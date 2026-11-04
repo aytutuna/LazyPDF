@@ -1,0 +1,108 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Comment.CommentPanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools">
+    <tools:ToolPanel.Resources>
+        <Style x:Key="SwatchStyle" TargetType="RadioButton">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Margin" Value="0,0,2,2" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Grid Background="Transparent">
+                            <Ellipse x:Name="Ring" Margin="1" StrokeThickness="2" Stroke="Transparent" />
+                            <Ellipse Margin="4" Fill="{TemplateBinding Background}" Stroke="{DynamicResource ControlStrokeColorDefaultBrush}" StrokeThickness="1" />
+                            <TextBlock x:Name="Auto" Text="A" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Tag" Value="auto">
+                                <Setter TargetName="Auto" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource ControlStrokeColorSecondaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </tools:ToolPanel.Resources>
+    <StackPanel Margin="12,0,12,12">
+        <TextBlock Text="{loc:T Mark up text}" Style="{StaticResource SectionHeaderText}" Margin="0,4,0,6" AutomationProperties.HeadingLevel="Level2" />
+        <UniformGrid x:Name="MarkupGrid" Columns="2">
+            <Button x:Name="MarkHighlight" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Highlight}" Margin="0,0,4,4" HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="{loc:T Highlight}" ToolTip="{loc:T Highlight the selected text.}" Click="Markup_Click" />
+            <Button x:Name="MarkUnderline" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Underline}" Margin="4,0,0,4" HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="{loc:T Underline}" ToolTip="{loc:T Underline the selected text.}" Click="Markup_Click" />
+            <Button x:Name="MarkStrikeOut" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Strike}" Margin="0,0,4,0" HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="{loc:T Strikethrough}" ToolTip="{loc:T Strike out the selected text.}" Click="Markup_Click" />
+            <Button x:Name="MarkSquiggly" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Squiggly}" Margin="4,0,0,0" HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="{loc:T Squiggly}" ToolTip="{loc:T Underline the selected text with a wavy line.}" Click="Markup_Click" />
+        </UniformGrid>
+
+        <TextBlock Text="{loc:T Draw}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,6" AutomationProperties.HeadingLevel="Level2" />
+        <UniformGrid x:Name="Palette" Columns="2" />
+        <TextBlock x:Name="Hint" Style="{StaticResource ReasonText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" Visibility="Collapsed" />
+        <StackPanel x:Name="StampRow" Margin="0,8,0,0" Visibility="Collapsed">
+            <TextBlock Text="{loc:T Stamp text}" Style="{StaticResource FieldLabelText}" />
+            <ComboBox x:Name="StampName" IsEditable="True" AutomationProperties.Name="{loc:T Stamp text}" SelectionChanged="Stamp_Changed" LostFocus="Stamp_Changed" />
+        </StackPanel>
+
+        <StackPanel x:Name="SelectedRow" Visibility="Collapsed">
+            <TextBlock x:Name="SelectedTitle" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,6" AutomationProperties.HeadingLevel="Level2" />
+            <UniformGrid Columns="2">
+                <Button x:Name="EditText" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Edit text}" Margin="0,0,4,0" HorizontalAlignment="Stretch"
+                        AutomationProperties.Name="{loc:T Edit text}" Click="EditText_Click" />
+                <Button x:Name="DeleteMark" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Delete}" Margin="4,0,0,0" HorizontalAlignment="Stretch"
+                        AutomationProperties.Name="{loc:T Delete}" ToolTip="{loc:T Delete the selected mark.}" Click="DeleteMark_Click" />
+            </UniformGrid>
+        </StackPanel>
+
+        <TextBlock Text="{loc:T Look}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,6" AutomationProperties.HeadingLevel="Level2" />
+        <TextBlock Text="{loc:T Colour}" Style="{StaticResource FieldLabelText}" />
+        <WrapPanel x:Name="Swatches" />
+        <DockPanel Margin="0,6,0,0">
+            <TextBlock x:Name="WidthReadout" DockPanel.Dock="Right" Style="{StaticResource ReadoutText}" Width="48" />
+            <TextBlock Text="{loc:T Width}" Style="{StaticResource FieldLabelText}" VerticalAlignment="Center" />
+        </DockPanel>
+        <Slider x:Name="WidthSlider" Minimum="0.5" Maximum="12" Value="2" SmallChange="0.5" LargeChange="1" TickFrequency="0.5" IsSnapToTickEnabled="True"
+                AutomationProperties.Name="{loc:T Width}" ValueChanged="Look_Changed" />
+        <DockPanel Margin="0,6,0,0">
+            <TextBlock x:Name="OpacityReadout" DockPanel.Dock="Right" Style="{StaticResource ReadoutText}" Width="48" />
+            <TextBlock Text="{loc:T Opacity}" Style="{StaticResource FieldLabelText}" VerticalAlignment="Center" />
+        </DockPanel>
+        <Slider x:Name="OpacitySlider" Minimum="10" Maximum="100" Value="100" SmallChange="5" LargeChange="10" TickFrequency="5" IsSnapToTickEnabled="True"
+                AutomationProperties.Name="{loc:T Opacity}" ValueChanged="Look_Changed" />
+        <TextBlock Text="{loc:T Font}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ComboBox x:Name="FontFamilyBox" AutomationProperties.Name="{loc:T Font}" SelectionChanged="Look_Changed" />
+            <ComboBox x:Name="FontSizeBox" Grid.Column="1" Width="64" Margin="6,0,0,0" IsEditable="True" AutomationProperties.Name="{loc:T Size}"
+                      SelectionChanged="Look_Changed" LostFocus="Look_Changed" />
+        </Grid>
+        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+            <ToggleButton x:Name="BoldToggle" Content="B" FontWeight="Bold" MinWidth="36" Height="32"
+                          AutomationProperties.Name="{loc:T Bold}" ToolTip="{loc:T Bold}" Click="Look_Changed" />
+            <ToggleButton x:Name="ItalicToggle" Content="I" FontStyle="Italic" MinWidth="36" Height="32" Margin="4,0,0,0"
+                          AutomationProperties.Name="{loc:T Italic}" ToolTip="{loc:T Italic}" Click="Look_Changed" />
+        </StackPanel>
+
+        <TextBlock Text="{loc:T Share}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,6" AutomationProperties.HeadingLevel="Level2" />
+        <UniformGrid Columns="2">
+            <Button x:Name="ImportButton" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Import}" Margin="0,0,4,0" HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="{loc:T Import comments}" ToolTip="{loc:T Add comments from an FDF or XFDF file.}" Click="Import_Click" />
+            <Button x:Name="ExportButton" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Export}" Margin="4,0,0,0" HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="{loc:T Export comments}" ToolTip="{loc:T Save the comments as an FDF or XFDF file.}" Click="Export_Click" />
+        </UniformGrid>
+    </StackPanel>
+</tools:ToolPanel>

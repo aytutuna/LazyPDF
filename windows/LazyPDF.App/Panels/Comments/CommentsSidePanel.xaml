@@ -5,9 +5,43 @@
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
                  xmlns:panel="clr-namespace:LazyPDF.App.Panels.Comments">
     <Grid>
-        <ListBox x:Name="Comments" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Comments}"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" PreviewMouseLeftButtonUp="Comments_PreviewMouseLeftButtonUp"
-                 PreviewKeyDown="Comments_PreviewKeyDown">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel Margin="12,0,12,6">
+            <DockPanel>
+                <Button x:Name="ExportButton" DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE898;" Margin="6,0,0,0"
+                        ToolTip="{loc:T Save a summary of the comments}" AutomationProperties.Name="{loc:T Export summary}" Click="Export_Click" />
+                <Grid>
+                    <TextBox x:Name="Search" AutomationProperties.Name="{loc:T Filter comments}" ToolTip="{loc:T Filter by text or author}" TextChanged="Filter_Changed" />
+                    <TextBlock x:Name="SearchHint" Text="{loc:T Filter}" Style="{StaticResource PlaceholderText}" />
+                </Grid>
+            </DockPanel>
+            <Grid Margin="0,6,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="6" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ComboBox x:Name="GroupBy" AutomationProperties.Name="{loc:T Group by}" ToolTip="{loc:T Group by}" SelectionChanged="Filter_Changed" />
+                <ComboBox x:Name="StatusFilter" Grid.Column="2" AutomationProperties.Name="{loc:T Show status}" ToolTip="{loc:T Show status}" SelectionChanged="Filter_Changed" />
+            </Grid>
+        </StackPanel>
+
+        <ListBox x:Name="Comments" Grid.Row="1" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Comments}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" SelectionChanged="Comments_SelectionChanged"
+                 PreviewMouseLeftButtonUp="Comments_PreviewMouseLeftButtonUp" PreviewKeyDown="Comments_PreviewKeyDown">
+            <ListBox.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" Style="{StaticResource SectionHeaderText}" Margin="12,10,12,2" AutomationProperties.HeadingLevel="Level3" />
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+            </ListBox.GroupStyle>
             <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
                     <Setter Property="AutomationProperties.Name" Value="{Binding Summary}" />
@@ -19,11 +53,30 @@
                         <TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis" />
                         <TextBlock Text="{Binding Text}" Style="{StaticResource BodyText}" TextWrapping="Wrap" MaxHeight="52" TextTrimming="CharacterEllipsis"
                                    Visibility="{Binding TextVisibility}" />
-                        <TextBlock Text="{Binding Where}" Style="{StaticResource SecondaryBodyText}" FontSize="12" />
+                        <TextBlock Text="{Binding Where}" Style="{StaticResource SecondaryBodyText}" FontSize="12" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <TextBlock x:Name="Empty" Style="{StaticResource ReasonText}" Margin="12,8" Visibility="Collapsed" Text="{loc:T This file has no comments.}" />
+        <TextBlock x:Name="Empty" Grid.Row="1" Style="{StaticResource ReasonText}" Margin="12,8" Visibility="Collapsed" VerticalAlignment="Top"
+                   AutomationProperties.LiveSetting="Polite" />
+
+        <Border x:Name="Detail" Grid.Row="2" Style="{StaticResource CardStyle}" Margin="8,0,8,8" Visibility="Collapsed">
+            <StackPanel>
+                <ItemsControl x:Name="Replies" AutomationProperties.Name="{loc:T Replies}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,0,0,4" Text="{Binding}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{loc:T Status}" Style="{StaticResource FieldLabelText}" />
+                <ComboBox x:Name="StatusBox" DisplayMemberPath="Name" AutomationProperties.Name="{loc:T Status}" SelectionChanged="Status_Changed" />
+                <TextBox x:Name="ReplyBox" Margin="0,8,0,0" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="72" VerticalScrollBarVisibility="Auto"
+                         AutomationProperties.Name="{loc:T Reply}" TextChanged="ReplyBox_TextChanged" />
+                <Button x:Name="ReplyButton" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Reply}" Margin="0,6,0,0" HorizontalAlignment="Right" IsEnabled="False"
+                        AutomationProperties.Name="{loc:T Send reply}" Click="Reply_Click" />
+            </StackPanel>
+        </Border>
     </Grid>
 </tools:ToolPanel>

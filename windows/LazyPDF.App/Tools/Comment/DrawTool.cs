@@ -1,0 +1,172 @@
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Shapes;
+using LazyPDF.App.Viewer;
+
+namespace LazyPDF.App.Tools.Comment;
+
+/// <summary>Takes the pointer to draw one kind of mark on a page; what was drawn goes to <paramref name="done"/> as page points.</summary>
+public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkStyle> style, Action<MarkTool, int, IReadOnlyList<Point>> done) : IPagePointerTool
+{
+    private const double MinDrag = 3;
+
+    private readonly List<Point> _points = [];
+    private int _page = -1;
+    private Point _now;
+    private Shape? _preview;
+    private Shape? _box;
+
+    public Cursor? Cursor => tool == MarkTool.Pencil ? Cursors.Pen : Cursors.Cross;
+
+    /// <summary>A polygon or cloud has corners and waits for more.</summary>
+    public bool Started => _page >= 0;
+
+    private bool ByClick => tool is MarkTool.Note or MarkTool.Stamp or MarkTool.Attach;
+
+    private bool Many => tool is MarkTool.Polygon or MarkTool.Cloud;
+
+    public void Press(PagePointer pointer)
+    {
+        if (Many && _page >= 0)
+        {
+            if (pointer.Page != _page) return;
+            if (pointer.Clicks >= 2 || (_points.Count >= 3 && Close(pointer.Point, _points[0]))) Finish();
+            else Extend(pointer.Point);
+            return;
+        }
+        Clear();
+        _page = pointer.Page;
+        _points.Add(pointer.Point);
+        _now = pointer.Point;
+        if (!ByClick) Show();
+    }
+
+    public void Move(PagePointer pointer)
+    {
+        if (_page < 0 || pointer.Page != _page) return;
+        _now = pointer.Point;
+        if (pointer.Pressed && (tool == MarkTool.Pencil || tool == MarkTool.Eraser) && (_now - _points[^1]).Length >= 1) _points.Add(_now);
+        Show();
+    }
+
+    public void Release(PagePointer pointer)
+    {
+        if (_page < 0) return;
+        if (pointer.Page == _page) _now = pointer.Point;
+        if (Many)
+        {
+            if (_points.Count == 1) Extend(_now);
+            return;
+        }
+        if (ByClick)
+        {
+            Finish();
+            return;
+        }
+        if (tool is MarkTool.Pencil or MarkTool.Eraser)
+        {
+            if (_points.Count < 2) _points.Add(_now + new Vector(0.1, 0));
+            Finish();
+            return;
+        }
+        if ((_now - _points[0]).Length < MinDrag)
+        {
+            Clear();
+            return;
+        }
+        _points.Add(_now);
+        Finish();
+    }
+
+    public void Cancel() => Clear();
+
+    private static bool Close(Point a, Point b) => (a - b).Length < 6;
+
+    private void Extend(Point at)
+    {
+        if ((at - _points[^1]).Length < 1) return;
+        _points.Add(at);
+        Show();
+    }
+
+    private void Finish()
+    {
+        int page = _page;
+        var points = _points.ToArray();
+        Clear();
+        if (Many && points.Length < 3) return;
+        done(tool, page, points);
+    }
+
+    private void Clear()
+    {
+        if (_preview is not null) viewer.Overlay(_page).Children.Remove(_preview);
+        if (_box is not null) viewer.Overlay(_page).Children.Remove(_box);
+        _preview = null;
+        _box = null;
+        _points.Clear();
+        _page = -1;
+    }
+
+    // The preview is redrawn whole on every move: the shapes are small and a page rarely holds more than a few points.
+    private void Show()
+    {
+        if (_page < 0) return;
+        var overlay = viewer.Overlay(_page);
+        var look = style();
+        var color = look.Color is { } c ? Color.FromRgb(Byte(c, 0), Byte(c, 1), Byte(c, 2)) : Colors.Red;
+        var brush = new SolidColorBrush(tool == MarkTool.Eraser ? Colors.Gray : color) { Opacity = tool == MarkTool.Eraser ? 0.5 : look.Opacity };
+        double thickness = tool == MarkTool.Eraser ? 8 : Math.Max(look.Width, 1);
+        if (_preview is not null) overlay.Children.Remove(_preview);
+        if (_box is not null) overlay.Children.Remove(_box);
+        _preview = _box = null;
+
+        var shape = Outline(brush, thickness);
+        if (shape is null) return;
+        shape.IsHitTestVisible = false;
+        _preview = shape;
+        overlay.Children.Add(shape);
+        if (tool == MarkTool.Callout)
+        {
+            var area = Marker.BoxOf(tool, [_points[0], _now]);
+            var frame = new Rectangle { Width = area.Width, Height = area.Height, Stroke = brush, StrokeThickness = thickness, IsHitTestVisible = false };
+            Canvas.SetLeft(frame, area.X);
+            Canvas.SetTop(frame, area.Y);
+            _box = frame;
+            overlay.Children.Add(frame);
+        }
+    }
+
+    private Shape? Outline(Brush brush, double thickness)
+    {
+        var first = _points[0];
+        switch (tool)
+        {
+            case MarkTool.Rectangle or MarkTool.TextBox or MarkTool.Oval:
+            {
+                var area = new Rect(first, _now);
+                Shape shape = tool == MarkTool.Oval ? new Ellipse() : new Rectangle();
+                shape.Width = area.Width;
+                shape.Height = area.Height;
+                shape.Stroke = brush;
+                shape.StrokeThickness = tool == MarkTool.TextBox ? 1 : thickness;
+                if (tool == MarkTool.TextBox) shape.StrokeDashArray = [4, 3];
+                Canvas.SetLeft(shape, area.X);
+                Canvas.SetTop(shape, area.Y);
+                return shape;
+            }
+            case MarkTool.Line or MarkTool.Arrow or MarkTool.Callout:
+                return new Line { X1 = first.X, Y1 = first.Y, X2 = _now.X, Y2 = _now.Y, Stroke = brush, StrokeThickness = thickness };
+            case MarkTool.Polygon or MarkTool.Cloud:
+                return new Polyline { Points = [.. _points, _now], Stroke = brush, StrokeThickness = thickness, StrokeLineJoin = PenLineJoin.Round };
+            case MarkTool.Pencil or MarkTool.Eraser:
+                return new Polyline { Points = [.. _points], Stroke = brush, StrokeThickness = thickness, StrokeLineJoin = PenLineJoin.Round, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round };
+            default:
+                return null;
+        }
+    }
+
+    private static byte Byte(double[] color, int i) => (byte)Math.Round(Math.Clamp(color.Length == 1 ? color[0] : color.Length >= 3 ? color[i] : 0, 0, 1) * 255);
+}

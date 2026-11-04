@@ -1,51 +1,123 @@
+using System.ComponentModel;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Threading;
 using LazyPDF.App.Tools;
+using LazyPDF.App.Tools.Comment;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Panels.Comments;
 
-/// <summary>One comment in the list.</summary>
-public sealed class CommentRow(PdfComment comment, string where)
-{
-    public PdfComment Comment { get; } = comment;
-
-    public string Title => string.IsNullOrEmpty(Comment.Author) ? AnnotationText.KindName(Comment.Type) : AnnotationText.KindName(Comment.Type) + " · " + Comment.Author;
-
-    public string Text => Comment.Text ?? "";
-
-    public Visibility TextVisibility => Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
-
-    public string Where { get; } = comment.Replies.Count > 0 ? where + " · " + Loc.Plural(comment.Replies.Count, "{0} reply", "{0} replies", comment.Replies.Count) : where;
-
-    public string Summary => Title + ", " + Where + (Text.Length > 0 ? ", " + Text : "");
-}
-
-/// <summary>Every comment and mark of the file in page order; a click shows it on its page.</summary>
+/// <summary>Every comment and mark of the file, grouped and filtered; a click shows it on its page, and the one picked can be answered.</summary>
 public partial class CommentsSidePanel : ToolPanel
 {
-    public CommentsSidePanel() => InitializeComponent();
+    private sealed record Grouping(CommentOrder Order, string Name);
+
+    private sealed record StatusChoice(ReviewStatus? Status, string Name);
+
+    private readonly DispatcherTimer _typing = new() { Interval = TimeSpan.FromMilliseconds(250) };
+    private IReadOnlyList<PdfComment> _all = [];
+    private bool _loading = true;
+    private bool _allowed = true;
+
+    public CommentsSidePanel()
+    {
+        InitializeComponent();
+        GroupBy.ItemsSource = new Grouping[] { new(CommentOrder.Page, Loc.T("By page")), new(CommentOrder.Author, Loc.T("By author")), new(CommentOrder.Type, Loc.T("By type")) };
+        GroupBy.DisplayMemberPath = nameof(Grouping.Name);
+        GroupBy.SelectedIndex = 0;
+        var statuses = new[] { ReviewStatus.None, ReviewStatus.Accepted, ReviewStatus.Rejected, ReviewStatus.Cancelled, ReviewStatus.Completed };
+        StatusFilter.ItemsSource = new[] { new StatusChoice(null, Loc.T("Any status")) }.Concat(statuses.Select(s => new StatusChoice(s, AnnotationText.StatusName(s)))).ToList();
+        StatusFilter.DisplayMemberPath = nameof(StatusChoice.Name);
+        StatusFilter.SelectedIndex = 0;
+        StatusBox.ItemsSource = statuses.Select(s => new StatusChoice(s, AnnotationText.StatusName(s))).ToList();
+        LazyPDF.App.Icon.SetGlyph(ReplyButton, "");
+        _typing.Tick += Typing_Tick;
+        _loading = false;
+    }
 
     protected override void OnAttach()
     {
         Tab!.Changed += Tab_Changed;
-        Build();
+        _allowed = Exchange.CanComment(Tab.Document);
+        Load();
     }
 
     protected override void OnDetach()
     {
+        _typing.Stop();
         Tab!.Changed -= Tab_Changed;
         Comments.ItemsSource = null;
+        _all = [];
     }
 
-    private void Tab_Changed(object? sender, EventArgs e) => Build();
+    private void Tab_Changed(object? sender, EventArgs e) => Load();
+
+    private void Filter_Changed(object sender, RoutedEventArgs e)
+    {
+        SearchHint.Visibility = Search.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        if (_loading || Tab is null) return;
+        if (sender == Search)
+        {
+            _typing.Stop();
+            _typing.Start();
+        }
+        else if (sender == GroupBy) Load();
+        else Build();
+    }
+
+    private void Typing_Tick(object? sender, EventArgs e)
+    {
+        _typing.Stop();
+        if (Tab is not null) Build();
+    }
+
+    // The file is read once per change; filtering and typing in the filter work on what was read.
+    private void Load()
+    {
+        var order = (GroupBy.SelectedItem as Grouping)?.Order ?? CommentOrder.Page;
+        _all = PdfComments.List(Tab!.Document, null, order);
+        Build();
+    }
+
+    private IReadOnlyList<PdfComment> Visible()
+    {
+        var status = (StatusFilter.SelectedItem as StatusChoice)?.Status;
+        string query = Search.Text.Trim();
+        return [.. _all.Where(c => (status is null || c.Status == status) && (query.Length == 0 || Mentions(c, query)))];
+    }
+
+    private static bool Mentions(PdfComment c, string query) =>
+        Has(c.Text, query) || Has(c.Author, query) || c.Replies.Any(r => Has(r.Contents, query) || Has(r.Title, query));
+
+    private static bool Has(string? text, string query) => text?.Contains(query, StringComparison.CurrentCultureIgnoreCase) == true;
 
     private void Build()
     {
-        var comments = PdfComments.List(Tab!.Document);
-        Comments.ItemsSource = comments.Select(c => new CommentRow(c, Loc.T("Page {0}", Viewer!.PageLabel(c.PageIndex)))).ToList();
-        Empty.Visibility = comments.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        var viewer = Viewer!;
+        var order = (GroupBy.SelectedItem as Grouping)?.Order ?? CommentOrder.Page;
+        int? picked = (Comments.SelectedItem as CommentRow)?.Comment.Annotation.Reference?.Number;
+        var comments = Visible();
+        var rows = comments.Select(c => new CommentRow(c, Loc.T("Page {0}", viewer.PageLabel(c.PageIndex)), GroupOf(c, order, viewer))).ToList();
+        var view = new ListCollectionView(rows);
+        view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(CommentRow.Group)));
+        _loading = true;
+        Comments.ItemsSource = view;
+        Comments.SelectedItem = rows.FirstOrDefault(r => r.Comment.Annotation.Reference?.Number == picked && picked is not null);
+        _loading = false;
+        ShowDetail();
+        bool any = _all.Count > 0;
+        Empty.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        Empty.Text = any ? Loc.T("No comment matches.") : Loc.T("This file has no comments.");
     }
+
+    private static string GroupOf(PdfComment comment, CommentOrder order, Viewer.IDocumentViewer viewer) => order switch
+    {
+        CommentOrder.Author => string.IsNullOrEmpty(comment.Author) ? Loc.T("No author") : comment.Author,
+        CommentOrder.Type => AnnotationText.KindName(comment.Type),
+        _ => Loc.T("Page {0}", viewer.PageLabel(comment.PageIndex)),
+    };
 
     private void Go(CommentRow row)
     {
