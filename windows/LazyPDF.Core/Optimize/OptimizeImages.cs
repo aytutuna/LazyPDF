@@ -39,30 +39,41 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
         var placed = PlacedImages.Measure(document);
         if (!placed.Complete)
         {
-            Partial = true;
+            Partial = images.Any(i => !placed.Found.TryGetValue(i, out var seen) || Exceeds(seen));
             return;
         }
         var unseen = Unseen(placed);
         foreach (var image in images)
         {
             if (!placed.Found.TryGetValue(image, out var placement)) continue;
-            if (unseen.Contains(image)) Partial = true;
+            if (unseen.Contains(image)) Partial |= Exceeds(placement);
             else if (TryShrink(image, placement)) Downsampled++;
         }
     }
 
-    // Images listed by resources the walk never reached, and by the forms those call, may be painted
-    // somewhere nobody measured (a soft mask group, a Type 3 glyph, an appearance state not shown).
+    // Images listed by resources the walk never reached, and by the forms, patterns and soft mask groups those
+    // use, may be painted somewhere nobody measured (a Type 3 glyph, an appearance state not shown).
     private HashSet<PdfStream> Unseen(PlacedImages walk)
     {
         var set = new HashSet<PdfStream>(ReferenceEqualityComparer.Instance);
+        var visited = new HashSet<PdfStream>(ReferenceEqualityComparer.Instance);
         var forms = new Stack<PdfStream>();
+        void Enter(PdfObject? value)
+        {
+            if (document.Resolve(value) is PdfStream stream && OptimizeWalk.IsForm(document, stream) && visited.Add(stream)) forms.Push(stream);
+        }
         void List(PdfDictionary? resources)
         {
             foreach (var (_, value) in document.Dict(resources, "XObject")?.Entries ?? [])
             {
-                if (document.Resolve(value) is not PdfStream xobject || !set.Add(xobject)) continue;
-                if (document.Name(xobject.Dictionary, "Subtype") == "Form") forms.Push(xobject);
+                if (document.Resolve(value) is not PdfStream xobject) continue;
+                set.Add(xobject);
+                Enter(xobject);
+            }
+            foreach (var (_, value) in document.Dict(resources, "Pattern")?.Entries ?? []) Enter(value);
+            foreach (var (_, value) in document.Dict(resources, "ExtGState")?.Entries ?? [])
+            {
+                if (document.Dict(document.Resolve(value) as PdfDictionary, "SMask") is { } mask) Enter(mask["G"]);
             }
         }
         foreach (var dictionary in PdfGraph.AllDictionaries(document))
@@ -71,6 +82,12 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
         }
         while (forms.Count > 0) List(document.Dict(forms.Pop().Dictionary, "Resources"));
         return set;
+    }
+
+    private bool Exceeds(Placement placement)
+    {
+        double above = Math.Max(options.ImageDpiAbove, options.ImageDpi);
+        return placement.DpiX > above || placement.DpiY > above;
     }
 
     private bool TryBilevel(PdfStream stream)
@@ -138,8 +155,7 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
         var dictionary = stream.Dictionary;
         int width = (int)(document.Integer(dictionary, "Width") ?? 0), height = (int)(document.Integer(dictionary, "Height") ?? 0);
         if (width < 1 || height < 1 || (long)width * height > PdfImageSamples.MaxPixels) return false;
-        double above = Math.Max(options.ImageDpiAbove, options.ImageDpi);
-        if (placement.DpiX <= above && placement.DpiY <= above) return false;
+        if (!Exceeds(placement)) return false;
         int newWidth = Math.Max(1, (int)Math.Round(width * Math.Min(1, options.ImageDpi / placement.DpiX)));
         int newHeight = Math.Max(1, (int)Math.Round(height * Math.Min(1, options.ImageDpi / placement.DpiY)));
         if ((long)newWidth * newHeight > 0.9 * width * height) return false;

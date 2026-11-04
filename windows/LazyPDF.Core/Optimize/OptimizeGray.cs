@@ -6,14 +6,25 @@ namespace LazyPDF.Core;
 // Turns colour into gray: the colour operators of every content stream and the pixels of the
 // image XObjects. Shadings, spot colours, Lab and patterns have no gray twin that keeps their
 // look, so they stay and are counted.
+//
+// A form takes its colour space from whoever paints it, so the content is simulated twice. The first
+// pass rewrites nothing and learns which spaces reach each form; where a form has to keep its operands
+// (a caller's space is a Lab or DeviceN one), the callers that would turn their cs gray hold it back.
 internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int jpegQuality)
 {
-    private enum Space { Gray, Rgb, Cmyk, Other, Pattern, Unknown, Inherited }
+    // Alien is a space of three or more components that gray cannot stand in for, or one that was not found.
+    private enum Space { Gray, Rgb, Cmyk, Alien, Other, Inherited }
+
+    private readonly record struct Origin(PdfStream Stream, int At);
+
+    private readonly record struct Slot(Space Space, Origin? At);
+
+    private sealed record Entry(PdfDictionary? Resources, Slot Fill, Slot Stroke);
 
     private sealed class State
     {
-        public Space Fill, Stroke;
-        public readonly Stack<(Space, Space)> Saved = new();
+        public Slot Fill, Stroke;
+        public readonly Stack<(Slot, Slot)> Saved = new();
     }
 
     private const long MaxPixels = 32_000_000;
@@ -21,8 +32,20 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
     // Component counts of the Lab and DeviceN spaces in the file that an operand count could be mistaken for RGB or CMYK.
     private readonly HashSet<int> _alien = [];
 
-    // Forms painted while a caller's colour space was a Lab, DeviceN or similar one, or an RGB or CMYK one that cs turns gray.
-    private readonly HashSet<PdfStream> _keptFor = new(ReferenceEqualityComparer.Instance), _convertedFor = new(ReferenceEqualityComparer.Instance);
+    // Colour operators that stay as written, because a form or a shared stream needs the space they set.
+    private readonly HashSet<Origin> _held = [];
+    private readonly HashSet<PdfStream> _frozen = new(ReferenceEqualityComparer.Instance), _simulated = new(ReferenceEqualityComparer.Instance);
+    private readonly Dictionary<PdfStream, Entry> _entries = new(ReferenceEqualityComparer.Instance);
+    private readonly Dictionary<PdfStream, byte[]> _output = new(ReferenceEqualityComparer.Instance);
+    private readonly Dictionary<PdfStream, int> _maskUsers = new(ReferenceEqualityComparer.Instance);
+
+    // Learned by the first pass. An edge is a form painted while its own colour was still its caller's; a paint is
+    // a form painted in a space some operator set. Callers hold the spaces that reach a form, for fill or stroke.
+    private readonly List<(PdfStream From, PdfStream To, bool Stroke)> _edges = [];
+    private readonly HashSet<(PdfStream Form, bool Stroke, Slot Slot)> _paints = [];
+    private readonly HashSet<(PdfStream Form, bool Stroke)> _consumers = [];
+    private readonly Dictionary<(PdfStream Form, bool Stroke), HashSet<Space>> _callers = new();
+    private bool _analysing;
 
     public int Streams { get; private set; }
     public int Images { get; private set; }
@@ -39,31 +62,116 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
                 if (family is ImageFamily.Lab or ImageFamily.Spot && components >= 3) _alien.Add(components);
             }
         }
-        var done = new HashSet<PdfStream>(ReferenceEqualityComparer.Instance);
+        var pages = new List<(PdfDictionary? Resources, List<PdfStream> Streams, bool Straddles)>();
+        var used = new HashSet<PdfStream>(ReferenceEqualityComparer.Instance);
         foreach (var page in document.Pages)
         {
-            var state = new State { Fill = Space.Gray, Stroke = Space.Gray };
             var contents = document.Resolve(page.Dictionary["Contents"]);
-            var streams = (contents is PdfArray list ? list.Items : [contents ?? PdfNull.Instance])
-                .Select(document.Resolve).OfType<PdfStream>().Where(done.Add).ToList();
-            if (Straddles(streams))
+            var streams = (contents is PdfArray list ? list.Items : [contents ?? PdfNull.Instance]).Select(document.Resolve).OfType<PdfStream>().ToList();
+            bool straddles = Straddles(streams);
+            if (straddles) _frozen.UnionWith(streams);
+            used.UnionWith(streams);
+            pages.Add((page.Resources, streams, straddles));
+        }
+        var all = PdfGraph.Objects(document).Select(o => o.Value).OfType<PdfStream>().ToList();
+        var forms = all.Where(s => !used.Contains(s) && OptimizeWalk.IsForm(document, s) && document.Integer(s.Dictionary, "PaintType") != 2).ToList();
+        foreach (var stream in all)
+        {
+            if (document.Resolve(stream.Dictionary["SMask"]) is PdfStream soft) _maskUsers[soft] = _maskUsers.GetValueOrDefault(soft) + 1;
+        }
+
+        _analysing = true;
+        Pass(pages, forms);
+        Settle();
+        _analysing = false;
+        Left = 0;
+        Pass(pages, forms);
+        foreach (var (stream, data) in _output)
+        {
+            PdfGraph.SetData(stream, data);
+            Streams++;
+        }
+        foreach (var stream in all)
+        {
+            var dictionary = stream.Dictionary;
+            if (document.Integer(dictionary, "PatternType") == 2) Left++;
+            else if (document.Name(dictionary, "Subtype") == "Image" && document.Bool(dictionary, "ImageMask") != true) GrayImage(stream);
+        }
+    }
+
+    private void Pass(List<(PdfDictionary? Resources, List<PdfStream> Streams, bool Straddles)> pages, List<PdfStream> forms)
+    {
+        foreach (var (resources, streams, straddles) in pages)
+        {
+            if (straddles)
             {
                 Left++;
                 continue;
             }
-            foreach (var stream in streams) Convert(stream, page.Resources, state);
-        }
-        foreach (var (_, value) in PdfGraph.Objects(document))
-        {
-            if (value is not PdfStream stream || !done.Add(stream)) continue;
-            var dictionary = stream.Dictionary;
-            if (document.Name(dictionary, "Subtype") == "Form" || (document.Integer(dictionary, "PatternType") == 1 && document.Integer(dictionary, "PaintType") != 2))
+            var state = new State { Fill = new Slot(Space.Gray, null), Stroke = new Slot(Space.Gray, null) };
+            foreach (var stream in streams)
             {
-                Convert(stream, document.Dict(dictionary, "Resources"), new State { Fill = Space.Inherited, Stroke = Space.Inherited });
+                if (_analysing) NoteContext(stream, new Entry(resources, state.Fill, state.Stroke));
+                bool again = !_analysing && !_simulated.Add(stream);
+                int before = Left;
+                Convert(stream, resources, state);
+                // A stream on several pages is run for each page's state but counted once.
+                if (again) Left = before;
             }
-            else if (document.Integer(dictionary, "PatternType") == 2) Left++;
-            else if (document.Name(dictionary, "Subtype") == "Image" && document.Bool(dictionary, "ImageMask") != true) GrayImage(stream);
         }
+        foreach (var form in forms)
+        {
+            var inherited = new Slot(Space.Inherited, null);
+            Convert(form, document.Dict(form.Dictionary, "Resources"), new State { Fill = inherited, Stroke = inherited });
+        }
+    }
+
+    // A stream shared by pages is rewritten once, so it must read the same on each: the same resources and the
+    // same colour spaces coming in. Otherwise it stays as it is, and so do the operators that set what it takes in.
+    private void NoteContext(PdfStream stream, Entry entry)
+    {
+        if (!_entries.TryAdd(stream, entry) && _entries[stream] != entry && _frozen.Add(stream)) Hold(_entries[stream]);
+        if (_frozen.Contains(stream)) Hold(entry);
+    }
+
+    private void Hold(Entry entry)
+    {
+        if (entry.Fill.At is { } fill) _held.Add(fill);
+        if (entry.Stroke.At is { } stroke) _held.Add(stroke);
+    }
+
+    private void Settle()
+    {
+        var calls = _edges.ToLookup(e => (e.From, e.Stroke), e => e.To);
+        var work = new Queue<(PdfStream Form, bool Stroke, Space Space)>(_paints.Select(p => (p.Form, p.Stroke, p.Slot.Space)));
+        while (work.Count > 0)
+        {
+            var (form, stroke, space) = work.Dequeue();
+            if (!_callers.TryGetValue((form, stroke), out var spaces)) _callers[(form, stroke)] = spaces = [];
+            if (!spaces.Add(space)) continue;
+            foreach (var next in calls[(form, stroke)]) work.Enqueue((next, stroke, space));
+        }
+        // A form that keeps its operands holds back every caller on the way to it that would rewrite its cs.
+        var callers = _edges.ToLookup(e => (e.To, e.Stroke), e => e.From);
+        var keeping = new Queue<(PdfStream Form, bool Stroke)>(_consumers.Where(c => _callers.TryGetValue(c, out var spaces) && spaces.Contains(Space.Alien)));
+        var reaching = new HashSet<(PdfStream, bool)>();
+        while (keeping.Count > 0)
+        {
+            var (form, stroke) = keeping.Dequeue();
+            if (!reaching.Add((form, stroke))) continue;
+            foreach (var caller in callers[(form, stroke)]) keeping.Enqueue((caller, stroke));
+        }
+        foreach (var (form, stroke, slot) in _paints)
+        {
+            if (slot.At is { } at && slot.Space is Space.Rgb or Space.Cmyk && reaching.Contains((form, stroke))) _held.Add(at);
+        }
+    }
+
+    // Whether an operand-counted colour in a form stays: its callers include a Lab or DeviceN space, or none is known and the file holds one that size.
+    private bool Keeps(PdfStream form, bool stroke, int operands)
+    {
+        var spaces = _callers.GetValueOrDefault((form, stroke)) ?? [];
+        return spaces.Contains(Space.Alien) || (!spaces.Contains(Space.Rgb) && !spaces.Contains(Space.Cmyk) && _alien.Contains(operands));
     }
 
     // An operator may sit in a later stream than its operands (7.8.2), and each stream is rewritten on its own.
@@ -108,13 +216,28 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
         }
         var output = new MemoryStream();
         int copied = 0;
-        bool changed = false;
+        bool changed = false, frozen = _frozen.Contains(stream);
         void Replace(ContentOperation op, string text)
         {
+            if (_analysing || frozen) return;
             output.Write(data, copied, op.Start - copied);
             output.Write(Encoding.Latin1.GetBytes(text));
             copied = op.End;
             changed = true;
+        }
+
+        // The state keeps the space the operands are written for, which the colours that follow still need. An
+        // operator that cannot be rewritten leaves its space as it was, and so everything written for it.
+        Slot Set(ContentOperation op, Space space, string? replacement)
+        {
+            var at = new Origin(stream, op.Start);
+            if (space is Space.Rgb or Space.Cmyk && !_analysing && (replacement is null || frozen || _held.Contains(at)))
+            {
+                Left++;
+                return new Slot(Space.Alien, at);
+            }
+            if (replacement is not null) Replace(op, replacement);
+            return new Slot(space, at);
         }
 
         foreach (var op in operations)
@@ -128,47 +251,46 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
                     (state.Fill, state.Stroke) = state.Saved.Pop();
                     break;
                 case "g" or "rg" or "k" or "G" or "RG" or "K":
+                {
                     bool stroke = char.IsUpper(op.Operator[0]);
-                    var plain = Gray(op, op.Operator.ToLowerInvariant() switch { "g" => 1, "rg" => 3, _ => 4 });
-                    if (stroke) state.Stroke = Space.Gray;
-                    else state.Fill = Space.Gray;
-                    if (plain is { } y && op.Operator is not ("g" or "G")) Replace(op, $"{Format(y)} {(stroke ? "G" : "g")}");
+                    char kind = char.ToLowerInvariant(op.Operator[0]);
+                    var model = kind == 'g' ? Space.Gray : kind == 'r' ? Space.Rgb : Space.Cmyk;
+                    double? level = model == Space.Gray ? null : Gray(op, model == Space.Rgb ? 3 : 4);
+                    var set = Set(op, model, level is { } y ? $"{Format(y)} {(stroke ? "G" : "g")}" : null);
+                    if (stroke) state.Stroke = set;
+                    else state.Fill = set;
                     break;
+                }
                 case "cs" or "CS":
+                {
                     var space = SpaceOf(op, resources);
-                    // The state keeps the colour space the operands are written for, which the colours that follow still need.
-                    if (space is Space.Rgb or Space.Cmyk) Replace(op, $"/DeviceGray {op.Operator}");
-                    if (op.Operator == "cs") state.Fill = space;
-                    else state.Stroke = space;
+                    var set = Set(op, space, space is Space.Rgb or Space.Cmyk ? $"/DeviceGray {op.Operator}" : null);
+                    if (op.Operator == "cs") state.Fill = set;
+                    else state.Stroke = set;
                     break;
+                }
                 case "sc" or "scn" or "SC" or "SCN":
+                {
                     bool upper = char.IsUpper(op.Operator[0]);
-                    var current = upper ? state.Stroke : state.Fill;
+                    var current = (upper ? state.Stroke : state.Fill).Space;
                     bool inherited = current == Space.Inherited;
                     int count = op.Operands.Count;
                     int needed = current == Space.Rgb || (inherited && count == 3) ? 3 : current == Space.Cmyk || (inherited && count == 4) ? 4 : 0;
-                    if (needed == 0 || !op.Operands.All(o => o is PdfNumber) || Gray(op, needed) is not { } y2) break;
-                    if (!inherited)
-                    {
-                        Replace(op, $"{Format(y2)} {op.Operator}");
-                        break;
-                    }
-                    // The caller's space is a guess from the operand count unless a caller was seen; a Lab or DeviceN space of that size makes it a bad one.
-                    bool kept = _keptFor.Contains(stream), converted = _convertedFor.Contains(stream);
-                    if (kept || (!converted && _alien.Contains(needed)))
-                    {
-                        Left++;
-                        break;
-                    }
+                    if (needed == 0 || !op.Operands.All(o => o is PdfNumber) || Gray(op, needed) is not { } shade) break;
+                    if (!inherited) Replace(op, $"{Format(shade)} {op.Operator}");
+                    else if (_analysing) _consumers.Add((stream, upper));
+                    else if (Keeps(stream, upper, needed)) Left++;
                     // g and G set their own space; the state stays inherited so the next colour is judged the same way.
-                    Replace(op, $"{Format(y2)} {(upper ? "G" : "g")}");
+                    else Replace(op, $"{Format(shade)} {(upper ? "G" : "g")}");
                     break;
-                case "Do" when state.Fill != Space.Inherited && op.Operands.Count > 0 && op.Operands[0] is PdfName xobject
+                }
+                case "Do" when _analysing && op.Operands.Count > 0 && op.Operands[0] is PdfName xobject
                     && document.Resolve(document.Dict(resources, "XObject")?[xobject.Value]) is PdfStream form:
-                    foreach (var held in new[] { state.Fill, state.Stroke })
+                    foreach (bool stroke in new[] { false, true })
                     {
-                        if (held is Space.Other) _keptFor.Add(form);
-                        else if (held is Space.Rgb or Space.Cmyk) _convertedFor.Add(form);
+                        var held = stroke ? state.Stroke : state.Fill;
+                        if (held.Space == Space.Inherited) _edges.Add((stream, form, stroke));
+                        else _paints.Add((form, stroke, held));
                     }
                     break;
                 case "sh":
@@ -181,8 +303,7 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
         }
         if (!changed) return;
         output.Write(data, copied, data.Length - copied);
-        PdfGraph.SetData(stream, output.ToArray());
-        Streams++;
+        _output.TryAdd(stream, output.ToArray());
     }
 
     private static bool IsGrayInline(InlineImage image) =>
@@ -232,6 +353,10 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
         }
     }
 
+    // The matte has one value per component of the image it belongs to, so a mask that two images use cannot follow just one of them.
+    private bool SharesMatte(PdfDictionary image) =>
+        document.Resolve(image["SMask"]) is PdfStream soft && soft.Dictionary.ContainsKey("Matte") && _maskUsers.GetValueOrDefault(soft) > 1;
+
     private void SetMatte(PdfDictionary image, double gray, int components)
     {
         var soft = (PdfStream)document.Resolve(image["SMask"])!;
@@ -240,7 +365,7 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
 
     private Space SpaceOf(ContentOperation op, PdfDictionary? resources)
     {
-        if (op.Operands.Count == 0 || op.Operands[0] is not PdfName name) return Space.Unknown;
+        if (op.Operands.Count == 0 || op.Operands[0] is not PdfName name) return Space.Other;
         PdfObject? definition = name;
         if (name.Value is not ("DeviceGray" or "DeviceRGB" or "DeviceCMYK" or "Pattern"))
         {
@@ -249,13 +374,20 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
             {
                 // The colour stays whatever space the caller meant by the name.
                 Left++;
-                return Space.Unknown;
+                return Space.Alien;
             }
         }
-        if (name.Value == "Pattern" || (definition is PdfArray { Items.Count: > 0 } array && document.Resolve(array.Items[0]) is PdfName { Value: "Pattern" })) return Space.Pattern;
-        var (family, _) = ImageKit.Describe(document, definition);
+        if (name.Value == "Pattern" || (definition is PdfArray { Items.Count: > 0 } array && document.Resolve(array.Items[0]) is PdfName { Value: "Pattern" })) return Space.Other;
+        var (family, components) = ImageKit.Describe(document, definition);
         if (family is ImageFamily.Spot or ImageFamily.Lab) Left++;
-        return family switch { ImageFamily.Gray => Space.Gray, ImageFamily.Rgb => Space.Rgb, ImageFamily.Cmyk => Space.Cmyk, _ => Space.Other };
+        return family switch
+        {
+            ImageFamily.Gray => Space.Gray,
+            ImageFamily.Rgb => Space.Rgb,
+            ImageFamily.Cmyk => Space.Cmyk,
+            ImageFamily.Unknown => Space.Alien,
+            _ => components >= 3 ? Space.Alien : Space.Other,
+        };
     }
 
     private void GrayImage(PdfStream stream)
@@ -264,7 +396,7 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
         var (family, components) = ImageKit.Describe(document, dictionary["ColorSpace"]);
         if (family is ImageFamily.Gray or ImageFamily.Unknown) return;
         int width = (int)(document.Integer(dictionary, "Width") ?? 0), height = (int)(document.Integer(dictionary, "Height") ?? 0);
-        if (family is ImageFamily.Spot or ImageFamily.Lab || width < 1 || height < 1 || (long)width * height > MaxPixels || document.Resolve(dictionary["Mask"]) is PdfArray)
+        if (family is ImageFamily.Spot or ImageFamily.Lab || width < 1 || height < 1 || (long)width * height > MaxPixels || document.Resolve(dictionary["Mask"]) is PdfArray || SharesMatte(dictionary))
         {
             Left++;
             return;

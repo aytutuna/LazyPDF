@@ -32,6 +32,10 @@ public class SanitizeHiddenTextTests
         Assert.Equal(1, Hidden("q 0 0 20 20 re W n BT /F1 12 Tf 100 100 Td (CLIPPED) Tj ET Q"));
 
     [Fact]
+    public void TextUnderAClipThatMissesThePageIsHidden() =>
+        Assert.Equal(1, Hidden("q 300 300 10 10 re W n BT /F1 12 Tf 0 0 Td (SECRET) Tj ET Q"));
+
+    [Fact]
     public void TextTooSmallToReadIsHidden() =>
         Assert.Equal(1, Hidden("BT /F1 0.3 Tf 10 100 Td (TINY) Tj ET BT /F1 8 Tf 10 50 Td (SMALL) Tj ET"));
 

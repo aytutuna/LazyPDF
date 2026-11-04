@@ -13,14 +13,7 @@ internal static class SanitizeSignatures
         {
             if (!IsSignature(document, field)) continue;
             field.Remove("V");
-            field.Remove("AP");
-            if (document.Array(field, "Kids") is { } kids)
-            {
-                foreach (var kid in kids.Items)
-                {
-                    if (document.Resolve(kid) is PdfDictionary widget) widget.Remove("AP");
-                }
-            }
+            ClearAppearances(document, field);
             count++;
         }
         var form = document.Dict(document.Catalog, "AcroForm");
@@ -29,6 +22,23 @@ internal static class SanitizeSignatures
         document.Catalog.Remove("DSS");
         form?.Remove("SigFlags");
         return count == 0 && left ? 1 : count;
+    }
+
+    // The kids of a field, however deep, are its widgets and sub-fields; none of them has a value of its own to be known by.
+    private static void ClearAppearances(PdfDocument document, PdfDictionary field)
+    {
+        var seen = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance) { field };
+        var pending = new Stack<PdfDictionary>([field]);
+        while (pending.Count > 0)
+        {
+            var node = pending.Pop();
+            node.Remove("AP");
+            if (document.Array(node, "Kids") is not { } kids) continue;
+            foreach (var kid in kids.Items)
+            {
+                if (document.Resolve(kid) is PdfDictionary child && seen.Add(child)) pending.Push(child);
+            }
+        }
     }
 
     // /Type of the value is optional (12.8.1), so a signature field is also known by its inherited /FT.

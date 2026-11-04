@@ -31,7 +31,7 @@ internal sealed class SanitizeText(PdfDocument document)
             double alpha = paint == 1 ? state.StrokeAlpha : paint == 2 ? Math.Max(state.FillAlpha, state.StrokeAlpha) : state.FillAlpha;
             var box = glyph.Bounds;
             var clip = state.Clip;
-            bool unseen = alpha <= 0 || Math.Max(box.Width, box.Height) < Legible
+            bool unseen = alpha <= 0 || Math.Max(box.Width, box.Height) < Legible || clip.IsEmpty
                 || box.Right < clip.Left || box.Left > clip.Right || box.Top < clip.Bottom || box.Bottom > clip.Top;
             Glyphs.Add(new Glyph((context.Forms.Count == 0 ? null : context.Forms[^1], context.OperatorIndex), box, white, unseen, state.RenderMode, _order++));
         }

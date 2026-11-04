@@ -15,22 +15,22 @@ public sealed class PdfSanitizer(PdfDocument document)
     public IReadOnlyList<SanitizeFinding> Scan()
     {
         using var working = PdfDocument.Open(document.SaveRewrite());
-        var (found, _) = Apply(working, Everything);
+        var (found, _, _) = Apply(working, Everything);
         return Findings(found);
     }
 
     public SanitizeResult Run(SanitizeOptions options)
     {
         using var working = PdfDocument.Open(document.SaveRewrite());
-        var (found, stripped) = Apply(working, options);
+        var (found, stripped, taken) = Apply(working, options);
         var removed = new Dictionary<SanitizeItem, int>();
+        var kept = new Dictionary<SanitizeItem, int>();
         foreach (var (item, count) in found)
         {
-            if (!IsRemoved(item, options)) continue;
-            removed[item] = item == SanitizeItem.InvisibleText ? stripped : count;
+            int gone = taken.TryGetValue(item, out int exact) ? exact : !IsRemoved(item, options) ? 0 : item == SanitizeItem.InvisibleText ? stripped : count;
+            removed[item] = gone;
+            kept[item] = count - gone;
         }
-        var kept = found.Where(f => !removed.ContainsKey(f.Key)).ToDictionary();
-        if (removed.TryGetValue(SanitizeItem.InvisibleText, out int shows) && found[SanitizeItem.InvisibleText] > shows) kept[SanitizeItem.InvisibleText] = found[SanitizeItem.InvisibleText] - shows;
         var security = options.Security ?? (options.KeepEncryption ? document.Security : null);
         // The keys of the older handlers are made from the first /ID, so a handler taken over from the input keeps the id it was made with.
         bool inherited = security is not null && ReferenceEquals(security, document.Security);
@@ -61,8 +61,9 @@ public sealed class PdfSanitizer(PdfDocument document)
         _ => false,
     };
 
-    // Counts everything and removes what the options choose; returns the counts and the number of invisible shows taken out.
-    private (Dictionary<SanitizeItem, int> Found, int Stripped) Apply(PdfDocument working, SanitizeOptions o)
+    // Counts everything and removes what the options choose; returns the counts, the number of invisible shows taken out
+    // and, for the kinds of action, how many were taken (a rendition with a script goes under either option).
+    private (Dictionary<SanitizeItem, int> Found, int Stripped, Dictionary<SanitizeItem, int> Taken) Apply(PdfDocument working, SanitizeOptions o)
     {
         var found = new Dictionary<SanitizeItem, int> { [SanitizeItem.Signatures] = SanitizeSignatures.Strip(working) };
         var text = new SanitizeText(working);
@@ -72,10 +73,10 @@ public sealed class PdfSanitizer(PdfDocument document)
         int stripped = o.InvisibleText && invisible > 0 ? text.Strip() : 0;
 
         found[SanitizeItem.HiddenLayers] = new SanitizeLayers(working).Run(o.HiddenLayers);
-        var (scripts, launch, uri) = SanitizeActions.Run(working, o.JavaScript, o.LaunchActions, o.ExternalLinks);
-        found[SanitizeItem.JavaScript] = scripts;
-        found[SanitizeItem.LaunchActions] = launch;
-        found[SanitizeItem.ExternalLinks] = uri;
+        var (actions, taken) = SanitizeActions.Run(working, o.JavaScript, o.LaunchActions, o.ExternalLinks);
+        found[SanitizeItem.JavaScript] = actions.JavaScript;
+        found[SanitizeItem.LaunchActions] = actions.Launch;
+        found[SanitizeItem.ExternalLinks] = actions.Uri;
         found[SanitizeItem.EmbeddedFiles] = SanitizeData.EmbeddedFiles(working, o.EmbeddedFiles);
         found[SanitizeItem.Comments] = SanitizeData.Comments(working, o.Comments);
         found[SanitizeItem.FormData] = SanitizeData.FormData(working, o.FormData);
@@ -85,6 +86,12 @@ public sealed class PdfSanitizer(PdfDocument document)
         found[SanitizeItem.SearchIndexes] = SanitizeData.SearchIndexes(working, o.SearchIndexes);
         found[SanitizeItem.FilePaths] = SanitizeData.FilePaths(working, o.FilePaths);
         found[SanitizeItem.PreviousVersions] = Math.Max(0, document.SectionOffsets.Count - (document.WasLinearized ? 2 : 1));
-        return (found, stripped);
+        var gone = new Dictionary<SanitizeItem, int>
+        {
+            [SanitizeItem.JavaScript] = taken.JavaScript,
+            [SanitizeItem.LaunchActions] = taken.Launch,
+            [SanitizeItem.ExternalLinks] = taken.Uri,
+        };
+        return (found, stripped, gone);
     }
 }

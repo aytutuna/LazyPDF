@@ -90,8 +90,8 @@ internal static class SanitizeData
         if (!remove) return entered.Count;
         foreach (var field in form.Fields)
         {
-            var node = field.Dictionary;
-            for (int depth = 0; node is not null && depth < MaxParents; depth++, node = document.Dict(node, "Parent")) node.Remove("DV");
+            field.Dictionary.Remove("DV");
+            foreach (var parent in Parents(document, field.Dictionary)) parent.Remove("DV");
         }
         form.Refresh();
         try
@@ -102,8 +102,19 @@ internal static class SanitizeData
         {
             foreach (var field in entered) Blank(document, field.Dictionary);
         }
+        // Reset and Blank work down from the field; a value a parent passes on to its kids is only reachable from here.
+        foreach (var field in form.Fields)
+        {
+            foreach (var parent in Parents(document, field.Dictionary)) parent.Remove("V");
+        }
         document.Dict(document.Catalog, "AcroForm")?.Remove("XFA");
         return entered.Count;
+    }
+
+    private static IEnumerable<PdfDictionary> Parents(PdfDocument document, PdfDictionary node)
+    {
+        var up = document.Dict(node, "Parent");
+        for (int depth = 0; up is not null && depth < MaxParents; depth++, up = document.Dict(up, "Parent")) yield return up;
     }
 
     // The value also sits in the appearance, the rich text and the selected state or index of a widget, which may be a kid of the field.
@@ -184,29 +195,28 @@ internal static class SanitizeData
         var seen = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
         void Visit(PdfDictionary? spec, bool window = false)
         {
-            if (spec is null || document.Name(spec, "FS") == "URL" || !seen.Add(spec)) return;
-            bool changed = Cut(document, spec, remove);
-            // The parameter string of a Launch commonly carries a path (12.6.4.5).
-            if (window)
+            // A file specification may hold another as its /F (7.11.3).
+            for (; spec is not null && seen.Add(spec); spec = document.Dict(spec, "F"), window = false)
             {
-                foreach (string key in new[] { "D", "P" })
+                bool changed = Cut(document, spec, remove);
+                // The parameter string of a Launch commonly carries a path (12.6.4.5).
+                if (window)
                 {
-                    if (!spec.ContainsKey(key)) continue;
-                    changed = true;
-                    if (remove) spec.Remove(key);
+                    foreach (string key in new[] { "D", "P" })
+                    {
+                        if (!spec.ContainsKey(key)) continue;
+                        changed = true;
+                        if (remove) spec.Remove(key);
+                    }
                 }
+                if (changed) count++;
             }
-            if (changed) count++;
         }
         foreach (var dictionary in PdfGraph.AllDictionaries(document))
         {
             bool launch = SanitizeActions.Kind(document, dictionary) == "Launch";
             if (launch || document.Name(dictionary, "Type") == "Filespec" || dictionary.ContainsKey("EF") || dictionary.ContainsKey("RF")) Visit(dictionary);
-            if (launch)
-            {
-                Visit(document.Dict(dictionary, "F"));
-                Visit(document.Dict(dictionary, "Win"), window: true);
-            }
+            if (launch) Visit(document.Dict(dictionary, "Win"), window: true);
             if (document.Dict(dictionary, "OPI") is not { } opi) continue;
             Visit(document.Dict(opi, "1.3"));
             Visit(document.Dict(opi, "2.0"));
@@ -214,13 +224,23 @@ internal static class SanitizeData
         return count;
     }
 
+    // A web address is not a path on this machine, but a file: address is one (7.11.5).
+    private static bool IsAddress(string text, bool declared)
+    {
+        if (text.StartsWith("file:", StringComparison.OrdinalIgnoreCase)) return false;
+        int colon = text.IndexOf(':');
+        return declared || (colon > 1 && char.IsAsciiLetter(text[0]) && text[..colon].All(c => char.IsAsciiLetterOrDigit(c) || c is '+' or '-' or '.'));
+    }
+
     private static bool Cut(PdfDocument document, PdfDictionary spec, bool remove)
     {
         bool changed = false;
+        bool url = document.Name(spec, "FS") == "URL";
         foreach (string key in new[] { "F", "UF" })
         {
             if (document.Resolve(spec[key]) is not PdfString text) continue;
             string shown = PdfText.Decode(text.Bytes);
+            if (IsAddress(shown, url)) continue;
             int cut = shown.LastIndexOfAny(['/', '\\']);
             if (cut < 0) continue;
             changed = true;

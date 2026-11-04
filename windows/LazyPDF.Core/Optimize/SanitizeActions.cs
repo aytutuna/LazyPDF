@@ -12,27 +12,31 @@ internal static class SanitizeActions
     private static readonly HashSet<string> Known =
         ["GoTo", "Named", "SetOCGState", "Hide", "ResetForm", "Trans", "GoTo3DView", "JavaScript", "URI", .. Leaving];
 
-    /// <summary>Counts, and with <paramref name="remove"/> takes out, JavaScript, launching or leaving actions, and links to a URI.</summary>
-    public static (int JavaScript, int Launch, int Uri) Run(PdfDocument document, bool removeScripts, bool removeLaunch, bool removeUri)
+    /// <summary>Counts, and with the options takes out, JavaScript, launching or leaving actions, and links to a URI; also counts how many of each went.</summary>
+    public static (ActionCounts Found, ActionCounts Taken) Run(PdfDocument document, bool removeScripts, bool removeLaunch, bool removeUri)
     {
-        var count = new int[3];
+        var chains = new Chains(document);
         bool Wanted(string kind) => kind switch { "JavaScript" => removeScripts, "URI" => removeUri, _ => removeLaunch };
+        void Hang(PdfDictionary holder, string key)
+        {
+            if (document.Dict(holder, key) is not { } action) return;
+            if (chains.Filter(holder[key]!, action, true, Wanted) is { } kept) holder[key] = kept;
+            else holder.Remove(key);
+        }
         foreach (var dictionary in PdfGraph.AllDictionaries(document))
         {
             if (dictionary.ContainsKey("OnInstantiate"))
             {
-                count[0]++;
-                if (removeScripts) dictionary.Remove("OnInstantiate");
+                chains.Found[0]++;
+                if (removeScripts)
+                {
+                    chains.Taken[0]++;
+                    dictionary.Remove("OnInstantiate");
+                }
             }
-            foreach (string key in new[] { "A", "OpenAction", "PA", "NA" })
-            {
-                if (document.Dict(dictionary, key) is { } action) Filter(document, dictionary, key, action, Wanted, count);
-            }
+            foreach (string key in new[] { "A", "OpenAction", "PA", "NA" }) Hang(dictionary, key);
             if (document.Dict(dictionary, "AA") is not { } triggers) continue;
-            foreach (var (name, _) in triggers.Entries.ToArray())
-            {
-                if (document.Dict(triggers, name) is { } action) Filter(document, triggers, name, action, Wanted, count);
-            }
+            foreach (var (name, _) in triggers.Entries.ToArray()) Hang(triggers, name);
             if (triggers.Count == 0) dictionary.Remove("AA");
         }
 
@@ -41,20 +45,36 @@ internal static class SanitizeActions
         foreach (string key in new[] { "JavaScript", "Templates", "Pages", "AlternatePresentations" })
         {
             if (names is null || !names.ContainsKey(key)) continue;
-            count[0] += Math.Max(1, PdfNameTree.Read(document, names[key]).Count);
+            var entries = PdfNameTree.Read(document, names[key]);
+            int n = Math.Max(1, entries.Count);
+            chains.Found[0] += n;
+            if (removeScripts) chains.Taken[0] += n;
+            // What follows an entry is an action too; the entries themselves are counted above.
+            foreach (var entry in entries)
+            {
+                if (document.Resolve(entry.Value) is PdfDictionary action) chains.Filter(entry.Value, action, false, removeScripts ? _ => true : Wanted);
+            }
             if (removeScripts) names.Remove(key);
         }
         if (document.Dict(document.Catalog, "AcroForm") is { } form && XfaHasScript(document, form["XFA"]))
         {
-            count[0]++;
-            if (removeScripts) form.Remove("XFA");
+            chains.Found[0]++;
+            if (removeScripts)
+            {
+                chains.Taken[0]++;
+                form.Remove("XFA");
+            }
         }
         if (document.Dict(document.Catalog, "URI") is not null)
         {
-            count[2]++;
-            if (removeUri) document.Catalog.Remove("URI");
+            chains.Found[2]++;
+            if (removeUri)
+            {
+                chains.Taken[2]++;
+                document.Catalog.Remove("URI");
+            }
         }
-        return (count[0], count[1], count[2]);
+        return (new ActionCounts(chains.Found[0], chains.Found[1], chains.Found[2]), new ActionCounts(chains.Taken[0], chains.Taken[1], chains.Taken[2]));
     }
 
     public static string Kind(PdfDocument document, PdfDictionary action)
@@ -65,74 +85,107 @@ internal static class SanitizeActions
         return type == "JavaScript" ? "JavaScript" : type == "URI" ? "URI" : Leaving.Contains(type) ? "Launch" : "Other";
     }
 
-    // Takes the actions the options choose out of the chain that starts at holder[key]. The chain is a graph
-    // (/Next may name an action twice or loop), so it is walked with a work list. An action that stays is kept even behind
-    // one that goes: it takes the removed one's place in each link, and in the holder when the root goes.
-    private static void Filter(PdfDocument document, PdfDictionary holder, string key, PdfDictionary root, Func<string, bool> wanted, int[] count)
+    // The chain after an action is a graph (/Next may name an action twice or loop), so it is walked with a work list.
+    // An action that stays is kept even behind one that goes: it takes the removed one's place in each link, and in the
+    // holder when the root goes. A crafted file can make that rewiring quadratic, so the links written share one budget.
+    private sealed class Chains(PdfDocument document)
     {
-        var raw = new Dictionary<PdfDictionary, PdfObject>(ReferenceEqualityComparer.Instance) { [root] = holder[key]! };
-        var gone = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
-        var pending = new Stack<PdfDictionary>([root]);
-        while (pending.Count > 0)
+        private const int MaxLinks = 200_000;
+
+        public readonly int[] Found = new int[3];
+        public readonly int[] Taken = new int[3];
+        private int _budget = MaxLinks;
+
+        /// <summary>
+        /// Takes the actions <paramref name="wanted"/> chooses out of the chain that starts at <paramref name="root"/>, which
+        /// <paramref name="item"/> is as written. Returns what the holder names now, or null when nothing is left.
+        /// A root that is not <paramref name="counted"/> is counted elsewhere and stays.
+        /// </summary>
+        public PdfObject? Filter(PdfObject item, PdfDictionary root, bool counted, Func<string, bool> wanted)
         {
-            var action = pending.Pop();
-            string kind = Kind(document, action);
-            if (kind != "Other")
+            var raw = new Dictionary<PdfDictionary, PdfObject>(ReferenceEqualityComparer.Instance) { [root] = item };
+            var gone = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
+            var pending = new Stack<PdfDictionary>([root]);
+            while (pending.Count > 0)
             {
-                count[kind == "JavaScript" ? 0 : kind == "Launch" ? 1 : 2]++;
-                // A rendition with a script is still a media action.
-                bool media = kind == "JavaScript" && document.Name(action, "S") == "Rendition";
-                if (media) count[1]++;
-                if (wanted(kind) || (media && wanted("Launch"))) gone.Add(action);
+                var action = pending.Pop();
+                string kind = Kind(document, action);
+                if (kind != "Other" && (counted || !ReferenceEquals(action, root)))
+                {
+                    int slot = kind == "JavaScript" ? 0 : kind == "Launch" ? 1 : 2;
+                    // A rendition with a script is still a media action, and it goes under either option.
+                    bool media = kind == "JavaScript" && document.Name(action, "S") == "Rendition";
+                    Found[slot]++;
+                    if (media) Found[1]++;
+                    if (wanted(kind) || (media && wanted("Launch")))
+                    {
+                        gone.Add(action);
+                        Taken[slot]++;
+                        if (media) Taken[1]++;
+                    }
+                }
+                foreach (var (link, next) in Chained(document, action))
+                {
+                    if (raw.TryAdd(next, link)) pending.Push(next);
+                }
             }
-            foreach (var (item, next) in Chained(document, action))
+            if (gone.Count == 0) return item;
+
+            var known = new Dictionary<PdfDictionary, List<PdfDictionary>>(ReferenceEqualityComparer.Instance);
+            foreach (var action in raw.Keys.Where(a => !gone.Contains(a)).ToList())
             {
-                if (raw.TryAdd(next, item)) pending.Push(next);
+                var links = Chained(document, action);
+                if (links.Any(l => gone.Contains(l.Action))) SetNext(action, links.SelectMany(l => gone.Contains(l.Action) ? Surviving(l.Action, gone, known) : [l.Action]), raw);
             }
+            if (!gone.Contains(root)) return item;
+            var left = Surviving(root, gone, known);
+            if (left.Count == 0) return null;
+            if (left.Count == 1) return raw[left[0]];
+            // A holder names one action. The first survivor may be named elsewhere too, so a copy carries the others.
+            var head = new PdfDictionary();
+            foreach (var (key, value) in left[0].Entries) head.Add(key, value);
+            SetNext(head, Chained(document, left[0]).Select(l => l.Action).Concat(left.Skip(1)), raw);
+            return document.Add(head);
         }
-        if (gone.Count == 0) return;
-        foreach (var action in raw.Keys.Where(a => !gone.Contains(a)).ToList())
+
+        // The actions that stay among those chained after this one, looking through the ones that go.
+        private List<PdfDictionary> Surviving(PdfDictionary from, HashSet<PdfDictionary> gone, Dictionary<PdfDictionary, List<PdfDictionary>> known)
+        {
+            if (known.TryGetValue(from, out var cached)) return cached;
+            var found = new List<PdfDictionary>();
+            var listed = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
+            var visited = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance) { from };
+            var pending = new Stack<PdfDictionary>();
+            Expand(from, pending);
+            while (pending.Count > 0 && _budget > 0)
+            {
+                var action = pending.Pop();
+                if (!gone.Contains(action))
+                {
+                    if (listed.Add(action)) found.Add(action);
+                }
+                else if (visited.Add(action))
+                {
+                    Expand(action, pending);
+                }
+            }
+            return known[from] = found;
+        }
+
+        private void Expand(PdfDictionary action, Stack<PdfDictionary> pending)
         {
             var links = Chained(document, action);
-            if (links.Any(l => gone.Contains(l.Action))) SetNext(document, action, links.SelectMany(l => gone.Contains(l.Action) ? Surviving(document, l.Action, gone) : [l.Action]), raw);
+            _budget -= links.Count;
+            for (int i = links.Count - 1; i >= 0; i--) pending.Push(links[i].Action);
         }
-        if (!gone.Contains(root)) return;
-        var left = Surviving(document, root, gone);
-        if (left.Count == 0)
-        {
-            holder.Remove(key);
-            return;
-        }
-        holder[key] = raw[left[0]];
-        if (left.Count > 1) SetNext(document, left[0], Chained(document, left[0]).Select(l => l.Action).Concat(left.Skip(1)), raw);
-    }
 
-    // The actions that stay among those chained after this one, looking through the ones that go.
-    private static List<PdfDictionary> Surviving(PdfDocument document, PdfDictionary from, HashSet<PdfDictionary> gone)
-    {
-        var found = new List<PdfDictionary>();
-        var visited = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance) { from };
-        var pending = new Stack<PdfDictionary>(Chained(document, from).Select(l => l.Action).Reverse());
-        while (pending.Count > 0)
+        private void SetNext(PdfDictionary action, IEnumerable<PdfDictionary> next, Dictionary<PdfDictionary, PdfObject> raw)
         {
-            var action = pending.Pop();
-            if (!gone.Contains(action))
-            {
-                if (!found.Contains(action)) found.Add(action);
-            }
-            else if (visited.Add(action))
-            {
-                foreach (var (_, next) in Chained(document, action).AsEnumerable().Reverse()) pending.Push(next);
-            }
+            var items = next.Distinct().Take(Math.Max(0, _budget)).Select(n => raw[n]).ToList();
+            _budget -= items.Count;
+            if (items.Count == 0) action.Remove("Next");
+            else action["Next"] = items.Count == 1 && document.Resolve(action["Next"]) is not PdfArray ? items[0] : new PdfArray(items);
         }
-        return found;
-    }
-
-    private static void SetNext(PdfDocument document, PdfDictionary action, IEnumerable<PdfDictionary> next, Dictionary<PdfDictionary, PdfObject> raw)
-    {
-        var items = next.Distinct().Select(n => raw[n]).ToList();
-        if (items.Count == 0) action.Remove("Next");
-        else action["Next"] = items.Count == 1 && document.Resolve(action["Next"]) is not PdfArray ? items[0] : new PdfArray(items);
     }
 
     private static List<(PdfObject Item, PdfDictionary Action)> Chained(PdfDocument document, PdfDictionary action) => document.Resolve(action["Next"]) switch
@@ -159,3 +212,5 @@ internal static class SanitizeActions
         return false;
     }
 }
+
+internal readonly record struct ActionCounts(int JavaScript, int Launch, int Uri);
