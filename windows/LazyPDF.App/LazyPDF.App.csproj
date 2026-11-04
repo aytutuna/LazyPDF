@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- 10.0.19041.0 gives access to WinRT APIs (Windows.Data.Pdf, Windows.Media.Ocr) from WPF via CsWinRT. -->
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>LazyPDF.App</RootNamespace>
+    <AssemblyName>LazyPDF</AssemblyName>
+    <NeutralLanguage>en</NeutralLanguage>
+    <SatelliteResourceLanguages>en;tr</SatelliteResourceLanguages>
+    <Product>Lazy PDF</Product>
+    <AssemblyTitle>Lazy PDF</AssemblyTitle>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <!-- Explorer, the taskbar and Alt+Tab; the windows load the same file as a resource. -->
+    <ApplicationIcon>app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="app.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LazyPDF.Core\LazyPDF.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System.IO" />
+    <!-- Core has a TextBlock of its own, so the window code cannot import the whole namespace. -->
+    <Using Include="LazyPDF.Core.Loc" Alias="Loc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="LazyPDF.App.Tests" />
+  </ItemGroup>
+
+</Project>

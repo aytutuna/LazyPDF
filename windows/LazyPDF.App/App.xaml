@@ -1,0 +1,19 @@
+<Application x:Class="LazyPDF.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:LazyPDF.App"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- The built-in Windows 11 (Fluent) theme. It must stay first: the styles below are
+                     based on its styles. It follows the system light/dark setting; ThemeService
+                     swaps it for the light or dark variant when the user picks one. -->
+                <ResourceDictionary Source="pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.xaml" />
+                <ResourceDictionary Source="Styles/Tokens.xaml" />
+                <ResourceDictionary Source="Styles/Controls.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
