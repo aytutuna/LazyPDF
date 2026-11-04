@@ -15,8 +15,62 @@ internal sealed class FakeCodec(PdfRgbaImage? image) : IImageCodec
     public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [];
 }
 
+/// <summary>Draws every page as a gradient at the size the page has, so a test can tell where the marks were filled.</summary>
+internal sealed class RedactFakeRenderer(PdfDocument document) : IPageRenderer
+{
+    public List<int> Drawn { get; } = [];
+    public List<double> Dpis { get; } = [];
+
+    public PdfRgbaImage? Render(int pageIndex, double dpi)
+    {
+        Drawn.Add(pageIndex);
+        Dpis.Add(dpi);
+        var geometry = new PageGeometry(document.Pages[pageIndex]);
+        int width = (int)Math.Ceiling(geometry.Width * dpi / 72), height = (int)Math.Ceiling(geometry.Height * dpi / 72);
+        var rgba = new byte[width * height * 4];
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                int i = (y * width + x) * 4;
+                (rgba[i], rgba[i + 1], rgba[i + 2], rgba[i + 3]) = ((byte)(100 + x * 100 / width), (byte)(100 + y * 100 / height), 200, 255);
+            }
+        }
+        return new PdfRgbaImage(width, height, rgba);
+    }
+}
+
 internal static class RedactionKit
 {
+    /// <summary>The options that let a page the redaction cannot follow become a picture, drawn small to keep the tests quick.</summary>
+    public static RedactionOptions Drawing(PdfDocument document, RedactionOptions? options = null) =>
+        (options ?? new RedactionOptions()) with { Renderer = new RedactFakeRenderer(document), FlattenDpi = 24 };
+
+    public static RedactionResult Apply(PdfDocument document, IEnumerable<RedactionMark> marks, RedactionOptions? options = null) =>
+        new PdfRedactor(document).Apply(marks, Drawing(document, options));
+
+    public static RedactionResult AssertFlattened(PdfDocument document, PdfRect area, params string[] words) =>
+        AssertFlattened(document, [RedactionMark.FromRect(0, area)], words);
+
+    /// <summary>
+    /// The page of the first mark cannot be followed to its end: the call refuses without a renderer, and with one the page
+    /// becomes a picture and none of the words is left in the file.
+    /// </summary>
+    public static RedactionResult AssertFlattened(PdfDocument document, IReadOnlyList<RedactionMark> marks, params string[] words)
+    {
+        int page = marks[0].Page;
+        var refused = Assert.Throws<InvalidOperationException>(() => new PdfRedactor(document).Apply(marks));
+        Assert.Equal(RedactionText.NeedsPicture(page), refused.Message);
+        var result = Apply(document, marks);
+        Assert.Contains(page, result.Report.Flattened);
+        Assert.True(result.Verification.IsClean, string.Join("; ", result.Verification.Problems));
+        foreach (string word in words) Assert.False(Holds(result.Bytes, word), word);
+        using var output = Reopen(result.Bytes);
+        Assert.DoesNotContain("Tj", Latin(output, page));
+        Assert.Contains(" Do", Latin(output, page));
+        return result;
+    }
+
     public const string Marker = "ZQXMARKER";
     public const string Helvetica = ContentTestPdf.Helvetica;
 

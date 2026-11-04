@@ -134,15 +134,10 @@ public class RedactPathTests
     }
 
     [Fact]
-    public void TilingPatternPaintedUnderTheMarkIsRemovedFromThatUse()
+    public void TilingPatternPaintedUnderTheMarkMakesThePagePicture()
     {
         using var document = RedactionKit.Page("/Pattern cs /P1 scn 150 150 200 200 re f /Pattern cs /P1 scn 400 400 50 50 re f",
             "/Pattern <</P1 6 0 R>>", pdf => pdf.Stream(6, "/Type /Pattern /PatternType 1 /PaintType 1 /TilingType 1 /BBox [0 0 10 10] /XStep 10 /YStep 10 /Resources <<>>", "0 0 5 5 re f"));
-        var result = new PdfRedactor(document).Apply([RedactionMark.FromRect(0, Hole)]);
-        using var output = RedactionKit.Open(result);
-        var paths = ContentTestPdf.Run(output).Paths;
-        Assert.Equal(2, paths.Count(p => p.Path.Bounds.Left >= 400 || p.Path.Bounds.Width <= 10));
-        Assert.DoesNotContain(paths, p => p.Path.Bounds.Left == 150);
-        Assert.Equal(1, result.Report.Paths);
+        RedactionKit.AssertFlattened(document, [RedactionMark.FromRect(0, Hole)]);
     }
 }

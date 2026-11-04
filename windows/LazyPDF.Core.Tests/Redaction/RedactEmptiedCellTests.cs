@@ -3,7 +3,7 @@ using Xunit;
 
 namespace LazyPDF.Core.Tests;
 
-// A cell or mask group with other uses is emptied when it holds a picture or text; what counts as holding one.
+// A cell or mask group that holds a picture or text and is painted under a mark makes the page a picture; one a page without marks paints stays.
 public class RedactEmptiedCellTests
 {
     private const string Pixels = "ZQXPIXELSDATAZQXPIXELSDATAZQXPIXELSDATAZQXPIXELSDATAZQXPIXELSDATA123";
@@ -12,7 +12,7 @@ public class RedactEmptiedCellTests
     private const string TwoFills = "/Pattern cs /P1 scn 0 0 600 800 re f 10 10 5 5 re f";
     private static readonly PdfRect Hole = new(200, 200, 300, 300);
 
-    private static RedactionResult Redact(PdfDocument document) => new PdfRedactor(document).Apply([RedactionMark.FromRect(0, Hole)]);
+    private static RedactionResult Redact(PdfDocument document) => RedactionKit.Apply(document, [RedactionMark.FromRect(0, Hole)]);
 
     private static string Cell(string resources) =>
         $"/Type /Pattern /PatternType 1 /PaintType 1 /TilingType 1 /BBox [0 0 600 800] /XStep 600 /YStep 800 /Resources <<{resources}>>";
@@ -69,7 +69,7 @@ public class RedactEmptiedCellTests
     }
 
     [Fact]
-    public void PictureOnlyAnEmptiedCellPaintedDoesNotStayInASharedResourceList()
+    public void PictureAPageWithoutMarksStillPaintsStays()
     {
         var pdf = new TestPdf();
         pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R>>");
@@ -83,6 +83,8 @@ public class RedactEmptiedCellTests
         pdf.Stream(10, Cell("/XObject <</Im1 8 0 R>>"), "q 50 0 0 50 0 0 cm /Im1 Do Q");
         using var document = PdfDocument.Open(pdf.Finish());
         var result = Redact(document);
-        Assert.False(RedactionKit.Holds(result.Bytes, "ZQXPIXELSDATA"));
+        Assert.Contains(0, result.Report.Flattened);
+        // The page without marks still paints the cell and the picture in it.
+        Assert.True(RedactionKit.Holds(result.Bytes, "ZQXPIXELSDATA"));
     }
 }

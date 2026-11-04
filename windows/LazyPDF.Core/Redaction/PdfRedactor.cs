@@ -5,7 +5,8 @@ namespace LazyPDF.Core;
 /// <summary>
 /// Removes what is under marks from a document for good. Marking writes /Redact annotations that can
 /// be looked over and nothing is removed; applying reads the marks, takes the text, pictures, shapes,
-/// annotations and form fields under them out of a copy of the file and covers the places.
+/// annotations and form fields under them out of a copy of the file and covers the places. A page that cannot be
+/// followed to its end by the rule in <see cref="RedactionWalk"/> becomes a picture of itself instead.
 /// The result is always a new file written whole (<see cref="PdfDocument.SaveRewrite"/>): an earlier
 /// revision of the same file would still hold what was removed, so the document itself is not
 /// changed and there is no way to apply by appending.
@@ -45,14 +46,19 @@ public sealed partial class PdfRedactor(PdfDocument document, IFontSource? fonts
     public RedactionResult ApplyMarked(RedactionOptions? options = null) => Apply(ReadMarks(), options);
 
     /// <summary>
-    /// Removes what is under the marks and returns the new file. Throws <see cref="InvalidOperationException"/>
-    /// with <see cref="RedactionText.NoFont"/> when overlay text needs a font that cannot be found; the
-    /// document is not changed in any case.
+    /// Removes what is under the marks and returns the new file. A page with marks that is not understood in full, by
+    /// the rule in <see cref="RedactionWalk"/>, becomes a picture of itself drawn by <see cref="RedactionOptions.Renderer"/>;
+    /// without one, or when it cannot draw the page, this throws <see cref="InvalidOperationException"/> with
+    /// <see cref="RedactionText.NeedsPicture"/> or <see cref="RedactionText.NotDrawn"/>. It throws the same with
+    /// <see cref="RedactionText.NoFont"/> when overlay text needs a font that cannot be found. The document is not
+    /// changed in any case.
     /// </summary>
     public RedactionResult Apply(IEnumerable<RedactionMark> marks, RedactionOptions? options = null)
     {
         options ??= new RedactionOptions();
-        var chosen = marks.Where(m => m.Page >= 0 && m.Page < document.Pages.Count && m.Quads.Count > 0).ToList();
+        var chosen = marks.Where(m => m.Page >= 0 && m.Page < document.Pages.Count)
+            .Select(m => m with { Quads = [.. m.Quads.Where(q => double.IsFinite(q.X0 + q.Y0 + q.X1 + q.Y1 + q.X2 + q.Y2 + q.X3 + q.Y3))] })
+            .Where(m => m.Quads.Count > 0).ToList();
         using var work = PdfDocument.Open(document.SaveRewrite());
         PushDownResources(work);
 
@@ -67,55 +73,117 @@ public sealed partial class PdfRedactor(PdfDocument document, IFontSource? fonts
         var pages = new List<PageRedaction>();
         var needles = new HashSet<string>(StringComparer.Ordinal);
         var tagged = new Dictionary<int, Dictionary<int, (int Total, int Removed)>>();
-        var dropped = new HashSet<object>(ReferenceEqualityComparer.Instance);
         var rewriter = new ContentRewriter(work, new ImageRedactor(work, images));
         var interpreter = new ContentInterpreter(work) { WalkPatterns = false };
-        foreach (var group in chosen.GroupBy(m => m.Page).OrderBy(g => g.Key))
+        var plans = chosen.GroupBy(m => m.Page).OrderBy(g => g.Key).Select(g => Examine(work, work.Pages[g.Key], [.. g], interpreter, needles)).ToList();
+        plans = Reconcile(plans);
+        if (options.FlattenMarkedPages) plans = [.. plans.Select(p => p with { Understood = false })];
+        if (options.Renderer is null && plans.FirstOrDefault(p => !p.Understood) is { } stuck) throw new InvalidOperationException(RedactionText.NeedsPicture(stuck.Page.Index));
+
+        // What the marked pages reach now is all emptied at the end except what they still paint.
+        var reached = new HashSet<int>();
+        foreach (var plan in plans) reached.UnionWith(plan.Reach);
+        var painted = new HashSet<int>();
+        var flattened = new List<int>();
+        foreach (var plan in plans)
         {
-            var page = work.Pages[group.Key];
-            var done = RedactPage(work, page, [.. group], options, font, rewriter, interpreter, needles, dropped, out var counts);
-            pages.Add(done);
-            tagged[page.Reference.Number] = counts;
+            pages.Add(RedactPage(work, plan, options, font, rewriter, needles, painted, flattened, out var counts));
+            tagged[plan.Page.Reference.Number] = counts;
+        }
+        var marked = plans.Select(p => p.Page.Index).ToHashSet();
+        var unfollowed = new List<int>();
+        if (reached.Count > 0)
+        {
+            foreach (var page in work.Pages.Where(p => !marked.Contains(p.Index)))
+            {
+                if (!Keep(work, page, reached, painted)) unfollowed.Add(page.Index);
+            }
         }
 
-        dropped.UnionWith(rewriter.Replaced);
-        var unused = RedactionPrune.Run(work, dropped);
         int signatures = RemoveSignatures(work);
         CleanForm(work);
-        RedactionStructure.Prune(work, tagged, [.. dropped.OfType<PdfStream>()]);
-        RedactionPrune.Scrub(work, unused);
+        RedactionStructure.Prune(work, tagged, rewriter.Replaced, [.. flattened.Select(i => work.Pages[i].Reference.Number)]);
+        RedactionObjects.Sweep(work, reached, painted);
         var findings = RedactionMetadata.Scan(work, needles, options.ChangeMetadata);
 
         // The check reads the file as plain bytes; encrypting changes nothing it looks at. An open file gets an /ID
         // of its own, so that it is not tied to the original; the keys of an encrypted one are made from the first.
         byte[] bytes = work.SaveRewrite(new PdfSaveOptions(DocumentId: RandomNumberGenerator.GetBytes(16)));
         var verification = Verify(bytes, chosen, needles, texts.Distinct().ToList());
+        if (unfollowed.Count > 0) verification = new RedactionVerification([.. verification.Problems, .. unfollowed.Select(RedactionText.NotFollowed)]);
         if (options.KeepEncryption && document.Security is { } security)
         {
             bytes = work.SaveRewrite(new PdfSaveOptions(Security: security, DocumentId: document.FirstId ?? []));
         }
-        var report = new RedactionReport(pages, findings, signatures, options.IncludeText ? [.. needles.Order(StringComparer.Ordinal)] : []);
+        var report = new RedactionReport(pages, findings, signatures, options.IncludeText ? [.. needles.Order(StringComparer.Ordinal)] : []) { Flattened = flattened };
         return new RedactionResult(bytes, report, verification);
+    }
+
+    // A page without marks keeps what it paints of the objects a redacted page reached; what it only lists is not its own.
+    // A page that cannot be followed keeps every stream it lists, but not what its keys happen to name, and the result says it was not checked.
+    private static bool Keep(PdfDocument work, PdfPage page, HashSet<int> reached, HashSet<int> painted)
+    {
+        var all = new HashSet<int>();
+        RedactionObjects.Collect(work, page.Dictionary, all);
+        if (!all.Overlaps(reached)) return true;
+        var first = new RedactionWalk(work);
+        if (!first.Page(page))
+        {
+            RedactionObjects.Painted(work, page.Dictionary, painted, RedactionObjects.Listing);
+            return false;
+        }
+        // Its own lists, so that the ones it shared with a redacted page are not held by it.
+        RedactionResources.Rebuild(work, page.Dictionary, first);
+        var walk = new RedactionWalk(work);
+        walk.Page(page);
+        return KeepPainted(work, page, walk, painted);
+    }
+
+    // False when an appearance cannot be followed: the page then keeps every stream its annotations list, and the result says so.
+    private static bool KeepPainted(PdfDocument work, PdfPage page, RedactionWalk walk, HashSet<int> painted)
+    {
+        bool followed = walk.Annotations(page);
+        if (!followed) RedactionObjects.Painted(work, page.Dictionary["Annots"], painted, RedactionObjects.Listing);
+        painted.UnionWith(walk.Used);
+        RedactionObjects.PaintedStream(work, page.Dictionary["Contents"], painted, RedactionObjects.Painting);
+        RedactionObjects.Painted(work, page.Dictionary["Group"], painted, RedactionObjects.Painting);
+        KeepBoxes(work, page, painted);
+        return followed;
+    }
+
+    // The boxes and the turn can be objects of their own, shared with pages that were not redacted.
+    private static void KeepBoxes(PdfDocument work, PdfPage page, HashSet<int> painted)
+    {
+        foreach (string key in (ReadOnlySpan<string>)["MediaBox", "CropBox", "BleedBox", "TrimBox", "ArtBox", "Rotate", "UserUnit"])
+        {
+            RedactionObjects.Painted(work, page.Dictionary[key], painted, RedactionObjects.Painting);
+        }
     }
 
     // Resources a page takes from the page tree stay in the tree node, and with them the pictures
     // that are cut on the page. Every page gets its own reference and the nodes lose theirs.
     private static void PushDownResources(PdfDocument work)
     {
-        const int MaxDepth = 64;
-        var nodes = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
-        foreach (var page in work.Pages)
+        const int MaxDepth = 256;
+        var nodes = new List<PdfDictionary>();
+        var seen = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
+        // Down from the root by /Kids, as the page list is read, since a /Parent can be missing or point elsewhere.
+        void Down(PdfObject? node, PdfObject? inherited, int depth)
         {
-            bool own = page.Dictionary.ContainsKey("Resources");
-            var node = work.Dict(page.Dictionary, "Parent");
-            for (int depth = 0; node is not null && depth < MaxDepth; depth++, node = work.Dict(node, "Parent"))
+            if (work.Resolve(node) is not PdfDictionary dictionary || depth > MaxDepth || !seen.Add(dictionary)) return;
+            inherited = dictionary["Resources"] ?? inherited;
+            // A node is told as the page list tells it: /Type /Page is a page, whatever else it holds.
+            if (work.Name(dictionary, "Type") != "Page" && work.Resolve(dictionary["Kids"]) is PdfArray kids)
             {
-                nodes.Add(node);
-                if (own || node["Resources"] is not { } inherited) continue;
-                page.Dictionary["Resources"] = inherited;
-                own = true;
+                nodes.Add(dictionary);
+                foreach (var kid in kids.Items) Down(kid, inherited, depth + 1);
+            }
+            else if (!dictionary.ContainsKey("Resources") && inherited is not null)
+            {
+                dictionary["Resources"] = inherited;
             }
         }
+        Down(work.Catalog["Pages"], null, 0);
         foreach (var node in nodes) node.Remove("Resources");
     }
 

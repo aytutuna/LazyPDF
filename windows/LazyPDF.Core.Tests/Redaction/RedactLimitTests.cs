@@ -3,7 +3,7 @@ using Xunit;
 
 namespace LazyPDF.Core.Tests;
 
-// Where the interpreter drops state without saying so, the scan cannot tell where things are.
+// Where the interpreter drops state without saying so, the scan cannot tell where things are, and the page becomes a picture.
 public class RedactLimitTests
 {
     private const string Text = "BT /F1 12 Tf 50 700 Td (ZQXQSECRET) Tj ET";
@@ -16,7 +16,7 @@ public class RedactLimitTests
     public void PageThatOpensMoreThanTheStackHoldsIsRefused()
     {
         using var document = RedactionKit.Page(DeepStack);
-        Assert.Throws<InvalidOperationException>(() => new PdfRedactor(document).Apply([RedactionMark.FromRect(0, Moved)]));
+        RedactionKit.AssertFlattened(document, [RedactionMark.FromRect(0, Moved)], "ZQXQSECRET");
     }
 
     [Fact]
@@ -24,7 +24,7 @@ public class RedactLimitTests
     {
         string path = string.Concat(Enumerable.Repeat("0 0 1 1 re ", 200_001));
         using var document = RedactionKit.Page(path + "60 700 m 200 700 l S");
-        Assert.Throws<InvalidOperationException>(() => new PdfRedactor(document).Apply([RedactionMark.FromRect(0, Mark)]));
+        RedactionKit.AssertFlattened(document, [RedactionMark.FromRect(0, Mark)], "60 700");
     }
 
     [Fact]
@@ -32,8 +32,7 @@ public class RedactLimitTests
     {
         using var document = RedactionKit.Page("/Fm1 Do", "/XObject <</Fm1 6 0 R>>", pdf =>
             pdf.Stream(6, "/Type /XObject /Subtype /Form /BBox [0 0 600 800] /Resources <</Font <</F1 5 0 R>>>>", DeepStack));
-        var result = new PdfRedactor(document).Apply([RedactionMark.FromRect(0, Mark)]);
-        Assert.False(RedactionKit.Holds(result.Bytes, "ZQXQSECRET"));
+        RedactionKit.AssertFlattened(document, [RedactionMark.FromRect(0, Mark)], "ZQXQSECRET");
     }
 
     [Fact]
@@ -48,7 +47,7 @@ public class RedactLimitTests
     public void ShowOperatorWithMoreOperandsThanTheParserKeepsIsRefused()
     {
         using var document = RedactionKit.Page("BT /F1 12 Tf 50 700 Td " + string.Concat(Enumerable.Repeat("(a) ", 520)) + "(iiiiZQXOPERAND) Tj ET");
-        Assert.Throws<InvalidOperationException>(() => new PdfRedactor(document).Apply([RedactionMark.FromRect(0, Mark)]));
+        RedactionKit.AssertFlattened(document, [RedactionMark.FromRect(0, Mark)], "ZQXOPERAND");
     }
 
     [Fact]
@@ -56,6 +55,6 @@ public class RedactLimitTests
     {
         string content = string.Concat(Enumerable.Repeat("/X BMC ", 1030)) + "/Span <</Alt (ZQXDESCR)>> BDC " + Text + " EMC " + string.Concat(Enumerable.Repeat("EMC ", 1030));
         using var document = RedactionKit.Page(content);
-        Assert.Throws<InvalidOperationException>(() => new PdfRedactor(document).Apply([RedactionMark.FromRect(0, Mark)]));
+        RedactionKit.AssertFlattened(document, [RedactionMark.FromRect(0, Mark)], "ZQXQSECRET", "ZQXDESCR");
     }
 }

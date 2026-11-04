@@ -14,20 +14,25 @@ public class RedactFormXObjectTests
         RedactionKit.Page("q 1 0 0 1 50 100 cm /Fm1 Do Q q 1 0 0 1 50 500 cm /Fm1 Do Q", "/XObject <</Fm1 6 0 R>>",
             pdf => pdf.Stream(6, Form, "BT /F1 12 Tf 10 50 Td (ZQXMARKER) Tj ET"));
 
+    // The original of a form stays for a use that has nothing cut out of it, and holds what was cut from the other, so the page becomes a picture.
     [Fact]
-    public void FormUsedTwiceIsCutOnlyWhereTheMarkIs()
+    public void FormUsedTwiceWithAMarkOnOneUseMakesThePagePicture()
     {
         using var document = TwoPlacements();
-        var glyphs = RedactionKit.Glyphs(document);
-        Assert.Equal(18, glyphs.Count);
-        var mark = RedactionMark.FromRect(0, new PdfRect(40, 140, 200, 170));
-        var result = new PdfRedactor(document).Apply([mark]);
+        RedactionKit.AssertFlattened(document, new PdfRect(40, 140, 200, 170), "ZQXMARKER");
+    }
+
+    [Fact]
+    public void FormUsedTwiceAndMarkedOnBothUsesIsCutOnEachCopy()
+    {
+        using var document = TwoPlacements();
+        var marks = new[] { new PdfRect(40, 140, 200, 170), new PdfRect(40, 540, 200, 570) }.Select(r => RedactionMark.FromRect(0, r)).ToList();
+        var result = new PdfRedactor(document).Apply(marks);
+        Assert.Empty(result.Report.Flattened);
+        Assert.Equal(18, result.Report.Glyphs);
         using var output = RedactionKit.Open(result);
-        var after = RedactionKit.Glyphs(output);
-        Assert.Equal(9, after.Count);
-        Assert.All(after, g => Assert.Equal(550, g.Y, 0.01));
-        Assert.Equal(9, result.Report.Glyphs);
-        Assert.Equal("ZQXMARKER", RedactionKit.Text(after));
+        Assert.Equal("", TextOf(output));
+        Assert.False(RedactionKit.Holds(result.Bytes, "ZQXMARKER"));
     }
 
     [Fact]
@@ -51,23 +56,33 @@ public class RedactFormXObjectTests
     [Fact]
     public void NestedFormsAreCopiedAlongTheChain()
     {
-        using var document = RedactionKit.Page("q 1 0 0 1 50 100 cm /Outer Do Q q 1 0 0 1 50 500 cm /Outer Do Q", "/XObject <</Outer 6 0 R>>", pdf =>
+        using var document = RedactionKit.Page("q 1 0 0 1 50 100 cm /Outer Do Q", "/XObject <</Outer 6 0 R>>", pdf =>
         {
             pdf.Stream(6, "/Type /XObject /Subtype /Form /BBox [0 0 300 100] /Resources <</Font <</F1 5 0 R>> /XObject <</Inner 7 0 R>>>>", "q 1 0 0 1 0 20 cm /Inner Do Q BT /F1 12 Tf 10 5 Td (outer) Tj ET");
             pdf.Stream(7, Form, "BT /F1 12 Tf 10 30 Td (ZQXMARKER) Tj ET");
         });
         var result = new PdfRedactor(document).Apply([RedactionMark.FromRect(0, new PdfRect(40, 150, 300, 185))]);
         using var output = RedactionKit.Open(result);
-        var after = RedactionKit.Glyphs(output);
-        Assert.Equal("outer" + "ZQXMARKER" + "outer", RedactionKit.Text(after));
-        Assert.DoesNotContain(after, g => g.Text == "Z" && g.Y < 300);
+        Assert.Equal("outer", RedactionKit.Text(output));
+        Assert.False(RedactionKit.Holds(result.Bytes, "ZQXMARKER"));
+    }
+
+    [Fact]
+    public void NestedFormsUsedTwiceWithAMarkOnOneUseMakeThePagePicture()
+    {
+        using var document = RedactionKit.Page("q 1 0 0 1 50 100 cm /Outer Do Q q 1 0 0 1 50 500 cm /Outer Do Q", "/XObject <</Outer 6 0 R>>", pdf =>
+        {
+            pdf.Stream(6, "/Type /XObject /Subtype /Form /BBox [0 0 300 100] /Resources <</Font <</F1 5 0 R>> /XObject <</Inner 7 0 R>>>>", "q 1 0 0 1 0 20 cm /Inner Do Q BT /F1 12 Tf 10 5 Td (outer) Tj ET");
+            pdf.Stream(7, Form, "BT /F1 12 Tf 10 30 Td (ZQXMARKER) Tj ET");
+        });
+        RedactionKit.AssertFlattened(document, new PdfRect(40, 150, 300, 185), "ZQXMARKER");
     }
 
     [Fact]
     public void ImageInsideAFormIsCutOnACopyOfTheForm()
     {
         var data = Enumerable.Repeat((byte)7, 16).ToArray();
-        using var document = RedactionKit.Page("q 1 0 0 1 50 100 cm /Fm1 Do Q q 1 0 0 1 50 500 cm /Fm1 Do Q", "/XObject <</Fm1 6 0 R>>", pdf =>
+        using var document = RedactionKit.Page("q 1 0 0 1 50 100 cm /Fm1 Do Q", "/XObject <</Fm1 6 0 R>>", pdf =>
         {
             pdf.Stream(6, "/Type /XObject /Subtype /Form /BBox [0 0 300 100] /Resources <</XObject <</Im 7 0 R>>>>", "q 100 0 0 100 0 0 cm /Im Do Q");
             pdf.Stream(7, "/Type /XObject /Subtype /Image /Width 4 /Height 4 /ColorSpace /DeviceGray /BitsPerComponent 8", data);
@@ -75,10 +90,9 @@ public class RedactFormXObjectTests
         // The image is 100 points square at 50..150 over 100..200: its top left pixel.
         var result = new PdfRedactor(document).Apply([RedactionMark.FromRect(0, new PdfRect(50, 175, 70, 200))]);
         using var output = RedactionKit.Open(result);
-        var images = RedactionKit.Images(output);
-        Assert.Equal(2, images.Count);
-        Assert.Equal(0, output.Data(images[0].Stream!)[0]);
-        Assert.Equal(7, output.Data(images[1].Stream!)[0]);
+        var image = Assert.Single(RedactionKit.Images(output));
+        Assert.Equal(0, output.Data(image.Stream!)[0]);
+        Assert.Equal(7, output.Data(image.Stream!)[1]);
     }
 
     [Fact]

@@ -3,7 +3,7 @@ using Xunit;
 
 namespace LazyPDF.Core.Tests;
 
-// The interpreter enters 20 forms deep; the 20th is the last one it reads and what it calls is out of sight.
+// The interpreter enters 20 forms deep; the 20th is the last one it reads and what it calls is out of sight, so the page becomes a picture.
 public class RedactDepthTests
 {
     private static readonly PdfRect Near = new(90, 90, 200, 120);
@@ -21,17 +21,14 @@ public class RedactDepthTests
         });
 
     [Fact]
-    public void LastFormReadHasItsCallDroppedWithoutALeftoverCopy()
+    public void FormsNestedPastTheDepthMakeThePagePicture()
     {
         using var document = Chain();
-        var result = new PdfRedactor(document).Apply([RedactionMark.FromRect(0, Near)]);
-        Assert.False(RedactionKit.Holds(result.Bytes, "ZQXDEEPSECRET"));
-        Assert.False(RedactionKit.Holds(result.Bytes, "near"));
-        Assert.True(result.Verification.IsClean, string.Join("; ", result.Verification.Problems));
+        RedactionKit.AssertFlattened(document, [RedactionMark.FromRect(0, Near)], "ZQXDEEPSECRET", "near");
     }
 
     [Fact]
-    public void ContentItemNamingTheDroppedFormLeavesTheTree()
+    public void ContentItemOfAPageThatBecamePictureLeavesTheTree()
     {
         using var document = Chain();
         var root = new PdfDictionary { ["Type"] = new PdfName("StructTreeRoot") };
@@ -52,7 +49,8 @@ public class RedactDepthTests
         figure["K"] = new PdfDictionary { ["Type"] = new PdfName("MCR"), ["Pg"] = document.Pages[0].Reference, ["Stm"] = new PdfReference(25, 0), ["MCID"] = new PdfNumber(0) };
         figure["Alt"] = PdfText.ToObject("ZQXALT");
         document.Catalog["StructTreeRoot"] = rootRef;
-        var result = new PdfRedactor(document).Apply([RedactionMark.FromRect(0, Near)]);
+        var result = RedactionKit.Apply(document, [RedactionMark.FromRect(0, Near)]);
+        Assert.Contains(0, result.Report.Flattened);
         Assert.False(RedactionKit.Holds(result.Bytes, "ZQXALT"));
         Assert.False(RedactionKit.Holds(result.Bytes, "ZQXDEEPSECRET"));
     }

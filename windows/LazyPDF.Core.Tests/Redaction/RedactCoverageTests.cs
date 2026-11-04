@@ -20,20 +20,17 @@ public class RedactCoverageTests
         });
 
     [Fact]
-    public void FormsNestedBeyondTheDepthTheWalkerEntersGoWhenTheyReachTheMark()
+    public void FormsNestedBeyondTheDepthTheWalkerEntersMakeThePagePicture()
     {
         using var document = Chain(22);
-        var result = new PdfRedactor(document).Apply([RedactionMark.FromRect(0, Mark)]);
-        Assert.True(result.Verification.IsClean);
-        Assert.False(RedactionKit.Holds(result.Bytes, "secret"));
-        Assert.Equal(1, result.Report.Paths);
+        RedactionKit.AssertFlattened(document, [RedactionMark.FromRect(0, Mark)], "secret");
     }
 
     [Fact]
     public void FormsWithinTheDepthAreRedacted()
     {
         using var document = Chain(10);
-        var result = new PdfRedactor(document).Apply([RedactionMark.FromRect(0, Mark)]);
+        var result = RedactionKit.Apply(document, [RedactionMark.FromRect(0, Mark)]);
         Assert.Equal(6, result.Report.Glyphs);
         Assert.True(result.Verification.IsClean);
     }
@@ -42,23 +39,13 @@ public class RedactCoverageTests
         RedactionKit.Page("/Fm1 Do BT /F1 12 Tf 50 700 Td (secret) Tj ET", "/XObject <</Fm1 6 0 R>>",
             pdf => pdf.Stream(6, $"/Type /XObject /Subtype /Form /BBox {box} /Filter /FlateDecode", "this is not deflate data"));
 
-    [Fact]
-    public void FormThatCannotBeReadGoesWhenItReachesTheMark()
+    [Theory]
+    [InlineData("[0 0 600 800]")]
+    [InlineData("[0 0 10 10]")]
+    public void FormThatCannotBeReadMakesThePagePictureWhereverItIs(string box)
     {
-        using var document = Unreadable("[0 0 600 800]");
-        var result = new PdfRedactor(document).Apply([RedactionMark.FromRect(0, Mark)]);
-        Assert.True(result.Verification.IsClean);
-        Assert.False(RedactionKit.Holds(result.Bytes, "this is not deflate data"));
-        Assert.Equal(6, result.Report.Glyphs);
-    }
-
-    [Fact]
-    public void FormThatCannotBeReadStaysWhenItIsFarFromTheMark()
-    {
-        using var document = Unreadable("[0 0 10 10]");
-        var result = new PdfRedactor(document).Apply([RedactionMark.FromRect(0, Mark)]);
-        Assert.True(RedactionKit.Holds(result.Bytes, "this is not deflate data"));
-        Assert.Equal(0, result.Report.Paths);
+        using var document = Unreadable(box);
+        RedactionKit.AssertFlattened(document, [RedactionMark.FromRect(0, Mark)], "secret", "this is not deflate data");
     }
 
     [Fact]

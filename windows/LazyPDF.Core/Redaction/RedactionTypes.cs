@@ -34,6 +34,18 @@ public sealed record RedactionOptions
     /// <summary>Replace the removed text where /Info, the XMP packet and bookmark titles hold it. They are reported either way.</summary>
     public bool ChangeMetadata { get; init; }
 
+    /// <summary>
+    /// Draws the pages that cannot be redacted as text (see <see cref="PdfRedactor.Apply(IEnumerable{RedactionMark}, RedactionOptions?)"/>).
+    /// It draws the document handed to the redactor. Without one, such a page makes the call throw.
+    /// </summary>
+    public IPageRenderer? Renderer { get; init; }
+
+    /// <summary>Every page with a mark becomes a picture, as a page that is not understood does; without a renderer the call throws.</summary>
+    public bool FlattenMarkedPages { get; init; }
+
+    /// <summary>The resolution a page is drawn at when it becomes a picture, at most 1200.</summary>
+    public double FlattenDpi { get; init; } = 200;
+
     /// <summary>Write the output with the input's encryption. A file opened with a password needs it again to open.</summary>
     public bool KeepEncryption { get; init; } = true;
 }
@@ -65,11 +77,15 @@ public sealed record RedactionReport(IReadOnlyList<PageRedaction> Pages, IReadOn
     public int Annotations => Pages.Sum(p => p.Annotations);
     public int Fields => Pages.Sum(p => p.Fields);
 
+    /// <summary>The pages (from 0) that were turned into pictures; their text is no longer selectable.</summary>
+    public IReadOnlyList<int> Flattened { get; init; } = [];
+
     /// <summary>The report in plain words, one line a page.</summary>
     public override string ToString()
     {
         var lines = Pages.Where(p => !p.IsEmpty).Select(RedactionText.Line).ToList();
-        if (lines.Count == 0) lines.Add(RedactionText.NothingFound);
+        if (lines.Count == 0 && Flattened.Count == 0) lines.Add(RedactionText.NothingFound);
+        lines.AddRange(Flattened.Select(RedactionText.Flattened));
         lines.AddRange(Findings.Select(f => f.Changed ? RedactionText.MetadataChanged(f.Where) : RedactionText.MetadataHolds(f.Where)));
         if (SignaturesRemoved > 0) lines.Add(RedactionText.SignaturesGone(SignaturesRemoved));
         lines.AddRange(Text.Select(RedactionText.Removed));

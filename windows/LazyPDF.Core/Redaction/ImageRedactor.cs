@@ -10,8 +10,21 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
 {
     private const long MaxSamples = 256L << 20;
     private const int MaxMaskDepth = 2;
+    private static readonly string[] MaskKeys = ["SMask", "Mask"];
     // What describes the picture itself (ISO 32000-1 8.9.5); anything else on the dictionary can lead back to the original.
-    private static readonly string[] Kept = ["Type", "Subtype", "Width", "Height", "ColorSpace", "BitsPerComponent", "Intent", "ImageMask", "Mask", "Decode", "Interpolate", "SMask", "SMaskInData", "StructParent", "OC"];
+    private static readonly string[] Kept = ["Type", "Subtype", "Width", "Height", "ColorSpace", "BitsPerComponent", "Intent", "ImageMask", "Mask", "Decode", "Interpolate", "SMask", "SMaskInData", "Matte", "StructParent", "OC"];
+
+    /// <summary>The soft mask and stencil mask of a picture, and theirs in turn as far as <see cref="Redact"/> copies: the streams a cut makes private copies of.</summary>
+    public static IEnumerable<PdfStream> Masks(PdfDocument document, PdfStream image, int depth = 0)
+    {
+        if (depth > MaxMaskDepth) yield break;
+        foreach (string key in MaskKeys)
+        {
+            if (document.Stream(image.Dictionary, key) is not { } mask) continue;
+            yield return mask;
+            foreach (var inner in Masks(document, mask, depth + 1)) yield return inner;
+        }
+    }
 
     public PdfReference? Redact(PdfStream image, IReadOnlyList<MarkArea> areas, PdfMatrix placement)
     {

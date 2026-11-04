@@ -17,7 +17,7 @@ public class RedactCorpusMetadataTests(ITestOutputHelper output)
         string? list = Environment.GetEnvironmentVariable("LAZYPDF_CORPUS");
         if (string.IsNullOrEmpty(list) || !File.Exists(list)) return;
 
-        int files = 0, clean = 0, attachments = 0, refused = 0;
+        int files = 0, clean = 0, attachments = 0, refused = 0, flattened = 0;
         var dirty = new List<string>();
         foreach (string path in File.ReadAllLines(list).Where(l => l.Trim().Length > 0))
         {
@@ -34,7 +34,9 @@ public class RedactCorpusMetadataTests(ITestOutputHelper output)
                 }
                 if (marks.Count == 0) continue;
                 files++;
-                var problems = new PdfRedactor(document).Apply(marks, new RedactionOptions { ChangeMetadata = true }).Verification.Problems;
+                var result = new PdfRedactor(document).Apply(marks, RedactionKit.Drawing(document, new RedactionOptions { ChangeMetadata = true }));
+                flattened += result.Report.Flattened.Count;
+                var problems = result.Verification.Problems;
                 if (problems.Count == 0) clean++;
                 else if (problems.All(p => p.Contains("attached file"))) attachments++;
                 else dirty.Add($"file {files}: {problems.Count} problems");
@@ -47,7 +49,7 @@ public class RedactCorpusMetadataTests(ITestOutputHelper output)
                 refused++;
             }
         }
-        output.WriteLine($"{files} files redacted: {clean} clean, {attachments} with the word in an attachment only, {dirty.Count} not clean, {refused} refused");
+        output.WriteLine($"{files} files redacted: {clean} clean, {attachments} with the word in an attachment only, {dirty.Count} not clean, {refused} refused, {flattened} pages flattened");
         foreach (string d in dirty.Take(20)) output.WriteLine(d);
         Assert.Empty(dirty);
     }

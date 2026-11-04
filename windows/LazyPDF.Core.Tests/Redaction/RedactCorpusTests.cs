@@ -18,7 +18,7 @@ public class RedactCorpusTests(ITestOutputHelper output)
         string? list = Environment.GetEnvironmentVariable("LAZYPDF_CORPUS");
         if (string.IsNullOrEmpty(list) || !File.Exists(list)) return;
 
-        int files = 0, skipped = 0, pages = 0, gone = 0, same = 0, reopened = 0, readByPig = 0, nonEmptyPages = 0;
+        int files = 0, skipped = 0, pages = 0, gone = 0, same = 0, reopened = 0, readByPig = 0, nonEmptyPages = 0, flattened = 0, kept = 0;
         var failures = new List<string>();
         foreach (string path in File.ReadAllLines(list).Where(l => l.Trim().Length > 0))
         {
@@ -41,7 +41,8 @@ public class RedactCorpusTests(ITestOutputHelper output)
                 }
                 if (marks.Count == 0) continue;
 
-                var result = new PdfRedactor(document).Apply(marks);
+                var result = new PdfRedactor(document).Apply(marks, RedactionKit.Drawing(document));
+                flattened += result.Report.Flattened.Count;
                 using var again = PdfDocument.Open(result.Bytes);
                 reopened++;
                 try
@@ -64,6 +65,8 @@ public class RedactCorpusTests(ITestOutputHelper output)
                     if (inside) failures.Add($"file {files} page {mark.Page + 1}: text left under the mark");
                     else gone++;
 
+                    if (result.Report.Flattened.Contains(mark.Page)) continue;
+                    kept++;
                     var (words, target) = before[mark.Page];
                     var expected = new List<string>(words);
                     expected.Remove(target);
@@ -80,9 +83,9 @@ public class RedactCorpusTests(ITestOutputHelper output)
                 failures.Add($"file {files}: {e.GetType().Name} {e.Message}");
             }
         }
-        output.WriteLine($"{files} files, {skipped} skipped, {reopened} redacted and reopened ({readByPig} read by PdfPig), {pages} pages: word gone on {gone}, other words the same on {same}, {failures.Count} failures");
+        output.WriteLine($"{files} files, {skipped} skipped, {reopened} redacted and reopened ({readByPig} read by PdfPig), {pages} pages: word gone on {gone}, other words the same on {same} of {kept} pages not flattened, {flattened} pages flattened, {failures.Count} failures");
         foreach (string f in failures.Take(20)) output.WriteLine(f);
         Assert.Empty(failures);
-        Assert.True(same >= pages * 0.9, $"other words the same on {same} of {pages} pages");
+        Assert.True(same >= kept * 0.9, $"other words the same on {same} of {kept} pages");
     }
 }

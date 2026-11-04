@@ -146,7 +146,7 @@ public class RedactCopiesTests
     private static PdfDocument WithWordElsewhere()
     {
         var pdf = new TestPdf();
-        pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R>>");
+        pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R /Metadata 9 0 R>>");
         pdf.Obj(2, "<</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 600 800]>>");
         pdf.Obj(3, "<</Type /Page /Parent 2 0 R /Contents 4 0 R /Annots [6 0 R] /Resources <</Font <</F1 5 0 R>> /XObject <</Fm1 7 0 R>>>>>>");
         pdf.Stream(4, "", "/Fm1 Do BT /F1 12 Tf 100 700 Td (ZQXMARKER) Tj ET");
@@ -154,6 +154,7 @@ public class RedactCopiesTests
         pdf.Obj(6, "<</Type /Annot /Subtype /Link /Rect [10 10 50 50] /A <</S /URI /URI (http://example.com/ZQXMARKER)>>>>");
         pdf.Stream(7, "/Type /XObject /Subtype /Form /BBox [0 0 10 10] /Metadata 8 0 R", "0 g 0 0 1 1 re f");
         pdf.Stream(8, "/Type /Metadata /Subtype /XML", "<x:xmpmeta><dc:title>ZQXMARKER in a form</dc:title></x:xmpmeta>");
+        pdf.Stream(9, "/Type /Metadata /Subtype /XML", "<x:xmpmeta><dc:title>ZQXMARKER in the catalog</dc:title></x:xmpmeta>");
         var document = PdfDocument.Open(pdf.Finish());
         Tag(document, new PdfNumber(0), "about ZQXMARKER");
         return document;
@@ -169,6 +170,9 @@ public class RedactCopiesTests
         Assert.Contains(kept.Report.Findings, f => f.Where == RedactionText.TextElsewhere && !f.Changed);
         Assert.Contains(kept.Report.Findings, f => f.Where.Contains("XMP") && !f.Changed);
         Assert.True(RedactionKit.Holds(kept.Bytes, "example.com/ZQXMARKER"));
+        // The packet of a form is private data of the page and goes with it; the catalog's is the file's own.
+        Assert.False(RedactionKit.Holds(kept.Bytes, "in a form"));
+        Assert.True(RedactionKit.Holds(kept.Bytes, "in the catalog"));
 
         var changed = new PdfRedactor(document).Apply(marks, new RedactionOptions { ChangeMetadata = true });
         using var output = RedactionKit.Open(changed);

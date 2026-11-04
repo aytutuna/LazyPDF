@@ -11,7 +11,6 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
 {
     private const int MaxFormOperations = 1_000_000;
     private const long MaxFormSize = 64L << 20;
-    private static readonly string[] AltKeys = ["ActualText", "Alt", "E"];
     // What a form is drawn from (8.10); /AF, /Metadata, /PieceInfo, /OPI and the like are not copied along.
     private static readonly string[] FormKept = ["Type", "Subtype", "FormType", "BBox", "Matrix", "Resources", "Group", "OC", "StructParent", "StructParents"];
     private static readonly string[] Construction = ["m", "l", "c", "v", "y", "h", "re"];
@@ -19,7 +18,10 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
 
     private readonly record struct Cut(int Start, int End, string Text);
 
-    /// <summary>The images and forms that were copied or dropped; the originals must not stay listed in resources that never paint them.</summary>
+    /// <summary>What a shift in a show array is worth (9.3.4): everything but the size in <see cref="Face"/>, and the size times the horizontal scale in <see cref="Unit"/>, 0 when it is not known.</summary>
+    private readonly record struct Scale(string Face, double Unit);
+
+    /// <summary>The images and forms that were copied, for the tag tree: an item that still names the original would keep it.</summary>
     public HashSet<PdfStream> Replaced { get; } = [];
 
     /// <summary>A resource dictionary of one's own to add names to: the categories are copied, what they point at is shared.</summary>
@@ -40,18 +42,13 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
         var resources = Private(document.Dict(owner, "Resources") ?? inherited);
         owner["Resources"] = resources;
         var cuts = new List<Cut>();
-        var gone = new HashSet<int>();
-        var replaced = new HashSet<string>();
-        var properties = new HashSet<string>();
         var leads = new Dictionary<int, double>();
         var emptied = new HashSet<int>();
-        string?[]? fonts = null;
+        Scale[]? scales = null;
 
         void Replace(int index, string text)
         {
             cuts.Add(new Cut(operations[index].Start, operations[index].End, text));
-            gone.Add(index);
-            if (operations[index].Operator == "Do" && operations[index].Operands.Count > 0 && operations[index].Operands[0] is PdfName old) replaced.Add(old.Value);
         }
 
         foreach (var (index, edit) in node.Edits.OrderBy(e => e.Key))
@@ -66,13 +63,17 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
                     Replace(index, s.Before + Encoding.Latin1.GetString(source, op.Start, op.End - op.Start) + s.After);
                     break;
                 case TextEdit t:
-                    Replace(index, ShowText(operations, fonts ??= FontsInForce(operations), index, t, leads, emptied));
+                    Replace(index, ShowText(operations, scales ??= Scales(operations, resources), index, t, leads, emptied));
                     break;
                 case PathEdit p:
-                    RewritePath(operations, index, p, cuts, gone);
+                    RewritePath(operations, index, p, cuts);
                     break;
                 case ImageEdit image:
                     Replaced.Add(image.Image);
+                    foreach (string key in (ReadOnlySpan<string>)["SMask", "Mask"])
+                    {
+                        if (document.Stream(image.Image.Dictionary, key) is { } mask) Replaced.Add(mask);
+                    }
                     Replace(index, images.Redact(image.Image, image.Areas, image.Matrix) is { } reference
                         ? Do(ContentResources.Add(document, resources, "XObject", reference, "Rd"))
                         : "");
@@ -87,10 +88,10 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
         }
         MergePositions(operations, emptied, cuts);
         DropMatrices(operations, emptied, cuts);
+        MergeMatrices(operations, emptied, cuts);
         foreach (var (index, child) in node.Children.OrderBy(c => c.Key))
         {
-            // A form the scan could not follow is dropped at its call; a copy would only hold what the original does.
-            if (!child.HasEdits || child.Form is not { } form || node.Edits.GetValueOrDefault(index) is DeleteEdit) continue;
+            if (!child.HasEdits || child.Form is not { } form) continue;
             Replaced.Add(form);
             var copy = new PdfDictionary();
             foreach (string key in FormKept)
@@ -107,29 +108,32 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
                 Replace(index, "");
                 continue;
             }
+            bytes = RedactionResources.DropIdleFonts(bytes);
+            var walk = new RedactionWalk(document);
+            if (walk.Content(copy, bytes)) RedactionResources.Rebuild(document, copy, walk);
             copy["Filter"] = new PdfName("FlateDecode");
             copy.Remove("DecodeParms");
             var reference = document.Add(new PdfStream(copy, PdfFilterEncoders.Flate(bytes)));
             Replace(index, Do(ContentResources.Add(document, resources, "XObject", reference, "Rd")));
         }
-        foreach (int index in node.DirtyMarked)
+        foreach (var (index, described) in node.DirtyMarked)
         {
             var op = operations[index];
-            var described = op.Operands.Count >= 2 ? op.Operands[^1] switch
-            {
-                PdfDictionary inline => inline,
-                PdfName key => document.Dict(document.Dict(resources, "Properties"), key.Value),
-                _ => null,
-            } : null;
-            if (described is null) continue;
-            var plain = described.Copy();
-            foreach (string key in AltKeys) plain.Remove(key);
+            if (op.Operands.Count < 2) continue;
+            // Only the number that ties the sequence to the tag tree stays: any other key may describe what was taken out.
+            var plain = new PdfDictionary();
+            if (described["MCID"] is { } mcid) plain["MCID"] = mcid;
             cuts.Add(new Cut(op.Start, op.End, $"{op.Operands[0]} {plain} BDC"));
-            gone.Add(index);
-            if (op.Operands[^1] is PdfName name) properties.Add(name.Value);
+        }
+        // A point has no extent to say what it describes, so on a stream that lost something none keeps a description.
+        if (node.HasEdits)
+        {
+            foreach (var op in operations.Where(o => o.Operator == "DP" && o.Operands is [PdfName, PdfDictionary or PdfName]))
+            {
+                cuts.Add(new Cut(op.Start, op.End, $"{op.Operands[0]} {new PdfDictionary()} DP"));
+            }
         }
 
-        DropUnused(operations, gone, replaced, properties, resources);
         var output = new MemoryStream();
         int at = 0;
         foreach (var cut in cuts.OrderBy(c => c.Start))
@@ -145,27 +149,10 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
 
     private static string Do(string name) => $"{new PdfName(name)} Do";
 
-    // The old name goes from the private resources once nothing in the stream calls it.
-    private void DropUnused(IReadOnlyList<ContentOperation> operations, HashSet<int> gone, HashSet<string> replaced, HashSet<string> properties, PdfDictionary resources)
-    {
-        Drop(operations, gone, replaced, ["Do"], 0, document.Dict(resources, "XObject"));
-        Drop(operations, gone, properties, ["BDC", "DP"], 1, document.Dict(resources, "Properties"));
-    }
-
-    private static void Drop(IReadOnlyList<ContentOperation> operations, HashSet<int> gone, HashSet<string> names, string[] users, int operand, PdfDictionary? category)
-    {
-        if (category is null) return;
-        foreach (string name in names)
-        {
-            bool used = operations.Where((o, i) => !gone.Contains(i) && users.Contains(o.Operator) && o.Operands.Count > operand && o.Operands[operand] is PdfName n && n.Value == name).Any();
-            if (!used) category.Remove(name);
-        }
-    }
-
     // The construction operators of the path go one by one: colour and state operators may sit between
     // them and the paint, and have to stay. The new outline is written where the paint was. The rule of
     // a clip is the one of its own W or W*, not of the paint operator that follows (8.5.4).
-    private static void RewritePath(IReadOnlyList<ContentOperation> operations, int index, PathEdit edit, List<Cut> cuts, HashSet<int> gone)
+    private static void RewritePath(IReadOnlyList<ContentOperation> operations, int index, PathEdit edit, List<Cut> cuts)
     {
         var paint = operations[index];
         bool evenOdd = false;
@@ -174,7 +161,6 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
             if (!Construction.Contains(operations[i].Operator) && operations[i].Operator is not ("W" or "W*")) continue;
             evenOdd |= operations[i].Operator == "W*";
             cuts.Add(new Cut(operations[i].Start, operations[i].End, ""));
-            gone.Add(i);
         }
         string text = "";
         if (edit.Ctm.Invert() is { } back)
@@ -189,7 +175,6 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
         }
         else if (text.Length > 0) text += paint.Operator;
         cuts.Add(new Cut(paint.Start, paint.End, text));
-        gone.Add(index);
     }
 
     private const int Over = -1;
@@ -198,7 +183,7 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
     // The patch writes one shift for a run of removed glyphs. A shift at the end of the operator moves to the
     // front of the next show on the same line, so that a run over several operators keeps its total and no
     // width per operator; at the end of a line, when the next show starts from a position of its own, it goes.
-    private static string ShowText(IReadOnlyList<ContentOperation> operations, string?[] fonts, int index, TextEdit edit, Dictionary<int, double> leads, HashSet<int> emptied)
+    private static string ShowText(IReadOnlyList<ContentOperation> operations, Scale[] scales, int index, TextEdit edit, Dictionary<int, double> leads, HashSet<int> emptied)
     {
         var op = operations[index];
         var patch = new ShowPatch(op);
@@ -228,11 +213,11 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
         if (leads.Remove(index, out double lead)) items.Add(new PdfNumber(lead));
         if (show is not null) items.AddRange(Elements(show));
         items = Merge(items);
-        int next = Next(operations, fonts, index);
+        var (next, ratio) = Next(operations, scales, index);
         if (next != Keep && items.Count > 0 && items[^1] is PdfNumber last)
         {
             items.RemoveAt(items.Count - 1);
-            if (next >= 0) leads[next] = leads.GetValueOrDefault(next) + last.Value;
+            if (next >= 0) leads[next] = leads.GetValueOrDefault(next) + last.Value * ratio;
         }
         if (op.Operator is "Tj" or "TJ" && !items.Any(i => i is PdfString)) emptied.Add(index);
 
@@ -246,41 +231,62 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
         return output.ToString().TrimEnd('\n');
     }
 
-    // The last Tf at or before each operation, as written.
-    private static string?[] FontsInForce(IReadOnlyList<ContentOperation> operations)
+    // What a shift means at each operation: the font size set by the last Tf or by a graphics state that has a font
+    // (9.3.4), and the horizontal scale. Q gives back what the q before it held.
+    private Scale[] Scales(IReadOnlyList<ContentOperation> operations, PdfDictionary resources)
     {
-        var fonts = new string?[operations.Count];
-        string? font = null;
-        for (int i = 0; i < fonts.Length; i++)
+        var scales = new Scale[operations.Count];
+        var saved = new Stack<(string, double, double)>();
+        string face = "";
+        double size = 0, scale = 1;
+        var states = document.Dict(resources, "ExtGState");
+        var fonts = document.Dict(resources, "Font");
+        for (int i = 0; i < scales.Length; i++)
         {
-            if (operations[i].Operator == "Tf") font = operations[i].ToString();
-            fonts[i] = font;
+            var op = operations[i];
+            switch (op.Operator)
+            {
+                case "q":
+                    saved.Push((face, size, scale));
+                    break;
+                case "Q" when saved.Count > 0:
+                    (face, size, scale) = saved.Pop();
+                    break;
+                case "Tf":
+                    // The size sets what a shift is worth; the font only where it can write vertically.
+                    if (op.Operands is [PdfName name, PdfNumber number] && document.Dict(fonts, name.Value) is { } simple && document.Name(simple, "Subtype") != "Type0") (face, size) = ("", number.Value);
+                    else (face, size) = (op.ToString(), 0);
+                    break;
+                case "Tz":
+                    scale = (op.Number(0) ?? 100) / 100;
+                    break;
+                case "gs" when op.Operands.Count > 0 && op.Operands[0] is PdfName state && document.Dict(states, state.Value) is { } entries && entries.ContainsKey("Font"):
+                    (face, size) = (op.ToString(), 0);
+                    break;
+            }
+            scales[i] = new Scale(face, size * scale);
         }
-        return fonts;
+        return scales;
     }
 
-    // The next show operator on the same line, or what ends the line first. A change of font size or scale between
-    // them would change what a shift means; the same font set again does not.
-    private static int Next(IReadOnlyList<ContentOperation> operations, string?[] fonts, int index)
+    // The next show operator on the same line, or what ends the line first. A shift moves to a show where the font allows
+    // it, scaled to the size of that show.
+    private static (int Index, double Ratio) Next(IReadOnlyList<ContentOperation> operations, Scale[] scales, int index)
     {
-        bool changed = false;
-        string? font = fonts[index];
         for (int i = index + 1; i < operations.Count; i++)
         {
             switch (operations[i].Operator)
             {
                 case "Tj" or "TJ":
-                    return changed ? Keep : i;
+                    var (here, there) = (scales[index], scales[i]);
+                    if (here.Face != there.Face) return (Keep, 1);
+                    if (here.Unit == there.Unit) return (i, 1);
+                    return here.Unit > 0 && there.Unit > 0 ? (i, here.Unit / there.Unit) : (Keep, 1);
                 case "Td" or "TD" or "Tm" or "T*" or "'" or "\"" or "ET" or "BT":
-                    return Over;
-                case "Tf" when operations[i].ToString() == font:
-                    break;
-                case "Tf" or "Tz" or "q" or "Q" or "gs":
-                    changed = true;
-                    break;
+                    return (Over, 1);
             }
         }
-        return Over;
+        return (Over, 1);
     }
 
     private static IEnumerable<PdfObject> Elements(ContentOperation show) =>
@@ -302,7 +308,7 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
     private static string Show(List<PdfObject> items) => items is [PdfString only] ? $"{only} Tj" : $"{new PdfArray(items)} TJ";
 
     // A position set between shows that were all taken out has nothing to place: it goes, or is added to the
-    // relative move that follows (a Td after a Td, any move before a TD that is level), or is overwritten by the
+    // relative move that follows (a Td after a Td or a TD, a TD before a Td, any move before a TD when it is level), or is overwritten by the
     // matrix that follows. A TD also sets the leading (9.4.2), which a dropped one passes on as a TL.
     private static void MergePositions(IReadOnlyList<ContentOperation> operations, HashSet<int> emptied, List<Cut> cuts)
     {
@@ -317,16 +323,16 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
             for (; q < operations.Count; q++)
             {
                 if (emptied.Contains(q)) any = true;
-                else if (operations[q].Operator is "Tj" or "TJ" or "Td" or "TD" or "Tm" or "T*" or "'" or "\"" or "ET" or "BT" or "q" or "Q") break;
+                else if (operations[q].Operator is "Tj" or "TJ" or "Td" or "TD" or "Tm" or "T*" or "'" or "\"" or "ET" or "BT") break;
             }
             if (!any) continue;
             string after = q < operations.Count ? operations[q].Operator : "ET";
             var (px, py) = op.Operator == "Tm" ? (0, 0) : moves.GetValueOrDefault(p, (op.Number(0)!.Value, op.Number(1)!.Value));
             if (after is "ET" or "BT" or "Tm") text[p] = op.Operator == "TD" ? $"{new PdfNumber(0 - py).Text} TL" : "";
-            else if (after is "Td" or "TD" && op.Operator != "Tm" && operations[q].Number(0) is { } x && operations[q].Number(1) is { } y && (after == "TD" ? py == 0 : op.Operator == "Td"))
+            else if (after is "Td" or "TD" && op.Operator != "Tm" && operations[q].Number(0) is { } x && operations[q].Number(1) is { } y && (after == "Td" || py == 0))
             {
                 moves[q] = (x + px, y + py);
-                text[p] = "";
+                text[p] = op.Operator == "TD" && after == "Td" ? $"{new PdfNumber(0 - py).Text} TL" : "";
                 text[q] = $"{new PdfNumber(x + px).Text} {new PdfNumber(y + py).Text} {after}";
             }
         }
@@ -353,9 +359,49 @@ internal sealed class ContentRewriter(PdfDocument document, ImageRedactor images
             for (int q = enclosing[shown]; q >= 0 && close.TryGetValue(q, out int end) && seen.Add(q); q = enclosing[q])
             {
                 var block = Enumerable.Range(q + 1, end - q - 1).ToList();
-                if (block.Any(i => Paints.Contains(operations[i].Operator) || operations[i].Operator is "sh" or "Do" or "BI" or "'" or "\"" || operations[i].Operator is "Tj" or "TJ" && !emptied.Contains(i))) break;
+                if (block.Any(i => Draws(operations, emptied, i))) break;
                 foreach (int i in block.Where(i => operations[i].Operator == "cm")) cuts.Add(new Cut(operations[i].Start, operations[i].End, ""));
             }
         }
     }
+
+    // Matrices that only separate shows that were taken out gave the position of the removed runs. Those that meet
+    // become the one matrix they add up to, or none when it comes to nothing, since each step alone is the width of a run.
+    private static void MergeMatrices(IReadOnlyList<ContentOperation> operations, HashSet<int> emptied, List<Cut> cuts)
+    {
+        if (emptied.Count == 0) return;
+        var merged = new HashSet<int>();
+        for (int a = 0; a < operations.Count; a++)
+        {
+            if (merged.Contains(a) || Matrix(operations[a]) is not { } total) continue;
+            bool shown = false, joined = false;
+            for (int b = a + 1; b < operations.Count; b++)
+            {
+                if (emptied.Contains(b)) shown = true;
+                else if (operations[b].Operator == "cm")
+                {
+                    if (!shown || Matrix(operations[b]) is not { } next) break;
+                    total = total.Multiply(next);
+                    cuts.Add(new Cut(operations[b].Start, operations[b].End, ""));
+                    merged.Add(b);
+                    (shown, joined) = (false, true);
+                }
+                else if (operations[b].Operator is "q" or "Q" || Construction.Contains(operations[b].Operator) || Draws(operations, emptied, b)) break;
+            }
+            if (!joined) continue;
+            string text = Near(total, PdfMatrix.Identity) ? "" : $"{new PdfNumber(total.A).Text} {new PdfNumber(total.B).Text} {new PdfNumber(total.C).Text} {new PdfNumber(total.D).Text} {new PdfNumber(total.E).Text} {new PdfNumber(total.F).Text} cm";
+            cuts.Add(new Cut(operations[a].Start, operations[a].End, text));
+        }
+    }
+
+    private static bool Draws(IReadOnlyList<ContentOperation> operations, HashSet<int> emptied, int i) =>
+        Paints.Contains(operations[i].Operator) || operations[i].Operator is "sh" or "Do" or "BI" or "'" or "\"" || operations[i].Operator is "Tj" or "TJ" && !emptied.Contains(i);
+
+    private static PdfMatrix? Matrix(ContentOperation op) =>
+        op.Operator == "cm" && op.Operands.Count == 6 && op.Operands.All(o => o is PdfNumber)
+            ? new PdfMatrix(op.Number(0)!.Value, op.Number(1)!.Value, op.Number(2)!.Value, op.Number(3)!.Value, op.Number(4)!.Value, op.Number(5)!.Value)
+            : null;
+
+    private static bool Near(PdfMatrix a, PdfMatrix b) =>
+        Math.Abs(a.A - b.A) < 1e-9 && Math.Abs(a.B - b.B) < 1e-9 && Math.Abs(a.C - b.C) < 1e-9 && Math.Abs(a.D - b.D) < 1e-9 && Math.Abs(a.E - b.E) < 1e-6 && Math.Abs(a.F - b.F) < 1e-6;
 }

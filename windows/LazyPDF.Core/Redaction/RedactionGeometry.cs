@@ -89,7 +89,9 @@ internal static class Geometry
     public static bool Overlaps(IReadOnlyList<(double X, double Y)> polygon, MarkArea area)
     {
         if (polygon.Count == 0) return false;
-        if (Area(polygon) > 1e-9) return Area(Clip(polygon, area)) > 1e-7;
+        double whole = Area(polygon), extent = Math.Max(polygon.Max(p => p.X) - polygon.Min(p => p.X), polygon.Max(p => p.Y) - polygon.Min(p => p.Y));
+        // The thresholds follow the size of the shape, so that a glyph at a tiny font size is not lost between them.
+        if (whole > 1e-9 * extent * extent) return Area(Clip(polygon, area)) > Math.Min(1e-7, whole * 1e-6);
         return Contains(area, polygon.Average(p => p.X), polygon.Average(p => p.Y));
     }
 
@@ -103,6 +105,10 @@ internal static class Geometry
         [m.Transform(left, bottom), m.Transform(right, bottom), m.Transform(right, top), m.Transform(left, top)];
 
     public static List<(double X, double Y)> Corners(TextQuad q) => [(q.X0, q.Y0), (q.X1, q.Y1), (q.X2, q.Y2), (q.X3, q.Y3)];
+
+    /// <summary>As <see cref="Meets"/>, and a rectangle with no extent counts at the point or line it is.</summary>
+    public static bool Touches(PdfRect rect, MarkArea area) =>
+        Overlaps([(rect.Left, rect.Bottom), (rect.Right, rect.Bottom), (rect.Right, rect.Top), (rect.Left, rect.Top)], area);
 
     public static bool Meets(PdfRect rect, MarkArea area) =>
         !rect.IsEmpty && Overlaps([(rect.Left, rect.Bottom), (rect.Right, rect.Bottom), (rect.Right, rect.Top), (rect.Left, rect.Top)], area);

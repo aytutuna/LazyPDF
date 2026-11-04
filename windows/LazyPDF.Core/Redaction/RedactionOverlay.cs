@@ -6,14 +6,17 @@ internal static class RedactionOverlay
     private const double MinSize = 3;
     private const double MaxSize = 16;
 
+    public static double[] FillOf(RedactionMark mark, RedactionOptions options) =>
+        mark.Fill is { Length: 1 or 3 or 4 } ? mark.Fill : options.Fill is { Length: 1 or 3 or 4 } ? options.Fill : [0];
+
     public static byte[] Build(IEnumerable<RedactionMark> marks, RedactionOptions options, PdfDrawFont? font, string fontName)
     {
         var w = new ContentWriter().Save();
         foreach (var mark in marks)
         {
-            double[] fill = mark.Fill is { Length: 1 or 3 or 4 } ? mark.Fill : options.Fill is { Length: 1 or 3 or 4 } ? options.Fill : [0];
+            double[] fill = FillOf(mark, options);
             Color(w, fill);
-            foreach (var q in mark.Quads) w.Raw(RedactionPaths.Polygons([Geometry.Corners(q)]) + "f");
+            foreach (var q in mark.Quads) w.Raw(RedactionPaths.Polygons([MarkArea.Of(q).Points]) + "f");
             string? text = mark.OverlayText ?? options.OverlayText;
             if (font is null || string.IsNullOrEmpty(text)) continue;
             foreach (var q in mark.Quads) Text(w, q, text, options.RepeatOverlay, font, fontName, Dark(fill));

@@ -6,7 +6,7 @@ namespace LazyPDF.Core.Tests;
 public class RedactBudgetTests
 {
     [Fact]
-    public void A_page_too_big_to_scan_to_the_end_is_refused_not_passed_through()
+    public void A_page_too_big_to_scan_to_the_end_becomes_a_picture_not_passed_through()
     {
         using var document = RedactionKit.Page("/F6 Do BT /F1 12 Tf 100 700 Td (secret) Tj ET", "/XObject <</F6 6 0 R>>", pdf =>
         {
@@ -17,8 +17,8 @@ public class RedactBudgetTests
             pdf.Stream(13, "/Type /XObject /Subtype /Form /BBox [0 0 10 10]", "0 0 m");
         });
 
-        var mark = RedactionMark.FromRect(0, new PdfRect(90, 690, 300, 720), null, "X");
+        var mark = RedactionMark.FromRect(0, new PdfRect(90, 690, 300, 720));
 
-        Assert.Throws<InvalidOperationException>(() => new PdfRedactor(document).Apply([mark]));
+        RedactionKit.AssertFlattened(document, [mark], "secret");
     }
 }

@@ -4,7 +4,6 @@ namespace LazyPDF.Core;
 public static class RedactionText
 {
     public const string NoFont = "No font for this text. Pick another font.";
-    public const string TooBig = "This page is too complex to redact safely.";
     public const string NothingFound = "Nothing was under the marks.";
     public const string ReplacedBy = "[redacted]";
     public const string TextElsewhere = "Descriptions, links and names";
@@ -26,13 +25,18 @@ public static class RedactionText
         if (count > 0) parts.Add($"{count} {(count == 1 ? one : many)}");
     }
 
+    public static string NeedsPicture(int page) => $"Page {page + 1} cannot be redacted as text. It needs a page renderer to be turned into a picture.";
+    public static string NotDrawn(int page) => $"Page {page + 1} could not be drawn, so it cannot be turned into a picture.";
+    public static string Flattened(int page) => $"Page {page + 1} was turned into a picture. Its text can no longer be selected.";
     public static string MetadataHolds(string where) => $"{where} holds removed text.";
     public static string MetadataChanged(string where) => $"{where} held removed text. It was replaced.";
     public static string SignaturesGone(int count) => count == 1 ? "The signature is gone." : $"{count} signatures are gone.";
     public static string Removed(string text) => $"Removed: {text}";
 
     public static string StillInside(int page) => $"Text is still inside a mark on page {page + 1}.";
+    public static string PageOf(int page) => $"page {page + 1}";
     public static string AttachedFile(int number) => $"an attached file (object {number})";
+    public static string NotChecked(string where) => $"{where} could not be opened, so it was not checked.";
     public static string StillInFile(string where) => $"Removed text is still in {where}.";
     public static string NotFollowed(int page) => $"Page {page + 1} could not be followed to its end, so it was not fully checked.";
     public const string TooManyStrings = "Not every removed string could be checked.";

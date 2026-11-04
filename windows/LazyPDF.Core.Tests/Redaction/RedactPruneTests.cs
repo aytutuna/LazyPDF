@@ -3,6 +3,7 @@ using Xunit;
 
 namespace LazyPDF.Core.Tests;
 
+// What is left in the lists of a page after a removal: only what the new content names.
 public class RedactPruneTests
 {
     private const string Pixels = "ZQXPIXELSDATAZQXPIXELSDATAZQXPIXELSDATAZQXPIXELSDATAZQXPIXELSDATA123";
@@ -10,7 +11,7 @@ public class RedactPruneTests
     private static readonly PdfRect Hole = new(200, 200, 300, 300);
 
     private static RedactionResult Redact(PdfDocument document, PdfRect? mark = null) =>
-        new PdfRedactor(document).Apply([RedactionMark.FromRect(0, mark ?? Hole)]);
+        RedactionKit.Apply(document, [RedactionMark.FromRect(0, mark ?? Hole)]);
 
     private static PdfDocument TwoPages(string first, string second, string shared, Action<TestPdf> more)
     {
@@ -28,17 +29,14 @@ public class RedactPruneTests
     }
 
     [Fact]
-    public void PatternCellWithAPictureGoesWithThePathItFilled()
+    public void PatternFillWithAPictureInItsCellMakesThePagePicture()
     {
         using var document = RedactionKit.Page("/Pattern cs /P1 scn 150 150 200 200 re f", "/Pattern <</P1 6 0 R>>", pdf =>
         {
             pdf.Stream(6, "/Type /Pattern /PatternType 1 /PaintType 1 /TilingType 1 /BBox [0 0 50 50] /XStep 50 /YStep 50 /Resources <</XObject <</Im1 7 0 R>>>>", "q 50 0 0 50 0 0 cm /Im1 Do Q");
             pdf.Stream(7, ImageEntries, Pixels);
         });
-        var result = Redact(document);
-        using var output = RedactionKit.Open(result);
-        Assert.False(RedactionKit.Holds(result.Bytes, "ZQXPIXELSDATA"));
-        Assert.Equal(1, result.Report.Paths);
+        RedactionKit.AssertFlattened(document, Hole, "ZQXPIXELSDATA");
     }
 
     [Fact]

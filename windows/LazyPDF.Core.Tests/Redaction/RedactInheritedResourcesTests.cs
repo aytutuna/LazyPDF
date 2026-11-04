@@ -21,7 +21,7 @@ public class RedactInheritedResourcesTests
         pdf.Stream(8, "", "BT /F1 12 Tf 100 300 Td (second) Tj ET");
         using var document = PdfDocument.Open(pdf.Finish());
 
-        var result = new PdfRedactor(document).Apply([RedactionMark.FromRect(0, new PdfRect(90, 90, 260, 200))]);
+        var result = RedactionKit.Apply(document, [RedactionMark.FromRect(0, new PdfRect(90, 90, 260, 200))]);
         using var output = RedactionKit.Open(result);
         Assert.False(RedactionKit.Holds(result.Bytes, Pixels));
         Assert.All(output.Data(RedactionKit.Images(output).Single().Stream!), b => Assert.Equal(0, b));

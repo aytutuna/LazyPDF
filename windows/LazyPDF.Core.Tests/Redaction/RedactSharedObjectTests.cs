@@ -13,7 +13,7 @@ public class RedactSharedObjectTests
     private static readonly PdfRect Under = new(95, 95, 125, 125);
 
     private static RedactionResult Redact(PdfDocument document, PdfRect? mark = null) =>
-        new PdfRedactor(document).Apply([RedactionMark.FromRect(0, mark ?? Under)]);
+        RedactionKit.Apply(document, [RedactionMark.FromRect(0, mark ?? Under)]);
 
     private static PdfDocument Glyphs(string text) =>
         RedactionKit.Page($"BT /F3 12 Tf 100 100 Td {text} ET", "/Font <</F3 6 0 R>>", pdf =>
@@ -25,27 +25,10 @@ public class RedactSharedObjectTests
         });
 
     [Fact]
-    public void GlyphProcedureOfARemovedCharacterLeavesTheFontThatStaysInUse()
+    public void FontWhoseGlyphPaintsAPictureMakesThePagePicture()
     {
         using var document = Glyphs("(a) Tj 200 0 Td (b) Tj");
-        var result = Redact(document);
-        using var output = RedactionKit.Open(result);
-        Assert.False(RedactionKit.Holds(result.Bytes, "ZQXPIXELSDATA"));
-        var font = output.ObjectNumbers.Select(output.Get).OfType<PdfDictionary>().Single(d => output.Name(d, "Subtype") == "Type3");
-        var procedures = output.Dict(font, "CharProcs")!;
-        Assert.True(procedures.ContainsKey("b"));
-        Assert.False(procedures.ContainsKey("a"));
-    }
-
-    [Fact]
-    public void GlyphProcedureStaysWhileTheCharacterIsShownElsewhere()
-    {
-        using var document = Glyphs("(a) Tj 200 0 Td (a) Tj");
-        var result = Redact(document);
-        using var output = RedactionKit.Open(result);
-        var font = output.ObjectNumbers.Select(output.Get).OfType<PdfDictionary>().Single(d => output.Name(d, "Subtype") == "Type3");
-        Assert.True(output.Dict(font, "CharProcs")!.ContainsKey("a"));
-        Assert.True(RedactionKit.Holds(result.Bytes, "ZQXPIXELSDATA"));
+        RedactionKit.AssertFlattened(document, [RedactionMark.FromRect(0, Under)], "ZQXPIXELSDATA");
     }
 
     [Fact]
