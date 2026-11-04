@@ -1,0 +1,363 @@
+using LazyPDF.App.Tools.Forms;
+using LazyPDF.Core;
+using Xunit;
+
+namespace LazyPDF.App.Tests;
+
+// What the Forms panel changes in a tab, against real Core calls: one undoable step each, and Core's refusals.
+public sealed class FormEditsTests
+{
+    private static readonly FakeFonts Fonts = new();
+
+    [Fact]
+    public void FillingAFieldIsOneUndoableStep()
+    {
+        using var tab = FormPdfs.Tab();
+        int raised = 0;
+        tab.Changed += (_, _) => raised++;
+
+        var result = FormEdits.Apply(tab, Fonts, "Fill form field", form => form.SetValue("name", "Ada"));
+
+        Assert.Equal(1, result.Filled);
+        Assert.Equal(1, raised);
+        Assert.Equal("Fill form field", tab.Session.UndoLabel);
+        Assert.Equal("Ada", FormPdfs.Read(tab).Find("name")!.Value);
+        tab.Undo();
+        Assert.Null(FormPdfs.Read(tab).Find("name")!.Value);
+    }
+
+    [Fact]
+    public void TextIsCutAtTheLongestTheFieldTakes()
+    {
+        using var tab = FormPdfs.Tab();
+
+        FormEdits.Apply(tab, Fonts, "Fill form field", form => form.SetValue("code", "123456"));
+
+        Assert.Equal("1234", FormPdfs.Read(tab).Find("code")!.Value);
+    }
+
+    [Fact]
+    public void ARadioButtonTurnsTheWholeGroup()
+    {
+        using var tab = FormPdfs.Tab();
+        var second = FormPdfs.Read(tab).Find("plan")!.Widgets[1];
+
+        FormEdits.Apply(tab, Fonts, "Fill form field", form => form.SetValue("plan", second.Export));
+
+        var plan = FormPdfs.Read(tab).Find("plan")!;
+        Assert.False(plan.Widgets[0].IsOn);
+        Assert.True(plan.Widgets[1].IsOn);
+    }
+
+    [Fact]
+    public void AListTakesSeveralChoices()
+    {
+        using var tab = FormPdfs.Tab();
+
+        FormEdits.Apply(tab, Fonts, "Fill form field", form => form.SetChoices("langs", ["English", "German"]));
+
+        Assert.Equal(["English", "German"], FormPdfs.Read(tab).Find("langs")!.Selected);
+    }
+
+    [Fact]
+    public void ARequiredFieldReadsAsRequired()
+    {
+        using var tab = FormPdfs.Tab();
+
+        Assert.True(FormPdfs.Read(tab).Find("name")!.Has(FieldFlags.Required));
+        Assert.False(FormPdfs.Read(tab).Find("code")!.Has(FieldFlags.Required));
+    }
+
+    [Fact]
+    public async Task AnEditOffTheUiThreadIsCommittedOnceDone()
+    {
+        using var tab = FormPdfs.Tab();
+        FormEdits.Apply(tab, Fonts, "Fill form field", form => form.SetValue("name", "Ada"));
+
+        int reset = await FormEdits.ApplyAsync(tab, Fonts, "Reset form", form => form.Reset());
+
+        Assert.True(reset > 0);
+        Assert.Equal("Reset form", tab.Session.UndoLabel);
+        Assert.Null(FormPdfs.Read(tab).Find("name")!.Value);
+    }
+
+    [Fact]
+    public void FlatteningTakesTheFieldsOut()
+    {
+        using var tab = FormPdfs.Tab();
+        FormEdits.Apply(tab, Fonts, "Fill form field", form => form.SetValue("name", "Ada"));
+
+        int burned = FormEdits.Apply(tab, Fonts, "Flatten form", form => form.Flatten());
+
+        Assert.Equal(7, burned);
+        Assert.Empty(FormPdfs.Read(tab).Fields);
+        tab.Undo();
+        Assert.Equal(6, FormPdfs.Read(tab).Fields.Count);
+    }
+
+    [Fact]
+    public void ANewFieldGetsAFreeName()
+    {
+        using var tab = FormPdfs.Tab();
+        var form = FormPdfs.Read(tab);
+
+        Assert.Equal("Text1", FormEdits.NewName(form, FieldKind.Text));
+        FormEdits.Add(form, FieldKind.Text, 0, new PdfRect(10, 10, 100, 30), null);
+        Assert.Equal("Text2", FormEdits.NewName(FormPdfs.Read(tab), FieldKind.Text));
+    }
+
+    [Fact]
+    public void ADrawnFieldIsAddedAsOneStep()
+    {
+        using var tab = FormPdfs.Tab();
+
+        var (name, widget) = FormEdits.Apply(tab, Fonts, "Add form field", form => FormEdits.Add(form, FieldKind.CheckBox, 1, new PdfRect(20, 20, 34, 34), null));
+
+        var field = FormPdfs.Read(tab).Find(name)!;
+        Assert.Equal(0, widget);
+        Assert.Equal(FieldKind.CheckBox, field.Kind);
+        Assert.Equal(1, field.Widgets[0].PageIndex);
+        tab.Undo();
+        Assert.Null(FormPdfs.Read(tab).Find(name));
+    }
+
+    [Fact]
+    public void ARadioButtonDrawnWhileAGroupIsSelectedJoinsIt()
+    {
+        using var tab = FormPdfs.Tab();
+
+        var (name, widget) = FormEdits.Apply(tab, Fonts, "Add form field",
+            form => FormEdits.Add(form, FieldKind.Radio, 0, new PdfRect(200, 550, 214, 564), form.Find("plan")));
+
+        Assert.Equal("plan", name);
+        Assert.Equal(2, widget);
+        Assert.Equal(3, FormPdfs.Read(tab).Find("plan")!.Widgets.Count);
+    }
+
+    [Fact]
+    public void ARadioButtonDrawnAloneStartsAGroup()
+    {
+        using var tab = FormPdfs.Tab();
+
+        var (name, _) = FormEdits.Apply(tab, Fonts, "Add form field", form => FormEdits.Add(form, FieldKind.Radio, 0, new PdfRect(200, 500, 214, 514), null));
+
+        Assert.Equal("Radio1", name);
+    }
+
+    [Fact]
+    public void MovingAndResizingAWidgetKeepsItsField()
+    {
+        using var tab = FormPdfs.Tab();
+        var rect = new PdfRect(70, 650, 400, 700);
+
+        FormEdits.Apply(tab, Fonts, "Move form field", form => { form.Resize(form.Find("code")!.Widgets[0], rect); return true; });
+
+        Assert.Equal(rect, FormPdfs.Read(tab).Find("code")!.Widgets[0].Rect);
+    }
+
+    [Fact]
+    public void ATakenNameIsRefusedWithCoresSentenceAndNothingIsCommitted()
+    {
+        using var tab = FormPdfs.Tab();
+
+        var error = Assert.Throws<InvalidOperationException>(() =>
+            FormEdits.Apply(tab, Fonts, "Rename field", form => { form.Rename(form.Find("code")!, "name"); return true; }));
+
+        Assert.Equal(FormText.NameTaken("name"), error.Message);
+        Assert.Equal(FormText.NameTaken("name"), FormEdits.ProblemOf(error).Text);
+        Assert.False(tab.Session.CanUndo);
+    }
+
+    [Fact]
+    public void AFlagAndTheOptionsAreChangedThroughCore()
+    {
+        using var tab = FormPdfs.Tab();
+
+        FormEdits.Apply(tab, Fonts, "Change choices", form =>
+        {
+            form.SetFlag(form.Find("code")!, FieldFlags.Required, true);
+            form.SetOptions(form.Find("city")!, FormEdits.ParseOptions("Ankara\nIZ=Izmir\n\n Bursa "));
+            return true;
+        });
+
+        var read = FormPdfs.Read(tab);
+        Assert.True(read.Find("code")!.Has(FieldFlags.Required));
+        Assert.Equal([new FieldOption("Ankara"), new FieldOption("IZ", "Izmir"), new FieldOption("Bursa")], read.Find("city")!.Options);
+    }
+
+    [Fact]
+    public void OptionsWriteBackAsTheyWereTyped()
+    {
+        var options = FormEdits.ParseOptions("Ankara\r\nIZ=Izmir");
+
+        Assert.Equal("Ankara\r\nIZ=Izmir", FormEdits.FormatOptions(options));
+    }
+
+    [Fact]
+    public void RemovingOneRadioButtonLeavesTheGroup()
+    {
+        using var tab = FormPdfs.Tab();
+
+        FormEdits.Apply(tab, Fonts, "Delete form field", form => { form.Remove(form.Find("plan")!.Widgets[1]); return true; });
+
+        Assert.Single(FormPdfs.Read(tab).Find("plan")!.Widgets);
+    }
+
+    [Fact]
+    public void TheTabOrderOfAPageIsSetAndRead()
+    {
+        using var tab = FormPdfs.Tab();
+
+        FormEdits.Apply(tab, Fonts, "Change tab order", form => { form.SetTabOrder(0, TabOrder.Row); return true; });
+
+        Assert.Equal(TabOrder.Row, FormPdfs.Read(tab).GetTabOrder(0));
+    }
+
+    [Fact]
+    public void FillingAStaticXfaFormRemovesTheXfaData()
+    {
+        using var tab = FormPdfs.Tab(FormPdfs.StaticXfa());
+        Assert.Equal(XfaKind.Static, FormPdfs.Read(tab).Xfa);
+
+        FormEdits.Apply(tab, Fonts, "Fill form field", form => form.SetValue("name", "Ada"));
+
+        Assert.Equal(XfaKind.None, FormPdfs.Read(tab).Xfa);
+    }
+
+    [Fact]
+    public void ADynamicXfaFormCannotBeFilledAndSaysWhy()
+    {
+        using var tab = FormPdfs.Tab(FormPdfs.DynamicXfa());
+        Assert.Equal(XfaKind.Dynamic, FormPdfs.Read(tab).Xfa);
+
+        var error = Assert.Throws<PdfReadException>(() => FormEdits.Apply(tab, Fonts, "Fill form field", form => form.SetValue("name", "Ada")));
+
+        Assert.Equal(FormText.DynamicXfa, FormEdits.ProblemOf(error).Text);
+    }
+
+    [Fact]
+    public void DetectingReadsACopyAndLeavesTheTabAlone()
+    {
+        var bytes = PdfFromText.Create("Name: ______________________\nCity: ______________________", Fonts).Bytes;
+        using var tab = FormPdfs.Tab(bytes);
+
+        var found = FormEdits.Detect(tab);
+
+        Assert.False(tab.IsDirty);
+        Assert.NotEmpty(found);
+        Assert.All(found, p => Assert.Equal(0, p.PageIndex));
+    }
+
+    [Fact]
+    public void ARefusedEditLeavesNothingPendingInTheDocument()
+    {
+        using var tab = FormPdfs.Tab();
+
+        Assert.Throws<InvalidOperationException>(() => FormEdits.Apply(tab, Fonts, "Rename field", form =>
+        {
+            form.SetFlag(form.Find("code")!, FieldFlags.Required, true);
+            form.Rename(form.Find("code")!, "name");
+            return true;
+        }));
+
+        Assert.False(tab.IsDirty);
+        Assert.False(FormPdfs.Read(tab).Find("code")!.Has(FieldFlags.Required));
+        FormEdits.Apply(tab, Fonts, "Fill form field", form => form.SetValue("name", "Ada"));
+        tab.Undo();
+        Assert.False(FormPdfs.Read(tab).Find("code")!.Has(FieldFlags.Required));
+    }
+
+    [Fact]
+    public async Task AnEditCancelledWhileItRanIsNotCommitted()
+    {
+        using var tab = FormPdfs.Tab();
+        using var source = new CancellationTokenSource();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => FormEdits.ApplyAsync(tab, Fonts, "Reset form", form =>
+        {
+            form.SetValue("name", "Ada");
+            source.Cancel();
+            return 1;
+        }, source.Token));
+
+        Assert.False(tab.IsDirty);
+        Assert.Null(FormPdfs.Read(tab).Find("name")!.Value);
+    }
+
+    [Fact]
+    public async Task AnEditWhoseDocumentWasReplacedMeanwhileSaysSoAndKeepsTheNewOne()
+    {
+        using var tab = FormPdfs.Tab();
+        FormEdits.Apply(tab, Fonts, "Fill form field", form => form.SetValue("name", "Ada"));
+
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => FormEdits.ApplyAsync(tab, Fonts, "Reset form", form =>
+        {
+            tab.Session.Undo();
+            return form.Reset();
+        }));
+
+        Assert.Equal(Loc.T("The file changed meanwhile. Run it again."), error.Message);
+        Assert.False(tab.Session.CanUndo);
+        Assert.False(tab.IsDirty);
+    }
+
+    [Fact]
+    public void AFieldDrawnOnATurnedPageIsTurnedWithIt()
+    {
+        using var tab = FormPdfs.Tab(FormPdfs.Turned());
+
+        var (name, _) = FormEdits.Apply(tab, Fonts, "Add form field", form => FormEdits.Add(form, FieldKind.Text, 0, new PdfRect(300, 100, 320, 250), null));
+
+        var mk = (PdfDictionary)tab.Document.Resolve(FormPdfs.Read(tab).Find(name)!.Widgets[0].Dictionary["MK"])!;
+        Assert.Equal(90, tab.Document.Integer(mk, "R"));
+    }
+
+    [Fact]
+    public void FoundFieldsTakeFreeNamesInsteadOfFailingHalfWay()
+    {
+        using var tab = FormPdfs.Tab();
+        var found = new[]
+        {
+            new FieldProposal(0, new PdfRect(60, 300, 200, 320), FieldKind.Text, "fresh", null),
+            new FieldProposal(0, new PdfRect(60, 270, 200, 290), FieldKind.Text, "name", null),
+            new FieldProposal(0, new PdfRect(60, 240, 200, 260), FieldKind.Text, "name.first", null),
+        };
+
+        int added = FormEdits.Apply(tab, Fonts, "Add form fields", form => FormEdits.AddFound(form, found));
+
+        var form = FormPdfs.Read(tab);
+        Assert.Equal(3, added);
+        Assert.NotNull(form.Find("fresh"));
+        Assert.NotNull(form.Find("name_2"));
+        Assert.NotNull(form.Find("name_first"));
+    }
+
+    [Fact]
+    public void AButtonCaptionIsSetAndReadBack()
+    {
+        using var tab = FormPdfs.Tab();
+        FormEdits.Apply(tab, Fonts, "Add form field", form => FormEdits.Add(form, FieldKind.PushButton, 0, new PdfRect(60, 300, 160, 324), null));
+
+        FormEdits.Apply(tab, Fonts, "Change button caption", form => { FormEdits.SetCaption(form, form.Find("Button1")!, "Submit"); return true; });
+
+        var form = FormPdfs.Read(tab);
+        Assert.Equal("Submit", FormEdits.CaptionOf(form, form.Find("Button1")!));
+    }
+
+    [Fact]
+    public void ChangingFieldsNeedsPermissionToModifyTheFile()
+    {
+        using var tab = FormPdfs.Tab();
+
+        Assert.True(FormEdits.CanModify(tab.Document));
+    }
+
+    [Fact]
+    public void AFormWithoutFieldsReadsAsEmpty()
+    {
+        using var tab = FormPdfs.Tab(Pdfs.Text());
+
+        Assert.Empty(FormPdfs.Read(tab).Fields);
+        Assert.Equal(XfaKind.None, FormPdfs.Read(tab).Xfa);
+    }
+}

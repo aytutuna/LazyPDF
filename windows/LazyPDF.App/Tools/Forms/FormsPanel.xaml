@@ -1,0 +1,126 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Forms.FormsPanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:forms="clr-namespace:LazyPDF.App.Tools.Forms">
+    <StackPanel Margin="12,4,12,12">
+        <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,0,0,12">
+            <UniformGrid Rows="1">
+                <RadioButton x:Name="FillMode" Style="{StaticResource SegmentedTextItemStyle}" GroupName="FormsMode" Content="{loc:T Fill in}"
+                             AutomationProperties.Name="{loc:T Fill in the form}" Checked="Mode_Checked" />
+                <RadioButton x:Name="DesignMode" Style="{StaticResource SegmentedTextItemStyle}" GroupName="FormsMode" Content="{loc:T Edit fields}"
+                             AutomationProperties.Name="{loc:T Edit the fields}" Checked="Mode_Checked" />
+            </UniformGrid>
+        </Border>
+
+        <TextBlock x:Name="Summary" Style="{StaticResource BodyText}" TextWrapping="Wrap" />
+        <Grid x:Name="Note" Margin="0,8,0,0" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="NoteGlyph" Style="{StaticResource ReasonGlyph}" Text="&#xE946;" />
+            <TextBlock x:Name="NoteText" Grid.Column="1" Style="{StaticResource ReasonText}" />
+        </Grid>
+
+        <StackPanel x:Name="FieldsPane" Margin="0,12,0,0">
+            <TextBlock Text="{loc:T Fields}" Style="{StaticResource FieldLabelText}" />
+            <ListBox x:Name="FieldList" MaxHeight="160" SelectionChanged="FieldList_SelectionChanged" AutomationProperties.Name="{loc:T Fields}">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Summary}" />
+                        <Setter Property="MinHeight" Value="0" />
+                        <Setter Property="Padding" Value="8,3" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type forms:FieldRow}">
+                        <StackPanel Margin="0,2">
+                            <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Detail}" Style="{StaticResource CaptionText}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </StackPanel>
+
+        <StackPanel x:Name="FillPane" Margin="0,12,0,0">
+            <CheckBox x:Name="HighlightToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Highlight fields}" IsChecked="True"
+                      AutomationProperties.Name="{loc:T Highlight fields}" Click="Highlight_Click" />
+            <TextBlock Style="{StaticResource ReasonText}" Margin="0,6,0,12" Text="{loc:T A red outline marks a required field that is empty.}" />
+            <Button x:Name="ResetButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE777;" HorizontalAlignment="Left"
+                    Content="{loc:T Reset form}" AutomationProperties.Name="{loc:T Reset form}" Click="Reset_Click" />
+        </StackPanel>
+
+        <StackPanel x:Name="DesignPane" Margin="0,12,0,0" Visibility="Collapsed">
+            <TextBlock Text="{loc:T New field}" Style="{StaticResource FieldLabelText}" />
+            <ComboBox x:Name="KindBox" HorizontalAlignment="Stretch" SelectionChanged="KindBox_SelectionChanged" AutomationProperties.Name="{loc:T New field}" />
+            <TextBlock x:Name="DrawHint" Style="{StaticResource ReasonText}" Margin="0,6,0,12" Text="{loc:T Drag on the page to draw a field. Click a field to change it.}" />
+
+            <Border x:Name="Card" Style="{StaticResource CardStyle}" Margin="0,0,0,12" Visibility="Collapsed">
+                <StackPanel>
+                    <TextBlock Text="{loc:T Name}" Style="{StaticResource FieldLabelText}" />
+                    <TextBox x:Name="NameBox" LostFocus="Property_LostFocus" KeyDown="Property_KeyDown" AutomationProperties.Name="{loc:T Field name}" />
+                    <TextBlock Text="{loc:T Hint}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" />
+                    <TextBox x:Name="HintBox" LostFocus="Property_LostFocus" KeyDown="Property_KeyDown" AutomationProperties.Name="{loc:T Field hint}" />
+                    <CheckBox x:Name="RequiredBox" Content="{loc:T Required}" Margin="0,8,0,0" Click="Flag_Click" AutomationProperties.Name="{loc:T Required}" />
+                    <CheckBox x:Name="ReadOnlyBox" Content="{loc:T Read only}" Click="Flag_Click" AutomationProperties.Name="{loc:T Read only}" />
+                    <CheckBox x:Name="MultilineBox" Content="{loc:T Several lines}" Click="Flag_Click" AutomationProperties.Name="{loc:T Several lines}" />
+                    <CheckBox x:Name="SecretBox" Content="{loc:T Hide the text}" Click="Flag_Click" AutomationProperties.Name="{loc:T Hide the text}" />
+                    <CheckBox x:Name="MultiSelectBox" Content="{loc:T Several choices}" Click="Flag_Click" AutomationProperties.Name="{loc:T Several choices}" />
+                    <CheckBox x:Name="EditableBox" Content="{loc:T Typing allowed}" Click="Flag_Click" AutomationProperties.Name="{loc:T Typing allowed}" />
+                    <StackPanel x:Name="CaptionRow">
+                        <TextBlock Text="{loc:T Caption}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" />
+                        <TextBox x:Name="CaptionBox" LostFocus="Property_LostFocus" KeyDown="Property_KeyDown" AutomationProperties.Name="{loc:T Button caption}" />
+                    </StackPanel>
+                    <StackPanel x:Name="LengthRow">
+                        <TextBlock Text="{loc:T Longest text}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" />
+                        <TextBox x:Name="LengthBox" LostFocus="Property_LostFocus" KeyDown="Property_KeyDown" AutomationProperties.Name="{loc:T Longest text}" />
+                    </StackPanel>
+                    <StackPanel x:Name="ChoiceRow">
+                        <TextBlock Text="{loc:T Choices}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" />
+                        <TextBox x:Name="ChoiceBox" AcceptsReturn="True" MinHeight="64" MaxHeight="120" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto"
+                                 LostFocus="Property_LostFocus" AutomationProperties.Name="{loc:T Choices}" />
+                        <TextBlock Style="{StaticResource ReasonText}" Margin="0,4,0,0" Text="{loc:T One choice per line.}" />
+                    </StackPanel>
+                    <StackPanel x:Name="StartRow">
+                        <TextBlock Text="{loc:T Starting value}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" />
+                        <TextBox x:Name="StartBox" LostFocus="Property_LostFocus" KeyDown="Property_KeyDown" AutomationProperties.Name="{loc:T Starting value}" />
+                    </StackPanel>
+                    <Button x:Name="DeleteButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE74D;" HorizontalAlignment="Left" Margin="0,12,0,0"
+                            Content="{loc:T Delete field}" AutomationProperties.Name="{loc:T Delete field}" Click="Delete_Click" />
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="{loc:T Tab order on this page}" Style="{StaticResource FieldLabelText}" />
+            <ComboBox x:Name="TabBox" HorizontalAlignment="Stretch" SelectionChanged="TabBox_SelectionChanged" AutomationProperties.Name="{loc:T Tab order on this page}" />
+
+            <Button x:Name="FindButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE721;" HorizontalAlignment="Left" Margin="0,12,0,0"
+                    Content="{loc:T Find fields}" AutomationProperties.Name="{loc:T Find fields in the file}" Click="Find_Click" />
+            <StackPanel x:Name="FoundPane" Visibility="Collapsed">
+                <TextBlock x:Name="FoundText" Style="{StaticResource ReasonText}" Margin="0,6,0,4" />
+                <ListBox x:Name="FoundList" MaxHeight="150" AutomationProperties.Name="{loc:T Fields found}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type forms:FoundRow}">
+                            <CheckBox IsChecked="{Binding IsChecked}" Content="{Binding Text}" Margin="0,2" Click="Found_Click" AutomationProperties.Name="{Binding Text}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <Button x:Name="AddFoundButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE710;" HorizontalAlignment="Left" Margin="0,8,0,0"
+                        Content="{loc:T Add checked fields}" AutomationProperties.Name="{loc:T Add checked fields}" Click="AddFound_Click" />
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel x:Name="DataPane" Margin="0,16,0,0">
+            <TextBlock Text="{loc:T Form data}" Style="{StaticResource FieldLabelText}" />
+            <UniformGrid Rows="1">
+                <Button x:Name="ImportButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE896;" Margin="0,0,4,0"
+                        Content="{loc:T Import}" AutomationProperties.Name="{loc:T Import form data}" Click="Import_Click" />
+                <Button x:Name="ExportButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE898;" Margin="4,0,0,0"
+                        Content="{loc:T Export}" AutomationProperties.Name="{loc:T Export form data}" Click="Export_Click" />
+            </UniformGrid>
+            <TextBlock Style="{StaticResource ReasonText}" Margin="0,6,0,0" Text="{loc:T FDF\, XFDF\, CSV and JSON files.}" />
+        </StackPanel>
+    </StackPanel>
+</tools:ToolPanel>
