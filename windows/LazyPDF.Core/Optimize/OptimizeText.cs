@@ -53,11 +53,13 @@ public static class OptimizeText
         SanitizeItem.SearchIndexes => "Search and web capture data",
         SanitizeItem.ExternalLinks => "Links to the outside",
         SanitizeItem.FilePaths => "File names and paths",
+        SanitizeItem.Signatures => "Digital signatures",
         _ => item.ToString(),
     };
 
     public const string NeedsCodec = "Images in JPEG and JPEG 2000 need the system codec and were left.";
     public const string LeftColor = "Shadings, spot colours and patterns were left in colour.";
     public const string LeftPartialFonts = "Fonts with uses that could not be traced were left whole.";
+    public const string LeftPartialImages = "Images with uses that could not be traced were left at their size.";
     public const string LeftMixedText = "Invisible text in a text object that also shows visible text was left.";
 }

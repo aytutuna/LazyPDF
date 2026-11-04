@@ -24,13 +24,14 @@ internal static class OptimizeKit
         StripThumbnails = false, StripPieceInfo = false, PruneResources = false,
     };
 
-    /// <summary>A one-page file (200 by 200); the content is object 4 and <paramref name="more"/> adds objects from 5 on.</summary>
-    public static byte[] Build(string content, string resources = "", Action<TestPdf>? more = null, string pageExtra = "", string catalogExtra = "")
+    /// <summary>A one-page file (200 by 200); the content is object 4 and <paramref name="more"/> adds objects from 5 on. With <paramref name="shared"/> the resources are object 12.</summary>
+    public static byte[] Build(string content, string resources = "", Action<TestPdf>? more = null, string pageExtra = "", string catalogExtra = "", string contents = "4 0 R", bool shared = false)
     {
         var pdf = new TestPdf();
         pdf.Obj(1, $"<</Type /Catalog /Pages 2 0 R {catalogExtra}>>");
         pdf.Obj(2, "<</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 200 200]>>");
-        pdf.Obj(3, $"<</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <<{resources}>> {pageExtra}>>");
+        pdf.Obj(3, $"<</Type /Page /Parent 2 0 R /Contents {contents} /Resources {(shared ? "12 0 R" : $"<<{resources}>>")} {pageExtra}>>");
+        if (shared) pdf.Obj(12, $"<<{resources}>>");
         pdf.Stream(4, "", content);
         more?.Invoke(pdf);
         return pdf.Finish();

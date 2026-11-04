@@ -65,7 +65,7 @@ public class OptimizeGrayTests
         var form = (PdfStream)document.Resolve(document.Dict(document.Pages[0].Resources, "XObject")!["Fm0"])!;
         var operations = ContentParser.Parse(document.Data(form));
         Assert.All(operations.Where(o => o.Operator is "sc" or "g"), o => Assert.Single(o.Operands));
-        Assert.Contains(operations, o => o.Operator == "sc" && Math.Abs(o.Number(0)!.Value - 0.587) < 0.001);
+        Assert.Contains(operations, o => o.Operator == "g" && Math.Abs(o.Number(0)!.Value - 0.587) < 0.001);
         Assert.Equal(2, result.Steps.Single(s => s.Kind == OptimizeStepKind.Grayscale).Count);
     }
 
@@ -138,5 +138,86 @@ public class OptimizeGrayTests
             pdf.Obj(5, "<</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>"));
         var result = Run(file);
         Assert.Equal("red words", OptimizeKit.PigText(result.Bytes).Trim());
+    }
+
+    private static IReadOnlyList<ContentOperation> Operators(PdfDocument document, PdfStream stream) => ContentParser.Parse(document.Data(stream));
+
+    [Fact]
+    public void AnIndexedImagesMatteIsLookedUpInThePalette()
+    {
+        const string dictionary = "/Type /XObject /Subtype /Image /Width 8 /Height 8 /BitsPerComponent 8 /Filter /FlateDecode";
+        byte[] file = OptimizeKit.Build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf =>
+        {
+            pdf.Stream(5, dictionary + " /ColorSpace [/Indexed /DeviceRGB 1 <FFFFFF000000>] /SMask 6 0 R", TestPdf.Deflate(new byte[64]));
+            pdf.Stream(6, dictionary + " /ColorSpace /DeviceGray /Matte [1]", TestPdf.Deflate(OptimizeKit.Gradient(8, 8, 1)));
+        });
+        using var after = PdfDocument.Open(Run(file).Bytes);
+
+        var matte = after.Array(after.Stream(OptimizeKit.Image(after).Dictionary, "SMask")!.Dictionary, "Matte")!;
+        Assert.Equal(0, ((PdfNumber)matte.Items.Single()).Value);
+    }
+
+    [Fact]
+    public void ColourInASpaceThatCannotBeLookedUpStaysAndIsReported()
+    {
+        byte[] file = OptimizeKit.Build("/Fm0 Do", "/XObject <</Fm0 5 0 R>>", pdf =>
+            pdf.Stream(5, "/Type /XObject /Subtype /Form /BBox [0 0 100 100]", "/Cs1 cs 1 0 0 sc 0 0 5 5 re f"));
+        var result = Run(file);
+
+        Assert.Contains(OptimizeText.LeftColor, result.Notes);
+    }
+
+    [Fact]
+    public void AColourSpaceNamedInOneStreamAndSetInTheNextIsLeftAlone()
+    {
+        byte[] file = OptimizeKit.Build("/DeviceRGB cs 1 0 0", contents: "[4 0 R 5 0 R]", more: pdf => pdf.Stream(5, "", "sc 0 0 5 5 re f"));
+        var result = Run(file);
+
+        using var document = PdfDocument.Open(result.Bytes);
+        var all = ContentParser.Parse(document.Pages[0].Contents());
+        Assert.Equal("DeviceRGB", ((PdfName)all.Single(o => o.Operator == "cs").Operands[0]).Value);
+        Assert.Equal(3, all.Single(o => o.Operator == "sc").Operands.Count);
+        Assert.Contains(OptimizeText.LeftColor, result.Notes);
+    }
+
+    [Fact]
+    public void AFormInheritingALabSpaceKeepsItsOperands()
+    {
+        byte[] file = OptimizeKit.Build("/L cs /Fm0 Do", "/ColorSpace <</L [/Lab <</WhitePoint [0.95 1 1.09]>>]>> /XObject <</Fm0 5 0 R>>", pdf =>
+            pdf.Stream(5, "/Type /XObject /Subtype /Form /BBox [0 0 100 100]", "50 20 30 sc 0 0 5 5 re f"));
+        var result = Run(file);
+
+        using var document = PdfDocument.Open(result.Bytes);
+        var form = (PdfStream)document.Resolve(document.Dict(document.Pages[0].Resources, "XObject")!["Fm0"])!;
+        Assert.Equal(3, Operators(document, form).Single(o => o.Operator == "sc").Operands.Count);
+    }
+
+    [Fact]
+    public void EveryInheritedColourInAFormIsConverted()
+    {
+        byte[] file = OptimizeKit.Build("/Fm0 Do", "/XObject <</Fm0 5 0 R>>", pdf =>
+            pdf.Stream(5, "/Type /XObject /Subtype /Form /BBox [0 0 100 100]", "1 0 0 sc 0 0 5 5 re f 0 1 0 sc 5 5 5 5 re f"));
+        var result = Run(file);
+
+        using var document = PdfDocument.Open(result.Bytes);
+        var form = (PdfStream)document.Resolve(document.Dict(document.Pages[0].Resources, "XObject")!["Fm0"])!;
+        Assert.All(Operators(document, form).Where(o => o.Operator is "sc" or "g"), o => Assert.Single(o.Operands));
+    }
+
+    [Fact]
+    public void AnRgbCallerAndALabSomewhereElseStillAgreeWithTheForm()
+    {
+        const string resources = "/ColorSpace <</Cs0 [/ICCBased 6 0 R] /L [/Lab <</WhitePoint [0.95 1 1.09]>>]>> /XObject <</Fm0 5 0 R>>";
+        byte[] file = OptimizeKit.Build("/Cs0 cs /Fm0 Do", resources, pdf =>
+        {
+            pdf.Stream(5, "/Type /XObject /Subtype /Form /BBox [0 0 100 100]", "0.2 0.4 0.6 sc 0 0 5 5 re f");
+            pdf.Stream(6, "/N 3", "profile");
+        });
+        var result = Run(file);
+
+        using var document = PdfDocument.Open(result.Bytes);
+        var form = (PdfStream)document.Resolve(document.Dict(document.Pages[0].Resources, "XObject")!["Fm0"])!;
+        Assert.Equal("DeviceGray", ((PdfName)ContentParser.Parse(document.Pages[0].Contents()).Single(o => o.Operator == "cs").Operands[0]).Value);
+        Assert.Single(Operators(document, form).Single(o => o.Operator is "sc" or "g").Operands);
     }
 }

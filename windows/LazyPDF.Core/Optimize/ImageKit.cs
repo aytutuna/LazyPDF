@@ -43,7 +43,7 @@ internal static class ImageKit
     {
         int perRow = width * components;
         var result = new byte[(long)perRow * height];
-        int rowBytes = (perRow * bpc + 7) / 8;
+        long rowBytes = ((long)perRow * bpc + 7) / 8;
         for (int y = 0; y < height; y++)
         {
             long from = (long)y * rowBytes;
@@ -112,29 +112,25 @@ internal sealed class Placement
     public double DpiX = double.MaxValue, DpiY = double.MaxValue;
 }
 
-// Where each image is painted and how big: the real resolution is pixels over the placed size.
-internal sealed class PlacedImages : ContentVisitor
+// Where each image is painted and how big: the real resolution is pixels over the placed size,
+// which is the matrix scale times the page's /UserUnit points.
+internal sealed class PlacedImages : OptimizeWalk
 {
-    private readonly Dictionary<PdfStream, Placement> _found = new(ReferenceEqualityComparer.Instance);
+    public readonly Dictionary<PdfStream, Placement> Found = new(ReferenceEqualityComparer.Instance);
 
-    public static Dictionary<PdfStream, Placement> Measure(PdfDocument document)
+    public static PlacedImages Measure(PdfDocument document)
     {
         var visitor = new PlacedImages();
-        var interpreter = new ContentInterpreter(document);
-        foreach (var page in document.Pages)
-        {
-            interpreter.Run(page, visitor);
-            foreach (var (form, matrix) in PageAppearances.Of(document, page)) interpreter.Run(form, visitor, matrix);
-        }
-        return visitor._found;
+        visitor.Walk(document);
+        return visitor;
     }
 
     public override void PaintImage(ContentContext context, ImageInfo image)
     {
         if (image.Stream is not { } stream || image.IsMask) return;
-        double across = double.Hypot(image.Matrix.A, image.Matrix.B), down = double.Hypot(image.Matrix.C, image.Matrix.D);
+        double across = double.Hypot(image.Matrix.A, image.Matrix.B) * UserUnit, down = double.Hypot(image.Matrix.C, image.Matrix.D) * UserUnit;
         if (across < 1e-6 || down < 1e-6) return;
-        if (!_found.TryGetValue(stream, out var placement)) _found[stream] = placement = new Placement();
+        if (!Found.TryGetValue(stream, out var placement)) Found[stream] = placement = new Placement();
         placement.DpiX = Math.Min(placement.DpiX, image.Width * 72 / across);
         placement.DpiY = Math.Min(placement.DpiY, image.Height * 72 / down);
     }

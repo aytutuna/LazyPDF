@@ -1,15 +1,16 @@
 namespace LazyPDF.Core;
 
-// Text a reader cannot see: white on a page that is blank under it, or covered by a picture
-// painted later (reported only), and text in render mode 3, which may be an OCR layer and goes
+// Text a reader cannot see: white on a page that is blank under it, covered by a picture painted
+// later, fully transparent, too small to read or outside the page or the clip (reported only), and text in render mode 3, which may be an OCR layer and goes
 // only on request.
 internal sealed class SanitizeText(PdfDocument document)
 {
     private const int MaxGlyphs = 100_000;
     private const int MaxPaints = 20_000;
     private const byte Light = 247;
+    private const double Legible = 1;
 
-    private readonly record struct Glyph(object Run, PdfRect Bounds, bool White, int Mode, int Order);
+    private readonly record struct Glyph(object Run, PdfRect Bounds, bool White, bool Unseen, int Mode, int Order);
 
     private readonly record struct Paint(PdfRect Bounds, bool Light, bool Image, int Order);
 
@@ -23,10 +24,16 @@ internal sealed class SanitizeText(PdfDocument document)
         {
             if (Glyphs.Count >= MaxGlyphs) return;
             var state = context.State;
-            var color = state.RenderMode == 1 ? state.StrokeColor : state.FillColor;
+            int paint = state.RenderMode & 3;
+            var color = paint == 1 ? state.StrokeColor : state.FillColor;
             var rgb = color.Rgb;
             bool white = rgb.R >= Light && rgb.G >= Light && rgb.B >= Light;
-            Glyphs.Add(new Glyph((context.Forms.Count == 0 ? null : context.Forms[^1], context.OperatorIndex), glyph.Bounds, white, state.RenderMode, _order++));
+            double alpha = paint == 1 ? state.StrokeAlpha : paint == 2 ? Math.Max(state.FillAlpha, state.StrokeAlpha) : state.FillAlpha;
+            var box = glyph.Bounds;
+            var clip = state.Clip;
+            bool unseen = alpha <= 0 || Math.Max(box.Width, box.Height) < Legible
+                || box.Right < clip.Left || box.Left > clip.Right || box.Top < clip.Bottom || box.Bottom > clip.Top;
+            Glyphs.Add(new Glyph((context.Forms.Count == 0 ? null : context.Forms[^1], context.OperatorIndex), box, white, unseen, state.RenderMode, _order++));
         }
 
         public override void PaintPath(ContentContext context, PathInfo path)
@@ -52,6 +59,7 @@ internal sealed class SanitizeText(PdfDocument document)
     {
         var hidden = new HashSet<object>();
         var invisible = new HashSet<object>();
+        var shown = new HashSet<object>();
         var interpreter = new ContentInterpreter(document);
         foreach (var page in document.Pages)
         {
@@ -66,11 +74,18 @@ internal sealed class SanitizeText(PdfDocument document)
                     invisible.Add(key);
                     continue;
                 }
-                if (glyph.Mode is 4 or 5 or 6 or 7 || hidden.Contains(key)) continue;
+                if (glyph.Mode == 7) continue;
+                if (!glyph.Unseen) shown.Add(key);
+                if (hidden.Contains(key)) continue;
                 var center = (X: (glyph.Bounds.Left + glyph.Bounds.Right) / 2, Y: (glyph.Bounds.Bottom + glyph.Bounds.Top) / 2);
                 bool covered = images.Any(p => p.Order > glyph.Order && Holds(p.Bounds, glyph.Bounds));
                 bool blank = !covered && glyph.White && !scan.Paints.Any(p => p.Order < glyph.Order && !p.Light && Contains(p.Bounds, center.X, center.Y));
                 if (covered || blank) hidden.Add(key);
+            }
+            foreach (var glyph in scan.Glyphs)
+            {
+                var key = (page.Index, glyph.Run);
+                if (glyph.Unseen && glyph.Mode != 3 && glyph.Mode != 7 && !shown.Contains(key)) hidden.Add(key);
             }
         }
         return (hidden.Count, invisible.Count);

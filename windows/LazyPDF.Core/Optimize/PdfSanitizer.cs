@@ -3,7 +3,9 @@ namespace LazyPDF.Core;
 /// <summary>
 /// "Clean for sharing". <see cref="Scan"/> lists what the file holds; <see cref="Run"/> writes a new
 /// file without the chosen kinds. The file is always rewritten, so earlier versions and
-/// unreferenced objects go with it, and the document is not changed. Signatures do not survive.
+/// unreferenced objects go with it, and the document is not changed. Signatures do not survive, and
+/// neither do their values, appearances, /DSS and /Perms. The output keeps the encryption of the
+/// input unless <see cref="SanitizeOptions.KeepEncryption"/> is off or a handler is given.
 /// </summary>
 public sealed class PdfSanitizer(PdfDocument document)
 {
@@ -29,7 +31,11 @@ public sealed class PdfSanitizer(PdfDocument document)
         }
         var kept = found.Where(f => !removed.ContainsKey(f.Key)).ToDictionary();
         if (removed.TryGetValue(SanitizeItem.InvisibleText, out int shows) && found[SanitizeItem.InvisibleText] > shows) kept[SanitizeItem.InvisibleText] = found[SanitizeItem.InvisibleText] - shows;
-        byte[] bytes = working.SaveRewrite(new PdfSaveOptions(false, options.Security, options.DocumentId));
+        var security = options.Security ?? (options.KeepEncryption ? document.Security : null);
+        // The keys of the older handlers are made from the first /ID, so a handler taken over from the input keeps the id it was made with.
+        bool inherited = security is not null && ReferenceEquals(security, document.Security);
+        byte[]? id = inherited && security is { Revision: < 5 } ? document.FirstId : options.DocumentId ?? (inherited ? document.FirstId : null);
+        byte[] bytes = working.SaveRewrite(new PdfSaveOptions(false, security, id));
         return new SanitizeResult(bytes, Findings(removed), Findings(kept), document.Length, bytes.Length);
     }
 
@@ -51,14 +57,14 @@ public sealed class PdfSanitizer(PdfDocument document)
         SanitizeItem.SearchIndexes => o.SearchIndexes,
         SanitizeItem.ExternalLinks => o.ExternalLinks,
         SanitizeItem.FilePaths => o.FilePaths,
-        SanitizeItem.PreviousVersions => true,
+        SanitizeItem.PreviousVersions or SanitizeItem.Signatures => true,
         _ => false,
     };
 
     // Counts everything and removes what the options choose; returns the counts and the number of invisible shows taken out.
     private (Dictionary<SanitizeItem, int> Found, int Stripped) Apply(PdfDocument working, SanitizeOptions o)
     {
-        var found = new Dictionary<SanitizeItem, int>();
+        var found = new Dictionary<SanitizeItem, int> { [SanitizeItem.Signatures] = SanitizeSignatures.Strip(working) };
         var text = new SanitizeText(working);
         var (hidden, invisible) = text.Count();
         found[SanitizeItem.HiddenText] = hidden;
@@ -78,7 +84,7 @@ public sealed class PdfSanitizer(PdfDocument document)
         found[SanitizeItem.Thumbnails] = SanitizeData.Thumbnails(working, o.Thumbnails);
         found[SanitizeItem.SearchIndexes] = SanitizeData.SearchIndexes(working, o.SearchIndexes);
         found[SanitizeItem.FilePaths] = SanitizeData.FilePaths(working, o.FilePaths);
-        found[SanitizeItem.PreviousVersions] = Math.Max(0, document.SectionOffsets.Count - (document.IsLinearized ? 2 : 1));
+        found[SanitizeItem.PreviousVersions] = Math.Max(0, document.SectionOffsets.Count - (document.WasLinearized ? 2 : 1));
         return (found, stripped);
     }
 }

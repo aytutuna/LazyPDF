@@ -19,26 +19,30 @@ internal static class SanitizeActions
         bool Wanted(string kind) => kind switch { "JavaScript" => removeScripts, "URI" => removeUri, _ => removeLaunch };
         foreach (var dictionary in PdfGraph.AllDictionaries(document))
         {
-            foreach (string key in new[] { "A", "OpenAction", "PA" })
+            if (dictionary.ContainsKey("OnInstantiate"))
             {
-                if (document.Dict(dictionary, key) is { } action && Kind(document, action) is not null && Filter(document, action, Wanted, count, []))
-                {
-                    dictionary.Remove(key);
-                }
+                count[0]++;
+                if (removeScripts) dictionary.Remove("OnInstantiate");
+            }
+            foreach (string key in new[] { "A", "OpenAction", "PA", "NA" })
+            {
+                if (document.Dict(dictionary, key) is { } action) Filter(document, dictionary, key, action, Wanted, count);
             }
             if (document.Dict(dictionary, "AA") is not { } triggers) continue;
             foreach (var (name, _) in triggers.Entries.ToArray())
             {
-                if (document.Dict(triggers, name) is { } action && Kind(document, action) is not null && Filter(document, action, Wanted, count, [])) triggers.Remove(name);
+                if (document.Dict(triggers, name) is { } action) Filter(document, triggers, name, action, Wanted, count);
             }
             if (triggers.Count == 0) dictionary.Remove("AA");
         }
 
         var names = document.Dict(document.Catalog, "Names");
-        if (names is not null && names.ContainsKey("JavaScript"))
+        // Pages a script can spawn (12.7.6) and slide shows are content only the viewer's scripting or presentation mode reaches.
+        foreach (string key in new[] { "JavaScript", "Templates", "Pages", "AlternatePresentations" })
         {
-            count[0] += Math.Max(1, PdfNameTree.Read(document, names["JavaScript"]).Count);
-            if (removeScripts) names.Remove("JavaScript");
+            if (names is null || !names.ContainsKey(key)) continue;
+            count[0] += Math.Max(1, PdfNameTree.Read(document, names[key]).Count);
+            if (removeScripts) names.Remove(key);
         }
         if (document.Dict(document.Catalog, "AcroForm") is { } form && XfaHasScript(document, form["XFA"]))
         {
@@ -53,34 +57,90 @@ internal static class SanitizeActions
         return (count[0], count[1], count[2]);
     }
 
-    public static string? Kind(PdfDocument document, PdfDictionary action)
+    public static string Kind(PdfDocument document, PdfDictionary action)
     {
         string? type = document.Name(action, "S");
-        return type is null ? null : !Known.Contains(type) ? "Other" : type == "JavaScript" ? "JavaScript" : type == "URI" ? "URI" : Leaving.Contains(type) ? "Launch" : "Other";
+        if (type is null || !Known.Contains(type)) return "Other";
+        if (type == "Rendition" && action.ContainsKey("JS")) return "JavaScript";
+        return type == "JavaScript" ? "JavaScript" : type == "URI" ? "URI" : Leaving.Contains(type) ? "Launch" : "Other";
     }
 
-    // True when the action itself is to go; otherwise the actions chained after it are filtered.
-    private static bool Filter(PdfDocument document, PdfDictionary action, Func<string, bool> wanted, int[] count, HashSet<PdfDictionary> seen)
+    // Takes the actions the options choose out of the chain that starts at holder[key]. The chain is a graph
+    // (/Next may name an action twice or loop), so it is walked with a work list. An action that stays is kept even behind
+    // one that goes: it takes the removed one's place in each link, and in the holder when the root goes.
+    private static void Filter(PdfDocument document, PdfDictionary holder, string key, PdfDictionary root, Func<string, bool> wanted, int[] count)
     {
-        string kind = Kind(document, action)!;
-        if (!seen.Add(action)) return false;
-        if (kind != "Other")
+        var raw = new Dictionary<PdfDictionary, PdfObject>(ReferenceEqualityComparer.Instance) { [root] = holder[key]! };
+        var gone = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
+        var pending = new Stack<PdfDictionary>([root]);
+        while (pending.Count > 0)
         {
-            count[kind == "JavaScript" ? 0 : kind == "Launch" ? 1 : 2]++;
-            if (wanted(kind)) return true;
+            var action = pending.Pop();
+            string kind = Kind(document, action);
+            if (kind != "Other")
+            {
+                count[kind == "JavaScript" ? 0 : kind == "Launch" ? 1 : 2]++;
+                // A rendition with a script is still a media action.
+                bool media = kind == "JavaScript" && document.Name(action, "S") == "Rendition";
+                if (media) count[1]++;
+                if (wanted(kind) || (media && wanted("Launch"))) gone.Add(action);
+            }
+            foreach (var (item, next) in Chained(document, action))
+            {
+                if (raw.TryAdd(next, item)) pending.Push(next);
+            }
         }
-        switch (document.Resolve(action["Next"]))
+        if (gone.Count == 0) return;
+        foreach (var action in raw.Keys.Where(a => !gone.Contains(a)).ToList())
         {
-            case PdfDictionary next when Kind(document, next) is not null && Filter(document, next, wanted, count, seen):
-                action.Remove("Next");
-                break;
-            case PdfArray list:
-                list.Items.RemoveAll(item => document.Resolve(item) is PdfDictionary next && Kind(document, next) is not null && Filter(document, next, wanted, count, seen));
-                if (list.Items.Count == 0) action.Remove("Next");
-                break;
+            var links = Chained(document, action);
+            if (links.Any(l => gone.Contains(l.Action))) SetNext(document, action, links.SelectMany(l => gone.Contains(l.Action) ? Surviving(document, l.Action, gone) : [l.Action]), raw);
         }
-        return false;
+        if (!gone.Contains(root)) return;
+        var left = Surviving(document, root, gone);
+        if (left.Count == 0)
+        {
+            holder.Remove(key);
+            return;
+        }
+        holder[key] = raw[left[0]];
+        if (left.Count > 1) SetNext(document, left[0], Chained(document, left[0]).Select(l => l.Action).Concat(left.Skip(1)), raw);
     }
+
+    // The actions that stay among those chained after this one, looking through the ones that go.
+    private static List<PdfDictionary> Surviving(PdfDocument document, PdfDictionary from, HashSet<PdfDictionary> gone)
+    {
+        var found = new List<PdfDictionary>();
+        var visited = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance) { from };
+        var pending = new Stack<PdfDictionary>(Chained(document, from).Select(l => l.Action).Reverse());
+        while (pending.Count > 0)
+        {
+            var action = pending.Pop();
+            if (!gone.Contains(action))
+            {
+                if (!found.Contains(action)) found.Add(action);
+            }
+            else if (visited.Add(action))
+            {
+                foreach (var (_, next) in Chained(document, action).AsEnumerable().Reverse()) pending.Push(next);
+            }
+        }
+        return found;
+    }
+
+    private static void SetNext(PdfDocument document, PdfDictionary action, IEnumerable<PdfDictionary> next, Dictionary<PdfDictionary, PdfObject> raw)
+    {
+        var items = next.Distinct().Select(n => raw[n]).ToList();
+        if (items.Count == 0) action.Remove("Next");
+        else action["Next"] = items.Count == 1 && document.Resolve(action["Next"]) is not PdfArray ? items[0] : new PdfArray(items);
+    }
+
+    private static List<(PdfObject Item, PdfDictionary Action)> Chained(PdfDocument document, PdfDictionary action) => document.Resolve(action["Next"]) switch
+    {
+        PdfDictionary next => [(action["Next"]!, next)],
+        PdfArray list => [.. list.Items.Select(i => (Item: i, Action: document.Resolve(i) as PdfDictionary)).Where(l => l.Action is not null).Select(l => (l.Item, l.Action!))],
+        _ => [],
+    };
 
     private static bool XfaHasScript(PdfDocument document, PdfObject? xfa)
     {

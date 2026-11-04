@@ -5,6 +5,8 @@ namespace LazyPDF.Core;
 // what it finds and, when asked, takes it out.
 internal static class SanitizeData
 {
+    private const int MaxParents = 64;
+
     // Annotations that are the reader's own marks; links, widgets and media belong to the page.
     private static readonly HashSet<string> NotComments = ["Link", "Widget", "Screen", "Movie", "3D", "RichMedia", "PrinterMark", "TrapNet", "Watermark", "FileAttachment"];
 
@@ -12,7 +14,7 @@ internal static class SanitizeData
     {
         int listed = PdfAttachments.List(document).Count;
         var all = PdfGraph.AllDictionaries(document);
-        int specs = all.Count(d => d.ContainsKey("EF"));
+        int specs = all.Count(d => d.ContainsKey("EF") || d.ContainsKey("RF"));
         if (remove)
         {
             document.Dict(document.Catalog, "Names")?.Remove("EmbeddedFiles");
@@ -20,6 +22,7 @@ internal static class SanitizeData
             foreach (var dictionary in all)
             {
                 dictionary.Remove("EF");
+                dictionary.Remove("RF");
                 dictionary.Remove("AF");
                 if (ReferenceEquals(dictionary, document.Catalog)) dictionary.Remove("Collection");
             }
@@ -45,13 +48,38 @@ internal static class SanitizeData
     private static bool IsComment(PdfDocument document, PdfDictionary annotation) =>
         document.Name(annotation, "Subtype") is { } type && !NotComments.Contains(type);
 
-    private static void RemoveAnnotations(PdfDocument document, Func<PdfDictionary, bool> remove)
+    // The structure tree names annotations too (OBJR), and the rewrite keeps whatever is reachable.
+    internal static void RemoveAnnotations(PdfDocument document, Func<PdfDictionary, bool> remove)
     {
+        var gone = new HashSet<int>();
         foreach (var page in document.Pages)
         {
             if (document.Array(page.Dictionary, "Annots") is not { } annots) continue;
-            annots.Items.RemoveAll(item => document.Resolve(item) is PdfDictionary a && remove(a));
+            annots.Items.RemoveAll(item =>
+            {
+                if (document.Resolve(item) is not PdfDictionary a || !remove(a)) return false;
+                if (item is PdfReference reference) gone.Add(reference.Number);
+                return true;
+            });
             if (annots.Items.Count == 0) page.Dictionary.Remove("Annots");
+        }
+        PdfGraph.Detach(document, gone);
+        if (gone.Count > 0) DropEmptyObjectRefs(document);
+    }
+
+    // Detach takes the /Obj out of an OBJR but leaves the dictionary, which is invalid without it (14.7.4.3).
+    private static void DropEmptyObjectRefs(PdfDocument document)
+    {
+        bool Empty(PdfObject? item) => document.Resolve(item) is PdfDictionary d && document.Name(d, "Type") == "OBJR" && !d.ContainsKey("Obj");
+        foreach (var element in PdfGraph.AllDictionaries(document))
+        {
+            if (element["K"] is not { } kids) continue;
+            if (document.Resolve(kids) is PdfArray list)
+            {
+                list.Items.RemoveAll(Empty);
+                if (list.Items.Count == 0) element.Remove("K");
+            }
+            else if (Empty(kids)) element.Remove("K");
         }
     }
 
@@ -62,7 +90,8 @@ internal static class SanitizeData
         if (!remove) return entered.Count;
         foreach (var field in form.Fields)
         {
-            for (var node = field.Dictionary; node is not null; node = document.Dict(node, "Parent")) node.Remove("DV");
+            var node = field.Dictionary;
+            for (int depth = 0; node is not null && depth < MaxParents; depth++, node = document.Dict(node, "Parent")) node.Remove("DV");
         }
         form.Refresh();
         try
@@ -71,10 +100,25 @@ internal static class SanitizeData
         }
         catch (Exception e) when (e is PdfReadException or InvalidOperationException)
         {
-            foreach (var field in entered) field.Dictionary.Remove("V");
+            foreach (var field in entered) Blank(document, field.Dictionary);
         }
         document.Dict(document.Catalog, "AcroForm")?.Remove("XFA");
         return entered.Count;
+    }
+
+    // The value also sits in the appearance, the rich text and the selected state or index of a widget, which may be a kid of the field.
+    internal static void Blank(PdfDocument document, PdfDictionary field, int depth = 0)
+    {
+        field.Remove("V");
+        field.Remove("RV");
+        field.Remove("AP");
+        field.Remove("AS");
+        field.Remove("I");
+        if (depth >= 8 || document.Array(field, "Kids") is not { } kids) return;
+        foreach (var kid in kids.Items)
+        {
+            if (document.Resolve(kid) is PdfDictionary widget && !widget.ContainsKey("T")) Blank(document, widget, depth + 1);
+        }
     }
 
     public static int Metadata(PdfDocument document, bool remove)
@@ -137,29 +181,57 @@ internal static class SanitizeData
     public static int FilePaths(PdfDocument document, bool remove)
     {
         int count = 0;
-        foreach (var dictionary in PdfGraph.AllDictionaries(document))
+        var seen = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
+        void Visit(PdfDictionary? spec, bool window = false)
         {
-            bool spec = document.Name(dictionary, "Type") == "Filespec" || dictionary.ContainsKey("EF")
-                || (SanitizeActions.Kind(document, dictionary) is "Launch");
-            if (!spec) continue;
-            bool changed = false;
-            foreach (string key in new[] { "F", "UF" })
+            if (spec is null || document.Name(spec, "FS") == "URL" || !seen.Add(spec)) return;
+            bool changed = Cut(document, spec, remove);
+            // The parameter string of a Launch commonly carries a path (12.6.4.5).
+            if (window)
             {
-                if (dictionary[key] is not PdfString text) continue;
-                string shown = PdfText.Decode(text.Bytes);
-                int cut = shown.LastIndexOfAny(['/', '\\']);
-                if (cut < 0) continue;
-                changed = true;
-                if (remove) text.Bytes = PdfText.Encode(shown[(cut + 1)..]);
-            }
-            foreach (string key in new[] { "DOS", "Mac", "Unix" })
-            {
-                if (!dictionary.ContainsKey(key)) continue;
-                changed = true;
-                if (remove) dictionary.Remove(key);
+                foreach (string key in new[] { "D", "P" })
+                {
+                    if (!spec.ContainsKey(key)) continue;
+                    changed = true;
+                    if (remove) spec.Remove(key);
+                }
             }
             if (changed) count++;
         }
+        foreach (var dictionary in PdfGraph.AllDictionaries(document))
+        {
+            bool launch = SanitizeActions.Kind(document, dictionary) == "Launch";
+            if (launch || document.Name(dictionary, "Type") == "Filespec" || dictionary.ContainsKey("EF") || dictionary.ContainsKey("RF")) Visit(dictionary);
+            if (launch)
+            {
+                Visit(document.Dict(dictionary, "F"));
+                Visit(document.Dict(dictionary, "Win"), window: true);
+            }
+            if (document.Dict(dictionary, "OPI") is not { } opi) continue;
+            Visit(document.Dict(opi, "1.3"));
+            Visit(document.Dict(opi, "2.0"));
+        }
         return count;
+    }
+
+    private static bool Cut(PdfDocument document, PdfDictionary spec, bool remove)
+    {
+        bool changed = false;
+        foreach (string key in new[] { "F", "UF" })
+        {
+            if (document.Resolve(spec[key]) is not PdfString text) continue;
+            string shown = PdfText.Decode(text.Bytes);
+            int cut = shown.LastIndexOfAny(['/', '\\']);
+            if (cut < 0) continue;
+            changed = true;
+            if (remove) text.Bytes = PdfText.Encode(shown[(cut + 1)..]);
+        }
+        foreach (string key in new[] { "DOS", "Mac", "Unix" })
+        {
+            if (!spec.ContainsKey(key)) continue;
+            changed = true;
+            if (remove) spec.Remove(key);
+        }
+        return changed;
     }
 }

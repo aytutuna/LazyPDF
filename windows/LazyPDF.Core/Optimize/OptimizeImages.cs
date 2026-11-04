@@ -9,11 +9,18 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
 {
     private const long MaxPixels = 16_000_000;
 
+    // Unpack holds every sample of the image; a row is limited as PdfImageSamples limits it.
+    private const long MaxSamples = 1L << 28;
+    private const long MaxRowSamples = 1L << 26;
+
     private readonly HashSet<PdfStream> _done = new(ReferenceEqualityComparer.Instance);
 
     public int Bilevel { get; private set; }
     public int Downsampled { get; private set; }
     public bool NeedsCodec { get; private set; }
+
+    /// <summary>Some image was left at its size because a use of it could not be measured.</summary>
+    public bool Partial { get; private set; }
 
     public void Run()
     {
@@ -29,29 +36,40 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
             }
         }
         if (options.ImageDpi <= 0) return;
-        var placements = PlacedImages.Measure(document);
-        var untraced = Untraced();
+        var placed = PlacedImages.Measure(document);
+        if (!placed.Complete)
+        {
+            Partial = true;
+            return;
+        }
+        var unseen = Unseen(placed);
         foreach (var image in images)
         {
-            if (placements.TryGetValue(image, out var placement) && !untraced.Contains(image) && TryShrink(image, placement)) Downsampled++;
+            if (!placed.Found.TryGetValue(image, out var placement)) continue;
+            if (unseen.Contains(image)) Partial = true;
+            else if (TryShrink(image, placement)) Downsampled++;
         }
     }
 
-    // Images drawn by Type 3 glyph procedures are never walked, so their sizes are not known.
-    private HashSet<PdfStream> Untraced()
+    // Images listed by resources the walk never reached, and by the forms those call, may be painted
+    // somewhere nobody measured (a soft mask group, a Type 3 glyph, an appearance state not shown).
+    private HashSet<PdfStream> Unseen(PlacedImages walk)
     {
         var set = new HashSet<PdfStream>(ReferenceEqualityComparer.Instance);
-        foreach (var dictionary in PdfGraph.AllDictionaries(document))
+        var forms = new Stack<PdfStream>();
+        void List(PdfDictionary? resources)
         {
-            if (document.Name(dictionary, "Subtype") != "Type3") continue;
-            foreach (var inner in PdfGraph.Dictionaries(document.Dict(dictionary, "Resources")))
+            foreach (var (_, value) in document.Dict(resources, "XObject")?.Entries ?? [])
             {
-                foreach (var (_, value) in inner.Entries)
-                {
-                    if (document.Resolve(value) is PdfStream xobject) set.Add(xobject);
-                }
+                if (document.Resolve(value) is not PdfStream xobject || !set.Add(xobject)) continue;
+                if (document.Name(xobject.Dictionary, "Subtype") == "Form") forms.Push(xobject);
             }
         }
+        foreach (var dictionary in PdfGraph.AllDictionaries(document))
+        {
+            if (document.Dict(dictionary, "Resources") is { } resources && !walk.Reached(resources)) List(resources);
+        }
+        while (forms.Count > 0) List(document.Dict(forms.Pop().Dictionary, "Resources"));
         return set;
     }
 
@@ -60,7 +78,7 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
         var dictionary = stream.Dictionary;
         int width = (int)(document.Integer(dictionary, "Width") ?? 0), height = (int)(document.Integer(dictionary, "Height") ?? 0);
         if (width < 1 || height < 1 || (long)width * height > MaxPixels) return false;
-        if (dictionary.ContainsKey("Decode") || document.Resolve(dictionary["Mask"]) is PdfArray || dictionary.ContainsKey("SMaskInData")) return false;
+        if (dictionary.ContainsKey("Decode") || document.Resolve(dictionary["Mask"]) is PdfArray || dictionary.ContainsKey("SMaskInData") || HasMatte(dictionary)) return false;
         var (family, _) = ImageKit.Describe(document, dictionary["ColorSpace"]);
         long bpc = document.Integer(dictionary, "BitsPerComponent") ?? 8;
         if (family is ImageFamily.Unknown or ImageFamily.Spot or ImageFamily.Lab || (bpc == 1 && family == ImageFamily.Gray)) return false;
@@ -126,16 +144,21 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
         int newHeight = Math.Max(1, (int)Math.Round(height * Math.Min(1, options.ImageDpi / placement.DpiY)));
         if ((long)newWidth * newHeight > 0.9 * width * height) return false;
         if (dictionary.ContainsKey("SMaskInData") || document.Resolve(dictionary["Mask"]) is not null) return false;
+        var soft = document.Resolve(dictionary["SMask"]) as PdfStream;
+        int maskWidth = (int)(document.Integer(soft?.Dictionary, "Width") ?? 0), maskHeight = (int)(document.Integer(soft?.Dictionary, "Height") ?? 0);
+        // A matte only fits a mask of the image's own size, which a failed mask shrink would break.
+        if (soft is not null && (HasMatte(dictionary) || (long)maskWidth * maskHeight > PdfImageSamples.MaxPixels)) return false;
         if (!_done.Add(stream)) return false;
 
         bool replaced = Shrink(stream, width, height, newWidth, newHeight);
-        if (replaced && document.Resolve(dictionary["SMask"]) is PdfStream soft && _done.Add(soft))
+        if (replaced && soft is not null && maskWidth > 0 && maskHeight > 0 && _done.Add(soft))
         {
-            int mw = (int)(document.Integer(soft.Dictionary, "Width") ?? 0), mh = (int)(document.Integer(soft.Dictionary, "Height") ?? 0);
-            if (mw > 0 && mh > 0) Shrink(soft, mw, mh, Math.Max(1, (int)((long)mw * newWidth / width)), Math.Max(1, (int)((long)mh * newHeight / height)));
+            Shrink(soft, maskWidth, maskHeight, Math.Max(1, (int)((long)maskWidth * newWidth / width)), Math.Max(1, (int)((long)maskHeight * newHeight / height)));
         }
         return replaced;
     }
+
+    private bool HasMatte(PdfDictionary image) => document.Resolve(image["SMask"]) is PdfStream soft && soft.Dictionary.ContainsKey("Matte");
 
     private bool Shrink(PdfStream stream, int width, int height, int newWidth, int newHeight)
     {
@@ -170,7 +193,7 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
             }
             components = 3;
         }
-        else if (components > 0 && family != ImageFamily.Unknown)
+        else if (components > 0 && family != ImageFamily.Unknown && (long)width * components <= MaxRowSamples && (long)width * height * components <= MaxSamples)
         {
             pixels = ImageKit.Unpack(decoded.Data, width, height, components, (int)bpc);
         }

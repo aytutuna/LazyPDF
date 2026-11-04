@@ -62,11 +62,7 @@ internal sealed class SanitizeLayers(PdfDocument document)
         }
         // The forms and pictures whose Do went are still named in the resources.
         if (_cuts.Count > 0) new OptimizeResources(document).Run();
-        foreach (var page in document.Pages)
-        {
-            if (document.Array(page.Dictionary, "Annots") is not { } annots) continue;
-            annots.Items.RemoveAll(item => document.Resolve(item) is PdfDictionary a && document.Dict(a, "OC") is { } group && _visibility.IsHidden(group));
-        }
+        SanitizeData.RemoveAnnotations(document, a => document.Dict(a, "OC") is { } group && _visibility.IsHidden(group));
         var numbers = hiddenLayers.Select(l => l.Reference.Number).ToHashSet();
         PdfGraph.Detach(document, numbers);
         if (document.Dict(document.Catalog, "OCProperties") is { } properties && (document.Array(properties, "OCGs")?.Items.Count ?? 0) == 0)

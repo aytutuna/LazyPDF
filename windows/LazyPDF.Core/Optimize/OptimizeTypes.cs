@@ -103,6 +103,7 @@ public enum SanitizeItem
     SearchIndexes,
     ExternalLinks,
     FilePaths,
+    Signatures,
 }
 
 public sealed record SanitizeFinding(SanitizeItem Item, int Count);
@@ -123,6 +124,10 @@ public sealed record SanitizeOptions
     public bool SearchIndexes { get; init; } = true;
     public bool ExternalLinks { get; init; } = true;
     public bool FilePaths { get; init; } = true;
+
+    /// <summary>Write the output with the input's encryption; ignored when <see cref="Security"/> is given.</summary>
+    public bool KeepEncryption { get; init; } = true;
+
     public PdfSecurity? Security { get; init; }
     public byte[]? DocumentId { get; init; }
 }

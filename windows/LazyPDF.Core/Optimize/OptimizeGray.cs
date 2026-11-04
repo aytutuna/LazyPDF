@@ -8,7 +8,7 @@ namespace LazyPDF.Core;
 // look, so they stay and are counted.
 internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int jpegQuality)
 {
-    private enum Space { Gray, Rgb, Cmyk, Other, Pattern, Unknown }
+    private enum Space { Gray, Rgb, Cmyk, Other, Pattern, Unknown, Inherited }
 
     private sealed class State
     {
@@ -18,6 +18,12 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
 
     private const long MaxPixels = 32_000_000;
 
+    // Component counts of the Lab and DeviceN spaces in the file that an operand count could be mistaken for RGB or CMYK.
+    private readonly HashSet<int> _alien = [];
+
+    // Forms painted while a caller's colour space was a Lab, DeviceN or similar one, or an RGB or CMYK one that cs turns gray.
+    private readonly HashSet<PdfStream> _keptFor = new(ReferenceEqualityComparer.Instance), _convertedFor = new(ReferenceEqualityComparer.Instance);
+
     public int Streams { get; private set; }
     public int Images { get; private set; }
     public int Left { get; private set; }
@@ -25,15 +31,27 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
 
     public void Run()
     {
+        foreach (var dictionary in PdfGraph.AllDictionaries(document))
+        {
+            foreach (var (_, space) in document.Dict(dictionary, "ColorSpace")?.Entries ?? [])
+            {
+                var (family, components) = ImageKit.Describe(document, space);
+                if (family is ImageFamily.Lab or ImageFamily.Spot && components >= 3) _alien.Add(components);
+            }
+        }
         var done = new HashSet<PdfStream>(ReferenceEqualityComparer.Instance);
         foreach (var page in document.Pages)
         {
             var state = new State { Fill = Space.Gray, Stroke = Space.Gray };
             var contents = document.Resolve(page.Dictionary["Contents"]);
-            foreach (var item in contents is PdfArray list ? list.Items : [contents ?? PdfNull.Instance])
+            var streams = (contents is PdfArray list ? list.Items : [contents ?? PdfNull.Instance])
+                .Select(document.Resolve).OfType<PdfStream>().Where(done.Add).ToList();
+            if (Straddles(streams))
             {
-                if (document.Resolve(item) is PdfStream stream && done.Add(stream)) Convert(stream, page.Resources, state);
+                Left++;
+                continue;
             }
+            foreach (var stream in streams) Convert(stream, page.Resources, state);
         }
         foreach (var (_, value) in PdfGraph.Objects(document))
         {
@@ -41,11 +59,38 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
             var dictionary = stream.Dictionary;
             if (document.Name(dictionary, "Subtype") == "Form" || (document.Integer(dictionary, "PatternType") == 1 && document.Integer(dictionary, "PaintType") != 2))
             {
-                Convert(stream, document.Dict(dictionary, "Resources"), new State { Fill = Space.Unknown, Stroke = Space.Unknown });
+                Convert(stream, document.Dict(dictionary, "Resources"), new State { Fill = Space.Inherited, Stroke = Space.Inherited });
             }
             else if (document.Integer(dictionary, "PatternType") == 2) Left++;
             else if (document.Name(dictionary, "Subtype") == "Image" && document.Bool(dictionary, "ImageMask") != true) GrayImage(stream);
         }
+    }
+
+    // An operator may sit in a later stream than its operands (7.8.2), and each stream is rewritten on its own.
+    private bool Straddles(List<PdfStream> streams)
+    {
+        if (streams.Count < 2) return false;
+        var joined = new MemoryStream();
+        var ends = new List<int>();
+        try
+        {
+            foreach (var stream in streams)
+            {
+                joined.Write(document.Data(stream));
+                ends.Add((int)joined.Length);
+                joined.WriteByte((byte)'\n');
+            }
+            foreach (var op in ContentParser.Parse(joined.ToArray()))
+            {
+                int at = ends.BinarySearch(op.Start);
+                at = at < 0 ? ~at : at + 1;
+                if (at < ends.Count && op.End > ends[at]) return true;
+            }
+        }
+        catch (PdfReadException)
+        {
+        }
+        return false;
     }
 
     private void Convert(PdfStream stream, PdfDictionary? resources, State state)
@@ -97,11 +142,34 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
                     else state.Stroke = space;
                     break;
                 case "sc" or "scn" or "SC" or "SCN":
-                    var current = char.IsUpper(op.Operator[0]) ? state.Stroke : state.Fill;
+                    bool upper = char.IsUpper(op.Operator[0]);
+                    var current = upper ? state.Stroke : state.Fill;
+                    bool inherited = current == Space.Inherited;
                     int count = op.Operands.Count;
-                    bool numbers = op.Operands.All(o => o is PdfNumber);
-                    if (numbers && (current == Space.Rgb || (current == Space.Unknown && count == 3)) && Gray(op, 3) is { } fromRgb) Replace(op, $"{Format(fromRgb)} {op.Operator}");
-                    else if (numbers && (current == Space.Cmyk || (current == Space.Unknown && count == 4)) && Gray(op, 4) is { } fromCmyk) Replace(op, $"{Format(fromCmyk)} {op.Operator}");
+                    int needed = current == Space.Rgb || (inherited && count == 3) ? 3 : current == Space.Cmyk || (inherited && count == 4) ? 4 : 0;
+                    if (needed == 0 || !op.Operands.All(o => o is PdfNumber) || Gray(op, needed) is not { } y2) break;
+                    if (!inherited)
+                    {
+                        Replace(op, $"{Format(y2)} {op.Operator}");
+                        break;
+                    }
+                    // The caller's space is a guess from the operand count unless a caller was seen; a Lab or DeviceN space of that size makes it a bad one.
+                    bool kept = _keptFor.Contains(stream), converted = _convertedFor.Contains(stream);
+                    if (kept || (!converted && _alien.Contains(needed)))
+                    {
+                        Left++;
+                        break;
+                    }
+                    // g and G set their own space; the state stays inherited so the next colour is judged the same way.
+                    Replace(op, $"{Format(y2)} {(upper ? "G" : "g")}");
+                    break;
+                case "Do" when state.Fill != Space.Inherited && op.Operands.Count > 0 && op.Operands[0] is PdfName xobject
+                    && document.Resolve(document.Dict(resources, "XObject")?[xobject.Value]) is PdfStream form:
+                    foreach (var held in new[] { state.Fill, state.Stroke })
+                    {
+                        if (held is Space.Other) _keptFor.Add(form);
+                        else if (held is Space.Rgb or Space.Cmyk) _convertedFor.Add(form);
+                    }
                     break;
                 case "sh":
                     Left++;
@@ -132,12 +200,42 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
             if (op.Operands[op.Operands.Count - n + i] is not PdfNumber number) return null;
             v[i] = Math.Clamp(number.Value, 0, 1);
         }
-        return n switch
+        return Luminance(v);
+    }
+
+    private static double Luminance(double[] v) => v.Length switch
+    {
+        1 => v[0],
+        3 => 0.299 * v[0] + 0.587 * v[1] + 0.114 * v[2],
+        _ => (1 - v[3]) * (1 - (0.299 * v[0] + 0.587 * v[1] + 0.114 * v[2])),
+    };
+
+    // The matte is a colour in the image's space, so it follows the image to gray. Looked up before the
+    // image changes: an indexed image's matte is a palette index (11.6.5.3).
+    private double? MatteGray(PdfDictionary image, ImageFamily family, int components)
+    {
+        if (document.Resolve(image["SMask"]) is not PdfStream soft || document.Array(soft.Dictionary, "Matte") is not { } matte || matte.Items.Count != components) return null;
+        var values = matte.Items.Select(i => document.Resolve(i) is PdfNumber n ? n.Value : 0).ToArray();
+        if (family != ImageFamily.Indexed) return Luminance([.. values.Select(v => Math.Clamp(v, 0, 1))]);
+        var entry = image.Copy();
+        foreach (string key in new[] { "SMask", "Mask", "Decode" }) entry.Remove(key);
+        entry["Width"] = entry["Height"] = new PdfNumber(1);
+        entry["BitsPerComponent"] = new PdfNumber(8);
+        try
         {
-            1 => v[0],
-            3 => 0.299 * v[0] + 0.587 * v[1] + 0.114 * v[2],
-            _ => (1 - v[3]) * (1 - (0.299 * v[0] + 0.587 * v[1] + 0.114 * v[2])),
-        };
+            var pixel = PdfImageSamples.ToRgba(entry, [(byte)Math.Clamp(values[0], 0, 255)], document.Resolve, s => document.Data(s)).Rgba;
+            return ImageKit.Luminance(pixel[0], pixel[1], pixel[2]) / 255.0;
+        }
+        catch (PdfReadException)
+        {
+            return null;
+        }
+    }
+
+    private void SetMatte(PdfDictionary image, double gray, int components)
+    {
+        var soft = (PdfStream)document.Resolve(image["SMask"])!;
+        soft.Dictionary["Matte"] = new PdfArray([.. Enumerable.Repeat<PdfObject>(new PdfNumber(gray), components)]);
     }
 
     private Space SpaceOf(ContentOperation op, PdfDictionary? resources)
@@ -147,7 +245,12 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
         if (name.Value is not ("DeviceGray" or "DeviceRGB" or "DeviceCMYK" or "Pattern"))
         {
             definition = document.Resolve(document.Dict(resources, "ColorSpace")?[name.Value]);
-            if (definition is null) return Space.Unknown;
+            if (definition is null)
+            {
+                // The colour stays whatever space the caller meant by the name.
+                Left++;
+                return Space.Unknown;
+            }
         }
         if (name.Value == "Pattern" || (definition is PdfArray { Items.Count: > 0 } array && document.Resolve(array.Items[0]) is PdfName { Value: "Pattern" })) return Space.Pattern;
         var (family, _) = ImageKit.Describe(document, definition);
@@ -158,7 +261,7 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
     private void GrayImage(PdfStream stream)
     {
         var dictionary = stream.Dictionary;
-        var (family, _) = ImageKit.Describe(document, dictionary["ColorSpace"]);
+        var (family, components) = ImageKit.Describe(document, dictionary["ColorSpace"]);
         if (family is ImageFamily.Gray or ImageFamily.Unknown) return;
         int width = (int)(document.Integer(dictionary, "Width") ?? 0), height = (int)(document.Integer(dictionary, "Height") ?? 0);
         if (family is ImageFamily.Spot or ImageFamily.Lab || width < 1 || height < 1 || (long)width * height > MaxPixels || document.Resolve(dictionary["Mask"]) is PdfArray)
@@ -196,6 +299,7 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
             Left++;
             return;
         }
+        double? matte = MatteGray(dictionary, family, components);
         var gray = new byte[pixels.Width * pixels.Height];
         for (int i = 0; i < gray.Length; i++) gray[i] = ImageKit.Luminance(pixels.Rgba[4 * i], pixels.Rgba[4 * i + 1], pixels.Rgba[4 * i + 2]);
         if (coded is null)
@@ -217,6 +321,7 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
         dictionary["BitsPerComponent"] = new PdfNumber(8);
         dictionary.Remove("DecodeParms");
         dictionary.Remove("Decode");
+        if (matte is { } level) SetMatte(dictionary, level, coded is null ? 1 : 3);
         Images++;
     }
 }

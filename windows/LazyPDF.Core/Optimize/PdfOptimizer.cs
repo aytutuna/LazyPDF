@@ -3,7 +3,8 @@ namespace LazyPDF.Core;
 /// <summary>
 /// Makes a file smaller by a full rewrite (<see cref="PdfDocument.SaveRewrite"/>) with the steps
 /// the options choose. The document is not changed: the steps run on a copy made from a plain
-/// rewrite, and the result is never larger than that rewrite. Signatures do not survive.
+/// rewrite, and the result is never larger than that rewrite, unless the file is made gray, encrypted
+/// or given an id. Signatures do not survive.
 /// </summary>
 public sealed class PdfOptimizer(PdfDocument document, IImageCodec? codec = null)
 {
@@ -65,7 +66,8 @@ public sealed class PdfOptimizer(PdfDocument document, IImageCodec? codec = null
             images.Run();
             if (options.BilevelTolerance >= 0) Did(OptimizeStepKind.BilevelImages, images.Bilevel);
             if (options.ImageDpi > 0) Did(OptimizeStepKind.DownsampleImages, images.Downsampled);
-            if (images.NeedsCodec && !notes.Contains(OptimizeText.NeedsCodec)) notes.Add(OptimizeText.NeedsCodec);
+            if (images.Partial) notes.Add(OptimizeText.LeftPartialImages);
+            if (images.NeedsCodec &&!notes.Contains(OptimizeText.NeedsCodec)) notes.Add(OptimizeText.NeedsCodec);
         }
         var (recompressed, converted) = OptimizeStreams.Run(working, options.RecompressStreams, options.ConvertOldFilters);
         if (options.RecompressStreams) Did(OptimizeStepKind.RecompressStreams, recompressed);

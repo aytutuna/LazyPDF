@@ -123,6 +123,22 @@ public class SanitizerTests
     }
 
     [Fact]
+    public void BlankingAFieldTakesEveryCopyOfTheEnteredValue()
+    {
+        var pdf = new TestPdf();
+        pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R /AcroForm <</Fields [4 0 R 5 0 R]>>>>");
+        pdf.Obj(2, "<</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 200 200]>>");
+        pdf.Obj(3, "<</Type /Page /Parent 2 0 R /Annots [4 0 R 5 0 R]>>");
+        pdf.Obj(4, "<</Type /Annot /Subtype /Widget /FT /Btn /T (agree) /V /Yes /AS /Yes /Rect [10 50 30 70] /P 3 0 R /AP <</N <</Yes 7 0 R>>>>>>");
+        pdf.Obj(5, "<</Type /Annot /Subtype /Widget /FT /Ch /T (pick) /Opt [(a) (b) (c)] /V (c) /I [2] /Rect [10 100 80 140] /P 3 0 R>>");
+        pdf.Stream(7, "/Type /XObject /Subtype /Form /BBox [0 0 20 20]", "0 0 20 20 re f");
+        using var document = PdfDocument.Open(pdf.Finish());
+        foreach (var field in PdfForm.Read(document).Fields) SanitizeData.Blank(document, field.Dictionary);
+        byte[] saved = document.SaveRewrite();
+        foreach (string key in new[] { "/V", "/AS", "/I ", "/AP" }) Assert.False(OptimizeKit.Everywhere(saved, key), key);
+    }
+
+    [Fact]
     public void ARunOnNothingToRemoveJustRewrites()
     {
         using var document = PdfDocument.Open(TestPdf.Simple(2));

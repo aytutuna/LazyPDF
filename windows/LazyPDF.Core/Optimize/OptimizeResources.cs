@@ -28,11 +28,7 @@ internal sealed class OptimizeResources(PdfDocument document)
         {
             if (page.Resources is not { } resources) continue;
             var usage = UsageOf(resources);
-            var contents = document.Resolve(page.Dictionary["Contents"]);
-            foreach (var item in contents is PdfArray list ? list.Items : [contents ?? PdfNull.Instance])
-            {
-                if (document.Resolve(item) is PdfStream part) CollectStream(part, resources, usage);
-            }
+            CollectPage(page, resources, usage);
             foreach (var stream in AppearancesWithoutResources(page)) CollectStream(stream, resources, usage);
         }
         foreach (var (_, value) in PdfGraph.Objects(document))
@@ -70,6 +66,27 @@ internal sealed class OptimizeResources(PdfDocument document)
         try
         {
             Collect(document.Data(stream), resources, usage, 0, []);
+        }
+        catch (PdfReadException)
+        {
+            usage.Unsafe = true;
+        }
+    }
+
+    // An operator may sit in a later stream than its operands (7.8.2), so the streams are read as one.
+    private void CollectPage(PdfPage page, PdfDictionary resources, Usage usage)
+    {
+        var contents = document.Resolve(page.Dictionary["Contents"]);
+        var joined = new MemoryStream();
+        try
+        {
+            foreach (var item in contents is PdfArray list ? list.Items : [contents ?? PdfNull.Instance])
+            {
+                if (document.Resolve(item) is not PdfStream part) continue;
+                joined.Write(document.Data(part));
+                joined.WriteByte((byte)'\n');
+            }
+            Collect(joined.ToArray(), resources, usage, 0, []);
         }
         catch (PdfReadException)
         {
@@ -140,8 +157,11 @@ internal sealed class OptimizeResources(PdfDocument document)
                 case "BDC" or "DP" when op.Operands.Count >= 2 && op.Operands[^1] is PdfName property:
                     usage.Names["Properties"].Add(property.Value);
                     break;
-                case "BI" when op.Image is { } image && (image.Dictionary["CS"] ?? image.Dictionary["ColorSpace"]) is PdfName inlineSpace:
-                    usage.Names["ColorSpace"].Add(inlineSpace.Value);
+                case "BI" when op.Image is { } image:
+                    // An indexed inline image names its base space in the array (8.9.7).
+                    var inlineSpace = image.Dictionary["CS"] ?? image.Dictionary["ColorSpace"];
+                    if (inlineSpace is PdfArray { Items.Count: > 1 } indexed) inlineSpace = indexed.Items[1];
+                    if (inlineSpace is PdfName inlineName) usage.Names["ColorSpace"].Add(inlineName.Value);
                     break;
             }
         }

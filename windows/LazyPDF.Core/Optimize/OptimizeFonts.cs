@@ -5,7 +5,8 @@ namespace LazyPDF.Core;
 
 // Trims fully embedded TrueType programs to the glyphs the document shows. A program is trimmed
 // only when every font that uses it is listed in page, form or pattern resources and nowhere else
-// (the form's /DR, a field's /DA, anything later editing could use), and was walked.
+// (the form's /DR, a field's /DA, anything later editing could use), and every table that lists it
+// was walked to the end. A program shared with a subset-tagged font is left alone.
 internal sealed class OptimizeFonts(PdfDocument document)
 {
     private static readonly Regex SubsetTag = new("^[A-Z]{6}\\+", RegexOptions.Compiled);
@@ -13,10 +14,10 @@ internal sealed class OptimizeFonts(PdfDocument document)
     private sealed class Program
     {
         public readonly List<PdfDictionary> Fonts = [];
-        public bool Blocked;
+        public bool Blocked, Tagged;
     }
 
-    private sealed class Uses : ContentVisitor
+    private sealed class Uses : OptimizeWalk
     {
         public readonly Dictionary<PdfDictionary, HashSet<int>> Codes = new(ReferenceEqualityComparer.Instance);
 
@@ -30,78 +31,80 @@ internal sealed class OptimizeFonts(PdfDocument document)
     public int Run(out bool partial)
     {
         partial = false;
-        var programs = new Dictionary<PdfStream, Program>(ReferenceEqualityComparer.Instance);
         var listed = ListedFonts(out var outside);
+        var seen = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
+        var fonts = new List<(PdfDictionary Font, int Number, PdfStream Program)>();
+        void Consider(PdfDictionary font, int number)
+        {
+            if (document.Name(font, "Subtype") is not ("TrueType" or "Type0") || !seen.Add(font) || ProgramOf(font) is not { } program) return;
+            fonts.Add((font, number, program));
+        }
+        var numbers = new Dictionary<PdfDictionary, int>(ReferenceEqualityComparer.Instance);
         foreach (var (number, value) in PdfGraph.Objects(document))
         {
-            var font = value as PdfDictionary;
-            if (font is null || document.Name(font, "Type") != "Font" || document.Name(font, "Subtype") is not ("TrueType" or "Type0")) continue;
-            var program = ProgramOf(font);
-            if (program is null) continue;
-            if (!programs.TryGetValue(program, out var entry)) programs[program] = entry = new Program();
-            entry.Fonts.Add(font);
-            if (!listed.Contains(font) || outside.Contains(number)) entry.Blocked = true;
+            if (value is PdfDictionary indirect) numbers[indirect] = number;
         }
-        // A font written directly in a resource dictionary has no number to be referred to by.
-        foreach (var dictionary in listed)
-        {
-            foreach (var (_, item) in dictionary.Entries)
-            {
-                if (item is PdfDictionary direct && document.Name(direct, "Subtype") is "TrueType" or "Type0" && ProgramOf(direct) is { } p)
-                {
-                    if (!programs.TryGetValue(p, out var entry)) programs[p] = entry = new Program();
-                    entry.Fonts.Add(direct);
-                }
-            }
-        }
-        if (programs.Count == 0) return 0;
+        // A font written directly has no number to be referred to by, and is blocked unless a /Font table lists it.
+        foreach (var font in PdfGraph.AllDictionaries(document)) Consider(font, numbers.GetValueOrDefault(font));
+        if (fonts.Count == 0) return 0;
 
         var uses = new Uses();
-        var interpreter = new ContentInterpreter(document);
-        foreach (var page in document.Pages)
+        uses.Walk(document);
+        var programs = new Dictionary<PdfStream, Program>(ReferenceEqualityComparer.Instance);
+        foreach (var (font, number, stream) in fonts)
         {
-            interpreter.Run(page, uses);
-            foreach (var (form, matrix) in PageAppearances.Of(document, page)) interpreter.Run(form, uses, matrix);
+            if (!programs.TryGetValue(stream, out var entry)) programs[stream] = entry = new Program();
+            entry.Fonts.Add(font);
+            if (SubsetTag.IsMatch(document.Name(font, "BaseFont") ?? "")) entry.Tagged = true;
+            if (!uses.Complete || outside.Contains(number) || !listed.TryGetValue(font, out var owners) || !owners.All(uses.Reached)) entry.Blocked = true;
         }
 
         int trimmed = 0;
         foreach (var (stream, program) in programs)
         {
+            if (program.Tagged) continue;
             if (program.Blocked) partial = true;
             else if (Trim(stream, program, uses)) trimmed++;
         }
         return trimmed;
     }
 
-    // The font dictionaries named by a /Resources /Font dictionary, and the numbers of objects referred to from anywhere else.
-    private HashSet<PdfDictionary> ListedFonts(out HashSet<int> outside)
+    // The font dictionaries named by a /Resources /Font dictionary with the resource dictionaries that hold it, and the numbers of objects referred to from anywhere else.
+    private Dictionary<PdfDictionary, List<PdfDictionary>> ListedFonts(out HashSet<int> outside)
     {
-        var tables = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
+        var tables = new Dictionary<PdfDictionary, List<PdfDictionary>>(ReferenceEqualityComparer.Instance);
         foreach (var dictionary in PdfGraph.AllDictionaries(document))
         {
-            if (document.Dict(dictionary, "Resources") is { } resources && document.Dict(resources, "Font") is { } fonts) tables.Add(fonts);
+            if (document.Dict(dictionary, "Resources") is not { } resources || document.Dict(resources, "Font") is not { } fonts) continue;
+            if (!tables.TryGetValue(fonts, out var owners)) tables[fonts] = owners = [];
+            owners.Add(resources);
         }
-        var listed = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
+        var listed = new Dictionary<PdfDictionary, List<PdfDictionary>>(ReferenceEqualityComparer.Instance);
+        void List(PdfDictionary font, List<PdfDictionary> owners)
+        {
+            if (!listed.TryGetValue(font, out var all)) listed[font] = all = [];
+            all.AddRange(owners);
+        }
         outside = [];
         foreach (var (_, value) in PdfGraph.Objects(document))
         {
             foreach (var container in PdfGraph.ContainersOf(value))
             {
                 var children = container is PdfDictionary d ? d.Entries.Select(e => e.Value) : ((PdfArray)container).Items;
-                bool table = container is PdfDictionary dictionary && tables.Contains(dictionary);
+                var owners = container is PdfDictionary table ? tables.GetValueOrDefault(table) : null;
                 foreach (var child in children)
                 {
                     if (child is not PdfReference reference) continue;
-                    if (table && document.Get(reference.Number) is PdfDictionary font) listed.Add(font);
+                    if (owners is not null && document.Get(reference.Number) is PdfDictionary font) List(font, owners);
                     else outside.Add(reference.Number);
                 }
             }
         }
-        foreach (var table in tables)
+        foreach (var (table, owners) in tables)
         {
             foreach (var (_, item) in table.Entries)
             {
-                if (item is PdfDictionary direct) listed.Add(direct);
+                if (item is PdfDictionary direct) List(direct, owners);
             }
         }
         return listed;
@@ -109,7 +112,6 @@ internal sealed class OptimizeFonts(PdfDocument document)
 
     private PdfStream? ProgramOf(PdfDictionary font)
     {
-        if (SubsetTag.IsMatch(document.Name(font, "BaseFont") ?? "")) return null;
         var holder = font;
         if (document.Name(font, "Subtype") == "Type0")
         {
