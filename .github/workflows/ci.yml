@@ -17,6 +17,10 @@ jobs:
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
+      - name: Strings
+        run: |
+          python scripts/gen_l10n.py
+          git diff --exit-code -- windows/LazyPDF.Core/Strings.tr.resx
       # Built first, so the tests do not share the runner's cores with the compiler.
       - name: Build
         run: dotnet build windows/LazyPDF.sln -c Release

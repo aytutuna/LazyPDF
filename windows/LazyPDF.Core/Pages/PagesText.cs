@@ -1,10 +1,10 @@
 namespace LazyPDF.Core;
 
-/// <summary>Texts the pages tools show, kept in one place until they go through Loc.T.</summary>
+/// <summary>Texts the pages tools show.</summary>
 public static class PagesText
 {
-    public const string RangeUsage = "Type pages like 1-3, 5";
+    public static string RangeUsage => Loc.T("Type pages like 1-3, 5");
 
     public static string PastTheEnd(int page, int count) =>
-        $"Page {page} is past the end ({count} page{(count == 1 ? "" : "s")})";
+        Loc.Plural(count, "Page {1} is past the end ({0} page)", "Page {1} is past the end ({0} pages)", page);
 }

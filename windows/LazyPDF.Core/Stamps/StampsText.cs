@@ -1,8 +1,8 @@
 namespace LazyPDF.Core;
 
-/// <summary>Texts the stamps raise to the user. Loc.T takes them over when it exists.</summary>
+/// <summary>Texts the stamps raise to the user.</summary>
 public static class StampsText
 {
-    public const string NoFont = "No font for this text. Pick another font.";
-    public const string NeedsContent = "Give the stamp a text or an image.";
+    public static string NoFont => Loc.T("No font for this text. Pick another font.");
+    public static string NeedsContent => Loc.T("Give the stamp a text or an image.");
 }

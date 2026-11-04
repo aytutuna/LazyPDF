@@ -5,61 +5,61 @@ public static class OptimizeText
 {
     public static string StepName(OptimizeStepKind kind) => kind switch
     {
-        OptimizeStepKind.RemoveUnreferenced => "Remove unused objects",
-        OptimizeStepKind.ObjectStreams => "Pack objects",
-        OptimizeStepKind.RecompressStreams => "Recompress streams",
-        OptimizeStepKind.ConvertOldFilters => "Replace old filters",
-        OptimizeStepKind.RemoveDuplicates => "Merge duplicates",
-        OptimizeStepKind.StripThumbnails => "Remove thumbnails",
-        OptimizeStepKind.StripPieceInfo => "Remove application data",
-        OptimizeStepKind.StripPrivateData => "Remove private keys",
-        OptimizeStepKind.PruneResources => "Drop unused resources",
-        OptimizeStepKind.DownsampleImages => "Shrink images",
-        OptimizeStepKind.BilevelImages => "Make black and white images 1-bit",
-        OptimizeStepKind.SubsetFonts => "Trim fonts",
-        OptimizeStepKind.Grayscale => "Convert to grayscale",
+        OptimizeStepKind.RemoveUnreferenced => Loc.T("Remove unused objects"),
+        OptimizeStepKind.ObjectStreams => Loc.T("Pack objects"),
+        OptimizeStepKind.RecompressStreams => Loc.T("Recompress streams"),
+        OptimizeStepKind.ConvertOldFilters => Loc.T("Replace old filters"),
+        OptimizeStepKind.RemoveDuplicates => Loc.T("Merge duplicates"),
+        OptimizeStepKind.StripThumbnails => Loc.T("Remove thumbnails"),
+        OptimizeStepKind.StripPieceInfo => Loc.T("Remove application data"),
+        OptimizeStepKind.StripPrivateData => Loc.T("Remove private keys"),
+        OptimizeStepKind.PruneResources => Loc.T("Drop unused resources"),
+        OptimizeStepKind.DownsampleImages => Loc.T("Shrink images"),
+        OptimizeStepKind.BilevelImages => Loc.T("Make black and white images 1-bit"),
+        OptimizeStepKind.SubsetFonts => Loc.T("Trim fonts"),
+        OptimizeStepKind.Grayscale => Loc.T("Convert to grayscale"),
         _ => kind.ToString(),
     };
 
     public static string KindName(SpaceKind kind) => kind switch
     {
-        SpaceKind.Images => "Images",
-        SpaceKind.Fonts => "Fonts",
-        SpaceKind.Content => "Page content",
-        SpaceKind.Forms => "Forms",
-        SpaceKind.Annotations => "Annotations",
-        SpaceKind.Metadata => "Metadata",
-        SpaceKind.Structure => "Structure",
-        SpaceKind.Attachments => "Attachments",
-        SpaceKind.Overhead => "File overhead",
-        SpaceKind.Unreferenced => "Unused data",
+        SpaceKind.Images => Loc.T("Images"),
+        SpaceKind.Fonts => Loc.T("Fonts"),
+        SpaceKind.Content => Loc.T("Page content"),
+        SpaceKind.Forms => Loc.T("Forms"),
+        SpaceKind.Annotations => Loc.T("Annotations"),
+        SpaceKind.Metadata => Loc.T("Metadata"),
+        SpaceKind.Structure => Loc.T("Structure"),
+        SpaceKind.Attachments => Loc.T("Attachments"),
+        SpaceKind.Overhead => Loc.T("File overhead"),
+        SpaceKind.Unreferenced => Loc.T("Unused data"),
         _ => kind.ToString(),
     };
 
     public static string ItemName(SanitizeItem item) => item switch
     {
-        SanitizeItem.JavaScript => "JavaScript",
-        SanitizeItem.LaunchActions => "Actions that launch or open other files",
-        SanitizeItem.EmbeddedFiles => "Attached files",
-        SanitizeItem.HiddenLayers => "Hidden layers",
-        SanitizeItem.HiddenText => "Hidden text",
-        SanitizeItem.InvisibleText => "Invisible text",
-        SanitizeItem.Comments => "Comments and markup",
-        SanitizeItem.FormData => "Form data",
-        SanitizeItem.Metadata => "Document information and metadata",
-        SanitizeItem.PieceInfo => "Application data",
-        SanitizeItem.Thumbnails => "Page thumbnails",
-        SanitizeItem.PreviousVersions => "Earlier versions",
-        SanitizeItem.SearchIndexes => "Search and web capture data",
-        SanitizeItem.ExternalLinks => "Links to the outside",
-        SanitizeItem.FilePaths => "File names and paths",
-        SanitizeItem.Signatures => "Digital signatures",
+        SanitizeItem.JavaScript => Loc.T("JavaScript"),
+        SanitizeItem.LaunchActions => Loc.T("Actions that launch or open other files"),
+        SanitizeItem.EmbeddedFiles => Loc.T("Attached files"),
+        SanitizeItem.HiddenLayers => Loc.T("Hidden layers"),
+        SanitizeItem.HiddenText => Loc.T("Hidden text"),
+        SanitizeItem.InvisibleText => Loc.T("Invisible text"),
+        SanitizeItem.Comments => Loc.T("Comments and markup"),
+        SanitizeItem.FormData => Loc.T("Form data"),
+        SanitizeItem.Metadata => Loc.T("Document information and metadata"),
+        SanitizeItem.PieceInfo => Loc.T("Application data"),
+        SanitizeItem.Thumbnails => Loc.T("Page thumbnails"),
+        SanitizeItem.PreviousVersions => Loc.T("Earlier versions"),
+        SanitizeItem.SearchIndexes => Loc.T("Search and web capture data"),
+        SanitizeItem.ExternalLinks => Loc.T("Links to the outside"),
+        SanitizeItem.FilePaths => Loc.T("File names and paths"),
+        SanitizeItem.Signatures => Loc.T("Digital signatures"),
         _ => item.ToString(),
     };
 
-    public const string NeedsCodec = "Images in JPEG and JPEG 2000 need the system codec and were left.";
-    public const string LeftColor = "Shadings, spot colours and patterns were left in colour.";
-    public const string LeftPartialFonts = "Fonts with uses that could not be traced were left whole.";
-    public const string LeftPartialImages = "Images with uses that could not be traced were left at their size.";
-    public const string LeftMixedText = "Invisible text in a text object that also shows visible text was left.";
+    public static string NeedsCodec => Loc.T("Images in JPEG and JPEG 2000 need the system codec and were left.");
+    public static string LeftColor => Loc.T("Shadings, spot colours and patterns were left in colour.");
+    public static string LeftPartialFonts => Loc.T("Fonts with uses that could not be traced were left whole.");
+    public static string LeftPartialImages => Loc.T("Images with uses that could not be traced were left at their size.");
+    public static string LeftMixedText => Loc.T("Invisible text in a text object that also shows visible text was left.");
 }

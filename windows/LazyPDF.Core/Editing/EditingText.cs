@@ -3,24 +3,24 @@ namespace LazyPDF.Core;
 /// <summary>The words of the problems the editor reports.</summary>
 public static class EditingText
 {
-    public const string NoFont = "No font has these letters.";
-    public const string NoGlyphs = "No font has {0}.";
-    public const string FontSetOutside = "The font is set outside this form.";
-    public const string ColorOutside = "The colour is set outside this form.";
-    public const string SharedForm = "The same form is painted twice.";
-    public const string Vertical = "Vertical text cannot be changed.";
-    public const string ActualText = "This text has replacement text.";
-    public const string NoText = "There is no text there.";
-    public const string Unbalanced = "The graphics state is left open around it.";
-    public const string CrossesLines = "The match runs over two lines.";
-    public const string NoImage = "This picture cannot be read.";
-    public const string ClipPath = "A path that clips cannot be changed.";
-    public const string NotAlone = "It shares its group with other content.";
-    public const string TooBig = "The area is empty.";
-    public const string MoreStreams = "The text is in more than one stream.";
-    public const string MixedSizes = "The block is set in more than one size.";
-    public const string NothingChanged = "Nothing to change.";
-    public const string StateBetween = "A setting between them would change it.";
-    public const string AlreadyThere = "It is already there.";
-    public const string StaleObject = "The object is from before the last change.";
+    public static string NoFont => Loc.T("No font has these letters.");
+    public static string NoGlyphs => Loc.T("No font has {0}.");
+    public static string FontSetOutside => Loc.T("The font is set outside this form.");
+    public static string ColorOutside => Loc.T("The colour is set outside this form.");
+    public static string SharedForm => Loc.T("The same form is painted twice.");
+    public static string Vertical => Loc.T("Vertical text cannot be changed.");
+    public static string ActualText => Loc.T("This text has replacement text.");
+    public static string NoText => Loc.T("There is no text there.");
+    public static string Unbalanced => Loc.T("The graphics state is left open around it.");
+    public static string CrossesLines => Loc.T("The match runs over two lines.");
+    public static string NoImage => Loc.T("This picture cannot be read.");
+    public static string ClipPath => Loc.T("A path that clips cannot be changed.");
+    public static string NotAlone => Loc.T("It shares its group with other content.");
+    public static string TooBig => Loc.T("The area is empty.");
+    public static string MoreStreams => Loc.T("The text is in more than one stream.");
+    public static string MixedSizes => Loc.T("The block is set in more than one size.");
+    public static string NothingChanged => Loc.T("Nothing to change.");
+    public static string StateBetween => Loc.T("A setting between them would change it.");
+    public static string AlreadyThere => Loc.T("It is already there.");
+    public static string StaleObject => Loc.T("The object is from before the last change.");
 }

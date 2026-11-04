@@ -1,44 +1,39 @@
 namespace LazyPDF.Core;
 
-/// <summary>Texts redaction raises to the user. Loc.T takes them over when it exists.</summary>
+/// <summary>Texts redaction raises to the user.</summary>
 public static class RedactionText
 {
-    public const string NoFont = "No font for this text. Pick another font.";
-    public const string NothingFound = "Nothing was under the marks.";
+    public static string NoFont => Loc.T("No font for this text. Pick another font.");
+    public static string NothingFound => Loc.T("Nothing was under the marks.");
     public const string ReplacedBy = "[redacted]";
-    public const string TextElsewhere = "Descriptions, links and names";
-    public const string XmpUnreadable = "An XMP packet that could not be read";
+    public static string TextElsewhere => Loc.T("Descriptions, links and names");
+    public static string XmpUnreadable => Loc.T("An XMP packet that could not be read");
 
     public static string Line(PageRedaction p)
     {
         var parts = new List<string>();
-        Add(parts, p.Glyphs, "character", "characters");
-        Add(parts, p.Images, "image", "images");
-        Add(parts, p.Paths, "shape", "shapes");
-        Add(parts, p.Annotations, "note", "notes");
-        Add(parts, p.Fields, "form field", "form fields");
-        return $"Page {p.Page + 1}: removed {string.Join(", ", parts)}.";
+        if (p.Glyphs > 0) parts.Add(Loc.Plural(p.Glyphs, "{0} character", "{0} characters"));
+        if (p.Images > 0) parts.Add(Loc.Plural(p.Images, "{0} image", "{0} images"));
+        if (p.Paths > 0) parts.Add(Loc.Plural(p.Paths, "{0} shape", "{0} shapes"));
+        if (p.Annotations > 0) parts.Add(Loc.Plural(p.Annotations, "{0} note", "{0} notes"));
+        if (p.Fields > 0) parts.Add(Loc.Plural(p.Fields, "{0} form field", "{0} form fields"));
+        return Loc.T("Page {0}: removed {1}.", p.Page + 1, string.Join(", ", parts));
     }
 
-    private static void Add(List<string> parts, int count, string one, string many)
-    {
-        if (count > 0) parts.Add($"{count} {(count == 1 ? one : many)}");
-    }
+    public static string NeedsPicture(int page) => Loc.T("Page {0} cannot be redacted as text. It needs a page renderer to be turned into a picture.", page + 1);
+    public static string NotDrawn(int page) => Loc.T("Page {0} could not be drawn, so it cannot be turned into a picture.", page + 1);
+    public static string Flattened(int page) => Loc.T("Page {0} was turned into a picture. Its text can no longer be selected.", page + 1);
+    public static string MetadataHolds(string where) => Loc.T("{0} holds removed text.", where);
+    public static string MetadataChanged(string where) => Loc.T("{0} held removed text. It was replaced.", where);
+    public static string SignaturesGone(int count) => Loc.Plural(count, "The signature is gone.", "{0} signatures are gone.");
+    public static string Removed(string text) => Loc.T("Removed: {0}", text);
 
-    public static string NeedsPicture(int page) => $"Page {page + 1} cannot be redacted as text. It needs a page renderer to be turned into a picture.";
-    public static string NotDrawn(int page) => $"Page {page + 1} could not be drawn, so it cannot be turned into a picture.";
-    public static string Flattened(int page) => $"Page {page + 1} was turned into a picture. Its text can no longer be selected.";
-    public static string MetadataHolds(string where) => $"{where} holds removed text.";
-    public static string MetadataChanged(string where) => $"{where} held removed text. It was replaced.";
-    public static string SignaturesGone(int count) => count == 1 ? "The signature is gone." : $"{count} signatures are gone.";
-    public static string Removed(string text) => $"Removed: {text}";
-
-    public static string StillInside(int page) => $"Text is still inside a mark on page {page + 1}.";
-    public static string PageOf(int page) => $"page {page + 1}";
-    public static string AttachedFile(int number) => $"an attached file (object {number})";
-    public static string NotChecked(string where) => $"{where} could not be opened, so it was not checked.";
-    public static string StillInFile(string where) => $"Removed text is still in {where}.";
-    public static string NotFollowed(int page) => $"Page {page + 1} could not be followed to its end, so it was not fully checked.";
-    public const string TooManyStrings = "Not every removed string could be checked.";
-    public const string DoesNotOpen = "The output does not open.";
+    public static string StillInside(int page) => Loc.T("Text is still inside a mark on page {0}.", page + 1);
+    public static string PageOf(int page) => Loc.T("page {0}|in a sentence", page + 1);
+    public static string AttachedFile(int number) => Loc.T("an attached file (object {0})", number);
+    public static string NotChecked(string where) => Loc.T("{0} could not be opened, so it was not checked.", where);
+    public static string StillInFile(string where) => Loc.T("Removed text is still in {0}.", where);
+    public static string NotFollowed(int page) => Loc.T("Page {0} could not be followed to its end, so it was not fully checked.", page + 1);
+    public static string TooManyStrings => Loc.T("Not every removed string could be checked.");
+    public static string DoesNotOpen => Loc.T("The output does not open.");
 }

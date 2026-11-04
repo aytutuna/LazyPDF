@@ -1,44 +1,43 @@
 namespace LazyPDF.Core;
 
-// User-visible words of this layer, in one place until Loc.T exists.
 public static class AnnotationText
 {
-    public static string NoFont => "No font can draw this text. Choose another font.";
+    public static string NoFont => Loc.T("No font can draw this text. Choose another font.");
 
     public static string KindName(AnnotationType type) => type switch
     {
-        AnnotationType.Text => "Note",
-        AnnotationType.FreeText => "Text box",
-        AnnotationType.Line => "Line",
-        AnnotationType.Square => "Rectangle",
-        AnnotationType.Circle => "Oval",
-        AnnotationType.Polygon => "Polygon",
-        AnnotationType.PolyLine => "Polyline",
-        AnnotationType.Highlight => "Highlight",
-        AnnotationType.Underline => "Underline",
-        AnnotationType.Squiggly => "Squiggly underline",
-        AnnotationType.StrikeOut => "Strikethrough",
-        AnnotationType.Stamp => "Stamp",
-        AnnotationType.Caret => "Insert text",
-        AnnotationType.Ink => "Drawing",
-        AnnotationType.FileAttachment => "Attachment",
-        AnnotationType.Redact => "Redaction",
-        AnnotationType.Link => "Link",
-        _ => "Annotation",
+        AnnotationType.Text => Loc.T("Note"),
+        AnnotationType.FreeText => Loc.T("Text box"),
+        AnnotationType.Line => Loc.T("Line"),
+        AnnotationType.Square => Loc.T("Rectangle"),
+        AnnotationType.Circle => Loc.T("Oval"),
+        AnnotationType.Polygon => Loc.T("Polygon"),
+        AnnotationType.PolyLine => Loc.T("Polyline"),
+        AnnotationType.Highlight => Loc.T("Highlight"),
+        AnnotationType.Underline => Loc.T("Underline"),
+        AnnotationType.Squiggly => Loc.T("Squiggly underline"),
+        AnnotationType.StrikeOut => Loc.T("Strikethrough"),
+        AnnotationType.Stamp => Loc.T("Stamp"),
+        AnnotationType.Caret => Loc.T("Insert text"),
+        AnnotationType.Ink => Loc.T("Drawing"),
+        AnnotationType.FileAttachment => Loc.T("Attachment"),
+        AnnotationType.Redact => Loc.T("Redaction"),
+        AnnotationType.Link => Loc.T("Link"),
+        _ => Loc.T("Annotation"),
     };
 
     public static string StatusName(ReviewStatus status) => status switch
     {
-        ReviewStatus.Accepted => "Accepted",
-        ReviewStatus.Rejected => "Rejected",
-        ReviewStatus.Cancelled => "Cancelled",
-        ReviewStatus.Completed => "Completed",
-        ReviewStatus.Marked => "Marked",
-        ReviewStatus.Unmarked => "Unmarked",
-        _ => "None",
+        ReviewStatus.Accepted => Loc.T("Accepted"),
+        ReviewStatus.Rejected => Loc.T("Rejected"),
+        ReviewStatus.Cancelled => Loc.T("Cancelled"),
+        ReviewStatus.Completed => Loc.T("Completed"),
+        ReviewStatus.Marked => Loc.T("Marked"),
+        ReviewStatus.Unmarked => Loc.T("Unmarked"),
+        _ => Loc.T("None"),
     };
 
-    public static string StatusSetBy(ReviewStatus status, string author) => $"{StatusName(status)} set by {author}";
+    public static string StatusSetBy(ReviewStatus status, string author) => Loc.T("{0} set by {1}", StatusName(status), author);
 
     /// <summary>The standard stamp names of ISO 32000-1 12.5.6.12, in the order a palette shows them.</summary>
     public static IReadOnlyList<string> StandardStamps { get; } =

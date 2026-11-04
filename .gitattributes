@@ -7,3 +7,6 @@
 *.jpg binary
 *.ttf binary
 *.p12 binary
+# Written by scripts/gen_l10n.py; the CI diff compares bytes.
+windows/LazyPDF.Core/Strings.tr.resx text eol=lf
+l10n/shared.json text eol=lf

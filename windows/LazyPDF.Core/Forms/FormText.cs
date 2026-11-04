@@ -1,46 +1,45 @@
 namespace LazyPDF.Core;
 
-// User-visible words of this layer, in one place until Loc.T exists.
 public static class FormText
 {
-    public static string NoFont => "No font can draw this text. Choose another font.";
+    public static string NoFont => Loc.T("No font can draw this text. Choose another font.");
 
-    public static string DynamicXfa => "This is a dynamic XFA form. Lazy PDF cannot fill it.";
+    public static string DynamicXfa => Loc.T("This is a dynamic XFA form. Lazy PDF cannot fill it.");
 
-    public static string XfaRemoved => "The XFA data was removed. The form now uses its normal fields.";
+    public static string XfaRemoved => Loc.T("The XFA data was removed. The form now uses its normal fields.");
 
-    public static string ScriptNotRun => "This script did not run. Only built-in format and calculate functions run.";
+    public static string ScriptNotRun => Loc.T("This script did not run. Only built-in format and calculate functions run.");
 
-    public static string NameTaken(string name) => $"A field named {name} already exists. Choose another name.";
+    public static string NameTaken(string name) => Loc.T("A field named {0} already exists. Choose another name.", name);
 
-    public static string BadName => "A field name cannot be empty or end with a period.";
+    public static string BadName => Loc.T("A field name cannot be empty or end with a period.");
 
-    public static string BadRect => "The field needs a rectangle with an area.";
+    public static string BadRect => Loc.T("The field needs a rectangle with an area.");
 
-    public static string NoPage => "The page is not in the document.";
+    public static string NoPage => Loc.T("The page is not in the document.");
 
-    public static string NotAField => "This field is not part of the form.";
+    public static string NotAField => Loc.T("This field is not part of the form.");
 
     public static string KindName(FieldKind kind) => kind switch
     {
-        FieldKind.Text => "Text field",
-        FieldKind.CheckBox => "Check box",
-        FieldKind.Radio => "Radio button",
-        FieldKind.PushButton => "Button",
-        FieldKind.ComboBox => "Drop-down list",
-        FieldKind.ListBox => "List box",
-        _ => "Signature",
+        FieldKind.Text => Loc.T("Text field"),
+        FieldKind.CheckBox => Loc.T("Check box"),
+        FieldKind.Radio => Loc.T("Radio button"),
+        FieldKind.PushButton => Loc.T("Button"),
+        FieldKind.ComboBox => Loc.T("Drop-down list"),
+        FieldKind.ListBox => Loc.T("List box"),
+        _ => Loc.T("Signature"),
     };
 
-    public static string OutOfRange(string min, string max) => $"Enter a value from {min} to {max}.";
+    public static string OutOfRange(string min, string max) => Loc.T("Enter a value from {0} to {1}.", min, max);
 
-    public static string AtLeast(string min) => $"Enter a value of at least {min}.";
+    public static string AtLeast(string min) => Loc.T("Enter a value of at least {0}.", min);
 
-    public static string AtMost(string max) => $"Enter a value of at most {max}.";
+    public static string AtMost(string max) => Loc.T("Enter a value of at most {0}.", max);
 
-    public static string BadNumber => "Enter a number.";
+    public static string BadNumber => Loc.T("Enter a number.");
 
-    public static string BadDate => "Enter a date.";
+    public static string BadDate => Loc.T("Enter a date.");
 
-    public static string BadFormat => "The value does not fit the format.";
+    public static string BadFormat => Loc.T("The value does not fit the format.");
 }
