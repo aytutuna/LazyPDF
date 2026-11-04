@@ -43,7 +43,7 @@ public class OcrTriageTests
     }
 
     [Fact]
-    public void OurOwnLayerIsRecognizedAndLeavesTheKindOfTheRest()
+    public void OurOwnLayerIsRecognizedWhateverElseThePageShows()
     {
         var scan = OcrKit.Scan();
         PdfOcrLayer.Add(scan, [new OcrPageWords(0, OcrKit.Words(), 400, 600)], "en");
@@ -53,7 +53,7 @@ public class OcrTriageTests
 
         var printed = OcrKit.Scan(1, "", "BT /F1 12 Tf 50 500 Td (Hello) Tj ET");
         PdfOcrLayer.Add(printed, [new OcrPageWords(0, OcrKit.Words(), 400, 600)], "en");
-        Assert.Equal(OcrPageKind.Text, KindOf(printed));
+        Assert.Equal(OcrPageKind.OwnLayer, KindOf(printed));
     }
 
     [Fact]

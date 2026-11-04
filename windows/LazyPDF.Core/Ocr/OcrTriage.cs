@@ -9,7 +9,7 @@ public enum OcrPageKind
     Drawing,
     /// <summary>A picture covers most of the page and any text on it is a stamp or a number.</summary>
     Picture,
-    /// <summary>The only text is the layer <see cref="PdfOcrLayer"/> wrote.</summary>
+    /// <summary>The page has the layer <see cref="PdfOcrLayer"/> wrote, whatever else it shows.</summary>
     OwnLayer,
     /// <summary>The only text is invisible and not ours: an earlier OCR by another tool.</summary>
     ForeignLayer,
@@ -49,8 +49,8 @@ public static class OcrTriage
         double area = page.CropBox.Width * page.CropBox.Height;
         bool picture = area > 0 && survey.PictureArea / area >= PictureShare;
         bool visibleText = survey.Visible > 0 && !(picture && survey.TextArea / area < SparseTextShare);
-        if (visibleText) return OcrPageKind.Text;
         if (PdfOcrLayer.Has(document, page)) return OcrPageKind.OwnLayer;
+        if (visibleText) return OcrPageKind.Text;
         if (survey.Invisible > 0) return OcrPageKind.ForeignLayer;
         if (picture) return OcrPageKind.Picture;
         return survey.Marks > 0 ? OcrPageKind.Drawing : OcrPageKind.Blank;

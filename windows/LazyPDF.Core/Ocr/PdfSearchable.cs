@@ -81,7 +81,7 @@ public static class PdfSearchable
             {
                 var recognized = await recognizer.RecognizeAsync(image, options.Language, cancellation).ConfigureAwait(false);
                 found.Add(new OcrPageWords(index, recognized, image.Width, image.Height));
-                if (recognized.Count > 0)
+                if (OcrLayerContent.Layout(recognized, image.Width, image.Height, new PageGeometry(page)).Count > 0)
                 {
                     outcome = OcrOutcome.Added;
                     added++;

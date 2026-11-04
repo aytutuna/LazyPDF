@@ -69,6 +69,27 @@ internal static class OcrLayerContent
               .Show(encoded);
     }
 
+    /// <summary>
+    /// The geometry the stream was written in: the rotation under which its first text matrix runs
+    /// along the display's x axis. After the page's /Rotate changes, lines and heights are only
+    /// meaningful in that frame; <paramref name="current"/> is returned when no rotation fits.
+    /// </summary>
+    public static PageGeometry WrittenIn(PdfDocument document, PdfPage page, PdfStream stream, PageGeometry current)
+    {
+        var tm = ContentParser.Parse(document.Data(stream)).FirstOrDefault(o => o.Operator == "Tm" && o.Operands.Count == 6);
+        if (tm is null) return current;
+        double a = tm.Number(0) ?? 1, b = tm.Number(1) ?? 0, norm = Math.Sqrt(a * a + b * b);
+        foreach (int rotate in new[] { current.Rotation, 0, 90, 180, 270 })
+        {
+            var candidate = new PageGeometry(page.CropBox, rotate, page.UserUnit);
+            var (x0, y0) = candidate.ToUser(0, 0);
+            var (x1, y1) = candidate.ToUser(1, 0);
+            double dx = x1 - x0, dy = y1 - y0, length = Math.Sqrt(dx * dx + dy * dy);
+            if (Math.Abs(dx / length - a / norm) < 1e-3 && Math.Abs(dy / length - b / norm) < 1e-3) return candidate;
+        }
+        return current;
+    }
+
     /// <summary>The lines of a layer stream. Words are in display points; a stream that does not follow the format gives what could be read.</summary>
     public static List<List<PlacedWord>> Read(PdfDocument document, PdfPage page, PdfStream stream, PageGeometry geometry)
     {

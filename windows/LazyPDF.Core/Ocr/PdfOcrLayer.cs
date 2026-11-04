@@ -105,10 +105,11 @@ public static class PdfOcrLayer
     /// <exception cref="ArgumentOutOfRangeException">No such word.</exception>
     public static void Correct(PdfDocument document, PdfPage page, int index, string text)
     {
-        var geometry = new PageGeometry(page);
+        var shown = new PageGeometry(page);
         int first = 0;
         foreach (var stream in LayerStreams(document, page))
         {
+            var geometry = OcrLayerContent.WrittenIn(document, page, stream, shown);
             var lines = OcrLayerContent.Read(document, page, stream, geometry);
             int count = lines.Sum(l => l.Count);
             if (index >= first + count)
