@@ -17,7 +17,7 @@ internal sealed partial class PdfAConversionRun
             used ??= [];
             if (subtype == "Type3")
             {
-                if (before.NeedsToUnicode(pdfFont) && AddToUnicode(font, pdfFont, used)) corrected++;
+                if (WantsToUnicode(before, font, pdfFont, used) && AddToUnicode(before, font, pdfFont, used)) corrected++;
                 continue;
             }
             var holder = subtype == "Type0" && _doc.Array(font, "DescendantFonts") is { Items.Count: > 0 } kids && _doc.Resolve(kids.Items[0]) is PdfDictionary d ? d : font;
@@ -29,9 +29,9 @@ internal sealed partial class PdfAConversionRun
                 continue;
             }
             bool changed = FixWidths(font, holder, pdfFont, used);
-            changed |= FixSubsetSets(descriptor!, pdfFont, used);
-            changed |= FixEncoding(font, holder, descriptor!, subtype);
-            if (before.NeedsToUnicode(pdfFont)) changed |= AddToUnicode(font, pdfFont, used);
+            changed |= FixSubsetSets(descriptor!, holder, pdfFont, used);
+            changed |= FixEncoding(font, holder, descriptor!, pdfFont, used, subtype);
+            if (WantsToUnicode(before, font, pdfFont, used)) changed |= AddToUnicode(before, font, pdfFont, used);
             if (changed) corrected++;
         }
         if (embedded > 0) Changed(PdfAText.FontsEmbedded(embedded));
@@ -63,30 +63,54 @@ internal sealed partial class PdfAConversionRun
     private FontFile? FindFile(PdfFont font, string family, FontStyles style) =>
         fonts?.Find(family, style) ?? fonts?.Find(Generic(font), style);
 
-    private static string FirstCharacter(string text) => char.ConvertFromUtf32(char.ConvertToUtf32(text, 0));
+    // One code point, or null: a glyph for "fi" is not the one for "f", so text of several characters cannot be drawn from a single glyph.
+    private static int? SingleCodePoint(string text) =>
+        Rune.TryGetRuneAt(text, 0, out var rune) && rune.Utf16SequenceLength == text.Length ? rune.Value : null;
 
+    private static readonly (int Platform, int Encoding)[] UnicodeCmaps = [(3, 10), (3, 1), (0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 6)];
+
+    private static bool IsSymbolFile(FontFile file) =>
+        TrueTypeFont.TryParse(file.Data, file.CollectionIndex) is { } tt && tt.HasCmap(3, 0) && !UnicodeCmaps.Any(c => tt.HasCmap(c.Platform, c.Encoding));
+
+    // A font that cannot show every code the content uses is not replaced: an embedded font with .notdef in it would pass
+    // the validator and still lose the text, so the original stays and is reported.
     private bool EmbedSimple(PdfDictionary font, PdfFont pdfFont, SortedSet<int> used)
     {
         var (family, style, symbolic) = Choose(pdfFont);
         if (FindFile(pdfFont, family, style) is not { } file) return false;
         var unicode = new SortedDictionary<int, string>();
+        var bare = pdfFont.HasToUnicode ? WithoutToUnicode(font) : null;
         for (int code = 0; code < 256; code++)
         {
             if (code < 32 && !used.Contains(code)) continue;
-            pdfFont.Read([(byte)code], out var character);
-            if (character.Unicode is { Length: > 0 } text) unicode[code] = text;
+            if (TextOf(pdfFont, bare, [(byte)code]) is { } text) unicode[code] = text;
         }
-        // A symbol font's glyphs sit at 0xF000 and up in its (3,0) cmap, whatever they stand for.
-        var lookup = unicode.ToDictionary(p => p.Key, p => symbolic ? char.ConvertFromUtf32(0xF000 + p.Key) : FirstCharacter(p.Value));
-        if (lookup.Count == 0 || EmbeddedFontBuilder.Build(file.Data, [string.Concat(lookup.Values)], out _, file.CollectionIndex) is not { } built) return false;
+        // A symbol file has glyphs at the code (or 0xF000 above it) of its own encoding whatever they stand for, so a code is looked up
+        // under the code the font's built-in encoding gives its glyph name; any other file is asked for the text.
+        var builtIn = symbolic && IsSymbolFile(file) ? CodesByName(Standard14.Find(pdfFont.Name)?.BuiltInEncoding) : null;
+        var options = new SortedDictionary<int, int>();
+        foreach (var (code, text) in unicode)
+        {
+            if (builtIn is not null)
+            {
+                if (pdfFont.GlyphNameOf(code) is { } glyph && builtIn.TryGetValue(glyph, out int own)) options[code] = own;
+            }
+            else if (SingleCodePoint(text) is { } single)
+            {
+                options[code] = single;
+            }
+        }
+        string wanted = string.Concat(options.Values.Select(char.ConvertFromUtf32));
+        if (wanted.Length == 0 || EmbeddedFontBuilder.Build(file.Data, [wanted], out _, file.CollectionIndex) is not { } built) return false;
 
         var cidOf = new SortedDictionary<int, int>();
-        foreach (var (code, key) in lookup)
+        foreach (var (code, codePoint) in options)
         {
-            if (built.Codes.TryGetValue(char.ConvertToUtf32(key, 0), out int cid)) cidOf[code] = cid;
+            if (built.Codes.TryGetValue(codePoint, out int cid)) cidOf[code] = cid;
         }
+        if (used.Any(code => !cidOf.ContainsKey(code))) return false;
         var map = new CMapEntries(cidOf);
-        var cidFont = BuildCidFont(built, pdfFont.Name);
+        var cidFont = BuildCidFont(built, pdfFont.Name, BuiltCids(built));
         var type0 = new PdfDictionary();
         type0["Type"] = new PdfName("Font");
         type0["Subtype"] = new PdfName("Type0");
@@ -100,28 +124,30 @@ internal sealed partial class PdfAConversionRun
 
     private bool EmbedComposite(PdfDictionary font, PdfDictionary cid, PdfFont pdfFont, SortedSet<int> used)
     {
-        if (_doc.Resolve(font["Encoding"]) is not PdfName { Value: "Identity-H" or "Identity-V" } || _doc.Name(cid, "Subtype") != "CIDFontType2") return false;
+        if (!IsIdentity(font) || _doc.Name(cid, "Subtype") != "CIDFontType2") return false;
         var (family, style, _) = Choose(pdfFont);
         if (FindFile(pdfFont, family, style) is not { } file) return false;
         var unicode = new SortedDictionary<int, string>();
+        var bare = pdfFont.HasToUnicode ? WithoutToUnicode(font) : null;
         foreach (int value in used)
         {
-            pdfFont.Read([(byte)(value >> 8), (byte)value], out var character);
-            if (character.Unicode is { Length: > 0 } text) unicode[value] = text;
+            if (TextOf(pdfFont, bare, [(byte)(value >> 8), (byte)value]) is { } text && SingleCodePoint(text) is not null) unicode[value] = text;
         }
-        if (unicode.Count == 0 || EmbeddedFontBuilder.Build(file.Data, [string.Concat(unicode.Values.Select(FirstCharacter))], out _, file.CollectionIndex) is not { IsCff: false } built) return false;
+        if (unicode.Count == 0 || unicode.Count != used.Count) return false;
+        if (EmbeddedFontBuilder.Build(file.Data, [string.Concat(unicode.Values)], out _, file.CollectionIndex) is not { IsCff: false } built) return false;
+        if (unicode.Values.Any(text => !built.Codes.ContainsKey(char.ConvertToUtf32(text, 0)))) return false;
 
         var gid = new byte[(unicode.Keys.Max() + 1) * 2];
         var widthOf = built.Widths.SelectMany(r => r.Widths.Select((w, i) => (Cid: r.FirstCid + i, Width: w))).ToDictionary(p => p.Cid, p => p.Width);
         var widths = new SortedDictionary<int, double>();
         foreach (var (value, text) in unicode)
         {
-            if (!built.Codes.TryGetValue(char.ConvertToUtf32(text, 0), out int code)) continue;
+            int code = built.Codes[char.ConvertToUtf32(text, 0)];
             gid[2 * value] = (byte)(code >> 8);
             gid[2 * value + 1] = (byte)code;
             widths[value] = widthOf.GetValueOrDefault(code);
         }
-        var fresh = BuildCidFont(built, pdfFont.Name);
+        var fresh = BuildCidFont(built, pdfFont.Name, widths.Keys);
         cid["BaseFont"] = new PdfName(built.BaseFont);
         cid["FontDescriptor"] = fresh["FontDescriptor"]!;
         var toGid = new PdfDictionary();
@@ -129,11 +155,31 @@ internal sealed partial class PdfAConversionRun
         cid["CIDToGIDMap"] = _doc.Add(new PdfStream(toGid, PdfFilterEncoders.Flate(gid)));
         cid["W"] = WidthArray(widths);
         font["BaseFont"] = new PdfName(built.BaseFont);
-        if (!pdfFont.HasToUnicode) font["ToUnicode"] = _doc.Add(ToUnicodeStream(unicode, 2));
+        if (!pdfFont.HasToUnicode || ToUnicodeGaps(font, pdfFont, used)) font["ToUnicode"] = _doc.Add(ToUnicodeStream(unicode, 2));
         return true;
     }
 
-    private PdfDictionary BuildCidFont(EmbeddedFont built, string name)
+    private static Dictionary<string, int>? CodesByName(IReadOnlyList<string?>? encoding)
+    {
+        if (encoding is null) return null;
+        var codes = new Dictionary<string, int>();
+        for (int code = 0; code < encoding.Count; code++)
+        {
+            if (encoding[code] is { } name) codes.TryAdd(name, code);
+        }
+        return codes;
+    }
+
+    private static SortedSet<int> BuiltCids(EmbeddedFont built)
+    {
+        var cids = new SortedSet<int>(built.Widths.SelectMany(r => Enumerable.Range(r.FirstCid, r.Widths.Count)));
+        var tt = TrueTypeFont.TryParse(built.Program);
+        AddGlyphCids(cids, tt?.Cff, tt, null);
+        return cids;
+    }
+
+    // The CIDSet names the CIDs of the glyphs in the program, which for a subset include the parts of composite glyphs.
+    private PdfDictionary BuildCidFont(EmbeddedFont built, string name, IReadOnlyCollection<int> cidSet)
     {
         var fontFile = new PdfDictionary();
         fontFile["Length1"] = new PdfNumber(built.Program.Length);
@@ -153,6 +199,7 @@ internal sealed partial class PdfAConversionRun
         descriptor["CapHeight"] = new PdfNumber(d.CapHeight);
         descriptor["StemV"] = new PdfNumber(d.StemV);
         descriptor[built.IsCff ? "FontFile3" : "FontFile2"] = file;
+        if (built.IsSubset) descriptor["CIDSet"] = _doc.Add(CidSetStream([.. cidSet, 0]));
 
         var widths = new List<PdfObject>();
         foreach (var run in built.Widths)
@@ -251,73 +298,71 @@ internal sealed partial class PdfAConversionRun
         return character.Width;
     }
 
-    private bool FixSubsetSets(PdfDictionary descriptor, PdfFont pdfFont, SortedSet<int> used)
-    {
-        bool changed = false;
-        if (_doc.Stream(descriptor, "CIDSet") is { } set)
-        {
-            byte[]? bits = null;
-            try
-            {
-                bits = _doc.Data(set, 1 << 20);
-            }
-            catch (PdfReadException)
-            {
-            }
-            if (bits is null || used.Any(cid => (cid >> 3) >= bits.Length || (bits[cid >> 3] & (0x80 >> (cid & 7))) == 0))
-            {
-                descriptor.Remove("CIDSet");
-                changed = true;
-            }
-        }
-        if (_doc.Resolve(descriptor["CharSet"]) is PdfString charSet)
-        {
-            var listed = Encoding.Latin1.GetString(charSet.Bytes).Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet();
-            if (used.Select(pdfFont.GlyphNameOf).Any(g => g is not (null or ".notdef") && !listed.Contains(g)))
-            {
-                descriptor.Remove("CharSet");
-                changed = true;
-            }
-        }
-        return changed;
-    }
+    // 6.2.11.7.2: every code the font shows needs text that is not U+0000, U+FEFF or U+FFFE.
+    private static bool HasText(string? text) => text is { Length: > 0 } && text.IndexOfAny(['\0', '\uFEFF', '\uFFFE']) < 0;
 
-    private bool FixEncoding(PdfDictionary font, PdfDictionary holder, PdfDictionary descriptor, string? subtype)
+    private bool WantsToUnicode(PdfAChecker before, PdfDictionary font, PdfFont pdfFont, SortedSet<int> used) =>
+        before.NeedsToUnicode(pdfFont) || level.NeedsUnicode() && pdfFont.HasToUnicode && ToUnicodeGaps(font, pdfFont, used);
+
+    private bool IsIdentity(PdfDictionary font) => _doc.Resolve(font["Encoding"]) is PdfName { Value: "Identity-H" or "Identity-V" };
+
+    // The map is keyed by code and the uses of a composite font by CID, which are the same only under an Identity CMap.
+    private bool ToUnicodeGaps(PdfDictionary font, PdfFont pdfFont, SortedSet<int> used)
     {
-        if (subtype == "Type0")
+        if (pdfFont.IsComposite && !IsIdentity(font) || _doc.Stream(font, "ToUnicode") is not { } stream) return false;
+        CMap map;
+        try
         {
-            if (_doc.Name(holder, "Subtype") != "CIDFontType2" || !descriptor.ContainsKey("FontFile2") || holder["CIDToGIDMap"] is not null) return false;
-            holder["CIDToGIDMap"] = new PdfName("Identity");
+            map = CMap.Parse(_doc.Data(stream, 16 << 20));
+        }
+        catch (PdfReadException)
+        {
             return true;
         }
-        if (subtype != "TrueType") return false;
-        long flags = _doc.Integer(descriptor, "Flags") ?? 0;
-        var encoding = _doc.Resolve(font["Encoding"]);
-        if ((flags & 4) != 0 && (flags & 32) == 0)
-        {
-            return encoding is not null && font.Remove("Encoding");
-        }
-        string? baseName = encoding switch { PdfName n => n.Value, PdfDictionary e => _doc.Name(e, "BaseEncoding"), _ => null };
-        if (baseName is "WinAnsiEncoding" or "MacRomanEncoding") return false;
-        if (encoding is PdfDictionary dictionary) dictionary["BaseEncoding"] = new PdfName("WinAnsiEncoding");
-        else font["Encoding"] = new PdfName("WinAnsiEncoding");
-        return true;
+        int width = pdfFont.IsComposite ? 2 : 1;
+        return used.Any(code => !HasText(map.UnicodeOf(code, width) ?? map.UnicodeOf(code, 0)));
     }
 
-    // Level U: the codes the font shows get text from what the reader can trace; a code mapped to nothing is left out.
-    private bool AddToUnicode(PdfDictionary font, PdfFont pdfFont, SortedSet<int> used)
+    // Level U: the codes the font shows get text the reader can trace, from the map the font has or else from its encoding. A code with none
+    // leaves the font as it is; a map with a hole in it would pass for complete, so it is dropped and the font reported, but only
+    // where the validator would then report it: a font with a Latin encoding passes without a map, and keeps the entries it has.
+    private bool AddToUnicode(PdfAChecker before, PdfDictionary font, PdfFont pdfFont, SortedSet<int> used)
     {
         var map = new SortedDictionary<int, string>();
         int bytes = pdfFont.IsComposite ? 2 : 1;
-        if (pdfFont.IsComposite && _doc.Resolve(font["Encoding"]) is not PdfName { Value: "Identity-H" or "Identity-V" }) return false;
-        foreach (int key in pdfFont.IsComposite ? used : Enumerable.Range(0, 256))
+        var bare = pdfFont.HasToUnicode ? WithoutToUnicode(font) : null;
+        if (!pdfFont.IsComposite || IsIdentity(font))
         {
-            pdfFont.Read(bytes == 2 ? [(byte)(key >> 8), (byte)key] : [(byte)key], out var character);
-            if (character.Unicode is { Length: > 0 } text) map[key] = text;
+            foreach (int key in pdfFont.IsComposite ? used : Enumerable.Range(0, 256))
+            {
+                byte[] code = bytes == 2 ? [(byte)(key >> 8), (byte)key] : [(byte)key];
+                if (TextOf(pdfFont, bare, code) is { } text) map[key] = text;
+            }
         }
-        if (map.Count == 0) return false;
-        font["ToUnicode"] = _doc.Add(ToUnicodeStream(map, bytes));
-        return true;
+        if (map.Count > 0 && used.All(map.ContainsKey))
+        {
+            font["ToUnicode"] = _doc.Add(ToUnicodeStream(map, bytes));
+            return true;
+        }
+        return bare is not null && before.NeedsToUnicode(bare) && font.Remove("ToUnicode");
+    }
+
+    // The text of a code from the font's /ToUnicode, or from its encoding where the map has none or a text the standard rejects.
+    private static string? TextOf(PdfFont font, PdfFont? bare, byte[] code)
+    {
+        font.Read(code, out var character);
+        if (!HasText(character.Unicode) && bare is not null) bare.Read(code, out character);
+        return HasText(character.Unicode) ? character.Unicode : null;
+    }
+
+    private PdfFont WithoutToUnicode(PdfDictionary font)
+    {
+        var copy = new PdfDictionary();
+        foreach (var (key, value) in font.Entries)
+        {
+            if (key != "ToUnicode") copy[key] = value;
+        }
+        return PdfFont.Get(_doc, copy);
     }
 
     /// <summary>An embedded one-byte CMap sending each code to a CID: <c>cidchar</c> entries, 100 to a section.</summary>
