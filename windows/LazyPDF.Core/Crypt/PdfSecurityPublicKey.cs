@@ -35,13 +35,16 @@ public sealed partial class PdfSecurity
         PdfDictionary? filter = null;
         if (!direct)
         {
-            filter = (encrypt["CF"] as PdfDictionary)?[(encrypt["StmF"] as PdfName)?.Value ?? ""] as PdfDictionary
+            // Recipients sit in whichever filter the file uses; /StmF, /StrF and /EFF may each be Identity.
+            var cf = encrypt["CF"] as PdfDictionary;
+            filter = new[] { "StmF", "StrF", "EFF" }.Select(key => (encrypt[key] as PdfName)?.Value)
+                         .Select(name => name is null ? null : cf?[name] as PdfDictionary).FirstOrDefault(f => f is not null)
                      ?? throw PdfReadException.Damaged("The public-key crypt filter is missing.");
         }
         if ((direct ? encrypt["Recipients"] : filter!["Recipients"]) is not PdfArray list)
             throw PdfReadException.Damaged("The public-key handler has no /Recipients.");
         var recipients = list.Items.Take(MaxRecipients).OfType<PdfString>().Select(s => s.Bytes).ToList();
-        bool metadata = ((filter ?? encrypt)["EncryptMetadata"] ?? encrypt["EncryptMetadata"]) is not PdfBoolean { Value: false };
+        bool metadata = v < 4 || ((filter ?? encrypt)["EncryptMetadata"] ?? encrypt["EncryptMetadata"]) is not PdfBoolean { Value: false };
         int length = v switch { 1 => 5, 4 => 16, _ => Math.Clamp(Number(encrypt, "Length", 40) / 8, 5, 16) };
 
         foreach (byte[] stored in recipients)

@@ -12,6 +12,7 @@ internal static class PageCleanup
     {
         public Dictionary<PdfDictionary, (PdfObject? Result, int Depth)> Actions { get; } = new(ReferenceEqualityComparer.Instance);
         public Dictionary<PdfArray, (PdfObject? Result, int Depth)> Lists { get; } = new(ReferenceEqualityComparer.Instance);
+        public Dictionary<PdfArray, PdfObject?> Leads { get; } = new(ReferenceEqualityComparer.Instance);
     }
 
     public static void BeforeDelete(PdfDocument document, IReadOnlyList<PdfPage> doomed)
@@ -76,11 +77,14 @@ internal static class PageCleanup
 
     // A GoTo to a gone page is dropped and the action that followed it takes its place; where several followed,
     // the first takes its place and the rest follow it, since /A and /OpenAction hold one action (12.6.2).
+    // A /Next array is edited where it stands, so every holder keeps pointing at it and the file stays linear.
     private static PdfObject? Action(PdfDocument document, PdfObject? value, Func<PdfObject?, bool> dead, Seen done, int depth)
     {
         if (document.Resolve(value) is not PdfDictionary action) return value;
         if (done.Actions.TryGetValue(action, out var known) && depth >= known.Depth) return known.Result;
-        done.Actions[action] = (value, depth);
+        bool gone = document.Name(action, "S") == "GoTo" && dead(action["D"]);
+        // A /Next that leads back to a GoTo being dropped has nothing to point at.
+        done.Actions[action] = (gone ? null : value, depth);
         PdfObject? next = action["Next"];
         if (depth < 32 && next is not null)
         {
@@ -89,10 +93,11 @@ internal static class PageCleanup
                 if (done.Lists.TryGetValue(list, out var walked) && depth >= walked.Depth) next = walked.Result;
                 else
                 {
-                    var results = list.Items.Select(i => Action(document, i, dead, done, depth + 1)).OfType<PdfObject>().ToList();
-                    var kept = Dictionaries(document, results);
-                    bool same = kept.Count == list.Items.Count && kept.Zip(list.Items).All(p => ReferenceEquals(p.First, p.Second));
-                    next = same ? next : kept.Count == 0 ? null : new PdfArray(kept);
+                    var kept = Dictionaries(document, list.Items.ToArray().Select(i => Action(document, i, dead, done, depth + 1)).OfType<PdfObject>());
+                    list.Items.Clear();
+                    list.Items.AddRange(kept);
+                    done.Leads.Remove(list);
+                    next = kept.Count == 0 ? null : next;
                     done.Lists[list] = (next, depth);
                 }
             }
@@ -100,8 +105,7 @@ internal static class PageCleanup
             if (next is null) action.Remove("Next");
             else action["Next"] = next;
         }
-        bool gone = document.Name(action, "S") == "GoTo" && dead(action["D"]);
-        var result = gone ? Lead(document, next) : value;
+        var result = gone ? Lead(document, next, done) : value;
         done.Actions[action] = (result, depth);
         return result;
     }
@@ -110,18 +114,25 @@ internal static class PageCleanup
         [.. items.Where(i => document.Resolve(i) is PdfDictionary)];
 
     // The first follower becomes a copy that carries the others after its own, so an action other holders share is left as it is.
-    private static PdfObject? Lead(PdfDocument document, PdfObject? next)
+    // The copy and its chain are objects of their own, made once per array, so holders of one array share them.
+    private static PdfObject? Lead(PdfDocument document, PdfObject? next, Seen done)
     {
         if (document.Resolve(next) is PdfDictionary) return next;
         if (document.Resolve(next) is not PdfArray list) return null;
+        if (done.Leads.TryGetValue(list, out var led)) return led;
         var actions = Dictionaries(document, list.Items);
-        if (actions.Count < 2) return actions.FirstOrDefault();
-        var head = ((PdfDictionary)document.Resolve(actions[0])!).Copy();
-        var chain = new List<PdfObject>();
-        if (head["Next"] is { } own) chain.AddRange(document.Resolve(own) is PdfArray owned ? owned.Items : [own]);
-        chain.AddRange(actions.Skip(1));
-        head["Next"] = new PdfArray(Dictionaries(document, chain));
-        return head;
+        PdfObject? lead = actions.FirstOrDefault();
+        if (actions.Count > 1)
+        {
+            var head = ((PdfDictionary)document.Resolve(actions[0])!).Copy();
+            var chain = new List<PdfObject>();
+            if (head["Next"] is { } own) chain.AddRange(document.Resolve(own) is PdfArray owned ? owned.Items : [own]);
+            chain.AddRange(actions.Skip(1));
+            head["Next"] = document.Add(new PdfArray(Dictionaries(document, chain)));
+            lead = document.Add(head);
+        }
+        done.Leads[list] = lead;
+        return lead;
     }
 
     private static void DropLinks(PdfDocument document, PdfPage page, Func<PdfObject?, bool> dead, Seen done)
