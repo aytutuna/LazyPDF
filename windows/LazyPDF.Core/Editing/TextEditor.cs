@@ -30,12 +30,12 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     }
 
     // Text after a cut keeps its place, by a move forward of the width cut, except in the run the new text goes into
-    // (the run of flow), where it follows the new text.
-    private void CutAll(IReadOnlyList<EditGlyph> glyphs, EditGlyph? flow)
+    // (the run of flow), where it follows the new text. A twin that got no new text is not in the flow: what follows it moves.
+    private void CutAll(IReadOnlyList<EditGlyph> glyphs, EditGlyph? flow, IReadOnlyList<EditGlyph>? unplaced = null)
     {
         var all = glyphs.SelectMany(g => g.Twins.Prepend(g)).ToList();
         foreach (var g in all) PatchOf(g).Cut(g.Element, g.Offset, g.Offset + g.Length);
-        var flows = flow is null ? [] : flow.Twins.Prepend(flow).ToList();
+        var flows = flow is null ? [] : flow.Twins.Prepend(flow).Except(unplaced ?? []).ToList();
         foreach (var group in Runs([.. all.Where(g => !flows.Any(f => SameRun(f, g)))]))
         {
             var first = group[0];
@@ -63,8 +63,8 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
         double newWidth = pieces.Sum(p => p.Advance) * anchor.UnitX;
         double shift = AlignmentShift(range, glyphs, newWidth);
         PutText(glyphs[0], false, pieces, wrap, shift);
-        foreach (var twin in glyphs[0].Twins) PutText(twin, false, pieces, wrap, shift);
-        CutAll(glyphs, glyphs[0]);
+        var unplaced = PutTwins(glyphs[0], anchor, pieces, text, style, wrap, shift);
+        CutAll(glyphs, glyphs[0], unplaced);
         CheckRoom(range, glyphs, newWidth);
     }
 
@@ -88,8 +88,8 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
             var anchor = AnchorOf(group);
             var pieces = builder.Build(PlaceOf(group[0]), anchor, part);
             PutText(group[0], false, pieces, default, 0);
-            foreach (var twin in group[0].Twins) PutText(twin, false, pieces, default, 0);
-            CutAll(group, group[0]);
+            var unplaced = PutTwins(group[0], anchor, pieces, part, null, default, 0);
+            CutAll(group, group[0], unplaced);
             width += pieces.Sum(p => p.Advance) * anchor.UnitX;
         }
         CheckRoom(range, glyphs, width);
@@ -147,6 +147,33 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
         return runs;
     }
 
+    // A twin is shown in a font and a stream of its own, so the codes of the anchor's font mean nothing to it: its text is built again for it.
+    private List<EditGlyph> PutTwins(EditGlyph glyph, EditGlyph anchor, List<EditPiece> pieces, string text, TextStyleChange? style, StyleWrap wrap, double shift)
+    {
+        var unplaced = new List<EditGlyph>();
+        foreach (var twin in glyph.Twins)
+        {
+            if (twin.Font == anchor.Font && twin.Unit == anchor.Unit)
+            {
+                PutText(twin, false, pieces, wrap, shift);
+                continue;
+            }
+            var mark = batch.Save();
+            try
+            {
+                var own = Pieces(PlaceOf(twin), twin, twin, text, style, out var twinWrap);
+                PutText(twin, false, own, twinWrap, shift);
+            }
+            catch (EditConflictException) when (twin.RenderMode == 3)
+            {
+                // A hidden copy that cannot show the new letters is cut with the rest rather than blocking the edit.
+                batch.Restore(mark);
+                unplaced.Add(twin);
+            }
+        }
+        return unplaced;
+    }
+
     private void PutText(EditGlyph at, bool after, List<EditPiece> pieces, StyleWrap wrap, double shift)
     {
         var items = TextBuilder.Items(PlaceOf(at), at, pieces, ShiftAmount(at, shift), wrap.Before, wrap.After, wrap.Size);
@@ -163,7 +190,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     {
         wrap = default;
         if (style is null) return builder.Build(place, anchor, text);
-        var state = place.Unit.States.At(at.Op);
+        var state = place.States.At(at.Op);
         var before = new ContentWriter();
         var after = new ContentWriter();
         var restore = StateParts.None;
@@ -200,7 +227,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
                 pieces = [.. pieces.Select(p => new EditPiece { Text = p.Text, Bytes = p.Bytes, Font = p.Font, IsSpace = p.IsSpace, Shift = p.Shift, Advance = p.Advance * factor })];
             }
         }
-        if (restore != StateParts.None) state.Replay(after, restore);
+        if (restore != StateParts.None) place.States.At(at.Op + 1).Replay(after, restore);
         wrap = new StyleWrap(before.Length > 0 ? before.ToArray() : null, after.Length > 0 ? after.ToArray() : null, size);
         return pieces;
     }
@@ -237,13 +264,13 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
             Replace(range, model.Text.GetText(range), change);
             return;
         }
-        foreach (var group in glyphs.GroupBy(g => (g.Unit, g.Visit)))
+        var changed = (change.Size is null ? StateParts.None : StateParts.Font) | (change.CharSpacing is null ? StateParts.None : StateParts.CharSpacing) |
+            (change.Color is null ? StateParts.None : StateParts.Fill | StateParts.Stroke);
+        foreach (var run in StreamRuns(glyphs.SelectMany(g => g.Twins.Prepend(g)), changed))
         {
-            var list = group.ToList();
-            var (a, b) = (list[0], list[^1]);
-            var place = PlaceOf(a);
+            var (a, b) = (run[0], run[^1]);
             if (!Balanced(a.Unit, a.Op, b.Op)) throw new EditConflictException(EditingText.Unbalanced);
-            var state = a.Unit.States.At(a.Op);
+            var state = PlaceOf(a).States.At(a.Op);
             var before = new ContentWriter();
             var restore = StateParts.None;
             if (change.Size is { } size)
@@ -268,11 +295,52 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
                 restore |= StateParts.CharSpacing;
             }
             var after = new ContentWriter();
-            b.Unit.States.At(b.Op).Replay(after, restore);
+            PlaceOf(b).States.At(b.Op + 1).Replay(after, restore);
             PatchOf(a).Insert(a.Element, a.Offset, [new ShowOps(before.ToArray())]);
             PatchOf(b).Insert(b.Element, b.Offset + b.Length, [new ShowOps(after.ToArray())]);
         }
     }
+
+    private static readonly HashSet<string> Painted = ["Do", "sh", "BI", "S", "s", "f", "F", "f*", "B", "B*", "b", "b*"];
+
+    // The glyphs in the order the stream shows them, cut into runs that nothing else is drawn inside of, that stay
+    // within one q level, and that no operator setting one of `parts` falls inside of, so that operators put round a
+    // run reach these glyphs only and are not undone by the stream.
+    private List<List<EditGlyph>> StreamRuns(IEnumerable<EditGlyph> glyphs, StateParts parts)
+    {
+        var own = glyphs.ToHashSet();
+        var runs = new List<List<EditGlyph>>();
+        foreach (var group in own.GroupBy(g => (g.Unit, g.Visit)))
+        {
+            var ops = group.Key.Unit.Operations;
+            EditGlyph? last = null;
+            foreach (var g in group.OrderBy(g => g.Op).ThenBy(g => g.Element).ThenBy(g => g.Offset))
+            {
+                bool apart = last is not null && (model.ForeignBetween(g.Unit, last, g, own) || !Balanced(g.Unit, runs[^1][0].Op, g.Op) ||
+                    Enumerable.Range(last.Op + 1, Math.Max(0, g.Op - last.Op - 1)).Any(i => Painted.Contains(ops[i].Operator)) ||
+                    Enumerable.Range(last.Op + 1, Math.Max(0, g.Op - last.Op)).Any(i => (Sets(ops[i].Operator) & parts) != 0));
+                if (last is null || apart) runs.Add([g]);
+                else runs[^1].Add(g);
+                last = g;
+            }
+        }
+        return runs;
+    }
+
+    private static StateParts Sets(string op) => op switch
+    {
+        "Tf" => StateParts.Font,
+        "Tc" => StateParts.CharSpacing,
+        "Tw" => StateParts.WordSpacing,
+        "\"" => StateParts.CharSpacing | StateParts.WordSpacing,
+        "Tz" => StateParts.Scale,
+        "TL" => StateParts.Leading,
+        "Tr" => StateParts.Mode,
+        "Ts" => StateParts.Rise,
+        "g" or "rg" or "k" or "cs" or "sc" or "scn" => StateParts.Fill,
+        "G" or "RG" or "K" or "CS" or "SC" or "SCN" => StateParts.Stroke,
+        _ => StateParts.None,
+    };
 
     /// <summary>The operations from <paramref name="first"/> to <paramref name="last"/> open and close the same q levels, so that an operator put round them cannot leak.</summary>
     internal static bool Balanced(ContentUnit unit, int first, int last)

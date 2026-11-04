@@ -117,6 +117,7 @@ public sealed partial class PageEditor
         }
         catch (EditConflictException e)
         {
+            batch.Discard();
             return TextEditResult.Failed(e.Message);
         }
         bool done = _session.Commit(label);
@@ -136,6 +137,7 @@ public sealed partial class PageEditor
         }
         catch (EditConflictException e)
         {
+            batch.Discard();
             return TextEditResult.Failed(e.Message);
         }
         return Finish(label, batch, builder, editor);

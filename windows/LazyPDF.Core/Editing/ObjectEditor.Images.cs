@@ -136,11 +136,40 @@ internal sealed partial class ObjectEditor
         };
         if (me < 0 || target == me || target < 0 || target >= siblings.Count) throw new EditConflictException(EditingText.AlreadyThere);
         bool after = target > me;
+        if (!(after ? Crossable(unit, close + 1, siblings[target].Last) : Crossable(unit, siblings[target].First, open - 1))) throw new EditConflictException(EditingText.StateBetween);
         int at = after ? ops[siblings[target].Last].End : ops[siblings[target].First].Start;
         string group = Encoding.Latin1.GetString(unit.Data, ops[open].Start, ops[close].End - ops[open].Start);
         Replace(place, ops[open].Start, ops[close].End, "");
         Insert(place, at, after ? "\n" + group : group + "\n");
     }
+
+    // Operators that only build or paint: a group can jump over them. A setting or clip it would meet, or
+    // marked content it would leave, changes how it is drawn and which layer or structure element owns it (8.4, 14.6).
+    private static readonly HashSet<string> Inert =
+    [
+        "m", "l", "c", "v", "y", "h", "re", "S", "s", "f", "F", "f*", "B", "B*", "b", "b*", "n", "Do", "sh", "BI",
+        "BT", "ET", "Td", "TD", "Tm", "T*", "Tj", "TJ", "'", "\"", "Tf", "Tc", "Tw", "Tz", "TL", "Tr", "Ts", "MP", "DP",
+    ];
+
+    private static bool Crossable(ContentUnit unit, int from, int to)
+    {
+        var ops = unit.Operations;
+        for (int i = from; i <= to && i < ops.Count; i++)
+        {
+            if (ops[i].Operator == "q")
+            {
+                i = Closing(unit, i + 1, unit.States.At(i).Depth + 1);
+                if (i < 0) return false;
+            }
+            else if (!Inert.Contains(ops[i].Operator) || AddsToClip(unit, i)) return false;
+        }
+        return true;
+    }
+
+    // Text shown in render mode 4 to 7 joins the clip at ET (9.3.6), so a group moved past it is clipped differently.
+    private static bool AddsToClip(ContentUnit unit, int index) =>
+        unit.Operations[index].Operator is "Tj" or "TJ" or "'" or "\"" &&
+        unit.States.At(index).Mode is { Operands: [PdfNumber { Value: >= 4 and <= 7 }] };
 
     private static int Closing(ContentUnit unit, int from, int depth)
     {

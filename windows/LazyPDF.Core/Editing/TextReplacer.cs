@@ -14,6 +14,8 @@ public sealed record ReplaceReport(int Replaced, IReadOnlyList<ReplaceFailure> F
 /// <summary>Find and replace through a whole document, committed as one step.</summary>
 public static class TextReplacer
 {
+    private static readonly Regex GroupReference = new(@"\$(?:(\$)|(&)|([`'+])|(\d+)|\{(\w+)\})", RegexOptions.CultureInvariant);
+
     /// <summary>
     /// Replaces every match of <paramref name="query"/> (searched as <see cref="TextSearch"/> does,
     /// with the same options) in the document of <paramref name="session"/> and commits once. With
@@ -38,6 +40,7 @@ public static class TextReplacer
             var batch = new EditBatch(document, model.Page, model.Scan);
             var builder = new TextBuilder(document, batch, fonts);
             var editor = new TextEditor(model, batch, builder, fonts);
+            var expanded = Expansions(model.Text, query, replacement, options);
             var done = new List<SearchMatch>();
             foreach (var match in matches)
             {
@@ -45,7 +48,7 @@ public static class TextReplacer
                 try
                 {
                     if (LinesOf(model, match.Range) > 1) throw new EditConflictException(EditingText.CrossesLines);
-                    editor.Replace(match.Range, Replacement(match.Text, query, replacement, options));
+                    editor.Replace(match.Range, expanded.GetValueOrDefault(match.Range, replacement));
                     done.Add(match);
                 }
                 catch (EditConflictException e)
@@ -62,6 +65,7 @@ public static class TextReplacer
             }
             catch (EditConflictException e)
             {
+                batch.Discard();
                 failures.AddRange(done.Select(m => new ReplaceFailure(p, m.Text, e.Message)));
                 continue;
             }
@@ -83,17 +87,56 @@ public static class TextReplacer
         return lines.Count;
     }
 
-    private static string Replacement(string matched, string query, string replacement, TextSearchOptions options)
+    // The replacement of each regex match, found on the text TextSearch runs (folded as the options ask) so that every
+    // match it reports has an entry. Lookarounds and the whole-word edges see the page; a group is the page's own text,
+    // with its case and accents, taken back through the map.
+    private static Dictionary<TextRange, string> Expansions(TextPage text, string query, string replacement, TextSearchOptions options)
     {
-        if (!options.Regex) return replacement;
+        var found = new Dictionary<TextRange, string>();
+        if (!options.Regex) return found;
+        string folded = options.FoldDiacritics ? SearchText.StripMarks(query) : query;
+        string pattern = options.WholeWord ? $@"(?<![\p{{L}}\p{{N}}])(?:{folded})(?![\p{{L}}\p{{N}}])" : folded;
+        var flags = RegexOptions.CultureInvariant | (options.MatchCase ? RegexOptions.None : RegexOptions.IgnoreCase);
+        var regex = new Regex(pattern, flags, TimeSpan.FromSeconds(2));
         try
         {
-            var flags = RegexOptions.CultureInvariant | (options.MatchCase ? RegexOptions.None : RegexOptions.IgnoreCase);
-            return new Regex(query, flags, TimeSpan.FromSeconds(2)).Replace(matched, replacement, 1);
+            foreach (bool dropHyphens in new[] { false, true })
+            {
+                var searched = SearchText.Build(text, options, dropHyphens);
+                foreach (Match m in regex.Matches(searched.Text))
+                {
+                    if (m.Length > 0) found.TryAdd(RangeOf(searched, m.Index, m.Length), Expand(text, searched, regex, m, replacement));
+                }
+                if (!searched.HasHyphenBreak) break;
+            }
         }
-        catch (Exception e) when (e is ArgumentException or RegexMatchTimeoutException)
+        catch (RegexMatchTimeoutException)
         {
-            return replacement;
         }
+        return found;
+    }
+
+    private static TextRange RangeOf(SearchText searched, int index, int length) =>
+        new(searched.Map[index], searched.Map[index + length - 1] + 1);
+
+    // The tokens .NET expands from the searched text ($&, $+, $`, $') are taken from the page as well; $$ is left for Result.
+    private static string Expand(TextPage text, SearchText searched, Regex regex, Match m, string replacement)
+    {
+        string Page(int index, int length) => length == 0 ? "" : text.GetText(RangeOf(searched, index, length), true).Replace("$", "$$");
+        string withPage = GroupReference.Replace(replacement, token =>
+        {
+            if (token.Groups[1].Success) return token.Value;
+            string name = token.Groups[2].Success ? "0" : token.Groups[4].Success ? token.Groups[4].Value : token.Groups[5].Value;
+            switch (token.Groups[3].Value)
+            {
+                case "`": return Page(0, m.Index);
+                case "'": return Page(m.Index + m.Length, searched.Text.Length - m.Index - m.Length);
+                case "+": name = regex.GetGroupNumbers().Max().ToString(); break;
+            }
+            if (regex.GroupNumberFromName(name) < 0) return token.Value;
+            var group = m.Groups[name];
+            return Page(group.Index, group.Length);
+        });
+        return m.Result(withPage);
     }
 }

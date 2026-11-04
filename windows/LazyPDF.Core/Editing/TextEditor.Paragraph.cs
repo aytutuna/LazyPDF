@@ -39,7 +39,7 @@ internal sealed partial class TextEditor
         bool multi = lines.Count > 1;
         double spacing = block.LineSpacing > 0 ? block.LineSpacing : anchor.UserSize * 1.2;
         double room = multi ? right - left : double.PositiveInfinity;
-        var anchorFont = place.Unit.States.At(anchor.Op).Font;
+        var anchorFont = place.States.At(anchor.Op).Font;
 
         // Each line keeps its own character and word spacing and scaling, so a line is measured as the line it goes into.
         EditGlyph Line(int k) => lines[Math.Min(k, lines.Count - 1)].First;
@@ -79,7 +79,7 @@ internal sealed partial class TextEditor
             double? word = alignment == TextAlignment.Justify && !last ? JustifyWord(pieces, right - left - width, at) : null;
             var font = FontFor(anchor, anchorFont, at);
             var (before, after) = Normalize(font, at, word ?? 0);
-            var items = TextBuilder.Items(PlaceOf(at), at, pieces, ShiftAmount(at, start - line.Start), before, after, null, font ?? at.Unit.States.At(at.Op).Font);
+            var items = TextBuilder.Items(PlaceOf(at), at, pieces, ShiftAmount(at, start - line.Start), before, after, null, font ?? PlaceOf(at).States.At(at.Op).Font);
             PatchOf(at).Insert(at.Element, at.Offset, items);
             CutAll(line.Glyphs, at);
         }
@@ -119,7 +119,7 @@ internal sealed partial class TextEditor
             parts |= StateParts.WordSpacing;
         }
         var after = new ContentWriter();
-        at.Unit.States.At(at.Op).Replay(after, parts);
+        PlaceOf(at).States.At(at.Op + 1).Replay(after, parts);
         return (before.Length > 0 ? before.ToArray() : null, after.Length > 0 ? after.ToArray() : null);
     }
 
@@ -150,7 +150,7 @@ internal sealed partial class TextEditor
         w.Raw("");
         if (et < 0) w.Op("ET");
         w.Save();
-        place.Unit.States.At(reference.Op).Replay(w, StateParts.All);
+        place.States.At(reference.Op + 1).Replay(w, StateParts.All);
         var font = FontFor(anchor, anchorFont, reference);
         if (font is not null) w.Add(font);
         var (ux, uy) = reference.Direction;
@@ -161,7 +161,7 @@ internal sealed partial class TextEditor
             double along = start - referenceStart, down = (e + 1) * spacing;
             var tm = Moved(reference, ux * along + uy * down, uy * along - ux * down);
             w.BeginText().TextMatrix(tm);
-            w.Raw(System.Text.Encoding.Latin1.GetString(ShowPatch.Write(TextBuilder.Items(PlaceOf(reference), reference, pieces, current: font ?? place.Unit.States.At(reference.Op).Font), false)));
+            w.Raw(System.Text.Encoding.Latin1.GetString(ShowPatch.Write(TextBuilder.Items(PlaceOf(reference), reference, pieces, current: font ?? place.States.At(reference.Op).Font), false)));
             w.EndText();
         }
         w.Restore();
@@ -249,20 +249,51 @@ internal sealed partial class TextEditor
                 _ => left,
             };
             double shift = target - line.Start;
-            var at = line.First;
-            var items = new List<ShowItem>();
-            if (Math.Abs(shift) > 0.01) items.Add(new ShowShift(-ShiftAmount(at, shift)));
-            PatchOf(at).Insert(at.Element, at.Offset, items);
-            if (alignment != TextAlignment.Justify || k == lines.Count - 1) continue;
-            int spaces = line.Glyphs.Count(g => g.Character.IsSpace);
+            var everything = line.Glyphs.SelectMany(g => g.Twins.Prepend(g)).ToList();
+            int spaces = alignment == TextAlignment.Justify && k < lines.Count - 1 ? line.Glyphs.Count(g => g.Character.IsSpace) : 0;
             double slack = right - left - width;
-            if (spaces == 0 || slack <= 0.01) continue;
-            if (!Balanced(at.Unit, at.Op, line.Last.Op)) throw new EditConflictException(EditingText.Unbalanced);
-            var set = new ContentWriter().WordSpacing(at.WordSpacing + slack / at.UnitX / at.Scale / spaces);
-            var restore = new ContentWriter();
-            line.Last.Unit.States.At(line.Last.Op).Replay(restore, StateParts.WordSpacing);
-            PatchOf(at).Insert(at.Element, at.Offset, [new ShowOps(set.ToArray())]);
-            PatchOf(line.Last).Insert(line.Last.Element, line.Last.Offset + line.Last.Length, [new ShowOps(restore.ToArray())]);
+            bool justify = spaces > 0 && slack > 0.01;
+            if (Math.Abs(shift) > 0.01 || justify) Shift(everything, shift, justify ? SpacesBefore(line) : null, justify ? slack / spaces : 0);
+            if (!justify) continue;
+            foreach (var run in StreamRuns(everything, StateParts.WordSpacing))
+            {
+                var (first, last) = (run[0], run[^1]);
+                if (!Balanced(first.Unit, first.Op, last.Op)) throw new EditConflictException(EditingText.Unbalanced);
+                var set = new ContentWriter().WordSpacing(first.WordSpacing + slack / first.UnitX / first.Scale / spaces);
+                var restore = new ContentWriter();
+                PlaceOf(last).States.At(last.Op + 1).Replay(restore, StateParts.WordSpacing);
+                PatchOf(first).Insert(first.Element, first.Offset, [new ShowOps(set.ToArray())]);
+                PatchOf(last).Insert(last.Element, last.Offset + last.Length, [new ShowOps(restore.ToArray())]);
+            }
+        }
+    }
+
+    // The spaces ahead of each glyph of a line, its twins' included.
+    private static Dictionary<EditGlyph, int> SpacesBefore(Line line)
+    {
+        var before = new Dictionary<EditGlyph, int>();
+        int count = 0;
+        foreach (var g in line.Glyphs)
+        {
+            foreach (var each in g.Twins.Prepend(g)) before[each] = count;
+            if (g.Character.IsSpace) count++;
+        }
+        return before;
+    }
+
+    // A Td works from the line matrix, which a shift in a string does not move, so each string that starts at a
+    // new position is shifted on its own, by what the word spacing added to the line before it.
+    private void Shift(List<EditGlyph> glyphs, double shift, Dictionary<EditGlyph, int>? spacesBefore, double perSpace)
+    {
+        foreach (var group in glyphs.GroupBy(g => (g.Unit, g.Visit)))
+        {
+            EditGlyph? last = null;
+            foreach (var g in group.OrderBy(g => g.Op).ThenBy(g => g.Element).ThenBy(g => g.Offset))
+            {
+                double amount = shift + (spacesBefore?.GetValueOrDefault(g) ?? 0) * perSpace;
+                if ((last is null || !SameRun(last, g)) && Math.Abs(amount) > 0.01) PatchOf(g).Insert(g.Element, g.Offset, [new ShowShift(-ShiftAmount(g, amount))]);
+                last = g;
+            }
         }
     }
 
@@ -273,18 +304,21 @@ internal sealed partial class TextEditor
         if (lines.Count < 2 || old <= 0 || spacing <= 0) throw new EditConflictException(EditingText.NoText);
         for (int k = 1; k < lines.Count; k++)
         {
-            var (first, last) = (lines[k].First, lines[k].Last);
-            if (!Balanced(first.Unit, first.Op, last.Op)) throw new EditConflictException(EditingText.Unbalanced);
-            var m = first.TextMatrix.Multiply(first.Ctm);
-            double vertical = Math.Sqrt(m.C * m.C + m.D * m.D);
-            var (ux, uy) = first.Direction;
-            double sign = Math.Sign(m.C * -uy + m.D * ux);
-            if (vertical < 1e-9 || sign == 0) continue;
-            var set = new ContentWriter().Op("Ts", first.Rise + sign * k * (old - spacing) / vertical);
-            var restore = new ContentWriter();
-            last.Unit.States.At(last.Op).Replay(restore, StateParts.Rise);
-            PatchOf(first).Insert(first.Element, first.Offset, [new ShowOps(set.ToArray())]);
-            PatchOf(last).Insert(last.Element, last.Offset + last.Length, [new ShowOps(restore.ToArray())]);
+            foreach (var run in StreamRuns(lines[k].Glyphs.SelectMany(g => g.Twins.Prepend(g)), StateParts.Rise))
+            {
+                var (first, last) = (run[0], run[^1]);
+                if (!Balanced(first.Unit, first.Op, last.Op)) throw new EditConflictException(EditingText.Unbalanced);
+                var m = first.TextMatrix.Multiply(first.Ctm);
+                double vertical = Math.Sqrt(m.C * m.C + m.D * m.D);
+                var (ux, uy) = first.Direction;
+                double sign = Math.Sign(m.C * -uy + m.D * ux);
+                if (vertical < 1e-9 || sign == 0) continue;
+                var set = new ContentWriter().Op("Ts", first.Rise + sign * k * (old - spacing) / vertical);
+                var restore = new ContentWriter();
+                PlaceOf(last).States.At(last.Op + 1).Replay(restore, StateParts.Rise);
+                PatchOf(first).Insert(first.Element, first.Offset, [new ShowOps(set.ToArray())]);
+                PatchOf(last).Insert(last.Element, last.Offset + last.Length, [new ShowOps(restore.ToArray())]);
+            }
         }
     }
 }

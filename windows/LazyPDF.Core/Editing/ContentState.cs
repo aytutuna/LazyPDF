@@ -35,6 +35,32 @@ internal sealed class OpState
     public int Depth;
     public bool InText;
 
+    /// <summary>Colours the caller set that the form cannot name, so that no operator of the form can bring them back.</summary>
+    public StateParts Lost;
+
+    /// <summary>
+    /// What a form starts with when it is painted from this state: everything but the stack, the text object and the matrix.
+    /// An operator that names a resource is kept only where <paramref name="resolves"/> says the form finds the same one.
+    /// </summary>
+    public OpState ForForm(Func<ContentOperation, bool> resolves) => With(s =>
+    {
+        s.Depth = 0;
+        s.InText = false;
+        s.Ctm = PdfMatrix.Identity;
+        if (s.Font is { } font && !resolves(font)) s.Font = null;
+        if (!s.Fill.All(resolves))
+        {
+            s.Fill = None;
+            s.Lost |= StateParts.Fill;
+        }
+        if (!s.Stroke.All(resolves))
+        {
+            s.Stroke = None;
+            s.Lost |= StateParts.Stroke;
+        }
+        s.States = [.. s.States.Where(resolves)];
+    });
+
     public OpState With(Action<OpState> change)
     {
         var copy = (OpState)MemberwiseClone();
@@ -45,6 +71,7 @@ internal sealed class OpState
     /// <summary>Writes the operators that bring a state back to this one for the chosen parts; a part never set is written as its default.</summary>
     public void Replay(ContentWriter w, StateParts parts)
     {
+        if ((parts & Lost) != 0) throw new EditConflictException(EditingText.ColorOutside);
         if (parts.HasFlag(StateParts.Font) && Font is not null) w.Add(Font);
         Put(w, parts, StateParts.CharSpacing, CharSpacing, "Tc", 0);
         Put(w, parts, StateParts.WordSpacing, WordSpacing, "Tw", 0);
@@ -76,11 +103,16 @@ internal sealed class OpStates
 {
     private const int MaxStack = 256;
 
-    private OpStates(OpState[] before, OpState end, PdfMatrix baseCtm)
+    private static readonly HashSet<string> TopLevelSetters =
+        ["cm", "gs", "Tc", "Tw", "\"", "Tz", "Tr", "Ts", "d", "J", "j", "w", "M", "i", "ri", "W", "W*"];
+
+    private OpStates(OpState[] before, OpState end, PdfMatrix baseCtm, bool stray, bool setsTopLevel)
     {
         Before = before;
         End = end;
         BaseCtm = baseCtm;
+        Stray = stray;
+        SetsTopLevel = setsTopLevel;
     }
 
     public OpState[] Before { get; }
@@ -89,20 +121,31 @@ internal sealed class OpStates
     /// <summary>The matrix in force once every open <c>q</c> has been closed.</summary>
     public PdfMatrix BaseCtm { get; }
 
+    /// <summary>A <c>Q</c> with nothing to pop: a <c>q</c> written ahead of the stream would be popped by it.</summary>
+    public bool Stray { get; }
+
+    /// <summary>An operator outside every <c>q</c> sets state that outlives the stream (8.4.2).</summary>
+    public bool SetsTopLevel { get; }
+
     /// <summary>The state before operation <paramref name="index"/>; the end state for an index past the last.</summary>
     public OpState At(int index) => index < Before.Length ? Before[index] : End;
 
-    /// <summary>Follows the stack the way the interpreter does: a <c>Q</c> with nothing to pop is ignored.</summary>
-    public static OpStates Scan(IReadOnlyList<ContentOperation> ops)
+    /// <summary>
+    /// Follows the stack the way the interpreter does: a <c>Q</c> with nothing to pop is ignored.
+    /// A form starts from the state it is painted in (8.10.1), so a part it never sets is the caller's, not the default.
+    /// </summary>
+    public static OpStates Scan(IReadOnlyList<ContentOperation> ops, OpState? inherited = null)
     {
         var before = new OpState[ops.Count];
-        var current = new OpState();
+        var current = inherited ?? new OpState();
         var stack = new List<OpState>();
         int overflow = 0;
+        bool stray = false, setsTopLevel = false;
         for (int i = 0; i < ops.Count; i++)
         {
             before[i] = current;
             var op = ops[i];
+            if (stack.Count == 0 && overflow == 0 && TopLevelSetters.Contains(op.Operator)) setsTopLevel = true;
             switch (op.Operator)
             {
                 case "q":
@@ -118,6 +161,7 @@ internal sealed class OpStates
                         current = stack[^1].With(s => s.InText = inText);
                         stack.RemoveAt(stack.Count - 1);
                     }
+                    else stray = true;
                     current = current.With(s => s.Depth = stack.Count + overflow);
                     break;
                 case "cm":
@@ -128,18 +172,22 @@ internal sealed class OpStates
                 case "Tf": current = current.With(s => s.Font = op); break;
                 case "Tc": current = current.With(s => s.CharSpacing = op); break;
                 case "Tw": current = current.With(s => s.WordSpacing = op); break;
+                case "\"" when op.Operands.Count >= 3:
+                    var (word, chars) = (new ContentOperation("Tw", [op.Operands[0]], op.Start, op.End), new ContentOperation("Tc", [op.Operands[1]], op.Start, op.End));
+                    current = current.With(s => (s.WordSpacing, s.CharSpacing) = (word, chars));
+                    break;
                 case "Tz": current = current.With(s => s.Scale = op); break;
                 case "TL": current = current.With(s => s.Leading = op); break;
                 case "Tr": current = current.With(s => s.Mode = op); break;
                 case "Ts": current = current.With(s => s.Rise = op); break;
-                case "g" or "rg" or "k" or "cs": current = current.With(s => s.Fill = [op]); break;
-                case "G" or "RG" or "K" or "CS": current = current.With(s => s.Stroke = [op]); break;
+                case "g" or "rg" or "k" or "cs": current = current.With(s => (s.Fill, s.Lost) = ([op], s.Lost & ~StateParts.Fill)); break;
+                case "G" or "RG" or "K" or "CS": current = current.With(s => (s.Stroke, s.Lost) = ([op], s.Lost & ~StateParts.Stroke)); break;
                 case "sc" or "scn": current = current.With(s => s.Fill = Colored(s.Fill, op)); break;
                 case "SC" or "SCN": current = current.With(s => s.Stroke = Colored(s.Stroke, op)); break;
                 case "gs": current = current.With(s => s.States = [.. s.States.TakeLast(15), op]); break;
             }
         }
-        return new OpStates(before, current, stack.Count > 0 ? stack[0].Ctm : current.Ctm);
+        return new OpStates(before, current, stack.Count > 0 ? stack[0].Ctm : current.Ctm, stray, setsTopLevel);
     }
 
     // A colour operator after its space operator replays together with it.

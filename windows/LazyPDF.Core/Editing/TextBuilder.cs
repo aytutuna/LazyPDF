@@ -37,7 +37,10 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
     private readonly Dictionary<PdfFont, FontCodec> _codecs = [];
     private readonly Dictionary<(ContentUnit, PdfFont), (PdfDrawFont Draw, string Name, string Covered)> _stand = [];
 
-    public List<FontSubstitution> Substitutions { get; } = [];
+    private readonly List<(FontSubstitution Info, Place Place, string Name)> _made = [];
+
+    /// <summary>The stand-ins whose font is still in the batch; one taken back with its edit is not reported.</summary>
+    public IReadOnlyList<FontSubstitution> Substitutions => [.. _made.Where(m => batch.HasResource(m.Place, m.Name)).Select(m => m.Info)];
 
     public FontCodec Codec(PdfFont font)
     {
@@ -102,13 +105,16 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
     private void Substitute(Place place, EditGlyph anchor, List<string> runes, EditPiece?[] pieces, List<int> missing)
     {
         if (fonts is null) throw new EditConflictException(EditingText.NoFont);
-        var state = place.Unit.States.At(anchor.Op);
+        var state = place.States.At(anchor.Op);
         if (state.Font is null) throw new EditConflictException(EditingText.FontSetOutside);
         string needed = string.Concat(missing.Select(i => runes[i]).Distinct());
         var key = (place.Unit, anchor.Font);
-        if (!_stand.TryGetValue(key, out var stand) || !needed.All(c => stand.Covered.Contains(c)))
+        // An edit taken back removes its resources; a stand-in named by one is no longer there.
+        bool known = _stand.TryGetValue(key, out var stand) && batch.HasResource(place, stand.Name);
+        if (!known) stand = (null!, "", "");
+        if (!known || !needed.All(c => stand.Covered.Contains(c)))
         {
-            string covered = (stand.Covered ?? "") + needed;
+            string covered = stand.Covered + needed;
             var (families, style) = FontMatch.For(anchor.Font);
             var embedder = new PdfFontEmbedder(document, fonts);
             PdfDrawFont? draw = null;
@@ -127,7 +133,7 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
             }
             string name = batch.AddResource(place, "Font", draw.Reference) ?? throw new EditConflictException(EditingText.SharedForm);
             _stand[key] = stand = (draw, name, covered);
-            Substitutions.Add(new FontSubstitution(anchor.Font.Name, family, needed, draw.IsEmbedded));
+            _made.Add((new FontSubstitution(anchor.Font.Name, family, needed, draw.IsEmbedded), place, name));
         }
         foreach (int i in missing)
         {
@@ -168,7 +174,7 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
             if (next == font) return;
             Flush();
             if (next is not null) items.Add(new ShowOps(new ContentWriter().Font(next, size ?? at.FontSize).ToArray()));
-            else items.Add(new ShowOps(new ContentWriter().Add(current ?? place.Unit.States.At(at.Op).Font!).ToArray()));
+            else items.Add(new ShowOps(new ContentWriter().Add(current ?? place.States.At(at.Op).Font!).ToArray()));
             font = next;
         }
         foreach (var piece in pieces)

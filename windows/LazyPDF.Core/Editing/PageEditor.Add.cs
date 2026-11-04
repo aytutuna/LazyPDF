@@ -28,7 +28,11 @@ public sealed partial class PageEditor
         var embedder = new PdfFontEmbedder(model.Document, _fonts);
         var draw = embedder.Add(style.Family, style.Style, [text]);
         if (draw is null) return TextEditResult.Failed(EditingText.NoFont);
-        if (draw.Missing.Count > 0) return TextEditResult.Failed(string.Format(EditingText.NoGlyphs, string.Concat(draw.Missing.Select(char.ConvertFromUtf32))));
+        if (draw.Missing.Count > 0)
+        {
+            batch.Discard();
+            return TextEditResult.Failed(string.Format(EditingText.NoGlyphs, string.Concat(draw.Missing.Select(char.ConvertFromUtf32))));
+        }
 
         var geometry = new PageGeometry(model.Page);
         var shown = geometry.ToDisplay(box);

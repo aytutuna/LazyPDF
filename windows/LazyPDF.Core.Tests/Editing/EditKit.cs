@@ -18,6 +18,9 @@ internal sealed class EditArialSource : IFontSource
 /// <summary>A glyph as the interpreter places it, for comparing a page before and after an edit.</summary>
 internal sealed record EditGlyphAt(string Text, double X, double Y, double Size);
 
+/// <summary>A glyph with the state it is drawn in.</summary>
+internal sealed record EditShown(string Text, double X, double Y, double Size, RgbColor Color, double Tc, double Tw);
+
 internal static class EditKit
 {
     public const string Helvetica = "<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>";
@@ -61,6 +64,22 @@ internal static class EditKit
         return found;
     }
 
+    public static List<EditShown> Shown(PdfEditSession session, int page = 0)
+    {
+        var document = PdfDocument.Open(session.Current.ToArray());
+        var found = new List<EditShown>();
+        new ContentInterpreter(document).Run(document.Pages[page], new Observe(found));
+        return found;
+    }
+
+    /// <summary>The glyphs of a word, found in the order they are drawn.</summary>
+    public static List<EditShown> Of(List<EditShown> shown, string word)
+    {
+        int at = string.Concat(shown.Select(s => s.Text)).IndexOf(word, StringComparison.Ordinal);
+        Assert.True(at >= 0, word);
+        return shown.GetRange(at, word.Length);
+    }
+
     public static TextRange Find(PdfEditSession session, string word, int page = 0)
     {
         var text = TextPage.Create(session.Document, session.Document.Pages[page]);
@@ -69,6 +88,15 @@ internal static class EditKit
     }
 
     public static string Latin(PdfEditSession session, int page = 0) => Encoding.Latin1.GetString(session.Document.Pages[page].Contents());
+
+    private sealed class Observe(List<EditShown> found) : ContentVisitor
+    {
+        public override void ShowGlyph(ContentContext context, in GlyphInfo glyph)
+        {
+            var s = context.State;
+            found.Add(new EditShown(glyph.Unicode ?? "", Math.Round(glyph.Matrix.E, 2), Math.Round(glyph.Matrix.F, 2), Math.Round(glyph.Matrix.D, 2), s.FillColor.Rgb, s.CharSpacing, s.WordSpacing));
+        }
+    }
 
     private sealed class Collect(List<EditGlyphAt> found) : ContentVisitor
     {

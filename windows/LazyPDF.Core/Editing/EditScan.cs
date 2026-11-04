@@ -9,21 +9,30 @@ internal sealed class ContentUnit(PdfStream? form, byte[] data, IReadOnlyList<Co
     public PdfStream? Form { get; } = form;
     public byte[] Data { get; } = data;
     public IReadOnlyList<ContentOperation> Operations { get; } = operations;
-    public OpStates States => _states ??= OpStates.Scan(Operations);
+    public OpStates States => _states ??= OpStates.Scan(Operations, Inherited);
+
+    /// <summary>For a form: the state at the <c>Do</c> of its first visit.</summary>
+    public OpState? Inherited { get; set; }
 
     /// <summary>How many times the walk ran this stream: a form painted twice is edited for both.</summary>
     public int Visits { get; set; }
 }
 
 /// <summary>One run of a form XObject inside the walk: where its <c>Do</c> is and what encloses it.</summary>
-internal sealed class FormVisit(PdfStream form, FormVisit? parent, ContentUnit parentUnit, int doOperation, string? name, ContentUnit unit)
+internal sealed class FormVisit(PdfStream form, FormVisit? parent, ContentUnit parentUnit, int doOperation, string? name, ContentUnit unit, OpState inherited)
 {
+    private OpStates? _states;
+
     public PdfStream Form { get; } = form;
     public FormVisit? Parent { get; } = parent;
     public ContentUnit ParentUnit { get; } = parentUnit;
     public int DoOperation { get; } = doOperation;
     public string? Name { get; } = name;
     public ContentUnit Unit { get; } = unit;
+    public OpState Inherited { get; } = inherited;
+
+    /// <summary>The scan of the form from the state at this visit's <c>Do</c>.</summary>
+    public OpStates States => _states ??= ReferenceEquals(Inherited, Unit.Inherited) ? Unit.States : OpStates.Scan(Unit.Operations, Inherited);
 
     public IReadOnlyList<PdfStream> Chain => Parent is null ? [Form] : [.. Parent.Chain, Form];
 }
@@ -93,6 +102,7 @@ internal sealed class EditScan : ContentVisitor
     private const int MaxFormOperations = 1_000_000;
 
     private readonly PdfDocument _document;
+    private readonly PdfPage _page;
     private readonly List<FormVisit> _visits = [];
     private int _inPattern;
     private int _sequence;
@@ -100,6 +110,7 @@ internal sealed class EditScan : ContentVisitor
     public EditScan(PdfDocument document, PdfPage page)
     {
         _document = document;
+        _page = page;
         byte[] data = page.Contents();
         PageUnit = new ContentUnit(null, data, ContentParser.Parse(data)) { Visits = 1 };
     }
@@ -136,8 +147,35 @@ internal sealed class EditScan : ContentVisitor
             Forms[form.Stream] = unit;
         }
         unit.Visits++;
-        _visits.Add(new FormVisit(form.Stream, Visit, Current, context.OperatorIndex, form.Name, unit));
+        var parent = Visit;
+        var inherited = (parent?.States ?? PageUnit.States).At(context.OperatorIndex).ForForm(op => SameResource(op, parent, form.Stream));
+        if (unit.Visits == 1) unit.Inherited = inherited;
+        _visits.Add(new FormVisit(form.Stream, parent, Current, context.OperatorIndex, form.Name, unit, inherited));
     }
+
+    // A name in an operator inherited from the caller means what the form's own resources say it means (7.8.3), so
+    // it can be replayed in the form only where they give the same object.
+    private bool SameResource(ContentOperation op, FormVisit? caller, PdfStream form)
+    {
+        var (category, name) = op.Operator switch
+        {
+            "Tf" => ("Font", op.Operands.ElementAtOrDefault(0)),
+            "gs" => ("ExtGState", op.Operands.ElementAtOrDefault(0)),
+            "cs" or "CS" => ("ColorSpace", op.Operands.ElementAtOrDefault(0)),
+            "sc" or "scn" or "SC" or "SCN" => ("Pattern", op.Operands.LastOrDefault()),
+            _ => ("", null),
+        };
+        if (name is not PdfName { Value: var key } || category == "") return true;
+        if (category == "ColorSpace" && key is "DeviceGray" or "DeviceRGB" or "DeviceCMYK" or "Pattern") return true;
+        if (_document.Dict(form.Dictionary, "Resources") is not { } own) return true;
+        return ReferenceEquals(Find(own, category, key), Find(CallerResources(caller), category, key));
+    }
+
+    private PdfDictionary? CallerResources(FormVisit? caller) =>
+        caller is null ? _page.Resources : _document.Dict(caller.Form.Dictionary, "Resources") ?? CallerResources(caller.Parent);
+
+    private PdfObject? Find(PdfDictionary? resources, string category, string name) =>
+        _document.Dict(resources, category) is { } entries && entries.ContainsKey(name) ? _document.Resolve(entries[name]) : null;
 
     public override void EndForm(ContentContext context, FormInfo form)
     {

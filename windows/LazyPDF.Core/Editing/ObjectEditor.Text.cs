@@ -35,29 +35,13 @@ internal sealed partial class ObjectEditor
     // and no cm changes the matrix in between.
     private bool Joins(ContentUnit unit, EditGlyph a, EditGlyph b, HashSet<EditGlyph> own, HashSet<int> ownOps)
     {
-        if (a.Op == b.Op) return !ForeignBetween(unit, a, b, own);
+        if (a.Op == b.Op) return !model.ForeignBetween(unit, a, b, own);
         var ops = unit.Operations;
         for (int i = a.Op + 1; i < b.Op; i++)
         {
             if (ops[i].Operator == "cm" || (IsPainting(ops[i]) && !ownOps.Contains(i))) return false;
         }
-        return Near(a.Ctm, b.Ctm) && TextEditor.Balanced(unit, a.Op, b.Op) && !ForeignBetween(unit, a, b, own);
-    }
-
-    // A glyph of another object shown between the two, in their strings or the ones between.
-    private bool ForeignBetween(ContentUnit unit, EditGlyph a, EditGlyph b, HashSet<EditGlyph> own)
-    {
-        for (int op = a.Op; op <= b.Op; op++)
-        {
-            foreach (var g in model.GlyphsAt(unit, op))
-            {
-                if (own.Contains(g)) continue;
-                bool afterA = op > a.Op || (g.Element, g.Offset).CompareTo((a.Element, a.Offset)) > 0;
-                bool beforeB = op < b.Op || (g.Element, g.Offset).CompareTo((b.Element, b.Offset)) < 0;
-                if (afterA && beforeB) return true;
-            }
-        }
-        return false;
+        return Near(a.Ctm, b.Ctm) && TextEditor.Balanced(unit, a.Op, b.Op) && !model.ForeignBetween(unit, a, b, own);
     }
 
     private void TransformRun(Place place, List<EditGlyph> run, PdfMatrix t)

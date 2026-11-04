@@ -6,7 +6,11 @@ namespace LazyPDF.Core;
 internal sealed class EditConflictException(string message) : Exception(message);
 
 /// <summary>A content stream and the run of it an edit is about.</summary>
-internal readonly record struct Place(ContentUnit Unit, FormVisit? Visit);
+internal readonly record struct Place(ContentUnit Unit, FormVisit? Visit)
+{
+    /// <summary>The scan of this run: a form painted twice starts from the state of each <c>Do</c>.</summary>
+    public OpStates States => Visit?.States ?? Unit.States;
+}
 
 /// <summary>
 /// The changes of one edit, gathered and then written to the document together: cuts in content
@@ -17,6 +21,8 @@ internal readonly record struct Place(ContentUnit Unit, FormVisit? Visit);
 /// </summary>
 internal sealed class EditBatch(PdfDocument document, PdfPage page, EditScan scan)
 {
+    private readonly int _firstObject = document.NextObjectNumber;
+
     private sealed class UnitEdit(ContentUnit unit, FormVisit? visit)
     {
         public ContentUnit Unit { get; } = unit;
@@ -54,11 +60,12 @@ internal sealed class EditBatch(PdfDocument document, PdfPage page, EditScan sca
     {
         internal Dictionary<ContentUnit, (int Splices, int Resources, Dictionary<int, (int Cuts, int Inserts)> Patches)> Units { get; } = [];
         internal int Appended { get; init; }
+        internal int Objects { get; init; }
     }
 
     public Mark Save()
     {
-        var mark = new Mark { Appended = _appended.Count };
+        var mark = new Mark { Appended = _appended.Count, Objects = document.NextObjectNumber };
         foreach (var (unit, edit) in _edits)
         {
             mark.Units[unit] = (edit.Splices.Count, edit.Resources.Count, edit.Patches.ToDictionary(p => p.Key, p => p.Value.Count));
@@ -78,7 +85,21 @@ internal sealed class EditBatch(PdfDocument document, PdfPage page, EditScan sca
             foreach (var (op, count) in saved.Patches) edit.Patches[op].Truncate(count);
         }
         _appended.RemoveRange(mark.Appended, _appended.Count - mark.Appended);
+        DeleteObjects(mark.Objects);
     }
+
+    /// <summary>Takes back everything the batch added to the document, for an edit that is given up.</summary>
+    public void Discard() => DeleteObjects(_firstObject);
+
+    // Fonts and pictures are made in the document as soon as an edit asks for them; an edit taken back must not leave them to be saved.
+    private void DeleteObjects(int from)
+    {
+        for (int number = from; number < document.NextObjectNumber; number++) document.Delete(number);
+    }
+
+    /// <summary>Whether a resource called <paramref name="name"/> is still waiting to be written to the stream of <paramref name="place"/>.</summary>
+    public bool HasResource(Place place, string name) =>
+        _edits.TryGetValue(place.Unit, out var edit) && edit.Resources.Any(r => r.Name == name);
 
     private UnitEdit? Edit(Place place)
     {
@@ -302,19 +323,24 @@ internal sealed class EditBatch(PdfDocument document, PdfPage page, EditScan sca
             foreach (var bytes in _appended) all.Write(bytes);
             list.Add(document.Add(NewStream(null, all.ToArray())));
         }
+        if (_appended.Count > 0 && Wraps) list.Insert(0, document.Add(NewStream(null, "q\n"u8.ToArray())));
         if (list.Count > 0) page.Dictionary["Contents"] = list.Count == 1 && items.Count <= 1 ? list[0] : new PdfArray(list);
         if (edit.Resources.Count > 0) AddResources(ContentResources.ForEdit(document, page), edit.Resources, copy: false);
     }
 
-    // What leaves the graphics state clean for content added after the page's: the text object and
-    // the q levels the page leaves open closed, the matrix it leaves behind undone.
+    // A page that leaves state at its top level (a text mode, a clip, a dash) runs inside a q of its own, written
+    // first and closed in Prefix, so none of it reaches the added content (8.4.2). A stray Q would pop that q
+    // and change the page itself, and a page that leaves nothing needs none: it keeps the added content at the
+    // level of the page's own, where Order can pass it.
+    private bool Wraps => scan.PageUnit.States is { Stray: false, SetsTopLevel: true };
+
     private byte[] Prefix()
     {
         var states = scan.PageUnit.States;
         var w = new ContentWriter();
         if (states.End.InText) w.Op("ET");
-        for (int i = 0; i < states.End.Depth; i++) w.Restore();
-        if (states.BaseCtm.Invert() is { } inverse && states.BaseCtm != PdfMatrix.Identity) w.Concat(inverse);
+        for (int i = Wraps ? 0 : 1; i <= states.End.Depth; i++) w.Restore();
+        if (!Wraps && states.BaseCtm.Invert() is { } inverse && states.BaseCtm != PdfMatrix.Identity) w.Concat(inverse);
         return w.ToArray();
     }
 
@@ -412,10 +438,18 @@ internal static class Splices
         foreach (var s in splices)
         {
             output.Write(data, at, s.Start - at);
-            output.Write(s.Bytes);
+            if (s.Bytes.Length > 0)
+            {
+                // Inserted operators must not run into the token on either side of them (7.2.3).
+                if (output.Length > 0 && IsRegular(output.GetBuffer()[output.Length - 1]) && IsRegular(s.Bytes[0])) output.WriteByte((byte)' ');
+                output.Write(s.Bytes);
+                if (s.End < data.Length && IsRegular(s.Bytes[^1]) && IsRegular(data[s.End])) output.WriteByte((byte)' ');
+            }
             at = s.End;
         }
         output.Write(data, at, data.Length - at);
         return output.ToArray();
     }
+
+    private static bool IsRegular(byte b) => b > 32 && b < 127 && "()<>[]{}/%"u8.IndexOf(b) < 0;
 }

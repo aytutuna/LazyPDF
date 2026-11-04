@@ -104,7 +104,11 @@ public sealed partial class PageEditor
             if (o.Id >= model.Objects.Count || !ReferenceEquals(model.Objects[o.Id], o)) throw new ArgumentException(EditingText.StaleObject, nameof(objects));
             editor.Try(o, () => change(editor, o));
         }
-        if (editor.Changed == 0) return new ObjectEditResult(0, editor.Skipped);
+        if (editor.Changed == 0)
+        {
+            batch.Discard();
+            return new ObjectEditResult(0, editor.Skipped);
+        }
         try
         {
             batch.Apply();
@@ -112,6 +116,7 @@ public sealed partial class PageEditor
         }
         catch (EditConflictException e)
         {
+            batch.Discard();
             return new ObjectEditResult(0, [.. editor.Skipped, new SkippedObject(-1, e.Message)]);
         }
         _session.Commit(label);

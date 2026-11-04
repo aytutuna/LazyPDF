@@ -42,6 +42,22 @@ internal sealed class PageModel
         return _byOp.TryGetValue((unit, op), out var found) ? found : [];
     }
 
+    /// <summary>A glyph that is not in <paramref name="own"/> is shown between <paramref name="a"/> and <paramref name="b"/>, in their strings or the ones between.</summary>
+    public bool ForeignBetween(ContentUnit unit, EditGlyph a, EditGlyph b, HashSet<EditGlyph> own)
+    {
+        for (int op = a.Op; op <= b.Op; op++)
+        {
+            foreach (var g in GlyphsAt(unit, op))
+            {
+                if (own.Contains(g)) continue;
+                bool afterA = op > a.Op || (g.Element, g.Offset).CompareTo((a.Element, a.Offset)) > 0;
+                bool beforeB = op < b.Op || (g.Element, g.Offset).CompareTo((b.Element, b.Offset)) < 0;
+                if (afterA && beforeB) return true;
+            }
+        }
+        return false;
+    }
+
     private readonly Dictionary<int, TextAlignment> _lineAlignment = [];
 
     public TextAlignment? AlignmentOfLine(int line) => _lineAlignment.TryGetValue(line, out var a) ? a : null;
@@ -52,6 +68,7 @@ internal sealed class PageModel
         var scan = new EditScan(document, page);
         new ContentInterpreter(document) { WalkPatterns = false }.Run(page, scan);
         var text = TextPage.Create(document, page);
+        text.RequirePageContent();
         var model = new PageModel(document, page, scan, text);
         model.MapChars();
         model.BuildObjects();
