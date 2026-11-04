@@ -1,0 +1,129 @@
+using System.Diagnostics;
+using System.Windows;
+using System.Windows.Controls;
+using LazyPDF.App.Tools;
+using LazyPDF.Core;
+using Microsoft.Win32;
+
+namespace LazyPDF.App.Panels.Attachments;
+
+/// <summary>One line of the list.</summary>
+public sealed class AttachmentRow(PdfAttachment item, string pageText)
+{
+    public PdfAttachment Item { get; } = item;
+
+    public string Name => string.IsNullOrEmpty(Item.FileName) ? Item.Name : Item.FileName;
+
+    public string Details => string.Join(" · ", new[] { Item.Size is { } size ? Size(size) : null, pageText, Item.Description }.Where(s => !string.IsNullOrEmpty(s)));
+
+    public string Summary => Details.Length == 0 ? Name : Name + ", " + Details;
+
+    private static string Size(long bytes) => bytes switch
+    {
+        < 1024 => Loc.T("{0} bytes", bytes),
+        < 1024 * 1024 => Loc.T("{0} KB", Math.Round(bytes / 1024.0, 1)),
+        _ => Loc.T("{0} MB", Math.Round(bytes / 1048576.0, 1)),
+    };
+}
+
+/// <summary>The files carried inside the PDF: open one, or save it. Nothing is run from here that the system would run without asking.</summary>
+public partial class AttachmentsSidePanel : ToolPanel
+{
+    // A file from inside another file can be a program; those are saved, not started.
+    private static readonly string[] Programs = [".exe", ".com", ".bat", ".cmd", ".msi", ".ps1", ".vbs", ".vbe", ".js", ".jse", ".wsf", ".scr", ".lnk", ".hta", ".jar", ".reg", ".dll", ".cpl", ".msc", ".pif"];
+
+    public AttachmentsSidePanel() => InitializeComponent();
+
+    protected override void OnAttach()
+    {
+        Tab!.Changed += Tab_Changed;
+        Build();
+    }
+
+    protected override void OnDetach()
+    {
+        Tab!.Changed -= Tab_Changed;
+        Files.ItemsSource = null;
+    }
+
+    private void Tab_Changed(object? sender, EventArgs e) => Build();
+
+    private void Build()
+    {
+        var list = PdfAttachments.List(Tab!.Document);
+        Files.ItemsSource = list.Select(a => new AttachmentRow(a, a.PageIndex is { } page ? Loc.T("Page {0}", page + 1) : "")).ToList();
+        Empty.Visibility = list.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        Note.Visibility = Visibility.Collapsed;
+    }
+
+    private void Files_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
+        OpenButton.IsEnabled = SaveButton.IsEnabled = Files.SelectedItem is not null;
+
+    private void Files_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (Files.SelectedItem is not null) Open_Click(sender, e);
+    }
+
+    private void Tell(string text)
+    {
+        Note.Text = text;
+        Note.Visibility = Visibility.Visible;
+    }
+
+    private static string SafeName(string name) =>
+        string.Concat(System.IO.Path.GetFileName(name).Select(c => Array.IndexOf(System.IO.Path.GetInvalidFileNameChars(), c) >= 0 ? '_' : c));
+
+    private byte[]? Read(AttachmentRow row)
+    {
+        try
+        {
+            return PdfAttachments.Extract(Tab!.Document, row.Item);
+        }
+        catch (PdfReadException)
+        {
+            Tell(Loc.T("This attachment could not be read."));
+            return null;
+        }
+    }
+
+    private void Open_Click(object sender, RoutedEventArgs e)
+    {
+        if (Files.SelectedItem is not AttachmentRow row) return;
+        string name = SafeName(row.Name);
+        if (Programs.Contains(System.IO.Path.GetExtension(name), StringComparer.OrdinalIgnoreCase))
+        {
+            Tell(Loc.T("This file could run as a program. Save it instead."));
+            return;
+        }
+        if (Read(row) is not { } bytes) return;
+        try
+        {
+            string folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Lazy PDF", "Attachments", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(folder);
+            string path = System.IO.Path.Combine(folder, name.Length > 0 ? name : "attachment");
+            File.WriteAllBytes(path, bytes);
+            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+            Note.Visibility = Visibility.Collapsed;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+            Tell(Loc.T("This attachment could not be opened."));
+        }
+    }
+
+    private void Save_Click(object sender, RoutedEventArgs e)
+    {
+        if (Files.SelectedItem is not AttachmentRow row) return;
+        var dialog = new SaveFileDialog { FileName = SafeName(row.Name), Title = Loc.T("Save attachment") };
+        if (dialog.ShowDialog() != true || Read(row) is not { } bytes) return;
+        try
+        {
+            File.WriteAllBytes(dialog.FileName, bytes);
+            Note.Visibility = Visibility.Collapsed;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            Tell(Loc.T("The attachment could not be saved. Check the folder and try again."));
+        }
+    }
+}

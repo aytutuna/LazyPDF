@@ -1,0 +1,32 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Panels.Search.SearchSidePanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:viewer="clr-namespace:LazyPDF.App.Viewer">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Margin="12,0,12,8">
+            <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE721;" Content="{loc:T Find}" Padding="10,3,10,4" HorizontalAlignment="Left"
+                    ToolTip="{loc:T Find (Ctrl+F)}" Click="Find_Click" />
+            <TextBlock x:Name="Summary" Style="{StaticResource ReasonText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />
+        </StackPanel>
+        <ListBox x:Name="Results" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Search results}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" SelectionChanged="Results_SelectionChanged">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                    <Setter Property="AutomationProperties.Name" Value="{Binding Spoken}" />
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type viewer:SearchHit}">
+                    <StackPanel Margin="2,3">
+                        <TextBlock Style="{StaticResource BodyText}" TextWrapping="Wrap" MaxHeight="40" TextTrimming="CharacterEllipsis">
+                            <Run Text="{Binding Before, Mode=OneTime}" /><Run Text="{Binding Text, Mode=OneTime}" FontWeight="SemiBold" /><Run Text="{Binding After, Mode=OneTime}" />
+                        </TextBlock>
+                        <TextBlock Text="{Binding PageText, Mode=OneTime}" Style="{StaticResource SecondaryBodyText}" FontSize="12" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</tools:ToolPanel>

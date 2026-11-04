@@ -1,0 +1,37 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Panels.Attachments.AttachmentsSidePanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:panel="clr-namespace:LazyPDF.App.Panels.Attachments">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Bottom" Margin="12,8,12,12">
+            <StackPanel Orientation="Horizontal">
+                <Button x:Name="OpenButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8A7;" Content="{loc:T Open}"
+                        Padding="10,3,10,4" IsEnabled="False" Click="Open_Click" />
+                <Button x:Name="SaveButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE74E;" Content="{loc:T Save as}"
+                        Padding="10,3,10,4" Margin="8,0,0,0" IsEnabled="False" Click="Save_Click" />
+            </StackPanel>
+            <TextBlock x:Name="Note" Style="{StaticResource ReasonText}" Margin="0,8,0,0" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
+        </StackPanel>
+        <Grid>
+            <ListBox x:Name="Files" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Attachments}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionChanged="Files_SelectionChanged" MouseDoubleClick="Files_MouseDoubleClick">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Summary}" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type panel:AttachmentRow}">
+                        <StackPanel Margin="4,4">
+                            <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Details}" Style="{StaticResource SecondaryBodyText}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock x:Name="Empty" Style="{StaticResource ReasonText}" Margin="12,8" Visibility="Collapsed" Text="{loc:T This file has no attachments.}" />
+        </Grid>
+    </DockPanel>
+</tools:ToolPanel>
