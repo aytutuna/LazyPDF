@@ -4,26 +4,34 @@ namespace LazyPDF.Core;
 internal sealed partial class PdfAChecker
 {
     private const int MaxAnnotations = 50_000;
-    private const int MaxActionDepth = 16;
+
+    // What walking an annotation, and resolving one of its appearance states, cost in the work budget; /Annots and /N are often shared by many pages.
+    private const int AnnotationWork = 256;
+    private const int StateWork = 64;
+    private readonly HashSet<PdfArray> _nextLists = new(ReferenceEqualityComparer.Instance);
 
     private static readonly string[] Part1Annotations =
-        ["Text", "Link", "FreeText", "Line", "Square", "Circle", "Polygon", "PolyLine", "Highlight", "Underline", "Squiggly", "StrikeOut", "Stamp", "Ink", "Popup", "Widget", "PrinterMark", "TrapNet"];
+        ["Text", "Link", "FreeText", "Line", "Square", "Circle", "Highlight", "Underline", "Squiggly", "StrikeOut", "Stamp", "Ink", "Popup", "Widget", "PrinterMark", "TrapNet"];
 
-    private static readonly string[] LaterAnnotations = [.. Part1Annotations, "Caret", "FileAttachment", "Redact", "Watermark"];
+    private static readonly string[] LaterAnnotations = [.. Part1Annotations, "Polygon", "PolyLine", "Caret", "FileAttachment", "Redact", "Watermark"];
 
-    internal static readonly string[] ForbiddenActions = ["Launch", "Sound", "Movie", "ResetForm", "ImportData", "JavaScript", "Hide", "SetOCGState", "Rendition", "Trans", "GoTo3DView"];
+    internal static readonly string[] ForbiddenActions = ["Launch", "Sound", "Movie", "ResetForm", "ImportData", "JavaScript", "Hide", "SetOCGState", "Rendition", "Trans", "GoTo3DView", "SetState", "NOP"];
 
     internal static readonly string[] NamedActions = ["NextPage", "PrevPage", "FirstPage", "LastPage"];
 
     /// <summary>The annotation subtypes a part allows, before the rule about attachments.</summary>
     internal static string[] AllowedAnnotations(int part) => part == 1 ? Part1Annotations : LaterAnnotations;
 
+    private readonly HashSet<PdfStream> _appearancesRun = new(ReferenceEqualityComparer.Instance);
+    private readonly HashSet<PdfDictionary> _actionsSeen = new(ReferenceEqualityComparer.Instance);
+
     private void CheckAnnotations(PdfPage page, int pageNumber, ContentInterpreter interpreter)
     {
         if (_doc.Array(page.Dictionary, "Annots") is not { } annotations) return;
         string flags = C("6.5.3", "6.3.2"), appearance = C("6.5.3", "6.3.3");
-        for (int i = 0; i < annotations.Items.Count && i < MaxAnnotations; i++)
+        for (int i = 0; i < annotations.Items.Count && i < MaxAnnotations && !OverBudget; i++)
         {
+            _work += AnnotationWork;
             if (_doc.Resolve(annotations.Items[i]) is not PdfDictionary annotation) continue;
             string where = PdfAText.AnnotationName(pageNumber, i + 1);
             string? subtype = _doc.Name(annotation, "Subtype");
@@ -34,8 +42,9 @@ internal sealed partial class PdfAChecker
             }
             if (subtype == "FileAttachment" && Part == 4) Add("6.3.1", where, PdfAText.EmbeddedFile);
             if (IsPart1 && (_doc.Number(annotation, "CA") is < 1)) Add(ClauseTransparency, where, PdfAText.Opacity);
-            CheckAction(annotation["A"], where, 0);
+            CheckAction(annotation["A"], where);
             CheckTriggers(annotation, where, subtype == "Widget");
+            if (IsPart1 && _intentComponents != 3 && (HasColor(annotation, "C") || HasColor(annotation, "IC"))) Add("6.5.3", where, PdfAText.AnnotationColor);
 
             if (subtype == "Popup") continue;
             long f = _doc.Integer(annotation, "F") ?? 0;
@@ -64,19 +73,24 @@ internal sealed partial class PdfAChecker
             PdfDictionary states => states.Entries.Take(256).Select(e => _doc.Resolve(e.Value)).OfType<PdfStream>().ToList(),
             _ => new List<PdfStream>(),
         };
+        _work += (long)streams.Count * StateWork;
         foreach (var stream in streams)
         {
             CheckFormStream(stream, where);
+            if (!_appearancesRun.Add(stream)) continue;
             try
             {
-                interpreter.Run(stream, new Visitor(this, where));
+                interpreter.Run(stream, new Visitor(this, where, null));
+                if (interpreter.IsTruncated) Add("6.1.7", where, PdfAText.TooMuchContent);
             }
             catch (PdfReadException)
             {
-                Add("6.1.7", where, PdfAText.ContentUnreadable);
+                Unreadable(where);
             }
         }
     }
+
+    private bool HasColor(PdfDictionary annotation, string key) => _doc.Array(annotation, key) is { Items.Count: > 0 };
 
     /// <summary>/FT of the field a widget belongs to, found up the /Parent chain.</summary>
     private string? FieldType(PdfDictionary field)
@@ -93,25 +107,48 @@ internal sealed partial class PdfAChecker
     {
         if (_doc.Dict(owner, "AA") is not { } triggers) return;
         if (field) Add(C("6.6.2", "6.5.2"), where, PdfAText.FieldTriggers);
-        foreach (var (_, action) in triggers.Entries.Take(64)) CheckAction(action, where, 0);
+        foreach (var (_, action) in triggers.Entries.Take(64)) CheckAction(action, where);
     }
 
-    private void CheckAction(PdfObject? value, string where, int depth)
+    // An action is judged once wherever it is reached from, and a /Next chain is followed to its end: a loop or a shared tail, array or action, costs nothing more.
+    private void CheckAction(PdfObject? value, string where)
     {
-        if (depth > MaxActionDepth || _doc.Resolve(value) is not PdfDictionary action) return;
-        string? type = _doc.Name(action, "S");
+        var pending = new Stack<PdfObject?>();
+        pending.Push(value);
         string clause = C("6.6.1", "6.5.1");
-        if (type is not null && ForbiddenActions.Contains(type)) Add(clause, where, type == "JavaScript" ? PdfAText.JavaScript : PdfAText.ForbiddenAction(type));
-        else if (type == "Named" && !NamedActions.Contains(_doc.Name(action, "N") ?? ""))
-            Add(clause, where, PdfAText.NamedAction(_doc.Name(action, "N")));
-        switch (_doc.Resolve(action["Next"]))
+        while (pending.Count > 0)
         {
-            case PdfDictionary next:
-                CheckAction(next, where, depth + 1);
-                break;
-            case PdfArray list:
-                foreach (var item in list.Items.Take(64)) CheckAction(item, where, depth + 1);
-                break;
+            if (_doc.Resolve(pending.Pop()) is not PdfDictionary action || !_actionsSeen.Add(action)) continue;
+            string? type = _doc.Name(action, "S");
+            if (type is not null && ForbiddenActions.Contains(type)) Add(clause, where, type == "JavaScript" ? PdfAText.JavaScript : PdfAText.ForbiddenAction(type));
+            else if (type == "Named" && !NamedActions.Contains(_doc.Name(action, "N") ?? ""))
+                Add(clause, where, PdfAText.NamedAction(_doc.Name(action, "N")));
+            switch (_doc.Resolve(action["Next"]))
+            {
+                case PdfDictionary next:
+                    pending.Push(next);
+                    break;
+                case PdfArray list when _nextLists.Add(list):
+                    foreach (var item in list.Items) pending.Push(item);
+                    break;
+            }
+        }
+    }
+
+    private void CheckOutlines()
+    {
+        var seen = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
+        var stack = new Stack<PdfDictionary>();
+        if (_doc.Dict(_doc.Dict(_doc.Catalog, "Outlines"), "First") is { } first) stack.Push(first);
+        while (stack.Count > 0 && seen.Count < 200_000)
+        {
+            var item = stack.Pop();
+            if (!seen.Add(item)) continue;
+            CheckAction(item["A"], PdfAText.Outlines);
+            foreach (string key in (ReadOnlySpan<string>)["First", "Next"])
+            {
+                if (_doc.Dict(item, key) is { } child) stack.Push(child);
+            }
         }
     }
 

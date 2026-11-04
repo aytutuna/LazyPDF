@@ -12,7 +12,9 @@ internal sealed partial class PdfAChecker
         CheckMetadata();
         CheckOptionalContent();
         if (catalog.ContainsKey("AA")) Add(C("6.6.2", "6.5.2"), PdfAText.Catalog, PdfAText.CatalogTriggers);
-        CheckAction(catalog["OpenAction"], PdfAText.Catalog, 0);
+        if (!IsPart1 && catalog.ContainsKey("NeedsRendering")) Add("6.4.2", PdfAText.Catalog, PdfAText.NeedsRendering);
+        CheckAction(catalog["OpenAction"], PdfAText.Catalog);
+        CheckOutlines();
         if (_doc.Dict(_doc.Dict(catalog, "Names"), "JavaScript") is not null) Add(C("6.6.1", "6.5.1"), PdfAText.Catalog, PdfAText.JavaScript);
         CheckForm();
     }
@@ -39,15 +41,17 @@ internal sealed partial class PdfAChecker
                 Add(clause, PdfAText.OutputIntent, PdfAText.ProfileComponents);
                 continue;
             }
-            if (_intentComponents == 0) _intentComponents = (int)n;
+            string? fault;
             try
             {
-                if (IccProblem(_doc.Data(profile, 32L << 20), (int)n, IsPart1 ? 2 : 4) is { } problem) Add(clause, PdfAText.OutputIntent, problem);
+                fault = IccProblem(_doc.Data(profile, 32L << 20), (int)n, IsPart1 ? 2 : 4, true);
             }
             catch (PdfReadException)
             {
-                Add(clause, PdfAText.OutputIntent, PdfAText.ProfileUnreadable);
+                fault = PdfAText.ProfileUnreadable;
             }
+            if (fault is not null) Add(clause, PdfAText.OutputIntent, fault);
+            else if (_intentComponents == 0 && _doc.Name(intent, "S") == "GTS_PDFA1") _intentComponents = (int)n;
         }
     }
 
@@ -59,6 +63,7 @@ internal sealed partial class PdfAChecker
             Add(clause, PdfAText.Catalog, PdfAText.NoMetadata);
             return;
         }
+        if (stream.Dictionary.ContainsKey("Filter")) Add(clause, PdfAText.Metadata, PdfAText.MetadataFilter);
         byte[] bytes;
         try
         {
@@ -83,7 +88,7 @@ internal sealed partial class PdfAChecker
     {
         string clause = C("6.7.11", "6.6.4");
         string? part = xmp.Get(PdfAXmp.Id, "part")?.Trim();
-        string? conformance = xmp.Get(PdfAXmp.Id, "conformance")?.Trim().ToUpperInvariant();
+        string? conformance = xmp.Get(PdfAXmp.Id, "conformance")?.Trim();
         if (part is null)
         {
             Add(clause, PdfAText.Metadata, PdfAText.NoIdentification);
@@ -95,7 +100,7 @@ internal sealed partial class PdfAChecker
             if (xmp.Get(PdfAXmp.Id, "rev")?.Trim() != "2020") Add(clause, PdfAText.Metadata, PdfAText.NoRevision);
             return;
         }
-        string[] accepted = level.NeedsUnicode() ? ["U", "A"] : ["B", "U", "A"];
+        string[] accepted = level.NeedsUnicode() ? ["U", "A"] : IsPart1 ? ["B", "A"] : ["B", "U", "A"];
         if (conformance is null || !accepted.Contains(conformance)) Add(clause, PdfAText.Metadata, PdfAText.WrongConformance(conformance, level.Conformance()!));
     }
 

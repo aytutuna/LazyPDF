@@ -62,7 +62,8 @@ public class PdfAImageTests
         Assert.Contains("6.2.9", StandardsKit.Clauses(Form("/Ref << /F (x.pdf) /Page 0 >>")));
         Assert.Contains("6.2.9", StandardsKit.Clauses(Form("/Subtype2 /PS")));
         Assert.Contains("6.2.9", StandardsKit.Clauses(Form("/OPI << >>")));
-        Assert.Contains("6.2.5", StandardsKit.Clauses(Form("/Ref << /F (x.pdf) /Page 0 >>"), PdfALevel.A1b));
+        Assert.Contains("6.2.6", StandardsKit.Clauses(Form("/Ref << /F (x.pdf) /Page 0 >>"), PdfALevel.A1b));
+        Assert.Contains("6.2.7", StandardsKit.Clauses(Form("/Subtype2 /PS"), PdfALevel.A1b));
     }
 
     [Fact]

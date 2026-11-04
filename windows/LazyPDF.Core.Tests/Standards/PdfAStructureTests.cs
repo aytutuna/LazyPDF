@@ -97,7 +97,8 @@ public class PdfAStructureTests
         });
         var issues = StandardsKit.Check(file).Issues;
         Assert.Contains(issues, i => i.Clause == "6.1.7" && i.Message.Contains("/F"));
-        Assert.Contains(issues, i => i.Clause == "6.1.10" && i.Message.Contains("LZW"));
+        Assert.Contains(issues, i => i.Clause == "6.1.7.2" && i.Message.Contains("LZW"));
+        Assert.Contains(StandardsKit.Check(file, PdfALevel.A1b).Issues, i => i.Clause == "6.1.10" && i.Message.Contains("LZW"));
     }
 
     [Fact]

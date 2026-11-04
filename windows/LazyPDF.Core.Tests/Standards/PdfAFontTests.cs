@@ -103,7 +103,9 @@ public class PdfAFontTests
             descriptor["CIDSet"] = d.Add(new PdfStream(new PdfDictionary(), new byte[16]));
         });
         Assert.Contains("6.2.11.4.2", StandardsKit.Clauses(empty));
-        Assert.Contains("6.3.5", StandardsKit.Clauses(empty, PdfALevel.A1b));
+        Assert.DoesNotContain("6.3.5", StandardsKit.Clauses(empty, PdfALevel.A1b));
+        byte[] subset = StandardsKit.Edited(empty, d => ((PdfDictionary)d.Get(11)!)["FontName"] = new PdfName("ABCDEF+Arial"));
+        Assert.Contains("6.3.5", StandardsKit.Clauses(subset, PdfALevel.A1b));
 
         byte[] complete = StandardsKit.Edited(Composite(), d =>
         {

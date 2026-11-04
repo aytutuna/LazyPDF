@@ -38,14 +38,18 @@ public static class PdfAText
     public static string StreamKey(string key) => $"A stream has the key /{key}, which is not allowed.";
     public const string Lzw = "A stream uses the LZW filter.";
     public const string CryptFilter = "A stream uses the Crypt filter.";
+    public static string UnknownFilter(string name) => $"A stream uses the filter {name}, which the standard does not list.";
+    public const string HexString = "A hexadecimal string has an odd number of digits or a character that is not a hex digit.";
 
     public static string StringTooLong(int length) => F($"A string is {length} bytes long, past the limit.");
     public const string NameTooLong = "A name is longer than 127 bytes.";
     public static string IntegerTooBig(string text) => $"The integer {text} is outside the 32-bit range.";
     public static string ArrayTooLong(int count) => F($"An array has {count} elements; the limit is 8191.");
     public static string DictionaryTooBig(int count) => F($"A dictionary has {count} entries; the limit is 4095.");
+    public static string RealTooBig(string text) => $"The real number {text} is beyond 32767.";
+    public const string TooMuchContent = "The page content is too large to check in full.";
     public const string GraphicsNesting = "Graphics states are nested more than 28 deep.";
-    public const string TooManyColorants = "A DeviceN space has more than 32 colorants.";
+    public static string TooManyColorants(int limit) => F($"A DeviceN space has more than {limit} colorants.");
 
     public const string EmbeddedFile = "The file embeds another file, which this level does not allow.";
     public const string EmbeddedNotPdfA = "An embedded file is not a PDF/A file.";
@@ -61,6 +65,7 @@ public static class PdfAText
     public const string TransferFunction = "A graphics state sets a transfer function.";
     public const string Halftone = "A graphics state sets a halftone.";
     public static string BlendMode(string? mode) => $"The blend mode {mode} needs transparency.";
+    public static string UnknownBlendMode(string mode) => $"The blend mode {mode} is not one of the standard ones.";
     public const string Opacity = "A constant opacity below 1 needs transparency.";
     public const string SoftMask = "A soft mask needs transparency.";
     public const string ImageTransparency = "An image has a soft mask or alpha data.";
@@ -86,8 +91,10 @@ public static class PdfAText
     public const string CMapNotKnown = "The font names a CMap that is neither predefined nor embedded.";
     public const string NoSystemInfo = "The CIDFont has no /CIDSystemInfo.";
     public const string NoCidToGid = "A TrueType CIDFont has no /CIDToGIDMap.";
-    public const string CidSetIncomplete = "The /CIDSet does not list every glyph shown.";
-    public const string CharSetIncomplete = "The /CharSet does not list every glyph shown.";
+    public const string CidSetIncomplete = "The /CIDSet does not list every glyph shown or held in the font program.";
+    public const string CharSetIncomplete = "The /CharSet does not list every glyph shown or held in the font program.";
+    public const string CidSetMissing = "A subset CIDFont has no /CIDSet.";
+    public const string CharSetMissing = "A subset Type 1 font has no /CharSet.";
     public const string SymbolicEncoding = "A symbolic TrueType font has an /Encoding.";
     public const string SymbolicCmap = "A symbolic TrueType font has no (3,0) or (1,0) cmap.";
     public const string TrueTypeEncoding = "A TrueType font must use WinAnsiEncoding or MacRomanEncoding.";
@@ -105,9 +112,13 @@ public static class PdfAText
     public const string JavaScript = "JavaScript is used.";
     public static string ForbiddenAction(string type) => $"A {type} action is used.";
     public static string NamedAction(string? name) => $"The named action {name} is not allowed.";
+    public const string Outlines = "Outlines";
+    public const string AnnotationColor = "An annotation has /C or /IC and the output intent is not an RGB profile.";
+    public const string NeedsRendering = "The catalog has /NeedsRendering.";
     public const string NeedAppearances = "The form sets /NeedAppearances to true.";
     public const string Xfa = "The form has XFA data.";
 
+    public const string MetadataFilter = "The metadata stream has a /Filter.";
     public const string NoMetadata = "The catalog has no /Metadata stream.";
     public const string XmpTooBig = "The XMP packet is too large to read.";
     public const string XmpNoRdf = "The XMP packet has no rdf:RDF element.";

@@ -12,11 +12,35 @@ internal sealed partial class PdfAChecker
         if (_doc.Repairs.Any(r => r.StartsWith("Cut ", StringComparison.Ordinal))) Add("6.1.2", PdfAText.Header, PdfAText.BytesBeforeHeader);
         CheckHeader(data);
         CheckTrailer(data);
+        if (HasBadHexString(data)) Add("6.1.6", PdfAText.Trailer, PdfAText.HexString);
         if (_doc.XrefRebuilt) Add("6.1.4", PdfAText.Xref, PdfAText.XrefDamaged);
         if (IsPart1)
         {
             if (_doc.XrefIsStream) Add("6.1.4", PdfAText.Xref, PdfAText.XrefStream);
             if (_doc.Entries.Values.Any(e => e.Kind == PdfDocument.EntryKind.Compressed)) Add("6.1.4", PdfAText.Xref, PdfAText.ObjectStreams);
+        }
+        else
+        {
+            CheckObjectStreams();
+        }
+    }
+
+    // Nothing refers to an object stream as a value, so the walk of the objects never meets one; the strings in it are read here.
+    private void CheckObjectStreams()
+    {
+        foreach (int number in _doc.Entries.Values.Where(e => e.Kind == PdfDocument.EntryKind.Compressed).Select(e => e.StreamNumber).Distinct())
+        {
+            if (OverBudget) return;
+            if (_doc.Get(number) is not PdfStream stream) continue;
+            try
+            {
+                byte[] data = _doc.Data(stream, MaxStreamBytes);
+                _work += data.Length;
+                if (HasBadHexString(data)) Add("6.1.6", PdfAText.ObjectName(number), PdfAText.HexString);
+            }
+            catch (PdfReadException)
+            {
+            }
         }
     }
 
@@ -59,8 +83,8 @@ internal sealed partial class PdfAChecker
         if (stream.DataOffset < 0 || stream.DataOffset > _doc.Source.Length) return;
         var data = _doc.Source.Span;
         int start = (int)stream.DataOffset;
-        bool lf = start > 0 && data[start - 1] == 10;
-        if (!lf) Add("6.1.7", where, PdfAText.StreamKeyword);
+        int keyword = start >= 2 && data[start - 1] == 10 ? (data[start - 2] == 13 ? start - 2 : start - 1) : -1;
+        if (keyword < 6 || !data[(keyword - 6)..keyword].SequenceEqual("stream"u8)) Add("6.1.7", where, PdfAText.StreamKeyword);
 
         long? declared = _doc.Integer(stream.Dictionary, "Length");
         if (declared is not >= 0 || declared > data.Length - start)
@@ -70,6 +94,70 @@ internal sealed partial class PdfAChecker
         }
         int end = start + (int)declared;
         int after = end < data.Length && data[end] == 13 ? (end + 1 < data.Length && data[end + 1] == 10 ? end + 2 : end + 1) : end < data.Length && data[end] == 10 ? end + 1 : end;
-        if (!data[after..].StartsWith("endstream"u8)) Add("6.1.7", where, PdfAText.StreamLength);
+        if (after == end || !data[after..].StartsWith("endstream"u8)) Add("6.1.7", where, PdfAText.StreamLength);
     }
+
+    // 6.1.6: a hex string has an even number of hex digits and nothing but white space besides. The parser drops the difference, so this
+    // reads the bytes outside the stream data. In a content stream the data of an inline image is skipped.
+    internal static bool HasBadHexString(ReadOnlySpan<byte> data, bool content = false)
+    {
+        for (int i = 0; i < data.Length; i++)
+        {
+            byte c = data[i];
+            if (c == '%')
+            {
+                while (i < data.Length && data[i] is not (10 or 13)) i++;
+            }
+            else if (c == '(')
+            {
+                for (int depth = 0; i < data.Length; i++)
+                {
+                    if (data[i] == '\\') i++;
+                    else if (data[i] == '(') depth++;
+                    else if (data[i] == ')' && --depth == 0) break;
+                }
+            }
+            else if (c == '<' && i + 1 < data.Length && data[i + 1] == '<')
+            {
+                i++;
+            }
+            else if (c == '<')
+            {
+                int digits = 0;
+                for (i++; i < data.Length && data[i] != '>'; i++)
+                {
+                    if (Uri.IsHexDigit((char)data[i])) digits++;
+                    else if (data[i] is not (0 or 9 or 10 or 12 or 13 or 32)) return true;
+                }
+                if (digits % 2 != 0) return true;
+            }
+            else if (IsRegular(c) || c == '/')
+            {
+                int from = c == '/' ? i + 1 : i, end = from;
+                while (end < data.Length && IsRegular(data[end])) end++;
+                if (c != '/' && data[from..end].SequenceEqual("stream"u8))
+                {
+                    int close = data[end..].IndexOf("endstream"u8);
+                    end = close < 0 ? data.Length : end + close;
+                }
+                else if (content && c != '/' && data[from..end].SequenceEqual("ID"u8))
+                {
+                    end = EndOfInlineImage(data, end);
+                }
+                i = Math.Max(i, end - 1);
+            }
+        }
+        return false;
+    }
+
+    private static int EndOfInlineImage(ReadOnlySpan<byte> data, int from)
+    {
+        for (int i = Math.Max(from, 1); i + 1 < data.Length; i++)
+        {
+            if (data[i] == 'E' && data[i + 1] == 'I' && (data[i - 1] is 0 or 9 or 10 or 12 or 13 or 32) && (i + 2 == data.Length || !IsRegular(data[i + 2]))) return i;
+        }
+        return data.Length;
+    }
+
+    private static bool IsRegular(byte c) => c is not (0 or 9 or 10 or 12 or 13 or 32 or (byte)'(' or (byte)')' or (byte)'<' or (byte)'>' or (byte)'[' or (byte)']' or (byte)'{' or (byte)'}' or (byte)'/' or (byte)'%');
 }

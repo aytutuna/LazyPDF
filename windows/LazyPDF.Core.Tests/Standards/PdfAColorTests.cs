@@ -109,6 +109,30 @@ public class PdfAColorTests
         Assert.Contains("6.2.10", StandardsKit.Clauses(StandardsKit.Compliant(PdfALevel.A1b, content: "BX 1 2 frob EX"), PdfALevel.A1b));
     }
 
+    [Fact]
+    public void AnIndexedSpaceOverADeviceBaseIsAUseOfIt()
+    {
+        byte[] file = StandardsKit.Compliant(intents: NoIntent, resources: "/ColorSpace <</CS0 [/Indexed /DeviceRGB 1 <000000FFFFFF>]>>", content: "/CS0 cs 0 sc 0 0 5 5 re f");
+        Assert.Contains("6.2.4.3", StandardsKit.Clauses(file));
+        Assert.Contains("6.2.3.3", StandardsKit.Clauses(StandardsKit.Compliant(PdfALevel.A1b, intents: NoIntent, resources: "/ColorSpace <</CS0 [/Indexed /DeviceRGB 1 <000000FFFFFF>]>>",
+            content: "/CS0 cs 0 sc 0 0 5 5 re f"), PdfALevel.A1b));
+        byte[] unpainted = StandardsKit.Compliant(intents: NoIntent, resources: "/ColorSpace <</CS0 [/Indexed /DeviceRGB 1 <000000FFFFFF>]>>", content: "");
+        Assert.DoesNotContain("6.2.4.3", StandardsKit.Clauses(unpainted));
+    }
+
+    [Fact]
+    public void ShadingsPatternsAndGroupsCountOnlyWhenPainted()
+    {
+        const string shading = "<</ShadingType 2 /ColorSpace /DeviceRGB /Coords [0 0 10 0] /Function <</FunctionType 2 /Domain [0 1] /C0 [0 0 0] /C1 [1 1 1] /N 1>>>>";
+        const string resources = "/Shading <</Sh0 " + shading + ">> /Pattern <</P0 <</PatternType 2 /Shading " + shading + ">>>> /XObject <</Fm 9 0 R>>";
+        byte[] Page(string content) => StandardsKit.Compliant(intents: NoIntent, resources: resources, content: content,
+            extra: pdf => pdf.Stream(9, "/Type /XObject /Subtype /Form /BBox [0 0 10 10] /Group <</S /Transparency /CS /DeviceRGB>>", ""));
+        Assert.DoesNotContain("6.2.4.3", StandardsKit.Clauses(Page("")));
+        Assert.Contains("6.2.4.3", StandardsKit.Clauses(Page("/Sh0 sh")));
+        Assert.Contains("6.2.4.3", StandardsKit.Clauses(Page("/Pattern cs /P0 scn 0 0 10 10 re f")));
+        Assert.Contains("6.2.4.3", StandardsKit.Clauses(Page("/Fm Do")));
+    }
+
     private static PdfStream Profile(PdfDocument document) =>
         (PdfStream)document.Resolve(((PdfDictionary)document.Resolve(document.Array(document.Catalog, "OutputIntents")!.Items[0])!)["DestOutputProfile"])!;
 

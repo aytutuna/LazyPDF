@@ -21,7 +21,7 @@ internal sealed class PdfAXmp
         "http://ns.adobe.com/xap/1.0/mm/", "http://ns.adobe.com/xap/1.0/rights/", "http://ns.adobe.com/photoshop/1.0/",
         "http://ns.adobe.com/tiff/1.0/", "http://ns.adobe.com/exif/1.0/", "http://ns.adobe.com/xap/1.0/t/pg/", "http://ns.adobe.com/xap/1.0/bj/",
         "http://www.aiim.org/pdfa/ns/extension/", "http://www.aiim.org/pdfa/ns/schema#", "http://www.aiim.org/pdfa/ns/property#",
-        "http://www.aiim.org/pdfa/ns/type#", "http://www.aiim.org/pdfa/ns/field#", "http://www.aiim.org/pdfua/ns/id/",
+        "http://www.aiim.org/pdfa/ns/type#", "http://www.aiim.org/pdfa/ns/field#",
     ];
 
     private readonly List<XElement> _descriptions;
