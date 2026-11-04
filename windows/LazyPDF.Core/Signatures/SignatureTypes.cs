@@ -202,4 +202,7 @@ public sealed record VerifyOptions
     public DateTimeOffset? Now { get; init; }
 
     public string? Password { get; init; }
+
+    /// <summary>For a file encrypted to recipients: the certificate of one of them, with its private key.</summary>
+    public X509Certificate2? Certificate { get; init; }
 }

@@ -14,7 +14,7 @@ public static class PdfSignatureVerifier
     public static IReadOnlyList<SignatureReport> Verify(byte[] pdf, VerifyOptions? options = null)
     {
         options ??= new VerifyOptions();
-        var document = PdfDocument.Open(pdf, options.Password);
+        var document = options.Certificate is { } certificate ? PdfDocument.Open(pdf, certificate) : PdfDocument.Open(pdf, options.Password);
         var file = PdfSigner.SourceBytes(document);
         var found = SignatureScan.Find(file).OrderBy(f => f.Offset).ToList();
         var checker = new SignatureChecker(document, file, PdfRevisions.List(file), options, found);
