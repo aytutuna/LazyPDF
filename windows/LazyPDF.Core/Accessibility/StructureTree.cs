@@ -11,7 +11,8 @@ public sealed partial class StructureTree
 {
     private const int MaxDepth = 128;
     private const int MaxNodes = 1_000_000;
-    private const int MaxMcid = 1_000_000;
+    internal const int MaxMcid = 1_000_000;
+    internal const long MaxParentSlots = 4_000_000;
 
     private static readonly HashSet<string> Standard = new(StringComparer.Ordinal)
     {
@@ -247,7 +248,7 @@ public sealed partial class StructureTree
         {
             if (_document.Integer(d, "MCID") is >= 0 and <= MaxMcid and var id)
             {
-                into.Add(new StructContent(own >= 0 ? own : page, (int)id, d["Stm"] as PdfReference) { Parent = parent });
+                into.Add(new StructContent(own >= 0 ? own : page, (int)id, d["Stm"] as PdfReference) { Parent = parent, StreamOwner = d["StmOwn"] });
             }
             return;
         }

@@ -10,6 +10,7 @@ internal sealed class TagSession
     private readonly StructElement _root = new("Document");
     private readonly Dictionary<HeadingLook, int> _levels;
     private readonly List<(int Page, StructElement Element)> _figures = [];
+    private long _slots;
     private int _level, _headings, _paragraphs, _lists, _tables, _artifacts;
 
     public TagSession(PdfDocument document, List<TagPage?> layouts)
@@ -93,7 +94,6 @@ internal sealed class TagSession
 
         int level = _level;
         foreach (var node in layout.Nodes) CreateElements(node, page.Index, ref level);
-        _level = level;
 
         // Text claims an operation before a figure does: a form that draws both is described by its words.
         var claims = new Dictionary<int, TagNode>();
@@ -103,14 +103,24 @@ internal sealed class TagSession
             foreach (int op in leaf.Operations) claims.TryAdd(op, leaf);
         }
 
-        int mcid = 0;
         var properties = _document.Dict(page.Resources, "Properties");
-        var planner = new ContentTagger(parsed, claims, name => _document.Dict(properties, name), node =>
+        var used = ContentTagger.UsedMcids(parsed, name => _document.Dict(properties, name), _document);
+        var numbered = new List<(TagNode Node, int Mcid)>();
+        int next = 0;
+        var planner = new ContentTagger(parsed, claims, node =>
         {
-            _tree.Add(node.Element!, new StructContent(page.Index, mcid));
-            return mcid++;
+            while (used.Contains(next)) next++;
+            numbered.Add((node, next));
+            return next++;
         });
         planner.Run();
+
+        // The parent tree keeps an array up to the highest number of each page; refusing here leaves the page as it was.
+        int highest = numbered.Count > 0 ? numbered.Max(n => n.Mcid) : -1;
+        if (highest > StructureTree.MaxMcid || _slots + highest + 1 > StructureTree.MaxParentSlots) return false;
+        _slots += highest + 1;
+        _level = level;
+        foreach (var (node, mcid) in numbered) _tree.Add(node.Element!, new StructContent(page.Index, mcid));
 
         _artifacts += planner.Artifacts;
         if (streams is null)

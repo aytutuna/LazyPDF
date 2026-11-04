@@ -19,6 +19,9 @@ public sealed class StructContent(int pageIndex, int mcid, PdfReference? stream 
 
     /// <summary>The form XObject whose content holds the sequence; null when it is in the page's own content.</summary>
     public PdfReference? Stream { get; } = stream;
+
+    /// <summary>/StmOwn of the MCR (14.7.4.2): the object the stream belongs to, written back as it was read.</summary>
+    internal PdfObject? StreamOwner { get; init; }
 }
 
 /// <summary>An object reference (OBJR): an annotation or XObject that belongs to an element.</summary>

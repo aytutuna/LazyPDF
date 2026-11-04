@@ -5,8 +5,10 @@ public static partial class AccessibilityChecker
     private sealed record ContentChecks(AccessibilityItem Searchable, AccessibilityItem Encoding, AccessibilityItem TaggedContent);
 
     // What a page's content says about itself, found in one run of the interpreter.
-    private sealed class PageContent(Func<ContentContext, int, bool> known) : ContentVisitor
+    private sealed class PageContent(Func<PdfStream?, int, bool> known) : ContentVisitor
     {
+        private readonly List<(MarkedContent Mark, PdfStream? Form)> _open = [];
+
         public int Glyphs { get; private set; }
         public int Images { get; private set; }
         public int Loose { get; private set; }
@@ -37,11 +39,17 @@ public static partial class AccessibilityChecker
 
         public override void PaintShading(ContentContext context, ShadingInfo shading) => Note(context);
 
+        // A sequence is numbered in the stream that holds it, so each is kept with its form.
+        public override void BeginMarked(ContentContext context, MarkedContent marked) =>
+            _open.Add((marked, context.Forms.Count > 0 ? context.Forms[^1] : null));
+
+        public override void EndMarked(ContentContext context, MarkedContent marked) => _open.RemoveAt(_open.Count - 1);
+
         // 7.1 of ISO 14289-1: everything drawn is in the tags or an artifact.
         private void Note(ContentContext context)
         {
             if (context.Marked.Any(m => m.Tag == "Artifact")) return;
-            if (context.Mcid is not { } mcid || !known(context, mcid)) Loose++;
+            if (!_open.Any(o => o.Mark.Mcid is { } mcid && known(o.Form, mcid))) Loose++;
         }
     }
 
@@ -68,9 +76,8 @@ public static partial class AccessibilityChecker
         {
             cancel.ThrowIfCancellationRequested();
             // Without a tree every sequence counts as known: the tagged rule is then a person's to judge.
-            bool Known(ContentContext context, int mcid) =>
-                tree is null || (inPage.TryGetValue(page.Index, out var set) && set.Contains(mcid))
-                || (context.Forms.Count > 0 && inForm.Contains((context.Forms[^1].Number, mcid)));
+            bool Known(PdfStream? form, int mcid) =>
+                tree is null || (form is null ? inPage.TryGetValue(page.Index, out var set) && set.Contains(mcid) : inForm.Contains((form.Number, mcid)));
 
             var visitor = new PageContent(Known);
             try

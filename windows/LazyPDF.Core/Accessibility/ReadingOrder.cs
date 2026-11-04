@@ -31,6 +31,7 @@ public static class ReadingOrder
     private sealed class Walker(PdfDocument document, StructureTree tree)
     {
         private readonly Dictionary<int, Dictionary<(int Stream, int Mcid), Piece>> _pages = [];
+        private readonly HashSet<(int Page, int Stream, int Mcid)> _named = tree.Contents.Select(c => (c.PageIndex, c.Stream?.Number ?? 0, c.Mcid)).ToHashSet();
         private readonly List<string> _lines = [];
         private readonly StringBuilder _line = new();
 
@@ -103,26 +104,69 @@ public static class ReadingOrder
         private void Append(StringBuilder into, StructContent content)
         {
             if (content.PageIndex < 0 || content.PageIndex >= document.Pages.Count) return;
-            if (!_pages.TryGetValue(content.PageIndex, out var pieces)) _pages[content.PageIndex] = pieces = Read(document, document.Pages[content.PageIndex]);
+            if (!_pages.TryGetValue(content.PageIndex, out var pieces)) _pages[content.PageIndex] = pieces = Read(document.Pages[content.PageIndex]);
             if (pieces.TryGetValue((content.Stream?.Number ?? 0, content.Mcid), out var piece)) into.Append(piece.Text).Append(' ');
         }
 
-        // Characters by the sequence that holds them; a sequence of the page also takes what its forms draw.
-        private static Dictionary<(int Stream, int Mcid), Piece> Read(PdfDocument document, PdfPage page)
+        // Characters by the sequence that holds them: the innermost one around the glyph that the tree names, each in the stream that numbers it.
+        private Dictionary<(int Stream, int Mcid), Piece> Read(PdfPage page)
         {
             var text = TextPage.Create(document, page);
+            var owners = new Owners(_named.Contains, page.Index);
+            try
+            {
+                new ContentInterpreter(document) { WalkPatterns = false }.Run(page, owners);
+            }
+            catch (PdfReadException)
+            {
+            }
             var pieces = new Dictionary<(int, int), Piece>();
             var chars = text.Chars;
+            var keys = new (int, int)?[chars.Count];
             for (int i = 0; i < chars.Count; i++)
             {
                 var c = chars[i];
-                int? mcid = c.Mcid;
-                if (mcid is null && c.IsImplied && i > 0 && i + 1 < chars.Count && chars[i - 1].Mcid is { } before && chars[i + 1].Mcid == before) mcid = before;
-                if (mcid is not { } id) continue;
-                Add(pieces, (0, id), c);
-                if (c.Form is { } form) Add(pieces, (form.Number, id), c);
+                if (!c.IsImplied) keys[i] = owners.OwnerOf(c);
+            }
+            for (int i = 0; i < chars.Count; i++)
+            {
+                if (chars[i].IsImplied && i > 0 && i + 1 < chars.Count) keys[i] = keys[i - 1] is { } before && keys[i + 1] == before ? before : null;
+                if (keys[i] is { } found) Add(pieces, found, chars[i]);
             }
             return pieces;
+        }
+
+        // Finds, for each glyph the page draws, the innermost open sequence the tree names; a sequence is numbered in the stream that holds its BDC.
+        private sealed class Owners(Func<(int Page, int Stream, int Mcid), bool> named, int page) : ContentVisitor
+        {
+            private readonly List<(MarkedContent Mark, int Stream)> _open = [];
+
+            // A form drawn twice shows the same operator and offset twice, so the drawings are told apart by where they put the glyph.
+            private readonly Dictionary<(int Stream, int Op, int Element, int Offset), List<(double X, double Y, (int Stream, int Mcid)? Owner)>> _glyphs = [];
+
+            public (int Stream, int Mcid)? OwnerOf(TextChar c)
+            {
+                if (!_glyphs.TryGetValue((c.Form?.Number ?? 0, c.OperatorIndex, c.Element, c.Offset), out var drawn)) return null;
+                var (x, y) = (c.Quad.X0, c.Quad.Y0);
+                return drawn.MinBy(d => (d.X - x) * (d.X - x) + (d.Y - y) * (d.Y - y)).Owner;
+            }
+
+            public override void BeginMarked(ContentContext context, MarkedContent marked) =>
+                _open.Add((marked, context.Forms.Count > 0 ? context.Forms[^1].Number : 0));
+
+            public override void EndMarked(ContentContext context, MarkedContent marked) => _open.RemoveAt(_open.Count - 1);
+
+            public override void ShowGlyph(ContentContext context, in GlyphInfo glyph)
+            {
+                (int, int)? owner = null;
+                for (int i = _open.Count - 1; i >= 0 && owner is null; i--)
+                {
+                    if (_open[i].Mark.Mcid is { } mcid && named((page, _open[i].Stream, mcid))) owner = (_open[i].Stream, mcid);
+                }
+                var key = (context.Forms.Count > 0 ? context.Forms[^1].Number : 0, context.OperatorIndex, glyph.Element, glyph.Offset);
+                if (!_glyphs.TryGetValue(key, out var drawn)) _glyphs[key] = drawn = [];
+                drawn.Add((glyph.Matrix.E, glyph.Matrix.F, owner));
+            }
         }
 
         private static void Add(Dictionary<(int, int), Piece> pieces, (int, int) key, TextChar c)

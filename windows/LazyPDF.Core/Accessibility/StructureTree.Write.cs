@@ -5,13 +5,15 @@ public sealed partial class StructureTree
     /// <summary>
     /// Stores the tree: every element gets its dictionary written (keys this class does not know stay),
     /// the root's /K, /RoleMap, /ClassMap and /ParentTree are rebuilt from the elements, pages and
-    /// objects that hold content get a /StructParents or /StructParent key where they have none,
-    /// /MarkInfo /Marked is set and removed elements are freed. A value that is already what would be
-    /// written is left alone, so editing one element changes a few objects, not the whole tree.
+    /// objects that hold content get a /StructParents or /StructParent key where they have none or
+    /// share one with another owner, /MarkInfo /Marked is set and removed elements are freed. A tree
+    /// whose parent tree arrays would run past four million slots is an <see cref="InvalidOperationException"/>.
+    /// A value that is already what would be written is left alone, so editing one element changes a
+    /// few objects, not the whole tree.
     /// </summary>
     public void Write(PdfDocument document)
     {
-        if (IsTruncated) throw new InvalidOperationException(AccessibilityText.TreeTooLarge);
+        if (IsTruncated || ParentSlots() > MaxParentSlots) throw new InvalidOperationException(AccessibilityText.TreeTooLarge);
         var pages = document.Pages;
         Reference ??= document.Add(Dictionary);
         var all = Elements.ToList();
@@ -32,6 +34,10 @@ public sealed partial class StructureTree
         if (info is null) catalog["MarkInfo"] = info = new PdfDictionary();
         if (document.Bool(info, "Marked") != true) info["Marked"] = new PdfBoolean(true);
     }
+
+    // Each page's array in the parent tree runs up to its highest MCID, so a few far-off numbers would allocate a great deal.
+    private long ParentSlots() =>
+        Contents.GroupBy(c => (c.PageIndex, c.Stream?.Number ?? 0)).Sum(g => g.Max(c => (long)c.Mcid) + 1);
 
     private void WriteElement(PdfDocument document, StructElement element, IReadOnlyList<PdfPage> pages)
     {
@@ -64,6 +70,7 @@ public sealed partial class StructureTree
                     if (content.PageIndex >= 0 && content.PageIndex < pages.Count) mcr["Pg"] = pages[content.PageIndex].Reference;
                     mcr["MCID"] = new PdfNumber(content.Mcid);
                     if (content.Stream is not null) mcr["Stm"] = content.Stream;
+                    if (content.StreamOwner is not null) mcr["StmOwn"] = content.StreamOwner;
                     items.Add(mcr);
                     break;
                 case StructObject target:
@@ -112,16 +119,45 @@ public sealed partial class StructureTree
         {
             if (document.Integer(owner, name) is { } existingKey and >= 0) used.Add(existingKey);
         }
+        foreach (var page in pages)
+        {
+            if (document.Integer(page.Dictionary, "StructParents") is { } pageKey and >= 0) used.Add(pageKey);
+        }
+        var strays = Strays(document, work.Select(w => w.Owner).Concat(pages.Select(p => p.Dictionary)));
+        foreach (var (_, _, strayKey) in strays) used.Add(strayKey);
         long next = Math.Max(document.Integer(Dictionary, "ParentTreeNextKey") ?? 0, used.Count > 0 ? used.Max() + 1 : 0);
+
+        // A key stands for one owner; a later owner that carries the same number (pages merged by another tool) gets a new one.
+        var owners = new Dictionary<long, PdfDictionary>();
+        var assigned = new List<(long Key, StructElement Element, StructKid Kid)>();
+        foreach (var (owner, name, element, kid) in work.OrderBy(w => w.Kid is StructObject))
+        {
+            long key = document.Integer(owner, name) ?? -1;
+            if (key < 0 || (owners.TryGetValue(key, out var holder) && !ReferenceEquals(holder, owner))) owner[name] = new PdfNumber(key = next++);
+            owners[key] = owner;
+            assigned.Add((key, element, kid));
+        }
+
+        // The parent tree is rebuilt from the elements above, so a number a form or annotation outside them still carries would now lead to another owner's element.
+        foreach (var (owner, name, strayKey) in strays)
+        {
+            if (owners.ContainsKey(strayKey)) owner.Remove(name);
+        }
+
+        // A page without tagged content has no use for a key, and one that another owner now holds would point its numbers at that owner's elements.
+        foreach (var page in pages)
+        {
+            if (document.Integer(page.Dictionary, "StructParents") is { } pageKey and >= 0
+                && owners.TryGetValue(pageKey, out var holder) && !ReferenceEquals(holder, page.Dictionary))
+            {
+                page.Dictionary.Remove("StructParents");
+            }
+        }
 
         var entries = new SortedDictionary<long, PdfObject>();
         var arrays = new Dictionary<long, List<PdfObject>>();
-        foreach (var (owner, name, element, kid) in work)
+        foreach (var (key, element, kid) in assigned)
         {
-            long key;
-            if (document.Integer(owner, name) is { } existingKey and >= 0) key = existingKey;
-            else owner[name] = new PdfNumber(key = next++);
-
             if (kid is StructContent content)
             {
                 if (!arrays.TryGetValue(key, out var list)) arrays[key] = list = [];
@@ -145,6 +181,22 @@ public sealed partial class StructureTree
         }
         long highest = entries.Count > 0 ? entries.Keys.Max() : -1;
         Put(Dictionary, "ParentTreeNextKey", new PdfNumber(Math.Max(next, highest + 1)));
+    }
+
+    private static List<(PdfDictionary Owner, string Name, long Key)> Strays(PdfDocument document, IEnumerable<PdfDictionary> known)
+    {
+        var skip = new HashSet<PdfDictionary>(known, ReferenceEqualityComparer.Instance);
+        var found = new List<(PdfDictionary, string, long)>();
+        foreach (int number in document.ObjectNumbers)
+        {
+            var d = document.Get(number) switch { PdfStream s => s.Dictionary, PdfDictionary plain => plain, _ => null };
+            if (d is null || skip.Contains(d)) continue;
+            foreach (string name in (string[])["StructParents", "StructParent"])
+            {
+                if (document.Integer(d, name) is { } key and >= 0) found.Add((d, name, key));
+            }
+        }
+        return found;
     }
 
     private static PdfObject? Kids(List<PdfObject> items, PdfObject? current) =>

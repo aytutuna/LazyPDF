@@ -19,7 +19,6 @@ internal sealed class ContentTagger
 
     private readonly IReadOnlyList<IReadOnlyList<ContentOperation>> _streams;
     private readonly IReadOnlyDictionary<int, TagNode> _claims;
-    private readonly Func<string, PdfDictionary?> _properties;
     private readonly Func<TagNode, int> _newMcid;
     private readonly Stack<bool> _open = [];
     private int _skip;
@@ -29,11 +28,10 @@ internal sealed class ContentTagger
 
     public ContentTagger(
         IReadOnlyList<IReadOnlyList<ContentOperation>> streams, IReadOnlyDictionary<int, TagNode> claims,
-        Func<string, PdfDictionary?> properties, Func<TagNode, int> newMcid)
+        Func<TagNode, int> newMcid)
     {
         _streams = streams;
         _claims = claims;
-        _properties = properties;
         _newMcid = newMcid;
         Insertions = [.. streams.Select(_ => new List<ContentInsertion>())];
     }
@@ -94,18 +92,21 @@ internal sealed class ContentTagger
         }
     }
 
-    // Content already inside an /Artifact or a sequence with an /MCID is somebody else's to describe.
-    private bool IsForeign(ContentOperation op)
+    // Content inside an /Artifact is somebody else's to describe. A sequence with an /MCID is not: with no tree
+    // it belongs to nothing, and the new sequences are numbered past it.
+    private bool IsForeign(ContentOperation op) => op.Operands.Count > 0 && op.Operands[0] is PdfName { Value: "Artifact" };
+
+    /// <summary>The /MCID numbers the streams already carry. New sequences take the lowest numbers not in it, so a stale far-off number does not stretch the parent tree.</summary>
+    public static HashSet<int> UsedMcids(IReadOnlyList<IReadOnlyList<ContentOperation>> streams, Func<string, PdfDictionary?> properties, PdfDocument document)
     {
-        if (op.Operands.Count == 0 || op.Operands[0] is not PdfName tag) return false;
-        if (tag.Value == "Artifact") return true;
-        var properties = op.Operands.Count > 1 ? op.Operands[1] switch
+        var used = new HashSet<int>();
+        foreach (var op in streams.SelectMany(s => s))
         {
-            PdfDictionary d => d,
-            PdfName n => _properties(n.Value),
-            _ => null,
-        } : null;
-        return properties?.ContainsKey("MCID") == true;
+            if (op.Operator != "BDC" || op.Operands.Count < 2) continue;
+            var dictionary = op.Operands[1] switch { PdfDictionary d => d, PdfName n => properties(n.Value), _ => null };
+            if (dictionary is not null && document.Integer(dictionary, "MCID") is { } id and >= 0 and <= int.MaxValue) used.Add((int)id);
+        }
+        return used;
     }
 
     private void Extend(int stream, int index, TagNode? target)
