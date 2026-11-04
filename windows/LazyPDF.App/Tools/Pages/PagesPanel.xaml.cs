@@ -1,0 +1,157 @@
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Threading;
+using LazyPDF.App.Services;
+using LazyPDF.Core;
+
+namespace LazyPDF.App.Tools.Pages;
+
+/// <summary>
+/// The organize view: every page as a picture in a grid, to select, drag into a new order and change from the bar
+/// above; below are the jobs that need a choice first (insert, crop, resize, page labels).
+/// </summary>
+public partial class PagesPanel : ToolPanel
+{
+    // The size of a tile in the grid and of the page picture in it. The grid works out which tiles are in view from these.
+    public const double TileWidth = 108;
+    public const double TileHeight = 160;
+    private const double BoxWidth = 92;
+    private const double BoxHeight = 124;
+    public const double ColumnStep = TileWidth + 8;
+    public const double RowStep = TileHeight + 6;
+
+    private bool _syncing;
+    private IEnumerable<int>? _reselect;
+    private double _dpr = 1;
+
+    public PagesPanel()
+    {
+        InitializeComponent();
+        foreach (var size in PaperSize.All) Paper.Items.Add(size.Name);
+        Paper.Items.Add(Loc.T("Custom size"));
+        Paper.SelectedIndex = 0;
+    }
+
+    private List<PageCell> Cells => Thumbs.ItemsSource as List<PageCell> ?? [];
+
+    protected override void OnAttach()
+    {
+        Tab!.Changed += Tab_Changed;
+        _dpr = VisualTreeHelper.GetDpi(this).DpiScaleX;
+        Build();
+        Arm();
+    }
+
+    protected override void OnDetach()
+    {
+        Disarm();
+        Tab!.Changed -= Tab_Changed;
+        foreach (var cell in Cells) cell.Release();
+        Thumbs.ItemsSource = null;
+    }
+
+    private void Tab_Changed(object? sender, EventArgs e)
+    {
+        var select = _reselect;
+        _reselect = null;
+        Build(select);
+    }
+
+    private void Build(IEnumerable<int>? select = null)
+    {
+        var document = Tab!.Document;
+        var labels = PdfPageLabels.Labels(document);
+        var cells = new List<PageCell>(document.Pages.Count);
+        for (int i = 0; i < document.Pages.Count; i++)
+        {
+            var shown = new PageGeometry(document.Pages[i]);
+            double scale = Math.Min(BoxWidth / Math.Max(shown.Width, 1), BoxHeight / Math.Max(shown.Height, 1));
+            cells.Add(new PageCell(i, labels[i], Math.Max(Math.Round(shown.Width * scale), 4), Math.Max(Math.Round(shown.Height * scale), 4), scale));
+        }
+        _syncing = true;
+        Thumbs.ItemsSource = cells;
+        foreach (int page in select ?? [])
+        {
+            if (page >= 0 && page < cells.Count) Thumbs.SelectedItems.Add(cells[page]);
+        }
+        _syncing = false;
+        if (select is not null && Thumbs.SelectedItems.Count > 0) Thumbs.ScrollIntoView(Thumbs.SelectedItems[0]);
+        Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
+        Refresh();
+    }
+
+    private List<int> Selected() => [.. Thumbs.SelectedItems.Cast<PageCell>().Select(c => c.Index).Order()];
+
+    // Pages a job covers: the selection, else every page.
+    private List<int> SelectedOrAll()
+    {
+        var pages = Selected();
+        return pages.Count > 0 ? pages : [.. Enumerable.Range(0, Cells.Count)];
+    }
+
+    private void Thumbs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_syncing) return;
+        if (Thumbs.SelectedItems.Count == 1 && Viewer is { } viewer && Thumbs.SelectedItem is PageCell cell && viewer.PageIndex != cell.Index) viewer.GoToPage(cell.Index);
+        Refresh();
+    }
+
+    private void Thumbs_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key != System.Windows.Input.Key.Delete || Thumbs.SelectedItems.Count == 0) return;
+        Remove_Click(sender, e);
+        e.Handled = true;
+    }
+
+    private void Fields_Changed(object sender, TextChangedEventArgs e) => Refresh();
+
+    // The bar, the count and the hints follow the selection; the pinned action follows the open section.
+    private void Refresh()
+    {
+        if (Tab is null) return;
+        var pages = Selected();
+        int total = Cells.Count;
+        bool any = pages.Count > 0;
+        TurnLeft.IsEnabled = TurnRight.IsEnabled = Copy.IsEnabled = Extract.IsEnabled = Remove.IsEnabled = any;
+        Earlier.IsEnabled = any && pages[0] > 0;
+        Later.IsEnabled = any && pages[^1] < total - 1;
+        Replace.IsEnabled = any;
+        SignedRow.Visibility = Tab.Document.IsSigned ? Visibility.Visible : Visibility.Collapsed;
+        Summary.Text = any ? Loc.T("{0} of {1} selected", pages.Count, total) : Loc.Plural(total, "{0} page", "{0} pages", total);
+        RefreshHints(pages);
+        RaiseActionChanged();
+    }
+
+    // Tiles in view and one row either side get a picture; the rest let theirs go.
+    private void LoadVisible()
+    {
+        if (Tab?.Renderer is not WindowsPageRenderer renderer || Scroller() is not { } scroll) return;
+        int columns = Math.Max(1, (int)(scroll.ViewportWidth / ColumnStep));
+        int first = Math.Max(0, (int)(scroll.VerticalOffset / RowStep) - 1) * columns;
+        int last = ((int)((scroll.VerticalOffset + scroll.ViewportHeight) / RowStep) + 2) * columns;
+        var cells = Cells;
+        for (int i = 0; i < cells.Count; i++)
+        {
+            if (i >= first && i < last) _ = cells[i].LoadAsync(renderer, cells[i].Scale * 72 * _dpr);
+            else cells[i].Release();
+        }
+    }
+
+    private ScrollViewer? Scroller() => Descendant<ScrollViewer>(Thumbs);
+
+    private static T? Descendant<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T found) return found;
+            if (Descendant<T>(child) is { } inner) return inner;
+        }
+        return null;
+    }
+
+    private void Thumbs_ScrollChanged(object sender, ScrollChangedEventArgs e) => LoadVisible();
+
+    private void Thumbs_SizeChanged(object sender, SizeChangedEventArgs e) => LoadVisible();
+}

@@ -1,0 +1,167 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Pages.PagesPanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:pages="clr-namespace:LazyPDF.App.Tools.Pages">
+    <StackPanel Margin="{StaticResource PanePadding}">
+        <DockPanel x:Name="SignedRow" Margin="0,0,0,8" Visibility="Collapsed">
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE7BA;" />
+            <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T This file is signed. Changing its pages breaks the signatures.}" />
+        </DockPanel>
+        <WrapPanel x:Name="Bar" Margin="0,0,0,4">
+            <Button x:Name="TurnLeft" Style="{StaticResource IconButtonStyle}" Content="&#xE7AD;"
+                    ToolTip="{loc:T Rotate left}" AutomationProperties.Name="{loc:T Rotate left}" Click="TurnLeft_Click">
+                <Button.LayoutTransform>
+                    <ScaleTransform ScaleX="-1" />
+                </Button.LayoutTransform>
+            </Button>
+            <Button x:Name="TurnRight" Style="{StaticResource IconButtonStyle}" Content="&#xE7AD;"
+                    ToolTip="{loc:T Rotate right}" AutomationProperties.Name="{loc:T Rotate right}" Click="TurnRight_Click" />
+            <Button x:Name="Copy" Style="{StaticResource IconButtonStyle}" Content="&#xE8C8;"
+                    ToolTip="{loc:T Duplicate}" AutomationProperties.Name="{loc:T Duplicate}" Click="Copy_Click" />
+            <Button x:Name="Extract" Style="{StaticResource IconButtonStyle}" Content="&#xE8A7;"
+                    ToolTip="{loc:T Extract to a new file}" AutomationProperties.Name="{loc:T Extract to a new file}" Click="Extract_Click" />
+            <Button x:Name="Remove" Style="{StaticResource IconButtonStyle}" Content="&#xE74D;"
+                    ToolTip="{loc:T Delete}" AutomationProperties.Name="{loc:T Delete}" Click="Remove_Click" />
+            <Button x:Name="Earlier" Style="{StaticResource IconButtonStyle}" Content="&#xE76B;"
+                    ToolTip="{loc:T Move earlier}" AutomationProperties.Name="{loc:T Move earlier}" Click="Earlier_Click" />
+            <Button x:Name="Later" Style="{StaticResource IconButtonStyle}" Content="&#xE76C;"
+                    ToolTip="{loc:T Move later}" AutomationProperties.Name="{loc:T Move later}" Click="Later_Click" />
+        </WrapPanel>
+        <TextBlock x:Name="Summary" Style="{StaticResource SecondaryBodyText}" Margin="2,0,0,6" />
+        <Border Style="{StaticResource StageStyle}" Padding="0" Margin="0,0,0,12">
+            <ListBox x:Name="Thumbs" Height="340" BorderThickness="0" Background="Transparent" SelectionMode="Extended" AllowDrop="True"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True"
+                     AutomationProperties.Name="{loc:T Pages}" SelectionChanged="Thumbs_SelectionChanged"
+                     ScrollViewer.ScrollChanged="Thumbs_ScrollChanged" SizeChanged="Thumbs_SizeChanged" KeyDown="Thumbs_KeyDown"
+                     PreviewMouseLeftButtonDown="Thumbs_PreviewMouseLeftButtonDown" PreviewMouseMove="Thumbs_PreviewMouseMove"
+                     PreviewMouseLeftButtonUp="Thumbs_PreviewMouseLeftButtonUp" DragOver="Thumbs_DragOver" DragLeave="Thumbs_DragLeave" Drop="Thumbs_Drop">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <pages:TilePanel CellWidth="{x:Static pages:PagesPanel.ColumnStep}" CellHeight="{x:Static pages:PagesPanel.RowStep}" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource ThumbnailListItemStyle}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type pages:PageCell}">
+                        <Grid Width="{x:Static pages:PagesPanel.TileWidth}" Height="{x:Static pages:PagesPanel.TileHeight}" Background="Transparent">
+                            <StackPanel VerticalAlignment="Center">
+                                <Border Width="{Binding Width}" Height="{Binding Height}" CornerRadius="{StaticResource ThumbnailCornerRadius}" Background="White"
+                                        BorderThickness="1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" SnapsToDevicePixels="True">
+                                    <Image Source="{Binding Image}" Stretch="Uniform" />
+                                </Border>
+                                <TextBlock Text="{Binding Label}" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <Border x:Name="Before" Width="3" HorizontalAlignment="Left" Margin="-2,6" Background="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Collapsed" />
+                            <Border x:Name="After" Width="3" HorizontalAlignment="Right" Margin="-2,6" Background="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Collapsed" />
+                        </Grid>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding DropBefore}" Value="True">
+                                <Setter TargetName="Before" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DropAfter}" Value="True">
+                                <Setter TargetName="After" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <Expander x:Name="InsertSection" Header="{loc:T Insert and replace}" AutomationProperties.Name="{loc:T Insert and replace}"
+                  Expanded="Section_Expanded" Collapsed="Section_Collapsed">
+            <StackPanel Margin="0,4,0,8">
+                <TextBlock Text="{loc:T Where}" Style="{StaticResource FieldLabelText}" />
+                <ComboBox x:Name="Place" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Where}" SelectedIndex="0">
+                    <ComboBoxItem Content="{loc:T After the selection}" />
+                    <ComboBoxItem Content="{loc:T Before the selection}" />
+                    <ComboBoxItem Content="{loc:T At the start}" />
+                    <ComboBoxItem Content="{loc:T At the end}" />
+                </ComboBox>
+                <Button x:Name="Blank" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Blank page}"
+                        loc:Icon.Glyph="&#xE710;" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Blank page}" Click="Blank_Click" />
+                <TextBlock Text="{loc:T Pages to take (empty is all)}" Style="{StaticResource FieldLabelText}" />
+                <TextBox x:Name="Taken" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Pages to take (empty is all)}" />
+                <Button x:Name="FromFile" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Pages from a file}"
+                        loc:Icon.Glyph="&#xE8E5;" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Pages from a file}" Click="FromFile_Click" />
+                <Button x:Name="Replace" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Replace with a file}"
+                        loc:Icon.Glyph="&#xE8AB;" AutomationProperties.Name="{loc:T Replace with a file}" Click="Replace_Click" />
+            </StackPanel>
+        </Expander>
+
+        <Expander x:Name="CropSection" Header="{loc:T Crop}" AutomationProperties.Name="{loc:T Crop}"
+                  Expanded="Section_Expanded" Collapsed="Section_Collapsed">
+            <StackPanel Margin="0,4,0,8">
+                <CheckBox x:Name="CropDraw" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Draw a box on the page}" Margin="0,0,0,8"
+                          AutomationProperties.Name="{loc:T Draw a box on the page}" Checked="CropDraw_Changed" Unchecked="CropDraw_Changed" />
+                <TextBlock x:Name="CropHint" Style="{StaticResource ReasonText}" Margin="0,0,0,8" />
+                <CheckBox x:Name="CropAll" Content="{loc:T Every page}" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Crop every page}" Click="CropAll_Click" />
+                <Button x:Name="CropReset" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Remove the crop}"
+                        loc:Icon.Glyph="&#xE7A7;" AutomationProperties.Name="{loc:T Remove the crop}" Click="CropReset_Click" />
+            </StackPanel>
+        </Expander>
+
+        <Expander x:Name="ResizeSection" Header="{loc:T Resize}" AutomationProperties.Name="{loc:T Resize}"
+                  Expanded="Section_Expanded" Collapsed="Section_Collapsed">
+            <StackPanel Margin="0,4,0,8">
+                <TextBlock Text="{loc:T Page size}" Style="{StaticResource FieldLabelText}" />
+                <ComboBox x:Name="Paper" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Page size}" SelectionChanged="Paper_SelectionChanged" />
+                <Grid x:Name="CustomSize" Margin="0,0,0,12" Visibility="Collapsed">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{loc:T Width in mm}" Style="{StaticResource FieldLabelText}" />
+                        <TextBox x:Name="CustomWidth" Text="210" TextChanged="Fields_Changed" AutomationProperties.Name="{loc:T Width in mm}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="{loc:T Height in mm}" Style="{StaticResource FieldLabelText}" />
+                        <TextBox x:Name="CustomHeight" Text="297" TextChanged="Fields_Changed" AutomationProperties.Name="{loc:T Height in mm}" />
+                    </StackPanel>
+                </Grid>
+                <CheckBox x:Name="ScaleContent" Content="{loc:T Scale the content}" IsChecked="True" AutomationProperties.Name="{loc:T Scale the content}" />
+                <TextBlock x:Name="ResizeHint" Style="{StaticResource ReasonText}" Margin="0,8,0,0" />
+            </StackPanel>
+        </Expander>
+
+        <Expander x:Name="LabelSection" Header="{loc:T Page labels}" AutomationProperties.Name="{loc:T Page labels}"
+                  Expanded="Section_Expanded" Collapsed="Section_Collapsed">
+            <StackPanel Margin="0,4,0,8">
+                <TextBlock Text="{loc:T Numbering}" Style="{StaticResource FieldLabelText}" />
+                <ComboBox x:Name="LabelStyle" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Numbering}" SelectedIndex="0">
+                    <ComboBoxItem Content="1, 2, 3" />
+                    <ComboBoxItem Content="i, ii, iii" />
+                    <ComboBoxItem Content="I, II, III" />
+                    <ComboBoxItem Content="a, b, c" />
+                    <ComboBoxItem Content="A, B, C" />
+                    <ComboBoxItem Content="{loc:T Prefix only}" />
+                </ComboBox>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{loc:T Prefix}" Style="{StaticResource FieldLabelText}" />
+                        <TextBox x:Name="LabelPrefix" AutomationProperties.Name="{loc:T Prefix}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="{loc:T Start at}" Style="{StaticResource FieldLabelText}" />
+                        <TextBox x:Name="LabelStart" Text="1" TextChanged="Fields_Changed" AutomationProperties.Name="{loc:T Start at}" />
+                    </StackPanel>
+                </Grid>
+                <TextBlock x:Name="LabelHint" Style="{StaticResource ReasonText}" Margin="0,0,0,8" />
+                <Button x:Name="LabelClear" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Remove all labels}"
+                        loc:Icon.Glyph="&#xE74D;" AutomationProperties.Name="{loc:T Remove all labels}" Click="LabelClear_Click" />
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</tools:ToolPanel>
