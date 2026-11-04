@@ -1,0 +1,99 @@
+<UserControl x:Class="LazyPDF.App.HomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:LazyPDF.App"
+             xmlns:loc="clr-namespace:LazyPDF.App">
+    <!-- The Home tab: the jobs people come for as tiles, then the files opened last. Each tile is an icon and a
+         title; what it does is its tooltip, shown on hover and on keyboard focus. The tiles are one Tab stop: the
+         arrow keys move between them and Enter or Space starts one. A tile that cannot be started says why. -->
+    <UserControl.Resources>
+        <DataTemplate x:Key="TileTemplate">
+            <Button x:Name="Tile" Style="{StaticResource TaskTileButtonStyle}" Click="Tile_Click"
+                    IsEnabled="{Binding Available}"
+                    AutomationProperties.Name="{Binding Title}"
+                    AutomationProperties.HelpText="{Binding HelpText}"
+                    ToolTip="{Binding HelpText}">
+                <DockPanel>
+                    <TextBlock x:Name="TileGlyph" DockPanel.Dock="Top" Text="{Binding Glyph}" Style="{StaticResource TaskTileGlyphStyle}" />
+                    <TextBlock x:Name="Reason" DockPanel.Dock="Bottom" Text="{Binding Reason}" Style="{StaticResource ReasonText}"
+                               Visibility="Collapsed" />
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap"
+                               Margin="0,6,0,0" VerticalAlignment="Top" />
+                </DockPanel>
+            </Button>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Available}" Value="False">
+                    <Setter TargetName="Reason" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="TileGlyph" Property="Opacity" Value="0.4" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <DataTemplate x:Key="RecentTemplate">
+            <Button Style="{StaticResource CardButtonStyle}" Width="168" Height="188" Margin="6" Padding="8"
+                    Click="Recent_Click" ToolTip="{Binding Item.Path}"
+                    AutomationProperties.Name="{Binding Item.Name}"
+                    AutomationProperties.HelpText="{Binding Caption}"
+                    FocusVisualStyle="{StaticResource CardFocusVisualStyle}">
+                <Button.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="{loc:T Remove from list}" Click="RemoveRecent_Click"
+                                  AutomationProperties.Name="{loc:T Remove from list}" />
+                    </ContextMenu>
+                </Button.ContextMenu>
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Style="{StaticResource ImageWellStyle}" Height="120">
+                        <Grid>
+                            <TextBlock Text="&#xE8A5;" Style="{StaticResource GlyphText}" FontSize="32" Opacity="0.4"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Image Source="{Binding Thumbnail}" Stretch="Uniform" Margin="4"
+                                   RenderOptions.BitmapScalingMode="HighQuality" />
+                        </Grid>
+                    </Border>
+                    <TextBlock Text="{Binding Item.Name}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis"
+                               Margin="0,8,0,0" DockPanel.Dock="Top" />
+                    <TextBlock Text="{Binding Caption}" Style="{StaticResource CaptionText}" TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </DockPanel>
+            </Button>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <ScrollViewer x:Name="Scroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  Focusable="False" SizeChanged="Scroller_SizeChanged">
+        <StackPanel Margin="0,0,0,24">
+            <TextBlock x:Name="TitleLabel" Text="{loc:T What would you like to do?}" Style="{StaticResource TitleText}"
+                       TextWrapping="Wrap" Margin="16,20,16,8" AutomationProperties.HeadingLevel="Level1" />
+
+            <ItemsControl x:Name="TileGrid" Focusable="False" ItemTemplate="{StaticResource TileTemplate}"
+                          AutomationProperties.Name="{loc:T Jobs}"
+                          KeyboardNavigation.TabNavigation="Once"
+                          KeyboardNavigation.DirectionalNavigation="Contained">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+
+            <DockPanel x:Name="RecentHeader" Margin="16,24,16,4">
+                <Button DockPanel.Dock="Right" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Clear list}"
+                        AutomationProperties.Name="{loc:T Clear the recent files}" Click="ClearRecent_Click" />
+                <TextBlock Text="{loc:T Recent files}" Style="{StaticResource SectionHeaderText}" VerticalAlignment="Center"
+                           AutomationProperties.HeadingLevel="Level2" />
+            </DockPanel>
+
+            <ItemsControl x:Name="RecentGrid" Focusable="False" ItemTemplate="{StaticResource RecentTemplate}"
+                          AutomationProperties.Name="{loc:T Recent files}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+
+            <TextBlock x:Name="NoRecent" Text="{loc:T Files you open show up here.}" Style="{StaticResource SecondaryBodyText}"
+                       Margin="16,8,16,0" Visibility="Collapsed" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
