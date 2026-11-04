@@ -1,0 +1,222 @@
+using System.IO.Compression;
+using System.Text;
+
+namespace LazyPDF.Core;
+
+// Turns colour into gray: the colour operators of every content stream and the pixels of the
+// image XObjects. Shadings, spot colours, Lab and patterns have no gray twin that keeps their
+// look, so they stay and are counted.
+internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int jpegQuality)
+{
+    private enum Space { Gray, Rgb, Cmyk, Other, Pattern, Unknown }
+
+    private sealed class State
+    {
+        public Space Fill, Stroke;
+        public readonly Stack<(Space, Space)> Saved = new();
+    }
+
+    private const long MaxPixels = 32_000_000;
+
+    public int Streams { get; private set; }
+    public int Images { get; private set; }
+    public int Left { get; private set; }
+    public bool NeedsCodec { get; private set; }
+
+    public void Run()
+    {
+        var done = new HashSet<PdfStream>(ReferenceEqualityComparer.Instance);
+        foreach (var page in document.Pages)
+        {
+            var state = new State { Fill = Space.Gray, Stroke = Space.Gray };
+            var contents = document.Resolve(page.Dictionary["Contents"]);
+            foreach (var item in contents is PdfArray list ? list.Items : [contents ?? PdfNull.Instance])
+            {
+                if (document.Resolve(item) is PdfStream stream && done.Add(stream)) Convert(stream, page.Resources, state);
+            }
+        }
+        foreach (var (_, value) in PdfGraph.Objects(document))
+        {
+            if (value is not PdfStream stream || !done.Add(stream)) continue;
+            var dictionary = stream.Dictionary;
+            if (document.Name(dictionary, "Subtype") == "Form" || (document.Integer(dictionary, "PatternType") == 1 && document.Integer(dictionary, "PaintType") != 2))
+            {
+                Convert(stream, document.Dict(dictionary, "Resources"), new State { Fill = Space.Unknown, Stroke = Space.Unknown });
+            }
+            else if (document.Integer(dictionary, "PatternType") == 2) Left++;
+            else if (document.Name(dictionary, "Subtype") == "Image" && document.Bool(dictionary, "ImageMask") != true) GrayImage(stream);
+        }
+    }
+
+    private void Convert(PdfStream stream, PdfDictionary? resources, State state)
+    {
+        byte[] data;
+        IReadOnlyList<ContentOperation> operations;
+        try
+        {
+            data = document.Data(stream);
+            operations = ContentParser.Parse(data);
+        }
+        catch (PdfReadException)
+        {
+            return;
+        }
+        var output = new MemoryStream();
+        int copied = 0;
+        bool changed = false;
+        void Replace(ContentOperation op, string text)
+        {
+            output.Write(data, copied, op.Start - copied);
+            output.Write(Encoding.Latin1.GetBytes(text));
+            copied = op.End;
+            changed = true;
+        }
+
+        foreach (var op in operations)
+        {
+            switch (op.Operator)
+            {
+                case "q":
+                    state.Saved.Push((state.Fill, state.Stroke));
+                    break;
+                case "Q" when state.Saved.Count > 0:
+                    (state.Fill, state.Stroke) = state.Saved.Pop();
+                    break;
+                case "g" or "rg" or "k" or "G" or "RG" or "K":
+                    bool stroke = char.IsUpper(op.Operator[0]);
+                    var plain = Gray(op, op.Operator.ToLowerInvariant() switch { "g" => 1, "rg" => 3, _ => 4 });
+                    if (stroke) state.Stroke = Space.Gray;
+                    else state.Fill = Space.Gray;
+                    if (plain is { } y && op.Operator is not ("g" or "G")) Replace(op, $"{Format(y)} {(stroke ? "G" : "g")}");
+                    break;
+                case "cs" or "CS":
+                    var space = SpaceOf(op, resources);
+                    // The state keeps the colour space the operands are written for, which the colours that follow still need.
+                    if (space is Space.Rgb or Space.Cmyk) Replace(op, $"/DeviceGray {op.Operator}");
+                    if (op.Operator == "cs") state.Fill = space;
+                    else state.Stroke = space;
+                    break;
+                case "sc" or "scn" or "SC" or "SCN":
+                    var current = char.IsUpper(op.Operator[0]) ? state.Stroke : state.Fill;
+                    int count = op.Operands.Count;
+                    bool numbers = op.Operands.All(o => o is PdfNumber);
+                    if (numbers && (current == Space.Rgb || (current == Space.Unknown && count == 3)) && Gray(op, 3) is { } fromRgb) Replace(op, $"{Format(fromRgb)} {op.Operator}");
+                    else if (numbers && (current == Space.Cmyk || (current == Space.Unknown && count == 4)) && Gray(op, 4) is { } fromCmyk) Replace(op, $"{Format(fromCmyk)} {op.Operator}");
+                    break;
+                case "sh":
+                    Left++;
+                    break;
+                case "BI" when op.Image is { } image && !IsGrayInline(image):
+                    Left++;
+                    break;
+            }
+        }
+        if (!changed) return;
+        output.Write(data, copied, data.Length - copied);
+        PdfGraph.SetData(stream, output.ToArray());
+        Streams++;
+    }
+
+    private static bool IsGrayInline(InlineImage image) =>
+        (image.Dictionary["CS"] ?? image.Dictionary["ColorSpace"]) is PdfName { Value: "G" or "DeviceGray" } || image.Dictionary["IM"] is PdfBoolean { Value: true } || image.Dictionary["ImageMask"] is PdfBoolean { Value: true };
+
+    private static string Format(double value) => new PdfNumber(Math.Clamp(value, 0, 1)).Text;
+
+    // Luminance of the last n operands as RGB, or of CMYK taken the way the filters do (1 - c)(1 - k).
+    private static double? Gray(ContentOperation op, int n)
+    {
+        if (op.Operands.Count < n) return null;
+        var v = new double[n];
+        for (int i = 0; i < n; i++)
+        {
+            if (op.Operands[op.Operands.Count - n + i] is not PdfNumber number) return null;
+            v[i] = Math.Clamp(number.Value, 0, 1);
+        }
+        return n switch
+        {
+            1 => v[0],
+            3 => 0.299 * v[0] + 0.587 * v[1] + 0.114 * v[2],
+            _ => (1 - v[3]) * (1 - (0.299 * v[0] + 0.587 * v[1] + 0.114 * v[2])),
+        };
+    }
+
+    private Space SpaceOf(ContentOperation op, PdfDictionary? resources)
+    {
+        if (op.Operands.Count == 0 || op.Operands[0] is not PdfName name) return Space.Unknown;
+        PdfObject? definition = name;
+        if (name.Value is not ("DeviceGray" or "DeviceRGB" or "DeviceCMYK" or "Pattern"))
+        {
+            definition = document.Resolve(document.Dict(resources, "ColorSpace")?[name.Value]);
+            if (definition is null) return Space.Unknown;
+        }
+        if (name.Value == "Pattern" || (definition is PdfArray { Items.Count: > 0 } array && document.Resolve(array.Items[0]) is PdfName { Value: "Pattern" })) return Space.Pattern;
+        var (family, _) = ImageKit.Describe(document, definition);
+        if (family is ImageFamily.Spot or ImageFamily.Lab) Left++;
+        return family switch { ImageFamily.Gray => Space.Gray, ImageFamily.Rgb => Space.Rgb, ImageFamily.Cmyk => Space.Cmyk, _ => Space.Other };
+    }
+
+    private void GrayImage(PdfStream stream)
+    {
+        var dictionary = stream.Dictionary;
+        var (family, _) = ImageKit.Describe(document, dictionary["ColorSpace"]);
+        if (family is ImageFamily.Gray or ImageFamily.Unknown) return;
+        int width = (int)(document.Integer(dictionary, "Width") ?? 0), height = (int)(document.Integer(dictionary, "Height") ?? 0);
+        if (family is ImageFamily.Spot or ImageFamily.Lab || width < 1 || height < 1 || (long)width * height > MaxPixels || document.Resolve(dictionary["Mask"]) is PdfArray)
+        {
+            Left++;
+            return;
+        }
+        var (filter, parameters, _) = document.DecodeSpec(stream);
+        PdfRgbaImage pixels;
+        string? coded;
+        try
+        {
+            var decoded = PdfFilters.DecodeToCodec(document.RawData(stream), filter, parameters);
+            coded = decoded.Codec;
+            if (coded is null)
+            {
+                var plain = dictionary.Copy();
+                plain.Remove("SMask");
+                plain.Remove("Mask");
+                pixels = PdfImageSamples.ToRgba(plain, decoded.Data, document.Resolve, s => document.Data(s));
+            }
+            else if (coded is "DCTDecode" or "JPXDecode" && !dictionary.ContainsKey("Decode") && codec is not null && codec.Decode(decoded.Data, coded) is { } image)
+            {
+                pixels = image;
+            }
+            else
+            {
+                if (coded is "DCTDecode" or "JPXDecode" && codec is null) NeedsCodec = true;
+                Left++;
+                return;
+            }
+        }
+        catch (PdfReadException)
+        {
+            Left++;
+            return;
+        }
+        var gray = new byte[pixels.Width * pixels.Height];
+        for (int i = 0; i < gray.Length; i++) gray[i] = ImageKit.Luminance(pixels.Rgba[4 * i], pixels.Rgba[4 * i + 1], pixels.Rgba[4 * i + 2]);
+        if (coded is null)
+        {
+            stream.Data = PdfFilterEncoders.Flate(gray, CompressionLevel.SmallestSize);
+            dictionary["Filter"] = new PdfName("FlateDecode");
+            dictionary["ColorSpace"] = new PdfName("DeviceGray");
+        }
+        else
+        {
+            var rgba = new byte[gray.Length * 4];
+            for (int i = 0; i < gray.Length; i++) (rgba[4 * i], rgba[4 * i + 1], rgba[4 * i + 2], rgba[4 * i + 3]) = (gray[i], gray[i], gray[i], 255);
+            stream.Data = codec!.EncodeJpeg(new PdfRgbaImage(pixels.Width, pixels.Height, rgba), Math.Clamp(jpegQuality, 1, 100));
+            dictionary["Filter"] = new PdfName("DCTDecode");
+            dictionary["ColorSpace"] = new PdfName("DeviceRGB");
+            dictionary["Width"] = new PdfNumber(pixels.Width);
+            dictionary["Height"] = new PdfNumber(pixels.Height);
+        }
+        dictionary["BitsPerComponent"] = new PdfNumber(8);
+        dictionary.Remove("DecodeParms");
+        dictionary.Remove("Decode");
+        Images++;
+    }
+}
