@@ -1,0 +1,12 @@
+.build/
+.swiftpm/
+dist/
+*.xcodeproj
+.DS_Store
+
+# Windows / .NET
+windows/**/bin/
+windows/**/obj/
+windows/.vs/
+
+__pycache__/
