@@ -67,4 +67,47 @@ public class FormStateTests
         Assert.All(EditKit.Of(shown, "Hello"), g => Assert.Equal(20, g.Size));
         Assert.All(EditKit.Of(shown, "World"), g => Assert.Equal(12, g.Size));
     }
+
+    [Fact]
+    public void AParagraphLineInAFontThatCannotBeRestoredInTheFormIsRefused()
+    {
+        var session = Open("BT /F1 12 Tf ET /Fm0 Do",
+            "BT 50 686 Td (second line) Tj 0 -300 Td (far text) Tj ET BT /F9 12 Tf 50 700 Td (first line) Tj ET", "/Font <</F9 6 0 R>>");
+        string before = FormData(session);
+        var editor = new PageEditor(session, 0);
+        var block = editor.Objects.OfType<TextObject>().Single(o => o.Lines.Count == 2);
+        var result = editor.ReplaceParagraph(block, "alpha\nbeta");
+        Assert.False(result.Done);
+        Assert.Equal(EditingText.FontSetOutside, result.Problem);
+        Assert.Equal(before, FormData(session));
+    }
+
+    [Fact]
+    public void ATransparencyGroupDoesNotInheritTheGraphicsStateOfTheCaller()
+    {
+        var session = EditKit.Session("/GS0 gs /Fm0 Do",
+            more: pdf =>
+            {
+                pdf.Obj(8, "<</Type /ExtGState /ca 0.5>>");
+                pdf.Stream(7, "/Type /XObject /Subtype /Form /BBox [0 0 600 800] /Group <</S /Transparency>> /Resources <</Font <</F1 5 0 R>> /ExtGState <</GS0 8 0 R>>>>",
+                    "BT /F1 12 Tf 50 700 Td (one) Tj ET");
+            },
+            resources: "/Font <</F1 5 0 R>> /XObject <</Fm0 7 0 R>> /ExtGState <</GS0 8 0 R>>");
+        var editor = new PageEditor(session, 0);
+        var result = editor.ReplaceParagraph(editor.Objects.OfType<TextObject>().Single(), "one\ntwo");
+        Assert.True(result.Done, result.Problem);
+        Assert.DoesNotContain("gs", FormData(session));
+    }
+
+    [Fact]
+    public void ThePaintingOfAFormThatSetsTheModeIsTheOneOrderLooksAt()
+    {
+        const string Form = "q 1 0 0 rg 0 0 50 50 re f Q BT /F1 12 Tf (x) Tj ET q 0 0 1 rg 100 0 50 50 re f Q";
+        var session = Open("/Fm0 Do 7 Tr /Fm0 Do", Form, "/Font <</F1 5 0 R>>");
+        var editor = new PageEditor(session, 0);
+        var blue = editor.Objects.OfType<PathObject>().Last();
+        var result = editor.Order(blue, OrderMove.Backward);
+        Assert.False(result.Done);
+        Assert.Equal(EditingText.StateBetween, Assert.Single(result.Skipped).Reason);
+    }
 }

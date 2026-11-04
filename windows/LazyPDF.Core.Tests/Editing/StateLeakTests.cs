@@ -7,14 +7,14 @@ namespace LazyPDF.Core.Tests;
 // Edits put operators round text and objects; none of them may change what the content around them draws.
 public class StateLeakTests
 {
-    private sealed record Shown(string Text, double X, double Y, RgbColor Color, double Tc, double Tw, int Mode, double Size);
+    private sealed record Shown(string Text, double X, double Y, RgbColor Color, double Tc, double Tw, int Mode, double Size, RgbColor Stroke, double Alpha);
 
     private sealed class Probe(List<Shown> found) : ContentVisitor
     {
         public override void ShowGlyph(ContentContext context, in GlyphInfo glyph)
         {
             var s = context.State;
-            found.Add(new Shown(glyph.Unicode ?? "", Math.Round(glyph.Matrix.E, 2), Math.Round(glyph.Matrix.F, 2), s.FillColor.Rgb, s.CharSpacing, s.WordSpacing, s.RenderMode, Math.Round(glyph.Matrix.D, 2)));
+            found.Add(new Shown(glyph.Unicode ?? "", Math.Round(glyph.Matrix.E, 2), Math.Round(glyph.Matrix.F, 2), s.FillColor.Rgb, s.CharSpacing, s.WordSpacing, s.RenderMode, Math.Round(glyph.Matrix.D, 2), s.StrokeColor.Rgb, s.FillAlpha));
         }
     }
 
@@ -177,6 +177,38 @@ public class StateLeakTests
         {
             Assert.Equal(0, g.Tc);
             Assert.Equal(0, g.Tw);
+        });
+    }
+
+    [Fact]
+    public void TextRestyledAcrossARenderModeChangeKeepsItsStrokeInTheNewColour()
+    {
+        var session = EditKit.Session("BT /F1 12 Tf 50 700 Td (abc) Tj 1 Tr (def) Tj ET");
+        var editor = new PageEditor(session, 0);
+        var result = editor.SetTextStyle([EditKit.Find(session, "abcdef")], new TextStyleChange(Color: Red));
+        Assert.True(result.Done, result.Problem);
+        var shown = Read(session);
+        Assert.All(Of(shown, "abc"), g => Assert.Equal(Red, g.Color));
+        Assert.All(Of(shown, "def"), g =>
+        {
+            Assert.Equal(Red, g.Color);
+            Assert.Equal(Red, g.Stroke);
+        });
+    }
+
+    [Fact]
+    public void AddedContentAfterAStrayRestoreDoesNotInheritWhatThePageLeftSet()
+    {
+        var session = EditKit.Session("Q /GS0 gs BT 3 Tr 5 Tc 2 Tw /F1 12 Tf 50 700 Td (ocr) Tj ET",
+            resources: "/Font <</F1 5 0 R>> /ExtGState <</GS0 <</ca 0.5>>>>");
+        var editor = new PageEditor(session, 0, new EditArialSource());
+        Assert.True(editor.AddTextBox(new PdfRect(100, 300, 300, 400), "new").Done);
+        Assert.All(Of(Read(session), "new"), g =>
+        {
+            Assert.Equal(0, g.Mode);
+            Assert.Equal(0, g.Tc);
+            Assert.Equal(0, g.Tw);
+            Assert.Equal(1, g.Alpha);
         });
     }
 }

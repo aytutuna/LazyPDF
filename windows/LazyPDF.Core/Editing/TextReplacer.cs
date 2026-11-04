@@ -14,7 +14,7 @@ public sealed record ReplaceReport(int Replaced, IReadOnlyList<ReplaceFailure> F
 /// <summary>Find and replace through a whole document, committed as one step.</summary>
 public static class TextReplacer
 {
-    private static readonly Regex GroupReference = new(@"\$(?:(\$)|(&)|([`'+])|(\d+)|\{(\w+)\})", RegexOptions.CultureInvariant);
+    private static readonly Regex GroupReference = new(@"\$(?:(\$)|(&)|([`'+_])|(\d+)|\{(\w+)\})", RegexOptions.CultureInvariant);
 
     /// <summary>
     /// Replaces every match of <paramref name="query"/> (searched as <see cref="TextSearch"/> does,
@@ -119,10 +119,19 @@ public static class TextReplacer
     private static TextRange RangeOf(SearchText searched, int index, int length) =>
         new(searched.Map[index], searched.Map[index + length - 1] + 1);
 
-    // The tokens .NET expands from the searched text ($&, $+, $`, $') are taken from the page as well; $$ is left for Result.
+    // The tokens .NET expands from the searched text ($&, $+, $`, $', $_) are taken from the page as well; $$ is left for Result.
     private static string Expand(TextPage text, SearchText searched, Regex regex, Match m, string replacement)
     {
-        string Page(int index, int length) => length == 0 ? "" : text.GetText(RangeOf(searched, index, length), true).Replace("$", "$$");
+        // The page text of a range loses the white space at its ends, which a group or the text around a match may be made of.
+        string Page(int index, int length)
+        {
+            if (length == 0) return "";
+            string seen = searched.Text.Substring(index, length);
+            string core = text.GetText(RangeOf(searched, index, length), true);
+            string lead = seen[..(seen.Length - seen.TrimStart().Length)];
+            string trail = lead.Length == seen.Length ? "" : seen[seen.TrimEnd().Length..];
+            return (lead + core + trail).Replace("$", "$$");
+        }
         string withPage = GroupReference.Replace(replacement, token =>
         {
             if (token.Groups[1].Success) return token.Value;
@@ -131,8 +140,11 @@ public static class TextReplacer
             {
                 case "`": return Page(0, m.Index);
                 case "'": return Page(m.Index + m.Length, searched.Text.Length - m.Index - m.Length);
+                case "_": return Page(0, searched.Text.Length);
                 case "+": name = regex.GetGroupNumbers().Max().ToString(); break;
             }
+            // Result reads $01 as group 1 whatever the groups are named.
+            if (name.All(char.IsAsciiDigit)) name = int.TryParse(name, out int number) ? number.ToString() : name;
             if (regex.GroupNumberFromName(name) < 0) return token.Value;
             var group = m.Groups[name];
             return Page(group.Index, group.Length);

@@ -30,8 +30,9 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     }
 
     // Text after a cut keeps its place, by a move forward of the width cut, except in the run the new text goes into
-    // (the run of flow), where it follows the new text. A twin that got no new text is not in the flow: what follows it moves.
-    private void CutAll(IReadOnlyList<EditGlyph> glyphs, EditGlyph? flow, IReadOnlyList<EditGlyph>? unplaced = null)
+    // (the run of flow), where it follows the new text. A twin that got no new text is not in the flow: what follows it
+    // moves by what the visible text moved, `growth` along the line, so that the two stay together.
+    private void CutAll(IReadOnlyList<EditGlyph> glyphs, EditGlyph? flow, IReadOnlyList<EditGlyph>? unplaced = null, double growth = 0)
     {
         var all = glyphs.SelectMany(g => g.Twins.Prepend(g)).ToList();
         foreach (var g in all) PatchOf(g).Cut(g.Element, g.Offset, g.Offset + g.Length);
@@ -39,7 +40,8 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
         foreach (var group in Runs([.. all.Where(g => !flows.Any(f => SameRun(f, g)))]))
         {
             var first = group[0];
-            double amount = -group.Sum(g => g.Advance) * 1000 / (first.FontSize * first.Scale);
+            double moved = group.Sum(g => g.Advance) + (unplaced is not null && group.Any(unplaced.Contains) ? growth / first.UnitX : 0);
+            double amount = -moved * 1000 / (first.FontSize * first.Scale);
             if (double.IsFinite(amount) && Math.Abs(amount) > 1e-6) PatchOf(first).Insert(first.Element, first.Offset, [new ShowShift(amount)]);
         }
     }
@@ -64,7 +66,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
         double shift = AlignmentShift(range, glyphs, newWidth);
         PutText(glyphs[0], false, pieces, wrap, shift);
         var unplaced = PutTwins(glyphs[0], anchor, pieces, text, style, wrap, shift);
-        CutAll(glyphs, glyphs[0], unplaced);
+        CutAll(glyphs, glyphs[0], unplaced, shift + newWidth - Extent(glyphs));
         CheckRoom(range, glyphs, newWidth);
     }
 
@@ -89,8 +91,9 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
             var pieces = builder.Build(PlaceOf(group[0]), anchor, part);
             PutText(group[0], false, pieces, default, 0);
             var unplaced = PutTwins(group[0], anchor, pieces, part, null, default, 0);
-            CutAll(group, group[0], unplaced);
-            width += pieces.Sum(p => p.Advance) * anchor.UnitX;
+            double groupWidth = pieces.Sum(p => p.Advance) * anchor.UnitX;
+            CutAll(group, group[0], unplaced, groupWidth - Extent(group));
+            width += groupWidth;
         }
         CheckRoom(range, glyphs, width);
     }
@@ -265,7 +268,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
             return;
         }
         var changed = (change.Size is null ? StateParts.None : StateParts.Font) | (change.CharSpacing is null ? StateParts.None : StateParts.CharSpacing) |
-            (change.Color is null ? StateParts.None : StateParts.Fill | StateParts.Stroke);
+            (change.Color is null ? StateParts.None : StateParts.Fill | StateParts.Stroke | StateParts.Mode);
         foreach (var run in StreamRuns(glyphs.SelectMany(g => g.Twins.Prepend(g)), changed))
         {
             var (a, b) = (run[0], run[^1]);

@@ -148,10 +148,13 @@ internal sealed class EditScan : ContentVisitor
         }
         unit.Visits++;
         var parent = Visit;
-        var inherited = (parent?.States ?? PageUnit.States).At(context.OperatorIndex).ForForm(op => SameResource(op, parent, form.Stream));
+        var inherited = (parent?.States ?? PageUnit.States).At(context.OperatorIndex).ForForm(op => SameResource(op, parent, form.Stream), IsTransparencyGroup(form.Stream));
         if (unit.Visits == 1) unit.Inherited = inherited;
         _visits.Add(new FormVisit(form.Stream, parent, Current, context.OperatorIndex, form.Name, unit, inherited));
     }
+
+    private bool IsTransparencyGroup(PdfStream form) =>
+        _document.Dict(form.Dictionary, "Group") is { } group && _document.Resolve(group["S"]) is PdfName { Value: "Transparency" };
 
     // A name in an operator inherited from the caller means what the form's own resources say it means (7.8.3), so
     // it can be replayed in the form only where they give the same object.

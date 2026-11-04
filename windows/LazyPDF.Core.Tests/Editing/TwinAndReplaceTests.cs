@@ -218,7 +218,7 @@ public class TwinAndReplaceTests
     {
         var session = EditKit.Session("BT /F1 12 Tf 50 700 Td (Ab Cd!) Tj ET");
         TextReplacer.ReplaceAll(session, @"(c)d", "<$`|$'|$+>", new TextSearchOptions(Regex: true));
-        Assert.Equal("Ab <Ab|!|C>!", Page(session));
+        Assert.Equal("Ab <Ab |!|C>!", Page(session));
     }
 
     [Fact]
@@ -230,5 +230,52 @@ public class TwinAndReplaceTests
         session = EditKit.Session("BT /F1 12 Tf 50 700 Td (cost 42 now) Tj ET");
         TextReplacer.ReplaceAll(session, @"\d+", "$$0.99", new TextSearchOptions(Regex: true));
         Assert.Equal("cost $0.99 now", Page(session));
+    }
+
+    [Fact]
+    public void TheSpacesAtTheEdgesOfAGroupAreKept()
+    {
+        var session = EditKit.Session("BT /F1 12 Tf 50 700 Td (cost 42 USD now) Tj ET");
+        var report = TextReplacer.ReplaceAll(session, @"(\d+)( USD)", "$1$2!", new TextSearchOptions(Regex: true));
+        Assert.Equal(1, report.Replaced);
+        Assert.Equal("cost 42 USD! now", Page(session));
+        session = EditKit.Session("BT /F1 12 Tf 50 700 Td (Hello World) Tj ET");
+        TextReplacer.ReplaceAll(session, @"(\w+)( )(\w+)", "$3$2$1", new TextSearchOptions(Regex: true));
+        Assert.Equal("World Hello", Page(session));
+    }
+
+    [Fact]
+    public void TheWholeInputOfARegexIsThePageToo()
+    {
+        var session = EditKit.Session("BT /F1 12 Tf 50 700 Td (Hello World) Tj ET");
+        TextReplacer.ReplaceAll(session, @"H\w+", "[$_]", new TextSearchOptions(Regex: true));
+        Assert.Equal("[Hello World] World", Page(session));
+    }
+
+    [Fact]
+    public void AGroupWrittenWithALeadingZeroIsTheGroupOfThePageEvenWithNamedGroups()
+    {
+        var session = EditKit.Session("BT /F1 12 Tf 50 700 Td (HELLO) Tj ET");
+        var report = TextReplacer.ReplaceAll(session, @"(?<y>h)(\w+)", "$01", new TextSearchOptions(Regex: true));
+        Assert.Equal(1, report.Replaced);
+        Assert.Equal("ELLO", Page(session));
+    }
+
+    [Fact]
+    public void TheTailOfAHiddenCopyFollowsTheNewTextWhenItIsWiderThanTheOldOne()
+    {
+        string cut = $"<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /FirstChar 32 /LastChar 68 /Widths [278 {string.Join(" ", Enumerable.Repeat(600, 32))} 667 667 722 722] /Encoding /WinAnsiEncoding>>";
+        var session = EditKit.Session("BT /F1 12 Tf 50 700 Td (AB CD) Tj ET BT /F3 12 Tf 3 Tr 50 700 Td (AB CD) Tj ET",
+            more: pdf => pdf.Obj(7, cut), resources: "/Font <</F1 5 0 R /F3 7 0 R>>");
+        double Gap(List<(string Text, int Mode, double X)> shown, string letter) =>
+            shown.Single(g => g.Mode == 3 && g.Text == letter).X - shown.Single(g => g.Mode == 0 && g.Text == letter).X;
+        Assert.Equal(0, Gap(Read(session), "C"), 2);
+        string text = Page(session);
+        var result = new PageEditor(session, 0).ReplaceText(EditKit.Find(session, "AB"), "WWWW");
+        Assert.True(result.Done, result.Problem);
+        var after = Read(session);
+        Assert.Equal(0, Gap(after, "C"), 2);
+        Assert.Equal(0, Gap(after, "D"), 2);
+        Assert.Equal(text.Replace("AB", "WWWW"), Page(session));
     }
 }

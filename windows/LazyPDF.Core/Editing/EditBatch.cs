@@ -319,7 +319,7 @@ internal sealed class EditBatch(PdfDocument document, PdfPage page, EditScan sca
         if (_appended.Count > 0)
         {
             var all = new MemoryStream();
-            all.Write(Prefix());
+            all.Write(Prefix(edit));
             foreach (var bytes in _appended) all.Write(bytes);
             list.Add(document.Add(NewStream(null, all.ToArray())));
         }
@@ -334,14 +334,33 @@ internal sealed class EditBatch(PdfDocument document, PdfPage page, EditScan sca
     // level of the page's own, where Order can pass it.
     private bool Wraps => scan.PageUnit.States is { Stray: false, SetsTopLevel: true };
 
-    private byte[] Prefix()
+    private byte[] Prefix(UnitEdit edit)
     {
         var states = scan.PageUnit.States;
         var w = new ContentWriter();
         if (states.End.InText) w.Op("ET");
         for (int i = Wraps ? 0 : 1; i <= states.End.Depth; i++) w.Restore();
         if (!Wraps && states.BaseCtm.Invert() is { } inverse && states.BaseCtm != PdfMatrix.Identity) w.Concat(inverse);
+        if (states.Stray && states.SetsTopLevel) Reset(w, edit, states.End);
         return w.ToArray();
+    }
+
+    // With a stray Q there is no q of ours to close, so the state the page left is put back to its initial values
+    // (Tables 52, 53 and 57). A clip it left cannot be undone.
+    private void Reset(ContentWriter w, UnitEdit edit, OpState end)
+    {
+        w.TextRenderMode(0).CharSpacing(0).WordSpacing(0).Op("Tz", 100).Op("Ts", 0).Raw("[] 0 d");
+        w.LineWidth(1).Op("J", 0).Op("j", 0).Op("M", 10);
+        if (end.States.Count == 0) return;
+        var initial = new PdfDictionary();
+        initial["Type"] = new PdfName("ExtGState");
+        initial["CA"] = new PdfNumber(1L);
+        initial["ca"] = new PdfNumber(1L);
+        initial["BM"] = new PdfName("Normal");
+        initial["SMask"] = new PdfName("None");
+        string name = NewName();
+        edit.Resources.Add(new Resource("ExtGState", name, () => initial));
+        w.GraphicsState(name);
     }
 
     private sealed record Part(int Item, PdfStream Stream, int Start, int End);

@@ -35,19 +35,25 @@ internal sealed class OpState
     public int Depth;
     public bool InText;
 
-    /// <summary>Colours the caller set that the form cannot name, so that no operator of the form can bring them back.</summary>
+    /// <summary>A font or colours the caller set that the form cannot name, so that no operator of the form can bring them back.</summary>
     public StateParts Lost;
 
     /// <summary>
     /// What a form starts with when it is painted from this state: everything but the stack, the text object and the matrix.
     /// An operator that names a resource is kept only where <paramref name="resolves"/> says the form finds the same one.
+    /// A transparency group starts with full opacity, the Normal blend mode and no soft mask whatever the caller set (11.6.6),
+    /// and the caller's graphics state already applies to the group as a whole, so none of it is inherited.
     /// </summary>
-    public OpState ForForm(Func<ContentOperation, bool> resolves) => With(s =>
+    public OpState ForForm(Func<ContentOperation, bool> resolves, bool transparencyGroup) => With(s =>
     {
         s.Depth = 0;
         s.InText = false;
         s.Ctm = PdfMatrix.Identity;
-        if (s.Font is { } font && !resolves(font)) s.Font = null;
+        if (s.Font is { } font && !resolves(font))
+        {
+            s.Font = null;
+            s.Lost |= StateParts.Font;
+        }
         if (!s.Fill.All(resolves))
         {
             s.Fill = None;
@@ -58,7 +64,7 @@ internal sealed class OpState
             s.Stroke = None;
             s.Lost |= StateParts.Stroke;
         }
-        s.States = [.. s.States.Where(resolves)];
+        s.States = transparencyGroup ? None : [.. s.States.Where(resolves)];
     });
 
     public OpState With(Action<OpState> change)
@@ -71,7 +77,7 @@ internal sealed class OpState
     /// <summary>Writes the operators that bring a state back to this one for the chosen parts; a part never set is written as its default.</summary>
     public void Replay(ContentWriter w, StateParts parts)
     {
-        if ((parts & Lost) != 0) throw new EditConflictException(EditingText.ColorOutside);
+        if ((parts & Lost) != 0) throw new EditConflictException((parts & Lost & StateParts.Font) != 0 ? EditingText.FontSetOutside : EditingText.ColorOutside);
         if (parts.HasFlag(StateParts.Font) && Font is not null) w.Add(Font);
         Put(w, parts, StateParts.CharSpacing, CharSpacing, "Tc", 0);
         Put(w, parts, StateParts.WordSpacing, WordSpacing, "Tw", 0);
@@ -169,7 +175,7 @@ internal sealed class OpStates
                     break;
                 case "BT": current = current.With(s => s.InText = true); break;
                 case "ET": current = current.With(s => s.InText = false); break;
-                case "Tf": current = current.With(s => s.Font = op); break;
+                case "Tf": current = current.With(s => (s.Font, s.Lost) = (op, s.Lost & ~StateParts.Font)); break;
                 case "Tc": current = current.With(s => s.CharSpacing = op); break;
                 case "Tw": current = current.With(s => s.WordSpacing = op); break;
                 case "\"" when op.Operands.Count >= 3:
