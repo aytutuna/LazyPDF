@@ -22,6 +22,8 @@ public sealed partial class ContentInterpreter(PdfDocument document)
     private static readonly PdfRect Unbounded = new(-1e9, -1e9, 1e9, 1e9);
 
     private readonly PdfDocument _doc = document;
+
+    internal PdfDocument Document => _doc;
     private readonly Dictionary<PdfStream, IReadOnlyList<ContentOperation>> _formOperations = [];
     private readonly Dictionary<PdfObject, ColorSpaceInfo> _colorSpaces = [];
     private readonly List<PdfStream> _forms = [];

@@ -60,6 +60,10 @@ public sealed partial class TextPage
             interpreter.WalkPatterns = false;
             interpreter.Run(page, collector);
             truncated = interpreter.IsTruncated;
+            if (options.IncludeAnnotations)
+            {
+                foreach (var (form, matrix) in PageAppearances.Of(interpreter.Document, page, shownOnly: true)) interpreter.Run(form, collector, matrix);
+            }
         }
         catch (PdfReadException)
         {

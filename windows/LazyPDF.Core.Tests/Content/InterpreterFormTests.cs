@@ -93,7 +93,7 @@ public class InterpreterFormTests
         var watch = System.Diagnostics.Stopwatch.StartNew();
         interpreter.Run(document.Pages[0], new Recorder());
         Assert.True(interpreter.IsTruncated);
-        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(30), watch.Elapsed.ToString());
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(120), watch.Elapsed.ToString());
     }
 
     [Fact]

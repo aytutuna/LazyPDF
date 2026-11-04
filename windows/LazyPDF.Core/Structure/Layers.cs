@@ -135,3 +135,43 @@ public static class PdfLayers
         }
     }
 }
+
+/// <summary>Which optional content is off in the default view: the groups that are, and the membership dictionaries (8.11.2.2) that follow from them.</summary>
+internal sealed class LayerVisibility
+{
+    private readonly PdfDocument _document;
+    private readonly HashSet<PdfDictionary> _off = new(ReferenceEqualityComparer.Instance);
+
+    public LayerVisibility(PdfDocument document)
+    {
+        _document = document;
+        foreach (var layer in PdfLayers.Read(document).Layers.Where(l => !l.IsOn))
+        {
+            if (document.Get(layer.Reference.Number) is PdfDictionary group) _off.Add(group);
+        }
+    }
+
+    public bool AnyOff => _off.Count > 0;
+
+    // /VE expressions are not evaluated and count as visible.
+    public bool IsHidden(PdfDictionary group)
+    {
+        if (_off.Contains(group)) return true;
+        if (_document.Name(group, "Type") != "OCMD" || group.ContainsKey("VE")) return false;
+        var members = _document.Resolve(group["OCGs"]) switch
+        {
+            PdfDictionary single => [single],
+            PdfArray array => array.Items.Select(i => _document.Resolve(i) as PdfDictionary).OfType<PdfDictionary>().ToList(),
+            _ => new List<PdfDictionary>(),
+        };
+        if (members.Count == 0) return false;
+        int off = members.Count(_off.Contains);
+        return (_document.Name(group, "P") ?? "AnyOn") switch
+        {
+            "AllOn" => off > 0,
+            "AnyOff" => off == 0,
+            "AllOff" => off < members.Count,
+            _ => off == members.Count,
+        };
+    }
+}

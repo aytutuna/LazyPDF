@@ -88,7 +88,8 @@ public sealed record TextBlock(int Index, TextRange Lines, PdfRect Bounds, bool 
 /// <summary>What the text of a page is built from.</summary>
 /// <param name="IncludeArtifacts">Keep text marked /Artifact (headers, footers, page numbers).</param>
 /// <param name="RemoveDuplicates">Drop a glyph drawn again at nearly the same place, how bold is faked.</param>
-public sealed record TextPageOptions(bool IncludeArtifacts = true, bool RemoveDuplicates = true);
+/// <param name="IncludeAnnotations">Add the text of the appearances of annotations and form fields that are shown, placed on the page. Those characters have <see cref="TextChar.Form"/> set to the appearance stream, which the page's own content does not reach.</param>
+public sealed record TextPageOptions(bool IncludeArtifacts = true, bool RemoveDuplicates = true, bool IncludeAnnotations = false);
 
 /// <summary>The nearest character to a point, with the word and line it is in.</summary>
 public readonly record struct TextHit(int Char, int Word, int Line, double Distance);

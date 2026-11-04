@@ -34,6 +34,8 @@ internal sealed class TextCollector(TextPageOptions options) : ContentVisitor
     private const int MaxCellScan = 64;
 
     private readonly List<(MarkedContent Marked, int Start, string Text)> _spans = [];
+    private readonly HashSet<object> _hiddenScopes = new(ReferenceEqualityComparer.Instance);
+    private LayerVisibility? _layers;
 
     public List<FlowGlyph> Glyphs { get; } = [];
 
@@ -43,7 +45,7 @@ internal sealed class TextCollector(TextPageOptions options) : ContentVisitor
     public override void ShowGlyph(ContentContext context, in GlyphInfo info)
     {
         var state = context.State;
-        if (state.RenderMode == 7) return;
+        if (state.RenderMode == 7 || _hiddenScopes.Count > 0) return;
         if (Glyphs.Count >= MaxGlyphs)
         {
             IsFull = true;
@@ -111,8 +113,19 @@ internal sealed class TextCollector(TextPageOptions options) : ContentVisitor
         });
     }
 
+    // Content in a group that is off is not on the page, so it is not its text.
+    private bool Hidden(ContentContext context, PdfDictionary group) => (_layers ??= new LayerVisibility(context.Document)).IsHidden(group);
+
+    public override void BeginForm(ContentContext context, FormInfo form)
+    {
+        if (!form.IsPattern && form.OptionalContent is { } group && Hidden(context, group)) _hiddenScopes.Add(form);
+    }
+
+    public override void EndForm(ContentContext context, FormInfo form) => _hiddenScopes.Remove(form);
+
     public override void BeginMarked(ContentContext context, MarkedContent marked)
     {
+        if (marked.OptionalContent is { } group && Hidden(context, group)) _hiddenScopes.Add(marked);
         if (_spans.Count > 0 || marked.Properties is null) return;
         if (context.Document.Resolve(marked.Properties["ActualText"]) is PdfString s)
         {
@@ -122,6 +135,7 @@ internal sealed class TextCollector(TextPageOptions options) : ContentVisitor
 
     public override void EndMarked(ContentContext context, MarkedContent marked)
     {
+        _hiddenScopes.Remove(marked);
         if (_spans.Count == 0 || !ReferenceEquals(_spans[0].Marked, marked)) return;
         var (_, start, text) = _spans[0];
         _spans.Clear();
