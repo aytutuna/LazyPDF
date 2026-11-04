@@ -1,0 +1,125 @@
+using LazyPDF.App.Documents;
+using Xunit;
+
+namespace LazyPDF.App.Tests;
+
+// The Home tab's tiles: the jobs people come for, each with its reason when it cannot start.
+public sealed class HomeTilesTests
+{
+    private static readonly string[] Ids = ["open", "combine", "compress", "protect", "sign", "form", "edit", "scan", "export"];
+
+    [Fact]
+    public void TheTilesAreTheNineJobsInOrder()
+    {
+        using var f = new ViewModelFixture();
+
+        Assert.Equal(Ids, f.Vm.Tiles.Select(t => t.Id));
+        Assert.Equal(["Open", "Combine", "Compress", "Protect", "Sign", "Fill a form", "Edit", "Scan", "Export"], f.Vm.Tiles.Select(t => t.Title));
+    }
+
+    [Fact]
+    public void WithNoFileOnlyOpenIsAvailableAndTheOthersSayWhy()
+    {
+        using var f = new ViewModelFixture();
+
+        foreach (var tile in f.Vm.Tiles.Where(t => t.Id is not ("open" or "scan")))
+        {
+            Assert.False(tile.Available);
+            Assert.Equal("Open a file first", tile.Reason);
+        }
+        Assert.True(f.Vm.Tiles[0].Available);
+        Assert.Null(f.Vm.Tiles[0].Reason);
+    }
+
+    [Fact]
+    public void ATileThatCannotStartTellsScreenReadersWhy()
+    {
+        using var f = new ViewModelFixture();
+
+        Assert.Equal("Put pages of other files into this one, or split it. Not available: Open a file first", f.Vm.Tiles.Single(t => t.Id == "combine").HelpText);
+        Assert.Equal("Open a PDF, a picture or a text file.", f.Vm.Tiles[0].HelpText);
+    }
+
+    [Fact]
+    public void ScanNeedsLazyScan()
+    {
+        using var f = new ViewModelFixture();
+        var scan = f.Vm.Tiles.Single(t => t.Id == "scan");
+
+        Assert.False(scan.Available);
+        Assert.Equal("Needs Lazy Scan", scan.Reason);
+
+        f.Sisters.LazyScanInstalled = true;
+        scan = f.Vm.Tiles.Single(t => t.Id == "scan");
+        Assert.True(scan.Available);
+        Assert.Null(scan.Reason);
+    }
+
+    [Fact]
+    public async Task OnceAFileIsOpenTheToolTilesAreAvailable()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf());
+        f.Vm.ActiveTab = HomeTab.Instance;
+
+        Assert.All(f.Vm.Tiles.Where(t => t.Id != "scan"), t =>
+        {
+            Assert.True(t.Available);
+            Assert.Null(t.Reason);
+        });
+    }
+
+    [Theory]
+    [InlineData("combine", "combine")]
+    [InlineData("compress", "optimize")]
+    [InlineData("protect", "protect")]
+    [InlineData("sign", "fillsign")]
+    [InlineData("form", "fillsign")]
+    [InlineData("edit", "editcontent")]
+    [InlineData("export", "export")]
+    public async Task ATileOpensItsToolOnTheDocumentLastInUse(string tile, string tool)
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenFilesAsync([f.Pdf("a.pdf"), f.Pdf("b.pdf")]);
+        f.Vm.ActiveTab = HomeTab.Instance;
+
+        f.Vm.StartTile(tile);
+
+        Assert.Equal(tool, f.Vm.ActiveToolId);
+        Assert.Equal("b.pdf", f.Vm.ActiveDocument?.Title);
+    }
+
+    [Fact]
+    public void ATileThatCannotStartDoesNothing()
+    {
+        using var f = new ViewModelFixture();
+
+        f.Vm.StartTile("combine");
+
+        Assert.Null(f.Vm.ActiveToolId);
+        Assert.True(f.Vm.IsHome);
+    }
+
+    [Fact]
+    public void ScanStartsLazyScanOnlyWhenItIsThere()
+    {
+        using var f = new ViewModelFixture();
+
+        f.Vm.StartTile("scan");
+        Assert.Equal(0, f.Sisters.ScanOpened);
+
+        f.Sisters.LazyScanInstalled = true;
+        f.Vm.StartTile("scan");
+        Assert.Equal(1, f.Sisters.ScanOpened);
+    }
+
+    [Fact]
+    public async Task AfterTheLastDocumentClosesTheTilesWaitForAFileAgain()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf());
+        f.Vm.Close(f.Vm.ActiveDocument!);
+
+        Assert.False(f.Vm.Tiles.Single(t => t.Id == "combine").Available);
+    }
+}
