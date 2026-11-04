@@ -117,22 +117,22 @@ public sealed partial class StructureTree
         var used = new HashSet<long>();
         foreach (var (owner, name, _, _) in work)
         {
-            if (document.Integer(owner, name) is { } existingKey and >= 0) used.Add(existingKey);
+            if (KeyOf(document, owner, name) is { } existingKey) used.Add(existingKey);
         }
         foreach (var page in pages)
         {
-            if (document.Integer(page.Dictionary, "StructParents") is { } pageKey and >= 0) used.Add(pageKey);
+            if (KeyOf(document, page.Dictionary, "StructParents") is { } pageKey) used.Add(pageKey);
         }
         var strays = Strays(document, work.Select(w => w.Owner).Concat(pages.Select(p => p.Dictionary)));
         foreach (var (_, _, strayKey) in strays) used.Add(strayKey);
-        long next = Math.Max(document.Integer(Dictionary, "ParentTreeNextKey") ?? 0, used.Count > 0 ? used.Max() + 1 : 0);
+        long next = Math.Max(Math.Min(document.Integer(Dictionary, "ParentTreeNextKey") ?? 0, MaxKey), used.Count > 0 ? used.Max() + 1 : 0);
 
         // A key stands for one owner; a later owner that carries the same number (pages merged by another tool) gets a new one.
         var owners = new Dictionary<long, PdfDictionary>();
         var assigned = new List<(long Key, StructElement Element, StructKid Kid)>();
         foreach (var (owner, name, element, kid) in work.OrderBy(w => w.Kid is StructObject))
         {
-            long key = document.Integer(owner, name) ?? -1;
+            long key = KeyOf(document, owner, name) ?? -1;
             if (key < 0 || (owners.TryGetValue(key, out var holder) && !ReferenceEquals(holder, owner))) owner[name] = new PdfNumber(key = next++);
             owners[key] = owner;
             assigned.Add((key, element, kid));
@@ -147,7 +147,7 @@ public sealed partial class StructureTree
         // A page without tagged content has no use for a key, and one that another owner now holds would point its numbers at that owner's elements.
         foreach (var page in pages)
         {
-            if (document.Integer(page.Dictionary, "StructParents") is { } pageKey and >= 0
+            if (KeyOf(document, page.Dictionary, "StructParents") is { } pageKey
                 && owners.TryGetValue(pageKey, out var holder) && !ReferenceEquals(holder, page.Dictionary))
             {
                 page.Dictionary.Remove("StructParents");
@@ -183,17 +183,34 @@ public sealed partial class StructureTree
         Put(Dictionary, "ParentTreeNextKey", new PdfNumber(Math.Max(next, highest + 1)));
     }
 
+    // PDF integers stop at 2^31 - 1 (ISO 32000-1 Annex C), so a larger key is no key; it also keeps the next free number from overflowing.
+    private const long MaxKey = int.MaxValue;
+    private const int MaxAnnotations = 5000;
+
+    private static long? KeyOf(PdfDocument document, PdfDictionary owner, string name) =>
+        document.Integer(owner, name) is { } key and >= 0 and <= MaxKey ? key : null;
+
+    // Every object, and the annotations a page holds as direct dictionaries, which no object number leads to.
     private static List<(PdfDictionary Owner, string Name, long Key)> Strays(PdfDocument document, IEnumerable<PdfDictionary> known)
     {
         var skip = new HashSet<PdfDictionary>(known, ReferenceEqualityComparer.Instance);
         var found = new List<(PdfDictionary, string, long)>();
+        var candidates = new List<PdfDictionary>();
         foreach (int number in document.ObjectNumbers)
         {
-            var d = document.Get(number) switch { PdfStream s => s.Dictionary, PdfDictionary plain => plain, _ => null };
-            if (d is null || skip.Contains(d)) continue;
+            if (document.Get(number) switch { PdfStream s => s.Dictionary, PdfDictionary plain => plain, _ => null } is { } d) candidates.Add(d);
+        }
+        foreach (var page in document.Pages)
+        {
+            if (document.Array(page.Dictionary, "Annots") is not { } annots) continue;
+            candidates.AddRange(annots.Items.Take(MaxAnnotations).OfType<PdfDictionary>());
+        }
+        foreach (var d in candidates)
+        {
+            if (skip.Contains(d)) continue;
             foreach (string name in (string[])["StructParents", "StructParent"])
             {
-                if (document.Integer(d, name) is { } key and >= 0) found.Add((d, name, key));
+                if (KeyOf(document, d, name) is { } key) found.Add((d, name, key));
             }
         }
         return found;

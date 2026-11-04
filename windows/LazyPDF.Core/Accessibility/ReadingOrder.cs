@@ -136,36 +136,62 @@ public static class ReadingOrder
             return pieces;
         }
 
-        // Finds, for each glyph the page draws, the innermost open sequence the tree names; a sequence is numbered in the stream that holds its BDC.
+        // Finds, for each glyph the text page keeps, the innermost open sequence the tree names; a sequence is numbered in the stream that holds its BDC.
+        // The text collector decides which glyphs count (clip, render mode 7, hidden layers), so a drawing the page does not show is never an owner.
         private sealed class Owners(Func<(int Page, int Stream, int Mcid), bool> named, int page) : ContentVisitor
         {
+            private const int MaxNear = 64;
+
+            private readonly TextCollector _shown = new(new TextPageOptions());
             private readonly List<(MarkedContent Mark, int Stream)> _open = [];
 
-            // A form drawn twice shows the same operator and offset twice, so the drawings are told apart by where they put the glyph.
-            private readonly Dictionary<(int Stream, int Op, int Element, int Offset), List<(double X, double Y, (int Stream, int Mcid)? Owner)>> _glyphs = [];
+            // A form drawn twice shows the same operator and offset twice, so the drawings are told apart by the corner the collector puts on the glyph.
+            private readonly Dictionary<(int Stream, int Op, int Element, int Offset, double X, double Y), (int Stream, int Mcid)?> _exact = [];
+
+            // A glyph under /ActualText is merged with its neighbours and its box no longer matches a drawing; the nearest of the first few drawings serves.
+            private readonly Dictionary<(int Stream, int Op, int Element, int Offset), List<(double X, double Y, (int Stream, int Mcid)? Owner)>> _near = [];
 
             public (int Stream, int Mcid)? OwnerOf(TextChar c)
             {
-                if (!_glyphs.TryGetValue((c.Form?.Number ?? 0, c.OperatorIndex, c.Element, c.Offset), out var drawn)) return null;
+                var key = (c.Form?.Number ?? 0, c.OperatorIndex, c.Element, c.Offset);
                 var (x, y) = (c.Quad.X0, c.Quad.Y0);
+                if (_exact.TryGetValue((key.Item1, key.Item2, key.Item3, key.Item4, x, y), out var owner)) return owner;
+                if (!_near.TryGetValue(key, out var drawn)) return null;
                 return drawn.MinBy(d => (d.X - x) * (d.X - x) + (d.Y - y) * (d.Y - y)).Owner;
             }
 
-            public override void BeginMarked(ContentContext context, MarkedContent marked) =>
+            public override void BeginMarked(ContentContext context, MarkedContent marked)
+            {
+                _shown.BeginMarked(context, marked);
                 _open.Add((marked, context.Forms.Count > 0 ? context.Forms[^1].Number : 0));
+            }
 
-            public override void EndMarked(ContentContext context, MarkedContent marked) => _open.RemoveAt(_open.Count - 1);
+            public override void EndMarked(ContentContext context, MarkedContent marked)
+            {
+                _shown.EndMarked(context, marked);
+                _open.RemoveAt(_open.Count - 1);
+            }
+
+            public override void BeginForm(ContentContext context, FormInfo form) => _shown.BeginForm(context, form);
+
+            public override void EndForm(ContentContext context, FormInfo form) => _shown.EndForm(context, form);
 
             public override void ShowGlyph(ContentContext context, in GlyphInfo glyph)
             {
+                int before = _shown.Glyphs.Count;
+                _shown.ShowGlyph(context, glyph);
+                if (_shown.Glyphs.Count == before) return;
+
                 (int, int)? owner = null;
                 for (int i = _open.Count - 1; i >= 0 && owner is null; i--)
                 {
                     if (_open[i].Mark.Mcid is { } mcid && named((page, _open[i].Stream, mcid))) owner = (_open[i].Stream, mcid);
                 }
-                var key = (context.Forms.Count > 0 ? context.Forms[^1].Number : 0, context.OperatorIndex, glyph.Element, glyph.Offset);
-                if (!_glyphs.TryGetValue(key, out var drawn)) _glyphs[key] = drawn = [];
-                drawn.Add((glyph.Matrix.E, glyph.Matrix.F, owner));
+                var g = _shown.Glyphs[^1];
+                int form = g.Form?.Number ?? 0;
+                _exact.TryAdd((form, g.Op, g.Element, g.Offset, g.Quad.X0, g.Quad.Y0), owner);
+                if (!_near.TryGetValue((form, g.Op, g.Element, g.Offset), out var drawn)) _near[(form, g.Op, g.Element, g.Offset)] = drawn = [];
+                if (drawn.Count < MaxNear) drawn.Add((g.Quad.X0, g.Quad.Y0, owner));
             }
         }
 
