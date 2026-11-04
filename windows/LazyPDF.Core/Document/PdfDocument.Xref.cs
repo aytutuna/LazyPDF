@@ -245,8 +245,9 @@ public sealed partial class PdfDocument
                         highest = Math.Max(highest, objectNumber);
                         break;
                     default:
-                        // Types a later PDF version may add read as null (7.5.8.3).
-                        continue;
+                        // Types a later PDF version may add read as null (7.5.8.3), and so hide the entry of an older section.
+                        entry = new Entry(EntryKind.Free, 0, 0, 0);
+                        break;
                 }
                 section.TryAdd(objectNumber, entry);
             }

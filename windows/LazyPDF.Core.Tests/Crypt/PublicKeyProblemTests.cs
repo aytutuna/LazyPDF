@@ -81,7 +81,7 @@ public class PublicKeyProblemTests
     public void UnknownSubFilterIsUnsupported()
     {
         var dictionary = Sealed();
-        dictionary["SubFilter"] = new PdfName("adbe.pkcs7.s3");
+        dictionary["SubFilter"] = new PdfName("adbe.pkcs7.s9");
 
         Assert.Equal(PdfReadProblem.Unsupported, OpenProblem(dictionary));
     }
@@ -90,7 +90,7 @@ public class PublicKeyProblemTests
     public void VersionThatDoesNotFitTheSubFilterIsUnsupported()
     {
         var dictionary = Sealed();
-        dictionary["V"] = new PdfNumber(4);
+        dictionary["V"] = new PdfNumber(2);
 
         Assert.Equal(PdfReadProblem.Unsupported, OpenProblem(dictionary));
     }
@@ -168,5 +168,44 @@ public class PublicKeyProblemTests
         list.Items.Add(real);
 
         Assert.Null(PdfSecurity.OpenPublicKey(dictionary, PublicKeyFiles.Alice));
+    }
+
+    [Fact]
+    public void Aes128FileIsS5WithItsRecipientsInTheFilter()
+    {
+        var dictionary = Sealed(PdfCryptStrength.Aes128);
+
+        Assert.Equal("adbe.pkcs7.s5", ((PdfName)dictionary["SubFilter"]!).Value);
+        Assert.False(dictionary.ContainsKey("Recipients"));
+        Assert.NotNull(PdfSecurity.OpenPublicKey(dictionary, PublicKeyFiles.Alice));
+    }
+
+    [Theory]
+    [InlineData("adbe.pkcs7.s3", 1, 40)]
+    [InlineData("adbe.pkcs7.s4", 2, 128)]
+    public void RecipientsAtTheTopLevelOpenAnRc4File(string subFilter, int v, int bits)
+    {
+        var sealedAes = PdfSecurity.CreatePublicKey([new PdfRecipient(PublicKeyFiles.Alice)], PdfCryptStrength.Aes128);
+        var stored = (PdfArray)FilterOf(sealedAes.Dictionary)["Recipients"]!;
+        var dictionary = new PdfDictionary();
+        dictionary.Add("Filter", new PdfName("Adobe.PubSec"));
+        dictionary.Add("SubFilter", new PdfName(subFilter));
+        dictionary.Add("V", new PdfNumber(v));
+        dictionary.Add("Length", new PdfNumber(bits));
+        dictionary.Add("Recipients", stored);
+
+        var reader = PdfSecurity.OpenPublicKey(dictionary, PublicKeyFiles.Alice)!;
+
+        Assert.True(reader.IsPublicKey);
+        byte[] text = "secret"u8.ToArray();
+        Assert.Equal(text, reader.DecryptString(4, 0, reader.EncryptString(4, 0, text)));
+        Assert.Equal(PdfReadProblem.Damaged, ProblemOf(() => PdfSecurity.OpenPublicKey(Without(dictionary), PublicKeyFiles.Alice)));
+    }
+
+    private static PdfDictionary Without(PdfDictionary dictionary)
+    {
+        var copy = dictionary.Copy();
+        copy.Remove("Recipients");
+        return copy;
     }
 }

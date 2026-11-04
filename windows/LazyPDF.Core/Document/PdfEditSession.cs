@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 
 namespace LazyPDF.Core;
 
@@ -13,6 +14,7 @@ namespace LazyPDF.Core;
 public sealed class PdfEditSession
 {
     private readonly string? _password;
+    private readonly X509Certificate2? _certificate;
     private readonly List<(int End, string Label)> _steps = [];
     private byte[] _current;
     // The bytes at the newest step; after an undo, longer than _current. The same array when nothing is undone.
@@ -21,10 +23,11 @@ public sealed class PdfEditSession
     private int _position;
     private int _savedPosition;
 
-    private PdfEditSession(byte[] bytes, string? password)
+    private PdfEditSession(byte[] bytes, string? password, X509Certificate2? certificate = null)
     {
         _password = password;
-        Document = PdfDocument.Open(bytes, password);
+        _certificate = certificate;
+        Document = Read(bytes);
         _current = _longest = SourceBytes(Document);
         _floor = _current.Length;
         Versions = PdfVersion.Find(Document);
@@ -33,6 +36,13 @@ public sealed class PdfEditSession
     public static PdfEditSession Open(byte[] bytes, string? password = null) => new(bytes, password);
 
     public static PdfEditSession Open(string path, string? password = null) => new(File.ReadAllBytes(path), password);
+
+    /// <summary>A file encrypted for recipients, opened (and read back after every save) with the private key of <paramref name="certificate"/>.</summary>
+    public static PdfEditSession Open(byte[] bytes, X509Certificate2 certificate) => new(bytes, null, certificate);
+
+    public static PdfEditSession Open(string path, X509Certificate2 certificate) => new(File.ReadAllBytes(path), null, certificate);
+
+    private PdfDocument Read(byte[] bytes) => _certificate is null ? PdfDocument.Open(bytes, _password) : PdfDocument.Open(bytes, _certificate);
 
     /// <summary>The document at the current state, to read and to change. Changes wait here until <see cref="Commit"/>.</summary>
     public PdfDocument Document { get; private set; }
@@ -82,7 +92,7 @@ public sealed class PdfEditSession
     private bool Take(string label, byte[] next)
     {
         // Reading it back is the check that the update is one a strict parser takes: one that needs a rebuild is not.
-        var document = PdfDocument.Open(next, _password);
+        var document = Read(next);
         if (document.XrefRebuilt && !Document.XrefRebuilt) throw PdfReadException.Damaged("The update does not read back.");
 
         if (_savedPosition > _position) _savedPosition = -1;
@@ -107,7 +117,7 @@ public sealed class PdfEditSession
     public void Save(string path)
     {
         Commit("");
-        PdfFileSaver.Save(path, _current, _password, Document, samePages: true);
+        PdfFileSaver.Save(path, _current, _password, _certificate, Document, samePages: true);
         _savedPosition = _position;
     }
 
@@ -119,8 +129,8 @@ public sealed class PdfEditSession
     public void SaveCompact(string path)
     {
         byte[] bytes = Document.SaveRewrite(new PdfSaveOptions(Document.PdfAPart != 1, Document.Security));
-        PdfFileSaver.Save(path, bytes, _password, Document, samePages: true);
-        var document = PdfDocument.Open(bytes, _password);
+        PdfFileSaver.Save(path, bytes, _password, _certificate, Document, samePages: true);
+        var document = Read(bytes);
         _steps.Clear();
         _position = _savedPosition = 0;
         _current = _longest = SourceBytes(document);
@@ -133,13 +143,13 @@ public sealed class PdfEditSession
     public byte[] ExtractVersion(PdfVersion version) => _current.AsSpan(0, version.End).ToArray();
 
     /// <summary>Writes an earlier state of the file to <paramref name="path"/> (not the open file's own path unless the earlier state is wanted back).</summary>
-    public void SaveVersion(PdfVersion version, string path) => PdfFileSaver.Save(path, ExtractVersion(version), _password, Document, samePages: false);
+    public void SaveVersion(PdfVersion version, string path) => PdfFileSaver.Save(path, ExtractVersion(version), _password, _certificate, Document, samePages: false);
 
     private bool MoveTo(int position)
     {
         int end = position == 0 ? _floor : _steps[position - 1].End;
         byte[] bytes = end == _longest.Length ? _longest : _longest[..end];
-        Document = PdfDocument.Open(bytes, _password);
+        Document = Read(bytes);
         _current = bytes;
         _position = position;
         return true;

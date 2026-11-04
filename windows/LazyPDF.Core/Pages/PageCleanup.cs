@@ -6,20 +6,29 @@ internal static class PageCleanup
 {
     private const int MaxItems = 1_000_000;
 
+    // What became of each action and each /Next array, whoever holds it, and the depth it was walked from.
+    // A holder nearer the top walks again what an earlier one cut short at the depth limit.
+    private sealed class Seen
+    {
+        public Dictionary<PdfDictionary, (PdfObject? Result, int Depth)> Actions { get; } = new(ReferenceEqualityComparer.Instance);
+        public Dictionary<PdfArray, (PdfObject? Result, int Depth)> Lists { get; } = new(ReferenceEqualityComparer.Instance);
+    }
+
     public static void BeforeDelete(PdfDocument document, IReadOnlyList<PdfPage> doomed)
     {
         var gone = doomed.Select(p => p.Reference.Number).ToHashSet();
         var names = new DestContext(document);
         bool Dead(PdfObject? destination) => PageDestinations.PageOfAny(document, names, destination) is { } page && gone.Contains(page.Number);
 
-        Outlines(document, Dead);
+        var done = new Seen();
+        Outlines(document, Dead, done);
         foreach (var page in document.Pages)
         {
             if (gone.Contains(page.Reference.Number)) continue;
-            DropLinks(document, page, Dead);
-            Triggers(document, page.Dictionary, Dead);
+            DropLinks(document, page, Dead, done);
+            Triggers(document, page.Dictionary, Dead, done);
         }
-        OpenAction(document, Dead);
+        OpenAction(document, Dead, done);
         PageDestinations.RemoveWhere(document, Dead);
         foreach (var page in doomed) RemoveFields(document, page);
         Structure(document, doomed);
@@ -28,7 +37,7 @@ internal static class PageCleanup
     }
 
     // The item stays, without a destination; a bookmark that goes nowhere is still a heading.
-    private static void Outlines(PdfDocument document, Func<PdfObject?, bool> dead)
+    private static void Outlines(PdfDocument document, Func<PdfObject?, bool> dead, Seen done)
     {
         if (document.Dict(document.Catalog, "Outlines") is not { } root) return;
         var seen = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
@@ -38,63 +47,93 @@ internal static class PageCleanup
         {
             var item = stack.Pop();
             if (!seen.Add(item)) continue;
-            Strip(document, item, dead);
+            Strip(document, item, dead, done);
             if (document.Dict(item, "Next") is { } next) stack.Push(next);
             if (document.Dict(item, "First") is { } first) stack.Push(first);
         }
     }
 
-    private static void Strip(PdfDocument document, PdfDictionary holder, Func<PdfObject?, bool> dead)
+    private static void Strip(PdfDocument document, PdfDictionary holder, Func<PdfObject?, bool> dead, Seen done)
     {
         if (holder.ContainsKey("Dest") && dead(holder["Dest"])) holder.Remove("Dest");
-        Triggers(document, holder, dead);
+        Triggers(document, holder, dead, done);
     }
 
-    private static void Triggers(PdfDocument document, PdfDictionary holder, Func<PdfObject?, bool> dead)
+    private static void Triggers(PdfDocument document, PdfDictionary holder, Func<PdfObject?, bool> dead, Seen done)
     {
         if (holder.ContainsKey("A"))
         {
-            if (Action(document, holder["A"], dead, 0, []) is { } kept) holder["A"] = kept;
+            if (Action(document, holder["A"], dead, done, 0) is { } kept) holder["A"] = kept;
             else holder.Remove("A");
         }
         if (document.Dict(holder, "AA") is not { } additional) return;
         foreach (string key in additional.Entries.Select(e => e.Key).Distinct().ToList())
         {
-            if (Action(document, additional[key], dead, 0, []) is { } kept) additional[key] = kept;
+            if (Action(document, additional[key], dead, done, 0) is { } kept) additional[key] = kept;
             else additional.Remove(key);
         }
     }
 
-    // A GoTo to a gone page is dropped and the action that followed it takes its place.
-    private static PdfObject? Action(PdfDocument document, PdfObject? value, Func<PdfObject?, bool> dead, int depth, HashSet<PdfDictionary> seen)
+    // A GoTo to a gone page is dropped and the action that followed it takes its place; where several followed,
+    // the first takes its place and the rest follow it, since /A and /OpenAction hold one action (12.6.2).
+    private static PdfObject? Action(PdfDocument document, PdfObject? value, Func<PdfObject?, bool> dead, Seen done, int depth)
     {
-        if (document.Resolve(value) is not PdfDictionary action || !seen.Add(action)) return value;
+        if (document.Resolve(value) is not PdfDictionary action) return value;
+        if (done.Actions.TryGetValue(action, out var known) && depth >= known.Depth) return known.Result;
+        done.Actions[action] = (value, depth);
         PdfObject? next = action["Next"];
         if (depth < 32 && next is not null)
         {
             if (document.Resolve(next) is PdfArray list)
             {
-                var kept = list.Items.Select(i => Action(document, i, dead, depth + 1, seen)).OfType<PdfObject>().ToList();
-                next = kept.Count == 0 ? null : new PdfArray(kept);
+                if (done.Lists.TryGetValue(list, out var walked) && depth >= walked.Depth) next = walked.Result;
+                else
+                {
+                    var results = list.Items.Select(i => Action(document, i, dead, done, depth + 1)).OfType<PdfObject>().ToList();
+                    var kept = Dictionaries(document, results);
+                    bool same = kept.Count == list.Items.Count && kept.Zip(list.Items).All(p => ReferenceEquals(p.First, p.Second));
+                    next = same ? next : kept.Count == 0 ? null : new PdfArray(kept);
+                    done.Lists[list] = (next, depth);
+                }
             }
-            else next = Action(document, next, dead, depth + 1, seen);
+            else next = document.Resolve(next) is PdfDictionary ? Action(document, next, dead, done, depth + 1) : null;
             if (next is null) action.Remove("Next");
             else action["Next"] = next;
         }
         bool gone = document.Name(action, "S") == "GoTo" && dead(action["D"]);
-        return gone ? next : value;
+        var result = gone ? Lead(document, next) : value;
+        done.Actions[action] = (result, depth);
+        return result;
     }
 
-    private static void DropLinks(PdfDocument document, PdfPage page, Func<PdfObject?, bool> dead)
+    private static List<PdfObject> Dictionaries(PdfDocument document, IEnumerable<PdfObject> items) =>
+        [.. items.Where(i => document.Resolve(i) is PdfDictionary)];
+
+    // The first follower becomes a copy that carries the others after its own, so an action other holders share is left as it is.
+    private static PdfObject? Lead(PdfDocument document, PdfObject? next)
+    {
+        if (document.Resolve(next) is PdfDictionary) return next;
+        if (document.Resolve(next) is not PdfArray list) return null;
+        var actions = Dictionaries(document, list.Items);
+        if (actions.Count < 2) return actions.FirstOrDefault();
+        var head = ((PdfDictionary)document.Resolve(actions[0])!).Copy();
+        var chain = new List<PdfObject>();
+        if (head["Next"] is { } own) chain.AddRange(document.Resolve(own) is PdfArray owned ? owned.Items : [own]);
+        chain.AddRange(actions.Skip(1));
+        head["Next"] = new PdfArray(Dictionaries(document, chain));
+        return head;
+    }
+
+    private static void DropLinks(PdfDocument document, PdfPage page, Func<PdfObject?, bool> dead, Seen done)
     {
         if (document.Array(page.Dictionary, "Annots") is not { } annots) return;
         foreach (var item in annots.Items)
         {
-            if (document.Resolve(item) is PdfDictionary annotation) Strip(document, annotation, dead);
+            if (document.Resolve(item) is PdfDictionary annotation) Strip(document, annotation, dead, done);
         }
     }
 
-    private static void OpenAction(PdfDocument document, Func<PdfObject?, bool> dead)
+    private static void OpenAction(PdfDocument document, Func<PdfObject?, bool> dead, Seen done)
     {
         var action = document.Resolve(document.Catalog["OpenAction"]);
         if (action is PdfArray)
@@ -103,10 +142,10 @@ internal static class PageCleanup
         }
         else if (action is PdfDictionary)
         {
-            if (Action(document, document.Catalog["OpenAction"], dead, 0, []) is { } kept) document.Catalog["OpenAction"] = kept;
+            if (Action(document, document.Catalog["OpenAction"], dead, done, 0) is { } kept) document.Catalog["OpenAction"] = kept;
             else document.Catalog.Remove("OpenAction");
         }
-        if (document.Dict(document.Catalog, "AA") is not null) Triggers(document, document.Catalog, dead);
+        if (document.Dict(document.Catalog, "AA") is not null) Triggers(document, document.Catalog, dead, done);
     }
 
     // A widget goes from its field; a field with no widget or sub-field left goes from its parent, up to /Fields.
@@ -177,12 +216,19 @@ internal static class PageCleanup
     private static void Threads(PdfDocument document, HashSet<int> gone)
     {
         if (document.Array(document.Catalog, "Threads") is not { } threads) return;
+        var members = new HashSet<int>();
         foreach (var item in threads.Items.ToList())
         {
             if (document.Resolve(item) is not PdfDictionary thread || thread["F"] is not PdfReference first) continue;
+            // A ring met under an earlier thread is done; the thread stays only while its first bead does.
+            if (members.Contains(first.Number))
+            {
+                if (document.Resolve(first) is null) Forget(document, threads, item);
+                continue;
+            }
             var ring = new List<PdfReference>();
             var bead = first;
-            while (ring.Count < MaxItems && !ring.Any(r => r.Number == bead.Number))
+            while (ring.Count < MaxItems && members.Add(bead.Number))
             {
                 ring.Add(bead);
                 if (document.Resolve(bead) is not PdfDictionary d || d["N"] is not PdfReference next) break;
@@ -193,8 +239,7 @@ internal static class PageCleanup
             foreach (var removed in ring.Except(kept)) document.Delete(removed.Number);
             if (kept.Count == 0)
             {
-                threads.Items.Remove(item);
-                if (item is PdfReference reference) document.Delete(reference.Number);
+                Forget(document, threads, item);
                 continue;
             }
             for (int i = 0; i < kept.Count; i++)
@@ -205,5 +250,11 @@ internal static class PageCleanup
             }
             thread["F"] = kept[0];
         }
+    }
+
+    private static void Forget(PdfDocument document, PdfArray threads, PdfObject item)
+    {
+        threads.Items.Remove(item);
+        if (item is PdfReference reference) document.Delete(reference.Number);
     }
 }

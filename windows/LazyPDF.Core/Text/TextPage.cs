@@ -37,6 +37,15 @@ public sealed partial class TextPage
     /// <summary>The page ran past the interpreter's operation limit or 1,000,000 glyphs; the text stops there.</summary>
     public bool IsTruncated { get; }
 
+    /// <summary>Built with <see cref="TextPageOptions.IncludeAnnotations"/>: some characters belong to appearance streams, and their operator indexes mean nothing in the page's own content.</summary>
+    public bool IncludesAnnotations { get; private init; }
+
+    /// <summary>For code that edits the content by operator index.</summary>
+    internal void RequirePageContent()
+    {
+        if (IncludesAnnotations) throw new InvalidOperationException(TextPageText.AnnotationsIncluded);
+    }
+
     public IReadOnlyList<TextChar> Chars => _chars;
     public IReadOnlyList<TextWord> Words => _words;
     public IReadOnlyList<PageLine> Lines => _lines;
@@ -76,10 +85,10 @@ public sealed partial class TextPage
         if (options.RemoveDuplicates) collector.RemoveDuplicates();
         var geometry = new PageGeometry(page);
         var lines = new TextFlow(geometry).Run(collector.Glyphs);
-        return Assemble(page, geometry, lines, truncated);
+        return Assemble(page, geometry, lines, truncated, options.IncludeAnnotations);
     }
 
-    private static TextPage Assemble(PdfPage page, PageGeometry geometry, List<FlowLine> layout, bool truncated)
+    private static TextPage Assemble(PdfPage page, PageGeometry geometry, List<FlowLine> layout, bool truncated, bool annotations)
     {
         var chars = new List<TextChar>();
         var words = new List<TextWord>();
@@ -132,7 +141,7 @@ public sealed partial class TextPage
                 blockFirst = li + 1;
             }
         }
-        return new TextPage(page.Index, page.CropBox, geometry, [.. chars], [.. words], [.. lines], [.. blocks], truncated);
+        return new TextPage(page.Index, page.CropBox, geometry, [.. chars], [.. words], [.. lines], [.. blocks], truncated) { IncludesAnnotations = annotations };
     }
 
     private static void AddWords(List<TextChar> chars, int first, int line, List<TextWord> words)

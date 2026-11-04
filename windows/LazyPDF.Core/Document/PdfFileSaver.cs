@@ -1,3 +1,5 @@
+using System.Security.Cryptography.X509Certificates;
+
 namespace LazyPDF.Core;
 
 // Global rule 5: a save goes to a temporary file in the same folder, is read back, and only then
@@ -14,14 +16,20 @@ public static class PdfFileSaver
     /// as it was. Throws <see cref="IOException"/>, <see cref="UnauthorizedAccessException"/> or
     /// <see cref="PdfReadException"/> (the bytes are not a PDF).
     /// </summary>
-    public static void Save(string path, byte[] bytes, string? password = null) => Save(path, bytes, password, null, false);
+    public static void Save(string path, byte[] bytes, string? password = null) => Save(path, bytes, password, null, null, false);
+
+    /// <summary>As above, for bytes encrypted for recipients: read back with the private key of <paramref name="certificate"/>.</summary>
+    public static void Save(string path, byte[] bytes, X509Certificate2 certificate) => Save(path, bytes, null, certificate, null, false);
 
     /// <summary>
     /// As above; with the <paramref name="source"/> the bytes come from, a file that opens only by
     /// a rebuild the source did not need, or (with <paramref name="samePages"/>) that has another
     /// number of pages, is refused: opening alone is not proof that nothing was lost.
     /// </summary>
-    internal static void Save(string path, byte[] bytes, string? password, PdfDocument? source, bool samePages)
+    internal static void Save(string path, byte[] bytes, string? password, PdfDocument? source, bool samePages) =>
+        Save(path, bytes, password, null, source, samePages);
+
+    internal static void Save(string path, byte[] bytes, string? password, X509Certificate2? certificate, PdfDocument? source, bool samePages)
     {
         string full = Path.GetFullPath(path);
         string temp = Path.Combine(Path.GetDirectoryName(full)!, $".{Guid.NewGuid():N}.pdf.tmp");
@@ -35,7 +43,7 @@ public static class PdfFileSaver
             File.SetAttributes(temp, File.GetAttributes(temp) | FileAttributes.Hidden);
             byte[] back = File.ReadAllBytes(temp);
             if (!back.AsSpan().SequenceEqual(bytes)) throw new IOException("The file did not read back as written.");
-            using (var reopened = PdfDocument.Open(back, password))
+            using (var reopened = certificate is null ? PdfDocument.Open(back, password) : PdfDocument.Open(back, certificate))
             {
                 if (source is not null && reopened.XrefRebuilt && !source.XrefRebuilt)
                     throw PdfReadException.Damaged("The file does not read back without repairs.");

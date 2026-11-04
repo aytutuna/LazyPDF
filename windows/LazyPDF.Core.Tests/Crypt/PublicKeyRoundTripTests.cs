@@ -26,7 +26,7 @@ public class PublicKeyRoundTripTests
 
     [Theory]
     [InlineData(PdfCryptStrength.Aes256, "adbe.pkcs7.s5", 5, "AESV3")]
-    [InlineData(PdfCryptStrength.Aes128, "adbe.pkcs7.s4", 4, "AESV2")]
+    [InlineData(PdfCryptStrength.Aes128, "adbe.pkcs7.s5", 4, "AESV2")]
     public void DictionaryHasTheShapeOfTheSpec(PdfCryptStrength strength, string subFilter, int v, string method)
     {
         var dictionary = PdfSecurity.CreatePublicKey([new PdfRecipient(PublicKeyFiles.Alice)], strength).Dictionary;

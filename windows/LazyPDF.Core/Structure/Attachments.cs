@@ -45,6 +45,9 @@ public static class PdfAttachments
         return list;
     }
 
+    internal static PdfStream? StreamOf(PdfDocument document, PdfAttachment attachment) =>
+        EmbeddedStream(document, document.Resolve(attachment.Spec) as PdfDictionary);
+
     /// <summary>The file's bytes, decoded.</summary>
     public static byte[] Extract(PdfDocument document, PdfAttachment attachment)
     {

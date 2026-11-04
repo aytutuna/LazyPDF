@@ -5,9 +5,10 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace LazyPDF.Core;
 
-// The public-key handler, /Filter /Adobe.PubSec with SubFilter adbe.pkcs7.s4 (V 4) or s5 (V 5), ISO 32000-1
-// 7.6.4 and 7.6.5. Each recipient is a CMS EnvelopedData holding a 20-byte seed and the recipient's 4
-// permission bytes; the file key is a digest of the seed and every EnvelopedData as stored.
+// The public-key handler, /Filter /Adobe.PubSec, ISO 32000-1 7.6.4 and 7.6.5: SubFilter s3 or s4 (V 1 or 2, RC4,
+// /Recipients in the encryption dictionary), s5 and s4 with V 4 (crypt filters, /Recipients in the filter), and s5 with V 5.
+// Each recipient is a CMS EnvelopedData holding a 20-byte seed and the recipient's 4 permission bytes;
+// the file key is a digest of the seed and every EnvelopedData as stored.
 public sealed partial class PdfSecurity
 {
     private const int MaxRecipients = 1000;
@@ -24,24 +25,31 @@ public sealed partial class PdfSecurity
     {
         string? subFilter = (encrypt["SubFilter"] as PdfName)?.Value;
         int v = Number(encrypt, "V", 0);
-        bool known = (subFilter, v) is ("adbe.pkcs7.s4", 4) or ("adbe.pkcs7.s5", 5);
+        bool direct = (subFilter, v) is ("adbe.pkcs7.s3" or "adbe.pkcs7.s4", 1 or 2);
+        bool known = direct || (subFilter, v) is ("adbe.pkcs7.s4", 4) or ("adbe.pkcs7.s5", 4 or 5);
         if (encrypt["Filter"] is not PdfName { Value: "Adobe.PubSec" } || !known)
             throw new PdfReadException(PdfReadProblem.Unsupported, $"The public-key handler {subFilter} with version {v} is not supported.");
 
         var (strings, streams, filters) = ReadFilters(encrypt, v);
         var embedded = CheckCiphers(encrypt, v, v == 5, strings, streams, filters);
-        var filter = (encrypt["CF"] as PdfDictionary)?[(encrypt["StmF"] as PdfName)?.Value ?? ""] as PdfDictionary
+        PdfDictionary? filter = null;
+        if (!direct)
+        {
+            filter = (encrypt["CF"] as PdfDictionary)?[(encrypt["StmF"] as PdfName)?.Value ?? ""] as PdfDictionary
                      ?? throw PdfReadException.Damaged("The public-key crypt filter is missing.");
-        if (filter["Recipients"] is not PdfArray list) throw PdfReadException.Damaged("The crypt filter has no /Recipients.");
+        }
+        if ((direct ? encrypt["Recipients"] : filter!["Recipients"]) is not PdfArray list)
+            throw PdfReadException.Damaged("The public-key handler has no /Recipients.");
         var recipients = list.Items.Take(MaxRecipients).OfType<PdfString>().Select(s => s.Bytes).ToList();
-        bool metadata = (filter["EncryptMetadata"] ?? encrypt["EncryptMetadata"]) is not PdfBoolean { Value: false };
+        bool metadata = ((filter ?? encrypt)["EncryptMetadata"] ?? encrypt["EncryptMetadata"]) is not PdfBoolean { Value: false };
+        int length = v switch { 1 => 5, 4 => 16, _ => Math.Clamp(Number(encrypt, "Length", 40) / 8, 5, 16) };
 
         foreach (byte[] stored in recipients)
         {
             if (Unseal(stored, certificate) is not { Length: 24 } content) continue;
-            byte[] key = FileKey(v, content.AsSpan(0, 20), recipients, metadata);
+            byte[] key = FileKey(v, length, content.AsSpan(0, 20), recipients, metadata);
             int p = BinaryPrimitives.ReadInt32BigEndian(content.AsSpan(20));
-            return new PdfSecurity(encrypt, key, v == 4 ? 4 : 6, p, (p & 2) != 0, metadata, strings, streams, filters,
+            return new PdfSecurity(encrypt, key, v == 5 ? 6 : v, p, (p & 2) != 0, metadata, strings, streams, filters,
                                    RandomNumberGenerator.Fill, embedded) { IsPublicKey = true };
         }
         return null;
@@ -49,7 +57,7 @@ public sealed partial class PdfSecurity
 
     /// <summary>
     /// A handler for a new file readable by exactly <paramref name="recipients"/>, each with their own
-    /// permissions. <see cref="PdfCryptStrength.Aes256"/> makes V 5 (s5), Aes128 V 4 (s4). The seed and
+    /// permissions. <see cref="PdfCryptStrength.Aes256"/> makes V 5 (s5), Aes128 V 4 (also s5). The seed and
     /// the CMS content keys come from the system generator, so two calls never give the same file.
     /// The new handler is an owner: <see cref="OpenedAsOwner"/> is true and its permissions are all.
     /// </summary>
@@ -86,7 +94,7 @@ public sealed partial class PdfSecurity
 
         var dictionary = new PdfDictionary();
         dictionary.Add("Filter", new PdfName("Adobe.PubSec"));
-        dictionary.Add("SubFilter", new PdfName(modern ? "adbe.pkcs7.s5" : "adbe.pkcs7.s4"));
+        dictionary.Add("SubFilter", new PdfName("adbe.pkcs7.s5"));
         dictionary.Add("V", new PdfNumber(v));
         dictionary.Add("Length", new PdfNumber(modern ? 256 : 128));
         dictionary.Add("CF", cf);
@@ -94,21 +102,21 @@ public sealed partial class PdfSecurity
         dictionary.Add("StrF", new PdfName(CryptFilterName));
 
         var method = modern ? Method.Aes256 : Method.Aes128;
-        return new PdfSecurity(dictionary, FileKey(v, seed, stored, true), modern ? 6 : 4, unchecked((int)(0xFFFFF0C0u | (uint)PdfPermissions.All | 2u)),
+        return new PdfSecurity(dictionary, FileKey(v, modern ? 32 : 16, seed, stored, true), modern ? 6 : 4, unchecked((int)(0xFFFFF0C0u | (uint)PdfPermissions.All | 2u)),
                                true, true, method, method, new() { [CryptFilterName] = method }, RandomNumberGenerator.Fill)
         { IsPublicKey = true };
     }
 
-    // 7.6.5.3: SHA-1 of seed, recipients and, without metadata encryption, four 0xFF bytes, cut to 128 bits for V 4;
+    // 7.6.5.3: SHA-1 of seed, recipients and, without metadata encryption, four 0xFF bytes, cut to the key length for V 1 to 4;
     // SHA-256 of the same for V 5.
-    private static byte[] FileKey(int v, ReadOnlySpan<byte> seed, List<byte[]> recipients, bool encryptMetadata)
+    private static byte[] FileKey(int v, int length, ReadOnlySpan<byte> seed, List<byte[]> recipients, bool encryptMetadata)
     {
         using var hash = v == 5 ? IncrementalHash.CreateHash(HashAlgorithmName.SHA256) : IncrementalHash.CreateHash(HashAlgorithmName.SHA1);
         hash.AppendData(seed);
         foreach (byte[] recipient in recipients) hash.AppendData(recipient);
         if (!encryptMetadata) hash.AppendData([0xFF, 0xFF, 0xFF, 0xFF]);
         byte[] digest = hash.GetHashAndReset();
-        return v == 5 ? digest : digest[..16];
+        return v == 5 ? digest : digest[..length];
     }
 
     private static byte[]? Unseal(byte[] stored, X509Certificate2 certificate)

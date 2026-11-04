@@ -45,4 +45,18 @@ public class TextAnnotationOptionTests
         var page = TextPage.Create(document, document.Pages[0], new TextPageOptions(IncludeAnnotations: true));
         Assert.DoesNotContain("secret", page.Text);
     }
+
+    [Fact]
+    public void TextWithAnnotationsIsRefusedWhereOperatorIndexesAreUsed()
+    {
+        var document = Annotated();
+        var plain = TextPage.Create(document, document.Pages[0]);
+        var shown = TextPage.Create(document, document.Pages[0], new TextPageOptions(IncludeAnnotations: true));
+
+        Assert.False(plain.IncludesAnnotations);
+        plain.RequirePageContent();
+        Assert.True(shown.IncludesAnnotations);
+        var e = Assert.Throws<InvalidOperationException>(shown.RequirePageContent);
+        Assert.Equal(TextPageText.AnnotationsIncluded, e.Message);
+    }
 }
