@@ -27,6 +27,7 @@ public sealed class PdfAConverter(IFontSource? fonts = null)
 internal sealed partial class PdfAConversionRun(IFontSource? fonts, PdfALevel level, DateTimeOffset date)
 {
     private readonly List<string> _changes = [];
+    private readonly List<PdfAIssue> _left = [];
     private PdfDocument _doc = null!;
 
     private int Part => level.Part();
@@ -55,7 +56,7 @@ internal sealed partial class PdfAConversionRun(IFontSource? fonts, PdfALevel le
                 byte[] bytes = _doc.SaveRewrite();
                 SetHeaderVersion(bytes);
                 using var written = PdfDocument.Open(bytes);
-                return new PdfAConversion(bytes, null, PdfAValidator.Validate(written, level).Issues, _changes);
+                return new PdfAConversion(bytes, null, PdfAValidator.Validate(written, level).Issues.Union(_left).ToList(), _changes);
             }
             catch (PdfReadException e)
             {

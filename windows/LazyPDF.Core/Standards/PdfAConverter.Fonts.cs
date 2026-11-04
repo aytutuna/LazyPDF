@@ -17,7 +17,8 @@ internal sealed partial class PdfAConversionRun
             used ??= [];
             if (subtype == "Type3")
             {
-                if (WantsToUnicode(before, font, pdfFont, used) && AddToUnicode(before, font, pdfFont, used)) corrected++;
+                if (WantsToUnicode(before, font, pdfFont, used) && AddToUnicode(font, pdfFont, used)) corrected++;
+                ReportUnicodeHoles(font, used);
                 continue;
             }
             var holder = subtype == "Type0" && _doc.Array(font, "DescendantFonts") is { Items.Count: > 0 } kids && _doc.Resolve(kids.Items[0]) is PdfDictionary d ? d : font;
@@ -26,13 +27,16 @@ internal sealed partial class PdfAConversionRun
             if (!isEmbedded)
             {
                 if (subtype == "Type0" ? EmbedComposite(font, holder, pdfFont, used) : EmbedSimple(font, pdfFont, used)) embedded++;
+                else ReportUnicodeHoles(font, used);
                 continue;
             }
-            bool changed = FixWidths(font, holder, pdfFont, used);
+            bool changed = FixEncoding(font, holder, descriptor!, pdfFont, used, subtype);
+            if (changed) pdfFont = Snapshot(font);
+            changed |= FixWidths(font, holder, pdfFont, used);
             changed |= FixSubsetSets(descriptor!, holder, pdfFont, used);
-            changed |= FixEncoding(font, holder, descriptor!, pdfFont, used, subtype);
-            if (WantsToUnicode(before, font, pdfFont, used)) changed |= AddToUnicode(before, font, pdfFont, used);
+            if (WantsToUnicode(before, font, pdfFont, used)) changed |= AddToUnicode(font, pdfFont, used);
             if (changed) corrected++;
+            ReportUnicodeHoles(font, used);
         }
         if (embedded > 0) Changed(PdfAText.FontsEmbedded(embedded));
         if (corrected > 0) Changed(PdfAText.FontsCorrected(corrected));
@@ -306,10 +310,33 @@ internal sealed partial class PdfAConversionRun
 
     private bool IsIdentity(PdfDictionary font) => _doc.Resolve(font["Encoding"]) is PdfName { Value: "Identity-H" or "Identity-V" };
 
-    // The map is keyed by code and the uses of a composite font by CID, which are the same only under an Identity CMap.
+    // The uses of a composite font are CIDs, which are its codes only under an Identity CMap. Under another the codes are found by reading
+    // each of one and two bytes through the CMap, so a code of three or four bytes is not met.
+    private List<byte[]> UsedCodes(PdfDictionary font, PdfFont pdfFont, SortedSet<int> used)
+    {
+        if (!pdfFont.IsComposite) return [.. used.Select(code => new[] { (byte)code })];
+        if (IsIdentity(font)) return [.. used.Select(cid => new[] { (byte)(cid >> 8), (byte)cid })];
+        var codes = new List<byte[]>();
+        for (int first = 0; first < 256; first++)
+        {
+            if (pdfFont.Read([(byte)first, 0, 0, 0], out var one) == 1)
+            {
+                if (one.Cid > 0 && used.Contains(one.Cid)) codes.Add([(byte)first]);
+                continue;
+            }
+            for (int second = 0; second < 256; second++)
+            {
+                if (pdfFont.Read([(byte)first, (byte)second, 0, 0], out var two) == 2 && two.Cid > 0 && used.Contains(two.Cid)) codes.Add([(byte)first, (byte)second]);
+            }
+        }
+        return codes;
+    }
+
+    private static int Value(byte[] code) => code.Aggregate(0, (value, b) => value << 8 | b);
+
     private bool ToUnicodeGaps(PdfDictionary font, PdfFont pdfFont, SortedSet<int> used)
     {
-        if (pdfFont.IsComposite && !IsIdentity(font) || _doc.Stream(font, "ToUnicode") is not { } stream) return false;
+        if (_doc.Stream(font, "ToUnicode") is not { } stream) return false;
         CMap map;
         try
         {
@@ -319,32 +346,32 @@ internal sealed partial class PdfAConversionRun
         {
             return true;
         }
-        int width = pdfFont.IsComposite ? 2 : 1;
-        return used.Any(code => !HasText(map.UnicodeOf(code, width) ?? map.UnicodeOf(code, 0)));
+        return UsedCodes(font, pdfFont, used).Any(code => !HasText(map.UnicodeOf(Value(code), code.Length) ?? map.UnicodeOf(Value(code), 0)));
     }
 
-    // Level U: the codes the font shows get text the reader can trace, from the map the font has or else from its encoding. A code with none
-    // leaves the font as it is; a map with a hole in it would pass for complete, so it is dropped and the font reported, but only
-    // where the validator would then report it: a font with a Latin encoding passes without a map, and keeps the entries it has.
-    private bool AddToUnicode(PdfAChecker before, PdfDictionary font, PdfFont pdfFont, SortedSet<int> used)
+    // Level U: the codes the font shows get text the reader can trace, from the map the font has or else from its encoding. The map is
+    // written again without the entries the standard rejects; a code left with no text is reported by ReportUnicodeHoles.
+    private bool AddToUnicode(PdfDictionary font, PdfFont pdfFont, SortedSet<int> used)
     {
-        var map = new SortedDictionary<int, string>();
-        int bytes = pdfFont.IsComposite ? 2 : 1;
         var bare = pdfFont.HasToUnicode ? WithoutToUnicode(font) : null;
-        if (!pdfFont.IsComposite || IsIdentity(font))
+        var codes = pdfFont.IsComposite ? UsedCodes(font, pdfFont, used) : [.. Enumerable.Range(0, 256).Select(code => new[] { (byte)code })];
+        var map = new SortedDictionary<int, string>();
+        foreach (var code in codes)
         {
-            foreach (int key in pdfFont.IsComposite ? used : Enumerable.Range(0, 256))
-            {
-                byte[] code = bytes == 2 ? [(byte)(key >> 8), (byte)key] : [(byte)key];
-                if (TextOf(pdfFont, bare, code) is { } text) map[key] = text;
-            }
+            if (TextOf(pdfFont, bare, code) is { } text) map[Value(code)] = text;
         }
-        if (map.Count > 0 && used.All(map.ContainsKey))
-        {
-            font["ToUnicode"] = _doc.Add(ToUnicodeStream(map, bytes));
-            return true;
-        }
-        return bare is not null && before.NeedsToUnicode(bare) && font.Remove("ToUnicode");
+        if (map.Count == 0) return font.Remove("ToUnicode");
+        font["ToUnicode"] = _doc.Add(ToUnicodeStream(map, codes.Max(code => code.Length)));
+        return true;
+    }
+
+    // The validator passes a font with a Latin encoding whatever codes the content shows and whatever its map holds, so a code with no text is reported here.
+    private void ReportUnicodeHoles(PdfDictionary font, SortedSet<int> used)
+    {
+        if (!level.NeedsUnicode()) return;
+        var current = Snapshot(font);
+        if (UsedCodes(font, current, used).Any(code => TextOf(current, null, code) is null))
+            _left.Add(new PdfAIssue("6.2.11.7.2", PdfAText.FontName(current.BaseFont), PdfAText.NoUnicode));
     }
 
     // The text of a code from the font's /ToUnicode, or from its encoding where the map has none or a text the standard rejects.
@@ -355,12 +382,15 @@ internal sealed partial class PdfAConversionRun
         return HasText(character.Unicode) ? character.Unicode : null;
     }
 
-    private PdfFont WithoutToUnicode(PdfDictionary font)
+    private PdfFont WithoutToUnicode(PdfDictionary font) => Snapshot(font, "ToUnicode");
+
+    // A copy, because a PdfFont keeps what it read from its dictionary the first time.
+    private PdfFont Snapshot(PdfDictionary font, string? without = null)
     {
         var copy = new PdfDictionary();
         foreach (var (key, value) in font.Entries)
         {
-            if (key != "ToUnicode") copy[key] = value;
+            if (key != without) copy[key] = value;
         }
         return PdfFont.Get(_doc, copy);
     }

@@ -134,7 +134,7 @@ internal sealed partial class PdfAConversionRun
 
     // 9.6.6.4 and 6.2.11.6: a non-symbolic TrueType font names WinAnsi or MacRoman, and names of other glyphs go in /Differences, which
     // the standard allows only with AGL names and a (3,1) cmap. A code the content shows keeps its glyph; when that cannot be done within
-    // the rules the font is left as it is and the validator reports it.
+    // the rules the font is left as it is and reported.
     private bool FixEncoding(PdfDictionary font, PdfDictionary holder, PdfDictionary descriptor, PdfFont pdfFont, SortedSet<int> used, string? subtype)
     {
         if (subtype == "Type0")
@@ -156,19 +156,22 @@ internal sealed partial class PdfAConversionRun
 
         string? baseName = encoding switch { PdfName n => n.Value, PdfDictionary e => _doc.Name(e, "BaseEncoding"), _ => null };
         bool named = baseName is "WinAnsiEncoding" or "MacRomanEncoding";
-        var listed = named && encoding is PdfDictionary dictionary ? ReadDifferences(_doc.Array(dictionary, "Differences")) : new SortedDictionary<int, string>();
+        var read = encoding is PdfDictionary dictionary ? ReadDifferences(_doc.Array(dictionary, "Differences")) : new SortedDictionary<int, string>();
+        var listed = named ? read : new SortedDictionary<int, string>();
         bool unicodeCmap = tt is null || tt.HasCmap(3, 1);
         if (symbolic && !unicodeCmap) return false;
-        var differences = new SortedDictionary<int, string>(unicodeCmap ? listed.Where(p => GlyphList.UnicodeOf(p.Value) is not null).ToDictionary() : []);
+        var differences = new SortedDictionary<int, string>(unicodeCmap ? listed.Where(p => AglNames.Value.Contains(p.Value)).ToDictionary() : []);
         string table = named ? baseName! : "WinAnsiEncoding";
         var names = PdfEncodings.ByName(table)!;
         if (tt is not null)
         {
             foreach (int code in used)
             {
-                int old = DrawnGlyph(tt, pdfFont.GlyphNameOf(code), code);
+                // Without a base encoding a non-symbolic font starts from StandardEncoding (9.6.6.4), where PdfFont assumes WinAnsi.
+                string? shown = baseName is null && !symbolic ? read.GetValueOrDefault(code) ?? PdfEncodings.Standard[code] : pdfFont.GlyphNameOf(code);
+                int old = DrawnGlyph(tt, shown, code);
                 if (old == 0 || old == DrawnGlyph(tt, differences.GetValueOrDefault(code) ?? names[code], code)) continue;
-                if (!unicodeCmap || PinName(pdfFont, tt, old) is not { } pin) return false;
+                if (!unicodeCmap || PinName(pdfFont, tt, old) is not { } pin) return LeftAsItIs(pdfFont, named && !symbolic);
                 differences[code] = pin;
             }
         }
@@ -179,17 +182,38 @@ internal sealed partial class PdfAConversionRun
         return true;
     }
 
-    private static readonly Lazy<Dictionary<string, int>> MacCodes = new(() => CodesByName(PdfEncodings.ByName("MacRomanEncoding"))!);
+    // A font with no named base is reported by the checker already; one with WinAnsi or MacRoman and /Differences that cannot go is reported here.
+    private bool LeftAsItIs(PdfFont pdfFont, bool named)
+    {
+        if (named) _left.Add(new PdfAIssue(Part == 1 ? "6.3.7" : "6.2.11.6", PdfAText.FontName(pdfFont.BaseFont), PdfAText.TrueTypeDifferences));
+        return false;
+    }
+
+    private static readonly Lazy<HashSet<string>> AglNames = new(() =>
+        TableBlob.InflateText(GlyphListData.Agl).Split('\n').Select(line => line.Split(' ')).Where(parts => parts.Length > 1).Select(parts => parts[0]).ToHashSet());
+
+    // The names of Apple's Mac OS Roman that 9.6.6.4 goes through and PDF's MacRomanEncoding leaves out.
+    private static readonly Lazy<Dictionary<string, int>> MacCodes = new(() =>
+    {
+        var codes = CodesByName(PdfEncodings.MacRoman)!;
+        string[] extra = ["notequal", "infinity", "lessequal", "greaterequal", "partialdiff", "summation", "product", "pi", "integral", "Omega", "radical", "approxequal", "Delta", "lozenge", "apple", "Euro"];
+        int[] at = [0xAD, 0xB0, 0xB2, 0xB3, 0xB6, 0xB7, 0xB8, 0xB9, 0xBA, 0xBD, 0xC3, 0xC5, 0xC6, 0xD7, 0xF0, 0xDB];
+        for (int i = 0; i < extra.Length; i++) codes.TryAdd(extra[i], at[i]);
+        return codes;
+    });
 
     // The glyph the reader draws for a code: the one the name reaches, else the code through the others.
     private static int DrawnGlyph(TrueTypeFont tt, string? name, int code) =>
         name is not null && ByName(tt, name) is > 0 and var glyph ? glyph : ByCode(tt, code);
 
-    // 9.6.6.4: the character of the name through the (3,1) cmap, and without one the MacRoman code of the name through the (1,0) cmap.
+    // 9.6.6.4: the character of the name through the (3,1) cmap, and without one the Mac OS Roman code of the name through the (1,0) cmap;
+    // a name that reaches no glyph that way is looked up in the 'post' table.
     private static int ByName(TrueTypeFont tt, string name)
     {
-        if (!tt.HasCmap(3, 1) && tt.HasCmap(1, 0)) return MacCodes.Value.TryGetValue(name, out int mac) ? tt.GlyphForCmap(1, 0, mac) : 0;
-        return GlyphList.UnicodeOf(name) is { Length: > 0 } text ? tt.GlyphForCodePoint(char.ConvertToUtf32(text, 0)) : 0;
+        int glyph;
+        if (!tt.HasCmap(3, 1) && tt.HasCmap(1, 0)) glyph = MacCodes.Value.TryGetValue(name, out int mac) ? tt.GlyphForCmap(1, 0, mac) : 0;
+        else glyph = GlyphList.UnicodeOf(name) is { Length: > 0 } text ? tt.GlyphForCodePoint(char.ConvertToUtf32(text, 0)) : 0;
+        return glyph > 0 ? glyph : tt.GlyphForName(name);
     }
 
     private static int ByCode(TrueTypeFont tt, int code)
@@ -204,7 +228,8 @@ internal sealed partial class PdfAConversionRun
     private static string? PinName(PdfFont pdfFont, TrueTypeFont tt, int glyph)
     {
         if (pdfFont.Program?.UnicodeOf(glyph) is not { Length: > 0 } text || SingleCodePoint(text) is not { } codePoint) return null;
-        return tt.GlyphForCodePoint(codePoint) == glyph ? GlyphList.NameOf(codePoint) : null;
+        string name = GlyphList.NameOf(codePoint);
+        return tt.GlyphForCodePoint(codePoint) == glyph && AglNames.Value.Contains(name) ? name : null;
     }
 
     // The reader finds a glyph by the name first (9.6.6.4); without an encoding the cmap by code decides, and it has to agree.
