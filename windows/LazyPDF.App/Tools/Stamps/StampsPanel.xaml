@@ -1,0 +1,226 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Stamps.StampsPanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools">
+    <StackPanel Margin="12,4,12,12">
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Add}" />
+        <ComboBox x:Name="KindBox" SelectedIndex="0" AutomationProperties.Name="{loc:T Kind of stamp}" SelectionChanged="Kind_SelectionChanged">
+            <ComboBoxItem Content="{loc:T Watermark}" />
+            <ComboBoxItem Content="{loc:T Background}" />
+            <ComboBoxItem Content="{loc:T Header and footer}" />
+            <ComboBoxItem Content="{loc:T Bates numbers}" />
+        </ComboBox>
+        <Grid x:Name="ProblemRow" Margin="0,8,0,0" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Style="{StaticResource ReasonGlyph}" Text="&#xE7BA;" Foreground="{DynamicResource SystemFillColorCautionBrush}" />
+            <TextBlock x:Name="ProblemText" Grid.Column="1" Style="{StaticResource ReasonText}" />
+        </Grid>
+
+        <StackPanel x:Name="WatermarkBox" Margin="0,12,0,0">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Text}" />
+            <TextBox x:Name="WatermarkText" AcceptsReturn="True" TextWrapping="Wrap" MinLines="2" MaxLines="4" VerticalScrollBarVisibility="Auto"
+                     AutomationProperties.Name="{loc:T Watermark text}" TextChanged="Form_Changed" />
+            <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Size}" />
+            <DockPanel>
+                <TextBlock x:Name="ScaleReadout" DockPanel.Dock="Right" Width="44" Style="{StaticResource ReadoutText}" />
+                <Slider x:Name="ScaleSlider" Minimum="10" Maximum="100" Value="60" AutomationProperties.Name="{loc:T Watermark size}" ValueChanged="Form_Changed" />
+            </DockPanel>
+            <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Turn}" />
+            <DockPanel>
+                <TextBlock x:Name="TurnReadout" DockPanel.Dock="Right" Width="44" Style="{StaticResource ReadoutText}" />
+                <Slider x:Name="TurnSlider" Minimum="-90" Maximum="90" Value="45" AutomationProperties.Name="{loc:T Watermark angle}" ValueChanged="Form_Changed" />
+            </DockPanel>
+            <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Place}" />
+            <ComboBox x:Name="PlaceBox" SelectedIndex="4" AutomationProperties.Name="{loc:T Watermark place}" SelectionChanged="Form_Changed">
+                <ComboBoxItem Content="{loc:T Top left}" />
+                <ComboBoxItem Content="{loc:T Top}" />
+                <ComboBoxItem Content="{loc:T Top right}" />
+                <ComboBoxItem Content="{loc:T Left}" />
+                <ComboBoxItem Content="{loc:T Centre}" />
+                <ComboBoxItem Content="{loc:T Right}" />
+                <ComboBoxItem Content="{loc:T Bottom left}" />
+                <ComboBoxItem Content="{loc:T Bottom}" />
+                <ComboBoxItem Content="{loc:T Bottom right}" />
+            </ComboBox>
+            <CheckBox x:Name="BehindBox" Style="{StaticResource ToggleSwitchStyle}" Margin="0,8,0,0" Content="{loc:T Behind the page text}"
+                      AutomationProperties.Name="{loc:T Behind the page text}" Click="Form_Changed" />
+        </StackPanel>
+
+        <StackPanel x:Name="BackgroundBox" Margin="0,12,0,0">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Colour}" />
+            <ComboBox x:Name="BackColorBox" AutomationProperties.Name="{loc:T Background colour}" SelectionChanged="Form_Changed" />
+            <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Picture fit}" />
+            <ComboBox x:Name="FitBox" SelectedIndex="0" AutomationProperties.Name="{loc:T Picture fit}" SelectionChanged="Form_Changed">
+                <ComboBoxItem Content="{loc:T Cover the page}" />
+                <ComboBoxItem Content="{loc:T Fit inside the page}" />
+                <ComboBoxItem Content="{loc:T Stretch to the page}" />
+            </ComboBox>
+        </StackPanel>
+
+        <StackPanel x:Name="PictureBox" Margin="0,12,0,0">
+            <DockPanel LastChildFill="False">
+                <Button x:Name="PictureButton" DockPanel.Dock="Left" Content="{loc:T Pick a picture}" AutomationProperties.Name="{loc:T Pick a picture}" Click="Picture_Click" />
+                <Button x:Name="PictureClear" DockPanel.Dock="Right" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Remove picture}" Visibility="Collapsed"
+                        AutomationProperties.Name="{loc:T Remove picture}" Click="PictureClear_Click" />
+            </DockPanel>
+            <TextBlock x:Name="PictureName" Style="{StaticResource ReasonText}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" Visibility="Collapsed" />
+        </StackPanel>
+
+        <StackPanel x:Name="OpacityBox" Margin="0,12,0,0">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Opacity}" />
+            <DockPanel>
+                <TextBlock x:Name="OpacityReadout" DockPanel.Dock="Right" Width="44" Style="{StaticResource ReadoutText}" />
+                <Slider x:Name="OpacitySlider" Minimum="5" Maximum="100" Value="30" AutomationProperties.Name="{loc:T Opacity}" ValueChanged="Form_Changed" />
+            </DockPanel>
+            <CheckBox x:Name="LayerBox" Style="{StaticResource ToggleSwitchStyle}" Margin="0,8,0,0" Content="{loc:T Readers can hide it}"
+                      AutomationProperties.Name="{loc:T Readers can hide it}" Click="Form_Changed" />
+        </StackPanel>
+
+        <StackPanel x:Name="BandsBox" Margin="0,12,0,0">
+            <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,0,0,4" Text="{loc:T Header}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="56" /><ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition /><RowDefinition /><RowDefinition />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Style="{StaticResource ReasonText}" VerticalAlignment="Center" Text="{loc:T Left}" />
+                <TextBox x:Name="HeaderLeft" Grid.Row="0" Grid.Column="1" Margin="0,0,0,4" AutomationProperties.Name="{loc:T Header left}" TextChanged="Form_Changed" />
+                <TextBlock Grid.Row="1" Style="{StaticResource ReasonText}" VerticalAlignment="Center" Text="{loc:T Centre}" />
+                <TextBox x:Name="HeaderCentre" Grid.Row="1" Grid.Column="1" Margin="0,0,0,4" AutomationProperties.Name="{loc:T Header centre}" TextChanged="Form_Changed" />
+                <TextBlock Grid.Row="2" Style="{StaticResource ReasonText}" VerticalAlignment="Center" Text="{loc:T Right}" />
+                <TextBox x:Name="HeaderRight" Grid.Row="2" Grid.Column="1" Margin="0,0,0,4" AutomationProperties.Name="{loc:T Header right}" TextChanged="Form_Changed" />
+            </Grid>
+            <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" Text="{loc:T Footer}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="56" /><ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition /><RowDefinition /><RowDefinition />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Style="{StaticResource ReasonText}" VerticalAlignment="Center" Text="{loc:T Left}" />
+                <TextBox x:Name="FooterLeft" Grid.Row="0" Grid.Column="1" Margin="0,0,0,4" AutomationProperties.Name="{loc:T Footer left}" TextChanged="Form_Changed" />
+                <TextBlock Grid.Row="1" Style="{StaticResource ReasonText}" VerticalAlignment="Center" Text="{loc:T Centre}" />
+                <TextBox x:Name="FooterCentre" Grid.Row="1" Grid.Column="1" Margin="0,0,0,4" Text="{}{page}" AutomationProperties.Name="{loc:T Footer centre}" TextChanged="Form_Changed" />
+                <TextBlock Grid.Row="2" Style="{StaticResource ReasonText}" VerticalAlignment="Center" Text="{loc:T Right}" />
+                <TextBox x:Name="FooterRight" Grid.Row="2" Grid.Column="1" Margin="0,0,0,4" AutomationProperties.Name="{loc:T Footer right}" TextChanged="Form_Changed" />
+            </Grid>
+            <TextBlock x:Name="TokensHint" Style="{StaticResource ReasonText}" Margin="0,4,0,0" />
+            <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                    <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T First page number}" TextTrimming="CharacterEllipsis" />
+                    <TextBox x:Name="FirstNumber" Text="1" AutomationProperties.Name="{loc:T First page number}" TextChanged="Form_Changed" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                    <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Date format}" />
+                    <TextBox x:Name="DateFormatBox" Text="yyyy-MM-dd" AutomationProperties.Name="{loc:T Date format}" TextChanged="Form_Changed" />
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+
+        <StackPanel x:Name="BatesBox" Margin="0,12,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                    <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Before}" />
+                    <TextBox x:Name="PrefixBox" AutomationProperties.Name="{loc:T Before the number}" TextChanged="Form_Changed" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                    <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T After}" />
+                    <TextBox x:Name="SuffixBox" AutomationProperties.Name="{loc:T After the number}" TextChanged="Form_Changed" />
+                </StackPanel>
+            </Grid>
+            <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                    <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Digits}" />
+                    <TextBox x:Name="DigitsBox" Text="6" AutomationProperties.Name="{loc:T Digits}" TextChanged="Form_Changed" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="4,0,0,0">
+                    <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Start at}" />
+                    <TextBox x:Name="StartBox" Text="1" AutomationProperties.Name="{loc:T Start at}" TextChanged="Form_Changed" />
+                </StackPanel>
+            </Grid>
+            <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Place}" />
+            <ComboBox x:Name="BatesPlaceBox" SelectedIndex="5" AutomationProperties.Name="{loc:T Bates number place}" SelectionChanged="Form_Changed">
+                <ComboBoxItem Content="{loc:T Top left}" />
+                <ComboBoxItem Content="{loc:T Top}" />
+                <ComboBoxItem Content="{loc:T Top right}" />
+                <ComboBoxItem Content="{loc:T Bottom left}" />
+                <ComboBoxItem Content="{loc:T Bottom}" />
+                <ComboBoxItem Content="{loc:T Bottom right}" />
+            </ComboBox>
+        </StackPanel>
+
+        <StackPanel x:Name="FontBox" Margin="0,12,0,0">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Font}" />
+            <ComboBox x:Name="FontFamilyBox" AutomationProperties.Name="{loc:T Font}" SelectionChanged="Form_Changed" />
+            <WrapPanel Margin="0,8,0,0">
+                <CheckBox x:Name="BoldBox" Content="{loc:T Bold}" Margin="0,0,16,0" AutomationProperties.Name="{loc:T Bold}" Click="Form_Changed" />
+                <CheckBox x:Name="ItalicBox" Content="{loc:T Italic}" AutomationProperties.Name="{loc:T Italic}" Click="Form_Changed" />
+            </WrapPanel>
+            <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Colour}" />
+            <ComboBox x:Name="ColorBox" AutomationProperties.Name="{loc:T Text colour}" SelectionChanged="Form_Changed" />
+            <StackPanel x:Name="TextSizeBox">
+                <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Text size}" />
+                <DockPanel>
+                    <TextBlock x:Name="TextSizeReadout" DockPanel.Dock="Right" Width="44" Style="{StaticResource ReadoutText}" />
+                    <Slider x:Name="TextSizeSlider" Minimum="6" Maximum="36" Value="10" SmallChange="1" AutomationProperties.Name="{loc:T Text size}" ValueChanged="Form_Changed" />
+                </DockPanel>
+                <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Margin}" />
+                <DockPanel>
+                    <TextBlock x:Name="MarginReadout" DockPanel.Dock="Right" Width="44" Style="{StaticResource ReadoutText}" />
+                    <Slider x:Name="MarginSlider" Minimum="12" Maximum="144" Value="36" SmallChange="1" AutomationProperties.Name="{loc:T Margin}" ValueChanged="Form_Changed" />
+                </DockPanel>
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Margin="0,12,0,0">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T On pages}" />
+            <ComboBox x:Name="PagesBox" SelectedIndex="0" AutomationProperties.Name="{loc:T Pages to stamp}" SelectionChanged="Form_Changed">
+                <ComboBoxItem Content="{loc:T All pages}" />
+                <ComboBoxItem Content="{loc:T Odd pages}" />
+                <ComboBoxItem Content="{loc:T Even pages}" />
+                <ComboBoxItem Content="{loc:T Pages I type}" />
+            </ComboBox>
+            <TextBox x:Name="PagesText" Margin="0,4,0,0" Visibility="Collapsed" AutomationProperties.Name="{loc:T Page range}" TextChanged="Form_Changed" />
+        </StackPanel>
+
+        <StackPanel x:Name="RunsBox" Margin="0,20,0,0" Visibility="Collapsed">
+            <TextBlock Style="{StaticResource SectionHeaderText}" Text="{loc:T Already on this file}" AutomationProperties.HeadingLevel="Level3" />
+            <ListBox x:Name="RunList" Margin="0,8,0,0" MaxHeight="150" SelectionChanged="RunList_SelectionChanged" AutomationProperties.Name="{loc:T Stamps on this file}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="0,2" AutomationProperties.Name="{Binding Summary}">
+                            <TextBlock Text="{Binding Title}" Style="{StaticResource BodyText}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Details}" Style="{StaticResource ReasonText}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock x:Name="UpdateNote" Style="{StaticResource ReasonText}" Margin="0,4,0,0" Visibility="Collapsed"
+                       Text="{loc:T Change the settings above and update it. Pick a picture again if it had one.}" />
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" /><ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="RemoveButton" Grid.Column="0" Margin="0,0,4,0" Content="{loc:T Remove}" IsEnabled="False" AutomationProperties.Name="{loc:T Remove the selected stamp}" Click="Remove_Click" />
+                <Button x:Name="RemoveAllButton" Grid.Column="1" Margin="4,0,0,0" Content="{loc:T Remove all}" AutomationProperties.Name="{loc:T Remove all stamps}" Click="RemoveAll_Click" />
+            </Grid>
+            <Button x:Name="NewButton" Style="{StaticResource SubtleButtonStyle}" Margin="0,4,0,0" HorizontalAlignment="Left" Content="{loc:T Add a new one instead}" Visibility="Collapsed"
+                    AutomationProperties.Name="{loc:T Add a new one instead}" Click="New_Click" />
+        </StackPanel>
+    </StackPanel>
+</tools:ToolPanel>

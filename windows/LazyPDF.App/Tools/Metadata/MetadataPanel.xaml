@@ -1,0 +1,59 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Metadata.MetadataPanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools">
+    <StackPanel Margin="12,4,12,12">
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Title}" />
+        <TextBox x:Name="TitleBox" AutomationProperties.Name="{loc:T Title}" TextChanged="Field_Changed" />
+
+        <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Author}" />
+        <TextBox x:Name="AuthorBox" AutomationProperties.Name="{loc:T Author}" TextChanged="Field_Changed" />
+
+        <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Subject}" />
+        <TextBox x:Name="SubjectBox" AcceptsReturn="True" TextWrapping="Wrap" MinLines="2" MaxLines="4" VerticalScrollBarVisibility="Auto"
+                 AutomationProperties.Name="{loc:T Subject}" TextChanged="Field_Changed" />
+
+        <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Keywords}" />
+        <TextBox x:Name="KeywordsBox" AutomationProperties.Name="{loc:T Keywords}" TextChanged="Field_Changed" />
+        <TextBlock Style="{StaticResource ReasonText}" Margin="0,4,0,0" Text="{loc:T Separate them with commas.}" />
+
+        <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Created}" />
+        <DatePicker x:Name="CreatedPicker" AutomationProperties.Name="{loc:T Created}" SelectedDateChanged="Field_Changed" />
+        <TextBlock x:Name="ModifiedText" Style="{StaticResource ReasonText}" Margin="0,4,0,0" />
+        <CheckBox x:Name="TouchModifiedBox" Style="{StaticResource ToggleSwitchStyle}" Margin="0,8,0,0" IsChecked="True"
+                  Content="{loc:T Update the changed date}" AutomationProperties.Name="{loc:T Update the changed date}" />
+        <TextBlock x:Name="MakerText" Style="{StaticResource ReasonText}" Margin="0,4,0,0" Visibility="Collapsed" />
+
+        <TextBlock Style="{StaticResource SectionHeaderText}" Margin="0,20,0,8" Text="{loc:T When it opens}" AutomationProperties.HeadingLevel="Level3" />
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Show beside the page}" />
+        <ComboBox x:Name="ModeBox" AutomationProperties.Name="{loc:T Show beside the page}" SelectionChanged="Field_Changed" />
+        <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Page layout}" />
+        <ComboBox x:Name="LayoutBox" AutomationProperties.Name="{loc:T Page layout}" SelectionChanged="Field_Changed" />
+        <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Language}" />
+        <TextBox x:Name="LanguageBox" AutomationProperties.Name="{loc:T Language}" TextChanged="Field_Changed" />
+        <TextBlock Style="{StaticResource ReasonText}" Margin="0,4,0,0" Text="{loc:T A code such as en-US or tr-TR.}" />
+        <CheckBox x:Name="TitleBarBox" Style="{StaticResource ToggleSwitchStyle}" Margin="0,8,0,0" Content="{loc:T Title in the title bar}"
+                  AutomationProperties.Name="{loc:T Title in the title bar}" Click="Field_Changed" />
+        <CheckBox x:Name="ToolbarBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Hide the toolbar}"
+                  AutomationProperties.Name="{loc:T Hide the toolbar}" Click="Field_Changed" />
+        <CheckBox x:Name="MenuBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Hide the menu bar}"
+                  AutomationProperties.Name="{loc:T Hide the menu bar}" Click="Field_Changed" />
+        <CheckBox x:Name="ControlsBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Hide window controls}"
+                  AutomationProperties.Name="{loc:T Hide window controls}" Click="Field_Changed" />
+        <CheckBox x:Name="FitBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Size window to page}"
+                  AutomationProperties.Name="{loc:T Size window to page}" Click="Field_Changed" />
+        <CheckBox x:Name="CentreBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Centre the window}"
+                  AutomationProperties.Name="{loc:T Centre the window}" Click="Field_Changed" />
+        <CheckBox x:Name="RightToLeftBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Read right to left}"
+                  AutomationProperties.Name="{loc:T Read right to left}" Click="Field_Changed" />
+
+        <TextBlock Style="{StaticResource SectionHeaderText}" Margin="0,20,0,8" Text="{loc:T When it prints}" AutomationProperties.HeadingLevel="Level3" />
+        <CheckBox x:Name="ActualSizeBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Print at actual size}"
+                  AutomationProperties.Name="{loc:T Print at actual size}" Click="Field_Changed" />
+        <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" Text="{loc:T Sides}" />
+        <ComboBox x:Name="SidesBox" AutomationProperties.Name="{loc:T Sides}" SelectionChanged="Field_Changed" />
+        <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Copies}" />
+        <ComboBox x:Name="CopiesBox" AutomationProperties.Name="{loc:T Copies}" SelectionChanged="Field_Changed" />
+    </StackPanel>
+</tools:ToolPanel>

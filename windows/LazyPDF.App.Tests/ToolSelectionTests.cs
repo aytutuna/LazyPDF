@@ -5,6 +5,7 @@ using Xunit;
 namespace LazyPDF.App.Tests;
 
 // The tool and the side panel in use, the appearance and the busy bar: the window state that is not a document.
+[Collection("Application")]
 public sealed class ToolSelectionTests
 {
     [Fact]
@@ -72,7 +73,7 @@ public sealed class ToolSelectionTests
     }
 
     [Fact]
-    public void TheAppearanceIsKept()
+    public Task TheAppearanceIsKept() => Sta.Run(() =>
     {
         using var f = new ViewModelFixture();
 
@@ -81,7 +82,8 @@ public sealed class ToolSelectionTests
         Assert.Equal(AppAppearance.Dark, ThemeService.Appearance);
         Assert.Equal(AppAppearance.Dark, AppPreferencesStore.Load(f.Dir.Sub("settings")).Appearance);
         ThemeService.Apply(AppAppearance.System);
-    }
+        return Task.CompletedTask;
+    });
 
     [Fact]
     public async Task TheBusyBarShowsWhileWorkRunsAndCancelEndsIt()
