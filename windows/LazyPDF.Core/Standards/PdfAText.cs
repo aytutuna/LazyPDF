@@ -98,6 +98,7 @@ public static class PdfAText
     public const string SymbolicEncoding = "A symbolic TrueType font has an /Encoding.";
     public const string SymbolicCmap = "A symbolic TrueType font has no (3,0) or (1,0) cmap.";
     public const string TrueTypeEncoding = "A TrueType font must use WinAnsiEncoding or MacRomanEncoding.";
+    public const string TrueTypeDifferences = "The /Differences of a TrueType font need names from the Adobe Glyph List and a (3,1) cmap.";
     public const string NoUnicode = "The font has no /ToUnicode and its text cannot be traced another way.";
 
     public static string AnnotationType(string? subtype) => subtype is null ? "An annotation has no subtype." : $"The annotation type {subtype} is not allowed.";
@@ -109,6 +110,9 @@ public static class PdfAText
     public const string AppearanceNotStream = "The /N of an annotation must be a stream.";
     public const string FieldTriggers = "A field or widget has an /AA entry.";
     public const string CatalogTriggers = "The catalog has an /AA entry.";
+    public const string PageTriggers = "A page has an /AA entry.";
+    public const string WidgetAction = "A widget has an /A entry.";
+    public static string TriggerKey(string key) => $"An additional-actions dictionary has the key /{key}, which is not allowed.";
     public const string JavaScript = "JavaScript is used.";
     public static string ForbiddenAction(string type) => $"A {type} action is used.";
     public static string NamedAction(string? name) => $"The named action {name} is not allowed.";

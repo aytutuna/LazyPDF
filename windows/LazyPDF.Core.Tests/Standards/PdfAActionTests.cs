@@ -67,4 +67,28 @@ public class PdfAActionTests
         Assert.Contains("6.5.1", StandardsKit.Clauses(StandardsKit.Compliant(page: "/AA << /O << /S /JavaScript /JS (1) >> >>")));
         Assert.DoesNotContain("6.5.1", StandardsKit.Clauses(StandardsKit.Compliant(page: "/AA << /O << /S /URI /URI (x) >> >>")));
     }
+
+    [Theory]
+    [InlineData(PdfALevel.A2b)]
+    [InlineData(PdfALevel.A3b)]
+    public void APageMayNotHaveAdditionalActionsInPartsTwoAndThree(PdfALevel level)
+    {
+        byte[] file = StandardsKit.Compliant(level, page: "/AA << /O << /S /URI /URI (x) >> >>");
+        Assert.Contains(StandardsKit.Check(file, level).Issues, i => i.Clause == "6.5.2" && i.Message == PdfAText.PageTriggers);
+    }
+
+    [Fact]
+    public void PartOneHasNoRuleAgainstPageAdditionalActions()
+    {
+        byte[] file = StandardsKit.Compliant(PdfALevel.A1b, page: "/AA << /O << /S /URI /URI (x) >> >>");
+        Assert.DoesNotContain(StandardsKit.Check(file, PdfALevel.A1b).Issues, i => i.Message == PdfAText.PageTriggers);
+    }
+
+    [Fact]
+    public void PartFourLimitsTheKeysOfAPageAdditionalActions()
+    {
+        Assert.Contains(StandardsKit.Check(StandardsKit.Compliant(PdfALevel.A4, page: "/AA << /O << /S /URI /URI (x) >> >>"), PdfALevel.A4).Issues, i => i.Clause == "6.6.3");
+        Assert.Contains(StandardsKit.Check(StandardsKit.Compliant(PdfALevel.A4, page: "/AA << /C << /S /URI /URI (x) >> >>"), PdfALevel.A4).Issues, i => i.Clause == "6.6.3");
+        Assert.DoesNotContain("6.6.3", StandardsKit.Clauses(StandardsKit.Compliant(PdfALevel.A4, page: "/AA << /E << /S /URI /URI (x) >> /Bl << /S /URI /URI (y) >> >>"), PdfALevel.A4));
+    }
 }

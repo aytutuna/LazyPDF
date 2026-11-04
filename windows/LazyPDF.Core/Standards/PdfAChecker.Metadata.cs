@@ -11,7 +11,7 @@ internal sealed partial class PdfAChecker
         CheckOutputIntents();
         CheckMetadata();
         CheckOptionalContent();
-        if (catalog.ContainsKey("AA")) Add(C("6.6.2", "6.5.2"), PdfAText.Catalog, PdfAText.CatalogTriggers);
+        if (catalog.ContainsKey("AA")) Add(Part == 4 ? "6.6.3" : C("6.6.2", "6.5.2"), PdfAText.Catalog, PdfAText.CatalogTriggers);
         if (!IsPart1 && catalog.ContainsKey("NeedsRendering")) Add("6.4.2", PdfAText.Catalog, PdfAText.NeedsRendering);
         CheckAction(catalog["OpenAction"], PdfAText.Catalog);
         CheckOutlines();

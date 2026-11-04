@@ -98,9 +98,10 @@ internal sealed partial class PdfAChecker
     }
 
     // 6.1.6: a hex string has an even number of hex digits and nothing but white space besides. The parser drops the difference, so this
-    // reads the bytes outside the stream data. In a content stream the data of an inline image is skipped.
-    internal static bool HasBadHexString(ReadOnlySpan<byte> data, bool content = false)
+    // reads the bytes outside the stream data. In a content stream, given as its parsed operations, the data of an inline image is skipped to where the parser found its end.
+    internal static bool HasBadHexString(ReadOnlySpan<byte> data, IReadOnlyList<ContentOperation>? content = null)
     {
+        var images = content?.Where(o => o.Image is not null).GetEnumerator();
         for (int i = 0; i < data.Length; i++)
         {
             byte c = data[i];
@@ -140,23 +141,14 @@ internal sealed partial class PdfAChecker
                     int close = data[end..].IndexOf("endstream"u8);
                     end = close < 0 ? data.Length : end + close;
                 }
-                else if (content && c != '/' && data[from..end].SequenceEqual("ID"u8))
+                else if (images is not null && c != '/' && data[from..end].SequenceEqual("ID"u8) && images.MoveNext())
                 {
-                    end = EndOfInlineImage(data, end);
+                    end = Math.Max(end, Math.Min(images.Current.End, data.Length));
                 }
                 i = Math.Max(i, end - 1);
             }
         }
         return false;
-    }
-
-    private static int EndOfInlineImage(ReadOnlySpan<byte> data, int from)
-    {
-        for (int i = Math.Max(from, 1); i + 1 < data.Length; i++)
-        {
-            if (data[i] == 'E' && data[i + 1] == 'I' && (data[i - 1] is 0 or 9 or 10 or 12 or 13 or 32) && (i + 2 == data.Length || !IsRegular(data[i + 2]))) return i;
-        }
-        return data.Length;
     }
 
     private static bool IsRegular(byte c) => c is not (0 or 9 or 10 or 12 or 13 or 32 or (byte)'(' or (byte)')' or (byte)'<' or (byte)'>' or (byte)'[' or (byte)']' or (byte)'{' or (byte)'}' or (byte)'/' or (byte)'%');

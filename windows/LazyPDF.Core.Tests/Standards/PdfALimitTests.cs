@@ -39,6 +39,14 @@ public class PdfALimitTests
     }
 
     [Fact]
+    public void LimitsApplyToTheDictionaryOfAnInlineImage()
+    {
+        const string image = "BI /W 1 /H 1 /BPC 8 /CS /G /D [0 40000.5] ID a EI";
+        Assert.Contains(StandardsKit.Check(StandardsKit.Compliant(PdfALevel.A1b, content: image), PdfALevel.A1b).Issues, i => i.Clause == "6.1.12" && i.Message.Contains("40000.5"));
+        Assert.DoesNotContain("6.1.13", StandardsKit.Clauses(StandardsKit.Compliant(content: image)));
+    }
+
+    [Fact]
     public void TheLowestIntegerIsInRange()
     {
         StandardsKit.AssertClean(WithPageEntry("/Extra -2147483648"));

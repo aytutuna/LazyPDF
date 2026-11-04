@@ -132,7 +132,7 @@ public class PdfAFontFixTests
     }
 
     [Fact]
-    public void AToUnicodeWithAHoleIsNotWrittenAtLevelU()
+    public void ACodeWithoutTextGetsTheMapOfTheOthersAndIsReportedAtLevelU()
     {
         const string proc = "10 0 0 0 10 10 d1 0 0 10 10 re f";
         byte[] file = Page("<</Type /Font /Subtype /Type3 /FontBBox [0 0 10 10] /FontMatrix [0.1 0 0 0.1 0 0] /CharProcs <</A 6 0 R /g1 7 0 R>> " +
@@ -144,7 +144,7 @@ public class PdfAFontFixTests
         var result = Convert(file, PdfALevel.A2u);
         Assert.Contains(result.Remaining, i => i.Clause == "6.2.11.7.2");
         using var document = PdfDocument.Open(result.Bytes!);
-        Assert.False(FontOf(document).HasToUnicode);
+        Assert.Equal("A", FontOf(document).Decode("A"u8)[0].Unicode);
     }
 
     [Fact]
@@ -237,7 +237,7 @@ public class PdfAFontFixTests
     }
 
     [Fact]
-    public void AToUnicodeWithAHoleThatNothingFillsIsDroppedAndReported()
+    public void AToUnicodeWithAHoleKeepsTheTextItCanTraceAndIsReported()
     {
         const string proc = "10 0 0 0 10 10 d1 0 0 10 10 re f";
         byte[] file = Page("<</Type /Font /Subtype /Type3 /FontBBox [0 0 10 10] /FontMatrix [0.1 0 0 0.1 0 0] /CharProcs <</A 6 0 R /g1 7 0 R>> " +
@@ -250,7 +250,7 @@ public class PdfAFontFixTests
         var result = Convert(file, PdfALevel.A2u);
         Assert.Contains(result.Remaining, i => i.Clause == "6.2.11.7.2");
         using var document = PdfDocument.Open(result.Bytes!);
-        Assert.False(FontOf(document).HasToUnicode);
+        Assert.Equal("A", FontOf(document).Decode("A"u8)[0].Unicode);
     }
 
     [Fact]
@@ -370,6 +370,21 @@ public class PdfAFontFixTests
         return copy;
     }
 
+    // Sets the post table to format 1, which names the first 258 glyphs in the standard Macintosh order.
+    private static byte[] NamedGlyphs(byte[] font)
+    {
+        byte[] copy = (byte[])font.Clone();
+        int tables = copy[4] << 8 | copy[5];
+        for (int i = 0; i < tables; i++)
+        {
+            int entry = 12 + 16 * i;
+            if (System.Text.Encoding.ASCII.GetString(copy, entry, 4) != "post") continue;
+            int post = copy[entry + 8] << 24 | copy[entry + 9] << 16 | copy[entry + 10] << 8 | copy[entry + 11];
+            (copy[post], copy[post + 1], copy[post + 2], copy[post + 3]) = (0, 1, 0, 0);
+        }
+        return copy;
+    }
+
     [Fact]
     public void AConvertedFontKeepsItsToUnicodeWhenConvertedAgainToLevelU()
     {
@@ -383,12 +398,53 @@ public class PdfAFontFixTests
     }
 
     [Fact]
-    public void AToUnicodeOfALatinFontWithAHoleIsKept()
+    public void AToUnicodeOfALatinFontWithAHoleLosesItsNulAndTheHoleIsReported()
     {
-        byte[] file = ArialPage("/Encoding /WinAnsiEncoding /ToUnicode 12 0 R", "32", "<4101> Tj", PdfALevel.A2u, pdf => pdf.Stream(12, "", OneToUnicode("0041")));
-        using var document = PdfDocument.Open(Clean(Convert(file, PdfALevel.A2u)));
-        Assert.True(FontOf(document).HasToUnicode);
+        byte[] file = ArialPage("/Encoding /WinAnsiEncoding /ToUnicode 12 0 R", "32", "<4101> Tj", PdfALevel.A2u, pdf => pdf.Stream(12, "", OneToUnicode("0000")));
+        var result = Convert(file, PdfALevel.A2u);
+        Assert.Contains(result.Remaining, i => i.Clause == "6.2.11.7.2");
+        using var document = PdfDocument.Open(result.Bytes!);
         Assert.Equal("A", FontOf(document).Decode([0x41])[0].Unicode);
+    }
+
+    [Fact]
+    public void ACodeWithoutTextInALatinFontWithNoMapIsReportedAtLevelU()
+    {
+        byte[] file = ArialPage("/Encoding /WinAnsiEncoding", "32", "<4101> Tj", PdfALevel.A2u);
+        Assert.Contains(Convert(file, PdfALevel.A2u).Remaining, i => i.Clause == "6.2.11.7.2");
+        Clean(Convert(ArialPage("/Encoding /WinAnsiEncoding", "32", "<41> Tj", PdfALevel.A2u), PdfALevel.A2u));
+    }
+
+    private static byte[] ByteCoded(string toUnicode)
+    {
+        var arial = Installed("arial.ttf");
+        int h = arial.GlyphForCodePoint('H'), i = arial.GlyphForCodePoint('i');
+        byte[] program = File.ReadAllBytes(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "arial.ttf"));
+        string cmap = "/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /Byte def /CMapType 1 def 1 begincodespacerange <00> <FF> endcodespacerange " +
+                      $"2 begincidchar <69> {h} <6A> {i} endcidchar endcmap CMapName currentdict /CMap defineresource pop end end";
+        return StandardsKit.Compliant(PdfALevel.A2u, content: "BT /F1 12 Tf 20 20 Td <696A> Tj ET", resources: "/Font <</F1 9 0 R>>", extra: pdf =>
+        {
+            pdf.Obj(9, "<</Type /Font /Subtype /Type0 /BaseFont /Arial /Encoding 13 0 R /DescendantFonts [12 0 R] /ToUnicode 14 0 R>>");
+            pdf.Stream(10, $"/Length1 {program.Length}", program);
+            pdf.Obj(11, "<</Type /FontDescriptor /FontName /Arial /Flags 32 /FontBBox [-665 -325 2000 1006] /ItalicAngle 0 /Ascent 905 /Descent -212 /CapHeight 716 /StemV 80 /FontFile2 10 0 R>>");
+            pdf.Obj(12, $"<</Type /Font /Subtype /CIDFontType2 /BaseFont /Arial /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >> /FontDescriptor 11 0 R /DW 1000 /W [{h} [722] {i} [222]] /CIDToGIDMap /Identity>>");
+            pdf.Stream(13, "/Type /CMap /CMapName /Byte /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >>", cmap);
+            pdf.Stream(14, "", toUnicode);
+        });
+    }
+
+    [Fact]
+    public void ACompositeFontUnderAOneByteCMapGetsTheTextItsMapLacks()
+    {
+        const string head = "/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /X def 1 begincodespacerange <00> <FF> endcodespacerange ";
+        const string tail = " endcmap CMapName currentdict /CMap defineresource pop end end";
+        foreach (string toUnicode in new[] { head + "1 beginbfchar <69> <0000> endbfchar" + tail, head + "1 beginbfchar <69> <0048> endbfchar" + tail })
+        {
+            using var document = PdfDocument.Open(Clean(Convert(ByteCoded(toUnicode), PdfALevel.A2u)));
+            var written = CMap.Parse(document.Data(document.Stream(FontOf(document).Dictionary, "ToUnicode")!, 1 << 16));
+            Assert.Equal("H", written.UnicodeOf(0x69, 1));
+            Assert.Equal("i", written.UnicodeOf(0x6A, 1));
+        }
     }
 
     [Fact]
@@ -404,7 +460,7 @@ public class PdfAFontFixTests
             pdf.Stream(8, "", toUnicode);
         });
         using var document = PdfDocument.Open(Clean(Convert(file, PdfALevel.A2u)));
-        Assert.All(FontOf(document).Decode([0, 0x22, 0, 0x23]), c => Assert.True(c.Unicode is { Length: > 0 } && c.Unicode != " "));
+        Assert.Equal(["A", "B"], FontOf(document).Decode([0, 0x22, 0, 0x23]).Select(c => c.Unicode));
     }
 
     [Fact]
@@ -427,17 +483,70 @@ public class PdfAFontFixTests
         using (var document = PdfDocument.Open(result.Bytes!)) Assert.Equal("StandardEncoding", document.Name(FontOf(document).Dictionary, "Encoding"));
 
         byte[] listed = FontPage("arial.ttf", "/Encoding << /Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences [39 /quoteright] >>", "32", "(') Tj", PdfALevel.A2b, patch: MacOnly);
-        using var kept = PdfDocument.Open(Convert(listed).Bytes!);
-        Assert.NotNull(kept.Array(kept.Dict(FontOf(kept).Dictionary, "Encoding")!, "Differences"));
+        var kept = Convert(listed);
+        Assert.Contains(kept.Remaining, i => i.Clause == "6.2.11.6" && i.Message == PdfAText.TrueTypeDifferences);
+        using var after = PdfDocument.Open(kept.Bytes!);
+        Assert.NotNull(after.Array(after.Dict(FontOf(after).Dictionary, "Encoding")!, "Differences"));
     }
 
     [Fact]
     public void ASymbolicFontWithoutAUnicodeCmapIsNotMadeNonSymbolic()
     {
         Assert.True(File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "symbol.ttf")), "symbol.ttf is not installed; this test needs it");
-        byte[] file = FontPage("symbol.ttf", "/Encoding /MacRomanEncoding", "4", "<80> Tj", PdfALevel.A2b);
+        byte[] file = FontPage("symbol.ttf", "/Encoding /WinAnsiEncoding", "4", "<B0> Tj", PdfALevel.A2b);
         var result = Convert(file);
+        Assert.Contains(result.Remaining, i => i.Clause == "6.2.11.6");
         using var document = PdfDocument.Open(result.Bytes!);
         Assert.Equal(4, document.Integer(Descriptor(document), "Flags"));
+        Assert.Equal("WinAnsiEncoding", document.Name(FontOf(document).Dictionary, "Encoding"));
+    }
+
+    [Fact]
+    public void ASymbolicFontWhoseNamesReachOtherGlyphsThroughMacRomanKeepsItsEncoding()
+    {
+        byte[] file = FontPage("arial.ttf", "/Encoding /StandardEncoding", "4", "(') Tj", PdfALevel.A2b, patch: MacOnly);
+        var result = Convert(file);
+        Assert.Contains(result.Remaining, i => i.Clause == "6.2.11.6");
+        using var document = PdfDocument.Open(result.Bytes!);
+        Assert.Equal("StandardEncoding", document.Name(FontOf(document).Dictionary, "Encoding"));
+        Assert.Equal(4, document.Integer(Descriptor(document), "Flags"));
+    }
+
+    private static List<string> DifferenceNames(PdfDocument document)
+    {
+        var encoding = document.Dict(FontOf(document).Dictionary, "Encoding");
+        return encoding is null ? [] : document.Array(encoding, "Differences")!.Items.Select(document.Resolve).OfType<PdfName>().Select(n => n.Value).ToList();
+    }
+
+    [Fact]
+    public void ATrueTypeFontWithNoEncodingStartsFromStandardEncoding()
+    {
+        byte[] none = ArialPage("", "32", "(') Tj");
+        using (var document = PdfDocument.Open(Clean(Convert(none)))) Assert.Equal("’", FontOf(document).Decode("'"u8)[0].Unicode);
+
+        byte[] noBase = ArialPage("/Encoding << /Type /Encoding /Differences [65 /B] >>", "32", "(`A) Tj");
+        using var written = PdfDocument.Open(Clean(Convert(noBase)));
+        Assert.Equal(["‘", "B"], FontOf(written).Decode("`A"u8).Select(c => c.Unicode));
+    }
+
+    [Fact]
+    public void NamesOutsideTheGlyphListAreNotLeftInTheDifferences()
+    {
+        byte[] file = ArialPage("/Encoding << /Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences [65 /a1 66 /A.sc] >>", "32", "(AB) Tj");
+        using var document = PdfDocument.Open(Clean(Convert(file)));
+        Assert.DoesNotContain(DifferenceNames(document), n => n is "a1" or "A.sc");
+
+        byte[] pinned = ArialPage("/Encoding << /Type /Encoding /Differences [65 /uni01F8] >>", "32", "(A) Tj");
+        Assert.Contains(Convert(pinned).Remaining, i => i.Clause == "6.2.11.6");
+    }
+
+    [Fact]
+    public void AMacOsRomanNameAndAPostNameAreNotMistakenForTheCode()
+    {
+        byte[] mac = FontPage("arial.ttf", "/Encoding << /Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences [65 /infinity] >>", "32", "(A) Tj", PdfALevel.A2b, patch: MacOnly);
+        Assert.Contains(Convert(mac).Remaining, i => i.Message == PdfAText.TrueTypeDifferences);
+
+        byte[] post = FontPage("arial.ttf", "/Encoding << /Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences [65 /.null] >>", "32", "(A) Tj", PdfALevel.A2b, patch: NamedGlyphs);
+        Assert.Contains(Convert(post).Remaining, i => i.Message == PdfAText.TrueTypeDifferences);
     }
 }

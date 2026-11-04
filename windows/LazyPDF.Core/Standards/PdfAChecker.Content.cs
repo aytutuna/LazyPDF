@@ -24,29 +24,12 @@ internal sealed partial class PdfAChecker
     private const int MaxFontCodes = 70_000;
     private const int MaxOperations = 10_000_000;
 
-    private const long MaxStreamBytes = 64L << 20;
-
-    // The interpreter's limits on a form: the most operations it runs, how deep forms nest, and how many it keeps parsed. It skips a longer or
-    // deeper form without a trace, and inflates a form that did not fit in its cache again at every paint.
-    private const int MaxFormOperations = 1_000_000;
-    private const int MaxFormDepth = 20;
-    private const int MaxCachedForms = 1024;
-    private const long MaxCachedOperations = 4_000_000;
-
-    private readonly record struct FormCost(int Operations, long Size, bool Nests);
-
     private static readonly string[] RenderingIntents = ["AbsoluteColorimetric", "RelativeColorimetric", "Saturation", "Perceptual"];
 
     private readonly HashSet<PdfDictionary> _resourcesSeen = new(ReferenceEqualityComparer.Instance);
     private readonly HashSet<PdfStream> _streamsSeen = new(ReferenceEqualityComparer.Instance);
     private readonly HashSet<(string Family, string Where, PdfDictionary? Scope)> _deviceUses = [];
-    private readonly Dictionary<PdfStream, FormCost> _formCosts = new(ReferenceEqualityComparer.Instance);
-    private readonly HashSet<PdfStream> _cachedForms = new(ReferenceEqualityComparer.Instance);
-    private long _cachedOperations;
     private readonly HashSet<PdfDictionary> _renderedFonts = new(ReferenceEqualityComparer.Instance);
-
-    // Bytes of content read and operations run, all pages, forms and appearances together; the interpreter limits one run only.
-    private long _work;
     private readonly Dictionary<string, string> _separations = [];
     private int _scanDepth;
 
@@ -61,10 +44,6 @@ internal sealed partial class PdfAChecker
     private string ClauseState => C("6.2.8", "6.2.5");
     private string ClauseIntent => C("6.2.9", "6.2.6");
 
-    internal long MaxWork { get; init; } = 1L << 30;
-
-    private bool OverBudget => _work > MaxWork;
-
     private void CheckPages()
     {
         var interpreter = new ContentInterpreter(_doc);
@@ -76,6 +55,7 @@ internal sealed partial class PdfAChecker
             string where = PdfAText.PageName(i + 1);
             CheckGroup(page.Dictionary, where, page.Resources, true);
             CheckTriggers(page.Dictionary, where, false);
+            if (Part is 2 or 3 && page.Dictionary.ContainsKey("AA")) Add("6.5.2", where, PdfAText.PageTriggers);
             ScanResources(page.Resources, where);
             try
             {
@@ -92,8 +72,6 @@ internal sealed partial class PdfAChecker
         if (OverBudget) Unreadable(PdfAText.PageName(Math.Max(1, i)));
     }
 
-    private void Unreadable(string where) => Add("6.1.7", where, OverBudget ? PdfAText.TooMuchContent : PdfAText.ContentUnreadable);
-
     private void UseDevice(string family, string where, PdfDictionary? scope)
     {
         if (!_deviceUses.Add((family, where, scope))) return;
@@ -109,40 +87,16 @@ internal sealed partial class PdfAChecker
     // A default space counts in the resource dictionary of the content that uses the device space (ISO 32000-1 8.6.5.6).
     private bool HasDefault(PdfDictionary? scope, string name) => _doc.Dict(scope, "ColorSpace")?.ContainsKey(name) == true;
 
-    // A form is parsed once but run at every paint, so each paint costs its operations, and the bytes inflated again when the interpreter has no room
-    // to keep it. A form that could not be read may be inflated again at every paint, so it costs what that takes at most.
-    private void Charge(PdfStream form, string where)
-    {
-        long cost = MaxStreamBytes;
-        if (_formCosts.TryGetValue(form, out var known))
-        {
-            if (known.Operations > MaxFormOperations) Add("6.1.7", where, PdfAText.TooMuchContent);
-            cost = known.Operations + (IsKept(form, known.Operations) ? 0 : known.Size);
-        }
-        _work += cost + 1;
-        if (OverBudget) throw PdfReadException.Damaged(PdfAText.TooMuchContent);
-    }
-
-    // Follows the interpreter's cache, which takes forms in the order they are first painted and keeps a form it skipped as empty.
-    private bool IsKept(PdfStream form, int operations)
-    {
-        if (_cachedForms.Contains(form)) return true;
-        int held = operations > MaxFormOperations ? 0 : operations;
-        if (_cachedForms.Count >= MaxCachedForms || _cachedOperations + held > MaxCachedOperations) return false;
-        _cachedForms.Add(form);
-        _cachedOperations += held;
-        return true;
-    }
-
     private IReadOnlyList<ContentOperation> CheckContent(byte[] data, string where)
     {
         int depth = 0, deepest = 0;
         _work += data.Length;
-        if (HasBadHexString(data, true)) Add("6.1.6", where, PdfAText.HexString);
         var operations = ContentParser.Parse(data, MaxOperations);
+        if (HasBadHexString(data, operations)) Add("6.1.6", where, PdfAText.HexString);
         foreach (var op in operations)
         {
             foreach (var operand in op.Operands) CheckOperand(operand, where);
+            if (op.Image is not null) CheckOperand(op.Image.Dictionary, where);
             switch (op.Operator)
             {
                 case "q":
@@ -237,7 +191,11 @@ internal sealed partial class PdfAChecker
 
     private void CheckExtGState(PdfDictionary state, string where)
     {
-        if (_doc.Dict(state, "SMask") is { } mask && _doc.Stream(mask, "G") is { } group) ScanText(group, _doc.Dict(group.Dictionary, "Resources"), where);
+        if (_doc.Dict(state, "SMask") is { } mask && _doc.Stream(mask, "G") is { } group)
+        {
+            CheckFormStream(group, where);
+            ScanText(group, _doc.Dict(group.Dictionary, "Resources"), where, false);
+        }
         if (state.ContainsKey("TR")) Add(ClauseState, where, PdfAText.TransferFunction);
         if (state.ContainsKey("TR2") && _doc.Name(state, "TR2") != "Default") Add(ClauseState, where, PdfAText.TransferFunction);
         if (state.ContainsKey("HTP")) Add(ClauseState, where, PdfAText.Halftone);
@@ -269,16 +227,7 @@ internal sealed partial class PdfAChecker
         CheckGroup(d, where, resources, false);
         ScanResources(resources, where);
         if (OverBudget) return;
-        try
-        {
-            byte[] data = _doc.Data(form, MaxStreamBytes);
-            var operations = CheckContent(data, where);
-            _formCosts[form] = new FormCost(operations.Count, data.Length, operations.Any(o => o.Operator is "Do" or "scn" or "SCN"));
-        }
-        catch (PdfReadException)
-        {
-            Unreadable(where);
-        }
+        Measure(form, where);
     }
 
     private void CheckImage(PdfStream image, string where)
@@ -409,14 +358,27 @@ internal sealed partial class PdfAChecker
     private void NoteGlyph(ContentContext context, in GlyphInfo glyph, string where, PdfDictionary? scope)
     {
         int mode = context.State.RenderMode % 4;
-        if (mode is 0 or 2) UseColor(context.State.FillColor, where, scope);
-        if (mode is 1 or 2) UseColor(context.State.StrokeColor, where, scope);
+        if (mode is 0 or 2)
+        {
+            UseColor(context.State.FillColor, where, scope);
+            ScanCell(context.State.FillColor, where, scope);
+        }
+        if (mode is 1 or 2)
+        {
+            UseColor(context.State.StrokeColor, where, scope);
+            ScanCell(context.State.StrokeColor, where, scope);
+        }
         var font = glyph.Font;
         if (context.State.RenderMode != 3) _renderedFonts.Add(font.Dictionary);
         int key = font.IsComposite ? glyph.Character.Cid : glyph.Code;
         if ((uint)key > 0xFFFF) return;
-        var used = UsesOf(font.Dictionary, where, scope);
-        if (used.Count >= MaxFontCodes || !used.Add(key) || font.IsType3) return;
+        var used = UsesOf(font.Dictionary);
+        if (used.Count >= MaxFontCodes || !used.Add(key)) return;
+        if (font.IsType3)
+        {
+            ScanProcedure(font, glyph.Code, scope, where);
+            return;
+        }
         double? program = font.IsComposite ? font.ProgramCidWidth(key) : font.ProgramWidth(key);
         if (program is { } own && Math.Abs(own - glyph.Character.Width) > 1)
             Add(C("6.3.6", "6.2.11.5"), PdfAText.FontName(font.BaseFont), PdfAText.WidthDiffers(key, glyph.Character.Width, own));
@@ -426,17 +388,24 @@ internal sealed partial class PdfAChecker
     {
         // The resources whose Default spaces apply: those of the innermost form that has any, else the page's.
         private readonly Stack<PdfDictionary?> _scopes = new([resources]);
+        private readonly HashSet<PdfStream> _patterns = new(ReferenceEqualityComparer.Instance);
 
-        public override void ShowGlyph(ContentContext context, in GlyphInfo glyph) => checker.NoteGlyph(context, glyph, where, _scopes.Peek());
+        public override void ShowGlyph(ContentContext context, in GlyphInfo glyph)
+        {
+            checker.UseMask(context, where, _scopes.Peek());
+            checker.NoteGlyph(context, glyph, where, _scopes.Peek());
+        }
 
         public override void PaintPath(ContentContext context, PathInfo path)
         {
+            checker.UseMask(context, where, _scopes.Peek());
             if (path.Fill) checker.UseColor(context.State.FillColor, where, _scopes.Peek());
             if (path.Stroke) checker.UseColor(context.State.StrokeColor, where, _scopes.Peek());
         }
 
         public override void PaintImage(ContentContext context, ImageInfo image)
         {
+            checker.UseMask(context, where, _scopes.Peek());
             if (image.Stream is { } stream)
             {
                 checker.CheckImage(stream, where);
@@ -446,21 +415,37 @@ internal sealed partial class PdfAChecker
             {
                 checker.CheckInlineImage(image.Dictionary, where, _scopes.Peek());
             }
-            if (image.IsMask) checker.UseColor(context.State.FillColor, where, _scopes.Peek());
+            if (!image.IsMask) return;
+            checker.UseColor(context.State.FillColor, where, _scopes.Peek());
+            checker.ScanCell(context.State.FillColor, where, _scopes.Peek());
         }
 
-        public override void PaintShading(ContentContext context, ShadingInfo shading) => checker.CheckShading(shading.Shading, where, _scopes.Peek(), true);
+        public override void PaintShading(ContentContext context, ShadingInfo shading)
+        {
+            checker.UseMask(context, where, _scopes.Peek());
+            checker.CheckShading(shading.Shading, where, _scopes.Peek(), true);
+        }
 
         public override void BeginForm(ContentContext context, FormInfo form)
         {
             checker.CheckFormStream(form.Stream, where);
             checker.Charge(form.Stream, where);
-            if (context.Forms.Count >= MaxFormDepth && checker._formCosts.TryGetValue(form.Stream, out var cost) && cost.Nests)
-                checker.Add("6.1.7", where, PdfAText.TooMuchContent);
             _scopes.Push(checker._doc.Dict(form.Stream.Dictionary, "Resources") ?? _scopes.Peek());
+            if (context.Forms.Count >= MaxFormDepth && checker.SkipsContent(form.Stream, context, Find, _patterns)) checker.Add("6.1.7", where, PdfAText.TooMuchContent);
+            if (form.IsPattern) _patterns.Add(form.Stream);
             checker.CheckGroup(form.Stream.Dictionary, where, _scopes.Peek(), true);
         }
 
         public override void EndForm(ContentContext context, FormInfo form) => _scopes.Pop();
+
+        // The interpreter looks a name up in the innermost resources that have the category, then outwards.
+        private PdfObject? Find(string category, string name)
+        {
+            foreach (var scope in _scopes)
+            {
+                if (checker._doc.Dict(scope, category) is { } entries && entries.ContainsKey(name)) return checker._doc.Resolve(entries[name]);
+            }
+            return null;
+        }
     }
 }

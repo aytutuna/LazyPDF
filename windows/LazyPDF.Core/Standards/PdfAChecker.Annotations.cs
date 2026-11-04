@@ -42,6 +42,7 @@ internal sealed partial class PdfAChecker
             }
             if (subtype == "FileAttachment" && Part == 4) Add("6.3.1", where, PdfAText.EmbeddedFile);
             if (IsPart1 && (_doc.Number(annotation, "CA") is < 1)) Add(ClauseTransparency, where, PdfAText.Opacity);
+            if (subtype == "Widget" && annotation.ContainsKey("A")) Add(C("6.6.1", "6.4.1"), where, PdfAText.WidgetAction);
             CheckAction(annotation["A"], where);
             CheckTriggers(annotation, where, subtype == "Widget");
             if (IsPart1 && _intentComponents != 3 && (HasColor(annotation, "C") || HasColor(annotation, "IC"))) Add("6.5.3", where, PdfAText.AnnotationColor);
@@ -103,11 +104,16 @@ internal sealed partial class PdfAChecker
         return null;
     }
 
+    // Widgets and fields may not have an /AA through part 3 (6.6.2, 6.4.1); part 4 drops that ban and limits the keys of every other owner (6.6.3).
     private void CheckTriggers(PdfDictionary owner, string where, bool field)
     {
         if (_doc.Dict(owner, "AA") is not { } triggers) return;
-        if (field) Add(C("6.6.2", "6.5.2"), where, PdfAText.FieldTriggers);
-        foreach (var (_, action) in triggers.Entries.Take(64)) CheckAction(action, where);
+        if (field && Part != 4) Add(C("6.6.2", "6.4.1"), where, PdfAText.FieldTriggers);
+        foreach (var (key, action) in triggers.Entries.Take(64))
+        {
+            if (Part == 4 && !field && key is not ("E" or "X" or "D" or "U" or "Fo" or "Bl")) Add("6.6.3", where, PdfAText.TriggerKey(key));
+            CheckAction(action, where);
+        }
     }
 
     // An action is judged once wherever it is reached from, and a /Next chain is followed to its end: a loop or a shared tail, array or action, costs nothing more.
@@ -170,7 +176,7 @@ internal sealed partial class PdfAChecker
         {
             var field = stack.Pop();
             if (!visited.Add(field)) continue;
-            if (field.ContainsKey("AA")) Add(C("6.6.2", "6.5.2"), PdfAText.Form, PdfAText.FieldTriggers);
+            if (field.ContainsKey("AA") && Part != 4) Add(C("6.6.2", "6.4.1"), PdfAText.Form, PdfAText.FieldTriggers);
             foreach (var kid in _doc.Array(field, "Kids")?.Items.Take(MaxAnnotations) ?? [])
             {
                 if (_doc.Resolve(kid) is PdfDictionary child) stack.Push(child);

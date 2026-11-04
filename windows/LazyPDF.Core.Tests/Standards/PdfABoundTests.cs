@@ -200,7 +200,7 @@ public class PdfABoundTests
             {
                 pdf.Stream(9, "/Type /XObject /Subtype /Form /BBox [0 0 100 100]", new string(' ', 2 << 20));
                 for (int i = 0; i < small; i++) pdf.Stream(20 + i, "/Type /XObject /Subtype /Form /BBox [0 0 10 10]", "q Q");
-            }), 16 << 20);
+            }), 8 << 20);
         Assert.Contains(Run(20).Issues, i => i.Message == PdfAText.TooMuchContent);
         Assert.DoesNotContain(Run(1).Issues, i => i.Message == PdfAText.TooMuchContent);
     }
@@ -263,6 +263,13 @@ public class PdfABoundTests
         Assert.Contains("6.1.6", StandardsKit.Clauses(StandardsKit.Compliant(content: "/Span <</X <ABC>>> BDC EMC")));
         StandardsKit.AssertClean(StandardsKit.Compliant(content: "/Span <</X <ABCD>>> BDC EMC"));
         StandardsKit.AssertClean(StandardsKit.Compliant(content: "q BI /W 2 /H 1 /BPC 8 /CS /G ID <( EI Q"));
+    }
+
+    [Fact]
+    public void InlineImageDataEndsWhereTheParserEndsIt()
+    {
+        Assert.DoesNotContain("6.1.6", StandardsKit.Clauses(StandardsKit.Compliant(content: "q BI /W 8 /H 1 /BPC 8 /CS /G ID a EI <z EI Q")));
+        Assert.Contains("6.1.6", StandardsKit.Clauses(StandardsKit.Compliant(content: "q BI /W 1 /H 1 /BPC 8 /CS /G ID a EI <z> Q")));
     }
 
     [Fact]
