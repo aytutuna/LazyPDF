@@ -16,6 +16,7 @@ public static class XlsxWriter
     private const int MaxSheets = 1000;
     private const int MaxColumns = 64;
     private const double ColumnGap = 6;
+    private const int MaxSheetRows = 1048576, MaxSheetColumns = 16384, MaxCellChars = 32767;
 
     public static byte[] Make(ExportDocument document)
     {
@@ -83,9 +84,10 @@ public static class XlsxWriter
         return ExportZip.Make(entries);
     }
 
-    private static string Sheet(List<List<string>> rows)
+    private static string Sheet(List<List<string>> all)
     {
-        int columns = rows.Count == 0 ? 1 : Math.Max(1, rows.Max(r => r.Count));
+        var rows = all.Count > MaxSheetRows ? all.GetRange(0, MaxSheetRows) : all;
+        int columns = rows.Count == 0 ? 1 : Math.Clamp(rows.Max(r => r.Count), 1, MaxSheetColumns);
         var sb = new StringBuilder(Header);
         sb.Append("<worksheet xmlns=\"").Append(Main).Append("\"><dimension ref=\"A1:").Append(Column(columns - 1)).Append(I(Math.Max(1, rows.Count))).Append("\"/><cols>");
         for (int c = 0; c < columns; c++)
@@ -97,10 +99,11 @@ public static class XlsxWriter
         for (int r = 0; r < rows.Count; r++)
         {
             sb.Append("<row r=\"").Append(I(r + 1)).Append("\">");
-            for (int c = 0; c < rows[r].Count; c++)
+            for (int c = 0; c < Math.Min(rows[r].Count, columns); c++)
             {
                 string text = rows[r][c];
                 if (text.Length == 0) continue;
+                if (text.Length > MaxCellChars) text = text[..MaxCellChars];
                 string at = Column(c) + I(r + 1);
                 if (TryNumber(text, out double number))
                     sb.Append("<c r=\"").Append(at).Append("\"><v>").Append(number.ToString("R", CultureInfo.InvariantCulture)).Append("</v></c>");
@@ -139,10 +142,11 @@ public static class XlsxWriter
             int index = 0;
             foreach (var line in row.OrderBy(l => l.Bounds.X))
             {
-                int column = aligned ? starts.FindLastIndex(s => s <= line.Bounds.X + ColumnGap / 2) : index;
+                int column = aligned ? starts.FindLastIndex(s => s <= line.Bounds.X + ColumnGap / 2) : Math.Min(index, MaxSheetColumns - 1);
                 while (cells.Count <= Math.Max(column, 0)) cells.Add("");
                 column = Math.Max(column, 0);
-                cells[column] = cells[column].Length > 0 ? cells[column] + " " + line.Text.Trim() : line.Text.Trim();
+                if (cells[column].Length == 0) cells[column] = line.Text.Trim();
+                else if (cells[column].Length < MaxCellChars) cells[column] += " " + line.Text.Trim();
                 index++;
             }
             grid.Add(cells);

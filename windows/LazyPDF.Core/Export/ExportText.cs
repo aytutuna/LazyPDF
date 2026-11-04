@@ -11,5 +11,6 @@ public static class ExportText
     public static string Slide(int number) => string.Create(CultureInfo.InvariantCulture, $"Slide {number}");
 
     public const string NoUsablePicture = "None of the pictures could be read.";
+    public const string TooLarge = "The document is too large to export.";
     public const string NoFont = "No font file can draw this text.";
 }

@@ -32,6 +32,7 @@ public static class HtmlWriter
             sb.Append("<section id=\"page-").Append(I(page.Index + 1)).Append("\">\n");
             foreach (var block in page.Blocks)
             {
+                CheckLength(sb, Encoded(block, false));
                 if (block is ExportParagraph { Item: { } item } listed)
                 {
                     if (lists.Count > 0 && item.ListId != listId) CloseLists(0);
@@ -83,7 +84,9 @@ public static class HtmlWriter
             CloseLists(0);
             sb.Append("</section>\n");
         }
-        return sb.Append("</body>\n</html>\n").ToString();
+        sb.Append("</body>\n</html>\n");
+        CheckLength(sb);
+        return sb.ToString();
     }
 
     /// <summary>
@@ -122,6 +125,7 @@ public static class HtmlWriter
                 sb.Append("</span>\n");
             }
             sb.Append("</div>\n");
+            CheckLength(sb);
         }
         return sb.Append("</body>\n</html>\n").ToString();
     }

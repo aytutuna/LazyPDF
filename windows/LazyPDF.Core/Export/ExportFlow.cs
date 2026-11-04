@@ -52,6 +52,7 @@ internal sealed class ExPara
 
 internal static class ExportFlow
 {
+    private const int MaxProbe = 256;
     private const string Bullets = "•◦▪▫●○■□‣⁃∙·▸►▶➢➤✓✔◆◇–—-*";
 
     private static readonly Regex NumberOnly = new(@"^[0-9]{1,3}[.)]$");
@@ -59,17 +60,49 @@ internal static class ExportFlow
 
     public static bool IsMarker(string text) => text.Length == 1 && Bullets.Contains(text[0]) || NumberOnly.IsMatch(text);
 
+    private static int LowerBound(double[] values, double target)
+    {
+        int low = 0, high = values.Length;
+        while (low < high)
+        {
+            int mid = (low + high) >>> 1;
+            if (values[mid] < target) low = mid + 1;
+            else high = mid;
+        }
+        return low;
+    }
+
     /// <summary>
     /// A bullet or number drawn apart from its text, which the text layer may have put in a column
     /// of its own, goes back in front of the text on its row. The marker's place in the order is dropped.
+    /// A line takes one marker.
     /// </summary>
     public static void JoinMarkers(List<ExLine?> lines)
     {
+        var markers = new List<int>();
+        var candidates = new List<int>();
         for (int i = 0; i < lines.Count; i++)
         {
-            if (lines[i] is not { } marker || !IsMarker(marker.Text)) continue;
-            int at = lines.FindIndex(l => l is not null && l != marker && !IsMarker(l.Text) && Math.Abs(l.CenterY - marker.CenterY) <= 0.5 * marker.Size
-                && l.Left > marker.Right - 0.1 * marker.Size && l.Left - marker.Right < 3 * marker.Size);
+            if (lines[i] is not { } line) continue;
+            (IsMarker(line.Text) ? markers : candidates).Add(i);
+        }
+        // Looked up by height, a bounded number at a time, so a page of bare glyphs stays linear.
+        candidates.Sort((a, b) => lines[a]!.CenterY.CompareTo(lines[b]!.CenterY));
+        var heights = candidates.Select(i => lines[i]!.CenterY).ToArray();
+        var joined = new HashSet<int>();
+        foreach (int i in markers)
+        {
+            var marker = lines[i]!;
+            double reach = 0.5 * marker.Size;
+            int k = LowerBound(heights, marker.CenterY - reach);
+            int at = -1;
+            for (int probes = 0; k < heights.Length && heights[k] <= marker.CenterY + reach && probes < MaxProbe; k++, probes++)
+            {
+                int j = candidates[k];
+                var l = lines[j]!;
+                if (joined.Contains(j) || at >= 0 && j > at) continue;
+                if (l.Left > marker.Right - 0.1 * marker.Size && l.Left - marker.Right < 3 * marker.Size) at = j;
+            }
             if (at < 0) continue;
             var text = lines[at]!;
             var runs = new List<ExportRun> { marker.Runs[0] with { Text = marker.Text + " " } };
@@ -84,6 +117,7 @@ internal static class ExportFlow
                 Block = text.Block,
                 IsArtifact = text.IsArtifact,
             };
+            joined.Add(at);
             lines[i] = null;
         }
     }

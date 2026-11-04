@@ -19,6 +19,7 @@ public static class MarkdownWriter
             ExportParagraph? previous = null;
             foreach (var block in page.Blocks)
             {
+                CheckLength(sb, embedImages ? Encoded(block, false) : 0);
                 if (previous?.Item is { } before && !(block is ExportParagraph { Item: { } now } && now.ListId == before.ListId)) sb.Append('\n');
                 switch (block)
                 {
@@ -45,6 +46,7 @@ public static class MarkdownWriter
             }
             if (previous?.Item is not null) sb.Append('\n');
         }
+        CheckLength(sb);
         return sb.ToString().TrimEnd('\n') + (sb.Length > 0 ? "\n" : "");
     }
 

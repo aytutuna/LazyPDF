@@ -130,4 +130,59 @@ public class PdfFromPicturesTests
         Assert.Single(pig.GetPage(1).GetImages());
         Assert.Single(pig.GetPage(2).GetImages());
     }
+
+    // The sample JPEG with an Exif block after its JFIF header that carries the given orientation.
+    private static byte[] Oriented(int orientation, int xDpi = 0, int yDpi = 0)
+    {
+        var jpeg = Jpeg();
+        if (xDpi > 0) (jpeg[13], jpeg[14], jpeg[15], jpeg[16], jpeg[17]) = (1, (byte)(xDpi >> 8), (byte)xDpi, (byte)(yDpi >> 8), (byte)yDpi);
+        byte[] exif = [0xFF, 0xE1, 0, 34, (byte)'E', (byte)'x', (byte)'i', (byte)'f', 0, 0, (byte)'M', (byte)'M', 0, 42, 0, 0, 0, 8,
+            0, 1, 0x01, 0x12, 0, 3, 0, 0, 0, 1, 0, (byte)orientation, 0, 0, 0, 0, 0, 0];
+        int at = 4 + (jpeg[4] << 8 | jpeg[5]);
+        return [.. jpeg[..at], .. exif, .. jpeg[at..]];
+    }
+
+    [Fact]
+    public void ExifOrientationTurnsThePictureAndChoosesThePageShape()
+    {
+        var file = Oriented(6);
+        var made = PdfFromPictures.Create([file], Codec, new PdfPageSetup(Margin: 0));
+        var (document, images) = Reopen(made);
+        var page = document.Pages[0].MediaBox;
+        Assert.True(page.Height > page.Width);
+        var m = images[0].Matrix;
+        Assert.Equal(0, m.A, 6);
+        Assert.Equal(0, m.D, 6);
+        Assert.Equal(6 * 72 / 96.0, m.C, 6);
+        Assert.Equal(-8 * 72 / 96.0, m.B, 6);
+        Assert.Equal(file, document.RawData(images[0].Stream!));
+    }
+
+    [Fact]
+    public void AMirroredOrientationFlipsTheMatrixAndFitToPictureSwapsSides()
+    {
+        var made = PdfFromPictures.Create([Oriented(2), Oriented(8)], Codec, new PdfPageSetup(PdfPaper.Picture, Margin: 0));
+        var (document, images) = Reopen(made);
+        Assert.True(images[0].Matrix.A < 0);
+        var turned = document.Pages[1].MediaBox;
+        Assert.Equal(6 * 72 / 96.0, turned.Width, 6);
+        Assert.Equal(8 * 72 / 96.0, turned.Height, 6);
+    }
+
+    [Fact]
+    public void DensityOfBothAxesIsUsed()
+    {
+        var made = PdfFromPictures.Create([Oriented(1, 200, 100)], Codec, new PdfPageSetup(Margin: 0));
+        var box = Reopen(made).Images[0].Bounds;
+        Assert.Equal(8 * 72 / 200.0, box.Width, 4);
+        Assert.Equal(6 * 72 / 100.0, box.Height, 4);
+    }
+
+    [Theory]
+    [InlineData(300)]
+    [InlineData(297.638)]
+    public void AMarginThatLeavesNoRoomIsRefused(double margin)
+    {
+        Assert.Throws<ArgumentException>(() => PdfFromPictures.Create([Jpeg()], Codec, new PdfPageSetup(Margin: margin)));
+    }
 }

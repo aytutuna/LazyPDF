@@ -23,6 +23,7 @@ public static class RtfWriter
             if (page.Index != document.Pages[0].Index) sb.Append(@"\page").Append('\n');
             foreach (var block in page.Blocks)
             {
+                CheckLength(sb, Encoded(block, true));
                 switch (block)
                 {
                     case ExportParagraph paragraph:
@@ -37,7 +38,9 @@ public static class RtfWriter
                 }
             }
         }
-        return sb.Append('}').ToString();
+        sb.Append('}');
+        CheckLength(sb);
+        return sb.ToString();
     }
 
     private static void Paragraph(StringBuilder sb, ExportParagraph paragraph, Dictionary<(int, int), int> counters)
@@ -66,9 +69,9 @@ public static class RtfWriter
 
     private static void Table(StringBuilder sb, ExportTable table, int content)
     {
-        int columns = table.Columns;
+        int columns = Math.Min(table.Columns, DocxWriter.MaxTableColumns);
         if (columns == 0) return;
-        double total = table.Widths?.Sum() ?? 0;
+        double total = table.Widths?.Take(columns).Sum() ?? 0;
         foreach (var row in table.Rows)
         {
             sb.Append(@"\trowd\trgaph108");
@@ -78,7 +81,11 @@ public static class RtfWriter
                 edge += total > 0 ? table.Widths![c] / total * content : (double)content / columns;
                 sb.Append(@"\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx").Append(I((long)Math.Round(edge)));
             }
-            foreach (string cell in row) sb.Append(@"\pard\intbl\fs20 ").Append(Text(cell)).Append(@"\cell");
+            for (int c = 0; c < columns; c++)
+            {
+                string cell = c == columns - 1 && columns < row.Count ? string.Join(" ", row.Skip(c).Where(t => t.Length > 0)) : row[c];
+                sb.Append(@"\pard\intbl\fs20 ").Append(Text(cell)).Append(@"\cell");
+            }
             sb.Append(@"\row").Append('\n');
         }
         sb.Append(@"\pard\par").Append('\n');

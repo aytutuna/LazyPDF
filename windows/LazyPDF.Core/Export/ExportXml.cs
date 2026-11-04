@@ -9,6 +9,20 @@ internal static class ExportXml
 
     public const long EmuPerPoint = 12700;
 
+    // A .NET string holds 1,073,741,791 characters. A writer that builds its file as one string checks the length as it goes and
+    // refuses a document that would pass this, so the failure is a PdfReadException and not an OutOfMemoryException at ToString.
+    private const long MaxOutputChars = 1L << 29;
+
+    public static void CheckLength(StringBuilder sb, long coming = 0)
+    {
+        if (sb.Length + coming > MaxOutputChars) throw new PdfReadException(PdfReadProblem.Unsupported, ExportText.TooLarge);
+    }
+
+    // The characters a picture adds where its bytes are written out at every occurrence.
+    public static long Encoded(ExportBlock block, bool hex) => block is ExportPicture picture
+        ? hex ? 2L * picture.Image.Data.Length : (picture.Image.Data.Length + 2L) / 3 * 4
+        : 0;
+
     // From Lazy Scan's DocxWriter.cs (EscapeXml): characters XML cannot hold are left out.
     public static string Escape(string text)
     {

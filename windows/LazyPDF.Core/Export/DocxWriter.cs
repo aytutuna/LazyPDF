@@ -15,6 +15,7 @@ namespace LazyPDF.Core;
 public static class DocxWriter
 {
     private const int MinTwips = 144, MaxTwips = 31680;
+    internal const int MaxTableColumns = 63;
     private const string W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
     private const string RelNs = "http://schemas.openxmlformats.org/package/2006/relationships";
     private const string OfficeRel = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
@@ -89,6 +90,7 @@ public static class DocxWriter
             if (blocks.Count == 0 && pageBreak) sb.Append("<w:p><w:pPr><w:pageBreakBefore/></w:pPr></w:p>");
             foreach (var block in blocks)
             {
+                CheckLength(sb);
                 any = true;
                 switch (block)
                 {
@@ -117,6 +119,7 @@ public static class DocxWriter
         sb.Append("/><w:pgMar w:top=\"").Append(I(top)).Append("\" w:right=\"").Append(I(right)).Append("\" w:bottom=\"").Append(I(bottom))
             .Append("\" w:left=\"").Append(I(left)).Append("\" w:header=\"").Append(I(Math.Min(top, 720) / 2)).Append("\" w:footer=\"").Append(I(Math.Min(bottom, 720) / 2))
             .Append("\" w:gutter=\"0\"/></w:sectPr></w:body></w:document>");
+        CheckLength(sb);
         return sb.ToString();
     }
 
@@ -151,12 +154,14 @@ public static class DocxWriter
 
     private static void Table(StringBuilder sb, ExportTable table, int contentTwips)
     {
-        int columns = table.Columns;
+        int columns = Math.Min(table.Columns, MaxTableColumns);
         if (columns == 0) return;
-        var widths = new int[columns];
+        // Word stops at 63 columns; what lies beyond joins the last one.
+        var share = new double[columns];
         double total = table.Widths?.Sum() ?? 0;
-        for (int c = 0; c < columns; c++)
-            widths[c] = (int)Math.Max(120, total > 0 ? table.Widths![c] / total * contentTwips : (double)contentTwips / columns);
+        for (int c = 0; c < table.Columns; c++) share[Math.Min(c, columns - 1)] += total > 0 ? table.Widths![c] : 1;
+        var widths = new int[columns];
+        for (int c = 0; c < columns; c++) widths[c] = (int)Math.Max(120, share[c] / share.Sum() * contentTwips);
 
         sb.Append("<w:tbl><w:tblPr><w:tblStyle w:val=\"TableGrid\"/><w:tblW w:w=\"").Append(I(widths.Sum())).Append("\" w:type=\"dxa\"/><w:tblLayout w:type=\"fixed\"/></w:tblPr><w:tblGrid>");
         foreach (int w in widths) sb.Append("<w:gridCol w:w=\"").Append(I(w)).Append("\"/>");
@@ -167,7 +172,8 @@ public static class DocxWriter
             for (int c = 0; c < columns; c++)
             {
                 sb.Append("<w:tc><w:tcPr><w:tcW w:w=\"").Append(I(widths[c])).Append("\" w:type=\"dxa\"/></w:tcPr><w:p>");
-                if (row[c].Length > 0) sb.Append("<w:r><w:t xml:space=\"preserve\">").Append(Escape(row[c])).Append("</w:t></w:r>");
+                string cell = c == columns - 1 && columns < row.Count ? string.Join(" ", row.Skip(c).Where(t => t.Length > 0)) : row[c];
+                if (cell.Length > 0) sb.Append("<w:r><w:t xml:space=\"preserve\">").Append(Escape(cell)).Append("</w:t></w:r>");
                 sb.Append("</w:p></w:tc>");
             }
             sb.Append("</w:tr>");
@@ -260,7 +266,8 @@ public static class DocxWriter
     {
         var boxes = document.Pages.SelectMany(p => p.Blocks.Select(b => (Page: p, b.Bounds))).ToList();
         if (boxes.Count == 0) return (1440, 1440, 1440, 1440);
-        int Clamp(double points, int limit) => Math.Clamp((int)Math.Round(points * 20), 360, Math.Max(360, Math.Min(2880, limit)));
+        // The two margins of an axis take at most two thirds of the paper, so the content width stays positive on a stamp-sized page.
+        int Clamp(double points, int limit) => Math.Clamp((int)Math.Round(points * 20), Math.Min(360, limit), Math.Max(Math.Min(360, limit), Math.Min(2880, limit)));
         int left = Clamp(boxes.Min(b => b.Bounds.X), width / 3);
         int top = Clamp(boxes.Min(b => b.Bounds.Y), height / 3);
         int right = Clamp(boxes.Min(b => b.Page.Width - b.Bounds.X - b.Bounds.Width), width / 3);

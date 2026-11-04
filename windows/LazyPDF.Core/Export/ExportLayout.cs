@@ -8,22 +8,29 @@ namespace LazyPDF.Core;
 public static class ExportLayout
 {
     private const double MinPictureSide = 4;
+    private const long MaxChars = 1L << 26;
+    // Every run costs a line, a paragraph and some markup besides its characters.
+    private const int RunCost = 32;
 
     /// <summary>
     /// Analyses <paramref name="pages"/> (0-based, in the order given; null for all). Pictures
     /// need the <paramref name="codec"/> only for JPEG 2000, JBIG2 and masks on a JPEG.
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">A page index is out of range.</exception>
+    /// <exception cref="PdfReadException">The pages hold more text than the export keeps in memory.</exception>
     public static ExportDocument Analyze(PdfDocument document, IReadOnlyList<int>? pages = null, IImageCodec? codec = null, CancellationToken cancel = default)
     {
         var interpreter = new ContentInterpreter(document) { WalkPatterns = false };
-        var images = new ExportImages(document, codec);
+        var images = new ExportImages(document, codec, cancel);
         var work = new List<PageWork>();
+        long chars = 0;
         foreach (int index in pages ?? Enumerable.Range(0, document.Pages.Count).ToList())
         {
             cancel.ThrowIfCancellationRequested();
             if (index < 0 || index >= document.Pages.Count) throw new ArgumentOutOfRangeException(nameof(pages));
             work.Add(Collect(document, interpreter, images, index));
+            chars += work[^1].Lines.Sum(l => l.Runs.Sum(r => RunCost + (long)r.Text.Length));
+            if (chars > MaxChars) throw new PdfReadException(PdfReadProblem.Unsupported, ExportText.TooLarge);
         }
 
         var dropped = ExportStructure.RunningHeads([.. work.Select(w => (w.Height, (IReadOnlyList<ExRow>)w.Blocks.Where(b => !b.IsTable).SelectMany(b => b.Rows).ToList()))]);
@@ -89,15 +96,27 @@ public static class ExportLayout
         }
 
         bool scanned = text.Chars.Count > 0 && text.Chars.Count(c => c.RenderMode == 3) * 5 >= text.Chars.Count * 4;
+        var matrix = geometry.Matrix;
+        var shown = new PdfMatrix(matrix.A, matrix.B, matrix.C, matrix.D, matrix.E, matrix.F);
         foreach (var info in scan.Images)
         {
             var box = geometry.ToDisplay(info.Bounds);
             if (box.Width < MinPictureSide || box.Height < MinPictureSide) continue;
             // The page picture under the invisible text of an OCR'd scan would only repeat it.
             if (scanned && box.Width >= 0.9 * geometry.Width && box.Height >= 0.9 * geometry.Height) continue;
-            if (images.Get(info) is { } image) work.Pictures.Add(new ExportPicture(box, image));
+            int turn = ExportImageTurn.Of(info.Matrix.Multiply(shown));
+            if (images.Get(info, turn) is not { } image) continue;
+            // A JPEG that could not be turned lies sideways after a quarter turn; at its own shape it is not stretched as well.
+            work.Pictures.Add(new ExportPicture(image.IsJpeg && turn >= 5 ? Fitted(box, image) : box, image));
         }
         return work;
+    }
+
+    private static DisplayRect Fitted(DisplayRect box, ExportImage image)
+    {
+        double scale = Math.Min(box.Width / image.Width, box.Height / image.Height);
+        double w = image.Width * scale, h = image.Height * scale;
+        return new DisplayRect(box.X + (box.Width - w) / 2, box.Y + (box.Height - h) / 2, w, h);
     }
 
     private sealed record WorkBlock(bool IsTable, List<ExRow> Rows);

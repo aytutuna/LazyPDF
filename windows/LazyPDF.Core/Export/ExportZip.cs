@@ -9,14 +9,19 @@ internal sealed record ExportZipEntry(string Name, byte[] Data);
 
 /// <summary>
 /// A minimal zip writer for the Office packages: entries deflated when that is smaller, dated
-/// 1980-01-01, in the order given, with a CRC-32 per entry. No zip64.
+/// 1980-01-01, in the order given, with a CRC-32 per entry. No zip64; a package past 65534 entries or 1 GB is refused with a <see cref="PdfReadException"/>.
 /// </summary>
 internal static class ExportZip
 {
     // 1980-01-01, the earliest date a zip holds: the same bytes on every save.
     private const ushort DosDate = (0 << 9) | (1 << 5) | 1;
 
+    // A MemoryStream stops at 2 GB, so the package is refused well before.
+    private const long MaxPackage = 1L << 30;
+
     private static readonly uint[] Table = MakeTable();
+
+    private static PdfReadException TooLarge() => new(PdfReadProblem.Unsupported, ExportText.TooLarge);
 
     /// <summary>The CRC-32 of zip and PNG (polynomial 0xEDB88320, reflected); pass the previous value to continue.</summary>
     public static uint Crc32(ReadOnlySpan<byte> data, uint crc = 0)
@@ -28,7 +33,8 @@ internal static class ExportZip
 
     public static byte[] Make(IReadOnlyList<ExportZipEntry> entries)
     {
-        if (entries.Count > ushort.MaxValue) throw new ArgumentException("Too many entries for a zip without zip64.", nameof(entries));
+        // 0xFFFF in the end record is the zip64 marker, so that count is already too many.
+        if (entries.Count >= ushort.MaxValue || entries.Sum(e => (long)e.Data.Length) > MaxPackage) throw TooLarge();
         using var output = new MemoryStream();
         using var central = new MemoryStream();
         foreach (var entry in entries)
@@ -44,7 +50,7 @@ internal static class ExportZip
                 method = 8;
             }
             long offset = output.Position;
-            if (offset > uint.MaxValue || stored.LongLength > uint.MaxValue) throw new ArgumentException("The package is too large for a zip without zip64.", nameof(entries));
+            if (offset > uint.MaxValue || stored.LongLength > uint.MaxValue) throw TooLarge();
             ushort version = method == 8 ? (ushort)20 : (ushort)10;
 
             WriteUInt32(output, 0x04034B50);
@@ -85,7 +91,7 @@ internal static class ExportZip
         central.Position = 0;
         central.CopyTo(output);
         long centralSize = output.Position - centralOffset;
-        if (output.Position > uint.MaxValue) throw new ArgumentException("The package is too large for a zip without zip64.", nameof(entries));
+        if (output.Position > uint.MaxValue) throw TooLarge();
 
         WriteUInt32(output, 0x06054B50);
         WriteUInt16(output, 0);
