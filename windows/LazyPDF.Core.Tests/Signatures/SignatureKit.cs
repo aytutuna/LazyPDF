@@ -104,7 +104,7 @@ internal sealed class Pki
     {
         using var key = RSA.Create(2048);
         var request = new CertificateRequest($"CN={name}, O=Lazy Test", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-        request.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
+        if (extension?.Oid?.Value != "2.5.29.19") request.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
         if (extension?.Oid?.Value != "2.5.29.15") request.CertificateExtensions.Add(new X509KeyUsageExtension(usage, true));
         var oids = new OidCollection();
         foreach (string purpose in purposes) oids.Add(new Oid(purpose));
@@ -179,6 +179,10 @@ internal sealed class FakeNetwork : ISignatureTransport
     public DateTimeOffset Issued { get; set; } = Pki.Signing.AddDays(1);
 
     public DateTimeOffset? NextUpdate { get; set; }
+
+    /// <summary>The thisUpdate of the OCSP answers when it is not <see cref="Issued"/>.</summary>
+    public DateTimeOffset? OcspThisUpdate { get; set; }
+
     public X509Extension? CrlExtension { get; set; }
     public List<string> Requests { get; } = [];
 
@@ -335,7 +339,7 @@ internal sealed class FakeNetwork : ISignatureTransport
                 {
                     data.WriteNull(new Asn1Tag(TagClass.ContextSpecific, 0));
                 }
-                data.WriteGeneralizedTime(Issued, omitFractionalSeconds: true);
+                data.WriteGeneralizedTime(OcspThisUpdate ?? Issued, omitFractionalSeconds: true);
                 if (NextUpdate is { } next)
                 {
                     using (data.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 0))) data.WriteGeneralizedTime(next, omitFractionalSeconds: true);

@@ -204,7 +204,7 @@ public class SignatureRoleTests
         long xref = file.Length + text.Length;
         text.Append("xref\n");
         foreach (var (number, offset) in offsets.OrderBy(o => o.Item1)) text.Append($"{number} 1\n{offset:D10} 00000 n \n");
-        text.Append($"trailer\n<</Size {Math.Max(document.NextObjectNumber, objects.Max(o => o.Number) + 1)} /Root {document.Trailer["Root"]} /Prev {document.StartXref}>>\nstartxref\n{xref}\n%%EOF\n");
+        text.Append($"trailer\n<</Size {Math.Max(document.NextObjectNumber, objects.Max(o => o.Number) + 1)} {SignatureRawKit.Kept(document)} /Prev {document.StartXref}>>\nstartxref\n{xref}\n%%EOF\n");
         return [.. file, .. TestPdf.Latin(text.ToString())];
     }
 

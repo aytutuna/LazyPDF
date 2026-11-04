@@ -36,8 +36,6 @@ public static class PdfSignatureVerifier
 
 internal sealed class SignatureChecker
 {
-    private const int MaxBetween = 64;
-
     private readonly PdfDocument _document;
     private readonly byte[] _file;
     private readonly IReadOnlyList<PdfRevision> _revisions;
@@ -216,12 +214,12 @@ internal sealed class SignatureChecker
         int level = 0;
         var changes = SignatureChangeReport.None;
         var kind = report.Kind;
-        if (!IsBlank(ranges.Revision.End, _file.Length))
+        if (!IsBlank(ranges.End, _file.Length))
         {
             PdfDocument signed;
             try
             {
-                signed = PdfDocument.Open(_file.AsSpan(0, ranges.Revision.End).ToArray(), _options.Password);
+                signed = PdfDocument.Open(_file.AsSpan(0, ranges.End).ToArray(), _options.Password);
             }
             catch (PdfReadException)
             {
@@ -230,8 +228,8 @@ internal sealed class SignatureChecker
             if (signed.XrefRebuilt) return Fail(report, SignatureVerdict.Unknown, SignatureProblem.DamagedStructure);
             (level, bool certification) = Level(signed, found.Number);
             if (certification && kind == SignatureKind.Approval) kind = SignatureKind.Certification;
-            var later = _revisions.Where(r => r.End > ranges.Revision.End).ToList();
-            changes = ChangeDetector.Compare(signed, _document, level, Between(later), _signatures) with { RevisionsAfter = later.Count };
+            int later = _revisions.Count(r => r.End > ranges.Revision.End);
+            changes = ChangeDetector.Compare(signed, _document, level, _signatures) with { RevisionsAfter = later };
         }
         else if (kind == SignatureKind.Approval)
         {
@@ -247,19 +245,6 @@ internal sealed class SignatureChecker
             verdict = SignatureVerdict.ChangedAfterSigning;
         }
         return report with { Kind = kind, Certification = (CertificationLevel)level, Changes = changes, Problems = problems, Verdict = verdict };
-    }
-
-    // The revisions between the signed one and the last, opened; null when there are too many or one does not open.
-    private IReadOnlyList<PdfDocument>? Between(List<PdfRevision> later)
-    {
-        if (later.Count > MaxBetween) return null;
-        var documents = new List<PdfDocument>();
-        foreach (var revision in later.Take(later.Count - 1))
-        {
-            try { documents.Add(PdfDocument.Open(_file.AsSpan(0, revision.End).ToArray(), _options.Password)); }
-            catch (PdfReadException) { return null; }
-        }
-        return documents;
     }
 
     // The access permission in force for a signature: 0 for a file that is not certified.
@@ -285,14 +270,8 @@ internal sealed class SignatureChecker
     private static SignatureReport Fail(SignatureReport report, SignatureVerdict verdict, SignatureProblem problem) =>
         report with { Verdict = verdict, Problems = [problem] };
 
-    private bool IsBlank(int from, int to)
-    {
-        for (int i = from; i < to; i++)
-        {
-            if (!PdfLexer.IsWhiteSpace(_file[i])) return false;
-        }
-        return true;
-    }
+    // At most one end-of-line follows the last %%EOF; any more is a tail for the change rules to read, whatever it holds.
+    private bool IsBlank(int from, int to) => _file.AsSpan(from, to - from) is [] or [(byte)'\n'] or [(byte)'\r'] or [(byte)'\r', (byte)'\n'];
 
     // The final file's own copy of the signature object when it is the one in the bytes: decrypted, with references usable.
     private PdfDictionary DictionaryOf(FoundSignature found) =>

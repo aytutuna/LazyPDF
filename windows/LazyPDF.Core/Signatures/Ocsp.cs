@@ -122,7 +122,8 @@ internal sealed class OcspResponse
                 || !CmsBuilder.HashData(algorithm, issuer.PublicKey.EncodedKeyValue.RawData).AsSpan().SequenceEqual(r.KeyHash)) continue;
             if (!SignedBy(issuer)) return (RevocationState.NoData, null, r.ThisUpdate);
             var state = r.Revoked ? RevocationState.Revoked : r.Good ? RevocationState.Good : RevocationState.NoData;
-            if (state == RevocationState.Good && time is { } at && !Covers(r.ThisUpdate, r.NextUpdate, at)) state = RevocationState.NoData;
+            // A "good" newer than the response that carries it was not known when the responder signed (RFC 6960 4.2.2.1).
+            if (state == RevocationState.Good && (r.ThisUpdate > ProducedAt || (time is { } at && !Covers(r.ThisUpdate, r.NextUpdate, at)))) state = RevocationState.NoData;
             return (state, r.RevokedAt, r.ThisUpdate);
         }
         return (RevocationState.NoData, null, default);

@@ -3,6 +3,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using LazyPDF.Core;
 using Xunit;
+using static LazyPDF.Core.Tests.SignatureRawKit;
 
 namespace LazyPDF.Core.Tests;
 
@@ -37,7 +38,7 @@ public class SignatureForgeryTests
         var document = PdfDocument.Open(signed);
         var text = new StringBuilder("\n" + objects);
         long xref = signed.Length + text.Length;
-        text.Append($"xref\n{entries}trailer\n<</Size {document.NextObjectNumber} /Root 1 0 R /Prev {document.StartXref}>>\nstartxref\n{xref}\n%%EOF\n");
+        text.Append($"xref\n{entries}trailer\n<</Size {document.NextObjectNumber}{Kept(document)} /Prev {document.StartXref}>>\nstartxref\n{xref}\n%%EOF\n");
         return [.. signed, .. TestPdf.Latin(text.ToString())];
     }
 
@@ -136,7 +137,7 @@ public class SignatureForgeryTests
         byte[] attacked = AppendSection(padded, StreamObject(9, Encoding.Latin1.GetString(Evil)), "");
 
         Assert.Contains("pay 1,000,000", ViewerText(attacked));
-        AssertChanged(Check(attacked), SignatureChangeKind.PageContent);
+        AssertUnreadable(attacked);
     }
 
     [Fact]
@@ -319,9 +320,7 @@ public class SignatureForgeryTests
 
         byte[] attacked = AppendSection(signed, objects, $"60 1\n{offset:D10} 00000 n \n");
 
-        var report = Check(attacked);
-        Assert.Equal(SignatureVerdict.ChangedAfterSigning, report.Verdict);
-        Assert.Contains(report.Changes.NotAllowed, c => c.Kind == SignatureChangeKind.PageContent && c.Object == content);
+        AssertUnreadable(attacked);
     }
 
     [Fact]
@@ -333,9 +332,7 @@ public class SignatureForgeryTests
         byte[] attacked = AppendSection(first, "", $"{content} 1\n{original:D10} 00000 n \n");
 
         Assert.DoesNotContain("pay 1,000,000", ViewerText(attacked));
-        var report = Check(attacked);
-        Assert.Equal(SignatureVerdict.ChangedAfterSigning, report.Verdict);
-        Assert.Contains(report.Changes.NotAllowed, c => c.Object == content);
+        AssertUnreadable(attacked);
     }
 
     [Fact]
@@ -347,9 +344,7 @@ public class SignatureForgeryTests
 
         byte[] attacked = AppendSection(signed, shadow, "");
 
-        var report = Check(attacked);
-        Assert.Equal(SignatureVerdict.ChangedAfterSigning, report.Verdict);
-        Assert.Contains(report.Changes.NotAllowed, c => c.Object == content);
+        AssertUnreadable(attacked);
     }
 
     [Fact]
@@ -360,7 +355,7 @@ public class SignatureForgeryTests
 
         var reports = SignatureKit.Verify(attacked);
 
-        Assert.Equal(SignatureVerdict.Valid, reports[0].Verdict);
+        Assert.Equal(SignatureVerdict.ChangedAfterSigning, reports[0].Verdict);
     }
 
     // ---- revocation data

@@ -43,7 +43,7 @@ public class SignatureHardeningTests
         var document = PdfDocument.Open(file);
         int contents = ((PdfReference)document.Pages[0].Dictionary["Contents"]!).Number;
         const string Body = "BT /F1 18 Tf 40 300 Td (pay 1,000,000) Tj ET";
-        string tail = $"\n{lead}{contents} 0 obj\n<</Length {Body.Length}>>\nstream\n{Body}\nendstream\nendobj\nxref\ntrailer\n<</Size {document.NextObjectNumber} /Root 1 0 R /Prev {document.StartXref}>>\nstartxref\n{document.StartXref}\n%%EOF\n";
+        string tail = $"\n{lead}{contents} 0 obj\n<</Length {Body.Length}>>\nstream\n{Body}\nendstream\nendobj\nxref\ntrailer\n<</Size {document.NextObjectNumber}{SignatureRawKit.Kept(document)} /Prev {document.StartXref}>>\nstartxref\n{document.StartXref}\n%%EOF\n";
         return [.. file, .. TestPdf.Latin(tail)];
     }
 
@@ -58,7 +58,7 @@ public class SignatureHardeningTests
     }
 
     [Fact]
-    public void Many_later_revisions_do_not_switch_the_unlisted_object_check_off()
+    public void Many_later_updates_do_not_hide_an_unlisted_object()
     {
         byte[] many = Retitled(SignatureChangeTests.Certified(CertificationLevel.Annotate), 20);
 
@@ -67,14 +67,19 @@ public class SignatureHardeningTests
     }
 
     [Fact]
-    public void Revisions_that_cannot_all_be_opened_leave_the_file_unchecked_and_so_changed()
+    public void Seventy_later_updates_are_all_read()
     {
-        byte[] flooded = Retitled(SignatureChangeTests.Certified(CertificationLevel.Annotate), 70);
+        byte[] many = Retitled(SignatureChangeTests.Certified(CertificationLevel.Annotate), 70);
 
-        var report = CheckFirst(flooded);
+        Assert.Equal(SignatureVerdict.Valid, CheckFirst(many).Verdict);
+    }
 
-        Assert.Equal(SignatureVerdict.ChangedAfterSigning, report.Verdict);
-        Assert.Contains(report.Changes.NotAllowed, c => c.Kind == SignatureChangeKind.Other);
+    [Fact]
+    public void More_updates_than_the_checker_reads_leave_the_file_unchecked_and_so_changed()
+    {
+        byte[] flooded = Retitled(SignatureChangeTests.Certified(CertificationLevel.Annotate), 260);
+
+        SignatureRawKit.AssertUnreadable(flooded);
     }
 
     [Fact]

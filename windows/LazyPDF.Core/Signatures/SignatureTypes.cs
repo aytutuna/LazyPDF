@@ -121,6 +121,9 @@ public enum SignatureChangeKind
     PageStructure,
     Form,
     Other,
+
+    /// <summary>What follows the signed bytes cannot be read exactly, so nothing about it can be judged.</summary>
+    Unreadable,
 }
 
 /// <summary>One difference between the signed revision and a later one. <paramref name="Page"/> is 0-based, -1 when no page is involved.</summary>

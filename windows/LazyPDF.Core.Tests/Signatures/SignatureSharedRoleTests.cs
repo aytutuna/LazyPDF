@@ -13,7 +13,7 @@ public class SignatureSharedRoleTests
 
     private static SignatureReport Check(byte[] file) => SignatureKit.Verify(file)[0];
 
-    private static TestPdf Doc(string catalog = "", string page = "/Contents 4 0 R")
+    internal static TestPdf Doc(string catalog = "", string page = "/Contents 4 0 R")
     {
         var pdf = new TestPdf();
         pdf.Obj(1, $"<</Type /Catalog /Pages 2 0 R {catalog}>>");
@@ -24,7 +24,7 @@ public class SignatureSharedRoleTests
         return pdf;
     }
 
-    private static byte[] Sign(TestPdf pdf, CertificationLevel level) =>
+    internal static byte[] Sign(TestPdf pdf, CertificationLevel level) =>
         PdfSigner.Sign(pdf.Finish(), SignatureKit.Request(Pki) with { Certify = level });
 
     private static void AssertNotAllowed(SignatureReport report, SignatureChangeKind? kind = null)
@@ -44,9 +44,7 @@ public class SignatureSharedRoleTests
         byte[] attacked = SignatureForgeryTests.AppendSection(signed, $")>>\nstream\n{Evil}\nendstream\nendobj\n", "");
 
         Assert.Contains("pay 1,000,000", Encoding.Latin1.GetString(PdfDocument.Open(attacked).Pages[0].Contents()));
-        var report = Check(attacked);
-        AssertNotAllowed(report, SignatureChangeKind.PageContent);
-        Assert.Contains(report.Changes.NotAllowed, c => c.Object == 9);
+        AssertNotAllowed(Check(attacked), SignatureChangeKind.Unreadable);
     }
 
     [Fact]
@@ -67,7 +65,7 @@ public class SignatureSharedRoleTests
         byte[] attacked = PdfSigner.Sign(shadowed, new PdfSignRequest(Pki.LeafEc, Pki.Signing.AddDays(1)) { Chain = Pki.Chain, FieldName = "Second" });
 
         Assert.Contains("pay 1,000,000", Encoding.Latin1.GetString(PdfDocument.Open(attacked).Pages[0].Contents()));
-        AssertNotAllowed(Check(attacked), SignatureChangeKind.PageContent);
+        AssertNotAllowed(Check(attacked), SignatureChangeKind.Unreadable);
     }
 
     [Theory]
@@ -164,7 +162,7 @@ public class SignatureSharedRoleTests
         byte[] after = SignatureRoleTests.AppendRaw(before, [.. update]);
 
         var final = PdfDocument.Open(after);
-        return ChangeDetector.Compare(PdfDocument.Open(before), final, 1, [], new HashSet<long> { final.Entries[30].Offset });
+        return ChangeDetector.Compare(PdfDocument.Open(before), final, 1, new HashSet<long> { final.Entries[30].Offset });
     }
 
     [Fact]

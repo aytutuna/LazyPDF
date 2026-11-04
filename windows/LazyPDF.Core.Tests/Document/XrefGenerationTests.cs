@@ -29,7 +29,7 @@ public class XrefGenerationTests
         using var before = PdfDocument.Open(file);
         using var after = PdfDocument.Open(Relisted(file, number));
 
-        var report = ChangeDetector.Compare(before, after, 2, [], new HashSet<long>());
+        var report = ChangeDetector.Compare(before, after, 2, new HashSet<long>());
 
         Assert.Contains(report.Changes, c => c.Object == number && !c.Allowed);
     }

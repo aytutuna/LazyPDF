@@ -246,7 +246,7 @@ public class SignatureAttackTests
         long prev = document.StartXref;
         var sb = new StringBuilder("\n" + objects);
         long xref = signed.Length + sb.Length;
-        sb.Append($"xref\n{entries}trailer\n<</Size {document.NextObjectNumber} /Root 1 0 R /Prev {prev}>>\nstartxref\n{(pointAtOld ? prev : xref)}\n%%EOF\n");
+        sb.Append($"xref\n{entries}trailer\n<</Size {document.NextObjectNumber}{SignatureRawKit.Kept(document)} /Prev {prev}>>\nstartxref\n{(pointAtOld ? prev : xref)}\n%%EOF\n");
         return [.. signed, .. TestPdf.Latin(sb.ToString())];
     }
 
@@ -260,9 +260,7 @@ public class SignatureAttackTests
 
         Assert.Contains("pay 1,000,000", ViewerText(attacked));
         Assert.Empty(PdfDocument.Open(attacked).Repairs);
-        var report = Check(attacked);
-        AssertNotAllowed(report, SignatureChangeKind.PageContent);
-        Assert.Contains(report.Changes.NotAllowed, c => c.Object == 4);
+        AssertNotAllowed(Check(attacked), SignatureChangeKind.Unreadable);
     }
 
     [Fact]
@@ -274,7 +272,7 @@ public class SignatureAttackTests
 
         Assert.True(PdfDocument.Open(attacked).XrefRebuilt);
         Assert.Contains("pay 1,000,000", ViewerText(attacked));
-        AssertNotAllowed(Check(attacked), SignatureChangeKind.Other);
+        AssertNotAllowed(Check(attacked), SignatureChangeKind.Unreadable);
     }
 
     [Fact]
@@ -288,9 +286,7 @@ public class SignatureAttackTests
         byte[] attacked = AppendSection(signed, copy, "", pointAtOld: true);
 
         Assert.DoesNotContain("pay 1,000,000", ViewerText(attacked));
-        var report = Check(attacked);
-        Assert.Equal(SignatureVerdict.ChangedAfterSigning, report.Verdict);
-        Assert.Contains(report.Changes.NotAllowed, c => c.Object == 4);
+        AssertNotAllowed(Check(attacked), SignatureChangeKind.Unreadable);
     }
 
     [Fact]
@@ -305,13 +301,13 @@ public class SignatureAttackTests
     }
 
     [Fact]
-    public void A_stream_that_contains_a_pdf_does_not_look_like_a_hidden_object()
+    public void A_stream_that_contains_a_pdf_is_an_unreferenced_object_and_not_a_hidden_one()
     {
         byte[] signed = SignatureChangeTests.Certified(CertificationLevel.Annotate);
         byte[] inner = PdfDocument.Open(SignatureKit.Plain()).SaveIncremental();
         byte[] attached = SignatureChangeTests.Edit(signed, d => d.Add(new PdfStream(new PdfDictionary(), inner)));
 
-        Assert.Equal(SignatureVerdict.Valid, Check(attached).Verdict);
+        AssertNotAllowed(Check(attached), SignatureChangeKind.Other);
     }
 
     [Fact]

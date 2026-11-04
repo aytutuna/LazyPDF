@@ -1,75 +1,59 @@
 namespace LazyPDF.Core;
 
-// Compares the revision a signature closes with the file as it is, object by object, and says what changed
-// and whether the signature's level allows it. Roles (catalog, form, field, page, annotation) are taken from the
-// signed revision, so nothing a later revision declares can talk its own changes into being allowed.
+// Judges what the updates after a signature changed. UpdateGate has already shown that the bytes are exact; here
+// each object an update lists is compared with its signed copy and judged by what the signed revision used it for
+// (Jobs). An object with more than one job, a new object nothing allowed reaches, a freed object something still
+// names, a changed generation: none of these is allowed. What the rules do not name is not allowed.
 internal sealed partial class ChangeDetector
 {
-    private const int MaxFields = 200_000;
-    private const int MaxDepth = 32;
+    private static readonly SignatureChangeReport Unreadable = new([new SignatureChange(SignatureChangeKind.Unreadable, 0, -1, null, false)], 0);
 
     private readonly PdfDocument _a;
     private readonly PdfDocument _b;
     private readonly int _level;
-    private readonly IReadOnlyList<PdfDocument>? _between;
     private readonly IReadOnlySet<long> _signatures;
+    private readonly Jobs _jobsA;
+    private readonly Jobs _jobsB;
     private readonly List<SignatureChange> _changes = [];
-
-    private readonly int _catalog;
-    private readonly int _info;
-    private readonly int _metadata;
-    private readonly int _acroForm;
-    private readonly int _fieldsArray;
-    private readonly Dictionary<int, int> _pages = [];
-    private readonly Dictionary<int, int> _annots = [];
-    private readonly Dictionary<int, int> _annotArrays = [];
-    private readonly Dictionary<int, FieldNode> _fields = [];
-    private readonly Dictionary<int, int> _widgetFields = [];
     private readonly List<(FieldLockAction Action, HashSet<string> Names)> _locks = [];
-    private HashSet<int>? _content;
-    private HashSet<int>? _reachable;
-    private HashSet<int>? _dss;
-    private HashSet<int>? _foreign;
-    private Dictionary<int, List<int>>? _appearanceOwners;
-    private Dictionary<int, int>? _referenceCounts;
+    private Dictionary<int, int>? _references;
+    private Dictionary<int, int>? _signedReferences;
 
-    private sealed record FieldNode(int Number, string Name, bool IsSignature, bool HasValue);
-
-    private ChangeDetector(PdfDocument before, PdfDocument after, int level, IReadOnlyList<PdfDocument>? between, IReadOnlySet<long> signatures)
+    private ChangeDetector(PdfDocument before, PdfDocument after, int level, IReadOnlySet<long> signatures)
     {
-        _between = between;
-        _signatures = signatures;
         _a = before;
         _b = after;
         _level = level;
-        _catalog = Number(before.Trailer["Root"]);
-        _info = Number(before.Trailer["Info"]);
-        _metadata = Number(before.Catalog["Metadata"]);
-        _acroForm = Number(before.Catalog["AcroForm"]);
-        if (before.Dict(before.Catalog, "AcroForm") is { } form) _fieldsArray = Number(form["Fields"]);
-        for (int i = 0; i < before.Pages.Count; i++)
-        {
-            if (before.Pages[i].Reference is { } page) _pages[page.Number] = i;
-            IndexAnnotations(before.Pages[i], i);
-        }
-        IndexFields();
+        _signatures = signatures;
+        _jobsA = new Jobs(before);
+        _jobsB = new Jobs(after);
+        ReadLocks();
     }
 
     /// <summary>
-    /// The changes from <paramref name="before"/> to <paramref name="after"/> judged at <paramref name="level"/>:
-    /// 0 for a file that is not certified, else the /DocMDP permission 1 to 3. <paramref name="between"/> are the
-    /// revisions in between, which tell an object left over from an earlier update from one that was slipped in;
-    /// null when they could not be opened, which leaves the file unchecked and so not allowed. <paramref name="signatures"/>
-    /// are the offsets of the signature objects in the file whose byte range is sound: only those make a new signature field real.
+    /// The changes from <paramref name="before"/>, the file cut at the end of the signed bytes, to <paramref name="after"/>
+    /// judged at <paramref name="level"/>: 0 for a file that is not certified, else the /DocMDP permission 1 to 3.
+    /// <paramref name="signatures"/> are the offsets of the signature objects in the file whose byte range is sound: only
+    /// those make a new signature field real. Bytes that cannot all be placed exactly are one change that is not allowed.
     /// </summary>
-    public static SignatureChangeReport Compare(PdfDocument before, PdfDocument after, int level, IReadOnlyList<PdfDocument>? between, IReadOnlySet<long> signatures)
+    public static SignatureChangeReport Compare(PdfDocument before, PdfDocument after, int level, IReadOnlySet<long> signatures)
     {
-        var detector = new ChangeDetector(before, after, level, between, signatures);
-        detector.Run();
-        return new SignatureChangeReport(detector._changes, 0);
+        try
+        {
+            if (UpdateGate.Check(before, after) is not { } listing) return Unreadable;
+            var detector = new ChangeDetector(before, after, level, signatures);
+            // Jobs the walk did not reach are jobs nothing will judge.
+            if (!detector._jobsA.Complete || !detector._jobsB.Complete) return Unreadable;
+            detector.Run(listing);
+            // The documents repair as objects are read; a repair the signed revision did not need means a table was not trusted.
+            if (after.Repairs.Except(before.Repairs).Any()) detector.Report(SignatureChangeKind.Unreadable, 0, allowed: false);
+            return new SignatureChangeReport(detector._changes, 0);
+        }
+        catch (PdfReadException)
+        {
+            return Unreadable;
+        }
     }
-
-    private static int Number(PdfObject? value) => value is PdfReference r ? r.Number : 0;
 
     private bool Permits(SignatureChangeKind kind) => kind switch
     {
@@ -84,151 +68,235 @@ internal sealed partial class ChangeDetector
     private void Report(SignatureChangeKind kind, int number, int page = -1, string? field = null, bool? allowed = null) =>
         _changes.Add(new SignatureChange(kind, number, page, field, allowed ?? Permits(kind)));
 
-    private void Run()
-    {
-        if (_b.XrefRebuilt && !_a.XrefRebuilt) Report(SignatureChangeKind.Other, 0, allowed: false);
-        if (Number(_a.Trailer["Root"]) != Number(_b.Trailer["Root"])) Report(SignatureChangeKind.PageStructure, Number(_b.Trailer["Root"]), allowed: false);
-        if (Number(_a.Trailer["Info"]) != Number(_b.Trailer["Info"]) && _b.Trailer["Info"] is not null) Report(SignatureChangeKind.Metadata, Number(_b.Trailer["Info"]));
-        if (_a.Trailer["Encrypt"]?.ToString() != _b.Trailer["Encrypt"]?.ToString()) Report(SignatureChangeKind.Other, 0, allowed: false);
+    private static bool IsListed(PdfDocument.Entry entry) => entry.Kind is PdfDocument.EntryKind.InUse or PdfDocument.EntryKind.Compressed;
 
-        var numbers = new SortedSet<int>(_a.ObjectNumbers);
-        numbers.UnionWith(_b.ObjectNumbers);
-        var added = new List<int>();
-        var removed = new List<int>();
-        foreach (int n in numbers)
+    private void Run(UpdateGate.Listing listing)
+    {
+        foreach (int n in listing.Touched.Order())
         {
-            _a.Entries.TryGetValue(n, out var ea);
-            _b.Entries.TryGetValue(n, out var eb);
-            bool inA = ea.Kind is PdfDocument.EntryKind.InUse or PdfDocument.EntryKind.Compressed;
-            bool inB = eb.Kind is PdfDocument.EntryKind.InUse or PdfDocument.EntryKind.Compressed;
-            if (!inA && !inB) continue;
-            if (inA && inB)
+            _a.Entries.TryGetValue(n, out var before);
+            _b.Entries.TryGetValue(n, out var after);
+            // A cross-reference or object stream an update writes is only plumbing while nothing refers to it: its bytes
+            // are not an object then, and its members are judged one by one. A number the signed revision named is judged as any.
+            if (listing.Plumbing.Contains(n) && !IsListed(before) && !References().ContainsKey(n)) continue;
+            if (IsListed(before) && IsListed(after))
             {
-                var va = Read(_a, n);
-                // An entry the reader had to move to find the object (a scan finds the newest copy in the final file) is no longer the same entry.
-                if (va is not null && ea.Kind == PdfDocument.EntryKind.InUse && ea == eb && _a.Entries[n] == ea && ClosedInSigned(va, ea.Offset)) continue;
-                var vb = Read(_b, n);
-                // An entry the signed revision could not read, a number past its end or an object cut off by it, shows the update's bytes now.
-                if (va is null)
-                {
-                    if (vb is not null) added.Add(n);
-                    continue;
-                }
-                if (vb is null)
-                {
-                    removed.Add(n);
-                    continue;
-                }
-                // References in the signed revision carry the old generation and now read as null, whatever the bytes say.
-                if (ea.Generation != eb.Generation) Removed(n, true);
-                else if (!Same(va, vb)) Modified(n, va, vb);
+                if (before.Generation != after.Generation) Denied(n, _jobsA.Of(n));
+                else if (_a.Get(n) is { } x && _b.Get(n) is { } y && !Same(x, y)) Modified(n, x, y);
             }
-            else if (inB)
+            else if (IsListed(after))
             {
-                added.Add(n);
+                Added(n);
             }
-            else
+            else if (IsListed(before))
             {
-                removed.Add(n);
+                Removed(n);
+            }
+            else if (listing.Defined.Contains(n) && References().ContainsKey(n))
+            {
+                // Given an object and freed again, the reference that was dangling in the signed revision is still there for a scanning viewer to fill.
+                Denied(n, _jobsB.Of(n));
             }
         }
-        var held = removed.Where(Held).ToHashSet();
-        var stillUsed = new HashSet<int>();
-        if (held.Count > 0)
-        {
-            foreach (int m in _b.ObjectNumbers)
-            {
-                if (_b.Get(m) is { } value) Collect(value, held, stillUsed, 0);
-            }
-        }
-        foreach (int n in removed) Removed(n, stillUsed.Contains(n));
-        Unclaimed(added);
-        if (_between is null) Report(SignatureChangeKind.Other, 0, allowed: false);
-        else Orphans();
-    }
-
-    // An object that cannot be read is nothing, as it is for a viewer.
-    private static PdfObject? Read(PdfDocument document, int n) => document.Get(n) is PdfNull ? null : document.Get(n);
-
-    // Bytes the signature covers read the same in both revisions, unless a stream's data only ends past the signed revision.
-    private bool ClosedInSigned(PdfObject value, long offset)
-    {
-        if (offset >= _a.Length) return false;
-        if (value is not PdfStream stream) return true;
-        long end = stream.DataOffset + (_a.Integer(stream.Dictionary, "Length") ?? -1);
-        if (end < stream.DataOffset || end > _a.Length) return false;
-        var source = _a.Source.Span;
-        int at = (int)end;
-        while (at < source.Length && PdfLexer.IsWhiteSpace(source[at])) at++;
-        return source[at..].StartsWith("endstream"u8);
     }
 
     private bool Same(PdfObject a, PdfObject b)
     {
-        if (a is PdfStream sa && b is PdfStream sb)
-        {
-            return Text(sa.Dictionary) == Text(sb.Dictionary) && _a.RawData(sa).AsSpan().SequenceEqual(_b.RawData(sb));
-        }
+        if (a is PdfStream sa && b is PdfStream sb) return Text(sa.Dictionary) == Text(sb.Dictionary) && _a.RawData(sa).AsSpan().SequenceEqual(_b.RawData(sb));
         return a.GetType() == b.GetType() && Text(a) == Text(b);
     }
 
-    private void IndexAnnotations(PdfPage page, int index)
+    // The one kind of use an object has, or null when it has none or several.
+    private static JobKind? OnlyKind(IEnumerable<Job> jobs)
     {
-        if (page.Dictionary["Annots"] is PdfReference array) _annotArrays[array.Number] = index;
-        if (_a.Array(page.Dictionary, "Annots") is not { } annots) return;
-        foreach (var item in annots.Items)
+        var kinds = jobs.Select(j => j.Kind).Distinct().Take(2).ToList();
+        return kinds.Count == 1 ? kinds[0] : null;
+    }
+
+    private static int PageOf(IEnumerable<Job> jobs) => jobs.Select(j => j.Page).FirstOrDefault(p => p >= 0, -1);
+
+    private void Denied(int n, IEnumerable<Job> jobs)
+    {
+        var kinds = jobs.Select(j => j.Kind).ToHashSet();
+        var kind = kinds.Contains(JobKind.Content) ? SignatureChangeKind.PageContent
+            : kinds.Overlaps([JobKind.Page, JobKind.PageTree, JobKind.Catalog]) ? SignatureChangeKind.PageStructure
+            : kinds.Overlaps([JobKind.Form, JobKind.FieldList, JobKind.Field, JobKind.Defaults]) ? SignatureChangeKind.Form
+            : SignatureChangeKind.Other;
+        Report(kind, n, PageOf(jobs), allowed: false);
+    }
+
+    private void Modified(int n, PdfObject before, PdfObject after)
+    {
+        var jobs = _jobsA.Of(n).Union(_jobsB.Of(n)).ToList();
+        if (OnlyKind(jobs) is not { } kind || kind is JobKind.Field or JobKind.Dss or JobKind.Defaults && jobs.Select(j => j.Owner).Distinct().Count() > 1)
         {
-            if (item is PdfReference r) _annots[r.Number] = index;
+            Denied(n, jobs);
+            return;
+        }
+        int page = PageOf(jobs);
+        var (a, b) = (before as PdfDictionary, after as PdfDictionary);
+        switch (kind)
+        {
+            case JobKind.Catalog when a is not null && b is not null:
+                Catalog(n, a, b);
+                break;
+            case JobKind.Form when a is not null && b is not null:
+                AcroForm(n, a, b);
+                break;
+            case JobKind.Page when a is not null && b is not null:
+                Page(n, page, a, b);
+                break;
+            case JobKind.Field when a is not null && b is not null:
+                Field(n, _jobsA.Fields.GetValueOrDefault(jobs[0].Owner), a, b);
+                break;
+            case JobKind.Comment when a is not null && b is not null:
+                Comment(n, page, a, b);
+                break;
+            case JobKind.FieldList when before is PdfArray fa && after is PdfArray fb:
+                FieldsDiff(fa.Items, fb.Items);
+                break;
+            case JobKind.AnnotList when before is PdfArray aa && after is PdfArray ab:
+                AnnotsDiff(aa.Items, ab.Items, page);
+                break;
+            case JobKind.Appearance or JobKind.Value:
+                foreach (var job in jobs.DistinctBy(j => j.Owner)) Part(n, job, added: false);
+                break;
+            case JobKind.Info when before is PdfStream sa && after is PdfStream sb:
+                Packet(n, sa, sb);
+                break;
+            case JobKind.Info:
+                Information(n, a, b);
+                break;
+            case JobKind.Defaults:
+                Report(SignatureChangeKind.FormFill, n, allowed: DefaultsAllowed(a is not null && b is not null && Grew(a, b, jobs[0].Owner)));
+                break;
+            case JobKind.Dss:
+                Validation(n, jobs[0].Owner, before, after);
+                break;
+            default:
+                Denied(n, jobs);
+                break;
         }
     }
 
-    private void IndexFields()
+    // A new object is allowed only for the use the update gives it, and only where that use may be added.
+    private void Added(int n)
     {
-        if (_a.Dict(_a.Catalog, "AcroForm") is not { } form || _a.Array(form, "Fields") is not { } fields) return;
-        foreach (var item in fields.Items)
+        var jobs = _jobsB.Of(n);
+        // A font the form's defaults gain is the one its new appearance draws with. A new object changes how a signed one
+        // draws only through a changed object that names it, which is judged on its own, unless the signed revision named
+        // a number nothing was at.
+        if (jobs.Any(j => j.Kind == JobKind.Defaults) && jobs.All(j => j.Kind is JobKind.Defaults or JobKind.Appearance))
         {
-            if (item is PdfReference r) Walk(r, "", false, 0);
+            Report(SignatureChangeKind.FormFill, n, allowed: DefaultsAllowed(!SignedReferences().ContainsKey(n)));
+            foreach (var job in jobs.Where(j => j.Kind == JobKind.Appearance).DistinctBy(j => j.Owner)) Part(n, job, added: true);
+            return;
         }
-        // A signed field's own lock and the locks its signatures declare.
-        foreach (var (number, node) in _fields)
+        if (OnlyKind(jobs) is not { } kind)
         {
-            if (!node.IsSignature || !node.HasValue || _a.Get(number) is not PdfDictionary field) continue;
-            if (_a.Dict(field, "V") is { } signature && _a.Array(signature, "Reference") is { } references) ReadLocks(references);
+            Denied(n, jobs);
+            return;
+        }
+        int page = PageOf(jobs);
+        switch (kind)
+        {
+            case JobKind.Comment:
+                AddedComment(n, page);
+                break;
+            case JobKind.Field:
+                AddedField(n, page);
+                break;
+            case JobKind.Appearance or JobKind.Value:
+                foreach (var job in jobs.DistinctBy(j => j.Owner)) Part(n, job, added: true);
+                break;
+            case JobKind.Info:
+                Information(n, new PdfDictionary(), _b.Get(n) as PdfDictionary);
+                break;
+            case JobKind.Dss:
+                Report(SignatureChangeKind.ValidationData, n);
+                break;
+            case JobKind.AnnotList when _b.Get(n) is PdfArray items:
+                AnnotsDiff([], items.Items, page);
+                break;
+            case JobKind.FieldList when _b.Get(n) is PdfArray items:
+                FieldsDiff([], items.Items);
+                break;
+            case JobKind.Form when _b.Get(n) is PdfDictionary form:
+                AcroForm(n, new PdfDictionary(), form);
+                break;
+            default:
+                Denied(n, jobs);
+                break;
         }
     }
 
-    private void Walk(PdfReference reference, string prefix, bool inheritedSignature, int depth)
+    private void Removed(int n)
     {
-        if (depth > MaxDepth || _fields.Count > MaxFields || _fields.ContainsKey(reference.Number) || _a.Get(reference.Number) is not PdfDictionary dictionary) return;
-        string name = prefix;
-        if (PdfText.Read(_a, dictionary["T"]) is { } partial) name = name.Length == 0 ? partial : name + "." + partial;
-        bool signature = _a.Name(dictionary, "FT") is { } type ? type == "Sig" : inheritedSignature;
-        _fields[reference.Number] = new FieldNode(reference.Number, name, signature, dictionary["V"] is not null && dictionary["V"] is not PdfNull);
-        if (_a.Array(dictionary, "Kids") is not { } kids) return;
-        foreach (var kid in kids.Items)
+        var jobs = _jobsA.Of(n);
+        // A name that is still written down somewhere would read as nothing there.
+        if (References().ContainsKey(n) || OnlyKind(jobs) is not { } kind)
         {
-            if (kid is not PdfReference k) continue;
-            if (_a.Get(k.Number) is PdfDictionary child && !child.ContainsKey("T")) _widgetFields[k.Number] = reference.Number;
-            else Walk(k, name, signature, depth + 1);
+            Denied(n, jobs);
+            return;
+        }
+        switch (kind)
+        {
+            case JobKind.Comment or JobKind.AnnotList:
+                Report(SignatureChangeKind.Comment, n, PageOf(jobs));
+                break;
+            case JobKind.Appearance when jobs.All(j => j.Owner == 0):
+                Report(SignatureChangeKind.Comment, n, PageOf(jobs));
+                break;
+            case JobKind.Info:
+                Report(SignatureChangeKind.Metadata, n);
+                break;
+            case JobKind.Dss:
+                Report(SignatureChangeKind.ValidationData, n);
+                break;
+            default:
+                Denied(n, jobs);
+                break;
         }
     }
 
-    private void ReadLocks(PdfArray references)
+    // How often each number is written as a reference anywhere in the file as it is, in objects nothing reaches too.
+    private Dictionary<int, int> References() => _references ??= CountReferences(_b);
+
+    private Dictionary<int, int> SignedReferences() => _signedReferences ??= CountReferences(_a);
+
+    private static Dictionary<int, int> CountReferences(PdfDocument document)
     {
-        foreach (var item in references.Items)
+        var counts = new Dictionary<int, int>();
+        foreach (var r in ReferencesIn(document.Trailer)) counts[r.Number] = counts.GetValueOrDefault(r.Number) + 1;
+        foreach (int number in document.ObjectNumbers)
         {
-            if (_a.Resolve(item) is not PdfDictionary reference || _a.Name(reference, "TransformMethod") != "FieldMDP") continue;
-            if (_a.Dict(reference, "TransformParams") is not { } parameters) continue;
-            var action = _a.Name(parameters, "Action") switch { "Include" => FieldLockAction.Include, "Exclude" => FieldLockAction.Exclude, _ => FieldLockAction.All };
-            var names = _a.Array(parameters, "Fields")?.Items.Select(i => PdfText.Read(_a, i)).OfType<string>().ToHashSet() ?? [];
-            _locks.Add((action, names));
+            if (document.Get(number) is not { } value) continue;
+            foreach (var r in ReferencesIn(value)) counts[r.Number] = counts.GetValueOrDefault(r.Number) + 1;
         }
+        return counts;
     }
 
-    private bool IsLocked(string fieldName) => _locks.Any(l => l.Action switch
+    private static IEnumerable<PdfReference> ReferencesIn(PdfObject value)
     {
-        FieldLockAction.All => true,
-        FieldLockAction.Include => l.Names.Contains(fieldName),
-        _ => !l.Names.Contains(fieldName),
-    });
+        var pending = new Stack<PdfObject>();
+        pending.Push(value);
+        while (pending.Count > 0)
+        {
+            switch (pending.Pop())
+            {
+                case PdfReference r:
+                    yield return r;
+                    break;
+                case PdfArray array:
+                    foreach (var item in array.Items) pending.Push(item);
+                    break;
+                case PdfDictionary dictionary:
+                    foreach (var (_, item) in dictionary.Entries) pending.Push(item);
+                    break;
+                case PdfStream stream:
+                    pending.Push(stream.Dictionary);
+                    break;
+            }
+        }
+    }
 }

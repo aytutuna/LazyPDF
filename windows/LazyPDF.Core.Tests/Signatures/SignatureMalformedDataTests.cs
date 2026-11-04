@@ -1,5 +1,6 @@
 using System.Formats.Asn1;
 using System.Security.Cryptography;
+using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using LazyPDF.Core;
 using Xunit;
@@ -96,5 +97,48 @@ public class SignatureMalformedDataTests
 
         Assert.Empty(data.Ocsps);
         Assert.Empty(data.Crls);
+    }
+
+    [Fact]
+    public void An_ocsp_good_dated_after_the_answer_that_carries_it_says_nothing()
+    {
+        var network = new FakeNetwork { Issued = Pki.Signing.AddDays(1), OcspThisUpdate = Pki.Signing.AddDays(11) };
+        var answer = OcspResponse.Parse(AnswerOf(network))!;
+
+        Assert.Equal(RevocationState.NoData, answer.About(Pki.Leaf, Pki.Intermediate).State);
+    }
+
+    [Fact]
+    public void A_crl_for_ca_certificates_says_nothing_of_one_whose_basic_constraints_do_not_decode()
+    {
+        using var odd = Pki.IssuedWith("Odd Constraints", new X509Extension("2.5.29.19", [0xFF, 0x01], false));
+        var network = new FakeNetwork { CrlExtension = new X509Extension("2.5.29.28", [0x30, 0x03, 0x81, 0x01, 0xFF], true) };
+        var crl = Crl.Parse(network.Get(Pki.CrlUrl)!)!;
+
+        Assert.Equal(RevocationState.NoData, crl.About(odd, Pki.Intermediate).State);
+    }
+
+    [Fact]
+    public void A_crl_issuer_whose_key_usage_does_not_decode_signs_nothing()
+    {
+        using var key = RSA.Create(2048);
+        var request = new CertificateRequest(Pki.Intermediate.SubjectName, key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        request.CertificateExtensions.Add(new X509Extension("2.5.29.15", [0xFF, 0x01], true));
+        using var odd = request.CreateSelfSigned(Pki.NotBefore, Pki.NotAfter);
+        var crl = Crl.Parse(new FakeNetwork().Get(Pki.CrlUrl)!)!;
+
+        Assert.Equal(RevocationState.NoData, crl.About(Pki.Leaf, odd).State);
+    }
+
+    [Fact]
+    public void A_certificate_whose_subject_key_identifier_does_not_decode_is_passed_over_when_the_signer_is_looked_for()
+    {
+        var signed = new SignedCms(new ContentInfo([1, 2, 3]), detached: true);
+        signed.ComputeSignature(new CmsSigner(SubjectIdentifierType.SubjectKeyIdentifier, Pki.Leaf) { IncludeOption = X509IncludeOption.EndCertOnly });
+        var cms = CmsSignature.Parse(signed.Encode())!;
+        using var odd = Pki.IssuedWith("Odd Identifier", new X509Extension("2.5.29.14", [0xFF, 0x01], false));
+        cms.Certificates.Insert(0, odd);
+
+        Assert.Equal(Pki.Leaf.Thumbprint, cms.FindSigner()!.Thumbprint);
     }
 }

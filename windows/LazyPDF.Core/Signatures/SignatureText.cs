@@ -106,6 +106,7 @@ public static class SignatureText
             SignatureChangeKind.PageContent => "Page content changed" + where,
             SignatureChangeKind.PageStructure => "Pages changed" + where,
             SignatureChangeKind.Form => "Form changed" + where,
+            SignatureChangeKind.Unreadable => "Added data cannot be checked",
             _ => "Document changed" + where,
         };
     }
