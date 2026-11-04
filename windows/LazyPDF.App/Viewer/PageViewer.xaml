@@ -1,0 +1,119 @@
+<UserControl x:Class="LazyPDF.App.Viewer.PageViewer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:LazyPDF.App"
+             xmlns:v="clr-namespace:LazyPDF.App.Viewer"
+             IsTabStop="False" PreviewKeyDown="Viewer_PreviewKeyDown"
+             AutomationProperties.Name="{loc:T Document viewer}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border x:Name="Bar" Grid.Row="0" BorderThickness="0,0,0,1" Padding="6,3" SizeChanged="Bar_SizeChanged"
+                BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
+            <DockPanel LastChildFill="False">
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" KeyboardNavigation.TabIndex="0">
+                    <Button x:Name="PreviousButton" Style="{StaticResource IconButtonStyle}" Content="&#xE70E;"
+                            ToolTip="{loc:T Previous page}" AutomationProperties.Name="{loc:T Previous page}" Click="Previous_Click" />
+                    <TextBox x:Name="PageBox" Width="48" Height="28" TextAlignment="Center" VerticalContentAlignment="Center" Margin="2,0"
+                             ToolTip="{loc:T Go to page (Ctrl+G)}" AutomationProperties.Name="{loc:T Go to page}"
+                             PreviewKeyDown="PageBox_PreviewKeyDown" GotKeyboardFocus="PageBox_GotKeyboardFocus" LostKeyboardFocus="PageBox_LostKeyboardFocus" />
+                    <TextBlock x:Name="PageCountText" Style="{StaticResource CaptionText}" VerticalAlignment="Center" Margin="2,0,6,0" />
+                    <Button x:Name="NextButton" Style="{StaticResource IconButtonStyle}" Content="&#xE70D;"
+                            ToolTip="{loc:T Next page}" AutomationProperties.Name="{loc:T Next page}" Click="Next_Click" />
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" KeyboardNavigation.TabIndex="3">
+                    <Button x:Name="FindButton" Style="{StaticResource IconButtonStyle}" Content="&#xE721;"
+                            ToolTip="{loc:T Find (Ctrl+F)}" AutomationProperties.Name="{loc:T Find}" Click="Find_Click" />
+                    <Button x:Name="MoreButton" Style="{StaticResource IconButtonStyle}" Content="&#xE712;"
+                            ToolTip="{loc:T View options}" AutomationProperties.Name="{loc:T View options}" Click="More_Click">
+                        <Button.ContextMenu>
+                            <ContextMenu Placement="Bottom" Opened="MoreMenu_Opened">
+                                <MenuItem x:Name="SelectItem" Header="{loc:T Select text}" IsCheckable="True" Click="Select_Click" />
+                                <MenuItem x:Name="HandItem" Header="{loc:T Hand tool}" IsCheckable="True" Click="Hand_Click" />
+                                <Separator />
+                                <MenuItem x:Name="OnePageItem" Header="{loc:T One page}" IsCheckable="True" Click="Arrangement_Click" Tag="single" />
+                                <MenuItem x:Name="ContinuousItem" Header="{loc:T Scroll continuously}" IsCheckable="True" Click="Arrangement_Click" Tag="continuous" />
+                                <MenuItem x:Name="TwoPageItem" Header="{loc:T Two pages}" IsCheckable="True" Click="Arrangement_Click" Tag="two" />
+                                <MenuItem x:Name="CoverItem" Header="{loc:T Show cover page}" IsCheckable="True" Click="Arrangement_Click" Tag="cover" />
+                                <Separator />
+                                <MenuItem Header="{loc:T Rotate clockwise}" Click="RotateRight_Click" />
+                                <MenuItem Header="{loc:T Rotate counterclockwise}" Click="RotateLeft_Click" />
+                                <Separator />
+                                <MenuItem x:Name="TintNoneItem" Header="{loc:T Light pages}" IsCheckable="True" Click="Tint_Click" Tag="None" />
+                                <MenuItem x:Name="TintDarkItem" Header="{loc:T Dark pages}" IsCheckable="True" Click="Tint_Click" Tag="Dark" />
+                                <MenuItem x:Name="TintSepiaItem" Header="{loc:T Sepia pages}" IsCheckable="True" Click="Tint_Click" Tag="Sepia" />
+                                <Separator />
+                                <MenuItem x:Name="ReadingItem" Header="{loc:T Reading mode}" IsCheckable="True" Click="Reading_Click" />
+                                <MenuItem x:Name="FullScreenItem" Header="{loc:T Full screen (F11)}" IsCheckable="True" Click="FullScreen_Click" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                </StackPanel>
+                <StackPanel x:Name="ModeGroup" DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,8,0" KeyboardNavigation.TabIndex="2">
+                    <ToggleButton x:Name="SelectButton" Style="{StaticResource IconButtonStyle}" Content="&#xE8B0;"
+                                  ToolTip="{loc:T Select text}" AutomationProperties.Name="{loc:T Select text}" Click="Select_Click" />
+                    <ToggleButton x:Name="HandButton" Style="{StaticResource IconButtonStyle}" Content="&#xE927;"
+                                  ToolTip="{loc:T Hand tool}" AutomationProperties.Name="{loc:T Hand tool}" Click="Hand_Click" />
+                </StackPanel>
+                <StackPanel x:Name="ZoomGroup" Orientation="Horizontal" HorizontalAlignment="Center" Margin="8,0" KeyboardNavigation.TabIndex="1">
+                    <Button x:Name="ZoomOutButton" Style="{StaticResource IconButtonStyle}" Content="&#xE71F;"
+                            ToolTip="{loc:T Zoom out (Ctrl+Minus)}" AutomationProperties.Name="{loc:T Zoom out}" Click="ZoomOut_Click" />
+                    <Button x:Name="ZoomButton" Style="{StaticResource SubtleButtonStyle}" MinWidth="64" Height="32" Click="Zoom_Click"
+                            ToolTip="{loc:T Zoom}">
+                        <Button.ContextMenu>
+                            <ContextMenu Placement="Bottom">
+                                <MenuItem Header="{loc:T Fit width}" Click="FitWidth_Click" />
+                                <MenuItem Header="{loc:T Fit page}" Click="FitPage_Click" />
+                                <MenuItem Header="{loc:T Actual size}" Click="ActualSize_Click" />
+                                <Separator />
+                                <MenuItem x:Name="Preset25" Tag="0.25" Click="ZoomPreset_Click" />
+                                <MenuItem x:Name="Preset50" Tag="0.5" Click="ZoomPreset_Click" />
+                                <MenuItem x:Name="Preset75" Tag="0.75" Click="ZoomPreset_Click" />
+                                <MenuItem x:Name="Preset100" Tag="1" Click="ZoomPreset_Click" />
+                                <MenuItem x:Name="Preset125" Tag="1.25" Click="ZoomPreset_Click" />
+                                <MenuItem x:Name="Preset150" Tag="1.5" Click="ZoomPreset_Click" />
+                                <MenuItem x:Name="Preset200" Tag="2" Click="ZoomPreset_Click" />
+                                <MenuItem x:Name="Preset400" Tag="4" Click="ZoomPreset_Click" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                    <Button x:Name="ZoomInButton" Style="{StaticResource IconButtonStyle}" Content="&#xE8A3;"
+                            ToolTip="{loc:T Zoom in (Ctrl+Plus)}" AutomationProperties.Name="{loc:T Zoom in}" Click="ZoomIn_Click" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <ScrollViewer x:Name="Scroller" CanContentScroll="True" PanningMode="None" Focusable="False" IsTabStop="False" AutomationProperties.Name="{loc:T Pages}"
+                          HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <v:PageSurface x:Name="Surface" AutomationProperties.Name="{loc:T Pages}" />
+            </ScrollViewer>
+
+            <v:FindBar x:Name="Find" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="12,8,24,0" />
+
+            <Border x:Name="LinkCard" Style="{StaticResource CardStyle}" Background="{DynamicResource ControlSolidFillColorDefaultBrush}" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                    Margin="12,0,12,16" Padding="12" MaxWidth="480" Effect="{DynamicResource CardHoverShadow}"
+                    AutomationProperties.Name="{loc:T Open this link?}">
+                <StackPanel>
+                    <TextBlock x:Name="LinkTitle" Style="{StaticResource BodyStrongText}" />
+                    <TextBlock x:Name="LinkAddress" Style="{StaticResource SecondaryBodyText}" TextWrapping="Wrap" Margin="0,4,0,10" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="LinkCancel" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Cancel}" Padding="12,4" Click="LinkCancel_Click" />
+                        <Button x:Name="LinkOpen" Style="{StaticResource AccentIconTextButtonStyle}" Content="{loc:T Open}" Margin="8,0,0,0" Padding="12,4" Click="LinkOpen_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <TextBlock x:Name="Note" Style="{StaticResource BodyText}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="340"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" />
+
+            <Button x:Name="ExitReadingButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE711;" Content="{loc:T Exit reading mode}"
+                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="12,8,24,0" Padding="10,3,10,4"
+                    Visibility="Collapsed" Click="ExitReading_Click" />
+        </Grid>
+    </Grid>
+</UserControl>
