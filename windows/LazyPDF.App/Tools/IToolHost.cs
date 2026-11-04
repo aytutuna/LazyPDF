@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using LazyPDF.App.Documents;
 
 namespace LazyPDF.App.Tools;
@@ -7,6 +8,9 @@ public interface IToolHost
 {
     /// <summary>Runs <paramref name="work"/> with the busy bar showing <paramref name="text"/> and a Cancel that ends it through the token.</summary>
     Task RunBusyAsync(string text, Func<CancellationToken, Task> work);
+
+    /// <summary>Changes the text of the busy bar while <see cref="RunBusyAsync"/> runs, for a step count; does nothing when it does not.</summary>
+    void SetBusyText(string text) { }
 
     void ShowProblem(Problem problem);
 
@@ -19,4 +23,17 @@ public interface IToolHost
 
     /// <summary>Opens PDF bytes as a new document with unsaved changes and no file, so saving asks for a name: the result of Combine, Compare, Export or Create.</summary>
     Task OpenNewAsync(byte[] pdf, string title);
+
+    /// <summary>As above, for encrypted bytes: the password or certificate that opens them is kept for the tab, so nothing is asked again.</summary>
+    Task OpenNewAsync(byte[] pdf, string title, string? password, X509Certificate2? certificate) => OpenNewAsync(pdf, title);
+
+    /// <summary>Reads the tab's file from disk again and puts it in the tab's place, after a tool wrote the file.</summary>
+    Task ReloadAsync(DocumentTab tab);
+
+    /// <summary>As above; false when the tab was not replaced, and the info bar says why.</summary>
+    async Task<bool> TryReloadAsync(DocumentTab tab)
+    {
+        await ReloadAsync(tab);
+        return true;
+    }
 }

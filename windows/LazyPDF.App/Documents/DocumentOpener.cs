@@ -51,7 +51,7 @@ public sealed class DocumentOpener(IImageCodec codec, IFontSource fonts)
         return new OpenSource(bytes, path, System.IO.Path.GetFileName(path), false, Stamp: stamp);
     }
 
-    private static string Decode(byte[] bytes)
+    internal static string Decode(byte[] bytes)
     {
         try
         {

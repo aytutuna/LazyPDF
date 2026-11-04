@@ -96,6 +96,9 @@ public sealed class DocumentTab : ITab, IDisposable
         return true;
     }
 
+    /// <summary>Takes up steps the session committed by itself, as a signature does: loads the renderer again and tells the window.</summary>
+    public void Reload() => Refresh();
+
     public bool Undo() => Session.Undo() && Refreshed();
 
     public bool Redo() => Session.Redo() && Refreshed();
@@ -137,7 +140,8 @@ public sealed class DocumentTab : ITab, IDisposable
         return true;
     }
 
-    private void Refresh()
+    /// <summary>For a tool whose engine call committed on the session itself: draws the new state and tells the window.</summary>
+    public void Refresh()
     {
         CanDraw = Renderer.Load(Session, _password);
         Revision++;

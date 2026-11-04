@@ -80,9 +80,21 @@ public partial class MainWindow
         SaveMenu.IsOpen = true;
     }
 
-    private void Undo_Click(object sender, RoutedEventArgs e) => _vm.Undo();
+    private void Undo_Click(object sender, RoutedEventArgs e) => Undo();
 
-    private void Redo_Click(object sender, RoutedEventArgs e) => _vm.Redo();
+    private void Redo_Click(object sender, RoutedEventArgs e) => Redo();
+
+    private void Undo()
+    {
+        _inspectorPanel?.HandIn();
+        _vm.Undo();
+    }
+
+    private void Redo()
+    {
+        _inspectorPanel?.HandIn();
+        _vm.Redo();
+    }
 
     private void Print_Click(object sender, RoutedEventArgs e) => _vm.Print();
 
@@ -111,9 +123,26 @@ public partial class MainWindow
         }
     }
 
+    // Combine takes dropped files into its own list, so over it they do not open as tabs.
+    private bool OverCombine(DragEventArgs e)
+    {
+        if (InspectorHost.Content is not Tools.Combine.CombinePanel panel) return false;
+        for (var node = e.OriginalSource as DependencyObject; node is not null;
+             node = node is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
+        {
+            if (ReferenceEquals(node, panel)) return true;
+        }
+        return false;
+    }
+
     private void Window_PreviewDragOver(object sender, DragEventArgs e)
     {
         if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+        if (OverCombine(e))
+        {
+            DropOverlay.Visibility = Visibility.Collapsed;
+            return;
+        }
         e.Effects = DragDropEffects.Copy;
         DropOverlay.Visibility = Visibility.Visible;
         e.Handled = true;
@@ -124,7 +153,7 @@ public partial class MainWindow
     private void Window_PreviewDrop(object sender, DragEventArgs e)
     {
         DropOverlay.Visibility = Visibility.Collapsed;
-        if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
+        if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths || OverCombine(e)) return;
         e.Handled = true;
         _ = _vm.OpenFilesAsync(paths);
     }

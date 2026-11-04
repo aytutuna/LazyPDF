@@ -248,7 +248,7 @@
                             <TextBlock x:Name="InspectorTitle" Style="{StaticResource BodyStrongText}" VerticalAlignment="Center"
                                        TextTrimming="CharacterEllipsis" AutomationProperties.HeadingLevel="Level2" />
                         </DockPanel>
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <ScrollViewer AutomationProperties.Name="{loc:T Tools}" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <ContentControl x:Name="InspectorHost" IsTabStop="False" />
                         </ScrollViewer>
                         <Border Grid.Row="2" x:Name="InspectorFooter" Style="{StaticResource DialogFooterStyle}" Padding="12,10" Visibility="Collapsed">
@@ -266,9 +266,9 @@
                     <DockPanel>
                         <Border DockPanel.Dock="Bottom" Style="{StaticResource DialogFooterStyle}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button x:Name="PasswordOpen" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Open}" MinWidth="88"
+                                <Button x:Name="PasswordOpen" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Open}" AutomationProperties.Name="{loc:T Open}" MinWidth="88"
                                         Margin="0,0,8,0" IsDefault="True" Click="PasswordOpen_Click" />
-                                <Button Content="{loc:T Cancel}" MinWidth="88" IsCancel="True" Click="PasswordCancel_Click" />
+                                <Button Content="{loc:T Cancel}" AutomationProperties.Name="{loc:T Cancel}" MinWidth="88" IsCancel="True" Click="PasswordCancel_Click" />
                             </StackPanel>
                         </Border>
                         <StackPanel Margin="24,20,24,20">
@@ -292,10 +292,10 @@
                     <DockPanel>
                         <Border DockPanel.Dock="Bottom" Style="{StaticResource DialogFooterStyle}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button x:Name="CloseSaveButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Save}" MinWidth="88" Margin="0,0,8,0"
+                                <Button x:Name="CloseSaveButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Save}" AutomationProperties.Name="{loc:T Save}" MinWidth="88" Margin="0,0,8,0"
                                         IsDefault="True" Click="CloseSave_Click" />
-                                <Button Content="{loc:T Don\'t save}" MinWidth="88" Margin="0,0,8,0" Click="CloseDiscard_Click" />
-                                <Button Content="{loc:T Cancel}" MinWidth="88" IsCancel="True" Click="CloseCancel_Click" />
+                                <Button Content="{loc:T Don\'t save}" AutomationProperties.Name="{loc:T Don\'t save}" MinWidth="88" Margin="0,0,8,0" Click="CloseDiscard_Click" />
+                                <Button Content="{loc:T Cancel}" AutomationProperties.Name="{loc:T Cancel}" MinWidth="88" IsCancel="True" Click="CloseCancel_Click" />
                             </StackPanel>
                         </Border>
                         <StackPanel Margin="24,20,24,20">
@@ -314,9 +314,9 @@
                     <DockPanel>
                         <Border DockPanel.Dock="Bottom" Style="{StaticResource DialogFooterStyle}">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button x:Name="RestoreButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Restore}" MinWidth="88" Margin="0,0,8,0"
+                                <Button x:Name="RestoreButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Restore}" AutomationProperties.Name="{loc:T Restore}" MinWidth="88" Margin="0,0,8,0"
                                         IsDefault="True" Click="Restore_Click" />
-                                <Button Content="{loc:T Discard}" MinWidth="88" Click="DiscardRecovery_Click" />
+                                <Button Content="{loc:T Discard}" AutomationProperties.Name="{loc:T Discard}" MinWidth="88" Click="DiscardRecovery_Click" />
                             </StackPanel>
                         </Border>
                         <StackPanel Margin="24,20,24,20">
@@ -336,7 +336,7 @@
                         HorizontalAlignment="Center" VerticalAlignment="Center">
                     <DockPanel>
                         <Border DockPanel.Dock="Bottom" Style="{StaticResource DialogFooterStyle}">
-                            <Button x:Name="SettingsDoneButton" Content="{loc:T Done}" MinWidth="88" HorizontalAlignment="Right" IsDefault="True" IsCancel="True"
+                            <Button x:Name="SettingsDoneButton" Content="{loc:T Done}" AutomationProperties.Name="{loc:T Done}" MinWidth="88" HorizontalAlignment="Right" IsDefault="True" IsCancel="True"
                                     Click="SettingsDone_Click" />
                         </Border>
                         <StackPanel Margin="24,20,24,20">
@@ -392,7 +392,7 @@
                     <ProgressBar x:Name="BusyBar" Width="160" VerticalAlignment="Center" Margin="0,0,12,0"
                                  IsIndeterminate="True" AutomationProperties.Name="{loc:T Progress}" Visibility="Collapsed" />
                     <Button x:Name="CancelButton" Style="{StaticResource IconTextButtonStyle}" local:Icon.Glyph="&#xE711;"
-                            Content="{loc:T Cancel}" Padding="10,3,10,4" Visibility="Collapsed" Click="Cancel_Click" />
+                            Content="{loc:T Cancel}" AutomationProperties.Name="{loc:T Cancel}" Padding="10,3,10,4" Visibility="Collapsed" Click="Cancel_Click" />
                 </StackPanel>
             </StatusBarItem>
             <StatusBarItem DockPanel.Dock="Right">

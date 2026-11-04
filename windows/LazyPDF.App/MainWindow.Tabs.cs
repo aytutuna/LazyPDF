@@ -63,14 +63,14 @@ public partial class MainWindow
 
     private void CloseTab_Click(object sender, RoutedEventArgs e)
     {
-        if (((FrameworkElement)sender).DataContext is DocumentTab tab) _vm.RequestClose(tab);
+        if (((FrameworkElement)sender).DataContext is DocumentTab tab) RequestClose(tab);
         e.Handled = true;
     }
 
     private void TabList_PreviewMouseDown(object sender, MouseButtonEventArgs e)
     {
         if (e.ChangedButton != MouseButton.Middle || TabAt(e.OriginalSource) is not DocumentTab tab) return;
-        _vm.RequestClose(tab);
+        RequestClose(tab);
         e.Handled = true;
     }
 

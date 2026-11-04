@@ -60,6 +60,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        Panels.Attachments.AttachmentsSidePanel.DeleteOpenedCopies();
         _channel?.Dispose();
         _instance?.ReleaseMutex();
         _instance?.Dispose();

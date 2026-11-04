@@ -104,6 +104,9 @@ public sealed class PdfEditSession
         return true;
     }
 
+    /// <summary>Drops the changes waiting in <see cref="Document"/> by reading the current bytes again.</summary>
+    public void Discard() => MoveTo(_position);
+
     /// <summary>Back one step, dropping uncommitted changes. False when there is nothing to undo.</summary>
     public bool Undo() => CanUndo && MoveTo(_position - 1);
 

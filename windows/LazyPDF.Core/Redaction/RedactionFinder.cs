@@ -88,8 +88,9 @@ public static class RedactionFinder
     private static bool IsSocialSecurity(string text)
     {
         string d = Digits(text);
+        if (d.Length != 9) return false;
         int area = int.Parse(d[..3]);
-        return d.Length == 9 && area is not (0 or 666) && area < 900 && d[3..5] != "00" && d[5..] != "0000";
+        return area is not (0 or 666) && area < 900 && d[3..5] != "00" && d[5..] != "0000";
     }
 
     // 10th digit: ((odd digits sum * 7) - even digits sum) mod 10; 11th: sum of the first ten mod 10.

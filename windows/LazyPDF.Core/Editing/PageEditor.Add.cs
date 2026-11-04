@@ -71,6 +71,41 @@ public sealed partial class PageEditor
         return result with { Overlaps = bottom > shown.Y + shown.Height + 0.01 };
     }
 
+    /// <summary>
+    /// Adds a picture inside <paramref name="box"/> (user space), upright on the page as it is shown, centred and
+    /// keeping its proportions. JPEG data is embedded as it is; other files go through the editor's <see cref="IImageCodec"/>.
+    /// </summary>
+    public ObjectEditResult AddImage(PdfRect box, byte[] file)
+    {
+        if (box.IsEmpty) return new ObjectEditResult(0, [new SkippedObject(-1, EditingText.TooBig)]);
+        var model = Model;
+        PdfImage? added = file.Length > 2 && file[0] == 0xFF && file[1] == 0xD8 ? PdfImageWriter.AddJpeg(model.Document, file) : null;
+        if (added is null && _codec?.DecodeFile(file) is { Count: > 0 } frames)
+        {
+            added = PdfImageWriter.AddRgba(model.Document, frames[0].Width, frames[0].Height, frames[0].Rgba);
+        }
+        if (added is null) return new ObjectEditResult(0, [new SkippedObject(-1, EditingText.NoImage)]);
+
+        var geometry = new PageGeometry(model.Page);
+        var shown = geometry.ToDisplay(box);
+        double scale = Math.Min(shown.Width / added.Width, shown.Height / added.Height);
+        double w = added.Width * scale, h = added.Height * scale;
+        double x = shown.X + (shown.Width - w) / 2, y = shown.Y + (shown.Height - h) / 2;
+        var origin = geometry.ToUser(x, y + h);
+        var across = geometry.ToUser(x + w, y + h);
+        var up = geometry.ToUser(x, y);
+        var matrix = new PdfMatrix(across.X - origin.X, across.Y - origin.Y, up.X - origin.X, up.Y - origin.Y, origin.X, origin.Y);
+
+        var batch = new EditBatch(model.Document, model.Page, model.Scan);
+        string name = batch.NewName();
+        var writer = new ContentWriter().Paint(name, matrix);
+        batch.Append(writer.ToArray(), ("XObject", name, added.Reference));
+        batch.Apply();
+        _session.Commit("Add picture");
+        _model = null;
+        return new ObjectEditResult(1, []);
+    }
+
     /// <summary>Adds a straight line from one point to another (user space).</summary>
     public ObjectEditResult AddLine(double x1, double y1, double x2, double y2, ShapeStyle? style = null) =>
         AddShape("Add line", style ?? new ShapeStyle(new RgbColor(0, 0, 0)), w => w.MoveTo(x1, y1).LineTo(x2, y2), stroke: true, fill: false);

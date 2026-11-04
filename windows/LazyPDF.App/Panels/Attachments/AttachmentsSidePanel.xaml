@@ -7,9 +7,9 @@
     <DockPanel>
         <StackPanel DockPanel.Dock="Bottom" Margin="12,8,12,12">
             <StackPanel Orientation="Horizontal">
-                <Button x:Name="OpenButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8A7;" Content="{loc:T Open}"
+                <Button x:Name="OpenButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8A7;" Content="{loc:T Open}" AutomationProperties.Name="{loc:T Open}"
                         Padding="10,3,10,4" IsEnabled="False" Click="Open_Click" />
-                <Button x:Name="SaveButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE74E;" Content="{loc:T Save as}"
+                <Button x:Name="SaveButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE74E;" Content="{loc:T Save as}" AutomationProperties.Name="{loc:T Save as}"
                         Padding="10,3,10,4" Margin="8,0,0,0" IsEnabled="False" Click="Save_Click" />
             </StackPanel>
             <TextBlock x:Name="Note" Style="{StaticResource ReasonText}" Margin="0,8,0,0" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />

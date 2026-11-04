@@ -1,0 +1,22 @@
+<Window x:Class="LazyPDF.App.Tools.Create.CreateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:LazyPDF.App"
+        xmlns:create="clr-namespace:LazyPDF.App.Tools.Create"
+        Title="{loc:T Create a PDF}" Width="400" Height="580" MinWidth="320" MinHeight="360" WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        FontFamily="{StaticResource TextFontFamily}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <ScrollViewer AutomationProperties.Name="{loc:T Create}" VerticalScrollBarVisibility="Auto">
+            <create:CreatePanel x:Name="Panel" />
+        </ScrollViewer>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="12">
+            <Button x:Name="CreateButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Create}" MinWidth="88" IsDefault="True" Margin="0,0,8,0"
+                    AutomationProperties.Name="{loc:T Create}" Click="CreateButton_Click" />
+            <Button Content="{loc:T Cancel}" MinWidth="88" IsCancel="True" AutomationProperties.Name="{loc:T Cancel}" />
+        </StackPanel>
+    </Grid>
+</Window>

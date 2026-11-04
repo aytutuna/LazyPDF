@@ -41,6 +41,18 @@ public class PdfSearchableTests
     }
 
     [Fact]
+    public async Task ReadingAloneLeavesTheDocumentAndGivesTheWordsToWrite()
+    {
+        var session = PdfEditSession.Open(OcrKit.ScanBytes(2));
+        var read = await PdfSearchable.ReadAsync(session.Document, new FakeRecognizer(OcrKit.Words()), new FakeRenderer(session.Document), new OcrOptions(Dpi: 72));
+
+        Assert.Equal(new OcrResult(2, 0, 0, 0, 0, false), read.Result);
+        Assert.Equal([0, 1], read.Pages.Select(p => p.PageIndex));
+        Assert.False(session.IsDirty);
+        Assert.False(PdfOcrLayer.Has(session.Document, session.Document.Pages[0]));
+    }
+
+    [Fact]
     public async Task WordsAreAtTheirBoxesWhateverTheResolution()
     {
         var session = PdfEditSession.Open(OcrKit.ScanBytes(1, "/Rotate 90"));

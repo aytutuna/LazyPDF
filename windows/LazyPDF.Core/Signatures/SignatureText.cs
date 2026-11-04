@@ -112,5 +112,5 @@ public static class SignatureText
     }
 
     private static string Date(DateTimeOffset? time) =>
-        time is { } t ? t.ToString("d MMM yyyy", CultureInfo.InvariantCulture) : "";
+        time is { } t ? t.ToString("d MMM yyyy", CultureInfo.CurrentUICulture) : "";
 }

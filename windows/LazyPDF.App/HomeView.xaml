@@ -59,7 +59,7 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <ScrollViewer x:Name="Scroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+    <ScrollViewer AutomationProperties.Name="{loc:T What would you like to do?}" x:Name="Scroller" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                   Focusable="False" SizeChanged="Scroller_SizeChanged">
         <StackPanel Margin="0,0,0,24">
             <TextBlock x:Name="TitleLabel" Text="{loc:T What would you like to do?}" Style="{StaticResource TitleText}"

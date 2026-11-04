@@ -19,7 +19,13 @@ public sealed class SisterApps : ISisterApps
 
     public void OpenLazyScan()
     {
-        using var process = Process.Start(new ProcessStartInfo(ScanScheme + ":") { UseShellExecute = true });
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo(ScanScheme + ":") { UseShellExecute = true });
+        }
+        catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+        }
     }
 
     public bool TryPrint(string path)

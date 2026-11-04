@@ -70,7 +70,8 @@ internal sealed partial class ObjectEditor(PageModel model, EditBatch batch, Tex
         switch (o)
         {
             case ImageObject image:
-                Wrap(PlaceOf(o), image.Op, image.Op, "q\n" + Matrix(Around(image.Placement, t)), "\nQ");
+                var (first, last) = WithCrops(image);
+                Wrap(PlaceOf(o), first, last, "q\n" + Matrix(Around(image.Placement, t)), "\nQ");
                 break;
             case PathObject path:
                 if (path.Clips) throw new EditConflictException(EditingText.ClipPath);
@@ -80,6 +81,22 @@ internal sealed partial class ObjectEditor(PageModel model, EditBatch batch, Tex
                 TransformText(block, t);
                 break;
         }
+    }
+
+    private static readonly string[] CropOps = ["q", "m", "l", "l", "l", "h", "W", "n"];
+
+    // A cropped picture sits in the clip Crop wrote round its paint, which has to move with it.
+    private static (int First, int Last) WithCrops(ImageObject image)
+    {
+        var ops = image.Unit.Operations;
+        int first = image.Op, last = image.Op;
+        while (first >= CropOps.Length && last + 1 < ops.Count && ops[last + 1].Operator == "Q"
+            && CropOps.Select((name, i) => ops[first - CropOps.Length + i].Operator == name).All(same => same))
+        {
+            first -= CropOps.Length;
+            last++;
+        }
+        return (first, last);
     }
 
     public void Delete(PageObject o)

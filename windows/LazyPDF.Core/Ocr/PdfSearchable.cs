@@ -32,6 +32,9 @@ public sealed record OcrProgress(int PageIndex, int Done, int Total, OcrOutcome 
 
 public sealed record OcrResult(int Added, int NoWords, int Skipped, int NotRendered, int Words, bool Committed);
 
+/// <summary>What <see cref="PdfSearchable.ReadAsync"/> found: the counts, with no words written and nothing committed, and the words to write.</summary>
+public sealed record OcrRead(OcrResult Result, IReadOnlyList<OcrPageWords> Pages);
+
 /// <summary>The Make searchable action: reads the pages of a document that need it and adds the text layer.</summary>
 public static class PdfSearchable
 {
@@ -52,15 +55,30 @@ public static class PdfSearchable
                                                  OcrOptions options, IProgress<OcrProgress>? progress = null,
                                                  CancellationToken cancellation = default)
     {
+        var read = await ReadAsync(session.Document, recognizer, renderer, options, progress, cancellation).ConfigureAwait(false);
+        if (read.Pages.Count == 0) return read.Result;
+        int words = PdfOcrLayer.Add(session.Document, read.Pages, options.Language);
+        return read.Result with { Words = words, Committed = session.Commit(OcrStatusText.Label) };
+    }
+
+    /// <summary>
+    /// The reading half of <see cref="RunAsync"/>, for a caller that reads a copy of the file on another thread and
+    /// writes the layers into the document it shows (<see cref="PdfOcrLayer.Add"/>). <paramref name="document"/> is only read.
+    /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException"><see cref="OcrOptions.Dpi"/> outside 72 to 600.</exception>
+    /// <exception cref="OperationCanceledException"/>
+    public static async Task<OcrRead> ReadAsync(PdfDocument document, ITextRecognizer recognizer, IPageRenderer renderer,
+                                                OcrOptions options, IProgress<OcrProgress>? progress = null,
+                                                CancellationToken cancellation = default)
+    {
         if (!(options.Dpi >= MinDpi && options.Dpi <= MaxDpi)) throw new ArgumentOutOfRangeException(nameof(options));
-        var document = session.Document;
         var targets = options.Pages is null
             ? Enumerable.Range(0, document.Pages.Count).ToList()
             : options.Pages.Where(i => i >= 0 && i < document.Pages.Count).Distinct().Order().ToList();
 
         var interpreter = new ContentInterpreter(document);
         var found = new List<OcrPageWords>();
-        int added = 0, noWords = 0, skipped = 0, notRendered = 0, words = 0, done = 0;
+        int added = 0, noWords = 0, skipped = 0, notRendered = 0, done = 0;
         foreach (int index in targets)
         {
             cancellation.ThrowIfCancellationRequested();
@@ -96,12 +114,6 @@ public static class PdfSearchable
         }
 
         cancellation.ThrowIfCancellationRequested();
-        bool committed = false;
-        if (found.Count > 0)
-        {
-            words = PdfOcrLayer.Add(document, found, options.Language);
-            committed = session.Commit(OcrStatusText.Label);
-        }
-        return new OcrResult(added, noWords, skipped, notRendered, words, committed);
+        return new OcrRead(new OcrResult(added, noWords, skipped, notRendered, 0, false), found);
     }
 }

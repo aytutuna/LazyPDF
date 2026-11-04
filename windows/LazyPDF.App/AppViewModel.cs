@@ -66,6 +66,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
         {
             if (value is null || ReferenceEquals(_activeTab, value) || !Strip.Contains(value)) return;
             _activeTab = value;
+            DropAction();
             if (value is DocumentTab document) _lastDocument = document;
             NotifyAll();
             CheckDisk();
@@ -99,6 +100,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     {
         if (id is not null && ToolCatalog.Find(id) is null) return;
         _activeToolId = id == _activeToolId ? null : id;
+        DropAction();
         NotifyAll();
     }
 
@@ -119,6 +121,12 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
         ThemeService.Apply(appearance);
         AppPreferencesStore.Update(preferences => preferences.Appearance = appearance, _settingsDirectory ?? StoreFiles.DefaultDirectory);
         NotifyAll();
+    }
+
+    // A button on the info bar acts on the tab and tool it was made for, so it goes when they do.
+    private void DropAction()
+    {
+        if (_message?.Action is not null) _message = null;
     }
 
     public void ShowNotice(string title, string text, NoticeAction? action = null)
@@ -162,11 +170,22 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
         }
         finally
         {
-            _busy = null;
-            _busyText = "";
+            // A job that started over this one must keep the bar.
+            if (ReferenceEquals(_busy, source))
+            {
+                _busy = null;
+                _busyText = "";
+            }
             source.Dispose();
             NotifyAll();
         }
+    }
+
+    public void SetBusyText(string text)
+    {
+        if (_busy is null) return;
+        _busyText = text;
+        NotifyAll();
     }
 
     public void CancelBusy() => _busy?.Cancel();

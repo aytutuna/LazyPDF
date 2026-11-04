@@ -115,7 +115,7 @@ public partial class MainWindow
             };
             AutomationProperties.SetName(button, side.Title);
             string id = side.Id;
-            button.Click += (_, _) => _vm.SetSidePanel(id);
+            button.Click += (_, _) => ShowSidePanel(id);
             _railButtons[side.Id] = button;
             Rail.Children.Add(button);
         }
@@ -128,7 +128,15 @@ public partial class MainWindow
         RefreshFromViewModel();
     }
 
-    private void RailToggle_Click(object sender, RoutedEventArgs e) => _vm.ToggleSidePanel();
+    private void RailToggle_Click(object sender, RoutedEventArgs e) => ShowSidePanel(null);
+
+    // The side pane has no room beside an open tool on a narrow window, so the tool gives way.
+    private void ShowSidePanel(string? id)
+    {
+        if (_narrow && _vm.ActiveTool is not null) _vm.SelectTool(_vm.ActiveToolId);
+        if (id is null) _vm.ToggleSidePanel();
+        else _vm.SetSidePanel(id);
+    }
 
     private void SidePaneClose_Click(object sender, RoutedEventArgs e) => _vm.SetSidePanel(_vm.SidePanelId);
 
@@ -268,7 +276,7 @@ public partial class MainWindow
         Row(Loc.T("Pages"), tab.PageCount.ToString());
         Row(Loc.T("PDF version"), document.Version);
         Row(Loc.T("Size"), Size(tab.Session.Current.Length));
-        Row(Loc.T("Protection"), document.IsEncrypted ? Loc.T("Password protected") : Loc.T("Not protected"));
+        Row(Loc.T("Protection"), !document.IsEncrypted ? Loc.T("Not protected") : document.Security is { IsPublicKey: true } ? Loc.T("Protected for certificate holders") : Loc.T("Password protected"));
         if (document.IsSigned) Row(Loc.T("Signatures"), document.IsCertified ? Loc.T("Signed and certified") : Loc.T("Signed"));
         return panel;
     }

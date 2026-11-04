@@ -1,0 +1,102 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Create.CreatePanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 Loaded="CreatePanel_Loaded" Unloaded="CreatePanel_Unloaded">
+    <StackPanel Margin="12,4,12,12">
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Make a PDF from}" />
+        <ComboBox x:Name="SourceBox" SelectedIndex="0" AutomationProperties.Name="{loc:T Make a PDF from}" SelectionChanged="SourceBox_SelectionChanged">
+            <ComboBoxItem Content="{loc:T Blank pages}" />
+            <ComboBoxItem Content="{loc:T Pictures}" />
+            <ComboBoxItem Content="{loc:T Text}" />
+            <ComboBoxItem Content="{loc:T Clipboard}" />
+        </ComboBox>
+
+        <StackPanel x:Name="BlankOptions" Margin="0,16,0,0">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Number of pages}" />
+            <TextBox x:Name="BlankPagesBox" Text="1" MaxLength="3" HorizontalAlignment="Left" Width="80" AutomationProperties.Name="{loc:T Number of pages}"
+                     TextChanged="Input_Changed" />
+        </StackPanel>
+
+        <StackPanel x:Name="PictureOptions" Margin="0,16,0,0" Visibility="Collapsed">
+            <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE710;" Content="{loc:T Add pictures}" Padding="10,3,10,4" HorizontalAlignment="Left"
+                    AutomationProperties.Name="{loc:T Add pictures}" Click="AddPictures_Click" />
+            <ListBox x:Name="PictureList" Margin="0,8,0,0" MinHeight="64" MaxHeight="160" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     AutomationProperties.Name="{loc:T Pictures}" SelectionChanged="PictureList_SelectionChanged">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                        <Setter Property="ToolTip" Value="{Binding Path}" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
+            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                <Button x:Name="MoveUp" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE70E;" ToolTip="{loc:T Move up}"
+                        AutomationProperties.Name="{loc:T Move up}" Click="MoveUp_Click" />
+                <Button x:Name="MoveDown" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE70D;" ToolTip="{loc:T Move down}" Margin="4,0,0,0"
+                        AutomationProperties.Name="{loc:T Move down}" Click="MoveDown_Click" />
+                <Button x:Name="RemovePicture" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE74D;" ToolTip="{loc:T Remove}" Margin="4,0,0,0"
+                        AutomationProperties.Name="{loc:T Remove}" Click="RemovePicture_Click" />
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel x:Name="TextOptions" Margin="0,16,0,0" Visibility="Collapsed">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Text for the pages}" />
+            <TextBox x:Name="TypedText" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MinHeight="120" MaxHeight="200"
+                     AutomationProperties.Name="{loc:T Text for the pages}" TextChanged="Input_Changed" />
+            <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8E5;" Content="{loc:T Open a text file}" Padding="10,3,10,4" HorizontalAlignment="Left"
+                    Margin="0,8,0,0" AutomationProperties.Name="{loc:T Open a text file}" Click="OpenTextFile_Click" />
+        </StackPanel>
+
+        <DockPanel x:Name="ClipboardOptions" Margin="0,16,0,0" Visibility="Collapsed">
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE77F;" />
+            <TextBlock x:Name="ClipboardState" Style="{StaticResource ReasonText}" AutomationProperties.LiveSetting="Polite" />
+        </DockPanel>
+
+        <DockPanel x:Name="ReasonRow" Margin="0,8,0,0" Visibility="Collapsed">
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE946;" />
+            <TextBlock x:Name="Reason" Style="{StaticResource ReasonText}" AutomationProperties.LiveSetting="Polite" />
+        </DockPanel>
+
+        <StackPanel x:Name="SetupOptions" Margin="0,16,0,0">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Paper}" />
+            <ComboBox x:Name="PaperBox" SelectedIndex="0" AutomationProperties.Name="{loc:T Paper}" SelectionChanged="PaperBox_SelectionChanged">
+                <ComboBoxItem Content="A4" />
+                <ComboBoxItem Content="{loc:T Letter}" />
+                <ComboBoxItem x:Name="PicturePaper" Content="{loc:T Size of the picture}" />
+            </ComboBox>
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Orientation}" Margin="0,12,0,4" />
+            <ComboBox x:Name="OrientationBox" SelectedIndex="0" AutomationProperties.Name="{loc:T Orientation}">
+                <ComboBoxItem Content="{loc:T Automatic}" />
+                <ComboBoxItem Content="{loc:T Portrait}" />
+                <ComboBoxItem Content="{loc:T Landscape}" />
+            </ComboBox>
+            <StackPanel x:Name="MarginRow">
+                <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Margin}" Margin="0,12,0,4" />
+                <ComboBox x:Name="MarginBox" SelectedIndex="2" AutomationProperties.Name="{loc:T Margin}">
+                    <ComboBoxItem Tag="0" Content="{loc:T None}" />
+                    <ComboBoxItem Tag="18" Content="{loc:T Narrow}" />
+                    <ComboBoxItem Tag="36" Content="{loc:T Normal}" />
+                    <ComboBoxItem Tag="72" Content="{loc:T Wide}" />
+                </ComboBox>
+            </StackPanel>
+            <StackPanel x:Name="FontRow">
+                <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Text size}" Margin="0,12,0,4" />
+                <ComboBox x:Name="FontSizeBox" SelectedIndex="2" AutomationProperties.Name="{loc:T Text size}">
+                    <ComboBoxItem Tag="9" Content="9 pt" />
+                    <ComboBoxItem Tag="10" Content="10 pt" />
+                    <ComboBoxItem Tag="11" Content="11 pt" />
+                    <ComboBoxItem Tag="12" Content="12 pt" />
+                    <ComboBoxItem Tag="14" Content="14 pt" />
+                    <ComboBoxItem Tag="18" Content="18 pt" />
+                </ComboBox>
+            </StackPanel>
+        </StackPanel>
+    </StackPanel>
+</tools:ToolPanel>

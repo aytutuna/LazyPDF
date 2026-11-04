@@ -103,7 +103,7 @@ public sealed partial class PdfRedactor
         {
             if (document.Get(number) is not { } value) continue;
             bool attached = value is PdfStream { Dictionary: var d } file && (document.Name(d, "Type") == "EmbeddedFile" || files.Contains(file));
-            string where = attached ? RedactionText.AttachedFile(number) : $"object {number}";
+            string where = attached ? RedactionText.AttachedFile(number) : Loc.T("object {0}|in a sentence", number);
             bool unread = false;
             bool found = Holds(document, value is PdfStream s0 ? s0.Dictionary : value, needles, 0);
             if (!found && value is PdfStream stream && !programs.Contains(stream))

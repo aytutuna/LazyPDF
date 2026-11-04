@@ -1,3 +1,4 @@
+using LazyPDF.App.Documents;
 using Xunit;
 
 namespace LazyPDF.App.Tests;
@@ -84,6 +85,39 @@ public sealed class DiskChangeTests
         Assert.Equal(["a.pdf", "b.pdf"], f.Vm.Documents.Select(d => d.Title));
         Assert.Equal(3, f.Vm.Documents.First().PageCount);
         Assert.NotSame(old, f.Vm.Documents.First());
+    }
+
+    [Fact]
+    public async Task ReloadingTheActiveTabTellsTheWindowAboutTheNewOne()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        var old = f.Vm.ActiveDocument!;
+        Touch(path, Pdfs.Text(pages: 3));
+        var seen = new List<DocumentTab?>();
+        f.Vm.PropertyChanged += (_, _) => seen.Add(f.Vm.ActiveDocument);
+
+        await f.Vm.ReloadAsync(old);
+
+        Assert.NotSame(old, f.Vm.ActiveDocument);
+        Assert.Same(f.Vm.ActiveDocument, seen[^1]);
+    }
+
+    [Fact]
+    public async Task TheButtonOfANoticeGoesWhenTheTabIsClosed()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        var tab = f.Vm.ActiveDocument!;
+        Touch(path, Pdfs.Text(pages: 3));
+        f.Vm.CheckDisk();
+        Assert.NotNull(f.Vm.Message?.Action);
+
+        f.Vm.Close(tab);
+
+        Assert.Null(f.Vm.Message);
     }
 
     [Fact]

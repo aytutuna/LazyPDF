@@ -34,6 +34,19 @@ public partial class AttachmentsSidePanel : ToolPanel
 
     public AttachmentsSidePanel() => InitializeComponent();
 
+    private static string OpenedFolder => System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Lazy PDF", "Attachments");
+
+    /// <summary>Removes the copies made to open attachments, which hold the file decrypted. One a program still has open stays.</summary>
+    public static void DeleteOpenedCopies()
+    {
+        if (!Directory.Exists(OpenedFolder)) return;
+        foreach (string copy in Directory.EnumerateDirectories(OpenedFolder))
+        {
+            try { Directory.Delete(copy, recursive: true); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        }
+    }
+
     protected override void OnAttach()
     {
         Tab!.Changed += Tab_Changed;
@@ -98,7 +111,7 @@ public partial class AttachmentsSidePanel : ToolPanel
         if (Read(row) is not { } bytes) return;
         try
         {
-            string folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Lazy PDF", "Attachments", Guid.NewGuid().ToString("N"));
+            string folder = System.IO.Path.Combine(OpenedFolder, Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(folder);
             string path = System.IO.Path.Combine(folder, name.Length > 0 ? name : "attachment");
             File.WriteAllBytes(path, bytes);

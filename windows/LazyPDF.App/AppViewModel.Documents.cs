@@ -52,8 +52,10 @@ public sealed partial class AppViewModel
         foreach (string path in paths) await OpenAsync(path);
     }
 
-    public Task OpenNewAsync(byte[] pdf, string title) =>
-        OpenAsync(new PendingOpen(new OpenSource(pdf, null, title, Made: true)), password: null, certificate: null);
+    public Task OpenNewAsync(byte[] pdf, string title) => OpenNewAsync(pdf, title, null, null);
+
+    public Task OpenNewAsync(byte[] pdf, string title, string? password, X509Certificate2? certificate) =>
+        OpenAsync(new PendingOpen(new OpenSource(pdf, null, title, Made: true)), password, certificate);
 
     public async Task OpenAsync(string path)
     {
@@ -174,6 +176,12 @@ public sealed partial class AppViewModel
             _recentFiles.Add(path);
             Recent = BuildRecent();
         }
+        if (pending.Replacing is { } was)
+        {
+            tab.PageIndex = Math.Min(was.PageIndex, tab.PageCount - 1);
+            tab.Zoom = was.Zoom;
+            tab.Fit = was.Fit;
+        }
         ActiveTab = tab;
         if (source.Note is not null) ShowNotice(Loc.T("Opened with changes"), source.Note);
         else if (!tab.CanDraw) ShowNotice(Loc.T("Pages cannot be shown"), Loc.T("{0} opens for editing, but Windows cannot draw its pages.", tab.Title));
@@ -198,9 +206,7 @@ public sealed partial class AppViewModel
     private void Replace(int index, DocumentTab tab)
     {
         var old = (DocumentTab)Strip[index];
-        bool wasActive = ReferenceEquals(_activeTab, old);
         Strip[index] = tab;
-        if (wasActive) _activeTab = tab;
         if (ReferenceEquals(_lastDocument, old)) _lastDocument = tab;
         old.Changed -= Tab_Changed;
         _warnedAboutDisk.Remove(old);
@@ -269,6 +275,7 @@ public sealed partial class AppViewModel
     /// <summary>Closes the tab if it has nothing unsaved; otherwise sets <see cref="CloseQuestion"/> and returns false.</summary>
     public bool RequestClose(DocumentTab tab)
     {
+        if (WaitForJob()) return false;
         if (!tab.IsDirty)
         {
             Close(tab);
@@ -290,6 +297,7 @@ public sealed partial class AppViewModel
         if (wasActive) _activeTab = Strip[Math.Min(index, Strip.Count - 1)];
         if (ReferenceEquals(_lastDocument, tab)) _lastDocument = Documents.LastOrDefault();
         if (ReferenceEquals(CloseQuestion, tab)) CloseQuestion = null;
+        DropAction();
         _warnedAboutDisk.Remove(tab);
         tab.Changed -= Tab_Changed;
         tab.Dispose();
@@ -318,8 +326,17 @@ public sealed partial class AppViewModel
     /// <summary>True when the window can close now; otherwise asks about the first document with unsaved changes and goes on from there.</summary>
     public bool RequestExit()
     {
+        if (WaitForJob()) return false;
         _exiting = true;
         return !ContinueExit(raise: false);
+    }
+
+    // A job edits the document off the thread, so what is in it now is not something to save or to throw away.
+    private bool WaitForJob()
+    {
+        if (!IsBusy) return false;
+        ShowNotice(Loc.T("Still working"), Loc.T("Wait for the job to end, or cancel it, then close."));
+        return true;
     }
 
     private bool ContinueExit(bool raise)
@@ -358,10 +375,12 @@ public sealed partial class AppViewModel
         ShowNotice(Loc.T("File changed"), text, new NoticeAction(Loc.T("Open that version"), () => _ = ReloadAsync(tab)));
     }
 
-    /// <summary>Reads the file again from disk and, once that worked, puts it in the place of the tab; unsaved changes are dropped then, not before.</summary>
-    public async Task ReloadAsync(DocumentTab tab)
+    public Task ReloadAsync(DocumentTab tab) => TryReloadAsync(tab);
+
+    /// <summary>Reads the file again from disk and, once that worked, puts it in the place of the tab, keeping its page and zoom; unsaved changes are dropped then, not before. False when the tab was not replaced.</summary>
+    public async Task<bool> TryReloadAsync(DocumentTab tab)
     {
-        if (tab.Path is not { } path || !Strip.Contains(tab)) return;
+        if (tab.Path is not { } path || !Strip.Contains(tab)) return false;
         OpenSource source;
         try
         {
@@ -370,8 +389,9 @@ public sealed partial class AppViewModel
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or PdfReadException)
         {
             ShowProblem(Problems.Open(e, tab.Title));
-            return;
+            return false;
         }
         if (Strip.Contains(tab)) await OpenAsync(new PendingOpen(source, replacing: tab), tab.Password, tab.Certificate);
+        return !Strip.Contains(tab);
     }
 }

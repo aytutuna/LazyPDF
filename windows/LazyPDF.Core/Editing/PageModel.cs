@@ -154,7 +154,7 @@ internal sealed class PageModel
         }
         foreach (var image in Scan.Images)
         {
-            found.Add((image.Sequence, id => new ImageObject(id, image.Info.Bounds, image.Unit, image.Visit, image.Sequence, image.Info, image.Opacity, image.Op)));
+            found.Add((image.Sequence, id => new ImageObject(id, Shown(image), image.Unit, image.Visit, image.Sequence, image.Info, image.Opacity, image.Op)));
         }
         foreach (var path in Scan.Paths)
         {
@@ -179,6 +179,13 @@ internal sealed class PageModel
             if (CharGlyphs[i] is { } g) list.Add(g);
         }
         return list;
+    }
+
+    // The part of a picture a clip leaves showing, which is what a person sees and grabs.
+    private static PdfRect Shown(ImageRecord image)
+    {
+        var shown = image.Info.Bounds.Intersect(image.Clip);
+        return shown.IsEmpty ? image.Info.Bounds : shown;
     }
 
     private TextObject MakeText(int id, TextBlock block, List<EditGlyph> glyphs)

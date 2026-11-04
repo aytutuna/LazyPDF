@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Create;
 using LazyPDF.App.Viewer;
 
 namespace LazyPDF.App;
@@ -16,6 +17,7 @@ public partial class MainWindow : Window
     private readonly AppViewModel _vm;
     private readonly IDocumentViewer _viewer = ViewerFactory.Create();
     private bool _refreshing;
+    private bool _refreshAgain;
     private DocumentTab? _shownTab;
     private InfoMessage? _messageShown;
     private bool _homeShown;
@@ -75,9 +77,29 @@ public partial class MainWindow : Window
 
     private void RefreshFromViewModel()
     {
-        if (_refreshing) return;
+        if (_refreshing)
+        {
+            _refreshAgain = true;
+            return;
+        }
         _refreshing = true;
         try
+        {
+            do
+            {
+                _refreshAgain = false;
+                RefreshAll();
+            }
+            while (_refreshAgain);
+        }
+        finally
+        {
+            _refreshing = false;
+        }
+    }
+
+    private void RefreshAll()
+    {
         {
             bool home = _vm.IsHome;
             HookTabPanel();
@@ -101,20 +123,16 @@ public partial class MainWindow : Window
             RefreshStatus();
             RefreshOverlays();
         }
-        finally
-        {
-            _refreshing = false;
-        }
     }
 
     private void RefreshButtons()
     {
         var tab = _vm.ActiveDocument;
-        SaveButton.IsEnabled = tab is not null;
-        SaveMenuButton.IsEnabled = tab is not null;
+        SaveButton.IsEnabled = tab is not null && !_vm.IsBusy;
+        SaveMenuButton.IsEnabled = tab is not null && !_vm.IsBusy;
         PrintButton.IsEnabled = tab is not null;
-        UndoButton.IsEnabled = _vm.CanUndo;
-        RedoButton.IsEnabled = _vm.CanRedo;
+        UndoButton.IsEnabled = _vm.CanUndo && !_vm.IsBusy;
+        RedoButton.IsEnabled = _vm.CanRedo && !_vm.IsBusy;
         UndoButton.ToolTip = _vm.UndoLabel is { Length: > 0 } undo ? Loc.T("Undo {0} (Ctrl+Z)", undo) : Loc.T("Undo (Ctrl+Z)");
         RedoButton.ToolTip = _vm.RedoLabel is { Length: > 0 } redo ? Loc.T("Redo {0} (Ctrl+Y)", redo) : Loc.T("Redo (Ctrl+Y)");
     }
@@ -135,6 +153,7 @@ public partial class MainWindow : Window
         InfoBarMessage.Text = message.Text;
         InfoBarAction.Visibility = message.Action is null ? Visibility.Collapsed : Visibility.Visible;
         InfoBarAction.Content = message.Action?.Text;
+        InfoBarAction.IsEnabled = !_vm.IsBusy;
         if (ReferenceEquals(message, _messageShown)) return;
         _messageShown = message;
         AutomationProperties.SetName(InfoBarText, $"{message.Title}. {message.Text}");
@@ -190,7 +209,13 @@ public partial class MainWindow : Window
     private void Home_TileChosen(object? sender, string id)
     {
         if (id == AppViewModel.OpenTile) OpenWithDialog();
-        else _vm.StartTile(id);
+        else if (id == AppViewModel.CreateTile) _ = CreateWindow.RunAsync(this, _vm);
+        else
+        {
+            _vm.StartTile(id);
+            if (_vm.ActiveTool is not null)
+                Dispatcher.BeginInvoke(() => InspectorHost.MoveFocus(new TraversalRequest(FocusNavigationDirection.First)), System.Windows.Threading.DispatcherPriority.Loaded);
+        }
     }
 
     private void Home_FileChosen(object? sender, string path) => _ = _vm.OpenAsync(path);
@@ -214,12 +239,30 @@ public partial class MainWindow : Window
 
     private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-        if (!_vm.RequestExit()) e.Cancel = true;
+        if (!HandInTyping(_vm.ActiveDocument) || !_vm.RequestExit()) e.Cancel = true;
+    }
+
+    // Text still being typed in a tool has to be in the document before the question about unsaved changes.
+    // False while a job is running.
+    private bool HandInTyping(DocumentTab? tab)
+    {
+        if (_actionRunning)
+        {
+            _vm.ShowNotice(Loc.T("Still working"), Loc.T("Wait for the job to end, or cancel it, then close."));
+            return false;
+        }
+        if (tab is not null && ReferenceEquals(tab, _vm.ActiveDocument)) _inspectorPanel?.HandIn();
+        return true;
+    }
+
+    private void RequestClose(DocumentTab tab)
+    {
+        if (HandInTyping(tab)) _vm.RequestClose(tab);
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && !Modal && !_actionRunning)
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && !Modal && !_actionRunning && !_vm.IsBusy)
         {
             bool shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
             switch (e.Key)
@@ -228,12 +271,12 @@ public partial class MainWindow : Window
                 case Key.O: OpenWithDialog(); break;
                 case Key.S when shift: SaveAsWithDialog(); break;
                 case Key.S: SaveWithDialog(); break;
-                case Key.W when _vm.ActiveDocument is { } open: _vm.RequestClose(open); break;
+                case Key.W when _vm.ActiveDocument is { } open: RequestClose(open); break;
                 case Key.P: _vm.Print(); break;
                 case Key.F when _vm.ActiveDocument is not null: _viewer.ShowFind(); break;
                 case Key.G when _vm.ActiveDocument is not null: _viewer.ShowGoToPage(); break;
-                case Key.Z: _vm.Undo(); break;
-                case Key.Y: _vm.Redo(); break;
+                case Key.Z: Undo(); break;
+                case Key.Y: Redo(); break;
                 case Key.Tab: CycleTab(shift ? -1 : 1); break;
                 default: return;
             }

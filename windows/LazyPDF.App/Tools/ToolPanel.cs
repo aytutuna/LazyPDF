@@ -54,6 +54,11 @@ public abstract class ToolPanel : UserControl, IToolPanel
         Host = null;
     }
 
+    /// <summary>Puts text that is still being typed into the document; the shell calls it before it asks about unsaved changes or undoes a step.</summary>
+    public virtual void HandIn()
+    {
+    }
+
     protected virtual void OnAttach()
     {
     }

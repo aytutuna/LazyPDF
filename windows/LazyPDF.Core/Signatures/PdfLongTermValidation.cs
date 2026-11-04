@@ -25,7 +25,7 @@ public static class PdfLongTermValidation
     public static void Add(PdfEditSession session, ISignatureTransport transport, DateTimeOffset time)
     {
         Add(session.Document, transport, time);
-        session.Commit("Validation data");
+        session.Commit(Loc.T("Validation data"));
     }
 
     internal static void Add(PdfDocument document, ISignatureTransport transport, DateTimeOffset time)

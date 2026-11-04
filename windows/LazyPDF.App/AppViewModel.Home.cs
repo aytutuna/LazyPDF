@@ -21,13 +21,14 @@ public sealed record HomeTile(string Id, string Title, string Glyph, string Desc
 public sealed partial class AppViewModel
 {
     public const string OpenTile = "open";
+    public const string CreateTile = "create";
     public const string ScanTile = "scan";
 
     /// <summary>The tools behind the tiles that are tools: tile id, tool id.</summary>
     private static readonly (string Tile, string Tool)[] ToolTiles =
     [
         ("combine", "combine"), ("compress", "optimize"), ("protect", "protect"), ("sign", "fillsign"),
-        ("form", "fillsign"), ("edit", "editcontent"), ("export", "export"),
+        ("form", "forms"), ("edit", "editcontent"), ("export", "export"),
     ];
 
     public IReadOnlyList<RecentItem> Recent { get; private set; }
@@ -47,10 +48,11 @@ public sealed partial class AppViewModel
             return
             [
                 new(OpenTile, Loc.T("Open"), "\uE8E5", Loc.T("Open a PDF, a picture or a text file."), true, null),
-                ForTool("combine", Loc.T("Combine"), "\uE8F4", Loc.T("Put pages of other files into this one, or split it.")),
+                new(CreateTile, Loc.T("Create"), "\uE8B9", Loc.T("Make a PDF from blank pages, pictures, text or the clipboard."), true, null),
+                ForTool("combine", Loc.T("Combine"), "\uE8F4", Loc.T("Join files into a new one, or split this one.")),
                 ForTool("compress", Loc.T("Compress"), "\uE9D9", Loc.T("Make the file smaller.")),
                 ForTool("protect", Loc.T("Protect"), "\uE72E", Loc.T("Set a password and decide what others may do.")),
-                ForTool("sign", Loc.T("Sign"), "\uE76D", Loc.T("Sign the file with your name or a certificate.")),
+                ForTool("sign", Loc.T("Sign"), "\uE76D", Loc.T("Sign the file with your name.")),
                 ForTool("form", Loc.T("Fill a form"), "\uE8D2", Loc.T("Fill in the fields of a form.")),
                 ForTool("edit", Loc.T("Edit"), "\uE70F", Loc.T("Change the words and pictures on a page.")),
                 new(ScanTile, Loc.T("Scan"), "\uE722", Loc.T("Scan paper into a PDF with Lazy Scan."), _sisters.LazyScanInstalled,

@@ -6,15 +6,15 @@ namespace LazyPDF.App.Tests;
 // The Home tab's tiles: the jobs people come for, each with its reason when it cannot start.
 public sealed class HomeTilesTests
 {
-    private static readonly string[] Ids = ["open", "combine", "compress", "protect", "sign", "form", "edit", "scan", "export"];
+    private static readonly string[] Ids = ["open", "create", "combine", "compress", "protect", "sign", "form", "edit", "scan", "export"];
 
     [Fact]
-    public void TheTilesAreTheNineJobsInOrder()
+    public void TheTilesAreTheTenJobsInOrder()
     {
         using var f = new ViewModelFixture();
 
         Assert.Equal(Ids, f.Vm.Tiles.Select(t => t.Id));
-        Assert.Equal(["Open", "Combine", "Compress", "Protect", "Sign", "Fill a form", "Edit", "Scan", "Export"], f.Vm.Tiles.Select(t => t.Title));
+        Assert.Equal(["Open", "Create", "Combine", "Compress", "Protect", "Sign", "Fill a form", "Edit", "Scan", "Export"], f.Vm.Tiles.Select(t => t.Title));
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public sealed class HomeTilesTests
     {
         using var f = new ViewModelFixture();
 
-        foreach (var tile in f.Vm.Tiles.Where(t => t.Id is not ("open" or "scan")))
+        foreach (var tile in f.Vm.Tiles.Where(t => t.Id is not ("open" or "create" or "scan")))
         {
             Assert.False(tile.Available);
             Assert.Equal("Open a file first", tile.Reason);
@@ -36,7 +36,7 @@ public sealed class HomeTilesTests
     {
         using var f = new ViewModelFixture();
 
-        Assert.Equal("Put pages of other files into this one, or split it. Not available: Open a file first", f.Vm.Tiles.Single(t => t.Id == "combine").HelpText);
+        Assert.Equal("Join files into a new one, or split this one. Not available: Open a file first", f.Vm.Tiles.Single(t => t.Id == "combine").HelpText);
         Assert.Equal("Open a PDF, a picture or a text file.", f.Vm.Tiles[0].HelpText);
     }
 
@@ -74,7 +74,7 @@ public sealed class HomeTilesTests
     [InlineData("compress", "optimize")]
     [InlineData("protect", "protect")]
     [InlineData("sign", "fillsign")]
-    [InlineData("form", "fillsign")]
+    [InlineData("form", "forms")]
     [InlineData("edit", "editcontent")]
     [InlineData("export", "export")]
     public async Task ATileOpensItsToolOnTheDocumentLastInUse(string tile, string tool)

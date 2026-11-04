@@ -24,21 +24,24 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
     /// <summary>Why the last request gave nothing; null after one that worked.</summary>
     public string? LastFailure { get; private set; }
 
+    /// <summary>Ends the request in flight and fails the ones after it.</summary>
+    public CancellationToken Cancel { get; set; }
+
     public static bool IsOffline => !NetworkInterface.GetIsNetworkAvailable();
 
     public byte[]? Post(string url, string contentType, byte[] body)
     {
         var content = new ByteArrayContent(body);
         content.Headers.TryAddWithoutValidation("Content-Type", contentType);
-        return Send(new HttpRequestMessage(HttpMethod.Post, url) { Content = content });
+        return Send(HttpMethod.Post, url, content);
     }
 
-    public byte[]? Get(string url) => Send(new HttpRequestMessage(HttpMethod.Get, url));
+    public byte[]? Get(string url) => Send(HttpMethod.Get, url, null);
 
-    private byte[]? Send(HttpRequestMessage request)
+    private byte[]? Send(HttpMethod method, string url, HttpContent? content)
     {
         LastFailure = null;
-        if (request.RequestUri is not { Scheme: "http" or "https" })
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var address) || address.Scheme is not ("http" or "https"))
         {
             LastFailure = Loc.T("The address is not a web address.");
             return null;
@@ -50,7 +53,8 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
         }
         try
         {
-            using var response = _client.Send(request);
+            using var request = new HttpRequestMessage(method, address) { Content = content };
+            using var response = _client.Send(request, Cancel);
             if (!response.IsSuccessStatusCode)
             {
                 LastFailure = Loc.T("The server answered with an error ({0}).", (int)response.StatusCode);

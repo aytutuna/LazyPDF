@@ -32,8 +32,9 @@ public partial class MainWindow
         SettingsOverlay.Visibility = _settingsOpen ? Visibility.Visible : Visibility.Collapsed;
         bool modal = Modal;
         if (modal && !_wasModal) _focusBeforeOverlay = focused;
-        TabBar.IsEnabled = !modal && !_actionRunning;
-        ToolStrip.IsEnabled = ContentAreaBehind.IsEnabled = !modal;
+        TabBar.IsEnabled = !modal && !_actionRunning && !_vm.IsBusy;
+        ToolStrip.IsEnabled = !modal && !_vm.IsBusy;
+        ContentAreaBehind.IsEnabled = !modal && !_vm.IsBusy;
         if (!modal && _wasModal) ReturnFocus();
         _wasModal = modal;
     }

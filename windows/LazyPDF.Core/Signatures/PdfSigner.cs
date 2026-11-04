@@ -34,13 +34,13 @@ public static class PdfSigner
     public static void Sign(PdfEditSession session, PdfSignRequest request)
     {
         var job = new SignJob(request);
-        session.CommitBytes("Sign", SignOnce(session.Document, job));
+        session.CommitBytes(Loc.T("Sign"), SignOnce(session.Document, job));
         if (job.Level >= PadesLevel.LT)
         {
             PdfLongTermValidation.Add(session.Document, request.Timestamp!.Transport, request.Time);
-            session.Commit("Validation data");
+            session.Commit(Loc.T("Validation data"));
         }
-        if (job.Level == PadesLevel.LTA) session.CommitBytes("Time stamp", DocumentTimestamp(session.Document, request.Timestamp!, request.Time));
+        if (job.Level == PadesLevel.LTA) session.CommitBytes(Loc.T("Time stamp"), DocumentTimestamp(session.Document, request.Timestamp!, request.Time));
     }
 
     /// <summary>Adds a document time stamp (ETSI.RFC3161) over the whole file, which keeps earlier signatures and validation data verifiable once their certificates expire.</summary>
@@ -48,7 +48,7 @@ public static class PdfSigner
         DocumentTimestamp(PdfDocument.Open(pdf, password), settings, time);
 
     public static void AddDocumentTimestamp(PdfEditSession session, TimestampSettings settings, DateTimeOffset time) =>
-        session.CommitBytes("Time stamp", DocumentTimestamp(session.Document, settings, time));
+        session.CommitBytes(Loc.T("Time stamp"), DocumentTimestamp(session.Document, settings, time));
 
     internal static byte[] SourceBytes(PdfDocument document) =>
         MemoryMarshal.TryGetArray(document.Source, out var segment) && segment.Offset == 0 && segment.Count == segment.Array!.Length

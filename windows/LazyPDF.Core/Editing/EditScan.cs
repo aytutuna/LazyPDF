@@ -91,7 +91,7 @@ internal sealed class EditGlyph
     }
 }
 
-internal sealed record ImageRecord(ContentUnit Unit, FormVisit? Visit, int Op, ImageInfo Info, double Opacity, int Sequence);
+internal sealed record ImageRecord(ContentUnit Unit, FormVisit? Visit, int Op, ImageInfo Info, double Opacity, int Sequence, PdfRect Clip);
 
 internal sealed record PathRecord(ContentUnit Unit, FormVisit? Visit, int FirstOp, int PaintOp, PathInfo Info, PathStyle Style, int Sequence);
 
@@ -237,7 +237,7 @@ internal sealed class EditScan : ContentVisitor
     public override void PaintImage(ContentContext context, ImageInfo image)
     {
         if (_inPattern > 0) return;
-        Images.Add(new ImageRecord(Current, Visit, context.OperatorIndex, image, context.State.FillAlpha, _sequence++));
+        Images.Add(new ImageRecord(Current, Visit, context.OperatorIndex, image, context.State.FillAlpha, _sequence++, context.State.Clip));
     }
 
     public override void PaintPath(ContentContext context, PathInfo path)
