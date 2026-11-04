@@ -89,6 +89,7 @@ public static partial class PageOperations
             double s = Math.Min(w / crop.Width, h / crop.Height);
             double e = (w - s * crop.Width) / 2 - s * crop.Left, f = (h - s * crop.Height) / 2 - s * crop.Bottom;
             WrapContents(document, dict, s, e, f);
+            MapPatterns(document, page, new PdfMatrix(s, 0, 0, s, e, f));
             MapAnnotations(document, dict, s, e, f);
             var whole = new PdfRect(0, 0, w, h);
             dict["MediaBox"] = whole.ToArray();
@@ -134,6 +135,32 @@ public static partial class PageOperations
         else parts.Add(page["Contents"]!);
         parts.Add(document.Add(new PdfStream(new PdfDictionary(), "\nQ"u8.ToArray())));
         page["Contents"] = new PdfArray(parts);
+    }
+
+    // A pattern's matrix goes to the page's default space, which the cm round the content does not reach (8.7.3.1).
+    // The page gets its own pattern objects, as the old ones may be shared with pages that keep their size.
+    private static void MapPatterns(PdfDocument document, PdfPage page, PdfMatrix scale)
+    {
+        if (document.Dict(page.Resources, "Pattern") is not { } patterns) return;
+        var resources = page.Resources!.Copy();
+        var own = new PdfDictionary();
+        foreach (var (name, value) in patterns.Entries)
+        {
+            PdfObject made = value;
+            var resolved = document.Resolve(value);
+            if (resolved is PdfStream or PdfDictionary)
+            {
+                var dictionary = resolved is PdfStream stream ? stream.Dictionary : (PdfDictionary)resolved;
+                var matrix = PdfMatrix.FromArray(document.Array(dictionary, "Matrix"), document.Resolve) ?? PdfMatrix.Identity;
+                var moved = matrix.Multiply(scale);
+                var copy = dictionary.Copy();
+                copy["Matrix"] = new PdfArray([.. new[] { moved.A, moved.B, moved.C, moved.D, moved.E, moved.F }.Select(n => (PdfObject)new PdfNumber(n))]);
+                made = document.Add(resolved is PdfStream tiling ? new PdfStream(copy, document.RawData(tiling)) : copy);
+            }
+            own[name] = made;
+        }
+        resources["Pattern"] = own;
+        page.Dictionary["Resources"] = resources;
     }
 
     private static void MapAnnotations(PdfDocument document, PdfDictionary page, double s, double e, double f)

@@ -9,8 +9,8 @@ internal static class PageCleanup
     public static void BeforeDelete(PdfDocument document, IReadOnlyList<PdfPage> doomed)
     {
         var gone = doomed.Select(p => p.Reference.Number).ToHashSet();
-        var names = new PageDestinations(document);
-        bool Dead(PdfObject? destination) => names.PageOfAny(destination) is { } page && gone.Contains(page.Number);
+        var names = new DestContext(document);
+        bool Dead(PdfObject? destination) => PageDestinations.PageOfAny(document, names, destination) is { } page && gone.Contains(page.Number);
 
         Outlines(document, Dead);
         foreach (var page in document.Pages)
@@ -20,7 +20,7 @@ internal static class PageCleanup
             Triggers(document, page.Dictionary, Dead);
         }
         OpenAction(document, Dead);
-        names.RemoveWhere(Dead);
+        PageDestinations.RemoveWhere(document, Dead);
         foreach (var page in doomed) RemoveFields(document, page);
         Structure(document, doomed);
         Threads(document, gone);
@@ -54,30 +54,30 @@ internal static class PageCleanup
     {
         if (holder.ContainsKey("A"))
         {
-            if (Action(document, holder["A"], dead, 0) is { } kept) holder["A"] = kept;
+            if (Action(document, holder["A"], dead, 0, []) is { } kept) holder["A"] = kept;
             else holder.Remove("A");
         }
         if (document.Dict(holder, "AA") is not { } additional) return;
         foreach (string key in additional.Entries.Select(e => e.Key).Distinct().ToList())
         {
-            if (Action(document, additional[key], dead, 0) is { } kept) additional[key] = kept;
+            if (Action(document, additional[key], dead, 0, []) is { } kept) additional[key] = kept;
             else additional.Remove(key);
         }
     }
 
     // A GoTo to a gone page is dropped and the action that followed it takes its place.
-    private static PdfObject? Action(PdfDocument document, PdfObject? value, Func<PdfObject?, bool> dead, int depth)
+    private static PdfObject? Action(PdfDocument document, PdfObject? value, Func<PdfObject?, bool> dead, int depth, HashSet<PdfDictionary> seen)
     {
-        if (document.Resolve(value) is not PdfDictionary action) return value;
+        if (document.Resolve(value) is not PdfDictionary action || !seen.Add(action)) return value;
         PdfObject? next = action["Next"];
         if (depth < 32 && next is not null)
         {
             if (document.Resolve(next) is PdfArray list)
             {
-                var kept = list.Items.Select(i => Action(document, i, dead, depth + 1)).OfType<PdfObject>().ToList();
+                var kept = list.Items.Select(i => Action(document, i, dead, depth + 1, seen)).OfType<PdfObject>().ToList();
                 next = kept.Count == 0 ? null : new PdfArray(kept);
             }
-            else next = Action(document, next, dead, depth + 1);
+            else next = Action(document, next, dead, depth + 1, seen);
             if (next is null) action.Remove("Next");
             else action["Next"] = next;
         }
@@ -103,7 +103,7 @@ internal static class PageCleanup
         }
         else if (action is PdfDictionary)
         {
-            if (Action(document, document.Catalog["OpenAction"], dead, 0) is { } kept) document.Catalog["OpenAction"] = kept;
+            if (Action(document, document.Catalog["OpenAction"], dead, 0, []) is { } kept) document.Catalog["OpenAction"] = kept;
             else document.Catalog.Remove("OpenAction");
         }
         if (document.Dict(document.Catalog, "AA") is not null) Triggers(document, document.Catalog, dead);

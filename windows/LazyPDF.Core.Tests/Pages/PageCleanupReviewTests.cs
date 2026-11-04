@@ -23,9 +23,8 @@ public class PageCleanupReviewTests
             .Obj(free + 1, "<</Limits [(n) (z)] /Names [(n) [6 0 R /Fit] (z) [6 0 R /Fit]]>>"));
         PageOperations.Delete(document, [0, 2]);
         var root = document.Dict(document.Dict(document.Catalog, "Names"), "Dests")!;
-        var kid = Assert.Single(document.Array(root, "Kids")!.Items);
-        var limits = document.Array((PdfDictionary)document.Resolve(kid)!, "Limits")!.Items.Select(i => PdfText.Read(document, i));
-        Assert.Equal(["m", "m"], limits);
+        Assert.Equal(["m"], PdfNameTree.Read(document, root).Select(e => e.Key));
+        Assert.False(root.ContainsKey("Limits"));
     }
 
     [Fact]

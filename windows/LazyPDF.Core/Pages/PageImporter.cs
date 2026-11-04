@@ -45,6 +45,8 @@ internal sealed partial class PageImporter
             if (!seen.Add(page.Reference.Number)) _fields.Clear();
             FillPage(page, reference, dict);
         }
+        TrimGroups();
+        CarryOrder();
         Drain();
         MergeLayers();
         return [.. made.Select(m => m.Ref)];

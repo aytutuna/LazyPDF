@@ -59,9 +59,7 @@ public class PageDeleteReferenceTests
         var document = Open($"/Outlines {Outline} 0 R {tree}");
         PageOperations.Delete(document, [1]);
         var root = document.Dict(document.Dict(document.Catalog, "Names"), "Dests")!;
-        var kids = document.Array(root, "Kids")!.Items.Select(k => (PdfDictionary)document.Resolve(k)!).ToList();
-        Assert.Single(kids);
-        Assert.Equal(2, document.Array(kids[0], "Names")!.Items.Count);
+        Assert.Equal(["a"], PdfNameTree.Read(document, root).Select(e => e.Key));
     }
 
     [Fact]

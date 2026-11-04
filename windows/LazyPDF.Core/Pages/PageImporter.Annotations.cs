@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace LazyPDF.Core;
 
@@ -8,13 +9,21 @@ internal sealed partial class PageImporter
 {
     private const int MaxFieldDepth = 32;
     private const int MaxActionChain = 32;
+    private const int MaxActionNodes = 512;
+    private int _actionNodes;
 
     private readonly Dictionary<int, PdfReference> _local = [];
     private readonly Dictionary<int, (PdfReference Ref, PdfArray Kids)> _fields = [];
-    private PageDestinations? _names;
+    private DestContext? _names;
     private HashSet<string>? _rootNames;
     private bool _formMerged;
     private readonly List<(PdfDictionary Source, PdfDictionary Copy)> _fieldActions = [];
+    private readonly Dictionary<string, string> _fontRenames = [];
+    private readonly Dictionary<int, List<PdfReference>> _copies = [];
+    private readonly Dictionary<PdfArray, FieldCopy> _groups = new(ReferenceEqualityComparer.Instance);
+
+    // A field above widgets as copied: which of the source's kids came across, by position.
+    private sealed record FieldCopy(PdfDictionary Source, PdfDictionary Copy, List<int> Positions);
 
     private void CopyAnnotations(PdfPage page, PdfReference pageRef, PdfDictionary dict)
     {
@@ -28,6 +37,9 @@ internal sealed partial class PageImporter
             // No number to key it by, so a direct annotation gets a negative one that no object has.
             else if (item is PdfDictionary inline) items.Add((new PdfReference(--direct, 0), inline));
         }
+
+        // The form's defaults come first: a font renamed there is renamed in the /DA of every field copied.
+        if (!_same && items.Any(i => _source.Name(i.Dict, "Subtype") == "Widget")) TargetFields();
 
         // Popups go second: one stays only with the annotation that owns it.
         var made = new List<(PdfDictionary Source, PdfDictionary Copy, PdfReference Ref)>();
@@ -44,14 +56,20 @@ internal sealed partial class PageImporter
                 made.Add((annotation, copy, reference));
             }
         }
-        foreach (var (source, copy, reference) in made) FillAnnotation(source, copy, reference, pageRef);
+        var sources = new Dictionary<PdfDictionary, PdfReference>(ReferenceEqualityComparer.Instance);
+        foreach (var (numbered, annotation) in items) sources.TryAdd(annotation, numbered);
+        foreach (var (source, copy, reference) in made) FillAnnotation(source, copy, reference, pageRef, sources[source]);
         ResolveFieldActions();
+        foreach (var (number, reference) in _local)
+        {
+            if (number > 0) Record(number, reference);
+        }
 
         var kept = items.Where(i => _local.ContainsKey(i.Source.Number)).Select(i => (PdfObject)_local[i.Source.Number]).Distinct().ToList();
         if (kept.Count > 0) dict["Annots"] = new PdfArray(kept);
     }
 
-    private void FillAnnotation(PdfDictionary source, PdfDictionary copy, PdfReference self, PdfReference pageRef)
+    private void FillAnnotation(PdfDictionary source, PdfDictionary copy, PdfReference self, PdfReference pageRef, PdfReference sourceRef)
     {
         bool widget = _source.Name(source, "Subtype") == "Widget";
         foreach (var (key, value) in source.Entries)
@@ -66,11 +84,12 @@ internal sealed partial class PageImporter
                 "Dest" => FixDestination(value),
                 "A" => FixAction(value),
                 "AA" => FixAdditional(value),
+                "DA" => FixDefaultAppearance(value),
                 _ => Copy(value),
             };
             if (item is not null and not PdfNull) copy.Add(key, item);
         }
-        if (widget) AttachWidget(source, copy, self);
+        if (widget) AttachWidget(source, copy, self, sourceRef);
     }
 
     private bool IsDeadLink(PdfDictionary annotation)
@@ -82,7 +101,8 @@ internal sealed partial class PageImporter
 
     private PdfObject? FixAction(PdfObject value, int depth = 0)
     {
-        if (_source.Resolve(value) is not PdfDictionary action || depth > MaxActionChain) return null;
+        if (depth == 0) _actionNodes = 0;
+        if (_source.Resolve(value) is not PdfDictionary action || depth > MaxActionChain || ++_actionNodes > MaxActionNodes) return null;
         string? type = _source.Name(action, "S");
         var copy = new PdfDictionary();
         foreach (var (key, item) in action.Entries)
@@ -159,20 +179,22 @@ internal sealed partial class PageImporter
         if (value is null) return null;
         if (_same) return Copy(value);
         var resolved = _source.Resolve(value);
-        if (resolved is PdfName or PdfString) resolved = _source.Resolve((_names ??= new PageDestinations(_source)).Lookup(value));
+        if (resolved is PdfName or PdfString) resolved = _source.Resolve(PageDestinations.Lookup(_source, _names ??= new DestContext(_source), value));
         if (resolved is PdfDictionary named) resolved = _source.Resolve(named["D"]);
         if (resolved is not PdfArray { Items.Count: > 0 } array) return null;
         if (array.Items[0] is PdfReference page && !_newPages.ContainsKey(page.Number)) return null;
         return Copy(array);
     }
 
-    private void AttachWidget(PdfDictionary source, PdfDictionary copy, PdfReference self)
+    private void AttachWidget(PdfDictionary source, PdfDictionary copy, PdfReference self, PdfReference sourceRef)
     {
-        if (source["Parent"] is PdfReference parentRef && _source.Resolve(parentRef) is PdfDictionary)
+        if (source["Parent"] is PdfReference parentRef && _source.Resolve(parentRef) is PdfDictionary parentSource)
         {
             var parent = FieldNode(parentRef, 1);
             copy["Parent"] = parent.Ref;
             parent.Kids.Items.Add(self);
+            int position = _source.Array(parentSource, "Kids")?.Items.FindIndex(k => k is PdfReference r && r.Number == sourceRef.Number) ?? -1;
+            _groups[parent.Kids].Positions.Add(position);
         }
         else if (copy.ContainsKey("T") || copy.ContainsKey("FT"))
         {
@@ -193,10 +215,12 @@ internal sealed partial class PageImporter
         foreach (var (key, value) in node.Entries)
         {
             if (key is "Kids" or "Parent" || !ReferenceEquals(node[key], value)) continue;
-            var item = key == "AA" ? FixAdditional(value) : Copy(value);
+            var item = key switch { "AA" => FixAdditional(value), "DA" => FixDefaultAppearance(value), _ => Copy(value) };
             if (item is not (null or PdfNull)) copy.Add(key, item);
         }
         copy["Kids"] = kids;
+        _groups[kids] = new FieldCopy(node, copy, []);
+        Record(source.Number, reference);
         DropSignature(node, copy);
         if (node["Parent"] is PdfReference up && depth < MaxFieldDepth && _source.Resolve(up) is PdfDictionary)
         {
@@ -241,7 +265,7 @@ internal sealed partial class PageImporter
         {
             foreach (string key in new[] { "DA", "Q" })
             {
-                if (!root.ContainsKey(key) && form[key] is { } inherited) root[key] = Copy(inherited);
+                if (!root.ContainsKey(key) && form[key] is { } inherited) root[key] = key == "DA" ? FixDefaultAppearance(inherited) : Copy(inherited);
             }
         }
         fields.Items.Add(reference);
@@ -304,7 +328,78 @@ internal sealed partial class PageImporter
             foreach (var (name, item) in names.Entries)
             {
                 if (!group.ContainsKey(name)) group.Add(name, Copy(item));
+                else if (category == "Font" && !SameFont(names[name], group[name]))
+                {
+                    // The copied fields name this font in their /DA, so it has to come across under a name of its own.
+                    string fresh = name;
+                    for (int n = 2; group.ContainsKey(fresh); n++) fresh = $"{name}_{n}";
+                    group.Add(fresh, Copy(item));
+                    _fontRenames[name] = fresh;
+                }
             }
         }
+    }
+
+    private bool SameFont(PdfObject? source, PdfObject? target) =>
+        _source.Resolve(source) is PdfDictionary a && _target.Resolve(target) is PdfDictionary b && a.ToString() == b.ToString();
+
+    private PdfObject FixDefaultAppearance(PdfObject value)
+    {
+        if (_fontRenames.Count == 0 || PdfText.Read(_source, value) is not { } da) return Copy(value);
+        string fixedText = Regex.Replace(da, @"/([^\s/<>\[\]()]+)(\s+[-+\d.]+\s+Tf)",
+            m => _fontRenames.TryGetValue(m.Groups[1].Value, out var renamed) ? $"/{renamed}{m.Groups[2].Value}" : m.Value);
+        return PdfText.ToObject(fixedText);
+    }
+
+    private void Record(int sourceNumber, PdfReference copy)
+    {
+        if (!_copies.TryGetValue(sourceNumber, out var list)) _copies[sourceNumber] = list = [];
+        if (!list.Contains(copy)) list.Add(copy);
+    }
+
+    // Calculation order (12.7.6.2): the copies of the fields the source lists follow what the target lists.
+    private void CarryOrder()
+    {
+        if (_source.Dict(_source.Catalog, "AcroForm") is { } form && _source.Array(form, "CO") is { } order
+            && _target.Dict(_target.Catalog, "AcroForm") is { } into)
+        {
+            var added = order.Items.OfType<PdfReference>().SelectMany(r => _copies.GetValueOrDefault(r.Number) ?? []).ToList();
+            if (added.Count > 0)
+            {
+                var list = _target.Array(into, "CO");
+                if (list is null) into["CO"] = list = new PdfArray([]);
+                list.Items.AddRange(added);
+            }
+        }
+        _copies.Clear();
+    }
+
+    // A group that lost some of its buttons keeps the export values of the ones that came, and a value naming a button that stayed behind is Off (the rule of PageCleanup.ForgetButton).
+    private void TrimGroups()
+    {
+        foreach (var (kids, group) in _groups)
+        {
+            var (source, copy, positions) = group;
+            var all = _source.Array(source, "Kids");
+            if (all is null || positions.Count == 0 || positions.Count >= all.Items.Count || positions.Contains(-1)) continue;
+            if (!InheritedButton(source)) continue;
+            if (_source.Array(source, "Opt") is { } options)
+            {
+                copy["Opt"] = new PdfArray([.. positions.Where(p => p < options.Items.Count).Select(p => Copy(options.Items[p]))]);
+            }
+            var states = positions.Select(p => _source.Dict(_source.Dict(_source.Resolve(all.Items[p]) as PdfDictionary, "AP"), "N")).OfType<PdfDictionary>().ToList();
+            if (copy["V"] is PdfName { Value: not "Off" } value && states.Count > 0 && !states.Any(s => s.ContainsKey(value.Value))) copy["V"] = new PdfName("Off");
+        }
+        _groups.Clear();
+    }
+
+    private bool InheritedButton(PdfDictionary field)
+    {
+        for (int depth = 0; field is not null && depth < MaxFieldDepth; depth++)
+        {
+            if (_source.Name(field, "FT") is { } type) return type == "Btn";
+            field = _source.Dict(field, "Parent")!;
+        }
+        return false;
     }
 }

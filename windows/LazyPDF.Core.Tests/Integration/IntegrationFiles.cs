@@ -9,7 +9,7 @@ internal static class IntegrationFiles
 {
     public const string Password = "user";
 
-    private static readonly byte[] FileId = Enumerable.Range(1, 16).Select(i => (byte)(i * 3)).ToArray();
+    internal static readonly byte[] FileId = Enumerable.Range(1, 16).Select(i => (byte)(i * 3)).ToArray();
 
     /// <summary>
     /// <paramref name="count"/> pages of 400 by 600 showing "Page n" (fonts /F1 and the form font /Helv),

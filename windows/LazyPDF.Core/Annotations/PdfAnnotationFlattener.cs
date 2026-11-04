@@ -53,7 +53,8 @@ public static class PdfAnnotationFlattener
         {
             if (!stream.Dictionary.ContainsKey("Subtype")) stream.Dictionary["Subtype"] = new PdfName("Form");
             string name = ContentResources.Add(document, resources, "XObject", reference, "Fm");
-            content.Paint(name, Placement(document, stream, annotation.Rect));
+            bool upright = annotation.Flags.HasFlag(AnnotationFlags.NoRotate) && page.Rotate != 0;
+            content.Paint(name, upright ? Upright(document, stream, annotation.Rect, page) : Placement(document, stream, annotation.Rect));
         }
         Surround(document, page, content.ToArray());
 
@@ -105,6 +106,25 @@ public static class PdfAnnotationFlattener
         var transformed = matrix.Transform(box);
         double sx = transformed.Width > 0 ? rect.Width / transformed.Width : 1, sy = transformed.Height > 0 ? rect.Height / transformed.Height : 1;
         return new PdfMatrix(sx, 0, 0, sy, rect.Left - transformed.Left * sx, rect.Bottom - transformed.Bottom * sy);
+    }
+
+    // NoRotate (12.5.3): the appearance stays upright on the shown page, at its natural size, with the
+    // corner of the rectangle that is shown top left kept where it is.
+    private static PdfMatrix Upright(PdfDocument document, PdfStream form, PdfRect rect, PdfPage page)
+    {
+        var box = document.Rect(form.Dictionary, "BBox") ?? new PdfRect(0, 0, rect.Width, rect.Height);
+        var matrix = PdfMatrix.FromArray(document.Array(form.Dictionary, "Matrix"), document.Resolve) ?? PdfMatrix.Identity;
+        var natural = matrix.Transform(box);
+        var geometry = new PageGeometry(page);
+        var anchor = geometry.ToDisplay(rect);
+        double unit = page.UserUnit;
+        (double X, double Y) At(double u, double v) =>
+            geometry.ToUser(anchor.X + (u - natural.Left) * unit, anchor.Y + (natural.Top - v) * unit);
+        var origin = At(natural.Left, natural.Bottom);
+        var right = At(natural.Left + 1, natural.Bottom);
+        var up = At(natural.Left, natural.Bottom + 1);
+        double a = right.X - origin.X, b = right.Y - origin.Y, c = up.X - origin.X, d = up.Y - origin.Y;
+        return new PdfMatrix(a, b, c, d, origin.X - a * natural.Left - c * natural.Bottom, origin.Y - b * natural.Left - d * natural.Bottom);
     }
 
     // Wraps the page's own content in q ... Q, closing any q it left open, so that nothing it left in

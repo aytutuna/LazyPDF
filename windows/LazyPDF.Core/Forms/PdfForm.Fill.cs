@@ -229,7 +229,8 @@ public sealed partial class PdfForm
     private void Clear(PdfDictionary d)
     {
         d.Remove("V");
-        for (var up = _document.Dict(d, "Parent"); up is not null; up = _document.Dict(up, "Parent"))
+        var up = _document.Dict(d, "Parent");
+        for (int depth = 0; up is not null && depth < 64; depth++, up = _document.Dict(up, "Parent"))
         {
             if (up.ContainsKey("V"))
             {
@@ -252,8 +253,18 @@ public sealed partial class PdfForm
                 appearance.Apply(field, w, null, "", onState: own);
                 w.Dictionary["AS"] = new PdfName(field.IsChecked && field.Value == (w.Export ?? own) ? own : "Off");
             }
-            else appearance.Apply(field, w, font, display, color);
+            else appearance.Apply(field, w, WidgetFont(field, w, font, display), display, color);
         }
+    }
+
+    // A widget with a /DA of its own is set in the font that names, which can differ from its field's.
+    private FormFont? WidgetFont(FormField field, FormWidget widget, FormFont? font, string display)
+    {
+        string? own = PdfText.Read(_document, widget.Dictionary, "DA") is { } da ? DefaultAppearance.Parse(da).Font : null;
+        if (own is null || own == FontKey(field) || own == font?.Name) return font;
+        var (resolved, replaced) = ResolveFonts(new() { [own] = field.Kind == FieldKind.ListBox ? [.. field.Options.Select(o => o.Display)] : [display] })[own];
+        if (replaced) SetFontName(widget.Dictionary, PdfText.Read(_document, widget.Dictionary, "DA"), resolved.Name);
+        return resolved;
     }
 
     // What a text field shows: its value through the format script, if it has one of the built-in ones.
@@ -348,12 +359,14 @@ public sealed partial class PdfForm
         return (format.Family, format.Style);
     }
 
-    private void SetFontName(FormField field, string name)
+    private static void SetFontName(FormField field, string name) => SetFontName(field.Dictionary, field.DefaultAppearance, name);
+
+    private static void SetFontName(PdfDictionary holder, string? current, string name)
     {
-        string da = field.DefaultAppearance ?? "/Helv 0 Tf 0 g";
+        string da = current ?? "/Helv 0 Tf 0 g";
         string updated = Regex.Replace(da, @"/[^\s/<>\[\]()]+(\s+[-+\d.]+\s+Tf)", $"/{name}$1");
         if (updated == da && !da.Contains("Tf")) updated = $"/{name} 0 Tf " + da;
-        field.Dictionary["DA"] = PdfText.ToObject(updated);
+        holder["DA"] = PdfText.ToObject(updated);
     }
 
     private PdfDictionary EnsureAcroForm()
