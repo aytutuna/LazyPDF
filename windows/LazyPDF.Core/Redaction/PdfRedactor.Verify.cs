@@ -124,15 +124,13 @@ public sealed partial class PdfRedactor
                         unread = true;
                     }
                 }
+                // The element and attribute names of an XMP packet are the format's own, and character references hide a word from a search of the raw bytes, so a packet that reads as XML is searched by what it says.
+                bool packet = document.Name(stream.Dictionary, "Type") == "Metadata" || document.Name(stream.Dictionary, "Subtype") == "XML";
                 // A form that nothing paints, or that is painted where the page scan does not look, is not checked against the page, so the text it shows is looked for here.
                 bool unseen = !content.Contains(stream) && !painted.Contains(number);
                 found = isContent ? HoldsInOperands(document, data, needles, unseen || nested > 0, ref unread) || (unseen || nested > 0) && Speaks(document, (i, v) => i.Run(stream, v), needles, ref unread)
-                    : attached || Container(data) ? HoldsAttached(data, needles, nested, ref unread) : needles.In(data);
-                // Character references hide a word from a search of the raw packet.
-                if (!found && (document.Name(stream.Dictionary, "Type") == "Metadata" || document.Name(stream.Dictionary, "Subtype") == "XML") && RedactionMetadata.PlainText(data) is { } plain)
-                {
-                    found = needles.In(Encoding.UTF8.GetBytes(plain));
-                }
+                    : attached || Container(data) ? HoldsAttached(data, needles, nested, ref unread)
+                    : packet && RedactionMetadata.PlainText(data) is { } plain ? needles.In(Encoding.UTF8.GetBytes(plain)) : needles.In(data);
             }
             if (found) problems.Add(RedactionText.StillInFile(where));
             else if (unread) problems.Add(RedactionText.NotChecked(where));
