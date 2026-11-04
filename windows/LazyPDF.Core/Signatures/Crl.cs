@@ -8,13 +8,23 @@ namespace LazyPDF.Core;
 /// <summary>A certificate revocation list (RFC 5280) read far enough to ask whether a serial number is on it.</summary>
 internal sealed class Crl
 {
+    private const string IssuingDistributionPoint = "2.5.29.28";
+    private const string DeltaIndicator = "2.5.29.27";
+
     private byte[] _issuer = [];
     private byte[] _tbs = [];
     private string _signatureOid = "";
     private byte[] _signature = [];
     private readonly Dictionary<BigInteger, DateTimeOffset> _revoked = [];
+    private Scope? _scope;
+    private bool _delta;
+
+    // The issuingDistributionPoint extension (RFC 5280 5.2.5): the part of the issuer's certificates the list speaks for.
+    private sealed record Scope(List<string> Points, bool OnlyUser, bool OnlyCa, bool Other);
 
     public DateTimeOffset ThisUpdate { get; private set; }
+
+    public DateTimeOffset? NextUpdate { get; private set; }
 
     public byte[] Raw { get; private set; } = [];
 
@@ -32,7 +42,7 @@ internal sealed class Crl
             tbs.ReadSequence();
             crl._issuer = tbs.ReadEncodedValue().ToArray();
             crl.ThisUpdate = ReadTime(tbs);
-            if (tbs.HasData && tbs.PeekTag().TagValue is (int)UniversalTagNumber.UtcTime or (int)UniversalTagNumber.GeneralizedTime) ReadTime(tbs);
+            if (tbs.HasData && tbs.PeekTag().TagValue is (int)UniversalTagNumber.UtcTime or (int)UniversalTagNumber.GeneralizedTime) crl.NextUpdate = ReadTime(tbs);
             if (tbs.HasData && tbs.PeekTag().TagValue == (int)UniversalTagNumber.Sequence)
             {
                 var entries = tbs.ReadSequence();
@@ -43,6 +53,19 @@ internal sealed class Crl
                     crl._revoked.TryAdd(serial, ReadTime(entry));
                 }
             }
+            if (tbs.HasData && tbs.PeekTag().HasSameClassAndValue(new Asn1Tag(TagClass.ContextSpecific, 0, true)))
+            {
+                var extensions = tbs.ReadSequence(new Asn1Tag(TagClass.ContextSpecific, 0, true)).ReadSequence();
+                while (extensions.HasData)
+                {
+                    var extension = extensions.ReadSequence();
+                    string oid = extension.ReadObjectIdentifier();
+                    if (extension.PeekTag().TagValue == (int)UniversalTagNumber.Boolean) extension.ReadBoolean();
+                    byte[] value = extension.ReadOctetString();
+                    if (oid == DeltaIndicator) crl._delta = true;
+                    else if (oid == IssuingDistributionPoint) crl._scope = ReadScope(value);
+                }
+            }
             return crl;
         }
         catch (Exception e) when (e is AsnContentException or InvalidOperationException or ArgumentException)
@@ -51,16 +74,92 @@ internal sealed class Crl
         }
     }
 
+    private static Scope ReadScope(byte[] der)
+    {
+        var points = new List<string>();
+        bool user = false, ca = false, other = false;
+        try
+        {
+            var reader = new AsnReader(der, AsnEncodingRules.DER).ReadSequence();
+            var constructed = new Asn1Tag(TagClass.ContextSpecific, 0, true);
+            while (reader.HasData)
+            {
+                var tag = reader.PeekTag();
+                if (tag.TagClass != TagClass.ContextSpecific) throw new AsnContentException();
+                switch (tag.TagValue)
+                {
+                    case 0:
+                        var name = reader.ReadSequence(tag);
+                        if (!name.HasData || !name.PeekTag().HasSameClassAndValue(constructed))
+                        {
+                            other = true;
+                            break;
+                        }
+                        var names = name.ReadSequence(constructed);
+                        while (names.HasData)
+                        {
+                            if (names.PeekTag() is { TagClass: TagClass.ContextSpecific, TagValue: 6 } uri) points.Add(System.Text.Encoding.ASCII.GetString(names.ReadOctetString(uri)));
+                            else
+                            {
+                                names.ReadEncodedValue();
+                                other = true;
+                            }
+                        }
+                        break;
+                    case 1:
+                        user = reader.ReadBoolean(tag);
+                        break;
+                    case 2:
+                        ca = reader.ReadBoolean(tag);
+                        break;
+                    default:
+                        other = true;
+                        reader.ReadEncodedValue();
+                        break;
+                }
+            }
+        }
+        catch (AsnContentException)
+        {
+            other = true;
+        }
+        return new Scope(points, user, ca, other);
+    }
+
     private static DateTimeOffset ReadTime(AsnReader reader) =>
         reader.PeekTag().TagValue == (int)UniversalTagNumber.UtcTime ? reader.ReadUtcTime() : reader.ReadGeneralizedTime();
 
-    /// <summary>The list is by <paramref name="issuer"/> and carries its signature; the status of <paramref name="certificate"/> on it.</summary>
-    public (RevocationState State, DateTimeOffset? RevokedAt) About(X509Certificate2 certificate, X509Certificate2 issuer)
+    /// <summary>
+    /// The list is by <paramref name="issuer"/>, carries its signature and covers <paramref name="certificate"/>; the status of the
+    /// certificate on it. A list is complete for the certificate or says nothing: a delta list or one for other
+    /// certificates never makes a certificate good. With a <paramref name="time"/>, "good" counts only when the list holds for that time.
+    /// </summary>
+    public (RevocationState State, DateTimeOffset? RevokedAt) About(X509Certificate2 certificate, X509Certificate2 issuer, DateTimeOffset? time = null)
     {
         if (!_issuer.AsSpan().SequenceEqual(issuer.SubjectName.RawData) || !certificate.IssuerName.RawData.AsSpan().SequenceEqual(_issuer)) return (RevocationState.NoData, null);
+        if (!MaySignLists(issuer)) return (RevocationState.NoData, null);
         var algorithm = Oids.DigestName(OcspResponse.DigestOf(_signatureOid)) ?? HashAlgorithmName.SHA256;
         if (!CmsVerifier.VerifyRaw(issuer, _signatureOid, _signature, _tbs, algorithm)) return (RevocationState.NoData, null);
-        return _revoked.TryGetValue(CmsBuilder.Serial(certificate), out var at) ? (RevocationState.Revoked, at) : (RevocationState.Good, null);
+        // A name on any list its issuer signed is revoked; only a complete list can clear it.
+        if (_revoked.TryGetValue(CmsBuilder.Serial(certificate), out var at)) return (RevocationState.Revoked, at);
+        if (_delta || !InScope(certificate)) return (RevocationState.NoData, null);
+        return time is { } t && !OcspResponse.Covers(ThisUpdate, NextUpdate, t) ? (RevocationState.NoData, null) : (RevocationState.Good, null);
+    }
+
+    private bool InScope(X509Certificate2 certificate)
+    {
+        if (_scope is not { } scope) return true;
+        bool authority;
+        try { authority = certificate.Extensions.OfType<X509BasicConstraintsExtension>().Any(b => b.CertificateAuthority); }
+        catch (CryptographicException) { return false; }
+        if (scope.Other || (scope.OnlyUser && authority) || (scope.OnlyCa && !authority)) return false;
+        return scope.Points.Count == 0 || CertificateLinks.CrlUrls(certificate).Intersect(scope.Points).Any();
+    }
+
+    private static bool MaySignLists(X509Certificate2 issuer)
+    {
+        try { return issuer.Extensions.OfType<X509KeyUsageExtension>().FirstOrDefault() is not { } usage || usage.KeyUsages.HasFlag(X509KeyUsageFlags.CrlSign); }
+        catch (CryptographicException) { return false; }
     }
 }
 

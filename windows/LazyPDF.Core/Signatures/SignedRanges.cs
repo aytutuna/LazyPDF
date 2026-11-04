@@ -8,6 +8,8 @@ namespace LazyPDF.Core;
 /// </summary>
 internal sealed record SignedRanges(int GapStart, int GapEnd, int End, PdfRevision Revision, byte[] Contents)
 {
+    private const int BlankSlack = 8;
+
     public byte[] Digest(byte[] file, HashAlgorithmName algorithm)
     {
         using var hash = IncrementalHash.CreateHash(algorithm);
@@ -26,6 +28,7 @@ internal sealed record SignedRanges(int GapStart, int GapEnd, int End, PdfRevisi
             if (array.Items[i] is not PdfNumber { IsInteger: true, Integer: { } value and >= 0 }) return null;
             numbers[i] = value;
         }
+        if (numbers.Any(x => x > file.Length)) return null;
         long a = numbers[1], b = numbers[2], end = numbers[2] + numbers[3];
         if (numbers[0] != 0 || a <= found.Offset || b <= a + 1 || end > file.Length || end <= b - 1) return null;
         if (file[a] != (byte)'<' || file[b - 1] != (byte)'>') return null;
@@ -35,12 +38,13 @@ internal sealed record SignedRanges(int GapStart, int GapEnd, int End, PdfRevisi
         int objectEnd = file.AsSpan((int)b).IndexOf("endobj"u8);
         if (objectEnd < 0) return null;
 
-        // The second range ends where a revision does (a few blank bytes after its "%%EOF" aside), and the
-        // signature's object is inside that revision and not an earlier one.
+        // The second range ends where a revision does, give or take the blank bytes around its "%%EOF" that
+        // PdfRevisions leaves out or other tools add, and the signature's object is inside that revision and not an earlier one.
         for (int i = 0; i < revisions.Count; i++)
         {
             var revision = revisions[i];
-            if (revision.End < end || revision.End - end > 2 || !file.AsSpan((int)end, revision.End - (int)end).ToArray().All(c => PdfLexer.IsWhiteSpace(c))) continue;
+            int low = (int)Math.Min(end, revision.End), high = (int)Math.Max(end, revision.End);
+            if (high - low > BlankSlack || !file.AsSpan(low, high - low).ToArray().All(c => PdfLexer.IsWhiteSpace(c))) continue;
             long start = i == 0 ? 0 : revisions[i - 1].End;
             if (found.Offset < start || found.Offset >= end) return null;
             return new SignedRanges((int)a, (int)b, (int)end, revision, decoded);

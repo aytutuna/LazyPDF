@@ -28,10 +28,15 @@ internal static class SignatureAppearance
                ?? throw new InvalidOperationException(SignatureText.NoFont);
     }
 
-    public static PdfReference Draw(PdfDocument document, PdfRect rect, SignatureLook look, string text, PdfDrawFont? font)
+    /// <summary>
+    /// The appearance for a widget at <paramref name="rect"/> on a page turned <paramref name="rotate"/> degrees clockwise: it is drawn
+    /// upright as the page is shown, and its /Matrix turns it back into the page's own space (12.5.5).
+    /// </summary>
+    public static PdfReference Draw(PdfDocument document, PdfRect rect, int rotate, SignatureLook look, string text, PdfDrawFont? font)
     {
-        var canvas = new AppearanceCanvas(document, rect);
-        double width = rect.Width, height = rect.Height;
+        bool sideways = rotate is 90 or 270;
+        double width = sideways ? rect.Height : rect.Width, height = sideways ? rect.Width : rect.Height;
+        var canvas = new AppearanceCanvas(document, new PdfRect(0, 0, width, height));
         bool hasImage = look.Jpeg is not null || look.Image is not null;
         bool hasInk = look.Ink is { Count: > 0 };
         double graphicsWidth = (hasImage || hasInk) ? (font is null ? width : width * 0.4) : 0;
@@ -68,7 +73,15 @@ internal static class SignatureAppearance
         }
 
         if (font is not null) DrawText(canvas, font, text, graphicsWidth + Margin, width - graphicsWidth - 2 * Margin, height - 2 * Margin);
-        return document.Add(canvas.ToStream());
+        var form = canvas.ToStream();
+        if (rotate != 0) form.Dictionary["Matrix"] = Turn(rotate);
+        return document.Add(form);
+    }
+
+    private static PdfArray Turn(int degrees)
+    {
+        (int a, int b) = degrees switch { 90 => (0, 1), 180 => (-1, 0), _ => (0, -1) };
+        return new PdfArray([new PdfNumber(a), new PdfNumber(b), new PdfNumber(-b), new PdfNumber(a), new PdfNumber(0), new PdfNumber(0)]);
     }
 
     private static void DrawText(AppearanceCanvas canvas, PdfDrawFont font, string text, double left, double width, double height)

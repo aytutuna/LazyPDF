@@ -17,6 +17,7 @@ internal enum RevocationState
 internal sealed class OcspResponse
 {
     private const string Sha1 = "1.3.14.3.2.26";
+    private const string OcspSigning = "1.3.6.1.5.5.7.3.9";
 
     private sealed record Single(string HashOid, byte[] NameHash, byte[] KeyHash, BigInteger Serial, bool Good, bool Revoked, DateTimeOffset? RevokedAt, DateTimeOffset ThisUpdate, DateTimeOffset? NextUpdate);
 
@@ -107,8 +108,11 @@ internal sealed class OcspResponse
         }
     }
 
-    /// <summary>What the response says of <paramref name="certificate"/> if <paramref name="issuer"/> or a responder it authorised signed it.</summary>
-    public (RevocationState State, DateTimeOffset? RevokedAt, DateTimeOffset ThisUpdate) About(X509Certificate2 certificate, X509Certificate2 issuer)
+    /// <summary>
+    /// What the response says of <paramref name="certificate"/> if <paramref name="issuer"/> or a responder it authorised signed it.
+    /// With a <paramref name="time"/>, "good" counts only when the response says so for that time (see <see cref="Covers"/>).
+    /// </summary>
+    public (RevocationState State, DateTimeOffset? RevokedAt, DateTimeOffset ThisUpdate) About(X509Certificate2 certificate, X509Certificate2 issuer, DateTimeOffset? time = null)
     {
         var serial = CmsBuilder.Serial(certificate);
         foreach (var r in _responses)
@@ -117,34 +121,52 @@ internal sealed class OcspResponse
             if (!CmsBuilder.HashData(algorithm, issuer.SubjectName.RawData).AsSpan().SequenceEqual(r.NameHash)
                 || !CmsBuilder.HashData(algorithm, issuer.PublicKey.EncodedKeyValue.RawData).AsSpan().SequenceEqual(r.KeyHash)) continue;
             if (!SignedBy(issuer)) return (RevocationState.NoData, null, r.ThisUpdate);
-            return (r.Revoked ? RevocationState.Revoked : r.Good ? RevocationState.Good : RevocationState.NoData, r.RevokedAt, r.ThisUpdate);
+            var state = r.Revoked ? RevocationState.Revoked : r.Good ? RevocationState.Good : RevocationState.NoData;
+            if (state == RevocationState.Good && time is { } at && !Covers(r.ThisUpdate, r.NextUpdate, at)) state = RevocationState.NoData;
+            return (state, r.RevokedAt, r.ThisUpdate);
         }
         return (RevocationState.NoData, null, default);
     }
 
-    // The issuer itself, or a certificate it issued that is in the response (a delegated responder).
+    /// <summary>A status holds for <paramref name="time"/> when it was issued then or later, or its validity (RFC 6960 2.4, RFC 5280 5.1.2.5) spans it.</summary>
+    public static bool Covers(DateTimeOffset thisUpdate, DateTimeOffset? nextUpdate, DateTimeOffset time) =>
+        thisUpdate >= time || (nextUpdate is { } next && next >= time);
+
+    // The issuer itself, or a certificate it issued for answering OCSP (RFC 6960 4.2.2.2) that is in the response.
     private bool SignedBy(X509Certificate2 issuer)
     {
         var algorithm = Oids.DigestName(DigestOf(_signatureOid)) ?? HashAlgorithmName.SHA256;
         if (CmsVerifier.VerifyRaw(issuer, _signatureOid, _signature, _tbs, algorithm)) return true;
         foreach (var candidate in _certificates)
         {
-            if (!candidate.IssuerName.RawData.AsSpan().SequenceEqual(issuer.SubjectName.RawData)) continue;
-            if (!IssuedBy(candidate, issuer)) continue;
+            if (!candidate.IssuerName.RawData.AsSpan().SequenceEqual(issuer.SubjectName.RawData) || ProducedAt < candidate.NotBefore || ProducedAt > candidate.NotAfter) continue;
+            if (!MaySignOcsp(candidate) || !IssuedBy(candidate, issuer, ProducedAt)) continue;
             if (CmsVerifier.VerifyRaw(candidate, _signatureOid, _signature, _tbs, algorithm)) return true;
         }
         return false;
     }
 
-    private static bool IssuedBy(X509Certificate2 certificate, X509Certificate2 issuer)
+    // The responder's certificate has to hold when it answered, whatever the clock says now.
+    private static bool MaySignOcsp(X509Certificate2 certificate)
+    {
+        try { return certificate.Extensions.OfType<X509EnhancedKeyUsageExtension>().Any(e => e.EnhancedKeyUsages.Cast<Oid>().Any(o => o.Value == OcspSigning)); }
+        catch (CryptographicException) { return false; }
+    }
+
+    private static bool IssuedBy(X509Certificate2 certificate, X509Certificate2 issuer, DateTimeOffset producedAt)
     {
         using var chain = new X509Chain();
+        chain.ChainPolicy.VerificationTime = producedAt.UtcDateTime;
         chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
         chain.ChainPolicy.CustomTrustStore.Add(issuer);
         chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
         chain.ChainPolicy.DisableCertificateDownloads = true;
-        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.IgnoreNotTimeValid | X509VerificationFlags.IgnoreEndRevocationUnknown;
-        return chain.Build(certificate);
+        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.IgnoreEndRevocationUnknown;
+        chain.Build(certificate);
+        // An issuer that is not a root ends the chain as partial although it is the anchor here.
+        var statuses = chain.ChainStatus.Aggregate(X509ChainStatusFlags.NoError, (all, s) => all | s.Status);
+        return chain.ChainElements.Count > 1 && chain.ChainElements[1].Certificate.RawData.AsSpan().SequenceEqual(issuer.RawData)
+               && (statuses & ~X509ChainStatusFlags.PartialChain) == 0;
     }
 
     /// <summary>The digest a signature algorithm OID names, as an OID for <see cref="Oids.DigestName"/>.</summary>

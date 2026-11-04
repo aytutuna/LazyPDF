@@ -91,13 +91,11 @@ public class SignatureChangeTests
     public void Certification_without_changes_refuses_another_signature()
     {
         byte[] certified = Certified(CertificationLevel.NoChanges);
-        byte[] second = PdfSigner.Sign(certified, new PdfSignRequest(Pki.LeafEc, Pki.Signing.AddDays(1)) { Chain = Pki.Chain });
 
-        var report = First(second);
+        var thrown = Assert.Throws<InvalidOperationException>(() =>
+            PdfSigner.Sign(certified, new PdfSignRequest(Pki.LeafEc, Pki.Signing.AddDays(1)) { Chain = Pki.Chain }));
 
-        Assert.Equal(SignatureKind.Certification, report.Kind);
-        Assert.Equal(SignatureVerdict.ChangedAfterSigning, report.Verdict);
-        Assert.Contains(report.Changes.Changes, c => c.Kind == SignatureChangeKind.Signature && !c.Allowed);
+        Assert.Equal(SignatureText.CertifiedClosed, thrown.Message);
     }
 
     [Fact]

@@ -98,7 +98,7 @@ public class SignatureAttackTests
     }
 
     // A signature that is correct for a byte range of the signer's own choosing: the digest and the CMS are made again.
-    private static byte[] Resign(byte[] file, Func<int, int, int, (int GapStart, int GapEnd, int End)> shape)
+    internal static byte[] Resign(byte[] file, Func<int, int, int, (int GapStart, int GapEnd, int End)> shape)
     {
         var found = SignatureScan.Find(file)[0];
         var numbers = ((PdfArray)found.Dictionary["ByteRange"]!).Items.Select(i => (int)((PdfNumber)i).Value).ToArray();

@@ -7,6 +7,8 @@ public static class SignatureText
 {
     public const string NoPrivateKey = "This certificate has no private key. Choose another one or sign with a token.";
     public const string NotCertifiable = "Only the first signature of a file can certify it. Sign without certifying.";
+    public const string CertifiedClosed = "This file is certified so that nothing may change. Another signature would break that.";
+    public const string FieldLocked = "An earlier signature locked this field. Choose another one.";
     public const string FieldTaken = "This field is already signed. Choose another one.";
     public const string NoFont = "No font can draw the signature text. Choose another font.";
     public const string NoPage = "The page is not in the document.";

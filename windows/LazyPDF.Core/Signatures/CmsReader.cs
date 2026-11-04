@@ -115,13 +115,24 @@ internal sealed class CmsSignature
             {
                 if (c.IssuerName.RawData.AsSpan().SequenceEqual(IssuerName) && CmsBuilder.Serial(c) == Serial) return c;
             }
-            else if (KeyId is not null && c.Extensions.OfType<X509SubjectKeyIdentifierExtension>().FirstOrDefault() is { } ski
-                     && Convert.FromHexString(ski.SubjectKeyIdentifier!).AsSpan().SequenceEqual(KeyId))
+            else if (KeyId is not null && KeyIdentifier(c) is { } id && id.AsSpan().SequenceEqual(KeyId))
             {
                 return c;
             }
         }
         return null;
+    }
+
+    private static byte[]? KeyIdentifier(X509Certificate2 certificate)
+    {
+        try
+        {
+            return certificate.Extensions.OfType<X509SubjectKeyIdentifierExtension>().FirstOrDefault() is { } ski ? Convert.FromHexString(ski.SubjectKeyIdentifier!) : null;
+        }
+        catch (CryptographicException)
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -203,7 +214,7 @@ internal static class CmsVerifier
                 _ => CmsCheck.Unsupported,
             };
         }
-        catch (CryptographicException)
+        catch (Exception e) when (e is CryptographicException or AsnContentException or OverflowException or ArgumentException)
         {
             return CmsCheck.BadSignature;
         }

@@ -62,6 +62,7 @@ public static class PdfSigner
         Oids.Digest(request.Digest);
 
         var target = SignatureField.Resolve(document, job);
+        if (SignatureField.Refusal(document, target) is { } refusal) throw new InvalidOperationException(refusal);
         if (job.Certify != CertificationLevel.None && SignatureScan.Find(SourceBytes(document)).Count > 0) throw new InvalidOperationException(SignatureText.NotCertifiable);
         if (job.Level >= PadesLevel.T && request.Timestamp is null) throw new InvalidOperationException(SignatureText.NoTimestampServer);
         string? url = job.TimestampUrl;
@@ -72,7 +73,7 @@ public static class PdfSigner
         var look = request.Look ?? new SignatureLook();
         string text = visible ? SignatureAppearance.Text(job, look) : "";
         var font = visible ? SignatureAppearance.AddFont(document, job, look, text) : null;
-        var appearance = visible ? SignatureAppearance.Draw(document, target.Rect, look, text, font) : null;
+        var appearance = visible ? SignatureAppearance.Draw(document, target.Rect, target.Page.Rotate, look, text, font) : null;
 
         var chain = EmbeddedChain(request);
         int reserve = request.ReserveBytes > 0

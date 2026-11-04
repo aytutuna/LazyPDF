@@ -32,6 +32,24 @@ internal static class SignatureField
         return new Target(field, null, field, request.Rect ?? default, Page(document, request.PageIndex), true, false, name);
     }
 
+    /// <summary>Why an earlier signature forbids this one: a certification that allows no changes, or a lock on the field to sign.</summary>
+    public static string? Refusal(PdfDocument document, Target target)
+    {
+        if (SignatureChecker.Level(document, 0).Level == 1) return SignatureText.CertifiedClosed;
+        if (target.IsNew) return null;
+        foreach (var found in SignatureScan.Find(PdfSigner.SourceBytes(document)))
+        {
+            foreach (var item in document.Array(found.Dictionary, "Reference")?.Items ?? [])
+            {
+                if (document.Resolve(item) is not PdfDictionary reference || document.Name(reference, "TransformMethod") != "FieldMDP") continue;
+                if (document.Dict(reference, "TransformParams") is not { } parameters || ReadLock(document, parameters) is not { } fieldLock) continue;
+                bool listed = fieldLock.Fields.Contains(target.Name);
+                if (fieldLock.Action == FieldLockAction.All || listed == (fieldLock.Action == FieldLockAction.Include)) return SignatureText.FieldLocked;
+            }
+        }
+        return null;
+    }
+
     private static PdfPage Page(PdfDocument document, int index) =>
         index >= 0 && index < document.Pages.Count ? document.Pages[index] : throw new ArgumentException(SignatureText.NoPage);
 

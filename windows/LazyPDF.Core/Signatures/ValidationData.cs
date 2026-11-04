@@ -67,26 +67,26 @@ internal sealed class ValidationData
                     }
                 }
             }
-            catch (AsnContentException)
+            catch (Exception e) when (e is AsnContentException or ArgumentException)
             {
                 // Archived data that does not read adds nothing.
             }
         }
     }
 
-    /// <summary>What the data says of <paramref name="certificate"/>; a revocation is reported with its time.</summary>
-    public (RevocationState State, DateTimeOffset? At) Check(X509Certificate2 certificate, X509Certificate2 issuer)
+    /// <summary>What the data says of <paramref name="certificate"/>; a revocation is reported with its time. "Good" counts only when the data holds for <paramref name="time"/>, when there is one.</summary>
+    public (RevocationState State, DateTimeOffset? At) Check(X509Certificate2 certificate, X509Certificate2 issuer, DateTimeOffset? time = null)
     {
         var state = RevocationState.NoData;
         foreach (var ocsp in Ocsps)
         {
-            var (s, revokedAt, _) = ocsp.About(certificate, issuer);
+            var (s, revokedAt, _) = ocsp.About(certificate, issuer, time);
             if (s == RevocationState.Revoked) return (s, revokedAt);
             if (s == RevocationState.Good) state = s;
         }
         foreach (var crl in Crls)
         {
-            var (s, revokedAt) = crl.About(certificate, issuer);
+            var (s, revokedAt) = crl.About(certificate, issuer, time);
             if (s == RevocationState.Revoked) return (s, revokedAt);
             if (s == RevocationState.Good && state == RevocationState.NoData) state = s;
         }
@@ -102,16 +102,44 @@ internal static class CertificateTrust
     private const X509ChainStatusFlags Harmless = X509ChainStatusFlags.NoError | X509ChainStatusFlags.NotTimeValid
         | X509ChainStatusFlags.RevocationStatusUnknown | X509ChainStatusFlags.OfflineRevocation;
 
-    public static TrustResult Evaluate(X509Certificate2 certificate, IEnumerable<X509Certificate2> extra, DateTimeOffset? time, VerifyOptions options)
+    private const string TimeStamping = "1.3.6.1.5.5.7.3.8";
+    private static readonly string[] SigningPurposes =
+    [
+        "1.3.6.1.5.5.7.3.4", // email protection, which PDF signers have long carried
+        "1.2.840.113583.1.1.5", // Adobe PDF signing
+        "1.3.6.1.4.1.311.10.3.12", // Microsoft document signing
+        "2.5.29.37.0", // any purpose
+    ];
+
+    /// <summary>The chain of <paramref name="certificate"/>, trusted only when it is also meant for the job: signing documents, or for a time stamp authority <paramref name="timestamp"/>.</summary>
+    public static TrustResult Evaluate(X509Certificate2 certificate, IEnumerable<X509Certificate2> extra, DateTimeOffset? time, VerifyOptions options, bool timestamp = false)
     {
         var certificates = extra.ToList();
         var result = Build(certificate, certificates, time, options.TrustAnchors, system: false);
         if (!result.Trusted && options.UseSystemStore)
         {
             var viaSystem = Build(certificate, [.. certificates, .. options.TrustAnchors], time, [], system: true);
-            if (viaSystem.Trusted) return viaSystem;
+            if (viaSystem.Trusted) result = viaSystem;
         }
-        return result;
+        return Suits(certificate, timestamp) ? result : result with { Trusted = false };
+    }
+
+    // RFC 5280 4.2.1.3 and 4.2.1.12; RFC 3161 2.3 asks a time stamp authority for the one purpose.
+    // The extensions decode when read, and a certificate in a file may carry one that does not: it suits nothing.
+    private static bool Suits(X509Certificate2 certificate, bool timestamp)
+    {
+        try
+        {
+            if (certificate.Extensions.OfType<X509KeyUsageExtension>().FirstOrDefault() is { } usage
+                && (usage.KeyUsages & (X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.NonRepudiation)) == 0) return false;
+            if (certificate.Extensions.OfType<X509EnhancedKeyUsageExtension>().FirstOrDefault() is not { } purposes) return !timestamp;
+            var oids = purposes.EnhancedKeyUsages.Cast<Oid>().Select(o => o.Value).ToList();
+            return timestamp ? oids.Contains(TimeStamping) : oids.Any(o => SigningPurposes.Contains(o));
+        }
+        catch (CryptographicException)
+        {
+            return false;
+        }
     }
 
     private static TrustResult Build(X509Certificate2 certificate, List<X509Certificate2> extra, DateTimeOffset? time, IReadOnlyList<X509Certificate2> anchors, bool system)

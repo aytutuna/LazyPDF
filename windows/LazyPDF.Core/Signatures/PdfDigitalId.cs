@@ -32,10 +32,12 @@ public static class PdfDigitalId
     }
 
     /// <summary>The certificate and its private key as a PFX file protected by <paramref name="password"/>.</summary>
-    public static byte[] ExportPfx(X509Certificate2 certificate, string password) => certificate.Export(X509ContentType.Pfx, password);
+    public static byte[] ExportPfx(X509Certificate2 certificate, string password) =>
+        certificate.ExportPkcs12(Pkcs12ExportPbeParameters.Pbes2Aes256Sha256, password);
 
+    /// <summary>The certificate with its key held in memory only: nothing is left in the profile when the caller disposes it or the process dies.</summary>
     public static X509Certificate2 ImportPfx(byte[] pfx, string password) =>
-        X509CertificateLoader.LoadPkcs12(pfx, password, X509KeyStorageFlags.Exportable);
+        X509CertificateLoader.LoadPkcs12(pfx, password, X509KeyStorageFlags.EphemeralKeySet);
 
     // A comma or a quote in a name would end its attribute early.
     private static string Escape(string value) =>

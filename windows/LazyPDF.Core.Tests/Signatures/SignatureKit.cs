@@ -91,6 +91,31 @@ internal sealed class Pki
         return rsa ? signed.CopyWithPrivateKey(rsaKey!) : signed.CopyWithPrivateKey(ecKey!);
     }
 
+    /// <summary>A certificate under the intermediate with the given key usage and purposes, for those that must not count as a signer, a time stamp authority or an OCSP responder.</summary>
+    public X509Certificate2 Issued(string name, X509KeyUsageFlags usage, params string[] purposes) => Issue(name, usage, NotAfter, null, purposes);
+
+    /// <summary>Like <see cref="Issued"/>, valid until <paramref name="notAfter"/>.</summary>
+    public X509Certificate2 IssuedUntil(DateTimeOffset notAfter, string name, X509KeyUsageFlags usage, params string[] purposes) => Issue(name, usage, notAfter, null, purposes);
+
+    /// <summary>A certificate for signing that also carries <paramref name="extension"/>, which may not decode.</summary>
+    public X509Certificate2 IssuedWith(string name, X509Extension extension) => Issue(name, X509KeyUsageFlags.DigitalSignature, NotAfter, extension);
+
+    private X509Certificate2 Issue(string name, X509KeyUsageFlags usage, DateTimeOffset notAfter, X509Extension? extension, params string[] purposes)
+    {
+        using var key = RSA.Create(2048);
+        var request = new CertificateRequest($"CN={name}, O=Lazy Test", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        request.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
+        if (extension?.Oid?.Value != "2.5.29.15") request.CertificateExtensions.Add(new X509KeyUsageExtension(usage, true));
+        var oids = new OidCollection();
+        foreach (string purpose in purposes) oids.Add(new Oid(purpose));
+        if (oids.Count > 0) request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(oids, false));
+        if (extension is not null) request.CertificateExtensions.Add(extension);
+        using var issuerKey = Intermediate.GetRSAPrivateKey()!;
+        var generator = X509SignatureGenerator.CreateForRSA(issuerKey, RSASignaturePadding.Pkcs1);
+        using var signed = request.Create(Intermediate.SubjectName, generator, NotBefore, notAfter, SerialBytes());
+        return signed.CopyWithPrivateKey(key);
+    }
+
     private static X509Certificate2 SelfSignedLeaf(string name)
     {
         using var key = RSA.Create(2048);
@@ -143,6 +168,18 @@ internal sealed class FakeNetwork : ISignatureTransport
     public bool OcspDown { get; set; }
     public bool CrlDown { get; set; }
     public bool StampDown { get; set; }
+
+    /// <summary>The certificate that signs the OCSP answers when it is not the issuer; it is carried in the answer.</summary>
+    public X509Certificate2? Responder { get; set; }
+
+    /// <summary>The certificate that signs the time stamps when it is not the test authority.</summary>
+    public X509Certificate2? StampCertificate { get; set; }
+
+    /// <summary>When the OCSP answers and the CRL were issued.</summary>
+    public DateTimeOffset Issued { get; set; } = Pki.Signing.AddDays(1);
+
+    public DateTimeOffset? NextUpdate { get; set; }
+    public X509Extension? CrlExtension { get; set; }
     public List<string> Requests { get; } = [];
 
     public byte[]? Post(string url, string contentType, byte[] body)
@@ -161,7 +198,57 @@ internal sealed class FakeNetwork : ISignatureTransport
         if (url == Pki.RootCrlUrl) return builder.Build(_pki.Root, BigInteger.One, Pki.NotAfter, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1, Pki.Signing.AddDays(1));
         if (url != Pki.CrlUrl || CrlDown) return null;
         if (Revoked) builder.AddEntry(_pki.Leaf.SerialNumberBytes.Span, RevokedAt, X509RevocationReason.KeyCompromise);
-        return builder.Build(_pki.Intermediate, BigInteger.One, Pki.NotAfter, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1, Pki.Signing.AddDays(1));
+        if (CrlExtension is not null) return CrlWithExtension(CrlExtension);
+        return builder.Build(_pki.Intermediate, BigInteger.One, NextUpdate ?? Pki.NotAfter, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1, Issued);
+    }
+
+    // The framework's builder takes no extensions, so a list with one is written out.
+    private byte[] CrlWithExtension(X509Extension extension)
+    {
+        var tbs = new AsnWriter(AsnEncodingRules.DER);
+        using (tbs.PushSequence())
+        {
+            tbs.WriteInteger(1);
+            using (tbs.PushSequence())
+            {
+                tbs.WriteObjectIdentifier("1.2.840.113549.1.1.11");
+                tbs.WriteNull();
+            }
+            tbs.WriteEncodedValue(_pki.Intermediate.SubjectName.RawData);
+            tbs.WriteUtcTime(Issued);
+            tbs.WriteUtcTime(NextUpdate ?? Pki.NotAfter);
+            if (Revoked)
+            {
+                using (tbs.PushSequence())
+                using (tbs.PushSequence())
+                {
+                    tbs.WriteInteger(new BigInteger(_pki.Leaf.SerialNumberBytes.Span, isUnsigned: true, isBigEndian: true));
+                    tbs.WriteUtcTime(RevokedAt);
+                }
+            }
+            using (tbs.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 0)))
+            using (tbs.PushSequence())
+            using (tbs.PushSequence())
+            {
+                tbs.WriteObjectIdentifier(extension.Oid!.Value!);
+                if (extension.Critical) tbs.WriteBoolean(true);
+                tbs.WriteOctetString(extension.RawData);
+            }
+        }
+        byte[] body = tbs.Encode();
+        using var key = _pki.Intermediate.GetRSAPrivateKey()!;
+        var list = new AsnWriter(AsnEncodingRules.DER);
+        using (list.PushSequence())
+        {
+            list.WriteEncodedValue(body);
+            using (list.PushSequence())
+            {
+                list.WriteObjectIdentifier("1.2.840.113549.1.1.11");
+                list.WriteNull();
+            }
+            list.WriteBitString(key.SignData(body, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1));
+        }
+        return list.Encode();
     }
 
     private byte[] Stamp(byte[] request)
@@ -187,14 +274,15 @@ internal sealed class FakeNetwork : ISignatureTransport
         }
 
         var cms = new System.Security.Cryptography.Pkcs.SignedCms(new System.Security.Cryptography.Pkcs.ContentInfo(new Oid("1.2.840.113549.1.9.16.1.4"), info.Encode()), false);
-        var signer = new System.Security.Cryptography.Pkcs.CmsSigner(System.Security.Cryptography.Pkcs.SubjectIdentifierType.IssuerAndSerialNumber, _pki.Tsa)
+        var authority = StampCertificate ?? _pki.Tsa;
+        var signer = new System.Security.Cryptography.Pkcs.CmsSigner(System.Security.Cryptography.Pkcs.SubjectIdentifierType.IssuerAndSerialNumber, authority)
         {
             IncludeOption = X509IncludeOption.EndCertOnly,
             DigestAlgorithm = new Oid("2.16.840.1.101.3.4.2.1"),
         };
         foreach (var c in _pki.Chain) signer.Certificates.Add(c);
         var ess = new AsnWriter(AsnEncodingRules.DER);
-        CmsBuilder.WriteSigningCertificate(ess, _pki.Tsa);
+        CmsBuilder.WriteSigningCertificate(ess, authority);
         signer.SignedAttributes.Add(new AsnEncodedData(new Oid(Oids.SigningCertificateV2), ess.Encode()));
         cms.ComputeSignature(signer);
 
@@ -223,8 +311,8 @@ internal sealed class FakeNetwork : ISignatureTransport
         var data = new AsnWriter(AsnEncodingRules.DER);
         using (data.PushSequence())
         {
-            using (data.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 1))) data.WriteEncodedValue(issuer.SubjectName.RawData);
-            data.WriteGeneralizedTime(Pki.Signing.AddDays(1), omitFractionalSeconds: true);
+            using (data.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 1))) data.WriteEncodedValue((Responder ?? issuer).SubjectName.RawData);
+            data.WriteGeneralizedTime(Issued, omitFractionalSeconds: true);
             using (data.PushSequence())
             using (data.PushSequence())
             {
@@ -247,11 +335,15 @@ internal sealed class FakeNetwork : ISignatureTransport
                 {
                     data.WriteNull(new Asn1Tag(TagClass.ContextSpecific, 0));
                 }
-                data.WriteGeneralizedTime(Pki.Signing.AddDays(1), omitFractionalSeconds: true);
+                data.WriteGeneralizedTime(Issued, omitFractionalSeconds: true);
+                if (NextUpdate is { } next)
+                {
+                    using (data.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 0))) data.WriteGeneralizedTime(next, omitFractionalSeconds: true);
+                }
             }
         }
         byte[] tbs = data.Encode();
-        using var key = issuer.GetRSAPrivateKey()!;
+        using var key = (Responder ?? issuer).GetRSAPrivateKey()!;
         byte[] signature = key.SignData(tbs, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
         var basic = new AsnWriter(AsnEncodingRules.DER);
@@ -264,6 +356,11 @@ internal sealed class FakeNetwork : ISignatureTransport
                 basic.WriteNull();
             }
             basic.WriteBitString(signature);
+            if (Responder is not null)
+            {
+                using (basic.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 0)))
+                using (basic.PushSequence()) basic.WriteEncodedValue(Responder.RawData);
+            }
         }
         var response = new AsnWriter(AsnEncodingRules.DER);
         using (response.PushSequence())

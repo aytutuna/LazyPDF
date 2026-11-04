@@ -16,8 +16,9 @@ public static class PdfSignatureVerifier
         options ??= new VerifyOptions();
         var document = PdfDocument.Open(pdf, options.Password);
         var file = PdfSigner.SourceBytes(document);
-        var checker = new SignatureChecker(document, file, PdfRevisions.List(file), options);
-        var reports = SignatureScan.Find(file).OrderBy(f => f.Offset).Select(checker.Check).ToList();
+        var found = SignatureScan.Find(file).OrderBy(f => f.Offset).ToList();
+        var checker = new SignatureChecker(document, file, PdfRevisions.List(file), options, found);
+        var reports = found.Select(checker.Check).ToList();
         for (int i = 0; i < reports.Count; i++)
         {
             // Long term validation archives data in the file; a time stamp over it, later, keeps that data trustworthy.
@@ -35,22 +36,24 @@ public static class PdfSignatureVerifier
 
 internal sealed class SignatureChecker
 {
-    private const int MaxBetween = 16;
+    private const int MaxBetween = 64;
 
     private readonly PdfDocument _document;
     private readonly byte[] _file;
     private readonly IReadOnlyList<PdfRevision> _revisions;
     private readonly VerifyOptions _options;
     private readonly ValidationData _dss;
+    private readonly HashSet<long> _signatures;
     private Dictionary<int, string>? _fieldNames;
 
-    public SignatureChecker(PdfDocument document, byte[] file, IReadOnlyList<PdfRevision> revisions, VerifyOptions options)
+    public SignatureChecker(PdfDocument document, byte[] file, IReadOnlyList<PdfRevision> revisions, VerifyOptions options, IReadOnlyList<FoundSignature> found)
     {
         _document = document;
         _file = file;
         _revisions = revisions;
         _options = options;
         _dss = ValidationData.ReadDss(document);
+        _signatures = found.Where(f => SignedRanges.Check(file, f, revisions) is { } ranges && CmsSignature.Parse(ranges.Contents) is not null).Select(f => f.Offset).ToHashSet();
     }
 
     public SignatureReport Check(FoundSignature found, int index)
@@ -125,7 +128,7 @@ internal sealed class SignatureChecker
         bool checkedAll = trust.Chain.Count > 1;
         for (int i = 0; i + 1 < trust.Chain.Count; i++)
         {
-            var (state, at) = evidence.Check(trust.Chain[i], trust.Chain[i + 1]);
+            var (state, at) = evidence.Check(trust.Chain[i], trust.Chain[i + 1], time);
             if (state == RevocationState.Revoked && (time is null || at is null || at <= time)) problems.Add(SignatureProblem.CertificateRevoked);
             checkedAll &= state == RevocationState.Good;
         }
@@ -166,7 +169,7 @@ internal sealed class SignatureChecker
 
         var problems = new List<SignatureProblem>();
         var time = token.TokenInfo.Timestamp;
-        var trust = CertificateTrust.Evaluate(tsa, _dss.Certificates.Concat(carried), time, _options);
+        var trust = CertificateTrust.Evaluate(tsa, _dss.Certificates.Concat(carried), time, _options, timestamp: true);
         if (!trust.Trusted) problems.Add(SignatureProblem.UntrustedSigner);
         if (!trust.TimeValid) problems.Add(SignatureProblem.CertificateNotValid);
         return report with
@@ -195,7 +198,7 @@ internal sealed class SignatureChecker
             return null;
         }
         var time = token.TokenInfo.Timestamp;
-        var trust = CertificateTrust.Evaluate(tsa, extra.Concat(TokenCertificates(token)), time, _options);
+        var trust = CertificateTrust.Evaluate(tsa, extra.Concat(TokenCertificates(token)), time, _options, timestamp: true);
         if (!trust.Trusted || !trust.TimeValid)
         {
             problems.Add(SignatureProblem.TimestampInvalid);
@@ -228,7 +231,7 @@ internal sealed class SignatureChecker
             (level, bool certification) = Level(signed, found.Number);
             if (certification && kind == SignatureKind.Approval) kind = SignatureKind.Certification;
             var later = _revisions.Where(r => r.End > ranges.Revision.End).ToList();
-            changes = ChangeDetector.Compare(signed, _document, level, Between(later)) with { RevisionsAfter = later.Count };
+            changes = ChangeDetector.Compare(signed, _document, level, Between(later), _signatures) with { RevisionsAfter = later.Count };
         }
         else if (kind == SignatureKind.Approval)
         {
@@ -246,7 +249,7 @@ internal sealed class SignatureChecker
         return report with { Kind = kind, Certification = (CertificationLevel)level, Changes = changes, Problems = problems, Verdict = verdict };
     }
 
-    // The revisions between the signed one and the last, opened; null when there are too many to be worth it.
+    // The revisions between the signed one and the last, opened; null when there are too many or one does not open.
     private IReadOnlyList<PdfDocument>? Between(List<PdfRevision> later)
     {
         if (later.Count > MaxBetween) return null;
@@ -260,7 +263,7 @@ internal sealed class SignatureChecker
     }
 
     // The access permission in force for a signature: 0 for a file that is not certified.
-    private static (int Level, bool Certification) Level(PdfDocument document, int signatureNumber)
+    internal static (int Level, bool Certification) Level(PdfDocument document, int signatureNumber)
     {
         if (document.Dict(document.Catalog, "Perms") is not { } perms || perms["DocMDP"] is not PdfReference reference) return (0, false);
         if (document.Resolve(reference) is not PdfDictionary signature) return (0, false);

@@ -12,9 +12,8 @@ internal sealed partial class ChangeDetector
     private readonly PdfDocument _b;
     private readonly int _level;
     private readonly IReadOnlyList<PdfDocument>? _between;
+    private readonly IReadOnlySet<long> _signatures;
     private readonly List<SignatureChange> _changes = [];
-    private readonly HashSet<int> _claimed = [];
-    private readonly HashSet<int> _modified = [];
 
     private readonly int _catalog;
     private readonly int _info;
@@ -30,13 +29,16 @@ internal sealed partial class ChangeDetector
     private HashSet<int>? _content;
     private HashSet<int>? _reachable;
     private HashSet<int>? _dss;
-    private Dictionary<int, int>? _appearanceOwner;
+    private HashSet<int>? _foreign;
+    private Dictionary<int, List<int>>? _appearanceOwners;
+    private Dictionary<int, int>? _referenceCounts;
 
-    private sealed record FieldNode(string Name, bool IsSignature, bool HasValue);
+    private sealed record FieldNode(int Number, string Name, bool IsSignature, bool HasValue);
 
-    private ChangeDetector(PdfDocument before, PdfDocument after, int level, IReadOnlyList<PdfDocument>? between)
+    private ChangeDetector(PdfDocument before, PdfDocument after, int level, IReadOnlyList<PdfDocument>? between, IReadOnlySet<long> signatures)
     {
         _between = between;
+        _signatures = signatures;
         _a = before;
         _b = after;
         _level = level;
@@ -57,11 +59,12 @@ internal sealed partial class ChangeDetector
     /// The changes from <paramref name="before"/> to <paramref name="after"/> judged at <paramref name="level"/>:
     /// 0 for a file that is not certified, else the /DocMDP permission 1 to 3. <paramref name="between"/> are the
     /// revisions in between, which tell an object left over from an earlier update from one that was slipped in;
-    /// null skips that check.
+    /// null when they could not be opened, which leaves the file unchecked and so not allowed. <paramref name="signatures"/>
+    /// are the offsets of the signature objects in the file whose byte range is sound: only those make a new signature field real.
     /// </summary>
-    public static SignatureChangeReport Compare(PdfDocument before, PdfDocument after, int level, IReadOnlyList<PdfDocument>? between)
+    public static SignatureChangeReport Compare(PdfDocument before, PdfDocument after, int level, IReadOnlyList<PdfDocument>? between, IReadOnlySet<long> signatures)
     {
-        var detector = new ChangeDetector(before, after, level, between);
+        var detector = new ChangeDetector(before, after, level, between, signatures);
         detector.Run();
         return new SignatureChangeReport(detector._changes, 0);
     }
@@ -98,15 +101,27 @@ internal sealed partial class ChangeDetector
             _b.Entries.TryGetValue(n, out var eb);
             bool inA = ea.Kind is PdfDocument.EntryKind.InUse or PdfDocument.EntryKind.Compressed;
             bool inB = eb.Kind is PdfDocument.EntryKind.InUse or PdfDocument.EntryKind.Compressed;
-            if (inA && inB && ea.Kind == PdfDocument.EntryKind.InUse && ea == eb) continue;
             if (!inA && !inB) continue;
             if (inA && inB)
             {
-                var va = _a.Get(n);
-                var vb = _b.Get(n);
-                if (va is null || vb is null || Same(va, vb)) continue;
-                _modified.Add(n);
-                Modified(n, va, vb);
+                var va = Read(_a, n);
+                // An entry the reader had to move to find the object (a scan finds the newest copy in the final file) is no longer the same entry.
+                if (va is not null && ea.Kind == PdfDocument.EntryKind.InUse && ea == eb && _a.Entries[n] == ea && ClosedInSigned(va, ea.Offset)) continue;
+                var vb = Read(_b, n);
+                // An entry the signed revision could not read, a number past its end or an object cut off by it, shows the update's bytes now.
+                if (va is null)
+                {
+                    if (vb is not null) added.Add(n);
+                    continue;
+                }
+                if (vb is null)
+                {
+                    removed.Add(n);
+                    continue;
+                }
+                // References in the signed revision carry the old generation and now read as null, whatever the bytes say.
+                if (ea.Generation != eb.Generation) Removed(n, true);
+                else if (!Same(va, vb)) Modified(n, va, vb);
             }
             else if (inB)
             {
@@ -128,16 +143,33 @@ internal sealed partial class ChangeDetector
         }
         foreach (int n in removed) Removed(n, stillUsed.Contains(n));
         Unclaimed(added);
-        if (_between is not null) Orphans();
+        if (_between is null) Report(SignatureChangeKind.Other, 0, allowed: false);
+        else Orphans();
+    }
+
+    // An object that cannot be read is nothing, as it is for a viewer.
+    private static PdfObject? Read(PdfDocument document, int n) => document.Get(n) is PdfNull ? null : document.Get(n);
+
+    // Bytes the signature covers read the same in both revisions, unless a stream's data only ends past the signed revision.
+    private bool ClosedInSigned(PdfObject value, long offset)
+    {
+        if (offset >= _a.Length) return false;
+        if (value is not PdfStream stream) return true;
+        long end = stream.DataOffset + (_a.Integer(stream.Dictionary, "Length") ?? -1);
+        if (end < stream.DataOffset || end > _a.Length) return false;
+        var source = _a.Source.Span;
+        int at = (int)end;
+        while (at < source.Length && PdfLexer.IsWhiteSpace(source[at])) at++;
+        return source[at..].StartsWith("endstream"u8);
     }
 
     private bool Same(PdfObject a, PdfObject b)
     {
         if (a is PdfStream sa && b is PdfStream sb)
         {
-            return sa.Dictionary.ToString() == sb.Dictionary.ToString() && _a.RawData(sa).AsSpan().SequenceEqual(_b.RawData(sb));
+            return Text(sa.Dictionary) == Text(sb.Dictionary) && _a.RawData(sa).AsSpan().SequenceEqual(_b.RawData(sb));
         }
-        return a.GetType() == b.GetType() && a.ToString() == b.ToString();
+        return a.GetType() == b.GetType() && Text(a) == Text(b);
     }
 
     private void IndexAnnotations(PdfPage page, int index)
@@ -171,7 +203,7 @@ internal sealed partial class ChangeDetector
         string name = prefix;
         if (PdfText.Read(_a, dictionary["T"]) is { } partial) name = name.Length == 0 ? partial : name + "." + partial;
         bool signature = _a.Name(dictionary, "FT") is { } type ? type == "Sig" : inheritedSignature;
-        _fields[reference.Number] = new FieldNode(name, signature, dictionary["V"] is not null && dictionary["V"] is not PdfNull);
+        _fields[reference.Number] = new FieldNode(reference.Number, name, signature, dictionary["V"] is not null && dictionary["V"] is not PdfNull);
         if (_a.Array(dictionary, "Kids") is not { } kids) return;
         foreach (var kid in kids.Items)
         {

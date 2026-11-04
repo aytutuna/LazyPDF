@@ -199,7 +199,7 @@ public class SignatureVerificationTests
         }
     }
 
-    private static byte[] ByFramework(byte[] content, X509Certificate2 certificate, HashAlgorithmName digest, RSASignaturePadding? padding = null, bool attributes = true)
+    internal static byte[] ByFramework(byte[] content, X509Certificate2 certificate, HashAlgorithmName digest, RSASignaturePadding? padding = null, bool attributes = true)
     {
         var cms = new SignedCms(new ContentInfo(content), detached: true);
         var signer = padding is null
