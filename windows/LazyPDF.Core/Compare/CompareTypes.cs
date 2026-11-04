@@ -28,8 +28,9 @@ public enum ChangeArea
 
 /// <summary>
 /// One difference. Pages count from 0, -1 where a side has none. Quads are in user space of the page
-/// on their own side. A side that has no content of its own (the place where text was removed, the
-/// place it was added) holds a quad of zero width at that spot; a document difference holds none.
+/// on their own side. The side where text was removed or added holds a quad of zero width at that
+/// spot. A picture or annotation that exists on one side only has no quad on the other, and a document
+/// difference holds none.
 /// </summary>
 /// <param name="Detail">What differs, in words, for formats, images, annotations, pages and the document.</param>
 public sealed record CompareChange(ChangeKind Kind, ChangeArea Area, int OldPage, int NewPage, string OldText, string NewText,

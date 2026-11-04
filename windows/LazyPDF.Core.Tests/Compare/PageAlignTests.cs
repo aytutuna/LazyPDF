@@ -118,6 +118,18 @@ public class PageAlignTests
     }
 
     [Fact]
+    public void PagesEditedThroughoutStillPairInAFileTooLongForTheFullTable()
+    {
+        string Words(int page, bool edited) => string.Join(' ', Enumerable.Range(1, 12).Select(w => $"p{page}w{w}" + (edited && w % 3 == 0 ? "x" : "")));
+        string[][] before = [.. Enumerable.Range(0, 201).Select(i => new[] { Words(i, false) })];
+        string[][] after = [["fresh cover page"], .. Enumerable.Range(0, 201).Select(i => new[] { Words(i, true) })];
+        var result = Compare(before, after);
+        Assert.Equal(201, result.Pages.Count(p => !p.IsAdded && !p.IsRemoved));
+        Assert.Equal(1, result.Pages.Count(p => p.IsAdded));
+        Assert.Equal(0, result.Pages.Count(p => p.IsRemoved));
+    }
+
+    [Fact]
     public void CancellationStopsTheRun()
     {
         using var a = Doc(Pages("a", "b"));

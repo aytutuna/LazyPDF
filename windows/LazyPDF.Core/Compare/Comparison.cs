@@ -20,8 +20,8 @@ internal sealed partial class Comparison
         _options = options;
         _cancellation = cancellation;
         var ids = new Dictionary<string, int>();
-        _oldReader = new PageReader(before, options, ids);
-        _newReader = new PageReader(after, options, ids);
+        _oldReader = new PageReader(before, options, ids, cancellation);
+        _newReader = new PageReader(after, options, ids, cancellation);
     }
 
     private sealed class TextHunk(int pair, SequenceDiff.Hunk range, PageData oldData, PageData newData)
@@ -138,7 +138,8 @@ internal sealed partial class Comparison
         }
         CompareSize(work, oldData.Page, newData.Page);
 
-        var hunks = SequenceDiff.Diff(oldData.Ids, newData.Ids).Select(h => Slide(h, oldData, newData)).ToList();
+        var hunks = SequenceDiff.Diff(oldData.Ids, newData.Ids);
+        for (int k = 0; k < hunks.Count; k++) hunks[k] = Slide(hunks[k], k > 0 ? hunks[k - 1] : null, k + 1 < hunks.Count ? hunks[k + 1] : null, oldData, newData);
         foreach (var hunk in hunks)
         {
             if (_options.IgnoreWhiteSpace && hunk.OldCount > 0 && hunk.NewCount > 0 && Squash(oldData, hunk.OldStart, hunk.OldCount) == Squash(newData, hunk.NewStart, hunk.NewCount)) continue;
@@ -159,9 +160,12 @@ internal sealed partial class Comparison
     {
         var a = new PageGeometry(oldPage);
         var b = new PageGeometry(newPage);
-        if (Math.Abs(a.Width - b.Width) <= 1 && Math.Abs(a.Height - b.Height) <= 1) return;
+        string? detail = null;
+        if (Math.Abs(a.Width - b.Width) > 1 || Math.Abs(a.Height - b.Height) > 1) detail = CompareText.PageSize(a.Width, a.Height, b.Width, b.Height);
+        else if (oldPage.Rotate != newPage.Rotate) detail = CompareText.PageRotation(oldPage.Rotate, newPage.Rotate);
+        if (detail is null) return;
         work.Others.Add(new CompareChange(ChangeKind.Changed, ChangeArea.Page, work.Pair.OldIndex, work.Pair.NewIndex, "", "",
-            [BoxQuad(oldPage.CropBox)], [BoxQuad(newPage.CropBox)], CompareText.PageSize(a.Width, a.Height, b.Width, b.Height)));
+            [BoxQuad(oldPage.CropBox)], [BoxQuad(newPage.CropBox)], detail));
     }
 
     /// <summary>
@@ -169,7 +173,7 @@ internal sealed partial class Comparison
     /// the block slides over equal neighbours. Take the reading whose block starts and ends on line
     /// boundaries, so that the same paragraph looks the same at both ends of a move.
     /// </summary>
-    private static SequenceDiff.Hunk Slide(SequenceDiff.Hunk hunk, PageData oldData, PageData newData)
+    private static SequenceDiff.Hunk Slide(SequenceDiff.Hunk hunk, SequenceDiff.Hunk? previous, SequenceDiff.Hunk? next, PageData oldData, PageData newData)
     {
         bool deletion = hunk.NewCount == 0, insertion = hunk.OldCount == 0;
         if (deletion == insertion) return hunk;
@@ -177,10 +181,13 @@ internal sealed partial class Comparison
         var data = deletion ? oldData : newData;
         int start = deletion ? hunk.OldStart : hunk.NewStart, count = deletion ? hunk.OldCount : hunk.NewCount;
 
+        // The block stays between its neighbours, which it may not overlap.
+        int low = previous is { } p ? (deletion ? p.OldStart + p.OldCount : p.NewStart + p.NewCount) : 0;
+        int high = next is { } n ? (deletion ? n.OldStart : n.NewStart) : ids.Length;
         int left = 0;
-        while (left < MaxSlide && start - left > 0 && ids[start - left - 1] == ids[start - left + count - 1]) left++;
+        while (left < MaxSlide && start - left > low && ids[start - left - 1] == ids[start - left + count - 1]) left++;
         int right = 0;
-        while (right < MaxSlide && start + right + count < ids.Length && ids[start + right] == ids[start + right + count]) right++;
+        while (right < MaxSlide && start + right + count < high && ids[start + right] == ids[start + right + count]) right++;
         int best = 0, bestScore = Score(data, start, count);
         for (int shift = -left; shift <= right; shift++)
         {

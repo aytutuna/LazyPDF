@@ -38,6 +38,7 @@ public class AnnotationCompareTests
         var change = Assert.Single(Run(Nothing, Square).Changes);
         Assert.Equal((ChangeKind.Added, ChangeArea.Annotation, "Square", "first"), (change.Kind, change.Area, change.Detail, change.NewText));
         Assert.Single(change.NewQuads);
+        Assert.Empty(change.OldQuads);
     }
 
     [Fact]
@@ -46,7 +47,7 @@ public class AnnotationCompareTests
         var change = Assert.Single(Run(Square, Nothing).Changes);
         Assert.Equal((ChangeKind.Removed, "first"), (change.Kind, change.OldText));
         Assert.Single(change.OldQuads);
-        Assert.Single(change.NewQuads);
+        Assert.Empty(change.NewQuads);
     }
 
     [Fact]

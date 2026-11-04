@@ -55,7 +55,8 @@ public static class ComparisonReport
             writer.AddNote(page, new PdfRect(box.Left + 8, box.Top - 32, box.Left + 32, box.Top - 8), info, "Comment", color);
             return 1;
         }
-        var quads = change.NewQuads.Select(Widen).ToList();
+        // Nothing of the change is on this page (a removal from a page that has no words left): mark where it was.
+        var quads = (change.NewQuads.Count > 0 ? change.NewQuads : change.OldQuads).Select(Widen).ToList();
         if (quads.Count == 0) return 0;
         writer.AddTextMarkup(page, AnnotationType.Highlight, quads, info, new AnnotationStyle(color));
         return 1;

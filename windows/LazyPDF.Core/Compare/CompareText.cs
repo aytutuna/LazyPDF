@@ -44,6 +44,8 @@ public static class CompareText
     public static string PageSize(double oldWidth, double oldHeight, double newWidth, double newHeight) =>
         string.Create(CultureInfo.InvariantCulture, $"Size {oldWidth:0.#} x {oldHeight:0.#} pt to {newWidth:0.#} x {newHeight:0.#} pt");
 
+    public static string PageRotation(int from, int to) => $"Rotation {from} to {to} degrees";
+
     public static string FontChange(string from, string to) => $"Font {from} to {to}";
 
     public static string SizeChange(double from, double to) => string.Create(CultureInfo.InvariantCulture, $"Size {from:0.##} to {to:0.##}");

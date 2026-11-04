@@ -60,9 +60,8 @@ internal sealed partial class Comparison
 
         void Report(ChangeKind kind, PageImage? old, PageImage? updated, string? detail)
         {
-            var oldBox = old?.Bounds ?? updated!.Bounds;
-            var newBox = updated?.Bounds ?? old!.Bounds;
-            work.Others.Add(new CompareChange(kind, ChangeArea.Image, pair.OldIndex, pair.NewIndex, "", "", [BoxQuad(oldBox)], [BoxQuad(newBox)], detail));
+            work.Others.Add(new CompareChange(kind, ChangeArea.Image, pair.OldIndex, pair.NewIndex, "", "",
+                old is null ? [] : [BoxQuad(old.Bounds)], updated is null ? [] : [BoxQuad(updated.Bounds)], detail));
         }
 
         for (int j = 0; j < newImages.Count; j++)
@@ -175,13 +174,13 @@ internal sealed partial class Comparison
         {
             if (done.Contains(j)) continue;
             var b = newNotes[j];
-            work.Others.Add(new CompareChange(ChangeKind.Added, ChangeArea.Annotation, pair.OldIndex, pair.NewIndex, "", b.Contents ?? "", [BoxQuad(b.Rect)], NoteQuads(b), b.Subtype));
+            work.Others.Add(new CompareChange(ChangeKind.Added, ChangeArea.Annotation, pair.OldIndex, pair.NewIndex, "", b.Contents ?? "", [], NoteQuads(b), b.Subtype));
         }
         for (int i = 0; i < oldNotes.Count; i++)
         {
             if (usedOld[i]) continue;
             var a = oldNotes[i];
-            work.Others.Add(new CompareChange(ChangeKind.Removed, ChangeArea.Annotation, pair.OldIndex, pair.NewIndex, a.Contents ?? "", "", NoteQuads(a), [BoxQuad(a.Rect)], a.Subtype));
+            work.Others.Add(new CompareChange(ChangeKind.Removed, ChangeArea.Annotation, pair.OldIndex, pair.NewIndex, a.Contents ?? "", "", NoteQuads(a), [], a.Subtype));
         }
     }
 

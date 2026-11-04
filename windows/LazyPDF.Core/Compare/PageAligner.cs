@@ -3,8 +3,7 @@ namespace LazyPDF.Core;
 /// <summary>
 /// Pairs the pages of two files by what is on them. The pairs that keep their order and add up to the
 /// most similarity are found first (a weighted longest increasing subsequence), then the pages left
-/// over are paired as moved when they are alike, and what remains between two anchors is paired by
-/// position when the gap has as many pages on both sides.
+/// over are paired as moved when they are alike, and what remains between two anchors is paired in order.
 /// </summary>
 internal static class PageAligner
 {
@@ -13,6 +12,8 @@ internal static class PageAligner
     private const int MaxPostings = 64;
     private const int TopCandidates = 8;
     private const int SameHashCandidates = 4;
+    private const double PoorWeight = 0.01;
+    private const int MaxGapCells = 40_000;
 
     /// <summary>
     /// A page signature is the sorted distinct hashes of its word pairs (and pictures); a page with
@@ -46,14 +47,7 @@ internal static class PageAligner
         {
             var freeOld = Enumerable.Range(oi, anchor.Old - oi).Where(i => oldTo[i] < 0).ToList();
             var freeNew = Enumerable.Range(nj, anchor.New - nj).Where(j => newTo[j] < 0).ToList();
-            var paired = new Dictionary<int, int>();
-            if (freeOld.Count == freeNew.Count)
-            {
-                for (int k = 0; k < freeNew.Count; k++)
-                {
-                    if ((oldPoor[freeOld[k]] && newPoor[freeNew[k]]) || Dice(before[freeOld[k]], after[freeNew[k]]) >= GapThreshold) paired[freeNew[k]] = freeOld[k];
-                }
-            }
+            var paired = Gap(freeOld, freeNew, before, after, oldPoor, newPoor, cancellation);
             foreach (int i in freeOld.Where(i => !paired.ContainsValue(i))) result.Add(new PagePair(i, -1, 0, false));
             for (int j = nj; j < anchor.New; j++)
             {
@@ -66,6 +60,71 @@ internal static class PageAligner
             nj = anchor.New + 1;
         }
         return result;
+    }
+
+    /// <summary>
+    /// The pages left between two anchors, paired in order by the pairing of most similarity, so that one
+    /// inserted page does not cancel the rest. Pages of equal weight pair with the earliest partner.
+    /// </summary>
+    private static Dictionary<int, int> Gap(List<int> freeOld, List<int> freeNew, IReadOnlyList<int[]> before, IReadOnlyList<int[]> after,
+        IReadOnlyList<bool> oldPoor, IReadOnlyList<bool> newPoor, CancellationToken cancellation)
+    {
+        var paired = new Dictionary<int, int>();
+        double Weight(int i, int j)
+        {
+            double dice = Dice(before[i], after[j]);
+            if (dice >= GapThreshold) return dice;
+            return oldPoor[i] && newPoor[j] ? PoorWeight : 0;
+        }
+        int n = freeOld.Count, m = freeNew.Count;
+        if (n == 0 || m == 0) return paired;
+        // A gap too big for the full table keeps a band of diagonals around the line from the first pair to the last.
+        int low = -n, high = m;
+        if ((long)n * m > MaxGapCells)
+        {
+            int shift = m - n;
+            int slack = (MaxGapCells / Math.Max(n, m) - Math.Abs(shift) - 1) / 2;
+            if (slack < 1) return paired;
+            low = Math.Min(0, shift) - slack;
+            high = Math.Max(0, shift) + slack;
+        }
+
+        var first = new int[n];
+        var best = new double[n + 1][];
+        best[n] = [];
+        for (int a = 0; a < n; a++)
+        {
+            first[a] = Math.Clamp(a + low, 0, m);
+            best[a] = new double[Math.Max(0, Math.Min(a + high, m - 1) - first[a] + 1)];
+        }
+        double Best(int a, int b)
+        {
+            if (a >= n) return 0;
+            int k = b - first[a];
+            return k >= 0 && k < best[a].Length ? best[a][k] : 0;
+        }
+        for (int a = n - 1; a >= 0; a--)
+        {
+            cancellation.ThrowIfCancellationRequested();
+            for (int k = best[a].Length - 1; k >= 0; k--)
+            {
+                int b = first[a] + k;
+                best[a][k] = Math.Max(Best(a + 1, b), Math.Max(Best(a, b + 1), Best(a + 1, b + 1) + Weight(freeOld[a], freeNew[b])));
+            }
+        }
+        for (int a = 0, b = 0; a < n && b < m;)
+        {
+            double w = Weight(freeOld[a], freeNew[b]);
+            if (w > 0 && Best(a, b) == Best(a + 1, b + 1) + w)
+            {
+                paired[freeNew[b]] = freeOld[a];
+                a++;
+                b++;
+            }
+            else if (Best(a, b) == Best(a + 1, b)) a++;
+            else b++;
+        }
+        return paired;
     }
 
     private readonly record struct Candidate(int Old, int New, double Similarity);

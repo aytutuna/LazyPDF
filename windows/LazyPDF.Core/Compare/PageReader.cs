@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace LazyPDF.Core;
 
@@ -34,32 +36,46 @@ internal sealed class PageData(PdfPage page, TextPage text, int[] kept, int[] id
         return quads;
     }
 
-    /// <summary>A quad of zero width at the place before token <paramref name="at"/>: the right edge of the word before it, else the left edge of the one at it.</summary>
+    /// <summary>A quad of zero width at the place before token <paramref name="at"/>: the end of the word before it, else the start of the one at it (the right edge in a left-to-right line, the left in a right-to-left one).</summary>
     public List<TextQuad> Anchor(int at)
     {
         if (at > 0 && Quads(at - 1, 1) is { Count: > 0 } before)
         {
             var q = before[^1];
-            return [new TextQuad(q.X1, q.Y1, q.X1, q.Y1, q.X2, q.Y2, q.X2, q.Y2)];
+            return RightToLeft(Text.Words[Kept[at - 1]].Range.End - 1) ? Left(q) : Right(q);
         }
         if (at < Kept.Length && Quads(at, 1) is { Count: > 0 } after)
         {
             var q = after[0];
-            return [new TextQuad(q.X0, q.Y0, q.X0, q.Y0, q.X3, q.Y3, q.X3, q.Y3)];
+            return RightToLeft(Text.Words[Kept[at]].Range.Start) ? Right(q) : Left(q);
         }
         return [];
     }
+
+    // The line's direction, not the character's: digits and Latin words inside a right-to-left line have an even level.
+    private bool RightToLeft(int index) => Text.Lines[Text.Chars[index].Line].IsRtl;
+
+    private static List<TextQuad> Left(TextQuad q) => [new TextQuad(q.X0, q.Y0, q.X0, q.Y0, q.X3, q.Y3, q.X3, q.Y3)];
+
+    private static List<TextQuad> Right(TextQuad q) => [new TextQuad(q.X1, q.Y1, q.X1, q.Y1, q.X2, q.Y2, q.X2, q.Y2)];
 
     public TextChar FormatChar(int token) => Text.Chars[Text.Words[Kept[token]].Range.Start];
 }
 
 /// <summary>Reads the pages of one file as <see cref="PageData"/> and finds the pictures on them.</summary>
-internal sealed class PageReader(PdfDocument document, CompareOptions options, Dictionary<string, int> ids)
+internal sealed class PageReader(PdfDocument document, CompareOptions options, Dictionary<string, int> ids, CancellationToken cancellation)
 {
     private const double ZoneFraction = 0.07;
+    private const int MaxLookDepth = 6;
+    private const int MaxLookNodes = 1024;
+    private const int MaxLookItems = 256;
+    private const long MaxLookBytes = 16L << 20;
+    private static readonly string[] LookKeys = ["ColorSpace", "Decode", "ImageMask", "Mask", "SMask", "Matte"];
     private readonly TextCache _cache = new(document);
     private readonly ContentInterpreter _interpreter = new(document);
     private readonly Dictionary<PdfStream, string> _hashes = new(ReferenceEqualityComparer.Instance);
+    private readonly Dictionary<PdfStream, string> _samples = new(ReferenceEqualityComparer.Instance);
+    private int _nodes;
 
     public PdfDocument Document => document;
 
@@ -109,9 +125,53 @@ internal sealed class PageReader(PdfDocument document, CompareOptions options, D
             data = document.RawData(stream);
         }
         else data = image.Inline?.Data ?? [];
-        string hash = $"{image.Width}x{image.Height}:{Convert.ToHexString(SHA256.HashData(data), 0, 12)}";
+        _nodes = 0;
+        string hash = $"{image.Width}x{image.Height}:{Fingerprint(data)}{Look(image.Dictionary, 0)}|{Describe(image.Dictionary["DecodeParms"], 0)}";
         if (image.Stream is { } s) _hashes[s] = hash;
         return hash;
+    }
+
+    private static string Fingerprint(byte[] data) => Convert.ToHexString(SHA256.HashData(data), 0, 12);
+
+    /// <summary>What besides the samples changes how a picture looks: colour space, /Decode, masks (ISO 32000-1 8.9.5).</summary>
+    private string Look(PdfDictionary image, int depth)
+    {
+        var sb = new StringBuilder();
+        foreach (string key in LookKeys) sb.Append('|').Append(Describe(image[key], depth));
+        return sb.ToString();
+    }
+
+    /// <summary>References are followed, never printed, and strings and numbers are taken by value: the same picture keeps its look when the objects are renumbered or a value is respelled.</summary>
+    private string Describe(PdfObject? value, int depth)
+    {
+        value = document.Resolve(value);
+        if (depth >= MaxLookDepth || value is null || ++_nodes > MaxLookNodes) return "";
+        cancellation.ThrowIfCancellationRequested();
+        return value switch
+        {
+            PdfStream stream => $"S{SamplesOf(stream)}{Look(stream.Dictionary, depth + 1)}",
+            PdfDictionary dictionary => $"<{string.Join(' ', dictionary.Entries.OrderBy(e => e.Key, StringComparer.Ordinal).Take(MaxLookItems).Select(e => $"{e.Key} {Describe(e.Value, depth + 1)}"))}>",
+            PdfArray array => $"[{string.Join(' ', array.Items.Take(MaxLookItems).Select(item => Describe(item, depth + 1)))}]",
+            PdfString text => Convert.ToHexString(text.Bytes),
+            PdfNumber number => number.Value.ToString("R", CultureInfo.InvariantCulture),
+            _ => value.ToString(),
+        };
+    }
+
+    /// <summary>A palette or profile is judged by its content: saving may store it with another filter. A stream reached again is not decoded again.</summary>
+    private string SamplesOf(PdfStream stream)
+    {
+        if (_samples.TryGetValue(stream, out string? known)) return known;
+        byte[] data;
+        try
+        {
+            data = document.Data(stream, MaxLookBytes);
+        }
+        catch (PdfReadException)
+        {
+            data = document.RawData(stream);
+        }
+        return _samples[stream] = Fingerprint(data);
     }
 
     private sealed class ImageCollector(PageReader reader, List<PageImage> found) : ContentVisitor

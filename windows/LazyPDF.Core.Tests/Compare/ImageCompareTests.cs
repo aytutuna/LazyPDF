@@ -77,10 +77,10 @@ public class ImageCompareTests
     {
         var added = Assert.Single(Run([], [Logo]).Changes);
         Assert.Equal((ChangeKind.Added, ChangeArea.Image), (added.Kind, added.Area));
-        Assert.Single(added.OldQuads);
+        Assert.Empty(added.OldQuads);
         var removed = Assert.Single(Run([Logo], []).Changes);
         Assert.Equal(ChangeKind.Removed, removed.Kind);
-        Assert.Single(removed.NewQuads);
+        Assert.Empty(removed.NewQuads);
     }
 
     [Fact]
