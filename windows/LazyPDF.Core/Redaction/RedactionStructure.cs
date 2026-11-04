@@ -13,12 +13,13 @@ internal static class RedactionStructure
     private static readonly string[] AltKeys = ["ActualText", "Alt", "E", "T"];
 
     /// <param name="tagged">Per page object number: how many items each marked content ID painted and how many of them were removed.</param>
-    public static void Prune(PdfDocument document, Dictionary<int, Dictionary<int, (int Total, int Removed)>> tagged)
+    /// <param name="replaced">Pictures and forms that were copied or dropped, and what else was dropped; a content item or object that still names the original would keep it in the file.</param>
+    public static void Prune(PdfDocument document, Dictionary<int, Dictionary<int, (int Total, int Removed)>> tagged, HashSet<PdfStream> replaced)
     {
         if (document.Dict(document.Catalog, "StructTreeRoot") is not { } root) return;
         var gone = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
         int budget = MaxElements;
-        Visit(document, root, null, tagged, gone, 0, ref budget);
+        Visit(document, root, null, tagged, replaced, gone, 0, ref budget);
         if (gone.Count == 0) return;
 
         bool Left(PdfObject? value) => document.Resolve(value) is PdfDictionary d && gone.Contains(d);
@@ -45,7 +46,7 @@ internal static class RedactionStructure
 
     /// <summary>Whether the element still has content; elements that have none are added to <paramref name="gone"/> by their parent.</summary>
     private static (bool Alive, bool Touched) Visit(PdfDocument document, PdfDictionary element, int? page,
-        Dictionary<int, Dictionary<int, (int Total, int Removed)>> tagged, HashSet<PdfDictionary> gone, int depth, ref int budget)
+        Dictionary<int, Dictionary<int, (int Total, int Removed)>> tagged, HashSet<PdfStream> replaced, HashSet<PdfDictionary> gone, int depth, ref int budget)
     {
         if (depth > MaxDepth || --budget < 0) return (true, false);
         if (element["Pg"] is PdfReference own) page = own.Number;
@@ -59,17 +60,21 @@ internal static class RedactionStructure
                 case PdfNumber n:
                     touched |= Content(page, (int)n.Value, tagged, kept, kid);
                     break;
-                case PdfDictionary d when document.Name(d, "Type") == "MCR":
+                case PdfDictionary d when IsContentItem(document, d, "MCR", "MCID"):
                     int? at = d["Pg"] is PdfReference mp ? mp.Number : page;
-                    if (d.ContainsKey("Stm")) kept.Add(kid);
+                    if (d.ContainsKey("Stm"))
+                    {
+                        if (document.Resolve(d["Stm"]) is PdfStream form && replaced.Contains(form)) touched = true;
+                        else kept.Add(kid);
+                    }
                     else touched |= Content(at, (int)(document.Integer(d, "MCID") ?? -1), tagged, kept, kid);
                     break;
-                case PdfDictionary d when document.Name(d, "Type") == "OBJR":
-                    if (document.Resolve(d["Obj"]) is null) touched = true;
+                case PdfDictionary d when IsContentItem(document, d, "OBJR", "Obj"):
+                    if (document.Resolve(d["Obj"]) is null || (document.Resolve(d["Obj"]) is PdfStream target && replaced.Contains(target))) touched = true;
                     else kept.Add(kid);
                     break;
                 case PdfDictionary child:
-                    var (alive, inner) = Visit(document, child, page, tagged, gone, depth + 1, ref budget);
+                    var (alive, inner) = Visit(document, child, page, tagged, replaced, gone, depth + 1, ref budget);
                     touched |= inner;
                     if (alive) kept.Add(kid);
                     else
@@ -89,6 +94,10 @@ internal static class RedactionStructure
         // The root has no content of its own and stays.
         return (kept.Count > 0 || kids.Count == 0, touched);
     }
+
+    // The type is required, but a writer that leaves it out still has a content item when there is no structure type.
+    private static bool IsContentItem(PdfDocument document, PdfDictionary item, string type, string key) =>
+        document.Name(item, "Type") == type || (!item.ContainsKey("S") && !item.ContainsKey("Type") && item.ContainsKey(key));
 
     // True when the content lost something; it stays in the tree unless every item it painted is gone.
     private static bool Content(int? page, int mcid, Dictionary<int, Dictionary<int, (int Total, int Removed)>> tagged,

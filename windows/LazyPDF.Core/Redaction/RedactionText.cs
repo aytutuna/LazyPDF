@@ -7,6 +7,8 @@ public static class RedactionText
     public const string TooBig = "This page is too complex to redact safely.";
     public const string NothingFound = "Nothing was under the marks.";
     public const string ReplacedBy = "[redacted]";
+    public const string TextElsewhere = "Descriptions, links and names";
+    public const string XmpUnreadable = "An XMP packet that could not be read";
 
     public static string Line(PageRedaction p)
     {
@@ -30,6 +32,9 @@ public static class RedactionText
     public static string Removed(string text) => $"Removed: {text}";
 
     public static string StillInside(int page) => $"Text is still inside a mark on page {page + 1}.";
+    public static string AttachedFile(int number) => $"an attached file (object {number})";
     public static string StillInFile(string where) => $"Removed text is still in {where}.";
+    public static string NotFollowed(int page) => $"Page {page + 1} could not be followed to its end, so it was not fully checked.";
+    public const string TooManyStrings = "Not every removed string could be checked.";
     public const string DoesNotOpen = "The output does not open.";
 }

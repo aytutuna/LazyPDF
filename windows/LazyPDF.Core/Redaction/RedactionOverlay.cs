@@ -13,7 +13,7 @@ internal static class RedactionOverlay
         {
             double[] fill = mark.Fill is { Length: 1 or 3 or 4 } ? mark.Fill : options.Fill is { Length: 1 or 3 or 4 } ? options.Fill : [0];
             Color(w, fill);
-            foreach (var q in mark.Quads) w.Raw(RedactionScan.Polygons([Geometry.Corners(q)]) + "f");
+            foreach (var q in mark.Quads) w.Raw(RedactionPaths.Polygons([Geometry.Corners(q)]) + "f");
             string? text = mark.OverlayText ?? options.OverlayText;
             if (font is null || string.IsNullOrEmpty(text)) continue;
             foreach (var q in mark.Quads) Text(w, q, text, options.RepeatOverlay, font, fontName, Dark(fill));

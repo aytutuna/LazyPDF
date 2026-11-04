@@ -17,8 +17,8 @@ internal sealed record TextEdit(Dictionary<(int Element, int Offset), (int Lengt
 
 internal sealed record ImageEdit(PdfStream Image, List<MarkArea> Areas, PdfMatrix Matrix) : ContentEdit;
 
-/// <summary>A painted path to remove, or for a rectangle fill the pieces left of it (in page space).</summary>
-internal sealed record PathEdit(bool Clips, PdfMatrix Ctm, List<PdfRect>? Pieces) : ContentEdit;
+/// <summary>A painted or clipping path to remove, and the polygons left of it outside the marks (in page space; none for a path that goes whole).</summary>
+internal sealed record PathEdit(bool Clips, PdfMatrix Ctm, List<List<(double X, double Y)>> Remains) : ContentEdit;
 
 /// <summary>One content stream in use: the page, or a form as it is painted at one place.</summary>
 internal sealed class ScanNode(PdfStream? form)
@@ -35,19 +35,27 @@ internal sealed class ScanNode(PdfStream? form)
 /// Walks a page and records what meets the marks, per content stream and operator index: glyphs,
 /// paths, images, shadings and the marked content that held them.
 /// </summary>
-internal sealed class RedactionScan(IReadOnlyList<MarkArea> areas) : ContentVisitor
+internal sealed class RedactionScan(IReadOnlyList<MarkArea> areas, PdfDictionary? pageResources = null) : ContentVisitor
 {
     private static readonly string[] AltKeys = ["ActualText", "Alt", "E"];
-    private const int CurveSteps = 8;
+    private const int MaxFormDepth = 20;
 
     private readonly Stack<ScanNode> _nodes = new([new ScanNode(null)]);
     private readonly List<(ScanNode Node, int Op, MarkedContent Marked)> _open = [];
+    private readonly Dictionary<PdfStream, string[]?> _calls = new(ReferenceEqualityComparer.Instance);
+    private readonly Dictionary<PdfStream, bool> _followable = new(ReferenceEqualityComparer.Instance);
     private int _pattern;
 
     public ScanNode Root => _nodes.Last();
     public int Glyphs { get; private set; }
     public int Images { get; private set; }
     public int Paths { get; private set; }
+
+    /// <summary>A form that could not be run to its end meets a mark, so what it holds was not looked at.</summary>
+    public bool Incomplete { get; private set; }
+
+    /// <summary>What painted under a mark, so that it can be dropped from the resources if nothing else paints it: fonts, patterns, shadings, soft masks and property lists.</summary>
+    public HashSet<object> Dropped { get; } = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>Painted items per page-level MCID, and how many of them were removed.</summary>
     public Dictionary<int, (int Total, int Removed)> Marked { get; } = [];
@@ -67,6 +75,9 @@ internal sealed class RedactionScan(IReadOnlyList<MarkArea> areas) : ContentVisi
         Count(context, true);
         Glyphs++;
         var state = context.State;
+        Dropped.Add(glyph.Font.Dictionary);
+        if (glyph.Font.IsType3) RedactionPrune.Glyph(context.Document, glyph.Font, context.Forms.Count > 0 ? context.Document.Dict(context.Forms[^1].Dictionary, "Resources") : pageResources, glyph.Code, Dropped);
+        RedactionPrune.Note(o => Dropped.Add(o), state, state.RenderMode is 0 or 2 or 4 or 6, state.RenderMode is 1 or 2 or 5 or 6);
         double scale = glyph.Font.IsVertical ? state.FontSize : state.FontSize * state.HorizontalScale;
         double adjust = scale == 0 ? 0 : -glyph.Advance * 1000 / scale;
         if (!Current.Edits.TryGetValue(context.OperatorIndex, out var edit)) Current.Edits[context.OperatorIndex] = edit = new TextEdit([]);
@@ -75,24 +86,30 @@ internal sealed class RedactionScan(IReadOnlyList<MarkArea> areas) : ContentVisi
 
     public override void PaintPath(ContentContext context, PathInfo path)
     {
-        if (_pattern > 0 || !(path.Fill || path.Stroke)) return;
-        var hit = areas.Where(a => PathMeets(path, a)).ToList();
+        bool paints = path.Fill || path.Stroke;
+        if (_pattern > 0 || !(paints || path.Clips)) return;
+        var hit = areas.Where(a => RedactionPaths.Meets(path, a)).ToList();
         if (hit.Count == 0)
         {
-            Count(context, false);
+            if (paints) Count(context, false);
             return;
         }
+        // A rectangle that only clips and holds every mark shows no shape; one with an edge inside a mark, or the clip of anything else, can be the marked shape itself.
+        if (!paints && RedactionPaths.AxisRectangle(path) is { } clip && hit.All(a => Covers(clip, a.Bounds))) return;
         Count(context, true);
         Paths++;
         var state = context.State;
-        List<PdfRect>? pieces = null;
-        if (path.Fill && !path.Stroke && !path.Clips && state.FillColor.Pattern is null && state.FillColor.PatternName is null
-            && state.Ctm.Invert() is not null && AxisRectangle(path) is { } rect)
+        RedactionPrune.Note(o => Dropped.Add(o), state, path.Fill, path.Stroke);
+        List<List<(double X, double Y)>> remains = [];
+        if (state.Ctm.Invert() is not null)
         {
-            pieces = [rect];
-            foreach (var area in hit) pieces = [.. pieces.SelectMany(p => Subtract(p, area.Bounds))];
+            if (path.Clips) remains = RedactionPaths.Outside(path, hit);
+            else if (path.Fill && !path.Stroke && state.FillColor.Pattern is null && state.FillColor.PatternName is null && state.SoftMask is null && RedactionPaths.AxisRectangle(path) is { } rect)
+            {
+                remains = RedactionPaths.Around(rect, hit);
+            }
         }
-        Current.Edits[context.OperatorIndex] = new PathEdit(path.Clips, state.Ctm, pieces);
+        Current.Edits[context.OperatorIndex] = new PathEdit(path.Clips, state.Ctm, remains);
     }
 
     public override void PaintImage(ContentContext context, ImageInfo image)
@@ -107,18 +124,31 @@ internal sealed class RedactionScan(IReadOnlyList<MarkArea> areas) : ContentVisi
         }
         Count(context, true);
         Images++;
+        RedactionPrune.Note(o => Dropped.Add(o), context.State, image.IsMask, false);
         Current.Edits[context.OperatorIndex] = image.Stream is { } stream ? new ImageEdit(stream, hit, image.Matrix) : DeleteEdit.Instance;
     }
 
     public override void PaintShading(ContentContext context, ShadingInfo shading)
     {
         if (_pattern > 0 || !areas.Any(a => Geometry.Meets(shading.Bounds, a))) return;
+        var dictionary = shading.Shading as PdfDictionary ?? (shading.Shading as PdfStream)?.Dictionary;
+        // Mesh and function shadings carry their samples in the file, and the clip hole hides them without removing them.
+        if (dictionary is not null && context.Document.Integer(dictionary, "ShadingType") is 1 or >= 4)
+        {
+            Count(context, true);
+            Paths++;
+            Dropped.Add(shading.Shading);
+            RedactionPrune.Note(o => Dropped.Add(o), context.State, false, false);
+            Current.Edits[context.OperatorIndex] = DeleteEdit.Instance;
+            return;
+        }
         var inverse = context.State.Ctm.Invert();
         if (inverse is not { } back) return;
+        Count(context, true);
         var everything = Geometry.Corners(back, -1e6, -1e6, 1e6, 1e6);
         var holes = areas.Select(a => a.Points.Select(p => back.Transform(p.X, p.Y)).ToList());
         var path = new StringBuilder("q\n");
-        foreach (var polygon in holes.Prepend(everything)) Polygon(path, polygon);
+        foreach (var polygon in holes.Prepend(everything)) RedactionPaths.Polygon(path, polygon);
         Current.Edits[context.OperatorIndex] = new SurroundEdit(path.Append("W* n\n").ToString(), "\nQ");
     }
 
@@ -132,6 +162,17 @@ internal sealed class RedactionScan(IReadOnlyList<MarkArea> areas) : ContentVisi
 
     public override void BeginForm(ContentContext context, FormInfo form)
     {
+        // The interpreter does not enter forms below this depth, nor read one that fails or is too long, and it skips
+        // a form that is already running. What such a form holds cannot be looked at, so a use of it that reaches a
+        // mark goes whole.
+        if (!form.IsPattern && (context.Forms.Count >= MaxFormDepth || !Followable(context, form.Stream)) && areas.Any(a => Geometry.Meets(form.Bounds, a)))
+        {
+            Incomplete = true;
+            Count(context, true);
+            Paths++;
+            Dropped.Add(form.Stream);
+            Current.Edits[context.OperatorIndex] = DeleteEdit.Instance;
+        }
         if (form.IsPattern)
         {
             _pattern++;
@@ -148,6 +189,44 @@ internal sealed class RedactionScan(IReadOnlyList<MarkArea> areas) : ContentVisi
         else _nodes.Pop();
     }
 
+    private bool Followable(ContentContext context, PdfStream form)
+    {
+        if (_followable.TryGetValue(form, out bool known)) return known;
+        var scope = new List<PdfDictionary?>([pageResources, .. context.Forms.Select(f => context.Document.Dict(f.Dictionary, "Resources"))]);
+        known = Calls(context.Document, form) is not null && !Reaches(context.Document, form, form, scope, new(ReferenceEqualityComparer.Instance), 0);
+        _followable[form] = known;
+        return known;
+    }
+
+    // The names a form paints with Do; null when it cannot be read.
+    private string[]? Calls(PdfDocument document, PdfStream form)
+    {
+        if (_calls.TryGetValue(form, out var known)) return known;
+        known = RedactionLimits.Followable(document, form)?.Where(o => o.Operator == "Do" && o.Operands.FirstOrDefault() is PdfName)
+            .Select(o => ((PdfName)o.Operands[0]).Value).Distinct().ToArray();
+        _calls[form] = known;
+        return known;
+    }
+
+    // Whether the form paints, through the forms it calls, the one it started from. The interpreter looks a name up
+    // in the innermost resources first, then in those of the forms that call.
+    private bool Reaches(PdfDocument document, PdfStream at, PdfStream target, List<PdfDictionary?> scope, Dictionary<object, int> seen, int depth)
+    {
+        if (depth >= MaxFormDepth || seen.TryGetValue(at, out int shallowest) && shallowest <= depth) return false;
+        seen[at] = depth;
+        scope = [.. scope, document.Dict(at.Dictionary, "Resources")];
+        foreach (string name in Calls(document, at) ?? [])
+        {
+            var found = scope.AsEnumerable().Reverse().Select(r => document.Dict(r, "XObject")).FirstOrDefault(x => x is not null && x.ContainsKey(name));
+            if (document.Resolve(found?[name]) is not PdfStream called) continue;
+            if (ReferenceEquals(called, target) || Reaches(document, called, target, scope, seen, depth + 1)) return true;
+        }
+        return false;
+    }
+
+    private static bool Covers(PdfRect outer, PdfRect inner) =>
+        outer.Left <= inner.Left && outer.Bottom <= inner.Bottom && outer.Right >= inner.Right && outer.Top >= inner.Top;
+
     private void Count(ContentContext context, bool removed)
     {
         if (removed)
@@ -155,122 +234,14 @@ internal sealed class RedactionScan(IReadOnlyList<MarkArea> areas) : ContentVisi
             // A description of the text in a sequence that lost some of it would give it away.
             foreach (var (node, op, marked) in _open)
             {
-                if (marked.Properties is { } p && AltKeys.Any(p.ContainsKey)) node.DirtyMarked.Add(op);
+                if (marked.Properties is not { } p || !AltKeys.Any(p.ContainsKey)) continue;
+                node.DirtyMarked.Add(op);
+                Dropped.Add(p);
             }
         }
-        if (context.Forms.Count > 0 || context.Mcid is not { } mcid) return;
+        // The structure tree names the sequences of the page itself; what a form paints belongs to the one that calls it.
+        if (_open.FindLast(o => ReferenceEquals(o.Node, Root) && o.Marked.Mcid is not null) is not { Marked.Mcid: { } mcid }) return;
         var (total, gone) = Marked.GetValueOrDefault(mcid);
         Marked[mcid] = (total + 1, gone + (removed ? 1 : 0));
-    }
-
-    private static void Polygon(StringBuilder path, IReadOnlyList<(double X, double Y)> points)
-    {
-        for (int i = 0; i < points.Count; i++) path.Append(new PdfNumber(points[i].X).Text).Append(' ').Append(new PdfNumber(points[i].Y).Text).Append(i == 0 ? " m\n" : " l\n");
-        path.Append("h\n");
-    }
-
-    public static string Polygons(IEnumerable<IReadOnlyList<(double X, double Y)>> polygons)
-    {
-        var path = new StringBuilder();
-        foreach (var polygon in polygons) Polygon(path, polygon);
-        return path.ToString();
-    }
-
-    private static List<List<(double X, double Y)>> Flatten(PathInfo path, out List<bool> closed)
-    {
-        var result = new List<List<(double X, double Y)>>();
-        closed = [];
-        List<(double X, double Y)>? current = null;
-        (double X, double Y) last = default;
-        foreach (var s in path.Segments)
-        {
-            switch (s.Kind)
-            {
-                case PathSegmentKind.Move:
-                    current = [(s.X1, s.Y1)];
-                    result.Add(current);
-                    closed.Add(false);
-                    last = (s.X1, s.Y1);
-                    break;
-                case PathSegmentKind.Line when current is not null:
-                    current.Add(last = (s.X1, s.Y1));
-                    break;
-                case PathSegmentKind.Curve when current is not null:
-                    var start = last;
-                    for (int i = 1; i <= CurveSteps; i++)
-                    {
-                        double t = (double)i / CurveSteps, u = 1 - t;
-                        current.Add((u * u * u * start.X + 3 * u * u * t * s.X1 + 3 * u * t * t * s.X2 + t * t * t * s.X3,
-                                     u * u * u * start.Y + 3 * u * u * t * s.Y1 + 3 * u * t * t * s.Y2 + t * t * t * s.Y3));
-                    }
-                    last = (s.X3, s.Y3);
-                    break;
-                case PathSegmentKind.Close when current is not null:
-                    closed[^1] = true;
-                    last = current[0];
-                    break;
-            }
-        }
-        return result;
-    }
-
-    private static bool PathMeets(PathInfo path, MarkArea area)
-    {
-        var ink = path.InkBounds;
-        if (ink.Right < area.Bounds.Left || ink.Left > area.Bounds.Right || ink.Top < area.Bounds.Bottom || ink.Bottom > area.Bounds.Top) return false;
-        var subpaths = Flatten(path, out var closed);
-        double half = Math.Max(0, (path.InkBounds.Width - path.Bounds.Width) / 2);
-        for (int s = 0; s < subpaths.Count; s++)
-        {
-            var points = subpaths[s];
-            bool wrap = path.Fill || closed[s];
-            for (int i = 0; i < points.Count; i++)
-            {
-                if (i + 1 == points.Count && !wrap) break;
-                double reach = Geometry.Distance(points[i], points[(i + 1) % points.Count], area);
-                if (path.Fill && reach == 0) return true;
-                if (path.Stroke && reach <= half) return true;
-            }
-        }
-        if (!path.Fill) return false;
-        var inside = area.Points.Append((X: area.Points.Average(p => p.X), Y: area.Points.Average(p => p.Y)));
-        return inside.Any(p => Geometry.Inside(subpaths, path.EvenOdd, p.X, p.Y));
-    }
-
-    private static PdfRect? AxisRectangle(PathInfo path)
-    {
-        var points = new List<(double X, double Y)>();
-        foreach (var s in path.Segments)
-        {
-            if (s.Kind == PathSegmentKind.Move && points.Count == 0) points.Add((s.X1, s.Y1));
-            else if (s.Kind == PathSegmentKind.Line) points.Add((s.X1, s.Y1));
-            else if (s.Kind != PathSegmentKind.Close) return null;
-        }
-        if (points.Count == 5 && Near(points[0], points[4])) points.RemoveAt(4);
-        if (points.Count != 4) return null;
-        bool horizontalFirst = Same(points[0].Y, points[1].Y) && Same(points[1].X, points[2].X) && Same(points[2].Y, points[3].Y) && Same(points[3].X, points[0].X);
-        bool verticalFirst = Same(points[0].X, points[1].X) && Same(points[1].Y, points[2].Y) && Same(points[2].X, points[3].X) && Same(points[3].Y, points[0].Y);
-        if (!horizontalFirst && !verticalFirst) return null;
-        return new PdfRect(points.Min(p => p.X), points.Min(p => p.Y), points.Max(p => p.X), points.Max(p => p.Y));
-    }
-
-    private static bool Same(double a, double b) => Math.Abs(a - b) < 1e-6;
-
-    private static bool Near((double X, double Y) a, (double X, double Y) b) => Same(a.X, b.X) && Same(a.Y, b.Y);
-
-    // The rectangle with the mark's box taken out: a band to the left and right over the full height
-    // and the strips above and below between them.
-    private static IEnumerable<PdfRect> Subtract(PdfRect r, PdfRect cut)
-    {
-        if (cut.Right <= r.Left || cut.Left >= r.Right || cut.Top <= r.Bottom || cut.Bottom >= r.Top)
-        {
-            yield return r;
-            yield break;
-        }
-        double left = Math.Max(cut.Left, r.Left), right = Math.Min(cut.Right, r.Right);
-        if (cut.Left > r.Left) yield return new PdfRect(r.Left, r.Bottom, cut.Left, r.Top);
-        if (cut.Right < r.Right) yield return new PdfRect(cut.Right, r.Bottom, r.Right, r.Top);
-        if (cut.Top < r.Top) yield return new PdfRect(left, cut.Top, right, r.Top);
-        if (cut.Bottom > r.Bottom) yield return new PdfRect(left, r.Bottom, right, cut.Bottom);
     }
 }

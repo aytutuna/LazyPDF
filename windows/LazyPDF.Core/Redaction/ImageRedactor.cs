@@ -10,7 +10,8 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
 {
     private const long MaxSamples = 256L << 20;
     private const int MaxMaskDepth = 2;
-    private static readonly string[] Dropped = ["Metadata", "PieceInfo", "LastModified", "Length", "Filter", "DecodeParms"];
+    // What describes the picture itself (ISO 32000-1 8.9.5); anything else on the dictionary can lead back to the original.
+    private static readonly string[] Kept = ["Type", "Subtype", "Width", "Height", "ColorSpace", "BitsPerComponent", "Intent", "ImageMask", "Mask", "Decode", "Interpolate", "SMask", "SMaskInData", "StructParent", "OC"];
 
     public PdfReference? Redact(PdfStream image, IReadOnlyList<MarkArea> areas, PdfMatrix placement)
     {
@@ -33,8 +34,11 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
         var d = image.Dictionary;
         var (filter, parameters, _) = document.DecodeSpec(image);
         var decoded = PdfFilters.DecodeToCodec(document.RawData(image), filter, parameters, MaxSamples);
-        var copy = d.Copy();
-        foreach (string key in Dropped) copy.Remove(key);
+        var copy = new PdfDictionary();
+        foreach (string key in Kept)
+        {
+            if (d[key] is { } value) copy[key] = value;
+        }
         copy["Filter"] = new PdfName("FlateDecode");
         if (!Masks(d, copy, unit, depth)) return null;
 
@@ -45,8 +49,11 @@ internal sealed class ImageRedactor(PdfDocument document, IImageCodec? codec)
             bool mask = document.Bool(d, "ImageMask") == true;
             int bits = mask ? 1 : (int)(document.Integer(d, "BitsPerComponent") ?? 8);
             int components = mask ? 1 : SampleColorSpace.Parse(d["ColorSpace"], document.Resolve, s => document.Data(s)).Components;
-            Zero(decoded.Data, width, height, components * bits, unit);
-            return document.Add(new PdfStream(copy, PdfFilterEncoders.Flate(decoded.Data)));
+            var samples = decoded.Data;
+            long used = ((long)width * components * bits + 7) / 8 * height;
+            if (samples.Length > used) samples = samples[..(int)used];
+            Zero(samples, width, height, components * bits, unit);
+            return document.Add(new PdfStream(copy, PdfFilterEncoders.Flate(samples)));
         }
 
         if (codec?.Decode(decoded.Data, decoded.Codec) is not { } pixels || !Fits(pixels.Width, pixels.Height)) return null;

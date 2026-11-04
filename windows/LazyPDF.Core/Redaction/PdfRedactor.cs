@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+
 namespace LazyPDF.Core;
 
 /// <summary>
@@ -65,24 +67,28 @@ public sealed partial class PdfRedactor(PdfDocument document, IFontSource? fonts
         var pages = new List<PageRedaction>();
         var needles = new HashSet<string>(StringComparer.Ordinal);
         var tagged = new Dictionary<int, Dictionary<int, (int Total, int Removed)>>();
+        var dropped = new HashSet<object>(ReferenceEqualityComparer.Instance);
         var rewriter = new ContentRewriter(work, new ImageRedactor(work, images));
         var interpreter = new ContentInterpreter(work) { WalkPatterns = false };
         foreach (var group in chosen.GroupBy(m => m.Page).OrderBy(g => g.Key))
         {
             var page = work.Pages[group.Key];
-            var done = RedactPage(work, page, [.. group], options, font, rewriter, interpreter, needles, out var counts);
+            var done = RedactPage(work, page, [.. group], options, font, rewriter, interpreter, needles, dropped, out var counts);
             pages.Add(done);
             tagged[page.Reference.Number] = counts;
         }
 
-        DropUnpainted(work, rewriter.Replaced);
+        dropped.UnionWith(rewriter.Replaced);
+        var unused = RedactionPrune.Run(work, dropped);
         int signatures = RemoveSignatures(work);
         CleanForm(work);
-        RedactionStructure.Prune(work, tagged);
+        RedactionStructure.Prune(work, tagged, [.. dropped.OfType<PdfStream>()]);
+        RedactionPrune.Scrub(work, unused);
         var findings = RedactionMetadata.Scan(work, needles, options.ChangeMetadata);
 
-        // The check reads the file as plain bytes; encrypting changes nothing it looks at.
-        byte[] bytes = work.SaveRewrite();
+        // The check reads the file as plain bytes; encrypting changes nothing it looks at. An open file gets an /ID
+        // of its own, so that it is not tied to the original; the keys of an encrypted one are made from the first.
+        byte[] bytes = work.SaveRewrite(new PdfSaveOptions(DocumentId: RandomNumberGenerator.GetBytes(16)));
         var verification = Verify(bytes, chosen, needles, texts.Distinct().ToList());
         if (options.KeepEncryption && document.Security is { } security)
         {
@@ -111,42 +117,6 @@ public sealed partial class PdfRedactor(PdfDocument document, IFontSource? fonts
             }
         }
         foreach (var node in nodes) node.Remove("Resources");
-    }
-
-    // Many files give every page the same resource list, with every picture of the file in it. The
-    // original of a cut picture or form must not stay reachable through a list that never paints it.
-    private static void DropUnpainted(PdfDocument work, HashSet<PdfStream> replaced)
-    {
-        var numbers = replaced.Select(s => s.Number).ToHashSet();
-        var listed = new List<(PdfDictionary Map, string Name, int Number)>();
-        foreach (var page in work.Pages)
-        {
-            if (work.Dict(work.Dict(page.Dictionary, "Resources"), "XObject") is not { } map) continue;
-            foreach (var (name, value) in map.Entries)
-            {
-                if (value is PdfReference r && numbers.Contains(r.Number)) listed.Add((map, name, r.Number));
-            }
-        }
-        if (listed.Count == 0) return;
-        var painted = new PaintedStreams();
-        var interpreter = new ContentInterpreter(work);
-        foreach (var page in work.Pages) interpreter.Run(page, painted);
-        foreach (var (map, name, number) in listed)
-        {
-            if (!painted.Numbers.Contains(number)) map.Remove(name);
-        }
-    }
-
-    private sealed class PaintedStreams : ContentVisitor
-    {
-        public HashSet<int> Numbers { get; } = [];
-
-        public override void PaintImage(ContentContext context, ImageInfo image)
-        {
-            if (image.Stream is { } stream) Numbers.Add(stream.Number);
-        }
-
-        public override void BeginForm(ContentContext context, FormInfo form) => Numbers.Add(form.Stream.Number);
     }
 
     // A signature covers bytes that no longer exist in the output.

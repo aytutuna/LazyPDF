@@ -6,13 +6,14 @@ public sealed partial class PdfRedactor
     private const int MinNeedle = 3;
 
     private PageRedaction RedactPage(PdfDocument work, PdfPage page, List<RedactionMark> marks, RedactionOptions options, PdfDrawFont? font,
-        ContentRewriter rewriter, ContentInterpreter interpreter, HashSet<string> needles, out Dictionary<int, (int Total, int Removed)> tagged)
+        ContentRewriter rewriter, ContentInterpreter interpreter, HashSet<string> needles, HashSet<object> dropped, out Dictionary<int, (int Total, int Removed)> tagged)
     {
         var areas = marks.SelectMany(m => m.Quads).Select(MarkArea.Of).Where(a => a.IsUsable).ToList();
         AddNeedles(TextPage.Create(interpreter, page), areas, needles);
-        var scan = new RedactionScan(areas);
+        var scan = new RedactionScan(areas, page.Resources);
         interpreter.Run(page, scan);
-        if (interpreter.IsTruncated) throw new InvalidOperationException(RedactionText.TooBig);
+        if (interpreter.IsTruncated || RedactionLimits.Exceeded(ContentParser.Parse(page.Contents()))) throw new InvalidOperationException(RedactionText.TooBig);
+        dropped.UnionWith(scan.Dropped);
         tagged = scan.Marked;
 
         byte[] content = rewriter.Rewrite(scan.Root, page.Contents(), page.Dictionary, page.Resources, false);
@@ -63,6 +64,7 @@ public sealed partial class PdfRedactor
     // The words of the page under each mark, to look for in places the marks do not reach.
     private static void AddNeedles(TextPage text, List<MarkArea> areas, HashSet<string> needles)
     {
+        text.RequirePageContent();
         foreach (var area in areas)
         {
             int start = -1;
