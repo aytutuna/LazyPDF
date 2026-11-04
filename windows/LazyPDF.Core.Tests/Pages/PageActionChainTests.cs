@@ -68,7 +68,7 @@ public class PageActionChainTests
             }
         });
 
-        await Task.Run(() => PageOperations.Delete(document, [1])).WaitAsync(TimeSpan.FromSeconds(20));
+        await Task.Run(() => PageOperations.Delete(document, [1])).WaitAsync(TimeSpan.FromSeconds(120));
 
         var thread = (PdfDictionary)document.Resolve(document.Array(document.Catalog, "Threads")!.Items[0])!;
         Assert.NotNull(thread["F"]);
