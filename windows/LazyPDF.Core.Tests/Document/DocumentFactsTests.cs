@@ -54,9 +54,17 @@ public class DocumentFactsTests
     [Fact]
     public void LinearizedFileSaysSoInItsFirstObject()
     {
-        var pdf = new TestPdf("%PDF-1.4\n%âãÏÓ\n").Obj(7, "<</Linearized 1 /L 1234 /N 1>>");
-        var document = Open("", pdf);
-        Assert.True(document.IsLinearized);
+        byte[] Build(string length)
+        {
+            var pdf = new TestPdf("%PDF-1.4\n%âãÏÓ\n").Obj(7, $"<</Linearized 1 /L {length} /N 1>>");
+            pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R>>");
+            pdf.Obj(2, "<</Type /Pages /Kids [] /Count 0>>");
+            return pdf.Finish();
+        }
+        int size = Build("000").Length;
+        Assert.True(PdfDocument.Open(Build(size.ToString())).IsLinearized);
+        // A length that is not the file's means something was added or cut after.
+        Assert.False(PdfDocument.Open(Build((size + 1).ToString())).IsLinearized);
     }
 
     [Fact]

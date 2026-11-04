@@ -32,8 +32,15 @@ public sealed partial class PdfDocument
     /// <summary>The catalog says the file is tagged (/MarkInfo /Marked true).</summary>
     public bool IsTagged => Bool(Dict(Catalog, "MarkInfo"), "Marked") == true;
 
-    /// <summary>The first object of the file holds a /Linearized dictionary (Annex F).</summary>
-    public bool IsLinearized => _linearized ??= FirstObjectIsLinearization();
+    /// <summary>
+    /// The first object of the file holds a /Linearized dictionary (Annex F) whose /L is the length
+    /// of the file. An update added after it makes the length differ: the file is still valid but
+    /// no longer linearized, and so is a file cut short.
+    /// </summary>
+    public bool IsLinearized => _linearized ??= LinearizationDictionary() is { } dictionary && (dictionary["L"] as PdfNumber)?.Integer == _data.Length;
+
+    /// <summary>The file starts with a linearization dictionary, whether or not an update has been added since.</summary>
+    internal bool WasLinearized => LinearizationDictionary() is not null;
 
     /// <summary>The PDF/A part its XMP metadata claims (1, 2, 3, 4), or null when it claims none.</summary>
     public int? PdfAPart => PdfAIdentification().Part;
@@ -41,17 +48,17 @@ public sealed partial class PdfDocument
     /// <summary>The PDF/A conformance level its metadata claims ("A", "B", "U"), or null.</summary>
     public string? PdfAConformance => PdfAIdentification().Conformance;
 
-    private bool FirstObjectIsLinearization()
+    private PdfDictionary? LinearizationDictionary()
     {
         try
         {
             var lexer = new PdfLexer(_bytes, _headerVersionEnd);
             lexer.ReadObjectHeader();
-            return lexer.ReadObject() is PdfDictionary dictionary && dictionary.ContainsKey("Linearized");
+            return lexer.ReadObject() is PdfDictionary dictionary && dictionary.ContainsKey("Linearized") ? dictionary : null;
         }
         catch (PdfReadException)
         {
-            return false;
+            return null;
         }
     }
 
