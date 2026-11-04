@@ -1,14 +1,10 @@
 using System.Globalization;
-using System.Security.Cryptography;
 
 namespace LazyPDF.Core;
 
 internal sealed partial class Comparison
 {
-    private const long MaxAttachmentBytes = 64L << 20;
-    private const long AttachmentBudget = 256L << 20;
-
-    private void CompareDocuments(List<PagePair> pairs, List<CompareChange> changes)
+    internal void CompareDocuments(List<PagePair> pairs, List<CompareChange> changes)
     {
         CompareMetadata(changes);
         CompareBookmarks(pairs, changes);
@@ -102,58 +98,6 @@ internal sealed partial class Comparison
             list.AddRange(Flatten(item, level + 1));
         }
         return list;
-    }
-
-    /// <param name="Decoded">The decoded file; null when it is too large, over the budget, or does not decode.</param>
-    private sealed record Attachment(string? Decoded, string Stored);
-
-    /// <summary>A file name used twice keeps its second file under "name (2)".</summary>
-    private Dictionary<string, Attachment> Attachments(PdfDocument document)
-    {
-        var result = new Dictionary<string, Attachment>();
-        var known = new Dictionary<PdfStream, Attachment>(ReferenceEqualityComparer.Instance);
-        long budget = AttachmentBudget;
-        foreach (var attachment in PdfAttachments.List(document))
-        {
-            _cancellation.ThrowIfCancellationRequested();
-            if (PdfAttachments.StreamOf(document, attachment) is not { } stream) continue;
-            string name = attachment.FileName;
-            for (int n = 2; result.ContainsKey(name); n++) name = $"{attachment.FileName} ({n})";
-            if (!known.TryGetValue(stream, out var fingerprint)) known[stream] = fingerprint = Fingerprint(document, stream, ref budget);
-            result[name] = fingerprint;
-        }
-        return result;
-    }
-
-    // A failed decode is charged in full: it may have run to the limit before it gave up.
-    private static Attachment Fingerprint(PdfDocument document, PdfStream stream, ref long budget)
-    {
-        byte[] stored = document.RawData(stream);
-        string storedText = $"{stored.Length} bytes stored, {Convert.ToHexString(SHA256.HashData(stored), 0, 6)}";
-        long limit = Math.Min(MaxAttachmentBytes, budget);
-        if (limit <= 0) return new Attachment(null, storedText);
-        try
-        {
-            byte[] data = document.Data(stream, limit);
-            if (data.Length > limit) return new Attachment(null, storedText);
-            budget -= data.Length;
-            return new Attachment($"{data.Length} bytes, {Convert.ToHexString(SHA256.HashData(data), 0, 6)}", storedText);
-        }
-        catch (PdfReadException)
-        {
-            budget -= limit;
-            return new Attachment(null, storedText);
-        }
-    }
-
-    /// <summary>A file that one side could not decode is judged by its stored bytes on both sides, so that the budget used by other attachments cannot make an unchanged file differ.</summary>
-    private void CompareAttachments(List<CompareChange> changes)
-    {
-        var before = Attachments(_before);
-        var after = Attachments(_after);
-        Dictionary<string, string?> Texts(Dictionary<string, Attachment> side, Dictionary<string, Attachment> other) =>
-            side.ToDictionary(p => p.Key, p => (string?)(p.Value.Decoded is { } text && (!other.TryGetValue(p.Key, out var o) || o.Decoded is not null) ? text : p.Value.Stored));
-        CompareValues(Texts(before, after), Texts(after, before), name => $"{CompareText.Attachment} {name}", changes);
     }
 
     private void CompareForms(List<CompareChange> changes)

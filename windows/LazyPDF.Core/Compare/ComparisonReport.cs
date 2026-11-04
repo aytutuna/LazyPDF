@@ -20,7 +20,17 @@ public static class ComparisonReport
     /// place it was. <paramref name="after"/> is not changed; the date is the one the annotations carry.
     /// </summary>
     /// <param name="fonts">Only needed when a file name or text of the summary has characters Latin-1 lacks; without it they print as ?.</param>
-    public static byte[] Write(PdfDocument after, ComparisonResult result, string oldName, string newName, IFontSource? fonts = null, DateTimeOffset? date = null)
+    public static byte[] Write(PdfDocument after, ComparisonResult result, string oldName, string newName, IFontSource? fonts = null, DateTimeOffset? date = null) =>
+        Report(null, after, result, oldName, newName, fonts, date);
+
+    /// <summary>
+    /// As above, given the old file as well: a removal that has no place in the new page is marked at the same place of the
+    /// displayed page, scaled to the new page's size, where the other overload uses its old coordinates unchanged.
+    /// </summary>
+    public static byte[] Write(PdfDocument before, PdfDocument after, ComparisonResult result, string oldName, string newName, IFontSource? fonts = null, DateTimeOffset? date = null) =>
+        Report(before, after, result, oldName, newName, fonts, date);
+
+    private static byte[] Report(PdfDocument? before, PdfDocument after, ComparisonResult result, string oldName, string newName, IFontSource? fonts, DateTimeOffset? date)
     {
         using var copy = PdfDocument.Open(after.SaveRewrite());
         var writer = new PdfAnnotationWriter(copy, fonts);
@@ -34,13 +44,13 @@ public static class ComparisonReport
                 truncated = true;
                 break;
             }
-            marks += Mark(writer, copy.Pages[change.NewPage], change, date);
+            marks += Mark(writer, copy.Pages[change.NewPage], change, before, date);
         }
         SummaryPages.Insert(copy, result, oldName, newName, truncated, fonts);
         return copy.SaveRewrite();
     }
 
-    private static int Mark(PdfAnnotationWriter writer, PdfPage page, CompareChange change, DateTimeOffset? date)
+    private static int Mark(PdfAnnotationWriter writer, PdfPage page, CompareChange change, PdfDocument? before, DateTimeOffset? date)
     {
         var color = change.Kind switch
         {
@@ -56,10 +66,30 @@ public static class ComparisonReport
             return 1;
         }
         // Nothing of the change is on this page (a removal from a page that has no words left): mark where it was.
-        var quads = (change.NewQuads.Count > 0 ? change.NewQuads : change.OldQuads).Select(Widen).ToList();
+        var quads = (change.NewQuads.Count > 0 ? change.NewQuads : Carried(change, page, before)).Select(Widen).ToList();
         if (quads.Count == 0) return 0;
         writer.AddTextMarkup(page, AnnotationType.Highlight, quads, info, new AnnotationStyle(color));
         return 1;
+    }
+
+    private static IReadOnlyList<TextQuad> Carried(CompareChange change, PdfPage page, PdfDocument? before)
+    {
+        if (before is null || change.OldPage < 0 || change.OldPage >= before.Pages.Count) return change.OldQuads;
+        var from = new PageGeometry(before.Pages[change.OldPage]);
+        var to = new PageGeometry(page);
+        (double X, double Y) Point(double x, double y)
+        {
+            var (dx, dy) = from.ToDisplay(x, y);
+            return to.ToUser(dx * to.Width / from.Width, dy * to.Height / from.Height);
+        }
+        return [.. change.OldQuads.Select(q =>
+        {
+            var (x0, y0) = Point(q.X0, q.Y0);
+            var (x1, y1) = Point(q.X1, q.Y1);
+            var (x2, y2) = Point(q.X2, q.Y2);
+            var (x3, y3) = Point(q.X3, q.Y3);
+            return new TextQuad(x0, y0, x1, y1, x2, y2, x3, y3);
+        })];
     }
 
     /// <summary>A highlight of no width would not show; take it two points each way across the line.</summary>

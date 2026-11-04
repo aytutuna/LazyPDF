@@ -21,7 +21,7 @@ internal static class PageAligner
     /// </summary>
     public static List<PagePair> Align(IReadOnlyList<int[]> before, IReadOnlyList<int[]> after, IReadOnlyList<bool> oldPoor, IReadOnlyList<bool> newPoor, CancellationToken cancellation)
     {
-        var candidates = Candidates(before, after, cancellation);
+        var candidates = Candidates(before, after, MatchThreshold, cancellation);
         var anchors = Chain(candidates, after.Count);
         var oldTo = new int[before.Count];
         var newTo = new int[after.Count];
@@ -65,6 +65,7 @@ internal static class PageAligner
     /// <summary>
     /// The pages left between two anchors, paired in order by the pairing of most similarity, so that one
     /// inserted page does not cancel the rest. Pages of equal weight pair with the earliest partner.
+    /// A gap too big for the full table is split first at the pages that share enough words, wherever they stand.
     /// </summary>
     private static Dictionary<int, int> Gap(List<int> freeOld, List<int> freeNew, IReadOnlyList<int[]> before, IReadOnlyList<int[]> after,
         IReadOnlyList<bool> oldPoor, IReadOnlyList<bool> newPoor, CancellationToken cancellation)
@@ -76,60 +77,67 @@ internal static class PageAligner
             if (dice >= GapThreshold) return dice;
             return oldPoor[i] && newPoor[j] ? PoorWeight : 0;
         }
-        int n = freeOld.Count, m = freeNew.Count;
-        if (n == 0 || m == 0) return paired;
-        // A gap too big for the full table keeps a band of diagonals around the line from the first pair to the last.
-        int low = -n, high = m;
-        if ((long)n * m > MaxGapCells)
+
+        void Table(List<int> oldPages, List<int> newPages)
         {
-            int shift = m - n;
-            int slack = (MaxGapCells / Math.Max(n, m) - Math.Abs(shift) - 1) / 2;
-            if (slack < 1) return paired;
-            low = Math.Min(0, shift) - slack;
-            high = Math.Max(0, shift) + slack;
+            int n = oldPages.Count, m = newPages.Count;
+            if (n == 0 || m == 0) return;
+            var best = new double[n + 1, m + 1];
+            for (int a = n - 1; a >= 0; a--)
+            {
+                cancellation.ThrowIfCancellationRequested();
+                for (int b = m - 1; b >= 0; b--)
+                    best[a, b] = Math.Max(best[a + 1, b], Math.Max(best[a, b + 1], best[a + 1, b + 1] + Weight(oldPages[a], newPages[b])));
+            }
+            for (int a = 0, b = 0; a < n && b < m;)
+            {
+                double w = Weight(oldPages[a], newPages[b]);
+                if (w > 0 && best[a, b] == best[a + 1, b + 1] + w)
+                {
+                    paired[newPages[b]] = oldPages[a];
+                    a++;
+                    b++;
+                }
+                else if (best[a, b] == best[a + 1, b]) a++;
+                else b++;
+            }
         }
 
-        var first = new int[n];
-        var best = new double[n + 1][];
-        best[n] = [];
-        for (int a = 0; a < n; a++)
+        // What the chain left between its pairs has no page alike on both sides. Pages with no words to tell
+        // them apart (scans) pair by position when the counts agree.
+        void Rest(List<int> oldPages, List<int> newPages)
         {
-            first[a] = Math.Clamp(a + low, 0, m);
-            best[a] = new double[Math.Max(0, Math.Min(a + high, m - 1) - first[a] + 1)];
-        }
-        double Best(int a, int b)
-        {
-            if (a >= n) return 0;
-            int k = b - first[a];
-            return k >= 0 && k < best[a].Length ? best[a][k] : 0;
-        }
-        for (int a = n - 1; a >= 0; a--)
-        {
-            cancellation.ThrowIfCancellationRequested();
-            for (int k = best[a].Length - 1; k >= 0; k--)
+            if ((long)oldPages.Count * newPages.Count <= MaxGapCells) Table(oldPages, newPages);
+            else if (oldPages.Count == newPages.Count)
             {
-                int b = first[a] + k;
-                best[a][k] = Math.Max(Best(a + 1, b), Math.Max(Best(a, b + 1), Best(a + 1, b + 1) + Weight(freeOld[a], freeNew[b])));
+                for (int a = 0; a < oldPages.Count; a++)
+                {
+                    if (Weight(oldPages[a], newPages[a]) > 0) paired[newPages[a]] = oldPages[a];
+                }
             }
         }
-        for (int a = 0, b = 0; a < n && b < m;)
+
+        if ((long)freeOld.Count * freeNew.Count <= MaxGapCells)
         {
-            double w = Weight(freeOld[a], freeNew[b]);
-            if (w > 0 && Best(a, b) == Best(a + 1, b + 1) + w)
-            {
-                paired[freeNew[b]] = freeOld[a];
-                a++;
-                b++;
-            }
-            else if (Best(a, b) == Best(a + 1, b)) a++;
-            else b++;
+            Table(freeOld, freeNew);
+            return paired;
         }
+        var candidates = Candidates([.. freeOld.Select(i => before[i])], [.. freeNew.Select(j => after[j])], GapThreshold, cancellation);
+        int a0 = 0, b0 = 0;
+        foreach (var c in Chain(candidates, freeNew.Count))
+        {
+            Rest(freeOld.GetRange(a0, c.Old - a0), freeNew.GetRange(b0, c.New - b0));
+            paired[freeNew[c.New]] = freeOld[c.Old];
+            a0 = c.Old + 1;
+            b0 = c.New + 1;
+        }
+        Rest(freeOld.GetRange(a0, freeOld.Count - a0), freeNew.GetRange(b0, freeNew.Count - b0));
         return paired;
     }
 
     private readonly record struct Candidate(int Old, int New, double Similarity);
 
-    private static List<Candidate> Candidates(IReadOnlyList<int[]> before, IReadOnlyList<int[]> after, CancellationToken cancellation)
+    private static List<Candidate> Candidates(IReadOnlyList<int[]> before, IReadOnlyList<int[]> after, double threshold, CancellationToken cancellation)
     {
         var index = new Dictionary<int, List<int>>();
         var byHash = new Dictionary<long, List<int>>();
@@ -161,7 +169,7 @@ internal static class PageAligner
             foreach (int i in chosen)
             {
                 double similarity = Dice(before[i], after[j]);
-                if (similarity >= MatchThreshold) result.Add(new Candidate(i, j, similarity));
+                if (similarity >= threshold) result.Add(new Candidate(i, j, similarity));
             }
         }
         return result;

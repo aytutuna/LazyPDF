@@ -50,4 +50,74 @@ public class AttachmentLimitTests
         Assert.Equal(ChangeKind.Removed, change.Kind);
         Assert.Contains("a.bin", change.Detail);
     }
+
+    private static byte[] Zlib(byte[] data, System.IO.Compression.CompressionLevel level)
+    {
+        var packed = new MemoryStream();
+        using (var z = new System.IO.Compression.ZLibStream(packed, level, true)) z.Write(data);
+        return packed.ToArray();
+    }
+
+    // Four files that do not decode, each charged the whole cap, then a file whose two sides are packed differently.
+    private static PdfDocument WithUndecodable(string word, System.IO.Compression.CompressionLevel level)
+    {
+        using var document = Doc(Page("files"));
+        foreach (string name in new[] { "u1.bin", "u2.bin", "u3.bin", "u4.bin" })
+        {
+            var added = PdfAttachments.Add(document, name, System.Text.Encoding.ASCII.GetBytes($"{word} {name}"));
+            PdfAttachments.StreamOf(document, added)!.Dictionary["Filter"] = new PdfName("NoSuchDecode");
+        }
+        byte[] text = System.Text.Encoding.ASCII.GetBytes(string.Concat(Enumerable.Repeat("some words to pack ", 200)));
+        var last = PdfAttachments.Add(document, "z.txt", text);
+        PdfAttachments.StreamOf(document, last)!.Data = Zlib(text, level);
+        return Open(document.SaveRewrite());
+    }
+
+    [Fact]
+    public void FailedDecodesUseUpTheBudget()
+    {
+        using var before = WithUndecodable("one", System.IO.Compression.CompressionLevel.Optimal);
+        using var after = WithUndecodable("uno", System.IO.Compression.CompressionLevel.NoCompression);
+        var result = PdfComparer.Compare(before, after);
+        var change = Assert.Single(result.Changes, c => c.Detail!.Contains("z.txt"));
+        Assert.Contains("bytes stored", change.OldText);
+    }
+
+    [Fact]
+    public void FilesStoredAlikeCostNoBudget()
+    {
+        using var before = WithUndecodable("one", System.IO.Compression.CompressionLevel.Optimal);
+        using var after = WithUndecodable("one", System.IO.Compression.CompressionLevel.NoCompression);
+        Assert.True(PdfComparer.Compare(before, before).IsIdentical);
+        Assert.DoesNotContain(PdfComparer.Compare(before, after).Changes, c => c.Detail!.Contains("z.txt"));
+    }
+
+    [Fact]
+    public void CancelledTokenStopsTheDocumentComparison()
+    {
+        using var before = With(("a.txt", [1, 2, 3]));
+        using var after = With(("a.txt", [1, 2, 4]));
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+        var comparison = new Comparison(before, after, new CompareOptions(), cancelled.Token);
+        Assert.Throws<OperationCanceledException>(() => comparison.CompareDocuments([], []));
+    }
+
+    private static PdfDocument SharedBy(int entries)
+    {
+        using var document = Doc(Page("files"));
+        var added = PdfAttachments.Add(document, "r.pdf", [1, 2, 3]);
+        var tree = document.Dict(document.Dict(document.Catalog, "Names"), "EmbeddedFiles")!;
+        tree["Names"] = new PdfArray([.. Enumerable.Range(0, entries).SelectMany(i => new PdfObject[] { PdfText.ToObject($"k{i:D6}"), added.Spec! })]);
+        return Open(document.SaveRewrite());
+    }
+
+    [Fact]
+    public void ManyEntriesWithOneFileNameAreNamedInLinearTime()
+    {
+        using var file = SharedBy(20_000);
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        Assert.True(PdfComparer.Compare(file, file).IsIdentical);
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), watch.Elapsed.ToString());
+    }
 }

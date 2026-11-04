@@ -199,4 +199,17 @@ public class ComparisonReportTests
         string text = ComparisonReport.ToText(PdfComparer.Compare(x, y), "a", "b");
         Assert.Contains("Document\n  Removed document (Title): One", text);
     }
+
+    [Fact]
+    public void RemovalFromAPageWithAnotherBoxIsMarkedAtTheSamePlaceOfTheDisplayedPage()
+    {
+        using var a = Open(Bytes([[new("alpha beta gamma")]]));
+        using var b = Open(Bytes([[]], pageKeys: "/MediaBox [100 100 406 496]"));
+        var result = PdfComparer.Compare(a, b);
+        using var report = PdfDocument.Open(ComparisonReport.Write(a, b, result, "old.pdf", "new.pdf", null, Date));
+        // The words stood at x 72 and y about 740 of 612 by 792; the new page is half that size with its origin at 100.
+        var box = Assert.Single(Marks(report, 1)).Quads.Single().Bounds;
+        Assert.InRange(box.Left, 134, 138);
+        Assert.InRange(box.Bottom, 462, 476);
+    }
 }

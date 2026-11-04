@@ -129,6 +129,44 @@ public class PageAlignTests
         Assert.Equal(0, result.Pages.Count(p => p.IsRemoved));
     }
 
+    private static string Edited(int page) => string.Join(' ', Enumerable.Range(1, 12).Select(w => $"p{page}w{w}" + (w % 3 == 0 ? "x" : "")));
+
+    private static string Original(int page) => string.Join(' ', Enumerable.Range(1, 12).Select(w => $"p{page}w{w}"));
+
+    [Fact]
+    public void EditedPagesPairWhateverTheOffsetInAGapOfEqualLength()
+    {
+        // 120 pages in front, 120 gone at the end: the true offset is beyond any band of 40000 cells around the diagonal.
+        string[][] before = [.. Enumerable.Range(0, 201).Select(i => new[] { Original(i) })];
+        string[][] after = [.. Enumerable.Range(0, 120).Select(i => new[] { $"fresh cover {i} " + string.Join(' ', Enumerable.Range(0, 12).Select(w => $"f{i}w{w}")) }), .. Enumerable.Range(0, 81).Select(i => new[] { Edited(i) })];
+        var result = Compare(before, after);
+        var paired = result.Pages.Where(p => !p.IsAdded && !p.IsRemoved).ToList();
+        Assert.Equal(81, paired.Count);
+        Assert.All(paired, p => Assert.Equal(p.OldIndex + 120, p.NewIndex));
+        Assert.Equal(120, result.Pages.Count(p => p.IsAdded));
+        Assert.Equal(120, result.Pages.Count(p => p.IsRemoved));
+    }
+
+    [Fact]
+    public void EditedPagesPairInAGapWhoseSidesDifferByMoreThanTheTableAllows()
+    {
+        string[][] before = [.. Enumerable.Range(0, 150).Select(i => new[] { Original(i) })];
+        string[][] after = [.. Enumerable.Range(0, 140).Select(i => new[] { $"fresh cover {i} " + string.Join(' ', Enumerable.Range(0, 12).Select(w => $"f{i}w{w}")) }), .. Enumerable.Range(0, 150).Select(i => new[] { Edited(i) })];
+        var result = Compare(before, after);
+        var paired = result.Pages.Where(p => !p.IsAdded && !p.IsRemoved).ToList();
+        Assert.Equal(150, paired.Count);
+        Assert.All(paired, p => Assert.Equal(p.OldIndex + 140, p.NewIndex));
+    }
+
+    [Fact]
+    public void ScansWithNothingAlikePairByPositionInAGapTooLargeForTheFullTable()
+    {
+        string[][] before = [.. Enumerable.Range(0, 201).Select(i => new[] { $"alpha{i} beta{i}" })];
+        string[][] after = [.. Enumerable.Range(0, 201).Select(i => new[] { $"gamma{i} delta{i}" })];
+        var result = Compare(before, after);
+        Assert.Equal(201, result.Pages.Count(p => !p.IsAdded && !p.IsRemoved && p.OldIndex == p.NewIndex));
+    }
+
     [Fact]
     public void CancellationStopsTheRun()
     {

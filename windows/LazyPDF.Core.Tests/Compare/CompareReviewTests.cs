@@ -75,7 +75,7 @@ public class CompareReviewTests
         Assert.InRange(Assert.Single(change.OldQuads).Bounds.Left, 99, 101);
     }
 
-    private static PdfDocument Picture(string imageKeys, Action<TestPdf, int>? extra = null)
+    internal static PdfDocument Picture(string imageKeys, Action<TestPdf, int>? extra = null)
     {
         var bytes = Bytes([[new("Some text")]], more: (pdf, first) =>
         {
