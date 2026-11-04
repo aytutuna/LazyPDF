@@ -1,0 +1,91 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Certificates.CertificatesPanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:services="clr-namespace:LazyPDF.App.Services">
+    <StackPanel Margin="{StaticResource PanePadding}">
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Sign with}" />
+        <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,0,0,8">
+            <UniformGrid Rows="1">
+                <RadioButton x:Name="StoreMode" GroupName="IdentitySource" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Windows}" IsChecked="True"
+                             AutomationProperties.Name="{loc:T Certificate from Windows}" Checked="Source_Checked" />
+                <RadioButton x:Name="FileMode" GroupName="IdentitySource" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T PFX file}"
+                             AutomationProperties.Name="{loc:T Certificate from a PFX file}" Checked="Source_Checked" />
+            </UniformGrid>
+        </Border>
+
+        <StackPanel x:Name="StorePage" Margin="{StaticResource FieldSpacing}">
+            <ComboBox x:Name="CertBox" AutomationProperties.Name="{loc:T Certificate}" SelectionChanged="CertBox_SelectionChanged">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type services:CertificateChoice}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Issuer}" Style="{StaticResource SecondaryBodyText}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <DockPanel x:Name="CertNote" Margin="0,6,0,0" Visibility="Collapsed">
+                <TextBlock x:Name="CertNoteGlyph" DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE7BA;" />
+                <TextBlock x:Name="CertNoteText" Style="{StaticResource ReasonText}" />
+            </DockPanel>
+        </StackPanel>
+
+        <StackPanel x:Name="FilePage" Visibility="Collapsed" Margin="{StaticResource FieldSpacing}">
+            <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8E5;" Content="{loc:T Choose a file}" AutomationProperties.Name="{loc:T Choose a file}" Padding="10,3,10,4"
+                    HorizontalAlignment="Left" Click="ChooseFile_Click" />
+            <TextBlock x:Name="FileName" Style="{StaticResource ReasonText}" Margin="0,6,0,8" TextTrimming="CharacterEllipsis" />
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Password}" />
+            <PasswordBox x:Name="FilePassword" AutomationProperties.Name="{loc:T Password of the PFX file}" PasswordChanged="FilePassword_PasswordChanged" />
+        </StackPanel>
+
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Signature on the page}" />
+        <StackPanel Margin="{StaticResource FieldSpacing}">
+            <ComboBox x:Name="WhereBox" DisplayMemberPath="Text" AutomationProperties.Name="{loc:T Signature on the page}" SelectionChanged="WhereBox_SelectionChanged" />
+            <StackPanel x:Name="BoxRow" Visibility="Collapsed" Margin="0,8,0,0">
+                <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE7C9;" Content="{loc:T Draw the box}" AutomationProperties.Name="{loc:T Draw the box}" Padding="10,3,10,4"
+                        HorizontalAlignment="Left" Click="DrawBox_Click" />
+                <TextBlock x:Name="BoxText" Style="{StaticResource ReasonText}" Margin="0,6,0,0" AutomationProperties.LiveSetting="Polite" />
+            </StackPanel>
+        </StackPanel>
+
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Reason}" />
+        <TextBox x:Name="ReasonBox" Margin="{StaticResource FieldSpacing}" AutomationProperties.Name="{loc:T Reason}" />
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Place}" />
+        <TextBox x:Name="PlaceBox" Margin="{StaticResource FieldSpacing}" AutomationProperties.Name="{loc:T Place}" />
+
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Certify}" />
+        <StackPanel Margin="{StaticResource FieldSpacing}">
+            <ComboBox x:Name="CertifyBox" DisplayMemberPath="Text" AutomationProperties.Name="{loc:T Certify}" />
+            <DockPanel x:Name="CertifyNote" Margin="0,6,0,0" Visibility="Collapsed">
+                <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE946;" />
+                <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T Only the first signature of a file can certify it.}" />
+            </DockPanel>
+        </StackPanel>
+
+        <CheckBox x:Name="StampSwitch" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Time stamp}" AutomationProperties.Name="{loc:T Time stamp}"
+                  Checked="Stamp_Changed" Unchecked="Stamp_Changed" />
+        <StackPanel x:Name="StampPage" Visibility="Collapsed" Margin="0,4,0,0">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Time stamp server address}" />
+            <TextBox x:Name="UrlBox" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Time stamp server address}" TextChanged="UrlBox_TextChanged" />
+            <DockPanel x:Name="UrlNote" Margin="0,0,0,8" Visibility="Collapsed">
+                <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE7BA;" />
+                <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T Use a web address that starts with https://.}" AutomationProperties.LiveSetting="Polite" />
+            </DockPanel>
+            <CheckBox x:Name="LongSwitch" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Long term validation}"
+                      AutomationProperties.Name="{loc:T Long term validation}" />
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE946;" />
+                <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T Keeps the proof that the certificate was good. The signature can then be checked after it expires.}" />
+            </DockPanel>
+        </StackPanel>
+
+        <StackPanel x:Name="ExistingPage" Visibility="Collapsed" Margin="0,16,0,0">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Signatures already in the file}" />
+            <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE73E;" Content="{loc:T Add validation data}" AutomationProperties.Name="{loc:T Add validation data}" Padding="10,3,10,4"
+                    HorizontalAlignment="Left" Click="AddValidation_Click" />
+            <TextBlock Style="{StaticResource ReasonText}" Margin="0,6,0,0" Text="{loc:T Asks the certificate servers for proof and stores it in the file.}" />
+        </StackPanel>
+    </StackPanel>
+</tools:ToolPanel>

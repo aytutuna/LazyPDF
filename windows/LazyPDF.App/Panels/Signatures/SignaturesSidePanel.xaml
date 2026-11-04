@@ -4,40 +4,101 @@
                  xmlns:loc="clr-namespace:LazyPDF.App"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
                  xmlns:panel="clr-namespace:LazyPDF.App.Panels.Signatures">
-    <Grid>
-        <ListBox x:Name="List" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Signatures}"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch"
-                 PreviewMouseLeftButtonUp="List_PreviewMouseLeftButtonUp" PreviewKeyDown="List_PreviewKeyDown">
-            <ListBox.ItemContainerStyle>
-                <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                    <Setter Property="AutomationProperties.Name" Value="{Binding Summary}" />
-                </Style>
-            </ListBox.ItemContainerStyle>
-            <ListBox.ItemTemplate>
-                <DataTemplate DataType="{x:Type panel:SignatureRow}">
-                    <DockPanel Margin="2,4">
-                        <TextBlock x:Name="Mark" DockPanel.Dock="Left" Style="{StaticResource GlyphText}" Text="{Binding Glyph}" Margin="0,2,10,0" VerticalAlignment="Top"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <StackPanel>
-                            <TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis" />
-                            <TextBlock Text="{Binding Status}" Style="{StaticResource SecondaryBodyText}" FontSize="12" />
-                            <TextBlock Text="{Binding Sentence}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,2,0,0" />
-                        </StackPanel>
-                    </DockPanel>
-                    <DataTemplate.Triggers>
-                        <DataTrigger Binding="{Binding Level}" Value="Good">
-                            <Setter TargetName="Mark" Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Level}" Value="Caution">
-                            <Setter TargetName="Mark" Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Level}" Value="Bad">
-                            <Setter TargetName="Mark" Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
-                        </DataTrigger>
-                    </DataTemplate.Triggers>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-        <TextBlock x:Name="Note" Style="{StaticResource ReasonText}" Margin="12,8" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
-    </Grid>
+    <ScrollViewer AutomationProperties.Name="{loc:T Signatures}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+            <ListBox x:Name="List" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Signatures}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch"
+                     SelectionChanged="List_SelectionChanged" PreviewMouseLeftButtonUp="List_PreviewMouseLeftButtonUp" PreviewKeyDown="List_PreviewKeyDown">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Summary}" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type panel:SignatureRow}">
+                        <DockPanel Margin="2,4">
+                            <TextBlock x:Name="Mark" DockPanel.Dock="Left" Style="{StaticResource GlyphText}" Text="{Binding Glyph}" Margin="0,2,10,0" VerticalAlignment="Top"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <StackPanel>
+                                <TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Status}" Style="{StaticResource SecondaryBodyText}" FontSize="12" />
+                                <TextBlock Text="{Binding Sentence}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </DockPanel>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Level}" Value="Good">
+                                <Setter TargetName="Mark" Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Level}" Value="Caution">
+                                <Setter TargetName="Mark" Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Level}" Value="Bad">
+                                <Setter TargetName="Mark" Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock x:Name="Note" Style="{StaticResource ReasonText}" Margin="12,8" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
+
+            <StackPanel x:Name="Details" Visibility="Collapsed" Margin="12,4,12,8">
+                <ItemsControl x:Name="Sections" IsTabStop="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type panel:SignatureSection}">
+                            <StackPanel Margin="0,0,0,8">
+                                <TextBlock Text="{Binding Heading}" Style="{StaticResource FieldLabelText}" FontWeight="SemiBold" AutomationProperties.HeadingLevel="Level3" />
+                                <ItemsControl ItemsSource="{Binding Lines}" IsTabStop="False">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,0,0,2" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <StackPanel Orientation="Horizontal">
+                    <Button x:Name="ViewButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8A7;" Content="{loc:T View signed version}" AutomationProperties.Name="{loc:T View signed version}"
+                            Padding="10,3,10,4" Click="View_Click" />
+                    <Button x:Name="RestoreButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE74E;" Content="{loc:T Save it}"
+                            ToolTip="{loc:T Save the signed version as a file}" AutomationProperties.Name="{loc:T Save the signed version as a file}"
+                            Padding="10,3,10,4" Margin="8,0,0,0" Click="Restore_Click" />
+                </StackPanel>
+                <TextBlock x:Name="VersionNote" Style="{StaticResource ReasonText}" Margin="0,6,0,0" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
+            </StackPanel>
+
+            <Expander x:Name="Trust" Header="{loc:T Trust settings}" Margin="8,4,8,8" AutomationProperties.Name="{loc:T Trust settings}">
+                <StackPanel Margin="4,4,4,0">
+                    <CheckBox x:Name="WindowsTrust" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Trust what Windows trusts}"
+                              AutomationProperties.Name="{loc:T Trust what Windows trusts}" Click="WindowsTrust_Click" />
+                    <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Certificates you trust}" Margin="0,8,0,4" />
+                    <ListBox x:Name="TrustList" BorderThickness="0" Background="Transparent" MaxHeight="140" AutomationProperties.Name="{loc:T Certificates you trust}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type panel:TrustRow}">
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE74D;" ToolTip="{loc:T Remove}"
+                                            AutomationProperties.Name="{loc:T Remove}" Click="RemoveTrust_Click" />
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource BodyText}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Detail}" Style="{StaticResource SecondaryBodyText}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock x:Name="NoTrusted" Style="{StaticResource ReasonText}" Text="{loc:T None added.}" />
+                    <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE710;" Content="{loc:T Add a certificate}" AutomationProperties.Name="{loc:T Add a certificate}" Padding="10,3,10,4"
+                            HorizontalAlignment="Left" Margin="0,8,0,0" Click="AddTrust_Click" />
+                    <TextBlock x:Name="TrustNote" Style="{StaticResource ReasonText}" Margin="0,6,0,0" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
+                </StackPanel>
+            </Expander>
+        </StackPanel>
+    </ScrollViewer>
 </tools:ToolPanel>

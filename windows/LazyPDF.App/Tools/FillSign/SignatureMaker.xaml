@@ -1,0 +1,65 @@
+<UserControl x:Class="LazyPDF.App.Tools.FillSign.SignatureMaker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:LazyPDF.App">
+    <StackPanel>
+        <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,0,0,12">
+            <UniformGrid Rows="1">
+                <RadioButton x:Name="TypeMode" GroupName="SignatureMode" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Type}" IsChecked="True"
+                             AutomationProperties.Name="{loc:T Type your name}" Checked="Mode_Checked" />
+                <RadioButton x:Name="DrawMode" GroupName="SignatureMode" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Draw}"
+                             AutomationProperties.Name="{loc:T Draw it}" Checked="Mode_Checked" />
+                <RadioButton x:Name="PictureMode" GroupName="SignatureMode" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Picture}"
+                             AutomationProperties.Name="{loc:T Use a picture}" Checked="Mode_Checked" />
+            </UniformGrid>
+        </Border>
+
+        <StackPanel x:Name="TypePage">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Name}" />
+            <TextBox x:Name="NameBox" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Name}" TextChanged="NameBox_TextChanged" />
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Style}" />
+            <ComboBox x:Name="FontBox" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Style}" SelectionChanged="FontBox_SelectionChanged">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" FontFamily="{Binding}" FontSize="18" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </StackPanel>
+
+        <StackPanel x:Name="DrawPage" Visibility="Collapsed">
+            <Border Background="White" BorderThickness="1" CornerRadius="4" Height="110" Margin="0,0,0,8"
+                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                <InkCanvas x:Name="Ink" Background="Transparent" AutomationProperties.Name="{loc:T Drawing area for the signature}"
+                           StrokeCollected="Ink_StrokeCollected" StrokeErasing="Ink_StrokeErasing" />
+            </Border>
+            <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE75C;" Content="{loc:T Clear}" AutomationProperties.Name="{loc:T Clear}" Padding="10,3,10,4"
+                    HorizontalAlignment="Left" Margin="0,0,0,12" Click="Clear_Click" />
+        </StackPanel>
+
+        <StackPanel x:Name="PicturePage" Visibility="Collapsed">
+            <StackPanel Orientation="Horizontal">
+                <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8B9;" Content="{loc:T Choose a picture}" AutomationProperties.Name="{loc:T Choose a picture}" Padding="10,3,10,4"
+                        Click="Choose_Click" />
+                <Button x:Name="TurnButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE7AD;" Content="{loc:T Turn}" Padding="10,3,10,4"
+                        Margin="8,0,0,0" IsEnabled="False" ToolTip="{loc:T Turn the picture a quarter}" AutomationProperties.Name="{loc:T Turn the picture a quarter}"
+                        Click="Turn_Click" />
+            </StackPanel>
+            <TextBlock x:Name="PictureNote" Style="{StaticResource ReasonText}" Margin="0,8,0,12" AutomationProperties.LiveSetting="Polite"
+                       Text="{loc:T Sign on white paper and take a photo. The paper is made see-through.}" />
+        </StackPanel>
+
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Preview}" />
+        <Border Background="White" BorderThickness="1" CornerRadius="4" Height="64" Margin="0,0,0,12" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+            <Image x:Name="Preview" Margin="6" Stretch="Uniform" AutomationProperties.Name="{loc:T Preview}" />
+        </Border>
+
+        <CheckBox x:Name="KeepBox" Style="{StaticResource ToggleSwitchStyle}" IsChecked="True" Content="{loc:T Keep for next time}"
+                  AutomationProperties.Name="{loc:T Keep for next time}" Margin="0,0,0,8" />
+        <StackPanel Orientation="Horizontal">
+            <Button x:Name="UseButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE73E;" Content="{loc:T Use}" AutomationProperties.Name="{loc:T Use}" Padding="10,3,10,4"
+                    IsEnabled="False" Click="Use_Click" />
+            <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Cancel}" AutomationProperties.Name="{loc:T Cancel}" Padding="10,3,10,4" Margin="8,0,0,0" Click="Cancel_Click" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

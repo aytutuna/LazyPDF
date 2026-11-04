@@ -1,65 +1,32 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Tools;
+using LazyPDF.App.Tools.Certificates;
 using LazyPDF.Core;
+using Microsoft.Win32;
 
 namespace LazyPDF.App.Panels.Signatures;
 
-public enum SignatureLevel
-{
-    Good,
-    Caution,
-    Bad,
-    Unknown,
-}
-
-/// <summary>One signature in the list, in the words Core has for it.</summary>
-public sealed class SignatureRow(SignatureReport report, int page, Rect where)
-{
-    public SignatureReport Report { get; } = report;
-
-    /// <summary>The page the signature's field is on, or -1 when it has none.</summary>
-    public int Page { get; } = page;
-
-    /// <summary>The field on that page, in page space.</summary>
-    public Rect Where { get; } = where;
-
-    public string Title => Report.SignerName ?? Report.FieldName ?? Loc.T("Signature {0}", Report.Index + 1);
-
-    public string Status => SignatureText.Status(Report.Verdict);
-
-    public string Sentence => Report.Sentence;
-
-    public string Summary => Title + ", " + Status + ". " + Sentence;
-
-    public SignatureLevel Level => Report.Verdict switch
-    {
-        SignatureVerdict.Valid => SignatureLevel.Good,
-        SignatureVerdict.ValidButUntrusted => SignatureLevel.Caution,
-        SignatureVerdict.ChangedAfterSigning or SignatureVerdict.Broken => SignatureLevel.Bad,
-        _ => SignatureLevel.Unknown,
-    };
-
-    public string Glyph => Level switch
-    {
-        SignatureLevel.Good => "",
-        SignatureLevel.Caution => "",
-        SignatureLevel.Bad => "",
-        _ => "",
-    };
-}
-
-/// <summary>The signatures of the file and what Core found when it checked them; a click shows the field.</summary>
+/// <summary>
+/// The signatures of the file and what Core found when it checked them. A click shows the field; the details
+/// say what changed since, what is wrong and what could not be checked, and offer the signed version of the file.
+/// </summary>
 public partial class SignaturesSidePanel : ToolPanel
 {
     private int _ticket;
 
-    public SignaturesSidePanel() => InitializeComponent();
+    public SignaturesSidePanel()
+    {
+        InitializeComponent();
+        ShowTrust();
+    }
 
     protected override void OnAttach()
     {
         Tab!.Changed += Tab_Changed;
+        ShowTrust();
         _ = BuildAsync();
     }
 
@@ -76,18 +43,16 @@ public partial class SignaturesSidePanel : ToolPanel
     {
         int ticket = ++_ticket;
         var tab = Tab!;
-        if (!tab.Document.IsSigned)
-        {
-            Show(null, Loc.T("This file has no signatures."));
-            return;
-        }
         Show(null, Loc.T("Checking the signatures"));
-        var bytes = PageBytes(tab);
-        var options = new VerifyOptions { Password = tab.Password, Certificate = tab.Certificate };
+        var bytes = tab.Session.Current.ToArray();
+        string? password = tab.Password;
+        var certificate = tab.Certificate;
+        var options = SigningSettingsStore.Load().Verify(password, certificate, DateTimeOffset.Now);
         IReadOnlyList<SignatureReport>? reports;
+        Dictionary<string, (int Page, PdfRect Rect)> fields = [];
         try
         {
-            reports = await Task.Run(() => PdfSignatureVerifier.Verify(bytes, options));
+            (reports, fields) = await Task.Run(() => (PdfSignatureVerifier.Verify(bytes, options), SignatureFields.Locate(bytes, password, certificate)));
         }
         catch (PdfReadException)
         {
@@ -95,29 +60,23 @@ public partial class SignaturesSidePanel : ToolPanel
         }
         if (ticket != _ticket) return;
         if (reports is null) Show(null, Loc.T("The signatures could not be checked."));
-        else Show(reports.Select(Row).ToList(), reports.Count == 0 ? Loc.T("This file has no signatures.") : null);
+        else Show(reports.Select(r => Row(r, fields)).ToList(), reports.Count == 0 ? Loc.T("This file has no signatures.") : null);
+        if (reports is { Count: > 0 }) List.SelectedIndex = 0;
     }
-
-    private static byte[] PageBytes(DocumentTab tab) => tab.Session.Current.ToArray();
 
     private void Show(List<SignatureRow>? rows, string? note)
     {
         List.ItemsSource = rows;
+        Details.Visibility = Visibility.Collapsed;
         Note.Text = note ?? "";
         Note.Visibility = note is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    // Finds the field's widget on its page.
-    private SignatureRow Row(SignatureReport report)
+    private SignatureRow Row(SignatureReport report, Dictionary<string, (int Page, PdfRect Rect)> fields)
     {
-        var document = Tab!.Document;
-        foreach (var annotation in PdfAnnotations.ReadAll(document))
-        {
-            if (annotation.Type != AnnotationType.Widget || report.FieldName is null || PdfText.Read(document, annotation.Dictionary, "T") != report.FieldName) continue;
-            var box = Viewer!.Geometry(annotation.PageIndex).ToDisplay(annotation.Rect);
-            return new SignatureRow(report, annotation.PageIndex, new Rect(box.X, box.Y, box.Width, box.Height));
-        }
-        return new SignatureRow(report, -1, Rect.Empty);
+        if (report.FieldName is null || !fields.TryGetValue(report.FieldName, out var at)) return new SignatureRow(report, -1, Rect.Empty);
+        var box = Viewer!.Geometry(at.Page).ToDisplay(at.Rect);
+        return new SignatureRow(report, at.Page, new Rect(box.X, box.Y, box.Width, box.Height));
     }
 
     private void Go(SignatureRow row)
@@ -125,6 +84,23 @@ public partial class SignaturesSidePanel : ToolPanel
         if (row.Page < 0 || Viewer is not { } viewer) return;
         viewer.GoToPage(row.Page);
         viewer.Reveal(row.Page, row.Where);
+    }
+
+    private void List_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (List.SelectedItem is not SignatureRow row)
+        {
+            Details.Visibility = Visibility.Collapsed;
+            return;
+        }
+        Sections.ItemsSource = row.Sections;
+        Details.Visibility = Visibility.Visible;
+        bool copy = row.HasLaterRevisions;
+        bool locked = Tab!.Document.IsEncrypted;
+        ViewButton.IsEnabled = copy && !locked;
+        RestoreButton.IsEnabled = copy;
+        VersionNote.Text = !copy ? Loc.T("This is the signed version.") : locked ? Loc.T("A protected file cannot open as a copy. Save the signed version, then open it.") : "";
+        VersionNote.Visibility = VersionNote.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void List_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -139,5 +115,58 @@ public partial class SignaturesSidePanel : ToolPanel
             Go(row);
             e.Handled = true;
         }
+    }
+
+    private async void View_Click(object sender, RoutedEventArgs e)
+    {
+        if (List.SelectedItem is not SignatureRow row) return;
+        if (SignedVersion.Of(Tab!.Session.Current.ToArray(), row.Report) is not { } bytes)
+        {
+            Tell(Loc.T("The signed version is not in the file's history."));
+            return;
+        }
+        await Host!.OpenNewAsync(bytes, Loc.T("{0} (signed by {1})", System.IO.Path.GetFileNameWithoutExtension(Tab.Title), row.Title));
+    }
+
+    private void Restore_Click(object sender, RoutedEventArgs e)
+    {
+        var tab = Tab!;
+        if (List.SelectedItem is not SignatureRow row) return;
+        if (SignedVersion.Of(tab.Session.Current.ToArray(), row.Report) is not { } bytes)
+        {
+            Tell(Loc.T("The signed version is not in the file's history."));
+            return;
+        }
+        var dialog = new SaveFileDialog
+        {
+            Title = Loc.T("Save the signed version"),
+            Filter = "PDF|*.pdf",
+            FileName = Loc.T("{0} (signed)", System.IO.Path.GetFileNameWithoutExtension(tab.Title)) + ".pdf",
+        };
+        if (dialog.ShowDialog() != true) return;
+        if (string.Equals(System.IO.Path.GetFullPath(dialog.FileName), tab.Path is null ? null : System.IO.Path.GetFullPath(tab.Path), StringComparison.OrdinalIgnoreCase))
+        {
+            Tell(Loc.T("That is the open file. Choose another name."));
+            return;
+        }
+        try
+        {
+            if (tab.Certificate is { } certificate) PdfFileSaver.Save(dialog.FileName, bytes, certificate);
+            else PdfFileSaver.Save(dialog.FileName, bytes, tab.Password);
+            var host = Host!;
+            string saved = dialog.FileName;
+            host.SetStatus(Loc.T("Signed version saved."));
+            host.ShowNotice(Loc.T("Signed version saved"), System.IO.Path.GetFileName(saved), new NoticeAction(Loc.T("Open it"), () => _ = host.OpenAsync(saved)));
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or PdfReadException)
+        {
+            Tell(Loc.T("The file could not be saved. Check the folder and try again."));
+        }
+    }
+
+    private void Tell(string text)
+    {
+        VersionNote.Text = text;
+        VersionNote.Visibility = Visibility.Visible;
     }
 }
