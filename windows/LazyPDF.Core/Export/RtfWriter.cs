@@ -71,14 +71,16 @@ public static class RtfWriter
     {
         int columns = Math.Min(table.Columns, DocxWriter.MaxTableColumns);
         if (columns == 0) return;
-        double total = table.Widths?.Take(columns).Sum() ?? 0;
+        var share = DocxWriter.Shares(table, columns);
+        double total = share.Sum();
         foreach (var row in table.Rows)
         {
+            CheckLength(sb);
             sb.Append(@"\trowd\trgaph108");
             double edge = 0;
             for (int c = 0; c < columns; c++)
             {
-                edge += total > 0 ? table.Widths![c] / total * content : (double)content / columns;
+                edge += share[c] / total * content;
                 sb.Append(@"\clbrdrt\brdrs\brdrw10\clbrdrl\brdrs\brdrw10\clbrdrb\brdrs\brdrw10\clbrdrr\brdrs\brdrw10\cellx").Append(I((long)Math.Round(edge)));
             }
             for (int c = 0; c < columns; c++)

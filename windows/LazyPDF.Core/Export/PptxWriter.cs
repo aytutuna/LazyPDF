@@ -16,6 +16,11 @@ public static class PptxWriter
     private const string RelNs = "http://schemas.openxmlformats.org/package/2006/relationships";
     private const long MinSlide = 914400, MaxSlide = 51206400;
 
+    // Slides are held as strings until the package is made, then copied to bytes; a picture adds a relationship to its slide besides its markup.
+    private const long MaxSlideChars = 1L << 27;
+    private const int RelChars = 256;
+    private const int FixedEntries = 9;
+
     public static byte[] Make(ExportDocument document)
     {
         var first = document.Pages.Count > 0 ? document.Pages[0] : null;
@@ -24,8 +29,15 @@ public static class PptxWriter
 
         var media = new List<ExportImage>();
         var mediaIndex = new Dictionary<ExportImage, int>(ReferenceEqualityComparer.Instance);
+        ExportZip.CheckCount(FixedEntries + 2L * document.Pages.Count);
         var slides = new List<(string Xml, List<int> Images)>();
-        foreach (var page in document.Pages) slides.Add(Slide(page, width, height, media, mediaIndex));
+        long held = 0;
+        foreach (var page in document.Pages)
+        {
+            slides.Add(Slide(page, width, height, media, mediaIndex, held));
+            held += slides[^1].Xml.Length + RelChars * (long)slides[^1].Images.Count;
+        }
+        ExportZip.CheckCount(FixedEntries + 2L * slides.Count + media.Count);
 
         var types = new StringBuilder(Header);
         types.Append("<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">")
@@ -85,7 +97,7 @@ public static class PptxWriter
         return ExportZip.Make(entries);
     }
 
-    private static (string Xml, List<int> Images) Slide(ExportPage page, long width, long height, List<ExportImage> media, Dictionary<ExportImage, int> mediaIndex)
+    private static (string Xml, List<int> Images) Slide(ExportPage page, long width, long height, List<ExportImage> media, Dictionary<ExportImage, int> mediaIndex, long held)
     {
         double scale = Math.Min(width / (page.Width * EmuPerPoint), height / (page.Height * EmuPerPoint));
         if (!(scale > 0) || double.IsInfinity(scale)) scale = 1;
@@ -101,6 +113,7 @@ public static class PptxWriter
         int id = 1;
         foreach (var picture in page.Pictures)
         {
+            CheckLength(sb, held + RelChars, MaxSlideChars);
             if (!mediaIndex.TryGetValue(picture.Image, out int number))
             {
                 media.Add(picture.Image);
@@ -114,6 +127,7 @@ public static class PptxWriter
         }
         foreach (var line in page.Lines)
         {
+            CheckLength(sb, held, MaxSlideChars);
             sb.Append("<p:sp><p:nvSpPr><p:cNvPr id=\"").Append(I(++id)).Append("\" name=\"Text ").Append(I(id)).Append("\"/><p:cNvSpPr txBox=\"1\"/><p:nvPr/></p:nvSpPr><p:spPr>")
                 .Append(Frame(line.Bounds, line.Bounds.Height * 0.5)).Append("<a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom><a:noFill/></p:spPr>")
                 .Append("<p:txBody><a:bodyPr wrap=\"none\" lIns=\"0\" tIns=\"0\" rIns=\"0\" bIns=\"0\" rtlCol=\"0\" anchor=\"t\"><a:noAutofit/></a:bodyPr><a:lstStyle/><a:p>");
@@ -128,6 +142,7 @@ public static class PptxWriter
             sb.Append("</a:p></p:txBody></p:sp>");
         }
         sb.Append("</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>");
+        CheckLength(sb, held, MaxSlideChars);
         return (sb.ToString(), images);
     }
 

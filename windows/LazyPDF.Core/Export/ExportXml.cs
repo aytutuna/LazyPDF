@@ -13,9 +13,9 @@ internal static class ExportXml
     // refuses a document that would pass this, so the failure is a PdfReadException and not an OutOfMemoryException at ToString.
     private const long MaxOutputChars = 1L << 29;
 
-    public static void CheckLength(StringBuilder sb, long coming = 0)
+    public static void CheckLength(StringBuilder sb, long coming = 0, long limit = MaxOutputChars)
     {
-        if (sb.Length + coming > MaxOutputChars) throw new PdfReadException(PdfReadProblem.Unsupported, ExportText.TooLarge);
+        if (sb.Length + coming > limit) throw new PdfReadException(PdfReadProblem.Unsupported, ExportText.TooLarge);
     }
 
     // The characters a picture adds where its bytes are written out at every occurrence.

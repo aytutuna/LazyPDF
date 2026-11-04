@@ -18,18 +18,21 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
         if (_pixels > pixelBudget) throw new PdfReadException(PdfReadProblem.Unsupported, ExportText.TooLarge);
     }
 
-    /// <summary>True when a JPEG file made of the image's data shows what the page shows.</summary>
-    public bool ShowsAsFile(PdfDictionary dictionary)
+    /// <summary>True when a JPEG file made of <paramref name="jpeg"/> shows what the page shows.</summary>
+    public bool ShowsAsFile(PdfDictionary dictionary, byte[] jpeg)
     {
         if (Present(dictionary["SMask"]) || Present(dictionary["Mask"]) || document.Bool(dictionary, "ImageMask") == true) return false;
-        if (PdfFunction.Numbers(dictionary["Decode"], document.Resolve) is { } decode && !decode.Chunk(2).All(pair => pair is [0, 1])) return false;
+        var decode = PdfFunction.Numbers(dictionary["Decode"], document.Resolve);
+        bool identity = decode is null || decode.Chunk(2).All(pair => pair is [0, 1]);
         try
         {
-            return Space(dictionary) is null or SampleColorSpace.Gray or SampleColorSpace.Rgb or SampleColorSpace.Cmyk;
+            var space = Space(dictionary);
+            if (space is SampleColorSpace.Cmyk) return identity ? !HasAdobeMarker(jpeg) : Inverts(decode) && HasAdobeMarker(jpeg);
+            return identity && space is null or SampleColorSpace.Gray or SampleColorSpace.Rgb;
         }
         catch (PdfReadException)
         {
-            return true;
+            return identity;
         }
     }
 
@@ -43,11 +46,12 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
     /// <paramref name="pixels"/> are the codec's, sRGB already. A space of one or three components is
     /// given back to the samples code as samples, so /Decode, the tint transform and a colour key apply
     /// as for any image. Any other space, and one that cannot be read, is taken as the codec left it:
-    /// the ink values of a CMYK or DeviceN image cannot be told from its RGB, and a codec that reads
-    /// the Adobe marker has applied the inversion that /Decode of such a file stands for.
+    /// the inks of a DeviceN image cannot be recovered from its RGB. A CMYK image is brought to what
+    /// the page shows (see <see cref="CmykView"/>). <paramref name="coded"/> is the codec's input.
     /// </summary>
-    public PdfRgbaImage FromPixels(PdfDictionary dictionary, PdfRgbaImage pixels, string coder)
+    public PdfRgbaImage FromPixels(PdfDictionary dictionary, PdfRgbaImage pixels, string coder, byte[] coded)
     {
+        if (coder == "JPXDecode") pixels = JpxAlpha(pixels, document.Integer(dictionary, "SMaskInData") ?? 0);
         bool imageMask = document.Bool(dictionary, "ImageMask") == true;
         SampleColorSpace? space = null;
         bool readable = true;
@@ -62,7 +66,11 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
         int n = imageMask ? 1 : space?.Components ?? 3;
         bool samples = readable && n is 1 or 3;
         var (plain, mask, stencil) = Split(dictionary, all: !samples);
-        if (!samples) return Apply(pixels, mask, stencil);
+        if (!samples)
+        {
+            if (space is { Components: 4 }) pixels = CmykView(dictionary, pixels, space, coder == "DCTDecode" && HasAdobeMarker(coded));
+            return Apply(pixels, mask, stencil);
+        }
 
         plain["Width"] = new PdfNumber(pixels.Width);
         plain["Height"] = new PdfNumber(pixels.Height);
@@ -79,6 +87,85 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
         return Apply(converted, mask, stencil);
     }
 
+    // ISO 32000-1 Table 89: 0 leaves the codestream's alpha out, 1 takes it as straight alpha, 2 as premultiplied.
+    private static PdfRgbaImage JpxAlpha(PdfRgbaImage image, long mode)
+    {
+        if (mode == 1) return image;
+        var rgba = (byte[])image.Rgba.Clone();
+        for (int i = 3; i < rgba.Length; i += 4)
+        {
+            int alpha = rgba[i];
+            if (mode < 1) rgba[i] = 255;
+            else if (alpha is > 0 and < 255)
+            {
+                for (int c = 1; c <= 3; c++) rgba[i - c] = (byte)Math.Min(255, (rgba[i - c] * 255 + alpha / 2) / alpha);
+            }
+        }
+        return new PdfRgbaImage(image.Width, image.Height, rgba);
+    }
+
+    private static bool Inverts(double[]? decode) => decode is { Length: >= 8 } && decode.Chunk(2).Take(4).All(pair => pair is [1, 0]);
+
+    // The Adobe marker (APP14) tells a codec that the stored inks are inverted.
+    private static bool HasAdobeMarker(byte[] jpeg)
+    {
+        int p = 2;
+        while (p + 4 <= jpeg.Length && jpeg[p] == 0xFF && jpeg[p + 1] != 0xDA)
+        {
+            int length = jpeg[p + 2] << 8 | jpeg[p + 3];
+            if (jpeg[p + 1] == 0xEE && length >= 7 && p + 9 <= jpeg.Length && jpeg[p + 4] == 'A' && jpeg[p + 5] == 'd') return true;
+            p += 2 + length;
+        }
+        return false;
+    }
+
+    // A codec shows an Adobe-marked CMYK JPEG the way a JPEG file looks and an unmarked one as stored.
+    // A page shows the stored inks after /Decode, so the two differ when the marker and a reversing
+    // /Decode disagree; the RGB inverse stands in for the ink inverse, which RGB cannot give back.
+    private PdfRgbaImage CmykView(PdfDictionary dictionary, PdfRgbaImage pixels, SampleColorSpace space, bool marked)
+    {
+        var decode = PdfFunction.Numbers(dictionary["Decode"], document.Resolve);
+        var rgba = (byte[])pixels.Rgba.Clone();
+        if (marked != Inverts(decode))
+        {
+            for (int i = 0; i < rgba.Length; i++)
+            {
+                if (i % 4 != 3) rgba[i] = (byte)(255 - rgba[i]);
+            }
+        }
+        if (PdfFunction.Numbers(dictionary["Mask"], document.Resolve) is { Length: >= 8 } key) Key(rgba, key, decode, space);
+        return new PdfRgbaImage(pixels.Width, pixels.Height, rgba);
+    }
+
+    // The colour key (ISO 32000-1 8.9.6.4) is matched against the RGB of the corners of its ink range.
+    private static void Key(byte[] rgba, double[] key, double[]? decode, SampleColorSpace space)
+    {
+        Span<double> ink = stackalloc double[4];
+        Span<byte> rgb = stackalloc byte[3];
+        int[] low = [255, 255, 255], high = [0, 0, 0];
+        bool decoded = decode is { Length: >= 8 };
+        for (int corner = 0; corner < 16; corner++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                double from = decoded ? decode![2 * j] : space.Min(j), to = decoded ? decode![2 * j + 1] : space.Max(j);
+                ink[j] = from + key[2 * j + (corner >> j & 1)] * (to - from) / 255;
+            }
+            space.ToRgb(ink, rgb);
+            for (int c = 0; c < 3; c++)
+            {
+                low[c] = Math.Min(low[c], rgb[c]);
+                high[c] = Math.Max(high[c], rgb[c]);
+            }
+        }
+        for (int i = 0; i < rgba.Length; i += 4)
+        {
+            bool inside = true;
+            for (int c = 0; c < 3; c++) inside &= rgba[i + c] >= low[c] && rgba[i + c] <= high[c];
+            if (inside) rgba[i + 3] = 0;
+        }
+    }
+
     private bool Present(PdfObject? value) => document.Resolve(value) is not (null or PdfNull);
 
     private SampleColorSpace? Space(PdfDictionary dictionary) =>
@@ -91,6 +178,8 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
         if (document.Resolve(dictionary["SMask"]) is PdfStream soft)
         {
             ChargeMask(soft);
+            // A soft mask overrides /Mask (ISO 32000-1 8.9.6.5), so a /Mask stream is never read.
+            plain.Remove("Mask");
             if (!all && !IsCoded(soft)) return (plain, null, false);
             plain.Remove("SMask");
             return (plain, soft, false);
@@ -105,11 +194,13 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
         return (plain, null, false);
     }
 
-    // A coded mask is charged for what the codec returns; an unreadable size is refused later and costs nothing.
+    // A coded mask is charged for what the codec returns; an unreadable size is refused later and costs
+    // nothing. The size is read as the samples code reads it, /W and /H included.
     private void ChargeMask(PdfStream mask)
     {
         if (IsCoded(mask)) return;
-        long width = document.Integer(mask.Dictionary, "Width") ?? 0, height = document.Integer(mask.Dictionary, "Height") ?? 0;
+        var d = mask.Dictionary;
+        long width = PdfFilters.Int(document.Resolve(d["Width"] ?? d["W"]), 0), height = PdfFilters.Int(document.Resolve(d["Height"] ?? d["H"]), 0);
         if (width >= 1 && height >= 1 && width <= PdfImageSamples.MaxPixels / height) Charge(width * height);
     }
 

@@ -68,6 +68,7 @@ public static class HtmlWriter
                         sb.Append("<table>\n");
                         foreach (var row in table.Rows)
                         {
+                            CheckLength(sb);
                             sb.Append("<tr>");
                             foreach (string cell in row) sb.Append("<td>").Append(Escape(cell)).Append("</td>");
                             sb.Append("</tr>\n");
@@ -123,9 +124,9 @@ public static class HtmlWriter
                     if (style) sb.Append("</span>");
                 }
                 sb.Append("</span>\n");
+                CheckLength(sb);
             }
             sb.Append("</div>\n");
-            CheckLength(sb);
         }
         return sb.Append("</body>\n</html>\n").ToString();
     }

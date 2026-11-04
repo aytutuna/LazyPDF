@@ -4,6 +4,7 @@ using Xunit;
 
 namespace LazyPDF.Core.Tests;
 
+[Collection("ExportLarge")]
 public class ExportOutputBudgetTests
 {
     private static ExportDocument OnePage(IReadOnlyList<ExportBlock> blocks) =>

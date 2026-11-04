@@ -104,7 +104,7 @@ public class ExportReviewFixTests
         for (int i = 0; i < 20000; i++) content.Append($"1 0 0 1 {10 + i % 50 * 11} {780 - i / 50 * 1.5} Tm (x) Tj ");
         content.Append("ET");
         var document = ExportKit.Open(content.ToString());
-        Assert.Throws<PdfReadException>(() => ExportLayout.Analyze(document, Enumerable.Repeat(0, 120).ToList()));
+        Assert.Throws<PdfReadException>(() => ExportLayout.Analyze(document, Enumerable.Repeat(0, 180).ToList()));
         Assert.NotEmpty(ExportLayout.Analyze(document, Enumerable.Repeat(0, 3).ToList()).Pages);
     }
 

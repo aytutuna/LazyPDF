@@ -21,7 +21,16 @@ internal static class ExportZip
 
     private static readonly uint[] Table = MakeTable();
 
+    // 0xFFFF in the end record is the zip64 marker, so that count is already too many.
+    private const int MaxEntries = ushort.MaxValue - 1;
+
     private static PdfReadException TooLarge() => new(PdfReadProblem.Unsupported, ExportText.TooLarge);
+
+    /// <summary>Refuses a package of more entries than the end record can count, for a writer to ask before it builds them.</summary>
+    public static void CheckCount(long entries)
+    {
+        if (entries > MaxEntries) throw TooLarge();
+    }
 
     /// <summary>The CRC-32 of zip and PNG (polynomial 0xEDB88320, reflected); pass the previous value to continue.</summary>
     public static uint Crc32(ReadOnlySpan<byte> data, uint crc = 0)
@@ -33,8 +42,8 @@ internal static class ExportZip
 
     public static byte[] Make(IReadOnlyList<ExportZipEntry> entries)
     {
-        // 0xFFFF in the end record is the zip64 marker, so that count is already too many.
-        if (entries.Count >= ushort.MaxValue || entries.Sum(e => (long)e.Data.Length) > MaxPackage) throw TooLarge();
+        CheckCount(entries.Count);
+        if (entries.Sum(e => (long)e.Data.Length) > MaxPackage) throw TooLarge();
         using var output = new MemoryStream();
         using var central = new MemoryStream();
         foreach (var entry in entries)

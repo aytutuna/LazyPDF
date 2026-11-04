@@ -152,14 +152,20 @@ public static class DocxWriter
         sb.Append("</w:r>");
     }
 
+    // Word stops at 63 columns; what lies beyond joins the last one, with its width.
+    internal static double[] Shares(ExportTable table, int columns)
+    {
+        var share = new double[columns];
+        double total = table.Widths?.Sum() ?? 0;
+        for (int c = 0; c < table.Columns; c++) share[Math.Min(c, columns - 1)] += total > 0 ? table.Widths![c] : 1;
+        return share;
+    }
+
     private static void Table(StringBuilder sb, ExportTable table, int contentTwips)
     {
         int columns = Math.Min(table.Columns, MaxTableColumns);
         if (columns == 0) return;
-        // Word stops at 63 columns; what lies beyond joins the last one.
-        var share = new double[columns];
-        double total = table.Widths?.Sum() ?? 0;
-        for (int c = 0; c < table.Columns; c++) share[Math.Min(c, columns - 1)] += total > 0 ? table.Widths![c] : 1;
+        var share = Shares(table, columns);
         var widths = new int[columns];
         for (int c = 0; c < columns; c++) widths[c] = (int)Math.Max(120, share[c] / share.Sum() * contentTwips);
 
@@ -168,6 +174,7 @@ public static class DocxWriter
         sb.Append("</w:tblGrid>");
         foreach (var row in table.Rows)
         {
+            CheckLength(sb);
             sb.Append("<w:tr>");
             for (int c = 0; c < columns; c++)
             {

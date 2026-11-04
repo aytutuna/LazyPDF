@@ -8,11 +8,10 @@ namespace LazyPDF.Core;
 /// colour space applied. Results are kept per image object, and per picture for inline images, so
 /// a logo on every page is decoded once.
 /// </summary>
-internal sealed class ExportImages(PdfDocument document, IImageCodec? codec, CancellationToken cancel = default, long pixelBudget = 1L << 32)
+internal sealed class ExportImages(PdfDocument document, IImageCodec? codec, CancellationToken cancel = default, long pixelBudget = 1L << 32, long byteLimit = 1L << 29)
 {
     // Past this many pixels an image is left out rather than decoded (rule 4).
     private const long MaxPixels = 1L << 26;
-    private const long MaxTotalBytes = 1L << 29;
 
     private readonly ExportImageMerge _merge = new(document, codec, pixelBudget);
     private readonly Dictionary<(PdfStream, int), ExportImage?> _streams = [];
@@ -54,35 +53,22 @@ internal sealed class ExportImages(PdfDocument document, IImageCodec? codec, Can
         {
             cancel.ThrowIfCancellationRequested();
             long width = document.Integer(dictionary, "Width") ?? 0, height = document.Integer(dictionary, "Height") ?? 0;
-            if (width < 1 || height < 1 || width * height > MaxPixels) return null;
+            if (width < 1 || height < 1 || width > MaxPixels / height) return null;
 
             PdfObject? filter, parameters;
             if (stream is not null) (filter, parameters, _) = document.DecodeSpec(stream);
             else (filter, parameters) = (dictionary["Filter"], dictionary["DecodeParms"]);
-            var decoded = PdfFilters.DecodeToCodec(raw, filter, parameters);
+            var decoded = PdfFilters.DecodeToCodec(raw, filter, parameters, Math.Max(0, byteLimit - _total));
 
             ExportImage Jpeg() => new(decoded.Data, true, (int)width, (int)height);
-            if (decoded.Codec == "DCTDecode" && orientation == 1 && _merge.ShowsAsFile(dictionary)) return Keep(Jpeg());
+            if (decoded.Codec == "DCTDecode" && orientation == 1 && _merge.ShowsAsFile(dictionary, decoded.Data)) return Keep(Jpeg());
 
             // Past a limit a JPEG is still kept as its bytes: they are in hand and cost nothing to decode.
             PdfRgbaImage? pixels = null;
             try
             {
-                if (_total > MaxTotalBytes) throw new PdfReadException(PdfReadProblem.Unsupported, ExportText.TooLarge);
-                if (decoded.Codec is null)
-                {
-                    _merge.Charge(width * height);
-                    pixels = _merge.FromSamples(dictionary, decoded.Data);
-                }
-                else if (codec is not null)
-                {
-                    _merge.Charge(0);
-                    if (codec.Decode(decoded.Data, decoded.Codec) is { } coded && (long)coded.Width * coded.Height <= MaxPixels)
-                    {
-                        _merge.Charge((long)coded.Width * coded.Height);
-                        pixels = _merge.FromPixels(dictionary, coded, decoded.Codec);
-                    }
-                }
+                if (_total > byteLimit) throw new PdfReadException(PdfReadProblem.Unsupported, ExportText.TooLarge);
+                pixels = Pixels(dictionary, decoded, width * height);
             }
             catch (PdfReadException) when (decoded.Codec == "DCTDecode")
             {
@@ -95,6 +81,38 @@ internal sealed class ExportImages(PdfDocument document, IImageCodec? codec, Can
         {
             return null;
         }
+    }
+
+    // A mask that cannot be read leaves the picture opaque.
+    private PdfRgbaImage? Pixels(PdfDictionary dictionary, PdfDecodedStream decoded, long declared)
+    {
+        try
+        {
+            return Decode(dictionary, decoded, declared);
+        }
+        catch (PdfReadException e) when (e.Problem == PdfReadProblem.Damaged
+            && (document.Resolve(dictionary["SMask"]) is PdfStream || document.Resolve(dictionary["Mask"]) is PdfStream))
+        {
+            var opaque = dictionary.Copy();
+            opaque.Remove("SMask");
+            opaque.Remove("Mask");
+            return Decode(opaque, decoded, declared);
+        }
+    }
+
+    private PdfRgbaImage? Decode(PdfDictionary dictionary, PdfDecodedStream decoded, long declared)
+    {
+        if (decoded.Codec is null)
+        {
+            _merge.Charge(declared);
+            return _merge.FromSamples(dictionary, decoded.Data);
+        }
+        if (codec is null) return null;
+        _merge.Charge(0);
+        if (codec.Decode(decoded.Data, decoded.Codec) is not { } coded) return null;
+        long size = (long)coded.Width * coded.Height;
+        _merge.Charge(size);
+        return size <= MaxPixels ? _merge.FromPixels(dictionary, coded, decoded.Codec, decoded.Data) : null;
     }
 
     private ExportImage Keep(ExportImage image)

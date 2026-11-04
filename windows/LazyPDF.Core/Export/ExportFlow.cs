@@ -53,6 +53,7 @@ internal sealed class ExPara
 internal static class ExportFlow
 {
     private const int MaxProbe = 256;
+    private const int MaxBlankFactor = 4;
     private const string Bullets = "•◦▪▫●○■□‣⁃∙·▸►▶➢➤✓✔◆◇–—-*";
 
     private static readonly Regex NumberOnly = new(@"^[0-9]{1,3}[.)]$");
@@ -150,6 +151,8 @@ internal static class ExportFlow
         }
         int columns = even ? rows[0].Cells.Count : spans.Count;
         if (columns < 2) return null;
+        // Staggered text makes a column of its own for nearly every cell, and the blanks are not in the Analyze budget.
+        if (!even && (long)columns * rows.Count > MaxBlankFactor * rows.Sum(r => r.Cells.Count)) return null;
 
         var body = new List<IReadOnlyList<string>>();
         foreach (var row in rows)

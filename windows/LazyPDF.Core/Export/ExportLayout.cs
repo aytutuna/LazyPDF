@@ -8,9 +8,14 @@ namespace LazyPDF.Core;
 public static class ExportLayout
 {
     private const double MinPictureSide = 4;
-    private const long MaxChars = 1L << 26;
-    // Every run costs a line, a paragraph and some markup besides its characters.
-    private const int RunCost = 32;
+
+    // What the model holds, in bytes, as far as it can be told before it is built. A run keeps a record,
+    // a line and a paragraph's copy besides its characters; a picture is listed three times and each
+    // occurrence costs the writers markup and a relationship; a ruled cell is a string reference in a list.
+    private const long MaxModel = 1L << 30;
+    private const int RunBytes = 320;
+    private const int PictureBytes = 1024;
+    private const int CellBytes = 16;
 
     /// <summary>
     /// Analyses <paramref name="pages"/> (0-based, in the order given; null for all). Pictures
@@ -23,14 +28,14 @@ public static class ExportLayout
         var interpreter = new ContentInterpreter(document) { WalkPatterns = false };
         var images = new ExportImages(document, codec, cancel);
         var work = new List<PageWork>();
-        long chars = 0;
+        long held = 0;
         foreach (int index in pages ?? Enumerable.Range(0, document.Pages.Count).ToList())
         {
             cancel.ThrowIfCancellationRequested();
             if (index < 0 || index >= document.Pages.Count) throw new ArgumentOutOfRangeException(nameof(pages));
             work.Add(Collect(document, interpreter, images, index));
-            chars += work[^1].Lines.Sum(l => l.Runs.Sum(r => RunCost + (long)r.Text.Length));
-            if (chars > MaxChars) throw new PdfReadException(PdfReadProblem.Unsupported, ExportText.TooLarge);
+            held += work[^1].Cost();
+            if (held > MaxModel) throw new PdfReadException(PdfReadProblem.Unsupported, ExportText.TooLarge);
         }
 
         var dropped = ExportStructure.RunningHeads([.. work.Select(w => (w.Height, (IReadOnlyList<ExRow>)w.Blocks.Where(b => !b.IsTable).SelectMany(b => b.Rows).ToList()))]);
@@ -136,6 +141,10 @@ public static class ExportLayout
         public List<object> Flow { get; } = [];
 
         public IEnumerable<WorkBlock> Blocks => Items.OfType<WorkBlock>();
+
+        public long Cost() => Lines.Sum(l => l.Runs.Sum(r => RunBytes + 2L * r.Text.Length))
+            + PictureBytes * (long)Pictures.Count
+            + CellBytes * Items.OfType<ExportTable>().Sum(t => (long)t.Rows.Count * t.Columns);
 
         public void Assemble(HashSet<ExRow> dropped)
         {

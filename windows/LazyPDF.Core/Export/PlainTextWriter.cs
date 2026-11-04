@@ -15,6 +15,7 @@ public static class PlainTextWriter
             ExportParagraph? previous = null;
             foreach (var block in page.Blocks)
             {
+                CheckLength(sb);
                 switch (block)
                 {
                     case ExportParagraph { Item: { } item } listed:
@@ -31,7 +32,11 @@ public static class PlainTextWriter
                         break;
                     case ExportTable table:
                         if (previous is not null) sb.Append('\n');
-                        foreach (var row in table.Rows) sb.Append(string.Join('\t', row.Select(c => c.Replace('\t', ' ').Replace('\n', ' ')))).Append('\n');
+                        foreach (var row in table.Rows)
+                        {
+                            CheckLength(sb);
+                            sb.Append(string.Join('\t', row.Select(c => c.Replace('\t', ' ').Replace('\n', ' ')))).Append('\n');
+                        }
                         break;
                     default:
                         continue;
@@ -42,6 +47,7 @@ public static class PlainTextWriter
             if (previous is not null) sb.Append('\n');
             sb.Append('\f');
         }
+        CheckLength(sb);
         return sb.ToString();
     }
 }

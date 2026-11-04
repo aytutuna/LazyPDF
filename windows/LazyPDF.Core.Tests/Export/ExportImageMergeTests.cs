@@ -13,9 +13,24 @@ internal sealed class ExportRgbaCodec(int width, params byte[] rgba) : IImageCod
     public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => throw new NotSupportedException();
 }
 
+/// <summary>Reports an image of the given size without holding any pixels.</summary>
+internal sealed class ExportSizedCodec(int width, int height) : IImageCodec
+{
+    public PdfRgbaImage? Decode(byte[] data, string codec) => new(width, height, []);
+
+    public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) => null;
+
+    public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => throw new NotSupportedException();
+}
+
 public class ExportImageMergeTests
 {
     private const string Image = "/Type /XObject /Subtype /Image";
+    private const string CmykJpeg = "/Width 1 /Height 1 /ColorSpace /DeviceCMYK /BitsPerComponent 8 /Filter /DCTDecode";
+    private const string Reversed = "/Decode [1 0 1 0 1 0 1 0]";
+
+    // A JPEG that stops after its Adobe marker; the export only reads the header.
+    private static readonly byte[] Adobe = [0xFF, 0xD8, 0xFF, 0xEE, 0, 14, (byte)'A', (byte)'d', (byte)'o', (byte)'b', (byte)'e', 0, 100, 0, 0, 0, 0, 0, 0xFF, 0xDA];
 
     private static PdfDocument Open(string content, Action<TestPdf> objects, string resources = "/XObject <</Im 10 0 R>>", string pageEntries = "")
     {
@@ -49,19 +64,34 @@ public class ExportImageMergeTests
     }
 
     [Fact]
-    public void ACmykJpegIsTakenAsTheCodecReadsIt()
+    public void ACmykJpegThatReadsTheSameWithOrWithoutTheCodecStaysAFile()
     {
         var codec = new ExportRgbaCodec(1, 200, 100, 50, 255);
-        var inverted = Extract("/Width 1 /Height 1 /ColorSpace /DeviceCMYK /BitsPerComponent 8 /Filter /DCTDecode /Decode [1 0 1 0 1 0 1 0]", [1], codec);
-        Assert.Equal([200, 100, 50, 255], Rgba(inverted));
+        Assert.True(Assert.IsType<ExportImage>(Extract($"{CmykJpeg} {Reversed}", Adobe, codec)).IsJpeg);
+        Assert.True(Assert.IsType<ExportImage>(Extract(CmykJpeg, [1], codec)).IsJpeg);
     }
 
     [Fact]
-    public void AColourKeyOnACmykJpegIsNotComparedWithTheCodecsRgb()
+    public void AnAdobeCmykJpegWithItsReversingDecodeIsNotReversedAgain()
     {
-        var png = Extract("/Width 1 /Height 1 /ColorSpace /DeviceCMYK /BitsPerComponent 8 /Filter /DCTDecode /Mask [0 0 0 0 0 0 0 0]", [1],
-            new ExportRgbaCodec(1, 0, 0, 0, 255));
-        Assert.Equal([0, 0, 0, 255], Rgba(png));
+        var png = Extract($"{CmykJpeg} {Reversed} /Mask [255 255 255 255 255 255 255 255]", Adobe, new ExportRgbaCodec(1, 200, 100, 50, 255));
+        Assert.Equal([200, 100, 50, 255], Rgba(png));
+    }
+
+    [Theory]
+    [InlineData("", true)]
+    [InlineData("/Decode [1 0 1 0 1 0 1 0]", false)]
+    public void ACmykJpegWhoseMarkerAndDecodeDisagreeIsShownAsThePageShowsIt(string decode, bool marked)
+    {
+        var png = Extract($"{CmykJpeg} {decode}", marked ? Adobe : [1], new ExportRgbaCodec(1, 200, 100, 50, 255));
+        Assert.Equal([55, 155, 205, 255], Rgba(png));
+    }
+
+    [Fact]
+    public void AColourKeyOnACmykJpegIsMatchedAgainstTheRgbOfItsInks()
+    {
+        var png = Extract($"{CmykJpeg} /Mask [0 0 0 0 0 0 0 0]", [1], new ExportRgbaCodec(2, 255, 255, 255, 255, 0, 0, 0, 255));
+        Assert.Equal([0, 255], Rgba(png).Where((_, i) => i % 4 == 3));
     }
 
     [Fact]
@@ -107,6 +137,49 @@ public class ExportImageMergeTests
     {
         var png = Extract("/Width 1 /Height 1 /ColorSpace [/CalCMYK <<>>] /Filter /JPXDecode", [1], new ExportRgbaCodec(1, 10, 20, 30, 255));
         Assert.Equal([10, 20, 30, 255], Rgba(png));
+    }
+
+    [Fact]
+    public void TheAlphaOfAJpxImageWithAnUnreadableColourSpaceFollowsSMaskInData()
+    {
+        var codec = new ExportRgbaCodec(1, 10, 20, 30, 40);
+        Assert.Equal([10, 20, 30, 255], Rgba(Extract("/Width 1 /Height 1 /ColorSpace [/CalCMYK <<>>] /Filter /JPXDecode", [1], codec)));
+        Assert.Equal([10, 20, 30, 40], Rgba(Extract("/Width 1 /Height 1 /ColorSpace [/CalCMYK <<>>] /Filter /JPXDecode /SMaskInData 1", [1], codec)));
+    }
+
+    [Fact]
+    public void PremultipliedJpxAlphaIsUndone()
+    {
+        var png = Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode /SMaskInData 2", [1], new ExportRgbaCodec(1, 10, 20, 30, 128));
+        Assert.Equal([20, 40, 60, 128], Rgba(png));
+    }
+
+    [Fact]
+    public void ACodedSoftMaskBesideAMaskStreamLeavesTheMaskStreamUnread()
+    {
+        var png = Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /SMask 11 0 R /Mask 12 0 R", TestPdf.Deflate([9, 8, 7]),
+            new ExportPixelCodec(1, 128), pdf =>
+            {
+                pdf.Stream(11, $"{Image} /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /JPXDecode", [1]);
+                pdf.Stream(12, $"{Image} /Width 1 /Height 1 /ImageMask true /Filter /JBIG2Decode", [1]);
+            });
+        Assert.Equal([9, 8, 7, 128], Rgba(png));
+    }
+
+    [Fact]
+    public void AnUnreadableMaskLeavesACodecImageOpaque()
+    {
+        var png = Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode /SMask 11 0 R", [1], new ExportRgbaCodec(1, 10, 20, 30, 255),
+            pdf => pdf.Stream(11, $"{Image} /Width 0 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode", TestPdf.Deflate([0])));
+        Assert.Equal([10, 20, 30, 255], Rgba(png));
+    }
+
+    [Fact]
+    public void AnUnreadableMaskLeavesAJpegWithoutACodecAsItsBytes()
+    {
+        var image = Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /SMask 11 0 R", [1], null,
+            pdf => pdf.Stream(11, $"{Image} /Width 0 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode", TestPdf.Deflate([0])));
+        Assert.True(Assert.IsType<ExportImage>(image).IsJpeg);
     }
 
     private static List<ImageInfo> Infos(PdfDocument document)
@@ -217,6 +290,79 @@ public class ExportImageMergeTests
         }, "/XObject <</A 10 0 R /B 11 0 R /C 12 0 R>>");
         var images = new ExportImages(document, new ExportRgbaCodec(10, new byte[400]), pixelBudget: 150);
         Assert.Equal([true, false, false], Infos(document).Select(i => images.Get(i) is not null));
+    }
+
+    [Fact]
+    public void ACodecImageDecodedPastTheSizeLimitIsStillCharged()
+    {
+        var document = Open("/A Do /B Do", pdf =>
+        {
+            pdf.Stream(10, $"{Image} /Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode", [1]);
+            pdf.Stream(11, $"{Image} /Width 10 /Height 10 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode", TestPdf.Deflate(new byte[100]));
+        }, "/XObject <</A 10 0 R /B 11 0 R>>");
+        var images = new ExportImages(document, new ExportSizedCodec(9000, 9000), pixelBudget: 81_000_050);
+        Assert.Equal([false, false], Infos(document).Select(i => images.Get(i) is not null));
+    }
+
+    [Fact]
+    public void ASizeThatWrapsDoesNotCreditThePixelBudget()
+    {
+        var document = Open(string.Concat(Enumerable.Range(0, 7).Select(i => $"/Im{i} Do ")), pdf =>
+        {
+            for (int i = 0; i < 7; i++)
+            {
+                string size = i == 0 ? "/Width 3037000500 /Height 3037000500" : "/Width 10 /Height 10";
+                pdf.Stream(10 + i, $"{Image} {size} /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode", TestPdf.Deflate(new byte[100]));
+            }
+        }, "/XObject <<" + string.Concat(Enumerable.Range(0, 7).Select(i => $"/Im{i} {10 + i} 0 R ")) + ">>");
+        var images = new ExportImages(document, null, pixelBudget: 250);
+        Assert.Equal(2, Infos(document).Count(i => images.Get(i) is not null));
+    }
+
+    [Fact]
+    public void AMaskSizedByTheShortKeysIsChargedForItsPixels()
+    {
+        var document = Flate(5, "/SMask 40 0 R", pdf => pdf.Stream(40, $"{Image} /W 1000 /H 1000 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode", TestPdf.Deflate(new byte[10])));
+        var images = new ExportImages(document, null, pixelBudget: 2_500_000);
+        Assert.Equal(2, Infos(document).Count(i => images.Get(i) is not null));
+    }
+
+    [Fact]
+    public void ACodedMaskIsChargedForThePixelsTheCodecReturns()
+    {
+        var document = Flate(1, "/SMask 40 0 R", pdf => pdf.Stream(40, $"{Image} /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /JPXDecode", [1]));
+        var images = new ExportImages(document, new ExportPixelCodec(10, new byte[100]), pixelBudget: 150);
+        Assert.Null(images.Get(Infos(document)[0]));
+    }
+
+    [Fact]
+    public void AJpegBehindAFilterPastTheByteLimitIsLeftOut()
+    {
+        var document = Open("/Im Do", pdf => pdf.Stream(10, $"{Image} /Width 1 /Height 1 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter [/FlateDecode /DCTDecode]", TestPdf.Deflate(new byte[5000])));
+        var images = new ExportImages(document, null, byteLimit: 1000);
+        Assert.Null(images.Get(Infos(document)[0]));
+    }
+
+    [Fact]
+    public void AJpegBehindAFilterWithinTheByteLimitIsKept()
+    {
+        var document = Open("/Im Do", pdf => pdf.Stream(10, $"{Image} /Width 1 /Height 1 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter [/FlateDecode /DCTDecode]", TestPdf.Deflate(new byte[500])));
+        var images = new ExportImages(document, null, byteLimit: 1000);
+        Assert.Equal(500, Assert.IsType<ExportImage>(images.Get(Infos(document)[0])).Data.Length);
+    }
+
+    [Fact]
+    public void JpegsPastTheByteLimitAreStillKeptAsTheirBytes()
+    {
+        var document = Open("/A Do /B Do /C Do", pdf =>
+        {
+            foreach (int id in new[] { 10, 11, 12 }) pdf.Stream(id, $"{Image} /Width 1 /Height 1 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode", [1, 2, 3, 4]);
+        }, "/XObject <</A 10 0 R /B 11 0 R /C 12 0 R>>");
+        var images = new ExportImages(document, new ExportRgbaCodec(1, 1, 2, 3, 255), byteLimit: 3);
+        var infos = Infos(document);
+        Assert.True(Assert.IsType<ExportImage>(images.Get(infos[0])).IsJpeg);
+        Assert.True(Assert.IsType<ExportImage>(images.Get(infos[1])).IsJpeg);
+        Assert.True(Assert.IsType<ExportImage>(images.Get(infos[2], 6)).IsJpeg);
     }
 
     [Fact]

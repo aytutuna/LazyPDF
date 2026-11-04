@@ -72,6 +72,7 @@ public static class MarkdownWriter
     {
         for (int r = 0; r < table.Rows.Count; r++)
         {
+            CheckLength(sb);
             sb.Append('|');
             foreach (string cell in table.Rows[r]) sb.Append(' ').Append(Escape(cell.Replace('\n', ' ').Replace('\t', ' '))).Append(" |");
             sb.Append('\n');
