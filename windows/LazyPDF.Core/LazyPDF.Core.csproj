@@ -13,4 +13,8 @@ signatures, redaction. No UI and no OS-specific APIs.</Description>
     <InternalsVisibleTo Include="LazyPDF" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
+  </ItemGroup>
+
 </Project>

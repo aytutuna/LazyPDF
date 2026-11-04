@@ -186,6 +186,19 @@ internal static class PdfKeys
         return aes.EncryptCbc(fileKey, stackalloc byte[16], PaddingMode.None);
     }
 
+    /// <summary>Algorithm 2.A step on /Perms: decrypts it and compares /P, the metadata flag and the "adb" marker.</summary>
+    public static bool PermsMatch(byte[] fileKey, ReadOnlySpan<byte> perms, int p, bool encryptMetadata)
+    {
+        if (perms.Length < 16) return false;
+        Span<byte> block = stackalloc byte[16];
+        using var aes = Aes.Create();
+        aes.Key = fileKey;
+        aes.DecryptEcb(perms[..16], block, PaddingMode.None);
+        return BinaryPrimitives.ReadInt32LittleEndian(block) == p
+               && block[8] == (encryptMetadata ? (byte)'T' : (byte)'F')
+               && block[9..12].SequenceEqual("adb"u8);
+    }
+
     /// <summary>Algorithm 10: /Perms, the permissions and the metadata flag under the file key, so a changed /P is noticed.</summary>
     public static byte[] Perms(byte[] fileKey, int p, ReadOnlySpan<byte> filler)
     {

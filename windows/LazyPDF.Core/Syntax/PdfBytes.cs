@@ -113,6 +113,8 @@ public enum PdfReadProblem
     PasswordRequired,
     /// <summary>The file uses something this reader does not handle (a filter other than Flate, say).</summary>
     Unsupported,
+    /// <summary>The file is encrypted for recipients and the certificate given, if any, is not one of them or has no private key.</summary>
+    CertificateRequired,
 }
 
 /// <summary>Thrown by <see cref="PdfDocument"/>; the message is technical, <see cref="Problem"/> says what kind.</summary>

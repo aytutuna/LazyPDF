@@ -19,8 +19,17 @@ public sealed partial class PdfDocument
         return file;
     }
 
-    /// <summary>A new file of the objects reachable from the trailer, renumbered. Signatures do not survive it.</summary>
-    public byte[] SaveRewrite(PdfSaveOptions? options = null) => new PdfRewriter(this, options ?? new PdfSaveOptions()).Run();
+    /// <summary>
+    /// A new file of the objects reachable from the trailer, renumbered. Signatures do not survive it.
+    /// Another handler than the file's own, or none, needs the owner's rights when the file restricts
+    /// its permissions, and throws <see cref="UnauthorizedAccessException"/> without them.
+    /// </summary>
+    public byte[] SaveRewrite(PdfSaveOptions? options = null)
+    {
+        options ??= new PdfSaveOptions();
+        RequireEncryptionRights(options.Security);
+        return new PdfRewriter(this, options).Run();
+    }
 
     internal IReadOnlyDictionary<int, Entry> Entries => _entries;
 

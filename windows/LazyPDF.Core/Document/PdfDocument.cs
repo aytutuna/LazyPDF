@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace LazyPDF.Core;
@@ -44,6 +45,24 @@ public sealed partial class PdfDocument : IDisposable
     {
         if (new FileInfo(path).Length > int.MaxValue) throw new PdfReadException(PdfReadProblem.Unsupported, "The file is too large.");
         return Open(File.ReadAllBytes(path), password);
+    }
+
+    /// <summary>
+    /// Opens a file encrypted for recipients with the private key of <paramref name="certificate"/>.
+    /// A certificate that is not a recipient, or has no private key, is <see cref="PdfReadProblem.CertificateRequired"/>.
+    /// A file with the standard handler opens only if its user password is empty.
+    /// </summary>
+    public static PdfDocument Open(byte[] bytes, X509Certificate2 certificate)
+    {
+        var document = new PdfDocument(bytes) { _certificate = certificate };
+        document.Load();
+        return document;
+    }
+
+    public static PdfDocument Open(string path, X509Certificate2 certificate)
+    {
+        if (new FileInfo(path).Length > int.MaxValue) throw new PdfReadException(PdfReadProblem.Unsupported, "The file is too large.");
+        return Open(File.ReadAllBytes(path), certificate);
     }
 
     public void Dispose()

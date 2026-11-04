@@ -47,6 +47,17 @@ public sealed partial class PdfSecurity
     /// <summary>False when the document's metadata stream is stored in the clear (R 4 and later).</summary>
     public bool EncryptMetadata { get; }
 
+    /// <summary>
+    /// An R 6 file whose /Perms is missing or does not agree with /P and /EncryptMetadata under the
+    /// file key: someone changed the permissions without the key. The file still opens; false for
+    /// every other revision and for a new handler.
+    /// </summary>
+    public bool PermsMismatch { get; private init; }
+
+    /// <summary>Whether this is the public-key handler (<see cref="OpenPublicKey"/>, <see cref="CreatePublicKey"/>).</summary>
+    public bool IsPublicKey { get; private init; }
+
+    /// <summary>The revision; for the public-key handler 4 for V 4 and 6 for V 5, so the version rules of a save treat both handlers alike.</summary>
     public int Revision { get; }
 
     /// <summary>The /Encrypt dictionary: the one given to <see cref="Open"/>, or the new one. It is never encrypted itself.</summary>
@@ -68,13 +79,8 @@ public sealed partial class PdfSecurity
             throw new PdfReadException(PdfReadProblem.Unsupported, $"The encryption version {v} revision {r} is not supported.");
 
         var (strings, streams, filters) = ReadFilters(encrypt, v);
-        var embedded = v >= 4 && encrypt["EFF"] is PdfName eff ? Named(eff, filters) : streams;
         bool modern = r >= 5;
-        foreach (var method in filters.Values.Append(strings).Append(streams).Append(embedded))
-        {
-            if (method != Method.Identity && (method == Method.Aes256) != modern)
-                throw new PdfReadException(PdfReadProblem.Unsupported, "The crypt filter does not match the encryption revision.");
-        }
+        var embedded = CheckCiphers(encrypt, v, modern, strings, streams, filters);
 
         byte[] o = Bytes(encrypt, "O"), u = Bytes(encrypt, "U");
         int p = unchecked((int)(long)(encrypt["P"] is PdfNumber number ? number.Value : 0));
@@ -99,8 +105,24 @@ public sealed partial class PdfSecurity
                 throw new PdfReadException(PdfReadProblem.Unsupported, "AES-128 needs a 128-bit key.");
             key = OpenLegacy(PdfPasswords.Legacy(password), o, u, p, firstId, r, length, metadata, out owner);
         }
-        return key is null ? null : new PdfSecurity(encrypt, key, r, p, owner, metadata, strings, streams, filters,
-                                              RandomNumberGenerator.Fill, embedded);
+        if (key is null) return null;
+        // R 6 only: the /Perms of R 5 files in the wild are not reliable.
+        bool mismatch = r == 6 && !(encrypt["Perms"] is PdfString perms && PdfKeys.PermsMatch(key, perms.Bytes, p, metadata));
+        return new PdfSecurity(encrypt, key, r, p, owner, metadata, strings, streams, filters,
+                               RandomNumberGenerator.Fill, embedded) { PermsMismatch = mismatch };
+    }
+
+    /// <summary>The method of embedded files, after checking that every cipher in use belongs to the revision.</summary>
+    private static Method CheckCiphers(PdfDictionary encrypt, int v, bool modern, Method strings, Method streams,
+                                       Dictionary<string, Method> filters)
+    {
+        var embedded = v >= 4 && encrypt["EFF"] is PdfName eff ? Named(eff, filters) : streams;
+        foreach (var method in filters.Values.Append(strings).Append(streams).Append(embedded))
+        {
+            if (method != Method.Identity && (method == Method.Aes256) != modern)
+                throw new PdfReadException(PdfReadProblem.Unsupported, "The crypt filter does not match the encryption revision.");
+        }
+        return embedded;
     }
 
     private static byte[]? OpenLegacy(byte[] password, byte[] o, byte[] u, int p, byte[] id, int r, int length,
