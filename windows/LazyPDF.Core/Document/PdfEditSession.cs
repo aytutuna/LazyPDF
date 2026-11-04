@@ -66,6 +66,21 @@ public sealed class PdfEditSession
         byte[] next = new byte[_current.Length + update.Length];
         _current.CopyTo(next, 0);
         update.CopyTo(next, _current.Length);
+        return Take(label, next);
+    }
+
+    /// <summary>
+    /// Commits a file the caller built on the current bytes, which must be its start (a signed update, whose
+    /// bytes depend on where they land). Read back and recorded like <see cref="Commit"/>.
+    /// </summary>
+    internal bool CommitBytes(string label, byte[] next)
+    {
+        if (next.Length <= _current.Length || !next.AsSpan(0, _current.Length).SequenceEqual(_current)) throw new ArgumentException("The file does not continue the current one.", nameof(next));
+        return Take(label, next);
+    }
+
+    private bool Take(string label, byte[] next)
+    {
         // Reading it back is the check that the update is one a strict parser takes: one that needs a rebuild is not.
         var document = PdfDocument.Open(next, _password);
         if (document.XrefRebuilt && !Document.XrefRebuilt) throw PdfReadException.Damaged("The update does not read back.");
