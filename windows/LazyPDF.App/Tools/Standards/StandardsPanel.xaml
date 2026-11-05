@@ -1,0 +1,47 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Standards.StandardsPanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:local="clr-namespace:LazyPDF.App.Tools.Standards">
+    <StackPanel Margin="12,4,12,12">
+        <Border Style="{StaticResource SegmentedTrackStyle}">
+            <UniformGrid Rows="1">
+                <RadioButton x:Name="ModeCheck" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Check}" GroupName="StandardsMode"
+                             IsChecked="True" AutomationProperties.Name="{loc:T Check}" Checked="Mode_Checked" />
+                <RadioButton x:Name="ModeConvert" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Convert}" GroupName="StandardsMode"
+                             AutomationProperties.Name="{loc:T Convert}" Checked="Mode_Checked" />
+            </UniformGrid>
+        </Border>
+
+        <TextBlock x:Name="ModeNote" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,12,0,0" />
+
+        <TextBlock Text="{loc:T Level}" Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" />
+        <ComboBox x:Name="LevelBox" AutomationProperties.Name="{loc:T PDF/A level}" SelectionChanged="LevelBox_SelectionChanged" />
+        <TextBlock x:Name="LevelNote" Style="{StaticResource ReasonText}" Margin="0,4,0,0" />
+
+        <DockPanel x:Name="WarnRow" Margin="0,12,0,0" Visibility="Collapsed">
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE7BA;" />
+            <TextBlock x:Name="WarnNote" Style="{StaticResource ReasonText}" AutomationProperties.LiveSetting="Polite" />
+        </DockPanel>
+
+        <StackPanel x:Name="Result" Margin="0,16,0,0" Visibility="Collapsed">
+            <TextBlock x:Name="Verdict" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+            <TextBlock x:Name="Caveat" Style="{StaticResource ReasonText}" Margin="0,2,0,0" />
+            <ItemsControl x:Name="IssueList" KeyboardNavigation.TabNavigation="Continue">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type local:IssueRow}">
+                        <StackPanel Margin="0,12,0,0" AutomationProperties.Name="{Binding Summary}">
+                            <TextBlock Text="{Binding Message}" Style="{StaticResource BodyText}" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Where}" Style="{StaticResource SecondaryBodyText}" FontSize="12" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Clause}" Style="{StaticResource SecondaryBodyText}" FontSize="12" />
+                            <Button Content="{Binding PlaceText}" AutomationProperties.Name="{Binding PlaceText}" HorizontalAlignment="Left" Margin="0,6,0,0"
+                                    Click="Place_Click" Visibility="{Binding HasPlaces, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock x:Name="Rest" Style="{StaticResource ReasonText}" Margin="0,12,0,0" />
+        </StackPanel>
+    </StackPanel>
+</tools:ToolPanel>
