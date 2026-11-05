@@ -307,6 +307,74 @@ public class CMapTests
         sb.Append("endcidchar");
         var map = CMap.Parse(Encoding.ASCII.GetBytes(sb.ToString()));
         Assert.NotNull(map.CidOf(0x10));
+        Assert.Equal(1_000_000, map.Cids.Count);
+    }
+
+    static string Repeat(string section, string line, int count, string end) =>
+        "1 begincodespacerange <00000000> <FFFFFFFF> endcodespacerange\n" + section + "\n" +
+        new StringBuilder().Insert(0, line + "\n", count) + end;
+
+    [Fact]
+    public void EveryKindOfEntryStopsAtTheCap()
+    {
+        var chars = CMap.Parse(Bytes(Repeat("begincidchar", "<00000001> 5", 1_200_000, "endcidchar")));
+        Assert.Equal(1_000_000, chars.Cids.Count);
+        var ranges = CMap.Parse(Bytes(Repeat("begincidrange", "<00000001> <00000002> 5", 1_200_000, "endcidrange")));
+        Assert.Equal(1_000_000, ranges.Cids.Count);
+        var bfChars = CMap.Parse(Bytes(Repeat("beginbfchar", "<00000001> <0041>", 1_200_000, "endbfchar")));
+        Assert.Equal(1_000_000, bfChars.Texts.Count);
+        var bfRanges = CMap.Parse(Bytes(Repeat("beginbfrange", "<00000001> <00000002> <0041>", 1_200_000, "endbfrange")));
+        Assert.Equal(1_000_000, bfRanges.Texts.Count);
+        var bfArray = CMap.Parse(Bytes(Repeat("beginbfrange\n<00000000> <FFFFFFFF> [", "<0041>", 1_200_000, "] endbfrange")));
+        Assert.Equal(1_000_000, bfArray.Texts.Count);
+    }
+
+    [Fact]
+    public void TheCapCountsNotdefsAndCidsTogether()
+    {
+        string text = Repeat("beginnotdefchar", "<00000001> 5", 600_000, "endnotdefchar") + "\n1 begincidchar\n" +
+            new StringBuilder().Insert(0, "<00000002> 7\n", 600_000) + "endcidchar";
+        var map = CMap.Parse(Bytes(text));
+        Assert.Equal(600_000, map.Notdefs.Count);
+        Assert.Equal(400_000, map.Cids.Count);
+    }
+
+    [Fact]
+    public void CodespacesAreCappedAt100()
+    {
+        var sb = new StringBuilder();
+        for (int i = 0; i < 2; i++)
+        {
+            sb.Append("60 begincodespacerange\n");
+            for (int j = 0; j < 60; j++)
+                sb.Append("<00> <FF>\n");
+            sb.Append("endcodespacerange\n");
+        }
+        Assert.Equal(100, CMap.Parse(Bytes(sb.ToString())).SpaceList.Count);
+    }
+
+    [Fact]
+    public void FourByteCodesWrapWhereTheyOverflow()
+    {
+        var ranges = CMap.Parse(Bytes("1 begincidrange <00000000> <7FFFFFFF> 2147483647 endcidrange"));
+        Assert.Equal(int.MinValue, ranges.CidOf(1, 4));
+        Assert.Equal(int.MaxValue, ranges.CidOf(0, 4));
+
+        var high = CMap.Parse(Bytes("1 begincodespacerange <00000000> <FFFFFFFF> endcodespacerange 2 beginbfchar <80000000> <0041> <FFFFFFFF> <0042> endbfchar"));
+        Assert.Equal(int.MinValue, high.NextCode([0x80, 0x00, 0x00, 0x00], out int length));
+        Assert.Equal(4, length);
+        Assert.Equal("A", high.UnicodeOf(int.MinValue, 4));
+        Assert.Equal(-1, high.NextCode([0xFF, 0xFF, 0xFF, 0xFF], out _));
+        Assert.Equal("B", high.UnicodeOf(-1, 4));
+    }
+
+    [Fact]
+    public void ABfRangeArrayPastTheLastCodeWraps()
+    {
+        var map = CMap.Parse(Bytes("1 beginbfrange <FFFFFFFE> <FFFFFFFF> [<0041> <0042> <0043>] endbfrange"));
+        Assert.Equal("A", map.UnicodeOf(-2, 4));
+        Assert.Equal("B", map.UnicodeOf(-1, 4));
+        Assert.Equal("C", map.UnicodeOf(0, 4));
     }
 
     static int ReadLength(CMap map, byte[] bytes)

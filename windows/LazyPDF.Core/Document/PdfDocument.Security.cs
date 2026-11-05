@@ -21,7 +21,7 @@ public sealed partial class PdfDocument
         var entry = Trailer["Encrypt"];
         if (entry is null or PdfNull) return;
         if (entry is PdfReference reference) _encryptNumber = reference.Number;
-        _encrypt = Flatten(entry, 3) as PdfDictionary ?? throw PdfReadException.Damaged("The /Encrypt entry is not a dictionary.");
+        _encrypt = Flatten(entry, 3, streams: false) as PdfDictionary ?? throw PdfReadException.Damaged("The /Encrypt entry is not a dictionary.");
         _securityId = Id.FirstOrDefault() ?? [];
         bool publicKey = _encrypt["Filter"] is PdfName { Value: "Adobe.PubSec" };
         _security = publicKey

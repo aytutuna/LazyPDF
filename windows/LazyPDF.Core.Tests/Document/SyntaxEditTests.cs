@@ -74,4 +74,17 @@ public class SyntaxEditTests
         Assert.Equal(new PdfRect(0, 0, 5, 5), new PdfRect(0, 0, 10, 10).Intersect(new PdfRect(-5, -5, 5, 5)));
         Assert.True(new PdfRect(0, 0, 1, 1).Intersect(new PdfRect(5, 5, 6, 6)).IsEmpty);
     }
+
+    [Fact]
+    public void ANumberKeepsItsTextAndReadsItsValue()
+    {
+        foreach (var (text, value) in new[] { ("4.", 4.0), ("-.5", -0.5), ("+.5", 0.5), ("0012", 12.0), ("1.25", 1.25) })
+        {
+            Assert.Equal(value, new PdfNumber(text).Value);
+        }
+        Assert.Null(new PdfNumber("4.").Integer);
+        Assert.Equal(12, new PdfNumber("0012").Integer);
+        Assert.Equal(3, new PdfNumber("+3").Integer);
+        Assert.Null(new PdfNumber("9223372036854775808").Integer);
+    }
 }

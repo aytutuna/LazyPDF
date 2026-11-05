@@ -45,6 +45,20 @@ public class FlateTests
     }
 
     [Fact]
+    public void StrictDecodingTakesABreakOffForDamage()
+    {
+        var data = FilterFixtures.Text(100_000);
+        var packed = PdfFilterEncoders.Flate(data);
+        var cut = packed[..(packed.Length / 2)];
+        Assert.NotEmpty(PdfFilters.Decode(cut, Name("FlateDecode"), null));
+        var e = Assert.Throws<PdfReadException>(() => PdfFilters.Decode(cut, Name("FlateDecode"), null, PdfFilters.DefaultMaxSize, strict: true));
+        Assert.Equal(PdfReadProblem.Damaged, e.Problem);
+        Assert.Equal("A compressed stream breaks off.", e.Message);
+        Assert.Equal(data, PdfFilters.Decode(packed, Name("FlateDecode"), null, PdfFilters.DefaultMaxSize, strict: true));
+        Assert.Equal(data, PdfFilters.Decode(packed[..^4], Name("FlateDecode"), null, PdfFilters.DefaultMaxSize, strict: true));
+    }
+
+    [Fact]
     public void BadChecksumStillGivesTheData()
     {
         var data = FilterFixtures.Text(10_000);

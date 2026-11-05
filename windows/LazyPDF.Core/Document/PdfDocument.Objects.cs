@@ -289,7 +289,7 @@ public sealed partial class PdfDocument
                 AddRepair($"Object stream {number}'s header lists {i} objects, not the {n} it says.");
                 break;
             }
-            if (objectNumber > MaxObjectNumber || first + relative >= data.Length) continue;
+            if (objectNumber is < 1 or > MaxObjectNumber || first + relative >= data.Length) continue;
             offsets.TryAdd((int)objectNumber.Value, (int)(first.Value + relative.Value));
             numbers.Add((int)objectNumber.Value);
         }
@@ -300,16 +300,17 @@ public sealed partial class PdfDocument
 
     /// <summary>
     /// Resolves the references in a value down to <paramref name="depth"/> levels, as the filters and
-    /// the security handler want their parameters. Streams are left as they are. Shared references
+    /// the security handler want their parameters. Streams are left as they are, or read as nothing when
+    /// <paramref name="streams"/> is false (a value that is written back as a direct one). Shared references
     /// would multiply at every level, so after a few thousand values the rest reads as nothing.
     /// </summary>
-    private PdfObject? Flatten(PdfObject? value, int depth)
+    private PdfObject? Flatten(PdfObject? value, int depth, bool streams = true)
     {
         int budget = MaxFlattenedNodes;
-        return Flatten(value, depth, ref budget);
+        return Flatten(value, depth, streams, ref budget);
     }
 
-    private PdfObject? Flatten(PdfObject? value, int depth, ref int budget)
+    private PdfObject? Flatten(PdfObject? value, int depth, bool streams, ref int budget)
     {
         switch (Resolve(value))
         {
@@ -318,7 +319,7 @@ public sealed partial class PdfDocument
                 foreach (var item in array.Items)
                 {
                     if (--budget < 0) break;
-                    items.Add(Flatten(item, depth - 1, ref budget) ?? PdfNull.Instance);
+                    items.Add(Flatten(item, depth - 1, streams, ref budget) ?? PdfNull.Instance);
                 }
                 return new PdfArray(items);
             case PdfDictionary dictionary when depth > 0:
@@ -326,9 +327,11 @@ public sealed partial class PdfDocument
                 foreach (var (key, item) in dictionary.Entries)
                 {
                     if (--budget < 0) break;
-                    copy.Add(key, Flatten(item, depth - 1, ref budget) ?? PdfNull.Instance);
+                    copy.Add(key, Flatten(item, depth - 1, streams, ref budget) ?? PdfNull.Instance);
                 }
                 return copy;
+            case PdfStream when !streams:
+                return null;
             case var other:
                 return other;
         }

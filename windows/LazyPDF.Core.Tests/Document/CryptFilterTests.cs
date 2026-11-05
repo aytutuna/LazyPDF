@@ -11,7 +11,8 @@ public class CryptFilterTests
         PdfSecurity.Create("", owner, PdfPermissions.All, strength, FileId, new Random(7));
 
     /// <summary>A one-page AES-128 file whose content stream (object 6) has the given dictionary entries and is stored by <paramref name="store"/>.</summary>
-    private static (byte[] File, PdfSecurity Security) Encrypted(string entries, Func<PdfSecurity, PdfDictionary, byte[]> store, string? filterObject = null)
+    private static (byte[] File, PdfSecurity Security) Encrypted(string entries, Func<PdfSecurity, PdfDictionary, byte[]> store, string? filterObject = null,
+        Action<TestPdf, PdfSecurity>? more = null, string encryptEntries = "")
     {
         var security = Handler();
         var pdf = new TestPdf("%PDF-1.6\n");
@@ -20,7 +21,8 @@ public class CryptFilterTests
         pdf.Obj(3, "<</Type /Page /Parent 2 0 R /Contents 6 0 R /MediaBox [0 0 50 50]>>");
         if (filterObject is not null) pdf.Obj(9, filterObject);
         pdf.Stream(6, entries, store(security, FilterFixtures.Dict($"<< {entries} >>")));
-        pdf.Obj(8, security.Dictionary.ToString());
+        more?.Invoke(pdf, security);
+        pdf.Obj(8, security.Dictionary.ToString()[..^2] + encryptEntries + ">>");
         string id = Convert.ToHexString(FileId);
         return (pdf.Finish($"/Root 1 0 R /Encrypt 8 0 R /ID [<{id}> <{id}>]"), security);
     }
@@ -64,6 +66,35 @@ public class CryptFilterTests
 
         byte[] again = document.SaveRewrite(new PdfSaveOptions(Security: Handler(PdfCryptStrength.Aes256, "other")));
         Assert.Equal("q Q", Contents(again));
+    }
+
+    [Fact]
+    public void ParametersThatNameAStreamSurviveDroppingTheCryptFilter()
+    {
+        var (file, _) = Encrypted("/Filter [/Crypt /JBIG2Decode] /DecodeParms [<</Name /Identity>> <</JBIG2Globals 7 0 R>>]",
+            (s, d) => TestPdf.Latin("HELLO"),
+            more: (pdf, s) => pdf.Stream(7, "", s.EncryptStream(7, 0, TestPdf.Latin("globals"), new PdfDictionary())));
+        var document = PdfDocument.Open(file);
+
+        byte[] plain = document.SaveRewrite();
+        Assert.DoesNotContain("Crypt", TestPdf.Text(plain));
+        var reopened = PdfDocument.Open(plain);
+        var contents = (PdfStream)reopened.Resolve(reopened.Pages[0].Dictionary["Contents"])!;
+        var parameters = (PdfDictionary)reopened.Resolve(((PdfArray)reopened.Resolve(contents.Dictionary["DecodeParms"])!).Items[0])!;
+        Assert.IsType<PdfReference>(parameters["JBIG2Globals"]);
+        Assert.Equal("globals", TestPdf.Text(reopened.RawData(reopened.Resolve<PdfStream>(parameters["JBIG2Globals"])!)));
+    }
+
+    [Fact]
+    public void AStreamInTheEncryptDictionaryDoesNotStopAKeptHandlerFromSaving()
+    {
+        var (file, _) = Encrypted("", (s, d) => s.EncryptStream(6, 0, TestPdf.Latin("q Q"), d),
+            more: (pdf, s) => pdf.Stream(7, "", s.EncryptStream(7, 0, TestPdf.Latin("junk"), new PdfDictionary())),
+            encryptEntries: " /Junk 7 0 R");
+        var document = PdfDocument.Open(file);
+        Assert.NotNull(document.Security);
+        Assert.Equal("q Q", Contents(document.SaveRewrite(new PdfSaveOptions(Security: document.Security))));
+        Assert.Equal("q Q", Contents(document.SaveRewrite(new PdfSaveOptions(UseObjectStreams: true, Security: document.Security))));
     }
 
     [Fact]

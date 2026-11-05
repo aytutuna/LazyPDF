@@ -45,7 +45,8 @@ public static class TrueTypeSubsetter
         var map = new Dictionary<int, int>(kept.Count);
         foreach (var old in kept) map[old] = map.Count;
 
-        var (glyf, loca, longLoca) = BuildGlyphs(f, kept, map);
+        if (BuildGlyphs(f, kept, map) is not { } built) return SubsetResult.Failed(SubsetStatus.Unreadable);
+        var (glyf, loca, longLoca) = built;
         var tables = new SortedDictionary<string, byte[]>(StringComparer.Ordinal)
         {
             ["glyf"] = glyf,
@@ -102,8 +103,13 @@ public static class TrueTypeSubsetter
         return at;
     }
 
-    private static (byte[] Glyf, byte[] Loca, bool Long) BuildGlyphs(TrueTypeFont f, SortedSet<int> kept, Dictionary<int, int> map)
+    /// <summary>Null when the glyphs add up to more than an int holds: a loca whose glyphs overlap can make a font of a few hundred KB ask for gigabytes.</summary>
+    private static (byte[] Glyf, byte[] Loca, bool Long)? BuildGlyphs(TrueTypeFont f, SortedSet<int> kept, Dictionary<int, int> map)
     {
+        long total = 0;
+        foreach (var old in kept)
+            if ((total += (f.GlyphData(old).Length + 3L) & ~3L) > int.MaxValue) return null;
+
         var offsets = new int[kept.Count + 1];
         using var glyf = new MemoryStream();
         var i = 0;

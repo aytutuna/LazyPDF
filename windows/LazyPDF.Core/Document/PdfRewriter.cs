@@ -111,8 +111,8 @@ internal sealed class PdfRewriter(PdfDocument document, PdfSaveOptions options)
             dictionary.Remove("Filter");
             return true;
         }
-        dictionary["Filter"] = filter;
-        if (parameters is not (null or PdfNull)) dictionary["DecodeParms"] = parameters;
+        dictionary["Filter"] = Remap(filter);
+        if (parameters is not (null or PdfNull)) dictionary["DecodeParms"] = Remap(parameters);
         return true;
     }
 
@@ -157,6 +157,8 @@ internal sealed class PdfRewriter(PdfDocument document, PdfSaveOptions options)
         PdfReference reference => _numbers.TryGetValue(reference.Number, out int n) ? new PdfReference(n, 0) : PdfNull.Instance,
         PdfArray array => new PdfArray([.. array.Items.Select(Remap)]),
         PdfDictionary dictionary => RemapDictionary(dictionary, false),
+        // A stream the flattened parameters met (/JBIG2Globals) is written as the reference it came from.
+        PdfStream stream => _numbers.TryGetValue(stream.Number, out int n) ? new PdfReference(n, 0) : PdfNull.Instance,
         _ => value,
     };
 

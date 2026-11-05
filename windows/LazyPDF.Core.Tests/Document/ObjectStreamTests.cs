@@ -122,4 +122,17 @@ public class ObjectStreamTests
         Assert.Contains(document.Repairs, r => r.Contains("header lists"));
         Assert.Equal("Catalog", document.Name(document.Catalog, "Type"));
     }
+
+    [Fact]
+    public void ObjectNumberZeroInAnObjectStreamHeaderIsLeftOut()
+    {
+        var pdf = new TestPdf("%PDF-1.5\n");
+        string header = "0 0 1 4 ";
+        pdf.Stream(5, $"/Type /ObjStm /N 2 /First {header.Length}", header + "(x) " + Bodies[0] + " ");
+        pdf.Obj(2, Bodies[1]).Obj(3, Bodies[2]);
+        var document = PdfDocument.Open(pdf.FinishWithoutXref());
+        Assert.Equal("Catalog", document.Name(document.Catalog, "Type"));
+        Assert.DoesNotContain(0, document.ObjectNumbers);
+        foreach (int number in document.ObjectNumbers) document.Set(number, document.Get(number)!);
+    }
 }

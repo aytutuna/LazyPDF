@@ -124,9 +124,27 @@ public static class PdfFilters
 
     private static void InflateFrom(byte[] data, int start, FilterBuffer output, bool strict)
     {
-        using var input = new MemoryStream(data, start, data.Length - start);
+        using var input = new EndWatch(data, start);
         using var d = new DeflateStream(input, CompressionMode.Decompress);
         Pump(d, output, strict);
+        // DeflateStream reports a stream that breaks off as the end of its data. It asks its source for more
+        // input only when the final block has not ended, so a source that ran dry shows the break.
+        if (strict && output.Count > 0 && input.RanDry) throw PdfReadException.Damaged("A compressed stream breaks off.");
+    }
+
+    private sealed class EndWatch(byte[] data, int start) : MemoryStream(data, start, data.Length - start)
+    {
+        public bool RanDry { get; private set; }
+
+        public override int Read(byte[] buffer, int offset, int count) => Watch(base.Read(buffer, offset, count), count);
+
+        public override int Read(Span<byte> buffer) => Watch(base.Read(buffer), buffer.Length);
+
+        private int Watch(int read, int asked)
+        {
+            if (read == 0 && asked > 0) RanDry = true;
+            return read;
+        }
     }
 
     private static void Pump(Stream source, FilterBuffer output, bool strict)

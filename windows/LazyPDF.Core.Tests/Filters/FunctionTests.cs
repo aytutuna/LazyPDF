@@ -152,6 +152,14 @@ public class FunctionTests
     }
 
     [Fact]
+    public void SampledWithANanInputStaysInsideTheSamples()
+    {
+        // A NaN does not clamp, and its fraction is not 0, so the corner past the only sample is weighed.
+        var f = Parse("<< /FunctionType 0 /Domain [0 1] /Range [0 1] /Size [1] /BitsPerSample 8 >>", [255]);
+        Near(Eval(f, 0)[0], Eval(f, double.NaN)[0]);
+    }
+
+    [Fact]
     public void SampledWithFewerSamplesThanSizeIsDamaged()
     {
         var e = Assert.Throws<PdfReadException>(() =>

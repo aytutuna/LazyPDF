@@ -237,7 +237,8 @@ public abstract partial class PdfFunction
             for (int i = 0; i < Inputs; i++)
             {
                 double e = Interpolate(input[i], Domain[2 * i], Domain[2 * i + 1], _encode[2 * i], _encode[2 * i + 1]);
-                e = Math.Clamp(e, 0, _size[i] - 1);
+                // A NaN does not clamp and leaves a fraction that weighs the corner past the last sample.
+                e = double.IsNaN(e) ? 0 : Math.Clamp(e, 0, _size[i] - 1);
                 low[i] = Math.Min((int)e, Math.Max(_size[i] - 2, 0));
                 fraction[i] = e - low[i];
             }

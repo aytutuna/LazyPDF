@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using Xunit;
 
 namespace LazyPDF.Core.Tests;
@@ -188,6 +189,53 @@ public class TrueTypeSubsetterTests
         var subset = TrueTypeFont.TryParse(result.Data)!;
         AssertSameGlyphs(source, subset, result.GlyphMap);
         Assert.Equal(SubsetStatus.Unreadable, TrueTypeSubsetter.Subset(data, ids, 99).Status);
+    }
+
+    [Fact]
+    public void GlyphsThatAddUpPastTheIntRangeAreRefused()
+    {
+        // 65535 glyphs, the even ones 70000 bytes long and the odd ones empty: 32768 x 70000 bytes is more than an int holds.
+        var font = Edit(TrueTypeBuilder.Build(), (tag, data) =>
+        {
+            switch (tag)
+            {
+                case "glyf": return new byte[70000];
+                case "loca":
+                    var loca = new byte[4 * 65536];
+                    for (var k = 1; k < 65536; k += 2) BinaryPrimitives.WriteUInt32BigEndian(loca.AsSpan(4 * k), 70000);
+                    return loca;
+                case "head": data[51] = 1; return data;
+                case "maxp": data[4] = 0xFF; data[5] = 0xFF; return data;
+                default: return data;
+            }
+        });
+        Assert.Equal(65535, TrueTypeFont.TryParse(font)!.GlyphCount);
+
+        var result = TrueTypeSubsetter.Subset(font, Enumerable.Range(0, 65535).ToArray());
+
+        Assert.Equal(SubsetStatus.Unreadable, result.Status);
+        Assert.Empty(result.Data);
+        Assert.Empty(result.GlyphMap);
+        Assert.Equal(SubsetStatus.Ok, TrueTypeSubsetter.Subset(font, [2, 4]).Status);
+    }
+
+    private static byte[] Edit(byte[] font, Func<string, byte[], byte[]> change)
+    {
+        var count = (font[4] << 8) | font[5];
+        var header = font.AsSpan(0, 12 + 16 * count).ToArray();
+        var body = new List<byte>();
+        for (var i = 0; i < count; i++)
+        {
+            var entry = 12 + 16 * i;
+            var tag = System.Text.Encoding.ASCII.GetString(font, entry, 4);
+            var at = BinaryPrimitives.ReadInt32BigEndian(font.AsSpan(entry + 8));
+            var data = change(tag, font.AsSpan(at, BinaryPrimitives.ReadInt32BigEndian(font.AsSpan(entry + 12))).ToArray());
+            BinaryPrimitives.WriteUInt32BigEndian(header.AsSpan(entry + 8), (uint)(header.Length + body.Count));
+            BinaryPrimitives.WriteUInt32BigEndian(header.AsSpan(entry + 12), (uint)data.Length);
+            body.AddRange(data);
+            while (body.Count % 4 != 0) body.Add(0);
+        }
+        return [.. header, .. body];
     }
 
     [Fact]
