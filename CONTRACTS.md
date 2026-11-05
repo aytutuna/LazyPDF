@@ -78,7 +78,8 @@ Everything that touches the system sits in `Services/` behind a small interface 
 - `WicImageCodec`, `SystemFontSource`, `WindowsOcr` and `WindowsCertificates` give Core its images, fonts, text recognition and certificate store.
 - `HttpSignatureTransport` fetches time stamps and validation data; it is cancellable.
 - `InstanceChannel` hands a second launch's files to the running window; `FileAssociation` and `LazyPdfAddress` handle Open with and `lazypdf:`.
-- `SisterApps` starts Lazy Scan and hands a file to Lazy Print; the window prints itself when Print is not there.
+- `SisterApps` starts Lazy Scan and hands a file to Lazy Print; the window prints itself when Print is not there. It finds a sister by its address under the classes key, and failing that by asking Windows (`Launcher.QueryUriSupportAsync`), since an app from the Store registers its address in its package. The answer is kept for 30 seconds.
+- `Packaging.IsPackaged` says whether the process has a package identity (`GetCurrentPackageFullName`). `AppFolders` names the folders the app writes to. `AppInfo` gives About its version (the assembly's, from `Version` in `windows/Directory.Build.props`), copyright, addresses and the `THIRD-PARTY-NOTICES.txt` shipped beside the exe.
 - `RecentFiles`, `AppPreferencesStore`, `StoreFiles` (the settings file rules) and `RecoveryStore`.
 
 ### A tool
@@ -102,14 +103,31 @@ Panels with several jobs split into partial files (`PagesPanel.Edit.cs`, `PagesP
 
 `preferences.json` (appearance, the side panel left open, inspector sections), `recent.json`, `signing.json`, `batch-sets.json` and the saved signatures live in `%APPDATA%\Lazy PDF`. A file that does not decode is moved aside and the defaults are used; one that cannot be read is left alone. A part of a file that is damaged resets only that property.
 
+About is reached from the settings and shows the name, version, copyright, "Free and open source under the MIT licence.", the links to pdf.alazy.app, the privacy page and support@alazy.app, and the notices file.
+
+The Home tab's tiles that cannot start (Scan without Lazy Scan, a tool without an open file) stay in place with their reason under the title, and choosing one puts the reason in the status line instead of doing nothing.
+
 `RecoveryStore` keeps each open document as `id.pdf` and `id.json` in `%LOCALAPPDATA%\Lazy PDF\Recovery`, written after every edit on a background worker. Closing or saving on purpose removes the entry. At start, entries whose process is gone are offered back as documents with unsaved changes, and a file that is already open comes back as a copy that needs a name.
+
+### The Store package
+
+`store/windows/Package.appxmanifest` is the package manifest: `runFullTrust` and no other capability, minimum Windows 10.0.19041.0, no protocol (the `lazypdf:` address is only registered by the Open with switch outside the Store), and `.pdf` and the picture types of `FileKinds` as file associations. A file association adds an Open with entry; Windows keeps the default, and the manifest has nothing that claims it. The identity is three names taken from Partner Center (`PartnerCenterIdentityName`, `CN=PartnerCenterPublisher`, `PartnerCenterPublisherDisplayName`) that `scripts/make_msix.ps1` replaces. `scripts/make_store_assets.py` draws the tiles and logos in `store/windows/Assets` and the listing images in `store/windows/Listing`; `release.yml` publishes x64 and arm64 self-contained and packs them with the runner's `makeappx`.
+
+Running packaged changes four things.
+- The settings that write `HKCU\Software\Classes` are hidden, and `FileAssociation.SetForCurrentUser` does nothing: the manifest registers Open with and the address. A key written from inside the package would only be the package's own copy.
+- Writes under `%APPDATA%` and `%LOCALAPPDATA%` (preferences, recent files, signing settings, recovery, thumbnails) go to the package's store for the user. The app reaches them at the same paths, and they go with an uninstall. Nothing else on the PC sees them.
+- For that reason the copy of a document made for Lazy Print (`AppFolders.PrintCopies`) and the copies of attachments opened in another program (`AppFolders.OpenedAttachments`) are under `%TEMP%\Lazy PDF`, which the package does not redirect. Lazy Print reads the first by path.
+- The exe's folder is read-only. Nothing writes there: Core touches no files, and every folder the app uses is under AppData or temp (`PackagingTests` checks it).
+
+The single-instance mutex and pipe, the pipe to Lazy Print and the `lazyprint:` and `lazyscan:` addresses work the same: a full-trust process is not in an app container. A start from a file or a `lazypdf:` address gets it as the argument, which `App.FilesOf` reads. Settings made by an unpackaged copy are not carried over to the packaged one.
 
 ### Not done
 
+
 - Phone capture and signing over the phone link: the address and mutex are reserved, nothing listens.
 - Scanning into the open file: the Scan tile starts Lazy Scan and stops there.
-- No installer or package; the app runs from the build.
 - Turkish is the only translation.
+- The package has been built with `makeappx` but not installed or signed, so the manifest's activation and the AppData redirection are known from the documentation, not from a run. The arm64 build has not been built.
 - The Swift targets.
 
 # Modules
