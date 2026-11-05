@@ -47,6 +47,23 @@ public class TextAnnotationOptionTests
     }
 
     [Fact]
+    public void AnAppearanceThatRunsOutOfOperationsMarksThePageTruncated()
+    {
+        // 220 x 220 x 220 operations, past the interpreter's 10,000,000.
+        string Repeat(string op) => string.Concat(Enumerable.Repeat(op, 220));
+        var document = TextTestPdf.Page(TextTestPdf.Line(100, 700, "body"), "/Font <</F1 5 0 R>>", "/Annots [8 0 R]", pdf =>
+        {
+            TextTestPdf.Font(pdf, 5);
+            pdf.Obj(8, "<</Type /Annot /Subtype /Stamp /Rect [0 0 100 100] /AP <</N 9 0 R>>>>");
+            pdf.Stream(9, "/Type /XObject /Subtype /Form /BBox [0 0 100 100] /Resources <</XObject <</B 10 0 R>>>>", Repeat("/B Do "));
+            pdf.Stream(10, "/Type /XObject /Subtype /Form /BBox [0 0 100 100] /Resources <</XObject <</C 11 0 R>>>>", Repeat("/C Do "));
+            pdf.Stream(11, "/Type /XObject /Subtype /Form /BBox [0 0 100 100]", Repeat("n "));
+        });
+        Assert.False(TextPage.Create(document, document.Pages[0]).IsTruncated);
+        Assert.True(TextPage.Create(document, document.Pages[0], new TextPageOptions(IncludeAnnotations: true)).IsTruncated);
+    }
+
+    [Fact]
     public void TextWithAnnotationsIsRefusedWhereOperatorIndexesAreUsed()
     {
         var document = Annotated();

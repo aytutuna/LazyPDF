@@ -1,0 +1,173 @@
+# One line is "<op> <words>". Bytes of a content stream are escaped (\n \r \t \\ \xHH); strings of a query or a text use \uXXXX \xHH \n \t \\.
+# page <pageEntries> ;; <resources> ;; <content> ;; <object> ...: a one-page file (600 x 800) turned into a text page and dumped.
+#   "-" is nothing, and for the resources it is /Font <</F1 5 0 R>>. An object is "font N [code=hex,...]" (the half em wide
+#   font of TextTestPdf as objects N and N+1, a code's text as four hex digits per UTF-16 unit), "obj N <text>",
+#   "stream N <entries or -> :: <bytes>" or "catalog <entries>". {line X Y text}, {size S X Y text} and {col X TOP prefix N}
+#   stand for lines of 10 point text, text of size S and N lines 12 points apart.
+# pageopts <flags> ;; <page ...>: the same with A (no artifacts), D (keep duplicates) and N (annotations) as options.
+# search <flags> ;; <query> ;; <page ...>: c match case, w whole word, r regex, f fold diacritics. The hits of one page.
+# text <flags> <string>: what the search does to one string (flags c and f). blocks <kind>: UTF-16 unit tables.
+# fixture <file> <password or ->: every page of a file in Tests/Fixtures/Documents, or of the one under Tests/Fixtures that a path names.
+page - ;; - ;; 0 0 1 rg {line 100 700 Hi} ;; font 5
+page - ;; - ;; BT /F1 10 Tf 100 700 Td [(ab) -600 (cd)] TJ ( ef) Tj ET ;; font 5
+page - ;; - ;; BT /F1 10 Tf 100 700 Td [(A) 60 (V) -50 (A)] TJ ET ;; font 5
+page - ;; - ;; {line 100 700 \\001nd} ;; font 5 1=00660069
+page - ;; - ;; {line 100 700 \\001\\002} ;; font 5 1=FB01,2=FEED
+page - ;; - ;; BT /F1 10 Tf 3 Tr 100 700 Td (ocr) Tj 7 Tr (gone) Tj ET ;; font 5
+page - ;; - ;; q 0 0 50 50 re W n {line 200 700 clipped}Q {line -300 700 off}{line 100 100 kept} ;; font 5
+page - ;; - ;; q 100 690 22 30 re W n {line 100 700 abcdefgh}Q ;; font 5
+page - ;; - ;; {line 100 700 body}/Artifact BMC {line 100 50 footer}EMC ;; font 5
+pageopts A ;; - ;; - ;; {line 100 700 body}/Artifact BMC {line 100 50 footer}EMC ;; font 5
+page - ;; - ;; /Span <</ActualText (Hello)>> BDC {line 100 700 xyz}EMC {line 100 650 after} ;; font 5
+page - ;; - ;; /Span <</ActualText <FEFF00E900E8>>> BDC {line 100 700 ab}EMC ;; font 5
+page - ;; - ;; /Span <</ActualText ()>> BDC {line 100 700 xyz}EMC {line 100 650 kept} ;; font 5
+page - ;; - ;; /Span <</ActualText (\\204)>> BDC BT /F1 10 Tf 100 700 Td (-) Tj ET EMC ;; font 5
+page - ;; - ;; /Span <</ActualText (two lines)>> BDC {line 100 700 xyz}{line 100 640 uvw}EMC ;; font 5
+page - ;; - ;; {line 100 700 Bold}{line 100.4 700 Bold} ;; font 5
+pageopts D ;; - ;; - ;; {line 100 700 Bold}{line 100.4 700 Bold} ;; font 5
+page - ;; - ;; {line 100 700 ll} ;; font 5
+page - ;; - ;; {line 100 700 a\\001b} ;; font 5 1=
+page - ;; /Font <</F1 5 0 R>> /XObject <</Fm 7 0 R>> ;; /Fm Do {line 100 600 page} ;; font 5 ;; stream 7 /Type /XObject /Subtype /Form /BBox [0 0 600 800] /Resources <</Font <</F1 5 0 R>>>> :: {line 100 700 form}
+page - ;; /Font <</F1 5 0 R>> /XObject <</Fm 7 0 R>> ;; /Fm Do ;; font 5 ;; stream 7 /Type /XObject /Subtype /Form /BBox [0 0 600 800] /Resources <</Font <</F1 5 0 R>> /XObject <</Fm 7 0 R>>>> :: /Fm Do {line 100 700 loop}
+page - ;; - ;; BT /F1 10 Tf 100 700 Td [(ab) 5 (cd)] TJ ET ;; font 5
+page - ;; - ;; BT /F1 10 Tf 0 1 -1 0 300 300 Tm (up) Tj ET ;; font 5
+page - ;; - ;;  ;; font 5
+page - ;; - ;; (((( << [ BT ET Tj ;; font 5
+page - ;; - ;; BT /F1 0 Tf 100 700 Td (x) Tj ET ;; font 5
+page - ;; - ;; BT /F1 10 Tf 0 0 0 0 100 100 Tm (flat) Tj ET BT /F1 1000000000000 Tf 1 0 0 1 0 0 Tm (huge) Tj ET ;; font 5
+page - ;; - ;; BT /F1 10 Tf 1 0 0 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 100 100 Tm (x) Tj ET {line 100 700 left}{line 300 700 right} ;; font 5
+page /UserUnit 1000 ;; - ;; {line 100 700 left}{line 300 700 right}BT /F1 10 Tf 1 0 0 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 100 100 Tm (x) Tj ET ;; font 5
+page - ;; - ;; BT /F1 10 Tf 1 0 0.3 1 100 700 Tm (hello world, in italic) Tj ET ;; font 5
+page - ;; - ;; BT /F1 10 Tf 30 Tz 100 700 Td (Hello million) Tj ET ;; font 5
+page - ;; - ;; BT /F1 1 Tf 100 700 Td (ab ab) Tj ET ;; obj 5 <</Type /Font /Subtype /Type3 /FontBBox [0 -2 8 6] /FontMatrix [1 0 0 1 0 0] /FirstChar 32 /LastChar 98 /Widths [3 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6] /Encoding <</Type /Encoding /Differences [32 /space 97 /a /b]>> /CharProcs <</a 6 0 R /b 6 0 R /space 6 0 R>>>> ;; stream 6 - :: 6 0 0 -2 6 6 d1 0 0 6 6 re f
+page /UserUnit 2 ;; /Font <</F1 5 0 R /F2 7 0 R>> ;; BT /F1 1 Tf 1 -1 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 Tm (a) Tj ET BT /F2 10 Tf 1 -1 1 1 100 700 Tm (b) Tj ET BT /F1 1 Tf 1 -1 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 -1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 -1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 Tm (c) Tj ET ;; obj 5 <</Type /Font /Subtype /Type3 /FontBBox [0 -31800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 8 31800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000] /FontMatrix [1 0 0 1 0 0] /FirstChar 97 /LastChar 99 /Widths [6 6 6] /Encoding <</Type /Encoding /Differences [97 /a /b /c]>> /CharProcs <</a 6 0 R /b 6 0 R /c 6 0 R>>>> ;; stream 6 - :: 6 0 0 -2 6 6 d1 0 0 6 6 re f ;; font 7
+page - ;; - ;; {line 50 700 first line here}{line 50 688 second line here} ;; font 5
+page - ;; - ;; {size 44 50 700 Questions}{size 20 50 678 Expenses and more} ;; font 5
+page - ;; - ;; {line 50 700 one}{line 50 688 two}{line 50 650 three} ;; font 5
+page - ;; - ;; {col 50 700 left 6}{col 330 700 right 6} ;; font 5
+page - ;; - ;; {col 50 700 left 8}{col 330 700 right 8}{line 295 40 7} ;; font 5
+page - ;; - ;; {line 150 760 A heading across the whole page}{col 50 720 left 5}{col 330 720 right 5}{line 50 100 a note under both columns is long enough to cross the gutter between them} ;; font 5
+page - ;; - ;; {col 50 700 lefta 3}{col 50 640 leftb 3}{col 330 700 righta 3}{col 330 640 rightb 3} ;; font 5
+page - ;; - ;; {line 50 600 name0}{line 200 600 0}{line 350 600 city0}{line 50 584 name1}{line 200 584 11}{line 350 584 city1}{line 50 568 name2}{line 200 568 22}{line 350 568 city2}{line 50 552 name3}{line 200 552 33}{line 350 552 city3} ;; font 5
+page - ;; - ;; {line 50 600 a}{line 200 600 b}{line 350 600 c}{line 50 584 d}{line 200 584 e}{line 350 584 f} ;; font 5
+page - ;; - ;; {line 50 600 Item}{line 200 600 Price}{line 50 584 apple}{line 200 584 3}{line 50 568 a long label that is not a cell}{line 50 552 pear}{line 200 552 4}{line 50 536 plum}{line 200 536 5} ;; font 5
+page - ;; - ;; BT /F1 10 Tf 100 700 Td (E = mc) Tj /F1 6 Tf 4 Ts (2) Tj ET ;; font 5
+page - ;; - ;; BT /F1 20 Tf 100 700 Td (Big) Tj 8 Tf ( small) Tj ET ;; font 5
+page - ;; - ;; {line 50 650 third}{line 50 700 first}{line 50 676 second} ;; font 5
+page /Rotate 90 ;; - ;; BT /F1 10 Tf 0 1 -1 0 100 100 Tm (first line of text) Tj ET BT /F1 10 Tf 0 1 -1 0 112 100 Tm (second line of text) Tj ET BT /F1 10 Tf 0 1 -1 0 124 100 Tm (third line of text) Tj ET ;; font 5
+page /Rotate 270 ;; - ;; BT /F1 10 Tf 0 -1 1 0 62 700 Tm (alpha beta) Tj ET BT /F1 10 Tf 0 -1 1 0 50 700 Tm (gamma delta) Tj ET ;; font 5
+page /Rotate 180 ;; - ;; {line 50 700 upside down}{line 50 688 and more} ;; font 5
+page - ;; /Font <</V 6 0 R>> ;; BT /V 10 Tf 300 700 Td <000100020003> Tj ET BT /V 10 Tf 280 700 Td <000400050006> Tj ET ;; obj 6 <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-V /DescendantFonts [7 0 R] /ToUnicode 8 0 R>> ;; obj 7 <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /DW 1000>> ;; stream 8 - :: /CIDInit /ProcSet findresource begin 12 dict begin begincmap 1 begincodespacerange <0000> <FFFF> endcodespacerange 6 beginbfchar <0001> <0041> <0002> <0042> <0003> <0043> <0004> <0044> <0005> <0045> <0006> <0046> endbfchar endcmap
+page - ;; - ;; BT /F1 10 Tf 0 1 -1 0 30 300 Tm (side label) Tj ET {line 100 700 main text}{line 100 688 more main text} ;; font 5
+page - ;; - ;; BT /F1 10 Tf 100 700 Td [(cell one) -4000 (cell two)] TJ ET ;; font 5
+page - ;; - ;; {line 100 700 an informa-}{line 100 688 tion line} ;; font 5
+page - ;; - ;; {line 50 700 a long informa-}{line 50 688 tion and well-}{line 50 676 Known text} ;; font 5
+page - ;; - ;; {line 100 700 some informa\\001}{line 100 688 tion here} ;; font 5 1=00AD
+page - ;; - ;; {line 100 700 \\003\\002\\001} ;; font 5 1=05D0,2=05D1,3=05D2,4=05D3,5=05D4,6=05D5,7=FEDF,8=FE8E
+page - ;; - ;; {line 100 700 abc \\003\\002\\001 def} ;; font 5 1=05D0,2=05D1,3=05D2,4=05D3,5=05D4,6=05D5,7=FEDF,8=FE8E
+page - ;; - ;; {line 100 700 abc \\006\\005\\004 \\003\\002\\001} ;; font 5 1=05D0,2=05D1,3=05D2,4=05D3,5=05D4,6=05D5,7=FEDF,8=FE8E
+page - ;; - ;; {line 100 700 12.5 \\003\\002\\001} ;; font 5 1=05D0,2=05D1,3=05D2,4=05D3,5=05D4,6=05D5,7=FEDF,8=FE8E
+page - ;; - ;; {line 100 700 \\(\\003\\002\\001\\)} ;; font 5 1=05D0,2=05D1,3=05D2,4=05D3,5=05D4,6=05D5,7=FEDF,8=FE8E
+page - ;; - ;; {line 100 700 \\010\\007} ;; font 5 1=05D0,2=05D1,3=05D2,4=05D3,5=05D4,6=05D5,7=FEDF,8=FE8E
+page - ;; - ;; {line 100 700 50%\\001} ;; font 5 1=05D0
+page - ;; - ;; {line 100 700 (50\\001%) and $5\\001 #3} ;; font 5 1=05D0
+page - ;; - ;; {line 330 700 \\001\\002\\003 \\001\\002\\003 \\001\\002\\003 \\001\\002\\003 \\001\\002\\003}{line 330 688 \\001\\002\\003 \\001\\002\\003 \\001\\002\\003 \\001\\002\\003 \\001\\002\\003}{line 330 676 \\001\\002\\003 \\001\\002\\003 \\001\\002\\003 \\001\\002\\003 \\001\\002\\003}{line 330 664 \\001\\002\\003 \\001\\002\\003 \\001\\002\\003 \\001\\002\\003 \\001\\002\\003}{line 50 700 \\004\\005\\006 \\004\\005\\006 \\004\\005\\006 \\004\\005\\006 \\004\\005\\006}{line 50 688 \\004\\005\\006 \\004\\005\\006 \\004\\005\\006 \\004\\005\\006 \\004\\005\\006}{line 50 676 \\004\\005\\006 \\004\\005\\006 \\004\\005\\006 \\004\\005\\006 \\004\\005\\006}{line 50 664 \\004\\005\\006 \\004\\005\\006 \\004\\005\\006 \\004\\005\\006 \\004\\005\\006} ;; font 5 1=05D0,2=05D1,3=05D2,4=05D3,5=05D4,6=05D5
+page - ;; /Font <</F1 10 0 R>> /Properties <</L1 7 0 R /L2 8 0 R /M 9 0 R>> /XObject <</Fm 21 0 R>> ;; BT /F1 12 Tf 20 250 Td (plain) Tj ET /OC /L1 BDC BT /F1 12 Tf 20 200 Td (notes) Tj ET EMC /OC /L2 BDC BT /F1 12 Tf 20 150 Td (extra) Tj ET EMC /OC /M BDC BT /F1 12 Tf 20 100 Td (member) Tj ET EMC /Fm Do ;; catalog /OCProperties <</OCGs [7 0 R 8 0 R] /D <</OFF [7 0 R]>>>> ;; obj 10 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>> ;; obj 7 <</Type /OCG /Name (Notes)>> ;; obj 8 <</Type /OCG /Name (Extra)>> ;; obj 9 <</Type /OCMD /OCGs [7 0 R 8 0 R] /P /AllOn>> ;; stream 21 /Type /XObject /Subtype /Form /BBox [0 0 300 300] /OC 7 0 R /Resources <</Font <</F1 10 0 R>>>> :: BT /F1 12 Tf 20 50 Td (inform) Tj ET
+page - ;; /Font <</F1 10 0 R>> /Properties <</L1 7 0 R /L2 8 0 R /M 9 0 R>> /XObject <</Fm 21 0 R>> ;; BT /F1 12 Tf 20 250 Td (plain) Tj ET /OC /L1 BDC BT /F1 12 Tf 20 200 Td (notes) Tj ET EMC /OC /L2 BDC BT /F1 12 Tf 20 150 Td (extra) Tj ET EMC /OC /M BDC BT /F1 12 Tf 20 100 Td (member) Tj ET EMC /Fm Do ;; catalog /OCProperties <</OCGs [7 0 R 8 0 R] /D <</OFF [8 0 R]>>>> ;; obj 10 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>> ;; obj 7 <</Type /OCG /Name (Notes)>> ;; obj 8 <</Type /OCG /Name (Extra)>> ;; obj 9 <</Type /OCMD /OCGs [7 0 R 8 0 R] /P /AllOn>> ;; stream 21 /Type /XObject /Subtype /Form /BBox [0 0 300 300] /OC 7 0 R /Resources <</Font <</F1 10 0 R>>>> :: BT /F1 12 Tf 20 50 Td (inform) Tj ET
+page - ;; /Font <</F1 10 0 R>> /Properties <</L1 7 0 R /L2 8 0 R /M 9 0 R>> /XObject <</Fm 21 0 R>> ;; BT /F1 12 Tf 20 250 Td (plain) Tj ET /OC /L1 BDC BT /F1 12 Tf 20 200 Td (notes) Tj ET EMC /OC /L2 BDC BT /F1 12 Tf 20 150 Td (extra) Tj ET EMC /OC /M BDC BT /F1 12 Tf 20 100 Td (member) Tj ET EMC /Fm Do ;; catalog /OCProperties <</OCGs [7 0 R 8 0 R] /D <</OFF []>>>> ;; obj 10 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>> ;; obj 7 <</Type /OCG /Name (Notes)>> ;; obj 8 <</Type /OCG /Name (Extra)>> ;; obj 9 <</Type /OCMD /OCGs [7 0 R 8 0 R] /P /AllOn>> ;; stream 21 /Type /XObject /Subtype /Form /BBox [0 0 300 300] /OC 7 0 R /Resources <</Font <</F1 10 0 R>>>> :: BT /F1 12 Tf 20 50 Td (inform) Tj ET
+pageopts N ;; /Annots [6 0 R 7 0 R] ;; /Font <</F1 5 0 R>> ;; BT /F1 12 Tf 50 700 Td (Page 1 body text) Tj ET ;; obj 5 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>> ;; obj 6 <</Type /Annot /Subtype /FreeText /Rect [40 300 240 340] /F 0 /AP <</N 8 0 R>>>> ;; obj 7 <</Type /Annot /Subtype /Widget /FT /Tx /T (f1) /V (typed value) /Rect [40 40 240 60] /F 4 /AP <</N 9 0 R>>>> ;; stream 8 /Type /XObject /Subtype /Form /BBox [0 0 200 40] /Resources <</Font <</F1 5 0 R>>>> :: BT /F1 12 Tf 2 12 Td (comment text) Tj ET ;; stream 9 /Type /XObject /Subtype /Form /BBox [0 0 200 20] /Resources <</Font <</F1 5 0 R>>>> :: BT /F1 12 Tf 2 5 Td (typed value) Tj ET
+pageopts N ;; /Annots [6 0 R 7 0 R] ;; /Font <</F1 5 0 R>> ;; BT /F1 12 Tf 50 700 Td (Page 1 body text) Tj ET ;; obj 5 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>> ;; obj 6 <</Type /Annot /Subtype /FreeText /Rect [40 300 240 340] /F 2 /AP <</N 8 0 R>>>> ;; obj 7 <</Type /Annot /Subtype /Popup /Rect [40 40 240 60] /AP <</N 9 0 R>>>> ;; stream 8 /Type /XObject /Subtype /Form /BBox [0 0 200 40] /Resources <</Font <</F1 5 0 R>>>> :: BT /F1 12 Tf 2 12 Td (secret remark) Tj ET ;; stream 9 /Type /XObject /Subtype /Form /BBox [0 0 200 20] /Resources <</Font <</F1 5 0 R>>>> :: BT /F1 12 Tf 2 5 Td (popup text) Tj ET
+page - ;; /Font <</F1 5 0 R>> ;; BT /F1 12 Tf 50 700 Td (Page 1 body text) Tj ET ;; catalog /Lang (en) ;; obj 5 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+search - ;; the ;; - ;; - ;; {line 100 700 The quick Brown fox}{line 100 688 jumps over the lazy dog}{line 100 676 The end} ;; font 5
+search c ;; The ;; - ;; - ;; {line 100 700 The quick Brown fox}{line 100 688 jumps over the lazy dog}{line 100 676 The end} ;; font 5
+search c ;; brown ;; - ;; - ;; {line 100 700 The quick Brown fox}{line 100 688 jumps over the lazy dog}{line 100 676 The end} ;; font 5
+search w ;; ov ;; - ;; - ;; {line 100 700 The quick Brown fox}{line 100 688 jumps over the lazy dog}{line 100 676 The end} ;; font 5
+search w ;; over ;; - ;; - ;; {line 100 700 The quick Brown fox}{line 100 688 jumps over the lazy dog}{line 100 676 The end} ;; font 5
+search w ;; the ;; - ;; - ;; {line 100 700 The quick Brown fox}{line 100 688 jumps over the lazy dog}{line 100 676 The end} ;; font 5
+search - ;; fox jumps ;; - ;; - ;; {line 100 700 The quick Brown fox}{line 100 688 jumps over the lazy dog}{line 100 676 The end} ;; font 5
+search - ;;   fox     jumps   ;; - ;; - ;; {line 100 700 The quick Brown fox}{line 100 688 jumps over the lazy dog}{line 100 676 The end} ;; font 5
+search r ;; \\b[qj]\\w+ ;; - ;; - ;; {line 100 700 The quick Brown fox}{line 100 688 jumps over the lazy dog}{line 100 676 The end} ;; font 5
+search rc ;; Brown\\s+fox ;; - ;; - ;; {line 100 700 The quick Brown fox}{line 100 688 jumps over the lazy dog}{line 100 676 The end} ;; font 5
+search r ;; fox\\sjumps ;; - ;; - ;; {line 100 700 The quick Brown fox}{line 100 688 jumps over the lazy dog}{line 100 676 The end} ;; font 5
+search rw ;; x* ;; - ;; - ;; {line 100 700 The quick Brown fox}{line 100 688 jumps over the lazy dog}{line 100 676 The end} ;; font 5
+search rw ;; qu\\w+|the ;; - ;; - ;; {line 100 700 The quick Brown fox}{line 100 688 jumps over the lazy dog}{line 100 676 The end} ;; font 5
+search r ;; ( ;; - ;; - ;; {line 100 700 The quick Brown fox} ;; font 5
+search r ;; (?<w>o\\w) ;; - ;; - ;; {line 100 700 The quick Brown fox}{line 100 688 jumps over the lazy dog} ;; font 5
+search - ;; a   b ;; - ;; - ;; BT /F1 10 Tf 100 700 Td [(a) -800 (b)] TJ ET ;; font 5
+search - ;; one two ;; - ;; - ;; BT /F1 10 Tf 100 700 Td [(one) -700 (two)] TJ ET ;; font 5
+search - ;; information ;; - ;; - ;; {line 100 700 some informa-}{line 100 688 tion and a well-}{line 100 676 known case} ;; font 5
+search - ;; well-known ;; - ;; - ;; {line 100 700 some informa-}{line 100 688 tion and a well-}{line 100 676 known case} ;; font 5
+search - ;; informa-tion ;; - ;; - ;; {line 100 700 some informa-}{line 100 688 tion and a well-}{line 100 676 known case} ;; font 5
+search - ;; information ;; - ;; - ;; {line 100 700 some informa\\001}{line 100 688 tion here} ;; font 5 1=00AD
+search - ;; xab ;; - ;; - ;; {line 100 700 xab ab ab} ;; font 5
+search w ;; ab ab ;; - ;; - ;; {line 100 700 xab ab ab} ;; font 5
+search - ;; aa ;; - ;; - ;; {line 100 700 aaaa} ;; font 5
+search w ;; -x ;; - ;; - ;; {line 100 700 a -x b} ;; font 5
+search - ;; cafe ;; - ;; - ;; {line 100 700 caf\\001 na\\002ve r\\003sum\\001} ;; font 5 1=00E9,2=00EF,3=00E9
+search f ;; cafe ;; - ;; - ;; {line 100 700 caf\\001 na\\002ve r\\003sum\\001} ;; font 5 1=00E9,2=00EF,3=00E9
+search f ;; naive ;; - ;; - ;; {line 100 700 caf\\001 na\\002ve r\\003sum\\001} ;; font 5 1=00E9,2=00EF,3=00E9
+search f ;; r\u00E9sum\u00E9 ;; - ;; - ;; {line 100 700 caf\\001 na\\002ve r\\003sum\\001} ;; font 5 1=00E9,2=00EF,3=00E9
+search f ;; resume ;; - ;; - ;; {line 100 700 caf\\001 na\\002ve r\\003sum\\001} ;; font 5 1=00E9,2=00EF,3=00E9
+search - ;; caf\u00E9 ;; - ;; - ;; {line 100 700 caf\\001 na\\002ve r\\003sum\\001} ;; font 5 1=00E9,2=00EF,3=00E9
+search f ;; cafe ;; - ;; - ;; {line 100 700 cafe\\001} ;; font 5 1=0301
+search - ;; \u0130stanbul ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search - ;; istanbul ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search - ;; Istanbul ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search - ;; \u0131\u015F\u0131k ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search - ;; isik ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search - ;; izmir ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search - ;; \u0131zmir ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search f ;; istanbul ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search f ;; \u0130STANBUL ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search f ;; isik ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search f ;; ISIK ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search f ;; \u0131zmir ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search f ;; izmir ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search c ;; Istanbul ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search c ;; \u0130stanbul ;; - ;; - ;; {line 100 700 \\001stanbul \\002\\003\\002k \\004zmir} ;; font 5 1=0130,2=0131,3=015F,4=0049
+search - ;; istanbul ;; - ;; - ;; {line 100 700 \\001STANBUL} ;; font 5 1=0130
+search rf ;; \\b\u015Fehir\\b ;; - ;; - ;; {line 100 700 \\001ehir} ;; font 5 1=015F
+search f ;; strasse ;; - ;; - ;; {line 100 700 Stra\\001e \\002sir Ol\\003f} ;; font 5 1=00DF,2=00C6,3=00F8
+search f ;; aesir ;; - ;; - ;; {line 100 700 Stra\\001e \\002sir Ol\\003f} ;; font 5 1=00DF,2=00C6,3=00F8
+search f ;; olof ;; - ;; - ;; {line 100 700 Stra\\001e \\002sir Ol\\003f} ;; font 5 1=00DF,2=00C6,3=00F8
+search - ;; find ;; - ;; - ;; {line 100 700 \\001nd the \\002ow} ;; font 5 1=FB01,2=FB02
+search - ;; flow ;; - ;; - ;; {line 100 700 \\001nd the \\002ow} ;; font 5 1=FB01,2=FB02
+search - ;; \u03C3\u03BF ;; - ;; - ;; {line 100 700 \\001\\002 \\003\\001} ;; font 5 1=03A3,2=039F,3=03A3
+text - Istanbul \u0130stanbul \u0131\u015F\u0131k ISIK
+text f Istanbul \u0130stanbul \u0131\u015F\u0131k ISIK
+text c Istanbul \u0130stanbul \u0131\u015F\u0131k ISIK
+text cf Istanbul \u0130stanbul \u0131\u015F\u0131k ISIK
+text - Stra\u00DFe \u1E9E \u00C6sir Ol\u00F8f \u0152uvre \u0141\u00F3d\u017A \u0110ur\u0111ev
+text f Stra\u00DFe \u1E9E \u00C6sir Ol\u00F8f \u0152uvre \u0141\u00F3d\u017A \u0110ur\u0111ev
+text f r\u00E9sum\u00E9 na\u00EFve cafe\u0301 \u00C5ngstr\u00F6m \u00F1 \u1EA1 \u1E0D
+text - \u0391\u03A3 \u03A3\u0391\u03A3 \u0386 \u0388 \u03C2
+text f \u0391\u03A3 \u03A3\u0391\u03A3 \u0386 \u0388 \u03C2
+text - \u0410\u0411\u042F \u0401 \u0419 \u04C0
+text f \u0410\u0411\u042F \u0401 \u0419 \u04C0
+text - \u212A \u2126 \u0178 \u1E9E \u01C5 \u01C8 \u2160 \u24B6
+text - \uFB01nd \uFB02ow \uFB03 \uFB00 \uFB06
+text - \uFEDF\uFE8E \uFE8D \uFEED \uFDF2 \uFDFA
+text - a\u200Bb\uFEFFc\x01d\x7Fe\x9Ff\x85g
+text - \u00A0\u2003 spaced   out\u00A0\u2003text \t\n
+text f \u4E2D\u6587 \uAC00\uD55C \u3042\u30A2 \uFF21\uFF22
+text - Hello World 123 abc.def
+text c Hello World 123 abc.def
+text - \u05D0\u05D1 \u0627\u0644 abc 123 \u0661\u0662\u0663 \u06F1\u06F2
+text - \u00B2 \u00BD \u2460 \u2070 \u02B0 \u2000\u2028
+blocks letter
+blocks lower
+blocks white
+blocks mark
+blocks tolower
+blocks toloweri
+blocks strip
+blocks clean
+fixture crypt-rc4-40.pdf secret
+fixture crypt-aes128.pdf secret
+fixture crypt-aes256-r5.pdf secret
+fixture crypt-aes256.pdf secret
+fixture crypt-aes256.pdf owner
+fixture locked.pdf secret
+fixture owner-only-rc4.pdf -
+fixture owner-only-aes.pdf -
+fixture golden/text/text-pages.pdf -

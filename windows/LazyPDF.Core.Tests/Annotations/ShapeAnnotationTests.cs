@@ -218,5 +218,16 @@ public class ShapeAnnotationTests
         Assert.Throws<ArgumentException>(() => writer.AddPolyLine(page, [(1, 1)]));
         Assert.Throws<ArgumentException>(() => writer.AddInk(page, []));
         Assert.Throws<ArgumentException>(() => writer.AddSquare(page, new PdfRect(5, 5, 5, 5), new AnnotationStyle(Width: 0)));
+        Assert.Throws<ArgumentException>(() => writer.AddStamp(page, new PdfRect(5, 5, 5, 5), "Draft"));
+        Assert.Throws<ArgumentException>(() => writer.AddFreeText(page, new PdfRect(5, 5, 5, 5), "x"));
+        Assert.Throws<ArgumentException>(() => writer.AddImageStamp(page, new PdfRect(5, 5, 5, 5), 1, 1, [0, 0, 0, 255]));
+    }
+
+    [Fact]
+    public void CloudBorderOfAnInfiniteEdgeStaysSmall()
+    {
+        (double X, double Y)[] corners = [(double.NegativeInfinity, 0), (10, 0), (10, 50), (double.NegativeInfinity, 50)];
+        Assert.Equal(4, CloudBorder.Resample(corners, 10).Count);
+        Assert.Equal(4, CloudBorder.RectPoints(double.NegativeInfinity, 0, 10, 50, 10).Count);
     }
 }

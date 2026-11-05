@@ -29,6 +29,8 @@ internal sealed partial class PageImporter
     public List<PdfReference> Import(IReadOnlyList<int> indexes, CancellationToken cancel = default)
     {
         var pages = _source.Pages;
+        // A field made by an earlier import is not this one's: the copies of a document listed twice each get their own.
+        _fields.Clear();
         var made = new List<(PdfPage Page, PdfReference Ref, PdfDictionary Dict)>();
         foreach (int index in indexes)
         {

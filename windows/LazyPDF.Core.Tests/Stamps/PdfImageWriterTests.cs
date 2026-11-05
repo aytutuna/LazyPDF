@@ -23,6 +23,14 @@ public class PdfImageWriterTests
     private static PdfStream Stream(PdfDocument document, PdfImage image) => (PdfStream)document.Resolve(image.Reference)!;
 
     [Fact]
+    public void APictureWithTooManyPixelsIsRefusedNotAsAMistake()
+    {
+        var document = StampKit.Doc(1);
+        var error = Assert.Throws<InvalidOperationException>(() => PdfImageWriter.AddRgba(document, 12000, 12000, []));
+        Assert.Equal(StampsText.PictureTooLarge, error.Message);
+    }
+
+    [Fact]
     public void AJpegGoesInAsItIsWithItsSize()
     {
         var document = StampKit.Doc(1);

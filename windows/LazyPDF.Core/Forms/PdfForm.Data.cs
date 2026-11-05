@@ -14,7 +14,7 @@ public sealed partial class PdfForm
         foreach (var field in Exported())
         {
             var node = root;
-            foreach (string part in field.Name.Split('.')) node = node.Child(part);
+            foreach (string part in field.Name.Split('.', MaxFdfParts)) node = node.Child(part);
             node.Value = FdfValue(field);
         }
         fdf.Fields.AddRange(root.Children.Select(c => c.ToField()));
@@ -49,6 +49,9 @@ public sealed partial class PdfForm
         var fields = Exported().ToList();
         return FormCsv.Write([fields.Select(f => f.Name), fields.Select(CsvValue)]);
     }
+
+    // The nesting stays as deep as PdfFdf reads; the rest of a longer name is kept as one part, so the name joins back whole.
+    private const int MaxFdfParts = 32;
 
     private IEnumerable<FormField> Exported() => _fields
         .Where(f => f.Kind is not (FieldKind.PushButton or FieldKind.Signature) && !f.Has(FieldFlags.NoExport))

@@ -84,6 +84,17 @@ internal static class TextBidi
                 _ => -1,
             };
         }
+        // Everything to the right of a neutral is still unresolved when it is reached, so where the scans to the right stop is
+        // known beforehand: rescanning for every neutral is quadratic on a long run of them.
+        var terminator = new bool[n];
+        for (int i = 0; i < n; i++) terminator[i] = levels[i] < 0 && IsTerminator(line[i].Text);
+        var nextResolved = new int[n];
+        var endOfTerminators = new int[n];
+        for (int i = n - 1; i >= 0; i--)
+        {
+            nextResolved[i] = i + 1 < n && levels[i + 1] < 0 ? nextResolved[i + 1] : i + 1;
+            endOfTerminators[i] = i + 1 < n && terminator[i + 1] ? endOfTerminators[i + 1] : i + 1;
+        }
         for (int i = 0; i < n; i++)
         {
             if (levels[i] >= 0) continue;
@@ -95,16 +106,14 @@ internal static class TextBidi
             if (IsTerminator(line[i].Text))
             {
                 // W5: a run of terminators beside a European number belongs to the number.
-                int left1 = i - 1, right1 = i + 1;
+                int left1 = i - 1, right1 = endOfTerminators[i];
                 while (left1 >= 0 && levels[left1] < 0 && IsTerminator(line[left1].Text)) left1--;
-                while (right1 < n && levels[right1] < 0 && IsTerminator(line[right1].Text)) right1++;
                 if (left1 >= 0 && classes[left1] == BidiClass.EN) levels[i] = levels[left1];
                 else if (right1 < n && classes[right1] == BidiClass.EN) levels[i] = levels[right1];
                 if (levels[i] >= 0) continue;
             }
-            int a = i - 1, b = i + 1;
+            int a = i - 1, b = nextResolved[i];
             while (a >= 0 && levels[a] < 0) a--;
-            while (b < n && levels[b] < 0) b++;
             int left = a >= 0 ? Direction(classes[a], levels[a]) : para, right = b < n ? Direction(classes[b], levels[b]) : para;
             int direction = left == right ? left : para;
             levels[i] = direction == 1 ? 1 : evenL;

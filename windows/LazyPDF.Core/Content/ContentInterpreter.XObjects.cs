@@ -139,7 +139,7 @@ public sealed partial class ContentInterpreter
                 _ => null,
             };
         }
-        var marked = new MarkedContent(tag, properties, properties is null ? null : (int?)_doc.Integer(properties, "MCID"), tag == "OC" ? properties : null);
+        var marked = new MarkedContent(tag, properties, properties is null ? null : _doc.Integer(properties, "MCID") is >= int.MinValue and <= int.MaxValue and var mcid ? (int)mcid : null, tag == "OC" ? properties : null);
         _marked.Add(marked);
         _visitor.BeginMarked(_context, marked);
     }

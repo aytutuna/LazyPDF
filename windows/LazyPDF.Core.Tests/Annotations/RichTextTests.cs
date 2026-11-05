@@ -54,4 +54,12 @@ public class RichTextTests
         string deep = string.Concat(Enumerable.Repeat("<span>", 5000)) + "x" + string.Concat(Enumerable.Repeat("</span>", 5000));
         Assert.Equal("x", PdfRichText.ToPlain("<body>" + deep + "</body>"));
     }
+
+    [Fact]
+    public void ALeadingXmlDeclarationIsAllowed()
+    {
+        Assert.Equal("hello", PdfRichText.ToPlain("<?xml version=\"1.0\"?><body xmlns=\"http://www.w3.org/1999/xhtml\"><p>hello</p></body>"));
+        Assert.Equal("", PdfRichText.ToPlain(" <?xml version=\"1.0\"?><p>late</p>"));
+        Assert.Equal("", PdfRichText.ToPlain("<?xml?><p>bad</p>"));
+    }
 }

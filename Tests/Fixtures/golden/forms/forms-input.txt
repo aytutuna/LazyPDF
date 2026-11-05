@@ -1,0 +1,138 @@
+# One line is "<op> <words>". Bytes are escaped (\n \r \t \\ \xHH).
+# parse <script>: the calls FormScriptParser reads (n number, s string, [..] list), or null.
+# format <script>|<value>: the text and colour the AF format call shows. check <script>|<value>: the keystroke or range message.
+# number <text>: ParseNumber. calc <function>|<v1,v2,..>: AFSimple_Calculate over fields a, b, c.. holding the values.
+# csv <bytes>: rows read, then written again.
+# fill <name>\t<value>: a field of the test form set (no value clears it), with its widgets and the appearance streams decoded.
+# reset, author, style, flatten, export: the test form reset, a form built from every kind of field, restyled, flattened, exported.
+# detect <content>: the blanks FieldDetector finds on a page drawing that content.
+parse AFNumber_Format(2, 0, 0, 0, "$", true);
+parse AFNumber_Format(2,0,0,0,'',true)
+parse // totals\nAFSimple_Calculate("SUM", new Array("a", "b"));
+parse AFDate_FormatEx("dd/mm/yyyy"); AFRange_Validate(true, 0, false, 0)
+parse AFSimple_Calculate('AVG', ['a','b'])
+parse AFNumber_Format(2, -1, 3.5, 0, 'A\\'s \\u0041\\n', false)
+parse /* c */ AFSpecial_Format(0) /* d */
+parse event.value = 1;
+parse AFNumber_Format(2, 0, 0, 0, "$", true); app.alert(1);
+parse AFNumber_Format(x);
+parse AFNumber_Format(2, 0
+parse AFUnknown_Format(2);
+parse AFNumber_Format(1, [2, [3, null, true]], new Array(4))
+format AFNumber_Format(2, 0, 0, 0, "", true)|1234.5
+format AFNumber_Format(0, 1, 0, 0, "", true)|1234.5
+format AFNumber_Format(2, 2, 0, 0, "", true)|1234.5
+format AFNumber_Format(2, 3, 0, 0, "", true)|1234,5
+format AFNumber_Format(2, 4, 0, 0, "", true)|1234567.891
+format AFNumber_Format(2, 0, 0, 0, " TL", false)|10
+format AFNumber_Format(2, 0, 0, 0, "$", true)|-3
+format AFNumber_Format(2, 0, 2, 0, "", true)|-3
+format AFNumber_Format(2, 0, 1, 0, "", true)|-3
+format AFNumber_Format(0, 0, 3, 0, "", true)|-0.4
+format AFNumber_Format(1, 0, 0, 0, "", true)|0.25
+format AFNumber_Format(1, 0, 0, 0, "", true)|0.35
+format AFNumber_Format(15, 0, 0, 0, "", true)|1
+format AFNumber_Format(2, 0, 0, 0, "", true)|abc
+format AFNumber_Format(2, 0, 0, 0, "", true)|
+format AFPercent_Format(1, 0)|0.256
+format AFPercent_Format(0, 3)|-0.5
+format AFDate_FormatEx("dd/mm/yyyy")|2024-03-05
+format AFDate_FormatEx("dd/mm/yyyy")|03/04/2024
+format AFDate_FormatEx("mmmm d, yyyy")|3/5/2024
+format AFDate_FormatEx("dddd, mmmm d, yyyy")|March 5, 2024
+format AFDate_FormatEx("ddd d mmm yy")|2024-12-31
+format AFDate_Format(2)|2024-03-05
+format AFDate_Format(3)|2/29/2024
+format AFDate_Format(11)|2024-03-05
+format AFDate_Format(1)|not a date
+format AFDate_Format(1)|2/30/2024
+format AFTime_Format(1)|13:05
+format AFTime_Format(0)|1:05 pm
+format AFTime_Format(3)|12:00:00 am
+format AFTime_FormatEx("HH:MM:ss")|9:05:07 am
+format AFTime_FormatEx("hh:MM:ss tt")|21:05:07
+format AFSpecial_Format(0)|34000
+format AFSpecial_Format(1)|340001234
+format AFSpecial_Format(2)|5551234567
+format AFSpecial_Format(2)|555-1234
+format AFSpecial_Format(3)|123456789
+format AFSpecial_Format(2)|123456789012
+format AFSpecial_Format(0)|123
+check AFRange_Validate(true, 0, true, 100)|50
+check AFRange_Validate(true, 0, true, 100)|101
+check AFRange_Validate(true, 0, false, 0)|-1
+check AFRange_Validate(false, 0, true, 9)|10
+check AFRange_Validate(true, 0, true, 100)|x
+check AFNumber_Keystroke(2, 0, 0, 0, "", true)|x1y
+check AFNumber_Keystroke(2, 0, 0, 0, "", true)|1,234.5
+check AFPercent_Keystroke(2, 0)|12%
+check AFDate_KeystrokeEx("dd/mm/yyyy")|soon
+check AFDate_KeystrokeEx("dd/mm/yyyy")|2024-03-05
+check AFTime_Keystroke(0)|25:00
+check AFSpecial_Keystroke(2)|12
+check AFSpecial_KeystrokeEx("AA-999")|A1-234
+check AFSpecial_KeystrokeEx("AA-999")|AB-234
+check AFSpecial_KeystrokeEx("OX9")|1x2
+number 1,234.56
+number 1.234,56
+number 1234,5
+number 1,234,567
+number 1.234.567
+number $ 12
+number (7.5)
+number 12%
+number 1'234.5
+number -.5
+number 12abc
+number text
+number
+number 1 2 3
+number 1..2
+calc SUM|3,5,2
+calc AVG|3,5,2
+calc PRD|3,5,2
+calc MIN|3,5,2
+calc MAX|3,5,2
+calc SUM|0.1,0.2
+calc SUM|0.00001,0
+calc SUM|-0.00000000001,0
+calc SUM|123456789012345678,0
+calc SUM|100000000000000,1
+calc AVG|
+calc MIN|1.5,x,-2
+calc SUM|1234567.891,0.5
+calc MAX|0.000123,0.0004
+csv a,b,c\r\n1,2,3\r\n
+csv \xEF\xBB\xBFa;b;c\r\n1;"x;y";\r\n\r\n"two\nlines";"say ""hi""";3\r\n
+csv a\tb\n1\t2
+csv only
+csv
+csv a," b ",\n,,\n"unterminated
+fill name\tAda Lovelace
+fill name\t
+fill agree\tYes
+fill agree\tno
+fill agree\tmaybe
+fill choice\tb
+fill choice\tzzz
+fill city\tIzmir
+fill city\tBursa
+fill city\tNowhere
+fill langs\tEnglish; German
+fill langs\tLatin
+fill code\t1234567
+fill code\tab
+fill secret\tabc
+fill bio\tone two three four five six seven eight nine ten eleven twelve thirteen\nsecond paragraph
+fill bio\tSupercalifragilisticexpialidocious_Supercalifragilisticexpialidocious_Supercalifragilisticexpialidocious
+fill sig\tx
+reset
+author
+style
+flatten
+export
+detect BT /F1 12 Tf 50 700 Td (Name:) Tj ET\n0.5 w 100 698 m 300 698 l S\nBT /F1 12 Tf 50 650 Td (Address: ____________) Tj ET\n50 600 10 10 re S\nBT /F1 12 Tf 66 601 Td (I agree) Tj ET\nBT /F1 12 Tf 50 560 Td (Code) Tj ET\n100 550 14 18 re S 114 550 14 18 re S 128 550 14 18 re S 142 550 14 18 re S 156 550 14 18 re S 170 550 14 18 re S\nBT /F1 12 Tf 50 500 Td (Phone:) Tj ET\n61 455 m 61 458.314 58.314 461 55 461 c 51.686 461 49 458.314 49 455 c 49 451.686 51.686 449 55 449 c 58.314 449 61 451.686 61 455 c h S\nBT /F1 12 Tf 66 452 Td (Choice) Tj ET\n0.8 g 50 380 100 20 re f 0 g\nBT /F1 12 Tf 300 300 Td (Printed text) Tj ET\n300 298 m 420 298 l S\n50 200 m 250 200 l S 50 200 m 50 230 l S 250 200 m 250 230 l S
+detect BT /F1 12 Tf 50 700 Td (Name:) Tj ET 100 698 m 300 698 l S BT /F1 12 Tf 50 650 Td (Name:) Tj ET 100 648 m 300 648 l S
+detect BT /F1 12 Tf 50 700 Td (Just a sentence on the page.) Tj ET
+detect BT /F1 12 Tf 50 700 Td (Notes) Tj ET 50 600 200 60 re S 150 600 m 150 660 l S
+detect q q q Q Q Q Q ) ] >> BT (x) Tj

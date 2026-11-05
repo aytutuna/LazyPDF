@@ -48,6 +48,15 @@ public class HeaderFooterTests
     }
 
     [Fact]
+    public void ANumberPastTheEndOfAnIntWraps()
+    {
+        var document = StampKit.Doc(2);
+        new PdfStamper(document).AddHeaderFooter(new HeaderFooterSpec { Footer = new("", "{page} of {pages}", ""), StartNumber = int.MaxValue });
+        Assert.Equal("2147483647 of -2147483648", Shown(document, 0));
+        Assert.Equal("-2147483648 of -2147483648", Shown(document, 1));
+    }
+
+    [Fact]
     public void DateFileAndTheDefaultFormat()
     {
         var document = StampKit.Doc(1);

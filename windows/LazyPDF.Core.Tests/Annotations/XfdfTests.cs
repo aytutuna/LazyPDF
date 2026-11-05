@@ -149,6 +149,24 @@ public class XfdfTests
     }
 
     [Fact]
+    public void ColoursBeyondTheRangeClampToItsEnds()
+    {
+        string huge = "-1" + new string('0', 200);
+        var document = Blank(1, pdf => pdf.Obj(20, $"<</Subtype /Square /Rect [0 0 5 5] /C [{huge} 0 0 {huge}]>>"), "/Annots [20 0 R]");
+        string xml = Encoding.UTF8.GetString(PdfXfdf.Write(PdfFdf.Export(document)));
+        Assert.Contains("color=\"#FFFFFF\"", xml);
+    }
+
+    [Fact]
+    public void AnElementWithManyAttributesIsReadQuickly()
+    {
+        var xml = new StringBuilder("<xfdf xmlns=\"http://ns.adobe.com/xfdf/\"><annots><text page=\"0\" rect=\"1,1,2,2\" name=\"a\"");
+        for (int i = 0; i < 100_000; i++) xml.Append(" a").Append(i).Append("=\"\"");
+        xml.Append("/></annots></xfdf>");
+        Assert.Single(PdfXfdf.Read(xml.ToString()).Annotations);
+    }
+
+    [Fact]
     public void FieldValuesRoundTrip()
     {
         var fdf = new FdfFile();

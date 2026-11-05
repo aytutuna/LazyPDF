@@ -118,4 +118,21 @@ public class PageBoxTests
         PageOperations.RemoveTransitions(document, [0, 1]);
         Assert.All(document.Pages, p => Assert.False(p.Dictionary.ContainsKey("Trans") || p.Dictionary.ContainsKey("Dur")));
     }
+
+    [Fact]
+    public void RemovingABoxKeepsPagesThatWereFoundByScanning()
+    {
+        var pdf = new TestPdf();
+        pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R>>");
+        pdf.Obj(2, "<</Type /Pages /Kids [] /Count 0>>");
+        pdf.Obj(3, "<</Type /Page /MediaBox [0 0 200 300] /CropBox [10 10 50 50]>>");
+        pdf.Obj(4, "<</Type /Page /MediaBox [0 0 200 300]>>");
+        var document = PdfDocument.Open(pdf.Finish("/Root 1 0 R"));
+        Assert.Equal(2, document.Pages.Count);
+        PageOperations.SetBox(document, [0], PageBox.Crop, null);
+        Assert.Equal(2, document.Pages.Count);
+        Assert.Equal(new PdfRect(0, 0, 200, 300), document.Pages[0].CropBox);
+        PageOperations.Rotate(document, [1], 90);
+        Assert.Equal(90, document.Pages[1].Rotate);
+    }
 }

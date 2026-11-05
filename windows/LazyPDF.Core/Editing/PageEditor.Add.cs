@@ -80,7 +80,7 @@ public sealed partial class PageEditor
         if (box.IsEmpty) return new ObjectEditResult(0, [new SkippedObject(-1, EditingText.TooBig)]);
         var model = Model;
         PdfImage? added = file.Length > 2 && file[0] == 0xFF && file[1] == 0xD8 ? PdfImageWriter.AddJpeg(model.Document, file) : null;
-        if (added is null && _codec?.DecodeFile(file) is { Count: > 0 } frames)
+        if (added is null && _codec?.DecodeFile(file) is { Count: > 0 } frames && ObjectEditor.Fits(frames[0]))
         {
             added = PdfImageWriter.AddRgba(model.Document, frames[0].Width, frames[0].Height, frames[0].Rgba);
         }

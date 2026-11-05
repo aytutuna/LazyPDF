@@ -71,7 +71,13 @@ public sealed partial class TextPage
             truncated = interpreter.IsTruncated;
             if (options.IncludeAnnotations)
             {
-                foreach (var (form, matrix) in PageAppearances.Of(interpreter.Document, page, shownOnly: true)) interpreter.Run(form, collector, matrix);
+                foreach (var (form, matrix) in PageAppearances.Of(interpreter.Document, page, shownOnly: true))
+                {
+                    // Each run starts with a fresh operation budget, so one that ran out ends the walk.
+                    if (truncated || collector.IsFull) break;
+                    interpreter.Run(form, collector, matrix);
+                    truncated |= interpreter.IsTruncated;
+                }
             }
         }
         catch (PdfReadException)

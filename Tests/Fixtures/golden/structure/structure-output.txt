@@ -1,0 +1,1015 @@
+> text \x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f
+< \u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008\t\n\u000b\u000c\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u02d8\u02c7\u02c6\u02d9\u02dd\u02db\u02da\u02dc
+> text \x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x3a\x3b\x3c\x3d\x3e\x3f
+<  !"#$%&'()*+,-./0123456789:;<=>?
+> text \x40\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50\x51\x52\x53\x54\x55\x56\x57\x58\x59\x5a\x5b\x5c\x5d\x5e\x5f
+< @ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_
+> text \x60\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7a\x7b\x7c\x7d\x7e\x7f
+< `abcdefghijklmnopqrstuvwxyz{|}~\u007f
+> text \x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f
+< \u2022\u2020\u2021\u2026\u2014\u2013\u0192\u2044\u2039\u203a\u2212\u2030\u201e\u201c\u201d\u2018\u2019\u201a\u2122\ufb01\ufb02\u0141\u0152\u0160\u0178\u017d\u0131\u0142\u0153\u0161\u017e\u009f
+> text \xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf
+< \u20ac\u00a1\u00a2\u00a3\u00a4\u00a5\u00a6\u00a7\u00a8\u00a9\u00aa\u00ab\u00ac\u00ad\u00ae\u00af\u00b0\u00b1\u00b2\u00b3\u00b4\u00b5\u00b6\u00b7\u00b8\u00b9\u00ba\u00bb\u00bc\u00bd\u00be\u00bf
+> text \xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf
+< \u00c0\u00c1\u00c2\u00c3\u00c4\u00c5\u00c6\u00c7\u00c8\u00c9\u00ca\u00cb\u00cc\u00cd\u00ce\u00cf\u00d0\u00d1\u00d2\u00d3\u00d4\u00d5\u00d6\u00d7\u00d8\u00d9\u00da\u00db\u00dc\u00dd\u00de\u00df
+> text \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff
+< \u00e0\u00e1\u00e2\u00e3\u00e4\u00e5\u00e6\u00e7\u00e8\u00e9\u00ea\u00eb\u00ec\u00ed\u00ee\u00ef\u00f0\u00f1\u00f2\u00f3\u00f4\u00f5\u00f6\u00f7\u00f8\u00f9\u00fa\u00fb\u00fc\u00fd\u00fe\u00ff
+> text \xfe\xff\x00A\x04\x16\xd8\x3d\xdc\x4d
+< A\u0416\ud83d\udc4d
+> text \xff\xfeA\x00\x16\x04\x3d\xd8\x4d\xdc
+< A\u0416\ud83d\udc4d
+> text \xfe\xff\x00\x1b\x00e\x00n\x00\x1b\x00H\x00i
+< Hi
+> text \xfe\xff\x00a\x00\x1b\x00e\x00n\x00b
+< a
+> text \xfe\xff\x00\x1b\x00\x1b\x00\x1b
+< 
+> text \xfe\xff\x00a\x00
+< a\ufffd
+> text \xfe\xff\xd8\x00\x00a
+< \ufffda
+> text \xfe\xff\xdc\x00\xd8\x00
+< \ufffd\ufffd
+> text \xfe\xff
+< 
+> text \xff\xfe
+< 
+> text \xfe
+< \u00fe
+> text \xef\xbb\xbf
+< 
+> text \xef\xbb\xbfab\xd0\x96\xe2\x82\xac\xf0\x9f\x98\x80
+< ab\u0416\u20ac\ud83d\ude00
+> text \xef\xbb\xbfa\xc3(b
+< a\ufffd(b
+> text \xef\xbb\xbf\xe2\x82
+< \ufffd
+> text \xef\xbb\xbfa\x1bde\x1bb
+< ab
+> text Plain \(text\)
+< Plain (text)
+> text
+< 
+> encode Quarterly report
+< 517561727465726c79207265706f7274
+> encode caf\xc3\xa9 \xe2\x80\xa2\xe2\x82\xac
+< 636166e92080a0
+> encode T\xc3\xbcrk\xc3\xa7e \xc4\x9f
+< feff005400fc0072006b00e700650020011f
+> encode mark \xf0\x9f\x93\x98
+< feff006d00610072006b0020d83ddcd8
+> encode a\tb\nc\r
+< 6109620a630d
+> encode \x01\x02\x7f
+< feff00010002007f
+> encode \xc2\x80\xc2\x9f\xc2\xa0\xc2\xad
+< feff0080009f00a000ad
+> encode \xef\xac\x81\xe2\x84\xa2\xc5\x81\xc5\x92
+< 93929596
+> encode
+< 
+> object plain
+< (plain)
+> object with (parens) and \\
+< (with \(parens\) and \\)
+> object \xd0\x96
+< <FEFF0416>
+> object a\nb
+< <610A62>
+> object caf\xc3\xa9
+< <636166E9>
+> object
+< ()
+> key caf\xc3\xa9
+< caf\u00e9
+< caf\u00e9
+> key A\xd0\x96
+< \u00fe\u00ff\u0000A\u0004\u0016
+< A\u0416
+> key plain
+< plain
+< plain
+> date D:20261019213005+03'00'
+< 2026-10-19T21:30:05.0000000+03:00 D:20261019213005+03'00' 2026-10-19T21:30:05+03:00
+> date D:2026
+< 2026-01-01T00:00:00.0000000+00:00 D:20260101000000+00'00' 2026-01-01T00:00:00+00:00
+> date D:202603
+< 2026-03-01T00:00:00.0000000+00:00 D:20260301000000+00'00' 2026-03-01T00:00:00+00:00
+> date D:20260315
+< 2026-03-15T00:00:00.0000000+00:00 D:20260315000000+00'00' 2026-03-15T00:00:00+00:00
+> date D:2026031512
+< 2026-03-15T12:00:00.0000000+00:00 D:20260315120000+00'00' 2026-03-15T12:00:00+00:00
+> date D:202603151230
+< 2026-03-15T12:30:00.0000000+00:00 D:20260315123000+00'00' 2026-03-15T12:30:00+00:00
+> date 20260315120000Z
+< 2026-03-15T12:00:00.0000000+00:00 D:20260315120000+00'00' 2026-03-15T12:00:00+00:00
+> date D:20260315120000Z00'00'
+< 2026-03-15T12:00:00.0000000+00:00 D:20260315120000+00'00' 2026-03-15T12:00:00+00:00
+> date \x20\x20D:20260315120000\x20\x20
+< 2026-03-15T12:00:00.0000000+00:00 D:20260315120000+00'00' 2026-03-15T12:00:00+00:00
+> date D:20260101000000-05'00'
+< 2026-01-01T00:00:00.0000000-05:00 D:20260101000000-05'00' 2026-01-01T00:00:00-05:00
+> date D:20260101000000+05'30'
+< 2026-01-01T00:00:00.0000000+05:30 D:20260101000000+05'30' 2026-01-01T00:00:00+05:30
+> date D:20260101000000+0530
+< 2026-01-01T00:00:00.0000000+05:30 D:20260101000000+05'30' 2026-01-01T00:00:00+05:30
+> date D:20260101000000+02
+< 2026-01-01T00:00:00.0000000+02:00 D:20260101000000+02'00' 2026-01-01T00:00:00+02:00
+> date D:20260101000000+2
+< 2026-01-01T00:00:00.0000000+00:00 D:20260101000000+00'00' 2026-01-01T00:00:00+00:00
+> date D:20260101000000+
+< 2026-01-01T00:00:00.0000000+00:00 D:20260101000000+00'00' 2026-01-01T00:00:00+00:00
+> date D:20260101000000-
+< 2026-01-01T00:00:00.0000000+00:00 D:20260101000000+00'00' 2026-01-01T00:00:00+00:00
+> date D:20260101000000+14'00'
+< 2026-01-01T00:00:00.0000000+14:00 D:20260101000000+14'00' 2026-01-01T00:00:00+14:00
+> date D:20260101000000+14'01'
+< null
+> date D:20260101000000+23'59'
+< null
+> date D:20260101000000+24'00'
+< null
+> date D:20260101000000+25'00'
+< null
+> date D:20260101000000+05'60'
+< null
+> date D:20260101000000Z
+< 2026-01-01T00:00:00.0000000+00:00 D:20260101000000+00'00' 2026-01-01T00:00:00+00:00
+> date D:20260101000000z
+< 2026-01-01T00:00:00.0000000+00:00 D:20260101000000+00'00' 2026-01-01T00:00:00+00:00
+> date D:20260101000000 +03'00'
+< 2026-01-01T00:00:00.0000000+00:00 D:20260101000000+00'00' 2026-01-01T00:00:00+00:00
+> date D:
+< null
+> date
+< null
+> date yesterday
+< null
+> date D:20261301
+< null
+> date D:20260230
+< null
+> date D:20240229
+< 2024-02-29T00:00:00.0000000+00:00 D:20240229000000+00'00' 2024-02-29T00:00:00+00:00
+> date D:20230229
+< null
+> date D:2026010125
+< null
+> date D:20260101240000
+< null
+> date D:20260101006000
+< null
+> date D:20260101000060
+< 2026-01-01T00:00:59.0000000+00:00 D:20260101000059+00'00' 2026-01-01T00:00:59+00:00
+> date D:20161231235960Z
+< 2016-12-31T23:59:59.0000000+00:00 D:20161231235959+00'00' 2016-12-31T23:59:59+00:00
+> date D:20161231235961Z
+< null
+> date D:00000101
+< null
+> date D:00010101000000Z
+< 0001-01-01T00:00:00.0000000+00:00 D:00010101000000+00'00' 0001-01-01T00:00:00+00:00
+> date D:00010101000000-05'00'
+< 0001-01-01T00:00:00.0000000-05:00 D:00010101000000-05'00' 0001-01-01T00:00:00-05:00
+> date D:99991231235959+14'00'
+< 9999-12-31T23:59:59.0000000+14:00 D:99991231235959+14'00' 9999-12-31T23:59:59+14:00
+> date D:99991231235959Z
+< 9999-12-31T23:59:59.0000000+00:00 D:99991231235959+00'00' 9999-12-31T23:59:59+00:00
+> date D:2026x
+< 2026-01-01T00:00:00.0000000+00:00 D:20260101000000+00'00' 2026-01-01T00:00:00+00:00
+> date D:20x6
+< null
+> date D:2026-03-15
+< 2026-01-01T00:00:00.0000000-03:00 D:20260101000000-03'00' 2026-01-01T00:00:00-03:00
+> date D:20260315T120000
+< 2026-03-15T00:00:00.0000000+00:00 D:20260315000000+00'00' 2026-03-15T00:00:00+00:00
+> date D:2026 0315
+< 2026-01-01T00:00:00.0000000+00:00 D:20260101000000+00'00' 2026-01-01T00:00:00+00:00
+> date D:\xd9\xa2\xd9\xa0\xd9\xa2\xd9\xa6
+< null
+> date 2026
+< 2026-01-01T00:00:00.0000000+00:00 D:20260101000000+00'00' 2026-01-01T00:00:00+00:00
+> date D:D:2026
+< null
+> date   
+< null
+> date D:99999999
+< null
+> xmpdate 2026
+< null
+> xmpdate 2026-03
+< 2026-03-01T00:00:00.0000000+00:00
+> xmpdate 2026-03-01
+< 2026-03-01T00:00:00.0000000+00:00
+> xmpdate 2026-03-01T10:00
+< 2026-03-01T10:00:00.0000000+00:00
+> xmpdate 2026-03-01T10:00:05
+< 2026-03-01T10:00:05.0000000+00:00
+> xmpdate 2026-03-01T10:00:05Z
+< 2026-03-01T10:00:05.0000000+00:00
+> xmpdate 2026-03-01T10:00:05+03:00
+< 2026-03-01T10:00:05.0000000+03:00
+> xmpdate 2026-03-01T10:00:05.123+03:00
+< 2026-03-01T10:00:05.1230000+03:00
+> xmpdate 2026-03-01T10:00:05.1234567Z
+< 2026-03-01T10:00:05.1234567+00:00
+> xmpdate 2026-03-01T10:00:05.123456789Z
+< 2026-03-01T10:00:05.1234568+00:00
+> xmpdate 2026-03-01T10:00:05.12345678
+< 2026-03-01T10:00:05.1234568+00:00
+> xmpdate 20260301
+< null
+> xmpdate 2026-03-01 10:00:05
+< 2026-03-01T10:00:05.0000000+00:00
+> xmpdate 2026-03-01T10:00:05-0300
+< 2026-03-01T10:00:05.0000000-03:00
+> xmpdate 2026-03-01T10:00:05+03
+< 2026-03-01T10:00:05.0000000+03:00
+> xmpdate 2026-13-01
+< null
+> xmpdate 2026-02-30
+< null
+> xmpdate 0001-01-01T00:00:00+05:00
+< null
+> xmpdate 9999-12-31T23:59:59-05:00
+< null
+> xmpdate \x20\x202026-03-01\x20\x20
+< 2026-03-01T00:00:00.0000000+00:00
+> xmpdate 2026-03-01T24:00:00
+< null
+> xmpdate 2026-03-01T10:00:60
+< null
+> xmpdate soon
+< null
+> xmpdate
+< null
+> xmpdate 2026-03-01T10:00:05.Z
+< null
+> xmpdate 2026-3-1
+< 2026-03-01T00:00:00.0000000+00:00
+> xmpdate 2026-03-01T1:00:05Z
+< null
+> xmpdate 2026-03-01t10:00:05z
+< 2026-03-01T10:00:05.0000000+00:00
+> xmpdate 2026-03-01T10:00:05+14:00
+< 2026-03-01T10:00:05.0000000+14:00
+> xmpdate 2026-03-01T10:00:05+15:00
+< null
+> xmpdate 2026-03-01T10:00:05 +03:00
+< 2026-03-01T10:00:05.0000000+03:00
+> xmpdate D:20260301
+< null
+> xmpdate 2026-03-01T10:00:05.5
+< 2026-03-01T10:00:05.5000000+00:00
+> xmpdate +2026-03-01
+< null
+> xmpdate -2026-03-01
+< null
+> xmpdate 2026-03-01T10:00:05+03:00:00
+< null
+> xmpdate 2026-03-01T10:00+03:00
+< 2026-03-01T10:00:00.0000000+03:00
+> xmpdate 2026-03-01T10Z
+< null
+> xmpdate 2026-03-01T10:00:05,5Z
+< 2026-03-01T10:00:05.5000000+00:00
+> xmpdate 2026-03-01Z
+< 2026-03-01T00:00:00.0000000+00:00
+> xmpdate 2026-03-01+03:00
+< 2026-03-01T00:00:00.0000000+03:00
+> xmpdate 2026-03-01 1:00:05Z
+< 2026-03-01T01:00:05.0000000+00:00
+> xmpdate 2026-03-01 10:00:05 Z
+< 2026-03-01T10:00:05.0000000+00:00
+> xmpdate 2026-03-01T10:00:05.0000000Z
+< 2026-03-01T10:00:05.0000000+00:00
+> xmpdate 2026-03-01T10:00:05\x20+0300
+< 2026-03-01T10:00:05.0000000+03:00
+> xmpdate 2026-03-01T10:00:05+3
+< 2026-03-01T10:00:05.0000000+03:00
+> xmpdate 2026-03-01T10:00:05+03:0
+< 2026-03-01T10:00:05.0000000+03:00
+> xmpdate 2026-03-01T10:00:05+03:60
+< null
+> xmpdate 2026-03-01T10:00:05-00:30
+< 2026-03-01T10:00:05.0000000-00:30
+> xmpdate 2026-03-01T10:00:05Zx
+< null
+> xmpdate 2026-03-01\t
+< 2026-03-01T00:00:00.0000000+00:00
+> xmpdate 2026-03-01T10:00:5Z
+< null
+> xmpdate 2026-03-01T10:00:05.
+< null
+> xmpdate 2026-03-01T10:00:05.5.5Z
+< null
+> xmpdate 2026-03-01T10:00:05\x20+03:00\x20
+< 2026-03-01T10:00:05.0000000+03:00
+> xmpdate 2026-03-01T23:59:59.9999999Z
+< 2026-03-01T23:59:59.9999999+00:00
+> xmpdate 2026-03-01T10:00:05+14:01
+< null
+> xmpdate 2026-03-01T10:00:05+23:00
+< null
+> xmpdate 2026-03-01T10:00:05+00:00
+< 2026-03-01T10:00:05.0000000+00:00
+> xmpdate 0001-01-01
+< 0001-01-01T00:00:00.0000000+00:00
+> xmpdate 0001-01-01T00:00:00Z
+< 0001-01-01T00:00:00.0000000+00:00
+> xmpdate 9999-12-31T23:59:59Z
+< 9999-12-31T23:59:59.0000000+00:00
+> xmpdate 0000-01-01
+< null
+> xmpdate 10000-01-01
+< null
+> xmpdate 2026-3
+< 2026-03-01T00:00:00.0000000+00:00
+> xmpdate 2026-1-1T10:00Z
+< 2026-01-01T10:00:00.0000000+00:00
+> xmpdate 2026-03-1
+< 2026-03-01T00:00:00.0000000+00:00
+> xmpdate 2026-03-01T10:60Z
+< null
+> xmpdate 2026-00-10
+< null
+> xmpdate 2026-03-00
+< null
+> xmpdate 2026-03-01T10:00:05-03
+< 2026-03-01T10:00:05.0000000-03:00
+> xmpdate 2026-03-01T10:00:05-0
+< 2026-03-01T10:00:05.0000000+00:00
+> xmpdate 2026-03-01T10:00:05-03:30
+< 2026-03-01T10:00:05.0000000-03:30
+> xmpdate 2020-01-02T03:04:05+01:00
+< 2020-01-02T03:04:05.0000000+01:00
+> xmpdate 2026-03-01T10:00:05.0Z
+< 2026-03-01T10:00:05.0000000+00:00
+> xmpdate 2026-03-01T10:00:05.9999999+14:00
+< 2026-03-01T10:00:05.9999999+14:00
+> xmpdate 2026-03-01T23:59:59.99999999Z
+< 2026-03-02T00:00:00.0000000+00:00
+> xmpdate 2026-12-31T23:59:59.99999995+02:00
+< 2027-01-01T00:00:00.0000000+02:00
+> xmpdate 2026-03-01T23:59:59.99999994Z
+< 2026-03-01T23:59:59.9999999+00:00
+> xmpdate 9999-12-31T23:59:59.99999999Z
+< null
+> labels 0:n:: 1 | 3
+< ,,
+< 1: <</Type /Catalog /Pages 2 0 R /PageLabels <</Nums [0 <<>>]>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream
+< 6: stream
+> labels 0:r::1;3:D::1;6:D:A-:10 | 9
+< i,ii,iii,1,2,3,A-10,A-11,A-12
+< 1: <</Type /Catalog /Pages 2 0 R /PageLabels <</Nums [0 <</S /r>> 3 <</S /D>> 6 <</S /D /P (A-) /St 10>>]>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream
+< 6: stream
+> labels 0:R::1;1:D:p. :5 | 4
+< I,p. 5,p. 6,p. 7
+< 1: <</Type /Catalog /Pages 2 0 R /PageLabels <</Nums [0 <</S /R>> 1 <</S /D /P (p. ) /St 5>>]>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream
+< 6: stream
+> labels 0:n:Cover:1;2:D::1 | 4
+< Cover,Cover,1,2
+< 1: <</Type /Catalog /Pages 2 0 R /PageLabels <</Nums [0 <</P (Cover)>> 2 <</S /D>>]>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream
+< 6: stream
+> labels 2:n:x:1 | 4
+< 1,2,x,x
+< 1: <</Type /Catalog /Pages 2 0 R /PageLabels <</Nums [0 <</S /D>> 2 <</P (x)>>]>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream
+< 6: stream
+> labels 0:R::1994 | 1
+< MCMXCIV
+< 1: <</Type /Catalog /Pages 2 0 R /PageLabels <</Nums [0 <</S /R /St 1994>>]>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream
+< 6: stream
+> labels 0:R::3999 | 1
+< MMMCMXCIX
+< 1: <</Type /Catalog /Pages 2 0 R /PageLabels <</Nums [0 <</S /R /St 3999>>]>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream
+< 6: stream
+> labels 0:R::4000 | 1
+< MMMM
+< 1: <</Type /Catalog /Pages 2 0 R /PageLabels <</Nums [0 <</S /R /St 4000>>]>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream
+< 6: stream
+> labels 0:R::4999 | 1
+< MMMMCMXCIX
+< 1: <</Type /Catalog /Pages 2 0 R /PageLabels <</Nums [0 <</S /R /St 4999>>]>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream
+< 6: stream
+> labels 0:r::1;1:r::4;2:r::9;3:r::14;4:r::40;5:r::94 | 6
+< i,iv,ix,xiv,xl,xciv
+< 1: <</Type /Catalog /Pages 2 0 R /PageLabels <</Nums [0 <</S /r>> 1 <</S /r /St 4>> 2 <</S /r /St 9>> 3 <</S /r /St 14>> 4 <</S /r /St 40>> 5 <</S /r /St 94>>]>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream
+< 6: stream
+> labels 0:a::1;1:a::26;2:a::27;3:a::28;4:a::52;5:a::53 | 6
+< a,z,aa,bb,zz,aaa
+< 1: <</Type /Catalog /Pages 2 0 R /PageLabels <</Nums [0 <</S /a>> 1 <</S /a /St 26>> 2 <</S /a /St 27>> 3 <</S /a /St 28>> 4 <</S /a /St 52>> 5 <</S /a /St 53>>]>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream
+< 6: stream
+> labels 0:A::53;1:A::78;2:A::79 | 3
+< AAA,ZZZ,AAAA
+< 1: <</Type /Catalog /Pages 2 0 R /PageLabels <</Nums [0 <</S /A /St 53>> 1 <</S /A /St 78>> 2 <</S /A /St 79>>]>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream
+< 6: stream
+> labels 4:A::1;2:D:S:3;2:D:T:3 | 6
+< 1,2,T3,T4,A,B
+< 1: <</Type /Catalog /Pages 2 0 R /PageLabels <</Nums [0 <</S /D>> 2 <</S /D /P (T) /St 3>> 4 <</S /A>>]>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream
+< 6: stream
+> labels 0:D:a\\b:1 | 2
+< a\\\\b1,a\\\\b2
+< 1: <</Type /Catalog /Pages 2 0 R /PageLabels <</Nums [0 <</S /D /P (a\\\\b)>>]>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream
+< 6: stream
+> meta <?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about="" xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/" pdfaid:part="2" pdfaid:conformance="B" pdf:Producer="Old producer"\n    xmp:CreatorTool="Old tool" xmp:CreateDate="2020-01-02T03:04:05+01:00">\n   <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/"><rdf:Alt><rdf:li xml:lang="x-default">Old title</rdf:li></rdf:Alt></dc:title>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about="" xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" pdfaid:part="2" pdfaid:conformance="B" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/">\n   \n  <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <?xml version="1.0" encoding="UTF-8"?><x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/></x:xmpmeta>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF></x:xmpmeta>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta \xef\xbb\xbf<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmp="http://ns.adobe.com/xap/1.0/"><dc:subject><rdf:Bag><rdf:li>old</rdf:li></rdf:Bag></dc:subject><xmp:MetadataDate>2000-01-01T00:00:00Z</xmp:MetadataDate></rdf:Description></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><xmp:MetadataDate>2026-02-03T04:05:06-05:00</xmp:MetadataDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Plain title</dc:title></Description></RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><Alt><li xml:lang="x-default">Golden title</li></Alt></dc:title><dc:creator><Seq><li>A. Writer</li></Seq></dc:creator><dc:description><Alt><li xml:lang="x-default">Subject &amp; more &lt;x&gt;</li></Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><Bag><li>one</li><li>two</li><li>three</li><li>four</li></Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></Description></RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <r:RDF xmlns:r="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><r:Description><x:Other xmlns:x="urn:x" a="1" b=\'2\'>keep &amp; &lt;this&gt; &#233;&#x1F600;</x:Other><!-- comment --><?pi data?><![CDATA[a<b]]></r:Description><r:Description xmlns:dc="http://purl.org/dc/elements/1.1/" dc:title="second"/></r:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <r:RDF xmlns:r="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><r:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><x:Other xmlns:x="urn:x" a="1" b="2">keep &amp; &lt;this&gt; \u00e9\ud83d\ude00</x:Other><!-- comment --><?pi data?><![CDATA[a<b]]><dc:title><r:Alt><r:li xml:lang="x-default">Golden title</r:li></r:Alt></dc:title><dc:creator><r:Seq><r:li>A. Writer</r:li></r:Seq></dc:creator><dc:description><r:Alt><r:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</r:li></r:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><r:Bag><r:li>one</r:li><r:li>two</r:li><r:li>three</r:li><r:li>four</r:li></r:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></r:Description><r:Description xmlns:dc="http://purl.org/dc/elements/1.1/" /></r:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\r\n\t<rdf:Description>\r\n\t\t<empty></empty><short/>\r\n\t</rdf:Description>\r\n</rdf:RDF>\r\n
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n\t<rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/">\n\t\t<empty></empty><short />\n\t<dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description>\n</rdf:RDF>\n
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <a><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><rdf:Description pdfx:Department="old"><pdfx:Note>old</pdfx:Note></rdf:Description></rdf:RDF></a>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <a><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF></a>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description/></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description a:b="1"/></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description a:b="1"/></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description></rdf:Description>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description></rdf:Description>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description b="1" b="2"/></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description b="1" b="2"/></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description>&nbsp;</rdf:Description></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description>&nbsp;</rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta x<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp x<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>\x20
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF> 
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <!-- before -->\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>\n<!-- after -->\n
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <!-- before -->\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>\n<!-- after -->\n
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xml:lang="en" attr="a\tb&#x9;c&#xA;d&quot;e"/></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xml:lang="en" attr="a b&#x9;c&#xA;d&quot;e" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <?xml version="1.0" encoding="iso-8859-1"?><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:rights>caf\xe9</dc:rights></rdf:Description></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:rights>caf\u00e9</dc:rights><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description><dc:title xmlns:dc="urn:other">kept</dc:title></rdf:Description></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title xmlns:dc="urn:other">kept</dc:title><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title><rdf:Alt><rdf:li> </rdf:li></rdf:Alt></dc:title></rdf:Description>x</rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description>x</rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns="http://purl.org/dc/elements/1.1/"/></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns="http://purl.org/dc/elements/1.1/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <a:RDF xmlns:a="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:b="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><a:Description/></a:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <b:RDF xmlns:a="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:b="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><b:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><b:Alt><b:li xml:lang="x-default">Golden title</b:li></b:Alt></dc:title><dc:creator><b:Seq><b:li>A. Writer</b:li></b:Seq></dc:creator><dc:description><b:Alt><b:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</b:li></b:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><b:Bag><b:li>one</b:li><b:li>two</b:li><b:li>three</b:li><b:li>four</b:li></b:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></b:Description></b:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><Description p2:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/" xmlns:p2="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><dc:title><Alt><li xml:lang="x-default">Golden title</li></Alt></dc:title><dc:creator><Seq><li>A. Writer</li></Seq></dc:creator><dc:description><Alt><li xml:lang="x-default">Subject &amp; more &lt;x&gt;</li></Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><Bag><li>one</li><li>two</li><li>three</li><li>four</li></Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></Description></RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><\xc4\xb2/></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><\u0132/></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>a&#13;&#10;b&#x0000000000041;</dc:title></rdf:Description></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <?xml foo="1" version="1.0"?><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <?xml foo="1" version="1.0"?><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00r\x00d\x00f\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00w\x00w\x00w\x00.\x00w\x003\x00.\x00o\x00r\x00g\x00/\x001\x009\x009\x009\x00/\x000\x002\x00/\x002\x002\x00-\x00r\x00d\x00f\x00-\x00s\x00y\x00n\x00t\x00a\x00x\x00-\x00n\x00s\x00#\x00"\x00>\x00<\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00d\x00c\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00p\x00u\x00r\x00l\x00.\x00o\x00r\x00g\x00/\x00d\x00c\x00/\x00e\x00l\x00e\x00m\x00e\x00n\x00t\x00s\x00/\x001\x00.\x001\x00/\x00"\x00>\x00<\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00c\x00a\x00f\x00\xe9\x00<\x00/\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00>\x00
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta \x00<\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00r\x00d\x00f\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00w\x00w\x00w\x00.\x00w\x003\x00.\x00o\x00r\x00g\x00/\x001\x009\x009\x009\x00/\x000\x002\x00/\x002\x002\x00-\x00r\x00d\x00f\x00-\x00s\x00y\x00n\x00t\x00a\x00x\x00-\x00n\x00s\x00#\x00"\x00>\x00<\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00d\x00c\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00p\x00u\x00r\x00l\x00.\x00o\x00r\x00g\x00/\x00d\x00c\x00/\x00e\x00l\x00e\x00m\x00e\x00n\x00t\x00s\x00/\x001\x00.\x001\x00/\x00"\x00>\x00<\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00c\x00a\x00f\x00\xe9\x00<\x00/\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta \xff\xfe<\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00r\x00d\x00f\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00w\x00w\x00w\x00.\x00w\x003\x00.\x00o\x00r\x00g\x00/\x001\x009\x009\x009\x00/\x000\x002\x00/\x002\x002\x00-\x00r\x00d\x00f\x00-\x00s\x00y\x00n\x00t\x00a\x00x\x00-\x00n\x00s\x00#\x00"\x00>\x00<\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00d\x00c\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00p\x00u\x00r\x00l\x00.\x00o\x00r\x00g\x00/\x00d\x00c\x00/\x00e\x00l\x00e\x00m\x00e\x00n\x00t\x00s\x00/\x001\x00.\x001\x00/\x00"\x00>\x00<\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00c\x00a\x00f\x00\xe9\x00<\x00/\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00>\x00
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta \xff\xfe\x00\x00<\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00R\x00\x00\x00D\x00\x00\x00F\x00\x00\x00 \x00\x00\x00x\x00\x00\x00m\x00\x00\x00l\x00\x00\x00n\x00\x00\x00s\x00\x00\x00:\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00=\x00\x00\x00"\x00\x00\x00h\x00\x00\x00t\x00\x00\x00t\x00\x00\x00p\x00\x00\x00:\x00\x00\x00/\x00\x00\x00/\x00\x00\x00w\x00\x00\x00w\x00\x00\x00w\x00\x00\x00.\x00\x00\x00w\x00\x00\x003\x00\x00\x00.\x00\x00\x00o\x00\x00\x00r\x00\x00\x00g\x00\x00\x00/\x00\x00\x001\x00\x00\x009\x00\x00\x009\x00\x00\x009\x00\x00\x00/\x00\x00\x000\x00\x00\x002\x00\x00\x00/\x00\x00\x002\x00\x00\x002\x00\x00\x00-\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00-\x00\x00\x00s\x00\x00\x00y\x00\x00\x00n\x00\x00\x00t\x00\x00\x00a\x00\x00\x00x\x00\x00\x00-\x00\x00\x00n\x00\x00\x00s\x00\x00\x00#\x00\x00\x00"\x00\x00\x00>\x00\x00\x00<\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00D\x00\x00\x00e\x00\x00\x00s\x00\x00\x00c\x00\x00\x00r\x00\x00\x00i\x00\x00\x00p\x00\x00\x00t\x00\x00\x00i\x00\x00\x00o\x00\x00\x00n\x00\x00\x00 \x00\x00\x00x\x00\x00\x00m\x00\x00\x00l\x00\x00\x00n\x00\x00\x00s\x00\x00\x00:\x00\x00\x00d\x00\x00\x00c\x00\x00\x00=\x00\x00\x00"\x00\x00\x00h\x00\x00\x00t\x00\x00\x00t\x00\x00\x00p\x00\x00\x00:\x00\x00\x00/\x00\x00\x00/\x00\x00\x00p\x00\x00\x00u\x00\x00\x00r\x00\x00\x00l\x00\x00\x00.\x00\x00\x00o\x00\x00\x00r\x00\x00\x00g\x00\x00\x00/\x00\x00\x00d\x00\x00\x00c\x00\x00\x00/\x00\x00\x00e\x00\x00\x00l\x00\x00\x00e\x00\x00\x00m\x00\x00\x00e\x00\x00\x00n\x00\x00\x00t\x00\x00\x00s\x00\x00\x00/\x00\x00\x001\x00\x00\x00.\x00\x00\x001\x00\x00\x00/\x00\x00\x00"\x00\x00\x00>\x00\x00\x00<\x00\x00\x00d\x00\x00\x00c\x00\x00\x00:\x00\x00\x00t\x00\x00\x00i\x00\x00\x00t\x00\x00\x00l\x00\x00\x00e\x00\x00\x00>\x00\x00\x00c\x00\x00\x00a\x00\x00\x00f\x00\x00\x00\xe9\x00\x00\x00<\x00\x00\x00/\x00\x00\x00d\x00\x00\x00c\x00\x00\x00:\x00\x00\x00t\x00\x00\x00i\x00\x00\x00t\x00\x00\x00l\x00\x00\x00e\x00\x00\x00>\x00\x00\x00<\x00\x00\x00/\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00D\x00\x00\x00e\x00\x00\x00s\x00\x00\x00c\x00\x00\x00r\x00\x00\x00i\x00\x00\x00p\x00\x00\x00t\x00\x00\x00i\x00\x00\x00o\x00\x00\x00n\x00\x00\x00>\x00\x00\x00<\x00\x00\x00/\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00R\x00\x00\x00D\x00\x00\x00F\x00\x00\x00>\x00\x00\x00
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta \x00\x00\x00<\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00R\x00\x00\x00D\x00\x00\x00F\x00\x00\x00 \x00\x00\x00x\x00\x00\x00m\x00\x00\x00l\x00\x00\x00n\x00\x00\x00s\x00\x00\x00:\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00=\x00\x00\x00"\x00\x00\x00h\x00\x00\x00t\x00\x00\x00t\x00\x00\x00p\x00\x00\x00:\x00\x00\x00/\x00\x00\x00/\x00\x00\x00w\x00\x00\x00w\x00\x00\x00w\x00\x00\x00.\x00\x00\x00w\x00\x00\x003\x00\x00\x00.\x00\x00\x00o\x00\x00\x00r\x00\x00\x00g\x00\x00\x00/\x00\x00\x001\x00\x00\x009\x00\x00\x009\x00\x00\x009\x00\x00\x00/\x00\x00\x000\x00\x00\x002\x00\x00\x00/\x00\x00\x002\x00\x00\x002\x00\x00\x00-\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00-\x00\x00\x00s\x00\x00\x00y\x00\x00\x00n\x00\x00\x00t\x00\x00\x00a\x00\x00\x00x\x00\x00\x00-\x00\x00\x00n\x00\x00\x00s\x00\x00\x00#\x00\x00\x00"\x00\x00\x00>\x00\x00\x00<\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00D\x00\x00\x00e\x00\x00\x00s\x00\x00\x00c\x00\x00\x00r\x00\x00\x00i\x00\x00\x00p\x00\x00\x00t\x00\x00\x00i\x00\x00\x00o\x00\x00\x00n\x00\x00\x00 \x00\x00\x00x\x00\x00\x00m\x00\x00\x00l\x00\x00\x00n\x00\x00\x00s\x00\x00\x00:\x00\x00\x00d\x00\x00\x00c\x00\x00\x00=\x00\x00\x00"\x00\x00\x00h\x00\x00\x00t\x00\x00\x00t\x00\x00\x00p\x00\x00\x00:\x00\x00\x00/\x00\x00\x00/\x00\x00\x00p\x00\x00\x00u\x00\x00\x00r\x00\x00\x00l\x00\x00\x00.\x00\x00\x00o\x00\x00\x00r\x00\x00\x00g\x00\x00\x00/\x00\x00\x00d\x00\x00\x00c\x00\x00\x00/\x00\x00\x00e\x00\x00\x00l\x00\x00\x00e\x00\x00\x00m\x00\x00\x00e\x00\x00\x00n\x00\x00\x00t\x00\x00\x00s\x00\x00\x00/\x00\x00\x001\x00\x00\x00.\x00\x00\x001\x00\x00\x00/\x00\x00\x00"\x00\x00\x00>\x00\x00\x00<\x00\x00\x00d\x00\x00\x00c\x00\x00\x00:\x00\x00\x00t\x00\x00\x00i\x00\x00\x00t\x00\x00\x00l\x00\x00\x00e\x00\x00\x00>\x00\x00\x00c\x00\x00\x00a\x00\x00\x00f\x00\x00\x00\xe9\x00\x00\x00<\x00\x00\x00/\x00\x00\x00d\x00\x00\x00c\x00\x00\x00:\x00\x00\x00t\x00\x00\x00i\x00\x00\x00t\x00\x00\x00l\x00\x00\x00e\x00\x00\x00>\x00\x00\x00<\x00\x00\x00/\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00D\x00\x00\x00e\x00\x00\x00s\x00\x00\x00c\x00\x00\x00r\x00\x00\x00i\x00\x00\x00p\x00\x00\x00t\x00\x00\x00i\x00\x00\x00o\x00\x00\x00n\x00\x00\x00>\x00\x00\x00<\x00\x00\x00/\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00R\x00\x00\x00D\x00\x00\x00F\x00\x00\x00>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <\x00?\x00x\x00m\x00l\x00 \x00v\x00e\x00r\x00s\x00i\x00o\x00n\x00=\x00"\x001\x00.\x000\x00"\x00 \x00e\x00n\x00c\x00o\x00d\x00i\x00n\x00g\x00=\x00"\x00u\x00t\x00f\x00-\x001\x006\x00"\x00?\x00>\x00<\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00r\x00d\x00f\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00w\x00w\x00w\x00.\x00w\x003\x00.\x00o\x00r\x00g\x00/\x001\x009\x009\x009\x00/\x000\x002\x00/\x002\x002\x00-\x00r\x00d\x00f\x00-\x00s\x00y\x00n\x00t\x00a\x00x\x00-\x00n\x00s\x00#\x00"\x00>\x00<\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00d\x00c\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00p\x00u\x00r\x00l\x00.\x00o\x00r\x00g\x00/\x00d\x00c\x00/\x00e\x00l\x00e\x00m\x00e\x00n\x00t\x00s\x00/\x001\x00.\x001\x00/\x00"\x00>\x00<\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00c\x00a\x00f\x00\xe9\x00<\x00/\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00>\x00
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <\x00?\x00x\x00m\x00l\x00 \x00v\x00e\x00r\x00s\x00i\x00o\x00n\x00=\x00"\x001\x00.\x000\x00"\x00 \x00e\x00n\x00c\x00o\x00d\x00i\x00n\x00g\x00=\x00"\x00u\x00t\x00f\x00-\x008\x00"\x00?\x00>\x00<\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00r\x00d\x00f\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00w\x00w\x00w\x00.\x00w\x003\x00.\x00o\x00r\x00g\x00/\x001\x009\x009\x009\x00/\x000\x002\x00/\x002\x002\x00-\x00r\x00d\x00f\x00-\x00s\x00y\x00n\x00t\x00a\x00x\x00-\x00n\x00s\x00#\x00"\x00>\x00<\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00d\x00c\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00p\x00u\x00r\x00l\x00.\x00o\x00r\x00g\x00/\x00d\x00c\x00/\x00e\x00l\x00e\x00m\x00e\x00n\x00t\x00s\x00/\x001\x00.\x001\x00/\x00"\x00>\x00<\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00c\x00a\x00f\x00\xe9\x00<\x00/\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00>\x00
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <\u0000?\u0000x\u0000m\u0000l\u0000 \u0000v\u0000e\u0000r\u0000s\u0000i\u0000o\u0000n\u0000=\u0000"\u00001\u0000.\u00000\u0000"\u0000 \u0000e\u0000n\u0000c\u0000o\u0000d\u0000i\u0000n\u0000g\u0000=\u0000"\u0000u\u0000t\u0000f\u0000-\u00008\u0000"\u0000?\u0000>\u0000<\u0000r\u0000d\u0000f\u0000:\u0000R\u0000D\u0000F\u0000 \u0000x\u0000m\u0000l\u0000n\u0000s\u0000:\u0000r\u0000d\u0000f\u0000=\u0000"\u0000h\u0000t\u0000t\u0000p\u0000:\u0000/\u0000/\u0000w\u0000w\u0000w\u0000.\u0000w\u00003\u0000.\u0000o\u0000r\u0000g\u0000/\u00001\u00009\u00009\u00009\u0000/\u00000\u00002\u0000/\u00002\u00002\u0000-\u0000r\u0000d\u0000f\u0000-\u0000s\u0000y\u0000n\u0000t\u0000a\u0000x\u0000-\u0000n\u0000s\u0000#\u0000"\u0000>\u0000<\u0000r\u0000d\u0000f\u0000:\u0000D\u0000e\u0000s\u0000c\u0000r\u0000i\u0000p\u0000t\u0000i\u0000o\u0000n\u0000 \u0000x\u0000m\u0000l\u0000n\u0000s\u0000:\u0000d\u0000c\u0000=\u0000"\u0000h\u0000t\u0000t\u0000p\u0000:\u0000/\u0000/\u0000p\u0000u\u0000r\u0000l\u0000.\u0000o\u0000r\u0000g\u0000/\u0000d\u0000c\u0000/\u0000e\u0000l\u0000e\u0000m\u0000e\u0000n\u0000t\u0000s\u0000/\u00001\u0000.\u00001\u0000/\u0000"\u0000>\u0000<\u0000d\u0000c\u0000:\u0000t\u0000i\u0000t\u0000l\u0000e\u0000>\u0000c\u0000a\u0000f\u0000\ufffd\u0000<\u0000/\u0000d\u0000c\u0000:\u0000t\u0000i\u0000t\u0000l\u0000e\u0000>\u0000<\u0000/\u0000r\u0000d\u0000f\u0000:\u0000D\u0000e\u0000s\u0000c\u0000r\u0000i\u0000p\u0000t\u0000i\u0000o\u0000n\u0000>\u0000<\u0000/\u0000r\u0000d\u0000f\u0000:\u0000R\u0000D\u0000F\u0000>\u0000
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>caf\xe9</dc:title></rdf:Description></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>caf\ufffd</dc:title></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <?xml version="1.0" encoding="ascii"?><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>caf\xe9</dc:title></rdf:Description></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta \xef\xbb\xbf<?xml version="1.0" encoding="latin1"?><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>caf\xc3\xa9</dc:title></rdf:Description></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">Golden title</rdf:li></rdf:Alt></dc:title><dc:creator><rdf:Seq><rdf:li>A. Writer</rdf:li></rdf:Seq></dc:creator><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject &amp; more &lt;x&gt;</rdf:li></rdf:Alt></dc:description><pdf:Keywords>one, two;three,, ;four</pdf:Keywords><dc:subject><rdf:Bag><rdf:li>one</rdf:li><rdf:li>two</rdf:li><rdf:li>three</rdf:li><rdf:li>four</rdf:li></rdf:Bag></dc:subject><pdf:Producer>Lazy PDF</pdf:Producer><xmp:CreatorTool>Tool</xmp:CreatorTool><xmp:CreateDate>2026-01-02T03:04:05+03:00</xmp:CreateDate><xmp:ModifyDate>2026-02-03T04:05:06-05:00</xmp:ModifyDate><pdfx:Department>Finance</pdfx:Department><pdfx:Note>T\u00fcrk\u00e7e</pdfx:Note><pdfx:Ctl>ab\nc</pdfx:Ctl></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> meta <?xml version="1.0" encoding="no-such-encoding"?><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>caf\xe9</dc:title></rdf:Description></rdf:RDF>
+< info <</Title (Golden title) /Author (A. Writer) /Subject (Subject & more <x>) /Keywords (one, two;three,, ;four) /Creator (Tool) /Producer (Lazy PDF) /CreationDate (D:20260102030405+03'00') /ModDate (D:20260203040506-05'00') /Department (Finance) /bad#20key (x) /Note <54FC726BE765> /Ctl <FEFF006100010062000D000A0063>>>
+< xmp <?xml version="1.0" encoding="no-such-encoding"?><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>caf\ufffd</dc:title></rdf:Description></rdf:RDF>
+< read Golden title|A. Writer|Subject & more <x>|one, two;three,, ;four|2026-01-02T03:04:05.0000000+03:00|2026-02-03T04:05:06.0000000-05:00|Ctl=a\u0001b\r\nc,Department=Finance,Note=T\u00fcrk\u00e7e,bad key=x
+> action <</S /GoTo /D [4 0 R /XYZ 5 6 null]>>
+< GoTo page=1 fit=Xyz left=5 bottom=- right=- top=6 zoom=- name=- next=[]
+< written <</Type /Action /S /GoTo /D [4 0 R /XYZ 5 6 null]>>
+< javascript no
+> action <</S /GoTo>>
+< null
+> action <</S /GoTo /D [4 0 R /XYZ 5 6 null] /Next <</S /Named /N /NextPage>>>>
+< GoTo page=1 fit=Xyz left=5 bottom=- right=- top=6 zoom=- name=- next=[Named NextPage next=[]]
+< written <</Type /Action /S /GoTo /D [4 0 R /XYZ 5 6 null] /Next <</Type /Action /S /Named /N /NextPage>>>>
+< javascript no
+> action <</S /GoTo /D (nowhere)>>
+< GoTo page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=nowhere next=[]
+< written <</Type /Action /S /GoTo /D (nowhere)>>
+< javascript no
+> action <</S /GoToR /F (other.pdf) /D [2 /Fit] /NewWindow true>>
+< GoToR file=other.pdf new=true dest=page=2 fit=Fit left=- bottom=- right=- top=- zoom=- name=- next=[]
+< written <</Type /Action /S /GoToR /F (other.pdf) /D [2 /Fit] /NewWindow true>>
+< javascript no
+> action <</S /GoToR /F <</Type /Filespec /F (a.pdf) /UF (b.pdf)>> /D (chapter1)>>
+< GoToR file=b.pdf new=- dest=page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=chapter1 next=[]
+< written <</Type /Action /S /GoToR /F (b.pdf) /D (chapter1)>>
+< javascript no
+> action <</S /GoToR /F <</F (only.pdf)>> /D [-1 /Fit]>>
+< GoToR file=only.pdf new=- dest=page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=- next=[]
+< written <</Type /Action /S /GoToR /F (only.pdf) /D [0 /Fit]>>
+< javascript no
+> action <</S /GoToR /D [3000000000 /FitH 5] /NewWindow false>>
+< GoToR file= new=false dest=page=-1 fit=FitH left=- bottom=- right=- top=5 zoom=- name=- next=[]
+< written <</Type /Action /S /GoToR /F () /D [0 /FitH 5] /NewWindow false>>
+< javascript no
+> action <</S /URI /URI (https://example.com/a?b=1)>>
+< Uri https://example.com/a?b=1 next=[]
+< written <</Type /Action /S /URI /URI (https://example.com/a?b=1)>>
+< javascript no
+> action <</S /URI /URI <687474703A2F2F782FC3A9>>>
+< Uri http://x/\u00e9 next=[]
+< written <</Type /Action /S /URI /URI (http://x/\303\251)>>
+< javascript no
+> action <</S /URI /URI <687474703A2F2F782FE9>>>
+< Uri http://x/\u00e9 next=[]
+< written <</Type /Action /S /URI /URI (http://x/\303\251)>>
+< javascript no
+> action <</S /URI /URI <C0AF41>>>
+< Uri \u00c0\u00afA next=[]
+< written <</Type /Action /S /URI /URI (\303\200\302\257A)>>
+< javascript no
+> action <</S /URI /URI <EFBBBF41>>>
+< Uri \ufeffA next=[]
+< written <</Type /Action /S /URI /URI (\357\273\277A)>>
+< javascript no
+> action <</S /URI /URI 5>>
+< null
+> action <</S /Launch /F (tool.exe)>>
+< Launch file=tool.exe new=- next=[]
+< written <</Type /Action /S /Launch /F (tool.exe)>>
+< javascript no
+> action <</S /Launch /F <FEFF00610062> /NewWindow true>>
+< Launch file=ab new=true next=[]
+< written <</Type /Action /S /Launch /F (ab) /NewWindow true>>
+< javascript no
+> action <</S /Named /N /NextPage>>
+< Named NextPage next=[]
+< written <</Type /Action /S /Named /N /NextPage>>
+< javascript no
+> action <</S /Named>>
+< Named  next=[]
+< written <</Type /Action /S /Named /N />>
+< javascript no
+> action <</S /JavaScript /JS (app.alert\(1\);)>>
+< JavaScript app.alert(1); next=[]
+< written <</Type /Action /S /JavaScript /JS (app.alert\(1\);)>>
+< javascript yes
+> action <</S /JavaScript /JS 21 0 R>> ;; 21=stream(this.print\(\);)
+< JavaScript this.print(); next=[]
+< written <</Type /Action /S /JavaScript /JS (this.print\(\);)>>
+< javascript yes
+> action <</S /JavaScript /JS 21 0 R>> ;; 21=stream(\xfe\xff\x00\x41\x04\x16)
+< JavaScript A\u0416 next=[]
+< written <</Type /Action /S /JavaScript /JS <FEFF00410416>>>
+< javascript yes
+> action <</S /JavaScript>>
+< JavaScript  next=[]
+< written <</Type /Action /S /JavaScript /JS ()>>
+< javascript yes
+> action <</S /JavaScript /JS 7>>
+< JavaScript  next=[]
+< written <</Type /Action /S /JavaScript /JS ()>>
+< javascript yes
+> action <</S /SubmitForm /F <</FS /URL /F (http://x/post)>> /Flags 4 /Fields [(name) 22 0 R (b) 5 [1]]>> ;; 22=<</FT /Tx /T (email)>>
+< SubmitForm url=http://x/post flags=4 fields=[name|email|b] next=[]
+< written <</Type /Action /S /SubmitForm /F <</FS /URL /F (http://x/post)>> /Flags 4 /Fields [(name) (email) (b)]>>
+< javascript no
+> action <</S /SubmitForm /Flags 4294967297>>
+< SubmitForm url= flags=1 fields=[] next=[]
+< written <</Type /Action /S /SubmitForm /F <</FS /URL /F ()>> /Flags 1>>
+< javascript no
+> action <</S /SubmitForm /Flags -3 /Fields 5>>
+< SubmitForm url= flags=-3 fields=[] next=[]
+< written <</Type /Action /S /SubmitForm /F <</FS /URL /F ()>> /Flags -3>>
+< javascript no
+> action <</S /ResetForm>>
+< ResetForm flags=0 fields=[] next=[]
+< written <</Type /Action /S /ResetForm>>
+< javascript no
+> action <</S /ResetForm /Flags 1 /Fields [(a) (b)]>>
+< ResetForm flags=1 fields=[a|b] next=[]
+< written <</Type /Action /S /ResetForm /Flags 1 /Fields [(a) (b)]>>
+< javascript no
+> action <</S /Hide /T (x)>>
+< Other Hide next=[]
+< written refused
+< javascript no
+> action <</S /SetOCGState /State [/OFF 5 0 R]>>
+< Other SetOCGState next=[]
+< written refused
+< javascript no
+> action <</S /Whatever>>
+< Other Whatever next=[]
+< written refused
+< javascript no
+> action <</Type /Action>>
+< null
+> action <</S (GoTo)>>
+< null
+> action (not an action)
+< null
+> action <</S /Named /N /NextPage /Next [<</S /URI /URI (a)>> 21 0 R]>> ;; 21=<</S /JavaScript /JS (x) /Next <</S /Named /N /LastPage>>>>
+< Named NextPage next=[Uri a next=[], JavaScript x next=[Named LastPage next=[]]]
+< written <</Type /Action /S /Named /N /NextPage /Next [<</Type /Action /S /URI /URI (a)>> <</Type /Action /S /JavaScript /JS (x) /Next <</Type /Action /S /Named /N /LastPage>>>>]>>
+< javascript yes
+> action <</S /Named /N /A /Next 21 0 R>> ;; 21=<</S /Named /N /B /Next 20 0 R>>
+< Named A next=[Named B next=[]]
+< written <</Type /Action /S /Named /N /A /Next <</Type /Action /S /Named /N /B>>>>
+< javascript no
+> action <</S /Named /N /A /Next <</S /Named /N /B /Next [<</S /Named /N /C>> null 99 0 R 5]>>>>
+< Named A next=[Named B next=[Named C next=[]]]
+< written <</Type /Action /S /Named /N /A /Next <</Type /Action /S /Named /N /B /Next <</Type /Action /S /Named /N /C>>>>>>
+< javascript no
+> action <</S /Named /N /A /Next [20 0 R 20 0 R]>>
+< Named A next=[]
+< written <</Type /Action /S /Named /N /A>>
+< javascript no
+> action <</S /Named /N /A /Next 21 0 R>> ;; 21=<</S /Named /N /B /Next 22 0 R>> ;; 22=<</S /Named /N /C /Next 23 0 R>> ;; 23=<</S /Named /N /D /Next 24 0 R>> ;; 24=<</S /Named /N /E /Next 25 0 R>> ;; 25=<</S /Named /N /F /Next 26 0 R>> ;; 26=<</S /Named /N /G /Next 27 0 R>> ;; 27=<</S /Named /N /H /Next 28 0 R>> ;; 28=<</S /Named /N /I /Next 29 0 R>> ;; 29=<</S /Named /N /J>>
+< Named A next=[Named B next=[Named C next=[Named D next=[Named E next=[Named F next=[Named G next=[Named H next=[Named I next=[Named J next=[]]]]]]]]]]
+< written <</Type /Action /S /Named /N /A /Next <</Type /Action /S /Named /N /B /Next <</Type /Action /S /Named /N /C /Next <</Type /Action /S /Named /N /D /Next <</Type /Action /S /Named /N /E /Next <</Type /Action /S /Named /N /F /Next <</Type /Action /S /Named /N /G /Next <</Type /Action /S /Named /N /H /Next <</Type /Action /S /Named /N /I /Next <</Type /Action /S /Named /N /J>>>>>>>>>>>>>>>>>>>>
+< javascript no
+> action <</S /Named /N /A /Next [<</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>>]>>
+< Named A next=[Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[], Named X next=[]]
+< written <</Type /Action /S /Named /N /A /Next [<</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>> <</Type /Action /S /Named /N /X>>]>>
+< javascript no
+> action <</S /Named /N /A /Next 21 0 R>> ;; 21=<</S /Named /N /B /Next 22 0 R>> ;; 22=<</S /Launch /F (x) /Next [<</S /JavaScript /JS (deep)>>]>>
+< Named A next=[Named B next=[Launch file=x new=- next=[JavaScript deep next=[]]]]
+< written <</Type /Action /S /Named /N /A /Next <</Type /Action /S /Named /N /B /Next <</Type /Action /S /Launch /F (x) /Next <</Type /Action /S /JavaScript /JS (deep)>>>>>>>>
+< javascript yes
+> action <</S /Named /N /N0 /Next 21 0 R>> ;; 21=<</S /Named /N /N1 /Next 22 0 R>> ;; 22=<</S /Named /N /N2 /Next 23 0 R>> ;; 23=<</S /Named /N /N3 /Next 24 0 R>> ;; 24=<</S /Named /N /N4 /Next 25 0 R>> ;; 25=<</S /Named /N /N5 /Next 26 0 R>> ;; 26=<</S /Named /N /N6 /Next 27 0 R>> ;; 27=<</S /Named /N /N7 /Next 28 0 R>> ;; 28=<</S /Named /N /N8 /Next 29 0 R>> ;; 29=<</S /Named /N /N9 /Next 30 0 R>> ;; 30=<</S /Named /N /N10 /Next 31 0 R>> ;; 31=<</S /Named /N /N11 /Next 32 0 R>> ;; 32=<</S /Named /N /N12 /Next 33 0 R>> ;; 33=<</S /JavaScript /JS (end)>>
+< Named N0 next=[Named N1 next=[Named N2 next=[Named N3 next=[Named N4 next=[Named N5 next=[Named N6 next=[Named N7 next=[Named N8 next=[Named N9 next=[Named N10 next=[Named N11 next=[Named N12 next=[JavaScript end next=[]]]]]]]]]]]]]]
+< written <</Type /Action /S /Named /N /N0 /Next <</Type /Action /S /Named /N /N1 /Next <</Type /Action /S /Named /N /N2 /Next <</Type /Action /S /Named /N /N3 /Next <</Type /Action /S /Named /N /N4 /Next <</Type /Action /S /Named /N /N5 /Next <</Type /Action /S /Named /N /N6 /Next <</Type /Action /S /Named /N /N7 /Next <</Type /Action /S /Named /N /N8 /Next <</Type /Action /S /Named /N /N9 /Next <</Type /Action /S /Named /N /N10 /Next <</Type /Action /S /Named /N /N11 /Next <</Type /Action /S /Named /N /N12 /Next <</Type /Action /S /JavaScript /JS (end)>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+< javascript yes
+> action <</S /URI /URI 5 /Next <</S /JavaScript /JS (x)>>>>
+< Other URI next=[JavaScript x next=[]]
+< written refused
+< javascript yes
+> action <</S /GoTo /Next <</S /JavaScript /JS (x)>>>>
+< Other GoTo next=[JavaScript x next=[]]
+< written refused
+< javascript yes
+> action <</S /Hide /T (x) /Next <</S /GoTo /D [99 0 R /Fit]>>>>
+< Other Hide next=[GoTo page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=- next=[]]
+< written refused
+< javascript no
+> action <</S /GoTo /D [99 0 R /Fit]>>
+< GoTo page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=- next=[]
+< written refused
+< javascript no
+> dest [4 0 R /XYZ 10 250 2]
+< page=1 fit=Xyz left=10 bottom=- right=- top=250 zoom=2 name=-
+< written [4 0 R /XYZ 10 250 2]
+< located 1 10 50 2
+> dest [4 0 R /XYZ null null null]
+< page=1 fit=Xyz left=- bottom=- right=- top=- zoom=- name=-
+< written [4 0 R /XYZ null null null]
+< located 1 0 0 -
+> dest [4 0 R /Fit]
+< page=1 fit=Fit left=- bottom=- right=- top=- zoom=- name=-
+< written [4 0 R /Fit]
+< located 1 0 0 -
+> dest [5 0 R /FitH 120]
+< page=2 fit=FitH left=- bottom=- right=- top=120 zoom=- name=-
+< written [5 0 R /FitH 120]
+< located 2 0 180 -
+> dest [3 0 R /FitV 30]
+< page=0 fit=FitV left=30 bottom=- right=- top=- zoom=- name=-
+< written [3 0 R /FitV 30]
+< located 0 30 0 -
+> dest [3 0 R /FitR 10 20 100 200]
+< page=0 fit=FitR left=10 bottom=20 right=100 top=200 zoom=- name=-
+< written [3 0 R /FitR 10 20 100 200]
+< located 0 10 100 -
+> dest [3 0 R /FitB]
+< page=0 fit=FitB left=- bottom=- right=- top=- zoom=- name=-
+< written [3 0 R /FitB]
+< located 0 0 0 -
+> dest [4 0 R /FitBH 99]
+< page=1 fit=FitBH left=- bottom=- right=- top=99 zoom=- name=-
+< written [4 0 R /FitBH 99]
+< located 1 0 201 -
+> dest [4 0 R /FitBV 5]
+< page=1 fit=FitBV left=5 bottom=- right=- top=- zoom=- name=-
+< written [4 0 R /FitBV 5]
+< located 1 5 0 -
+> dest [4 0 R /XYZ 0 0 0]
+< page=1 fit=Xyz left=0 bottom=- right=- top=0 zoom=0 name=-
+< written [4 0 R /XYZ 0 0 null]
+< located 1 0 300 -
+> dest [4 0 R /XYZ -32768 900000 1.5]
+< page=1 fit=Xyz left=-32768 bottom=- right=- top=900000 zoom=1.5 name=-
+< written [4 0 R /XYZ -32768 900000 1.5]
+< located 1 0 0 1.5
+> dest [5 0 R /FitH]
+< page=2 fit=FitH left=- bottom=- right=- top=- zoom=- name=-
+< written [5 0 R /FitH null]
+< located 2 0 0 -
+> dest [5 0 R /FitR 1 2]
+< page=2 fit=FitR left=1 bottom=2 right=- top=- zoom=- name=-
+< written [5 0 R /FitR 1 2 null null]
+< located 2 1 0 -
+> dest [5 0 R /FitR 1 2 3]
+< page=2 fit=FitR left=1 bottom=2 right=3 top=- zoom=- name=-
+< written [5 0 R /FitR 1 2 3 null]
+< located 2 1 0 -
+> dest [5 0 R /XYZ (a) /b 3]
+< page=2 fit=Xyz left=- bottom=- right=- top=- zoom=3 name=-
+< written [5 0 R /XYZ null null 3]
+< located 2 0 0 3
+> dest [4 0 R /Bogus 1]
+< null
+> dest [4 0 R]
+< null
+> dest []
+< null
+> dest [99 0 R /Fit]
+< page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=-
+< written null
+< located null
+> dest [6 0 R /Fit]
+< page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=-
+< written null
+< located null
+> dest [null /Fit]
+< page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=-
+< written null
+< located null
+> dest [4 0 R (Fit)]
+< null
+> dest [4 0 R /Fit /Extra 1 2 3]
+< page=1 fit=Fit left=- bottom=- right=- top=- zoom=- name=-
+< written [4 0 R /Fit]
+< located 1 0 0 -
+> dest <</D [4 0 R /Fit]>>
+< page=1 fit=Fit left=- bottom=- right=- top=- zoom=- name=-
+< written [4 0 R /Fit]
+< located 1 0 0 -
+> dest <</D 5>>
+< null
+> dest <<>>
+< null
+> dest /name
+< page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=name
+< written (name)
+< located null
+> dest (string)
+< page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=string
+< written (string)
+< located null
+> dest 5
+< null
+> dest null
+< null
+> dest [4 0 R /XYZ 1e-7 .5 -.5]
+< page=1 fit=Xyz left=1 bottom=- right=- top=0.5 zoom=-0.5 name=-
+< written [4 0 R /XYZ 1 0.5 null]
+< located 1 1 299.5 -
+> dest [4 0 R /XYZ 12345678.123456789 1 1]
+< page=1 fit=Xyz left=12345678.123457 bottom=- right=- top=1 zoom=1 name=-
+< written [4 0 R /XYZ 12345678.123457 1 1]
+< located 1 200 299 1
+> destr [7 /FitH 50]
+< page=7 fit=FitH left=- bottom=- right=- top=50 zoom=- name=-
+< written [7 /FitH 50]
+> destr [0 /Fit]
+< page=0 fit=Fit left=- bottom=- right=- top=- zoom=- name=-
+< written [0 /Fit]
+> destr [-1 /Fit]
+< page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=-
+< written [0 /Fit]
+> destr [2147483647 /Fit]
+< page=2147483647 fit=Fit left=- bottom=- right=- top=- zoom=- name=-
+< written [2147483647 /Fit]
+> destr [2147483648 /Fit]
+< page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=-
+< written [0 /Fit]
+> destr [1.5 /Fit]
+< page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=-
+< written [0 /Fit]
+> destr [4 0 R /Fit]
+< page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=-
+< written [0 /Fit]
+> destr (chap)
+< page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=chap
+< written (chap)
+> destr /name
+< page=-1 fit=Fit left=- bottom=- right=- top=- zoom=- name=name
+< written (name)
+> destr <</D [2 /FitV 3]>>
+< page=2 fit=FitV left=3 bottom=- right=- top=- zoom=- name=-
+< written [2 /FitV 3]
+> destr [3 /XYZ 1 2 3]
+< page=3 fit=Xyz left=1 bottom=- right=- top=2 zoom=3 name=-
+< written [3 /XYZ 1 2 3]
+> destr [3 /FitR 1 2 3 4]
+< page=3 fit=FitR left=1 bottom=2 right=3 top=4 zoom=- name=-
+< written [3 /FitR 1 2 3 4]
+> destr []
+< null
+> scenario nametree
+< 1: <</Type /Catalog /Pages 2 0 R /Names <</Dests 8 0 R>>>>
+< 2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 4 0 R>>
+< 4: stream
+< 5: <</Names [(n000) 0 (n001) 1 (n002) 2 (n003) 3 (n004) 4 (n005) 5 (n006) 6 (n007) 7 (n008) 8 (n009) 9 (n010) 10 (n011) 11 (n012) 12 (n013) 13 (n014) 14 (n015) 15 (n016) 16 (n017) 17 (n018) 18 (n019) 19 (n020) 20 (n021) 21 (n022) 22 (n023) 23 (n024) 24 (n025) 25 (n026) 26 (n027) 27 (n028) 28 (n029) 29 (n030) 30 (n031) 31 (n032) 32 (n033) 33 (n034) 34 (n035) 35 (n036) 36 (n037) 37 (n038) 38 (n039) 39 (n040) 40 (n041) 41 (n042) 42 (n043) 43 (n044) 44 (n045) 45 (n046) 46 (n047) 47 (n048) 48 (n049) 49 (n050) 50 (n051) 51 (n052) 52 (n053) 53 (n054) 54 (n055) 55 (n056) 56 (n057) 57 (n058) 58 (n059) 59 (n060) 60 (n061) 61 (n062) 62 (n063) 63] /Limits [(n000) (n063)]>>
+< 6: <</Names [(n064) 64 (n065) 65 (n066) 66 (n067) 67 (n068) 68 (n069) 69 (n070) 70 (n071) 71 (n072) 72 (n073) 73 (n074) 74 (n075) 75 (n076) 76 (n077) 77 (n078) 78 (n079) 79 (n080) 80 (n081) 81 (n082) 82 (n083) 83 (n084) 84 (n085) 85 (n086) 86 (n087) 87 (n088) 88 (n089) 89 (n090) 90 (n091) 91 (n092) 92 (n093) 93 (n094) 94 (n095) 95 (n096) 96 (n097) 97 (n098) 98 (n099) 99 (n100) 100 (n101) 101 (n102) 102 (n103) 103 (n104) 104 (n105) 105 (n106) 106 (n107) 107 (n108) 108 (n109) 109 (n110) 110 (n111) 111 (n112) 112 (n113) 113 (n114) 114 (n115) 115 (n116) 116 (n117) 117 (n118) 118 (n119) 119 (n120) 120 (n121) 121 (n122) 122 (n123) 123 (n124) 124 (n125) 125 (n126) 126 (n127) 127] /Limits [(n064) (n127)]>>
+< 7: <</Names [(n128) 128 (n129) 129 (n130) 130 (n131) 131 (n132) 132 (n133) 133 (n134) 134 (n135) 135 (n136) 136 (n137) 137 (n138) 138 (n139) 139 (n140) 140 (n141) 141 (n142) 142 (n143) 143 (n144) 144 (n145) 145 (n146) 146 (n147) 147 (n148) 148 (n149) 149] /Limits [(n128) (n149)]>>
+< 8: <</Kids [5 0 R 6 0 R 7 0 R]>>
+> scenario numbertree
+< 1: <</Type /Catalog /Pages 2 0 R /Names <</Nums 8 0 R>>>>
+< 2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 4 0 R>>
+< 4: stream
+< 5: <</Nums [0 0 3 1 6 2 9 3 12 4 15 5 18 6 21 7 24 8 27 9 30 10 33 11 36 12 39 13 42 14 45 15 48 16 51 17 54 18 57 19 60 20 63 21 66 22 69 23 72 24 75 25 78 26 81 27 84 28 87 29 90 30 93 31 96 32 99 33 102 34 105 35 108 36 111 37 114 38 117 39 120 40 123 41 126 42 129 43 132 44 135 45 138 46 141 47 144 48 147 49 150 50 153 51 156 52 159 53 162 54 165 55 168 56 171 57 174 58 177 59 180 60 183 61 186 62 189 63] /Limits [0 189]>>
+< 6: <</Nums [192 64 195 65 198 66 201 67 204 68 207 69 210 70 213 71 216 72 219 73 222 74 225 75 228 76 231 77 234 78 237 79 240 80 243 81 246 82 249 83 252 84 255 85 258 86 261 87 264 88 267 89 270 90 273 91 276 92 279 93 282 94 285 95 288 96 291 97 294 98 297 99 300 100 303 101 306 102 309 103 312 104 315 105 318 106 321 107 324 108 327 109 330 110 333 111 336 112 339 113 342 114 345 115 348 116 351 117 354 118 357 119 360 120 363 121 366 122 369 123 372 124 375 125 378 126 381 127] /Limits [192 381]>>
+< 7: <</Nums [384 128 387 129 390 130 393 131 396 132 399 133 402 134 405 135 408 136 411 137 414 138 417 139 420 140 423 141 426 142 429 143 432 144 435 145 438 146 441 147 444 148 447 149] /Limits [384 447]>>
+< 8: <</Kids [5 0 R 6 0 R 7 0 R]>>
+> scenario actions
+< <</Type /Action /S /GoTo /D [5 0 R /FitH 7]>>
+< <</Type /Action /S /GoTo /D [4 0 R /FitR 1 2 3 4]>>
+< <</Type /Action /S /GoToR /F (o.pdf) /D [3 /Fit] /NewWindow true>>
+< <</Type /Action /S /GoToR /F <6FE92E706466> /D (chap)>>
+< <</Type /Action /S /Launch /F (x.exe)>>
+< <</Type /Action /S /Launch /NewWindow false>>
+< <</Type /Action /S /URI /URI (https://example.com/\303\251?a=1&b=\(2\))>>
+< <</Type /Action /S /Named /N /PrevPage>>
+< <</Type /Action /S /JavaScript /JS <7661722073203D2022E9223B0A5C>>>
+< <</Type /Action /S /JavaScript /JS <FEFF0416>>>
+< <</Type /Action /S /SubmitForm /F <</FS /URL /F (http://x/post)>> /Flags 4 /Fields [(a) <FEFF00620416>]>>
+< <</Type /Action /S /ResetForm>>
+< <</Type /Action /S /ResetForm /Flags 1 /Fields [(f)]>>
+< <</Type /Action /S /Named /N /A /Next [<</Type /Action /S /URI /URI (u)>> <</Type /Action /S /Named /N /B /Next <</Type /Action /S /Named /N /C>>>>]>>
+< <</Type /Action /S /Named /N /Only /Next <</Type /Action /S /Named /N /One>>>>
+> scenario destinations
+< 70 old page=2 fit=Fit left=- bottom=- right=- top=- zoom=- name=old d069 page=0 fit=FitH left=- bottom=- right=- top=69 zoom=- name=d069
+< 1: <</Type /Catalog /Pages 2 0 R /Dests <</old [5 0 R /Fit]>> /Names <</Dests 9 0 R>>>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R 5 0 R] /Count 3 /MediaBox [0 0 200 300]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 7 0 R>>
+< 5: <</Type /Page /Parent 2 0 R /Contents 8 0 R>>
+< 6: stream
+< 7: stream
+< 8: stream
+< 9: <</Kids [22 0 R 23 0 R]>>
+< 22: <</Names [(d000) [3 0 R /FitH 0] (d001) [4 0 R /FitH 1] (d002) [5 0 R /FitH 2] (d003) [3 0 R /FitH 3] (d004) [4 0 R /FitH 4] (d006) [3 0 R /FitH 6] (d007) [4 0 R /FitH 7] (d008) [5 0 R /FitH 8] (d009) [3 0 R /FitH 9] (d010) [4 0 R /FitH 10] (d011) [5 0 R /FitH 11] (d012) [3 0 R /FitH 12] (d013) [4 0 R /FitH 13] (d014) [5 0 R /FitH 14] (d015) [3 0 R /FitH 15] (d016) [4 0 R /FitH 16] (d017) [5 0 R /FitH 17] (d018) [3 0 R /FitH 18] (d019) [4 0 R /FitH 19] (d020) [5 0 R /FitH 20] (d021) [3 0 R /FitH 21] (d022) [4 0 R /FitH 22] (d023) [5 0 R /FitH 23] (d024) [3 0 R /FitH 24] (d025) [4 0 R /FitH 25] (d026) [5 0 R /FitH 26] (d027) [3 0 R /FitH 27] (d028) [4 0 R /FitH 28] (d029) [5 0 R /FitH 29] (d030) [3 0 R /FitH 30] (d031) [4 0 R /FitH 31] (d032) [5 0 R /FitH 32] (d033) [3 0 R /FitH 33] (d034) [4 0 R /FitH 34] (d035) [5 0 R /FitH 35] (d036) [3 0 R /FitH 36] (d037) [4 0 R /FitH 37] (d038) [5 0 R /FitH 38] (d039) [3 0 R /FitH 39] (d040) [4 0 R /FitH 40] (d041) [5 0 R /FitH 41] (d042) [3 0 R /FitH 42] (d043) [4 0 R /FitH 43] (d044) [5 0 R /FitH 44] (d045) [3 0 R /FitH 45] (d046) [4 0 R /FitH 46] (d047) [5 0 R /FitH 47] (d048) [3 0 R /FitH 48] (d049) [4 0 R /FitH 49] (d050) [5 0 R /FitH 50] (d051) [3 0 R /FitH 51] (d052) [4 0 R /FitH 52] (d053) [5 0 R /FitH 53] (d054) [3 0 R /FitH 54] (d055) [4 0 R /FitH 55] (d056) [5 0 R /FitH 56] (d057) [3 0 R /FitH 57] (d058) [4 0 R /FitH 58] (d059) [5 0 R /FitH 59] (d060) [3 0 R /FitH 60] (d061) [4 0 R /FitH 61] (d062) [5 0 R /FitH 62] (d063) [3 0 R /FitH 63] (d064) [4 0 R /FitH 64]] /Limits [(d000) (d064)]>>
+< 23: <</Names [(d065) [5 0 R /FitH 65] (d066) [3 0 R /FitH 66] (d067) [4 0 R /FitH 67] (d068) [5 0 R /FitH 68] (d069) [3 0 R /FitH 69]] /Limits [(d065) (d069)]>>
+> scenario outline
+< Chapter 1(Section 1.1,\u0416\u0410),Chapter 2(Appendix (a)),Chapter 3
+< Chapter 1(Chapter 3,\u0416\u0410),Renamed(Appendix (a)),T\u00fcrk\u00e7e(Link)
+< 20: <</Type /Outlines /First 21 0 R /Last 27 0 R /Count 6>>
+< 21: <</Title (Chapter 1) /Parent 20 0 R /Next 22 0 R /First 23 0 R /Last 25 0 R /Count 2 /Dest [3 0 R /XYZ 0 300 null] /C [1 0 0] /F 3 /Unknown (kept)>>
+< 22: <</Title (Renamed) /Parent 20 0 R /Prev 21 0 R /Next 27 0 R /First 26 0 R /Last 26 0 R /Count -1 /Dest (target) /SE 21 0 R>>
+< 23: <</Title (Chapter 3) /Parent 21 0 R /Dest [5 0 R /Fit] /Next 25 0 R>>
+< 25: <</Title <FEFF04160410> /Parent 21 0 R /Prev 23 0 R>>
+< 26: <</Title (Appendix \(a\)) /Parent 22 0 R>>
+< 27: <</Title <54FC726BE765> /Parent 20 0 R /Prev 22 0 R /Dest [4 0 R /XYZ 10 250 null] /C [0 0.5 1] /F 2 /First 28 0 R /Last 28 0 R /Count 1>>
+< 28: <</Title (Link) /Parent 27 0 R /A <</Type /Action /S /URI /URI (http://x)>>>>
+> scenario links
+< 3: <</Type /Page /Parent 2 0 R /Contents 6 0 R /Annots [9 0 R 10 0 R]>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 7 0 R /Annots [12 0 R]>>
+< 5: <</Type /Page /Parent 2 0 R /Contents 8 0 R>>
+< 6: stream
+< 7: stream
+< 8: stream
+< 9: <</Type /Annot /Subtype /Link /Rect [10 10 60 30] /Border [0 0 0] /Dest [5 0 R /FitH 5]>>
+< 10: <</Type /Annot /Subtype /Link /Rect [70 10 120 30] /Border [0 0 0] /A <</Type /Action /S /URI /URI (https://example.com/\303\251)>>>>
+< 12: <</Type /Annot /Subtype /Link /Rect [5.5 6.25 7 8] /Border [0 0 0] /A <</Type /Action /S /GoToR /F (o.pdf) /D [0 /Fit]>>>>
+< link [10 10 60 30] page=2 fit=FitH left=- bottom=- right=- top=5 zoom=- name=- - - 9 0 R
+< link [70 10 120 30] - Uri https://example.com/\u00e9 next=[] https://example.com/é 10 0 R
+> scenario viewer
+< <</Type /Catalog /Pages 2 0 R /Lang (en-US) /PageMode /FullScreen /PageLayout /TwoPageRight /ViewerPreferences <</DisplayDocTitle true /HideToolbar true /HideMenubar true /HideWindowUI true /FitWindow true /CenterWindow true /Direction /R2L /PrintScaling /None /Duplex /DuplexFlipShortEdge /NumCopies 3>>>>
+< <</Type /Catalog /Pages 2 0 R>>
+< <</Type /Catalog /Pages 2 0 R /Lang <FEFF0416> /PageMode /UseThumbs /PageLayout /OneColumn /ViewerPreferences <</CenterWindow true /Duplex /Simplex>>>>

@@ -1,0 +1,185 @@
+# One line is "<op> <words>". Bytes are escaped (\n \r \t \\ \xHH); the words are read as UTF-8.
+# bates <prefix>|<suffix>|<digits>|<number>: BatesSpec.Format.
+# date <culture>|<format>: the day 2026-03-09 14:05:07.1234567 +03:00 formatted by .NET (the Swift side has its own formatter).
+# expand <template>: the header and footer tokens expanded for page 7 of 20, file report.pdf, Bates B-000007, the day above.
+# jpeg <hex>: the frame size and components read from a JPEG header.
+# stamp <name>: a document stamped as the name says, the runs reported and listed, every object of the file.
+bates ACME-|/A|5|41
+bates ||1|0
+bates P|S|0|7
+bates ||18|123
+bates ||18|9223372036854775807
+bates ||6|-5
+bates ||3|-12345
+bates x||19|1
+bates \xc3\xa7||4|7
+bates a b|c d|2|123
+date |yyyy-MM-dd
+date |dd/MM/yyyy
+date |d MMMM yyyy
+date |dddd, d MMM yy
+date |ddd dd
+date |HH:mm:ss
+date |hh:mm tt
+date |h:m:s t
+date |H:mm
+date |hh:mm:ss.fff
+date |ss.FFF
+date |fffffff
+date |FFFFFFF
+date |zzz
+date |zz
+date |z
+date |K
+date |yyyy-MM-ddTHH:mm:ssK
+date |y
+date |yy
+date |yyy
+date |yyyyy
+date |M/d/yyyy
+date |MMM
+date |gg
+date |'day' d
+date |"day" d
+date |\\d\\a\\y d
+date |%d
+date |d'th
+date |d\\
+date |%
+date |%%
+date |hhh
+date |HHH
+date |mmm
+date |sss
+date |zzzz
+date |ffffffff
+date |x
+date |dd.MM.yyyy HH:mm
+date |
+date |d
+date |D
+date |f
+date |F
+date |g
+date |G
+date |m
+date |M
+date |t
+date |T
+date |y
+date |Y
+date |s
+date |o
+date |O
+date en-GB|d MMMM yyyy
+date en-GB|dddd d MMM yyyy
+date tr-TR|d MMMM yyyy dddd
+date tr-TR|d MMM yy ddd
+date tr-TR|dd/MM/yyyy
+date tr-TR|hh:mm tt
+date tr-TR|HH:mm:ss
+date |r
+date |R
+date |u
+date |U
+date |ss.%F
+date |ss.%f
+date |ð
+date |ðd
+date tr-TR|
+date tr-TR|d
+date tr-TR|D
+date tr-TR|f
+date tr-TR|F
+date tr-TR|g
+date tr-TR|G
+date tr-TR|m
+date tr-TR|M
+date tr-TR|t
+date tr-TR|T
+date tr-TR|y
+date tr-TR|Y
+date tr-TR|s
+date tr-TR|o
+date tr-TR|O
+date tr-TR|r
+date tr-TR|R
+date tr-TR|u
+date tr-TR|U
+date tr-TR|dddd d MMMM yyyy
+date tr-TR|tt h:mm
+date tr-TR|dd/MM/yyyy HH:mm
+date tr-TR|g
+date en-US|
+date en-US|d
+date en-US|D
+date en-US|f
+date en-US|F
+date en-US|g
+date en-US|G
+date en-US|m
+date en-US|M
+date en-US|t
+date en-US|T
+date en-US|y
+date en-US|Y
+date en-US|s
+date en-US|o
+date en-US|O
+date en-US|r
+date en-US|R
+date en-US|u
+date en-US|U
+date en-US|dddd d MMMM yyyy
+date en-US|tt h:mm
+date en-US|dd/MM/yyyy HH:mm
+date en-US|g
+expand plain
+expand {page}/{pages}
+expand {file} {bates} {date}
+expand {date:dd MMMM yyyy}
+expand {date:}
+expand {date:'}
+expand {nope} {page
+expand {{page}}
+expand {}
+expand }{page}
+expand {page}{pages}{page
+expand \xc3\xa7{page}\xc3\xa7
+expand {date:HH:mm}
+jpeg ffd8ffc0001108001e002803011100021100031100ffd9
+jpeg ffd8ffc2000b08001e002801011100ffd9
+jpeg ffd8ffc0000e08001e002802011100021100ffd9
+jpeg ffd8ffffffc0001108001e002803011100021100031100ffd9
+jpeg ffd8ffee000e41646f626500640000000002ffc0001408001e002804011100021100031100041100ffd9
+jpeg ffd8ffc40005000000ffc0001108001e002803011100021100031100ffd9
+jpeg ffd8ffd0ffc0001108001e002803011100021100031100ffd9
+jpeg ffd8ffc0001108000000280311
+jpeg ffd8ffc0001108001e0000031100021100031100ffd9
+jpeg ffd8ffc0001108001e002800ffd9
+jpeg ffd8ffc00011
+jpeg ffd8ffc0
+jpeg ffd8ff
+jpeg ffd8ffda
+jpeg ffd8ffd9
+jpeg ffd8
+jpeg 0000
+jpeg
+jpeg ffd8ffe00001
+jpeg ffd8ffe0ffff00
+jpeg ffd8ffc0000708001e0028
+stamp wm-text
+stamp wm-lines
+stamp wm-image
+stamp wm-layer
+stamp wm-pages
+stamp bg-color
+stamp bg-fits
+stamp bg-both
+stamp hf-basic
+stamp hf-tokens
+stamp hf-evenodd
+stamp rotated
+stamp unbalanced
+stamp update-remove
+stamp remove-all

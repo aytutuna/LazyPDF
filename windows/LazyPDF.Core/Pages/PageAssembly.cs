@@ -53,7 +53,7 @@ public static class PageAssembly
     {
         if (count < 1) throw new ArgumentOutOfRangeException(nameof(count));
         int total = source.Pages.Count;
-        return SplitByRanges(source, [.. Enumerable.Range(0, (total + count - 1) / count).Select(p => (IReadOnlyList<int>)[.. Enumerable.Range(p * count, Math.Min(count, total - p * count))])], cancel);
+        return SplitByRanges(source, [.. Enumerable.Range(0, total == 0 ? 0 : (total - 1) / count + 1).Select(p => (IReadOnlyList<int>)[.. Enumerable.Range(p * count, Math.Min(count, total - p * count))])], cancel);
     }
 
     /// <summary>One part for each list of pages.</summary>

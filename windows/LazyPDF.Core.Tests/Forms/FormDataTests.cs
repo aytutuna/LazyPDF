@@ -176,4 +176,20 @@ public class FormDataTests
 
         Assert.Throws<PdfReadException>(() => BulkFill.Create(pdf.Finish(), "a\n1\n"));
     }
+
+    [Fact]
+    public void AFieldNameOfEndlessPartsExportsAtABoundedDepth()
+    {
+        string name = string.Concat(Enumerable.Repeat("a.", 100_000)) + "z";
+        var pdf = new TestPdf();
+        pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R /AcroForm <</Fields [10 0 R]>>>>");
+        pdf.Obj(2, "<</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 200 200]>>");
+        pdf.Obj(3, "<</Type /Page /Parent 2 0 R /Annots [10 0 R]>>");
+        pdf.Obj(10, $"<</Type /Annot /Subtype /Widget /FT /Tx /T ({name}) /V (x) /Rect [0 0 100 20] /P 3 0 R>>");
+        var form = PdfForm.Read(PdfDocument.Open(pdf.Finish()));
+
+        var fdf = PdfFdf.Read(PdfFdf.Write(form.ExportFdf()));
+
+        Assert.Equal(name, Assert.Single(fdf.FlatFields()).Key);
+    }
 }

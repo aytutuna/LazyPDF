@@ -13,6 +13,25 @@ public class AddImageTests
         public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [];
     }
 
+    private sealed class HugeCodec : IImageCodec
+    {
+        public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+        public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) => [new PdfRgbaImage(12000, 12000, new byte[16])];
+        public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [];
+    }
+
+    [Fact]
+    public void ADecodedPictureThatDoesNotFitIsRefusedNotThrown()
+    {
+        var session = EditKit.Session("q 1 0 0 rg 0 0 50 50 re f Q");
+        var editor = new PageEditor(session, 0, null, new HugeCodec());
+
+        var result = editor.AddImage(new PdfRect(100, 500, 300, 600), [1]);
+
+        Assert.False(result.Done);
+        Assert.Empty(EditPaint.Images(session));
+    }
+
     [Fact]
     public void ThePictureKeepsItsShapeAndSitsInTheMiddleOfTheBox()
     {

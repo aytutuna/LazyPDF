@@ -105,6 +105,14 @@ public class TextMarkupTests
     }
 
     [Fact]
+    public void AQuadTooFarOutToInflateHasNoArea()
+    {
+        var document = Blank();
+        var far = new[] { MarkupQuad.FromRect(new PdfRect(1e18, 500, 1e18, 514)) };
+        Assert.Throws<ArgumentException>(() => new PdfAnnotationWriter(document).AddTextMarkup(document.Pages[0], AnnotationType.Highlight, far));
+    }
+
+    [Fact]
     public void AppendsToAnIndirectAnnotsArray()
     {
         var document = Blank(1, pdf => pdf.Obj(20, "[]"), "/Annots 20 0 R");

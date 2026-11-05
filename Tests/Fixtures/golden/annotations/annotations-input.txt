@@ -1,0 +1,124 @@
+# One line is "<op> <words>". Bytes are escaped (\n \r \t \\ \xHH).
+# rich <utf-8 bytes>: PdfRichText.ToPlain. da <bytes>: a /DA read, the format it makes, and the /DA and /DS built from that.
+# css <utf-8 bytes>: the format a CSS style makes, built the same way.
+# ap <name>: a new annotation drawn by the writer on a blank page, the objects it makes (streams decoded).
+# edit: moves, resizes and restyles. comments: a hand-written file listed in each order and filter, then answered.
+# flatten <name>: a hand-written page with the appearances burned in. export: an FDF export written, read, imported and as XFDF.
+# fdf <bytes>: an FDF file read and written again, as FDF and as XFDF. xfdf <bytes>: an XFDF file read and written again.
+# attach, layers and facts <name>: attachments added and removed, layers switched, document facts.
+rich <body xmlns="http://www.w3.org/1999/xhtml"><p>one</p><p>two</p></body>
+rich <p>a  \n  b <b>c</b></p>
+rich <p>a<br/>b</p><p>c</p>
+rich <body>\n  <p>one</p>\n  <p>two</p>\n</body>
+rich a &amp; b &lt; &#351; &#x1F600; \xc5\x9f
+rich just words
+rich <body><p>unclosed
+rich <!DOCTYPE b [<!ENTITY x "y">]><body>&x;</body>
+rich <a:b>x</a:b>
+rich <b>x</b> <i>y</i>
+rich <p>one<![CDATA[hidden]]>two<!-- c --><?pi d?></p>
+rich <p><span style="font-size:0">a</span> b</p>
+rich <p>a</p>\r\n<p>b</p>
+rich <?xml version="1.0"?><body xmlns="http://www.w3.org/1999/xhtml"><p>hello</p></body>
+rich <?xml version="1.0" encoding="UTF-8"?>\n<p>x</p><p>y</p>
+rich  <?xml version="1.0"?><p>late</p>
+rich <?xml?><p>bad</p>
+rich <?xml version="2.0"?><p>bad</p>
+rich
+da /Helv 12 Tf 0 g
+da /TiBI 18 Tf 0 0 1 rg
+da /CoBo 7.5 Tf 1 0 0 0 k
+da /Foo 10 Tf
+da 1 0 0 rg /Helv 9 Tf
+da /Helv x Tf
+da /Helv 12 Tf 0.5 0.5 g
+da 0 0 1 rg
+da /Helv 0 Tf
+da /HeBO 12.125 Tf 0.2 0.4 0.6 rg
+da   \t/HeOb  11  Tf\r\n0 g
+da 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 /Helv 10 Tf 0 g
+da /Helv 1e1 Tf 1e-1 g
+da /Helv 0x10 Tf 0 g
+da /Helv 12.005 Tf 0 g
+da /Helv 1000000000000 Tf 0 g
+da /Helv 99999999999999 Tf 1 0 0 rg
+da
+css font-size:12pt;font-family:'Times New Roman', serif;font-weight:bold;color:#FF0000
+css font: italic bold 14px Arial, sans-serif
+css font-weight:700;font-style:oblique;text-decoration: Underline
+css font-weight:bolder
+css color:#abc
+css color:#12345
+css color:red
+css font-size: 0
+css font-size: 1000
+css font-size: 12 pt
+css font-family: "Courier New"
+css font-family: ,x
+css font: 12px
+css font: bold
+css ;;font-size:20pt;;
+css font-size:11.005pt
+css font-weight: 599
+css text-decoration:none
+ap highlight
+ap underline
+ap strikeout
+ap squiggly
+ap square
+ap square-dash
+ap square-cloud
+ap circle
+ap circle-cloud
+ap line
+ap endings
+ap arrow
+ap polyline
+ap polygon
+ap cloud
+ap ink
+ap freetext
+ap freetext-wrap
+ap freetext-rich
+ap freetext-callout
+ap stamp
+ap stamp-custom
+ap note
+ap note-comment
+ap caret
+ap attachments
+ap redact
+ap link
+edit
+comments
+flatten basic
+flatten widgets
+flatten links
+flatten rotated
+export
+fdf %FDF-1.2\n1 0 obj\n<</FDF<</F (a.pdf) /Annots [2 0 R 4 0 R] /Fields[<</T (person) /Kids[<</T (name) /V (Ayse)>> <</T (tick) /V /Yes>>]>>]>>>>\nendobj\n2 0 obj\n<</Subtype /Square /Page 0 /Rect [10 10 90 60] /C [1 0 0] /NM (sq) /Popup 3 0 R /IRT 4 0 R>>\nendobj\n3 0 obj\n<</Subtype /Popup /Page 0 /Rect [100 10 200 60] /Parent 2 0 R>>\nendobj\n4 0 obj\n<</Subtype /Text /Page 1 /Rect [1 1 21 21] /Contents (note) /NM (nt) /T (A)>>\nendobj\ntrailer\n<</Root 1 0 R>>\n%%EOF
+fdf %FDF-1.2\n1 0 obj\n<</FDF<</Annots [2 0 R]>>>>\nendobj\n2 0 obj\n<</Subtype /Stamp /Page 0 /Rect [0 0 9 9] /AP <</N 3 0 R>>>>\nendobj\n3 0 obj\n<</Type /XObject /Subtype /Form /BBox [0 0 9 9] /Length 5>>\nstream\nhello\nendstream\nendobj\ntrailer\n<</Root 1 0 R>>
+fdf %FDF-1.2\n1 0 obj\n<</FDF<</Annots [2 0 R]>>>>\nendobj\n2 0 obj\n<</Subtype /Stamp /Page 0 /Rect [0 0 9 9] /AP <</N 3 0 R>>>>\nendobj\n3 0 obj\n<</Type /XObject /Subtype /Form /BBox [0 0 9 9] /Length 999>>\nstream\nhel\x00lo\nendstream\nendobj\ntrailer\n<</Root 1 0 R>>
+fdf %FDF-1.2\n1 0 obj\n<</FDF<</F <</UF (u.pdf)>> /Annots [<</Subtype /Text>> 2 0 R 5 0 R]>>>>\nendobj\n2 0 obj\n<</Subtype /Caret /Page 999999999999 /Rect [0 0 9 9]>>\nendobj\ntrailer\n<</Root 1 0 R>>
+fdf %FDF-1.2\n1 0 obj\n<</FDF<</Annots [2 0 R]>>>>\nendobj\n2 0 obj\n<</Subtype /Square /Page 0 /Rect [10 10 90 60] /C [-1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 0 0 -1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]>>\nendobj\ntrailer\n<</Root 1 0 R>>
+fdf hello
+fdf %FDF-1.2\n1 0 obj\n<</Nope 1>>\nendobj
+xfdf <?xml version="1.0" encoding="UTF-8"?>\n<xfdf xmlns="http://ns.adobe.com/xfdf/" xml:space="preserve">\n  <f href="C:\\docs\\a.pdf"/>\n  <fields>\n    <field name="person"><field name="name"><value>Ay\xc5\x9fe</value></field><field name="langs"><value>tr</value><value>en</value></field></field>\n    <field name="empty"><value/></field>\n  </fields>\n  <annots>\n    <highlight color="#FFFF00" flags="print" name="h1" page="0" rect="10,20,110,34" title="Ali" subject="Highlight" date="D:20260301090000+00'00'" coords="10,34,110,34,10,20,110,20" opacity="0.5">\n      <contents>nice</contents>\n      <popup flags="print,nozoom,norotate" open="no" page="0" rect="120,20,220,100"/>\n    </highlight>\n    <freetext page="1" rect="50,50,250,100" name="f1" justification="2" flags="print">\n      <contents>text &amp; more</contents>\n      <defaultappearance>/Helv 14 Tf 1 0 0 rg</defaultappearance>\n      <defaultstyle>font: Helvetica 14pt</defaultstyle>\n      <contents-richtext><body xmlns="http://www.w3.org/1999/xhtml"><p><span style="font-weight:bold">text</span> &amp; more</p></body></contents-richtext>\n    </freetext>\n    <unheardof page="0"/>\n    <square page="0" rect="5,5,25,25" name="s1" style="cloudy" intensity="1" interior-color="#00FF00" color="#0000FF" width="2"/>\n    <ink page="0" rect="0,0,40,40" name="i1"><inklist><gesture>1,2;3,4;5,6</gesture><gesture>7,8;9,10</gesture></inklist></ink>\n  </annots>\n</xfdf>
+xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><annots><freetext page="0" rect="1,1,50,50" name="r1"><contents-richtext>\n  <body xmlns="http://www.w3.org/1999/xhtml" xmlns:xfa="http://www.xfa.org/schema/xfa-data/1.0/" xfa:APIVersion="Acrobat:11.0.0" style="font-size:11pt"><p dir="ltr"><span style="font-weight:bold">bold</span> and <i>it</i> &amp; \xc5\x9f</p>\n<p/><p>x<br/>y</p><!-- c --></body>\n</contents-richtext></freetext><text page="0" rect="1,1,2,2" name="r2"><contents-richtext><p>plain <b>x</b></p>tail<![CDATA[c<d]]><?pi d?></contents-richtext></text><text page="0" rect="1,1,2,2" name="r3"><contents-richtext xml:space="preserve"><p> a </p></contents-richtext></text></annots></xfdf>
+xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><f href="a&amp;b &quot;q&quot; &lt;&gt;\x09tab"/><annots><text page="0" rect="1,1,2,2" name="x1" replyType="reply" inreplyto="x0" state="Accepted" statemodel="Review" icon="Comment" open="yes" flags="print,hidden,locked"/><text page="0" rect="1,1,2,2" name="x0" title="A &amp; B" subject="s"><contents>line1\nline2\r\n\tcontent &amp; &lt;&gt; \xc5\x9f</contents></text><line page="0" rect="0,0,10,10" start="1,2" end="3,4" head="Circle" tail="ClosedArrow" width="1.5" style="dash" dashes="3,1"/><line page="0" rect="0,0,10,10" head="Square"/><polygon page="0" rect="0,0,10,10"><vertices>1,2;3,4;5,6</vertices></polygon><stamp page="x" icon="Draft" color="#GG0000" interior-color="#ff00ff" width="abc"/><caret page="2" symbol="none" justification="1.9"/><redact page="1" overlaytext="R" opacity="0.25" fringe="1,2,3,4" callout="1,2,3,4,5,6"/></annots></xfdf>
+xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><annots><text page="0" rect="1,1,2,2" name="a" inreplyto="b"/><text page="0" rect="1,1,2,2" name="b"/></annots></xfdf>
+xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><annots>
+xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><annots><square page="000000000000012" rect="1,1,9,9" name="p1"/><text page="0" rect="1,1,2,2" name="p2"><contents>&#00000000000000065;&#x000000000000042;</contents></text></annots></xfdf>
+xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><annots><text page="0" rect="1,1,2,2" name="a"><contents>a\xffb</contents></text></annots></xfdf>
+xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/" xmlns:x="urn:x"><annots><text page="0" rect="1,1,2,2" name="a" x:k="1"/></annots></xfdf>
+xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><annots><text page="0" rect="1,1,2,2" name="a" name="b"/></annots></xfdf>
+xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><annots><text page="0" rect="1,1,2,2" name="a" y:k="2"/></annots></xfdf>
+xfdf <other/>
+xfdf <!DOCTYPE xfdf [<!ENTITY x SYSTEM "file:///c:/windows/win.ini">]><xfdf xmlns="http://ns.adobe.com/xfdf/"><fields><field name="a"><value>&x;</value></field></fields></xfdf>
+xfdf not xml at all
+attach
+layers
+facts plain
+facts everything
+facts xfa
+facts rotated

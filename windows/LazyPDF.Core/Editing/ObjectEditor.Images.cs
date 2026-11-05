@@ -9,11 +9,15 @@ internal sealed partial class ObjectEditor
 {
     public IImageCodec? Codec { get; init; }
 
+    /// <summary>Whether a decoded frame is one <see cref="ContentImages.AddRgba"/> takes; a codec promises no size limit.</summary>
+    internal static bool Fits(PdfRgbaImage frame) =>
+        frame.Width > 0 && frame.Height > 0 && (long)frame.Width * frame.Height <= PdfImageSamples.MaxPixels && frame.Rgba.Length == (long)frame.Width * frame.Height * 4;
+
     /// <summary>Paints another picture where the object is, fitted inside its place with the proportions of the new one.</summary>
     public void ReplaceImage(ImageObject image, byte[] file, bool fit)
     {
         PdfImage? added = file.Length > 2 && file[0] == 0xFF && file[1] == 0xD8 ? PdfImageWriter.AddJpeg(Document, file) : null;
-        if (added is null && Codec?.DecodeFile(file) is { Count: > 0 } frames)
+        if (added is null && Codec?.DecodeFile(file) is { Count: > 0 } frames && Fits(frames[0]))
         {
             var frame = frames[0];
             added = PdfImageWriter.AddRgba(Document, frame.Width, frame.Height, frame.Rgba);

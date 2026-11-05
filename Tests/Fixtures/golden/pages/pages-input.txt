@@ -1,0 +1,44 @@
+# One line is "<op> <words>". Bytes are escaped (\n \r \t \ \xHH); the words are read as UTF-8.
+# range <text>|<page count>: PageRange.Parse, the pages it gives (0-based) or its message.
+# case <name>: a document built as the name says, a page operation applied, and every object of the result with the trailer.
+range 1-3, 5, 8-|10
+range 5,1-2,2,1|8
+range  2 - 4 ,  7 |8
+range 8-|8
+range 1-3|3
+range 9|8
+range 1-12|8
+range 9-|8
+range 2, 3|1
+range 1|0
+range |8
+range abc|8
+range 1,,2|8
+range 3-1|8
+range 0|8
+range -3|8
+range 1-2-3|8
+range 1.5|8
+range 1 2|8
+range 99999999999|8
+range 2147483648|8
+case rotate
+case boxes
+case resize-scale
+case resize-box
+case delete
+case delete-first
+case delete-tagged
+case reorder
+case move
+case duplicate
+case insert-blank
+case import
+case import-annotated
+case import-self
+case extract
+case extract-linked
+case merge
+case split-every
+case split-at
+case split-size

@@ -1,0 +1,334 @@
+# One line is "<op> <words>". Bytes are escaped (\n \r \t \\ \xHH).
+# text <bytes>: PdfText.Decode. encode <utf-8 bytes>: PdfText.Encode as hex. object <utf-8 bytes>: PdfText.ToObject.
+# key <utf-8 bytes>: PdfNameTree.KeyOf and TextOf. date <text>: PdfDate.Parse, Format and FormatXmp. xmpdate <text>: PdfDate.ParseXmp.
+# labels <start:style:prefix:first;...> | <pages>: the labels, then the objects a write of the ranges makes.
+# meta <bytes>: a fixed DocumentMetadata written into a file whose /Metadata holds the bytes.
+# action <object 20> ;; <n>=<object or stream(bytes)> ...: an action read, written again and searched for scripts.
+# dest and destr <object 20>: a destination read, written again and (dest) located on the 200 by 300 point pages.
+# scenario <name>: fixed edits, then the objects.
+text \x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f
+text \x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x3a\x3b\x3c\x3d\x3e\x3f
+text \x40\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50\x51\x52\x53\x54\x55\x56\x57\x58\x59\x5a\x5b\x5c\x5d\x5e\x5f
+text \x60\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7a\x7b\x7c\x7d\x7e\x7f
+text \x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f
+text \xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf
+text \xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf
+text \xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff
+text \xfe\xff\x00A\x04\x16\xd8\x3d\xdc\x4d
+text \xff\xfeA\x00\x16\x04\x3d\xd8\x4d\xdc
+text \xfe\xff\x00\x1b\x00e\x00n\x00\x1b\x00H\x00i
+text \xfe\xff\x00a\x00\x1b\x00e\x00n\x00b
+text \xfe\xff\x00\x1b\x00\x1b\x00\x1b
+text \xfe\xff\x00a\x00
+text \xfe\xff\xd8\x00\x00a
+text \xfe\xff\xdc\x00\xd8\x00
+text \xfe\xff
+text \xff\xfe
+text \xfe
+text \xef\xbb\xbf
+text \xef\xbb\xbfab\xd0\x96\xe2\x82\xac\xf0\x9f\x98\x80
+text \xef\xbb\xbfa\xc3(b
+text \xef\xbb\xbf\xe2\x82
+text \xef\xbb\xbfa\x1bde\x1bb
+text Plain \(text\)
+text
+encode Quarterly report
+encode caf\xc3\xa9 \xe2\x80\xa2\xe2\x82\xac
+encode T\xc3\xbcrk\xc3\xa7e \xc4\x9f
+encode mark \xf0\x9f\x93\x98
+encode a\tb\nc\r
+encode \x01\x02\x7f
+encode \xc2\x80\xc2\x9f\xc2\xa0\xc2\xad
+encode \xef\xac\x81\xe2\x84\xa2\xc5\x81\xc5\x92
+encode
+object plain
+object with (parens) and \\
+object \xd0\x96
+object a\nb
+object caf\xc3\xa9
+object
+key caf\xc3\xa9
+key A\xd0\x96
+key plain
+date D:20261019213005+03'00'
+date D:2026
+date D:202603
+date D:20260315
+date D:2026031512
+date D:202603151230
+date 20260315120000Z
+date D:20260315120000Z00'00'
+date \x20\x20D:20260315120000\x20\x20
+date D:20260101000000-05'00'
+date D:20260101000000+05'30'
+date D:20260101000000+0530
+date D:20260101000000+02
+date D:20260101000000+2
+date D:20260101000000+
+date D:20260101000000-
+date D:20260101000000+14'00'
+date D:20260101000000+14'01'
+date D:20260101000000+23'59'
+date D:20260101000000+24'00'
+date D:20260101000000+25'00'
+date D:20260101000000+05'60'
+date D:20260101000000Z
+date D:20260101000000z
+date D:20260101000000 +03'00'
+date D:
+date
+date yesterday
+date D:20261301
+date D:20260230
+date D:20240229
+date D:20230229
+date D:2026010125
+date D:20260101240000
+date D:20260101006000
+date D:20260101000060
+date D:20161231235960Z
+date D:20161231235961Z
+date D:00000101
+date D:00010101000000Z
+date D:00010101000000-05'00'
+date D:99991231235959+14'00'
+date D:99991231235959Z
+date D:2026x
+date D:20x6
+date D:2026-03-15
+date D:20260315T120000
+date D:2026 0315
+date D:\xd9\xa2\xd9\xa0\xd9\xa2\xd9\xa6
+date 2026
+date D:D:2026
+date   
+date D:99999999
+xmpdate 2026
+xmpdate 2026-03
+xmpdate 2026-03-01
+xmpdate 2026-03-01T10:00
+xmpdate 2026-03-01T10:00:05
+xmpdate 2026-03-01T10:00:05Z
+xmpdate 2026-03-01T10:00:05+03:00
+xmpdate 2026-03-01T10:00:05.123+03:00
+xmpdate 2026-03-01T10:00:05.1234567Z
+xmpdate 2026-03-01T10:00:05.123456789Z
+xmpdate 2026-03-01T10:00:05.12345678
+xmpdate 20260301
+xmpdate 2026-03-01 10:00:05
+xmpdate 2026-03-01T10:00:05-0300
+xmpdate 2026-03-01T10:00:05+03
+xmpdate 2026-13-01
+xmpdate 2026-02-30
+xmpdate 0001-01-01T00:00:00+05:00
+xmpdate 9999-12-31T23:59:59-05:00
+xmpdate \x20\x202026-03-01\x20\x20
+xmpdate 2026-03-01T24:00:00
+xmpdate 2026-03-01T10:00:60
+xmpdate soon
+xmpdate
+xmpdate 2026-03-01T10:00:05.Z
+xmpdate 2026-3-1
+xmpdate 2026-03-01T1:00:05Z
+xmpdate 2026-03-01t10:00:05z
+xmpdate 2026-03-01T10:00:05+14:00
+xmpdate 2026-03-01T10:00:05+15:00
+xmpdate 2026-03-01T10:00:05 +03:00
+xmpdate D:20260301
+xmpdate 2026-03-01T10:00:05.5
+xmpdate +2026-03-01
+xmpdate -2026-03-01
+xmpdate 2026-03-01T10:00:05+03:00:00
+xmpdate 2026-03-01T10:00+03:00
+xmpdate 2026-03-01T10Z
+xmpdate 2026-03-01T10:00:05,5Z
+xmpdate 2026-03-01Z
+xmpdate 2026-03-01+03:00
+xmpdate 2026-03-01 1:00:05Z
+xmpdate 2026-03-01 10:00:05 Z
+xmpdate 2026-03-01T10:00:05.0000000Z
+xmpdate 2026-03-01T10:00:05\x20+0300
+xmpdate 2026-03-01T10:00:05+3
+xmpdate 2026-03-01T10:00:05+03:0
+xmpdate 2026-03-01T10:00:05+03:60
+xmpdate 2026-03-01T10:00:05-00:30
+xmpdate 2026-03-01T10:00:05Zx
+xmpdate 2026-03-01\t
+xmpdate 2026-03-01T10:00:5Z
+xmpdate 2026-03-01T10:00:05.
+xmpdate 2026-03-01T10:00:05.5.5Z
+xmpdate 2026-03-01T10:00:05\x20+03:00\x20
+xmpdate 2026-03-01T23:59:59.9999999Z
+xmpdate 2026-03-01T10:00:05+14:01
+xmpdate 2026-03-01T10:00:05+23:00
+xmpdate 2026-03-01T10:00:05+00:00
+xmpdate 0001-01-01
+xmpdate 0001-01-01T00:00:00Z
+xmpdate 9999-12-31T23:59:59Z
+xmpdate 0000-01-01
+xmpdate 10000-01-01
+xmpdate 2026-3
+xmpdate 2026-1-1T10:00Z
+xmpdate 2026-03-1
+xmpdate 2026-03-01T10:60Z
+xmpdate 2026-00-10
+xmpdate 2026-03-00
+xmpdate 2026-03-01T10:00:05-03
+xmpdate 2026-03-01T10:00:05-0
+xmpdate 2026-03-01T10:00:05-03:30
+xmpdate 2020-01-02T03:04:05+01:00
+xmpdate 2026-03-01T10:00:05.0Z
+xmpdate 2026-03-01T10:00:05.9999999+14:00
+xmpdate 2026-03-01T23:59:59.99999999Z
+xmpdate 2026-12-31T23:59:59.99999995+02:00
+xmpdate 2026-03-01T23:59:59.99999994Z
+xmpdate 9999-12-31T23:59:59.99999999Z
+labels 0:n:: 1 | 3
+labels 0:r::1;3:D::1;6:D:A-:10 | 9
+labels 0:R::1;1:D:p. :5 | 4
+labels 0:n:Cover:1;2:D::1 | 4
+labels 2:n:x:1 | 4
+labels 0:R::1994 | 1
+labels 0:R::3999 | 1
+labels 0:R::4000 | 1
+labels 0:R::4999 | 1
+labels 0:r::1;1:r::4;2:r::9;3:r::14;4:r::40;5:r::94 | 6
+labels 0:a::1;1:a::26;2:a::27;3:a::28;4:a::52;5:a::53 | 6
+labels 0:A::53;1:A::78;2:A::79 | 3
+labels 4:A::1;2:D:S:3;2:D:T:3 | 6
+labels 0:D:a\\b:1 | 2
+meta <?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about="" xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/" pdfaid:part="2" pdfaid:conformance="B" pdf:Producer="Old producer"\n    xmp:CreatorTool="Old tool" xmp:CreateDate="2020-01-02T03:04:05+01:00">\n   <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/"><rdf:Alt><rdf:li xml:lang="x-default">Old title</rdf:li></rdf:Alt></dc:title>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+meta <?xml version="1.0" encoding="UTF-8"?><x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/></x:xmpmeta>
+meta \xef\xbb\xbf<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmp="http://ns.adobe.com/xap/1.0/"><dc:subject><rdf:Bag><rdf:li>old</rdf:li></rdf:Bag></dc:subject><xmp:MetadataDate>2000-01-01T00:00:00Z</xmp:MetadataDate></rdf:Description></rdf:RDF>
+meta <RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Plain title</dc:title></Description></RDF>
+meta <r:RDF xmlns:r="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><r:Description><x:Other xmlns:x="urn:x" a="1" b=\'2\'>keep &amp; &lt;this&gt; &#233;&#x1F600;</x:Other><!-- comment --><?pi data?><![CDATA[a<b]]></r:Description><r:Description xmlns:dc="http://purl.org/dc/elements/1.1/" dc:title="second"/></r:RDF>
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\r\n\t<rdf:Description>\r\n\t\t<empty></empty><short/>\r\n\t</rdf:Description>\r\n</rdf:RDF>\r\n
+meta <a><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/"><rdf:Description pdfx:Department="old"><pdfx:Note>old</pdfx:Note></rdf:Description></rdf:RDF></a>
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description/></rdf:RDF>
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description a:b="1"/></rdf:RDF>
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description></rdf:Description>
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description b="1" b="2"/></rdf:RDF>
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description>&nbsp;</rdf:Description></rdf:RDF>
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+meta x<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>\x20
+meta <!-- before -->\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>\n<!-- after -->\n
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xml:lang="en" attr="a\tb&#x9;c&#xA;d&quot;e"/></rdf:RDF>
+meta <?xml version="1.0" encoding="iso-8859-1"?><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:rights>caf\xe9</dc:rights></rdf:Description></rdf:RDF>
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description><dc:title xmlns:dc="urn:other">kept</dc:title></rdf:Description></rdf:RDF>
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title><rdf:Alt><rdf:li> </rdf:li></rdf:Alt></dc:title></rdf:Description>x</rdf:RDF>
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns="http://purl.org/dc/elements/1.1/"/></rdf:RDF>
+meta <a:RDF xmlns:a="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:b="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><a:Description/></a:RDF>
+meta <RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><\xc4\xb2/></rdf:RDF>
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>a&#13;&#10;b&#x0000000000041;</dc:title></rdf:Description></rdf:RDF>
+meta <?xml foo="1" version="1.0"?><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+meta <\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00r\x00d\x00f\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00w\x00w\x00w\x00.\x00w\x003\x00.\x00o\x00r\x00g\x00/\x001\x009\x009\x009\x00/\x000\x002\x00/\x002\x002\x00-\x00r\x00d\x00f\x00-\x00s\x00y\x00n\x00t\x00a\x00x\x00-\x00n\x00s\x00#\x00"\x00>\x00<\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00d\x00c\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00p\x00u\x00r\x00l\x00.\x00o\x00r\x00g\x00/\x00d\x00c\x00/\x00e\x00l\x00e\x00m\x00e\x00n\x00t\x00s\x00/\x001\x00.\x001\x00/\x00"\x00>\x00<\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00c\x00a\x00f\x00\xe9\x00<\x00/\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00>\x00
+meta \x00<\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00r\x00d\x00f\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00w\x00w\x00w\x00.\x00w\x003\x00.\x00o\x00r\x00g\x00/\x001\x009\x009\x009\x00/\x000\x002\x00/\x002\x002\x00-\x00r\x00d\x00f\x00-\x00s\x00y\x00n\x00t\x00a\x00x\x00-\x00n\x00s\x00#\x00"\x00>\x00<\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00d\x00c\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00p\x00u\x00r\x00l\x00.\x00o\x00r\x00g\x00/\x00d\x00c\x00/\x00e\x00l\x00e\x00m\x00e\x00n\x00t\x00s\x00/\x001\x00.\x001\x00/\x00"\x00>\x00<\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00c\x00a\x00f\x00\xe9\x00<\x00/\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00>
+meta \xff\xfe<\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00r\x00d\x00f\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00w\x00w\x00w\x00.\x00w\x003\x00.\x00o\x00r\x00g\x00/\x001\x009\x009\x009\x00/\x000\x002\x00/\x002\x002\x00-\x00r\x00d\x00f\x00-\x00s\x00y\x00n\x00t\x00a\x00x\x00-\x00n\x00s\x00#\x00"\x00>\x00<\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00d\x00c\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00p\x00u\x00r\x00l\x00.\x00o\x00r\x00g\x00/\x00d\x00c\x00/\x00e\x00l\x00e\x00m\x00e\x00n\x00t\x00s\x00/\x001\x00.\x001\x00/\x00"\x00>\x00<\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00c\x00a\x00f\x00\xe9\x00<\x00/\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00>\x00
+meta \xff\xfe\x00\x00<\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00R\x00\x00\x00D\x00\x00\x00F\x00\x00\x00 \x00\x00\x00x\x00\x00\x00m\x00\x00\x00l\x00\x00\x00n\x00\x00\x00s\x00\x00\x00:\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00=\x00\x00\x00"\x00\x00\x00h\x00\x00\x00t\x00\x00\x00t\x00\x00\x00p\x00\x00\x00:\x00\x00\x00/\x00\x00\x00/\x00\x00\x00w\x00\x00\x00w\x00\x00\x00w\x00\x00\x00.\x00\x00\x00w\x00\x00\x003\x00\x00\x00.\x00\x00\x00o\x00\x00\x00r\x00\x00\x00g\x00\x00\x00/\x00\x00\x001\x00\x00\x009\x00\x00\x009\x00\x00\x009\x00\x00\x00/\x00\x00\x000\x00\x00\x002\x00\x00\x00/\x00\x00\x002\x00\x00\x002\x00\x00\x00-\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00-\x00\x00\x00s\x00\x00\x00y\x00\x00\x00n\x00\x00\x00t\x00\x00\x00a\x00\x00\x00x\x00\x00\x00-\x00\x00\x00n\x00\x00\x00s\x00\x00\x00#\x00\x00\x00"\x00\x00\x00>\x00\x00\x00<\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00D\x00\x00\x00e\x00\x00\x00s\x00\x00\x00c\x00\x00\x00r\x00\x00\x00i\x00\x00\x00p\x00\x00\x00t\x00\x00\x00i\x00\x00\x00o\x00\x00\x00n\x00\x00\x00 \x00\x00\x00x\x00\x00\x00m\x00\x00\x00l\x00\x00\x00n\x00\x00\x00s\x00\x00\x00:\x00\x00\x00d\x00\x00\x00c\x00\x00\x00=\x00\x00\x00"\x00\x00\x00h\x00\x00\x00t\x00\x00\x00t\x00\x00\x00p\x00\x00\x00:\x00\x00\x00/\x00\x00\x00/\x00\x00\x00p\x00\x00\x00u\x00\x00\x00r\x00\x00\x00l\x00\x00\x00.\x00\x00\x00o\x00\x00\x00r\x00\x00\x00g\x00\x00\x00/\x00\x00\x00d\x00\x00\x00c\x00\x00\x00/\x00\x00\x00e\x00\x00\x00l\x00\x00\x00e\x00\x00\x00m\x00\x00\x00e\x00\x00\x00n\x00\x00\x00t\x00\x00\x00s\x00\x00\x00/\x00\x00\x001\x00\x00\x00.\x00\x00\x001\x00\x00\x00/\x00\x00\x00"\x00\x00\x00>\x00\x00\x00<\x00\x00\x00d\x00\x00\x00c\x00\x00\x00:\x00\x00\x00t\x00\x00\x00i\x00\x00\x00t\x00\x00\x00l\x00\x00\x00e\x00\x00\x00>\x00\x00\x00c\x00\x00\x00a\x00\x00\x00f\x00\x00\x00\xe9\x00\x00\x00<\x00\x00\x00/\x00\x00\x00d\x00\x00\x00c\x00\x00\x00:\x00\x00\x00t\x00\x00\x00i\x00\x00\x00t\x00\x00\x00l\x00\x00\x00e\x00\x00\x00>\x00\x00\x00<\x00\x00\x00/\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00D\x00\x00\x00e\x00\x00\x00s\x00\x00\x00c\x00\x00\x00r\x00\x00\x00i\x00\x00\x00p\x00\x00\x00t\x00\x00\x00i\x00\x00\x00o\x00\x00\x00n\x00\x00\x00>\x00\x00\x00<\x00\x00\x00/\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00R\x00\x00\x00D\x00\x00\x00F\x00\x00\x00>\x00\x00\x00
+meta \x00\x00\x00<\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00R\x00\x00\x00D\x00\x00\x00F\x00\x00\x00 \x00\x00\x00x\x00\x00\x00m\x00\x00\x00l\x00\x00\x00n\x00\x00\x00s\x00\x00\x00:\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00=\x00\x00\x00"\x00\x00\x00h\x00\x00\x00t\x00\x00\x00t\x00\x00\x00p\x00\x00\x00:\x00\x00\x00/\x00\x00\x00/\x00\x00\x00w\x00\x00\x00w\x00\x00\x00w\x00\x00\x00.\x00\x00\x00w\x00\x00\x003\x00\x00\x00.\x00\x00\x00o\x00\x00\x00r\x00\x00\x00g\x00\x00\x00/\x00\x00\x001\x00\x00\x009\x00\x00\x009\x00\x00\x009\x00\x00\x00/\x00\x00\x000\x00\x00\x002\x00\x00\x00/\x00\x00\x002\x00\x00\x002\x00\x00\x00-\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00-\x00\x00\x00s\x00\x00\x00y\x00\x00\x00n\x00\x00\x00t\x00\x00\x00a\x00\x00\x00x\x00\x00\x00-\x00\x00\x00n\x00\x00\x00s\x00\x00\x00#\x00\x00\x00"\x00\x00\x00>\x00\x00\x00<\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00D\x00\x00\x00e\x00\x00\x00s\x00\x00\x00c\x00\x00\x00r\x00\x00\x00i\x00\x00\x00p\x00\x00\x00t\x00\x00\x00i\x00\x00\x00o\x00\x00\x00n\x00\x00\x00 \x00\x00\x00x\x00\x00\x00m\x00\x00\x00l\x00\x00\x00n\x00\x00\x00s\x00\x00\x00:\x00\x00\x00d\x00\x00\x00c\x00\x00\x00=\x00\x00\x00"\x00\x00\x00h\x00\x00\x00t\x00\x00\x00t\x00\x00\x00p\x00\x00\x00:\x00\x00\x00/\x00\x00\x00/\x00\x00\x00p\x00\x00\x00u\x00\x00\x00r\x00\x00\x00l\x00\x00\x00.\x00\x00\x00o\x00\x00\x00r\x00\x00\x00g\x00\x00\x00/\x00\x00\x00d\x00\x00\x00c\x00\x00\x00/\x00\x00\x00e\x00\x00\x00l\x00\x00\x00e\x00\x00\x00m\x00\x00\x00e\x00\x00\x00n\x00\x00\x00t\x00\x00\x00s\x00\x00\x00/\x00\x00\x001\x00\x00\x00.\x00\x00\x001\x00\x00\x00/\x00\x00\x00"\x00\x00\x00>\x00\x00\x00<\x00\x00\x00d\x00\x00\x00c\x00\x00\x00:\x00\x00\x00t\x00\x00\x00i\x00\x00\x00t\x00\x00\x00l\x00\x00\x00e\x00\x00\x00>\x00\x00\x00c\x00\x00\x00a\x00\x00\x00f\x00\x00\x00\xe9\x00\x00\x00<\x00\x00\x00/\x00\x00\x00d\x00\x00\x00c\x00\x00\x00:\x00\x00\x00t\x00\x00\x00i\x00\x00\x00t\x00\x00\x00l\x00\x00\x00e\x00\x00\x00>\x00\x00\x00<\x00\x00\x00/\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00D\x00\x00\x00e\x00\x00\x00s\x00\x00\x00c\x00\x00\x00r\x00\x00\x00i\x00\x00\x00p\x00\x00\x00t\x00\x00\x00i\x00\x00\x00o\x00\x00\x00n\x00\x00\x00>\x00\x00\x00<\x00\x00\x00/\x00\x00\x00r\x00\x00\x00d\x00\x00\x00f\x00\x00\x00:\x00\x00\x00R\x00\x00\x00D\x00\x00\x00F\x00\x00\x00>
+meta <\x00?\x00x\x00m\x00l\x00 \x00v\x00e\x00r\x00s\x00i\x00o\x00n\x00=\x00"\x001\x00.\x000\x00"\x00 \x00e\x00n\x00c\x00o\x00d\x00i\x00n\x00g\x00=\x00"\x00u\x00t\x00f\x00-\x001\x006\x00"\x00?\x00>\x00<\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00r\x00d\x00f\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00w\x00w\x00w\x00.\x00w\x003\x00.\x00o\x00r\x00g\x00/\x001\x009\x009\x009\x00/\x000\x002\x00/\x002\x002\x00-\x00r\x00d\x00f\x00-\x00s\x00y\x00n\x00t\x00a\x00x\x00-\x00n\x00s\x00#\x00"\x00>\x00<\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00d\x00c\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00p\x00u\x00r\x00l\x00.\x00o\x00r\x00g\x00/\x00d\x00c\x00/\x00e\x00l\x00e\x00m\x00e\x00n\x00t\x00s\x00/\x001\x00.\x001\x00/\x00"\x00>\x00<\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00c\x00a\x00f\x00\xe9\x00<\x00/\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00>\x00
+meta <\x00?\x00x\x00m\x00l\x00 \x00v\x00e\x00r\x00s\x00i\x00o\x00n\x00=\x00"\x001\x00.\x000\x00"\x00 \x00e\x00n\x00c\x00o\x00d\x00i\x00n\x00g\x00=\x00"\x00u\x00t\x00f\x00-\x008\x00"\x00?\x00>\x00<\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00r\x00d\x00f\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00w\x00w\x00w\x00.\x00w\x003\x00.\x00o\x00r\x00g\x00/\x001\x009\x009\x009\x00/\x000\x002\x00/\x002\x002\x00-\x00r\x00d\x00f\x00-\x00s\x00y\x00n\x00t\x00a\x00x\x00-\x00n\x00s\x00#\x00"\x00>\x00<\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00 \x00x\x00m\x00l\x00n\x00s\x00:\x00d\x00c\x00=\x00"\x00h\x00t\x00t\x00p\x00:\x00/\x00/\x00p\x00u\x00r\x00l\x00.\x00o\x00r\x00g\x00/\x00d\x00c\x00/\x00e\x00l\x00e\x00m\x00e\x00n\x00t\x00s\x00/\x001\x00.\x001\x00/\x00"\x00>\x00<\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00c\x00a\x00f\x00\xe9\x00<\x00/\x00d\x00c\x00:\x00t\x00i\x00t\x00l\x00e\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00i\x00o\x00n\x00>\x00<\x00/\x00r\x00d\x00f\x00:\x00R\x00D\x00F\x00>\x00
+meta <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>caf\xe9</dc:title></rdf:Description></rdf:RDF>
+meta <?xml version="1.0" encoding="ascii"?><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>caf\xe9</dc:title></rdf:Description></rdf:RDF>
+meta \xef\xbb\xbf<?xml version="1.0" encoding="latin1"?><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>caf\xc3\xa9</dc:title></rdf:Description></rdf:RDF>
+meta <?xml version="1.0" encoding="no-such-encoding"?><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>caf\xe9</dc:title></rdf:Description></rdf:RDF>
+action <</S /GoTo /D [4 0 R /XYZ 5 6 null]>>
+action <</S /GoTo>>
+action <</S /GoTo /D [4 0 R /XYZ 5 6 null] /Next <</S /Named /N /NextPage>>>>
+action <</S /GoTo /D (nowhere)>>
+action <</S /GoToR /F (other.pdf) /D [2 /Fit] /NewWindow true>>
+action <</S /GoToR /F <</Type /Filespec /F (a.pdf) /UF (b.pdf)>> /D (chapter1)>>
+action <</S /GoToR /F <</F (only.pdf)>> /D [-1 /Fit]>>
+action <</S /GoToR /D [3000000000 /FitH 5] /NewWindow false>>
+action <</S /URI /URI (https://example.com/a?b=1)>>
+action <</S /URI /URI <687474703A2F2F782FC3A9>>>
+action <</S /URI /URI <687474703A2F2F782FE9>>>
+action <</S /URI /URI <C0AF41>>>
+action <</S /URI /URI <EFBBBF41>>>
+action <</S /URI /URI 5>>
+action <</S /Launch /F (tool.exe)>>
+action <</S /Launch /F <FEFF00610062> /NewWindow true>>
+action <</S /Named /N /NextPage>>
+action <</S /Named>>
+action <</S /JavaScript /JS (app.alert\(1\);)>>
+action <</S /JavaScript /JS 21 0 R>> ;; 21=stream(this.print\(\);)
+action <</S /JavaScript /JS 21 0 R>> ;; 21=stream(\xfe\xff\x00\x41\x04\x16)
+action <</S /JavaScript>>
+action <</S /JavaScript /JS 7>>
+action <</S /SubmitForm /F <</FS /URL /F (http://x/post)>> /Flags 4 /Fields [(name) 22 0 R (b) 5 [1]]>> ;; 22=<</FT /Tx /T (email)>>
+action <</S /SubmitForm /Flags 4294967297>>
+action <</S /SubmitForm /Flags -3 /Fields 5>>
+action <</S /ResetForm>>
+action <</S /ResetForm /Flags 1 /Fields [(a) (b)]>>
+action <</S /Hide /T (x)>>
+action <</S /SetOCGState /State [/OFF 5 0 R]>>
+action <</S /Whatever>>
+action <</Type /Action>>
+action <</S (GoTo)>>
+action (not an action)
+action <</S /Named /N /NextPage /Next [<</S /URI /URI (a)>> 21 0 R]>> ;; 21=<</S /JavaScript /JS (x) /Next <</S /Named /N /LastPage>>>>
+action <</S /Named /N /A /Next 21 0 R>> ;; 21=<</S /Named /N /B /Next 20 0 R>>
+action <</S /Named /N /A /Next <</S /Named /N /B /Next [<</S /Named /N /C>> null 99 0 R 5]>>>>
+action <</S /Named /N /A /Next [20 0 R 20 0 R]>>
+action <</S /Named /N /A /Next 21 0 R>> ;; 21=<</S /Named /N /B /Next 22 0 R>> ;; 22=<</S /Named /N /C /Next 23 0 R>> ;; 23=<</S /Named /N /D /Next 24 0 R>> ;; 24=<</S /Named /N /E /Next 25 0 R>> ;; 25=<</S /Named /N /F /Next 26 0 R>> ;; 26=<</S /Named /N /G /Next 27 0 R>> ;; 27=<</S /Named /N /H /Next 28 0 R>> ;; 28=<</S /Named /N /I /Next 29 0 R>> ;; 29=<</S /Named /N /J>>
+action <</S /Named /N /A /Next [<</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>> <</S /Named /N /X>>]>>
+action <</S /Named /N /A /Next 21 0 R>> ;; 21=<</S /Named /N /B /Next 22 0 R>> ;; 22=<</S /Launch /F (x) /Next [<</S /JavaScript /JS (deep)>>]>>
+action <</S /Named /N /N0 /Next 21 0 R>> ;; 21=<</S /Named /N /N1 /Next 22 0 R>> ;; 22=<</S /Named /N /N2 /Next 23 0 R>> ;; 23=<</S /Named /N /N3 /Next 24 0 R>> ;; 24=<</S /Named /N /N4 /Next 25 0 R>> ;; 25=<</S /Named /N /N5 /Next 26 0 R>> ;; 26=<</S /Named /N /N6 /Next 27 0 R>> ;; 27=<</S /Named /N /N7 /Next 28 0 R>> ;; 28=<</S /Named /N /N8 /Next 29 0 R>> ;; 29=<</S /Named /N /N9 /Next 30 0 R>> ;; 30=<</S /Named /N /N10 /Next 31 0 R>> ;; 31=<</S /Named /N /N11 /Next 32 0 R>> ;; 32=<</S /Named /N /N12 /Next 33 0 R>> ;; 33=<</S /JavaScript /JS (end)>>
+action <</S /URI /URI 5 /Next <</S /JavaScript /JS (x)>>>>
+action <</S /GoTo /Next <</S /JavaScript /JS (x)>>>>
+action <</S /Hide /T (x) /Next <</S /GoTo /D [99 0 R /Fit]>>>>
+action <</S /GoTo /D [99 0 R /Fit]>>
+dest [4 0 R /XYZ 10 250 2]
+dest [4 0 R /XYZ null null null]
+dest [4 0 R /Fit]
+dest [5 0 R /FitH 120]
+dest [3 0 R /FitV 30]
+dest [3 0 R /FitR 10 20 100 200]
+dest [3 0 R /FitB]
+dest [4 0 R /FitBH 99]
+dest [4 0 R /FitBV 5]
+dest [4 0 R /XYZ 0 0 0]
+dest [4 0 R /XYZ -32768 900000 1.5]
+dest [5 0 R /FitH]
+dest [5 0 R /FitR 1 2]
+dest [5 0 R /FitR 1 2 3]
+dest [5 0 R /XYZ (a) /b 3]
+dest [4 0 R /Bogus 1]
+dest [4 0 R]
+dest []
+dest [99 0 R /Fit]
+dest [6 0 R /Fit]
+dest [null /Fit]
+dest [4 0 R (Fit)]
+dest [4 0 R /Fit /Extra 1 2 3]
+dest <</D [4 0 R /Fit]>>
+dest <</D 5>>
+dest <<>>
+dest /name
+dest (string)
+dest 5
+dest null
+dest [4 0 R /XYZ 1e-7 .5 -.5]
+dest [4 0 R /XYZ 12345678.123456789 1 1]
+destr [7 /FitH 50]
+destr [0 /Fit]
+destr [-1 /Fit]
+destr [2147483647 /Fit]
+destr [2147483648 /Fit]
+destr [1.5 /Fit]
+destr [4 0 R /Fit]
+destr (chap)
+destr /name
+destr <</D [2 /FitV 3]>>
+destr [3 /XYZ 1 2 3]
+destr [3 /FitR 1 2 3 4]
+destr []
+scenario nametree
+scenario numbertree
+scenario actions
+scenario destinations
+scenario outline
+scenario links
+scenario viewer

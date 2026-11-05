@@ -5,18 +5,22 @@ using Xunit.Abstractions;
 namespace LazyPDF.Core.Tests;
 
 // Reads the annotations of every file in a list when LAZYPDF_CORPUS names a text file of paths, moves
-// them through FDF and XFDF, adds one of ours and flattens a copy; does nothing otherwise. Only counts are printed.
+// them through FDF and XFDF, adds one of ours and flattens a copy. Without it, the files of Tests/Fixtures/Documents/annotations
+// stand in, and the counts must show that annotations were read and changed. Only counts are printed.
 public class AnnotationCorpusTests(ITestOutputHelper output)
 {
     [Fact]
     public void EveryFileReadsExportsAndTakesANewAnnotation()
     {
         string? list = Environment.GetEnvironmentVariable("LAZYPDF_CORPUS");
-        if (string.IsNullOrEmpty(list) || !File.Exists(list)) return;
+        bool ours = string.IsNullOrEmpty(list) || !File.Exists(list);
+        var paths = ours
+            ? Directory.GetFiles(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Documents", "annotations"), "*.pdf").Order(StringComparer.Ordinal)
+            : File.ReadAllLines(list!).Where(l => l.Trim().Length > 0);
 
         int files = 0, annotated = 0, annotations = 0, comments = 0, replies = 0, exported = 0, flattened = 0, imported = 0, changed = 0;
         var problems = new List<string>();
-        foreach (string path in File.ReadAllLines(list).Where(l => l.Trim().Length > 0))
+        foreach (string path in paths)
         {
             if (!File.Exists(path)) continue;
             PdfDocument document;
@@ -83,5 +87,6 @@ public class AnnotationCorpusTests(ITestOutputHelper output)
         output.WriteLine($"{files} files, {annotated} with annotations ({annotations} in all), {comments} comments with {replies} replies, " +
                          $"{exported} exported to FDF, {imported} imported again, {changed} edited, {flattened} flattened");
         Assert.True(problems.Count == 0, string.Join("\n", problems));
+        if (ours) Assert.True(annotated > 0 && comments > 0 && exported > 0 && changed > 0 && flattened > 0, "the fixture has annotations to read, change and flatten");
     }
 }

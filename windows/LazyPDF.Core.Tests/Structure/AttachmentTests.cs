@@ -56,6 +56,16 @@ public class AttachmentTests
     }
 
     [Fact]
+    public void ColonsInANameBelongToIt()
+    {
+        var document = StructureFixtures.Open();
+        PdfAttachments.Add(document, "Invoice: March.pdf", [1]);
+        PdfAttachments.Add(document, "a.b:c", [1]);
+        Assert.Equal("Invoice: March (2).pdf", PdfAttachments.Add(document, "Invoice: March.pdf", [2]).Name);
+        Assert.Equal("a (2).b:c", PdfAttachments.Add(document, "a.b:c", [2]).Name);
+    }
+
+    [Fact]
     public void NonLatinNamesSurvive()
     {
         var document = StructureFixtures.Open();

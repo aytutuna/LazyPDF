@@ -72,4 +72,13 @@ public class PdfDateTests
         Assert.Null(PdfDate.ParseXmp("soon"));
         Assert.Null(PdfDate.ParseXmp(null));
     }
+
+    [Fact]
+    public void XmpFractionThatRoundsUpCarries()
+    {
+        Assert.Equal(new DateTimeOffset(2026, 3, 2, 0, 0, 0, TimeSpan.Zero), PdfDate.ParseXmp("2026-03-01T23:59:59.99999999Z"));
+        Assert.Equal(new DateTimeOffset(2027, 1, 1, 0, 0, 0, TimeSpan.FromHours(2)), PdfDate.ParseXmp("2026-12-31T23:59:59.99999995+02:00"));
+        Assert.Equal(new DateTimeOffset(2026, 3, 1, 23, 59, 59, TimeSpan.Zero).AddTicks(9_999_999), PdfDate.ParseXmp("2026-03-01T23:59:59.99999994Z"));
+        Assert.Null(PdfDate.ParseXmp("9999-12-31T23:59:59.99999999Z"));
+    }
 }

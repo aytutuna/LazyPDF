@@ -63,20 +63,20 @@ internal sealed class XmpPacket
 
     /// <summary>Sets a simple property, or takes it out when <paramref name="value"/> is null.</summary>
     public void Set(XNamespace ns, string prefix, string name, string? value) =>
-        Put(ns, prefix, name, value is null ? null : new XElement(ns + name, value));
+        Put(ns, prefix, name, value is null ? null : new XElement(ns + name, Clean(value)));
 
     /// <summary>A language alternative with one item, x-default.</summary>
     public void SetAlt(XNamespace ns, string prefix, string name, string? value) =>
         Put(ns, prefix, name, value is null ? null : new XElement(ns + name,
-            new XElement(Rdf + "Alt", new XElement(Rdf + "li", new XAttribute(XNamespace.Xml + "lang", "x-default"), value))));
+            new XElement(Rdf + "Alt", new XElement(Rdf + "li", new XAttribute(XNamespace.Xml + "lang", "x-default"), Clean(value)))));
 
     /// <summary>An ordered list with one item.</summary>
     public void SetSeq(XNamespace ns, string prefix, string name, string? value) =>
-        Put(ns, prefix, name, value is null ? null : new XElement(ns + name, new XElement(Rdf + "Seq", new XElement(Rdf + "li", value))));
+        Put(ns, prefix, name, value is null ? null : new XElement(ns + name, new XElement(Rdf + "Seq", new XElement(Rdf + "li", Clean(value)))));
 
     /// <summary>An unordered list, or nothing when there are no values.</summary>
     public void SetBag(XNamespace ns, string prefix, string name, IReadOnlyList<string> values) =>
-        Put(ns, prefix, name, values.Count == 0 ? null : new XElement(ns + name, new XElement(Rdf + "Bag", values.Select(v => new XElement(Rdf + "li", v)))));
+        Put(ns, prefix, name, values.Count == 0 ? null : new XElement(ns + name, new XElement(Rdf + "Bag", values.Select(v => new XElement(Rdf + "li", Clean(v))))));
 
     public byte[] ToBytes()
     {
@@ -85,6 +85,11 @@ internal sealed class XmpPacket
         using (var writer = XmlWriter.Create(output, settings)) _document.Save(writer);
         return output.ToArray();
     }
+
+    // XML has no place for most control characters, U+FFFE or U+FFFF, and XmlWriter refuses them; a title that holds one
+    // would stop the whole write. They are left out of the packet, and /Info keeps the text as it is.
+    private static string Clean(string value) =>
+        string.Concat(value.Where(c => XmlConvert.IsXmlChar(c) || char.IsSurrogate(c)));
 
     private IEnumerable<XElement> Descriptions() => _rdf.Elements(Rdf + "Description");
 

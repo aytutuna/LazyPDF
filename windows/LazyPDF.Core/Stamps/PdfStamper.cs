@@ -85,7 +85,7 @@ public sealed partial class PdfStamper(PdfDocument document, IFontSource? fonts 
         return [.. runs.Select(r => new StampInfo(r.Key, r.Value.Kind, r.Value.Label, r.Value.Behind, r.Value.Pages))];
     }
 
-    private int NextId() => document.Pages.SelectMany(p => StampStreams.Scan(document, p)).Select(f => f.Id).DefaultIfEmpty(0).Max() + 1;
+    private int NextId() => StampStreams.Spare(document.Pages.SelectMany(p => StampStreams.Scan(document, p)).Select(f => f.Id).ToHashSet());
 
     private List<int> Targets(IReadOnlyList<int>? pages) => pages is null
         ? [.. Enumerable.Range(0, document.Pages.Count)]

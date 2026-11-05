@@ -114,6 +114,7 @@ public class FormAuthorTests
         Assert.Throws<InvalidOperationException>(() => form.AddField(new FieldSpec(FieldKind.Text, "person", 0, Box)));
         Assert.Throws<InvalidOperationException>(() => form.AddField(new FieldSpec(FieldKind.Text, "person.first.x", 0, Box)));
         Assert.Throws<ArgumentException>(() => form.AddField(new FieldSpec(FieldKind.Text, "bad.", 0, Box)));
+        Assert.Throws<ArgumentException>(() => form.AddField(new FieldSpec(FieldKind.Text, "a..b", 0, Box)));
         Assert.Throws<ArgumentException>(() => form.AddField(new FieldSpec(FieldKind.Text, "ok", 9, Box)));
         Assert.Throws<ArgumentException>(() => form.AddField(new FieldSpec(FieldKind.Text, "ok", 0, new PdfRect(1, 1, 1, 5))));
         Assert.Equal(2, PdfForm.Read(Reopen(form.Document)).Fields.Count);

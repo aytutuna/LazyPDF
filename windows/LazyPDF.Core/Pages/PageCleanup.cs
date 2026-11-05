@@ -228,6 +228,7 @@ internal static class PageCleanup
     {
         if (document.Array(document.Catalog, "Threads") is not { } threads) return;
         var members = new HashSet<int>();
+        var pages = document.Pages.Select(p => p.Reference.Number).ToHashSet();
         foreach (var item in threads.Items.ToList())
         {
             if (document.Resolve(item) is not PdfDictionary thread || thread["F"] is not PdfReference first) continue;
@@ -247,7 +248,8 @@ internal static class PageCleanup
             }
             var kept = ring.Where(r => document.Resolve(r) is PdfDictionary d && !(d["P"] is PdfReference p && gone.Contains(p.Number))).ToList();
             if (kept.Count == ring.Count) continue;
-            foreach (var removed in ring.Except(kept)) document.Delete(removed.Number);
+            // A bead that is really a page is not the thread's to delete.
+            foreach (var removed in ring.Except(kept).Where(r => !pages.Contains(r.Number))) document.Delete(removed.Number);
             if (kept.Count == 0)
             {
                 Forget(document, threads, item);

@@ -19,6 +19,20 @@ internal static class StampStreams
     public static string StateName(int id) => Prefix(id) + "G";
     public static string LayerResourceName(int id) => Prefix(id) + "P";
 
+    /// <summary>The run id in a marker; one outside the range of an int is not one this code wrote, and is left alone.</summary>
+    public static int? IdOf(PdfDocument document, PdfDictionary marker) =>
+        document.Integer(marker, "Id") is >= int.MinValue and <= int.MaxValue and var id ? (int)id : null;
+
+    /// <summary>An id above every one in use, or the lowest free one when there is none above.</summary>
+    public static int Spare(ICollection<int> used)
+    {
+        int max = used.DefaultIfEmpty(0).Max();
+        if (max < int.MaxValue) return max + 1;
+        int id = 1;
+        while (used.Contains(id)) id++;
+        return id;
+    }
+
     public readonly record struct Found(int Id, StampKind Kind, string? Label, bool Behind);
 
     public static List<PdfObject> Contents(PdfDocument document, PdfPage page)
@@ -41,10 +55,11 @@ internal static class StampStreams
         var found = new List<Found>();
         foreach (var item in Contents(document, page))
         {
-            if (MarkerOf(document, item) is not { } marker || document.Integer(marker, "Id") is not { } id) continue;
-            var kind = Enum.TryParse<StampKind>(document.Name(marker, "Kind"), out var k) ? k : StampKind.Watermark;
+            if (MarkerOf(document, item) is not { } marker || IdOf(document, marker) is not { } id) continue;
+            // The name as written; Enum.TryParse would also take numbers, lists and spaces.
+            var kind = Enum.TryParse<StampKind>(document.Name(marker, "Kind"), out var k) && Enum.GetName(k) == document.Name(marker, "Kind") ? k : StampKind.Watermark;
             string? label = document.Resolve(marker["Label"]) is PdfString s ? PdfText.Decode(s.Bytes) : null;
-            found.Add(new Found((int)id, kind, label, document.Bool(marker, "Back") == true));
+            found.Add(new Found(id, kind, label, document.Bool(marker, "Back") == true));
         }
         return found;
     }
@@ -79,7 +94,7 @@ internal static class StampStreams
         items.RemoveAll(item => Drop(document, item, id, uses));
         if (items.Count == before) return false;
         // Without a stamp in front the wrapper has nothing to keep apart.
-        bool front = items.Any(i => MarkerOf(document, i) is { } m && document.Integer(m, "Id") is not null && document.Bool(m, "Back") != true);
+        bool front = items.Any(i => MarkerOf(document, i) is { } m && IdOf(document, m) is not null && document.Bool(m, "Back") != true);
         if (!front) items.RemoveAll(item => Drop(document, item, null, uses));
         page.Dictionary["Contents"] = new PdfArray(items);
         return true;
@@ -89,7 +104,7 @@ internal static class StampStreams
     private static bool Drop(PdfDocument document, PdfObject item, int? id, Dictionary<int, int> uses)
     {
         if (MarkerOf(document, item) is not { } marker || item is not PdfReference reference) return false;
-        bool mine = id is null ? marker["Wrap"] is not null : document.Integer(marker, "Id") == id;
+        bool mine = id is null ? marker["Wrap"] is not null : IdOf(document, marker) == id;
         // A duplicated page shares its stamp streams: they are freed with the last page that lists them.
         if (!mine) return false;
         int left = uses.GetValueOrDefault(reference.Number, 1) - 1;

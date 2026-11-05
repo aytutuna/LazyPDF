@@ -41,7 +41,7 @@ public sealed record DocumentActions(PdfAction? OpenAction, IReadOnlyList<PdfTri
 public static class PdfActions
 {
     private const int MaxActions = 64;
-    private const int MaxDepth = 8;
+    private const int MaxDepth = MaxActions;
     private const int MaxAnnotations = 50_000;
 
     /// <summary>
@@ -83,7 +83,9 @@ public static class PdfActions
             "ResetForm" => new ResetFormAction((int)(document.Integer(dictionary, "Flags") ?? 0), Fields(document, dictionary)),
             _ => new OtherAction(type),
         };
-        return result is null ? null : result with { Next = next };
+        // An action that cannot be built still hands its chain on: a script that follows it is still in the file.
+        if (result is null) return next.Count == 0 ? null : new OtherAction(type) { Next = next };
+        return result with { Next = next };
     }
 
     /// <summary>The action to store for <paramref name="action"/>, with its chain. An <see cref="OtherAction"/> cannot be written.</summary>

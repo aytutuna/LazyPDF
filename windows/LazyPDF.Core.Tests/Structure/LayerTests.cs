@@ -134,6 +134,20 @@ public class LayerTests
         Assert.False(PdfLayers.SetVisible(StructureFixtures.Open(), new PdfReference(30, 0), false));
     }
 
+    [Fact(Timeout = 20000)]
+    public async Task AnOrderThatListsItselfIsReadOnce()
+    {
+        var document = StructureFixtures.File("/OCProperties <</OCGs [30 0 R] /D <</Order 31 0 R>>>>", pdf =>
+        {
+            pdf.Obj(30, "<</Type /OCG /Name (A)>>");
+            pdf.Obj(31, "[31 0 R 31 0 R 31 0 R 31 0 R 30 0 R]");
+        });
+        var set = await Task.Run(() => PdfLayers.Read(document));
+        Assert.Single(set.Layers);
+        Assert.True(set.Order.Count < 10);
+        Assert.Contains(set.Order, n => n.Layer is not null);
+    }
+
     [Fact]
     public void JunkAndLoopsInOrderAreTolerated()
     {

@@ -1,0 +1,137 @@
+# One line is "<op> <words>". Bytes are escaped (\n \r \t \\ \xHH) and {N*text} stands for text N times.
+# parse <bytes>: the operations of a content stream. write <bytes>: the same, parsed, written and shown as bytes.
+# run <resources> ;; <content> ;; <object 5> ;; <object 6> ...: a one-page file (600 x 800) run by the interpreter.
+#   An object is its text, or "stream <entries> :: <bytes>" ("file:<path under golden>" for bytes read from a file).
+# font <hex or -> ;; <object 5> ;; ...: the font of object 5 decodes the bytes. nest <n>: n forms, each running the next.
+# fixture <file> <password or ->: every page of a file in Tests/Fixtures/Documents.
+parse q 1 0 0 1 10 20 cm /F1 12 Tf (Hi) Tj Q
+parse q  10 20 m % comment\n 30 40 l S Q
+parse --5 w -.5 w 4. w +3 w - w . w 1.2.3 5-3 m +-+5 w 0012 w 1e5 w 007.50 w
+parse (a\\(b\\)\\101\\n\\\nc(nested)) Tj <48656C6C6F2> Tj () Tj <> Tj (\\53\\0053\\777\\8) Tj (a\r\nb\rc) Tj <4 1 4 2 zz 43> Tj
+parse /A#20B gs /#4 gs /N#zz gs /A#4 gs /# gs / gs /A#41#42 gs
+parse [(A) -120 (B) [1 2]] TJ /OC <</MCID 3 /K [/A <</X 1>>]>> BDC /P <</A /B /C>> BDC /Q <</A>> BDC
+parse true false null foo 1 2 3 zork 4 w truefoo nullx falsey
+parse ) ] >> } 1 w >
+parse BT [(A) 10 (B) TJ ET
+parse BT <</A 1 /B Tj ET
+parse (never closed Tj
+parse <4142 Tj
+parse {100*[}1 w
+parse {100*<<}1 w
+parse {70*[(A)}] TJ
+parse {600*1 }w
+parse aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 1 w BT\x00ET T*\x0c' "
+parse 1 0 0 1 0 0 cm % no newline at end
+parse q % comment only\n
+parse q BI /W 4 /H 3 /BPC 8 /CS /G ID \x00 EI \x80\x90\xa0\xb0\xc0\xd0\xe0\nEI Q
+parse BI /W 2 /H 2 /F /Fl /CS /RGB /BPC 8 ID\n\x01\x02\x03 EI \xff\xfe\xfd\x09\x08\x07\nEI\n1 w
+parse BI /W 1 /H 1 /F /AHx ID 00>
+parse BI /W 1 /H 1 /BPC 8 /CS /G ID\r\n\x07\nEI
+parse BI /W 1 /H 1 /BPC 8 /CS /Cs1 /F /Fl /D [1 0] /IM false /I true /DP <</K -1>> ID x\nEI Q
+parse BI /W 72057594037927928 /H 1024 /IM true ID abc\nEI Q
+parse BI /W 4611686018427387904 /H 4 /BPC 8 /CS /RGB ID abc\nEI Q
+parse BI /W 2 /H 2 /BPC 8 /CS [/I /RGB 1 <000000FFFFFF>] ID abcd EI Q
+parse BI /W 2 /H 2 /BPC 4 /CS /CMYK ID 12345678 EI /W 3 /H 3 /IM true ID abcdefghi EI
+parse BI /W 2 /H 2 EI 1 w
+parse BI /W 2
+parse BI /W 2 ID
+parse BI ID EI Q
+write q 1 0 0 1 10 20.5 cm /F1 12 Tf (a\\(b\\)\\n) Tj <00FF> Tj [(A) -120 (B)] TJ Q
+write /Span <</MCID 3 /Lang (en)>> BDC EMC [3 2] 1 d 0.5 g 0 0 100 100 re f*
+write BT 1 0 0 1 5 5 Tm (x) ' 1 2 (y) " ET
+write 1 2 zork 3 4 w true false null foo
+write q BI /W 14 /H 1 /BPC 8 /CS /G ID \x00\x01\x02 EI \xff\xfe\x80\x0a\x0d()\nEI Q
+write 1.5 -.5 +3 4. . --2 w /N#20x gs (\x00\x01\xff) Tj
+run /Font <</F1 5 0 R>> ;; BT /F1 10 Tf 100 200 Td (AB) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+run /Font <</F1 5 0 R>> ;; BT /F1 10 Tf 100 0 Td [(A) -1000 (B) 500 (C)] TJ ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+run /Font <</F1 5 0 R>> ;; BT /F1 10 Tf 1 Tc 5 Tw 50 Tz 0 0 Td (A B) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+run /Font <</F1 5 0 R>> ;; BT /F1 10 Tf 14 TL 100 500 Td (A) Tj T* (B) Tj (C) ' 2 3 (D) " 0 -20 TD (E) Tj T* (F) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+run /Font <</F1 5 0 R>> ;; q 2 0 0 3 10 20 cm BT /F1 10 Tf 0 1 -1 0 50 60 Tm 4 Ts (A) Tj ET Q ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+run /Font <</F1 5 0 R>> ;; BT /Nope 10 Tf (AB) Tj ET BT (A) Tj ET BT /F1 abc Tf (C) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+run /Font <</F1 5 0 R>> ;; BT (A) Tj /F1 12 Tf (B) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+run /Font <</F1 5 0 R>> /ExtGState <</G1 <</Font [5 0 R 20]>>>> ;; /G1 gs BT (A) Tj 3 Tr (B) Tj 1 Tr (C) Tj 7 Tr (D) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+run /Font <</F1 5 0 R>> ;; BT /F1 10 Tf [(A) /Name (B) [1] null 3 (C)] TJ 5 Tj [ ] TJ ' (D) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+run /Font <</T3 5 0 R>> ;; BT /T3 10 Tf (AA\x42) Tj ET ;; <</Type /Font /Subtype /Type3 /FontBBox [0 0 1000 1000] /FontMatrix [0.002 0 0 0.002 0 0] /FirstChar 65 /LastChar 65 /Widths [500] /Encoding <</Type /Encoding /Differences [65 /A]>> /CharProcs <<>>>>
+run /Font <</V 5 0 R>> ;; BT /V 10 Tf 100 500 Td <00010002> Tj ET ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-V /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /DW 1000>>
+run /Font <</A 5 0 R /B 6 0 R /C 7 0 R /D 8 0 R>> ;; BT /A 10 Tf (Hello) Tj /B 10 Tf (Hello) Tj /C 10 Tf (abc) Tj /D 10 Tf (abc) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Courier>> ;; <</Type /Font /Subtype /Type1 /BaseFont /Times-Roman>> ;; <</Type /Font /Subtype /Type1 /BaseFont /Symbol>> ;; <</Type /Font /Subtype /Type1 /BaseFont /ZapfDingbats>>
+run /Font <</F 5 0 R>> ;; BT /F 12 Tf <00010002> Tj <00 41> Tj ET ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /DW 500 /W [1 [250 750]]>>
+run  ;; 1 0 0 rg 10 20 100 50 re f 10 w 0 0 100 100 re S q 2 0 0 2 100 100 cm 0 0 10 10 re B Q 0.5 g 1 1 1 1 re F
+run  ;; 0 0 m 50 100 100 100 150 0 c 10 10 m 50 60 90 10 v 20 20 l 30 30 50 50 60 60 y h f* 0 0 m s 5 5 m 6 6 l b 7 7 m 8 8 l B* 9 9 m 1 1 l b* 100 100 l S 1 2 3 4 5 6 c n h 0 0 m 1 1 l 2 w S
+run  ;; 0 0 100 100 re W n 50 50 200 200 re f 20 20 10 10 re W* n 0 0 5 5 re f 0 0 10 10 re W S 0 0 m W f
+run  ;; Q Q {300*q 2 w }{300*Q }0 0 1 1 re S Q
+run  ;; 3 w 1 J 2 j 4 M [3 2] 1 d 0 0 1 1 re S [] 0 d 0 0 1 1 re S [a 5 (x) 7] 2 d 0 0 1 1 re S 1 J 0 0 1 1 re S 99999999999 J 0 0 1 1 re S
+run /ExtGState <</G <</CA 0.5 /ca 0.25 /BM [/Multiply /Normal] /LW 7 /LC 1 /LJ 2 /ML 3 /D [[2 1] 0] /SMask <</S /Alpha>>>> /G2 <</CA 5 /ca -1 /BM (x) /SMask /None /D [1 2]>> /G3 3>> ;; /G gs 0 0 1 1 re f /G2 gs 0 0 1 1 re f /G3 gs /Missing gs 0 0 1 1 re f
+run /ColorSpace <</Cs1 [/Separation /Spot /DeviceCMYK <</FunctionType 2 /Domain [0 1] /C0 [0 0 0 0] /C1 [0 1 1 0] /N 1>>] /Cs2 [/Indexed /DeviceRGB 1 <FF0000 00FF00>] /Cs3 [/ICCBased 5 0 R] /Cs4 [/Lab <</WhitePoint [0.95 1 1.09]>>] /Cs5 [/CalRGB <</WhitePoint [0.95 1 1.09]>>] /Cs6 [/DeviceN [/A /B] /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [0 0 0] /C1 [1 1 1] /N 1>>] /Cs7 [/Pattern /DeviceRGB] /Cs8 /CalRGB /Cs9 [/CalGray <</WhitePoint [0.95 1 1.09]>>]>> ;; /Cs1 cs 1 sc 0 0 1 1 re f /Cs2 cs 1 sc 0 0 1 1 re f /Cs3 cs 0.5 0.2 0.1 sc 0 0 1 1 re f /Cs4 cs 50 20 -10 sc 0 0 1 1 re f /Cs5 cs 0.2 0.4 0.6 sc 0 0 1 1 re f /Cs6 cs 0.1 0.2 sc 0 0 1 1 re f /Cs7 cs 1 0 0 /P1 scn 0 0 1 1 re f /Cs8 cs 0 0 1 1 re f /Cs9 cs 0.3 sc 0 0 1 1 re f ;; stream /N 3 :: abc
+run  ;; 0.5 g 0.2 0.4 0.6 rg 0 1 0 0 k 0 G 1 0 0 RG 0 0 0 1 K 0 0 1 1 re B 1 rg 0 0 1 1 re f /X cs 0 0 1 1 re f /DeviceRGB cs 0.5 sc 0 0 1 1 re f /DeviceCMYK CS 0 0 1 1 re S sc 0 0 1 1 re S 2 -1 7 rg 0 0 1 1 re f
+run /Pattern <</P1 5 0 R /P2 <</PatternType 2 /Shading <</ShadingType 2 /ColorSpace /DeviceRGB /Coords [0 0 1 1]>>>>>> ;; /Pattern cs /P1 scn 0 0 100 100 re f /P2 scn 0 0 5 5 re f /Pattern CS /P2 SCN 0 0 5 5 re S /Missing scn 0 0 5 5 re f ;; stream /PatternType 1 /PaintType 1 /TilingType 1 /BBox [0 0 10 10] /XStep 10 /YStep 10 /Matrix [2 0 0 2 0 0] :: 0 0 5 5 re f
+run /Pattern <</P1 5 0 R>> /ColorSpace <</Cp [/Pattern /DeviceRGB]>> ;; /Cp cs 1 0 0 /P1 scn 0 0 100 100 re f 0 1 0 /P1 SCN 0 0 5 5 re S ;; stream /PatternType 1 /PaintType 2 /TilingType 1 /BBox [0 0 10 10] /XStep 10 /YStep 10 :: 0 0 5 5 re f 0 0 1 rg 1 1 2 2 re f
+run /XObject <</Im 5 0 R /Fm2 6 0 R /Bad 7 0 R /Odd 8 0 R>> ;; q 100 0 0 50 10 20 cm /Im Do Q /Fm2 Do /Bad Do /Odd Do /None Do /Im Do ;; stream /Type /XObject /Subtype /Image /Width 8 /Height 4 /ColorSpace /DeviceGray /BitsPerComponent 8 /ImageMask true /OC 9 0 R :: \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00 ;; stream /BBox [0 0 5 5] :: 0 0 1 1 re f ;; stream /Subtype /Bogus :: 0 0 1 1 re f ;; 5 ;; <</Type /OCG /Name (L)>>
+run /ColorSpace <</Cs1 [/Indexed /DeviceRGB 1 <000000FFFFFF>]>> ;; q 40 0 0 40 5 5 cm BI /W 2 /H 2 /BPC 8 /CS /Cs1 ID abcd\nEI Q BI /W 99999999999 /H -4 /IM true ID abc\nEI
+run /Shading <</Sh <</ShadingType 2 /ColorSpace /DeviceRGB /Coords [0 0 1 1]>> /Sh2 5 0 R /Sh3 3>> ;; 0 0 50 50 re W n /Sh sh /Sh2 sh /Sh3 sh /Nope sh ;; stream /ShadingType 4 /ColorSpace /DeviceRGB /BitsPerCoordinate 8 /BitsPerComponent 8 /BitsPerFlag 8 /Decode [0 1 0 1 0 1 0 1 0 1] :: abc
+run /Properties <</Lyr 5 0 R /Bad 3>> ;; /Span <</MCID 4>> BDC /OC /Lyr BDC /P1 BMC 0 0 1 1 re f EMC EMC EMC EMC /OC /Bad BDC /Span /Missing BDC /Span 5 BDC BMC /X <</MCID (a)>> BDC EMC ;; <</Type /OCG /Name (Layer)>>
+run  ;; /A BMC /B BMC 0 0 1 1 re f
+run  ;; {1100*/A BMC }0 0 1 1 re f
+run /XObject <</Fm 5 0 R>> /Font <</F1 6 0 R>> ;; /Fm Do 0 0 1 1 re f ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] /Matrix [1 0 0 1 10 10] :: q 9 w 0 0 500 500 re f ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+run /XObject <</Fm 5 0 R>> /Font <</F1 6 0 R>> ;; BT /F1 10 Tf 1 0 0 1 5 6 Tm /Fm Do (B) Tj ET ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] /Matrix [1 0 0 1 50 60] :: BT /F1 10 Tf (A) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+run /XObject <</Fm 5 0 R>> ;; /Fm Do ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] /Resources <</Font <</F1 6 0 R>>>> :: BT /F1 10 Tf (A) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Courier>>
+run /XObject <</Fm 5 0 R>> /Font <</F1 6 0 R>> ;; /Fm Do ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] :: BT /F1 10 Tf (A) Tj ET /Fm Do ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+run /XObject <</A 5 0 R /B 6 0 R>> /Font <</F1 7 0 R>> ;; /A Do ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] :: BT /F1 10 Tf (A) Tj ET /B Do ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] :: BT /F1 10 Tf (B) Tj ET /A Do ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+run /XObject <</Fm 5 0 R>> ;; /Fm Do 0 0 1 1 re f ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] /Filter /FlateDecode :: xx
+run /XObject <</Fm 5 0 R>> ;; /P BMC /Fm Do 0 0 1 1 re f EMC ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] :: /X BMC 0 0 1 1 re f EMC EMC EMC
+run /XObject <</Fm 5 0 R /Fm2 6 0 R /Fm3 7 0 R>> ;; 0 0 m 10 10 l /Fm Do 20 20 l S /Fm2 Do /Fm3 Do ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] /OC 8 0 R :: q 1 0 0 rg 2 0 0 2 0 0 cm 0 0 1 1 re f ;; stream /Type /XObject /Subtype /Form :: 5 w 0 0 3 3 re S ;; stream /Type /XObject /Subtype /Form /BBox [10 10 20 20] /Matrix [0 1 -1 0 0 0] :: 0 0 100 100 re f ;; <</Type /OCG /Name (L)>>
+run /XObject <</Fm 5 0 R>> ;; /Fm Do 0 0 1 1 re f ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] :: {1200000*q }
+nest 40
+font 412062 ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold>>
+font 4161203132 ;; <</Type /Font /Subtype /TrueType /BaseFont /ABCDEF+TimesNewRomanPS-BoldMT /Encoding /WinAnsiEncoding>>
+font 4142436100 ;; <</Type /Font /Subtype /Type1 /BaseFont /Foo /FirstChar 65 /LastChar 66 /Widths [500 600] /FontDescriptor 6 0 R>> ;; <</Type /FontDescriptor /FontName /Foo /Flags 32 /MissingWidth 300 /Ascent 900 /Descent 250 /CapHeight 700 /ItalicAngle -12 /FontBBox [-10 -250 1000 900]>>
+font 41 ;; <</Type /Font /Subtype /Type1 /BaseFont /Foo>>
+font 414243 ;; <</Type /Font /Subtype /Type1 /BaseFont /Foo-Bold /FontDescriptor 6 0 R>> ;; <</Type /FontDescriptor /FontName /Foo /Flags 262147 /FontWeight 700>>
+font 414243 ;; <</Type /Font /Subtype /Type1 /BaseFont /Foo /FontDescriptor 6 0 R>> ;; <</Type /FontDescriptor /FontName /Foo /Flags 34 /Ascent 0 /Descent 0 /FontBBox [0 -100 500 800]>>
+font 41424364C8FF ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding <</Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences [65 /Euro /ccedilla 200 /uni011F 255 /u1F600 /nosuchglyph]>>>>
+font 41E98EC8FF ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /MacRomanEncoding>>
+font 41E98EC8FF ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+font 41E98EC8FF ;; <</Type /Font /Subtype /Type1 /BaseFont /Foo /Encoding /MacExpertEncoding>>
+font 41E98EC8FF ;; <</Type /Font /Subtype /TrueType /BaseFont /Foo>>
+font 41426162 ;; <</Type /Font /Subtype /Type1 /BaseFont /Symbol>>
+font 41426162 ;; <</Type /Font /Subtype /Type1 /BaseFont /ZapfDingbats>>
+font 4142 ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding <</Differences [-5 /a 1000 /b 255 /c 256 /d 65 (x) 99999 /e 3 /f]>>>>
+font 4142 ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /ToUnicode 6 0 R>> ;; stream :: /CIDInit /ProcSet findresource begin 12 dict begin begincmap 1 begincodespacerange <00> <FF> endcodespacerange 2 beginbfchar <41> <005A> <42> <00660069> endbfchar 1 beginbfrange <61> <63> <0061> endbfrange endcmap
+font 4142 ;; <</Type /Font /Subtype /TrueType /BaseFont /Foo /Encoding /WinAnsiEncoding /ToUnicode 6 0 R>> ;; stream :: /CIDInit /ProcSet findresource begin 12 dict begin begincmap 1 begincodespacerange <0000> <FFFF> endcodespacerange 1 beginbfchar <0041> <015F> endbfchar endcmap
+font 4142 ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /FirstChar 65 /Widths [333] /ToUnicode 6 0 R>> ;; stream /Filter /FlateDecode :: garbage
+font 00010002000F0032 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /DW 800 /W [1 [500 600] 10 20 700]>>
+font 000100020003FFFF ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /DW 500 /W [1 2 3 [4] 70000 80000 5 -3 /x 3 [100 /a 200] 65535 [7 8] -5 2 9 (s) 1]>>
+font 00010005000800FF ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-V /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType0 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /DW 1000 /DW2 [900 -950] /W2 [5 [-500 100 800] 7 8 -600 200 700]>>
+font 41 82A0 42 A1 8140 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /90ms-RKSJ-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Japan1) /Supplement 2>> /DW 1000>>
+font 002200230100FFFF0001 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType0 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Japan1) /Supplement 2>>>>
+font 002200230100 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType0 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (GB1) /Supplement 2>>>>
+font 002200230100 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType0 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (CNS1) /Supplement 2>>>>
+font 002200230100 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType0 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Korea1) /Supplement 2>>>>
+font 3042004130A2 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /UniJIS-UCS2-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Japan1) /Supplement 2>> /DW 1000>>
+font 3042004130A2 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /UniJIS-UCS2-V /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Japan1) /Supplement 2>> /DW 1000>>
+font D800FF ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /UniJIS-UTF16-H /DescendantFonts [<<>>]>>
+font D83DDE00004100 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /UniJIS-UTF16-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Japan1) /Supplement 6>>>>
+font 2020 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding 7 0 R /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /DW 500 /W [100 [250]]>> ;; stream /Type /CMap /CMapName /Custom :: /CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /Custom def /WMode 0 def 1 begincodespacerange <00> <FF> endcodespacerange 1 begincidrange <20> <7E> 100 endcidrange endcmap
+font 2041 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding 7 0 R /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /DW 500>> ;; stream /Type /CMap /UseCMap /90ms-RKSJ-H :: /CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /Custom def /WMode 1 def 1 begincodespacerange <00> <FF> endcodespacerange 1 begincidrange <20> <7E> 100 endcidrange endcmap
+font 4142 ;; <</Type /Font /Subtype /Type3 /FontBBox [0 -200 1000 800] /FontMatrix [0.002 0 0 0.004 0 0] /FirstChar 65 /LastChar 66 /Widths [500 250] /FontDescriptor 6 0 R /Encoding <</Differences [65 /A /B]>> /CharProcs <<>>>> ;; <</Type /FontDescriptor /FontName /T3 /Flags 4 /MissingWidth 100>>
+font 4142 ;; <</Type /Font /Subtype /Type3 /FontMatrix [0 0 0 0 0 0] /Widths 5>>
+font 004100 ;; <</Type /Font /Subtype /Type0 /BaseFont /X>>
+font 004100 ;; <</Type /Font /Subtype /Type0 /DescendantFonts [<<>>] /Encoding /NoSuchCMap>>
+font 41 ;; <<>>
+font 41FF ;; <</Type /Font /Subtype /TrueType /Widths [/a (b) 3 [4]] /FirstChar -5 /Encoding 3>>
+font 4142 ;; <</Type /Font /Subtype /Type1 /Encoding <</Differences [/a 99999 /b -4 (x)]>> /ToUnicode 5 0 R>>
+font 4142 ;; <</BaseFont /Helvetica>>
+font 4142 ;; <</DescendantFonts [<<>>]>>
+font 414243 ;; <</Type /Font /Subtype /TrueType /BaseFont /Arial /FontDescriptor 6 0 R>> ;; <</Type /FontDescriptor /FontName /Arial /Flags 4 /FontFile2 7 0 R>> ;; stream :: file:programs/synthetic.ttf
+font 4142C0 ;; <</Type /Font /Subtype /TrueType /BaseFont /Arial /Encoding /WinAnsiEncoding /FontDescriptor 6 0 R>> ;; <</Type /FontDescriptor /FontName /Arial /Flags 32 /FontFile2 7 0 R>> ;; stream :: file:programs/synthetic.ttf
+font 4142 ;; <</Type /Font /Subtype /TrueType /BaseFont /Arial /Encoding <</Differences [65 /Amatched /Alt]>> /FontDescriptor 6 0 R>> ;; <</Type /FontDescriptor /FontName /Arial /Flags 32 /FontFile2 7 0 R>> ;; stream :: file:programs/synthetic.ttf
+font 000100020003000400050006 ;; <</Type /Font /Subtype /Type0 /BaseFont /Arial /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /Arial /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /FontDescriptor 7 0 R /CIDToGIDMap /Identity /DW 700>> ;; <</Type /FontDescriptor /FontName /Arial /Flags 32 /FontFile2 8 0 R>> ;; stream :: file:programs/synthetic.ttf
+font 000100020003000400050006 ;; <</Type /Font /Subtype /Type0 /BaseFont /Arial /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /Arial /FontDescriptor 7 0 R /CIDToGIDMap 9 0 R>> ;; <</Type /FontDescriptor /FontName /Arial /Flags 32 /FontFile2 8 0 R>> ;; stream :: file:programs/synthetic.ttf ;; stream :: \x00\x00\x00\x02\x00\x01\x00\x06\x00\x04
+font 4142 ;; <</Type /Font /Subtype /Type1 /BaseFont /Foo /FontDescriptor 6 0 R>> ;; <</Type /FontDescriptor /FontName /Foo /Flags 4 /FontFile 7 0 R>> ;; stream :: %!PS-AdobeFont-1.0: Foo\n/FontName /Foo def
+fixture crypt-rc4-40.pdf secret
+fixture crypt-aes128.pdf secret
+fixture crypt-aes256-r5.pdf secret
+fixture crypt-aes256.pdf secret
+fixture crypt-aes256.pdf owner
+fixture locked.pdf secret
+fixture owner-only-rc4.pdf -
+fixture owner-only-aes.pdf -

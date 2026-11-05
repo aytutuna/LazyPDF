@@ -165,6 +165,15 @@ public class FdfTests
     }
 
     [Fact]
+    public void AnObjectNumberAtTheLimitDoesNotWrap()
+    {
+        var fdf = new FdfFile();
+        fdf.Add(int.MaxValue, new PdfDictionary());
+        Assert.Throws<PdfReadException>(() => fdf.Reserve());
+        Assert.Throws<PdfReadException>(() => PdfFdf.Write(fdf));
+    }
+
+    [Fact]
     public void TheFileOnlyHoldsWhatTheAnnotationsReach()
     {
         var fdf = PdfFdf.Export(Commented());

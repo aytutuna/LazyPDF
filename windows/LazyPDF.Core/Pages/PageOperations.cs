@@ -59,7 +59,13 @@ public static partial class PageOperations
             page.Dictionary[BoxKeys[box]] = set.ToArray();
         }
         // A page keeps the values it had when the tree was read, so a removed box would still show.
-        if (rect is null) document.RefreshPages();
+        if (rect is null)
+        {
+            var before = document.Pages.Select(p => p.Reference).ToList();
+            document.RefreshPages();
+            // Pages that were found by scanning are in no tree, and the walk would not find them again.
+            if (document.Pages.Count == 0 && before.Count > 0) PageTree.Set(document, before);
+        }
     }
 
     /// <summary>

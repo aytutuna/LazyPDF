@@ -87,7 +87,7 @@ internal sealed class TextFlow(PageGeometry geometry)
         var (a, b, c, d, _, _) = geometry.Matrix;
         double scale = Math.Sqrt(Math.Abs(a * d - b * c));
         for (int i = 0; i < glyphs.Count; i++) Prepare(glyphs[i], i, scale);
-        glyphs = glyphs.FindAll(g => double.IsFinite(g.Display.X0 + g.Display.Y0 + g.Display.X1 + g.Display.Y1
+        glyphs = glyphs.FindAll(g => double.IsFinite(g.Em) && double.IsFinite(g.Display.X0 + g.Display.Y0 + g.Display.X1 + g.Display.Y1
             + g.Display.X2 + g.Display.Y2 + g.Display.X3 + g.Display.Y3));
         if (glyphs.Count == 0) return result;
 

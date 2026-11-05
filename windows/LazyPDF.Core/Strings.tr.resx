@@ -4708,6 +4708,9 @@
   <data name="That password is not right." xml:space="preserve">
     <value>Parola doğru değil.</value>
   </data>
+  <data name="That picture is too large. Pick a smaller one." xml:space="preserve">
+    <value>Bu resim çok büyük. Daha küçük bir resim seçin.</value>
+  </data>
   <data name="The /CIDSet does not list every glyph shown or held in the font program." xml:space="preserve">
     <value>/CIDSet, yazı tipi programında gösterilen ya da tutulan her glifi listelemiyor.</value>
   </data>

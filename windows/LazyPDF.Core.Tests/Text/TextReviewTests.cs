@@ -9,9 +9,29 @@ public class TextReviewTests
     public async Task NotANumberGlyphEdgeDoesNotHangTheColumnScan()
     {
         string content = Line(100, 700, "left") + Line(300, 700, "right")
-            + "BT /F1 10 Tf 1 0 0 1e306 100 100 Tm (x) Tj ET\n";
+            + $"BT /F1 10 Tf 1 0 0 {Big(306)} 100 100 Tm (x) Tj ET\n";
         var page = await Task.Run(() => Text(content, "/UserUnit 1000"));
         Assert.Contains("left", page.Text);
+    }
+
+    [Fact(Timeout = 20000)]
+    public async Task GlyphsWhoseEmOverflowDoNotHangTheLineJoin()
+    {
+        string bbox = "318" + new string('0', 155);
+        string far = Big(300);
+        string content = $"BT /F1 1 Tf 1 -1 {Big(150)} {Big(150)} {far} {far} Tm (a) Tj ET\n"
+            + "BT /F2 10 Tf 1 -1 1 1 100 700 Tm (b) Tj ET\n"
+            + $"BT /F1 1 Tf 1 -1 {Big(150)} {Big(150)} -{far} -{far} Tm (c) Tj ET\n";
+        var document = Page(content, "/Font <</F1 5 0 R /F2 7 0 R>>", "/UserUnit 2", pdf =>
+        {
+            Font(pdf, 7);
+            pdf.Obj(5, $"<</Type /Font /Subtype /Type3 /FontBBox [0 -{bbox} 8 {bbox}] /FontMatrix [1 0 0 1 0 0] /FirstChar 97 /LastChar 99 "
+                + "/Widths [6 6 6] /Encoding <</Type /Encoding /Differences [97 /a /b /c]>> /CharProcs <</a 6 0 R /b 6 0 R /c 6 0 R>>>>");
+            pdf.Stream(6, "", "6 0 0 -2 6 6 d1 0 0 6 6 re f");
+        });
+        var page = await Task.Run(() => TextPage.Create(document, document.Pages[0]));
+        Assert.Contains("b", page.Text);
+        Assert.Null(TextInvariants.Check(page));
     }
 
     [Fact]

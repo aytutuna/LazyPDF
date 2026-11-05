@@ -41,6 +41,9 @@ internal static class TextTestPdf
     }
 
     /// <summary>A line at the given point in /F1 at size 10 unless told otherwise: every glyph is half the size wide.</summary>
+    /// <summary>A one with <paramref name="zeros"/> zeros: PDF has no exponent notation, so a huge number is written out.</summary>
+    public static string Big(int zeros) => "1" + new string('0', zeros);
+
     public static string Line(double x, double y, string text, double size = 10) =>
         $"BT /F1 {size} Tf {x} {y} Td ({text}) Tj ET\n";
 }

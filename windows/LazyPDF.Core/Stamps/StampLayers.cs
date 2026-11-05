@@ -44,26 +44,29 @@ internal static class StampLayers
     private static void Unlist(PdfDocument document, PdfDictionary? config, PdfReference layer)
     {
         if (config is null) return;
+        var seen = new HashSet<PdfArray>(ReferenceEqualityComparer.Instance);
         foreach (string key in (ReadOnlySpan<string>)["Order", "ON", "OFF", "Locked", "RBGroups"])
         {
-            if (document.Array(config, key) is { } array) Strip(document, array, layer, 0);
+            if (document.Array(config, key) is { } array) Strip(document, array, layer, 0, seen);
         }
         if (document.Array(config, "AS") is { } states)
         {
             foreach (var state in states.Items)
             {
-                if (document.Resolve(state) is PdfDictionary d && document.Array(d, "OCGs") is { } groups) Strip(document, groups, layer, 0);
+                if (document.Resolve(state) is PdfDictionary d && document.Array(d, "OCGs") is { } groups) Strip(document, groups, layer, 0, seen);
             }
         }
     }
 
-    private static void Strip(PdfDocument document, PdfArray array, PdfReference layer, int depth)
+    // An array that holds itself would otherwise be walked once per way into it.
+    private static void Strip(PdfDocument document, PdfArray array, PdfReference layer, int depth, HashSet<PdfArray> seen)
     {
+        if (!seen.Add(array)) return;
         array.Items.RemoveAll(i => i is PdfReference r && r.Number == layer.Number);
         if (depth > 8) return;
         foreach (var item in array.Items)
         {
-            if (document.Resolve(item) is PdfArray inner) Strip(document, inner, layer, depth + 1);
+            if (document.Resolve(item) is PdfArray inner) Strip(document, inner, layer, depth + 1, seen);
         }
     }
 

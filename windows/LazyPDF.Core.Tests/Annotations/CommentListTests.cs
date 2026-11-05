@@ -123,6 +123,14 @@ public class CommentListTests
     }
 
     [Fact]
+    public void AParentTooFarOutLeavesNoRoomForTheReply()
+    {
+        var document = Blank(1, pdf => pdf.Obj(20, "<</Subtype /Text /Rect [1000000000000000000 1000000000000000000 2000000000000000000 2000000000000000000]>>"), "/Annots [20 0 R]");
+        var parent = PdfAnnotations.Read(document, document.Pages[0]).Single();
+        Assert.Throws<ArgumentException>(() => PdfComments.Reply(document, parent, "x", "A", Day));
+    }
+
+    [Fact]
     public void DanglingReplyCountsAsAComment()
     {
         var document = Blank(1, pdf => pdf.Obj(20, "<</Subtype /Text /Rect [0 0 5 5] /IRT 99 0 R /Contents (orphan)>>"), "/Annots [20 0 R]");

@@ -167,6 +167,23 @@ public class InterpreterGraphicsTests
     }
 
     [Fact]
+    public void AnMcidOutsideTheIntRangeIsNoStructureElement()
+    {
+        var r = Run("/Span <</MCID 4294967301>> BDC 0 0 1 1 re f EMC");
+        Assert.Equal(["begin Span", "end Span"], r.Events);
+        Assert.Null(r.Where[0].Mcid);
+    }
+
+    [Fact]
+    public void BoundsAreNotANumberWhenTheMatrixOverflows()
+    {
+        string big = "1" + new string('0', 308);
+        var path = Run($"{big} 0 0 {big} 0 0 cm {big} 0 0 {big} 0 0 cm 0 0 5 5 re f").Paths[0].Path;
+        Assert.True(double.IsNaN(path.Bounds.Left));
+        Assert.True(double.IsNaN(path.Bounds.Top));
+    }
+
+    [Fact]
     public void UnclosedMarkedContentIsClosedAtTheEnd()
     {
         var r = Run("/A BMC /B BMC 0 0 1 1 re f");

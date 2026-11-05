@@ -434,7 +434,7 @@ public sealed partial class PdfForm
     // A parent left without kids goes too, and so on up.
     private void Prune(PdfDictionary? node)
     {
-        while (node is not null && _document.Array(node, "Kids") is { Items.Count: 0 })
+        for (int depth = 0; node is not null && depth < MaxDepth && _document.Array(node, "Kids") is { Items.Count: 0 }; depth++)
         {
             RemoveFromCalculation(node);
             var (up, taken) = Detach(node);

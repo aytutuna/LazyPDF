@@ -139,7 +139,9 @@ public static class PdfFdf
         }
         if (annots.Count > 0) body["Annots"] = new PdfArray(annots);
 
-        int rootNumber = (fdf.Objects.Count == 0 ? 0 : fdf.Objects.Keys.Max()) + 1;
+        int highest = fdf.Objects.Count == 0 ? 0 : fdf.Objects.Keys.Max();
+        if (highest == int.MaxValue) throw PdfReadException.Damaged("The FDF data holds too many objects.");
+        int rootNumber = highest + 1;
         var output = new MemoryStream();
         Put(output, "%FDF-1.2\n%âãÏÓ\n");
         Put(output, $"{rootNumber} 0 obj\n<</FDF {body}>>\nendobj\n");

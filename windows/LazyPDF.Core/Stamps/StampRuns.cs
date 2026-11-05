@@ -18,7 +18,7 @@ internal static class StampRuns
         var claimed = new Dictionary<int, (StampKind Kind, string? Label, bool Behind)>();
         var renamed = new Dictionary<(object Origin, int Id), int>();
         var done = new HashSet<PdfObject>(ReferenceEqualityComparer.Instance);
-        int next = pages.SelectMany(p => StampStreams.Scan(document, p.Page)).Select(f => f.Id).DefaultIfEmpty(0).Max();
+        var used = pages.SelectMany(p => StampStreams.Scan(document, p.Page)).Select(f => f.Id).ToHashSet();
         foreach (var (page, origin) in pages)
         {
             foreach (var found in StampStreams.Scan(document, page))
@@ -32,7 +32,8 @@ internal static class StampRuns
                 int id = found.Id;
                 if (claimed.TryGetValue(id, out var holder) && holder != signature)
                 {
-                    id = ++next;
+                    id = StampStreams.Spare(used);
+                    used.Add(id);
                     Renumber(document, page, found.Id, id, done);
                 }
                 claimed[id] = signature;
@@ -45,8 +46,8 @@ internal static class StampRuns
     {
         foreach (var item in StampStreams.Contents(document, page))
         {
-            if (document.Resolve(item) is not PdfStream stream || !done.Add(stream)) continue;
-            if (document.Dict(stream.Dictionary, StampStreams.Key) is not { } marker || document.Integer(marker, "Id") != from) continue;
+            if (document.Resolve(item) is not PdfStream stream) continue;
+            if (document.Dict(stream.Dictionary, StampStreams.Key) is not { } marker || StampStreams.IdOf(document, marker) != from || !done.Add(stream)) continue;
             marker["Id"] = new PdfNumber(to);
             string text = Encoding.Latin1.GetString(document.Data(stream, MaxContent));
             text = text.Replace(StampStreams.Prefix(from), StampStreams.Prefix(to), StringComparison.Ordinal);

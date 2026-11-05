@@ -80,4 +80,14 @@ public class PageDeleteTests
         Assert.Equal([90, 0], again.Pages.Select(p => p.Rotate));
         Assert.Empty(again.Repairs);
     }
+
+    [Fact]
+    public void ABeadThatIsAKeptPageIsNotDeletedWithTheThread()
+    {
+        int free = PageTestFiles.Free(3);
+        var document = PageTestFiles.Open(3, $"/Threads [{free} 0 R]", i => i == 1 ? $"/P {PageTestFiles.PageObject(0)} 0 R" : "",
+            add: pdf => pdf.Obj(free, $"<</F {PageTestFiles.PageObject(1)} 0 R>>"));
+        PageOperations.Delete(document, [0]);
+        Assert.Equal([2, 3], PageTestFiles.Order(document));
+    }
 }

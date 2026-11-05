@@ -129,4 +129,16 @@ public class PageLabelTests
         Assert.Equal(5, PdfPageLabels.Find(document, "4"));
         Assert.Null(PdfPageLabels.Find(document, "zz"));
     }
+
+    [Fact]
+    public void FindComparesOrdinally()
+    {
+        var document = StructureFixtures.Open(3);
+        PdfPageLabels.Write(document, [new(0, PageLabelStyle.None, "Kısım"), new(1, PageLabelStyle.None, "ᾀ"), new(2, PageLabelStyle.None, "é")]);
+        Assert.Null(PdfPageLabels.Find(document, "KISIM"));
+        Assert.Equal(0, PdfPageLabels.Find(document, "KıSıM"));
+        Assert.Equal(1, PdfPageLabels.Find(document, "ᾈ"));
+        Assert.Equal(2, PdfPageLabels.Find(document, "É"));
+        Assert.Null(PdfPageLabels.Find(document, "é"));
+    }
 }

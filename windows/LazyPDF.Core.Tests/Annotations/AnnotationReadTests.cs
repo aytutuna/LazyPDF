@@ -123,6 +123,32 @@ public class AnnotationReadTests
     }
 
     [Fact]
+    public void StatesAndEndingsAreReadByTheirNames()
+    {
+        var a = One("<</Subtype /Text /Rect [0 0 5 5] /State (2) /LE /3>>");
+        Assert.Null(a.State);
+        Assert.Equal(LineEnding.None, a.StartEnding);
+        Assert.Null(One("<</Subtype /Text /Rect [0 0 5 5] /State ( Rejected )>>").State);
+        Assert.Equal(ReviewStatus.Rejected, One("<</Subtype /Text /Rect [0 0 5 5] /State (Rejected)>>").State);
+    }
+
+    [Fact]
+    public void ArraysManyAnnotationsPointToAreReadOnce()
+    {
+        var document = Blank(1, pdf =>
+        {
+            pdf.Obj(20, "<</Subtype /Highlight /Rect [0 0 5 5] /QuadPoints 21 0 R /InkList 22 0 R>>");
+            pdf.Obj(21, "[" + string.Concat(Enumerable.Repeat("1 ", 100_000)) + "]");
+            pdf.Obj(22, "[" + string.Concat(Enumerable.Repeat("21 0 R ", 50_000)) + "]");
+        }, "/Annots [" + string.Concat(Enumerable.Repeat("20 0 R ", 20_000)) + "]");
+        var list = PdfAnnotations.Read(document, document.Pages[0]);
+        Assert.Equal(20_000, list.Count);
+        Assert.Equal(100_000, list[^1].QuadPoints.Count);
+        Assert.Equal(50_000, list[^1].InkList.Count);
+        Assert.Same(list[0].QuadPoints, list[^1].QuadPoints);
+    }
+
+    [Fact]
     public void ReadAllWalksEveryPage()
     {
         var document = Blank(3);

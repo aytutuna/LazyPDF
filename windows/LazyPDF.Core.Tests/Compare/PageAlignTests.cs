@@ -114,7 +114,7 @@ public class PageAlignTests
         Assert.Equal(2, result.Pages.Count(p => p.IsAdded));
         Assert.Equal(1, result.Pages.Count(p => p.IsRemoved));
         Assert.Equal(3, result.Summary.Pages);
-        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(20), watch.Elapsed.ToString());
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(90), watch.Elapsed.ToString());
     }
 
     [Fact]

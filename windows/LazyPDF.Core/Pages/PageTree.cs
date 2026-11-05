@@ -35,7 +35,7 @@ internal static class PageTree
         }
 
         var spare = new Queue<(PdfReference Ref, PdfDictionary Dict)>(layout.Interior);
-        var leaves = order.Select(r => new Leaf(r, (PdfDictionary)document.Resolve(r)!)).ToArray();
+        var leaves = order.Select(r => new Leaf(r, document.Resolve(r) as PdfDictionary ?? throw PdfReadException.Damaged("A page of the document is missing."))).ToArray();
         Fill(document, root, rootRef, leaves, spare);
         if (document.Name(root, "Type") != "Pages") root["Type"] = new PdfName("Pages");
         foreach (var (reference, _) in spare) document.Delete(reference.Number);

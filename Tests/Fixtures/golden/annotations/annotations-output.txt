@@ -1,0 +1,960 @@
+> rich <body xmlns="http://www.w3.org/1999/xhtml"><p>one</p><p>two</p></body>
+< one\ntwo
+> rich <p>a  \n  b <b>c</b></p>
+< a b c
+> rich <p>a<br/>b</p><p>c</p>
+< a\nb\nc
+> rich <body>\n  <p>one</p>\n  <p>two</p>\n</body>
+< one\ntwo
+> rich a &amp; b &lt; &#351; &#x1F600; \xc5\x9f
+< a & b < \u015f \ud83d\ude00 \u015f
+> rich just words
+< just words
+> rich <body><p>unclosed
+< 
+> rich <!DOCTYPE b [<!ENTITY x "y">]><body>&x;</body>
+< 
+> rich <a:b>x</a:b>
+< 
+> rich <b>x</b> <i>y</i>
+< x y
+> rich <p>one<![CDATA[hidden]]>two<!-- c --><?pi d?></p>
+< onetwo
+> rich <p><span style="font-size:0">a</span> b</p>
+< a b
+> rich <p>a</p>\r\n<p>b</p>
+< a\nb
+> rich <?xml version="1.0"?><body xmlns="http://www.w3.org/1999/xhtml"><p>hello</p></body>
+< hello
+> rich <?xml version="1.0" encoding="UTF-8"?>\n<p>x</p><p>y</p>
+< x\ny
+> rich  <?xml version="1.0"?><p>late</p>
+< 
+> rich <?xml?><p>bad</p>
+< 
+> rich <?xml version="2.0"?><p>bad</p>
+< 
+> rich
+< 
+> da /Helv 12 Tf 0 g
+< parsed Helv 12 [0] standard=True
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> da /TiBI 18 Tf 0 0 1 rg
+< parsed TiBI 18 [0,0,1] standard=True
+< format Times New Roman|18|True|True|False|[0,0,1]
+< build /TiBI 18 Tf 0 0 1 rg
+< style font-family: Times New Roman; font-size: 18pt; font-weight: bold; font-style: italic; text-align: center; color: #0000FF
+> da /CoBo 7.5 Tf 1 0 0 0 k
+< parsed CoBo 7.5 [1,0,0,0] standard=True
+< format Courier New|7.5|True|False|False|[1,0,0,0]
+< build /CoBo 7.5 Tf 1 0 0 0 k
+< style font-family: Courier New; font-size: 7.5pt; font-weight: bold; font-style: normal; text-align: center; color: #000000
+> da /Foo 10 Tf
+< parsed Foo 10 - standard=False
+< format Helvetica|10|False|False|False|[0]
+< build /Helv 10 Tf 0 g
+< style font-family: Helvetica; font-size: 10pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> da 1 0 0 rg /Helv 9 Tf
+< parsed Helv 9 [1,0,0] standard=True
+< format Helvetica|9|False|False|False|[1,0,0]
+< build /Helv 9 Tf 1 0 0 rg
+< style font-family: Helvetica; font-size: 9pt; font-weight: normal; font-style: normal; text-align: center; color: #FF0000
+> da /Helv x Tf
+< parsed Helv - - standard=True
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> da /Helv 12 Tf 0.5 0.5 g
+< parsed Helv 12 [0.5] standard=True
+< format Helvetica|12|False|False|False|[0.5]
+< build /Helv 12 Tf 0.5 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #808080
+> da 0 0 1 rg
+< parsed - - [0,0,1] standard=False
+< format Helvetica|12|False|False|False|[0,0,1]
+< build /Helv 12 Tf 0 0 1 rg
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #0000FF
+> da /Helv 0 Tf
+< parsed Helv 0 - standard=True
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> da /HeBO 12.125 Tf 0.2 0.4 0.6 rg
+< parsed HeBO 12.125 [0.2,0.4,0.6] standard=True
+< format Helvetica|12.125|True|True|False|[0.2,0.4,0.6]
+< build /HeBO 12.125 Tf 0.2 0.4 0.6 rg
+< style font-family: Helvetica; font-size: 12.13pt; font-weight: bold; font-style: italic; text-align: center; color: #336699
+> da   \t/HeOb  11  Tf\r\n0 g
+< parsed HeOb 11 [0] standard=True
+< format Helvetica|11|False|True|False|[0]
+< build /HeOb 11 Tf 0 g
+< style font-family: Helvetica; font-size: 11pt; font-weight: normal; font-style: italic; text-align: center; color: #000000
+> da 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 /Helv 10 Tf 0 g
+< parsed Helv 10 [0] standard=True
+< format Helvetica|10|False|False|False|[0]
+< build /Helv 10 Tf 0 g
+< style font-family: Helvetica; font-size: 10pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> da /Helv 1e1 Tf 1e-1 g
+< parsed Helv 10 [0.1] standard=True
+< format Helvetica|10|False|False|False|[0.1]
+< build /Helv 10 Tf 0.1 g
+< style font-family: Helvetica; font-size: 10pt; font-weight: normal; font-style: normal; text-align: center; color: #1A1A1A
+> da /Helv 0x10 Tf 0 g
+< parsed Helv - [0] standard=True
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> da /Helv 12.005 Tf 0 g
+< parsed Helv 12.005 [0] standard=True
+< format Helvetica|12.005|False|False|False|[0]
+< build /Helv 12.005 Tf 0 g
+< style font-family: Helvetica; font-size: 12.01pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> da /Helv 1000000000000 Tf 0 g
+< parsed Helv 1000000000000 [0] standard=True
+< format Helvetica|1000000000000|False|False|False|[0]
+< build /Helv 1000000000000 Tf 0 g
+< style font-family: Helvetica; font-size: 1000000000000pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> da /Helv 99999999999999 Tf 1 0 0 rg
+< parsed Helv 99999999999999 [1,0,0] standard=True
+< format Helvetica|99999999999999|False|False|False|[1,0,0]
+< build /Helv 99999999999999 Tf 1 0 0 rg
+< style font-family: Helvetica; font-size: 99999999999999pt; font-weight: normal; font-style: normal; text-align: center; color: #FF0000
+> da
+< parsed - - - standard=False
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> css font-size:12pt;font-family:'Times New Roman', serif;font-weight:bold;color:#FF0000
+< format Times New Roman|12|True|False|False|[1,0,0]
+< build /TiBo 12 Tf 1 0 0 rg
+< style font-family: Times New Roman; font-size: 12pt; font-weight: bold; font-style: normal; text-align: center; color: #FF0000
+> css font: italic bold 14px Arial, sans-serif
+< format Arial|14|True|True|False|[0]
+< build /HeBO 14 Tf 0 g
+< style font-family: Arial; font-size: 14pt; font-weight: bold; font-style: italic; text-align: center; color: #000000
+> css font-weight:700;font-style:oblique;text-decoration: Underline
+< format Helvetica|12|True|True|True|[0]
+< build /HeBO 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: bold; font-style: italic; text-align: center; color: #000000
+> css font-weight:bolder
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> css color:#abc
+< format Helvetica|12|False|False|False|[0.666667,0.733333,0.8]
+< build /Helv 12 Tf 0.666667 0.733333 0.8 rg
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #AABBCC
+> css color:#12345
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> css color:red
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> css font-size: 0
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> css font-size: 1000
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> css font-size: 12 pt
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> css font-family: "Courier New"
+< format Courier New|12|False|False|False|[0]
+< build /Cour 12 Tf 0 g
+< style font-family: Courier New; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> css font-family: ,x
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> css font: 12px
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> css font: bold
+< format Helvetica|12|True|False|False|[0]
+< build /HeBo 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: bold; font-style: normal; text-align: center; color: #000000
+> css ;;font-size:20pt;;
+< format Helvetica|20|False|False|False|[0]
+< build /Helv 20 Tf 0 g
+< style font-family: Helvetica; font-size: 20pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> css font-size:11.005pt
+< format Helvetica|11.005|False|False|False|[0]
+< build /Helv 11.005 Tf 0 g
+< style font-family: Helvetica; font-size: 11.01pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> css font-weight: 599
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> css text-decoration:none
+< format Helvetica|12|False|False|False|[0]
+< build /Helv 12 Tf 0 g
+< style font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: center; color: #000000
+> ap highlight
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 202 36] /Matrix [1 0 0 1 0 0] /Resources <</ExtGState <</GS1 <</Type /ExtGState /CA 0.5 /ca 0.5 /BM /Multiply /AIS false>>>>>> /Filter /FlateDecode>> | /GS1 gs\n1 1 0 rg\n1 35 m\n201 35 l\n201 21 l\n1 21 l\nh\n1 15 m\n101 15 l\n101 1 l\n1 1 l\nh\nf\n
+< 5: <</Type /Annot /Subtype /Highlight /Rect [99 479 301 515] /F 4 /NM (nm) /C [1 1 0] /CA 0.5 /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /QuadPoints [100 514 300 514 100 500 300 500 100 494 200 494 100 480 200 480] /AP <</N 4 0 R>>>>
+> ap underline
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 202 36] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 0 0.5 1 RG\n1 w\n1 21.5 m\n201 21.5 l\nS\n1 w\n1 1.5 m\n101 1.5 l\nS\n
+< 5: <</Type /Annot /Subtype /Underline /Rect [99 479 301 515] /F 4 /NM (nm) /C [0 0.5 1] /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /QuadPoints [100 514 300 514 100 500 300 500 100 494 200 494 100 480 200 480] /AP <</N 4 0 R>>>>
+> ap strikeout
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 202 36] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n1 w\n1 28 m\n201 28 l\nS\n1 w\n1 8 m\n101 8 l\nS\n
+< 5: <</Type /Annot /Subtype /StrikeOut /Rect [99 479 301 515] /F 4 /NM (nm) /C [1 0 0] /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /QuadPoints [100 514 300 514 100 500 300 500 100 494 200 494 100 480 200 480] /AP <</N 4 0 R>>>>
+> ap squiggly
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 202 36] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n0.75 w\n1 21.4 m\n3 22.8 l\n5 21.4 l\n7 22.8 l\n9 21.4 l\n11 22.8 l\n13 21.4 l\n15 22.8 l\n17 21.4 l\n19 22.8 l\n21 21.4 l\n23 22.8 l\n25 21.4 l\n27 22.8 l\n29 21.4 l\n31 22.8 l\n33 21.4 l\n35 22.8 l\n37 21.4 l\n39 22.8 l\n41 21.4 l\n43 22.8 l\n45 21.4 l\n47 22.8 l\n49 21.4 l\n51 22.8 l\n53 21.4 l\n55 22.8 l\n57 21.4 l\n59 22.8 l\n61 21.4 l\n63 22.8 l\n65 21.4 l\n67 22.8 l\n69 21.4 l\n71 22.8 l\n73 21.4 l\n75 22.8 l\n77 21.4 l\n79 22.8 l\n81 21.4 l\n83 22.8 l\n85 21.4 l\n87 22.8 l\n89 21.4 l\n91 22.8 l\n93 21.4 l\n95 22.8 l\n97 21.4 l\n99 22.8 l\n101 21.4 l\n103 22.8 l\n105 21.4 l\n107 22.8 l\n109 21.4 l\n111 22.8 l\n113 21.4 l\n115 22.8 l\n117 21.4 l\n119 22.8 l\n121 21.4 l\n123 22.8 l\n125 21.4 l\n127 22.8 l\n129 21.4 l\n131 22.8 l\n133 21.4 l\n135 22.8 l\n137 21.4 l\n139 22.8 l\n141 21.4 l\n143 22.8 l\n145 21.4 l\n147 22.8 l\n149 21.4 l\n151 22.8 l\n153 21.4 l\n155 22.8 l\n157 21.4 l\n159 22.8 l\n161 21.4 l\n163 22.8 l\n165 21.4 l\n167 22.8 l\n169 21.4 l\n171 22.8 l\n173 21.4 l\n175 22.8 l\n177 21.4 l\n179 22.8 l\n181 21.4 l\n183 22.8 l\n185 21.4 l\n187 22.8 l\n189 21.4 l\n191 22.8 l\n193 21.4 l\n195 22.8 l\n197 21.4 l\n199 22.8 l\n201 21.4 l\nS\n1 1.4 m\n3 2.8 l\n5 1.4 l\n7 2.8 l\n9 1.4 l\n11 2.8 l\n13 1.4 l\n15 2.8 l\n17 1.4 l\n19 2.8 l\n21 1.4 l\n23 2.8 l\n25 1.4 l\n27 2.8 l\n29 1.4 l\n31 2.8 l\n33 1.4 l\n35 2.8 l\n37 1.4 l\n39 2.8 l\n41 1.4 l\n43 2.8 l\n45 1.4 l\n47 2.8 l\n49 1.4 l\n51 2.8 l\n53 1.4 l\n55 2.8 l\n57 1.4 l\n59 2.8 l\n61 1.4 l\n63 2.8 l\n65 1.4 l\n67 2.8 l\n69 1.4 l\n71 2.8 l\n73 1.4 l\n75 2.8 l\n77 1.4 l\n79 2.8 l\n81 1.4 l\n83 2.8 l\n85 1.4 l\n87 2.8 l\n89 1.4 l\n91 2.8 l\n93 1.4 l\n95 2.8 l\n97 1.4 l\n99 2.8 l\n101 1.4 l\nS\n
+< 5: <</Type /Annot /Subtype /Squiggly /Rect [99 479 301 515] /F 4 /NM (nm) /C [1 0 0] /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /QuadPoints [100 514 300 514 100 500 300 500 100 494 200 494 100 480 200 480] /AP <</N 4 0 R>>>>
+> ap square
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 100 50] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 0 0 1 RG\n1 1 0 rg\n4 w\n1 j\n2 2 96 46 re\nB\n
+< 5: <</Type /Annot /Subtype /Square /Rect [100 600 200 650] /F 4 /NM (nm) /C [0 0 1] /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /BS <</Type /Border /W 4 /S /S>> /IC [1 1 0] /AP <</N 4 0 R>>>>
+> ap square-dash
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 100 50] /Matrix [1 0 0 1 0 0] /Resources <</ExtGState <</GS1 <</Type /ExtGState /CA 0.5 /ca 0.5 /BM /Normal /AIS false>>>>>> /Filter /FlateDecode>> | /GS1 gs\n1 0 0 RG\n1 w\n[4 2] 0 d\n1 j\n0.5 0.5 99 49 re\nS\n
+< 5: <</Type /Annot /Subtype /Square /Rect [100 600 200 650] /F 4 /NM (nm) /C [1 0 0] /CA 0.5 /BS <</Type /Border /W 1 /S /D /D [4 2]>> /AP <</N 4 0 R>>>>
+> ap square-cloud
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 160 100] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n1 w\n1 j\n6.1 6.1 m\n6.1 -1.066061 19.536364 -1.066061 19.536364 6.1 c\n19.536364 -1.066061 32.972727 -1.066061 32.972727 6.1 c\n32.972727 -1.066061 46.409091 -1.066061 46.409091 6.1 c\n46.409091 -1.066061 59.845455 -1.066061 59.845455 6.1 c\n59.845455 -1.066061 73.281818 -1.066061 73.281818 6.1 c\n73.281818 -1.066061 86.718182 -1.066061 86.718182 6.1 c\n86.718182 -1.066061 100.154545 -1.066061 100.154545 6.1 c\n100.154545 -1.066061 113.590909 -1.066061 113.590909 6.1 c\n113.590909 -1.066061 127.027273 -1.066061 127.027273 6.1 c\n127.027273 -1.066061 140.463636 -1.066061 140.463636 6.1 c\n140.463636 -1.066061 153.9 -1.066061 153.9 6.1 c\n160.589524 6.1 160.589524 18.642857 153.9 18.642857 c\n160.589524 18.642857 160.589524 31.185714 153.9 31.185714 c\n160.589524 31.185714 160.589524 43.728571 153.9 43.728571 c\n160.589524 43.728571 160.589524 56.271429 153.9 56.271429 c\n160.589524 56.271429 160.589524 68.814286 153.9 68.814286 c\n160.589524 68.814286 160.589524 81.357143 153.9 81.357143 c\n160.589524 81.357143 160.589524 93.9 153.9 93.9 c\n153.9 101.066061 140.463636 101.066061 140.463636 93.9 c\n140.463636 101.066061 127.027273 101.066061 127.027273 93.9 c\n127.027273 101.066061 113.590909 101.066061 113.590909 93.9 c\n113.590909 101.066061 100.154545 101.066061 100.154545 93.9 c\n100.154545 101.066061 86.718182 101.066061 86.718182 93.9 c\n86.718182 101.066061 73.281818 101.066061 73.281818 93.9 c\n73.281818 101.066061 59.845455 101.066061 59.845455 93.9 c\n59.845455 101.066061 46.409091 101.066061 46.409091 93.9 c\n46.409091 101.066061 32.972727 101.066061 32.972727 93.9 c\n32.972727 101.066061 19.536364 101.066061 19.536364 93.9 c\n19.536364 101.066061 6.1 101.066061 6.1 93.9 c\n-0.589524 93.9 -0.589524 81.357143 6.1 81.357143 c\n-0.589524 81.357143 -0.589524 68.814286 6.1 68.814286 c\n-0.589524 68.814286 -0.589524 56.271429 6.1 56.271429 c\n-0.589524 56.271429 -0.589524 43.728571 6.1 43.728571 c\n-0.589524 43.728571 -0.589524 31.185714 6.1 31.185714 c\n-0.589524 31.185714 -0.589524 18.642857 6.1 18.642857 c\n-0.589524 18.642857 -0.589524 6.1 6.1 6.1 c\nh\nS\n
+< 5: <</Type /Annot /Subtype /Square /Rect [100 600 260 700] /F 4 /NM (nm) /C [1 0 0] /BS <</Type /Border /W 1 /S /S>> /BE <</S /C /I 2>> /RD [6.1 6.1 6.1 6.1] /AP <</N 4 0 R>>>>
+> ap circle
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 60 60] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n0 1 0 rg\n2 w\n1 j\n59 30 m\n59 46.016258 46.016258 59 30 59 c\n13.983742 59 1 46.016258 1 30 c\n1 13.983742 13.983742 1 30 1 c\n46.016258 1 59 13.983742 59 30 c\nh\nB\n
+< 5: <</Type /Annot /Subtype /Circle /Rect [100 600 160 660] /F 4 /NM (nm) /C [1 0 0] /BS <</Type /Border /W 2 /S /S>> /IC [0 1 0] /AP <</N 4 0 R>>>>
+> ap circle-cloud
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 160 100] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n1 w\n1 j\n155.5 50 m\n160.669847 50.924786 158.935873 60.618249 153.766026 59.693463 c\n158.393084 62.19644 153.700001 70.872174 149.072943 68.369197 c\n152.946873 71.939729 146.252126 79.203346 142.378196 75.632815 c\n145.520853 79.86659 137.582525 85.759072 134.439868 81.525297 c\n136.935782 86.172276 128.222696 90.852113 125.726783 86.205134 c\n127.65622 91.115658 118.448988 94.733352 116.519551 89.822829 c\n117.943372 94.903704 108.41673 97.573368 106.99291 92.492493 c\n107.953752 97.681222 98.224884 99.4828 97.264042 94.294071 c\n97.789586 99.544957 87.944175 100.530352 87.418631 95.279466 c\n87.523045 100.555626 77.630244 100.751403 77.52583 95.475242 c\n77.211976 100.743073 67.334793 100.154597 67.648647 94.886766 c\n66.907999 100.111585 57.111464 98.722871 57.852111 93.498052 c\n56.663978 98.639351 47.024043 96.411602 48.212175 91.270303 c\n46.542113 96.275366 37.157619 93.144 38.827681 88.138937 c\n36.623821 92.932056 27.636723 88.799817 29.840583 84.006698 c\n27.032236 88.470741 18.662154 83.20509 21.470502 78.741047 c\n17.971517 82.683061 10.580241 76.122466 14.079225 72.180451 c\n9.822058 75.278312 4.01357 67.296124 8.270737 64.198264 c\n3.323446 65.972645 -0.003519 56.696474 4.943772 54.922093 c\n-0.30646 54.922093 -0.30646 45.077907 4.943772 45.077907 c\n-0.003519 43.303526 3.323446 34.027355 8.270737 35.801736 c\n4.01357 32.703876 9.822058 24.721688 14.079225 27.819549 c\n10.580241 23.877534 17.971517 17.316939 21.470502 21.258953 c\n18.662154 16.79491 27.032236 11.529259 29.840583 15.993302 c\n27.636723 11.200183 36.623821 7.067944 38.827681 11.861063 c\n37.157619 6.856 46.542113 3.724634 48.212175 8.729697 c\n47.024043 3.588398 56.663978 1.360649 57.852111 6.501948 c\n57.111464 1.277129 66.907999 -0.111585 67.648647 5.113234 c\n67.334793 -0.154597 77.211976 -0.743073 77.52583 4.524758 c\n77.630244 -0.751403 87.523045 -0.555626 87.418631 4.720534 c\n87.944175 -0.530352 97.789586 0.455043 97.264042 5.705929 c\n98.224884 0.5172 107.953752 2.318778 106.99291 7.507507 c\n108.41673 2.426632 117.943372 5.096296 116.519551 10.177171 c\n118.448988 5.266648 127.65622 8.884342 125.726783 13.794866 c\n128.222696 9.147887 136.935782 13.827724 134.439868 18.474703 c\n137.582525 14.240928 145.520853 20.13341 142.378196 24.367185 c\n146.252126 20.796654 152.946873 28.060271 149.072943 31.630803 c\n153.700001 29.127826 158.393084 37.80356 153.766026 40.306537 c\n158.935873 39.381751 160.669847 49.075214 155.5 50 c\nh\nS\n
+< 5: <</Type /Annot /Subtype /Circle /Rect [100 600 260 700] /F 4 /NM (nm) /C [1 0 0] /BS <</Type /Border /W 1 /S /S>> /BE <</S /C /I 1>> /RD [4.5 4.5 4.5 4.5] /AP <</N 4 0 R>>>>
+> ap line
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 204 54] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n2 2 m\n202 52 l\nS\n
+< 5: <</Type /Annot /Subtype /Line /Rect [98 598 302 652] /F 4 /NM (nm) /C [1 0 0] /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /L [100 600 300 650] /LE [/None /None] /BS <</Type /Border /W 2 /S /S>> /AP <</N 4 0 R>>>>
+> ap endings
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 220 70] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n10 10 m\n210 60 l\nS\nq\n[] 0 d\n0 1 0 rg\n12.328342 13.88057 m\n6.11943 12.328342 l\n7.671658 6.11943 l\n13.88057 7.671658 l\nh\nB\nQ\nq\n[] 0 d\n0 1 0 rg\n207.671658 56.11943 m\n213.88057 57.671658 l\n212.328342 63.88057 l\n206.11943 62.328342 l\nh\nB\nQ\n
+< 5: <</Type /Annot /Subtype /Line /Rect [90 590 310 660] /F 4 /NM (nm) /C [1 0 0] /L [100 600 300 650] /LE [/Square /Square] /BS <</Type /Border /W 2 /S /S>> /IC [0 1 0] /AP <</N 4 0 R>>>>
+< 6: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 220 70] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n10 10 m\n210 60 l\nS\nq\n[] 0 d\n0 1 0 rg\n13.2 10 m\n13.2 11.767311 11.767311 13.2 10 13.2 c\n8.232689 13.2 6.8 11.767311 6.8 10 c\n6.8 8.232689 8.232689 6.8 10 6.8 c\n11.767311 6.8 13.2 8.232689 13.2 10 c\nh\nB\nQ\nq\n[] 0 d\n0 1 0 rg\n213.2 60 m\n213.2 61.767311 211.767311 63.2 210 63.2 c\n208.232689 63.2 206.8 61.767311 206.8 60 c\n206.8 58.232689 208.232689 56.8 210 56.8 c\n211.767311 56.8 213.2 58.232689 213.2 60 c\nh\nB\nQ\n
+< 7: <</Type /Annot /Subtype /Line /Rect [90 590 310 660] /F 4 /NM (nm) /C [1 0 0] /L [100 600 300 650] /LE [/Circle /Circle] /BS <</Type /Border /W 2 /S /S>> /IC [0 1 0] /AP <</N 6 0 R>>>>
+< 8: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 220 70] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n10 10 m\n210 60 l\nS\nq\n[] 0 d\n0 1 0 rg\n6.11943 9.029857 m\n10.970143 6.11943 l\n13.88057 10.970143 l\n9.029857 13.88057 l\nh\nB\nQ\nq\n[] 0 d\n0 1 0 rg\n213.88057 60.970143 m\n209.029857 63.88057 l\n206.11943 59.029857 l\n210.970143 56.11943 l\nh\nB\nQ\n
+< 9: <</Type /Annot /Subtype /Line /Rect [90 590 310 660] /F 4 /NM (nm) /C [1 0 0] /L [100 600 300 650] /LE [/Diamond /Diamond] /BS <</Type /Border /W 2 /S /S>> /IC [0 1 0] /AP <</N 8 0 R>>>>
+< 10: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 220 70] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n10 10 m\n210 60 l\nS\nq\n[] 0 d\n0 1 0 rg\n16.150687 15.115569 m\n10 10 l\n17.834404 8.380704 l\nS\nQ\nq\n[] 0 d\n0 1 0 rg\n203.849313 54.884431 m\n210 60 l\n202.165596 61.619296 l\nS\nQ\n
+< 11: <</Type /Annot /Subtype /Line /Rect [90 590 310 660] /F 4 /NM (nm) /C [1 0 0] /L [100 600 300 650] /LE [/OpenArrow /OpenArrow] /BS <</Type /Border /W 2 /S /S>> /IC [0 1 0] /AP <</N 10 0 R>>>>
+< 12: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 220 70] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n10 10 m\n210 60 l\nS\nq\n[] 0 d\n0 1 0 rg\n16.150687 15.115569 m\n10 10 l\n17.834404 8.380704 l\nh\nB\nQ\nq\n[] 0 d\n0 1 0 rg\n203.849313 54.884431 m\n210 60 l\n202.165596 61.619296 l\nh\nB\nQ\n
+< 13: <</Type /Annot /Subtype /Line /Rect [90 590 310 660] /F 4 /NM (nm) /C [1 0 0] /L [100 600 300 650] /LE [/ClosedArrow /ClosedArrow] /BS <</Type /Border /W 2 /S /S>> /IC [0 1 0] /AP <</N 12 0 R>>>>
+< 14: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 220 70] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n10 10 m\n210 60 l\nS\nq\n[] 0 d\n0 1 0 rg\n9.029857 13.88057 m\n10.970143 6.11943 l\nS\nQ\nq\n[] 0 d\n0 1 0 rg\n210.970143 56.11943 m\n209.029857 63.88057 l\nS\nQ\n
+< 15: <</Type /Annot /Subtype /Line /Rect [90 590 310 660] /F 4 /NM (nm) /C [1 0 0] /L [100 600 300 650] /LE [/Butt /Butt] /BS <</Type /Border /W 2 /S /S>> /IC [0 1 0] /AP <</N 14 0 R>>>>
+< 16: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 220 70] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n10 10 m\n210 60 l\nS\nq\n[] 0 d\n0 1 0 rg\n3.849313 4.884431 m\n10 10 l\n2.165596 11.619296 l\nS\nQ\nq\n[] 0 d\n0 1 0 rg\n216.150687 65.115569 m\n210 60 l\n217.834404 58.380704 l\nS\nQ\n
+< 17: <</Type /Annot /Subtype /Line /Rect [90 590 310 660] /F 4 /NM (nm) /C [1 0 0] /L [100 600 300 650] /LE [/ROpenArrow /ROpenArrow] /BS <</Type /Border /W 2 /S /S>> /IC [0 1 0] /AP <</N 16 0 R>>>>
+< 18: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 220 70] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n10 10 m\n210 60 l\nS\nq\n[] 0 d\n0 1 0 rg\n3.849313 4.884431 m\n10 10 l\n2.165596 11.619296 l\nh\nB\nQ\nq\n[] 0 d\n0 1 0 rg\n216.150687 65.115569 m\n210 60 l\n217.834404 58.380704 l\nh\nB\nQ\n
+< 19: <</Type /Annot /Subtype /Line /Rect [90 590 310 660] /F 4 /NM (nm) /C [1 0 0] /L [100 600 300 650] /LE [/RClosedArrow /RClosedArrow] /BS <</Type /Border /W 2 /S /S>> /IC [0 1 0] /AP <</N 18 0 R>>>>
+< 20: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 220 70] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n10 10 m\n210 60 l\nS\nq\n[] 0 d\n0 1 0 rg\n7.219547 12.875601 m\n12.780453 7.124399 l\nS\nQ\nq\n[] 0 d\n0 1 0 rg\n212.780453 57.124399 m\n207.219547 62.875601 l\nS\nQ\n
+< 21: <</Type /Annot /Subtype /Line /Rect [90 590 310 660] /F 4 /NM (nm) /C [1 0 0] /L [100 600 300 650] /LE [/Slash /Slash] /BS <</Type /Border /W 2 /S /S>> /IC [0 1 0] /AP <</N 20 0 R>>>>
+> ap arrow
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 220 20] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n10 10 m\n210 10 l\nS\nq\n[] 0 d\n202.792249 6.52893 m\n210 10 l\n202.792249 13.47107 l\nS\nQ\n
+< 5: <</Type /Annot /Subtype /Line /Rect [90 590 310 610] /F 4 /NM (nm) /C [1 0 0] /L [100 600 300 600] /LE [/None /OpenArrow] /IT /LineArrow /BS <</Type /Border /W 2 /S /S>> /AP <</N 4 0 R>>>>
+> ap polyline
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 166 66] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 0 0 1 RG\n1 w\n1 j\n8 8 m\n58 58 l\n108 8 l\n158 58 l\nS\nq\n[] 0 d\n155.688047 51.392817 m\n158 58 l\n151.392817 55.688047 l\nh\nS\nQ\n
+< 5: <</Type /Annot /Subtype /PolyLine /Rect [92 592 258 658] /F 4 /NM (nm) /C [0 0 1] /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /Vertices [100 600 150 650 200 600 250 650] /LE [/None /ClosedArrow] /BS <</Type /Border /W 1 /S /S>> /AP <</N 4 0 R>>>>
+> ap polygon
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 152 52] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 0 0 1 RG\n1 0.8 0.8 rg\n1 w\n1 j\n1 1 m\n51 51 l\n101 1 l\n151 51 l\nh\nB\n
+< 5: <</Type /Annot /Subtype /Polygon /Rect [99 599 251 651] /F 4 /NM (nm) /C [0 0 1] /Vertices [100 600 150 650 200 600 250 650] /BS <</Type /Border /W 1 /S /S>> /IC [1 0.8 0.8] /AP <</N 4 0 R>>>>
+> ap cloud
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 110 110] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n1 w\n1 j\n5 5 m\n5 -0.333333 15 -0.333333 15 5 c\n15 -0.333333 25 -0.333333 25 5 c\n25 -0.333333 35 -0.333333 35 5 c\n35 -0.333333 45 -0.333333 45 5 c\n45 -0.333333 55 -0.333333 55 5 c\n55 -0.333333 65 -0.333333 65 5 c\n65 -0.333333 75 -0.333333 75 5 c\n75 -0.333333 85 -0.333333 85 5 c\n85 -0.333333 95 -0.333333 95 5 c\n95 -0.333333 105 -0.333333 105 5 c\n110.333333 5 110.333333 15 105 15 c\n110.333333 15 110.333333 25 105 25 c\n110.333333 25 110.333333 35 105 35 c\n110.333333 35 110.333333 45 105 45 c\n110.333333 45 110.333333 55 105 55 c\n110.333333 55 110.333333 65 105 65 c\n110.333333 65 110.333333 75 105 75 c\n110.333333 75 110.333333 85 105 85 c\n110.333333 85 110.333333 95 105 95 c\n110.333333 95 110.333333 105 105 105 c\n105 110.333333 95 110.333333 95 105 c\n95 110.333333 85 110.333333 85 105 c\n85 110.333333 75 110.333333 75 105 c\n75 110.333333 65 110.333333 65 105 c\n65 110.333333 55 110.333333 55 105 c\n55 110.333333 45 110.333333 45 105 c\n45 110.333333 35 110.333333 35 105 c\n35 110.333333 25 110.333333 25 105 c\n25 110.333333 15 110.333333 15 105 c\n15 110.333333 5 110.333333 5 105 c\n-0.333333 105 -0.333333 95 5 95 c\n-0.333333 95 -0.333333 85 5 85 c\n-0.333333 85 -0.333333 75 5 75 c\n-0.333333 75 -0.333333 65 5 65 c\n-0.333333 65 -0.333333 55 5 55 c\n-0.333333 55 -0.333333 45 5 45 c\n-0.333333 45 -0.333333 35 5 35 c\n-0.333333 35 -0.333333 25 5 25 c\n-0.333333 25 -0.333333 15 5 15 c\n-0.333333 15 -0.333333 5 5 5 c\nh\nS\n
+< 5: <</Type /Annot /Subtype /Polygon /Rect [95 595 205 705] /F 4 /NM (nm) /C [1 0 0] /Vertices [100 600 200 600 200 700 100 700] /IT /PolygonCloud /BS <</Type /Border /W 1 /S /S>> /BE <</S /C /I 1>> /AP <</N 4 0 R>>>>
+> ap ink
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 205 45] /Matrix [1 0 0 1 0 0] /Resources <</ExtGState <</GS1 <</Type /ExtGState /CA 0.4 /ca 0.4 /BM /Normal /AIS false>>>>>> /Filter /FlateDecode>> | /GS1 gs\n0 0 0 RG\n3 w\n1 j\n1 J\n2.5 2.5 m\n9.166667 15.833333 15.833333 23.333333 22.5 25 c\n29.166667 26.666667 35.833333 25 42.5 20 c\n49.166667 15 55.833333 17.5 62.5 27.5 c\n72.5 42.5 l\nS\n202.5 2.5 m\n202.5 2.5 l\nS\n
+< 5: <</Type /Annot /Subtype /Ink /Rect [97.5 597.5 302.5 642.5] /F 4 /NM (nm) /C [0 0 0] /CA 0.4 /InkList [[100 600 110 620 130 625 150 610 170 640] [300 600]] /BS <</Type /Border /W 3 /S /S>> /AP <</N 4 0 R>>>>
+> ap freetext
+< 4: <</Type /Font /Subtype /Type1 /BaseFont /Times-Bold /Encoding /WinAnsiEncoding>>
+< 5: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 200 40] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 4 0 R>>>> /Filter /FlateDecode>> | 1 1 0.8 rg\n0 0 200 40 re\nf\n1 0 0 RG\n2 w\n1 1 198 38 re\nS\nq\n0 0 200 40 re\nW\nn\n0 0 1 rg\nBT\n/F1 14 Tf\n42.649 26.438 Td\n<48656C6C6F2C20> Tj\nET\n0 0 1 rg\nBT\n/F1 14 Tf\n81.541 26.438 Td\n<576F726C6420> Tj\nET\n0 0 1 rg\nBT\n/F1 14 Tf\n123.933 26.438 Td\n<28636166E929> Tj\nET\nQ\n
+< 6: <</Type /Annot /Subtype /FreeText /Rect [100 600 300 640] /F 4 /NM (nm) /C [1 0 0] /T <FEFF00410079015F0065> /Contents <48656C6C6F2C20576F726C642028636166E929> /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /IC [1 1 0.8] /BS <</Type /Border /W 2 /S /S>> /IT /FreeText /DA (/TiBo 14 Tf 0 0 1 rg) /DS (font-family: Times New Roman; font-size: 14pt; font-weight: bold; font-style: normal; text-align: center; color: #0000FF) /Q 1 /AP <</N 5 0 R>>>>
+> ap freetext-wrap
+< 4: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 5: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 120 100] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 4 0 R>>>> /Filter /FlateDecode>> | q\n0 0 120 100 re\nW\nn\n0 0 0 rg\nBT\n/F1 12 Tf\n2 89.384 Td\n<54686520> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n26.012 89.384 Td\n<717569636B20> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n57.356 89.384 Td\n<62726F776E20> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n93.368 89.384 Td\n<666F78> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n2 76.619 Td\n<6A756D707320> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n37.34 76.619 Td\n<6F76657220> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n64.016 76.619 Td\n<74686520> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n84.032 76.619 Td\n<6C617A79> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n2 63.854 Td\n<646F6720> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n25.352 63.854 Td\n<616E6420> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n48.704 63.854 Td\n<6B65657073> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n2 51.089 Td\n<72756E6E696E67> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n2 38.324 Td\n<537570657263616C6966726167696C69737469636578> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n2 25.559 Td\n<7069616C69646F63696F7573> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n64.688 25.559 Td\n<656E64> Tj\nET\nQ\n
+< 6: <</Type /Annot /Subtype /FreeText /Rect [100 500 220 600] /F 4 /NM (nm) /Contents <54686520717569636B2062726F776E20666F78206A756D7073206F76657220746865206C617A7920646F6720616E64206B656570732072756E6E696E670A537570657263616C6966726167696C697374696365787069616C69646F63696F757320656E64> /BS <</Type /Border /W 0 /S /S>> /IT /FreeText /DA (/Helv 12 Tf 0 g) /DS (font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: left; color: #000000) /Q 0 /AP <</N 5 0 R>>>>
+> ap freetext-rich
+< 4: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 5: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 6: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding>>
+< 7: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 300 60] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 4 0 R /F2 5 0 R /F3 6 0 R>>>> /Filter /FlateDecode>> | q\n0 0 300 60 re\nW\nn\n0 0 0 rg\nBT\n/F1 12 Tf\n2 49.384 Td\n<706C61696E20> Tj\nET\n1 0 0 rg\nBT\n/F2 12 Tf\n30.68 49.384 Td\n<6C6F7564> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n56.012 49.384 Td\n<20> Tj\nET\n0 0 0 rg\nBT\n/F3 12 Tf\n59.348 49.384 Td\n<736C616E746564> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n98.036 49.384 Td\n<20> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n101.372 49.384 Td\n<756E646572> Tj\nET\n0 0 0 RG\n0.666667 w\n101.372 47.944 m\n132.056 47.944 l\nS\n0 0 0 rg\nBT\n/F1 12 Tf\n2 36.619 Td\n<7365636F6E64> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n2 23.854 Td\n<7468697264> Tj\nET\nQ\n
+< 8: <</Type /Annot /Subtype /FreeText /Rect [100 600 400 660] /F 4 /NM (nm) /Contents <706C61696E206C6F756420736C616E74656420756E6465720A7365636F6E640A7468697264> /BS <</Type /Border /W 0 /S /S>> /IT /FreeText /DA (/Helv 12 Tf 0 g) /DS (font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: left; color: #000000) /Q 0 /RC (<body xmlns="http://www.w3.org/1999/xhtml" style="font-size:12pt;font-family:Helvetica"><p>plain <span style="font-weight:bold;color:#FF0000">loud</span> <i>slanted</i> <u>under</u></p><p>second<br/>third</p></body>) /AP <</N 7 0 R>>>>
+> ap freetext-callout
+< 4: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 5: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 308 148] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 4 0 R>>>> /Filter /FlateDecode>> | 0 0 0 RG\n1 w\n208.5 108.5 99 39 re\nS\n1 w\n8 8 m\n108 8 l\n208 128 l\nS\nq\n[] 0 d\n14.306782 11.037186 m\n8 8 l\n14.306782 4.962814 l\nS\nQ\nq\n208 108 100 40 re\nW\nn\n0 0 0 rg\nBT\n/F1 12 Tf\n211 136.384 Td\n<73656520> Tj\nET\n0 0 0 rg\nBT\n/F1 12 Tf\n233.68 136.384 Td\n<68657265> Tj\nET\nQ\n
+< 6: <</Type /Annot /Subtype /FreeText /Rect [92 492 400 640] /F 4 /NM (nm) /C [0 0 0] /Contents (see here) /BS <</Type /Border /W 1 /S /S>> /IT /FreeTextCallout /CL [100 500 200 500 300 620] /LE /OpenArrow /RD [208 108 0 0] /DA (/Helv 12 Tf 0 g) /DS (font-family: Helvetica; font-size: 12pt; font-weight: normal; font-style: normal; text-align: left; color: #000000) /Q 0 /AP <</N 5 0 R>>>>
+> ap stamp
+< 4: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 5: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 200 60] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 4 0 R>>>> /Filter /FlateDecode /LazyPDFText true>> | 0 0.5 0.15 RG\n4 w\n8 2 m\n192 2 l\n195.313708 2 198 4.686292 198 8 c\n198 52 l\n198 55.313708 195.313708 58 192 58 c\n8 58 l\n4.686292 58 2 55.313708 2 52 c\n2 8 l\n2 4.686292 4.686292 2 8 2 c\nh\nS\n0 0.5 0.15 rg\nBT\n/F1 30 Tf\n15.82 22.335 Td\n<415050524F564544> Tj\nET\n
+< 6: <</Type /Annot /Subtype /Stamp /Rect [100 600 300 660] /F 4 /NM (nm) /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /Name /Approved /AP <</N 5 0 R>>>>
+> ap stamp-custom
+< 4: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 5: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 200 60] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 4 0 R>>>> /Filter /FlateDecode /LazyPDFText true>> | 0 0.4 0 RG\n4 w\n8 2 m\n192 2 l\n195.313708 2 198 4.686292 198 8 c\n198 52 l\n198 55.313708 195.313708 58 192 58 c\n8 58 l\n4.686292 58 2 55.313708 2 52 c\n2 8 l\n2 4.686292 4.686292 2 8 2 c\nh\nS\n0 0.4 0 rg\nBT\n/F1 30 Tf\n22.465 22.335 Td\n<526576696577206D65> Tj\nET\n
+< 6: <</Type /Annot /Subtype /Stamp /Rect [100 600 300 660] /F 4 /NM (nm) /C [0 0.4 0] /Name /Review#20me /AP <</N 5 0 R>>>>
+> ap note
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 20 20] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0.9 0.2 rg\n0 G\n0.833333 w\n0.5 0.5 19 19 re\nB\n4 14.4 m\n16 14.4 l\nS\n4 10.4 m\n16 10.4 l\nS\n4 6.4 m\n16 6.4 l\nS\n
+< 5: <</Type /Annot /Subtype /Text /Rect [100 700 120 720] /F 28 /NM (nm) /C [1 0.9 0.2] /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /Name /Note /Open false /AP <</N 4 0 R>>>>
+> ap note-comment
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 20 20] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0.5 0 rg\n0 G\n0.833333 w\n0.5 6 m\n0.5 19.5 l\n19.5 19.5 l\n19.5 6 l\n11 6 l\n5 0.5 l\n6 6 l\nh\nB\n
+< 5: <</Type /Annot /Subtype /Text /Rect [100 700 120 720] /F 28 /NM (nm) /C [1 0.5 0] /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /Name /Comment /Open false /AP <</N 4 0 R>>>>
+> ap caret
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 16 16] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 0 g\n0 0 m\n5.6 0 8 6.4 8 16 c\n8 6.4 10.4 0 16 0 c\nh\nf\n
+< 5: <</Type /Annot /Subtype /Caret /Rect [100 600 116 616] /F 4 /NM (nm) /C [0] /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /Sy /P /AP <</N 4 0 R>>>>
+> ap attachments
+< 4: stream <</Type /EmbeddedFile /Params <</Size 15 /CheckSum <E55C9DC1D97A239EFD2703A8E2EFEF5C> /ModDate (D:20260304100000+00'00')>> /Subtype /text#2Fplain>> | data of PushPin
+< 5: <</Type /Filespec /F (PushPin.txt) /UF (PushPin.txt) /EF <</F 4 0 R /UF 4 0 R>>>>
+< 6: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 16 16] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 0.3 0.3 0.35 RG\n0.3 0.3 0.35 rg\n1.6 w\n1 J 1 j\n3.2 3.2 m\n8 8 l\nS\n7.2 5.6 m\n10.4 5.6 l\n13.6 8.8 l\n13.6 10.4 l\n5.6 10.4 l\n5.6 8.8 l\nh\nf\n
+< 7: <</Type /Annot /Subtype /FileAttachment /Rect [100 700 116 716] /F 28 /NM (nm) /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /Name /PushPin /FS 5 0 R /AP <</N 6 0 R>>>>
+< 8: stream <</Type /EmbeddedFile /Params <</Size 17 /CheckSum <6A90C974E7D9DF328455B655C5254D00> /ModDate (D:20260304100000+00'00')>> /Subtype /text#2Fplain>> | data of Paperclip
+< 9: <</Type /Filespec /F (Paperclip.txt) /UF (Paperclip.txt) /EF <</F 8 0 R /UF 8 0 R>>>>
+< 10: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 16 16] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 0.3 0.3 0.35 RG\n0.3 0.3 0.35 rg\n1.6 w\n1 J 1 j\n5.6 2.4 m\n5.6 13.6 l\n11.2 13.6 l\n11.2 4 l\n8.32 4 l\n8.32 11.2 l\nS\n
+< 11: <</Type /Annot /Subtype /FileAttachment /Rect [100 700 116 716] /F 28 /NM (nm) /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /Name /Paperclip /FS 9 0 R /AP <</N 10 0 R>>>>
+< 12: stream <</Type /EmbeddedFile /Params <</Size 13 /CheckSum <3D073221C1551D30A01811470B47662C> /ModDate (D:20260304100000+00'00')>> /Subtype /text#2Fplain>> | data of Graph
+< 13: <</Type /Filespec /F (Graph.txt) /UF (Graph.txt) /EF <</F 12 0 R /UF 12 0 R>>>>
+< 14: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 16 16] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 0.3 0.3 0.35 RG\n0.3 0.3 0.35 rg\n1.6 w\n1 J 1 j\n1.92 1.6 3.52 4.8 re\nf\n6.72 1.6 3.52 8 re\nf\n11.52 1.6 3.52 11.2 re\nf\n
+< 15: <</Type /Annot /Subtype /FileAttachment /Rect [100 700 116 716] /F 28 /NM (nm) /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /Name /Graph /FS 13 0 R /AP <</N 14 0 R>>>>
+< 16: stream <</Type /EmbeddedFile /Params <</Size 11 /CheckSum <F47E159A3AFF171608BB9D8DC7037497> /ModDate (D:20260304100000+00'00')>> /Subtype /text#2Fplain>> | data of Tag
+< 17: <</Type /Filespec /F (Tag.txt) /UF (Tag.txt) /EF <</F 16 0 R /UF 16 0 R>>>>
+< 18: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 16 16] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 0.3 0.3 0.35 RG\n0.3 0.3 0.35 rg\n1.6 w\n1 J 1 j\n1.6 8.8 m\n7.2 14.4 l\n14.4 14.4 l\n14.4 7.2 l\n8.8 1.6 l\nh\nf\n
+< 19: <</Type /Annot /Subtype /FileAttachment /Rect [100 700 116 716] /F 28 /NM (nm) /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /Name /Tag /FS 17 0 R /AP <</N 18 0 R>>>>
+> ap redact
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 204 38] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n1.5 w\n2 36 m\n202 36 l\n202 22 l\n2 22 l\nh\nS\n2 16 m\n102 16 l\n102 2 l\n2 2 l\nh\nS\n
+< 5: <</Type /Annot /Subtype /Redact /Rect [98 478 302 516] /F 4 /NM (nm) /C [1 0 0] /T <FEFF00410079015F0065> /Contents (check this) /Subj (Review) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /QuadPoints [100 514 300 514 100 500 300 500 100 494 200 494 100 480 200 480] /IC [0 0 0] /OverlayText (REDACTED) /AP <</N 4 0 R>>>>
+> ap link
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 100 20] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 0 0 1 RG\n2 w\n1 1 98 18 re\nS\n
+< 5: <</Type /Annot /Subtype /Link /Rect [100 600 200 620] /F 4 /A <</Type /Action /S /URI /URI (https://example.com)>> /C [0 0 1] /BS <</Type /Border /W 2 /S /S>> /AP <</N 4 0 R>>>>
+< 6: <</Type /Annot /Subtype /Link /Rect [100 500 200 520] /F 4 /Dest [3 0 R /Fit] /Border [0 0 0]>>
+> edit
+< 4: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 123 43] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n1 w\n1 j\n1 J\n1.5 1.5 m\n21.5 41.5 l\nS\n101.5 1.5 m\n121.5 41.5 l\nS\n
+< 5: <</Type /Annot /Subtype /Ink /Rect [128.5 588.5 251.5 631.5] /F 4 /NM (nm) /C [1 0 0] /InkList [[130 590 150 630] [230 590 250 630]] /BS <</Type /Border /W 1 /S /S>> /AP <</N 4 0 R>>>>
+< 6: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 104 104] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n2 2 m\n102 2 l\n52 102 l\nh\nS\n
+< 7: <</Type /Annot /Subtype /Polygon /Rect [98 598 306 650] /F 4 /NM (nm) /C [1 0 0] /Vertices [102 599 302 599 202 649] /BS <</Type /Border /W 2 /S /S>> /AP <</N 8 0 R>>>>
+< 8: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 208 52] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n4 1 m\n204 1 l\n104 51 l\nh\nS\n
+< 9: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 202 16] /Matrix [1 0 0 1 0 0] /Resources <</ExtGState <</GS1 <</Type /ExtGState /CA 1 /ca 1 /BM /Multiply /AIS false>>>>>> /Filter /FlateDecode>> | /GS1 gs\n1 1 0 rg\n1 15 m\n201 15 l\n201 1 l\n1 1 l\nh\nf\n
+< 10: <</Type /Annot /Subtype /Highlight /Rect [99 499 301 515] /F 4 /NM (nm) /C [0 1 0] /QuadPoints [100 514 300 514 100 500 300 500] /AP <</N 12 0 R>> /CA 0.25>>
+< 11: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 202 16] /Matrix [1 0 0 1 0 0] /Resources <</ExtGState <</GS1 <</Type /ExtGState /CA 1 /ca 1 /BM /Multiply /AIS false>>>>>> /Filter /FlateDecode>> | /GS1 gs\n0 1 0 rg\n1 15 m\n201 15 l\n201 1 l\n1 1 l\nh\nf\n
+< 12: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 202 16] /Matrix [1 0 0 1 0 0] /Resources <</ExtGState <</GS1 <</Type /ExtGState /CA 0.25 /ca 0.25 /BM /Multiply /AIS false>>>>>> /Filter /FlateDecode>> | /GS1 gs\n0 1 0 rg\n1 15 m\n201 15 l\n201 1 l\n1 1 l\nh\nf\n
+< 13: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 20 20] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0.9 0.2 rg\n0 G\n0.833333 w\n0.5 0.5 19 19 re\nB\n4 14.4 m\n16 14.4 l\nS\n4 10.4 m\n16 10.4 l\nS\n4 6.4 m\n16 6.4 l\nS\n
+< 14: <</Type /Annot /Subtype /Text /Rect [10 700 30 720] /F 28 /NM (nm) /C [1 0.9 0.2] /T (A) /Contents (second) /Name /Note /Open false /AP <</N 13 0 R>> /M (D:20260304100000+00'00')>>
+< 15: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 16: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 200 40] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 15 0 R>>>> /Filter /FlateDecode>> | q\n0 0 200 40 re\nW\nn\n0 0 0 rg\nBT\n/F1 12 Tf\n2 29.384 Td\n<7374796C6564> Tj\nET\nQ\n
+< 17: <</Type /Annot /Subtype /FreeText /Rect [100 600 300 640] /F 4 /NM (nm) /Contents (styled) /BS <</Type /Border /W 0 /S /S>> /IT /FreeText /DA (/CoBo 20 Tf 1 0 0 rg) /DS (font-family: Courier New; font-size: 20pt; font-weight: bold; font-style: normal; text-align: center; color: #FF0000) /Q 1 /AP <</N 19 0 R>>>>
+< 18: <</Type /Font /Subtype /Type1 /BaseFont /Courier-Bold /Encoding /WinAnsiEncoding>>
+< 19: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 200 40] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 18 0 R>>>> /Filter /FlateDecode>> | q\n0 0 200 40 re\nW\nn\n1 0 0 rg\nBT\n/F1 20 Tf\n64 25.42 Td\n<7374796C6564> Tj\nET\nQ\n
+< 20: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 49 49] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n1 w\n1 j\n0.5 0.5 48 48 re\nS\n
+< ink [130,590,150,630] [128.5 588.5 251.5 631.5]
+> comments
+< Page parent|Zed|0|Rejected|4|2026-03-01T09:00:00.0000000+00:00 ; orphan|ali|0|None|0|- ; marked|alice|0|None|0|2026-03-01T08:00:00.0000000+00:00 ; one\ntwo|-|0|None|0|2026-03-01T07:00:00.0000000+00:00 ; box|Alice|0|None|0|- ; parent|Zed|1|None|0|2026-03-01T09:00:00.0000000+00:00 ; orphan|ali|1|None|0|- ; marked|alice|1|None|0|2026-03-01T08:00:00.0000000+00:00 ; one\ntwo|-|1|None|0|2026-03-01T07:00:00.0000000+00:00 ; box|Alice|1|None|0|-
+< Page descending box|Alice|1|None|0|- ; one\ntwo|-|1|None|0|2026-03-01T07:00:00.0000000+00:00 ; marked|alice|1|None|0|2026-03-01T08:00:00.0000000+00:00 ; orphan|ali|1|None|0|- ; parent|Zed|1|None|0|2026-03-01T09:00:00.0000000+00:00 ; box|Alice|0|None|0|- ; one\ntwo|-|0|None|0|2026-03-01T07:00:00.0000000+00:00 ; marked|alice|0|None|0|2026-03-01T08:00:00.0000000+00:00 ; orphan|ali|0|None|0|- ; parent|Zed|0|Rejected|4|2026-03-01T09:00:00.0000000+00:00
+< Date one\ntwo|-|0|None|0|2026-03-01T07:00:00.0000000+00:00 ; one\ntwo|-|1|None|0|2026-03-01T07:00:00.0000000+00:00 ; marked|alice|0|None|0|2026-03-01T08:00:00.0000000+00:00 ; marked|alice|1|None|0|2026-03-01T08:00:00.0000000+00:00 ; parent|Zed|0|Rejected|4|2026-03-01T09:00:00.0000000+00:00 ; parent|Zed|1|None|0|2026-03-01T09:00:00.0000000+00:00 ; orphan|ali|0|None|0|- ; box|Alice|0|None|0|- ; orphan|ali|1|None|0|- ; box|Alice|1|None|0|-
+< Date descending box|Alice|1|None|0|- ; orphan|ali|1|None|0|- ; box|Alice|0|None|0|- ; orphan|ali|0|None|0|- ; parent|Zed|1|None|0|2026-03-01T09:00:00.0000000+00:00 ; parent|Zed|0|Rejected|4|2026-03-01T09:00:00.0000000+00:00 ; marked|alice|1|None|0|2026-03-01T08:00:00.0000000+00:00 ; marked|alice|0|None|0|2026-03-01T08:00:00.0000000+00:00 ; one\ntwo|-|1|None|0|2026-03-01T07:00:00.0000000+00:00 ; one\ntwo|-|0|None|0|2026-03-01T07:00:00.0000000+00:00
+< Author one\ntwo|-|0|None|0|2026-03-01T07:00:00.0000000+00:00 ; one\ntwo|-|1|None|0|2026-03-01T07:00:00.0000000+00:00 ; orphan|ali|0|None|0|- ; orphan|ali|1|None|0|- ; marked|alice|0|None|0|2026-03-01T08:00:00.0000000+00:00 ; box|Alice|0|None|0|- ; marked|alice|1|None|0|2026-03-01T08:00:00.0000000+00:00 ; box|Alice|1|None|0|- ; parent|Zed|0|Rejected|4|2026-03-01T09:00:00.0000000+00:00 ; parent|Zed|1|None|0|2026-03-01T09:00:00.0000000+00:00
+< Author descending parent|Zed|1|None|0|2026-03-01T09:00:00.0000000+00:00 ; parent|Zed|0|Rejected|4|2026-03-01T09:00:00.0000000+00:00 ; box|Alice|1|None|0|- ; marked|alice|1|None|0|2026-03-01T08:00:00.0000000+00:00 ; box|Alice|0|None|0|- ; marked|alice|0|None|0|2026-03-01T08:00:00.0000000+00:00 ; orphan|ali|1|None|0|- ; orphan|ali|0|None|0|- ; one\ntwo|-|1|None|0|2026-03-01T07:00:00.0000000+00:00 ; one\ntwo|-|0|None|0|2026-03-01T07:00:00.0000000+00:00
+< Type marked|alice|0|None|0|2026-03-01T08:00:00.0000000+00:00 ; marked|alice|1|None|0|2026-03-01T08:00:00.0000000+00:00 ; parent|Zed|0|Rejected|4|2026-03-01T09:00:00.0000000+00:00 ; orphan|ali|0|None|0|- ; parent|Zed|1|None|0|2026-03-01T09:00:00.0000000+00:00 ; orphan|ali|1|None|0|- ; box|Alice|0|None|0|- ; box|Alice|1|None|0|- ; one\ntwo|-|0|None|0|2026-03-01T07:00:00.0000000+00:00 ; one\ntwo|-|1|None|0|2026-03-01T07:00:00.0000000+00:00
+< Type descending one\ntwo|-|1|None|0|2026-03-01T07:00:00.0000000+00:00 ; one\ntwo|-|0|None|0|2026-03-01T07:00:00.0000000+00:00 ; box|Alice|1|None|0|- ; box|Alice|0|None|0|- ; orphan|ali|1|None|0|- ; parent|Zed|1|None|0|2026-03-01T09:00:00.0000000+00:00 ; orphan|ali|0|None|0|- ; parent|Zed|0|Rejected|4|2026-03-01T09:00:00.0000000+00:00 ; marked|alice|1|None|0|2026-03-01T08:00:00.0000000+00:00 ; marked|alice|0|None|0|2026-03-01T08:00:00.0000000+00:00
+< author ali orphan|ali|0|None|0|- ; marked|alice|0|None|0|2026-03-01T08:00:00.0000000+00:00 ; box|Alice|0|None|0|- ; orphan|ali|1|None|0|- ; marked|alice|1|None|0|2026-03-01T08:00:00.0000000+00:00 ; box|Alice|1|None|0|-
+< text SECOND parent|Zed|0|Rejected|4|2026-03-01T09:00:00.0000000+00:00
+< rejected parent|Zed|0|Rejected|4|2026-03-01T09:00:00.0000000+00:00
+< replies parent|Zed|0|Rejected|4|2026-03-01T09:00:00.0000000+00:00
+< page 1 parent|Zed|1|None|0|2026-03-01T09:00:00.0000000+00:00 ; orphan|ali|1|None|0|- ; marked|alice|1|None|0|2026-03-01T08:00:00.0000000+00:00 ; one\ntwo|-|1|None|0|2026-03-01T07:00:00.0000000+00:00 ; box|Alice|1|None|0|-
+< types one\ntwo|-|0|None|0|2026-03-01T07:00:00.0000000+00:00 ; box|Alice|0|None|0|- ; one\ntwo|-|1|None|0|2026-03-01T07:00:00.0000000+00:00 ; box|Alice|1|None|0|-
+< reply <</Type /Annot /Subtype /Text /Rect [10 700 30 720] /F 30 /NM (nm) /C [1 0.9 0.2] /T (Can) /Contents (agreed) /CreationDate (D:20260304100000+00'00') /M (D:20260304100000+00'00') /IRT 20 0 R /RT /R /Name /Note /AP <</N 28 0 R>>>>
+< status <</Type /Annot /Subtype /Text /Rect [10 700 30 720] /F 30 /NM (nm) /C [1 0.9 0.2] /T (Deniz) /Contents (Marked set by Deniz) /CreationDate (D:20260304110000+00'00') /M (D:20260304110000+00'00') /IRT 20 0 R /RT /R /Name /Note /StateModel (Marked) /State (Marked) /AP <</N 30 0 R>>>>
+< after parent|Zed|0|Marked|6|2026-03-01T09:00:00.0000000+00:00 ; orphan|ali|0|None|0|- ; marked|alice|0|None|0|2026-03-01T08:00:00.0000000+00:00 ; one\ntwo|-|0|None|0|2026-03-01T07:00:00.0000000+00:00 ; box|Alice|0|None|0|- ; parent|Zed|1|None|0|2026-03-01T09:00:00.0000000+00:00 ; orphan|ali|1|None|0|- ; marked|alice|1|None|0|2026-03-01T08:00:00.0000000+00:00 ; one\ntwo|-|1|None|0|2026-03-01T07:00:00.0000000+00:00 ; box|Alice|1|None|0|-
+> flatten basic
+< count 5
+< 3: <</Type /Page /Parent 2 0 R /Annots [45 0 R 46 0 R 47 0 R 48 0 R] /Contents [51 0 R 4 0 R 52 0 R] /Resources <</XObject <</Fm1 30 0 R /Fm2 31 0 R /Fm3 32 0 R /Fm4 32 0 R /Fm5 30 0 R>>>>>>
+< 4: stream <</Length 66>> | 0.5 0 0 0.5 0 0 cm 1 0 0 rg q BT /F1 20 Tf 100 100 Td (Page) Tj ET
+< 30: stream <</Subtype /Form /BBox [0 0 50 50] /Length 14>> | 0 0 50 50 re f
+< 31: stream <</Subtype /Form /BBox [0 0 10 20] /Matrix [0 1 -1 0 0 0] /Length 14>> | 0 0 10 20 re f
+< 32: stream <</BBox [0 0 20 20] /Length 14 /Subtype /Form>> | 0 0 20 20 re f
+< 45: <</Subtype /Widget /Rect [300 300 320 320] /AS /On /AP <</N <</On 32 0 R /Off 30 0 R>>>>>>
+< 46: <</Subtype /Link /Rect [0 0 5 5] /AP <</N 30 0 R>>>>
+< 47: <</Subtype /Square /Rect [0 0 50 50] /F 2 /AP <</N 30 0 R>>>>
+< 48: <</Subtype /Square /Rect [0 0 50 50]>>
+< 50: <</Type /OCG /Name (hidden)>>
+< 51: stream <<>> | q\n
+< 52: stream <<>> | Q\nQ\nq\n1 0 0 1 10 10 cm\n/Fm1 Do\nQ\nq\n10 0 0 5 300 100 cm\n/Fm2 Do\nQ\nq\n1 0 0 1 200 200 cm\n/Fm3 Do\nQ\nq\n1 0 0 1 200 200 cm\n/Fm4 Do\nQ\nq\n0.4 0 0 0.4 70 70 cm\n/Fm5 Do\nQ\n
+> flatten widgets
+< count 1
+< 3: <</Type /Page /Parent 2 0 R /Annots [40 0 R 41 0 R 42 0 R 43 0 R 44 0 R 46 0 R 47 0 R 48 0 R 49 0 R] /Contents [51 0 R 4 0 R 52 0 R] /Resources <</XObject <</Fm1 32 0 R>>>>>>
+< 4: stream <</Length 66>> | 0.5 0 0 0.5 0 0 cm 1 0 0 rg q BT /F1 20 Tf 100 100 Td (Page) Tj ET
+< 30: stream <</Subtype /Form /BBox [0 0 50 50] /Length 14>> | 0 0 50 50 re f
+< 31: stream <</Subtype /Form /BBox [0 0 10 20] /Matrix [0 1 -1 0 0 0] /Length 14>> | 0 0 10 20 re f
+< 32: stream <</BBox [0 0 20 20] /Length 14 /Subtype /Form>> | 0 0 20 20 re f
+< 40: <</Subtype /Square /Rect [10 10 60 60] /NM (a) /AP <</N 30 0 R>>>>
+< 41: <</Subtype /Stamp /Rect [100 100 300 150] /NM (b) /AP <</N 31 0 R>> /F 4>>
+< 42: <</Subtype /Text /Rect [200 200 220 220] /NM (c) /AP <</N 32 0 R>> /F 20 /Popup 43 0 R>>
+< 43: <</Subtype /Popup /Rect [230 200 330 300] /Parent 42 0 R>>
+< 44: <</Subtype /Text /Rect [200 200 220 220] /IRT 42 0 R /NM (d) /AP <</N 32 0 R>>>>
+< 46: <</Subtype /Link /Rect [0 0 5 5] /AP <</N 30 0 R>>>>
+< 47: <</Subtype /Square /Rect [0 0 50 50] /F 2 /AP <</N 30 0 R>>>>
+< 48: <</Subtype /Square /Rect [0 0 50 50]>>
+< 49: <</Subtype /Square /Rect [70 70 90 90] /AP <</N 30 0 R>> /OC 50 0 R>>
+< 50: <</Type /OCG /Name (hidden)>>
+< 51: stream <<>> | q\n
+< 52: stream <<>> | Q\nQ\nq\n1 0 0 1 300 300 cm\n/Fm1 Do\nQ\n
+> flatten links
+< count 3
+< 3: <</Type /Page /Parent 2 0 R /Annots [41 0 R 42 0 R 43 0 R 44 0 R 45 0 R 47 0 R 48 0 R] /Contents [51 0 R 4 0 R 52 0 R] /Resources <</XObject <</Fm1 30 0 R /Fm2 30 0 R /Fm3 30 0 R>>>>>>
+< 4: stream <</Length 66>> | 0.5 0 0 0.5 0 0 cm 1 0 0 rg q BT /F1 20 Tf 100 100 Td (Page) Tj ET
+< 30: stream <</Subtype /Form /BBox [0 0 50 50] /Length 14>> | 0 0 50 50 re f
+< 31: stream <</Subtype /Form /BBox [0 0 10 20] /Matrix [0 1 -1 0 0 0] /Length 14>> | 0 0 10 20 re f
+< 32: stream <</BBox [0 0 20 20] /Length 14>> | 0 0 20 20 re f
+< 41: <</Subtype /Stamp /Rect [100 100 300 150] /NM (b) /AP <</N 31 0 R>> /F 4>>
+< 42: <</Subtype /Text /Rect [200 200 220 220] /NM (c) /AP <</N 32 0 R>> /F 20 /Popup 43 0 R>>
+< 43: <</Subtype /Popup /Rect [230 200 330 300] /Parent 42 0 R>>
+< 44: <</Subtype /Text /Rect [200 200 220 220] /IRT 42 0 R /NM (d) /AP <</N 32 0 R>>>>
+< 45: <</Subtype /Widget /Rect [300 300 320 320] /AS /On /AP <</N <</On 32 0 R /Off 30 0 R>>>>>>
+< 47: <</Subtype /Square /Rect [0 0 50 50] /F 2 /AP <</N 30 0 R>>>>
+< 48: <</Subtype /Square /Rect [0 0 50 50]>>
+< 50: <</Type /OCG /Name (hidden)>>
+< 51: stream <<>> | q\n
+< 52: stream <<>> | Q\nQ\nq\n1 0 0 1 10 10 cm\n/Fm1 Do\nQ\nq\n0.1 0 0 0.1 0 0 cm\n/Fm2 Do\nQ\nq\n0.4 0 0 0.4 70 70 cm\n/Fm3 Do\nQ\n
+> flatten rotated
+< count 5
+< 3: <</Type /Page /Parent 2 0 R /Annots [45 0 R 46 0 R 47 0 R 48 0 R] /Contents [51 0 R 4 0 R 52 0 R] /Rotate 90 /Resources <</XObject <</Fm1 30 0 R /Fm2 31 0 R /Fm3 32 0 R /Fm4 32 0 R /Fm5 30 0 R>>>>>>
+< 4: stream <</Length 66>> | 0.5 0 0 0.5 0 0 cm 1 0 0 rg q BT /F1 20 Tf 100 100 Td (Page) Tj ET
+< 30: stream <</Subtype /Form /BBox [0 0 50 50] /Length 14>> | 0 0 50 50 re f
+< 31: stream <</Subtype /Form /BBox [0 0 10 20] /Matrix [0 1 -1 0 0 0] /Length 14>> | 0 0 10 20 re f
+< 32: stream <</BBox [0 0 20 20] /Length 14 /Subtype /Form>> | 0 0 20 20 re f
+< 45: <</Subtype /Widget /Rect [300 300 320 320] /AS /On /AP <</N <</On 32 0 R /Off 30 0 R>>>>>>
+< 46: <</Subtype /Link /Rect [0 0 5 5] /AP <</N 30 0 R>>>>
+< 47: <</Subtype /Square /Rect [0 0 50 50] /F 2 /AP <</N 30 0 R>>>>
+< 48: <</Subtype /Square /Rect [0 0 50 50]>>
+< 50: <</Type /OCG /Name (hidden)>>
+< 51: stream <<>> | q\n
+< 52: stream <<>> | Q\nQ\nq\n1 0 0 1 10 10 cm\n/Fm1 Do\nQ\nq\n10 0 0 5 300 100 cm\n/Fm2 Do\nQ\nq\n0 1 -1 0 220 200 cm\n/Fm3 Do\nQ\nq\n1 0 0 1 200 200 cm\n/Fm4 Do\nQ\nq\n0.4 0 0 0.4 70 70 cm\n/Fm5 Do\nQ\n
+> export
+< annotation page=0 <</Type /Annot /Subtype /Text /Rect [50 100 70 120] /Contents <FEFF015F0069> /T (Ay\351e) /Subj (Review) /NM (note) /M (D:20260301090000Z) /CreationDate (D:20260301090000Z) /C [1 0.5 0] /F 28 /Name /Comment /Popup 11 0 R /Page 0>>
+< annotation page=0 <</Type /Annot /Subtype /Text /Rect [50 100 70 120] /IRT 2 0 R /RT /R /Contents (reply) /T (Can) /NM (reply) /StateModel (Review) /State (Accepted) /F 30 /Page 0>>
+< annotation page=0 <</Type /Annot /Subtype /Stamp /Rect [300 600 500 660] /Name /Approved /NM (stamp) /AP <</N 12 0 R>> /Dummy (x) /Page 0>>
+< annotation page=0 <</Type /Annot /Subtype /Highlight /Rect [50 700 150 714] /QuadPoints [50 714 150 714 50 700 150 700] /C [1 1 0] /CA 0.5 /NM (hl) /BS <</W 2 /S /D /D [3 1]>> /Page 0>>
+< annotation page=1 <</Type /Annot /Subtype /FreeText /Rect [100 100 300 140] /Contents (box) /DA (/Helv 12 Tf 0 g) /DS (font: Helvetica 12pt) /Q 1 /NM (ft) /RC (<body xmlns="http://www.w3.org/1999/xhtml"><p>one &amp; <b>two</b></p></body>) /IC [1 1 0.8] /C [1 0 0] /RD [1 2 3 4] /LE [/Circle /ClosedArrow] /CL [1 2 3 4] /Page 1>>
+< annotation page=1 <</Type /Annot /Subtype /Line /Rect [10 10 110 60] /L [10 10 110 60] /LE [/Circle /ClosedArrow] /NM (ln) /BS <</W 2>> /IT /LineArrow /Page 1>>
+< annotation page=1 <</Type /Annot /Subtype /Ink /Rect [0 0 40 40] /InkList [[1 2 3 4] [5 6 7 8]] /NM (ink) /Open false /Page 1>>
+< annotation page=1 <</Type /Annot /Subtype /Circle /Rect [0 0 40 40] /BE <</S /C /I 2>> /NM (ci) /Vertices [1 2 3 4] /Page 1>>
+< annotation page=1 <</Type /Annot /Subtype /Square /Rect [5 5 25 25] /NM (sq) /Q 7 /RT /Group /Sy /P /IT /Foo /Page 1>>
+< annotation page=0 <</Type /Annot /Subtype /Popup /Rect [80 100 180 160] /Parent 2 0 R /Open true /NM (popup) /Page 0>>
+< %FDF-1.2
+< %\u00e2\u00e3\u00cf\u00d3
+< 14 0 obj
+< <</FDF <</F (book.pdf) /Annots [2 0 R 3 0 R 4 0 R 5 0 R 6 0 R 7 0 R 8 0 R 9 0 R 10 0 R 11 0 R]>>>>
+< endobj
+< 2 0 obj
+< <</Type /Annot /Subtype /Text /Rect [50 100 70 120] /Contents <FEFF015F0069> /T (Ay\\351e) /Subj (Review) /NM (note) /M (D:20260301090000Z) /CreationDate (D:20260301090000Z) /C [1 0.5 0] /F 28 /Name /Comment /Popup 11 0 R /Page 0>>
+< endobj
+< 3 0 obj
+< <</Type /Annot /Subtype /Text /Rect [50 100 70 120] /IRT 2 0 R /RT /R /Contents (reply) /T (Can) /NM (reply) /StateModel (Review) /State (Accepted) /F 30 /Page 0>>
+< endobj
+< 4 0 obj
+< <</Type /Annot /Subtype /Stamp /Rect [300 600 500 660] /Name /Approved /NM (stamp) /AP <</N 12 0 R>> /Dummy (x) /Page 0>>
+< endobj
+< 5 0 obj
+< <</Type /Annot /Subtype /Highlight /Rect [50 700 150 714] /QuadPoints [50 714 150 714 50 700 150 700] /C [1 1 0] /CA 0.5 /NM (hl) /BS <</W 2 /S /D /D [3 1]>> /Page 0>>
+< endobj
+< 6 0 obj
+< <</Type /Annot /Subtype /FreeText /Rect [100 100 300 140] /Contents (box) /DA (/Helv 12 Tf 0 g) /DS (font: Helvetica 12pt) /Q 1 /NM (ft) /RC (<body xmlns="http://www.w3.org/1999/xhtml"><p>one &amp; <b>two</b></p></body>) /IC [1 1 0.8] /C [1 0 0] /RD [1 2 3 4] /LE [/Circle /ClosedArrow] /CL [1 2 3 4] /Page 1>>
+< endobj
+< 7 0 obj
+< <</Type /Annot /Subtype /Line /Rect [10 10 110 60] /L [10 10 110 60] /LE [/Circle /ClosedArrow] /NM (ln) /BS <</W 2>> /IT /LineArrow /Page 1>>
+< endobj
+< 8 0 obj
+< <</Type /Annot /Subtype /Ink /Rect [0 0 40 40] /InkList [[1 2 3 4] [5 6 7 8]] /NM (ink) /Open false /Page 1>>
+< endobj
+< 9 0 obj
+< <</Type /Annot /Subtype /Circle /Rect [0 0 40 40] /BE <</S /C /I 2>> /NM (ci) /Vertices [1 2 3 4] /Page 1>>
+< endobj
+< 10 0 obj
+< <</Type /Annot /Subtype /Square /Rect [5 5 25 25] /NM (sq) /Q 7 /RT /Group /Sy /P /IT /Foo /Page 1>>
+< endobj
+< 11 0 obj
+< <</Type /Annot /Subtype /Popup /Rect [80 100 180 160] /Parent 2 0 R /Open true /NM (popup) /Page 0>>
+< endobj
+< 12 0 obj
+< <</Type /XObject /Subtype /Form /BBox [0 0 200 60] /Resources <</Font <</F1 13 0 R>>>> /Length 36>>
+< stream
+< BT /F1 12 Tf 5 5 Td (Approved) Tj ET
+< endstream
+< endobj
+< 13 0 obj
+< <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< endobj
+< trailer
+< <</Root 14 0 R>>
+< %%EOF
+< 
+< narrow Stamp,Highlight
+< import 10 0 0
+< 4: <</Type /Page /Parent 2 0 R /Annots [9 0 R 10 0 R 11 0 R 12 0 R 13 0 R]>>
+< 5: <</Type /Annot /Subtype /Text /Rect [50 100 70 120] /Contents <FEFF015F0069> /T (Ay\351e) /Subj (Review) /NM (note) /M (D:20260301090000Z) /CreationDate (D:20260301090000Z) /C [1 0.5 0] /F 28 /Name /Comment /Popup 14 0 R /P 3 0 R /AP <</N 15 0 R>>>>
+< 6: <</Type /Annot /Subtype /Text /Rect [50 100 70 120] /IRT 5 0 R /RT /R /Contents (reply) /T (Can) /NM (reply) /StateModel (Review) /State (Accepted) /F 30 /P 3 0 R /AP <</N 16 0 R>>>>
+< 7: <</Type /Annot /Subtype /Stamp /Rect [300 600 500 660] /Name /Approved /NM (stamp) /AP <</N 17 0 R>> /Dummy (x) /P 3 0 R>>
+< 8: <</Type /Annot /Subtype /Highlight /Rect [50 700 150 714] /QuadPoints [50 714 150 714 50 700 150 700] /C [1 1 0] /CA 0.5 /NM (hl) /BS <</W 2 /S /D /D [3 1]>> /P 3 0 R /AP <</N 19 0 R>>>>
+< 9: <</Type /Annot /Subtype /FreeText /Rect [100 100 300 140] /Contents (box) /DA (/Helv 12 Tf 0 g) /DS (font: Helvetica 12pt) /Q 1 /NM (ft) /RC (<body xmlns="http://www.w3.org/1999/xhtml"><p>one &amp; <b>two</b></p></body>) /IC [1 1 0.8] /C [1 0 0] /RD [1 2 3 4] /LE [/Circle /ClosedArrow] /CL [1 2 3 4] /P 4 0 R /AP <</N 22 0 R>>>>
+< 10: <</Type /Annot /Subtype /Line /Rect [10 10 110 60] /L [10 10 110 60] /LE [/Circle /ClosedArrow] /NM (ln) /BS <</W 2>> /IT /LineArrow /P 4 0 R /AP <</N 23 0 R>>>>
+< 11: <</Type /Annot /Subtype /Ink /Rect [0 0 40 40] /InkList [[1 2 3 4] [5 6 7 8]] /NM (ink) /Open false /P 4 0 R /AP <</N 24 0 R>>>>
+< 12: <</Type /Annot /Subtype /Circle /Rect [0 0 40 40] /BE <</S /C /I 2>> /NM (ci) /Vertices [1 2 3 4] /P 4 0 R /AP <</N 25 0 R>>>>
+< 13: <</Type /Annot /Subtype /Square /Rect [5 5 25 25] /NM (sq) /Q 7 /RT /Group /Sy /P /IT /Foo /P 4 0 R /AP <</N 26 0 R>>>>
+< 14: <</Type /Annot /Subtype /Popup /Rect [80 100 180 160] /Parent 5 0 R /Open true /NM (popup) /P 3 0 R>>
+< 15: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 20 20] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0.5 0 rg\n0 G\n0.833333 w\n0.5 6 m\n0.5 19.5 l\n19.5 19.5 l\n19.5 6 l\n11 6 l\n5 0.5 l\n6 6 l\nh\nB\n
+< 16: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 20 20] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 1 0 rg\n0 G\n0.833333 w\n0.5 0.5 19 19 re\nB\n4 14.4 m\n16 14.4 l\nS\n4 10.4 m\n16 10.4 l\nS\n4 6.4 m\n16 6.4 l\nS\n
+< 17: stream <</Type /XObject /Subtype /Form /BBox [0 0 200 60] /Resources <</Font <</F1 18 0 R>>>>>> | BT /F1 12 Tf 5 5 Td (Approved) Tj ET
+< 18: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< 19: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 100 14] /Matrix [1 0 0 1 0 0] /Resources <</ExtGState <</GS1 <</Type /ExtGState /CA 0.5 /ca 0.5 /BM /Multiply /AIS false>>>>>> /Filter /FlateDecode>> | /GS1 gs\n1 1 0 rg\n0 14 m\n100 14 l\n100 0 l\n0 0 l\nh\nf\n
+< 20: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 21: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 22: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 200 40] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 20 0 R /F2 21 0 R>>>> /Filter /FlateDecode>> | 1 1 0.8 rg\n1 2 196 34 re\nf\n1 0 0 RG\n1 w\n1.5 2.5 195 33 re\nS\n1 w\n-99 -98 m\n-97 -96 l\nS\nq\n[] 0 d\n1 1 0.8 rg\n-96.2 -98 m\n-96.2 -96.453603 -97.453603 -95.2 -99 -95.2 c\n-100.546397 -95.2 -101.8 -96.453603 -101.8 -98 c\n-101.8 -99.546397 -100.546397 -100.8 -99 -100.8 c\n-97.453603 -100.8 -96.2 -99.546397 -96.2 -98 c\nh\nB\nQ\nq\n1 2 196 34 re\nW\nn\n0 g\nBT\n/F1 12 Tf\n71.322 24.384 Td\n<6F6E6520> Tj\nET\n0 g\nBT\n/F1 12 Tf\n94.674 24.384 Td\n<2620> Tj\nET\n0 g\nBT\n/F2 12 Tf\n106.014 24.384 Td\n<74776F> Tj\nET\nQ\n
+< 23: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 100 50] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n0 0 m\n100 50 l\nS\nq\n[] 0 d\n3.2 0 m\n3.2 1.767311 1.767311 3.2 0 3.2 c\n-1.767311 3.2 -3.2 1.767311 -3.2 0 c\n-3.2 -1.767311 -1.767311 -3.2 0 -3.2 c\n1.767311 -3.2 3.2 -1.767311 3.2 0 c\nh\nS\nQ\nq\n[] 0 d\n95.105501 43.671976 m\n100 50 l\n92.000882 49.881215 l\nh\nS\nQ\n
+< 24: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 40 40] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n1 w\n1 j\n1 J\n1 2 m\n3 4 l\nS\n5 6 m\n7 8 l\nS\n
+< 25: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 40 40] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n1 w\n1 j\n40 20 m\n46.856401 22.495526 42.17729 35.351278 35.320889 32.855752 c\n38.969104 39.174646 27.121178 46.015049 23.472964 39.696155 c\n22.205952 46.881736 8.732988 44.506089 10 37.320508 c\n4.410611 42.010563 -4.383242 31.530457 1.206148 26.840403 c\n-6.090282 26.840403 -6.090282 13.159597 1.206148 13.159597 c\n-4.383242 8.469543 4.410611 -2.010563 10 2.679492 c\n8.732988 -4.506089 22.205952 -6.881736 23.472964 0.303845 c\n27.121178 -6.015049 38.969104 0.825354 35.320889 7.144248 c\n42.17729 4.648722 46.856401 17.504474 40 20 c\nh\nS\n
+< 26: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 20 20] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n1 w\n1 j\n0.5 0.5 19 19 re\nS\n
+< again 0 10 0
+< <?xml version="1.0" encoding="utf-8"?>
+< <xfdf xml:space="preserve" xmlns="http://ns.adobe.com/xfdf/">
+<   <f href="book.pdf" />
+<   <annots>
+<     <text page="0" rect="50,100,70,120" name="note" title="Ay\u00e9e" subject="Review" date="D:20260301090000Z" creationdate="D:20260301090000Z" icon="Comment" flags="print,nozoom,norotate" color="#FF8000">
+<       <contents>\u015fi</contents>
+<       <popup page="0" rect="80,100,180,160" open="yes" />
+<     </text>
+<     <text page="0" rect="50,100,70,120" name="reply" title="Can" replyType="reply" state="Accepted" statemodel="Review" flags="hidden,print,nozoom,norotate" inreplyto="note">
+<       <contents>reply</contents>
+<     </text>
+<     <stamp page="0" rect="300,600,500,660" name="stamp" icon="Approved" />
+<     <highlight page="0" rect="50,700,150,714" name="hl" opacity="0.5" coords="50,714,150,714,50,700,150,700" color="#FFFF00" width="2" style="dash" dashes="3,1" />
+<     <freetext page="1" rect="100,100,300,140" name="ft" justification="centered" fringe="1,2,3,4" callout="1,2,3,4" color="#FF0000" interior-color="#FFFFCC" head="Circle" tail="ClosedArrow">
+<       <contents>box</contents>
+<       <contents-richtext>
+<         <body xmlns="http://www.w3.org/1999/xhtml">
+<           <p>one &amp; <b>two</b></p>
+<         </body>
+<       </contents-richtext>
+<       <defaultappearance>/Helv 12 Tf 0 g</defaultappearance>
+<       <defaultstyle>font: Helvetica 12pt</defaultstyle>
+<     </freetext>
+<     <line page="1" rect="10,10,110,60" name="ln" intent="LineArrow" start="10,10" end="110,60" head="Circle" tail="ClosedArrow" width="2" style="solid" />
+<     <ink page="1" rect="0,0,40,40" name="ink" open="no">
+<       <inklist>
+<         <gesture>1,2;3,4</gesture>
+<         <gesture>5,6;7,8</gesture>
+<       </inklist>
+<     </ink>
+<     <circle page="1" rect="0,0,40,40" name="ci" style="cloudy" intensity="2">
+<       <vertices>1,2;3,4</vertices>
+<     </circle>
+<     <square page="1" rect="5,5,25,25" name="sq" intent="Foo" replyType="group" symbol="paragraph" />
+<   </annots>
+< </xfdf>
+< xfdf 9 book.pdf
+< xannotation page=0 <</Type /Annot /Subtype /Text /NM (note) /T <4179E965> /Subj (Review) /M (D:20260301090000Z) /CreationDate (D:20260301090000Z) /Name /Comment /Rect [50 100 70 120] /C [1 0.501961 0] /F 28 /Contents <FEFF015F0069> /Popup <</Rect [80 100 180 160] /Open true>>>>
+< xannotation page=0 <</Type /Annot /Subtype /Text /NM (reply) /T (Can) /State (Accepted) /StateModel (Review) /RT /R /IRT (note) /Rect [50 100 70 120] /F 30 /Contents (reply)>>
+< xannotation page=0 <</Type /Annot /Subtype /Stamp /NM (stamp) /Name /Approved /Rect [300 600 500 660]>>
+< xannotation page=0 <</Type /Annot /Subtype /Highlight /NM (hl) /CA 0.5 /Rect [50 700 150 714] /C [1 1 0] /QuadPoints [50 714 150 714 50 700 150 700] /BS <</Type /Border /W 2 /S /D /D [3 1]>>>>
+< xannotation page=1 <</Type /Annot /Subtype /FreeText /NM (ft) /Q 1 /Rect [100 100 300 140] /C [1 0 0] /IC [1 1 0.8] /RD [1 2 3 4] /CL [1 2 3 4] /LE [/Circle /ClosedArrow] /Contents (box) /RC <0A20202020202020203C626F647920786D6C6E733D22687474703A2F2F7777772E77332E6F72672F313939392F7868746D6C223E0A202020202020202020203C703E6F6E652026616D703B203C623E74776F3C2F623E3C2F703E0A20202020202020203C2F626F64793E0A202020202020> /DA (/Helv 12 Tf 0 g) /DS (font: Helvetica 12pt)>>
+< xannotation page=1 <</Type /Annot /Subtype /Line /NM (ln) /IT /LineArrow /Rect [10 10 110 60] /L [10 10 110 60] /LE [/Circle /ClosedArrow] /BS <</Type /Border /W 2 /S /S>>>>
+< xannotation page=1 <</Type /Annot /Subtype /Ink /NM (ink) /Open false /Rect [0 0 40 40] /InkList [[1 2 3 4] [5 6 7 8]]>>
+< xannotation page=1 <</Type /Annot /Subtype /Circle /NM (ci) /Rect [0 0 40 40] /BE <</S /C /I 2>> /Vertices [1 2 3 4]>>
+< xannotation page=1 <</Type /Annot /Subtype /Square /NM (sq) /IT /Foo /RT /Group /Sy /P /Rect [5 5 25 25]>>
+< ximport 10 0 0
+< 4: <</Type /Page /Parent 2 0 R /Annots [9 0 R 10 0 R 11 0 R 12 0 R 13 0 R]>>
+< 5: <</Type /Annot /Subtype /Text /NM (note) /T <4179E965> /Subj (Review) /M (D:20260301090000Z) /CreationDate (D:20260301090000Z) /Name /Comment /Rect [50 100 70 120] /C [1 0.501961 0] /F 28 /Contents <FEFF015F0069> /Popup 14 0 R /P 3 0 R /AP <</N 15 0 R>>>>
+< 6: <</Type /Annot /Subtype /Text /NM (reply) /T (Can) /State (Accepted) /StateModel (Review) /RT /R /IRT 5 0 R /Rect [50 100 70 120] /F 30 /Contents (reply) /P 3 0 R /AP <</N 16 0 R>>>>
+< 7: <</Type /Annot /Subtype /Stamp /NM (stamp) /Name /Approved /Rect [300 600 500 660] /P 3 0 R /AP <</N 18 0 R>>>>
+< 8: <</Type /Annot /Subtype /Highlight /NM (hl) /CA 0.5 /Rect [50 700 150 714] /C [1 1 0] /QuadPoints [50 714 150 714 50 700 150 700] /BS <</Type /Border /W 2 /S /D /D [3 1]>> /P 3 0 R /AP <</N 19 0 R>>>>
+< 9: <</Type /Annot /Subtype /FreeText /NM (ft) /Q 1 /Rect [100 100 300 140] /C [1 0 0] /IC [1 1 0.8] /RD [1 2 3 4] /CL [1 2 3 4] /LE [/Circle /ClosedArrow] /Contents (box) /RC <0A20202020202020203C626F647920786D6C6E733D22687474703A2F2F7777772E77332E6F72672F313939392F7868746D6C223E0A202020202020202020203C703E6F6E652026616D703B203C623E74776F3C2F623E3C2F703E0A20202020202020203C2F626F64793E0A202020202020> /DA (/Helv 12 Tf 0 g) /DS (font: Helvetica 12pt) /P 4 0 R /AP <</N 22 0 R>>>>
+< 10: <</Type /Annot /Subtype /Line /NM (ln) /IT /LineArrow /Rect [10 10 110 60] /L [10 10 110 60] /LE [/Circle /ClosedArrow] /BS <</Type /Border /W 2 /S /S>> /P 4 0 R /AP <</N 23 0 R>>>>
+< 11: <</Type /Annot /Subtype /Ink /NM (ink) /Open false /Rect [0 0 40 40] /InkList [[1 2 3 4] [5 6 7 8]] /P 4 0 R /AP <</N 24 0 R>>>>
+< 12: <</Type /Annot /Subtype /Circle /NM (ci) /Rect [0 0 40 40] /BE <</S /C /I 2>> /Vertices [1 2 3 4] /P 4 0 R /AP <</N 25 0 R>>>>
+< 13: <</Type /Annot /Subtype /Square /NM (sq) /IT /Foo /RT /Group /Sy /P /Rect [5 5 25 25] /P 4 0 R /AP <</N 26 0 R>>>>
+< 14: <</Rect [80 100 180 160] /Open true /Subtype /Popup /Parent 5 0 R /P 3 0 R>>
+< 15: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 20 20] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0.501961 0 rg\n0 G\n0.833333 w\n0.5 6 m\n0.5 19.5 l\n19.5 19.5 l\n19.5 6 l\n11 6 l\n5 0.5 l\n6 6 l\nh\nB\n
+< 16: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 20 20] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 1 0 rg\n0 G\n0.833333 w\n0.5 0.5 19 19 re\nB\n4 14.4 m\n16 14.4 l\nS\n4 10.4 m\n16 10.4 l\nS\n4 6.4 m\n16 6.4 l\nS\n
+< 17: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 18: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 200 60] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 17 0 R>>>> /Filter /FlateDecode /LazyPDFText true>> | 0 0.5 0.15 RG\n4 w\n8 2 m\n192 2 l\n195.313708 2 198 4.686292 198 8 c\n198 52 l\n198 55.313708 195.313708 58 192 58 c\n8 58 l\n4.686292 58 2 55.313708 2 52 c\n2 8 l\n2 4.686292 4.686292 2 8 2 c\nh\nS\n0 0.5 0.15 rg\nBT\n/F1 30 Tf\n15.82 22.335 Td\n<415050524F564544> Tj\nET\n
+< 19: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 100 14] /Matrix [1 0 0 1 0 0] /Resources <</ExtGState <</GS1 <</Type /ExtGState /CA 0.5 /ca 0.5 /BM /Multiply /AIS false>>>>>> /Filter /FlateDecode>> | /GS1 gs\n1 1 0 rg\n0 14 m\n100 14 l\n100 0 l\n0 0 l\nh\nf\n
+< 20: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 21: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 22: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 200 40] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 20 0 R /F2 21 0 R>>>> /Filter /FlateDecode>> | 1 1 0.8 rg\n1 2 196 34 re\nf\n1 0 0 RG\n1 w\n1.5 2.5 195 33 re\nS\n1 w\n-99 -98 m\n-97 -96 l\nS\nq\n[] 0 d\n1 1 0.8 rg\n-96.2 -98 m\n-96.2 -96.453603 -97.453603 -95.2 -99 -95.2 c\n-100.546397 -95.2 -101.8 -96.453603 -101.8 -98 c\n-101.8 -99.546397 -100.546397 -100.8 -99 -100.8 c\n-97.453603 -100.8 -96.2 -99.546397 -96.2 -98 c\nh\nB\nQ\nq\n1 2 196 34 re\nW\nn\n0 g\nBT\n/F1 12 Tf\n71.322 24.384 Td\n<6F6E6520> Tj\nET\n0 g\nBT\n/F1 12 Tf\n94.674 24.384 Td\n<2620> Tj\nET\n0 g\nBT\n/F2 12 Tf\n106.014 24.384 Td\n<74776F> Tj\nET\nQ\n
+< 23: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 100 50] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n2 w\n1 j\n0 0 m\n100 50 l\nS\nq\n[] 0 d\n3.2 0 m\n3.2 1.767311 1.767311 3.2 0 3.2 c\n-1.767311 3.2 -3.2 1.767311 -3.2 0 c\n-3.2 -1.767311 -1.767311 -3.2 0 -3.2 c\n1.767311 -3.2 3.2 -1.767311 3.2 0 c\nh\nS\nQ\nq\n[] 0 d\n95.105501 43.671976 m\n100 50 l\n92.000882 49.881215 l\nh\nS\nQ\n
+< 24: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 40 40] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n1 w\n1 j\n1 J\n1 2 m\n3 4 l\nS\n5 6 m\n7 8 l\nS\n
+< 25: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 40 40] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n1 w\n1 j\n40 20 m\n46.856401 22.495526 42.17729 35.351278 35.320889 32.855752 c\n38.969104 39.174646 27.121178 46.015049 23.472964 39.696155 c\n22.205952 46.881736 8.732988 44.506089 10 37.320508 c\n4.410611 42.010563 -4.383242 31.530457 1.206148 26.840403 c\n-6.090282 26.840403 -6.090282 13.159597 1.206148 13.159597 c\n-4.383242 8.469543 4.410611 -2.010563 10 2.679492 c\n8.732988 -4.506089 22.205952 -6.881736 23.472964 0.303845 c\n27.121178 -6.015049 38.969104 0.825354 35.320889 7.144248 c\n42.17729 4.648722 46.856401 17.504474 40 20 c\nh\nS\n
+< 26: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 20 20] /Matrix [1 0 0 1 0 0] /Resources <<>> /Filter /FlateDecode>> | 1 0 0 RG\n1 w\n1 j\n0.5 0.5 19 19 re\nS\n
+> fdf %FDF-1.2\n1 0 obj\n<</FDF<</F (a.pdf) /Annots [2 0 R 4 0 R] /Fields[<</T (person) /Kids[<</T (name) /V (Ayse)>> <</T (tick) /V /Yes>>]>>]>>>>\nendobj\n2 0 obj\n<</Subtype /Square /Page 0 /Rect [10 10 90 60] /C [1 0 0] /NM (sq) /Popup 3 0 R /IRT 4 0 R>>\nendobj\n3 0 obj\n<</Subtype /Popup /Page 0 /Rect [100 10 200 60] /Parent 2 0 R>>\nendobj\n4 0 obj\n<</Subtype /Text /Page 1 /Rect [1 1 21 21] /Contents (note) /NM (nt) /T (A)>>\nendobj\ntrailer\n<</Root 1 0 R>>\n%%EOF
+< file a.pdf
+< field person.name (Ayse)
+< field person.tick /Yes
+< annotation page=0 <</Subtype /Square /Page 0 /Rect [10 10 90 60] /C [1 0 0] /NM (sq) /Popup 3 0 R /IRT 4 0 R>>
+< annotation page=1 <</Subtype /Text /Page 1 /Rect [1 1 21 21] /Contents (note) /NM (nt) /T (A)>>
+< %FDF-1.2
+< %\u00e2\u00e3\u00cf\u00d3
+< 5 0 obj
+< <</FDF <</F (a.pdf) /Fields [<</T (person) /Kids [<</T (name) /V (Ayse)>> <</T (tick) /V /Yes>>]>>] /Annots [2 0 R 4 0 R]>>>>
+< endobj
+< 2 0 obj
+< <</Subtype /Square /Page 0 /Rect [10 10 90 60] /C [1 0 0] /NM (sq) /Popup 3 0 R /IRT 4 0 R>>
+< endobj
+< 3 0 obj
+< <</Subtype /Popup /Page 0 /Rect [100 10 200 60] /Parent 2 0 R>>
+< endobj
+< 4 0 obj
+< <</Subtype /Text /Page 1 /Rect [1 1 21 21] /Contents (note) /NM (nt) /T (A)>>
+< endobj
+< trailer
+< <</Root 5 0 R>>
+< %%EOF
+< 
+< <?xml version="1.0" encoding="utf-8"?>
+< <xfdf xml:space="preserve" xmlns="http://ns.adobe.com/xfdf/">
+<   <f href="a.pdf" />
+<   <fields>
+<     <field name="person">
+<       <field name="name">
+<         <value>Ayse</value>
+<       </field>
+<       <field name="tick">
+<         <value>Yes</value>
+<       </field>
+<     </field>
+<   </fields>
+<   <annots>
+<     <square page="0" rect="10,10,90,60" name="sq" color="#FF0000" inreplyto="nt">
+<       <popup page="0" rect="100,10,200,60" />
+<     </square>
+<     <text page="1" rect="1,1,21,21" name="nt" title="A">
+<       <contents>note</contents>
+<     </text>
+<   </annots>
+< </xfdf>
+> fdf %FDF-1.2\n1 0 obj\n<</FDF<</Annots [2 0 R]>>>>\nendobj\n2 0 obj\n<</Subtype /Stamp /Page 0 /Rect [0 0 9 9] /AP <</N 3 0 R>>>>\nendobj\n3 0 obj\n<</Type /XObject /Subtype /Form /BBox [0 0 9 9] /Length 5>>\nstream\nhello\nendstream\nendobj\ntrailer\n<</Root 1 0 R>>
+< file -
+< annotation page=0 <</Subtype /Stamp /Page 0 /Rect [0 0 9 9] /AP <</N 3 0 R>>>>
+< %FDF-1.2
+< %\u00e2\u00e3\u00cf\u00d3
+< 4 0 obj
+< <</FDF <</Annots [2 0 R]>>>>
+< endobj
+< 2 0 obj
+< <</Subtype /Stamp /Page 0 /Rect [0 0 9 9] /AP <</N 3 0 R>>>>
+< endobj
+< 3 0 obj
+< <</Type /XObject /Subtype /Form /BBox [0 0 9 9] /Length 5>>
+< stream
+< hello
+< endstream
+< endobj
+< trailer
+< <</Root 4 0 R>>
+< %%EOF
+< 
+< <?xml version="1.0" encoding="utf-8"?>
+< <xfdf xml:space="preserve" xmlns="http://ns.adobe.com/xfdf/">
+<   <annots>
+<     <stamp page="0" rect="0,0,9,9" />
+<   </annots>
+< </xfdf>
+> fdf %FDF-1.2\n1 0 obj\n<</FDF<</Annots [2 0 R]>>>>\nendobj\n2 0 obj\n<</Subtype /Stamp /Page 0 /Rect [0 0 9 9] /AP <</N 3 0 R>>>>\nendobj\n3 0 obj\n<</Type /XObject /Subtype /Form /BBox [0 0 9 9] /Length 999>>\nstream\nhel\x00lo\nendstream\nendobj\ntrailer\n<</Root 1 0 R>>
+< file -
+< annotation page=0 <</Subtype /Stamp /Page 0 /Rect [0 0 9 9] /AP <</N 3 0 R>>>>
+< %FDF-1.2
+< %\u00e2\u00e3\u00cf\u00d3
+< 4 0 obj
+< <</FDF <</Annots [2 0 R]>>>>
+< endobj
+< 2 0 obj
+< <</Subtype /Stamp /Page 0 /Rect [0 0 9 9] /AP <</N 3 0 R>>>>
+< endobj
+< 3 0 obj
+< <</Type /XObject /Subtype /Form /BBox [0 0 9 9] /Length 6>>
+< stream
+< hel\u0000lo
+< endstream
+< endobj
+< trailer
+< <</Root 4 0 R>>
+< %%EOF
+< 
+< <?xml version="1.0" encoding="utf-8"?>
+< <xfdf xml:space="preserve" xmlns="http://ns.adobe.com/xfdf/">
+<   <annots>
+<     <stamp page="0" rect="0,0,9,9" />
+<   </annots>
+< </xfdf>
+> fdf %FDF-1.2\n1 0 obj\n<</FDF<</F <</UF (u.pdf)>> /Annots [<</Subtype /Text>> 2 0 R 5 0 R]>>>>\nendobj\n2 0 obj\n<</Subtype /Caret /Page 999999999999 /Rect [0 0 9 9]>>\nendobj\ntrailer\n<</Root 1 0 R>>
+< file u.pdf
+< annotation page=0 <</Subtype /Text>>
+< annotation page=2147483647 <</Subtype /Caret /Page 999999999999 /Rect [0 0 9 9]>>
+< %FDF-1.2
+< %\u00e2\u00e3\u00cf\u00d3
+< 4 0 obj
+< <</FDF <</F (u.pdf) /Annots [3 0 R 2 0 R]>>>>
+< endobj
+< 2 0 obj
+< <</Subtype /Caret /Page 2147483647 /Rect [0 0 9 9]>>
+< endobj
+< 3 0 obj
+< <</Subtype /Text /Page 0>>
+< endobj
+< trailer
+< <</Root 4 0 R>>
+< %%EOF
+< 
+< <?xml version="1.0" encoding="utf-8"?>
+< <xfdf xml:space="preserve" xmlns="http://ns.adobe.com/xfdf/">
+<   <f href="u.pdf" />
+<   <annots>
+<     <text page="0" />
+<     <caret page="2147483647" rect="0,0,9,9" />
+<   </annots>
+< </xfdf>
+> fdf %FDF-1.2\n1 0 obj\n<</FDF<</Annots [2 0 R]>>>>\nendobj\n2 0 obj\n<</Subtype /Square /Page 0 /Rect [10 10 90 60] /C [-1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 0 0 -1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]>>\nendobj\ntrailer\n<</Root 1 0 R>>
+< file -
+< annotation page=0 <</Subtype /Square /Page 0 /Rect [10 10 90 60] /C [-1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 0 0 -1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]>>
+< %FDF-1.2
+< %\u00e2\u00e3\u00cf\u00d3
+< 3 0 obj
+< <</FDF <</Annots [2 0 R]>>>>
+< endobj
+< 2 0 obj
+< <</Subtype /Square /Page 0 /Rect [10 10 90 60] /C [-1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 0 0 -1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]>>
+< endobj
+< trailer
+< <</Root 3 0 R>>
+< %%EOF
+< 
+< <?xml version="1.0" encoding="utf-8"?>
+< <xfdf xml:space="preserve" xmlns="http://ns.adobe.com/xfdf/">
+<   <annots>
+<     <square page="0" rect="10,10,90,60" color="#FFFFFF" />
+<   </annots>
+< </xfdf>
+> fdf hello
+< error Damaged There is no FDF dictionary in the file.
+> fdf %FDF-1.2\n1 0 obj\n<</Nope 1>>\nendobj
+< error Damaged There is no FDF dictionary in the file.
+> xfdf <?xml version="1.0" encoding="UTF-8"?>\n<xfdf xmlns="http://ns.adobe.com/xfdf/" xml:space="preserve">\n  <f href="C:\\docs\\a.pdf"/>\n  <fields>\n    <field name="person"><field name="name"><value>Ay\xc5\x9fe</value></field><field name="langs"><value>tr</value><value>en</value></field></field>\n    <field name="empty"><value/></field>\n  </fields>\n  <annots>\n    <highlight color="#FFFF00" flags="print" name="h1" page="0" rect="10,20,110,34" title="Ali" subject="Highlight" date="D:20260301090000+00'00'" coords="10,34,110,34,10,20,110,20" opacity="0.5">\n      <contents>nice</contents>\n      <popup flags="print,nozoom,norotate" open="no" page="0" rect="120,20,220,100"/>\n    </highlight>\n    <freetext page="1" rect="50,50,250,100" name="f1" justification="2" flags="print">\n      <contents>text &amp; more</contents>\n      <defaultappearance>/Helv 14 Tf 1 0 0 rg</defaultappearance>\n      <defaultstyle>font: Helvetica 14pt</defaultstyle>\n      <contents-richtext><body xmlns="http://www.w3.org/1999/xhtml"><p><span style="font-weight:bold">text</span> &amp; more</p></body></contents-richtext>\n    </freetext>\n    <unheardof page="0"/>\n    <square page="0" rect="5,5,25,25" name="s1" style="cloudy" intensity="1" interior-color="#00FF00" color="#0000FF" width="2"/>\n    <ink page="0" rect="0,0,40,40" name="i1"><inklist><gesture>1,2;3,4;5,6</gesture><gesture>7,8;9,10</gesture></inklist></ink>\n  </annots>\n</xfdf>
+< file C:\\docs\\a.pdf
+< field person.name <FEFF00410079015F0065>
+< field person.langs [(tr) (en)]
+< field empty ()
+< annotation page=0 <</Type /Annot /Subtype /Highlight /NM (h1) /T (Ali) /Subj (Highlight) /M (D:20260301090000+00'00') /CA 0.5 /Rect [10 20 110 34] /C [1 1 0] /QuadPoints [10 34 110 34 10 20 110 20] /F 4 /Contents (nice) /Popup <</Rect [120 20 220 100] /F 28 /Open false>>>>
+< annotation page=1 <</Type /Annot /Subtype /FreeText /NM (f1) /Q 2 /Rect [50 50 250 100] /F 4 /Contents (text & more) /DA (/Helv 14 Tf 1 0 0 rg) /DS (font: Helvetica 14pt) /RC <3C626F647920786D6C6E733D22687474703A2F2F7777772E77332E6F72672F313939392F7868746D6C223E0A20203C703E0A202020203C7370616E207374796C653D22666F6E742D7765696768743A626F6C64223E746578743C2F7370616E3E2026616D703B206D6F72653C2F703E0A3C2F626F64793E>>>
+< annotation page=0 <</Type /Annot /Subtype /Square /NM (s1) /Rect [5 5 25 25] /C [0 0 1] /IC [0 1 0] /BS <</Type /Border /W 2 /S /S>> /BE <</S /C /I 1>>>>
+< annotation page=0 <</Type /Annot /Subtype /Ink /NM (i1) /Rect [0 0 40 40] /InkList [[1 2 3 4 5 6] [7 8 9 10]]>>
+< <?xml version="1.0" encoding="utf-8"?>
+< <xfdf xml:space="preserve" xmlns="http://ns.adobe.com/xfdf/">
+<   <f href="C:\\docs\\a.pdf" />
+<   <fields>
+<     <field name="person">
+<       <field name="name">
+<         <value>Ay\u015fe</value>
+<       </field>
+<       <field name="langs">
+<         <value>tr</value>
+<         <value>en</value>
+<       </field>
+<     </field>
+<     <field name="empty">
+<       <value></value>
+<     </field>
+<   </fields>
+<   <annots>
+<     <highlight page="0" rect="10,20,110,34" name="h1" title="Ali" subject="Highlight" date="D:20260301090000+00'00'" opacity="0.5" coords="10,34,110,34,10,20,110,20" flags="print" color="#FFFF00">
+<       <contents>nice</contents>
+<       <popup page="0" rect="120,20,220,100" open="no" />
+<     </highlight>
+<     <freetext page="1" rect="50,50,250,100" name="f1" justification="right" flags="print">
+<       <contents>text &amp; more</contents>
+<       <contents-richtext>
+<         <body xmlns="http://www.w3.org/1999/xhtml">
+<           <p>
+<             <span style="font-weight:bold">text</span> &amp; more</p>
+<         </body>
+<       </contents-richtext>
+<       <defaultappearance>/Helv 14 Tf 1 0 0 rg</defaultappearance>
+<       <defaultstyle>font: Helvetica 14pt</defaultstyle>
+<     </freetext>
+<     <square page="0" rect="5,5,25,25" name="s1" color="#0000FF" interior-color="#00FF00" width="2" style="cloudy" intensity="1" />
+<     <ink page="0" rect="0,0,40,40" name="i1">
+<       <inklist>
+<         <gesture>1,2;3,4;5,6</gesture>
+<         <gesture>7,8;9,10</gesture>
+<       </inklist>
+<     </ink>
+<   </annots>
+< </xfdf>
+> xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><annots><freetext page="0" rect="1,1,50,50" name="r1"><contents-richtext>\n  <body xmlns="http://www.w3.org/1999/xhtml" xmlns:xfa="http://www.xfa.org/schema/xfa-data/1.0/" xfa:APIVersion="Acrobat:11.0.0" style="font-size:11pt"><p dir="ltr"><span style="font-weight:bold">bold</span> and <i>it</i> &amp; \xc5\x9f</p>\n<p/><p>x<br/>y</p><!-- c --></body>\n</contents-richtext></freetext><text page="0" rect="1,1,2,2" name="r2"><contents-richtext><p>plain <b>x</b></p>tail<![CDATA[c<d]]><?pi d?></contents-richtext></text><text page="0" rect="1,1,2,2" name="r3"><contents-richtext xml:space="preserve"><p> a </p></contents-richtext></text></annots></xfdf>
+< file -
+< annotation page=0 <</Type /Annot /Subtype /FreeText /NM (r1) /Rect [1 1 50 50] /RC <FEFF000A00200020003C0062006F0064007900200078006D006C006E0073003D00220068007400740070003A002F002F007700770077002E00770033002E006F00720067002F0031003900390039002F007800680074006D006C002200200078006D006C006E0073003A007800660061003D00220068007400740070003A002F002F007700770077002E007800660061002E006F00720067002F0073006300680065006D0061002F007800660061002D0064006100740061002F0031002E0030002F00220020007800660061003A00410050004900560065007200730069006F006E003D0022004100630072006F006200610074003A00310031002E0030002E003000220020007300740079006C0065003D00220066006F006E0074002D00730069007A0065003A00310031007000740022003E000A00200020003C00700020006400690072003D0022006C007400720022003E000A0020002000200020003C007300700061006E0020007300740079006C0065003D00220066006F006E0074002D007700650069006700680074003A0062006F006C00640022003E0062006F006C0064003C002F007300700061006E003E00200061006E00640020003C0069003E00690074003C002F0069003E002000260061006D0070003B0020015F003C002F0070003E000A003C00700020002F003E003C0070003E0078003C006200720020002F003E0079003C002F0070003E003C0021002D002D002000630020002D002D003E003C002F0062006F00640079003E000A>>>
+< annotation page=0 <</Type /Annot /Subtype /Text /NM (r2) /Rect [1 1 2 2] /RC (<p xmlns="http://ns.adobe.com/xfdf/">plain <b>x</b></p>tail<![CDATA[c<d]]><?pi d?>)>>
+< annotation page=0 <</Type /Annot /Subtype /Text /NM (r3) /Rect [1 1 2 2] /RC (<p xmlns="http://ns.adobe.com/xfdf/"> a </p>)>>
+< <?xml version="1.0" encoding="utf-8"?>
+< <xfdf xml:space="preserve" xmlns="http://ns.adobe.com/xfdf/">
+<   <annots>
+<     <freetext page="0" rect="1,1,50,50" name="r1">
+<       <contents-richtext>
+<         <body xmlns="http://www.w3.org/1999/xhtml" xmlns:xfa="http://www.xfa.org/schema/xfa-data/1.0/" xfa:APIVersion="Acrobat:11.0.0" style="font-size:11pt">
+<           <p dir="ltr">
+<             <span style="font-weight:bold">bold</span> and <i>it</i> &amp; \u015f</p>
+<           <p />
+<           <p>x<br />y</p>
+<           <!-- c -->
+<         </body>
+<       </contents-richtext>
+<     </freetext>
+<     <text page="0" rect="1,1,2,2" name="r2" />
+<     <text page="0" rect="1,1,2,2" name="r3">
+<       <contents-richtext>
+<         <p xmlns="http://ns.adobe.com/xfdf/"> a </p>
+<       </contents-richtext>
+<     </text>
+<   </annots>
+< </xfdf>
+> xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><f href="a&amp;b &quot;q&quot; &lt;&gt;\x09tab"/><annots><text page="0" rect="1,1,2,2" name="x1" replyType="reply" inreplyto="x0" state="Accepted" statemodel="Review" icon="Comment" open="yes" flags="print,hidden,locked"/><text page="0" rect="1,1,2,2" name="x0" title="A &amp; B" subject="s"><contents>line1\nline2\r\n\tcontent &amp; &lt;&gt; \xc5\x9f</contents></text><line page="0" rect="0,0,10,10" start="1,2" end="3,4" head="Circle" tail="ClosedArrow" width="1.5" style="dash" dashes="3,1"/><line page="0" rect="0,0,10,10" head="Square"/><polygon page="0" rect="0,0,10,10"><vertices>1,2;3,4;5,6</vertices></polygon><stamp page="x" icon="Draft" color="#GG0000" interior-color="#ff00ff" width="abc"/><caret page="2" symbol="none" justification="1.9"/><redact page="1" overlaytext="R" opacity="0.25" fringe="1,2,3,4" callout="1,2,3,4,5,6"/></annots></xfdf>
+< file a&b "q" <> tab
+< annotation page=0 <</Type /Annot /Subtype /Text /NM (x1) /State (Accepted) /StateModel (Review) /Name /Comment /RT /R /Open true /IRT (x0) /Rect [1 1 2 2] /F 134>>
+< annotation page=0 <</Type /Annot /Subtype /Text /NM (x0) /T (A & B) /Subj (s) /Rect [1 1 2 2] /Contents <FEFF006C0069006E00650031000A006C0069006E00650032000A00090063006F006E00740065006E0074002000260020003C003E0020015F>>>
+< annotation page=0 <</Type /Annot /Subtype /Line /Rect [0 0 10 10] /L [1 2 3 4] /LE [/Circle /ClosedArrow] /BS <</Type /Border /W 1.5 /S /D /D [3 1]>>>>
+< annotation page=0 <</Type /Annot /Subtype /Line /Rect [0 0 10 10] /LE [/Square /None]>>
+< annotation page=0 <</Type /Annot /Subtype /Polygon /Rect [0 0 10 10] /Vertices [1 2 3 4 5 6]>>
+< annotation page=-1 <</Type /Annot /Subtype /Stamp /Name /Draft /IC [1 0 1]>>
+< annotation page=2 <</Type /Annot /Subtype /Caret /Sy /None /Q 1>>
+< annotation page=1 <</Type /Annot /Subtype /Redact /OverlayText (R) /CA 0.25 /RD [1 2 3 4] /CL [1 2 3 4 5 6]>>
+< <?xml version="1.0" encoding="utf-8"?>
+< <xfdf xml:space="preserve" xmlns="http://ns.adobe.com/xfdf/">
+<   <f href="a&amp;b &quot;q&quot; &lt;&gt; tab" />
+<   <annots>
+<     <text page="0" rect="1,1,2,2" name="x1" icon="Comment" replyType="reply" state="Accepted" statemodel="Review" open="yes" flags="hidden,print,locked" inreplyto="x0" />
+<     <text page="0" rect="1,1,2,2" name="x0" title="A &amp; B" subject="s">
+<       <contents>line1
+< line2
+< \tcontent &amp; &lt;&gt; \u015f</contents>
+<     </text>
+<     <line page="0" rect="0,0,10,10" start="1,2" end="3,4" head="Circle" tail="ClosedArrow" width="1.5" style="dash" dashes="3,1" />
+<     <line page="0" rect="0,0,10,10" head="Square" tail="None" />
+<     <polygon page="0" rect="0,0,10,10">
+<       <vertices>1,2;3,4;5,6</vertices>
+<     </polygon>
+<     <stamp page="-1" icon="Draft" interior-color="#FF00FF" />
+<     <caret page="2" justification="centered" symbol="none" />
+<     <redact page="1" opacity="0.25" overlaytext="R" fringe="1,2,3,4" callout="1,2,3,4,5,6" />
+<   </annots>
+< </xfdf>
+> xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><annots><text page="0" rect="1,1,2,2" name="a" inreplyto="b"/><text page="0" rect="1,1,2,2" name="b"/></annots></xfdf>
+< file -
+< annotation page=0 <</Type /Annot /Subtype /Text /NM (a) /IRT (b) /Rect [1 1 2 2]>>
+< annotation page=0 <</Type /Annot /Subtype /Text /NM (b) /Rect [1 1 2 2]>>
+< <?xml version="1.0" encoding="utf-8"?>
+< <xfdf xml:space="preserve" xmlns="http://ns.adobe.com/xfdf/">
+<   <annots>
+<     <text page="0" rect="1,1,2,2" name="a" inreplyto="b" />
+<     <text page="0" rect="1,1,2,2" name="b" />
+<   </annots>
+< </xfdf>
+> xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><annots>
+< error Damaged The XFDF is not well-formed
+> xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><annots><square page="000000000000012" rect="1,1,9,9" name="p1"/><text page="0" rect="1,1,2,2" name="p2"><contents>&#00000000000000065;&#x000000000000042;</contents></text></annots></xfdf>
+< file -
+< annotation page=12 <</Type /Annot /Subtype /Square /NM (p1) /Rect [1 1 9 9]>>
+< annotation page=0 <</Type /Annot /Subtype /Text /NM (p2) /Rect [1 1 2 2] /Contents (AB)>>
+< <?xml version="1.0" encoding="utf-8"?>
+< <xfdf xml:space="preserve" xmlns="http://ns.adobe.com/xfdf/">
+<   <annots>
+<     <square page="12" rect="1,1,9,9" name="p1" />
+<     <text page="0" rect="1,1,2,2" name="p2">
+<       <contents>AB</contents>
+<     </text>
+<   </annots>
+< </xfdf>
+> xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><annots><text page="0" rect="1,1,2,2" name="a"><contents>a\xffb</contents></text></annots></xfdf>
+< error Damaged The XFDF is not well-formed
+> xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/" xmlns:x="urn:x"><annots><text page="0" rect="1,1,2,2" name="a" x:k="1"/></annots></xfdf>
+< file -
+< annotation page=0 <</Type /Annot /Subtype /Text /NM (a) /Rect [1 1 2 2]>>
+< <?xml version="1.0" encoding="utf-8"?>
+< <xfdf xml:space="preserve" xmlns="http://ns.adobe.com/xfdf/">
+<   <annots>
+<     <text page="0" rect="1,1,2,2" name="a" />
+<   </annots>
+< </xfdf>
+> xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><annots><text page="0" rect="1,1,2,2" name="a" name="b"/></annots></xfdf>
+< error Damaged The XFDF is not well-formed
+> xfdf <xfdf xmlns="http://ns.adobe.com/xfdf/"><annots><text page="0" rect="1,1,2,2" name="a" y:k="2"/></annots></xfdf>
+< error Damaged The XFDF is not well-formed
+> xfdf <other/>
+< error Damaged There is no xfdf element in the file.
+> xfdf <!DOCTYPE xfdf [<!ENTITY x SYSTEM "file:///c:/windows/win.ini">]><xfdf xmlns="http://ns.adobe.com/xfdf/"><fields><field name="a"><value>&x;</value></field></fields></xfdf>
+< error Damaged The XFDF is not well-formed
+> xfdf not xml at all
+< error Damaged The XFDF is not well-formed
+> attach
+< item  (2).hidden| (2).hidden|-|-|1|1|-|-|89E74E640B8C46257A29DE0616794D5D|
+< item .hidden|.hidden|-|-|1|1|-|-|06ECA1B437C7904CC3CE6546C8110110|
+< item Invoice: March (2).pdf|Invoice: March (2).pdf|-|-|1|1|-|-|13C8FFD977013703A701CF8E11DEAC65|
+< item Invoice: March.pdf|Invoice: March.pdf|-|-|1|1|-|-|68B329DA9893E34099C7D8AD5CB9C940|
+< item a (2).b:c|a (2).b:c|-|-|1|1|-|-|DCB9BE2F604E5DF91DEB9659BED4748D|
+< item a.b (2).txt|a.b (2).txt|-|-|1|1|-|-|8BB6C17838643F9691CC6A4DE6C51709|
+< item a.b:c|a.b:c|-|-|1|1|-|-|58C89562F58FD276F592420068DB8C09|
+< item dir/a.b.txt|dir/a.b.txt|-|-|1|1|-|-|EC7F7E7BB43742CE868145F71D37B53C|
+< item end (2)|end (2)|-|-|1|1|-|-|5E732A1878BE2342DBFEFF5FE3CA5AA3|
+< item end.|end.|-|-|1|1|-|-|E2BA905BF306F46FACA223D3CB20E2CF|
+< item notes (2).txt|notes (2).txt|-|-|3|3|-|-|5289DF737DF57326FCDD22597AFB1FAC|
+< item notes.txt|notes.txt|Meeting notes|text/plain|11|11|2026-05-06T07:08:09.0000000+02:00|2026-05-07T07:08:09.0000000+02:00|DDD3010369ADE097CAC61C4142D89DA7|
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< 5: stream <</Length 22>> | BT /F1 12 Tf (1) Tj ET
+< 6: stream <</Length 22>> | BT /F1 12 Tf (2) Tj ET
+< 7: stream <</Type /EmbeddedFile /Subtype /text#2Fplain /Params <</Size 11 /CreationDate (D:20260506070809+02'00') /ModDate (D:20260507070809+02'00') /CheckSum <DDD3010369ADE097CAC61C4142D89DA7>>>>> | short notes
+< 8: <</Type /Filespec /F (notes.txt) /UF (notes.txt) /EF <</F 7 0 R /UF 7 0 R>> /Desc (Meeting notes)>>
+< 9: <</Names [( \(2\).hidden) 19 0 R (.hidden) 17 0 R (Invoice: March \(2\).pdf) 27 0 R (Invoice: March.pdf) 25 0 R (a \(2\).b:c) 31 0 R (a.b \(2\).txt) 15 0 R (a.b:c) 29 0 R (dir/a.b.txt) 13 0 R (end \(2\)) 23 0 R (end.) 21 0 R (notes \(2\).txt) 11 0 R (notes.txt) 8 0 R]>>
+< 10: stream <</Type /EmbeddedFile /Params <</Size 3 /CheckSum <5289DF737DF57326FCDD22597AFB1FAC>>>>> | \u0001\u0002\u0003
+< 11: <</Type /Filespec /F (notes \(2\).txt) /UF (notes \(2\).txt) /EF <</F 10 0 R /UF 10 0 R>>>>
+< 12: stream <</Type /EmbeddedFile /Params <</Size 1 /CheckSum <EC7F7E7BB43742CE868145F71D37B53C>>>>> | \u0004
+< 13: <</Type /Filespec /F (dir/a.b.txt) /UF (dir/a.b.txt) /EF <</F 12 0 R /UF 12 0 R>>>>
+< 14: stream <</Type /EmbeddedFile /Params <</Size 1 /CheckSum <8BB6C17838643F9691CC6A4DE6C51709>>>>> | \u0005
+< 15: <</Type /Filespec /F (a.b \(2\).txt) /UF (a.b \(2\).txt) /EF <</F 14 0 R /UF 14 0 R>>>>
+< 16: stream <</Type /EmbeddedFile /Params <</Size 1 /CheckSum <06ECA1B437C7904CC3CE6546C8110110>>>>> | \u0006
+< 17: <</Type /Filespec /F (.hidden) /UF (.hidden) /EF <</F 16 0 R /UF 16 0 R>>>>
+< 18: stream <</Type /EmbeddedFile /Params <</Size 1 /CheckSum <89E74E640B8C46257A29DE0616794D5D>>>>> | \u0007
+< 19: <</Type /Filespec /F ( \(2\).hidden) /UF ( \(2\).hidden) /EF <</F 18 0 R /UF 18 0 R>>>>
+< 20: stream <</Type /EmbeddedFile /Params <</Size 1 /CheckSum <E2BA905BF306F46FACA223D3CB20E2CF>>>>> | \u0008
+< 21: <</Type /Filespec /F (end.) /UF (end.) /EF <</F 20 0 R /UF 20 0 R>>>>
+< 22: stream <</Type /EmbeddedFile /Params <</Size 1 /CheckSum <5E732A1878BE2342DBFEFF5FE3CA5AA3>>>>> | \t
+< 23: <</Type /Filespec /F (end \(2\)) /UF (end \(2\)) /EF <</F 22 0 R /UF 22 0 R>>>>
+< 24: stream <</Type /EmbeddedFile /Params <</Size 1 /CheckSum <68B329DA9893E34099C7D8AD5CB9C940>>>>> | \n
+< 25: <</Type /Filespec /F (Invoice: March.pdf) /UF (Invoice: March.pdf) /EF <</F 24 0 R /UF 24 0 R>>>>
+< 26: stream <</Type /EmbeddedFile /Params <</Size 1 /CheckSum <13C8FFD977013703A701CF8E11DEAC65>>>>> | \u000b
+< 27: <</Type /Filespec /F (Invoice: March \(2\).pdf) /UF (Invoice: March \(2\).pdf) /EF <</F 26 0 R /UF 26 0 R>>>>
+< 28: stream <</Type /EmbeddedFile /Params <</Size 1 /CheckSum <58C89562F58FD276F592420068DB8C09>>>>> | \u000c
+< 29: <</Type /Filespec /F (a.b:c) /UF (a.b:c) /EF <</F 28 0 R /UF 28 0 R>>>>
+< 30: stream <</Type /EmbeddedFile /Params <</Size 1 /CheckSum <DCB9BE2F604E5DF91DEB9659BED4748D>>>>> | \r
+< 31: <</Type /Filespec /F (a \(2\).b:c) /UF (a \(2\).b:c) /EF <</F 30 0 R /UF 30 0 R>>>>
+< removed  (2).hidden,Invoice: March (2).pdf,Invoice: March.pdf,a (2).b:c,a.b (2).txt,a.b:c,dir/a.b.txt,end (2),end.,notes (2).txt,notes.txt
+< empty <</Type /Catalog /Pages 2 0 R /Names <<>>>>
+> layers
+< read Background:on:-:View,\u0416:off:-:Design,Layer:off:locked:-,Extra:off:-:-
+< order Background,'Group'(\u0416,Layer),Extra
+< set True
+< 31 on Background:off:-:View,\u0416:on:-:Design,Layer:off:locked:-,Extra:off:-:-
+< order Background,'Group'(\u0416,Layer),Extra
+< set True
+< 30 on Background:on:-:View,\u0416:off:-:Design,Layer:off:locked:-,Extra:off:-:-
+< order Background,'Group'(\u0416,Layer),Extra
+< set True
+< 33 off Background:on:-:View,\u0416:off:-:Design,Layer:off:locked:-,Extra:off:-:-
+< order Background,'Group'(\u0416,Layer),Extra
+< set False
+< <</OCGs [30 0 R 31 0 R 32 0 R 33 0 R] /D <</Locked [32 0 R] /RBGroups [[30 0 R 31 0 R 33 0 R]] /Order [30 0 R (Group) [31 0 R 32 0 R]] /OFF [31 0 R 32 0 R 33 0 R]>>>>
+> facts plain
+< 1.4 784 3 200 300 lang=- tagged=False linearized=False encrypted=False signed=False certified=False
+< None js=False bookmarks=False portfolio=False attachments=0 layers=0 pdfa=-/- repairs=0 title=-
+< text None Layer New bookmark
+> facts everything
+< 1.4 1686 3 200 300 lang=en tagged=True linearized=False encrypted=False signed=True certified=False
+< AcroForm js=True bookmarks=True portfolio=True attachments=1 layers=2 pdfa=-/- repairs=0 title=-
+< text Form Layer New bookmark
+> facts xfa
+< 1.4 1071 3 200 300 lang=- tagged=False linearized=False encrypted=False signed=False certified=False
+< Xfa js=False bookmarks=False portfolio=False attachments=0 layers=0 pdfa=-/- repairs=0 title=-
+< text XFA form Layer New bookmark
+> facts rotated
+< 1.4 439 2 600 400 lang=- tagged=False linearized=False encrypted=False signed=False certified=False
+< None js=False bookmarks=False portfolio=False attachments=0 layers=0 pdfa=-/- repairs=0 title=-
+< text None Layer New bookmark

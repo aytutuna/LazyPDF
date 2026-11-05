@@ -1,0 +1,1776 @@
+> parse q 1 0 0 1 10 20 cm /F1 12 Tf (Hi) Tj Q
+< op q [0,1]
+< op cm [2,18] 1 0 0 1 10 20
+< op Tf [19,28] /F1 12
+< op Tj [29,36] (Hi)
+< op Q [37,38]
+> parse q  10 20 m % comment\n 30 40 l S Q
+< op q [0,1]
+< op m [3,10] 10 20
+< op l [22,29] 30 40
+< op S [30,31]
+< op Q [32,33]
+> parse --5 w -.5 w 4. w +3 w - w . w 1.2.3 5-3 m +-+5 w 0012 w 1e5 w 007.50 w
+< op w [0,5] -5
+< op w [6,11] -.5
+< op w [12,16] 4.
+< op w [17,21] +3
+< op w [22,25] 0
+< op w [26,29] 0
+< op m [30,41] 1.2 .3 5 -3
+< op w [42,48] 5
+< op w [49,55] 0012
+< op e5 [56,59] 1
+< op w [60,61]
+< op w [62,70] 007.50
+> parse (a\\(b\\)\\101\\n\\\nc(nested)) Tj <48656C6C6F2> Tj () Tj <> Tj (\\53\\0053\\777\\8) Tj (a\r\nb\rc) Tj <4 1 4 2 zz 43> Tj
+< op Tj [0,28] (a\(b\)A\nc\(nested\))
+< op Tj [29,45] <48656C6C6F20>
+< op Tj [46,51] ()
+< op Tj [52,57] <>
+< op Tj [58,77] (+\0053\3778)
+< op Tj [78,89] (a\nb\nc)
+< op Tj [90,108] <414243>
+> parse /A#20B gs /#4 gs /N#zz gs /A#4 gs /# gs / gs /A#41#42 gs
+< op gs [0,9] /A#20B
+< op gs [10,16] /#234
+< op gs [17,25] /N#23zz
+< op gs [26,33] /A#234
+< op gs [34,39] /#23
+< op gs [40,44] /
+< op gs [45,56] /AAB
+> parse [(A) -120 (B) [1 2]] TJ /OC <</MCID 3 /K [/A <</X 1>>]>> BDC /P <</A /B /C>> BDC /Q <</A>> BDC
+< op TJ [0,23] [(A) -120 (B) [1 2]]
+< op BDC [24,60] /OC <</MCID 3 /K [/A <</X 1>>]>>
+< op BDC [61,80] /P <</A /B /C null>>
+< op BDC [81,94] /Q <</A null>>
+> parse true false null foo 1 2 3 zork 4 w truefoo nullx falsey
+< op foo [0,19] true false null
+< op zork [20,30] 1 2 3
+< op w [31,34] 4
+< op truefoo [35,42]
+< op nullx [43,48]
+< op falsey [49,55]
+> parse ) ] >> } 1 w >
+< op w [9,12] 1
+> parse BT [(A) 10 (B) TJ ET
+< op BT [0,2]
+< op TJ [3,17] [(A) 10 (B)]
+< op ET [18,20]
+> parse BT <</A 1 /B Tj ET
+< op BT [0,2]
+< op Tj [3,15] <</A 1>>
+< op ET [16,18]
+> parse (never closed Tj
+> parse <4142 Tj
+> parse {100*[}1 w
+< op w [0,103] [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] [] 1]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+> parse {100*<<}1 w
+< op w [0,203] <<>>
+> parse {70*[(A)}] TJ
+< op TJ [0,284] [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [(A) [] (A) [] (A) [] (A) [] (A) [] (A) [] (A)]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+> parse {600*1 }w
+< op w [0,1201] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+> parse aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 1 w BT\x00ET T*\x0c' "
+< op aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa [0,48]
+< op w [49,52] 1
+< op BT [53,55]
+< op ET [56,58]
+< op T* [59,61]
+< op ' [62,63]
+< op " [64,65]
+> parse 1 0 0 1 0 0 cm % no newline at end
+< op cm [0,14] 1 0 0 1 0 0
+> parse q % comment only\n
+< op q [0,1]
+> parse q BI /W 4 /H 3 /BPC 8 /CS /G ID \x00 EI \x80\x90\xa0\xb0\xc0\xd0\xe0\nEI Q
+< op q [0,1]
+< op BI [2,47]
+< image 12 \x00 EI \x80\x90\xa0\xb0\xc0\xd0\xe0
+< dictionary <</W 4 /H 3 /BPC 8 /CS /G>>
+< expanded <</Width 4 /Height 3 /BitsPerComponent 8 /ColorSpace /G>>
+< op Q [48,49]
+> parse BI /W 2 /H 2 /F /Fl /CS /RGB /BPC 8 ID\n\x01\x02\x03 EI \xff\xfe\xfd\x09\x08\x07\nEI\n1 w
+< op BI [0,55]
+< image 13 \x01\x02\x03 EI \xff\xfe\xfd\t\x08\x07
+< dictionary <</W 2 /H 2 /F /Fl /CS /RGB /BPC 8>>
+< expanded <</Width 2 /Height 2 /Filter /Fl /ColorSpace /RGB /BitsPerComponent 8>>
+< op w [56,59] 1
+> parse BI /W 1 /H 1 /F /AHx ID 00>
+< op BI [0,27]
+< image 3 00>
+< dictionary <</W 1 /H 1 /F /AHx>>
+< expanded <</Width 1 /Height 1 /Filter /AHx>>
+> parse BI /W 1 /H 1 /BPC 8 /CS /G ID\r\n\x07\nEI
+< op BI [0,35]
+< image 1 \x07
+< dictionary <</W 1 /H 1 /BPC 8 /CS /G>>
+< expanded <</Width 1 /Height 1 /BitsPerComponent 8 /ColorSpace /G>>
+> parse BI /W 1 /H 1 /BPC 8 /CS /Cs1 /F /Fl /D [1 0] /IM false /I true /DP <</K -1>> ID x\nEI Q
+< op BI [0,84]
+< image 1 x
+< dictionary <</W 1 /H 1 /BPC 8 /CS /Cs1 /F /Fl /D [1 0] /IM false /I true /DP <</K -1>>>>
+< expanded <</Width 1 /Height 1 /BitsPerComponent 8 /ColorSpace /Cs1 /Filter /Fl /Decode [1 0] /ImageMask false /Interpolate true /DecodeParms <</K -1>>>>
+< op Q [85,86]
+> parse BI /W 72057594037927928 /H 1024 /IM true ID abc\nEI Q
+< op BI [0,50]
+< image 3 abc
+< dictionary <</W 72057594037927928 /H 1024 /IM true>>
+< expanded <</Width 72057594037927928 /Height 1024 /ImageMask true>>
+< op Q [51,52]
+> parse BI /W 4611686018427387904 /H 4 /BPC 8 /CS /RGB ID abc\nEI Q
+< op BI [0,56]
+< image 3 abc
+< dictionary <</W 4611686018427387904 /H 4 /BPC 8 /CS /RGB>>
+< expanded <</Width 4611686018427387904 /Height 4 /BitsPerComponent 8 /ColorSpace /RGB>>
+< op Q [57,58]
+> parse BI /W 2 /H 2 /BPC 8 /CS [/I /RGB 1 <000000FFFFFF>] ID abcd EI Q
+< op BI [0,61]
+< image 4 abcd
+< dictionary <</W 2 /H 2 /BPC 8 /CS [/I /RGB 1 <000000FFFFFF>]>>
+< expanded <</Width 2 /Height 2 /BitsPerComponent 8 /ColorSpace [/I /RGB 1 <000000FFFFFF>]>>
+< op Q [62,63]
+> parse BI /W 2 /H 2 /BPC 4 /CS /CMYK ID 12345678 EI /W 3 /H 3 /IM true ID abcdefghi EI
+< op BI [0,44]
+< image 8 12345678
+< dictionary <</W 2 /H 2 /BPC 4 /CS /CMYK>>
+< expanded <</Width 2 /Height 2 /BitsPerComponent 4 /ColorSpace /CMYK>>
+< op ID [45,66] /W 3 /H 3 /IM true
+< op abcdefghi [67,76]
+< op EI [77,79]
+> parse BI /W 2 /H 2 EI 1 w
+< op BI [0,15]
+< image 0 
+< dictionary <</W 2 /H 2>>
+< expanded <</Width 2 /Height 2>>
+< op w [16,19] 1
+> parse BI /W 2
+< op BI [0,7]
+< image 0 
+< dictionary <</W 2>>
+< expanded <</Width 2>>
+> parse BI /W 2 ID
+< op BI [0,10]
+< image 0 
+< dictionary <</W 2>>
+< expanded <</Width 2>>
+> parse BI ID EI Q
+< op BI [0,8]
+< image 0 
+< dictionary <<>>
+< expanded <<>>
+< op Q [9,10]
+> write q 1 0 0 1 10 20.5 cm /F1 12 Tf (a\\(b\\)\\n) Tj <00FF> Tj [(A) -120 (B)] TJ Q
+< q\n1 0 0 1 10 20.5 cm\n/F1 12 Tf\n(a\\(b\\)\\n) Tj\n<00FF> Tj\n[(A) -120 (B)] TJ\nQ\n
+> write /Span <</MCID 3 /Lang (en)>> BDC EMC [3 2] 1 d 0.5 g 0 0 100 100 re f*
+< /Span <</MCID 3 /Lang (en)>> BDC\nEMC\n[3 2] 1 d\n0.5 g\n0 0 100 100 re\nf*\n
+> write BT 1 0 0 1 5 5 Tm (x) ' 1 2 (y) " ET
+< BT\n1 0 0 1 5 5 Tm\n(x) '\n1 2 (y) "\nET\n
+> write 1 2 zork 3 4 w true false null foo
+< 1 2 zork\n3 4 w\ntrue false null foo\n
+> write q BI /W 14 /H 1 /BPC 8 /CS /G ID \x00\x01\x02 EI \xff\xfe\x80\x0a\x0d()\nEI Q
+< q\nBI /W 14 /H 1 /BPC 8 /CS /G\nID\n\x00\x01\x02 EI \xff\xfe\x80\n\r()\nEI\nQ\n
+> write 1.5 -.5 +3 4. . --2 w /N#20x gs (\x00\x01\xff) Tj
+< 1.5 -.5 +3 4. 0 -2 w\n/N#20x gs\n(\\000\\001\\377) Tj\n
+> run /Font <</F1 5 0 R>> ;; BT /F1 10 Tf 100 200 Td (AB) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< glyph op=3 forms=0 mcid=- code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 100 200] box=[100 197.93 106.67 207.18] adv=6.67 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< glyph op=3 forms=0 mcid=- code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 106.67 200] box=[106.67 197.93 113.34 207.18] adv=6.67 el=0 off=1 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< truncated 0
+> run /Font <</F1 5 0 R>> ;; BT /F1 10 Tf 100 0 Td [(A) -1000 (B) 500 (C)] TJ ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< glyph op=3 forms=0 mcid=- code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 100 0] box=[100 -2.07 106.67 7.18] adv=6.67 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< glyph op=3 forms=0 mcid=- code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 116.67 0] box=[116.67 -2.07 123.34 7.18] adv=6.67 el=2 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< glyph op=3 forms=0 mcid=- code=67 len=1 cid=67 w=722 u=0043 space=0 va=-1000 ox=361 oy=880 m=[10 0 0 10 118.34 0] box=[118.34 -2.07 125.56 7.18] adv=7.22 el=4 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< truncated 0
+> run /Font <</F1 5 0 R>> ;; BT /F1 10 Tf 1 Tc 5 Tw 50 Tz 0 0 Td (A B) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< glyph op=6 forms=0 mcid=- code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880 m=[5 0 0 10 0 0] box=[0 -2.07 3.335 7.18] adv=3.835 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=1 tw=5 tz=0.5 tl=0 ts=0 tr=0 font=Helvetica size=10
+< glyph op=6 forms=0 mcid=- code=32 len=1 cid=32 w=278 u=0020 space=1 va=-1000 ox=139 oy=880 m=[5 0 0 10 3.835 0] box=[3.835 -2.07 5.225 7.18] adv=4.39 el=0 off=1 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=1 tw=5 tz=0.5 tl=0 ts=0 tr=0 font=Helvetica size=10
+< glyph op=6 forms=0 mcid=- code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880 m=[5 0 0 10 8.225 0] box=[8.225 -2.07 11.56 7.18] adv=3.835 el=0 off=2 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=1 tw=5 tz=0.5 tl=0 ts=0 tr=0 font=Helvetica size=10
+< truncated 0
+> run /Font <</F1 5 0 R>> ;; BT /F1 10 Tf 14 TL 100 500 Td (A) Tj T* (B) Tj (C) ' 2 3 (D) " 0 -20 TD (E) Tj T* (F) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< glyph op=4 forms=0 mcid=- code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 100 500] box=[100 497.93 106.67 507.18] adv=6.67 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=14 ts=0 tr=0 font=Helvetica size=10
+< glyph op=6 forms=0 mcid=- code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 100 486] box=[100 483.93 106.67 493.18] adv=6.67 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=14 ts=0 tr=0 font=Helvetica size=10
+< glyph op=7 forms=0 mcid=- code=67 len=1 cid=67 w=722 u=0043 space=0 va=-1000 ox=361 oy=880 m=[10 0 0 10 100 472] box=[100 469.93 107.22 479.18] adv=7.22 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=14 ts=0 tr=0 font=Helvetica size=10
+< glyph op=8 forms=0 mcid=- code=68 len=1 cid=68 w=722 u=0044 space=0 va=-1000 ox=361 oy=880 m=[10 0 0 10 100 458] box=[100 455.93 107.22 465.18] adv=10.22 el=1 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=3 tw=2 tz=1 tl=14 ts=0 tr=0 font=Helvetica size=10
+< glyph op=10 forms=0 mcid=- code=69 len=1 cid=69 w=667 u=0045 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 100 438] box=[100 435.93 106.67 445.18] adv=9.67 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=3 tw=2 tz=1 tl=20 ts=0 tr=0 font=Helvetica size=10
+< glyph op=12 forms=0 mcid=- code=70 len=1 cid=70 w=611 u=0046 space=0 va=-1000 ox=305.5 oy=880 m=[10 0 0 10 100 418] box=[100 415.93 106.11 425.18] adv=9.11 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=3 tw=2 tz=1 tl=20 ts=0 tr=0 font=Helvetica size=10
+< truncated 0
+> run /Font <</F1 5 0 R>> ;; q 2 0 0 3 10 20 cm BT /F1 10 Tf 0 1 -1 0 50 60 Tm 4 Ts (A) Tj ET Q ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< glyph op=6 forms=0 mcid=- code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880 m=[0 30 -20 0 102 200] box=[87.64 200 106.14 220.01] adv=6.67 el=0 off=0 ctm=[2 0 0 3 10 20] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=4 tr=0 font=Helvetica size=10
+< truncated 0
+> run /Font <</F1 5 0 R>> ;; BT /Nope 10 Tf (AB) Tj ET BT (A) Tj ET BT /F1 abc Tf (C) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< glyph op=2 forms=0 mcid=- code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 0 0] box=[0 -2.07 6.67 7.18] adv=6.67 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< glyph op=2 forms=0 mcid=- code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 6.67 0] box=[6.67 -2.07 13.34 7.18] adv=6.67 el=0 off=1 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< glyph op=5 forms=0 mcid=- code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 0 0] box=[0 -2.07 6.67 7.18] adv=6.67 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< glyph op=10 forms=0 mcid=- code=67 len=1 cid=67 w=722 u=0043 space=0 va=-1000 ox=361 oy=880 m=[10 0 0 10 0 0] box=[0 -2.07 7.22 7.18] adv=7.22 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< truncated 0
+> run /Font <</F1 5 0 R>> ;; BT (A) Tj /F1 12 Tf (B) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< glyph op=1 forms=0 mcid=- code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880 m=[0 0 0 0 0 0] box=[0 0 0 0] adv=0 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=0
+< glyph op=3 forms=0 mcid=- code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880 m=[12 0 0 12 0 0] box=[0 -2.484 8.004 8.616] adv=8.004 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=12
+< truncated 0
+> run /Font <</F1 5 0 R>> /ExtGState <</G1 <</Font [5 0 R 20]>>>> ;; /G1 gs BT (A) Tj 3 Tr (B) Tj 1 Tr (C) Tj 7 Tr (D) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< glyph op=2 forms=0 mcid=- code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880 m=[20 0 0 20 0 0] box=[0 -4.14 13.34 14.36] adv=13.34 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=20
+< glyph op=4 forms=0 mcid=- code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880 m=[20 0 0 20 13.34 0] box=[13.34 -4.14 26.68 14.36] adv=13.34 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=3 font=Helvetica size=20
+< glyph op=6 forms=0 mcid=- code=67 len=1 cid=67 w=722 u=0043 space=0 va=-1000 ox=361 oy=880 m=[20 0 0 20 26.68 0] box=[26.68 -4.14 41.12 14.36] adv=14.44 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=1 font=Helvetica size=20
+< glyph op=8 forms=0 mcid=- code=68 len=1 cid=68 w=722 u=0044 space=0 va=-1000 ox=361 oy=880 m=[20 0 0 20 41.12 0] box=[41.12 -4.14 55.56 14.36] adv=14.44 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=7 font=Helvetica size=20
+< truncated 0
+> run /Font <</F1 5 0 R>> ;; BT /F1 10 Tf [(A) /Name (B) [1] null 3 (C)] TJ 5 Tj [ ] TJ ' (D) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< glyph op=2 forms=0 mcid=- code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 0 0] box=[0 -2.07 6.67 7.18] adv=6.67 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< glyph op=2 forms=0 mcid=- code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 6.67 0] box=[6.67 -2.07 13.34 7.18] adv=6.67 el=2 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< glyph op=2 forms=0 mcid=- code=67 len=1 cid=67 w=722 u=0043 space=0 va=-1000 ox=361 oy=880 m=[10 0 0 10 13.31 0] box=[13.31 -2.07 20.53 7.18] adv=7.22 el=6 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< glyph op=6 forms=0 mcid=- code=68 len=1 cid=68 w=722 u=0044 space=0 va=-1000 ox=361 oy=880 m=[10 0 0 10 20.53 0] box=[20.53 -2.07 27.75 7.18] adv=7.22 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< truncated 0
+> run /Font <</T3 5 0 R>> ;; BT /T3 10 Tf (AA\x42) Tj ET ;; <</Type /Font /Subtype /Type3 /FontBBox [0 0 1000 1000] /FontMatrix [0.002 0 0 0.002 0 0] /FirstChar 65 /LastChar 65 /Widths [500] /Encoding <</Type /Encoding /Differences [65 /A]>> /CharProcs <<>>>>
+< glyph op=2 forms=0 mcid=- code=65 len=1 cid=65 w=1000 u=0041 space=0 va=-1000 ox=500 oy=880 m=[10 0 0 10 0 0] box=[0 0 10 20] adv=10 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font= size=10
+< glyph op=2 forms=0 mcid=- code=65 len=1 cid=65 w=1000 u=0041 space=0 va=-1000 ox=500 oy=880 m=[10 0 0 10 10 0] box=[10 0 20 20] adv=10 el=0 off=1 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font= size=10
+< glyph op=2 forms=0 mcid=- code=66 len=1 cid=66 w=0 u=0042 space=0 va=-1000 ox=0 oy=880 m=[10 0 0 10 20 0] box=[20 0 20 20] adv=0 el=0 off=2 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font= size=10
+< truncated 0
+> run /Font <</V 5 0 R>> ;; BT /V 10 Tf 100 500 Td <00010002> Tj ET ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-V /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /DW 1000>>
+< glyph op=3 forms=0 mcid=- code=1 len=2 cid=1 w=1000 u=- space=0 va=-1000 ox=500 oy=880 m=[10 0 0 10 95 491.2] box=[95 489.2 105 499.2] adv=-10 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=X size=10
+< glyph op=3 forms=0 mcid=- code=2 len=2 cid=2 w=1000 u=- space=0 va=-1000 ox=500 oy=880 m=[10 0 0 10 95 481.2] box=[95 479.2 105 489.2] adv=-10 el=0 off=2 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=X size=10
+< truncated 0
+> run /Font <</A 5 0 R /B 6 0 R /C 7 0 R /D 8 0 R>> ;; BT /A 10 Tf (Hello) Tj /B 10 Tf (Hello) Tj /C 10 Tf (abc) Tj /D 10 Tf (abc) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Courier>> ;; <</Type /Font /Subtype /Type1 /BaseFont /Times-Roman>> ;; <</Type /Font /Subtype /Type1 /BaseFont /Symbol>> ;; <</Type /Font /Subtype /Type1 /BaseFont /ZapfDingbats>>
+< glyph op=2 forms=0 mcid=- code=72 len=1 cid=72 w=600 u=0048 space=0 va=-1000 ox=300 oy=880 m=[10 0 0 10 0 0] box=[0 -1.57 6 6.29] adv=6 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Courier size=10
+< glyph op=2 forms=0 mcid=- code=101 len=1 cid=101 w=600 u=0065 space=0 va=-1000 ox=300 oy=880 m=[10 0 0 10 6 0] box=[6 -1.57 12 6.29] adv=6 el=0 off=1 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Courier size=10
+< glyph op=2 forms=0 mcid=- code=108 len=1 cid=108 w=600 u=006C space=0 va=-1000 ox=300 oy=880 m=[10 0 0 10 12 0] box=[12 -1.57 18 6.29] adv=6 el=0 off=2 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Courier size=10
+< glyph op=2 forms=0 mcid=- code=108 len=1 cid=108 w=600 u=006C space=0 va=-1000 ox=300 oy=880 m=[10 0 0 10 18 0] box=[18 -1.57 24 6.29] adv=6 el=0 off=3 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Courier size=10
+< glyph op=2 forms=0 mcid=- code=111 len=1 cid=111 w=600 u=006F space=0 va=-1000 ox=300 oy=880 m=[10 0 0 10 24 0] box=[24 -1.57 30 6.29] adv=6 el=0 off=4 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Courier size=10
+< glyph op=4 forms=0 mcid=- code=72 len=1 cid=72 w=722 u=0048 space=0 va=-1000 ox=361 oy=880 m=[10 0 0 10 30 0] box=[30 -2.17 37.22 6.83] adv=7.22 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Times-Roman size=10
+< glyph op=4 forms=0 mcid=- code=101 len=1 cid=101 w=444 u=0065 space=0 va=-1000 ox=222 oy=880 m=[10 0 0 10 37.22 0] box=[37.22 -2.17 41.66 6.83] adv=4.44 el=0 off=1 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Times-Roman size=10
+< glyph op=4 forms=0 mcid=- code=108 len=1 cid=108 w=278 u=006C space=0 va=-1000 ox=139 oy=880 m=[10 0 0 10 41.66 0] box=[41.66 -2.17 44.44 6.83] adv=2.78 el=0 off=2 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Times-Roman size=10
+< glyph op=4 forms=0 mcid=- code=108 len=1 cid=108 w=278 u=006C space=0 va=-1000 ox=139 oy=880 m=[10 0 0 10 44.44 0] box=[44.44 -2.17 47.22 6.83] adv=2.78 el=0 off=3 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Times-Roman size=10
+< glyph op=4 forms=0 mcid=- code=111 len=1 cid=111 w=500 u=006F space=0 va=-1000 ox=250 oy=880 m=[10 0 0 10 47.22 0] box=[47.22 -2.17 52.22 6.83] adv=5 el=0 off=4 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Times-Roman size=10
+< glyph op=6 forms=0 mcid=- code=97 len=1 cid=97 w=631 u=03B1 space=0 va=-1000 ox=315.5 oy=880 m=[10 0 0 10 52.22 0] box=[52.22 -2.93 58.53 10.1] adv=6.31 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Symbol size=10
+< glyph op=6 forms=0 mcid=- code=98 len=1 cid=98 w=549 u=03B2 space=0 va=-1000 ox=274.5 oy=880 m=[10 0 0 10 58.53 0] box=[58.53 -2.93 64.02 10.1] adv=5.49 el=0 off=1 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Symbol size=10
+< glyph op=6 forms=0 mcid=- code=99 len=1 cid=99 w=549 u=03C7 space=0 va=-1000 ox=274.5 oy=880 m=[10 0 0 10 64.02 0] box=[64.02 -2.93 69.51 10.1] adv=5.49 el=0 off=2 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Symbol size=10
+< glyph op=8 forms=0 mcid=- code=97 len=1 cid=97 w=789 u=2741 space=0 va=-1000 ox=394.5 oy=880 m=[10 0 0 10 69.51 0] box=[69.51 -1.43 77.4 8.2] adv=7.89 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=ZapfDingbats size=10
+< glyph op=8 forms=0 mcid=- code=98 len=1 cid=98 w=789 u=2742 space=0 va=-1000 ox=394.5 oy=880 m=[10 0 0 10 77.4 0] box=[77.4 -1.43 85.29 8.2] adv=7.89 el=0 off=1 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=ZapfDingbats size=10
+< glyph op=8 forms=0 mcid=- code=99 len=1 cid=99 w=707 u=2743 space=0 va=-1000 ox=353.5 oy=880 m=[10 0 0 10 85.29 0] box=[85.29 -1.43 92.36 8.2] adv=7.07 el=0 off=2 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=ZapfDingbats size=10
+< truncated 0
+> run /Font <</F 5 0 R>> ;; BT /F 12 Tf <00010002> Tj <00 41> Tj ET ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /DW 500 /W [1 [250 750]]>>
+< glyph op=2 forms=0 mcid=- code=1 len=2 cid=1 w=250 u=- space=0 va=-1000 ox=125 oy=880 m=[12 0 0 12 0 0] box=[0 -2.4 3 9.6] adv=3 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=X size=12
+< glyph op=2 forms=0 mcid=- code=2 len=2 cid=2 w=750 u=- space=0 va=-1000 ox=375 oy=880 m=[12 0 0 12 3 0] box=[3 -2.4 12 9.6] adv=9 el=0 off=2 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=X size=12
+< glyph op=3 forms=0 mcid=- code=65 len=2 cid=65 w=500 u=- space=0 va=-1000 ox=250 oy=880 m=[12 0 0 12 12 0] box=[12 -2.4 18 9.6] adv=6 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=X size=12
+< truncated 0
+> run  ;; 1 0 0 rg 10 20 100 50 re f 10 w 0 0 100 100 re S q 2 0 0 2 100 100 cm 0 0 10 10 re B Q 0.5 g 1 1 1 1 re F
+< path op=2 forms=0 mcid=- f segs=M 10 20;L 110 20;L 110 70;L 10 70;Z bounds=[10 20 110 70] ink=[10 20 110 70] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceRGB(1,0,0):255,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=5 forms=0 mcid=- S segs=M 0 0;L 100 0;L 100 100;L 0 100;Z bounds=[0 0 100 100] ink=[-5 -5 105 105] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceRGB(1,0,0):255,0,0 stroke=DeviceGray(0):0,0,0 lw=10 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=9 forms=0 mcid=- B segs=M 100 100;L 120 100;L 120 120;L 100 120;Z bounds=[100 100 120 120] ink=[90 90 130 130] fill=1 stroke=1 eo=0 clips=0 ctm=[2 0 0 2 100 100] clip=[0 0 600 800] fill=DeviceRGB(1,0,0):255,0,0 stroke=DeviceGray(0):0,0,0 lw=10 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=13 forms=0 mcid=- F segs=M 1 1;L 2 1;L 2 2;L 1 2;Z bounds=[1 1 2 2] ink=[1 1 2 2] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0.5):128,128,128 stroke=DeviceGray(0):0,0,0 lw=10 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> run  ;; 0 0 m 50 100 100 100 150 0 c 10 10 m 50 60 90 10 v 20 20 l 30 30 50 50 60 60 y h f* 0 0 m s 5 5 m 6 6 l b 7 7 m 8 8 l B* 9 9 m 1 1 l b* 100 100 l S 1 2 3 4 5 6 c n h 0 0 m 1 1 l 2 w S
+< path op=7 forms=0 mcid=- f* segs=M 0 0;C 50 100 100 100 150 0;M 10 10;C 10 10 50 60 90 10;L 20 20;C 50 50 60 60 60 60;Z bounds=[0 0 150 100] ink=[0 0 150 100] fill=1 stroke=0 eo=1 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=9 forms=0 mcid=- s segs=M 0 0;Z bounds=[0 0 0 0] ink=[-0.5 -0.5 0.5 0.5] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=12 forms=0 mcid=- b segs=M 5 5;L 6 6;Z bounds=[5 5 6 6] ink=[4.5 4.5 6.5 6.5] fill=1 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=15 forms=0 mcid=- B* segs=M 7 7;L 8 8 bounds=[7 7 8 8] ink=[6.5 6.5 8.5 8.5] fill=1 stroke=1 eo=1 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=18 forms=0 mcid=- b* segs=M 9 9;L 1 1;Z bounds=[1 1 9 9] ink=[0.5 0.5 9.5 9.5] fill=1 stroke=1 eo=1 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=20 forms=0 mcid=- S segs=M 100 100 bounds=[100 100 100 100] ink=[99.5 99.5 100.5 100.5] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=27 forms=0 mcid=- S segs=M 0 0;L 1 1 bounds=[0 0 1 1] ink=[-1 -1 2 2] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=2 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> run  ;; 0 0 100 100 re W n 50 50 200 200 re f 20 20 10 10 re W* n 0 0 5 5 re f 0 0 10 10 re W S 0 0 m W f
+< path op=2 forms=0 mcid=- n segs=M 0 0;L 100 0;L 100 100;L 0 100;Z bounds=[0 0 100 100] ink=[0 0 100 100] fill=0 stroke=0 eo=0 clips=1 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=4 forms=0 mcid=- f segs=M 50 50;L 250 50;L 250 250;L 50 250;Z bounds=[50 50 250 250] ink=[50 50 250 250] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 100 100] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=7 forms=0 mcid=- n segs=M 20 20;L 30 20;L 30 30;L 20 30;Z bounds=[20 20 30 30] ink=[20 20 30 30] fill=0 stroke=0 eo=0 clips=1 ctm=[1 0 0 1 0 0] clip=[0 0 100 100] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=9 forms=0 mcid=- f segs=M 0 0;L 5 0;L 5 5;L 0 5;Z bounds=[0 0 5 5] ink=[0 0 5 5] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[20 20 30 30] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=12 forms=0 mcid=- S segs=M 0 0;L 10 0;L 10 10;L 0 10;Z bounds=[0 0 10 10] ink=[-0.5 -0.5 10.5 10.5] fill=0 stroke=1 eo=0 clips=1 ctm=[1 0 0 1 0 0] clip=[20 20 30 30] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=15 forms=0 mcid=- f segs=M 0 0 bounds=[0 0 0 0] ink=[0 0 0 0] fill=1 stroke=0 eo=0 clips=1 ctm=[1 0 0 1 0 0] clip=[20 20 20 20] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> run  ;; Q Q {300*q 2 w }{300*Q }0 0 1 1 re S Q
+< path op=903 forms=0 mcid=- S segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[-0.5 -0.5 1.5 1.5] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> run  ;; 3 w 1 J 2 j 4 M [3 2] 1 d 0 0 1 1 re S [] 0 d 0 0 1 1 re S [a 5 (x) 7] 2 d 0 0 1 1 re S 1 J 0 0 1 1 re S 99999999999 J 0 0 1 1 re S
+< path op=6 forms=0 mcid=- S segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[-1.5 -1.5 2.5 2.5] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=3 cap=1 join=2 miter=4 dash=[3,2]@1 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=9 forms=0 mcid=- S segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[-1.5 -1.5 2.5 2.5] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=3 cap=1 join=2 miter=4 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=12 forms=0 mcid=- S segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[-1.5 -1.5 2.5 2.5] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=3 cap=1 join=2 miter=4 dash=[5,0,7]@2 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=15 forms=0 mcid=- S segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[-1.5 -1.5 2.5 2.5] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=3 cap=1 join=2 miter=4 dash=[5,0,7]@2 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=18 forms=0 mcid=- S segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[-1.5 -1.5 2.5 2.5] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=3 cap=2147483647 join=2 miter=4 dash=[5,0,7]@2 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> run /ExtGState <</G <</CA 0.5 /ca 0.25 /BM [/Multiply /Normal] /LW 7 /LC 1 /LJ 2 /ML 3 /D [[2 1] 0] /SMask <</S /Alpha>>>> /G2 <</CA 5 /ca -1 /BM (x) /SMask /None /D [1 2]>> /G3 3>> ;; /G gs 0 0 1 1 re f /G2 gs 0 0 1 1 re f /G3 gs /Missing gs 0 0 1 1 re f
+< path op=2 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=7 cap=1 join=2 miter=3 dash=[2,1]@0 alpha=0.25/0.5 bm=Multiply sm=1 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=5 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=7 cap=1 join=2 miter=3 dash=[2,1]@0 alpha=0/1 bm=Multiply sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=9 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=7 cap=1 join=2 miter=3 dash=[2,1]@0 alpha=0/1 bm=Multiply sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> run /ColorSpace <</Cs1 [/Separation /Spot /DeviceCMYK <</FunctionType 2 /Domain [0 1] /C0 [0 0 0 0] /C1 [0 1 1 0] /N 1>>] /Cs2 [/Indexed /DeviceRGB 1 <FF0000 00FF00>] /Cs3 [/ICCBased 5 0 R] /Cs4 [/Lab <</WhitePoint [0.95 1 1.09]>>] /Cs5 [/CalRGB <</WhitePoint [0.95 1 1.09]>>] /Cs6 [/DeviceN [/A /B] /DeviceRGB <</FunctionType 2 /Domain [0 1] /C0 [0 0 0] /C1 [1 1 1] /N 1>>] /Cs7 [/Pattern /DeviceRGB] /Cs8 /CalRGB /Cs9 [/CalGray <</WhitePoint [0.95 1 1.09]>>]>> ;; /Cs1 cs 1 sc 0 0 1 1 re f /Cs2 cs 1 sc 0 0 1 1 re f /Cs3 cs 0.5 0.2 0.1 sc 0 0 1 1 re f /Cs4 cs 50 20 -10 sc 0 0 1 1 re f /Cs5 cs 0.2 0.4 0.6 sc 0 0 1 1 re f /Cs6 cs 0.1 0.2 sc 0 0 1 1 re f /Cs7 cs 1 0 0 /P1 scn 0 0 1 1 re f /Cs8 cs 0 0 1 1 re f /Cs9 cs 0.3 sc 0 0 1 1 re f ;; stream /N 3 :: abc
+< path op=3 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=Separation(1):255,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=7 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=Indexed(1):0,255,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=11 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=ICCBased(0.5,0.2,0.1):128,51,26 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=15 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=Lab(50,20,-10):145,107,136 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=19 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=CalRGB(0.2,0.4,0.6):0,201,198 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=23 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceN(0.1,0.2):26,26,26 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=27 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=Pattern(1,0,0):255,0,0:P1 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=30 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceRGB(0,0,0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=34 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=CalGray(0.3):77,77,77 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> run  ;; 0.5 g 0.2 0.4 0.6 rg 0 1 0 0 k 0 G 1 0 0 RG 0 0 0 1 K 0 0 1 1 re B 1 rg 0 0 1 1 re f /X cs 0 0 1 1 re f /DeviceRGB cs 0.5 sc 0 0 1 1 re f /DeviceCMYK CS 0 0 1 1 re S sc 0 0 1 1 re S 2 -1 7 rg 0 0 1 1 re f
+< path op=7 forms=0 mcid=- B segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[-0.5 -0.5 1.5 1.5] fill=1 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceCMYK(0,1,0,0):255,0,255 stroke=DeviceCMYK(0,0,0,1):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=10 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceCMYK(0,1,0,0):255,0,255 stroke=DeviceCMYK(0,0,0,1):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=13 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceCMYK(0,0,0,1):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=17 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceRGB(0.5):128,0,0 stroke=DeviceCMYK(0,0,0,1):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=20 forms=0 mcid=- S segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[-0.5 -0.5 1.5 1.5] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceRGB(0.5):128,0,0 stroke=DeviceCMYK(0,0,0,1):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=23 forms=0 mcid=- S segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[-0.5 -0.5 1.5 1.5] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceRGB(0.5):128,0,0 stroke=DeviceCMYK(0,0,0,1):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=26 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceRGB(2,-1,7):255,0,255 stroke=DeviceCMYK(0,0,0,1):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> run /Pattern <</P1 5 0 R /P2 <</PatternType 2 /Shading <</ShadingType 2 /ColorSpace /DeviceRGB /Coords [0 0 1 1]>>>>>> ;; /Pattern cs /P1 scn 0 0 100 100 re f /P2 scn 0 0 5 5 re f /Pattern CS /P2 SCN 0 0 5 5 re S /Missing scn 0 0 5 5 re f ;; stream /PatternType 1 /PaintType 1 /TilingType 1 /BBox [0 0 10 10] /XStep 10 /YStep 10 /Matrix [2 0 0 2 0 0] :: 0 0 5 5 re f
+< path op=3 forms=0 mcid=- f segs=M 0 0;L 100 0;L 100 100;L 0 100;Z bounds=[0 0 100 100] ink=[0 0 100 100] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=Pattern():0,0,0:P1 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< pattern op=3 forms=1 mcid=- name=P1 m=[2 0 0 2 0 0] bounds=[0 0 20 20] oc=0
+< path op=1 forms=1 mcid=- f segs=M 0 0;L 10 0;L 10 10;L 0 10;Z bounds=[0 0 10 10] ink=[0 0 10 10] fill=1 stroke=0 eo=0 clips=0 ctm=[2 0 0 2 0 0] clip=[0 0 20 20] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< endform op=3 forms=1 mcid=-
+< path op=6 forms=0 mcid=- f segs=M 0 0;L 5 0;L 5 5;L 0 5;Z bounds=[0 0 5 5] ink=[0 0 5 5] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=Pattern():0,0,0:P2 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=10 forms=0 mcid=- S segs=M 0 0;L 5 0;L 5 5;L 0 5;Z bounds=[0 0 5 5] ink=[-0.5 -0.5 5.5 5.5] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=Pattern():0,0,0:P2 stroke=Pattern():0,0,0:P2 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=13 forms=0 mcid=- f segs=M 0 0;L 5 0;L 5 5;L 0 5;Z bounds=[0 0 5 5] ink=[0 0 5 5] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=Pattern():0,0,0:Missing stroke=Pattern():0,0,0:P2 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> run /Pattern <</P1 5 0 R>> /ColorSpace <</Cp [/Pattern /DeviceRGB]>> ;; /Cp cs 1 0 0 /P1 scn 0 0 100 100 re f 0 1 0 /P1 SCN 0 0 5 5 re S ;; stream /PatternType 1 /PaintType 2 /TilingType 1 /BBox [0 0 10 10] /XStep 10 /YStep 10 :: 0 0 5 5 re f 0 0 1 rg 1 1 2 2 re f
+< path op=3 forms=0 mcid=- f segs=M 0 0;L 100 0;L 100 100;L 0 100;Z bounds=[0 0 100 100] ink=[0 0 100 100] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=Pattern(1,0,0):255,0,0:P1 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< pattern op=3 forms=1 mcid=- name=P1 m=[1 0 0 1 0 0] bounds=[0 0 10 10] oc=0
+< path op=1 forms=1 mcid=- f segs=M 0 0;L 5 0;L 5 5;L 0 5;Z bounds=[0 0 5 5] ink=[0 0 5 5] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 10 10] fill=DeviceRGB(1,0,0):255,0,0 stroke=DeviceRGB(1,0,0):255,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< path op=4 forms=1 mcid=- f segs=M 1 1;L 3 1;L 3 3;L 1 3;Z bounds=[1 1 3 3] ink=[1 1 3 3] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 10 10] fill=DeviceRGB(0,0,1):0,0,255 stroke=DeviceRGB(1,0,0):255,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< endform op=3 forms=1 mcid=-
+< path op=6 forms=0 mcid=- S segs=M 0 0;L 5 0;L 5 5;L 0 5;Z bounds=[0 0 5 5] ink=[-0.5 -0.5 5.5 5.5] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=Pattern(1,0,0):255,0,0:P1 stroke=DeviceGray(0,1,0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> run /XObject <</Im 5 0 R /Fm2 6 0 R /Bad 7 0 R /Odd 8 0 R>> ;; q 100 0 0 50 10 20 cm /Im Do Q /Fm2 Do /Bad Do /Odd Do /None Do /Im Do ;; stream /Type /XObject /Subtype /Image /Width 8 /Height 4 /ColorSpace /DeviceGray /BitsPerComponent 8 /ImageMask true /OC 9 0 R :: \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00 ;; stream /BBox [0 0 5 5] :: 0 0 1 1 re f ;; stream /Subtype /Bogus :: 0 0 1 1 re f ;; 5 ;; <</Type /OCG /Name (L)>>
+< image op=2 forms=0 mcid=- name=Im inline=0 stream=1 w=8 h=4 mask=1 oc=1 m=[100 0 0 50 10 20] bounds=[10 20 110 70] dict=<</Type /XObject /Subtype /Image /Width 8 /Height 4 /ColorSpace /DeviceGray /BitsPerComponent 8 /ImageMask true /OC 9 0 R /Length 32>>
+< form op=4 forms=1 mcid=- name=Fm2 m=[1 0 0 1 0 0] bounds=[0 0 5 5] oc=0
+< path op=1 forms=1 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 5 5] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< endform op=4 forms=1 mcid=-
+< image op=8 forms=0 mcid=- name=Im inline=0 stream=1 w=8 h=4 mask=1 oc=1 m=[1 0 0 1 0 0] bounds=[0 0 1 1] dict=<</Type /XObject /Subtype /Image /Width 8 /Height 4 /ColorSpace /DeviceGray /BitsPerComponent 8 /ImageMask true /OC 9 0 R /Length 32>>
+< truncated 0
+> run /ColorSpace <</Cs1 [/Indexed /DeviceRGB 1 <000000FFFFFF>]>> ;; q 40 0 0 40 5 5 cm BI /W 2 /H 2 /BPC 8 /CS /Cs1 ID abcd\nEI Q BI /W 99999999999 /H -4 /IM true ID abc\nEI
+< image op=2 forms=0 mcid=- name=- inline=1 stream=0 w=2 h=2 mask=0 oc=0 m=[40 0 0 40 5 5] bounds=[5 5 45 45] dict=<</Width 2 /Height 2 /BitsPerComponent 8 /ColorSpace [/Indexed /DeviceRGB 1 <000000FFFFFF>]>>
+< image op=4 forms=0 mcid=- name=- inline=1 stream=0 w=2147483647 h=0 mask=1 oc=0 m=[1 0 0 1 0 0] bounds=[0 0 1 1] dict=<</Width 99999999999 /Height -4 /ImageMask true>>
+< truncated 0
+> run /Shading <</Sh <</ShadingType 2 /ColorSpace /DeviceRGB /Coords [0 0 1 1]>> /Sh2 5 0 R /Sh3 3>> ;; 0 0 50 50 re W n /Sh sh /Sh2 sh /Sh3 sh /Nope sh ;; stream /ShadingType 4 /ColorSpace /DeviceRGB /BitsPerCoordinate 8 /BitsPerComponent 8 /BitsPerFlag 8 /Decode [0 1 0 1 0 1 0 1 0 1] :: abc
+< path op=2 forms=0 mcid=- n segs=M 0 0;L 50 0;L 50 50;L 0 50;Z bounds=[0 0 50 50] ink=[0 0 50 50] fill=0 stroke=0 eo=0 clips=1 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< shading op=3 forms=0 mcid=- name=Sh bounds=[0 0 50 50] kind=dictionary
+< shading op=4 forms=0 mcid=- name=Sh2 bounds=[0 0 50 50] kind=stream
+< truncated 0
+> run /Properties <</Lyr 5 0 R /Bad 3>> ;; /Span <</MCID 4>> BDC /OC /Lyr BDC /P1 BMC 0 0 1 1 re f EMC EMC EMC EMC /OC /Bad BDC /Span /Missing BDC /Span 5 BDC BMC /X <</MCID (a)>> BDC EMC ;; <</Type /OCG /Name (Layer)>>
+< begin op=0 forms=0 mcid=4 tag=Span mcid=4 props=<</MCID 4>> oc=0
+< begin op=1 forms=0 mcid=4 tag=OC mcid=- props=<</Type /OCG /Name (Layer)>> oc=1
+< begin op=2 forms=0 mcid=4 tag=P1 mcid=- props=- oc=0
+< path op=4 forms=0 mcid=4 f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< end op=5 forms=0 mcid=4 tag=P1
+< end op=6 forms=0 mcid=4 tag=OC
+< end op=7 forms=0 mcid=4 tag=Span
+< begin op=9 forms=0 mcid=- tag=OC mcid=- props=- oc=0
+< begin op=10 forms=0 mcid=- tag=Span mcid=- props=- oc=0
+< begin op=11 forms=0 mcid=- tag=Span mcid=- props=- oc=0
+< begin op=12 forms=0 mcid=- tag= mcid=- props=- oc=0
+< begin op=13 forms=0 mcid=- tag=X mcid=- props=<</MCID (a)>> oc=0
+< end op=14 forms=0 mcid=- tag=X
+< end op=14 forms=0 mcid=- tag=
+< end op=14 forms=0 mcid=- tag=Span x2
+< end op=14 forms=0 mcid=- tag=OC
+< truncated 0
+> run  ;; /A BMC /B BMC 0 0 1 1 re f
+< begin op=0 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1 forms=0 mcid=- tag=B mcid=- props=- oc=0
+< path op=3 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< end op=3 forms=0 mcid=- tag=B
+< end op=3 forms=0 mcid=- tag=A
+< truncated 0
+> run  ;; {1100*/A BMC }0 0 1 1 re f
+< begin op=0 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=2 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=3 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=4 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=5 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=6 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=7 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=8 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=9 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=10 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=11 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=12 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=13 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=14 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=15 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=16 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=17 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=18 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=19 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=20 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=21 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=22 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=23 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=24 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=25 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=26 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=27 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=28 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=29 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=30 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=31 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=32 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=33 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=34 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=35 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=36 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=37 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=38 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=39 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=40 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=41 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=42 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=43 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=44 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=45 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=46 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=47 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=48 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=49 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=50 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=51 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=52 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=53 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=54 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=55 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=56 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=57 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=58 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=59 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=60 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=61 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=62 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=63 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=64 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=65 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=66 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=67 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=68 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=69 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=70 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=71 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=72 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=73 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=74 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=75 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=76 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=77 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=78 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=79 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=80 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=81 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=82 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=83 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=84 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=85 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=86 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=87 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=88 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=89 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=90 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=91 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=92 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=93 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=94 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=95 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=96 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=97 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=98 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=99 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=100 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=101 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=102 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=103 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=104 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=105 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=106 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=107 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=108 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=109 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=110 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=111 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=112 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=113 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=114 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=115 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=116 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=117 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=118 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=119 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=120 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=121 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=122 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=123 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=124 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=125 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=126 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=127 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=128 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=129 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=130 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=131 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=132 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=133 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=134 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=135 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=136 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=137 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=138 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=139 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=140 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=141 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=142 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=143 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=144 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=145 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=146 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=147 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=148 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=149 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=150 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=151 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=152 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=153 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=154 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=155 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=156 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=157 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=158 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=159 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=160 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=161 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=162 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=163 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=164 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=165 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=166 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=167 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=168 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=169 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=170 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=171 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=172 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=173 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=174 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=175 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=176 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=177 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=178 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=179 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=180 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=181 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=182 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=183 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=184 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=185 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=186 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=187 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=188 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=189 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=190 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=191 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=192 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=193 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=194 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=195 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=196 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=197 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=198 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=199 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=200 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=201 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=202 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=203 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=204 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=205 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=206 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=207 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=208 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=209 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=210 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=211 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=212 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=213 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=214 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=215 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=216 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=217 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=218 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=219 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=220 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=221 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=222 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=223 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=224 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=225 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=226 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=227 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=228 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=229 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=230 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=231 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=232 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=233 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=234 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=235 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=236 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=237 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=238 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=239 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=240 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=241 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=242 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=243 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=244 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=245 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=246 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=247 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=248 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=249 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=250 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=251 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=252 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=253 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=254 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=255 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=256 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=257 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=258 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=259 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=260 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=261 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=262 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=263 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=264 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=265 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=266 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=267 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=268 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=269 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=270 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=271 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=272 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=273 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=274 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=275 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=276 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=277 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=278 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=279 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=280 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=281 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=282 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=283 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=284 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=285 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=286 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=287 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=288 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=289 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=290 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=291 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=292 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=293 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=294 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=295 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=296 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=297 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=298 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=299 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=300 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=301 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=302 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=303 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=304 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=305 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=306 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=307 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=308 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=309 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=310 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=311 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=312 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=313 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=314 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=315 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=316 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=317 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=318 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=319 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=320 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=321 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=322 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=323 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=324 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=325 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=326 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=327 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=328 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=329 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=330 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=331 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=332 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=333 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=334 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=335 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=336 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=337 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=338 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=339 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=340 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=341 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=342 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=343 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=344 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=345 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=346 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=347 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=348 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=349 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=350 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=351 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=352 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=353 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=354 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=355 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=356 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=357 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=358 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=359 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=360 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=361 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=362 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=363 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=364 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=365 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=366 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=367 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=368 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=369 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=370 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=371 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=372 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=373 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=374 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=375 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=376 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=377 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=378 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=379 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=380 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=381 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=382 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=383 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=384 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=385 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=386 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=387 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=388 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=389 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=390 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=391 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=392 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=393 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=394 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=395 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=396 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=397 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=398 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=399 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=400 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=401 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=402 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=403 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=404 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=405 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=406 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=407 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=408 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=409 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=410 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=411 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=412 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=413 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=414 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=415 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=416 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=417 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=418 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=419 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=420 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=421 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=422 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=423 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=424 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=425 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=426 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=427 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=428 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=429 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=430 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=431 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=432 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=433 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=434 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=435 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=436 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=437 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=438 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=439 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=440 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=441 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=442 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=443 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=444 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=445 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=446 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=447 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=448 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=449 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=450 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=451 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=452 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=453 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=454 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=455 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=456 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=457 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=458 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=459 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=460 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=461 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=462 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=463 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=464 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=465 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=466 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=467 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=468 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=469 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=470 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=471 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=472 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=473 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=474 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=475 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=476 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=477 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=478 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=479 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=480 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=481 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=482 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=483 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=484 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=485 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=486 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=487 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=488 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=489 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=490 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=491 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=492 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=493 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=494 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=495 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=496 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=497 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=498 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=499 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=500 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=501 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=502 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=503 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=504 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=505 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=506 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=507 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=508 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=509 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=510 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=511 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=512 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=513 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=514 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=515 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=516 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=517 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=518 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=519 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=520 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=521 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=522 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=523 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=524 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=525 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=526 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=527 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=528 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=529 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=530 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=531 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=532 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=533 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=534 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=535 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=536 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=537 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=538 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=539 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=540 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=541 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=542 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=543 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=544 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=545 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=546 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=547 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=548 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=549 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=550 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=551 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=552 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=553 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=554 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=555 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=556 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=557 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=558 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=559 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=560 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=561 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=562 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=563 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=564 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=565 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=566 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=567 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=568 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=569 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=570 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=571 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=572 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=573 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=574 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=575 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=576 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=577 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=578 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=579 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=580 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=581 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=582 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=583 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=584 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=585 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=586 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=587 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=588 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=589 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=590 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=591 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=592 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=593 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=594 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=595 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=596 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=597 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=598 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=599 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=600 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=601 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=602 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=603 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=604 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=605 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=606 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=607 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=608 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=609 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=610 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=611 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=612 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=613 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=614 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=615 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=616 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=617 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=618 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=619 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=620 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=621 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=622 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=623 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=624 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=625 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=626 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=627 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=628 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=629 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=630 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=631 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=632 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=633 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=634 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=635 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=636 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=637 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=638 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=639 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=640 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=641 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=642 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=643 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=644 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=645 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=646 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=647 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=648 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=649 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=650 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=651 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=652 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=653 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=654 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=655 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=656 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=657 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=658 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=659 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=660 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=661 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=662 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=663 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=664 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=665 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=666 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=667 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=668 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=669 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=670 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=671 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=672 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=673 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=674 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=675 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=676 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=677 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=678 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=679 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=680 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=681 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=682 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=683 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=684 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=685 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=686 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=687 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=688 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=689 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=690 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=691 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=692 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=693 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=694 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=695 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=696 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=697 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=698 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=699 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=700 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=701 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=702 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=703 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=704 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=705 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=706 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=707 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=708 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=709 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=710 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=711 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=712 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=713 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=714 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=715 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=716 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=717 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=718 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=719 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=720 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=721 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=722 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=723 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=724 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=725 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=726 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=727 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=728 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=729 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=730 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=731 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=732 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=733 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=734 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=735 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=736 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=737 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=738 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=739 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=740 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=741 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=742 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=743 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=744 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=745 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=746 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=747 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=748 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=749 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=750 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=751 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=752 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=753 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=754 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=755 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=756 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=757 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=758 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=759 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=760 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=761 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=762 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=763 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=764 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=765 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=766 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=767 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=768 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=769 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=770 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=771 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=772 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=773 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=774 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=775 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=776 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=777 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=778 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=779 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=780 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=781 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=782 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=783 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=784 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=785 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=786 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=787 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=788 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=789 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=790 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=791 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=792 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=793 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=794 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=795 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=796 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=797 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=798 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=799 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=800 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=801 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=802 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=803 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=804 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=805 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=806 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=807 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=808 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=809 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=810 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=811 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=812 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=813 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=814 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=815 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=816 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=817 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=818 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=819 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=820 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=821 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=822 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=823 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=824 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=825 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=826 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=827 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=828 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=829 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=830 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=831 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=832 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=833 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=834 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=835 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=836 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=837 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=838 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=839 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=840 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=841 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=842 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=843 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=844 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=845 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=846 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=847 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=848 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=849 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=850 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=851 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=852 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=853 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=854 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=855 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=856 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=857 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=858 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=859 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=860 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=861 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=862 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=863 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=864 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=865 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=866 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=867 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=868 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=869 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=870 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=871 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=872 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=873 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=874 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=875 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=876 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=877 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=878 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=879 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=880 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=881 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=882 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=883 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=884 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=885 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=886 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=887 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=888 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=889 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=890 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=891 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=892 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=893 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=894 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=895 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=896 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=897 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=898 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=899 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=900 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=901 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=902 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=903 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=904 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=905 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=906 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=907 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=908 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=909 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=910 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=911 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=912 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=913 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=914 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=915 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=916 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=917 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=918 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=919 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=920 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=921 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=922 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=923 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=924 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=925 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=926 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=927 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=928 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=929 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=930 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=931 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=932 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=933 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=934 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=935 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=936 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=937 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=938 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=939 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=940 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=941 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=942 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=943 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=944 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=945 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=946 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=947 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=948 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=949 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=950 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=951 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=952 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=953 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=954 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=955 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=956 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=957 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=958 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=959 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=960 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=961 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=962 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=963 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=964 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=965 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=966 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=967 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=968 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=969 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=970 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=971 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=972 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=973 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=974 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=975 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=976 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=977 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=978 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=979 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=980 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=981 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=982 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=983 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=984 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=985 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=986 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=987 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=988 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=989 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=990 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=991 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=992 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=993 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=994 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=995 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=996 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=997 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=998 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=999 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1000 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1001 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1002 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1003 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1004 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1005 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1006 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1007 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1008 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1009 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1010 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1011 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1012 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1013 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1014 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1015 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1016 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1017 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1018 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1019 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1020 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1021 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1022 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< begin op=1023 forms=0 mcid=- tag=A mcid=- props=- oc=0
+< path op=1101 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< end op=1101 forms=0 mcid=- tag=A x1024
+< truncated 0
+> run /XObject <</Fm 5 0 R>> /Font <</F1 6 0 R>> ;; /Fm Do 0 0 1 1 re f ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] /Matrix [1 0 0 1 10 10] :: q 9 w 0 0 500 500 re f ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< form op=0 forms=1 mcid=- name=Fm m=[1 0 0 1 10 10] bounds=[10 10 110 110] oc=0
+< path op=3 forms=1 mcid=- f segs=M 10 10;L 510 10;L 510 510;L 10 510;Z bounds=[10 10 510 510] ink=[10 10 510 510] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 10 10] clip=[10 10 110 110] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=9 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< endform op=0 forms=1 mcid=-
+< path op=2 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> run /XObject <</Fm 5 0 R>> /Font <</F1 6 0 R>> ;; BT /F1 10 Tf 1 0 0 1 5 6 Tm /Fm Do (B) Tj ET ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] /Matrix [1 0 0 1 50 60] :: BT /F1 10 Tf (A) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< form op=3 forms=1 mcid=- name=Fm m=[1 0 0 1 50 60] bounds=[50 60 150 160] oc=0
+< glyph op=2 forms=1 mcid=- code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 50 60] box=[50 57.93 56.67 67.18] adv=6.67 el=0 off=0 ctm=[1 0 0 1 50 60] clip=[50 60 150 160] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< endform op=3 forms=1 mcid=-
+< glyph op=4 forms=0 mcid=- code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 5 6] box=[5 3.93 11.67 13.18] adv=6.67 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< truncated 0
+> run /XObject <</Fm 5 0 R>> ;; /Fm Do ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] /Resources <</Font <</F1 6 0 R>>>> :: BT /F1 10 Tf (A) Tj ET ;; <</Type /Font /Subtype /Type1 /BaseFont /Courier>>
+< form op=0 forms=1 mcid=- name=Fm m=[1 0 0 1 0 0] bounds=[0 0 100 100] oc=0
+< glyph op=2 forms=1 mcid=- code=65 len=1 cid=65 w=600 u=0041 space=0 va=-1000 ox=300 oy=880 m=[10 0 0 10 0 0] box=[0 -1.57 6 6.29] adv=6 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 100 100] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Courier size=10
+< endform op=0 forms=1 mcid=-
+< truncated 0
+> run /XObject <</Fm 5 0 R>> /Font <</F1 6 0 R>> ;; /Fm Do ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] :: BT /F1 10 Tf (A) Tj ET /Fm Do ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< form op=0 forms=1 mcid=- name=Fm m=[1 0 0 1 0 0] bounds=[0 0 100 100] oc=0
+< glyph op=2 forms=1 mcid=- code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 0 0] box=[0 -2.07 6.67 7.18] adv=6.67 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 100 100] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< endform op=0 forms=1 mcid=-
+< truncated 0
+> run /XObject <</A 5 0 R /B 6 0 R>> /Font <</F1 7 0 R>> ;; /A Do ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] :: BT /F1 10 Tf (A) Tj ET /B Do ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] :: BT /F1 10 Tf (B) Tj ET /A Do ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+< form op=0 forms=1 mcid=- name=A m=[1 0 0 1 0 0] bounds=[0 0 100 100] oc=0
+< glyph op=2 forms=1 mcid=- code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 0 0] box=[0 -2.07 6.67 7.18] adv=6.67 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 100 100] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< form op=4 forms=2 mcid=- name=B m=[1 0 0 1 0 0] bounds=[0 0 100 100] oc=0
+< glyph op=2 forms=2 mcid=- code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880 m=[10 0 0 10 0 0] box=[0 -2.07 6.67 7.18] adv=6.67 el=0 off=0 ctm=[1 0 0 1 0 0] clip=[0 0 100 100] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=Helvetica size=10
+< endform op=4 forms=2 mcid=-
+< endform op=0 forms=1 mcid=-
+< truncated 0
+> run /XObject <</Fm 5 0 R>> ;; /Fm Do 0 0 1 1 re f ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] /Filter /FlateDecode :: xx
+< form op=0 forms=1 mcid=- name=Fm m=[1 0 0 1 0 0] bounds=[0 0 100 100] oc=0
+< endform op=0 forms=1 mcid=-
+< path op=2 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> run /XObject <</Fm 5 0 R>> ;; /P BMC /Fm Do 0 0 1 1 re f EMC ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] :: /X BMC 0 0 1 1 re f EMC EMC EMC
+< begin op=0 forms=0 mcid=- tag=P mcid=- props=- oc=0
+< form op=1 forms=1 mcid=- name=Fm m=[1 0 0 1 0 0] bounds=[0 0 100 100] oc=0
+< begin op=0 forms=1 mcid=- tag=X mcid=- props=- oc=0
+< path op=2 forms=1 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 100 100] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< end op=3 forms=1 mcid=- tag=X
+< endform op=1 forms=1 mcid=-
+< path op=3 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< end op=4 forms=0 mcid=- tag=P
+< truncated 0
+> run /XObject <</Fm 5 0 R /Fm2 6 0 R /Fm3 7 0 R>> ;; 0 0 m 10 10 l /Fm Do 20 20 l S /Fm2 Do /Fm3 Do ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] /OC 8 0 R :: q 1 0 0 rg 2 0 0 2 0 0 cm 0 0 1 1 re f ;; stream /Type /XObject /Subtype /Form :: 5 w 0 0 3 3 re S ;; stream /Type /XObject /Subtype /Form /BBox [10 10 20 20] /Matrix [0 1 -1 0 0 0] :: 0 0 100 100 re f ;; <</Type /OCG /Name (L)>>
+< form op=2 forms=1 mcid=- name=Fm m=[1 0 0 1 0 0] bounds=[0 0 100 100] oc=1
+< path op=4 forms=1 mcid=- f segs=M 0 0;L 2 0;L 2 2;L 0 2;Z bounds=[0 0 2 2] ink=[0 0 2 2] fill=1 stroke=0 eo=0 clips=0 ctm=[2 0 0 2 0 0] clip=[0 0 100 100] fill=DeviceRGB(1,0,0):255,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< endform op=2 forms=1 mcid=-
+< path op=4 forms=0 mcid=- S segs=M 0 0;L 10 10;L 20 20 bounds=[0 0 20 20] ink=[-0.5 -0.5 20.5 20.5] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< form op=5 forms=1 mcid=- name=Fm2 m=[1 0 0 1 0 0] bounds=[0 0 600 800] oc=0
+< path op=2 forms=1 mcid=- S segs=M 0 0;L 3 0;L 3 3;L 0 3;Z bounds=[0 0 3 3] ink=[-2.5 -2.5 5.5 5.5] fill=0 stroke=1 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=5 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< endform op=5 forms=1 mcid=-
+< form op=6 forms=1 mcid=- name=Fm3 m=[0 1 -1 0 0 0] bounds=[-20 10 -10 20] oc=0
+< path op=1 forms=1 mcid=- f segs=M 0 0;L 0 100;L -100 100;L -100 0;Z bounds=[-100 0 0 100] ink=[-100 0 0 100] fill=1 stroke=0 eo=0 clips=0 ctm=[0 1 -1 0 0 0] clip=[0 0 0 0] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< endform op=6 forms=1 mcid=-
+< truncated 0
+> run /XObject <</Fm 5 0 R>> ;; /Fm Do 0 0 1 1 re f ;; stream /Type /XObject /Subtype /Form /BBox [0 0 100 100] :: {1200000*q }
+< form op=0 forms=1 mcid=- name=Fm m=[1 0 0 1 0 0] bounds=[0 0 100 100] oc=0
+< endform op=0 forms=1 mcid=-
+< path op=2 forms=0 mcid=- f segs=M 0 0;L 1 0;L 1 1;L 0 1;Z bounds=[0 0 1 1] ink=[0 0 1 1] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 600 800] fill=DeviceGray(0):0,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> nest 40
+< paths 20 depth 20
+> font 412062 ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold>>
+< font subtype=Type1 base=Helvetica-Bold name=Helvetica-Bold composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=262176 bold=1 italic=0 fixed=0 serif=0 symbolic=0 ascent=718 descent=-207 cap=718 matrix=[0.001 0 0 0.001 0 0] bbox=[-170 -228 1003 962]
+< char code=65 len=1 cid=65 w=722 u=0041 space=0 va=-1000 ox=361 oy=880
+< char code=32 len=1 cid=32 w=278 u=0020 space=1 va=-1000 ox=139 oy=880
+< char code=98 len=1 cid=98 w=611 u=0062 space=0 va=-1000 ox=305.5 oy=880
+< text 0041,0020,0062
+> font 4161203132 ;; <</Type /Font /Subtype /TrueType /BaseFont /ABCDEF+TimesNewRomanPS-BoldMT /Encoding /WinAnsiEncoding>>
+< font subtype=TrueType base=ABCDEF+TimesNewRomanPS-BoldMT name=TimesNewRomanPS-BoldMT composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=262178 bold=1 italic=0 fixed=0 serif=1 symbolic=0 ascent=683 descent=-217 cap=676 matrix=[0.001 0 0 0.001 0 0] bbox=[-168 -218 1000 935]
+< char code=65 len=1 cid=65 w=722 u=0041 space=0 va=-1000 ox=361 oy=880
+< char code=97 len=1 cid=97 w=500 u=0061 space=0 va=-1000 ox=250 oy=880
+< char code=32 len=1 cid=32 w=250 u=0020 space=1 va=-1000 ox=125 oy=880
+< char code=49 len=1 cid=49 w=500 u=0031 space=0 va=-1000 ox=250 oy=880
+< char code=50 len=1 cid=50 w=500 u=0032 space=0 va=-1000 ox=250 oy=880
+< text 0041,0061,0020,0031,0032
+> font 4142436100 ;; <</Type /Font /Subtype /Type1 /BaseFont /Foo /FirstChar 65 /LastChar 66 /Widths [500 600] /FontDescriptor 6 0 R>> ;; <</Type /FontDescriptor /FontName /Foo /Flags 32 /MissingWidth 300 /Ascent 900 /Descent 250 /CapHeight 700 /ItalicAngle -12 /FontBBox [-10 -250 1000 900]>>
+< font subtype=Type1 base=Foo name=Foo composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=1 fixed=0 serif=0 symbolic=0 ascent=900 descent=-250 cap=700 matrix=[0.001 0 0 0.001 0 0] bbox=[-10 -250 1000 900]
+< char code=65 len=1 cid=65 w=500 u=0041 space=0 va=-1000 ox=250 oy=880
+< char code=66 len=1 cid=66 w=600 u=0042 space=0 va=-1000 ox=300 oy=880
+< char code=67 len=1 cid=67 w=300 u=0043 space=0 va=-1000 ox=150 oy=880
+< char code=97 len=1 cid=97 w=300 u=0061 space=0 va=-1000 ox=150 oy=880
+< char code=0 len=1 cid=0 w=300 u=- space=0 va=-1000 ox=150 oy=880
+< text 0041,0042,0043,0061
+> font 41 ;; <</Type /Font /Subtype /Type1 /BaseFont /Foo>>
+< font subtype=Type1 base=Foo name=Foo composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880
+< text 0041
+> font 414243 ;; <</Type /Font /Subtype /Type1 /BaseFont /Foo-Bold /FontDescriptor 6 0 R>> ;; <</Type /FontDescriptor /FontName /Foo /Flags 262147 /FontWeight 700>>
+< font subtype=Type1 base=Foo-Bold name=Foo-Bold composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=262147 bold=1 italic=0 fixed=1 serif=1 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=65 len=1 cid=65 w=600 u=0041 space=0 va=-1000 ox=300 oy=880
+< char code=66 len=1 cid=66 w=600 u=0042 space=0 va=-1000 ox=300 oy=880
+< char code=67 len=1 cid=67 w=600 u=0043 space=0 va=-1000 ox=300 oy=880
+< text 0041,0042,0043
+> font 414243 ;; <</Type /Font /Subtype /Type1 /BaseFont /Foo /FontDescriptor 6 0 R>> ;; <</Type /FontDescriptor /FontName /Foo /Flags 34 /Ascent 0 /Descent 0 /FontBBox [0 -100 500 800]>>
+< font subtype=Type1 base=Foo name=Foo composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=34 bold=0 italic=0 fixed=0 serif=1 symbolic=0 ascent=800 descent=-100 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=[0 -100 500 800]
+< char code=65 len=1 cid=65 w=722 u=0041 space=0 va=-1000 ox=361 oy=880
+< char code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880
+< char code=67 len=1 cid=67 w=667 u=0043 space=0 va=-1000 ox=333.5 oy=880
+< text 0041,0042,0043
+> font 41424364C8FF ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding <</Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences [65 /Euro /ccedilla 200 /uni011F 255 /u1F600 /nosuchglyph]>>>>
+< font subtype=Type1 base=Helvetica name=Helvetica composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=718 descent=-207 cap=718 matrix=[0.001 0 0 0.001 0 0] bbox=[-166 -225 1000 931]
+< char code=65 len=1 cid=65 w=556 u=20AC space=0 va=-1000 ox=278 oy=880
+< char code=66 len=1 cid=66 w=500 u=00E7 space=0 va=-1000 ox=250 oy=880
+< char code=67 len=1 cid=67 w=722 u=0043 space=0 va=-1000 ox=361 oy=880
+< char code=100 len=1 cid=100 w=556 u=0064 space=0 va=-1000 ox=278 oy=880
+< char code=200 len=1 cid=200 w=0 u=011F space=0 va=-1000 ox=0 oy=880
+< char code=255 len=1 cid=255 w=0 u=1F600 space=0 va=-1000 ox=0 oy=880
+< text 20AC,00E7,0043,0064,011F,1F600
+> font 41E98EC8FF ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /MacRomanEncoding>>
+< font subtype=Type1 base=Helvetica name=Helvetica composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=718 descent=-207 cap=718 matrix=[0.001 0 0 0.001 0 0] bbox=[-166 -225 1000 931]
+< char code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880
+< char code=233 len=1 cid=233 w=667 u=00C8 space=0 va=-1000 ox=333.5 oy=880
+< char code=142 len=1 cid=142 w=556 u=00E9 space=0 va=-1000 ox=278 oy=880
+< char code=200 len=1 cid=200 w=556 u=00BB space=0 va=-1000 ox=278 oy=880
+< char code=255 len=1 cid=255 w=333 u=02C7 space=0 va=-1000 ox=166.5 oy=880
+< text 0041,00C8,00E9,00BB,02C7
+> font 41E98EC8FF ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< font subtype=Type1 base=Helvetica name=Helvetica composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=718 descent=-207 cap=718 matrix=[0.001 0 0 0.001 0 0] bbox=[-166 -225 1000 931]
+< char code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880
+< char code=233 len=1 cid=233 w=556 u=00E9 space=0 va=-1000 ox=278 oy=880
+< char code=142 len=1 cid=142 w=611 u=017D space=0 va=-1000 ox=305.5 oy=880
+< char code=200 len=1 cid=200 w=667 u=00C8 space=0 va=-1000 ox=333.5 oy=880
+< char code=255 len=1 cid=255 w=500 u=00FF space=0 va=-1000 ox=250 oy=880
+< text 0041,00E9,017D,00C8,00FF
+> font 41E98EC8FF ;; <</Type /Font /Subtype /Type1 /BaseFont /Foo /Encoding /MacExpertEncoding>>
+< font subtype=Type1 base=Foo name=Foo composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=65 len=1 cid=65 w=0 u=- space=0 va=-1000 ox=0 oy=880
+< char code=233 len=1 cid=233 w=0 u=F6ED space=0 va=-1000 ox=0 oy=880
+< char code=142 len=1 cid=142 w=0 u=F7E9 space=0 va=-1000 ox=0 oy=880
+< char code=200 len=1 cid=200 w=0 u=- space=0 va=-1000 ox=0 oy=880
+< char code=255 len=1 cid=255 w=0 u=- space=0 va=-1000 ox=0 oy=880
+< text F6ED,F7E9
+> font 41E98EC8FF ;; <</Type /Font /Subtype /TrueType /BaseFont /Foo>>
+< font subtype=TrueType base=Foo name=Foo composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880
+< char code=233 len=1 cid=233 w=556 u=00E9 space=0 va=-1000 ox=278 oy=880
+< char code=142 len=1 cid=142 w=611 u=017D space=0 va=-1000 ox=305.5 oy=880
+< char code=200 len=1 cid=200 w=667 u=00C8 space=0 va=-1000 ox=333.5 oy=880
+< char code=255 len=1 cid=255 w=500 u=00FF space=0 va=-1000 ox=250 oy=880
+< text 0041,00E9,017D,00C8,00FF
+> font 41426162 ;; <</Type /Font /Subtype /Type1 /BaseFont /Symbol>>
+< font subtype=Type1 base=Symbol name=Symbol composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=4 bold=0 italic=0 fixed=0 serif=0 symbolic=1 ascent=1010 descent=-293 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=[-180 -293 1090 1010]
+< char code=65 len=1 cid=65 w=722 u=0391 space=0 va=-1000 ox=361 oy=880
+< char code=66 len=1 cid=66 w=667 u=0392 space=0 va=-1000 ox=333.5 oy=880
+< char code=97 len=1 cid=97 w=631 u=03B1 space=0 va=-1000 ox=315.5 oy=880
+< char code=98 len=1 cid=98 w=549 u=03B2 space=0 va=-1000 ox=274.5 oy=880
+< text 0391,0392,03B1,03B2
+> font 41426162 ;; <</Type /Font /Subtype /Type1 /BaseFont /ZapfDingbats>>
+< font subtype=Type1 base=ZapfDingbats name=ZapfDingbats composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=4 bold=0 italic=0 fixed=0 serif=0 symbolic=1 ascent=820 descent=-143 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=[-1 -143 981 820]
+< char code=65 len=1 cid=65 w=692 u=2721 space=0 va=-1000 ox=346 oy=880
+< char code=66 len=1 cid=66 w=786 u=2722 space=0 va=-1000 ox=393 oy=880
+< char code=97 len=1 cid=97 w=789 u=2741 space=0 va=-1000 ox=394.5 oy=880
+< char code=98 len=1 cid=98 w=789 u=2742 space=0 va=-1000 ox=394.5 oy=880
+< text 2721,2722,2741,2742
+> font 4142 ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding <</Differences [-5 /a 1000 /b 255 /c 256 /d 65 (x) 99999 /e 3 /f]>>>>
+< font subtype=Type1 base=Helvetica name=Helvetica composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=718 descent=-207 cap=718 matrix=[0.001 0 0 0.001 0 0] bbox=[-166 -225 1000 931]
+< char code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880
+< char code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880
+< text 0041,0042
+> font 4142 ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /ToUnicode 6 0 R>> ;; stream :: /CIDInit /ProcSet findresource begin 12 dict begin begincmap 1 begincodespacerange <00> <FF> endcodespacerange 2 beginbfchar <41> <005A> <42> <00660069> endbfchar 1 beginbfrange <61> <63> <0061> endbfrange endcmap
+< font subtype=Type1 base=Helvetica name=Helvetica composite=0 type3=0 vertical=0 embedded=0 tounicode=1 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=718 descent=-207 cap=718 matrix=[0.001 0 0 0.001 0 0] bbox=[-166 -225 1000 931]
+< char code=65 len=1 cid=65 w=667 u=005A space=0 va=-1000 ox=333.5 oy=880
+< char code=66 len=1 cid=66 w=667 u=0066,0069 space=0 va=-1000 ox=333.5 oy=880
+< text 005A,0066,0069
+> font 4142 ;; <</Type /Font /Subtype /TrueType /BaseFont /Foo /Encoding /WinAnsiEncoding /ToUnicode 6 0 R>> ;; stream :: /CIDInit /ProcSet findresource begin 12 dict begin begincmap 1 begincodespacerange <0000> <FFFF> endcodespacerange 1 beginbfchar <0041> <015F> endbfchar endcmap
+< font subtype=TrueType base=Foo name=Foo composite=0 type3=0 vertical=0 embedded=0 tounicode=1 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=65 len=1 cid=65 w=667 u=015F space=0 va=-1000 ox=333.5 oy=880
+< char code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880
+< text 015F,0042
+> font 4142 ;; <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /FirstChar 65 /Widths [333] /ToUnicode 6 0 R>> ;; stream /Filter /FlateDecode :: garbage
+< font subtype=Type1 base=Helvetica name=Helvetica composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=718 descent=-207 cap=718 matrix=[0.001 0 0 0.001 0 0] bbox=[-166 -225 1000 931]
+< char code=65 len=1 cid=65 w=333 u=0041 space=0 va=-1000 ox=166.5 oy=880
+< char code=66 len=1 cid=66 w=0 u=0042 space=0 va=-1000 ox=0 oy=880
+< text 0041,0042
+> font 00010002000F0032 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /DW 800 /W [1 [500 600] 10 20 700]>>
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=1 len=2 cid=1 w=500 u=- space=0 va=-1000 ox=250 oy=880
+< char code=2 len=2 cid=2 w=600 u=- space=0 va=-1000 ox=300 oy=880
+< char code=15 len=2 cid=15 w=700 u=- space=0 va=-1000 ox=350 oy=880
+< char code=50 len=2 cid=50 w=800 u=- space=0 va=-1000 ox=400 oy=880
+< text 
+> font 000100020003FFFF ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /DW 500 /W [1 2 3 [4] 70000 80000 5 -3 /x 3 [100 /a 200] 65535 [7 8] -5 2 9 (s) 1]>>
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=1 len=2 cid=1 w=9 u=- space=0 va=-1000 ox=4.5 oy=880
+< char code=2 len=2 cid=2 w=9 u=- space=0 va=-1000 ox=4.5 oy=880
+< char code=3 len=2 cid=3 w=500 u=- space=0 va=-1000 ox=250 oy=880
+< char code=65535 len=2 cid=65535 w=7 u=- space=0 va=-1000 ox=3.5 oy=880
+< text 
+> font 00010005000800FF ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-V /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType0 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /DW 1000 /DW2 [900 -950] /W2 [5 [-500 100 800] 7 8 -600 200 700]>>
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=1 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=1 len=2 cid=1 w=1000 u=- space=0 va=-950 ox=500 oy=900
+< char code=5 len=2 cid=5 w=1000 u=- space=0 va=-500 ox=100 oy=800
+< char code=8 len=2 cid=8 w=1000 u=- space=0 va=-600 ox=200 oy=700
+< char code=255 len=2 cid=255 w=1000 u=- space=0 va=-950 ox=500 oy=900
+< text 
+> font 41 82A0 42 A1 8140 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /90ms-RKSJ-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Japan1) /Supplement 2>> /DW 1000>>
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=65 len=1 cid=264 w=1000 u=0041 space=0 va=-1000 ox=500 oy=880
+< char code=33440 len=2 cid=843 w=1000 u=3042 space=0 va=-1000 ox=500 oy=880
+< char code=66 len=1 cid=265 w=1000 u=0042 space=0 va=-1000 ox=500 oy=880
+< char code=161 len=1 cid=327 w=1000 u=FF61 space=0 va=-1000 ox=500 oy=880
+< char code=33088 len=2 cid=633 w=1000 u=2003 space=0 va=-1000 ox=500 oy=880
+< text 0041,3042,0042,FF61,2003
+> font 002200230100FFFF0001 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType0 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Japan1) /Supplement 2>>>>
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=34 len=2 cid=34 w=1000 u=0041 space=0 va=-1000 ox=500 oy=880
+< char code=35 len=2 cid=35 w=1000 u=0042 space=0 va=-1000 ox=500 oy=880
+< char code=256 len=2 cid=256 w=1000 u=0039 space=0 va=-1000 ox=500 oy=880
+< char code=65535 len=2 cid=65535 w=1000 u=- space=0 va=-1000 ox=500 oy=880
+< char code=1 len=2 cid=1 w=1000 u=0020 space=0 va=-1000 ox=500 oy=880
+< text 0041,0042,0039,0020
+> font 002200230100 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType0 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (GB1) /Supplement 2>>>>
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=34 len=2 cid=34 w=1000 u=0041 space=0 va=-1000 ox=500 oy=880
+< char code=35 len=2 cid=35 w=1000 u=0042 space=0 va=-1000 ox=500 oy=880
+< char code=256 len=2 cid=256 w=1000 u=2166 space=0 va=-1000 ox=500 oy=880
+< text 0041,0042,2166
+> font 002200230100 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType0 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (CNS1) /Supplement 2>>>>
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=34 len=2 cid=34 w=1000 u=0041 space=0 va=-1000 ox=500 oy=880
+< char code=35 len=2 cid=35 w=1000 u=0042 space=0 va=-1000 ox=500 oy=880
+< char code=256 len=2 cid=256 w=1000 u=- space=0 va=-1000 ox=500 oy=880
+< text 0041,0042
+> font 002200230100 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType0 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Korea1) /Supplement 2>>>>
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=34 len=2 cid=34 w=1000 u=0041 space=0 va=-1000 ox=500 oy=880
+< char code=35 len=2 cid=35 w=1000 u=0042 space=0 va=-1000 ox=500 oy=880
+< char code=256 len=2 cid=256 w=1000 u=327F space=0 va=-1000 ox=500 oy=880
+< text 0041,0042,327F
+> font 3042004130A2 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /UniJIS-UCS2-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Japan1) /Supplement 2>> /DW 1000>>
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=12354 len=2 cid=843 w=1000 u=3042 space=0 va=-1000 ox=500 oy=880
+< char code=65 len=2 cid=34 w=1000 u=0041 space=0 va=-1000 ox=500 oy=880
+< char code=12450 len=2 cid=926 w=1000 u=30A2 space=0 va=-1000 ox=500 oy=880
+< text 3042,0041,30A2
+> font 3042004130A2 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /UniJIS-UCS2-V /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Japan1) /Supplement 2>> /DW 1000>>
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=1 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=12354 len=2 cid=843 w=1000 u=3042 space=0 va=-1000 ox=500 oy=880
+< char code=65 len=2 cid=34 w=1000 u=0041 space=0 va=-1000 ox=500 oy=880
+< char code=12450 len=2 cid=926 w=1000 u=30A2 space=0 va=-1000 ox=500 oy=880
+< text 3042,0041,30A2
+> font D800FF ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /UniJIS-UTF16-H /DescendantFonts [<<>>]>>
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=14156031 len=3 cid=0 w=1000 u=- space=0 va=-1000 ox=500 oy=880
+< text 
+> font D83DDE00004100 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding /UniJIS-UTF16-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /CIDSystemInfo <</Registry (Adobe) /Ordering (Japan1) /Supplement 6>>>>
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=-667034112 len=4 cid=0 w=1000 u=1F600 space=0 va=-1000 ox=500 oy=880
+< char code=65 len=2 cid=34 w=1000 u=0041 space=0 va=-1000 ox=500 oy=880
+< char code=0 len=1 cid=0 w=1000 u=0000 space=0 va=-1000 ox=500 oy=880
+< text 1F600,0041,0000
+> font 2020 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding 7 0 R /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /DW 500 /W [100 [250]]>> ;; stream /Type /CMap /CMapName /Custom :: /CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /Custom def /WMode 0 def 1 begincodespacerange <00> <FF> endcodespacerange 1 begincidrange <20> <7E> 100 endcidrange endcmap
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=32 len=1 cid=100 w=250 u=- space=1 va=-1000 ox=125 oy=880
+< char code=32 len=1 cid=100 w=250 u=- space=1 va=-1000 ox=125 oy=880
+< text 
+> font 2041 ;; <</Type /Font /Subtype /Type0 /BaseFont /X /Encoding 7 0 R /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /X /DW 500>> ;; stream /Type /CMap /UseCMap /90ms-RKSJ-H :: /CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /Custom def /WMode 1 def 1 begincodespacerange <00> <FF> endcodespacerange 1 begincidrange <20> <7E> 100 endcidrange endcmap
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=1 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=32 len=1 cid=100 w=500 u=- space=1 va=-1000 ox=250 oy=880
+< char code=65 len=1 cid=133 w=500 u=- space=0 va=-1000 ox=250 oy=880
+< text 
+> font 4142 ;; <</Type /Font /Subtype /Type3 /FontBBox [0 -200 1000 800] /FontMatrix [0.002 0 0 0.004 0 0] /FirstChar 65 /LastChar 66 /Widths [500 250] /FontDescriptor 6 0 R /Encoding <</Differences [65 /A /B]>> /CharProcs <<>>>> ;; <</Type /FontDescriptor /FontName /T3 /Flags 4 /MissingWidth 100>>
+< font subtype=Type3 base= name= composite=0 type3=1 vertical=0 embedded=0 tounicode=0 flags=4 bold=0 italic=0 fixed=0 serif=0 symbolic=1 ascent=3200 descent=-800 cap=0 matrix=[0.002 0 0 0.004 0 0] bbox=[0 -200 1000 800]
+< char code=65 len=1 cid=65 w=1000 u=0041 space=0 va=-1000 ox=500 oy=880
+< char code=66 len=1 cid=66 w=500 u=0042 space=0 va=-1000 ox=250 oy=880
+< text 0041,0042
+> font 4142 ;; <</Type /Font /Subtype /Type3 /FontMatrix [0 0 0 0 0 0] /Widths 5>>
+< font subtype=Type3 base= name= composite=0 type3=1 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=65 len=1 cid=65 w=0 u=0041 space=0 va=-1000 ox=0 oy=880
+< char code=66 len=1 cid=66 w=0 u=0042 space=0 va=-1000 ox=0 oy=880
+< text 0041,0042
+> font 004100 ;; <</Type /Font /Subtype /Type0 /BaseFont /X>>
+< font subtype=Type0 base=X name=X composite=1 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=65 len=2 cid=65 w=1000 u=- space=0 va=-1000 ox=500 oy=880
+< char code=0 len=1 cid=0 w=1000 u=- space=0 va=-1000 ox=500 oy=880
+< text 
+> font 004100 ;; <</Type /Font /Subtype /Type0 /DescendantFonts [<<>>] /Encoding /NoSuchCMap>>
+< font subtype=Type0 base= name= composite=1 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=65 len=2 cid=65 w=1000 u=- space=0 va=-1000 ox=500 oy=880
+< char code=0 len=1 cid=0 w=1000 u=- space=0 va=-1000 ox=500 oy=880
+< text 
+> font 41 ;; <<>>
+< font subtype=Type1 base= name= composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880
+< text 0041
+> font 41FF ;; <</Type /Font /Subtype /TrueType /Widths [/a (b) 3 [4]] /FirstChar -5 /Encoding 3>>
+< font subtype=TrueType base= name= composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=65 len=1 cid=65 w=0 u=0041 space=0 va=-1000 ox=0 oy=880
+< char code=255 len=1 cid=255 w=0 u=00FF space=0 va=-1000 ox=0 oy=880
+< text 0041,00FF
+> font 4142 ;; <</Type /Font /Subtype /Type1 /Encoding <</Differences [/a 99999 /b -4 (x)]>> /ToUnicode 5 0 R>>
+< font subtype=Type1 base= name= composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880
+< char code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880
+< text 0041,0042
+> font 4142 ;; <</BaseFont /Helvetica>>
+< font subtype=Type1 base=Helvetica name=Helvetica composite=0 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=718 descent=-207 cap=718 matrix=[0.001 0 0 0.001 0 0] bbox=[-166 -225 1000 931]
+< char code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880
+< char code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880
+< text 0041,0042
+> font 4142 ;; <</DescendantFonts [<<>>]>>
+< font subtype=Type0 base= name= composite=1 type3=0 vertical=0 embedded=0 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=16706 len=2 cid=16706 w=1000 u=- space=0 va=-1000 ox=500 oy=880
+< text 
+> font 414243 ;; <</Type /Font /Subtype /TrueType /BaseFont /Arial /FontDescriptor 6 0 R>> ;; <</Type /FontDescriptor /FontName /Arial /Flags 4 /FontFile2 7 0 R>> ;; stream :: file:programs/synthetic.ttf
+< font subtype=TrueType base=Arial name=Arial composite=0 type3=0 vertical=0 embedded=1 tounicode=0 flags=4 bold=0 italic=0 fixed=0 serif=0 symbolic=1 ascent=718 descent=-207 cap=718 matrix=[0.001 0 0 0.001 0 0] bbox=[-166 -225 1000 931]
+< char code=65 len=1 cid=65 w=600 u=0041 space=0 va=-1000 ox=300 oy=880
+< char code=66 len=1 cid=66 w=550 u=0042 space=0 va=-1000 ox=275 oy=880
+< char code=67 len=1 cid=67 w=0 u=- space=0 va=-1000 ox=0 oy=880
+< text 0041,0042
+> font 4142C0 ;; <</Type /Font /Subtype /TrueType /BaseFont /Arial /Encoding /WinAnsiEncoding /FontDescriptor 6 0 R>> ;; <</Type /FontDescriptor /FontName /Arial /Flags 32 /FontFile2 7 0 R>> ;; stream :: file:programs/synthetic.ttf
+< font subtype=TrueType base=Arial name=Arial composite=0 type3=0 vertical=0 embedded=1 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=718 descent=-207 cap=718 matrix=[0.001 0 0 0.001 0 0] bbox=[-166 -225 1000 931]
+< char code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880
+< char code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880
+< char code=192 len=1 cid=192 w=667 u=00C0 space=0 va=-1000 ox=333.5 oy=880
+< text 0041,0042,00C0
+> font 4142 ;; <</Type /Font /Subtype /TrueType /BaseFont /Arial /Encoding <</Differences [65 /Amatched /Alt]>> /FontDescriptor 6 0 R>> ;; <</Type /FontDescriptor /FontName /Arial /Flags 32 /FontFile2 7 0 R>> ;; stream :: file:programs/synthetic.ttf
+< font subtype=TrueType base=Arial name=Arial composite=0 type3=0 vertical=0 embedded=1 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=718 descent=-207 cap=718 matrix=[0.001 0 0 0.001 0 0] bbox=[-166 -225 1000 931]
+< char code=65 len=1 cid=65 w=600 u=0041 space=0 va=-1000 ox=300 oy=880
+< char code=66 len=1 cid=66 w=550 u=0042 space=0 va=-1000 ox=275 oy=880
+< text 0041,0042
+> font 000100020003000400050006 ;; <</Type /Font /Subtype /Type0 /BaseFont /Arial /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /Arial /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /FontDescriptor 7 0 R /CIDToGIDMap /Identity /DW 700>> ;; <</Type /FontDescriptor /FontName /Arial /Flags 32 /FontFile2 8 0 R>> ;; stream :: file:programs/synthetic.ttf
+< font subtype=Type0 base=Arial name=Arial composite=1 type3=0 vertical=0 embedded=1 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=718 descent=-207 cap=718 matrix=[0.001 0 0 0.001 0 0] bbox=[-166 -225 1000 931]
+< char code=1 len=2 cid=1 w=700 u=0041 space=0 va=-1000 ox=350 oy=880
+< char code=2 len=2 cid=2 w=700 u=0042 space=0 va=-1000 ox=350 oy=880
+< char code=3 len=2 cid=3 w=700 u=00C0 space=0 va=-1000 ox=350 oy=880
+< char code=4 len=2 cid=4 w=700 u=011F space=0 va=-1000 ox=350 oy=880
+< char code=5 len=2 cid=5 w=700 u=0020 space=0 va=-1000 ox=350 oy=880
+< char code=6 len=2 cid=6 w=700 u=0130 space=0 va=-1000 ox=350 oy=880
+< text 0041,0042,00C0,011F,0020,0130
+> font 000100020003000400050006 ;; <</Type /Font /Subtype /Type0 /BaseFont /Arial /Encoding /Identity-H /DescendantFonts [6 0 R]>> ;; <</Type /Font /Subtype /CIDFontType2 /BaseFont /Arial /FontDescriptor 7 0 R /CIDToGIDMap 9 0 R>> ;; <</Type /FontDescriptor /FontName /Arial /Flags 32 /FontFile2 8 0 R>> ;; stream :: file:programs/synthetic.ttf ;; stream :: \x00\x00\x00\x02\x00\x01\x00\x06\x00\x04
+< font subtype=Type0 base=Arial name=Arial composite=1 type3=0 vertical=0 embedded=1 tounicode=0 flags=32 bold=0 italic=0 fixed=0 serif=0 symbolic=0 ascent=718 descent=-207 cap=718 matrix=[0.001 0 0 0.001 0 0] bbox=[-166 -225 1000 931]
+< char code=1 len=2 cid=1 w=1000 u=0042 space=0 va=-1000 ox=500 oy=880
+< char code=2 len=2 cid=2 w=1000 u=0041 space=0 va=-1000 ox=500 oy=880
+< char code=3 len=2 cid=3 w=1000 u=0130 space=0 va=-1000 ox=500 oy=880
+< char code=4 len=2 cid=4 w=1000 u=011F space=0 va=-1000 ox=500 oy=880
+< char code=5 len=2 cid=5 w=1000 u=- space=0 va=-1000 ox=500 oy=880
+< char code=6 len=2 cid=6 w=1000 u=- space=0 va=-1000 ox=500 oy=880
+< text 0042,0041,0130,011F
+> font 4142 ;; <</Type /Font /Subtype /Type1 /BaseFont /Foo /FontDescriptor 6 0 R>> ;; <</Type /FontDescriptor /FontName /Foo /Flags 4 /FontFile 7 0 R>> ;; stream :: %!PS-AdobeFont-1.0: Foo\n/FontName /Foo def
+< font subtype=Type1 base=Foo name=Foo composite=0 type3=0 vertical=0 embedded=1 tounicode=0 flags=4 bold=0 italic=0 fixed=0 serif=0 symbolic=1 ascent=800 descent=-200 cap=0 matrix=[0.001 0 0 0.001 0 0] bbox=-
+< char code=65 len=1 cid=65 w=667 u=0041 space=0 va=-1000 ox=333.5 oy=880
+< char code=66 len=1 cid=66 w=667 u=0042 space=0 va=-1000 ox=333.5 oy=880
+< text 0041,0042
+> fixture crypt-rc4-40.pdf secret
+< page 0
+< path op=2 forms=0 mcid=- f segs=M 0 0;L 612 0;L 612 792;L 0 792;Z bounds=[0 0 612 792] ink=[0 0 612 792] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 612 792] fill=DeviceRGB(1,0,0):255,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> fixture crypt-aes128.pdf secret
+< page 0
+< path op=2 forms=0 mcid=- f segs=M 0 0;L 612 0;L 612 792;L 0 792;Z bounds=[0 0 612 792] ink=[0 0 612 792] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 612 792] fill=DeviceRGB(1,0,0):255,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> fixture crypt-aes256-r5.pdf secret
+< page 0
+< path op=2 forms=0 mcid=- f segs=M 0 0;L 612 0;L 612 792;L 0 792;Z bounds=[0 0 612 792] ink=[0 0 612 792] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 612 792] fill=DeviceRGB(1,0,0):255,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> fixture crypt-aes256.pdf secret
+< page 0
+< path op=2 forms=0 mcid=- f segs=M 0 0;L 612 0;L 612 792;L 0 792;Z bounds=[0 0 612 792] ink=[0 0 612 792] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 612 792] fill=DeviceRGB(1,0,0):255,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> fixture crypt-aes256.pdf owner
+< page 0
+< path op=2 forms=0 mcid=- f segs=M 0 0;L 612 0;L 612 792;L 0 792;Z bounds=[0 0 612 792] ink=[0 0 612 792] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 612 792] fill=DeviceRGB(1,0,0):255,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> fixture locked.pdf secret
+< page 0
+< path op=2 forms=0 mcid=- f segs=M 0 0;L 612 0;L 612 792;L 0 792;Z bounds=[0 0 612 792] ink=[0 0 612 792] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 612 792] fill=DeviceRGB(1,0,0):255,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> fixture owner-only-rc4.pdf -
+< page 0
+< path op=2 forms=0 mcid=- f segs=M 0 0;L 612 0;L 612 792;L 0 792;Z bounds=[0 0 612 792] ink=[0 0 612 792] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 612 792] fill=DeviceRGB(1,0,0):255,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0
+> fixture owner-only-aes.pdf -
+< page 0
+< path op=2 forms=0 mcid=- f segs=M 0 0;L 612 0;L 612 792;L 0 792;Z bounds=[0 0 612 792] ink=[0 0 612 792] fill=1 stroke=0 eo=0 clips=0 ctm=[1 0 0 1 0 0] clip=[0 0 612 792] fill=DeviceRGB(1,0,0):255,0,0 stroke=DeviceGray(0):0,0,0 lw=1 cap=0 join=0 miter=10 dash=[]@0 alpha=1/1 bm=Normal sm=0 tc=0 tw=0 tz=1 tl=0 ts=0 tr=0 font=- size=0
+< truncated 0

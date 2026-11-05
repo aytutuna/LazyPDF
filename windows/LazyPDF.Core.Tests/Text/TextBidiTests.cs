@@ -77,4 +77,14 @@ public class TextBidiTests
         Assert.Equal(1, page.CaretAt(111, 702));
         Assert.Equal(3, page.CaretAt(99, 702));
     }
+
+    [Theory(Timeout = 20000)]
+    [InlineData('%')]
+    [InlineData('.')]
+    public async Task ALongRunOfNeutralsIsResolvedInLinearTime(char neutral)
+    {
+        string content = "BT /F1 0.001 Tf 100 700 Td (" + new string(neutral, 100_000) + @"\001) Tj ET";
+        var page = await Task.Run(() => Text(content, "", Hebrew));
+        Assert.StartsWith("א", page.Text);
+    }
 }

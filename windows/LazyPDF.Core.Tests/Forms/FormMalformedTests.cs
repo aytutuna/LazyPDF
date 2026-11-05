@@ -116,4 +116,12 @@ public class FormMalformedTests
         Assert.Equal(["s"], form.SetValue("s", "x").Rejected);
         Assert.True(form.CanFill);
     }
+
+    [Fact]
+    public void AWidgetWithoutARectangleCannotBeMoved()
+    {
+        var form = Build("<</Fields [10 0 R]>>", "<</Type /Annot /Subtype /Widget /FT /Tx /T (t) /P 3 0 R>>");
+
+        Assert.Throws<ArgumentException>(() => form.Move(form.Find("t")!.Widgets[0], 5, 5));
+    }
 }

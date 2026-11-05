@@ -65,7 +65,7 @@ public class TextBrokenInputTests
     [Fact]
     public void ADegenerateMatrixLeavesNothingBehind()
     {
-        var page = Text("BT /F1 10 Tf 0 0 0 0 100 100 Tm (flat) Tj ET BT /F1 1e12 Tf 1 0 0 1 0 0 Tm (huge) Tj ET");
+        var page = Text("BT /F1 10 Tf 0 0 0 0 100 100 Tm (flat) Tj ET BT /F1 1000000000000 Tf 1 0 0 1 0 0 Tm (huge) Tj ET");
         Assert.Null(TextInvariants.Check(page));
     }
 

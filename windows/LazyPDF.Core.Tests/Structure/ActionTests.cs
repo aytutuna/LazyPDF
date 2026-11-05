@@ -241,4 +241,33 @@ public class ActionTests
         Assert.Equal(["O", "C"], triggers.Select(t => t.Event));
         Assert.Empty(PdfActions.Triggers(document, null));
     }
+
+    [Fact]
+    public void ScriptBehindALongChainIsFound()
+    {
+        var document = StructureFixtures.File("/OpenAction 20 0 R", pdf =>
+        {
+            for (int i = 0; i < 12; i++) pdf.Obj(20 + i, $"<</S /Named /N /NextPage /Next {21 + i} 0 R>>");
+            pdf.Obj(32, "<</S /JavaScript /JS (x)>>");
+        });
+        Assert.True(PdfActions.HasJavaScript(document));
+    }
+
+    [Theory]
+    [InlineData("<</S /URI /URI 5 /Next <</S /JavaScript /JS (x)>>>>")]
+    [InlineData("<</S /GoTo /Next <</S /JavaScript /JS (x)>>>>")]
+    public void ScriptBehindAnActionThatFailsToBuildIsFound(string body)
+    {
+        var document = StructureFixtures.File("/OpenAction 20 0 R", pdf => pdf.Obj(20, body));
+        Assert.True(PdfActions.HasJavaScript(document));
+        Assert.Single(Assert.IsType<OtherAction>(PdfActions.ReadDocument(document).OpenAction).Next);
+    }
+
+    [Fact]
+    public void AnActionReadFromAFileThatCannotBeWrittenIsRefusedOnTheWay()
+    {
+        var document = StructureFixtures.File("", pdf => pdf.Obj(20, "<</S /Hide /T (x) /Next <</S /GoTo /D [99 0 R /Fit]>>>>"));
+        var action = PdfActions.Read(document, new PdfReference(20, 0))!;
+        Assert.Throws<ArgumentException>(() => PdfActions.ToObject(document, action));
+    }
 }

@@ -67,7 +67,7 @@ public sealed class FdfFile
     internal void Add(int number, PdfObject value)
     {
         Objects[number] = value;
-        if (number >= _next) _next = number + 1;
+        if (number >= _next) _next = (int)Math.Min((long)number + 1, int.MaxValue);
     }
 
     /// <summary>

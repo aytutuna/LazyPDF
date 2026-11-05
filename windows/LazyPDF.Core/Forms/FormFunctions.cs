@@ -33,7 +33,7 @@ internal static class FormFunctions
             case "AFNumber_Format":
                 return ParseNumber(value, (int)call.Number(1)) is { } n ? Number(n, (int)call.Number(0), (int)call.Number(1), (int)call.Number(2), call.Text(4), call.Flag(5, true), percent: false) : null;
             case "AFPercent_Format":
-                return ParseNumber(value) is { } p ? Number(p * 100, (int)call.Number(0), (int)call.Number(1), 0, "", true, percent: true) : null;
+                return ParseNumber(value) is { } p && double.IsFinite(p * 100) ? Number(p * 100, (int)call.Number(0), (int)call.Number(1), 0, "", true, percent: true) : null;
             case "AFDate_Format" or "AFDate_FormatEx" or "AFTime_Format" or "AFTime_FormatEx":
                 return ParseDate(value, DateFormat(call)) is { } d ? new Formatted(PrintDate(d, DateFormat(call)), null) : null;
             case "AFSpecial_Format":
@@ -88,7 +88,9 @@ internal static class FormFunctions
         return double.IsFinite(result) ? NumberText(result) : null;
     }
 
-    public static string NumberText(double value) => Math.Round(value, 10).ToString("R", CultureInfo.InvariantCulture);
+    // Math.Round goes through value * 1e10, which moves a large whole number by a few units in the last place; from 2^43 on a
+    // double has no digits beyond the tenth to round off.
+    public static string NumberText(double value) => (Math.Abs(value) < 1e13 ? Math.Round(value, 10) : value).ToString("R", CultureInfo.InvariantCulture);
 
     // Under a style with a comma as the decimal mark a lone dot followed by three digits is a group mark.
     private static double? ParseNumber(string text, int separatorStyle)

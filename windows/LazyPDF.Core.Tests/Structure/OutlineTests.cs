@@ -334,4 +334,13 @@ public class OutlineTests
         Assert.Equal(2, bookmarks.Roots.Count);
         Assert.Equal(3, bookmarks.Roots[0].Children.Count);
     }
+
+    [Fact]
+    public void AnActionReadFromAFileThatCannotBeWrittenStopsTheWrite()
+    {
+        var document = Sample();
+        var outline = Outline.Read(document);
+        outline.Items[0].Action = new OtherAction("Hide");
+        Assert.Throws<ArgumentException>(() => outline.Write(document));
+    }
 }

@@ -18,8 +18,13 @@ public static class PdfImageWriter
 
     /// <summary><paramref name="rgba"/> is straight RGBA8, top row first.</summary>
     /// <exception cref="ArgumentException">The size is not positive or does not fit the data.</exception>
-    public static PdfImage AddRgba(PdfDocument document, int width, int height, byte[] rgba) =>
-        new(ContentImages.AddRgba(document, width, height, rgba), width, height);
+    /// <exception cref="InvalidOperationException">The picture has more pixels than an image may (<see cref="StampsText.PictureTooLarge"/>).</exception>
+    public static PdfImage AddRgba(PdfDocument document, int width, int height, byte[] rgba)
+    {
+        // A picture the user picked can be this big; it is not a caller's mistake.
+        if (width >= 1 && height >= 1 && (long)width * height > PdfImageSamples.MaxPixels) throw new InvalidOperationException(StampsText.PictureTooLarge);
+        return new(ContentImages.AddRgba(document, width, height, rgba), width, height);
+    }
 
     // From Lazy Scan's PdfBuilder.cs: the frame size and component count
     // of a JPEG from its start-of-frame segment, walking the markers by their lengths.

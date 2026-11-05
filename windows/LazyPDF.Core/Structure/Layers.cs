@@ -43,7 +43,7 @@ public static class PdfLayers
 
         var placed = new HashSet<int>();
         var order = new List<LayerNode>();
-        if (document.Array(config, "Order") is { } tree) order = Nodes(document, tree, byNumber, placed, 0);
+        if (document.Array(config, "Order") is { } tree) order = Nodes(document, tree, byNumber, placed, [], 0);
         foreach (var layer in layers)
         {
             if (!placed.Contains(layer.Reference.Number)) order.Add(new LayerNode(null, layer, []));
@@ -83,10 +83,11 @@ public static class PdfLayers
         return true;
     }
 
-    private static List<LayerNode> Nodes(PdfDocument document, PdfArray array, Dictionary<int, PdfLayer> layers, HashSet<int> placed, int depth)
+    private static List<LayerNode> Nodes(PdfDocument document, PdfArray array, Dictionary<int, PdfLayer> layers, HashSet<int> placed, HashSet<PdfArray> visited, int depth)
     {
         var nodes = new List<LayerNode>();
-        if (depth > MaxDepth) return nodes;
+        // An array that lists itself, or that several arrays list, is read once: the tree is the file's, not a count of the ways to walk it.
+        if (depth > MaxDepth || !visited.Add(array)) return nodes;
         bool afterRow = false;
         foreach (var item in array.Items.Take(MaxLayers))
         {
@@ -94,7 +95,7 @@ public static class PdfLayers
             if (resolved is PdfArray children)
             {
                 // An array right after a layer or a label is that row's children; otherwise it is a group without a name.
-                var inner = Nodes(document, children, layers, placed, depth + 1);
+                var inner = Nodes(document, children, layers, placed, visited, depth + 1);
                 if (afterRow) nodes[^1] = nodes[^1] with { Children = inner };
                 else nodes.Add(new LayerNode(null, null, inner));
                 afterRow = false;

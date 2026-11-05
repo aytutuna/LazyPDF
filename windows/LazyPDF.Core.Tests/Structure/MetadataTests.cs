@@ -247,4 +247,153 @@ public class MetadataTests
         Assert.Equal("Annual report", DocumentMetadata.Read(reopened).Title);
         Assert.Equal("Finance", DocumentMetadata.Read(reopened).Custom["Department"]);
     }
+
+    private const string Rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+    private const string DcNs = "http://purl.org/dc/elements/1.1/";
+
+    private static PdfDocument WithBytes(byte[] packet) =>
+        StructureFixtures.File("/Metadata 30 0 R", pdf => pdf.Stream(30, "/Type /Metadata /Subtype /XML", packet));
+
+    private static string PacketText(PdfDocument document) =>
+        Encoding.UTF8.GetString(document.Data(document.Stream(document.Catalog, "Metadata")!)).Replace("\r\n", "\n");
+
+    [Fact]
+    public void CharactersXmlForbidsAreLeftOutOfXmp()
+    {
+        var document = WithXmp(Packet);
+        (Sample() with { Title = "A\u0001B￾", Subject = "a\r\nb\rc", Keywords = "k\u0008;m" }).Write(document);
+        string text = PacketText(document);
+        Assert.Contains(">AB</rdf:li>", text);
+        Assert.Contains(">a\nb\nc</rdf:li>", text);
+        Assert.Contains("<rdf:li>k</rdf:li><rdf:li>m</rdf:li>", text);
+        Assert.NotNull(XmpPacket.Load(document));
+    }
+
+    [Fact]
+    public void PacketThatIsNotUtf8IsLeftAlone()
+    {
+        byte[] latin1 = Encoding.Latin1.GetBytes($"<rdf:RDF xmlns:rdf=\"{Rdf}\"><rdf:Description xmlns:dc=\"{DcNs}\"><dc:title>café</dc:title></rdf:Description></rdf:RDF>");
+        var document = WithBytes(latin1);
+        Assert.Null(DocumentMetadata.Read(document).Title);
+        Sample().Write(document);
+        Assert.Equal(latin1, document.Data(document.Stream(document.Catalog, "Metadata")!));
+    }
+
+    [Fact]
+    public void XmpIsReadInTheEncodingsXmlReaderKnows()
+    {
+        string body = $"<rdf:RDF xmlns:rdf=\"{Rdf}\"><rdf:Description xmlns:dc=\"{DcNs}\"><dc:title>café</dc:title></rdf:Description></rdf:RDF>";
+        string Declared(string name) => $"<?xml version=\"1.0\" encoding=\"{name}\"?>";
+        var utf32be = Encoding.GetEncoding(12001);
+        (string Name, byte[] Bytes, string Title)[] cases =
+        [
+            ("utf-16le", Encoding.Unicode.GetBytes(body), "café"),
+            ("utf-16le mark", [.. Encoding.Unicode.GetPreamble(), .. Encoding.Unicode.GetBytes(body)], "café"),
+            ("utf-16be", Encoding.BigEndianUnicode.GetBytes(body), "café"),
+            ("utf-16 declared", Encoding.Unicode.GetBytes(Declared("utf-16") + body), "café"),
+            ("utf-32le mark", [.. Encoding.UTF32.GetPreamble(), .. Encoding.UTF32.GetBytes(body)], "café"),
+            ("utf-32be", utf32be.GetBytes(body), "café"),
+            ("utf-32be mark", [.. utf32be.GetPreamble(), .. utf32be.GetBytes(body)], "café"),
+            ("latin-1 declared", Encoding.Latin1.GetBytes(Declared("ISO-8859-1") + body), "café"),
+            ("ascii declared", Encoding.Latin1.GetBytes(Declared("ascii") + body), "caf?"),
+            ("utf-8 mark and latin-1 declared", [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes(Declared("latin1") + body)], "cafÃ©"),
+        ];
+        foreach (var (name, bytes, title) in cases)
+        {
+            Assert.True(title == DocumentMetadata.Read(WithBytes(bytes)).Title, name);
+        }
+    }
+
+    [Fact]
+    public void XmpInAnEncodingXmlReaderRefusesIsLeftAlone()
+    {
+        string body = $"<rdf:RDF xmlns:rdf=\"{Rdf}\"/>";
+        byte[][] cases =
+        [
+            Encoding.Unicode.GetBytes($"<?xml version=\"1.0\" encoding=\"utf-8\"?>{body}"),
+            Encoding.UTF8.GetBytes($"<?xml version=\"1.0\" encoding=\"utf-16\"?>{body}"),
+            Encoding.Latin1.GetBytes($"<?xml version=\"1.0\" encoding=\"no-such-encoding\"?>{body}"),
+            [.. Encoding.UTF8.GetBytes("<rdf:RDF xmlns:rdf=\"" + Rdf + "\">a"), 0xED, 0xA0, 0x80, .. Encoding.UTF8.GetBytes("</rdf:RDF>")],
+            [0xFF, 0xFE, .. Encoding.Unicode.GetBytes("<rdf:RDF xmlns:rdf=\"" + Rdf + "\">a"), 0x00, 0xD8, .. Encoding.Unicode.GetBytes("</rdf:RDF>")],
+        ];
+        foreach (byte[] bytes in cases)
+        {
+            var document = WithBytes(bytes);
+            Sample().Write(document);
+            Assert.Equal(bytes, document.Data(document.Stream(document.Catalog, "Metadata")!));
+        }
+    }
+
+    [Fact]
+    public void XmpThatXmlReaderRefusesIsLeftAlone()
+    {
+        string[] cases =
+        [
+            $"<?xml foo=\"1\" version=\"1.0\"?><rdf:RDF xmlns:rdf=\"{Rdf}\"/>",
+            $"<?xml version=\"1.0\" standalone=\"yes\" encoding=\"utf-8\"?><rdf:RDF xmlns:rdf=\"{Rdf}\"/>",
+            $"<rdf:RDF xmlns:rdf=\"{Rdf}\" xmlns=\"http://www.w3.org/2000/xmlns/\"/>",
+            $"<rdf:RDF xmlns:rdf=\"{Rdf}\"><Ĳ/></rdf:RDF>",
+            $"<rdf:RDF xmlns:rdf=\"{Rdf}\"><é></é></rdf:RDF>",
+            $"<rdf:RDF xmlns:rdf=\"{Rdf}\">&#X41;</rdf:RDF>",
+            $"<rdf:RDF xmlns:rdf=\"{Rdf}\">&#x110000;</rdf:RDF>",
+        ];
+        foreach (string xml in cases)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes(xml);
+            var document = WithBytes(bytes);
+            Sample().Write(document);
+            Assert.True(bytes.AsSpan().SequenceEqual(document.Data(document.Stream(document.Catalog, "Metadata")!)), xml);
+        }
+    }
+
+    [Fact]
+    public void XmpThatXmlReaderAcceptsIsRead()
+    {
+        string[] cases =
+        [
+            $"<rdf:RDF xmlns:rdf=\"{Rdf}\"><rdf:Description xmlns:dc=\"{DcNs}\"><dc:title>&#x0000000000041;</dc:title></rdf:Description></rdf:RDF>",
+            $"<rdf:RDF xmlns:rdf=\"{Rdf}\"><rdf:Description xmlns:dc=\"{DcNs}\" é=\"1\" é=\"2\"><dc:title>A</dc:title></rdf:Description></rdf:RDF>",
+            $"<?xml version=\"1.0\" standalone=\"no\"?><rdf:RDF xmlns:rdf=\"{Rdf}\"><rdf:Description xmlns:dc=\"{DcNs}\"><dc:title>A</dc:title></rdf:Description></rdf:RDF>",
+        ];
+        foreach (string xml in cases)
+        {
+            Assert.True("A" == DocumentMetadata.Read(WithBytes(Encoding.UTF8.GetBytes(xml))).Title, xml);
+        }
+    }
+
+    [Fact]
+    public void NamesXmlConvertRefusesAreNotCustomKeys()
+    {
+        var document = WithXmp(Packet);
+        (Sample() with { Custom = new Dictionary<string, string> { ["Ĳ"] = "x", ["Fine"] = "y" } }).Write(document);
+        string text = PacketText(document);
+        Assert.DoesNotContain("Ĳ", text);
+        Assert.Contains(">y</pdfx:Fine>", text);
+    }
+
+    [Fact]
+    public void PrefixesAreChosenAgainWhenThePacketIsWritten()
+    {
+        var twice = WithXmp($"<a:RDF xmlns:a=\"{Rdf}\" xmlns:b=\"{Rdf}\"><a:Description/></a:RDF>");
+        Sample().Write(twice);
+        string text = PacketText(twice);
+        Assert.Contains("<b:RDF ", text);
+        Assert.Contains("<b:Description ", text);
+
+        var byDefault = WithXmp($"<rdf:RDF xmlns:rdf=\"{Rdf}\"><rdf:Description xmlns=\"{DcNs}\"/></rdf:RDF>");
+        Sample().Write(byDefault);
+        text = PacketText(byDefault);
+        Assert.Contains("xmlns:dc=", text);
+        Assert.Contains("<dc:title>", text);
+        Assert.NotNull(XmpPacket.Load(byDefault));
+    }
+
+    [Fact]
+    public void AttributeInTheOnlyDefaultNamespaceGetsAPrefix()
+    {
+        var document = WithXmp($"<RDF xmlns=\"{Rdf}\"/>");
+        Sample().Write(document);
+        Assert.NotNull(XmpPacket.Load(document));
+        Assert.Contains("<Description p", PacketText(document));
+    }
 }

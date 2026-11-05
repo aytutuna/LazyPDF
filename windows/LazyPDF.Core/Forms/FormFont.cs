@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Text;
 
 namespace LazyPDF.Core;
@@ -49,7 +50,7 @@ internal sealed class FormFont
         {
             one[0] = (byte)code;
             font.Read(one, out var c);
-            if (c.Unicode is { Length: > 0 } text && Rune.GetRuneAt(text, 0) is var rune && rune.Utf16SequenceLength == text.Length) codes.TryAdd(rune.Value, (code, c.Width));
+            if (c.Unicode is { Length: > 0 } text && Rune.DecodeFromUtf16(text, out var rune, out int used) == OperationStatus.Done && used == text.Length) codes.TryAdd(rune.Value, (code, c.Width));
         }
         if (!codes.ContainsKey(0xA0) && codes.TryGetValue(' ', out var space)) codes[0xA0] = space;
         double ascent = font.Ascent > 0 ? font.Ascent / 1000 : 0.8;

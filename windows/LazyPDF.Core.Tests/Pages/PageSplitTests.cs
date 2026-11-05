@@ -132,4 +132,11 @@ public class PageSplitTests
         Assert.False(session.Commit("Nothing"));
         Assert.False(session.IsDirty);
     }
+
+    [Fact]
+    public void ACountBeyondThePagesIsOnePart()
+    {
+        Assert.Equal("1,2", Order(PageAssembly.SplitEvery(PageTestFiles.Open(2), int.MaxValue)));
+        Assert.Equal("1,2", Order(PageAssembly.SplitEvery(PageTestFiles.Open(2), int.MaxValue - 1)));
+    }
 }

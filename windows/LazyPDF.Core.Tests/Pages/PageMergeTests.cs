@@ -134,4 +134,19 @@ public class PageMergeTests
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
     }
+
+    [Fact]
+    public void ADocumentListedTwiceGivesEachCopyItsOwnFields()
+    {
+        var source = PdfDocument.Open(PageTestFiles.Make(1, "/AcroForm <</Fields [20 0 R]>>", i => "/Annots [21 0 R 22 0 R]", add: pdf => pdf
+            .Obj(20, "<</FT /Btn /Ff 49152 /T (r) /V /a /Kids [21 0 R 22 0 R]>>")
+            .Obj(21, "<</Type /Annot /Subtype /Widget /Parent 20 0 R /Rect [0 0 10 10] /AS /a /AP <</N <</a 23 0 R /Off 23 0 R>>>>>>")
+            .Obj(22, "<</Type /Annot /Subtype /Widget /Parent 20 0 R /Rect [20 0 30 10] /AS /Off /AP <</N <</b 23 0 R /Off 23 0 R>>>>>>")
+            .Stream(23, "/Type /XObject /Subtype /Form /BBox [0 0 10 10]", "")));
+        var merged = PageAssembly.Merge([new MergeSource(source), new MergeSource(source)]);
+        var again = PdfDocument.Open(merged.SaveRewrite());
+        var fields = again.Array(again.Dict(again.Catalog, "AcroForm"), "Fields")!.Items.Select(f => (PdfDictionary)again.Resolve(f)!).ToList();
+        Assert.Equal(["r", "r_2"], fields.Select(f => Encoding.Latin1.GetString(((PdfString)f["T"]!).Bytes)));
+        Assert.All(fields, f => Assert.Equal(2, again.Array(f, "Kids")!.Items.Count));
+    }
 }
