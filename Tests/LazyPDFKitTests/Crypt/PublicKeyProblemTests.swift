@@ -6,7 +6,7 @@ import XCTest
 // on. The seven before it open a PdfDocument (NoCertificateNeedsOne, CertificateOfSomeoneElseNeedsTheRightOne,
 // RightCertificateWithoutItsPrivateKeyIsNotEnough, ProblemIsTheSameForBothStrengths, PasswordFileGivenACertificate
 // StillWantsAPassword, PasswordFileWithAnEmptyUserPasswordOpensWithACertificate, PlainFileIgnoresTheCertificate) and
-// come with the Document layer. The two tests at the end are their handler-level halves: the answer that the
+// are in Document/PublicKeyProblemOpenTests.swift. The two tests at the end are their handler-level halves: the answer that the
 // document turns into CertificateRequired. DamagedRecipientsAreNotACrash has no C# twin.
 
 final class PublicKeyProblemTests: XCTestCase {

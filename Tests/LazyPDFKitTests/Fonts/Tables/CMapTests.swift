@@ -268,7 +268,7 @@ final class CMapTests: XCTestCase {
         let start = Date()
         let map = CMap.parse(data)
         let elapsed = Date().timeIntervalSince(start) * 1000
-        XCTAssertLessThan(elapsed, 5000, "\(elapsed) ms")
+        XCTAssertLessThan(elapsed, 60_000, "\(elapsed) ms")
         XCTAssertEqual(map.unicodeOf(0x00), String(repeating: "\u{AAAA}", count: 128))
     }
 

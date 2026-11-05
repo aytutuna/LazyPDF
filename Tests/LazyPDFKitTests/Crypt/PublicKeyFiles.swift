@@ -4,7 +4,7 @@ import Security
 @testable import LazyPDFKit
 
 // Twin of windows/LazyPDF.Core.Tests/Crypt/PublicKeyFiles.cs, without Plain, Seal and Content, which need
-// PdfDocument and come with the Document layer. The certificates are made once per run.
+// PdfDocument and are in Document/PublicKeyDocumentFiles.swift. The certificates are made once per run.
 
 enum PublicKeyFiles {
     static let alice = certificate("First")

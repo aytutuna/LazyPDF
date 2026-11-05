@@ -2,7 +2,7 @@ import XCTest
 @testable import LazyPDFKit
 
 // Mirrors windows/LazyPDF.Core.Tests/Document/XrefUnknownTypeTests.cs: the same cases. The one-page file is
-// PageTestFiles.Make(1), which comes with the Pages layer's tests; its single use here is spelled out below.
+// PageTestFiles.Make(1) of the C#, spelled out below.
 
 final class XrefUnknownTypeTests: XCTestCase {
     /// Catalog 1, tree 2, font 3, page 4 and its contents 5.

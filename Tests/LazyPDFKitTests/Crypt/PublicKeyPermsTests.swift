@@ -2,7 +2,7 @@ import XCTest
 @testable import LazyPDFKit
 
 // Mirrors windows/LazyPDF.Core.Tests/Crypt/PublicKeyPermsTests.cs: the same cases except DocumentExposesTheFact,
-// which needs PdfDocument and comes with the Document layer.
+// which needs PdfDocument and is in Document/PermsDocumentTests.swift.
 
 final class PublicKeyPermsTests: XCTestCase {
     private let id = SyntheticEncryption.id

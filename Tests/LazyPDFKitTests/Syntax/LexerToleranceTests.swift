@@ -2,7 +2,7 @@ import XCTest
 @testable import LazyPDFKit
 
 // Mirrors windows/LazyPDF.Core.Tests/Document/LexerToleranceTests.cs: the same cases, except
-// SpacesAfterTheStreamKeywordAreNotData, which opens a document and comes with the Document layer (the
+// SpacesAfterTheStreamKeywordAreNotData, which opens a document and is in Document/LexerToleranceOpenTests.swift (the
 // lexer's side of it is in the golden file).
 
 final class LexerToleranceTests: XCTestCase {
