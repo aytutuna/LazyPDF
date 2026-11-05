@@ -1,0 +1,37 @@
+name: Swift
+
+on:
+  push:
+    branches: [main, 'swiftci/**']
+
+permissions:
+  contents: read
+
+jobs:
+  macos:
+    # Package.swift declares swift-tools-version 6.0 (the Swift 5 language mode), macOS 14 and
+    # iOS 18. Xcode 16.4 is selected explicitly, so a change of the image's default Xcode cannot
+    # change the toolchain silently.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Select Xcode 16.4
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+      - name: Toolchain
+        run: swift --version
+      - name: Build
+        run: swift build
+      - name: Test
+        run: swift test --parallel
+
+  linux:
+    # The engine needs Foundation alone, so the runner's own Swift builds and tests it.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Toolchain
+        run: swift --version
+      - name: Build
+        run: swift build
+      - name: Test
+        run: swift test --parallel
