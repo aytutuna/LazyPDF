@@ -6,7 +6,8 @@ namespace LazyPDF.App.Tools;
 
 /// <summary>The pinned button under a tool's panel: what it does, when it can, and what it runs.</summary>
 /// <param name="Glyph">A Segoe Fluent Icons glyph.</param>
-public sealed record ToolAction(string Text, string Glyph, Func<bool> CanRun, Func<Task> Run);
+/// <param name="Hint">One sentence on what the button does, shown as its tooltip and read out with it.</param>
+public sealed record ToolAction(string Text, string Glyph, Func<bool> CanRun, Func<Task> Run, string? Hint = null);
 
 /// <summary>
 /// A tool's panel in the inspector, or a side panel on the rail. The shell calls <see cref="Attach"/> when
@@ -46,6 +47,9 @@ public abstract class ToolPanel : UserControl, IToolPanel
         OnAttach();
     }
 
+    /// <summary>For a panel in a window of its own that needs no document, as Batch does from Home.</summary>
+    internal void AttachHost(IToolHost host) => Host = host;
+
     public void Detach()
     {
         OnDetach();
@@ -54,10 +58,11 @@ public abstract class ToolPanel : UserControl, IToolPanel
         Host = null;
     }
 
-    /// <summary>Puts text that is still being typed into the document; the shell calls it before it asks about unsaved changes or undoes a step.</summary>
-    public virtual void HandIn()
-    {
-    }
+    /// <summary>
+    /// Puts text that is still being typed into the document; the shell calls it before it asks about unsaved changes or undoes a step.
+    /// False when the text is waiting for an answer and the caller must not go on as if it were kept.
+    /// </summary>
+    public virtual bool HandIn() => true;
 
     protected virtual void OnAttach()
     {

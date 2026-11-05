@@ -64,7 +64,7 @@ public static class ToolCatalog
     [
         new("comment", ToolGroup.Comment, Loc.T("Comment"), "\uE90A", Loc.T("Highlight, draw and leave notes on the pages."), () => new CommentPanel()),
         new("measure", ToolGroup.Comment, Loc.T("Measure"), "\uECC6", Loc.T("Measure distances, perimeters and areas on a page."), () => new MeasurePanel()),
-        new("editcontent", ToolGroup.Edit, Loc.T("Edit text and images"), "\uE70F", Loc.T("Change the words and pictures already on a page."), () => new EditContentPanel()),
+        new("editcontent", ToolGroup.Edit, Loc.T("Edit text and pictures"), "\uE70F", Loc.T("Change the words and pictures already on a page."), () => new EditContentPanel()),
         new("stamps", ToolGroup.Edit, Loc.T("Stamps and watermarks"), "\uE7C3", Loc.T("Add a stamp, a watermark, page numbers or a header."), () => new StampsPanel()),
         new("metadata", ToolGroup.Edit, Loc.T("Properties"), "\uE946", Loc.T("Title, author and the other facts stored in the file."), () => new MetadataPanel()),
         new("pages", ToolGroup.Pages, Loc.T("Organize pages"), "\uE8A1", Loc.T("Rotate, move, delete, crop and extract pages."), () => new PagesPanel()),
@@ -88,12 +88,12 @@ public static class ToolCatalog
     public static IReadOnlyList<SidePanelInfo> SidePanels { get; } =
     [
         new("pages", Loc.T("Pages"), "\uE7C3", Loc.T("Thumbnails of every page."), () => new PagesSidePanel()),
-        new("bookmarks", Loc.T("Bookmarks"), "\uE8A4", Loc.T("The outline of the file."), () => new BookmarksSidePanel()),
+        new("bookmarks", Loc.T("Bookmarks"), "\uE8A4", Loc.T("The bookmarks of the file."), () => new BookmarksSidePanel()),
         new("attachments", Loc.T("Attachments"), "\uE723", Loc.T("Files carried inside this one."), () => new AttachmentsSidePanel()),
         new("layers", Loc.T("Layers"), "\uE81E", Loc.T("Parts of the pages that can be shown or hidden."), () => new LayersSidePanel()),
         new("comments", Loc.T("Comments"), "\uE90A", Loc.T("Every note and mark, with replies."), () => new CommentsSidePanel()),
         new("signatures", Loc.T("Signatures"), "\uE929", Loc.T("Who signed the file and whether it changed since."), () => new SignaturesSidePanel()),
-        new("search", Loc.T("Search"), "\uE721", Loc.T("Find words in the file."), () => new SearchSidePanel()),
+        new("search", Loc.T("Search"), "\uE721", Loc.T("Search for words in the file."), () => new SearchSidePanel()),
     ];
 
     public static ToolInfo? Find(string id) => Tools.FirstOrDefault(t => t.Id == id);

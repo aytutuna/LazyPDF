@@ -182,7 +182,7 @@ public partial class MainWindow
             _inspectorPanel = null;
             _inspectorTab = null;
             InspectorGlyph.Text = "\uE946";
-            InspectorTitle.Text = Loc.T("Document");
+            InspectorTitle.Text = Loc.T("File");
             InspectorClose.Visibility = Visibility.Collapsed;
             InspectorHost.Content = DocumentSummary(tab);
             InspectorFooter.Visibility = Visibility.Collapsed;
@@ -223,6 +223,8 @@ public partial class MainWindow
         InspectorAction.Content = action.Text;
         LazyPDF.App.Icon.SetGlyph(InspectorAction, action.Glyph);
         InspectorAction.IsEnabled = action.CanRun();
+        InspectorAction.ToolTip = action.Hint;
+        AutomationProperties.SetHelpText(InspectorAction, action.Hint ?? "");
     }
 
     private async void InspectorAction_Click(object sender, RoutedEventArgs e)

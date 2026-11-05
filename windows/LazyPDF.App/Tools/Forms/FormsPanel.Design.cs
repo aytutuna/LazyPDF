@@ -25,6 +25,7 @@ public sealed partial class FormsPanel
         _selected = name;
         _selectedIndex = index;
         _selectedOrdinal = ordinal;
+        if (SelectedField(Form) is { Kind: FieldKind.Radio } radio) GroupBox.Text = radio.Name;
         ShowDesign(Form);
     }
 
@@ -59,11 +60,12 @@ public sealed partial class FormsPanel
     {
         if (NewKind is not { } kind) return;
         var rect = UserRect(page, box);
-        string? group = _selected;
+        string? selected = _selected;
+        string group = GroupBox.Text;
         int ordinal = _selectedOrdinal;
         var added = Edit<(string Name, int Widget)?>(Loc.T("Add form field"),
-            form => FormEdits.Add(form, kind, page, rect, group is null ? null : form.FindAll(group).ElementAtOrDefault(ordinal)));
-        if (added is { } field) Select(field.Name, field.Widget, field.Name == group ? ordinal : 0);
+            form => FormEdits.Add(form, kind, page, rect, selected is null ? null : form.FindAll(selected).ElementAtOrDefault(ordinal), group));
+        if (added is { } field) Select(field.Name, field.Widget, field.Name == selected ? ordinal : 0);
     }
 
     internal void Reshape(int page, Rect box)
@@ -121,6 +123,7 @@ public sealed partial class FormsPanel
         MultilineBox.Visibility = SecretBox.Visibility = LengthRow.Visibility = text ? Visibility.Visible : Visibility.Collapsed;
         ChoiceRow.Visibility = choice ? Visibility.Visible : Visibility.Collapsed;
         StartRow.Visibility = text || choice ? Visibility.Visible : Visibility.Collapsed;
+        ShowStyle(form, field);
     }
 
     private void ShowTabOrder()
@@ -135,6 +138,7 @@ public sealed partial class FormsPanel
     private void KindBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (Tab is null) return;
+        GroupRow.Visibility = NewKind == FieldKind.Radio ? Visibility.Visible : Visibility.Collapsed;
         DrawHint.Text = NewKind == FieldKind.Radio
             ? Loc.T("Drag on the page to draw it. With a radio group selected the button joins it.")
             : Loc.T("Drag on the page to draw a field. Click a field to change it.");
@@ -157,7 +161,8 @@ public sealed partial class FormsPanel
     {
         if (_loading || SelectedField(Form) is not { } field) return;
         bool done = true;
-        if (ReferenceEquals(sender, NameBox)) done = Rename(field, NameBox.Text.Trim());
+        if (LookProperty(sender, field) is { } styled) done = styled;
+        else if (ReferenceEquals(sender, NameBox)) done = Rename(field, NameBox.Text.Trim());
         else if (ReferenceEquals(sender, HintBox) && HintBox.Text != (field.Tooltip ?? ""))
             done = ChangeField(Loc.T("Change field hint"), (form, f) => form.SetTooltip(f, HintBox.Text));
         else if (ReferenceEquals(sender, LengthBox))
@@ -194,6 +199,7 @@ public sealed partial class FormsPanel
         if (!ChangeField(Loc.T("Rename field"), (form, f) => form.Rename(f, name))) return false;
         _selected = name;
         _selectedOrdinal = Form.FindAll(name).Count - 1;
+        if (SelectedField(Form) is { Kind: FieldKind.Radio } radio) GroupBox.Text = radio.Name;
         ShowDesign(Form);
         return true;
     }
@@ -242,14 +248,14 @@ public sealed partial class FormsPanel
         IReadOnlyList<FieldProposal>? found = null;
         await Host!.RunBusyAsync(Loc.T("Looking for fields"), async token =>
         {
-            found = await Task.Run(() => FormEdits.Detect(tab), token).WaitAsync(token);
+            found = await Task.Run(() => FormEdits.Detect(tab, token), token).WaitAsync(token);
         });
         if (found is null || !ReferenceEquals(Tab, tab)) return;
         _found = [.. found.Select(p => new FoundRow(p))];
         FoundList.ItemsSource = _found;
         FoundText.Text = found.Count == 0
-            ? Loc.T("No blanks found. A page that is only a picture has none to find.")
-            : Loc.Plural(found.Count, "{0} field found.", "{0} fields found.");
+            ? Loc.T("No blanks found.")
+            : Loc.Plural(found.Count, "{0} field found.", "{0} fields found.") + (found.Any(p => p.FromPixels) ? " " + Loc.T("Fields on scanned pages are guesses. Check each one.") : "");
         AddFoundButton.Visibility = FoundList.Visibility = found.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         FoundPane.Visibility = Visibility.Visible;
         ShowDesign(Form);

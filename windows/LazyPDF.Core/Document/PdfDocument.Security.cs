@@ -47,7 +47,7 @@ public sealed partial class PdfDocument
     internal void RequireEncryptionRights(PdfSecurity? target)
     {
         if (_security is { OpenedAsOwner: false, Permissions: not PdfPermissions.All } && !ReferenceEquals(target, _security))
-            throw new UnauthorizedAccessException("The file restricts its permissions and was not opened with the rights to change its encryption.");
+            throw new PdfPermissionException("The file restricts its permissions and was not opened with the rights to change its encryption.");
     }
 
     /// <summary>

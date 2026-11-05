@@ -71,7 +71,7 @@ public class LinearizerEncryptionTests
         byte[] locked = PdfDocument.Open(LinearizerKit.Make(2)).SaveRewrite(new PdfSaveOptions(Security: security, DocumentId: LinearizerKit.FileId));
 
         using var asUser = PdfDocument.Open(locked);
-        Assert.Throws<UnauthorizedAccessException>(() => asUser.SaveLinearized());
+        Assert.Throws<PdfPermissionException>(() => asUser.SaveLinearized());
         LinearizerKit.Verify(asUser.SaveLinearized(new PdfSaveOptions(Security: asUser.Security)));
         using var asOwner = PdfDocument.Open(locked, "owner");
         LinearizerKit.Verify(asOwner.SaveLinearized());

@@ -22,6 +22,10 @@ public static class Problems
         _ => new(Loc.T("File cannot be opened"), Loc.T("{0} could not be opened.", name)),
     };
 
+    /// <summary>What Core's <see cref="UnauthorizedAccessException"/> means in a tool: the file's own permissions forbid the change.</summary>
+    public static Problem Restricted() =>
+        new(Loc.T("This file cannot be changed"), Loc.T("Its permissions do not allow it. Open it with the owner password."));
+
     public static Problem Save(Exception error, string name) => error switch
     {
         PdfReadException => new(Loc.T("Not saved"), Loc.T("The new {0} did not read back correctly, so the old one was kept. Your changes are still open.", name)),

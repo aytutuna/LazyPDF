@@ -13,7 +13,7 @@ public static class RedactionText
     {
         var parts = new List<string>();
         if (p.Glyphs > 0) parts.Add(Loc.Plural(p.Glyphs, "{0} character", "{0} characters"));
-        if (p.Images > 0) parts.Add(Loc.Plural(p.Images, "{0} image", "{0} images"));
+        if (p.Images > 0) parts.Add(Loc.Plural(p.Images, "{0} picture", "{0} pictures"));
         if (p.Paths > 0) parts.Add(Loc.Plural(p.Paths, "{0} shape", "{0} shapes"));
         if (p.Annotations > 0) parts.Add(Loc.Plural(p.Annotations, "{0} note", "{0} notes"));
         if (p.Fields > 0) parts.Add(Loc.Plural(p.Fields, "{0} form field", "{0} form fields"));

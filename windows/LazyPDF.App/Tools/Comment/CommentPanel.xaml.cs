@@ -35,7 +35,7 @@ public partial class CommentPanel : ToolPanel
         (MarkTool.Polygon, Loc.T("Polygon"), "\uEB3C", Loc.T("Click each corner, double-click to finish.")),
         (MarkTool.Cloud, Loc.T("Cloud"), "\uE753", Loc.T("Click each corner, double-click to finish.")),
         (MarkTool.Pencil, Loc.T("Pencil"), "\uEDFB", Loc.T("Drag to draw freehand.")),
-        (MarkTool.Eraser, Loc.T("Eraser"), "\uE75C", Loc.T("Drag over a drawing to remove it.")),
+        (MarkTool.Eraser, Loc.T("Eraser"), "\uE75C", Loc.T("Drag over a drawing to erase it.")),
         (MarkTool.Stamp, Loc.T("Stamp"), "\uE8E1", Loc.T("Click where the stamp goes.")),
         (MarkTool.Attach, Loc.T("Attach file"), "\uE723", Loc.T("Click where the file goes.")),
     ];
@@ -126,7 +126,11 @@ public partial class CommentPanel : ToolPanel
         Choose();
     }
 
-    public override void HandIn() => _editor?.Finish();
+    public override bool HandIn()
+    {
+        _editor?.Finish();
+        return true;
+    }
 
     protected override void OnDetach()
     {
@@ -195,7 +199,9 @@ public partial class CommentPanel : ToolPanel
         }
         _choosing = false;
         StampRow.Visibility = _tool == MarkTool.Stamp ? Visibility.Visible : Visibility.Collapsed;
-        Hint.Text = _allowed ? Tools.First(t => t.Tool == _tool).Hint : Loc.T("This file does not allow comments.");
+        Hint.Text = !_allowed ? Loc.T("This file does not allow comments.")
+            : _tool is MarkTool.Note or MarkTool.TextBox or MarkTool.Stamp or MarkTool.Attach ? $"{Tools.First(t => t.Tool == _tool).Hint} {Loc.T("Or press Enter on the page.")}"
+            : Tools.First(t => t.Tool == _tool).Hint;
         Hint.Visibility = Visibility.Visible;
         ShowSelected();
     }

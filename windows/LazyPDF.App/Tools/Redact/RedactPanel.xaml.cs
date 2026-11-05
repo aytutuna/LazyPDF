@@ -62,6 +62,7 @@ public partial class RedactPanel : ToolPanel
         Body.IsEnabled = !_restricted;
         RestrictedNote.Visibility = _restricted ? Visibility.Visible : Visibility.Collapsed;
         DropMarksOfOtherPages();
+        tab.PendingMarks = _state.Marks.Items.Count;
         _state.Marks.Changed += Marks_Changed;
         tab.Changed += Tab_Changed;
         Viewer!.SelectionChanged += Viewer_SelectionChanged;
@@ -103,6 +104,7 @@ public partial class RedactPanel : ToolPanel
 
     private void Marks_Changed(object? sender, EventArgs e)
     {
+        Tab!.PendingMarks = _state!.Marks.Items.Count;
         ShowMarks();
         RaiseActionChanged();
     }

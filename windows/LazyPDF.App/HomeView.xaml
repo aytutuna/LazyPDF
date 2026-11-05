@@ -5,11 +5,10 @@
              xmlns:loc="clr-namespace:LazyPDF.App">
     <!-- The Home tab: the jobs people come for as tiles, then the files opened last. Each tile is an icon and a
          title; what it does is its tooltip, shown on hover and on keyboard focus. The tiles are one Tab stop: the
-         arrow keys move between them and Enter or Space starts one. A tile that cannot be started says why. -->
+         arrow keys move between them and Enter or Space starts one. A tile that cannot be started stays in the order, so its reason is read, and does nothing. -->
     <UserControl.Resources>
         <DataTemplate x:Key="TileTemplate">
             <Button x:Name="Tile" Style="{StaticResource TaskTileButtonStyle}" Click="Tile_Click"
-                    IsEnabled="{Binding Available}"
                     AutomationProperties.Name="{Binding Title}"
                     AutomationProperties.HelpText="{Binding HelpText}"
                     ToolTip="{Binding HelpText}">
@@ -17,7 +16,7 @@
                     <TextBlock x:Name="TileGlyph" DockPanel.Dock="Top" Text="{Binding Glyph}" Style="{StaticResource TaskTileGlyphStyle}" />
                     <TextBlock x:Name="Reason" DockPanel.Dock="Bottom" Text="{Binding Reason}" Style="{StaticResource ReasonText}"
                                Visibility="Collapsed" />
-                    <TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap"
+                    <TextBlock x:Name="TileTitle" Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap"
                                Margin="0,6,0,0" VerticalAlignment="Top" />
                 </DockPanel>
             </Button>
@@ -25,6 +24,7 @@
                 <DataTrigger Binding="{Binding Available}" Value="False">
                     <Setter TargetName="Reason" Property="Visibility" Value="Visible" />
                     <Setter TargetName="TileGlyph" Property="Opacity" Value="0.4" />
+                    <Setter TargetName="TileTitle" Property="Opacity" Value="0.7" />
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>

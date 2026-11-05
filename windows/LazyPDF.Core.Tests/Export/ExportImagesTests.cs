@@ -48,6 +48,29 @@ public class ExportImagesTests
     private static IEnumerable<byte> Alpha(ExportImage image) => ExportKit.PngDecode(image.Data).Rgba.Where((_, i) => i % 4 == 3);
 
     [Fact]
+    public void APictureOverTheSizeLimitIsLeftOutAndCounted()
+    {
+        var document = Open("q 10 0 0 10 0 0 cm /Im Do Q", pdf => pdf.Stream(10, $"{Image} /Width 10000 /Height 10000 /ColorSpace /DeviceGray /BitsPerComponent 8", [1]));
+
+        var model = ExportLayout.Analyze(document);
+
+        Assert.Equal(1, model.PicturesLeftOut);
+        Assert.Empty(model.Pages[0].Pictures);
+        Assert.Equal("1 picture was left out because the file is too large.", ExportText.PicturesLeftOut(1));
+    }
+
+    [Fact]
+    public void APictureThatWasKeptIsNotCounted()
+    {
+        var document = Open("q 10 0 0 10 0 0 cm /Im Do Q", pdf => pdf.Stream(10, $"{Image} /Width 2 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8", [0, 255]));
+
+        var model = ExportLayout.Analyze(document);
+
+        Assert.Equal(0, model.PicturesLeftOut);
+        Assert.Single(model.Pages[0].Pictures);
+    }
+
+    [Fact]
     public void ADecodeArrayOnAJpegIsHonoured()
     {
         var png = Extract("/Width 2 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode /Decode [1 0]", [1], new ExportPixelCodec(2, 0, 200));

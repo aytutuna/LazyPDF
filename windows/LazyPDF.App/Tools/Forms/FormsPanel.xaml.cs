@@ -31,11 +31,12 @@ public sealed partial class FormsPanel : ToolPanel
     public FormsPanel()
     {
         InitializeComponent();
-        _flatten = new ToolAction(Loc.T("Flatten form"), "", CanFlatten, FlattenAsync);
+        _flatten = new ToolAction(Loc.T("Flatten form"), "", CanFlatten, FlattenAsync, Loc.T("Makes the fields part of the page. They can no longer be filled in or changed."));
         KindBox.DisplayMemberPath = nameof(KindChoice.Text);
         KindBox.ItemsSource = new[] { new KindChoice(Loc.T("None"), null) }.Concat(
             Enum.GetValues<FieldKind>().Select(kind => new KindChoice(FormText.KindName(kind), kind))).ToList();
         KindBox.SelectedIndex = 0;
+        FillStyleChoices();
         TabBox.DisplayMemberPath = nameof(TabChoice.Text);
         TabBox.ItemsSource = new TabChoice[]
         {
@@ -56,7 +57,7 @@ public sealed partial class FormsPanel : ToolPanel
 
     protected override void OnAttach()
     {
-        _fill = new FillLayer(Viewer!, Enter, Choose, ResetFields) { Highlight = HighlightToggle.IsChecked == true };
+        _fill = new FillLayer(Viewer!, Enter, Choose, ResetFields, name => Host!.OpenSigning(name)) { Highlight = HighlightToggle.IsChecked == true };
         _frames = new FieldFrames(Viewer!);
         _tool = new FieldTool(this);
         Tab!.Changed += Tab_Changed;
@@ -72,7 +73,11 @@ public sealed partial class FormsPanel : ToolPanel
         Reload();
     }
 
-    public override void HandIn() => _fill?.Flush();
+    public override bool HandIn()
+    {
+        _fill?.Flush();
+        return true;
+    }
 
     protected override void OnDetach()
     {

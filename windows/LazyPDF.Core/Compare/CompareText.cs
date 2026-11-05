@@ -16,7 +16,7 @@ public static class CompareText
     {
         ChangeArea.Text => Loc.T("Text"),
         ChangeArea.Format => Loc.T("Format"),
-        ChangeArea.Image => Loc.T("Image"),
+        ChangeArea.Image => Loc.T("Picture"),
         ChangeArea.Annotation => Loc.T("Annotation"),
         ChangeArea.Page => Loc.T("Page"),
         _ => Loc.T("Document"),

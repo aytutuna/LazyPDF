@@ -18,6 +18,9 @@ internal sealed class ExportImages(PdfDocument document, IImageCodec? codec, Can
     private readonly Dictionary<(string, int), ExportImage?> _inline = [];
     private long _total;
 
+    /// <summary>Pictures left out because they or the pictures before them passed a memory limit; one the codec cannot read does not count.</summary>
+    public int LeftOut { get; private set; }
+
     /// <summary>
     /// The picture for <paramref name="info"/>. <paramref name="orientation"/> (1 to 8, as in Exif)
     /// turns its pixels to the way the page shows them; a JPEG kept as its own bytes cannot be turned.
@@ -53,7 +56,8 @@ internal sealed class ExportImages(PdfDocument document, IImageCodec? codec, Can
         {
             cancel.ThrowIfCancellationRequested();
             long width = document.Integer(dictionary, "Width") ?? 0, height = document.Integer(dictionary, "Height") ?? 0;
-            if (width < 1 || height < 1 || width > MaxPixels / height) return null;
+            if (width < 1 || height < 1) return null;
+            if (width > MaxPixels / height) return Dropped();
 
             PdfObject? filter, parameters;
             if (stream is not null) (filter, parameters, _) = document.DecodeSpec(stream);
@@ -77,10 +81,16 @@ internal sealed class ExportImages(PdfDocument document, IImageCodec? codec, Can
             pixels = ExportImageTurn.Apply(pixels, orientation);
             return Keep(new ExportImage(PngWriter.Encode(pixels), false, pixels.Width, pixels.Height));
         }
-        catch (PdfReadException)
+        catch (PdfReadException e)
         {
-            return null;
+            return e.Message == ExportText.TooLarge || e.Message == FilterBuffer.TooBig().Message ? Dropped() : null;
         }
+    }
+
+    private ExportImage? Dropped()
+    {
+        LeftOut++;
+        return null;
     }
 
     // A mask that cannot be read leaves the picture opaque.
@@ -112,7 +122,8 @@ internal sealed class ExportImages(PdfDocument document, IImageCodec? codec, Can
         if (codec.Decode(decoded.Data, decoded.Codec) is not { } coded) return null;
         long size = (long)coded.Width * coded.Height;
         _merge.Charge(size);
-        return size <= MaxPixels ? _merge.FromPixels(dictionary, coded, decoded.Codec, decoded.Data) : null;
+        if (size > MaxPixels) throw new PdfReadException(PdfReadProblem.Unsupported, ExportText.TooLarge);
+        return _merge.FromPixels(dictionary, coded, decoded.Codec, decoded.Data);
     }
 
     private ExportImage Keep(ExportImage image)

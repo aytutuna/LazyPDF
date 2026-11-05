@@ -40,20 +40,20 @@
         <TextBlock x:Name="PresetNote" Style="{StaticResource ReasonText}" Margin="0,6,0,12" />
 
         <StackPanel x:Name="CustomOptions" Visibility="Collapsed" Margin="0,12,0,12">
-            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Image resolution}" />
-            <ComboBox x:Name="Dpi" Margin="{StaticResource FieldSpacing}" AutomationProperties.Name="{loc:T Image resolution}" />
-            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Image quality}" />
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Picture resolution}" />
+            <ComboBox x:Name="Dpi" Margin="{StaticResource FieldSpacing}" AutomationProperties.Name="{loc:T Picture resolution}" />
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Picture quality}" />
             <Grid Margin="{StaticResource FieldSpacing}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="40" />
                 </Grid.ColumnDefinitions>
                 <Slider x:Name="Quality" Minimum="30" Maximum="95" Value="75" SmallChange="5" LargeChange="10" IsSnapToTickEnabled="True" TickFrequency="5"
-                        ValueChanged="Quality_ValueChanged" AutomationProperties.Name="{loc:T Image quality}" />
+                        ValueChanged="Quality_ValueChanged" AutomationProperties.Name="{loc:T Picture quality}" />
                 <TextBlock x:Name="QualityValue" Grid.Column="1" Style="{StaticResource ReadoutText}" />
             </Grid>
             <CheckBox x:Name="TrimFonts" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Trim fonts}" IsChecked="True" AutomationProperties.Name="{loc:T Trim fonts}" />
-            <CheckBox x:Name="BlackWhite" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Make black and white images 1-bit}" IsChecked="True" AutomationProperties.Name="{loc:T Make black and white images 1-bit}" />
+            <CheckBox x:Name="BlackWhite" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Make black and white pictures 1-bit}" IsChecked="True" AutomationProperties.Name="{loc:T Make black and white pictures 1-bit}" />
             <CheckBox x:Name="DropAppData" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Remove application data}" IsChecked="True" AutomationProperties.Name="{loc:T Remove application data}" />
             <CheckBox x:Name="DropPrivateKeys" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Remove private keys}" AutomationProperties.Name="{loc:T Remove private keys}" />
         </StackPanel>

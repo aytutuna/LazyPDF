@@ -3,6 +3,7 @@
 // window is disabled, so the keyboard cannot reach behind it either.
 
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
 using LazyPDF.App.Documents;
@@ -127,8 +128,16 @@ public partial class MainWindow
             return;
         }
         CloseOverlay.Visibility = Visibility.Visible;
-        CloseTitle.Text = Loc.T("Save changes to {0}?", tab.Title);
-        if (!ReferenceEquals(_shownQuestion, tab)) CloseSaveButton.Focus();
+        bool marksOnly = !tab.IsDirty;
+        CloseTitle.Text = marksOnly ? Loc.T("Close {0}?", tab.Title) : Loc.T("Save changes to {0}?", tab.Title);
+        string lost = Loc.T("Your changes are lost if you do not save them.");
+        string marks = Loc.Plural(tab.PendingMarks, "{0} redaction mark is not applied yet.", "{0} redaction marks are not applied yet.");
+        CloseBody.Text = marksOnly ? marks : tab.PendingMarks > 0 ? $"{lost} {marks}" : lost;
+        CloseSaveButton.Visibility = marksOnly ? Visibility.Collapsed : Visibility.Visible;
+        string discard = marksOnly ? Loc.T("Close") : Loc.T("Don't save");
+        CloseDiscardButton.Content = discard;
+        AutomationProperties.SetName(CloseDiscardButton, discard);
+        if (!ReferenceEquals(_shownQuestion, tab)) (marksOnly ? CloseCancelButton : CloseSaveButton).Focus();
         _shownQuestion = tab;
     }
 
@@ -174,7 +183,7 @@ public partial class MainWindow
         RecoveryOverlay.Visibility = Visibility.Visible;
         if (!_recoveryShown) RestoreButton.Focus();
         _recoveryShown = true;
-        RecoveryTitle.Text = Loc.Plural(offer.Count, "Restore {0} document?", "Restore {0} documents?");
+        RecoveryTitle.Text = Loc.Plural(offer.Count, "Restore {0} file?", "Restore {0} files?");
         RecoveryList.Text = string.Join(Environment.NewLine, offer.Select(entry => entry.Meta.Title));
     }
 

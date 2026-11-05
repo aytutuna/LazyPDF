@@ -56,7 +56,8 @@ public sealed record ExportPage(int Index, double Width, double Height, IReadOnl
 
 /// <summary>The model every writer works from.</summary>
 /// <param name="BodySize">The size most text is set in, in points.</param>
-public sealed record ExportDocument(string? Title, IReadOnlyList<ExportPage> Pages, double BodySize)
+/// <param name="PicturesLeftOut">How many pictures the memory limits kept out of the pages.</param>
+public sealed record ExportDocument(string? Title, IReadOnlyList<ExportPage> Pages, double BodySize, int PicturesLeftOut = 0)
 {
     public IEnumerable<ExportTable> Tables => Pages.SelectMany(p => p.Blocks.OfType<ExportTable>());
 }

@@ -9,7 +9,7 @@ public static class ChangeGate
     /// <summary>Why the file may not be changed; null when it may.</summary>
     public static Problem? Refusal(PdfDocument document) =>
         document.Security is { OpenedAsOwner: false } security && !security.Permissions.HasFlag(PdfPermissions.Modify)
-            ? new Problem(Loc.T("This file cannot be changed"), Loc.T("Its permissions do not allow it. Open it with the owner password."))
+            ? Problems.Restricted()
             : null;
 
     /// <summary>Runs <paramref name="run"/> unless the file forbids it; a signed file asks first.</summary>
@@ -38,6 +38,10 @@ public static class ChangeGate
         try
         {
             await run();
+        }
+        catch (PdfPermissionException)
+        {
+            host.ShowProblem(Problems.Restricted());
         }
         catch (Exception error) when (error is not OutOfMemoryException)
         {

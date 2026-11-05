@@ -22,7 +22,7 @@ public sealed partial class PdfDocument
     /// <summary>
     /// A new file of the objects reachable from the trailer, renumbered. Signatures do not survive it.
     /// Another handler than the file's own, or none, needs the owner's rights when the file restricts
-    /// its permissions, and throws <see cref="UnauthorizedAccessException"/> without them.
+    /// its permissions, and throws <see cref="PdfPermissionException"/> without them.
     /// </summary>
     public byte[] SaveRewrite(PdfSaveOptions? options = null)
     {

@@ -81,6 +81,9 @@ public sealed class DocumentTab : ITab, IDisposable
 
     public bool IsDirty => _unsaved || Session.IsDirty;
 
+    /// <summary>Redaction marks drawn but not yet applied; they live in the Redact panel and are lost with the tab.</summary>
+    public int PendingMarks { get; set; }
+
     public bool CanClose => true;
 
     /// <summary>Raised when the file's bytes changed.</summary>

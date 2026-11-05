@@ -119,7 +119,7 @@ public partial class FillSignPanel : ToolPanel
         _tool = new PlacementTool(Viewer!, aspect, Placed, Stop);
         Viewer!.PointerTool = _tool;
         Hint.Visibility = Visibility.Visible;
-        HintText.Text = aspect > 0 ? Loc.T("Click the page, or drag a box, to place it.") : Loc.T("Click the page where the text starts.");
+        HintText.Text = $"{(aspect > 0 ? Loc.T("Click the page, or drag a box, to place it.") : Loc.T("Click the page where the text starts."))} {Loc.T("Or press Enter on the page.")}";
         Host!.SetStatus(Loc.T("Click where it should go."));
         RaiseActionChanged();
     }

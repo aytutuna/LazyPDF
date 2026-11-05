@@ -14,8 +14,8 @@ public static class OptimizeText
         OptimizeStepKind.StripPieceInfo => Loc.T("Remove application data"),
         OptimizeStepKind.StripPrivateData => Loc.T("Remove private keys"),
         OptimizeStepKind.PruneResources => Loc.T("Drop unused resources"),
-        OptimizeStepKind.DownsampleImages => Loc.T("Shrink images"),
-        OptimizeStepKind.BilevelImages => Loc.T("Make black and white images 1-bit"),
+        OptimizeStepKind.DownsampleImages => Loc.T("Shrink pictures"),
+        OptimizeStepKind.BilevelImages => Loc.T("Make black and white pictures 1-bit"),
         OptimizeStepKind.SubsetFonts => Loc.T("Trim fonts"),
         OptimizeStepKind.Grayscale => Loc.T("Convert to grayscale"),
         _ => kind.ToString(),
@@ -23,7 +23,7 @@ public static class OptimizeText
 
     public static string KindName(SpaceKind kind) => kind switch
     {
-        SpaceKind.Images => Loc.T("Images"),
+        SpaceKind.Images => Loc.T("Pictures"),
         SpaceKind.Fonts => Loc.T("Fonts"),
         SpaceKind.Content => Loc.T("Page content"),
         SpaceKind.Forms => Loc.T("Forms"),
@@ -57,9 +57,9 @@ public static class OptimizeText
         _ => item.ToString(),
     };
 
-    public static string NeedsCodec => Loc.T("Images in JPEG and JPEG 2000 need the system codec and were left.");
+    public static string NeedsCodec => Loc.T("Pictures in JPEG and JPEG 2000 need the system codec and were left.");
     public static string LeftColor => Loc.T("Shadings, spot colours and patterns were left in colour.");
     public static string LeftPartialFonts => Loc.T("Fonts with uses that could not be traced were left whole.");
-    public static string LeftPartialImages => Loc.T("Images with uses that could not be traced were left at their size.");
+    public static string LeftPartialImages => Loc.T("Pictures with uses that could not be traced were left at their size.");
     public static string LeftMixedText => Loc.T("Invisible text in a text object that also shows visible text was left.");
 }

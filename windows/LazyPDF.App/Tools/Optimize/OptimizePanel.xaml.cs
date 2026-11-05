@@ -93,9 +93,9 @@ public sealed partial class OptimizePanel : ToolPanel
     {
         PresetNote.Text = Preset() switch
         {
-            SizePreset.Small => Loc.T("Smallest file. Images drop to 96 dpi and lose some detail."),
-            SizePreset.Balanced => Loc.T("Good for email and screens. Images drop to 150 dpi."),
-            SizePreset.High => Loc.T("Keeps detail for printing. Images stay up to 300 dpi."),
+            SizePreset.Small => Loc.T("Smallest file. Pictures drop to 96 dpi and lose some detail."),
+            SizePreset.Balanced => Loc.T("Good for email and screens. Pictures drop to 150 dpi."),
+            SizePreset.High => Loc.T("Keeps detail for printing. Pictures stay up to 300 dpi."),
             _ => "",
         };
         PresetNote.Visibility = PresetNote.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;

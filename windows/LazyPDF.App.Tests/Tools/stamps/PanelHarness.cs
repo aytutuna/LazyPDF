@@ -18,10 +18,16 @@ internal static class Sta
         var ready = new TaskCompletionSource<Dispatcher>();
         var thread = new Thread(() =>
         {
+            LazyPDF.App.App.Unattended = true;
             var app = new LazyPDF.App.App { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-            app.InitializeComponent();
-            app.Dispatcher.InvokeAsync(() => ready.SetResult(app.Dispatcher));
-            app.Run();
+            // The application has queued its start, which opens the window named by StartupUri. InitializeComponent
+            // sets that name, so it runs after the start and no window is opened.
+            app.Dispatcher.InvokeAsync(() =>
+            {
+                app.InitializeComponent();
+                ready.SetResult(app.Dispatcher);
+            });
+            Dispatcher.Run();
         })
         { IsBackground = true };
         thread.SetApartmentState(ApartmentState.STA);

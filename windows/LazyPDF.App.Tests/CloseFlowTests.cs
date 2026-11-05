@@ -42,6 +42,34 @@ public sealed class CloseFlowTests
     }
 
     [Fact]
+    public async Task ATabWithRedactionMarksWaitingIsAskedAboutAndStaysOpen()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf());
+        var tab = f.Vm.ActiveDocument!;
+        tab.PendingMarks = 3;
+
+        Assert.False(f.Vm.RequestClose(tab));
+
+        Assert.Same(tab, f.Vm.CloseQuestion);
+        Assert.False(tab.IsDirty);
+        Assert.Single(f.Vm.Documents);
+    }
+
+    [Fact]
+    public async Task ExitAsksAboutAnUnappliedRedactionMarkToo()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf());
+        var tab = f.Vm.ActiveDocument!;
+        tab.PendingMarks = 1;
+
+        Assert.False(f.Vm.RequestExit());
+
+        Assert.Same(tab, f.Vm.CloseQuestion);
+    }
+
+    [Fact]
     public async Task CancellingTheQuestionKeepsTheDocument()
     {
         using var f = new ViewModelFixture();

@@ -89,9 +89,9 @@ public class PublicKeyChangeTests
         using var user = PdfDocument.Open(Passworded(), "user");
 
         Assert.False(user.Security!.OpenedAsOwner);
-        Assert.Throws<UnauthorizedAccessException>(() => user.SaveRewrite());
-        Assert.Throws<UnauthorizedAccessException>(() => user.SaveRewrite(ToPassword()));
-        Assert.Throws<UnauthorizedAccessException>(() => user.SaveRewrite(ToRecipients(new PdfRecipient(PublicKeyFiles.Alice))));
+        Assert.Throws<PdfPermissionException>(() => user.SaveRewrite());
+        Assert.Throws<PdfPermissionException>(() => user.SaveRewrite(ToPassword()));
+        Assert.Throws<PdfPermissionException>(() => user.SaveRewrite(ToRecipients(new PdfRecipient(PublicKeyFiles.Alice))));
     }
 
     [Fact]
@@ -99,9 +99,9 @@ public class PublicKeyChangeTests
     {
         using var recipient = PdfDocument.Open(PublicKeyFiles.Seal([new PdfRecipient(PublicKeyFiles.Alice, PdfPermissions.Print)]), PublicKeyFiles.Alice);
 
-        Assert.Throws<UnauthorizedAccessException>(() => recipient.SaveRewrite());
-        Assert.Throws<UnauthorizedAccessException>(() => recipient.SaveRewrite(ToPassword()));
-        Assert.Throws<UnauthorizedAccessException>(() => recipient.SaveRewrite(ToRecipients(new PdfRecipient(PublicKeyFiles.Bob))));
+        Assert.Throws<PdfPermissionException>(() => recipient.SaveRewrite());
+        Assert.Throws<PdfPermissionException>(() => recipient.SaveRewrite(ToPassword()));
+        Assert.Throws<PdfPermissionException>(() => recipient.SaveRewrite(ToRecipients(new PdfRecipient(PublicKeyFiles.Bob))));
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public class PublicKeyChangeTests
     {
         using var user = PdfDocument.Open(Passworded(), "user");
 
-        Assert.Throws<UnauthorizedAccessException>(() => user.SaveRewrite());
+        Assert.Throws<PdfPermissionException>(() => user.SaveRewrite());
 
         Assert.Contains(PublicKeyFiles.PageText, PublicKeyFiles.Content(user));
     }

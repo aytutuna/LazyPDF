@@ -12,6 +12,8 @@ public sealed class RedactDrawTool(IDocumentViewer viewer, Action<int, Point, Po
 {
     private const double Smallest = 4;
 
+    private static readonly Size KeyBox = new(160, 24);
+
     private PageOverlay? _layer;
     private Rectangle? _preview;
     private int _page;
@@ -50,6 +52,8 @@ public sealed class RedactDrawTool(IDocumentViewer viewer, Action<int, Point, Po
         int page = _page;
         var from = _from;
         Cancel();
+        // The keyboard sends a click, which gets a box of the usual size.
+        if (pointer.FromKeys && Math.Abs(to.X - from.X) < Smallest && Math.Abs(to.Y - from.Y) < Smallest) to = Clamp(page, new Point(from.X + KeyBox.Width, from.Y + KeyBox.Height));
         var box = new Rect(from, to);
         if (box.Width >= Smallest && box.Height >= Smallest) boxDrawn(page, from, to);
     }

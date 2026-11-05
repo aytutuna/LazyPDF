@@ -55,4 +55,4 @@ public enum ExportGap
 /// <param name="Files">How many files were written.</param>
 /// <param name="Where">The file written, or the folder when there are several.</param>
 /// <param name="Skipped">Pages the system could not draw.</param>
-public sealed record ExportResult(int Files, string Where, int Skipped = 0, ExportGap Gap = ExportGap.None);
+public sealed record ExportResult(int Files, string Where, int Skipped = 0, ExportGap Gap = ExportGap.None, int PicturesLeftOut = 0);

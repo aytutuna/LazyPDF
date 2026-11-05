@@ -22,7 +22,7 @@ internal static class OutputWriter
     {
         if (tab.Revision != revision)
         {
-            host.ShowProblem(new Problem(Loc.T("Document changed"), Loc.T("{0} changed while this ran. Run it again.", tab.Title)));
+            host.ShowProblem(new Problem(Loc.T("File changed"), Loc.T("{0} changed while this ran. Run it again.", tab.Title)));
             return false;
         }
         if (!replace || tab.Path is not { } path)

@@ -87,10 +87,18 @@ internal sealed partial class PdfAConversionRun
         info["CreationDate"] = new PdfString(System.Text.Encoding.ASCII.GetBytes(PdfDate.Format(meta.Created!.Value)), isHex: false);
         info["ModDate"] = new PdfString(System.Text.Encoding.ASCII.GetBytes(PdfDate.Format(date)), isHex: false);
 
+        _meta = meta;
+        PutPacket(declare: true);
+        Changed(PdfAText.MetadataWritten(level));
+    }
+
+    // The packet names the level only for a file the validator passes: a file that says it is PDF/A and is not
+    // is worse than one that makes no claim.
+    private void PutPacket(bool declare)
+    {
         var dictionary = new PdfDictionary();
         dictionary["Type"] = new PdfName("Metadata");
         dictionary["Subtype"] = new PdfName("XML");
-        _doc.Catalog["Metadata"] = _doc.Add(new PdfStream(dictionary, PdfAPacket.Xmp(level, meta, date)));
-        Changed(PdfAText.MetadataWritten(level));
+        _doc.Catalog["Metadata"] = _doc.Add(new PdfStream(dictionary, PdfAPacket.Xmp(level, _meta!, date, declare)));
     }
 }

@@ -48,7 +48,7 @@ public static class ExportLayout
 
         var result = work.Select(w => new ExportPage(w.Index, w.Width, w.Height,
             [.. w.Flow.Select(b => b is ExPara p ? Paragraph(p, lists) : (ExportBlock)b)], w.Lines, w.Pictures)).ToList();
-        return new ExportDocument(PdfText.Read(document, document.Info, "Title"), result, body);
+        return new ExportDocument(PdfText.Read(document, document.Info, "Title"), result, body, images.LeftOut);
     }
 
     private static ExportParagraph Paragraph(ExPara p, Dictionary<ExPara, ExportListItem> lists)

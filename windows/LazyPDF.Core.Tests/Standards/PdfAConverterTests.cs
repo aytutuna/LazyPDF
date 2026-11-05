@@ -298,6 +298,31 @@ public class PdfAConverterTests
     }
 
     [Fact]
+    public void AFileThatStillBreaksRulesDoesNotClaimTheLevel()
+    {
+        SystemFonts.RequireArial();
+        var result = Convert(Plain("0 0 0 1 k 0 0 50 50 re f"));
+
+        Assert.NotEmpty(result.Remaining);
+        using var document = PdfDocument.Open(result.Bytes!);
+        Assert.Null(document.PdfAPart);
+        Assert.Contains(PdfAText.NotDeclared(PdfALevel.A2b), result.Changes);
+        Assert.Equal(PdfAValidator.Validate(document, PdfALevel.A2b).Issues.Count, result.Remaining.Count);
+        Assert.DoesNotContain(PdfAText.MetadataWritten(PdfALevel.A2b), result.Changes);
+    }
+
+    [Fact]
+    public void AFileThatPassesNamesTheLevel()
+    {
+        SystemFonts.RequireArial();
+        var result = Convert(Plain());
+
+        using var document = PdfDocument.Open(Clean(result));
+        Assert.Equal(2, document.PdfAPart);
+        Assert.Contains(PdfAText.MetadataWritten(PdfALevel.A2b), result.Changes);
+    }
+
+    [Fact]
     public void AnExistingIccOutputIntentIsKept()
     {
         SystemFonts.RequireArial();

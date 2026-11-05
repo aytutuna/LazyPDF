@@ -11,11 +11,23 @@ public partial class App : Application
     private Mutex? _instance;
     private InstanceChannel? _channel;
 
+    /// <summary>
+    /// Set by a host that builds the application without starting it, such as the tests: it then neither takes the
+    /// single-instance mutex nor hands its arguments to a copy that is running.
+    /// </summary>
+    public static bool Unattended { get; set; }
+
     /// <summary>The files named on the command line; the main window takes them once it is open.</summary>
     public static IReadOnlyList<string> StartupFiles { get; private set; } = [];
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        if (Unattended)
+        {
+            ThemeService.Initialize();
+            base.OnStartup(e);
+            return;
+        }
         var files = FilesOf(e.Args);
         _instance = new Mutex(true, InstanceMutexName, out bool first);
         if (!first)

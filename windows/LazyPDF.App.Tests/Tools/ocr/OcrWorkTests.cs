@@ -261,7 +261,7 @@ public sealed class OcrWorkTests
         var result = await Make(tab, f, recognizer, All());
 
         Assert.Null(result);
-        Assert.Equal("The document changed", f.Vm.Message!.Title);
+        Assert.Equal("The file changed", f.Vm.Message!.Title);
         Assert.Equal("Retitle", tab.Session.UndoLabel);
         Assert.False(PdfOcrLayer.Has(tab.Document, tab.Document.Pages[0]));
     }

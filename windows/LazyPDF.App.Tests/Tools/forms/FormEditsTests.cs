@@ -145,6 +145,75 @@ public sealed class FormEditsTests
     }
 
     [Fact]
+    public void ARadioGroupCanBeNamedWhenItIsMadeAndLaterButtonsJoinIt()
+    {
+        using var tab = FormPdfs.Tab();
+
+        var (first, _) = FormEdits.Apply(tab, Fonts, "Add form field", form => FormEdits.Add(form, FieldKind.Radio, 0, new PdfRect(200, 500, 214, 514), null, " size "));
+        var (second, widget) = FormEdits.Apply(tab, Fonts, "Add form field", form => FormEdits.Add(form, FieldKind.Radio, 0, new PdfRect(240, 500, 254, 514), null, "size"));
+
+        Assert.Equal(("size", "size", 1), (first, second, widget));
+        Assert.Equal(["Choice1", "Choice2"], FormPdfs.Read(tab).Find("size")!.Widgets.Select(w => w.OnState));
+    }
+
+    [Fact]
+    public void AGroupNameWinsOverTheSelectedGroupAndCannotTakeAnotherKindsName()
+    {
+        using var tab = FormPdfs.Tab();
+
+        var (name, _) = FormEdits.Apply(tab, Fonts, "Add form field", form => FormEdits.Add(form, FieldKind.Radio, 0, new PdfRect(200, 500, 214, 514), form.Find("plan"), "other"));
+
+        Assert.Equal("other", name);
+        Assert.Equal(2, FormPdfs.Read(tab).Find("plan")!.Widgets.Count);
+        Assert.Throws<InvalidOperationException>(() => FormEdits.Apply(tab, Fonts, "Add form field", form => FormEdits.Add(form, FieldKind.Radio, 0, new PdfRect(200, 450, 214, 464), null, "name")));
+    }
+
+    [Theory]
+    [InlineData("example.com/form", "https://example.com/form")]
+    [InlineData(" http://example.com ", "http://example.com")]
+    [InlineData("mailto:a@example.com", "mailto:a@example.com")]
+    [InlineData("forms@acme.com", "mailto:forms@acme.com")]
+    [InlineData("https://forms@acme.com", null)]
+    [InlineData("two words", null)]
+    [InlineData("", null)]
+    [InlineData("javascript:alert(1)", null)]
+    public void AddressesAreWebOrMailAddresses(string typed, string? expected)
+    {
+        Assert.Equal(expected, FormEdits.AddressOf(typed));
+    }
+
+    [Fact]
+    public void ColoursAreComparedAsTheyShowOnScreen()
+    {
+        Assert.True(FormEdits.SameColour([0], [0, 0, 0]));
+        Assert.True(FormEdits.SameColour([0.5], [0.5, 0.5, 0.5]));
+        Assert.True(FormEdits.SameColour([0, 0, 0, 1], [0]));
+        Assert.False(FormEdits.SameColour([0, 0, 1], [1, 0, 0]));
+    }
+
+    [Fact]
+    public void LookAndActionAreOneUndoableStepEach()
+    {
+        using var tab = FormPdfs.Tab();
+
+        FormEdits.Apply(tab, Fonts, "Change font", form => { form.SetFont(form.Find("name")!, "CoBo"); return 0; });
+        FormEdits.Apply(tab, Fonts, "Change button action", form =>
+        {
+            var go = form.AddField(new FieldSpec(FieldKind.PushButton, "go", 0, new PdfRect(300, 100, 400, 124)) { Caption = "Go" });
+            form.SetButtonAction(go, new ButtonAction(ButtonActionKind.Hide, "name"));
+            return 0;
+        });
+
+        var form = FormPdfs.Read(tab);
+        Assert.Equal("CoBo", form.GetTextLook(form.Find("name")!).Font);
+        Assert.Equal(new ButtonAction(ButtonActionKind.Hide, "name"), form.GetButtonAction(form.Find("go")!));
+        tab.Undo();
+        Assert.Null(FormPdfs.Read(tab).Find("go"));
+        tab.Undo();
+        Assert.Equal("Helv", FormPdfs.Read(tab).GetTextLook(FormPdfs.Read(tab).Find("name")!).Font);
+    }
+
+    [Fact]
     public void MovingAndResizingAWidgetKeepsItsField()
     {
         using var tab = FormPdfs.Tab();

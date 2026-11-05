@@ -54,7 +54,7 @@ public static class Exporter
             case ExportFormat.Rtf: SaveText(target, RtfWriter.Make(model)); break;
             default: SaveText(target, PlainTextWriter.Make(model)); break;
         }
-        return new ExportResult(1, target, Gap: options.Format == ExportFormat.Excel ? ExcelGap(model) : ExportGap.None);
+        return new ExportResult(1, target, Gap: options.Format == ExportFormat.Excel ? ExcelGap(model) : ExportGap.None, PicturesLeftOut: model.PicturesLeftOut);
     }
 
     // With tables a workbook has a sheet for each table and none for the text around them, otherwise a sheet for each page.

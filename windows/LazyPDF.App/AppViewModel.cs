@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Windows;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.App.Tools;
@@ -33,6 +34,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     private string _sidePanelId;
     private string _lastSidePanelId;
     private InfoMessage? _message;
+    private UIElement? _stage;
     private string _status = "";
     private CancellationTokenSource? _busy;
     private string _busyText = "";
@@ -92,9 +94,19 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
 
     public string StatusShort => StatusLine.Short(_status);
 
+    /// <summary>What a tool put on the stage in place of the viewer; null while the viewer shows.</summary>
+    public UIElement? HeldStage => _stage;
+
     public bool IsBusy => _busy is not null;
 
     public string BusyText => _busyText;
+
+    public void HoldStage(UIElement? view)
+    {
+        if (ReferenceEquals(_stage, view)) return;
+        _stage = view;
+        NotifyAll();
+    }
 
     public void SelectTool(string? id)
     {
@@ -167,6 +179,11 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
         catch (OperationCanceledException)
         {
             SetStatus(Loc.T("Cancelled."));
+        }
+        catch (PdfPermissionException)
+        {
+            // Only Core's refusal; a file system error is the tool's to explain.
+            ShowProblem(Problems.Restricted());
         }
         finally
         {

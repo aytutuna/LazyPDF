@@ -6,8 +6,8 @@
                  xmlns:viewer="clr-namespace:LazyPDF.App.Viewer">
     <DockPanel>
         <StackPanel DockPanel.Dock="Top" Margin="12,0,12,8">
-            <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE721;" Content="{loc:T Find}" AutomationProperties.Name="{loc:T Find}" Padding="10,3,10,4" HorizontalAlignment="Left"
-                    ToolTip="{loc:T Find (Ctrl+F)}" Click="Find_Click" />
+            <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE721;" Content="{loc:T Search}" AutomationProperties.Name="{loc:T Search}" Padding="10,3,10,4" HorizontalAlignment="Left"
+                    ToolTip="{loc:T Search (Ctrl+F)}" Click="Find_Click" />
             <TextBlock x:Name="Summary" Style="{StaticResource ReasonText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
         <ListBox x:Name="Results" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Search results}"

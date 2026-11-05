@@ -38,7 +38,7 @@ public sealed partial class OutputChoice : UserControl
     {
         if (Note is null) return;
         Note.Text = _signed ? Loc.T("A signed file is not replaced. The result opens in a new tab.")
-            : !ThisFile.IsEnabled ? Loc.T("This document has no file yet.")
+            : !ThisFile.IsEnabled ? Loc.T("This file is not saved yet.")
             : Replace ? Loc.T("Replaces the file on disk and clears Undo.")
             : Loc.T("Opens in a new tab. You name it when you save.");
     }

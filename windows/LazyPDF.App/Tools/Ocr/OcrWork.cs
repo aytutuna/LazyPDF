@@ -34,7 +34,7 @@ public static class OcrWork
         if (read is null) return null;
         if (tab.Revision != revision)
         {
-            host.ShowNotice(Loc.T("The document changed"), Loc.T("Nothing was added. Run it again."));
+            host.ShowNotice(Loc.T("The file changed"), Loc.T("Nothing was added. Run it again."));
             return null;
         }
 

@@ -79,8 +79,8 @@ public sealed class ProtectWorkTests
         using var document = PdfDocument.Open(Pdfs.Restricted(PdfPermissions.Print));
 
         Assert.True(ProtectWork.IsLockedAgainstChange(document));
-        Assert.Throws<UnauthorizedAccessException>(() => ProtectWork.Remove(document));
-        Assert.Throws<UnauthorizedAccessException>(() => ProtectWork.WithPassword(document, "new", "new", PdfPermissions.All, PdfCryptStrength.Aes256));
+        Assert.Throws<PdfPermissionException>(() => ProtectWork.Remove(document));
+        Assert.Throws<PdfPermissionException>(() => ProtectWork.WithPassword(document, "new", "new", PdfPermissions.All, PdfCryptStrength.Aes256));
     }
 
     [Fact]

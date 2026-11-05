@@ -45,12 +45,12 @@ internal static class FormEdits
         }
     }
 
-    /// <summary>The proposals of the detector for the whole file, read from a copy so the work can leave the UI thread.</summary>
-    public static IReadOnlyList<FieldProposal> Detect(DocumentTab tab)
+    /// <summary>The proposals of the detector for the whole file, read from a copy so the work can leave the UI thread. Scanned pages are drawn and read from their pixels.</summary>
+    public static IReadOnlyList<FieldProposal> Detect(DocumentTab tab, CancellationToken token = default)
     {
         byte[] bytes = tab.Session.Current.ToArray();
         var copy = tab.Certificate is { } certificate ? PdfDocument.Open(bytes, certificate) : PdfDocument.Open(bytes, tab.Password);
-        return FieldDetector.Detect(copy);
+        return FieldDetector.Detect(copy, tab.Renderer, token);
     }
 
     public static string NewName(PdfForm form, FieldKind kind)
@@ -82,18 +82,19 @@ internal static class FormEdits
     };
 
     /// <summary>
-    /// Adds a field of <paramref name="kind"/>; a radio button drawn while a radio group is selected joins the group.
+    /// Adds a field of <paramref name="kind"/>. A radio button joins the group <paramref name="group"/> names, or the
+    /// selected radio group when that is empty, and starts a group of that name when there is none yet.
     /// Returns the field's name and the index of the new widget.
     /// </summary>
-    public static (string Name, int Widget) Add(PdfForm form, FieldKind kind, int page, PdfRect rect, FormField? selected)
+    public static (string Name, int Widget) Add(PdfForm form, FieldKind kind, int page, PdfRect rect, FormField? selected, string group = "")
     {
-        if (kind == FieldKind.Radio && selected is { Kind: FieldKind.Radio })
+        string? named = kind == FieldKind.Radio && group.Trim().Length > 0 ? group.Trim() : null;
+        if (kind == FieldKind.Radio && (named is null ? selected : form.Find(named)) is { Kind: FieldKind.Radio } joined)
         {
-            string group = selected.Name;
-            form.AddWidget(selected, page, rect);
-            return (group, form.Find(group)!.Widgets.Count - 1);
+            form.AddWidget(joined, page, rect);
+            return (joined.Name, form.Find(joined.Name)!.Widgets.Count - 1);
         }
-        var spec = new FieldSpec(kind, NewName(form, kind), page, rect)
+        var spec = new FieldSpec(kind, named ?? NewName(form, kind), page, rect)
         {
             Caption = kind == FieldKind.PushButton ? Loc.T("Button") : null,
             Rotation = PageRotation(form, page),
@@ -140,6 +141,26 @@ internal static class FormEdits
         }
         form.Regenerate([field]);
     }
+
+    /// <summary>The address a link or a submit goes to: web addresses and mailto links as typed, a bare e-mail address with mailto: before it, anything else with https://. Null when it is not an address.</summary>
+    public static string? AddressOf(string text)
+    {
+        string typed = text.Trim();
+        if (typed.Length == 0 || typed.Contains(' ')) return null;
+        if (!typed.Contains(':')) typed = (typed.Contains('@') && !typed.Contains('/') ? "mailto:" : "https://") + typed;
+        // https://name@host reads as a web address with a user name, which is rarely what was meant.
+        return Uri.TryCreate(typed, UriKind.Absolute, out var uri) && ((uri.Scheme is "http" or "https" && uri.Host.Length > 0 && uri.UserInfo.Length == 0) || uri.Scheme == "mailto") ? typed : null;
+    }
+
+    /// <summary>Whether two text colours (1, 3 or 4 numbers) are the same on screen.</summary>
+    public static bool SameColour(double[] a, double[] b) => Rgb(a).Zip(Rgb(b), (x, y) => Math.Abs(x - y) < 0.02).All(same => same);
+
+    private static double[] Rgb(double[] c) => c.Length switch
+    {
+        1 => [c[0], c[0], c[0]],
+        4 => [(1 - c[0]) * (1 - c[3]), (1 - c[1]) * (1 - c[3]), (1 - c[2]) * (1 - c[3])],
+        _ => c.Length == 3 ? c : [0, 0, 0],
+    };
 
     public static IReadOnlyList<FieldOption> ParseOptions(string text) =>
     [

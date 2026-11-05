@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Batch;
 using LazyPDF.App.Tools.Create;
 using LazyPDF.App.Viewer;
 
@@ -110,6 +111,7 @@ public partial class MainWindow : Window
             if (home) Home.Show(_vm.Tiles, _vm.Recent);
             if (home && !_homeShown) Dispatcher.BeginInvoke(FocusHome, System.Windows.Threading.DispatcherPriority.Loaded);
             _homeShown = home;
+            ViewerHost.Content = _vm.HeldStage ?? _viewer.View;
             if (!ReferenceEquals(_shownTab, _vm.ActiveDocument))
             {
                 _shownTab = _vm.ActiveDocument;
@@ -210,6 +212,7 @@ public partial class MainWindow : Window
     {
         if (id == AppViewModel.OpenTile) OpenWithDialog();
         else if (id == AppViewModel.CreateTile) _ = CreateWindow.RunAsync(this, _vm);
+        else if (id == AppViewModel.BatchTile) BatchWindow.Open(this, _vm);
         else
         {
             _vm.StartTile(id);
@@ -243,7 +246,7 @@ public partial class MainWindow : Window
     }
 
     // Text still being typed in a tool has to be in the document before the question about unsaved changes.
-    // False while a job is running.
+    // False while a job is running or typed text waits for an answer.
     private bool HandInTyping(DocumentTab? tab)
     {
         if (_actionRunning)
@@ -251,8 +254,7 @@ public partial class MainWindow : Window
             _vm.ShowNotice(Loc.T("Still working"), Loc.T("Wait for the job to end, or cancel it, then close."));
             return false;
         }
-        if (tab is not null && ReferenceEquals(tab, _vm.ActiveDocument)) _inspectorPanel?.HandIn();
-        return true;
+        return tab is null || !ReferenceEquals(tab, _vm.ActiveDocument) || _inspectorPanel?.HandIn() != false;
     }
 
     private void RequestClose(DocumentTab tab)
@@ -273,8 +275,8 @@ public partial class MainWindow : Window
                 case Key.S: SaveWithDialog(); break;
                 case Key.W when _vm.ActiveDocument is { } open: RequestClose(open); break;
                 case Key.P: _vm.Print(); break;
-                case Key.F when _vm.ActiveDocument is not null: _viewer.ShowFind(); break;
-                case Key.G when _vm.ActiveDocument is not null: _viewer.ShowGoToPage(); break;
+                case Key.F when _vm.ActiveDocument is not null && _vm.HeldStage is null: _viewer.ShowFind(); break;
+                case Key.G when _vm.ActiveDocument is not null && _vm.HeldStage is null: _viewer.ShowGoToPage(); break;
                 case Key.Z: Undo(); break;
                 case Key.Y: Redo(); break;
                 case Key.Tab: CycleTab(shift ? -1 : 1); break;
@@ -286,6 +288,7 @@ public partial class MainWindow : Window
 
     private void CycleTab(int step)
     {
+        if (_inspectorPanel?.HandIn() == false) return;
         int index = _vm.Strip.IndexOf(_vm.ActiveTab);
         _vm.ActiveTab = _vm.Strip[(index + step + _vm.Strip.Count) % _vm.Strip.Count];
     }

@@ -38,7 +38,7 @@ public partial class PageViewer
         };
         _screen.SetResourceReference(Window.BackgroundProperty, "SolidBackgroundFillColorBaseBrush");
         _screen.SetResourceReference(Window.FontFamilyProperty, "TextFontFamily");
-        AutomationProperties.SetName(_screen, Loc.T("Document viewer"));
+        AutomationProperties.SetName(_screen, Loc.T("Page viewer"));
         _screen.Closed += Screen_Closed;
         _screen.Show();
         Surface.Focus();

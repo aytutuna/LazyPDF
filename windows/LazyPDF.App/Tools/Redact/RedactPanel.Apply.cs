@@ -12,7 +12,8 @@ public partial class RedactPanel
         if (_working) return;
         var tab = Tab!;
         var host = Host!;
-        var marks = _state!.Marks.Items.Select(m => m.Mark).ToList();
+        var state = _state!;
+        var marks = state.Marks.Items.Select(m => m.Mark).ToList();
         var settings = new RedactSettings((Cover)CoverBox.SelectedItem, OverlayBox.Text, FlattenBox.IsChecked == true);
         byte[] bytes = tab.Session.Current.ToArray();
         int revision = tab.Revision;
@@ -43,6 +44,9 @@ public partial class RedactPanel
             return;
         }
 
+        // The marks are done with once the copy exists; the panel may be detached by now, so the count is set here too.
+        state.Marks.Clear();
+        tab.PendingMarks = 0;
         var summary = RedactSummary.Of(result, settings.FlattenAll);
         _incoming = summary;
         _incomingTitle = Loc.T("{0} (redacted).pdf", System.IO.Path.GetFileNameWithoutExtension(tab.Title));

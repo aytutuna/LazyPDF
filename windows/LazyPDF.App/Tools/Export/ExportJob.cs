@@ -37,6 +37,7 @@ public static class ExportJob
             ? Loc.T("Saved as {0}.", Path.GetFileName(result.Where))
             : Loc.Plural(result.Files, "Saved {0} file in {1}.", "Saved {0} files in {1}.", Leaf(result.Where));
         if (result.Skipped > 0) text += " " + Loc.Plural(result.Skipped, "{0} page could not be drawn.", "{0} pages could not be drawn.");
+        if (result.PicturesLeftOut > 0) text += " " + ExportText.PicturesLeftOut(result.PicturesLeftOut);
         if (result.Gap == ExportGap.OutsideTables) text += " " + Loc.T("Text outside the tables was left out.");
         else if (result.Gap == ExportGap.PastSheetLimit) text += " " + Loc.T("Pages past the first 1000 sheets were left out.");
         host.ShowNotice(Loc.T("Exported"), text, new NoticeAction(Loc.T("Show in folder"), () => Reveal(result.Where, options.ToFolder)));

@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using LazyPDF.App.Tools.Stamps;
 using LazyPDF.Core;
 
@@ -39,6 +41,23 @@ public sealed partial class MetadataPanel : ToolPanel
     }
 
     protected override void OnDetach() => Tab!.Changed -= Tab_Changed;
+
+    // Typed properties go into the file on Save, on leaving a field and on close, as one undo step each time.
+    // A signed file asks first, so there the caller is told to wait and leaving a field does not ask again.
+    public override bool HandIn()
+    {
+        if (!_changed || Tab is null) return true;
+        bool asks = AsksFirst;
+        _ = RunAsync();
+        return !asks;
+    }
+
+    private bool AsksFirst => Tab is { } tab && tab.Document.IsSigned && ChangeGate.Refusal(tab.Document) is null;
+
+    private void Fields_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (e.OriginalSource is TextBox && !AsksFirst) HandIn();
+    }
 
     private void Tab_Changed(object? sender, EventArgs e) => Load(_changed);
 

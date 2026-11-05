@@ -52,6 +52,51 @@ public sealed class MetadataPanelTests
     });
 
     [Fact]
+    public Task HandingInPutsTypedPropertiesInTheFileAndMarksItUnsaved() => Sta.Run(() =>
+    {
+        using var tab = Open();
+        var panel = Attach(tab, new RecordingHost());
+        Find<TextBox>(panel, "TitleBox").Text = "Report";
+        Assert.False(tab.IsDirty);
+
+        panel.HandIn();
+
+        Assert.Equal("Report", DocumentMetadata.Read(tab.Document).Title);
+        Assert.True(tab.IsDirty);
+        Assert.False(panel.Action!.CanRun());
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task HandingInOnASignedFileWaitsForTheAnswer() => Sta.Run(async () =>
+    {
+        using var tab = Open(StampsPanelTests.Signed(certified: false));
+        var host = new RecordingHost();
+        var panel = Attach(tab, host);
+        Find<TextBox>(panel, "TitleBox").Text = "Report";
+
+        Assert.False(panel.HandIn());
+        Assert.Single(host.Notices);
+        Assert.False(tab.IsDirty);
+
+        host.Actions[0]!.Run();
+        await Sta.Until(() => tab.IsDirty);
+        Assert.True(panel.HandIn());
+    });
+
+    [Fact]
+    public Task HandingInWithNothingTypedChangesNothing() => Sta.Run(() =>
+    {
+        using var tab = Open();
+        var panel = Attach(tab, new RecordingHost());
+
+        panel.HandIn();
+
+        Assert.False(tab.IsDirty);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task SavingWritesTheFormAndTheFormThenMatchesTheFile() => Sta.Run(async () =>
     {
         using var tab = Open();

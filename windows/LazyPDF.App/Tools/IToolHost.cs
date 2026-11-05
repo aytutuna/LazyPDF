@@ -1,4 +1,5 @@
 using System.Security.Cryptography.X509Certificates;
+using System.Windows;
 using LazyPDF.App.Documents;
 
 namespace LazyPDF.App.Tools;
@@ -11,6 +12,9 @@ public interface IToolHost
 
     /// <summary>Changes the text of the busy bar while <see cref="RunBusyAsync"/> runs, for a step count; does nothing when it does not.</summary>
     void SetBusyText(string text) { }
+
+    /// <summary>Shows <paramref name="view"/> on the stage in place of the viewer, until it is called again with null. Only a tool that is attached may hold it, and it lets go when it is detached.</summary>
+    void HoldStage(UIElement? view) { }
 
     void ShowProblem(Problem problem);
 
@@ -26,6 +30,12 @@ public interface IToolHost
 
     /// <summary>As above, for encrypted bytes: the password or certificate that opens them is kept for the tab, so nothing is asked again.</summary>
     Task OpenNewAsync(byte[] pdf, string title, string? password, X509Certificate2? certificate) => OpenNewAsync(pdf, title);
+
+    /// <summary>Opens the Certificates tool with the empty signature field of that name chosen as the place to sign.</summary>
+    void OpenSigning(string field) { }
+
+    /// <summary>The field <see cref="OpenSigning"/> named, once: the tool asks for it when it is shown.</summary>
+    string? TakeSigningField() => null;
 
     /// <summary>Reads the tab's file from disk again and puts it in the tab's place, after a tool wrote the file.</summary>
     Task ReloadAsync(DocumentTab tab);

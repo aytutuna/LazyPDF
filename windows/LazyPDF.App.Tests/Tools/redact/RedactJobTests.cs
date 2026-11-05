@@ -186,7 +186,7 @@ public sealed class RedactJobTests
         var pdf = Pdfs.Restricted(PdfPermissions.Print);
         var mark = RedactionMark.FromRect(0, new PdfRect(0, 0, 100, 100));
 
-        var error = Assert.Throws<UnauthorizedAccessException>(() =>
+        var error = Assert.Throws<PdfPermissionException>(() =>
             RedactJob.Apply(pdf, null, null, [mark], Plain, new BlankPages(pdf), new FakeFonts(), new FakeCodec()));
         var problem = RedactJob.Failed(error);
 

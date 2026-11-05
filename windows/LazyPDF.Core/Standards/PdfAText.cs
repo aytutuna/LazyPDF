@@ -166,6 +166,8 @@ public static class PdfAText
     public static string AttachmentsRemoved(int count) => Loc.T("{0} embedded files were removed.", count);
     public static string AttachmentsDescribed(int count) => Loc.T("{0} embedded files were given a relationship and a type.", count);
     public static string IntentAdded => Loc.T("An sRGB output intent was added.");
+    public static string NotDeclared(PdfALevel level) => Loc.T("The XMP metadata does not name {0}, because rules are still broken.", level.Name());
+
     public static string MetadataWritten(PdfALevel level) => Loc.T("The XMP metadata now identifies the file as {0}.", level.Name());
     public static string FontsEmbedded(int count) => Loc.T("{0} fonts were embedded.", count);
     public static string FontsCorrected(int count) => Loc.T("{0} fonts were corrected.", count);

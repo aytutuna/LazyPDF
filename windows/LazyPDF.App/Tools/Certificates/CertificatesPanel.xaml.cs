@@ -68,6 +68,10 @@ public partial class CertificatesPanel : ToolPanel
         CertBox.SelectedIndex = again >= 0 ? again : certificates.Count > 0 ? 0 : -1;
         ShowCertificateNote();
         Refill();
+        if (Host!.TakeSigningField() is { } field && WhereBox.ItemsSource is IEnumerable<WhereChoice> places)
+        {
+            WhereBox.SelectedItem = places.FirstOrDefault(p => p.Field == field) ?? WhereBox.SelectedItem;
+        }
     }
 
     protected override void OnDetach()

@@ -26,7 +26,8 @@ public readonly record struct PagePoint(int Page, Point Point);
 /// </summary>
 /// <param name="Pressed">The left button is down.</param>
 /// <param name="Clicks">1, 2 or 3 for a press; 0 for a move.</param>
-public sealed record PagePointer(int Page, Point Point, Point View, bool Pressed, int Clicks, ModifierKeys Modifiers);
+/// <param name="FromKeys">Sent by Enter on the keyboard, so it is a click and a box tool has to pick the size.</param>
+public sealed record PagePointer(int Page, Point Point, Point View, bool Pressed, int Clicks, ModifierKeys Modifiers, bool FromKeys = false);
 
 /// <summary>
 /// A tool that takes the pointer. Set it as <see cref="IDocumentViewer.PointerTool"/>; the viewer then sends it the

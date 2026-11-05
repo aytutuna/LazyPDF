@@ -13,7 +13,8 @@ public sealed record PdfAConversion(byte[]? Bytes, string? Refusal, IReadOnlyLis
 /// <summary>
 /// Takes a PDF to a PDF/A level by rewriting it. It embeds or replaces fonts from the font source, corrects widths,
 /// drops encryption, actions, JavaScript and forbidden annotations, draws missing appearances, rewrites LZW, adds the
-/// sRGB output intent and writes the XMP identification with /Info in step. It refuses what it cannot do honestly
+/// sRGB output intent and writes the XMP identification with /Info in step, but only when nothing remains broken: a file
+/// that still fails gets the same metadata without the pdfaid claim. It refuses what it cannot do honestly
 /// (transparency for part 1, an encrypted file whose permissions forbid changes, a dynamic XFA form); what it leaves
 /// broken it reports in <see cref="PdfAConversion.Remaining"/>.
 /// </summary>
@@ -29,6 +30,7 @@ internal sealed partial class PdfAConversionRun(IFontSource? fonts, PdfALevel le
     private readonly List<string> _changes = [];
     private readonly List<PdfAIssue> _left = [];
     private PdfDocument _doc = null!;
+    private DocumentMetadata? _meta;
 
     private int Part => level.Part();
 
@@ -56,7 +58,19 @@ internal sealed partial class PdfAConversionRun(IFontSource? fonts, PdfALevel le
                 byte[] bytes = _doc.SaveRewrite();
                 SetHeaderVersion(bytes);
                 using var written = PdfDocument.Open(bytes);
-                return new PdfAConversion(bytes, null, PdfAValidator.Validate(written, level).Issues.Union(_left).ToList(), _changes);
+                var left = PdfAValidator.Validate(written, level).Issues.Union(_left).ToList();
+                if (left.Count > 0)
+                {
+                    PutPacket(declare: false);
+                    _changes.Remove(PdfAText.MetadataWritten(level));
+                    Changed(PdfAText.NotDeclared(level));
+                    bytes = _doc.SaveRewrite();
+                    SetHeaderVersion(bytes);
+                    // What the delivered file fails is what a validator will say of it, which includes the missing identification.
+                    using var delivered = PdfDocument.Open(bytes);
+                    left = PdfAValidator.Validate(delivered, level).Issues.Union(_left).ToList();
+                }
+                return new PdfAConversion(bytes, null, left, _changes);
             }
             catch (PdfReadException e)
             {

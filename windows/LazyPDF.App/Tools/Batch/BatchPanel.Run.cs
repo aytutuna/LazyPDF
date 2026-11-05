@@ -265,7 +265,7 @@ public partial class BatchPanel
         return true;
     }
 
-    private void StopWatching()
+    internal void StopWatching()
     {
         _watchCancel?.Cancel();
         _watchCancel = null;

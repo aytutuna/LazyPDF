@@ -19,6 +19,7 @@ internal sealed partial class FillLayer
     private readonly Func<string, string?, bool> _enter;
     private readonly Func<string, IReadOnlyList<string>, bool> _choose;
     private readonly Action<IReadOnlyList<string>?> _reset;
+    private readonly Action<string> _sign;
     private readonly Dictionary<int, (Canvas Host, List<Slot> Slots)> _pages = [];
     private PdfForm _form = null!;
     private bool _canFill;
@@ -28,12 +29,14 @@ internal sealed partial class FillLayer
     /// <param name="enter">Takes a value typed or clicked into a field and says whether the field kept it.</param>
     /// <param name="choose">The same for the choices of a list box.</param>
     /// <param name="reset">Clears the named fields, or every field for null; what a Reset button on the page asks for.</param>
-    public FillLayer(IDocumentViewer viewer, Func<string, string?, bool> enter, Func<string, IReadOnlyList<string>, bool> choose, Action<IReadOnlyList<string>?> reset)
+    /// <param name="sign">Opens signing with the named empty signature field chosen.</param>
+    public FillLayer(IDocumentViewer viewer, Func<string, string?, bool> enter, Func<string, IReadOnlyList<string>, bool> choose, Action<IReadOnlyList<string>?> reset, Action<string> sign)
     {
         _viewer = viewer;
         _enter = enter;
         _choose = choose;
         _reset = reset;
+        _sign = sign;
     }
 
     public bool Highlight
@@ -167,7 +170,7 @@ internal sealed partial class FillLayer
             FieldKind.ComboBox => Combo(field, index, box),
             FieldKind.ListBox => List(field, index, box),
             FieldKind.PushButton => Push(field, index, box, widget),
-            FieldKind.Signature => new Slot(field.Name, index, box, null, (_, _) => { }),
+            FieldKind.Signature => field.IsSigned ? new Slot(field.Name, index, box, null, (_, _) => { }) : Sign(field, index, box),
             _ => null,
         };
         if (slot is null) return null;
@@ -176,7 +179,7 @@ internal sealed partial class FillLayer
         {
             string name = field.Tooltip is { Length: > 0 } tip ? tip : field.Name;
             System.Windows.Automation.AutomationProperties.SetName(control, name);
-            control.ToolTip = field.Tooltip is { Length: > 0 } ? field.Tooltip : null;
+            control.ToolTip = field.Tooltip is { Length: > 0 } ? field.Tooltip : field.Kind == FieldKind.Signature ? Loc.T("Click to sign") : null;
             control.IsEnabled = _canFill && !field.Has(FieldFlags.ReadOnly);
         }
         return slot;

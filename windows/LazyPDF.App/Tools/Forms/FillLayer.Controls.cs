@@ -168,6 +168,17 @@ internal sealed partial class FillLayer
         return new Slot(field.Name, index, box, button, (_, _) => { });
     }
 
+    private Slot Sign(FormField field, int index, Rect box)
+    {
+        var button = new ToggleButton { Style = FieldStyles.Hit };
+        button.Click += (_, _) =>
+        {
+            button.IsChecked = false;
+            _sign(field.Name);
+        };
+        return new Slot(field.Name, index, box, button, (_, _) => { });
+    }
+
     private Slot Combo(FormField field, int index, Rect box)
     {
         bool editable = field.Has(FieldFlags.Edit);

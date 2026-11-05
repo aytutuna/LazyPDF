@@ -21,3 +21,9 @@ internal sealed class FoundRow(FieldProposal proposal)
 internal sealed record KindChoice(string Text, FieldKind? Kind);
 
 internal sealed record TabChoice(string Text, TabOrder Order);
+
+internal sealed record FontChoice(string Text, string Name);
+
+internal sealed record ColourChoice(string Text, double[] Rgb);
+
+internal sealed record ActionChoice(string Text, ButtonActionKind Kind);

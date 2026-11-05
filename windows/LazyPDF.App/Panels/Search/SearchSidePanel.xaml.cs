@@ -46,5 +46,9 @@ public partial class SearchSidePanel : ToolPanel
         if (!_syncing && Results.SelectedIndex >= 0) Viewer?.Search.Select(Results.SelectedIndex);
     }
 
-    private void Find_Click(object sender, RoutedEventArgs e) => Viewer?.ShowFind();
+    // The viewer is out of the tree while a tool holds the stage, so its find bar would open unseen.
+    private void Find_Click(object sender, RoutedEventArgs e)
+    {
+        if (Viewer is { View.IsVisible: true } viewer) viewer.ShowFind();
+    }
 }

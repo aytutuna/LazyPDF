@@ -23,6 +23,7 @@ public sealed partial class AppViewModel
     public const string OpenTile = "open";
     public const string CreateTile = "create";
     public const string ScanTile = "scan";
+    public const string BatchTile = "batch";
 
     /// <summary>The tools behind the tiles that are tools: tile id, tool id.</summary>
     private static readonly (string Tile, string Tool)[] ToolTiles =
@@ -50,7 +51,7 @@ public sealed partial class AppViewModel
                 new(OpenTile, Loc.T("Open"), "\uE8E5", Loc.T("Open a PDF, a picture or a text file."), true, null),
                 new(CreateTile, Loc.T("Create"), "\uE8B9", Loc.T("Make a PDF from blank pages, pictures, text or the clipboard."), true, null),
                 ForTool("combine", Loc.T("Combine"), "\uE8F4", Loc.T("Join files into a new one, or split this one.")),
-                ForTool("compress", Loc.T("Compress"), "\uE9D9", Loc.T("Make the file smaller.")),
+                ForTool("compress", Loc.T("Make smaller"), "\uE9D9", Loc.T("Make the file smaller.")),
                 ForTool("protect", Loc.T("Protect"), "\uE72E", Loc.T("Set a password and decide what others may do.")),
                 ForTool("sign", Loc.T("Sign"), "\uE76D", Loc.T("Sign the file with your name.")),
                 ForTool("form", Loc.T("Fill a form"), "\uE8D2", Loc.T("Fill in the fields of a form.")),
@@ -58,6 +59,7 @@ public sealed partial class AppViewModel
                 new(ScanTile, Loc.T("Scan"), "\uE722", Loc.T("Scan paper into a PDF with Lazy Scan."), _sisters.LazyScanInstalled,
                     _sisters.LazyScanInstalled ? null : Loc.T("Needs Lazy Scan")),
                 ForTool("export", Loc.T("Export"), "\uE8AD", Loc.T("Save as Word, Excel, PowerPoint, HTML, text or pictures.")),
+                new(BatchTile, Loc.T("Batch"), "", Loc.T("Do the same to every file in a folder."), true, null),
             ];
         }
     }

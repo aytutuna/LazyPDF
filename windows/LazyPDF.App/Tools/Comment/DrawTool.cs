@@ -12,6 +12,8 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
 {
     private const double MinDrag = 3;
 
+    private static readonly Size DefaultBox = new(160, 48);
+
     private readonly List<Point> _points = [];
     private int _page = -1;
     private Point _now;
@@ -73,8 +75,14 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
         }
         if ((_now - _points[0]).Length < MinDrag)
         {
-            Clear();
-            return;
+            // A click makes a box of the usual size, so the keyboard can place one too.
+            if (tool != MarkTool.TextBox)
+            {
+                Clear();
+                return;
+            }
+            var page = viewer.PageSize(_page);
+            _now = new Point(Math.Min(_points[0].X + DefaultBox.Width, page.Width), Math.Min(_points[0].Y + DefaultBox.Height, page.Height));
         }
         _points.Add(_now);
         Finish();

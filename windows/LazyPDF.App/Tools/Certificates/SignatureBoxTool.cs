@@ -12,6 +12,8 @@ internal sealed class SignatureBoxTool(IDocumentViewer viewer, Action<int, Rect>
 {
     private const double MinSide = 20;
 
+    private static readonly Size KeyBox = new(180, 60);
+
     private int _page = -1;
     private Point _from;
     private Rectangle? _outline;
@@ -40,6 +42,8 @@ internal sealed class SignatureBoxTool(IDocumentViewer viewer, Action<int, Rect>
         if (_page < 0) return;
         int page = _page;
         var box = Box(pointer.Point);
+        // The keyboard sends a click, which gets a box of the usual size.
+        if (pointer.FromKeys && box.Width < 3 && box.Height < 3) box = Fit(_from);
         Clear();
         if (box.Width >= MinSide && box.Height >= MinSide) drawn(page, box);
     }
@@ -73,6 +77,12 @@ internal sealed class SignatureBoxTool(IDocumentViewer viewer, Action<int, Rect>
         var a = new Point(Math.Clamp(_from.X, 0, size.Width), Math.Clamp(_from.Y, 0, size.Height));
         var b = new Point(Math.Clamp(to.X, 0, size.Width), Math.Clamp(to.Y, 0, size.Height));
         return new Rect(a, b);
+    }
+
+    private Rect Fit(Point at)
+    {
+        var size = viewer.PageSize(_page);
+        return new Rect(Math.Max(0, Math.Min(at.X, size.Width - KeyBox.Width)), Math.Max(0, Math.Min(at.Y, size.Height - KeyBox.Height)), Math.Min(KeyBox.Width, size.Width), Math.Min(KeyBox.Height, size.Height));
     }
 
     private void Clear()

@@ -73,13 +73,14 @@ public sealed partial class EditContentPanel : ToolPanel
         RefreshPanel();
     }
 
-    public override void HandIn()
+    public override bool HandIn()
     {
         FlushOpacity();
         if (_pending != Pending.None && !CommitEditor() && MessageRow.Visibility == Visibility.Visible)
         {
             Host!.ShowProblem(new Problem(Loc.T("Typed text was not kept"), MessageText.Text));
         }
+        return true;
     }
 
     protected override void OnDetach()

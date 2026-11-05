@@ -272,11 +272,11 @@ public sealed partial class AppViewModel
         if (ActiveDocument is { } tab && tab.Redo()) NotifyAll();
     }
 
-    /// <summary>Closes the tab if it has nothing unsaved; otherwise sets <see cref="CloseQuestion"/> and returns false.</summary>
+    /// <summary>Closes the tab if it has nothing unsaved and no redaction marks waiting; otherwise sets <see cref="CloseQuestion"/> and returns false.</summary>
     public bool RequestClose(DocumentTab tab)
     {
         if (WaitForJob()) return false;
-        if (!tab.IsDirty)
+        if (!tab.IsDirty && tab.PendingMarks == 0)
         {
             Close(tab);
             return true;
@@ -341,7 +341,7 @@ public sealed partial class AppViewModel
 
     private bool ContinueExit(bool raise)
     {
-        if (Documents.FirstOrDefault(d => d.IsDirty) is { } dirty)
+        if (Documents.FirstOrDefault(d => d.IsDirty || d.PendingMarks > 0) is { } dirty)
         {
             ActiveTab = dirty;
             CloseQuestion = dirty;

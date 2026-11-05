@@ -6,15 +6,15 @@ namespace LazyPDF.App.Tests;
 // The Home tab's tiles: the jobs people come for, each with its reason when it cannot start.
 public sealed class HomeTilesTests
 {
-    private static readonly string[] Ids = ["open", "create", "combine", "compress", "protect", "sign", "form", "edit", "scan", "export"];
+    private static readonly string[] Ids = ["open", "create", "combine", "compress", "protect", "sign", "form", "edit", "scan", "export", "batch"];
 
     [Fact]
-    public void TheTilesAreTheTenJobsInOrder()
+    public void TheTilesAreTheElevenJobsInOrder()
     {
         using var f = new ViewModelFixture();
 
         Assert.Equal(Ids, f.Vm.Tiles.Select(t => t.Id));
-        Assert.Equal(["Open", "Create", "Combine", "Compress", "Protect", "Sign", "Fill a form", "Edit", "Scan", "Export"], f.Vm.Tiles.Select(t => t.Title));
+        Assert.Equal(["Open", "Create", "Combine", "Make smaller", "Protect", "Sign", "Fill a form", "Edit", "Scan", "Export", "Batch"], f.Vm.Tiles.Select(t => t.Title));
     }
 
     [Fact]
@@ -22,13 +22,23 @@ public sealed class HomeTilesTests
     {
         using var f = new ViewModelFixture();
 
-        foreach (var tile in f.Vm.Tiles.Where(t => t.Id is not ("open" or "create" or "scan")))
+        foreach (var tile in f.Vm.Tiles.Where(t => t.Id is not ("open" or "create" or "scan" or "batch")))
         {
             Assert.False(tile.Available);
             Assert.Equal("Open a file first", tile.Reason);
         }
         Assert.True(f.Vm.Tiles[0].Available);
         Assert.Null(f.Vm.Tiles[0].Reason);
+    }
+
+    [Fact]
+    public void BatchNeedsNoFile()
+    {
+        using var f = new ViewModelFixture();
+        var batch = f.Vm.Tiles.Single(t => t.Id == AppViewModel.BatchTile);
+
+        Assert.True(batch.Available);
+        Assert.Null(batch.Reason);
     }
 
     [Fact]

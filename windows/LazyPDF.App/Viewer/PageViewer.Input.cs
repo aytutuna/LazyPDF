@@ -71,6 +71,7 @@ public partial class PageViewer
 
     private void EndPointerTool()
     {
+        EndKeyPlacement();
         if (_drag == Drag.Tool)
         {
             _drag = Drag.None;
@@ -331,6 +332,11 @@ public partial class PageViewer
     // Keys on the pages themselves.
     private void Surface_KeyDown(object sender, KeyEventArgs e)
     {
+        if (PlaceWithKeys(e))
+        {
+            e.Handled = true;
+            return;
+        }
         bool ctrl = Keyboard.Modifiers.HasFlag(ModifierKeys.Control), shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
         if (shift && !_selection.IsEmpty && ExtendSelection(e.Key, ctrl))
         {

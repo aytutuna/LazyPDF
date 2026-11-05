@@ -4,7 +4,7 @@
              xmlns:loc="clr-namespace:LazyPDF.App"
              xmlns:v="clr-namespace:LazyPDF.App.Viewer"
              IsTabStop="False" PreviewKeyDown="Viewer_PreviewKeyDown"
-             AutomationProperties.Name="{loc:T Document viewer}">
+             AutomationProperties.Name="{loc:T Page viewer}">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -27,7 +27,7 @@
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" KeyboardNavigation.TabIndex="3">
                     <Button x:Name="FindButton" Style="{StaticResource IconButtonStyle}" Content="&#xE721;"
-                            ToolTip="{loc:T Find (Ctrl+F)}" AutomationProperties.Name="{loc:T Find}" Click="Find_Click" />
+                            ToolTip="{loc:T Search (Ctrl+F)}" AutomationProperties.Name="{loc:T Search}" Click="Find_Click" />
                     <Button x:Name="MoreButton" Style="{StaticResource IconButtonStyle}" Content="&#xE712;"
                             ToolTip="{loc:T View options}" AutomationProperties.Name="{loc:T View options}" Click="More_Click">
                         <Button.ContextMenu>
@@ -106,6 +106,12 @@
                         <Button x:Name="LinkOpen" Style="{StaticResource AccentIconTextButtonStyle}" Content="{loc:T Open}" AutomationProperties.Name="{loc:T Open}" Margin="8,0,0,0" Padding="12,4" Click="LinkOpen_Click" />
                     </StackPanel>
                 </StackPanel>
+            </Border>
+
+            <Border x:Name="PlaceCue" Style="{StaticResource CardStyle}" Background="{DynamicResource ControlSolidFillColorDefaultBrush}" Visibility="Collapsed"
+                    HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12,0,12,16" Padding="12,6" IsHitTestVisible="False">
+                <TextBlock x:Name="PlaceCueText" Style="{StaticResource BodyText}" TextWrapping="Wrap" Text="{loc:T Arrow keys move it. Enter places it. Escape cancels.}"
+                           AutomationProperties.LiveSetting="Assertive" />
             </Border>
 
             <TextBlock x:Name="Note" Style="{StaticResource BodyText}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="340"

@@ -26,7 +26,7 @@ public partial class MainWindow
 
     private void SaveWithDialog()
     {
-        if (_vm.ActiveDocument is not { } tab) return;
+        if (_vm.ActiveDocument is not { } tab || _inspectorPanel?.HandIn() == false) return;
         if (AppViewModel.NeedsName(tab)) SaveAsWithDialog();
         else _vm.Save(tab);
     }
@@ -35,13 +35,13 @@ public partial class MainWindow
 
     private bool SaveAsWithDialog()
     {
-        if (_vm.ActiveDocument is not { } tab || AskForPath(tab, Loc.T("Save as")) is not { } path) return false;
+        if (_inspectorPanel?.HandIn() == false || _vm.ActiveDocument is not { } tab || AskForPath(tab, Loc.T("Save as")) is not { } path) return false;
         return _vm.SaveAs(tab, path);
     }
 
     private void SaveCompact_Click(object sender, RoutedEventArgs e)
     {
-        if (_vm.ActiveDocument is not { } tab) return;
+        if (_vm.ActiveDocument is not { } tab || _inspectorPanel?.HandIn() == false) return;
         if (tab.Document.IsSigned)
         {
             _vm.ShowNotice(Loc.T("Signatures would be lost"), Loc.T("{0} is signed. Saving it compact writes it again and the signatures no longer hold. Save and Save as keep them.", tab.Title),
@@ -123,14 +123,15 @@ public partial class MainWindow
         }
     }
 
-    // Combine takes dropped files into its own list, so over it they do not open as tabs.
-    private bool OverCombine(DragEventArgs e)
+    // Combine and a view that holds the stage take dropped files into their own lists, so over them they do not open as tabs.
+    private bool OverFileTarget(DragEventArgs e)
     {
-        if (InspectorHost.Content is not Tools.Combine.CombinePanel panel) return false;
+        UIElement? target = _vm.HeldStage ?? InspectorHost.Content as Tools.Combine.CombinePanel;
+        if (target is null) return false;
         for (var node = e.OriginalSource as DependencyObject; node is not null;
              node = node is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
         {
-            if (ReferenceEquals(node, panel)) return true;
+            if (ReferenceEquals(node, target)) return true;
         }
         return false;
     }
@@ -138,7 +139,7 @@ public partial class MainWindow
     private void Window_PreviewDragOver(object sender, DragEventArgs e)
     {
         if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
-        if (OverCombine(e))
+        if (OverFileTarget(e))
         {
             DropOverlay.Visibility = Visibility.Collapsed;
             return;
@@ -153,7 +154,7 @@ public partial class MainWindow
     private void Window_PreviewDrop(object sender, DragEventArgs e)
     {
         DropOverlay.Visibility = Visibility.Collapsed;
-        if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths || OverCombine(e)) return;
+        if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths || OverFileTarget(e)) return;
         e.Handled = true;
         _ = _vm.OpenFilesAsync(paths);
     }
