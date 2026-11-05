@@ -1,0 +1,96 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Redact.RedactPanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:redact="clr-namespace:LazyPDF.App.Tools.Redact">
+    <StackPanel Margin="12,4,12,12">
+        <DockPanel x:Name="RestrictedNote" Margin="0,0,0,12" Visibility="Collapsed">
+            <TextBlock DockPanel.Dock="Left" Text="&#xE72E;" Style="{StaticResource ReasonGlyph}" />
+            <TextBlock Text="{loc:T This file does not allow changes. It cannot be redacted.}" Style="{StaticResource ReasonText}" />
+        </DockPanel>
+        <StackPanel x:Name="Body">
+            <Border x:Name="ResultCard" Style="{StaticResource CardStyle}" Margin="0,0,0,12" Visibility="Collapsed"
+                    AutomationProperties.Name="{loc:T Result of the redaction}">
+                <StackPanel>
+                    <DockPanel>
+                        <TextBlock x:Name="ResultGlyph" DockPanel.Dock="Left" Style="{StaticResource GlyphText}" Margin="0,2,8,0" VerticalAlignment="Top" />
+                        <TextBlock x:Name="ResultTitle" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+                    </DockPanel>
+                    <TextBlock x:Name="ResultAdvice" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,4,0,0" />
+                    <TextBlock x:Name="ResultReport" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                    <TextBlock x:Name="ResultProblems" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,8,0,0"
+                               Foreground="{DynamicResource SystemFillColorCriticalBrush}" />
+                    <TextBlock x:Name="ResultNotChecked" Style="{StaticResource ReasonText}" Margin="0,8,0,0" />
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="{loc:T Mark}" Style="{StaticResource SectionHeaderText}" Margin="0,0,0,8" />
+            <CheckBox x:Name="DrawToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Draw boxes on the page}" Margin="0,0,0,8"
+                      AutomationProperties.Name="{loc:T Draw boxes on the page}" Checked="DrawToggle_Changed" Unchecked="DrawToggle_Changed" />
+            <Button x:Name="MarkSelectionButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE710;" Content="{loc:T Mark selected text}"
+                    HorizontalAlignment="Left" Padding="10,3,10,4" AutomationProperties.Name="{loc:T Mark selected text}" Click="MarkSelection_Click" />
+            <TextBlock x:Name="SelectionNote" Text="{loc:T Select text on the page first.}" Style="{StaticResource ReasonText}" Margin="0,6,0,0" />
+
+            <TextBlock Text="{loc:T Find}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,8" />
+            <TextBlock Text="{loc:T Word or phrase}" Style="{StaticResource FieldLabelText}" />
+            <TextBox x:Name="QueryBox" MinHeight="30" VerticalContentAlignment="Center" AutomationProperties.Name="{loc:T Word or phrase}"
+                     PreviewKeyDown="QueryBox_PreviewKeyDown" TextChanged="QueryBox_TextChanged" />
+            <CheckBox x:Name="MatchCaseBox" Content="{loc:T Match case}" Margin="0,6,0,0" AutomationProperties.Name="{loc:T Match case}" />
+            <CheckBox x:Name="WholeWordBox" Content="{loc:T Whole word}" AutomationProperties.Name="{loc:T Whole word}" />
+            <Button x:Name="FindWordsButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE721;" Content="{loc:T Mark every match}"
+                    HorizontalAlignment="Left" Padding="10,3,10,4" Margin="0,6,0,0" IsEnabled="False" AutomationProperties.Name="{loc:T Mark every match}"
+                    Click="FindWords_Click" />
+            <TextBlock Text="{loc:T Kind of data}" Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" />
+            <ComboBox x:Name="KindBox" DisplayMemberPath="Name" AutomationProperties.Name="{loc:T Kind of data}" />
+            <Button x:Name="FindKindButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE721;" Content="{loc:T Mark all of this kind}"
+                    HorizontalAlignment="Left" Padding="10,3,10,4" Margin="0,6,0,0" AutomationProperties.Name="{loc:T Mark all of this kind}"
+                    Click="FindKind_Click" />
+
+            <DockPanel Margin="0,16,0,8">
+                <Button x:Name="ClearButton" DockPanel.Dock="Right" Style="{StaticResource SubtleButtonStyle}" Padding="8,2" Content="{loc:T Remove all}"
+                        AutomationProperties.Name="{loc:T Remove all}" Click="Clear_Click" />
+                <TextBlock x:Name="MarkedHeader" Style="{StaticResource SectionHeaderText}" VerticalAlignment="Center" AutomationProperties.LiveSetting="Polite" />
+            </DockPanel>
+            <TextBlock x:Name="EmptyNote" Text="{loc:T Nothing is marked yet.}" Style="{StaticResource ReasonText}" />
+            <ListBox x:Name="MarkedList" BorderThickness="0" Background="Transparent" MaxHeight="220" HorizontalContentAlignment="Stretch"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:T Marks}"
+                     SelectionChanged="MarkedList_SelectionChanged" PreviewKeyDown="MarkedList_PreviewKeyDown">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <EventSetter Event="PreviewMouseLeftButtonUp" Handler="MarkedItem_Click" />
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Spoken}" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type redact:MarkItem}">
+                        <DockPanel Margin="2,2">
+                            <Button DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE711;" VerticalAlignment="Center"
+                                    ToolTip="{loc:T Remove this mark}" AutomationProperties.Name="{loc:T Remove this mark}" Click="RemoveMark_Click" />
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Label}" Style="{StaticResource BodyText}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding PageText}" Style="{StaticResource SecondaryBodyText}" FontSize="12" />
+                            </StackPanel>
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <TextBlock Text="{loc:T Cover}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,8" />
+            <TextBlock Text="{loc:T Colour}" Style="{StaticResource FieldLabelText}" />
+            <ComboBox x:Name="CoverBox" DisplayMemberPath="Name" AutomationProperties.Name="{loc:T Colour}" />
+            <TextBlock Text="{loc:T Text on the boxes (optional)}" Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" />
+            <TextBox x:Name="OverlayBox" MinHeight="30" VerticalContentAlignment="Center" AutomationProperties.Name="{loc:T Text on the boxes (optional)}" />
+
+            <TextBlock Text="{loc:T Options}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,8" />
+            <CheckBox x:Name="FlattenBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Flatten every marked page}"
+                      AutomationProperties.Name="{loc:T Flatten every marked page}" />
+            <TextBlock Text="{loc:T Each marked page becomes a picture. Its text can no longer be selected.}" Style="{StaticResource ReasonText}" Margin="0,4,0,0" />
+
+            <DockPanel Margin="0,16,0,0">
+                <TextBlock DockPanel.Dock="Left" Text="&#xE946;" Style="{StaticResource ReasonGlyph}" />
+                <TextBlock Text="{loc:T The result opens as a new file. This file is not changed.}" Style="{StaticResource ReasonText}" />
+            </DockPanel>
+        </StackPanel>
+    </StackPanel>
+</tools:ToolPanel>

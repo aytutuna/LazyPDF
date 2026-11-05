@@ -1,0 +1,142 @@
+using System.Windows;
+using LazyPDF.App.Tools.Redact;
+using LazyPDF.Core;
+using Xunit;
+
+namespace LazyPDF.App.Tests;
+
+// The marks of the Redact tool before anything is removed: the list, and the move between page space and the file's.
+public sealed class MarkListTests
+{
+    private static MarkItem Item(int page, double left, double bottom, string label = "x") =>
+        new(RedactionMark.FromRect(page, new PdfRect(left, bottom, left + 40, bottom + 10)), label);
+
+    [Fact]
+    public void MarksComeInReadingOrder()
+    {
+        var list = new MarkList();
+
+        list.Add([Item(1, 10, 100, "late"), Item(0, 10, 100, "low"), Item(0, 10, 500, "high"), Item(0, 80, 500, "right")]);
+
+        Assert.Equal(["high", "right", "low", "late"], list.Items.Select(m => m.Label));
+    }
+
+    [Fact]
+    public void AMarkOnTheSamePlaceIsNotAddedTwice()
+    {
+        var list = new MarkList();
+        int changes = 0;
+        list.Changed += (_, _) => changes++;
+
+        Assert.Equal(1, list.Add([Item(0, 10, 100)]));
+        Assert.Equal(0, list.Add([Item(0, 10.2, 100.1)]));
+        Assert.Equal(1, list.Add([Item(1, 10, 100), Item(1, 10, 100)]));
+
+        Assert.Equal(2, list.Items.Count);
+        Assert.Equal(2, changes);
+    }
+
+    [Fact]
+    public void RemovingAndClearingTellTheListeners()
+    {
+        var list = new MarkList();
+        var first = Item(0, 10, 100);
+        list.Add([first, Item(0, 10, 200)]);
+        int changes = 0;
+        list.Changed += (_, _) => changes++;
+
+        list.Remove(first);
+        list.Remove(first);
+        list.Clear();
+        list.Clear();
+
+        Assert.Empty(list.Items);
+        Assert.Equal(2, changes);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(90)]
+    [InlineData(180)]
+    [InlineData(270)]
+    public void ABoxDraggedOnAPageComesBackWhereItWasDrawn(int rotate)
+    {
+        var geometry = new PageGeometry(new PdfRect(0, 0, 200, 300), rotate);
+        var from = new Point(10, 20);
+        var to = new Point(60, 45);
+
+        var mark = MarkShapes.Box(2, geometry, to, from);
+        var outline = MarkShapes.Outline(geometry, mark.Quads[0]);
+
+        Assert.Equal(2, mark.Page);
+        Assert.Equal(4, outline.Count);
+        Assert.Equal(10, outline.Min(p => p.X), 6);
+        Assert.Equal(60, outline.Max(p => p.X), 6);
+        Assert.Equal(20, outline.Min(p => p.Y), 6);
+        Assert.Equal(45, outline.Max(p => p.Y), 6);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(90)]
+    [InlineData(180)]
+    [InlineData(270)]
+    public void ABoxReadsLeftToRightAsItIsShownOnATurnedPage(int rotate)
+    {
+        var geometry = new PageGeometry(new PdfRect(0, 0, 200, 300), rotate);
+
+        var quad = MarkShapes.Box(0, geometry, new Point(10, 20), new Point(200, 40)).Quads[0];
+
+        var (x0, y0) = geometry.ToDisplay(quad.X0, quad.Y0);
+        var (x1, y1) = geometry.ToDisplay(quad.X1, quad.Y1);
+        var (x3, y3) = geometry.ToDisplay(quad.X3, quad.Y3);
+        Assert.Equal(190, x1 - x0, 6);
+        Assert.Equal(0, y1 - y0, 6);
+        Assert.Equal(0, x3 - x0, 6);
+        Assert.Equal(-20, y3 - y0, 6);
+    }
+
+    [Fact]
+    public void MarkingThousandsOfPlacesAtOnceIsQuick()
+    {
+        var list = new MarkList();
+        var items = Enumerable.Range(0, 40_000).Select(i => Item(i % 40, i / 40 % 20 * 45, i / 800 * 12)).ToList();
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+
+        int added = list.Add(items);
+
+        Assert.Equal(40_000, added);
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public void AMarkTakenOutCanBeAddedAgain()
+    {
+        var list = new MarkList();
+        var item = Item(0, 10, 100);
+        list.Add([item]);
+        list.Remove(item);
+
+        Assert.Equal(1, list.Add([item]));
+        list.Clear();
+        Assert.Equal(1, list.Add([item]));
+    }
+
+    [Fact]
+    public void ABoxIsInUserSpaceWithTheOriginAtTheBottom()
+    {
+        var geometry = new PageGeometry(new PdfRect(0, 0, 200, 300), 0);
+
+        var bounds = MarkShapes.Box(0, geometry, new Point(10, 20), new Point(60, 45)).Quads[0].Bounds;
+
+        Assert.Equal((10, 255, 60, 280), (bounds.Left, bounds.Bottom, bounds.Right, bounds.Top));
+    }
+
+    [Theory]
+    [InlineData("", new int[0])]
+    [InlineData("1", new[] { 0 })]
+    [InlineData("2-4, 7", new[] { 6, 1, 2, 3 })]
+    [InlineData("1, 3, 5", new[] { 0, 2, 4 })]
+    public void PagesAreWrittenAsRanges(string expected, int[] pages) =>
+        Assert.Equal(expected, RedactSummary.PageRanges(pages));
+}
