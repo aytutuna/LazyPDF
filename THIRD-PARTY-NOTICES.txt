@@ -1,0 +1,159 @@
+Lazy PDF third-party notices
+
+Lazy PDF is free, and its source is public to read (the LICENSE file).
+This file lists the code and data from other people that is part of the app,
+where it came from and under what terms.
+
+
+1. Code that ships with the app
+
+The Store build is self-contained, so it carries the .NET runtime and the
+Windows desktop libraries, at the version the build was published with.
+
+.NET runtime and libraries (Microsoft.NETCore.App.Runtime)
+.NET Windows Desktop runtime, WPF (Microsoft.WindowsDesktop.App.Runtime)
+System.Security.Cryptography.Pkcs
+    By Microsoft and the .NET Foundation and Contributors. MIT License.
+    https://github.com/dotnet/dotnet
+    The runtime also contains code from other projects. Their notices are in
+    DOTNET-THIRD-PARTY-NOTICES.txt next to the app, which is the
+    THIRD-PARTY-NOTICES.TXT of the runtime pack the build used.
+
+    The MIT License (MIT)
+
+    Copyright (c) .NET Foundation and Contributors
+
+    All rights reserved.
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+    THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    DEALINGS IN THE SOFTWARE.
+
+C#/WinRT (WinRT.Runtime.dll 2.2.0)
+Windows SDK for .NET (Microsoft.Windows.SDK.NET.dll 10.0.19041.55, from the
+package Microsoft.Windows.SDK.NET.Ref 10.0.19041.57)
+    Copyright (c) Microsoft Corporation. All rights reserved.
+    They let the app call Windows.Data.Pdf and Windows.Media.Ocr. C#/WinRT is
+    under the MIT licence, the same text as above with the copyright line
+    "Copyright (c) Microsoft Corporation". The Windows SDK projection names
+    the Windows SDK licence as its terms: https://aka.ms/WinSDKLicenseURL
+
+
+2. Data inside the engine (LazyPDF.Core)
+
+Adobe predefined CJK CMaps (Fonts/Tables/CMapData.cs)
+    61 character collection maps, character id mappings only, from Adobe's
+    cmap-resources, under the BSD 3-clause licence:
+
+    Copyright 1990-2023 Adobe. All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+
+    Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.
+
+    Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+    Neither the name of Adobe nor the names of its contributors may be used to
+    endorse or promote products derived from this software without specific
+    prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+    ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+    POSSIBILITY OF SUCH DAMAGE.
+
+
+Adobe Glyph List and ZapfDingbats glyph list (Fonts/Tables/GlyphListData.cs)
+    Adobe Systems, under the BSD 3-clause licence:
+
+    Copyright 2002-2019 Adobe (http://www.adobe.com/).
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are met:
+
+    Redistributions of source code must retain the above copyright notice, this
+    list of conditions and the following disclaimer.
+
+    Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+
+    Neither the name of Adobe nor the names of its contributors may be used to
+    endorse or promote products derived from this software without specific
+    prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+    AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+    ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+    LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+    POSSIBILITY OF SUCH DAMAGE.
+
+
+Adobe Core 14 font metrics (Fonts/Tables/Standard14Data.cs)
+    Widths and font-wide values of the Adobe AFM files for the 14 standard
+    PDF fonts. Adobe Systems. Adobe's terms for the AFM files:
+
+    Copyright (c) 1985, 1987, 1989, 1990, 1997 Adobe Systems Incorporated.
+    All Rights Reserved.
+
+    This file and the 14 PostScript(R) AFM files it accompanies may be used,
+    copied, and distributed for any purpose and without charge, with or without
+    modification, provided that all copyright notices are retained; that the
+    AFM files are not distributed without this file; that all modifications to
+    this file or any of the AFM files are prominently noted in the modified
+    file(s); and that this paragraph is not modified. Adobe Systems has no
+    responsibility or obligation to support the use of the AFM files.
+
+sRGB colour profile (Standards/PdfASrgb.cs)
+    "sRGB-v2-magic.icc" from Compact-ICC-Profiles by Clinton Ingram,
+    https://github.com/saucecontrol/Compact-ICC-Profiles, released to the
+    public domain under CC0 1.0. It is the output intent of PDF/A files the
+    app writes. The 736 bytes in the source were checked against the SHA-256
+    recorded there, af4efe28f6d311799865f325ba39184a2e978b113ca74124d60af7de22b105f4.
+
+Encoding tables (Fonts/Tables/EncodingData.cs, Fonts/Programs/StandardNames.cs)
+    StandardEncoding, WinAnsi, MacRoman, MacExpert, PDFDocEncoding, Symbol and
+    ZapfDingbats from ISO 32000-1 Annex D; the 391 CFF standard strings from
+    Adobe Technical Note 5176; the 258 Macintosh glyph names of the TrueType
+    'post' table from Apple's TrueType reference manual. These are lists of
+    names fixed by the specifications.
+
+Written for this project and needing no notice: the invisible-text font used
+for OCR (built from code, not a font file), the PDF/A XMP packet, and the code
+taken over from Lazy Scan and Lazy Print, which have the same author.
+
+
+3. Not shipped
+
+The tests use xunit, PdfPig and the .NET test SDK. They are not part of the app.

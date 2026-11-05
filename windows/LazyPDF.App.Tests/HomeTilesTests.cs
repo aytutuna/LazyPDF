@@ -6,15 +6,15 @@ namespace LazyPDF.App.Tests;
 // The Home tab's tiles: the jobs people come for, each with its reason when it cannot start.
 public sealed class HomeTilesTests
 {
-    private static readonly string[] Ids = ["open", "create", "combine", "compress", "protect", "sign", "form", "edit", "scan", "export", "batch"];
+    private static readonly string[] Ids = ["open", "create", "combine", "compress", "protect", "sign", "form", "edit", "export", "batch"];
 
     [Fact]
-    public void TheTilesAreTheElevenJobsInOrder()
+    public void TheTilesAreTheTenJobsInOrder()
     {
         using var f = new ViewModelFixture();
 
         Assert.Equal(Ids, f.Vm.Tiles.Select(t => t.Id));
-        Assert.Equal(["Open", "Create", "Combine", "Make smaller", "Protect", "Sign", "Fill a form", "Edit", "Scan", "Export", "Batch"], f.Vm.Tiles.Select(t => t.Title));
+        Assert.Equal(["Open", "Create", "Combine", "Make smaller", "Protect", "Sign", "Fill a form", "Edit", "Export", "Batch"], f.Vm.Tiles.Select(t => t.Title));
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public sealed class HomeTilesTests
     {
         using var f = new ViewModelFixture();
 
-        foreach (var tile in f.Vm.Tiles.Where(t => t.Id is not ("open" or "create" or "scan" or "batch")))
+        foreach (var tile in f.Vm.Tiles.Where(t => t.Id is not ("open" or "create" or "batch")))
         {
             Assert.False(tile.Available);
             Assert.Equal("Open a file first", tile.Reason);
@@ -51,18 +51,17 @@ public sealed class HomeTilesTests
     }
 
     [Fact]
-    public void ScanNeedsLazyScan()
+    public void ScanIsOnlyThereWhenLazyScanIs()
     {
         using var f = new ViewModelFixture();
-        var scan = f.Vm.Tiles.Single(t => t.Id == "scan");
-
-        Assert.False(scan.Available);
-        Assert.Equal("Needs Lazy Scan", scan.Reason);
+        Assert.DoesNotContain(f.Vm.Tiles, t => t.Id == "scan");
 
         f.Sisters.LazyScanInstalled = true;
-        scan = f.Vm.Tiles.Single(t => t.Id == "scan");
+        var tiles = f.Vm.Tiles.ToList();
+        var scan = tiles.Single(t => t.Id == "scan");
         Assert.True(scan.Available);
         Assert.Null(scan.Reason);
+        Assert.Equal("export", tiles[tiles.IndexOf(scan) + 1].Id);
     }
 
     [Fact]
@@ -121,6 +120,16 @@ public sealed class HomeTilesTests
         f.Sisters.LazyScanInstalled = true;
         f.Vm.StartTile("scan");
         Assert.Equal(1, f.Sisters.ScanOpened);
+    }
+
+    [Fact]
+    public void AToolTileWithoutAFileSaysToOpenOne()
+    {
+        using var f = new ViewModelFixture();
+
+        f.Vm.StartTile("combine");
+
+        Assert.Contains("Open a file first", f.Vm.StatusFull);
     }
 
     [Fact]

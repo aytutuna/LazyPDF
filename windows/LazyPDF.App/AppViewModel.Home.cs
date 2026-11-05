@@ -46,6 +46,11 @@ public sealed partial class AppViewModel
             HomeTile ForTool(string id, string title, string glyph, string description) =>
                 new(id, title, glyph, description, hasDocument, hasDocument ? null : needFile);
 
+            // Lazy Scan is a separate app: its tile is there only when it is.
+            HomeTile[] scan = _sisters.LazyScanInstalled
+                ? [new(ScanTile, Loc.T("Scan"), "", Loc.T("Scan paper into a PDF with Lazy Scan."), true, null)]
+                : [];
+
             return
             [
                 new(OpenTile, Loc.T("Open"), "\uE8E5", Loc.T("Open a PDF, a picture or a text file."), true, null),
@@ -56,8 +61,7 @@ public sealed partial class AppViewModel
                 ForTool("sign", Loc.T("Sign"), "\uE76D", Loc.T("Sign the file with your name.")),
                 ForTool("form", Loc.T("Fill a form"), "\uE8D2", Loc.T("Fill in the fields of a form.")),
                 ForTool("edit", Loc.T("Edit"), "\uE70F", Loc.T("Change the words and pictures on a page.")),
-                new(ScanTile, Loc.T("Scan"), "\uE722", Loc.T("Scan paper into a PDF with Lazy Scan."), _sisters.LazyScanInstalled,
-                    _sisters.LazyScanInstalled ? null : Loc.T("Needs Lazy Scan")),
+                .. scan,
                 ForTool("export", Loc.T("Export"), "\uE8AD", Loc.T("Save as Word, Excel, PowerPoint, HTML, text or pictures.")),
                 new(BatchTile, Loc.T("Batch"), "", Loc.T("Do the same to every file in a folder."), true, null),
             ];
@@ -66,7 +70,7 @@ public sealed partial class AppViewModel
 
     /// <summary>
     /// Starts the job behind a tile: a tool opens on the document last in use, Scan starts Lazy Scan. Open is the
-    /// window's, since it needs the file dialog. A tile that cannot be started does nothing.
+    /// window's, since it needs the file dialog. A tile that cannot be started says why in the status line.
     /// </summary>
     public void StartTile(string id)
     {
@@ -76,7 +80,12 @@ public sealed partial class AppViewModel
             return;
         }
         var tool = ToolTiles.FirstOrDefault(t => t.Tile == id).Tool;
-        if (tool is null || _lastDocument is null || !Strip.Contains(_lastDocument)) return;
+        if (tool is null) return;
+        if (_lastDocument is null || !Strip.Contains(_lastDocument))
+        {
+            SetStatus(Tiles.Single(t => t.Id == id).HelpText);
+            return;
+        }
         _activeTab = _lastDocument;
         _activeToolId = tool;
         NotifyAll();

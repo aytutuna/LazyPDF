@@ -356,10 +356,43 @@
                                                  Checked="Appearance_Checked" />
                                 </StackPanel>
                             </Border>
-                            <CheckBox x:Name="OpenWithToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Show Lazy PDF in Open with}"
-                                      AutomationProperties.Name="{loc:T Show Lazy PDF in Open with}" Click="OpenWith_Click" />
-                            <TextBlock Text="{loc:T 'Adds Lazy PDF to the Open with list of PDF files and registers lazypdf: addresses, for your account only. It never becomes the default program.'}"
-                                       Style="{StaticResource ReasonText}" Margin="0,6,0,0" />
+                            <StackPanel x:Name="OpenWithSection">
+                                <CheckBox x:Name="OpenWithToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Show Lazy PDF in Open with}"
+                                          AutomationProperties.Name="{loc:T Show Lazy PDF in Open with}" Click="OpenWith_Click" />
+                                <TextBlock Text="{loc:T 'Adds Lazy PDF to the Open with list of PDF files and registers lazypdf: addresses, for your account only. It never becomes the default program.'}"
+                                           Style="{StaticResource ReasonText}" Margin="0,6,0,0" />
+                            </StackPanel>
+                            <Button x:Name="AboutButton" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T About Lazy PDF}"
+                                    AutomationProperties.Name="{loc:T About Lazy PDF}" HorizontalAlignment="Left" Margin="0,16,0,0" Click="About_Click" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+            </Grid>
+
+            <!-- Name, version, links and the notices for the code and data that ship with the app. -->
+            <Grid x:Name="AboutOverlay" Style="{StaticResource OverlayScrimStyle}" PreviewKeyDown="AboutOverlay_PreviewKeyDown">
+                <Border Style="{StaticResource DialogCardStyle}" MaxWidth="560" MinWidth="340" Margin="24"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Bottom" Style="{StaticResource DialogFooterStyle}">
+                            <Button x:Name="AboutDoneButton" Content="{loc:T Done}" AutomationProperties.Name="{loc:T Done}" MinWidth="88" HorizontalAlignment="Right" IsDefault="True" IsCancel="True"
+                                    Click="AboutDone_Click" />
+                        </Border>
+                        <StackPanel Margin="24,20,24,20">
+                            <TextBlock Text="Lazy PDF" Style="{StaticResource SubtitleText}" AutomationProperties.HeadingLevel="Level1" />
+                            <TextBlock x:Name="AboutVersion" Style="{StaticResource BodyText}" Margin="0,4,0,0" />
+                            <TextBlock x:Name="AboutCopyright" Style="{StaticResource SecondaryBodyText}" Margin="0,2,0,0" />
+                            <TextBlock Text="{loc:T Free. The source is public to read.}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,12,0,0" />
+                            <StackPanel Orientation="Horizontal" Margin="-11,8,0,12">
+                                <Button x:Name="SiteLink" Style="{StaticResource SubtleButtonStyle}" Click="SiteLink_Click" />
+                                <Button x:Name="PrivacyLink" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Privacy}"
+                                        AutomationProperties.Name="{loc:T Privacy}" Click="PrivacyLink_Click" />
+                                <Button x:Name="SupportLink" Style="{StaticResource SubtleButtonStyle}" Click="SupportLink_Click" />
+                            </StackPanel>
+                            <TextBlock Text="{loc:T Third-party notices}" Style="{StaticResource FieldLabelText}" />
+                            <TextBox x:Name="AboutNotices" IsReadOnly="True" TextWrapping="NoWrap" Height="200" Margin="0,4,0,0" Padding="8"
+                                     VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="11"
+                                     AutomationProperties.Name="{loc:T Third-party notices}" />
                         </StackPanel>
                     </DockPanel>
                 </Border>

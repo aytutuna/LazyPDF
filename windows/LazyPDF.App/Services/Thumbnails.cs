@@ -19,7 +19,7 @@ public sealed class Thumbnails
     public Thumbnails(Func<IDocumentRenderer> renderers, string? directory = null)
     {
         _renderers = renderers;
-        _directory = directory ?? System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lazy PDF", "Thumbnails");
+        _directory = directory ?? AppFolders.Thumbnails;
         Prune();
     }
 

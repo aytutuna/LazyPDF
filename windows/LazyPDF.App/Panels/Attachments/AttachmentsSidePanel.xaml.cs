@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools;
 using LazyPDF.Core;
 using Microsoft.Win32;
@@ -26,15 +27,12 @@ public sealed class AttachmentRow(PdfAttachment item, string pageText)
     };
 }
 
-/// <summary>The files carried inside the PDF: open one, or save it. Nothing is run from here that the system would run without asking.</summary>
+/// <summary>The files carried inside the PDF: open one, or save it. A file that could run as a program can only be saved.</summary>
 public partial class AttachmentsSidePanel : ToolPanel
 {
-    // A file from inside another file can be a program; those are saved, not started.
-    private static readonly string[] Programs = [".exe", ".com", ".bat", ".cmd", ".msi", ".ps1", ".vbs", ".vbe", ".js", ".jse", ".wsf", ".scr", ".lnk", ".hta", ".jar", ".reg", ".dll", ".cpl", ".msc", ".pif"];
-
     public AttachmentsSidePanel() => InitializeComponent();
 
-    private static string OpenedFolder => System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Lazy PDF", "Attachments");
+    private static string OpenedFolder => AppFolders.OpenedAttachments;
 
     /// <summary>Removes the copies made to open attachments, which hold the file decrypted. One a program still has open stays.</summary>
     public static void DeleteOpenedCopies()
@@ -83,9 +81,6 @@ public partial class AttachmentsSidePanel : ToolPanel
         Note.Visibility = Visibility.Visible;
     }
 
-    private static string SafeName(string name) =>
-        string.Concat(System.IO.Path.GetFileName(name).Select(c => Array.IndexOf(System.IO.Path.GetInvalidFileNameChars(), c) >= 0 ? '_' : c));
-
     private byte[]? Read(AttachmentRow row)
     {
         try
@@ -102,8 +97,8 @@ public partial class AttachmentsSidePanel : ToolPanel
     private void Open_Click(object sender, RoutedEventArgs e)
     {
         if (Files.SelectedItem is not AttachmentRow row) return;
-        string name = SafeName(row.Name);
-        if (Programs.Contains(System.IO.Path.GetExtension(name), StringComparer.OrdinalIgnoreCase))
+        string name = AttachmentFiles.SafeName(row.Name);
+        if (AttachmentFiles.CouldRun(name))
         {
             Tell(Loc.T("This file could run as a program. Save it instead."));
             return;
@@ -127,7 +122,7 @@ public partial class AttachmentsSidePanel : ToolPanel
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         if (Files.SelectedItem is not AttachmentRow row) return;
-        var dialog = new SaveFileDialog { FileName = SafeName(row.Name), Title = Loc.T("Save attachment") };
+        var dialog = new SaveFileDialog { FileName = AttachmentFiles.SafeName(row.Name), Title = Loc.T("Save attachment") };
         if (dialog.ShowDialog() != true || Read(row) is not { } bytes) return;
         try
         {

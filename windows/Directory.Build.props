@@ -4,5 +4,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <InvariantGlobalization>false</InvariantGlobalization>
+    <Version>1.0.0</Version>
+    <Authors>Aytu</Authors>
+    <Copyright>Copyright (c) 2026 Aytu</Copyright>
   </PropertyGroup>
 </Project>

@@ -1,7 +1,8 @@
 // The overlays that sit on the window instead of opening one: the password or certificate of a locked file,
-// what to do with unsaved changes, what a crash left, and the settings. While one is up the rest of the
+// what to do with unsaved changes, what a crash left, the settings and the About screen. While one is up the rest of the
 // window is disabled, so the keyboard cannot reach behind it either.
 
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -16,13 +17,14 @@ public partial class MainWindow
     private (string Name, bool Certificate, int Attempts)? _shownRequest;
     private DocumentTab? _shownQuestion;
     private bool _settingsOpen;
+    private bool _aboutOpen;
     private bool _loadingSettings;
     private bool _wasModal;
     private bool _recoveryShown;
     private IInputElement? _focusBeforeOverlay;
 
     private bool Modal => PasswordOverlay.Visibility == Visibility.Visible || CloseOverlay.Visibility == Visibility.Visible
-                          || RecoveryOverlay.Visibility == Visibility.Visible || _settingsOpen;
+                          || RecoveryOverlay.Visibility == Visibility.Visible || _settingsOpen || _aboutOpen;
 
     private void RefreshOverlays()
     {
@@ -31,6 +33,7 @@ public partial class MainWindow
         RefreshCloseOverlay();
         RefreshRecoveryOverlay();
         SettingsOverlay.Visibility = _settingsOpen ? Visibility.Visible : Visibility.Collapsed;
+        AboutOverlay.Visibility = _aboutOpen ? Visibility.Visible : Visibility.Collapsed;
         bool modal = Modal;
         if (modal && !_wasModal) _focusBeforeOverlay = focused;
         TabBar.IsEnabled = !modal && !_actionRunning && !_vm.IsBusy;
@@ -200,7 +203,9 @@ public partial class MainWindow
             AppAppearance.Dark => AppearanceDark,
             _ => AppearanceSystem,
         }).IsChecked = true;
-        OpenWithToggle.IsChecked = FileAssociation.IsRegisteredForCurrentUser();
+        // In the Store package the manifest registers the Open with entry and the address.
+        OpenWithSection.Visibility = Packaging.IsPackaged ? Visibility.Collapsed : Visibility.Visible;
+        OpenWithToggle.IsChecked = !Packaging.IsPackaged && FileAssociation.IsRegisteredForCurrentUser();
         _loadingSettings = false;
         _settingsOpen = true;
         RefreshOverlays();
@@ -218,6 +223,56 @@ public partial class MainWindow
         if (e.Key != Key.Escape) return;
         SettingsDone_Click(sender, e);
         e.Handled = true;
+    }
+
+    private void About_Click(object sender, RoutedEventArgs e)
+    {
+        AboutVersion.Text = Loc.T("Version {0}", AppInfo.Version);
+        AboutCopyright.Text = AppInfo.Copyright;
+        SetLink(SiteLink, new Uri(AppInfo.Site).Host, Loc.T("Website"));
+        SetLink(SupportLink, AppInfo.SupportAddress, Loc.T("Email support"));
+        AboutNotices.Text = AppInfo.Notices() ?? Loc.T("The notices file is missing from this copy of Lazy PDF. Reinstall the app to get it back.");
+        _settingsOpen = false;
+        _aboutOpen = true;
+        RefreshOverlays();
+        AboutDoneButton.Focus();
+    }
+
+    private static void SetLink(Button link, string text, string name)
+    {
+        link.Content = text;
+        AutomationProperties.SetName(link, name);
+    }
+
+    private void AboutDone_Click(object sender, RoutedEventArgs e)
+    {
+        _aboutOpen = false;
+        RefreshOverlays();
+    }
+
+    private void AboutOverlay_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape) return;
+        AboutDone_Click(sender, e);
+        e.Handled = true;
+    }
+
+    private void SiteLink_Click(object sender, RoutedEventArgs e) => Launch(AppInfo.Site);
+
+    private void PrivacyLink_Click(object sender, RoutedEventArgs e) => Launch(AppInfo.PrivacyPage);
+
+    private void SupportLink_Click(object sender, RoutedEventArgs e) => Launch("mailto:" + AppInfo.SupportAddress);
+
+    private void Launch(string address)
+    {
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo(address) { UseShellExecute = true });
+        }
+        catch (Exception error) when (error is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            _vm.ShowProblem(new Problem(Loc.T("Not opened"), Loc.T("Windows could not open {0}.", address)));
+        }
     }
 
     private void Appearance_Checked(object sender, RoutedEventArgs e)

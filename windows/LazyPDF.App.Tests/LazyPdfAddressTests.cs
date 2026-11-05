@@ -21,6 +21,12 @@ public sealed class LazyPdfAddressTests
         Assert.Empty(LazyPdfAddress.Parse("lazypdf://open"));
     }
 
+    [Theory]
+    [InlineData("lazypdf://open?file=%5C%5Cattacker.example%5Cs%5Ca.pdf")]
+    [InlineData("lazypdf://open?file=%5C%5C%3F%5CUNC%5Chost%5Cs%5Ca.pdf")]
+    [InlineData("lazypdf://open?file=%2F%2Fhost%2Fs%2Fa.pdf")]
+    public void NetworkPathsAreNotOpened(string address) => Assert.Empty(LazyPdfAddress.Parse(address));
+
     [Fact]
     public void FilesAreUnescapedAndKeptInOrder()
     {

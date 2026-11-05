@@ -1479,9 +1479,6 @@
   "Scan paper into a PDF with Lazy Scan.": {
     "tr": "Kâğıdı Lazy Scan ile PDF olarak tarayın."
   },
-  "Needs Lazy Scan": {
-    "tr": "Lazy Scan gerekli"
-  },
   "Export": {
     "tr": "Dışa aktar"
   },
@@ -6506,5 +6503,32 @@
   },
   "Drag on the page to draw a field. Click a field to change it.": {
     "tr": "Alan çizmek için sayfada sürükleyin. Değiştirmek için bir alana tıklayın."
+  },
+  "About Lazy PDF": {
+    "tr": "Lazy PDF hakkında"
+  },
+  "Free. The source is public to read.": {
+    "tr": "Ücretsiz. Kaynak kodu herkese açıktır."
+  },
+  "Third-party notices": {
+    "tr": "Üçüncü taraf bildirimleri"
+  },
+  "Privacy": {
+    "tr": "Gizlilik"
+  },
+  "Website": {
+    "tr": "Web sitesi"
+  },
+  "Email support": {
+    "tr": "Destek için e-posta"
+  },
+  "The notices file is missing from this copy of Lazy PDF. Reinstall the app to get it back.": {
+    "tr": "Bildirim dosyası bu Lazy PDF kopyasında yok. Dosyayı geri getirmek için uygulamayı yeniden yükleyin."
+  },
+  "Not opened": {
+    "tr": "Açılamadı"
+  },
+  "Windows could not open {0}.": {
+    "tr": "Windows şunu açamadı: {0}"
   }
 }

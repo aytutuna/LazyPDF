@@ -12,7 +12,7 @@ public static class LazyPdfAddress
 
     public static bool IsAddress(string text) => text.TrimStart().StartsWith(Scheme + ":", StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>The full paths an address names; none for one that names no file.</summary>
+    /// <summary>The full local paths an address names; none for one that names no file. Network paths are skipped: opening one would make Windows connect and send the user's credentials.</summary>
     public static IReadOnlyList<string> Parse(string address)
     {
         int query = address.IndexOf('?');
@@ -23,7 +23,7 @@ public static class LazyPdfAddress
             int equals = pair.IndexOf('=');
             if (equals < 0 || pair[..equals] != "file") continue;
             string path = Uri.UnescapeDataString(pair[(equals + 1)..].Replace('+', ' '));
-            if (Path.IsPathFullyQualified(path)) files.Add(path);
+            if (Path.IsPathFullyQualified(path) && !path.StartsWith(@"\\") && !path.StartsWith("//")) files.Add(path);
         }
         return files;
     }

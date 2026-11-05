@@ -166,6 +166,9 @@
   <data name="AES 256-bit" xml:space="preserve">
     <value>AES 256 bit</value>
   </data>
+  <data name="About Lazy PDF" xml:space="preserve">
+    <value>Lazy PDF hakkında</value>
+  </data>
   <data name="About the signature" xml:space="preserve">
     <value>İmza hakkında</value>
   </data>
@@ -1480,6 +1483,9 @@
   <data name="Email addresses" xml:space="preserve">
     <value>E-posta adresleri</value>
   </data>
+  <data name="Email support" xml:space="preserve">
+    <value>Destek için e-posta</value>
+  </data>
   <data name="Encryption" xml:space="preserve">
     <value>Şifreleme</value>
   </data>
@@ -2001,6 +2007,9 @@
   </data>
   <data name="Forward" xml:space="preserve">
     <value>Öne</value>
+  </data>
+  <data name="Free. The source is public to read." xml:space="preserve">
+    <value>Ücretsiz. Kaynak kodu herkese açıktır.</value>
   </data>
   <data name="From Windows" xml:space="preserve">
     <value>Windows'tan</value>
@@ -2602,9 +2611,6 @@
   <data name="Need another language? In Settings, Language and region, add it and its Optical character recognition." xml:space="preserve">
     <value>Başka bir dil mi gerekiyor? Ayarlar'da Dil ve bölge altında dili ve Optik karakter tanıma özelliğini ekleyin.</value>
   </data>
-  <data name="Needs Lazy Scan" xml:space="preserve">
-    <value>Lazy Scan gerekli</value>
-  </data>
   <data name="Needs a person" xml:space="preserve">
     <value>Kişi bakmalı</value>
   </data>
@@ -2832,6 +2838,9 @@
   </data>
   <data name="Not found" xml:space="preserve">
     <value>Bulunamadı</value>
+  </data>
+  <data name="Not opened" xml:space="preserve">
+    <value>Açılamadı</value>
   </data>
   <data name="Not printed" xml:space="preserve">
     <value>Yazdırılmadı</value>
@@ -3528,6 +3537,9 @@
   </data>
   <data name="Printing is not allowed" xml:space="preserve">
     <value>Yazdırmaya izin verilmiyor</value>
+  </data>
+  <data name="Privacy" xml:space="preserve">
+    <value>Gizlilik</value>
   </data>
   <data name="Problems" xml:space="preserve">
     <value>Sorunlar</value>
@@ -5119,6 +5131,9 @@
   <data name="The newest, based on PDF 2.0." xml:space="preserve">
     <value>En yenisi, PDF 2.0'a dayanır.</value>
   </data>
+  <data name="The notices file is missing from this copy of Lazy PDF. Reinstall the app to get it back." xml:space="preserve">
+    <value>Bildirim dosyası bu Lazy PDF kopyasında yok. Dosyayı geri getirmek için uygulamayı yeniden yükleyin.</value>
+  </data>
   <data name="The object is from before the last change." xml:space="preserve">
     <value>Nesne son değişiklikten önceye ait.</value>
   </data>
@@ -5328,6 +5343,9 @@
   </data>
   <data name="These settings cannot make this file smaller. Try the Small preset." xml:space="preserve">
     <value>Bu ayarlarla dosya küçülmüyor. Küçük ayarını deneyin.</value>
+  </data>
+  <data name="Third-party notices" xml:space="preserve">
+    <value>Üçüncü taraf bildirimleri</value>
   </data>
   <data name="This attachment could not be opened." xml:space="preserve">
     <value>Bu ek açılamadı.</value>
@@ -5803,6 +5821,9 @@
   <data name="Web page (.html)" xml:space="preserve">
     <value>Web sayfası (.html)</value>
   </data>
+  <data name="Website" xml:space="preserve">
+    <value>Web sitesi</value>
+  </data>
   <data name="What was found" xml:space="preserve">
     <value>Bulunanlar</value>
   </data>
@@ -5880,6 +5901,9 @@
   </data>
   <data name="Windows cannot read {0} text yet. Add the language under Settings, Time and language." xml:space="preserve">
     <value>Windows henüz {0} metnini okuyamıyor. Ayarlar, Saat ve dil altından dili ekleyin.</value>
+  </data>
+  <data name="Windows could not open {0}." xml:space="preserve">
+    <value>Windows şunu açamadı: {0}</value>
   </data>
   <data name="Windows does not let Lazy PDF read one of the pictures. Check who may open it." xml:space="preserve">
     <value>Windows, Lazy PDF'nin resimlerden birini okumasına izin vermiyor. Dosyayı kimlerin açabildiğini denetleyin.</value>

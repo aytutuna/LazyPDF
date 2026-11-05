@@ -104,7 +104,7 @@ public partial class HomeView : UserControl
 
     private void Tile_Click(object sender, RoutedEventArgs e)
     {
-        if (((FrameworkElement)sender).DataContext is HomeTile { Available: true } tile) TileChosen?.Invoke(this, tile.Id);
+        if (((FrameworkElement)sender).DataContext is HomeTile tile) TileChosen?.Invoke(this, tile.Id);
     }
 
     private void Recent_Click(object sender, RoutedEventArgs e)

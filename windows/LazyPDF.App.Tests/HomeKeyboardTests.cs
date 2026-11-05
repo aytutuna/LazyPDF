@@ -43,7 +43,7 @@ public sealed class HomeKeyboardTests
     });
 
     [Fact]
-    public Task ClickingATileThatCannotStartRaisesNothing() => Sta.Run(() =>
+    public Task ClickingATileThatCannotStartIsStillReported() => Sta.Run(() =>
     {
         using var f = new ViewModelFixture();
         var home = Show(f);
@@ -56,7 +56,8 @@ public sealed class HomeKeyboardTests
         buttons[combine].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         buttons[batch].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
-        Assert.Equal(["batch"], chosen);
+        // The view model then says why in the status line; the window does not start anything.
+        Assert.Equal(["combine", "batch"], chosen);
         return Task.CompletedTask;
     });
 }

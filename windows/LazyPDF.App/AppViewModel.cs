@@ -46,7 +46,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
         _opener = new DocumentOpener(codec, fonts);
         _sisters = sisters;
         _settingsDirectory = settingsDirectory;
-        _printDirectory = printDirectory ?? System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lazy PDF", "Print");
+        _printDirectory = printDirectory ?? AppFolders.PrintCopies;
         _recovery = new RecoveryStore(recoveryDirectory);
         _recentFiles = new RecentFiles(settingsDirectory);
         _sidePanelId = AppPreferencesStore.Load(settingsDirectory ?? StoreFiles.DefaultDirectory).SidePanel;

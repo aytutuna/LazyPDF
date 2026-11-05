@@ -82,10 +82,12 @@ public static class FileAssociation
 
     /// <summary>
     /// Registers (or removes) the running exe for the current user and tells File Explorer so its icons
-    /// follow. False when a policy keeps the user's classes read-only.
+    /// follow. False when a policy keeps the user's classes read-only. A packaged app does nothing: its manifest
+    /// registers the entries, and a key written from inside the package would only be the package's own copy.
     /// </summary>
     public static bool SetForCurrentUser(bool on)
     {
+        if (Packaging.IsPackaged) return false;
         if (Environment.ProcessPath is not { } exe) return false;
         try
         {

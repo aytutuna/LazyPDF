@@ -27,8 +27,7 @@ public sealed record RecoveryEntry(Guid Id, RecoveryMeta Meta, string PdfPath);
 /// </summary>
 public sealed class RecoveryStore(string? directory = null)
 {
-    private readonly string _directory = directory ?? System.IO.Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lazy PDF", "Recovery");
+    private readonly string _directory = directory ?? AppFolders.Recovery;
     private readonly object _gate = new();
     private readonly Dictionary<Guid, (byte[] Bytes, RecoveryMeta Meta)> _waiting = [];
     private Task _worker = Task.CompletedTask;
