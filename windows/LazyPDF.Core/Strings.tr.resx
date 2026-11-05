@@ -52,6 +52,9 @@
   <data name="A code such as en-US or tr-TR." xml:space="preserve">
     <value>en-US veya tr-TR gibi bir kod.</value>
   </data>
+  <data name="A colour is one, three or four numbers from 0 to 1." xml:space="preserve">
+    <value>Bir renk, 0 ile 1 arasında bir, üç veya dört sayıdır.</value>
+  </data>
   <data name="A constant opacity below 1 needs transparency." xml:space="preserve">
     <value>1'in altındaki sabit opaklık saydamlık gerektirir.</value>
   </data>
@@ -286,6 +289,15 @@
   <data name="Adding validation data" xml:space="preserve">
     <value>Doğrulama verisi ekleniyor</value>
   </data>
+  <data name="Address" xml:space="preserve">
+    <value>Adres</value>
+  </data>
+  <data name="Address not accepted" xml:space="preserve">
+    <value>Adres kabul edilmedi</value>
+  </data>
+  <data name="Address or field name" xml:space="preserve">
+    <value>Adres veya alan adı</value>
+  </data>
   <data name="Adds Lazy PDF to the Open with list of PDF files and registers lazypdf: addresses, for your account only. It never becomes the default program." xml:space="preserve">
     <value>Lazy PDF'yi PDF dosyalarının Birlikte aç listesine ekler ve lazypdf: adreslerini kaydeder; yalnızca hesabınız için. Hiçbir zaman varsayılan program olmaz.</value>
   </data>
@@ -322,8 +334,8 @@
   <data name="All files done" xml:space="preserve">
     <value>Tüm dosyalar bitti</value>
   </data>
-  <data name="All open documents" xml:space="preserve">
-    <value>Açık tüm belgeler</value>
+  <data name="All open files" xml:space="preserve">
+    <value>Açık tüm dosyalar</value>
   </data>
   <data name="All page content is tagged or marked as an artifact." xml:space="preserve">
     <value>Tüm sayfa içeriği etiketli ya da yapay öğe olarak işaretli.</value>
@@ -433,6 +445,9 @@
   <data name="Annotations" xml:space="preserve">
     <value>Ek açıklamalar</value>
   </data>
+  <data name="Another button of this field already uses {0}. Choose another value." xml:space="preserve">
+    <value>Bu alanın başka bir düğmesi zaten şu değeri kullanıyor: {0}. Başka bir değer seçin.</value>
+  </data>
   <data name="Another file" xml:space="preserve">
     <value>Başka dosya</value>
   </data>
@@ -469,6 +484,9 @@
   <data name="Arrow" xml:space="preserve">
     <value>Ok</value>
   </data>
+  <data name="Arrow keys move it. Enter places it. Escape cancels." xml:space="preserve">
+    <value>Ok tuşları taşır. Enter yerleştirir. Esc iptal eder.</value>
+  </data>
   <data name="Ask the signer to sign again with SHA-256." xml:space="preserve">
     <value>İmzalayandan SHA-256 ile yeniden imzalamasını isteyin.</value>
   </data>
@@ -504,6 +522,9 @@
   </data>
   <data name="Automatic" xml:space="preserve">
     <value>Otomatik</value>
+  </data>
+  <data name="Back to the document (Esc)" xml:space="preserve">
+    <value>Belgeye dön (Esc)</value>
   </data>
   <data name="Background" xml:space="preserve">
     <value>Arka plan</value>
@@ -613,8 +634,14 @@
   <data name="Button" xml:space="preserve">
     <value>Düğme</value>
   </data>
+  <data name="Button action" xml:space="preserve">
+    <value>Düğme işlemi</value>
+  </data>
   <data name="Button caption" xml:space="preserve">
     <value>Düğme yazısı</value>
+  </data>
+  <data name="Buttons with one name are one group. Leave it empty to join the selected group or start a new one." xml:space="preserve">
+    <value>Aynı adı taşıyan düğmeler tek bir gruptur. Seçili gruba katılmak veya yeni grup başlatmak için boş bırakın.</value>
   </data>
   <data name="By author" xml:space="preserve">
     <value>Yazara göre</value>
@@ -721,14 +748,23 @@
   <data name="Change anyway" xml:space="preserve">
     <value>Yine de değiştir</value>
   </data>
+  <data name="Change button action" xml:space="preserve">
+    <value>Düğme işlemini değiştir</value>
+  </data>
   <data name="Change button caption" xml:space="preserve">
     <value>Düğme yazısını değiştir</value>
   </data>
   <data name="Change choices" xml:space="preserve">
     <value>Seçenekleri değiştir</value>
   </data>
+  <data name="Change export value" xml:space="preserve">
+    <value>Dışa aktarma değerini değiştir</value>
+  </data>
   <data name="Change field hint" xml:space="preserve">
     <value>Alan ipucunu değiştir</value>
+  </data>
+  <data name="Change font" xml:space="preserve">
+    <value>Yazı tipini değiştir</value>
   </data>
   <data name="Change hidden text" xml:space="preserve">
     <value>Gizli metni değiştir</value>
@@ -762,6 +798,12 @@
   </data>
   <data name="Change tab order" xml:space="preserve">
     <value>Sekme sırasını değiştir</value>
+  </data>
+  <data name="Change text colour" xml:space="preserve">
+    <value>Metin rengini değiştir</value>
+  </data>
+  <data name="Change text size" xml:space="preserve">
+    <value>Metin boyutunu değiştir</value>
   </data>
   <data name="Change the file" xml:space="preserve">
     <value>Dosyayı değiştir</value>
@@ -928,6 +970,9 @@
   <data name="Click the two ends. Hold Shift for straight lines." xml:space="preserve">
     <value>İki ucuna tıklayın. Düz çizgiler için Shift tuşunu basılı tutun.</value>
   </data>
+  <data name="Click to sign" xml:space="preserve">
+    <value>İmzalamak için tıklayın</value>
+  </data>
   <data name="Click where it should go." xml:space="preserve">
     <value>Yerleşeceği yere tıklayın.</value>
   </data>
@@ -952,7 +997,7 @@
   <data name="Close" xml:space="preserve">
     <value>Kapat</value>
   </data>
-  <data name="Close the find bar" xml:space="preserve">
+  <data name="Close the search bar" xml:space="preserve">
     <value>Arama çubuğunu kapat</value>
   </data>
   <data name="Close the side panel" xml:space="preserve">
@@ -960,6 +1005,9 @@
   </data>
   <data name="Close the tool" xml:space="preserve">
     <value>Aracı kapat</value>
+  </data>
+  <data name="Close {0}?" xml:space="preserve">
+    <value>{0} kapatılsın mı?</value>
   </data>
   <data name="Cloud" xml:space="preserve">
     <value>Bulut</value>
@@ -1045,9 +1093,6 @@
   <data name="Completed" xml:space="preserve">
     <value>Tamamlandı</value>
   </data>
-  <data name="Compress" xml:space="preserve">
-    <value>Sıkıştır</value>
-  </data>
   <data name="Confidential" xml:space="preserve">
     <value>Gizli</value>
   </data>
@@ -1074,6 +1119,12 @@
   </data>
   <data name="Copies" xml:space="preserve">
     <value>Kopya</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>Kopyala</value>
+  </data>
+  <data name="Copy (Ctrl+C)" xml:space="preserve">
+    <value>Kopyala (Ctrl+C)</value>
   </data>
   <data name="Copy for the others" xml:space="preserve">
     <value>Diğerleri için kopya</value>
@@ -1167,6 +1218,15 @@
   </data>
   <data name="Custom tags without a standard meaning: {0}{1}. Map each to a standard tag." xml:space="preserve">
     <value>Standart anlamı olmayan özel etiketler: {0}{1}. Her birini standart bir etikete eşleyin.</value>
+  </data>
+  <data name="Cut" xml:space="preserve">
+    <value>Kes</value>
+  </data>
+  <data name="Cut (Ctrl+X)" xml:space="preserve">
+    <value>Kes (Ctrl+X)</value>
+  </data>
+  <data name="Cut pages" xml:space="preserve">
+    <value>Sayfaları kes</value>
   </data>
   <data name="Dark" xml:space="preserve">
     <value>Koyu</value>
@@ -1294,9 +1354,6 @@
   <data name="Document is tagged" xml:space="preserve">
     <value>Belge etiketli</value>
   </data>
-  <data name="Document viewer" xml:space="preserve">
-    <value>Belge görüntüleyici</value>
-  </data>
   <data name="Does not pass the checks for {0}. Rules broken: {1}." xml:space="preserve">
     <value>{0} denetimlerini geçmiyor. Bozulan kurallar: {1}.</value>
   </data>
@@ -1336,7 +1393,7 @@
   <data name="Drag on the page where it goes." xml:space="preserve">
     <value>Yerleşeceği alanı sayfada sürükleyin.</value>
   </data>
-  <data name="Drag over a drawing to remove it." xml:space="preserve">
+  <data name="Drag over a drawing to erase it." xml:space="preserve">
     <value>Bir çizimi silmek için üzerinde sürükleyin.</value>
   </data>
   <data name="Drag the part of the picture to keep." xml:space="preserve">
@@ -1414,7 +1471,7 @@
   <data name="Edit text" xml:space="preserve">
     <value>Metni düzenle</value>
   </data>
-  <data name="Edit text and images" xml:space="preserve">
+  <data name="Edit text and pictures" xml:space="preserve">
     <value>Metni ve resimleri düzenle</value>
   </data>
   <data name="Edit the fields" xml:space="preserve">
@@ -1522,6 +1579,9 @@
   <data name="Export summary" xml:space="preserve">
     <value>Özeti dışa aktar</value>
   </data>
+  <data name="Export value" xml:space="preserve">
+    <value>Dışa aktarma değeri</value>
+  </data>
   <data name="Exported" xml:space="preserve">
     <value>Dışa aktarıldı</value>
   </data>
@@ -1575,6 +1635,9 @@
   </data>
   <data name="Fields found" xml:space="preserve">
     <value>Bulunan alanlar</value>
+  </data>
+  <data name="Fields on scanned pages are guesses. Check each one." xml:space="preserve">
+    <value>Taranmış sayfalardaki alanlar tahmindir. Her birini kontrol edin.</value>
   </data>
   <data name="Figure" xml:space="preserve">
     <value>Şekil</value>
@@ -1762,23 +1825,11 @@
   <data name="Find" xml:space="preserve">
     <value>Bul</value>
   </data>
-  <data name="Find (Ctrl+F)" xml:space="preserve">
-    <value>Bul (Ctrl+F)</value>
-  </data>
   <data name="Find fields" xml:space="preserve">
     <value>Alanları bul</value>
   </data>
   <data name="Find fields in the file" xml:space="preserve">
     <value>Dosyadaki alanları bul</value>
-  </data>
-  <data name="Find in the document" xml:space="preserve">
-    <value>Belgede bul</value>
-  </data>
-  <data name="Find text" xml:space="preserve">
-    <value>Aranacak metin</value>
-  </data>
-  <data name="Find words in the file." xml:space="preserve">
-    <value>Dosyadaki sözcükleri bulun.</value>
   </data>
   <data name="Finish" xml:space="preserve">
     <value>Bitir</value>
@@ -1963,7 +2014,7 @@
   <data name="Full screen (F11)" xml:space="preserve">
     <value>Tam ekran (F11)</value>
   </data>
-  <data name="Give the stamp a text or an image." xml:space="preserve">
+  <data name="Give the stamp a text or a picture." xml:space="preserve">
     <value>Damgaya bir metin ya da resim verin.</value>
   </data>
   <data name="Go on anyway" xml:space="preserve">
@@ -1978,7 +2029,7 @@
   <data name="Go to page {0}" xml:space="preserve">
     <value>{0}. sayfaya git</value>
   </data>
-  <data name="Good for email and screens. Images drop to 150 dpi." xml:space="preserve">
+  <data name="Good for email and screens. Pictures drop to 150 dpi." xml:space="preserve">
     <value>E-posta ve ekran için uygun. Resimler 150 dpi'ye düşer.</value>
   </data>
   <data name="Good." xml:space="preserve">
@@ -1998,6 +2049,9 @@
   </data>
   <data name="Group by" xml:space="preserve">
     <value>Grupla</value>
+  </data>
+  <data name="Group name" xml:space="preserve">
+    <value>Grup adı</value>
   </data>
   <data name="Hand tool" xml:space="preserve">
     <value>El aracı</value>
@@ -2046,6 +2100,9 @@
   </data>
   <data name="Hidden text" xml:space="preserve">
     <value>Gizli metin</value>
+  </data>
+  <data name="Hide a field" xml:space="preserve">
+    <value>Alanı gizle</value>
   </data>
   <data name="Hide the menu bar" xml:space="preserve">
     <value>Menü çubuğunu gizle</value>
@@ -2097,27 +2154,6 @@
   </data>
   <data name="Ignore spacing" xml:space="preserve">
     <value>Boşlukları yok say</value>
-  </data>
-  <data name="Image" xml:space="preserve">
-    <value>Resim</value>
-  </data>
-  <data name="Image quality" xml:space="preserve">
-    <value>Resim kalitesi</value>
-  </data>
-  <data name="Image resolution" xml:space="preserve">
-    <value>Resim çözünürlüğü</value>
-  </data>
-  <data name="Image {0}" xml:space="preserve">
-    <value>Resim {0}</value>
-  </data>
-  <data name="Images" xml:space="preserve">
-    <value>Resimler</value>
-  </data>
-  <data name="Images in JPEG and JPEG 2000 need the system codec and were left." xml:space="preserve">
-    <value>JPEG ve JPEG 2000 resimler sistem kodekini gerektirir ve olduğu gibi bırakıldı.</value>
-  </data>
-  <data name="Images with uses that could not be traced were left at their size." xml:space="preserve">
-    <value>Kullanımı izlenemeyen resimler boyutlarında bırakıldı.</value>
   </data>
   <data name="Import" xml:space="preserve">
     <value>İçe aktar</value>
@@ -2227,7 +2263,7 @@
   <data name="Keep their text" xml:space="preserve">
     <value>Metinlerini koru</value>
   </data>
-  <data name="Keeps detail for printing. Images stay up to 300 dpi." xml:space="preserve">
+  <data name="Keeps detail for printing. Pictures stay up to 300 dpi." xml:space="preserve">
     <value>Baskı için ayrıntıyı korur. Resimler 300 dpi'ye kadar kalır.</value>
   </data>
   <data name="Keeps some private data" xml:space="preserve">
@@ -2286,6 +2322,9 @@
   </data>
   <data name="Lazy PDF closed before these were saved. Restore them to carry on where you were." xml:space="preserve">
     <value>Lazy PDF bunlar kaydedilmeden kapandı. Kaldığınız yerden devam etmek için geri yükleyin.</value>
+  </data>
+  <data name="Leave it empty to fit the text to the field." xml:space="preserve">
+    <value>Metni alana sığdırmak için boş bırakın.</value>
   </data>
   <data name="Leave it empty to remove the word." xml:space="preserve">
     <value>Sözcüğü kaldırmak için boş bırakın.</value>
@@ -2425,7 +2464,7 @@
   <data name="Make a new one" xml:space="preserve">
     <value>Yenisini oluştur</value>
   </data>
-  <data name="Make black and white images 1-bit" xml:space="preserve">
+  <data name="Make black and white pictures 1-bit" xml:space="preserve">
     <value>Siyah beyaz resimleri 1 bit yap</value>
   </data>
   <data name="Make searchable" xml:space="preserve">
@@ -2439,6 +2478,9 @@
   </data>
   <data name="Makes a new file and tries to meet the level. This file stays as it is." xml:space="preserve">
     <value>Düzeye uymaya çalışan yeni bir dosya oluşturur. Bu dosya olduğu gibi kalır.</value>
+  </data>
+  <data name="Makes the fields part of the page. They can no longer be filled in or changed." xml:space="preserve">
+    <value>Alanları sayfanın bir parçası yapar. Artık doldurulamaz veya değiştirilemez.</value>
   </data>
   <data name="Making the file smaller" xml:space="preserve">
     <value>Dosya küçültülüyor</value>
@@ -2605,11 +2647,14 @@
   <data name="No access" xml:space="preserve">
     <value>Erişim yok</value>
   </data>
+  <data name="No action" xml:space="preserve">
+    <value>İşlem yok</value>
+  </data>
   <data name="No author" xml:space="preserve">
     <value>Yazar yok</value>
   </data>
-  <data name="No blanks found. A page that is only a picture has none to find." xml:space="preserve">
-    <value>Boşluk bulunamadı. Yalnızca resimden oluşan bir sayfada bulunacak boşluk yoktur.</value>
+  <data name="No blanks found." xml:space="preserve">
+    <value>Boşluk bulunamadı.</value>
   </data>
   <data name="No bookmark starts after the first page. Split by pages or size instead." xml:space="preserve">
     <value>İlk sayfadan sonra başlayan bir yer imi yok. Sayfa sayısına ya da boyuta göre bölün.</value>
@@ -2681,7 +2726,7 @@
     <value>Bu bilgisayardaki hiçbir yazı tipi {0} metnini çizemiyor.</value>
   </data>
   <data name="No font on this computer can draw the text. Remove the letters it cannot show." xml:space="preserve">
-    <value>Bu bilgisayardaki hiçbir yazı tipi metni çizemiyor. Gösteremediği harfleri çıkarın.</value>
+    <value>Bu bilgisayardaki hiçbir yazı tipi metni çizemiyor. Gösteremediği harfleri kaldırın.</value>
   </data>
   <data name="No page could be tagged. Scans need text recognition first. Pages that share content cannot be tagged." xml:space="preserve">
     <value>Hiçbir sayfa etiketlenemedi. Taramalar için önce metin tanıma gerekir. İçerik paylaşan sayfalar etiketlenemez.</value>
@@ -2938,6 +2983,15 @@
   <data name="One side" xml:space="preserve">
     <value>Tek yüz</value>
   </data>
+  <data name="Only PDF files can be added between pages." xml:space="preserve">
+    <value>Sayfaların arasına yalnızca PDF dosyaları eklenebilir.</value>
+  </data>
+  <data name="Only a button can have an action." xml:space="preserve">
+    <value>Yalnızca bir düğmenin işlemi olabilir.</value>
+  </data>
+  <data name="Only a check box or radio button has an export value." xml:space="preserve">
+    <value>Dışa aktarma değeri yalnızca onay kutusunda veya seçenek düğmesinde bulunur.</value>
+  </data>
   <data name="Only an element can sit at the root." xml:space="preserve">
     <value>Kökte yalnızca bir öğe bulunabilir.</value>
   </data>
@@ -2986,11 +3040,14 @@
   <data name="Open a file first" xml:space="preserve">
     <value>Önce bir dosya açın</value>
   </data>
+  <data name="Open a link" xml:space="preserve">
+    <value>Bağlantı aç</value>
+  </data>
   <data name="Open a text file" xml:space="preserve">
     <value>Metin dosyası aç</value>
   </data>
-  <data name="Open documents" xml:space="preserve">
-    <value>Açık belgeler</value>
+  <data name="Open files" xml:space="preserve">
+    <value>Açık dosyalar</value>
   </data>
   <data name="Open in new tabs" xml:space="preserve">
     <value>Yeni sekmelerde aç</value>
@@ -3025,6 +3082,9 @@
   <data name="Options" xml:space="preserve">
     <value>Seçenekler</value>
   </data>
+  <data name="Or press Enter on the page." xml:space="preserve">
+    <value>Ya da sayfada Enter'a basın.</value>
+  </data>
   <data name="Orange" xml:space="preserve">
     <value>Turuncu</value>
   </data>
@@ -3034,8 +3094,11 @@
   <data name="Order in the file" xml:space="preserve">
     <value>Dosyadaki sıra</value>
   </data>
+  <data name="Organize on the stage" xml:space="preserve">
+    <value>Sayfaları büyük görünümde düzenle</value>
+  </data>
   <data name="Organize pages" xml:space="preserve">
-    <value>Sayfaları düzenle</value>
+    <value>Sayfaları yönet</value>
   </data>
   <data name="Orientation" xml:space="preserve">
     <value>Yön</value>
@@ -3115,6 +3178,9 @@
   <data name="Page thumbnails" xml:space="preserve">
     <value>Sayfa küçük resimleri</value>
   </data>
+  <data name="Page viewer" xml:space="preserve">
+    <value>Sayfa görüntüleyici</value>
+  </data>
   <data name="Page {0}" xml:space="preserve">
     <value>Sayfa {0}</value>
   </data>
@@ -3186,6 +3252,9 @@
   </data>
   <data name="Pages not changed" xml:space="preserve">
     <value>Sayfalar değiştirilmedi</value>
+  </data>
+  <data name="Pages not copied" xml:space="preserve">
+    <value>Sayfalar kopyalanamadı</value>
   </data>
   <data name="Pages not extracted" xml:space="preserve">
     <value>Sayfalar ayıklanamadı</value>
@@ -3277,6 +3346,15 @@
   <data name="Password to open" xml:space="preserve">
     <value>Açma parolası</value>
   </data>
+  <data name="Paste" xml:space="preserve">
+    <value>Yapıştır</value>
+  </data>
+  <data name="Paste (Ctrl+V)" xml:space="preserve">
+    <value>Yapıştır (Ctrl+V)</value>
+  </data>
+  <data name="Paste pages" xml:space="preserve">
+    <value>Sayfaları yapıştır</value>
+  </data>
   <data name="Pencil" xml:space="preserve">
     <value>Kalem</value>
   </data>
@@ -3334,11 +3412,17 @@
   <data name="Picture of the figure" xml:space="preserve">
     <value>Şeklin resmi</value>
   </data>
+  <data name="Picture quality" xml:space="preserve">
+    <value>Resim kalitesi</value>
+  </data>
   <data name="Picture replaced" xml:space="preserve">
     <value>Resim değiştirildi</value>
   </data>
   <data name="Picture replaced." xml:space="preserve">
     <value>Resim değiştirildi.</value>
+  </data>
+  <data name="Picture resolution" xml:space="preserve">
+    <value>Resim çözünürlüğü</value>
   </data>
   <data name="Picture saved." xml:space="preserve">
     <value>Resim kaydedildi.</value>
@@ -3349,14 +3433,23 @@
   <data name="Picture watermark" xml:space="preserve">
     <value>Resimli filigran</value>
   </data>
+  <data name="Picture {0}" xml:space="preserve">
+    <value>Resim {0}</value>
+  </data>
   <data name="Pictures" xml:space="preserve">
     <value>Resimler</value>
+  </data>
+  <data name="Pictures in JPEG and JPEG 2000 need the system codec and were left." xml:space="preserve">
+    <value>JPEG ve JPEG 2000 resimler sistem kodekini gerektirir ve olduğu gibi bırakıldı.</value>
   </data>
   <data name="Pictures in the file" xml:space="preserve">
     <value>Dosyadaki resimler</value>
   </data>
   <data name="Pictures of the pages" xml:space="preserve">
     <value>Sayfaların resimleri</value>
+  </data>
+  <data name="Pictures with uses that could not be traced were left at their size." xml:space="preserve">
+    <value>Kullanımı izlenemeyen resimler boyutlarında bırakıldı.</value>
   </data>
   <data name="Pictures.pdf" xml:space="preserve">
     <value>Resimler.pdf</value>
@@ -3511,6 +3604,9 @@
   <data name="Radio button" xml:space="preserve">
     <value>Seçenek düğmesi</value>
   </data>
+  <data name="Radio group name" xml:space="preserve">
+    <value>Seçenek düğmesi grubunun adı</value>
+  </data>
   <data name="Ran {0}" xml:space="preserve">
     <value>{0} işlendi</value>
   </data>
@@ -3635,7 +3731,7 @@
     <value>Listeden kaldır</value>
   </data>
   <data name="Remove from the list" xml:space="preserve">
-    <value>Listeden çıkar</value>
+    <value>Listeden kaldır</value>
   </data>
   <data name="Remove link" xml:space="preserve">
     <value>Bağlantıyı kaldır</value>
@@ -3799,8 +3895,8 @@
   <data name="Restore" xml:space="preserve">
     <value>Geri yükle</value>
   </data>
-  <data name="Restore {0} document?|plural" xml:space="preserve">
-    <value>{0} belge geri yüklensin mi?</value>
+  <data name="Restore {0} file?|plural" xml:space="preserve">
+    <value>{0} dosya geri yüklensin mi?</value>
   </data>
   <data name="Result" xml:space="preserve">
     <value>Sonuç</value>
@@ -3997,14 +4093,26 @@
   <data name="Search" xml:space="preserve">
     <value>Ara</value>
   </data>
+  <data name="Search (Ctrl+F)" xml:space="preserve">
+    <value>Ara (Ctrl+F)</value>
+  </data>
   <data name="Search and web capture data" xml:space="preserve">
     <value>Arama ve web yakalama verisi</value>
   </data>
   <data name="Search failed" xml:space="preserve">
     <value>Arama yapılamadı</value>
   </data>
+  <data name="Search for words in the file." xml:space="preserve">
+    <value>Dosyada sözcük arayın.</value>
+  </data>
   <data name="Search results" xml:space="preserve">
     <value>Arama sonuçları</value>
+  </data>
+  <data name="Search text" xml:space="preserve">
+    <value>Aranacak metin</value>
+  </data>
+  <data name="Search the file" xml:space="preserve">
+    <value>Dosyada ara</value>
   </data>
   <data name="Search the file to list every match here." xml:space="preserve">
     <value>Dosyada arayın, eşleşmeler burada listelensin.</value>
@@ -4047,6 +4155,9 @@
   </data>
   <data name="Send reply" xml:space="preserve">
     <value>Yanıtı gönder</value>
+  </data>
+  <data name="Send the form to an address" xml:space="preserve">
+    <value>Formu bir adrese gönder</value>
   </data>
   <data name="Send to back" xml:space="preserve">
     <value>En arkaya gönder</value>
@@ -4105,6 +4216,9 @@
   <data name="Show Lazy PDF in Open with" xml:space="preserve">
     <value>Lazy PDF'yi Birlikte aç listesinde göster</value>
   </data>
+  <data name="Show a field" xml:space="preserve">
+    <value>Alanı göster</value>
+  </data>
   <data name="Show beside the page" xml:space="preserve">
     <value>Sayfanın yanında göster</value>
   </data>
@@ -4129,7 +4243,7 @@
   <data name="Showing or hiding a layer changes the view only. The file stays as it is." xml:space="preserve">
     <value>Bir katmanı göstermek ya da gizlemek yalnızca görünümü değiştirir. Dosya olduğu gibi kalır.</value>
   </data>
-  <data name="Shrink images" xml:space="preserve">
+  <data name="Shrink pictures" xml:space="preserve">
     <value>Resimleri küçült</value>
   </data>
   <data name="Shrink the file and see where its space goes." xml:space="preserve">
@@ -4273,7 +4387,7 @@
   <data name="Small" xml:space="preserve">
     <value>Küçük</value>
   </data>
-  <data name="Smallest file. Images drop to 96 dpi and lose some detail." xml:space="preserve">
+  <data name="Smallest file. Pictures drop to 96 dpi and lose some detail." xml:space="preserve">
     <value>En küçük dosya. Resimler 96 dpi'ye düşer ve biraz ayrıntı kaybeder.</value>
   </data>
   <data name="Snap to text" xml:space="preserve">
@@ -4466,7 +4580,7 @@
     <value>Etiketler eklenemedi</value>
   </data>
   <data name="Take out hidden data before the file goes to someone else." xml:space="preserve">
-    <value>Dosya başkasına gitmeden önce gizli verileri çıkarın.</value>
+    <value>Dosya başkasına gitmeden önce gizli verileri kaldırın.</value>
   </data>
   <data name="Take the recognized text off the chosen pages" xml:space="preserve">
     <value>Seçili sayfalardaki tanınan metni kaldırın</value>
@@ -4536,6 +4650,9 @@
   </data>
   <data name="Text size" xml:space="preserve">
     <value>Metin boyutu</value>
+  </data>
+  <data name="Text size not accepted" xml:space="preserve">
+    <value>Metin boyutu kabul edilmedi</value>
   </data>
   <data name="Text that reflows" xml:space="preserve">
     <value>Yeniden akan metin</value>
@@ -4621,6 +4738,9 @@
   <data name="The XMP has no pdfaid:rev of 2020." xml:space="preserve">
     <value>XMP'de 2020 değerinde pdfaid:rev yok.</value>
   </data>
+  <data name="The XMP metadata does not name {0}, because rules are still broken." xml:space="preserve">
+    <value>XMP üst verisi {0} adını vermiyor, çünkü kurallar hâlâ ihlal ediliyor.</value>
+  </data>
   <data name="The XMP metadata now identifies the file as {0}." xml:space="preserve">
     <value>XMP üst verisi artık dosyayı {0} olarak tanımlıyor.</value>
   </data>
@@ -4675,6 +4795,9 @@
   <data name="The bookmarks make {0} part.|plural" xml:space="preserve">
     <value>Yer imleri {0} parça oluşturuyor.</value>
   </data>
+  <data name="The bookmarks of the file." xml:space="preserve">
+    <value>Dosyanın yer imleri.</value>
+  </data>
   <data name="The catalog has /NeedsRendering." xml:space="preserve">
     <value>Katalogda /NeedsRendering var.</value>
   </data>
@@ -4723,9 +4846,6 @@
   <data name="The cross-reference data is damaged and had to be rebuilt." xml:space="preserve">
     <value>Çapraz başvuru verisi hasarlıydı ve yeniden oluşturulması gerekti.</value>
   </data>
-  <data name="The document changed" xml:space="preserve">
-    <value>Belge değişti</value>
-  </data>
   <data name="The document has bookmarks, or is short enough not to need them." xml:space="preserve">
     <value>Belgede yer imleri var ya da yer imi gerektirmeyecek kadar kısa.</value>
   </data>
@@ -4741,9 +4861,6 @@
   <data name="The document is tagged." xml:space="preserve">
     <value>Belge etiketli.</value>
   </data>
-  <data name="The document is too large to export." xml:space="preserve">
-    <value>Belge dışa aktarılamayacak kadar büyük.</value>
-  </data>
   <data name="The document language is missing or not valid. Set it so a screen reader picks the right voice." xml:space="preserve">
     <value>Belgenin dili eksik ya da geçersiz. Ekran okuyucu doğru sesi seçsin diye dili ayarlayın.</value>
   </data>
@@ -4755,6 +4872,9 @@
   </data>
   <data name="The encryption was removed." xml:space="preserve">
     <value>Şifreleme kaldırıldı.</value>
+  </data>
+  <data name="The export value cannot be empty or Off." xml:space="preserve">
+    <value>Dışa aktarma değeri boş veya Off olamaz.</value>
   </data>
   <data name="The field asks for a different digest." xml:space="preserve">
     <value>Alan farklı bir özet istiyor.</value>
@@ -4779,6 +4899,9 @@
   </data>
   <data name="The figure is no longer in the file." xml:space="preserve">
     <value>Şekil artık dosyada değil.</value>
+  </data>
+  <data name="The file changed" xml:space="preserve">
+    <value>Dosya değişti</value>
   </data>
   <data name="The file changed meanwhile. Replace again." xml:space="preserve">
     <value>Dosya bu sırada değişti. Yeniden değiştirin.</value>
@@ -4823,7 +4946,7 @@
     <value>Dosya kaydedilemedi. Klasörü denetleyip yeniden deneyin.</value>
   </data>
   <data name="The file could not be searched." xml:space="preserve">
-    <value>Dosya taranamadı.</value>
+    <value>Dosyada arama yapılamadı.</value>
   </data>
   <data name="The file could not be searched. Close it and open it again." xml:space="preserve">
     <value>Dosyada arama yapılamadı. Dosyayı kapatıp yeniden açın.</value>
@@ -4866,6 +4989,9 @@
   </data>
   <data name="The file is signed. The new file loses the signatures." xml:space="preserve">
     <value>Dosya imzalı. Yeni dosya imzaları kaybeder.</value>
+  </data>
+  <data name="The file is too large to export." xml:space="preserve">
+    <value>Dosya dışa aktarılamayacak kadar büyük.</value>
   </data>
   <data name="The file needs a password." xml:space="preserve">
     <value>Dosya bir parola gerektiriyor.</value>
@@ -4923,6 +5049,12 @@
   </data>
   <data name="The form has XFA data." xml:space="preserve">
     <value>Formda XFA verisi var.</value>
+  </data>
+  <data name="The form has no field named {0}." xml:space="preserve">
+    <value>Formda adı {0} olan bir alan yok.</value>
+  </data>
+  <data name="The form has no font named {0}." xml:space="preserve">
+    <value>Formda adı {0} olan bir yazı tipi yok.</value>
   </data>
   <data name="The form sets /NeedAppearances to true." xml:space="preserve">
     <value>Form /NeedAppearances değerini doğru yapıyor.</value>
@@ -4999,9 +5131,6 @@
   <data name="The original is unchanged. Save the copy to keep it." xml:space="preserve">
     <value>Özgün dosya değişmedi. Kopyayı kaydederek saklayın.</value>
   </data>
-  <data name="The outline of the file." xml:space="preserve">
-    <value>Dosyanın anahattı.</value>
-  </data>
   <data name="The output does not open." xml:space="preserve">
     <value>Çıktı açılmıyor.</value>
   </data>
@@ -5031,6 +5160,9 @@
   </data>
   <data name="The pages could not be copied into a new file. Try fewer pages." xml:space="preserve">
     <value>Sayfalar yeni bir dosyaya kopyalanamadı. Daha az sayfa deneyin.</value>
+  </data>
+  <data name="The pages could not be copied. Try fewer pages." xml:space="preserve">
+    <value>Sayfalar kopyalanamadı. Daha az sayfa deneyin.</value>
   </data>
   <data name="The pages could not be tagged. Save a copy of the file and try again." xml:space="preserve">
     <value>Sayfalar etiketlenemedi. Dosyanın bir kopyasını kaydedip yeniden deneyin.</value>
@@ -5143,6 +5275,9 @@
   <data name="The text is in more than one stream." xml:space="preserve">
     <value>Metin birden fazla akışta.</value>
   </data>
+  <data name="The text size must be from 0 to 200 points." xml:space="preserve">
+    <value>Metin boyutu 0 ile 200 punto arasında olmalı.</value>
+  </data>
   <data name="The time stamp is not valid." xml:space="preserve">
     <value>Zaman damgası geçerli değil.</value>
   </data>
@@ -5160,6 +5295,9 @@
   </data>
   <data name="The value does not fit the format." xml:space="preserve">
     <value>Değer biçime uymuyor.</value>
+  </data>
+  <data name="The value saved when this button is chosen." xml:space="preserve">
+    <value>Bu düğme seçildiğinde kaydedilen değer.</value>
   </data>
   <data name="The whole file fits in one part. Use a smaller amount." xml:space="preserve">
     <value>Dosyanın tamamı tek parçaya sığıyor. Daha küçük bir değer girin.</value>
@@ -5208,9 +5346,6 @@
   </data>
   <data name="This computer is offline. Connect to the internet and try again." xml:space="preserve">
     <value>Bu bilgisayar çevrimdışı. İnternete bağlanıp yeniden deneyin.</value>
-  </data>
-  <data name="This document has no file yet." xml:space="preserve">
-    <value>Bu belgenin henüz dosyası yok.</value>
   </data>
   <data name="This field does not take that value. Check it and try again." xml:space="preserve">
     <value>Bu alan bu değeri kabul etmiyor. Değeri kontrol edip yeniden deneyin.</value>
@@ -5287,6 +5422,9 @@
   <data name="This file is not protected." xml:space="preserve">
     <value>Bu dosya korunmuyor.</value>
   </data>
+  <data name="This file is not saved yet." xml:space="preserve">
+    <value>Bu dosya henüz kaydedilmedi.</value>
+  </data>
   <data name="This file is protected. Open it with its owner password to use this tool." xml:space="preserve">
     <value>Bu dosya korumalı. Bu aracı kullanmak için sahip parolasıyla açın.</value>
   </data>
@@ -5316,6 +5454,9 @@
   </data>
   <data name="This is the signed version." xml:space="preserve">
     <value>Bu, imzalı sürümün kendisi.</value>
+  </data>
+  <data name="This kind of action cannot be set here." xml:space="preserve">
+    <value>Bu tür bir işlem burada ayarlanamaz.</value>
   </data>
   <data name="This link cannot be opened." xml:space="preserve">
     <value>Bu bağlantı açılamıyor.</value>
@@ -5352,6 +5493,9 @@
   </data>
   <data name="This text includes annotation text, which the page's content does not hold. Build the page without IncludeAnnotations to edit or redact it." xml:space="preserve">
     <value>Bu metin, sayfa içeriğinde bulunmayan ek açıklama metnini de içeriyor. Düzenlemek ya da karartmak için sayfayı IncludeAnnotations olmadan oluşturun.</value>
+  </data>
+  <data name="Thumbnail size" xml:space="preserve">
+    <value>Küçük resim boyutu</value>
   </data>
   <data name="Thumbnails of every page." xml:space="preserve">
     <value>Her sayfanın küçük resmi.</value>
@@ -5482,17 +5626,26 @@
   <data name="Type a name for the set, then save it." xml:space="preserve">
     <value>Küme için bir ad yazın, sonra kaydedin.</value>
   </data>
+  <data name="Type a number from 0 to 200, or leave it empty to fit the text to the field." xml:space="preserve">
+    <value>0 ile 200 arasında bir sayı yazın veya metni alana sığdırmak için boş bırakın.</value>
+  </data>
   <data name="Type a number from 1 to {0}." xml:space="preserve">
     <value>1 ile {0} arasında bir sayı yazın.</value>
   </data>
   <data name="Type a title for the file, then save it." xml:space="preserve">
     <value>Dosya için bir başlık yazın, sonra kaydedin.</value>
   </data>
+  <data name="Type a web address such as https://example.com." xml:space="preserve">
+    <value>https://example.com gibi bir web adresi yazın.</value>
+  </data>
   <data name="Type a whole number, or leave it empty for no limit." xml:space="preserve">
     <value>Tam sayı yazın veya sınır istemiyorsanız boş bırakın.</value>
   </data>
   <data name="Type pages like 1-3, 5" xml:space="preserve">
     <value>Sayfaları şöyle yazın: 1-3, 5</value>
+  </data>
+  <data name="Type the address the button goes to." xml:space="preserve">
+    <value>Düğmenin gideceği adresi yazın.</value>
   </data>
   <data name="Type the first number of the run." xml:space="preserve">
     <value>Dizinin ilk numarasını yazın.</value>
@@ -5747,7 +5900,7 @@
     <value>Windows'ta sizin için özel anahtarlı sertifika yok. PFX dosyası kullanın.</value>
   </data>
   <data name="Windows has no font for the text on the boxes. Clear that text and try again." xml:space="preserve">
-    <value>Windows'ta kutulardaki metin için yazı tipi yok. Bu metni silip yeniden deneyin.</value>
+    <value>Windows'ta kutulardaki metin için yazı tipi yok. Bu metni temizleyip yeniden deneyin.</value>
   </data>
   <data name="Windows has no voice ready. Add one under Time and language, Speech." xml:space="preserve">
     <value>Windows'ta hazır bir ses yok. Zaman ve dil, Konuşma bölümünden ekleyin.</value>
@@ -5768,7 +5921,7 @@
     <value>Bu sayfadaki sözcükler</value>
   </data>
   <data name="Words: {0} added, {1} removed" xml:space="preserve">
-    <value>Sözcük: {0} eklendi, {1} silindi</value>
+    <value>Sözcük: {0} eklendi, {1} kaldırıldı</value>
   </data>
   <data name="Write report" xml:space="preserve">
     <value>Rapor yaz</value>
@@ -6037,9 +6190,6 @@
   <data name="{0} holds removed text." xml:space="preserve">
     <value>{0} kaldırılan metni içeriyor.</value>
   </data>
-  <data name="{0} image|plural" xml:space="preserve">
-    <value>{0} resim</value>
-  </data>
   <data name="{0} integers beyond 32 bits were cut to the limit." xml:space="preserve">
     <value>32 bit sınırını aşan {0} tamsayı sınıra çekildi.</value>
   </data>
@@ -6142,11 +6292,17 @@
   <data name="{0} page added|plural" xml:space="preserve">
     <value>{0} sayfa eklendi</value>
   </data>
+  <data name="{0} page copied|plural" xml:space="preserve">
+    <value>{0} sayfa kopyalandı</value>
+  </data>
   <data name="{0} page could not be drawn.|plural" xml:space="preserve">
     <value>{0} sayfa çizilemedi.</value>
   </data>
   <data name="{0} page cropped|plural" xml:space="preserve">
     <value>{0} sayfa kırpıldı</value>
+  </data>
+  <data name="{0} page cut|plural" xml:space="preserve">
+    <value>{0} sayfa kesildi</value>
   </data>
   <data name="{0} page deleted|plural" xml:space="preserve">
     <value>{0} sayfa silindi</value>
@@ -6162,6 +6318,9 @@
   </data>
   <data name="{0} page moved|plural" xml:space="preserve">
     <value>{0} sayfa taşındı</value>
+  </data>
+  <data name="{0} page pasted|plural" xml:space="preserve">
+    <value>{0} sayfa yapıştırıldı</value>
   </data>
   <data name="{0} page resized|plural" xml:space="preserve">
     <value>{0} sayfa yeniden boyutlandırıldı</value>
@@ -6190,8 +6349,17 @@
   <data name="{0} picture could not be read.|plural" xml:space="preserve">
     <value>{0} resim okunamadı.</value>
   </data>
+  <data name="{0} picture was left out because the file is too large.|plural" xml:space="preserve">
+    <value>{0} resim, dosya çok büyük olduğu için dışarıda bırakıldı.</value>
+  </data>
+  <data name="{0} picture|plural" xml:space="preserve">
+    <value>{0} resim</value>
+  </data>
   <data name="{0} pt" xml:space="preserve">
     <value>{0} pt</value>
+  </data>
+  <data name="{0} redaction mark is not applied yet.|plural" xml:space="preserve">
+    <value>{0} karartma işareti henüz uygulanmadı.</value>
   </data>
   <data name="{0} reply|plural" xml:space="preserve">
     <value>{0} yanıt</value>

@@ -293,9 +293,6 @@
   "Format": {
     "tr": "Biçim"
   },
-  "Image": {
-    "tr": "Resim"
-  },
   "Page": {
     "tr": "Sayfa"
   },
@@ -441,9 +438,6 @@
   "Page {0}": {
     "tr": "Sayfa {0}"
   },
-  "Image {0}": {
-    "tr": "Resim {0}"
-  },
   "Table {0} (p{1})": {
     "tr": "Tablo {0} (s. {1})"
   },
@@ -452,9 +446,6 @@
   },
   "None of the pictures could be read.": {
     "tr": "Resimlerin hiçbiri okunamadı."
-  },
-  "The document is too large to export.": {
-    "tr": "Belge dışa aktarılamayacak kadar büyük."
   },
   "No font file can draw this text.": {
     "tr": "Hiçbir yazı tipi dosyası bu metni çizemiyor."
@@ -561,20 +552,11 @@
   "Drop unused resources": {
     "tr": "Kullanılmayan kaynakları at"
   },
-  "Shrink images": {
-    "tr": "Resimleri küçült"
-  },
-  "Make black and white images 1-bit": {
-    "tr": "Siyah beyaz resimleri 1 bit yap"
-  },
   "Trim fonts": {
     "tr": "Yazı tiplerini kırp"
   },
   "Convert to grayscale": {
     "tr": "Gri tonlamaya çevir"
-  },
-  "Images": {
-    "tr": "Resimler"
   },
   "Fonts": {
     "tr": "Yazı tipleri"
@@ -651,17 +633,11 @@
   "Digital signatures": {
     "tr": "Dijital imzalar"
   },
-  "Images in JPEG and JPEG 2000 need the system codec and were left.": {
-    "tr": "JPEG ve JPEG 2000 resimler sistem kodekini gerektirir ve olduğu gibi bırakıldı."
-  },
   "Shadings, spot colours and patterns were left in colour.": {
     "tr": "Gölgelendirmeler, özel renkler ve desenler renkli bırakıldı."
   },
   "Fonts with uses that could not be traced were left whole.": {
     "tr": "Kullanımı izlenemeyen yazı tipleri bütün bırakıldı."
-  },
-  "Images with uses that could not be traced were left at their size.": {
-    "tr": "Kullanımı izlenemeyen resimler boyutlarında bırakıldı."
   },
   "Invisible text in a text object that also shows visible text was left.": {
     "tr": "Görünür metin de gösteren bir metin nesnesindeki görünmez metin bırakıldı."
@@ -733,10 +709,6 @@
   "{0} character": {
     "other": "{0} characters",
     "tr": "{0} karakter"
-  },
-  "{0} image": {
-    "other": "{0} images",
-    "tr": "{0} resim"
   },
   "{0} shape": {
     "other": "{0} shapes",
@@ -954,9 +926,6 @@
   },
   "Document changed": {
     "tr": "Belge değişti"
-  },
-  "Give the stamp a text or an image.": {
-    "tr": "Damgaya bir metin ya da resim verin."
   },
   "File header": {
     "tr": "Dosya üst bilgisi"
@@ -1477,9 +1446,6 @@
   "Join files into a new one, or split this one.": {
     "tr": "Dosyaları yeni bir dosyada birleştirin ya da bunu bölün."
   },
-  "Compress": {
-    "tr": "Sıkıştır"
-  },
   "Make the file smaller.": {
     "tr": "Dosyayı küçültün."
   },
@@ -1690,10 +1656,6 @@
   "Windows would not let Lazy PDF change this setting. Your account may be managed by someone else.": {
     "tr": "Windows, Lazy PDF'nin bu ayarı değiştirmesine izin vermedi. Hesabınız başkası tarafından yönetiliyor olabilir."
   },
-  "Restore {0} document?": {
-    "other": "Restore {0} documents?",
-    "tr": "{0} belge geri yüklensin mi?"
-  },
   "Something went wrong": {
     "tr": "Bir şeyler ters gitti"
   },
@@ -1789,9 +1751,6 @@
   },
   "Settings": {
     "tr": "Ayarlar"
-  },
-  "Open documents": {
-    "tr": "Açık belgeler"
   },
   "Tools": {
     "tr": "Araçlar"
@@ -1919,9 +1878,6 @@
   "Measure distances, perimeters and areas on a page.": {
     "tr": "Bir sayfada uzaklıkları, çevreleri ve alanları ölçün."
   },
-  "Edit text and images": {
-    "tr": "Metni ve resimleri düzenle"
-  },
   "Change the words and pictures already on a page.": {
     "tr": "Sayfada zaten bulunan sözcükleri ve resimleri değiştirin."
   },
@@ -1938,7 +1894,7 @@
     "tr": "Başlık, yazar ve dosyada saklanan diğer bilgiler."
   },
   "Organize pages": {
-    "tr": "Sayfaları düzenle"
+    "tr": "Sayfaları yönet"
   },
   "Rotate, move, delete, crop and extract pages.": {
     "tr": "Sayfaları döndürün, taşıyın, silin, kırpın ve ayıklayın."
@@ -1971,7 +1927,7 @@
     "tr": "Paylaşım için temizle"
   },
   "Take out hidden data before the file goes to someone else.": {
-    "tr": "Dosya başkasına gitmeden önce gizli verileri çıkarın."
+    "tr": "Dosya başkasına gitmeden önce gizli verileri kaldırın."
   },
   "Make smaller": {
     "tr": "Küçült"
@@ -2012,9 +1968,6 @@
   "Bookmarks": {
     "tr": "Yer imleri"
   },
-  "The outline of the file.": {
-    "tr": "Dosyanın anahattı."
-  },
   "Files carried inside this one.": {
     "tr": "Bu dosyanın içinde taşınan dosyalar."
   },
@@ -2035,9 +1988,6 @@
   },
   "Search": {
     "tr": "Ara"
-  },
-  "Find words in the file.": {
-    "tr": "Dosyadaki sözcükleri bulun."
   },
   "Convert": {
     "tr": "Dönüştür"
@@ -2088,9 +2038,6 @@
   "Find": {
     "tr": "Bul"
   },
-  "Find (Ctrl+F)": {
-    "tr": "Bul (Ctrl+F)"
-  },
   "Search results": {
     "tr": "Arama sonuçları"
   },
@@ -2122,12 +2069,6 @@
   "The signatures could not be checked.": {
     "tr": "İmzalar denetlenemedi."
   },
-  "Find in the document": {
-    "tr": "Belgede bul"
-  },
-  "Close the find bar": {
-    "tr": "Arama çubuğunu kapat"
-  },
   "Next match (F3)": {
     "tr": "Sonraki eşleşme (F3)"
   },
@@ -2139,9 +2080,6 @@
   },
   "Previous match": {
     "tr": "Önceki eşleşme"
-  },
-  "Find text": {
-    "tr": "Aranacak metin"
   },
   "Match case": {
     "tr": "Büyük/küçük harfe duyarlı"
@@ -2172,9 +2110,6 @@
   },
   "This link cannot be opened.": {
     "tr": "Bu bağlantı açılamıyor."
-  },
-  "Document viewer": {
-    "tr": "Belge görüntüleyici"
   },
   "Previous page": {
     "tr": "Önceki sayfa"
@@ -2305,9 +2240,6 @@
   "{0} could not be finished. If part of it was done, Undo takes it back.": {
     "tr": "{0} tamamlanamadı. Bir kısmı yapıldıysa Geri al onu geri alır."
   },
-  "All open documents": {
-    "tr": "Açık tüm belgeler"
-  },
   "Add comments from an FDF or XFDF file.": {
     "tr": "Yorumları bir FDF veya XFDF dosyasından ekleyin."
   },
@@ -2382,9 +2314,6 @@
   },
   "Drag from the spot to where the text goes.": {
     "tr": "Noktadan metnin yerleşeceği yere sürükleyin."
-  },
-  "Drag over a drawing to remove it.": {
-    "tr": "Bir çizimi silmek için üzerinde sürükleyin."
   },
   "Drag to draw a line.": {
     "tr": "Çizgi çizmek için sürükleyin."
@@ -2706,7 +2635,7 @@
     "tr": "Bu süzgeçlerle gösterilecek bir şey yok."
   },
   "Words: {0} added, {1} removed": {
-    "tr": "Sözcük: {0} eklendi, {1} silindi"
+    "tr": "Sözcük: {0} eklendi, {1} kaldırıldı"
   },
   "{0} area differs": {
     "other": "{0} areas differ",
@@ -2958,7 +2887,7 @@
     "tr": "Bu metin için yazı tipi yok"
   },
   "No font on this computer can draw the text. Remove the letters it cannot show.": {
-    "tr": "Bu bilgisayardaki hiçbir yazı tipi metni çizemiyor. Gösteremediği harfleri çıkarın."
+    "tr": "Bu bilgisayardaki hiçbir yazı tipi metni çizemiyor. Gösteremediği harfleri kaldırın."
   },
   "No picture to use": {
     "tr": "Kullanılacak resim yok"
@@ -3579,9 +3508,6 @@
   "Delete form field": {
     "tr": "Form alanını sil"
   },
-  "Drag on the page to draw a field. Click a field to change it.": {
-    "tr": "Alan çizmek için sayfada sürükleyin. Değiştirmek için bir alana tıklayın."
-  },
   "Drag on the page to draw it. With a radio group selected the button joins it.": {
     "tr": "Çizmek için sayfada sürükleyin. Bir seçenek grubu seçiliyse düğme gruba katılır."
   },
@@ -3686,9 +3612,6 @@
   },
   "New field": {
     "tr": "Yeni alan"
-  },
-  "No blanks found. A page that is only a picture has none to find.": {
-    "tr": "Boşluk bulunamadı. Yalnızca resimden oluşan bir sayfada bulunacak boşluk yoktur."
   },
   "Now make the change again.": {
     "tr": "Şimdi değişikliği yeniden yapın."
@@ -4323,9 +4246,6 @@
     "other": "Removed from {0} pages",
     "tr": "{0} sayfadan kaldırıldı"
   },
-  "The document changed": {
-    "tr": "Belge değişti"
-  },
   "Nothing was added. Run it again.": {
     "tr": "Hiçbir şey eklenmedi. Yeniden çalıştırın."
   },
@@ -4405,23 +4325,11 @@
   "File written, not shown": {
     "tr": "Dosya yazıldı, gösterilemedi"
   },
-  "Good for email and screens. Images drop to 150 dpi.": {
-    "tr": "E-posta ve ekran için uygun. Resimler 150 dpi'ye düşer."
-  },
   "High": {
     "tr": "Yüksek"
   },
-  "Image quality": {
-    "tr": "Resim kalitesi"
-  },
-  "Image resolution": {
-    "tr": "Resim çözünürlüğü"
-  },
   "Keep as is": {
     "tr": "Olduğu gibi bırak"
-  },
-  "Keeps detail for printing. Images stay up to 300 dpi.": {
-    "tr": "Baskı için ayrıntıyı korur. Resimler 300 dpi'ye kadar kalır."
   },
   "Left in: {0}.": {
     "tr": "Dosyada kalanlar: {0}."
@@ -4468,17 +4376,11 @@
   "Size and quality": {
     "tr": "Boyut ve kalite"
   },
-  "Smallest file. Images drop to 96 dpi and lose some detail.": {
-    "tr": "En küçük dosya. Resimler 96 dpi'ye düşer ve biraz ayrıntı kaybeder."
-  },
   "The file could not be searched.": {
-    "tr": "Dosya taranamadı."
+    "tr": "Dosyada arama yapılamadı."
   },
   "These settings cannot make this file smaller. Try the Small preset.": {
     "tr": "Bu ayarlarla dosya küçülmüyor. Küçük ayarını deneyin."
-  },
-  "This document has no file yet.": {
-    "tr": "Bu belgenin henüz dosyası yok."
   },
   "This file": {
     "tr": "Bu dosya"
@@ -4588,7 +4490,7 @@
     "tr": "Birleştirilecek dosyalar"
   },
   "Remove from the list": {
-    "tr": "Listeden çıkar"
+    "tr": "Listeden kaldır"
   },
   "Split by": {
     "tr": "Bölme ölçütü"
@@ -5126,7 +5028,7 @@
     "tr": "Karartılamadı"
   },
   "Windows has no font for the text on the boxes. Clear that text and try again.": {
-    "tr": "Windows'ta kutulardaki metin için yazı tipi yok. Bu metni silip yeniden deneyin."
+    "tr": "Windows'ta kutulardaki metin için yazı tipi yok. Bu metni temizleyip yeniden deneyin."
   },
   "Redacting": {
     "tr": "Karartılıyor"
@@ -6333,5 +6235,276 @@
   },
   "Protected for certificate holders": {
     "tr": "Sertifika sahipleri için korumalı"
+  },
+  "Click to sign": {
+    "tr": "İmzalamak için tıklayın"
+  },
+  "No blanks found.": {
+    "tr": "Boşluk bulunamadı."
+  },
+  "Fields on scanned pages are guesses. Check each one.": {
+    "tr": "Taranmış sayfalardaki alanlar tahmindir. Her birini kontrol edin."
+  },
+  "No action": {
+    "tr": "İşlem yok"
+  },
+  "Open a link": {
+    "tr": "Bağlantı aç"
+  },
+  "Send the form to an address": {
+    "tr": "Formu bir adrese gönder"
+  },
+  "Show a field": {
+    "tr": "Alanı göster"
+  },
+  "Hide a field": {
+    "tr": "Alanı gizle"
+  },
+  "Address": {
+    "tr": "Adres"
+  },
+  "Change font": {
+    "tr": "Yazı tipini değiştir"
+  },
+  "Change text colour": {
+    "tr": "Metin rengini değiştir"
+  },
+  "Change export value": {
+    "tr": "Dışa aktarma değerini değiştir"
+  },
+  "Text size not accepted": {
+    "tr": "Metin boyutu kabul edilmedi"
+  },
+  "Type a number from 0 to 200, or leave it empty to fit the text to the field.": {
+    "tr": "0 ile 200 arasında bir sayı yazın veya metni alana sığdırmak için boş bırakın."
+  },
+  "Change text size": {
+    "tr": "Metin boyutunu değiştir"
+  },
+  "Address not accepted": {
+    "tr": "Adres kabul edilmedi"
+  },
+  "Type a web address such as https://example.com.": {
+    "tr": "https://example.com gibi bir web adresi yazın."
+  },
+  "Change button action": {
+    "tr": "Düğme işlemini değiştir"
+  },
+  "Group name": {
+    "tr": "Grup adı"
+  },
+  "Radio group name": {
+    "tr": "Seçenek düğmesi grubunun adı"
+  },
+  "Export value": {
+    "tr": "Dışa aktarma değeri"
+  },
+  "The value saved when this button is chosen.": {
+    "tr": "Bu düğme seçildiğinde kaydedilen değer."
+  },
+  "Leave it empty to fit the text to the field.": {
+    "tr": "Metni alana sığdırmak için boş bırakın."
+  },
+  "Button action": {
+    "tr": "Düğme işlemi"
+  },
+  "Address or field name": {
+    "tr": "Adres veya alan adı"
+  },
+  "Makes the fields part of the page. They can no longer be filled in or changed.": {
+    "tr": "Alanları sayfanın bir parçası yapar. Artık doldurulamaz veya değiştirilemez."
+  },
+  "Only a check box or radio button has an export value.": {
+    "tr": "Dışa aktarma değeri yalnızca onay kutusunda veya seçenek düğmesinde bulunur."
+  },
+  "The export value cannot be empty or Off.": {
+    "tr": "Dışa aktarma değeri boş veya Off olamaz."
+  },
+  "Another button of this field already uses {0}. Choose another value.": {
+    "tr": "Bu alanın başka bir düğmesi zaten şu değeri kullanıyor: {0}. Başka bir değer seçin."
+  },
+  "The form has no font named {0}.": {
+    "tr": "Formda adı {0} olan bir yazı tipi yok."
+  },
+  "The text size must be from 0 to 200 points.": {
+    "tr": "Metin boyutu 0 ile 200 punto arasında olmalı."
+  },
+  "A colour is one, three or four numbers from 0 to 1.": {
+    "tr": "Bir renk, 0 ile 1 arasında bir, üç veya dört sayıdır."
+  },
+  "Only a button can have an action.": {
+    "tr": "Yalnızca bir düğmenin işlemi olabilir."
+  },
+  "Type the address the button goes to.": {
+    "tr": "Düğmenin gideceği adresi yazın."
+  },
+  "The form has no field named {0}.": {
+    "tr": "Formda adı {0} olan bir alan yok."
+  },
+  "This kind of action cannot be set here.": {
+    "tr": "Bu tür bir işlem burada ayarlanamaz."
+  },
+  "Buttons with one name are one group. Leave it empty to join the selected group or start a new one.": {
+    "tr": "Aynı adı taşıyan düğmeler tek bir gruptur. Seçili gruba katılmak veya yeni grup başlatmak için boş bırakın."
+  },
+  "Cut pages": {
+    "tr": "Sayfaları kes"
+  },
+  "Paste pages": {
+    "tr": "Sayfaları yapıştır"
+  },
+  "Pages not copied": {
+    "tr": "Sayfalar kopyalanamadı"
+  },
+  "The pages could not be copied. Try fewer pages.": {
+    "tr": "Sayfalar kopyalanamadı. Daha az sayfa deneyin."
+  },
+  "Only PDF files can be added between pages.": {
+    "tr": "Sayfaların arasına yalnızca PDF dosyaları eklenebilir."
+  },
+  "{0} page cut": {
+    "other": "{0} pages cut",
+    "tr": "{0} sayfa kesildi"
+  },
+  "{0} page copied": {
+    "other": "{0} pages copied",
+    "tr": "{0} sayfa kopyalandı"
+  },
+  "{0} page pasted": {
+    "other": "{0} pages pasted",
+    "tr": "{0} sayfa yapıştırıldı"
+  },
+  "Thumbnail size": {
+    "tr": "Küçük resim boyutu"
+  },
+  "Back to the document (Esc)": {
+    "tr": "Belgeye dön (Esc)"
+  },
+  "Cut (Ctrl+X)": {
+    "tr": "Kes (Ctrl+X)"
+  },
+  "Cut": {
+    "tr": "Kes"
+  },
+  "Copy (Ctrl+C)": {
+    "tr": "Kopyala (Ctrl+C)"
+  },
+  "Copy": {
+    "tr": "Kopyala"
+  },
+  "Paste (Ctrl+V)": {
+    "tr": "Yapıştır (Ctrl+V)"
+  },
+  "Paste": {
+    "tr": "Yapıştır"
+  },
+  "Organize on the stage": {
+    "tr": "Sayfaları büyük görünümde düzenle"
+  },
+  "Edit text and pictures": {
+    "tr": "Metni ve resimleri düzenle"
+  },
+  "Picture quality": {
+    "tr": "Resim kalitesi"
+  },
+  "Picture resolution": {
+    "tr": "Resim çözünürlüğü"
+  },
+  "Good for email and screens. Pictures drop to 150 dpi.": {
+    "tr": "E-posta ve ekran için uygun. Resimler 150 dpi'ye düşer."
+  },
+  "Keeps detail for printing. Pictures stay up to 300 dpi.": {
+    "tr": "Baskı için ayrıntıyı korur. Resimler 300 dpi'ye kadar kalır."
+  },
+  "Smallest file. Pictures drop to 96 dpi and lose some detail.": {
+    "tr": "En küçük dosya. Resimler 96 dpi'ye düşer ve biraz ayrıntı kaybeder."
+  },
+  "Shrink pictures": {
+    "tr": "Resimleri küçült"
+  },
+  "Make black and white pictures 1-bit": {
+    "tr": "Siyah beyaz resimleri 1 bit yap"
+  },
+  "Give the stamp a text or a picture.": {
+    "tr": "Damgaya bir metin ya da resim verin."
+  },
+  "Pictures with uses that could not be traced were left at their size.": {
+    "tr": "Kullanımı izlenemeyen resimler boyutlarında bırakıldı."
+  },
+  "Pictures in JPEG and JPEG 2000 need the system codec and were left.": {
+    "tr": "JPEG ve JPEG 2000 resimler sistem kodekini gerektirir ve olduğu gibi bırakıldı."
+  },
+  "Picture {0}": {
+    "tr": "Resim {0}"
+  },
+  "Search (Ctrl+F)": {
+    "tr": "Ara (Ctrl+F)"
+  },
+  "Search the file": {
+    "tr": "Dosyada ara"
+  },
+  "Close the search bar": {
+    "tr": "Arama çubuğunu kapat"
+  },
+  "Search text": {
+    "tr": "Aranacak metin"
+  },
+  "Search for words in the file.": {
+    "tr": "Dosyada sözcük arayın."
+  },
+  "Open files": {
+    "tr": "Açık dosyalar"
+  },
+  "All open files": {
+    "tr": "Açık tüm dosyalar"
+  },
+  "The file changed": {
+    "tr": "Dosya değişti"
+  },
+  "This file is not saved yet.": {
+    "tr": "Bu dosya henüz kaydedilmedi."
+  },
+  "Page viewer": {
+    "tr": "Sayfa görüntüleyici"
+  },
+  "The bookmarks of the file.": {
+    "tr": "Dosyanın yer imleri."
+  },
+  "Drag over a drawing to erase it.": {
+    "tr": "Bir çizimi silmek için üzerinde sürükleyin."
+  },
+  "{0} picture": {
+    "other": "{0} pictures",
+    "tr": "{0} resim"
+  },
+  "Restore {0} file?": {
+    "other": "Restore {0} files?",
+    "tr": "{0} dosya geri yüklensin mi?"
+  },
+  "Close {0}?": {
+    "tr": "{0} kapatılsın mı?"
+  },
+  "{0} redaction mark is not applied yet.": {
+    "other": "{0} redaction marks are not applied yet.",
+    "tr": "{0} karartma işareti henüz uygulanmadı."
+  },
+  "Arrow keys move it. Enter places it. Escape cancels.": {
+    "tr": "Ok tuşları taşır. Enter yerleştirir. Esc iptal eder."
+  },
+  "Or press Enter on the page.": {
+    "tr": "Ya da sayfada Enter'a basın."
+  },
+  "The XMP metadata does not name {0}, because rules are still broken.": {
+    "tr": "XMP üst verisi {0} adını vermiyor, çünkü kurallar hâlâ ihlal ediliyor."
+  },
+  "{0} picture was left out because the file is too large.": {
+    "other": "{0} pictures were left out because the file is too large.",
+    "tr": "{0} resim, dosya çok büyük olduğu için dışarıda bırakıldı."
+  },
+  "The file is too large to export.": {
+    "tr": "Dosya dışa aktarılamayacak kadar büyük."
+  },
+  "Drag on the page to draw a field. Click a field to change it.": {
+    "tr": "Alan çizmek için sayfada sürükleyin. Değiştirmek için bir alana tıklayın."
   }
 }
