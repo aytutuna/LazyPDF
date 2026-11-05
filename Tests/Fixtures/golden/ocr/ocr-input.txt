@@ -1,0 +1,80 @@
+# One line is "<op> <rest>". Strings use \uXXXX \xHH \n \t \\. Parts of a line are separated by " ;; ".
+# A word is "text@x,y,width,height" or "text@x,y,width,height,confidence": a box in the pixels of the picture, origin top-left.
+# font program|map|ranges: the TrueType program, the compressed /CIDToGIDMap and the ToUnicode ranges that never change.
+# cmap <text>|<text>...: the codes of the texts in one font and its ToUnicode map apart from the ranges.
+# flip <text>: the text as OcrVisualOrder writes it, as UTF-16 units in hex.
+# page <pixel width> <pixel height> ;; <word> ...: the lines, paragraphs and texts of one page.
+# place <rotate> <crop box l,b,r,t or -> <user unit> <pixel width> <pixel height> ;; <word> ...: the lines laid out on a page
+#   whose media box is 400 x 600, and the content stream written for them.
+# add <page entries or -> ;; <language> ;; <word> ...: PdfOcrLayer.Add on a one-page scan (400 x 600, picture /Im1, font /F1), the layer's stream
+#   and the font objects as written, with the streams decoded.
+# triage <page entries or -> ;; <content>: the kind of the scan page that draws the content.
+font program
+font map
+font ranges
+cmap Hello
+cmap a\ud83d\ude00|\ud840\udc00\ud83d\ude00|x
+cmap \u011f\u00fc\u015f|abc
+cmap e1\ud83d\ude01\ud83d\ude02|\ud83d\ude02\ud83d\ude01
+cmap \u05e9\u05dc\u05d5\u05dd|\u0645\u0631\u062d\u0628\u0627
+flip hello
+flip
+flip 12.5%
+flip \u011f\u00fc\u015f\u0130\u0131
+flip \u05e9\u05dc\u05d5\u05dd
+flip \u05e9\u05dc\u05d5\u05dd123
+flip a3.14\u05d1
+flip (\u05e9\u05dc\u05d5\u05dd)
+flip \u05e9\u05dc\u05d5\u05dd \u05e2\u05d5\u05dc\u05dd
+flip \u0645\u0631\u062d\u0628\u0627 \u0628\u0627\u0644\u0639\u0627\u0644\u0645 2026
+flip abc \u05e9\u05dc\u05d5\u05dd def
+flip \u05d1\u05d3\u05d9\u05e7\u05d4 (1,000) [x] \u00aby\u00bb <z>
+flip \u05e1\u05e2\u05d9\u05e303.14 {a}
+flip \ud83d\ude00\u05d0
+flip 1,000\u05d0
+page 100 100 ;; Hello@10,100,40,10,0.9 ;; world@60,100,40,10,0.5
+page 100 100 ;; world@60,100,40,10 ;; Hello@10,100,40,10
+page 400 600 ;; Soup@10,100,40,10 ;; 4.50@300,100,40,10
+page 700 800 ;; L0a@10,100,40,10 ;; L0b@55,100,40,10 ;; R0a@300,107,40,10 ;; R0b@345,107,40,10 ;; L1a@10,114,40,10 ;; L1b@55,114,40,10 ;; R1a@300,121,40,10 ;; R1b@345,121,40,10 ;; L2a@10,128,40,10 ;; L2b@55,128,40,10 ;; R2a@300,135,40,10 ;; R2b@345,135,40,10
+page 700 800 ;; dish0@10,100,40,10 ;; 0.50@300,100,40,10 ;; dish1@10,114,40,10 ;; 1.50@300,114,40,10 ;; dish2@10,128,40,10 ;; 2.50@300,128,40,10
+page 300 200 ;; Alpha@10,10,280,10 ;; beta@10,22,280,10 ;; gamma-@10,34,280,10 ;; delta@10,46,200,10 ;; Second@10,90,280,10 ;; paragraph@10,102,100,10
+page 300 200 ;; Intro@10,10,280,10 ;; Indented@40,22,250,10 ;; next@10,34,280,10 ;; far@10,100,280,10
+page 300 200 ;; Title@100,10,100,10 ;; centred@110,22,80,10 ;; body@10,34,280,10
+page 300 200 ;; one@10,10,100,10 ;; up@10,60,100,10 ;; again@10,5,100,10
+page 100 100 ;; @10,10,40,10 ;;   @10,30,40,10 ;; flat@10,50,40,0 ;; neg@10,70,-5,10 ;; ok@10,90,40,10
+page 100 100 ;;   a\x00\x01b\tc\u2028 @10,10,40,10 ;; x\u2029y@10,40,40,10
+page 400 400 ;; a@10,10,30,10 ;; b@25,15,30,10 ;; c@40,20,30,10 ;; d@55,25,30,10
+page 400 400 ;; s0@0,0,40,10 ;; s1@100,30,40,10 ;; s2@200,60,40,10 ;; s3@300,90,40,10
+page 400 400 ;; Head@10,10,380,14 ;; l1@10,40,40,10 ;; l2@10,52,40,10 ;; l3@10,64,40,10 ;; r1@250,40,40,10 ;; r2@250,52,40,10 ;; r3@250,64,40,10
+place 0 - 1 400 600 ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+place 90 - 1 600 400 ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+place 180 - 1 400 600 ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+place 270 - 1 600 400 ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+place 0 20,30,380,570 2 720 1080 ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+place 0 - 1 800 1200 ;; Hello@80,200,200,48 ;; world@320,200,220,48
+place 0 - 1 400 600 ;; \u05e9\u05dc\u05d5\u05dd@250,100,80,24 ;; \u05e2\u05d5\u05dc\u05dd@150,100,80,24 ;; \u0645\u0631\u062d\u0628\u0627@250,160,80,24 ;; \u0628\u0627\u0644\u0639\u0627\u0644\u0645@140,160,90,24
+place 0 - 1 400 600 ;; \u05e1\u05e2\u05d9\u05e33.14@200,100,100,24 ;; (\u05e9\u05dc\u05d5\u05dd)@80,100,100,24
+place 0 - 1 400 600 ;; \ud83d\ude00x\ud840\udc00@10,10,90,20 ;; \ud840\udc00@120,10,30,20
+place 0 - 1 400 600 ;; a\x00b\tc\n@100,200,60,20 ;; \ufffd@200,200,40,20 ;; flat@10,10,50,0 ;; back@10,10,-50,20 ;; empty@10,10,0,20
+place 0 - 1 400 600 ;; outside@-500,5000,50,20 ;; tiny@10,10,50,0.001
+place 0 - 1 400 600 ;; ab@10,100,30,20 ;; cd@12,100,30,20 ;; ef@60,104,30,16
+page 400 600 ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+add - ;; en-US ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+add /Rotate 90 ;; tr-TR ;; Hello@40,100,100,24 ;; world@160,100,110,24 ;; Second@40,160,120,24 ;; line@180,160,60,24
+add /CropBox [20 30 380 570] /UserUnit 2 ;; en ;; Hello@80,200,200,48 ;; world@320,200,220,48
+add - ;; en ;; \ud83d\ude00x@10,10,90,20 ;; \ud840\udc00@120,10,30,20
+add - ;; en ;; flat@10,10,40,0
+triage - ;; q 400 0 0 600 0 0 cm /Im1 Do Q
+triage - ;; q Q
+triage - ;; 0 0 100 100 re f
+triage - ;; q 40 0 0 40 10 10 cm /Im1 Do Q
+triage - ;; BT /F1 12 Tf 50 500 Td (Hello) Tj ET
+triage - ;; q 400 0 0 600 0 0 cm /Im1 Do Q BT 3 Tr /F1 12 Tf 50 500 Td (Hello) Tj ET
+triage - ;; q 400 0 0 600 0 0 cm /Im1 Do Q BT /F1 8 Tf 10 10 Td (B 000123) Tj ET
+triage /CropBox [0 0 200 300] ;; q 200 0 0 300 0 0 cm /Im1 Do Q
+triage - ;; q 400 0 0 200 0 0 cm /Im1 Do Q
+triage - ;; BT 7 Tr /F1 12 Tf 50 500 Td (Clip) Tj ET
+triage - ;; BT /F1 12 Tf 50 500 Td (   ) Tj ET
+triage - ;; q q q BT BT ET ET Q Q Q Q Q /Nope Do /F9 12 Tf (x) Tj [ ( )
+triage - ;; 0 0 m 100 100 l S
+triage - ;; q 0.5 g 0 0 10 10 re f Q BT /F1 12 Tf 50 500 Td (Hi) Tj ET
