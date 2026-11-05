@@ -984,3 +984,13 @@ A page with marks is either understood in full or turned into a picture. Removin
 - What stays: a stream with none of the markers above, named by a font-program key under a private key of a painted object, stays.
 - `RedactionOptions.FlattenMarkedPages` (false by default) turns every page with a mark into a picture, as an unknown page is; without a renderer the call throws `NeedsPicture` the same way.
 - An XMP packet that is not XML, or cannot be written back after it was changed (the parser accepts an `xmlns` binding the writer refuses), is emptied and reported as `XmpUnreadable`; reading never throws anything else.
+
+### App and form additions
+
+- `PagePointer` has a new last parameter `FromKeys` (default false). It is true for a click sent by Enter from the keyboard path; a pointer tool that draws a box gives such a click a default size instead of an empty box. `SignatureBoxTool`, `CropTool` and `RedactDrawTool` do this.
+- The keyboard path lives in `PageViewer.Placement.cs`: Enter shows a cross in the middle of the page in view, the arrow keys move it (Shift small steps, Ctrl big ones), Enter again clicks there, Escape lets go.
+- `ChangeGate.Refusal(PdfDocument)` returns a `Problem?`: `Problems.Restricted()` when the file was not opened as owner and lacks the Modify permission, else null.
+- `ChangeGate.RunAsync(tab, host, name, run)` checks `Refusal` first, asks before changing a signed or certified file, and shows a problem for `PdfPermissionException` or any other failure except out of memory.
+- `PdfPermissionException` (Core, derives from `UnauthorizedAccessException`) is what a save or change throws when the file's rights do not allow it. Callers outside `ChangeGate` catch it and show `Problems.Restricted()`.
+- The forms panel hint reads "Drag on the page to draw a field. Click a field to change it." and "No blanks found." is the text for a scan with no fields found.
+- The Turkish catalog in `l10n/shared.json` has the new wording for pictures (not images) in the shell, optimize and edit texts, and the page cut and paste texts.
