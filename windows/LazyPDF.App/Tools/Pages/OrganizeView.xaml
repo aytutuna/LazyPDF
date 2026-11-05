@@ -1,0 +1,117 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Pages.OrganizeView"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:pages="clr-namespace:LazyPDF.App.Tools.Pages"
+                 AutomationProperties.Name="{loc:T Organize pages}" AllowDrop="True"
+                 PreviewKeyDown="View_PreviewKeyDown" DragOver="View_DragOver" Drop="View_Drop">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Padding="8,6" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
+            <WrapPanel VerticalAlignment="Center">
+                <Button x:Name="Done" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Done}" loc:Icon.Glyph="&#xE72B;" Margin="0,0,8,0"
+                        ToolTip="{loc:T Back to the document (Esc)}" AutomationProperties.Name="{loc:T Done}" Click="Done_Click" />
+                <Button x:Name="TurnLeft" Style="{StaticResource IconButtonStyle}" Content="&#xE7AD;"
+                        ToolTip="{loc:T Rotate left}" AutomationProperties.Name="{loc:T Rotate left}" Click="TurnLeft_Click">
+                    <Button.LayoutTransform>
+                        <ScaleTransform ScaleX="-1" />
+                    </Button.LayoutTransform>
+                </Button>
+                <Button x:Name="TurnRight" Style="{StaticResource IconButtonStyle}" Content="&#xE7AD;"
+                        ToolTip="{loc:T Rotate right}" AutomationProperties.Name="{loc:T Rotate right}" Click="TurnRight_Click" />
+                <Button x:Name="Remove" Style="{StaticResource IconButtonStyle}" Content="&#xE74D;"
+                        ToolTip="{loc:T Delete}" AutomationProperties.Name="{loc:T Delete}" Click="Remove_Click" />
+                <Button x:Name="Duplicate" Style="{StaticResource IconButtonStyle}" Content="&#xE923;"
+                        ToolTip="{loc:T Duplicate}" AutomationProperties.Name="{loc:T Duplicate}" Click="Duplicate_Click" />
+                <Button x:Name="Extract" Style="{StaticResource IconButtonStyle}" Content="&#xE8A7;"
+                        ToolTip="{loc:T Extract to a new file}" AutomationProperties.Name="{loc:T Extract to a new file}" Click="Extract_Click" />
+                <Button x:Name="Cut" Style="{StaticResource IconButtonStyle}" Content="&#xE8C6;"
+                        ToolTip="{loc:T Cut (Ctrl+X)}" AutomationProperties.Name="{loc:T Cut}" Click="Cut_Click" />
+                <Button x:Name="Copy" Style="{StaticResource IconButtonStyle}" Content="&#xE8C8;"
+                        ToolTip="{loc:T Copy (Ctrl+C)}" AutomationProperties.Name="{loc:T Copy}" Click="Copy_Click" />
+                <Button x:Name="Paste" Style="{StaticResource IconButtonStyle}" Content="&#xE77F;"
+                        ToolTip="{loc:T Paste (Ctrl+V)}" AutomationProperties.Name="{loc:T Paste}" Click="Paste_Click" />
+                <Button x:Name="Blank" Style="{StaticResource IconButtonStyle}" Content="&#xE710;"
+                        ToolTip="{loc:T Blank page}" AutomationProperties.Name="{loc:T Blank page}" Click="Blank_Click" />
+                <Button x:Name="FromFile" Style="{StaticResource IconButtonStyle}" Content="&#xE8E5;"
+                        ToolTip="{loc:T Pages from a file}" AutomationProperties.Name="{loc:T Pages from a file}" Click="FromFile_Click" />
+                <ComboBox x:Name="Place" Width="150" Margin="8,0,0,0" VerticalAlignment="Center" SelectedIndex="0"
+                          ToolTip="{loc:T Where}" AutomationProperties.Name="{loc:T Where}">
+                    <ComboBoxItem Content="{loc:T After the selection}" />
+                    <ComboBoxItem Content="{loc:T Before the selection}" />
+                    <ComboBoxItem Content="{loc:T At the start}" />
+                    <ComboBoxItem Content="{loc:T At the end}" />
+                </ComboBox>
+            </WrapPanel>
+        </Border>
+        <Border DockPanel.Dock="Bottom" Padding="12,6" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
+            <DockPanel>
+                <Slider x:Name="TileSize" DockPanel.Dock="Right" Width="160" VerticalAlignment="Center" Minimum="72" Maximum="320" Value="140"
+                        SmallChange="16" LargeChange="48" ToolTip="{loc:T Thumbnail size}" AutomationProperties.Name="{loc:T Thumbnail size}"
+                        ValueChanged="TileSize_ValueChanged" />
+                <TextBlock x:Name="Summary" Style="{StaticResource SecondaryBodyText}" VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+        <DockPanel x:Name="SignedRow" DockPanel.Dock="Top" Margin="12,8,12,0" Visibility="Collapsed">
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE7BA;" />
+            <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T This file is signed. Changing its pages breaks the signatures.}" />
+        </DockPanel>
+        <ListBox x:Name="Thumbs" BorderThickness="0" Background="Transparent" SelectionMode="Extended" AllowDrop="True" Padding="8"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True"
+                 AutomationProperties.Name="{loc:T Pages}" SelectionChanged="Thumbs_SelectionChanged" ScrollViewer.ScrollChanged="Thumbs_ScrollChanged"
+                 SizeChanged="Thumbs_SizeChanged" MouseDoubleClick="Thumbs_MouseDoubleClick" ButtonBase.Click="Thumbs_Click">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <pages:TilePanel />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem" BasedOn="{StaticResource ThumbnailListItemStyle}">
+                    <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type pages:PageCell}">
+                    <Grid Background="Transparent">
+                        <StackPanel VerticalAlignment="Center">
+                            <Grid Width="{Binding Width}" Height="{Binding Height}" HorizontalAlignment="Center">
+                                <Border CornerRadius="{StaticResource ThumbnailCornerRadius}" Background="White" BorderThickness="1"
+                                        BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" SnapsToDevicePixels="True">
+                                    <Image Source="{Binding Image}" Stretch="Uniform" />
+                                </Border>
+                                <Border x:Name="Hover" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,4,0,0" Padding="2" Visibility="Collapsed"
+                                        CornerRadius="{StaticResource ThumbnailCornerRadius}" Background="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"
+                                        BorderThickness="1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Style="{StaticResource SmallIconButtonStyle}" Content="&#xE7AD;" Tag="-90" Focusable="False"
+                                                ToolTip="{loc:T Rotate left}" AutomationProperties.Name="{loc:T Rotate left}">
+                                            <Button.LayoutTransform>
+                                                <ScaleTransform ScaleX="-1" />
+                                            </Button.LayoutTransform>
+                                        </Button>
+                                        <Button Style="{StaticResource SmallIconButtonStyle}" Content="&#xE7AD;" Tag="90" Focusable="False"
+                                                ToolTip="{loc:T Rotate right}" AutomationProperties.Name="{loc:T Rotate right}" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                            <TextBlock Text="{Binding Label}" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                        </StackPanel>
+                        <Border x:Name="Before" Width="3" HorizontalAlignment="Left" Margin="-2,6" Background="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Collapsed" />
+                        <Border x:Name="After" Width="3" HorizontalAlignment="Right" Margin="-2,6" Background="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Collapsed" />
+                    </Grid>
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                            <Setter TargetName="Hover" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding DropBefore}" Value="True">
+                            <Setter TargetName="Before" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding DropAfter}" Value="True">
+                            <Setter TargetName="After" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</tools:ToolPanel>

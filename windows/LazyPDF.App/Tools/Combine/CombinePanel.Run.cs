@@ -41,7 +41,7 @@ public partial class CombinePanel
             {
                 // The open document is read again here: its pages may be taken twice and the session belongs to the UI thread.
                 var again = PageEdits.Reopen(tab);
-                byte[] made = PageAssembly.Merge([.. sources.Select(s => new MergeSource(s.Entry.Document ?? again, s.Pages))]).SaveRewrite();
+                byte[] made = PageAssembly.Merge([.. sources.Select(s => new MergeSource(s.Entry.Document ?? again, s.Pages))], token).SaveRewrite();
                 token.ThrowIfCancellationRequested();
                 bytes = made;
             }, token));
@@ -84,7 +84,7 @@ public partial class CombinePanel
             await host.RunBusyAsync(Loc.T("Splitting file"), token => Task.Run(() =>
             {
                 var saved = new List<byte[]>();
-                foreach (var part in CombineJob.Split(PageEdits.Reopen(tab), kind, amount))
+                foreach (var part in CombineJob.Split(PageEdits.Reopen(tab), kind, amount, token))
                 {
                     token.ThrowIfCancellationRequested();
                     saved.Add(part.SaveRewrite());

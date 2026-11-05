@@ -238,7 +238,7 @@ public sealed class PageEditsTests
 
         Assert.ThrowsAny<ArgumentException>(() => PageEdits.Crop(tab.Document, [0, 1], box));
         Assert.True(tab.Document.HasChanges);
-        PagesPanel.Refuse(host, tab);
+        PageJobs.Refuse(host, tab);
 
         Assert.False(tab.Document.HasChanges);
         Assert.False(tab.Commit("Later"));

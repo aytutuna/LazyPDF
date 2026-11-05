@@ -25,12 +25,12 @@ public sealed class PageCell(int index, string label, double width, double heigh
 
     public string Name { get; } = Loc.T("Page {0}", label);
 
-    public double Width { get; } = width;
+    public double Width { get; private set; } = width;
 
-    public double Height { get; } = height;
+    public double Height { get; private set; } = height;
 
     /// <summary>Size of the picture in pixels per point of the page.</summary>
-    public double Scale { get; } = scale;
+    public double Scale { get; private set; } = scale;
 
     public ImageSource? Image => _image;
 
@@ -67,6 +67,15 @@ public sealed class PageCell(int index, string label, double width, double heigh
         // A page that cannot be drawn stays marked as loading, so it is not asked for again.
         _image = image;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Image)));
+    }
+
+    /// <summary>Changes the size the cell is drawn at; the picture it has stays until the grid asks for a sharper one.</summary>
+    public void Refit(double width, double height, double scale)
+    {
+        Width = width;
+        Height = height;
+        Scale = scale;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     }
 
     public void Release()

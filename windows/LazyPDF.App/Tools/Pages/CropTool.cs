@@ -11,6 +11,8 @@ namespace LazyPDF.App.Tools.Pages;
 /// <summary>Draws a box on a page with the left button and keeps it, in page space, until the next drag or <see cref="Clear"/>.</summary>
 internal sealed class CropTool(IDocumentViewer viewer) : IPagePointerTool
 {
+    private static readonly Size KeyBox = new(240, 160);
+
     private readonly Rectangle _frame = new()
     {
         Stroke = (Brush)Application.Current.FindResource("AccentFillColorDefaultBrush"),
@@ -52,6 +54,15 @@ internal sealed class CropTool(IDocumentViewer viewer) : IPagePointerTool
         _dragging = false;
         var to = Inside(pointer);
         double width = Math.Abs(to.X - _from.X), height = Math.Abs(to.Y - _from.Y);
+        if (pointer.FromKeys && width < 4 && height < 4)
+        {
+            // The keyboard sends a click, which gets a box of the usual size.
+            var size = viewer.PageSize(_page);
+            _from = new Point(Math.Max(0, Math.Min(_from.X, size.Width - KeyBox.Width)), Math.Max(0, Math.Min(_from.Y, size.Height - KeyBox.Height)));
+            to = new Point(Math.Min(_from.X + KeyBox.Width, size.Width), Math.Min(_from.Y + KeyBox.Height, size.Height));
+            width = to.X - _from.X;
+            height = to.Y - _from.Y;
+        }
         if (width < 4 || height < 4)
         {
             Clear();

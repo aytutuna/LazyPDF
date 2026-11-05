@@ -14,67 +14,28 @@ public partial class PagesPanel
     private bool Apply(string label, Action<PdfDocument> change, IEnumerable<int>? reselect, string status)
     {
         if (Tab is not { } tab || Host is not { } host) return false;
+        _reselect = reselect;
         try
         {
-            change(tab.Document);
-        }
-        catch (Exception error) when (error is ArgumentException or PdfReadException)
-        {
-            Refuse(host, tab);
-            return false;
-        }
-        return Commit(host, tab, label, reselect, status);
-    }
-
-    // For the edits that copy pages in from another file: the work runs off the UI thread and the result goes to the tab it started on,
-    // wherever the person has moved to meanwhile.
-    private async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, IEnumerable<int>? reselect, string status)
-    {
-        bool done = false;
-        try
-        {
-            await host.RunBusyAsync(busy, token => Task.Run(() =>
-            {
-                token.ThrowIfCancellationRequested();
-                change(tab.Document);
-                done = !token.IsCancellationRequested;
-            }, token));
-        }
-        catch (Exception error) when (error is ArgumentException or PdfReadException)
-        {
-            Refuse(host, tab);
-            return false;
-        }
-        if (done) return Commit(host, tab, label, reselect, status);
-        tab.Session.Discard();
-        return false;
-    }
-
-    private bool Commit(IToolHost host, DocumentTab tab, string label, IEnumerable<int>? reselect, string status)
-    {
-        _reselect = ReferenceEquals(Tab, tab) ? reselect : null;
-        try
-        {
-            if (!tab.Commit(label)) return false;
-        }
-        catch (PdfReadException)
-        {
-            Refuse(host, tab);
-            return false;
+            return PageJobs.Apply(tab, host, label, change, status);
         }
         finally
         {
             _reselect = null;
         }
-        host.SetStatus(status);
-        return true;
     }
 
-    // What was changed in memory is dropped, so a half-done edit cannot be committed later with another one.
-    internal static void Refuse(IToolHost host, DocumentTab tab)
+    private async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, IEnumerable<int>? reselect, string status)
     {
-        tab.Session.Discard();
-        host.ShowProblem(new Problem(Loc.T("Pages not changed"), Loc.T("The file did not take that change. Pick other pages and try again.")));
+        _reselect = reselect;
+        try
+        {
+            return await PageJobs.ApplyAsync(tab, host, busy, label, change, status);
+        }
+        finally
+        {
+            _reselect = null;
+        }
     }
 
     private void TurnLeft_Click(object sender, RoutedEventArgs e) => Turn(-90);
@@ -126,23 +87,8 @@ public partial class PagesPanel
         var tab = Tab!;
         var host = Host!;
         var pages = Selected();
-        if (CopyRules.Refused(tab.Document, host)) return;
-        byte[]? bytes = null;
-        try
-        {
-            await host.RunBusyAsync(Loc.T("Extracting pages"), token => Task.Run(() =>
-            {
-                byte[] made = PageAssembly.Extract(PageEdits.Reopen(tab), pages).SaveRewrite();
-                token.ThrowIfCancellationRequested();
-                bytes = made;
-            }, token));
-        }
-        catch (Exception error) when (error is PdfReadException or ArgumentException)
-        {
-            host.ShowProblem(new Problem(Loc.T("Pages not extracted"), Loc.T("The pages could not be copied into a new file. Try fewer pages.")));
-            return;
-        }
-        if (bytes is null) return;
+        var failed = new Problem(Loc.T("Pages not extracted"), Loc.T("The pages could not be copied into a new file. Try fewer pages."));
+        if (await PageJobs.CopyOutAsync(tab, host, pages, Loc.T("Extracting pages"), failed) is not { } bytes) return;
         await host.OpenNewAsync(bytes, Loc.T("{0} extract.pdf", System.IO.Path.GetFileNameWithoutExtension(tab.Title)));
         host.SetStatus(Loc.Plural(pages.Count, "{0} page extracted", "{0} pages extracted", pages.Count));
         CopyRules.NoteUnprotected(tab.Document, host);

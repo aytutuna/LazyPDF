@@ -19,11 +19,11 @@ internal static class CombineJob
         return by == SplitBy.Count ? amount >= 1 && amount == Math.Floor(amount) && amount <= int.MaxValue : amount >= 0.01 && amount <= 100_000;
     }
 
-    public static IReadOnlyList<PdfDocument> Split(PdfDocument source, SplitBy by, double amount) => by switch
+    public static IReadOnlyList<PdfDocument> Split(PdfDocument source, SplitBy by, double amount, CancellationToken cancel = default) => by switch
     {
-        SplitBy.Count => PageAssembly.SplitEvery(source, (int)amount),
-        SplitBy.Size => PageAssembly.SplitBySize(source, (long)(amount * MegabyteBytes)),
-        _ => PageAssembly.SplitAt(source, BookmarkStarts(source)),
+        SplitBy.Count => PageAssembly.SplitEvery(source, (int)amount, cancel),
+        SplitBy.Size => PageAssembly.SplitBySize(source, (long)(amount * MegabyteBytes), cancel: cancel),
+        _ => PageAssembly.SplitAt(source, BookmarkStarts(source), cancel),
     };
 
     /// <summary>The pages the top-level bookmarks point at, in the order of the outline.</summary>

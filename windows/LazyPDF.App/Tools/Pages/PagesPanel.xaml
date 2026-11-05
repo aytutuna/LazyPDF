@@ -9,6 +9,8 @@
             <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE7BA;" />
             <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T This file is signed. Changing its pages breaks the signatures.}" />
         </DockPanel>
+        <Button x:Name="Organize" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Organize on the stage}"
+                loc:Icon.Glyph="&#xE8A9;" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Organize on the stage}" Click="Organize_Click" />
         <WrapPanel x:Name="Bar" Margin="0,0,0,4">
             <Button x:Name="TurnLeft" Style="{StaticResource IconButtonStyle}" Content="&#xE7AD;"
                     ToolTip="{loc:T Rotate left}" AutomationProperties.Name="{loc:T Rotate left}" Click="TurnLeft_Click">
@@ -34,9 +36,7 @@
             <ListBox x:Name="Thumbs" Height="340" BorderThickness="0" Background="Transparent" SelectionMode="Extended" AllowDrop="True"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True"
                      AutomationProperties.Name="{loc:T Pages}" SelectionChanged="Thumbs_SelectionChanged"
-                     ScrollViewer.ScrollChanged="Thumbs_ScrollChanged" SizeChanged="Thumbs_SizeChanged" KeyDown="Thumbs_KeyDown"
-                     PreviewMouseLeftButtonDown="Thumbs_PreviewMouseLeftButtonDown" PreviewMouseMove="Thumbs_PreviewMouseMove"
-                     PreviewMouseLeftButtonUp="Thumbs_PreviewMouseLeftButtonUp" DragOver="Thumbs_DragOver" DragLeave="Thumbs_DragLeave" Drop="Thumbs_Drop">
+                     ScrollViewer.ScrollChanged="Thumbs_ScrollChanged" SizeChanged="Thumbs_SizeChanged" KeyDown="Thumbs_KeyDown">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <pages:TilePanel CellWidth="{x:Static pages:PagesPanel.ColumnStep}" CellHeight="{x:Static pages:PagesPanel.RowStep}" />

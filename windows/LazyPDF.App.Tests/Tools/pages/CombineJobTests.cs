@@ -66,6 +66,17 @@ public sealed class CombineJobTests
     }
 
     [Fact]
+    public void ACancelledSplitStopsInsteadOfMakingParts()
+    {
+        var source = PdfDocument.Open(Pdfs.Text(7));
+        using var cancel = new CancellationTokenSource();
+        cancel.Cancel();
+
+        Assert.Throws<OperationCanceledException>(() => CombineJob.Split(source, SplitBy.Size, 0.01, cancel.Token));
+        Assert.Throws<OperationCanceledException>(() => CombineJob.Split(source, SplitBy.Count, 2, cancel.Token));
+    }
+
+    [Fact]
     public void SplittingByBookmarksCutsAtTheTopLevelOnes()
     {
         var source = WithBookmarks(6, 0, 2, 5);

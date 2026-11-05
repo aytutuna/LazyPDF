@@ -38,6 +38,14 @@ internal sealed class TilePanel : VirtualizingPanel, IScrollInfo
     public (int Index, bool After) CellAt(Point point) =>
         Locate(point, _offset, CellWidth, CellHeight, _columns, ItemCount);
 
+    /// <summary>The first and last cell in view, widened by <paramref name="spareRows"/> rows each way.</summary>
+    public (int First, int Last) Window(int spareRows)
+    {
+        int first = Math.Max(0, (int)(_offset / CellHeight) - spareRows) * _columns;
+        int last = ((int)((_offset + _viewport.Height) / CellHeight) + 1 + spareRows) * _columns - 1;
+        return (first, Math.Min(last, ItemCount - 1));
+    }
+
     public static (int Index, bool After) Locate(Point point, double offset, double cellWidth, double cellHeight, int columns, int count)
     {
         if (count == 0) return (0, false);

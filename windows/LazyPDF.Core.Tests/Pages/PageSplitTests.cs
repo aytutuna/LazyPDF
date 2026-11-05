@@ -89,6 +89,22 @@ public class PageSplitTests
     }
 
     [Fact]
+    public void ACancelledSplitBySizeThrows()
+    {
+        using var source = new CancellationTokenSource();
+        source.Cancel();
+        Assert.Throws<OperationCanceledException>(() => PageAssembly.SplitBySize(PageTestFiles.Open(6), 1, cancel: source.Token));
+    }
+
+    [Fact]
+    public void ACancelledSplitByCountThrows()
+    {
+        using var source = new CancellationTokenSource();
+        source.Cancel();
+        Assert.Throws<OperationCanceledException>(() => PageAssembly.SplitEvery(PageTestFiles.Open(6), 2, source.Token));
+    }
+
+    [Fact]
     public void ALimitAboveTheWholeGivesOnePart()
     {
         var parts = PageAssembly.SplitBySize(PageTestFiles.Open(4), 10_000_000);

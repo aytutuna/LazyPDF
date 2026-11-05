@@ -8,8 +8,9 @@ using LazyPDF.Core;
 namespace LazyPDF.App.Tools.Pages;
 
 /// <summary>
-/// The organize view: every page as a picture in a grid, to select, drag into a new order and change from the bar
-/// above; below are the jobs that need a choice first (insert, crop, resize, page labels).
+/// The pages in a grid small enough for the inspector, to select, drag into a new order and change from the bar
+/// above; below are the jobs that need a choice first (insert, crop, resize, page labels). The button on top
+/// opens the same grid on the stage.
 /// </summary>
 public partial class PagesPanel : ToolPanel
 {
@@ -21,6 +22,7 @@ public partial class PagesPanel : ToolPanel
     public const double ColumnStep = TileWidth + 8;
     public const double RowStep = TileHeight + 6;
 
+    private OrganizeView? _organize;
     private bool _syncing;
     private IEnumerable<int>? _reselect;
     private double _dpr = 1;
@@ -28,6 +30,7 @@ public partial class PagesPanel : ToolPanel
     public PagesPanel()
     {
         InitializeComponent();
+        _ = new PageDrag(Thumbs, () => Cells, Selected, (pages, before) => MoveTo(pages, before));
         foreach (var size in PaperSize.All) Paper.Items.Add(size.Name);
         Paper.Items.Add(Loc.T("Custom size"));
         Paper.SelectedIndex = 0;
@@ -45,10 +48,31 @@ public partial class PagesPanel : ToolPanel
 
     protected override void OnDetach()
     {
+        CloseOrganize();
         Disarm();
         Tab!.Changed -= Tab_Changed;
         foreach (var cell in Cells) cell.Release();
         Thumbs.ItemsSource = null;
+    }
+
+    private void Organize_Click(object sender, RoutedEventArgs e)
+    {
+        if (_organize is not null) return;
+        _organize = new OrganizeView();
+        _organize.Closed += Organize_Closed;
+        _organize.Attach(Tab!, Viewer!, Host!);
+        Host!.HoldStage(_organize);
+    }
+
+    private void Organize_Closed(object? sender, EventArgs e) => CloseOrganize();
+
+    private void CloseOrganize()
+    {
+        if (_organize is not { } view) return;
+        _organize = null;
+        view.Closed -= Organize_Closed;
+        Host!.HoldStage(null);
+        view.Detach();
     }
 
     private void Tab_Changed(object? sender, EventArgs e)
@@ -138,18 +162,7 @@ public partial class PagesPanel : ToolPanel
         }
     }
 
-    private ScrollViewer? Scroller() => Descendant<ScrollViewer>(Thumbs);
-
-    private static T? Descendant<T>(DependencyObject parent) where T : DependencyObject
-    {
-        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
-        {
-            var child = VisualTreeHelper.GetChild(parent, i);
-            if (child is T found) return found;
-            if (Descendant<T>(child) is { } inner) return inner;
-        }
-        return null;
-    }
+    private ScrollViewer? Scroller() => PageDrag.Descendant<ScrollViewer>(Thumbs);
 
     private void Thumbs_ScrollChanged(object sender, ScrollChangedEventArgs e) => LoadVisible();
 

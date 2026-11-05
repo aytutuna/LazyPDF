@@ -1,0 +1,90 @@
+using LazyPDF.App.Documents;
+using LazyPDF.Core;
+
+namespace LazyPDF.App.Tools.Pages;
+
+/// <summary>What the Pages inspector and the organize view both do with a tab: one change to the document as one undo step, and pages copied out.</summary>
+internal static class PageJobs
+{
+    public static bool Apply(DocumentTab tab, IToolHost host, string label, Action<PdfDocument> change, string status)
+    {
+        try
+        {
+            change(tab.Document);
+        }
+        catch (Exception error) when (error is ArgumentException or PdfReadException)
+        {
+            Refuse(host, tab);
+            return false;
+        }
+        return Commit(tab, host, label, status);
+    }
+
+    // For the edits that copy pages in from another file: the work runs off the UI thread and the result goes to the tab it started on,
+    // wherever the person has moved to meanwhile.
+    public static async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, string status)
+    {
+        bool done = false;
+        try
+        {
+            await host.RunBusyAsync(busy, token => Task.Run(() =>
+            {
+                token.ThrowIfCancellationRequested();
+                change(tab.Document);
+                done = !token.IsCancellationRequested;
+            }, token));
+        }
+        catch (Exception error) when (error is ArgumentException or PdfReadException)
+        {
+            Refuse(host, tab);
+            return false;
+        }
+        if (done) return Commit(tab, host, label, status);
+        tab.Session.Discard();
+        return false;
+    }
+
+    private static bool Commit(DocumentTab tab, IToolHost host, string label, string status)
+    {
+        try
+        {
+            if (!tab.Commit(label)) return false;
+        }
+        catch (PdfReadException)
+        {
+            Refuse(host, tab);
+            return false;
+        }
+        host.SetStatus(status);
+        return true;
+    }
+
+    // What was changed in memory is dropped, so a half-done edit cannot be committed later with another one.
+    internal static void Refuse(IToolHost host, DocumentTab tab)
+    {
+        tab.Session.Discard();
+        host.ShowProblem(new Problem(Loc.T("Pages not changed"), Loc.T("The file did not take that change. Pick other pages and try again.")));
+    }
+
+    /// <summary>The pages as a PDF of their own, made off the UI thread. Null when the file does not allow copying, when it was cancelled or when it failed, with <paramref name="failed"/> shown.</summary>
+    public static async Task<byte[]?> CopyOutAsync(DocumentTab tab, IToolHost host, IReadOnlyList<int> pages, string busy, Problem failed)
+    {
+        if (CopyRules.Refused(tab.Document, host)) return null;
+        byte[]? bytes = null;
+        try
+        {
+            await host.RunBusyAsync(busy, token => Task.Run(() =>
+            {
+                byte[] made = PageAssembly.Extract(PageEdits.Reopen(tab), pages, token).SaveRewrite();
+                token.ThrowIfCancellationRequested();
+                bytes = made;
+            }, token));
+        }
+        catch (Exception error) when (error is PdfReadException or ArgumentException)
+        {
+            host.ShowProblem(failed);
+            return null;
+        }
+        return bytes;
+    }
+}

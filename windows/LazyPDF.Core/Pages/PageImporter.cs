@@ -26,12 +26,13 @@ internal sealed partial class PageImporter
     }
 
     /// <summary>Copies the pages at these source indexes (repeats give separate copies); the new pages belong to no tree yet.</summary>
-    public List<PdfReference> Import(IReadOnlyList<int> indexes)
+    public List<PdfReference> Import(IReadOnlyList<int> indexes, CancellationToken cancel = default)
     {
         var pages = _source.Pages;
         var made = new List<(PdfPage Page, PdfReference Ref, PdfDictionary Dict)>();
         foreach (int index in indexes)
         {
+            cancel.ThrowIfCancellationRequested();
             if ((uint)index >= (uint)pages.Count) throw new ArgumentOutOfRangeException(nameof(indexes), $"There is no page {index + 1}.");
             var dict = new PdfDictionary();
             var reference = _target.Add(dict);
@@ -42,6 +43,7 @@ internal sealed partial class PageImporter
         var seen = new HashSet<int>();
         foreach (var (page, reference, dict) in made)
         {
+            cancel.ThrowIfCancellationRequested();
             if (!seen.Add(page.Reference.Number)) _fields.Clear();
             FillPage(page, reference, dict);
         }

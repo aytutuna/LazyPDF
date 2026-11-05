@@ -95,4 +95,43 @@ public class PageMergeTests
         Assert.True(session.Undo());
         Assert.Equal(4, session.Document.Pages.Count);
     }
+
+    [Fact]
+    public void ACancelledMergeThrowsBeforeCopyingAnything()
+    {
+        using var source = new CancellationTokenSource();
+        source.Cancel();
+        Assert.Throws<OperationCanceledException>(() => PageAssembly.Merge([new MergeSource(Doc(3)), new MergeSource(Doc(3))], source.Token));
+    }
+
+    [Fact]
+    public void AMergeCancelledWhileItCopiesPagesStopsThere()
+    {
+        using var source = new CancellationTokenSource();
+        var pages = new CancelsWhenRead(source, [0, 1, 2]);
+        Assert.Throws<OperationCanceledException>(() => PageAssembly.Merge([new MergeSource(Doc(1)), new MergeSource(Doc(3), pages)], source.Token));
+    }
+
+    [Fact]
+    public void AnUncancelledTokenChangesNothing()
+    {
+        var merged = PageAssembly.Merge([new MergeSource(Doc(2)), new MergeSource(Doc(2))], CancellationToken.None);
+        Assert.Equal([1, 2, 1, 2], PageTestFiles.Order(merged));
+    }
+
+    // Raises the token as soon as the importer starts to read the list of pages.
+    private sealed class CancelsWhenRead(CancellationTokenSource source, IReadOnlyList<int> pages) : IReadOnlyList<int>
+    {
+        public int Count => pages.Count;
+
+        public int this[int index] => pages[index];
+
+        public IEnumerator<int> GetEnumerator()
+        {
+            source.Cancel();
+            return pages.GetEnumerator();
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    }
 }
