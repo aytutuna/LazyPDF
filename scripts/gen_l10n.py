@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Writes windows/LazyPDF.Core/Strings.tr.resx from l10n/shared.json and checks the catalog
-against the code.
+"""Writes windows/LazyPDF.Core/Strings.tr.resx and, for the Swift engine, l10n/out/apple/tr.lproj/Kit.strings
+from l10n/shared.json, and checks the catalog against the code.
 
 The catalog maps an English text to its translation: {"Cancel": {"tr": "İptal"}}. A plural is
 keyed by its singular and carries the other form: {"{0} page": {"other": "{0} pages", "tr": "{0} sayfa"}}.
-Loc.T, Loc.Plural and {loc:T ...} in windows/ are the only places a key may come from, so the
-script fails on a text the code uses and the catalog lacks, on one the catalog has and nothing
-uses, on a missing translation and on placeholders that differ.
+Loc.T, Loc.Plural and {loc:T ...} in windows/, and L10n.t and L10n.plural in Sources/, are the only
+places a key may come from, so the script fails on a text the code uses and the catalog lacks, on one
+the catalog has and nothing uses, on a missing translation and on placeholders that differ. Kit.strings
+holds the texts the Swift code asks for; a plural is written as "<singular>|one" and "<singular>|other",
+the rows L10n.plural looks up.
 
   --check   validate, write nothing
   --sync    append the texts the code uses and the catalog lacks, with an empty translation
@@ -22,6 +24,8 @@ from xml.sax.saxutils import escape
 ROOT = Path(__file__).resolve().parent.parent
 CATALOG = ROOT / "l10n" / "shared.json"
 RESX = ROOT / "windows" / "LazyPDF.Core" / "Strings.tr.resx"
+SWIFT_SOURCES = ROOT / "Sources"
+KIT_STRINGS = ROOT / "l10n" / "out" / "apple" / "tr.lproj" / "Kit.strings"
 SKIP_DIRS = {"bin", "obj", "LazyPDF.Core.Tests", "LazyPDF.App.Tests"}
 LANGUAGES = ["tr"]
 HEADER = "Written by scripts/gen_l10n.py from l10n/shared.json; do not edit."
@@ -33,6 +37,8 @@ TERNARY = re.compile(r"\bLoc\.T\(\s*[^\"\s][^\"?;]*\?\s*" + LITERAL + r"\s*:\s*"
 PLURAL = re.compile(r"\bLoc\.Plural\([^,]+,\s*" + LITERAL + r"\s*,\s*" + LITERAL)
 # "a" + "b" would be read as "a" alone, and never found at run time.
 SPLIT = re.compile(r"\bLoc\.T\(\s*" + LITERAL + r"\s*\+")
+SWIFT_CALL = re.compile(r"\bL10n\.t\(\s*" + LITERAL)
+SWIFT_PLURAL = re.compile(r"\bL10n\.plural\([^,]+,\s*one:\s*" + LITERAL + r"\s*,\s*other:\s*" + LITERAL)
 
 
 def unescape(literal):
@@ -92,6 +98,32 @@ def keys_in_code():
     return found, split
 
 
+def keys_in_swift():
+    """({key: (file, plural other or None)}, [(text, file)] for literals with an interpolation)."""
+    found, interpolated = {}, []
+    for path in sorted(SWIFT_SOURCES.rglob("*.swift")):
+        if path.name == "L10n.swift":
+            continue
+        where = path.relative_to(ROOT).as_posix()
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for m in SWIFT_CALL.finditer(text):
+            if "\\(" in m.group(1):
+                interpolated.append((m.group(1), where))
+            else:
+                found.setdefault(unescape(m.group(1)), (where, None))
+        for m in SWIFT_PLURAL.finditer(text):
+            found[unescape(m.group(1))] = (where, unescape(m.group(2)))
+    return found, interpolated
+
+
+def strings_text(pairs):
+    def quote(s):
+        return '"' + s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
+
+    lines = [f"/* {HEADER} */"] + [f"{quote(k)} = {quote(v)};" for k, v in pairs]
+    return "\n".join(lines) + "\n"
+
+
 def placeholders(text):
     return sorted(PLACEHOLDER.findall(text))
 
@@ -115,6 +147,7 @@ def main():
     args = set(sys.argv[1:])
     catalog = json.loads(CATALOG.read_text(encoding="utf-8"), object_pairs_hook=no_duplicates)
     used, split = keys_in_code()
+    swift, interpolated = keys_in_swift()
 
     if "--sync" in args:
         for key, (_, other) in used.items():
@@ -125,6 +158,12 @@ def main():
         return
 
     errors = [f"split over two literals, never found: {text!r} ({where})" for text, where in split]
+    errors += [f"interpolated, never found: {text!r} ({where})" for text, where in interpolated]
+    for key, (where, other) in swift.items():
+        if key not in catalog:
+            errors.append(f"not in the catalog: {key!r} ({where})")
+        elif other is not None and catalog[key].get("other") != other:
+            errors.append(f"plural form differs: {key!r} ({where})")
     for key, (where, other) in used.items():
         if key not in catalog:
             errors.append(f"not in the catalog: {key!r} ({where})")
@@ -157,6 +196,14 @@ def main():
     pairs = sorted((key + ("|plural" if "other" in entry else ""), entry["tr"]) for key, entry in catalog.items())
     RESX.write_bytes(resx_text(pairs).encode("utf-8"))
     print(f"{len(pairs)} texts in {RESX.relative_to(ROOT)}")
+    rows = []
+    for key, entry in catalog.items():
+        if key in swift:
+            for name in ([key + "|one", key + "|other"] if "other" in entry else [key]):
+                rows.append((name, entry["tr"]))
+    KIT_STRINGS.parent.mkdir(parents=True, exist_ok=True)
+    KIT_STRINGS.write_bytes(strings_text(sorted(rows)).encode("utf-8"))
+    print(f"{len(rows)} texts in {KIT_STRINGS.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

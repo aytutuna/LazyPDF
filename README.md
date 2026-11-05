@@ -36,7 +36,7 @@ dotnet test windows/LazyPDF.sln
 dotnet run --project windows/LazyPDF.App
 ```
 
-Texts are English in the code and Turkish in `l10n/shared.json`. After changing either, run `python scripts/gen_l10n.py`, which writes `windows/LazyPDF.Core/Strings.tr.resx` and fails on a text without a translation or one nothing uses.
+Texts are English in the code and Turkish in `l10n/shared.json`. After changing either, run `python scripts/gen_l10n.py`, which writes `windows/LazyPDF.Core/Strings.tr.resx` and, for the Swift engine, `l10n/out/apple/tr.lproj/Kit.strings`, and fails on a text without a translation or one nothing uses.
 
 ## CI
 

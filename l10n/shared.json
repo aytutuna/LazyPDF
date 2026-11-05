@@ -6425,6 +6425,9 @@
   "Give the stamp a text or a picture.": {
     "tr": "Damgaya bir metin ya da resim verin."
   },
+  "That picture is too large. Pick a smaller one.": {
+    "tr": "Bu resim çok büyük. Daha küçük bir resim seçin."
+  },
   "Pictures with uses that could not be traced were left at their size.": {
     "tr": "Kullanımı izlenemeyen resimler boyutlarında bırakıldı."
   },
