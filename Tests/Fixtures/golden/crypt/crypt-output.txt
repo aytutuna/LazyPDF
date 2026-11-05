@@ -1,0 +1,148 @@
+> password Pass\x20word\x201
+< prepare=5061737320776F72642031 decompose=5061737320776F72642031 legacy=5061737320776F72642031
+> password -
+< prepare= decompose= legacy=
+> password a\xc2\xa0b\xe3\x80\x80c
+< prepare=6120622063 decompose=6120622063 legacy=61C2A062E3808063
+> password a\xc2\xadb\xe2\x80\x8dc\xef\xb8\x8f
+< prepare=616263 decompose=616263 legacy=61C2AD62E2808D63EFB88F
+> password \xef\xac\x81\xe2\x91\xa0
+< prepare=666931 decompose=666931 legacy=EFAC81E291A0
+> password e\xcc\x81
+< prepare=C3A9 decompose=65CC81 legacy=65CC81
+> password \xc3\xa9
+< prepare=C3A9 decompose=65CC81 legacy=E9
+> password \xc4\xb0stanbul
+< prepare=C4B07374616E62756C decompose=49CC877374616E62756C legacy=C4B07374616E62756C
+> password \xe1\xba\x9b\xcc\xa3
+< prepare=E1B9A9 decompose=73CCA3CC87 legacy=E1BA9BCCA3
+> password \xea\xb0\x80
+< prepare=EAB080 decompose=E18480E185A1 legacy=EAB080
+> password \xe1\x84\x80\xe1\x85\xa1
+< prepare=EAB080 decompose=E18480E185A1 legacy=E18480E185A1
+> password \xe2\x84\xab
+< prepare=C385 decompose=41CC8A legacy=E284AB
+> password \xef\xbc\xa1\xef\xbc\xa2\xef\xbc\x91
+< prepare=414231 decompose=414231 legacy=EFBCA1EFBCA2EFBC91
+> password \xc2\xbd
+< prepare=31E2818432 decompose=31E2818432 legacy=BD
+> password \xe2\x84\xa2
+< prepare=544D decompose=544D legacy=E284A2
+> password \xef\xb7\xba
+< prepare=D8B5D984D98920D8A7D984D984D98720D8B9D984D98AD98720D988D8B3D984D985 decompose=D8B5D984D98920D8A7D984D984D98720D8B9D984D98AD98720D988D8B3D984D985 legacy=EFB7BA
+> password caf\xc3\xa9
+< prepare=636166C3A9 decompose=63616665CC81 legacy=636166E9
+> password \xe4\xb8\xad\xe6\x96\x87
+< prepare=E4B8ADE69687 decompose=E4B8ADE69687 legacy=E4B8ADE69687
+> password aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+< prepare=61616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161 decompose=61616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161 legacy=61616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161
+> password \xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9
+< prepare=C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3A9C3 decompose=65CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165CC8165 legacy=E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9E9
+> hash 5 secret 0123456789abcdef -
+< F153EF81CBC7FFBF834E5616495D710219CAF9D13CBE822DAE2CA8DCCCAE62FA
+> hash 6 secret 0123456789abcdef -
+< 39DFCAC4699C9A03328655C42C3F4349943F3C1CD14105DEF92A54333EFEE5AF
+> hash 6 - 0123456789abcdef -
+< 1E500E81EF817EB3BECC79AA210AE9A4B51CAB5B51D1CC3772D51B1E8807AF57
+> hash 6 caf\xc3\xa9 fedcba9876543210 00050a0f14191e23282d32373c41464b50555a5f64696e73787d82878c91969ba0a5aaafb4b9bec3c8cdd2d7dce1e6eb
+< 67255F14EEC7EC0086CC3DA300D9C0A1B973AF2E6F3916AD4F244AE365EC27B4
+> hash 5 owner 0011223344556677 00050a0f14191e23282d32373c41464b50555a5f64696e73787d82878c91969ba0a5aaafb4b9bec3c8cdd2d7dce1e6eb
+< 86EE68C73D960C070B41F80A085FA820BA1697E5A0235EF72D288E80885461D7
+> legacy 2 5 1 user owner 0123456789ABCDEF0123456789ABCDEF
+< o=94E8094419662A774442FB072E3D9F19E9D130EC09A4D0061E78FE920F7AB62F key=C65FB88361 u=80FC3DA3CB96A4CE9B8E9E6E4B1714FBC10E41C2CFBFB235EDEF6BEC4C4A6630 hidden=7573657228BF4E5E4E758A4164004E56FFFA01082E2E00B6D0683E802F0CA9FE check=true
+> legacy 3 16 1 user owner 0123456789ABCDEF0123456789ABCDEF
+< o=0BA3835F88F90388E74E54584125CE142BE0DE24C6B0D37746E075B891756671 key=7804DF64EB2D3C077E4FEF62F2550C94 u=BB5A1876EA714B9F85467BC7AF435B7A hidden=7573657228BF4E5E4E758A4164004E56FFFA01082E2E00B6D0683E802F0CA9FE check=true
+> legacy 3 5 1 caf\xc3\xa9 owner 0123456789ABCDEF0123456789ABCDEF
+< o=2A5A22F9008FAFCB228B7DB3C43A1090BC5B56E9B1556E89FC0656FD291F4908 key=D038B0ADAB u=1287855630AC4BB91B7EE48E84E55999 hidden=636166E928BF4E5E4E758A4164004E56FFFA01082E2E00B6D0683E802F0CA9FE check=true
+> legacy 4 16 1 u o 0123456789ABCDEF0123456789ABCDEF
+< o=2A2F0A1990192C60114730BDCD39F37828A53C89A340DD473C85299DC5258E1C key=029482627C03800F9B452626981589CF u=1C952BB6C7F9F294161B9B6A8AB6E479 hidden=7528BF4E5E4E758A4164004E56FFFA01082E2E00B6D0683E802F0CA9FE645369 check=true
+> legacy 4 16 0 u o 0123456789ABCDEF0123456789ABCDEF
+< o=2A2F0A1990192C60114730BDCD39F37828A53C89A340DD473C85299DC5258E1C key=E3C7B1DA1A37FAC8A2667682F3AD4518 u=19BBAF749EB78FB32529E6681A50583D hidden=7528BF4E5E4E758A4164004E56FFFA01082E2E00B6D0683E802F0CA9FE645369 check=true
+> legacy 3 16 1 - owner 0123456789ABCDEF0123456789ABCDEF
+< o=566FA873EE33C797CD3B904FDADF814AFA34DF9A38F6ED41B984E2C6DA2AA6F5 key=60488105264D679816F4781EE9874D86 u=2C1687A9517CFF099BEC62B8A7EDDB76 hidden=28BF4E5E4E758A4164004E56FFFA01082E2E00B6D0683E802F0CA9FE6453697A check=true
+> legacy 3 16 1 a\xe4\xb8\xad o -
+< o=3EE30DFAE6E817B41E56BAB2FFC6472FDF7113813BBEB5CF6CC21BB4144D748B key=AD93182ADEED7540F0103EC924AC75C0 u=63BB401C58B907BD34B06E6A1D316ACF hidden=61E4B8AD28BF4E5E4E758A4164004E56FFFA01082E2E00B6D0683E802F0CA9FE check=true
+> perms 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F -4 01020304
+< 1134250A487C05902343C01D3249F305 match=true
+> perms 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F -3904 FFFFFFFF
+< 3B8504A39E6B5AC815446D2312C101D4 match=true
+> fixture crypt-rc4-40.pdf secret
+< owner=false revision=2 permissions=3900 metadata=true perms-mismatch=false content=312030203020726720302030203631322037393220726520660A
+> fixture crypt-rc4-40.pdf owner
+< owner=true revision=2 permissions=3900 metadata=true perms-mismatch=false content=312030203020726720302030203631322037393220726520660A
+> fixture crypt-rc4-40.pdf Secret
+< none
+> fixture crypt-aes128.pdf secret
+< owner=false revision=4 permissions=3900 metadata=true perms-mismatch=false content=312030203020726720302030203631322037393220726520660A
+> fixture crypt-aes128.pdf owner
+< owner=true revision=4 permissions=3900 metadata=true perms-mismatch=false content=312030203020726720302030203631322037393220726520660A
+> fixture crypt-aes256-r5.pdf secret
+< owner=false revision=5 permissions=3900 metadata=true perms-mismatch=false content=312030203020726720302030203631322037393220726520660A
+> fixture crypt-aes256-r5.pdf owner
+< owner=true revision=5 permissions=3900 metadata=true perms-mismatch=false content=312030203020726720302030203631322037393220726520660A
+> fixture crypt-aes256.pdf secret
+< owner=false revision=6 permissions=3900 metadata=true perms-mismatch=false content=312030203020726720302030203631322037393220726520660A
+> fixture crypt-aes256.pdf owner
+< owner=true revision=6 permissions=3900 metadata=true perms-mismatch=false content=312030203020726720302030203631322037393220726520660A
+> fixture crypt-aes256.pdf -
+< none
+> fixture locked.pdf secret
+< owner=true revision=3 permissions=3900 metadata=true perms-mismatch=false content=312030203020726720302030203631322037393220726520660A
+> fixture locked.pdf -
+< none
+> fixture owner-only-rc4.pdf -
+< owner=false revision=3 permissions=3900 metadata=true perms-mismatch=false content=312030203020726720302030203631322037393220726520660A
+> fixture owner-only-rc4.pdf owner
+< owner=true revision=3 permissions=3900 metadata=true perms-mismatch=false content=312030203020726720302030203631322037393220726520660A
+> fixture owner-only-aes.pdf -
+< owner=false revision=4 permissions=3900 metadata=true perms-mismatch=false content=312030203020726720302030203631322037393220726520660A
+> fixture owner-only-aes.pdf owner
+< owner=true revision=4 permissions=3900 metadata=true perms-mismatch=false content=312030203020726720302030203631322037393220726520660A
+> certificate alice
+< issuer=3010310E300C060355040313054669727374 serial=9ED59996C1F1569D key-id=644A56400D225933EFE4A003D89647D7186F2CD7
+> certificate bob
+< issuer=3011310F300D060355040313065365636F6E64 serial=7F032CB413C781E9 key-id=A084F7008FF82C694B1691123B0CABD6FB0E2AB6
+> recipients pubkey-aes256.txt
+< entries=1 | key=1.2.840.113549.1.1.1 content=2.16.840.1.101.3.4.1.42 serial=9ED59996C1F1569D
+> recipients pubkey-aes128.txt
+< entries=1 | key=1.2.840.113549.1.1.1 content=2.16.840.1.101.3.4.1.42 serial=9ED59996C1F1569D
+> recipients pubkey-two.txt
+< entries=2 | key=1.2.840.113549.1.1.1 content=2.16.840.1.101.3.4.1.42 serial=9ED59996C1F1569D | key=1.2.840.113549.1.1.1 content=2.16.840.1.101.3.4.1.42 serial=7F032CB413C781E9
+> publickey pubkey-aes256.txt alice
+< owner=false revision=6 permissions=3900 public-key=true text=Sealed by the Windows engine
+> publickey pubkey-aes256.txt bob
+< none
+> publickey pubkey-aes128.txt alice
+< owner=false revision=4 permissions=3900 public-key=true text=Sealed by the Windows engine
+> publickey pubkey-two.txt alice
+< owner=false revision=6 permissions=20 public-key=true text=Sealed by the Windows engine
+> publickey pubkey-two.txt bob
+< owner=true revision=6 permissions=3900 public-key=true text=Sealed by the Windows engine
+> recipients pubkey-rc2.txt
+< entries=1 | key=1.2.840.113549.1.1.1 content=1.2.840.113549.3.2 serial=9ED59996C1F1569D
+> recipients pubkey-3des.txt
+< entries=1 | key=1.2.840.113549.1.1.1 content=1.2.840.113549.3.7 serial=9ED59996C1F1569D
+> recipients pubkey-oaep.txt
+< entries=1 | key=1.2.840.113549.1.1.7 content=2.16.840.1.101.3.4.1.42 serial=9ED59996C1F1569D
+> recipients pubkey-keyid.txt
+< entries=1 | key=1.2.840.113549.1.1.1 content=2.16.840.1.101.3.4.1.42 key-id=644A56400D225933EFE4A003D89647D7186F2CD7
+> recipients pubkey-keyid-plain.txt
+< entries=1 | key=1.2.840.113549.1.1.1 content=2.16.840.1.101.3.4.1.42 key-id=ECB1442D30A1E4B01AEB8860605FFE262AF15BA5
+> recipients pubkey-trailing.txt
+< entries=1 | key=1.2.840.113549.1.1.1 content=2.16.840.1.101.3.4.1.42 serial=9ED59996C1F1569D
+> publickey pubkey-rc2.txt alice
+< owner=false revision=6 permissions=3900 public-key=true text=Sealed by the Windows engine
+> publickey pubkey-3des.txt alice
+< owner=false revision=6 permissions=3900 public-key=true text=Sealed by the Windows engine
+> publickey pubkey-oaep.txt alice
+< owner=false revision=6 permissions=3900 public-key=true text=Sealed by the Windows engine
+> publickey pubkey-keyid.txt alice
+< owner=false revision=6 permissions=3900 public-key=true text=Sealed by the Windows engine
+> publickey pubkey-trailing.txt alice
+< owner=false revision=6 permissions=3900 public-key=true text=Sealed by the Windows engine
+> publickey pubkey-keyid-plain.txt carol
+< owner=false revision=6 permissions=3900 public-key=true text=Sealed by the Windows engine
+> publickey pubkey-keyid-plain.txt alice
+< none
+> publickey pubkey-rc2.txt bob
+< none

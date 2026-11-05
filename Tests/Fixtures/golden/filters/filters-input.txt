@@ -1,0 +1,354 @@
+# Cases for the Filters golden test. Ops: decode (filters, parameters, bytes), strict (bytes), inflate (bytes),
+# predict (parameters, bytes), codec (filters, parameters, bytes), file (filters, parameters, file, strict, flips, length).
+# Filters are names joined by commas and parameters are Key=value pairs joined by commas, the value in PDF syntax; "-" is
+# none, or no bytes. A flip is offset:xor with the xor in hex. The deflate streams are made by hand or by zlib.
+# ASCIIHexDecode
+decode AHx - 48656C6C6F>
+decode AHx - 48\x2065\x206c\x0a6C\x206F>
+decode AHx - 4>
+decode AHx - 48656C6C6F
+decode AHx - 48zz65>
+decode AHx - >
+decode AHx - -
+decode AHx - 4\x208\x206\x205>6C6C
+decode AHx - 4865\x096C\x0d\x0a6C6>
+# ASCII85Decode
+decode A85 - 87cURD]i,"Ebo80~>
+decode A85 - z~>
+decode A85 - zz~>
+decode A85 - 87cURDZ~>
+decode A85 - ~>
+decode A85 - <~87cURD]i,"Ebo80~>
+decode A85 - s8W-!~>
+decode A85 - uuuuu~>
+decode A85 - !!~>
+decode A85 - !~>
+decode A85 - 87cU\x0aRD]i,"Ebo80~>
+decode A85 - vvvvv~>
+decode A85 - 87cURD]i,"Ebo80
+decode A85 - zs8W-!!!!!~>
+decode A85 - !!!!z~>
+decode A85 - %%%%%~>
+# RunLengthDecode
+decode RL - \x02abc\xfeX\x80
+decode RL - \x00A\x80
+decode RL - \x80
+decode RL - -
+decode RL - \x05ab
+decode RL - \xffA\x80
+decode RL - \x81B\x80
+decode RL - \x03abcd
+decode RL - \x80ignored
+decode RL - \xfe
+# LZWDecode
+decode LZW - \x80\x0b`P"\x0c\x0c\x85\x01
+decode LZW EarlyChange=0 \x80\x0b`P"\x0c\x0c\x85\x01
+decode LZW EarlyChange=1 \x80\x0b`P"\x0c\x0c\x85\x01
+decode LZW - \x80\x0b`P
+decode LZW - \xff\xff\xff
+decode LZW - \x80@@
+decode LZW - \x80\x10`P\x10
+decode LZW - \x20\x90\xa0\x20
+decode LZW - -
+file LZW - lzw-grow.bin 0 - -
+file LZW EarlyChange=0 lzw-grow-late.bin 0 - -
+file LZW - lzw-grow-late.bin 0 - -
+file LZW - lzw-grow.bin 0 1500:ff -
+# Crypt, codecs and a chain
+decode Crypt - abc
+decode Crypt Name=/Identity abc
+decode Crypt Name=/StdCF abc
+decode DCT - abc
+decode JPXDecode - abc
+decode Bogus - abc
+decode AHx,A85 - 7E7E>
+decode AHx,RL - 0361626380>
+codec DCT ColorTransform=0 abc
+codec AHx,DCTDecode - 41424344>
+codec AHx,JBIG2Decode JBIG2Globals=5 41424344>
+codec JPXDecode,AHx - 4142>
+codec AHx - 4142>
+codec - - 4142>
+# Predictors
+predict Predictor=2,Colors=3,Columns=3 \x0a\x14\x1e\x01\x02\x03\x04\x05\x06
+predict Predictor=2,Colors=1,Columns=4,BitsPerComponent=16 \x00\x01\x00\x02\xff\xff\x00\x03
+predict Predictor=2,Colors=1,Columns=8,BitsPerComponent=4 \x124Vx\x9a\xbc\xde\xf0
+predict Predictor=2,Colors=1,Columns=8,BitsPerComponent=2 \x1b\xe4U\xaa
+predict Predictor=2,Colors=1,Columns=8,BitsPerComponent=1 \xffU\x0f
+predict Predictor=2,Colors=2,Columns=5 \x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d
+predict Predictor=15,Columns=3 \x00\x01\x02\x03\x01\x01\x01\x01\x02\x05\x05\x05\x03\x09\x09\x09\x04\x03\x03\x03\x04\xc8d2
+predict Predictor=10,Columns=3 \x00\x01\x02\x03\x01\x01\x01\x01\x02\x05\x05\x05\x03\x09\x09\x09\x04\x03\x03\x03\x04\xc8d2
+predict Predictor=12,Columns=1,Colors=3 \x00\x01\x02\x03\x02\x01\x01\x01\x02\xff\xff\xff
+predict Predictor=14,Columns=2,Colors=3,BitsPerComponent=16 \x01\x00\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x04\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09
+predict Predictor=15,Columns=3 \x00\x01\x02\x03\x01\x01\x01\x01\x02\x05\x05\x05\x03\x09\x09\x09\x04\x03\x03\x03\x04\xc8
+predict Predictor=15,Columns=3 \x07\x01\x02\x03
+predict Predictor=15,Columns=100000 \x00\x01\x02\x03\x01\x01\x01\x01\x02\x05\x05\x05\x03\x09\x09\x09\x04\x03\x03\x03\x04\xc8d2
+predict Predictor=1,Columns=3 \x00\x01\x02\x03\x01\x01\x01\x01\x02\x05\x05\x05\x03\x09\x09\x09\x04\x03\x03\x03\x04\xc8d2
+predict Predictor=3,Columns=3 \x00\x01\x02\x03\x01\x01\x01\x01\x02\x05\x05\x05\x03\x09\x09\x09\x04\x03\x03\x03\x04\xc8d2
+predict Predictor=12,Columns=3,BitsPerComponent=3 \x00\x01\x02\x03\x01\x01\x01\x01\x02\x05\x05\x05\x03\x09\x09\x09\x04\x03\x03\x03\x04\xc8d2
+predict Predictor=12,Columns=3,Colors=70000 \x00\x01\x02\x03\x01\x01\x01\x01\x02\x05\x05\x05\x03\x09\x09\x09\x04\x03\x03\x03\x04\xc8d2
+predict Predictor=12 -
+decode Fl - x\x01\xcbH\xcd\xc9\xc9W\xc0\x20\x01h\x03\x08\xb1
+decode Fl Predictor=12,Columns=4 x\x9ccbdbfa\xc2E\x00\x00\x04V\x00I
+decode Fl - x\xda\xcbH\xcd\xc9\xc9W\xc8@'\x01h\x03\x08\xb1
+# CCITTFaxDecode
+decode CCF K=-1,Columns=8,Rows=2 \xc0
+decode CCF K=-1,Columns=8,Rows=4 \xf0
+decode CCF K=-1,Columns=8,Rows=4,BlackIs1=true \xf0
+decode CCF K=-1,Columns=16 \x7f\x1d@\x80
+decode CCF K=0,Columns=8 \x98\x98\x98
+decode CCF K=0,Columns=8,EncodedByteAlign=true \x98\x98\x98
+decode CCF K=0,Columns=8,EndOfLine=true \x00\x19\x80\x00\x19\x80
+decode CCF K=0,Columns=8,Rows=2 5\x145\x14
+decode CCF K=4,Columns=16 \x00\x18\x98\x98\xf0\x00\x14
+decode CCF K=0,Columns=0 \x98
+decode CCF K=0,Columns=2000000 \x98
+decode CCF K=0 \x98\x98
+decode CCF K=0,Columns=8 -
+decode CCF K=0,Columns=64 \x07\x0a\x0d\x10\x13\x16\x19\x1c\x1f"%(+.147:=@CFILORUX[^adgjmpsv
+decode CCF K=-1,Columns=64 \x07\x0a\x0d\x10\x13\x16\x19\x1c\x1f"%(+.147:=@CFILORUX[^adgjmpsv
+# Deflate streams made by hand: valid ones, then the stored block and the block type
+inflate KLJ\x06\x00
+decode Fl - x\x9cKLJ\x06\x00
+strict x\x9cKLJ\x06\x00
+strict x\x9cKLJ\x06
+inflate K\x1c\x05@\x90\x04\x00
+inflate K\x04B\x00
+inflate \x01\x03\x00\xfc\xffabc
+inflate \x01\x03\x00\xfc\xfeabc
+inflate \x01\x05\x00\xfa\xffabc
+inflate \x00\x01\x00\xfe\xffa\x07
+inflate \x07
+inflate \x00\x01\x00\xfe\xffa\x01\x01\x00\xfe\xffbtrailing
+# Fixed codes: the length symbols 284 to 287 and the distance slots 28 to 31
+inflate K\x1c\x01\x00\x00
+inflate K\x1c\x05\x00
+inflate K\x1c\x03\x00
+inflate K\x1c\x07\x00
+inflate K\x1c\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3\x00x\x00\x00\x00
+inflate K\x1c\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3\x00x\x01\x00\x00
+inflate K\x1c\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3\x00\xf8\x00
+inflate K\x1c\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3`\x14\x8c\x82Q0\x0aF\xc1(\x18\x05\xa3\x00\xf8\x01
+# Dynamic blocks: complete, incomplete, over-subscribed, too many symbols, a repeat code first
+inflate \x05\xc0\x01\x04\x00\x00\x00\x80\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0d\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00N\x1a
+inflate \x05\xc0\x01\x04\x00\x00\x00\x80\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0d\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00&\x0d
+inflate \xed\xc0\x01\x04\x00\x00\x00\x80\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0f\x00\x00\x00Y
+inflate \x05\xc0\x01\x04\x00\x00\x00\x80\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x87
+inflate \x05\xc0\x01\x04\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x01\x00
+inflate \x05\xc2\x01\x04\x00\x00\x00\x80\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0d\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xae\xa4\x01
+inflate \x05\xc0\x01\x04\x00\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00
+inflate \xfd\xc0\x01\x04\x00\x00\x00\x00\x90\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x80\x00
+inflate \x05\xde\x01\x04\x00\x00\x00\x80\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0d\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00.\x00\x00\x00\x20\x0d
+inflate \x05\xc0\x05\x08\x00\x00\x00\x80\xa0\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x000\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00R\x1a
+inflate \x05\x00\x80\xe4\xff\xff_\x1a
+inflate \x05\xc0\x01\x04\x00\x00\x00@\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xa5\x01
+# Streams from zlib
+inflate x\x01\xf3,Q(O,V(\xc9HUHJ-.Q\xc8OS(\xc9\xccM-\xd6Q\xc8D\xc8\x94\xe7\x17!I\xe9)\x8cj\x02\x87\x11=\x03\x02\x00B\xc2\x939
+inflate x\xda\xf3,Q(O,V(\xc9HUHJ-.Q\xc8OS(\xc9\xccM-\xd6Q\xc8D\xc8\x94\xe7\x17!I\xe9)x\x8ej\xa2\xb7&\x00B\xc2\x939
+strict x\xda\xf3,Q(O,V(\xc9HUHJ-.Q\xc8OS(\xc9\xccM-\xd6Q\xc8D\xc8\x94\xe7\x17!I\xe9)x\x8ej\xa2\xb7&\x00B\xc2\x939
+strict x\xda\xf3,Q(O,V(\xc9HUHJ-.Q\xc8OS(\xc9\xccM-\xd6Q\xc8D\xc8\x94\xe7\x17!I\xe9)x\x8ej
+decode Fl - x\xda\xf3,Q(O,V(\xc9HUHJ-.Q\xc8OS(\xc9\xccM-\xd6Q\xc8D\xc8\x94\xe7\x17!I\xe9)x\x8ej
+decode Fl - x\xda\x03\x00\x00\x00\x00\x01
+decode Fl - x\x9c
+decode Fl - x
+file FlateDecode - flate-tables.bin 0 - -
+file FlateDecode - flate-tables.bin 1 - -
+file FlateDecode - flate-tables.bin 0 - 600
+file FlateDecode - flate-tables.bin 1 - 600
+# Cuts and flips near the 8 KB stretches DeflateStream takes its input in
+file FlateDecode - flate-nibbles.bin 0 - -
+file FlateDecode - flate-nibbles.bin 1 - -
+file FlateDecode - flate-nibbles.bin 0 - 8190
+file FlateDecode - flate-nibbles.bin 1 - 8190
+file FlateDecode - flate-nibbles.bin 0 - 8191
+file FlateDecode - flate-nibbles.bin 1 - 8191
+file FlateDecode - flate-nibbles.bin 0 - 8192
+file FlateDecode - flate-nibbles.bin 1 - 8192
+file FlateDecode - flate-nibbles.bin 0 - 8193
+file FlateDecode - flate-nibbles.bin 1 - 8193
+file FlateDecode - flate-nibbles.bin 0 - 8200
+file FlateDecode - flate-nibbles.bin 1 - 8200
+file FlateDecode - flate-nibbles.bin 0 - 16383
+file FlateDecode - flate-nibbles.bin 1 - 16383
+file FlateDecode - flate-nibbles.bin 0 - 16384
+file FlateDecode - flate-nibbles.bin 1 - 16384
+file FlateDecode - flate-nibbles.bin 0 - 16385
+file FlateDecode - flate-nibbles.bin 1 - 16385
+file FlateDecode - flate-nibbles.bin 0 8180:ff -
+file FlateDecode - flate-nibbles.bin 0 8181:ff -
+file FlateDecode - flate-nibbles.bin 0 8182:ff -
+file FlateDecode - flate-nibbles.bin 0 8183:ff -
+file FlateDecode - flate-nibbles.bin 0 8184:ff -
+file FlateDecode - flate-nibbles.bin 0 8185:ff -
+file FlateDecode - flate-nibbles.bin 0 8186:ff -
+file FlateDecode - flate-nibbles.bin 0 8187:ff -
+file FlateDecode - flate-nibbles.bin 0 8188:ff -
+file FlateDecode - flate-nibbles.bin 0 8189:ff -
+file FlateDecode - flate-nibbles.bin 0 8190:ff -
+file FlateDecode - flate-nibbles.bin 0 8191:ff -
+file FlateDecode - flate-nibbles.bin 0 8192:ff -
+file FlateDecode - flate-nibbles.bin 0 8193:ff -
+file FlateDecode - flate-nibbles.bin 0 8194:ff -
+file FlateDecode - flate-nibbles.bin 0 8195:ff -
+file FlateDecode - flate-nibbles.bin 0 8196:ff -
+file FlateDecode - flate-nibbles.bin 0 8197:ff -
+file FlateDecode - flate-nibbles.bin 0 8198:ff -
+file FlateDecode - flate-nibbles.bin 0 8199:ff -
+file FlateDecode - flate-nibbles.bin 0 8200:ff -
+file FlateDecode - flate-nibbles.bin 0 8201:ff -
+file FlateDecode - flate-nibbles.bin 0 8202:ff -
+file FlateDecode - flate-nibbles.bin 0 8203:ff -
+file FlateDecode - flate-nibbles.bin 0 16372:ff -
+file FlateDecode - flate-nibbles.bin 0 16373:ff -
+file FlateDecode - flate-nibbles.bin 0 16374:ff -
+file FlateDecode - flate-nibbles.bin 0 16375:ff -
+file FlateDecode - flate-nibbles.bin 0 16376:ff -
+file FlateDecode - flate-nibbles.bin 0 16377:ff -
+file FlateDecode - flate-nibbles.bin 0 16378:ff -
+file FlateDecode - flate-nibbles.bin 0 16379:ff -
+file FlateDecode - flate-nibbles.bin 0 16380:ff -
+file FlateDecode - flate-nibbles.bin 0 16381:ff -
+file FlateDecode - flate-nibbles.bin 0 16382:ff -
+file FlateDecode - flate-nibbles.bin 0 16383:ff -
+file FlateDecode - flate-nibbles.bin 0 16384:ff -
+file FlateDecode - flate-nibbles.bin 0 16385:ff -
+file FlateDecode - flate-nibbles.bin 0 16386:ff -
+file FlateDecode - flate-nibbles.bin 0 16387:ff -
+file FlateDecode - flate-nibbles.bin 0 16388:ff -
+file FlateDecode - flate-nibbles.bin 0 16389:ff -
+file FlateDecode - flate-nibbles.bin 0 16390:ff -
+file FlateDecode - flate-nibbles.bin 0 16391:ff -
+file FlateDecode - flate-nibbles.bin 0 16392:ff -
+file FlateDecode - flate-nibbles.bin 0 16393:ff -
+file FlateDecode - flate-nibbles.bin 0 16394:ff -
+file FlateDecode - flate-nibbles.bin 0 16395:ff -
+file FlateDecode - flate-nibbles.bin 0 8186:55 -
+file FlateDecode - flate-nibbles.bin 1 8186:aa -
+file FlateDecode - flate-nibbles.bin 0 8187:55 -
+file FlateDecode - flate-nibbles.bin 1 8187:aa -
+file FlateDecode - flate-nibbles.bin 0 8188:55 -
+file FlateDecode - flate-nibbles.bin 1 8188:aa -
+file FlateDecode - flate-nibbles.bin 0 8189:55 -
+file FlateDecode - flate-nibbles.bin 1 8189:aa -
+file FlateDecode - flate-nibbles.bin 0 8190:55 -
+file FlateDecode - flate-nibbles.bin 1 8190:aa -
+file FlateDecode - flate-nibbles.bin 0 8191:55 -
+file FlateDecode - flate-nibbles.bin 1 8191:aa -
+file FlateDecode - flate-nibbles.bin 0 8192:55 -
+file FlateDecode - flate-nibbles.bin 1 8192:aa -
+file FlateDecode - flate-nibbles.bin 0 8193:55 -
+file FlateDecode - flate-nibbles.bin 1 8193:aa -
+file FlateDecode - flate-nibbles.bin 0 8194:55 -
+file FlateDecode - flate-nibbles.bin 1 8194:aa -
+file FlateDecode - flate-nibbles.bin 0 8195:55 -
+file FlateDecode - flate-nibbles.bin 1 8195:aa -
+# Fixed blocks of literals and runs of 258 followed by a tail: end (a second block), bad (a block type that is not one), badlen (a stored block that fails its check), cut (no end of block)
+blocks 8184 0 bad 0
+blocks 8184 0 bad 1
+blocks 8185 0 bad 0
+blocks 8185 0 bad 1
+blocks 8186 0 bad 0
+blocks 8186 0 bad 1
+blocks 8187 0 bad 0
+blocks 8187 0 bad 1
+blocks 8188 0 bad 0
+blocks 8188 0 bad 1
+blocks 8189 0 bad 0
+blocks 8189 0 bad 1
+blocks 8190 0 bad 0
+blocks 8190 0 bad 1
+blocks 8191 0 bad 0
+blocks 8191 0 bad 1
+blocks 8192 0 bad 0
+blocks 8192 0 bad 1
+blocks 8193 0 bad 0
+blocks 8193 0 bad 1
+blocks 8194 0 bad 0
+blocks 8194 0 bad 1
+blocks 8195 0 bad 0
+blocks 8195 0 bad 1
+blocks 8196 0 bad 0
+blocks 8196 0 bad 1
+blocks 8197 0 bad 0
+blocks 8197 0 bad 1
+blocks 8198 0 bad 0
+blocks 8198 0 bad 1
+blocks 8199 0 bad 0
+blocks 8199 0 bad 1
+blocks 8188 0 badlen 0
+blocks 8188 0 cut 0
+blocks 8188 0 cut 1
+blocks 8188 0 end 1
+blocks 8189 0 badlen 0
+blocks 8189 0 cut 0
+blocks 8189 0 cut 1
+blocks 8189 0 end 1
+blocks 8190 0 badlen 0
+blocks 8190 0 cut 0
+blocks 8190 0 cut 1
+blocks 8190 0 end 1
+blocks 8191 0 badlen 0
+blocks 8191 0 cut 0
+blocks 8191 0 cut 1
+blocks 8191 0 end 1
+blocks 8192 0 badlen 0
+blocks 8192 0 cut 0
+blocks 8192 0 cut 1
+blocks 8192 0 end 1
+blocks 8193 0 badlen 0
+blocks 8193 0 cut 0
+blocks 8193 0 cut 1
+blocks 8193 0 end 1
+blocks 8194 0 badlen 0
+blocks 8194 0 cut 0
+blocks 8194 0 cut 1
+blocks 8194 0 end 1
+blocks 8195 0 badlen 0
+blocks 8195 0 cut 0
+blocks 8195 0 cut 1
+blocks 8195 0 end 1
+blocks 16376 0 bad 0
+blocks 16377 0 bad 0
+blocks 16378 0 bad 0
+blocks 16379 0 bad 0
+blocks 16380 0 bad 0
+blocks 16381 0 bad 0
+blocks 16382 0 bad 0
+blocks 16383 0 bad 0
+blocks 16384 0 bad 0
+blocks 16385 0 bad 0
+blocks 16386 0 bad 0
+blocks 16387 0 bad 0
+blocks 16388 0 bad 0
+blocks 16389 0 bad 0
+blocks 16390 0 bad 0
+blocks 16391 0 bad 0
+blocks 1 254 bad 0
+blocks 1 254 cut 1
+blocks 2 254 bad 0
+blocks 2 254 cut 1
+blocks 3 254 bad 0
+blocks 3 254 cut 1
+blocks 4 254 bad 0
+blocks 4 254 cut 1
+blocks 5 254 bad 0
+blocks 5 254 cut 1
+blocks 6 254 bad 0
+blocks 6 254 cut 1
+blocks 7 254 bad 0
+blocks 7 254 cut 1
+blocks 3 1000 end 1
+blocks 3 1000 bad 1
+file FlateDecode - flate-repeat.bin 0 - -
+file FlateDecode - flate-repeat.bin 0 40:ff -
+file FlateDecode - flate-repeat.bin 0 77:ff -
+file FlateDecode - flate-repeat.bin 0 114:ff -
+file FlateDecode - flate-repeat.bin 0 151:ff -
+file FlateDecode - flate-repeat.bin 0 188:ff -
+file FlateDecode - flate-repeat.bin 0 225:ff -
+file FlateDecode - flate-repeat.bin 0 262:ff -
+file FlateDecode - flate-repeat.bin 0 299:ff -
+file FlateDecode - flate-repeat.bin 0 336:ff -
+file FlateDecode - flate-repeat.bin 0 373:ff -
+file FlateDecode - flate-repeat.bin 0 - 206
+file FlateDecode - flate-repeat.bin 1 - 206

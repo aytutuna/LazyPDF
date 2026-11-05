@@ -1,0 +1,150 @@
+# Lexer cases for the Syntax golden test: op, one space, the bytes. Ops: object, value (no
+# stream), header, keyword, unsigned, string (written as literal and as hex), name (written).
+object null
+object true
+object false
+object   %comment\n  42
+object 42
+object -17
+object +3
+object 0012
+object 4.
+object -.5
+object +.5
+object 1.5.2
+object --5
+object 5-3
+object -
+object .
+object 9223372036854775807
+object 9223372036854775808
+object 99999999999999999999999999
+object 12 0 R
+object 12 0 R 5
+object 0012 07 R
+object 12 65535 R
+object 12 65536 R
+object 2147483647 0 R
+object 2147483648 0 R
+object 12 0 S
+object 12 0
+object 1 2 3
+object /Name
+object /A#20B
+object /A#2
+object /A#zz
+object /#41#42
+object /
+object /Name/Next
+object /A(b
+object /\xe9\xff
+object ()
+object (abc)
+object (a(b)c)
+object (a\\(b\\)c)
+object (a\\nb\\rc\\td\\be\\ff)
+object (\\101\\60\\0053)
+object (\\777)
+object (\\8)
+object (line\\\ncontinued)
+object (line\\\r\ncontinued)
+object (a\rb)
+object (a\r\nb)
+object (a\nb)
+object (\\q)
+object (unclosed
+object (trailing\\
+object <>
+object <41424344>
+object <4 1 4 2>
+object <414>
+object <41 4x2 zz 43>
+object <4142
+object [
+object []
+object [1 2 3]
+object [1 2 3
+object [1 2 3\nendobj
+object [1 2 3 endstream
+object [[1] [2 [3]]]
+object [/A (b) <63> 1.5 2 0 R null true]
+object <<>>
+object <</A 1>>
+object <</A 1 /B 2>>
+object <</A 1 /A 2>>
+object <</A 1 /B [2\nendobj
+object <</A 1 /B
+object <</A 1 /B >>
+object <</A>>
+object <</A 1 (junk) 2 3 /B 4>>
+object <</A <</B <</C 1>>>>>>
+object <</A 1
+object <</A 1 )>>
+object << /Length 5 >> stream\nhello\nendstream
+object << /Length 5 >>\nstream\r\nhello
+object << /Length 5 >>\nstream  \r\nhello
+object << /Length 5 >>\nstream \t\nhello
+object << /Length 5 >>\nstream\rhello
+object << /Length 5 >> stream hello
+object << /Length 5 >> stream
+object << /Length 0 >> stream\n
+object << /Length 0 >> streamx
+object << /Length 5 >> stream\r\n\r\n
+value << /Length 5 >> stream\nhello
+value [<</A 1>> stream]
+object <</A 1>>   rest
+object )
+object >
+object ]
+object }
+object {
+object foo
+object truee
+object endobj
+object @
+object 
+object %only a comment
+value 
+header 12 0 obj
+header 12 0 obj<<>>
+header   12   0   obj  <<
+header 12 0 object
+header 12 0
+header 12
+header 2147483647 65535 obj
+header 2147483648 0 obj
+header 1 65536 obj
+header a 0 obj
+header -1 0 obj
+header 12 0 R
+keyword abc def
+keyword   %c\nabc
+keyword abc(def
+keyword /abc
+keyword 
+keyword \x00\x09\x0a\x0c\x0d\x20x
+unsigned 12 0 R
+unsigned   007
+unsigned 12abc
+unsigned 12/
+unsigned -5
+unsigned 
+unsigned 9223372036854775807
+unsigned 9223372036854775808
+unsigned 922337203685477580
+unsigned 922337203685477581
+string abc
+string a(b)c\\
+string \x00\x01\x1f\x20\x7e\x7f\x80\xff
+string \r\n
+string 
+name A B
+name A#B
+name A/B
+name A()<>[]{}%
+name \x00\x1f \x7f\xff
+name 
+object [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+object [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[
+object <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A 
+object [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[

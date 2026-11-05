@@ -1,0 +1,58 @@
+# Files read as they are; objects, aes128, aes256 and aes256objects are saved by the writer, so only what they say is printed.
+open table
+open stream
+open hybrid
+open objects
+open aes128
+open aes256
+open aes256objects
+open simple2
+open junk-before
+open header-late
+open not-pdf
+open no-startxref
+open startxref-past-end
+open shifted
+open wrong-length
+open no-endstream
+open no-trailer
+open no-root
+open truncated
+open no-catalog
+open no-tree
+open later-definition
+open pdf-in-stream
+open prev-broken
+open tree-ancestors
+open tree-cycle
+open tree-junk
+open tree-boxes
+open object-stream
+open object-stream-lost
+# Saved as an update
+incremental table
+incremental stream
+incremental hybrid
+incremental objects
+incremental aes128
+incremental aes256
+incremental aes256objects
+# Saved as a rewrite
+rewrite table plain
+rewrite table packed
+rewrite stream plain
+rewrite stream packed
+rewrite hybrid plain
+rewrite hybrid packed
+rewrite objects plain
+rewrite objects packed
+rewrite aes128 plain
+rewrite aes128 packed
+rewrite aes256 plain
+rewrite aes256 packed
+rewrite aes256objects plain
+rewrite aes256objects packed
+rewrite no-startxref plain
+rewrite no-startxref packed
+rewrite tree-cycle plain
+rewrite tree-cycle packed

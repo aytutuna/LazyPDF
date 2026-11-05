@@ -1,0 +1,77 @@
+# Cases for the Crypt golden test. Ops: password (prepared, decomposed and legacy bytes), hash (revision, password,
+# salt, user key), legacy (revision, key bytes, metadata, user, owner, id), perms (file key, /P, filler), fixture
+# (file, password), certificate, recipients, publickey (sealed file, holder). "-" is the empty password or no bytes.
+password Pass\x20word\x201
+password -
+password a\xc2\xa0b\xe3\x80\x80c
+password a\xc2\xadb\xe2\x80\x8dc\xef\xb8\x8f
+password \xef\xac\x81\xe2\x91\xa0
+password e\xcc\x81
+password \xc3\xa9
+password \xc4\xb0stanbul
+password \xe1\xba\x9b\xcc\xa3
+password \xea\xb0\x80
+password \xe1\x84\x80\xe1\x85\xa1
+password \xe2\x84\xab
+password \xef\xbc\xa1\xef\xbc\xa2\xef\xbc\x91
+password \xc2\xbd
+password \xe2\x84\xa2
+password \xef\xb7\xba
+password caf\xc3\xa9
+password \xe4\xb8\xad\xe6\x96\x87
+password aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+password \xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9
+hash 5 secret 0123456789abcdef -
+hash 6 secret 0123456789abcdef -
+hash 6 - 0123456789abcdef -
+hash 6 caf\xc3\xa9 fedcba9876543210 00050a0f14191e23282d32373c41464b50555a5f64696e73787d82878c91969ba0a5aaafb4b9bec3c8cdd2d7dce1e6eb
+hash 5 owner 0011223344556677 00050a0f14191e23282d32373c41464b50555a5f64696e73787d82878c91969ba0a5aaafb4b9bec3c8cdd2d7dce1e6eb
+legacy 2 5 1 user owner 0123456789ABCDEF0123456789ABCDEF
+legacy 3 16 1 user owner 0123456789ABCDEF0123456789ABCDEF
+legacy 3 5 1 caf\xc3\xa9 owner 0123456789ABCDEF0123456789ABCDEF
+legacy 4 16 1 u o 0123456789ABCDEF0123456789ABCDEF
+legacy 4 16 0 u o 0123456789ABCDEF0123456789ABCDEF
+legacy 3 16 1 - owner 0123456789ABCDEF0123456789ABCDEF
+legacy 3 16 1 a\xe4\xb8\xad o -
+perms 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F -4 01020304
+perms 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F -3904 FFFFFFFF
+fixture crypt-rc4-40.pdf secret
+fixture crypt-rc4-40.pdf owner
+fixture crypt-rc4-40.pdf Secret
+fixture crypt-aes128.pdf secret
+fixture crypt-aes128.pdf owner
+fixture crypt-aes256-r5.pdf secret
+fixture crypt-aes256-r5.pdf owner
+fixture crypt-aes256.pdf secret
+fixture crypt-aes256.pdf owner
+fixture crypt-aes256.pdf -
+fixture locked.pdf secret
+fixture locked.pdf -
+fixture owner-only-rc4.pdf -
+fixture owner-only-rc4.pdf owner
+fixture owner-only-aes.pdf -
+fixture owner-only-aes.pdf owner
+certificate alice
+certificate bob
+recipients pubkey-aes256.txt
+recipients pubkey-aes128.txt
+recipients pubkey-two.txt
+publickey pubkey-aes256.txt alice
+publickey pubkey-aes256.txt bob
+publickey pubkey-aes128.txt alice
+publickey pubkey-two.txt alice
+publickey pubkey-two.txt bob
+recipients pubkey-rc2.txt
+recipients pubkey-3des.txt
+recipients pubkey-oaep.txt
+recipients pubkey-keyid.txt
+recipients pubkey-keyid-plain.txt
+recipients pubkey-trailing.txt
+publickey pubkey-rc2.txt alice
+publickey pubkey-3des.txt alice
+publickey pubkey-oaep.txt alice
+publickey pubkey-keyid.txt alice
+publickey pubkey-trailing.txt alice
+publickey pubkey-keyid-plain.txt carol
+publickey pubkey-keyid-plain.txt alice
+publickey pubkey-rc2.txt bob

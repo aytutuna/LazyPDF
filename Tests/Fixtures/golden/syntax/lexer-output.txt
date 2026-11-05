@@ -1,0 +1,296 @@
+> object null
+< PdfNull null pos=4
+> object true
+< PdfBoolean true pos=4
+> object false
+< PdfBoolean false pos=5
+> object   %comment\n  42
+< PdfNumber 42 integer=42 pos=15
+> object 42
+< PdfNumber 42 integer=42 pos=2
+> object -17
+< PdfNumber -17 integer=-17 pos=3
+> object +3
+< PdfNumber +3 integer=3 pos=2
+> object 0012
+< PdfNumber 0012 integer=12 pos=4
+> object 4.
+< PdfNumber 4. integer=none pos=2
+> object -.5
+< PdfNumber -.5 integer=none pos=3
+> object +.5
+< PdfNumber +.5 integer=none pos=3
+> object 1.5.2
+< PdfNumber 1.5 integer=none pos=5
+> object --5
+< PdfNumber -5 integer=-5 pos=3
+> object 5-3
+< PdfNumber 5 integer=5 pos=3
+> object -
+< PdfNumber 0 integer=0 pos=1
+> object .
+< PdfNumber 0 integer=0 pos=1
+> object 9223372036854775807
+< PdfNumber 9223372036854775807 integer=9223372036854775807 pos=19
+> object 9223372036854775808
+< PdfNumber 9223372036854775808 integer=none pos=19
+> object 99999999999999999999999999
+< PdfNumber 99999999999999999999999999 integer=none pos=26
+> object 12 0 R
+< PdfReference 12 0 R pos=6
+> object 12 0 R 5
+< PdfReference 12 0 R pos=6
+> object 0012 07 R
+< PdfReference 12 7 R pos=9
+> object 12 65535 R
+< PdfReference 12 65535 R pos=10
+> object 12 65536 R
+< PdfNumber 12 integer=12 pos=2
+> object 2147483647 0 R
+< PdfReference 2147483647 0 R pos=14
+> object 2147483648 0 R
+< PdfNumber 2147483648 integer=2147483648 pos=10
+> object 12 0 S
+< PdfNumber 12 integer=12 pos=2
+> object 12 0
+< PdfNumber 12 integer=12 pos=2
+> object 1 2 3
+< PdfNumber 1 integer=1 pos=1
+> object /Name
+< PdfName /Name pos=5
+> object /A#20B
+< PdfName /A#20B pos=6
+> object /A#2
+< PdfName /A#232 pos=4
+> object /A#zz
+< PdfName /A#23zz pos=5
+> object /#41#42
+< PdfName /AB pos=7
+> object /
+< PdfName / pos=1
+> object /Name/Next
+< PdfName /Name pos=5
+> object /A(b
+< PdfName /A pos=2
+> object /\xe9\xff
+< PdfName /#E9#FF pos=3
+> object ()
+< PdfString () pos=2
+> object (abc)
+< PdfString (abc) pos=5
+> object (a(b)c)
+< PdfString (a\\(b\\)c) pos=7
+> object (a\\(b\\)c)
+< PdfString (a\\(b\\)c) pos=9
+> object (a\\nb\\rc\\td\\be\\ff)
+< PdfString (a\\nb\\rc\\011d\\010e\\014f) pos=18
+> object (\\101\\60\\0053)
+< PdfString (A0\\0053) pos=14
+> object (\\777)
+< PdfString (\\377) pos=6
+> object (\\8)
+< PdfString (8) pos=4
+> object (line\\\ncontinued)
+< PdfString (linecontinued) pos=17
+> object (line\\\r\ncontinued)
+< PdfString (linecontinued) pos=18
+> object (a\rb)
+< PdfString (a\\nb) pos=5
+> object (a\r\nb)
+< PdfString (a\\nb) pos=6
+> object (a\nb)
+< PdfString (a\\nb) pos=5
+> object (\\q)
+< PdfString (q) pos=4
+> object (unclosed
+< error damaged: A string is not closed.
+> object (trailing\\
+< error damaged: A string is not closed.
+> object <>
+< PdfString <> pos=2
+> object <41424344>
+< PdfString <41424344> pos=10
+> object <4 1 4 2>
+< PdfString <4142> pos=9
+> object <414>
+< PdfString <4140> pos=5
+> object <41 4x2 zz 43>
+< PdfString <414243> pos=14
+> object <4142
+< error damaged: A hex string is not closed.
+> object [
+< error damaged: An array is not closed.
+> object []
+< PdfArray [] pos=2
+> object [1 2 3]
+< PdfArray [1 2 3] pos=7
+> object [1 2 3
+< error damaged: An array is not closed.
+> object [1 2 3\nendobj
+< PdfArray [1 2 3] pos=7
+> object [1 2 3 endstream
+< PdfArray [1 2 3] pos=7
+> object [[1] [2 [3]]]
+< PdfArray [[1] [2 [3]]] pos=13
+> object [/A (b) <63> 1.5 2 0 R null true]
+< PdfArray [/A (b) <63> 1.5 2 0 R null true] pos=33
+> object <<>>
+< PdfDictionary <<>> pos=4
+> object <</A 1>>
+< PdfDictionary <</A 1>> pos=8
+> object <</A 1 /B 2>>
+< PdfDictionary <</A 1 /B 2>> pos=13
+> object <</A 1 /A 2>>
+< PdfDictionary <</A 2>> pos=13
+> object <</A 1 /B [2\nendobj
+< PdfDictionary <</A 1 /B [2]>> pos=13
+> object <</A 1 /B
+< error damaged: The file ends inside an object.
+> object <</A 1 /B >>
+< PdfDictionary <</A 1 /B null>> pos=12
+> object <</A>>
+< PdfDictionary <</A null>> pos=6
+> object <</A 1 (junk) 2 3 /B 4>>
+< PdfDictionary <</A 1 /B 4>> pos=24
+> object <</A <</B <</C 1>>>>>>
+< PdfDictionary <</A <</B <</C 1>>>>>> pos=22
+> object <</A 1
+< error damaged: A dictionary is not closed.
+> object <</A 1 )>>
+< error damaged: Unexpected ')' at byte 7.
+> object << /Length 5 >> stream\nhello\nendstream
+< PdfStream <</Length 5>> data@23 pos=23
+> object << /Length 5 >>\nstream\r\nhello
+< PdfStream <</Length 5>> data@24 pos=24
+> object << /Length 5 >>\nstream  \r\nhello
+< PdfStream <</Length 5>> data@26 pos=26
+> object << /Length 5 >>\nstream \t\nhello
+< PdfStream <</Length 5>> data@25 pos=25
+> object << /Length 5 >>\nstream\rhello
+< PdfStream <</Length 5>> data@23 pos=23
+> object << /Length 5 >> stream hello
+< PdfStream <</Length 5>> data@22 pos=22
+> object << /Length 5 >> stream
+< PdfStream <</Length 5>> data@22 pos=22
+> object << /Length 0 >> stream\n
+< PdfStream <</Length 0>> data@23 pos=23
+> object << /Length 0 >> streamx
+< PdfDictionary <</Length 0>> pos=15
+> object << /Length 5 >> stream\r\n\r\n
+< PdfStream <</Length 5>> data@24 pos=24
+> value << /Length 5 >> stream\nhello
+< PdfDictionary <</Length 5>> pos=15
+> value [<</A 1>> stream]
+< error damaged: Unexpected "stream" at byte 16.
+> object <</A 1>>   rest
+< PdfDictionary <</A 1>> pos=8
+> object )
+< error damaged: Unexpected ')' at byte 0.
+> object >
+< error damaged: Unexpected '>' at byte 0.
+> object ]
+< error damaged: Unexpected ']' at byte 0.
+> object }
+< error damaged: Unexpected '}' at byte 0.
+> object {
+< error damaged: Unexpected '{' at byte 0.
+> object foo
+< error damaged: Unexpected "foo" at byte 3.
+> object truee
+< error damaged: Unexpected "truee" at byte 5.
+> object endobj
+< error damaged: Unexpected "endobj" at byte 6.
+> object @
+< error damaged: Unexpected "@" at byte 1.
+> object 
+< error damaged: The file ends inside an object.
+> object %only a comment
+< error damaged: The file ends inside an object.
+> value 
+< error damaged: The file ends inside an object.
+> header 12 0 obj
+< (12, 0) pos=8
+> header 12 0 obj<<>>
+< (12, 0) pos=8
+> header   12   0   obj  <<
+< (12, 0) pos=14
+> header 12 0 object
+< error damaged: No object header at byte 11.
+> header 12 0
+< error damaged: No object header at byte 4.
+> header 12
+< error damaged: No object header at byte 2.
+> header 2147483647 65535 obj
+< (2147483647, 65535) pos=20
+> header 2147483648 0 obj
+< error damaged: No object header at byte 12.
+> header 1 65536 obj
+< error damaged: No object header at byte 7.
+> header a 0 obj
+< error damaged: No object header at byte 0.
+> header -1 0 obj
+< error damaged: No object header at byte 0.
+> header 12 0 R
+< error damaged: No object header at byte 6.
+> keyword abc def
+< "abc" pos=3
+> keyword   %c\nabc
+< "abc" pos=8
+> keyword abc(def
+< "abc" pos=3
+> keyword /abc
+< "" pos=0
+> keyword 
+< "" pos=0
+> keyword \x00\x09\x0a\x0c\x0d\x20x
+< "x" pos=7
+> unsigned 12 0 R
+< 12 pos=2
+> unsigned   007
+< 7 pos=5
+> unsigned 12abc
+< none pos=0
+> unsigned 12/
+< 12 pos=2
+> unsigned -5
+< none pos=0
+> unsigned 
+< none pos=0
+> unsigned 9223372036854775807
+< none pos=0
+> unsigned 9223372036854775808
+< none pos=0
+> unsigned 922337203685477580
+< 922337203685477580 pos=18
+> unsigned 922337203685477581
+< 922337203685477581 pos=18
+> string abc
+< (abc) <616263>
+> string a(b)c\\
+< (a\(b\)c\\) <61286229635C>
+> string \x00\x01\x1f\x20\x7e\x7f\x80\xff
+< (\000\001\037 ~\177\200\377) <00011F207E7F80FF>
+> string \r\n
+< (\r\n) <0D0A>
+> string 
+< () <>
+> name A B
+< /A#20B
+> name A#B
+< /A#23B
+> name A/B
+< /A#2FB
+> name A()<>[]{}%
+< /A#28#29#3C#3E#5B#5D#7B#7D#25
+> name \x00\x1f \x7f\xff
+< /#00#1F#20#7F#FF
+> name 
+< /
+> object [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+< PdfArray [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[1]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]] pos=401
+> object [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[
+< error damaged: An array is not closed.
+> object <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A <</A 
+< error unsupported: Objects are nested too deeply.
+> object [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[
+< error unsupported: Objects are nested too deeply.

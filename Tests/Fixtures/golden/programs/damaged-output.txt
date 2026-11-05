@@ -1,0 +1,1200 @@
+ttf 0 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 1 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 2 glyphs 7 upem 1000 ascent 800 cap 700 segments 53 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 3 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 119736 ps TestSans-Regular A 1 E 3 name Alt
+ttf 4 null
+ttf 5 glyphs 7 upem 1000 ascent 800 cap 700 segments 53 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 6 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 7 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 8 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps null A 1 E 3 name Alt
+ttf 9 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 10 glyphs 7 upem 1000 ascent 800 cap 700 segments 34 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 11 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 55480 ps TestSans-Regular A 1 E 3 name Alt
+ttf 12 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name null
+ttf 13 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps null A 1 E 3 name Alt
+ttf 14 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 15 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 16 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TDstSans-Regular A 1 E 3 name Alt
+ttf 17 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 2412 ps TestSans-Regular A 1 E 3 name Alt
+ttf 18 glyphs 7 upem 1000 ascent 800 cap 700 segments 49 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 19 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 0 E 0 name Alt
+ttf 20 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 21 glyphs 7 upem 1000 ascent 800 cap 700 segments 34 advances 3000 ps T·stSans-Rºgular A 1 E 224 name Alt
+ttf 22 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps null A 1 E 3 name Alt
+ttf 23 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 24 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 25 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-)egular A 1 E 3 name Alt
+ttf 26 glyphs 26119 upem 1000 ascent 800 cap 700 segments 58 advances 17250 ps TestSans-Regular A 1 E 3 name Alt
+ttf 27 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 28 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 29 glyphs 7 upem 1000 ascent 800 cap 700 segments 34 advances 3000 ps TestSans-Regular A 1 E 3 name null
+ttf 30 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 31 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 32 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 33 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 34 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name null
+ttf 35 glyphs 7 upem 1000 ascent 800 cap 700 segments 53 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 36 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 37 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 38 null
+ttf 39 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 40 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 0 E 0 name Alt
+ttf 41 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name null
+ttf 42 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 43 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 44 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 45 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 46 glyphs 7 upem 1000 ascent 800 cap 700 segments 53 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 47 null
+ttf 48 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 49 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 50 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 51 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 52 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 53 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 54 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 55 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 56 glyphs 7 upem 1000 ascent 800 cap 700 segments 53 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 57 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 0 E 0 name Alt
+ttf 58 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name ÷lt
+ttf 59 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 60 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 61 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 62 glyphs 7 upem 1000 ascent 910 cap 700 segments 58 advances 3000 ps null A 1 E 3 name Alt
+ttf 63 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 64 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 2520 ps TestSans-Regular A 1 E 3 name Alt
+ttf 65 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 66 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 67 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 102 name Alt
+ttf 68 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 69 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name null
+ttf 70 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 2871 ps TestSans-Regular A 1 E 3 name Alt
+ttf 71 glyphs 7 upem 1000 ascent 800 cap 700 segments 64 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 72 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 73 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 74 glyphs 7 upem 1000 ascent 800 cap 700 segments 34 advances 2940 ps TestSans-Regular A 1 E 3 name Alt
+ttf 75 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 76 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps null A 1 E 3 name Alt
+ttf 77 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 0 ps TestSans-Regular A 1 E 3 name Alt
+ttf 78 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 79 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 80 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 81 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TeëtSans-Regular A 1 E 3 name Alt
+ttf 82 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 128 name Alt
+ttf 83 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 84 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 85 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 86 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name null
+ttf 87 glyphs 7 upem 1000 ascent 800 cap 700 segments 53 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 88 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 89 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 90 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 91 glyphs 7 upem 1000 ascent 800 cap 700 segments 34 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 92 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 93 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps null A 1 E 3 name Alt
+ttf 94 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 95 glyphs 7 upem 1000 ascent 800 cap 700 segments 34 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 96 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 97 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 98 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 99 glyphs 7 upem 1000 ascent 800 cap 7868 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 100 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 101 glyphs 7 upem 1000 ascent 800 cap 700 segments 38 advances 3000 ps TestSans-Reular A 1 E 3 name Alt
+ttf 102 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 103 glyphs 7 upem 1000 ascent 800 cap 700 segments 49 advances 3000 ps TestSans-Regular A 0 E 0 name Alt
+ttf 104 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 105 glyphs 7 upem 1000 ascent 800 cap 700 segments 49 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 106 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps Te{tSans-Regular A 1 E 3 name Alt
+ttf 107 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 108 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 109 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 110 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Rígular A 1 E 3 name Alt
+ttf 111 glyphs 7 upem 1000 ascent 800 cap 700 segments 50 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 112 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 113 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 0 E 0 name Alt
+ttf 114 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name null
+ttf 115 glyphs 7 upem 1000 ascent 800 cap 700 segments 53 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 116 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 117 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 118 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps T驥stSans-Regular A 1 E 3 name null
+ttf 119 glyphs 7 upem 1000 ascent 800 cap 700 segments 38 advances 110520 ps TestSans-Regular A 1 E 3 name Alt
+ttf 120 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 121 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 122 glyphs 7 upem 1000 ascent 800 cap 700 segments 49 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 123 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSansRegular A 1 E 3 name Alt
+ttf 124 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 0 E 3 name Alt
+ttf 125 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3154 ps TestSans-Regular A 1 E 3 name Alt
+ttf 126 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 127 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 128 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 129 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 130 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps null A 1 E 3 name Alt
+ttf 131 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 132 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 133 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps T⽥stSans-Regular A 1 E 3 name Alt
+ttf 134 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 135 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 136 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 137 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 138 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 139 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 140 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 141 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 142 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 143 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 144 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 145 null
+ttf 146 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 147 glyphs 7 upem 1000 ascent 800 cap 700 segments 49 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 148 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 0 E 0 name Alt
+ttf 149 null
+ttf 150 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 151 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 152 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSas-Regular A 1 E 3 name Alt
+ttf 153 null
+ttf 154 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 0 E 0 name Alt
+ttf 155 glyphs 7 upem 1000 ascent 800 cap 700 segments 50 advances 16568 ps TestSans-Regular A 1 E 0 name Alt
+ttf 156 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 157 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 158 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 159 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 160 glyphs 7 upem 1000 ascent 800 cap 700 segments 53 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 161 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 162 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 163 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 164 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 165 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Reguar A 1 E 3 name Alt
+ttf 166 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 0 E 0 name Alt
+ttf 167 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 168 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 169 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 170 glyphs 7 upem 1000 ascent 800 cap 700 segments 34 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 171 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 172 glyphs 7 upem 1000 ascent 800 cap 700 segments 59 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 173 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 174 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 175 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps Tes⵴Sans-Regular A 1 E 3 name Alt
+ttf 176 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regula衲 A 1 E 3 name Alt
+ttf 177 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 178 glyphs 7 upem 1000 ascent 800 cap 700 segments 38 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 179 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 180 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 181 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 182 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 183 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 184 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 185 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 186 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 187 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 0 ps TestSans-Regular A 1 E 3 name Alt
+ttf 188 glyphs 7 upem 1000 ascent 800 cap 700 segments 49 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 189 glyphs 7 upem 1000 ascent 800 cap 700 segments 60 advances 3000 ps TestSans-Regular A 0 E 0 name Alt
+ttf 190 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 0 E 0 name Alt
+ttf 191 null
+ttf 192 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 193 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 194 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 195 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 0 ps TestSans-Reg뉵lar A 1 E 3 name Alt
+ttf 196 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 197 glyphs 7 upem 1000 ascent 800 cap 700 segments 34 advances 3000 ps TestSans-Regular A 1 E 128 name Alt
+ttf 198 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 199 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 200 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 201 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 0 E 0 name Alt
+ttf 202 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 0 E 0 name Alt
+ttf 203 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Reular A 1 E 3 name Alt
+ttf 204 glyphs 7 upem 1000 ascent 800 cap 700 segments 38 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 205 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 206 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 207 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name null
+ttf 208 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 209 glyphs 7 upem 1000 ascent 800 cap 700 segments 53 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 210 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 211 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 212 glyphs 7 upem 1000 ascent 800 cap 700 segments 34 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 213 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps null A 1 E 3 name Alt
+ttf 214 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name null
+ttf 215 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 0 ps TestSans-Regular A 1 E 3 name Alt
+ttf 216 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 217 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestS+ns-Regular A 1 E 3 name Alt
+ttf 218 glyphs 7 upem 1000 ascent 800 cap 700 segments 38 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 219 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 220 glyphs 7 upem 1000 ascent 800 cap 700 segments 54 advances 3000 ps ðestSans-Regular A 1 E 3 name Alt
+ttf 221 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 222 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 223 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 224 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 225 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 226 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 227 glyphs 7 upem 1000 ascent 800 cap 700 segments 53 advances 3000 ps TestSans-Regular A 0 E 0 name Alt
+ttf 228 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 229 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 0 ps TestSans-Regular A 0 E 0 name Alt
+ttf 230 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 231 glyphs 7 upem 1000 ascent 26144 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 232 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps null A 1 E 3 name Alt
+ttf 233 null
+ttf 234 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 235 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 236 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 237 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 0 name Alt
+ttf 238 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 239 null
+ttf 240 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 241 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 242 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 243 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 0 ps TestSans-Regular A 1 E 3 name Alt
+ttf 244 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 10936 ps TestSans-Regular A 1 E 3 name Alt
+ttf 245 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 246 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 247 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 0 ps TestSans-Regular A 1 E 3 name Alt
+ttf 248 null
+ttf 249 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 128 name Alt
+ttf 250 null
+ttf 251 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 252 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 253 glyphs 7 upem 1000 ascent 800 cap 700 segments 53 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 254 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 255 null
+ttf 256 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 257 glyphs 7 upem 1000 ascent 800 cap 700 segments 53 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 258 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 259 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps null A 1 E 3 name Alt
+ttf 260 glyphs 7 upem 1000 ascent 800 cap 4284 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 261 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 262 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 263 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name null
+ttf 264 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps null A 1 E 3 name Alt
+ttf 265 glyphs 7 upem 1000 ascent 800 cap 700 segments 34 advances 3000 ps TestSans-Regular A 1 E 0 name Alt
+ttf 266 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 267 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 268 glyphs 7 upem 1000 ascent 800 cap 700 segments 49 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 269 glyphs 7 upem 1000 ascent 800 cap 700 segments 100 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 270 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 271 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 272 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 273 glyphs 7 upem 1000 ascent 800 cap 700 segments 25 advances 3000 ps TestSans-Regular A 1 E 136 name Alt
+ttf 274 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps null A 1 E 3 name Alt
+ttf 275 glyphs 7 upem 1000 ascent 800 cap 700 segments 53 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 276 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestS͡ns-Regular A 1 E 3 name Alt
+ttf 277 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 278 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 279 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 2860 ps TestSans-Regular A 1 E 3 name Alt
+ttf 280 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regu癬ar A 1 E 3 name Alt
+ttf 281 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 282 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 283 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 284 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 285 null
+ttf 286 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 287 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 288 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 289 glyphs 7 upem 1000 ascent 800 cap 700 segments 62 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 290 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 291 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 292 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name null
+ttf 293 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 294 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 295 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 296 null
+ttf 297 glyphs 7 upem 1000 ascent 800 cap 700 segments 58 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 298 glyphs 7 upem 1000 ascent 800 cap 700 segments 0 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+ttf 299 glyphs 7 upem 1000 ascent 800 cap 700 segments 14 advances 3000 ps TestSans-Regular A 1 E 3 name Alt
+cff 0 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 1 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 2 null
+cff 3 null
+cff 4 null
+cff 5 null
+cff 6 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 7 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 8 glyphs 4 cid false name Test segments 11 widths 1756 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 9 null
+cff 10 null
+cff 11 glyphs 4 cid false name  segments 9 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 12 null
+cff 13 null
+cff 14 glyphs 4 cid false name Test segments 14 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 15 null
+cff 16 null
+cff 17 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 eacute c500 0
+cff 18 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 19 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 space c500 0
+cff 20 null
+cff 21 glyphs 4 cid false name Test segments 4 widths 0 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 22 glyphs 0 cid false name Test segments 0 widths 0 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cff 23 glyphs 4 cid false name Test segments 9 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 24 glyphs 4 cid false name Test segments 12 widths -2566912548 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 25 glyphs 4 cid false name Test segments 12 widths 1700 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 26 glyphs 4 cid false name Test segments 12 widths 315 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 27 null
+cff 28 null
+cff 29 null
+cff 30 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 31 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 32 glyphs 4 cid false name Test segments 12 widths 41485788 matrix 0.001,0,0,0.001,0,0 g1  c500 0
+cff 33 glyphs 4 cid false name Test segments 12 widths 1443 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 34 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 .notdef c500 0
+cff 35 null
+cff 36 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 37 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 38 glyphs 4 cid false name Test segments 9 widths 400 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 39 null
+cff 40 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 41 null
+cff 42 glyphs 4 cid false name Test segments 14 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 43 glyphs 4 cid false name Test segments 7 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 44 glyphs 4 cid false name Test segments 11 widths -1375730212 matrix 0.001,0,0,0.001,0,0 g1 parenright c500 0
+cff 45 null
+cff 46 null
+cff 47 glyphs 4 cid false name Test segments 7 widths 1200 matrix 0.001,0,0,0.001,0,0 g1  c500 0
+cff 48 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 49 null
+cff 50 null
+cff 51 null
+cff 52 glyphs 4 cid false name Test segments 12 widths 2061 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 53 glyphs 4 cid false name Test segments 7 widths 2717910492 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 54 glyphs 4 cid false name Test segments 12 widths 1105 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 55 glyphs 4 cid false name Test segments 13 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 56 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 57 null
+cff 58 null
+cff 59 glyphs 4 cid false name áest segments 11 widths 315 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 60 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 61 null
+cff 62 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 .notdef c500 0
+cff 63 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 64 null
+cff 65 null
+cff 66 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 67 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 .notdef c500 0
+cff 68 null
+cff 69 glyphs 4 cid false name Test segments 11 widths 6876 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 70 glyphs 4 cid false name Test segments 9 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 71 glyphs 4 cid false name  segments 5 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 72 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 73 null
+cff 74 null
+cff 75 null
+cff 76 null
+cff 77 null
+cff 78 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 79 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 80 glyphs 4 cid false name Tes segments 7 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 .notdef c500 0
+cff 81 glyphs 4 cid false name ënst segments 12 widths 1381 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 82 null
+cff 83 null
+cff 84 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 85 null
+cff 86 glyphs 4 cid false name Test segments 4 widths 1400 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 87 null
+cff 88 null
+cff 89 glyphs 4 cid false name Tesc segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 90 null
+cff 91 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 92 null
+cff 93 glyphs 4 cid false name Test segments 10 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 94 null
+cff 95 null
+cff 96 null
+cff 97 null
+cff 98 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 99 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 space c500 0
+cff 100 glyphs 4 cid false name TVst segments 11 widths 1105 matrix 0.001,0,0,0.001,0,0 g1 .notdef c500 0
+cff 101 null
+cff 102 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 103 glyphs 4 cid false name Test segments 13 widths 0 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 104 glyphs 4 cid false name Test segments 6 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 105 glyphs 4 cid false name Test segments 9 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 equal c500 0
+cff 106 null
+cff 107 null
+cff 108 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 109 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 110 null
+cff 111 null
+cff 112 null
+cff 113 glyphs 4 cid false name  segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 .notdef c500 0
+cff 114 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 115 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 116 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 117 null
+cff 118 glyphs 4 cid false name Test segments 11 widths 1700 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 119 null
+cff 120 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 121 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 122 null
+cff 123 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 .notdef c500 0
+cff 124 null
+cff 125 null
+cff 126 null
+cff 127 null
+cff 128 glyphs 4 cid false name Test segments 8 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 129 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 130 null
+cff 131 glyphs 0 cid false name Test segments 0 widths 0 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cff 132 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 133 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 134 null
+cff 135 null
+cff 136 null
+cff 137 null
+cff 138 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 139 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 140 glyphs 4 cid false name TFst segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 141 glyphs 4 cid false name Test segments 7 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 .notdef c500 0
+cff 142 glyphs 4 cid false name Tst segments 6 widths 0 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 143 null
+cff 144 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 145 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 146 glyphs 4 cid false name Test segments 12 widths -553646628 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 147 null
+cff 148 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 149 glyphs 4 cid false name Test segments 6 widths 1200 matrix 0.001,0,0,0.001,0,0 g1  c500 0
+cff 150 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 151 null
+cff 152 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 153 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 154 glyphs 4 cid false name Test segments 11 widths 400 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 155 glyphs 4 cid false name ÷est segments 11 widths 108252 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 156 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 one c500 0
+cff 157 null
+cff 158 null
+cff 159 null
+cff 160 null
+cff 161 glyphs 4 cid false name Te7t segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 162 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 163 glyphs 4 cid false name Test segments 9 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 164 null
+cff 165 glyphs 4 cid false name Test segments 6 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 166 null
+cff 167 null
+cff 168 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 169 null
+cff 170 glyphs 4 cid false name ¨est segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 171 null
+cff 172 null
+cff 173 null
+cff 174 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 175 null
+cff 176 null
+cff 177 null
+cff 178 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1  c500 0
+cff 179 glyphs 4 cid false name Test segments 4 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 180 glyphs 4 cid false name Test segments 5 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 181 null
+cff 182 glyphs 4 cid false name Tst segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 183 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1  c500 0
+cff 184 null
+cff 185 null
+cff 186 null
+cff 187 null
+cff 188 null
+cff 189 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 190 null
+cff 191 null
+cff 192 glyphs 4 cid false name Test segments 10 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 193 null
+cff 194 null
+cff 195 null
+cff 196 null
+cff 197 glyphs 4 cid false name Test segments 11 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 198 null
+cff 199 glyphs 4 cid false name Tãst segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 200 null
+cff 201 glyphs 0 cid false name  segments 0 widths 0 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cff 202 null
+cff 203 glyphs 4 cid false name  segments 12 widths 1400 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 204 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 205 null
+cff 206 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 space c500 0
+cff 207 null
+cff 208 glyphs 4 cid false name Test segments 0 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 209 glyphs 4 cid false name Test segments 11 widths 57052 matrix 0.001,0,0,0.001,0,0 g1 space c500 0
+cff 210 glyphs 4 cid false name Test segments 12 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 211 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 212 null
+cff 213 glyphs 0 cid false name Test segments 0 widths 0 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cff 214 glyphs 4 cid false name Test segments 8 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 215 null
+cff 216 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 217 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 .notdef c500 0
+cff 218 null
+cff 219 null
+cff 220 null
+cff 221 null
+cff 222 glyphs 4 cid false name Test segments 12 widths 1725 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 223 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 224 null
+cff 225 glyphs 4 cid false name Test segments 14 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 226 null
+cff 227 null
+cff 228 null
+cff 229 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 230 glyphs 4 cid false name  segments 12 widths 182748 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 231 glyphs 4 cid false name Test segments 10 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 232 null
+cff 233 null
+cff 234 glyphs 4 cid false name  segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 235 glyphs 4 cid false name Test segments 10 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 236 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 237 null
+cff 238 glyphs 4 cid false name Test segments 6 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 239 null
+cff 240 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 241 glyphs 4 cid false name Test segments 5 widths -1560279588 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 242 glyphs 4 cid false name Test segments 12 widths 13108700 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 243 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 244 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 245 glyphs 4 cid false name  segments 7 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 246 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 247 null
+cff 248 null
+cff 249 null
+cff 250 glyphs 4 cid false name Test segments 11 widths 1105 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 251 glyphs 4 cid false name Test segments 4 widths 0 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 252 glyphs 4 cid false name Test segments 12 widths 22492 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 253 glyphs 4 cid false name Test segments 12 widths 1105 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 254 glyphs 4 cid false name Test segments 11 widths -671086930 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 255 glyphs 4 cid false name Test segments 10 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 256 null
+cff 257 null
+cff 258 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 259 null
+cff 260 glyphs 4 cid false name  segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 261 glyphs 4 cid false name Test segments 11 widths 1965 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 262 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 263 null
+cff 264 glyphs 4 cid false name T«st segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 265 glyphs 4 cid false name Test segments 11 widths 1000 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 266 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 267 null
+cff 268 null
+cff 269 glyphs 4 cid false name Test segments 11 widths -3321887068 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 270 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 271 glyphs 4 cid false name Test segments 12 widths 1313 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 272 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 273 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 .notdef c500 0
+cff 274 glyphs 4 cid false name Test segments 13 widths 0 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 275 null
+cff 276 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 277 null
+cff 278 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 .notdef c500 0
+cff 279 null
+cff 280 null
+cff 281 null
+cff 282 glyphs 4 cid false name Test segments 11 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 283 null
+cff 284 glyphs 4 cid false name Test segments 12 widths 1105 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 285 null
+cff 286 null
+cff 287 null
+cff 288 glyphs 4 cid false name Test segments 12 widths 1500 matrix 0.001,0,0,0.001,0,0 g1 z c500 0
+cff 289 null
+cff 290 null
+cff 291 glyphs 4 cid false name Test segments 12 widths 32220 matrix 0.001,0,0,0.001,0,0 g1 .notdef c500 0
+cff 292 null
+cff 293 null
+cff 294 null
+cff 295 glyphs 4 cid false name  segments 4 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 A c500 0
+cff 296 glyphs 4 cid false name Test segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 dsuperior c500 0
+cff 297 null
+cff 298 null
+cff 299 null
+cid 0 glyphs 4 cid true name Cid segments 10 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 1 glyphs 4 cid true name Cid segments 12 widths 1050 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 2 glyphs 4 cid true name Cid segments 12 widths 1155 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 3 glyphs 0 cid true name Ci segments 0 widths 0 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 4 null
+cid 5 null
+cid 6 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 7 null
+cid 8 glyphs 4 cid true name Cid segments 11 widths 503318030 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 9 null
+cid 10 null
+cid 11 null
+cid 12 null
+cid 13 glyphs 4 cid true name Cid segments 10 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 14 glyphs 4 cid true name Cid segments 12 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 15 null
+cid 16 glyphs 4 cid true name Cid segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 17 null
+cid 18 glyphs 4 cid true name Cid segments 11 widths 850 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 19 glyphs 4 cid true name Cid segments 4 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 20 glyphs 4 cid true name Cid segments 12 widths 1900 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 21 null
+cid 22 null
+cid 23 glyphs 4 cid true name Cid segments 10 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 24 null
+cid 25 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 26 null
+cid 27 glyphs 4 cid true name Cid segments 9 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 28 null
+cid 29 null
+cid 30 null
+cid 31 null
+cid 32 null
+cid 33 null
+cid 34 null
+cid 35 glyphs 4 cid true name  segments 11 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 36 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 37 glyphs 4 cid true name Cid segments 11 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 38 glyphs 4 cid true name  segments 12 widths 12584462 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 39 null
+cid 40 null
+cid 41 null
+cid 42 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 43 glyphs 4 cid true name Cid segments 12 widths 1850 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 44 null
+cid 45 null
+cid 46 null
+cid 47 null
+cid 48 glyphs 4 cid true name Cid segments 5 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 49 null
+cid 50 glyphs 4 cid true name Cid segments 11 widths 850 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 51 null
+cid 52 null
+cid 53 glyphs 4 cid true name Cid segments 5 widths 55054 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 54 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 55 glyphs 4 cid true name Cid segments 12 widths 10552846 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 56 null
+cid 57 glyphs 4 cid true name Cid segments 12 widths -134216928 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 58 glyphs 4 cid true name Cid segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 59 null
+cid 60 glyphs 4 cid true name Cid segments 12 widths -1476393458 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 61 null
+cid 62 glyphs 4 cid true name Cid segments 11 widths 37690 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 63 null
+cid 64 glyphs 4 cid true name Cid segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 65 null
+cid 66 glyphs 4 cid true name Cid segments 11 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 67 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 68 null
+cid 69 null
+cid 70 null
+cid 71 null
+cid 72 glyphs 4 cid true name Cid segments 12 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 73 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 74 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 75 null
+cid 76 null
+cid 77 null
+cid 78 null
+cid 79 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 80 glyphs 4 cid false name >id segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 parenright c500 0
+cid 81 glyphs 4 cid true name Cid segments 13 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 82 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 83 glyphs 4 cid true name Cid segments 11 widths 1350 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 84 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 85 glyphs 4 cid true name  segments 12 widths 1696 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 86 null
+cid 87 null
+cid 88 null
+cid 89 glyphs 4 cid true name Ci7 segments 11 widths 1350 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 90 glyphs 4 cid true name Cid segments 11 widths 1350 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 91 glyphs 4 cid true name Cid segments 5 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 92 null
+cid 93 glyphs 4 cid true name Cid segments 11 widths 1834 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 94 null
+cid 95 glyphs 4 cid true name Cid segments 12 widths 27264526 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 96 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 97 glyphs 4 cid true name Cid segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 98 glyphs 4 cid true name Cid segments 12 widths 1850 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 99 null
+cid 100 glyphs 4 cid true name Cid segments 12 widths 1050 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 101 null
+cid 102 null
+cid 103 glyphs 4 cid true name Cid segments 11 widths 850 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 104 glyphs 4 cid true name Cid segments 5 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 105 null
+cid 106 null
+cid 107 glyphs 0 cid true name Ci× segments 0 widths 0 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 108 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 109 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 110 glyphs 4 cid true name Cid segments 12 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 111 glyphs 4 cid true name Cid segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 112 null
+cid 113 null
+cid 114 glyphs 4 cid true name Cid segments 12 widths 26126 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 115 null
+cid 116 null
+cid 117 null
+cid 118 null
+cid 119 null
+cid 120 glyphs 4 cid true name Cid segments 11 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 121 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 122 null
+cid 123 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 124 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 125 null
+cid 126 null
+cid 127 glyphs 4 cid true name CÂd segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 128 glyphs 4 cid true name Cid segments 4 widths 700 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 129 glyphs 4 cid true name Cid segments 11 widths 110 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 130 null
+cid 131 glyphs 4 cid true name Cid segments 11 widths 1337 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 132 null
+cid 133 glyphs 4 cid true name Cid segments 12 widths 1358 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 134 null
+cid 135 glyphs 4 cid true name Cid segments 10 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 136 null
+cid 137 glyphs 4 cid true name Cid segments 11 widths 1199 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 138 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 139 glyphs 4 cid true name Cid segments 11 widths 850 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 140 glyphs 4 cid true name Cid segments 14 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 141 null
+cid 142 glyphs 4 cid true name Cid segments 11 widths 44046 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 143 null
+cid 144 null
+cid 145 null
+cid 146 glyphs 4 cid true name Ci& segments 11 widths 1350 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 147 glyphs 4 cid true name Cid segments 4 widths 0 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 148 null
+cid 149 glyphs 4 cid true name Cid segments 7 widths 1050 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 150 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 151 glyphs 4 cid true name Cid segments 12 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 152 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 153 null
+cid 154 null
+cid 155 glyphs 4 cid false name Cid segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 parenright c500 0
+cid 156 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 157 glyphs 4 cid true name Cid segments 12 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 158 null
+cid 159 null
+cid 160 null
+cid 161 null
+cid 162 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 163 glyphs 4 cid true name Cd segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 164 glyphs 4 cid true name Cid segments 9 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 165 null
+cid 166 null
+cid 167 glyphs 4 cid true name Cid segments 11 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 168 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 169 null
+cid 170 glyphs 4 cid true name Cid segments 12 widths 10814990 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 171 null
+cid 172 glyphs 4 cid true name Cid segments 11 widths 20579704 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 173 null
+cid 174 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 175 glyphs 4 cid true name Cid segments 11 widths 1350 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 176 glyphs 4 cid true name  segments 11 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 177 null
+cid 178 null
+cid 179 glyphs 4 cid true name Cid segments 5 widths 1000 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 180 glyphs 4 cid true name Cid segments 11 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 181 null
+cid 182 glyphs 4 cid true name Cid segments 4 widths 0 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 183 null
+cid 184 glyphs 4 cid true name Cid segments 11 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 185 null
+cid 186 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 187 glyphs 4 cid true name Cid segments 7 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 188 glyphs 4 cid true name Cid segments 11 widths 673 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 189 null
+cid 190 null
+cid 191 glyphs 4 cid true name Cd segments 4 widths 1000 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 192 null
+cid 193 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 194 null
+cid 195 glyphs 4 cid true name Cid segments 15 widths 1150 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 196 glyphs 4 cid true name  segments 11 widths 738216974 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 197 glyphs 4 cid true name Cid segments 10 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 198 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 199 glyphs 4 cid true name Cid segments 12 widths 1155 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 200 null
+cid 201 glyphs 4 cid false name Cid segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 parenright c500 0
+cid 202 null
+cid 203 null
+cid 204 null
+cid 205 glyphs 4 cid true name Cid segments 11 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 206 null
+cid 207 null
+cid 208 glyphs 4 cid true name Cid segments 13 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 209 null
+cid 210 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 211 glyphs 4 cid true name Cid segments 12 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 212 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 213 null
+cid 214 glyphs 4 cid true name Cid segments 12 widths 205 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 215 null
+cid 216 glyphs 4 cid true name Cid segments 4 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 217 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 218 glyphs 4 cid true name Cid segments 11 widths 1000 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 219 glyphs 4 cid true name aid segments 11 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 220 glyphs 4 cid true name Cid segments 12 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 221 null
+cid 222 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 223 glyphs 4 cid true name  segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 224 glyphs 4 cid true name Cid segments 11 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 225 null
+cid 226 glyphs 4 cid true name Cid segments 11 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 227 glyphs 0 cid true name Cid segments 0 widths 0 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 228 glyphs 4 cid true name Cid segments 12 widths 43022 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 229 glyphs 4 cid true name Cid segments 10 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 230 null
+cid 231 null
+cid 232 null
+cid 233 null
+cid 234 glyphs 4 cid true name Cid segments 11 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 235 glyphs 4 cid true name Cid segments 11 widths 850 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 236 null
+cid 237 null
+cid 238 null
+cid 239 null
+cid 240 glyphs 4 cid true name Cid segments 12 widths 1850 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 241 glyphs 4 cid true name Cid segments 12 widths 1850 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 242 glyphs 4 cid true name Cid segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 243 null
+cid 244 glyphs 4 cid true name Cid segments 14 widths 0 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 245 null
+cid 246 null
+cid 247 glyphs 4 cid true name Cid segments 12 widths 1850 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 248 null
+cid 249 glyphs 4 cid true name Cid segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 250 glyphs 1 cid true name Cid segments 0 widths 250 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 251 null
+cid 252 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 253 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 254 glyphs 4 cid true name Cid segments 12 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 255 glyphs 4 cid true name Cid segments 11 widths 1050 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 256 null
+cid 257 glyphs 4 cid true name Cÿd segments 15 widths 1174406670 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 258 null
+cid 259 null
+cid 260 glyphs 4 cid true name Cid segments 11 widths 100 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 261 glyphs 4 cid true name Cid segments 11 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 262 null
+cid 263 null
+cid 264 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 265 null
+cid 266 null
+cid 267 null
+cid 268 null
+cid 269 null
+cid 270 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 271 glyphs 4 cid true name Cid segments 12 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 272 glyphs 4 cid true name Cid segments 7 widths 700 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 273 null
+cid 274 glyphs 4 cid true name Cid segments 13 widths 1000 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 275 null
+cid 276 glyphs 4 cid true name Cid segments 9 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 277 null
+cid 278 glyphs 4 cid true name Cid segments 11 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 279 null
+cid 280 null
+cid 281 null
+cid 282 glyphs 4 cid true name Cid segments 12 widths 1696 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 283 null
+cid 284 null
+cid 285 null
+cid 286 null
+cid 287 glyphs 4 cid true name Cid segments 11 widths -2113928866 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 288 glyphs 4 cid true name Cid segments 11 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 289 null
+cid 290 glyphs 4 cid true name Cid segments 4 widths 1200 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 291 null
+cid 292 null
+cid 293 null
+cid 294 glyphs 4 cid true name Cid segments 12 widths 800 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 295 glyphs 4 cid true name Cid segments 12 widths 1550 matrix 0.001,0,0,0.001,0,0 g1 null c500 0
+cid 296 null
+cid 297 null
+cid 298 glyphs 4 cid true name Cid segments 13 widths 10224466 matrix 0.001,0,0,0.001,0,0 g1 null c500 3
+cid 299 null
+type1 0 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 1 name TestFont glyphs 3 segments 7 widths 1350 A A
+type1 2 null
+type1 3 null
+type1 4 null
+type1 5 null
+type1 6 null
+type1 7 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 8 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 9 null
+type1 10 null
+type1 11 null
+type1 12 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 13 name TestFont glyphs 2 segments 5 widths 850 A A
+type1 14 null
+type1 15 null
+type1 16 null
+type1 17 null
+type1 18 null
+type1 19 null
+type1 20 null
+type1 21 name TestFont glyphs 6 segments 26 widths 2450 A A
+type1 22 null
+type1 23 name TestFont glyphs 1 segments 0 widths 250 A A
+type1 24 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 25 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 26 null
+type1 27 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 28 null
+type1 29 null
+type1 30 name TestFont glyphs 3 segments 5 widths 850 A A
+type1 31 null
+type1 32 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 33 null
+type1 34 null
+type1 35 null
+type1 36 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 37 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 38 null
+type1 39 null
+type1 40 null
+type1 41 null
+type1 42 name TestFont glyphs 7 segments 29 widths 3050 A A
+type1 43 null
+type1 44 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 45 null
+type1 46 null
+type1 47 null
+type1 48 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 49 null
+type1 50 name TestFont glyphs 5 segments 22 widths 2050 A A
+type1 51 null
+type1 52 null
+type1 53 null
+type1 54 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 55 null
+type1 56 null
+type1 57 name TestFont glyphs 7 segments 29 widths 3050 A A
+type1 58 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 59 null
+type1 60 null
+type1 61 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 62 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 63 name TestFont glyphs 2 segments 3 widths 850 A A
+type1 64 null
+type1 65 null
+type1 66 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 67 name TestFont glyphs 5 segments 22 widths 2450 A A
+type1 68 null
+type1 69 null
+type1 70 null
+type1 71 null
+type1 72 null
+type1 73 name TestFont glyphs 3 segments 7 widths 1350 A A
+type1 74 null
+type1 75 name TestFont glyphs 8 segments 33 widths 3450 A A
+type1 76 null
+type1 77 name TestFont glyphs 3 segments 7 widths 1350 A null
+type1 78 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 79 null
+type1 80 null
+type1 81 name TestFont glyphs 3 segments 7 widths 933 A A
+type1 82 null
+type1 83 name TestFont glyphs 5 segments 20 widths 2450 A null
+type1 84 null
+type1 85 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 86 null
+type1 87 null
+type1 88 null
+type1 89 null
+type1 90 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 91 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 92 null
+type1 93 null
+type1 94 name TestFont9def glyphs 7 segments 29 widths 3050 A A
+type1 95 null
+type1 96 name TestFont glyphs 5 segments 20 widths 2050 A A
+type1 97 null
+type1 98 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 99 null
+type1 100 null
+type1 101 null
+type1 102 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 103 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 104 name TestFont glyphs 8 segments 32 widths 3450 A A
+type1 105 null
+type1 106 name TestFont glyphs 1 segments 0 widths 250 A null
+type1 107 name TestFont glyphs 6 segments 26 widths 2750 A A
+type1 108 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 109 null
+type1 110 null
+type1 111 null
+type1 112 null
+type1 113 null
+type1 114 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 115 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 116 null
+type1 117 name TestFont glyphs 2 segments 0 widths 850 A A
+type1 118 null
+type1 119 null
+type1 120 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 121 name TestFont glyphs 3 segments 10 widths 1350 A A
+type1 122 null
+type1 123 null
+type1 124 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 125 name TestFont glyphs 4 segments 20 widths 2050 A A
+type1 126 null
+type1 127 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 128 null
+type1 129 null
+type1 130 null
+type1 131 null
+type1 132 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 133 name TestFont glyphs 5 segments 20 widths 2050 A A
+type1 134 null
+type1 135 name TestFonÿ glyphs 8 segments 34 widths 3450 A A
+type1 136 null
+type1 137 name TestFont glyphs 3 segments 7 widths 1350 A A
+type1 138 null
+type1 139 null
+type1 140 name  glyphs 8 segments 34 widths 3450 A A
+type1 141 null
+type1 142 null
+type1 143 null
+type1 144 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 145 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 146 null
+type1 147 null
+type1 148 name TestFont glyphs 5 segments 24 widths 2450 A null
+type1 149 null
+type1 150 name TestFont glyphs 3 segments 8 widths 1350 A A
+type1 151 null
+type1 152 null
+type1 153 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 154 name TestFont glyphs 2 segments 0 widths 250 A A
+type1 155 null
+type1 156 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 157 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 158 name TestFont glyphs 6 segments 23 widths 2750 A A
+type1 159 null
+type1 160 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 161 null
+type1 162 name TestFont glyphs 8 segments 29 widths 3050 A A
+type1 163 null
+type1 164 null
+type1 165 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 166 name TestFont glyphs 5 segments 20 widths 2450 A A
+type1 167 null
+type1 168 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 169 null
+type1 170 name TestFont glyphs 8 segments 33 widths 3450 A A
+type1 171 null
+type1 172 null
+type1 173 name TestFont glyphs 3 segments 8 widths 918 A A
+type1 174 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 175 name TestFont glyphs 1 segments 0 widths 250 A A
+type1 176 name TestFont glyphs 7 segments 26 widths 2750 A A
+type1 177 null
+type1 178 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 179 null
+type1 180 null
+type1 181 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 182 null
+type1 183 name TestFont glyphs 4 segments 10 widths 1350 A A
+type1 184 null
+type1 185 null
+type1 186 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 187 name TestFont glyphs 6 segments 26 widths 2450 A A
+type1 188 null
+type1 189 null
+type1 190 null
+type1 191 name TestFont glyphs 7 segments 29 widths 3050 A A
+type1 192 null
+type1 193 name TestFont glyphs 7 segments 29 widths 2750 A A
+type1 194 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 195 null
+type1 196 null
+type1 197 null
+type1 198 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 199 null
+type1 200 null
+type1 201 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 202 null
+type1 203 null
+type1 204 name TestFont glyphs 1 segments 0 widths 0 A A
+type1 205 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 206 name TestFont glyphs 3 segments 8 widths 1350 A A
+type1 207 null
+type1 208 name TestFont glyphs 3 segments 5 widths 850 A A
+type1 209 null
+type1 210 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 211 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 212 null
+type1 213 null
+type1 214 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 215 null
+type1 216 name TestFont glyphs 5 segments 23 widths 2450 A A
+type1 217 null
+type1 218 name  glyphs 2 segments 5 widths 850 A A
+type1 219 null
+type1 220 name TestFont glyphs 7 segments 26 widths 3050 A A
+type1 221 null
+type1 222 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 223 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 224 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 225 null
+type1 226 name TestFont glyphs 4 segments 10 widths 2050 A A
+type1 227 null
+type1 228 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 229 null
+type1 230 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 231 null
+type1 232 null
+type1 233 null
+type1 234 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 235 null
+type1 236 name TestFont glyphs 3 segments 10 widths 1350 A A
+type1 237 name TestFont glyphs 2 segments 5 widths 850 A A
+type1 238 null
+type1 239 name T±stFont glyphs 3 segments 8 widths 1350 A A
+type1 240 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 241 name TestFont glyphs 3 segments 7 widths 1350 A A
+type1 242 null
+type1 243 name TestFont glyphs 1 segments 0 widths 0 A A
+type1 244 null
+type1 245 null
+type1 246 null
+type1 247 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 248 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 249 null
+type1 250 null
+type1 251 null
+type1 252 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 253 name TestFont glyphs 8 segments 33 widths 3450 A A
+type1 254 null
+type1 255 null
+type1 256 name TestFont glyphs 3 segments 7 widths 1350 A A
+type1 257 null
+type1 258 null
+type1 259 null
+type1 260 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 261 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 262 null
+type1 263 null
+type1 264 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 265 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 266 name TestFont glyphs 2 segments 3 widths 850 A A
+type1 267 name TestFont glyphs 1 segments 0 widths 0 A A
+type1 268 null
+type1 269 null
+type1 270 name TestFont glyphs 3 segments 7 widths 1350 A A
+type1 271 null
+type1 272 null
+type1 273 null
+type1 274 null
+type1 275 null
+type1 276 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 277 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 278 name TestFont glyphs 6 segments 26 widths 2750 A A
+type1 279 null
+type1 280 name TestFnt glyphs 7 segments 26 widths 2750 A A
+type1 281 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 282 name TestFont glyphs 8 segments 31 widths 3450 A A
+type1 283 null
+type1 284 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 285 null
+type1 286 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 287 null
+type1 288 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 289 name TestFont glyphs 3 segments 7 widths 1350 A A
+type1 290 name TestFont glyphs 5 segments 25 widths 2050 A A
+type1 291 null
+type1 292 null
+type1 293 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 294 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 295 null
+type1 296 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 297 name TestFont glyphs 8 segments 34 widths 3450 A A
+type1 298 null
+type1 299 name TestFont glyphs 2 segments 0 widths 850 A A

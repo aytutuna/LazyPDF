@@ -1,0 +1,581 @@
+== 2 pairs
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def
+/CMapName /Adobe-Identity-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<0000> <FFFF>
+endcodespacerange
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+end
+== 2 pairs 0001=0041 0002=0042 0003=0043 0010=00660069 0020=D83DDE00 0021=D83DDE01 0100=00FE 0101=00FF 0102=0100 FFFF=4E2D
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def
+/CMapName /Adobe-Identity-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<0000> <FFFF>
+endcodespacerange
+3 beginbfrange
+<0001> <0003> <0041>
+<0020> <0021> <D83DDE00>
+<0100> <0101> <00FE>
+endbfrange
+3 beginbfchar
+<0010> <00660069>
+<0102> <0100>
+<FFFF> <4E2D>
+endbfchar
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+end
+== 1 pairs 41=005A 42=005B 43=0061 FE=00FE FF=00FF
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def
+/CMapName /Adobe-Identity-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<00> <FF>
+endcodespacerange
+2 beginbfrange
+<41> <42> <005A>
+<FE> <FF> <00FE>
+endbfrange
+1 beginbfchar
+<43> <0061>
+endbfchar
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+end
+== 2 pairs 0005=0061 0005=0062 0006=
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def
+/CMapName /Adobe-Identity-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<0000> <FFFF>
+endcodespacerange
+1 beginbfchar
+<0005> <0062>
+endbfchar
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+end
+== 3 pairs 000001=0041 FFFFFF=0042
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def
+/CMapName /Adobe-Identity-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<000000> <FFFFFF>
+endcodespacerange
+2 beginbfchar
+<000001> <0041>
+<FFFFFF> <0042>
+endbfchar
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+end
+== 4 pairs 00000001=0041 7FFFFFFF=0042 80000000=0043 FFFFFFFF=0044
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def
+/CMapName /Adobe-Identity-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<00000000> <FFFFFFFF>
+endcodespacerange
+4 beginbfchar
+<00000001> <0041>
+<7FFFFFFF> <0042>
+<80000000> <0043>
+<FFFFFFFF> <0044>
+endbfchar
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+end
+== 2 pairs 00FE=00FE 00FF=00FF 0100=0100 0101=0101
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def
+/CMapName /Adobe-Identity-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<0000> <FFFF>
+endcodespacerange
+2 beginbfrange
+<00FE> <00FF> <00FE>
+<0100> <0101> <0100>
+endbfrange
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+end
+== 2 pairs 0010=0041 0011=0042 0012=0043 0013=0061 0014=0062
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def
+/CMapName /Adobe-Identity-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<0000> <FFFF>
+endcodespacerange
+2 beginbfrange
+<0010> <0012> <0041>
+<0013> <0014> <0061>
+endbfrange
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+end
+== 2 pairs 0030=00660069 0031=00660069 0032=0066006A
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def
+/CMapName /Adobe-Identity-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<0000> <FFFF>
+endcodespacerange
+1 beginbfrange
+<0031> <0032> <00660069>
+endbfrange
+1 beginbfchar
+<0030> <00660069>
+endbfchar
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+end
+== 2 many 250
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def
+/CMapName /Adobe-Identity-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<0000> <FFFF>
+endcodespacerange
+100 beginbfchar
+<0000> <00784E00>
+<0002> <00784E03>
+<0004> <00784E06>
+<0006> <00784E09>
+<0008> <00784E0C>
+<000A> <00784E0F>
+<000C> <00784E12>
+<000E> <00784E15>
+<0010> <00784E18>
+<0012> <00784E1B>
+<0014> <00784E1E>
+<0016> <00784E21>
+<0018> <00784E24>
+<001A> <00784E27>
+<001C> <00784E2A>
+<001E> <00784E2D>
+<0020> <00784E30>
+<0022> <00784E33>
+<0024> <00784E36>
+<0026> <00784E39>
+<0028> <00784E3C>
+<002A> <00784E3F>
+<002C> <00784E42>
+<002E> <00784E45>
+<0030> <00784E48>
+<0032> <00784E4B>
+<0034> <00784E4E>
+<0036> <00784E51>
+<0038> <00784E54>
+<003A> <00784E57>
+<003C> <00784E5A>
+<003E> <00784E5D>
+<0040> <00784E60>
+<0042> <00784E63>
+<0044> <00784E66>
+<0046> <00784E69>
+<0048> <00784E6C>
+<004A> <00784E6F>
+<004C> <00784E72>
+<004E> <00784E75>
+<0050> <00784E78>
+<0052> <00784E7B>
+<0054> <00784E7E>
+<0056> <00784E81>
+<0058> <00784E84>
+<005A> <00784E87>
+<005C> <00784E8A>
+<005E> <00784E8D>
+<0060> <00784E90>
+<0062> <00784E93>
+<0064> <00784E96>
+<0066> <00784E99>
+<0068> <00784E9C>
+<006A> <00784E9F>
+<006C> <00784EA2>
+<006E> <00784EA5>
+<0070> <00784EA8>
+<0072> <00784EAB>
+<0074> <00784EAE>
+<0076> <00784EB1>
+<0078> <00784EB4>
+<007A> <00784EB7>
+<007C> <00784EBA>
+<007E> <00784EBD>
+<0080> <00784EC0>
+<0082> <00784EC3>
+<0084> <00784EC6>
+<0086> <00784EC9>
+<0088> <00784ECC>
+<008A> <00784ECF>
+<008C> <00784ED2>
+<008E> <00784ED5>
+<0090> <00784ED8>
+<0092> <00784EDB>
+<0094> <00784EDE>
+<0096> <00784EE1>
+<0098> <00784EE4>
+<009A> <00784EE7>
+<009C> <00784EEA>
+<009E> <00784EED>
+<00A0> <00784EF0>
+<00A2> <00784EF3>
+<00A4> <00784EF6>
+<00A6> <00784EF9>
+<00A8> <00784EFC>
+<00AA> <00784EFF>
+<00AC> <00784F02>
+<00AE> <00784F05>
+<00B0> <00784F08>
+<00B2> <00784F0B>
+<00B4> <00784F0E>
+<00B6> <00784F11>
+<00B8> <00784F14>
+<00BA> <00784F17>
+<00BC> <00784F1A>
+<00BE> <00784F1D>
+<00C0> <00784F20>
+<00C2> <00784F23>
+<00C4> <00784F26>
+<00C6> <00784F29>
+endbfchar
+100 beginbfchar
+<00C8> <00784F2C>
+<00CA> <00784F2F>
+<00CC> <00784F32>
+<00CE> <00784F35>
+<00D0> <00784F38>
+<00D2> <00784F3B>
+<00D4> <00784F3E>
+<00D6> <00784F41>
+<00D8> <00784F44>
+<00DA> <00784F47>
+<00DC> <00784F4A>
+<00DE> <00784F4D>
+<00E0> <00784F50>
+<00E2> <00784F53>
+<00E4> <00784F56>
+<00E6> <00784F59>
+<00E8> <00784F5C>
+<00EA> <00784F5F>
+<00EC> <00784F62>
+<00EE> <00784F65>
+<00F0> <00784F68>
+<00F2> <00784F6B>
+<00F4> <00784F6E>
+<00F6> <00784F71>
+<00F8> <00784F74>
+<00FA> <00784F77>
+<00FC> <00784F7A>
+<00FE> <00784F7D>
+<0100> <00784F80>
+<0102> <00784F83>
+<0104> <00784F86>
+<0106> <00784F89>
+<0108> <00784F8C>
+<010A> <00784F8F>
+<010C> <00784F92>
+<010E> <00784F95>
+<0110> <00784F98>
+<0112> <00784F9B>
+<0114> <00784F9E>
+<0116> <00784FA1>
+<0118> <00784FA4>
+<011A> <00784FA7>
+<011C> <00784FAA>
+<011E> <00784FAD>
+<0120> <00784FB0>
+<0122> <00784FB3>
+<0124> <00784FB6>
+<0126> <00784FB9>
+<0128> <00784FBC>
+<012A> <00784FBF>
+<012C> <00784FC2>
+<012E> <00784FC5>
+<0130> <00784FC8>
+<0132> <00784FCB>
+<0134> <00784FCE>
+<0136> <00784FD1>
+<0138> <00784FD4>
+<013A> <00784FD7>
+<013C> <00784FDA>
+<013E> <00784FDD>
+<0140> <00784FE0>
+<0142> <00784FE3>
+<0144> <00784FE6>
+<0146> <00784FE9>
+<0148> <00784FEC>
+<014A> <00784FEF>
+<014C> <00784FF2>
+<014E> <00784FF5>
+<0150> <00784FF8>
+<0152> <00784FFB>
+<0154> <00784FFE>
+<0156> <00785001>
+<0158> <00785004>
+<015A> <00785007>
+<015C> <0078500A>
+<015E> <0078500D>
+<0160> <00785010>
+<0162> <00785013>
+<0164> <00785016>
+<0166> <00785019>
+<0168> <0078501C>
+<016A> <0078501F>
+<016C> <00785022>
+<016E> <00785025>
+<0170> <00785028>
+<0172> <0078502B>
+<0174> <0078502E>
+<0176> <00785031>
+<0178> <00785034>
+<017A> <00785037>
+<017C> <0078503A>
+<017E> <0078503D>
+<0180> <00785040>
+<0182> <00785043>
+<0184> <00785046>
+<0186> <00785049>
+<0188> <0078504C>
+<018A> <0078504F>
+<018C> <00785052>
+<018E> <00785055>
+endbfchar
+50 beginbfchar
+<0190> <00785058>
+<0192> <0078505B>
+<0194> <0078505E>
+<0196> <00785061>
+<0198> <00785064>
+<019A> <00785067>
+<019C> <0078506A>
+<019E> <0078506D>
+<01A0> <00785070>
+<01A2> <00785073>
+<01A4> <00785076>
+<01A6> <00785079>
+<01A8> <0078507C>
+<01AA> <0078507F>
+<01AC> <00785082>
+<01AE> <00785085>
+<01B0> <00785088>
+<01B2> <0078508B>
+<01B4> <0078508E>
+<01B6> <00785091>
+<01B8> <00785094>
+<01BA> <00785097>
+<01BC> <0078509A>
+<01BE> <0078509D>
+<01C0> <007850A0>
+<01C2> <007850A3>
+<01C4> <007850A6>
+<01C6> <007850A9>
+<01C8> <007850AC>
+<01CA> <007850AF>
+<01CC> <007850B2>
+<01CE> <007850B5>
+<01D0> <007850B8>
+<01D2> <007850BB>
+<01D4> <007850BE>
+<01D6> <007850C1>
+<01D8> <007850C4>
+<01DA> <007850C7>
+<01DC> <007850CA>
+<01DE> <007850CD>
+<01E0> <007850D0>
+<01E2> <007850D3>
+<01E4> <007850D6>
+<01E6> <007850D9>
+<01E8> <007850DC>
+<01EA> <007850DF>
+<01EC> <007850E2>
+<01EE> <007850E5>
+<01F0> <007850E8>
+<01F2> <007850EB>
+endbfchar
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+end
+== 2 spans 120
+/CIDInit /ProcSet findresource begin
+12 dict begin
+begincmap
+/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def
+/CMapName /Adobe-Identity-UCS def
+/CMapType 2 def
+1 begincodespacerange
+<0000> <FFFF>
+endcodespacerange
+100 beginbfrange
+<0000> <0001> <4E00>
+<0010> <0011> <4E03>
+<0020> <0021> <4E06>
+<0030> <0031> <4E09>
+<0040> <0041> <4E0C>
+<0050> <0051> <4E0F>
+<0060> <0061> <4E12>
+<0070> <0071> <4E15>
+<0080> <0081> <4E18>
+<0090> <0091> <4E1B>
+<00A0> <00A1> <4E1E>
+<00B0> <00B1> <4E21>
+<00C0> <00C1> <4E24>
+<00D0> <00D1> <4E27>
+<00E0> <00E1> <4E2A>
+<00F0> <00F1> <4E2D>
+<0100> <0101> <4E30>
+<0110> <0111> <4E33>
+<0120> <0121> <4E36>
+<0130> <0131> <4E39>
+<0140> <0141> <4E3C>
+<0150> <0151> <4E3F>
+<0160> <0161> <4E42>
+<0170> <0171> <4E45>
+<0180> <0181> <4E48>
+<0190> <0191> <4E4B>
+<01A0> <01A1> <4E4E>
+<01B0> <01B1> <4E51>
+<01C0> <01C1> <4E54>
+<01D0> <01D1> <4E57>
+<01E0> <01E1> <4E5A>
+<01F0> <01F1> <4E5D>
+<0200> <0201> <4E60>
+<0210> <0211> <4E63>
+<0220> <0221> <4E66>
+<0230> <0231> <4E69>
+<0240> <0241> <4E6C>
+<0250> <0251> <4E6F>
+<0260> <0261> <4E72>
+<0270> <0271> <4E75>
+<0280> <0281> <4E78>
+<0290> <0291> <4E7B>
+<02A0> <02A1> <4E7E>
+<02B0> <02B1> <4E81>
+<02C0> <02C1> <4E84>
+<02D0> <02D1> <4E87>
+<02E0> <02E1> <4E8A>
+<02F0> <02F1> <4E8D>
+<0300> <0301> <4E90>
+<0310> <0311> <4E93>
+<0320> <0321> <4E96>
+<0330> <0331> <4E99>
+<0340> <0341> <4E9C>
+<0350> <0351> <4E9F>
+<0360> <0361> <4EA2>
+<0370> <0371> <4EA5>
+<0380> <0381> <4EA8>
+<0390> <0391> <4EAB>
+<03A0> <03A1> <4EAE>
+<03B0> <03B1> <4EB1>
+<03C0> <03C1> <4EB4>
+<03D0> <03D1> <4EB7>
+<03E0> <03E1> <4EBA>
+<03F0> <03F1> <4EBD>
+<0400> <0401> <4EC0>
+<0410> <0411> <4EC3>
+<0420> <0421> <4EC6>
+<0430> <0431> <4EC9>
+<0440> <0441> <4ECC>
+<0450> <0451> <4ECF>
+<0460> <0461> <4ED2>
+<0470> <0471> <4ED5>
+<0480> <0481> <4ED8>
+<0490> <0491> <4EDB>
+<04A0> <04A1> <4EDE>
+<04B0> <04B1> <4EE1>
+<04C0> <04C1> <4EE4>
+<04D0> <04D1> <4EE7>
+<04E0> <04E1> <4EEA>
+<04F0> <04F1> <4EED>
+<0500> <0501> <4EF0>
+<0510> <0511> <4EF3>
+<0520> <0521> <4EF6>
+<0530> <0531> <4EF9>
+<0540> <0541> <4EFC>
+<0560> <0561> <4F02>
+<0570> <0571> <4F05>
+<0580> <0581> <4F08>
+<0590> <0591> <4F0B>
+<05A0> <05A1> <4F0E>
+<05B0> <05B1> <4F11>
+<05C0> <05C1> <4F14>
+<05D0> <05D1> <4F17>
+<05E0> <05E1> <4F1A>
+<05F0> <05F1> <4F1D>
+<0600> <0601> <4F20>
+<0610> <0611> <4F23>
+<0620> <0621> <4F26>
+<0630> <0631> <4F29>
+<0640> <0641> <4F2C>
+endbfrange
+19 beginbfrange
+<0650> <0651> <4F2F>
+<0660> <0661> <4F32>
+<0670> <0671> <4F35>
+<0680> <0681> <4F38>
+<0690> <0691> <4F3B>
+<06A0> <06A1> <4F3E>
+<06B0> <06B1> <4F41>
+<06C0> <06C1> <4F44>
+<06D0> <06D1> <4F47>
+<06E0> <06E1> <4F4A>
+<06F0> <06F1> <4F4D>
+<0700> <0701> <4F50>
+<0710> <0711> <4F53>
+<0720> <0721> <4F56>
+<0730> <0731> <4F59>
+<0740> <0741> <4F5C>
+<0750> <0751> <4F5F>
+<0760> <0761> <4F62>
+<0770> <0771> <4F65>
+endbfrange
+2 beginbfchar
+<0550> <4EFF>
+<0551> <4F00>
+endbfchar
+endcmap
+CMapName currentdict /CMap defineresource pop
+end
+end

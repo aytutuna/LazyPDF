@@ -1,0 +1,905 @@
+cff 0 .notdef
+cff 1 space
+cff 2 exclam
+cff 3 quotedbl
+cff 4 numbersign
+cff 5 dollar
+cff 6 percent
+cff 7 ampersand
+cff 8 quoteright
+cff 9 parenleft
+cff 10 parenright
+cff 11 asterisk
+cff 12 plus
+cff 13 comma
+cff 14 hyphen
+cff 15 period
+cff 16 slash
+cff 17 zero
+cff 18 one
+cff 19 two
+cff 20 three
+cff 21 four
+cff 22 five
+cff 23 six
+cff 24 seven
+cff 25 eight
+cff 26 nine
+cff 27 colon
+cff 28 semicolon
+cff 29 less
+cff 30 equal
+cff 31 greater
+cff 32 question
+cff 33 at
+cff 34 A
+cff 35 B
+cff 36 C
+cff 37 D
+cff 38 E
+cff 39 F
+cff 40 G
+cff 41 H
+cff 42 I
+cff 43 J
+cff 44 K
+cff 45 L
+cff 46 M
+cff 47 N
+cff 48 O
+cff 49 P
+cff 50 Q
+cff 51 R
+cff 52 S
+cff 53 T
+cff 54 U
+cff 55 V
+cff 56 W
+cff 57 X
+cff 58 Y
+cff 59 Z
+cff 60 bracketleft
+cff 61 backslash
+cff 62 bracketright
+cff 63 asciicircum
+cff 64 underscore
+cff 65 quoteleft
+cff 66 a
+cff 67 b
+cff 68 c
+cff 69 d
+cff 70 e
+cff 71 f
+cff 72 g
+cff 73 h
+cff 74 i
+cff 75 j
+cff 76 k
+cff 77 l
+cff 78 m
+cff 79 n
+cff 80 o
+cff 81 p
+cff 82 q
+cff 83 r
+cff 84 s
+cff 85 t
+cff 86 u
+cff 87 v
+cff 88 w
+cff 89 x
+cff 90 y
+cff 91 z
+cff 92 braceleft
+cff 93 bar
+cff 94 braceright
+cff 95 asciitilde
+cff 96 exclamdown
+cff 97 cent
+cff 98 sterling
+cff 99 fraction
+cff 100 yen
+cff 101 florin
+cff 102 section
+cff 103 currency
+cff 104 quotesingle
+cff 105 quotedblleft
+cff 106 guillemotleft
+cff 107 guilsinglleft
+cff 108 guilsinglright
+cff 109 fi
+cff 110 fl
+cff 111 endash
+cff 112 dagger
+cff 113 daggerdbl
+cff 114 periodcentered
+cff 115 paragraph
+cff 116 bullet
+cff 117 quotesinglbase
+cff 118 quotedblbase
+cff 119 quotedblright
+cff 120 guillemotright
+cff 121 ellipsis
+cff 122 perthousand
+cff 123 questiondown
+cff 124 grave
+cff 125 acute
+cff 126 circumflex
+cff 127 tilde
+cff 128 macron
+cff 129 breve
+cff 130 dotaccent
+cff 131 dieresis
+cff 132 ring
+cff 133 cedilla
+cff 134 hungarumlaut
+cff 135 ogonek
+cff 136 caron
+cff 137 emdash
+cff 138 AE
+cff 139 ordfeminine
+cff 140 Lslash
+cff 141 Oslash
+cff 142 OE
+cff 143 ordmasculine
+cff 144 ae
+cff 145 dotlessi
+cff 146 lslash
+cff 147 oslash
+cff 148 oe
+cff 149 germandbls
+cff 150 onesuperior
+cff 151 logicalnot
+cff 152 mu
+cff 153 trademark
+cff 154 Eth
+cff 155 onehalf
+cff 156 plusminus
+cff 157 Thorn
+cff 158 onequarter
+cff 159 divide
+cff 160 brokenbar
+cff 161 degree
+cff 162 thorn
+cff 163 threequarters
+cff 164 twosuperior
+cff 165 registered
+cff 166 minus
+cff 167 eth
+cff 168 multiply
+cff 169 threesuperior
+cff 170 copyright
+cff 171 Aacute
+cff 172 Acircumflex
+cff 173 Adieresis
+cff 174 Agrave
+cff 175 Aring
+cff 176 Atilde
+cff 177 Ccedilla
+cff 178 Eacute
+cff 179 Ecircumflex
+cff 180 Edieresis
+cff 181 Egrave
+cff 182 Iacute
+cff 183 Icircumflex
+cff 184 Idieresis
+cff 185 Igrave
+cff 186 Ntilde
+cff 187 Oacute
+cff 188 Ocircumflex
+cff 189 Odieresis
+cff 190 Ograve
+cff 191 Otilde
+cff 192 Scaron
+cff 193 Uacute
+cff 194 Ucircumflex
+cff 195 Udieresis
+cff 196 Ugrave
+cff 197 Yacute
+cff 198 Ydieresis
+cff 199 Zcaron
+cff 200 aacute
+cff 201 acircumflex
+cff 202 adieresis
+cff 203 agrave
+cff 204 aring
+cff 205 atilde
+cff 206 ccedilla
+cff 207 eacute
+cff 208 ecircumflex
+cff 209 edieresis
+cff 210 egrave
+cff 211 iacute
+cff 212 icircumflex
+cff 213 idieresis
+cff 214 igrave
+cff 215 ntilde
+cff 216 oacute
+cff 217 ocircumflex
+cff 218 odieresis
+cff 219 ograve
+cff 220 otilde
+cff 221 scaron
+cff 222 uacute
+cff 223 ucircumflex
+cff 224 udieresis
+cff 225 ugrave
+cff 226 yacute
+cff 227 ydieresis
+cff 228 zcaron
+cff 229 exclamsmall
+cff 230 Hungarumlautsmall
+cff 231 dollaroldstyle
+cff 232 dollarsuperior
+cff 233 ampersandsmall
+cff 234 Acutesmall
+cff 235 parenleftsuperior
+cff 236 parenrightsuperior
+cff 237 twodotenleader
+cff 238 onedotenleader
+cff 239 zerooldstyle
+cff 240 oneoldstyle
+cff 241 twooldstyle
+cff 242 threeoldstyle
+cff 243 fouroldstyle
+cff 244 fiveoldstyle
+cff 245 sixoldstyle
+cff 246 sevenoldstyle
+cff 247 eightoldstyle
+cff 248 nineoldstyle
+cff 249 commasuperior
+cff 250 threequartersemdash
+cff 251 periodsuperior
+cff 252 questionsmall
+cff 253 asuperior
+cff 254 bsuperior
+cff 255 centsuperior
+cff 256 dsuperior
+cff 257 esuperior
+cff 258 isuperior
+cff 259 lsuperior
+cff 260 msuperior
+cff 261 nsuperior
+cff 262 osuperior
+cff 263 rsuperior
+cff 264 ssuperior
+cff 265 tsuperior
+cff 266 ff
+cff 267 ffi
+cff 268 ffl
+cff 269 parenleftinferior
+cff 270 parenrightinferior
+cff 271 Circumflexsmall
+cff 272 hyphensuperior
+cff 273 Gravesmall
+cff 274 Asmall
+cff 275 Bsmall
+cff 276 Csmall
+cff 277 Dsmall
+cff 278 Esmall
+cff 279 Fsmall
+cff 280 Gsmall
+cff 281 Hsmall
+cff 282 Ismall
+cff 283 Jsmall
+cff 284 Ksmall
+cff 285 Lsmall
+cff 286 Msmall
+cff 287 Nsmall
+cff 288 Osmall
+cff 289 Psmall
+cff 290 Qsmall
+cff 291 Rsmall
+cff 292 Ssmall
+cff 293 Tsmall
+cff 294 Usmall
+cff 295 Vsmall
+cff 296 Wsmall
+cff 297 Xsmall
+cff 298 Ysmall
+cff 299 Zsmall
+cff 300 colonmonetary
+cff 301 onefitted
+cff 302 rupiah
+cff 303 Tildesmall
+cff 304 exclamdownsmall
+cff 305 centoldstyle
+cff 306 Lslashsmall
+cff 307 Scaronsmall
+cff 308 Zcaronsmall
+cff 309 Dieresissmall
+cff 310 Brevesmall
+cff 311 Caronsmall
+cff 312 Dotaccentsmall
+cff 313 Macronsmall
+cff 314 figuredash
+cff 315 hypheninferior
+cff 316 Ogoneksmall
+cff 317 Ringsmall
+cff 318 Cedillasmall
+cff 319 questiondownsmall
+cff 320 oneeighth
+cff 321 threeeighths
+cff 322 fiveeighths
+cff 323 seveneighths
+cff 324 onethird
+cff 325 twothirds
+cff 326 zerosuperior
+cff 327 foursuperior
+cff 328 fivesuperior
+cff 329 sixsuperior
+cff 330 sevensuperior
+cff 331 eightsuperior
+cff 332 ninesuperior
+cff 333 zeroinferior
+cff 334 oneinferior
+cff 335 twoinferior
+cff 336 threeinferior
+cff 337 fourinferior
+cff 338 fiveinferior
+cff 339 sixinferior
+cff 340 seveninferior
+cff 341 eightinferior
+cff 342 nineinferior
+cff 343 centinferior
+cff 344 dollarinferior
+cff 345 periodinferior
+cff 346 commainferior
+cff 347 Agravesmall
+cff 348 Aacutesmall
+cff 349 Acircumflexsmall
+cff 350 Atildesmall
+cff 351 Adieresissmall
+cff 352 Aringsmall
+cff 353 AEsmall
+cff 354 Ccedillasmall
+cff 355 Egravesmall
+cff 356 Eacutesmall
+cff 357 Ecircumflexsmall
+cff 358 Edieresissmall
+cff 359 Igravesmall
+cff 360 Iacutesmall
+cff 361 Icircumflexsmall
+cff 362 Idieresissmall
+cff 363 Ethsmall
+cff 364 Ntildesmall
+cff 365 Ogravesmall
+cff 366 Oacutesmall
+cff 367 Ocircumflexsmall
+cff 368 Otildesmall
+cff 369 Odieresissmall
+cff 370 OEsmall
+cff 371 Oslashsmall
+cff 372 Ugravesmall
+cff 373 Uacutesmall
+cff 374 Ucircumflexsmall
+cff 375 Udieresissmall
+cff 376 Yacutesmall
+cff 377 Thornsmall
+cff 378 Ydieresissmall
+cff 379 001.000
+cff 380 001.001
+cff 381 001.002
+cff 382 001.003
+cff 383 Black
+cff 384 Bold
+cff 385 Book
+cff 386 Light
+cff 387 Medium
+cff 388 Regular
+cff 389 Roman
+cff 390 Semibold
+mac 0 .notdef
+mac 1 .null
+mac 2 nonmarkingreturn
+mac 3 space
+mac 4 exclam
+mac 5 quotedbl
+mac 6 numbersign
+mac 7 dollar
+mac 8 percent
+mac 9 ampersand
+mac 10 quotesingle
+mac 11 parenleft
+mac 12 parenright
+mac 13 asterisk
+mac 14 plus
+mac 15 comma
+mac 16 hyphen
+mac 17 period
+mac 18 slash
+mac 19 zero
+mac 20 one
+mac 21 two
+mac 22 three
+mac 23 four
+mac 24 five
+mac 25 six
+mac 26 seven
+mac 27 eight
+mac 28 nine
+mac 29 colon
+mac 30 semicolon
+mac 31 less
+mac 32 equal
+mac 33 greater
+mac 34 question
+mac 35 at
+mac 36 A
+mac 37 B
+mac 38 C
+mac 39 D
+mac 40 E
+mac 41 F
+mac 42 G
+mac 43 H
+mac 44 I
+mac 45 J
+mac 46 K
+mac 47 L
+mac 48 M
+mac 49 N
+mac 50 O
+mac 51 P
+mac 52 Q
+mac 53 R
+mac 54 S
+mac 55 T
+mac 56 U
+mac 57 V
+mac 58 W
+mac 59 X
+mac 60 Y
+mac 61 Z
+mac 62 bracketleft
+mac 63 backslash
+mac 64 bracketright
+mac 65 asciicircum
+mac 66 underscore
+mac 67 grave
+mac 68 a
+mac 69 b
+mac 70 c
+mac 71 d
+mac 72 e
+mac 73 f
+mac 74 g
+mac 75 h
+mac 76 i
+mac 77 j
+mac 78 k
+mac 79 l
+mac 80 m
+mac 81 n
+mac 82 o
+mac 83 p
+mac 84 q
+mac 85 r
+mac 86 s
+mac 87 t
+mac 88 u
+mac 89 v
+mac 90 w
+mac 91 x
+mac 92 y
+mac 93 z
+mac 94 braceleft
+mac 95 bar
+mac 96 braceright
+mac 97 asciitilde
+mac 98 Adieresis
+mac 99 Aring
+mac 100 Ccedilla
+mac 101 Eacute
+mac 102 Ntilde
+mac 103 Odieresis
+mac 104 Udieresis
+mac 105 aacute
+mac 106 agrave
+mac 107 acircumflex
+mac 108 adieresis
+mac 109 atilde
+mac 110 aring
+mac 111 ccedilla
+mac 112 eacute
+mac 113 egrave
+mac 114 ecircumflex
+mac 115 edieresis
+mac 116 iacute
+mac 117 igrave
+mac 118 icircumflex
+mac 119 idieresis
+mac 120 ntilde
+mac 121 oacute
+mac 122 ograve
+mac 123 ocircumflex
+mac 124 odieresis
+mac 125 otilde
+mac 126 uacute
+mac 127 ugrave
+mac 128 ucircumflex
+mac 129 udieresis
+mac 130 dagger
+mac 131 degree
+mac 132 cent
+mac 133 sterling
+mac 134 section
+mac 135 bullet
+mac 136 paragraph
+mac 137 germandbls
+mac 138 registered
+mac 139 copyright
+mac 140 trademark
+mac 141 acute
+mac 142 dieresis
+mac 143 notequal
+mac 144 AE
+mac 145 Oslash
+mac 146 infinity
+mac 147 plusminus
+mac 148 lessequal
+mac 149 greaterequal
+mac 150 yen
+mac 151 mu
+mac 152 partialdiff
+mac 153 summation
+mac 154 product
+mac 155 pi
+mac 156 integral
+mac 157 ordfeminine
+mac 158 ordmasculine
+mac 159 Omega
+mac 160 ae
+mac 161 oslash
+mac 162 questiondown
+mac 163 exclamdown
+mac 164 logicalnot
+mac 165 radical
+mac 166 florin
+mac 167 approxequal
+mac 168 Delta
+mac 169 guillemotleft
+mac 170 guillemotright
+mac 171 ellipsis
+mac 172 nonbreakingspace
+mac 173 Agrave
+mac 174 Atilde
+mac 175 Otilde
+mac 176 OE
+mac 177 oe
+mac 178 endash
+mac 179 emdash
+mac 180 quotedblleft
+mac 181 quotedblright
+mac 182 quoteleft
+mac 183 quoteright
+mac 184 divide
+mac 185 lozenge
+mac 186 ydieresis
+mac 187 Ydieresis
+mac 188 fraction
+mac 189 currency
+mac 190 guilsinglleft
+mac 191 guilsinglright
+mac 192 fi
+mac 193 fl
+mac 194 daggerdbl
+mac 195 periodcentered
+mac 196 quotesinglbase
+mac 197 quotedblbase
+mac 198 perthousand
+mac 199 Acircumflex
+mac 200 Ecircumflex
+mac 201 Aacute
+mac 202 Edieresis
+mac 203 Egrave
+mac 204 Iacute
+mac 205 Icircumflex
+mac 206 Idieresis
+mac 207 Igrave
+mac 208 Oacute
+mac 209 Ocircumflex
+mac 210 apple
+mac 211 Ograve
+mac 212 Uacute
+mac 213 Ucircumflex
+mac 214 Ugrave
+mac 215 dotlessi
+mac 216 circumflex
+mac 217 tilde
+mac 218 macron
+mac 219 breve
+mac 220 dotaccent
+mac 221 ring
+mac 222 cedilla
+mac 223 hungarumlaut
+mac 224 ogonek
+mac 225 caron
+mac 226 Lslash
+mac 227 lslash
+mac 228 Scaron
+mac 229 scaron
+mac 230 Zcaron
+mac 231 zcaron
+mac 232 brokenbar
+mac 233 Eth
+mac 234 eth
+mac 235 Yacute
+mac 236 yacute
+mac 237 Thorn
+mac 238 thorn
+mac 239 minus
+mac 240 multiply
+mac 241 onesuperior
+mac 242 twosuperior
+mac 243 threesuperior
+mac 244 onehalf
+mac 245 onequarter
+mac 246 threequarters
+mac 247 franc
+mac 248 Gbreve
+mac 249 gbreve
+mac 250 Idotaccent
+mac 251 Scedilla
+mac 252 scedilla
+mac 253 Cacute
+mac 254 cacute
+mac 255 Ccaron
+mac 256 ccaron
+mac 257 dcroat
+std 0 null 0
+std 1 null 0
+std 2 null 0
+std 3 null 0
+std 4 null 0
+std 5 null 0
+std 6 null 0
+std 7 null 0
+std 8 null 0
+std 9 null 0
+std 10 null 0
+std 11 null 0
+std 12 null 0
+std 13 null 0
+std 14 null 0
+std 15 null 0
+std 16 null 0
+std 17 null 0
+std 18 null 0
+std 19 null 0
+std 20 null 0
+std 21 null 0
+std 22 null 0
+std 23 null 0
+std 24 null 0
+std 25 null 0
+std 26 null 0
+std 27 null 0
+std 28 null 0
+std 29 null 0
+std 30 null 0
+std 31 null 0
+std 32 space 1
+std 33 exclam 2
+std 34 quotedbl 3
+std 35 numbersign 4
+std 36 dollar 5
+std 37 percent 6
+std 38 ampersand 7
+std 39 quoteright 8
+std 40 parenleft 9
+std 41 parenright 10
+std 42 asterisk 11
+std 43 plus 12
+std 44 comma 13
+std 45 hyphen 14
+std 46 period 15
+std 47 slash 16
+std 48 zero 17
+std 49 one 18
+std 50 two 19
+std 51 three 20
+std 52 four 21
+std 53 five 22
+std 54 six 23
+std 55 seven 24
+std 56 eight 25
+std 57 nine 26
+std 58 colon 27
+std 59 semicolon 28
+std 60 less 29
+std 61 equal 30
+std 62 greater 31
+std 63 question 32
+std 64 at 33
+std 65 A 34
+std 66 B 35
+std 67 C 36
+std 68 D 37
+std 69 E 38
+std 70 F 39
+std 71 G 40
+std 72 H 41
+std 73 I 42
+std 74 J 43
+std 75 K 44
+std 76 L 45
+std 77 M 46
+std 78 N 47
+std 79 O 48
+std 80 P 49
+std 81 Q 50
+std 82 R 51
+std 83 S 52
+std 84 T 53
+std 85 U 54
+std 86 V 55
+std 87 W 56
+std 88 X 57
+std 89 Y 58
+std 90 Z 59
+std 91 bracketleft 60
+std 92 backslash 61
+std 93 bracketright 62
+std 94 asciicircum 63
+std 95 underscore 64
+std 96 quoteleft 65
+std 97 a 66
+std 98 b 67
+std 99 c 68
+std 100 d 69
+std 101 e 70
+std 102 f 71
+std 103 g 72
+std 104 h 73
+std 105 i 74
+std 106 j 75
+std 107 k 76
+std 108 l 77
+std 109 m 78
+std 110 n 79
+std 111 o 80
+std 112 p 81
+std 113 q 82
+std 114 r 83
+std 115 s 84
+std 116 t 85
+std 117 u 86
+std 118 v 87
+std 119 w 88
+std 120 x 89
+std 121 y 90
+std 122 z 91
+std 123 braceleft 92
+std 124 bar 93
+std 125 braceright 94
+std 126 asciitilde 95
+std 127 null 0
+std 128 null 0
+std 129 null 0
+std 130 null 0
+std 131 null 0
+std 132 null 0
+std 133 null 0
+std 134 null 0
+std 135 null 0
+std 136 null 0
+std 137 null 0
+std 138 null 0
+std 139 null 0
+std 140 null 0
+std 141 null 0
+std 142 null 0
+std 143 null 0
+std 144 null 0
+std 145 null 0
+std 146 null 0
+std 147 null 0
+std 148 null 0
+std 149 null 0
+std 150 null 0
+std 151 null 0
+std 152 null 0
+std 153 null 0
+std 154 null 0
+std 155 null 0
+std 156 null 0
+std 157 null 0
+std 158 null 0
+std 159 null 0
+std 160 null 0
+std 161 exclamdown 96
+std 162 cent 97
+std 163 sterling 98
+std 164 fraction 99
+std 165 yen 100
+std 166 florin 101
+std 167 section 102
+std 168 currency 103
+std 169 quotesingle 104
+std 170 quotedblleft 105
+std 171 guillemotleft 106
+std 172 guilsinglleft 107
+std 173 guilsinglright 108
+std 174 fi 109
+std 175 fl 110
+std 176 null 0
+std 177 endash 111
+std 178 dagger 112
+std 179 daggerdbl 113
+std 180 periodcentered 114
+std 181 null 0
+std 182 paragraph 115
+std 183 bullet 116
+std 184 quotesinglbase 117
+std 185 quotedblbase 118
+std 186 quotedblright 119
+std 187 guillemotright 120
+std 188 ellipsis 121
+std 189 perthousand 122
+std 190 null 0
+std 191 questiondown 123
+std 192 null 0
+std 193 grave 124
+std 194 acute 125
+std 195 circumflex 126
+std 196 tilde 127
+std 197 macron 128
+std 198 breve 129
+std 199 dotaccent 130
+std 200 dieresis 131
+std 201 null 0
+std 202 ring 132
+std 203 cedilla 133
+std 204 null 0
+std 205 hungarumlaut 134
+std 206 ogonek 135
+std 207 caron 136
+std 208 emdash 137
+std 209 null 0
+std 210 null 0
+std 211 null 0
+std 212 null 0
+std 213 null 0
+std 214 null 0
+std 215 null 0
+std 216 null 0
+std 217 null 0
+std 218 null 0
+std 219 null 0
+std 220 null 0
+std 221 null 0
+std 222 null 0
+std 223 null 0
+std 224 null 0
+std 225 AE 138
+std 226 null 0
+std 227 ordfeminine 139
+std 228 null 0
+std 229 null 0
+std 230 null 0
+std 231 null 0
+std 232 Lslash 140
+std 233 Oslash 141
+std 234 OE 142
+std 235 ordmasculine 143
+std 236 null 0
+std 237 null 0
+std 238 null 0
+std 239 null 0
+std 240 null 0
+std 241 ae 144
+std 242 null 0
+std 243 null 0
+std 244 null 0
+std 245 dotlessi 145
+std 246 null 0
+std 247 null 0
+std 248 lslash 146
+std 249 oslash 147
+std 250 oe 148
+std 251 germandbls 149
+std 252 null 0
+std 253 null 0
+std 254 null 0
+std 255 null 0

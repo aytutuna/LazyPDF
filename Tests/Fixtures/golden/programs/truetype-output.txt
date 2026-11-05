@@ -1,0 +1,57 @@
+collection 1
+upem 1000 glyphs 7 ascent 800 descent -200 lineGap 100
+cap 700 x 500 bounds 0 -100 500 800 italic -11.5 fixed false bold true
+weight 700 fsType 0 embedding true subsetting true cff false outlines true
+family Test Sans ps TestSans-Regular
+table glyf true
+table loca true
+table cmap true
+table post true
+table name true
+table cvt  true
+table fpgm true
+table prep true
+table CFF  false
+table kern false
+cp 32 5 cmap31 5 cmap10 5 cmap310 5 cmap00 0
+cp 65 1 cmap31 1 cmap10 1 cmap310 1 cmap00 0
+cp 66 2 cmap31 2 cmap10 2 cmap310 2 cmap00 0
+cp 67 0 cmap31 0 cmap10 0 cmap310 0 cmap00 0
+cp 192 3 cmap31 3 cmap10 0 cmap310 3 cmap00 0
+cp 287 4 cmap31 4 cmap10 0 cmap310 4 cmap00 0
+cp 304 6 cmap31 6 cmap10 0 cmap310 6 cmap00 0
+cp 305 4 cmap31 4 cmap10 0 cmap310 4 cmap00 0
+cp 128512 2 cmap31 0 cmap10 0 cmap310 2 cmap00 0
+cp 20013 0 cmap31 0 cmap10 0 cmap310 0 cmap00 0
+cp -1 0 cmap31 0 cmap10 0 cmap310 0 cmap00 0
+cp 1114111 0 cmap31 0 cmap10 0 cmap310 0 cmap00 0
+hasCmap 31 true 10 true 310 true 05 true 30 false
+variation 65 65024 1
+variation 66 65024 2
+variation 67 65024 0
+variation 287 65024 6
+variation 287 65025 0
+glyph -1 name null advance 0 lsb 0 box null
+  null
+glyph 0 name .notdef advance 500 lsb 10 box 50 0 450 700
+  M 50 0 L 450 0 L 450 700 L 50 700 Z
+glyph 1 name A advance 600 lsb 10 box 0 0 500 700
+  M 0 0 L 250 700 L 500 0 Z M 200 100 L 300 100 Q 250 400 200 100 Z
+glyph 2 name B advance 550 lsb 10 box 0 0 400 600
+  M 0 300 Q 0 0 400 0 Q 400 300 400 600 Q 0 600 0 300 Z M 100 500 Q 100 100 300 100 L 300 500 Z
+glyph 3 name Alt advance 600 lsb 10 box 0 0 500 800
+  M 0 0 L 250 700 L 500 0 Z M 200 100 L 300 100 Q 250 400 200 100 Z M 100 750 L 140 750 L 140 790 L 100 790 Z
+glyph 4 name acutecomb advance 250 lsb 10 box 0 0 80 80
+  M 0 0 L 80 0 L 80 80 L 0 80 Z
+glyph 5 name space advance 250 lsb 20 box null
+  empty
+glyph 6 name Amatched advance 250 lsb 30 box 0 0 500 800
+  M 0 0 L 425 700 L 500 0 Z M 225 100 L 325 100 Q 350 400 225 100 Z M 425 700 L 505 700 L 505 780 L 425 780 Z M -5 20 L 75 20 L 75 100 L -5 100 Z
+glyph 7 name null advance 0 lsb 0 box null
+  null
+forName .notdef 0
+forName A 1
+forName Alt 3
+forName acutecomb 4
+forName space 5
+forName nothing 0

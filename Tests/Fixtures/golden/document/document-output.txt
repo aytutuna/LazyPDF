@@ -1,0 +1,951 @@
+> open table
+< version 1.4 encrypted no id 0102030405060708090A0B0C0D0E0F10
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no start 582 next 8 length 891
+< repairs 0
+< pages 2
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 3 gen 0 InUse 223 <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< obj 4 gen 0 InUse 284 <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< obj 5 gen 0 InUse 345 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 6 gen 0 InUse 433 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 7 gen 0 InUse 521 <</Title (Original title) /Author (Someone)>>
+> open stream
+< version 1.5 encrypted no id 0102030405060708090A0B0C0D0E0F10
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes start 582 next 9 length 835
+< repairs 0
+< pages 2
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 3 gen 0 InUse 223 <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< obj 4 gen 0 InUse 284 <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< obj 5 gen 0 InUse 345 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 6 gen 0 InUse 433 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 7 gen 0 InUse 521 <</Title (Original title) /Author (Someone)>>
+< obj 8 gen 0 InUse 582 <</Type /XRef /Size 9 /W [1 4 1] /Root 1 0 R /Info 7 0 R>>
+> open hybrid
+< version 1.5 encrypted no id 0102030405060708090A0B0C0D0E0F10
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no start 744 next 10 length 1108
+< repairs 0
+< pages 2
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 3 gen 0 Compressed 0 <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< obj 4 gen 0 InUse 223 <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< obj 5 gen 0 InUse 284 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 6 gen 0 InUse 372 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 7 gen 0 InUse 460 <</Title (Original title) /Author (Someone)>>
+< obj 8 gen 0 InUse 521 <</Type /ObjStm /N 1 /First 4>> data 3 0 <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< obj 9 gen 0 InUse 646 <</Type /XRef /Size 10 /W [1 4 1] /Index [3 1]>>
+> open objects
+< version 1.5 encrypted no
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes next 10
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title (Original title) /Author (Someone)>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 8 gen 0 <</Type /ObjStm /N 4 /First 21 /Filter /FlateDecode>> data 2 0 3 46 4 198 5 244 <</Title (Original title) /Author (Someone)>>\n<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>\n<</Type /Page /Parent 3 0 R /Contents 6 0 R>>\n<</Type /Page /Parent 3 0 R /Contents 7 0 R>>\n
+< obj 9 gen 0 <</Type /XRef /W [1 2 2] /Index [0 10] /Size 10 /Root 1 0 R /Info 2 0 R /Filter /FlateDecode>>
+> open aes128
+< version 1.6 encrypted yes
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no next 9
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title <4F726967696E616C207469746C65> /Author <536F6D656F6E65>>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 8 gen 0 encryption dictionary
+> open aes256
+< version 1.7 encrypted yes
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no next 9
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title <4F726967696E616C207469746C65> /Author <536F6D656F6E65>>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 8 gen 0 encryption dictionary
+> open aes256objects
+< version 1.7 encrypted yes
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes next 11
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title (Original title) /Author (Someone)>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 8 gen 0 <</Type /ObjStm /N 4 /First 21 /Filter /FlateDecode>> data 2 0 3 46 4 198 5 244 <</Title (Original title) /Author (Someone)>>\n<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>\n<</Type /Page /Parent 3 0 R /Contents 6 0 R>>\n<</Type /Page /Parent 3 0 R /Contents 7 0 R>>\n
+< obj 9 gen 0 encryption dictionary
+< obj 10 gen 0 <</Type /XRef /W [1 2 2] /Index [0 11] /Size 11 /Root 1 0 R /Info 2 0 R /Encrypt 9 0 R /Filter /FlateDecode>>
+> open simple2
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no start 405 next 7 length 606
+< repairs 0
+< pages 2
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (1) Tj ET
+< page 1 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (2) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< obj 3 gen 0 InUse 141 <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< obj 4 gen 0 InUse 202 <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< obj 5 gen 0 InUse 263 <<>> data BT /F1 12 Tf (1) Tj ET
+< obj 6 gen 0 InUse 334 <<>> data BT /F1 12 Tf (2) Tj ET
+> open junk-before
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no start 405 next 7 length 606
+< repairs 1
+< repair Cut 13 bytes before the %PDF header.
+< pages 2
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (1) Tj ET
+< page 1 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (2) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< obj 3 gen 0 InUse 141 <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< obj 4 gen 0 InUse 202 <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< obj 5 gen 0 InUse 263 <<>> data BT /F1 12 Tf (1) Tj ET
+< obj 6 gen 0 InUse 334 <<>> data BT /F1 12 Tf (2) Tj ET
+> open header-late
+< error NotPdf The file does not start with %PDF.
+> open not-pdf
+< error NotPdf The file does not start with %PDF.
+> open no-startxref
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt yes stream no start 0 next 7 length 607
+< repairs 1
+< repair There is no startxref. Rebuilt the cross-reference table by scanning the file.
+< pages 2
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (1) Tj ET
+< page 1 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (2) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< obj 3 gen 0 InUse 141 <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< obj 4 gen 0 InUse 202 <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< obj 5 gen 0 InUse 263 <<>> data BT /F1 12 Tf (1) Tj ET
+< obj 6 gen 0 InUse 334 <<>> data BT /F1 12 Tf (2) Tj ET
+> open startxref-past-end
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt yes stream no start 0 next 4 length 302
+< repairs 1
+< repair startxref does not point into the file. Rebuilt the cross-reference table by scanning the file.
+< pages 1
+< page 0 ref 3 0 media [0 0 612 792] crop [0 0 612 792] rotate 0 unit 1 contents 
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R] /Count 1>>
+< obj 3 gen 0 InUse 111 <</Type /Page /Parent 2 0 R>>
+> open shifted
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no start 405 next 7 length 606
+< repairs 2
+< repair Object 1 was listed at byte 16; found at byte 9.
+< repair Object 2 was listed at byte 63; found at byte 56.
+< pages 2
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (1) Tj ET
+< page 1 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (2) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< obj 3 gen 0 InUse 141 <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< obj 4 gen 0 InUse 202 <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< obj 5 gen 0 InUse 263 <<>> data BT /F1 12 Tf (1) Tj ET
+< obj 6 gen 0 InUse 334 <<>> data BT /F1 12 Tf (2) Tj ET
+> open wrong-length
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no start 437 next 12 length 740
+< repairs 0
+< pages 1
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (1) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+< obj 3 gen 0 InUse 135 <</Type /Page /Parent 2 0 R /Contents 4 0 R>>
+< obj 4 gen 0 InUse 196 <<>> data BT /F1 12 Tf (1) Tj ET
+< obj 9 gen 0 InUse 267 <<>> data twelve bytes
+< obj 10 gen 0 InUse 327 <<>> data ten bytes!
+< obj 11 gen 0 InUse 388 <<>> data no length
+> open no-endstream
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no start 316 next 10 length 579
+< repairs 0
+< pages 1
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (1) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+< obj 3 gen 0 InUse 135 <</Type /Page /Parent 2 0 R /Contents 4 0 R>>
+< obj 4 gen 0 InUse 196 <<>> data BT /F1 12 Tf (1) Tj ET
+< obj 9 gen 0 InUse 267 <<>> data cut short
+> open no-trailer
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt yes stream no start 0 next 7 length 405
+< repairs 3
+< repair There is no startxref. Rebuilt the cross-reference table by scanning the file.
+< repair The file has no trailer.
+< repair Found the catalog (object 1) by scanning.
+< pages 2
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (1) Tj ET
+< page 1 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (2) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< obj 3 gen 0 InUse 141 <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< obj 4 gen 0 InUse 202 <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< obj 5 gen 0 InUse 263 <<>> data BT /F1 12 Tf (1) Tj ET
+< obj 6 gen 0 InUse 334 <<>> data BT /F1 12 Tf (2) Tj ET
+> open no-root
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt yes stream no start 0 next 7 length 595
+< repairs 2
+< repair The catalog could not be read. Rebuilt the cross-reference table by scanning the file.
+< repair Found the catalog (object 1) by scanning.
+< pages 2
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (1) Tj ET
+< page 1 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (2) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< obj 3 gen 0 InUse 141 <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< obj 4 gen 0 InUse 202 <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< obj 5 gen 0 InUse 263 <<>> data BT /F1 12 Tf (1) Tj ET
+< obj 6 gen 0 InUse 334 <<>> data BT /F1 12 Tf (2) Tj ET
+> open truncated
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt yes stream no start 0 next 9 length 664
+< repairs 3
+< repair There is no startxref. Rebuilt the cross-reference table by scanning the file.
+< repair The file has no trailer.
+< repair Found the catalog (object 1) by scanning.
+< pages 3
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (1) Tj ET
+< page 1 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (2) Tj ET
+< page 2 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (3) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R 4 0 R 5 0 R] /Count 3 /MediaBox [0 0 200 300]>>
+< obj 3 gen 0 InUse 147 <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< obj 4 gen 0 InUse 208 <</Type /Page /Parent 2 0 R /Contents 7 0 R>>
+< obj 5 gen 0 InUse 269 <</Type /Page /Parent 2 0 R /Contents 8 0 R>>
+< obj 6 gen 0 InUse 330 <<>> data BT /F1 12 Tf (1) Tj ET
+< obj 7 gen 0 InUse 401 <<>> data BT /F1 12 Tf (2) Tj ET
+< obj 8 gen 0 InUse 472 <<>> data BT /F1 12 Tf (3) Tj ET
+> open no-catalog
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt yes stream no start 0 next 6 length 160
+< repairs 3
+< repair There is no startxref. Rebuilt the cross-reference table by scanning the file.
+< repair The file has no trailer.
+< repair The file has no catalog; made one.
+< pages 2
+< page 0 ref 3 0 media [0 0 612 792] crop [0 0 612 792] rotate 0 unit 1 contents 
+< page 1 ref 4 0 media [0 0 612 792] crop [0 0 612 792] rotate 0 unit 1 contents 
+< obj 2 gen 0 InUse 9 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2>>
+< obj 3 gen 0 InUse 70 <</Type /Page /Parent 2 0 R>>
+< obj 4 gen 0 InUse 115 <</Type /Page /Parent 2 0 R>>
+< obj 5 gen 0 New 0 <</Type /Catalog /Pages 2 0 R>>
+> open no-tree
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt yes stream no start 0 next 7 length 115
+< repairs 4
+< repair There is no startxref. Rebuilt the cross-reference table by scanning the file.
+< repair The file has no trailer.
+< repair Made a page tree for 2 pages found by scanning.
+< repair The file has no catalog; made one.
+< pages 2
+< page 0 ref 3 0 media [0 0 10 10] crop [0 0 10 10] rotate 0 unit 1 contents 
+< page 1 ref 4 0 media [0 0 20 20] crop [0 0 20 20] rotate 0 unit 1 contents 
+< obj 3 gen 0 InUse 9 <</Type /Page /MediaBox [0 0 10 10]>>
+< obj 4 gen 0 InUse 62 <</Type /Page /MediaBox [0 0 20 20]>>
+< obj 5 gen 0 New 0 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2>>
+< obj 6 gen 0 New 0 <</Type /Catalog /Pages 5 0 R>>
+> open later-definition
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt yes stream no start 0 next 5 length 340
+< repairs 3
+< repair There is no startxref. Rebuilt the cross-reference table by scanning the file.
+< repair The file has no trailer.
+< repair Found the catalog (object 1) by scanning.
+< pages 1
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 180 unit 1 contents BT /F1 12 Tf (1) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+< obj 3 gen 0 InUse 267 <</Type /Page /Parent 2 0 R /Rotate 180 /Contents 4 0 R>>
+< obj 4 gen 0 InUse 196 <<>> data BT /F1 12 Tf (1) Tj ET
+> open pdf-in-stream
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt yes stream no start 0 next 9 length 391
+< repairs 3
+< repair There is no startxref. Rebuilt the cross-reference table by scanning the file.
+< repair The file has no trailer.
+< repair Found the catalog (object 1) by scanning.
+< pages 1
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (1) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+< obj 3 gen 0 InUse 135 <</Type /Page /Parent 2 0 R /Contents 4 0 R>>
+< obj 4 gen 0 InUse 196 <<>> data BT /F1 12 Tf (1) Tj ET
+< obj 8 gen 0 InUse 267 <<>> data %PDF-1.4\n9 0 obj\n<</Type /Page /Rotate 90>>\nendobj\ntrailer\n<</Root 9 0 R>>\n
+> open prev-broken
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt yes stream no start 0 next 5 length 595
+< repairs 1
+< repair /Prev does not point into the file. Rebuilt the cross-reference table by scanning the file.
+< pages 1
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 90 unit 1 contents BT /F1 12 Tf (1) Tj ET
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+< obj 3 gen 0 InUse 428 <</Type /Page /Parent 2 0 R /Rotate 90 /Contents 4 0 R>>
+< obj 4 gen 0 InUse 196 <<>> data BT /F1 12 Tf (1) Tj ET
+> open tree-ancestors
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no start 423 next 6 length 604
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 100 200] crop [10 10 60 60] rotate 90 unit 1 contents 
+< page 1 ref 5 0 media [0 0 50 50] crop [10 10 50 50] rotate 270 unit 1 contents 
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R] /Count 2 /MediaBox [0 0 100 200] /Rotate 90 /Resources <</Font <<>>>>>>
+< obj 3 gen 0 InUse 172 <</Type /Pages /Parent 2 0 R /Kids [4 0 R 5 0 R] /Count 2 /CropBox [10 10 60 60]>>
+< obj 4 gen 0 InUse 270 <</Type /Page /Parent 3 0 R>>
+< obj 5 gen 0 InUse 315 <</Type /Page /Parent 3 0 R /Rotate 270 /MediaBox [0 0 50 50] /Resources <</XObject <<>>>>>>
+> open tree-cycle
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no start 279 next 6 length 460
+< repairs 0
+< pages 2
+< page 0 ref 3 0 media [0 0 612 792] crop [0 0 612 792] rotate 0 unit 1 contents 
+< page 1 ref 5 0 media [0 0 612 792] crop [0 0 612 792] rotate 0 unit 1 contents 
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R 2 0 R 4 0 R] /Count 2>>
+< obj 3 gen 0 InUse 123 <</Type /Page /Parent 2 0 R>>
+< obj 4 gen 0 InUse 168 <</Type /Pages /Parent 2 0 R /Kids [2 0 R 5 0 R]>>
+< obj 5 gen 0 InUse 234 <</Type /Page /Parent 4 0 R>>
+> open tree-junk
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no start 273 next 7 length 474
+< repairs 0
+< pages 1
+< page 0 ref 3 0 media [0 0 612 792] crop [0 0 612 792] rotate 0 unit 1 contents 
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R 42 (text) null 77 0 R 6 0 R <</Type /Page>> 5 0 R 3 0 R] /Count 2>>
+< obj 3 gen 0 InUse 167 <</Type /Page>>
+< obj 5 gen 0 InUse 198 <</Type /Font /BaseFont /Helvetica>>
+< obj 6 gen 0 InUse 250 [1 2 3]
+> open tree-boxes
+< version 1.4 encrypted no id -
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no start 322 next 5 length 483
+< repairs 0
+< pages 2
+< page 0 ref 3 0 media [0 0 300 400] crop [0 0 300 400] rotate 90 unit 2 contents 
+< page 1 ref 4 0 media [0 0 612 792] crop [0 0 612 792] rotate 270 unit 1 contents 
+< obj 1 gen 0 InUse 9 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 InUse 56 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2>>
+< obj 3 gen 0 InUse 117 <</Type /Page /MediaBox [300 400 0 0] /TrimBox [5 5 15 25] /Rotate 450 /UserUnit 2>>
+< obj 4 gen 0 InUse 217 <</Type /Page /MediaBox [0 0 0 0] /CropBox [1 2] /Rotate -90 /UserUnit -3 /BleedBox (x)>>
+> open object-stream
+< version 1.5 encrypted no
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes next 7
+< repairs 0
+< pages 1
+< page 0 ref 3 0 media [0 0 100 100] crop [0 0 100 100] rotate 0 unit 1 contents q Q
+< obj 1 gen 0 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 <</Type /Pages /Kids [3 0 R] /Count 1>>
+< obj 3 gen 0 <</Type /Page /Parent 2 0 R /Contents 4 0 R /MediaBox [0 0 100 100]>>
+< obj 4 gen 0 <<>> data q Q
+< obj 5 gen 0 <</Type /ObjStm /N 3 /First 14 /Filter /FlateDecode>> data 1 0 2 32 3 72 <</Type /Catalog /Pages 2 0 R>>\n<</Type /Pages /Kids [3 0 R] /Count 1>>\n<</Type /Page /Parent 2 0 R /Contents 4 0 R /MediaBox [0 0 100 100]>>\n
+< obj 6 gen 0 <</Type /XRef /Size 7 /W [1 3 1] /Root 1 0 R /Filter /FlateDecode>>
+> open object-stream-lost
+< version 1.5 encrypted no
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt yes stream no next 7
+< repairs 1
+< repair No object header at byte 13. Rebuilt the cross-reference table by scanning the file.
+< pages 1
+< page 0 ref 3 0 media [0 0 100 100] crop [0 0 100 100] rotate 0 unit 1 contents q Q
+< obj 1 gen 0 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 <</Type /Pages /Kids [3 0 R] /Count 1>>
+< obj 3 gen 0 <</Type /Page /Parent 2 0 R /Contents 4 0 R /MediaBox [0 0 100 100]>>
+< obj 4 gen 0 <<>> data q Q
+< obj 5 gen 0 <</Type /ObjStm /N 3 /First 14 /Filter /FlateDecode>> data 1 0 2 32 3 72 <</Type /Catalog /Pages 2 0 R>>\n<</Type /Pages /Kids [3 0 R] /Count 1>>\n<</Type /Page /Parent 2 0 R /Contents 4 0 R /MediaBox [0 0 100 100]>>\n
+< obj 6 gen 0 <</Type /XRef /Size 7 /W [1 3 1] /Root 1 0 R /Filter /FlateDecode>>
+> incremental table
+< 1 0 obj
+< <</Type /Catalog /Pages 2 0 R /Extra 8 0 R>>
+< endobj
+< 6 0 obj
+< <</Length 38>>
+< stream
+< BT /F1 12 Tf 20 100 Td (Changed) Tj ET
+< endstream
+< endobj
+< 7 0 obj
+< <</Title (New title) /Author (Someone)>>
+< endobj
+< 8 0 obj
+< <</Note (Added note)>>
+< endobj
+< xref
+< 1 1
+< 0000000891 00000 n 
+< 6 3
+< 0000000951 00000 n 
+< 0000001037 00000 n 
+< 0000001093 00000 n 
+< trailer
+< <</Size 9 /Root 1 0 R /Info 7 0 R /ID [<0102030405060708090A0B0C0D0E0F10> <00000000000000000000000000000000>] /Prev 582>>
+< startxref
+< 1131
+< %%EOF
+> incremental stream
+< 1 0 obj
+< <</Type /Catalog /Pages 2 0 R /Extra 9 0 R>>
+< endobj
+< 6 0 obj
+< <</Length 38>>
+< stream
+< BT /F1 12 Tf 20 100 Td (Changed) Tj ET
+< endstream
+< endobj
+< 7 0 obj
+< <</Title (New title) /Author (Someone)>>
+< endobj
+< 9 0 obj
+< <</Note (Added note)>>
+< endobj
+< 10 0 obj
+< <</Type /XRef /W [1 2 2] /Index [1 1 6 2 9 2] /Size 11 /Root 1 0 R /Info 7 0 R /ID [<0102030405060708090A0B0C0D0E0F10> <00000000000000000000000000000000>] /Prev 582 /Length 25>>
+< stream
+< \x01\x03C\x00\x00\x01\x03\x7f\x00\x00\x01\x03\xd5\x00\x00\x01\x04\r\x00\x00\x01\x043\x00\x00
+< endstream
+< endobj
+< startxref
+< 1075
+< %%EOF
+> incremental hybrid
+< 1 0 obj
+< <</Type /Catalog /Pages 2 0 R /Extra 10 0 R>>
+< endobj
+< 6 0 obj
+< <</Length 38>>
+< stream
+< BT /F1 12 Tf 20 100 Td (Changed) Tj ET
+< endstream
+< endobj
+< 7 0 obj
+< <</Title (New title) /Author (Someone)>>
+< endobj
+< 10 0 obj
+< <</Note (Added note)>>
+< endobj
+< xref
+< 1 1
+< 0000001108 00000 n 
+< 6 2
+< 0000001169 00000 n 
+< 0000001255 00000 n 
+< 10 1
+< 0000001311 00000 n 
+< trailer
+< <</Size 11 /Root 1 0 R /Info 7 0 R /ID [<0102030405060708090A0B0C0D0E0F10> <00000000000000000000000000000000>] /Prev 744>>
+< startxref
+< 1350
+< %%EOF
+> incremental objects
+< version 1.5 encrypted no
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes next 12
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Changed) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R /Extra 10 0 R>>
+< obj 2 gen 0 <</Title (New title) /Author (Someone)>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Changed) Tj ET
+< obj 8 gen 0 <</Type /ObjStm /N 4 /First 21 /Filter /FlateDecode>> data 2 0 3 46 4 198 5 244 <</Title (Original title) /Author (Someone)>>\n<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>\n<</Type /Page /Parent 3 0 R /Contents 6 0 R>>\n<</Type /Page /Parent 3 0 R /Contents 7 0 R>>\n
+< obj 9 gen 0 <</Type /XRef /W [1 2 2] /Index [0 10] /Size 10 /Root 1 0 R /Info 2 0 R /Filter /FlateDecode>>
+< obj 10 gen 0 <</Note (Added note)>>
+< obj 11 gen 0 <</Type /XRef /W [1 2 2] /Index [1 2 7 1 10 2] /Size 12 /Root 1 0 R /Info 2 0 R>>
+> incremental aes128
+< version 1.6 encrypted yes
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no next 10
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Changed) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R /Extra 9 0 R>>
+< obj 2 gen 0 <</Title <4E6577207469746C65> /Author <536F6D656F6E65>>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Changed) Tj ET
+< obj 8 gen 0 encryption dictionary
+< obj 9 gen 0 <</Note <4164646564206E6F7465>>>
+> incremental aes256
+< version 1.7 encrypted yes
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no next 10
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Changed) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R /Extra 9 0 R>>
+< obj 2 gen 0 <</Title <4E6577207469746C65> /Author <536F6D656F6E65>>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Changed) Tj ET
+< obj 8 gen 0 encryption dictionary
+< obj 9 gen 0 <</Note <4164646564206E6F7465>>>
+> incremental aes256objects
+< version 1.7 encrypted yes
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes next 13
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Changed) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R /Extra 11 0 R>>
+< obj 2 gen 0 <</Title <4E6577207469746C65> /Author <536F6D656F6E65>>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Changed) Tj ET
+< obj 8 gen 0 <</Type /ObjStm /N 4 /First 21 /Filter /FlateDecode>> data 2 0 3 46 4 198 5 244 <</Title (Original title) /Author (Someone)>>\n<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>\n<</Type /Page /Parent 3 0 R /Contents 6 0 R>>\n<</Type /Page /Parent 3 0 R /Contents 7 0 R>>\n
+< obj 9 gen 0 encryption dictionary
+< obj 10 gen 0 <</Type /XRef /W [1 2 2] /Index [0 11] /Size 11 /Root 1 0 R /Info 2 0 R /Encrypt 9 0 R /Filter /FlateDecode>>
+< obj 11 gen 0 <</Note <4164646564206E6F7465>>>
+< obj 12 gen 0 <</Type /XRef /W [1 2 2] /Index [1 2 7 1 11 2] /Size 13 /Root 1 0 R /Info 2 0 R /Encrypt 9 0 R>>
+> rewrite table plain
+< %PDF-1.4
+< %\xe2\xe3\xcf\xd3
+< 1 0 obj
+< <</Type /Catalog /Pages 3 0 R>>
+< endobj
+< 2 0 obj
+< <</Title (Original title) /Author (Someone)>>
+< endobj
+< 3 0 obj
+< <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< endobj
+< 4 0 obj
+< <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< endobj
+< 5 0 obj
+< <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< endobj
+< 6 0 obj
+< <</Length 39>>
+< stream
+< BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< endstream
+< endobj
+< 7 0 obj
+< <</Length 39>>
+< stream
+< BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< endstream
+< endobj
+< xref
+< 0 8
+< 0000000000 65535 f 
+< 0000000015 00000 n 
+< 0000000062 00000 n 
+< 0000000123 00000 n 
+< 0000000290 00000 n 
+< 0000000351 00000 n 
+< 0000000412 00000 n 
+< 0000000499 00000 n 
+< trailer
+< <</Size 8 /Root 1 0 R /Info 2 0 R /ID [<0102030405060708090A0B0C0D0E0F10> <00000000000000000000000000000000>]>>
+< startxref
+< 586
+< %%EOF
+> rewrite table packed
+< version 1.5 encrypted no
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes next 10
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title (Original title) /Author (Someone)>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 8 gen 0 <</Type /ObjStm /N 4 /First 21 /Filter /FlateDecode>> data 2 0 3 46 4 198 5 244 <</Title (Original title) /Author (Someone)>>\n<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>\n<</Type /Page /Parent 3 0 R /Contents 6 0 R>>\n<</Type /Page /Parent 3 0 R /Contents 7 0 R>>\n
+< obj 9 gen 0 <</Type /XRef /W [1 2 2] /Index [0 10] /Size 10 /Root 1 0 R /Info 2 0 R /Filter /FlateDecode>>
+> rewrite stream plain
+< %PDF-1.5
+< %\xe2\xe3\xcf\xd3
+< 1 0 obj
+< <</Type /Catalog /Pages 3 0 R>>
+< endobj
+< 2 0 obj
+< <</Title (Original title) /Author (Someone)>>
+< endobj
+< 3 0 obj
+< <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< endobj
+< 4 0 obj
+< <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< endobj
+< 5 0 obj
+< <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< endobj
+< 6 0 obj
+< <</Length 39>>
+< stream
+< BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< endstream
+< endobj
+< 7 0 obj
+< <</Length 39>>
+< stream
+< BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< endstream
+< endobj
+< xref
+< 0 8
+< 0000000000 65535 f 
+< 0000000015 00000 n 
+< 0000000062 00000 n 
+< 0000000123 00000 n 
+< 0000000290 00000 n 
+< 0000000351 00000 n 
+< 0000000412 00000 n 
+< 0000000499 00000 n 
+< trailer
+< <</Size 8 /Root 1 0 R /Info 2 0 R /ID [<0102030405060708090A0B0C0D0E0F10> <00000000000000000000000000000000>]>>
+< startxref
+< 586
+< %%EOF
+> rewrite stream packed
+< version 1.5 encrypted no
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes next 10
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title (Original title) /Author (Someone)>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 8 gen 0 <</Type /ObjStm /N 4 /First 21 /Filter /FlateDecode>> data 2 0 3 46 4 198 5 244 <</Title (Original title) /Author (Someone)>>\n<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>\n<</Type /Page /Parent 3 0 R /Contents 6 0 R>>\n<</Type /Page /Parent 3 0 R /Contents 7 0 R>>\n
+< obj 9 gen 0 <</Type /XRef /W [1 2 2] /Index [0 10] /Size 10 /Root 1 0 R /Info 2 0 R /Filter /FlateDecode>>
+> rewrite hybrid plain
+< %PDF-1.5
+< %\xe2\xe3\xcf\xd3
+< 1 0 obj
+< <</Type /Catalog /Pages 3 0 R>>
+< endobj
+< 2 0 obj
+< <</Title (Original title) /Author (Someone)>>
+< endobj
+< 3 0 obj
+< <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< endobj
+< 4 0 obj
+< <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< endobj
+< 5 0 obj
+< <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< endobj
+< 6 0 obj
+< <</Length 39>>
+< stream
+< BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< endstream
+< endobj
+< 7 0 obj
+< <</Length 39>>
+< stream
+< BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< endstream
+< endobj
+< xref
+< 0 8
+< 0000000000 65535 f 
+< 0000000015 00000 n 
+< 0000000062 00000 n 
+< 0000000123 00000 n 
+< 0000000290 00000 n 
+< 0000000351 00000 n 
+< 0000000412 00000 n 
+< 0000000499 00000 n 
+< trailer
+< <</Size 8 /Root 1 0 R /Info 2 0 R /ID [<0102030405060708090A0B0C0D0E0F10> <00000000000000000000000000000000>]>>
+< startxref
+< 586
+< %%EOF
+> rewrite hybrid packed
+< version 1.5 encrypted no
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes next 10
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title (Original title) /Author (Someone)>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 8 gen 0 <</Type /ObjStm /N 4 /First 21 /Filter /FlateDecode>> data 2 0 3 46 4 198 5 244 <</Title (Original title) /Author (Someone)>>\n<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>\n<</Type /Page /Parent 3 0 R /Contents 6 0 R>>\n<</Type /Page /Parent 3 0 R /Contents 7 0 R>>\n
+< obj 9 gen 0 <</Type /XRef /W [1 2 2] /Index [0 10] /Size 10 /Root 1 0 R /Info 2 0 R /Filter /FlateDecode>>
+> rewrite objects plain
+< version 1.5 encrypted no
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no next 8
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title (Original title) /Author (Someone)>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+> rewrite objects packed
+< version 1.5 encrypted no
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes next 10
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title (Original title) /Author (Someone)>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 8 gen 0 <</Type /ObjStm /N 4 /First 21 /Filter /FlateDecode>> data 2 0 3 46 4 198 5 244 <</Title (Original title) /Author (Someone)>>\n<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>\n<</Type /Page /Parent 3 0 R /Contents 6 0 R>>\n<</Type /Page /Parent 3 0 R /Contents 7 0 R>>\n
+< obj 9 gen 0 <</Type /XRef /W [1 2 2] /Index [0 10] /Size 10 /Root 1 0 R /Info 2 0 R /Filter /FlateDecode>>
+> rewrite aes128 plain
+< version 1.6 encrypted yes
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no next 9
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title <4F726967696E616C207469746C65> /Author <536F6D656F6E65>>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 8 gen 0 encryption dictionary
+> rewrite aes128 packed
+< version 1.6 encrypted yes
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes next 11
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title <4F726967696E616C207469746C65> /Author <536F6D656F6E65>>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 8 gen 0 <</Type /ObjStm /N 4 /First 21 /Filter /FlateDecode>> data 2 0 3 67 4 219 5 265 <</Title <4F726967696E616C207469746C65> /Author <536F6D656F6E65>>>\n<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>\n<</Type /Page /Parent 3 0 R /Contents 6 0 R>>\n<</Type /Page /Parent 3 0 R /Contents 7 0 R>>\n
+< obj 9 gen 0 encryption dictionary
+< obj 10 gen 0 <</Type /XRef /W [1 2 2] /Index [0 11] /Size 11 /Root 1 0 R /Info 2 0 R /Encrypt 9 0 R /Filter /FlateDecode>>
+> rewrite aes256 plain
+< version 1.7 encrypted yes
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no next 9
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title <4F726967696E616C207469746C65> /Author <536F6D656F6E65>>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 8 gen 0 encryption dictionary
+> rewrite aes256 packed
+< version 1.7 encrypted yes
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes next 11
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title <4F726967696E616C207469746C65> /Author <536F6D656F6E65>>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 8 gen 0 <</Type /ObjStm /N 4 /First 21 /Filter /FlateDecode>> data 2 0 3 67 4 219 5 265 <</Title <4F726967696E616C207469746C65> /Author <536F6D656F6E65>>>\n<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>\n<</Type /Page /Parent 3 0 R /Contents 6 0 R>>\n<</Type /Page /Parent 3 0 R /Contents 7 0 R>>\n
+< obj 9 gen 0 encryption dictionary
+< obj 10 gen 0 <</Type /XRef /W [1 2 2] /Index [0 11] /Size 11 /Root 1 0 R /Info 2 0 R /Encrypt 9 0 R /Filter /FlateDecode>>
+> rewrite aes256objects plain
+< version 1.7 encrypted yes
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no next 9
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title <4F726967696E616C207469746C65> /Author <536F6D656F6E65>>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 8 gen 0 encryption dictionary
+> rewrite aes256objects packed
+< version 1.7 encrypted yes
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes next 11
+< repairs 0
+< pages 2
+< page 0 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< page 1 ref 5 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 3 0 R>>
+< obj 2 gen 0 <</Title (Original title) /Author (Someone)>>
+< obj 3 gen 0 <</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>
+< obj 4 gen 0 <</Type /Page /Parent 3 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <</Type /Page /Parent 3 0 R /Contents 7 0 R>>
+< obj 6 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page one) Tj ET
+< obj 7 gen 0 <<>> data BT /F1 12 Tf 20 100 Td (Page two) Tj ET
+< obj 8 gen 0 <</Type /ObjStm /N 4 /First 21 /Filter /FlateDecode>> data 2 0 3 46 4 198 5 244 <</Title (Original title) /Author (Someone)>>\n<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300] /Resources <</Font <</F1 <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>>>>>>>\n<</Type /Page /Parent 3 0 R /Contents 6 0 R>>\n<</Type /Page /Parent 3 0 R /Contents 7 0 R>>\n
+< obj 9 gen 0 encryption dictionary
+< obj 10 gen 0 <</Type /XRef /W [1 2 2] /Index [0 11] /Size 11 /Root 1 0 R /Info 2 0 R /Encrypt 9 0 R /Filter /FlateDecode>>
+> rewrite no-startxref plain
+< version 1.4 encrypted no
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no next 7
+< repairs 0
+< pages 2
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (1) Tj ET
+< page 1 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (2) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< obj 3 gen 0 <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< obj 4 gen 0 <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <<>> data BT /F1 12 Tf (1) Tj ET
+< obj 6 gen 0 <<>> data BT /F1 12 Tf (2) Tj ET
+> rewrite no-startxref packed
+< version 1.5 encrypted no
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes next 9
+< repairs 0
+< pages 2
+< page 0 ref 3 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (1) Tj ET
+< page 1 ref 4 0 media [0 0 200 300] crop [0 0 200 300] rotate 0 unit 1 contents BT /F1 12 Tf (2) Tj ET
+< obj 1 gen 0 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>
+< obj 3 gen 0 <</Type /Page /Parent 2 0 R /Contents 5 0 R>>
+< obj 4 gen 0 <</Type /Page /Parent 2 0 R /Contents 6 0 R>>
+< obj 5 gen 0 <<>> data BT /F1 12 Tf (1) Tj ET
+< obj 6 gen 0 <<>> data BT /F1 12 Tf (2) Tj ET
+< obj 7 gen 0 <</Type /ObjStm /N 3 /First 15 /Filter /FlateDecode>> data 2 0 3 70 4 116 <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 200 300]>>\n<</Type /Page /Parent 2 0 R /Contents 5 0 R>>\n<</Type /Page /Parent 2 0 R /Contents 6 0 R>>\n
+< obj 8 gen 0 <</Type /XRef /W [1 2 2] /Index [0 9] /Size 9 /Root 1 0 R /Filter /FlateDecode>>
+> rewrite tree-cycle plain
+< version 1.4 encrypted no
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream no next 6
+< repairs 0
+< pages 2
+< page 0 ref 3 0 media [0 0 612 792] crop [0 0 612 792] rotate 0 unit 1 contents 
+< page 1 ref 5 0 media [0 0 612 792] crop [0 0 612 792] rotate 0 unit 1 contents 
+< obj 1 gen 0 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 <</Type /Pages /Kids [3 0 R 2 0 R 4 0 R] /Count 2>>
+< obj 3 gen 0 <</Type /Page /Parent 2 0 R>>
+< obj 4 gen 0 <</Type /Pages /Parent 2 0 R /Kids [2 0 R 5 0 R]>>
+< obj 5 gen 0 <</Type /Page /Parent 4 0 R>>
+> rewrite tree-cycle packed
+< version 1.5 encrypted no
+< facts signed no certified no xfa no tagged no linearized no pdfa 
+< layout rebuilt no stream yes next 8
+< repairs 0
+< pages 2
+< page 0 ref 3 0 media [0 0 612 792] crop [0 0 612 792] rotate 0 unit 1 contents 
+< page 1 ref 5 0 media [0 0 612 792] crop [0 0 612 792] rotate 0 unit 1 contents 
+< obj 1 gen 0 <</Type /Catalog /Pages 2 0 R>>
+< obj 2 gen 0 <</Type /Pages /Kids [3 0 R 2 0 R 4 0 R] /Count 2>>
+< obj 3 gen 0 <</Type /Page /Parent 2 0 R>>
+< obj 4 gen 0 <</Type /Pages /Parent 2 0 R /Kids [2 0 R 5 0 R]>>
+< obj 5 gen 0 <</Type /Page /Parent 4 0 R>>
+< obj 6 gen 0 <</Type /ObjStm /N 4 /First 20 /Filter /FlateDecode>> data 2 0 3 52 4 82 5 133 <</Type /Pages /Kids [3 0 R 2 0 R 4 0 R] /Count 2>>\n<</Type /Page /Parent 2 0 R>>\n<</Type /Pages /Parent 2 0 R /Kids [2 0 R 5 0 R]>>\n<</Type /Page /Parent 4 0 R>>\n
+< obj 7 gen 0 <</Type /XRef /W [1 2 2] /Index [0 8] /Size 8 /Root 1 0 R /Filter /FlateDecode>>

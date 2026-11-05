@@ -1,0 +1,51 @@
+# One line is the body of local subroutine 0 of the name-keyed test font, without the return. Glyph 2
+# (10 20 rmoveto, then the subroutine) is dumped. Tokens are numbers, operator names and raw:<hex> bytes.
+10 20 add dup rlineto
+20 4 div 5 3 mul rlineto
+1 2 exch rlineto
+9 8 7 drop rlineto
+10 3 sub 0 rlineto
+5 0 div 1 rlineto
+1 2 3 4 5 6 7 8 9 10 11 12 flex
+1 2 3 4 5 6 7 hflex
+1 2 3 4 5 6 7 8 9 hflex1
+10 20 30 -10 20 5 10 5 20 30 40 flex1
+1 2 3 4 5 6 7 8 9 10 11 flex1
+5 10 20 30 40 vvcurveto
+10 20 30 40 vvcurveto
+10 20 30 40 50 hhcurveto
+10 20 30 40 hhcurveto
+1 2 3 4 5 6 7 8 rcurveline
+1 2 3 4 5 6 7 8 rlinecurve
+10 20 30 40 hvcurveto
+10 20 30 40 50 hvcurveto
+10 20 30 40 50 60 70 80 90 vhcurveto
+10 20 30 40 50 60 70 80 vhcurveto
+10 20 30 40 50 60 rrcurveto
+10 20 30 40 50 60 70 80 rrcurveto
+10 20 hlineto
+10 20 30 vlineto
+1 2 3 4 5 6 rlineto
+-5 raw:0c09 3 rlineto
+7 raw:0c0e 3 rlineto
+16 raw:0c1a 3 rlineto
+1 0 raw:0c03 5 rlineto
+1 0 raw:0c04 5 rlineto
+0 raw:0c05 5 rlineto
+3 3 raw:0c0f 5 rlineto
+raw:0c17 5 rlineto
+10 20 1 2 raw:0c16 5 rlineto
+10 20 2 1 raw:0c16 5 rlineto
+7 3 raw:0c14 3 raw:0c15 5 rlineto
+7 40 raw:0c14 40 raw:0c15 5 rlineto
+10 20 30 2 raw:0c1d 5 rlineto
+10 20 30 -1 raw:0c1d 5 rlineto
+1 2 3 4 4 1 raw:0c1e 7 rlineto
+1 2 3 4 4 -3 raw:0c1e 7 rlineto
+1 2 3 4 3 2000000 raw:0c1e 7 rlineto
+1 2 3 4 9 1 raw:0c1e 7 rlineto
+1 2 3 raw:0c1c rlineto
+5 raw:0c12 5 5 rlineto
+rlineto
+callsubr
+-107 callsubr 5 5 rlineto

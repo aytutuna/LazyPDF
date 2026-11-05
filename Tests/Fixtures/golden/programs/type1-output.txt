@@ -1,0 +1,66 @@
+font Binary 4 false name TestFont matrix 0.001,0,0,0.001,0,0 bounds -10 -20 900 800
+  encoding 65:A,66:B,67:C
+  glyph .notdef has true width 250 empty
+  glyph A has true width 600 M 50 0 L 150 0 L 150 100 L 50 100 Z
+  glyph B has true width 500 M 10 10 C 30 10 40 15 50 15 C 60 15 70 10 80 10 L 80 110 Z
+  glyph C has true width 700 M 50 0 L 150 0 L 150 100 L 50 100 Z M 20 50 C 40 50 50 55 60 55 C 70 55 80 50 90 50 L 90 150 Z
+  glyph D has true width 400 M 0 0 L 50 0 Z
+  glyph E has true width 300 M 0 0 L 10 0 Z
+  glyph F has true width 300 M 10 20 L 10 25 Z
+  glyph G has true width 400 M 0 0 C 10 0 10 10 20 10 C 20 15 30 25 35 25 C 38 25 42 30 42 36 Z
+  glyph missing has false width 0 null
+font Hex 4 false name TestFont matrix 0.001,0,0,0.001,0,0 bounds -10 -20 900 800
+  encoding 65:A,66:B,67:C
+  glyph .notdef has true width 250 empty
+  glyph A has true width 600 M 50 0 L 150 0 L 150 100 L 50 100 Z
+  glyph B has true width 500 M 10 10 C 30 10 40 15 50 15 C 60 15 70 10 80 10 L 80 110 Z
+  glyph C has true width 700 M 50 0 L 150 0 L 150 100 L 50 100 Z M 20 50 C 40 50 50 55 60 55 C 70 55 80 50 90 50 L 90 150 Z
+  glyph D has true width 400 M 0 0 L 50 0 Z
+  glyph E has true width 300 M 0 0 L 10 0 Z
+  glyph F has true width 300 M 10 20 L 10 25 Z
+  glyph G has true width 400 M 0 0 C 10 0 10 10 20 10 C 20 15 30 25 35 25 C 38 25 42 30 42 36 Z
+  glyph missing has false width 0 null
+font Pfb 4 false name TestFont matrix 0.001,0,0,0.001,0,0 bounds -10 -20 900 800
+  encoding 65:A,66:B,67:C
+  glyph .notdef has true width 250 empty
+  glyph A has true width 600 M 50 0 L 150 0 L 150 100 L 50 100 Z
+  glyph B has true width 500 M 10 10 C 30 10 40 15 50 15 C 60 15 70 10 80 10 L 80 110 Z
+  glyph C has true width 700 M 50 0 L 150 0 L 150 100 L 50 100 Z M 20 50 C 40 50 50 55 60 55 C 70 55 80 50 90 50 L 90 150 Z
+  glyph D has true width 400 M 0 0 L 50 0 Z
+  glyph E has true width 300 M 0 0 L 10 0 Z
+  glyph F has true width 300 M 10 20 L 10 25 Z
+  glyph G has true width 400 M 0 0 C 10 0 10 10 20 10 C 20 15 30 25 35 25 C 38 25 42 30 42 36 Z
+  glyph missing has false width 0 null
+font Binary 4 true name TestFont matrix 0.001,0,0,0.001,0,0 bounds -10 -20 900 800
+  encoding 65:A,66:B,67:C
+  glyph .notdef has true width 250 empty
+  glyph A has true width 600 M 50 0 L 150 0 L 150 100 L 50 100 Z
+  glyph B has true width 500 M 10 10 C 30 10 40 15 50 15 C 60 15 70 10 80 10 L 80 110 Z
+  glyph C has true width 700 M 50 0 L 150 0 L 150 100 L 50 100 Z M 20 50 C 40 50 50 55 60 55 C 70 55 80 50 90 50 L 90 150 Z
+  glyph D has true width 400 M 0 0 L 50 0 Z
+  glyph E has true width 300 M 0 0 L 10 0 Z
+  glyph F has true width 300 M 10 20 L 10 25 Z
+  glyph G has true width 400 M 0 0 C 10 0 10 10 20 10 C 20 15 30 25 35 25 C 38 25 42 30 42 36 Z
+  glyph missing has false width 0 null
+font Binary 0 false name TestFont matrix 0.001,0,0,0.001,0,0 bounds -10 -20 900 800
+  encoding 65:A,66:B,67:C
+  glyph .notdef has true width 250 empty
+  glyph A has true width 600 M 50 0 L 150 0 L 150 100 L 50 100 Z
+  glyph B has true width 500 M 10 10 C 30 10 40 15 50 15 C 60 15 70 10 80 10 L 80 110 Z
+  glyph C has true width 700 M 50 0 L 150 0 L 150 100 L 50 100 Z M 20 50 C 40 50 50 55 60 55 C 70 55 80 50 90 50 L 90 150 Z
+  glyph D has true width 400 M 0 0 L 50 0 Z
+  glyph E has true width 300 M 0 0 L 10 0 Z
+  glyph F has true width 300 M 10 20 L 10 25 Z
+  glyph G has true width 400 M 0 0 C 10 0 10 10 20 10 C 20 15 30 25 35 25 C 38 25 42 30 42 36 Z
+  glyph missing has false width 0 null
+font Hex -1 true name TestFont matrix 0.001,0,0,0.001,0,0 bounds -10 -20 900 800
+  encoding 65:A,66:B,67:C
+  glyph .notdef has true width 250 empty
+  glyph A has true width 600 M 50 0 L 150 0 L 150 100 L 50 100 Z
+  glyph B has true width 500 M 10 10 C 30 10 40 15 50 15 C 60 15 70 10 80 10 L 80 110 Z
+  glyph C has true width 700 M 50 0 L 150 0 L 150 100 L 50 100 Z M 20 50 C 40 50 50 55 60 55 C 70 55 80 50 90 50 L 90 150 Z
+  glyph D has true width 400 M 0 0 L 50 0 Z
+  glyph E has true width 300 M 0 0 L 10 0 Z
+  glyph F has true width 300 M 10 20 L 10 25 Z
+  glyph G has true width 400 M 0 0 C 10 0 10 10 20 10 C 20 15 30 25 35 25 C 38 25 42 30 42 36 Z
+  glyph missing has false width 0 null
