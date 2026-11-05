@@ -58,4 +58,4 @@ The site's pages are in `site/`. Until the app is on the Store it says so.
 
 ## Licence
 
-All rights reserved. The code is here to be read, not used; see `LICENSE`. Third-party components keep their own licences, listed in `THIRD-PARTY-NOTICES.txt`.
+PolyForm Noncommercial 1.0.0: free for personal, study and research use, and commercial use needs written permission. The source is available, but this is not an open source licence. See `LICENSE`. Third-party components keep their own licences, listed in `THIRD-PARTY-NOTICES.txt`.
