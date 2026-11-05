@@ -1,0 +1,62 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Ocr.OcrPanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools">
+    <StackPanel Margin="12,4,12,12">
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Language}" />
+        <ComboBox x:Name="LanguageBox" DisplayMemberPath="Name" MinHeight="32" SelectionChanged="LanguageBox_SelectionChanged"
+                  AutomationProperties.Name="{loc:T Language}" />
+        <DockPanel Margin="0,6,0,0">
+            <TextBlock x:Name="LanguageGlyph" DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE946;" />
+            <TextBlock x:Name="LanguageNote" Style="{StaticResource ReasonText}" />
+        </DockPanel>
+
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Pages}" Margin="0,16,0,4" />
+        <TextBlock x:Name="PagesSummary" Style="{StaticResource BodyText}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+        <ListBox x:Name="PageList" Margin="0,6,0,0" MaxHeight="190" SelectionMode="Multiple" SelectionChanged="PageList_SelectionChanged"
+                 AutomationProperties.Name="{loc:T Pages to read}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource CaptionText}" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   Margin="12,0,0,0" Text="{Binding KindText}" />
+                        <TextBlock Style="{StaticResource BodyText}" Text="{Binding Label}" />
+                    </DockPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Pages that are already searchable}" Margin="0,16,0,4" TextWrapping="Wrap" />
+        <Border Style="{StaticResource SegmentedTrackStyle}" HorizontalAlignment="Left">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="KeepLayers" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Keep}" IsChecked="True"
+                             AutomationProperties.Name="{loc:T Keep their text}" Click="Existing_Click" />
+                <RadioButton x:Name="ReplaceLayers" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Replace}"
+                             AutomationProperties.Name="{loc:T Replace their text}" Click="Existing_Click" />
+            </StackPanel>
+        </Border>
+        <Button x:Name="RemoveButton" Style="{StaticResource IconTextButtonStyle}" Margin="0,12,0,0" HorizontalAlignment="Left"
+                loc:Icon.Glyph="&#xE74D;" Content="{loc:T Remove text layer}" ToolTip="{loc:T Take the recognized text off the chosen pages}" Click="Remove_Click"
+                AutomationProperties.Name="{loc:T Remove text layer}" />
+        <TextBlock x:Name="RemoveNote" Style="{StaticResource ReasonText}" Margin="0,4,0,0" Visibility="Collapsed" />
+
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Correct a word}" Margin="0,20,0,4" />
+        <CheckBox x:Name="WordsToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Show words on the page}" IsChecked="True"
+                  Click="WordsToggle_Click" AutomationProperties.Name="{loc:T Show words on the page}" />
+        <DockPanel x:Name="WordHint" Margin="0,8,0,0">
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE946;" />
+            <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T Click a word on the page or choose one below.}" />
+        </DockPanel>
+        <ListBox x:Name="WordList" Margin="0,8,0,0" MaxHeight="120" DisplayMemberPath="Text" Visibility="Collapsed"
+                 SelectionChanged="WordList_SelectionChanged" KeyDown="WordList_KeyDown" AutomationProperties.Name="{loc:T Words on this page}" />
+        <StackPanel x:Name="WordEditor" Margin="0,8,0,0" Visibility="Collapsed">
+            <TextBlock x:Name="WordWhere" Style="{StaticResource ReasonText}" Margin="0,0,0,4" />
+            <TextBox x:Name="WordBox" MinHeight="32" VerticalContentAlignment="Center" KeyDown="WordBox_KeyDown"
+                     AutomationProperties.Name="{loc:T Corrected word}" />
+            <TextBlock Style="{StaticResource ReasonText}" Margin="0,4,0,0" Text="{loc:T Leave it empty to remove the word.}" />
+            <Button x:Name="WordApplyButton" Style="{StaticResource IconTextButtonStyle}" Margin="0,8,0,0" HorizontalAlignment="Left" loc:Icon.Glyph="&#xE73E;" Content="{loc:T Apply}"
+                    Click="WordApply_Click" AutomationProperties.Name="{loc:T Apply the corrected word}" />
+        </StackPanel>
+    </StackPanel>
+</tools:ToolPanel>
