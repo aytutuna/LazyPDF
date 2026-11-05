@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lazy PDF: a PDF editor for Windows</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Read, fill, sign, redact, compare and convert PDFs on Windows. Free, works offline, no account.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="brand" href="./">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 3h11l7 7v19H8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M19 3v7h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><rect x="12" y="16" width="10" height="3" rx="1.5" fill="currentColor"/><rect x="12" y="22" width="7" height="3" rx="1.5" fill="currentColor"/></svg>
+      Lazy PDF
+    </a>
+    <nav aria-label="Sections">
+      <a href="#tools">What it does</a>
+      <a href="#screens">Screenshots</a>
+      <a href="#offline">Offline</a>
+      <a href="#platforms">Platforms</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <h1>Open a PDF, change it, send it on.</h1>
+    <p class="lede">Lazy PDF reads and edits PDF files on Windows. You can fill forms, sign, cross out private details for good, rearrange pages, turn a file into Word or Excel, and see what changed between two versions. It is free, it works without an internet connection, and there is no account.</p>
+    <p class="status"><strong>Not released yet.</strong> There is nothing to download. So far Lazy PDF has been checked by its automated tests and by drawing its windows off screen, not by people using it on their own files.</p>
+    <!-- Microsoft Store link goes here once the listing exists. -->
+  </div>
+
+  <section id="tools">
+    <div class="wrap">
+      <h2>What it does</h2>
+      <p class="narrow">Each job is a tool on the strip under the tabs. Pick one and its options open on the right of the page.</p>
+      <ul class="tasks">
+        <li>Comment: highlight, draw and leave notes. Measure distances and areas on a page.</li>
+        <li>Edit the words and pictures already on a page. Add stamps, watermarks, page numbers and headers.</li>
+        <li>Rotate, move, delete, crop and extract pages. Join files, or split one.</li>
+        <li>Fill in forms, and add or change form fields.</li>
+        <li>Sign with a drawn signature, or with a certificate from Windows or a PFX file, and check the signatures already in a file.</li>
+        <li>Protect a file with a password and decide what others may do with it.</li>
+        <li>Redact: remove text and pictures from the file for good, by selection, by phrase or by kind of data such as email addresses.</li>
+        <li>Clean for sharing: take out hidden data before a file goes to someone else.</li>
+        <li>Make a file smaller and see where its space goes.</li>
+        <li>Export to Word, Excel, PowerPoint, HTML, text or pictures. Create a PDF from pictures, text or the clipboard.</li>
+        <li>Batch: do the same to every file in a folder, and watch a folder for new ones.</li>
+        <li>Make scanned pages searchable with the text recognition built into Windows.</li>
+        <li>Compare two files, or a file with an earlier version of itself.</li>
+        <li>Check a file for screen readers and fix what is missing. Check it against PDF/A and convert it; a converted file passes Lazy PDF's own checks.</li>
+      </ul>
+      <p>Changes are kept as steps you can undo one at a time. While you work, an unsaved copy is kept on your computer so a crash does not lose the edits, and the app offers it back the next time it starts.</p>
+    </div>
+  </section>
+
+  <section id="screens">
+    <div class="wrap">
+      <h2>Screenshots</h2>
+      <p class="narrow">Taken from the app with sample files made for testing. The app follows the Windows light or dark setting, or you can choose one.</p>
+      <div class="shots">
+        <figure>
+          <picture>
+            <source srcset="assets/redact-dark.png" media="(prefers-color-scheme: dark)">
+            <img src="assets/redact-light.png" width="1200" height="800" alt="The Redact tool beside a page: mark text, find a phrase or a kind of data, then redact to a new file." loading="lazy">
+          </picture>
+          <figcaption>Redact marks what to remove and writes the result to a new file.</figcaption>
+        </figure>
+        <figure>
+          <picture>
+            <source srcset="assets/pages-dark.png" media="(prefers-color-scheme: dark)">
+            <img src="assets/pages-light.png" width="1200" height="800" alt="The Organize pages tool showing four page thumbnails with rotate, delete and extract buttons." loading="lazy">
+          </picture>
+          <figcaption>Organize pages: rotate, move, delete, crop and extract.</figcaption>
+        </figure>
+        <figure>
+          <picture>
+            <source srcset="assets/compare-dark.png" media="(prefers-color-scheme: dark)">
+            <img src="assets/compare-light.png" width="1200" height="800" alt="The Compare files tool with choices for what to compare and what to show." loading="lazy">
+          </picture>
+          <figcaption>Compare files, by content or by pixels.</figcaption>
+        </figure>
+        <figure>
+          <picture>
+            <source srcset="assets/fillsign-dark.png" media="(prefers-color-scheme: dark)">
+            <img src="assets/fillsign-light.png" width="1200" height="800" alt="The Fill and sign tool with tabs for signature, initials, text and date." loading="lazy">
+          </picture>
+          <figcaption>Fill and sign: keep a signature and place it on the page.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="offline">
+    <div class="wrap narrow">
+      <h2>Offline, and nothing sent</h2>
+      <p>Lazy PDF does not need an account and has no ads, analytics, crash reports or update check. Your files are read and changed on your computer.</p>
+      <p>The one thing that uses the network is signing with a certificate, and only when you ask for a time stamp or for validation data to be added. The <a href="privacy.html">privacy page</a> lists exactly what is sent and to whom.</p>
+    </div>
+  </section>
+
+  <section id="platforms">
+    <div class="wrap">
+      <h2>Platforms</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Windows</h3>
+          <p>Windows 10 version 2004 or later. Planned for the Microsoft Store.</p>
+        </div>
+        <div class="card">
+          <h3>Mac</h3>
+          <p>There is no Mac version yet. It is planned for the Mac App Store.</p>
+        </div>
+      </div>
+      <p class="narrow" style="margin-top:1.5rem">Lazy PDF is a sister app of Lazy Scan and Lazy Print. The Print button hands the open file to Lazy Print when it is installed and uses the Windows print dialog otherwise. The Scan tile starts Lazy Scan; scanning straight into an open file is not done yet.</p>
+    </div>
+  </section>
+
+  <section id="support">
+    <div class="wrap narrow">
+      <h2>Support</h2>
+      <p>Questions and problems go to <a href="mailto:support@alazy.app">support@alazy.app</a>.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Lazy PDF</span>
+    <a href="privacy.html">Privacy</a>
+    <a href="mailto:support@alazy.app">support@alazy.app</a>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Privacy: Lazy PDF</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="brand" href="./">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 3h11l7 7v19H8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M19 3v7h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><rect x="12" y="16" width="10" height="3" rx="1.5" fill="currentColor"/><rect x="12" y="22" width="7" height="3" rx="1.5" fill="currentColor"/></svg>
+      Lazy PDF
+    </a>
+    <nav aria-label="Sections">
+      <a href="./">Home</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap narrow" style="padding-top:3rem;padding-bottom:3rem">
+    <h1 style="font-size:clamp(2rem,1.4rem + 2.5vw,3rem);margin-bottom:1.5rem">Privacy</h1>
+
+    <p>Lazy PDF is published by Aytu. This is the version of 5 November 2026.</p>
+
+    <p>Lazy PDF has no accounts, no ads, no analytics, no crash reporting and no check for updates. It does not send anything to its developer or to any server run for it. Your files are read and changed on your computer. The only time the app itself makes a network request is when you sign with a certificate and ask for a time stamp or for validation data, described below.</p>
+
+    <h2 style="margin-top:2.5rem">The network requests</h2>
+    <p>These come from the Certificates tool and nowhere else in the app. They happen only when you press Sign with the time stamp switch on, or press Add validation data, or sign with the long-term validation switch on.</p>
+    <ul>
+      <li><strong>Time stamp.</strong> The app sends a request to the time stamp server whose address you typed in. The request holds a hash of the signature being made (a fingerprint, not the file or any of its words) and a random number. There is no built-in server: with the switch off, or no address, nothing is sent. The last address you used is kept on your computer so it can be filled in next time.</li>
+      <li><strong>Validation data.</strong> To embed proof that a certificate was valid, the app asks the places the certificate itself names. It downloads the issuer's certificate and a revocation list with plain requests, and asks the certificate's OCSP server with a request holding hashes of the issuer's name and key and the certificate's serial number.</li>
+    </ul>
+    <p>Only <code>http</code> and <code>https</code> addresses are used. A request waits at most 20 seconds, and an answer over 8 MB is thrown away. If Windows reports that the computer is offline, the app does not try and says so. Each server you reach sees your computer's internet address, as with any web request, and what it does with it is up to the server's operator.</p>
+    <p>Checking the signatures of a file is done on your computer with what is in the file, the Windows certificate store and any certificates you added by hand. It makes no requests.</p>
+
+    <h2 style="margin-top:2.5rem">Things that open outside the app</h2>
+    <ul>
+      <li><strong>Links in a file.</strong> Clicking a link shows the address and asks. Only <code>http</code>, <code>https</code> and <code>mailto</code> addresses can be opened, and they are handed to Windows, so your browser or mail program makes the request, not Lazy PDF. Form submit, JavaScript and launch actions in a file are not run.</li>
+      <li><strong>Attachments.</strong> Opening a file carried inside a PDF writes a copy to a temporary folder and opens it with the program Windows has for that type. Programs and scripts are refused; they can only be saved.</li>
+      <li><strong>Lazy Print.</strong> The Print button writes a copy of the document as it stands, unsaved changes included, to <code>%TEMP%\Lazy PDF\Print</code>. If Lazy Print is running, the app tells it the path of that copy through a local pipe on your computer. If it is installed but not running, the app starts it with a <code>lazyprint:</code> address that holds the path. If it is not there, the Windows print dialog opens instead. Nothing goes over the network from Lazy PDF, and what Lazy Print does with the file is covered by its own privacy page.</li>
+      <li><strong>Lazy Scan.</strong> If Lazy Scan is installed, a Scan tile starts it with a <code>lazyscan:</code> address. No file or path is passed.</li>
+      <li><strong>Show in folder.</strong> After an export, a button opens Explorer on the result.</li>
+    </ul>
+
+    <h2 style="margin-top:2.5rem">What is kept on your computer</h2>
+    <ul>
+      <li>In <code>%APPDATA%\Lazy PDF</code>: <code>preferences.json</code> (light or dark, the side panel left open), <code>recent.json</code> (the paths of the last 24 files you opened and when), <code>signing.json</code> (trust choices, certificates you added by hand, the last time stamp address), <code>batch-sets.json</code> (the batch settings you saved, with their folders) and a folder of signatures and initials you saved as pictures.</li>
+      <li>In <code>%LOCALAPPDATA%\Lazy PDF\Recovery</code>: a copy of each open document that has unsaved changes, rewritten after every edit, with a small file saying where it came from. It is deleted when you save or close the document on purpose. After a crash it stays until you restore or discard it. The app adds no encryption of its own to these copies.</li>
+      <li>In <code>%LOCALAPPDATA%\Lazy PDF\Thumbnails</code>: small pictures of the first page of files shown on the Home tab, named by a hash of the file's path, size and time. Files not used for 60 days are deleted when the app starts. A file that needs a password gets no picture.</li>
+      <li>In <code>%TEMP%\Lazy PDF\Print</code>: the copies made for printing, which hold the document with any unsaved changes. Folders more than a day old are removed the next time you print.</li>
+      <li>In <code>%TEMP%\Lazy PDF\Attachments</code>: the copies made to open attachments, removed when the app closes normally. After a crash, or for one a program still has open, they stay until the next normal close or until you remove them. They hold the attachment as it is in the file, decrypted if the file was encrypted.</li>
+      <li>Where you tell it to: saved files, exports, and the files the batch tool writes. When you save over a file, the new version is first written beside it under a temporary name and then moved into place.</li>
+      <li>Open with entries. From the Microsoft Store, the package registers Lazy PDF at install for <code>.pdf</code> and for the picture types <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, <code>.tif</code>, <code>.tiff</code>, <code>.bmp</code>, <code>.gif</code>, <code>.heic</code> and <code>.heif</code>, so it appears in the Open with list for them. There is no switch for this in the Store build. Windows keeps your default program for each type, and uninstalling removes the entries. A copy not from the Store has a switch in the settings, off until you turn it on, that writes a few entries under <code>HKEY_CURRENT_USER\Software\Classes</code> for PDFs and the <code>lazypdf:</code> address and removes them when you turn it off. Neither changes the default PDF program, and neither is written for all users.</li>
+    </ul>
+    <p>Uninstalling. From the Microsoft Store, Windows keeps what the app wrote under <code>%APPDATA%</code> and <code>%LOCALAPPDATA%</code> in a folder that belongs to the app, so the settings, the recent files list, recovery copies and thumbnails are deleted when you uninstall. Anything the app wrote to <code>%TEMP%</code> is outside that folder and stays until you or Windows' storage cleanup removes it, as do the files you saved yourself. A copy not from the Store is not installed by Windows, so its folders are yours to delete.</p>
+    <p>A second start of the app passes its file names to the running one through a pipe that only your Windows account can use. It does not go over the network.</p>
+
+    <h2 style="margin-top:2.5rem">Windows and the stores</h2>
+    <p>Pages are drawn with the PDF reader built into Windows, and scanned pages are recognized with the text recognition built into Windows, both on your computer. Printing through the Windows print dialog follows Windows and your printer. If you get the app from the Microsoft Store, the store knows you installed it under its own terms; Lazy PDF does not see that and adds nothing to it.</p>
+
+    <h2 style="margin-top:2.5rem">Third-party code</h2>
+    <p>The app uses Microsoft's <code>System.Security.Cryptography.Pkcs</code> package to build and read signatures. It makes no connections of its own. Everything else uses what Windows and .NET provide.</p>
+
+    <h2 style="margin-top:2.5rem">This website and support mail</h2>
+    <p>This website is hosted on GitHub Pages. It has no cookies, scripts or analytics of its own; like any web host, GitHub sees the internet address of whoever requests a page and handles it under its own terms. If you write to support@alazy.app, Aytu reads your message, and any file or name you send in it, only to answer you. It is not passed on and is deleted when the matter is closed, or on request.</p>
+
+    <h2 style="margin-top:2.5rem">Changes</h2>
+    <p>If this changes, this page changes with it and the date at the top changes too.</p>
+
+    <h2 style="margin-top:2.5rem">Contact</h2>
+    <p>Questions go to <a href="mailto:support@alazy.app">support@alazy.app</a>.</p>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Lazy PDF</span>
+    <a href="./">Home</a>
+  </div>
+</footer>
+</body>
+</html>
