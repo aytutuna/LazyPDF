@@ -1,0 +1,194 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Batch.BatchPanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:batch="clr-namespace:LazyPDF.App.Tools.Batch">
+    <ScrollViewer AutomationProperties.Name="{loc:T Batch}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="12,8,12,12">
+            <TextBlock x:Name="Summary" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,0,0,12" />
+
+            <TextBlock Text="{loc:T Saved sets}" Style="{StaticResource FieldLabelText}" />
+            <DockPanel Margin="0,0,0,16">
+                <Button x:Name="DeleteSetButton" DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE74D;" Margin="4,0,0,0"
+                        ToolTip="{loc:T Delete set}" AutomationProperties.Name="{loc:T Delete set}" Click="DeleteSet_Click" />
+                <Button x:Name="SaveSetButton" DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE74E;" Margin="8,0,0,0"
+                        ToolTip="{loc:T Save set}" AutomationProperties.Name="{loc:T Save set}" Click="SaveSet_Click" />
+                <ComboBox x:Name="SetBox" IsEditable="True" IsTextSearchEnabled="False" AutomationProperties.Name="{loc:T Name of the set}" SelectionChanged="SetBox_SelectionChanged"
+                          TextBoxBase.TextChanged="SetBox_TextChanged" />
+            </DockPanel>
+
+            <TextBlock Text="{loc:T Steps}" Style="{StaticResource SectionHeaderText}" AutomationProperties.HeadingLevel="Level2" />
+            <ListBox x:Name="StepList" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Steps}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" SelectionChanged="StepList_SelectionChanged">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Spoken}" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type batch:StepRow}">
+                        <StackPanel Margin="2,3">
+                            <TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Detail}" Style="{StaticResource SecondaryBodyText}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock x:Name="NoSteps" Style="{StaticResource ReasonText}" Text="{loc:T Add a step to begin.}" Margin="0,0,0,4" />
+            <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+                <Button x:Name="AddStepButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE710;" Content="{loc:T Add step}" Padding="10,3,10,4"
+                        AutomationProperties.Name="{loc:T Add step}" Click="AddStep_Click" />
+                <Button x:Name="UpButton" Style="{StaticResource IconButtonStyle}" Content="&#xE70E;" Margin="8,0,0,0" ToolTip="{loc:T Move up}"
+                        AutomationProperties.Name="{loc:T Move step up}" Click="Up_Click" />
+                <Button x:Name="DownButton" Style="{StaticResource IconButtonStyle}" Content="&#xE70D;" ToolTip="{loc:T Move down}"
+                        AutomationProperties.Name="{loc:T Move step down}" Click="Down_Click" />
+                <Button x:Name="RemoveStepButton" Style="{StaticResource IconButtonStyle}" Content="&#xE711;" ToolTip="{loc:T Remove step}"
+                        AutomationProperties.Name="{loc:T Remove step}" Click="RemoveStep_Click" />
+            </StackPanel>
+
+            <StackPanel x:Name="Editor" Margin="0,0,0,16">
+                <StackPanel x:Name="CleanEditor">
+                    <CheckBox x:Name="KeepComments" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Keep comments}" AutomationProperties.Name="{loc:T Keep comments}" Click="Setting_Changed" />
+                    <CheckBox x:Name="KeepForms" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Keep form data}" AutomationProperties.Name="{loc:T Keep form data}" Click="Setting_Changed" />
+                    <CheckBox x:Name="KeepLinks" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Keep links}" AutomationProperties.Name="{loc:T Keep links}" Click="Setting_Changed" />
+                    <CheckBox x:Name="KeepAttachments" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Keep attachments}" AutomationProperties.Name="{loc:T Keep attachments}" Click="Setting_Changed" />
+                </StackPanel>
+                <StackPanel x:Name="LanguageEditor">
+                    <TextBlock Text="{loc:T Language}" Style="{StaticResource FieldLabelText}" />
+                    <ComboBox x:Name="LanguageBox" DisplayMemberPath="Name" AutomationProperties.Name="{loc:T Language of the text}" SelectionChanged="Setting_Changed" />
+                    <TextBlock x:Name="LanguageNote" Style="{StaticResource ReasonText}" Margin="0,4,0,0" />
+                </StackPanel>
+                <StackPanel x:Name="PresetEditor">
+                    <TextBlock Text="{loc:T Size}" Style="{StaticResource FieldLabelText}" />
+                    <ComboBox x:Name="PresetBox" AutomationProperties.Name="{loc:T Size of the file}" SelectionChanged="Setting_Changed" />
+                </StackPanel>
+                <StackPanel x:Name="WatermarkEditor">
+                    <TextBlock Text="{loc:T Text}" Style="{StaticResource FieldLabelText}" />
+                    <TextBox x:Name="WatermarkBox" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Watermark text}" TextChanged="Setting_Changed" />
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{loc:T Opacity %}" Style="{StaticResource FieldLabelText}" />
+                            <TextBox x:Name="OpacityBox" AutomationProperties.Name="{loc:T Opacity in percent}" TextChanged="Setting_Changed" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="{loc:T Angle}" Style="{StaticResource FieldLabelText}" />
+                            <TextBox x:Name="AngleBox" AutomationProperties.Name="{loc:T Angle in degrees}" TextChanged="Setting_Changed" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Text="{loc:T Width %}" Style="{StaticResource FieldLabelText}" />
+                            <TextBox x:Name="SizeBox" AutomationProperties.Name="{loc:T Width in percent of the page}" TextChanged="Setting_Changed" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="{loc:T Position}" Style="{StaticResource FieldLabelText}" />
+                    <ComboBox x:Name="AnchorBox" AutomationProperties.Name="{loc:T Position of the watermark}" SelectionChanged="Setting_Changed" />
+                </StackPanel>
+                <StackPanel x:Name="BatesEditor">
+                    <TextBlock Text="{loc:T Before the number}" Style="{StaticResource FieldLabelText}" />
+                    <TextBox x:Name="PrefixBox" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Text before the number}" TextChanged="Setting_Changed" />
+                    <TextBlock Text="{loc:T After the number}" Style="{StaticResource FieldLabelText}" />
+                    <TextBox x:Name="SuffixBox" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Text after the number}" TextChanged="Setting_Changed" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{loc:T Digits}" Style="{StaticResource FieldLabelText}" />
+                            <TextBox x:Name="DigitsBox" AutomationProperties.Name="{loc:T Digits in the number}" TextChanged="Setting_Changed" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="{loc:T Starts at}" Style="{StaticResource FieldLabelText}" />
+                            <TextBox x:Name="StartBox" AutomationProperties.Name="{loc:T First number}" TextChanged="Setting_Changed" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="{loc:T Place}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,0" />
+                    <ComboBox x:Name="PlaceBox" AutomationProperties.Name="{loc:T Where the number goes}" SelectionChanged="Setting_Changed" />
+                </StackPanel>
+                <StackPanel x:Name="LevelEditor">
+                    <TextBlock Text="{loc:T Level}" Style="{StaticResource FieldLabelText}" />
+                    <ComboBox x:Name="LevelBox" AutomationProperties.Name="{loc:T PDF/A level}" SelectionChanged="Setting_Changed" />
+                </StackPanel>
+            </StackPanel>
+
+            <TextBlock Text="{loc:T Results go to}" Style="{StaticResource SectionHeaderText}" AutomationProperties.HeadingLevel="Level2" />
+            <DockPanel Margin="0,0,0,8">
+                <Button DockPanel.Dock="Right" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Browse}" Margin="8,0,0,0" Padding="10,3,10,4"
+                        AutomationProperties.Name="{loc:T Choose the results folder}" Click="BrowseOutput_Click" />
+                <TextBox x:Name="OutputBox" IsReadOnly="True" AutomationProperties.Name="{loc:T Results folder}" />
+            </DockPanel>
+            <TextBlock Text="{loc:T File name}" Style="{StaticResource FieldLabelText}" />
+            <TextBox x:Name="TemplateBox" AutomationProperties.Name="{loc:T File name of the results}" TextChanged="Template_Changed" />
+            <TextBlock x:Name="TemplateHint" Style="{StaticResource ReasonText}" Margin="0,4,0,16" />
+
+            <TextBlock Text="{loc:T Files}" Style="{StaticResource SectionHeaderText}" AutomationProperties.HeadingLevel="Level2" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8E5;" Content="{loc:T Add files}" Padding="10,3,10,4"
+                        AutomationProperties.Name="{loc:T Add files}" Click="AddFiles_Click" />
+                <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8B7;" Content="{loc:T Add folder}" Padding="10,3,10,4" Margin="8,0,0,0"
+                        AutomationProperties.Name="{loc:T Add every PDF in a folder}" Click="AddFolder_Click" />
+            </StackPanel>
+            <ListBox x:Name="FileList" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Files to run on}" MaxHeight="120"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type batch:FileRow}">
+                        <DockPanel Margin="2,0">
+                            <Button DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE711;" ToolTip="{Binding RemoveName}"
+                                    AutomationProperties.Name="{Binding RemoveName}" Click="RemoveFile_Click" />
+                            <TextBlock Text="{Binding Name}" ToolTip="{Binding Path}" Style="{StaticResource BodyText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock x:Name="NoFiles" Style="{StaticResource ReasonText}" Text="{loc:T No files yet.}" Margin="0,0,0,16" />
+
+            <TextBlock Text="{loc:T Watch a folder}" Style="{StaticResource SectionHeaderText}" AutomationProperties.HeadingLevel="Level2" Margin="0,16,0,0" />
+            <CheckBox x:Name="WatchToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Run on new files}" AutomationProperties.Name="{loc:T Run on new files}"
+                      Click="Watch_Click" />
+            <DockPanel Margin="0,0,0,4">
+                <Button DockPanel.Dock="Right" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Browse}" Margin="8,0,0,0" Padding="10,3,10,4"
+                        AutomationProperties.Name="{loc:T Choose the folder to watch}" Click="BrowseWatch_Click" />
+                <TextBox x:Name="WatchBox" IsReadOnly="True" AutomationProperties.Name="{loc:T Folder to watch}" />
+            </DockPanel>
+            <DockPanel Margin="0,0,0,16">
+                <TextBlock x:Name="WatchGlyph" Text="&#xE946;" Style="{StaticResource ReasonGlyph}" DockPanel.Dock="Left" />
+                <TextBlock x:Name="WatchNote" Style="{StaticResource ReasonText}" AutomationProperties.LiveSetting="Polite" />
+            </DockPanel>
+
+            <DockPanel Margin="0,0,0,4">
+                <Button x:Name="ClearLogButton" DockPanel.Dock="Right" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Clear}"
+                        AutomationProperties.Name="{loc:T Clear the results}" Click="ClearLog_Click" />
+                <TextBlock Text="{loc:T Results}" Style="{StaticResource SectionHeaderText}" VerticalAlignment="Center" AutomationProperties.HeadingLevel="Level2" />
+            </DockPanel>
+            <ListBox x:Name="LogList" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Results}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" MaxHeight="260">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Spoken}" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type batch:LogRow}">
+                        <DockPanel Margin="2,3">
+                            <TextBlock Text="{Binding Glyph}" Style="{StaticResource ReasonGlyph}" DockPanel.Dock="Left" Margin="0,3,8,0" />
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}" />
+                                <TextBlock Text="{Binding Title}" Style="{StaticResource BodyText}" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Detail}" Style="{StaticResource SecondaryBodyText}" FontSize="12" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock x:Name="NoLog" Style="{StaticResource ReasonText}" Text="{loc:T Nothing has run yet.}" />
+        </StackPanel>
+    </ScrollViewer>
+</tools:ToolPanel>

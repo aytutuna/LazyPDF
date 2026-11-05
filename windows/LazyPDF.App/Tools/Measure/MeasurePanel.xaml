@@ -1,0 +1,92 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Measure.MeasurePanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:measure="clr-namespace:LazyPDF.App.Tools.Measure">
+    <ScrollViewer AutomationProperties.Name="{loc:T Measure}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="12,8,12,12">
+            <TextBlock x:Name="Summary" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,0,0,12" />
+
+            <TextBlock Text="{loc:T Measure}" Style="{StaticResource FieldLabelText}" />
+            <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,0,0,12">
+                <UniformGrid Rows="1">
+                    <RadioButton x:Name="DistanceMode" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Distance}" GroupName="MeasureKind"
+                                 IsChecked="True" AutomationProperties.Name="{loc:T Distance}" Checked="Kind_Checked" />
+                    <RadioButton x:Name="PerimeterMode" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Perimeter}" GroupName="MeasureKind"
+                                 AutomationProperties.Name="{loc:T Perimeter}" Checked="Kind_Checked" />
+                    <RadioButton x:Name="AreaMode" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Area}" GroupName="MeasureKind"
+                                 AutomationProperties.Name="{loc:T Area}" Checked="Kind_Checked" />
+                </UniformGrid>
+            </Border>
+
+            <TextBlock Text="{loc:T On the page}" Style="{StaticResource FieldLabelText}" />
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="96" />
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="PageValue" Text="1" AutomationProperties.Name="{loc:T Length on the page}" TextChanged="Scale_Changed" />
+                <ComboBox x:Name="PageUnit" Grid.Column="2" AutomationProperties.Name="{loc:T Unit on the page}" SelectionChanged="Scale_Changed" />
+            </Grid>
+            <TextBlock Text="{loc:T Stands for}" Style="{StaticResource FieldLabelText}" />
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="96" />
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="RealValue" Text="1" AutomationProperties.Name="{loc:T Real length}" TextChanged="Scale_Changed" />
+                <ComboBox x:Name="RealUnit" Grid.Column="2" AutomationProperties.Name="{loc:T Real unit}" SelectionChanged="Scale_Changed" />
+            </Grid>
+            <DockPanel x:Name="ScaleProblem" Margin="0,0,0,8" Visibility="Collapsed">
+                <TextBlock Text="&#xE7BA;" Style="{StaticResource ReasonGlyph}" DockPanel.Dock="Left" Foreground="{DynamicResource SystemFillColorCautionBrush}" />
+                <TextBlock Text="{loc:T Enter a scale above zero.}" Style="{StaticResource ReasonText}" />
+            </DockPanel>
+
+            <CheckBox x:Name="SnapToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Snap to text}" IsChecked="True"
+                      AutomationProperties.Name="{loc:T Snap to text}" Click="Snap_Click" />
+            <DockPanel Margin="0,4,0,12">
+                <TextBlock Text="&#xE946;" Style="{StaticResource ReasonGlyph}" DockPanel.Dock="Left" />
+                <TextBlock x:Name="Hint" Style="{StaticResource ReasonText}" />
+            </DockPanel>
+
+            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,12">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                        <Button x:Name="StartOverButton" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Start over}" ToolTip="{loc:T Start over (Esc)}"
+                                AutomationProperties.Name="{loc:T Start the shape over}" Click="StartOver_Click" />
+                        <Button x:Name="FinishButton" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Finish}"
+                                AutomationProperties.Name="{loc:T Finish shape}" Click="Finish_Click" />
+                    </StackPanel>
+                    <TextBlock x:Name="Readout" Style="{StaticResource SubtitleText}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                               AutomationProperties.Name="{loc:T Current measurement}" />
+                </DockPanel>
+            </Border>
+
+            <TextBlock Text="{loc:T Waiting to be added}" Style="{StaticResource FieldLabelText}" />
+            <ListBox x:Name="Results" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Measurements}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Spoken}" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type measure:MeasureRow}">
+                        <DockPanel Margin="2,2">
+                            <Button DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE711;" ToolTip="{Binding RemoveName}"
+                                    AutomationProperties.Name="{Binding RemoveName}" Click="Remove_Click" />
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Value}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Place}" Style="{StaticResource SecondaryBodyText}" FontSize="12" />
+                            </StackPanel>
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock x:Name="Empty" Style="{StaticResource ReasonText}" Text="{loc:T Nothing measured yet.}" />
+        </StackPanel>
+    </ScrollViewer>
+</tools:ToolPanel>
