@@ -88,7 +88,7 @@ final class Crl {
                 switch tag.value {
                 case 0:
                     var name = try reader.readSequence(tag)
-                    if !name.hasData || !(try name.peekTag().hasSameClassAndValue(constructed)) {
+                    if try !name.hasData || !name.peekTag().hasSameClassAndValue(constructed) {
                         other = true
                         break
                     }
@@ -196,9 +196,9 @@ enum CertificateLinks {
             var points = try outer.readSequence()
             while points.hasData {
                 var point = try points.readSequence()
-                if !point.hasData || !(try point.peekTag().hasSameClassAndValue(constructed)) { continue }
+                if try !point.hasData || !point.peekTag().hasSameClassAndValue(constructed) { continue }
                 var name = try point.readSequence(constructed)
-                if !name.hasData || !(try name.peekTag().hasSameClassAndValue(constructed)) { continue }
+                if try !name.hasData || !name.peekTag().hasSameClassAndValue(constructed) { continue }
                 var names = try name.readSequence(constructed)
                 while names.hasData {
                     let tag = try names.peekTag()

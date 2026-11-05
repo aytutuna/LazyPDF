@@ -6,9 +6,7 @@ import Security
 // Signatures made with it show as "not trusted" everywhere but where it is added as trusted by hand. Apple-only: the
 // key is a SecKey. The certificate is written by CertificateBuilder, since Security.framework has no certificate writer.
 //
-// Left out against the C#: ExportPfx. Security.framework reads a PKCS#12 file (SecPKCS12Import) but writes one only
-// from a keychain item, so it throws `unsupported` here; the file the user keeps would have to come from a PKCS#12
-// writer of our own.
+// Left out against the C#: ExportPfx and ImportPfx, which throw `unsupported` (see the notes on each).
 
 public enum PdfDigitalId {
     private static let emailProtection = "1.3.6.1.5.5.7.3.4"
@@ -40,23 +38,11 @@ public enum PdfDigitalId {
         throw PdfReadException(.unsupported, "A PFX file cannot be written on this platform.")
     }
 
-    /// The certificate with its key held in memory only where the platform allows it.
+    /// The certificate with its key. Security.framework hands a PKCS#12 identity out as a SecIdentity, a CoreFoundation
+    /// type this package cannot take out of the import result without a forced cast, so the Mac and iPhone apps read
+    /// the file themselves and set `X509Certificate.privateKey`.
     public static func importPfx(_ pfx: [UInt8], _ password: String) throws -> X509Certificate {
-        var items: CFArray?
-        let status = SecPKCS12Import(Data(pfx) as CFData, [kSecImportExportPassphrase: password] as CFDictionary, &items)
-        guard status == errSecSuccess, let list = items as? [[String: Any]], let first = list.first,
-              let identity = first[kSecImportItemIdentity as String] as? SecIdentity else {
-            throw SignatureCryptoException(message: "The PFX file could not be opened with that password.")
-        }
-        var sec: SecCertificate?
-        var key: SecKey?
-        guard SecIdentityCopyCertificate(identity, &sec) == errSecSuccess, let sec,
-              SecIdentityCopyPrivateKey(identity, &key) == errSecSuccess,
-              let certificate = X509Certificate([UInt8](SecCertificateCopyData(sec) as Data)) else {
-            throw SignatureCryptoException(message: "The PFX file holds no usable identity.")
-        }
-        certificate.privateKey = key
-        return certificate
+        throw PdfReadException(.unsupported, "A PFX file cannot be read here; the app loads the identity and sets its key.")
     }
 
     // A comma or a quote in a name would end its attribute early.
