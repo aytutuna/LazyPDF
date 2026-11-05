@@ -1,0 +1,67 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Optimize.OptimizePanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:optimize="clr-namespace:LazyPDF.App.Tools.Optimize">
+    <StackPanel Margin="{StaticResource PanePadding}">
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Where the space goes}" />
+        <TextBlock x:Name="Total" Style="{StaticResource ReasonText}" Margin="0,0,0,8" />
+        <ItemsControl x:Name="Rows" Focusable="False" Margin="{StaticResource FieldSpacing}" AutomationProperties.Name="{loc:T Where the space goes}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type optimize:AuditRow}">
+                    <Grid Margin="0,0,0,6" AutomationProperties.Name="{Binding Summary}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="{Binding Name}" Style="{StaticResource BodyText}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="1" Text="{Binding Size}" Style="{StaticResource ReadoutText}" Margin="8,0,0,0" />
+                        <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Minimum="0" Maximum="1" Value="{Binding Share, Mode=OneWay}" Height="4" Margin="0,3,0,0"
+                                     Focusable="False" IsTabStop="False" AutomationProperties.Name="{Binding Name}" />
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Size and quality}" />
+        <Border Style="{StaticResource SegmentedTrackStyle}" AutomationProperties.Name="{loc:T Size and quality}">
+            <UniformGrid Rows="1">
+                <RadioButton x:Name="PresetSmall" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Small}" Checked="Preset_Checked" AutomationProperties.Name="{loc:T Small}" />
+                <RadioButton x:Name="PresetBalanced" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Balanced}" IsChecked="True" Checked="Preset_Checked" AutomationProperties.Name="{loc:T Balanced}" />
+                <RadioButton x:Name="PresetHigh" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T High}" Checked="Preset_Checked" AutomationProperties.Name="{loc:T High}" />
+                <RadioButton x:Name="PresetCustom" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Custom}" Checked="Preset_Checked" AutomationProperties.Name="{loc:T Custom}" />
+            </UniformGrid>
+        </Border>
+        <TextBlock x:Name="PresetNote" Style="{StaticResource ReasonText}" Margin="0,6,0,12" />
+
+        <StackPanel x:Name="CustomOptions" Visibility="Collapsed" Margin="0,12,0,12">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Image resolution}" />
+            <ComboBox x:Name="Dpi" Margin="{StaticResource FieldSpacing}" AutomationProperties.Name="{loc:T Image resolution}" />
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Image quality}" />
+            <Grid Margin="{StaticResource FieldSpacing}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="40" />
+                </Grid.ColumnDefinitions>
+                <Slider x:Name="Quality" Minimum="30" Maximum="95" Value="75" SmallChange="5" LargeChange="10" IsSnapToTickEnabled="True" TickFrequency="5"
+                        ValueChanged="Quality_ValueChanged" AutomationProperties.Name="{loc:T Image quality}" />
+                <TextBlock x:Name="QualityValue" Grid.Column="1" Style="{StaticResource ReadoutText}" />
+            </Grid>
+            <CheckBox x:Name="TrimFonts" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Trim fonts}" IsChecked="True" AutomationProperties.Name="{loc:T Trim fonts}" />
+            <CheckBox x:Name="BlackWhite" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Make black and white images 1-bit}" IsChecked="True" AutomationProperties.Name="{loc:T Make black and white images 1-bit}" />
+            <CheckBox x:Name="DropAppData" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Remove application data}" IsChecked="True" AutomationProperties.Name="{loc:T Remove application data}" />
+            <CheckBox x:Name="DropPrivateKeys" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Remove private keys}" AutomationProperties.Name="{loc:T Remove private keys}" />
+        </StackPanel>
+
+        <CheckBox x:Name="Gray" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Convert to grayscale}" AutomationProperties.Name="{loc:T Convert to grayscale}" />
+        <CheckBox x:Name="FastWeb" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Fast web view}" AutomationProperties.Name="{loc:T Fast web view}" />
+        <TextBlock Style="{StaticResource ReasonText}" Margin="0,2,0,16" Text="{loc:T Page one shows before the whole file has loaded.}" />
+
+        <optimize:OutputChoice x:Name="Output" />
+    </StackPanel>
+</tools:ToolPanel>

@@ -1,0 +1,21 @@
+<UserControl x:Class="LazyPDF.App.Tools.Optimize.OutputChoice"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:LazyPDF.App">
+    <StackPanel>
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Save as}" />
+        <Border Style="{StaticResource SegmentedTrackStyle}" AutomationProperties.Name="{loc:T Save as}">
+            <UniformGrid Rows="1">
+                <RadioButton x:Name="NewFile" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T New file}" IsChecked="True"
+                             Checked="Choice_Checked" AutomationProperties.Name="{loc:T New file}" />
+                <RadioButton x:Name="ThisFile" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T This file}"
+                             Checked="Choice_Checked" AutomationProperties.Name="{loc:T This file}" />
+            </UniformGrid>
+        </Border>
+        <TextBlock x:Name="Note" Style="{StaticResource ReasonText}" Margin="0,6,0,0" />
+        <DockPanel x:Name="SignedRow" Margin="0,8,0,0" Visibility="Collapsed">
+            <TextBlock DockPanel.Dock="Left" Text="&#xE7BA;" Style="{StaticResource ReasonGlyph}" Foreground="{DynamicResource SystemFillColorCautionBrush}" />
+            <TextBlock x:Name="SignedNote" Style="{StaticResource ReasonText}" />
+        </DockPanel>
+    </StackPanel>
+</UserControl>

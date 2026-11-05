@@ -1,0 +1,25 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Sanitize.SanitizePanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:sanitize="clr-namespace:LazyPDF.App.Tools.Sanitize"
+                 xmlns:optimize="clr-namespace:LazyPDF.App.Tools.Optimize">
+    <StackPanel Margin="{StaticResource PanePadding}">
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T What was found}" />
+        <TextBlock x:Name="Found" Style="{StaticResource ReasonText}" Margin="0,0,0,8" Text="{loc:T Looking through the file.}" />
+        <ItemsControl x:Name="Rows" Focusable="False" Margin="{StaticResource FieldSpacing}" AutomationProperties.Name="{loc:T What was found}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type sanitize:SanitizeRow}">
+                    <StackPanel Margin="0,0,0,4">
+                        <CheckBox Style="{StaticResource ToggleSwitchStyle}" Content="{Binding Label}" IsChecked="{Binding IsChecked}" IsEnabled="{Binding CanTick}"
+                                  Click="Row_Click" AutomationProperties.Name="{Binding Label}" />
+                        <TextBlock Style="{StaticResource ReasonText}" Text="{Binding Note}" Visibility="{Binding NoteVisibility}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <optimize:OutputChoice x:Name="Output" />
+    </StackPanel>
+</tools:ToolPanel>
