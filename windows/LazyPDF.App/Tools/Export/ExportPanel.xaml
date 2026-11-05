@@ -1,0 +1,70 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Export.ExportPanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools">
+    <StackPanel Margin="12,4,12,12">
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Save as}" />
+        <ComboBox x:Name="FormatBox" SelectedIndex="0" AutomationProperties.Name="{loc:T Save as}" SelectionChanged="FormatBox_SelectionChanged">
+            <ComboBoxItem Tag="Word" Content="Word (.docx)" />
+            <ComboBoxItem Tag="Excel" Content="Excel (.xlsx)" />
+            <ComboBoxItem Tag="PowerPoint" Content="PowerPoint (.pptx)" />
+            <ComboBoxItem Tag="Html" Content="{loc:T Web page (.html)}" />
+            <ComboBoxItem Tag="Markdown" Content="Markdown (.md)" />
+            <ComboBoxItem Tag="Rtf" Content="{loc:T Rich text (.rtf)}" />
+            <ComboBoxItem Tag="Text" Content="{loc:T Plain text (.txt)}" />
+            <ComboBoxItem Tag="Pictures" Content="{loc:T Pictures of the pages}" />
+            <ComboBoxItem Tag="Images" Content="{loc:T Pictures in the file}" />
+        </ComboBox>
+
+        <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Pages}" Margin="0,16,0,4" />
+        <RadioButton x:Name="AllPages" GroupName="ExportScope" IsChecked="True" Content="{loc:T All pages}" AutomationProperties.Name="{loc:T All pages}"
+                     Checked="Scope_Changed" />
+        <RadioButton x:Name="CurrentPage" GroupName="ExportScope" Margin="0,4,0,0" Content="{loc:T This page}" AutomationProperties.Name="{loc:T This page}"
+                     Checked="Scope_Changed" />
+        <RadioButton x:Name="TypedPages" GroupName="ExportScope" Margin="0,4,0,0" Content="{loc:T These pages}" AutomationProperties.Name="{loc:T These pages}"
+                     Checked="Scope_Changed" />
+        <TextBox x:Name="PagesBox" Margin="0,6,0,0" IsEnabled="{Binding IsChecked, ElementName=TypedPages}" AutomationProperties.Name="{loc:T Pages to export}"
+                 ToolTip="{loc:T Type pages like 1-3\, 5}" TextChanged="PagesBox_TextChanged" />
+
+        <DockPanel x:Name="ReasonRow" Margin="0,8,0,0" Visibility="Collapsed">
+            <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE946;" />
+            <TextBlock x:Name="Reason" Style="{StaticResource ReasonText}" AutomationProperties.LiveSetting="Polite" />
+        </DockPanel>
+
+        <StackPanel x:Name="HtmlOptions" Visibility="Collapsed" Margin="0,16,0,0">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Layout}" />
+            <ComboBox x:Name="HtmlLayoutBox" SelectedIndex="0" AutomationProperties.Name="{loc:T Layout}">
+                <ComboBoxItem Content="{loc:T Text that reflows}" />
+                <ComboBoxItem Content="{loc:T Text where it is on the page}" />
+            </ComboBox>
+        </StackPanel>
+
+        <CheckBox x:Name="MarkdownPicturesBox" Visibility="Collapsed" Margin="0,16,0,0" Style="{StaticResource ToggleSwitchStyle}"
+                  Content="{loc:T Include pictures}" AutomationProperties.Name="{loc:T Include pictures}" />
+
+        <StackPanel x:Name="PictureOptions" Visibility="Collapsed" Margin="0,16,0,0">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Picture type}" />
+            <ComboBox x:Name="PictureTypeBox" SelectedIndex="0" AutomationProperties.Name="{loc:T Picture type}" SelectionChanged="PictureTypeBox_SelectionChanged">
+                <ComboBoxItem Content="PNG" />
+                <ComboBoxItem Content="JPEG" />
+            </ComboBox>
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Resolution}" Margin="0,12,0,4" />
+            <ComboBox x:Name="DpiBox" SelectedIndex="2" AutomationProperties.Name="{loc:T Resolution}">
+                <ComboBoxItem Tag="72" Content="72 dpi" />
+                <ComboBoxItem Tag="96" Content="96 dpi" />
+                <ComboBoxItem Tag="150" Content="150 dpi" />
+                <ComboBoxItem Tag="300" Content="300 dpi" />
+                <ComboBoxItem Tag="600" Content="600 dpi" />
+            </ComboBox>
+            <StackPanel x:Name="QualityRow" Visibility="Collapsed">
+                <DockPanel Margin="0,12,0,4">
+                    <TextBlock DockPanel.Dock="Right" Style="{StaticResource ReadoutText}" Text="{Binding Value, ElementName=QualityBox, StringFormat={}{0:0}}" />
+                    <TextBlock Style="{StaticResource FieldLabelText}" Margin="0" Text="{loc:T Quality}" />
+                </DockPanel>
+                <Slider x:Name="QualityBox" Minimum="1" Maximum="100" Value="85" SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True"
+                        AutomationProperties.Name="{loc:T Quality}" />
+            </StackPanel>
+        </StackPanel>
+    </StackPanel>
+</tools:ToolPanel>
