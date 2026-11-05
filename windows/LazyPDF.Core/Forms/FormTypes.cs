@@ -148,3 +148,22 @@ public sealed class FormWidget
 /// <param name="Calculated">Fields the calculation order changed afterwards.</param>
 /// <param name="NotRun">Scripts that were not run because they are not built-in functions.</param>
 public sealed record FormFillResult(int Filled, IReadOnlyList<string> UnknownFields, IReadOnlyList<string> Rejected, int Calculated, IReadOnlyList<FormScript> NotRun);
+
+/// <summary>The font name (a /DR name such as Helv), size in points (0 fits the text to the field) and colour a field's /DA gives.</summary>
+public sealed record TextLook(string Font, double Size, double[] Color);
+
+public enum ButtonActionKind
+{
+    None,
+    OpenLink,
+    Reset,
+    Submit,
+    Show,
+    Hide,
+
+    /// <summary>An action this layer does not write: a script, a page jump and the like. Reading gives it; setting it is refused.</summary>
+    Other,
+}
+
+/// <summary>What a push button does when it is clicked. <see cref="Target"/> is the address of a link or a submit, and the full name of the field a Show or Hide acts on.</summary>
+public sealed record ButtonAction(ButtonActionKind Kind, string? Target = null);

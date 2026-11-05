@@ -20,6 +20,26 @@ public static class FormText
 
     public static string NotAField => Loc.T("This field is not part of the form.");
 
+    public static string NotAButton => Loc.T("Only a check box or radio button has an export value.");
+
+    public static string BadExport => Loc.T("The export value cannot be empty or Off.");
+
+    public static string ExportTaken(string value) => Loc.T("Another button of this field already uses {0}. Choose another value.", value);
+
+    public static string UnknownFont(string font) => Loc.T("The form has no font named {0}.", font);
+
+    public static string BadSize => Loc.T("The text size must be from 0 to 200 points.");
+
+    public static string BadColor => Loc.T("A colour is one, three or four numbers from 0 to 1.");
+
+    public static string NotAPushButton => Loc.T("Only a button can have an action.");
+
+    public static string NoAddress => Loc.T("Type the address the button goes to.");
+
+    public static string NoSuchField(string name) => Loc.T("The form has no field named {0}.", name);
+
+    public static string OtherAction => Loc.T("This kind of action cannot be set here.");
+
     public static string KindName(FieldKind kind) => kind switch
     {
         FieldKind.Text => Loc.T("Text field"),

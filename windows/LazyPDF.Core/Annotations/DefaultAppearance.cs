@@ -12,6 +12,8 @@ internal static class DefaultAppearance
         ["Cour"] = ("Courier New", false, false), ["CoBo"] = ("Courier New", true, false), ["CoOb"] = ("Courier New", false, true), ["CoBO"] = ("Courier New", true, true),
     };
 
+    public static bool IsStandard(string font) => Fonts.ContainsKey(font);
+
     public static (string? Font, double? Size, double[]? Color) Parse(string? da)
     {
         if (string.IsNullOrWhiteSpace(da)) return (null, null, null);

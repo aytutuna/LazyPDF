@@ -49,8 +49,7 @@ public sealed partial class PdfForm
         if (flags != FieldFlags.None) node["Ff"] = new PdfNumber((long)flags);
         if (spec.Kind != FieldKind.Signature)
         {
-            string color = string.Join(' ', spec.TextColor.Select(n => new PdfNumber(n).Text));
-            node["DA"] = PdfText.ToObject($"/{spec.Font} {new PdfNumber(spec.FontSize).Text} Tf {color} {(spec.TextColor.Length switch { 1 => "g", 4 => "k", _ => "rg" })}");
+            node["DA"] = PdfText.ToObject(DaString(spec.Font, spec.FontSize, spec.TextColor));
         }
         if (spec.Alignment is 1 or 2) node["Q"] = new PdfNumber(spec.Alignment);
         if (spec.Kind == FieldKind.Text && spec.MaxLength > 0) node["MaxLen"] = new PdfNumber(spec.MaxLength);
@@ -159,6 +158,7 @@ public sealed partial class PdfForm
     public void Remove(FormField field)
     {
         RequireFillable();
+        RetargetButtons(field.Name, null);
         RemoveField(field);
         DropXfa();
         Refresh();
@@ -199,8 +199,23 @@ public sealed partial class PdfForm
             Prune(parent);
         }
         d["T"] = PdfText.ToObject(path[^1]);
+        RetargetButtons(field.Name, name);
         DropXfa();
         Refresh();
+    }
+
+    // Show and Hide actions hold the full name of their target as a string, so they follow a rename and go with a removed field.
+    private void RetargetButtons(string name, string? renamed)
+    {
+        foreach (var button in _fields.Where(f => f.Kind == FieldKind.PushButton))
+        {
+            foreach (var widget in button.Widgets)
+            {
+                if (_document.Dict(widget.Dictionary, "A") is not { } a || _document.Name(a, "S") != "Hide" || PdfText.Read(_document, a["T"]) != name) continue;
+                if (renamed is null) widget.Dictionary.Remove("A");
+                else a["T"] = PdfText.ToObject(renamed);
+            }
+        }
     }
 
     /// <summary>Sets or clears one of the field's flag bits. The bits that name the kind (radio, push button, combo) cannot be changed.</summary>

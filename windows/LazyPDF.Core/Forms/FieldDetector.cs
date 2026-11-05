@@ -8,6 +8,9 @@ public sealed record FieldProposal(int PageIndex, PdfRect Rect, FieldKind Kind, 
     public int Cells { get; init; }
     public bool Multiline { get; init; }
 
+    /// <summary>Read from the pixels of a scanned page, which is a better guess than a ruling in the file but still a guess.</summary>
+    public bool FromPixels { get; init; }
+
     /// <summary>The proposal as a spec for <see cref="PdfForm.AddField"/>.</summary>
     public FieldSpec ToSpec() => new(Kind, Name, PageIndex, Rect)
     {
@@ -43,6 +46,37 @@ public static class FieldDetector
     {
         var form = PdfForm.Read(document);
         return Detect(document, document.Pages[pageIndex], form, form.Fields.Select(f => f.Name).ToHashSet());
+    }
+
+    /// <summary>
+    /// As <see cref="Detect(PdfDocument)"/>; a page that is a scan, with or without a text layer from OCR, is also
+    /// drawn through <paramref name="renderer"/> and read from its pixels (<see cref="ScanFieldDetector"/>).
+    /// </summary>
+    public static IReadOnlyList<FieldProposal> Detect(PdfDocument document, IPageRenderer renderer, CancellationToken cancellation = default)
+    {
+        var form = PdfForm.Read(document);
+        var names = form.Fields.Select(f => f.Name).ToHashSet();
+        var kinds = OcrTriage.ClassifyAll(document);
+        return [.. document.Pages.SelectMany(p =>
+        {
+            cancellation.ThrowIfCancellationRequested();
+            return Detect(document, p, form, names, renderer, kinds[p.Index]);
+        })];
+    }
+
+    /// <summary>As above for one page.</summary>
+    public static IReadOnlyList<FieldProposal> Detect(PdfDocument document, int pageIndex, IPageRenderer renderer)
+    {
+        var form = PdfForm.Read(document);
+        var page = document.Pages[pageIndex];
+        return Detect(document, page, form, form.Fields.Select(f => f.Name).ToHashSet(), renderer, OcrTriage.Classify(document, page));
+    }
+
+    private static List<FieldProposal> Detect(PdfDocument document, PdfPage page, PdfForm form, HashSet<string> names, IPageRenderer renderer, OcrPageKind kind)
+    {
+        var found = Detect(document, page, form, names);
+        if (kind is OcrPageKind.Picture or OcrPageKind.OwnLayer or OcrPageKind.ForeignLayer) found.AddRange(ScanFieldDetector.Detect(document, page, form, names, renderer, found));
+        return found;
     }
 
     private static List<FieldProposal> Detect(PdfDocument document, PdfPage page, PdfForm form, HashSet<string> names)
@@ -183,7 +217,7 @@ public static class FieldDetector
         }
     }
 
-    private static bool Vertical(PdfRect a, PdfRect b) => Math.Min(a.Top, b.Top) - Math.Max(a.Bottom, b.Bottom) >= 0.4 * Math.Min(a.Height, b.Height);
+    internal static bool Vertical(PdfRect a, PdfRect b) => Math.Min(a.Top, b.Top) - Math.Max(a.Bottom, b.Bottom) >= 0.4 * Math.Min(a.Height, b.Height);
 
     // The text a blank belongs to: on its own line before it (after it for a check box or radio button), else just above it.
     private static ScanRun? LabelFor(List<ScanRun> runs, PdfRect rect, bool toRight)
@@ -196,7 +230,7 @@ public static class FieldDetector
             .OrderBy(r => r.Box.Bottom).FirstOrDefault();
     }
 
-    private static bool Covers(PdfRect existing, PdfRect candidate)
+    internal static bool Covers(PdfRect existing, PdfRect candidate)
     {
         var common = existing.Intersect(candidate);
         if (common.IsEmpty) return false;
@@ -212,14 +246,14 @@ public static class FieldDetector
             && (g.Box.Left + g.Box.Right) / 2 <= inner.Right && inner.Bottom <= (g.Box.Bottom + g.Box.Top) / 2 && (g.Box.Bottom + g.Box.Top) / 2 <= inner.Top);
     }
 
-    private static string? Clean(string? label)
+    internal static string? Clean(string? label)
     {
         if (label is null) return null;
         string text = string.Join(' ', label.Replace('_', ' ').Trim().Trim(':', '.', ' ').Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
         return text.Length == 0 ? null : text.Length > 60 ? text[..60] : text;
     }
 
-    private static string Unique(HashSet<string> names, string? label, FieldKind kind)
+    internal static string Unique(HashSet<string> names, string? label, FieldKind kind)
     {
         string baseName = Clean(label)?.Replace('.', ' ') ?? kind switch { FieldKind.CheckBox => "Check", FieldKind.Radio => "Radio", _ => "Text" };
         string name = baseName;
