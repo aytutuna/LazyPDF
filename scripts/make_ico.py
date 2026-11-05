@@ -117,6 +117,10 @@ def rect_shape(canvas, left, top, right, bottom, radius, color, opacity=1.0):
 
 
 def draw(size, corner=0.0):
+    return paint(size, corner).png()
+
+
+def paint(size, corner=0.0):
     canvas = Canvas(size, BACKGROUND)
 
     # The page, with its top right corner cut along a diagonal and the flap drawn where it folded over.
@@ -139,7 +143,7 @@ def draw(size, corner=0.0):
         rect_shape(canvas, 316, line_top, 316 + width, line_top + 32, 16, LINES)
     if corner:
         canvas.round_corners(corner)
-    return canvas.png()
+    return canvas
 
 
 def main():
