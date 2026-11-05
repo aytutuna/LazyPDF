@@ -62,6 +62,56 @@ Against Acrobat Pro. Skipped on purpose: XFA dynamic forms (detected and reporte
 
 Beyond Acrobat: scan into the open file through Lazy Scan, print with Lazy Print's booklets and N-up, one-click clean for sharing, redaction by pattern with a report of what was removed, signature checks in plain words, every saved version recoverable from the file, phone capture and signing over the phone link, folder rules, and all of it offline with no account.
 
+## Windows app
+
+The solution is `windows/LazyPDF.sln`: `LazyPDF.Core` (the engine, no UI), `LazyPDF.App` (WPF, net10.0-windows10.0.19041.0, references Core) and one test project for each. App code is code-behind and a view model, file-scoped namespaces, sealed classes, records for data, no MVVM toolkit. Handlers are named `Control_Event`. Every control has `AutomationProperties.Name`, and all text goes through `{loc:T}` in XAML and `Loc.T` in code. `scripts/gen_l10n.py --check` fails on a text the code uses and `l10n/shared.json` lacks, on one nothing uses, and on a missing Turkish.
+
+### Shape
+
+`AppViewModel` (split by job: documents, home, print) holds the tabs, the active tool, the info bar and the busy bar. `MainWindow` is the shell: tab strip, tool strip, side rail, stage, inspector, status line. A tab is a `DocumentTab` (the edit session, undo, the file on disk, the password or certificate it was opened with) or the `HomeTab`.
+
+### Services
+
+Everything that touches the system sits in `Services/` behind a small interface or a plain class, so tests pass stand-ins.
+
+- `WindowsPageRenderer` draws pages through `Windows.Data.Pdf` (`IDocumentRenderer`); `Thumbnails` and the viewer's tile cache sit on it.
+- `WicImageCodec`, `SystemFontSource`, `WindowsOcr` and `WindowsCertificates` give Core its images, fonts, text recognition and certificate store.
+- `HttpSignatureTransport` fetches time stamps and validation data; it is cancellable.
+- `InstanceChannel` hands a second launch's files to the running window; `FileAssociation` and `LazyPdfAddress` handle Open with and `lazypdf:`.
+- `SisterApps` starts Lazy Scan and hands a file to Lazy Print; the window prints itself when Print is not there.
+- `RecentFiles`, `AppPreferencesStore`, `StoreFiles` (the settings file rules) and `RecoveryStore`.
+
+### A tool
+
+A tool is one folder under `Tools/` with a `ToolPanel` subclass, listed once in `ToolCatalog` with its id, group, glyph, one-sentence summary and a factory. The shell builds the panel the first time the tool is picked and calls `Attach(tab, viewer, host)` and `Detach()`. `Action` is the accent button pinned under the panel; `RaiseActionChanged` tells the shell it changed. Work that takes time goes through `IToolHost.RunBusyAsync`, which shows the busy bar with a Cancel that arrives as a token. A tool changes the document only with `tab.Commit(label)`, which is one undo step. When it writes the file itself it calls `ReloadAsync`. Results that are a new file open as a new tab with `OpenNewAsync`. Problems and notices go to the host, never to a dialog of the tool's own, except Create and Compare, which have a window.
+
+Panels with several jobs split into partial files (`PagesPanel.Edit.cs`, `PagesPanel.Drag.cs`); logic that needs no controls lives in a plain class beside it (`CreateJob`, `RedactJob`) so it is tested without a window. The side panels on the rail are built the same way and are listed in `ToolCatalog.SidePanels`.
+
+### The viewer
+
+`IDocumentViewer` is what panels may ask of the stage; `PageViewer` is the one implementation. Page numbers are 0-based and everything is for the UI thread.
+
+- `Show`, `PageIndex`, `Zoom`, `GoToPage`, `GoToDestination`, `FollowAction`, `GoBack`, `GoForward`, `Reveal`.
+- `VisiblePages`, `PageSize`, `PageToView`, `ViewToPage`, `Geometry`. Page space is points from the top left of the page as shown, y down; `PageGeometry` converts to PDF user space.
+- `Overlay(page)` is a canvas over a page for previews and handles; it moves with the page.
+- `PointerTool` takes the left button as press, move, release (`IPagePointerTool`); without one the pointer pans or selects text.
+- `GetTextAsync`, `GetSelectionAsync`, `SelectAll`, `ClearSelection` for text; `SetLayerVisible` for layers.
+- Events: `StateChanged`, `ViewChanged`, `PageChanged`, `ModeChanged`, `SelectionChanged`, `LayersChanged`.
+
+### Settings and recovery
+
+`preferences.json` (appearance, the side panel left open, inspector sections), `recent.json`, `signing.json`, `batch-sets.json` and the saved signatures live in `%APPDATA%\Lazy PDF`. A file that does not decode is moved aside and the defaults are used; one that cannot be read is left alone. A part of a file that is damaged resets only that property.
+
+`RecoveryStore` keeps each open document as `id.pdf` and `id.json` in `%LOCALAPPDATA%\Lazy PDF\Recovery`, written after every edit on a background worker. Closing or saving on purpose removes the entry. At start, entries whose process is gone are offered back as documents with unsaved changes, and a file that is already open comes back as a copy that needs a name.
+
+### Not done
+
+- Phone capture and signing over the phone link: the address and mutex are reserved, nothing listens.
+- Scanning into the open file: the Scan tile starts Lazy Scan and stops there.
+- No installer or package; the app runs from the build.
+- Turkish is the only translation.
+- The Swift targets.
+
 # Modules
 
 Each section below is written when its layer lands.
