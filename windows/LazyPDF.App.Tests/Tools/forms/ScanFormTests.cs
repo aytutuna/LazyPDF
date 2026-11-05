@@ -86,11 +86,11 @@ public sealed class ScanFormTests
     {
         Found(0, out var found);
 
-        Assert.Equal(2, found.Count(p => p.Kind == FieldKind.Text && p.Rect.Height < 30));
+        Assert.Equal(2, found.Count(p => p.Kind == FieldKind.Text && p.Rect.Height < 25));
         Assert.Single(found, p => p.Kind == FieldKind.CheckBox);
         Assert.Single(found, p => p.Kind == FieldKind.Text && p.Rect.Height > 25);
         Assert.All(found, p => Assert.True(p.FromPixels));
-        var line = found.Where(p => p.Rect.Height < 30).OrderByDescending(p => p.Rect.Top).First();
+        var line = found.Where(p => p.Rect.Height < 25).OrderByDescending(p => p.Rect.Top).First();
         // The picture is 600 pixels over 300 points; the upper line is 100 points down the page, above 175 to 250 points across.
         Assert.InRange(line.Rect.Left, 73, 77);
         Assert.InRange(line.Rect.Right, 248, 252);
