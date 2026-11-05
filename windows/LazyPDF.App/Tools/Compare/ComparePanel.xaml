@@ -1,0 +1,76 @@
+<tools:ToolPanel x:Class="LazyPDF.App.Tools.Compare.ComparePanel"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="clr-namespace:LazyPDF.App"
+                 xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 xmlns:compare="clr-namespace:LazyPDF.App.Tools.Compare">
+    <StackPanel Margin="12,4,12,12">
+        <TextBlock Text="{loc:T Compare with}" Style="{StaticResource FieldLabelText}" />
+        <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,4,0,8" HorizontalAlignment="Left">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="FileMode" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Another file}" IsChecked="True"
+                             GroupName="Source" Padding="12,5,12,6" AutomationProperties.Name="{loc:T Another file}" Click="Source_Click" />
+                <RadioButton x:Name="VersionMode" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Earlier version}"
+                             GroupName="Source" Padding="12,5,12,6" AutomationProperties.Name="{loc:T Earlier version}" Click="Source_Click" />
+            </StackPanel>
+        </Border>
+
+        <StackPanel x:Name="FileGroup">
+            <Button x:Name="ChooseButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8E5;" Content="{loc:T Choose file}"
+                    HorizontalAlignment="Left" Padding="10,3,10,4" AutomationProperties.Name="{loc:T Choose file}" Click="Choose_Click" />
+            <TextBlock x:Name="ChosenText" Style="{StaticResource ReasonText}" Margin="0,6,0,4" TextTrimming="CharacterEllipsis" />
+            <CheckBox x:Name="OlderToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T This file is the older one}"
+                      AutomationProperties.Name="{loc:T This file is the older one}" />
+            <StackPanel x:Name="UnlockGroup" Visibility="Collapsed" Margin="0,8,0,0">
+                <TextBlock x:Name="UnlockText" Style="{StaticResource ReasonText}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+                <PasswordBox x:Name="OtherPassword" Margin="0,6,0,0" AutomationProperties.Name="{loc:T Password of the other file}" />
+                <ComboBox x:Name="OtherCertificate" DisplayMemberPath="Name" Margin="0,6,0,0" HorizontalAlignment="Stretch"
+                          AutomationProperties.Name="{loc:T Certificate of the other file}" />
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel x:Name="VersionGroup" Visibility="Collapsed">
+            <ComboBox x:Name="VersionBox" HorizontalAlignment="Stretch" AutomationProperties.Name="{loc:T Earlier version}" SelectionChanged="Version_Changed" />
+            <TextBlock x:Name="NoVersions" Style="{StaticResource ReasonText}" Margin="0,6,0,0" Text="{loc:T This file has no earlier versions.}" />
+        </StackPanel>
+
+        <TextBlock Text="{loc:T Look at}" Style="{StaticResource FieldLabelText}" Margin="0,16,0,0" />
+        <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,4,0,8" HorizontalAlignment="Left">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="ContentMode" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Content}" IsChecked="True"
+                             GroupName="How" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Content}" Click="How_Click" />
+                <RadioButton x:Name="PixelMode" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Pixels}"
+                             GroupName="How" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Pixels}" Click="How_Click" />
+            </StackPanel>
+        </Border>
+        <TextBlock x:Name="HowText" Style="{StaticResource ReasonText}" Margin="0,0,0,8" />
+
+        <StackPanel x:Name="OptionGroup">
+            <CheckBox x:Name="IgnoreCase" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Ignore capitals}" AutomationProperties.Name="{loc:T Ignore capitals}" />
+            <CheckBox x:Name="IgnoreSpace" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Ignore spacing}" AutomationProperties.Name="{loc:T Ignore spacing}" />
+            <CheckBox x:Name="IgnoreEdges" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Ignore headers and footers}" AutomationProperties.Name="{loc:T Ignore headers and footers}" />
+        </StackPanel>
+
+        <TextBlock x:Name="ShowLabel" Text="{loc:T Show}" Style="{StaticResource FieldLabelText}" Margin="0,12,0,0" />
+        <UniformGrid x:Name="FilterGrid" Columns="2" Margin="0,2,0,0">
+            <CheckBox x:Name="ShowText" Content="{loc:T Text}" IsChecked="True" AutomationProperties.Name="{loc:T Text}" Click="Filter_Click" />
+            <CheckBox x:Name="ShowPictures" Content="{loc:T Pictures}" IsChecked="True" AutomationProperties.Name="{loc:T Pictures}" Click="Filter_Click" />
+            <CheckBox x:Name="ShowNotes" Content="{loc:T Annotations}" IsChecked="True" AutomationProperties.Name="{loc:T Annotations}" Click="Filter_Click" />
+            <CheckBox x:Name="ShowForms" Content="{loc:T Forms}" IsChecked="True" AutomationProperties.Name="{loc:T Forms}" Click="Filter_Click" />
+            <CheckBox x:Name="ShowPages" Content="{loc:T Page properties}" IsChecked="True" AutomationProperties.Name="{loc:T Page properties}" Click="Filter_Click" />
+            <CheckBox x:Name="ShowDetails" Content="{loc:T File details}" IsChecked="True" AutomationProperties.Name="{loc:T File details}" Click="Filter_Click" />
+        </UniformGrid>
+
+        <StackPanel x:Name="ResultGroup" Visibility="Collapsed" Margin="0,16,0,0">
+            <TextBlock x:Name="SummaryText" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+            <TextBlock x:Name="NoteText" Style="{StaticResource ReasonText}" Margin="0,2,0,0" />
+            <WrapPanel Margin="0,8,0,8">
+                <Button x:Name="ViewButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8A0;" Content="{loc:T Side by side}"
+                        Margin="0,0,8,0" Padding="10,3,10,4" AutomationProperties.Name="{loc:T Side by side}" Click="View_Click" />
+                <Button x:Name="ReportButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE9F9;" Content="{loc:T Write report}"
+                        Padding="10,3,10,4" AutomationProperties.Name="{loc:T Write report}" Click="Report_Click" />
+            </WrapPanel>
+            <compare:ChangeList x:Name="Changes" MaxHeight="300" />
+        </StackPanel>
+    </StackPanel>
+</tools:ToolPanel>

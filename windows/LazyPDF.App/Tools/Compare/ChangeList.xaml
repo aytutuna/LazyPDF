@@ -1,0 +1,43 @@
+<UserControl x:Class="LazyPDF.App.Tools.Compare.ChangeList" x:ClassModifier="internal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:LazyPDF.App"
+             xmlns:compare="clr-namespace:LazyPDF.App.Tools.Compare"
+             xmlns:core="clr-namespace:LazyPDF.Core;assembly=LazyPDF.Core"
+             IsTabStop="False">
+    <ListBox x:Name="List" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Differences}"
+             ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch"
+             SelectionChanged="List_SelectionChanged" PreviewMouseLeftButtonDown="List_PreviewMouseLeftButtonDown">
+        <ListBox.ItemContainerStyle>
+            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                <Setter Property="AutomationProperties.Name" Value="{Binding Spoken}" />
+            </Style>
+        </ListBox.ItemContainerStyle>
+        <ListBox.ItemTemplate>
+            <DataTemplate DataType="{x:Type compare:ChangeRow}">
+                <DockPanel Margin="2,3">
+                    <Border x:Name="Bar" DockPanel.Dock="Left" Width="4" Margin="0,1,8,1" CornerRadius="2"
+                            Background="{DynamicResource AccentFillColorDefaultBrush}" />
+                    <StackPanel>
+                        <TextBlock Text="{Binding Title, Mode=OneTime}" Style="{StaticResource BodyText}" TextWrapping="Wrap" MaxHeight="40" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Subtitle, Mode=OneTime}" Style="{StaticResource SecondaryBodyText}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </DockPanel>
+                <DataTemplate.Triggers>
+                    <DataTrigger Binding="{Binding Kind}" Value="{x:Static core:ChangeKind.Added}">
+                        <Setter TargetName="Bar" Property="Background" Value="{DynamicResource SystemFillColorSuccessBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Kind}" Value="{x:Static core:ChangeKind.Removed}">
+                        <Setter TargetName="Bar" Property="Background" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Kind}" Value="{x:Static core:ChangeKind.Changed}">
+                        <Setter TargetName="Bar" Property="Background" Value="{DynamicResource SystemFillColorCautionBrush}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Kind}" Value="{x:Static core:ChangeKind.Moved}">
+                        <Setter TargetName="Bar" Property="Background" Value="{DynamicResource SystemFillColorCautionBrush}" />
+                    </DataTrigger>
+                </DataTemplate.Triggers>
+            </DataTemplate>
+        </ListBox.ItemTemplate>
+    </ListBox>
+</UserControl>
