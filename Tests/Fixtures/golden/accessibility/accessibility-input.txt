@@ -1,0 +1,105 @@
+# One line is "<op> <fixture>". Bytes are escaped (\n \r \t \ \xHH).
+# Fixtures: tagged and tagged-bad (a small tagged file, the second with a custom type, a skipped heading level, a figure
+# without alt text and no language); report <pages> (heading, paragraphs, bullets, table, picture, header, footer, number);
+# rotated <pages> (the same turned); page <content> (one page whose content stream is the text after the name).
+# marker <text>: the list marker of a line (kind and length) and whether the text alone is a marker. Text is read as UTF-8.
+# pagenumber <text>: whether the text is a page number. signature <text>: the line with digits folded, for headers and footers.
+# langtag <text>: whether the text is a language tag.
+# tree <fixture>: the structure tree read from the file and the reading order it gives.
+# check <fixture>: the accessibility report.
+# tag <fixture>: AutoTagger on the file, then every object of the result with the trailer (streams decoded), the tree and the order.
+# move <fixture>: the last element under the root moved to the front (the file is tagged first when it has no tree) and written.
+marker 1. First
+marker 12. Twelve
+marker 123. x
+marker 1234. x
+marker (1) x
+marker a) x
+marker (b) x
+marker A. x
+marker ab. x
+marker iv. x
+marker IV) x
+marker xiii. x
+marker xxxxxx. x
+marker 1.x
+marker 1.
+marker 1.\n
+marker - item
+marker -x
+marker * item
+marker \xe2\x80\xa2 bullet
+marker \xe2\x80\x93 dash
+marker \xef\x82\xb7 symbol
+marker x
+marker 
+marker 1.\xc2\xa0x
+marker \xd9\xa1. x
+marker 7)
+marker ( 1. x
+pagenumber 3
+pagenumber Page 3
+pagenumber page3
+pagenumber PAGE 3 OF 9
+pagenumber Page 3 of 9
+pagenumber 3 / 9
+pagenumber 3/9
+pagenumber iv
+pagenumber XIV
+pagenumber - 3 -
+pagenumber \xe2\x80\x93 12 \xe2\x80\x93
+pagenumber 12345
+pagenumber 1234
+pagenumber mmmmmm
+pagenumber mmmmmmm
+pagenumber page
+pagenumber 3 of
+pagenumber 3 of 12345
+pagenumber Chapter 3
+pagenumber a
+pagenumber 3\n-
+pagenumber \xd9\xa3
+pagenumber 3 off 9
+signature Page 3
+signature page  12 of 40
+signature 2026
+signature --
+signature \xc4\xb0stanbul 5 
+signature Caf\xc3\xa9 \xd9\xa3\xd9\xa4
+signature   A  \tB  
+langtag en
+langtag en-US
+langtag e
+langtag eng
+langtag engl
+langtag en-
+langtag en-U
+langtag en-US-x
+langtag en-US\n
+langtag en-US\n\n
+langtag en_US
+langtag zh-Hant-CN
+langtag en-123456789
+langtag \xd9\xa3\xd9\xa3
+langtag EN-us
+tree tagged
+tree tagged-bad
+tree report 1
+check tagged
+check tagged-bad
+check report 1
+check page q 600 0 0 700 0 0 cm /Im1 Do Q
+tag tagged
+tag report 1
+tag report 3
+tag rotated 2
+tag page BT /F1 11 Tf 72 700 Td (1. Open the file) Tj ET\nBT /F1 11 Tf 72 686 Td (2. Choose a name) Tj ET\nBT /F1 11 Tf 72 672 Td (3. Save it) Tj ET\nBT /F1 11 Tf 72 600 Td (Plain text that is not a list at all, only a sentence.) Tj ET\n
+tag page BT /F1 11 Tf 72 700 Td (1.) Tj 14 0 Td (Open the file) Tj ET BT /F1 11 Tf 72 686 Td (2.) Tj 14 0 Td (Choose a name) Tj ET
+tag page BT /F2 24 Tf 72 720 Td (Chapter One) Tj ET\nBT /F2 16 Tf 72 690 Td (Section A) Tj ET\nBT /F1 11 Tf 72 660 Td (Body text goes here and runs long enough to be the body.) Tj ET\nBT /F1 11 Tf 72 640 Td (More body text follows on the next line of the page.) Tj ET\nBT /F2 11 Tf 72 600 Td (Detail) Tj ET\nBT /F1 11 Tf 72 580 Td (Body text again, a sentence that is not bold at all.) Tj ET\n
+tag page /Artifact BMC 0.5 g 0 0 612 20 re f EMC\n/OC /MC0 BDC BT /F1 11 Tf 72 700 Td (Layered text inside optional content) Tj ET EMC\n/Artifact <</Type /Pagination>> BDC BT /F1 11 Tf 72 760 Td (Stamped words) Tj ET EMC\nBT /F1 11 Tf 72 650 Td (Ordinary text of the page, a full sentence.) Tj ET\n
+tag page /P <</MCID 0>> BDC BT /F1 11 Tf 72 700 Td (Old words) Tj ET EMC\nBT /F1 11 Tf 72 500 Td (New words) Tj ET\n
+tag page BT /F1 11 Tf 72 700 Td (Aa) Tj ET\nBT /F1 11 Tf 222 700 Td (Bb) Tj ET\nBT /F1 11 Tf 372 700 Td (Cc) Tj ET\nBT /F1 11 Tf 72 684 Td (Dd) Tj ET\nBT /F1 11 Tf 222 684 Td (Ee) Tj ET\nBT /F1 11 Tf 72 668 Td (Ff) Tj ET\nBT /F1 11 Tf 222 668 Td (Gg) Tj ET\nBT /F1 11 Tf 372 668 Td (Hh) Tj ET\n
+tag page 0.9 g 0 0 612 792 re f\n
+tag page
+move tagged
+move report 1

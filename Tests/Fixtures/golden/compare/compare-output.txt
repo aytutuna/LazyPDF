@@ -1,0 +1,980 @@
+> diff 1 2 3 ;; 1 2 3
+< none
+> diff - ;; 1 2 3
+< hunk 0 0 0 3
+> diff 1 2 3 ;; -
+< hunk 0 3 0 0
+> diff 1 2 3 4 5 ;; 1 2 8 9 4 5
+< hunk 2 1 2 2
+> diff 1 2 3 4 5 6 7 ;; 1 9 3 4 5 7
+< hunk 1 1 1 1
+< hunk 5 1 5 0
+> diff 3 1 4 1 5 9 2 6 5 3 5 ;; 2 7 1 8 2 8 1 8 2 8 4
+< hunk 0 1 0 2
+< hunk 2 1 3 3
+< hunk 4 2 7 1
+< hunk 7 4 9 2
+> diff 0 1 2 3 4 5 6 7 8 9 ;; 5 6 7 8 9 0 1 2 3 4
+< hunk 0 5 0 0
+< hunk 10 0 5 5
+> diff 1 1 1 2 2 2 ;; 2 2 2 1 1 1
+< hunk 0 3 0 0
+< hunk 6 0 3 3
+> diff 1 2 3 4 5 6 7 8 9 10 ;; 11 12 13 14 15 16 17 18 19 20 ;; 5
+< hunk 0 10 0 10
+> diff 7 1 2 3 4 5 8 ;; 7 9 1 2 3 4 5 9 8 ;; 100
+< hunk 1 0 1 1
+< hunk 6 0 7 1
+> compare - ;; @one:6 || @two:6 || @three:6 ;; @one:6 || @two:6 || @three:6
+< pages 3 3: 0/0/1 1/1/1 2/2/1
+< summary 0 0 0 0 | 0 0 0 0 0 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 3 pages and 3 pages
+< text No differences found.
+< text 
+> compare - ;; @a:2 | a line3 a3w1 a3w2 a3w3 a3w4 ;; @a:2 | a line3 a3w1 a3w2 CHANGED a3w4
+< pages 1 1: 0/0/0.92
+< change Changed Text 0 0 old=a3w3 new=CHANGED detail=-
+<   old [174.72 697.516 203.4 697.516 203.4 708.616 174.72 708.616]
+<   new [174.72 697.516 234.72 697.516 234.72 708.616 174.72 708.616]
+< summary 0 0 1 0 | 1 0 0 0 0 0 | 1 1
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 1 difference: Added 0, Removed 0, Changed 1, Moved 0
+< text 
+< text Pages 1
+< text   Changed text: a3w3 -> CHANGED
+< text 
+> compare - ;; the quick brown fox jumps over the lazy dog today ;; the quick brown fox jumps over the very lazy dog today
+< pages 1 1: 0/0/0.842105
+< change Added Text 0 0 old= new=very detail=-
+<   old [257.412 737.516 257.412 737.516 257.412 748.616 257.412 748.616]
+<   new [260.748 737.516 283.416 737.516 283.416 748.616 260.748 748.616]
+< summary 1 0 0 0 | 1 0 0 0 0 0 | 1 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 1 difference: Added 1, Removed 0, Changed 0, Moved 0
+< text 
+< text Pages 1
+< text   Added text: very
+< text 
+> compare - ;; the quick brown fox jumps over the lazy dog today ;; the quick brown fox jumps over the dog today
+< pages 1 1: 0/0/0.823529
+< change Removed Text 0 0 old=lazy new= detail=-
+<   old [260.748 737.516 282.084 737.516 282.084 748.616 260.748 748.616]
+<   new [257.412 737.516 257.412 737.516 257.412 748.616 257.412 748.616]
+< summary 0 1 0 0 | 1 0 0 0 0 0 | 0 1
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 1 difference: Added 0, Removed 1, Changed 0, Moved 0
+< text 
+< text Pages 1
+< text   Removed text: lazy
+< text 
+> compare - ;; the quick brown fox jumps over the lazy dog today ;; a very different sentence about nothing at all here
+< pages 1 1: 0/-1/0 -1/0/0
+< change Removed Page 0 -1 old= new= detail=Page removed
+<   old [0 0 612 0 612 792 0 792]
+<   new 
+< change Added Page -1 0 old= new= detail=Page added
+<   old 
+<   new [0 0 612 0 612 792 0 792]
+< summary 1 1 0 0 | 0 0 0 0 2 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 2 differences: Added 1, Removed 1, Changed 0, Moved 0
+< text 
+< text Pages 1 (old file)
+< text   Removed page (Page removed)
+< text 
+< text Pages 1
+< text   Added page (Page added)
+< text 
+> compare - ;; alpha one two three four five | bravo one two three four five | charlie one two three four five | delta one two three four five | echo one two thre...
+< pages 1 1: 0/0/1
+< change Changed Text 0 0 old=charlie new=echo detail=-
+<   old [72 697.516 107.34 697.516 107.34 708.616 72 708.616]
+<   new [72 697.516 98.016 697.516 98.016 708.616 72 708.616]
+< change Changed Text 0 0 old=delta new=charlie detail=-
+<   old [72 677.516 98.016 677.516 98.016 688.616 72 688.616]
+<   new [72 677.516 107.34 677.516 107.34 688.616 72 688.616]
+< change Changed Text 0 0 old=echo new=delta detail=-
+<   old [72 657.516 98.016 657.516 98.016 668.616 72 668.616]
+<   new [72 657.516 98.016 657.516 98.016 668.616 72 668.616]
+< summary 0 0 3 0 | 3 0 0 0 0 0 | 3 3
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 3 differences: Added 0, Removed 0, Changed 3, Moved 0
+< text 
+< text Pages 1
+< text   Changed text: charlie -> echo
+< text   Changed text: delta -> charlie
+< text   Changed text: echo -> delta
+< text 
+> compare - ;; alpha one two three four five | bravo one two three four five | charlie one two three four five | delta one two three four five | echo one two thre...
+< pages 1 1: 0/0/0.967742
+< change Changed Text 0 0 old=echo new=foxtrot detail=-
+<   old [72 657.516 98.016 657.516 98.016 668.616 72 668.616]
+<   new [72 657.516 105.348 657.516 105.348 668.616 72 668.616]
+< change Changed Text 0 0 old=foxtrot new=echo detail=-
+<   old [72 637.516 105.348 637.516 105.348 648.616 72 648.616]
+<   new [72 637.516 98.016 637.516 98.016 648.616 72 648.616]
+< change Changed Text 0 0 old=five new=six detail=-
+<   old [208.74 637.516 227.412 637.516 227.412 648.616 208.74 648.616]
+<   new [201.408 637.516 216.072 637.516 216.072 648.616 201.408 648.616]
+< summary 0 0 3 0 | 3 0 0 0 0 0 | 3 3
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 3 differences: Added 0, Removed 0, Changed 3, Moved 0
+< text 
+< text Pages 1
+< text   Changed text: echo -> foxtrot
+< text   Changed text: foxtrot -> echo
+< text   Changed text: five -> six
+< text 
+> compare - ;; first line of the page stays plain and the same | second line is where the format changes now | third line also stays exactly as it was ;; first li...
+< pages 1 1: 0/0/1
+< change Changed Format 0 0 old=second line is where the format changes now new=second line is where the format changes now detail=Font Helvetica to Times-Roman
+<   old [72 717.516 312.108 717.516 312.108 728.616 72 728.616]
+<   new [72 717.396 287.616 717.396 287.616 728.196 72 728.196]
+< summary 0 0 1 0 | 0 1 0 0 0 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 1 difference: Added 0, Removed 0, Changed 1, Moved 0
+< text 
+< text Pages 1
+< text   Changed format (Font Helvetica to Times-Roman): second line is where the format changes now
+< text 
+> compare - ;; first line of the page stays plain and the same | second line is where the format changes now | third line also stays exactly as it was ;; first li...
+< pages 1 1: 0/0/1
+< change Changed Format 0 0 old=second line is where the format changes now new=second line is where the format changes now detail=Size 12 to 14
+<   old [72 717.516 312.108 717.516 312.108 728.616 72 728.616]
+<   new [72 717.102 352.126 717.102 352.126 730.052 72 730.052]
+< summary 0 0 1 0 | 0 1 0 0 0 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 1 difference: Added 0, Removed 0, Changed 1, Moved 0
+< text 
+< text Pages 1
+< text   Changed format (Size 12 to 14): second line is where the format changes now
+< text 
+> compare - ;; first line of the page stays plain and the same | second line is where the format changes now | third line also stays exactly as it was ;; first li...
+< pages 1 1: 0/0/1
+< change Changed Format 0 0 old=second line is where the format changes now new=second line is where the format changes now detail=Colour #000000 to #FF0000
+<   old [72 717.516 312.108 717.516 312.108 728.616 72 728.616]
+<   new [72 717.516 312.108 717.516 312.108 728.616 72 728.616]
+< summary 0 0 1 0 | 0 1 0 0 0 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 1 difference: Added 0, Removed 0, Changed 1, Moved 0
+< text 
+< text Pages 1
+< text   Changed format (Colour #000000 to #FF0000): second line is where the format changes now
+< text 
+> compare - ;; first line of the page stays plain and the same | second line is where the format changes now | third line also stays exactly as it was ;; first li...
+< pages 1 1: 0/0/0.92
+< change Changed Text 0 0 old=format new=layout detail=-
+<   old [204.06 717.516 238.068 717.516 238.068 728.616 204.06 728.616]
+<   new [214.056 717.516 249.396 717.516 249.396 728.616 214.056 728.616]
+< change Changed Format 0 0 old=second line is where the new=second line is where the detail=Font Helvetica to Helvetica-Bold
+<   old [72 717.516 200.724 717.516 200.724 728.616 72 728.616]
+<   new [72 717.516 210.72 717.516 210.72 728.616 72 728.616]
+< change Changed Format 0 0 old=changes now new=changes now detail=Font Helvetica to Helvetica-Bold
+<   old [241.404 717.516 312.108 717.516 312.108 728.616 241.404 728.616]
+<   new [252.732 717.516 328.752 717.516 328.752 728.616 252.732 728.616]
+< summary 0 0 3 0 | 1 2 0 0 0 0 | 1 1
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 3 differences: Added 0, Removed 0, Changed 3, Moved 0
+< text 
+< text Pages 1
+< text   Changed text: format -> layout
+< text   Changed format (Font Helvetica to Helvetica-Bold): second line is where the
+< text   Changed format (Font Helvetica to Helvetica-Bold): changes now
+< text 
+> compare i ;; Hello World of Words in the page here ok ;; hello world OF words in the page here ok
+< pages 1 1: 0/0/1
+< summary 0 0 0 0 | 0 0 0 0 0 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text No differences found.
+< text 
+> compare - ;; Hello World of Words in the page here ok ;; hello world OF words in the page here ok
+< pages 1 1: 0/0/0.5
+< change Changed Text 0 0 old=Hello World of Words new=hello world OF words detail=-
+<   old [72 737.516 185.352 737.516 185.352 748.616 72 748.616]
+<   new [72 737.516 184.692 737.516 184.692 748.616 72 748.616]
+< summary 0 0 1 0 | 1 0 0 0 0 0 | 4 4
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 1 difference: Added 0, Removed 0, Changed 1, Moved 0
+< text 
+< text Pages 1
+< text   Changed text: Hello World of Words -> hello world OF words
+< text 
+> compare w ;; the data base of the system is large enough ;; the database of the system is large enough
+< pages 1 1: 0/0/0.666667
+< summary 0 0 0 0 | 0 0 0 0 0 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text No differences found.
+< text 
+> compare - ;; the data base of the system is large enough ;; the database of the system is large enough
+< pages 1 1: 0/0/0.666667
+< change Changed Text 0 0 old=data base new=database detail=-
+<   old [92.016 737.516 144.72 737.516 144.72 748.616 92.016 748.616]
+<   new [92.016 737.516 141.384 737.516 141.384 748.616 92.016 748.616]
+< summary 0 0 1 0 | 1 0 0 0 0 0 | 1 2
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 1 difference: Added 0, Removed 0, Changed 1, Moved 0
+< text 
+< text Pages 1
+< text   Changed text: data base -> database
+< text 
+> compare w ;; the data base of the system is large enough ;; the database of the system is small enough
+< pages 1 1: 0/0/0.4
+< change Changed Text 0 0 old=large new=small detail=-
+<   old [234.756 737.516 261.432 737.516 261.432 748.616 234.756 748.616]
+<   new [231.42 737.516 259.416 737.516 259.416 748.616 231.42 748.616]
+< summary 0 0 1 0 | 1 0 0 0 0 0 | 1 1
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 1 difference: Added 0, Removed 0, Changed 1, Moved 0
+< text 
+< text Pages 1
+< text   Changed text: large -> small
+< text 
+> compare h ;; Report May | body text of the page is here | more body text goes here ;; Report June | body text of the page is here | more body text goes here
+< pages 1 1: 0/0/1
+< summary 0 0 0 0 | 0 0 0 0 0 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text No differences found.
+< text 
+> compare - ;; Report May | body text of the page is here | more body text goes here ;; Report June | body text of the page is here | more body text goes here
+< pages 1 1: 0/0/0.833333
+< change Changed Text 0 0 old=May new=June detail=-
+<   old [111.348 737.516 134.016 737.516 134.016 748.616 111.348 748.616]
+<   new [111.348 737.516 137.364 737.516 137.364 748.616 111.348 748.616]
+< summary 0 0 1 0 | 1 0 0 0 0 0 | 1 1
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 1 difference: Added 0, Removed 0, Changed 1, Moved 0
+< text 
+< text Pages 1
+< text   Changed text: May -> June
+< text 
+> compare - ;; @a:6 || @b:6 || @c:6 || @d:6 ;; @a:6 || @b:6 || @x:6 || @c:6 || @d:6
+< pages 4 5: 0/0/1 1/1/1 -1/2/0 2/3/1 3/4/1
+< change Added Page -1 2 old= new= detail=Page added
+<   old 
+<   new [0 0 612 0 612 792 0 792]
+< summary 1 0 0 0 | 0 0 0 0 1 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 4 pages and 5 pages
+< text 1 difference: Added 1, Removed 0, Changed 0, Moved 0
+< text 
+< text Pages 3
+< text   Added page (Page added)
+< text 
+> compare - ;; @a:6 || @b:6 || @c:6 || @d:6 ;; @a:6 || @c:6 || @d:6
+< pages 4 3: 0/0/1 1/-1/0 2/1/1 3/2/1
+< change Removed Page 1 -1 old= new= detail=Page removed
+<   old [0 0 612 0 612 792 0 792]
+<   new 
+< summary 0 1 0 0 | 0 0 0 0 1 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 4 pages and 3 pages
+< text 1 difference: Added 0, Removed 1, Changed 0, Moved 0
+< text 
+< text Pages 2 (old file)
+< text   Removed page (Page removed)
+< text 
+> compare - ;; @a:6 || @b:6 || @c:6 || @d:6 || @e:6 ;; @a:6 || @c:6 || @d:6 || @e:6 || @b:6
+< pages 5 5: 0/0/1 2/1/1 3/2/1 4/3/1 1/4/1/moved
+< change Moved Page 1 4 old= new= detail=Page moved
+<   old [0 0 612 0 612 792 0 792]
+<   new [0 0 612 0 612 792 0 792]
+< summary 0 0 0 1 | 0 0 0 0 1 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 5 pages and 5 pages
+< text 1 difference: Added 0, Removed 0, Changed 0, Moved 1
+< text 
+< text Pages 5 (was 2)
+< text   Moved page (Page moved)
+< text 
+> compare - ;; @a:6 || @b:6 || @c:6 ;; @c:6 || @a:6 || @b:6
+< pages 3 3: 2/0/1/moved 0/1/1 1/2/1
+< change Moved Page 2 0 old= new= detail=Page moved
+<   old [0 0 612 0 612 792 0 792]
+<   new [0 0 612 0 612 792 0 792]
+< summary 0 0 0 1 | 0 0 0 0 1 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 3 pages and 3 pages
+< text 1 difference: Added 0, Removed 0, Changed 0, Moved 1
+< text 
+< text Pages 1 (was 3)
+< text   Moved page (Page moved)
+< text 
+> compare - ;; @a:6 || - || - || @b:6 || - ;; @a:6 || - || @b:6 || -
+< pages 5 4: 0/0/1 1/1/1 2/-1/0 3/2/1 4/3/1
+< change Removed Page 2 -1 old= new= detail=Page removed
+<   old [0 0 612 0 612 792 0 792]
+<   new 
+< summary 0 1 0 0 | 0 0 0 0 1 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 5 pages and 4 pages
+< text 1 difference: Added 0, Removed 1, Changed 0, Moved 0
+< text 
+< text Pages 3 (old file)
+< text   Removed page (Page removed)
+< text 
+> compare - ;; @a:6 || @b:6 ;; @a:6 || @zzz:6
+< pages 2 2: 0/0/1 1/-1/0 -1/1/0
+< change Removed Page 1 -1 old= new= detail=Page removed
+<   old [0 0 612 0 612 792 0 792]
+<   new 
+< change Added Page -1 1 old= new= detail=Page added
+<   old 
+<   new [0 0 612 0 612 792 0 792]
+< summary 1 1 0 0 | 0 0 0 0 2 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 2 pages and 2 pages
+< text 2 differences: Added 1, Removed 1, Changed 0, Moved 0
+< text 
+< text Pages 2 (old file)
+< text   Removed page (Page removed)
+< text 
+< text Pages 2
+< text   Added page (Page added)
+< text 
+> compare - ;; @a:6 ;; -
+< pages 1 1: 0/-1/0 -1/0/0
+< change Removed Page 0 -1 old= new= detail=Page removed
+<   old [0 0 612 0 612 792 0 792]
+<   new 
+< change Added Page -1 0 old= new= detail=Page added
+<   old 
+<   new [0 0 612 0 612 792 0 792]
+< summary 1 1 0 0 | 0 0 0 0 2 0 | 0 0
+< text Comparison
+< text old.pdf / new.pdf
+< text 1 pages and 1 pages
+< text 2 differences: Added 1, Removed 1, Changed 0, Moved 0
+< text 
+< text Pages 1 (old file)
+< text   Removed page (Page removed)
+< text 
+< text Pages 1
+< text   Added page (Page added)
+< text 
+> pixel text 5 1 ;; text 5 1 ;; 72
+< regions none
+< similarity 1
+< alignment 0 0 0
+< overlay 600 800 EB3C79F6BCE7F8A8B07DBD197E3CA683C1231B23E4493B7222C3A49A9F50CC9F
+> pixel text 5 1 ;; text 5 1 fill 200 740 80 14 0 ;; 72
+< region 200 740 80 14 1120
+< similarity 0.989224
+< alignment 0 0 0
+< overlay 600 800 92D327FEF7A3F3A4003460BABECC489937337B821E34A75D63C0EBF4C2E93189
+> pixel text 5 1 fill 200 740 80 14 0 ;; text 5 1 ;; 72
+< region 200 740 80 14 1120
+< similarity 0.989224
+< alignment 0 0 0
+< overlay 600 800 BD715B10D21770FCE673005D8B568B89C642217407C0B0E5CB24C0E2F922D396
+> pixel text 5 1 ;; text 5 1 fill 100 740 30 12 0 fill 400 40 30 12 0 ;; 72
+< region 400 40 30 12 360
+< region 100 740 30 12 360
+< similarity 0.993045
+< alignment 0 0 0
+< overlay 600 800 A1E85257B2E15C500F7FE11BA7099B517DE0D600929E9DFC2AA47424EE3DB793
+> pixel text 5 1 ;; text 5 1 fill 200 740 80 14 0 ;; 144
+< region 100 370 40 7 1120
+< similarity 0.989224
+< alignment 0 0 0
+< overlay 600 800 92D327FEF7A3F3A4003460BABECC489937337B821E34A75D63C0EBF4C2E93189
+> pixel text 5 1 ;; text 5 1 fill 200 740 80 14 230 ;; 72
+< regions none
+< similarity 1
+< alignment 0 0 0
+< overlay 600 800 A9C619669F5AFE81E64F59C2BC161955ED01FABFC0D074F6101987396ECCECCE
+> pixel text 5 1 ;; text 5 1 scan 0 7 -5 3 ;; 72
+< regions none
+< similarity 1
+< alignment 7 -5 0
+< overlay 600 800 3A162A915ED34EBE1DB8792496887C7C62FCEB391B0F534DCF26DC2D11E806FA
+> pixel text 5 1 ;; text 5 1 scan 0.8 6 4 2 ;; 72
+< regions none
+< similarity 1
+< alignment 6 4 0.8
+< overlay 600 800 425DA1E0C8077AF0671EB02A96A2510F7A3CF985C88FCD6A61EA8C0526031691
+> pixel text 5 1 ;; text 5 1 scan -1.2 -9 3 0 ;; 72
+< regions none
+< similarity 1
+< alignment -9 3 -1.2
+< overlay 600 800 ADD7B789DF5F0ABF4F9BCB460775C56DB20D1985CECB2C34B9E00333A17CCBF7
+> pixel text 5 1 ;; text 5 1 fill 100 420 120 14 0 scan 0.5 5 -3 0 ;; 72
+< region 105 415 120 15 1320
+< similarity 0.988068
+< alignment 5 -3 0.5
+< overlay 600 800 2462CDCF44E80881BDEDD19270C6EC0883E584F22F1020E9BFE14EFA2835D201
+> pixel text 5 1 ;; text 5 1.25 ;; 72
+< region 511 87 2 13 24
+< region 370 88 2 12 22
+< region 465 88 2 12 22
+< region 345 118 2 12 22
+< region 666 147 2 13 24
+< region 580 148 2 12 22
+< region 380 178 2 12 22
+< region 485 178 2 12 22
+< region 196 207 2 13 24
+< region 556 207 2 13 24
+< region 180 268 2 12 22
+< region 291 297 2 13 24
+< region 195 298 2 12 22
+< region 445 328 2 12 22
+< region 625 328 2 12 22
+< region 186 387 2 13 24
+< region 625 388 2 12 22
+< region 470 418 2 12 22
+< region 430 448 2 12 22
+< region 225 478 2 12 22
+< region 320 538 2 12 22
+< region 596 567 2 13 24
+< region 345 568 2 12 22
+< region 351 627 2 13 24
+< region 305 628 2 12 22
+< region 530 628 2 12 22
+< region 415 658 2 12 22
+< region 605 658 2 12 22
+< region 341 717 2 13 24
+< region 636 717 2 13 24
+< region 545 718 2 12 22
+< region 465 748 2 12 22
+< region 545 748 2 12 22
+< region 185 778 2 12 22
+< region 445 778 2 12 22
+< region 465 808 2 12 22
+< region 621 867 2 13 24
+< region 346 897 2 13 24
+< region 556 897 2 13 24
+< region 270 898 2 12 22
+< region 500 898 2 12 22
+< similarity 0.994519
+< alignment 0 0 0
+< overlay 750 1000 94DCDE8A82958A0CA6A3A3BA464D13E9900AD0297D4149A631603F87CCE4E35A
+> pixel text 5 1 ;; text 5 1 scan 0 4 0 0 ;; 72 ;; a
+< region 60 70 4 10 38
+< region 96 70 4 10 38
+< region 106 70 4 10 38
+< region 140 70 4 10 38
+< region 150 70 4 10 38
+< region 183 70 4 10 38
+< region 193 70 4 10 38
+< region 244 70 4 10 38
+< region 254 70 4 10 38
+< region 297 70 4 10 38
+< region 307 70 4 10 38
+< region 373 70 4 10 38
+< region 383 70 4 10 38
+< region 410 70 4 10 38
+< region 420 70 4 10 38
+< region 487 70 4 10 38
+< region 60 94 4 10 38
+< region 85 94 4 10 38
+< region 95 94 4 10 38
+< region 163 94 4 10 38
+< region 173 94 4 10 38
+< region 211 94 4 10 38
+< region 221 94 4 10 38
+< region 244 94 4 10 38
+< region 254 94 4 10 38
+< region 277 94 4 10 38
+< region 287 94 4 10 38
+< region 331 94 4 10 38
+< region 341 94 4 10 38
+< region 368 94 4 10 38
+< region 378 94 4 10 38
+< region 446 94 4 10 38
+< region 456 94 4 10 38
+< region 480 94 4 10 38
+< region 60 118 4 10 38
+< region 92 118 4 10 38
+< region 102 118 4 10 38
+< region 146 118 4 10 38
+< region 156 118 4 10 38
+< region 179 118 4 10 38
+< region 189 118 4 10 38
+< region 250 118 4 10 38
+< region 260 118 4 10 38
+< region 318 118 4 10 38
+< region 328 118 4 10 38
+< region 357 118 4 10 38
+< region 367 118 4 10 38
+< region 424 118 4 10 38
+< region 434 118 4 10 38
+< region 465 118 4 10 38
+< region 475 118 4 10 38
+< region 534 118 4 10 38
+< region 60 142 4 10 38
+< region 126 142 4 10 38
+< region 136 142 4 10 38
+< region 161 142 4 10 38
+< region 171 142 4 10 38
+< region 192 142 4 10 38
+< region 202 142 4 10 38
+< region 260 142 4 10 38
+< region 270 142 4 10 38
+< region 305 142 4 10 38
+< region 315 142 4 10 38
+< region 340 142 4 10 38
+< region 350 142 4 10 38
+< region 389 142 4 10 38
+< region 399 142 4 10 38
+< region 467 142 4 10 38
+< region 477 142 4 10 38
+< region 505 142 4 10 38
+< region 60 166 4 10 38
+< region 89 166 4 10 38
+< region 99 166 4 10 38
+< region 158 166 4 10 38
+< region 168 166 4 10 38
+< region 205 166 4 10 38
+< region 215 166 4 10 38
+< region 240 166 4 10 38
+< region 250 166 4 10 38
+< region 318 166 4 10 38
+< region 328 166 4 10 38
+< region 389 166 4 10 38
+< region 399 166 4 10 38
+< region 446 166 4 10 38
+< region 456 166 4 10 38
+< region 485 166 4 10 38
+< region 495 166 4 10 38
+< region 516 166 4 10 38
+< region 60 190 4 10 38
+< region 106 190 4 10 38
+< region 116 190 4 10 38
+< region 167 190 4 10 38
+< region 177 190 4 10 38
+< region 241 190 4 10 38
+< region 251 190 4 10 38
+< region 320 190 4 10 38
+< region 330 190 4 10 38
+< region 398 190 4 10 38
+< region 408 190 4 10 38
+< region 440 190 4 10 38
+< region 450 190 4 10 38
+< region 495 190 4 10 38
+< region 505 190 4 10 38
+< region 534 190 4 10 38
+< region 60 214 4 10 38
+< region 93 214 4 10 38
+< region 103 214 4 10 38
+< region 145 214 4 10 38
+< region 155 214 4 10 38
+< region 199 214 4 10 38
+< region 209 214 4 10 38
+< region 250 214 4 10 38
+< region 260 214 4 10 38
+< region 316 214 4 10 38
+< region 326 214 4 10 38
+< region 380 214 4 10 38
+< region 390 214 4 10 38
+< region 428 214 4 10 38
+< region 438 214 4 10 38
+< region 459 214 4 10 38
+< region 469 214 4 10 38
+< region 513 214 4 10 38
+< region 60 238 4 10 38
+< region 84 238 4 10 38
+< region 94 238 4 10 38
+< region 124 238 4 10 38
+< region 134 238 4 10 38
+< region 157 238 4 10 38
+< region 167 238 4 10 38
+< region 234 238 4 10 38
+< region 244 238 4 10 38
+< region 298 238 4 10 38
+< region 308 238 4 10 38
+< region 353 238 4 10 38
+< region 363 238 4 10 38
+< region 432 238 4 10 38
+< region 442 238 4 10 38
+< region 470 238 4 10 38
+< region 60 262 4 10 38
+< region 80 262 4 10 38
+< region 90 262 4 10 38
+< region 155 262 4 10 38
+< region 165 262 4 10 38
+< region 203 262 4 10 38
+< region 213 262 4 10 38
+< region 237 262 4 10 38
+< region 247 262 4 10 38
+< region 316 262 4 10 38
+< region 326 262 4 10 38
+< region 357 262 4 10 38
+< region 367 262 4 10 38
+< region 436 262 4 10 38
+< region 446 262 4 10 38
+< region 501 262 4 10 38
+< region 60 286 4 10 38
+< region 87 286 4 10 38
+< region 97 286 4 10 38
+< region 119 286 4 10 38
+< region 129 286 4 10 38
+< region 154 286 4 10 38
+< region 164 286 4 10 38
+< region 187 286 4 10 38
+< region 197 286 4 10 38
+< region 242 286 4 10 38
+< region 252 286 4 10 38
+< region 312 286 4 10 38
+< region 322 286 4 10 38
+< region 387 286 4 10 38
+< region 397 286 4 10 38
+< region 423 286 4 10 38
+< region 433 286 4 10 38
+< region 479 286 4 10 38
+< region 60 310 4 10 38
+< region 97 310 4 10 38
+< region 107 310 4 10 38
+< region 150 310 4 10 38
+< region 160 310 4 10 38
+< region 185 310 4 10 38
+< region 195 310 4 10 38
+< region 264 310 4 10 38
+< region 274 310 4 10 38
+< region 298 310 4 10 38
+< region 308 310 4 10 38
+< region 352 310 4 10 38
+< region 362 310 4 10 38
+< region 419 310 4 10 38
+< region 429 310 4 10 38
+< region 465 310 4 10 38
+< region 475 310 4 10 38
+< region 501 310 4 10 38
+< region 511 310 4 10 38
+< region 535 310 4 10 38
+< region 60 334 4 10 38
+< region 122 334 4 10 38
+< region 132 334 4 10 38
+< region 158 334 4 10 38
+< region 168 334 4 10 38
+< region 233 334 4 10 38
+< region 243 334 4 10 38
+< region 303 334 4 10 38
+< region 313 334 4 10 38
+< region 336 334 4 10 38
+< region 346 334 4 10 38
+< region 377 334 4 10 38
+< region 387 334 4 10 38
+< region 436 334 4 10 38
+< region 446 334 4 10 38
+< region 506 334 4 10 38
+< region 60 358 4 10 38
+< region 102 358 4 10 38
+< region 112 358 4 10 38
+< region 144 358 4 10 38
+< region 154 358 4 10 38
+< region 196 358 4 10 38
+< region 206 358 4 10 38
+< region 226 358 4 10 38
+< region 236 358 4 10 38
+< region 305 358 4 10 38
+< region 315 358 4 10 38
+< region 345 358 4 10 38
+< region 355 358 4 10 38
+< region 423 358 4 10 38
+< region 433 358 4 10 38
+< region 471 358 4 10 38
+< region 481 358 4 10 38
+< region 502 358 4 10 38
+< region 60 382 4 10 38
+< region 93 382 4 10 38
+< region 103 382 4 10 38
+< region 124 382 4 10 38
+< region 134 382 4 10 38
+< region 181 382 4 10 38
+< region 191 382 4 10 38
+< region 259 382 4 10 38
+< region 269 382 4 10 38
+< region 303 382 4 10 38
+< region 313 382 4 10 38
+< region 374 382 4 10 38
+< region 384 382 4 10 38
+< region 424 382 4 10 38
+< region 434 382 4 10 38
+< region 499 382 4 10 38
+< region 60 406 4 10 38
+< region 94 406 4 10 38
+< region 104 406 4 10 38
+< region 154 406 4 10 38
+< region 164 406 4 10 38
+< region 196 406 4 10 38
+< region 206 406 4 10 38
+< region 270 406 4 10 38
+< region 280 406 4 10 38
+< region 342 406 4 10 38
+< region 352 406 4 10 38
+< region 403 406 4 10 38
+< region 413 406 4 10 38
+< region 475 406 4 10 38
+< region 485 406 4 10 38
+< region 505 406 4 10 38
+< region 60 430 4 10 38
+< region 95 430 4 10 38
+< region 105 430 4 10 38
+< region 174 430 4 10 38
+< region 184 430 4 10 38
+< region 217 430 4 10 38
+< region 227 430 4 10 38
+< region 257 430 4 10 38
+< region 267 430 4 10 38
+< region 291 430 4 10 38
+< region 301 430 4 10 38
+< region 368 430 4 10 38
+< region 378 430 4 10 38
+< region 402 430 4 10 38
+< region 412 430 4 10 38
+< region 454 430 4 10 38
+< region 464 430 4 10 38
+< region 529 430 4 10 38
+< region 60 454 4 10 38
+< region 103 454 4 10 38
+< region 113 454 4 10 38
+< region 138 454 4 10 38
+< region 148 454 4 10 38
+< region 206 454 4 10 38
+< region 216 454 4 10 38
+< region 241 454 4 10 38
+< region 251 454 4 10 38
+< region 277 454 4 10 38
+< region 287 454 4 10 38
+< region 343 454 4 10 38
+< region 353 454 4 10 38
+< region 405 454 4 10 38
+< region 415 454 4 10 38
+< region 478 454 4 10 38
+< region 488 454 4 10 38
+< region 510 454 4 10 38
+< region 60 478 4 10 38
+< region 94 478 4 10 38
+< region 104 478 4 10 38
+< region 132 478 4 10 38
+< region 142 478 4 10 38
+< region 192 478 4 10 38
+< region 202 478 4 10 38
+< region 271 478 4 10 38
+< region 281 478 4 10 38
+< region 333 478 4 10 38
+< region 343 478 4 10 38
+< region 379 478 4 10 38
+< region 389 478 4 10 38
+< region 442 478 4 10 38
+< region 452 478 4 10 38
+< region 498 478 4 10 38
+< region 60 502 4 10 38
+< region 90 502 4 10 38
+< region 100 502 4 10 38
+< region 137 502 4 10 38
+< region 147 502 4 10 38
+< region 196 502 4 10 38
+< region 206 502 4 10 38
+< region 245 502 4 10 38
+< region 255 502 4 10 38
+< region 282 502 4 10 38
+< region 292 502 4 10 38
+< region 321 502 4 10 38
+< region 331 502 4 10 38
+< region 392 502 4 10 38
+< region 402 502 4 10 38
+< region 425 502 4 10 38
+< region 435 502 4 10 38
+< region 456 502 4 10 38
+< region 466 502 4 10 38
+< region 506 502 4 10 38
+< region 516 502 4 10 38
+< region 539 502 4 10 38
+< region 60 526 4 10 38
+< region 127 526 4 10 38
+< region 137 526 4 10 38
+< region 187 526 4 10 38
+< region 197 526 4 10 38
+< region 261 526 4 10 38
+< region 271 526 4 10 38
+< region 333 526 4 10 38
+< region 343 526 4 10 38
+< region 408 526 4 10 38
+< region 418 526 4 10 38
+< region 485 526 4 10 38
+< region 60 550 4 10 38
+< region 87 550 4 10 38
+< region 97 550 4 10 38
+< region 126 550 4 10 38
+< region 136 550 4 10 38
+< region 180 550 4 10 38
+< region 190 550 4 10 38
+< region 235 550 4 10 38
+< region 245 550 4 10 38
+< region 277 550 4 10 38
+< region 287 550 4 10 38
+< region 356 550 4 10 38
+< region 366 550 4 10 38
+< region 414 550 4 10 38
+< region 424 550 4 10 38
+< region 471 550 4 10 38
+< region 60 574 4 10 38
+< region 106 574 4 10 38
+< region 116 574 4 10 38
+< region 151 574 4 10 38
+< region 161 574 4 10 38
+< region 197 574 4 10 38
+< region 207 574 4 10 38
+< region 274 574 4 10 38
+< region 284 574 4 10 38
+< region 330 574 4 10 38
+< region 340 574 4 10 38
+< region 388 574 4 10 38
+< region 398 574 4 10 38
+< region 437 574 4 10 38
+< region 447 574 4 10 38
+< region 510 574 4 10 38
+< region 60 598 4 10 38
+< region 84 598 4 10 38
+< region 94 598 4 10 38
+< region 130 598 4 10 38
+< region 140 598 4 10 38
+< region 163 598 4 10 38
+< region 173 598 4 10 38
+< region 240 598 4 10 38
+< region 250 598 4 10 38
+< region 298 598 4 10 38
+< region 308 598 4 10 38
+< region 341 598 4 10 38
+< region 351 598 4 10 38
+< region 373 598 4 10 38
+< region 383 598 4 10 38
+< region 437 598 4 10 38
+< region 447 598 4 10 38
+< region 479 598 4 10 38
+< region 60 622 4 10 38
+< region 85 622 4 10 38
+< region 95 622 4 10 38
+< region 149 622 4 10 38
+< region 159 622 4 10 38
+< region 192 622 4 10 38
+< region 202 622 4 10 38
+< region 259 622 4 10 38
+< region 269 622 4 10 38
+< region 292 622 4 10 38
+< region 302 622 4 10 38
+< region 357 622 4 10 38
+< region 367 622 4 10 38
+< region 412 622 4 10 38
+< region 422 622 4 10 38
+< region 468 622 4 10 38
+< region 478 622 4 10 38
+< region 514 622 4 10 38
+< region 60 646 4 10 38
+< region 84 646 4 10 38
+< region 94 646 4 10 38
+< region 148 646 4 10 38
+< region 158 646 4 10 38
+< region 183 646 4 10 38
+< region 193 646 4 10 38
+< region 243 646 4 10 38
+< region 253 646 4 10 38
+< region 313 646 4 10 38
+< region 323 646 4 10 38
+< region 373 646 4 10 38
+< region 383 646 4 10 38
+< region 419 646 4 10 38
+< region 429 646 4 10 38
+< region 463 646 4 10 38
+< region 473 646 4 10 38
+< region 531 646 4 10 38
+< region 60 670 4 10 38
+< region 115 670 4 10 38
+< region 125 670 4 10 38
+< region 167 670 4 10 38
+< region 177 670 4 10 38
+< region 223 670 4 10 38
+< region 233 670 4 10 38
+< region 271 670 4 10 38
+< region 281 670 4 10 38
+< region 311 670 4 10 38
+< region 321 670 4 10 38
+< region 341 670 4 10 38
+< region 351 670 4 10 38
+< region 408 670 4 10 38
+< region 418 670 4 10 38
+< region 467 670 4 10 38
+< region 60 694 4 10 38
+< region 123 694 4 10 38
+< region 133 694 4 10 38
+< region 181 694 4 10 38
+< region 191 694 4 10 38
+< region 256 694 4 10 38
+< region 266 694 4 10 38
+< region 307 694 4 10 38
+< region 317 694 4 10 38
+< region 377 694 4 10 38
+< region 387 694 4 10 38
+< region 407 694 4 10 38
+< region 417 694 4 10 38
+< region 445 694 4 10 38
+< region 455 694 4 10 38
+< region 498 694 4 10 38
+< region 60 718 4 10 38
+< region 108 718 4 10 38
+< region 118 718 4 10 38
+< region 176 718 4 10 38
+< region 186 718 4 10 38
+< region 217 718 4 10 38
+< region 227 718 4 10 38
+< region 278 718 4 10 38
+< region 288 718 4 10 38
+< region 330 718 4 10 38
+< region 340 718 4 10 38
+< region 360 718 4 10 38
+< region 370 718 4 10 38
+< region 401 718 4 10 38
+< region 411 718 4 10 38
+< region 446 718 4 10 38
+< region 456 718 4 10 38
+< region 484 718 4 10 38
+< similarity 0.837737
+< alignment 0 0 0
+< overlay 600 800 C7F5E1453BE9DC1BF4CEF324EF35A6F6896E379B945B994D7A567C906BD11CE4
+> pixel text 5 1 ;; text 5 1 scan 0 1 0 0 ;; 72 ;; a
+< regions none
+< similarity 1
+< alignment 0 0 0
+< overlay 600 800 221F8480E0EFB797B6DE9862989A45907FB46B0C3AFF1DE72FADA37FD2523978
