@@ -1474,8 +1474,8 @@
   "Combine": {
     "tr": "Birleştir"
   },
-  "Put pages of other files into this one, or split it.": {
-    "tr": "Başka dosyaların sayfalarını buna ekleyin ya da bunu bölün."
+  "Join files into a new one, or split this one.": {
+    "tr": "Dosyaları yeni bir dosyada birleştirin ya da bunu bölün."
   },
   "Compress": {
     "tr": "Sıkıştır"
@@ -1492,8 +1492,8 @@
   "Sign": {
     "tr": "İmzala"
   },
-  "Sign the file with your name or a certificate.": {
-    "tr": "Dosyayı adınızla ya da bir sertifikayla imzalayın."
+  "Sign the file with your name.": {
+    "tr": "Dosyayı adınızla imzalayın."
   },
   "Fill a form": {
     "tr": "Form doldur"
@@ -1827,7 +1827,7 @@
     "tr": "Geri yükle"
   },
   "Discard": {
-    "tr": "At"
+    "tr": "Sil"
   },
   "Lazy PDF closed before these were saved. Restore them to carry on where you were.": {
     "tr": "Lazy PDF bunlar kaydedilmeden kapandı. Kaldığınız yerden devam etmek için geri yükleyin."
@@ -1907,9 +1907,6 @@
   "Windows cannot read {0} text yet. Add the language under Settings, Time and language.": {
     "tr": "Windows henüz {0} metnini okuyamıyor. Ayarlar, Saat ve dil altından dili ekleyin."
   },
-  "Not available yet.": {
-    "tr": "Henüz kullanılamıyor."
-  },
   "Comment": {
     "tr": "Yorum"
   },
@@ -1952,14 +1949,14 @@
   "Form fields": {
     "tr": "Form alanları"
   },
-  "Add, change and flatten form fields.": {
-    "tr": "Form alanları ekleyin, değiştirin ve düzleştirin."
+  "Fill in, add, change and flatten form fields.": {
+    "tr": "Form alanlarını doldurun, ekleyin, değiştirin ve düzleştirin."
   },
   "Fill and sign": {
     "tr": "Doldur ve imzala"
   },
-  "Fill in a form and sign it with your name.": {
-    "tr": "Bir formu doldurun ve adınızla imzalayın."
+  "Sign, initial, or add text and a date.": {
+    "tr": "İmzalayın, paraf atın ya da metin ve tarih ekleyin."
   },
   "Sign with a certificate and check the signatures of a file.": {
     "tr": "Sertifikayla imzalayın ve bir dosyanın imzalarını denetleyin."
@@ -1981,12 +1978,6 @@
   },
   "Shrink the file and see where its space goes.": {
     "tr": "Dosyayı küçültün ve yerinin nereye gittiğini görün."
-  },
-  "Create from pictures": {
-    "tr": "Resimlerden oluştur"
-  },
-  "Make a PDF from pictures or text.": {
-    "tr": "Resimlerden ya da metinden PDF yapın."
   },
   "Batch": {
     "tr": "Toplu işlem"
@@ -2316,5 +2307,4031 @@
   },
   "All open documents": {
     "tr": "Açık tüm belgeler"
+  },
+  "Add comments from an FDF or XFDF file.": {
+    "tr": "Yorumları bir FDF veya XFDF dosyasından ekleyin."
+  },
+  "Any status": {
+    "tr": "Tüm durumlar"
+  },
+  "Arrow": {
+    "tr": "Ok"
+  },
+  "Attach file": {
+    "tr": "Dosya ekle"
+  },
+  "Automatic": {
+    "tr": "Otomatik"
+  },
+  "Black": {
+    "tr": "Siyah"
+  },
+  "Blue": {
+    "tr": "Mavi"
+  },
+  "Bold": {
+    "tr": "Kalın"
+  },
+  "By author": {
+    "tr": "Yazara göre"
+  },
+  "By page": {
+    "tr": "Sayfaya göre"
+  },
+  "By type": {
+    "tr": "Türe göre"
+  },
+  "Callout": {
+    "tr": "Balon"
+  },
+  "Change look": {
+    "tr": "Görünümü değiştir"
+  },
+  "Click a mark to move, resize or delete it.": {
+    "tr": "Taşımak, boyutlandırmak veya silmek için bir işarete tıklayın."
+  },
+  "Click each corner, double-click to finish.": {
+    "tr": "Her köşeye tıklayın, bitirmek için çift tıklayın."
+  },
+  "Click where the file goes.": {
+    "tr": "Dosyanın yerleşeceği yere tıklayın."
+  },
+  "Click where the note goes.": {
+    "tr": "Notun yerleşeceği yere tıklayın."
+  },
+  "Click where the stamp goes.": {
+    "tr": "Damganın yerleşeceği yere tıklayın."
+  },
+  "Cloud": {
+    "tr": "Bulut"
+  },
+  "Comment files": {
+    "tr": "Yorum dosyaları"
+  },
+  "Comments exported.": {
+    "tr": "Yorumlar dışa aktarıldı."
+  },
+  "Delete": {
+    "tr": "Sil"
+  },
+  "Delete the selected mark.": {
+    "tr": "Seçili işareti silin."
+  },
+  "Drag a box, then type.": {
+    "tr": "Bir kutu sürükleyin, sonra yazın."
+  },
+  "Drag from the spot to where the text goes.": {
+    "tr": "Noktadan metnin yerleşeceği yere sürükleyin."
+  },
+  "Drag over a drawing to remove it.": {
+    "tr": "Bir çizimi silmek için üzerinde sürükleyin."
+  },
+  "Drag to draw a line.": {
+    "tr": "Çizgi çizmek için sürükleyin."
+  },
+  "Drag to draw a rectangle.": {
+    "tr": "Dikdörtgen çizmek için sürükleyin."
+  },
+  "Drag to draw an arrow.": {
+    "tr": "Ok çizmek için sürükleyin."
+  },
+  "Drag to draw an oval.": {
+    "tr": "Oval çizmek için sürükleyin."
+  },
+  "Drag to draw freehand.": {
+    "tr": "Serbest çizmek için sürükleyin."
+  },
+  "Draw": {
+    "tr": "Çiz"
+  },
+  "Edit text": {
+    "tr": "Metni düzenle"
+  },
+  "Erase": {
+    "tr": "Sil"
+  },
+  "Eraser": {
+    "tr": "Silgi"
+  },
+  "Export comments": {
+    "tr": "Yorumları dışa aktar"
+  },
+  "Export summary": {
+    "tr": "Özeti dışa aktar"
+  },
+  "Exporting comments": {
+    "tr": "Yorumlar dışa aktarılıyor"
+  },
+  "FDF file": {
+    "tr": "FDF dosyası"
+  },
+  "Filter": {
+    "tr": "Filtre"
+  },
+  "Filter by text or author": {
+    "tr": "Metne veya yazara göre süz"
+  },
+  "Filter comments": {
+    "tr": "Yorumları süz"
+  },
+  "Flatten comments": {
+    "tr": "Yorumları düzleştir"
+  },
+  "Flattening comments": {
+    "tr": "Yorumlar düzleştiriliyor"
+  },
+  "Green": {
+    "tr": "Yeşil"
+  },
+  "Group by": {
+    "tr": "Grupla"
+  },
+  "Highlight the selected text.": {
+    "tr": "Seçili metni vurgulayın."
+  },
+  "Import": {
+    "tr": "İçe aktar"
+  },
+  "Import comments": {
+    "tr": "Yorumları içe aktar"
+  },
+  "Importing comments": {
+    "tr": "Yorumlar içe aktarılıyor"
+  },
+  "Italic": {
+    "tr": "İtalik"
+  },
+  "Look": {
+    "tr": "Görünüm"
+  },
+  "Mark up text": {
+    "tr": "Metni işaretle"
+  },
+  "Move": {
+    "tr": "Taşı"
+  },
+  "Move marks": {
+    "tr": "İşaretleri taşı"
+  },
+  "No author": {
+    "tr": "Yazar yok"
+  },
+  "No comment matches.": {
+    "tr": "Eşleşen yorum yok."
+  },
+  "No comments to export.": {
+    "tr": "Dışa aktarılacak yorum yok."
+  },
+  "Not a comment file": {
+    "tr": "Yorum dosyası değil"
+  },
+  "Nothing imported": {
+    "tr": "Hiçbir şey eklenmedi"
+  },
+  "Nothing to draw": {
+    "tr": "Çizilecek bir şey yok"
+  },
+  "Nothing to flatten.": {
+    "tr": "Düzleştirilecek bir şey yok."
+  },
+  "Opacity": {
+    "tr": "Opaklık"
+  },
+  "Orange": {
+    "tr": "Turuncu"
+  },
+  "Pencil": {
+    "tr": "Kalem"
+  },
+  "Purple": {
+    "tr": "Mor"
+  },
+  "Red": {
+    "tr": "Kırmızı"
+  },
+  "Replies": {
+    "tr": "Yanıtlar"
+  },
+  "Reply": {
+    "tr": "Yanıtla"
+  },
+  "Reply from {0}: {1}": {
+    "tr": "{0} yanıtı: {1}"
+  },
+  "Resize": {
+    "tr": "Boyutlandır"
+  },
+  "Save a summary of the comments": {
+    "tr": "Yorumların özetini kaydet"
+  },
+  "Save the comments as an FDF or XFDF file.": {
+    "tr": "Yorumları FDF veya XFDF dosyası olarak kaydedin."
+  },
+  "Select some text first.": {
+    "tr": "Önce biraz metin seçin."
+  },
+  "Select text, then pick a markup above.": {
+    "tr": "Metni seçin, sonra yukarıdan bir işaret seçin."
+  },
+  "Selected: {0}": {
+    "tr": "Seçili: {0}"
+  },
+  "Send reply": {
+    "tr": "Yanıtı gönder"
+  },
+  "Set status": {
+    "tr": "Durumu ayarla"
+  },
+  "Share": {
+    "tr": "Paylaş"
+  },
+  "Show status": {
+    "tr": "Durumu göster"
+  },
+  "Squiggly": {
+    "tr": "Dalgalı"
+  },
+  "Stamp text": {
+    "tr": "Damga metni"
+  },
+  "Status": {
+    "tr": "Durum"
+  },
+  "Status: {0}": {
+    "tr": "Durum: {0}"
+  },
+  "Strike": {
+    "tr": "Üstü çizili"
+  },
+  "Strike out the selected text.": {
+    "tr": "Seçili metnin üstünü çizin."
+  },
+  "Summary saved.": {
+    "tr": "Özet kaydedildi."
+  },
+  "Text not drawn": {
+    "tr": "Metin çizilemedi"
+  },
+  "Text of the mark": {
+    "tr": "İşaretin metni"
+  },
+  "That mark has no area. Drag farther and try again.": {
+    "tr": "Bu işaretin bir alanı yok. Daha uzağa sürükleyip yeniden deneyin."
+  },
+  "Underline the selected text with a wavy line.": {
+    "tr": "Seçili metnin altını dalgalı çizgiyle çizin."
+  },
+  "Underline the selected text.": {
+    "tr": "Seçili metnin altını çizin."
+  },
+  "Width": {
+    "tr": "Kalınlık"
+  },
+  "XFDF file": {
+    "tr": "XFDF dosyası"
+  },
+  "Yellow": {
+    "tr": "Sarı"
+  },
+  "{0} could not be read. Pick an FDF or XFDF file.": {
+    "tr": "{0} okunamadı. Bir FDF veya XFDF dosyası seçin."
+  },
+  "{0} could not be written. Check that the disk has room and try again.": {
+    "tr": "{0} yazılamadı. Diskte yer olduğundan emin olup yeniden deneyin."
+  },
+  "{0} has no comments for the pages of this file.": {
+    "tr": "{0} dosyasında bu belgenin sayfalarına ait yorum yok."
+  },
+  "{0} pt": {
+    "tr": "{0} pt"
+  },
+  "This file does not allow comments.": {
+    "tr": "Bu dosya yorum eklemeye izin vermiyor."
+  },
+  "Imported {0} comment.": {
+    "other": "Imported {0} comments.",
+    "tr": "{0} yorum eklendi."
+  },
+  "{0} comment": {
+    "other": "{0} comments",
+    "tr": "{0} yorum"
+  },
+  "Flattened {0} mark.": {
+    "other": "Flattened {0} marks.",
+    "tr": "{0} işaret düzleştirildi."
+  },
+  "Change not kept": {
+    "tr": "Değişiklik tutulamadı"
+  },
+  "The file would not read back with that change. Save a copy and try again.": {
+    "tr": "Dosya bu değişiklikle yeniden okunamadı. Bir kopya kaydedip yeniden deneyin."
+  },
+  "File too large": {
+    "tr": "Dosya çok büyük"
+  },
+  "{0} is over 50 MB. Attach a smaller file.": {
+    "tr": "{0} 50 MB'ı aşıyor. Daha küçük bir dosya ekleyin."
+  },
+  "Attaching file": {
+    "tr": "Dosya ekleniyor"
+  },
+  "The comments in {0} are already in this file or belong to other pages.": {
+    "tr": "{0} içindeki yorumlar bu dosyada zaten var ya da başka sayfalara ait."
+  },
+  "Some comments left out": {
+    "tr": "Bazı yorumlar alınmadı"
+  },
+  "{0} skipped as copies or for other pages. {1} without a drawing.": {
+    "tr": "{0} yorum kopya olduğu veya başka sayfalara ait olduğu için atlandı. {1} yorumun çizimi yok."
+  },
+  "Some content left out": {
+    "tr": "Bazı içerik dışarıda kaldı"
+  },
+  "{0} attachment or picture stamp is not in an XFDF file. Export as FDF to keep it.": {
+    "other": "{0} attachments or picture stamps are not in an XFDF file. Export as FDF to keep them.",
+    "tr": "{0} ek veya resimli damga XFDF dosyasında yer almıyor. Korumak için FDF olarak dışa aktarın."
+  },
+  "Comments not exported": {
+    "tr": "Yorumlar dışa aktarılamadı"
+  },
+  "The file could not be read for export. Save a copy and try again.": {
+    "tr": "Dosya dışa aktarmak için okunamadı. Bir kopya kaydedip yeniden deneyin."
+  },
+  "Comments not flattened": {
+    "tr": "Yorumlar düzleştirilemedi"
+  },
+  "The pages could not be changed. Save a copy of the file and try again.": {
+    "tr": "Sayfalar değiştirilemedi. Dosyanın bir kopyasını kaydedip yeniden deneyin."
+  },
+  "Check before going on": {
+    "tr": "Devam etmeden önce denetleyin"
+  },
+  "Go on anyway": {
+    "tr": "Yine de devam et"
+  },
+  "This file is signed, so changing it breaks the signatures.": {
+    "tr": "Bu dosya imzalı, bu yüzden değiştirmek imzaları bozar."
+  },
+  "This comment cannot be answered": {
+    "tr": "Bu yoruma yanıt verilemiyor"
+  },
+  "Its file stores it in a way that has no room for replies. Add a note next to it.": {
+    "tr": "Dosya bunu yanıt eklemeye uygun olmayan biçimde saklıyor. Yanına bir not ekleyin."
+  },
+  "Differences": {
+    "tr": "Farklar"
+  },
+  "Looks different": {
+    "tr": "Farklı görünüyor"
+  },
+  "Page {0} of the old file": {
+    "tr": "Eski dosyada sayfa {0}"
+  },
+  "Page {0}, was {1}": {
+    "tr": "Sayfa {0}, eskiden {1}"
+  },
+  "Comparing files": {
+    "tr": "Dosyalar karşılaştırılıyor"
+  },
+  "Writing report": {
+    "tr": "Rapor yazılıyor"
+  },
+  "Report not written": {
+    "tr": "Rapor yazılmadı"
+  },
+  "The report could not be built from this comparison. Run the comparison again.": {
+    "tr": "Rapor bu karşılaştırmadan oluşturulamadı. Karşılaştırmayı yeniden yapın."
+  },
+  "Nothing to show with these filters.": {
+    "tr": "Bu süzgeçlerle gösterilecek bir şey yok."
+  },
+  "Words: {0} added, {1} removed": {
+    "tr": "Sözcük: {0} eklendi, {1} silindi"
+  },
+  "{0} area differs": {
+    "other": "{0} areas differ",
+    "tr": "{0} alan farklı"
+  },
+  "Compare with": {
+    "tr": "Şununla karşılaştır"
+  },
+  "Another file": {
+    "tr": "Başka dosya"
+  },
+  "Earlier version": {
+    "tr": "Önceki sürüm"
+  },
+  "Choose file": {
+    "tr": "Dosya seç"
+  },
+  "This file is the older one": {
+    "tr": "Bu dosya eski olan"
+  },
+  "This file has no earlier versions.": {
+    "tr": "Bu dosyanın önceki sürümü yok."
+  },
+  "Look at": {
+    "tr": "Karşılaştırma yöntemi"
+  },
+  "Content": {
+    "tr": "İçerik"
+  },
+  "Pixels": {
+    "tr": "Pikseller"
+  },
+  "Ignore capitals": {
+    "tr": "Büyük harfleri yok say"
+  },
+  "Ignore spacing": {
+    "tr": "Boşlukları yok say"
+  },
+  "Ignore headers and footers": {
+    "tr": "Üst ve alt bilgileri yok say"
+  },
+  "Show": {
+    "tr": "Göster"
+  },
+  "Page properties": {
+    "tr": "Sayfa özellikleri"
+  },
+  "File details": {
+    "tr": "Dosya bilgileri"
+  },
+  "Side by side": {
+    "tr": "Yan yana"
+  },
+  "Write report": {
+    "tr": "Rapor yaz"
+  },
+  "Version {0}": {
+    "tr": "Sürüm {0}"
+  },
+  "No file chosen": {
+    "tr": "Dosya seçilmedi"
+  },
+  "Only in the other file.": {
+    "tr": "Yalnızca diğer dosyada."
+  },
+  "Compares how the pages look. Use it for scans and drawings.": {
+    "tr": "Sayfaların görünüşünü karşılaştırır. Taramalar ve çizimler için kullanın."
+  },
+  "Compares words, fonts, pictures, notes and form values.": {
+    "tr": "Sözcükleri, yazı tiplerini, resimleri, notları ve form değerlerini karşılaştırır."
+  },
+  "{0}, version {1}": {
+    "tr": "{0}, sürüm {1}"
+  },
+  "Overlay": {
+    "tr": "Üst üste"
+  },
+  "Scroll together": {
+    "tr": "Birlikte kaydır"
+  },
+  "Comparison of {0} and {1}": {
+    "tr": "{0} ve {1} karşılaştırması"
+  },
+  "Old: {0}": {
+    "tr": "Eski: {0}"
+  },
+  "New: {0}": {
+    "tr": "Yeni: {0}"
+  },
+  "Blue marks places that look different.": {
+    "tr": "Mavi, farklı görünen yerleri işaretler."
+  },
+  "Page {0}, {1} % down": {
+    "tr": "Sayfa {0}, yukarıdan %{1}"
+  },
+  "Pages could not be drawn.": {
+    "tr": "Sayfalar çizilemedi."
+  },
+  "{0} page could not be drawn.": {
+    "other": "{0} pages could not be drawn.",
+    "tr": "{0} sayfa çizilemedi."
+  },
+  "Only the first {0} places are listed.": {
+    "tr": "Yalnızca ilk {0} yer listelendi."
+  },
+  "Report not allowed": {
+    "tr": "Rapora izin yok"
+  },
+  "{0} limits what readers may do. Open it with its owner password to write a report.": {
+    "tr": "{0} okuyucuların yapabileceklerini sınırlıyor. Rapor yazmak için dosyayı sahip parolasıyla açın."
+  },
+  "Nothing to report": {
+    "tr": "Raporlanacak bir şey yok"
+  },
+  "No difference matches the kinds switched on. Switch on more kinds under Show.": {
+    "tr": "Açık türlerle eşleşen fark yok. Göster altında daha fazla tür açın."
+  },
+  "{0} (filtered)": {
+    "tr": "{0} (süzülmüş)"
+  },
+  "{0}, filtered - {1}.pdf": {
+    "tr": "{0}, süzülmüş - {1}.pdf"
+  },
+  "{0} did not open. Check it and compare again.": {
+    "tr": "{0} açılmadı. Denetleyip yeniden karşılaştırın."
+  },
+  "{0} is locked for certificate holders. Pick one that opens it.": {
+    "tr": "{0} sertifika sahipleri için kilitli. Dosyayı açan bir sertifika seçin."
+  },
+  "{0} is locked. Type its password.": {
+    "tr": "{0} kilitli. Parolasını yazın."
+  },
+  "File is locked.": {
+    "tr": "Dosya kilitli."
+  },
+  "File changed. Compare again.": {
+    "tr": "Dosya değişti. Yeniden karşılaştırın."
+  },
+  "Password of the other file": {
+    "tr": "Diğer dosyanın parolası"
+  },
+  "Certificate of the other file": {
+    "tr": "Diğer dosyanın sertifikası"
+  },
+  "Creating": {
+    "tr": "Oluşturuluyor"
+  },
+  "Some left out": {
+    "tr": "Bazıları dışarıda kaldı"
+  },
+  "Some letters have no shape in the font and were left out.": {
+    "tr": "Bazı harflerin yazı tipinde şekli yok, bu yüzden atlandı."
+  },
+  "{0} picture could not be read.": {
+    "tr": "{0} resim okunamadı.",
+    "other": "{0} pictures could not be read."
+  },
+  "Make a PDF from": {
+    "tr": "PDF yapılacak kaynak"
+  },
+  "Blank pages": {
+    "tr": "Boş sayfalar"
+  },
+  "Clipboard": {
+    "tr": "Pano"
+  },
+  "Number of pages": {
+    "tr": "Sayfa sayısı"
+  },
+  "Add pictures": {
+    "tr": "Resim ekle"
+  },
+  "Move up": {
+    "tr": "Yukarı taşı"
+  },
+  "Move down": {
+    "tr": "Aşağı taşı"
+  },
+  "Remove": {
+    "tr": "Kaldır"
+  },
+  "Text for the pages": {
+    "tr": "Sayfaların metni"
+  },
+  "Open a text file": {
+    "tr": "Metin dosyası aç"
+  },
+  "Paper": {
+    "tr": "Kağıt"
+  },
+  "Size of the picture": {
+    "tr": "Resmin boyutu"
+  },
+  "Orientation": {
+    "tr": "Yön"
+  },
+  "Portrait": {
+    "tr": "Dikey"
+  },
+  "Landscape": {
+    "tr": "Yatay"
+  },
+  "Margin": {
+    "tr": "Kenar boşluğu"
+  },
+  "Narrow": {
+    "tr": "Dar"
+  },
+  "Normal": {
+    "tr": "Normal"
+  },
+  "Wide": {
+    "tr": "Geniş"
+  },
+  "Text size": {
+    "tr": "Metin boyutu"
+  },
+  "Create": {
+    "tr": "Oluştur"
+  },
+  "The clipboard holds text.": {
+    "tr": "Panoda metin var."
+  },
+  "The clipboard holds a picture.": {
+    "tr": "Panoda resim var."
+  },
+  "Copy text or a picture, then come back.": {
+    "tr": "Bir metin veya resim kopyalayın, sonra buraya dönün."
+  },
+  "Blank.pdf": {
+    "tr": "Boş.pdf"
+  },
+  "Text.pdf": {
+    "tr": "Metin.pdf"
+  },
+  "Clipboard.pdf": {
+    "tr": "Pano.pdf"
+  },
+  "Pictures.pdf": {
+    "tr": "Resimler.pdf"
+  },
+  "Clipboard is empty": {
+    "tr": "Pano boş"
+  },
+  "Copy text or a picture, then try again.": {
+    "tr": "Bir metin veya resim kopyalayın, sonra yeniden deneyin."
+  },
+  "No font for this text": {
+    "tr": "Bu metin için yazı tipi yok"
+  },
+  "No font on this computer can draw the text. Remove the letters it cannot show.": {
+    "tr": "Bu bilgisayardaki hiçbir yazı tipi metni çizemiyor. Gösteremediği harfleri çıkarın."
+  },
+  "No picture to use": {
+    "tr": "Kullanılacak resim yok"
+  },
+  "None of the pictures could be read. Pick JPEG, PNG, TIFF, BMP, GIF or HEIC files.": {
+    "tr": "Resimlerin hiçbiri okunamadı. JPEG, PNG, TIFF, BMP, GIF veya HEIC dosyaları seçin."
+  },
+  "Margin is too wide": {
+    "tr": "Kenar boşluğu çok geniş"
+  },
+  "The margin leaves no room on the page. Pick a smaller margin.": {
+    "tr": "Kenar boşluğu sayfada yer bırakmıyor. Daha küçük bir boşluk seçin."
+  },
+  "Windows does not let Lazy PDF read one of the pictures. Check who may open it.": {
+    "tr": "Windows, Lazy PDF'nin resimlerden birini okumasına izin vermiyor. Dosyayı kimlerin açabildiğini denetleyin."
+  },
+  "Picture cannot be read": {
+    "tr": "Resim okunamıyor"
+  },
+  "One of the pictures could not be read. Close any program that has it open and try again.": {
+    "tr": "Resimlerden biri okunamadı. Dosyayı açık tutan programları kapatıp yeniden deneyin."
+  },
+  "Exporting": {
+    "tr": "Dışa aktarılıyor"
+  },
+  "No pictures found": {
+    "tr": "Resim bulunamadı"
+  },
+  "This file has no pictures to save.": {
+    "tr": "Bu dosyada kaydedilecek resim yok."
+  },
+  "Nothing exported": {
+    "tr": "Dışa aktarılan bir şey yok"
+  },
+  "Windows cannot draw these pages. Try another format.": {
+    "tr": "Windows bu sayfaları çizemiyor. Başka bir biçim deneyin."
+  },
+  "Saved as {0}.": {
+    "tr": "{0} olarak kaydedildi."
+  },
+  "Exported": {
+    "tr": "Dışa aktarıldı"
+  },
+  "Show in folder": {
+    "tr": "Klasörde göster"
+  },
+  "Export saved.": {
+    "tr": "Dışa aktarma kaydedildi."
+  },
+  "Saved {0} file in {1}.": {
+    "tr": "{0} dosya {1} klasörüne kaydedildi.",
+    "other": "Saved {0} files in {1}."
+  },
+  "Web page (.html)": {
+    "tr": "Web sayfası (.html)"
+  },
+  "Rich text (.rtf)": {
+    "tr": "Zengin metin (.rtf)"
+  },
+  "Plain text (.txt)": {
+    "tr": "Düz metin (.txt)"
+  },
+  "Pictures of the pages": {
+    "tr": "Sayfaların resimleri"
+  },
+  "Pictures in the file": {
+    "tr": "Dosyadaki resimler"
+  },
+  "All pages": {
+    "tr": "Tüm sayfalar"
+  },
+  "This page": {
+    "tr": "Bu sayfa"
+  },
+  "These pages": {
+    "tr": "Şu sayfalar"
+  },
+  "Pages to export": {
+    "tr": "Dışa aktarılacak sayfalar"
+  },
+  "Layout": {
+    "tr": "Düzen"
+  },
+  "Text that reflows": {
+    "tr": "Yeniden akan metin"
+  },
+  "Include pictures": {
+    "tr": "Resimleri ekle"
+  },
+  "Picture type": {
+    "tr": "Resim türü"
+  },
+  "Resolution": {
+    "tr": "Çözünürlük"
+  },
+  "Quality": {
+    "tr": "Kalite"
+  },
+  "This file does not allow copying its content.": {
+    "tr": "Bu dosya içeriğinin kopyalanmasına izin vermiyor."
+  },
+  "Windows cannot draw this file.": {
+    "tr": "Windows bu dosyayı çizemiyor."
+  },
+  "Choose a folder for the pictures": {
+    "tr": "Resimler için bir klasör seçin"
+  },
+  "Too large to export": {
+    "tr": "Dışa aktarmak için çok büyük"
+  },
+  "{0} is too big for this format. Export fewer pages or pick another format.": {
+    "tr": "{0} bu biçim için çok büyük. Daha az sayfa aktarın veya başka bir biçim seçin."
+  },
+  "Not exported": {
+    "tr": "Dışa aktarılmadı"
+  },
+  "Windows does not let Lazy PDF write to {0}. Pick another folder.": {
+    "tr": "Windows, Lazy PDF'nin {0} konumuna yazmasına izin vermiyor. Başka bir klasör seçin."
+  },
+  "{0} could not be written. Check that the disk has room and that nothing else has the file open.": {
+    "tr": "{0} yazılamadı. Diskte yer olduğunu ve dosyayı başka bir şeyin açık tutmadığını denetleyin."
+  },
+  "Make a PDF from blank pages, pictures, text or the clipboard.": {
+    "tr": "Boş sayfalardan, resimlerden, metinden veya panodan PDF yapın."
+  },
+  "Letter": {
+    "tr": "Letter"
+  },
+  "Type a number from 1 to {0}.": {
+    "tr": "1 ile {0} arasında bir sayı yazın."
+  },
+  "That file is too big. Pick a text file under 1 MB.": {
+    "tr": "Bu dosya çok büyük. 1 MB'den küçük bir metin dosyası seçin."
+  },
+  "That file could not be read. Check that no other program has it open.": {
+    "tr": "Bu dosya okunamadı. Başka bir programda açık olmadığına bakın."
+  },
+  "Create a PDF": {
+    "tr": "PDF oluştur"
+  },
+  "No text found": {
+    "tr": "Metin bulunamadı"
+  },
+  "This file has no text to export. Run Make searchable first, or save the pages as pictures.": {
+    "tr": "Bu dosyada dışa aktarılacak metin yok. Önce Aranabilir yap'ı çalıştırın veya sayfaları resim olarak kaydedin."
+  },
+  "Text outside the tables was left out.": {
+    "tr": "Tabloların dışındaki metin dışarıda kaldı."
+  },
+  "Pages past the first 1000 sheets were left out.": {
+    "tr": "İlk 1000 sayfadan sonrası dışarıda kaldı."
+  },
+  "Text where it is on the page": {
+    "tr": "Metin sayfadaki yerinde"
+  },
+  "Replacing text": {
+    "tr": "Metin değiştiriliyor"
+  },
+  "Text replaced.": {
+    "tr": "Metin değiştirildi."
+  },
+  "This link does something else. Saving replaces it.": {
+    "tr": "Bu bağlantı başka bir iş yapıyor. Kaydetmek onu değiştirir."
+  },
+  "Link added.": {
+    "tr": "Bağlantı eklendi."
+  },
+  "Link changed.": {
+    "tr": "Bağlantı değişti."
+  },
+  "Link removed.": {
+    "tr": "Bağlantı kaldırıldı."
+  },
+  "All files": {
+    "tr": "Tüm dosyalar"
+  },
+  "Deleted.": {
+    "tr": "Silindi."
+  },
+  "Turned.": {
+    "tr": "Döndürüldü."
+  },
+  "Flipped.": {
+    "tr": "Çevrildi."
+  },
+  "Order changed.": {
+    "tr": "Sıra değişti."
+  },
+  "Replace the picture": {
+    "tr": "Resmi değiştir"
+  },
+  "Picture replaced.": {
+    "tr": "Resim değiştirildi."
+  },
+  "Save the picture": {
+    "tr": "Resmi kaydet"
+  },
+  "Picture saved.": {
+    "tr": "Resim kaydedildi."
+  },
+  "Picture not saved": {
+    "tr": "Resim kaydedilmedi"
+  },
+  "{0} could not be written. Choose another folder.": {
+    "tr": "{0} yazılamadı. Başka bir klasör seçin."
+  },
+  "Picture cropped.": {
+    "tr": "Resim kırpıldı."
+  },
+  "Add a picture": {
+    "tr": "Resim ekle"
+  },
+  "Picture added.": {
+    "tr": "Resim eklendi."
+  },
+  "{0} could not be read. Check that the file is still there.": {
+    "tr": "{0} okunamadı. Dosyanın yerinde olduğunu kontrol edin."
+  },
+  "Shape changed.": {
+    "tr": "Şekil değişti."
+  },
+  "{0}%": {
+    "tr": "%{0}"
+  },
+  "Opacity changed.": {
+    "tr": "Opaklık değişti."
+  },
+  "A table is changed one line at a time.": {
+    "tr": "Tablo her seferinde bir satır değiştirilir."
+  },
+  "Text changed.": {
+    "tr": "Metin değişti."
+  },
+  "Paragraph changed.": {
+    "tr": "Paragraf değişti."
+  },
+  "Text box added.": {
+    "tr": "Metin kutusu eklendi."
+  },
+  "Font changed.": {
+    "tr": "Yazı tipi değişti."
+  },
+  "Size changed.": {
+    "tr": "Boyut değişti."
+  },
+  "Spacing changed.": {
+    "tr": "Aralık değişti."
+  },
+  "Bold changed.": {
+    "tr": "Kalınlık değişti."
+  },
+  "Italic changed.": {
+    "tr": "Eğiklik değişti."
+  },
+  "Aligned.": {
+    "tr": "Hizalandı."
+  },
+  "Select": {
+    "tr": "Seç"
+  },
+  "Select objects": {
+    "tr": "Nesneleri seç"
+  },
+  "Add a text box": {
+    "tr": "Metin kutusu ekle"
+  },
+  "Add or change a link": {
+    "tr": "Bağlantı ekle veya değiştir"
+  },
+  "Size in points": {
+    "tr": "Punto olarak boyut"
+  },
+  "pt": {
+    "tr": "pt"
+  },
+  "Alignment": {
+    "tr": "Hizalama"
+  },
+  "Left": {
+    "tr": "Sol"
+  },
+  "Align left": {
+    "tr": "Sola hizala"
+  },
+  "Centre": {
+    "tr": "Orta"
+  },
+  "Align centre": {
+    "tr": "Ortala"
+  },
+  "Right": {
+    "tr": "Sağ"
+  },
+  "Align right": {
+    "tr": "Sağa hizala"
+  },
+  "Justify": {
+    "tr": "İki yana yasla"
+  },
+  "Line spacing": {
+    "tr": "Satır aralığı"
+  },
+  "Line spacing in points": {
+    "tr": "Punto olarak satır aralığı"
+  },
+  "Reflow the paragraph": {
+    "tr": "Paragrafı yeniden diz"
+  },
+  "Picture": {
+    "tr": "Resim"
+  },
+  "Replace": {
+    "tr": "Değiştir"
+  },
+  "Save as file": {
+    "tr": "Dosya olarak kaydet"
+  },
+  "Save the picture as a file": {
+    "tr": "Resmi dosya olarak kaydet"
+  },
+  "Crop": {
+    "tr": "Kırp"
+  },
+  "Crop the picture": {
+    "tr": "Resmi kırp"
+  },
+  "Shape": {
+    "tr": "Şekil"
+  },
+  "Fill": {
+    "tr": "Dolgu"
+  },
+  "Line width": {
+    "tr": "Çizgi kalınlığı"
+  },
+  "Line width in points": {
+    "tr": "Punto olarak çizgi kalınlığı"
+  },
+  "Arrange": {
+    "tr": "Sırala"
+  },
+  "To front": {
+    "tr": "En öne"
+  },
+  "Bring to front": {
+    "tr": "En öne getir"
+  },
+  "Forward": {
+    "tr": "Öne"
+  },
+  "Bring forward": {
+    "tr": "Bir öne getir"
+  },
+  "Backward": {
+    "tr": "Arkaya"
+  },
+  "Send backward": {
+    "tr": "Bir arkaya gönder"
+  },
+  "To back": {
+    "tr": "En arkaya"
+  },
+  "Send to back": {
+    "tr": "En arkaya gönder"
+  },
+  "Turn left": {
+    "tr": "Sola çevir"
+  },
+  "Turn left 90 degrees": {
+    "tr": "90 derece sola çevir"
+  },
+  "Turn right": {
+    "tr": "Sağa çevir"
+  },
+  "Turn right 90 degrees": {
+    "tr": "90 derece sağa çevir"
+  },
+  "Flip across": {
+    "tr": "Yatay çevir"
+  },
+  "Flip left to right": {
+    "tr": "Soldan sağa çevir"
+  },
+  "Flip down": {
+    "tr": "Dikey çevir"
+  },
+  "Flip top to bottom": {
+    "tr": "Yukarıdan aşağıya çevir"
+  },
+  "Delete the selection": {
+    "tr": "Seçimi sil"
+  },
+  "Web address": {
+    "tr": "Web adresi"
+  },
+  "Link to a web address": {
+    "tr": "Web adresine bağlantı"
+  },
+  "Link to a page": {
+    "tr": "Sayfaya bağlantı"
+  },
+  "Where the link goes": {
+    "tr": "Bağlantının gittiği yer"
+  },
+  "Remove the link": {
+    "tr": "Bağlantıyı kaldır"
+  },
+  "Replace in the whole file": {
+    "tr": "Tüm dosyada değiştir"
+  },
+  "Text to find": {
+    "tr": "Aranacak metin"
+  },
+  "Replace with": {
+    "tr": "Yeni metin"
+  },
+  "Text to put in its place": {
+    "tr": "Yerine konacak metin"
+  },
+  "Whole words only": {
+    "tr": "Yalnızca tam sözcükler"
+  },
+  "Replace all": {
+    "tr": "Tümünü değiştir"
+  },
+  "Colour changed.": {
+    "tr": "Renk değişti."
+  },
+  "Apply text": {
+    "tr": "Metni uygula"
+  },
+  "Add link": {
+    "tr": "Bağlantı ekle"
+  },
+  "Save link": {
+    "tr": "Bağlantıyı kaydet"
+  },
+  "Moved.": {
+    "tr": "Taşındı."
+  },
+  "Resized.": {
+    "tr": "Yeniden boyutlandı."
+  },
+  "The page changed. Select the object again.": {
+    "tr": "Sayfa değişti. Nesneyi yeniden seçin."
+  },
+  "Drag a box on the page, then type.": {
+    "tr": "Sayfada bir kutu çizin, sonra yazın."
+  },
+  "Drag an area to make a link, or click a link to change it.": {
+    "tr": "Bağlantı için bir alan çizin veya değiştirmek için bir bağlantıya tıklayın."
+  },
+  "Drag the part of the picture to keep.": {
+    "tr": "Resimde tutulacak bölümü çizin."
+  },
+  "Click text or a picture to change it. Drag to select several.": {
+    "tr": "Değiştirmek için bir metne veya resme tıklayın. Birkaçını seçmek için sürükleyin."
+  },
+  "Drag to move. Drag a handle to resize.": {
+    "tr": "Taşımak için sürükleyin. Boyutlandırmak için bir tutamacı sürükleyin."
+  },
+  "Text on the page": {
+    "tr": "Sayfadaki metin"
+  },
+  "Pick a mode above to edit the page again.": {
+    "tr": "Sayfayı yeniden düzenlemek için yukarıdan bir mod seçin."
+  },
+  "Grey": {
+    "tr": "Gri"
+  },
+  "White": {
+    "tr": "Beyaz"
+  },
+  "Nothing found to replace.": {
+    "tr": "Değiştirilecek bir şey bulunamadı."
+  },
+  "The new text runs into other text.": {
+    "tr": "Yeni metin başka metnin üstüne biniyor."
+  },
+  "The paragraph grew. Text below stayed put.": {
+    "tr": "Paragraf uzadı. Altındaki metin yerinde kaldı."
+  },
+  "Some letters use {0}.": {
+    "tr": "Bazı harfler {0} yazı tipini kullanıyor."
+  },
+  "Some objects were left as they were: {0}": {
+    "tr": "Bazı nesneler olduğu gibi bırakıldı: {0}"
+  },
+  "Replaced {0} time.": {
+    "other": "Replaced {0} times.",
+    "tr": "{0} yer değiştirildi."
+  },
+  "{0} match was left as it was: {1}": {
+    "other": "{0} matches were left as they were: {1}",
+    "tr": "{0} eşleşme olduğu gibi bırakıldı: {1}"
+  },
+  "Change link": {
+    "tr": "Bağlantıyı değiştir"
+  },
+  "Remove link": {
+    "tr": "Bağlantıyı kaldır"
+  },
+  "Replace text": {
+    "tr": "Metni değiştir"
+  },
+  "Text not replaced": {
+    "tr": "Metin değiştirilemedi"
+  },
+  "The file changed meanwhile. Replace again.": {
+    "tr": "Dosya bu sırada değişti. Yeniden değiştirin."
+  },
+  "The file could not be changed. Try again or open it again.": {
+    "tr": "Dosya değiştirilemedi. Yeniden deneyin ya da dosyayı yeniden açın."
+  },
+  "This shape has no fill. Use the line colour instead.": {
+    "tr": "Bu şeklin dolgusu yok. Çizgi rengini kullanın."
+  },
+  "This shape has no line. Use the fill colour instead.": {
+    "tr": "Bu şeklin çizgisi yok. Dolgu rengini kullanın."
+  },
+  "Typed text was not kept": {
+    "tr": "Yazılan metin korunmadı"
+  },
+  "Its permissions do not allow it. Open it with the owner password.": {
+    "tr": "İzinleri buna izin vermiyor. Sahip parolasıyla açın."
+  },
+  "This file cannot be changed": {
+    "tr": "Bu dosya değiştirilemez"
+  },
+  "A change breaks its signatures or its certification. Change it only if that is fine.": {
+    "tr": "Değişiklik imzalarını veya onay durumunu bozar. Yalnızca sakıncası yoksa değiştirin."
+  },
+  "A red outline marks a required field that is empty.": {
+    "tr": "Kırmızı çerçeve, boş bırakılmış zorunlu alanı gösterir."
+  },
+  "Add checked fields": {
+    "tr": "İşaretli alanları ekle"
+  },
+  "Add form field": {
+    "tr": "Form alanı ekle"
+  },
+  "Add form fields": {
+    "tr": "Form alanları ekle"
+  },
+  "Added {0} field.": {
+    "other": "Added {0} fields.",
+    "tr": "Eklenen alan: {0}."
+  },
+  "Button caption": {
+    "tr": "Düğme yazısı"
+  },
+  "By column": {
+    "tr": "Sütuna göre"
+  },
+  "By row": {
+    "tr": "Satıra göre"
+  },
+  "CSV files": {
+    "tr": "CSV dosyaları"
+  },
+  "Caption": {
+    "tr": "Yazı"
+  },
+  "Change anyway": {
+    "tr": "Yine de değiştir"
+  },
+  "Change button caption": {
+    "tr": "Düğme yazısını değiştir"
+  },
+  "Change choices": {
+    "tr": "Seçenekleri değiştir"
+  },
+  "Change field hint": {
+    "tr": "Alan ipucunu değiştir"
+  },
+  "Change hidden text": {
+    "tr": "Gizli metni değiştir"
+  },
+  "Change longest text": {
+    "tr": "En uzun metni değiştir"
+  },
+  "Change read only": {
+    "tr": "Salt okunur ayarını değiştir"
+  },
+  "Change required": {
+    "tr": "Zorunlu ayarını değiştir"
+  },
+  "Change several choices": {
+    "tr": "Çoklu seçimi değiştir"
+  },
+  "Change several lines": {
+    "tr": "Çok satırlı ayarını değiştir"
+  },
+  "Change starting value": {
+    "tr": "Başlangıç değerini değiştir"
+  },
+  "Change tab order": {
+    "tr": "Sekme sırasını değiştir"
+  },
+  "Change typing in the list": {
+    "tr": "Listeye yazmayı değiştir"
+  },
+  "Check the name and the size of the field, then try again.": {
+    "tr": "Alanın adını ve boyutunu kontrol edin, sonra yeniden deneyin."
+  },
+  "Choices": {
+    "tr": "Seçenekler"
+  },
+  "Choose Edit fields to add some, or to find the blanks of a form.": {
+    "tr": "Alan eklemek veya formun boşluklarını bulmak için Alanları düzenle sekmesini seçin."
+  },
+  "Data not read": {
+    "tr": "Veriler okunamadı"
+  },
+  "Delete field": {
+    "tr": "Alanı sil"
+  },
+  "Delete form field": {
+    "tr": "Form alanını sil"
+  },
+  "Drag on the page to draw a field. Click a field to change it.": {
+    "tr": "Alan çizmek için sayfada sürükleyin. Değiştirmek için bir alana tıklayın."
+  },
+  "Drag on the page to draw it. With a radio group selected the button joins it.": {
+    "tr": "Çizmek için sayfada sürükleyin. Bir seçenek grubu seçiliyse düğme gruba katılır."
+  },
+  "Edit fields": {
+    "tr": "Alanları düzenle"
+  },
+  "Edit the fields": {
+    "tr": "Alanları düzenle"
+  },
+  "Export form data": {
+    "tr": "Form verilerini dışa aktar"
+  },
+  "FDF files": {
+    "tr": "FDF dosyaları"
+  },
+  "FDF, XFDF, CSV and JSON files.": {
+    "tr": "FDF, XFDF, CSV ve JSON dosyaları."
+  },
+  "Field hint": {
+    "tr": "Alan ipucu"
+  },
+  "Field name": {
+    "tr": "Alan adı"
+  },
+  "Field not changed": {
+    "tr": "Alan değiştirilmedi"
+  },
+  "Fields": {
+    "tr": "Alanlar"
+  },
+  "Fields found": {
+    "tr": "Bulunan alanlar"
+  },
+  "File is signed": {
+    "tr": "Dosya imzalı"
+  },
+  "Fill form field": {
+    "tr": "Form alanını doldur"
+  },
+  "Fill in": {
+    "tr": "Doldur"
+  },
+  "Fill in the form": {
+    "tr": "Formu doldur"
+  },
+  "Filling in the form": {
+    "tr": "Form dolduruluyor"
+  },
+  "Find fields": {
+    "tr": "Alanları bul"
+  },
+  "Find fields in the file": {
+    "tr": "Dosyadaki alanları bul"
+  },
+  "Flatten form": {
+    "tr": "Formu düzleştir"
+  },
+  "Flattening the form": {
+    "tr": "Form düzleştiriliyor"
+  },
+  "Form cannot be read": {
+    "tr": "Form okunamıyor"
+  },
+  "Form data exported.": {
+    "tr": "Form verileri dışa aktarıldı."
+  },
+  "Form not supported": {
+    "tr": "Form desteklenmiyor"
+  },
+  "Hide the text": {
+    "tr": "Metni gizle"
+  },
+  "Highlight fields": {
+    "tr": "Alanları vurgula"
+  },
+  "Hint": {
+    "tr": "İpucu"
+  },
+  "Import form data": {
+    "tr": "Form verilerini içe aktar"
+  },
+  "JSON files": {
+    "tr": "JSON dosyaları"
+  },
+  "Lazy PDF cannot change this form. Try an earlier copy of the file.": {
+    "tr": "Lazy PDF bu formu değiştiremiyor. Dosyanın önceki bir kopyasını deneyin."
+  },
+  "Longest text": {
+    "tr": "En uzun metin"
+  },
+  "Longest text not a number": {
+    "tr": "En uzun metin sayı değil"
+  },
+  "Looking for fields": {
+    "tr": "Alanlar aranıyor"
+  },
+  "Move form field": {
+    "tr": "Form alanını taşı"
+  },
+  "Name": {
+    "tr": "Ad"
+  },
+  "New field": {
+    "tr": "Yeni alan"
+  },
+  "No blanks found. A page that is only a picture has none to find.": {
+    "tr": "Boşluk bulunamadı. Yalnızca resimden oluşan bir sayfada bulunacak boşluk yoktur."
+  },
+  "Now make the change again.": {
+    "tr": "Şimdi değişikliği yeniden yapın."
+  },
+  "One choice per line.": {
+    "tr": "Her satırda bir seçenek."
+  },
+  "Order in the file": {
+    "tr": "Dosyadaki sıra"
+  },
+  "Read only": {
+    "tr": "Salt okunur"
+  },
+  "Rename field": {
+    "tr": "Alanı yeniden adlandır"
+  },
+  "Required": {
+    "tr": "Zorunlu"
+  },
+  "Reset form": {
+    "tr": "Formu sıfırla"
+  },
+  "Resetting the form": {
+    "tr": "Form sıfırlanıyor"
+  },
+  "Script not run": {
+    "tr": "Komut dosyası çalışmadı"
+  },
+  "Several choices": {
+    "tr": "Birden çok seçim"
+  },
+  "Several lines": {
+    "tr": "Birden çok satır"
+  },
+  "Some data was not used": {
+    "tr": "Bazı veriler kullanılmadı"
+  },
+  "Starting value": {
+    "tr": "Başlangıç değeri"
+  },
+  "Tab order on this page": {
+    "tr": "Bu sayfadaki sekme sırası"
+  },
+  "The file changed meanwhile. Run it again.": {
+    "tr": "Dosya bu sırada değişti. Yeniden çalıştırın."
+  },
+  "The file has {0} rows. Only the first was used.": {
+    "tr": "Dosyada {0} satır var. Yalnızca ilki kullanıldı."
+  },
+  "The permissions of this file do not allow changing its fields.": {
+    "tr": "Bu dosyanın izinleri alanlarının değiştirilmesine izin vermiyor."
+  },
+  "The permissions of this file do not allow filling in forms.": {
+    "tr": "Bu dosyanın izinleri form doldurmaya izin vermiyor."
+  },
+  "This field does not take that value. Check it and try again.": {
+    "tr": "Bu alan bu değeri kabul etmiyor. Değeri kontrol edip yeniden deneyin."
+  },
+  "This file has no form fields.": {
+    "tr": "Bu dosyada form alanı yok."
+  },
+  "This form also has XFA data. Changing a field removes it.": {
+    "tr": "Bu formda XFA verisi de var. Bir alanı değiştirmek onu kaldırır."
+  },
+  "Type a whole number, or leave it empty for no limit.": {
+    "tr": "Tam sayı yazın veya sınır istemiyorsanız boş bırakın."
+  },
+  "Typing allowed": {
+    "tr": "Yazmaya izin ver"
+  },
+  "Unknown data file": {
+    "tr": "Bilinmeyen veri dosyası"
+  },
+  "Value not accepted": {
+    "tr": "Değer kabul edilmedi"
+  },
+  "XFA data removed": {
+    "tr": "XFA verisi kaldırıldı"
+  },
+  "XFDF files": {
+    "tr": "XFDF dosyaları"
+  },
+  "{0} could not be read as form data. Pick a file that a form export wrote.": {
+    "tr": "{0} form verisi olarak okunamadı. Bir form dışa aktarımının yazdığı dosyayı seçin."
+  },
+  "{0} could not be written. Check the folder and try again.": {
+    "tr": "{0} yazılamadı. Klasörü kontrol edip yeniden deneyin."
+  },
+  "{0} field": {
+    "other": "{0} fields",
+    "tr": "{0} alan"
+  },
+  "{0} field did not take its value: {1}.": {
+    "other": "{0} fields did not take their values: {1}.",
+    "tr": "Değerini kabul etmeyen alan: {0} ({1})."
+  },
+  "{0} field filled.": {
+    "other": "{0} fields filled.",
+    "tr": "Doldurulan alan: {0}."
+  },
+  "{0} field flattened.": {
+    "other": "{0} fields flattened.",
+    "tr": "Düzleştirilen alan: {0}."
+  },
+  "{0} field found.": {
+    "other": "{0} fields found.",
+    "tr": "Bulunan alan: {0}."
+  },
+  "{0} field reset.": {
+    "other": "{0} fields reset.",
+    "tr": "Sıfırlanan alan: {0}."
+  },
+  "{0} field, {1} required": {
+    "other": "{0} fields, {1} required",
+    "tr": "{0} alan, {1} zorunlu"
+  },
+  "{0} is not an FDF, XFDF, CSV or JSON file. Pick another file.": {
+    "tr": "{0} bir FDF, XFDF, CSV veya JSON dosyası değil. Başka bir dosya seçin."
+  },
+  "{0} name matches no field: {1}.": {
+    "other": "{0} names match no field: {1}.",
+    "tr": "Hiçbir alanla eşleşmeyen ad: {0} ({1})."
+  },
+  "{0}, page {1}": {
+    "tr": "{0}, sayfa {1}"
+  },
+  "PDFs that appear in the folder are run through the steps.": {
+    "tr": "Klasörde beliren PDF'ler adımlardan geçirilir."
+  },
+  "Watching {0}.": {
+    "tr": "{0} izleniyor."
+  },
+  "Results folder": {
+    "tr": "Sonuç klasörü"
+  },
+  "Folder of PDFs": {
+    "tr": "PDF klasörü"
+  },
+  "Running the steps": {
+    "tr": "Adımlar çalışıyor"
+  },
+  "File {0} of {1}": {
+    "tr": "Dosya {0} / {1}"
+  },
+  "All files done": {
+    "tr": "Tüm dosyalar bitti"
+  },
+  "Folder to watch": {
+    "tr": "İzlenecek klasör"
+  },
+  "No steps": {
+    "tr": "Adım yok"
+  },
+  "Add at least one step, then watch the folder.": {
+    "tr": "En az bir adım ekleyin, sonra klasörü izleyin."
+  },
+  "No folder to watch": {
+    "tr": "İzlenecek klasör yok"
+  },
+  "Choose an existing folder to watch.": {
+    "tr": "İzlenecek, var olan bir klasör seçin."
+  },
+  "No results folder": {
+    "tr": "Sonuç klasörü yok"
+  },
+  "Choose where the results go, then watch the folder.": {
+    "tr": "Sonuçların nereye gideceğini seçin, sonra klasörü izleyin."
+  },
+  "Same folder": {
+    "tr": "Aynı klasör"
+  },
+  "Choose a results folder other than the watched one, or the results would run again.": {
+    "tr": "İzlenen klasörden başka bir sonuç klasörü seçin, yoksa sonuçlar yeniden işlenir."
+  },
+  "Ran {0}": {
+    "tr": "{0} işlendi"
+  },
+  "{0} failed": {
+    "tr": "{0} başarısız"
+  },
+  "{0} file failed": {
+    "other": "{0} files failed",
+    "tr": "{0} dosya başarısız"
+  },
+  "Watermark": {
+    "tr": "Filigran"
+  },
+  "Bates numbers": {
+    "tr": "Bates numaraları"
+  },
+  "Small": {
+    "tr": "Küçük"
+  },
+  "Balanced": {
+    "tr": "Dengeli"
+  },
+  "High quality": {
+    "tr": "Yüksek kalite"
+  },
+  "Language {0}": {
+    "tr": "Dil: {0}"
+  },
+  "Removes hidden and private data": {
+    "tr": "Gizli ve özel verileri kaldırır"
+  },
+  "No text yet": {
+    "tr": "Henüz metin yok"
+  },
+  "Starts at {0}": {
+    "tr": "{0} ile başlar"
+  },
+  "Saved sets": {
+    "tr": "Kayıtlı kümeler"
+  },
+  "Delete set": {
+    "tr": "Kümeyi sil"
+  },
+  "Save set": {
+    "tr": "Kümeyi kaydet"
+  },
+  "Name of the set": {
+    "tr": "Kümenin adı"
+  },
+  "Steps": {
+    "tr": "Adımlar"
+  },
+  "Add a step to begin.": {
+    "tr": "Başlamak için bir adım ekleyin."
+  },
+  "Add step": {
+    "tr": "Adım ekle"
+  },
+  "Move step up": {
+    "tr": "Adımı yukarı taşı"
+  },
+  "Move step down": {
+    "tr": "Adımı aşağı taşı"
+  },
+  "Remove step": {
+    "tr": "Adımı kaldır"
+  },
+  "Language": {
+    "tr": "Dil"
+  },
+  "Language of the text": {
+    "tr": "Metnin dili"
+  },
+  "Size of the file": {
+    "tr": "Dosya boyutu"
+  },
+  "Watermark text": {
+    "tr": "Filigran metni"
+  },
+  "Before the number": {
+    "tr": "Numaradan önce"
+  },
+  "Text before the number": {
+    "tr": "Numaradan önceki metin"
+  },
+  "Digits": {
+    "tr": "Basamak"
+  },
+  "Digits in the number": {
+    "tr": "Numaradaki basamak sayısı"
+  },
+  "Starts at": {
+    "tr": "Başlangıç"
+  },
+  "First number": {
+    "tr": "İlk numara"
+  },
+  "Level": {
+    "tr": "Düzey"
+  },
+  "PDF/A level": {
+    "tr": "PDF/A düzeyi"
+  },
+  "Results go to": {
+    "tr": "Sonuçların gideceği yer"
+  },
+  "Browse": {
+    "tr": "Gözat"
+  },
+  "Choose the results folder": {
+    "tr": "Sonuç klasörünü seçin"
+  },
+  "File name": {
+    "tr": "Dosya adı"
+  },
+  "File name of the results": {
+    "tr": "Sonuçların dosya adı"
+  },
+  "Files": {
+    "tr": "Dosyalar"
+  },
+  "Add files": {
+    "tr": "Dosya ekle"
+  },
+  "Add folder": {
+    "tr": "Klasör ekle"
+  },
+  "Add every PDF in a folder": {
+    "tr": "Bir klasördeki tüm PDF'leri ekle"
+  },
+  "Files to run on": {
+    "tr": "İşlenecek dosyalar"
+  },
+  "No files yet.": {
+    "tr": "Henüz dosya yok."
+  },
+  "Watch a folder": {
+    "tr": "Klasör izle"
+  },
+  "Run on new files": {
+    "tr": "Yeni dosyalarda çalıştır"
+  },
+  "Choose the folder to watch": {
+    "tr": "İzlenecek klasörü seçin"
+  },
+  "Clear": {
+    "tr": "Temizle"
+  },
+  "Clear the results": {
+    "tr": "Sonuçları temizle"
+  },
+  "Results": {
+    "tr": "Sonuçlar"
+  },
+  "Nothing has run yet.": {
+    "tr": "Henüz bir şey çalışmadı."
+  },
+  "Remove {0}": {
+    "tr": "{0} öğesini kaldır"
+  },
+  "Use {0}, {1} and {2}. A name that is taken gets a number.": {
+    "tr": "{0}, {1} ve {2} kullanın. Alınmış bir ada numara eklenir."
+  },
+  "Run on every file": {
+    "tr": "Her dosyada çalıştır"
+  },
+  "Set has no name": {
+    "tr": "Kümenin adı yok"
+  },
+  "Type a name for the set, then save it.": {
+    "tr": "Küme için bir ad yazın, sonra kaydedin."
+  },
+  "Saved {0}": {
+    "tr": "{0} kaydedildi"
+  },
+  "Deleted {0}": {
+    "tr": "{0} silindi"
+  },
+  "{0} has a signature that these steps would break. Open it and sign it again afterwards.": {
+    "tr": "{0} imzalı; bu adımlar imzayı bozar. Dosyayı açıp adımlardan sonra yeniden imzalayın."
+  },
+  "Not converted to PDF/A": {
+    "tr": "PDF/A'ya dönüştürülemedi"
+  },
+  "Pages cannot be drawn": {
+    "tr": "Sayfalar çizilemiyor"
+  },
+  "Windows cannot draw this file, so its text cannot be read.": {
+    "tr": "Windows bu dosyayı çizemiyor, bu yüzden metni okunamıyor."
+  },
+  "Text cannot be read": {
+    "tr": "Metin okunamıyor"
+  },
+  "Watermark has no text": {
+    "tr": "Filigranın metni yok"
+  },
+  "Type the watermark text in the step, then run again.": {
+    "tr": "Adıma filigran metnini yazın, sonra yeniden çalıştırın."
+  },
+  "No font for the text": {
+    "tr": "Metin için yazı tipi yok"
+  },
+  "Use other text, or install a font that has these letters.": {
+    "tr": "Başka bir metin kullanın ya da bu harfleri içeren bir yazı tipi yükleyin."
+  },
+  "{0} PDF/A rule is left.": {
+    "other": "{0} PDF/A rules are left.",
+    "tr": "{0} PDF/A kuralı kaldı."
+  },
+  "Distance": {
+    "tr": "Mesafe"
+  },
+  "Perimeter": {
+    "tr": "Çevre"
+  },
+  "Area": {
+    "tr": "Alan"
+  },
+  "On the page": {
+    "tr": "Sayfada"
+  },
+  "Length on the page": {
+    "tr": "Sayfadaki uzunluk"
+  },
+  "Unit on the page": {
+    "tr": "Sayfadaki birim"
+  },
+  "Stands for": {
+    "tr": "Karşılığı"
+  },
+  "Real length": {
+    "tr": "Gerçek uzunluk"
+  },
+  "Real unit": {
+    "tr": "Gerçek birim"
+  },
+  "Enter a scale above zero.": {
+    "tr": "Sıfırdan büyük bir ölçek girin."
+  },
+  "Snap to text": {
+    "tr": "Metne yapış"
+  },
+  "Finish": {
+    "tr": "Bitir"
+  },
+  "Finish shape": {
+    "tr": "Şekli bitir"
+  },
+  "Current measurement": {
+    "tr": "Geçerli ölçüm"
+  },
+  "Waiting to be added": {
+    "tr": "Eklenmeyi bekleyen"
+  },
+  "Measurements": {
+    "tr": "Ölçümler"
+  },
+  "Nothing measured yet.": {
+    "tr": "Henüz ölçüm yok."
+  },
+  "Add to page": {
+    "tr": "Sayfaya ekle"
+  },
+  "Not allowed": {
+    "tr": "İzin yok"
+  },
+  "This file does not let anyone add marks. Ask its owner for a copy that does.": {
+    "tr": "Bu dosya kimsenin işaret eklemesine izin vermiyor. Sahibinden izin veren bir kopya isteyin."
+  },
+  "Click the two ends. Hold Shift for straight lines.": {
+    "tr": "İki ucuna tıklayın. Düz çizgiler için Shift tuşunu basılı tutun."
+  },
+  "Click each corner, then double-click to finish. Hold Shift for straight lines.": {
+    "tr": "Her köşeye tıklayın, bitirmek için çift tıklayın. Düz çizgiler için Shift tuşunu basılı tutun."
+  },
+  "Added {0} measurement": {
+    "other": "Added {0} measurements",
+    "tr": "{0} ölçüm eklendi"
+  },
+  "Angle": {
+    "tr": "Açı"
+  },
+  "Angle in degrees": {
+    "tr": "Derece olarak açı"
+  },
+  "Center": {
+    "tr": "Orta"
+  },
+  "Done, with notes": {
+    "tr": "Bitti, notlarla"
+  },
+  "Folder cannot be watched": {
+    "tr": "Klasör izlenemiyor"
+  },
+  "Footer, center": {
+    "tr": "Alt bilgi, orta"
+  },
+  "Footer, left": {
+    "tr": "Alt bilgi, sol"
+  },
+  "Footer, right": {
+    "tr": "Alt bilgi, sağ"
+  },
+  "Header, center": {
+    "tr": "Üst bilgi, orta"
+  },
+  "Header, left": {
+    "tr": "Üst bilgi, sol"
+  },
+  "Header, right": {
+    "tr": "Üst bilgi, sağ"
+  },
+  "Keep attachments": {
+    "tr": "Ekleri koru"
+  },
+  "Keep comments": {
+    "tr": "Yorumları koru"
+  },
+  "Keep form data": {
+    "tr": "Form verilerini koru"
+  },
+  "Keep links": {
+    "tr": "Bağlantıları koru"
+  },
+  "Keeps some private data": {
+    "tr": "Bazı özel verileri korur"
+  },
+  "Measurements dropped": {
+    "tr": "Ölçümler bırakıldı"
+  },
+  "Opacity %": {
+    "tr": "Opaklık %"
+  },
+  "Opacity in percent": {
+    "tr": "Yüzde olarak opaklık"
+  },
+  "Pick Distance, Perimeter or Area to measure again.": {
+    "tr": "Yeniden ölçmek için Mesafe, Çevre veya Alan seçin."
+  },
+  "Position of the watermark": {
+    "tr": "Filigranın konumu"
+  },
+  "Start over": {
+    "tr": "Baştan başla"
+  },
+  "Start over (Esc)": {
+    "tr": "Baştan başla (Esc)"
+  },
+  "Start the shape over": {
+    "tr": "Şekle baştan başla"
+  },
+  "Text after the number": {
+    "tr": "Numaradan sonraki metin"
+  },
+  "The folder cannot be watched any more. Check that it is there, then switch watching on again.": {
+    "tr": "Klasör artık izlenemiyor. Klasörün yerinde olduğunu kontrol edin, sonra izlemeyi yeniden açın."
+  },
+  "The pages they were on changed. Measure them again.": {
+    "tr": "Bulundukları sayfalar değişti. Yeniden ölçün."
+  },
+  "Watching stopped": {
+    "tr": "İzleme durdu"
+  },
+  "Where the number goes": {
+    "tr": "Numaranın yeri"
+  },
+  "Width %": {
+    "tr": "Genişlik %"
+  },
+  "Width in percent of the page": {
+    "tr": "Sayfanın yüzde kaçı genişlik"
+  },
+  "Windows does not let Lazy PDF watch this folder. Choose another.": {
+    "tr": "Windows, Lazy PDF'in bu klasörü izlemesine izin vermiyor. Başka bir klasör seçin."
+  },
+  "{0} limits what may be done to it. Ask its owner for a copy without limits.": {
+    "tr": "{0} üzerinde yapılabilecekleri sınırlıyor. Sahibinden sınırsız bir kopya isteyin."
+  },
+  "{0} kind of private data is left in.": {
+    "other": "{0} kinds of private data are left in.",
+    "tr": "{0} tür özel veri içeride kaldı."
+  },
+  "Pages to read": {
+    "tr": "Okunacak sayfalar"
+  },
+  "Pages that are already searchable": {
+    "tr": "Zaten aranabilir olan sayfalar"
+  },
+  "Keep": {
+    "tr": "Koru"
+  },
+  "Keep their text": {
+    "tr": "Metinlerini koru"
+  },
+  "Replace their text": {
+    "tr": "Metinlerini değiştir"
+  },
+  "Remove text layer": {
+    "tr": "Metin katmanını kaldır"
+  },
+  "Take the recognized text off the chosen pages": {
+    "tr": "Seçili sayfalardaki tanınan metni kaldırın"
+  },
+  "Correct a word": {
+    "tr": "Sözcüğü düzelt"
+  },
+  "Show words on the page": {
+    "tr": "Sözcükleri sayfada göster"
+  },
+  "Corrected word": {
+    "tr": "Düzeltilmiş sözcük"
+  },
+  "Leave it empty to remove the word.": {
+    "tr": "Sözcüğü kaldırmak için boş bırakın."
+  },
+  "Apply": {
+    "tr": "Uygula"
+  },
+  "Apply the corrected word": {
+    "tr": "Düzeltilmiş sözcüğü uygula"
+  },
+  "Searchable": {
+    "tr": "Aranabilir"
+  },
+  "Has text": {
+    "tr": "Metin var"
+  },
+  "Blank": {
+    "tr": "Boş"
+  },
+  "The pages could not be checked.": {
+    "tr": "Sayfalar denetlenemedi."
+  },
+  "{0} of {1} pages need it.": {
+    "tr": "{1} sayfadan {0} tanesi buna ihtiyaç duyuyor."
+  },
+  "Reading pages": {
+    "tr": "Sayfalar okunuyor"
+  },
+  "Language not available": {
+    "tr": "Dil kullanılamıyor"
+  },
+  "Made {0} page searchable": {
+    "other": "Made {0} pages searchable",
+    "tr": "{0} sayfa aranabilir yapıldı"
+  },
+  "Not every page was read": {
+    "tr": "Her sayfa okunamadı"
+  },
+  "No text found on {0} page. Check the language.": {
+    "other": "No text found on {0} pages. Check the language.",
+    "tr": "{0} sayfada metin bulunamadı. Dili denetleyin."
+  },
+  "Correct word": {
+    "tr": "Sözcüğü düzelt"
+  },
+  "Removed from {0} page": {
+    "other": "Removed from {0} pages",
+    "tr": "{0} sayfadan kaldırıldı"
+  },
+  "The document changed": {
+    "tr": "Belge değişti"
+  },
+  "Nothing was added. Run it again.": {
+    "tr": "Hiçbir şey eklenmedi. Yeniden çalıştırın."
+  },
+  "Text read earlier on those pages was removed. Undo brings it back.": {
+    "tr": "Bu sayfalarda daha önce okunan metin kaldırıldı. Geri al onu geri getirir."
+  },
+  "{0} chosen page already has text. Reading it adds a second layer, so search finds words twice.": {
+    "other": "{0} chosen pages already have text. Reading them adds a second layer, so search finds words twice.",
+    "tr": "Seçilen {0} sayfada zaten metin var. Okumak ikinci bir katman ekler, bu yüzden arama sözcükleri iki kez bulur."
+  },
+  "Choose pages marked Searchable above.": {
+    "tr": "Yukarıda Aranabilir olarak işaretli sayfaları seçin."
+  },
+  "No page has a text layer from here.": {
+    "tr": "Hiçbir sayfada buradan eklenmiş metin katmanı yok."
+  },
+  "Words on this page": {
+    "tr": "Bu sayfadaki sözcükler"
+  },
+  "Click a word on the page or choose one below.": {
+    "tr": "Sayfada bir sözcüğe tıklayın ya da aşağıdan seçin."
+  },
+  "Scan|noun": {
+    "tr": "Tarama"
+  },
+  "No OCR language is installed. In Settings, Language and region, add a language, then add Optical character recognition in its options.": {
+    "tr": "Yüklü bir OCR dili yok. Ayarlar'da Dil ve bölge altından bir dil ekleyin, ardından seçeneklerinden Optik karakter tanıma ekleyin."
+  },
+  "No OCR language is installed. For {0}, open its options in Settings, Language and region and add Optical character recognition if it is listed.": {
+    "tr": "Yüklü bir OCR dili yok. {0} için Ayarlar'da Dil ve bölge altında seçeneklerini açın ve listeleniyorsa Optik karakter tanıma ekleyin."
+  },
+  "Need another language? In Settings, Language and region, add it and its Optical character recognition.": {
+    "tr": "Başka bir dil mi gerekiyor? Ayarlar'da Dil ve bölge altında dili ve Optik karakter tanıma özelliğini ekleyin."
+  },
+  "No OCR for {0}. Open its options in Settings, Language and region and add Optical character recognition if it is listed.": {
+    "tr": "{0} için OCR yok. Ayarlar'da Dil ve bölge altında seçeneklerini açın ve listeleniyorsa Optik karakter tanıma ekleyin."
+  },
+  "A signed file is not replaced. The result opens in a new tab.": {
+    "tr": "İmzalı dosyanın üzerine yazılmaz. Sonuç yeni sekmede açılır."
+  },
+  "Already small": {
+    "tr": "Zaten küçük"
+  },
+  "Always removed.": {
+    "tr": "Her zaman kaldırılır."
+  },
+  "Clean file": {
+    "tr": "Dosyayı temizle"
+  },
+  "Cleaning the file": {
+    "tr": "Dosya temizleniyor"
+  },
+  "Custom": {
+    "tr": "Özel"
+  },
+  "Done.": {
+    "tr": "Bitti."
+  },
+  "Fast web view": {
+    "tr": "Hızlı web görünümü"
+  },
+  "File cleaned": {
+    "tr": "Dosya temizlendi"
+  },
+  "File cleaned.": {
+    "tr": "Dosya temizlendi."
+  },
+  "File made smaller": {
+    "tr": "Dosya küçültüldü"
+  },
+  "File rewritten": {
+    "tr": "Dosya yeniden yazıldı"
+  },
+  "File size {0}": {
+    "tr": "Dosya boyutu {0}"
+  },
+  "File written, not shown": {
+    "tr": "Dosya yazıldı, gösterilemedi"
+  },
+  "Good for email and screens. Images drop to 150 dpi.": {
+    "tr": "E-posta ve ekran için uygun. Resimler 150 dpi'ye düşer."
+  },
+  "High": {
+    "tr": "Yüksek"
+  },
+  "Image quality": {
+    "tr": "Resim kalitesi"
+  },
+  "Image resolution": {
+    "tr": "Resim çözünürlüğü"
+  },
+  "Keep as is": {
+    "tr": "Olduğu gibi bırak"
+  },
+  "Keeps detail for printing. Images stay up to 300 dpi.": {
+    "tr": "Baskı için ayrıntıyı korur. Resimler 300 dpi'ye kadar kalır."
+  },
+  "Left in: {0}.": {
+    "tr": "Dosyada kalanlar: {0}."
+  },
+  "Looking through the file.": {
+    "tr": "Dosya taranıyor."
+  },
+  "Making the file smaller": {
+    "tr": "Dosya küçültülüyor"
+  },
+  "May be the text layer of a scan. Off unless you tick it.": {
+    "tr": "Bir taramanın metin katmanı olabilir. İşaretlemezseniz kapalıdır."
+  },
+  "New file": {
+    "tr": "Yeni dosya"
+  },
+  "Nothing found. This file has no hidden data.": {
+    "tr": "Bir şey bulunamadı. Dosyada gizli veri yok."
+  },
+  "Nothing was removed.": {
+    "tr": "Hiçbir şey kaldırılmadı."
+  },
+  "Only reported. Redact removes it.": {
+    "tr": "Yalnızca bildirilir. Karart aracı kaldırır."
+  },
+  "Opens in a new tab. You name it when you save.": {
+    "tr": "Yeni sekmede açılır. Adını kaydederken verirsiniz."
+  },
+  "Page one shows before the whole file has loaded.": {
+    "tr": "Dosyanın tamamı yüklenmeden ilk sayfa görünür."
+  },
+  "Removed: {0}.": {
+    "tr": "Kaldırılanlar: {0}."
+  },
+  "Replaces the file on disk and clears Undo.": {
+    "tr": "Diskteki dosyanın yerine geçer ve Geri al geçmişini siler."
+  },
+  "Signatures are removed from the result.": {
+    "tr": "İmzalar sonuçtan kaldırılır."
+  },
+  "Signatures stay in the result but are no longer valid.": {
+    "tr": "İmzalar sonuçta kalır ama artık geçerli değildir."
+  },
+  "Size and quality": {
+    "tr": "Boyut ve kalite"
+  },
+  "Smallest file. Images drop to 96 dpi and lose some detail.": {
+    "tr": "En küçük dosya. Resimler 96 dpi'ye düşer ve biraz ayrıntı kaybeder."
+  },
+  "The file could not be searched.": {
+    "tr": "Dosya taranamadı."
+  },
+  "These settings cannot make this file smaller. Try the Small preset.": {
+    "tr": "Bu ayarlarla dosya küçülmüyor. Küçük ayarını deneyin."
+  },
+  "This document has no file yet.": {
+    "tr": "Bu belgenin henüz dosyası yok."
+  },
+  "This file": {
+    "tr": "Bu dosya"
+  },
+  "This file is protected. Open it with its owner password to use this tool.": {
+    "tr": "Bu dosya korumalı. Bu aracı kullanmak için sahip parolasıyla açın."
+  },
+  "Tick what to remove.": {
+    "tr": "Kaldırılacakları işaretleyin."
+  },
+  "What was found": {
+    "tr": "Bulunanlar"
+  },
+  "Where the space goes": {
+    "tr": "Alan nereye gidiyor"
+  },
+  "{0} (clean)": {
+    "tr": "{0} (temiz)"
+  },
+  "{0} (smaller)": {
+    "tr": "{0} (küçük)"
+  },
+  "{0} ({1})": {
+    "tr": "{0} ({1})"
+  },
+  "{0} changed while this ran. Run it again.": {
+    "tr": "{0} bu işlem sürerken değişti. İşlemi yeniden çalıştırın."
+  },
+  "{0} dpi": {
+    "tr": "{0} dpi"
+  },
+  "{0} smaller.": {
+    "tr": "{0} küçüldü."
+  },
+  "{0} to {1}, {2}% smaller.": {
+    "tr": "{0} → {1}, %{2} küçüldü."
+  },
+  "{0} to {1}.": {
+    "tr": "{0} → {1}."
+  },
+  "{0} was changed by another program. Pick New file, or open that version first.": {
+    "tr": "{0} başka bir program tarafından değiştirildi. Yeni dosya seçin ya da önce o sürümü açın."
+  },
+  "{0} was saved but could not be read again. Open it from disk.": {
+    "tr": "{0} kaydedildi ama yeniden okunamadı. Diskten açın."
+  },
+  "{0}, {1}": {
+    "tr": "{0}, {1}"
+  },
+  "Pages of {0}": {
+    "tr": "Sayfalar: {0}"
+  },
+  "{0} page": {
+    "other": "{0} pages",
+    "tr": "{0} sayfa"
+  },
+  "Pages not understood": {
+    "tr": "Sayfalar anlaşılamadı"
+  },
+  "{0}: {1}": {
+    "tr": "{0}: {1}"
+  },
+  "Combining files": {
+    "tr": "Dosyalar birleştiriliyor"
+  },
+  "Combined.pdf": {
+    "tr": "Birleştirilmiş.pdf"
+  },
+  "Splitting file": {
+    "tr": "Dosya bölünüyor"
+  },
+  "Nothing to split": {
+    "tr": "Bölünecek bir şey yok"
+  },
+  "The whole file fits in one part. Use a smaller amount.": {
+    "tr": "Dosyanın tamamı tek parçaya sığıyor. Daha küçük bir değer girin."
+  },
+  "Too many parts for tabs": {
+    "tr": "Sekmeler için çok fazla parça"
+  },
+  "Pick a folder for the parts.": {
+    "tr": "Parçalar için bir klasör seçin."
+  },
+  "{0} parts opened.": {
+    "tr": "{0} parça açıldı."
+  },
+  "Save to a folder": {
+    "tr": "Klasöre kaydet"
+  },
+  "Open the first": {
+    "tr": "İlkini aç"
+  },
+  "{0} file saved": {
+    "other": "{0} files saved",
+    "tr": "{0} dosya kaydedildi"
+  },
+  "Split": {
+    "tr": "Böl"
+  },
+  "Split this file": {
+    "tr": "Bu dosyayı böl"
+  },
+  "Files in order": {
+    "tr": "Dosyalar sırayla"
+  },
+  "Files to combine": {
+    "tr": "Birleştirilecek dosyalar"
+  },
+  "Remove from the list": {
+    "tr": "Listeden çıkar"
+  },
+  "Split by": {
+    "tr": "Bölme ölçütü"
+  },
+  "File size": {
+    "tr": "Dosya boyutu"
+  },
+  "Amount per part": {
+    "tr": "Parça başına miktar"
+  },
+  "Result": {
+    "tr": "Sonuç"
+  },
+  "Open in new tabs": {
+    "tr": "Yeni sekmelerde aç"
+  },
+  "Split file": {
+    "tr": "Dosyayı böl"
+  },
+  "Megabytes per part": {
+    "tr": "Parça başına megabayt"
+  },
+  "Pages per part": {
+    "tr": "Parça başına sayfa"
+  },
+  "A file of one page cannot be split.": {
+    "tr": "Tek sayfalık bir dosya bölünemez."
+  },
+  "Pages not changed": {
+    "tr": "Sayfalar değiştirilmedi"
+  },
+  "Rotate pages": {
+    "tr": "Sayfaları döndür"
+  },
+  "Duplicate pages": {
+    "tr": "Sayfaları çoğalt"
+  },
+  "Cannot delete every page": {
+    "tr": "Tüm sayfalar silinemez"
+  },
+  "A file needs at least one page. Leave one page out of the selection.": {
+    "tr": "Bir dosyada en az bir sayfa olmalı. Seçimin dışında bir sayfa bırakın."
+  },
+  "Delete pages": {
+    "tr": "Sayfaları sil"
+  },
+  "Move pages": {
+    "tr": "Sayfaları taşı"
+  },
+  "Extracting pages": {
+    "tr": "Sayfalar ayıklanıyor"
+  },
+  "Pages not extracted": {
+    "tr": "Sayfalar ayıklanamadı"
+  },
+  "The pages could not be copied into a new file. Try fewer pages.": {
+    "tr": "Sayfalar yeni bir dosyaya kopyalanamadı. Daha az sayfa deneyin."
+  },
+  "{0} extract.pdf": {
+    "tr": "Ayıklanan {0}.pdf"
+  },
+  "Insert blank page": {
+    "tr": "Boş sayfa ekle"
+  },
+  "Blank page added.": {
+    "tr": "Boş sayfa eklendi."
+  },
+  "Insert pages": {
+    "tr": "Sayfa ekle"
+  },
+  "Replace pages": {
+    "tr": "Sayfaları değiştir"
+  },
+  "Pages replaced.": {
+    "tr": "Sayfalar değiştirildi."
+  },
+  "{0} page rotated": {
+    "other": "{0} pages rotated",
+    "tr": "{0} sayfa döndürüldü"
+  },
+  "{0} page duplicated": {
+    "other": "{0} pages duplicated",
+    "tr": "{0} sayfa çoğaltıldı"
+  },
+  "{0} page deleted": {
+    "other": "{0} pages deleted",
+    "tr": "{0} sayfa silindi"
+  },
+  "{0} page moved": {
+    "other": "{0} pages moved",
+    "tr": "{0} sayfa taşındı"
+  },
+  "{0} page extracted": {
+    "other": "{0} pages extracted",
+    "tr": "{0} sayfa ayıklandı"
+  },
+  "{0} page added": {
+    "other": "{0} pages added",
+    "tr": "{0} sayfa eklendi"
+  },
+  "Crop pages": {
+    "tr": "Sayfaları kırp"
+  },
+  "Resize pages": {
+    "tr": "Sayfaları yeniden boyutlandır"
+  },
+  "Number pages": {
+    "tr": "Sayfaları numaralandır"
+  },
+  "Every page is changed.": {
+    "tr": "Tüm sayfalar değişir."
+  },
+  "Drag a box on a page.": {
+    "tr": "Bir sayfa üzerinde kutu çizin."
+  },
+  "Pages keep their orientation.": {
+    "tr": "Sayfalar yönünü korur."
+  },
+  "Every page is numbered.": {
+    "tr": "Tüm sayfalar numaralanır."
+  },
+  "Pages {0} to {1} are numbered.": {
+    "tr": "{0}. ile {1}. sayfalar numaralanır."
+  },
+  "Remove crop": {
+    "tr": "Kırpmayı kaldır"
+  },
+  "Crop removed.": {
+    "tr": "Kırpma kaldırıldı."
+  },
+  "Pages numbered.": {
+    "tr": "Sayfalar numaralandı."
+  },
+  "Remove page labels": {
+    "tr": "Sayfa etiketlerini kaldır"
+  },
+  "Labels removed.": {
+    "tr": "Etiketler kaldırıldı."
+  },
+  "{0} selected page is changed.": {
+    "other": "{0} selected pages are changed.",
+    "tr": "{0} seçili sayfa değişir."
+  },
+  "{0} page cropped": {
+    "other": "{0} pages cropped",
+    "tr": "{0} sayfa kırpıldı"
+  },
+  "{0} page resized": {
+    "other": "{0} pages resized",
+    "tr": "{0} sayfa yeniden boyutlandırıldı"
+  },
+  "Rotate left": {
+    "tr": "Sola döndür"
+  },
+  "Rotate right": {
+    "tr": "Sağa döndür"
+  },
+  "Duplicate": {
+    "tr": "Çoğalt"
+  },
+  "Extract to a new file": {
+    "tr": "Yeni dosyaya ayıkla"
+  },
+  "Move earlier": {
+    "tr": "Öne al"
+  },
+  "Move later": {
+    "tr": "Sonraya taşı"
+  },
+  "Insert and replace": {
+    "tr": "Ekle ve değiştir"
+  },
+  "Where": {
+    "tr": "Nereye"
+  },
+  "After the selection": {
+    "tr": "Seçimden sonra"
+  },
+  "Before the selection": {
+    "tr": "Seçimden önce"
+  },
+  "At the start": {
+    "tr": "Başa"
+  },
+  "At the end": {
+    "tr": "Sona"
+  },
+  "Blank page": {
+    "tr": "Boş sayfa"
+  },
+  "Pages to take (empty is all)": {
+    "tr": "Alınacak sayfalar (boşsa tümü)"
+  },
+  "Pages from a file": {
+    "tr": "Dosyadan sayfalar"
+  },
+  "Replace with a file": {
+    "tr": "Dosyayla değiştir"
+  },
+  "Every page": {
+    "tr": "Tüm sayfalar"
+  },
+  "Crop every page": {
+    "tr": "Tüm sayfaları kırp"
+  },
+  "Remove the crop": {
+    "tr": "Kırpmayı kaldır"
+  },
+  "Width in mm": {
+    "tr": "Genişlik (mm)"
+  },
+  "Height in mm": {
+    "tr": "Yükseklik (mm)"
+  },
+  "Scale the content": {
+    "tr": "İçeriği ölçekle"
+  },
+  "Page labels": {
+    "tr": "Sayfa etiketleri"
+  },
+  "Numbering": {
+    "tr": "Numaralandırma"
+  },
+  "Prefix only": {
+    "tr": "Yalnızca önek"
+  },
+  "Prefix": {
+    "tr": "Önek"
+  },
+  "Start at": {
+    "tr": "Başlangıç"
+  },
+  "Remove all labels": {
+    "tr": "Tüm etiketleri kaldır"
+  },
+  "Custom size": {
+    "tr": "Özel boyut"
+  },
+  "{0} of {1} selected": {
+    "tr": "{0} / {1} seçili"
+  },
+  "Legal": {
+    "tr": "Legal"
+  },
+  "The file did not take that change. Pick other pages and try again.": {
+    "tr": "Dosya bu değişikliği kabul etmedi. Başka sayfalar seçip yeniden deneyin."
+  },
+  "Copying pages": {
+    "tr": "Sayfalar kopyalanıyor"
+  },
+  "Adding pages": {
+    "tr": "Sayfalar ekleniyor"
+  },
+  "Replacing pages": {
+    "tr": "Sayfalar değiştiriliyor"
+  },
+  "File is protected": {
+    "tr": "Dosya korumalı"
+  },
+  "Its owner limits what may be done with it. Open it with the owner password to copy pages out.": {
+    "tr": "Dosyanın sahibi yapılabilecekleri sınırlamış. Sayfaları kopyalamak için dosyayı sahip parolasıyla açın."
+  },
+  "The copies are not password protected.": {
+    "tr": "Kopyalar parolayla korunmuyor."
+  },
+  "Copy is not protected": {
+    "tr": "Kopya korumasız"
+  },
+  "Reading file": {
+    "tr": "Dosya okunuyor"
+  },
+  "Files not combined": {
+    "tr": "Dosyalar birleştirilemedi"
+  },
+  "The files could not be put into one. Try fewer pages or files.": {
+    "tr": "Dosyalar tek bir dosyada birleştirilemedi. Daha az sayfa ya da dosya deneyin."
+  },
+  "File not split": {
+    "tr": "Dosya bölünemedi"
+  },
+  "The parts could not be made. Try a different amount.": {
+    "tr": "Parçalar oluşturulamadı. Başka bir değer deneyin."
+  },
+  "Nothing to cut at": {
+    "tr": "Bölünecek yer yok"
+  },
+  "No bookmark starts after the first page. Split by pages or size instead.": {
+    "tr": "İlk sayfadan sonra başlayan bir yer imi yok. Sayfa sayısına ya da boyuta göre bölün."
+  },
+  "The bookmarks make {0} part.": {
+    "other": "The bookmarks make {0} parts.",
+    "tr": "Yer imleri {0} parça oluşturuyor."
+  },
+  "This file is signed. Changing its pages breaks the signatures.": {
+    "tr": "Bu dosya imzalı. Sayfaları değiştirmek imzaları bozar."
+  },
+  "This file is signed. The new files do not keep its signatures.": {
+    "tr": "Bu dosya imzalı. Yeni dosyalar imzalarını taşımaz."
+  },
+  "Draw a box on the page": {
+    "tr": "Sayfaya kutu çiz"
+  },
+  "Turn on drawing to drag a box.": {
+    "tr": "Kutu sürüklemek için çizimi açın."
+  },
+  "Box of {0} by {1} mm.": {
+    "tr": "{0} x {1} mm kutu."
+  },
+  "Page {0} is changed.": {
+    "tr": "{0}. sayfa değiştirilir."
+  },
+  "{0} needs a password to open.": {
+    "tr": "{0} dosyasını açmak için parola gerekir."
+  },
+  "AES 128-bit, for older readers": {
+    "tr": "AES 128 bit, eski okuyucular için"
+  },
+  "AES 256-bit": {
+    "tr": "AES 256 bit"
+  },
+  "Add at least one certificate.": {
+    "tr": "En az bir sertifika ekleyin."
+  },
+  "Add comments": {
+    "tr": "Yorum ekle"
+  },
+  "Change the file": {
+    "tr": "Dosyayı değiştir"
+  },
+  "Copy for the others": {
+    "tr": "Diğerleri için kopya"
+  },
+  "Copy text and pictures": {
+    "tr": "Metni ve resimleri kopyala"
+  },
+  "Copy with protection": {
+    "tr": "Korumalı kopya"
+  },
+  "Copy without protection": {
+    "tr": "Korumasız kopya"
+  },
+  "Could not protect the file": {
+    "tr": "Dosya korunamadı"
+  },
+  "Current permissions password": {
+    "tr": "Geçerli izin parolası"
+  },
+  "Encryption": {
+    "tr": "Şifreleme"
+  },
+  "Enter the permissions password, then try again.": {
+    "tr": "İzin parolasını girip yeniden deneyin."
+  },
+  "Fair. A longer one is safer.": {
+    "tr": "Orta. Daha uzun olan daha güvenli."
+  },
+  "Fill in forms": {
+    "tr": "Formları doldur"
+  },
+  "From Windows": {
+    "tr": "Windows'tan"
+  },
+  "From a file": {
+    "tr": "Dosyadan"
+  },
+  "Good.": {
+    "tr": "İyi."
+  },
+  "Insert, delete and rotate pages": {
+    "tr": "Sayfa ekle, sil ve döndür"
+  },
+  "Limit what people can do": {
+    "tr": "Kişilerin yapabileceklerini sınırla"
+  },
+  "No certificates found.": {
+    "tr": "Sertifika bulunamadı."
+  },
+  "None of these has its key on this computer. You could not open the copy. Add your own certificate too.": {
+    "tr": "Bunların hiçbirinin anahtarı bu bilgisayarda değil. Kopyayı siz açamazsınız. Kendi sertifikanızı da ekleyin."
+  },
+  "Not a usable certificate": {
+    "tr": "Kullanılamayan sertifika"
+  },
+  "Older readers may not accept these letters. Use AES 256-bit.": {
+    "tr": "Eski okuyucular bu harfleri kabul etmeyebilir. AES 256 bit kullanın."
+  },
+  "Opened with limited rights. Enter its permissions password to change the protection.": {
+    "tr": "Sınırlı haklarla açıldı. Korumayı değiştirmek için izin parolasını girin."
+  },
+  "Opened with limited rights. Your certificate may not change the protection.": {
+    "tr": "Sınırlı haklarla açıldı. Sertifikanız korumayı değiştiremeyebilir."
+  },
+  "Password strength": {
+    "tr": "Parola gücü"
+  },
+  "Password to open": {
+    "tr": "Açma parolası"
+  },
+  "People may": {
+    "tr": "Kişilerin yapabilecekleri"
+  },
+  "People who can open it": {
+    "tr": "Dosyayı açabilecek kişiler"
+  },
+  "Permissions password": {
+    "tr": "İzin parolası"
+  },
+  "Print in high quality": {
+    "tr": "Yüksek kalitede yazdır"
+  },
+  "Protect for certificates": {
+    "tr": "Sertifikalar için koru"
+  },
+  "Protect for them": {
+    "tr": "Onlar için koru"
+  },
+  "Protect the file": {
+    "tr": "Dosyayı koru"
+  },
+  "Protect with a password": {
+    "tr": "Parolayla koru"
+  },
+  "Protected copy made.": {
+    "tr": "Korumalı kopya yapıldı."
+  },
+  "Protected copy saved.": {
+    "tr": "Korumalı kopya kaydedildi."
+  },
+  "Protected for certificate holders.": {
+    "tr": "Sertifika sahipleri için korunuyor."
+  },
+  "Protected with a password.": {
+    "tr": "Parolayla korunuyor."
+  },
+  "Protecting the file": {
+    "tr": "Dosya korunuyor"
+  },
+  "Protection is locked": {
+    "tr": "Koruma kilitli"
+  },
+  "Protection removed from a copy.": {
+    "tr": "Koruma kopyadan kaldırıldı."
+  },
+  "Remove protection": {
+    "tr": "Korumayı kaldır"
+  },
+  "Removing protection": {
+    "tr": "Koruma kaldırılıyor"
+  },
+  "Repeat password": {
+    "tr": "Parolayı yineleyin"
+  },
+  "Strong.": {
+    "tr": "Güçlü."
+  },
+  "That is not the permissions password. Check it and try again.": {
+    "tr": "Bu izin parolası değil. Kontrol edip yeniden deneyin."
+  },
+  "The copy opens without a password. The file in view stays as it is.": {
+    "tr": "Kopya parolasız açılır. Görüntülenen dosya olduğu gibi kalır."
+  },
+  "The copy will no longer be PDF/A.": {
+    "tr": "Kopya artık PDF/A olmayacak."
+  },
+  "The copy will not keep the signatures.": {
+    "tr": "Kopya imzaları korumaz."
+  },
+  "The file could not be rewritten. Save a copy, then protect that.": {
+    "tr": "Dosya yeniden yazılamadı. Bir kopya kaydedin, sonra onu koruyun."
+  },
+  "The original is unchanged. Save the copy to keep it.": {
+    "tr": "Özgün dosya değişmedi. Kopyayı kaydederek saklayın."
+  },
+  "The passwords do not match.": {
+    "tr": "Parolalar eşleşmiyor."
+  },
+  "These limits are a request, not a lock. Some programs ignore them. Only a password to open keeps the file private.": {
+    "tr": "Bu sınırlar bir istektir, kilit değildir. Bazı programlar bunları yok sayar. Dosyayı yalnızca açma parolası gizli tutar."
+  },
+  "These limits are a request, not a lock. Some programs ignore them. Only the certificates keep the file private.": {
+    "tr": "Bu sınırlar bir istektir, kilit değildir. Bazı programlar yok sayar. Dosyayı yalnızca sertifikalar gizli tutar."
+  },
+  "This file is not protected.": {
+    "tr": "Bu dosya korunmuyor."
+  },
+  "Use a different password here.": {
+    "tr": "Burada farklı bir parola kullanın."
+  },
+  "Weak. Try 12 or more characters.": {
+    "tr": "Zayıf. En az 12 karakter deneyin."
+  },
+  "Wrong password": {
+    "tr": "Yanlış parola"
+  },
+  "You cannot open it here. Send it to the people you chose.": {
+    "tr": "Burada açamazsınız. Seçtiğiniz kişilere gönderin."
+  },
+  "protected": {
+    "tr": "korumalı"
+  },
+  "unprotected": {
+    "tr": "korumasız"
+  },
+  "{0} is not an RSA certificate. Ask for the person's certificate file.": {
+    "tr": "{0} bir RSA sertifikası değil. Kişiden sertifika dosyasını isteyin."
+  },
+  "{0}, expired {1}": {
+    "tr": "{0}, {1} tarihinde doldu"
+  },
+  "{0}, valid until {1}": {
+    "tr": "{0}, {1} tarihine kadar geçerli"
+  },
+  "Email addresses": {
+    "tr": "E-posta adresleri"
+  },
+  "Phone numbers": {
+    "tr": "Telefon numaraları"
+  },
+  "US Social Security numbers": {
+    "tr": "ABD sosyal güvenlik numaraları"
+  },
+  "Turkish ID numbers": {
+    "tr": "T.C. kimlik numaraları"
+  },
+  "IBANs": {
+    "tr": "IBAN'lar"
+  },
+  "Card numbers": {
+    "tr": "Kart numaraları"
+  },
+  "Dates": {
+    "tr": "Tarihler"
+  },
+  "Not redacted": {
+    "tr": "Karartılamadı"
+  },
+  "Windows has no font for the text on the boxes. Clear that text and try again.": {
+    "tr": "Windows'ta kutulardaki metin için yazı tipi yok. Bu metni silip yeniden deneyin."
+  },
+  "Redacting": {
+    "tr": "Karartılıyor"
+  },
+  "{0} (redacted).pdf": {
+    "tr": "{0} (karartılmış).pdf"
+  },
+  "Redacted copy opened.": {
+    "tr": "Karartılmış kopya açıldı."
+  },
+  "Redacted copy has problems.": {
+    "tr": "Karartılmış kopyada sorunlar var."
+  },
+  "Box": {
+    "tr": "Kutu"
+  },
+  "Search failed": {
+    "tr": "Arama yapılamadı"
+  },
+  "The file could not be read. Close it and open it again.": {
+    "tr": "Dosya okunamadı. Kapatıp yeniden açın."
+  },
+  "Nothing found.": {
+    "tr": "Hiçbir şey bulunamadı."
+  },
+  "Nothing new to mark.": {
+    "tr": "İşaretlenecek yeni bir şey yok."
+  },
+  "{0} mark added.": {
+    "other": "{0} marks added.",
+    "tr": "{0} işaret eklendi."
+  },
+  "{0} mark": {
+    "other": "{0} marks",
+    "tr": "{0} işaret"
+  },
+  "Result of the redaction": {
+    "tr": "Karartma sonucu"
+  },
+  "Mark": {
+    "tr": "İşaretle"
+  },
+  "Draw boxes on the page": {
+    "tr": "Sayfaya kutu çiz"
+  },
+  "Mark selected text": {
+    "tr": "Seçili metni işaretle"
+  },
+  "Select text on the page first.": {
+    "tr": "Önce sayfada metin seçin."
+  },
+  "Word or phrase": {
+    "tr": "Sözcük veya ifade"
+  },
+  "Whole word": {
+    "tr": "Tam sözcük"
+  },
+  "Mark every match": {
+    "tr": "Tüm eşleşmeleri işaretle"
+  },
+  "Kind of data": {
+    "tr": "Veri türü"
+  },
+  "Mark all of this kind": {
+    "tr": "Bu türdekilerin hepsini işaretle"
+  },
+  "Remove all": {
+    "tr": "Hepsini kaldır"
+  },
+  "Nothing is marked yet.": {
+    "tr": "Henüz bir şey işaretlenmedi."
+  },
+  "Marks": {
+    "tr": "İşaretler"
+  },
+  "Remove this mark": {
+    "tr": "Bu işareti kaldır"
+  },
+  "Cover": {
+    "tr": "Örtü"
+  },
+  "Text on the boxes (optional)": {
+    "tr": "Kutulardaki metin (isteğe bağlı)"
+  },
+  "Options": {
+    "tr": "Seçenekler"
+  },
+  "Flatten every marked page": {
+    "tr": "İşaretli her sayfayı resme çevir"
+  },
+  "Each marked page becomes a picture. Its text can no longer be selected.": {
+    "tr": "İşaretli her sayfa resme dönüşür. Metni artık seçilemez."
+  },
+  "The result opens as a new file. This file is not changed.": {
+    "tr": "Sonuç yeni bir dosya olarak açılır. Bu dosya değişmez."
+  },
+  "Redact to a new file": {
+    "tr": "Yeni dosyaya karart"
+  },
+  "Check passed": {
+    "tr": "Denetim başarılı"
+  },
+  "Check found problems": {
+    "tr": "Kontrol sorun buldu"
+  },
+  "Page {1} is now a picture. Its text can no longer be selected.": {
+    "other": "Pages {1} are now pictures. Their text can no longer be selected.",
+    "tr": "{1}. sayfa artık bir resim. Metni artık seçilemez."
+  },
+  "Nothing was found inside the marked places.": {
+    "tr": "İşaretli yerlerde hiçbir şey bulunamadı."
+  },
+  "Not checked: the same words in places that are not marked, words inside pictures, and font files.": {
+    "tr": "Denetlenmedi: işaretli olmayan yerlerdeki aynı sözcükler, resimlerin içindeki sözcükler ve yazı tipi dosyaları."
+  },
+  "Do not share this copy yet. Read the problems below.": {
+    "tr": "Bu kopyayı henüz paylaşmayın. Aşağıdaki sorunları okuyun."
+  },
+  "Do not share this copy yet. Read the problems below. Flattening every marked page may clear them.": {
+    "tr": "Bu kopyayı henüz paylaşmayın. Aşağıdaki sorunları okuyun. İşaretli her sayfayı düzleştirmek sorunları giderebilir."
+  },
+  "This file does not allow changes. Ask its owner for a copy without limits.": {
+    "tr": "Bu dosya değişikliğe izin vermiyor. Sahibinden sınırsız bir kopya isteyin."
+  },
+  "The redaction could not be finished. Mark fewer places and try again. The file was not changed.": {
+    "tr": "Karartma tamamlanamadı. Daha az yer işaretleyip yeniden deneyin. Dosya değiştirilmedi."
+  },
+  "The file could not be searched. Close it and open it again.": {
+    "tr": "Dosyada arama yapılamadı. Dosyayı kapatıp yeniden açın."
+  },
+  "The file changed meanwhile. Try again.": {
+    "tr": "Dosya bu sırada değişti. Yeniden deneyin."
+  },
+  "The copy has no password": {
+    "tr": "Kopyanın parolası yok"
+  },
+  "Protect it before you share it.": {
+    "tr": "Paylaşmadan önce koruyun."
+  },
+  "{0} page has no text": {
+    "other": "{0} pages have no text",
+    "tr": "{0} sayfada metin yok"
+  },
+  "Words and numbers on those pages were not searched. Draw boxes over them instead.": {
+    "tr": "Bu sayfalardaki sözcükler ve sayılar aranmadı. Bunun yerine üzerlerine kutu çizin."
+  },
+  "{0} mark removed": {
+    "other": "{0} marks removed",
+    "tr": "{0} işaret kaldırıldı"
+  },
+  "The list is empty now.": {
+    "tr": "Liste şimdi boş."
+  },
+  "Put them back": {
+    "tr": "Geri koy"
+  },
+  "Marks removed": {
+    "tr": "İşaretler kaldırıldı"
+  },
+  "The pages changed, so the marks no longer fit. Mark them again.": {
+    "tr": "Sayfalar değişti, bu yüzden işaretler artık uymuyor. Yeniden işaretleyin."
+  },
+  "This file does not allow changes. It cannot be redacted.": {
+    "tr": "Bu dosya değişikliğe izin vermiyor. Karartılamaz."
+  },
+  "object {0}|in a sentence": {
+    "tr": "nesne {0}"
+  },
+  "A box I draw on the page": {
+    "tr": "Sayfaya çizeceğim bir kutu"
+  },
+  "A protected file cannot open as a copy. Save the signed version, then open it.": {
+    "tr": "Korumalı bir dosya kopya olarak açılamaz. İmzalı sürümü kaydedip sonra açın."
+  },
+  "About the signature": {
+    "tr": "İmza hakkında"
+  },
+  "Add a certificate": {
+    "tr": "Sertifika ekle"
+  },
+  "Add validation data": {
+    "tr": "Doğrulama verisi ekle"
+  },
+  "Added without proof of revocation.": {
+    "tr": "İptal kanıtı olmadan eklendi."
+  },
+  "Adding validation data": {
+    "tr": "Doğrulama verisi ekleniyor"
+  },
+  "Asks the certificate servers for proof and stores it in the file.": {
+    "tr": "Sertifika sunucularından kanıt ister ve dosyaya kaydeder."
+  },
+  "Box drawn on page {0}.": {
+    "tr": "Kutu {0}. sayfaya çizildi."
+  },
+  "Certificate": {
+    "tr": "Sertifika"
+  },
+  "Certificate files": {
+    "tr": "Sertifika dosyaları"
+  },
+  "Certificate from Windows": {
+    "tr": "Windows'tan sertifika"
+  },
+  "Certificate from a PFX file": {
+    "tr": "PFX dosyasından sertifika"
+  },
+  "Certificate from {0}.": {
+    "tr": "Sertifikayı veren: {0}."
+  },
+  "Certificate not opened": {
+    "tr": "Sertifika açılamadı"
+  },
+  "Certificates you trust": {
+    "tr": "Güvendiğiniz sertifikalar"
+  },
+  "Certified: form filling and comments are allowed.": {
+    "tr": "Sertifikalı: form doldurmaya ve yorum eklemeye izin var."
+  },
+  "Certified: form filling is allowed.": {
+    "tr": "Sertifikalı: form doldurmaya izin var."
+  },
+  "Certified: no changes are allowed.": {
+    "tr": "Sertifikalı: değişiklik yapılamaz."
+  },
+  "Certify": {
+    "tr": "Sertifikalandır"
+  },
+  "Changed since signing": {
+    "tr": "İmzadan sonra değişenler"
+  },
+  "Choose a PFX file": {
+    "tr": "PFX dosyası seç"
+  },
+  "Choose a file": {
+    "tr": "Dosya seç"
+  },
+  "Choose a picture": {
+    "tr": "Resim seç"
+  },
+  "Click the page where the text starts.": {
+    "tr": "Metnin başlayacağı yere sayfada tıklayın."
+  },
+  "Click the page, or drag a box, to place it.": {
+    "tr": "Yerleştirmek için sayfaya tıklayın ya da bir kutu sürükleyin."
+  },
+  "Click where it should go.": {
+    "tr": "Yerleşeceği yere tıklayın."
+  },
+  "Date": {
+    "tr": "Tarih"
+  },
+  "Date format": {
+    "tr": "Tarih biçimi"
+  },
+  "Do not certify": {
+    "tr": "Sertifikalandırma"
+  },
+  "Drag on the page where it goes.": {
+    "tr": "Yerleşeceği alanı sayfada sürükleyin."
+  },
+  "Draw it": {
+    "tr": "Elle çiz"
+  },
+  "Draw the box": {
+    "tr": "Kutuyu çiz"
+  },
+  "Drawing area for the signature": {
+    "tr": "İmza çizim alanı"
+  },
+  "Expires {0}": {
+    "tr": "Bitiş: {0}"
+  },
+  "Field {0}": {
+    "tr": "Alan {0}"
+  },
+  "File cannot be signed": {
+    "tr": "Dosya imzalanamıyor"
+  },
+  "File signed.": {
+    "tr": "Dosya imzalandı."
+  },
+  "Form filling allowed": {
+    "tr": "Form doldurmaya izin var"
+  },
+  "Form filling and comments allowed": {
+    "tr": "Form doldurmaya ve yorum eklemeye izin var"
+  },
+  "Initials": {
+    "tr": "Baş harfler"
+  },
+  "Keep for next time": {
+    "tr": "Sonraki sefer için sakla"
+  },
+  "Keeps the proof that the certificate was good. The signature can then be checked after it expires.": {
+    "tr": "Sertifikanın geçerli olduğunun kanıtını saklar. İmza, sertifikanın süresi dolduktan sonra da denetlenebilir."
+  },
+  "Key cannot be used": {
+    "tr": "Anahtar kullanılamıyor"
+  },
+  "Long term validation": {
+    "tr": "Uzun süreli doğrulama"
+  },
+  "Make a new one": {
+    "tr": "Yenisini oluştur"
+  },
+  "No box yet.": {
+    "tr": "Henüz kutu yok."
+  },
+  "No changes allowed": {
+    "tr": "Değişikliğe izin yok"
+  },
+  "None added.": {
+    "tr": "Hiçbiri eklenmedi."
+  },
+  "Not checked": {
+    "tr": "Denetlenemeyenler"
+  },
+  "Not signed": {
+    "tr": "İmzalanmadı"
+  },
+  "Not visible": {
+    "tr": "Görünmez"
+  },
+  "Nothing is saved yet.": {
+    "tr": "Henüz kayıtlı bir şey yok."
+  },
+  "Nothing new to add.": {
+    "tr": "Eklenecek yeni bir şey yok."
+  },
+  "Only the first signature of a file can certify it.": {
+    "tr": "Bir dosyayı yalnızca ilk imza sertifikalandırabilir."
+  },
+  "Open it": {
+    "tr": "Aç"
+  },
+  "PFX file": {
+    "tr": "PFX dosyası"
+  },
+  "Password of the PFX file": {
+    "tr": "PFX dosyasının parolası"
+  },
+  "Place": {
+    "tr": "Yer"
+  },
+  "Place on page": {
+    "tr": "Sayfaya yerleştir"
+  },
+  "Place signature": {
+    "tr": "İmzayı yerleştir"
+  },
+  "Place text": {
+    "tr": "Metni yerleştir"
+  },
+  "Place: {0}": {
+    "tr": "Yer: {0}"
+  },
+  "Placed on page {0}.": {
+    "tr": "{0}. sayfaya yerleştirildi."
+  },
+  "Preview": {
+    "tr": "Önizleme"
+  },
+  "Problems": {
+    "tr": "Sorunlar"
+  },
+  "Proof of revocation is missing": {
+    "tr": "İptal kanıtı eksik"
+  },
+  "Proof of the certificate is stored in the file.": {
+    "tr": "Sertifikanın kanıtı dosyada saklanıyor."
+  },
+  "Reason": {
+    "tr": "Neden"
+  },
+  "Reason: {0}": {
+    "tr": "Neden: {0}"
+  },
+  "Save it": {
+    "tr": "Kaydet"
+  },
+  "Save the signed version": {
+    "tr": "İmzalı sürümü kaydet"
+  },
+  "Save the signed version as a file": {
+    "tr": "İmzalı sürümü dosya olarak kaydet"
+  },
+  "Saved": {
+    "tr": "Kayıtlı"
+  },
+  "Saved initials": {
+    "tr": "Kayıtlı baş harfler"
+  },
+  "Saved signature": {
+    "tr": "Kayıtlı imza"
+  },
+  "Sign on white paper and take a photo. The paper is made see-through.": {
+    "tr": "Beyaz kâğıda imzalayıp fotoğrafını çekin. Kâğıt saydam yapılır."
+  },
+  "Sign with": {
+    "tr": "Şununla imzala"
+  },
+  "Signature on the page": {
+    "tr": "Sayfadaki imza"
+  },
+  "Signatures already in the file": {
+    "tr": "Dosyadaki mevcut imzalar"
+  },
+  "Signed version saved": {
+    "tr": "İmzalı sürüm kaydedildi"
+  },
+  "Signed version saved.": {
+    "tr": "İmzalı sürüm kaydedildi."
+  },
+  "Signed without validation data.": {
+    "tr": "Doğrulama verisi olmadan imzalandı."
+  },
+  "Signing the file": {
+    "tr": "Dosya imzalanıyor"
+  },
+  "Stop placing": {
+    "tr": "Yerleştirmeyi bırak"
+  },
+  "Style": {
+    "tr": "Stil"
+  },
+  "Text cannot be drawn": {
+    "tr": "Metin çizilemiyor"
+  },
+  "That file is not a certificate. Choose a .cer or .crt file.": {
+    "tr": "Bu dosya bir sertifika değil. .cer veya .crt dosyası seçin."
+  },
+  "That file is not a picture Lazy PDF can read. Choose a PNG or JPEG.": {
+    "tr": "Bu dosya Lazy PDF'nin okuyabildiği bir resim değil. PNG veya JPEG seçin."
+  },
+  "That is the open file. Choose another name.": {
+    "tr": "Bu, açık olan dosya. Başka bir ad seçin."
+  },
+  "The PFX file could not be opened. Check the password and that the file is a PFX.": {
+    "tr": "PFX dosyası açılamadı. Parolayı ve dosyanın PFX olduğunu denetleyin."
+  },
+  "The file could not be read for signing. Save it under another name and try again.": {
+    "tr": "Dosya imzalamak için okunamadı. Başka bir adla kaydedip yeniden deneyin."
+  },
+  "The file could not be saved. Check the folder and try again.": {
+    "tr": "Dosya kaydedilemedi. Klasörü denetleyip yeniden deneyin."
+  },
+  "The signature may not be checkable after its certificate expires. Add validation data again when the servers answer.": {
+    "tr": "Sertifika süresi dolunca imza denetlenemeyebilir. Sunucular yanıt verdiğinde doğrulama verisini yeniden ekleyin."
+  },
+  "The signed version is not in the file's history.": {
+    "tr": "İmzalı sürüm dosyanın geçmişinde yok."
+  },
+  "This certificate is not valid today. The signature will show as not trusted.": {
+    "tr": "Bu sertifika bugün geçerli değil. İmza güvenilmez görünecek."
+  },
+  "This file cannot be signed": {
+    "tr": "Bu dosya imzalanamaz"
+  },
+  "This is the signed version.": {
+    "tr": "Bu, imzalı sürümün kendisi."
+  },
+  "Time stamp": {
+    "tr": "Zaman damgası"
+  },
+  "Time stamp server address": {
+    "tr": "Zaman damgası sunucusu adresi"
+  },
+  "Trust settings": {
+    "tr": "Güven ayarları"
+  },
+  "Trust what Windows trusts": {
+    "tr": "Windows'un güvendiklerine güven"
+  },
+  "Turn": {
+    "tr": "Döndür"
+  },
+  "Turn the picture a quarter": {
+    "tr": "Resmi çeyrek tur döndür"
+  },
+  "Type": {
+    "tr": "Yaz"
+  },
+  "Type your name": {
+    "tr": "Adınızı yazın"
+  },
+  "Unreadable certificate": {
+    "tr": "Okunamayan sertifika"
+  },
+  "Use": {
+    "tr": "Kullan"
+  },
+  "Use a picture": {
+    "tr": "Resim kullan"
+  },
+  "Use a web address that starts with https://.": {
+    "tr": "https:// ile başlayan bir web adresi yazın."
+  },
+  "Validation data": {
+    "tr": "Doğrulama verisi"
+  },
+  "Validation data added.": {
+    "tr": "Doğrulama verisi eklendi."
+  },
+  "Validation data not added": {
+    "tr": "Doğrulama verisi eklenemedi"
+  },
+  "View signed version": {
+    "tr": "İmzalı sürümü göster"
+  },
+  "When it was signed. The time is the signer's word.": {
+    "tr": "İmzalanma zamanı. Zaman, imzalayanın beyanıdır."
+  },
+  "Whether the certificate was withdrawn.": {
+    "tr": "Sertifikanın geri çekilip çekilmediği."
+  },
+  "Windows has no certificate with a private key for you. Use a PFX file.": {
+    "tr": "Windows'ta sizin için özel anahtarlı sertifika yok. PFX dosyası kullanın."
+  },
+  "Windows would not let Lazy PDF use this key. Check the PIN or choose another certificate.": {
+    "tr": "Windows, Lazy PDF'nin bu anahtarı kullanmasına izin vermedi. PIN'i denetleyin veya başka bir sertifika seçin."
+  },
+  "{0} (signed by {1})": {
+    "tr": "{0} ({1} imzaladı)"
+  },
+  "{0} (signed)": {
+    "tr": "{0} (imzalı)"
+  },
+  "{0}, not allowed": {
+    "tr": "{0}, izin verilmeyen"
+  },
+  "Full screen": {
+    "tr": "Tam ekran"
+  },
+  "Nothing, just the page": {
+    "tr": "Hiçbiri, yalnızca sayfa"
+  },
+  "Scrolling, one page across": {
+    "tr": "Kaydırmalı, yan yana tek sayfa"
+  },
+  "Scrolling, two pages across": {
+    "tr": "Kaydırmalı, yan yana iki sayfa"
+  },
+  "Scrolling, two pages, cover alone": {
+    "tr": "Kaydırmalı, iki sayfa, kapak tek başına"
+  },
+  "Two pages at a time": {
+    "tr": "Aynı anda iki sayfa"
+  },
+  "Two pages at a time, cover alone": {
+    "tr": "Aynı anda iki sayfa, kapak tek başına"
+  },
+  "One page at a time": {
+    "tr": "Aynı anda tek sayfa"
+  },
+  "One side": {
+    "tr": "Tek yüz"
+  },
+  "Both sides, long edge": {
+    "tr": "Çift yüz, uzun kenar"
+  },
+  "Both sides, short edge": {
+    "tr": "Çift yüz, kısa kenar"
+  },
+  "Printer default": {
+    "tr": "Yazıcı varsayılanı"
+  },
+  "Title": {
+    "tr": "Başlık"
+  },
+  "Author": {
+    "tr": "Yazar"
+  },
+  "Subject": {
+    "tr": "Konu"
+  },
+  "Keywords": {
+    "tr": "Anahtar sözcükler"
+  },
+  "Separate them with commas.": {
+    "tr": "Virgülle ayırın."
+  },
+  "Created": {
+    "tr": "Oluşturulma"
+  },
+  "Update the changed date": {
+    "tr": "Değiştirilme tarihini güncelle"
+  },
+  "When it opens": {
+    "tr": "Açıldığında"
+  },
+  "Show beside the page": {
+    "tr": "Sayfanın yanında göster"
+  },
+  "Page layout": {
+    "tr": "Sayfa düzeni"
+  },
+  "A code such as en-US or tr-TR.": {
+    "tr": "en-US veya tr-TR gibi bir kod."
+  },
+  "Title in the title bar": {
+    "tr": "Başlık çubuğunda başlık"
+  },
+  "Hide the toolbar": {
+    "tr": "Araç çubuğunu gizle"
+  },
+  "Hide the menu bar": {
+    "tr": "Menü çubuğunu gizle"
+  },
+  "Hide window controls": {
+    "tr": "Pencere denetimlerini gizle"
+  },
+  "Size window to page": {
+    "tr": "Pencereyi sayfaya uydur"
+  },
+  "Centre the window": {
+    "tr": "Pencereyi ortala"
+  },
+  "Read right to left": {
+    "tr": "Sağdan sola oku"
+  },
+  "When it prints": {
+    "tr": "Yazdırıldığında"
+  },
+  "Print at actual size": {
+    "tr": "Gerçek boyutta yazdır"
+  },
+  "Sides": {
+    "tr": "Yüzler"
+  },
+  "Copies": {
+    "tr": "Kopya"
+  },
+  "Save properties": {
+    "tr": "Özellikleri kaydet"
+  },
+  "Changed {0}": {
+    "tr": "Değiştirilme: {0}"
+  },
+  "No changed date.": {
+    "tr": "Değiştirilme tarihi yok."
+  },
+  "Properties changed.": {
+    "tr": "Özellikler değişti."
+  },
+  "Add watermark": {
+    "tr": "Filigran ekle"
+  },
+  "Add background": {
+    "tr": "Arka plan ekle"
+  },
+  "Add Bates numbers": {
+    "tr": "Bates numarası ekle"
+  },
+  "Add header and footer": {
+    "tr": "Üst ve alt bilgi ekle"
+  },
+  "Type the text for at least one place.": {
+    "tr": "En az bir yer için metin yazın."
+  },
+  "No page in this file matches.": {
+    "tr": "Bu dosyada uyan sayfa yok."
+  },
+  "Background": {
+    "tr": "Arka plan"
+  },
+  "The first page number must be a whole number.": {
+    "tr": "İlk sayfa numarası tam sayı olmalı."
+  },
+  "Digits must be a number from 1 to 18.": {
+    "tr": "Basamak sayısı 1 ile 18 arasında olmalı."
+  },
+  "The first number must be 0 or more.": {
+    "tr": "İlk numara 0 veya daha büyük olmalı."
+  },
+  "Picture watermark": {
+    "tr": "Resimli filigran"
+  },
+  "Header and footer": {
+    "tr": "Üst ve alt bilgi"
+  },
+  "Removing the stamp": {
+    "tr": "Damga kaldırılıyor"
+  },
+  "Remove stamp": {
+    "tr": "Damgayı kaldır"
+  },
+  "Stamp removed.": {
+    "tr": "Damga kaldırıldı."
+  },
+  "Removing the stamps": {
+    "tr": "Damgalar kaldırılıyor"
+  },
+  "Remove all stamps": {
+    "tr": "Tüm damgaları kaldır"
+  },
+  "Stamps removed.": {
+    "tr": "Damgalar kaldırıldı."
+  },
+  "Add": {
+    "tr": "Ekle"
+  },
+  "Kind of stamp": {
+    "tr": "Damga türü"
+  },
+  "Watermark size": {
+    "tr": "Filigran boyutu"
+  },
+  "Watermark angle": {
+    "tr": "Filigran açısı"
+  },
+  "Watermark place": {
+    "tr": "Filigran konumu"
+  },
+  "Top left": {
+    "tr": "Sol üst"
+  },
+  "Top": {
+    "tr": "Üst"
+  },
+  "Top right": {
+    "tr": "Sağ üst"
+  },
+  "Bottom left": {
+    "tr": "Sol alt"
+  },
+  "Bottom": {
+    "tr": "Alt"
+  },
+  "Bottom right": {
+    "tr": "Sağ alt"
+  },
+  "Behind the page text": {
+    "tr": "Sayfa metninin arkasında"
+  },
+  "Background colour": {
+    "tr": "Arka plan rengi"
+  },
+  "Picture fit": {
+    "tr": "Resim sığdırma"
+  },
+  "Cover the page": {
+    "tr": "Sayfayı kapla"
+  },
+  "Fit inside the page": {
+    "tr": "Sayfanın içine sığdır"
+  },
+  "Stretch to the page": {
+    "tr": "Sayfaya ger"
+  },
+  "Pick a picture": {
+    "tr": "Resim seç"
+  },
+  "Remove picture": {
+    "tr": "Resmi kaldır"
+  },
+  "Readers can hide it": {
+    "tr": "Okuyucular gizleyebilir"
+  },
+  "Header": {
+    "tr": "Üst bilgi"
+  },
+  "Header left": {
+    "tr": "Üst bilgi sol"
+  },
+  "Header centre": {
+    "tr": "Üst bilgi orta"
+  },
+  "Header right": {
+    "tr": "Üst bilgi sağ"
+  },
+  "Footer": {
+    "tr": "Alt bilgi"
+  },
+  "Footer left": {
+    "tr": "Alt bilgi sol"
+  },
+  "Footer centre": {
+    "tr": "Alt bilgi orta"
+  },
+  "Footer right": {
+    "tr": "Alt bilgi sağ"
+  },
+  "First page number": {
+    "tr": "İlk sayfa numarası"
+  },
+  "Before": {
+    "tr": "Önce"
+  },
+  "After": {
+    "tr": "Sonra"
+  },
+  "After the number": {
+    "tr": "Numaradan sonra"
+  },
+  "Bates number place": {
+    "tr": "Bates numarası konumu"
+  },
+  "Text colour": {
+    "tr": "Metin rengi"
+  },
+  "On pages": {
+    "tr": "Sayfalarda"
+  },
+  "Pages to stamp": {
+    "tr": "Damgalanacak sayfalar"
+  },
+  "Odd pages": {
+    "tr": "Tek sayfalar"
+  },
+  "Even pages": {
+    "tr": "Çift sayfalar"
+  },
+  "Pages I type": {
+    "tr": "Yazacağım sayfalar"
+  },
+  "Page range": {
+    "tr": "Sayfa aralığı"
+  },
+  "Already on this file": {
+    "tr": "Dosyada olanlar"
+  },
+  "Stamps on this file": {
+    "tr": "Dosyadaki damgalar"
+  },
+  "Change the settings above and update it. Pick a picture again if it had one.": {
+    "tr": "Yukarıdaki ayarları değiştirip güncelleyin. Resmi varsa yeniden seçin."
+  },
+  "Remove the selected stamp": {
+    "tr": "Seçili damgayı kaldır"
+  },
+  "Add a new one instead": {
+    "tr": "Bunun yerine yenisini ekle"
+  },
+  "Light grey": {
+    "tr": "Açık gri"
+  },
+  "Cream": {
+    "tr": "Krem"
+  },
+  "Light blue": {
+    "tr": "Açık mavi"
+  },
+  "Confidential": {
+    "tr": "Gizli"
+  },
+  "{page}, {pages}, {date} and {file} fill in by themselves.": {
+    "tr": "{page}, {pages}, {date} ve {file} kendiliğinden dolar."
+  },
+  "{0}°": {
+    "tr": "{0}°"
+  },
+  "Update stamp": {
+    "tr": "Damgayı güncelle"
+  },
+  "Stamping pages": {
+    "tr": "Sayfalar damgalanıyor"
+  },
+  "Pick a PNG, JPEG or another common picture.": {
+    "tr": "PNG, JPEG veya yaygın başka bir resim seçin."
+  },
+  "Next number is {0}.": {
+    "tr": "Sıradaki numara {0}."
+  },
+  "Some characters are missing": {
+    "tr": "Bazı karakterler eksik"
+  },
+  "The font cannot draw all of the text. Pick another font and update the stamp.": {
+    "tr": "Yazı tipi metnin tamamını çizemiyor. Başka bir yazı tipi seçip damgayı güncelleyin."
+  },
+  "Stamped {0} page.": {
+    "other": "Stamped {0} pages.",
+    "tr": "{0} sayfa damgalandı."
+  },
+  "This file is certified, so changing it makes viewers report it as altered.": {
+    "tr": "Bu dosya onaylı, bu yüzden değiştirmek görüntüleyicilerde değiştirilmiş olarak görünür."
+  },
+  "Type the first number of the run.": {
+    "tr": "Dizinin ilk numarasını yazın."
+  },
+  "Nothing was stamped.": {
+    "tr": "Hiçbir şey damgalanmadı."
+  },
+  ", page {0}": {
+    "tr": ", sayfa {0}"
+  },
+  "Add tags": {
+    "tr": "Etiket ekle"
+  },
+  "Adding tags": {
+    "tr": "Etiketler ekleniyor"
+  },
+  "Allows transparency and layers. The usual choice.": {
+    "tr": "Saydamlığa ve katmanlara izin verir. Olağan seçim."
+  },
+  "Already tagged": {
+    "tr": "Zaten etiketli"
+  },
+  "Cannot read aloud": {
+    "tr": "Sesli okunamıyor"
+  },
+  "Check": {
+    "tr": "Denetle"
+  },
+  "Check stopped. Press Check to run it again.": {
+    "tr": "Denetim durduruldu. Yeniden çalıştırmak için Denetle'ye basın."
+  },
+  "Checking the file": {
+    "tr": "Dosya denetleniyor"
+  },
+  "Checking {0}": {
+    "tr": "{0} denetleniyor"
+  },
+  "Convert to {0}": {
+    "tr": "{0} biçimine dönüştür"
+  },
+  "Converted, checks passed": {
+    "tr": "Dönüştürüldü, denetimler geçti"
+  },
+  "Converted, rules still broken": {
+    "tr": "Dönüştürüldü, kurallar hâlâ bozuk"
+  },
+  "Converting to {0}": {
+    "tr": "{0} biçimine dönüştürülüyor"
+  },
+  "Describe figures": {
+    "tr": "Şekilleri tanımla"
+  },
+  "Description": {
+    "tr": "Açıklama"
+  },
+  "Description not saved": {
+    "tr": "Açıklama kaydedilmedi"
+  },
+  "Description saved.": {
+    "tr": "Açıklama kaydedildi."
+  },
+  "Does not pass the checks for {0}. Rules broken: {1}.": {
+    "tr": "{0} denetimlerini geçmiyor. Bozulan kurallar: {1}."
+  },
+  "Every figure has a description.": {
+    "tr": "Her şeklin bir açıklaması var."
+  },
+  "Failed": {
+    "tr": "Başarısız"
+  },
+  "Fails {0} checks.": {
+    "tr": "{0} denetimlerini geçmiyor."
+  },
+  "Figure description": {
+    "tr": "Şekil açıklaması"
+  },
+  "Figure {0}": {
+    "tr": "Şekil {0}"
+  },
+  "Figure {0}, page {1}": {
+    "tr": "Şekil {0}, sayfa {1}"
+  },
+  "Figures": {
+    "tr": "Şekiller"
+  },
+  "Go to page {0}": {
+    "tr": "{0}. sayfaya git"
+  },
+  "ISO 19005 clause {0}": {
+    "tr": "ISO 19005 madde {0}"
+  },
+  "It is open in a new tab. Save it to keep it.": {
+    "tr": "Yeni bir sekmede açık. Saklamak için kaydedin."
+  },
+  "Language is not valid": {
+    "tr": "Dil geçerli değil"
+  },
+  "Like 2b, and every character keeps its text.": {
+    "tr": "2b gibi; ayrıca her karakter metnini korur."
+  },
+  "Like 2b, and other files may be attached.": {
+    "tr": "2b gibi; ayrıca başka dosyalar eklenebilir."
+  },
+  "Like 3b, and every character keeps its text.": {
+    "tr": "3b gibi; ayrıca her karakter metnini korur."
+  },
+  "Lists the rules the file breaks. Nothing is changed.": {
+    "tr": "Dosyanın bozduğu kuralları listeler. Hiçbir şey değişmez."
+  },
+  "Makes a new file and tries to meet the level. This file stays as it is.": {
+    "tr": "Düzeye uymaya çalışan yeni bir dosya oluşturur. Bu dosya olduğu gibi kalır."
+  },
+  "Needs a person": {
+    "tr": "Kişi bakmalı"
+  },
+  "Next without one": {
+    "tr": "Açıklamasız sonraki"
+  },
+  "No description": {
+    "tr": "Açıklama yok"
+  },
+  "No page could be tagged. Scans need text recognition first. Pages that share content cannot be tagged.": {
+    "tr": "Hiçbir sayfa etiketlenemedi. Taramalar için önce metin tanıma gerekir. İçerik paylaşan sayfalar etiketlenemez."
+  },
+  "No picture": {
+    "tr": "Resim yok"
+  },
+  "Not converted": {
+    "tr": "Dönüştürülemedi"
+  },
+  "Nothing to tag": {
+    "tr": "Etiketlenecek bir şey yok"
+  },
+  "Passed": {
+    "tr": "Geçti"
+  },
+  "Passes Lazy PDF's checks for {0}.": {
+    "tr": "{0} için Lazy PDF denetimlerini geçiyor."
+  },
+  "Passes Lazy PDF's {0} checks.": {
+    "tr": "Lazy PDF'in {0} denetimlerini geçiyor."
+  },
+  "Picture of the figure": {
+    "tr": "Şeklin resmi"
+  },
+  "Read": {
+    "tr": "Oku"
+  },
+  "Read aloud": {
+    "tr": "Sesli oku"
+  },
+  "Reading order": {
+    "tr": "Okuma sırası"
+  },
+  "Reading the tags": {
+    "tr": "Etiketler okunuyor"
+  },
+  "Save description": {
+    "tr": "Açıklamayı kaydet"
+  },
+  "Save language": {
+    "tr": "Dili kaydet"
+  },
+  "Save title": {
+    "tr": "Başlığı kaydet"
+  },
+  "Saved.": {
+    "tr": "Kaydedildi."
+  },
+  "Set the tab order": {
+    "tr": "Sekme sırasını ayarla"
+  },
+  "Stop reading": {
+    "tr": "Okumayı durdur"
+  },
+  "Tag tree": {
+    "tr": "Etiket ağacı"
+  },
+  "Tags": {
+    "tr": "Etiketler"
+  },
+  "Tags added": {
+    "tr": "Etiketler eklendi"
+  },
+  "Tags added.": {
+    "tr": "Etiketler eklendi."
+  },
+  "Tags not added": {
+    "tr": "Etiketler eklenemedi"
+  },
+  "The change could not be written. Save a copy of the file and try again.": {
+    "tr": "Değişiklik yazılamadı. Dosyanın bir kopyasını kaydedip yeniden deneyin."
+  },
+  "The figure is no longer in the file.": {
+    "tr": "Şekil artık dosyada değil."
+  },
+  "The file could not be checked.": {
+    "tr": "Dosya denetlenemedi."
+  },
+  "The file could not be converted.": {
+    "tr": "Dosya dönüştürülemedi."
+  },
+  "The file has no figures.": {
+    "tr": "Dosyada şekil yok."
+  },
+  "The file has no tags, so it has no reading order. Add tags first.": {
+    "tr": "Dosyada etiket olmadığından okuma sırası yok. Önce etiket ekleyin."
+  },
+  "The file has no tags, so no figures are known. Add tags first.": {
+    "tr": "Dosyada etiket olmadığından şekiller bilinmiyor. Önce etiket ekleyin."
+  },
+  "The file has no tags. Add them so a screen reader can read it in order.": {
+    "tr": "Dosyada etiket yok. Ekran okuyucunun sırayla okuyabilmesi için etiket ekleyin."
+  },
+  "The file has tags, so none were added. Look at them in the tag tree.": {
+    "tr": "Dosyada etiket var, bu yüzden yenisi eklenmedi. Etiket ağacından bakın."
+  },
+  "The file is signed. The new file loses the signatures.": {
+    "tr": "Dosya imzalı. Yeni dosya imzaları kaybeder."
+  },
+  "The file says it is tagged but holds no tags. Lazy PDF cannot add them to it.": {
+    "tr": "Dosya etiketli olduğunu söylüyor ama hiç etiket içermiyor. Lazy PDF ona etiket ekleyemez."
+  },
+  "The list stops at 1000 findings.": {
+    "tr": "Liste 1000 bulguda sona eriyor."
+  },
+  "The new file is not password protected.": {
+    "tr": "Yeni dosya parolayla korunmaz."
+  },
+  "The new file passes Lazy PDF's checks for {0}.": {
+    "tr": "Yeni dosya {0} için Lazy PDF denetimlerini geçiyor."
+  },
+  "The new file still breaks {0} rules of {1}. The panel lists them.": {
+    "tr": "Yeni dosya {1} kurallarından {0} tanesini hâlâ bozuyor. Panel bunları listeler."
+  },
+  "The newest, based on PDF 2.0.": {
+    "tr": "En yenisi, PDF 2.0'a dayanır."
+  },
+  "The oldest and strictest. No transparency.": {
+    "tr": "En eski ve en katı olanı. Saydamlık yok."
+  },
+  "The pages could not be tagged. Save a copy of the file and try again.": {
+    "tr": "Sayfalar etiketlenemedi. Dosyanın bir kopyasını kaydedip yeniden deneyin."
+  },
+  "The signatures no longer hold.": {
+    "tr": "İmzalar artık geçerli değil."
+  },
+  "The tags are too large to list every figure.": {
+    "tr": "Etiketler tüm şekilleri listelemek için çok büyük."
+  },
+  "The tags could not be read.": {
+    "tr": "Etiketler okunamadı."
+  },
+  "The tags of this file are too large to change here.": {
+    "tr": "Bu dosyanın etiketleri burada değiştirilemeyecek kadar büyük."
+  },
+  "The tree is too large to show whole. Pick a tag to go to its page.": {
+    "tr": "Ağaç tamamını göstermek için çok büyük. Sayfasına gitmek için bir etiket seçin."
+  },
+  "These are Lazy PDF's own checks. No outside validator has confirmed them.": {
+    "tr": "Bunlar Lazy PDF'in kendi denetimleridir. Hiçbir dış doğrulayıcı bunları onaylamadı."
+  },
+  "This file is signed. Changes here break the signatures.": {
+    "tr": "Bu dosya imzalı. Buradaki değişiklikler imzaları bozar."
+  },
+  "Title is empty": {
+    "tr": "Başlık boş"
+  },
+  "Type a title for the file, then save it.": {
+    "tr": "Dosya için bir başlık yazın, sonra kaydedin."
+  },
+  "Untitled tag": {
+    "tr": "Adsız etiket"
+  },
+  "Windows has no voice ready. Add one under Time and language, Speech.": {
+    "tr": "Windows'ta hazır bir ses yok. Zaman ve dil, Konuşma bölümünden ekleyin."
+  },
+  "Write the language as a tag such as en-US or tr-TR.": {
+    "tr": "Dili en-US veya tr-TR gibi bir etiketle yazın."
+  },
+  "converted": {
+    "tr": "dönüştürüldü"
+  },
+  "{0} failed, {1} passed": {
+    "tr": "{0} başarısız, {1} geçti"
+  },
+  "{0} lines, in the order a screen reader reads them.": {
+    "tr": "{0} satır, ekran okuyucunun okuduğu sırayla."
+  },
+  "{0} more": {
+    "tr": "{0} tane daha"
+  },
+  "{0} more rules are not listed.": {
+    "tr": "{0} kural daha listelenmedi."
+  },
+  "{0} of {1} figures have no description.": {
+    "tr": "{1} şeklin {0} tanesinin açıklaması yok."
+  },
+  "{0} pages tagged: {1} headings, {2} paragraphs, {3} lists, {4} tables, {5} figures.": {
+    "tr": "{0} sayfa etiketlendi: {1} başlık, {2} paragraf, {3} liste, {4} tablo, {5} şekil."
+  },
+  "{0} pages were left as they were.": {
+    "tr": "{0} sayfa olduğu gibi bırakıldı."
+  },
+  "{0} passed, {1} failed, {2} need a person.": {
+    "tr": "{0} geçti, {1} başarısız, {2} için kişi bakmalı."
+  },
+  "{0} tags. Pick one to go to its page.": {
+    "tr": "{0} etiket. Sayfasına gitmek için birini seçin."
+  },
+  "{0}, and {1} more": {
+    "tr": "{0} ve {1} tane daha"
+  },
+  "This file is as small as it gets.": {
+    "tr": "Bu dosya zaten olabildiğince küçük."
+  },
+  "Type a Permissions password to apply the limits.": {
+    "tr": "Sınırları uygulamak için bir İzin parolası yazın."
+  },
+  "Still working": {
+    "tr": "Hâlâ çalışıyor"
+  },
+  "Wait for the job to end, or cancel it, then close.": {
+    "tr": "İşin bitmesini bekleyin ya da iptal edin, sonra kapatın."
+  },
+  "The file changed while you typed. Type it again.": {
+    "tr": "Siz yazarken dosya değişti. Yeniden yazın."
+  },
+  "Protected for certificate holders": {
+    "tr": "Sertifika sahipleri için korumalı"
   }
 }
