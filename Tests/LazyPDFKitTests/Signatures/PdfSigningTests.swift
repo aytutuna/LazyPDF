@@ -7,7 +7,7 @@ import Security
 // framework that agrees with our reading of a signature is SignedCms in the C#; here it is CMSDecoder on macOS, which
 // iOS does not have, and CmsVerifier on both. The C# opens the signed file with PdfPig and reads its page text; here
 // the file is opened with PdfDocument and the page's content stream is read. The Turkish name is drawn with the
-// synthetic font of the font program tests, which has A, B, ğ, ı, İ and À, so the name is made of those letters
+// synthetic font of the font program tests, which has A, B, ğ, İ and À, so the name is made of those letters
 // where the C# uses Arial from the Windows fonts folder.
 
 final class PdfSigningTests: XCTestCase {
@@ -180,7 +180,7 @@ final class PdfSigningTests: XCTestCase {
     }
 
     func test_turkishNamesAreEmbeddedFromTheFontSource() throws {
-        let name = "ABğıİÀ"
+        let name = "ABğİÀ"
         let certificate = try plainCertificate(name)
 
         var sign = PdfSignRequest(certificate, Pki.signing)

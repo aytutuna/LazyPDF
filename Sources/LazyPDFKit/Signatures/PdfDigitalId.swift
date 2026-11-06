@@ -39,13 +39,9 @@ public enum PdfDigitalId {
         guard let item = SecCertificateCreateWithData(nil, Data(certificate.rawData) as CFData) else {
             throw SignatureCryptoException(message: "The certificate could not be read.")
         }
-        // A key made in memory may not export on its own; an identity found in a keychain of its own always does.
-        let pair: [AnyObject] = [item, key]
-        let direct = export(pair as CFArray, password)
-        if let bytes = direct.bytes { return bytes }
-        let viaKeychain = exportViaKeychain(item, key, password)
-        if let bytes = viaKeychain.bytes { return bytes }
-        throw SignatureCryptoException(message: "The PFX file could not be written (\(direct.status), \(viaKeychain.status)).")
+        let written = exportViaKeychain(item, key, password)
+        guard let bytes = written.bytes else { throw SignatureCryptoException(message: "The PFX file could not be written (status \(written.status)).") }
+        return bytes
         #else
         throw PdfReadException(.unsupported, "A PFX file cannot be written on this platform.")
         #endif
@@ -63,18 +59,29 @@ public enum PdfDigitalId {
         return ([UInt8](data as Data), status)
     }
 
+    // SecItemExport does not take a key made in memory next to its certificate (it answers paramErr); it writes an
+    // identity. So the key goes into a keychain of its own as its PKCS#1 form (RSA only), which gives it the label
+    // that ties it to its certificate. Nothing may ask the user: a question here would wait for ever.
     private static func exportViaKeychain(_ certificate: SecCertificate, _ key: SecKey, _ password: String) -> (bytes: [UInt8]?, status: OSStatus) {
+        guard let representation = SecKeyCopyExternalRepresentation(key, nil) else { return (nil, errSecParam) }
         let path = NSTemporaryDirectory() + "lazypdf-" + UUID().uuidString + ".keychain"
         let secret = Array(password.utf8)
         var created: SecKeychain?
         let made = SecKeychainCreate(path, UInt32(secret.count), secret, false, nil, &created)
         guard made == errSecSuccess, let keychain = created else { return (nil, made) }
         defer { SecKeychainDelete(keychain) }
-        for (kind, item) in [(kSecClassKey, key as AnyObject), (kSecClassCertificate, certificate as AnyObject)] {
-            let attributes: [String: Any] = [kSecClass as String: kind, kSecValueRef as String: item, kSecUseKeychain as String: keychain]
-            let added = SecItemAdd(attributes as CFDictionary, nil)
-            if added != errSecSuccess { return (nil, added) }
-        }
+        var asked = DarwinBoolean(true)
+        SecKeychainGetUserInteractionAllowed(&asked)
+        SecKeychainSetUserInteractionAllowed(false)
+        defer { SecKeychainSetUserInteractionAllowed(asked.boolValue) }
+
+        var parameters = SecItemImportExportKeyParameters()
+        parameters.version = 0
+        parameters.flags = .noAccessControl
+        var format = SecExternalFormat.formatOpenSSL
+        var type = SecExternalItemType.itemTypePrivateKey
+        let imported = SecItemImport(representation, nil, &format, &type, [], &parameters, keychain, nil)
+        if imported != errSecSuccess { return (nil, imported) }
         var identity: SecIdentity?
         let found = SecIdentityCreateWithCertificate(keychain, certificate, &identity)
         guard found == errSecSuccess, let identity else { return (nil, found) }
