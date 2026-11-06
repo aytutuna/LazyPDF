@@ -1,20 +1,25 @@
 import XCTest
 @testable import LazyPDFKit
 
-// Mirrors windows/LazyPDF.Core.Tests/Redaction/RedactCompositeFontTests.cs: the same cases. The font is the synthetic one of
-// the annotation tests, where the C# uses Arial from the machine.
+// Mirrors windows/LazyPDF.Core.Tests/Redaction/RedactCompositeFontTests.cs: the same cases. The C# embeds Arial from the
+// machine; here the font is a Type0 font written by the test, with two-byte codes that are the characters themselves, a
+// ToUnicode map and no font program, which is all the redaction reads.
 
 final class RedactCompositeFontTests: XCTestCase {
-    // Embedded as a Type0 font with two-byte codes, drawing the text as hex strings.
+    // Two-byte codes, drawing the text as hex strings.
     private func embedded(_ text: String, _ content: ([UInt8]) -> String) throws -> PdfDocument {
-        let document = try RedactionKit.page("")
-        let found = try PdfFontEmbedder(document, try AnnotationFixtures.ArialSource()).add("Arial", .regular, [text], embed: true)
-        let font = try XCTUnwrap(found)
-        XCTAssertTrue(font.isEmbedded)
+        let map = "/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /Test def 1 begincodespacerange <0000> <FFFF> endcodespacerange "
+            + "1 beginbfrange <0000> <FFFF> <0000> endbfrange endcmap end end"
+        let document = try RedactionKit.page("", "") { pdf in
+            pdf.obj(6, "<</Type /Font /Subtype /Type0 /BaseFont /TestSans /Encoding /Identity-H /DescendantFonts [7 0 R] /ToUnicode 8 0 R>>")
+            pdf.obj(7, "<</Type /Font /Subtype /CIDFontType2 /BaseFont /TestSans /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /DW 600>>")
+            pdf.stream(8, "", map)
+        }
         let page = document.pages[0]
         let fonts = try XCTUnwrap(document.dict(ContentResources.forEdit(document, page), "Font"))
-        fonts["F2"] = font.reference
-        page.dictionary["Contents"] = try document.add(PdfStream(PdfDictionary(), data: Latin1.bytes(content(font.encode(text)))))
+        fonts["F2"] = PdfReference(6, 0)
+        let encoded = text.utf16.flatMap { [UInt8($0 >> 8), UInt8($0 & 0xFF)] }
+        page.dictionary["Contents"] = try document.add(PdfStream(PdfDictionary(), data: Latin1.bytes(content(encoded))))
         return document
     }
 
