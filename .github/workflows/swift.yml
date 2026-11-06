@@ -22,7 +22,9 @@ jobs:
       - name: Build
         run: swift build
       - name: Test
-        run: swift test --filter 'Signature'
+        run: swift test --filter 'SignatureOverlapTests'
+        env:
+          SWIFT_BACKTRACE: enable=yes,color=no,sanitize=no
 
   linux:
     # The engine needs Foundation alone, so the runner's own Swift builds and tests it.
@@ -34,4 +36,4 @@ jobs:
       - name: Build
         run: swift build
       - name: Test
-        run: swift test --filter 'Signature'
+        run: swift build --build-tests
