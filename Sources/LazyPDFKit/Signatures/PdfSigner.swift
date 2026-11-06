@@ -1,12 +1,15 @@
 import Foundation
+#if canImport(Security)
+import Security
+#endif
 
 // Twin of windows/LazyPDF.Core/Signatures/PdfSigner.cs: applies signatures (ISO 32000-1 12.8, ETSI EN 319 142 PAdES)
 // and document time stamps. A signature is always an incremental update: the bytes of the file stay as they were,
 // and the signature covers all of them. Throws `InvalidOperationException` with a `SignatureText` message for what the
 // user can fix (a taken field, a missing key, a seed value that cannot be met) and `ArgumentException` for a bad page.
 //
-// The chain to embed is the request's own: the C# also asks the system to build one from its store when the request
-// has none, which Security.framework does not offer for a certificate it has not been given.
+// The chain to embed is the request's own, else the one the system builds from its store (SecTrust, no downloads, no
+// revocation check); where it builds none, nothing is embedded.
 
 public enum PdfSigner {
     private static let baseReserve = 4096
@@ -72,7 +75,7 @@ public enum PdfSigner {
         let font = try visible ? SignatureAppearance.addFont(document, job, look, text) : nil
         let appearance = try visible ? SignatureAppearance.draw(document, target.rect, target.page.rotate, look, text, font) : nil
 
-        let chain = request.chain
+        let chain = embeddedChain(request)
         let reserve = request.reserveBytes > 0
             ? request.reserveBytes
             : baseReserve + request.certificate.rawData.count + chain.reduce(0) { $0 + $1.rawData.count } + (request.timestamp == nil ? 0 : timestampReserve)
@@ -88,6 +91,22 @@ public enum PdfSigner {
         var stamp: (([UInt8]) throws -> [UInt8]?)?
         if let s = request.timestamp, let url { stamp = { value in try TimestampClient.request(s, url, value) } }
         return try SignedUpdate.build(document, contents, job.digest) { digest in try CmsBuilder.build(digest, settings, stamp) }
+    }
+
+    private static func embeddedChain(_ request: PdfSignRequest) -> [X509Certificate] {
+        if !request.chain.isEmpty { return request.chain }
+        #if canImport(Security)
+        guard let leaf = SecCertificateCreateWithData(nil, Data(request.certificate.rawData) as CFData) else { return [] }
+        var trust: SecTrust?
+        guard SecTrustCreateWithCertificates(leaf, SecPolicyCreateBasicX509(), &trust) == errSecSuccess, let trust else { return [] }
+        SecTrustSetNetworkFetchAllowed(trust, false)
+        // The result does not matter: the evaluation builds the chain, and a chain that ends short is embedded as far as it goes.
+        _ = SecTrustEvaluateWithError(trust, nil)
+        let found = (SecTrustCopyCertificateChain(trust) as? [SecCertificate]) ?? []
+        return found.dropFirst().compactMap { X509Certificate([UInt8](SecCertificateCopyData($0) as Data)) }.filter { !$0.isSelfIssued }
+        #else
+        return []
+        #endif
     }
 
     private static func hasPrivateKey(_ certificate: X509Certificate) -> Bool {

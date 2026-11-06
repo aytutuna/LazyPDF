@@ -5,8 +5,6 @@ import Security
 // Twin of windows/LazyPDF.Core/Signatures/PdfDigitalId.cs: a self-signed certificate for people who have none.
 // Signatures made with it show as "not trusted" everywhere but where it is added as trusted by hand. Apple-only: the
 // key is a SecKey. The certificate is written by CertificateBuilder, since Security.framework has no certificate writer.
-//
-// Left out against the C#: ExportPfx and ImportPfx, which throw `unsupported` (see the notes on each).
 
 public enum PdfDigitalId {
     private static let emailProtection = "1.3.6.1.5.5.7.3.4"
@@ -33,16 +31,49 @@ public enum PdfDigitalId {
         return certificate
     }
 
-    /// The certificate and its private key as a PFX file protected by `password`.
+    /// The certificate and its private key as a PFX file protected by `password`. Only macOS can write a PKCS#12 file
+    /// (SecItemExport); iOS has no call for it and says so.
     public static func exportPfx(_ certificate: X509Certificate, _ password: String) throws -> [UInt8] {
+        #if os(macOS)
+        guard let key = certificate.privateKey else { throw SignatureCryptoException(message: "The certificate has no private key to export.") }
+        guard let item = SecCertificateCreateWithData(nil, Data(certificate.rawData) as CFData) else {
+            throw SignatureCryptoException(message: "The certificate could not be read.")
+        }
+        var parameters = SecItemImportExportKeyParameters()
+        let secret = password as CFString
+        parameters.version = 0
+        parameters.passphrase = Unmanaged<CFTypeRef>.passUnretained(secret as CFTypeRef)
+        var data: CFData?
+        let status = SecItemExport([item, key] as CFArray, .formatPKCS12, [], &parameters, &data)
+        guard status == errSecSuccess, let data else { throw SignatureCryptoException(message: "The PFX file could not be written.") }
+        return [UInt8](data as Data)
+        #else
         throw PdfReadException(.unsupported, "A PFX file cannot be written on this platform.")
+        #endif
     }
 
-    /// The certificate with its key. Security.framework hands a PKCS#12 identity out as a SecIdentity, a CoreFoundation
-    /// type this package cannot take out of the import result without a forced cast, so the Mac and iPhone apps read
-    /// the file themselves and set `X509Certificate.privateKey`.
+    /// The certificate with its key. On macOS the key stays in memory only, as `EphemeralKeySet` does; on iOS
+    /// SecPKCS12Import puts it in the app's keychain.
     public static func importPfx(_ pfx: [UInt8], _ password: String) throws -> X509Certificate {
-        throw PdfReadException(.unsupported, "A PFX file cannot be read here; the app loads the identity and sets its key.")
+        var options: [String: Any] = [kSecImportExportPassphrase as String: password]
+        #if os(macOS)
+        options[kSecImportToMemoryOnly as String] = true
+        #endif
+        var items: CFArray?
+        let status = SecPKCS12Import(Data(pfx) as CFData, options as CFDictionary, &items)
+        guard status == errSecSuccess, let list = items as? [[String: Any]],
+              let identity = list.first?[kSecImportItemIdentity as String] as? SecIdentity else {
+            throw SignatureCryptoException(message: "The PFX file could not be read; the password may be wrong.")
+        }
+        var certificate: SecCertificate?
+        var key: SecKey?
+        guard SecIdentityCopyCertificate(identity, &certificate) == errSecSuccess, let certificate,
+              SecIdentityCopyPrivateKey(identity, &key) == errSecSuccess,
+              let parsed = X509Certificate([UInt8](SecCertificateCopyData(certificate) as Data)) else {
+            throw SignatureCryptoException(message: "The PFX file holds no certificate with a key.")
+        }
+        parsed.privateKey = key
+        return parsed
     }
 
     // A comma or a quote in a name would end its attribute early.
