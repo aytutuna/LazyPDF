@@ -28,16 +28,24 @@ final class TimestampTokenRulesTests: XCTestCase {
         ])
     }
 
-    private func ess(_ certificate: X509Certificate, hashOfOther: Bool, wrongSerial: Bool, twoNames: Bool) -> [UInt8] {
+    private enum EssShape { case plain, unknownHash, trailingId, trailingSerial, trailingName }
+
+    private func ess(_ certificate: X509Certificate, hashOfOther: Bool, wrongSerial: Bool, twoNames: Bool, shape: EssShape) -> [UInt8] {
         var serial = certificate.serialNumber.magnitude
         if wrongSerial { serial.append(1) }
-        var names = [DerWriter.context(4, constructed: true, certificate.issuerName)]
+        let null = DerWriter.null
+        var name = [DerWriter.context(4, constructed: true, certificate.issuerName)]
+        if shape == .trailingName { name = [DerWriter.context(4, constructed: true, certificate.issuerName + null)] }
+        var names = name
         if twoNames { names.append(DerWriter.ia5String("x.example", tag: 0x82)) }
-        let id = DerWriter.sequence([
-            DerWriter.octetString(Sha256.hash(hashOfOther ? pki.leaf.rawData : certificate.rawData)),
-            DerWriter.sequence([DerWriter.sequence(names), DerWriter.integer(unsigned: serial)]),
-        ])
-        return DerWriter.sequence([DerWriter.sequence([id])])
+        var issuerSerial = [DerWriter.sequence(names), DerWriter.integer(unsigned: serial)]
+        if shape == .trailingSerial { issuerSerial.append(null) }
+        var parts: [[UInt8]] = []
+        if shape == .unknownHash { parts.append(DerWriter.sequence([DerWriter.oid("1.2.3.4")])) }
+        parts.append(DerWriter.octetString(Sha256.hash(hashOfOther ? pki.leaf.rawData : certificate.rawData)))
+        parts.append(DerWriter.sequence(issuerSerial))
+        if shape == .trailingId { parts.append(null) }
+        return DerWriter.sequence([DerWriter.sequence([DerWriter.sequence(parts)])])
     }
 
     /// The SigningCertificate attribute of RFC 2634, with a SHA-1 hash.
@@ -58,6 +66,8 @@ final class TimestampTokenRulesTests: XCTestCase {
         var keyIdentifier = false
         var version2Other = false
         var strayByte = false
+        var essShape = EssShape.plain
+        var spoiled = false
     }
 
     private func token(_ authority: X509Certificate, _ shape: Shape = Shape()) throws -> [UInt8] {
@@ -68,7 +78,7 @@ final class TimestampTokenRulesTests: XCTestCase {
                 DerWriter.sequence([DerWriter.oid(Oids.messageDigest), DerWriter.setOf([DerWriter.octetString(Sha256.hash(content))])]),
             ]
             if !shape.withoutEss && shape.version2 {
-                let value = ess(certificate, hashOfOther: shape.hashOfOther || shape.version2Other, wrongSerial: shape.wrongSerial, twoNames: shape.twoNames)
+                let value = ess(certificate, hashOfOther: shape.hashOfOther || shape.version2Other, wrongSerial: shape.wrongSerial, twoNames: shape.twoNames, shape: shape.essShape)
                 attributes.append(DerWriter.sequence([DerWriter.oid(Oids.signingCertificateV2), DerWriter.setOf([value])]))
             }
             if shape.version1 {
@@ -95,7 +105,9 @@ final class TimestampTokenRulesTests: XCTestCase {
             DerWriter.sequence([DerWriter.oid(Oids.tstInfo), DerWriter.context(0, constructed: true, DerWriter.octetString(content))]),
         ] + (shape.embedded ? [DerWriter.setOf(certificates.map { $0.rawData }, tag: 0xA0)] : [])
             + [shape.strayByte ? DerWriter.node(0x31, signers.flatMap { $0 } + [0xFF]) : DerWriter.set(signers)])
-        return DerWriter.sequence([DerWriter.oid(Oids.signedData), DerWriter.context(0, constructed: true, data)])
+        var encoded = DerWriter.sequence([DerWriter.oid(Oids.signedData), DerWriter.context(0, constructed: true, data)])
+        if shape.spoiled { encoded[encoded.count - 1] ^= 1 }
+        return encoded
     }
 
     private func accepts(_ encoded: [UInt8], _ extra: [X509Certificate] = []) -> Bool {
@@ -206,14 +218,41 @@ final class TimestampTokenRulesTests: XCTestCase {
         XCTAssertFalse(accepts(try token(critical, two)))
     }
 
-    func test_aStrayByteAfterTheFirstSignerDoesNotStopTheCmsFromReading() throws {
+    func test_aByteAfterTheFirstSignerThatIsNoSignerKeepsTheCmsReadableAndMakesTheTokenUnreadable() throws {
         let critical = try authority(critical: true, [timeStamping])
         var stray = Shape()
         stray.strayByte = true
+        let encoded = try token(critical, stray)
 
-        let cms = try XCTUnwrap(CmsSignature.parse(token(critical, stray)))
+        let cms = try XCTUnwrap(CmsSignature.parse(encoded))
 
-        XCTAssertEqual(cms.signerCount, 1)
+        XCTAssertEqual(cms.signerCount, 2)
+        XCTAssertNil(Rfc3161Token.tryDecode(encoded))
+        XCTAssertNotNil(Rfc3161Token.tryDecode(try token(critical)))
+    }
+
+    func test_aHashTheCertificateIdNamesHasToBeKnownAndNothingMayFollowTheParts() throws {
+        let critical = try authority(critical: true, [timeStamping])
+        func shaped(_ shape: EssShape) throws -> [UInt8] {
+            var value = Shape()
+            value.essShape = shape
+            return try token(critical, value)
+        }
+
+        XCTAssertTrue(accepts(try shaped(.plain)))
+        XCTAssertFalse(accepts(try shaped(.unknownHash)))
+        XCTAssertFalse(accepts(try shaped(.trailingId)))
+        XCTAssertFalse(accepts(try shaped(.trailingSerial)))
+        XCTAssertFalse(accepts(try shaped(.trailingName)))
+    }
+
+    func test_aSignatureThatDoesNotHoldMakesTheTokenUnreadable() throws {
+        let critical = try authority(critical: true, [timeStamping])
+        var spoiled = Shape()
+        spoiled.spoiled = true
+
+        XCTAssertNotNil(Rfc3161Token.tryDecode(try token(critical)))
+        XCTAssertNil(Rfc3161Token.tryDecode(try token(critical, spoiled)))
     }
 }
 #endif

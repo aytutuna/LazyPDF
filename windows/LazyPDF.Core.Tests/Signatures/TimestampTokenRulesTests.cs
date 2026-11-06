@@ -61,23 +61,35 @@ public class TimestampTokenRulesTests
 
     private enum Names { One, Two }
 
-    private static byte[] Ess(X509Certificate2 certificate, bool hashOfOther, bool wrongSerial, Names names = Names.One)
+    private enum Shape { Plain, UnknownHash, TrailingId, TrailingSerial, TrailingName }
+
+    private static byte[] Ess(X509Certificate2 certificate, bool hashOfOther, bool wrongSerial, Names names = Names.One, Shape shape = Shape.Plain)
     {
         var w = new AsnWriter(AsnEncodingRules.DER);
         using (w.PushSequence())
         using (w.PushSequence())
         using (w.PushSequence())
         {
+            if (shape == Shape.UnknownHash)
+            {
+                using (w.PushSequence()) w.WriteObjectIdentifier("1.2.3.4");
+            }
             w.WriteOctetString(SHA256.HashData(hashOfOther ? Pki.Leaf.RawData : certificate.RawData));
             using (w.PushSequence())
             {
                 using (w.PushSequence())
                 {
-                    using (w.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 4))) w.WriteEncodedValue(certificate.IssuerName.RawData);
+                    using (w.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 4)))
+                    {
+                        w.WriteEncodedValue(certificate.IssuerName.RawData);
+                        if (shape == Shape.TrailingName) w.WriteNull();
+                    }
                     if (names == Names.Two) w.WriteCharacterString(UniversalTagNumber.IA5String, "x.example", new Asn1Tag(TagClass.ContextSpecific, 2));
                 }
                 w.WriteInteger(new BigInteger(certificate.SerialNumberBytes.Span, isUnsigned: true, isBigEndian: true) + (wrongSerial ? 1 : 0));
+                if (shape == Shape.TrailingSerial) w.WriteNull();
             }
+            if (shape == Shape.TrailingId) w.WriteNull();
         }
         return w.Encode();
     }
@@ -95,7 +107,7 @@ public class TimestampTokenRulesTests
         return w.Encode();
     }
 
-    private static byte[] Token(X509Certificate2 authority, X509Certificate2? second = null, bool hashOfOther = false, bool wrongSerial = false, bool withoutEss = false, bool embedded = true, Names names = Names.One, bool v1 = false, bool v1Other = false, bool v2 = true, bool ski = false, bool v2Other = false)
+    private static byte[] Token(X509Certificate2 authority, X509Certificate2? second = null, bool hashOfOther = false, bool wrongSerial = false, bool withoutEss = false, bool embedded = true, Names names = Names.One, bool v1 = false, bool v1Other = false, bool v2 = true, bool ski = false, bool v2Other = false, Shape essShape = Shape.Plain, bool spoil = false, bool stray = false)
     {
         var cms = new SignedCms(new ContentInfo(new Oid("1.2.840.113549.1.9.16.1.4"), Info()), false);
         foreach (var signerCertificate in new[] { authority, second }.OfType<X509Certificate2>())
@@ -106,11 +118,42 @@ public class TimestampTokenRulesTests
                 DigestAlgorithm = new Oid("2.16.840.1.101.3.4.2.1"),
             };
             if (embedded) foreach (var c in Pki.Chain) signer.Certificates.Add(c);
-            if (!withoutEss && v2) signer.SignedAttributes.Add(new AsnEncodedData(new Oid(Oids.SigningCertificateV2), Ess(signerCertificate, hashOfOther || v2Other, wrongSerial, names)));
+            if (!withoutEss && v2) signer.SignedAttributes.Add(new AsnEncodedData(new Oid(Oids.SigningCertificateV2), Ess(signerCertificate, hashOfOther || v2Other, wrongSerial, names, essShape)));
             if (v1) signer.SignedAttributes.Add(new AsnEncodedData(new Oid("1.2.840.113549.1.9.16.2.12"), EssV1(signerCertificate, v1Other)));
             cms.ComputeSignature(signer);
         }
-        return cms.Encode();
+        byte[] encoded = cms.Encode();
+        if (spoil) encoded[^1] ^= 1;
+        return stray ? WithStrayByte(encoded) : encoded;
+    }
+
+    // The signer infos with one byte that is no signer after the first, and the lengths of everything around them made right.
+    private static byte[] WithStrayByte(byte[] token)
+    {
+        var outer = new AsnReader(token, AsnEncodingRules.DER).ReadSequence();
+        string oid = outer.ReadObjectIdentifier();
+        var signed = outer.ReadSequence(new Asn1Tag(TagClass.ContextSpecific, 0)).ReadSequence();
+        var items = new List<byte[]>();
+        while (signed.HasData) items.Add(signed.ReadEncodedValue().ToArray());
+        byte[] set = items[^1];
+        AsnDecoder.ReadEncodedValue(set, AsnEncodingRules.DER, out int offset, out int length, out _);
+        byte[] contents = [.. set.AsSpan(offset, length), 0xFF];
+        items[^1] = [0x31, .. Length(contents.Length), .. contents];
+
+        byte[] data = Wrap(0x30, items.SelectMany(i => i).ToArray());
+        byte[] explicitData = Wrap(0xA0, data);
+        var w = new AsnWriter(AsnEncodingRules.DER);
+        w.WriteObjectIdentifier(oid);
+        return Wrap(0x30, [.. w.Encode(), .. explicitData]);
+    }
+
+    private static byte[] Wrap(byte tag, byte[] contents) => [tag, .. Length(contents.Length), .. contents];
+
+    private static byte[] Length(int length)
+    {
+        if (length < 0x80) return [(byte)length];
+        byte[] bytes = BitConverter.GetBytes(length).Reverse().SkipWhile(b => b == 0).ToArray();
+        return [(byte)(0x80 | bytes.Length), .. bytes];
     }
 
     private static bool Accepts(byte[] token, params X509Certificate2[] extra) =>
@@ -202,5 +245,34 @@ public class TimestampTokenRulesTests
         using var critical = Authority(true, TimeStamping);
 
         Assert.False(Accepts(Token(critical, names: Names.Two)));
+    }
+
+    [Fact]
+    public void A_hash_the_certificate_id_names_has_to_be_one_that_is_known_and_nothing_may_follow_the_parts()
+    {
+        using var critical = Authority(true, TimeStamping);
+
+        Assert.True(Accepts(Token(critical, essShape: Shape.Plain)));
+        Assert.False(Accepts(Token(critical, essShape: Shape.UnknownHash)));
+        Assert.False(Accepts(Token(critical, essShape: Shape.TrailingId)));
+        Assert.False(Accepts(Token(critical, essShape: Shape.TrailingSerial)));
+        Assert.False(Accepts(Token(critical, essShape: Shape.TrailingName)));
+    }
+
+    [Fact]
+    public void A_signature_that_does_not_hold_makes_the_token_unreadable()
+    {
+        using var critical = Authority(true, TimeStamping);
+
+        Assert.True(Rfc3161TimestampToken.TryDecode(Token(critical), out _, out _));
+        Assert.False(Rfc3161TimestampToken.TryDecode(Token(critical, spoil: true), out _, out _));
+    }
+
+    [Fact]
+    public void A_byte_after_the_first_signer_that_is_no_signer_makes_the_token_unreadable()
+    {
+        using var critical = Authority(true, TimeStamping);
+
+        Assert.False(Rfc3161TimestampToken.TryDecode(Token(critical, stray: true), out _, out _));
     }
 }

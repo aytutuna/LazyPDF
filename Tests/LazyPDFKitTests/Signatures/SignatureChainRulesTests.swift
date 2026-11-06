@@ -120,6 +120,34 @@ final class SignatureChainRulesTests: XCTestCase {
         XCTAssertEqual(report.verdict, .validButUntrusted)
         XCTAssertTrue(report.problems.contains(.untrustedSigner))
         XCTAssertEqual(try verdict(try leaf(under: pki.root), [], anchors: [pki.root]).verdict, .valid)
+        // The chain ends at the link as at any anchor, so the root next to it changes nothing (X509Chain does the same).
+        XCTAssertEqual(try verdict(signer, [link], anchors: [link, pki.root]).verdict, .validButUntrusted)
+    }
+
+    func test_aRootSignedWithPSSIsTrustedWhenTheCallerTrustsIt() throws {
+        let root = try SignatureExtraKit.selfSignedWithPss("Pss Root")
+        let signer = try leaf(under: root)
+
+        let report = try verdict(signer, [], anchors: [root])
+
+        XCTAssertEqual(report.verdict, .valid)
+    }
+
+    func test_aRootWhoseSignatureCannotBeCheckedHereIsNotTrusted() throws {
+        // The signature algorithm of the root says MD5 with RSA, which nothing here checks (.NET trusts such a root).
+        let original = try SignatureExtraKit.selfSigned(subject: X509Certificate.name("CN=Md5 Root"),
+                                                        extensions: [CertificateBuilder.basicConstraints(authority: true), CertificateBuilder.keyUsage([.keyCertSign])])
+        let sha256: [UInt8] = [0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x0B]
+        var der = original.rawData
+        while let at = der.indexOf(sha256) { der.replaceSubrange(at..<at + sha256.count, with: [0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x04]) }
+        let root = try XCTUnwrap(X509Certificate(der))
+        root.privateKey = original.privateKey
+        let signer = try leaf(under: root)
+
+        let report = try verdict(signer, [], anchors: [root])
+
+        XCTAssertEqual(report.verdict, .validButUntrusted)
+        XCTAssertTrue(report.problems.contains(.untrustedSigner))
     }
 }
 #endif

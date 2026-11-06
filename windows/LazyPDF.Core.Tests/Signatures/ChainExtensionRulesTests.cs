@@ -42,4 +42,50 @@ public class ChainExtensionRulesTests
         Assert.False(Trusted("2.5.29.32", [0xFF, 0x01], false));
         Assert.False(Trusted("2.5.29.32", [0xFF, 0x01], true));
     }
+
+    private static (X509Certificate2 Root, X509Certificate2 Leaf) PssChain()
+    {
+        using var rootKey = RSA.Create(2048);
+        var rootRequest = new CertificateRequest("CN=Pss Root", rootKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pss);
+        rootRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
+        rootRequest.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyCertSign, true));
+        using var rootWithKey = rootRequest.CreateSelfSigned(Pki.NotBefore, Pki.NotAfter);
+        var root = X509CertificateLoader.LoadCertificate(rootWithKey.RawData);
+
+        using var leafKey = RSA.Create(2048);
+        var leafRequest = new CertificateRequest("CN=Pss Leaf", leafKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        leafRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
+        leafRequest.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, true));
+        using var signed = leafRequest.Create(rootWithKey, Pki.NotBefore, Pki.NotAfter, [1, 2, 3, 4]);
+        return (root, signed.CopyWithPrivateKey(leafKey));
+    }
+
+    [Fact]
+    public void A_root_signed_with_PSS_is_trusted_when_the_caller_trusts_it()
+    {
+        var (root, leaf) = PssChain();
+
+        Assert.True(CertificateTrust.Evaluate(leaf, [], Pki.Signing, new VerifyOptions { TrustAnchors = [root] }).Trusted);
+    }
+
+    [Fact]
+    public void A_link_certificate_with_the_name_of_the_root_ends_the_chain_as_an_anchor_whatever_else_is_trusted()
+    {
+        using var linkKey = RSA.Create(2048);
+        var linkRequest = new CertificateRequest("CN=Test Root", linkKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        linkRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
+        linkRequest.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyCertSign, true));
+        linkRequest.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(linkRequest.PublicKey, false));
+        using var linkSigned = linkRequest.Create(Pki.Root, Pki.NotBefore, Pki.NotAfter, [9, 9, 9]);
+        using var link = linkSigned.CopyWithPrivateKey(linkKey);
+
+        using var leafKey = RSA.Create(2048);
+        var leafRequest = new CertificateRequest("CN=Under Link", leafKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        leafRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
+        leafRequest.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, true));
+        using var leaf = leafRequest.Create(link, Pki.NotBefore, Pki.NotAfter, [1, 2, 3, 5]);
+
+        Assert.False(CertificateTrust.Evaluate(leaf, [link], Pki.Signing, new VerifyOptions { TrustAnchors = [link, Pki.Root] }).Trusted);
+        Assert.False(CertificateTrust.Evaluate(leaf, [link], Pki.Signing, new VerifyOptions { TrustAnchors = [link] }).Trusted);
+    }
 }

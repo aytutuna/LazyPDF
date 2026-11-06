@@ -55,6 +55,42 @@ enum SignatureExtraKit {
         return certificate
     }
 
+    /// A root that signed itself with RSASSA-PSS and SHA-256, with a new RSA key.
+    static func selfSignedWithPss(_ name: String) throws -> X509Certificate {
+        let key = try SignatureCrypto.newRsaKey(2048)
+        let info = try CertificateBuilder.publicKeyInfo(key)
+        let subject = X509Certificate.name("CN=\(name)")
+        let digestOid = try Oids.digest(.sha256)
+        let parameters = DerWriter.sequence([
+            DerWriter.context(0, constructed: true, DerWriter.sequence([DerWriter.oid(digestOid)])),
+            DerWriter.context(1, constructed: true, DerWriter.sequence([DerWriter.oid("1.2.840.113549.1.1.8"), DerWriter.sequence([DerWriter.oid(digestOid)])])),
+            DerWriter.context(2, constructed: true, DerWriter.integer(32)),
+        ])
+        let algorithm = DerWriter.sequence([DerWriter.oid(Oids.rsaPss), parameters])
+        let extensions = [CertificateBuilder.basicConstraints(authority: true), CertificateBuilder.keyUsage([.keyCertSign])].map { e in
+            DerWriter.sequence([DerWriter.oid(e.oid), DerWriter.boolean(true), DerWriter.octetString(e.value)])
+        }
+        let tbs = DerWriter.sequence([
+            DerWriter.context(0, constructed: true, DerWriter.integer(2)),
+            DerWriter.integer(unsigned: CertificateBuilder.serialNumber()),
+            algorithm,
+            subject,
+            DerWriter.sequence([DerWriter.time(Pki.notBefore), DerWriter.time(Pki.notAfter)]),
+            subject,
+            info,
+            DerWriter.context(3, constructed: true, DerWriter.sequence(extensions)),
+        ])
+        var error: Unmanaged<CFError>?
+        guard let signature = SecKeyCreateSignature(key, .rsaSignatureDigestPSSSHA256, Data(Sha256.hash(tbs)) as CFData, &error) else {
+            throw SignatureCryptoException(message: "The key could not sign.")
+        }
+        guard let certificate = X509Certificate(DerWriter.sequence([tbs, algorithm, DerWriter.bitString([UInt8](signature as Data))])) else {
+            throw SignatureCryptoException(message: "The certificate does not read.")
+        }
+        certificate.privateKey = key
+        return certificate
+    }
+
     /// A self-signed certificate valid from 2025 to 2040 with a new RSA key.
     static func selfSigned(subject: [UInt8], extensions: [X509Extension]) throws -> X509Certificate {
         let key = try SignatureCrypto.newRsaKey(2048)
