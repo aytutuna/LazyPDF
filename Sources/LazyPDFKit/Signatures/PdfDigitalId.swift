@@ -40,7 +40,7 @@ public enum PdfDigitalId {
             throw SignatureCryptoException(message: "The certificate could not be read.")
         }
         let written = exportViaKeychain(item, key, password)
-        guard let bytes = written.bytes else { throw SignatureCryptoException(message: "The PFX file could not be written (status \(written.status)).") }
+        guard let bytes = written.bytes else { throw SignatureCryptoException(message: "The PFX file could not be written (\(written.steps)).") }
         return bytes
         #else
         throw PdfReadException(.unsupported, "A PFX file cannot be written on this platform.")
@@ -61,31 +61,48 @@ public enum PdfDigitalId {
 
     // SecItemExport does not take a key made in memory next to its certificate (it answers paramErr); it writes an
     // identity. So the key goes into a keychain of its own as its PKCS#1 form (RSA only), which gives it the label
-    // that ties it to its certificate. Nothing may ask the user: a question here would wait for ever.
-    private static func exportViaKeychain(_ certificate: SecCertificate, _ key: SecKey, _ password: String) -> (bytes: [UInt8]?, status: OSStatus) {
-        guard let representation = SecKeyCopyExternalRepresentation(key, nil) else { return (nil, errSecParam) }
+    // that ties it to its certificate. Nothing may ask the user: a question here would wait for ever. `steps` names the
+    // status of each call, since the statuses of this framework say little alone.
+    private static func exportViaKeychain(_ certificate: SecCertificate, _ key: SecKey, _ password: String) -> (bytes: [UInt8]?, steps: String) {
+        guard let representation = SecKeyCopyExternalRepresentation(key, nil) else { return (nil, "key \(errSecParam)") }
         let path = NSTemporaryDirectory() + "lazypdf-" + UUID().uuidString + ".keychain"
         let secret = Array(password.utf8)
         var created: SecKeychain?
         let made = SecKeychainCreate(path, UInt32(secret.count), secret, false, nil, &created)
-        guard made == errSecSuccess, let keychain = created else { return (nil, made) }
+        guard made == errSecSuccess, let keychain = created else { return (nil, "keychain \(made)") }
         defer { SecKeychainDelete(keychain) }
         var asked = DarwinBoolean(true)
         SecKeychainGetUserInteractionAllowed(&asked)
         SecKeychainSetUserInteractionAllowed(false)
         defer { SecKeychainSetUserInteractionAllowed(asked.boolValue) }
 
+        var steps = "keychain \(made)"
         var parameters = SecItemImportExportKeyParameters()
         parameters.version = 0
         parameters.flags = .noAccessControl
         var format = SecExternalFormat.formatOpenSSL
         var type = SecExternalItemType.itemTypePrivateKey
-        let imported = SecItemImport(representation, nil, &format, &type, [], &parameters, keychain, nil)
-        if imported != errSecSuccess { return (nil, imported) }
+        var imported = SecItemImport(representation, nil, &format, &type, [], &parameters, keychain, nil)
+        steps += ", import \(imported)"
+        if imported != errSecSuccess {
+            format = .formatOpenSSL
+            type = .itemTypePrivateKey
+            imported = SecItemImport(representation, nil, &format, &type, [], nil, keychain, nil)
+            steps += ", import without parameters \(imported)"
+        }
+        if imported != errSecSuccess { return (nil, steps) }
         var identity: SecIdentity?
-        let found = SecIdentityCreateWithCertificate(keychain, certificate, &identity)
-        guard found == errSecSuccess, let identity else { return (nil, found) }
-        return export(identity, password)
+        var found = SecIdentityCreateWithCertificate(keychain, certificate, &identity)
+        steps += ", identity \(found)"
+        if found != errSecSuccess {
+            let list: [AnyObject] = [keychain]
+            found = SecIdentityCreateWithCertificate(list as CFArray, certificate, &identity)
+            steps += ", identity in a list \(found)"
+        }
+        guard found == errSecSuccess, let identity else { return (nil, steps) }
+        let written = export(identity, password)
+        steps += ", export \(written.status)"
+        return (written.bytes, steps)
     }
     #endif
 
