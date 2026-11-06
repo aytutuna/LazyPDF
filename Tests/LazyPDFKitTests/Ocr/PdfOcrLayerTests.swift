@@ -188,8 +188,10 @@ final class PdfOcrLayerTests: XCTestCase {
 
     func test_badArgumentsThrowBeforeAnythingChanges() throws {
         let document = try OcrKit.scan()
-        XCTAssertThrowsError(try PdfOcrLayer.add(document, [OcrPageWords(0, OcrKit.words(), 0, 600)], "en"))
-        XCTAssertThrowsError(try PdfOcrLayer.add(document, [OcrPageWords(0, OcrKit.words(), 400, 600), OcrPageWords(3, [], 400, 600)], "en"))
+        XCTAssertThrowsError(try PdfOcrLayer.add(document, [OcrPageWords(0, OcrKit.words(), 0, 600)], "en")) { XCTAssertTrue($0 is ArgumentException, "\($0)") }
+        XCTAssertThrowsError(try PdfOcrLayer.add(document, [OcrPageWords(0, OcrKit.words(), 400, 600), OcrPageWords(3, [], 400, 600)], "en")) {
+            XCTAssertTrue($0 is ArgumentException, "\($0)")
+        }
         XCTAssertFalse(PdfOcrLayer.has(document, document.pages[0]))
         XCTAssertFalse(document.hasChanges && OcrKit.layerStreams(document) > 0)
     }
@@ -216,5 +218,50 @@ final class PdfOcrLayerTests: XCTestCase {
         XCTAssertEqual(geometry.height, 1080)
         try addWords(document, OcrKit.words(), 720, 1080)
         OcrKit.assertAtBoxes(document)
+    }
+
+    // The C# throws InvalidOperationException from PdfDocument.Add; this port throws the read error there.
+    func test_addThatCannotAddObjectsLeavesTheOldLayerAlone() throws {
+        let document = try OcrKit.scan()
+        try addWords(document, OcrKit.words())
+        document.set(PdfDocument.maxObjectNumber, PdfNull.instance)
+
+        XCTAssertThrowsError(try addWords(document, [OcrKit.word("other", 10, 10, 50, 20)])) { XCTAssertTrue($0 is PdfReadException, "\($0)") }
+
+        XCTAssertEqual(OcrKit.texts(try PdfOcrLayer.words(document, document.pages[0])), ["Hello", "world", "Second", "line"])
+        XCTAssertEqual(OcrKit.layerStreams(document), 1)
+    }
+
+    func test_aLayerWithMoreOperationsThanTheFormatCanHoldIsAReadError() throws {
+        let document = try OcrKit.scan()
+        try OcrKit.addLayer(document, String(repeating: "BT\n", count: 8 * PdfOcrLayer.maxWords + 2))
+
+        XCTAssertThrowsError(try PdfOcrLayer.words(document, document.pages[0])) { XCTAssertTrue($0 is PdfReadException, "\($0)") }
+    }
+
+    func test_aLayerWithMoreWordsThanMaxWordsIsReadUpToMaxWords() throws {
+        let document = try OcrKit.scan()
+        try OcrKit.addLayer(document, "BT\n/LPOcrF 12 Tf\n" + String(repeating: "1 0 0 1 0 0 Tm\n<0041> Tj\n", count: PdfOcrLayer.maxWords + 1) + "ET\n")
+
+        XCTAssertEqual(try PdfOcrLayer.words(document, document.pages[0]).count, PdfOcrLayer.maxWords)
+    }
+
+    func test_aLayerStreamThatDoesNotDecodeIsAReadError() throws {
+        let document = try OcrKit.scan()
+        let dictionary = PdfDictionary()
+        dictionary["LazyPDFOcr"] = PdfDictionary()
+        dictionary["Filter"] = PdfName("FlateDecode")
+        let stream = try document.add(PdfStream(dictionary, data: [1, 2, 3, 4, 5]))
+        document.pages[0].dictionary["Contents"] = PdfArray([stream])
+
+        XCTAssertThrowsError(try PdfOcrLayer.words(document, document.pages[0])) { XCTAssertTrue($0 is PdfReadException, "\($0)") }
+    }
+
+    // A lone surrogate cannot be a Swift string, so a string the C# reads as one gives U+FFFD here.
+    func test_aLoneSurrogateInAHandMadeLayerReadsAsTheReplacementCharacter() throws {
+        let document = try OcrKit.scan()
+        try OcrKit.addLayer(document, "BT\n/LPOcrF 24 Tf\n1 0 0 1 40 100 Tm\n<D800> Tj\n<0041D800> Tj\nET\n")
+
+        XCTAssertEqual(OcrKit.texts(try PdfOcrLayer.words(document, document.pages[0])), ["\u{FFFD}", "A\u{FFFD}"])
     }
 }

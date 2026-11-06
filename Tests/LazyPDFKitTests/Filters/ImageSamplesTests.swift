@@ -374,6 +374,7 @@ final class ImageSamplesTests: XCTestCase {
         let start = Date()
         let image = try convert("<< /Width 2000 /Height 2000 /BitsPerComponent 8 /ColorSpace /DeviceRGB >>", samples)
         XCTAssertEqual(image.rgba.count, 2000 * 2000 * 4)
-        XCTAssertLessThan(Date().timeIntervalSince(start), 5)
+        // A debug build on a shared macOS runner takes about 5 s; quadratic work would take minutes.
+        XCTAssertLessThan(Date().timeIntervalSince(start), 30)
     }
 }

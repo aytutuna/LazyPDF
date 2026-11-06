@@ -131,7 +131,7 @@
 > langtag en-US-x
 < invalid
 > langtag en-US\n
-< valid
+< invalid
 > langtag en-US\n\n
 < invalid
 > langtag en_US

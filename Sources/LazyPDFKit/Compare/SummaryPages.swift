@@ -31,8 +31,6 @@ enum SummaryPages {
             regularFont = try embedder.add("Helvetica", .regular, lines.map { $0.text })
             boldFont = try embedder.add("Helvetica", .bold, lines.map { $0.text })
         }
-        // The C# takes the font as found and fails on a null: a text Latin-1 holds but WinAnsi lacks (U+0080 to U+009F)
-        // with no font source leaves none.
         guard let regular = regularFont, let bold = boldFont else { throw InvalidOperationException(AnnotationText.noFont) }
 
         lines = lines.flatMap { l -> [Line] in
@@ -112,6 +110,6 @@ enum SummaryPages {
 
     // Per UTF-16 unit, as the C# walks the string: a character outside the BMP is two question marks.
     private static func latin1(_ text: String) -> String {
-        String(decoding: text.utf16.map { $0 >= 0x20 && $0 <= 0xFF ? $0 : 0x3F }, as: UTF16.self)
+        String(decoding: text.utf16.map { ($0 >= 0x20 && $0 <= 0x7E) || ($0 >= 0xA0 && $0 <= 0xFF) ? $0 : 0x3F }, as: UTF16.self)
     }
 }

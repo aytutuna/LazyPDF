@@ -206,7 +206,7 @@ final class PdfSearchableTests: XCTestCase {
             XCTAssertEqual(result.added, 2, "\(strength)")
 
             let saved = session.current
-            XCTAssertThrowsError(try PdfDocument.open(saved, password: "wrong"))
+            XCTAssertThrowsError(try PdfDocument.open(saved, password: "wrong")) { XCTAssertTrue($0 is PdfReadException, "\($0)") }
             let reopened = try PdfDocument.open(saved, password: "user")
             XCTAssertTrue(reopened.isEncrypted)
             OcrKit.assertAtBoxes(reopened, 0)

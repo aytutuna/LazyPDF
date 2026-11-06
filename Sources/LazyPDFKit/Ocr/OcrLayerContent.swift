@@ -28,6 +28,10 @@ enum OcrLayerContent {
     private static let minSize = 0.01
     private static let minSpace = 0.1
 
+    // What the layer of a page can hold: maxWords words, about seven operations for each (a line of one word has the most).
+    private static let maxSize = 16 << 20
+    private static let maxOperations = 8 * PdfOcrLayer.maxWords
+
     /// Words in pixels to lines on the page as shown. A line takes the median top and bottom of its words, so its glyphs
     /// share a baseline.
     static func layout(_ words: [OcrWord], _ pixelWidth: Int, _ pixelHeight: Int, _ geometry: PageGeometry) -> [[PlacedWord]] {
@@ -83,7 +87,7 @@ enum OcrLayerContent {
     /// x axis. After the page's /Rotate changes, lines and heights are only meaningful in that frame; `current` is
     /// returned when no rotation fits.
     static func writtenIn(_ document: PdfDocument, _ page: PdfPage, _ stream: PdfStream, _ current: PageGeometry) throws -> PageGeometry {
-        guard let tm = ContentParser.parse(try document.data(stream)).first(where: { $0.operator == "Tm" && $0.operands.count == 6 }) else {
+        guard let tm = try operations(document, stream).first(where: { $0.operator == "Tm" && $0.operands.count == 6 }) else {
             return current
         }
         let a = tm.number(0) ?? 1, b = tm.number(1) ?? 0, norm = (a * a + b * b).squareRoot()
@@ -104,7 +108,9 @@ enum OcrLayerContent {
         var font: PdfFont?
         var size = 0.0, scale = 100.0
         var matrix = PdfMatrix.identity
-        for op in ContentParser.parse(try document.data(stream)) {
+        var words = 0
+        for op in try operations(document, stream) {
+            if words >= PdfOcrLayer.maxWords { break }
             switch op.operator {
             case "BT":
                 lines.append([])
@@ -128,12 +134,18 @@ enum OcrLayerContent {
                 let box = geometry.toDisplay(PdfRect(x1, y1, x2, y2))
                 let text = font?.toText(s.bytes) ?? bigEndianUnicode(s.bytes)
                 lines[lines.count - 1].append(PlacedWord(OcrVisualOrder.flip(text), box.x, box.y, box.width, box.height))
+                words += 1
             default:
                 break
             }
         }
         lines.removeAll { $0.isEmpty }
         return lines
+    }
+
+    // A stream that inflates past the size or holds more operations is a PdfReadException, not a layer.
+    private static func operations(_ document: PdfDocument, _ stream: PdfStream) throws -> [ContentOperation] {
+        try ContentParser.parse(document.data(stream, maxSize), maxOperations)
     }
 
     static func fontOf(_ document: PdfDocument, _ page: PdfPage, _ name: String) -> PdfFont? {

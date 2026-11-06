@@ -168,10 +168,8 @@ extension StructureTree {
         for item in assigned {
             guard let reference = item.element.reference else { continue }
             if let content = item.kid as? StructContent {
-                var list = arrays[item.key] ?? []
-                while list.count <= content.mcid { list.append(PdfNull.instance) }
-                list[content.mcid] = reference
-                arrays[item.key] = list
+                while arrays[item.key, default: []].count <= content.mcid { arrays[item.key, default: []].append(PdfNull.instance) }
+                arrays[item.key, default: []][content.mcid] = reference
             } else {
                 entries[item.key] = reference
             }

@@ -3,7 +3,7 @@ import XCTest
 
 // Mirrors windows/LazyPDF.Core.Tests/Standards/PdfABoundTests.cs: the same cases. The two tests that race a Task against a
 // timeout (AnActionThatNamesItselfInNextIsJudgedOnce, ActionsSharingOneNextListAreJudgedInLinearTime) run the check in line:
-// a loop would hang the run, which has its own limit.
+// a loop would hang the run, which has its own limit; the second also checks the elapsed time against six times the C# limit.
 
 final class PdfABoundTests: XCTestCase {
     private let helvetica = "<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>"
@@ -140,7 +140,9 @@ final class PdfABoundTests: XCTestCase {
             for i in 0..<count { pdf.obj(40 + i, "<</S /GoTo /D [3 0 R /Fit] /Next 39 0 R>>") }
             pdf.obj(40 + count, "<</S /JavaScript /JS (1)>>")
         })
+        let start = Date()
         XCTAssertTrue(try StandardsKit.check(file).issues.map { $0.clause }.contains("6.5.1"))
+        XCTAssertLessThan(Date().timeIntervalSince(start), 60, "the C# limit is 10 seconds; a debug build of Swift is slower")
     }
 
     func test_walkingAnnotationsAndTheirStatesUsesTheBudget() throws {
@@ -237,5 +239,39 @@ final class PdfABoundTests: XCTestCase {
         StandardsKit.assertHas(try StandardsKit.check(stream("/Fl")).issues) { $0.clause == "6.1.7.2" && $0.message.contains("Fl") }
         StandardsKit.assertHas(try StandardsKit.check(stream("[/ASCIIHexDecode /DCT]")).issues) { $0.clause == "6.1.7.2" && $0.message.contains("DCT") }
         StandardsKit.assertLacks(try StandardsKit.clauses(stream("/FlateDecode")), "6.1.7.2")
+    }
+
+    func test_statesPastTheBudgetStillHaveTheirDictionariesCheckedAndAreReported() throws {
+        let file = StandardsKit.compliant(page: "/Annots [30 0 R]", extra: { pdf in
+            pdf.obj(30, "<</Type /Annot /Subtype /Square /Rect [10 10 50 50] /F 4 /AP <</N 31 0 R>>>>")
+            pdf.obj(31, "<</A 32 0 R /B 33 0 R /C 34 0 R>>")
+            pdf.stream(32, "/Type /XObject /Subtype /Form /BBox [0 0 10 10]", String(repeating: " ", count: 40_000))
+            pdf.stream(33, "/Type /XObject /Subtype /Form /BBox [0 0 10 10]", "q Q")
+            pdf.stream(34, "/Type /XObject /Subtype /Form /BBox [0 0 10 10] /Ref 1 0 R", "q Q")
+        })
+        let issues = try limited(file, 20_000).issues
+        StandardsKit.assertHas(issues) { $0.message == PdfAText.referenceXObject }
+        StandardsKit.assertHas(issues) { $0.message == PdfAText.tooMuchContent && $0.where == "Page 1, annotation 1" }
+    }
+
+    func test_manyObjectsAreWalkedInLinearTime() throws {
+        let count = 100_000
+        let file = StandardsKit.compliant(catalog: "/Extra 39 0 R", extra: { pdf in
+            pdf.obj(39, "[" + (0..<count).map { "\(40 + $0) 0 R " }.joined() + "]")
+            for i in 0..<count { pdf.obj(40 + i, "<<>>") }
+        })
+        let start = Date()
+        _ = try StandardsKit.check(file)
+        XCTAssertLessThan(Date().timeIntervalSince(start), 120, "the C# limit is 30 seconds; a debug build of Swift is slower")
+    }
+
+    func test_objectStreamsAreReadInTheOrderTheFileListsThem() throws {
+        let stored = StandardsKit.compliant(extra: { pdf in
+            pdf.stream(9, "/Type /ObjStm /N 1 /First 5", "10 0 <</X <ABC>>>")
+            pdf.stream(8, "/Type /ObjStm /N 1 /First 5", "11 0 <</X <ABC>>>")
+        })
+        let rebuilt = TestPdf.replace(stored, "startxref", "startxref\n7")
+        let places = try StandardsKit.check(rebuilt).issues.filter { $0.clause == "6.1.6" }.map { $0.where }
+        XCTAssertEqual(places, [PdfAText.objectName(9), PdfAText.objectName(8)])
     }
 }
