@@ -107,10 +107,10 @@ final class OcrLayerCorrectionTests: XCTestCase {
 
     func test_noSuchWordOrNoLayerThrows() throws {
         let document = try withLayer()
-        XCTAssertThrowsError(try PdfOcrLayer.correct(document, document.pages[0], 4, "x"))
-        XCTAssertThrowsError(try PdfOcrLayer.correct(document, document.pages[0], -1, "x"))
+        XCTAssertThrowsError(try PdfOcrLayer.correct(document, document.pages[0], 4, "x")) { XCTAssertTrue($0 is ArgumentException, "\($0)") }
+        XCTAssertThrowsError(try PdfOcrLayer.correct(document, document.pages[0], -1, "x")) { XCTAssertTrue($0 is ArgumentException, "\($0)") }
         let bare = try OcrKit.scan()
-        XCTAssertThrowsError(try PdfOcrLayer.correct(bare, bare.pages[0], 0, "x"))
+        XCTAssertThrowsError(try PdfOcrLayer.correct(bare, bare.pages[0], 0, "x")) { XCTAssertTrue($0 is ArgumentException, "\($0)") }
         XCTAssertEqual(try texts(document), ["Hello", "world", "Second", "line"])
     }
 
@@ -122,5 +122,23 @@ final class OcrLayerCorrectionTests: XCTestCase {
         let words = TextPage.create(reopened, reopened.pages[0]).words.map { $0.text }
         XCTAssertTrue(words.contains("Welt"))
         XCTAssertTrue(words.contains("Second") && words.contains("line"))
+    }
+
+    func test_aLayerStreamNextToAnotherKeepsItsWideCharactersWhenTheFontIsReplaced() throws {
+        let document = try OcrKit.scan()
+        let a = "\u{1F600}", b = "\u{20000}", c = "\u{1F601}"
+        _ = try PdfOcrLayer.add(document, [OcrPageWords(0, [OcrKit.word(a, 10, 10, 40, 20)], 400, 600), OcrPageWords(0, [OcrKit.word(b, 10, 100, 40, 20)], 400, 600)], "en")
+        XCTAssertEqual(OcrKit.layerStreams(document), 2)
+        XCTAssertEqual(try texts(document), [b, a])
+
+        try PdfOcrLayer.correct(document, document.pages[0], 1, c)
+
+        XCTAssertEqual(try texts(document), [b, c])
+    }
+
+    func test_wordNumbersAtTheEdgesOfTheIntegersThrow() throws {
+        let document = try withLayer()
+        XCTAssertThrowsError(try PdfOcrLayer.correct(document, document.pages[0], Int.max, "x")) { XCTAssertTrue($0 is ArgumentException, "\($0)") }
+        XCTAssertThrowsError(try PdfOcrLayer.correct(document, document.pages[0], Int.min, "x")) { XCTAssertTrue($0 is ArgumentException, "\($0)") }
     }
 }

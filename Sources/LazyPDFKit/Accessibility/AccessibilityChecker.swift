@@ -22,10 +22,9 @@ public enum AccessibilityChecker {
         }
     }
 
-    // ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$
+    // ^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*\z
     static func isLanguageTag(_ text: String) -> Bool {
-        var units = Array(text.utf16)
-        if units.last == 0x0A { units.removeLast() }
+        let units = Array(text.utf16)
         let parts = units.split(separator: 0x2D, omittingEmptySubsequences: false)
         guard let first = parts.first, first.count >= 2, first.count <= 3, first.allSatisfy({ isAsciiLetter($0) }) else { return false }
         return parts.dropFirst().allSatisfy { $0.count >= 2 && $0.count <= 8 && $0.allSatisfy { isAsciiLetter($0) || isAsciiDigit($0) } }

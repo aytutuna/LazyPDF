@@ -187,6 +187,7 @@ public final class StructureTree {
             p = up.parent
         }
         detach(kid)
+        if let element = kid as? StructElement { unmark(element) }
         insert(parent, kid, index)
     }
 
@@ -239,7 +240,13 @@ public final class StructureTree {
 
     private func readKid(_ item: PdfObject?, _ parent: StructElement?, _ page: Int, _ depth: Int, _ into: inout [StructKid]) {
         if let list = item as? PdfArray {
-            for entry in list.items.prefix(Self.maxNodes) { readKid(entry, parent, page, depth, &into) }
+            // An array counts as a node and a nested one as a level, or a stack of arrays inside one object is not bounded.
+            nodes += 1
+            if nodes > Self.maxNodes || depth > Self.maxDepth {
+                isTruncated = true
+                return
+            }
+            for entry in list.items.prefix(Self.maxNodes) { readKid(entry, parent, page, entry is PdfArray ? depth + 1 : depth, &into) }
             return
         }
         nodes += 1
