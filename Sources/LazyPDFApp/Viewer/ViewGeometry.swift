@@ -56,8 +56,8 @@ public struct ViewRect: Equatable {
     public var isEmpty: Bool { width < 0 }
     public var left: Double { x }
     public var top: Double { y }
-    public var right: Double { x + width }
-    public var bottom: Double { y + height }
+    public var right: Double { isEmpty ? -.infinity : x + width }
+    public var bottom: Double { isEmpty ? -.infinity : y + height }
     public var size: ViewSize { ViewSize(width, height) }
     public var topLeft: ViewPoint { ViewPoint(x, y) }
     public var center: ViewPoint { ViewPoint(x + width / 2, y + height / 2) }
