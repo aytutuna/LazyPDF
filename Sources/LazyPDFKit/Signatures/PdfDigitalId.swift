@@ -39,19 +39,48 @@ public enum PdfDigitalId {
         guard let item = SecCertificateCreateWithData(nil, Data(certificate.rawData) as CFData) else {
             throw SignatureCryptoException(message: "The certificate could not be read.")
         }
+        // A key made in memory may not export on its own; an identity found in a keychain of its own always does.
+        let pair: [AnyObject] = [item, key]
+        let direct = export(pair as CFArray, password)
+        if let bytes = direct.bytes { return bytes }
+        let viaKeychain = exportViaKeychain(item, key, password)
+        if let bytes = viaKeychain.bytes { return bytes }
+        throw SignatureCryptoException(message: "The PFX file could not be written (\(direct.status), \(viaKeychain.status)).")
+        #else
+        throw PdfReadException(.unsupported, "A PFX file cannot be written on this platform.")
+        #endif
+    }
+
+    #if os(macOS)
+    private static func export(_ item: CFTypeRef, _ password: String) -> (bytes: [UInt8]?, status: OSStatus) {
         var parameters = SecItemImportExportKeyParameters()
         let secret = password as CFString
         parameters.version = 0
         parameters.passphrase = Unmanaged<CFTypeRef>.passUnretained(secret as CFTypeRef)
         var data: CFData?
-        let exported: [AnyObject] = [item, key]
-        let status = SecItemExport(exported as CFArray, .formatPKCS12, [], &parameters, &data)
-        guard status == errSecSuccess, let data else { throw SignatureCryptoException(message: "The PFX file could not be written.") }
-        return [UInt8](data as Data)
-        #else
-        throw PdfReadException(.unsupported, "A PFX file cannot be written on this platform.")
-        #endif
+        let status = SecItemExport(item, .formatPKCS12, [], &parameters, &data)
+        guard status == errSecSuccess, let data else { return (nil, status) }
+        return ([UInt8](data as Data), status)
     }
+
+    private static func exportViaKeychain(_ certificate: SecCertificate, _ key: SecKey, _ password: String) -> (bytes: [UInt8]?, status: OSStatus) {
+        let path = NSTemporaryDirectory() + "lazypdf-" + UUID().uuidString + ".keychain"
+        let secret = Array(password.utf8)
+        var created: SecKeychain?
+        let made = SecKeychainCreate(path, UInt32(secret.count), secret, false, nil, &created)
+        guard made == errSecSuccess, let keychain = created else { return (nil, made) }
+        defer { SecKeychainDelete(keychain) }
+        for (kind, item) in [(kSecClassKey, key as AnyObject), (kSecClassCertificate, certificate as AnyObject)] {
+            let attributes: [String: Any] = [kSecClass as String: kind, kSecValueRef as String: item, kSecUseKeychain as String: keychain]
+            let added = SecItemAdd(attributes as CFDictionary, nil)
+            if added != errSecSuccess { return (nil, added) }
+        }
+        var identity: SecIdentity?
+        let found = SecIdentityCreateWithCertificate(keychain, certificate, &identity)
+        guard found == errSecSuccess, let identity else { return (nil, found) }
+        return export(identity, password)
+    }
+    #endif
 
     /// The certificate with its key. From macOS 15 the key stays in memory only, as `EphemeralKeySet` does; before that
     /// and on iOS SecPKCS12Import puts it in the keychain.

@@ -188,7 +188,8 @@ final class PdfSigningTests: XCTestCase {
         sign.fonts = try Fonts()
         let signed = try PdfSigner.sign(SignatureKit.plain(), sign)
 
-        XCTAssertTrue(try play(signed, "Signature1").text.contains(name))
+        let shown = try play(signed, "Signature1").text
+        XCTAssertTrue(shown.contains(name), shown.unicodeScalars.map { String($0.value, radix: 16) }.joined(separator: " "))
         XCTAssertEqual(try single(SignatureKit.verify(signed)).signerName, name)
     }
 
