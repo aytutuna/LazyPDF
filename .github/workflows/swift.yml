@@ -22,7 +22,7 @@ jobs:
       - name: Build
         run: swift build
       - name: Test
-        run: swift test --filter 'SignatureChainRules|TimestampTokenRules|DigitalId|Pkcs12Writer'
+        run: swift test --parallel
 
   linux:
     # The engine needs Foundation alone, so the runner's own Swift builds and tests it.
@@ -34,4 +34,4 @@ jobs:
       - name: Build
         run: swift build
       - name: Test
-        run: swift test --filter 'SignatureChainRules|TimestampTokenRules|DigitalId|Pkcs12Writer'
+        run: swift test --parallel
