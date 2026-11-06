@@ -53,19 +53,21 @@ public enum PdfDigitalId {
         #endif
     }
 
-    /// The certificate with its key. On macOS the key stays in memory only, as `EphemeralKeySet` does; on iOS
-    /// SecPKCS12Import puts it in the app's keychain.
+    /// The certificate with its key. From macOS 15 the key stays in memory only, as `EphemeralKeySet` does; before that
+    /// and on iOS SecPKCS12Import puts it in the keychain.
     public static func importPfx(_ pfx: [UInt8], _ password: String) throws -> X509Certificate {
         var options: [String: Any] = [kSecImportExportPassphrase as String: password]
         #if os(macOS)
-        options[kSecImportToMemoryOnly as String] = true
+        if #available(macOS 15, *) { options[kSecImportToMemoryOnly as String] = true }
         #endif
         var items: CFArray?
         let status = SecPKCS12Import(Data(pfx) as CFData, options as CFDictionary, &items)
         guard status == errSecSuccess, let list = items as? [[String: Any]],
-              let identity = list.first?[kSecImportItemIdentity as String] as? SecIdentity else {
+              let found = list.first?[kSecImportItemIdentity as String], CFGetTypeID(found as AnyObject) == SecIdentityGetTypeID() else {
             throw SignatureCryptoException(message: "The PFX file could not be read; the password may be wrong.")
         }
+        // Swift checks no CoreFoundation type on a cast, so the type is checked above; the dictionary is the framework's own.
+        let identity = found as! SecIdentity
         var certificate: SecCertificate?
         var key: SecKey?
         guard SecIdentityCopyCertificate(identity, &certificate) == errSecSuccess, let certificate,
