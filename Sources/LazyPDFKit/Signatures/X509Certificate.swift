@@ -50,6 +50,9 @@ public final class X509Certificate {
     #if canImport(Security)
     /// The private key of a certificate that signs, set by whoever loaded the identity.
     public var privateKey: SecKey?
+
+    /// What the private key needs to stay usable, such as the keychain it was imported into.
+    var keyHolder: AnyObject?
     #endif
 
     /// nil when the bytes are not a certificate this reader understands.

@@ -92,6 +92,19 @@ final class DigitalIdTests: XCTestCase {
             XCTAssertEqual(try PdfSignatureVerifier.verify(PdfSigner.sign(SignatureKit.plain(), PdfSignRequest(loaded, Pki.signing))).first?.verdict, .validButUntrusted)
         }
     }
+
+    func test_theKeychainOfAnImportedIdGoesWhenTheIdDoes() throws {
+        let id = try PdfDigitalId.create("Ada Lovelace", nil, start, keyBits: 2048)
+        let pfx = try PdfDigitalId.exportPfx(id, "pass word")
+
+        var loaded: X509Certificate? = try PdfDigitalId.importPfxThroughKeychain(pfx, "pass word")
+        let path = try XCTUnwrap((loaded?.keyHolder as? TemporaryKeychain)?.path)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: path))
+        loaded = nil
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: path))
+        XCTAssertThrowsError(try PdfDigitalId.importPfxThroughKeychain(pfx, "wrong"))
+    }
     #endif
 
     func test_namesWithCommasQuotesAndTurkishLettersSurvive() throws {

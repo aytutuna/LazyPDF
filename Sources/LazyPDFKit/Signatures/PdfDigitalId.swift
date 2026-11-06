@@ -42,8 +42,9 @@ public enum PdfDigitalId {
     }
 
     /// The certificate with its key. From macOS 15 the key stays in memory only, as `EphemeralKeySet` does. Before that
-    /// it is imported into a keychain made for the purpose, copied out as a key of no keychain, and the keychain is
-    /// deleted. iOS has no such option: SecPKCS12Import puts the key in the keychain of the app.
+    /// it is imported into a keychain made for the purpose, which the certificate holds and deletes when it is let
+    /// go (macOS makes the imported key non-extractable, so it cannot be copied out of the keychain). iOS has no such
+    /// option: SecPKCS12Import puts the key in the keychain of the app.
     public static func importPfx(_ pfx: [UInt8], _ password: String) throws -> X509Certificate {
         #if os(macOS)
         if #available(macOS 15, *) { return try importPfx(pfx, password, keychain: nil, inMemory: true) }
@@ -56,25 +57,9 @@ public enum PdfDigitalId {
     #if os(macOS)
     /// The way macOS 14 takes; the macOS 15 runners take it too in a test.
     static func importPfxThroughKeychain(_ pfx: [UInt8], _ password: String) throws -> X509Certificate {
-        let path = NSTemporaryDirectory() + "lazypdf-" + UUID().uuidString + ".keychain"
-        var created: SecKeychain?
-        let made = SecKeychainCreate(path, UInt32(password.utf8.count), Array(password.utf8), false, nil, &created)
-        guard made == errSecSuccess, let keychain = created else { throw SignatureCryptoException(message: "The PFX file could not be read (keychain \(made)).") }
-        defer {
-            SecKeychainDelete(keychain)
-            if FileManager.default.fileExists(atPath: path) { try? FileManager.default.removeItem(atPath: path) }
-        }
-        let imported = try importPfx(pfx, password, keychain: keychain, inMemory: false)
-        guard let held = imported.privateKey, let representation = SecKeyCopyExternalRepresentation(held, nil),
-              let kind = SignatureCrypto.keyKind(imported) else { throw SignatureCryptoException(message: "The key of the PFX file does not export.") }
-        let attributes: [CFString: Any] = [
-            kSecAttrKeyType: kind == .rsa ? kSecAttrKeyTypeRSA : kSecAttrKeyTypeECSECPrimeRandom,
-            kSecAttrKeyClass: kSecAttrKeyClassPrivate,
-        ]
-        guard let free = SecKeyCreateWithData(representation, attributes as CFDictionary, nil) else {
-            throw SignatureCryptoException(message: "The key of the PFX file could not be kept in memory.")
-        }
-        imported.privateKey = free
+        guard let temporary = TemporaryKeychain(password) else { throw SignatureCryptoException(message: "The PFX file could not be read (no keychain).") }
+        let imported = try importPfx(pfx, password, keychain: temporary.keychain, inMemory: false)
+        imported.keyHolder = temporary
         return imported
     }
     #endif
@@ -109,4 +94,24 @@ public enum PdfDigitalId {
         "\"" + value.replacingOccurrences(of: "\"", with: "\"\"") + "\""
     }
 }
+
+#if os(macOS)
+/// A keychain file in the temporary folder that lives as long as the key in it is used.
+final class TemporaryKeychain {
+    let path = NSTemporaryDirectory() + "lazypdf-" + UUID().uuidString + ".keychain"
+    let keychain: SecKeychain
+
+    init?(_ password: String) {
+        var created: SecKeychain?
+        let secret = Array(password.utf8)
+        guard SecKeychainCreate(path, UInt32(secret.count), secret, false, nil, &created) == errSecSuccess, let created else { return nil }
+        keychain = created
+    }
+
+    deinit {
+        SecKeychainDelete(keychain)
+        if FileManager.default.fileExists(atPath: path) { try? FileManager.default.removeItem(atPath: path) }
+    }
+}
+#endif
 #endif
