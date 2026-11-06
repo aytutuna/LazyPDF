@@ -35,3 +35,99 @@ jobs:
         run: swift build
       - name: Test
         run: swift test --parallel
+
+  apps:
+    # The Mac app and the iPhone and iPad app are Xcode projects written by XcodeGen from mac/project.yml and ios/project.yml.
+    # They are built with signing off; the UI test only checks that the iOS app opens a window.
+    needs: macos
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - name: Select Xcode 16.4
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+      # XcodeGen (MIT) is downloaded here only, pinned to one release and its SHA-256, and never shipped; the projects it
+      # writes are not checked in. Source: github.com/yonaskolb/XcodeGen/releases/tag/2.46.0.
+      - name: Install XcodeGen
+        env:
+          XCODEGEN_VERSION: 2.46.0
+          XCODEGEN_SHA256: 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
+        run: |
+          set -euo pipefail
+          zip="$RUNNER_TEMP/xcodegen.zip"
+          curl -fsSL -o "$zip" "https://github.com/yonaskolb/XcodeGen/releases/download/$XCODEGEN_VERSION/xcodegen.zip"
+          hash=$(shasum -a 256 "$zip" | cut -d ' ' -f 1)
+          if [ "$hash" != "$XCODEGEN_SHA256" ]; then
+            echo "XcodeGen checksum mismatch: $hash"
+            exit 1
+          fi
+          unzip -q "$zip" -d "$RUNNER_TEMP/xcodegen-$XCODEGEN_VERSION"
+          echo "$RUNNER_TEMP/xcodegen-$XCODEGEN_VERSION/xcodegen/bin" >> "$GITHUB_PATH"
+      - name: Write the projects
+        run: |
+          xcodegen generate --spec mac/project.yml
+          xcodegen generate --spec ios/project.yml
+      - name: Build the Mac app
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project mac/LazyPDFMacApp.xcodeproj \
+            -scheme LazyPDFMacApp \
+            -configuration Release \
+            -destination generic/platform=macOS \
+            -derivedDataPath "$RUNNER_TEMP/mac-build" \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
+      - name: Check the Mac bundle
+        run: |
+          app="$RUNNER_TEMP/mac-build/Build/Products/Release/Lazy PDF.app"
+          plutil -lint "$app/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$app/Contents/Info.plist" | grep -qx "com.lazypdf.lazypdf"
+          test -f "$app/Contents/Resources/tr.lproj/Kit.strings"
+          codesign -d --entitlements :- "$app"
+      # The newest iOS runtime's first iPhone.
+      - name: Pick the simulator
+        id: simulator
+        run: |
+          set -euo pipefail
+          xcrun simctl list devices available --json > "$RUNNER_TEMP/simulators.json"
+          python3 - "$RUNNER_TEMP/simulators.json" >> "$GITHUB_OUTPUT" <<'PY'
+          import json, sys
+          found = []
+          for runtime, entries in json.load(open(sys.argv[1]))["devices"].items():
+              if ".SimRuntime.iOS-" not in runtime:
+                  continue
+              version = tuple(int(part) for part in runtime.rsplit("iOS-", 1)[1].split("-"))
+              found += [(version, e["name"], e["udid"]) for e in entries if e["name"].startswith("iPhone")]
+          if not found:
+              sys.exit("No available iPhone simulator on this image.")
+          newest = max(f[0] for f in found)
+          chosen = sorted(f for f in found if f[0] == newest)[0]
+          print("Simulator: %s, iOS %s, %s" % (chosen[1], ".".join(map(str, chosen[0])), chosen[2]), file=sys.stderr)
+          print("udid=%s" % chosen[2])
+          PY
+      - name: Build the iOS app and its tests
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -project ios/LazyPDFiOS.xcodeproj \
+            -scheme LazyPDFiOS \
+            -configuration Release \
+            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
+            -derivedDataPath "$RUNNER_TEMP/ios-build" \
+            CODE_SIGNING_ALLOWED=NO
+      # A cold simulator times out on the first launches.
+      - name: Boot the simulator
+        run: xcrun simctl bootstatus "${{ steps.simulator.outputs.udid }}" -b
+      - name: Run the UI tests
+        timeout-minutes: 20
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project ios/LazyPDFiOS.xcodeproj \
+            -scheme LazyPDFiOS \
+            -configuration Release \
+            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
+            -derivedDataPath "$RUNNER_TEMP/ios-build" \
+            CODE_SIGNING_ALLOWED=NO

@@ -1,0 +1,82 @@
+# The iPhone and iPad app's Xcode project, for XcodeGen (CI pins its release and SHA-256; see the apps job in
+# .github/workflows/swift.yml). `xcodegen generate --spec ios/project.yml` writes ios/LazyPDFiOS.xcodeproj, which is not
+# checked in. The app target holds no logic: it starts LazyPDFIOSApp from the package at the repository root
+# (Sources/LazyPDFIOS).
+name: LazyPDFiOS
+
+options:
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+
+packages:
+  LazyPDF:
+    path: ..
+
+targets:
+  LazyPDFiOS:
+    type: application
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: LazyPDFiOS
+        excludes:
+          - Info.plist
+          - PrivacyInfo.xcprivacy
+      - path: LazyPDFiOS/PrivacyInfo.xcprivacy
+        buildPhase: resources
+      # The engine's Turkish strings (written by scripts/gen_l10n.py), read from the main bundle.
+      - path: ../l10n/out/apple
+        includes:
+          - tr.lproj/Kit.strings
+        buildPhase: resources
+    dependencies:
+      - package: LazyPDF
+        product: LazyPDFIOS
+    settings:
+      base:
+        PRODUCT_NAME: LazyPDF
+        PRODUCT_MODULE_NAME: LazyPDFiOS
+        PRODUCT_BUNDLE_IDENTIFIER: com.lazypdf.lazypdf
+        INFOPLIST_FILE: LazyPDFiOS/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  LazyPDFiOSUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: LazyPDFiOSUITests
+    dependencies:
+      - target: LazyPDFiOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lazypdf.lazypdf.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        TEST_TARGET_NAME: LazyPDFiOS
+
+schemes:
+  LazyPDFiOS:
+    build:
+      targets:
+        LazyPDFiOS: all
+        LazyPDFiOSUITests: [test]
+    test:
+      targets:
+        - LazyPDFiOSUITests
+      gatherCoverageData: false

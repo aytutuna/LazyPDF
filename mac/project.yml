@@ -1,0 +1,62 @@
+# The Mac App Store build of Lazy PDF, for XcodeGen (CI pins its release and SHA-256; see the apps job in
+# .github/workflows/swift.yml). `xcodegen generate --spec mac/project.yml` writes mac/LazyPDFMacApp.xcodeproj, which is not
+# checked in. The target holds no logic: it starts LazyPDFMacApp from the package at the repository root
+# (Sources/LazyPDFMac).
+name: LazyPDFMacApp
+
+options:
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+packages:
+  LazyPDF:
+    path: ..
+
+targets:
+  LazyPDFMacApp:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: LazyPDFMacApp
+        excludes:
+          - Info.plist
+          - LazyPDFMac.entitlements
+          - PrivacyInfo.xcprivacy
+      - path: LazyPDFMacApp/PrivacyInfo.xcprivacy
+        buildPhase: resources
+      # The engine's Turkish strings (written by scripts/gen_l10n.py), read from the main bundle.
+      - path: ../l10n/out/apple
+        includes:
+          - tr.lproj/Kit.strings
+        buildPhase: resources
+    dependencies:
+      - package: LazyPDF
+        product: LazyPDFMac
+    settings:
+      base:
+        PRODUCT_NAME: Lazy PDF
+        PRODUCT_MODULE_NAME: LazyPDFMacApp
+        PRODUCT_BUNDLE_IDENTIFIER: com.lazypdf.lazypdf
+        INFOPLIST_FILE: LazyPDFMacApp/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: LazyPDFMacApp/LazyPDFMac.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        ENABLE_APP_SANDBOX: YES
+        SUPPORTED_PLATFORMS: macosx
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+schemes:
+  LazyPDFMacApp:
+    build:
+      targets:
+        LazyPDFMacApp: all
