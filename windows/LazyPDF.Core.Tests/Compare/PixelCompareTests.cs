@@ -5,7 +5,7 @@ namespace LazyPDF.Core.Tests;
 
 public class PixelCompareTests
 {
-    private sealed class Canvas(int width, int height)
+    internal sealed class Canvas(int width, int height)
     {
         public int Width { get; } = width;
         public int Height { get; } = height;
@@ -28,7 +28,7 @@ public class PixelCompareTests
     }
 
     /// <summary>A page of text-like lines of word blocks, the same for the same seed; <paramref name="scale"/> grows it.</summary>
-    private static Canvas Text(int width = 600, int height = 800, double scale = 1, int seed = 5)
+    internal static Canvas Text(int width = 600, int height = 800, double scale = 1, int seed = 5)
     {
         var random = new Random(seed);
         var canvas = new Canvas((int)(width * scale), (int)(height * scale));
@@ -47,7 +47,7 @@ public class PixelCompareTests
     }
 
     /// <summary>The picture seen through a turn by <paramref name="degrees"/> clockwise and a shift, as a scanner would make it.</summary>
-    private static PdfRgbaImage Scan(Canvas source, double degrees, int shiftX, int shiftY, int noise = 0)
+    internal static PdfRgbaImage Scan(Canvas source, double degrees, int shiftX, int shiftY, int noise = 0)
     {
         var result = new Canvas(source.Width, source.Height);
         double a = degrees * Math.PI / 180, cx = (source.Width - 1) / 2.0, cy = (source.Height - 1) / 2.0;
