@@ -91,12 +91,19 @@ public enum PdfDigitalId {
             steps += ", import without parameters \(imported)"
         }
         if imported != errSecSuccess { return (nil, steps) }
+        // The exporter asks the certificate for its keychain, so the certificate goes in too.
+        var certificates: CFArray?
+        var certificateFormat = SecExternalFormat.formatX509Cert
+        var certificateType = SecExternalItemType.itemTypeCertificate
+        let stored = SecItemImport(SecCertificateCopyData(certificate), nil, &certificateFormat, &certificateType, [], nil, keychain, &certificates)
+        steps += ", certificate \(stored)"
+        let inKeychain = (certificates as? [SecCertificate])?.first ?? certificate
         var identity: SecIdentity?
-        var found = SecIdentityCreateWithCertificate(keychain, certificate, &identity)
+        var found = SecIdentityCreateWithCertificate(keychain, inKeychain, &identity)
         steps += ", identity \(found)"
         if found != errSecSuccess {
             let list: [AnyObject] = [keychain]
-            found = SecIdentityCreateWithCertificate(list as CFArray, certificate, &identity)
+            found = SecIdentityCreateWithCertificate(list as CFArray, inKeychain, &identity)
             steps += ", identity in a list \(found)"
         }
         guard found == errSecSuccess, let identity else { return (nil, steps) }
