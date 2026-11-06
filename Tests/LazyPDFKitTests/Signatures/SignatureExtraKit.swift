@@ -33,6 +33,14 @@ enum SignatureExtraKit {
         XCTFail("Expected ArgumentException, nothing was thrown", file: file, line: line)
     }
 
+    /// An ECDSA signature as r followed by s (IEEE P1363) from its DER sequence, 32 bytes each.
+    static func p1363(_ der: [UInt8]) -> [UInt8] {
+        var outer = AsnReader(der)
+        guard var sequence = try? outer.readSequence(), let r = try? sequence.readInteger(), let s = try? sequence.readInteger() else { return [] }
+        func pad(_ value: AsnInteger) -> [UInt8] { [UInt8](repeating: 0, count: max(0, 32 - value.magnitude.count)) + value.magnitude }
+        return pad(r) + pad(s)
+    }
+
     /// A self-signed certificate valid from 2025 to 2040 with a new RSA key.
     static func selfSigned(subject: [UInt8], extensions: [X509Extension]) throws -> X509Certificate {
         let key = try SignatureCrypto.newRsaKey(2048)
