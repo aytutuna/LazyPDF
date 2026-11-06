@@ -81,7 +81,7 @@ enum RedactionStructure {
                         kept.append(kid)
                     }
                 } else {
-                    let lost = content(at, Int(saturating32: Double(document.integer(d, "MCID") ?? -1)), tagged, pictures, &kept, kid)
+                    let lost = content(at, Int(Int32(truncatingIfNeeded: document.integer(d, "MCID") ?? -1)), tagged, pictures, &kept, kid)
                     touched = touched || lost
                 }
             case let d as PdfDictionary where isContentItem(document, d, "OBJR", "Obj"):

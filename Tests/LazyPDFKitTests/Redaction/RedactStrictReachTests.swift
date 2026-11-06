@@ -266,23 +266,12 @@ final class RedactStrictReachTests: XCTestCase {
         XCTAssertFalse(leaf.containsKey("Alt"))
     }
 
-    private func gzip(_ text: String) -> [UInt8] {
-        let data = Latin1.bytes(text)
-        let zlib = Deflate.zlib(data, .smallestSize)
-        let crc = ExportZip.crc32(data)
-        var packed: [UInt8] = [0x1F, 0x8B, 8, 0, 0, 0, 0, 0, 0, 0xFF]
-        packed += zlib[2..<(zlib.count - 4)]
-        packed += [UInt8(crc & 0xFF), UInt8((crc >> 8) & 0xFF), UInt8((crc >> 16) & 0xFF), UInt8(crc >> 24)]
-        packed += [UInt8(data.count & 0xFF), UInt8((data.count >> 8) & 0xFF), 0, 0]
-        return packed
-    }
-
     func test_wordInAZipAttachedWithoutATypeIsFound() throws {
         let file = makeFile("BT /F1 12 Tf 100 100 Td (hello) Tj ET", "", { pdf in
-            pdf.stream(6, "", self.gzip("the ZQXCYCLE word"))
+            pdf.stream(6, "", RedactionKit.gzip(Latin1.bytes("the ZQXCYCLE word")))
             pdf.obj(7, "<</Type /Filespec /F (a.gz) /EF <</F 6 0 R>>>>")
         }, catalog: "/Names <</EmbeddedFiles <</Names [(a) 7 0 R]>>>>")
-        XCTAssertTrue(PdfRedactor.verify(file, [], ["ZQXCYCLE"]).problems.contains { $0.contains("attached file") })
+        RedactionKit.assertOneProblem(PdfRedactor.verify(file, [], ["ZQXCYCLE"]).problems, attached: true, found: true)
     }
 
     func test_containerOfAnotherFormatIsNotCalledClean() throws {

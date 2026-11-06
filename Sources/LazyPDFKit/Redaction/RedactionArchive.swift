@@ -5,9 +5,8 @@ import Foundation
 // the file was not looked into, and the result says so.
 //
 // Only what ZipArchive reads is read: the central directory (no zip64, no encryption), entries stored or deflated. The sizes
-// of the central directory are not trusted for how much is inflated; the budget is. A gzip file is read as one member and is
-// taken for one member only when its trailer (CRC-32 and length) is that of the output, since the inflater does not say where
-// a member ends and a second member would hide whatever it holds.
+// of the central directory are not trusted for how much is inflated; the budget is. Every member of a gzip file is read, each
+// with a trailer (CRC-32 and length) that is its own, and bytes that are no member are unread.
 
 struct ArchiveError: Error {}
 
@@ -43,8 +42,9 @@ enum RedactionArchive {
         if total == 0xFFFF || directory == 0xFFFF_FFFF { throw ArchiveError() }
         var found: [Entry] = []
         var at = directory
-        for _ in 0..<total {
-            guard u32(d, at) == 0x0201_4B50, let flags = u16(d, at + 8), let method = u16(d, at + 10), let packed = u32(d, at + 20),
+        // ZipArchive reads headers until the signature stops, and refuses a directory that holds another number than the end record says.
+        while u32(d, at) == 0x0201_4B50 {
+            guard let flags = u16(d, at + 8), let method = u16(d, at + 10), let packed = u32(d, at + 20),
                   let size = u32(d, at + 24), let nameLength = u16(d, at + 28), let extraLength = u16(d, at + 30),
                   let commentLength = u16(d, at + 32), let local = u32(d, at + 42) else { throw ArchiveError() }
             if packed == 0xFFFF_FFFF || size == 0xFFFF_FFFF || flags & 1 != 0 { throw ArchiveError() }
@@ -56,6 +56,7 @@ enum RedactionArchive {
             guard start + packed <= d.count else { throw ArchiveError() }
             found.append(Entry(method: method, size: size, data: d[start..<start + packed]))
         }
+        if found.count != total { throw ArchiveError() }
         return found
     }
 
@@ -71,11 +72,24 @@ enum RedactionArchive {
         }
     }
 
-    /// The one member of a gzip file inflated; `over` as above.
+    /// Every member of a gzip file inflated and joined, as GZipStream reads them; `over` as above. Bytes that are not a whole
+    /// member with a good trailer are unread, since a second member would hide what it holds.
     static func gunzip(_ d: [UInt8], _ budget: Int) throws -> (bytes: [UInt8], over: Bool) {
-        guard d.count >= 18, d[0] == 0x1F, d[1] == 0x8B, d[2] == 8 else { throw ArchiveError() }
-        let flags = d[3]
-        var at = 10
+        var all: [UInt8] = []
+        var at = 0
+        repeat {
+            let member = try gunzipMember(d, at, budget - all.count)
+            all += member.bytes
+            if member.over { return (all, true) }
+            at = member.end
+        } while at < d.count
+        return (all, false)
+    }
+
+    private static func gunzipMember(_ d: [UInt8], _ first: Int, _ budget: Int) throws -> (bytes: [UInt8], over: Bool, end: Int) {
+        guard first + 18 <= d.count, d[first] == 0x1F, d[first + 1] == 0x8B, d[first + 2] == 8 else { throw ArchiveError() }
+        let flags = d[first + 3]
+        var at = first + 10
         if flags & 4 != 0 {
             guard let extra = u16(d, at) else { throw ArchiveError() }
             at += 2 + extra
@@ -86,13 +100,19 @@ enum RedactionArchive {
         }
         if flags & 2 != 0 { at += 2 }
         guard at < d.count else { throw ArchiveError() }
-        let result = try raw(d, at, budget)
-        if result.over { return result }
-        let trailer = d.count - 8
-        guard trailer >= at, u32(d, trailer) == Int(crc(result.bytes)), u32(d, trailer + 4) == result.bytes.count & 0xFFFF_FFFF else {
+        let output = FilterBuffer(budget + 1)
+        var end = at
+        do {
+            if try !Flate.inflate(d, at, output, end: &end) { throw ArchiveError() }
+        } catch let error as PdfReadException {
+            // The buffer refuses to grow past the budget; that is "more than the budget", not damage.
+            if error.message == FilterBuffer.tooBig().message { return (output.toArray(), true, d.count) }
             throw ArchiveError()
         }
-        return result
+        let bytes = output.toArray()
+        if bytes.count > budget { return (bytes, true, d.count) }
+        guard end + 8 <= d.count, u32(d, end) == Int(crc(bytes)), u32(d, end + 4) == bytes.count & 0xFFFF_FFFF else { throw ArchiveError() }
+        return (bytes, false, end + 8)
     }
 
     private static func raw(_ d: [UInt8], _ start: Int, _ budget: Int) throws -> (bytes: [UInt8], over: Bool) {

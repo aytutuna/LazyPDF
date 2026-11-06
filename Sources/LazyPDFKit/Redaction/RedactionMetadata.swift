@@ -304,14 +304,37 @@ enum RedactionMetadata {
         return String(text)
     }
 
-    // The simple upper case of each UTF-16 unit, as OrdinalIgnoreCase compares.
+    // The simple upper case of each character, surrogate pairs included, as OrdinalIgnoreCase compares; a character keeps its
+    // length. The dotted and dotless I are left alone, as the invariant casing leaves them. Where the full mapping is longer
+    // than one character (U+1F80), the simple one is the titlecase, which is a single character for those and only those.
     private static func fold(_ units: [UInt16]) -> [UInt16] {
-        units.map { unit in
-            guard let scalar = Unicode.Scalar(unit) else { return unit }
-            if scalar.value < 0x80 { return unit >= 0x61 && unit <= 0x7A ? unit - 0x20 : unit }
-            let upper = scalar.properties.uppercaseMapping.utf16
-            return upper.count == 1 ? (upper.first ?? unit) : unit
+        var folded: [UInt16] = []
+        folded.reserveCapacity(units.count)
+        var i = 0
+        while i < units.count {
+            var scalar = Unicode.Scalar(units[i])
+            var width = 1
+            if scalar == nil, units[i] >= 0xD800, units[i] < 0xDC00, i + 1 < units.count, units[i + 1] >= 0xDC00, units[i + 1] < 0xE000 {
+                scalar = Unicode.Scalar(0x10000 + (UInt32(units[i] - 0xD800) << 10) + UInt32(units[i + 1] - 0xDC00))
+                width = 2
+            }
+            if let scalar, let upper = simpleUpper(scalar), upper.utf16.count == width {
+                folded.append(contentsOf: upper.utf16)
+            } else {
+                folded.append(contentsOf: units[i..<i + width])
+            }
+            i += width
         }
+        return folded
+    }
+
+    private static func simpleUpper(_ scalar: Unicode.Scalar) -> String? {
+        if scalar.value < 0x80 { return scalar.value >= 0x61 && scalar.value <= 0x7A ? String(Unicode.Scalar(scalar.value - 0x20) ?? scalar) : String(scalar) }
+        if scalar.value == 0x130 || scalar.value == 0x131 { return nil }
+        let upper = scalar.properties.uppercaseMapping.unicodeScalars
+        if upper.count == 1 { return String(upper) }
+        let title = scalar.properties.titlecaseMapping.unicodeScalars
+        return title.count == 1 ? String(title) : nil
     }
 
     private static func contains(_ text: [UInt16], _ needle: [UInt16]) -> Bool {

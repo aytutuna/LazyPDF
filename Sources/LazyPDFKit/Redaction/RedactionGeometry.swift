@@ -3,8 +3,8 @@ import Foundation
 // Twin of windows/LazyPDF.Core/Redaction/RedactionGeometry.cs: a marked area as a convex polygon in page user space, and the
 // geometry the scan tests it with.
 //
-// Enumerable.Min, Max and Average of doubles give NaN when one is NaN, and an ordering by a NaN key puts it first; the
-// helpers below do the same, so that a NaN meets a mark (the comparisons then all fail and the test falls to "contains")
+// Enumerable.Min and Average of doubles give NaN when one is NaN, Max skips it, and an ordering by a NaN key puts it first;
+// the helpers below do the same, so that a NaN meets a mark (the comparisons then all fail and the test falls to "contains")
 // instead of being skipped.
 
 typealias MarkPoint = (x: Double, y: Double)
@@ -54,12 +54,10 @@ enum Geometry {
         return result
     }
 
+    // Enumerable.Max of doubles puts a NaN below every number: it is the answer only when nothing else is there.
     static func maximum(_ values: [Double]) -> Double {
-        var result = -Double.infinity
-        for (i, v) in values.enumerated() {
-            if v.isNaN { return v }
-            if i == 0 || v > result { result = v }
-        }
+        var result = Double.nan
+        for v in values where !v.isNaN && (result.isNaN || v > result) { result = v }
         return result
     }
 

@@ -149,6 +149,8 @@ final class DomDocument {
         case let w as DomWhitespace:
             out += w.value
         case let c as DomComment:
+            // XmlTextWriter refuses a comment with two hyphens in it or ending in one.
+            if c.value.contains("--") || c.value.hasSuffix("-") { throw DomError() }
             out += "<!--" + c.value + "-->"
         case let p as DomInstruction:
             out += "<?" + p.target + (p.data.isEmpty ? "" : " " + p.data) + "?>"

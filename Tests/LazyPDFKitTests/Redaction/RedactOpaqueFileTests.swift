@@ -53,16 +53,9 @@ final class RedactOpaqueFileTests: XCTestCase {
     }
 
     func test_gzipUnderAPrivateKeyIsOpened() throws {
-        let data = Latin1.bytes("ZQXSECRET ZQXSECRET")
-        // A gzip member is the deflate stream of a zlib one between its own header and trailer.
-        let zlib = Deflate.zlib(data, .optimal)
-        let crc = ExportZip.crc32(data)
-        var packed: [UInt8] = [0x1F, 0x8B, 8, 0, 0, 0, 0, 0, 0, 0xFF]
-        packed += zlib[2..<(zlib.count - 4)]
-        packed += [UInt8(crc & 0xFF), UInt8((crc >> 8) & 0xFF), UInt8((crc >> 16) & 0xFF), UInt8(crc >> 24)]
-        packed += [UInt8(data.count), 0, 0, 0]
+        let packed = RedactionKit.gzip(Latin1.bytes("ZQXSECRET ZQXSECRET"))
         let document = try RedactionFiles.open(RedactionFiles.word, "", { pdf in pdf.stream(9, "", packed) }, catalogExtra: "/Backup 9 0 R")
         let result = try PdfRedactor(document).apply([RedactionMark.fromRect(0, RedactionFiles.over)])
-        XCTAssertFalse(result.verification.isClean)
+        RedactionKit.assertOneProblem(result.verification.problems, attached: false, found: true)
     }
 }

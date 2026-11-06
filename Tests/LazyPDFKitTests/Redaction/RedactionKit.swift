@@ -181,7 +181,14 @@ enum RedactionKit {
 
     /// The text in any form it can take in a file: plain, UTF-16, or either as hex digits.
     static func holds(_ bytes: [UInt8], _ text: String, _ password: String? = nil) -> Bool {
-        guard let all = try? everything(bytes, password) else { return false }
+        let all: String
+        do {
+            all = try everything(bytes, password)
+        } catch {
+            // The C# opens the file and throws; a file that does not open must not read as free of the text.
+            XCTFail("The output does not open: (error)")
+            return false
+        }
         let wide = Array(text.utf16).flatMap { [UInt8($0 >> 8), UInt8($0 & 0xFF)] }
         let forms = [text, Latin1.string(wide), hex(text), wide.map { String(format: "%02X", $0) }.joined()]
         let haystack = upper(all)
@@ -250,5 +257,40 @@ enum RedactionFiles {
     static func gone(_ result: RedactionResult, _ words: String...) {
         XCTAssertTrue(result.verification.isClean, result.verification.problems.joined(separator: "; "))
         for word in words { XCTAssertFalse(RedactionKit.holds(result.bytes, word), word) }
+    }
+}
+
+extension RedactionKit {
+    /// A gzip file of the data: one member, deflate between the header and the CRC-32 and length.
+    static func gzip(_ data: [UInt8]) -> [UInt8] {
+        let zlib = Deflate.zlib(data, .smallestSize)
+        let crc = ExportZip.crc32(data)
+        var packed: [UInt8] = [0x1F, 0x8B, 8, 0, 0, 0, 0, 0, 0, 0xFF]
+        packed += zlib[2..<(zlib.count - 4)]
+        packed += [UInt8(crc & 0xFF), UInt8((crc >> 8) & 0xFF), UInt8((crc >> 16) & 0xFF), UInt8(crc >> 24)]
+        packed += [UInt8(data.count & 0xFF), UInt8((data.count >> 8) & 0xFF), UInt8((data.count >> 16) & 0xFF), UInt8((data.count >> 24) & 0xFF)]
+        return packed
+    }
+}
+
+/// Hands the redaction the fixture font that has the letters of the Turkish overlay, as Arial has them in the C# tests.
+final class RedactionArialSource: FontSource {
+    static let turkish = ["Idotaccent", "Scedilla", "scedilla", "Gbreve", "gbreve", "dotlessi"]
+
+    func find(_ family: String, _ style: FontStyles) -> FontFile? {
+        FontFile(FixtureFonts.latin("ArialMT", extraGlyphs: Self.turkish))
+    }
+}
+
+extension RedactionKit {
+    /// The problems are exactly one, and it is `message` for the object the problem names (the numbers of the output are not
+    /// those of the input): what was found in it, or that it could not be looked into.
+    static func assertOneProblem(_ problems: [String], attached: Bool, found: Bool, file: StaticString = #filePath, line: UInt = #line) {
+        guard problems.count == 1, let number = Int(String(problems[0].unicodeScalars.filter { $0.properties.numericType == .decimal })) else {
+            XCTFail("expected one problem naming an object, got \(problems)", file: file, line: line)
+            return
+        }
+        let place = attached ? RedactionText.attachedFile(number) : L10n.t("object {0}|in a sentence", number)
+        XCTAssertEqual(problems, [found ? RedactionText.stillInFile(place) : RedactionText.notChecked(place)], file: file, line: line)
     }
 }
