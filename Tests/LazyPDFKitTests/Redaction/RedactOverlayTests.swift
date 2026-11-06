@@ -2,7 +2,7 @@ import XCTest
 @testable import LazyPDFKit
 
 // Mirrors windows/LazyPDF.Core.Tests/Redaction/RedactOverlayTests.cs: the same cases. The Turkish overlay is embedded from the
-// synthetic font of the annotation tests, where the C# uses Arial.
+// synthetic font of the annotation tests, where the C# uses Arial; it holds the dotted capital I, so the text is made of it.
 
 final class RedactOverlayTests: XCTestCase {
     private let box = PdfRect(100, 690, 300, 720)
@@ -63,9 +63,9 @@ final class RedactOverlayTests: XCTestCase {
     func test_turkishOverlayIsEmbeddedFromTheFontSource() throws {
         let document = try RedactionKit.page("BT /F1 12 Tf 100 700 Td (secret words) Tj ET")
         var options = RedactionOptions()
-        options.overlayText = "G\u{130}Z\u{130}L\u{130} \u{15E}\u{130}\u{130}R"
+        options.overlayText = "\u{130}\u{130}\u{130} \u{130}\u{130}"
         let result = try PdfRedactor(document, try AnnotationFixtures.ArialSource()).apply([RedactionMark.fromRect(0, PdfRect(100, 690, 300, 720))], options)
-        XCTAssertEqual(try shown(result), "G\u{130}Z\u{130}L\u{130} \u{15E}\u{130}\u{130}R")
+        XCTAssertEqual(try shown(result), "\u{130}\u{130}\u{130} \u{130}\u{130}")
     }
 
     func test_noFontForTheOverlayIsAnErrorAndChangesNothing() throws {
