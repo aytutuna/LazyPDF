@@ -10,7 +10,7 @@ final class TimestampTokenRulesTests: XCTestCase {
     private let pki = Pki.instance
     private let timeStamping = "1.3.6.1.5.5.7.3.8"
     private let emailProtection = "1.3.6.1.5.5.7.3.4"
-    private let hash = Sha256.hash([1, 2, 3])
+    private let imprint = Sha256.hash([1, 2, 3])
 
     private func authority(critical: Bool, _ purposes: [String]) throws -> X509Certificate {
         var extensions = [CertificateBuilder.basicConstraints(authority: false), CertificateBuilder.keyUsage([.digitalSignature])]
@@ -22,7 +22,7 @@ final class TimestampTokenRulesTests: XCTestCase {
         DerWriter.sequence([
             DerWriter.integer(1),
             DerWriter.oid("1.2.3.4.1"),
-            DerWriter.sequence([CmsBuilder.algorithmIdentifier("2.16.840.1.101.3.4.2.1", withNull: true), DerWriter.octetString(hash)]),
+            DerWriter.sequence([CmsBuilder.algorithmIdentifier("2.16.840.1.101.3.4.2.1", withNull: true), DerWriter.octetString(imprint)]),
             DerWriter.integer(77),
             DerWriter.generalizedTime(Pki.signing),
         ])
@@ -74,7 +74,7 @@ final class TimestampTokenRulesTests: XCTestCase {
 
     private func accepts(_ encoded: [UInt8], _ extra: [X509Certificate] = []) -> Bool {
         guard let (decoded, _) = Rfc3161Token.tryDecode(encoded) else { return false }
-        return decoded.verifySignatureForHash(hash, .sha256, extra) != nil
+        return decoded.verifySignatureForHash(imprint, .sha256, extra) != nil
     }
 
     func test_theAuthorityHasTheTimeStampingPurposeInOneCriticalExtension() throws {
