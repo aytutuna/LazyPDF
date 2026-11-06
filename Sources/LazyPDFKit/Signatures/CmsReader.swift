@@ -9,7 +9,7 @@ final class CmsSignature {
     private(set) var certificates: [X509Certificate] = []
     private(set) var digestOid = ""
     private(set) var signedAttributes: [UInt8]?
-    private(set) var attributes: [String: [[UInt8]]] = [:]
+    var attributes: [String: [[UInt8]]] = [:]
     private(set) var unsignedAttributes: [String: [[UInt8]]] = [:]
     private(set) var signatureOid = ""
     private(set) var signatureParameters: [UInt8] = []
