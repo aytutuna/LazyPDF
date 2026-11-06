@@ -7,7 +7,7 @@ import XCTest
 final class RunCutTests: XCTestCase {
     private let red = RgbColor(255, 0, 0)
 
-    private func across(_ session: PdfEditSession, _ from: String, _ to: String) throws -> TextRange {
+    private func across(_ session: PdfEditSession, _ from: String, _ to: String) throws -> LazyPDFKit.TextRange {
         TextRange(try EditKit.find(session, from).start, try EditKit.find(session, to).end)
     }
 

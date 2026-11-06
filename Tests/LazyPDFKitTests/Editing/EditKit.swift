@@ -134,7 +134,7 @@ enum EditKit {
         return Array(shown[at..<min(at + word.count, shown.count)])
     }
 
-    static func find(_ session: PdfEditSession, _ word: String, _ page: Int = 0) throws -> TextRange {
+    static func find(_ session: PdfEditSession, _ word: String, _ page: Int = 0) throws -> LazyPDFKit.TextRange {
         let text = TextPage.create(session.document, session.document.pages[page])
         let match = try TextSearch.find(text, word, TextSearchOptions(matchCase: true)).first
         return try XCTUnwrap(match).range
