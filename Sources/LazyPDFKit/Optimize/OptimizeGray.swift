@@ -503,27 +503,35 @@ final class OptimizeGray {
         let matte = matteGray(dictionary, family, components)
         var gray = Array(repeating: UInt8(0), count: count)
         for i in 0..<count { gray[i] = ImageKit.luminance(Int(pixels.rgba[4 * i]), Int(pixels.rgba[4 * i + 1]), Int(pixels.rgba[4 * i + 2])) }
-        if coded == nil {
-            stream.data = PdfFilterEncoders.flate(gray, .smallestSize)
-            dictionary["Filter"] = PdfName("FlateDecode")
-            dictionary["ColorSpace"] = PdfName("DeviceGray")
-        } else if let codec {
+        var jpeg: [UInt8] = []
+        if coded != nil, let codec {
             var rgba = Array(repeating: UInt8(255), count: count * 4)
             for i in 0..<count {
                 rgba[4 * i] = gray[i]
                 rgba[4 * i + 1] = gray[i]
                 rgba[4 * i + 2] = gray[i]
             }
-            stream.data = codec.encodeJpeg(PdfRgbaImage(pixels.width, pixels.height, rgba), Swift.min(Swift.max(jpegQuality, 1), 100))
+            jpeg = codec.encodeJpeg(PdfRgbaImage(pixels.width, pixels.height, rgba), Swift.min(Swift.max(jpegQuality, 1), 100))
+        }
+        // A picture the codec cannot write goes in as Flate gray instead of an empty stream.
+        let asJpeg = !jpeg.isEmpty
+        if asJpeg {
+            stream.data = jpeg
             dictionary["Filter"] = PdfName("DCTDecode")
             dictionary["ColorSpace"] = PdfName("DeviceRGB")
+        } else {
+            stream.data = PdfFilterEncoders.flate(gray, .smallestSize)
+            dictionary["Filter"] = PdfName("FlateDecode")
+            dictionary["ColorSpace"] = PdfName("DeviceGray")
+        }
+        if coded != nil {
             dictionary["Width"] = PdfNumber(pixels.width)
             dictionary["Height"] = PdfNumber(pixels.height)
         }
         dictionary["BitsPerComponent"] = PdfNumber(8)
         dictionary.remove("DecodeParms")
         dictionary.remove("Decode")
-        if let matte { setMatte(dictionary, matte, coded == nil ? 1 : 3) }
+        if let matte { setMatte(dictionary, matte, asJpeg ? 3 : 1) }
         images += 1
     }
 }

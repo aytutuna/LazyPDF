@@ -46,6 +46,10 @@ final class PageImagesTests: XCTestCase {
         XCTAssertNil(try PageImages.jpeg(ExportFakeRenderer(8, 8), ExportFakeCodec(), 5, 72))
     }
 
+    func test_aJpegTheCodecCannotWriteGivesNull() throws {
+        XCTAssertNil(try PageImages.jpeg(ExportFakeRenderer(8, 8), Capture(), 0, 72))
+    }
+
     func test_theJpegComesFromTheCodecAndTransparencyIsFlattenedOnWhite() throws {
         let renderer = ExportFakeRenderer(8, 8, alpha: 0)
         let jpeg = try PageImages.jpeg(renderer, ExportFakeCodec(), 0, 72, 60)

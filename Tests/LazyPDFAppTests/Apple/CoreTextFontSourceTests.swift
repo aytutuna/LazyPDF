@@ -1,4 +1,6 @@
 #if canImport(CoreText)
+import CoreText
+import Foundation
 import LazyPDFApp
 import LazyPDFKit
 import XCTest
@@ -34,6 +36,16 @@ final class CoreTextFontSourceTests: XCTestCase {
     func test_thePdfNamesForTheCommonFamiliesAreFound() {
         XCTAssertNotNil(source.find("Helvetica", .regular))
         XCTAssertNotNil(source.find("times new roman", .regular))
+    }
+
+    func test_aFaceInACollectionIsPickedByItsIndex() throws {
+        let file = try XCTUnwrap(source.find("Helvetica Neue", .bold))
+        try XCTSkipUnless(file.data.starts(with: Array("ttcf".utf8)), "not a collection on this system")
+
+        let faces = try XCTUnwrap(CTFontManagerCreateFontDescriptorsFromData(Data(file.data) as CFData) as? [CTFontDescriptor])
+        let name = CTFontDescriptorCopyAttribute(faces[file.collectionIndex], kCTFontNameAttribute) as? String
+
+        XCTAssertEqual(name, "HelveticaNeue-Bold")
     }
 
     func test_theFileIsOneTheEngineCanEmbedForTurkishLetters() throws {

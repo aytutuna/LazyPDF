@@ -5,8 +5,7 @@ import LazyPDFApp
 import LazyPDFKit
 import XCTest
 
-// Mirrors windows/LazyPDF.App.Tests/WicImageCodecTests.cs, with files made here. A see-through pixel can come back one
-// off in a colour channel (ImageIO works on premultiplied pixels), so the alpha test compares with a margin of 2.
+// Mirrors windows/LazyPDF.App.Tests/WicImageCodecTests.cs, with files made here.
 
 final class ImageIOCodecTests: XCTestCase {
     private let codec = ImageIOCodec()
@@ -80,9 +79,34 @@ final class ImageIOCodecTests: XCTestCase {
 
         XCTAssertEqual(frames.count, 1)
         XCTAssertEqual(frames[0].rgba.count, image.rgba.count)
-        for i in 0..<image.rgba.count {
-            XCTAssertLessThanOrEqual(abs(Int(frames[0].rgba[i]) - Int(image.rgba[i])), 2, "byte \(i)")
+        XCTAssertEqual(frames[0].rgba, image.rgba)
+    }
+
+    func test_aMostlyClearPngKeepsItsColours() throws {
+        let image = gradient(16, 16, alpha: 3)
+
+        let frames = try XCTUnwrap(codec.decodeFile(try encode("public.png", [cgImage(image)])))
+
+        XCTAssertEqual(frames[0].rgba, image.rgba)
+    }
+
+    func test_aFileOfAnotherKindThatImageIOKnowsGivesNil() throws {
+        XCTAssertNil(codec.decodeFile(try ApplePdfs.text()))
+    }
+
+    func test_aTiffWhoseSizeOverflowsIsLeftUnreadAndNotATrap() {
+        func entry(_ tag: UInt16, _ type: UInt16, _ value: UInt32) -> [UInt8] {
+            var bytes: [UInt8] = []
+            for part in [UInt32(tag) | UInt32(type) << 16, 1, value] { bytes += withUnsafeBytes(of: part.littleEndian) { Array($0) } }
+            return bytes
         }
+        let big: UInt32 = 0xFFFF_FFF0
+        var tiff: [UInt8] = [0x49, 0x49, 42, 0, 8, 0, 0, 0, 9, 0]
+        for e in [entry(256, 4, big), entry(257, 4, big), entry(258, 3, 8), entry(259, 3, 1), entry(262, 3, 1),
+                  entry(273, 4, 200), entry(277, 3, 1), entry(278, 4, big), entry(279, 4, 1)] { tiff += e }
+        tiff += [0, 0, 0, 0]
+
+        XCTAssertEqual((codec.decodeFile(tiff) ?? []).count, 0)
     }
 
     func test_aTiffGivesEveryFrame() throws {
