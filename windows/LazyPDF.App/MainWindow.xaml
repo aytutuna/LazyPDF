@@ -382,7 +382,7 @@
                             <TextBlock Text="Lazy PDF" Style="{StaticResource SubtitleText}" AutomationProperties.HeadingLevel="Level1" />
                             <TextBlock x:Name="AboutVersion" Style="{StaticResource BodyText}" Margin="0,4,0,0" />
                             <TextBlock x:Name="AboutCopyright" Style="{StaticResource SecondaryBodyText}" Margin="0,2,0,0" />
-                            <TextBlock Text="{loc:T Free. The source is public to read.}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,12,0,0" />
+                            <TextBlock Text="{loc:T Free. Source available under PolyForm Noncommercial 1.0.0.}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,12,0,0" />
                             <StackPanel Orientation="Horizontal" Margin="-11,8,0,12">
                                 <Button x:Name="SiteLink" Style="{StaticResource SubtleButtonStyle}" Click="SiteLink_Click" />
                                 <Button x:Name="PrivacyLink" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Privacy}"

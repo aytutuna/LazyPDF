@@ -1,6 +1,7 @@
 Lazy PDF third-party notices
 
-Lazy PDF is free, and its source is public to read (the LICENSE file).
+Lazy PDF is free, and its source is available under PolyForm Noncommercial
+1.0.0 (the LICENSE file).
 This file lists the code and data from other people that is part of the app,
 where it came from and under what terms.
 

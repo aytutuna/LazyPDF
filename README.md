@@ -1,6 +1,6 @@
 # Lazy PDF
 
-A PDF app for Windows: read, fill, sign, edit, redact, rearrange, compare and convert PDF files, offline and without an account. It is the third of the Lazy apps, after Lazy Scan and Lazy Print, and shares their layout and conventions. It is free, and the source is public to read.
+A PDF app for Windows: read, fill, sign, edit, redact, rearrange, compare and convert PDF files, offline and without an account. It is the third of the Lazy apps, after Lazy Scan and Lazy Print, and shares their layout and conventions. It is free, and the source is available.
 
 The window has a Home tab with the jobs people come for and the files opened last, and a tab for each open document. A document has a tool strip (comment, measure, edit text and pictures, stamps, pages, forms, fill and sign, certificates, protect, redact, clean for sharing, make smaller, export, batch, make searchable, compare, accessibility, PDF/A), a rail of side panels (pages, bookmarks, attachments, layers, comments, signatures, search) and the page. Changes are steps that can be undone one at a time, and an unsaved copy is kept so a crash does not lose them.
 

@@ -16,7 +16,7 @@ Pick a job on the Home tab, or open a file and choose a tool from the strip unde
 
 Every change is a step you can undo. While you work, an unsaved copy is kept on your PC, and the app offers it back if it closes by accident.
 
-Lazy PDF is free, and its source is public to read. It is a sister app of Lazy Scan and Lazy Print: when Lazy Print is installed, Print hands the file to it, and when Lazy Scan is installed, a Scan tile appears on the Home tab.
+Lazy PDF is free, and its source is available under PolyForm Noncommercial 1.0.0. It is a sister app of Lazy Scan and Lazy Print: when Lazy Print is installed, Print hands the file to it, and when Lazy Scan is installed, a Scan tile appears on the Home tab.
 
 Lazy PDF is new. If a file does not open or change as it should, write to support@alazy.app.
 
@@ -76,7 +76,7 @@ Ana sayfadan bir iş seçin ya da bir dosya açıp sekmelerin altındaki şeritt
 
 Her değişiklik geri alınabilen bir adımdır. Çalışırken kaydedilmemiş bir kopya bilgisayarınızda tutulur; uygulama kazara kapanırsa kopyayı size geri sunar.
 
-Lazy PDF ücretsizdir ve kaynak kodu herkese açıktır. Lazy Scan ve Lazy Print uygulamalarının kardeşidir: Lazy Print yüklüyse Yazdır dosyayı ona verir, Lazy Scan yüklüyse Ana sayfada bir Tara kutusu görünür.
+Lazy PDF ücretsizdir ve kaynak kodu PolyForm Noncommercial 1.0.0 lisansıyla erişilebilir. Lazy Scan ve Lazy Print uygulamalarının kardeşidir: Lazy Print yüklüyse Yazdır dosyayı ona verir, Lazy Scan yüklüyse Ana sayfada bir Tara kutusu görünür.
 
 Lazy PDF yenidir. Bir dosya olması gerektiği gibi açılmaz ya da değişmezse support@alazy.app adresine yazın.
 
