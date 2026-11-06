@@ -118,6 +118,8 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/ios-build" \
             CODE_SIGNING_ALLOWED=NO
       # A cold simulator times out on the first launches.
+      - name: Check the iOS bundle
+        run: test -f "$RUNNER_TEMP/ios-build/Build/Products/Release-iphonesimulator/LazyPDF.app/tr.lproj/Kit.strings"
       - name: Boot the simulator
         run: xcrun simctl bootstatus "${{ steps.simulator.outputs.udid }}" -b
       - name: Run the UI tests
@@ -131,3 +133,42 @@ jobs:
             -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
             -derivedDataPath "$RUNNER_TEMP/ios-build" \
             CODE_SIGNING_ALLOWED=NO
+
+  apps-store-toolchain:
+    # The store workflows archive with Xcode 26.6, so both projects are also built with it here, before an upload does it first.
+    needs: macos
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - name: Select Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
+      # XcodeGen (MIT) is downloaded here only, pinned to one release and its SHA-256, and never shipped; the projects it
+      # writes are not checked in. Source: github.com/yonaskolb/XcodeGen/releases/tag/2.46.0.
+      - name: Install XcodeGen
+        env:
+          XCODEGEN_VERSION: 2.46.0
+          XCODEGEN_SHA256: 4d9e34b62172d645eed6457cac13fc222569974098ef4ee9c3368bedf0196806
+        run: |
+          set -euo pipefail
+          zip="$RUNNER_TEMP/xcodegen.zip"
+          curl -fsSL -o "$zip" "https://github.com/yonaskolb/XcodeGen/releases/download/$XCODEGEN_VERSION/xcodegen.zip"
+          hash=$(shasum -a 256 "$zip" | cut -d ' ' -f 1)
+          if [ "$hash" != "$XCODEGEN_SHA256" ]; then
+            echo "XcodeGen checksum mismatch: $hash"
+            exit 1
+          fi
+          unzip -q "$zip" -d "$RUNNER_TEMP/xcodegen-$XCODEGEN_VERSION"
+          echo "$RUNNER_TEMP/xcodegen-$XCODEGEN_VERSION/xcodegen/bin" >> "$GITHUB_PATH"
+      - name: Write the projects
+        run: |
+          xcodegen generate --spec mac/project.yml
+          xcodegen generate --spec ios/project.yml
+      - name: Build the Mac app
+        run: |
+          set -o pipefail
+          xcodebuild build             -project mac/LazyPDFMacApp.xcodeproj             -scheme LazyPDFMacApp             -configuration Release             -destination generic/platform=macOS             -derivedDataPath "$RUNNER_TEMP/mac-build"             CODE_SIGN_IDENTITY=-             CODE_SIGNING_REQUIRED=NO             CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
+      - name: Build the iOS app
+        run: |
+          set -o pipefail
+          xcodebuild build             -project ios/LazyPDFiOS.xcodeproj             -scheme LazyPDFiOS             -configuration Release             -destination "generic/platform=iOS Simulator"             -derivedDataPath "$RUNNER_TEMP/ios-build"             CODE_SIGNING_ALLOWED=NO

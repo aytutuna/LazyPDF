@@ -1,6 +1,6 @@
 """Writes the app icon sets of the Mac app and of the iPhone and iPad app from the drawing of the Windows icon
 (make_ico.py), drawn at each size rather than scaled. The iPhone icon is a full opaque square, which iOS rounds
-itself; the Mac icons have rounded, transparent corners. Only the standard library is used.
+itself; the Mac icons are rounded and inset to Apple's grid. Only the standard library is used.
 
 Usage: python scripts/make_apple_icons.py
 """
@@ -16,6 +16,8 @@ ROOT = Path(__file__).resolve().parent.parent
 MAC = ROOT / "mac" / "LazyPDFMacApp" / "Assets.xcassets" / "AppIcon.appiconset"
 IOS = ROOT / "ios" / "LazyPDFiOS" / "Assets.xcassets" / "AppIcon.appiconset"
 
+# Apple's macOS grid puts the shape in 824 of 1024 pixels and leaves the rest transparent.
+MAC_MARGIN = make_ico.DESIGN * (1024 / 824 - 1) / 2
 MAC_POINTS = (16, 32, 128, 256, 512)
 INFO = {"author": "xcode", "version": 1}
 
@@ -25,7 +27,7 @@ def write_mac():
     for points in MAC_POINTS:
         for scale in (1, 2):
             name = "icon_%dx%d%s.png" % (points, points, "@2x" if scale == 2 else "")
-            png = make_ico.draw(points * scale, corner=0.22 * make_ico.DESIGN)
+            png = make_ico.draw(points * scale, corner=0.22 * make_ico.DESIGN, margin=MAC_MARGIN)
             (MAC / name).write_bytes(png)
             images.append({"filename": name, "idiom": "mac", "scale": "%dx" % scale,
                            "size": "%dx%d" % (points, points)})

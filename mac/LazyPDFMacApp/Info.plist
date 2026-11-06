@@ -29,7 +29,13 @@
 			<string>Alternate</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>public.image</string>
+				<string>public.jpeg</string>
+				<string>public.png</string>
+				<string>public.tiff</string>
+				<string>com.microsoft.bmp</string>
+				<string>com.compuserve.gif</string>
+				<string>public.heic</string>
+				<string>public.heif</string>
 			</array>
 		</dict>
 		<dict>

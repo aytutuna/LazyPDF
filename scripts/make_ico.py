@@ -42,9 +42,10 @@ def hex_color(text):
 
 
 class Canvas:
-    def __init__(self, size, color):
+    def __init__(self, size, color, margin=0.0):
         self.size = size
-        self.scale = size / DESIGN
+        self.margin = margin
+        self.scale = size / (DESIGN + 2 * margin)
         n = size * size
         cr, cg, cb = hex_color(color)
         self.r = array("d", [cr]) * n
@@ -57,26 +58,28 @@ class Canvas:
         size = self.size
         s = self.scale
         half = DESIGN / 2.0
+        m = self.margin
         self.a = array("d", [1.0]) * (size * size)
         for y in range(size):
-            py = (y + 0.5) / s
+            py = (y + 0.5) / s - m
             for x in range(size):
-                d = rounded_rect((x + 0.5) / s, py, half, half, half, half, radius) * s
+                d = rounded_rect((x + 0.5) / s - m, py, half, half, half, half, radius) * s
                 self.a[y * size + x] = min(max(0.5 - d, 0.0), 1.0)
 
     def shape(self, distance, bounds, color, opacity=1.0):
         """Paints where `distance` (design units) is negative, the edge smoothed over one pixel."""
         cr, cg, cb = hex_color(color)
         s = self.scale
-        x0 = max(0, int((bounds[0] - 2.0) * s))
-        y0 = max(0, int((bounds[1] - 2.0) * s))
-        x1 = min(self.size, int(math.ceil((bounds[2] + 2.0) * s)) + 1)
-        y1 = min(self.size, int(math.ceil((bounds[3] + 2.0) * s)) + 1)
+        m = self.margin
+        x0 = max(0, int((bounds[0] + m - 2.0) * s))
+        y0 = max(0, int((bounds[1] + m - 2.0) * s))
+        x1 = min(self.size, int(math.ceil((bounds[2] + m + 2.0) * s)) + 1)
+        y1 = min(self.size, int(math.ceil((bounds[3] + m + 2.0) * s)) + 1)
         for y in range(y0, y1):
-            py = (y + 0.5) / s
+            py = (y + 0.5) / s - m
             row = y * self.size
             for x in range(x0, x1):
-                d = distance((x + 0.5) / s, py) * s
+                d = distance((x + 0.5) / s - m, py) * s
                 alpha = min(max(0.5 - d, 0.0), 1.0) * opacity
                 if alpha <= 0.0:
                     continue
@@ -116,12 +119,12 @@ def rect_shape(canvas, left, top, right, bottom, radius, color, opacity=1.0):
                  (left, top, right, bottom), color, opacity)
 
 
-def draw(size, corner=0.0):
-    return paint(size, corner).png()
+def draw(size, corner=0.0, margin=0.0):
+    return paint(size, corner, margin).png()
 
 
-def paint(size, corner=0.0):
-    canvas = Canvas(size, BACKGROUND)
+def paint(size, corner=0.0, margin=0.0):
+    canvas = Canvas(size, BACKGROUND, margin)
 
     # The page, with its top right corner cut along a diagonal and the flap drawn where it folded over.
     left, top, right, bottom, cut = 232, 140, 792, 884, 200
