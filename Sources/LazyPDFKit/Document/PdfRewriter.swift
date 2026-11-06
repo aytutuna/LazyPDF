@@ -7,7 +7,7 @@ import Foundation
 // The deflated bytes (object streams, a cross-reference stream, a stream that is repacked) are the engine's own
 // Deflate and differ from .NET's, so a file saved here is not byte for byte the C#'s wherever one is written.
 
-final class PdfRewriter {
+public final class PdfRewriter {
     // The size qpdf and most writers pack to; an object stream is parsed whole to read one object.
     private static let objectsPerStream = 100
 
@@ -19,12 +19,12 @@ final class PdfRewriter {
     private var items: [PdfObject] = []
     private var followed = 0
 
-    init(_ document: PdfDocument, _ options: PdfSaveOptions) {
+    public init(_ document: PdfDocument, _ options: PdfSaveOptions) {
         self.document = document
         self.options = options
     }
 
-    func run() -> [UInt8] {
+    public func run() -> [UInt8] {
         let root = intern(document.trailer["Root"])
         let info = document.info == nil ? 0 : intern(document.trailer["Info"])
         follow()
