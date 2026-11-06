@@ -14,7 +14,7 @@ final class PdfAChecker {
     let document: PdfDocument
     let level: PdfALevel
     var issues: [PdfAIssue] = []
-    var seen = Set<String>()
+    var seen = Set<[UInt8]>()
     var truncated = false
 
     /// The fonts met, each with the codes (CIDs for a composite font) shown with it, in the order they were met.
@@ -91,7 +91,7 @@ final class PdfAChecker {
             truncated = true
             return
         }
-        if seen.insert("\(clause)|\(place)|\(message)").inserted { issues.append(PdfAIssue(clause, place, message)) }
+        if seen.insert(Array("\(clause)|\(place)|\(message)".utf8)).inserted { issues.append(PdfAIssue(clause, place, message)) }
     }
 
     func filterNames(_ dictionary: PdfDictionary, _ key: String = "Filter") -> [String] {

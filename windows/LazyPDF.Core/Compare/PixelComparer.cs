@@ -126,6 +126,8 @@ public static class PixelComparer
     /// <summary>The smallest and largest value in the (2r+1) square around each pixel, in two passes.</summary>
     private static void Extremes(byte[] source, int w, int h, int r, byte[] low, byte[] high)
     {
+        // A reach past the page sees all of it; the clamp only keeps the sums below from overflowing.
+        r = Math.Clamp(r, -(w + h), w + h);
         var rowLow = new byte[source.Length];
         var rowHigh = new byte[source.Length];
         for (int y = 0; y < h; y++)

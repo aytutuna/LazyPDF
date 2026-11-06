@@ -99,6 +99,7 @@ internal sealed partial class PdfAConversionRun
             {
                 if (IsForbidden(d[key]) && d.Remove(key)) removed++;
             }
+            if (_doc.Resolve(d["Next"]) is PdfArray chain) removed += chain.Items.RemoveAll(IsForbidden);
             if (_doc.Dict(d, "AA") is not { } triggers) continue;
             if (ReferenceEquals(d, _doc.Catalog) || IsFieldOrWidget(_doc, d))
             {
