@@ -84,12 +84,12 @@ final class ScanNode {
     var hasEdits: Bool { !edits.isEmpty || !dirtyMarked.isEmpty || children.values.contains { $0.hasEdits } }
 }
 
-private struct FontCode: Hashable {
-    let font: ObjectIdentifier
-    let code: Int
-}
-
 final class RedactionScan: ContentVisitor {
+    private struct FontCode: Hashable {
+        let font: ObjectIdentifier
+        let code: Int
+    }
+
     private let areas: [MarkArea]
     private var nodes: [ScanNode] = [ScanNode(nil)]
     private var openMarks: [(node: ScanNode, op: Int, marked: MarkedContent)] = []

@@ -60,4 +60,11 @@ final class ImageLookTests: XCTestCase {
         XCTAssertEqual(try CompareKit.single(try PdfComparer.compare(full, half).changes).detail, CompareText.imageReplaced)
         XCTAssertTrue(try PdfComparer.compare(full, respelled).isIdentical)
     }
+
+    func test_numbersAreSpelledAsRoundTripUpToTheSeventeenthPlace() throws {
+        let document = try CompareReviewTests.picture("")
+        let image = PdfDictionary()
+        image["Matte"] = PdfArray([PdfNumber(1_000_000_000_000_000), PdfNumber(10_000_000_000_000_000), PdfNumber(100_000_000_000_000_000), PdfNumber(0.00001)])
+        XCTAssertTrue(try ImageLook(document).of(image).contains("[1000000000000000 10000000000000000 1E+17 1E-05]"))
+    }
 }

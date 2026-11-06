@@ -49,6 +49,17 @@ public struct PdfAIssue: Hashable {
         self.where = place
         self.message = message
     }
+
+    // Ordinal, as the C# record compares: String's own == equates canonical equivalents, and the texts here are arbitrary Unicode from the XMP.
+    public static func == (a: PdfAIssue, b: PdfAIssue) -> Bool {
+        a.clause.utf8.elementsEqual(b.clause.utf8) && a.where.utf8.elementsEqual(b.where.utf8) && a.message.utf8.elementsEqual(b.message.utf8)
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(Array(clause.utf8))
+        hasher.combine(Array(`where`.utf8))
+        hasher.combine(Array(message.utf8))
+    }
 }
 
 /// What the validator found. `truncated` is set when it stopped listing at the cap.

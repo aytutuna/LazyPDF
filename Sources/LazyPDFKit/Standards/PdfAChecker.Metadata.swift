@@ -109,7 +109,7 @@ extension PdfAChecker {
                     equal = false
                 }
             } else {
-                equal = xmpValue == value
+                equal = xmpValue.map { XmlParser.same($0, value) } ?? false
             }
             if !equal { add(clause, PdfAText.info, PdfAText.infoDiffers(key, other)) }
         }

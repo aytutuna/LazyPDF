@@ -3,7 +3,7 @@ import XCTest
 
 // Mirrors windows/LazyPDF.Core.Tests/Standards/PdfABoundTests.cs: the same cases. The two tests that race a Task against a
 // timeout (AnActionThatNamesItselfInNextIsJudgedOnce, ActionsSharingOneNextListAreJudgedInLinearTime) run the check in line:
-// a loop would hang the run, which has its own limit.
+// a loop would hang the run, which has its own limit; the second also checks the elapsed time against six times the C# limit.
 
 final class PdfABoundTests: XCTestCase {
     private let helvetica = "<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>"
@@ -140,7 +140,9 @@ final class PdfABoundTests: XCTestCase {
             for i in 0..<count { pdf.obj(40 + i, "<</S /GoTo /D [3 0 R /Fit] /Next 39 0 R>>") }
             pdf.obj(40 + count, "<</S /JavaScript /JS (1)>>")
         })
+        let start = Date()
         XCTAssertTrue(try StandardsKit.check(file).issues.map { $0.clause }.contains("6.5.1"))
+        XCTAssertLessThan(Date().timeIntervalSince(start), 60, "the C# limit is 10 seconds; a debug build of Swift is slower")
     }
 
     func test_walkingAnnotationsAndTheirStatesUsesTheBudget() throws {

@@ -162,6 +162,14 @@ final class PixelCompareTests: XCTestCase {
         XCTAssertEqual(result.similarity, 1.0)
     }
 
+    func test_aToleranceNearTheLargestIntSeesTheWholePage() throws {
+        let page = text()
+        let options = PixelOptions(tolerance: Int(Int32.max), align: false)
+        let result = try PixelComparer.compare(page.toImage(), page.toImage(), 72, options)
+        XCTAssertTrue(result.differences.isEmpty)
+        XCTAssertEqual(result.similarity, 1.0)
+    }
+
     func test_onePixelShiftWithinToleranceIsNoDifference() throws {
         let page = text()
         let options = PixelOptions(align: false)

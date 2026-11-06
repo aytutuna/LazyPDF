@@ -274,6 +274,26 @@ final class PdfAConverterTests: XCTestCase {
         XCTAssertEqual(document.name(intent, "S"), "GTS_PDFA1")
     }
 
+    func test_anIntentProfileTheValidatorRefusesIsReplaced() throws {
+        var scanner = PdfASrgb.srgbProfile
+        scanner.replaceSubrange(12..<16, with: Array("scnr".utf8))
+        let file = plain(catalog: "/OutputIntents [6 0 R]", extra: { pdf in
+            pdf.obj(6, "<</Type /OutputIntent /S /GTS_PDFX /OutputConditionIdentifier (mine) /DestOutputProfile 7 0 R>>")
+            pdf.stream(7, "/N 3", scanner)
+        })
+        let result = try convert(file)
+        XCTAssertTrue(result.changes.contains { $0.contains("sRGB output intent") })
+        XCTAssertFalse(try StandardsKit.clauses(try clean(result)).contains("6.2.3"))
+    }
+
+    func test_aForbiddenActionInANextArrayIsRemoved() throws {
+        let file = plain(catalog: "/OpenAction << /S /URI /URI (x) /Next [<< /S /JavaScript /JS (1) >>] >>")
+        let bytes = try clean(try convert(file))
+        let document = try PdfDocument.open(bytes)
+        XCTAssertFalse(PdfActions.hasJavaScript(document))
+        XCTAssertFalse(try StandardsKit.clauses(bytes).contains("6.5.1"))
+    }
+
     func test_theProfileIsTheOneFromLazyScan() {
         XCTAssertEqual(PdfASrgb.srgbProfile.count, 736)
         let hex = Sha256.hash(PdfASrgb.srgbProfile).map { String(format: "%02x", $0) }.joined()

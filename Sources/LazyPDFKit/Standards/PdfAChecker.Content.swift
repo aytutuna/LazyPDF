@@ -199,8 +199,9 @@ extension PdfAChecker {
         if let mask = document.resolve(state["SMask"]), (mask as? PdfName)?.value != "None" { add(clauseTransparency, place, PdfAText.softMask) }
     }
 
-    func checkFormStream(_ form: PdfStream, _ place: String) {
+    func checkFormStream(_ form: PdfStream, _ named: @autoclosure () -> String) {
         if !streamsSeen.insert(ObjectIdentifier(form)).inserted { return }
+        let place = named()
         let d = form.dictionary
         if d.containsKey("Ref") { add(clauseReference, place, PdfAText.referenceXObject) }
         if document.name(d, "Subtype2") == "PS" || d.containsKey("PS") { add(clausePostScript, place, PdfAText.postScriptObject) }

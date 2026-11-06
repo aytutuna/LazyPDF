@@ -1,8 +1,7 @@
 import Foundation
 
 // Twin of windows/LazyPDF.Core/Export/PdfFromPicturesExif.cs: what a JPEG file says about how it is to be shown: JFIF
-// density and Exif orientation. A header cut short reads as no density and no orientation, where the C# indexes past the
-// end of the file.
+// density and Exif orientation.
 
 enum JpegMeta {
     private static let defaultDpi = 96.0
