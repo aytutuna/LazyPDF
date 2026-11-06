@@ -6,6 +6,7 @@ import Foundation
 extension Comparison {
     private static let maxAttachmentBytes = 64 << 20
     private static let attachmentBudget = 256 << 20
+    private static let minReadCharge = 256 << 10
 
     /// A file name used twice keeps its later files under "name (2)", "name (3)".
     private func attachments(_ document: PdfDocument) throws -> InsertionMap<PdfStream> {
@@ -28,14 +29,24 @@ extension Comparison {
         return result
     }
 
-    private static func stored(_ document: PdfDocument, _ streams: InsertionMap<PdfStream>) -> InsertionMap<String> {
+    /// What each file looks like in the file it is stored in. Streams may overlap, so the bytes read are limited to the
+    /// size of the document plus the budget; a stream past that is described by its size alone.
+    private func stored(_ document: PdfDocument, _ streams: InsertionMap<PdfStream>) throws -> InsertionMap<String> {
         var known: [StreamKey: String] = [:]
         var result = InsertionMap<String>()
+        var budget = document.length + Self.attachmentBudget
         for (name, stream) in streams.entries {
+            try Task.checkCancellation()
             var text = known[StreamKey(stream)]
             if text == nil {
-                let bytes = document.rawData(stream)
-                text = "\(bytes.count) bytes stored, \(ImageLook.toHexString(Array(Sha256.hash(bytes).prefix(6))))"
+                let size = document.rawLength(stream)
+                if size > budget {
+                    text = "\(size) bytes stored, not read"
+                } else {
+                    let bytes = document.rawData(stream)
+                    budget -= bytes.count
+                    text = "\(bytes.count) bytes stored, \(ImageLook.toHexString(Array(Sha256.hash(bytes).prefix(6))))"
+                }
                 known[StreamKey(stream)] = text
             }
             result.set(name, text ?? "")
@@ -49,15 +60,15 @@ extension Comparison {
     private func decoded(_ document: PdfDocument, _ streams: InsertionMap<PdfStream>, _ skip: Set<[UInt16]>) throws -> InsertionMap<String?> {
         var known: [StreamKey: String?] = [:]
         var result = InsertionMap<String?>()
-        var budget = Self.attachmentBudget
+        var budget = Self.attachmentBudget, read = Self.attachmentBudget
         for (name, stream) in streams.entries {
-            if skip.contains(Array(name.utf16)) { continue }
             try Task.checkCancellation()
+            if skip.contains(Array(name.utf16)) { continue }
             let text: String?
             if let seen = known[StreamKey(stream)] {
                 text = seen
             } else {
-                text = try Self.decode(document, stream, &budget)
+                text = try Self.decode(document, stream, &budget, &read)
                 known[StreamKey(stream)] = text
             }
             result.set(name, text)
@@ -65,9 +76,16 @@ extension Comparison {
         return result
     }
 
-    private static func decode(_ document: PdfDocument, _ stream: PdfStream, _ budget: inout Int) throws -> String? {
+    // The stored bytes of a stream are copied before any limit applies, and a filter allocates its buffers, so each stream
+    // is charged to the read budget with a floor; one too long to come under the limit even after a filter (hex halves,
+    // nothing shrinks more) is not read at all.
+    private static func decode(_ document: PdfDocument, _ stream: PdfStream, _ budget: inout Int, _ read: inout Int) throws -> String? {
         let limit = min(maxAttachmentBytes, budget)
         if limit <= 0 { return nil }
+        let size = document.rawLength(stream)
+        let charge = max(size, minReadCharge)
+        if size > (stream.dictionary.containsKey("Filter") ? 2 * limit : limit) || charge > read { return nil }
+        read -= charge
         do {
             let data = try document.data(stream, limit)
             if data.count > limit { return nil }
@@ -86,8 +104,8 @@ extension Comparison {
     func compareAttachments(_ changes: inout [CompareChange]) throws {
         let oldFiles = try attachments(before)
         let newFiles = try attachments(after)
-        let storedBefore = Self.stored(before, oldFiles)
-        let storedAfter = Self.stored(after, newFiles)
+        let storedBefore = try stored(before, oldFiles)
+        let storedAfter = try stored(after, newFiles)
         var same = Set<[UInt16]>()
         for (name, text) in storedBefore.entries {
             if let other = storedAfter.lookup(name), Ordinal.equal(other, text) { same.insert(Array(name.utf16)) }
