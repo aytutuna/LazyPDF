@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using LazyPDF.App.Services;
 using LazyPDF.Core;
 using Xunit;
@@ -43,16 +44,45 @@ public sealed class OneTabPerFileTests
     }
 
     [Fact]
-    public async Task GivingUpWhileThePasswordIsBeingCheckedOpensNothing()
+    public void GivingUpWhileThePasswordIsBeingCheckedOpensNothing()
     {
-        using var f = new ViewModelFixture();
-        await f.Vm.OpenAsync(f.Dir.File("locked.pdf", File.ReadAllBytes(Pdfs.Fixture("locked.pdf"))));
+        // In the app the check comes back on the window's thread, after the click; on the pool it could finish first.
+        OneThread.Run(async () =>
+        {
+            using var f = new ViewModelFixture();
+            await f.Vm.OpenAsync(f.Dir.File("locked.pdf", File.ReadAllBytes(Pdfs.Fixture("locked.pdf"))));
 
-        var submit = f.Vm.SubmitPasswordAsync("secret");
-        f.Vm.CancelPending();
-        await submit;
+            var submit = f.Vm.SubmitPasswordAsync("secret");
+            f.Vm.CancelPending();
+            await submit;
 
-        Assert.Empty(f.Vm.Documents);
+            Assert.Empty(f.Vm.Documents);
+        });
+    }
+
+    private sealed class OneThread : SynchronizationContext
+    {
+        private readonly BlockingCollection<(SendOrPostCallback, object?)> _queue = new();
+
+        public override void Post(SendOrPostCallback d, object? state) => _queue.Add((d, state));
+
+        public static void Run(Func<Task> body)
+        {
+            var before = Current;
+            var context = new OneThread();
+            SetSynchronizationContext(context);
+            try
+            {
+                var task = body();
+                task.ContinueWith(_ => context._queue.CompleteAdding(), TaskScheduler.Default);
+                foreach (var (d, state) in context._queue.GetConsumingEnumerable()) d(state);
+                task.GetAwaiter().GetResult();
+            }
+            finally
+            {
+                SetSynchronizationContext(before);
+            }
+        }
     }
 
     [Fact]
