@@ -1,0 +1,1131 @@
+> marker 1. First
+< numbered 2 lone=false
+> marker 12. Twelve
+< numbered 3 lone=false
+> marker 123. x
+< numbered 4 lone=false
+> marker 1234. x
+< none lone=false
+> marker (1) x
+< numbered 3 lone=false
+> marker a) x
+< numbered 2 lone=false
+> marker (b) x
+< numbered 3 lone=false
+> marker A. x
+< numbered 2 lone=false
+> marker ab. x
+< none lone=false
+> marker iv. x
+< numbered 3 lone=false
+> marker IV) x
+< numbered 3 lone=false
+> marker xiii. x
+< numbered 5 lone=false
+> marker xxxxxx. x
+< none lone=false
+> marker 1.x
+< none lone=false
+> marker 1.
+< numbered 2 lone=true
+> marker 1.\n
+< numbered 2 lone=false
+> marker - item
+< bullet 1 lone=false
+> marker -x
+< none lone=false
+> marker * item
+< bullet 1 lone=false
+> marker \xe2\x80\xa2 bullet
+< bullet 1 lone=false
+> marker \xe2\x80\x93 dash
+< bullet 1 lone=false
+> marker \xef\x82\xb7 symbol
+< bullet 1 lone=false
+> marker x
+< none lone=false
+> marker 
+< none lone=false
+> marker 1.\xc2\xa0x
+< numbered 2 lone=false
+> marker \xd9\xa1. x
+< numbered 2 lone=false
+> marker 7)
+< numbered 2 lone=true
+> marker ( 1. x
+< none lone=false
+> pagenumber 3
+< true
+> pagenumber Page 3
+< true
+> pagenumber page3
+< true
+> pagenumber PAGE 3 OF 9
+< true
+> pagenumber Page 3 of 9
+< true
+> pagenumber 3 / 9
+< true
+> pagenumber 3/9
+< true
+> pagenumber iv
+< true
+> pagenumber XIV
+< true
+> pagenumber - 3 -
+< true
+> pagenumber \xe2\x80\x93 12 \xe2\x80\x93
+< true
+> pagenumber 12345
+< false
+> pagenumber 1234
+< true
+> pagenumber mmmmmm
+< true
+> pagenumber mmmmmmm
+< false
+> pagenumber page
+< false
+> pagenumber 3 of
+< false
+> pagenumber 3 of 12345
+< false
+> pagenumber Chapter 3
+< false
+> pagenumber a
+< false
+> pagenumber 3\n-
+< true
+> pagenumber \xd9\xa3
+< true
+> pagenumber 3 off 9
+< false
+> signature Page 3
+< page #
+> signature page  12 of 40
+< page # of #
+> signature 2026
+< #
+> signature --
+< none
+> signature \xc4\xb0stanbul 5 
+< \u0130stanbul #
+> signature Caf\xc3\xa9 \xd9\xa3\xd9\xa4
+< caf\u00e9 #
+> signature   A  \tB  
+< a b
+> langtag en
+< valid
+> langtag en-US
+< valid
+> langtag e
+< invalid
+> langtag eng
+< valid
+> langtag engl
+< invalid
+> langtag en-
+< invalid
+> langtag en-U
+< invalid
+> langtag en-US-x
+< invalid
+> langtag en-US\n
+< invalid
+> langtag en-US\n\n
+< invalid
+> langtag en_US
+< invalid
+> langtag zh-Hant-CN
+< valid
+> langtag en-123456789
+< invalid
+> langtag \xd9\xa3\xd9\xa3
+< invalid
+> langtag EN-us
+< valid
+> tree tagged
+< Document page=-1 ref=9 title=~ alt=~ lang=~ actual=~ id=~
+<   H1 page=0 ref=10 title=Head alt=~ lang=tr actual=~ id=~
+<     content page=0 mcid=0 stream=-1
+<   P page=0 ref=11 title=~ alt=~ lang=~ actual=Body text id=~
+<     content page=0 mcid=1 stream=-1
+<   Figure page=0 ref=12 title=~ alt=A picture lang=~ actual=~ id=~
+<     content page=0 mcid=2 stream=-1
+< role Heading H1
+< role Weird Nope
+< class Fancy <</O /Layout>>
+< parent 0 [10 0 R 11 0 R 12 0 R]
+< truncated false
+< order # Head\nBody text\n[Figure: A picture]
+> tree tagged-bad
+< Document page=-1 ref=9 title=~ alt=~ lang=~ actual=~ id=~
+<   Weird page=0 ref=10 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=0 stream=-1
+<   H3 page=0 ref=11 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=1 stream=-1
+<   Figure page=0 ref=12 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=2 stream=-1
+< role Heading H1
+< role Weird Nope
+< class Fancy <</O /Layout>>
+< parent 0 [10 0 R 11 0 R 12 0 R]
+< truncated false
+< order Head\n### Body text\n[Figure]
+> tree report 1
+< no tree
+< order 
+> check tagged
+< tagged passed none [] Document is tagged | The document is tagged.
+< title failed setTitle [] Title is set and shown | The document has no title. Give it one so the window and the reader can name it.
+< language passed none [] Language is set | The document language is set.
+< security passed none [] Security allows screen readers | The security settings allow screen readers.
+< bookmarks passed none [] Long document has bookmarks | The document has bookmarks, or is short enough not to need them.
+< searchable passed none [] Pages have text | Every page with pictures also has text.
+< encoding passed none [] Fonts map to text | Every font maps its characters to text.
+< taggedContent passed none [] All content is tagged | All page content is tagged or marked as an artifact.
+< tabOrder passed none [] Tab order follows structure | Pages with links or fields follow the structure order.
+< contrast needsPerson none [] Colour contrast | Colour contrast is not checked here. Look at the pages and make sure text stands out from its background.
+< formNames passed none [] Form fields have names and tooltips | Every form field has a name and a tooltip, or there are no fields.
+< figureAlt passed none [] Figures have alt text | Every figure has alt text, or there are no figures.
+< tableStructure passed none [] Tables are well formed | Every table has rows and cells in the right places, or there are no tables.
+< tableHeaders passed none [] Tables have headers | Every table has header cells, or there are no tables.
+< listStructure passed none [] Lists are well formed | Every list has items, labels and bodies in the right places, or there are no lists.
+< headingOrder passed none [] Headings are in order | Headings go down one level at a time, or there are none.
+< roleMap passed none [] Custom tags are mapped | Every custom tag maps to a standard one.
+< links passed none [] Links have text | Every link is tagged and has text.
+< formTagged passed none [] Form fields are tagged | Every form field is tagged, or there are no fields.
+> check tagged-bad
+< tagged passed none [] Document is tagged | The document is tagged.
+< title failed setTitle [] Title is set and shown | The document has no title. Give it one so the window and the reader can name it.
+< language failed setLanguage [] Language is set | The document language is missing or not valid. Set it so a screen reader picks the right voice.
+< security passed none [] Security allows screen readers | The security settings allow screen readers.
+< bookmarks passed none [] Long document has bookmarks | The document has bookmarks, or is short enough not to need them.
+< searchable passed none [] Pages have text | Every page with pictures also has text.
+< encoding passed none [] Fonts map to text | Every font maps its characters to text.
+< taggedContent passed none [] All content is tagged | All page content is tagged or marked as an artifact.
+< tabOrder passed none [] Tab order follows structure | Pages with links or fields follow the structure order.
+< contrast needsPerson none [] Colour contrast | Colour contrast is not checked here. Look at the pages and make sure text stands out from its background.
+< formNames passed none [] Form fields have names and tooltips | Every form field has a name and a tooltip, or there are no fields.
+< figureAlt failed none [0:12] Figures have alt text | Figures without alt text: 1, first on page 1. Describe each one.
+< tableStructure passed none [] Tables are well formed | Every table has rows and cells in the right places, or there are no tables.
+< tableHeaders passed none [] Tables have headers | Every table has header cells, or there are no tables.
+< listStructure passed none [] Lists are well formed | Every list has items, labels and bodies in the right places, or there are no lists.
+< headingOrder failed none [0:11] Headings are in order | Headings out of order: 1, first on page 1. Start at level 1 and go down one level at a time.
+< roleMap failed none [0:10] Custom tags are mapped | Custom tags without a standard meaning: 1, first on page 1. Map each to a standard tag.
+< links passed none [] Links have text | Every link is tagged and has text.
+< formTagged passed none [] Form fields are tagged | Every form field is tagged, or there are no fields.
+> check report 1
+< tagged failed none [] Document is tagged | The document has no tags. Add tags so a screen reader can read it in order.
+< title failed setTitle [] Title is set and shown | The document has no title. Give it one so the window and the reader can name it.
+< language failed setLanguage [] Language is set | The document language is missing or not valid. Set it so a screen reader picks the right voice.
+< security passed none [] Security allows screen readers | The security settings allow screen readers.
+< bookmarks passed none [] Long document has bookmarks | The document has bookmarks, or is short enough not to need them.
+< searchable passed none [] Pages have text | Every page with pictures also has text.
+< encoding passed none [] Fonts map to text | Every font maps its characters to text.
+< taggedContent needsPerson none [] All content is tagged | There are no tags to check. Tag the document first.
+< tabOrder passed none [] Tab order follows structure | Pages with links or fields follow the structure order.
+< contrast needsPerson none [] Colour contrast | Colour contrast is not checked here. Look at the pages and make sure text stands out from its background.
+< formNames passed none [] Form fields have names and tooltips | Every form field has a name and a tooltip, or there are no fields.
+< figureAlt needsPerson none [] Figures have alt text | There are no tags to check. Tag the document first.
+< tableStructure needsPerson none [] Tables are well formed | There are no tags to check. Tag the document first.
+< tableHeaders needsPerson none [] Tables have headers | There are no tags to check. Tag the document first.
+< listStructure needsPerson none [] Lists are well formed | There are no tags to check. Tag the document first.
+< headingOrder needsPerson none [] Headings are in order | There are no tags to check. Tag the document first.
+< roleMap needsPerson none [] Custom tags are mapped | There are no tags to check. Tag the document first.
+< links needsPerson none [] Links have text | There are no tags to check. Tag the document first.
+< formTagged needsPerson none [] Form fields are tagged | There are no tags to check. Tag the document first.
+> check page q 600 0 0 700 0 0 cm /Im1 Do Q
+< tagged failed none [] Document is tagged | The document has no tags. Add tags so a screen reader can read it in order.
+< title failed setTitle [] Title is set and shown | The document has no title. Give it one so the window and the reader can name it.
+< language failed setLanguage [] Language is set | The document language is missing or not valid. Set it so a screen reader picks the right voice.
+< security passed none [] Security allows screen readers | The security settings allow screen readers.
+< bookmarks passed none [] Long document has bookmarks | The document has bookmarks, or is short enough not to need them.
+< searchable failed none [0:3] Pages have text | Pages with only pictures: 1, first on page 1. Run text recognition so the words can be read.
+< encoding passed none [] Fonts map to text | Every font maps its characters to text.
+< taggedContent needsPerson none [] All content is tagged | There are no tags to check. Tag the document first.
+< tabOrder passed none [] Tab order follows structure | Pages with links or fields follow the structure order.
+< contrast needsPerson none [] Colour contrast | Colour contrast is not checked here. Look at the pages and make sure text stands out from its background.
+< formNames passed none [] Form fields have names and tooltips | Every form field has a name and a tooltip, or there are no fields.
+< figureAlt needsPerson none [] Figures have alt text | There are no tags to check. Tag the document first.
+< tableStructure needsPerson none [] Tables are well formed | There are no tags to check. Tag the document first.
+< tableHeaders needsPerson none [] Tables have headers | There are no tags to check. Tag the document first.
+< listStructure needsPerson none [] Lists are well formed | There are no tags to check. Tag the document first.
+< headingOrder needsPerson none [] Headings are in order | There are no tags to check. Tag the document first.
+< roleMap needsPerson none [] Custom tags are mapped | There are no tags to check. Tag the document first.
+< links needsPerson none [] Links have text | There are no tags to check. Tag the document first.
+< formTagged needsPerson none [] Form fields are tagged | There are no tags to check. Tag the document first.
+> tag tagged
+< result true pages=0 skipped=0 headings=0 paragraphs=0 lists=0 tables=0 figures=0 artifacts=0 []
+< trailer <</Size 14 /Root 1 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 8 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+< 2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 612 792]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <</Font <</F1 5 0 R /F2 6 0 R>> /XObject <</Im1 7 0 R>>>> /StructParents 0 /Tabs /S>>
+< 4: stream <<>> | /H1 <</MCID 0>> BDC BT /F2 18 Tf 72 700 Td (Head) Tj ET EMC\n/P <</MCID 1>> BDC BT /F1 11 Tf 72 670 Td (Body text) Tj ET EMC\n/Figure <</MCID 2>> BDC q 50 0 0 50 72 600 cm /Im1 Do Q EMC\n
+< 5: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 6: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 7: stream <</Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0000P\u00a0\u00ff
+< 8: <</Type /StructTreeRoot /K 9 0 R /ParentTree 13 0 R /ParentTreeNextKey 1 /RoleMap <</Heading /H1 /Weird /Nope>> /ClassMap <</Fancy <</O /Layout>>>>>>
+< 9: <</Type /StructElem /S /Document /P 8 0 R /K [10 0 R 11 0 R 12 0 R]>>
+< 10: <</Type /StructElem /S /H1 /P 9 0 R /Pg 3 0 R /K 0 /T (Head) /Lang (tr) /A <</O /Layout /Placement /Block>> /C /Fancy>>
+< 11: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 1 /ActualText (Body text)>>
+< 12: <</Type /StructElem /S /Figure /P 9 0 R /Pg 3 0 R /K 2 /Alt (A picture)>>
+< 13: <</Nums [0 [10 0 R 11 0 R 12 0 R]]>>
+< Document page=-1 ref=9 title=~ alt=~ lang=~ actual=~ id=~
+<   H1 page=0 ref=10 title=Head alt=~ lang=tr actual=~ id=~
+<     content page=0 mcid=0 stream=-1
+<   P page=0 ref=11 title=~ alt=~ lang=~ actual=Body text id=~
+<     content page=0 mcid=1 stream=-1
+<   Figure page=0 ref=12 title=~ alt=A picture lang=~ actual=~ id=~
+<     content page=0 mcid=2 stream=-1
+< role Heading H1
+< role Weird Nope
+< class Fancy <</O /Layout>>
+< parent 0 [10 0 R 11 0 R 12 0 R]
+< truncated false
+< order # Head\nBody text\n[Figure: A picture]
+> tag report 1
+< result false pages=1 skipped=0 headings=1 paragraphs=3 lists=1 tables=1 figures=1 artifacts=2 [0:37]
+< trailer <</Size 8 /Root 1 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 8 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+< 2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 612 792]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <</Font <</F1 5 0 R /F2 6 0 R>> /XObject <</Im1 7 0 R>>>> /Tabs /S /StructParents 0>>
+< 4: stream <</Filter /FlateDecode>> | q 0.8 g /Artifact BMC 72 745 468 1 re f EMC Q\nBT /F1 9 Tf 72 760 Td /P <</MCID 0>> BDC (ACME Quarterly Report) Tj EMC ET\nBT /F2 20 Tf 72 700 Td /H1 <</MCID 1>> BDC (Introduction) Tj EMC ET\nBT /F1 11 Tf 72 672 Td /P <</MCID 2>> BDC (This is the first paragraph of page 1. It has enough words) Tj 0 -14 Td (to fill two lines of the body text.) Tj EMC ET\nBT /F1 11 Tf 72 620 Td /P <</MCID 3>> BDC (A second paragraph follows after a clear gap.) Tj EMC ET\nBT /F1 11 Tf 72 580 Td /Lbl <</MCID 4>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 5>> BDC (First item) Tj EMC ET\nBT /F1 11 Tf 72 564 Td /Lbl <</MCID 6>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 7>> BDC (Second item) Tj EMC ET\nBT /F1 11 Tf 72 548 Td /Lbl <</MCID 8>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 9>> BDC (Third item) Tj EMC ET\nBT /F2 11 Tf 72 500 Td /TH <</MCID 10>> BDC (Name) Tj EMC ET\nBT /F2 11 Tf 222 500 Td /TH <</MCID 11>> BDC (Count) Tj EMC ET\nBT /F2 11 Tf 372 500 Td /TH <</MCID 12>> BDC (Price) Tj EMC ET\nBT /F1 11 Tf 72 484 Td /TD <</MCID 13>> BDC (Apples) Tj EMC ET\nBT /F1 11 Tf 222 484 Td /TD <</MCID 14>> BDC (12) Tj EMC ET\nBT /F1 11 Tf 372 484 Td /TD <</MCID 15>> BDC (3.50) Tj EMC ET\nBT /F1 11 Tf 72 468 Td /TD <</MCID 16>> BDC (Pears) Tj EMC ET\nBT /F1 11 Tf 222 468 Td /TD <</MCID 17>> BDC (7) Tj EMC ET\nBT /F1 11 Tf 372 468 Td /TD <</MCID 18>> BDC (4.25) Tj EMC ET\nq 100 0 0 100 72 340 cm /Figure <</MCID 19>> BDC /Im1 Do EMC Q\nBT /F1 9 Tf 290 30 Td /Artifact BMC (Page 1) Tj EMC ET\n
+< 5: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 6: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 7: stream <</Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0000P\u00a0\u00ff
+< 8: <</Type /StructTreeRoot /K 9 0 R /ParentTree 38 0 R /ParentTreeNextKey 1>>
+< 9: <</Type /StructElem /S /Document /P 8 0 R /K [10 0 R 11 0 R 12 0 R 13 0 R 14 0 R 24 0 R 37 0 R]>>
+< 10: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 0>>
+< 11: <</Type /StructElem /S /H1 /P 9 0 R /Pg 3 0 R /K 1>>
+< 12: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 2>>
+< 13: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 3>>
+< 14: <</Type /StructElem /S /L /P 9 0 R /Pg 3 0 R /K [15 0 R 18 0 R 21 0 R]>>
+< 15: <</Type /StructElem /S /LI /P 14 0 R /Pg 3 0 R /K [16 0 R 17 0 R]>>
+< 16: <</Type /StructElem /S /Lbl /P 15 0 R /Pg 3 0 R /K 4>>
+< 17: <</Type /StructElem /S /LBody /P 15 0 R /Pg 3 0 R /K 5>>
+< 18: <</Type /StructElem /S /LI /P 14 0 R /Pg 3 0 R /K [19 0 R 20 0 R]>>
+< 19: <</Type /StructElem /S /Lbl /P 18 0 R /Pg 3 0 R /K 6>>
+< 20: <</Type /StructElem /S /LBody /P 18 0 R /Pg 3 0 R /K 7>>
+< 21: <</Type /StructElem /S /LI /P 14 0 R /Pg 3 0 R /K [22 0 R 23 0 R]>>
+< 22: <</Type /StructElem /S /Lbl /P 21 0 R /Pg 3 0 R /K 8>>
+< 23: <</Type /StructElem /S /LBody /P 21 0 R /Pg 3 0 R /K 9>>
+< 24: <</Type /StructElem /S /Table /P 9 0 R /Pg 3 0 R /K [25 0 R 29 0 R 33 0 R]>>
+< 25: <</Type /StructElem /S /TR /P 24 0 R /Pg 3 0 R /K [26 0 R 27 0 R 28 0 R]>>
+< 26: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 25 0 R /Pg 3 0 R /K 10>>
+< 27: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 25 0 R /Pg 3 0 R /K 11>>
+< 28: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 25 0 R /Pg 3 0 R /K 12>>
+< 29: <</Type /StructElem /S /TR /P 24 0 R /Pg 3 0 R /K [30 0 R 31 0 R 32 0 R]>>
+< 30: <</Type /StructElem /S /TD /P 29 0 R /Pg 3 0 R /K 13>>
+< 31: <</Type /StructElem /S /TD /P 29 0 R /Pg 3 0 R /K 14>>
+< 32: <</Type /StructElem /S /TD /P 29 0 R /Pg 3 0 R /K 15>>
+< 33: <</Type /StructElem /S /TR /P 24 0 R /Pg 3 0 R /K [34 0 R 35 0 R 36 0 R]>>
+< 34: <</Type /StructElem /S /TD /P 33 0 R /Pg 3 0 R /K 16>>
+< 35: <</Type /StructElem /S /TD /P 33 0 R /Pg 3 0 R /K 17>>
+< 36: <</Type /StructElem /S /TD /P 33 0 R /Pg 3 0 R /K 18>>
+< 37: <</Type /StructElem /S /Figure /P 9 0 R /Pg 3 0 R /K 19>>
+< 38: <</Nums [0 [10 0 R 11 0 R 12 0 R 13 0 R 16 0 R 17 0 R 19 0 R 20 0 R 22 0 R 23 0 R 26 0 R 27 0 R 28 0 R 30 0 R 31 0 R 32 0 R 34 0 R 35 0 R 36 0 R 37 0 R]]>>
+< Document page=-1 ref=9 title=~ alt=~ lang=~ actual=~ id=~
+<   P page=0 ref=10 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=0 stream=-1
+<   H1 page=0 ref=11 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=1 stream=-1
+<   P page=0 ref=12 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=2 stream=-1
+<   P page=0 ref=13 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=3 stream=-1
+<   L page=0 ref=14 title=~ alt=~ lang=~ actual=~ id=~
+<     LI page=0 ref=15 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=0 ref=16 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=4 stream=-1
+<       LBody page=0 ref=17 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=5 stream=-1
+<     LI page=0 ref=18 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=0 ref=19 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=6 stream=-1
+<       LBody page=0 ref=20 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=7 stream=-1
+<     LI page=0 ref=21 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=0 ref=22 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=8 stream=-1
+<       LBody page=0 ref=23 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=9 stream=-1
+<   Table page=0 ref=24 title=~ alt=~ lang=~ actual=~ id=~
+<     TR page=0 ref=25 title=~ alt=~ lang=~ actual=~ id=~
+<       TH page=0 ref=26 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=10 stream=-1
+<       TH page=0 ref=27 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=11 stream=-1
+<       TH page=0 ref=28 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=12 stream=-1
+<     TR page=0 ref=29 title=~ alt=~ lang=~ actual=~ id=~
+<       TD page=0 ref=30 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=13 stream=-1
+<       TD page=0 ref=31 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=14 stream=-1
+<       TD page=0 ref=32 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=15 stream=-1
+<     TR page=0 ref=33 title=~ alt=~ lang=~ actual=~ id=~
+<       TD page=0 ref=34 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=16 stream=-1
+<       TD page=0 ref=35 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=17 stream=-1
+<       TD page=0 ref=36 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=18 stream=-1
+<   Figure page=0 ref=37 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=19 stream=-1
+< parent 0 [10 0 R 11 0 R 12 0 R 13 0 R 16 0 R 17 0 R 19 0 R 20 0 R 22 0 R 23 0 R 26 0 R 27 0 R 28 0 R 30 0 R 31 0 R 32 0 R 34 0 R 35 0 R 36 0 R 37 0 R]
+< truncated false
+< order ACME Quarterly Report\n# Introduction\nThis is the first paragraph of page 1. It has enough words to fill two lines of the body text.\nA second paragraph follows after a clear gap.\n\u2022 First item\n\u2022 Second item\n\u2022 Third item\nName\tCount\tPrice\nApples\t12\t3.50\nPears\t7\t4.25\n[Figure]
+> tag report 3
+< result false pages=3 skipped=0 headings=3 paragraphs=6 lists=3 tables=3 figures=3 artifacts=9 [0:40,1:67,2:94]
+< trailer <</Size 12 /Root 1 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 12 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R 5 0 R] /Count 3 /MediaBox [0 0 612 792]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 6 0 R /Resources <</Font <</F1 9 0 R /F2 10 0 R>> /XObject <</Im1 11 0 R>>>> /Tabs /S /StructParents 0>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 7 0 R /Resources <</Font <</F1 9 0 R /F2 10 0 R>> /XObject <</Im1 11 0 R>>>> /Tabs /S /StructParents 1>>
+< 5: <</Type /Page /Parent 2 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R /F2 10 0 R>> /XObject <</Im1 11 0 R>>>> /Tabs /S /StructParents 2>>
+< 6: stream <</Filter /FlateDecode>> | q 0.8 g /Artifact BMC 72 745 468 1 re f EMC Q\nBT /F1 9 Tf 72 760 Td /Artifact BMC (ACME Quarterly Report) Tj EMC ET\nBT /F2 20 Tf 72 700 Td /H1 <</MCID 0>> BDC (Introduction) Tj EMC ET\nBT /F1 11 Tf 72 672 Td /P <</MCID 1>> BDC (This is the first paragraph of page 1. It has enough words) Tj 0 -14 Td (to fill two lines of the body text.) Tj EMC ET\nBT /F1 11 Tf 72 620 Td /P <</MCID 2>> BDC (A second paragraph follows after a clear gap.) Tj EMC ET\nBT /F1 11 Tf 72 580 Td /Lbl <</MCID 3>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 4>> BDC (First item) Tj EMC ET\nBT /F1 11 Tf 72 564 Td /Lbl <</MCID 5>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 6>> BDC (Second item) Tj EMC ET\nBT /F1 11 Tf 72 548 Td /Lbl <</MCID 7>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 8>> BDC (Third item) Tj EMC ET\nBT /F2 11 Tf 72 500 Td /TH <</MCID 9>> BDC (Name) Tj EMC ET\nBT /F2 11 Tf 222 500 Td /TH <</MCID 10>> BDC (Count) Tj EMC ET\nBT /F2 11 Tf 372 500 Td /TH <</MCID 11>> BDC (Price) Tj EMC ET\nBT /F1 11 Tf 72 484 Td /TD <</MCID 12>> BDC (Apples) Tj EMC ET\nBT /F1 11 Tf 222 484 Td /TD <</MCID 13>> BDC (12) Tj EMC ET\nBT /F1 11 Tf 372 484 Td /TD <</MCID 14>> BDC (3.50) Tj EMC ET\nBT /F1 11 Tf 72 468 Td /TD <</MCID 15>> BDC (Pears) Tj EMC ET\nBT /F1 11 Tf 222 468 Td /TD <</MCID 16>> BDC (7) Tj EMC ET\nBT /F1 11 Tf 372 468 Td /TD <</MCID 17>> BDC (4.25) Tj EMC ET\nq 100 0 0 100 72 340 cm /Figure <</MCID 18>> BDC /Im1 Do EMC Q\nBT /F1 9 Tf 290 30 Td /Artifact BMC (Page 1) Tj EMC ET\n
+< 7: stream <</Filter /FlateDecode>> | q 0.8 g /Artifact BMC 72 745 468 1 re f EMC Q\nBT /F1 9 Tf 72 760 Td /Artifact BMC (ACME Quarterly Report) Tj EMC ET\nBT /F2 20 Tf 72 700 Td /H1 <</MCID 0>> BDC (Introduction) Tj EMC ET\nBT /F1 11 Tf 72 672 Td /P <</MCID 1>> BDC (This is the first paragraph of page 2. It has enough words) Tj 0 -14 Td (to fill two lines of the body text.) Tj EMC ET\nBT /F1 11 Tf 72 620 Td /P <</MCID 2>> BDC (A second paragraph follows after a clear gap.) Tj EMC ET\nBT /F1 11 Tf 72 580 Td /Lbl <</MCID 3>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 4>> BDC (First item) Tj EMC ET\nBT /F1 11 Tf 72 564 Td /Lbl <</MCID 5>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 6>> BDC (Second item) Tj EMC ET\nBT /F1 11 Tf 72 548 Td /Lbl <</MCID 7>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 8>> BDC (Third item) Tj EMC ET\nBT /F2 11 Tf 72 500 Td /TH <</MCID 9>> BDC (Name) Tj EMC ET\nBT /F2 11 Tf 222 500 Td /TH <</MCID 10>> BDC (Count) Tj EMC ET\nBT /F2 11 Tf 372 500 Td /TH <</MCID 11>> BDC (Price) Tj EMC ET\nBT /F1 11 Tf 72 484 Td /TD <</MCID 12>> BDC (Apples) Tj EMC ET\nBT /F1 11 Tf 222 484 Td /TD <</MCID 13>> BDC (12) Tj EMC ET\nBT /F1 11 Tf 372 484 Td /TD <</MCID 14>> BDC (3.50) Tj EMC ET\nBT /F1 11 Tf 72 468 Td /TD <</MCID 15>> BDC (Pears) Tj EMC ET\nBT /F1 11 Tf 222 468 Td /TD <</MCID 16>> BDC (7) Tj EMC ET\nBT /F1 11 Tf 372 468 Td /TD <</MCID 17>> BDC (4.25) Tj EMC ET\nq 100 0 0 100 72 340 cm /Figure <</MCID 18>> BDC /Im1 Do EMC Q\nBT /F1 9 Tf 290 30 Td /Artifact BMC (Page 2) Tj EMC ET\n
+< 8: stream <</Filter /FlateDecode>> | q 0.8 g /Artifact BMC 72 745 468 1 re f EMC Q\nBT /F1 9 Tf 72 760 Td /Artifact BMC (ACME Quarterly Report) Tj EMC ET\nBT /F2 20 Tf 72 700 Td /H1 <</MCID 0>> BDC (Introduction) Tj EMC ET\nBT /F1 11 Tf 72 672 Td /P <</MCID 1>> BDC (This is the first paragraph of page 3. It has enough words) Tj 0 -14 Td (to fill two lines of the body text.) Tj EMC ET\nBT /F1 11 Tf 72 620 Td /P <</MCID 2>> BDC (A second paragraph follows after a clear gap.) Tj EMC ET\nBT /F1 11 Tf 72 580 Td /Lbl <</MCID 3>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 4>> BDC (First item) Tj EMC ET\nBT /F1 11 Tf 72 564 Td /Lbl <</MCID 5>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 6>> BDC (Second item) Tj EMC ET\nBT /F1 11 Tf 72 548 Td /Lbl <</MCID 7>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 8>> BDC (Third item) Tj EMC ET\nBT /F2 11 Tf 72 500 Td /TH <</MCID 9>> BDC (Name) Tj EMC ET\nBT /F2 11 Tf 222 500 Td /TH <</MCID 10>> BDC (Count) Tj EMC ET\nBT /F2 11 Tf 372 500 Td /TH <</MCID 11>> BDC (Price) Tj EMC ET\nBT /F1 11 Tf 72 484 Td /TD <</MCID 12>> BDC (Apples) Tj EMC ET\nBT /F1 11 Tf 222 484 Td /TD <</MCID 13>> BDC (12) Tj EMC ET\nBT /F1 11 Tf 372 484 Td /TD <</MCID 14>> BDC (3.50) Tj EMC ET\nBT /F1 11 Tf 72 468 Td /TD <</MCID 15>> BDC (Pears) Tj EMC ET\nBT /F1 11 Tf 222 468 Td /TD <</MCID 16>> BDC (7) Tj EMC ET\nBT /F1 11 Tf 372 468 Td /TD <</MCID 17>> BDC (4.25) Tj EMC ET\nq 100 0 0 100 72 340 cm /Figure <</MCID 18>> BDC /Im1 Do EMC Q\nBT /F1 9 Tf 290 30 Td /Artifact BMC (Page 3) Tj EMC ET\n
+< 9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 10: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 11: stream <</Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0000P\u00a0\u00ff
+< 12: <</Type /StructTreeRoot /K 13 0 R /ParentTree 95 0 R /ParentTreeNextKey 3>>
+< 13: <</Type /StructElem /S /Document /P 12 0 R /K [14 0 R 15 0 R 16 0 R 17 0 R 27 0 R 40 0 R 41 0 R 42 0 R 43 0 R 44 0 R 54 0 R 67 0 R 68 0 R 69 0 R 70 0 R 71 0 R 81 0 R 94 0 R]>>
+< 14: <</Type /StructElem /S /H1 /P 13 0 R /Pg 3 0 R /K 0>>
+< 15: <</Type /StructElem /S /P /P 13 0 R /Pg 3 0 R /K 1>>
+< 16: <</Type /StructElem /S /P /P 13 0 R /Pg 3 0 R /K 2>>
+< 17: <</Type /StructElem /S /L /P 13 0 R /Pg 3 0 R /K [18 0 R 21 0 R 24 0 R]>>
+< 18: <</Type /StructElem /S /LI /P 17 0 R /Pg 3 0 R /K [19 0 R 20 0 R]>>
+< 19: <</Type /StructElem /S /Lbl /P 18 0 R /Pg 3 0 R /K 3>>
+< 20: <</Type /StructElem /S /LBody /P 18 0 R /Pg 3 0 R /K 4>>
+< 21: <</Type /StructElem /S /LI /P 17 0 R /Pg 3 0 R /K [22 0 R 23 0 R]>>
+< 22: <</Type /StructElem /S /Lbl /P 21 0 R /Pg 3 0 R /K 5>>
+< 23: <</Type /StructElem /S /LBody /P 21 0 R /Pg 3 0 R /K 6>>
+< 24: <</Type /StructElem /S /LI /P 17 0 R /Pg 3 0 R /K [25 0 R 26 0 R]>>
+< 25: <</Type /StructElem /S /Lbl /P 24 0 R /Pg 3 0 R /K 7>>
+< 26: <</Type /StructElem /S /LBody /P 24 0 R /Pg 3 0 R /K 8>>
+< 27: <</Type /StructElem /S /Table /P 13 0 R /Pg 3 0 R /K [28 0 R 32 0 R 36 0 R]>>
+< 28: <</Type /StructElem /S /TR /P 27 0 R /Pg 3 0 R /K [29 0 R 30 0 R 31 0 R]>>
+< 29: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 28 0 R /Pg 3 0 R /K 9>>
+< 30: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 28 0 R /Pg 3 0 R /K 10>>
+< 31: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 28 0 R /Pg 3 0 R /K 11>>
+< 32: <</Type /StructElem /S /TR /P 27 0 R /Pg 3 0 R /K [33 0 R 34 0 R 35 0 R]>>
+< 33: <</Type /StructElem /S /TD /P 32 0 R /Pg 3 0 R /K 12>>
+< 34: <</Type /StructElem /S /TD /P 32 0 R /Pg 3 0 R /K 13>>
+< 35: <</Type /StructElem /S /TD /P 32 0 R /Pg 3 0 R /K 14>>
+< 36: <</Type /StructElem /S /TR /P 27 0 R /Pg 3 0 R /K [37 0 R 38 0 R 39 0 R]>>
+< 37: <</Type /StructElem /S /TD /P 36 0 R /Pg 3 0 R /K 15>>
+< 38: <</Type /StructElem /S /TD /P 36 0 R /Pg 3 0 R /K 16>>
+< 39: <</Type /StructElem /S /TD /P 36 0 R /Pg 3 0 R /K 17>>
+< 40: <</Type /StructElem /S /Figure /P 13 0 R /Pg 3 0 R /K 18>>
+< 41: <</Type /StructElem /S /H1 /P 13 0 R /Pg 4 0 R /K 0>>
+< 42: <</Type /StructElem /S /P /P 13 0 R /Pg 4 0 R /K 1>>
+< 43: <</Type /StructElem /S /P /P 13 0 R /Pg 4 0 R /K 2>>
+< 44: <</Type /StructElem /S /L /P 13 0 R /Pg 4 0 R /K [45 0 R 48 0 R 51 0 R]>>
+< 45: <</Type /StructElem /S /LI /P 44 0 R /Pg 4 0 R /K [46 0 R 47 0 R]>>
+< 46: <</Type /StructElem /S /Lbl /P 45 0 R /Pg 4 0 R /K 3>>
+< 47: <</Type /StructElem /S /LBody /P 45 0 R /Pg 4 0 R /K 4>>
+< 48: <</Type /StructElem /S /LI /P 44 0 R /Pg 4 0 R /K [49 0 R 50 0 R]>>
+< 49: <</Type /StructElem /S /Lbl /P 48 0 R /Pg 4 0 R /K 5>>
+< 50: <</Type /StructElem /S /LBody /P 48 0 R /Pg 4 0 R /K 6>>
+< 51: <</Type /StructElem /S /LI /P 44 0 R /Pg 4 0 R /K [52 0 R 53 0 R]>>
+< 52: <</Type /StructElem /S /Lbl /P 51 0 R /Pg 4 0 R /K 7>>
+< 53: <</Type /StructElem /S /LBody /P 51 0 R /Pg 4 0 R /K 8>>
+< 54: <</Type /StructElem /S /Table /P 13 0 R /Pg 4 0 R /K [55 0 R 59 0 R 63 0 R]>>
+< 55: <</Type /StructElem /S /TR /P 54 0 R /Pg 4 0 R /K [56 0 R 57 0 R 58 0 R]>>
+< 56: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 55 0 R /Pg 4 0 R /K 9>>
+< 57: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 55 0 R /Pg 4 0 R /K 10>>
+< 58: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 55 0 R /Pg 4 0 R /K 11>>
+< 59: <</Type /StructElem /S /TR /P 54 0 R /Pg 4 0 R /K [60 0 R 61 0 R 62 0 R]>>
+< 60: <</Type /StructElem /S /TD /P 59 0 R /Pg 4 0 R /K 12>>
+< 61: <</Type /StructElem /S /TD /P 59 0 R /Pg 4 0 R /K 13>>
+< 62: <</Type /StructElem /S /TD /P 59 0 R /Pg 4 0 R /K 14>>
+< 63: <</Type /StructElem /S /TR /P 54 0 R /Pg 4 0 R /K [64 0 R 65 0 R 66 0 R]>>
+< 64: <</Type /StructElem /S /TD /P 63 0 R /Pg 4 0 R /K 15>>
+< 65: <</Type /StructElem /S /TD /P 63 0 R /Pg 4 0 R /K 16>>
+< 66: <</Type /StructElem /S /TD /P 63 0 R /Pg 4 0 R /K 17>>
+< 67: <</Type /StructElem /S /Figure /P 13 0 R /Pg 4 0 R /K 18>>
+< 68: <</Type /StructElem /S /H1 /P 13 0 R /Pg 5 0 R /K 0>>
+< 69: <</Type /StructElem /S /P /P 13 0 R /Pg 5 0 R /K 1>>
+< 70: <</Type /StructElem /S /P /P 13 0 R /Pg 5 0 R /K 2>>
+< 71: <</Type /StructElem /S /L /P 13 0 R /Pg 5 0 R /K [72 0 R 75 0 R 78 0 R]>>
+< 72: <</Type /StructElem /S /LI /P 71 0 R /Pg 5 0 R /K [73 0 R 74 0 R]>>
+< 73: <</Type /StructElem /S /Lbl /P 72 0 R /Pg 5 0 R /K 3>>
+< 74: <</Type /StructElem /S /LBody /P 72 0 R /Pg 5 0 R /K 4>>
+< 75: <</Type /StructElem /S /LI /P 71 0 R /Pg 5 0 R /K [76 0 R 77 0 R]>>
+< 76: <</Type /StructElem /S /Lbl /P 75 0 R /Pg 5 0 R /K 5>>
+< 77: <</Type /StructElem /S /LBody /P 75 0 R /Pg 5 0 R /K 6>>
+< 78: <</Type /StructElem /S /LI /P 71 0 R /Pg 5 0 R /K [79 0 R 80 0 R]>>
+< 79: <</Type /StructElem /S /Lbl /P 78 0 R /Pg 5 0 R /K 7>>
+< 80: <</Type /StructElem /S /LBody /P 78 0 R /Pg 5 0 R /K 8>>
+< 81: <</Type /StructElem /S /Table /P 13 0 R /Pg 5 0 R /K [82 0 R 86 0 R 90 0 R]>>
+< 82: <</Type /StructElem /S /TR /P 81 0 R /Pg 5 0 R /K [83 0 R 84 0 R 85 0 R]>>
+< 83: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 82 0 R /Pg 5 0 R /K 9>>
+< 84: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 82 0 R /Pg 5 0 R /K 10>>
+< 85: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 82 0 R /Pg 5 0 R /K 11>>
+< 86: <</Type /StructElem /S /TR /P 81 0 R /Pg 5 0 R /K [87 0 R 88 0 R 89 0 R]>>
+< 87: <</Type /StructElem /S /TD /P 86 0 R /Pg 5 0 R /K 12>>
+< 88: <</Type /StructElem /S /TD /P 86 0 R /Pg 5 0 R /K 13>>
+< 89: <</Type /StructElem /S /TD /P 86 0 R /Pg 5 0 R /K 14>>
+< 90: <</Type /StructElem /S /TR /P 81 0 R /Pg 5 0 R /K [91 0 R 92 0 R 93 0 R]>>
+< 91: <</Type /StructElem /S /TD /P 90 0 R /Pg 5 0 R /K 15>>
+< 92: <</Type /StructElem /S /TD /P 90 0 R /Pg 5 0 R /K 16>>
+< 93: <</Type /StructElem /S /TD /P 90 0 R /Pg 5 0 R /K 17>>
+< 94: <</Type /StructElem /S /Figure /P 13 0 R /Pg 5 0 R /K 18>>
+< 95: <</Nums [0 [14 0 R 15 0 R 16 0 R 19 0 R 20 0 R 22 0 R 23 0 R 25 0 R 26 0 R 29 0 R 30 0 R 31 0 R 33 0 R 34 0 R 35 0 R 37 0 R 38 0 R 39 0 R 40 0 R] 1 [41 0 R 42 0 R 43 0 R 46 0 R 47 0 R 49 0 R 50 0 R 52 0 R 53 0 R 56 0 R 57 0 R 58 0 R 60 0 R 61 0 R 62 0 R 64 0 R 65 0 R 66 0 R 67 0 R] 2 [68 0 R 69 0 R 70 0 R 73 0 R 74 0 R 76 0 R 77 0 R 79 0 R 80 0 R 83 0 R 84 0 R 85 0 R 87 0 R 88 0 R 89 0 R 91 0 R 92 0 R 93 0 R 94 0 R]]>>
+< Document page=-1 ref=13 title=~ alt=~ lang=~ actual=~ id=~
+<   H1 page=0 ref=14 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=0 stream=-1
+<   P page=0 ref=15 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=1 stream=-1
+<   P page=0 ref=16 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=2 stream=-1
+<   L page=0 ref=17 title=~ alt=~ lang=~ actual=~ id=~
+<     LI page=0 ref=18 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=0 ref=19 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=3 stream=-1
+<       LBody page=0 ref=20 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=4 stream=-1
+<     LI page=0 ref=21 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=0 ref=22 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=5 stream=-1
+<       LBody page=0 ref=23 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=6 stream=-1
+<     LI page=0 ref=24 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=0 ref=25 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=7 stream=-1
+<       LBody page=0 ref=26 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=8 stream=-1
+<   Table page=0 ref=27 title=~ alt=~ lang=~ actual=~ id=~
+<     TR page=0 ref=28 title=~ alt=~ lang=~ actual=~ id=~
+<       TH page=0 ref=29 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=9 stream=-1
+<       TH page=0 ref=30 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=10 stream=-1
+<       TH page=0 ref=31 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=11 stream=-1
+<     TR page=0 ref=32 title=~ alt=~ lang=~ actual=~ id=~
+<       TD page=0 ref=33 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=12 stream=-1
+<       TD page=0 ref=34 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=13 stream=-1
+<       TD page=0 ref=35 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=14 stream=-1
+<     TR page=0 ref=36 title=~ alt=~ lang=~ actual=~ id=~
+<       TD page=0 ref=37 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=15 stream=-1
+<       TD page=0 ref=38 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=16 stream=-1
+<       TD page=0 ref=39 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=17 stream=-1
+<   Figure page=0 ref=40 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=18 stream=-1
+<   H1 page=1 ref=41 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=1 mcid=0 stream=-1
+<   P page=1 ref=42 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=1 mcid=1 stream=-1
+<   P page=1 ref=43 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=1 mcid=2 stream=-1
+<   L page=1 ref=44 title=~ alt=~ lang=~ actual=~ id=~
+<     LI page=1 ref=45 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=1 ref=46 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=3 stream=-1
+<       LBody page=1 ref=47 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=4 stream=-1
+<     LI page=1 ref=48 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=1 ref=49 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=5 stream=-1
+<       LBody page=1 ref=50 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=6 stream=-1
+<     LI page=1 ref=51 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=1 ref=52 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=7 stream=-1
+<       LBody page=1 ref=53 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=8 stream=-1
+<   Table page=1 ref=54 title=~ alt=~ lang=~ actual=~ id=~
+<     TR page=1 ref=55 title=~ alt=~ lang=~ actual=~ id=~
+<       TH page=1 ref=56 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=9 stream=-1
+<       TH page=1 ref=57 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=10 stream=-1
+<       TH page=1 ref=58 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=11 stream=-1
+<     TR page=1 ref=59 title=~ alt=~ lang=~ actual=~ id=~
+<       TD page=1 ref=60 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=12 stream=-1
+<       TD page=1 ref=61 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=13 stream=-1
+<       TD page=1 ref=62 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=14 stream=-1
+<     TR page=1 ref=63 title=~ alt=~ lang=~ actual=~ id=~
+<       TD page=1 ref=64 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=15 stream=-1
+<       TD page=1 ref=65 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=16 stream=-1
+<       TD page=1 ref=66 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=17 stream=-1
+<   Figure page=1 ref=67 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=1 mcid=18 stream=-1
+<   H1 page=2 ref=68 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=2 mcid=0 stream=-1
+<   P page=2 ref=69 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=2 mcid=1 stream=-1
+<   P page=2 ref=70 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=2 mcid=2 stream=-1
+<   L page=2 ref=71 title=~ alt=~ lang=~ actual=~ id=~
+<     LI page=2 ref=72 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=2 ref=73 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=3 stream=-1
+<       LBody page=2 ref=74 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=4 stream=-1
+<     LI page=2 ref=75 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=2 ref=76 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=5 stream=-1
+<       LBody page=2 ref=77 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=6 stream=-1
+<     LI page=2 ref=78 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=2 ref=79 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=7 stream=-1
+<       LBody page=2 ref=80 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=8 stream=-1
+<   Table page=2 ref=81 title=~ alt=~ lang=~ actual=~ id=~
+<     TR page=2 ref=82 title=~ alt=~ lang=~ actual=~ id=~
+<       TH page=2 ref=83 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=9 stream=-1
+<       TH page=2 ref=84 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=10 stream=-1
+<       TH page=2 ref=85 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=11 stream=-1
+<     TR page=2 ref=86 title=~ alt=~ lang=~ actual=~ id=~
+<       TD page=2 ref=87 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=12 stream=-1
+<       TD page=2 ref=88 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=13 stream=-1
+<       TD page=2 ref=89 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=14 stream=-1
+<     TR page=2 ref=90 title=~ alt=~ lang=~ actual=~ id=~
+<       TD page=2 ref=91 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=15 stream=-1
+<       TD page=2 ref=92 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=16 stream=-1
+<       TD page=2 ref=93 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=2 mcid=17 stream=-1
+<   Figure page=2 ref=94 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=2 mcid=18 stream=-1
+< parent 0 [14 0 R 15 0 R 16 0 R 19 0 R 20 0 R 22 0 R 23 0 R 25 0 R 26 0 R 29 0 R 30 0 R 31 0 R 33 0 R 34 0 R 35 0 R 37 0 R 38 0 R 39 0 R 40 0 R]
+< parent 1 [41 0 R 42 0 R 43 0 R 46 0 R 47 0 R 49 0 R 50 0 R 52 0 R 53 0 R 56 0 R 57 0 R 58 0 R 60 0 R 61 0 R 62 0 R 64 0 R 65 0 R 66 0 R 67 0 R]
+< parent 2 [68 0 R 69 0 R 70 0 R 73 0 R 74 0 R 76 0 R 77 0 R 79 0 R 80 0 R 83 0 R 84 0 R 85 0 R 87 0 R 88 0 R 89 0 R 91 0 R 92 0 R 93 0 R 94 0 R]
+< truncated false
+< order # Introduction\nThis is the first paragraph of page 1. It has enough words to fill two lines of the body text.\nA second paragraph follows after a clear gap.\n\u2022 First item\n\u2022 Second item\n\u2022 Third item\nName\tCount\tPrice\nApples\t12\t3.50\nPears\t7\t4.25\n[Figure]\n# Introduction\nThis is the first paragraph of page 2. It has enough words to fill two lines of the body text.\nA second paragraph follows after a clear gap.\n\u2022 First item\n\u2022 Second item\n\u2022 Third item\nName\tCount\tPrice\nApples\t12\t3.50\nPears\t7\t4.25\n[Figure]\n# Introduction\nThis is the first paragraph of page 3. It has enough words to fill two lines of the body text.\nA second paragraph follows after a clear gap.\n\u2022 First item\n\u2022 Second item\n\u2022 Third item\nName\tCount\tPrice\nApples\t12\t3.50\nPears\t7\t4.25\n[Figure]
+> tag rotated 2
+< result false pages=2 skipped=0 headings=2 paragraphs=8 lists=2 tables=2 figures=2 artifacts=2 [0:40,1:69]
+< trailer <</Size 10 /Root 1 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 10 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+< 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2 /MediaBox [0 0 612 792]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 5 0 R /Resources <</Font <</F1 7 0 R /F2 8 0 R>> /XObject <</Im1 9 0 R>>>> /Rotate 90 /Tabs /S /StructParents 0>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 6 0 R /Resources <</Font <</F1 7 0 R /F2 8 0 R>> /XObject <</Im1 9 0 R>>>> /Rotate 90 /Tabs /S /StructParents 1>>
+< 5: stream <</Filter /FlateDecode>> | q 0.8 g /Artifact BMC 72 745 468 1 re f EMC Q\nBT /F1 9 Tf 72 760 Td /P <</MCID 0>> BDC (ACME Quarterly Report) Tj EMC ET\nBT /F2 20 Tf 72 700 Td /H1 <</MCID 1>> BDC (Introduction) Tj EMC ET\nBT /F1 11 Tf 72 672 Td /P <</MCID 2>> BDC (This is the first paragraph of page 1. It has enough words) Tj 0 -14 Td (to fill two lines of the body text.) Tj EMC ET\nBT /F1 11 Tf 72 620 Td /P <</MCID 3>> BDC (A second paragraph follows after a clear gap.) Tj EMC ET\nBT /F1 11 Tf 72 580 Td /Lbl <</MCID 4>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 5>> BDC (First item) Tj EMC ET\nBT /F1 11 Tf 72 564 Td /Lbl <</MCID 6>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 7>> BDC (Second item) Tj EMC ET\nBT /F1 11 Tf 72 548 Td /Lbl <</MCID 8>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 9>> BDC (Third item) Tj EMC ET\nBT /F2 11 Tf 72 500 Td /TH <</MCID 10>> BDC (Name) Tj EMC ET\nBT /F2 11 Tf 222 500 Td /TH <</MCID 11>> BDC (Count) Tj EMC ET\nBT /F2 11 Tf 372 500 Td /TH <</MCID 12>> BDC (Price) Tj EMC ET\nBT /F1 11 Tf 72 484 Td /TD <</MCID 13>> BDC (Apples) Tj EMC ET\nBT /F1 11 Tf 222 484 Td /TD <</MCID 14>> BDC (12) Tj EMC ET\nBT /F1 11 Tf 372 484 Td /TD <</MCID 15>> BDC (3.50) Tj EMC ET\nBT /F1 11 Tf 72 468 Td /TD <</MCID 16>> BDC (Pears) Tj EMC ET\nBT /F1 11 Tf 222 468 Td /TD <</MCID 17>> BDC (7) Tj EMC ET\nBT /F1 11 Tf 372 468 Td /TD <</MCID 18>> BDC (4.25) Tj EMC ET\nq 100 0 0 100 72 340 cm /Figure <</MCID 19>> BDC /Im1 Do EMC Q\nBT /F1 9 Tf 290 30 Td /P <</MCID 20>> BDC (Page 1) Tj EMC ET\n
+< 6: stream <</Filter /FlateDecode>> | q 0.8 g /Artifact BMC 72 745 468 1 re f EMC Q\nBT /F1 9 Tf 72 760 Td /P <</MCID 0>> BDC (ACME Quarterly Report) Tj EMC ET\nBT /F2 20 Tf 72 700 Td /H1 <</MCID 1>> BDC (Introduction) Tj EMC ET\nBT /F1 11 Tf 72 672 Td /P <</MCID 2>> BDC (This is the first paragraph of page 2. It has enough words) Tj 0 -14 Td (to fill two lines of the body text.) Tj EMC ET\nBT /F1 11 Tf 72 620 Td /P <</MCID 3>> BDC (A second paragraph follows after a clear gap.) Tj EMC ET\nBT /F1 11 Tf 72 580 Td /Lbl <</MCID 4>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 5>> BDC (First item) Tj EMC ET\nBT /F1 11 Tf 72 564 Td /Lbl <</MCID 6>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 7>> BDC (Second item) Tj EMC ET\nBT /F1 11 Tf 72 548 Td /Lbl <</MCID 8>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 9>> BDC (Third item) Tj EMC ET\nBT /F2 11 Tf 72 500 Td /TH <</MCID 10>> BDC (Name) Tj EMC ET\nBT /F2 11 Tf 222 500 Td /TH <</MCID 11>> BDC (Count) Tj EMC ET\nBT /F2 11 Tf 372 500 Td /TH <</MCID 12>> BDC (Price) Tj EMC ET\nBT /F1 11 Tf 72 484 Td /TD <</MCID 13>> BDC (Apples) Tj EMC ET\nBT /F1 11 Tf 222 484 Td /TD <</MCID 14>> BDC (12) Tj EMC ET\nBT /F1 11 Tf 372 484 Td /TD <</MCID 15>> BDC (3.50) Tj EMC ET\nBT /F1 11 Tf 72 468 Td /TD <</MCID 16>> BDC (Pears) Tj EMC ET\nBT /F1 11 Tf 222 468 Td /TD <</MCID 17>> BDC (7) Tj EMC ET\nBT /F1 11 Tf 372 468 Td /TD <</MCID 18>> BDC (4.25) Tj EMC ET\nq 100 0 0 100 72 340 cm /Figure <</MCID 19>> BDC /Im1 Do EMC Q\nBT /F1 9 Tf 290 30 Td /P <</MCID 20>> BDC (Page 2) Tj EMC ET\n
+< 7: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 8: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 9: stream <</Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0000P\u00a0\u00ff
+< 10: <</Type /StructTreeRoot /K 11 0 R /ParentTree 70 0 R /ParentTreeNextKey 2>>
+< 11: <</Type /StructElem /S /Document /P 10 0 R /K [12 0 R 13 0 R 14 0 R 15 0 R 16 0 R 26 0 R 39 0 R 40 0 R 41 0 R 42 0 R 43 0 R 44 0 R 45 0 R 55 0 R 68 0 R 69 0 R]>>
+< 12: <</Type /StructElem /S /P /P 11 0 R /Pg 3 0 R /K 0>>
+< 13: <</Type /StructElem /S /H1 /P 11 0 R /Pg 3 0 R /K 1>>
+< 14: <</Type /StructElem /S /P /P 11 0 R /Pg 3 0 R /K 2>>
+< 15: <</Type /StructElem /S /P /P 11 0 R /Pg 3 0 R /K 3>>
+< 16: <</Type /StructElem /S /L /P 11 0 R /Pg 3 0 R /K [17 0 R 20 0 R 23 0 R]>>
+< 17: <</Type /StructElem /S /LI /P 16 0 R /Pg 3 0 R /K [18 0 R 19 0 R]>>
+< 18: <</Type /StructElem /S /Lbl /P 17 0 R /Pg 3 0 R /K 4>>
+< 19: <</Type /StructElem /S /LBody /P 17 0 R /Pg 3 0 R /K 5>>
+< 20: <</Type /StructElem /S /LI /P 16 0 R /Pg 3 0 R /K [21 0 R 22 0 R]>>
+< 21: <</Type /StructElem /S /Lbl /P 20 0 R /Pg 3 0 R /K 6>>
+< 22: <</Type /StructElem /S /LBody /P 20 0 R /Pg 3 0 R /K 7>>
+< 23: <</Type /StructElem /S /LI /P 16 0 R /Pg 3 0 R /K [24 0 R 25 0 R]>>
+< 24: <</Type /StructElem /S /Lbl /P 23 0 R /Pg 3 0 R /K 8>>
+< 25: <</Type /StructElem /S /LBody /P 23 0 R /Pg 3 0 R /K 9>>
+< 26: <</Type /StructElem /S /Table /P 11 0 R /Pg 3 0 R /K [27 0 R 31 0 R 35 0 R]>>
+< 27: <</Type /StructElem /S /TR /P 26 0 R /Pg 3 0 R /K [28 0 R 29 0 R 30 0 R]>>
+< 28: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 27 0 R /Pg 3 0 R /K 10>>
+< 29: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 27 0 R /Pg 3 0 R /K 11>>
+< 30: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 27 0 R /Pg 3 0 R /K 12>>
+< 31: <</Type /StructElem /S /TR /P 26 0 R /Pg 3 0 R /K [32 0 R 33 0 R 34 0 R]>>
+< 32: <</Type /StructElem /S /TD /P 31 0 R /Pg 3 0 R /K 13>>
+< 33: <</Type /StructElem /S /TD /P 31 0 R /Pg 3 0 R /K 14>>
+< 34: <</Type /StructElem /S /TD /P 31 0 R /Pg 3 0 R /K 15>>
+< 35: <</Type /StructElem /S /TR /P 26 0 R /Pg 3 0 R /K [36 0 R 37 0 R 38 0 R]>>
+< 36: <</Type /StructElem /S /TD /P 35 0 R /Pg 3 0 R /K 16>>
+< 37: <</Type /StructElem /S /TD /P 35 0 R /Pg 3 0 R /K 17>>
+< 38: <</Type /StructElem /S /TD /P 35 0 R /Pg 3 0 R /K 18>>
+< 39: <</Type /StructElem /S /P /P 11 0 R /Pg 3 0 R /K 20>>
+< 40: <</Type /StructElem /S /Figure /P 11 0 R /Pg 3 0 R /K 19>>
+< 41: <</Type /StructElem /S /P /P 11 0 R /Pg 4 0 R /K 0>>
+< 42: <</Type /StructElem /S /H1 /P 11 0 R /Pg 4 0 R /K 1>>
+< 43: <</Type /StructElem /S /P /P 11 0 R /Pg 4 0 R /K 2>>
+< 44: <</Type /StructElem /S /P /P 11 0 R /Pg 4 0 R /K 3>>
+< 45: <</Type /StructElem /S /L /P 11 0 R /Pg 4 0 R /K [46 0 R 49 0 R 52 0 R]>>
+< 46: <</Type /StructElem /S /LI /P 45 0 R /Pg 4 0 R /K [47 0 R 48 0 R]>>
+< 47: <</Type /StructElem /S /Lbl /P 46 0 R /Pg 4 0 R /K 4>>
+< 48: <</Type /StructElem /S /LBody /P 46 0 R /Pg 4 0 R /K 5>>
+< 49: <</Type /StructElem /S /LI /P 45 0 R /Pg 4 0 R /K [50 0 R 51 0 R]>>
+< 50: <</Type /StructElem /S /Lbl /P 49 0 R /Pg 4 0 R /K 6>>
+< 51: <</Type /StructElem /S /LBody /P 49 0 R /Pg 4 0 R /K 7>>
+< 52: <</Type /StructElem /S /LI /P 45 0 R /Pg 4 0 R /K [53 0 R 54 0 R]>>
+< 53: <</Type /StructElem /S /Lbl /P 52 0 R /Pg 4 0 R /K 8>>
+< 54: <</Type /StructElem /S /LBody /P 52 0 R /Pg 4 0 R /K 9>>
+< 55: <</Type /StructElem /S /Table /P 11 0 R /Pg 4 0 R /K [56 0 R 60 0 R 64 0 R]>>
+< 56: <</Type /StructElem /S /TR /P 55 0 R /Pg 4 0 R /K [57 0 R 58 0 R 59 0 R]>>
+< 57: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 56 0 R /Pg 4 0 R /K 10>>
+< 58: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 56 0 R /Pg 4 0 R /K 11>>
+< 59: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 56 0 R /Pg 4 0 R /K 12>>
+< 60: <</Type /StructElem /S /TR /P 55 0 R /Pg 4 0 R /K [61 0 R 62 0 R 63 0 R]>>
+< 61: <</Type /StructElem /S /TD /P 60 0 R /Pg 4 0 R /K 13>>
+< 62: <</Type /StructElem /S /TD /P 60 0 R /Pg 4 0 R /K 14>>
+< 63: <</Type /StructElem /S /TD /P 60 0 R /Pg 4 0 R /K 15>>
+< 64: <</Type /StructElem /S /TR /P 55 0 R /Pg 4 0 R /K [65 0 R 66 0 R 67 0 R]>>
+< 65: <</Type /StructElem /S /TD /P 64 0 R /Pg 4 0 R /K 16>>
+< 66: <</Type /StructElem /S /TD /P 64 0 R /Pg 4 0 R /K 17>>
+< 67: <</Type /StructElem /S /TD /P 64 0 R /Pg 4 0 R /K 18>>
+< 68: <</Type /StructElem /S /P /P 11 0 R /Pg 4 0 R /K 20>>
+< 69: <</Type /StructElem /S /Figure /P 11 0 R /Pg 4 0 R /K 19>>
+< 70: <</Nums [0 [12 0 R 13 0 R 14 0 R 15 0 R 18 0 R 19 0 R 21 0 R 22 0 R 24 0 R 25 0 R 28 0 R 29 0 R 30 0 R 32 0 R 33 0 R 34 0 R 36 0 R 37 0 R 38 0 R 40 0 R 39 0 R] 1 [41 0 R 42 0 R 43 0 R 44 0 R 47 0 R 48 0 R 50 0 R 51 0 R 53 0 R 54 0 R 57 0 R 58 0 R 59 0 R 61 0 R 62 0 R 63 0 R 65 0 R 66 0 R 67 0 R 69 0 R 68 0 R]]>>
+< Document page=-1 ref=11 title=~ alt=~ lang=~ actual=~ id=~
+<   P page=0 ref=12 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=0 stream=-1
+<   H1 page=0 ref=13 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=1 stream=-1
+<   P page=0 ref=14 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=2 stream=-1
+<   P page=0 ref=15 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=3 stream=-1
+<   L page=0 ref=16 title=~ alt=~ lang=~ actual=~ id=~
+<     LI page=0 ref=17 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=0 ref=18 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=4 stream=-1
+<       LBody page=0 ref=19 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=5 stream=-1
+<     LI page=0 ref=20 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=0 ref=21 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=6 stream=-1
+<       LBody page=0 ref=22 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=7 stream=-1
+<     LI page=0 ref=23 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=0 ref=24 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=8 stream=-1
+<       LBody page=0 ref=25 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=9 stream=-1
+<   Table page=0 ref=26 title=~ alt=~ lang=~ actual=~ id=~
+<     TR page=0 ref=27 title=~ alt=~ lang=~ actual=~ id=~
+<       TH page=0 ref=28 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=10 stream=-1
+<       TH page=0 ref=29 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=11 stream=-1
+<       TH page=0 ref=30 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=12 stream=-1
+<     TR page=0 ref=31 title=~ alt=~ lang=~ actual=~ id=~
+<       TD page=0 ref=32 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=13 stream=-1
+<       TD page=0 ref=33 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=14 stream=-1
+<       TD page=0 ref=34 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=15 stream=-1
+<     TR page=0 ref=35 title=~ alt=~ lang=~ actual=~ id=~
+<       TD page=0 ref=36 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=16 stream=-1
+<       TD page=0 ref=37 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=17 stream=-1
+<       TD page=0 ref=38 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=18 stream=-1
+<   P page=0 ref=39 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=20 stream=-1
+<   Figure page=0 ref=40 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=19 stream=-1
+<   P page=1 ref=41 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=1 mcid=0 stream=-1
+<   H1 page=1 ref=42 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=1 mcid=1 stream=-1
+<   P page=1 ref=43 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=1 mcid=2 stream=-1
+<   P page=1 ref=44 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=1 mcid=3 stream=-1
+<   L page=1 ref=45 title=~ alt=~ lang=~ actual=~ id=~
+<     LI page=1 ref=46 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=1 ref=47 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=4 stream=-1
+<       LBody page=1 ref=48 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=5 stream=-1
+<     LI page=1 ref=49 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=1 ref=50 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=6 stream=-1
+<       LBody page=1 ref=51 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=7 stream=-1
+<     LI page=1 ref=52 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=1 ref=53 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=8 stream=-1
+<       LBody page=1 ref=54 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=9 stream=-1
+<   Table page=1 ref=55 title=~ alt=~ lang=~ actual=~ id=~
+<     TR page=1 ref=56 title=~ alt=~ lang=~ actual=~ id=~
+<       TH page=1 ref=57 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=10 stream=-1
+<       TH page=1 ref=58 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=11 stream=-1
+<       TH page=1 ref=59 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=12 stream=-1
+<     TR page=1 ref=60 title=~ alt=~ lang=~ actual=~ id=~
+<       TD page=1 ref=61 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=13 stream=-1
+<       TD page=1 ref=62 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=14 stream=-1
+<       TD page=1 ref=63 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=15 stream=-1
+<     TR page=1 ref=64 title=~ alt=~ lang=~ actual=~ id=~
+<       TD page=1 ref=65 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=16 stream=-1
+<       TD page=1 ref=66 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=17 stream=-1
+<       TD page=1 ref=67 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=1 mcid=18 stream=-1
+<   P page=1 ref=68 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=1 mcid=20 stream=-1
+<   Figure page=1 ref=69 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=1 mcid=19 stream=-1
+< parent 0 [12 0 R 13 0 R 14 0 R 15 0 R 18 0 R 19 0 R 21 0 R 22 0 R 24 0 R 25 0 R 28 0 R 29 0 R 30 0 R 32 0 R 33 0 R 34 0 R 36 0 R 37 0 R 38 0 R 40 0 R 39 0 R]
+< parent 1 [41 0 R 42 0 R 43 0 R 44 0 R 47 0 R 48 0 R 50 0 R 51 0 R 53 0 R 54 0 R 57 0 R 58 0 R 59 0 R 61 0 R 62 0 R 63 0 R 65 0 R 66 0 R 67 0 R 69 0 R 68 0 R]
+< truncated false
+< order ACME Quarterly Report\n# Introduction\nThis is the first paragraph of page 1. It has enough words to fill two lines of the body text.\nA second paragraph follows after a clear gap.\n\u2022 First item\n\u2022 Second item\n\u2022 Third item\nName\tCount\tPrice\nApples\t12\t3.50\nPears\t7\t4.25\nPage 1\n[Figure]\nACME Quarterly Report\n# Introduction\nThis is the first paragraph of page 2. It has enough words to fill two lines of the body text.\nA second paragraph follows after a clear gap.\n\u2022 First item\n\u2022 Second item\n\u2022 Third item\nName\tCount\tPrice\nApples\t12\t3.50\nPears\t7\t4.25\nPage 2\n[Figure]
+> tag page BT /F1 11 Tf 72 700 Td (1. Open the file) Tj ET\nBT /F1 11 Tf 72 686 Td (2. Choose a name) Tj ET\nBT /F1 11 Tf 72 672 Td (3. Save it) Tj ET\nBT /F1 11 Tf 72 600 Td (Plain text that is not a list at all, only a sentence.) Tj ET\n
+< result false pages=1 skipped=0 headings=0 paragraphs=1 lists=1 tables=0 figures=0 artifacts=0 []
+< trailer <</Size 8 /Root 1 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 8 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+< 2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 612 792]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <</Font <</F1 5 0 R /F2 6 0 R>> /XObject <</Im1 7 0 R>>>> /Tabs /S /StructParents 0>>
+< 4: stream <</Filter /FlateDecode>> | BT /F1 11 Tf 72 700 Td /LBody <</MCID 0>> BDC (1. Open the file) Tj EMC ET\nBT /F1 11 Tf 72 686 Td /LBody <</MCID 1>> BDC (2. Choose a name) Tj EMC ET\nBT /F1 11 Tf 72 672 Td /LBody <</MCID 2>> BDC (3. Save it) Tj EMC ET\nBT /F1 11 Tf 72 600 Td /P <</MCID 3>> BDC (Plain text that is not a list at all, only a sentence.) Tj EMC ET\n
+< 5: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 6: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 7: stream <</Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0000P\u00a0\u00ff
+< 8: <</Type /StructTreeRoot /K 9 0 R /ParentTree 18 0 R /ParentTreeNextKey 1>>
+< 9: <</Type /StructElem /S /Document /P 8 0 R /K [10 0 R 17 0 R]>>
+< 10: <</Type /StructElem /S /L /P 9 0 R /Pg 3 0 R /K [11 0 R 13 0 R 15 0 R]>>
+< 11: <</Type /StructElem /S /LI /P 10 0 R /Pg 3 0 R /K 12 0 R>>
+< 12: <</Type /StructElem /S /LBody /P 11 0 R /Pg 3 0 R /K 0>>
+< 13: <</Type /StructElem /S /LI /P 10 0 R /Pg 3 0 R /K 14 0 R>>
+< 14: <</Type /StructElem /S /LBody /P 13 0 R /Pg 3 0 R /K 1>>
+< 15: <</Type /StructElem /S /LI /P 10 0 R /Pg 3 0 R /K 16 0 R>>
+< 16: <</Type /StructElem /S /LBody /P 15 0 R /Pg 3 0 R /K 2>>
+< 17: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 3>>
+< 18: <</Nums [0 [12 0 R 14 0 R 16 0 R 17 0 R]]>>
+< Document page=-1 ref=9 title=~ alt=~ lang=~ actual=~ id=~
+<   L page=0 ref=10 title=~ alt=~ lang=~ actual=~ id=~
+<     LI page=0 ref=11 title=~ alt=~ lang=~ actual=~ id=~
+<       LBody page=0 ref=12 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=0 stream=-1
+<     LI page=0 ref=13 title=~ alt=~ lang=~ actual=~ id=~
+<       LBody page=0 ref=14 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=1 stream=-1
+<     LI page=0 ref=15 title=~ alt=~ lang=~ actual=~ id=~
+<       LBody page=0 ref=16 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=2 stream=-1
+<   P page=0 ref=17 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=3 stream=-1
+< parent 0 [12 0 R 14 0 R 16 0 R 17 0 R]
+< truncated false
+< order 1. Open the file\n2. Choose a name\n3. Save it\nPlain text that is not a list at all, only a sentence.
+> tag page BT /F1 11 Tf 72 700 Td (1.) Tj 14 0 Td (Open the file) Tj ET BT /F1 11 Tf 72 686 Td (2.) Tj 14 0 Td (Choose a name) Tj ET
+< result false pages=1 skipped=0 headings=0 paragraphs=0 lists=1 tables=0 figures=0 artifacts=0 []
+< trailer <</Size 8 /Root 1 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 8 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+< 2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 612 792]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <</Font <</F1 5 0 R /F2 6 0 R>> /XObject <</Im1 7 0 R>>>> /Tabs /S /StructParents 0>>
+< 4: stream <</Filter /FlateDecode>> | BT /F1 11 Tf 72 700 Td /Lbl <</MCID 0>> BDC (1.) Tj EMC 14 0 Td /LBody <</MCID 1>> BDC (Open the file) Tj EMC ET BT /F1 11 Tf 72 686 Td /Lbl <</MCID 2>> BDC (2.) Tj EMC 14 0 Td /LBody <</MCID 3>> BDC (Choose a name) Tj EMC ET
+< 5: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 6: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 7: stream <</Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0000P\u00a0\u00ff
+< 8: <</Type /StructTreeRoot /K 9 0 R /ParentTree 17 0 R /ParentTreeNextKey 1>>
+< 9: <</Type /StructElem /S /Document /P 8 0 R /K 10 0 R>>
+< 10: <</Type /StructElem /S /L /P 9 0 R /Pg 3 0 R /K [11 0 R 14 0 R]>>
+< 11: <</Type /StructElem /S /LI /P 10 0 R /Pg 3 0 R /K [12 0 R 13 0 R]>>
+< 12: <</Type /StructElem /S /Lbl /P 11 0 R /Pg 3 0 R /K 0>>
+< 13: <</Type /StructElem /S /LBody /P 11 0 R /Pg 3 0 R /K 1>>
+< 14: <</Type /StructElem /S /LI /P 10 0 R /Pg 3 0 R /K [15 0 R 16 0 R]>>
+< 15: <</Type /StructElem /S /Lbl /P 14 0 R /Pg 3 0 R /K 2>>
+< 16: <</Type /StructElem /S /LBody /P 14 0 R /Pg 3 0 R /K 3>>
+< 17: <</Nums [0 [12 0 R 13 0 R 15 0 R 16 0 R]]>>
+< Document page=-1 ref=9 title=~ alt=~ lang=~ actual=~ id=~
+<   L page=0 ref=10 title=~ alt=~ lang=~ actual=~ id=~
+<     LI page=0 ref=11 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=0 ref=12 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=0 stream=-1
+<       LBody page=0 ref=13 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=1 stream=-1
+<     LI page=0 ref=14 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=0 ref=15 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=2 stream=-1
+<       LBody page=0 ref=16 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=3 stream=-1
+< parent 0 [12 0 R 13 0 R 15 0 R 16 0 R]
+< truncated false
+< order 1. Open the file\n2. Choose a name
+> tag page BT /F2 24 Tf 72 720 Td (Chapter One) Tj ET\nBT /F2 16 Tf 72 690 Td (Section A) Tj ET\nBT /F1 11 Tf 72 660 Td (Body text goes here and runs long enough to be the body.) Tj ET\nBT /F1 11 Tf 72 640 Td (More body text follows on the next line of the page.) Tj ET\nBT /F2 11 Tf 72 600 Td (Detail) Tj ET\nBT /F1 11 Tf 72 580 Td (Body text again, a sentence that is not bold at all.) Tj ET\n
+< result false pages=1 skipped=0 headings=3 paragraphs=3 lists=0 tables=0 figures=0 artifacts=0 []
+< trailer <</Size 8 /Root 1 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 8 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+< 2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 612 792]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <</Font <</F1 5 0 R /F2 6 0 R>> /XObject <</Im1 7 0 R>>>> /Tabs /S /StructParents 0>>
+< 4: stream <</Filter /FlateDecode>> | BT /F2 24 Tf 72 720 Td /H1 <</MCID 0>> BDC (Chapter One) Tj EMC ET\nBT /F2 16 Tf 72 690 Td /H2 <</MCID 1>> BDC (Section A) Tj EMC ET\nBT /F1 11 Tf 72 660 Td /P <</MCID 2>> BDC (Body text goes here and runs long enough to be the body.) Tj EMC ET\nBT /F1 11 Tf 72 640 Td /P <</MCID 3>> BDC (More body text follows on the next line of the page.) Tj EMC ET\nBT /F2 11 Tf 72 600 Td /H3 <</MCID 4>> BDC (Detail) Tj EMC ET\nBT /F1 11 Tf 72 580 Td /P <</MCID 5>> BDC (Body text again, a sentence that is not bold at all.) Tj EMC ET\n
+< 5: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 6: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 7: stream <</Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0000P\u00a0\u00ff
+< 8: <</Type /StructTreeRoot /K 9 0 R /ParentTree 16 0 R /ParentTreeNextKey 1>>
+< 9: <</Type /StructElem /S /Document /P 8 0 R /K [10 0 R 11 0 R 12 0 R 13 0 R 14 0 R 15 0 R]>>
+< 10: <</Type /StructElem /S /H1 /P 9 0 R /Pg 3 0 R /K 0>>
+< 11: <</Type /StructElem /S /H2 /P 9 0 R /Pg 3 0 R /K 1>>
+< 12: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 2>>
+< 13: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 3>>
+< 14: <</Type /StructElem /S /H3 /P 9 0 R /Pg 3 0 R /K 4>>
+< 15: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 5>>
+< 16: <</Nums [0 [10 0 R 11 0 R 12 0 R 13 0 R 14 0 R 15 0 R]]>>
+< Document page=-1 ref=9 title=~ alt=~ lang=~ actual=~ id=~
+<   H1 page=0 ref=10 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=0 stream=-1
+<   H2 page=0 ref=11 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=1 stream=-1
+<   P page=0 ref=12 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=2 stream=-1
+<   P page=0 ref=13 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=3 stream=-1
+<   H3 page=0 ref=14 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=4 stream=-1
+<   P page=0 ref=15 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=5 stream=-1
+< parent 0 [10 0 R 11 0 R 12 0 R 13 0 R 14 0 R 15 0 R]
+< truncated false
+< order # Chapter One\n## Section A\nBody text goes here and runs long enough to be the body.\nMore body text follows on the next line of the page.\n### Detail\nBody text again, a sentence that is not bold at all.
+> tag page /Artifact BMC 0.5 g 0 0 612 20 re f EMC\n/OC /MC0 BDC BT /F1 11 Tf 72 700 Td (Layered text inside optional content) Tj ET EMC\n/Artifact <</Type /Pagination>> BDC BT /F1 11 Tf 72 760 Td (Stamped words) Tj ET EMC\nBT /F1 11 Tf 72 650 Td (Ordinary text of the page, a full sentence.) Tj ET\n
+< result false pages=1 skipped=0 headings=0 paragraphs=2 lists=0 tables=0 figures=0 artifacts=0 []
+< trailer <</Size 8 /Root 1 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 8 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+< 2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 612 792]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <</Font <</F1 5 0 R /F2 6 0 R>> /XObject <</Im1 7 0 R>>>> /Tabs /S /StructParents 0>>
+< 4: stream <</Filter /FlateDecode>> | /Artifact BMC 0.5 g 0 0 612 20 re f EMC\n/OC /MC0 BDC BT /F1 11 Tf 72 700 Td /P <</MCID 0>> BDC (Layered text inside optional content) Tj EMC ET EMC\n/Artifact <</Type /Pagination>> BDC BT /F1 11 Tf 72 760 Td (Stamped words) Tj ET EMC\nBT /F1 11 Tf 72 650 Td /P <</MCID 1>> BDC (Ordinary text of the page, a full sentence.) Tj EMC ET\n
+< 5: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 6: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 7: stream <</Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0000P\u00a0\u00ff
+< 8: <</Type /StructTreeRoot /K 9 0 R /ParentTree 12 0 R /ParentTreeNextKey 1>>
+< 9: <</Type /StructElem /S /Document /P 8 0 R /K [10 0 R 11 0 R]>>
+< 10: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 0>>
+< 11: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 1>>
+< 12: <</Nums [0 [10 0 R 11 0 R]]>>
+< Document page=-1 ref=9 title=~ alt=~ lang=~ actual=~ id=~
+<   P page=0 ref=10 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=0 stream=-1
+<   P page=0 ref=11 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=1 stream=-1
+< parent 0 [10 0 R 11 0 R]
+< truncated false
+< order Layered text inside optional content\nOrdinary text of the page, a full sentence.
+> tag page /P <</MCID 0>> BDC BT /F1 11 Tf 72 700 Td (Old words) Tj ET EMC\nBT /F1 11 Tf 72 500 Td (New words) Tj ET\n
+< result false pages=1 skipped=0 headings=0 paragraphs=2 lists=0 tables=0 figures=0 artifacts=0 []
+< trailer <</Size 8 /Root 1 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 8 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+< 2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 612 792]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <</Font <</F1 5 0 R /F2 6 0 R>> /XObject <</Im1 7 0 R>>>> /Tabs /S /StructParents 0>>
+< 4: stream <</Filter /FlateDecode>> | /P <</MCID 0>> BDC BT /F1 11 Tf 72 700 Td /P <</MCID 1>> BDC (Old words) Tj EMC ET EMC\nBT /F1 11 Tf 72 500 Td /P <</MCID 2>> BDC (New words) Tj EMC ET\n
+< 5: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 6: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 7: stream <</Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0000P\u00a0\u00ff
+< 8: <</Type /StructTreeRoot /K 9 0 R /ParentTree 12 0 R /ParentTreeNextKey 1>>
+< 9: <</Type /StructElem /S /Document /P 8 0 R /K [10 0 R 11 0 R]>>
+< 10: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 1>>
+< 11: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 2>>
+< 12: <</Nums [0 [null 10 0 R 11 0 R]]>>
+< Document page=-1 ref=9 title=~ alt=~ lang=~ actual=~ id=~
+<   P page=0 ref=10 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=1 stream=-1
+<   P page=0 ref=11 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=2 stream=-1
+< parent 0 [null 10 0 R 11 0 R]
+< truncated false
+< order Old words\nNew words
+> tag page BT /F1 11 Tf 72 700 Td (Aa) Tj ET\nBT /F1 11 Tf 222 700 Td (Bb) Tj ET\nBT /F1 11 Tf 372 700 Td (Cc) Tj ET\nBT /F1 11 Tf 72 684 Td (Dd) Tj ET\nBT /F1 11 Tf 222 684 Td (Ee) Tj ET\nBT /F1 11 Tf 72 668 Td (Ff) Tj ET\nBT /F1 11 Tf 222 668 Td (Gg) Tj ET\nBT /F1 11 Tf 372 668 Td (Hh) Tj ET\n
+< result false pages=1 skipped=0 headings=0 paragraphs=3 lists=0 tables=0 figures=0 artifacts=0 []
+< trailer <</Size 8 /Root 1 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 8 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+< 2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 612 792]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <</Font <</F1 5 0 R /F2 6 0 R>> /XObject <</Im1 7 0 R>>>> /Tabs /S /StructParents 0>>
+< 4: stream <</Filter /FlateDecode>> | BT /F1 11 Tf 72 700 Td /P <</MCID 0>> BDC (Aa) Tj EMC ET\nBT /F1 11 Tf 222 700 Td /P <</MCID 1>> BDC (Bb) Tj EMC ET\nBT /F1 11 Tf 372 700 Td /P <</MCID 2>> BDC (Cc) Tj EMC ET\nBT /F1 11 Tf 72 684 Td /P <</MCID 3>> BDC (Dd) Tj EMC ET\nBT /F1 11 Tf 222 684 Td /P <</MCID 4>> BDC (Ee) Tj EMC ET\nBT /F1 11 Tf 72 668 Td /P <</MCID 5>> BDC (Ff) Tj EMC ET\nBT /F1 11 Tf 222 668 Td /P <</MCID 6>> BDC (Gg) Tj EMC ET\nBT /F1 11 Tf 372 668 Td /P <</MCID 7>> BDC (Hh) Tj EMC ET\n
+< 5: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 6: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 7: stream <</Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0000P\u00a0\u00ff
+< 8: <</Type /StructTreeRoot /K 9 0 R /ParentTree 13 0 R /ParentTreeNextKey 1>>
+< 9: <</Type /StructElem /S /Document /P 8 0 R /K [10 0 R 11 0 R 12 0 R]>>
+< 10: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K [0 1 2]>>
+< 11: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K [3 4]>>
+< 12: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K [5 6 7]>>
+< 13: <</Nums [0 [10 0 R 10 0 R 10 0 R 11 0 R 11 0 R 12 0 R 12 0 R 12 0 R]]>>
+< Document page=-1 ref=9 title=~ alt=~ lang=~ actual=~ id=~
+<   P page=0 ref=10 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=0 stream=-1
+<     content page=0 mcid=1 stream=-1
+<     content page=0 mcid=2 stream=-1
+<   P page=0 ref=11 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=3 stream=-1
+<     content page=0 mcid=4 stream=-1
+<   P page=0 ref=12 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=5 stream=-1
+<     content page=0 mcid=6 stream=-1
+<     content page=0 mcid=7 stream=-1
+< parent 0 [10 0 R 10 0 R 10 0 R 11 0 R 11 0 R 12 0 R 12 0 R 12 0 R]
+< truncated false
+< order Aa Bb Cc\nDd Ee\nFf Gg Hh
+> tag page 0.9 g 0 0 612 792 re f\n
+< result false pages=1 skipped=0 headings=0 paragraphs=0 lists=0 tables=0 figures=0 artifacts=1 []
+< trailer <</Size 8 /Root 1 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 8 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+< 2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 612 792]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <</Font <</F1 5 0 R /F2 6 0 R>> /XObject <</Im1 7 0 R>>>> /Tabs /S>>
+< 4: stream <</Filter /FlateDecode>> | 0.9 g /Artifact BMC 0 0 612 792 re f EMC\n
+< 5: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 6: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 7: stream <</Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0000P\u00a0\u00ff
+< 8: <</Type /StructTreeRoot /K 9 0 R /ParentTreeNextKey 0>>
+< 9: <</Type /StructElem /S /Document /P 8 0 R>>
+< Document page=-1 ref=9 title=~ alt=~ lang=~ actual=~ id=~
+< truncated false
+< order 
+> tag page
+< result false pages=1 skipped=0 headings=0 paragraphs=0 lists=0 tables=0 figures=0 artifacts=0 []
+< trailer <</Size 8 /Root 1 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 8 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+< 2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 612 792]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <</Font <</F1 5 0 R /F2 6 0 R>> /XObject <</Im1 7 0 R>>>> /Tabs /S>>
+< 4: stream <<>> | 
+< 5: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 6: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 7: stream <</Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0000P\u00a0\u00ff
+< 8: <</Type /StructTreeRoot /K 9 0 R /ParentTreeNextKey 0>>
+< 9: <</Type /StructElem /S /Document /P 8 0 R>>
+< Document page=-1 ref=9 title=~ alt=~ lang=~ actual=~ id=~
+< truncated false
+< order 
+> move tagged
+< trailer <</Size 14 /Root 1 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 8 0 R /MarkInfo <</Marked true>> /Lang (en-US)>>
+< 2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 612 792]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <</Font <</F1 5 0 R /F2 6 0 R>> /XObject <</Im1 7 0 R>>>> /StructParents 0 /Tabs /S>>
+< 4: stream <<>> | /H1 <</MCID 0>> BDC BT /F2 18 Tf 72 700 Td (Head) Tj ET EMC\n/P <</MCID 1>> BDC BT /F1 11 Tf 72 670 Td (Body text) Tj ET EMC\n/Figure <</MCID 2>> BDC q 50 0 0 50 72 600 cm /Im1 Do Q EMC\n
+< 5: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 6: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 7: stream <</Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0000P\u00a0\u00ff
+< 8: <</Type /StructTreeRoot /K 9 0 R /ParentTree 13 0 R /ParentTreeNextKey 1 /RoleMap <</Heading /H1 /Weird /Nope>> /ClassMap <</Fancy <</O /Layout>>>>>>
+< 9: <</Type /StructElem /S /Document /P 8 0 R /K [12 0 R 10 0 R 11 0 R]>>
+< 10: <</Type /StructElem /S /H1 /P 9 0 R /Pg 3 0 R /K 0 /T (Head) /Lang (tr) /A <</O /Layout /Placement /Block>> /C /Fancy>>
+< 11: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 1 /ActualText (Body text)>>
+< 12: <</Type /StructElem /S /Figure /P 9 0 R /Pg 3 0 R /K 2 /Alt (A picture)>>
+< 13: <</Nums [0 [10 0 R 11 0 R 12 0 R]]>>
+< Document page=-1 ref=9 title=~ alt=~ lang=~ actual=~ id=~
+<   Figure page=0 ref=12 title=~ alt=A picture lang=~ actual=~ id=~
+<     content page=0 mcid=2 stream=-1
+<   H1 page=0 ref=10 title=Head alt=~ lang=tr actual=~ id=~
+<     content page=0 mcid=0 stream=-1
+<   P page=0 ref=11 title=~ alt=~ lang=~ actual=Body text id=~
+<     content page=0 mcid=1 stream=-1
+< role Heading H1
+< role Weird Nope
+< class Fancy <</O /Layout>>
+< parent 0 [10 0 R 11 0 R 12 0 R]
+< truncated false
+> move report 1
+< trailer <</Size 8 /Root 1 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 8 0 R /MarkInfo <</Marked true>>>>
+< 2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 612 792]>>
+< 3: <</Type /Page /Parent 2 0 R /Contents 4 0 R /Resources <</Font <</F1 5 0 R /F2 6 0 R>> /XObject <</Im1 7 0 R>>>> /Tabs /S /StructParents 0>>
+< 4: stream <</Filter /FlateDecode>> | q 0.8 g /Artifact BMC 72 745 468 1 re f EMC Q\nBT /F1 9 Tf 72 760 Td /P <</MCID 0>> BDC (ACME Quarterly Report) Tj EMC ET\nBT /F2 20 Tf 72 700 Td /H1 <</MCID 1>> BDC (Introduction) Tj EMC ET\nBT /F1 11 Tf 72 672 Td /P <</MCID 2>> BDC (This is the first paragraph of page 1. It has enough words) Tj 0 -14 Td (to fill two lines of the body text.) Tj EMC ET\nBT /F1 11 Tf 72 620 Td /P <</MCID 3>> BDC (A second paragraph follows after a clear gap.) Tj EMC ET\nBT /F1 11 Tf 72 580 Td /Lbl <</MCID 4>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 5>> BDC (First item) Tj EMC ET\nBT /F1 11 Tf 72 564 Td /Lbl <</MCID 6>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 7>> BDC (Second item) Tj EMC ET\nBT /F1 11 Tf 72 548 Td /Lbl <</MCID 8>> BDC <95> Tj EMC 18 0 Td /LBody <</MCID 9>> BDC (Third item) Tj EMC ET\nBT /F2 11 Tf 72 500 Td /TH <</MCID 10>> BDC (Name) Tj EMC ET\nBT /F2 11 Tf 222 500 Td /TH <</MCID 11>> BDC (Count) Tj EMC ET\nBT /F2 11 Tf 372 500 Td /TH <</MCID 12>> BDC (Price) Tj EMC ET\nBT /F1 11 Tf 72 484 Td /TD <</MCID 13>> BDC (Apples) Tj EMC ET\nBT /F1 11 Tf 222 484 Td /TD <</MCID 14>> BDC (12) Tj EMC ET\nBT /F1 11 Tf 372 484 Td /TD <</MCID 15>> BDC (3.50) Tj EMC ET\nBT /F1 11 Tf 72 468 Td /TD <</MCID 16>> BDC (Pears) Tj EMC ET\nBT /F1 11 Tf 222 468 Td /TD <</MCID 17>> BDC (7) Tj EMC ET\nBT /F1 11 Tf 372 468 Td /TD <</MCID 18>> BDC (4.25) Tj EMC ET\nq 100 0 0 100 72 340 cm /Figure <</MCID 19>> BDC /Im1 Do EMC Q\nBT /F1 9 Tf 290 30 Td /Artifact BMC (Page 1) Tj EMC ET\n
+< 5: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+< 6: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding>>
+< 7: stream <</Type /XObject /Subtype /Image /Width 2 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0000P\u00a0\u00ff
+< 8: <</Type /StructTreeRoot /K 9 0 R /ParentTree 38 0 R /ParentTreeNextKey 1>>
+< 9: <</Type /StructElem /S /Document /P 8 0 R /K [37 0 R 10 0 R 11 0 R 12 0 R 13 0 R 14 0 R 24 0 R]>>
+< 10: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 0>>
+< 11: <</Type /StructElem /S /H1 /P 9 0 R /Pg 3 0 R /K 1>>
+< 12: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 2>>
+< 13: <</Type /StructElem /S /P /P 9 0 R /Pg 3 0 R /K 3>>
+< 14: <</Type /StructElem /S /L /P 9 0 R /Pg 3 0 R /K [15 0 R 18 0 R 21 0 R]>>
+< 15: <</Type /StructElem /S /LI /P 14 0 R /Pg 3 0 R /K [16 0 R 17 0 R]>>
+< 16: <</Type /StructElem /S /Lbl /P 15 0 R /Pg 3 0 R /K 4>>
+< 17: <</Type /StructElem /S /LBody /P 15 0 R /Pg 3 0 R /K 5>>
+< 18: <</Type /StructElem /S /LI /P 14 0 R /Pg 3 0 R /K [19 0 R 20 0 R]>>
+< 19: <</Type /StructElem /S /Lbl /P 18 0 R /Pg 3 0 R /K 6>>
+< 20: <</Type /StructElem /S /LBody /P 18 0 R /Pg 3 0 R /K 7>>
+< 21: <</Type /StructElem /S /LI /P 14 0 R /Pg 3 0 R /K [22 0 R 23 0 R]>>
+< 22: <</Type /StructElem /S /Lbl /P 21 0 R /Pg 3 0 R /K 8>>
+< 23: <</Type /StructElem /S /LBody /P 21 0 R /Pg 3 0 R /K 9>>
+< 24: <</Type /StructElem /S /Table /P 9 0 R /Pg 3 0 R /K [25 0 R 29 0 R 33 0 R]>>
+< 25: <</Type /StructElem /S /TR /P 24 0 R /Pg 3 0 R /K [26 0 R 27 0 R 28 0 R]>>
+< 26: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 25 0 R /Pg 3 0 R /K 10>>
+< 27: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 25 0 R /Pg 3 0 R /K 11>>
+< 28: <</A <</O /Table /Scope /Column>> /Type /StructElem /S /TH /P 25 0 R /Pg 3 0 R /K 12>>
+< 29: <</Type /StructElem /S /TR /P 24 0 R /Pg 3 0 R /K [30 0 R 31 0 R 32 0 R]>>
+< 30: <</Type /StructElem /S /TD /P 29 0 R /Pg 3 0 R /K 13>>
+< 31: <</Type /StructElem /S /TD /P 29 0 R /Pg 3 0 R /K 14>>
+< 32: <</Type /StructElem /S /TD /P 29 0 R /Pg 3 0 R /K 15>>
+< 33: <</Type /StructElem /S /TR /P 24 0 R /Pg 3 0 R /K [34 0 R 35 0 R 36 0 R]>>
+< 34: <</Type /StructElem /S /TD /P 33 0 R /Pg 3 0 R /K 16>>
+< 35: <</Type /StructElem /S /TD /P 33 0 R /Pg 3 0 R /K 17>>
+< 36: <</Type /StructElem /S /TD /P 33 0 R /Pg 3 0 R /K 18>>
+< 37: <</Type /StructElem /S /Figure /P 9 0 R /Pg 3 0 R /K 19>>
+< 38: <</Nums [0 [10 0 R 11 0 R 12 0 R 13 0 R 16 0 R 17 0 R 19 0 R 20 0 R 22 0 R 23 0 R 26 0 R 27 0 R 28 0 R 30 0 R 31 0 R 32 0 R 34 0 R 35 0 R 36 0 R 37 0 R]]>>
+< Document page=-1 ref=9 title=~ alt=~ lang=~ actual=~ id=~
+<   Figure page=0 ref=37 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=19 stream=-1
+<   P page=0 ref=10 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=0 stream=-1
+<   H1 page=0 ref=11 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=1 stream=-1
+<   P page=0 ref=12 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=2 stream=-1
+<   P page=0 ref=13 title=~ alt=~ lang=~ actual=~ id=~
+<     content page=0 mcid=3 stream=-1
+<   L page=0 ref=14 title=~ alt=~ lang=~ actual=~ id=~
+<     LI page=0 ref=15 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=0 ref=16 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=4 stream=-1
+<       LBody page=0 ref=17 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=5 stream=-1
+<     LI page=0 ref=18 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=0 ref=19 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=6 stream=-1
+<       LBody page=0 ref=20 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=7 stream=-1
+<     LI page=0 ref=21 title=~ alt=~ lang=~ actual=~ id=~
+<       Lbl page=0 ref=22 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=8 stream=-1
+<       LBody page=0 ref=23 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=9 stream=-1
+<   Table page=0 ref=24 title=~ alt=~ lang=~ actual=~ id=~
+<     TR page=0 ref=25 title=~ alt=~ lang=~ actual=~ id=~
+<       TH page=0 ref=26 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=10 stream=-1
+<       TH page=0 ref=27 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=11 stream=-1
+<       TH page=0 ref=28 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=12 stream=-1
+<     TR page=0 ref=29 title=~ alt=~ lang=~ actual=~ id=~
+<       TD page=0 ref=30 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=13 stream=-1
+<       TD page=0 ref=31 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=14 stream=-1
+<       TD page=0 ref=32 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=15 stream=-1
+<     TR page=0 ref=33 title=~ alt=~ lang=~ actual=~ id=~
+<       TD page=0 ref=34 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=16 stream=-1
+<       TD page=0 ref=35 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=17 stream=-1
+<       TD page=0 ref=36 title=~ alt=~ lang=~ actual=~ id=~
+<         content page=0 mcid=18 stream=-1
+< parent 0 [10 0 R 11 0 R 12 0 R 13 0 R 16 0 R 17 0 R 19 0 R 20 0 R 22 0 R 23 0 R 26 0 R 27 0 R 28 0 R 30 0 R 31 0 R 32 0 R 34 0 R 35 0 R 36 0 R 37 0 R]
+< truncated false
