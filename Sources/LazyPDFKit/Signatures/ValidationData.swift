@@ -110,6 +110,10 @@ enum CertificateTrust {
         "2.5.29.14", "2.5.29.15", "2.5.29.17", "2.5.29.18", "2.5.29.19", "2.5.29.31", "2.5.29.32", "2.5.29.35",
         "2.5.29.37", "2.5.29.46", "1.3.6.1.5.5.7.1.1", "1.3.6.1.5.5.7.1.11",
     ]
+    private static let checkedAlgorithms: Set<String> = [
+        "1.2.840.113549.1.1.5", "1.2.840.113549.1.1.11", "1.2.840.113549.1.1.12", "1.2.840.113549.1.1.13",
+        "1.2.840.10045.4.1", "1.2.840.10045.4.3.2", "1.2.840.10045.4.3.3", "1.2.840.10045.4.3.4",
+    ]
     private static let restricting: Set<String> = ["2.5.29.30", "2.5.29.33", "2.5.29.36", "2.5.29.54"]
 
     private static let maxChain = 16
@@ -230,6 +234,8 @@ enum CertificateTrust {
     /// Whether `issuer` made the signature on `certificate`.
     static func signs(_ issuer: X509Certificate, _ certificate: X509Certificate) -> Bool {
         if certificate.signatureAlgorithm == Oids.rsaPss { return signsWithPss(issuer, certificate) }
+        // Any other algorithm than these, such as MD5 with RSA, is not checked here and so does not hold.
+        guard checkedAlgorithms.contains(certificate.signatureAlgorithm) else { return false }
         let algorithm = Oids.digestName(OcspResponse.digestOf(certificate.signatureAlgorithm)) ?? .sha256
         return CmsVerifier.verifyRaw(issuer, certificate.signatureAlgorithm, certificate.signatureValue, certificate.tbsCertificate, algorithm)
     }
@@ -238,24 +244,37 @@ enum CertificateTrust {
     // Security.framework check; a different salt is not checked here, so it does not hold.
     private static func signsWithPss(_ issuer: X509Certificate, _ certificate: X509Certificate) -> Bool {
         var algorithm = HashAlgorithmName.sha1
+        var maskHash = HashAlgorithmName.sha1
         var salt = 20
         do {
             var reader = AsnReader(certificate.signatureParameters)
             var parameters = try reader.readSequence()
+            var seen: Set<Int> = []
             while parameters.hasData {
                 let tag = try parameters.peekTag()
+                guard tag.tagClass == 2, tag.value <= 3, seen.insert(tag.value).inserted else { return false }
                 var field = try parameters.readSequence(tag)
-                if tag.value == 0 {
+                switch tag.value {
+                case 0:
                     var identifier = try field.readSequence()
                     guard let named = Oids.digestName(try identifier.readObjectIdentifier()) else { return false }
                     algorithm = named
-                } else if tag.value == 2 {
+                case 1:
+                    var mask = try field.readSequence()
+                    let function = try mask.readObjectIdentifier()
+                    var inner = try mask.readSequence()
+                    guard function == "1.2.840.113549.1.1.8", let named = Oids.digestName(try inner.readObjectIdentifier()) else { return false }
+                    maskHash = named
+                case 2:
                     salt = try field.readInt()
+                default:
+                    guard try field.readInt() == 1 else { return false }
                 }
             }
         } catch {
             return false
         }
+        guard maskHash == algorithm else { return false }
         let hash = CmsBuilder.hashData(algorithm, certificate.tbsCertificate)
         return salt == hash.count && SignatureCrypto.verifyRsa(issuer, hash, algorithm, certificate.signatureValue, pss: true) == true
     }

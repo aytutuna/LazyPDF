@@ -152,8 +152,7 @@ final class DigitalIdTests: XCTestCase {
             let holder = try XCTUnwrap(loaded?.keyHolder as? TemporaryKeychain)
             return (holder.path, holder.keychain)
         }()
-        let sec = try XCTUnwrap(SecCertificateCreateWithData(nil, Data(try XCTUnwrap(loaded).rawData) as CFData))
-        var certificate: PdfCertificate? = PdfCertificate(certificate: sec, privateKey: try XCTUnwrap(loaded).privateKey, keyHolder: loaded?.keyHolder)
+        var certificate: PdfCertificate? = PdfCertificate(try XCTUnwrap(loaded))
         loaded = nil
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: path))

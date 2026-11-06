@@ -176,27 +176,43 @@ final class Rfc3161Token {
         do {
             var reader = AsnReader(value)
             var outer = try reader.readSequence()
+            guard !reader.hasData else { return nil }
             var ids = try outer.readSequence()
-            var id = try ids.readSequence()
-            var algorithm = version2 ? HashAlgorithmName.sha256 : .sha1
-            if version2, try id.peekTag().value == AsnUniversal.sequence {
-                var named = try id.readSequence()
-                guard let known = Oids.digestName(try named.readObjectIdentifier()) else { return nil }
-                algorithm = known
+            // Every id has to decode, as SigningCertificate(V2)Asn.Decode makes it; the first is the one that names the signer.
+            var first: (oid: String, hash: [UInt8], issuerSerial: ([UInt8], AsnInteger)?)?
+            while ids.hasData {
+                var id = try ids.readSequence()
+                let parsed = try readId(&id, version2)
+                if first == nil { first = parsed }
             }
-            let hash = try id.readOctetString()
-            guard id.hasData else { return (algorithm, hash, nil) }
-            var named = try id.readSequence()
-            var names = try named.readSequence()
-            var directory = try names.readSequence(.context(4, constructed: true))
-            let issuer = try directory.readEncodedValue()
-            guard !directory.hasData, !names.hasData else { return nil }
-            let serial = try named.readInteger()
-            guard !named.hasData, !id.hasData else { return nil }
-            return (algorithm, hash, (issuer, serial))
+            // The policies, when there are any, are one sequence.
+            if outer.hasData {
+                _ = try outer.readSequence()
+                guard !outer.hasData else { return nil }
+            }
+            guard let first, let algorithm = Oids.digestName(first.oid) else { return nil }
+            return (algorithm, first.hash, first.issuerSerial)
         } catch {
             return nil
         }
+    }
+
+    private static func readId(_ id: inout AsnReader, _ version2: Bool) throws -> (oid: String, hash: [UInt8], issuerSerial: ([UInt8], AsnInteger)?) {
+        var oid = version2 ? "2.16.840.1.101.3.4.2.1" : "1.3.14.3.2.26"
+        if version2, try id.peekTag().value == AsnUniversal.sequence {
+            var named = try id.readSequence()
+            oid = try named.readObjectIdentifier()
+        }
+        let hash = try id.readOctetString()
+        guard id.hasData else { return (oid, hash, nil) }
+        var named = try id.readSequence()
+        var names = try named.readSequence()
+        var directory = try names.readSequence(.context(4, constructed: true))
+        let issuer = try directory.readEncodedValue()
+        guard !directory.hasData, !names.hasData else { throw AsnContentException() }
+        let serial = try named.readInteger()
+        guard !named.hasData, !id.hasData else { throw AsnContentException() }
+        return (oid, hash, (issuer, serial))
     }
 
     /// The certificate the token names as its signer, among the ones it carries.

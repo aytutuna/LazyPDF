@@ -25,6 +25,13 @@ public struct PdfCertificate {
         self.init(certificate: certificate, privateKey: privateKey, keyHolder: nil)
     }
 
+    /// An identity of the Signatures layer (`PdfDigitalId.importPfx`): its certificate, its key and what keeps the key
+    /// usable. Nil when the certificate does not read as a system certificate.
+    public init?(_ certificate: X509Certificate) {
+        guard let sec = SecCertificateCreateWithData(nil, Data(certificate.rawData) as CFData) else { return nil }
+        self.init(certificate: sec, privateKey: certificate.privateKey, keyHolder: certificate.keyHolder)
+    }
+
     init(certificate: SecCertificate, privateKey: SecKey?, keyHolder: KeyHolder?) {
         self.certificate = certificate
         self.key = privateKey
