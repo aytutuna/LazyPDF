@@ -142,10 +142,10 @@ extension PdfRedactor {
                     found = holdsInOperands(document, data, needles, shows, &unread) || (shows && speaks(document, { $0.run(stream, $1) }, needles, &unread))
                 } else if attached || container(data) {
                     found = holdsAttached(data, needles, nested, &unread)
-                } else if packet, let plain = RedactionMetadata.plainText(data) {
-                    found = needles.contains(Array(plain.utf8))
                 } else {
+                    // Character references hide a word from a search of the raw bytes, so a packet that reads as XML is searched by what it says as well as by its bytes.
                     found = needles.contains(data)
+                    if !found, packet, let text = RedactionMetadata.plainText(data) { found = needles.contains(Array(text.utf8)) }
                 }
             }
             if found {
@@ -173,84 +173,86 @@ extension PdfRedactor {
             if units.count < PdfRedactor.maxSpoken, let text = glyph.unicode { units.append(contentsOf: text.utf16) }
         }
     }
-
-    // An attachment can wrap the original in a container the byte search cannot see into: a zip, or a PDF with its streams
-    // compressed. A container that cannot be opened, or lies deeper than is followed, is not known to be clean.
+    // An attachment can wrap the original in a container the byte search cannot see into. It counts as checked only when
+    // everything in it is read: text is searched as it is, a zip or gzip file is read whole and strictly by RedactionArchive,
+    // wherever the zip starts, and a PDF is read in every revision. Compressed data, a format not opened here and a file that is
+    // not plain text are not known to be clean, whatever their size, and nor is a container deeper than is followed.
     private static func holdsAttached(_ data: [UInt8], _ needles: Needles, _ nested: Int, _ unread: inout Bool) -> Bool {
         if needles.contains(data) { return true }
-        let zip = data.hasPattern([0x50, 0x4B, 3, 4], at: 0)
+        let zip = RedactionArchive.hasZipSignature(data)
         let gzip = data.hasPattern([0x1F, 0x8B], at: 0)
-        let pdf = !zip && !gzip && Array(data.prefix(1024)).indexOf(pdfMark) != nil
-        // Compressed or encrypted data in a format that is not opened here hides whatever is in it.
-        if unopened.contains(where: { data.hasPattern($0, at: 0) }) || (!zip && !gzip && !pdf && !media.contains(where: { data.hasPattern($0, at: 0) }) && dense(data)) {
-            unread = true
-            return false
-        }
+        let pdf = !zip && Array(data.prefix(1024)).indexOf(pdfMark) != nil
         if nested >= maxNested {
-            unread = unread || zip || gzip || pdf
+            unread = unread || !plain(data)
             return false
         }
-        do {
+        if zip || gzip {
+            let entries: [[UInt8]]?
             if zip {
-                var budget = maxStream
-                for entry in try RedactionArchive.entries(data) {
-                    if entry.size > budget {
-                        unread = true
-                        continue
-                    }
-                    let inflated = try RedactionArchive.inflate(entry, budget)
-                    if inflated.over {
-                        unread = true
-                        continue
-                    }
-                    budget -= inflated.bytes.count
-                    if holdsAttached(inflated.bytes, needles, nested + 1, &unread) { return true }
-                }
-            } else if gzip {
-                let inflated = try RedactionArchive.gunzip(data, maxStream)
-                if inflated.over {
-                    unread = true
-                } else {
-                    return holdsAttached(inflated.bytes, needles, nested + 1, &unread)
-                }
-            } else if pdf {
-                var problems: [String] = []
-                let inner = try PdfDocument.open(data)
-                search(inner, needles, &problems, nested + 1)
-                return !problems.isEmpty
+                entries = RedactionArchive.unzip(data, maxStream)
+            } else {
+                entries = RedactionArchive.gunzip(data, maxStream).map { [$0] }
             }
-        } catch {
+            guard let entries else {
+                unread = true
+                return false
+            }
+            for entry in entries where holdsAttached(entry, needles, nested + 1, &unread) { return true }
+            return false
+        }
+        if pdf { return holdsRevisions(data, needles, nested, &unread) }
+        unread = unread || !plain(data)
+        return false
+    }
+
+    // The newest revision of a PDF is what a reader opens; the ones before it are in the same bytes, and a file cut after an
+    // earlier end-of-file marker is a PDF that shows what the later ones took out. Each is read, and one that does not read counts as unread.
+    private static func holdsRevisions(_ data: [UInt8], _ needles: Needles, _ nested: Int, _ unread: inout Bool) -> Bool {
+        var ends: [Int] = []
+        var from = 0
+        while from <= data.count, let at = Array(data[from...]).indexOf(eofMark) {
+            var end = from + at + 5
+            while end < data.count && (data[end] == 10 || data[end] == 13) { end += 1 }
+            if end < data.count { ends.append(end) }
+            from += at + 5
+        }
+        if ends.count > maxRevisions {
             unread = true
+            ends.removeLast(ends.count - maxRevisions)
+        }
+        for part in ends.map({ Array(data[..<$0]) }) + [data] {
+            do {
+                var problems: [String] = []
+                let inner = try PdfDocument.open(part)
+                search(inner, needles, &problems, nested + 1)
+                if !problems.isEmpty { return true }
+            } catch {
+                unread = true
+            }
         }
         return false
     }
 
+    private static let maxRevisions = 8
+    private static let eofMark = Array("%%EOF".utf8)
+
+    // Formats that are packed and not opened here, whatever stream holds them.
     private static let unopened: [[UInt8]] = [
         [0x42, 0x5A, 0x68], [0xFD, 0x37, 0x7A, 0x58, 0x5A, 0], [0x37, 0x7A, 0xBC, 0xAF], [0x52, 0x61, 0x72, 0x21], [0x28, 0xB5, 0x2F, 0xFD], [0x04, 0x22, 0x4D, 0x18], [0x1F, 0x9D], [0x4C, 0x5A, 0x49, 0x50],
+        [0x4D, 0x53, 0x43, 0x46],
     ]
 
-    // Formats that keep their text in the clear or hold none worth the search.
-    private static let media: [[UInt8]] = [
-        [0x89, 0x50, 0x4E, 0x47], [0xFF, 0xD8, 0xFF], [0x47, 0x49, 0x46, 0x38], [0x52, 0x49, 0x46, 0x46], [0xD0, 0xCF, 0x11, 0xE0], [0x49, 0x44, 0x33], [0x4F, 0x67, 0x67, 0x53],
-    ]
-
-    // Whether the data starts like something holdsAttached opens or knows it cannot, wherever it is held.
+    // Whether the data is something holdsAttached opens or knows it cannot, wherever it is held.
     private static func container(_ data: [UInt8]) -> Bool {
-        data.hasPattern([0x50, 0x4B, 3, 4], at: 0) || data.hasPattern([0x1F, 0x8B], at: 0) || unopened.contains(where: { data.hasPattern($0, at: 0) })
+        RedactionArchive.hasZipSignature(data) || data.hasPattern([0x1F, 0x8B], at: 0) || unopened.contains(where: { data.hasPattern($0, at: 0) })
             || Array(data.prefix(1024)).indexOf(pdfMark) != nil
     }
 
     private static let pdfMark = Array("%PDF-".utf8)
 
-    // Bytes that look random: compressed or encrypted, whatever the format.
-    private static func dense(_ data: [UInt8]) -> Bool {
-        if data.count < 512 { return false }
-        var counts = [Int](repeating: 0, count: 256)
-        let length = min(data.count, 1 << 16)
-        for i in 0..<length { counts[Int(data[i])] += 1 }
-        var entropy = 0.0
-        for c in counts where c > 0 { entropy += -Double(c) / Double(length) * log2(Double(c) / Double(length)) }
-        return entropy > 7.2
+    // Text a reader sees as it is: no byte that a text file does not hold. Compressed and encrypted data has such bytes in the first few dozen.
+    private static func plain(_ data: [UInt8]) -> Bool {
+        !data.contains { $0 < 9 || $0 == 11 || ($0 > 13 && $0 < 32) || $0 == 127 }
     }
 
     private static func inCodec(_ document: PdfDocument, _ stream: PdfStream) -> [UInt8]? {

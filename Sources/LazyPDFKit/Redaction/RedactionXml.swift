@@ -185,8 +185,7 @@ private struct DomParser {
     private var i = 0
 
     init(_ scalars: [Unicode.Scalar]) {
-        var chars = scalars
-        if chars.first == "\u{FEFF}" { chars.removeFirst() }
+        let chars = scalars
         // Line ends read as LF.
         var normal: [Unicode.Scalar] = []
         normal.reserveCapacity(chars.count)

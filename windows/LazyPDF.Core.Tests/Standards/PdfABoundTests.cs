@@ -289,4 +289,47 @@ public class PdfABoundTests
         Assert.Contains(StandardsKit.Check(Stream("[/ASCIIHexDecode /DCT]")).Issues, i => i.Clause == "6.1.7.2" && i.Message.Contains("DCT"));
         Assert.DoesNotContain("6.1.7.2", StandardsKit.Clauses(Stream("/FlateDecode")));
     }
+
+    [Fact]
+    public void StatesPastTheBudgetStillHaveTheirDictionariesCheckedAndAreReported()
+    {
+        byte[] file = StandardsKit.Compliant(page: "/Annots [30 0 R]", extra: pdf =>
+        {
+            pdf.Obj(30, "<</Type /Annot /Subtype /Square /Rect [10 10 50 50] /F 4 /AP <</N 31 0 R>>>>");
+            pdf.Obj(31, "<</A 32 0 R /B 33 0 R /C 34 0 R>>");
+            pdf.Stream(32, "/Type /XObject /Subtype /Form /BBox [0 0 10 10]", new string(' ', 40_000));
+            pdf.Stream(33, "/Type /XObject /Subtype /Form /BBox [0 0 10 10]", "q Q");
+            pdf.Stream(34, "/Type /XObject /Subtype /Form /BBox [0 0 10 10] /Ref 1 0 R", "q Q");
+        });
+        var issues = Limited(file, 20_000).Issues;
+        Assert.Contains(issues, i => i.Message == PdfAText.ReferenceXObject);
+        Assert.Contains(issues, i => i.Message == PdfAText.TooMuchContent && i.Where == "Page 1, annotation 1");
+    }
+
+    [Fact]
+    public void ManyObjectsAreWalkedInLinearTime()
+    {
+        const int count = 100_000;
+        byte[] file = StandardsKit.Compliant(catalog: "/Extra 39 0 R", extra: pdf =>
+        {
+            pdf.Obj(39, "[" + string.Concat(Enumerable.Range(0, count).Select(i => $"{40 + i} 0 R ")) + "]");
+            for (int i = 0; i < count; i++) pdf.Obj(40 + i, "<<>>");
+        });
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        StandardsKit.Check(file);
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(30), clock.Elapsed.ToString());
+    }
+
+    [Fact]
+    public void ObjectStreamsAreReadInTheOrderTheFileListsThem()
+    {
+        byte[] stored = StandardsKit.Compliant(extra: pdf =>
+        {
+            pdf.Stream(9, "/Type /ObjStm /N 1 /First 5", "10 0 <</X <ABC>>>");
+            pdf.Stream(8, "/Type /ObjStm /N 1 /First 5", "11 0 <</X <ABC>>>");
+        });
+        byte[] rebuilt = TestPdf.Replace(stored, "startxref", "startxref\n7");
+        var places = StandardsKit.Check(rebuilt).Issues.Where(i => i.Clause == "6.1.6").Select(i => i.Where).ToList();
+        Assert.Equal([PdfAText.ObjectName(9), PdfAText.ObjectName(8)], places);
+    }
 }

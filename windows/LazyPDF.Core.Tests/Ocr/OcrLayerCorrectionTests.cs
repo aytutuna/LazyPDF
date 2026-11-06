@@ -137,4 +137,26 @@ public class OcrLayerCorrectionTests
         Assert.Contains("Welt", text);
         Assert.Contains("Second line", text);
     }
+
+    [Fact]
+    public void ALayerStreamNextToAnotherKeepsItsWideCharactersWhenTheFontIsReplaced()
+    {
+        var document = OcrKit.Scan();
+        string a = char.ConvertFromUtf32(0x1F600), b = char.ConvertFromUtf32(0x20000), c = char.ConvertFromUtf32(0x1F601);
+        PdfOcrLayer.Add(document, [new OcrPageWords(0, [OcrKit.Word(a, 10, 10, 40, 20)], 400, 600), new OcrPageWords(0, [OcrKit.Word(b, 10, 100, 40, 20)], 400, 600)], "en");
+        Assert.Equal(2, OcrKit.LayerStreams(document));
+        Assert.Equal([b, a], PdfOcrLayer.Words(document, document.Pages[0]).Select(w => w.Text));
+
+        PdfOcrLayer.Correct(document, document.Pages[0], 1, c);
+
+        Assert.Equal([b, c], PdfOcrLayer.Words(document, document.Pages[0]).Select(w => w.Text));
+    }
+
+    [Fact]
+    public void WordNumbersAtTheEdgesOfTheIntegersThrow()
+    {
+        var document = WithLayer();
+        Assert.Throws<ArgumentOutOfRangeException>(() => PdfOcrLayer.Correct(document, document.Pages[0], int.MaxValue, "x"));
+        Assert.Throws<ArgumentOutOfRangeException>(() => PdfOcrLayer.Correct(document, document.Pages[0], int.MinValue, "x"));
+    }
 }

@@ -27,7 +27,7 @@ final class RedactVerifyTests: XCTestCase {
         XCTAssertFalse(PdfRedactor.verify(result.bytes, try RedactionKit.marksOf(again, 0, "REDACTED"), [], []).isClean)
     }
 
-    func test_packetIsSearchedByItsTextNotItsElementNames() throws {
+    func test_packetIsSearchedByItsTextAndByItsBytes() throws {
         let document = try RedactionKit.page("BT /F1 12 Tf 100 700 Td (plain) Tj ET")
         let dictionary = PdfDictionary()
         dictionary["Type"] = PdfName("Metadata")
@@ -35,7 +35,9 @@ final class RedactVerifyTests: XCTestCase {
         let xmp = "<x:xmpmeta xmlns:x=\"adobe:ns:meta/\"><rdf:RDF><rdf:Description><xmpG:mode>RGB</xmpG:mode><dc:title>a &#103;izli b</dc:title></rdf:Description></rdf:RDF></x:xmpmeta>"
         document.catalog["Metadata"] = try document.add(PdfStream(dictionary, data: Array(xmp.utf8)))
         let bytes = try document.saveRewrite()
-        XCTAssertTrue(PdfRedactor.verify(bytes, [], ["mode"]).isClean)
+        // A name holds a word as much as a text does, and the bytes are searched besides the text.
+        XCTAssertFalse(PdfRedactor.verify(bytes, [], ["mode"]).isClean)
+        XCTAssertTrue(PdfRedactor.verify(bytes, [], ["absent"]).isClean)
         XCTAssertFalse(PdfRedactor.verify(bytes, [], ["gizli"]).isClean)
     }
 

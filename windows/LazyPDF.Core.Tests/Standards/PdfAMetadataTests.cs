@@ -111,4 +111,24 @@ public class PdfAMetadataTests
         byte[] file = StandardsKit.Compliant(intents: "/OutputIntents [9 0 R]", extra: pdf => pdf.Obj(9, "<</Type /OutputIntent /S /GTS_PDFA1 /DestOutputProfile 7 0 R>>"));
         Assert.Contains(StandardsKit.Check(file).Issues, i => i.Message.Contains("OutputConditionIdentifier"));
     }
+
+    [Fact]
+    public void ATitleThatDiffersFromTheXmpOnlyInCompositionDoesNotAgree()
+    {
+        string xmp = StandardsKit.Packet(PdfALevel.A2b);
+        Assert.Contains(">Title<", xmp);
+        string info = "<</Title <FEFF00430061006600650301> /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000Z) /ModDate (D:20260304103000Z)>>";
+        byte[] file = StandardsKit.Compliant(xmp: xmp.Replace(">Title<", ">Caf\u00E9<"), info: info);
+        Assert.Contains(StandardsKit.Check(file).Issues, i => i.Clause == "6.6.2.3" && i.Message.Contains("/Title"));
+        Assert.DoesNotContain(StandardsKit.Check(StandardsKit.Compliant(xmp: xmp.Replace(">Title<", ">Cafe\u0301<"), info: info)).Issues, i => i.Message.Contains("/Title"));
+    }
+
+    [Fact]
+    public void IssuesThatDifferOnlyInCompositionAreDifferentIssues()
+    {
+        var first = new PdfAIssue("6.7.3", "Info", "\u00E9");
+        var second = new PdfAIssue("6.7.3", "Info", "e\u0301");
+        Assert.NotEqual(first, second);
+        Assert.Equal(2, new HashSet<PdfAIssue> { first, second }.Count);
+    }
 }
