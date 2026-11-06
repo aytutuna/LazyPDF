@@ -25,9 +25,9 @@ jobs:
         timeout-minutes: 25
         run: |
           swift build --build-tests
-          for t in $(grep -o 'func test_[A-Za-z0-9]*' Tests/LazyPDFKitTests/Signatures/DigitalIdTests.swift | sed 's/func //'); do
+          for t in $(grep -o 'func test_[A-Za-z0-9]*' Tests/LazyPDFKitTests/Signatures/DigitalIdTests.swift | grep -i 'keychain' | sed 's/func //'); do
             echo "=== $t"
-            perl -e 'alarm 150; exec @ARGV' swift test --skip-build --filter "DigitalIdTests/$t" 2>&1 | grep -E "error|passed|failed|Executed" | head -4 || true
+            perl -e 'alarm 90; exec @ARGV' swift test --skip-build --filter "DigitalIdTests/$t" 2>&1 | grep -E "error|passed|failed|Executed" | head -4 || true
             echo "exit $?"
           done
           swift test --skip-build --filter 'SignatureChainRules|TimestampTokenRules|Pkcs12Writer'

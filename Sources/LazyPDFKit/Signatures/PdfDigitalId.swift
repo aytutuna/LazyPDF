@@ -110,6 +110,7 @@ final class TemporaryKeychain {
         guard SecKeychainCreate(path, UInt32(secret.count), secret, false, nil, &created) == errSecSuccess, let created else { return nil }
         // The default locks it after five minutes and on sleep, and unlocking asks for a password nobody knows.
         var settings = SecKeychainSettings(version: 1, lockOnSleep: false, useLockInterval: false, lockInterval: 0)
+        SecKeychainUnlock(created, UInt32(secret.count), secret, true)
         SecKeychainSetSettings(created, &settings)
         keychain = created
     }
