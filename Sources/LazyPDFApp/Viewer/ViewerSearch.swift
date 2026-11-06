@@ -160,8 +160,8 @@ public final class ViewerSearch {
         let page = source.page(match.page)
         let length = page.chars.count
         let range = side < 0
-            ? TextRange(Swift.max(0, match.range.start - context), match.range.start)
-            : TextRange(match.range.end, Swift.min(length, match.range.end + context))
+            ? LazyPDFKit.TextRange(Swift.max(0, match.range.start - context), match.range.start)
+            : LazyPDFKit.TextRange(match.range.end, Swift.min(length, match.range.end + context))
         return range.isEmpty ? "" : page.getText(range).replacingOccurrences(of: "\n", with: " ").replacingOccurrences(of: "\t", with: " ")
     }
 }
