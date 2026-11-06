@@ -32,6 +32,7 @@ final class TileSchedulerTests: XCTestCase {
     private final class Gate: @unchecked Sendable {
         private let lock = NSLock()
         private var held: [(page: Int, resume: CheckedContinuation<PdfRgbaImage?, Never>)] = []
+        private var finished: Set<Int> = []
         private let image: PdfRgbaImage
 
         init(_ image: PdfRgbaImage) {
@@ -54,7 +55,7 @@ final class TileSchedulerTests: XCTestCase {
 
         func finishAll() {
             lock.lock()
-            let all = held
+            let all = held.filter { !finished.contains($0.page) }
             held.removeAll()
             lock.unlock()
             for item in all { item.resume.resume(returning: nil) }
@@ -63,6 +64,7 @@ final class TileSchedulerTests: XCTestCase {
         func finish(_ page: Int) {
             lock.lock()
             let resume = held.first { $0.page == page }?.resume
+            finished.insert(page)
             lock.unlock()
             resume?.resume(returning: image)
         }
