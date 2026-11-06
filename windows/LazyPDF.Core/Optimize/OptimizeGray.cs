@@ -431,6 +431,11 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
             Left++;
             return;
         }
+        if (pixels.Width < 1 || pixels.Height < 1)
+        {
+            Left++;
+            return;
+        }
         double? matte = MatteGray(dictionary, family, components);
         var gray = new byte[pixels.Width * pixels.Height];
         for (int i = 0; i < gray.Length; i++) gray[i] = ImageKit.Luminance(pixels.Rgba[4 * i], pixels.Rgba[4 * i + 1], pixels.Rgba[4 * i + 2]);

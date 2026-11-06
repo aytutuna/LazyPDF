@@ -240,7 +240,7 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
             return false;
         }
         var image = codec.Decode(decoded.Data, decoded.Codec!);
-        if (image is null || (long)image.Width * image.Height > MaxPixels) return false;
+        if (image is null || image.Width < 1 || image.Height < 1 || (long)image.Width * image.Height > MaxPixels) return false;
         var rgb = new byte[image.Width * image.Height * 3];
         for (int i = 0, o = 0; i < image.Width * image.Height; i++)
         {
