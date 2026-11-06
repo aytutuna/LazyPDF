@@ -85,7 +85,7 @@ final class OptimizeResources {
                 joined.append(UInt8(ascii: "\n"))
             }
             var seen = Set<ObjectIdentifier>()
-            try collect(joined, resources, used, 0, &seen)
+            collect(joined, resources, used, 0, &seen)
         } catch {
             used.isUnsafe = true
         }
