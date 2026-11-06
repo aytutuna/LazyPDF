@@ -5278,6 +5278,12 @@
   <data name="The structure tree is too large to edit." xml:space="preserve">
     <value>Yapı ağacı düzenlenemeyecek kadar büyük.</value>
   </data>
+  <data name="The system does not let Lazy PDF read {0}. Check who may open it." xml:space="preserve">
+    <value>Sistem, Lazy PDF'nin {0} dosyasını okumasına izin vermiyor. Kimlerin açabildiğine bakın.</value>
+  </data>
+  <data name="The system does not let Lazy PDF write {0}. Save it under another name or in another folder." xml:space="preserve">
+    <value>Sistem, Lazy PDF'nin {0} dosyasına yazmasına izin vermiyor. Başka bir adla ya da başka bir klasöre kaydedin.</value>
+  </data>
   <data name="The tags are marked as unreliable. Check them and clear the mark." xml:space="preserve">
     <value>Etiketler güvenilmez olarak işaretli. Etiketleri denetleyin ve işareti kaldırın.</value>
   </data>
@@ -6315,6 +6321,9 @@
   </data>
   <data name="{0} opens for editing, but Windows cannot draw its pages." xml:space="preserve">
     <value>{0} düzenlemeye açılıyor ama Windows sayfalarını çizemiyor.</value>
+  </data>
+  <data name="{0} opens for editing, but its pages cannot be shown here." xml:space="preserve">
+    <value>{0} düzenleme için açıldı, ancak sayfaları burada gösterilemiyor.</value>
   </data>
   <data name="{0} page added|plural" xml:space="preserve">
     <value>{0} sayfa eklendi</value>

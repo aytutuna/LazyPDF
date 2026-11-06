@@ -6533,5 +6533,14 @@
   },
   "Windows could not open {0}.": {
     "tr": "Windows şunu açamadı: {0}"
+  },
+  "{0} opens for editing, but its pages cannot be shown here.": {
+    "tr": "{0} düzenleme için açıldı, ancak sayfaları burada gösterilemiyor."
+  },
+  "The system does not let Lazy PDF read {0}. Check who may open it.": {
+    "tr": "Sistem, Lazy PDF'nin {0} dosyasını okumasına izin vermiyor. Kimlerin açabildiğine bakın."
+  },
+  "The system does not let Lazy PDF write {0}. Save it under another name or in another folder.": {
+    "tr": "Sistem, Lazy PDF'nin {0} dosyasına yazmasına izin vermiyor. Başka bir adla ya da başka bir klasöre kaydedin."
   }
 }
