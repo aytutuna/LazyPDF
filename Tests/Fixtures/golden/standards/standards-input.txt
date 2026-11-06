@@ -1,0 +1,181 @@
+# One line is "<op> <words>". Bytes are escaped (\n \r \t \\ \xHH); a strip line holds the text as UTF-8.
+# check <level> <file>: the issues the validator finds in a file made from the name, for the level (A1b A2b A2u A3b A3u A4).
+# convert <level> <file>: the conversion of the file with no font source: refusal, changes, what remains, and every object of the result.
+# packet <level> <declare>: the XMP packet for a fixed set of properties, byte for byte.
+# strip <text>: PdfAPacket.Strip of the text.
+# profile: the sRGB profile as hex.
+check A1b compliant
+check A2b compliant
+check A2u compliant
+check A3b compliant
+check A3u compliant
+check A4 compliant
+check A1b no-intent
+check A2b no-intent
+check A2u no-intent
+check A3b no-intent
+check A3u no-intent
+check A4 no-intent
+check A1b broken
+check A2b broken
+check A2u broken
+check A3b broken
+check A3u broken
+check A4 broken
+check A1b streams
+check A2b streams
+check A2u streams
+check A3b streams
+check A3u streams
+check A4 streams
+check A1b metadata
+check A2b metadata
+check A2u metadata
+check A3b metadata
+check A3u metadata
+check A4 metadata
+check A1b layers
+check A2b layers
+check A2u layers
+check A3b layers
+check A3u layers
+check A4 layers
+check A1b attachment
+check A2b attachment
+check A2u attachment
+check A3b attachment
+check A3u attachment
+check A4 attachment
+check A1b form
+check A2b form
+check A2u form
+check A3b form
+check A3u form
+check A4 form
+check A1b limits
+check A2b limits
+check A2u limits
+check A3b limits
+check A3u limits
+check A4 limits
+check A1b inline
+check A2b inline
+check A2u inline
+check A3b inline
+check A3u inline
+check A4 inline
+check A1b plain
+check A2b plain
+check A2u plain
+check A3b plain
+check A3u plain
+check A4 plain
+check A1b transparency
+check A2b transparency
+check A2u transparency
+check A3b transparency
+check A3u transparency
+check A4 transparency
+check A1b lzw
+check A2b lzw
+check A2u lzw
+check A3b lzw
+check A3u lzw
+check A4 lzw
+convert A1b compliant
+convert A2b compliant
+convert A2u compliant
+convert A3b compliant
+convert A3u compliant
+convert A4 compliant
+convert A1b no-intent
+convert A2b no-intent
+convert A2u no-intent
+convert A3b no-intent
+convert A3u no-intent
+convert A4 no-intent
+convert A1b broken
+convert A2b broken
+convert A2u broken
+convert A3b broken
+convert A3u broken
+convert A4 broken
+convert A1b streams
+convert A2b streams
+convert A2u streams
+convert A3b streams
+convert A3u streams
+convert A4 streams
+convert A1b metadata
+convert A2b metadata
+convert A2u metadata
+convert A3b metadata
+convert A3u metadata
+convert A4 metadata
+convert A1b layers
+convert A2b layers
+convert A2u layers
+convert A3b layers
+convert A3u layers
+convert A4 layers
+convert A1b attachment
+convert A2b attachment
+convert A2u attachment
+convert A3b attachment
+convert A3u attachment
+convert A4 attachment
+convert A1b form
+convert A2b form
+convert A2u form
+convert A3b form
+convert A3u form
+convert A4 form
+convert A1b inline
+convert A2b inline
+convert A2u inline
+convert A3b inline
+convert A3u inline
+convert A4 inline
+convert A1b plain
+convert A2b plain
+convert A2u plain
+convert A3b plain
+convert A3u plain
+convert A4 plain
+convert A1b transparency
+convert A2b transparency
+convert A2u transparency
+convert A3b transparency
+convert A3u transparency
+convert A4 transparency
+convert A1b lzw
+convert A2b lzw
+convert A2u lzw
+convert A3b lzw
+convert A3u lzw
+convert A4 lzw
+packet A1b true
+packet A1b false
+packet A2b true
+packet A2b false
+packet A2u true
+packet A2u false
+packet A3b true
+packet A3b false
+packet A3u true
+packet A3u false
+packet A4 true
+packet A4 false
+strip
+strip hello
+strip   padded  
+strip a\r\nb\rc\nd
+strip \x01\x02only
+strip x\x00y\x0bz\x1fw
+strip \xf0\x9f\x98\x80 emoji
+strip \xef\xbf\xbe\xef\xbf\xbf gone
+strip \t\x20\xc2\xa0 mixed \xe2\x80\xa8
+strip \xc3\xa7\xc4\x9f
+strip &<>"
+strip \xff\xfe bad utf-8
+profile
