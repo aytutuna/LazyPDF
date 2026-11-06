@@ -104,10 +104,12 @@ public enum ComparisonReport {
         return cut(text, maxComment)
     }
 
-    /// The text up to `units` UTF-16 units, then "..." when there was more.
+    /// The text up to `units` UTF-16 units, one less when that would cut a pair in two, then "..." when there was more.
     private static func cut(_ text: String, _ units: Int) -> String {
-        if text.utf16.count <= units { return text }
-        return String(decoding: Array(text.utf16.prefix(units)), as: UTF16.self) + "..."
+        let all = Array(text.utf16)
+        if all.count <= units { return text }
+        let end = UTF16.isLeadSurrogate(all[units - 1]) ? units - 1 : units
+        return String(decoding: all[..<end], as: UTF16.self) + "..."
     }
 
     /// The result as lines of text: totals, then the differences page by page, then those of the document.

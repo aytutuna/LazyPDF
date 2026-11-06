@@ -25,6 +25,20 @@ final class AttachmentLimitTests: CompareTestCase {
         XCTAssertTrue(change.oldText.contains("bytes stored"))
     }
 
+    func test_storedBytesPastTheBudgetAreLeftUnreadAndTheFileIsJudgedByItsContent() throws {
+        let big = [UInt8](repeating: 0, count: 257 * mib)
+        var documents: [PdfDocument] = []
+        for text in ["hello", "hello", "howdy"] {
+            let document = try doc([page("files")])
+            try PdfAttachments.add(document, "big.bin", big)
+            try PdfAttachments.add(document, "small.txt", Array(text.utf8))
+            documents.append(document)
+        }
+        XCTAssertTrue(try PdfComparer.compare(documents[0], documents[1]).isIdentical)
+        let change = try single(try PdfComparer.compare(documents[0], documents[2]).changes)
+        XCTAssertTrue(try XCTUnwrap(change.detail).contains("small.txt"))
+    }
+
     func test_unfilteredFilesOverTheCapDoNotUseUpTheBudget() throws {
         var generator = DotNetRandom(7)
         let random = generator.nextBytes(65 * mib)

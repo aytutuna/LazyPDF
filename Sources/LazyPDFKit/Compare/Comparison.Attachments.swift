@@ -28,14 +28,24 @@ extension Comparison {
         return result
     }
 
-    private static func stored(_ document: PdfDocument, _ streams: InsertionMap<PdfStream>) -> InsertionMap<String> {
+    /// What each file looks like in the file it is stored in. Streams may overlap, so the bytes read are limited to the
+    /// size of the document plus the budget; a stream past that is left unread and says so with `side`, which makes the
+    /// two sides differ and sends the file to the decoder, which has a budget of its own.
+    private func stored(_ document: PdfDocument, _ streams: InsertionMap<PdfStream>, _ side: String) throws -> InsertionMap<String> {
         var known: [StreamKey: String] = [:]
         var result = InsertionMap<String>()
+        var budget = document.length + Self.attachmentBudget
         for (name, stream) in streams.entries {
+            try Task.checkCancellation()
             var text = known[StreamKey(stream)]
             if text == nil {
-                let bytes = document.rawData(stream)
-                text = "\(bytes.count) bytes stored, \(ImageLook.toHexString(Array(Sha256.hash(bytes).prefix(6))))"
+                if budget <= 0 {
+                    text = "not read, \(side)"
+                } else {
+                    let bytes = document.rawData(stream)
+                    budget -= bytes.count
+                    text = "\(bytes.count) bytes stored, \(ImageLook.toHexString(Array(Sha256.hash(bytes).prefix(6))))"
+                }
                 known[StreamKey(stream)] = text
             }
             result.set(name, text ?? "")
@@ -51,8 +61,8 @@ extension Comparison {
         var result = InsertionMap<String?>()
         var budget = Self.attachmentBudget
         for (name, stream) in streams.entries {
-            if skip.contains(Array(name.utf16)) { continue }
             try Task.checkCancellation()
+            if skip.contains(Array(name.utf16)) { continue }
             let text: String?
             if let seen = known[StreamKey(stream)] {
                 text = seen
@@ -86,8 +96,8 @@ extension Comparison {
     func compareAttachments(_ changes: inout [CompareChange]) throws {
         let oldFiles = try attachments(before)
         let newFiles = try attachments(after)
-        let storedBefore = Self.stored(before, oldFiles)
-        let storedAfter = Self.stored(after, newFiles)
+        let storedBefore = try stored(before, oldFiles, "before")
+        let storedAfter = try stored(after, newFiles, "after")
         var same = Set<[UInt16]>()
         for (name, text) in storedBefore.entries {
             if let other = storedAfter.lookup(name), Ordinal.equal(other, text) { same.insert(Array(name.utf16)) }

@@ -116,10 +116,11 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
         var chars = model.Text.Chars;
         EditGlyph? glyph = null;
         bool after = false;
+        if (index < 0) throw new EditConflictException(EditingText.NoText);
         for (int i = Math.Min(index, chars.Count - 1); i >= 0 && glyph is null; i--)
         {
             glyph = model.CharGlyphs[i];
-            after = i < index;
+            if (glyph is not null) after = i < index;
         }
         for (int i = index; i < chars.Count && glyph is null; i++) glyph = model.CharGlyphs[i];
         if (glyph is null) throw new EditConflictException(EditingText.NoText);

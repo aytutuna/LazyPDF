@@ -87,6 +87,11 @@ extension PdfAConversionRun {
         var removed = 0
         for d in parts.dictionaries {
             for key in ["A", "OpenAction", "Next"] where isForbidden(d[key]) && d.remove(key) { removed += 1 }
+            if let chain = document.resolve(d["Next"]) as? PdfArray {
+                let before = chain.items.count
+                chain.items.removeAll { isForbidden($0) }
+                removed += before - chain.items.count
+            }
             guard let triggers = document.dict(d, "AA") else { continue }
             if d === document.catalog || Self.isFieldOrWidget(document, d) {
                 d.remove("AA")

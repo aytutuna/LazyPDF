@@ -311,7 +311,9 @@ internal sealed partial class TextEditor
                 var m = first.TextMatrix.Multiply(first.Ctm);
                 double vertical = Math.Sqrt(m.C * m.C + m.D * m.D);
                 var (ux, uy) = first.Direction;
-                double sign = Math.Sign(m.C * -uy + m.D * ux);
+                double side = m.C * -uy + m.D * ux;
+                if (double.IsNaN(side)) continue;
+                double sign = Math.Sign(side);
                 if (vertical < 1e-9 || sign == 0) continue;
                 var set = new ContentWriter().Op("Ts", first.Rise + sign * k * (old - spacing) / vertical);
                 var restore = new ContentWriter();

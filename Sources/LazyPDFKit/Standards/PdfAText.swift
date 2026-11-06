@@ -207,7 +207,7 @@ public enum PdfAText {
         let whole = kept[0..<(kept.count - 2)].map { String($0) }.joined()
         var fraction = kept[(kept.count - 2)...].map { String($0) }.joined()
         while fraction.hasSuffix("0") { fraction.removeLast() }
-        let sign = value < 0 ? "-" : ""
+        let sign = value.sign == .minus ? "-" : ""
         return sign + whole + (fraction.isEmpty ? "" : "." + fraction)
     }
 }
