@@ -18,6 +18,10 @@ internal static class OcrLayerContent
     private const double MinSize = 0.01;
     private const double MinSpace = 0.1;
 
+    // What the layer of a page can hold: MaxWords words, about seven operations for each (a line of one word has the most).
+    private const long MaxSize = 16L << 20;
+    private const int MaxOperations = 8 * PdfOcrLayer.MaxWords;
+
     /// <summary>Words in pixels to lines on the page as shown. A line takes the median top and bottom of its words, so its glyphs share a baseline.</summary>
     public static List<List<PlacedWord>> Layout(IReadOnlyList<OcrWord> words, int pixelWidth, int pixelHeight, PageGeometry geometry)
     {
@@ -76,7 +80,7 @@ internal static class OcrLayerContent
     /// </summary>
     public static PageGeometry WrittenIn(PdfDocument document, PdfPage page, PdfStream stream, PageGeometry current)
     {
-        var tm = ContentParser.Parse(document.Data(stream)).FirstOrDefault(o => o.Operator == "Tm" && o.Operands.Count == 6);
+        var tm = Operations(document, stream).FirstOrDefault(o => o.Operator == "Tm" && o.Operands.Count == 6);
         if (tm is null) return current;
         double a = tm.Number(0) ?? 1, b = tm.Number(1) ?? 0, norm = Math.Sqrt(a * a + b * b);
         foreach (int rotate in new[] { current.Rotation, 0, 90, 180, 270 })
@@ -97,8 +101,10 @@ internal static class OcrLayerContent
         PdfFont? font = null;
         double size = 0, scale = 100;
         PdfMatrix matrix = PdfMatrix.Identity;
-        foreach (var op in ContentParser.Parse(document.Data(stream)))
+        int words = 0;
+        foreach (var op in Operations(document, stream))
         {
+            if (words >= PdfOcrLayer.MaxWords) break;
             switch (op.Operator)
             {
                 case "BT":
@@ -122,12 +128,17 @@ internal static class OcrLayerContent
                     var box = geometry.ToDisplay(new PdfRect(x1, y1, x2, y2));
                     string text = font is null ? Encoding.BigEndianUnicode.GetString(s.Bytes) : font.ToText(s.Bytes);
                     lines[^1].Add(new PlacedWord(OcrVisualOrder.Flip(text), box.X, box.Y, box.Width, box.Height));
+                    words++;
                     break;
             }
         }
         lines.RemoveAll(l => l.Count == 0);
         return lines;
     }
+
+    // A stream that inflates past the size or holds more operations is a PdfReadException, not a layer.
+    private static IReadOnlyList<ContentOperation> Operations(PdfDocument document, PdfStream stream) =>
+        ContentParser.Parse(document.Data(stream, MaxSize), MaxOperations);
 
     public static PdfFont? FontOf(PdfDocument document, PdfPage page, string name) =>
         document.Dict(document.Dict(page.Resources, "Font"), name) is { } dictionary ? PdfFont.Get(document, dictionary) : null;

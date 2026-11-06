@@ -55,19 +55,29 @@ public enum PdfOcrLayer {
             layouts.append((page, geometry, OcrLayerContent.layout(entry.words, entry.pixelWidth, entry.pixelHeight, geometry)))
         }
 
-        for layout in layouts { _ = remove(document, layout.page) }
+        // Adding objects can fail (the file has no numbers left), so everything that adds one comes before the old layers go.
         let texts = layouts.flatMap { $0.lines }.flatMap { $0 }.map { $0.text }
         let codes = GlyphlessCodes.for(texts)
         var font: PdfReference?
-        var count = 0
+        var streams: [PdfReference?] = []
         for layout in layouts {
-            if layout.lines.isEmpty { continue }
+            if layout.lines.isEmpty {
+                streams.append(nil)
+                continue
+            }
             let shared = try font ?? OcrLayerContent.addFont(document, codes)
             font = shared
             let content = OcrLayerContent.build(layout.lines, layout.geometry, unitOf(layout.page), codes)
-            privateFonts(document, layout.page, create: true)?[OcrLayerContent.fontName] = shared
+            streams.append(try OcrLayerContent.addStream(document, content, language))
+        }
+
+        for layout in layouts { _ = remove(document, layout.page) }
+        var count = 0
+        for (layout, stream) in zip(layouts, streams) {
+            guard let stream, let font else { continue }
+            privateFonts(document, layout.page, create: true)?[OcrLayerContent.fontName] = font
             var items = contents(document, layout.page)
-            items.insert(try OcrLayerContent.addStream(document, content, language), at: 0)
+            items.insert(stream, at: 0)
             layout.page.dictionary["Contents"] = PdfArray(items)
             count += layout.lines.reduce(0) { $0 + $1.count }
         }
@@ -160,10 +170,13 @@ public enum PdfOcrLayer {
 
     private static func rewrite(_ document: PdfDocument, _ page: PdfPage, _ stream: PdfStream, _ lines: [[PlacedWord]], _ geometry: PageGeometry) throws {
         let fonts = privateFonts(document, page, create: true)
-        var codes = GlyphlessCodes.for(lines.flatMap { $0 }.map { $0.text })
+        let texts = lines.flatMap { $0 }.map { $0.text }
         let known = OcrLayerContent.fontOf(document, page, OcrLayerContent.fontName).map { GlyphlessCodes.from($0) }
+        // The font serves every layer stream of the page, so a replacement keeps the characters the old one had at their codes.
+        let kept = (known?.supplementary ?? []).compactMap { Unicode.Scalar(UInt32(truncatingIfNeeded: $0)).map { String($0) } }
+        var codes = GlyphlessCodes.for(kept + texts)
         // Codes of characters beyond the BMP depend on the font, so a font that lacks one of them is replaced.
-        if let known, lines.flatMap({ $0 }).allSatisfy({ known.covers($0.text) }) {
+        if let known, texts.allSatisfy({ known.covers($0) }) {
             codes = known
         } else {
             fonts?[OcrLayerContent.fontName] = try OcrLayerContent.addFont(document, codes)

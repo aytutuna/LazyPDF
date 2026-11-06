@@ -130,6 +130,24 @@ enum OcrKit {
         return items.filter { (document.resolve($0) as? PdfStream)?.dictionary.containsKey("LazyPDFOcr") == true }.count
     }
 
+    /// A layer stream written by hand, first in the page's contents: the key a reader looks for, an uncompressed body.
+    static func addLayer(_ document: PdfDocument, _ content: String, _ pageIndex: Int = 0) throws {
+        let marker = PdfDictionary()
+        marker["Lang"] = PdfString(bytes: Array("en".utf8), isHex: false)
+        let dictionary = PdfDictionary()
+        dictionary["LazyPDFOcr"] = marker
+        let stream = try document.add(PdfStream(dictionary, data: Latin1.bytes(content)))
+        let page = document.pages[pageIndex]
+        var items: [PdfObject]
+        switch document.resolve(page.dictionary["Contents"]) {
+        case let array as PdfArray: items = array.items
+        case is PdfStream: items = page.dictionary["Contents"].map { [$0] } ?? []
+        default: items = []
+        }
+        items.insert(stream, at: 0)
+        page.dictionary["Contents"] = PdfArray(items)
+    }
+
     static func latin(_ bytes: [UInt8]) -> String { Latin1.string(bytes) }
 
     static func texts(_ words: [OcrLayerWord]) -> [String] { words.map { $0.text } }

@@ -37,6 +37,8 @@ internal static class OcrGolden
                 case "place": return Place(rest).ToList();
                 case "add": return Add(rest).ToList();
                 case "triage": return Triage(rest);
+                case "layer": return Layer(rest);
+                case "correct": return Correct(rest);
                 default: return [$"unknown op {op}"];
             }
         }
@@ -231,6 +233,44 @@ internal static class OcrGolden
         yield return "map " + (map.AsSpan().SequenceEqual(GlyphlessFont.CidToGidMapData()) ? "same" : "different");
         string toUnicode = Encoding.ASCII.GetString(document.Data((PdfStream)document.Resolve(font["ToUnicode"])!));
         yield return "tounicode " + Esc(toUnicode.Replace(GlyphlessFont.IdentityRanges.Value, "<ranges>\n"));
+    }
+
+    private static IEnumerable<string> WordLines(PdfDocument document)
+    {
+        foreach (var w in PdfOcrLayer.Words(document, document.Pages[0]))
+        {
+            yield return $"word {w.Index} {Esc(w.Text)} [{N(w.Box.X)} {N(w.Box.Y)} {N(w.Box.Width)} {N(w.Box.Height)}]";
+        }
+    }
+
+    // layer <page entries or -> ;; <content>: the words read from a layer stream written by hand with that content.
+    private static IEnumerable<string> Layer(string rest)
+    {
+        var parts = Split(rest);
+        var document = OcrKit.Scan(1, Entries(parts[0]));
+        OcrKit.AddLayer(document, Encoding.Latin1.GetString(Golden.Unescape(parts[1])));
+        return WordLines(document).ToList();
+    }
+
+    // correct <page entries or -> ;; <index> ;; <text> ;; <word> ...: Add on the scan, then Correct; the words read back, the
+    // layer's stream decoded and the characters beyond the BMP the font carries, by code.
+    private static IEnumerable<string> Correct(string rest)
+    {
+        var parts = Split(rest);
+        var document = OcrKit.Scan(1, Entries(parts[0]));
+        var geometry = new PageGeometry(document.Pages[0]);
+        PdfOcrLayer.Add(document, [new OcrPageWords(0, Words(parts.Skip(3)), (int)geometry.Width, (int)geometry.Height)], "en");
+        var page = document.Pages[0];
+        PdfOcrLayer.Correct(document, page, int.Parse(parts[1], CultureInfo.InvariantCulture), Str(parts[2]));
+        var result = WordLines(document).ToList();
+        var items = document.Resolve(page.Dictionary["Contents"]) is PdfArray array ? array.Items : [];
+        foreach (var item in items)
+        {
+            if (document.Resolve(item) is PdfStream stream && stream.Dictionary.ContainsKey("LazyPDFOcr")) result.Add("stream " + Esc(Encoding.Latin1.GetString(document.Data(stream))));
+        }
+        var font = OcrLayerContent.FontOf(document, page, "LPOcrF");
+        result.Add("supplementary " + (font is null ? "none" : string.Join(" ", GlyphlessCodes.From(font).Supplementary.Select(c => c.ToString("X")))));
+        return result;
     }
 
     // triage <page entries or -> ;; <content>: the kind of the page of OcrKit.Scan that draws the content.

@@ -265,4 +265,19 @@ final class StructureTreeTests: XCTestCase {
         XCTAssertEqual([objr.pageIndex, objr.target.number], [0, 10])
         XCTAssertEqual((kids[2] as? StructContent)?.stream?.number, 11)
     }
+
+    func test_aRemovedElementMovedBackKeepsItsObject() throws {
+        let document = try TaggedFile.open()
+        let tree = try XCTUnwrap(StructureTree.read(document))
+        let p = try XCTUnwrap(tree.elements.first { $0.type == "P" })
+        let number = try XCTUnwrap(p.reference).number
+        tree.remove(p)
+        try tree.move(p, tree.roots[0], -1)
+        try tree.write(document)
+
+        XCTAssertNotNil(document.get(number))
+        let read = try XCTUnwrap(StructureTree.read(document))
+        XCTAssertEqual(read.roots[0].children.map { $0.type }, ["H1", "Figure", "P"])
+        XCTAssertEqual(read.elementFor(0, 1)?.type, "P")
+    }
 }

@@ -181,6 +181,7 @@ extension AccessibilityChecker {
 
         let found = Found()
         var budget = 50_000
+        var withContent: [ObjectIdentifier: Bool] = [:]
         for page in document.pages {
             guard let annots = document.array(page.dictionary, "Annots") else { continue }
             for item in annots.items {
@@ -190,7 +191,7 @@ extension AccessibilityChecker {
                       document.name(annotation, "Subtype") == "Link" else { continue }
                 let described = !DotNetText.isNullOrWhiteSpace(PdfText.read(document, annotation, "Contents"))
                 if let owner = owners[reference.number] {
-                    if !described && !hasText(owner) && !hasContent(owner) { found.add(page.index, reference) }
+                    if !described && !hasText(owner) && !hasContent(owner, &withContent) { found.add(page.index, reference) }
                 } else {
                     found.add(page.index, reference)
                 }
@@ -200,8 +201,12 @@ extension AccessibilityChecker {
         return found.count == 0 ? pass(.links) : fail(.links, found)
     }
 
-    private static func hasContent(_ element: StructElement) -> Bool {
-        element.kids.contains { $0 is StructContent } || anyBelow(element, { $0.kids.contains { $0 is StructContent } })
+    // One element is named by many annotations at worst, and each walk is the whole subtree.
+    private static func hasContent(_ element: StructElement, _ known: inout [ObjectIdentifier: Bool]) -> Bool {
+        if let has = known[ObjectIdentifier(element)] { return has }
+        let has = element.kids.contains { $0 is StructContent } || anyBelow(element, { $0.kids.contains { $0 is StructContent } })
+        known[ObjectIdentifier(element)] = has
+        return has
     }
 
     // 7.18.1 and 7.18.4: a field has a name and a description.
