@@ -114,4 +114,13 @@ public class ReplaceTextTests
         Assert.True(session.Redo());
         Assert.Equal("Hello grand world", EditKit.Text(session).Trim());
     }
+
+    [Fact]
+    public void InsertBeforeTheFirstCharacterIsRefusedWhenThereIsNoCharacter()
+    {
+        var session = EditKit.Session(Line);
+        var result = new PageEditor(session, 0).InsertText(-1, "X");
+        Assert.False(result.Done);
+        Assert.Equal(EditingText.NoText, result.Problem);
+    }
 }

@@ -48,7 +48,13 @@ public static class TextReplacer
                 try
                 {
                     if (LinesOf(model, match.Range) > 1) throw new EditConflictException(EditingText.CrossesLines);
-                    editor.Replace(match.Range, expanded.GetValueOrDefault(match.Range, replacement));
+                    // Expansions stops at a time limit of its own; a group token left for a match after that would be written as it is.
+                    if (!expanded.TryGetValue(match.Range, out string? text))
+                    {
+                        if (options.Regex && replacement.Contains('$')) throw new EditConflictException(EditingText.NothingChanged);
+                        text = replacement;
+                    }
+                    editor.Replace(match.Range, text);
                     done.Add(match);
                 }
                 catch (EditConflictException e)
@@ -132,22 +138,36 @@ public static class TextReplacer
             string trail = lead.Length == seen.Length ? "" : seen[seen.TrimEnd().Length..];
             return (lead + core + trail).Replace("$", "$$");
         }
+        string Group(int number)
+        {
+            var group = m.Groups[number];
+            return Page(group.Index, group.Length);
+        }
         string withPage = GroupReference.Replace(replacement, token =>
         {
             if (token.Groups[1].Success) return token.Value;
-            string name = token.Groups[2].Success ? "0" : token.Groups[4].Success ? token.Groups[4].Value : token.Groups[5].Value;
+            if (token.Groups[2].Success) return Group(0);
             switch (token.Groups[3].Value)
             {
                 case "`": return Page(0, m.Index);
                 case "'": return Page(m.Index + m.Length, searched.Text.Length - m.Index - m.Length);
                 case "_": return Page(0, searched.Text.Length);
-                case "+": name = regex.GetGroupNumbers().Max().ToString(); break;
+                case "+": return Group(regex.GetGroupNumbers().Max());
             }
-            // Result reads $01 as group 1 whatever the groups are named.
-            if (name.All(char.IsAsciiDigit)) name = int.TryParse(name, out int number) ? number.ToString() : name;
-            if (regex.GroupNumberFromName(name) < 0) return token.Value;
-            var group = m.Groups[name];
-            return Page(group.Index, group.Length);
+            // Result reads the ASCII digits after a $ as the number, so any other digit after them is text, and a number
+            // past int.MaxValue is left in the token for Result to refuse. A number is a group even when the group is named.
+            bool braces = token.Groups[5].Success;
+            string name = braces ? token.Groups[5].Value : token.Groups[4].Value;
+            int digits = 0;
+            while (digits < name.Length && char.IsAsciiDigit(name[digits])) digits++;
+            if (digits == 0)
+            {
+                int named = braces ? regex.GroupNumberFromName(name) : -1;
+                return named < 0 ? token.Value : Group(named);
+            }
+            if (braces && digits < name.Length) return token.Value;
+            if (!int.TryParse(name[..digits], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out int number)) return token.Value;
+            return regex.GetGroupNumbers().Contains(number) ? Group(number) + name[digits..] : token.Value;
         });
         return m.Result(withPage);
     }

@@ -61,8 +61,9 @@ public sealed partial class PageEditor
             // A commit, undo or redo anywhere gives the session a new document.
             if (_model is null || !ReferenceEquals(_modelDocument, _session.Document))
             {
-                _modelDocument = _session.Document;
-                _model = PageModel.Load(_modelDocument, PageIndex);
+                var document = _session.Document;
+                _model = PageModel.Load(document, PageIndex);
+                _modelDocument = document;
             }
             return _model;
         }

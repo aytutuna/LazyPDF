@@ -85,6 +85,7 @@ internal sealed partial class ObjectEditor
         var place = PlaceOf(o);
         var ops = unit.Operations;
         var states = unit.States;
+        if (o is not (ImageObject or PathObject)) throw new EditConflictException(EditingText.NotAlone);
         int paint = o is ImageObject image ? image.Op : ((PathObject)o).PaintOp;
         int first = o is PathObject path ? path.FirstOp : paint;
         int d = states.At(first).Depth;
