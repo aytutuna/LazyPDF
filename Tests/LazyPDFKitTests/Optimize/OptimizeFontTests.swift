@@ -92,8 +92,13 @@ final class OptimizeFontTests: XCTestCase {
     private func compositeFont() -> [UInt8] {
         func u16(_ v: Int) -> [UInt8] { [UInt8((v >> 8) & 0xFF), UInt8(v & 0xFF)] }
         func u32(_ v: Int) -> [UInt8] { u16(v >> 16) + u16(v) }
-        let simple = u16(1) + u16(0) + u16(0) + u16(100) + u16(100) + u16(3) + u16(0) + [1, 1, 1, 1] + u16(0) + u16(100) + u16(0) + u16(100)
-        let composite = u16(0xFFFF) + u16(0) + u16(0) + u16(100) + u16(100) + u16(0) + u16(1) + [0, 0]
+        var simple: [UInt8] = []
+        for value in [1, 0, 0, 100, 100, 3, 0] { simple += u16(value) }
+        simple += [1, 1, 1, 1]
+        for value in [0, 100, 0, 100] { simple += u16(value) }
+        var composite: [UInt8] = []
+        for value in [0xFFFF, 0, 0, 100, 100, 0, 1] { composite += u16(value) }
+        composite += [0, 0]
         let spare = simple
         let glyphs = [[UInt8](), simple, composite, spare]
         var glyf: [UInt8] = []

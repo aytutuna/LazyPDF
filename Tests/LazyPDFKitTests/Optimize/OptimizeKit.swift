@@ -99,7 +99,9 @@ enum OptimizeKit {
         for y in 0..<height {
             for x in 0..<width {
                 for c in 0..<components {
-                    data[(y * width + x) * components + c] = UInt8((x * 255 / max(1, width - 1) + y * c * 40 / max(1, height)) & 0xFF)
+                    let across = x * 255 / max(1, width - 1)
+                    let down = y * c * 40 / max(1, height)
+                    data[(y * width + x) * components + c] = UInt8((across + down) & 0xFF)
                 }
             }
         }
