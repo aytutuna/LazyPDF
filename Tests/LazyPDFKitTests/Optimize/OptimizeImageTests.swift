@@ -145,6 +145,16 @@ final class OptimizeImageTests: XCTestCase {
         XCTAssertEqual(8, codec.lastEncoded?.width)
     }
 
+    func test_jpegTheCodecCannotWriteIsLeft() throws {
+        let dictionary = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode"
+        let file = OptimizeKit.build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in pdf.stream(5, dictionary, OptimizeKit.tinyJpeg) })
+        let codec = OptimizeFakeCodec()
+        codec.encodeFails = true
+        let (image, after) = try run(file, downsample(8, 10), codec: codec)
+        XCTAssertEqual(16, after.integer(image.dictionary, "Width"))
+        XCTAssertEqual(OptimizeKit.tinyJpeg, after.rawData(image))
+    }
+
     func test_jpegWithoutACodecIsLeftAndSaysSo() throws {
         let dictionary = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode"
         let file = OptimizeKit.build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in pdf.stream(5, dictionary, OptimizeKit.tinyJpeg) })

@@ -9,11 +9,15 @@ import LazyPDFKit
 // the decoder by the bytes, not the name.
 //
 // A frame is decoded when it is asked for, so one too big to hold is passed over by the size in its header alone.
-// ImageIO draws only into premultiplied contexts, so a see-through pixel comes back through a division and can be off
-// by one in a colour channel.
+// ImageIO's PNG output is already straight RGBA and is copied as it is. Anything else is drawn into a premultiplied
+// context, since ImageIO draws into no other, so a see-through pixel comes back through a division and loses colour as
+// its alpha falls.
 
 public final class ImageIOCodec: ImageCodec {
     private static let maxFrames = 2000
+    // What Windows' WIC decoders read; ImageIO also knows PSD, ICO, camera RAW, WebP and PDF.
+    private static let types: Set<String> = ["public.jpeg", "public.png", "public.tiff", "com.microsoft.bmp", "com.compuserve.gif",
+                                             "public.heic", "public.heif", "public.jpeg-2000"]
 
     public init() {}
 
@@ -23,7 +27,8 @@ public final class ImageIOCodec: ImageCodec {
     }
 
     public func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? {
-        guard let source = CGImageSourceCreateWithData(Data(file) as CFData, nil), CGImageSourceGetType(source) != nil else { return nil }
+        guard let source = CGImageSourceCreateWithData(Data(file) as CFData, nil),
+              let type = CGImageSourceGetType(source) as String?, Self.types.contains(type) else { return nil }
         let count = min(CGImageSourceGetCount(source), Self.maxFrames)
         guard count > 0 else { return nil }
         var frames: [PdfRgbaImage] = []
@@ -31,7 +36,8 @@ public final class ImageIOCodec: ImageCodec {
             guard let properties = CGImageSourceCopyPropertiesAtIndex(source, index, nil) as? [CFString: Any],
                   let width = properties[kCGImagePropertyPixelWidth] as? Int,
                   let height = properties[kCGImagePropertyPixelHeight] as? Int else { return nil }
-            if width * height > PdfImageSamples.maxPixels { continue }
+            let (size, overflow) = width.multipliedReportingOverflow(by: height)
+            if overflow || size < 0 || size > PdfImageSamples.maxPixels { continue }
             guard let image = CGImageSourceCreateImageAtIndex(source, index, nil), let frame = Self.rgba(image) else { return nil }
             frames.append(frame)
         }
@@ -51,6 +57,7 @@ public final class ImageIOCodec: ImageCodec {
         let width = image.width, height = image.height
         // The size is the codestream's own, whatever the dictionary says, and width * height * 4 can wrap.
         guard width > 0, height > 0, width * height <= PdfImageSamples.maxPixels else { return nil }
+        if let straight = straightCopy(image) { return straight }
         var pixels = [UInt8](repeating: 0, count: width * height * 4)
         let drawn = pixels.withUnsafeMutableBytes { buffer -> Bool in
             guard let context = CGContext(data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
@@ -64,6 +71,19 @@ public final class ImageIOCodec: ImageCodec {
             let alpha = Int(pixels[i + 3])
             if alpha == 0 || alpha == 255 { continue }
             for c in 0..<3 { pixels[i + c] = UInt8(min(255, (Int(pixels[i + c]) * 255 + alpha / 2) / alpha)) }
+        }
+        return PdfRgbaImage(width, height, pixels)
+    }
+
+    private static func straightCopy(_ image: CGImage) -> PdfRgbaImage? {
+        guard image.bitsPerComponent == 8, image.bitsPerPixel == 32, image.alphaInfo == .last,
+              image.bitmapInfo.intersection(.byteOrderMask).rawValue == 0, image.colorSpace?.model == .rgb,
+              let data = image.dataProvider?.data else { return nil }
+        let width = image.width, height = image.height, stride = image.bytesPerRow
+        guard stride >= width * 4, CFDataGetLength(data) >= stride * (height - 1) + width * 4, let source = CFDataGetBytePtr(data) else { return nil }
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        for row in 0..<height {
+            pixels.withUnsafeMutableBytes { $0.baseAddress!.advanced(by: row * width * 4).copyMemory(from: source + row * stride, byteCount: width * 4) }
         }
         return PdfRgbaImage(width, height, pixels)
     }

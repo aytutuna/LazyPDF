@@ -5,7 +5,8 @@ import LazyPDFKit
 // Follows windows/LazyPDF.App/Services/HttpSignatureTransport.cs: posting and fetching for time stamps, OCSP, CRLs and
 // issuer certificates, on an ephemeral URLSession. The engine wants nil when a request fails; `lastFailure` says why in
 // words a person can act on. Only https is fetched: there is no App Transport Security exception, so a plain http
-// address gets the same "could not be reached" a dead server does. There is no offline check up front as on Windows;
+// address is refused with a text of its own. CRL and OCSP addresses in public certificates are often http, so those
+// checks fail here. There is no offline check up front as on Windows;
 // a request that finds no connection reports the offline text when it fails.
 
 public final class UrlSessionTransport: SignatureTransport {
@@ -97,22 +98,30 @@ public final class UrlSessionTransport: SignatureTransport {
               scheme == "http" || scheme == "https" else {
             return fail(L10n.t("The address is not a web address."))
         }
-        guard scheme == "https" else { return fail(Self.unreachable) }
+        guard scheme == "https" else { return fail(L10n.t("This server is not secure (http), so it was not contacted.")) }
 
         var request = URLRequest(url: address, timeoutInterval: 20)
         request.httpMethod = method
         request.httpBody = body
         if let contentType { request.setValue(contentType, forHTTPHeaderField: "Content-Type") }
 
+        lock.lock()
+        let stopped = cancelled
+        lock.unlock()
+        if stopped { return fail(Self.timedOut) }
+
         let exchange = Exchange()
         let session = URLSession(configuration: configuration, delegate: exchange, delegateQueue: nil)
         defer { session.finishTasksAndInvalidate() }
         let running = session.dataTask(with: request)
         lock.lock()
-        let stopped = cancelled
         task = running
+        let stoppedSince = cancelled
         lock.unlock()
-        if stopped { return fail(Self.timedOut) }
+        if stoppedSince {
+            running.cancel()
+            return fail(Self.timedOut)
+        }
         running.resume()
         exchange.done.wait()
         lock.lock()

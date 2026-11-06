@@ -249,7 +249,7 @@ final class OptimizeImages {
             rgba[4 * i + 2] = small[3 * i + 2]
         }
         let jpeg = codec.encodeJpeg(PdfRgbaImage(newWidth, newHeight, rgba), Swift.min(Swift.max(options.jpegQuality, 1), 100))
-        if jpeg.count >= document.rawData(stream).count { return false }
+        if jpeg.isEmpty || jpeg.count >= document.rawData(stream).count { return false }
         Self.store(stream, newWidth, newHeight, jpeg, "DCTDecode")
         if family != .rgb || components != 3 { dictionary["ColorSpace"] = PdfName("DeviceRGB") }
         return true

@@ -10,6 +10,6 @@ public protocol ImageCodec: AnyObject {
     /// Every frame of a picture file (JPEG, PNG, TIFF, BMP, GIF, HEIC), or nil for anything else.
     func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]?
 
-    /// A JPEG of `image`; `quality` runs from 1 to 100.
+    /// A JPEG of `image`; `quality` runs from 1 to 100. Empty when the picture cannot be encoded.
     func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8]
 }

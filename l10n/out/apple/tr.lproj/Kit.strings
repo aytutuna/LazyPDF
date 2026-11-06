@@ -333,6 +333,7 @@
 "The XMP says conformance {0}; {1} is needed." = "XMP uyumluluk olarak {0} diyor; {1} gerekli.";
 "The XMP says part {0}; part {1} is checked." = "XMP {0}. bölümü söylüyor; {1}. bölüm denetleniyor.";
 "The XMP uses properties of {0} with no extension schema." = "XMP, {0} özelliklerini uzantı şeması olmadan kullanıyor.";
+"The address is not a web address." = "Adres bir web adresi değil.";
 "The annotation has no normal appearance stream." = "Ek açıklamanın normal görünüm akışı yok.";
 "The annotation is hidden, invisible or not shown on screen." = "Ek açıklama gizli, görünmez ya da ekranda gösterilmiyor.";
 "The annotation type {0} is not allowed." = "{0} ek açıklama türüne izin verilmiyor.";
@@ -412,6 +413,10 @@
 "The second line must be a comment of four bytes above 127." = "İkinci satır, 127'nin üzerinde dört bayttan oluşan bir yorum olmalı.";
 "The security settings allow screen readers." = "Güvenlik ayarları ekran okuyuculara izin veriyor.";
 "The security settings stop screen readers from reading the text. Allow text access for accessibility." = "Güvenlik ayarları ekran okuyucuların metni okumasını engelliyor. Erişilebilirlik için metin erişimine izin verin.";
+"The server answered with an error ({0})." = "Sunucu bir hatayla yanıt verdi ({0}).";
+"The server could not be reached. Check the connection and try again." = "Sunucuya ulaşılamadı. Bağlantıyı denetleyip yeniden deneyin.";
+"The server did not answer in time. Try again later." = "Sunucu zamanında yanıt vermedi. Daha sonra yeniden deneyin.";
+"The server's answer is too large." = "Sunucunun yanıtı çok büyük.";
 "The signature by {0} is not valid." = "{0} tarafından atılan imza geçerli değil.";
 "The signature does not fit in the space kept for it." = "İmza, ona ayrılan yere sığmıyor.";
 "The signature is gone.|one" = "{0} imza kaldırıldı.";
@@ -432,6 +437,8 @@
 "There are no tags to check. Tag the document first." = "Denetlenecek etiket yok. Önce belgeyi etiketleyin.";
 "There is no text there." = "Orada metin yok.";
 "This certificate has no private key. Choose another one or sign with a token." = "Bu sertifikanın özel anahtarı yok. Başka bir sertifika seçin ya da bir belirteçle imzalayın.";
+"This computer is offline. Connect to the internet and try again." = "Bu bilgisayar çevrimdışı. İnternete bağlanıp yeniden deneyin.";
+"This device cannot read {0} text." = "Bu aygıt {0} metnini okuyamıyor.";
 "This field is already signed. Choose another one." = "Bu alan zaten imzalı. Başka bir alan seçin.";
 "This field is not part of the form." = "Bu alan formun parçası değil.";
 "This file is certified so that nothing may change. Another signature would break that." = "Bu dosya hiçbir şey değişmeyecek şekilde onaylı. Bir imza daha bunu bozar.";
@@ -439,6 +446,7 @@
 "This kind of action cannot be set here." = "Bu tür bir işlem burada ayarlanamaz.";
 "This picture cannot be read." = "Bu resim okunamıyor.";
 "This script did not run. Only built-in format and calculate functions run." = "Bu betik çalışmadı. Yalnızca yerleşik biçim ve hesaplama işlevleri çalışır.";
+"This server is not secure (http), so it was not contacted." = "Bu sunucu güvenli değil (http), bu yüzden bağlanılmadı.";
 "This signature could not be checked." = "Bu imza denetlenemedi.";
 "This signature needs a time stamp server." = "Bu imza bir zaman damgası sunucusu gerektiriyor.";
 "This text has replacement text." = "Bu metnin yerine geçen bir metni var.";

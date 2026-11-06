@@ -112,6 +112,20 @@ final class OptimizeGrayTests: XCTestCase {
         XCTAssertFalse(result.notes.contains(OptimizeText.needsCodec))
     }
 
+    func test_jpegTheCodecCannotWriteBecomesFlateGray() throws {
+        let file = OptimizeKit.build("q 80 0 0 80 0 0 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", { pdf in
+            pdf.stream(5, "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode", OptimizeKit.tinyJpeg)
+        })
+        let codec = OptimizeFakeCodec()
+        codec.encodeFails = true
+        let result = try run(file, codec)
+        let after = try PdfDocument.open(result.bytes)
+        let dictionary = try OptimizeKit.image(after).dictionary
+        XCTAssertEqual("FlateDecode", after.name(dictionary, "Filter"))
+        XCTAssertEqual("DeviceGray", after.name(dictionary, "ColorSpace"))
+        XCTAssertEqual(16, after.integer(dictionary, "Width"))
+    }
+
     func test_jpegWhoseHeaderReadsZeroHeightIsLeft() throws {
         var jpeg = OptimizeKit.tinyJpeg
         let at = OptimizeKit.indexOf(jpeg, [0xFF, 0xC0])

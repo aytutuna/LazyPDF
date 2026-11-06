@@ -111,6 +111,7 @@ enum OptimizeKit {
 
 /// Stands for the system codecs: reads the size from a JPEG header and answers with a gradient.
 final class OptimizeFakeCodec: ImageCodec {
+    var encodeFails = false
     private(set) var decodes = 0
     private(set) var lastQuality = 0
     private(set) var lastEncoded: PdfRgbaImage?
@@ -139,6 +140,7 @@ final class OptimizeFakeCodec: ImageCodec {
     func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] {
         lastQuality = quality
         lastEncoded = image
+        if encodeFails { return [] }
         var data = Array(repeating: UInt8(0), count: 24 + image.width * image.height * quality / 100)
         data[0] = 0xFF
         data[1] = 0xD8

@@ -118,7 +118,7 @@ final class UrlSessionTransportTests: XCTestCase {
 
         L10n.english {
             XCTAssertNil(transport.get("http://crl.example/ca.crl"))
-            XCTAssertTrue(transport.lastFailure?.contains("could not be reached") == true)
+            XCTAssertTrue(transport.lastFailure?.contains("not secure") == true)
         }
         XCTAssertTrue(Stub.seen.isEmpty)
     }

@@ -26,7 +26,7 @@ public struct VisionTextRecognizer: TextRecognizer {
 
     public func recognizeAsync(_ image: PdfRgbaImage, _ language: String) async throws -> [OcrWord] {
         guard let tag = Self.supportedTag(language) else {
-            throw InvalidOperationException(L10n.t("This device cannot read {0} text yet. Add the language under Settings.", language))
+            throw InvalidOperationException(L10n.t("This device cannot read {0} text.", language))
         }
         try Task.checkCancellation()
         guard let picture = Self.picture(image) else { return [] }
@@ -37,22 +37,28 @@ public struct VisionTextRecognizer: TextRecognizer {
         request.usesLanguageCorrection = true
         let width = Double(image.width), height = Double(image.height)
 
-        let words: [OcrWord] = try await withTaskCancellationHandler {
-            try await withCheckedThrowingContinuation { continuation in
-                DispatchQueue.global(qos: .userInitiated).async {
-                    do {
-                        try VNImageRequestHandler(cgImage: picture, options: [:]).perform([request])
-                        continuation.resume(returning: Self.words(request.results ?? [], width, height))
-                    } catch {
-                        continuation.resume(throwing: error)
+        do {
+            let words: [OcrWord] = try await withTaskCancellationHandler {
+                try await withCheckedThrowingContinuation { continuation in
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        do {
+                            try VNImageRequestHandler(cgImage: picture, options: [:]).perform([request])
+                            continuation.resume(returning: Self.words(request.results ?? [], width, height))
+                        } catch {
+                            continuation.resume(throwing: error)
+                        }
                     }
                 }
+            } onCancel: {
+                request.cancel()
             }
-        } onCancel: {
-            request.cancel()
+            try Task.checkCancellation()
+            return words
+        } catch {
+            // A cancelled request fails with Vision's own error; the caller is promised CancellationError.
+            if Task.isCancelled { throw CancellationError() }
+            throw error
         }
-        try Task.checkCancellation()
-        return words
     }
 
     // Vision's boxes are fractions of the picture with the origin at the bottom left.

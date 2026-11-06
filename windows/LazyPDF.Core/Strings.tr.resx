@@ -5368,6 +5368,9 @@
   <data name="This computer is offline. Connect to the internet and try again." xml:space="preserve">
     <value>Bu bilgisayar çevrimdışı. İnternete bağlanıp yeniden deneyin.</value>
   </data>
+  <data name="This device cannot read {0} text." xml:space="preserve">
+    <value>Bu aygıt {0} metnini okuyamıyor.</value>
+  </data>
   <data name="This field does not take that value. Check it and try again." xml:space="preserve">
     <value>Bu alan bu değeri kabul etmiyor. Değeri kontrol edip yeniden deneyin.</value>
   </data>
@@ -5496,6 +5499,9 @@
   </data>
   <data name="This script did not run. Only built-in format and calculate functions run." xml:space="preserve">
     <value>Bu betik çalışmadı. Yalnızca yerleşik biçim ve hesaplama işlevleri çalışır.</value>
+  </data>
+  <data name="This server is not secure (http), so it was not contacted." xml:space="preserve">
+    <value>Bu sunucu güvenli değil (http), bu yüzden bağlanılmadı.</value>
   </data>
   <data name="This shape has no fill. Use the line colour instead." xml:space="preserve">
     <value>Bu şeklin dolgusu yok. Çizgi rengini kullanın.</value>

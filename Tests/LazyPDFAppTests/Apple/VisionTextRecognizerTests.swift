@@ -53,10 +53,9 @@ final class VisionTextRecognizerTests: XCTestCase {
         let recognizer = self.recognizer
 
         let task = Task { () -> [OcrWord] in
-            try await Task.sleep(nanoseconds: 50_000_000)
+            withUnsafeCurrentTask { $0?.cancel() }
             return try await recognizer.recognizeAsync(blank, "en-US")
         }
-        task.cancel()
 
         do {
             _ = try await task.value
