@@ -54,8 +54,12 @@ final class CmsSignature {
             var signer = try signers.readSequence()
             try result.readSigner(&signer)
             result.signerCount = 1
-            // Bytes after the first signer that are no signer are not counted: CmsSignature.Parse reads the first one only.
-            while signers.hasData, (try? signers.readEncodedValue()) != nil { result.signerCount += 1 }
+            // CmsSignature.Parse reads the first signer only and the main signature goes on with that. SignedCms.Decode
+            // fails on a tail that is no signer, which the time stamp path counts as one more signer.
+            while signers.hasData {
+                result.signerCount += 1
+                if (try? signers.readEncodedValue()) == nil { break }
+            }
             return result
         } catch {
             return nil

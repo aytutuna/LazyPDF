@@ -5,9 +5,23 @@ import XCTest
 // (2000) and its loader accepts (at most 300 000 for the MAC and for each key derivation).
 
 final class Pkcs12WriterTests: XCTestCase {
-    private func written() throws -> [UInt8] {
+    /// The salts and vectors of the golden file: 0, 1, 2 and so on, a byte more for each.
+    private func counting() -> (Int) -> [UInt8] {
+        var next: UInt8 = 0
+        return { count in
+            (0..<count).map { _ in
+                defer { next &+= 1 }
+                return next
+            }
+        }
+    }
+
+    private func written(fixed: Bool = false) throws -> [UInt8] {
         let certificate = try XCTUnwrap(X509Certificate(SignatureFixtures.read("id-cert.der")))
-        return try Pkcs12Writer.write(certificate, SignatureFixtures.read("id-key.pkcs1"), password: SignatureFixtures.password)
+        let key = try SignatureFixtures.read("id-key.pkcs1")
+        return fixed
+            ? try Pkcs12Writer.write(certificate, key, password: SignatureFixtures.password, random: counting())
+            : try Pkcs12Writer.write(certificate, key, password: SignatureFixtures.password)
     }
 
     private func macIterations(_ pfx: [UInt8]) throws -> Int {
@@ -51,12 +65,14 @@ final class Pkcs12WriterTests: XCTestCase {
         XCTAssertFalse(hex.contains("2A864886F70D010C0106"))
     }
 
-    func test_theFixtureTheCSharpOpensHoldsTheSameStructure() throws {
+    func test_theWriterWithFixedBytesMakesTheFileTheCSharpOpens() throws {
+        let made = try written(fixed: true)
         if ProcessInfo.processInfo.environment["LAZYPDF_WRITE_GOLDEN"] == "1" {
-            try Data(written()).write(to: SignatureFixtures.folder.appendingPathComponent("swift-export.pfx"))
+            try Data(made).write(to: SignatureFixtures.folder.appendingPathComponent("swift-export.pfx"))
         }
         let fixture = try SignatureFixtures.read("swift-export.pfx")
 
+        XCTAssertEqual(made, fixture)
         XCTAssertEqual(try macIterations(fixture), 2000)
         XCTAssertEqual(try derivationIterations(fixture), [2000, 2000])
     }

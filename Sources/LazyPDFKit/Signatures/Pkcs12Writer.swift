@@ -21,7 +21,7 @@ enum Pkcs12Writer {
 
     /// The certificate and its key, an RSA key as its PKCS#1 form and a P-256 key as the X9.63 point and scalar that
     /// Security.framework gives for it, in a PFX file protected by `password`.
-    static func write(_ certificate: X509Certificate, _ key: [UInt8], password: String) throws -> [UInt8] {
+    static func write(_ certificate: X509Certificate, _ key: [UInt8], password: String, random: (Int) -> [UInt8] = SignatureCrypto.randomBytes) throws -> [UInt8] {
         guard let pkcs8 = privateKeyInfo(certificate, key) else { throw SignatureCryptoException(message: "The key is of a kind a PFX file is not written for.") }
         let id = Sha1.hash(certificate.rawData)
         let attributes = DerWriter.set([DerWriter.sequence([DerWriter.oid(localKeyId), DerWriter.set([DerWriter.octetString(id)])])])
@@ -34,14 +34,14 @@ enum Pkcs12Writer {
             ])),
             attributes,
         ])])
-        let (certificateAlgorithm, certificateCipher) = try protect(certificateSafe, password)
+        let (certificateAlgorithm, certificateCipher) = try protect(certificateSafe, password, random)
         let encrypted = DerWriter.sequence([
             DerWriter.integer(0),
             DerWriter.sequence([DerWriter.oid(Oids.data), certificateAlgorithm, DerWriter.node(0x80, certificateCipher)]),
         ])
         let wrappedEncrypted = DerWriter.sequence([DerWriter.oid(encryptedData), DerWriter.context(0, constructed: true, encrypted)])
 
-        let (keyAlgorithm, keyCipher) = try protect(pkcs8, password)
+        let (keyAlgorithm, keyCipher) = try protect(pkcs8, password, random)
         let keySafe = DerWriter.sequence([DerWriter.sequence([
             DerWriter.oid(keyBag),
             DerWriter.context(0, constructed: true, DerWriter.sequence([keyAlgorithm, DerWriter.octetString(keyCipher)])),
@@ -50,7 +50,7 @@ enum Pkcs12Writer {
         let wrappedKeys = DerWriter.sequence([DerWriter.oid(Oids.data), DerWriter.context(0, constructed: true, DerWriter.octetString(keySafe))])
 
         let safe = DerWriter.sequence([wrappedEncrypted, wrappedKeys])
-        let macSalt = SignatureCrypto.randomBytes(16)
+        let macSalt = random(16)
         let macKey = try derivedMacKey(password, macSalt)
         let mac = hmac(macKey, safe)
         return DerWriter.sequence([
@@ -81,8 +81,8 @@ enum Pkcs12Writer {
     }
 
     // PBES2 of RFC 8018: the AlgorithmIdentifier that says how, and the data encrypted.
-    private static func protect(_ data: [UInt8], _ password: String) throws -> ([UInt8], [UInt8]) {
-        let salt = SignatureCrypto.randomBytes(16), iv = SignatureCrypto.randomBytes(16)
+    private static func protect(_ data: [UInt8], _ password: String, _ random: (Int) -> [UInt8]) throws -> ([UInt8], [UInt8]) {
+        let salt = random(16), iv = random(16)
         guard let key = pbkdf2(Array(password.utf8), salt) else { throw SignatureCryptoException(message: "The key could not be derived.") }
         let cipher = Aes(key: key).encryptCbc(Aes.padded(data), iv: iv)
         let derivation = DerWriter.sequence([

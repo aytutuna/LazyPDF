@@ -196,7 +196,9 @@ enum CertificateTrust {
         var below = 0
         for _ in 0..<maxChain {
             if time < current.notBefore || time > current.notAfter { flags.insert(.notTimeValid) }
-            // Only a root ends a chain as trusted; an anchor that was issued by another certificate leaves it partial.
+            // The chain ends at the first anchor, as X509Chain ends it: a root, whose own signature has to hold (a root whose
+            // signature cannot be checked here, such as one signed with MD5, is not trusted), and not an intermediate or a
+            // link certificate, which leave it partial.
             if anchors.contains(where: { $0.sameBytes(current) }) {
                 if !current.isSelfIssued { flags.insert(.partialChain) } else if !signs(current, current) { flags.insert(.notSignatureValid) }
                 return (elements, flags)
@@ -227,8 +229,35 @@ enum CertificateTrust {
 
     /// Whether `issuer` made the signature on `certificate`.
     static func signs(_ issuer: X509Certificate, _ certificate: X509Certificate) -> Bool {
+        if certificate.signatureAlgorithm == Oids.rsaPss { return signsWithPss(issuer, certificate) }
         let algorithm = Oids.digestName(OcspResponse.digestOf(certificate.signatureAlgorithm)) ?? .sha256
         return CmsVerifier.verifyRaw(issuer, certificate.signatureAlgorithm, certificate.signatureValue, certificate.tbsCertificate, algorithm)
+    }
+
+    // RSASSA-PSS-params (RFC 4055), as for a signature in a CMS: the salt as long as the digest, which is what .NET and
+    // Security.framework check; a different salt is not checked here, so it does not hold.
+    private static func signsWithPss(_ issuer: X509Certificate, _ certificate: X509Certificate) -> Bool {
+        var algorithm = HashAlgorithmName.sha1
+        var salt = 20
+        do {
+            var reader = AsnReader(certificate.signatureParameters)
+            var parameters = try reader.readSequence()
+            while parameters.hasData {
+                let tag = try parameters.peekTag()
+                var field = try parameters.readSequence(tag)
+                if tag.value == 0 {
+                    var identifier = try field.readSequence()
+                    guard let named = Oids.digestName(try identifier.readObjectIdentifier()) else { return false }
+                    algorithm = named
+                } else if tag.value == 2 {
+                    salt = try field.readInt()
+                }
+            }
+        } catch {
+            return false
+        }
+        let hash = CmsBuilder.hashData(algorithm, certificate.tbsCertificate)
+        return salt == hash.count && SignatureCrypto.verifyRsa(issuer, hash, algorithm, certificate.signatureValue, pss: true) == true
     }
 
     // A certificate that issues others is a CA allowed to sign certificates, and has room for the ones below it.

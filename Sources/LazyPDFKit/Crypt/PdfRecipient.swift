@@ -9,11 +9,26 @@ import Security
 /// C#'s X509Certificate2, which carries both.
 public struct PdfCertificate {
     public let certificate: SecCertificate
-    public let privateKey: SecKey?
+    private let key: SecKey?
+
+    /// The key, after what keeps it usable (the keychain it was imported into, see `X509Certificate.keyHolder`) has been
+    /// told it is wanted.
+    public var privateKey: SecKey? {
+        keyHolder?.prepare()
+        return key
+    }
+
+    /// Kept so that it lives as long as the certificate does.
+    let keyHolder: KeyHolder?
 
     public init(certificate: SecCertificate, privateKey: SecKey? = nil) {
+        self.init(certificate: certificate, privateKey: privateKey, keyHolder: nil)
+    }
+
+    init(certificate: SecCertificate, privateKey: SecKey?, keyHolder: KeyHolder?) {
         self.certificate = certificate
-        self.privateKey = privateKey
+        self.key = privateKey
+        self.keyHolder = keyHolder
     }
 }
 

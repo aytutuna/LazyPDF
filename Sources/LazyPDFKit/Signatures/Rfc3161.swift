@@ -98,7 +98,9 @@ final class Rfc3161Token {
         guard cms.signerCount == 1 else { return nil }
         let embedded = cms.findSigner()
         guard essAccepts(cms, embedded) else { return nil }
-        if let embedded, !isAuthority(embedded) { return nil }
+        if let embedded {
+            guard isAuthority(embedded), CmsVerifier.check(cms, embedded, { SignatureCrypto.hash($0, content) }) == .ok else { return nil }
+        }
         do {
             var outer = AsnReader(content)
             var info = try outer.readSequence()
@@ -179,7 +181,8 @@ final class Rfc3161Token {
             var algorithm = version2 ? HashAlgorithmName.sha256 : .sha1
             if version2, try id.peekTag().value == AsnUniversal.sequence {
                 var named = try id.readSequence()
-                algorithm = Oids.digestName(try named.readObjectIdentifier()) ?? .sha256
+                guard let known = Oids.digestName(try named.readObjectIdentifier()) else { return nil }
+                algorithm = known
             }
             let hash = try id.readOctetString()
             guard id.hasData else { return (algorithm, hash, nil) }
@@ -187,8 +190,10 @@ final class Rfc3161Token {
             var names = try named.readSequence()
             var directory = try names.readSequence(.context(4, constructed: true))
             let issuer = try directory.readEncodedValue()
-            guard !names.hasData else { return nil }
-            return (algorithm, hash, (issuer, try named.readInteger()))
+            guard !directory.hasData, !names.hasData else { return nil }
+            let serial = try named.readInteger()
+            guard !named.hasData, !id.hasData else { return nil }
+            return (algorithm, hash, (issuer, serial))
         } catch {
             return nil
         }

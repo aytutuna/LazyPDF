@@ -128,8 +128,13 @@ final class TemporaryKeychain: KeyHolder {
     static func removeStale() {
         let folder = NSTemporaryDirectory()
         for name in (try? FileManager.default.contentsOfDirectory(atPath: folder)) ?? [] where name.hasPrefix(prefix) && name.contains(".keychain") {
-            let digits = name.dropFirst(prefix.count).prefix { $0.isNumber }
-            guard let pid = Int32(digits), pid != ProcessInfo.processInfo.processIdentifier, kill(pid, 0) != 0, errno == ESRCH else { continue }
+            // lazypdf-<process number>-<UUID>.keychain: a name of any other shape is not ours to remove.
+            let rest = name.dropFirst(prefix.count)
+            let digits = rest.prefix { $0.isASCII && $0.isNumber }
+            let tail = rest.dropFirst(digits.count)
+            guard let pid = Int32(digits), tail.hasPrefix("-"), let end = tail.range(of: ".keychain"),
+                  UUID(uuidString: String(tail[tail.index(after: tail.startIndex)..<end.lowerBound])) != nil,
+                  pid != ProcessInfo.processInfo.processIdentifier, kill(pid, 0) != 0, errno == ESRCH else { continue }
             try? FileManager.default.removeItem(atPath: folder + name)
         }
     }

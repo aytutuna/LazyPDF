@@ -133,14 +133,36 @@ final class DigitalIdTests: XCTestCase {
         let folder = NSTemporaryDirectory()
         let gone = folder + "lazypdf-999999-" + UUID().uuidString + ".keychain"
         let ours = folder + "lazypdf-\(ProcessInfo.processInfo.processIdentifier)-" + UUID().uuidString + ".keychain"
-        XCTAssertTrue(FileManager.default.createFile(atPath: gone, contents: Data([1])))
-        XCTAssertTrue(FileManager.default.createFile(atPath: ours, contents: Data([1])))
-        defer { try? FileManager.default.removeItem(atPath: ours) }
+        // The name an earlier version gave: no process number, and a UUID that may start with digits.
+        let earlier = folder + "lazypdf-12345678-1234-1234-1234-123456789ABC.keychain-db"
+        for path in [gone, ours, earlier] { XCTAssertTrue(FileManager.default.createFile(atPath: path, contents: Data([1]))) }
+        defer { for path in [ours, earlier] { try? FileManager.default.removeItem(atPath: path) } }
 
         _ = try XCTUnwrap(TemporaryKeychain("pass word"))
 
         XCTAssertFalse(FileManager.default.fileExists(atPath: gone))
         XCTAssertTrue(FileManager.default.fileExists(atPath: ours))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: earlier))
+    }
+
+    func test_theCertificateOfAFileKeepsTheKeychainOfTheIdAndUnlocksItForTheKey() throws {
+        let id = try PdfDigitalId.create("Ada Lovelace", nil, start, keyBits: 2048)
+        var loaded: X509Certificate? = try PdfDigitalId.importPfxThroughKeychain(PdfDigitalId.exportPfx(id, "pass word"), "pass word")
+        let (path, keychain): (String, SecKeychain) = try {
+            let holder = try XCTUnwrap(loaded?.keyHolder as? TemporaryKeychain)
+            return (holder.path, holder.keychain)
+        }()
+        let sec = try XCTUnwrap(SecCertificateCreateWithData(nil, Data(try XCTUnwrap(loaded).rawData) as CFData))
+        var certificate: PdfCertificate? = PdfCertificate(certificate: sec, privateKey: try XCTUnwrap(loaded).privateKey, keyHolder: loaded?.keyHolder)
+        loaded = nil
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: path))
+        SecKeychainLock(keychain)
+        let key = try XCTUnwrap(certificate?.privateKey)
+        XCTAssertNotNil(SecKeyCreateSignature(key, .rsaSignatureDigestPKCS1v15SHA256, Data(Sha256.hash([1])) as CFData, nil))
+        certificate = nil
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: path))
     }
     #endif
 

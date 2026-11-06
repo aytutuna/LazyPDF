@@ -35,7 +35,7 @@ public enum PdfSignatureVerifier {
     private static func open(_ pdf: [UInt8], _ options: VerifyOptions) throws -> PdfDocument {
         #if canImport(Security)
         if let certificate = options.certificate, let sec = SecCertificateCreateWithData(nil, Data(certificate.rawData) as CFData) {
-            return try PdfDocument.open(pdf, certificate: PdfCertificate(certificate: sec, privateKey: certificate.privateKey))
+            return try PdfDocument.open(pdf, certificate: PdfCertificate(certificate: sec, privateKey: certificate.privateKey, keyHolder: certificate.keyHolder))
         }
         #endif
         return try PdfDocument.open(pdf, password: options.password)
