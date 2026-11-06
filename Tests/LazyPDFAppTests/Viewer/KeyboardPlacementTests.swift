@@ -8,7 +8,7 @@ import LazyPDFKit
 // to the views and the tools, and are not ported here.
 
 final class KeyboardPlacementTests: XCTestCase {
-    func test_enterStartsInTheMiddleOfThePageInView() throws {
+    func test_enterThenEnterClicksInTheMiddleOfThePageInView() throws {
         let surface = try OpenSurface(pages: 2)
         let size = surface.state.pageSize(0)
 

@@ -52,6 +52,14 @@ final class TileSchedulerTests: XCTestCase {
             }
         }
 
+        func finishAll() {
+            lock.lock()
+            let all = held
+            held.removeAll()
+            lock.unlock()
+            for item in all { item.resume.resume(returning: nil) }
+        }
+
         func finish(_ page: Int) {
             lock.lock()
             let resume = held.first { $0.page == page }?.resume
@@ -67,7 +75,7 @@ final class TileSchedulerTests: XCTestCase {
     func test_theLowestPriorityNumberIsDrawnFirst() async {
         let gate = Gate(image)
         let scheduler = makeScheduler(gate, workers: 1)
-        defer { scheduler.dispose() }
+        defer { scheduler.dispose(); gate.finishAll() }
 
         scheduler.want([(tile(1), 30), (tile(2), 10), (tile(3), 20)])
         await until { gate.started.count == 1 }
@@ -82,7 +90,7 @@ final class TileSchedulerTests: XCTestCase {
     func test_whatIsNotWantedAnyMoreIsNeverDrawn() async {
         let gate = Gate(image)
         let scheduler = makeScheduler(gate, workers: 1)
-        defer { scheduler.dispose() }
+        defer { scheduler.dispose(); gate.finishAll() }
         scheduler.want([(tile(1), 1), (tile(2), 2), (tile(3), 3)])
         await until { gate.started.count == 1 }
 
@@ -97,7 +105,7 @@ final class TileSchedulerTests: XCTestCase {
         let gate = Gate(image)
         let delivered = Log<Int>()
         let scheduler = makeScheduler(gate, workers: 1, delivered: delivered)
-        defer { scheduler.dispose() }
+        defer { scheduler.dispose(); gate.finishAll() }
         scheduler.want([(tile(1), 1), (tile(2), 2)])
         await until { gate.started.count == 1 }
 
@@ -115,7 +123,7 @@ final class TileSchedulerTests: XCTestCase {
         let gate = Gate(image)
         let delivered = Log<Int>()
         let scheduler = makeScheduler(gate, workers: 1, delivered: delivered)
-        defer { scheduler.dispose() }
+        defer { scheduler.dispose(); gate.finishAll() }
         scheduler.want([(tile(1), 1)])
         await until { gate.started.count == 1 }
         scheduler.want([])
@@ -130,7 +138,7 @@ final class TileSchedulerTests: XCTestCase {
     func test_severalWorkersDrawAtTheSameTime() async {
         let gate = Gate(image)
         let scheduler = makeScheduler(gate, workers: 3)
-        defer { scheduler.dispose() }
+        defer { scheduler.dispose(); gate.finishAll() }
 
         scheduler.want([(tile(1), 1), (tile(2), 2), (tile(3), 3), (tile(4), 4)])
 

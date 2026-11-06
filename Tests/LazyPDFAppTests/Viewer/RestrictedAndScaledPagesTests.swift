@@ -19,7 +19,8 @@ final class RestrictedAndScaledPagesTests: XCTestCase {
         return Array(text.utf8)
     }
 
-    func test_aUserUnitPageIsLaidOutAtItsRealSize() throws {
+    // TODO: the PDFKit renderer piece ports the renderer.pageSize test and applies UserUnit there; PDFKit page bounds ignore it.
+    func test_theEngineSizeOfAUserUnitPageIsItsRealSize() throws {
         let session = try PdfEditSession.open(blackPage(2))
 
         let sizes = PageSurfaceState.pageSizes(session.document, nil)

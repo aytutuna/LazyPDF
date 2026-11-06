@@ -97,7 +97,6 @@ public struct PageSurfaceState {
         document.pages.map { $0.reference.number }
     }
 
-    // MARK: Showing a document
 
     /// Shows a document. `zoom` and `fit` are what the tab remembers: a zoom with no fit is kept, anything else fits the width
     /// unless the tab was fitted to the page.
@@ -172,7 +171,6 @@ public struct PageSurfaceState {
         }
     }
 
-    // MARK: Options
 
     public mutating func setZoom(_ zoom: Double, around: ViewPoint? = nil) -> SurfaceChange {
         collecting { s in
@@ -249,7 +247,8 @@ public struct PageSurfaceState {
     }
 
     public mutating func setPixelsPerDip(_ value: Double) -> SurfaceChange {
-        collecting { s in
+        guard value > 0, value.isFinite else { return [] }
+        return collecting { s in
             s.pixelsPerDip = value
             let anchor = s.anchorAt(.zero)
             s.rebuild(nil, .zero, anchor)
@@ -273,7 +272,6 @@ public struct PageSurfaceState {
         return fit == .width ? ZoomMath.fitWidth(spread.width, room) : ZoomMath.fitPage(spread, room)
     }
 
-    // MARK: Layout
 
     // A point on a page that stays where it is on screen while the layout around it changes.
     private struct Anchor {
@@ -324,7 +322,6 @@ public struct PageSurfaceState {
         return (page, PageSpace.toPage(contentMatrix(page)).transform(content))
     }
 
-    // MARK: Going places
 
     /// Scrolls to a page. With `at` (page space) that point comes to the top of the view, whatever the rotation.
     public mutating func goToPage(_ page: Int, at: ViewPoint? = nil) -> SurfaceChange {
@@ -397,7 +394,7 @@ public struct PageSurfaceState {
 
     private mutating func clampOffset() {
         // Whole device pixels, so tiles keep their sharpness while scrolling.
-        let ppd = pixelsPerDip
+        let ppd = Swift.max(pixelsPerDip, 1e-6)
         offsetX = (Swift.min(Swift.max(offsetX, 0), Swift.max(0, layout.extent.width - viewport.width)) * ppd).rounded(.toNearestOrEven) / ppd
         offsetY = (Swift.min(Swift.max(offsetY, 0), Swift.max(0, layout.extent.height - viewport.height)) * ppd).rounded(.toNearestOrEven) / ppd
     }

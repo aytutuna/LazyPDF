@@ -35,6 +35,23 @@ final class OpenSurface {
 }
 
 final class PageSurfaceTests: XCTestCase {
+    func test_aZeroPixelDensityIsIgnored() throws {
+        let surface = try OpenSurface(pages: 3)
+        _ = surface.state.scrollBy(0, 50)
+
+        _ = surface.state.setPixelsPerDip(0)
+        _ = surface.state.scrollBy(0, 10)
+
+        XCTAssertTrue(surface.state.offsetY.isFinite)
+        XCTAssertTrue(surface.state.offsetX.isFinite)
+        XCTAssertFalse(surface.state.viewRect.isEmpty)
+    }
+
+    func test_anEmptyRectHasNoRightOrBottom() {
+        XCTAssertEqual(ViewRect.empty.right, -.infinity)
+        XCTAssertEqual(ViewRect.empty.bottom, -.infinity)
+    }
+
     func test_aFileOpensFittedToTheWidth() throws {
         let surface = try OpenSurface(pages: 3)
 
