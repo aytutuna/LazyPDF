@@ -7,7 +7,7 @@ import XCTest
 final class TurkishAndFontTests: XCTestCase {
     func test_turkishLettersComeFromTheFontSourceAndAreReported() throws {
         let session = try EditKit.session("BT /F1 12 Tf 50 700 Td (Hello world) Tj ET")
-        let editor = PageEditor(session, 0, EditArialSource())
+        let editor = try PageEditor(session, 0, EditArialSource())
         let result = try editor.replaceText(try EditKit.find(session, "world"), "dünya ğışŞİ")
         XCTAssertTrue(result.done, result.problem ?? "")
         XCTAssertFalse(result.substitutions.isEmpty)

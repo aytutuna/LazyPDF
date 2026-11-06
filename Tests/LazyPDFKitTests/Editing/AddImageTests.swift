@@ -19,7 +19,7 @@ final class AddImageTests: XCTestCase {
 
     func test_aDecodedPictureThatDoesNotFitIsRefusedNotThrown() throws {
         let session = try EditKit.session("q 1 0 0 rg 0 0 50 50 re f Q")
-        let editor = PageEditor(session, 0, nil, HugeCodec())
+        let editor = try PageEditor(session, 0, nil, HugeCodec())
 
         let result = try editor.addImage(PdfRect(100, 500, 300, 600), [1])
 
@@ -29,7 +29,7 @@ final class AddImageTests: XCTestCase {
 
     func test_thePictureKeepsItsShapeAndSitsInTheMiddleOfTheBox() throws {
         let session = try EditKit.session("q 1 0 0 rg 0 0 50 50 re f Q")
-        let editor = PageEditor(session, 0, nil, SquareCodec())
+        let editor = try PageEditor(session, 0, nil, SquareCodec())
 
         let result = try editor.addImage(PdfRect(100, 500, 300, 600), [1])
 
@@ -40,11 +40,11 @@ final class AddImageTests: XCTestCase {
 
     func test_onATurnedPageThePictureIsStillUprightInTheBox() throws {
         let session = try EditKit.session("q 1 0 0 rg 0 0 50 50 re f Q", "/Rotate 90")
-        let editor = PageEditor(session, 0, nil, SquareCodec())
+        let editor = try PageEditor(session, 0, nil, SquareCodec())
 
         XCTAssertTrue(try editor.addImage(PdfRect(100, 500, 300, 600), [1]).done)
 
-        let bounds = try assertSingle(editor.objects.compactMap { $0 as? ImageObject }).bounds
+        let bounds = try assertSingle(try editor.objects.compactMap { $0 as? ImageObject }).bounds
         XCTAssertEqual(bounds.width, 100, accuracy: 0.05)
         XCTAssertEqual(bounds.height, 100, accuracy: 0.05)
         XCTAssertEqual((bounds.left + bounds.right) / 2, 200, accuracy: 0.05)
@@ -53,7 +53,7 @@ final class AddImageTests: XCTestCase {
 
     func test_bytesNoCodecReadAreRefusedAndNothingIsCommitted() throws {
         let session = try EditKit.session("q 1 0 0 rg 0 0 50 50 re f Q")
-        let editor = PageEditor(session, 0, nil, SquareCodec())
+        let editor = try PageEditor(session, 0, nil, SquareCodec())
 
         let result = try editor.addImage(PdfRect(100, 500, 300, 600), [])
 

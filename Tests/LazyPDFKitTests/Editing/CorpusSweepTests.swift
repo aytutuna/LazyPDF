@@ -43,7 +43,7 @@ final class CorpusSweepTests: XCTestCase {
             opened += 1
             for p in 0..<min(session.document.pages.count, pagesPerFile) {
                 try run("set again", p, session, count) { editor in
-                    guard let block = editor.objects.compactMap({ $0 as? TextObject }).first(where: { $0.lines.count > 1 && !$0.isTable }) else { return nil }
+                    guard let block = try editor.objects.compactMap({ $0 as? TextObject }).first(where: { $0.lines.count > 1 && !$0.isTable }) else { return nil }
                     let before = words(session.document, p)
                     let result = try editor.replaceParagraph(block, replaceLineEndings(block.text))
                     if !result.done { return "refused: " + (result.problem ?? "") }
@@ -54,34 +54,34 @@ final class CorpusSweepTests: XCTestCase {
                     return "words changed (lost \(min(lost, 3)), gained \(min(gained, 3)))"
                 }
                 try run("bigger", p, session, count) { editor in
-                    editor.text.lines.isEmpty ? nil : done(try editor.setTextStyle([editor.text.lines[0].range], TextStyleChange(size: 14, color: RgbColor(200, 0, 0))))
+                    try editor.text.lines.isEmpty ? nil : done(try editor.setTextStyle([try editor.text.lines[0].range], TextStyleChange(size: 14, color: RgbColor(200, 0, 0))))
                 }
                 try run("align", p, session, count) { editor in
-                    guard let block = editor.objects.compactMap({ $0 as? TextObject }).first(where: { $0.lines.count > 1 }) else { return nil }
+                    guard let block = try editor.objects.compactMap({ $0 as? TextObject }).first(where: { $0.lines.count > 1 }) else { return nil }
                     return done(try editor.setAlignment(block, .right))
                 }
                 try run("spacing", p, session, count) { editor in
-                    guard let block = editor.objects.compactMap({ $0 as? TextObject }).first(where: { $0.lines.count > 1 && $0.lineSpacing > 0 }) else { return nil }
+                    guard let block = try editor.objects.compactMap({ $0 as? TextObject }).first(where: { $0.lines.count > 1 && $0.lineSpacing > 0 }) else { return nil }
                     return done(try editor.setLineSpacing(block, block.lineSpacing * 1.5))
                 }
                 try run("delete word", p, session, count) { editor in
-                    editor.text.words.isEmpty ? nil : done(try editor.deleteText(editor.text.words[0].range))
+                    try editor.text.words.isEmpty ? nil : done(try editor.deleteText(try editor.text.words[0].range))
                 }
                 try run("text box", p, session, count) { editor in
                     done(try editor.addTextBox(PdfRect(50, 50, 250, 120), "Added text, wrapped in its box."))
                 }
                 try run("delete objects", p, session, count) { editor in
-                    editor.objects.isEmpty ? nil : done(try editor.delete(Array(editor.objects.prefix(3))))
+                    try editor.objects.isEmpty ? nil : done(try editor.delete(Array(try editor.objects.prefix(3))))
                 }
                 try run("rotate", p, session, count) { editor in
-                    editor.objects.isEmpty ? nil : done(try editor.rotate(Array(editor.objects.prefix(3)), 25))
+                    try editor.objects.isEmpty ? nil : done(try editor.rotate(Array(try editor.objects.prefix(3)), 25))
                 }
                 try run("opacity", p, session, count) { editor in
-                    let paths = Array(editor.objects.compactMap { $0 as? PathObject }.prefix(2))
+                    let paths = Array(try editor.objects.compactMap { $0 as? PathObject }.prefix(2))
                     return paths.isEmpty ? nil : done(try editor.setOpacity(paths, 0.5))
                 }
                 try run("order", p, session, count) { editor in
-                    guard let o = editor.objects.first(where: { $0 is ImageObject || $0 is PathObject }) else { return nil }
+                    guard let o = try editor.objects.first(where: { $0 is ImageObject || $0 is PathObject }) else { return nil }
                     return done(try editor.order(o, .front))
                 }
             }
@@ -106,7 +106,7 @@ final class CorpusSweepTests: XCTestCase {
         var outcome: String?
         let repairs = session.document.repairs.count
         do {
-            outcome = try change(PageEditor(session, page, EditArialSource()))
+            outcome = try change(try PageEditor(session, page, EditArialSource()))
             if let found = outcome, found.hasPrefix("ok") {
                 let document = try PdfDocument.open(session.current)
                 _ = TextPage.create(document, document.pages[page])

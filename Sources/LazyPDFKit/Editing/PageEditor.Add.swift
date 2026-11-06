@@ -45,7 +45,7 @@ extension PageEditor {
     public func addTextBox(_ box: PdfRect, _ text: String, _ style: TextBoxStyle? = nil) throws -> TextEditResult {
         let style = style ?? TextBoxStyle()
         if box.isEmpty || text.isEmpty { return .failed(EditingText.tooBig) }
-        let model = self.model
+        let model = try self.model
         let batch = EditBatch(model.document, model.page, model.scan)
         let embedder = PdfFontEmbedder(model.document, fonts)
         guard let draw = try embedder.add(style.family, style.style, [text]) else { return .failed(EditingText.noFont) }
@@ -96,7 +96,7 @@ extension PageEditor {
     /// proportions. JPEG data is embedded as it is; other files go through the editor's `ImageCodec`.
     public func addImage(_ box: PdfRect, _ file: [UInt8]) throws -> ObjectEditResult {
         if box.isEmpty { return ObjectEditResult(0, [SkippedObject(id: -1, reason: EditingText.tooBig)]) }
-        let model = self.model
+        let model = try self.model
         guard let added = try ObjectEditor.addPicture(model.document, file, codec) else {
             return ObjectEditResult(0, [SkippedObject(id: -1, reason: EditingText.noImage)])
         }
@@ -147,7 +147,7 @@ extension PageEditor {
 
     private func addShape(_ label: String, _ style: ShapeStyle, _ path: (ContentWriter) -> Void, _ stroke: Bool, _ fill: Bool) throws -> ObjectEditResult {
         if !stroke && !fill { return ObjectEditResult(0, [SkippedObject(id: -1, reason: EditingText.nothingChanged)]) }
-        let model = self.model
+        let model = try self.model
         let batch = EditBatch(model.document, model.page, model.scan)
         let w = ContentWriter().save()
         var resources: [(category: String, name: String, value: PdfObject)] = []

@@ -25,18 +25,30 @@ final class AttachmentLimitTests: CompareTestCase {
         XCTAssertTrue(change.oldText.contains("bytes stored"))
     }
 
-    func test_storedBytesPastTheBudgetAreLeftUnreadAndTheFileIsJudgedByItsContent() throws {
-        let big = [UInt8](repeating: 0, count: 257 * mib)
-        var documents: [PdfDocument] = []
-        for text in ["hello", "hello", "howdy"] {
-            let document = try doc([page("files")])
-            try PdfAttachments.add(document, "big.bin", big)
-            try PdfAttachments.add(document, "small.txt", Array(text.utf8))
-            documents.append(document)
+    // The streams are held in memory and shared, so the file is small however many bytes the budget counts.
+    private func inMemory(_ data: (Int) -> [UInt8]) throws -> PdfDocument {
+        let document = try doc([page("files")])
+        for i in 0..<6 {
+            let added = try PdfAttachments.add(document, "a\(i).bin", [1])
+            let stream = try XCTUnwrap(PdfAttachments.streamOf(document, added))
+            _ = stream.dictionary.remove("Filter")
+            stream.data = data(i)
         }
-        XCTAssertTrue(try PdfComparer.compare(documents[0], documents[1]).isIdentical)
-        let change = try single(try PdfComparer.compare(documents[0], documents[2]).changes)
-        XCTAssertTrue(try XCTUnwrap(change.detail).contains("small.txt"))
+        return document
+    }
+
+    func test_storedBytesPastTheBudgetAreNotReadAndAreNotReportedAsChanged() throws {
+        let zeros = [UInt8](repeating: 0, count: 60 * mib)
+        let longer = [UInt8](repeating: 0, count: 60 * mib + 1)
+        var other = zeros
+        other[0] = 1
+        let before = try inMemory { _ in zeros }
+        let same = try inMemory { _ in zeros }
+        // a0 to a3 are read (4 x 60 MiB fit in 256 MiB), a4 is not and has the size of the old one, a5 differs in size.
+        let after = try inMemory { $0 == 4 ? other : $0 == 5 ? longer : zeros }
+        XCTAssertTrue(try PdfComparer.compare(before, same).isIdentical)
+        let change = try single(try PdfComparer.compare(before, after).changes)
+        XCTAssertTrue(try XCTUnwrap(change.detail).contains("a5.bin"))
     }
 
     func test_unfilteredFilesOverTheCapDoNotUseUpTheBudget() throws {

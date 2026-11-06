@@ -112,7 +112,7 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
         // An edit taken back removes its resources; a stand-in named by one is no longer there.
         bool known = _stand.TryGetValue(key, out var stand) && batch.HasResource(place, stand.Name);
         if (!known) stand = (null!, "", "");
-        if (!known || !needed.All(c => stand.Covered.Contains(c)))
+        if (!known || !needed.EnumerateRunes().All(stand.Covered.EnumerateRunes().ToHashSet().Contains))
         {
             string covered = stand.Covered + needed;
             var (families, style) = FontMatch.For(anchor.Font);
@@ -174,7 +174,7 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
             if (next == font) return;
             Flush();
             if (next is not null) items.Add(new ShowOps(new ContentWriter().Font(next, size ?? at.FontSize).ToArray()));
-            else items.Add(new ShowOps(new ContentWriter().Add(current ?? place.States.At(at.Op).Font!).ToArray()));
+            else items.Add(new ShowOps(new ContentWriter().Add(current ?? place.States.At(at.Op).Font ?? throw new EditConflictException(EditingText.FontSetOutside)).ToArray()));
             font = next;
         }
         foreach (var piece in pieces)

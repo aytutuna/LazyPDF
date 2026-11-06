@@ -53,7 +53,7 @@ final class ContentStreamTests: XCTestCase {
 
     func test_contentAddedAtTheEndStartsFromACleanState() throws {
         let session = try split("q 3 0 0 3 0 0 cm BT /F1 12 Tf 10 100 Td (open) Tj", "5 w")
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         XCTAssertTrue(try editor.addRectangle(PdfRect(200, 300, 260, 340), ShapeStyle(stroke: RgbColor(0, 0, 0))).done)
         let bounds = try EditPaint.paths(session)[0].path.bounds
         XCTAssertEqual(bounds, PdfRect(200, 300, 260, 340))
@@ -84,8 +84,8 @@ final class ContentStreamTests: XCTestCase {
 
     func test_aPageWithNoContentHasNothingToEdit() throws {
         let session = try EditKit.session("")
-        let editor = PageEditor(session, 0)
-        XCTAssertTrue(editor.objects.isEmpty)
+        let editor = try PageEditor(session, 0)
+        XCTAssertTrue(try editor.objects.isEmpty)
         XCTAssertFalse(try editor.replaceText(TextRange(0, 3), "x").done)
         XCTAssertFalse(session.canUndo)
     }

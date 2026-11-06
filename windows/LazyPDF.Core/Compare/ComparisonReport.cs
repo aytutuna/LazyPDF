@@ -113,7 +113,7 @@ public static class ComparisonReport
             ChangeArea.Text => CompareText.KindName(change.Kind),
             _ => change.Detail ?? CompareText.KindName(change.Kind),
         };
-        return text.Length > MaxComment ? text[..MaxComment] + "..." : text;
+        return Cut(text, MaxComment);
     }
 
     /// <summary>The result as lines of text: totals, then the differences page by page, then those of the document.</summary>
@@ -162,5 +162,13 @@ public static class ComparisonReport
         return head + detail + words;
     }
 
-    private static string Shorten(string text) => text.Length > 120 ? text[..120] + "..." : text;
+    private static string Shorten(string text) => Cut(text, 120);
+
+    /// <summary>The text up to <paramref name="units"/> UTF-16 units, one less when that would cut a pair in two, then "..." when there was more.</summary>
+    private static string Cut(string text, int units)
+    {
+        if (text.Length <= units) return text;
+        if (char.IsHighSurrogate(text[units - 1])) units--;
+        return text[..units] + "...";
+    }
 }

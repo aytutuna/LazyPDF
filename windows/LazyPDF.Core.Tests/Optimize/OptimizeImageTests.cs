@@ -184,6 +184,31 @@ public class OptimizeImageTests
     }
 
     [Fact]
+    public void JpegWhoseHeaderReadsZeroHeightIsLeft()
+    {
+        string dictionary = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode";
+        var jpeg = (byte[])OptimizeKit.TinyJpeg.Clone();
+        int at = jpeg.AsSpan().IndexOf(new byte[] { 0xFF, 0xC0 });
+        jpeg[at + 5] = 0;
+        jpeg[at + 6] = 0;
+        byte[] file = OptimizeKit.Build("q 72 0 0 72 10 10 cm /Im0 Do Q", "/XObject <</Im0 5 0 R>>", pdf => pdf.Stream(5, dictionary, jpeg));
+        var image = Run(file, Downsample(8, 10), out var after, new OptimizeFakeCodec());
+        Assert.Equal(16, after.Integer(image.Dictionary, "Width"));
+        Assert.Equal(jpeg, after.RawData(image));
+    }
+
+    [Fact]
+    public void ImagePlacedWithAMatrixThatOverflowsIsLeft()
+    {
+        string big = "1" + new string('0', 300);
+        string content = $"q {big} 0 0 {big} 0 0 cm {big} 0 0 {big} 0 0 cm 0 0 0 0 0 0 cm /Im0 Do Q";
+        var samples = OptimizeKit.Gradient(200, 200, 3);
+        byte[] file = OptimizeKit.Build(content, "/XObject <</Im0 5 0 R>>", pdf => pdf.Stream(5, Dictionary(200, 200, "/DeviceRGB"), TestPdf.Deflate(samples)));
+        var image = Run(file, Downsample(72, 100), out var after);
+        Assert.Equal(200, after.Integer(image.Dictionary, "Width"));
+    }
+
+    [Fact]
     public void ImageOnlyReachedByAType3GlyphIsLeft()
     {
         var samples = OptimizeKit.Gradient(200, 200, 3);

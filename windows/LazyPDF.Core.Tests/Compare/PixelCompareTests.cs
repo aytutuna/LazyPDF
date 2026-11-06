@@ -158,6 +158,16 @@ public class PixelCompareTests
     }
 
     [Fact]
+    public void AToleranceNearTheLargestIntSeesTheWholePage()
+    {
+        var page = new Canvas(16, 16);
+        var options = new PixelOptions(Tolerance: int.MaxValue, Align: false);
+        var result = PixelComparer.Compare(page.ToImage(), page.ToImage(), 72, options);
+        Assert.Empty(result.Differences);
+        Assert.Equal(1.0, result.Similarity);
+    }
+
+    [Fact]
     public void OnePixelShiftWithinToleranceIsNoDifference()
     {
         var page = Text();

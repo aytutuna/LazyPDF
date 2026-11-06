@@ -102,7 +102,7 @@ extension TextEditor {
             let word: Double? = alignment == .justify && !last ? Self.justifyWord(pieces, right - left - width, at) : nil
             let font = Self.fontFor(anchor, anchorFont, at)
             let (before, after) = try Self.normalize(font, at, word ?? 0)
-            let items = TextBuilder.items(Self.placeOf(at), at, pieces, shift: Self.shiftAmount(at, start - line.start), before: before, after: after,
+            let items = try TextBuilder.items(Self.placeOf(at), at, pieces, shift: Self.shiftAmount(at, start - line.start), before: before, after: after,
                                           current: font ?? Self.placeOf(at).states.at(at.op).font)
             try patchOf(at).insert(at.element, at.offset, items)
             try cutAll(line.glyphs, at)
@@ -179,7 +179,7 @@ extension TextEditor {
             let along = start - referenceStart, down = Double(e + 1) * spacing
             let tm = Self.moved(reference, ux * along + uy * down, uy * along - ux * down)
             w.beginText().textMatrix(tm)
-            let items = TextBuilder.items(Self.placeOf(reference), reference, pieces, current: font ?? place.states.at(reference.op).font)
+            let items = try TextBuilder.items(Self.placeOf(reference), reference, pieces, current: font ?? place.states.at(reference.op).font)
             w.raw(Latin1.string(ShowPatch.write(items, false)))
             w.endText()
         }
@@ -314,7 +314,7 @@ extension TextEditor {
                 let vertical = (m.c * m.c + m.d * m.d).squareRoot()
                 let (ux, uy) = first.direction
                 let side = m.c * -uy + m.d * ux
-                // Math.Sign throws for NaN; a line with no usable direction is left alone.
+                // A line with no usable direction is left alone.
                 let sign = side > 0 ? 1 : side < 0 ? -1 : 0
                 if vertical < 1e-9 || sign == 0 { continue }
                 let set = ContentWriter().op("Ts", first.rise + Double(sign * k) * (old - spacing) / vertical)

@@ -72,7 +72,7 @@ final class TextBoxTests: XCTestCase {
 
     func test_aBoxWithNoAreaOrNoTextIsRefused() throws {
         let session = try EditKit.session("")
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         XCTAssertFalse(try editor.addTextBox(PdfRect(10, 10, 10, 50), "x").done)
         XCTAssertFalse(try editor.addTextBox(PdfRect(10, 10, 50, 50), "").done)
         XCTAssertFalse(session.canUndo)

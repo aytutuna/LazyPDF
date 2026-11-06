@@ -2,8 +2,7 @@ import XCTest
 @testable import LazyPDFKit
 
 // Mirrors windows/LazyPDF.Core.Tests/Editing/RotatedAndEncryptedTests.cs: the same cases. The theories are tests that
-// loop over their cases. The last assertion of EncryptedFilesAreEditedAndStayEncrypted looks for "grand" in the saved
-// bytes; the C# builds the text to look for from a Span, whose ToString never holds it, so it can only pass.
+// loop over their cases.
 
 final class RotatedAndEncryptedTests: XCTestCase {
     func test_rotatedPagesAreEditedInUserSpace() throws {
@@ -38,8 +37,25 @@ final class RotatedAndEncryptedTests: XCTestCase {
             XCTAssertTrue(reopened.isEncrypted)
             XCTAssertTrue(TextPage.create(reopened, reopened.pages[0]).text.contains("Hello grand world"))
             XCTAssertFalse(TestPdf.contains(session.current, "grand"), "\(strength)")
+            // The stream is deflated, so the text is never plain; what encryption changes is the deflated bytes themselves.
+            for stored in storedContents(reopened) { XCTAssertNil(session.current.indexOf(stored), "\(strength)") }
             XCTAssertTrue(try session.undo())
             XCTAssertTrue(TextPage.create(session.document, session.document.pages[0]).text.contains("brave"))
         }
+    }
+
+    private func storedContents(_ document: PdfDocument) -> [[UInt8]] {
+        let contents = document.resolve(document.pages[0].dictionary["Contents"])
+        let items = (contents as? PdfArray)?.items ?? [contents].compactMap { $0 }
+        let stored = items.compactMap { document.resolve($0) as? PdfStream }.map { document.rawData($0) }
+        XCTAssertFalse(stored.isEmpty)
+        return stored
+    }
+
+    func test_anUnencryptedFileHoldsTheEditedStreamAsStored() throws {
+        let session = try EditKit.session("BT /F1 12 Tf 50 700 Td (Hello brave world) Tj ET")
+        XCTAssertTrue(try PageEditor(session, 0).replaceText(try EditKit.find(session, "brave"), "grand").done)
+        let reopened = try PdfDocument.open(session.current)
+        for stored in storedContents(reopened) { XCTAssertNotNil(session.current.indexOf(stored)) }
     }
 }

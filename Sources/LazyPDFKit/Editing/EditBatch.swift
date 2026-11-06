@@ -63,11 +63,18 @@ final class EditBatch {
         let value: () -> PdfObject
     }
 
+    private struct PagePlan {
+        let parts: [Part]
+        let splices: [Splice]
+        let groups: [(lo: Int, hi: Int)]
+    }
+
     private final class Work {
         let edit: UnitEdit
         let data: [UInt8]
         let copy: Bool
         var reference: PdfReference?
+        var plan: PagePlan?
 
         init(_ edit: UnitEdit, _ data: [UInt8], _ copy: Bool) {
             self.edit = edit
@@ -249,6 +256,8 @@ final class EditBatch {
             }
         }
 
+        // A form is rewritten in place, which discard cannot take back, so the page is checked before any is written.
+        for item in work where item.edit.visit == nil { item.plan = try planPage(item.edit) }
         for item in work {
             if let visit = item.edit.visit { try writeForm(item, visit) } else { try writePage(item) }
         }
@@ -319,10 +328,8 @@ final class EditBatch {
         return stream
     }
 
-    private func writePage(_ item: Work) throws {
-        let unitEdit = item.edit
+    private func planPage(_ unitEdit: UnitEdit) throws -> PagePlan {
         let parts = readParts()
-        let items = contentItems()
         let splices = try compile(unitEdit)
         // Groups of neighbouring parts, merged when a change spans the break between them.
         var groups: [(lo: Int, hi: Int)] = []
@@ -341,6 +348,18 @@ final class EditBatch {
             kept.append(merged)
             groups = kept
         }
+        let length = scan.pageUnit.data.count
+        for g in groups where parts[g.lo].start < 0 || parts[g.hi].end > length || parts[g.lo].start > parts[g.hi].end {
+            throw EditConflictException("A change lies outside the page content.")
+        }
+        return PagePlan(parts: parts, splices: splices, groups: groups)
+    }
+
+    private func writePage(_ item: Work) throws {
+        let unitEdit = item.edit
+        guard let plan = item.plan else { return }
+        let (parts, splices, groups) = (plan.parts, plan.splices, plan.groups)
+        let items = contentItems()
         var replaced: [Int: (hi: Int, ref: PdfObject)] = [:]
         let data = scan.pageUnit.data
         for (lo, hi) in groups.sorted(by: { $0.lo < $1.lo }) {
@@ -434,14 +453,16 @@ final class EditBatch {
         var parts: [Part] = []
         let items = contentItems()
         var at = 0
+        var room = 256 << 20
         for i in 0..<items.count {
             guard let stream = document.resolve(items[i]) as? PdfStream else { continue }
             let length: Int
             do {
-                length = try document.data(stream, 256 << 20).count
+                length = try document.data(stream, room).count
             } catch {
                 continue
             }
+            room = Swift.max(0, room - length - 1)
             if !parts.isEmpty { at += 1 }
             parts.append(Part(item: i, stream: stream, start: at, end: at + length))
             at += length

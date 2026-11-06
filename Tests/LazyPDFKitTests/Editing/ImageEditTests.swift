@@ -10,15 +10,15 @@ final class ImageEditTests: XCTestCase {
     }
 
     private func open(_ session: PdfEditSession) throws -> (PdfEditSession, PageEditor) {
-        (session, PageEditor(session, 0, EditArialSource()))
+        (session, try PageEditor(session, 0, EditArialSource()))
     }
 
     private func first(_ editor: PageEditor) throws -> ImageObject {
-        try XCTUnwrap(editor.objects.compactMap { $0 as? ImageObject }.first)
+        try XCTUnwrap(try editor.objects.compactMap { $0 as? ImageObject }.first)
     }
 
     private func last(_ editor: PageEditor) throws -> ImageObject {
-        try XCTUnwrap(editor.objects.compactMap { $0 as? ImageObject }.last)
+        try XCTUnwrap(try editor.objects.compactMap { $0 as? ImageObject }.last)
     }
 
     private func round(_ m: PdfMatrix) -> PdfMatrix {
@@ -27,7 +27,7 @@ final class ImageEditTests: XCTestCase {
 
     func test_imagesAreInTheModelWithTheirPlacement() throws {
         let (_, editor) = try open()
-        let images = editor.objects.compactMap { $0 as? ImageObject }
+        let images = try editor.objects.compactMap { $0 as? ImageObject }
         XCTAssertEqual(images.count, 2)
         XCTAssertEqual(images[0].name, "Im1")
         XCTAssertEqual(images[0].width, 8)
@@ -115,7 +115,7 @@ final class ImageEditTests: XCTestCase {
 
     func test_replacingThroughTheCodecEmbedsThePixels() throws {
         let session = try EditPaint.pictures()
-        let editor = PageEditor(session, 0, nil, FakeCodec())
+        let editor = try PageEditor(session, 0, nil, FakeCodec())
         XCTAssertTrue(try editor.replaceImage(try first(editor), [1, 2, 3], false).done)
         let seen = try EditPaint.images(session)
         XCTAssertEqual(seen[0].width, 2)

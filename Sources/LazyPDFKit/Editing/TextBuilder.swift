@@ -142,7 +142,7 @@ final class TextBuilder {
         // An edit taken back removes its resources; a stand-in named by one is no longer there.
         var stand: (draw: PdfDrawFont, name: String, covered: String)?
         if let found = stands[key], batch.hasResource(place, found.name) { stand = found }
-        if let known = stand, needed.utf16.allSatisfy({ known.covered.utf16.contains($0) }) {
+        if let known = stand, needed.unicodeScalars.allSatisfy({ known.covered.unicodeScalars.contains($0) }) {
             // The stand-in already has them.
         } else {
             let covered = (stand?.covered ?? "") + needed
@@ -175,7 +175,7 @@ final class TextBuilder {
     /// The pieces as show items. A stand-in font is selected before its characters and the font in
     /// force at `at` selected again after them; `before` and `after` go round the whole text.
     static func items(_ place: Place, _ at: EditGlyph, _ pieces: [EditPiece], shift: Double = 0, before: [UInt8]? = nil, after: [UInt8]? = nil,
-                      size: Double? = nil, current: ContentOperation? = nil) -> [ShowItem] {
+                      size: Double? = nil, current: ContentOperation? = nil) throws -> [ShowItem] {
         var items: [ShowItem] = []
         if let before, !before.isEmpty { items.append(ShowOps(before)) }
         if shift != 0 { items.append(ShowShift(-shift)) }
@@ -185,27 +185,29 @@ final class TextBuilder {
             if !run.isEmpty { items.append(ShowText(run)) }
             run.removeAll()
         }
-        func select(_ next: String?) {
+        func select(_ next: String?) throws {
             if next == font { return }
             flush()
             if let next {
                 items.append(ShowOps(ContentWriter().font(next, size ?? at.fontSize).toArray()))
             } else if let restore = current ?? place.states.at(at.op).font {
                 items.append(ShowOps(ContentWriter().add(restore).toArray()))
+            } else {
+                throw EditConflictException(EditingText.fontSetOutside)
             }
             font = next
         }
         for piece in pieces {
             if let move = piece.shift {
-                select(nil)
+                try select(nil)
                 flush()
                 items.append(ShowShift(move))
                 continue
             }
-            select(piece.font)
+            try select(piece.font)
             run.append(contentsOf: piece.bytes)
         }
-        select(nil)
+        try select(nil)
         flush()
         if let after, !after.isEmpty { items.append(ShowOps(after)) }
         return items

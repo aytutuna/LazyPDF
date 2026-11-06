@@ -61,8 +61,8 @@ final class CorpusEditTests: XCTestCase {
     private func attempt(_ session: PdfEditSession, _ page: Int) -> (outcome: String, attempted: Bool) {
         var attempted = false
         do {
-            let editor = PageEditor(session, page, EditArialSource())
-            let text = editor.text
+            let editor = try PageEditor(session, page, EditArialSource())
+            let text = try editor.text
             let word = text.words.first { w in
                 w.text.utf16.count >= 3 && w.text.utf16.allSatisfy { $0.isLetter } && text.lines[w.line].range.start == w.range.start
             }

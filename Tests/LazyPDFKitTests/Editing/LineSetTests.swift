@@ -6,12 +6,12 @@ import XCTest
 
 final class LineSetTests: XCTestCase {
     private func block(_ editor: PageEditor) throws -> TextObject {
-        try XCTUnwrap(editor.objects.compactMap { $0 as? TextObject }.first)
+        try XCTUnwrap(try editor.objects.compactMap { $0 as? TextObject }.first)
     }
 
     func test_justifyMovesAStringThatTdPlacesBehindTheSpacesBeforeIt() throws {
         let session = try EditKit.session("BT /F1 12 Tf 14 TL 50 700 Td (Hello ) Tj 31 0 Td (World) Tj -31 -14 Td (a much longer second line here) Tj ET")
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         let before = try EditKit.glyphs(session)
         let result = try editor.setAlignment(try block(editor), .justify)
         XCTAssertTrue(result.done, result.problem ?? "")
@@ -24,7 +24,7 @@ final class LineSetTests: XCTestCase {
 
     func test_lineSpacingMovesBothStrikesOfADoubleStruckLine() throws {
         let session = try EditKit.session("BT /F1 12 Tf 50 700 Td (first line) Tj ET BT /F1 12 Tf 50 686 Td (second) Tj ET BT /F1 12 Tf 50.2 686 Td (second) Tj ET")
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         XCTAssertTrue(try editor.setLineSpacing(try block(editor), 30).done)
         let second = try EditKit.glyphs(session).filter { $0.text == "s" && $0.y < 690 }
         XCTAssertEqual(second.count, 2)
@@ -34,7 +34,7 @@ final class LineSetTests: XCTestCase {
     func test_justifyOfLinesDrawnOutOfOrderLeavesTheWordSpacingOfTheRestAlone() throws {
         let content = "BT /F1 12 Tf 50 686 Td (line two is a longer one) Tj ET BT /F1 12 Tf 50 700 Td (line one) Tj ET BT /F1 12 Tf 50 100 Td (tail text) Tj ET"
         let session = try EditKit.session(content)
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         let result = try editor.setAlignment(try block(editor), .justify)
         XCTAssertTrue(result.done, result.problem ?? "")
         let shown = try EditKit.shown(session)
@@ -46,7 +46,7 @@ final class LineSetTests: XCTestCase {
     func test_lineSpacingOfLinesDrawnOutOfOrderLeavesTheRiseOfTheRestAlone() throws {
         let content = "BT /F1 12 Tf 50 672 Td (line three) Tj ET BT /F1 12 Tf 50 700 Td (line one) Tj ET BT /F1 12 Tf 50 686 Td (line two) Tj ET BT /F1 12 Tf 50 100 Td (tail) Tj ET"
         let session = try EditKit.session(content)
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         XCTAssertTrue(try editor.setLineSpacing(try block(editor), 20).done)
         let shown = try EditKit.shown(session)
         XCTAssertEqual(EditKit.of(shown, "line three")[0].y, 660, accuracy: 0.05)

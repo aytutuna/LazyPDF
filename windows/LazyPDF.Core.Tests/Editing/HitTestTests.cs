@@ -71,4 +71,21 @@ public class HitTestTests
         Assert.Equal(new RgbColor(0, 0, 0), text.Color);
         Assert.Equal(60, text.Bounds.Left, 1);
     }
+
+    [Fact]
+    public void AnEditorWhoseSessionLostItsPageThrowsOutOfRange()
+    {
+        Open(out var session);
+        PageOperations.InsertBlank(session.Document, 1, 612, 792);
+        Assert.True(session.Commit("Insert page"));
+        var last = new PageEditor(session, 1);
+        Assert.Empty(last.Objects);
+        Assert.True(session.Undo());
+        Assert.ThrowsAny<ArgumentException>(() => last.Objects);
+        Assert.ThrowsAny<ArgumentException>(() => last.Text);
+        Assert.ThrowsAny<ArgumentException>(() => last.HitTest(10, 10));
+        Assert.ThrowsAny<ArgumentException>(() => last.Select(new PdfRect(0, 0, 100, 100)));
+        Assert.ThrowsAny<ArgumentException>(() => last.AddRectangle(new PdfRect(10, 10, 50, 50), new ShapeStyle(new RgbColor(0, 0, 0))));
+        Assert.ThrowsAny<ArgumentException>(() => new PageEditor(session, 1));
+    }
 }

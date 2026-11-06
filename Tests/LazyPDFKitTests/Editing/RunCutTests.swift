@@ -42,14 +42,14 @@ final class RunCutTests: XCTestCase {
     func test_strikesInTheirOwnQGroupsAreJoinedByAJustifyAndByARestyle() throws {
         let content = "q BT /F1 12 Tf 14 TL 50 700 Td (Hello big) Tj ET Q q BT /F1 12 Tf 50.2 700 Td (Hello big) Tj ET Q q BT /F1 12 Tf 50 686 Td (a much longer second line here) Tj ET Q"
         let session = try EditKit.session(content)
-        var editor = PageEditor(session, 0)
-        let result = try editor.setAlignment(try assertSingle(editor.objects.compactMap { $0 as? TextObject }), .justify)
+        var editor = try PageEditor(session, 0)
+        let result = try editor.setAlignment(try assertSingle(try editor.objects.compactMap { $0 as? TextObject }), .justify)
         XCTAssertTrue(result.done, result.problem ?? "")
         let shown = try EditKit.shown(session)
         XCTAssertTrue(shown[5].tw > 0)
         XCTAssertEqual(shown[5].tw, shown[14].tw)
 
-        editor = PageEditor(session, 0)
+        editor = try PageEditor(session, 0)
         let restyle = try editor.setTextStyle([try across(session, "Hello", "big")], TextStyleChange(color: red))
         XCTAssertTrue(restyle.done, restyle.problem ?? "")
         for g in try EditKit.shown(session).prefix(18) where g.text != " " { XCTAssertEqual(g.color, red) }
@@ -57,7 +57,7 @@ final class RunCutTests: XCTestCase {
 
     func test_spacingOfTheQuoteOperatorIsPutBackAfterNewTextInAnotherStyle() throws {
         let session = try EditKit.session("BT /F1 12 Tf 50 700 Td 2 1 (abc def) \" ( ghi) Tj ET")
-        let editor = PageEditor(session, 0, EditArialSource())
+        let editor = try PageEditor(session, 0, EditArialSource())
         let result = try editor.setTextStyle([try EditKit.find(session, "abc")], TextStyleChange(bold: true, charSpacing: 4))
         XCTAssertTrue(result.done, result.problem ?? "")
         let shown = try EditKit.shown(session)

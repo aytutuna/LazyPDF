@@ -140,6 +140,7 @@ extension PdfDocument {
         startXref = 0
         xrefIsStream = false
         entries.removeAll()
+        entryOrder.removeAll()
         objects.removeAll()
         objectStreams.removeAll()
         // Where each object was found: an object stream's members count as written where the stream is.
@@ -175,6 +176,7 @@ extension PdfDocument {
             }
         }
 
+        entryOrder = order
         if !catalogUsable() { try findCatalog(scan, order) }
         trailer["Size"] = PdfNumber(nextObjectNumber)
     }

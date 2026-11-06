@@ -87,4 +87,21 @@ final class PdfAMetadataTests: XCTestCase {
         }, intents: "/OutputIntents [9 0 R]")
         StandardsKit.assertHas(try StandardsKit.check(file).issues) { $0.message.contains("OutputConditionIdentifier") }
     }
+
+    func test_aTitleThatDiffersFromTheXmpOnlyInCompositionDoesNotAgree() throws {
+        let xmp = StandardsKit.packet(.a2b)
+        XCTAssertTrue(xmp.contains(">Title<"))
+        let info = "<</Title <FEFF00430061006600650301> /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000Z) /ModDate (D:20260304103000Z)>>"
+        let file = StandardsKit.compliant(xmp: xmp.replacingOccurrences(of: ">Title<", with: ">Caf\u{E9}<"), info: info)
+        StandardsKit.assertHas(try StandardsKit.check(file).issues) { $0.clause == "6.6.2.3" && $0.message.contains("/Title") }
+        let same = StandardsKit.compliant(xmp: xmp.replacingOccurrences(of: ">Title<", with: ">Cafe\u{301}<"), info: info)
+        StandardsKit.assertNone(try StandardsKit.check(same).issues) { $0.message.contains("/Title") }
+    }
+
+    func test_issuesThatDifferOnlyInCompositionAreDifferentIssues() {
+        let first = PdfAIssue("6.7.3", "Info", "\u{E9}")
+        let second = PdfAIssue("6.7.3", "Info", "e\u{301}")
+        XCTAssertNotEqual(first, second)
+        XCTAssertEqual(Set([first, second]).count, 2)
+    }
 }

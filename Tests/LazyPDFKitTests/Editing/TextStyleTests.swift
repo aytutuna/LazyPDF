@@ -46,7 +46,7 @@ final class TextStyleTests: XCTestCase {
 
     func test_italicAndAFamilyChangeWork() throws {
         let session = try EditKit.session(line)
-        let editor = PageEditor(session, 0, EditArialSource())
+        let editor = try PageEditor(session, 0, EditArialSource())
         XCTAssertTrue(try editor.setTextStyle([try EditKit.find(session, "one")], TextStyleChange(italic: true)).done)
         XCTAssertTrue(try PageEditor(session, 0, EditArialSource()).setTextStyle([try EditKit.find(session, "three")], TextStyleChange(family: "Times New Roman")).done)
         let found = try fonts(session)
@@ -76,8 +76,8 @@ final class TextStyleTests: XCTestCase {
 
     func test_aSelectionOverTwoLinesIsStyledOnBoth() throws {
         let session = try EditKit.session("BT /F1 12 Tf 50 700 Td (first line) Tj 0 -14 Td (second line) Tj ET")
-        let editor = PageEditor(session, 0)
-        let range = TextRange(0, editor.text.chars.count)
+        let editor = try PageEditor(session, 0)
+        let range = TextRange(0, try editor.text.chars.count)
         XCTAssertTrue(try editor.setTextStyle([range], TextStyleChange(color: RgbColor(0, 0, 255))).done)
         let document = try PdfDocument.open(session.current)
         let probe = ColorProbe()

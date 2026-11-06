@@ -177,7 +177,7 @@ final class TextEditor {
         var i = Swift.min(index, chars.count - 1)
         while i >= 0 && glyph == nil {
             glyph = model.charGlyphs[i]
-            after = i < index
+            if glyph != nil { after = i < index }
             i -= 1
         }
         i = index
@@ -234,7 +234,7 @@ final class TextEditor {
     }
 
     func putText(_ at: EditGlyph, _ after: Bool, _ pieces: [EditPiece], _ wrap: StyleWrap, _ shift: Double) throws {
-        let items = TextBuilder.items(Self.placeOf(at), at, pieces, shift: Self.shiftAmount(at, shift), before: wrap.before, after: wrap.after, size: wrap.size)
+        let items = try TextBuilder.items(Self.placeOf(at), at, pieces, shift: Self.shiftAmount(at, shift), before: wrap.before, after: wrap.after, size: wrap.size)
         try patchOf(at).insert(at.element, at.offset + (after ? at.length : 0), items)
     }
 

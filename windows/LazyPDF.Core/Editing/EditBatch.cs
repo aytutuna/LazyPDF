@@ -46,7 +46,10 @@ internal sealed class EditBatch(PdfDocument document, PdfPage page, EditScan sca
         public byte[] Data { get; } = data;
         public bool Copy { get; } = copy;
         public PdfReference? Reference { get; set; }
+        public PagePlan? Plan { get; set; }
     }
+
+    private sealed record PagePlan(List<Part> Parts, List<Splice> Splices, List<(int Lo, int Hi)> Groups);
 
     private readonly Dictionary<ContentUnit, UnitEdit> _edits = [];
     private readonly List<byte[]> _appended = [];
@@ -210,6 +213,8 @@ internal sealed class EditBatch(PdfDocument document, PdfPage page, EditScan sca
             else work.Add(new Work(edit, data, false));
         }
 
+        // A form is rewritten in place, which Discard cannot take back, so the page is checked before any is written.
+        foreach (var item in work.Where(w => w.Edit.Visit is null)) item.Plan = PlanPage(item.Edit);
         foreach (var item in work)
         {
             if (item.Edit.Visit is { } visit) WriteForm(item, visit);
@@ -275,11 +280,9 @@ internal sealed class EditBatch(PdfDocument document, PdfPage page, EditScan sca
         return stream;
     }
 
-    private void WritePage(Work item)
+    private PagePlan PlanPage(UnitEdit edit)
     {
-        var edit = item.Edit;
         var parts = ReadParts();
-        var items = ContentItems();
         var splices = Compile(edit);
         // Groups of neighbouring parts, merged when a change spans the break between them.
         var groups = new List<(int Lo, int Hi)>();
@@ -296,6 +299,19 @@ internal sealed class EditBatch(PdfDocument document, PdfPage page, EditScan sca
             });
             groups.Add(merged);
         }
+        int length = scan.PageUnit.Data.Length;
+        foreach (var (lo, hi) in groups)
+        {
+            if (parts[lo].Start < 0 || parts[hi].End > length || parts[lo].Start > parts[hi].End) throw new EditConflictException("A change lies outside the page content.");
+        }
+        return new PagePlan(parts, splices, groups);
+    }
+
+    private void WritePage(Work item)
+    {
+        var edit = item.Edit;
+        var (parts, splices, groups) = item.Plan!;
+        var items = ContentItems();
         var replaced = new Dictionary<int, (int Hi, PdfObject Ref)>();
         var data = scan.PageUnit.Data;
         foreach (var (lo, hi) in groups.OrderBy(g => g.Lo))
@@ -382,18 +398,20 @@ internal sealed class EditBatch(PdfDocument document, PdfPage page, EditScan sca
         var parts = new List<Part>();
         var items = ContentItems();
         int at = 0;
+        long room = 256L << 20;
         for (int i = 0; i < items.Count; i++)
         {
             if (document.Resolve(items[i]) is not PdfStream stream) continue;
             int length;
             try
             {
-                length = document.Data(stream, 256L << 20).Length;
+                length = document.Data(stream, room).Length;
             }
             catch (PdfReadException)
             {
                 continue;
             }
+            room = Math.Max(0, room - length - 1);
             if (parts.Count > 0) at++;
             parts.Add(new Part(i, stream, at, at + length));
             at += length;

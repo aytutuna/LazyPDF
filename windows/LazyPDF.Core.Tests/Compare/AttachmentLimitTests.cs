@@ -29,6 +29,36 @@ public class AttachmentLimitTests
         Assert.Contains("bytes stored", change.OldText);
     }
 
+    // The streams are held in memory and shared, so the file is small however many bytes the budget counts.
+    private static PdfDocument InMemory(Func<int, byte[]> data)
+    {
+        var document = Doc(Page("files"));
+        for (int i = 0; i < 6; i++)
+        {
+            var added = PdfAttachments.Add(document, $"a{i}.bin", [1]);
+            var stream = PdfAttachments.StreamOf(document, added)!;
+            stream.Dictionary.Remove("Filter");
+            stream.Data = data(i);
+        }
+        return document;
+    }
+
+    [Fact]
+    public void StoredBytesPastTheBudgetAreNotReadAndAreNotReportedAsChanged()
+    {
+        byte[] zeros = new byte[60 * Mib];
+        byte[] longer = new byte[60 * Mib + 1];
+        byte[] other = (byte[])zeros.Clone();
+        other[0] = 1;
+        using var before = InMemory(_ => zeros);
+        using var same = InMemory(_ => zeros);
+        // a0 to a3 are read (4 x 60 MiB fit in 256 MiB), a4 is not and has the size of the old one, a5 differs in size.
+        using var after = InMemory(i => i == 4 ? other : i == 5 ? longer : zeros);
+        Assert.True(PdfComparer.Compare(before, same).IsIdentical);
+        var change = Assert.Single(PdfComparer.Compare(before, after).Changes);
+        Assert.Contains("a5.bin", change.Detail);
+    }
+
     [Fact]
     public void UnfilteredFilesOverTheCapDoNotUseUpTheBudget()
     {

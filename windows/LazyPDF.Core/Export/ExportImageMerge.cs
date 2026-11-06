@@ -267,7 +267,8 @@ internal sealed class ExportImageMerge(PdfDocument document, IImageCodec? codec,
             if (image is not null) Charge((long)image.Width * image.Height);
             inverted = PdfFunction.Numbers(mask.Dictionary["Decode"], document.Resolve) is [var low, var high, ..] && low > high;
         }
-        if (image is null || (long)image.Width * image.Height > PdfImageSamples.MaxPixels) return null;
+        if (image is null || image.Width < 1 || image.Height < 1 || (long)image.Width * image.Height > PdfImageSamples.MaxPixels
+            || image.Rgba.Length != (long)image.Width * image.Height * 4) return null;
 
         // An image mask decoded from samples already says where it paints in its alpha.
         bool painted = decoded.Codec is null && document.Bool(mask.Dictionary, "ImageMask") == true;

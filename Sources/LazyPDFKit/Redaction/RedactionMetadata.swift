@@ -5,8 +5,8 @@ import Foundation
 // replaces it when asked. Copies of whole pages and of earlier versions (XMP thumbnails and history, /PieceInfo) are removed
 // whatever is asked, since no search can find a picture in them.
 //
-// string.Replace and Contains with OrdinalIgnoreCase work on UTF-16 units here too: each unit is mapped to its simple upper
-// case and the units are compared, so the text keeps its length and a match can be put back in the original.
+// string.Replace and Contains with OrdinalIgnoreCase work on UTF-16 units here too: each character is mapped to its simple upper
+// case (RedactionCasing) and the units are compared, so the text keeps its length and a match can be put back in the original.
 
 enum RedactionMetadata {
     // Binary strings and font data that a few letters match by chance, and the bookmark titles, which have their own pass.
@@ -64,7 +64,12 @@ enum RedactionMetadata {
                 continue
             }
             var changed = strip(xml)
-            var found = false
+            // Names, instructions and namespace addresses hold words too, and are not text that can be replaced: the packet goes.
+            var found = markup(xml).contains(where: holds)
+            if found && change {
+                emptied(packet, &findings)
+                continue
+            }
             carriers(xml) { value, replace in
                 if !holds(value) { return }
                 found = true
@@ -221,6 +226,29 @@ enum RedactionMetadata {
         }
     }
 
+    // What an XMP packet says besides the carriers: the names of elements and attributes, the instructions, the declaration and the
+    // addresses of the namespaces.
+    private static func markup(_ xml: DomDocument) -> [String] {
+        var found: [String] = []
+        DomDocument.walk(xml.children) { node in
+            switch node {
+            case let instruction as DomInstruction:
+                found += [instruction.target, instruction.data]
+            case let declaration as DomDeclaration:
+                found += [declaration.version, declaration.encoding, declaration.standalone]
+            case let element as DomElement:
+                found.append(element.name)
+                for attribute in element.attributes {
+                    found.append(attribute.name)
+                    if attribute.name.hasPrefix("xmlns") { found.append(attribute.value) }
+                }
+            default:
+                break
+            }
+        }
+        return found
+    }
+
     // RemoveChild finds the node before the one it removes by walking from the first child, so taking many out of a long
     // list one at a time is quadratic; the element is emptied and what stays put back instead.
     private static func strip(_ xml: DomDocument) -> Bool {
@@ -304,37 +332,27 @@ enum RedactionMetadata {
         return String(text)
     }
 
-    // The simple upper case of each character, surrogate pairs included, as OrdinalIgnoreCase compares; a character keeps its
-    // length. The dotted and dotless I are left alone, as the invariant casing leaves them. Where the full mapping is longer
-    // than one character (U+1F80), the simple one is the titlecase, which is a single character for those and only those.
+    // The simple upper case of each character, surrogate pairs included, as OrdinalIgnoreCase compares (RedactionCasing); a character
+    // keeps its length.
     private static func fold(_ units: [UInt16]) -> [UInt16] {
         var folded: [UInt16] = []
         folded.reserveCapacity(units.count)
         var i = 0
         while i < units.count {
-            var scalar = Unicode.Scalar(units[i])
+            var value = UInt32(units[i])
             var width = 1
-            if scalar == nil, units[i] >= 0xD800, units[i] < 0xDC00, i + 1 < units.count, units[i + 1] >= 0xDC00, units[i + 1] < 0xE000 {
-                scalar = Unicode.Scalar(0x10000 + (UInt32(units[i] - 0xD800) << 10) + UInt32(units[i + 1] - 0xDC00))
+            if units[i] >= 0xD800, units[i] < 0xDC00, i + 1 < units.count, units[i + 1] >= 0xDC00, units[i + 1] < 0xE000 {
+                value = 0x10000 + (UInt32(units[i] - 0xD800) << 10) + UInt32(units[i + 1] - 0xDC00)
                 width = 2
             }
-            if let scalar, let upper = simpleUpper(scalar), upper.utf16.count == width {
-                folded.append(contentsOf: upper.utf16)
+            if let upper = RedactionCasing.upper[value], let scalar = Unicode.Scalar(upper), String(scalar).utf16.count == width {
+                folded.append(contentsOf: String(scalar).utf16)
             } else {
                 folded.append(contentsOf: units[i..<i + width])
             }
             i += width
         }
         return folded
-    }
-
-    private static func simpleUpper(_ scalar: Unicode.Scalar) -> String? {
-        if scalar.value < 0x80 { return scalar.value >= 0x61 && scalar.value <= 0x7A ? String(Unicode.Scalar(scalar.value - 0x20) ?? scalar) : String(scalar) }
-        if scalar.value == 0x130 || scalar.value == 0x131 { return nil }
-        let upper = scalar.properties.uppercaseMapping.unicodeScalars
-        if upper.count == 1 { return String(upper) }
-        let title = scalar.properties.titlecaseMapping.unicodeScalars
-        return title.count == 1 ? String(title) : nil
     }
 
     private static func contains(_ text: [UInt16], _ needle: [UInt16]) -> Bool {

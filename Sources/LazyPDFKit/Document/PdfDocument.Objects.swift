@@ -141,6 +141,7 @@ extension PdfDocument {
             stream.number = number
             stream.generation = generation
         }
+        if entries[number] == nil { entryOrder.append(number) }
         entries[number] = Entry(.new, 0, generation, 0)
         objects[number] = Slot(value, generation, 0, isNew: true)
         deleted.remove(number)

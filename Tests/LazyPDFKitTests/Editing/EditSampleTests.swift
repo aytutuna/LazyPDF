@@ -27,27 +27,27 @@ final class EditSampleTests: XCTestCase {
         }
 
         let fonts = EditArialSource()
-        var editor = PageEditor(session, 0, fonts)
+        var editor = try PageEditor(session, 0, fonts)
         XCTAssertTrue(try editor.replaceText(try EditKit.find(session, "Quarterly"), "Yıllık").done)
-        editor = PageEditor(session, 0, fonts)
+        editor = try PageEditor(session, 0, fonts)
         XCTAssertTrue(try editor.setTextStyle([try EditKit.find(session, "brown fox")], TextStyleChange(bold: true, color: RgbColor(180, 0, 0))).done)
-        editor = PageEditor(session, 0, fonts)
-        let paragraph = try XCTUnwrap(editor.objects.compactMap { $0 as? TextObject }.first { $0.text.hasPrefix("The quick") })
+        editor = try PageEditor(session, 0, fonts)
+        let paragraph = try XCTUnwrap(try editor.objects.compactMap { $0 as? TextObject }.first { $0.text.hasPrefix("The quick") })
         XCTAssertTrue(try editor.replaceParagraph(paragraph, "Çalışma raporu: the quick brown fox jumps over the lazy dog and keeps running until the end of the day, then rests").done)
-        editor = PageEditor(session, 0, fonts)
-        let images = editor.objects.compactMap { $0 as? ImageObject }
+        editor = try PageEditor(session, 0, fonts)
+        let images = try editor.objects.compactMap { $0 as? ImageObject }
         XCTAssertTrue(try editor.rotate([images[0]], 20).done)
-        editor = PageEditor(session, 0, fonts)
-        XCTAssertTrue(try editor.crop(try XCTUnwrap(editor.objects.compactMap { $0 as? ImageObject }.last), PdfRect(220, 450, 280, 520)).done)
-        editor = PageEditor(session, 0, fonts)
-        XCTAssertTrue(try editor.setPathStyle(Array(editor.objects.compactMap { $0 as? PathObject }.dropFirst()), fill: RgbColor(0, 150, 0), lineWidth: 6).done)
-        editor = PageEditor(session, 0, fonts)
+        editor = try PageEditor(session, 0, fonts)
+        XCTAssertTrue(try editor.crop(try XCTUnwrap(try editor.objects.compactMap { $0 as? ImageObject }.last), PdfRect(220, 450, 280, 520)).done)
+        editor = try PageEditor(session, 0, fonts)
+        XCTAssertTrue(try editor.setPathStyle(Array(try editor.objects.compactMap { $0 as? PathObject }.dropFirst()), fill: RgbColor(0, 150, 0), lineWidth: 6).done)
+        editor = try PageEditor(session, 0, fonts)
         XCTAssertTrue(try editor.addEllipse(PdfRect(380, 330, 500, 400), ShapeStyle(stroke: RgbColor(0, 0, 0), fill: RgbColor(255, 220, 0), width: 2)).done)
-        editor = PageEditor(session, 0, fonts)
+        editor = try PageEditor(session, 0, fonts)
         XCTAssertTrue(try editor.addTextBox(PdfRect(60, 280, 300, 380), "Yeni metin kutusu: ğüşiöç wraps inside its box and stays upright.",
                                             TextBoxStyle(family: "Arial", size: 12, color: RgbColor(0, 100, 0))).done)
-        editor = PageEditor(session, 0, fonts)
-        XCTAssertTrue(try editor.move(editor.objects.filter { ($0 as? TextObject)?.text.hasPrefix("footnote") == true }, 240, 0).done)
+        editor = try PageEditor(session, 0, fonts)
+        XCTAssertTrue(try editor.move(try editor.objects.filter { ($0 as? TextObject)?.text.hasPrefix("footnote") == true }, 240, 0).done)
         if let folder { try Data(session.current).write(to: URL(fileURLWithPath: folder).appendingPathComponent("after.pdf")) }
 
         XCTAssertTrue(try EditKit.text(session).contains("Yıllık"))

@@ -89,7 +89,7 @@ extension PdfDocument {
         lexer.skipWhiteSpace()
         let start = lexer.position
         if lexer.readKeyword() == "xref" {
-            var section: [Int: Entry] = [:]
+            var section = XrefSection()
             var highest: Int
             (lexer.position, highest) = try readTable(lexer.position, &section)
             if lexer.readKeyword() != "trailer" { throw PdfReadException.damaged("A cross-reference table has no trailer.") }
@@ -104,10 +104,10 @@ extension PdfDocument {
                     throw PdfReadException.damaged("/XRefStm does not point into the file.")
                 }
                 if hybridStreams.insert(so).inserted {
-                    var streamSection: [Int: Entry] = [:]
+                    var streamSection = XrefSection()
                     let (_, streamHighest) = try readStreamSection(so, &streamSection)
                     highest = max(highest, streamHighest)
-                    for (number, entry) in streamSection {
+                    for (number, entry) in streamSection.ordered {
                         if let listed = section[number], listed.kind != .free { continue }
                         section[number] = entry
                     }
@@ -116,20 +116,23 @@ extension PdfDocument {
             merge(section)
             return (trailer, false, highest)
         }
-        var entries: [Int: Entry] = [:]
-        let (dictionary, h) = try readStreamSection(start, &entries)
-        merge(entries)
+        var listed = XrefSection()
+        let (dictionary, h) = try readStreamSection(start, &listed)
+        merge(listed)
         return (dictionary, true, h)
     }
 
     /// Entries of an older section count only where no newer one has spoken.
-    private func merge(_ section: [Int: Entry]) {
-        for (number, entry) in section where entries[number] == nil { entries[number] = entry }
+    private func merge(_ section: XrefSection) {
+        for (number, entry) in section.ordered where entries[number] == nil {
+            entries[number] = entry
+            entryOrder.append(number)
+        }
     }
 
     /// A classic table's subsections ("first count", then count lines of "offset generation n|f"); the position
     /// after the last one. An offset past the file is kept: the object is looked for when it is wanted.
-    private func readTable(_ start: Int, _ section: inout [Int: Entry]) throws -> (position: Int, highest: Int) {
+    private func readTable(_ start: Int, _ section: inout XrefSection) throws -> (position: Int, highest: Int) {
         var pos = start
         var highest = 0
         while true {
@@ -187,7 +190,7 @@ extension PdfDocument {
     }
 
     /// A cross-reference stream (/Type /XRef) at `offset`: its entries and its dictionary.
-    private func readStreamSection(_ offset: Int, _ section: inout [Int: Entry]) throws -> (dictionary: PdfDictionary, highest: Int) {
+    private func readStreamSection(_ offset: Int, _ section: inout XrefSection) throws -> (dictionary: PdfDictionary, highest: Int) {
         let lexer = PdfLexer(sourceBytes, position: offset)
         let (number, generation) = try lexer.readObjectHeader()
         guard let stream = try lexer.readObject() as? PdfStream, (stream.dictionary["Type"] as? PdfName)?.value == "XRef" else {
@@ -267,5 +270,23 @@ extension PdfDocument {
     /// The C# takes the lower of the field and 65535 and casts it to int, which wraps for a negative field.
     private static func generationField(_ third: Int) -> Int {
         Int(Int32(truncatingIfNeeded: Swift.min(third, 65535)))
+    }
+}
+
+extension PdfDocument {
+    /// The entries of one section in the order it lists them, as the C# Dictionary gives them back.
+    struct XrefSection {
+        private var map: [Int: Entry] = [:]
+        private var order: [Int] = []
+
+        subscript(number: Int) -> Entry? {
+            get { map[number] }
+            set {
+                if map[number] == nil { order.append(number) }
+                map[number] = newValue
+            }
+        }
+
+        var ordered: [(number: Int, entry: Entry)] { order.compactMap { n in map[n].map { (number: n, entry: $0) } } }
     }
 }

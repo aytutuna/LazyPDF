@@ -12,14 +12,14 @@ final class PathEditTests: XCTestCase {
 
     private func open() throws -> (PdfEditSession, PageEditor) {
         let session = try EditKit.session(content)
-        return (session, PageEditor(session, 0))
+        return (session, try PageEditor(session, 0))
     }
 
-    private func paths(_ editor: PageEditor) -> [PathObject] { editor.objects.compactMap { $0 as? PathObject } }
+    private func paths(_ editor: PageEditor) throws -> [PathObject] { try editor.objects.compactMap { $0 as? PathObject } }
 
     func test_pathsAreModelledWithTheirPaint() throws {
         let (_, editor) = try open()
-        let found = paths(editor)
+        let found = try paths(editor)
         XCTAssertEqual(found.count, 3)
         XCTAssertTrue(found[0].fill && found[0].stroke)
         XCTAssertEqual(found[0].fillColor, RgbColor(255, 0, 0))
@@ -33,15 +33,15 @@ final class PathEditTests: XCTestCase {
 
     func test_moveAndScaleLeaveTheCoordinatesAlone() throws {
         let (session, editor) = try open()
-        XCTAssertTrue(try editor.move([paths(editor)[0]], 50, 25).done)
+        XCTAssertTrue(try editor.move([try paths(editor)[0]], 50, 25).done)
         let moved = try EditPaint.paths(session)[0].path
         XCTAssertEqual(moved.bounds, PdfRect(150, 125, 350, 225))
         XCTAssertTrue(EditKit.latin(session).contains("100 100 200 100 re B"))
 
         editor.refresh()
-        XCTAssertTrue(try editor.resize([paths(editor)[0]], PdfRect(100, 100, 200, 150)).done)
+        XCTAssertTrue(try editor.resize([try paths(editor)[0]], PdfRect(100, 100, 200, 150)).done)
         let scaled = try EditPaint.paths(session)[0].path
-        let ink = try XCTUnwrap(PageEditor(session, 0).objects.compactMap { $0 as? PathObject }.first).bounds
+        let ink = try XCTUnwrap(try PageEditor(session, 0).objects.compactMap { $0 as? PathObject }.first).bounds
         XCTAssertEqual(ink.left, 100, accuracy: 0.5)
         XCTAssertEqual(ink.right, 200, accuracy: 0.5)
         XCTAssertEqual(ink.bottom, 100, accuracy: 0.5)
@@ -51,7 +51,7 @@ final class PathEditTests: XCTestCase {
 
     func test_recolourAndLineWidthApplyToThatPathOnly() throws {
         let (session, editor) = try open()
-        let result = try editor.setPathStyle([paths(editor)[0]], fill: RgbColor(255, 255, 0), stroke: RgbColor(0, 0, 0), lineWidth: 8)
+        let result = try editor.setPathStyle([try paths(editor)[0]], fill: RgbColor(255, 255, 0), stroke: RgbColor(0, 0, 0), lineWidth: 8)
         XCTAssertTrue(result.done)
         let seen = try EditPaint.paths(session)
         XCTAssertEqual(seen[0].fill, RgbColor(255, 255, 0))
@@ -63,7 +63,7 @@ final class PathEditTests: XCTestCase {
 
     func test_aDeletedPathIsGoneAndThePageAroundItKeepsItsBytes() throws {
         let (session, editor) = try open()
-        XCTAssertTrue(try editor.delete([paths(editor)[1]]).done)
+        XCTAssertTrue(try editor.delete([try paths(editor)[1]]).done)
         XCTAssertEqual(try EditPaint.paths(session).count, 2)
         let text = EditKit.latin(session)
         XCTAssertTrue(text.hasPrefix("1 0 0 rg 0 0 1 RG 3 w 100 100 200 100 re B\nq 0 1 0 rg "))
@@ -72,8 +72,8 @@ final class PathEditTests: XCTestCase {
 
     func test_aPathThatClipsStaysAClipWhenItIsDeletedAndCannotBeMoved() throws {
         let session = try EditKit.session("q 0 0 100 100 re W f 0 g 10 10 m 90 90 l S Q")
-        let editor = PageEditor(session, 0)
-        let clipping = paths(editor)[0]
+        let editor = try PageEditor(session, 0)
+        let clipping = try paths(editor)[0]
         XCTAssertTrue(clipping.clips)
         let moved = try editor.move([clipping], 5, 5)
         XCTAssertFalse(moved.done)
@@ -85,7 +85,7 @@ final class PathEditTests: XCTestCase {
 
     func test_newShapesArePaintedWhereAsked() throws {
         let session = try EditKit.session("5 0 0 5 0 0 cm 1 0 0 rg 0 0 10 10 re f")
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         XCTAssertTrue(try editor.addLine(10, 10, 110, 60, ShapeStyle(stroke: RgbColor(0, 0, 255), width: 2)).done)
         XCTAssertTrue(try editor.addRectangle(PdfRect(200, 200, 260, 240), ShapeStyle(fill: RgbColor(0, 128, 0), opacity: 0.5)).done)
         XCTAssertTrue(try editor.addEllipse(PdfRect(300, 300, 400, 340), ShapeStyle(stroke: RgbColor(0, 0, 0), fill: RgbColor(255, 255, 0))).done)
@@ -106,8 +106,8 @@ final class PathEditTests: XCTestCase {
 
     func test_manyObjectsMoveInOneStep() throws {
         let session = try EditKit.session("BT /F1 12 Tf 50 700 Td (some text) Tj ET\n" + content)
-        let editor = PageEditor(session, 0)
-        let all = editor.objects
+        let editor = try PageEditor(session, 0)
+        let all = try editor.objects
         let before = try EditKit.glyphs(session)
         let bounds = try EditPaint.paths(session).map { $0.path.bounds }
         let result = try editor.move(all, 7, -3)
@@ -127,7 +127,7 @@ final class PathEditTests: XCTestCase {
 
     func test_aStaleObjectIsRefused() throws {
         let (_, editor) = try open()
-        let old = paths(editor)[0]
+        let old = try paths(editor)[0]
         _ = try editor.move([old], 1, 1)
         XCTAssertThrowsError(try editor.move([old], 1, 1)) { error in
             XCTAssertTrue(error is ArgumentException, "\(error)")

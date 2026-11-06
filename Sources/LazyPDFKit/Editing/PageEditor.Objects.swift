@@ -88,7 +88,7 @@ extension PageEditor {
 
     /// The bytes of a picture: JPEG and JPEG 2000 data as stored, everything else as a PNG. Nil when it cannot be read.
     public func extractImage(_ image: ImageObject) throws -> ExtractedImage? {
-        let model = self.model
+        let model = try self.model
         let batch = EditBatch(model.document, model.page, model.scan)
         let editor = ObjectEditor(model, batch, TextEditor(model, batch, TextBuilder(model.document, batch, fonts), fonts))
         editor.codec = codec
@@ -100,7 +100,7 @@ extension PageEditor {
     }
 
     private func editObjects(_ label: String, _ objects: [PageObject], _ change: (ObjectEditor, PageObject) throws -> Void) throws -> ObjectEditResult {
-        let model = self.model
+        let model = try self.model
         let batch = EditBatch(model.document, model.page, model.scan)
         let builder = TextBuilder(model.document, batch, fonts)
         let editor = ObjectEditor(model, batch, TextEditor(model, batch, builder, fonts))

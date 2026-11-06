@@ -98,4 +98,11 @@ final class ReplaceTextTests: XCTestCase {
         XCTAssertTrue(try session.redo())
         XCTAssertEqual(trimmed(try EditKit.text(session)), "Hello grand world")
     }
+
+    func test_insertBeforeTheFirstCharacterIsRefusedWhenThereIsNoCharacter() throws {
+        let session = try EditKit.session(line)
+        let result = try PageEditor(session, 0).insertText(-1, "X")
+        XCTAssertFalse(result.done)
+        XCTAssertEqual(result.problem, EditingText.noText)
+    }
 }

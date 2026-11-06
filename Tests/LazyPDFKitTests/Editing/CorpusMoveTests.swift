@@ -69,10 +69,10 @@ final class CorpusMoveTests: XCTestCase {
     }
 
     private func attempt(_ session: PdfEditSession, _ page: Int) throws -> String {
-        let editor = PageEditor(session, page)
-        if editor.objects.isEmpty { return "no objects" }
+        let editor = try PageEditor(session, page)
+        if try editor.objects.isEmpty { return "no objects" }
         let before = read(session.document, page)
-        let result = try editor.move(editor.objects, dx, dy)
+        let result = try editor.move(try editor.objects, dx, dy)
         if !result.done { return "refused: " + distinct(result.skipped.map { $0.reason }) }
         let after = read(try PdfDocument.open(session.current), page)
         let skipped = result.skipped.isEmpty ? "" : " with " + distinct(result.skipped.map { $0.reason })
@@ -86,6 +86,6 @@ final class CorpusMoveTests: XCTestCase {
         if !result.skipped.isEmpty { return "moved, some skipped: " + distinct(result.skipped.map { $0.reason }) }
         if count == 0 { return "ok" }
         let kinds = Set((0..<before.count).filter(off).map { before[$0].kind }).sorted().joined()
-        return "some not moved [\(kinds)]\(editor.objects.contains { !$0.forms.isEmpty } ? " forms" : "")"
+        return "some not moved [\(kinds)]\(try editor.objects.contains { !$0.forms.isEmpty } ? " forms" : "")"
     }
 }

@@ -47,8 +47,8 @@ final class FormTextTests: XCTestCase {
 
     func test_aFormPaintedTwiceIsCopiedForTheOneThatWasEdited() throws {
         let session = try PdfEditSession.open(pages(1, "q 1 0 0 1 50 600 cm /Fm1 Do Q q 1 0 0 1 50 400 cm /Fm1 Do Q"))
-        let editor = PageEditor(session, 0)
-        let top = try XCTUnwrap(editor.text.lines.sorted { $0.bounds.top > $1.bounds.top }.first)
+        let editor = try PageEditor(session, 0)
+        let top = try XCTUnwrap(try editor.text.lines.sorted { $0.bounds.top > $1.bounds.top }.first)
         let result = try editor.replaceText(TextRange(top.range.start + 5, top.range.start + 9), "word")
         XCTAssertTrue(result.done, result.problem ?? "")
         let lines = TextPage.create(session.document, session.document.pages[0]).lines.sorted { $0.bounds.top > $1.bounds.top }.map { $0.text }
@@ -76,8 +76,8 @@ final class FormTextTests: XCTestCase {
 
     func test_objectsInAFormMoveWithAMatrixInTheForm() throws {
         let session = try PdfEditSession.open(pages(1, "q 2 0 0 2 50 600 cm /Fm1 Do Q"))
-        let editor = PageEditor(session, 0)
-        let block = try XCTUnwrap(try assertSingle(editor.objects) as? TextObject)
+        let editor = try PageEditor(session, 0)
+        let block = try XCTUnwrap(try assertSingle(try editor.objects) as? TextObject)
         XCTAssertEqual(block.forms.count, 1)
         let before = try EditKit.glyphs(session)
         let result = try editor.move([block], 30, -10)

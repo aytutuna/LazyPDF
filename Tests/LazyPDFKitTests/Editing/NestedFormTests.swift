@@ -27,10 +27,10 @@ final class NestedFormTests: XCTestCase {
 
     func test_aChainOfSingleUsesIsEditedInPlace() throws {
         let session = try open("q 1 0 0 1 20 20 cm /In Do Q")
-        let editor = PageEditor(session, 0)
-        let block = try XCTUnwrap(try assertSingle(editor.objects) as? TextObject)
+        let editor = try PageEditor(session, 0)
+        let block = try XCTUnwrap(try assertSingle(try editor.objects) as? TextObject)
         XCTAssertEqual(block.forms.count, 2)
-        XCTAssertTrue(try editor.replaceText(editor.text.lines[0].range, "Changed").done)
+        XCTAssertTrue(try editor.replaceText(try editor.text.lines[0].range, "Changed").done)
         XCTAssertEqual(rows(session), ["Changed"])
         let xobject = try XCTUnwrap(session.document.dict(session.document.pages[0].resources, "XObject"))
         XCTAssertEqual((xobject["Out"] as? PdfReference)?.number, 8)
@@ -39,15 +39,15 @@ final class NestedFormTests: XCTestCase {
 
     func test_anInnerFormUsedTwiceIsCopiedForTheOneEdited() throws {
         let session = try open("q 1 0 0 1 20 20 cm /In Do Q q 1 0 0 1 20 220 cm /In Do Q")
-        let editor = PageEditor(session, 0)
-        let top = try XCTUnwrap(editor.text.lines.sorted { $0.bounds.top > $1.bounds.top }.first)
+        let editor = try PageEditor(session, 0)
+        let top = try XCTUnwrap(try editor.text.lines.sorted { $0.bounds.top > $1.bounds.top }.first)
         XCTAssertTrue(try editor.replaceText(top.range, "Changed").done)
         XCTAssertEqual(rows(session), ["Changed", "Inner text"])
     }
 
     func test_bothLevelsSharedBetweenPagesAreCopied() throws {
         let session = try open("q 1 0 0 1 20 20 cm /In Do Q", 2)
-        XCTAssertTrue(try PageEditor(session, 0).replaceText(PageEditor(session, 0).text.lines[0].range, "Changed").done)
+        XCTAssertTrue(try PageEditor(session, 0).replaceText(try PageEditor(session, 0).text.lines[0].range, "Changed").done)
         XCTAssertEqual(rows(session, 0), ["Changed"])
         XCTAssertEqual(rows(session, 1), ["Inner text"])
         XCTAssertTrue(try session.undo())

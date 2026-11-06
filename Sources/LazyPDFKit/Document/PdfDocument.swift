@@ -35,6 +35,8 @@ public final class PdfDocument {
     /// The table was rebuilt from a scan, so the offsets in the file's own cross-reference data cannot be built on.
     var xrefRebuilt = false
     var entries: [Int: Entry] = [:]
+    /// The numbers of `entries` in the order the file listed them (the order the C# Dictionary enumerates), for walks that must match it.
+    var entryOrder: [Int] = []
     var sections: [Int] = []
     var hybridStreams = Set<Int>()
     var loadingXref = false

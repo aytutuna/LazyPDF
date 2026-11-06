@@ -186,7 +186,7 @@ enum RedactionKit {
             all = try everything(bytes, password)
         } catch {
             // The C# opens the file and throws; a file that does not open must not read as free of the text.
-            XCTFail("The output does not open: (error)")
+            XCTFail("The output does not open: \(error)")
             return false
         }
         let wide = Array(text.utf16).flatMap { [UInt8($0 >> 8), UInt8($0 & 0xFF)] }
@@ -292,5 +292,16 @@ extension RedactionKit {
         }
         let place = attached ? RedactionText.attachedFile(number) : L10n.t("object {0}|in a sentence", number)
         XCTAssertEqual(problems, [found ? RedactionText.stillInFile(place) : RedactionText.notChecked(place)], file: file, line: line)
+    }
+}
+
+extension RedactionKit {
+    private static let goldenFolder = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .appendingPathComponent("Fixtures").appendingPathComponent("golden").appendingPathComponent("redaction")
+
+    /// A crafted attachment from Tests/Fixtures/golden/redaction, the files the C# tests read.
+    static func golden(_ name: String) throws -> [UInt8] {
+        [UInt8](try Data(contentsOf: goldenFolder.appendingPathComponent(name)))
     }
 }

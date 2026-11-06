@@ -2,7 +2,8 @@ import XCTest
 @testable import LazyPDFKit
 
 // Mirrors windows/LazyPDF.Core.Tests/Editing/TwinAndReplaceTests.cs: the same cases. Text drawn twice at one place,
-// regex replacement and edits taken back. The regular expressions run in ICU here (PORTING.md, Known differences).
+// regex replacement and edits taken back. The regular expressions run in ICU here (PORTING.md, Known differences);
+// the test with a quoted stretch has no twin.
 
 final class TwinAndReplaceTests: XCTestCase {
     private final class Probe: ContentVisitor {
@@ -39,7 +40,7 @@ final class TwinAndReplaceTests: XCTestCase {
         let swapped = "<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding <</Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences [65 /B 66 /A]>>>>"
         let session = try EditKit.session("BT /F1 12 Tf 50 700 Td (AB) Tj ET BT /F3 12 Tf 3 Tr 50 700 Td (BA) Tj ET",
                                           more: { pdf in pdf.obj(7, swapped) }, resources: "/Font <</F1 5 0 R /F3 7 0 R>>")
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         let result = try editor.replaceText(try EditKit.find(session, "AB"), "BA")
         XCTAssertTrue(result.done, result.problem ?? "")
         let shown = try read(session)
@@ -52,7 +53,7 @@ final class TwinAndReplaceTests: XCTestCase {
         let session = try EditKit.session("BT /F1 12 Tf 50 700 Td (ab) Tj ET /Fm0 Do",
                                           more: { pdf in pdf.stream(7, form, "BT /F1 12 Tf 3 Tr 50 700 Td (ab) Tj ET") },
                                           resources: "/Font <</F1 5 0 R>> /XObject <</Fm0 7 0 R>>")
-        let editor = PageEditor(session, 0, EditArialSource())
+        let editor = try PageEditor(session, 0, EditArialSource())
         let result = try editor.replaceText(try EditKit.find(session, "ab"), "ğş")
         XCTAssertTrue(result.done, result.problem ?? "")
         let document = try PdfDocument.open(session.current)
@@ -157,9 +158,9 @@ final class TwinAndReplaceTests: XCTestCase {
 
     func test_rightAlignMovesEveryPositionedRunOfALine() throws {
         let session = try EditKit.session(twoPlace)
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         let before = try read(session)
-        XCTAssertTrue(try editor.setAlignment(try assertSingle(editor.objects.compactMap { $0 as? TextObject }), .right).done)
+        XCTAssertTrue(try editor.setAlignment(try assertSingle(try editor.objects.compactMap { $0 as? TextObject }), .right).done)
         let after = try read(session)
         XCTAssertEqual(before.count, after.count)
         let shift = after[0].x - before[0].x
@@ -170,8 +171,8 @@ final class TwinAndReplaceTests: XCTestCase {
     func test_alignMovesADoubleStruckLineTogether() throws {
         let content = "BT /F1 12 Tf 14 TL 50 700 Td (Hello) Tj ET BT /F1 12 Tf 50.2 700 Td (Hello) Tj ET BT /F1 12 Tf 50 686 Td (a much longer second line here) Tj ET"
         let session = try EditKit.session(content)
-        let editor = PageEditor(session, 0)
-        let block = try assertSingle(editor.objects.compactMap { $0 as? TextObject })
+        let editor = try PageEditor(session, 0)
+        let block = try assertSingle(try editor.objects.compactMap { $0 as? TextObject })
         let before = try read(session)
         XCTAssertTrue(try editor.setAlignment(block, .right).done)
         let after = try read(session)
@@ -234,6 +235,54 @@ final class TwinAndReplaceTests: XCTestCase {
         let report = try TextReplacer.replaceAll(session, "(?<y>h)(\\w+)", "$01", TextSearchOptions(regex: true))
         XCTAssertEqual(report.replaced, 1)
         XCTAssertEqual(try page(session), "ELLO")
+    }
+
+    func test_aNumberedGroupThatIsNamedKeepsTheCaseOfThePage() throws {
+        func run(_ replacement: String) throws -> (ReplaceReport, String) {
+            let session = try EditKit.session("BT /F1 12 Tf 50 700 Td (Invoice 42) Tj ET")
+            let report = try TextReplacer.replaceAll(session, "(?<word>[a-z]+) (\\d+)", replacement, TextSearchOptions(regex: true))
+            return (report, try page(session))
+        }
+        let (report, first) = try run("$2 #$1")
+        XCTAssertEqual(report.replaced, 1)
+        XCTAssertEqual(first, "Invoice #42")
+        XCTAssertEqual(try run("$+!").1, "Invoice!")
+        XCTAssertEqual(try run("${2}|${word}").1, "Invoice|Invoice")
+    }
+
+    func test_aDigitThatIsNotAsciiAfterAGroupNumberIsText() throws {
+        let session = try EditKit.session("BT /F1 12 Tf 50 700 Td (ab) Tj ET")
+        let report = try TextReplacer.replaceAll(session, "(a)b", "$1\u{663}", TextSearchOptions(regex: true), fonts: EditArialSource())
+        XCTAssertEqual(report.replaced, 1)
+        XCTAssertEqual(try page(session), "a\u{663}")
+    }
+
+    func test_aGroupNumberPastInt32IsRefusedAndNothingChanges() throws {
+        for replacement in ["$99999999999", "${99999999999}", "$4294967297"] {
+            let session = try EditKit.session("BT /F1 12 Tf 50 700 Td (ab) Tj ET")
+            XCTAssertThrowsError(try TextReplacer.replaceAll(session, "(a)b", replacement, TextSearchOptions(regex: true)), replacement) {
+                XCTAssertTrue($0 is ArgumentException, replacement)
+            }
+            XCTAssertFalse(session.canUndo, replacement)
+            XCTAssertEqual(try page(session), "ab", replacement)
+        }
+    }
+
+    func test_aParenthesisInACommentIsNotAGroup() throws {
+        for pattern in ["(?x) # (\n(?<y>a)(b)", "(?#c(d)(?<y>a)(b)"] {
+            let session = try EditKit.session("BT /F1 12 Tf 50 700 Td (ab) Tj ET")
+            let report = try TextReplacer.replaceAll(session, pattern, "$1|$2|$+", TextSearchOptions(regex: true))
+            XCTAssertEqual(report.replaced, 1, pattern)
+            XCTAssertEqual(try page(session), "b|a|a", pattern)
+        }
+    }
+
+    // No twin: .NET has no \Q...\E, ICU does, and the groups it hides from the numbering are ICU's own.
+    func test_aParenthesisInAQuotedStretchIsNotAGroup() throws {
+        let session = try EditKit.session("BT /F1 12 Tf 50 700 Td (x\\(ab) Tj ET")
+        let report = try TextReplacer.replaceAll(session, "\\Qx(\\E(a)(?<y>b)", "$1|$2", TextSearchOptions(regex: true))
+        XCTAssertEqual(report.replaced, 1)
+        XCTAssertEqual(try page(session), "a|b")
     }
 
     func test_theTailOfAHiddenCopyFollowsTheNewTextWhenItIsWiderThanTheOldOne() throws {

@@ -64,8 +64,8 @@ final class FormStateTests: XCTestCase {
         let session = try open("BT /F1 12 Tf ET /Fm0 Do",
             "BT 50 686 Td (second line) Tj 0 -300 Td (far text) Tj ET BT /F9 12 Tf 50 700 Td (first line) Tj ET", "/Font <</F9 6 0 R>>")
         let before = try formData(session)
-        let editor = PageEditor(session, 0)
-        let block = try assertSingle(editor.objects.compactMap { $0 as? TextObject }.filter { $0.lines.count == 2 })
+        let editor = try PageEditor(session, 0)
+        let block = try assertSingle(try editor.objects.compactMap { $0 as? TextObject }.filter { $0.lines.count == 2 })
         let result = try editor.replaceParagraph(block, "alpha\nbeta")
         XCTAssertFalse(result.done)
         XCTAssertEqual(result.problem, EditingText.fontSetOutside)
@@ -80,8 +80,8 @@ final class FormStateTests: XCTestCase {
                            "BT /F1 12 Tf 50 700 Td (one) Tj ET")
             },
             resources: "/Font <</F1 5 0 R>> /XObject <</Fm0 7 0 R>> /ExtGState <</GS0 8 0 R>>")
-        let editor = PageEditor(session, 0)
-        let result = try editor.replaceParagraph(try assertSingle(editor.objects.compactMap { $0 as? TextObject }), "one\ntwo")
+        let editor = try PageEditor(session, 0)
+        let result = try editor.replaceParagraph(try assertSingle(try editor.objects.compactMap { $0 as? TextObject }), "one\ntwo")
         XCTAssertTrue(result.done, result.problem ?? "")
         XCTAssertFalse(try formData(session).contains("gs"))
     }
@@ -89,8 +89,8 @@ final class FormStateTests: XCTestCase {
     func test_thePaintingOfAFormThatSetsTheModeIsTheOneOrderLooksAt() throws {
         let form = "q 1 0 0 rg 0 0 50 50 re f Q BT /F1 12 Tf (x) Tj ET q 0 0 1 rg 100 0 50 50 re f Q"
         let session = try open("/Fm0 Do 7 Tr /Fm0 Do", form, "/Font <</F1 5 0 R>>")
-        let editor = PageEditor(session, 0)
-        let last = try XCTUnwrap(editor.objects.compactMap { $0 as? PathObject }.last)
+        let editor = try PageEditor(session, 0)
+        let last = try XCTUnwrap(try editor.objects.compactMap { $0 as? PathObject }.last)
         let result = try editor.order(last, .backward)
         XCTAssertFalse(result.done)
         XCTAssertEqual(try assertSingle(result.skipped).reason, EditingText.stateBetween)

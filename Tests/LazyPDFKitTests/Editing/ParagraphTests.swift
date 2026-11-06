@@ -36,7 +36,7 @@ final class ParagraphTests: XCTestCase {
     }
 
     private func block(_ editor: PageEditor) throws -> TextObject {
-        try assertSingle(editor.objects.compactMap { $0 as? TextObject })
+        try assertSingle(try editor.objects.compactMap { $0 as? TextObject })
     }
 
     private func rows(_ session: PdfEditSession) -> [String] {
@@ -44,7 +44,7 @@ final class ParagraphTests: XCTestCase {
     }
 
     func test_theBlockIsOneParagraphWithItsStyle() throws {
-        let b = try block(PageEditor(try left(), 0))
+        let b = try block(try PageEditor(try left(), 0))
         XCTAssertEqual(b.lines.count, 3)
         XCTAssertEqual(b.alignment, .left)
         XCTAssertEqual(b.lineSpacing, 14, accuracy: 0.05)
@@ -54,7 +54,7 @@ final class ParagraphTests: XCTestCase {
 
     func test_longerTextWrapsInsideTheWidthAndTheBlockGrows() throws {
         let session = try left()
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         let room = try lines.map { try width($0) }.max() ?? 0
         let text = "The quick brown fox jumps over the lazy dog and keeps running until the end of the day, then it sleeps under a tree until the sun is up again"
         let result = try editor.replaceParagraph(try block(editor), text)
@@ -68,7 +68,7 @@ final class ParagraphTests: XCTestCase {
 
     func test_shorterTextRemovesTheLinesItDoesNotNeed() throws {
         let session = try left()
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         let result = try editor.replaceParagraph(try block(editor), "Just one short line")
         XCTAssertTrue(result.done, result.problem ?? "")
         XCTAssertFalse(result.grew)
@@ -77,14 +77,14 @@ final class ParagraphTests: XCTestCase {
 
     func test_hardBreaksStartNewLines() throws {
         let session = try left()
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         _ = try editor.replaceParagraph(try block(editor), "one\ntwo\n\nthree")
         XCTAssertEqual(rows(session), ["one", "two", "three"])
     }
 
     func test_centeredLinesStayCentered() throws {
         let session = try aligned { 300 - (try self.width($0)) / 2 }
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         let b = try block(editor)
         XCTAssertEqual(b.alignment, .center)
         let result = try editor.replaceParagraph(b, "short top\nand a much longer second line of words")
@@ -96,7 +96,7 @@ final class ParagraphTests: XCTestCase {
 
     func test_rightAlignedLinesKeepTheirRightEdge() throws {
         let session = try aligned { 500 - (try self.width($0)) }
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         let b = try block(editor)
         XCTAssertEqual(b.alignment, .right)
         let result = try editor.replaceParagraph(b, "a little\nand a much longer second line")
@@ -106,8 +106,8 @@ final class ParagraphTests: XCTestCase {
 
     func test_replacingACenteredLineKeepsItCentered() throws {
         let session = try aligned { 300 - (try self.width($0)) / 2 }
-        let editor = PageEditor(session, 0)
-        let result = try editor.replaceText(editor.text.lines[1].range, "x")
+        let editor = try PageEditor(session, 0)
+        let result = try editor.replaceText(try editor.text.lines[1].range, "x")
         XCTAssertTrue(result.done, result.problem ?? "")
         let line = try XCTUnwrap(TextPage.create(session.document, session.document.pages[0]).lines.first { $0.text == "x" })
         XCTAssertEqual((line.bounds.left + line.bounds.right) / 2, 300, accuracy: 0.05)
@@ -121,11 +121,11 @@ final class ParagraphTests: XCTestCase {
             } else {
                 session = try left()
             }
-            let editor = PageEditor(session, 0)
+            let editor = try PageEditor(session, 0)
             let result = try editor.setAlignment(try block(editor), target)
             XCTAssertTrue(result.done, "\(target): \(result.problem ?? "")")
             let found = TextPage.create(session.document, session.document.pages[0]).lines
-            let b = try block(PageEditor(session, 0))
+            let b = try block(try PageEditor(session, 0))
             XCTAssertEqual(b.alignment, target)
             XCTAssertEqual(rows(session), lines, "\(target)")
             func edge(_ l: PageLine) -> Double {
@@ -142,7 +142,7 @@ final class ParagraphTests: XCTestCase {
 
     func test_justifyFillsTheWidthOfAllButTheLastLine() throws {
         let session = try left()
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         XCTAssertTrue(try editor.setAlignment(try block(editor), .justify).done)
         let found = TextPage.create(session.document, session.document.pages[0]).lines.sorted { $0.bounds.top > $1.bounds.top }
         XCTAssertEqual(found[0].bounds.right, found[1].bounds.right, accuracy: 0.05)
@@ -152,12 +152,12 @@ final class ParagraphTests: XCTestCase {
 
     func test_lineSpacingMovesTheLinesAndLeavesTheTextAlone() throws {
         let session = try left()
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         XCTAssertTrue(try editor.setLineSpacing(try block(editor), 20).done)
         let found = TextPage.create(session.document, session.document.pages[0]).lines.sorted { $0.bounds.top > $1.bounds.top }
         XCTAssertEqual(found[0].bounds.top - found[1].bounds.top, 20, accuracy: 0.05)
         XCTAssertEqual(found[1].bounds.top - found[2].bounds.top, 20, accuracy: 0.05)
         XCTAssertEqual(rows(session), lines)
-        XCTAssertEqual(try block(PageEditor(session, 0)).lineSpacing, 20, accuracy: 0.05)
+        XCTAssertEqual(try block(try PageEditor(session, 0)).lineSpacing, 20, accuracy: 0.05)
     }
 }

@@ -19,8 +19,8 @@ final class VerticalTextTests: XCTestCase {
 
     func test_verticalTextIsLeftAlone() throws {
         let session = try open("Identity-V")
-        let editor = PageEditor(session, 0)
-        XCTAssertEqual(DotNetText.trim(editor.text.text), "ABC")
+        let editor = try PageEditor(session, 0)
+        XCTAssertEqual(DotNetText.trim(try editor.text.text), "ABC")
         let result = try editor.replaceText(TextRange(0, 3), "XYZ")
         XCTAssertFalse(result.done)
         XCTAssertEqual(result.problem, EditingText.vertical)
@@ -29,7 +29,7 @@ final class VerticalTextTests: XCTestCase {
 
     func test_horizontalCidTextWithoutAnEmbeddedProgramTakesLettersItsMapShows() throws {
         let session = try open("Identity-H")
-        let editor = PageEditor(session, 0)
+        let editor = try PageEditor(session, 0)
         let result = try editor.replaceText(TextRange(0, 3), "CAB")
         XCTAssertTrue(result.done, result.problem ?? "")
         XCTAssertEqual(DotNetText.trim(try EditKit.text(session)), "CAB")

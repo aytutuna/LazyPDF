@@ -66,7 +66,14 @@ public enum TextReplacer {
                 let mark = batch.save()
                 do {
                     if linesOf(model, match.range) > 1 { throw EditConflictException(EditingText.crossesLines) }
-                    try editor.replace(match.range, expanded[RangeKey(start: match.range.start, end: match.range.end)] ?? replacement)
+                    // expansions stops at a time limit of its own; a group token left for a match after that would be written as it is.
+                    var text = replacement
+                    if let found = expanded[RangeKey(start: match.range.start, end: match.range.end)] {
+                        text = found
+                    } else if options.regex && replacement.contains("$") {
+                        throw EditConflictException(EditingText.nothingChanged)
+                    }
+                    try editor.replace(match.range, text)
                     done.append(match)
                 } catch let e as EditConflictException {
                     batch.restore(mark)
@@ -130,7 +137,7 @@ public enum TextReplacer {
             for m in matches where m.range.length > 0 && m.range.location >= 0 && m.range.location + m.range.length <= searched.text.count {
                 let key = rangeOf(searched, m.range.location, m.range.length)
                 let at = RangeKey(start: key.start, end: key.end)
-                if found[at] == nil { found[at] = expand(text, searched, numbering, m, replacement) }
+                if found[at] == nil { found[at] = try expand(text, searched, numbering, m, replacement) }
             }
             if timedOut || !searched.hasHyphenBreak { break }
         }
@@ -142,7 +149,7 @@ public enum TextReplacer {
     }
 
     // The tokens .NET expands from the searched text ($&, $+, $`, $', $_) are taken from the page as well; $$ is left for the last step.
-    private static func expand(_ text: TextPage, _ searched: SearchText, _ numbering: GroupNumbering, _ m: NSTextCheckingResult, _ replacement: String) -> String {
+    private static func expand(_ text: TextPage, _ searched: SearchText, _ numbering: GroupNumbering, _ m: NSTextCheckingResult, _ replacement: String) throws -> String {
         let all = searched.text
         // The page text of a range loses the white space at its ends, which a group or the text around a match may be made of.
         func page(_ index: Int, _ length: Int) -> [UInt16] {
@@ -180,28 +187,25 @@ public enum TextReplacer {
             }
             let c = r[i + 1]
             var length = 0
-            var name: String?
+            var name: ArraySlice<UInt16> = []
+            let braces = c == 0x7B
             if c == 0x24 {
                 out.append(contentsOf: [0x24, 0x24])
                 i += 2
                 continue
-            } else if c == 0x26 {
+            } else if c == 0x26 || c == 0x60 || c == 0x27 || c == 0x2B || c == 0x5F {
                 length = 2
-                name = "0"
-            } else if c == 0x60 || c == 0x27 || c == 0x2B || c == 0x5F {
-                length = 2
-                if c == 0x2B { name = String(numbering.total) }
             } else if isDecimalDigit(c) {
                 var e = i + 1
                 while e < r.count && isDecimalDigit(r[e]) { e += 1 }
                 length = e - i
-                name = String(units: Array(r[(i + 1)..<e]))
-            } else if c == 0x7B {
+                name = r[(i + 1)..<e]
+            } else if braces {
                 var e = i + 2
                 while e < r.count && isWordChar(r[e]) { e += 1 }
                 if e > i + 2 && e < r.count && r[e] == 0x7D {
                     length = e + 1 - i
-                    name = String(units: Array(r[(i + 2)..<e]))
+                    name = r[(i + 2)..<e]
                 }
             }
             if length == 0 {
@@ -211,19 +215,39 @@ public enum TextReplacer {
             }
             let token = Array(r[i..<i + length])
             i += length
-            if name == nil {
-                switch c {
-                case 0x60: out.append(contentsOf: page(0, m.range.location))
-                case 0x27: out.append(contentsOf: page(m.range.location + m.range.length, all.count - m.range.location - m.range.length))
-                default: out.append(contentsOf: page(0, all.count))
+            switch c {
+            case 0x26: out.append(contentsOf: group(0))
+            case 0x60: out.append(contentsOf: page(0, m.range.location))
+            case 0x27: out.append(contentsOf: page(m.range.location + m.range.length, all.count - m.range.location - m.range.length))
+            case 0x2B: out.append(contentsOf: group(numbering.index(ofNumber: numbering.total) ?? 0))
+            case 0x5F: out.append(contentsOf: page(0, all.count))
+            default:
+                // Match.Result reads the ASCII digits after the $ as the number; any other digit after them is text.
+                let digits = name.prefix { $0 >= 0x30 && $0 <= 0x39 }.count
+                if digits == 0 {
+                    if braces, let icu = numbering.index(ofName: String(units: Array(name))) {
+                        out.append(contentsOf: group(icu))
+                    } else {
+                        out.append(contentsOf: token)
+                    }
+                    continue
                 }
-                continue
+                if braces && digits < name.count {
+                    out.append(contentsOf: token)
+                    continue
+                }
+                var number = 0
+                for unit in name.prefix(digits) {
+                    number = number * 10 + Int(unit - 0x30)
+                    if number > Int(Int32.max) { throw ArgumentException("Capture group numbers must be less than or equal to Int32.MaxValue.") }
+                }
+                if let icu = numbering.index(ofNumber: number) {
+                    out.append(contentsOf: group(icu))
+                    out.append(contentsOf: name.dropFirst(digits))
+                } else {
+                    out.append(contentsOf: token)
+                }
             }
-            guard let key = name, let icu = numbering.index(of: key) else {
-                out.append(contentsOf: token)
-                continue
-            }
-            out.append(contentsOf: group(icu))
         }
         // What is left of Match.Result: $$ is one $.
         var result: [UInt16] = []
@@ -251,7 +275,7 @@ public enum TextReplacer {
 }
 
 /// Which capture group of ICU is group n of .NET: unnamed groups are 1 to k in order and the named ones follow, in order,
-/// where ICU counts every group from the left.
+/// where ICU counts every group from the left. Comments, quoted text and sets hold no groups.
 struct GroupNumbering {
     private var byNumber: [Int] = []
     private var byName: [String: Int] = [:]
@@ -262,11 +286,20 @@ struct GroupNumbering {
         var named: [(name: String, icu: Int)] = []
         var icu = 0
         var depth = 0
+        // Under (?x) a # starts a comment; the flag lasts to the end of the group it is set in.
+        var extended = false
+        var outer: [Bool] = []
         var i = 0
         while i < p.count {
             let c = p[i]
             if c == "\\" {
-                i += 2
+                if i + 1 < p.count && p[i + 1] == "Q" {
+                    i += 2
+                    while i < p.count && !(p[i] == "\\" && i + 1 < p.count && p[i + 1] == "E") { i += 1 }
+                    i += 2
+                } else {
+                    i += 2
+                }
                 continue
             }
             if depth > 0 {
@@ -285,21 +318,52 @@ struct GroupNumbering {
                 if i < p.count && p[i] == "]" { i += 1 }
                 continue
             }
-            if c == "(" {
-                if i + 1 < p.count && p[i + 1] == "?" {
-                    let kind: Unicode.Scalar? = i + 2 < p.count ? p[i + 2] : nil
-                    let next: Unicode.Scalar? = i + 3 < p.count ? p[i + 3] : nil
-                    if i + 3 <= p.count && ((kind == "<" && next != "=" && next != "!") || kind == "'") {
-                        let end: Unicode.Scalar = kind == "<" ? ">" : "'"
-                        var e = i + 3
-                        while e < p.count && p[e] != end { e += 1 }
-                        icu += 1
-                        named.append((String(String.UnicodeScalarView(p[(i + 3)..<e])), icu))
-                    }
-                } else {
-                    icu += 1
-                    unnamed.append(icu)
+            if c == "#" && extended {
+                while i < p.count && p[i] != "\n" { i += 1 }
+                continue
+            }
+            if c == ")" {
+                if let before = outer.popLast() { extended = before }
+                i += 1
+                continue
+            }
+            if c != "(" {
+                i += 1
+                continue
+            }
+            if i + 1 < p.count && p[i + 1] == "?" {
+                let kind: Unicode.Scalar? = i + 2 < p.count ? p[i + 2] : nil
+                let next: Unicode.Scalar? = i + 3 < p.count ? p[i + 3] : nil
+                if kind == "#" {
+                    while i < p.count && p[i] != ")" { i += 1 }
+                    i += 1
+                    continue
                 }
+                var j = i + 2
+                while j < p.count && (p[j] == "-" || (p[j].properties.isAlphabetic && p[j].isASCII)) { j += 1 }
+                if j < p.count && (p[j] == ")" || p[j] == ":") {
+                    var on = true
+                    var x = extended
+                    for flag in p[(i + 2)..<j] {
+                        if flag == "-" { on = false } else if flag == "x" { x = on }
+                    }
+                    if p[j] == ":" { outer.append(extended) }
+                    extended = x
+                    i = j + 1
+                    continue
+                }
+                outer.append(extended)
+                if i + 3 <= p.count && ((kind == "<" && next != "=" && next != "!") || kind == "'") {
+                    let end: Unicode.Scalar = kind == "<" ? ">" : "'"
+                    var e = i + 3
+                    while e < p.count && p[e] != end { e += 1 }
+                    icu += 1
+                    named.append((String(String.UnicodeScalarView(p[(i + 3)..<e])), icu))
+                }
+            } else {
+                outer.append(extended)
+                icu += 1
+                unnamed.append(icu)
             }
             i += 1
         }
@@ -310,12 +374,11 @@ struct GroupNumbering {
     /// The highest group number: the group `$+` stands for.
     var total: Int { byNumber.count }
 
-    func index(of key: String) -> Int? {
-        if key.unicodeScalars.allSatisfy({ $0.value >= 0x30 && $0.value <= 0x39 }) {
-            guard let number = Int(key) else { return nil }
-            if number == 0 { return 0 }
-            return number <= byNumber.count ? byNumber[number - 1] : nil
-        }
-        return byName[key]
+    /// The ICU index of group `number`; 0 is the whole match.
+    func index(ofNumber number: Int) -> Int? {
+        if number == 0 { return 0 }
+        return number > 0 && number <= byNumber.count ? byNumber[number - 1] : nil
     }
+
+    func index(ofName name: String) -> Int? { byName[name] }
 }

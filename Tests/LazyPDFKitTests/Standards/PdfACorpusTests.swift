@@ -90,7 +90,6 @@ final class PdfACorpusTests: XCTestCase {
             do {
                 let result = try converter.convert([UInt8](data), level, date)
                 if result.bytes == nil { refused += 1 } else if result.remaining.isEmpty { clean += 1 } else { left += 1 }
-            } catch is PdfReadException {
             } catch {
                 crashes.append("\(error)")
             }

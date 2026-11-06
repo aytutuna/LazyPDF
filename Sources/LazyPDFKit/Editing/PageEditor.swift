@@ -59,8 +59,8 @@ public final class PageEditor {
     private var loaded: PageModel?
     private var loadedDocument: PdfDocument?
 
-    public init(_ session: PdfEditSession, _ pageIndex: Int, _ fonts: FontSource? = nil, _ images: ImageCodec? = nil) {
-        precondition(pageIndex >= 0 && pageIndex < session.document.pages.count, "pageIndex")
+    public init(_ session: PdfEditSession, _ pageIndex: Int, _ fonts: FontSource? = nil, _ images: ImageCodec? = nil) throws {
+        if pageIndex < 0 || pageIndex >= session.document.pages.count { throw ArgumentException("pageIndex") }
         self.session = session
         self.pageIndex = pageIndex
         self.fonts = fonts
@@ -70,22 +70,25 @@ public final class PageEditor {
     public let pageIndex: Int
 
     /// The text, images and paths of the page in the order they are painted.
-    public var objects: [PageObject] { model.objects }
+    public var objects: [PageObject] { get throws { try model.objects } }
 
     /// The page's text as laid out, whose `TextRange`s the text changes take.
-    public var text: TextPage { model.text }
+    public var text: TextPage { get throws { try model.text } }
 
     /// Forgets what was read; the next member reads the page again.
     public func refresh() { loaded = nil }
 
     var model: PageModel {
-        // A commit, undo or redo anywhere gives the session a new document.
-        if let loaded, loadedDocument === session.document { return loaded }
-        let document = session.document
-        let created = PageModel.load(document, pageIndex)
-        loadedDocument = document
-        loaded = created
-        return created
+        get throws {
+            // A commit, undo or redo anywhere gives the session a new document, which can have fewer pages.
+            if let loaded, loadedDocument === session.document { return loaded }
+            let document = session.document
+            if pageIndex >= document.pages.count { throw ArgumentException("pageIndex") }
+            let created = PageModel.load(document, pageIndex)
+            loadedDocument = document
+            loaded = created
+            return created
+        }
     }
 
     /// Commits what the batch holds as one step and forgets the model.
@@ -97,8 +100,8 @@ public final class PageEditor {
     }
 
     /// The topmost object under the point, `tolerance` user space units wide.
-    public func hitTest(_ x: Double, _ y: Double, _ tolerance: Double = 1) -> PageObject? {
-        let objects = model.objects
+    public func hitTest(_ x: Double, _ y: Double, _ tolerance: Double = 1) throws -> PageObject? {
+        let objects = try model.objects
         var i = objects.count - 1
         while i >= 0 {
             if hits(objects[i], x, y, tolerance) { return objects[i] }
@@ -108,8 +111,8 @@ public final class PageEditor {
     }
 
     /// The objects whose bounds touch the rectangle, or lie wholly inside it.
-    public func select(_ rect: PdfRect, _ contained: Bool = false) -> [PageObject] {
-        model.objects.filter { o in
+    public func select(_ rect: PdfRect, _ contained: Bool = false) throws -> [PageObject] {
+        try model.objects.filter { o in
             contained
                 ? o.bounds.left >= rect.left && o.bounds.right <= rect.right && o.bounds.bottom >= rect.bottom && o.bounds.top <= rect.top
                 : o.bounds.left <= rect.right && o.bounds.right >= rect.left && o.bounds.bottom <= rect.top && o.bounds.top >= rect.bottom
@@ -148,7 +151,7 @@ public final class PageEditor {
     }
 
     func editText(_ label: String, _ change: (TextEditor) throws -> Void) throws -> TextEditResult {
-        let model = self.model
+        let model = try self.model
         let batch = EditBatch(model.document, model.page, model.scan)
         let builder = TextBuilder(model.document, batch, fonts)
         let editor = TextEditor(model, batch, builder, fonts)
