@@ -92,6 +92,11 @@ final class Rfc3161Token {
     /// Reads the token at the start of `encoded`; `consumed` is the length of its encoding.
     static func tryDecode(_ encoded: [UInt8]) -> (Rfc3161Token, consumed: Int)? {
         guard let cms = CmsSignature.parse(encoded), cms.contentType == Oids.tstInfo, let content = cms.content else { return nil }
+        // Rfc3161TimestampToken.TryDecode refuses a token with more than one signer or without the signing certificate
+        // attribute, one whose issuerSerial is not the signer's, and one whose embedded signer is no time stamping authority.
+        guard cms.signerCount == 1, cms.attributes[Oids.signingCertificateV2]?.count == 1,
+              issuerSerialMatches(cms, cms.issuerName, cms.serial) else { return nil }
+        if let embedded = cms.findSigner(), !(isAuthority(embedded) && cms.signingCertificateMatches(embedded)) { return nil }
         do {
             var outer = AsnReader(content)
             var info = try outer.readSequence()
@@ -123,9 +128,40 @@ final class Rfc3161Token {
     func verifySignatureForHash(_ hash: [UInt8], _ algorithm: HashAlgorithmName, _ extra: [X509Certificate]) -> X509Certificate? {
         guard Oids.digestName(hashOid) == algorithm, messageHash == hash, let content = cms.content,
               let signer = cms.findSigner(in: cms.certificates + extra), cms.attributes[Oids.signingCertificateV2] != nil,
-              cms.signingCertificateMatches(signer) else { return nil }
+              Self.isAuthority(signer), cms.signingCertificateMatches(signer),
+              Self.issuerSerialMatches(cms, signer.issuerName, signer.serialNumber) else { return nil }
         let check = CmsVerifier.check(cms, signer) { SignatureCrypto.hash($0, content) }
         return check == .ok ? signer : nil
+    }
+
+    /// RFC 3161 2.3: the certificate of the authority has the time stamping purpose in one extended key usage
+    /// extension, and the extension is critical.
+    static func isAuthority(_ certificate: X509Certificate) -> Bool {
+        let extensions = certificate.extensions.filter { $0.oid == "2.5.29.37" }
+        guard extensions.count == 1, extensions[0].critical, let purposes = (try? certificate.enhancedKeyUsages()) ?? nil else { return false }
+        return purposes.contains("1.3.6.1.5.5.7.3.8")
+    }
+
+    /// The issuerSerial of the ESSCertIDv2, when it has one, names `issuer` and `serial`.
+    static func issuerSerialMatches(_ cms: CmsSignature, _ issuer: [UInt8]?, _ serial: AsnInteger) -> Bool {
+        guard let values = cms.attributes[Oids.signingCertificateV2], values.count == 1 else { return true }
+        do {
+            var reader = AsnReader(values[0])
+            var outer = try reader.readSequence()
+            var ids = try outer.readSequence()
+            var id = try ids.readSequence()
+            if try id.peekTag().value == AsnUniversal.sequence { _ = try id.readSequence() }
+            _ = try id.readOctetString()
+            guard id.hasData else { return true }
+            var named = try id.readSequence()
+            var names = try named.readSequence()
+            var directory = try names.readSequence(.context(4, constructed: true))
+            let name = try directory.readEncodedValue()
+            let number = try named.readInteger()
+            return number == serial && (issuer.map { $0 == name } ?? true)
+        } catch {
+            return false
+        }
     }
 
     /// The certificate the token names as its signer, among the ones it carries.

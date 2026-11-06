@@ -3,8 +3,8 @@ import XCTest
 @testable import LazyPDFKit
 
 // Mirrors windows/LazyPDF.Core.Tests/Signatures/DigitalIdTests.cs: the same cases. The wrong-password case expects any
-// thrown error, as the C# expects any CryptographicException. The PFX file is written with SecItemExport, which only
-// macOS has, so the round trip runs there alone; iOS is checked for the refusal.
+// thrown error, as the C# expects any CryptographicException. The tests after the round trip hold what the C# pins in
+// SignatureHardeningTests (the protection of the file), an EC key, and that an import leaves no key in a keychain.
 
 final class DigitalIdTests: XCTestCase {
     private let start = DateTimeOffset(2026, 3, 1, 0, 0, 0)
@@ -33,7 +33,6 @@ final class DigitalIdTests: XCTestCase {
     }
 
     func test_thePfxCarriesTheKeyAndLoadsAgain() throws {
-        #if os(macOS)
         let id = try PdfDigitalId.create("Ada Lovelace", nil, start, keyBits: 2048)
 
         let pfx = try PdfDigitalId.exportPfx(id, "pass word")
@@ -42,11 +41,58 @@ final class DigitalIdTests: XCTestCase {
         XCTAssertEqual(id.thumbprint, loaded.thumbprint)
         XCTAssertNotNil(loaded.privateKey)
         XCTAssertThrowsError(try PdfDigitalId.importPfx(pfx, "wrong"))
-        #else
-        let id = try PdfDigitalId.create("Ada Lovelace", nil, start, keyBits: 2048)
-        XCTAssertThrowsError(try PdfDigitalId.exportPfx(id, "pass word")) { XCTAssertTrue($0 is PdfReadException) }
-        #endif
     }
+
+    func test_thePfxIsProtectedWithPBES2AndAES256NotTheOldTripleDES() throws {
+        let id = try PdfDigitalId.create("Ada Lovelace", nil, start, keyBits: 2048)
+
+        let pfx = try PdfDigitalId.exportPfx(id, "pass word")
+
+        let hex = pfx.map { String(format: "%02X", $0) }.joined()
+        XCTAssertTrue(hex.contains("2A864886F70D01050D"))
+        XCTAssertTrue(hex.contains("60864801650304012A"), "AES-256-CBC")
+        XCTAssertFalse(hex.contains("2A864886F70D010C0103"))
+        XCTAssertFalse(hex.contains("2A864886F70D010C0106"))
+    }
+
+    func test_anEcKeyExportsToo() throws {
+        let key = try SignatureCrypto.newEcKey()
+        let info = try CertificateBuilder.publicKeyInfo(key)
+        let name = X509Certificate.name("CN=Grace Hopper")
+        let der = try CertificateBuilder.build(subject: name, issuer: name, publicKeyInfo: info, notBefore: Pki.notBefore, notAfter: Pki.notAfter,
+                                               serial: CertificateBuilder.serialNumber(), extensions: [], issuerKey: try SignatureCrypto.newRsaKey(2048))
+        let id = try XCTUnwrap(X509Certificate(der))
+        id.privateKey = key
+
+        let loaded = try PdfDigitalId.importPfx(PdfDigitalId.exportPfx(id, "pass word"), "pass word")
+
+        XCTAssertEqual(loaded.thumbprint, id.thumbprint)
+        XCTAssertNotNil(loaded.privateKey)
+    }
+
+    #if os(macOS)
+    private func keychainHolds(_ certificate: X509Certificate) -> Bool {
+        let query: [String: Any] = [kSecClass as String: kSecClassIdentity, kSecMatchLimit as String: kSecMatchLimitAll, kSecReturnRef as String: true]
+        var found: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &found) == errSecSuccess, let identities = found as? [SecIdentity] else { return false }
+        return identities.contains { identity in
+            var copy: SecCertificate?
+            guard SecIdentityCopyCertificate(identity, &copy) == errSecSuccess, let copy else { return false }
+            return [UInt8](SecCertificateCopyData(copy) as Data) == certificate.rawData
+        }
+    }
+
+    func test_anImportedIdLeavesNothingInTheKeychain() throws {
+        let id = try PdfDigitalId.create("Ada Lovelace", nil, start, keyBits: 2048)
+        let pfx = try PdfDigitalId.exportPfx(id, "pass word")
+
+        // The way macOS 14 takes, which a newer system takes only here, and the way the system takes.
+        for loaded in [try PdfDigitalId.importPfxThroughKeychain(pfx, "pass word"), try PdfDigitalId.importPfx(pfx, "pass word")] {
+            XCTAssertFalse(keychainHolds(loaded))
+            XCTAssertEqual(try PdfSignatureVerifier.verify(PdfSigner.sign(SignatureKit.plain(), PdfSignRequest(loaded, Pki.signing))).first?.verdict, .validButUntrusted)
+        }
+    }
+    #endif
 
     func test_namesWithCommasQuotesAndTurkishLettersSurvive() throws {
         let name = "Doğan, \"Şık\" Ü."

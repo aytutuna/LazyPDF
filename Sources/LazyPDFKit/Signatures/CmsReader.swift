@@ -6,6 +6,7 @@ import Foundation
 
 final class CmsSignature {
     private(set) var length = 0
+    private(set) var signerCount = 0
     private(set) var certificates: [X509Certificate] = []
     private(set) var digestOid = ""
     private(set) var signedAttributes: [UInt8]?
@@ -52,6 +53,11 @@ final class CmsSignature {
             if !signers.hasData { return nil }
             var signer = try signers.readSequence()
             try result.readSigner(&signer)
+            result.signerCount = 1
+            while signers.hasData {
+                _ = try signers.readEncodedValue()
+                result.signerCount += 1
+            }
             return result
         } catch {
             return nil

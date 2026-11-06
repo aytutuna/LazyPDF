@@ -31,78 +31,59 @@ public enum PdfDigitalId {
         return certificate
     }
 
-    /// The certificate and its private key as a PFX file protected by `password`. Only macOS can write a PKCS#12 file
-    /// (SecItemExport); iOS has no call for it and says so.
+    /// The certificate and its private key as a PFX file protected by `password`: PBES2 with AES-256 and SHA-256, as the
+    /// C# writes it (Pkcs12Writer). The key must be one that exports.
     public static func exportPfx(_ certificate: X509Certificate, _ password: String) throws -> [UInt8] {
-        #if os(macOS)
         guard let key = certificate.privateKey else { throw SignatureCryptoException(message: "The certificate has no private key to export.") }
-        guard let item = SecCertificateCreateWithData(nil, Data(certificate.rawData) as CFData) else {
-            throw SignatureCryptoException(message: "The certificate could not be read.")
+        guard let representation = SecKeyCopyExternalRepresentation(key, nil) else {
+            throw SignatureCryptoException(message: "The private key does not export.")
         }
-        let written = exportViaKeychain(item, key, password)
-        guard let bytes = written.bytes else { throw SignatureCryptoException(message: "The PFX file could not be written (\(written.failure)).") }
-        return bytes
+        return try Pkcs12Writer.write(certificate, [UInt8](representation as Data), password: password)
+    }
+
+    /// The certificate with its key. From macOS 15 the key stays in memory only, as `EphemeralKeySet` does. Before that
+    /// it is imported into a keychain made for the purpose, copied out as a key of no keychain, and the keychain is
+    /// deleted. iOS has no such option: SecPKCS12Import puts the key in the keychain of the app.
+    public static func importPfx(_ pfx: [UInt8], _ password: String) throws -> X509Certificate {
+        #if os(macOS)
+        if #available(macOS 15, *) { return try importPfx(pfx, password, keychain: nil, inMemory: true) }
+        return try importPfxThroughKeychain(pfx, password)
         #else
-        throw PdfReadException(.unsupported, "A PFX file cannot be written on this platform.")
+        return try importPfx(pfx, password, keychain: nil, inMemory: false)
         #endif
     }
 
     #if os(macOS)
-    private static func export(_ item: CFTypeRef, _ password: String) -> (bytes: [UInt8]?, status: OSStatus) {
-        var parameters = SecItemImportExportKeyParameters()
-        let secret = password as CFString
-        parameters.version = 0
-        parameters.passphrase = Unmanaged<CFTypeRef>.passUnretained(secret as CFTypeRef)
-        var data: CFData?
-        let status = SecItemExport(item, .formatPKCS12, [], &parameters, &data)
-        guard status == errSecSuccess, let data else { return (nil, status) }
-        return ([UInt8](data as Data), status)
-    }
-
-    // SecItemExport does not take a key made in memory next to its certificate (it answers paramErr); it writes an
-    // identity. So the key and the certificate go into a keychain of their own, the key as its PKCS#1 form (RSA only),
-    // which gives it the label that ties it to the certificate. Nothing may ask the user: a question here would wait
-    // for ever. A failure names the call, since the statuses of this framework say little alone.
-    private static func exportViaKeychain(_ certificate: SecCertificate, _ key: SecKey, _ password: String) -> (bytes: [UInt8]?, failure: String) {
-        guard let representation = SecKeyCopyExternalRepresentation(key, nil) else { return (nil, "the key does not export") }
+    /// The way macOS 14 takes; the macOS 15 runners take it too in a test.
+    static func importPfxThroughKeychain(_ pfx: [UInt8], _ password: String) throws -> X509Certificate {
         let path = NSTemporaryDirectory() + "lazypdf-" + UUID().uuidString + ".keychain"
-        let secret = Array(password.utf8)
         var created: SecKeychain?
-        let made = SecKeychainCreate(path, UInt32(secret.count), secret, false, nil, &created)
-        guard made == errSecSuccess, let keychain = created else { return (nil, "keychain \(made)") }
-        defer { SecKeychainDelete(keychain) }
-        var asked = DarwinBoolean(true)
-        SecKeychainGetUserInteractionAllowed(&asked)
-        SecKeychainSetUserInteractionAllowed(false)
-        defer { SecKeychainSetUserInteractionAllowed(asked.boolValue) }
-
-        var parameters = SecItemImportExportKeyParameters()
-        parameters.version = 0
-        parameters.flags = .noAccessControl
-        var keyFormat = SecExternalFormat.formatOpenSSL
-        var keyType = SecExternalItemType.itemTypePrivateKey
-        let imported = SecItemImport(representation, nil, &keyFormat, &keyType, [], &parameters, keychain, nil)
-        if imported != errSecSuccess { return (nil, "key import \(imported)") }
-        // The exporter asks the certificate for its keychain, so the certificate goes in too.
-        var certificates: CFArray?
-        var certificateFormat = SecExternalFormat.formatX509Cert
-        var certificateType = SecExternalItemType.itemTypeCertificate
-        let stored = SecItemImport(SecCertificateCopyData(certificate), nil, &certificateFormat, &certificateType, [], nil, keychain, &certificates)
-        guard stored == errSecSuccess, let inKeychain = (certificates as? [SecCertificate])?.first else { return (nil, "certificate import \(stored)") }
-        var identity: SecIdentity?
-        let found = SecIdentityCreateWithCertificate(keychain, inKeychain, &identity)
-        guard found == errSecSuccess, let identity else { return (nil, "identity \(found)") }
-        let written = export(identity, password)
-        return (written.bytes, "export \(written.status)")
+        let made = SecKeychainCreate(path, UInt32(password.utf8.count), Array(password.utf8), false, nil, &created)
+        guard made == errSecSuccess, let keychain = created else { throw SignatureCryptoException(message: "The PFX file could not be read (keychain \(made)).") }
+        defer {
+            SecKeychainDelete(keychain)
+            try? FileManager.default.removeItem(atPath: path)
+        }
+        let imported = try importPfx(pfx, password, keychain: keychain, inMemory: false)
+        guard let held = imported.privateKey, let representation = SecKeyCopyExternalRepresentation(held, nil),
+              let kind = SignatureCrypto.keyKind(imported) else { throw SignatureCryptoException(message: "The key of the PFX file does not export.") }
+        let attributes: [CFString: Any] = [
+            kSecAttrKeyType: kind == .rsa ? kSecAttrKeyTypeRSA : kSecAttrKeyTypeECSECPrimeRandom,
+            kSecAttrKeyClass: kSecAttrKeyClassPrivate,
+        ]
+        guard let free = SecKeyCreateWithData(representation, attributes as CFDictionary, nil) else {
+            throw SignatureCryptoException(message: "The key of the PFX file could not be kept in memory.")
+        }
+        imported.privateKey = free
+        return imported
     }
     #endif
 
-    /// The certificate with its key. From macOS 15 the key stays in memory only, as `EphemeralKeySet` does; before that
-    /// and on iOS SecPKCS12Import puts it in the keychain.
-    public static func importPfx(_ pfx: [UInt8], _ password: String) throws -> X509Certificate {
+    private static func importPfx(_ pfx: [UInt8], _ password: String, keychain: AnyObject?, inMemory: Bool) throws -> X509Certificate {
         var options: [String: Any] = [kSecImportExportPassphrase as String: password]
         #if os(macOS)
-        if #available(macOS 15, *) { options[kSecImportToMemoryOnly as String] = true }
+        if inMemory, #available(macOS 15, *) { options[kSecImportToMemoryOnly as String] = true }
+        if let keychain { options[kSecImportExportKeychain as String] = keychain }
         #endif
         var items: CFArray?
         let status = SecPKCS12Import(Data(pfx) as CFData, options as CFDictionary, &items)

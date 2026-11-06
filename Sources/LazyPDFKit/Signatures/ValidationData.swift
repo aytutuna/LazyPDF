@@ -98,7 +98,18 @@ enum CertificateTrust {
         static let untrustedRoot = Flags(rawValue: 4)
         static let invalidBasicConstraints = Flags(rawValue: 8)
         static let notValidForUsage = Flags(rawValue: 16)
+        static let unsupportedExtension = Flags(rawValue: 32)
     }
+
+    // What this chain builder reads or can leave unread without harm. A critical extension outside the list, or any
+    // name constraints, policy constraints, policy mappings or inhibitAnyPolicy extension, would restrict the chain in
+    // a way that is not enforced here, so the chain is not trusted (.NET reports HasNotSupportedCriticalExtension, a
+    // name constraint or InvalidPolicyConstraints for them).
+    private static let understood: Set<String> = [
+        "2.5.29.9", "2.5.29.14", "2.5.29.15", "2.5.29.17", "2.5.29.18", "2.5.29.19", "2.5.29.31", "2.5.29.32", "2.5.29.35",
+        "2.5.29.37", "2.5.29.46", "1.3.6.1.5.5.7.1.1", "1.3.6.1.5.5.7.1.11",
+    ]
+    private static let restricting: Set<String> = ["2.5.29.30", "2.5.29.33", "2.5.29.36", "2.5.29.54"]
 
     private static let maxChain = 16
     private static let timeStamping = "1.3.6.1.5.5.7.3.8"
@@ -148,13 +159,29 @@ enum CertificateTrust {
 
     /// The chain from `leaf` up to an anchor or as far as the certificates lead, and what is wrong with it.
     private static func chain(_ leaf: X509Certificate, _ extra: [X509Certificate], _ anchors: [X509Certificate], _ time: DateTimeOffset) -> ([X509Certificate], Flags) {
+        var (elements, flags) = walk(leaf, extra, anchors, time)
+        if elements.contains(where: { !supportsExtensions($0) }) { flags.insert(.unsupportedExtension) }
+        return (elements, flags)
+    }
+
+    private static func supportsExtensions(_ certificate: X509Certificate) -> Bool {
+        certificate.extensions.allSatisfy { ext in
+            !restricting.contains(ext.oid) && (!ext.critical || understood.contains(ext.oid))
+        }
+    }
+
+    private static func walk(_ leaf: X509Certificate, _ extra: [X509Certificate], _ anchors: [X509Certificate], _ time: DateTimeOffset) -> ([X509Certificate], Flags) {
         var elements = [leaf]
         var flags: Flags = []
         var current = leaf
         var below = 0
         for _ in 0..<maxChain {
             if time < current.notBefore || time > current.notAfter { flags.insert(.notTimeValid) }
-            if anchors.contains(where: { $0.sameBytes(current) }) { return (elements, flags) }
+            // Only a root ends a chain as trusted; an anchor that was issued by another certificate leaves it partial.
+            if anchors.contains(where: { $0.sameBytes(current) }) {
+                if !current.isSelfIssued { flags.insert(.partialChain) }
+                return (elements, flags)
+            }
             if current.isSelfIssued {
                 flags.insert(.untrustedRoot)
                 return (elements, flags)
@@ -212,6 +239,8 @@ enum CertificateTrust {
         guard SecTrustCreateWithCertificates(certificates as CFArray, SecPolicyCreateBasicX509(), &trust) == errSecSuccess, let trust else {
             return TrustResult(trusted: false, timeValid: true, chain: [certificate])
         }
+        // Issuers named in a certificate of the file are not fetched: the C# disables downloads too.
+        SecTrustSetNetworkFetchAllowed(trust, false)
         SecTrustSetVerifyDate(trust, Date(timeIntervalSince1970: Double(time.unixSeconds)) as CFDate)
         let trusted = SecTrustEvaluateWithError(trust, nil)
         var elements: [X509Certificate] = []
