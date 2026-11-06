@@ -98,21 +98,25 @@ public enum PdfDigitalId {
 #if os(macOS)
 /// A keychain file in the temporary folder that lives as long as the key in it is used. The name carries the number
 /// of the process, so that the next one can remove what a crash left.
-final class TemporaryKeychain {
+final class TemporaryKeychain: KeyHolder {
     private static let prefix = "lazypdf-"
     let path = NSTemporaryDirectory() + TemporaryKeychain.prefix + "\(ProcessInfo.processInfo.processIdentifier)-" + UUID().uuidString + ".keychain"
     let keychain: SecKeychain
+    private let secret: [UInt8]
 
     init?(_ password: String) {
         Self.removeStale()
         var created: SecKeychain?
         let secret = Array(password.utf8)
         guard SecKeychainCreate(path, UInt32(secret.count), secret, false, nil, &created) == errSecSuccess, let created else { return nil }
-        // The default locks it after five minutes and on sleep, and unlocking asks for a password nobody knows.
-        var settings = SecKeychainSettings(version: 1, lockOnSleep: false, useLockInterval: false, lockInterval: 0)
-        SecKeychainUnlock(created, UInt32(secret.count), secret, true)
-        SecKeychainSetSettings(created, &settings)
+        self.secret = secret
         keychain = created
+    }
+
+    /// The system locks a keychain after five minutes and on sleep, and unlocking it asks for a password nobody knows, so
+    /// the certificate unlocks it each time its key is asked for.
+    func prepare() {
+        SecKeychainUnlock(keychain, UInt32(secret.count), secret, true)
     }
 
     deinit {

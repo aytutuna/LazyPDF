@@ -115,16 +115,18 @@ final class DigitalIdTests: XCTestCase {
         XCTAssertThrowsError(try PdfDigitalId.importPfxThroughKeychain(pfx, "wrong"))
     }
 
-    func test_theKeychainOfAnImportedIdDoesNotLockWhileTheIdIsInUse() throws {
+    func test_aKeychainThatLockedWhileTheIdWasIdleUnlocksWhenTheKeyIsUsed() throws {
         let id = try PdfDigitalId.create("Ada Lovelace", nil, start, keyBits: 2048)
         let loaded = try PdfDigitalId.importPfxThroughKeychain(PdfDigitalId.exportPfx(id, "pass word"), "pass word")
         let holder = try XCTUnwrap(loaded.keyHolder as? TemporaryKeychain)
 
-        var settings = SecKeychainSettings(version: 1, lockOnSleep: true, useLockInterval: true, lockInterval: 300)
-        XCTAssertEqual(SecKeychainCopySettings(holder.keychain, &settings), errSecSuccess)
+        SecKeychainLock(holder.keychain)
+        var status = SecKeychainStatus()
+        SecKeychainGetStatus(holder.keychain, &status)
+        XCTAssertEqual(status & UInt32(kSecUnlockStateStatus), 0)
 
-        XCTAssertFalse(settings.lockOnSleep.boolValue)
-        XCTAssertFalse(settings.useLockInterval.boolValue)
+        let reports = try PdfSignatureVerifier.verify(PdfSigner.sign(SignatureKit.plain(), PdfSignRequest(loaded, Pki.signing)))
+        XCTAssertEqual(reports.first?.verdict, .validButUntrusted)
     }
 
     func test_aKeychainFileOfAProcessThatIsGoneIsRemovedAndOneOfThisProcessIsNot() throws {

@@ -28,6 +28,11 @@ struct KeyUsage: OptionSet {
     static let decipherOnly = KeyUsage(rawValue: 32768)
 }
 
+/// Something that keeps a private key usable and is told before the key is used.
+protocol KeyHolder: AnyObject {
+    func prepare()
+}
+
 public final class X509Certificate {
     public let rawData: [UInt8]
     let tbsCertificate: [UInt8]
@@ -49,10 +54,18 @@ public final class X509Certificate {
 
     #if canImport(Security)
     /// The private key of a certificate that signs, set by whoever loaded the identity.
-    public var privateKey: SecKey?
+    public var privateKey: SecKey? {
+        get {
+            keyHolder?.prepare()
+            return storedKey
+        }
+        set { storedKey = newValue }
+    }
+
+    private var storedKey: SecKey?
 
     /// What the private key needs to stay usable, such as the keychain it was imported into.
-    var keyHolder: AnyObject?
+    var keyHolder: KeyHolder?
     #endif
 
     /// nil when the bytes are not a certificate this reader understands.
