@@ -1,0 +1,11 @@
+# linearized files are written byte for byte; the other ops print counts, which do not hang on deflate output
+linearize 1
+linearize 2
+linearize 3
+linearize 6
+audit dirty
+scan dirty
+sanitize dirty
+optimize small
+optimize balanced
+optimize high
