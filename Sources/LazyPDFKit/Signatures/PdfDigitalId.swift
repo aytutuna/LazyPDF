@@ -40,7 +40,7 @@ public enum PdfDigitalId {
             throw SignatureCryptoException(message: "The certificate could not be read.")
         }
         let written = exportViaKeychain(item, key, password)
-        guard let bytes = written.bytes else { throw SignatureCryptoException(message: "The PFX file could not be written (\(written.steps)).") }
+        guard let bytes = written.bytes else { throw SignatureCryptoException(message: "The PFX file could not be written (\(written.failure)).") }
         return bytes
         #else
         throw PdfReadException(.unsupported, "A PFX file cannot be written on this platform.")
@@ -60,11 +60,11 @@ public enum PdfDigitalId {
     }
 
     // SecItemExport does not take a key made in memory next to its certificate (it answers paramErr); it writes an
-    // identity. So the key goes into a keychain of its own as its PKCS#1 form (RSA only), which gives it the label
-    // that ties it to its certificate. Nothing may ask the user: a question here would wait for ever. `steps` names the
-    // status of each call, since the statuses of this framework say little alone.
-    private static func exportViaKeychain(_ certificate: SecCertificate, _ key: SecKey, _ password: String) -> (bytes: [UInt8]?, steps: String) {
-        guard let representation = SecKeyCopyExternalRepresentation(key, nil) else { return (nil, "key \(errSecParam)") }
+    // identity. So the key and the certificate go into a keychain of their own, the key as its PKCS#1 form (RSA only),
+    // which gives it the label that ties it to the certificate. Nothing may ask the user: a question here would wait
+    // for ever. A failure names the call, since the statuses of this framework say little alone.
+    private static func exportViaKeychain(_ certificate: SecCertificate, _ key: SecKey, _ password: String) -> (bytes: [UInt8]?, failure: String) {
+        guard let representation = SecKeyCopyExternalRepresentation(key, nil) else { return (nil, "the key does not export") }
         let path = NSTemporaryDirectory() + "lazypdf-" + UUID().uuidString + ".keychain"
         let secret = Array(password.utf8)
         var created: SecKeychain?
@@ -76,47 +76,24 @@ public enum PdfDigitalId {
         SecKeychainSetUserInteractionAllowed(false)
         defer { SecKeychainSetUserInteractionAllowed(asked.boolValue) }
 
-        var steps = "keychain \(made)"
         var parameters = SecItemImportExportKeyParameters()
         parameters.version = 0
         parameters.flags = .noAccessControl
-        var format = SecExternalFormat.formatOpenSSL
-        var type = SecExternalItemType.itemTypePrivateKey
-        var imported = SecItemImport(representation, nil, &format, &type, [], &parameters, keychain, nil)
-        steps += ", import \(imported)"
-        if imported != errSecSuccess {
-            format = .formatOpenSSL
-            type = .itemTypePrivateKey
-            imported = SecItemImport(representation, nil, &format, &type, [], nil, keychain, nil)
-            steps += ", import without parameters \(imported)"
-        }
-        if imported != errSecSuccess { return (nil, steps) }
+        var keyFormat = SecExternalFormat.formatOpenSSL
+        var keyType = SecExternalItemType.itemTypePrivateKey
+        let imported = SecItemImport(representation, nil, &keyFormat, &keyType, [], &parameters, keychain, nil)
+        if imported != errSecSuccess { return (nil, "key import \(imported)") }
         // The exporter asks the certificate for its keychain, so the certificate goes in too.
         var certificates: CFArray?
         var certificateFormat = SecExternalFormat.formatX509Cert
         var certificateType = SecExternalItemType.itemTypeCertificate
         let stored = SecItemImport(SecCertificateCopyData(certificate), nil, &certificateFormat, &certificateType, [], nil, keychain, &certificates)
-        steps += ", certificate \(stored)"
-        let inKeychain = (certificates as? [SecCertificate])?.first ?? certificate
+        guard stored == errSecSuccess, let inKeychain = (certificates as? [SecCertificate])?.first else { return (nil, "certificate import \(stored)") }
         var identity: SecIdentity?
-        var found = SecIdentityCreateWithCertificate(keychain, inKeychain, &identity)
-        steps += ", identity \(found)"
-        if found != errSecSuccess {
-            let list: [AnyObject] = [keychain]
-            found = SecIdentityCreateWithCertificate(list as CFArray, inKeychain, &identity)
-            steps += ", identity in a list \(found)"
-        }
-        guard found == errSecSuccess, let identity else { return (nil, steps) }
-        var written = export(identity, password)
-        steps += ", export \(written.status)"
-        if written.bytes == nil {
-            SecKeychainSetUserInteractionAllowed(asked.boolValue)
-            written = export(identity, password)
-            steps += ", export with questions allowed \(written.status)"
-        }
-        var standard: SecKeychain?
-        steps += ", default keychain \(SecKeychainCopyDefault(&standard))"
-        return (written.bytes, steps)
+        let found = SecIdentityCreateWithCertificate(keychain, inKeychain, &identity)
+        guard found == errSecSuccess, let identity else { return (nil, "identity \(found)") }
+        let written = export(identity, password)
+        return (written.bytes, "export \(written.status)")
     }
     #endif
 

@@ -13,7 +13,6 @@ jobs:
     # iOS 18. Xcode 16.4 is selected explicitly, so a change of the image's default Xcode cannot
     # change the toolchain silently.
     runs-on: macos-15
-    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
       - name: Select Xcode 16.4
@@ -23,7 +22,7 @@ jobs:
       - name: Build
         run: swift build
       - name: Test
-        run: swift test --filter 'Signature|DigitalId|FileRevision|LongTermValidation|PdfSigning'
+        run: swift test --parallel
 
   linux:
     # The engine needs Foundation alone, so the runner's own Swift builds and tests it.
@@ -35,4 +34,4 @@ jobs:
       - name: Build
         run: swift build
       - name: Test
-        run: swift test --filter 'Signature|DigitalId|FileRevision|LongTermValidation|PdfSigning'
+        run: swift test --parallel
