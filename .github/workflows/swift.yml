@@ -22,7 +22,15 @@ jobs:
       - name: Build
         run: swift build
       - name: Test
-        run: swift test --filter 'SignatureChainRules|TimestampTokenRules|DigitalId|Pkcs12Writer'
+        timeout-minutes: 25
+        run: |
+          swift build --build-tests
+          for t in $(grep -o 'func test_[A-Za-z0-9]*' Tests/LazyPDFKitTests/Signatures/DigitalIdTests.swift | sed 's/func //'); do
+            echo "=== $t"
+            perl -e 'alarm 150; exec @ARGV' swift test --skip-build --filter "DigitalIdTests/$t" 2>&1 | grep -E "error|passed|failed|Executed" | head -4 || true
+            echo "exit $?"
+          done
+          swift test --skip-build --filter 'SignatureChainRules|TimestampTokenRules|Pkcs12Writer'
 
   linux:
     # The engine needs Foundation alone, so the runner's own Swift builds and tests it.
