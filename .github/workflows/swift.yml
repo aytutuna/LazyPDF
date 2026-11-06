@@ -22,7 +22,7 @@ jobs:
       - name: Build
         run: swift build
       - name: Test
-        run: swift test --filter 'SignatureOverlapTests'
+        run: swift test --filter 'Signature'
         env:
           SWIFT_BACKTRACE: enable=yes,color=no,sanitize=no
 
