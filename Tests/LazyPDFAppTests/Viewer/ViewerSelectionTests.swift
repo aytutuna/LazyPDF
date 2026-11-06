@@ -63,8 +63,8 @@ final class ViewerSelectionTests: XCTestCase {
         let selection = ViewerSelection()
         selection.set(Caret(1, 5), Caret(2, 8))
 
-        XCTAssertEqual(selection.on(1, 20), TextRange(5, 20))
-        XCTAssertEqual(selection.on(2, 30), TextRange(0, 8))
+        XCTAssertEqual(selection.on(1, 20), LazyPDFKit.TextRange(5, 20))
+        XCTAssertEqual(selection.on(2, 30), LazyPDFKit.TextRange(0, 8))
         XCTAssertNil(selection.on(0, 10))
         XCTAssertNil(selection.on(3, 10))
         XCTAssertTrue(selection.covers(2))

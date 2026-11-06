@@ -63,18 +63,18 @@ public final class ViewerSelection {
     }
 
     /// The selected stretch of one page that has `characters` characters, or nil.
-    public func on(_ page: Int, _ characters: Int) -> TextRange? {
+    public func on(_ page: Int, _ characters: Int) -> LazyPDFKit.TextRange? {
         if !covers(page) { return nil }
         let (start, end) = (start, end)
         let from = page == start.page ? Swift.min(start.index, characters) : 0
         let to = page == end.page ? Swift.min(end.index, characters) : characters
-        return to > from ? TextRange(from, to) : nil
+        return to > from ? LazyPDFKit.TextRange(from, to) : nil
     }
 
     /// The stretch of each page's characters that is selected, given how many characters each page has.
-    public func ranges(_ characters: (Int) -> Int) -> [(page: Int, range: TextRange)] {
+    public func ranges(_ characters: (Int) -> Int) -> [(page: Int, range: LazyPDFKit.TextRange)] {
         if isEmpty { return [] }
-        var found: [(page: Int, range: TextRange)] = []
+        var found: [(page: Int, range: LazyPDFKit.TextRange)] = []
         for page in start.page...end.page {
             if let range = on(page, characters(page)) { found.append((page, range)) }
         }
