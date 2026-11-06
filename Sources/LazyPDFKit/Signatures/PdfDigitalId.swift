@@ -100,8 +100,15 @@ public enum PdfDigitalId {
             steps += ", identity in a list \(found)"
         }
         guard found == errSecSuccess, let identity else { return (nil, steps) }
-        let written = export(identity, password)
+        var written = export(identity, password)
         steps += ", export \(written.status)"
+        if written.bytes == nil {
+            SecKeychainSetUserInteractionAllowed(asked.boolValue)
+            written = export(identity, password)
+            steps += ", export with questions allowed \(written.status)"
+        }
+        var standard: SecKeychain?
+        steps += ", default keychain \(SecKeychainCopyDefault(&standard))"
         return (written.bytes, steps)
     }
     #endif

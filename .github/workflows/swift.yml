@@ -13,6 +13,7 @@ jobs:
     # iOS 18. Xcode 16.4 is selected explicitly, so a change of the image's default Xcode cannot
     # change the toolchain silently.
     runs-on: macos-15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
       - name: Select Xcode 16.4
