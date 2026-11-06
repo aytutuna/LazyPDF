@@ -49,6 +49,18 @@ final class RecoveryWritesTests: XCTestCase {
         XCTAssertEqual(store.abandoned().map(\.meta.title).sorted(), ["gone", "old"])
     }
 
+    func test_aProcessIdThatCannotBeOneIsNeverRunning() {
+        XCTAssertFalse(ProcessCheck.isRunning(-1))
+        XCTAssertFalse(ProcessCheck.isRunning(Int.min))
+    }
+
+    func test_aLiveProcessThatStartedAfterTheEntryWasWrittenIsAnotherProcess() throws {
+        let own = Int(ProcessInfo.processInfo.processIdentifier)
+        try XCTSkipIf(ProcessCheck.launched == nil, "the system does not give a start time")
+        XCTAssertTrue(ProcessCheck.isRunning(own, started: ProcessCheck.launched))
+        XCTAssertFalse(ProcessCheck.isRunning(own, started: Date(timeIntervalSince1970: 1_000_000)))
+    }
+
     func test_aWindowBesideALiveOneDoesNotOfferItsDocuments() async throws {
         let f = ViewModelFixture(self)
         await f.vm.open(f.pdf())

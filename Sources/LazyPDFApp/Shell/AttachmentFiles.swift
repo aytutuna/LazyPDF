@@ -9,6 +9,7 @@ public enum AttachmentFiles {
         "lnk", "url", "hta", "jar", "reg", "dll", "cpl", "msc", "pif", "chm", "application", "appref-ms",
         "jnlp", "diagcab", "settingcontent-ms",
         "app", "command", "sh", "pkg", "dmg", "workflow", "action", "terminal", "scpt", "scptd", "webloc", "inetloc", "ipa",
+        "tool", "mpkg", "mobileconfig", "fileloc", "shortcut", "prefpane", "osax", "kext", "dylib", "bundle",
     ]
 
     private static let refused: Set<Character> = ["<", ">", ":", "\"", "/", "\\", "|", "?", "*"]

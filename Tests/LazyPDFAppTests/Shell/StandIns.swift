@@ -91,11 +91,34 @@ final class FakeSisters: SisterApps {
     }
 }
 
-/// Keeps the path in the bytes of the bookmark.
+/// Keeps the path in the bytes of the bookmark. `moved` sends a path to where its file went since; `stale` marks every
+/// bookmark as one the system wants made again.
 final class PathBookmarks: Bookmarks {
+    var moved: [String: String] = [:]
+    var stale = false
+    var lost = false
+    private(set) var grants: [Grant] = []
+
     func make(_ url: URL) -> Data? { Data(url.standardizedFileURL.path.utf8) }
 
-    func resolve(_ bookmark: Data) -> URL? { URL(fileURLWithPath: String(decoding: bookmark, as: UTF8.self)) }
+    func resolve(_ bookmark: Data) -> ResolvedBookmark? {
+        if lost { return nil }
+        let path = String(decoding: bookmark, as: UTF8.self)
+        return ResolvedBookmark(url: URL(fileURLWithPath: moved[path] ?? path), stale: stale)
+    }
+
+    func access(_ url: URL) -> FileAccess? {
+        let grant = Grant()
+        grants.append(grant)
+        return grant
+    }
+}
+
+/// A file grant that counts how often it was stopped.
+final class Grant: FileAccess {
+    private(set) var stops = 0
+
+    func stop() { stops += 1 }
 }
 
 /// One identity, "alice"; it opens whatever the keys are asked to open, and any other is not a recipient.

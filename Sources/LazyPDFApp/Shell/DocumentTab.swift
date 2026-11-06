@@ -21,6 +21,9 @@ public final class DocumentTab: StripTab {
     public let certificate: CertificateChoice?
 
     private let recovery: RecoveryStore?
+    private let bookmarks: Bookmarks?
+    private var access: FileAccess?
+    private var locationBookmark: Data?
     private var location: URL?
     private let name: String
     private var unsaved: Bool
@@ -59,20 +62,23 @@ public final class DocumentTab: StripTab {
     ///     not given.
     public init(session: PdfEditSession, renderer: DocumentRenderer, url: URL?, title: String, password: String? = nil,
                 recovery: RecoveryStore? = nil, unsaved: Bool = false, known: DiskStamp? = nil,
-                certificate: CertificateChoice? = nil, loaded: Bool? = nil) {
+                certificate: CertificateChoice? = nil, loaded: Bool? = nil, bookmarks: Bookmarks? = nil, access: FileAccess? = nil) {
         self.session = session
         self.renderer = renderer
         self.location = url
         self.name = title
         self.password = password
         self.recovery = recovery
+        self.bookmarks = bookmarks
+        self.access = access
+        self.locationBookmark = url.flatMap { bookmarks?.make($0) }
         self.unsaved = unsaved
         self.certificate = certificate
         let stamp = known ?? DiskStamp.of(url)
         self.disk = stamp
         self.canDraw = loaded ?? renderer.load(session, password)
         if unsaved {
-            recovery?.write(id, session.current, Self.meta(title: url?.lastPathComponent ?? title, url: url, stamp: stamp))
+            recovery?.write(id, session.current, Self.meta(title: url?.lastPathComponent ?? title, url: url, stamp: stamp, bookmark: locationBookmark))
         }
     }
 
@@ -137,14 +143,14 @@ public final class DocumentTab: StripTab {
 
     public func saveAs(_ url: URL) throws {
         try session.save(url.path)
-        location = url
+        move(to: url)
         saved()
     }
 
     /// Writes the file without its history to `url` and goes on from that file.
     public func saveCompact(_ url: URL) throws {
         try session.saveCompact(url.path)
-        location = url
+        move(to: url)
         saved(rewritten: true)
     }
 
@@ -188,17 +194,31 @@ public final class DocumentTab: StripTab {
             recovery.delete(id)
             return
         }
-        recovery.write(id, session.current, Self.meta(title: title, url: location, stamp: disk))
+        recovery.write(id, session.current, Self.meta(title: title, url: location, stamp: disk, bookmark: locationBookmark))
     }
 
-    private nonisolated static func meta(title: String, url: URL?, stamp: DiskStamp?) -> RecoveryMeta {
+    private func move(to url: URL) {
+        location = url
+        locationBookmark = bookmarks?.make(url)
+    }
+
+    private nonisolated static func meta(title: String, url: URL?, stamp: DiskStamp?, bookmark: Data?) -> RecoveryMeta {
         RecoveryMeta(title: title, originalPath: url?.path, saved: Date(), originalWrite: stamp?.write,
-                     originalLength: stamp?.length ?? 0, processId: Int(ProcessInfo.processInfo.processIdentifier))
+                     originalLength: stamp?.length ?? 0, processId: Int(ProcessInfo.processInfo.processIdentifier),
+                     started: ProcessCheck.launched, bookmark: bookmark)
+    }
+
+    /// Takes over the file grant of the tab this one replaces, so a reload does not stop it.
+    func adoptAccess(from old: DocumentTab) {
+        access = old.access
+        old.access = nil
     }
 
     /// Lets go of the renderer and removes the recovery copy: closing on purpose is not a crash.
     public func dispose() {
         renderer.close()
         recovery?.delete(id)
+        access?.stop()
+        access = nil
     }
 }

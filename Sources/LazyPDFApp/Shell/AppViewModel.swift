@@ -62,6 +62,7 @@ public final class AppViewModel {
     @ObservationIgnored let certificates: CertificateKeys
     @ObservationIgnored let recovery: RecoveryStore
     @ObservationIgnored let recentFiles: RecentFiles
+    @ObservationIgnored let bookmarks: Bookmarks
     @ObservationIgnored let settings: URL
 
     private(set) var version = 0
@@ -97,6 +98,7 @@ public final class AppViewModel {
         self.certificates = certificates
         settings = folders.settings
         recovery = RecoveryStore(directory: folders.recovery)
+        self.bookmarks = bookmarks
         recentFiles = RecentFiles(directory: folders.settings, bookmarks: bookmarks)
         let preferences = AppPreferencesStore.load(folders.settings)
         sidePanelId = preferences.sidePanel

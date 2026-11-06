@@ -155,12 +155,19 @@ extension AppViewModel {
                 continue
             }
             // A file that is open already comes back as a copy that needs a name, not as a second tab on the file.
-            var url = entry.meta.originalPath.map { URL(fileURLWithPath: $0) }
-            if let original = url, tab(of: original) != nil { url = nil }
+            // The path alone is not enough in a sandbox; a bookmark that no longer leads anywhere leaves the copy to be named.
+            var url = original(entry.meta)
+            if let found = url, tab(of: found) != nil { url = nil }
+            let access = url.flatMap { bookmarks.access($0) }
             let stamp = entry.meta.originalWrite.map { DiskStamp(write: $0, length: entry.meta.originalLength) }
             let source = OpenSource(bytes: bytes, url: url, title: entry.meta.title, made: false, stamp: url == nil ? nil : stamp)
-            await open(PendingOpen(source, recovery: entry.id), password: nil, certificate: nil)
+            await open(PendingOpen(source, recovery: entry.id, access: access), password: nil, certificate: nil)
         }
+    }
+
+    private func original(_ meta: RecoveryMeta) -> URL? {
+        if let bookmark = meta.bookmark { return bookmarks.resolve(bookmark)?.url }
+        return meta.originalPath.map { URL(fileURLWithPath: $0) }
     }
 
     public func discardRecovery() {

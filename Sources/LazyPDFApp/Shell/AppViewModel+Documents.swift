@@ -5,7 +5,8 @@ import LazyPDFKit
 // what the File menu does, the password and certificate questions, undo and redo, and noticing that a file changed on disk.
 //
 // The file must be readable when it is handed in: the platform shell starts the security-scoped access before it calls
-// `open` and keeps it for as long as the tab is open.
+// `open` and passes the grant along. The shell stops it when the file is not kept (already open, unreadable, cancelled
+// or refused) and otherwise the tab stops it when it is disposed.
 
 /// What the password overlay shows: which file, whether it wants a certificate, and why the last try failed.
 public struct OpenRequest {
@@ -29,11 +30,18 @@ final class PendingOpen {
     var problem: String?
     var submitting = false
     var cancelled = false
+    var access: FileAccess?
 
-    init(_ source: OpenSource, recovery: UUID? = nil, replacing: DocumentTab? = nil) {
+    init(_ source: OpenSource, recovery: UUID? = nil, replacing: DocumentTab? = nil, access: FileAccess? = nil) {
         self.source = source
         self.recovery = recovery
         self.replacing = replacing
+        self.access = access
+    }
+
+    func release() {
+        access?.stop()
+        access = nil
     }
 }
 
@@ -75,13 +83,20 @@ extension AppViewModel {
         await open(PendingOpen(OpenSource(bytes: pdf, url: nil, title: title, made: true)), password: password, certificate: certificate)
     }
 
-    public func open(_ url: URL) async {
+    /// Opens a recent file, starting the access its bookmark gives.
+    public func openRecent(_ item: RecentItem) async {
+        await open(item.url, access: bookmarks.access(item.url))
+    }
+
+    public func open(_ url: URL, access: FileAccess? = nil) async {
+        var kept = false
+        defer { if !kept { access?.stop() } }
         let name = url.lastPathComponent
         if let already = tab(of: url) {
             select(already)
             return
         }
-        let key = RecentFiles.key(url).lowercased()
+        let key = RecentFiles.folded(url)
         if pending.contains(where: { Self.same($0.source.url, url) }) || !opening.insert(key).inserted { return }
         defer { opening.remove(key) }
         let source: OpenSource
@@ -97,7 +112,8 @@ extension AppViewModel {
             }
             return
         }
-        await open(PendingOpen(source), password: nil, certificate: nil)
+        kept = true
+        await open(PendingOpen(source, access: access), password: nil, certificate: nil)
     }
 
     func tab(of url: URL) -> DocumentTab? {
@@ -106,7 +122,7 @@ extension AppViewModel {
 
     static func same(_ a: URL?, _ b: URL?) -> Bool {
         guard let a, let b else { return false }
-        return RecentFiles.same(RecentFiles.key(a), RecentFiles.key(b))
+        return RecentFiles.sameFile(a, b)
     }
 
     public func submitPassword(_ password: String) async {
@@ -121,6 +137,7 @@ extension AppViewModel {
     public func cancelPending() {
         guard let first = pending.first else { return }
         first.cancelled = true
+        first.release()
         pending.removeFirst()
         notifyAll()
     }
@@ -155,6 +172,7 @@ extension AppViewModel {
             return
         } catch {
             self.pending.removeAll { $0 === pending }
+            pending.release()
             showProblem(Problems.open(error, source.title))
             return
         }
@@ -162,6 +180,7 @@ extension AppViewModel {
         if pending.cancelled { return }
         self.pending.removeAll { $0 === pending }
         if session.document.pages.count == 0 {
+            pending.release()
             showProblem(Problem(L10n.t("Nothing to show"), L10n.t("{0} has no pages.", source.title)))
             return
         }
@@ -173,8 +192,22 @@ extension AppViewModel {
             let renderer = make()
             return (renderer, renderer.load(session, password))
         }.value
+        // A second reload of one tab, or an open that lost a race, finds the file in a tab already: it must not make another.
+        let taken: Bool
+        if let old = pending.replacing {
+            taken = index(of: old) == nil
+        } else {
+            taken = url.map { tab(of: $0) != nil } ?? false
+        }
+        if taken {
+            renderer.close()
+            pending.release()
+            return
+        }
         let tab = DocumentTab(session: session, renderer: renderer, url: url, title: source.title, password: password,
-                              recovery: recovery, unsaved: unsaved, known: source.stamp, certificate: certificate, loaded: loaded)
+                              recovery: recovery, unsaved: unsaved, known: source.stamp, certificate: certificate, loaded: loaded,
+                              bookmarks: bookmarks, access: pending.access)
+        pending.access = nil
         tab.changed = { [weak self] in self?.notifyAll() }
         if let old = pending.replacing, let at = index(of: old) {
             replace(at, with: tab)
@@ -205,6 +238,7 @@ extension AppViewModel {
         strip[index] = tab
         if lastDocument === old { lastDocument = tab }
         old.changed = nil
+        tab.adoptAccess(from: old)
         warnedAboutDisk[ObjectIdentifier(old)] = nil
         old.dispose()
     }

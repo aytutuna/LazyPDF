@@ -42,6 +42,13 @@ final class AttachmentFilesTests: XCTestCase {
         }
     }
 
+    func test_otherThingsThatStartOrInstallSomethingAreRecognised() {
+        for name in ["setup.tool", "a.mpkg", "a.mobileconfig", "a.fileloc", "a.shortcut", "a.prefPane", "a.osax", "a.kext",
+                     "a.dylib", "a.bundle"] {
+            XCTAssertTrue(AttachmentFiles.couldRun(AttachmentFiles.safeName(name)), name)
+        }
+    }
+
     func test_documentsAreNot() {
         for name in ["report.pdf", "photo.jpg", "notes"] {
             XCTAssertFalse(AttachmentFiles.couldRun(AttachmentFiles.safeName(name)), name)
