@@ -41,6 +41,18 @@ enum SignatureExtraKit {
         return pad(r) + pad(s)
     }
 
+    /// A certificate under `issuer` with a new RSA key and the extensions given, valid from 2025 to 2040.
+    static func issue(_ name: String, under issuer: X509Certificate, _ extensions: [X509Extension]) throws -> X509Certificate {
+        let key = try SignatureCrypto.newRsaKey(2048)
+        let info = try CertificateBuilder.publicKeyInfo(key)
+        let der = try CertificateBuilder.build(subject: X509Certificate.name("CN=\(name), O=Lazy Test"), issuer: issuer.subjectName, publicKeyInfo: info,
+                                               notBefore: Pki.notBefore, notAfter: Pki.notAfter, serial: CertificateBuilder.serialNumber(),
+                                               extensions: extensions, issuerKey: try XCTUnwrap(issuer.privateKey))
+        guard let certificate = X509Certificate(der) else { throw SignatureCryptoException(message: "The certificate does not read.") }
+        certificate.privateKey = key
+        return certificate
+    }
+
     /// A self-signed certificate valid from 2025 to 2040 with a new RSA key.
     static func selfSigned(subject: [UInt8], extensions: [X509Extension]) throws -> X509Certificate {
         let key = try SignatureCrypto.newRsaKey(2048)
