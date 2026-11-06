@@ -256,4 +256,49 @@ public class PdfOcrLayerTests
         AddWords(document, OcrKit.Words(), 720, 1080);
         OcrKit.AssertAtBoxes(document);
     }
+
+    [Fact]
+    public void AddThatCannotAddObjectsLeavesTheOldLayerAlone()
+    {
+        var document = OcrKit.Scan();
+        AddWords(document, OcrKit.Words());
+        document.Set(PdfDocument.MaxObjectNumber, PdfNull.Instance);
+
+        Assert.Throws<InvalidOperationException>(() => AddWords(document, [OcrKit.Word("other", 10, 10, 50, 20)]));
+
+        Assert.Equal(["Hello", "world", "Second", "line"], PdfOcrLayer.Words(document, document.Pages[0]).Select(w => w.Text));
+        Assert.Equal(1, OcrKit.LayerStreams(document));
+    }
+
+    [Fact]
+    public void ALayerWithMoreOperationsThanTheFormatCanHoldIsAReadError()
+    {
+        var document = OcrKit.Scan();
+        OcrKit.AddLayer(document, string.Concat(Enumerable.Repeat("BT\n", 8 * PdfOcrLayer.MaxWords + 2)));
+
+        Assert.Throws<PdfReadException>(() => PdfOcrLayer.Words(document, document.Pages[0]));
+    }
+
+    [Fact]
+    public void ALayerWithMoreWordsThanMaxWordsIsReadUpToMaxWords()
+    {
+        var document = OcrKit.Scan();
+        OcrKit.AddLayer(document, "BT\n/LPOcrF 12 Tf\n" + string.Concat(Enumerable.Repeat("1 0 0 1 0 0 Tm\n<0041> Tj\n", PdfOcrLayer.MaxWords + 1)) + "ET\n");
+
+        Assert.Equal(PdfOcrLayer.MaxWords, PdfOcrLayer.Words(document, document.Pages[0]).Count);
+    }
+
+    [Fact]
+    public void ALayerStreamThatDoesNotDecodeIsAReadError()
+    {
+        var document = OcrKit.Scan();
+        var marker = new PdfDictionary();
+        var dictionary = new PdfDictionary();
+        dictionary["LazyPDFOcr"] = marker;
+        dictionary["Filter"] = new PdfName("FlateDecode");
+        var stream = document.Add(new PdfStream(dictionary, [1, 2, 3, 4, 5]));
+        document.Pages[0].Dictionary["Contents"] = new PdfArray([stream]);
+
+        Assert.Throws<PdfReadException>(() => PdfOcrLayer.Words(document, document.Pages[0]));
+    }
 }
