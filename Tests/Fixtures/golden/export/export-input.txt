@@ -1,0 +1,142 @@
+# One line is "<op> <words>". Content and text are escaped (\n \r \t \\ \xHH); the model, the writer and the file are named by words.
+# layout <content>: a one-page file (612 x 792; /F1 Helvetica, /F2 Helvetica-Bold, /F3 Helvetica-Oblique, /Im1 the 8 x 6 JPEG) analysed and dumped as a model.
+# content <writer> <content>: the same page through a writer: model, plain, markdown, markdownembed, htmlreflowed, htmlfixed, rtf, docx, xlsx or pptx. A package is shown by the name, size and CRC-32 of each part.
+# report <writer>: the three-page report of the tests (ExportKit.Report) through a writer.
+# built <name> <writer>: a model made by hand (turkish, nested, special, tables, tiny, pages or empty) through a writer.
+# number <text>: what a sheet makes of a cell. jpeg <hex>: the density and Exif orientation of a header. place <orientation> <w> <h> <x> <y>: where a picture goes. png <kind> <w> <h>: the format and filtered rows of a PNG (color, gray, alpha or flat).
+layout
+layout BT /F1 11 Tf 72 700 Td (Some body text that goes on for a while here.) Tj ET\nBT /F2 11 Tf 72 660 Td (Background) Tj ET\nBT /F1 11 Tf 72 640 Td (More body text that goes on for a while here.) Tj ET
+layout BT /F2 24 Tf 72 740 Td (Title) Tj ET\nBT /F2 16 Tf 72 700 Td (Chapter) Tj ET\nBT /F1 11 Tf 72 670 Td (Body text that fills a line of the page nicely.) Tj ET\nBT /F1 11 Tf 72 656 Td (More body text that fills a line of the page nicely.) Tj ET
+layout BT /F1 11 Tf 72 700 Td (Name) Tj ET BT /F1 11 Tf 220 700 Td (Qty) Tj ET BT /F1 11 Tf 320 700 Td (Price) Tj ET\nBT /F1 11 Tf 72 684 Td (Tea) Tj ET BT /F1 11 Tf 220 684 Td (3) Tj ET BT /F1 11 Tf 320 684 Td (4.50) Tj ET\nBT /F1 11 Tf 72 668 Td (Coffee) Tj ET BT /F1 11 Tf 220 668 Td (12) Tj ET BT /F1 11 Tf 320 668 Td (18.00) Tj ET\nBT /F1 11 Tf 72 652 Td (Milk) Tj ET BT /F1 11 Tf 220 652 Td (7) Tj ET BT /F1 11 Tf 320 652 Td (2.25) Tj ET
+layout q 612 0 0 792 0 0 cm /Im1 Do Q\nBT 3 Tr /F1 12 Tf 72 700 Td (Scanned words here) Tj ET
+layout BT /F1 11 Tf 72 700 Td 14 TL (A very long sentence with an inter-) Tj T* (national word continues here.) Tj T* (And a second line follows it.) Tj ET
+layout BT /F1 11 Tf 72 580 Td (\\225) Tj ET BT /F1 11 Tf 90 580 Td (Apples) Tj ET\nBT /F1 11 Tf 72 566 Td (\\225) Tj ET BT /F1 11 Tf 90 566 Td (Pears) Tj ET\nBT /F1 11 Tf 72 540 Td (1. First step) Tj ET\nBT /F1 11 Tf 72 526 Td (2. Second step) Tj ET\nBT /F1 11 Tf 100 510 Td (3.) Tj ET BT /F1 11 Tf 120 510 Td (Third step) Tj ET
+layout 0.5 w 72 400 m 372 400 l S 72 440 m 372 440 l S 72 480 m 372 480 l S\n72 400 m 72 480 l S 222 400 m 222 480 l S 372 400 m 372 480 l S\nBT /F1 11 Tf 80 460 Td (Item) Tj ET BT /F1 11 Tf 230 460 Td (Price) Tj ET\nBT /F1 11 Tf 80 420 Td (Tea) Tj ET BT /F1 11 Tf 230 420 Td (1,250.50) Tj ET
+layout BT /F1 9 Tf 72 765 Td (Confidential) Tj ET\nBT /F2 24 Tf 72 700 Td (Heading) Tj ET\nBT /F1 11 Tf 72 670 Td (Second paragraph with ) Tj /F2 11 Tf (important) Tj /F3 11 Tf ( words.) Tj ET\nq 96 0 0 72 72 250 cm /Im1 Do Q
+layout q 40 0 0 30 100 400 cm /Im1 Do Q q -40 0 0 30 300 400 cm /Im1 Do Q q 0 40 -30 0 400 400 cm /Im1 Do Q\nBT /F1 11 Tf 72 700 Td (Pictures below) Tj ET
+content plain BT /F2 24 Tf 72 740 Td (Title) Tj ET\nBT /F1 11 Tf 72 700 Td 14 TL (First line of a paragraph that runs on) Tj T* (to a second line and stops there.) Tj ET\nBT /F1 11 Tf 72 640 Td (Another paragraph.) Tj ET
+content markdown BT /F2 24 Tf 72 740 Td (Title) Tj ET\nBT /F1 11 Tf 72 700 Td 14 TL (First line of a paragraph that runs on) Tj T* (to a second line and stops there.) Tj ET\nBT /F1 11 Tf 72 640 Td (Another ) Tj /F2 11 Tf (bold) Tj /F3 11 Tf ( and italic.) Tj ET
+content htmlreflowed BT /F2 24 Tf 72 740 Td (Title) Tj ET\nBT /F1 11 Tf 72 700 Td (A paragraph & <more>.) Tj ET\nq 96 0 0 72 72 500 cm /Im1 Do Q
+content htmlfixed BT /F2 24 Tf 72 740 Td (Title) Tj ET\nBT /F1 11 Tf 72 700 Td (A paragraph with ) Tj /F2 11 Tf (bold) Tj /F1 8 Tf ( and small text.) Tj ET
+content rtf BT /F2 24 Tf 72 740 Td (Title) Tj ET\nBT /F1 11 Tf 72 700 Td (A paragraph \\(in parentheses\\) and {braces}.) Tj ET
+content docx BT /F2 24 Tf 72 740 Td (Title) Tj ET\nBT /F1 11 Tf 72 700 Td (A paragraph.) Tj ET\nq 96 0 0 72 72 500 cm /Im1 Do Q
+content xlsx BT /F1 11 Tf 72 700 Td (Name) Tj ET BT /F1 11 Tf 300 700 Td (Total) Tj ET\nBT /F1 11 Tf 72 684 Td (Rent) Tj ET BT /F1 11 Tf 300 684 Td (950) Tj ET\nBT /F1 11 Tf 72 668 Td (Tax) Tj ET BT /F1 11 Tf 300 668 Td (1,234.56) Tj ET
+content pptx BT /F2 24 Tf 72 740 Td (Title) Tj ET\nBT /F1 11 Tf 72 700 Td (A paragraph.) Tj ET\nq 96 0 0 72 72 500 cm /Im1 Do Q
+report model
+report plain
+report markdown
+report markdownembed
+report htmlreflowed
+report htmlfixed
+report rtf
+report docx
+report xlsx
+report pptx
+built turkish model
+built turkish plain
+built turkish markdown
+built turkish htmlreflowed
+built turkish rtf
+built turkish docx
+built nested model
+built nested plain
+built nested markdown
+built nested htmlreflowed
+built nested rtf
+built nested docx
+built special plain
+built special markdown
+built special htmlreflowed
+built special rtf
+built special docx
+built tables plain
+built tables markdown
+built tables htmlreflowed
+built tables rtf
+built tables docx
+built tables xlsx
+built tiny rtf
+built tiny docx
+built tiny htmlreflowed
+built tiny markdownembed
+built pages htmlfixed
+built pages pptx
+built pages xlsx
+built empty plain
+built empty markdown
+built empty htmlreflowed
+built empty htmlfixed
+built empty rtf
+built empty docx
+built empty xlsx
+built empty pptx
+number 42
+number -7
+number 0
+number 0.5
+number 3.14
+number 12,5
+number 1,23
+number 1,234
+number 1,234.56
+number 1.234,56
+number 1.234.567
+number 1,234,567
+number -1.234,5
+number \x208\x20
+number
+number abc
+number 007
+number 1.2.3
+number 12,34,56
+number 1e5
+number 12%
+number $5
+number -
+number 1,
+number 12345678901234567
+number 1.234,56,7
+number +5
+number -0
+number 100
+number 1000000
+number 0.1
+number 0.0001
+number 0.00001
+number 0.000000000000001
+number 123456789012345
+number 999999999999999
+number 1,000.5
+number 12.345
+number 0,5
+number 00.5
+number 0.50
+number .5
+number 5.
+jpeg FFD8FFE000104A4649460001010100C800C80000
+jpeg FFD8FFE000104A46494600010102007600760000
+jpeg FFD8FFE000104A46494600010100000100010000
+jpeg FFD8FFE000104A46494600010101000A000A0000
+jpeg FFD8FFDB0004000000000000000000000000
+jpeg FFD8FFE000104A46494600010101006000600000FFE100224578696600004D4D002A00000008000101120003000000010006000000000000FFD9
+jpeg FFD8FFE000104A46494600010101006000600000FFE100224578696600004D4D002A00000008000101120003000000010003000000000000FFD9
+jpeg FFD8FFE000104A46494600010101006000600000FFE100224578696600004D4D002A00000008000101120003000000010008000000000000FFD9
+jpeg FFD8FFE000104A46494600010101006000600000FFE100224578696600004D4D002A00000008000101120003000000010009000000000000FFD9
+jpeg FFD8FFE000104A46494600010101006000600000FFE1002245786966000049492A00080000000100120103000100000005000000000000FFD9
+jpeg FFD8FFE000104A46494600010101006000600000FFE100224578696600004D4D002A00000008000101110003000000010006000000000000FFD9
+place 1 100 50 10 20
+place 2 100 50 10 20
+place 3 100 50 10 20
+place 4 100 50 10 20
+place 5 100 50 10 20
+place 6 100 50 10 20
+place 7 100 50 10 20
+place 8 100 50 10 20
+place 9 100 50 10 20
+png color 1 1
+png color 7 5
+png color 64 33
+png alpha 40 20
+png gray 16 16
+png gray 3 100
+png flat 200 200

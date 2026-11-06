@@ -2008,8 +2008,8 @@
   <data name="Forward" xml:space="preserve">
     <value>Öne</value>
   </data>
-  <data name="Free. The source is public to read." xml:space="preserve">
-    <value>Ücretsiz. Kaynak kodu herkese açıktır.</value>
+  <data name="Free. Source available under PolyForm Noncommercial 1.0.0." xml:space="preserve">
+    <value>Ücretsiz. Kaynak kodu PolyForm Noncommercial 1.0.0 lisansıyla erişilebilir.</value>
   </data>
   <data name="From Windows" xml:space="preserve">
     <value>Windows'tan</value>

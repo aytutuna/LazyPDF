@@ -1,0 +1,1702 @@
+> check A1b compliant
+< issues 0 truncated false
+> check A2b compliant
+< issues 0 truncated false
+> check A2u compliant
+< issues 0 truncated false
+> check A3b compliant
+< issues 0 truncated false
+> check A3u compliant
+< issues 0 truncated false
+> check A4 compliant
+< issues 0 truncated false
+> check A1b no-intent
+< issues 1 truncated false
+<   6.2.3.3 | Page 1 | DeviceRGB is used and the file has no output intent or default space for it.
+> check A2b no-intent
+< issues 1 truncated false
+<   6.2.4.3 | Page 1 | DeviceRGB is used and the file has no output intent or default space for it.
+> check A2u no-intent
+< issues 1 truncated false
+<   6.2.4.3 | Page 1 | DeviceRGB is used and the file has no output intent or default space for it.
+> check A3b no-intent
+< issues 1 truncated false
+<   6.2.4.3 | Page 1 | DeviceRGB is used and the file has no output intent or default space for it.
+> check A3u no-intent
+< issues 1 truncated false
+<   6.2.4.3 | Page 1 | DeviceRGB is used and the file has no output intent or default space for it.
+> check A4 no-intent
+< issues 1 truncated false
+<   6.2.4.3 | Page 1 | DeviceRGB is used and the file has no output intent or default space for it.
+> check A1b broken
+< issues 13 truncated false
+<   6.6.2 | Catalog | The catalog has an /AA entry.
+<   6.6.1 | Catalog | JavaScript is used.
+<   6.2.8 | Page 1 | A graphics state sets a transfer function.
+<   6.2.8 | Page 1 | A graphics state sets a halftone.
+<   6.4 | Page 1 | The blend mode Glow needs transparency.
+<   6.4 | Page 1 | A constant opacity below 1 needs transparency.
+<   6.2.10 | Page 1 | The content uses the operator frob, which the standard does not define.
+<   6.2.3.3 | Page 1 | DeviceCMYK is used and the file has no output intent or default space for it.
+<   6.5.2 | Page 1, annotation 1 | The annotation type Sound is not allowed.
+<   6.5.3 | Page 1, annotation 2 | The Print flag of the annotation is not set.
+<   6.5.3 | Page 1, annotation 2 | The annotation has no normal appearance stream.
+<   6.6.1 | Page 1, annotation 3 | A Launch action is used.
+<   6.6.1 | Page 1, annotation 3 | The named action Print is not allowed.
+> check A2b broken
+< issues 14 truncated false
+<   6.5.2 | Catalog | The catalog has an /AA entry.
+<   6.4.2 | Catalog | The catalog has /NeedsRendering.
+<   6.5.1 | Catalog | JavaScript is used.
+<   6.5.2 | Page 1 | A page has an /AA entry.
+<   6.2.5 | Page 1 | A graphics state sets a transfer function.
+<   6.2.5 | Page 1 | A graphics state sets a halftone.
+<   6.2.10 | Page 1 | The blend mode Glow is not one of the standard ones.
+<   6.2.2 | Page 1 | The content uses the operator frob, which the standard does not define.
+<   6.2.4.3 | Page 1 | DeviceCMYK is used and the file has no output intent or default space for it.
+<   6.3.1 | Page 1, annotation 1 | The annotation type Sound is not allowed.
+<   6.3.2 | Page 1, annotation 2 | The Print flag of the annotation is not set.
+<   6.3.3 | Page 1, annotation 2 | The annotation has no normal appearance stream.
+<   6.5.1 | Page 1, annotation 3 | A Launch action is used.
+<   6.5.1 | Page 1, annotation 3 | The named action Print is not allowed.
+> check A2u broken
+< issues 14 truncated false
+<   6.5.2 | Catalog | The catalog has an /AA entry.
+<   6.4.2 | Catalog | The catalog has /NeedsRendering.
+<   6.5.1 | Catalog | JavaScript is used.
+<   6.5.2 | Page 1 | A page has an /AA entry.
+<   6.2.5 | Page 1 | A graphics state sets a transfer function.
+<   6.2.5 | Page 1 | A graphics state sets a halftone.
+<   6.2.10 | Page 1 | The blend mode Glow is not one of the standard ones.
+<   6.2.2 | Page 1 | The content uses the operator frob, which the standard does not define.
+<   6.2.4.3 | Page 1 | DeviceCMYK is used and the file has no output intent or default space for it.
+<   6.3.1 | Page 1, annotation 1 | The annotation type Sound is not allowed.
+<   6.3.2 | Page 1, annotation 2 | The Print flag of the annotation is not set.
+<   6.3.3 | Page 1, annotation 2 | The annotation has no normal appearance stream.
+<   6.5.1 | Page 1, annotation 3 | A Launch action is used.
+<   6.5.1 | Page 1, annotation 3 | The named action Print is not allowed.
+> check A3b broken
+< issues 14 truncated false
+<   6.5.2 | Catalog | The catalog has an /AA entry.
+<   6.4.2 | Catalog | The catalog has /NeedsRendering.
+<   6.5.1 | Catalog | JavaScript is used.
+<   6.5.2 | Page 1 | A page has an /AA entry.
+<   6.2.5 | Page 1 | A graphics state sets a transfer function.
+<   6.2.5 | Page 1 | A graphics state sets a halftone.
+<   6.2.10 | Page 1 | The blend mode Glow is not one of the standard ones.
+<   6.2.2 | Page 1 | The content uses the operator frob, which the standard does not define.
+<   6.2.4.3 | Page 1 | DeviceCMYK is used and the file has no output intent or default space for it.
+<   6.3.1 | Page 1, annotation 1 | The annotation type Sound is not allowed.
+<   6.3.2 | Page 1, annotation 2 | The Print flag of the annotation is not set.
+<   6.3.3 | Page 1, annotation 2 | The annotation has no normal appearance stream.
+<   6.5.1 | Page 1, annotation 3 | A Launch action is used.
+<   6.5.1 | Page 1, annotation 3 | The named action Print is not allowed.
+> check A3u broken
+< issues 14 truncated false
+<   6.5.2 | Catalog | The catalog has an /AA entry.
+<   6.4.2 | Catalog | The catalog has /NeedsRendering.
+<   6.5.1 | Catalog | JavaScript is used.
+<   6.5.2 | Page 1 | A page has an /AA entry.
+<   6.2.5 | Page 1 | A graphics state sets a transfer function.
+<   6.2.5 | Page 1 | A graphics state sets a halftone.
+<   6.2.10 | Page 1 | The blend mode Glow is not one of the standard ones.
+<   6.2.2 | Page 1 | The content uses the operator frob, which the standard does not define.
+<   6.2.4.3 | Page 1 | DeviceCMYK is used and the file has no output intent or default space for it.
+<   6.3.1 | Page 1, annotation 1 | The annotation type Sound is not allowed.
+<   6.3.2 | Page 1, annotation 2 | The Print flag of the annotation is not set.
+<   6.3.3 | Page 1, annotation 2 | The annotation has no normal appearance stream.
+<   6.5.1 | Page 1, annotation 3 | A Launch action is used.
+<   6.5.1 | Page 1, annotation 3 | The named action Print is not allowed.
+> check A4 broken
+< issues 14 truncated false
+<   6.6.3 | Catalog | The catalog has an /AA entry.
+<   6.4.2 | Catalog | The catalog has /NeedsRendering.
+<   6.5.1 | Catalog | JavaScript is used.
+<   6.6.3 | Page 1 | An additional-actions dictionary has the key /O, which is not allowed.
+<   6.2.5 | Page 1 | A graphics state sets a transfer function.
+<   6.2.5 | Page 1 | A graphics state sets a halftone.
+<   6.2.10 | Page 1 | The blend mode Glow is not one of the standard ones.
+<   6.2.2 | Page 1 | The content uses the operator frob, which the standard does not define.
+<   6.2.4.3 | Page 1 | DeviceCMYK is used and the file has no output intent or default space for it.
+<   6.3.1 | Page 1, annotation 1 | The annotation type Sound is not allowed.
+<   6.3.2 | Page 1, annotation 2 | The Print flag of the annotation is not set.
+<   6.3.3 | Page 1, annotation 2 | The annotation has no normal appearance stream.
+<   6.5.1 | Page 1, annotation 3 | A Launch action is used.
+<   6.5.1 | Page 1, annotation 3 | The named action Print is not allowed.
+> check A1b streams
+< issues 4 truncated false
+<   6.1.7 | Object 9 | A stream has the key /F, which is not allowed.
+<   6.1.10 | Object 9 | A stream uses the LZW filter.
+<   6.1.7 | Object 4 | The stream keyword must be followed by CRLF or LF.
+<   6.1.7 | Object 4 | The /Length of a stream does not match its data.
+> check A2b streams
+< issues 5 truncated false
+<   6.1.7.2 | Object 12 | A stream uses the filter Fl, which the standard does not list.
+<   6.1.7 | Object 9 | A stream has the key /F, which is not allowed.
+<   6.1.7.2 | Object 9 | A stream uses the LZW filter.
+<   6.1.7 | Object 4 | The stream keyword must be followed by CRLF or LF.
+<   6.1.7 | Object 4 | The /Length of a stream does not match its data.
+> check A2u streams
+< issues 5 truncated false
+<   6.1.7.2 | Object 12 | A stream uses the filter Fl, which the standard does not list.
+<   6.1.7 | Object 9 | A stream has the key /F, which is not allowed.
+<   6.1.7.2 | Object 9 | A stream uses the LZW filter.
+<   6.1.7 | Object 4 | The stream keyword must be followed by CRLF or LF.
+<   6.1.7 | Object 4 | The /Length of a stream does not match its data.
+> check A3b streams
+< issues 5 truncated false
+<   6.1.7.2 | Object 12 | A stream uses the filter Fl, which the standard does not list.
+<   6.1.7 | Object 9 | A stream has the key /F, which is not allowed.
+<   6.1.7.2 | Object 9 | A stream uses the LZW filter.
+<   6.1.7 | Object 4 | The stream keyword must be followed by CRLF or LF.
+<   6.1.7 | Object 4 | The /Length of a stream does not match its data.
+> check A3u streams
+< issues 5 truncated false
+<   6.1.7.2 | Object 12 | A stream uses the filter Fl, which the standard does not list.
+<   6.1.7 | Object 9 | A stream has the key /F, which is not allowed.
+<   6.1.7.2 | Object 9 | A stream uses the LZW filter.
+<   6.1.7 | Object 4 | The stream keyword must be followed by CRLF or LF.
+<   6.1.7 | Object 4 | The /Length of a stream does not match its data.
+> check A4 streams
+< issues 5 truncated false
+<   6.1.7.2 | Object 12 | A stream uses the filter Fl, which the standard does not list.
+<   6.1.7 | Object 9 | A stream has the key /F, which is not allowed.
+<   6.1.7.2 | Object 9 | A stream uses the LZW filter.
+<   6.1.7 | Object 4 | The stream keyword must be followed by CRLF or LF.
+<   6.1.7 | Object 4 | The /Length of a stream does not match its data.
+> check A1b metadata
+< issues 4 truncated false
+<   6.7.11 | Metadata | The XMP says conformance X; B is needed.
+<   6.7.3 | Document information | /Title does not match dc:title in the XMP.
+<   6.7.3 | Document information | /Author does not match dc:creator in the XMP.
+<   6.7.3 | Document information | /CreationDate does not match xmp:CreateDate in the XMP.
+> check A2b metadata
+< issues 5 truncated false
+<   6.6.4 | Metadata | The XMP says part 1; part 2 is checked.
+<   6.6.4 | Metadata | The XMP says conformance X; B is needed.
+<   6.6.2.3 | Document information | /Title does not match dc:title in the XMP.
+<   6.6.2.3 | Document information | /Author does not match dc:creator in the XMP.
+<   6.6.2.3 | Document information | /CreationDate does not match xmp:CreateDate in the XMP.
+> check A2u metadata
+< issues 4 truncated false
+<   6.6.4 | Metadata | The XMP says part 1; part 2 is checked.
+<   6.6.2.3 | Document information | /Title does not match dc:title in the XMP.
+<   6.6.2.3 | Document information | /Author does not match dc:creator in the XMP.
+<   6.6.2.3 | Document information | /CreationDate does not match xmp:CreateDate in the XMP.
+> check A3b metadata
+< issues 4 truncated false
+<   6.6.4 | Metadata | The XMP says conformance X; B is needed.
+<   6.6.2.3 | Document information | /Title does not match dc:title in the XMP.
+<   6.6.2.3 | Document information | /Author does not match dc:creator in the XMP.
+<   6.6.2.3 | Document information | /CreationDate does not match xmp:CreateDate in the XMP.
+> check A3u metadata
+< issues 3 truncated false
+<   6.6.2.3 | Document information | /Title does not match dc:title in the XMP.
+<   6.6.2.3 | Document information | /Author does not match dc:creator in the XMP.
+<   6.6.2.3 | Document information | /CreationDate does not match xmp:CreateDate in the XMP.
+> check A4 metadata
+< issues 5 truncated false
+<   6.1.3 | Document information | The information dictionary has /Title, which this level does not allow.
+<   6.1.3 | Document information | The information dictionary has /Author, which this level does not allow.
+<   6.1.3 | Document information | The information dictionary has /Creator, which this level does not allow.
+<   6.1.3 | Document information | The information dictionary has /Producer, which this level does not allow.
+<   6.6.2.3 | Document information | /CreationDate does not match xmp:CreateDate in the XMP.
+> check A1b layers
+< issues 1 truncated false
+<   6.1.13 | Catalog | The catalog has /OCProperties.
+> check A2b layers
+< issues 3 truncated false
+<   6.9 | Catalog | An optional content configuration has no /Name.
+<   6.9 | Catalog | An optional content configuration has /AS.
+<   6.9 | Catalog | The /Order of a configuration leaves out some groups.
+> check A2u layers
+< issues 3 truncated false
+<   6.9 | Catalog | An optional content configuration has no /Name.
+<   6.9 | Catalog | An optional content configuration has /AS.
+<   6.9 | Catalog | The /Order of a configuration leaves out some groups.
+> check A3b layers
+< issues 3 truncated false
+<   6.9 | Catalog | An optional content configuration has no /Name.
+<   6.9 | Catalog | An optional content configuration has /AS.
+<   6.9 | Catalog | The /Order of a configuration leaves out some groups.
+> check A3u layers
+< issues 3 truncated false
+<   6.9 | Catalog | An optional content configuration has no /Name.
+<   6.9 | Catalog | An optional content configuration has /AS.
+<   6.9 | Catalog | The /Order of a configuration leaves out some groups.
+> check A4 layers
+< issues 3 truncated false
+<   6.9 | Catalog | An optional content configuration has no /Name.
+<   6.9 | Catalog | An optional content configuration has /AS.
+<   6.9 | Catalog | The /Order of a configuration leaves out some groups.
+> check A1b attachment
+< issues 1 truncated false
+<   6.1.11 | Object 9 | The file embeds another file, which this level does not allow.
+> check A2b attachment
+< issues 1 truncated false
+<   6.8 | Object 9 | An embedded file is not a PDF/A file.
+> check A2u attachment
+< issues 1 truncated false
+<   6.8 | Object 9 | An embedded file is not a PDF/A file.
+> check A3b attachment
+< issues 2 truncated false
+<   6.8 | Object 9 | A file specification has no /AFRelationship.
+<   6.8 | Object 9 | An embedded file stream has no /Subtype giving its MIME type.
+> check A3u attachment
+< issues 2 truncated false
+<   6.8 | Object 9 | A file specification has no /AFRelationship.
+<   6.8 | Object 9 | An embedded file stream has no /Subtype giving its MIME type.
+> check A4 attachment
+< issues 1 truncated false
+<   6.8 | Object 9 | The file embeds another file, which this level does not allow.
+> check A1b form
+< issues 5 truncated false
+<   6.9 | Form | The form sets /NeedAppearances to true.
+<   6.9 | Form | The form has XFA data.
+<   6.6.2 | Form | A field or widget has an /AA entry.
+<   6.6.2 | Page 1, annotation 1 | A field or widget has an /AA entry.
+<   6.5.3 | Page 1, annotation 1 | The annotation has no normal appearance stream.
+> check A2b form
+< issues 5 truncated false
+<   6.4.1 | Form | The form sets /NeedAppearances to true.
+<   6.4.2 | Form | The form has XFA data.
+<   6.4.1 | Form | A field or widget has an /AA entry.
+<   6.4.1 | Page 1, annotation 1 | A field or widget has an /AA entry.
+<   6.3.3 | Page 1, annotation 1 | The annotation has no normal appearance stream.
+> check A2u form
+< issues 5 truncated false
+<   6.4.1 | Form | The form sets /NeedAppearances to true.
+<   6.4.2 | Form | The form has XFA data.
+<   6.4.1 | Form | A field or widget has an /AA entry.
+<   6.4.1 | Page 1, annotation 1 | A field or widget has an /AA entry.
+<   6.3.3 | Page 1, annotation 1 | The annotation has no normal appearance stream.
+> check A3b form
+< issues 5 truncated false
+<   6.4.1 | Form | The form sets /NeedAppearances to true.
+<   6.4.2 | Form | The form has XFA data.
+<   6.4.1 | Form | A field or widget has an /AA entry.
+<   6.4.1 | Page 1, annotation 1 | A field or widget has an /AA entry.
+<   6.3.3 | Page 1, annotation 1 | The annotation has no normal appearance stream.
+> check A3u form
+< issues 5 truncated false
+<   6.4.1 | Form | The form sets /NeedAppearances to true.
+<   6.4.2 | Form | The form has XFA data.
+<   6.4.1 | Form | A field or widget has an /AA entry.
+<   6.4.1 | Page 1, annotation 1 | A field or widget has an /AA entry.
+<   6.3.3 | Page 1, annotation 1 | The annotation has no normal appearance stream.
+> check A4 form
+< issues 3 truncated false
+<   6.4.1 | Form | The form sets /NeedAppearances to true.
+<   6.4.2 | Form | The form has XFA data.
+<   6.3.3 | Page 1, annotation 1 | The annotation has no normal appearance stream.
+> check A1b limits
+< issues 7 truncated false
+<   6.1.6 | Trailer | A hexadecimal string has an odd number of digits or a character that is not a hex digit.
+<   6.1.12 | Page 1 | The real number 40000.5 is beyond 32767.
+<   6.1.12 | Page 1 | Graphics states are nested more than 28 deep.
+<   6.1.12 | Object 1 | A string is 70,000 bytes long, past the limit.
+<   6.1.12 | Object 1 | The real number 40000.5 is beyond 32767.
+<   6.1.12 | Object 1 | The integer 3000000000 is outside the 32-bit range.
+<   6.1.12 | Object 1 | A name is longer than 127 bytes.
+> check A2b limits
+< issues 5 truncated false
+<   6.1.6 | Trailer | A hexadecimal string has an odd number of digits or a character that is not a hex digit.
+<   6.1.13 | Page 1 | Graphics states are nested more than 28 deep.
+<   6.1.13 | Object 1 | A string is 70,000 bytes long, past the limit.
+<   6.1.13 | Object 1 | The integer 3000000000 is outside the 32-bit range.
+<   6.1.13 | Object 1 | A name is longer than 127 bytes.
+> check A2u limits
+< issues 5 truncated false
+<   6.1.6 | Trailer | A hexadecimal string has an odd number of digits or a character that is not a hex digit.
+<   6.1.13 | Page 1 | Graphics states are nested more than 28 deep.
+<   6.1.13 | Object 1 | A string is 70,000 bytes long, past the limit.
+<   6.1.13 | Object 1 | The integer 3000000000 is outside the 32-bit range.
+<   6.1.13 | Object 1 | A name is longer than 127 bytes.
+> check A3b limits
+< issues 5 truncated false
+<   6.1.6 | Trailer | A hexadecimal string has an odd number of digits or a character that is not a hex digit.
+<   6.1.13 | Page 1 | Graphics states are nested more than 28 deep.
+<   6.1.13 | Object 1 | A string is 70,000 bytes long, past the limit.
+<   6.1.13 | Object 1 | The integer 3000000000 is outside the 32-bit range.
+<   6.1.13 | Object 1 | A name is longer than 127 bytes.
+> check A3u limits
+< issues 5 truncated false
+<   6.1.6 | Trailer | A hexadecimal string has an odd number of digits or a character that is not a hex digit.
+<   6.1.13 | Page 1 | Graphics states are nested more than 28 deep.
+<   6.1.13 | Object 1 | A string is 70,000 bytes long, past the limit.
+<   6.1.13 | Object 1 | The integer 3000000000 is outside the 32-bit range.
+<   6.1.13 | Object 1 | A name is longer than 127 bytes.
+> check A4 limits
+< issues 5 truncated false
+<   6.1.6 | Trailer | A hexadecimal string has an odd number of digits or a character that is not a hex digit.
+<   6.1.13 | Page 1 | Graphics states are nested more than 28 deep.
+<   6.1.13 | Object 1 | A string is 70,000 bytes long, past the limit.
+<   6.1.13 | Object 1 | The integer 3000000000 is outside the 32-bit range.
+<   6.1.13 | Object 1 | A name is longer than 127 bytes.
+> check A1b inline
+< issues 2 truncated false
+<   6.2.4 | Page 1 | An image sets /Interpolate to true.
+<   6.1.10 | Page 1 | A stream uses the Crypt filter.
+> check A2b inline
+< issues 2 truncated false
+<   6.2.8 | Page 1 | An image sets /Interpolate to true.
+<   6.1.10 | Page 1 | A stream uses the Crypt filter.
+> check A2u inline
+< issues 2 truncated false
+<   6.2.8 | Page 1 | An image sets /Interpolate to true.
+<   6.1.10 | Page 1 | A stream uses the Crypt filter.
+> check A3b inline
+< issues 2 truncated false
+<   6.2.8 | Page 1 | An image sets /Interpolate to true.
+<   6.1.10 | Page 1 | A stream uses the Crypt filter.
+> check A3u inline
+< issues 2 truncated false
+<   6.2.8 | Page 1 | An image sets /Interpolate to true.
+<   6.1.10 | Page 1 | A stream uses the Crypt filter.
+> check A4 inline
+< issues 2 truncated false
+<   6.2.8 | Page 1 | An image sets /Interpolate to true.
+<   6.1.10 | Page 1 | A stream uses the Crypt filter.
+> check A1b plain
+< issues 5 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.7.2 | Catalog | The catalog has no /Metadata stream.
+<   6.2.3.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+<   6.3.4 | Font Helvetica | The font is not embedded.
+> check A2b plain
+< issues 5 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+> check A2u plain
+< issues 5 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+> check A3b plain
+< issues 5 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+> check A3u plain
+< issues 5 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+> check A4 plain
+< issues 6 truncated false
+<   6.1.2 | File header | The header names version 1.4; it must be 2.0.
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+> check A1b transparency
+< issues 5 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.7.2 | Catalog | The catalog has no /Metadata stream.
+<   6.4 | Page 1 | A constant opacity below 1 needs transparency.
+<   6.2.3.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+> check A2b transparency
+< issues 4 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+> check A2u transparency
+< issues 4 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+> check A3b transparency
+< issues 4 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+> check A3u transparency
+< issues 4 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+> check A4 transparency
+< issues 5 truncated false
+<   6.1.2 | File header | The header names version 1.4; it must be 2.0.
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+> check A1b lzw
+< issues 6 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.7.2 | Catalog | The catalog has no /Metadata stream.
+<   6.2.3.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+<   6.1.10 | Object 4 | A stream uses the LZW filter.
+<   6.3.4 | Font Helvetica | The font is not embedded.
+> check A2b lzw
+< issues 6 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+<   6.1.7.2 | Object 4 | A stream uses the LZW filter.
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+> check A2u lzw
+< issues 6 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+<   6.1.7.2 | Object 4 | A stream uses the LZW filter.
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+> check A3b lzw
+< issues 6 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+<   6.1.7.2 | Object 4 | A stream uses the LZW filter.
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+> check A3u lzw
+< issues 6 truncated false
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+<   6.1.7.2 | Object 4 | A stream uses the LZW filter.
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+> check A4 lzw
+< issues 7 truncated false
+<   6.1.2 | File header | The header names version 1.4; it must be 2.0.
+<   6.1.2 | File header | The second line must be a comment of four bytes above 127.
+<   6.1.3 | Trailer | The trailer has no /ID of two strings.
+<   6.6.2.1 | Catalog | The catalog has no /Metadata stream.
+<   6.2.4.3 | Page 1 | DeviceGray is used and the file has no output intent or default space for it.
+<   6.1.7.2 | Object 4 | A stream uses the LZW filter.
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+> convert A1b compliant
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-1b.
+< remaining 0 clean true
+< header %PDF-1.4
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>1</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A2b compliant
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-2b.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A2u compliant
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-2u.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>U</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A3b compliant
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-3b.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A3u compliant
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-3u.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>U</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A4 compliant
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-4.
+< remaining 0 clean true
+< header %PDF-2.0
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>4</pdfaid:part>\n   <pdfaid:rev>2020</pdfaid:rev>\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A1b no-intent
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata now identifies the file as PDF/A-1b.
+< remaining 0 clean true
+< header %PDF-1.4
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>1</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A2b no-intent
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata now identifies the file as PDF/A-2b.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A2u no-intent
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata now identifies the file as PDF/A-2u.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>U</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A3b no-intent
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata now identifies the file as PDF/A-3b.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A3u no-intent
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata now identifies the file as PDF/A-3u.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>U</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A4 no-intent
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata now identifies the file as PDF/A-4.
+< remaining 0 clean true
+< header %PDF-2.0
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>4</pdfaid:part>\n   <pdfaid:rev>2020</pdfaid:rev>\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A1b broken
+< refusal PDF/A-1 does not allow transparency and it cannot be flattened here. The blend mode Glow needs transparency. A constant opacity below 1 needs transparency. Convert to PDF/A-2 or later instead.
+< remaining 0 clean false
+> convert A2b broken
+< refusal none
+< change 5 actions or scripts were removed.
+< change 1 annotations of a kind this level does not allow were removed.
+< change The print and visibility flags of 1 annotations were corrected.
+< change Appearances were drawn for 1 annotations.
+< change The XMP metadata does not name PDF/A-2b, because rules are still broken.
+< remaining 6 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.4.2 | Catalog | The catalog has /NeedsRendering.
+<   6.5.2 | Page 1 | A page has an /AA entry.
+<   6.2.10 | Page 1 | The blend mode Glow is not one of the standard ones.
+<   6.2.2 | Page 1 | The content uses the operator frob, which the standard does not define.
+<   6.2.4.3 | Page 1 | DeviceCMYK is used and the file has no output intent or default space for it.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /NeedsRendering false /Names <<>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</ExtGState <</G0 <</ca 0.5 /CA 0.5 /BM /Glow>>>>>> /Annots [9 0 R 10 0 R] /AA <</O <</S /URI /URI (x)>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | /G0 gs 0 0 0 1 k 0 0 5 5 re f BX 1 2 frob EX
+<   9: <</Type /Annot /Subtype /Square /Rect [60 10 90 50] /F 4 /C [1 0 0] /AP <</N 11 0 R>>>>
+<   10: <</Type /Annot /Subtype /Link /Rect [10 60 50 90] /F 4 /Border [0 0 0]>>
+<   11: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 30 40] /Matrix [1 0 0 1 0 0] /Resources <<>>>> | 1 0 0 RG\n1 w\n1 j\n0.5 0.5 29 39 re\nS\n
+> convert A2u broken
+< refusal none
+< change 5 actions or scripts were removed.
+< change 1 annotations of a kind this level does not allow were removed.
+< change The print and visibility flags of 1 annotations were corrected.
+< change Appearances were drawn for 1 annotations.
+< change The XMP metadata does not name PDF/A-2u, because rules are still broken.
+< remaining 6 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.4.2 | Catalog | The catalog has /NeedsRendering.
+<   6.5.2 | Page 1 | A page has an /AA entry.
+<   6.2.10 | Page 1 | The blend mode Glow is not one of the standard ones.
+<   6.2.2 | Page 1 | The content uses the operator frob, which the standard does not define.
+<   6.2.4.3 | Page 1 | DeviceCMYK is used and the file has no output intent or default space for it.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /NeedsRendering false /Names <<>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</ExtGState <</G0 <</ca 0.5 /CA 0.5 /BM /Glow>>>>>> /Annots [9 0 R 10 0 R] /AA <</O <</S /URI /URI (x)>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | /G0 gs 0 0 0 1 k 0 0 5 5 re f BX 1 2 frob EX
+<   9: <</Type /Annot /Subtype /Square /Rect [60 10 90 50] /F 4 /C [1 0 0] /AP <</N 11 0 R>>>>
+<   10: <</Type /Annot /Subtype /Link /Rect [10 60 50 90] /F 4 /Border [0 0 0]>>
+<   11: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 30 40] /Matrix [1 0 0 1 0 0] /Resources <<>>>> | 1 0 0 RG\n1 w\n1 j\n0.5 0.5 29 39 re\nS\n
+> convert A3b broken
+< refusal none
+< change 5 actions or scripts were removed.
+< change 1 annotations of a kind this level does not allow were removed.
+< change The print and visibility flags of 1 annotations were corrected.
+< change Appearances were drawn for 1 annotations.
+< change The XMP metadata does not name PDF/A-3b, because rules are still broken.
+< remaining 6 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.4.2 | Catalog | The catalog has /NeedsRendering.
+<   6.5.2 | Page 1 | A page has an /AA entry.
+<   6.2.10 | Page 1 | The blend mode Glow is not one of the standard ones.
+<   6.2.2 | Page 1 | The content uses the operator frob, which the standard does not define.
+<   6.2.4.3 | Page 1 | DeviceCMYK is used and the file has no output intent or default space for it.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /NeedsRendering false /Names <<>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</ExtGState <</G0 <</ca 0.5 /CA 0.5 /BM /Glow>>>>>> /Annots [9 0 R 10 0 R] /AA <</O <</S /URI /URI (x)>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | /G0 gs 0 0 0 1 k 0 0 5 5 re f BX 1 2 frob EX
+<   9: <</Type /Annot /Subtype /Square /Rect [60 10 90 50] /F 4 /C [1 0 0] /AP <</N 11 0 R>>>>
+<   10: <</Type /Annot /Subtype /Link /Rect [10 60 50 90] /F 4 /Border [0 0 0]>>
+<   11: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 30 40] /Matrix [1 0 0 1 0 0] /Resources <<>>>> | 1 0 0 RG\n1 w\n1 j\n0.5 0.5 29 39 re\nS\n
+> convert A3u broken
+< refusal none
+< change 5 actions or scripts were removed.
+< change 1 annotations of a kind this level does not allow were removed.
+< change The print and visibility flags of 1 annotations were corrected.
+< change Appearances were drawn for 1 annotations.
+< change The XMP metadata does not name PDF/A-3u, because rules are still broken.
+< remaining 6 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.4.2 | Catalog | The catalog has /NeedsRendering.
+<   6.5.2 | Page 1 | A page has an /AA entry.
+<   6.2.10 | Page 1 | The blend mode Glow is not one of the standard ones.
+<   6.2.2 | Page 1 | The content uses the operator frob, which the standard does not define.
+<   6.2.4.3 | Page 1 | DeviceCMYK is used and the file has no output intent or default space for it.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /NeedsRendering false /Names <<>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</ExtGState <</G0 <</ca 0.5 /CA 0.5 /BM /Glow>>>>>> /Annots [9 0 R 10 0 R] /AA <</O <</S /URI /URI (x)>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | /G0 gs 0 0 0 1 k 0 0 5 5 re f BX 1 2 frob EX
+<   9: <</Type /Annot /Subtype /Square /Rect [60 10 90 50] /F 4 /C [1 0 0] /AP <</N 11 0 R>>>>
+<   10: <</Type /Annot /Subtype /Link /Rect [10 60 50 90] /F 4 /Border [0 0 0]>>
+<   11: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 30 40] /Matrix [1 0 0 1 0 0] /Resources <<>>>> | 1 0 0 RG\n1 w\n1 j\n0.5 0.5 29 39 re\nS\n
+> convert A4 broken
+< refusal none
+< change 5 actions or scripts were removed.
+< change 1 annotations of a kind this level does not allow were removed.
+< change The print and visibility flags of 1 annotations were corrected.
+< change Appearances were drawn for 1 annotations.
+< change The XMP metadata does not name PDF/A-4, because rules are still broken.
+< remaining 6 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.4.2 | Catalog | The catalog has /NeedsRendering.
+<   6.6.3 | Page 1 | An additional-actions dictionary has the key /O, which is not allowed.
+<   6.2.10 | Page 1 | The blend mode Glow is not one of the standard ones.
+<   6.2.2 | Page 1 | The content uses the operator frob, which the standard does not define.
+<   6.2.4.3 | Page 1 | DeviceCMYK is used and the file has no output intent or default space for it.
+< header %PDF-2.0
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /NeedsRendering false /Names <<>>>>
+<   2: <</CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</ExtGState <</G0 <</ca 0.5 /CA 0.5 /BM /Glow>>>>>> /Annots [9 0 R 10 0 R] /AA <</O <</S /URI /URI (x)>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | /G0 gs 0 0 0 1 k 0 0 5 5 re f BX 1 2 frob EX
+<   9: <</Type /Annot /Subtype /Square /Rect [60 10 90 50] /F 4 /C [1 0 0] /AP <</N 11 0 R>>>>
+<   10: <</Type /Annot /Subtype /Link /Rect [10 60 50 90] /F 4 /Border [0 0 0]>>
+<   11: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 30 40] /Matrix [1 0 0 1 0 0] /Resources <<>>>> | 1 0 0 RG\n1 w\n1 j\n0.5 0.5 29 39 re\nS\n
+> convert A1b streams
+< refusal none
+< change 1 streams were recompressed without LZW.
+< change The XMP metadata now identifies the file as PDF/A-1b.
+< remaining 0 clean true
+< header %PDF-1.4
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /Extra 6 0 R /More 7 0 R>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [8 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>1</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 9 0 R>>
+<   6: stream <<>> | abc
+<   7: stream <</Filter /Fl>> | unreadable
+<   8: <</Type /Page /Parent 3 0 R /Contents 10 0 R /Resources <<>>>>
+<   9: stream <</N 3>> | 736 bytes
+<   10: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A2b streams
+< refusal none
+< change 1 streams were recompressed without LZW.
+< change The XMP metadata does not name PDF/A-2b, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.1.7.2 | Object 7 | A stream uses the filter Fl, which the standard does not list.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /Extra 6 0 R /More 7 0 R>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [8 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 9 0 R>>
+<   6: stream <<>> | abc
+<   7: stream <</Filter /Fl>> | unreadable
+<   8: <</Type /Page /Parent 3 0 R /Contents 10 0 R /Resources <<>>>>
+<   9: stream <</N 3>> | 736 bytes
+<   10: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A2u streams
+< refusal none
+< change 1 streams were recompressed without LZW.
+< change The XMP metadata does not name PDF/A-2u, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.1.7.2 | Object 7 | A stream uses the filter Fl, which the standard does not list.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /Extra 6 0 R /More 7 0 R>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [8 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 9 0 R>>
+<   6: stream <<>> | abc
+<   7: stream <</Filter /Fl>> | unreadable
+<   8: <</Type /Page /Parent 3 0 R /Contents 10 0 R /Resources <<>>>>
+<   9: stream <</N 3>> | 736 bytes
+<   10: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A3b streams
+< refusal none
+< change 1 streams were recompressed without LZW.
+< change The XMP metadata does not name PDF/A-3b, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.1.7.2 | Object 7 | A stream uses the filter Fl, which the standard does not list.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /Extra 6 0 R /More 7 0 R>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [8 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 9 0 R>>
+<   6: stream <<>> | abc
+<   7: stream <</Filter /Fl>> | unreadable
+<   8: <</Type /Page /Parent 3 0 R /Contents 10 0 R /Resources <<>>>>
+<   9: stream <</N 3>> | 736 bytes
+<   10: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A3u streams
+< refusal none
+< change 1 streams were recompressed without LZW.
+< change The XMP metadata does not name PDF/A-3u, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.1.7.2 | Object 7 | A stream uses the filter Fl, which the standard does not list.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /Extra 6 0 R /More 7 0 R>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [8 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 9 0 R>>
+<   6: stream <<>> | abc
+<   7: stream <</Filter /Fl>> | unreadable
+<   8: <</Type /Page /Parent 3 0 R /Contents 10 0 R /Resources <<>>>>
+<   9: stream <</N 3>> | 736 bytes
+<   10: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A4 streams
+< refusal none
+< change 1 streams were recompressed without LZW.
+< change The XMP metadata does not name PDF/A-4, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.1.7.2 | Object 7 | A stream uses the filter Fl, which the standard does not list.
+< header %PDF-2.0
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /Extra 6 0 R /More 7 0 R>>
+<   2: <</CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [8 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 9 0 R>>
+<   6: stream <<>> | abc
+<   7: stream <</Filter /Fl>> | unreadable
+<   8: <</Type /Page /Parent 3 0 R /Contents 10 0 R /Resources <<>>>>
+<   9: stream <</N 3>> | 736 bytes
+<   10: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A1b metadata
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-1b.
+< remaining 0 clean true
+< header %PDF-1.4
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Other) /Author (Someone) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103001+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>1</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Other</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Someone</rdf:li></rdf:Seq></dc:creator>\n   <xmp:CreateDate>2026-03-04T10:30:01+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A2b metadata
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-2b.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Other) /Author (Someone) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103001+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Other</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Someone</rdf:li></rdf:Seq></dc:creator>\n   <xmp:CreateDate>2026-03-04T10:30:01+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A2u metadata
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-2u.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Other) /Author (Someone) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103001+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>U</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Other</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Someone</rdf:li></rdf:Seq></dc:creator>\n   <xmp:CreateDate>2026-03-04T10:30:01+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A3b metadata
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-3b.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Other) /Author (Someone) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103001+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Other</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Someone</rdf:li></rdf:Seq></dc:creator>\n   <xmp:CreateDate>2026-03-04T10:30:01+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A3u metadata
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-3u.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Other) /Author (Someone) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103001+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>U</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Other</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Someone</rdf:li></rdf:Seq></dc:creator>\n   <xmp:CreateDate>2026-03-04T10:30:01+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A4 metadata
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-4.
+< remaining 0 clean true
+< header %PDF-2.0
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</CreationDate (D:20260304103001+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>4</pdfaid:part>\n   <pdfaid:rev>2020</pdfaid:rev>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Other</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Someone</rdf:li></rdf:Seq></dc:creator>\n   <xmp:CreateDate>2026-03-04T10:30:01+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A1b layers
+< refusal none
+< change The layers were removed; hidden layers now show.
+< change The XMP metadata now identifies the file as PDF/A-1b.
+< remaining 0 clean true
+< header %PDF-1.4
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>1</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A2b layers
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-2b.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /OCProperties <</OCGs [6 0 R] /D <</Name (Default)>>>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 8 0 R>>
+<   6: <</Type /OCG /Name (L)>>
+<   7: <</Type /Page /Parent 3 0 R /Contents 9 0 R /Resources <<>>>>
+<   8: stream <</N 3>> | 736 bytes
+<   9: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A2u layers
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-2u.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /OCProperties <</OCGs [6 0 R] /D <</Name (Default)>>>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>U</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 8 0 R>>
+<   6: <</Type /OCG /Name (L)>>
+<   7: <</Type /Page /Parent 3 0 R /Contents 9 0 R /Resources <<>>>>
+<   8: stream <</N 3>> | 736 bytes
+<   9: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A3b layers
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-3b.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /OCProperties <</OCGs [6 0 R] /D <</Name (Default)>>>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 8 0 R>>
+<   6: <</Type /OCG /Name (L)>>
+<   7: <</Type /Page /Parent 3 0 R /Contents 9 0 R /Resources <<>>>>
+<   8: stream <</N 3>> | 736 bytes
+<   9: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A3u layers
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-3u.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /OCProperties <</OCGs [6 0 R] /D <</Name (Default)>>>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>U</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 8 0 R>>
+<   6: <</Type /OCG /Name (L)>>
+<   7: <</Type /Page /Parent 3 0 R /Contents 9 0 R /Resources <<>>>>
+<   8: stream <</N 3>> | 736 bytes
+<   9: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A4 layers
+< refusal none
+< change The XMP metadata now identifies the file as PDF/A-4.
+< remaining 0 clean true
+< header %PDF-2.0
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /OCProperties <</OCGs [6 0 R] /D <</Name (Default)>>>>>>
+<   2: <</CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>4</pdfaid:part>\n   <pdfaid:rev>2020</pdfaid:rev>\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 8 0 R>>
+<   6: <</Type /OCG /Name (L)>>
+<   7: <</Type /Page /Parent 3 0 R /Contents 9 0 R /Resources <<>>>>
+<   8: stream <</N 3>> | 736 bytes
+<   9: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A1b attachment
+< refusal none
+< change 2 embedded files were removed.
+< change The XMP metadata now identifies the file as PDF/A-1b.
+< remaining 0 clean true
+< header %PDF-1.4
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /Names <<>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>1</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A2b attachment
+< refusal none
+< change 1 embedded files were removed.
+< change The XMP metadata now identifies the file as PDF/A-2b.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /Names <</EmbeddedFiles <</Names [(a.dat) 6 0 R]>>>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 8 0 R>>
+<   6: <</Type /Filespec /F (a.dat) /UF (a.dat)>>
+<   7: <</Type /Page /Parent 3 0 R /Contents 9 0 R /Resources <<>>>>
+<   8: stream <</N 3>> | 736 bytes
+<   9: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A2u attachment
+< refusal none
+< change 1 embedded files were removed.
+< change The XMP metadata now identifies the file as PDF/A-2u.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /Names <</EmbeddedFiles <</Names [(a.dat) 6 0 R]>>>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>U</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 8 0 R>>
+<   6: <</Type /Filespec /F (a.dat) /UF (a.dat)>>
+<   7: <</Type /Page /Parent 3 0 R /Contents 9 0 R /Resources <<>>>>
+<   8: stream <</N 3>> | 736 bytes
+<   9: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A3b attachment
+< refusal none
+< change 1 embedded files were given a relationship and a type.
+< change The XMP metadata now identifies the file as PDF/A-3b.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /Names <</EmbeddedFiles <</Names [(a.dat) 6 0 R]>>>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 8 0 R>>
+<   6: <</Type /Filespec /F (a.dat) /UF (a.dat) /EF <</F 9 0 R>> /AFRelationship /Unspecified>>
+<   7: <</Type /Page /Parent 3 0 R /Contents 10 0 R /Resources <<>>>>
+<   8: stream <</N 3>> | 736 bytes
+<   9: stream <</Type /EmbeddedFile /Subtype /application#2Foctet-stream>> | hello
+<   10: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A3u attachment
+< refusal none
+< change 1 embedded files were given a relationship and a type.
+< change The XMP metadata now identifies the file as PDF/A-3u.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /Names <</EmbeddedFiles <</Names [(a.dat) 6 0 R]>>>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [7 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>U</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 8 0 R>>
+<   6: <</Type /Filespec /F (a.dat) /UF (a.dat) /EF <</F 9 0 R>> /AFRelationship /Unspecified>>
+<   7: <</Type /Page /Parent 3 0 R /Contents 10 0 R /Resources <<>>>>
+<   8: stream <</N 3>> | 736 bytes
+<   9: stream <</Type /EmbeddedFile /Subtype /application#2Foctet-stream>> | hello
+<   10: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A4 attachment
+< refusal none
+< change 2 embedded files were removed.
+< change The XMP metadata now identifies the file as PDF/A-4.
+< remaining 0 clean true
+< header %PDF-2.0
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /Names <<>>>>
+<   2: <</CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>4</pdfaid:part>\n   <pdfaid:rev>2020</pdfaid:rev>\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A1b form
+< refusal none
+< change 1 actions or scripts were removed.
+< change The XFA data was removed; the form keeps its normal fields.
+< change Appearances were drawn for 1 form fields.
+< change The XMP metadata does not name PDF/A-1b, because rules are still broken.
+< remaining 2 clean false
+<   6.7.11 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.3.4 | Font Helvetica | The font is not embedded.
+< header %PDF-1.4
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /AcroForm <</Fields [6 0 R] /DA (/Helv 12 Tf 0 g) /DR <</Font <</Helv 7 0 R>>>>>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [8 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 9 0 R>>
+<   6: <</Type /Annot /Subtype /Widget /FT /Tx /T (name) /V (abc) /Rect [10 10 100 30] /F 4 /AP <</N 10 0 R>>>>
+<   7: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+<   8: <</Type /Page /Parent 3 0 R /Contents 11 0 R /Resources <<>> /Annots [6 0 R]>>
+<   9: stream <</N 3>> | 736 bytes
+<   10: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 90 20] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 7 0 R>>>>>> | /Tx BMC\nq\n0 0 90 20 re\nW\nn\n0 g\nBT\n/F1 12 Tf\n1 0 0 1 1 6.934 Tm\n<616263> Tj\nET\nQ\nEMC\n
+<   11: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A2b form
+< refusal none
+< change 1 actions or scripts were removed.
+< change The XFA data was removed; the form keeps its normal fields.
+< change Appearances were drawn for 1 form fields.
+< change The XMP metadata does not name PDF/A-2b, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /AcroForm <</Fields [6 0 R] /DA (/Helv 12 Tf 0 g) /DR <</Font <</Helv 7 0 R>>>>>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [8 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 9 0 R>>
+<   6: <</Type /Annot /Subtype /Widget /FT /Tx /T (name) /V (abc) /Rect [10 10 100 30] /F 4 /AP <</N 10 0 R>>>>
+<   7: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+<   8: <</Type /Page /Parent 3 0 R /Contents 11 0 R /Resources <<>> /Annots [6 0 R]>>
+<   9: stream <</N 3>> | 736 bytes
+<   10: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 90 20] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 7 0 R>>>>>> | /Tx BMC\nq\n0 0 90 20 re\nW\nn\n0 g\nBT\n/F1 12 Tf\n1 0 0 1 1 6.934 Tm\n<616263> Tj\nET\nQ\nEMC\n
+<   11: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A2u form
+< refusal none
+< change 1 actions or scripts were removed.
+< change The XFA data was removed; the form keeps its normal fields.
+< change Appearances were drawn for 1 form fields.
+< change The XMP metadata does not name PDF/A-2u, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /AcroForm <</Fields [6 0 R] /DA (/Helv 12 Tf 0 g) /DR <</Font <</Helv 7 0 R>>>>>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [8 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 9 0 R>>
+<   6: <</Type /Annot /Subtype /Widget /FT /Tx /T (name) /V (abc) /Rect [10 10 100 30] /F 4 /AP <</N 10 0 R>>>>
+<   7: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+<   8: <</Type /Page /Parent 3 0 R /Contents 11 0 R /Resources <<>> /Annots [6 0 R]>>
+<   9: stream <</N 3>> | 736 bytes
+<   10: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 90 20] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 7 0 R>>>>>> | /Tx BMC\nq\n0 0 90 20 re\nW\nn\n0 g\nBT\n/F1 12 Tf\n1 0 0 1 1 6.934 Tm\n<616263> Tj\nET\nQ\nEMC\n
+<   11: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A3b form
+< refusal none
+< change 1 actions or scripts were removed.
+< change The XFA data was removed; the form keeps its normal fields.
+< change Appearances were drawn for 1 form fields.
+< change The XMP metadata does not name PDF/A-3b, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /AcroForm <</Fields [6 0 R] /DA (/Helv 12 Tf 0 g) /DR <</Font <</Helv 7 0 R>>>>>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [8 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 9 0 R>>
+<   6: <</Type /Annot /Subtype /Widget /FT /Tx /T (name) /V (abc) /Rect [10 10 100 30] /F 4 /AP <</N 10 0 R>>>>
+<   7: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+<   8: <</Type /Page /Parent 3 0 R /Contents 11 0 R /Resources <<>> /Annots [6 0 R]>>
+<   9: stream <</N 3>> | 736 bytes
+<   10: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 90 20] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 7 0 R>>>>>> | /Tx BMC\nq\n0 0 90 20 re\nW\nn\n0 g\nBT\n/F1 12 Tf\n1 0 0 1 1 6.934 Tm\n<616263> Tj\nET\nQ\nEMC\n
+<   11: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A3u form
+< refusal none
+< change 1 actions or scripts were removed.
+< change The XFA data was removed; the form keeps its normal fields.
+< change Appearances were drawn for 1 form fields.
+< change The XMP metadata does not name PDF/A-3u, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /AcroForm <</Fields [6 0 R] /DA (/Helv 12 Tf 0 g) /DR <</Font <</Helv 7 0 R>>>>>>>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [8 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 9 0 R>>
+<   6: <</Type /Annot /Subtype /Widget /FT /Tx /T (name) /V (abc) /Rect [10 10 100 30] /F 4 /AP <</N 10 0 R>>>>
+<   7: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+<   8: <</Type /Page /Parent 3 0 R /Contents 11 0 R /Resources <<>> /Annots [6 0 R]>>
+<   9: stream <</N 3>> | 736 bytes
+<   10: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 90 20] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 7 0 R>>>>>> | /Tx BMC\nq\n0 0 90 20 re\nW\nn\n0 g\nBT\n/F1 12 Tf\n1 0 0 1 1 6.934 Tm\n<616263> Tj\nET\nQ\nEMC\n
+<   11: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A4 form
+< refusal none
+< change 1 actions or scripts were removed.
+< change The XFA data was removed; the form keeps its normal fields.
+< change Appearances were drawn for 1 form fields.
+< change The XMP metadata does not name PDF/A-4, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-2.0
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R] /AcroForm <</Fields [6 0 R] /DA (/Helv 12 Tf 0 g) /DR <</Font <</Helv 7 0 R>>>>>>>>
+<   2: <</CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [8 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 9 0 R>>
+<   6: <</Type /Annot /Subtype /Widget /FT /Tx /T (name) /V (abc) /Rect [10 10 100 30] /F 4 /AP <</N 10 0 R>>>>
+<   7: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>
+<   8: <</Type /Page /Parent 3 0 R /Contents 11 0 R /Resources <<>> /Annots [6 0 R]>>
+<   9: stream <</N 3>> | 736 bytes
+<   10: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 90 20] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 7 0 R>>>>>> | /Tx BMC\nq\n0 0 90 20 re\nW\nn\n0 g\nBT\n/F1 12 Tf\n1 0 0 1 1 6.934 Tm\n<616263> Tj\nET\nQ\nEMC\n
+<   11: stream <<>> | 0 0 1 rg 20 20 100 100 re f
+> convert A1b inline
+< refusal none
+< change The XMP metadata does not name PDF/A-1b, because rules are still broken.
+< remaining 3 clean false
+<   6.7.11 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.4 | Page 1 | An image sets /Interpolate to true.
+<   6.1.10 | Page 1 | A stream uses the Crypt filter.
+< header %PDF-1.4
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | q BI /W 1 /H 1 /BPC 8 /CS /G /I true /F /Crypt ID x EI Q BI /W 1 /H 1 /BPC 8 /CS /RGB ID abc EI Q
+> convert A2b inline
+< refusal none
+< change The XMP metadata does not name PDF/A-2b, because rules are still broken.
+< remaining 3 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.8 | Page 1 | An image sets /Interpolate to true.
+<   6.1.10 | Page 1 | A stream uses the Crypt filter.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | q BI /W 1 /H 1 /BPC 8 /CS /G /I true /F /Crypt ID x EI Q BI /W 1 /H 1 /BPC 8 /CS /RGB ID abc EI Q
+> convert A2u inline
+< refusal none
+< change The XMP metadata does not name PDF/A-2u, because rules are still broken.
+< remaining 3 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.8 | Page 1 | An image sets /Interpolate to true.
+<   6.1.10 | Page 1 | A stream uses the Crypt filter.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | q BI /W 1 /H 1 /BPC 8 /CS /G /I true /F /Crypt ID x EI Q BI /W 1 /H 1 /BPC 8 /CS /RGB ID abc EI Q
+> convert A3b inline
+< refusal none
+< change The XMP metadata does not name PDF/A-3b, because rules are still broken.
+< remaining 3 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.8 | Page 1 | An image sets /Interpolate to true.
+<   6.1.10 | Page 1 | A stream uses the Crypt filter.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | q BI /W 1 /H 1 /BPC 8 /CS /G /I true /F /Crypt ID x EI Q BI /W 1 /H 1 /BPC 8 /CS /RGB ID abc EI Q
+> convert A3u inline
+< refusal none
+< change The XMP metadata does not name PDF/A-3u, because rules are still broken.
+< remaining 3 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.8 | Page 1 | An image sets /Interpolate to true.
+<   6.1.10 | Page 1 | A stream uses the Crypt filter.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</Title (Title) /Creator (Test) /Producer (Test) /CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">Title</rdf:li></rdf:Alt></dc:title>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <xmp:CreatorTool>Test</xmp:CreatorTool>\n   <pdf:Producer>Test</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | q BI /W 1 /H 1 /BPC 8 /CS /G /I true /F /Crypt ID x EI Q BI /W 1 /H 1 /BPC 8 /CS /RGB ID abc EI Q
+> convert A4 inline
+< refusal none
+< change The XMP metadata does not name PDF/A-4, because rules are still broken.
+< remaining 3 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.8 | Page 1 | An image sets /Interpolate to true.
+<   6.1.10 | Page 1 | A stream uses the Crypt filter.
+< header %PDF-2.0
+<   1: <</Type /Catalog /Pages 3 0 R /Metadata 4 0 R /OutputIntents [5 0 R]>>
+<   2: <</CreationDate (D:20260304103000+00'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-04T10:30:00+00:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   5: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <<>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | q BI /W 1 /H 1 /BPC 8 /CS /G /I true /F /Crypt ID x EI Q BI /W 1 /H 1 /BPC 8 /CS /RGB ID abc EI Q
+> convert A1b plain
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-1b, because rules are still broken.
+< remaining 2 clean false
+<   6.7.11 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.3.4 | Font Helvetica | The font is not embedded.
+< header %PDF-1.4
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | BT /F1 12 Tf 20 100 Td (Hello world) Tj ET
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A2b plain
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-2b, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | BT /F1 12 Tf 20 100 Td (Hello world) Tj ET
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A2u plain
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-2u, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | BT /F1 12 Tf 20 100 Td (Hello world) Tj ET
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A3b plain
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-3b, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | BT /F1 12 Tf 20 100 Td (Hello world) Tj ET
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A3u plain
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-3u, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | BT /F1 12 Tf 20 100 Td (Hello world) Tj ET
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A4 plain
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-4, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-2.0
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | BT /F1 12 Tf 20 100 Td (Hello world) Tj ET
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A1b transparency
+< refusal PDF/A-1 does not allow transparency and it cannot be flattened here. A constant opacity below 1 needs transparency. Convert to PDF/A-2 or later instead.
+< remaining 0 clean false
+> convert A2b transparency
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata now identifies the file as PDF/A-2b.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>> /ExtGState <</GS <</ca 0.5>>>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | /GS gs 0 g 0 0 50 50 re f
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A2u transparency
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata now identifies the file as PDF/A-2u.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>U</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>> /ExtGState <</GS <</ca 0.5>>>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | /GS gs 0 g 0 0 50 50 re f
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A3b transparency
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata now identifies the file as PDF/A-3b.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>> /ExtGState <</GS <</ca 0.5>>>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | /GS gs 0 g 0 0 50 50 re f
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A3u transparency
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata now identifies the file as PDF/A-3u.
+< remaining 0 clean true
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>U</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>> /ExtGState <</GS <</ca 0.5>>>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | /GS gs 0 g 0 0 50 50 re f
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A4 transparency
+< refusal none
+< change An sRGB output intent was added.
+< change The XMP metadata now identifies the file as PDF/A-4.
+< remaining 0 clean true
+< header %PDF-2.0
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>4</pdfaid:part>\n   <pdfaid:rev>2020</pdfaid:rev>\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>> /ExtGState <</GS <</ca 0.5>>>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | /GS gs 0 g 0 0 50 50 re f
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A1b lzw
+< refusal none
+< change 1 streams were recompressed without LZW.
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-1b, because rules are still broken.
+< remaining 2 clean false
+<   6.7.11 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.3.4 | Font Helvetica | The font is not embedded.
+< header %PDF-1.4
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | BT /F1 12 Tf 20 100 Td (Hello world) Tj ET
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A2b lzw
+< refusal none
+< change 1 streams were recompressed without LZW.
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-2b, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | BT /F1 12 Tf 20 100 Td (Hello world) Tj ET
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A2u lzw
+< refusal none
+< change 1 streams were recompressed without LZW.
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-2u, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | BT /F1 12 Tf 20 100 Td (Hello world) Tj ET
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A3b lzw
+< refusal none
+< change 1 streams were recompressed without LZW.
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-3b, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | BT /F1 12 Tf 20 100 Td (Hello world) Tj ET
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A3u lzw
+< refusal none
+< change 1 streams were recompressed without LZW.
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-3u, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-1.7
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</Producer (Lazy PDF) /CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | BT /F1 12 Tf 20 100 Td (Hello world) Tj ET
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> convert A4 lzw
+< refusal none
+< change 1 streams were recompressed without LZW.
+< change An sRGB output intent was added.
+< change The XMP metadata does not name PDF/A-4, because rules are still broken.
+< remaining 2 clean false
+<   6.6.4 | Metadata | The XMP has no PDF/A identification (pdfaid:part).
+<   6.2.11.4.1 | Font Helvetica | The font is not embedded.
+< header %PDF-2.0
+<   1: <</Type /Catalog /Pages 3 0 R /OutputIntents [4 0 R] /Metadata 5 0 R>>
+<   2: <</CreationDate (D:20260309140507+03'00') /ModDate (D:20260309140507+03'00')>>
+<   3: <</Type /Pages /Kids [6 0 R] /Count 1 /MediaBox [0 0 200 300]>>
+<   4: <</Type /OutputIntent /S /GTS_PDFA1 /OutputConditionIdentifier (sRGB IEC61966-2.1) /Info (sRGB IEC61966-2.1) /DestOutputProfile 7 0 R>>
+<   5: stream <</Type /Metadata /Subtype /XML>> | <?xpacket begin="\u00ef\u00bb\u00bf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <xmp:CreateDate>2026-03-09T14:05:07+03:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Lazy PDF</pdf:Producer>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+<   6: <</Type /Page /Parent 3 0 R /Contents 8 0 R /Resources <</Font <</F1 9 0 R>>>>>>
+<   7: stream <</N 3>> | 736 bytes
+<   8: stream <<>> | BT /F1 12 Tf 20 100 Td (Hello world) Tj ET
+<   9: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
+> packet A1b true
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>1</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+> packet A1b false
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+> packet A2b true
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+> packet A2b false
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+> packet A2u true
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>2</pdfaid:part>\n   <pdfaid:conformance>U</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+> packet A2u false
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+> packet A3b true
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>B</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+> packet A3b false
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+> packet A3u true
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>3</pdfaid:part>\n   <pdfaid:conformance>U</pdfaid:conformance>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+> packet A3u false
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+> packet A4 true
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <pdfaid:part>4</pdfaid:part>\n   <pdfaid:rev>2020</pdfaid:rev>\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+> packet A4 false
+< <?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n<x:xmpmeta xmlns:x="adobe:ns:meta/">\n <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n  <rdf:Description rdf:about=""\n    xmlns:dc="http://purl.org/dc/elements/1.1/"\n    xmlns:xmp="http://ns.adobe.com/xap/1.0/"\n    xmlns:pdf="http://ns.adobe.com/pdf/1.3/">\n   <dc:format>application/pdf</dc:format>\n   <dc:title><rdf:Alt><rdf:li xml:lang="x-default">A &amp; B &lt;c&gt; &quot;d&quot; \xf0\x9f\x98\x80</rdf:li></rdf:Alt></dc:title>\n   <dc:creator><rdf:Seq><rdf:li>Au\nthor\tx</rdf:li></rdf:Seq></dc:creator>\n   <dc:description><rdf:Alt><rdf:li xml:lang="x-default">Subject</rdf:li></rdf:Alt></dc:description>\n   <xmp:CreateDate>2026-01-02T03:04:05-05:00</xmp:CreateDate>\n   <xmp:ModifyDate>2026-03-09T14:05:07+03:00</xmp:ModifyDate>\n   <xmp:MetadataDate>2026-03-09T14:05:07+03:00</xmp:MetadataDate>\n   <pdf:Producer>Prod</pdf:Producer>\n   <pdf:Keywords>k1, k2</pdf:Keywords>\n  </rdf:Description>\n </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end="w"?>
+> strip
+< null
+> strip hello
+< hello
+> strip   padded  
+< padded
+> strip a\r\nb\rc\nd
+< a\nb\nc\nd
+> strip \x01\x02only
+< only
+> strip x\x00y\x0bz\x1fw
+< xyzw
+> strip \xf0\x9f\x98\x80 emoji
+< \xf0\x9f\x98\x80 emoji
+> strip \xef\xbf\xbe\xef\xbf\xbf gone
+< gone
+> strip \t\x20\xc2\xa0 mixed \xe2\x80\xa8
+< mixed
+> strip \xc3\xa7\xc4\x9f
+< \xc3\xa7\xc4\x9f
+> strip &<>"
+< &<>"
+> strip \xff\xfe bad utf-8
+< \xef\xbf\xbd\xef\xbf\xbd bad utf-8
+> profile
+< 000002e06c636d73021000006d6e74725247422058595a2007e2000300140009000e001d616373704d53465400000000736177736374726c0000000000000000000000000000f6d6000100000000d32d68616e6493b234a90eb0228a98fd9aafa367899b000000000000000000000000000000000000000000000000000000000000000964657363000000f00000005f637072740000010c0000000c7774707400000118000000147258595a0000012c000000146758595a00000140000000146258595a00000154000000147254524300000168000001786754524300000168000001786254524300000168000001786465736300000000000000057352474200000000000000000000000074657874000000004343300058595a20000000000000f35400010000000116c958595a200000000000006fa0000038f20000038f58595a2000000000000062960000b789000018da58595a2000000000000024a000000f850000b6c46375727600000000000000b60000001c003800540070008c00a800c400e1010001220146016d019501c101f002200255028b02c40301033f038203c6040e045904a704f9054c05a405fe065c06be0721078a07f4086308d5094909c30a3f0abf0b420bc90c540ce10d740e090ea20f400fe01085112d11da128a133e13f614b21571163616fd17ca1899196e1a461b221c031ce71dd01ebd1fae20a4219e229c239f24a525b126c027d528ed2a0a2b2b2c512d7c2eaa2fde31163252339434d93624377338c63a203b7c3cdf3e453fb0412142964410458f4712489b4a284bbb4d514eee508f523553e05590574559005abe5c845e4c601b61ef63c765a6678969716b5f6d516f4a7146734a7551775e79717b887da67fc881f0841e865088898ac58d098f51919f93f3964b98ab9b0e9d789fe7a25ba4d6a756a9dbac67aef7b18fb42ab6ccb974bc21bed5c18dc44cc710c9daccabcf7fd25cd53dd824db12de04e0fee3fce701ea0ced1cf034f350f673f99bfccaffff
