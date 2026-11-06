@@ -17,9 +17,15 @@ extension PdfAChecker {
         var visited = Set<Int>()
         var stack: [(value: PdfObject, owner: Int)] = [(document.trailer, 0)]
         var steps = 0
+        // The text goes through a number formatter, so it is built when the owner changes and not at every step.
+        var placed = -1
+        var place = ""
         while steps < Self.maxSteps, let (value, owner) = stack.popLast() {
             steps += 1
-            let place = owner == 0 ? PdfAText.trailer : PdfAText.objectName(owner)
+            if owner != placed {
+                placed = owner
+                place = owner == 0 ? PdfAText.trailer : PdfAText.objectName(owner)
+            }
             switch value {
             case let reference as PdfReference:
                 if visited.insert(reference.number).inserted, let target = document.get(reference.number) { stack.append((target, reference.number)) }

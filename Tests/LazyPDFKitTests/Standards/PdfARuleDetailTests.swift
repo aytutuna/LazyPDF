@@ -113,4 +113,8 @@ final class PdfARuleDetailTests: XCTestCase {
         XCTAssertNil(PdfAChecker.iccProblem(scanner, 3, 4))
         XCTAssertNotNil(PdfAChecker.iccProblem(scanner, 3, 4, true))
     }
+
+    func test_aNegativeZeroWidthIsWrittenWithItsSign() {
+        XCTAssertTrue(PdfAText.widthDiffers(65, -0.0, 5).contains("is -0 but"))
+    }
 }

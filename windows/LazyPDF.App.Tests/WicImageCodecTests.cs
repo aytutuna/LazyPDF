@@ -126,4 +126,16 @@ public sealed class WicImageCodecTests
         using var reopened = PdfDocument.Open(made.Bytes);
         Assert.Equal(2, reopened.Pages.Count);
     }
+
+    [Fact]
+    public void APictureWithTooManyPixelsIsLeftUnreadAndNotAnException()
+    {
+        const int side = 16384;
+        var bitmap = BitmapSource.Create(side, side, 96, 96, PixelFormats.BlackWhite, null, new byte[side / 8 * side], side / 8);
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using var stream = new MemoryStream();
+        encoder.Save(stream);
+        Assert.Null(Codec.DecodeFile(stream.ToArray()));
+    }
 }

@@ -24,7 +24,7 @@ public sealed class WicImageCodec : IImageCodec
             var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
             return [.. decoder.Frames.Take(MaxFrames).Select(ToRgba)];
         }
-        catch (Exception e) when (e is NotSupportedException or FileFormatException or InvalidOperationException or ArgumentException or IOException)
+        catch (Exception e) when (e is NotSupportedException or FileFormatException or InvalidOperationException or ArgumentException or IOException or OutOfMemoryException)
         {
             return null;
         }
@@ -43,6 +43,8 @@ public sealed class WicImageCodec : IImageCodec
     {
         var converted = source.Format == PixelFormats.Bgra32 ? source : new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
         int width = converted.PixelWidth, height = converted.PixelHeight;
+        // The size is the codestream's own, whatever the dictionary says, and width * height * 4 wraps an int.
+        if ((long)width * height > PdfImageSamples.MaxPixels) throw new NotSupportedException();
         var pixels = new byte[width * height * 4];
         converted.CopyPixels(pixels, width * 4, 0);
         for (int i = 0; i < pixels.Length; i += 4) (pixels[i], pixels[i + 2]) = (pixels[i + 2], pixels[i]);

@@ -30,6 +30,23 @@ public class AttachmentLimitTests
     }
 
     [Fact]
+    public void StoredBytesPastTheBudgetAreLeftUnreadAndTheFileIsJudgedByItsContent()
+    {
+        byte[] big = new byte[257 * Mib];
+        using var before = Doc(Page("files"));
+        using var after = Doc(Page("files"));
+        using var changed = Doc(Page("files"));
+        foreach (var (document, text) in new[] { (before, "hello"), (after, "hello"), (changed, "howdy") })
+        {
+            PdfAttachments.Add(document, "big.bin", big);
+            PdfAttachments.Add(document, "small.txt", System.Text.Encoding.ASCII.GetBytes(text));
+        }
+        Assert.True(PdfComparer.Compare(before, after).IsIdentical);
+        var change = Assert.Single(PdfComparer.Compare(before, changed).Changes);
+        Assert.Contains("small.txt", change.Detail);
+    }
+
+    [Fact]
     public void UnfilteredFilesOverTheCapDoNotUseUpTheBudget()
     {
         byte[] random = new byte[65 * Mib];

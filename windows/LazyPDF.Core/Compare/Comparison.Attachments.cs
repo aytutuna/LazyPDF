@@ -26,16 +26,29 @@ internal sealed partial class Comparison
         return result;
     }
 
-    private static Dictionary<string, string> Stored(PdfDocument document, Dictionary<string, PdfStream> streams)
+    /// <summary>
+    /// What each file looks like in the file it is stored in. Streams may overlap, so the bytes read are limited to the
+    /// size of the document plus the budget; a stream past that is left unread and says so with <paramref name="side"/>,
+    /// which makes the two sides differ and sends the file to the decoder, which has a budget of its own.
+    /// </summary>
+    private Dictionary<string, string> Stored(PdfDocument document, Dictionary<string, PdfStream> streams, string side)
     {
         var known = new Dictionary<PdfStream, string>(ReferenceEqualityComparer.Instance);
         var result = new Dictionary<string, string>();
+        long budget = document.Length + AttachmentBudget;
         foreach (var (name, stream) in streams)
         {
+            _cancellation.ThrowIfCancellationRequested();
             if (!known.TryGetValue(stream, out string? text))
             {
-                byte[] stored = document.RawData(stream);
-                known[stream] = text = $"{stored.Length} bytes stored, {Convert.ToHexString(SHA256.HashData(stored), 0, 6)}";
+                if (budget <= 0) text = $"not read, {side}";
+                else
+                {
+                    byte[] stored = document.RawData(stream);
+                    budget -= stored.Length;
+                    text = $"{stored.Length} bytes stored, {Convert.ToHexString(SHA256.HashData(stored), 0, 6)}";
+                }
+                known[stream] = text;
             }
             result[name] = text;
         }
@@ -54,8 +67,8 @@ internal sealed partial class Comparison
         long budget = AttachmentBudget;
         foreach (var (name, stream) in streams)
         {
-            if (skip.Contains(name)) continue;
             _cancellation.ThrowIfCancellationRequested();
+            if (skip.Contains(name)) continue;
             if (!known.TryGetValue(stream, out string? text)) known[stream] = text = Decode(document, stream, ref budget);
             result[name] = text;
         }
@@ -90,8 +103,8 @@ internal sealed partial class Comparison
     {
         var before = Attachments(_before);
         var after = Attachments(_after);
-        var storedBefore = Stored(_before, before);
-        var storedAfter = Stored(_after, after);
+        var storedBefore = Stored(_before, before, "before");
+        var storedAfter = Stored(_after, after, "after");
         var same = storedBefore.Where(p => storedAfter.TryGetValue(p.Key, out string? other) && other == p.Value).Select(p => p.Key).ToHashSet();
         var decodedBefore = Decoded(_before, before, same);
         var decodedAfter = Decoded(_after, after, same);

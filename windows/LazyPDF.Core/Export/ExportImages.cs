@@ -123,6 +123,7 @@ internal sealed class ExportImages(PdfDocument document, IImageCodec? codec, Can
         long size = (long)coded.Width * coded.Height;
         _merge.Charge(size);
         if (size > MaxPixels) throw new PdfReadException(PdfReadProblem.Unsupported, ExportText.TooLarge);
+        if (coded.Width < 1 || coded.Height < 1 || coded.Rgba.Length != size * 4) return null;
         return _merge.FromPixels(dictionary, coded, decoded.Codec, decoded.Data);
     }
 

@@ -144,4 +144,27 @@ public class ExportBoundFixTests
         var edges = Regex.Matches(RtfWriter.Make(OnePage([table])), @"\\cellx(\d+)").Select(m => long.Parse(m.Groups[1].Value)).ToList();
         Assert.InRange(edges[62] - edges[61], 8 * edges[0] - 8, 8 * edges[0] + 8);
     }
+
+    [Fact]
+    public void ARowShorterThanTheTableReadsAsBlankCells()
+    {
+        var table = new ExportTable(new DisplayRect(10, 10, 500, 20), [["a", "b"], ["c"]], [10.0], true);
+        Assert.NotEmpty(DocxWriter.Make(OnePage([table])));
+        Assert.Contains(@"\pard\intbl\fs20 c\cell\pard\intbl\fs20 \cell", RtfWriter.Make(OnePage([table])));
+    }
+
+    [Fact]
+    public void DigitsOutsideTheBasicPlaneAreNotPageNumbers()
+    {
+        var row = Row(Cell("\U0001D7CF\U0001D7D0", 10, 780));
+        Assert.DoesNotContain(row, ExportStructure.RunningHeads([(792, [row])]));
+    }
+
+    [Fact]
+    public void HeadsThatDifferOnlyInTheirCompositionAreDifferentHeads()
+    {
+        var first = Row(Cell("Part \u00E9", 10, 10));
+        var second = Row(Cell("Part e\u0301", 10, 10));
+        Assert.Empty(ExportStructure.RunningHeads([(792, [first]), (792, [second])]));
+    }
 }

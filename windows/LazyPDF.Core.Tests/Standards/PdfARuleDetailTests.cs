@@ -131,4 +131,10 @@ public class PdfARuleDetailTests
         Assert.Null(PdfAChecker.IccProblem(scanner, 3, 4));
         Assert.NotNull(PdfAChecker.IccProblem(scanner, 3, 4, outputIntent: true));
     }
+
+    [Fact]
+    public void ANegativeZeroWidthIsWrittenWithItsSign()
+    {
+        Assert.Contains("is -0 but", PdfAText.WidthDiffers(65, -0.0, 5));
+    }
 }
