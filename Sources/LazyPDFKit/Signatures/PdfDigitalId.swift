@@ -62,7 +62,7 @@ public enum PdfDigitalId {
         guard made == errSecSuccess, let keychain = created else { throw SignatureCryptoException(message: "The PFX file could not be read (keychain \(made)).") }
         defer {
             SecKeychainDelete(keychain)
-            try? FileManager.default.removeItem(atPath: path)
+            if FileManager.default.fileExists(atPath: path) { try? FileManager.default.removeItem(atPath: path) }
         }
         let imported = try importPfx(pfx, password, keychain: keychain, inMemory: false)
         guard let held = imported.privateKey, let representation = SecKeyCopyExternalRepresentation(held, nil),
