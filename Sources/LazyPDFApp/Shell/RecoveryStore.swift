@@ -15,18 +15,27 @@ public struct RecoveryMeta: Codable, Equatable {
     /// The process that wrote the entry; one still running is not a crash.
     public var processId = 0
 
+    /// When that process started, to tell it from a later one that was given the same id.
+    public var started: Date?
+
+    /// Gets the original file back in a sandbox, where its path alone is not enough.
+    public var bookmark: Data?
+
     public init(title: String = "", originalPath: String? = nil, saved: Date = Date(timeIntervalSince1970: 0),
-                originalWrite: Date? = nil, originalLength: Int64 = 0, processId: Int = 0) {
+                originalWrite: Date? = nil, originalLength: Int64 = 0, processId: Int = 0,
+                started: Date? = nil, bookmark: Data? = nil) {
         self.title = title
         self.originalPath = originalPath
         self.saved = saved
         self.originalWrite = originalWrite
         self.originalLength = originalLength
         self.processId = processId
+        self.started = started
+        self.bookmark = bookmark
     }
 
     private enum CodingKeys: String, CodingKey {
-        case title, originalPath, saved, originalWrite, originalLength, processId
+        case title, originalPath, saved, originalWrite, originalLength, processId, started, bookmark
     }
 
     public init(from decoder: Decoder) throws {
@@ -37,6 +46,8 @@ public struct RecoveryMeta: Codable, Equatable {
         originalWrite = c.decodeLenient(forKey: .originalWrite, default: originalWrite)
         originalLength = c.decodeLenient(forKey: .originalLength, default: originalLength)
         processId = c.decodeLenient(forKey: .processId, default: processId)
+        started = c.decodeLenient(forKey: .started, default: started)
+        bookmark = c.decodeLenient(forKey: .bookmark, default: bookmark)
     }
 }
 
@@ -103,7 +114,7 @@ public final class RecoveryStore: @unchecked Sendable {
 
     /// The entries whose process is gone: what a crash left, as opposed to the documents of an instance that is still open.
     public func abandoned() -> [RecoveryEntry] {
-        list().filter { !ProcessCheck.isRunning($0.meta.processId) }
+        list().filter { !ProcessCheck.isRunning($0.meta.processId, started: $0.meta.started) }
     }
 
     private func drain() {

@@ -3,14 +3,36 @@ import Foundation
 // Follows windows/LazyPDF.App/Services/RecentFiles.cs. A sandboxed app can open a file again only through the bookmark
 // it made when the file was chosen, so the list keeps bookmarks, with the path as what is shown and compared.
 
+/// What a bookmark led to, and whether the system wants it made again.
+public struct ResolvedBookmark {
+    public let url: URL
+    public let stale: Bool
+
+    public init(url: URL, stale: Bool) {
+        self.url = url
+        self.stale = stale
+    }
+}
+
+/// A grant to use a file outside the app's own folders, held until `stop` is called. Calling `stop` twice does no harm.
+public protocol FileAccess: AnyObject {
+    func stop()
+}
+
 /// Makes and resolves the bookmarks of recent files. The Mac and iOS apps implement it with security-scoped bookmarks;
 /// tests keep the path in the bytes.
 public protocol Bookmarks {
     /// Nil when the system will not make one.
     func make(_ url: URL) -> Data?
 
-    /// Nil when the file cannot be found through the bookmark any more.
-    func resolve(_ bookmark: Data) -> URL?
+    /// Nil when the file cannot be found through the bookmark any more. It must not start security-scoped access, since
+    /// the recent list resolves every entry on the main actor after each open; it must also pass `.withoutUI` and
+    /// `.withoutMounting`, so an unplugged network volume cannot stall the window.
+    func resolve(_ bookmark: Data) -> ResolvedBookmark?
+
+    /// Starts access to a url that came from `resolve`, for a file about to be opened. Nil when no access is needed or it
+    /// was refused. The shell stops it when the file is no longer held.
+    func access(_ url: URL) -> FileAccess?
 }
 
 /// A file in the recent list: where it was, how to get back to it, and when it was last opened.
@@ -72,32 +94,70 @@ public final class RecentFiles {
     }
 
     public func add(_ url: URL, now: Date = Date()) {
-        let path = Self.key(url)
-        var files = load().filter { !Self.same($0.path, path) }
-        files.insert(RecentFile(path: path, bookmark: bookmarks.make(url) ?? Data(), opened: now), at: 0)
-        StoreFiles.write(RecentList(files: Array(files.prefix(Self.limit))), to: file)
+        let files = load().filter { !matches($0, url) }
+        write([RecentFile(path: Self.key(url), bookmark: bookmarks.make(url) ?? Data(), opened: now)] + files)
     }
 
+    /// Takes out the entry for the file, whether it is stored under this path or its bookmark now leads here.
     public func remove(_ url: URL) {
-        let path = Self.key(url)
-        StoreFiles.write(RecentList(files: load().filter { !Self.same($0.path, path) }), to: file)
+        write(load().filter { !matches($0, url) })
     }
 
     public func clear() {
-        StoreFiles.write(RecentList(), to: file)
+        write([])
     }
 
-    /// Where the file is now: through its bookmark, else by the path it had.
+    /// Where the file is now: through its bookmark, else by the path it had. A stale bookmark is made again.
     public func locate(_ recent: RecentFile) -> URL {
-        (recent.bookmark.isEmpty ? nil : bookmarks.resolve(recent.bookmark)) ?? URL(fileURLWithPath: recent.path)
+        if !recent.bookmark.isEmpty, let found = bookmarks.resolve(recent.bookmark) {
+            if found.stale, let fresh = bookmarks.make(found.url) { refresh(recent, fresh) }
+            return found.url
+        }
+        return URL(fileURLWithPath: recent.path)
     }
 
+    private func matches(_ recent: RecentFile, _ url: URL) -> Bool {
+        if Self.sameFile(URL(fileURLWithPath: recent.path), url) { return true }
+        guard !recent.bookmark.isEmpty, let found = bookmarks.resolve(recent.bookmark) else { return false }
+        return Self.sameFile(found.url, url)
+    }
+
+    private func refresh(_ recent: RecentFile, _ bookmark: Data) {
+        var files = load()
+        guard let at = files.firstIndex(where: { $0.path == recent.path }) else { return }
+        files[at].bookmark = bookmark
+        write(files)
+    }
+
+    private func write(_ files: [RecentFile]) {
+        StoreFiles.write(RecentList(files: Array(files.prefix(Self.limit))), to: file)
+    }
+
+    /// The path with symlinks resolved and accents composed, so one file has one spelling.
     static func key(_ url: URL) -> String {
-        url.standardizedFileURL.path
+        url.resolvingSymlinksInPath().standardizedFileURL.path.precomposedStringWithCanonicalMapping
     }
 
-    // The Mac's volumes are case-insensitive unless the user made one otherwise, as Windows' are.
-    static func same(_ a: String, _ b: String) -> Bool {
-        a.compare(b, options: .caseInsensitive) == .orderedSame
+    /// `key`, folded to lower case unless the volume says names differ by case (the Mac's usually do not).
+    static func folded(_ url: URL) -> String {
+        caseSensitive(url) ? key(url) : key(url).lowercased()
+    }
+
+    /// The same file by the system's own identity when both exist, else by name.
+    static func sameFile(_ a: URL, _ b: URL) -> Bool {
+        if let x = identity(a), let y = identity(b) { return x.isEqual(y) }
+        return folded(a) == folded(b)
+    }
+
+    private static func identity(_ url: URL) -> NSObjectProtocol? {
+        (try? url.resourceValues(forKeys: [.fileResourceIdentifierKey]))?.fileResourceIdentifier
+    }
+
+    private static func caseSensitive(_ url: URL) -> Bool {
+        var probe = url
+        while !FileManager.default.fileExists(atPath: probe.path), probe.pathComponents.count > 1 {
+            probe = probe.deletingLastPathComponent()
+        }
+        return (try? probe.resourceValues(forKeys: [.volumeSupportsCaseSensitiveNamesKey]))?.volumeSupportsCaseSensitiveNames == true
     }
 }
