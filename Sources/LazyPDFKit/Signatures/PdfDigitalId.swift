@@ -96,21 +96,37 @@ public enum PdfDigitalId {
 }
 
 #if os(macOS)
-/// A keychain file in the temporary folder that lives as long as the key in it is used.
+/// A keychain file in the temporary folder that lives as long as the key in it is used. The name carries the number
+/// of the process, so that the next one can remove what a crash left.
 final class TemporaryKeychain {
-    let path = NSTemporaryDirectory() + "lazypdf-" + UUID().uuidString + ".keychain"
+    private static let prefix = "lazypdf-"
+    let path = NSTemporaryDirectory() + TemporaryKeychain.prefix + "\(ProcessInfo.processInfo.processIdentifier)-" + UUID().uuidString + ".keychain"
     let keychain: SecKeychain
 
     init?(_ password: String) {
+        Self.removeStale()
         var created: SecKeychain?
         let secret = Array(password.utf8)
         guard SecKeychainCreate(path, UInt32(secret.count), secret, false, nil, &created) == errSecSuccess, let created else { return nil }
+        // The default locks it after five minutes and on sleep, and unlocking asks for a password nobody knows.
+        var settings = SecKeychainSettings(version: 1, lockOnSleep: false, useLockInterval: false, lockInterval: 0)
+        SecKeychainSetSettings(created, &settings)
         keychain = created
     }
 
     deinit {
         SecKeychainDelete(keychain)
         if FileManager.default.fileExists(atPath: path) { try? FileManager.default.removeItem(atPath: path) }
+    }
+
+    /// Removes the keychain files of processes that are gone.
+    static func removeStale() {
+        let folder = NSTemporaryDirectory()
+        for name in (try? FileManager.default.contentsOfDirectory(atPath: folder)) ?? [] where name.hasPrefix(prefix) && name.contains(".keychain") {
+            let digits = name.dropFirst(prefix.count).prefix { $0.isNumber }
+            guard let pid = Int32(digits), pid != ProcessInfo.processInfo.processIdentifier, kill(pid, 0) != 0, errno == ESRCH else { continue }
+            try? FileManager.default.removeItem(atPath: folder + name)
+        }
     }
 }
 #endif

@@ -54,10 +54,8 @@ final class CmsSignature {
             var signer = try signers.readSequence()
             try result.readSigner(&signer)
             result.signerCount = 1
-            while signers.hasData {
-                _ = try signers.readEncodedValue()
-                result.signerCount += 1
-            }
+            // Bytes after the first signer that are no signer are not counted: CmsSignature.Parse reads the first one only.
+            while signers.hasData, (try? signers.readEncodedValue()) != nil { result.signerCount += 1 }
             return result
         } catch {
             return nil

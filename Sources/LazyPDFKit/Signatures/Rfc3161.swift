@@ -92,11 +92,13 @@ final class Rfc3161Token {
     /// Reads the token at the start of `encoded`; `consumed` is the length of its encoding.
     static func tryDecode(_ encoded: [UInt8]) -> (Rfc3161Token, consumed: Int)? {
         guard let cms = CmsSignature.parse(encoded), cms.contentType == Oids.tstInfo, let content = cms.content else { return nil }
-        // Rfc3161TimestampToken.TryDecode refuses a token with more than one signer or without the signing certificate
-        // attribute, one whose issuerSerial is not the signer's, and one whose embedded signer is no time stamping authority.
-        guard cms.signerCount == 1, cms.attributes[Oids.signingCertificateV2]?.count == 1,
-              issuerSerialMatches(cms, cms.issuerName, cms.serial) else { return nil }
-        if let embedded = cms.findSigner(), !(isAuthority(embedded) && cms.signingCertificateMatches(embedded)) { return nil }
+        // Rfc3161TimestampToken.TryDecode refuses a token with more than one signer, or one whose signing certificate
+        // attribute (either version) does not name the signer; and one whose embedded signer is no time stamping
+        // authority or did not hold at the time of the stamp (checked below, once the time is read).
+        guard cms.signerCount == 1 else { return nil }
+        let embedded = cms.findSigner()
+        guard essAccepts(cms, embedded) else { return nil }
+        if let embedded, !isAuthority(embedded) { return nil }
         do {
             var outer = AsnReader(content)
             var info = try outer.readSequence()
@@ -108,6 +110,7 @@ final class Rfc3161Token {
             let hash = try imprint.readOctetString()
             _ = try info.readInteger()
             let time = try info.readGeneralizedTime()
+            if let embedded, !holds(embedded, at: time) { return nil }
             var nonce: AsnInteger?
             while info.hasData {
                 let tag = try info.peekTag()
@@ -127,9 +130,8 @@ final class Rfc3161Token {
     /// the signer may be found among besides those the token carries.
     func verifySignatureForHash(_ hash: [UInt8], _ algorithm: HashAlgorithmName, _ extra: [X509Certificate]) -> X509Certificate? {
         guard Oids.digestName(hashOid) == algorithm, messageHash == hash, let content = cms.content,
-              let signer = cms.findSigner(in: cms.certificates + extra), cms.attributes[Oids.signingCertificateV2] != nil,
-              Self.isAuthority(signer), cms.signingCertificateMatches(signer),
-              Self.issuerSerialMatches(cms, signer.issuerName, signer.serialNumber) else { return nil }
+              let signer = cms.findSigner(in: cms.certificates + extra), Self.essAccepts(cms, signer),
+              Self.isAuthority(signer), Self.holds(signer, at: timestamp) else { return nil }
         let check = CmsVerifier.check(cms, signer) { SignatureCrypto.hash($0, content) }
         return check == .ok ? signer : nil
     }
@@ -142,25 +144,53 @@ final class Rfc3161Token {
         return purposes.contains("1.3.6.1.5.5.7.3.8")
     }
 
-    /// The issuerSerial of the ESSCertIDv2, when it has one, names `issuer` and `serial`.
-    static func issuerSerialMatches(_ cms: CmsSignature, _ issuer: [UInt8]?, _ serial: AsnInteger) -> Bool {
-        guard let values = cms.attributes[Oids.signingCertificateV2], values.count == 1 else { return true }
+    static func holds(_ certificate: X509Certificate, at time: DateTimeOffset) -> Bool {
+        certificate.notBefore <= time && time <= certificate.notAfter
+    }
+
+    private static let signingCertificateV1 = "1.2.840.113549.1.9.16.2.12"
+
+    /// The signing certificate attribute, in the version of RFC 2634 (SHA-1) or of RFC 5035 or both, names the signer: the
+    /// hash is that of its certificate, and an issuerSerial, one directoryName and a serial, is its issuer and serial.
+    /// Without the certificate (an SKI signer that is not in the token) the issuerSerial can only be held against the
+    /// signer identifier, when that is an issuer and serial.
+    static func essAccepts(_ cms: CmsSignature, _ signer: X509Certificate?) -> Bool {
+        let versions: [(values: [[UInt8]]?, version2: Bool)] = [(cms.attributes[signingCertificateV1], false), (cms.attributes[Oids.signingCertificateV2], true)]
+        guard versions.contains(where: { $0.values != nil }) else { return false }
+        for (values, version2) in versions {
+            guard let values else { continue }
+            guard values.count == 1, let id = certificateId(values[0], version2) else { return false }
+            if let signer {
+                guard CmsBuilder.hashData(id.algorithm, signer.rawData) == id.hash else { return false }
+                if let (issuer, serial) = id.issuerSerial, issuer != signer.issuerName || serial != signer.serialNumber { return false }
+            } else if let (issuer, serial) = id.issuerSerial, let name = cms.issuerName, issuer != name || serial != cms.serial {
+                return false
+            }
+        }
+        return true
+    }
+
+    private static func certificateId(_ value: [UInt8], _ version2: Bool) -> (algorithm: HashAlgorithmName, hash: [UInt8], issuerSerial: ([UInt8], AsnInteger)?)? {
         do {
-            var reader = AsnReader(values[0])
+            var reader = AsnReader(value)
             var outer = try reader.readSequence()
             var ids = try outer.readSequence()
             var id = try ids.readSequence()
-            if try id.peekTag().value == AsnUniversal.sequence { _ = try id.readSequence() }
-            _ = try id.readOctetString()
-            guard id.hasData else { return true }
+            var algorithm = version2 ? HashAlgorithmName.sha256 : .sha1
+            if version2, try id.peekTag().value == AsnUniversal.sequence {
+                var named = try id.readSequence()
+                algorithm = Oids.digestName(try named.readObjectIdentifier()) ?? .sha256
+            }
+            let hash = try id.readOctetString()
+            guard id.hasData else { return (algorithm, hash, nil) }
             var named = try id.readSequence()
             var names = try named.readSequence()
             var directory = try names.readSequence(.context(4, constructed: true))
-            let name = try directory.readEncodedValue()
-            let number = try named.readInteger()
-            return number == serial && (issuer.map { $0 == name } ?? true)
+            let issuer = try directory.readEncodedValue()
+            guard !names.hasData else { return nil }
+            return (algorithm, hash, (issuer, try named.readInteger()))
         } catch {
-            return false
+            return nil
         }
     }
 

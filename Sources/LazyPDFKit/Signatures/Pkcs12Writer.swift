@@ -1,15 +1,13 @@
-#if canImport(Security)
 import Foundation
-import CommonCrypto
 
 // No C# twin: ExportPkcs12 with Pkcs12ExportPbeParameters.Pbes2Aes256Sha256 (RFC 7292, RFC 8018). SecItemExport can
 // only write the old pbeWithSHAAnd3-KeyTripleDES and 40 bit RC2 protection, so the file is written here: the
 // certificate and the PKCS#8 key each in a bag protected by PBES2 (PBKDF2 with HMAC-SHA256, AES-256-CBC), and a
-// HMAC-SHA256 over the whole. The AES is the one of the PDF encryption; the thousands of rounds of the key
-// derivation and of the MAC key go to CommonCrypto, since the code in Crypt is too slow for 600 000 of them.
+// HMAC-SHA256 over the whole. The iteration count is the 2000 that .NET writes: its loader refuses more than 300 000,
+// so a count chosen higher would give files the Windows app cannot open. Nothing here needs Security.framework.
 
 enum Pkcs12Writer {
-    private static let iterations = 600_000
+    private static let iterations = 2000
     private static let pbes2 = "1.2.840.113549.1.5.13"
     private static let pbkdf2 = "1.2.840.113549.1.5.12"
     private static let hmacSha256 = "1.2.840.113549.2.9"
@@ -59,7 +57,7 @@ enum Pkcs12Writer {
             DerWriter.integer(3),
             DerWriter.sequence([DerWriter.oid(Oids.data), DerWriter.context(0, constructed: true, DerWriter.octetString(safe))]),
             DerWriter.sequence([
-                DerWriter.sequence([CmsBuilder.algorithmIdentifier(sha256, withNull: true), DerWriter.octetString(mac)]),
+                DerWriter.sequence([CmsBuilder.algorithmIdentifier(sha256, withNull: false), DerWriter.octetString(mac)]),
                 DerWriter.octetString(macSalt),
                 DerWriter.integer(AsnInteger(iterations)),
             ]),
@@ -99,12 +97,15 @@ enum Pkcs12Writer {
         return (DerWriter.sequence([DerWriter.oid(pbes2), DerWriter.sequence([derivation, scheme])]), cipher)
     }
 
+    // PBKDF2 of RFC 8018 with HMAC-SHA256, for one block of 32 bytes.
     private static func pbkdf2(_ password: [UInt8], _ salt: [UInt8]) -> [UInt8]? {
-        var derived = [UInt8](repeating: 0, count: 32)
-        let secret = password.map { Int8(bitPattern: $0) }
-        let status = CCKeyDerivationPBKDF(CCPBKDFAlgorithm(kCCPBKDF2), secret, secret.count, salt, salt.count,
-                                          CCPseudoRandomAlgorithm(kCCPRFHmacAlgSHA256), UInt32(iterations), &derived, derived.count)
-        return status == Int32(kCCSuccess) ? derived : nil
+        var u = hmac(password, salt + [0, 0, 0, 1])
+        var block = u
+        for _ in 1..<iterations {
+            u = hmac(password, u)
+            for i in 0..<block.count { block[i] ^= u[i] }
+        }
+        return block
     }
 
     // The key of the MAC by RFC 7292 appendix B.2 with SHA-256: the password as a BMPString and the salt are
@@ -122,16 +123,11 @@ enum Pkcs12Writer {
         return digest
     }
 
-    private static func sha(_ data: [UInt8]) -> [UInt8] {
-        var out = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
-        _ = CC_SHA256(data, CC_LONG(data.count), &out)
-        return out
-    }
+    private static func sha(_ data: [UInt8]) -> [UInt8] { Sha256.hash(data) }
 
     private static func hmac(_ key: [UInt8], _ data: [UInt8]) -> [UInt8] {
-        var out = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
-        CCHmac(CCHmacAlgorithm(kCCHmacAlgSHA256), key, key.count, data, data.count, &out)
-        return out
+        var block = key.count > 64 ? Sha256.hash(key) : key
+        block += [UInt8](repeating: 0, count: 64 - block.count)
+        return Sha256.hash(block.map { $0 ^ 0x5C } + Sha256.hash(block.map { $0 ^ 0x36 } + data))
     }
 }
-#endif

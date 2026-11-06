@@ -99,6 +99,7 @@ enum CertificateTrust {
         static let invalidBasicConstraints = Flags(rawValue: 8)
         static let notValidForUsage = Flags(rawValue: 16)
         static let unsupportedExtension = Flags(rawValue: 32)
+        static let notSignatureValid = Flags(rawValue: 64)
     }
 
     // What this chain builder reads or can leave unread without harm. A critical extension outside the list, or any
@@ -106,7 +107,7 @@ enum CertificateTrust {
     // a way that is not enforced here, so the chain is not trusted (.NET reports HasNotSupportedCriticalExtension, a
     // name constraint or InvalidPolicyConstraints for them).
     private static let understood: Set<String> = [
-        "2.5.29.9", "2.5.29.14", "2.5.29.15", "2.5.29.17", "2.5.29.18", "2.5.29.19", "2.5.29.31", "2.5.29.32", "2.5.29.35",
+        "2.5.29.14", "2.5.29.15", "2.5.29.17", "2.5.29.18", "2.5.29.19", "2.5.29.31", "2.5.29.32", "2.5.29.35",
         "2.5.29.37", "2.5.29.46", "1.3.6.1.5.5.7.1.1", "1.3.6.1.5.5.7.1.11",
     ]
     private static let restricting: Set<String> = ["2.5.29.30", "2.5.29.33", "2.5.29.36", "2.5.29.54"]
@@ -166,7 +167,25 @@ enum CertificateTrust {
 
     private static func supportsExtensions(_ certificate: X509Certificate) -> Bool {
         certificate.extensions.allSatisfy { ext in
-            !restricting.contains(ext.oid) && (!ext.critical || understood.contains(ext.oid))
+            !restricting.contains(ext.oid) && (!ext.critical || understood.contains(ext.oid)) && (ext.oid != "2.5.29.32" || policiesDecode(ext.value))
+        }
+    }
+
+    // certificatePolicies is SEQUENCE OF PolicyInformation, each an identifier and perhaps qualifiers. .NET refuses a
+    // chain with one that does not decode, whether it is critical or not.
+    private static func policiesDecode(_ value: [UInt8]) -> Bool {
+        do {
+            var outer = AsnReader(value)
+            var list = try outer.readSequence()
+            while list.hasData {
+                var policy = try list.readSequence()
+                _ = try policy.readObjectIdentifier()
+                if policy.hasData { _ = try policy.readSequence() }
+                if policy.hasData { return false }
+            }
+            return !outer.hasData
+        } catch {
+            return false
         }
     }
 
@@ -179,7 +198,7 @@ enum CertificateTrust {
             if time < current.notBefore || time > current.notAfter { flags.insert(.notTimeValid) }
             // Only a root ends a chain as trusted; an anchor that was issued by another certificate leaves it partial.
             if anchors.contains(where: { $0.sameBytes(current) }) {
-                if !current.isSelfIssued { flags.insert(.partialChain) }
+                if !current.isSelfIssued { flags.insert(.partialChain) } else if !signs(current, current) { flags.insert(.notSignatureValid) }
                 return (elements, flags)
             }
             if current.isSelfIssued {
