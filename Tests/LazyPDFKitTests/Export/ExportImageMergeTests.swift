@@ -132,6 +132,17 @@ final class ExportImageMergeTests: XCTestCase {
         XCTAssertEqual(try rgba(png), [9, 8, 7, 128])
     }
 
+    func test_aCodecPictureWhoseBufferIsShorterThanItsSizeIsLeftOut() throws {
+        XCTAssertNil(try extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode", [1], ExportSizedCodec(100, 100)))
+    }
+
+    func test_aCodecSoftMaskWhoseBufferIsShorterThanItsSizeLeavesThePictureOpaque() throws {
+        let png = try extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /SMask 11 0 R", TestPdf.deflate([9, 8, 7]), ExportSizedCodec(1, 1)) { pdf in
+            pdf.stream(11, "\(self.image) /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCT", [1])
+        }
+        XCTAssertEqual(try rgba(png), [9, 8, 7, 255])
+    }
+
     func test_aDecodedImageWithAnUnreadableColourSpaceIsStillExported() throws {
         let png = try extract("/Width 1 /Height 1 /ColorSpace [/CalCMYK <<>>] /Filter /JPXDecode", [1], ExportRgbaCodec(1, 10, 20, 30, 255))
         XCTAssertEqual(try rgba(png), [10, 20, 30, 255])

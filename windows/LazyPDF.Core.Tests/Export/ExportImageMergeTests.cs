@@ -133,6 +133,20 @@ public class ExportImageMergeTests
     }
 
     [Fact]
+    public void ACodecPictureWhoseBufferIsShorterThanItsSizeIsLeftOut()
+    {
+        Assert.Null(Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /Filter /JPXDecode", [1], new ExportSizedCodec(100, 100)));
+    }
+
+    [Fact]
+    public void ACodecSoftMaskWhoseBufferIsShorterThanItsSizeLeavesThePictureOpaque()
+    {
+        var png = Extract("/Width 1 /Height 1 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /SMask 11 0 R", TestPdf.Deflate([9, 8, 7]), new ExportSizedCodec(1, 1),
+            pdf => pdf.Stream(11, $"{Image} /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCT", [1]));
+        Assert.Equal([9, 8, 7, 255], Rgba(png));
+    }
+
+    [Fact]
     public void ADecodedImageWithAnUnreadableColourSpaceIsStillExported()
     {
         var png = Extract("/Width 1 /Height 1 /ColorSpace [/CalCMYK <<>>] /Filter /JPXDecode", [1], new ExportRgbaCodec(1, 10, 20, 30, 255));

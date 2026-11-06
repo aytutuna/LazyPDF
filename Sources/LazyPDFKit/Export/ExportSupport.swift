@@ -73,7 +73,7 @@ enum ExportChar {
     }
 
     static func isDigit(_ c: Unicode.Scalar) -> Bool {
-        c.properties.generalCategory == .decimalNumber
+        c.value < 0x10000 && c.properties.generalCategory == .decimalNumber
     }
 
     static func isAsciiDigit(_ c: Unicode.Scalar) -> Bool {
