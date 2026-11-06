@@ -197,7 +197,7 @@ extension AppViewModel {
         if let old = pending.replacing {
             taken = index(of: old) == nil
         } else {
-            taken = url.map { tab(of: $0) != nil } ?? false
+            taken = url.map { self.tab(of: $0) != nil } ?? false
         }
         if taken {
             renderer.close()
