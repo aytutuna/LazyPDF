@@ -55,17 +55,35 @@ enum SignatureExtraKit {
         return certificate
     }
 
-    /// A root that signed itself with RSASSA-PSS and SHA-256, with a new RSA key.
-    static func selfSignedWithPss(_ name: String) throws -> X509Certificate {
+    /// The signer infos of a CMS with one byte after the first signer that is no signer, the lengths around made right.
+    static func withStrayByte(_ cms: [UInt8]) -> [UInt8] {
+        var outer = AsnReader(cms)
+        guard var sequence = try? outer.readSequence(), let oid = try? sequence.readEncodedValue(),
+              var wrapper = try? sequence.readSequence(.context(0, constructed: true)), var signed = try? wrapper.readSequence() else { return [] }
+        var items: [[UInt8]] = []
+        while signed.hasData {
+            guard let item = try? signed.readEncodedValue() else { return [] }
+            items.append(item)
+        }
+        guard let set = items.last, set.count > 2 else { return [] }
+        let header = set[1] < 0x80 ? 2 : 2 + Int(set[1] & 0x7F)
+        items[items.count - 1] = DerWriter.node(0x31, Array(set[header...]) + [0xFF])
+        return DerWriter.sequence([oid, DerWriter.context(0, constructed: true, DerWriter.sequence(items))])
+    }
+
+    /// A root that signed itself with RSASSA-PSS and SHA-256, with a new RSA key. The mask function, the salt, a trailer
+    /// field and a signature over other bytes than the tbs can be asked for.
+    static func selfSignedWithPss(_ name: String, maskHash: String? = nil, mask: String = "1.2.840.113549.1.1.8", salt: Int = 32,
+                                  trailer: Int? = nil, spoiled: Bool = false) throws -> X509Certificate {
         let key = try SignatureCrypto.newRsaKey(2048)
         let info = try CertificateBuilder.publicKeyInfo(key)
         let subject = X509Certificate.name("CN=\(name)")
         let digestOid = try Oids.digest(.sha256)
         let parameters = DerWriter.sequence([
             DerWriter.context(0, constructed: true, DerWriter.sequence([DerWriter.oid(digestOid)])),
-            DerWriter.context(1, constructed: true, DerWriter.sequence([DerWriter.oid("1.2.840.113549.1.1.8"), DerWriter.sequence([DerWriter.oid(digestOid)])])),
-            DerWriter.context(2, constructed: true, DerWriter.integer(32)),
-        ])
+            DerWriter.context(1, constructed: true, DerWriter.sequence([DerWriter.oid(mask), DerWriter.sequence([DerWriter.oid(maskHash ?? digestOid)])])),
+            DerWriter.context(2, constructed: true, DerWriter.integer(salt)),
+        ] + (trailer.map { [DerWriter.context(3, constructed: true, DerWriter.integer($0))] } ?? []))
         let algorithm = DerWriter.sequence([DerWriter.oid(Oids.rsaPss), parameters])
         let extensions = [CertificateBuilder.basicConstraints(authority: true), CertificateBuilder.keyUsage([.keyCertSign])].map { e in
             DerWriter.sequence([DerWriter.oid(e.oid), DerWriter.boolean(true), DerWriter.octetString(e.value)])
@@ -81,7 +99,7 @@ enum SignatureExtraKit {
             DerWriter.context(3, constructed: true, DerWriter.sequence(extensions)),
         ])
         var error: Unmanaged<CFError>?
-        guard let signature = SecKeyCreateSignature(key, .rsaSignatureDigestPSSSHA256, Data(Sha256.hash(tbs)) as CFData, &error) else {
+        guard let signature = SecKeyCreateSignature(key, .rsaSignatureDigestPSSSHA256, Data(Sha256.hash(spoiled ? tbs + [0] : tbs)) as CFData, &error) else {
             throw SignatureCryptoException(message: "The key could not sign.")
         }
         guard let certificate = X509Certificate(DerWriter.sequence([tbs, algorithm, DerWriter.bitString([UInt8](signature as Data))])) else {

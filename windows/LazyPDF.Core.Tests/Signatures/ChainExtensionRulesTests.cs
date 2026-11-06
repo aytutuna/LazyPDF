@@ -1,3 +1,4 @@
+using System.Formats.Asn1;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using LazyPDF.Core;
@@ -87,5 +88,79 @@ public class ChainExtensionRulesTests
 
         Assert.False(CertificateTrust.Evaluate(leaf, [link], Pki.Signing, new VerifyOptions { TrustAnchors = [link, Pki.Root] }).Trusted);
         Assert.False(CertificateTrust.Evaluate(leaf, [link], Pki.Signing, new VerifyOptions { TrustAnchors = [link] }).Trusted);
+    }
+
+    private sealed class PssGenerator(RSA key, byte[] algorithm, bool spoil) : X509SignatureGenerator
+    {
+        protected override PublicKey BuildPublicKey() => PublicKey.CreateFromSubjectPublicKeyInfo(key.ExportSubjectPublicKeyInfo(), out _);
+
+        public override byte[] GetSignatureAlgorithmIdentifier(HashAlgorithmName hashAlgorithm) => algorithm;
+
+        public override byte[] SignData(byte[] data, HashAlgorithmName hashAlgorithm)
+        {
+            if (spoil) data = [.. data, 0];
+            return key.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pss);
+        }
+    }
+
+    // RSASSA-PSS-params naming SHA-256, the mask function given, the salt given and, when asked, a trailer field.
+    private static byte[] PssAlgorithm(string maskOid, string maskHashOid, int salt, int? trailer)
+    {
+        const string Sha256Oid = "2.16.840.1.101.3.4.2.1";
+        var w = new AsnWriter(AsnEncodingRules.DER);
+        using (w.PushSequence())
+        {
+            w.WriteObjectIdentifier("1.2.840.113549.1.1.10");
+            using (w.PushSequence())
+            {
+                using (w.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 0, true)))
+                using (w.PushSequence()) w.WriteObjectIdentifier(Sha256Oid);
+                using (w.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 1, true)))
+                using (w.PushSequence())
+                {
+                    w.WriteObjectIdentifier(maskOid);
+                    using (w.PushSequence()) w.WriteObjectIdentifier(maskHashOid);
+                }
+                using (w.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 2, true))) w.WriteInteger(salt);
+                if (trailer is { } t)
+                {
+                    using (w.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 3, true))) w.WriteInteger(t);
+                }
+            }
+        }
+        return w.Encode();
+    }
+
+    private static bool PssRootTrusted(byte[] algorithm, bool spoil)
+    {
+        using var rootKey = RSA.Create(2048);
+        var rootRequest = new CertificateRequest("CN=Pss Variant", rootKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pss);
+        rootRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(true, false, 0, true));
+        rootRequest.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.KeyCertSign, true));
+        using var rootBare = rootRequest.Create(rootRequest.SubjectName, new PssGenerator(rootKey, algorithm, spoil), Pki.NotBefore, Pki.NotAfter, [7, 7, 7]);
+        using var rootWithKey = rootBare.CopyWithPrivateKey(rootKey);
+        var root = X509CertificateLoader.LoadCertificate(rootBare.RawData);
+
+        using var leafKey = RSA.Create(2048);
+        var leafRequest = new CertificateRequest("CN=Pss Variant Leaf", leafKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        leafRequest.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
+        leafRequest.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, true));
+        using var signed = leafRequest.Create(rootWithKey, Pki.NotBefore, Pki.NotAfter, [1, 2, 3, 6]);
+        using var leaf = signed.CopyWithPrivateKey(leafKey);
+        return CertificateTrust.Evaluate(leaf, [], Pki.Signing, new VerifyOptions { TrustAnchors = [root] }).Trusted;
+    }
+
+    [Fact]
+    public void A_PSS_root_is_trusted_only_with_the_mask_function_salt_and_signature_it_declares()
+    {
+        const string Mgf1 = "1.2.840.113549.1.1.8", Sha1Oid = "1.3.14.3.2.26", Sha256Oid = "2.16.840.1.101.3.4.2.1";
+
+        Assert.True(PssRootTrusted(PssAlgorithm(Mgf1, Sha256Oid, 32, null), false));
+        Assert.False(PssRootTrusted(PssAlgorithm(Mgf1, Sha1Oid, 32, null), false));
+        Assert.False(PssRootTrusted(PssAlgorithm("1.2.3.4", Sha256Oid, 32, null), false));
+        Assert.False(PssRootTrusted(PssAlgorithm(Mgf1, Sha256Oid, 32, 2), false));
+        Assert.True(PssRootTrusted(PssAlgorithm(Mgf1, Sha256Oid, 32, 1), false));
+        Assert.False(PssRootTrusted(PssAlgorithm(Mgf1, Sha256Oid, 20, null), false));
+        Assert.False(PssRootTrusted(PssAlgorithm(Mgf1, Sha256Oid, 32, null), true));
     }
 }

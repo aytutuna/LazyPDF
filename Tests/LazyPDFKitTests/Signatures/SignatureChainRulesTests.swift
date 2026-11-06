@@ -133,13 +133,32 @@ final class SignatureChainRulesTests: XCTestCase {
         XCTAssertEqual(report.verdict, .valid)
     }
 
+    func test_aPSSRootIsTrustedOnlyWithTheMaskFunctionSaltAndSignatureItDeclares() throws {
+        let sha1 = "1.3.14.3.2.26"
+        func verdict(of root: X509Certificate) throws -> SignatureVerdict {
+            try self.verdict(try leaf(under: root), [], anchors: [root]).verdict
+        }
+
+        XCTAssertEqual(try verdict(of: SignatureExtraKit.selfSignedWithPss("Pss Variant")), .valid)
+        XCTAssertEqual(try verdict(of: SignatureExtraKit.selfSignedWithPss("Pss Variant", trailer: 1)), .valid)
+        XCTAssertEqual(try verdict(of: SignatureExtraKit.selfSignedWithPss("Pss Variant", maskHash: sha1)), .validButUntrusted)
+        XCTAssertEqual(try verdict(of: SignatureExtraKit.selfSignedWithPss("Pss Variant", mask: "1.2.3.4")), .validButUntrusted)
+        XCTAssertEqual(try verdict(of: SignatureExtraKit.selfSignedWithPss("Pss Variant", trailer: 2)), .validButUntrusted)
+        XCTAssertEqual(try verdict(of: SignatureExtraKit.selfSignedWithPss("Pss Variant", salt: 20)), .validButUntrusted)
+        XCTAssertEqual(try verdict(of: SignatureExtraKit.selfSignedWithPss("Pss Variant", spoiled: true)), .validButUntrusted)
+    }
+
     func test_aRootWhoseSignatureCannotBeCheckedHereIsNotTrusted() throws {
         // The signature algorithm of the root says MD5 with RSA, which nothing here checks (.NET trusts such a root).
         let original = try SignatureExtraKit.selfSigned(subject: X509Certificate.name("CN=Md5 Root"),
                                                         extensions: [CertificateBuilder.basicConstraints(authority: true), CertificateBuilder.keyUsage([.keyCertSign])])
         let sha256: [UInt8] = [0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x0B]
         var der = original.rawData
-        while let at = der.indexOf(sha256) { der.replaceSubrange(at..<at + sha256.count, with: [0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x04]) }
+        // Only the algorithm of the certificate, the last one, not the one inside the tbs that the signature covers.
+        var last: Int?
+        while let at = der.indexOf(sha256, from: (last ?? -1) + 1) { last = at }
+        let at = try XCTUnwrap(last)
+        der.replaceSubrange(at..<at + sha256.count, with: [0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x04])
         let root = try XCTUnwrap(X509Certificate(der))
         root.privateKey = original.privateKey
         let signer = try leaf(under: root)

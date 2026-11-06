@@ -28,7 +28,7 @@ final class TimestampTokenRulesTests: XCTestCase {
         ])
     }
 
-    private enum EssShape { case plain, unknownHash, trailingId, trailingSerial, trailingName }
+    private enum EssShape { case plain, unknownHash, trailingId, trailingSerial, trailingName, secondMalformed, secondOther, policiesNull, policiesTwo, policiesEmpty, policiesGood }
 
     private func ess(_ certificate: X509Certificate, hashOfOther: Bool, wrongSerial: Bool, twoNames: Bool, shape: EssShape) -> [UInt8] {
         var serial = certificate.serialNumber.magnitude
@@ -45,7 +45,18 @@ final class TimestampTokenRulesTests: XCTestCase {
         parts.append(DerWriter.octetString(Sha256.hash(hashOfOther ? pki.leaf.rawData : certificate.rawData)))
         parts.append(DerWriter.sequence(issuerSerial))
         if shape == .trailingId { parts.append(null) }
-        return DerWriter.sequence([DerWriter.sequence([DerWriter.sequence(parts)])])
+        var ids = [DerWriter.sequence(parts)]
+        if shape == .secondMalformed { ids.append(null) }
+        if shape == .secondOther { ids.append(DerWriter.sequence([DerWriter.octetString(Sha256.hash(pki.leaf.rawData))])) }
+        var all = [DerWriter.sequence(ids)]
+        switch shape {
+        case .policiesNull: all.append(null)
+        case .policiesTwo: all += [DerWriter.sequence([]), DerWriter.sequence([])]
+        case .policiesEmpty: all.append(DerWriter.sequence([]))
+        case .policiesGood: all.append(DerWriter.sequence([DerWriter.sequence([DerWriter.oid("2.5.29.32.0")])]))
+        default: break
+        }
+        return DerWriter.sequence(all)
     }
 
     /// The SigningCertificate attribute of RFC 2634, with a SHA-1 hash.
@@ -253,6 +264,37 @@ final class TimestampTokenRulesTests: XCTestCase {
 
         XCTAssertNotNil(Rfc3161Token.tryDecode(try token(critical)))
         XCTAssertNil(Rfc3161Token.tryDecode(try token(critical, spoiled)))
+    }
+
+    func test_everyCertificateIdHasToDecodeAndThePoliciesAreOneSequenceAtMost() throws {
+        let critical = try authority(critical: true, [timeStamping])
+        func shaped(_ shape: EssShape) throws -> [UInt8] {
+            var value = Shape()
+            value.essShape = shape
+            return try token(critical, value)
+        }
+
+        XCTAssertTrue(accepts(try shaped(.secondOther)))
+        XCTAssertFalse(accepts(try shaped(.secondMalformed)))
+        XCTAssertTrue(accepts(try shaped(.policiesEmpty)))
+        XCTAssertTrue(accepts(try shaped(.policiesGood)))
+        XCTAssertFalse(accepts(try shaped(.policiesNull)))
+        XCTAssertFalse(accepts(try shaped(.policiesTwo)))
+    }
+
+    func test_aMainSignatureWithAByteAfterItsFirstSignerStaysValid() throws {
+        var request = SignatureKit.request(pki)
+        request.format = .pkcs7Detached
+        let file = try PdfSigner.sign(SignatureKit.plain(), request)
+
+        let other = SignatureKit.splice(file) { content in
+            guard let cms = try? SignatureVerificationTests.byFramework(content, self.pki.leaf, .sha256) else { return [] }
+            return SignatureExtraKit.withStrayByte(cms)
+        }
+
+        let reports = try SignatureKit.verify(other)
+        XCTAssertEqual(reports.count, 1)
+        XCTAssertEqual(reports.first?.verdict, .valid)
     }
 }
 #endif

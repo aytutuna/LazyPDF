@@ -61,35 +61,59 @@ public class TimestampTokenRulesTests
 
     private enum Names { One, Two }
 
-    private enum Shape { Plain, UnknownHash, TrailingId, TrailingSerial, TrailingName }
+    private enum Shape { Plain, UnknownHash, TrailingId, TrailingSerial, TrailingName, SecondMalformed, SecondOther, PoliciesNull, PoliciesTwo, PoliciesEmpty, PoliciesGood }
 
     private static byte[] Ess(X509Certificate2 certificate, bool hashOfOther, bool wrongSerial, Names names = Names.One, Shape shape = Shape.Plain)
     {
         var w = new AsnWriter(AsnEncodingRules.DER);
         using (w.PushSequence())
-        using (w.PushSequence())
-        using (w.PushSequence())
         {
-            if (shape == Shape.UnknownHash)
-            {
-                using (w.PushSequence()) w.WriteObjectIdentifier("1.2.3.4");
-            }
-            w.WriteOctetString(SHA256.HashData(hashOfOther ? Pki.Leaf.RawData : certificate.RawData));
             using (w.PushSequence())
             {
                 using (w.PushSequence())
                 {
-                    using (w.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 4)))
+                    if (shape == Shape.UnknownHash)
                     {
-                        w.WriteEncodedValue(certificate.IssuerName.RawData);
-                        if (shape == Shape.TrailingName) w.WriteNull();
+                        using (w.PushSequence()) w.WriteObjectIdentifier("1.2.3.4");
                     }
-                    if (names == Names.Two) w.WriteCharacterString(UniversalTagNumber.IA5String, "x.example", new Asn1Tag(TagClass.ContextSpecific, 2));
+                    w.WriteOctetString(SHA256.HashData(hashOfOther ? Pki.Leaf.RawData : certificate.RawData));
+                    using (w.PushSequence())
+                    {
+                        using (w.PushSequence())
+                        {
+                            using (w.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 4)))
+                            {
+                                w.WriteEncodedValue(certificate.IssuerName.RawData);
+                                if (shape == Shape.TrailingName) w.WriteNull();
+                            }
+                            if (names == Names.Two) w.WriteCharacterString(UniversalTagNumber.IA5String, "x.example", new Asn1Tag(TagClass.ContextSpecific, 2));
+                        }
+                        w.WriteInteger(new BigInteger(certificate.SerialNumberBytes.Span, isUnsigned: true, isBigEndian: true) + (wrongSerial ? 1 : 0));
+                        if (shape == Shape.TrailingSerial) w.WriteNull();
+                    }
+                    if (shape == Shape.TrailingId) w.WriteNull();
                 }
-                w.WriteInteger(new BigInteger(certificate.SerialNumberBytes.Span, isUnsigned: true, isBigEndian: true) + (wrongSerial ? 1 : 0));
-                if (shape == Shape.TrailingSerial) w.WriteNull();
+                if (shape == Shape.SecondMalformed) w.WriteNull();
+                if (shape == Shape.SecondOther)
+                {
+                    using (w.PushSequence()) w.WriteOctetString(SHA256.HashData(Pki.Leaf.RawData));
+                }
             }
-            if (shape == Shape.TrailingId) w.WriteNull();
+            switch (shape)
+            {
+                case Shape.PoliciesNull: w.WriteNull(); break;
+                case Shape.PoliciesTwo:
+                    using (w.PushSequence()) { }
+                    using (w.PushSequence()) { }
+                    break;
+                case Shape.PoliciesEmpty:
+                    using (w.PushSequence()) { }
+                    break;
+                case Shape.PoliciesGood:
+                    using (w.PushSequence())
+                    using (w.PushSequence()) w.WriteObjectIdentifier("2.5.29.32.0");
+                    break;
+            }
         }
         return w.Encode();
     }
@@ -274,5 +298,28 @@ public class TimestampTokenRulesTests
         using var critical = Authority(true, TimeStamping);
 
         Assert.False(Rfc3161TimestampToken.TryDecode(Token(critical, stray: true), out _, out _));
+    }
+
+    [Fact]
+    public void Every_certificate_id_has_to_decode_and_the_policies_are_one_sequence_at_most()
+    {
+        using var critical = Authority(true, TimeStamping);
+
+        Assert.True(Accepts(Token(critical, essShape: Shape.SecondOther)));
+        Assert.False(Accepts(Token(critical, essShape: Shape.SecondMalformed)));
+        Assert.True(Accepts(Token(critical, essShape: Shape.PoliciesEmpty)));
+        Assert.True(Accepts(Token(critical, essShape: Shape.PoliciesGood)));
+        Assert.False(Accepts(Token(critical, essShape: Shape.PoliciesNull)));
+        Assert.False(Accepts(Token(critical, essShape: Shape.PoliciesTwo)));
+    }
+
+    [Fact]
+    public void A_main_signature_with_a_byte_after_its_first_signer_stays_valid()
+    {
+        byte[] file = PdfSigner.Sign(SignatureKit.Plain(), SignatureKit.Request(Pki) with { Format = SignatureFormat.Pkcs7Detached });
+
+        byte[] other = SignatureKit.Splice(file, content => WithStrayByte(SignatureVerificationTests.ByFramework(content, Pki.Leaf, HashAlgorithmName.SHA256)));
+
+        Assert.Equal(SignatureVerdict.Valid, Assert.Single(SignatureKit.Verify(other)).Verdict);
     }
 }
