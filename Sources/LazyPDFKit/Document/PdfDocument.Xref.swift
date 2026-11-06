@@ -273,18 +273,20 @@ extension PdfDocument {
     }
 }
 
-/// The entries of one section in the order it lists them, as the C# Dictionary gives them back.
-struct XrefSection {
-    private var map: [Int: Entry] = [:]
-    private var order: [Int] = []
+extension PdfDocument {
+    /// The entries of one section in the order it lists them, as the C# Dictionary gives them back.
+    struct XrefSection {
+        private var map: [Int: Entry] = [:]
+        private var order: [Int] = []
 
-    subscript(number: Int) -> Entry? {
-        get { map[number] }
-        set {
-            if map[number] == nil { order.append(number) }
-            map[number] = newValue
+        subscript(number: Int) -> Entry? {
+            get { map[number] }
+            set {
+                if map[number] == nil { order.append(number) }
+                map[number] = newValue
+            }
         }
-    }
 
-    var ordered: [(number: Int, entry: Entry)] { order.compactMap { n in map[n].map { (n, $0) } } }
+        var ordered: [(number: Int, entry: Entry)] { order.compactMap { n in map[n].map { (number: n, entry: $0) } } }
+    }
 }
