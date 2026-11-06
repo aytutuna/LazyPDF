@@ -16,10 +16,13 @@ final class SignatureHardeningTests: XCTestCase {
     private let emailProtection = "1.3.6.1.5.5.7.3.4"
     private let ocspSigning = "1.3.6.1.5.5.7.3.9"
 
-    private func one(_ file: [UInt8], line: UInt = #line) throws -> SignatureReport {
-        let reports = try SignatureKit.verify(file)
+    private func single(_ reports: [SignatureReport], line: UInt = #line) throws -> SignatureReport {
         XCTAssertEqual(reports.count, 1, line: line)
         return try XCTUnwrap(reports.first, line: line)
+    }
+
+    private func one(_ file: [UInt8], line: UInt = #line) throws -> SignatureReport {
+        try single(SignatureKit.verify(file), line: line)
     }
 
     private func by(_ certificate: X509Certificate) -> PdfSignRequest {
@@ -210,7 +213,7 @@ final class SignatureHardeningTests: XCTestCase {
         options.trustAnchors = [pki.root]
         options.now = Pki.signing.adding(days: 5)
 
-        let report = try one(PdfSignatureVerifier.verify(signed, options))
+        let report = try single(PdfSignatureVerifier.verify(signed, options))
 
         XCTAssertNil(report.timestampTime)
         XCTAssertEqual(report.timeUsed, options.now)
@@ -226,7 +229,7 @@ final class SignatureHardeningTests: XCTestCase {
         later.trustAnchors = [pki.root]
         later.now = Pki.signing.adding(days: 60)
 
-        let report = try one(PdfSignatureVerifier.verify(archived, later))
+        let report = try single(PdfSignatureVerifier.verify(archived, later))
 
         XCTAssertTrue(report.problems.contains(.certificateRevoked))
         XCTAssertNotEqual(report.verdict, .valid)
