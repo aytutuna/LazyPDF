@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using System.Text;
 
 namespace LazyPDF.Core;
@@ -124,13 +123,13 @@ public sealed partial class PdfRedactor
                         unread = true;
                     }
                 }
-                // The element and attribute names of an XMP packet are the format's own, and character references hide a word from a search of the raw bytes, so a packet that reads as XML is searched by what it says.
+                // Character references hide a word from a search of the raw bytes, so a packet that reads as XML is searched by what it says as well as by its bytes; a name or an instruction that holds a word is in the bytes.
                 bool packet = document.Name(stream.Dictionary, "Type") == "Metadata" || document.Name(stream.Dictionary, "Subtype") == "XML";
                 // A form that nothing paints, or that is painted where the page scan does not look, is not checked against the page, so the text it shows is looked for here.
                 bool unseen = !content.Contains(stream) && !painted.Contains(number);
                 found = isContent ? HoldsInOperands(document, data, needles, unseen || nested > 0, ref unread) || (unseen || nested > 0) && Speaks(document, (i, v) => i.Run(stream, v), needles, ref unread)
                     : attached || Container(data) ? HoldsAttached(data, needles, nested, ref unread)
-                    : packet && RedactionMetadata.PlainText(data) is { } plain ? needles.In(Encoding.UTF8.GetBytes(plain)) : needles.In(data);
+                    : needles.In(data) || packet && RedactionMetadata.PlainText(data) is { } plain && needles.In(Encoding.UTF8.GetBytes(plain));
             }
             if (found) problems.Add(RedactionText.StillInFile(where));
             else if (unread) problems.Add(RedactionText.NotChecked(where));
@@ -156,99 +155,88 @@ public sealed partial class PdfRedactor
         }
     }
 
-    // An attachment can wrap the original in a container the byte search cannot see into: a zip, or a PDF with its streams
-    // compressed. A container that cannot be opened, or lies deeper than is followed, is not known to be clean.
+    // An attachment can wrap the original in a container the byte search cannot see into. It counts as checked only when
+    // everything in it is read: text is searched as it is, a zip or gzip file is read whole and strictly by RedactionArchive,
+    // wherever the zip starts, and a PDF is read in every revision. Compressed data, a format not opened here and a file that is
+    // not plain text are not known to be clean, whatever their size, and nor is a container deeper than is followed.
     private static bool HoldsAttached(byte[] data, Needles needles, int nested, ref bool unread)
     {
         if (needles.In(data)) return true;
-        bool zip = data is [0x50, 0x4B, 3, 4, ..];
+        bool zip = RedactionArchive.HasZipSignature(data);
         bool gzip = data is [0x1F, 0x8B, ..];
-        bool pdf = !zip && !gzip && Encoding.Latin1.GetString(data, 0, Math.Min(data.Length, 1024)).Contains("%PDF-", StringComparison.Ordinal);
-        // Compressed or encrypted data in a format that is not opened here hides whatever is in it.
-        if (Unopened.Any(m => data.AsSpan().StartsWith(m)) || !zip && !gzip && !pdf && !Media.Any(m => data.AsSpan().StartsWith(m)) && Dense(data))
-        {
-            unread = true;
-            return false;
-        }
+        bool pdf = !zip && Encoding.Latin1.GetString(data, 0, Math.Min(data.Length, 1024)).Contains("%PDF-", StringComparison.Ordinal);
         if (nested >= MaxNested)
         {
-            unread |= zip || gzip || pdf;
+            unread |= !Plain(data);
             return false;
         }
-        try
+        if (zip || gzip)
         {
-            if (zip)
+            List<byte[]>? entries = zip ? RedactionArchive.Unzip(data, MaxStream, out _) : RedactionArchive.Gunzip(data, MaxStream, out _) is { } joined ? new List<byte[]> { joined } : null;
+            if (entries is null)
             {
-                using var archive = new ZipArchive(new MemoryStream(data));
-                long budget = MaxStream;
-                foreach (var entry in archive.Entries)
-                {
-                    if (entry.Length > budget)
-                    {
-                        unread = true;
-                        continue;
-                    }
-                    using var inflated = entry.Open();
-                    var bytes = new MemoryStream();
-                    var chunk = new byte[1 << 16];
-                    for (int n; (n = inflated.Read(chunk)) > 0 && bytes.Length <= budget;) bytes.Write(chunk, 0, n);
-                    if (bytes.Length > budget)
-                    {
-                        unread = true;
-                        continue;
-                    }
-                    budget -= bytes.Length;
-                    if (HoldsAttached(bytes.ToArray(), needles, nested + 1, ref unread)) return true;
-                }
+                unread = true;
+                return false;
             }
-            else if (gzip)
+            foreach (var entry in entries)
             {
-                using var inflated = new GZipStream(new MemoryStream(data), CompressionMode.Decompress);
-                var bytes = new MemoryStream();
-                var chunk = new byte[1 << 16];
-                for (int n; (n = inflated.Read(chunk)) > 0 && bytes.Length <= MaxStream;) bytes.Write(chunk, 0, n);
-                if (bytes.Length > MaxStream) unread = true;
-                else return HoldsAttached(bytes.ToArray(), needles, nested + 1, ref unread);
+                if (HoldsAttached(entry, needles, nested + 1, ref unread)) return true;
             }
-            else if (pdf)
-            {
-                var problems = new List<string>();
-                using var inner = PdfDocument.Open(data);
-                Search(inner, needles, problems, nested + 1);
-                return problems.Count > 0;
-            }
+            return false;
         }
-        catch (Exception e) when (e is PdfReadException or InvalidDataException)
+        if (pdf) return HoldsRevisions(data, needles, nested, ref unread);
+        unread |= !Plain(data);
+        return false;
+    }
+
+    // The newest revision of a PDF is what a reader opens; the ones before it are in the same bytes, and a file cut after an
+    // earlier end-of-file marker is a PDF that shows what the later ones took out. Each is read, and one that does not read counts as unread.
+    private static bool HoldsRevisions(byte[] data, Needles needles, int nested, ref bool unread)
+    {
+        var ends = new List<int>();
+        for (int from = 0; data.AsSpan(from).IndexOf("%%EOF"u8) is var at and >= 0; from += at + 5)
+        {
+            int end = from + at + 5;
+            while (end < data.Length && data[end] is 10 or 13) end++;
+            if (end < data.Length) ends.Add(end);
+        }
+        if (ends.Count > MaxRevisions)
         {
             unread = true;
+            ends.RemoveRange(MaxRevisions, ends.Count - MaxRevisions);
+        }
+        foreach (var part in ends.Select(e => data[..e]).Append(data))
+        {
+            try
+            {
+                var problems = new List<string>();
+                using var inner = PdfDocument.Open(part);
+                Search(inner, needles, problems, nested + 1);
+                if (problems.Count > 0) return true;
+            }
+            catch (PdfReadException)
+            {
+                unread = true;
+            }
         }
         return false;
     }
 
+    private const int MaxRevisions = 8;
+
+    // Formats that are packed and not opened here, whatever stream holds them.
     private static readonly byte[][] Unopened =
     [
         [0x42, 0x5A, 0x68], [0xFD, 0x37, 0x7A, 0x58, 0x5A, 0], [0x37, 0x7A, 0xBC, 0xAF], [0x52, 0x61, 0x72, 0x21], [0x28, 0xB5, 0x2F, 0xFD], [0x04, 0x22, 0x4D, 0x18], [0x1F, 0x9D], [0x4C, 0x5A, 0x49, 0x50],
+        [0x4D, 0x53, 0x43, 0x46],
     ];
 
-    // Formats that keep their text in the clear or hold none worth the search.
-    private static readonly byte[][] Media =
-    [
-        [0x89, 0x50, 0x4E, 0x47], [0xFF, 0xD8, 0xFF], [0x47, 0x49, 0x46, 0x38], [0x52, 0x49, 0x46, 0x46], [0xD0, 0xCF, 0x11, 0xE0], [0x49, 0x44, 0x33], [0x4F, 0x67, 0x67, 0x53],
-    ];
-
-    // Whether the data starts like something HoldsAttached opens or knows it cannot, wherever it is held.
+    // Whether the data is something HoldsAttached opens or knows it cannot, wherever it is held.
     private static bool Container(byte[] data) =>
-        data is [0x50, 0x4B, 3, 4, ..] or [0x1F, 0x8B, ..] || Unopened.Any(m => data.AsSpan().StartsWith(m)) || data.AsSpan(0, Math.Min(data.Length, 1024)).IndexOf("%PDF-"u8) >= 0;
+        RedactionArchive.HasZipSignature(data) || data is [0x1F, 0x8B, ..] || Unopened.Any(m => data.AsSpan().StartsWith(m)) || data.AsSpan(0, Math.Min(data.Length, 1024)).IndexOf("%PDF-"u8) >= 0;
 
-    // Bytes that look random: compressed or encrypted, whatever the format.
-    private static bool Dense(byte[] data)
-    {
-        if (data.Length < 512) return false;
-        var counts = new int[256];
-        int length = Math.Min(data.Length, 1 << 16);
-        for (int i = 0; i < length; i++) counts[data[i]]++;
-        return counts.Where(c => c > 0).Sum(c => -(double)c / length * Math.Log2((double)c / length)) > 7.2;
-    }
+    // Text a reader sees as it is: no byte that a text file does not hold. Compressed and encrypted data has such bytes in the first few dozen.
+    private static bool Plain(byte[] data) => data.All(b => !(b < 9 || b is 11 or (> 13 and < 32) or 127));
 
     private static byte[]? InCodec(PdfDocument document, PdfStream stream)
     {
