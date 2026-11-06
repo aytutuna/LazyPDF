@@ -86,12 +86,14 @@ final class PdfAChecker {
     /// The clause for part 1, or for the later parts.
     func c(_ part1: String, _ later: String) -> String { isPart1 ? part1 : later }
 
-    func add(_ clause: String, _ place: String, _ message: String) {
+    // The place and the message go through the localiser, which is slow next to the walk, so they are built once the cap allows an issue.
+    func add(_ clause: String, _ place: @autoclosure () -> String, _ message: @autoclosure () -> String) {
         if issues.count >= Self.maxIssues {
             truncated = true
             return
         }
-        if seen.insert(Array("\(clause)|\(place)|\(message)".utf8)).inserted { issues.append(PdfAIssue(clause, place, message)) }
+        let at = place(), text = message()
+        if seen.insert(Array("\(clause)|\(at)|\(text)".utf8)).inserted { issues.append(PdfAIssue(clause, at, text)) }
     }
 
     func filterNames(_ dictionary: PdfDictionary, _ key: String = "Filter") -> [String] {

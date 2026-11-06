@@ -25,6 +25,14 @@ public sealed partial class PdfDocument
         return _security.DecryptStream(stream.Number, stream.Generation, raw, CryptView(stream.Dictionary));
     }
 
+    /// <summary>The size of <see cref="RawData"/> without copying it.</summary>
+    internal int RawLength(PdfStream stream)
+    {
+        if (stream.Data is { } memory) return memory.Length;
+        if (stream.DataOffset < 0 || stream.DataOffset > _data.Length) return 0;
+        return StreamLength(stream, (int)stream.DataOffset);
+    }
+
     /// <summary>
     /// The data of <paramref name="stream"/> decrypted and decoded, with /Length, /Filter and
     /// /DecodeParms resolved first. Throws <see cref="PdfReadException"/> for a filter that is

@@ -18,6 +18,13 @@ extension PdfDocument {
         return security.decryptStream(stream.number, stream.generation, raw, cryptView(stream.dictionary))
     }
 
+    /// The size of `rawData` without copying it.
+    func rawLength(_ stream: PdfStream) -> Int {
+        if let memory = stream.data { return memory.count }
+        if stream.dataOffset < 0 || stream.dataOffset > source.count { return 0 }
+        return streamLength(stream, stream.dataOffset)
+    }
+
     /// The data of `stream` decrypted and decoded, with /Length, /Filter and /DecodeParms resolved first.
     /// Throws `PdfReadException` for a filter that is not supported or data that does not decode.
     public func data(_ stream: PdfStream) throws -> [UInt8] {

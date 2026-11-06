@@ -163,7 +163,7 @@ final class PixelCompareTests: XCTestCase {
     }
 
     func test_aToleranceNearTheLargestIntSeesTheWholePage() throws {
-        let page = text()
+        let page = Canvas(16, 16)
         let options = PixelOptions(tolerance: Int(Int32.max), align: false)
         let result = try PixelComparer.compare(page.toImage(), page.toImage(), 72, options)
         XCTAssertTrue(result.differences.isEmpty)

@@ -77,8 +77,11 @@ extension PdfAChecker {
         for stream in streams {
             checkFormStream(stream, place())
             if !appearancesRun.insert(ObjectIdentifier(stream)).inserted { continue }
-            // Once the budget is spent the interpreter would still run every remaining state in full, where the C# stops at the first form.
-            if overBudget { break }
+            // Past the budget the C# run throws at its first form, so the state is only reported; Swift's would go on to the end.
+            if overBudget {
+                unreadable(place())
+                continue
+            }
             let visitor = Visitor(self, place(), nil)
             interpreter.run(stream, visitor)
             if visitor.failure != nil {

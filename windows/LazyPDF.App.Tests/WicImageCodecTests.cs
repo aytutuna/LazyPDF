@@ -136,6 +136,19 @@ public sealed class WicImageCodecTests
         encoder.Frames.Add(BitmapFrame.Create(bitmap));
         using var stream = new MemoryStream();
         encoder.Save(stream);
-        Assert.Null(Codec.DecodeFile(stream.ToArray()));
+        Assert.Empty(Codec.DecodeFile(stream.ToArray()) ?? []);
+    }
+
+    [Fact]
+    public void AFrameWithTooManyPixelsDoesNotTakeTheOtherFramesWithIt()
+    {
+        const int side = 16384;
+        BitmapSource Blank(int size) => BitmapSource.Create(size, size, 96, 96, PixelFormats.BlackWhite, null, new byte[(size + 7) / 8 * size], (size + 7) / 8);
+        var encoder = new TiffBitmapEncoder();
+        foreach (int size in new[] { 8, side, 16 }) encoder.Frames.Add(BitmapFrame.Create(Blank(size)));
+        using var stream = new MemoryStream();
+        encoder.Save(stream);
+        var frames = Codec.DecodeFile(stream.ToArray());
+        Assert.Equal([8, 16], frames!.Select(f => f.Width));
     }
 }

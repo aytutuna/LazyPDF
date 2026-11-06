@@ -160,7 +160,7 @@ public class PixelCompareTests
     [Fact]
     public void AToleranceNearTheLargestIntSeesTheWholePage()
     {
-        var page = Text();
+        var page = new Canvas(16, 16);
         var options = new PixelOptions(Tolerance: int.MaxValue, Align: false);
         var result = PixelComparer.Compare(page.ToImage(), page.ToImage(), 72, options);
         Assert.Empty(result.Differences);

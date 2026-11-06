@@ -21,10 +21,11 @@ public sealed class WicImageCodec : IImageCodec
         try
         {
             using var stream = new MemoryStream(file);
-            var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-            return [.. decoder.Frames.Take(MaxFrames).Select(ToRgba)];
+            var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
+            // A frame is decoded when it is read, so one too big to hold is passed over by its header size alone.
+            return [.. decoder.Frames.Take(MaxFrames).Where(f => (long)f.PixelWidth * f.PixelHeight <= PdfImageSamples.MaxPixels).Select(ToRgba)];
         }
-        catch (Exception e) when (e is NotSupportedException or FileFormatException or InvalidOperationException or ArgumentException or IOException or OutOfMemoryException)
+        catch (Exception e) when (e is NotSupportedException or FileFormatException or InvalidOperationException or ArgumentException or IOException or OutOfMemoryException or OverflowException)
         {
             return null;
         }
