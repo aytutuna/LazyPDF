@@ -6,7 +6,7 @@ public struct IOSApp: App {
     public init() {}
 
     public var body: some Scene {
-        WindowGroup {
+        WindowGroup("Lazy PDF") {
             Color.clear
         }
     }

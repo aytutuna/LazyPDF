@@ -1,6 +1,6 @@
 # The iPhone and iPad app's Xcode project, for XcodeGen (CI pins its release and SHA-256; see the apps job in
 # .github/workflows/swift.yml). `xcodegen generate --spec ios/project.yml` writes ios/LazyPDFiOS.xcodeproj, which is not
-# checked in. The app target holds no logic: it starts LazyPDFIOSApp from the package at the repository root
+# checked in. The app target holds no logic: it starts IOSApp from the package at the repository root
 # (Sources/LazyPDFIOS).
 name: LazyPDFiOS
 

@@ -1,6 +1,6 @@
 # The Mac App Store build of Lazy PDF, for XcodeGen (CI pins its release and SHA-256; see the apps job in
 # .github/workflows/swift.yml). `xcodegen generate --spec mac/project.yml` writes mac/LazyPDFMacApp.xcodeproj, which is not
-# checked in. The target holds no logic: it starts LazyPDFMacApp from the package at the repository root
+# checked in. The target holds no logic: it starts MacApp from the package at the repository root
 # (Sources/LazyPDFMac).
 name: LazyPDFMacApp
 
