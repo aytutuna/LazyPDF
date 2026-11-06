@@ -44,7 +44,8 @@ public enum PdfDigitalId {
         parameters.version = 0
         parameters.passphrase = Unmanaged<CFTypeRef>.passUnretained(secret as CFTypeRef)
         var data: CFData?
-        let status = SecItemExport([item, key] as CFArray, .formatPKCS12, [], &parameters, &data)
+        let exported: [AnyObject] = [item, key]
+        let status = SecItemExport(exported as CFArray, .formatPKCS12, [], &parameters, &data)
         guard status == errSecSuccess, let data else { throw SignatureCryptoException(message: "The PFX file could not be written.") }
         return [UInt8](data as Data)
         #else
