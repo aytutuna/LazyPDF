@@ -55,6 +55,15 @@ final class DigitalIdTests: XCTestCase {
         XCTAssertFalse(hex.contains("2A864886F70D010C0106"))
     }
 
+    func test_aPfxTheSwiftWriterMadeBeforeLoadsToo() throws {
+        let certificate = try XCTUnwrap(X509Certificate(SignatureFixtures.read("id-cert.der")))
+
+        let loaded = try PdfDigitalId.importPfx(SignatureFixtures.read("swift-export.pfx"), SignatureFixtures.password)
+
+        XCTAssertEqual(loaded.thumbprint, certificate.thumbprint)
+        XCTAssertNotNil(loaded.privateKey)
+    }
+
     func test_anEcKeyExportsToo() throws {
         let key = try SignatureCrypto.newEcKey()
         let info = try CertificateBuilder.publicKeyInfo(key)
@@ -104,6 +113,32 @@ final class DigitalIdTests: XCTestCase {
 
         XCTAssertFalse(FileManager.default.fileExists(atPath: path))
         XCTAssertThrowsError(try PdfDigitalId.importPfxThroughKeychain(pfx, "wrong"))
+    }
+
+    func test_theKeychainOfAnImportedIdDoesNotLockWhileTheIdIsInUse() throws {
+        let id = try PdfDigitalId.create("Ada Lovelace", nil, start, keyBits: 2048)
+        let loaded = try PdfDigitalId.importPfxThroughKeychain(PdfDigitalId.exportPfx(id, "pass word"), "pass word")
+        let holder = try XCTUnwrap(loaded.keyHolder as? TemporaryKeychain)
+
+        var settings = SecKeychainSettings(version: 1, lockOnSleep: true, useLockInterval: true, lockInterval: 300)
+        XCTAssertEqual(SecKeychainCopySettings(holder.keychain, &settings), errSecSuccess)
+
+        XCTAssertFalse(settings.lockOnSleep.boolValue)
+        XCTAssertFalse(settings.useLockInterval.boolValue)
+    }
+
+    func test_aKeychainFileOfAProcessThatIsGoneIsRemovedAndOneOfThisProcessIsNot() throws {
+        let folder = NSTemporaryDirectory()
+        let gone = folder + "lazypdf-999999-" + UUID().uuidString + ".keychain"
+        let ours = folder + "lazypdf-\(ProcessInfo.processInfo.processIdentifier)-" + UUID().uuidString + ".keychain"
+        XCTAssertTrue(FileManager.default.createFile(atPath: gone, contents: Data([1])))
+        XCTAssertTrue(FileManager.default.createFile(atPath: ours, contents: Data([1])))
+        defer { try? FileManager.default.removeItem(atPath: ours) }
+
+        _ = try XCTUnwrap(TemporaryKeychain("pass word"))
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: gone))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: ours))
     }
     #endif
 

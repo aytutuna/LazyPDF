@@ -81,5 +81,45 @@ final class SignatureChainRulesTests: XCTestCase {
         }
         XCTAssertEqual(try SignatureKit.verify(file).first?.verdict, .valid)
     }
+
+    func test_aCriticalSubjectDirectoryAttributesExtensionMakesTheSignerUntrusted() throws {
+        let ca = try authority()
+        let critical = try leaf(under: ca, [X509Extension(oid: "2.5.29.9", critical: true, value: DerWriter.sequence([]))])
+        let quiet = try leaf(under: ca, [X509Extension(oid: "2.5.29.9", critical: false, value: DerWriter.sequence([]))])
+
+        XCTAssertEqual(try verdict(critical, [ca, pki.intermediate, pki.root]).verdict, .validButUntrusted)
+        XCTAssertEqual(try verdict(quiet, [ca, pki.intermediate, pki.root]).verdict, .valid)
+    }
+
+    func test_certificatePoliciesThatDoNotDecodeMakeTheSignerUntrusted() throws {
+        let ca = try authority()
+        let policies = DerWriter.sequence([DerWriter.sequence([DerWriter.oid("2.5.29.32.0")])])
+        let good = try leaf(under: ca, [X509Extension(oid: "2.5.29.32", critical: false, value: policies)])
+        let broken = try leaf(under: ca, [X509Extension(oid: "2.5.29.32", critical: false, value: [0xFF, 0x01])])
+        let brokenCritical = try leaf(under: ca, [X509Extension(oid: "2.5.29.32", critical: true, value: [0xFF, 0x01])])
+
+        XCTAssertEqual(try verdict(good, [ca, pki.intermediate, pki.root]).verdict, .valid)
+        XCTAssertEqual(try verdict(broken, [ca, pki.intermediate, pki.root]).verdict, .validButUntrusted)
+        XCTAssertEqual(try verdict(brokenCritical, [ca, pki.intermediate, pki.root]).verdict, .validButUntrusted)
+    }
+
+    func test_anAnchorThatIsSelfIssuedButSignedByAnotherKeyIsNotARoot() throws {
+        // A link certificate: the name of the root, a new key, signed by the old key of the root.
+        let key = try SignatureCrypto.newRsaKey(2048)
+        let info = try CertificateBuilder.publicKeyInfo(key)
+        let der = try CertificateBuilder.build(subject: pki.root.subjectName, issuer: pki.root.subjectName, publicKeyInfo: info,
+                                               notBefore: Pki.notBefore, notAfter: Pki.notAfter, serial: CertificateBuilder.serialNumber(),
+                                               extensions: [CertificateBuilder.basicConstraints(authority: true), CertificateBuilder.keyUsage([.keyCertSign, .crlSign])],
+                                               issuerKey: try XCTUnwrap(pki.root.privateKey))
+        let link = try XCTUnwrap(X509Certificate(der))
+        link.privateKey = key
+        let signer = try leaf(under: link)
+
+        let report = try verdict(signer, [link], anchors: [link])
+
+        XCTAssertEqual(report.verdict, .validButUntrusted)
+        XCTAssertTrue(report.problems.contains(.untrustedSigner))
+        XCTAssertEqual(try verdict(try leaf(under: pki.root), [], anchors: [pki.root]).verdict, .valid)
+    }
 }
 #endif
