@@ -2,7 +2,7 @@ import XCTest
 import LazyPDFApp
 import LazyPDFIOS
 
-// Follows windows/LazyPDF.App.Tests/RecentFilesTests.cs for the bookmarks of the platform shell.
+// No Windows twin: Windows keeps paths where iOS keeps bookmarks.
 
 final class BookmarkTests: XCTestCase {
     private func file() throws -> URL {

@@ -5,7 +5,8 @@ import LazyPDFKit
 import LazyPDFApp
 
 // Follows windows/LazyPDF.App/Services/WindowsCertificates.cs. The identities are those in the app's keychain, which is
-// where SecPKCS12Import puts a .p12 or .pfx the person brings (PdfDigitalId.importPfx), so importing is the only way in.
+// where a .p12 or .pfx the person brings is stored (SecPKCS12Import only reads it on iOS, SecItemAdd keeps it), so
+// importing is the only way in.
 
 public final class IOSCertificates: CertificateKeys {
     /// What the list shows of one certificate.
@@ -45,9 +46,18 @@ public final class IOSCertificates: CertificateKeys {
     /// holds no identity.
     @discardableResult
     public func importIdentity(_ pfx: [UInt8], password: String) throws -> CertificateChoice {
-        let certificate = try PdfDigitalId.importPfx(pfx, password)
-        guard let entry = Self.entry(certificate) else { throw CocoaError(.fileReadCorruptFile) }
-        // The import reports success even when the keychain would not take the identity.
+        var items: CFArray?
+        let options = [kSecImportExportPassphrase as String: password]
+        guard SecPKCS12Import(Data(pfx) as CFData, options as CFDictionary, &items) == errSecSuccess,
+              let list = items as? [[String: Any]], let found = list.first?[kSecImportItemIdentity as String],
+              CFGetTypeID(found as AnyObject) == SecIdentityGetTypeID() else { throw CocoaError(.fileReadCorruptFile) }
+        let identity = found as! SecIdentity
+        var certificate: SecCertificate?
+        guard SecIdentityCopyCertificate(identity, &certificate) == errSecSuccess, let certificate,
+              let parsed = X509Certificate([UInt8](SecCertificateCopyData(certificate) as Data)),
+              let entry = Self.entry(parsed) else { throw CocoaError(.fileReadCorruptFile) }
+        let status = SecItemAdd([kSecValueRef as String: identity] as CFDictionary, nil)
+        guard status == errSecSuccess || status == errSecDuplicateItem else { throw CocoaError(.fileWriteUnknown) }
         guard identities().contains(where: { $0.entry.id == entry.id }) else { throw CocoaError(.fileWriteUnknown) }
         return Self.choices([entry], now: Date())[0]
     }
@@ -80,16 +90,9 @@ public final class IOSCertificates: CertificateKeys {
 
     public static func entry(_ certificate: X509Certificate) -> Entry? {
         let name = certificate.simpleName
-        return Entry(id: certificate.thumbprint, name: name.isEmpty ? certificate.subject : name, issuer: issuerName(certificate),
+        return Entry(id: certificate.thumbprint, name: name.isEmpty ? certificate.subject : name, issuer: certificate.issuerSimpleName,
                      notBefore: Date(timeIntervalSince1970: Double(certificate.notBefore.unixSeconds)),
                      notAfter: Date(timeIntervalSince1970: Double(certificate.notAfter.unixSeconds)))
-    }
-
-    // The issuer's simple name as GetNameInfo gives it: its common name, else the whole name.
-    private static func issuerName(_ certificate: X509Certificate) -> String {
-        let attributes = certificate.issuer.components(separatedBy: ", ")
-        if let common = attributes.first(where: { $0.hasPrefix("CN=") }) { return String(common.dropFirst(3)) }
-        return certificate.issuer
     }
 }
 #endif

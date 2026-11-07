@@ -28,7 +28,9 @@ public struct OpenPicker: UIViewControllerRepresentable {
         return picker
     }
 
-    public func updateUIViewController(_ controller: UIDocumentPickerViewController, context: Context) {}
+    public func updateUIViewController(_ controller: UIDocumentPickerViewController, context: Context) {
+        context.coordinator.picked = picked
+    }
 
     public func makeCoordinator() -> PickerDelegate {
         PickerDelegate(picked)
@@ -52,7 +54,9 @@ public struct ExportPicker: UIViewControllerRepresentable {
         return picker
     }
 
-    public func updateUIViewController(_ controller: UIDocumentPickerViewController, context: Context) {}
+    public func updateUIViewController(_ controller: UIDocumentPickerViewController, context: Context) {
+        context.coordinator.picked = picked
+    }
 
     public func makeCoordinator() -> PickerDelegate {
         PickerDelegate(picked)
@@ -60,7 +64,7 @@ public struct ExportPicker: UIViewControllerRepresentable {
 }
 
 public final class PickerDelegate: NSObject, UIDocumentPickerDelegate {
-    private let picked: ([PickedFile]) -> Void
+    var picked: ([PickedFile]) -> Void
 
     init(_ picked: @escaping ([PickedFile]) -> Void) {
         self.picked = picked
