@@ -16,7 +16,7 @@ final class PlainHttpTransport {
     enum Outcome: Equatable {
         case body([UInt8])
         case failed(Failure)
-        case redirect(String, keepsMethod: Bool)
+        case redirect(String, keepsMethod: Bool, status: Int)
     }
 
     static let maxResponseBytes = 8 << 20
@@ -40,7 +40,8 @@ final class PlainHttpTransport {
     }
 
     func send(_ url: URL, method: String, contentType: String?, body: Data?) -> Outcome {
-        guard let host = url.host, let port = NWEndpoint.Port(rawValue: UInt16(url.port ?? 80)) else {
+        guard let host = url.host,
+              let port = UInt16(exactly: url.port ?? 80).flatMap(NWEndpoint.Port.init(rawValue:)) else {
             return .failed(.unreachable)
         }
         let exchange = Exchange(host: host, port: port, request: Self.request(url, host, method, contentType, body),
@@ -109,6 +110,7 @@ private final class Exchange {
     }
 
     private func start() {
+        guard outcome == nil else { return }
         connection.stateUpdateHandler = { [self] state in
             switch state {
             case .ready:
@@ -117,7 +119,8 @@ private final class Exchange {
                 })
                 receive()
             case .waiting(let error), .failed(let error):
-                finish(.failed(Self.isOffline(error) ? .offline : .unreachable))
+                let offline = Self.isOffline(error) || connection.currentPath?.status == .unsatisfied
+                finish(.failed(offline ? .offline : .unreachable))
             default:
                 break
             }
@@ -184,7 +187,7 @@ private final class Exchange {
             headers[line[..<colon].lowercased()] = line[line.index(after: colon)...].trimmingCharacters(in: .whitespaces)
         }
         if [301, 302, 303, 307, 308].contains(code), let target = headers["location"] {
-            return .redirect(target, keepsMethod: code == 307 || code == 308)
+            return .redirect(target, keepsMethod: code == 307 || code == 308, status: code)
         }
         if !(200..<300).contains(code) { return .failed(.status(code)) }
         if code == 204 { return .body([]) }
@@ -199,18 +202,21 @@ private final class Exchange {
     }
 
     private func readChunks() -> PlainHttpTransport.Outcome? {
-        while let lineEnd = Self.find(buffer, [13, 10]) {
+        while true {
+            guard let lineEnd = Self.find(buffer, [13, 10]) else {
+                return buffer.count > 1024 ? .failed(.unreachable) : nil
+            }
             let line = String(decoding: buffer[..<lineEnd], as: UTF8.self)
             guard let size = Int(line.split(separator: ";").first?.trimmingCharacters(in: .whitespaces) ?? "", radix: 16),
                   size >= 0 else { return .failed(.unreachable) }
             if size == 0 { return .body(body) }
+            guard size <= PlainHttpTransport.maxResponseBytes - body.count else { return .failed(.tooLarge) }
             let chunkEnd = lineEnd + 2 + size
             if buffer.count < chunkEnd + 2 { return nil }
             body.append(contentsOf: buffer[(lineEnd + 2)..<chunkEnd])
             if body.count > PlainHttpTransport.maxResponseBytes { return .failed(.tooLarge) }
             buffer.removeSubrange(..<(chunkEnd + 2))
         }
-        return nil
     }
 
     private func atEnd() -> PlainHttpTransport.Outcome {

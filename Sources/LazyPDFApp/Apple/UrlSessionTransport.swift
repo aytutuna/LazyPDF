@@ -108,12 +108,15 @@ public final class UrlSessionTransport: SignatureTransport {
         var method = method
         var body = body
         var contentType = contentType
-        for _ in 0..<Self.maxRedirects {
+        var redirects = 0
+        for _ in 0...Self.maxRedirects {
             if address.scheme?.lowercased() == "https" { return secureSend(address, method, contentType, body) }
             switch plain.send(address, method: method, contentType: contentType, body: body) {
             case .body(let bytes): return bytes
             case .failed(let reason): return fail(Self.text(reason))
-            case .redirect(let target, let keepsMethod):
+            case .redirect(let target, let keepsMethod, let code):
+                if redirects == Self.maxRedirects { return fail(Self.text(.status(code))) }
+                redirects += 1
                 guard let next = URL(string: target, relativeTo: address)?.absoluteURL, next.host != nil,
                       ["http", "https"].contains(next.scheme?.lowercased()) else {
                     return fail(Self.unreachable)

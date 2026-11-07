@@ -98,6 +98,23 @@ private final class Server {
     }
 }
 
+private final class RedirectTarget: URLProtocol {
+    static var hosts = [String]()
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        Self.hosts.append(request.url?.host ?? "")
+        let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: nil)!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Data("secure".utf8))
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
+}
+
 final class PlainHttpTransportTests: XCTestCase {
     private func transport(_ server: Server, timeout: TimeInterval = 20) -> UrlSessionTransport {
         UrlSessionTransport(configuration: .ephemeral, plain: PlainHttpTransport(timeout: timeout))
@@ -265,8 +282,101 @@ final class PlainHttpTransportTests: XCTestCase {
         let server = try Server { _ in .send("HTTP/1.1 302 Found\r\nLocation: /\r\nContent-Length: 0\r\n\r\n") }
         let transport = transport(server)
 
+        L10n.english {
+            XCTAssertNil(transport.get(server.url()))
+            XCTAssertEqual(transport.lastFailure, "The server answered with an error (302).")
+        }
+        XCTAssertEqual(server.seen.count, 6)
+    }
+
+    func test_aChunkedAnswerOverTheCapIsRefused() throws {
+        let chunk = String(repeating: "a", count: 1 << 20)
+        let reply = "HTTP/1.1 200 OK
+Transfer-Encoding: chunked
+
+"
+            + String(repeating: "100000
+\(chunk)
+", count: 9) + "0
+
+"
+        let server = try Server { _ in .send(reply) }
+        let transport = transport(server)
+
+        L10n.english {
+            XCTAssertNil(transport.get(server.url()))
+            XCTAssertTrue(transport.lastFailure?.contains("too large") == true)
+        }
+    }
+
+    func test_aHugeChunkSizeIsRefusedWithoutTrapping() throws {
+        let server = try Server { _ in
+            .send("HTTP/1.1 200 OK
+Transfer-Encoding: chunked
+
+7fffffffffffffff
+abc", hold: true)
+        }
+        let transport = transport(server)
+
+        L10n.english {
+            XCTAssertNil(transport.get(server.url()))
+            XCTAssertTrue(transport.lastFailure?.contains("too large") == true)
+        }
+    }
+
+    func test_aChunkSizeLineThatNeverEndsIsGivenUp() throws {
+        let junk = String(repeating: "f", count: 4096)
+        let server = try Server { _ in .send("HTTP/1.1 200 OK
+Transfer-Encoding: chunked
+
+\(junk)", hold: true) }
+        let transport = transport(server)
+        let started = Date()
+
         XCTAssertNil(transport.get(server.url()))
-        XCTAssertNotNil(transport.lastFailure)
+
+        XCTAssertLessThan(Date().timeIntervalSince(started), 5)
+    }
+
+    func test_aPortOutOfRangeFailsInsteadOfTrapping() {
+        let transport = UrlSessionTransport(configuration: .ephemeral, plain: PlainHttpTransport(timeout: 2))
+
+        L10n.english {
+            XCTAssertNil(transport.get("http://127.0.0.1:99999/"))
+            XCTAssertTrue(transport.lastFailure?.contains("could not be reached") == true)
+        }
+    }
+
+    func test_aRedirectToANonWebSchemeFails() throws {
+        let server = try Server { _ in .send("HTTP/1.1 302 Found
+Location: ftp://x/
+Content-Length: 0
+
+") }
+        let transport = transport(server)
+
+        L10n.english {
+            XCTAssertNil(transport.get(server.url()))
+            XCTAssertTrue(transport.lastFailure?.contains("could not be reached") == true)
+        }
+    }
+
+    func test_aRedirectToHttpsHandsOverToTheSecureSession() throws {
+        let server = try Server { _ in
+            .send("HTTP/1.1 301 Moved
+Location: https://secure.example/x
+Content-Length: 0
+
+")
+        }
+        RedirectTarget.hosts = []
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [RedirectTarget.self]
+        let chained = UrlSessionTransport(configuration: configuration, plain: PlainHttpTransport(timeout: 5))
+
+        XCTAssertEqual(chained.get(server.url()), Array("secure".utf8))
+        XCTAssertEqual(RedirectTarget.hosts, ["secure.example"])
     }
 
     func test_aCancelledTransportFailsTheRequestsAfterIt() throws {
