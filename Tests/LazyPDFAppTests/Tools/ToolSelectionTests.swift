@@ -1,4 +1,5 @@
 import XCTest
+import LazyPDFKit
 @testable import LazyPDFApp
 
 // Mirrors windows/LazyPDF.App.Tests/ToolSelectionTests.cs and the state half of HomeKeyboardTests.cs: the tool and the side
