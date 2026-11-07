@@ -66,8 +66,8 @@ targets:
       - path: LazyPDFiOSTests
     dependencies:
       - target: LazyPDFiOS
-      - package: LazyPDF
-        product: LazyPDFKit
+      # The engine comes through the one product the app links. A copy of its own in the bundle makes the engine's classes
+      # and errors of the bundle different types from the app's, and every cast between them fails.
       - package: LazyPDF
         product: LazyPDFIOS
     settings:

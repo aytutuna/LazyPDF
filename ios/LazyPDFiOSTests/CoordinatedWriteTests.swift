@@ -59,41 +59,6 @@ final class CoordinatedWriteTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: url), Data("old".utf8))
     }
 
-    func test_rewriteReadsBackWithAndWithoutObjectStreams() throws {
-        var report: [String] = []
-        for streams in [false, true] {
-            let out = try PdfDocument.open(samplePdf()).saveRewrite(PdfSaveOptions(useObjectStreams: streams))
-            do {
-                let back = try PdfDocument.open(out)
-                report.append("streams=\(streams) ok pages=\(back.pages.count) repairs=\(back.repairs)")
-            } catch {
-                let text = String(decoding: (out.prefix(1200) + out.suffix(700)).map { $0 >= 32 && $0 < 127 || $0 == 10 ? $0 : 46 }, as: UTF8.self)
-                report.append("streams=\(streams) \(error) length=\(out.count) \(text)")
-            }
-        }
-        XCTAssertFalse(report.contains { !$0.contains(" ok ") }, report.joined(separator: " | "))
-    }
-
-    func test_whereTheTypesLiveReport() throws {
-        func image(_ type: Any.Type) -> String {
-            var info = Dl_info()
-            let pointer = unsafeBitCast(type, to: UnsafeRawPointer.self)
-            guard dladdr(pointer, &info) != 0, let name = info.dli_fname else { return "?" }
-            return (String(cString: name) as NSString).lastPathComponent
-        }
-        let tab = DocumentTab(session: try PdfEditSession.open(samplePdf()), renderer: StubRenderer(), url: nil, title: "t.pdf",
-                              writer: PlainFileWriter())
-        var report = ["test sees: DocumentTab=\(image(DocumentTab.self)) PdfEditSession=\(image(PdfEditSession.self)) PdfDocument=\(image(PdfDocument.self)) PdfDictionary=\(image(PdfDictionary.self)) PdfReadException=\(image(PdfReadException.self)) PlainFileWriter=\(image(PlainFileWriter.self)) CoordinatedFileWriter=\(image(CoordinatedFileWriter.self))"]
-        report.append("instances: session=\(image(type(of: tab.session))) catalog=\(image(type(of: tab.session.document.catalog))) tab=\(image(type(of: tab)))")
-        do { try tab.saveCompact(URL(fileURLWithPath: scratch(self).appendingPathComponent("z.pdf").path)) } catch {
-            report.append("tab compact failed: \(error) type=\(image(type(of: error)))")
-        }
-        do { _ = try IOSCertificates().open([], CertificateChoice(id: "x", name: "x", issuer: "x", expires: Date(), isValidNow: true)) } catch {
-            report.append("app error type=\(image(type(of: error)))")
-        }
-        XCTFail(report.joined(separator: " | "))
-    }
-
     func test_saveWritesTheBytesAndKeepsTheFileInPlace() throws {
         let folder = scratch(self)
         let url = folder.appendingPathComponent("a.pdf")
