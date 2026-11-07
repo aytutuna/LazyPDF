@@ -83,8 +83,6 @@ extension ViewerModel {
         apply(state.reveal(page, area))
     }
 
-    // MARK: The page box
-
     public func showGoToPage() {
         guard tab != nil else { return }
         if readingMode { readingMode = false }
@@ -101,8 +99,6 @@ extension ViewerModel {
         goToPage(page)
         return true
     }
-
-    // MARK: Find
 
     public func showFind() {
         guard tab != nil else { return }
@@ -148,8 +144,6 @@ extension ViewerModel {
         hitShapes.removeAll()
         onRedraw?()
     }
-
-    // MARK: Addresses
 
     // An address in a file is the file's, not the reader's: it is shown and asked about, and only the usual schemes are opened.
     func askToOpen(_ address: String) {

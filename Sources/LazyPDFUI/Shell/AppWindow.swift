@@ -151,8 +151,6 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         vm.requestClose(tab)
     }
 
-    // MARK: Wide
-
     private func regularLayout(width: CGFloat) -> some View {
         VStack(spacing: 0) {
             InfoBar(vm: vm)
@@ -244,8 +242,6 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             }
         }
     }
-
-    // MARK: Narrow
 
     private var compactLayout: some View {
         VStack(spacing: 0) {
@@ -378,8 +374,6 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         .presentationDetents([.medium, .large])
         .interactiveDismissDisabled(vm.isBusy || actionRunning)
     }
-
-    // MARK: Both
 
     private func chooseTile(_ id: String) {
         if id == AppViewModel.openTile {

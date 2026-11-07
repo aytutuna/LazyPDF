@@ -43,8 +43,6 @@ final class ViewerModelTests: XCTestCase {
         return (viewer, tab)
     }
 
-    // MARK: Keyboard placement
-
     func test_enterThenEnterClicksInTheMiddleOfThePageInView() throws {
         let (viewer, _) = try open()
         let tool = RecordingTool()
@@ -105,8 +103,6 @@ final class ViewerModelTests: XCTestCase {
 
         XCTAssertFalse(viewer.placeWithKeys(.enter))
     }
-
-    // MARK: The state the tab keeps
 
     func test_theTabKeepsThePageTheZoomAndTheFit() throws {
         let (viewer, tab) = try open(pages: 3)
@@ -208,8 +204,6 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.offset.y, 120)
     }
 
-    // MARK: Going places
-
     func test_aJumpIsInTheHistoryAndScrollingIsNot() throws {
         let (viewer, _) = try open(pages: 3)
         XCTAssertFalse(viewer.canGoBack)
@@ -292,8 +286,6 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.pageIndex, 1)
     }
 
-    // MARK: The pointer
-
     func test_handModeDragsThePageAlong() throws {
         let (viewer, _) = try open(pages: 3)
         viewer.mode = .hand
@@ -363,8 +355,6 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.pageIndex, 0)
         XCTAssertFalse(viewer.key(.enter))
     }
-
-    // MARK: Text
 
     private func pointOnFirstLine(_ viewer: ViewerModel, _ char: Int) async throws -> ViewPoint {
         let loaded = await viewer.text(0)
@@ -450,8 +440,6 @@ final class ViewerModelTests: XCTestCase {
         viewer.hideFind()
         XCTAssertFalse(viewer.findVisible)
     }
-
-    // MARK: Pictures
 
     func test_thePagesInViewGetTheirPictures() async throws {
         let (viewer, _) = try open(pages: 2)

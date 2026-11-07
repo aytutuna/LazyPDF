@@ -60,8 +60,6 @@ extension ViewerModel {
                                          reachable: { $0 }))
     }
 
-    // MARK: Drawing
-
     /// The pictures of a page to draw over its paper, and whether none could be made. A tile that has not come is stood in for
     /// by a smaller picture; once the sharp ones are all there, the others are let go.
     public func drawing(of page: Int) -> PageDrawing {
@@ -121,8 +119,6 @@ extension ViewerModel {
         func snap(_ v: Double) -> Double { (v * ppd).rounded(.toNearestOrAwayFromZero) / ppd }
         return ViewRect(from: ViewPoint(snap(rect.left), snap(rect.top)), to: ViewPoint(snap(rect.right), snap(rect.bottom)))
     }
-
-    // MARK: Layers
 
     public var layers: LayerSet {
         _ = layerRevision

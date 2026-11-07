@@ -35,8 +35,6 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
         PagePainter.draw(viewer, in: context, dirty: dirtyRect.offsetBy(dx: -offset.x, dy: -offset.y), colors: colors)
     }
 
-    // MARK: Pointer
-
     private func viewPoint(_ event: NSEvent) -> ViewPoint {
         let point = convert(event.locationInWindow, from: nil)
         let offset = viewer.offset
@@ -89,8 +87,6 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
         }
     }
 
-    // MARK: Keys
-
     override func keyDown(with event: NSEvent) {
         if let key = key(event), viewer.key(key, modifiers: modifiers(event)) { return }
         super.keyDown(with: event)
@@ -112,8 +108,6 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
         if event.keyCode == 53 { return .escape }
         return event.characters == " " ? .space : nil
     }
-
-    // MARK: Edit menu
 
     override func menu(for event: NSEvent) -> NSMenu? {
         let menu = NSMenu()
@@ -138,8 +132,6 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
     func validateMenuItem(_ item: NSMenuItem) -> Bool {
         item.action == #selector(copy(_:)) ? viewer.hasSelection : viewer.tab != nil
     }
-
-    // MARK: Accessibility
 
     // One element for each page in view, named by its place in the file and holding the page's text, read from the engine in
     // reading order so it does not depend on what is drawn.

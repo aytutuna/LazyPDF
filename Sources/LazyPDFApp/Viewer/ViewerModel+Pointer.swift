@@ -125,8 +125,6 @@ extension ViewerModel {
         dragSelection(at)
     }
 
-    // MARK: Keys
-
     /// A key on the pages. False when the viewer has no use for it.
     @discardableResult
     public func key(_ key: ViewerKey, modifiers: PointerModifiers = []) -> Bool {
@@ -194,8 +192,6 @@ extension ViewerModel {
     public func fitPage() {
         apply(state.setFit(.page))
     }
-
-    // MARK: Placing with the keys
 
     // Enter shows a cross in the middle of the page in view, the arrow keys move it (small steps with Shift, big ones with
     // Control or Command), and Enter again is a click there. Escape lets go.

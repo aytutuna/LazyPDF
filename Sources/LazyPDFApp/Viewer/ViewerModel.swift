@@ -102,8 +102,6 @@ public final class ViewerModel: DocumentViewer {
     @ObservationIgnored
     public private(set) lazy var search = ViewerSearch(source: { [unowned self] in self.textSource() }, startPage: { [unowned self] in self.state.currentPage })
 
-    // MARK: Showing a document
-
     public func show(_ tab: DocumentTab?) {
         endPointerTool()
         watching += 1
@@ -177,8 +175,6 @@ public final class ViewerModel: DocumentViewer {
         }
     }
 
-    // MARK: Applying a change of the surface
-
     func apply(_ change: SurfaceChange) {
         if change.isEmpty { return }
         if change.contains(.view) {
@@ -194,8 +190,6 @@ public final class ViewerModel: DocumentViewer {
         scheduleTiles()
         onRedraw?()
     }
-
-    // MARK: What the views give it
 
     /// The size of the area the pages show in and the device pixels in one point of it; a change refits a fitted zoom.
     public func setScreen(viewport: ViewSize, pixelsPerDip: Double) {
@@ -234,8 +228,6 @@ public final class ViewerModel: DocumentViewer {
     public var viewport: ViewSize { state.viewport }
 
     public var pixelsPerDip: Double { state.pixelsPerDip }
-
-    // MARK: DocumentViewer, looking
 
     public var pageIndex: Int {
         get {
@@ -361,8 +353,6 @@ public final class ViewerModel: DocumentViewer {
         return PagePoint(hit.page, hit.point)
     }
 
-    // MARK: Pointer mode and tool
-
     public var mode: PointerMode {
         get { pointerMode }
         set {
@@ -387,8 +377,6 @@ public final class ViewerModel: DocumentViewer {
         if drag == .tool { drag = .none }
         tool?.cancel()
     }
-
-    // MARK: The bar
 
     /// What the viewer has to say when the file cannot be drawn.
     public var cannotDraw: Bool {

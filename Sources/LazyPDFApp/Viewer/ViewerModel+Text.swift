@@ -95,8 +95,6 @@ extension ViewerModel {
         onRedraw?()
     }
 
-    // MARK: Selecting
-
     func beginSelection(_ at: ViewPoint, clicks: Int, extend wanted: Bool) {
         anchorWaiting = nil
         multi = nil
@@ -274,8 +272,6 @@ extension ViewerModel {
         guard let text = source?.peek(page), let range = selected.on(page, text.chars.count) else { return nil }
         return text.getText(range)
     }
-
-    // MARK: Shapes to draw
 
     /// The search hits and the selection on a page. A page whose text has not been read yet shows no selection until it is.
     public func highlights(of page: Int) -> PageHighlights {

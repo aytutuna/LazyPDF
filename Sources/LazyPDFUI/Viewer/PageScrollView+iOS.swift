@@ -115,8 +115,6 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         return ViewPoint(point.x, point.y)
     }
 
-    // MARK: Gestures
-
     override func gestureRecognizerShouldBegin(_ recognizer: UIGestureRecognizer) -> Bool {
         if let press = recognizer as? UILongPressGestureRecognizer {
             return press.minimumPressDuration == 0 ? viewer.pointerTool != nil : viewer.pointerTool == nil && viewer.mode == .select
@@ -185,8 +183,6 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         }
     }
 
-    // MARK: Edit menu
-
     func editMenuInteraction(_ interaction: UIEditMenuInteraction, menuFor configuration: UIEditMenuConfiguration, suggestedActions: [UIMenuElement]) -> UIMenu? {
         let copy = UIAction(title: L10n.t("Copy")) { [viewer] _ in
             Task { @MainActor in
@@ -195,8 +191,6 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         }
         return UIMenu(children: [copy])
     }
-
-    // MARK: Hardware keyboard
 
     override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
         var unhandled = presses
@@ -217,8 +211,6 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         .keyboardPageUp: .pageUp, .keyboardPageDown: .pageDown, .keyboardHome: .home, .keyboardEnd: .end,
         .keyboardSpacebar: .space, .keyboardReturnOrEnter: .enter, .keyboardEscape: .escape,
     ]
-
-    // MARK: Accessibility
 
     // One element for each page in view, named by its place in the file and holding the page's text, read from the engine in
     // reading order so it does not depend on what is drawn.
