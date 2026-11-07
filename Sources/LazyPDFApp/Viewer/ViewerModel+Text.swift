@@ -14,10 +14,15 @@ public struct PageHighlights {
 extension ViewerModel {
     public var hasSelection: Bool { !selected.isEmpty }
 
-    // A file opened with a certificate is read from a decrypted copy, as the page renderer does.
-    func readable(_ tab: DocumentTab) -> (bytes: [UInt8], password: String?) {
-        if tab.certificate == nil { return (tab.session.current, tab.password) }
-        return (PdfRewriter(tab.document, PdfSaveOptions()).run(), nil)
+    // A file opened with a certificate is read from a decrypted copy, as the page renderer does. The key stays with the
+    // platform, so the copy is written from the open document, and the caller runs the returned closure off the main actor.
+    func readable(_ tab: DocumentTab) -> () -> (bytes: [UInt8], password: String?) {
+        if tab.certificate == nil {
+            let plain = (bytes: tab.session.current, password: tab.password)
+            return { plain }
+        }
+        let document = tab.document
+        return { (PdfRewriter(document, PdfSaveOptions()).run(), nil) }
     }
 
     // The file changed or another one is shown: what was read is stale.
@@ -33,8 +38,11 @@ extension ViewerModel {
     func textSource() -> Task<TextSource?, Never> {
         guard let tab else { return Task<TextSource?, Never> { nil } }
         if let textTask { return textTask }
-        let (data, password) = readable(tab)
-        let task = Task<TextSource?, Never> { await TextSource.open(data, password: password) }
+        let read = readable(tab)
+        let task = Task<TextSource?, Never>.detached {
+            let (data, password) = read()
+            return await TextSource.open(data, password: password)
+        }
         textTask = task
         Task { [weak self] in
             let opened = await task.value
@@ -75,6 +83,7 @@ extension ViewerModel {
 
     func link(at page: Int, _ point: ViewPoint) -> PdfLink? {
         guard let tab else { return nil }
+        guard page >= 0, page < tab.document.pages.count else { return nil }
         if links[page] == nil { links[page] = PdfLinks.read(tab.document, tab.document.pages[page]) }
         guard let found = links[page], !found.isEmpty else { return nil }
         let (x, y) = geometry(page).toUser(point.x, point.y)

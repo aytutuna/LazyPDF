@@ -238,7 +238,9 @@ final class PageScrollView: NSScrollView {
         if viewer.continuous {
             super.scrollWheel(with: event)
         } else if event.momentumPhase.isEmpty {
-            viewer.scroll(by: -event.scrollingDeltaX, -event.scrollingDeltaY)
+            // A wheel with notches reports lines; a trackpad reports points.
+            let unit = event.hasPreciseScrollingDeltas ? 1 : PageSurfaceState.lineStep
+            viewer.scroll(by: -event.scrollingDeltaX * unit, -event.scrollingDeltaY * unit)
         }
     }
 

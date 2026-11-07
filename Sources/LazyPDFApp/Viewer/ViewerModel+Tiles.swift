@@ -175,10 +175,13 @@ extension ViewerModel {
             showTab()
             return
         }
-        let (data, password) = readable(tab)
+        let read = readable(tab)
         let changes = layerChanges.map { (layer: $0.key, visible: $0.value) }
         let make = makeRenderer
-        let copy = await Task.detached { DisplayCopy.create(data, password: password, changes: changes, makeRenderer: make) }.value
+        let copy = await Task.detached {
+            let (data, password) = read()
+            return DisplayCopy.create(data, password: password, changes: changes, makeRenderer: make)
+        }.value
         if ticket != layerTicket {
             copy?.renderer.close()
             return

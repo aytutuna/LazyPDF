@@ -26,6 +26,11 @@ private final class RecordingTool: PagePointerTool {
     func cancel() { cancelled = true }
 }
 
+private struct WeakTab {
+    weak var tab: DocumentTab?
+    init(_ tab: DocumentTab) { self.tab = tab }
+}
+
 @MainActor
 final class ViewerModelTests: XCTestCase {
     private var opened: [URL] = []
@@ -496,5 +501,26 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(PdfLayers.read(tab.document).layers.map(\.isOn), [true, true])
         viewer.setLayerVisible(TestPdfs.blackBox, true)
         await waitFor { viewer.layers.layers.first?.isOn == true }
+    }
+
+    func test_aTabThatWasShownAndLeftIsNotKeptAlive() throws {
+        let (viewer, _) = try open()
+        func showAndLeave() throws -> WeakTab {
+            let other = DocumentTab(session: try PdfEditSession.open(Pdfs.text(1)), renderer: FakeRenderer(), url: nil, title: "b.pdf")
+            viewer.show(other)
+            viewer.show(nil)
+            return WeakTab(other)
+        }
+        let gone = try showAndLeave()
+        XCTAssertNil(gone.tab)
+    }
+
+    func test_pagesDeletedBeforeTheReloadDoNotBreakTheLookups() throws {
+        let (viewer, tab) = try open(pages: 10)
+        try PageOperations.delete(tab.document, [4, 5, 6, 7, 8, 9])
+        XCTAssertTrue(try tab.commit("Delete pages"))
+
+        _ = viewer.geometry(9)
+        XCTAssertNil(viewer.link(at: 9, ViewPoint(10, 10)))
     }
 }
