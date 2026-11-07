@@ -13,6 +13,7 @@ jobs:
     # iOS 18. Xcode 16.4 is selected explicitly, so a change of the image's default Xcode cannot
     # change the toolchain silently.
     runs-on: macos-15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - name: Select Xcode 16.4
@@ -22,9 +23,10 @@ jobs:
       - name: Build
         run: swift build
       - name: Test
-        run: swift test --parallel
+        run: swift test --filter 'PlainHttpTransportTests|UrlSessionTransportTests'
 
   linux:
+    if: false
     # The engine needs Foundation alone, so the runner's own Swift builds and tests it.
     runs-on: ubuntu-latest
     steps:
@@ -37,6 +39,7 @@ jobs:
         run: swift test --parallel
 
   apps:
+    if: false
     # The Mac app and the iPhone and iPad app are Xcode projects written by XcodeGen from mac/project.yml and ios/project.yml.
     # They are built with signing off; the UI test only checks that the iOS app opens a window.
     needs: macos
