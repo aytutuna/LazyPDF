@@ -52,12 +52,23 @@ public protocol ToolHost: AnyObject {
 
     /// The field `openSigning` named, once: the tool asks for it when it is shown.
     func takeSigningField() -> String?
+
+    /// True while a tool changes the document off the main actor and nothing else may touch it.
+    var isDocumentBusy: Bool { get }
+
+    /// The certificate of an identity the file was opened with, as the engine checks signatures with it; nil when the
+    /// platform cannot give it.
+    func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate?
 }
 
 extension ToolHost {
     public func openSigning(_ field: String) {}
 
     public func takeSigningField() -> String? { nil }
+
+    public var isDocumentBusy: Bool { false }
+
+    public func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate? { nil }
 }
 
 /// A tool's panel in the inspector, or a side panel on the rail: the state behind its view. The shell attaches it when

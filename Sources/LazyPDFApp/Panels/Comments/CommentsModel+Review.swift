@@ -9,9 +9,9 @@ extension CommentsModel {
     @discardableResult
     public func reply(_ text: String) -> Bool {
         let words = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let tab, let host, let row = selectedRow, !words.isEmpty, !isBlocked() else { return false }
+        guard let tab, let host, let row = selectedRow, !words.isEmpty, !host.isDocumentBusy else { return false }
         let write = { [self] () -> Bool in
-            guard self.tab === tab, !isBlocked() else { return false }
+            guard self.tab === tab, !host.isDocumentBusy else { return false }
             return answer(tab, host, L10n.t("Reply")) {
                 _ = try PdfComments.reply(tab.document, row.comment.annotation, words, author, PanelDates.now())
             }
@@ -25,9 +25,9 @@ extension CommentsModel {
 
     /// Sets the review status of the picked comment.
     public func setStatus(_ status: ReviewStatus) {
-        guard let tab, let host, let row = selectedRow, status != row.comment.status, !isBlocked() else { return }
+        guard let tab, let host, let row = selectedRow, status != row.comment.status, !host.isDocumentBusy else { return }
         let write = { [self] () -> Bool in
-            guard self.tab === tab, !isBlocked() else { return false }
+            guard self.tab === tab, !host.isDocumentBusy else { return false }
             return answer(tab, host, L10n.t("Set status")) {
                 _ = try PdfComments.setStatus(tab.document, row.comment.annotation, status, author, PanelDates.now())
             }

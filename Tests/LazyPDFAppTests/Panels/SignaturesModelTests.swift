@@ -101,6 +101,58 @@ final class SignaturesModelTests: XCTestCase {
         XCTAssertEqual(rig.model.versionProblem, "The file could not be saved. Check the folder and try again.")
     }
 
+    func test_aSignedVersionIsNotSavedOverTheOpenFile() async throws {
+        let dir = TempDir(self)
+        let url = dir.url.appendingPathComponent("a.pdf")
+        let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text()), renderer: FakeRenderer(), url: url, title: "a.pdf")
+        let host = RecordingHost()
+        let model = SignaturesModel(trust: SignatureTrust(directory: dir.url))
+        model.attach(tab, PanelViewer(tab), host)
+
+        model.signedVersionSaved(.success(url))
+
+        XCTAssertEqual(model.versionProblem, "That is the open file. Choose another name.")
+        XCTAssertTrue(host.notices.isEmpty)
+    }
+
+    func test_theSavedFileIsOpenedWithTheGrantTheViewAsksFor() async throws {
+        let rig = try await attached(Pdfs.text())
+        let url = URL(fileURLWithPath: "/tmp/b.pdf")
+        let grant = Grant()
+
+        rig.model.signedVersionSaved(.success(url), access: { _ in grant })
+        rig.host.notices[0].action?.run()
+        await settle { rig.host.opened == [url] }
+
+        XCTAssertTrue(rig.host.openedAccess[0] === grant)
+    }
+
+    func test_aFileOpenedWithACertificateAsksTheWindowForTheKey() async throws {
+        let dir = TempDir(self)
+        let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text()), renderer: FakeRenderer(), url: nil, title: "a.pdf",
+                              certificate: FakeKeys.alice)
+        let host = RecordingHost()
+        let model = SignaturesModel(trust: SignatureTrust(directory: dir.url))
+        model.attach(tab, PanelViewer(tab), host)
+        await model.check().value
+
+        XCTAssertEqual(host.certificatesAsked, [FakeKeys.alice])
+        XCTAssertEqual(model.note, "The signatures could not be checked.")
+    }
+
+    func test_aFieldNoPageListsIsNotAskedForItsGeometry() async throws {
+        let rig = try await attached(Pdfs.text())
+        var report = SignatureReport()
+        report.fieldName = "Sig1"
+        let fields = ["Sig1": (page: -1, rect: PdfRect(0, 0, 10, 10))]
+
+        let row = rig.model.row(report, fields)
+
+        XCTAssertEqual(row.page, -1)
+        XCTAssertNil(row.area)
+        XCTAssertTrue(rig.viewer.geometryAsked.isEmpty)
+    }
+
     #if canImport(Security)
     private static let now = DateTimeOffset(2026, 3, 10, 9, 0, 0)
 

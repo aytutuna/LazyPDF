@@ -29,9 +29,6 @@ public final class CommentsModel: ToolPanelModel {
     /// The name of the person answering; the system's user name until the view gives a better one.
     @ObservationIgnored public var author = NSFullUserName()
 
-    /// True while a tool changes the document off the main actor and nothing else may touch it.
-    @ObservationIgnored public var isBlocked: () -> Bool = { false }
-
     var tab: DocumentTab?
     var viewer: DocumentViewer?
     var host: ToolHost?

@@ -17,7 +17,7 @@ public struct PagesPanelView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
-                    ForEach(model.thumbs, id: \.index) { thumb in
+                    ForEach(model.thumbs) { thumb in
                         PageThumbView(thumb: thumb, isCurrent: thumb.index == model.current) { model.select(thumb.index) }
                             .id(thumb.index)
                     }

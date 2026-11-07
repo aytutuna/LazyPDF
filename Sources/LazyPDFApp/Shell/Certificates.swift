@@ -30,4 +30,11 @@ public protocol CertificateKeys: AnyObject {
     /// Opens `bytes` with the private key of `choice`. Throws `PdfReadException` (certificateRequired) when the identity is
     /// not one of the recipients.
     func open(_ bytes: [UInt8], _ choice: CertificateChoice) throws -> PdfEditSession
+
+    /// The identity with its private key, for checking the signatures of a file `open` opened. Nil when it cannot be had.
+    func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate?
+}
+
+extension CertificateKeys {
+    public func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate? { nil }
 }
