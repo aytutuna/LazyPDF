@@ -48,6 +48,12 @@ final class CertificateTests: XCTestCase {
         try XCTSkipIf(status == errSecMissingEntitlement, "The keychain needs a signed app.")
     }
 
+    // The test bundle links its own copy of the engine, so an error from the app's copy never casts to the bundle's
+    // PdfReadException; the problem is read by name instead.
+    private func problem(_ error: Error) -> String? {
+        Mirror(reflecting: error).children.first { $0.label == "problem" }.map { String(describing: $0.value) }
+    }
+
     private func ours() -> [CertificateChoice] {
         keys.choices().filter { $0.name.hasSuffix(run) }
     }
@@ -127,8 +133,10 @@ final class CertificateTests: XCTestCase {
         let alice = try importIdentity("Alice")
         let mallory = try importIdentity("Mallory")
 
-        XCTAssertThrowsError(try keys.open(try sealed(for: alice.certificate), mallory.choice)) { error in
-            XCTAssertEqual((error as? PdfReadException)?.problem, .certificateRequired)
+        let bytes = try sealed(for: alice.certificate)
+
+        XCTAssertThrowsError(try keys.open(bytes, mallory.choice)) { error in
+            XCTAssertEqual(self.problem(error), "certificateRequired")
         }
     }
 
@@ -139,7 +147,7 @@ final class CertificateTests: XCTestCase {
         Self.forget(alice.choice.id)
 
         XCTAssertThrowsError(try keys.open(bytes, alice.choice)) { error in
-            XCTAssertEqual((error as? PdfReadException)?.problem, .certificateRequired)
+            XCTAssertEqual(self.problem(error), "certificateRequired")
         }
     }
 }

@@ -59,6 +59,23 @@ final class CoordinatedWriteTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: url), Data("old".utf8))
     }
 
+    func test_rewriteReadsBackWithAndWithoutObjectStreams() throws {
+        var report: [String] = []
+        for streams in [false, true] {
+            let out = try PdfDocument.open(samplePdf()).saveRewrite(PdfSaveOptions(useObjectStreams: streams))
+            do {
+                let back = try PdfDocument.open(out)
+                report.append("streams=\(streams) ok pages=\(back.pages.count) rebuilt=\(back.xrefRebuilt)")
+            } catch {
+                let text = String(decoding: out.prefix(2500).map { $0 >= 32 && $0 < 127 || $0 == 10 ? $0 : 46 }, as: UTF8.self)
+                report.append("streams=\(streams) \(error) length=\(out.count)
+\(text)")
+            }
+        }
+        XCTAssertFalse(report.contains { !$0.contains(" ok ") }, report.joined(separator: "
+"))
+    }
+
     func test_saveWritesTheBytesAndKeepsTheFileInPlace() throws {
         let folder = scratch(self)
         let url = folder.appendingPathComponent("a.pdf")
