@@ -80,7 +80,7 @@ final class PrintPermissionTests: XCTestCase {
         let f = ViewModelFixture(self)
         let old = f.folders.printCopies.appendingPathComponent("old", isDirectory: true)
         try FileManager.default.createDirectory(at: old, withIntermediateDirectories: true)
-        try FileManager.default.setAttributes([.creationDate: Date().addingTimeInterval(-86400 * 30)], ofItemAtPath: old.path)
+        try FileManager.default.setAttributes([.modificationDate: Date().addingTimeInterval(-86400 * 30)], ofItemAtPath: old.path)
         await f.vm.open(f.pdf("a.pdf"))
 
         f.vm.print()

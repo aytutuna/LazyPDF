@@ -30,8 +30,8 @@ extension AppViewModel {
     private func writePrintCopy(_ tab: DocumentTab) throws -> URL {
         let files = FileManager.default
         let yesterday = Date().addingTimeInterval(-86400)
-        let old = (try? files.contentsOfDirectory(at: printCopies, includingPropertiesForKeys: [.creationDateKey])) ?? []
-        for folder in old where ((try? folder.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? Date()) < yesterday {
+        let old = (try? files.contentsOfDirectory(at: printCopies, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+        for folder in old where ((try? folder.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date()) < yesterday {
             try? files.removeItem(at: folder)
         }
         let folder = printCopies.appendingPathComponent(UUID().uuidString, isDirectory: true)
