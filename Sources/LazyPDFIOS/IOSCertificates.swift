@@ -9,12 +9,12 @@ import LazyPDFApp
 
 public final class IOSCertificates: CertificateKeys {
     /// What the list shows of one certificate.
-    struct Entry {
-        let id: String
-        let name: String
-        let issuer: String
-        let notBefore: Date
-        let notAfter: Date
+    public struct Entry {
+        public let id: String
+        public let name: String
+        public let issuer: String
+        public let notBefore: Date
+        public let notAfter: Date
     }
 
     public init() {}
@@ -24,7 +24,7 @@ public final class IOSCertificates: CertificateKeys {
         Self.choices(identities().map(\.entry), now: Date())
     }
 
-    static func choices(_ entries: [Entry], now: Date) -> [CertificateChoice] {
+    public static func choices(_ entries: [Entry], now: Date) -> [CertificateChoice] {
         entries
             .map { CertificateChoice(id: $0.id, name: $0.name, issuer: $0.issuer, expires: $0.notAfter,
                                      isValidNow: $0.notBefore <= now && now <= $0.notAfter) }
@@ -47,6 +47,8 @@ public final class IOSCertificates: CertificateKeys {
     public func importIdentity(_ pfx: [UInt8], password: String) throws -> CertificateChoice {
         let certificate = try PdfDigitalId.importPfx(pfx, password)
         guard let entry = Self.entry(certificate) else { throw CocoaError(.fileReadCorruptFile) }
+        // The import reports success even when the keychain would not take the identity.
+        guard identities().contains(where: { $0.entry.id == entry.id }) else { throw CocoaError(.fileWriteUnknown) }
         return Self.choices([entry], now: Date())[0]
     }
 
@@ -76,7 +78,7 @@ public final class IOSCertificates: CertificateKeys {
         return result
     }
 
-    private static func entry(_ certificate: X509Certificate) -> Entry? {
+    public static func entry(_ certificate: X509Certificate) -> Entry? {
         let name = certificate.simpleName
         return Entry(id: certificate.thumbprint, name: name.isEmpty ? certificate.subject : name, issuer: issuerName(certificate),
                      notBefore: Date(timeIntervalSince1970: Double(certificate.notBefore.unixSeconds)),
