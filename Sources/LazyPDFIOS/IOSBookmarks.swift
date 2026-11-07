@@ -31,7 +31,7 @@ public final class SecurityScopedAccess: FileAccess {
     private let lock = NSLock()
     private var active = true
 
-    /// Nil when the URL needs no access (a file of the app's own) or the system refused it.
+    /// Nil when the system refused access.
     public static func start(_ url: URL) -> SecurityScopedAccess? {
         url.startAccessingSecurityScopedResource() ? SecurityScopedAccess(url) { $0.stopAccessingSecurityScopedResource() } : nil
     }

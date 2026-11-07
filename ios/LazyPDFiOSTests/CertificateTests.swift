@@ -74,6 +74,12 @@ final class CertificateTests: XCTestCase {
         XCTAssertEqual(choice.issuer, "Carol")
     }
 
+    func test_anIssuerNameWithACommaIsNotCutShort() throws {
+        let certificate = try PdfDigitalId.create("Doe, John", nil, DateTimeOffset(2020, 1, 1, 0, 0, 0), keyBits: 2048)
+
+        XCTAssertEqual(try XCTUnwrap(IOSCertificates.entry(certificate)).issuer, "Doe, John")
+    }
+
     func test_validOnesComeFirstThenByName() throws {
         let from = DateTimeOffset(2020, 1, 1, 0, 0, 0)
         let old = DateTimeOffset(2000, 1, 1, 0, 0, 0)
@@ -87,7 +93,7 @@ final class CertificateTests: XCTestCase {
         XCTAssertEqual(found.map(\.isValidNow), [true, true, false])
     }
 
-    func test_onlyIdentitiesWithAPrivateKeyAreOffered() throws {
+    func test_onlyCertificatesWithAPrivateKeyAreOffered() throws {
         try requireKeychain()
         let alone = try PdfDigitalId.create("Without key-\(run)", nil, DateTimeOffset(2020, 1, 1, 0, 0, 0), keyBits: 2048)
         let certificate = try XCTUnwrap(SecCertificateCreateWithData(nil, Data(alone.rawData) as CFData))

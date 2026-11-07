@@ -47,6 +47,18 @@ final class CoordinatedWriteTests: XCTestCase {
         XCTAssertEqual(try names(folder), ["a.pdf"])
     }
 
+    func test_aFileWithoutWritePermissionIsNotReplaced() throws {
+        let folder = scratch(self)
+        let url = folder.appendingPathComponent("a.pdf")
+        try Data("old".utf8).write(to: url)
+        try FileManager.default.setAttributes([.posixPermissions: 0o444], ofItemAtPath: url.path)
+
+        XCTAssertThrowsError(try CoordinatedFileWriter().write(to: url) { try Data("new".utf8).write(to: $0) }) { error in
+            XCTAssertEqual((error as? CocoaError)?.code, .fileWriteNoPermission)
+        }
+        XCTAssertEqual(try Data(contentsOf: url), Data("old".utf8))
+    }
+
     func test_saveWritesTheBytesAndKeepsTheFileInPlace() throws {
         let folder = scratch(self)
         let url = folder.appendingPathComponent("a.pdf")
@@ -59,6 +71,18 @@ final class CoordinatedWriteTests: XCTestCase {
         XCTAssertEqual(tab.url, url)
         XCTAssertEqual(try PdfDocument.open(path: url.path).pages.count, 1)
         XCTAssertFalse(tab.isDirty)
+    }
+
+    func test_saveCompactWritesTheFileAndMovesTheTabToIt() throws {
+        let folder = scratch(self)
+        let tab = try open(folder.appendingPathComponent("a.pdf"))
+        let compact = folder.appendingPathComponent("c.pdf")
+
+        try tab.saveCompact(compact)
+
+        XCTAssertEqual(try names(folder), ["c.pdf"])
+        XCTAssertEqual(try PdfDocument.open(path: compact.path).pages.count, 1)
+        XCTAssertEqual(tab.url, compact)
     }
 
     func test_saveAsWritesTheNewFileAndMovesTheTabToIt() throws {

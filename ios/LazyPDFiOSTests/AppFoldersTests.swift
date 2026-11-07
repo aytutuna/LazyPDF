@@ -1,7 +1,7 @@
 import XCTest
 import LazyPDFIOS
 
-// Follows windows/LazyPDF.App.Tests/AppFoldersTests.cs.
+// No Windows twin: the app's folders on iOS are the container's.
 
 final class AppFoldersTests: XCTestCase {
     private let folders = IOSAppFolders()

@@ -32,6 +32,12 @@ final class DigitalIdTests: XCTestCase {
         XCTAssertEqual(try id.basicConstraints()?.certificateAuthority, false)
     }
 
+    func test_theIssuersSimpleNameKeepsACommaInTheName() throws {
+        let id = try PdfDigitalId.create("Doe, John", nil, start, keyBits: 2048)
+
+        XCTAssertEqual(id.issuerSimpleName, "Doe, John")
+    }
+
     func test_thePfxCarriesTheKeyAndLoadsAgain() throws {
         let id = try PdfDigitalId.create("Ada Lovelace", nil, start, keyBits: 2048)
 

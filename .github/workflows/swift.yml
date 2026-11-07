@@ -23,6 +23,9 @@ jobs:
         run: swift build
       - name: Test
         run: swift test --parallel
+      # The apps ship a Release build, which the engine has failed in alone (Save compact read back no pages).
+      - name: Test the file writers in Release
+        run: swift test -c release -Xswiftc -enable-testing --filter FileWriterTests
 
   linux:
     # The engine needs Foundation alone, so the runner's own Swift builds and tests it.
@@ -116,7 +119,8 @@ jobs:
             -configuration Release \
             -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
             -derivedDataPath "$RUNNER_TEMP/ios-build" \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO
       # A cold simulator times out on the first launches.
       - name: Check the iOS bundle
         run: test -f "$RUNNER_TEMP/ios-build/Build/Products/Release-iphonesimulator/LazyPDF.app/tr.lproj/Kit.strings"
@@ -133,7 +137,8 @@ jobs:
             -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
             -derivedDataPath "$RUNNER_TEMP/ios-build" \
             -only-testing:LazyPDFiOSUITests \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO
       - name: Run the unit tests
         timeout-minutes: 20
         run: |
@@ -145,7 +150,8 @@ jobs:
             -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
             -derivedDataPath "$RUNNER_TEMP/ios-build" \
             -only-testing:LazyPDFiOSTests \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO
 
   apps-store-toolchain:
     # The store workflows archive with Xcode 26.6, so both projects are also built with it here, before an upload does it first.
