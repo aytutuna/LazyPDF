@@ -6,6 +6,7 @@ import PackageDescription
 // - LazyPDFApp: what the Mac and the iPhone and iPad apps share below the views: documents, tabs, recovery, the viewer's
 //   arithmetic, and the engine's platform hooks on Apple's frameworks (those files are wrapped in `#if canImport(...)`, so
 //   the rest builds and tests on Linux and Windows too).
+// - LazyPDFUI: the SwiftUI views the Mac and the iPhone and iPad share. Every file is wrapped in `#if canImport(SwiftUI)`.
 // - LazyPDFMac: the Mac's views and system services. Every file is wrapped in `#if os(macOS)`.
 // - LazyPDFIOS: the iPhone's and iPad's views and services. Every file is wrapped in `#if os(iOS)`.
 // - LazyPDF: the Mac app.
@@ -30,13 +31,18 @@ let package = Package(
             path: "Sources/LazyPDFApp"
         ),
         .target(
-            name: "LazyPDFMac",
+            name: "LazyPDFUI",
             dependencies: ["LazyPDFApp"],
+            path: "Sources/LazyPDFUI"
+        ),
+        .target(
+            name: "LazyPDFMac",
+            dependencies: ["LazyPDFUI"],
             path: "Sources/LazyPDFMac"
         ),
         .target(
             name: "LazyPDFIOS",
-            dependencies: ["LazyPDFApp"],
+            dependencies: ["LazyPDFUI"],
             path: "Sources/LazyPDFIOS"
         ),
         .executableTarget(
