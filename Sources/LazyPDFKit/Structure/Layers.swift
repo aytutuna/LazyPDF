@@ -23,6 +23,11 @@ public struct LayerNode {
 public struct LayerSet {
     public let layers: [PdfLayer]
     public let order: [LayerNode]
+
+    public init(layers: [PdfLayer], order: [LayerNode]) {
+        self.layers = layers
+        self.order = order
+    }
 }
 
 public enum PdfLayers {
