@@ -1,4 +1,5 @@
 #if canImport(SwiftUI)
+import ImageIO
 import SwiftUI
 import LazyPDFApp
 import LazyPDFKit
@@ -51,7 +52,7 @@ struct HomeScreen: View {
             .padding(.bottom, 8)
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 168), spacing: 12, alignment: .top)], alignment: .leading, spacing: 12) {
                 ForEach(vm.recent, id: \.url) { item in
-                    RecentCard(item: item) { Task { await vm.openRecent(item) } }
+                    RecentCard(item: item, thumbnail: { await vm.thumbnail(of: item) }) { Task { await vm.openRecent(item) } }
                         .contextMenu {
                             Button(L10n.t("Remove from list")) { vm.forgetRecent(item.url) }
                         }
@@ -96,7 +97,10 @@ private struct TileButton: View {
 
 private struct RecentCard: View {
     let item: RecentItem
+    let thumbnail: () async -> [UInt8]?
     let open: () -> Void
+
+    @State private var picture: CGImage?
 
     var body: some View {
         let caption = item.exists ? "\(item.opened) \u{00B7} \(item.folder)" : L10n.t("Not found")
@@ -104,12 +108,21 @@ private struct RecentCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 6).fill(.quaternary)
-                    Image(systemName: "doc.richtext")
-                        .font(.largeTitle)
-                        .foregroundStyle(.secondary)
-                        .opacity(0.6)
+                    if let picture {
+                        Image(decorative: picture, scale: 1)
+                            .resizable()
+                            .scaledToFit()
+                    } else {
+                        Image(systemName: "doc.richtext")
+                            .font(.largeTitle)
+                            .foregroundStyle(.secondary)
+                            .opacity(0.6)
+                    }
                 }
                 .frame(height: 110)
+                .task(id: item) {
+                    if let png = await thumbnail() { picture = Self.decode(png) }
+                }
                 Text(item.name)
                     .font(.headline)
                     .lineLimit(1)
@@ -130,6 +143,11 @@ private struct RecentCard: View {
         .help(item.url.path)
         .accessibilityLabel(item.name)
         .accessibilityHint(caption)
+    }
+
+    private static func decode(_ png: [UInt8]) -> CGImage? {
+        guard let source = CGImageSourceCreateWithData(Data(png) as CFData, nil) else { return nil }
+        return CGImageSourceCreateImageAtIndex(source, 0, nil)
     }
 }
 #endif

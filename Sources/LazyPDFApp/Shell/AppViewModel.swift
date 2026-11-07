@@ -63,6 +63,7 @@ public final class AppViewModel {
     @ObservationIgnored let recovery: RecoveryStore
     @ObservationIgnored let recentFiles: RecentFiles
     @ObservationIgnored let bookmarks: Bookmarks
+    @ObservationIgnored let thumbnails: Thumbnails
     @ObservationIgnored let settings: URL
     @ObservationIgnored let printDirectory: URL
 
@@ -108,6 +109,7 @@ public final class AppViewModel {
         printDirectory = folders.printCopies
         recovery = RecoveryStore(directory: folders.recovery)
         self.bookmarks = bookmarks
+        thumbnails = Thumbnails(renderers, directory: folders.thumbnails)
         recentFiles = RecentFiles(directory: folders.settings, bookmarks: bookmarks)
         let preferences = AppPreferencesStore.load(folders.settings)
         sidePanelId = preferences.sidePanel

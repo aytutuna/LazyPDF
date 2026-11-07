@@ -90,6 +90,15 @@ extension AppViewModel {
         notifyAll()
     }
 
+    /// The PNG of the first page of a recent file, for its card; nil when the file is gone or cannot be drawn.
+    public func thumbnail(of item: RecentItem) async -> [UInt8]? {
+        guard item.exists else { return nil }
+        let access = bookmarks.access(item.url)
+        defer { access?.stop() }
+        let thumbnails = thumbnails
+        return await Task.detached { await thumbnails.get(item.url) }.value
+    }
+
     /// Takes a file out of the recent list.
     public func forgetRecent(_ url: URL) {
         recentFiles.remove(url)
