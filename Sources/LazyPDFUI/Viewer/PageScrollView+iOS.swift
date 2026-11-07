@@ -117,12 +117,12 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
 
     // MARK: Gestures
 
-    func gestureRecognizerShouldBegin(_ recognizer: UIGestureRecognizer) -> Bool {
+    override func gestureRecognizerShouldBegin(_ recognizer: UIGestureRecognizer) -> Bool {
         if let press = recognizer as? UILongPressGestureRecognizer {
             return press.minimumPressDuration == 0 ? viewer.pointerTool != nil : viewer.pointerTool == nil && viewer.mode == .select
         }
         if recognizer is UITapGestureRecognizer { return viewer.pointerTool == nil }
-        return true
+        return super.gestureRecognizerShouldBegin(recognizer)
     }
 
     func gestureRecognizer(_ recognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
