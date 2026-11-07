@@ -133,7 +133,7 @@ final class ViewerSearchTests: XCTestCase {
 
     func test_anotherSearchReplacesTheOneBefore() async throws {
         let bytes = try pages(2)
-        let slow = Latch<TextSource?>()
+        let slow = Later<TextSource?>()
         var calls = 0
         let search = ViewerSearch(source: {
             calls += 1
@@ -162,7 +162,7 @@ final class ViewerSearchTests: XCTestCase {
 }
 
 /// A value that arrives later, for a test to hold a search back.
-private final class Latch<T>: @unchecked Sendable {
+private final class Later<T>: @unchecked Sendable {
     private let lock = NSLock()
     private var result: T?
     private var waiting: CheckedContinuation<T, Never>?
