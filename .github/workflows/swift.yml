@@ -132,6 +132,19 @@ jobs:
             -configuration Release \
             -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
             -derivedDataPath "$RUNNER_TEMP/ios-build" \
+            -only-testing:LazyPDFiOSUITests \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Run the unit tests
+        timeout-minutes: 20
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project ios/LazyPDFiOS.xcodeproj \
+            -scheme LazyPDFiOS \
+            -configuration Release \
+            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
+            -derivedDataPath "$RUNNER_TEMP/ios-build" \
+            -only-testing:LazyPDFiOSTests \
             CODE_SIGNING_ALLOWED=NO
 
   apps-store-toolchain:

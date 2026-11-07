@@ -206,7 +206,7 @@ extension AppViewModel {
         }
         let tab = DocumentTab(session: session, renderer: renderer, url: url, title: source.title, password: password,
                               recovery: recovery, unsaved: unsaved, known: source.stamp, certificate: certificate, loaded: loaded,
-                              bookmarks: bookmarks, access: pending.access)
+                              bookmarks: bookmarks, access: pending.access, writer: fileWriter)
         pending.access = nil
         tab.changed = { [weak self] in self?.notifyAll() }
         if let old = pending.replacing, let at = index(of: old) {

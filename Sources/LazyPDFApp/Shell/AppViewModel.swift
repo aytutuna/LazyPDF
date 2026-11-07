@@ -65,6 +65,9 @@ public final class AppViewModel {
     @ObservationIgnored let bookmarks: Bookmarks
     @ObservationIgnored let settings: URL
 
+    /// How the tabs write their files; the iPhone and iPad shell sets a coordinated writer.
+    @ObservationIgnored public var fileWriter: FileWriter = PlainFileWriter()
+
     private(set) var version = 0
 
     public internal(set) var strip: [any StripTab] = [HomeTab.shared]
