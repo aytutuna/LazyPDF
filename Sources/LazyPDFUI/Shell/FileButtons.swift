@@ -35,7 +35,16 @@ struct FileActions {
     }
 
     func print() {
-        if let tab = vm.activeDocument { commands.print(tab) }
+        vm.print()
+    }
+
+    // Cmd+Z belongs to the text being typed in while there is one, as the Windows window skips Z and Y for a text box.
+    func undo() {
+        if !EditFocus.undoInText(redo: false) { vm.undo() }
+    }
+
+    func redo() {
+        if !EditFocus.undoInText(redo: true) { vm.redo() }
     }
 
     /// The Save of the close question: a tab with no file asks for a name first. The tab closes once it is saved.
@@ -92,10 +101,10 @@ struct FileButtons: View {
             .help(L10n.t("More ways to save"))
             .accessibilityLabel(L10n.t("More ways to save"))
             Divider().frame(height: 16).padding(.horizontal, 4)
-            icon("arrow.uturn.backward", actions.undoHelp) { vm.undo() }
+            icon("arrow.uturn.backward", actions.undoHelp, actions.undo)
                 .keyboardShortcut("z")
                 .disabled(!vm.canUndo || vm.isBusy)
-            icon("arrow.uturn.forward", actions.redoHelp) { vm.redo() }
+            icon("arrow.uturn.forward", actions.redoHelp, actions.redo)
                 .keyboardShortcut("z", modifiers: [.command, .shift])
                 .disabled(!vm.canRedo || vm.isBusy)
             icon("printer", L10n.t("Print"), actions.print)

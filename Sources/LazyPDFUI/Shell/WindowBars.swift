@@ -7,6 +7,8 @@ import LazyPDFKit
 
 struct InfoBar: View {
     let vm: AppViewModel
+    // A sheet over the window repeats the bar; only one of them speaks.
+    var announces = true
 
     var body: some View {
         if let message = vm.message {
@@ -37,8 +39,8 @@ struct InfoBar: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background((message.isError ? Color.red : Color.orange).opacity(0.15))
-            .onChange(of: "\(message.title). \(message.text)") { _, spoken in
-                AccessibilityNotification.Announcement(spoken).post()
+            .onChange(of: "\(message.title). \(message.text)", initial: true) { _, spoken in
+                if announces { AccessibilityNotification.Announcement(spoken).post() }
             }
         }
     }
@@ -46,6 +48,7 @@ struct InfoBar: View {
 
 struct StatusBar: View {
     let vm: AppViewModel
+    var announces = true
 
     var body: some View {
         let spoken = vm.isBusy ? vm.busyText : vm.statusFull
@@ -80,7 +83,7 @@ struct StatusBar: View {
         .frame(height: 36)
         .overlay(alignment: .top) { Divider() }
         .onChange(of: spoken) { _, text in
-            if !text.isEmpty { AccessibilityNotification.Announcement(text).post() }
+            if announces && !text.isEmpty { AccessibilityNotification.Announcement(text).post() }
         }
     }
 
