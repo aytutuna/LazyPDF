@@ -64,6 +64,7 @@ public final class AppViewModel {
     @ObservationIgnored let recentFiles: RecentFiles
     @ObservationIgnored let bookmarks: Bookmarks
     @ObservationIgnored let settings: URL
+    @ObservationIgnored let printCopies: URL
 
     private(set) var version = 0
 
@@ -90,6 +91,9 @@ public final class AppViewModel {
     /// Called once everything that had unsaved changes has been dealt with.
     @ObservationIgnored public var exitRequested: (() -> Void)?
 
+    /// Called when Lazy Print did not take the document: the window prints it itself.
+    @ObservationIgnored public var systemPrintRequested: (@MainActor (DocumentTab) -> Void)?
+
     public init(renderers: @escaping () -> DocumentRenderer, codec: ImageCodec, fonts: FontSource, sisters: SisterApps,
                 certificates: CertificateKeys, bookmarks: Bookmarks, folders: AppFolders) {
         self.renderers = renderers
@@ -97,6 +101,7 @@ public final class AppViewModel {
         self.sisters = sisters
         self.certificates = certificates
         settings = folders.settings
+        printCopies = folders.printCopies
         recovery = RecoveryStore(directory: folders.recovery)
         self.bookmarks = bookmarks
         recentFiles = RecentFiles(directory: folders.settings, bookmarks: bookmarks)
