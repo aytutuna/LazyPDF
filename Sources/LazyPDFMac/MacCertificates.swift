@@ -6,7 +6,7 @@ import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Services/WindowsCertificates.cs, with the keychain for the Windows store. The identities
 // are those of the app's keychain; a .p12 or .pfx the person picks is read by the engine (PdfDigitalId.importPfx) and
-// kept there as well, and stays usable in this run even when the keychain refuses it.
+// imported into the keychain as well. It stays usable in this run when the keychain refuses it, and `kept` says so.
 
 final class MacCertificates: CertificateKeys {
     private struct Entry {
@@ -26,27 +26,33 @@ final class MacCertificates: CertificateKeys {
     }
 
     func open(_ bytes: [UInt8], _ choice: CertificateChoice) throws -> PdfEditSession {
+        guard let identity = certificate(for: choice) else {
+            throw PdfReadException(.certificateRequired, "The certificate is not in the keychain.")
+        }
+        return try PdfEditSession.open(bytes, certificate: identity)
+    }
+
+    /// What reading text, making a display copy and checking signatures need for a tab opened with `choice`.
+    func certificate(for choice: CertificateChoice) -> PdfCertificate? {
         lock.lock()
         let held = imported[choice.id]
         lock.unlock()
-        guard let entry = held ?? keychainEntries().first(where: { $0.x509.thumbprint == choice.id }) else {
-            throw PdfReadException(.certificateRequired, "The certificate is not in the keychain.")
-        }
-        return try PdfEditSession.open(bytes, certificate: entry.identity)
+        return (held ?? keychainEntries().first(where: { $0.x509.thumbprint == choice.id }))?.identity
     }
 
     /// Reads the identity of a .p12 or .pfx file. Throws when the password is wrong or the file holds no key.
-    /// `keep` also adds the key and certificate to the keychain, which tests leave out.
-    func importIdentity(_ pfx: [UInt8], password: String, keep: Bool = true) throws -> CertificateChoice {
+    /// `keep` also imports it into the keychain, which tests leave out; `kept` is false when the keychain refused.
+    func importIdentity(_ pfx: [UInt8], password: String, keep: Bool = true) throws -> (choice: CertificateChoice, kept: Bool) {
         let x509 = try PdfDigitalId.importPfx(pfx, password)
         guard let identity = PdfCertificate(x509) else {
             throw InvalidDataException("The PFX file holds no certificate the system can read.")
         }
-        if keep { addToKeychain(identity) }
+        // The engine's own import may be in memory or in a keychain that goes with the process; this one is for good.
+        let kept = keep && Self.addToKeychain(pfx, password)
         lock.lock()
         imported[x509.thumbprint] = Entry(x509: x509, identity: identity)
         lock.unlock()
-        return Self.choice(x509)
+        return (Self.choice(x509), kept)
     }
 
     static func choice(_ certificate: X509Certificate, now: Date = Date()) -> CertificateChoice {
@@ -79,18 +85,18 @@ final class MacCertificates: CertificateKeys {
         }
     }
 
-    private static func canUse(_ key: SecKey) -> Bool {
+    static func canUse(_ key: SecKey) -> Bool {
         SecKeyIsAlgorithmSupported(key, .sign, .rsaSignatureMessagePKCS1v15SHA256)
             || SecKeyIsAlgorithmSupported(key, .sign, .ecdsaSignatureMessageX962SHA256)
             || SecKeyIsAlgorithmSupported(key, .decrypt, .rsaEncryptionPKCS1)
     }
 
-    // A key that is already there is not an error, and one the keychain refuses leaves the identity in memory only.
-    private func addToKeychain(_ identity: PdfCertificate) {
-        if let key = identity.privateKey {
-            SecItemAdd([kSecClass as String: kSecClassKey, kSecValueRef as String: key] as CFDictionary, nil)
-        }
-        SecItemAdd([kSecClass as String: kSecClassCertificate, kSecValueRef as String: identity.certificate] as CFDictionary, nil)
+    // SecPKCS12Import adds to the default keychain unless it is asked for memory only; an identity that is already
+    // there answers with a duplicate item, which is not a failure.
+    private static func addToKeychain(_ pfx: [UInt8], _ password: String) -> Bool {
+        var items: CFArray?
+        let status = SecPKCS12Import(Data(pfx) as CFData, [kSecImportExportPassphrase as String: password] as CFDictionary, &items)
+        return status == errSecSuccess || status == errSecDuplicateItem
     }
 }
 #endif

@@ -57,14 +57,7 @@ public final class PdfKitRenderer: DocumentRenderer {
 
     public func load(_ session: PdfEditSession, _ password: String?) -> Bool {
         let source = session.document
-        var document: PDFDocument?
-        if !source.isEncrypted || source.security.map({ !$0.isPublicKey && $0.revision < 6 }) == true {
-            document = Self.open(session.current, password)
-        }
-        if document == nil, source.isEncrypted {
-            // Only for drawing: the copy is never saved, so the permissions on changing the encryption do not apply.
-            document = Self.open(PdfRewriter(source, PdfSaveOptions()).run(), nil)
-        }
+        let document = Self.document(session, password)
         let pages = source.pages
         let units = (0..<(document?.pageCount ?? 0)).map { $0 < pages.count ? pages[$0].userUnit : 1 }
         let next = document.map { Loaded($0, units) }
@@ -72,6 +65,20 @@ public final class PdfKitRenderer: DocumentRenderer {
         loaded = next
         lock.unlock()
         return next != nil
+    }
+
+    /// What PDFKit draws or prints for the session: its current bytes, or the engine's decrypted copy when PDFKit refuses them.
+    public static func document(_ session: PdfEditSession, _ password: String?) -> PDFDocument? {
+        let source = session.document
+        var document: PDFDocument?
+        if !source.isEncrypted || source.security.map({ !$0.isPublicKey && $0.revision < 6 }) == true {
+            document = open(session.current, password)
+        }
+        if document == nil, source.isEncrypted {
+            // Only for drawing: the copy is never saved, so the permissions on changing the encryption do not apply.
+            document = open(PdfRewriter(source, PdfSaveOptions()).run(), nil)
+        }
+        return document
     }
 
     public func close() {
