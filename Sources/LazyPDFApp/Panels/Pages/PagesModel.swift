@@ -55,12 +55,16 @@ public final class PagesModel: ToolPanelModel {
         viewer.goToPage(page)
     }
 
+    // From the tab, not the viewer: the viewer's layout follows the same revision a turn later, in no fixed order.
     private func build() {
-        guard let tab, let viewer else { return }
-        thumbs = (0..<viewer.pageCount).map { page in
-            let size = viewer.pageSize(page)
+        guard let tab else { return }
+        let sizes = PageSurfaceState.pageSizes(tab.document, tab.canDraw ? tab.renderer : nil)
+        let labels = PdfPageLabels.labels(tab.document)
+        thumbs = sizes.indices.map { page in
+            let size = sizes[page]
             let fit = min(Self.boxWidth / max(size.width, 1), Self.boxHeight / max(size.height, 1))
-            return PageThumb(index: page, label: viewer.pageLabel(page), width: (size.width * fit).rounded(),
+            let label = page < labels.count && !labels[page].isEmpty ? labels[page] : String(page + 1)
+            return PageThumb(index: page, label: label, width: (size.width * fit).rounded(),
                              height: (size.height * fit).rounded(), dpi: fit * 72 * scale, renderer: tab.renderer)
         }
     }

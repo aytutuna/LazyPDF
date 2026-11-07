@@ -6,17 +6,18 @@ import LazyPDFKit
 
 @MainActor
 final class PagesModelTests: XCTestCase {
-    private func attached(pages: Int = 3, renderer: DocumentRenderer = FakeRenderer(), labels: [String]? = nil) throws
+    private func attached(pages: Int = 3, renderer: DocumentRenderer = FakeRenderer(), labelled: Bool = false) throws
         -> (model: PagesModel, viewer: PanelViewer, tab: DocumentTab) {
         let tab = try PanelPdfs.tab(Pdfs.text(pages), renderer: renderer)
-        let viewer = PanelViewer(tab, labels: labels)
+        if labelled { try PdfPageLabels.write(tab.document, [PageLabelRange(0, .lowerRoman)]) }
+        let viewer = PanelViewer(tab)
         let model = PagesModel()
         model.attach(tab, viewer, RecordingHost())
         return (model, viewer, tab)
     }
 
     func test_everyPageGetsAThumbnailWithItsLabelAndASizeInTheBox() throws {
-        let (model, _, _) = try attached(labels: ["i", "ii", "iii"])
+        let (model, _, _) = try attached(renderer: SizedRenderer(), labelled: true)
 
         XCTAssertEqual(model.thumbs.map { $0.label }, ["i", "ii", "iii"])
         XCTAssertEqual(model.thumbs[1].name, "Page ii")
@@ -24,6 +25,16 @@ final class PagesModelTests: XCTestCase {
         XCTAssertEqual(model.thumbs[0].height, 171)
         XCTAssertEqual(model.thumbs[1].width, 95)
         XCTAssertEqual(model.thumbs[1].height, 190)
+    }
+
+    func test_deletingAPageShortensTheListAndRenumbersIt() async throws {
+        let (model, _, tab) = try attached(pages: 5, labelled: true)
+
+        try PageOperations.delete(tab.document, [1])
+        try tab.commit("Delete")
+
+        await settle { model.thumbs.count == 4 }
+        XCTAssertEqual(model.thumbs.map { $0.label }, ["i", "ii", "iii", "iv"])
     }
 
     func test_choosingAThumbnailGoesToThePageOnce() throws {
@@ -95,4 +106,12 @@ final class PagesModelTests: XCTestCase {
         XCTAssertTrue(model.thumbs.isEmpty)
         XCTAssertEqual(model.current, -1)
     }
+}
+
+/// Pages alternate between letter and a narrow page, as the panel viewer's do.
+private final class SizedRenderer: DocumentRenderer {
+    func load(_ session: PdfEditSession, _ password: String?) -> Bool { true }
+    func pageSize(_ pageIndex: Int) -> (width: Double, height: Double) { pageIndex % 2 == 0 ? (612, 792) : (300, 600) }
+    func close() {}
+    func render(_ pageIndex: Int, _ dpi: Double) -> PdfRgbaImage? { nil }
 }
