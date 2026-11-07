@@ -86,9 +86,11 @@ final class MacCertificates: CertificateKeys {
     }
 
     static func canUse(_ key: SecKey) -> Bool {
-        SecKeyIsAlgorithmSupported(key, .sign, .rsaSignatureMessagePKCS1v15SHA256)
+        let attributes = SecKeyCopyAttributes(key) as? [String: Any]
+        return (attributes?[kSecAttrKeyClass as String] as? String) == (kSecAttrKeyClassPrivate as String)
+            && (SecKeyIsAlgorithmSupported(key, .sign, .rsaSignatureMessagePKCS1v15SHA256)
             || SecKeyIsAlgorithmSupported(key, .sign, .ecdsaSignatureMessageX962SHA256)
-            || SecKeyIsAlgorithmSupported(key, .decrypt, .rsaEncryptionPKCS1)
+            || SecKeyIsAlgorithmSupported(key, .decrypt, .rsaEncryptionPKCS1))
     }
 
     // SecPKCS12Import adds to the default keychain unless it is asked for memory only; an identity that is already
