@@ -27,17 +27,12 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     private let sidePane: (String, DocumentTab) -> SidePane
     private let inspector: (String, DocumentTab) -> Inspector
 
-    @State private var sheet: LocalSheet?
+    @State private var sheet: Modal?
+    @State private var compact = false
     @State private var compactPanel: String?
     @State private var actionRunning = false
     @State private var dropTargeted = false
     @Environment(\.scenePhase) private var scenePhase
-
-    private enum LocalSheet: String, Identifiable {
-        case settings, about
-
-        var id: String { rawValue }
-    }
 
     /// - Parameter toolAction: the pinned button of the tool's panel, if it has one.
     public init(_ vm: AppViewModel, commands: ShellCommands = ShellCommands(),
@@ -55,25 +50,21 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
 
     public var body: some View {
         GeometryReader { proxy in
-            if proxy.size.width < Self.compactWidth {
-                compactLayout
-            } else {
-                regularLayout(width: proxy.size.width)
+            Group {
+                if proxy.size.width < Self.compactWidth {
+                    compactLayout
+                } else {
+                    regularLayout(width: proxy.size.width)
+                }
             }
+            .onChange(of: proxy.size.width < Self.compactWidth, initial: true) { _, now in compact = now }
         }
         .overlay { cards }
-        .sheet(item: $sheet) { which in
-            switch which {
-            case .settings:
-                SettingsView(vm: vm, about: { sheet = .about }, done: { sheet = nil })
-            case .about:
-                AboutView(done: { sheet = nil })
-            }
+        .sheet(item: modal) { which in
+            modalBody(which)
         }
-        .sheet(isPresented: Binding(get: { vm.passwordRequest != nil }, set: { if !$0 { vm.cancelPending() } })) {
-            if let request = vm.passwordRequest {
-                PasswordSheet(vm: vm, request: request)
-            }
+        .onChange(of: vm.passwordRequest != nil) { _, asked in
+            if asked { sheet = nil }
         }
         .background { shortcuts }
         .dropDestination(for: URL.self) { urls, _ in
@@ -87,9 +78,52 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             return true
         } isTargeted: { dropTargeted = $0 }
         .preferredColorScheme(colorScheme)
-        .onAppear { vm.checkRecovery() }
+        .onAppear {
+            vm.systemPrintRequested = commands.print
+            vm.checkRecovery()
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { vm.checkDisk() }
+        }
+    }
+
+    private var modal: Binding<Modal?> {
+        Binding(get: {
+            Modal.current(passwordAsked: vm.passwordRequest != nil, local: sheet, compact: compact,
+                          toolOpen: vm.activeTool != nil && vm.activeDocument != nil,
+                          panelOpen: compactPanel != nil && vm.activeDocument != nil)
+        }, set: { shown in
+            if shown != nil { return }
+            if vm.passwordRequest != nil {
+                vm.cancelPending()
+            } else if sheet != nil {
+                sheet = nil
+            } else if compact, let tool = vm.activeToolId, vm.activeTool != nil {
+                vm.selectTool(tool)
+            } else {
+                compactPanel = nil
+            }
+        })
+    }
+
+    @ViewBuilder private func modalBody(_ which: Modal) -> some View {
+        switch which {
+        case .password:
+            if let request = vm.passwordRequest {
+                PasswordSheet(vm: vm, request: request, importCertificate: commands.importCertificate)
+            }
+        case .settings:
+            SettingsView(vm: vm, about: { sheet = .about }, done: { sheet = nil })
+        case .about:
+            AboutView(done: { sheet = nil })
+        case .tool:
+            if let tool = vm.activeTool, let tab = vm.activeDocument {
+                toolSheet(tool, tab)
+            }
+        case .panel:
+            if let id = compactPanel, let pane = ToolCatalog.findSide(id), let tab = vm.activeDocument {
+                panelSheet(pane, tab)
+            }
         }
     }
 
@@ -237,11 +271,6 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
                 }
             }
             .disabled(frozen)
-            .sheet(isPresented: toolSheetShown) {
-                if let tool = vm.activeTool, let tab = vm.activeDocument {
-                    toolSheet(tool, tab)
-                }
-            }
             if vm.activeDocument != nil {
                 compactBar.disabled(frozen)
             }
@@ -259,6 +288,10 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             Button(actions.undoHelp) { vm.undo() }.disabled(!vm.canUndo || vm.isBusy)
             Button(actions.redoHelp) { vm.redo() }.disabled(!vm.canRedo || vm.isBusy)
             Button(L10n.t("Print"), action: actions.print).disabled(vm.activeDocument == nil)
+            Button(L10n.t("Close")) {
+                if let tab = vm.activeDocument { requestClose(tab) }
+            }
+            .disabled(vm.activeDocument == nil)
             Divider()
             Button(L10n.t("Settings")) { sheet = .settings }
         } label: {
@@ -306,16 +339,6 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .overlay(alignment: .top) { Divider() }
-        .sheet(isPresented: Binding(get: { compactPanel != nil && vm.activeDocument != nil }, set: { if !$0 { compactPanel = nil } })) {
-            if let id = compactPanel, let pane = ToolCatalog.findSide(id), let tab = vm.activeDocument {
-                panelSheet(pane, tab)
-            }
-        }
-    }
-
-    private var toolSheetShown: Binding<Bool> {
-        Binding(get: { vm.activeTool != nil && vm.activeDocument != nil },
-                set: { if !$0, let tool = vm.activeToolId { vm.selectTool(tool) } })
     }
 
     private func panelSheet(_ pane: SidePanelInfo, _ tab: DocumentTab) -> some View {
@@ -326,10 +349,14 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
                         Button(L10n.t("Done")) { compactPanel = nil }
+                            .disabled(vm.isBusy)
                     }
                 }
+                .safeAreaInset(edge: .top, spacing: 0) { InfoBar(vm: vm, announces: false) }
+                .safeAreaInset(edge: .bottom, spacing: 0) { StatusBar(vm: vm, announces: false) }
         }
         .presentationDetents([.medium, .large])
+        .interactiveDismissDisabled(vm.isBusy)
     }
 
     private func toolSheet(_ tool: ToolInfo, _ tab: DocumentTab) -> some View {
@@ -342,10 +369,14 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L10n.t("Done")) { vm.selectTool(tool.id) }
+                        .disabled(vm.isBusy || actionRunning)
                 }
             }
+            .safeAreaInset(edge: .top, spacing: 0) { InfoBar(vm: vm, announces: false) }
+            .safeAreaInset(edge: .bottom, spacing: 0) { StatusBar(vm: vm, announces: false) }
         }
         .presentationDetents([.medium, .large])
+        .interactiveDismissDisabled(vm.isBusy || actionRunning)
     }
 
     // MARK: Both

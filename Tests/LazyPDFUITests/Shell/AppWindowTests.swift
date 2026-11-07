@@ -134,7 +134,7 @@ final class AppWindowTests: XCTestCase {
         let request = try XCTUnwrap(f.vm.passwordRequest)
         XCTAssertTrue(request.needsCertificate)
         XCTAssertEqual(request.certificates.map(\.name), ["Alice"])
-        let image = try XCTUnwrap(picture(PasswordSheet(vm: f.vm, request: request), 420, 400))
+        let image = try XCTUnwrap(picture(PasswordSheet(vm: f.vm, request: request, importCertificate: { nil }), 420, 400))
         XCTAssertGreaterThan(variety(image), 8)
     }
 
