@@ -64,7 +64,7 @@ final class PrintFlowTests: XCTestCase {
         await f.vm.open(f.pdf())
         f.vm.print()
         let first = f.sisters.printed[0].deletingLastPathComponent()
-        try FileManager.default.setAttributes([.creationDate: Date().addingTimeInterval(-2 * 86400)], ofItemAtPath: first.path)
+        try FileManager.default.setAttributes([.modificationDate: Date().addingTimeInterval(-2 * 86400)], ofItemAtPath: first.path)
 
         f.vm.print()
 
