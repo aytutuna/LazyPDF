@@ -148,7 +148,7 @@ final class CommentsModelTests: XCTestCase {
     func test_nothingIsWrittenWhileAToolHoldsTheDocument() throws {
         let rig = try attached()
         rig.model.select(rig.model.rows[0].id)
-        rig.model.isBlocked = { true }
+        rig.host.isDocumentBusy = true
         let before = rig.tab.revision
 
         XCTAssertFalse(rig.model.reply("Fixed"))

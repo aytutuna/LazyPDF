@@ -28,8 +28,11 @@ private actor DrawTurns {
 /// scrolls away, so a long file holds only the thumbnails near the window.
 @MainActor
 @Observable
-public final class PageThumb {
+public final class PageThumb: Identifiable {
     public let index: Int
+
+    /// A rebuilt list has new thumbnails for the same pages, and a list keyed by page would not ask them for their pictures.
+    public nonisolated var id: ObjectIdentifier { ObjectIdentifier(self) }
     public let label: String
     public let name: String
     public let width: Double

@@ -3,9 +3,6 @@ import Observation
 import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Panels/Signatures/SignaturesSidePanel.xaml.cs and SignaturesSidePanel.Trust.cs.
-//
-// A file opened with a certificate cannot be checked here: the tab keeps the choice, not the key, so the engine gets no
-// way in and the panel says the signatures could not be checked.
 
 /// The signatures of the file and what the engine found when it checked them. Choosing one shows the field; the details say
 /// what changed since, what is wrong and what could not be checked, and offer the signed version of the file.
@@ -84,11 +81,20 @@ public final class SignaturesModel: ToolPanelModel {
         show([], L10n.t("Checking the signatures"))
         let bytes = tab.session.current
         let password = tab.password
-        let options = trust.verifyOptions(password: password, now: PanelDates.now())
+        var options = trust.verifyOptions(password: password, now: PanelDates.now())
+        if let choice = tab.certificate {
+            // The tab keeps the choice; the key comes from the platform, and without it the file cannot be read.
+            guard let certificate = host?.verifyCertificate(choice) else {
+                show([], L10n.t("The signatures could not be checked."))
+                return Task {}
+            }
+            options.certificate = certificate
+        }
+        let certificate = options.certificate
         return Task {
             let found = await Task.detached { () -> (reports: [SignatureReport], fields: [String: (page: Int, rect: PdfRect)])? in
                 do {
-                    return (try PdfSignatureVerifier.verify(bytes, options), try SignatureFields.locate(bytes, password))
+                    return (try PdfSignatureVerifier.verify(bytes, options), try SignatureFields.locate(bytes, password, certificate))
                 } catch {
                     return nil
                 }
@@ -133,17 +139,27 @@ public final class SignaturesModel: ToolPanelModel {
             versionProblem = L10n.t("The signed version is not in the file's history.")
             return nil
         }
+        if tab.certificate == nil, (try? PdfDocument.open(bytes, password: tab.password)) == nil {
+            versionProblem = L10n.t("The signed version is not in the file's history.")
+            return nil
+        }
         return (L10n.t("{0} (signed)", stem) + ".pdf", bytes)
     }
 
-    public func signedVersionSaved(_ result: Result<URL, Error>) {
+    /// `access` starts the system's grant to read the saved file again, which a file outside the app's folders needs; it
+    /// is asked for only when the person chooses to open the file.
+    public func signedVersionSaved(_ result: Result<URL, Error>, access: @escaping (URL) -> FileAccess? = { _ in nil }) {
         guard let host else { return }
         switch result {
         case .success(let url):
+            if let open = tab?.url, open.standardizedFileURL == url.standardizedFileURL {
+                versionProblem = L10n.t("That is the open file. Choose another name.")
+                return
+            }
             versionProblem = nil
             host.setStatus(L10n.t("Signed version saved."))
             host.showNotice(L10n.t("Signed version saved"), url.lastPathComponent, NoticeAction(L10n.t("Open it"), {
-                Task { await host.open(url, access: nil) }
+                Task { await host.open(url, access: access(url)) }
             }))
         case .failure:
             versionProblem = L10n.t("The file could not be saved. Check the folder and try again.")
@@ -189,8 +205,10 @@ public final class SignaturesModel: ToolPanelModel {
         note = text
     }
 
-    private func row(_ report: SignatureReport, _ fields: [String: (page: Int, rect: PdfRect)]) -> SignatureRow {
-        guard let name = report.fieldName, let at = fields[name], let viewer else { return SignatureRow(report, page: -1, area: nil) }
+    func row(_ report: SignatureReport, _ fields: [String: (page: Int, rect: PdfRect)]) -> SignatureRow {
+        guard let name = report.fieldName, let at = fields[name], let viewer, at.page >= 0, at.page < viewer.pageCount else {
+            return SignatureRow(report, page: -1, area: nil)
+        }
         let box = viewer.geometry(at.page).toDisplay(at.rect)
         return SignatureRow(report, page: at.page, area: ViewRect(box.x, box.y, box.width, box.height))
     }

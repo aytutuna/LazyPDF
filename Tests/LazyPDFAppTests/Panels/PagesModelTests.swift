@@ -53,6 +53,7 @@ final class PagesModelTests: XCTestCase {
 
         await settle { model.thumbs.first !== first }
         XCTAssertEqual(model.thumbs.count, 3)
+        XCTAssertNotEqual(model.thumbs[0].id, first.id)
     }
 
     func test_aThumbnailIsDrawnAtTheDensityOfTheScreenAndLetGoOf() async throws {

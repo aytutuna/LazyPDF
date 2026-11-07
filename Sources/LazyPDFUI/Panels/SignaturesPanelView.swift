@@ -42,7 +42,7 @@ public struct SignaturesPanelView: View {
             }
         }
         .accessibilityLabel(L10n.t("Signatures"))
-        .fileExporter(isPresented: $saving, document: file, contentType: .pdf, defaultFilename: fileName) { model.signedVersionSaved($0) }
+        .fileExporter(isPresented: $saving, document: file, contentType: .pdf, defaultFilename: fileName) { model.signedVersionSaved($0, access: { ScopedAccess($0) }) }
         .fileImporter(isPresented: $choosing, allowedContentTypes: [.x509Certificate, .data]) { result in
             if case .success(let url) = result { model.addTrusted(read(url)) }
         }

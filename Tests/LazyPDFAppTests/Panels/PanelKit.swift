@@ -32,6 +32,7 @@ final class PanelViewer: DocumentViewer {
     @ObservationIgnored var followed: [PdfAction?] = []
     @ObservationIgnored var layerCalls: [(layer: PdfReference, visible: Bool)] = []
     @ObservationIgnored var findShown = 0
+    @ObservationIgnored var geometryAsked: [Int] = []
 
     init(_ tab: DocumentTab? = nil, labels: [String]? = nil) {
         self.tab = tab
@@ -91,6 +92,7 @@ final class PanelViewer: DocumentViewer {
     func viewToPage(_ view: ViewPoint, nearest: Bool) -> PagePoint? { nil }
 
     func geometry(_ page: Int) -> PageGeometry {
+        geometryAsked.append(page)
         let size = pageSize(page)
         return PageGeometry(PdfRect(0, 0, size.width, size.height), 0)
     }
@@ -130,7 +132,15 @@ final class RecordingHost: ToolHost {
     var notices: [(title: String, text: String, action: NoticeAction?)] = []
     var statuses: [String] = []
     var opened: [URL] = []
+    var openedAccess: [FileAccess?] = []
     var openedNew: [(pdf: [UInt8], title: String)] = []
+    var isDocumentBusy = false
+    var certificatesAsked: [CertificateChoice] = []
+
+    func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate? {
+        certificatesAsked.append(choice)
+        return nil
+    }
 
     func runBusy(_ text: String, _ work: @MainActor (CancelToken) async throws -> Void) async throws {
         try await work(CancelToken())
@@ -140,7 +150,10 @@ final class RecordingHost: ToolHost {
     func showProblem(_ problem: Problem) { problems.append(problem) }
     func showNotice(_ title: String, _ text: String, _ action: NoticeAction?) { notices.append((title, text, action)) }
     func setStatus(_ sentence: String) { statuses.append(sentence) }
-    func open(_ url: URL, access: FileAccess?) async { opened.append(url) }
+    func open(_ url: URL, access: FileAccess?) async {
+        opened.append(url)
+        openedAccess.append(access)
+    }
 
     func openNew(_ pdf: [UInt8], title: String, password: String?, certificate: CertificateChoice?) async {
         openedNew.append((pdf, title))

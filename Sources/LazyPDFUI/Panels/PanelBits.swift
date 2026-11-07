@@ -2,6 +2,7 @@
 import CoreGraphics
 import SwiftUI
 import UniformTypeIdentifiers
+import LazyPDFApp
 import LazyPDFKit
 
 // What the side panels' views share: a file made of bytes for the save sheet, a picture from the engine's pixels, the line
@@ -23,6 +24,25 @@ struct BytesDocument: FileDocument {
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
         FileWrapper(regularFileWithContents: Data(bytes))
     }
+}
+
+/// The system's grant to read a file outside the app's folders, held until the tab that opened it lets go.
+final class ScopedAccess: FileAccess {
+    private let url: URL
+    private var active = true
+
+    init?(_ url: URL) {
+        guard url.startAccessingSecurityScopedResource() else { return nil }
+        self.url = url
+    }
+
+    func stop() {
+        guard active else { return }
+        active = false
+        url.stopAccessingSecurityScopedResource()
+    }
+
+    deinit { stop() }
 }
 
 enum PanelImage {
