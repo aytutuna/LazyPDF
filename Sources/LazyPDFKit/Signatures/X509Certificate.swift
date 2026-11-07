@@ -248,8 +248,13 @@ public final class X509Certificate {
     public var issuer: String { Self.nameText(issuerName) }
 
     /// The common name, else the first of the organizational unit, the organization and the e-mail address; empty when there is none.
-    public var simpleName: String {
-        guard let attributes = Self.attributes(subjectName) else { return "" }
+    public var simpleName: String { Self.simpleName(subjectName) }
+
+    /// `simpleName` of the issuer, as GetNameInfo(SimpleName, true) gives it.
+    public var issuerSimpleName: String { Self.simpleName(issuerName) }
+
+    private static func simpleName(_ name: [UInt8]) -> String {
+        guard let attributes = Self.attributes(name) else { return "" }
         for oid in ["2.5.4.3", "2.5.4.11", "2.5.4.10", "1.2.840.113549.1.9.1"] {
             if let found = attributes.last(where: { $0.oid == oid }), !found.value.isEmpty { return found.value }
         }
