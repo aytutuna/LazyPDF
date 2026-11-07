@@ -31,6 +31,7 @@ final class StandInFonts: FontSource {
 
 struct StandInSisters: SisterApps {
     var lazyScanInstalled: Bool { false }
+    var lazyPrintInstalled: Bool { false }
 
     func openLazyScan() {}
 

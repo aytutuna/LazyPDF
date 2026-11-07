@@ -23,6 +23,8 @@ final class MacSisterApps: SisterApps {
 
     var lazyScanInstalled: Bool { location(scanId) != nil }
 
+    var lazyPrintInstalled: Bool { location(printId) != nil }
+
     func openLazyScan() {
         guard let app = location(scanId) else { return }
         NSWorkspace.shared.openApplication(at: app, configuration: NSWorkspace.OpenConfiguration())

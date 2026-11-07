@@ -79,6 +79,7 @@ final class FakeFonts: FontSource {
 
 final class FakeSisters: SisterApps {
     var lazyScanInstalled = false
+    var lazyPrintInstalled = true
     var printTaken = false
     var printed: [URL] = []
     var scanOpened = 0

@@ -19,6 +19,9 @@ public protocol DocumentRenderer: PageRenderer {
 public protocol SisterApps {
     var lazyScanInstalled: Bool { get }
 
+    /// Whether `tryPrint` has anywhere to send a file.
+    var lazyPrintInstalled: Bool { get }
+
     func openLazyScan()
 
     /// Hands the file to Lazy Print. False when it is not there to take it.

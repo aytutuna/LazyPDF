@@ -11,6 +11,10 @@ extension AppViewModel {
             showProblem(Problem(L10n.t("Printing is not allowed"), L10n.t("The owner of {0} did not allow it to be printed.", tab.title)))
             return
         }
+        guard sisters.lazyPrintInstalled else {
+            systemPrintRequested?(tab)
+            return
+        }
         let file: URL
         do {
             file = try writePrintCopy(tab)
@@ -18,11 +22,19 @@ extension AppViewModel {
             showProblem(Problem(L10n.t("Not printed"), L10n.t("A copy of {0} could not be made for printing. Check that the disk has room.", tab.title)))
             return
         }
+        printCopyOwners = printCopyOwners.filter { $0.value.tab != nil }
+        printCopyOwners[file.standardizedFileURL.path] = WeakTab(tab: tab)
         if sisters.tryPrint(file) {
             setStatus(L10n.t("Sent to Lazy Print."))
         } else {
             systemPrintRequested?(tab)
         }
+    }
+
+    /// Lazy Print could not be started with the copy of a document: the window prints that document itself.
+    public func lazyPrintFailed(_ file: URL) {
+        guard let tab = printCopyOwners[file.standardizedFileURL.path]?.tab, index(of: tab) != nil else { return }
+        systemPrintRequested?(tab)
     }
 
     // The file as it stands now, unsaved changes included, in a folder of its own so the name stays the document's.
@@ -42,4 +54,8 @@ extension AppViewModel {
         try Data(tab.session.current).write(to: file)
         return file
     }
+}
+
+struct WeakTab {
+    weak var tab: DocumentTab?
 }

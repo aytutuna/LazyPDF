@@ -97,7 +97,8 @@ public final class AppViewModel {
     @ObservationIgnored public var exitRequested: (() -> Void)?
 
     /// Called when Lazy Print did not take the document: the window prints it itself.
-    @ObservationIgnored public var systemPrintRequested: ((DocumentTab) -> Void)?
+    @ObservationIgnored public var systemPrintRequested: (@MainActor (DocumentTab) -> Void)?
+    @ObservationIgnored var printCopyOwners: [String: WeakTab] = [:]
 
     public init(renderers: @escaping () -> DocumentRenderer, codec: ImageCodec, fonts: FontSource, sisters: SisterApps,
                 certificates: CertificateKeys, bookmarks: Bookmarks, folders: AppFolders) {

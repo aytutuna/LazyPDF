@@ -15,6 +15,8 @@ public struct IOSSisterApps: SisterApps {
         MainActor.assumeIsolated { UIApplication.shared.canOpenURL(Self.scan) }
     }
 
+    public var lazyPrintInstalled: Bool { false }
+
     public func openLazyScan() {
         MainActor.assumeIsolated { UIApplication.shared.open(Self.scan) }
     }

@@ -41,6 +41,43 @@ final class PrintFlowTests: XCTestCase {
         XCTAssertEqual(f.sisters.printed.count, 1)
     }
 
+    func test_withoutLazyPrintNoCopyIsWrittenAndTheWindowPrints() async {
+        let f = ViewModelFixture(self)
+        f.sisters.lazyPrintInstalled = false
+        await f.vm.open(f.pdf())
+        var asked: DocumentTab?
+        f.vm.systemPrintRequested = { asked = $0 }
+
+        f.vm.print()
+
+        XCTAssertTrue(asked === f.vm.activeDocument)
+        XCTAssertTrue(f.sisters.printed.isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: f.folders.printCopies.path))
+    }
+
+    func test_aLaunchOfLazyPrintThatFailsPrintsTheDocumentInTheWindow() async {
+        let f = ViewModelFixture(self)
+        f.sisters.printTaken = true
+        await f.vm.open(f.pdf())
+        var asked: DocumentTab?
+        f.vm.systemPrintRequested = { asked = $0 }
+        f.vm.print()
+
+        f.vm.lazyPrintFailed(f.sisters.printed[0])
+
+        XCTAssertTrue(asked === f.vm.activeDocument)
+    }
+
+    func test_aFailedLaunchForAFileNoTabOwnsPrintsNothing() async {
+        let f = ViewModelFixture(self)
+        var asked: DocumentTab?
+        f.vm.systemPrintRequested = { asked = $0 }
+
+        f.vm.lazyPrintFailed(URL(fileURLWithPath: "/tmp/other.pdf"))
+
+        XCTAssertNil(asked)
+    }
+
     func test_theCopyForLazyPrintKeepsTheNameOfADocumentMadeFromAPicture() async {
         let f = ViewModelFixture(self)
         await f.vm.open(f.dir.file("photo.png", [1, 2, 3]))
