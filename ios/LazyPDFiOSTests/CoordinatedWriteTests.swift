@@ -74,35 +74,33 @@ final class CoordinatedWriteTests: XCTestCase {
         XCTAssertFalse(report.contains { !$0.contains(" ok ") }, report.joined(separator: " | "))
     }
 
-    func test_compactStepsReport() throws {
-        var report: [String] = []
-        func step(_ name: String, _ body: () throws -> String) {
-            do { report.append("\(name) ok \(try body())") } catch { report.append("\(name) FAILED \(error)") }
-        }
+    func test_compactRepeatedReport() throws {
         let folder = scratch(self)
-        step("rewrite of a session") {
-            let session = try PdfEditSession.open(samplePdf())
-            let out = try session.document.saveRewrite(PdfSaveOptions(useObjectStreams: true, security: session.document.security))
-            return "pages=\(try PdfDocument.open(out).pages.count) length=\(out.count)"
+        var report: [String] = []
+        var firstBad: [UInt8]?
+        for (name, streams) in [("plain", false), ("streams", true)] {
+            var bad = 0
+            for _ in 0..<300 {
+                let session = try PdfEditSession.open(samplePdf())
+                let out = try session.document.saveRewrite(PdfSaveOptions(useObjectStreams: streams))
+                do { _ = try PdfDocument.open(out) } catch {
+                    bad += 1
+                    if firstBad == nil { firstBad = out }
+                }
+            }
+            report.append("\(name) bad=\(bad)/300")
         }
-        step("session compact to a plain path") {
-            let session = try PdfEditSession.open(samplePdf())
-            try session.saveCompact(folder.appendingPathComponent("p.pdf").path)
-            return "done"
-        }
-        step("tab compact with the plain writer") {
-            let tab = DocumentTab(session: try PdfEditSession.open(samplePdf()), renderer: StubRenderer(), url: folder.appendingPathComponent("q.pdf"),
+        var tabBad = 0
+        for n in 0..<100 {
+            let tab = DocumentTab(session: try PdfEditSession.open(samplePdf()), renderer: StubRenderer(), url: folder.appendingPathComponent("q\(n).pdf"),
                                   title: "q.pdf", writer: PlainFileWriter())
-            try tab.saveCompact(folder.appendingPathComponent("r.pdf"))
-            return "done"
+            do { try tab.saveCompact(folder.appendingPathComponent("r\(n).pdf")) } catch { tabBad += 1 }
         }
-        step("tab compact twice") {
-            let session = try PdfEditSession.open(samplePdf())
-            try session.saveCompact(folder.appendingPathComponent("s.pdf").path)
-            try session.saveCompact(folder.appendingPathComponent("t.pdf").path)
-            return "done"
+        report.append("tab bad=\(tabBad)/100")
+        if let out = firstBad {
+            report.append(String(decoding: (out.prefix(1500) + out.suffix(900)).map { $0 >= 32 && $0 < 127 ? $0 : 46 }, as: UTF8.self))
         }
-        XCTAssertFalse(report.contains { $0.contains("FAILED") }, report.joined(separator: " | "))
+        XCTAssertTrue(report.allSatisfy { !$0.contains("bad=") || $0.contains("bad=0/") }, report.joined(separator: " | "))
     }
 
     func test_saveWritesTheBytesAndKeepsTheFileInPlace() throws {
