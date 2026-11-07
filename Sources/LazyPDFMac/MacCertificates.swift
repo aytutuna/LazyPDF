@@ -22,7 +22,7 @@ final class MacCertificates: CertificateKeys {
         lock.lock()
         for (id, entry) in imported where !found.contains(where: { $0.x509.thumbprint == id }) { found.append(entry) }
         lock.unlock()
-        return Self.order(found.map { Self.choice($0.x509) })
+        return CertificateChoice.order(found.map { CertificateChoice($0.x509) })
     }
 
     func open(_ bytes: [UInt8], _ choice: CertificateChoice) throws -> PdfEditSession {
@@ -34,10 +34,18 @@ final class MacCertificates: CertificateKeys {
 
     /// What reading text, making a display copy and checking signatures need for a tab opened with `choice`.
     func certificate(for choice: CertificateChoice) -> PdfCertificate? {
+        entry(for: choice)?.identity
+    }
+
+    func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate? {
+        entry(for: choice)?.x509
+    }
+
+    private func entry(for choice: CertificateChoice) -> Entry? {
         lock.lock()
         let held = imported[choice.id]
         lock.unlock()
-        return (held ?? keychainEntries().first(where: { $0.x509.thumbprint == choice.id }))?.identity
+        return held ?? keychainEntries().first(where: { $0.x509.thumbprint == choice.id })
     }
 
     /// Reads the identity of a .p12 or .pfx file. Throws when the password is wrong or the file holds no key.
@@ -52,21 +60,7 @@ final class MacCertificates: CertificateKeys {
         lock.lock()
         imported[x509.thumbprint] = Entry(x509: x509, identity: identity)
         lock.unlock()
-        return (Self.choice(x509), kept)
-    }
-
-    static func choice(_ certificate: X509Certificate, now: Date = Date()) -> CertificateChoice {
-        let from = Double(certificate.notBefore.unixSeconds), to = Double(certificate.notAfter.unixSeconds)
-        let at = now.timeIntervalSince1970
-        return CertificateChoice(id: certificate.thumbprint, name: certificate.simpleName, issuer: certificate.issuerSimpleName,
-                                 expires: Date(timeIntervalSince1970: to), isValidNow: from <= at && at <= to)
-    }
-
-    /// Valid ones first, then by name.
-    static func order(_ choices: [CertificateChoice]) -> [CertificateChoice] {
-        choices.sorted {
-            $0.isValidNow != $1.isValidNow ? $0.isValidNow : $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
-        }
+        return (CertificateChoice(x509), kept)
     }
 
     // Only identities whose key can sign or decrypt are of use; the others would fail when picked.
@@ -81,6 +75,7 @@ final class MacCertificates: CertificateKeys {
             guard SecIdentityCopyCertificate(identity, &certificate) == errSecSuccess, let certificate,
                   SecIdentityCopyPrivateKey(identity, &key) == errSecSuccess, let key, Self.canUse(key),
                   let x509 = X509Certificate([UInt8](SecCertificateCopyData(certificate) as Data)) else { return nil }
+            x509.privateKey = key
             return Entry(x509: x509, identity: PdfCertificate(certificate: certificate, privateKey: key))
         }
     }

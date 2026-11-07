@@ -132,6 +132,8 @@ final class FakeKeys: CertificateKeys {
         if choice != Self.alice { throw PdfReadException(.certificateRequired, "The certificate does not open the file.") }
         return try PdfEditSession.open(Pdfs.text())
     }
+
+    func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate? { nil }
 }
 
 struct TestFolders: AppFolders {

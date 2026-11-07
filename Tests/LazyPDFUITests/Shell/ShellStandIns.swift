@@ -55,6 +55,8 @@ final class StandInKeys: CertificateKeys {
     func open(_ bytes: [UInt8], _ choice: CertificateChoice) throws -> PdfEditSession {
         try PdfEditSession.open(StandInPdfs.text())
     }
+
+    func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate? { nil }
 }
 
 struct StandInFolders: AppFolders {

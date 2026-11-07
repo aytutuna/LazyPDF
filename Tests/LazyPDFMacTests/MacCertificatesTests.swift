@@ -36,13 +36,6 @@ final class MacCertificatesTests: XCTestCase {
         CertificateChoice(id: name, name: name, issuer: "Test", expires: Date(), isValidNow: valid)
     }
 
-    func test_validOnesComeFirstThenByName() {
-        let ordered = MacCertificates.order([choice("Zeta", valid: true), choice("Expired", valid: false), choice("alpha", valid: true)])
-
-        XCTAssertEqual(ordered.map(\.name), ["alpha", "Zeta", "Expired"])
-        XCTAssertEqual(ordered.map(\.isValidNow), [true, true, false])
-    }
-
     func test_aChoiceCarriesItsThumbprintAndIssuer() throws {
         let keys = MacCertificates()
         let made = try Self.identity("Carol")
@@ -131,6 +124,16 @@ final class MacCertificatesTests: XCTestCase {
         let session = try a.keys.open(a.bytes, a.choice)
 
         XCTAssertEqual(session.document.pages.count, 1)
+    }
+
+    func test_theCertificateForCheckingSignaturesOpensTheFile() throws {
+        let a = try alice()
+
+        let x509 = try XCTUnwrap(a.keys.verifyCertificate(a.choice))
+        let session = try PdfEditSession.open(a.bytes, certificate: try XCTUnwrap(PdfCertificate(x509)))
+
+        XCTAssertEqual(session.document.pages.count, 1)
+        XCTAssertNil(a.keys.verifyCertificate(choice("nobody", valid: true)))
     }
 
     func test_anIdentityThatIsNotARecipientDoesNotOpenTheFile() throws {

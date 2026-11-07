@@ -22,6 +22,24 @@ public struct CertificateChoice: Equatable, Identifiable, Sendable {
     }
 }
 
+extension CertificateChoice {
+    /// The subject stands in for a certificate that names no common name, organisation or e-mail.
+    public init(_ certificate: X509Certificate, now: Date = Date()) {
+        let from = Double(certificate.notBefore.unixSeconds), to = Double(certificate.notAfter.unixSeconds)
+        let at = now.timeIntervalSince1970
+        let name = certificate.simpleName
+        self.init(id: certificate.thumbprint, name: name.isEmpty ? certificate.subject : name, issuer: certificate.issuerSimpleName,
+                  expires: Date(timeIntervalSince1970: to), isValidNow: from <= at && at <= to)
+    }
+
+    /// Valid ones first, then by name.
+    public static func order(_ choices: [CertificateChoice]) -> [CertificateChoice] {
+        choices.sorted {
+            $0.isValidNow != $1.isValidNow ? $0.isValidNow : $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }
+    }
+}
+
 /// The identities of the keychain and what opening a file with one takes.
 public protocol CertificateKeys: AnyObject {
     /// The identities whose private key the app can use.
@@ -33,8 +51,4 @@ public protocol CertificateKeys: AnyObject {
 
     /// The identity with its private key, for checking the signatures of a file `open` opened. Nil when it cannot be had.
     func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate?
-}
-
-extension CertificateKeys {
-    public func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate? { nil }
 }
