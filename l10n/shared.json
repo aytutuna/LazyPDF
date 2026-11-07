@@ -6554,5 +6554,14 @@
   },
   "Redo {0}": {
     "tr": "Yinele: {0}"
+  },
+  "Select all": {
+    "tr": "Tümünü seç"
+  },
+  "Back": {
+    "tr": "Geri"
+  },
+  "Go": {
+    "tr": "Git"
   }
 }

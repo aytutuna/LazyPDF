@@ -526,6 +526,9 @@
   <data name="Automatic" xml:space="preserve">
     <value>Otomatik</value>
   </data>
+  <data name="Back" xml:space="preserve">
+    <value>Geri</value>
+  </data>
   <data name="Back to the document (Esc)" xml:space="preserve">
     <value>Belgeye dön (Esc)</value>
   </data>
@@ -2025,6 +2028,9 @@
   </data>
   <data name="Give the stamp a text or a picture." xml:space="preserve">
     <value>Damgaya bir metin ya da resim verin.</value>
+  </data>
+  <data name="Go" xml:space="preserve">
+    <value>Git</value>
   </data>
   <data name="Go on anyway" xml:space="preserve">
     <value>Yine de devam et</value>
@@ -4146,6 +4152,9 @@
   </data>
   <data name="Select" xml:space="preserve">
     <value>Seç</value>
+  </data>
+  <data name="Select all" xml:space="preserve">
+    <value>Tümünü seç</value>
   </data>
   <data name="Select objects" xml:space="preserve">
     <value>Nesneleri seç</value>

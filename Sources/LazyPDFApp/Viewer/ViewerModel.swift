@@ -62,13 +62,13 @@ public final class ViewerModel: DocumentViewer {
     /// Something drawn changed: a tile came, a highlight moved.
     @ObservationIgnored public var onRedraw: (() -> Void)?
 
-    public private(set) var tab: DocumentTab?
+    public internal(set) var tab: DocumentTab?
 
     /// Moves with every scroll, zoom, rotation or rearrangement.
-    public private(set) var viewRevision = 0
+    public internal(set) var viewRevision = 0
 
     /// Moves with a change of page, zoom or arrangement; what the bar shows follows it.
-    public private(set) var shownRevision = 0
+    public internal(set) var shownRevision = 0
 
     public internal(set) var layerRevision = 0
     public internal(set) var findVisible = false
@@ -76,7 +76,7 @@ public final class ViewerModel: DocumentViewer {
     /// Moves each time Find is asked for, so the field takes the focus again.
     public internal(set) var findRequest = 0
     public internal(set) var findSeed: String?
-    public internal(set) var goToPageVisible = false
+    public var goToPageVisible = false
 
     /// The address a link wants opened, until the person says yes or no.
     public internal(set) var pendingAddress: PendingAddress?
