@@ -561,6 +561,7 @@
 "Text is still inside a mark on page {0}." = "Sayfa {0} üzerinde bir işaretin içinde hâlâ metin var.";
 "That certificate does not open this file." = "Bu sertifika bu dosyayı açmıyor.";
 "That file is not a certificate. Choose a .cer or .crt file." = "Bu dosya bir sertifika değil. .cer veya .crt dosyası seçin.";
+"That is the open file. Choose another name." = "Bu, açık olan dosya. Başka bir ad seçin.";
 "That password is not right." = "Parola doğru değil.";
 "That picture is too large. Pick a smaller one." = "Bu resim çok büyük. Daha küçük bir resim seçin.";
 "The /CIDSet does not list every glyph shown or held in the font program." = "/CIDSet, yazı tipi programında gösterilen ya da tutulan her glifi listelemiyor.";
@@ -665,6 +666,7 @@
 "The page content is too large to check in full." = "Sayfa içeriği tam denetlenemeyecek kadar büyük.";
 "The page is not in the document." = "Sayfa belgede yok.";
 "The print and visibility flags of {0} annotations were corrected." = "{0} ek açıklamanın yazdırma ve görünürlük bayrakları düzeltildi.";
+"The printer did not take {0}. Check that it is on and has no error, then try again." = "Yazıcı {0} dosyasını almadı. Açık olduğundan ve hata vermediğinden emin olup yeniden deneyin.";
 "The real number {0} is beyond 32767." = "{0} gerçel sayısı 32767'yi aşıyor.";
 "The rendering intent {0} is not one of the four standard ones." = "{0} çizim amacı dört standart amaçtan biri değil.";
 "The same form is painted twice." = "Aynı form iki kez çizilmiş.";
