@@ -499,7 +499,6 @@
 "This kind of action cannot be set here." = "Bu tür bir işlem burada ayarlanamaz.";
 "This picture cannot be read." = "Bu resim okunamıyor.";
 "This script did not run. Only built-in format and calculate functions run." = "Bu betik çalışmadı. Yalnızca yerleşik biçim ve hesaplama işlevleri çalışır.";
-"This server is not secure (http), so it was not contacted." = "Bu sunucu güvenli değil (http), bu yüzden bağlanılmadı.";
 "This signature could not be checked." = "Bu imza denetlenemedi.";
 "This signature needs a time stamp server." = "Bu imza bir zaman damgası sunucusu gerektiriyor.";
 "This text has replacement text." = "Bu metnin yerine geçen bir metni var.";

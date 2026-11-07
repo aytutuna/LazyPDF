@@ -4,10 +4,9 @@ import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Services/HttpSignatureTransport.cs: posting and fetching for time stamps, OCSP, CRLs and
 // issuer certificates, on an ephemeral URLSession. The engine wants nil when a request fails; `lastFailure` says why in
-// words a person can act on. Only https is fetched: there is no App Transport Security exception, so a plain http
-// address is refused with a text of its own. CRL and OCSP addresses in public certificates are often http, so those
-// checks fail here. There is no offline check up front as on Windows;
-// a request that finds no connection reports the offline text when it fails.
+// words a person can act on. URLSession carries https only: there is no App Transport Security exception, so plain http
+// addresses, which most CRL, OCSP and time stamp points are, go through PlainHttpTransport instead. There is no
+// offline check up front as on Windows; a request that finds no connection reports the offline text when it fails.
 
 public final class UrlSessionTransport: SignatureTransport {
     private static let maxResponseBytes = 8 << 20
@@ -47,14 +46,20 @@ public final class UrlSessionTransport: SignatureTransport {
     }
 
     private let configuration: URLSessionConfiguration
+    private let plain: PlainHttpTransport
     private let lock = NSLock()
     private var failure: String?
     private var task: URLSessionTask?
     private var cancelled = false
 
     /// A test passes a configuration with its own `protocolClasses`.
-    public init(configuration: URLSessionConfiguration = .ephemeral) {
+    public convenience init(configuration: URLSessionConfiguration = .ephemeral) {
+        self.init(configuration: configuration, plain: PlainHttpTransport())
+    }
+
+    init(configuration: URLSessionConfiguration, plain: PlainHttpTransport) {
         self.configuration = configuration
+        self.plain = plain
         configuration.timeoutIntervalForRequest = 20
         configuration.timeoutIntervalForResource = 20
     }
@@ -73,6 +78,7 @@ public final class UrlSessionTransport: SignatureTransport {
         let running = task
         lock.unlock()
         running?.cancel()
+        plain.cancel()
     }
 
     public func post(_ url: String, _ contentType: String, _ body: [UInt8]) -> [UInt8]? {
@@ -94,12 +100,44 @@ public final class UrlSessionTransport: SignatureTransport {
         lock.lock()
         failure = nil
         lock.unlock()
-        guard let address = URL(string: url), address.host != nil, let scheme = address.scheme?.lowercased(),
+        guard let first = URL(string: url), first.host != nil, let scheme = first.scheme?.lowercased(),
               scheme == "http" || scheme == "https" else {
             return fail(L10n.t("The address is not a web address."))
         }
-        guard scheme == "https" else { return fail(L10n.t("This server is not secure (http), so it was not contacted.")) }
+        var address = first
+        var method = method
+        var body = body
+        var contentType = contentType
+        for _ in 0..<Self.maxRedirects {
+            if address.scheme?.lowercased() == "https" { return secureSend(address, method, contentType, body) }
+            switch plain.send(address, method: method, contentType: contentType, body: body) {
+            case .body(let bytes): return bytes
+            case .failed(let reason): return fail(Self.text(reason))
+            case .redirect(let target, let keepsMethod):
+                guard let next = URL(string: target, relativeTo: address)?.absoluteURL, next.host != nil,
+                      ["http", "https"].contains(next.scheme?.lowercased()) else {
+                    return fail(Self.unreachable)
+                }
+                address = next
+                if !keepsMethod { (method, body, contentType) = ("GET", nil, nil) }
+            }
+        }
+        return fail(Self.unreachable)
+    }
 
+    private static let maxRedirects = 5
+
+    private static func text(_ reason: PlainHttpTransport.Failure) -> String {
+        switch reason {
+        case .timedOut: return timedOut
+        case .unreachable: return unreachable
+        case .offline: return L10n.t("This computer is offline. Connect to the internet and try again.")
+        case .tooLarge: return L10n.t("The server's answer is too large.")
+        case .status(let code): return L10n.t("The server answered with an error ({0}).", code)
+        }
+    }
+
+    private func secureSend(_ address: URL, _ method: String, _ contentType: String?, _ body: Data?) -> [UInt8]? {
         var request = URLRequest(url: address, timeoutInterval: 20)
         request.httpMethod = method
         request.httpBody = body

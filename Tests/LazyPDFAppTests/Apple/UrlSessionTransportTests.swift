@@ -4,7 +4,7 @@ import LazyPDFKit
 import XCTest
 
 // Mirrors windows/LazyPDF.App.Tests/HttpSignatureTransportTests.cs with a URLProtocol in place of the handler. There is
-// no IsOffline guard to skip on, and an http address is refused (the Windows GET test over http uses https here).
+// no IsOffline guard to skip on. Plain http goes to PlainHttpTransport, which PlainHttpTransportTests covers.
 
 private final class Stub: URLProtocol {
     static var answer: (URLRequest) throws -> (status: Int, body: Data) = { _ in (200, Data()) }
@@ -113,13 +113,11 @@ final class UrlSessionTransportTests: XCTestCase {
         XCTAssertTrue(Stub.seen.isEmpty)
     }
 
-    func test_aPlainHttpAddressIsNotFetched() {
+    func test_aPlainHttpAddressDoesNotGoThroughUrlSession() {
         let transport = transport { _ in (200, Data([1])) }
 
-        L10n.english {
-            XCTAssertNil(transport.get("http://crl.example/ca.crl"))
-            XCTAssertTrue(transport.lastFailure?.contains("not secure") == true)
-        }
+        _ = transport.get("http://127.0.0.1:1/ca.crl")
+
         XCTAssertTrue(Stub.seen.isEmpty)
     }
 

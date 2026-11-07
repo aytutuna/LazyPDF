@@ -1866,9 +1866,6 @@
   "This device cannot read {0} text.": {
     "tr": "Bu aygıt {0} metnini okuyamıyor."
   },
-  "This server is not secure (http), so it was not contacted.": {
-    "tr": "Bu sunucu güvenli değil (http), bu yüzden bağlanılmadı."
-  },
   "Comment": {
     "tr": "Yorum"
   },
