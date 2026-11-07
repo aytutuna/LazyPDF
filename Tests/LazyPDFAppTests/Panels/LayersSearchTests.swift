@@ -135,27 +135,28 @@ final class SearchModelTests: XCTestCase {
 @MainActor
 final class SidePanelCatalogTests: XCTestCase {
     func test_theRailHasTheSevenSidePanelsInTheOrderOfWindows() {
-        XCTAssertEqual(SidePanelCatalog.all.map { $0.id }, ["pages", "bookmarks", "attachments", "layers", "comments", "signatures", "search"])
+        XCTAssertEqual(ToolCatalog.sidePanels.map { $0.id }, ["pages", "bookmarks", "attachments", "layers", "comments", "signatures", "search"])
     }
 
     func test_aPanelIsFoundByItsId() {
-        XCTAssertEqual(SidePanelCatalog.find("bookmarks")?.title, "Bookmarks")
-        XCTAssertNil(SidePanelCatalog.find("nothing"))
+        XCTAssertEqual(ToolCatalog.findSide("bookmarks")?.title, "Bookmarks")
+        XCTAssertNil(ToolCatalog.findSide("nothing"))
+        XCTAssertNil(SidePanelCatalog.create("nothing", TestFolders(root: TempDir(self).url)))
     }
 
     func test_everyPanelHasWordsASymbolAndAModel() throws {
         let folders = TestFolders(root: TempDir(self).url)
-        for info in SidePanelCatalog.all {
+        for info in ToolCatalog.sidePanels {
             XCTAssertFalse(info.title.isEmpty)
             XCTAssertFalse(info.summary.isEmpty)
             XCTAssertFalse(info.symbol.isEmpty)
-            _ = info.create(folders)
+            XCTAssertNotNil(SidePanelCatalog.create(info.id, folders))
         }
     }
 
     func test_thePanelTheRailAlreadyRemembersIsInTheList() {
         let remembered = AppPreferences().sidePanel
-        XCTAssertNotNil(SidePanelCatalog.find(remembered))
+        XCTAssertNotNil(ToolCatalog.findSide(remembered))
     }
 }
 

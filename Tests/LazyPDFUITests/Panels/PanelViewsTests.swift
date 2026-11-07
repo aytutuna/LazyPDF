@@ -126,7 +126,7 @@ final class PanelViewsTests: XCTestCase {
     func test_theSidePanelViewShowsEachPanelOfTheRail() throws {
         let rig = try fixture()
 
-        for info in SidePanelCatalog.all {
+        for info in ToolCatalog.sidePanels {
             _ = try draw(SidePanelView(id: info.id, tab: rig.tab, viewer: rig.viewer, host: rig.host,
                                        folders: DefaultAppFolders()))
         }

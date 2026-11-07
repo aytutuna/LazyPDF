@@ -36,7 +36,7 @@ private struct SidePanelContent: View {
     var body: some View {
         content
             .onAppear {
-                let made = model ?? SidePanelCatalog.find(id)?.create(folders)
+                let made = model ?? SidePanelCatalog.create(id, folders)
                 model = made
                 made?.attach(tab, viewer, host)
             }
