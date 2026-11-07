@@ -291,15 +291,8 @@ final class PlainHttpTransportTests: XCTestCase {
 
     func test_aChunkedAnswerOverTheCapIsRefused() throws {
         let chunk = String(repeating: "a", count: 1 << 20)
-        let reply = "HTTP/1.1 200 OK
-Transfer-Encoding: chunked
-
-"
-            + String(repeating: "100000
-\(chunk)
-", count: 9) + "0
-
-"
+        let reply = "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n"
+            + String(repeating: "100000\r\n\(chunk)\r\n", count: 9) + "0\r\n\r\n"
         let server = try Server { _ in .send(reply) }
         let transport = transport(server)
 
@@ -311,11 +304,7 @@ Transfer-Encoding: chunked
 
     func test_aHugeChunkSizeIsRefusedWithoutTrapping() throws {
         let server = try Server { _ in
-            .send("HTTP/1.1 200 OK
-Transfer-Encoding: chunked
-
-7fffffffffffffff
-abc", hold: true)
+            .send("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n7fffffffffffffff\r\nabc", hold: true)
         }
         let transport = transport(server)
 
@@ -327,10 +316,7 @@ abc", hold: true)
 
     func test_aChunkSizeLineThatNeverEndsIsGivenUp() throws {
         let junk = String(repeating: "f", count: 4096)
-        let server = try Server { _ in .send("HTTP/1.1 200 OK
-Transfer-Encoding: chunked
-
-\(junk)", hold: true) }
+        let server = try Server { _ in .send("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n\(junk)", hold: true) }
         let transport = transport(server)
         let started = Date()
 
@@ -349,11 +335,7 @@ Transfer-Encoding: chunked
     }
 
     func test_aRedirectToANonWebSchemeFails() throws {
-        let server = try Server { _ in .send("HTTP/1.1 302 Found
-Location: ftp://x/
-Content-Length: 0
-
-") }
+        let server = try Server { _ in .send("HTTP/1.1 302 Found\r\nLocation: ftp://x/\r\nContent-Length: 0\r\n\r\n") }
         let transport = transport(server)
 
         L10n.english {
@@ -364,11 +346,7 @@ Content-Length: 0
 
     func test_aRedirectToHttpsHandsOverToTheSecureSession() throws {
         let server = try Server { _ in
-            .send("HTTP/1.1 301 Moved
-Location: https://secure.example/x
-Content-Length: 0
-
-")
+            .send("HTTP/1.1 301 Moved\r\nLocation: https://secure.example/x\r\nContent-Length: 0\r\n\r\n")
         }
         RedirectTarget.hosts = []
         let configuration = URLSessionConfiguration.ephemeral
