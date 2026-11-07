@@ -1,5 +1,5 @@
 import XCTest
-import LazyPDFKit
+@testable import LazyPDFKit
 @testable import LazyPDFApp
 
 // The Layers and Search panels, and the catalog of side panels (the side panel part of windows/LazyPDF.App.Tests/
@@ -64,6 +64,16 @@ final class LayersModelTests: XCTestCase {
         await settle { !model.roots[0].isOn }
         XCTAssertTrue(viewer.layerCalls.isEmpty)
         XCTAssertTrue(model.roots[1].isOn)
+    }
+
+    func test_theListFollowsTheViewerToTheLayersOfANewerFile() async throws {
+        let (model, viewer) = try attached()
+        let first = viewer.layers.layers[0]
+
+        viewer.layers = LayerSet(layers: [first], order: [LayerNode(label: nil, layer: first, children: [])])
+
+        await settle { model.roots.count == 1 }
+        XCTAssertEqual(model.roots.map { $0.name }, ["Black box"])
     }
 }
 

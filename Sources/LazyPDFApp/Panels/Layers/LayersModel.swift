@@ -96,6 +96,11 @@ public final class LayersModel: ToolPanelModel {
     // The view changed the layers (a radio group, or the file itself): the boxes follow.
     private func followView() {
         guard let viewer else { return }
+        // A rebuild that ran before the viewer read the new file saw the old layers; the viewer's change brings them here.
+        if Set(viewer.layers.layers.map { $0.reference.number }) != Set(rows.compactMap { $0.layer?.reference.number }) {
+            build()
+            return
+        }
         let state = Dictionary(viewer.layers.layers.map { ($0.reference.number, $0.isOn) }, uniquingKeysWith: { first, _ in first })
         for row in rows {
             if let layer = row.layer, let on = state[layer.reference.number] { row.set(on) }
