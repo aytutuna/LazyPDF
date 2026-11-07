@@ -5,7 +5,8 @@ import LazyPDFApp
 import LazyPDFIOS
 
 // Follows windows/LazyPDF.App.Tests/WindowsCertificatesTests.cs and CertificateReadersTests.cs. The keychain of the
-// simulator outlives a test, so every identity gets a name of its own and is removed again.
+// simulator outlives a test, so every identity gets a name of its own and is removed again. A build without signing has
+// no keychain; the tests that need one skip then.
 
 final class CertificateTests: XCTestCase {
     private let keys = IOSCertificates()
@@ -39,6 +40,14 @@ final class CertificateTests: XCTestCase {
         }
     }
 
+    private func requireKeychain() throws {
+        let item: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: "lazypdf-probe-\(run)",
+                                   kSecValueData as String: Data([1])]
+        let status = SecItemAdd(item as CFDictionary, nil)
+        SecItemDelete(item as CFDictionary)
+        try XCTSkipIf(status == errSecMissingEntitlement, "The keychain needs a signed app.")
+    }
+
     private func ours() -> [CertificateChoice] {
         keys.choices().filter { $0.name.hasSuffix(run) }
     }
@@ -49,31 +58,37 @@ final class CertificateTests: XCTestCase {
     }
 
     func test_anImportedIdentityIsOffered() throws {
+        try requireKeychain()
         let made = try importIdentity("Carol")
 
         XCTAssertEqual(ours().map(\.id), [made.choice.id])
     }
 
     func test_aChoiceCarriesItsThumbprintAndIssuer() throws {
-        let made = try importIdentity("Carol")
+        let certificate = try PdfDigitalId.create("Carol", nil, DateTimeOffset(2020, 1, 1, 0, 0, 0), keyBits: 2048)
 
-        XCTAssertEqual(made.choice.id, made.certificate.thumbprint)
-        XCTAssertEqual(made.choice.name, "Carol-\(run)")
-        XCTAssertEqual(made.choice.issuer, "Carol-\(run)")
+        let choice = try XCTUnwrap(IOSCertificates.choices([try XCTUnwrap(IOSCertificates.entry(certificate))], now: Date()).first)
+
+        XCTAssertEqual(choice.id, certificate.thumbprint)
+        XCTAssertEqual(choice.name, "Carol")
+        XCTAssertEqual(choice.issuer, "Carol")
     }
 
     func test_validOnesComeFirstThenByName() throws {
-        try importIdentity("Zeta")
-        try importIdentity("Expired", from: DateTimeOffset(2000, 1, 1, 0, 0, 0), years: 5)
-        try importIdentity("Alpha")
+        let from = DateTimeOffset(2020, 1, 1, 0, 0, 0)
+        let old = DateTimeOffset(2000, 1, 1, 0, 0, 0)
+        let entries = try [("Zeta", from, 40), ("Expired", old, 5), ("Alpha", from, 40)].map { name, start, years in
+            try XCTUnwrap(IOSCertificates.entry(try PdfDigitalId.create(name, nil, start, years: years, keyBits: 2048)))
+        }
 
-        let found = ours()
+        let found = IOSCertificates.choices(entries, now: Date())
 
-        XCTAssertEqual(found.map { $0.name.components(separatedBy: "-")[0] }, ["Alpha", "Zeta", "Expired"])
+        XCTAssertEqual(found.map(\.name), ["Alpha", "Zeta", "Expired"])
         XCTAssertEqual(found.map(\.isValidNow), [true, true, false])
     }
 
     func test_onlyIdentitiesWithAPrivateKeyAreOffered() throws {
+        try requireKeychain()
         let alone = try PdfDigitalId.create("Without key-\(run)", nil, DateTimeOffset(2020, 1, 1, 0, 0, 0), keyBits: 2048)
         let certificate = try XCTUnwrap(SecCertificateCreateWithData(nil, Data(alone.rawData) as CFData))
         let add: [String: Any] = [kSecClass as String: kSecClassCertificate, kSecValueRef as String: certificate]
@@ -85,6 +100,7 @@ final class CertificateTests: XCTestCase {
     }
 
     func test_aWrongPasswordImportsNothing() throws {
+        try requireKeychain()
         let made = try pfx("Dave")
 
         XCTAssertThrowsError(try keys.importIdentity(made.pfx, password: "wrong"))
@@ -92,6 +108,7 @@ final class CertificateTests: XCTestCase {
     }
 
     func test_aFileSealedForTheIdentityOpensWithIt() throws {
+        try requireKeychain()
         let alice = try importIdentity("Alice")
 
         let session = try keys.open(try sealed(for: alice.certificate), alice.choice)
@@ -100,6 +117,7 @@ final class CertificateTests: XCTestCase {
     }
 
     func test_anIdentityThatIsNotARecipientDoesNotOpenTheFile() throws {
+        try requireKeychain()
         let alice = try importIdentity("Alice")
         let mallory = try importIdentity("Mallory")
 
@@ -109,6 +127,7 @@ final class CertificateTests: XCTestCase {
     }
 
     func test_anIdentityThatLeftTheKeychainDoesNotOpenTheFile() throws {
+        try requireKeychain()
         let alice = try importIdentity("Alice")
         let bytes = try sealed(for: alice.certificate)
         Self.forget(alice.choice.id)

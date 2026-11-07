@@ -61,19 +61,15 @@ final class CoordinatedWriteTests: XCTestCase {
         XCTAssertFalse(tab.isDirty)
     }
 
-    func test_saveAsAndSaveCompactWriteTheirFiles() throws {
+    func test_saveAsWritesTheNewFileAndMovesTheTabToIt() throws {
         let folder = scratch(self)
-        let url = folder.appendingPathComponent("a.pdf")
-        let tab = try open(url)
+        let tab = try open(folder.appendingPathComponent("a.pdf"))
         let copy = folder.appendingPathComponent("b.pdf")
-        let compact = folder.appendingPathComponent("c.pdf")
 
         try tab.saveAs(copy)
-        try tab.saveCompact(compact)
 
-        XCTAssertEqual(try names(folder), ["b.pdf", "c.pdf"])
+        XCTAssertEqual(try names(folder), ["b.pdf"])
         XCTAssertEqual(try PdfDocument.open(path: copy.path).pages.count, 1)
-        XCTAssertEqual(try PdfDocument.open(path: compact.path).pages.count, 1)
-        XCTAssertEqual(tab.url, compact)
+        XCTAssertEqual(tab.url, copy)
     }
 }

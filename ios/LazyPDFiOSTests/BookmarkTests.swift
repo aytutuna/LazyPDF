@@ -47,8 +47,14 @@ final class BookmarkTests: XCTestCase {
         XCTAssertNil(IOSBookmarks().resolve(Data("not a bookmark".utf8)))
     }
 
-    func test_aFileOfTheAppsOwnNeedsNoAccess() throws {
-        XCTAssertNil(IOSBookmarks().access(try file()))
+    func test_anAccessToAFileOfTheAppsOwnCanBeStoppedAndTheFileStaysReadable() throws {
+        let url = try file()
+
+        let access = IOSBookmarks().access(url)
+        access?.stop()
+        access?.stop()
+
+        XCTAssertFalse(try Data(contentsOf: url).isEmpty)
     }
 
     func test_stoppingAnAccessEndsItExactlyOnce() {

@@ -31,6 +31,7 @@ targets:
         excludes:
           - Info.plist
           - PrivacyInfo.xcprivacy
+          - LazyPDFiOS.entitlements
       - path: LazyPDFiOS/PrivacyInfo.xcprivacy
         buildPhase: resources
       # The engine's Turkish strings (written by scripts/gen_l10n.py), read from the main bundle.
@@ -47,6 +48,8 @@ targets:
         PRODUCT_MODULE_NAME: LazyPDFiOSApp
         PRODUCT_BUNDLE_IDENTIFIER: com.lazypdf.lazypdf
         INFOPLIST_FILE: LazyPDFiOS/Info.plist
+        # The keychain holds the identities imported from a .p12; a simulator build without signing needs the group to reach it.
+        CODE_SIGN_ENTITLEMENTS: LazyPDFiOS/LazyPDFiOS.entitlements
         GENERATE_INFOPLIST_FILE: NO
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
