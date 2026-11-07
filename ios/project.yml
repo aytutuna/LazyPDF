@@ -44,7 +44,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: LazyPDF
-        PRODUCT_MODULE_NAME: LazyPDFiOS
+        PRODUCT_MODULE_NAME: LazyPDFiOSApp
         PRODUCT_BUNDLE_IDENTIFIER: com.lazypdf.lazypdf
         INFOPLIST_FILE: LazyPDFiOS/Info.plist
         GENERATE_INFOPLIST_FILE: NO
