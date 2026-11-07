@@ -2167,6 +2167,9 @@
   <data name="Import" xml:space="preserve">
     <value>İçe aktar</value>
   </data>
+  <data name="Import a certificate…" xml:space="preserve">
+    <value>Sertifika içe aktar…</value>
+  </data>
   <data name="Import comments" xml:space="preserve">
     <value>Yorumları içe aktar</value>
   </data>
@@ -2670,6 +2673,9 @@
   </data>
   <data name="No certificate with a private key was found on this computer." xml:space="preserve">
     <value>Bu bilgisayarda özel anahtarlı sertifika bulunamadı.</value>
+  </data>
+  <data name="No certificate with a private key was found. Import one from a .p12 or .pfx file." xml:space="preserve">
+    <value>Özel anahtarlı sertifika bulunamadı. Bir .p12 veya .pfx dosyasından içe aktarın.</value>
   </data>
   <data name="No certificates found." xml:space="preserve">
     <value>Sertifika bulunamadı.</value>

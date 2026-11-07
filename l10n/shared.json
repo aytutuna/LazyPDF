@@ -6557,5 +6557,11 @@
   },
   "Redo {0}": {
     "tr": "Yinele: {0}"
+  },
+  "Import a certificate…": {
+    "tr": "Sertifika içe aktar…"
+  },
+  "No certificate with a private key was found. Import one from a .p12 or .pfx file.": {
+    "tr": "Özel anahtarlı sertifika bulunamadı. Bir .p12 veya .pfx dosyasından içe aktarın."
   }
 }

@@ -92,6 +92,8 @@ struct RecoveryCard: View {
 struct PasswordSheet: View {
     let vm: AppViewModel
     let request: OpenRequest
+    /// Chooses a .p12 or .pfx file and returns the identity it put in the keychain; nil when the person gave up.
+    var importCertificate: (@MainActor () async -> CertificateChoice?)?
     @State private var password = ""
     @State private var chosen: String?
 
@@ -127,6 +129,13 @@ struct PasswordSheet: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             HStack(spacing: 8) {
+                if request.needsCertificate, let importCertificate {
+                    Button(L10n.t("Import a certificate…")) {
+                        Task {
+                            if let choice = await importCertificate() { await vm.submitCertificate(choice) }
+                        }
+                    }
+                }
                 Spacer(minLength: 0)
                 Button(L10n.t("Cancel"), role: .cancel) { vm.cancelPending() }
                     .keyboardShortcut(.cancelAction)
@@ -144,7 +153,7 @@ struct PasswordSheet: View {
 
     private var problem: String? {
         if request.needsCertificate && request.certificates.isEmpty {
-            return L10n.t("No certificate with a private key was found on this computer.")
+            return L10n.t("No certificate with a private key was found. Import one from a .p12 or .pfx file.")
         }
         return request.problem
     }
