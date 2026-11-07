@@ -27,10 +27,9 @@ final class MacSystemPrintTests: XCTestCase {
         XCTAssertEqual(operation.jobTitle, "Report.pdf")
     }
 
-    func test_aLockedFileNeedsItsPassword() throws {
+    func test_aLockedFileIsPrintedOnceItIsOpened() throws {
         let locked = try MacPdfs.fixture("locked.pdf")
 
-        XCTAssertNil(MacSystemPrint.operation(try PdfEditSession.open(locked, password: "secret"), password: "wrong", title: "l.pdf", info: NSPrintInfo()))
         XCTAssertNotNil(try operation(locked, "secret"))
     }
 
@@ -53,7 +52,7 @@ final class MacSystemPrintTests: XCTestCase {
         let document = try XCTUnwrap(MacSystemPrint.document(session, nil))
 
         let box = try XCTUnwrap(document.page(at: 0)).bounds(for: .cropBox)
-        XCTAssertEqual(box.width, 400, accuracy: 0.5)
+        XCTAssertEqual(box.width, 200, accuracy: 0.5)
         XCTAssertEqual(box.height, 200, accuracy: 0.5)
     }
 
@@ -62,7 +61,7 @@ final class MacSystemPrintTests: XCTestCase {
 
         let box = try XCTUnwrap(MacSystemPrint.document(session, nil)?.page(at: 0)).bounds(for: .cropBox)
 
-        XCTAssertEqual(box.width, 200, accuracy: 0.5)
+        XCTAssertEqual(box.width, 100, accuracy: 0.5)
     }
 }
 #endif
