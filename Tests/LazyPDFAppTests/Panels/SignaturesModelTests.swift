@@ -127,14 +127,13 @@ final class SignaturesModelTests: XCTestCase {
         XCTAssertTrue(rig.host.openedAccess[0] === grant)
     }
 
-    func test_aFileOpenedWithACertificateAsksTheWindowForTheKey() async throws {
+    func test_aFileOpenedWithACertificateAsksTheWindowForTheKey() throws {
         let dir = TempDir(self)
         let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text()), renderer: FakeRenderer(), url: nil, title: "a.pdf",
                               certificate: FakeKeys.alice)
         let host = RecordingHost()
         let model = SignaturesModel(trust: SignatureTrust(directory: dir.url))
         model.attach(tab, PanelViewer(tab), host)
-        await model.check().value
 
         XCTAssertEqual(host.certificatesAsked, [FakeKeys.alice])
         XCTAssertEqual(model.note, "The signatures could not be checked.")
