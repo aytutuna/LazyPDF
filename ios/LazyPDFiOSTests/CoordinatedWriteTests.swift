@@ -74,40 +74,24 @@ final class CoordinatedWriteTests: XCTestCase {
         XCTAssertFalse(report.contains { !$0.contains(" ok ") }, report.joined(separator: " | "))
     }
 
-    func test_compactVariantsReport() throws {
-        let folder = scratch(self)
-        var report: [String] = []
-        var count = 0
-        func step(_ name: String, _ body: () throws -> Void) {
-            count += 1
-            do { try body(); report.append("\(name) ok") } catch { report.append("\(name) FAILED \(error)") }
+    func test_whereTheTypesLiveReport() throws {
+        func image(_ type: Any.Type) -> String {
+            var info = Dl_info()
+            let pointer = unsafeBitCast(type, to: UnsafeRawPointer.self)
+            guard dladdr(pointer, &info) != 0, let name = info.dli_fname else { return "?" }
+            return (String(cString: name) as NSString).lastPathComponent
         }
-        func path() -> String { folder.appendingPathComponent("v\(count).pdf").path }
-        func tab(_ url: URL? = nil, _ session: PdfEditSession) -> DocumentTab {
-            DocumentTab(session: session, renderer: StubRenderer(), url: url, title: "t.pdf", writer: PlainFileWriter())
+        let tab = DocumentTab(session: try PdfEditSession.open(samplePdf()), renderer: StubRenderer(), url: nil, title: "t.pdf",
+                              writer: PlainFileWriter())
+        var report = ["test sees: DocumentTab=\(image(DocumentTab.self)) PdfEditSession=\(image(PdfEditSession.self)) PdfDocument=\(image(PdfDocument.self)) PdfDictionary=\(image(PdfDictionary.self)) PdfReadException=\(image(PdfReadException.self)) PlainFileWriter=\(image(PlainFileWriter.self)) CoordinatedFileWriter=\(image(CoordinatedFileWriter.self))"]
+        report.append("instances: session=\(image(type(of: tab.session))) catalog=\(image(type(of: tab.session.document.catalog))) tab=\(image(type(of: tab)))")
+        do { try tab.saveCompact(URL(fileURLWithPath: scratch(self).appendingPathComponent("z.pdf").path)) } catch {
+            report.append("tab compact failed: \(error) type=\(image(type(of: error)))")
         }
-        step("session direct") { try PdfEditSession.open(samplePdf()).saveCompact(path()) }
-        step("tab made, session direct") {
-            let session = try PdfEditSession.open(samplePdf())
-            _ = tab(nil, session)
-            try session.saveCompact(path())
+        do { _ = try IOSCertificates().open([], CertificateChoice(id: "x", name: "x", issuer: "x", expires: Date(), isValidNow: true)) } catch {
+            report.append("app error type=\(image(type(of: error)))")
         }
-        step("tab without url, tab compact") {
-            try tab(nil, try PdfEditSession.open(samplePdf())).saveCompact(URL(fileURLWithPath: path()))
-        }
-        step("writer without tab") {
-            let session = try PdfEditSession.open(samplePdf())
-            try PlainFileWriter().write(to: URL(fileURLWithPath: path())) { try session.saveCompact($0.path) }
-        }
-        step("tab save as") {
-            try tab(nil, try PdfEditSession.open(samplePdf())).saveAs(URL(fileURLWithPath: path()))
-        }
-        step("tab save then compact") {
-            let made = tab(nil, try PdfEditSession.open(samplePdf()))
-            try made.saveAs(URL(fileURLWithPath: path()))
-            try made.session.saveCompact(path())
-        }
-        XCTAssertFalse(report.contains { $0.contains("FAILED") }, report.joined(separator: " | "))
+        XCTFail(report.joined(separator: " | "))
     }
 
     func test_saveWritesTheBytesAndKeepsTheFileInPlace() throws {
