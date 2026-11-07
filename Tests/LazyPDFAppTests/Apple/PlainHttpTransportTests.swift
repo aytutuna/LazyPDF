@@ -156,8 +156,7 @@ final class PlainHttpTransportTests: XCTestCase {
 
     func test_aBinaryBodyKeepsItsBytes() throws {
         let body = (0..<256).map { UInt8($0) } + [13, 10, 13, 10]
-        var reply = Array("HTTP/1.1 200 OK\\r\\nContent-Length: \(body.count)\\r\\n\\r\\n".utf8)
-        reply = Array("HTTP/1.1 200 OK\r\nContent-Length: \(body.count)\r\n\r\n".utf8) + body
+        let reply = Array("HTTP/1.1 200 OK\r\nContent-Length: \(body.count)\r\n\r\n".utf8) + body
         let server = try Server { _ in .sendBytes(reply) }
 
         XCTAssertEqual(transport(server).get(server.url()), body)
