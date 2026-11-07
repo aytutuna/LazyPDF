@@ -3,7 +3,8 @@ import Foundation
 // Follows windows/LazyPDF.App/Services/AppFolders.cs. The apps pass their own folders in; tests pass a temporary one.
 
 /// Where the app keeps files. Settings and recovery copies sit in Application Support, thumbnails in the caches. A file
-/// another program has to read goes in the temporary folder.
+/// another program has to read goes where the platform keeps it longest: the temporary folder here, the caches in
+/// `MacAppFolders`, which is the one the Mac app uses.
 public protocol AppFolders {
     var settings: URL { get }
     var recovery: URL { get }
