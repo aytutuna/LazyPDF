@@ -196,14 +196,20 @@ final class AppWindowTests: XCTestCase {
         XCTAssertEqual(f.vm.appearance, .light)
     }
 
-    func test_theDocumentSummaryDrawsAndSizesAreWritten() async throws {
+    func test_theDocumentSummaryListsTheFactsOfTheFile() async throws {
         let f = ShellFixture(self)
         await f.openDocuments(1)
         let tab = try XCTUnwrap(f.vm.activeDocument)
 
-        let image = try XCTUnwrap(picture(DocumentSummary(tab: tab), 280, 400))
+        let facts = DocumentSummary.facts(tab)
 
-        XCTAssertGreaterThan(variety(image), 4)
+        XCTAssertEqual(facts.map(\.label), ["File", "Folder", "Pages", "PDF version", "Size", "Protection"])
+        XCTAssertEqual(facts.first?.value, "doc1.pdf")
+        XCTAssertEqual(facts.first { $0.label == "Pages" }?.value, "1")
+        XCTAssertEqual(facts.first { $0.label == "Protection" }?.value, "Not protected")
+    }
+
+    func test_sizesAreWrittenInTheUnitThatFits() {
         XCTAssertEqual(DocumentSummary.size(512), "512 bytes")
         XCTAssertEqual(DocumentSummary.size(1536), "1.5 KB")
         XCTAssertEqual(DocumentSummary.size(3 * 1_048_576), "3 MB")

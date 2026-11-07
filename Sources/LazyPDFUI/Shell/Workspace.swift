@@ -106,21 +106,15 @@ struct DocumentSummary: View {
     let tab: DocumentTab
 
     var body: some View {
-        let _ = tab.revision
-        let document = tab.document
+        let facts = Self.facts(tab)
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                row(L10n.t("File"), tab.title)
-                if let url = tab.url {
-                    row(L10n.t("Folder"), url.deletingLastPathComponent().path)
-                }
-                row(L10n.t("Pages"), String(tab.pageCount))
-                row(L10n.t("PDF version"), document.version)
-                row(L10n.t("Size"), Self.size(tab.session.current.count))
-                row(L10n.t("Protection"), !document.isEncrypted ? L10n.t("Not protected")
-                    : document.security?.isPublicKey == true ? L10n.t("Protected for certificate holders") : L10n.t("Password protected"))
-                if document.isSigned {
-                    row(L10n.t("Signatures"), document.isCertified ? L10n.t("Signed and certified") : L10n.t("Signed"))
+                ForEach(facts, id: \.label) { fact in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(fact.label).font(.caption).foregroundStyle(.secondary)
+                        Text(fact.value).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+                    }
+                    .accessibilityElement(children: .combine)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -128,12 +122,22 @@ struct DocumentSummary: View {
         }
     }
 
-    private func row(_ label: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label).font(.caption).foregroundStyle(.secondary)
-            Text(value).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+    static func facts(_ tab: DocumentTab) -> [(label: String, value: String)] {
+        _ = tab.revision
+        let document = tab.document
+        var facts = [(label: L10n.t("File"), value: tab.title)]
+        if let url = tab.url {
+            facts.append((L10n.t("Folder"), url.deletingLastPathComponent().path))
         }
-        .accessibilityElement(children: .combine)
+        facts.append((L10n.t("Pages"), String(tab.pageCount)))
+        facts.append((L10n.t("PDF version"), document.version))
+        facts.append((L10n.t("Size"), size(tab.session.current.count)))
+        facts.append((L10n.t("Protection"), !document.isEncrypted ? L10n.t("Not protected")
+            : document.security?.isPublicKey == true ? L10n.t("Protected for certificate holders") : L10n.t("Password protected")))
+        if document.isSigned {
+            facts.append((L10n.t("Signatures"), document.isCertified ? L10n.t("Signed and certified") : L10n.t("Signed")))
+        }
+        return facts
     }
 
     static func size(_ bytes: Int) -> String {
