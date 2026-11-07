@@ -273,6 +273,7 @@
 "Highlight" = "Vurgu";
 "Highlight, draw and leave notes on the pages." = "Sayfaları vurgulayın, üzerine çizin ve not bırakın.";
 "Home" = "Ana sayfa";
+"Import a certificate…" = "Sertifika içe aktar…";
 "Insert text" = "Metin ekle";
 "Invisible text" = "Görünmez metin";
 "Invisible text in a text object that also shows visible text was left." = "Görünür metin de gösteren bir metin nesnesindeki görünmez metin bırakıldı.";
@@ -318,7 +319,7 @@
 "Next page" = "Sonraki sayfa";
 "No access" = "Erişim yok";
 "No author" = "Yazar yok";
-"No certificate with a private key was found on this computer." = "Bu bilgisayarda özel anahtarlı sertifika bulunamadı.";
+"No certificate with a private key was found. Import one from a .p12 or .pfx file." = "Özel anahtarlı sertifika bulunamadı. Bir .p12 veya .pfx dosyasından içe aktarın.";
 "No comment matches." = "Eşleşen yorum yok.";
 "No comments to export." = "Dışa aktarılacak yorum yok.";
 "No differences found." = "Fark bulunamadı.";
