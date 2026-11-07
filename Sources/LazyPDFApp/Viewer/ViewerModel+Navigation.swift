@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Viewer/PageViewer.Navigation.cs: pages, destinations, the history, the find bar and the question

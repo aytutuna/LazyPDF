@@ -304,9 +304,10 @@ final class ViewerModelTests: XCTestCase {
         viewer.pointerMove(ViewPoint(at.x + 10, at.y + 10))
         viewer.pointerUp(ViewPoint(at.x + 20, at.y + 20))
 
-        XCTAssertEqual(tool.calls.map(\.kind), ["press", "move", "release"])
+        // After the release the pointer is hovering again, which the tool is told too.
+        XCTAssertEqual(tool.calls.map(\.kind), ["press", "move", "release", "move"])
         XCTAssertEqual(tool.calls[0].pointer.point.x, 50, accuracy: 1e-6)
-        XCTAssertEqual(tool.calls[2].pointer.point.y, 70, accuracy: 1e-6)
+        XCTAssertEqual(tool.calls[2].pointer.point.y, 50 + 20 / (viewer.zoom * PageSpace.dipPerPoint), accuracy: 1e-6)
         XCTAssertTrue(tool.calls[0].pointer.modifiers.contains(.shift))
         XCTAssertTrue(tool.calls[0].pointer.pressed)
         XCTAssertFalse(tool.calls[2].pointer.pressed)
@@ -354,7 +355,8 @@ final class ViewerModelTests: XCTestCase {
     // MARK: Text
 
     private func pointOnFirstLine(_ viewer: ViewerModel, _ char: Int) async throws -> ViewPoint {
-        let text = try XCTUnwrap(await viewer.text(0))
+        let loaded = await viewer.text(0)
+        let text = try XCTUnwrap(loaded)
         await until { viewer.pageText(0) != nil }
         let center = text.chars[char].quad.center
         let shown = viewer.geometry(0).toDisplay(center.x, center.y)
