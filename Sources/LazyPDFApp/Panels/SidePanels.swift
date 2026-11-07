@@ -1,4 +1,5 @@
 import Foundation
+import LazyPDFKit
 
 // Twin of SidePanelInfo and ToolCatalog.SidePanels in windows/LazyPDF.App/Tools/ToolCatalog.cs. The symbols are SF Symbols.
 

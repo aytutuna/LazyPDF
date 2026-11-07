@@ -61,7 +61,7 @@ public struct AttachmentsPanelView: View {
             .disabled(model.selected == nil)
             .padding(12)
         }
-        .onAppear { model.launch = open }
+        .onAppear { model.launch = launch }
         .fileExporter(isPresented: $saving, document: file, contentType: .data, defaultFilename: fileName) { model.saved($0) }
         #if os(iOS)
         .quickLookPreview($preview)
@@ -75,7 +75,7 @@ public struct AttachmentsPanelView: View {
         saving = true
     }
 
-    private func open(_ url: URL) -> Bool {
+    private func launch(_ url: URL) -> Bool {
         #if os(macOS)
         return NSWorkspace.shared.open(url)
         #else
