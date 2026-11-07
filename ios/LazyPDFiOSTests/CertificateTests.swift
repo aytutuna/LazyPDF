@@ -67,7 +67,7 @@ final class CertificateTests: XCTestCase {
     func test_aChoiceCarriesItsThumbprintAndIssuer() throws {
         let certificate = try PdfDigitalId.create("Carol", nil, DateTimeOffset(2020, 1, 1, 0, 0, 0), keyBits: 2048)
 
-        let choice = try XCTUnwrap(IOSCertificates.choices([try XCTUnwrap(IOSCertificates.entry(certificate))], now: Date()).first)
+        let choice = CertificateChoice(certificate)
 
         XCTAssertEqual(choice.id, certificate.thumbprint)
         XCTAssertEqual(choice.name, "Carol")
@@ -77,17 +77,17 @@ final class CertificateTests: XCTestCase {
     func test_anIssuerNameWithACommaIsNotCutShort() throws {
         let certificate = try PdfDigitalId.create("Doe, John", nil, DateTimeOffset(2020, 1, 1, 0, 0, 0), keyBits: 2048)
 
-        XCTAssertEqual(try XCTUnwrap(IOSCertificates.entry(certificate)).issuer, "Doe, John")
+        XCTAssertEqual(CertificateChoice(certificate).issuer, "Doe, John")
     }
 
     func test_validOnesComeFirstThenByName() throws {
         let from = DateTimeOffset(2020, 1, 1, 0, 0, 0)
         let old = DateTimeOffset(2000, 1, 1, 0, 0, 0)
-        let entries = try [("Zeta", from, 40), ("Expired", old, 5), ("Alpha", from, 40)].map { name, start, years in
-            try XCTUnwrap(IOSCertificates.entry(try PdfDigitalId.create(name, nil, start, years: years, keyBits: 2048)))
+        let choices = try [("Zeta", from, 40), ("Expired", old, 5), ("Alpha", from, 40)].map { name, start, years in
+            CertificateChoice(try PdfDigitalId.create(name, nil, start, years: years, keyBits: 2048))
         }
 
-        let found = IOSCertificates.choices(entries, now: Date())
+        let found = CertificateChoice.order(choices)
 
         XCTAssertEqual(found.map(\.name), ["Alpha", "Zeta", "Expired"])
         XCTAssertEqual(found.map(\.isValidNow), [true, true, false])
