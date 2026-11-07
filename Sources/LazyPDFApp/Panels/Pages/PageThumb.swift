@@ -56,16 +56,17 @@ public final class PageThumb {
     public func load() {
         guard image == nil, !loading, let renderer else { return }
         loading = true
-        let ticket = ticket
-        let (index, dpi) = (index, dpi)
+        let started = ticket
+        let page = index
+        let density = dpi
         Task { [weak self] in
             await DrawTurns.shared.enter()
             var picture: PdfRgbaImage?
-            if self?.ticket == ticket {
-                picture = await Task.detached { renderer.render(index, dpi) }.value
+            if self?.ticket == started {
+                picture = await Task.detached { renderer.render(page, density) }.value
             }
             await DrawTurns.shared.leave()
-            guard let self, self.ticket == ticket else { return }
+            guard let self, self.ticket == started else { return }
             // A page that could not be drawn stays marked as loading, so the list does not ask again and again.
             self.image = picture
         }
