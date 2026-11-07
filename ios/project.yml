@@ -55,6 +55,25 @@ targets:
         SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
+  LazyPDFiOSTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: LazyPDFiOSTests
+    dependencies:
+      - target: LazyPDFiOS
+      - package: LazyPDF
+        product: LazyPDFKit
+      - package: LazyPDF
+        product: LazyPDFIOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lazypdf.lazypdf.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        TEST_TARGET_NAME: LazyPDFiOS
+
   LazyPDFiOSUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -75,8 +94,10 @@ schemes:
     build:
       targets:
         LazyPDFiOS: all
+        LazyPDFiOSTests: [test]
         LazyPDFiOSUITests: [test]
     test:
       targets:
+        - LazyPDFiOSTests
         - LazyPDFiOSUITests
       gatherCoverageData: false

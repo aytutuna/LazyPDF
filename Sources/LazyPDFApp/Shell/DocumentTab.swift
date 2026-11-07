@@ -22,6 +22,7 @@ public final class DocumentTab: StripTab {
 
     private let recovery: RecoveryStore?
     private let bookmarks: Bookmarks?
+    private let writer: FileWriter
     private var access: FileAccess?
     private var locationBookmark: Data?
     private var location: URL?
@@ -62,7 +63,8 @@ public final class DocumentTab: StripTab {
     ///     not given.
     public init(session: PdfEditSession, renderer: DocumentRenderer, url: URL?, title: String, password: String? = nil,
                 recovery: RecoveryStore? = nil, unsaved: Bool = false, known: DiskStamp? = nil,
-                certificate: CertificateChoice? = nil, loaded: Bool? = nil, bookmarks: Bookmarks? = nil, access: FileAccess? = nil) {
+                certificate: CertificateChoice? = nil, loaded: Bool? = nil, bookmarks: Bookmarks? = nil, access: FileAccess? = nil,
+                writer: FileWriter = PlainFileWriter()) {
         self.session = session
         self.renderer = renderer
         self.location = url
@@ -70,6 +72,7 @@ public final class DocumentTab: StripTab {
         self.password = password
         self.recovery = recovery
         self.bookmarks = bookmarks
+        self.writer = writer
         self.access = access
         self.locationBookmark = url.flatMap { bookmarks?.make($0) }
         self.unsaved = unsaved
@@ -137,19 +140,19 @@ public final class DocumentTab: StripTab {
 
     public func save() throws {
         guard let location else { throw InvalidOperationException("The document has no file yet.") }
-        try session.save(location.path)
+        try writer.write(to: location) { try session.save($0.path) }
         saved()
     }
 
     public func saveAs(_ url: URL) throws {
-        try session.save(url.path)
+        try writer.write(to: url) { try session.save($0.path) }
         move(to: url)
         saved()
     }
 
     /// Writes the file without its history to `url` and goes on from that file.
     public func saveCompact(_ url: URL) throws {
-        try session.saveCompact(url.path)
+        try writer.write(to: url) { try session.saveCompact($0.path) }
         move(to: url)
         saved(rewritten: true)
     }
