@@ -64,6 +64,11 @@ let package = Package(
             path: "Tests/LazyPDFAppTests"
         ),
         .testTarget(
+            name: "LazyPDFMacTests",
+            dependencies: ["LazyPDFMac"],
+            path: "Tests/LazyPDFMacTests"
+        ),
+        .testTarget(
             name: "LazyPDFUITests",
             dependencies: ["LazyPDFUI"],
             path: "Tests/LazyPDFUITests"
