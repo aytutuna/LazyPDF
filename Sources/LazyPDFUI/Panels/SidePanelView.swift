@@ -11,7 +11,7 @@ public struct SidePanelView: View {
     let host: ToolHost
     let folders: AppFolders
 
-    public init(id: String, tab: DocumentTab, viewer: DocumentViewer, host: ToolHost, folders: AppFolders = DefaultAppFolders()) {
+    public init(id: String, tab: DocumentTab, viewer: DocumentViewer, host: ToolHost, folders: AppFolders) {
         self.id = id
         self.tab = tab
         self.viewer = viewer

@@ -130,7 +130,8 @@ final class PanelViewsTests: XCTestCase {
             _ = try draw(SidePanelView(id: info.id, tab: rig.tab, viewer: rig.viewer, host: rig.host,
                                        folders: DefaultAppFolders()))
         }
-        _ = try draw(SidePanelView(id: "nothing", tab: rig.tab, viewer: rig.viewer, host: rig.host))
+        _ = try draw(SidePanelView(id: "nothing", tab: rig.tab, viewer: rig.viewer, host: rig.host,
+                                  folders: DefaultAppFolders()))
     }
 
     func test_aPagePictureKeepsItsSizeAndColours() throws {

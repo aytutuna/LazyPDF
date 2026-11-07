@@ -3,8 +3,8 @@ import Foundation
 // Follows windows/LazyPDF.App/Services/AppFolders.cs. The apps pass their own folders in; tests pass a temporary one.
 
 /// Where the app keeps files. Settings and recovery copies sit in Application Support, thumbnails in the caches. A file
-/// another program has to read goes where the platform keeps it longest: the temporary folder here, the caches in
-/// `MacAppFolders`, which is the one the Mac app uses.
+/// another program has to read (the copies for Lazy Print) goes in the caches, which are cleared later than the temporary
+/// folder. In the Mac sandbox all of them are inside the app's container.
 public protocol AppFolders {
     var settings: URL { get }
     var recovery: URL { get }
@@ -16,29 +16,33 @@ public protocol AppFolders {
 }
 
 public struct DefaultAppFolders: AppFolders {
-    public init() {}
+    private let support: URL
+    private let caches: URL
+    private let temporary: URL
 
-    public var settings: URL { Self.support }
-
-    public var recovery: URL { Self.support.appendingPathComponent("Recovery", isDirectory: true) }
-
-    public var thumbnails: URL { Self.caches.appendingPathComponent("Thumbnails", isDirectory: true) }
-
-    public var printCopies: URL { Self.temporary.appendingPathComponent("Print", isDirectory: true) }
-
-    public var openedAttachments: URL { Self.temporary.appendingPathComponent("Attachments", isDirectory: true) }
-
-    private static var support: URL { folder(.applicationSupportDirectory, "Library/Application Support") }
-
-    private static var caches: URL { folder(.cachesDirectory, "Library/Caches") }
-
-    private static var temporary: URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent("Lazy PDF", isDirectory: true)
+    public init() {
+        let files = FileManager.default
+        let home = URL(fileURLWithPath: NSHomeDirectory())
+        let support = files.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? home.appendingPathComponent("Library/Application Support", isDirectory: true)
+        let caches = files.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? home.appendingPathComponent("Library/Caches", isDirectory: true)
+        self.init(support: support, caches: caches, temporary: files.temporaryDirectory)
     }
 
-    private static func folder(_ kind: FileManager.SearchPathDirectory, _ fallback: String) -> URL {
-        let base = FileManager.default.urls(for: kind, in: .userDomainMask).first
-            ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(fallback, isDirectory: true)
-        return base.appendingPathComponent("Lazy PDF", isDirectory: true)
+    public init(support: URL, caches: URL, temporary: URL) {
+        self.support = support.appendingPathComponent("Lazy PDF", isDirectory: true)
+        self.caches = caches.appendingPathComponent("Lazy PDF", isDirectory: true)
+        self.temporary = temporary.appendingPathComponent("Lazy PDF", isDirectory: true)
     }
+
+    public var settings: URL { support }
+
+    public var recovery: URL { support.appendingPathComponent("Recovery", isDirectory: true) }
+
+    public var thumbnails: URL { caches.appendingPathComponent("Thumbnails", isDirectory: true) }
+
+    public var printCopies: URL { caches.appendingPathComponent("Print", isDirectory: true) }
+
+    public var openedAttachments: URL { temporary.appendingPathComponent("Attachments", isDirectory: true) }
 }

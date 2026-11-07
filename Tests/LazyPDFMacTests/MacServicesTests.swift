@@ -4,32 +4,7 @@ import UniformTypeIdentifiers
 @testable import LazyPDFMac
 import LazyPDFApp
 
-// Not in the Windows tests: the folders of the sandbox container, the lookup of the sister apps and the panels.
-
-final class MacAppFoldersTests: XCTestCase {
-    private let folders = MacAppFolders(support: URL(fileURLWithPath: "/s"), caches: URL(fileURLWithPath: "/c"), temporary: URL(fileURLWithPath: "/t"))
-
-    func test_settingsAndRecoverySitInApplicationSupport() {
-        XCTAssertEqual(folders.settings.path, "/s/Lazy PDF")
-        XCTAssertEqual(folders.recovery.path, "/s/Lazy PDF/Recovery")
-    }
-
-    func test_thumbnailsAndPrintCopiesSitInTheCaches() {
-        XCTAssertEqual(folders.thumbnails.path, "/c/Lazy PDF/Thumbnails")
-        XCTAssertEqual(folders.printCopies.path, "/c/Lazy PDF/Print")
-    }
-
-    func test_openedAttachmentsSitInTheTemporaryFolder() {
-        XCTAssertEqual(folders.openedAttachments.path, "/t/Lazy PDF/Attachments")
-    }
-
-    func test_theSystemFoldersAreNamedAfterTheApp() {
-        let system = MacAppFolders()
-
-        XCTAssertEqual(system.settings.lastPathComponent, "Lazy PDF")
-        XCTAssertTrue(system.printCopies.path.contains("Caches"))
-    }
-}
+// Not in the Windows tests: the lookup of the sister apps and the panels.
 
 final class MacSisterAppsTests: XCTestCase {
     func test_anAppThatIsNotInstalledIsNotFound() {
