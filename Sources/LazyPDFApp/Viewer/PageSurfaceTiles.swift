@@ -37,7 +37,7 @@ extension PageSurfaceState {
     }
 
     // The tiles of a page at the current zoom that cover a part of it given in the scrolled area's coordinates.
-    private func required(_ page: Int, _ contentArea: ViewRect, _ reachable: (Int) -> Int) -> [TileSpec] {
+    func required(_ page: Int, _ contentArea: ViewRect, _ reachable: (Int) -> Int) -> [TileSpec] {
         let ppp = scale * pixelsPerDip
         let points = PageSpace.transform(PageSpace.toPage(contentMatrix(page)), contentArea)
         let pixels = ViewRect(points.x * ppp, points.y * ppp, points.width * ppp, points.height * ppp)
