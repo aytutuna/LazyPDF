@@ -204,11 +204,13 @@ enum PanelPdfs {
         return Array(file.utf8)
     }
 
+    @MainActor
     static func tab(_ bytes: [UInt8], title: String = "a.pdf", renderer: DocumentRenderer = FakeRenderer()) throws -> DocumentTab {
         DocumentTab(session: try PdfEditSession.open(bytes), renderer: renderer, url: nil, title: title)
     }
 
     /// Adds notes on page `page`: one by Ada, one by Grace with a reply from Ada.
+    @MainActor
     static func comment(_ tab: DocumentTab, page: Int = 0, author: String = "Ada", text: String = "Look") throws {
         let writer = PdfAnnotationWriter(tab.document)
         let info = AnnotationInfo(author: author, contents: text, date: DateTimeOffset(2026, 3, 1, 0, 0, 0))
