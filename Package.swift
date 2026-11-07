@@ -63,6 +63,11 @@ let package = Package(
             dependencies: ["LazyPDFApp"],
             path: "Tests/LazyPDFAppTests"
         ),
+        .testTarget(
+            name: "LazyPDFUITests",
+            dependencies: ["LazyPDFUI"],
+            path: "Tests/LazyPDFUITests"
+        ),
     ],
     swiftLanguageModes: [.v5]
 )
