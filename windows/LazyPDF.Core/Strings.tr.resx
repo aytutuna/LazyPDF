@@ -3709,6 +3709,9 @@
   <data name="Redo (Ctrl+Y)" xml:space="preserve">
     <value>Yinele (Ctrl+Y)</value>
   </data>
+  <data name="Redo {0}" xml:space="preserve">
+    <value>Yinele: {0}</value>
+  </data>
   <data name="Redo {0} (Ctrl+Y)" xml:space="preserve">
     <value>Yinele: {0} (Ctrl+Y)</value>
   </data>
@@ -4554,6 +4557,9 @@
   </data>
   <data name="Summary saved." xml:space="preserve">
     <value>Özet kaydedildi.</value>
+  </data>
+  <data name="System" xml:space="preserve">
+    <value>Sistem</value>
   </data>
   <data name="Tab order follows structure" xml:space="preserve">
     <value>Sekme sırası yapıyı izliyor</value>
@@ -5715,6 +5721,9 @@
   </data>
   <data name="Undo (Ctrl+Z)" xml:space="preserve">
     <value>Geri al (Ctrl+Z)</value>
+  </data>
+  <data name="Undo {0}" xml:space="preserve">
+    <value>Geri al: {0}</value>
   </data>
   <data name="Undo {0} (Ctrl+Z)" xml:space="preserve">
     <value>Geri al: {0} (Ctrl+Z)</value>

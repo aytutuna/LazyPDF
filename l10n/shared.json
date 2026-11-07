@@ -6548,5 +6548,14 @@
   },
   "The system does not let Lazy PDF write {0}. Save it under another name or in another folder.": {
     "tr": "Sistem, Lazy PDF'nin {0} dosyasına yazmasına izin vermiyor. Başka bir adla ya da başka bir klasöre kaydedin."
+  },
+  "System": {
+    "tr": "Sistem"
+  },
+  "Undo {0}": {
+    "tr": "Geri al: {0}"
+  },
+  "Redo {0}": {
+    "tr": "Yinele: {0}"
   }
 }
