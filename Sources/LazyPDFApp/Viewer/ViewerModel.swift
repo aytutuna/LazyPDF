@@ -17,6 +17,7 @@ public final class ViewerModel: DocumentViewer {
     @ObservationIgnored var labels: [String] = []
     @ObservationIgnored var bytes: [UInt8] = []
     @ObservationIgnored var seenRevision = 0
+    @ObservationIgnored var watching = 0
     @ObservationIgnored var beforeReading: (columns: Int, cover: Bool, continuous: Bool, fit: FitMode, zoom: Double)?
 
     // Pictures
@@ -105,6 +106,7 @@ public final class ViewerModel: DocumentViewer {
 
     public func show(_ tab: DocumentTab?) {
         endPointerTool()
+        watching += 1
         self.tab = tab
         history.clear()
         resetText()
@@ -122,7 +124,7 @@ public final class ViewerModel: DocumentViewer {
             apply(state.show(sizes: pageSizes(tab), pageObjects: PageSurfaceState.pageObjects(tab.document), page: tab.pageIndex, zoom: tab.zoom, fit: tab.fit))
             storeZoom(tab)
             tab.pageIndex = state.currentPage
-            watchRevision(tab)
+            watchRevision(tab, watching)
         } else {
             drawer.use(nil)
             bytes = []
@@ -162,14 +164,15 @@ public final class ViewerModel: DocumentViewer {
         tab.zoom = state.fit == .none ? state.zoom : 0
     }
 
-    private func watchRevision(_ watched: DocumentTab) {
+    // The registration lives in the watched tab, so it holds nothing strongly and a later show() retires it.
+    private func watchRevision(_ watched: DocumentTab, _ ticket: Int) {
         withObservationTracking {
             _ = watched.revision
-        } onChange: { [weak self] in
+        } onChange: { [weak self, weak watched] in
             Task { @MainActor in
-                guard let self, self.tab === watched else { return }
+                guard let self, let watched, self.watching == ticket, self.tab === watched else { return }
                 self.reload()
-                self.watchRevision(watched)
+                self.watchRevision(watched, ticket)
             }
         }
     }
@@ -341,7 +344,9 @@ public final class ViewerModel: DocumentViewer {
 
     public func geometry(_ page: Int) -> PageGeometry {
         if let known = geometries[page] { return known }
-        let made = PageGeometry(tab!.document.pages[page])
+        // The document can be ahead of the layout for the moment between a commit and the reload.
+        guard let pages = tab?.document.pages, page >= 0, page < pages.count else { return PageGeometry(PdfRect(0, 0, 1, 1), 0) }
+        let made = PageGeometry(pages[page])
         geometries[page] = made
         return made
     }
