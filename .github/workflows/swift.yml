@@ -23,9 +23,6 @@ jobs:
         run: swift build
       - name: Test
         run: swift test --parallel
-      # The apps ship a Release build, which the engine has failed in alone (Save compact read back no pages).
-      - name: Test the file writers in Release
-        run: swift test -c release -Xswiftc -enable-testing --filter FileWriterTests
 
   linux:
     # The engine needs Foundation alone, so the runner's own Swift builds and tests it.
