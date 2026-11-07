@@ -74,6 +74,37 @@ final class CoordinatedWriteTests: XCTestCase {
         XCTAssertFalse(report.contains { !$0.contains(" ok ") }, report.joined(separator: " | "))
     }
 
+    func test_compactStepsReport() throws {
+        var report: [String] = []
+        func step(_ name: String, _ body: () throws -> String) {
+            do { report.append("\(name) ok \(try body())") } catch { report.append("\(name) FAILED \(error)") }
+        }
+        let folder = scratch(self)
+        step("rewrite of a session") {
+            let session = try PdfEditSession.open(samplePdf())
+            let out = try session.document.saveRewrite(PdfSaveOptions(useObjectStreams: true, security: session.document.security))
+            return "pages=\(try PdfDocument.open(out).pages.count) length=\(out.count)"
+        }
+        step("session compact to a plain path") {
+            let session = try PdfEditSession.open(samplePdf())
+            try session.saveCompact(folder.appendingPathComponent("p.pdf").path)
+            return "done"
+        }
+        step("tab compact with the plain writer") {
+            let tab = DocumentTab(session: try PdfEditSession.open(samplePdf()), renderer: StubRenderer(), url: folder.appendingPathComponent("q.pdf"),
+                                  title: "q.pdf", writer: PlainFileWriter())
+            try tab.saveCompact(folder.appendingPathComponent("r.pdf"))
+            return "done"
+        }
+        step("tab compact twice") {
+            let session = try PdfEditSession.open(samplePdf())
+            try session.saveCompact(folder.appendingPathComponent("s.pdf").path)
+            try session.saveCompact(folder.appendingPathComponent("t.pdf").path)
+            return "done"
+        }
+        XCTAssertFalse(report.contains { $0.contains("FAILED") }, report.joined(separator: " | "))
+    }
+
     func test_saveWritesTheBytesAndKeepsTheFileInPlace() throws {
         let folder = scratch(self)
         let url = folder.appendingPathComponent("a.pdf")
