@@ -65,9 +65,9 @@ final class CoordinatedWriteTests: XCTestCase {
             let out = try PdfDocument.open(samplePdf()).saveRewrite(PdfSaveOptions(useObjectStreams: streams))
             do {
                 let back = try PdfDocument.open(out)
-                report.append("streams=\(streams) ok pages=\(back.pages.count) rebuilt=\(back.xrefRebuilt)")
+                report.append("streams=\(streams) ok pages=\(back.pages.count) repairs=\(back.repairs)")
             } catch {
-                let text = String(decoding: out.prefix(2500).map { $0 >= 32 && $0 < 127 || $0 == 10 ? $0 : 46 }, as: UTF8.self)
+                let text = String(decoding: (out.prefix(1200) + out.suffix(700)).map { $0 >= 32 && $0 < 127 || $0 == 10 ? $0 : 46 }, as: UTF8.self)
                 report.append("streams=\(streams) \(error) length=\(out.count) \(text)")
             }
         }
