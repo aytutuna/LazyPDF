@@ -21,29 +21,7 @@ final class MacBookmarks: Bookmarks {
     }
 
     func access(_ url: URL) -> FileAccess? {
-        url.startAccessingSecurityScopedResource() ? ScopedAccess(url) { $0.stopAccessingSecurityScopedResource() } : nil
+        SecurityScopedAccess.start(url)
     }
-}
-
-/// A started security-scoped grant. Each start has to be matched by one stop, so a second `stop` does nothing.
-final class ScopedAccess: FileAccess {
-    private let lock = NSLock()
-    private var end: ((URL) -> Void)?
-    private let url: URL
-
-    init(_ url: URL, end: @escaping (URL) -> Void) {
-        self.url = url
-        self.end = end
-    }
-
-    func stop() {
-        lock.lock()
-        let end = self.end
-        self.end = nil
-        lock.unlock()
-        end?(url)
-    }
-
-    deinit { stop() }
 }
 #endif

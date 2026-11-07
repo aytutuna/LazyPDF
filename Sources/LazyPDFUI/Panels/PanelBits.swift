@@ -26,25 +26,6 @@ struct BytesDocument: FileDocument {
     }
 }
 
-/// The system's grant to read a file outside the app's folders, held until the tab that opened it lets go.
-final class ScopedAccess: FileAccess {
-    private let url: URL
-    private var active = true
-
-    init?(_ url: URL) {
-        guard url.startAccessingSecurityScopedResource() else { return nil }
-        self.url = url
-    }
-
-    func stop() {
-        guard active else { return }
-        active = false
-        url.stopAccessingSecurityScopedResource()
-    }
-
-    deinit { stop() }
-}
-
 enum PanelImage {
     /// The page picture the engine drew (straight RGBA, opaque for a page) as an image; nil for an empty one.
     static func make(_ image: PdfRgbaImage) -> CGImage? {
