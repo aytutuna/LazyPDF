@@ -1,6 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 import LazyPDFApp
+import LazyPDFKit
 
 // Follows windows/LazyPDF.App/TabStripPanel.cs and MainWindow.Tabs.cs: Home, then the documents; the title, a dot while
 // there are unsaved changes, a close button, a drag to move a tab and a click of the middle button to close it.

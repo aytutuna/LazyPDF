@@ -1,6 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 import LazyPDFApp
+import LazyPDFKit
 
 // Follows windows/LazyPDF.App/HomeView.xaml(.cs): the jobs people come for as tiles, then the files opened last. A tile that
 // cannot be started stays a button, so a screen reader reads why; it starts nothing.

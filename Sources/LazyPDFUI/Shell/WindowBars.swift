@@ -1,6 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 import LazyPDFApp
+import LazyPDFKit
 
 // The info bar over the window and the status line under it (MainWindow.xaml: InfoBar and the StatusBar).
 

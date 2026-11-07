@@ -1,4 +1,5 @@
 import Foundation
+import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Tools/ToolCatalog.cs. The panels are made by the apps' own code, which looks them up by id,
 // so the catalog holds only what the shell lists.
