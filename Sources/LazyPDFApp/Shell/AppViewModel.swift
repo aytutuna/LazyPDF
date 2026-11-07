@@ -146,6 +146,7 @@ public final class AppViewModel {
 
     /// Opens the tool whose panel the inspector shows, or closes it when it is the open one.
     public func selectTool(_ id: String?) {
+        if let id, ToolCatalog.find(id) == nil { return }
         activeToolId = id == activeToolId ? nil : id
         dropAction()
         notifyAll()
