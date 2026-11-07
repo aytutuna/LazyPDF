@@ -14,33 +14,17 @@ enum MacPdfs {
         let content = "0 g 0 0 50 50 re f"
         let page = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] /Contents 4 0 R" + (unit.map { " /UserUnit \($0)" } ?? "") + " >>"
         let objects = ["<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>", page,
-                       "<< /Length \(content.utf8.count) >>
-stream
-\(content)
-endstream"]
-        var file = "%PDF-1.4
-"
+                       "<< /Length \(content.utf8.count) >>\nstream\n\(content)\nendstream"]
+        var file = "%PDF-1.4\n"
         var offsets: [Int] = []
         for (i, body) in objects.enumerated() {
             offsets.append(file.utf8.count)
-            file += "\(i + 1) 0 obj
-\(body)
-endobj
-"
+            file += "\(i + 1) 0 obj\n\(body)\nendobj\n"
         }
         let start = file.utf8.count
-        file += "xref
-0 \(objects.count + 1)
-0000000000 65535 f 
-"
-        for offset in offsets { file += String(format: "%010d 00000 n 
-", offset) }
-        file += "trailer
-<< /Size \(objects.count + 1) /Root 1 0 R >>
-startxref
-\(start)
-%%EOF
-"
+        file += "xref\n0 \(objects.count + 1)\n0000000000 65535 f \n"
+        for offset in offsets { file += String(format: "%010d 00000 n \n", offset) }
+        file += "trailer\n<< /Size \(objects.count + 1) /Root 1 0 R >>\nstartxref\n\(start)\n%%EOF\n"
         return Array(file.utf8)
     }
 
