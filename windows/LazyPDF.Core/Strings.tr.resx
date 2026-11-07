@@ -5623,6 +5623,9 @@
   <data name="Trust what Windows trusts" xml:space="preserve">
     <value>Windows'un güvendiklerine güven</value>
   </data>
+  <data name="Trust what the system trusts" xml:space="preserve">
+    <value>Sistemin güvendiklerine güven</value>
+  </data>
   <data name="Turkish ID numbers" xml:space="preserve">
     <value>T.C. kimlik numaraları</value>
   </data>
