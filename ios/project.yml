@@ -70,6 +70,9 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.lazypdf.lazypdf.tests
+        # The app's product name is LazyPDF, not its target name.
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/LazyPDF.app/LazyPDF
+        BUNDLE_LOADER: $(TEST_HOST)
         GENERATE_INFOPLIST_FILE: YES
         TARGETED_DEVICE_FAMILY: "1,2"
         TEST_TARGET_NAME: LazyPDFiOS
