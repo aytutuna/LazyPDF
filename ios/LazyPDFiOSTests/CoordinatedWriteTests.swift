@@ -68,12 +68,10 @@ final class CoordinatedWriteTests: XCTestCase {
                 report.append("streams=\(streams) ok pages=\(back.pages.count) rebuilt=\(back.xrefRebuilt)")
             } catch {
                 let text = String(decoding: out.prefix(2500).map { $0 >= 32 && $0 < 127 || $0 == 10 ? $0 : 46 }, as: UTF8.self)
-                report.append("streams=\(streams) \(error) length=\(out.count)
-\(text)")
+                report.append("streams=\(streams) \(error) length=\(out.count) \(text)")
             }
         }
-        XCTAssertFalse(report.contains { !$0.contains(" ok ") }, report.joined(separator: "
-"))
+        XCTAssertFalse(report.contains { !$0.contains(" ok ") }, report.joined(separator: " | "))
     }
 
     func test_saveWritesTheBytesAndKeepsTheFileInPlace() throws {
