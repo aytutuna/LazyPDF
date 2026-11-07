@@ -7,6 +7,13 @@ import LazyPDFKit
 // viewer belong to those tools and are not ported here; the mouse click that makes no box is the redact tool's too. The rest
 // checks what PageViewer does that the surface alone does not: the bar's state on the tab, the history, links, the pointer.
 
+// The viewer belongs to the main actor; a poll that ran on another thread would read its cache while tiles are filed in it.
+@MainActor
+private func waitFor(_ condition: () -> Bool, file: StaticString = #filePath, line: UInt = #line) async {
+    for _ in 0..<300 where !condition() { try? await Task.sleep(nanoseconds: 10_000_000) }
+    XCTAssertTrue(condition(), file: file, line: line)
+}
+
 @MainActor
 private final class RecordingTool: PagePointerTool {
     var calls: [(kind: String, pointer: PagePointer)] = []
@@ -357,7 +364,7 @@ final class ViewerModelTests: XCTestCase {
     private func pointOnFirstLine(_ viewer: ViewerModel, _ char: Int) async throws -> ViewPoint {
         let loaded = await viewer.text(0)
         let text = try XCTUnwrap(loaded)
-        await until { viewer.pageText(0) != nil }
+        await waitFor { viewer.pageText(0) != nil }
         let center = text.chars[char].quad.center
         let shown = viewer.geometry(0).toDisplay(center.x, center.y)
         return try XCTUnwrap(viewer.pageToView(0)).transform(ViewPoint(shown.x, shown.y))
@@ -444,7 +451,7 @@ final class ViewerModelTests: XCTestCase {
     func test_thePagesInViewGetTheirPictures() async throws {
         let (viewer, _) = try open(pages: 2)
 
-        await until { viewer.tilesPending == 0 && !viewer.drawing(of: 0).pictures.isEmpty }
+        await waitFor { viewer.tilesPending == 0 && !viewer.drawing(of: 0).pictures.isEmpty }
 
         let drawing = viewer.drawing(of: 0)
         XCTAssertFalse(drawing.failed)
@@ -472,7 +479,7 @@ final class ViewerModelTests: XCTestCase {
         try TestPdfs.retitle(tab.session, "New title")
 
         XCTAssertTrue(try tab.commit("Properties"))
-        await until { viewer.seenRevision == tab.revision }
+        await waitFor { viewer.seenRevision == tab.revision }
 
         XCTAssertEqual(viewer.pageIndex, 1)
         XCTAssertEqual(viewer.pageCount, 3)
@@ -483,11 +490,11 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.layers.layers.map(\.isOn), [true, true])
 
         viewer.setLayerVisible(TestPdfs.blackBox, false)
-        await until { viewer.layers.layers.first?.isOn == false }
+        await waitFor { viewer.layers.layers.first?.isOn == false }
 
         XCTAssertFalse(tab.isDirty)
         XCTAssertEqual(PdfLayers.read(tab.document).layers.map(\.isOn), [true, true])
         viewer.setLayerVisible(TestPdfs.blackBox, true)
-        await until { viewer.layers.layers.first?.isOn == true }
+        await waitFor { viewer.layers.layers.first?.isOn == true }
     }
 }

@@ -208,7 +208,7 @@ final class PageScrollView: NSScrollView {
 
     private func giveScreen() {
         let size = contentSize
-        viewer.setScreen(viewport: ViewSize(size.width, size.height), pixelsPerDip: window?.backingScaleFactor ?? 2)
+        viewer.setScreen(viewport: ViewSize(size.width, size.height), pixelsPerDip: Double(window?.backingScaleFactor ?? 2))
     }
 
     @objc private func clipMoved() {

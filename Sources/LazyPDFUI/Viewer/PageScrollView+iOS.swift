@@ -86,7 +86,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         super.layoutSubviews()
         canvas.frame = bounds
         scroll.frame = bounds
-        viewer.setScreen(viewport: ViewSize(bounds.width, bounds.height), pixelsPerDip: window?.screen.scale ?? traitCollection.displayScale)
+        viewer.setScreen(viewport: ViewSize(bounds.width, bounds.height), pixelsPerDip: Double(window?.screen.scale ?? traitCollection.displayScale))
     }
 
     override var canBecomeFirstResponder: Bool { true }
