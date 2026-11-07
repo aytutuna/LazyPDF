@@ -1,0 +1,405 @@
+#if canImport(SwiftUI)
+import SwiftUI
+import LazyPDFApp
+
+// Follows windows/LazyPDF.App/MainWindow.xaml and its partial files, on AppViewModel. Wide: the tab strip over a rail, the
+// side pane, the stage and the inspector, side by side. Narrow (the iPhone): the stage full screen with a document menu in
+// place of the tab strip, and the side panels and the tools as sheets.
+//
+// The three slots are filled in by the app: the stage shows a document, the side pane a panel of the rail, the inspector a
+// tool. Each is made again when the tab or the id changes (`id`), so a view can attach its model in onAppear and detach it
+// in onDisappear, as the shell of the Windows app does.
+
+public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
+    // Below this width the window is laid out for a phone.
+    private static var compactWidth: CGFloat { 700 }
+    // Below this width the side pane and the inspector do not both fit beside the stage: the pane gives way while a tool
+    // is open, and the inspector shows only for a tool.
+    private static var narrowWidth: CGFloat { 900 }
+    // Below this width the groups of the tool strip show their symbols only.
+    private static var iconsWidth: CGFloat { 1100 }
+
+    private let vm: AppViewModel
+    private let commands: ShellCommands
+    private let toolAction: (String) -> ToolAction?
+    private let stage: (DocumentTab) -> Stage
+    private let sidePane: (String, DocumentTab) -> SidePane
+    private let inspector: (String, DocumentTab) -> Inspector
+
+    @State private var sheet: LocalSheet?
+    @State private var compactPanel: String?
+    @State private var actionRunning = false
+    @State private var dropTargeted = false
+    @Environment(\.scenePhase) private var scenePhase
+
+    private enum LocalSheet: String, Identifiable {
+        case settings, about
+
+        var id: String { rawValue }
+    }
+
+    /// - Parameter toolAction: the pinned button of the tool's panel, if it has one.
+    public init(_ vm: AppViewModel, commands: ShellCommands = ShellCommands(),
+                toolAction: @escaping (String) -> ToolAction? = { _ in nil },
+                @ViewBuilder stage: @escaping (DocumentTab) -> Stage,
+                @ViewBuilder sidePane: @escaping (String, DocumentTab) -> SidePane,
+                @ViewBuilder inspector: @escaping (String, DocumentTab) -> Inspector) {
+        self.vm = vm
+        self.commands = commands
+        self.toolAction = toolAction
+        self.stage = stage
+        self.sidePane = sidePane
+        self.inspector = inspector
+    }
+
+    public var body: some View {
+        GeometryReader { proxy in
+            if proxy.size.width < Self.compactWidth {
+                compactLayout
+            } else {
+                regularLayout(width: proxy.size.width)
+            }
+        }
+        .overlay { cards }
+        .sheet(item: $sheet) { which in
+            switch which {
+            case .settings:
+                SettingsView(vm: vm, about: { sheet = .about }, done: { sheet = nil })
+            case .about:
+                AboutView(done: { sheet = nil })
+            }
+        }
+        .sheet(isPresented: Binding(get: { vm.passwordRequest != nil }, set: { if !$0 { vm.cancelPending() } })) {
+            if let request = vm.passwordRequest {
+                PasswordSheet(vm: vm, request: request)
+            }
+        }
+        .background { shortcuts }
+        .dropDestination(for: URL.self) { urls, _ in
+            let files = urls.filter(\.isFileURL)
+            if files.isEmpty { return false }
+            if let open = commands.openFiles {
+                open(files)
+            } else {
+                Task { await vm.open(files) }
+            }
+            return true
+        } isTargeted: { dropTargeted = $0 }
+        .preferredColorScheme(colorScheme)
+        .onAppear { vm.checkRecovery() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { vm.checkDisk() }
+        }
+    }
+
+    private var actions: FileActions { FileActions(vm: vm, commands: commands) }
+
+    private var colorScheme: ColorScheme? {
+        switch vm.appearance {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+
+    // The tab bar, the tool strip and the content are out of reach while a question is up or a job runs; the info bar and
+    // the status line stay, since Cancel is there.
+    private var frozen: Bool {
+        vm.isBusy || actionRunning || vm.closeQuestion != nil || vm.recoveryOffer != nil || vm.passwordRequest != nil
+    }
+
+    private func requestClose(_ tab: DocumentTab) {
+        if actionRunning {
+            vm.showNotice(L10n.t("Still working"), L10n.t("Wait for the job to end, or cancel it, then close."))
+            return
+        }
+        vm.requestClose(tab)
+    }
+
+    // MARK: Wide
+
+    private func regularLayout(width: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            InfoBar(vm: vm)
+            HStack(spacing: 8) {
+                TabStrip(vm: vm, close: requestClose)
+                if vm.documents.count > 1 {
+                    DocumentSwitcher(vm: vm, showsTitle: false)
+                        .menuStyle(.borderlessButton)
+                        .menuIndicator(.hidden)
+                        .fixedSize()
+                }
+                FileButtons(vm: vm, commands: commands) { sheet = .settings }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .disabled(frozen)
+            if let tab = vm.activeDocument {
+                ToolStrip(vm: vm, iconsOnly: width < Self.iconsWidth).disabled(frozen)
+                workspace(tab, narrow: width < Self.narrowWidth).disabled(frozen)
+            } else {
+                HomeScreen(vm: vm, chooseTile: chooseTile).disabled(frozen)
+            }
+            StatusBar(vm: vm)
+        }
+    }
+
+    private func workspace(_ tab: DocumentTab, narrow: Bool) -> some View {
+        let toolOpen = vm.activeTool != nil
+        return HStack(spacing: 0) {
+            Rail(vm: vm) { id in
+                // The pane has no room beside an open tool on a narrow window, so the tool gives way.
+                if narrow, let tool = vm.activeToolId { vm.selectTool(tool) }
+                if let id { vm.setSidePanel(id) } else { vm.toggleSidePanel() }
+            }
+            if let pane = vm.sidePanel, !(narrow && toolOpen) {
+                PaneFrame(symbol: nil, title: pane.title, closeHelp: L10n.t("Close the side panel"), close: { vm.setSidePanel(pane.id) }) {
+                    sidePane(pane.id, tab).id("\(tab.id)/\(pane.id)")
+                }
+                .frame(width: 260)
+                Divider()
+            }
+            stage(tab)
+                .id(tab.id)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .padding(EdgeInsets(top: 4, leading: 8, bottom: 8, trailing: 8))
+            if toolOpen || !narrow {
+                Divider()
+                inspectorPane(tab)
+                    .frame(width: 280)
+            }
+        }
+    }
+
+    @ViewBuilder private func inspectorPane(_ tab: DocumentTab) -> some View {
+        if let tool = vm.activeTool {
+            VStack(spacing: 0) {
+                PaneFrame(symbol: tool.symbol, title: tool.title, closeHelp: L10n.t("Close the tool"), close: { vm.selectTool(tool.id) }) {
+                    toolBody(tool, tab)
+                }
+                footer(tool)
+            }
+        } else {
+            PaneFrame(symbol: "info.circle", title: L10n.t("File"), closeHelp: nil, close: {}) {
+                DocumentSummary(tab: tab)
+            }
+        }
+    }
+
+    private func toolBody(_ tool: ToolInfo, _ tab: DocumentTab) -> some View {
+        ScrollView {
+            inspector(tool.id, tab)
+                .id("\(tab.id)/\(tool.id)")
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+        }
+        .accessibilityLabel(L10n.t("Tools"))
+    }
+
+    @ViewBuilder private func footer(_ tool: ToolInfo) -> some View {
+        if let action = toolAction(tool.id) {
+            ActionFooter(action: action, running: actionRunning) {
+                if actionRunning { return }
+                actionRunning = true
+                Task {
+                    await action.run()
+                    actionRunning = false
+                }
+            }
+        }
+    }
+
+    // MARK: Narrow
+
+    private var compactLayout: some View {
+        VStack(spacing: 0) {
+            InfoBar(vm: vm)
+            HStack(spacing: 8) {
+                DocumentSwitcher(vm: vm)
+                    .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
+                    .fixedSize()
+                Spacer(minLength: 0)
+                compactFileMenu
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .disabled(frozen)
+            Group {
+                if let tab = vm.activeDocument {
+                    stage(tab)
+                        .id(tab.id)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    HomeScreen(vm: vm, chooseTile: chooseTile)
+                }
+            }
+            .disabled(frozen)
+            .sheet(isPresented: toolSheetShown) {
+                if let tool = vm.activeTool, let tab = vm.activeDocument {
+                    toolSheet(tool, tab)
+                }
+            }
+            if vm.activeDocument != nil {
+                compactBar.disabled(frozen)
+            }
+            StatusBar(vm: vm)
+        }
+    }
+
+    private var compactFileMenu: some View {
+        Menu {
+            Button(L10n.t("Open a file")) { commands.open() }
+            Button(L10n.t("Save"), action: actions.save).disabled(vm.activeDocument == nil || vm.isBusy)
+            Button(L10n.t("Save as…"), action: actions.saveAs).disabled(vm.activeDocument == nil || vm.isBusy)
+            Button(L10n.t("Save compact…"), action: actions.saveCompact).disabled(vm.activeDocument == nil || vm.isBusy)
+            Divider()
+            Button(actions.undoHelp) { vm.undo() }.disabled(!vm.canUndo || vm.isBusy)
+            Button(actions.redoHelp) { vm.redo() }.disabled(!vm.canRedo || vm.isBusy)
+            Button(L10n.t("Print"), action: actions.print).disabled(vm.activeDocument == nil)
+            Divider()
+            Button(L10n.t("Settings")) { sheet = .settings }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+        }
+        .menuIndicator(.hidden)
+        .help(L10n.t("More ways to save"))
+        .accessibilityLabel(L10n.t("Settings"))
+    }
+
+    private var compactBar: some View {
+        HStack(spacing: 16) {
+            Menu {
+                ForEach(ToolCatalog.sidePanels, id: \.id) { panel in
+                    Button {
+                        compactPanel = panel.id
+                    } label: {
+                        Label(panel.title, systemImage: panel.symbol)
+                    }
+                }
+            } label: {
+                Image(systemName: "sidebar.left")
+            }
+            .menuIndicator(.hidden)
+            .accessibilityLabel(L10n.t("Side panels"))
+            Menu {
+                ForEach(ToolGroup.allCases, id: \.self) { group in
+                    Section(ToolCatalog.groupTitle(group)) {
+                        ForEach(ToolCatalog.tools.filter { $0.group == group }, id: \.id) { tool in
+                            Button {
+                                vm.selectTool(tool.id)
+                            } label: {
+                                Label(tool.title, systemImage: tool.symbol)
+                            }
+                        }
+                    }
+                }
+            } label: {
+                Image(systemName: "wrench.and.screwdriver")
+            }
+            .menuIndicator(.hidden)
+            .accessibilityLabel(L10n.t("Tools"))
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .overlay(alignment: .top) { Divider() }
+        .sheet(isPresented: Binding(get: { compactPanel != nil && vm.activeDocument != nil }, set: { if !$0 { compactPanel = nil } })) {
+            if let id = compactPanel, let pane = ToolCatalog.findSide(id), let tab = vm.activeDocument {
+                panelSheet(pane, tab)
+            }
+        }
+    }
+
+    private var toolSheetShown: Binding<Bool> {
+        Binding(get: { vm.activeTool != nil && vm.activeDocument != nil },
+                set: { if !$0, let tool = vm.activeToolId { vm.selectTool(tool) } })
+    }
+
+    private func panelSheet(_ pane: SidePanelInfo, _ tab: DocumentTab) -> some View {
+        NavigationStack {
+            sidePane(pane.id, tab)
+                .id("\(tab.id)/\(pane.id)")
+                .navigationTitle(pane.title)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(L10n.t("Done")) { compactPanel = nil }
+                    }
+                }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func toolSheet(_ tool: ToolInfo, _ tab: DocumentTab) -> some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                toolBody(tool, tab)
+                footer(tool)
+            }
+            .navigationTitle(tool.title)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(L10n.t("Done")) { vm.selectTool(tool.id) }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    // MARK: Both
+
+    private func chooseTile(_ id: String) {
+        if id == AppViewModel.openTile {
+            commands.open()
+        } else if id == AppViewModel.createTile {
+            commands.create()
+        } else if id == AppViewModel.batchTile {
+            commands.batch()
+        } else {
+            vm.startTile(id)
+        }
+    }
+
+    @ViewBuilder private var cards: some View {
+        if let tab = vm.closeQuestion {
+            CloseCard(tab: tab, save: { Task { await actions.saveAndClose(tab) } }, discard: { vm.close(tab) }, cancel: { vm.cancelClose() })
+        } else if let offer = vm.recoveryOffer {
+            RecoveryCard(titles: offer.map(\.meta.title), restore: { Task { await vm.restore() } }, discard: { vm.discardRecovery() })
+        } else if dropTargeted {
+            Label(L10n.t("Drop files to open them"), systemImage: "arrow.down.doc")
+                .font(.title3.bold())
+                .padding(.horizontal, 24)
+                .padding(.vertical, 16)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.accentColor, lineWidth: 2).padding(8))
+                .allowsHitTesting(false)
+        }
+    }
+
+    // Close the document, and go to the next or previous tab. Open, Save, Undo and the rest sit on the buttons.
+    private var shortcuts: some View {
+        Group {
+            Button("") { cycleTab(1) }
+                .keyboardShortcut(.tab, modifiers: .control)
+            Button("") { cycleTab(-1) }
+                .keyboardShortcut(.tab, modifiers: [.control, .shift])
+            Button("") {
+                if let tab = vm.activeDocument { requestClose(tab) }
+            }
+            .keyboardShortcut("w")
+        }
+        .disabled(frozen)
+        .opacity(0)
+        .frame(width: 0, height: 0)
+        .accessibilityHidden(true)
+    }
+
+    private func cycleTab(_ step: Int) {
+        let strip = vm.strip
+        guard let at = strip.firstIndex(where: { $0 === vm.activeTab }) else { return }
+        vm.select(strip[(at + step + strip.count) % strip.count])
+    }
+}
+#endif
