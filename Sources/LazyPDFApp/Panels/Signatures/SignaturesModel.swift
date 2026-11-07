@@ -1,0 +1,197 @@
+import Foundation
+import Observation
+import LazyPDFKit
+
+// Follows windows/LazyPDF.App/Panels/Signatures/SignaturesSidePanel.xaml.cs and SignaturesSidePanel.Trust.cs.
+//
+// A file opened with a certificate cannot be checked here: the tab keeps the choice, not the key, so the engine gets no
+// way in and the panel says the signatures could not be checked.
+
+/// The signatures of the file and what the engine found when it checked them. Choosing one shows the field; the details say
+/// what changed since, what is wrong and what could not be checked, and offer the signed version of the file.
+@MainActor
+@Observable
+public final class SignaturesModel: ToolPanelModel {
+    public private(set) var rows: [SignatureRow] = []
+
+    /// What stands in place of the list: that the check is running, that it failed, or that there is nothing to check.
+    public private(set) var note: String?
+
+    public private(set) var selected: Int?
+
+    /// What went wrong with the signed version, shown under its buttons.
+    public private(set) var versionProblem: String?
+
+    public private(set) var trustsSystem: Bool
+    public private(set) var trusted: [TrustRow]
+    public private(set) var trustNote: String?
+
+    var tab: DocumentTab?
+    var viewer: DocumentViewer?
+    var host: ToolHost?
+    @ObservationIgnored private let trust: SignatureTrust
+    @ObservationIgnored private var watch: ObservationWatch?
+    @ObservationIgnored private var ticket = 0
+
+    public init(trust: SignatureTrust) {
+        self.trust = trust
+        trustsSystem = trust.trustsSystem
+        trusted = trust.rows
+    }
+
+    public var action: ToolAction? { nil }
+
+    public var selectedRow: SignatureRow? { rows.first { $0.id == selected } }
+
+    public var canViewSigned: Bool { (selectedRow?.hasLaterRevisions ?? false) && !(tab?.document.isEncrypted ?? true) }
+
+    public var canSaveSigned: Bool { selectedRow?.hasLaterRevisions ?? false }
+
+    /// The line under the buttons for the signed version.
+    public var versionText: String? {
+        if let versionProblem { return versionProblem }
+        guard let row = selectedRow else { return nil }
+        if !row.hasLaterRevisions { return L10n.t("This is the signed version.") }
+        return tab?.document.isEncrypted == true ? L10n.t("A protected file cannot open as a copy. Save the signed version, then open it.") : nil
+    }
+
+    public func attach(_ tab: DocumentTab, _ viewer: DocumentViewer, _ host: ToolHost) {
+        self.tab = tab
+        self.viewer = viewer
+        self.host = host
+        watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.check() })
+        showTrust()
+        check()
+    }
+
+    public func detach() {
+        watch?.stop()
+        watch = nil
+        ticket += 1
+        rows = []
+        selected = nil
+        tab = nil
+        viewer = nil
+        host = nil
+    }
+
+    /// Checks the signatures of the file as it is; the task ends when the list is shown.
+    @discardableResult
+    public func check() -> Task<Void, Never> {
+        ticket += 1
+        let mine = ticket
+        guard let tab else { return Task {} }
+        show([], L10n.t("Checking the signatures"))
+        let bytes = tab.session.current
+        let password = tab.password
+        let options = trust.verifyOptions(password: password, now: PanelDates.now())
+        return Task {
+            let found = await Task.detached { () -> (reports: [SignatureReport], fields: [String: (page: Int, rect: PdfRect)])? in
+                do {
+                    return (try PdfSignatureVerifier.verify(bytes, options), try SignatureFields.locate(bytes, password))
+                } catch {
+                    return nil
+                }
+            }.value
+            guard mine == self.ticket, self.tab === tab else { return }
+            guard let found else {
+                self.show([], L10n.t("The signatures could not be checked."))
+                return
+            }
+            self.show(found.reports.map { self.row($0, found.fields) }, found.reports.isEmpty ? L10n.t("This file has no signatures.") : nil)
+            self.selected = self.rows.first?.id
+        }
+    }
+
+    public func select(_ id: Int?) {
+        selected = id
+        versionProblem = nil
+    }
+
+    /// Shows the field of the signature on its page.
+    public func go(_ row: SignatureRow) {
+        guard row.page >= 0, let area = row.area, let viewer else { return }
+        viewer.goToPage(row.page)
+        viewer.reveal(row.page, area)
+    }
+
+    /// Opens the file as it was when the picked signature closed it, as a copy.
+    public func viewSigned() async {
+        guard let tab, let host, let row = selectedRow else { return }
+        guard let bytes = SignedVersion.of(tab.session.current, row.report) else {
+            versionProblem = L10n.t("The signed version is not in the file's history.")
+            return
+        }
+        await host.openNew(bytes, title: L10n.t("{0} (signed by {1})", stem, row.title), password: nil, certificate: nil)
+    }
+
+    /// The signed version of the picked signature and the name to offer for it; nil when it is not in the history, which the
+    /// note then says.
+    public func signedVersionFile() -> (name: String, bytes: [UInt8])? {
+        guard let tab, let row = selectedRow else { return nil }
+        guard let bytes = SignedVersion.of(tab.session.current, row.report) else {
+            versionProblem = L10n.t("The signed version is not in the file's history.")
+            return nil
+        }
+        return (L10n.t("{0} (signed)", stem) + ".pdf", bytes)
+    }
+
+    public func signedVersionSaved(_ result: Result<URL, Error>) {
+        guard let host else { return }
+        switch result {
+        case .success(let url):
+            versionProblem = nil
+            host.setStatus(L10n.t("Signed version saved."))
+            host.showNotice(L10n.t("Signed version saved"), url.lastPathComponent, NoticeAction(L10n.t("Open it"), {
+                Task { await host.open(url, access: nil) }
+            }))
+        case .failure:
+            versionProblem = L10n.t("The file could not be saved. Check the folder and try again.")
+        }
+    }
+
+    public func setTrustsSystem(_ on: Bool) {
+        trust.setTrustsSystem(on)
+        showTrust()
+        check()
+    }
+
+    /// Adds the certificate in a file to those the user trusts.
+    public func addTrusted(_ bytes: [UInt8]) {
+        guard trust.add(bytes) else {
+            trustNote = L10n.t("That file is not a certificate. Choose a .cer or .crt file.")
+            return
+        }
+        trustNote = nil
+        showTrust()
+        check()
+    }
+
+    public func removeTrusted(_ row: TrustRow) {
+        trust.remove(row)
+        showTrust()
+        check()
+    }
+
+    private var stem: String {
+        URL(fileURLWithPath: tab?.title ?? "").deletingPathExtension().lastPathComponent
+    }
+
+    private func showTrust() {
+        trustsSystem = trust.trustsSystem
+        trusted = trust.rows
+    }
+
+    private func show(_ list: [SignatureRow], _ text: String?) {
+        rows = list
+        selected = nil
+        versionProblem = nil
+        note = text
+    }
+
+    private func row(_ report: SignatureReport, _ fields: [String: (page: Int, rect: PdfRect)]) -> SignatureRow {
+        guard let name = report.fieldName, let at = fields[name], let viewer else { return SignatureRow(report, page: -1, area: nil) }
+        let box = viewer.geometry(at.page).toDisplay(at.rect)
+        return SignatureRow(report, page: at.page, area: ViewRect(box.x, box.y, box.width, box.height))
+    }
+}

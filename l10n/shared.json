@@ -5506,6 +5506,9 @@
   "Trust what Windows trusts": {
     "tr": "Windows'un güvendiklerine güven"
   },
+  "Trust what the system trusts": {
+    "tr": "Sistemin güvendiklerine güven"
+  },
   "Turn": {
     "tr": "Döndür"
   },

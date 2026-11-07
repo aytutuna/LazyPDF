@@ -83,6 +83,7 @@ public final class AppViewModel {
     @ObservationIgnored var opening = Set<String>()
     @ObservationIgnored var warnedAboutDisk: [ObjectIdentifier: DiskStamp?] = [:]
     @ObservationIgnored var exiting = false
+    @ObservationIgnored var signingField: String?
     public internal(set) var closeQuestion: DocumentTab?
     public internal(set) var recent: [RecentItem] = []
     public internal(set) var recoveryOffer: [RecoveryEntry]?

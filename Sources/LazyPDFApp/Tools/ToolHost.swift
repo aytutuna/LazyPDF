@@ -46,6 +46,18 @@ public protocol ToolHost: AnyObject {
     /// Reads the tab's file from disk again and puts it in the tab's place, after a tool wrote the file; false when the
     /// tab was not replaced, and the info bar says why.
     func tryReload(_ tab: DocumentTab) async -> Bool
+
+    /// Opens the Certificates tool with the empty signature field of that name chosen as the place to sign.
+    func openSigning(_ field: String)
+
+    /// The field `openSigning` named, once: the tool asks for it when it is shown.
+    func takeSigningField() -> String?
+}
+
+extension ToolHost {
+    public func openSigning(_ field: String) {}
+
+    public func takeSigningField() -> String? { nil }
 }
 
 /// A tool's panel in the inspector, or a side panel on the rail: the state behind its view. The shell attaches it when
