@@ -1,6 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 import LazyPDFApp
+import LazyPDFKit
 
 // Follows windows/LazyPDF.App/MainWindow.xaml and its partial files, on AppViewModel. Wide: the tab strip over a rail, the
 // side pane, the stage and the inspector, side by side. Narrow (the iPhone): the stage full screen with a document menu in

@@ -11,9 +11,9 @@ final class AppInfoTests: XCTestCase {
     }
 
     func test_theVersionIsTheOneOfTheBundle() {
-        XCTAssertEqual(AppInfo.version(["CFBundleShortVersionString": "1.2.3"]), "1.2.3")
-        XCTAssertEqual(AppInfo.version([:]), "0.0.0")
-        XCTAssertEqual(AppInfo.version(nil), "0.0.0")
+        XCTAssertEqual(AppInfo.bundleVersion(["CFBundleShortVersionString": "1.2.3"]), "1.2.3")
+        XCTAssertEqual(AppInfo.bundleVersion([:]), "0.0.0")
+        XCTAssertEqual(AppInfo.bundleVersion(nil), "0.0.0")
     }
 
     func test_theCopyrightIsTheLicenceLine() {

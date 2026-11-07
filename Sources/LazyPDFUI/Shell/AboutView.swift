@@ -1,6 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 import LazyPDFApp
+import LazyPDFKit
 
 // The settings and About overlays of MainWindow.Overlays.cs. The Windows "Open with" switch is the platform shell's.
 

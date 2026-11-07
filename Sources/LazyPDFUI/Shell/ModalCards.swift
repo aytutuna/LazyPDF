@@ -1,6 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 import LazyPDFApp
+import LazyPDFKit
 
 // The overlays of MainWindow.Overlays.cs that stand over the window: the unsaved-changes question and the recovery offer.
 // The password question is a sheet (PasswordSheet) since it takes typing.

@@ -11,9 +11,9 @@ public enum AppInfo {
     public static let licence = "PolyForm Noncommercial 1.0.0"
 
     /// The version of the app's bundle.
-    public static var version: String { version(Bundle.main.infoDictionary) }
+    public static var version: String { bundleVersion(Bundle.main.infoDictionary) }
 
-    static func version(_ info: [String: Any]?) -> String {
+    static func bundleVersion(_ info: [String: Any]?) -> String {
         info?["CFBundleShortVersionString"] as? String ?? "0.0.0"
     }
 

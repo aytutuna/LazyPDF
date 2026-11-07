@@ -1,6 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 import LazyPDFApp
+import LazyPDFKit
 
 // The rail, the side pane and the inspector of MainWindow.xaml, and the file facts the inspector shows with no tool open
 // (MainWindow.Tools.cs: DocumentSummary).

@@ -1,6 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 import LazyPDFApp
+import LazyPDFKit
 
 // The file buttons of the tab bar and the tool strip under it (MainWindow.Files.cs, MainWindow.Tools.cs). The keyboard
 // shortcuts sit on the buttons, as the Windows accelerators sit on the window: Open, Save, Save as, Undo, Redo and Print.
