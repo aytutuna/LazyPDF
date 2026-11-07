@@ -30,8 +30,8 @@ extension AppViewModel {
     private func writePrintCopy(_ tab: DocumentTab) throws -> URL {
         let files = FileManager.default
         let yesterday = Date().addingTimeInterval(-86400)
-        for old in (try? files.contentsOfDirectory(at: printDirectory, includingPropertiesForKeys: [.creationDateKey])) ?? [] {
-            if let created = try? old.resourceValues(forKeys: [.creationDateKey]).creationDate, created < yesterday {
+        for old in (try? files.contentsOfDirectory(at: printDirectory, includingPropertiesForKeys: [.contentModificationDateKey])) ?? [] {
+            if let changed = try? old.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate, changed < yesterday {
                 try? files.removeItem(at: old)
             }
         }
