@@ -35,6 +35,7 @@ final class MacShell {
         vm.fileWriter = CoordinatedFileWriter()
         // TODO: Create and Batch come with the tools; until then their tiles stay off the Home screen.
         vm.hiddenTiles = [AppViewModel.createTile, AppViewModel.batchTile]
+        AttachmentsModel.deleteOpenedCopies(in: folders.openedAttachments)
         vm.exitRequested = { [unowned self] in self.finishExit() }
         commands = ShellCommands(open: { [unowned self] in self.openWithPanel() },
                                  saveAs: { [unowned self] in self.saveAs($0) },
