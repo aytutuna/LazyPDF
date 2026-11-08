@@ -406,7 +406,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         }
     }
 
-    // Close the document, and go to the next or previous tab. Open, Save, Undo and the rest sit on the buttons.
+    // Close the document, and go to the next or previous tab. The file commands are in the platform menu.
     private var shortcuts: some View {
         Group {
             Button("") { cycleTab(1) }
