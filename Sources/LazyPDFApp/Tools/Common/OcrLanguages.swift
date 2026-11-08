@@ -1,4 +1,5 @@
 import Foundation
+import LazyPDFKit
 #if canImport(Vision)
 import Vision
 #endif
