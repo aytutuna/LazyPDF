@@ -42,6 +42,8 @@ final class IOSShell {
         vm = AppViewModel(renderers: { PdfKitRenderer() }, codec: ImageIOCodec(), fonts: CoreTextFontSource(),
                           sisters: IOSSisterApps(), certificates: keys, bookmarks: IOSBookmarks(), folders: folders)
         vm.fileWriter = CoordinatedFileWriter()
+        // TODO: Create and Batch come with the tools; until then their tiles stay off the Home screen.
+        vm.hiddenTiles = [AppViewModel.createTile, AppViewModel.batchTile]
         // There is no exit to clean up at: what a kill left behind, copies of attachments among it, goes at launch.
         try? FileManager.default.removeItem(at: Self.staging)
         AttachmentsModel.deleteOpenedCopies(in: folders.openedAttachments)
