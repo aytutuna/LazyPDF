@@ -11,10 +11,18 @@ extension ViewerModel {
         return made
     }
 
-    func clearOverlays() {
-        let old = overlays.values
+    // Fields end with their text when the document they sat on stays open: a note being typed when the person changes tab.
+    func clearOverlays(keepText: Bool = false) {
+        let old = Array(overlays.values)
         overlays.removeAll()
-        for overlay in old { overlay.discard() }
+        for overlay in old { overlay.discard(keepText: keepText) }
+    }
+
+    public func endToolMarks(prefix: String) {
+        for overlay in Array(overlays.values) {
+            overlay.finishFields(prefix: prefix)
+            overlay.remove(prefix: prefix)
+        }
     }
 
     // The pages may have changed size, and a layer of a page that is gone has nothing to sit on.

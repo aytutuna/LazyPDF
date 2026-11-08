@@ -173,6 +173,16 @@ public struct OverlayItem {
     }
 }
 
+/// Where the caret goes when a field opens, which is also what the first key replaces.
+public enum FieldCaret {
+    /// Everything is selected, so typing replaces the text: a note or a label to rewrite.
+    case all
+    /// After the last character: a value to add to.
+    case end
+    /// At the character nearest `point` (page space): a field opened by a click inside its text.
+    case at(ViewPoint)
+}
+
 /// A text box on the page that takes the keyboard: a note being typed, a form field being filled. The page view puts a real
 /// text control over `area`, so the system's input methods, spelling and accessibility work. `text` follows what is typed.
 /// The field ends once: `commit` when it loses the focus or Return (or Command-Return for a multi-line one) is pressed,
@@ -181,7 +191,9 @@ public struct OverlayItem {
 public final class OverlayField {
     public let id: String
     public var area: ViewRect { didSet { touch() } }
-    public var text: String
+
+    /// Setting it changes what the control shows; typing in the control goes through `typed`.
+    public var text: String { didSet { if !typing { touch() } } }
     public var look: OverlayTextLook { didSet { touch() } }
 
     /// The text wraps at the width of `area` instead of growing to the right.
@@ -200,12 +212,26 @@ public final class OverlayField {
 
     public var onChange: ((String) -> Void)?
 
+    public var caret: FieldCaret
+
+    /// The characters show as dots: a password.
+    public var secure: Bool
+
+    /// The most characters the control takes; nil for no limit.
+    public var maxLength: Int?
+
+    /// Tab was pressed (`backwards` with Shift). With this set the key does not type a tab: the field decides, usually by
+    /// finishing and opening the next one. Nil leaves Tab to the control.
+    public var onTab: ((_ backwards: Bool) -> Void)?
+
     private let done: (String?) -> Void
     weak var overlay: PageOverlay?
     public private(set) var isClosed = false
+    private var typing = false
 
     public init(_ id: String, area: ViewRect, text: String = "", look: OverlayTextLook = OverlayTextLook(), wraps: Bool = true, multiline: Bool = false,
-                border: OverlayColor? = .accent, background: OverlayColor? = nil, label: String = "", done: @escaping (String?) -> Void) {
+                border: OverlayColor? = .accent, background: OverlayColor? = nil, label: String = "", caret: FieldCaret = .all,
+                secure: Bool = false, maxLength: Int? = nil, done: @escaping (String?) -> Void) {
         self.id = id
         self.area = area
         self.text = text
@@ -215,14 +241,26 @@ public final class OverlayField {
         self.border = border
         self.background = background
         self.label = label
+        self.caret = caret
+        self.secure = secure
+        self.maxLength = maxLength
         self.done = done
     }
 
     /// Typing in the control, from the page view.
     public func typed(_ text: String) {
         if isClosed || text == self.text { return }
+        typing = true
         self.text = text
+        typing = false
         onChange?(text)
+    }
+
+    /// Whether the control may replace `range` of `current` with `replacement`: not when that passes `maxLength`.
+    public func accepts(_ current: String, replacing range: NSRange, with replacement: String) -> Bool {
+        guard let maxLength else { return true }
+        let kept = (current as NSString).replacingCharacters(in: range, with: replacement)
+        return kept.count <= maxLength || replacement.isEmpty
     }
 
     /// Ends the field with `text` kept.
@@ -337,6 +375,11 @@ public final class PageOverlay {
         for field in fields where field.id.hasPrefix(prefix) { field.drop() }
     }
 
+    /// Ends every open field whose id starts with `prefix`; their `done` hears what was typed.
+    public func finishFields(prefix: String) {
+        for field in fields where field.id.hasPrefix(prefix) { field.finish() }
+    }
+
     func fieldClosed(_ field: OverlayField) {
         fields.removeAll { $0 === field }
         touch()
@@ -347,10 +390,12 @@ public final class PageOverlay {
         onChange?()
     }
 
-    /// The document went: open fields end without their text.
-    func discard() {
+    /// The document went: open fields end, with their text if the document is still open to take it.
+    func discard(keepText: Bool = false) {
         onChange = nil
-        for field in fields { field.drop() }
+        for field in fields {
+            if keepText { field.finish() } else { field.drop() }
+        }
         items.removeAll()
     }
 }

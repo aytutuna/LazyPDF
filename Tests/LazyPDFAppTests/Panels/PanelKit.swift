@@ -97,6 +97,13 @@ final class PanelViewer: DocumentViewer {
         return made
     }
 
+    func endToolMarks(prefix: String) {
+        for overlay in overlays.values {
+            overlay.finishFields(prefix: prefix)
+            overlay.remove(prefix: prefix)
+        }
+    }
+
     func pageToView(_ page: Int) -> ViewMatrix? { nil }
     func viewToPage(_ view: ViewPoint, nearest: Bool) -> PagePoint? { nil }
 

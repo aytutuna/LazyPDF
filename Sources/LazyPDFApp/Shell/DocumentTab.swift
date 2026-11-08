@@ -36,6 +36,9 @@ public final class DocumentTab: StripTab {
     /// False when the system cannot draw the file (it can still be edited and saved).
     public private(set) var canDraw: Bool
 
+    /// The tab was closed: its marks and fields have no document to go to.
+    @ObservationIgnored public private(set) var isDisposed = false
+
     /// Counts every change to the file's bytes (commit, undo, redo, save compact), so a viewer knows when to draw again.
     public private(set) var revision = 0
 
@@ -225,6 +228,7 @@ public final class DocumentTab: StripTab {
 
     /// Lets go of the renderer and removes the recovery copy: closing on purpose is not a crash.
     public func dispose() {
+        isDisposed = true
         renderer.close()
         recovery?.delete(id)
         access?.stop()

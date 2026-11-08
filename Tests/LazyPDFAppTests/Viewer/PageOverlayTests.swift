@@ -186,10 +186,90 @@ final class PageOverlayTests: XCTestCase {
         var heard: [String?] = []
         viewer.overlay(0).open(OverlayField("note", area: ViewRect(0, 0, 100, 40), text: "x") { heard.append($0) })
 
-        viewer.show(tab)
+        tab.dispose()
+        viewer.show(nil)
 
         XCTAssertEqual(heard.count, 1)
         XCTAssertNil(heard[0])
+    }
+
+    func test_aFieldKeepsItsTextWhenTheViewerLeavesADocumentThatStaysOpen() throws {
+        let (viewer, tab) = try open()
+        var heard: [String?] = []
+        let field = viewer.overlay(0).open(OverlayField("note", area: ViewRect(0, 0, 100, 40)) { heard.append($0) })
+        field.typed("typed")
+
+        viewer.show(nil)
+
+        XCTAssertEqual(heard, ["typed"])
+        XCTAssertFalse(tab.isDisposed)
+    }
+
+    func test_endingAToolsMarksFinishesItsFieldsAndRemovesItsItemsOnTheLayersThatExist() throws {
+        let (viewer, _) = try open()
+        var heard: [String?] = []
+        let layer = viewer.overlay(1)
+        layer.set(box("comment.a"))
+        layer.set(box("measure.a"))
+        layer.open(OverlayField("comment.note", area: ViewRect(0, 0, 10, 10), text: "kept") { heard.append($0) })
+        layer.open(OverlayField("measure.note", area: ViewRect(0, 0, 10, 10)) { _ in })
+
+        viewer.endToolMarks(prefix: "comment.")
+
+        XCTAssertEqual(heard, ["kept"])
+        XCTAssertEqual(layer.items.map(\.id), ["measure.a"])
+        XCTAssertEqual(layer.fields.map(\.id), ["measure.note"])
+        XCTAssertEqual(viewer.openFields.count, 1)
+    }
+
+    func test_endingAToolsMarksMakesNoLayerForAPageItNeverDrewOn() throws {
+        let (viewer, _) = try open()
+
+        viewer.endToolMarks(prefix: "comment.")
+
+        XCTAssertTrue(viewer.openFields.isEmpty)
+        XCTAssertEqual(viewer.overlay(2).items.count, 0)
+    }
+
+    func test_settingTheTextOfAFieldRedrawsAndTypingInItDoesNot() {
+        let layer = PageOverlay(page: 0, size: ViewSize(200, 300))
+        let field = layer.open(OverlayField("note", area: ViewRect(0, 0, 100, 40)) { _ in })
+        let before = layer.revision
+
+        field.text = "set"
+        XCTAssertGreaterThan(layer.revision, before)
+
+        let after = layer.revision
+        field.typed("typed")
+        XCTAssertEqual(layer.revision, after)
+        XCTAssertEqual(field.text, "typed")
+    }
+
+    func test_aFieldWithALimitRefusesWhatWouldPassIt() {
+        let field = OverlayField("pin", area: ViewRect(0, 0, 100, 40), maxLength: 4) { _ in }
+
+        XCTAssertTrue(field.accepts("123", replacing: NSRange(location: 3, length: 0), with: "4"))
+        XCTAssertFalse(field.accepts("1234", replacing: NSRange(location: 4, length: 0), with: "5"))
+        XCTAssertTrue(field.accepts("1234", replacing: NSRange(location: 0, length: 2), with: "98"))
+        XCTAssertTrue(field.accepts("1234", replacing: NSRange(location: 0, length: 4), with: ""))
+        let free = OverlayField("any", area: ViewRect(0, 0, 100, 40)) { _ in }
+        XCTAssertTrue(free.accepts("1234", replacing: NSRange(location: 4, length: 0), with: "5"))
+    }
+
+    func test_aFieldTakesTheCaretSecrecyAndTabItIsGiven() {
+        let point = ViewPoint(12, 3)
+        let field = OverlayField("pw", area: ViewRect(0, 0, 100, 40), caret: .at(point), secure: true) { _ in }
+        var tabs: [Bool] = []
+        field.onTab = { tabs.append($0) }
+
+        field.onTab?(true)
+
+        XCTAssertTrue(field.secure)
+        XCTAssertEqual(tabs, [true])
+        guard case .at(let kept) = field.caret else { return XCTFail("the caret was not kept") }
+        XCTAssertEqual(kept, point)
+        let plain = OverlayField("n", area: ViewRect(0, 0, 1, 1)) { _ in }
+        guard case .all = plain.caret else { return XCTFail("a field selects all by default") }
     }
 
     func test_fieldsLeaveByPrefix() {

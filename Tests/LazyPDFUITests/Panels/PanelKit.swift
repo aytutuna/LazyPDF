@@ -28,6 +28,7 @@ final class PanelViewer: DocumentViewer {
     var layers = LayerSet(layers: [], order: [])
     var search = ViewerSearch(source: { Task { nil } }, startPage: { 0 })
 
+    @ObservationIgnored var shows = 0
     @ObservationIgnored var sent: [Int] = []
     @ObservationIgnored var revealed: [(page: Int, area: ViewRect)] = []
     @ObservationIgnored var followed: [PdfAction?] = []
@@ -50,6 +51,7 @@ final class PanelViewer: DocumentViewer {
     var hasSelection: Bool { false }
 
     func show(_ tab: DocumentTab?) {
+        shows += 1
         self.tab = tab
         layers = tab.map { PdfLayers.read($0.document) } ?? LayerSet(layers: [], order: [])
     }
@@ -95,6 +97,13 @@ final class PanelViewer: DocumentViewer {
         let made = PageOverlay(page: page, size: pageSize(page))
         overlays[page] = made
         return made
+    }
+
+    func endToolMarks(prefix: String) {
+        for overlay in overlays.values {
+            overlay.finishFields(prefix: prefix)
+            overlay.remove(prefix: prefix)
+        }
     }
 
     func pageToView(_ page: Int) -> ViewMatrix? { nil }
@@ -144,6 +153,9 @@ final class RecordingHost: ToolHost {
     var openedNew: [(pdf: [UInt8], title: String)] = []
     var isDocumentBusy = false
     var certificatesAsked: [CertificateChoice] = []
+    var stageHolds: [Bool] = []
+
+    func holdStage(_ on: Bool) { stageHolds.append(on) }
 
     func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate? {
         certificatesAsked.append(choice)

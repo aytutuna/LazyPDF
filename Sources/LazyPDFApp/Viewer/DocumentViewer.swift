@@ -69,12 +69,19 @@ public enum PointerCursor: Sendable {
 }
 
 /// A tool that takes the pointer from the viewer: a press, moves with `pressed` set for the same page, then a release, which
-/// always arrives. Moves with nothing pressed arrive for the page under the pointer. Secondary clicks, scrolling and the
-/// keyboard stay with the viewer.
+/// always arrives. Moves with nothing pressed arrive for the page under a mouse pointer; a finger gives none. Secondary
+/// clicks and scrolling stay with the viewer, and so does the keyboard except for the keys `key` takes.
 @MainActor
 public protocol PagePointerTool: AnyObject {
     /// The cursor over the pages; nil for the arrow. Only the Mac shows it.
     var cursor: PointerCursor? { get }
+
+    /// Whether a touch that lands here is the tool's. A finger the tool does not take scrolls the page, so a tool whose
+    /// targets are small (a check box, a handle) answers true only over them. The Mac asks nothing.
+    func takes(_ pointer: PagePointer) -> Bool
+
+    /// A key the tool uses (Delete, Escape): true if it was taken, else the viewer gets it.
+    func key(_ key: ViewerKey, modifiers: PointerModifiers) -> Bool
 
     func press(_ pointer: PagePointer)
     func move(_ pointer: PagePointer)
@@ -82,6 +89,12 @@ public protocol PagePointerTool: AnyObject {
 
     /// Escape was pressed during a press, or the tool was replaced: drop what was started.
     func cancel()
+}
+
+extension PagePointerTool {
+    public func takes(_ pointer: PagePointer) -> Bool { true }
+
+    public func key(_ key: ViewerKey, modifiers: PointerModifiers) -> Bool { false }
 }
 
 /// A selected stretch of one page: its characters, their text and their boxes in PDF user space (what annotations take
@@ -186,6 +199,10 @@ public protocol DocumentViewer: AnyObject {
 
     /// The layer a tool draws on for a page: made on first use and kept for as long as the document is shown.
     func overlay(_ page: Int) -> PageOverlay
+
+    /// Ends a tool's marks: the fields whose id starts with `prefix` finish with the text typed so far and the items with
+    /// that prefix go, on the layers that exist. A layer is not made for a page the tool never drew on.
+    func endToolMarks(prefix: String)
 
     /// What dragging does. Setting it also drops any `pointerTool`.
     var mode: PointerMode { get set }

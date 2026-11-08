@@ -7,13 +7,15 @@ import LazyPDFKit
 
 /// A key the pages answer to.
 public enum ViewerKey {
-    case up, down, left, right, pageUp, pageDown, space, home, end, enter, escape
+    case up, down, left, right, pageUp, pageDown, space, home, end, enter, escape, delete, backspace
 }
 
 extension ViewerModel {
     private static let clickSlop = 4.0
 
-    public func pointerDown(_ at: ViewPoint, clicks: Int = 1, modifiers: PointerModifiers = []) {
+    /// A finger (`touch`) is never hovering, so the tool hears no moves between its presses.
+    public func pointerDown(_ at: ViewPoint, clicks: Int = 1, modifiers: PointerModifiers = [], touch: Bool = false) {
+        touching = touch
         guard tab != nil else { return }
         let hit = state.hit(at)
         down = at
@@ -65,12 +67,20 @@ extension ViewerModel {
         endDrag()
         if was == .pan || was == .select, !moved, let link = downLink { followLink(link) }
         hover(at, modifiers)
+        touching = false
+    }
+
+    /// Whether the tool wants a finger that lands at `at`; false over no page or with no tool.
+    public func toolTakes(_ at: ViewPoint) -> Bool {
+        guard let tool, let over = state.hit(at) else { return false }
+        return tool.takes(pointer(over.page, over.point, at, 1, true, []))
     }
 
     /// The pointer was taken away while the button was down (another window, a popup): the tool gets no release.
     public func pointerCancel() {
         if drag == .tool { tool?.cancel() }
         endDrag()
+        touching = false
     }
 
     private func pointer(_ page: Int, _ point: ViewPoint, _ view: ViewPoint, _ clicks: Int, _ pressed: Bool, _ modifiers: PointerModifiers) -> PagePointer {
@@ -86,6 +96,7 @@ extension ViewerModel {
 
     // The cursor over what is under the pointer: a link, text to select, or the tool's own.
     private func hover(_ at: ViewPoint, _ modifiers: PointerModifiers) {
+        if touching { return }
         if let tool {
             cursor = tool.cursor
             if let over = state.hit(at), state.pageMatrix(over.page) != nil {
@@ -128,6 +139,7 @@ extension ViewerModel {
     /// A key on the pages. False when the viewer has no use for it.
     @discardableResult
     public func key(_ key: ViewerKey, modifiers: PointerModifiers = []) -> Bool {
+        if let tool, tool.key(key, modifiers: modifiers) { return true }
         if placeWithKeys(key, modifiers) { return true }
         let shift = modifiers.contains(.shift)
         let big = !modifiers.isDisjoint(with: [.command, .option, .control])
@@ -156,7 +168,7 @@ extension ViewerModel {
             } else {
                 clearSelection()
             }
-        case .enter: return false
+        case .enter, .delete, .backspace: return false
         }
         return true
     }

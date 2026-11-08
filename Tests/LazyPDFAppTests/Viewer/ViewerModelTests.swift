@@ -18,7 +18,17 @@ private func waitFor(_ condition: () -> Bool, file: StaticString = #filePath, li
 private final class RecordingTool: PagePointerTool {
     var calls: [(kind: String, pointer: PagePointer)] = []
     var cancelled = false
+    var takesAll = true
+    var usedKeys: [ViewerKey] = []
+    var keysTaken: Set<ViewerKey> = []
     var cursor: PointerCursor? { nil }
+
+    func takes(_ pointer: PagePointer) -> Bool { takesAll }
+
+    func key(_ key: ViewerKey, modifiers: PointerModifiers) -> Bool {
+        usedKeys.append(key)
+        return keysTaken.contains(key)
+    }
 
     func press(_ pointer: PagePointer) { calls.append(("press", pointer)) }
     func move(_ pointer: PagePointer) { calls.append(("move", pointer)) }
@@ -315,6 +325,78 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertTrue(tool.calls[0].pointer.modifiers.contains(.shift))
         XCTAssertTrue(tool.calls[0].pointer.pressed)
         XCTAssertFalse(tool.calls[2].pointer.pressed)
+    }
+
+    func test_aFingerGetsNoMovesBetweenPresses() throws {
+        let (viewer, _) = try open()
+        let tool = RecordingTool()
+        viewer.pointerTool = tool
+        let at = try XCTUnwrap(viewer.pageToView(0)).transform(ViewPoint(50, 50))
+
+        viewer.pointerDown(at, touch: true)
+        viewer.pointerMove(ViewPoint(at.x + 10, at.y))
+        viewer.pointerUp(ViewPoint(at.x + 10, at.y))
+
+        XCTAssertEqual(tool.calls.map(\.kind), ["press", "move", "release"])
+        XCTAssertTrue(tool.calls[1].pointer.pressed)
+    }
+
+    func test_aFingerThatLandsBetweenPagesGivesTheToolNothing() throws {
+        let (viewer, _) = try open()
+        let tool = RecordingTool()
+        viewer.pointerTool = tool
+
+        viewer.pointerDown(ViewPoint(-5, -5), touch: true)
+        viewer.pointerMove(ViewPoint(-4, -4))
+        viewer.pointerUp(ViewPoint(-4, -4))
+
+        XCTAssertTrue(tool.calls.isEmpty)
+    }
+
+    func test_aMouseHoversAgainAfterAFingerHasGone() throws {
+        let (viewer, _) = try open()
+        let tool = RecordingTool()
+        viewer.pointerTool = tool
+        let at = try XCTUnwrap(viewer.pageToView(0)).transform(ViewPoint(50, 50))
+        viewer.pointerDown(at, touch: true)
+        viewer.pointerUp(at)
+        tool.calls.removeAll()
+
+        viewer.pointerMove(at)
+
+        XCTAssertEqual(tool.calls.map(\.kind), ["move"])
+        XCTAssertFalse(tool.calls[0].pointer.pressed)
+    }
+
+    func test_theToolSaysWhetherItTakesAFingerAtAPlace() throws {
+        let (viewer, _) = try open()
+        let tool = RecordingTool()
+        let at = try XCTUnwrap(viewer.pageToView(0)).transform(ViewPoint(50, 50))
+        XCTAssertFalse(viewer.toolTakes(at))
+
+        viewer.pointerTool = tool
+        XCTAssertTrue(viewer.toolTakes(at))
+        tool.takesAll = false
+        XCTAssertFalse(viewer.toolTakes(at))
+        tool.takesAll = true
+        XCTAssertFalse(viewer.toolTakes(ViewPoint(-5, -5)))
+        XCTAssertTrue(tool.calls.isEmpty)
+    }
+
+    func test_theToolIsOfferedAKeyFirstAndTheViewerGetsWhatItLeaves() throws {
+        let (viewer, _) = try open(pages: 3)
+        let tool = RecordingTool()
+        tool.keysTaken = [.delete, .escape]
+        viewer.pointerTool = tool
+        viewer.showFind()
+
+        XCTAssertTrue(viewer.key(.delete))
+        XCTAssertTrue(viewer.key(.escape))
+        XCTAssertTrue(viewer.findVisible)
+        XCTAssertTrue(viewer.key(.pageDown))
+        XCTAssertFalse(viewer.key(.backspace))
+
+        XCTAssertEqual(tool.usedKeys, [.delete, .escape, .pageDown, .backspace])
     }
 
     func test_escapeDuringAToolPressCancelsIt() throws {

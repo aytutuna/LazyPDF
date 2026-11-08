@@ -59,12 +59,16 @@ public final class ViewerModel: DocumentViewer {
     @ObservationIgnored var downLink: PdfLink?
     @ObservationIgnored var moved = false
     @ObservationIgnored var autoScroll: Task<Void, Never>?
+    @ObservationIgnored var touching = false
 
     /// The view should scroll to `offset` and be as big as `extent`: set after anything but the view's own scrolling.
     @ObservationIgnored public var onScroll: (() -> Void)?
 
     /// Something drawn changed: a tile came, a highlight moved.
     @ObservationIgnored public var onRedraw: (() -> Void)?
+
+    /// A pointer tool was taken or given back, for a view that handles touches differently while one is set.
+    @ObservationIgnored public var onToolChange: (() -> Void)?
 
     public internal(set) var tab: DocumentTab?
 
@@ -107,7 +111,7 @@ public final class ViewerModel: DocumentViewer {
 
     public func show(_ tab: DocumentTab?) {
         endPointerTool()
-        clearOverlays()
+        clearOverlays(keepText: self.tab.map { !$0.isDisposed } ?? false)
         watching += 1
         self.tab = tab
         history.clear()
@@ -374,6 +378,7 @@ public final class ViewerModel: DocumentViewer {
             endPointerTool()
             tool = newValue
             cursor = newValue?.cursor
+            onToolChange?()
         }
     }
 
