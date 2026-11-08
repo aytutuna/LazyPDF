@@ -38,6 +38,11 @@ struct FileActions {
         vm.print()
     }
 
+    func share() {
+        guard let tab = vm.activeDocument else { return }
+        commands.share?(tab)
+    }
+
     // Cmd+Z belongs to the text being typed in while there is one, as the Windows window skips Z and Y for a text box.
     func undo() {
         if !EditFocus.undoInText(redo: false) { vm.undo() }
@@ -91,6 +96,9 @@ struct FileButtons: View {
                     .keyboardShortcut("s", modifiers: [.command, .shift])
                 Button(L10n.t("Save compact…"), action: actions.saveCompact)
                     .help(L10n.t("Writes the file again without its history of changes."))
+                if commands.share != nil {
+                    Button(L10n.t("Share"), action: actions.share)
+                }
             } label: {
                 Image(systemName: "chevron.down").font(.caption)
             }

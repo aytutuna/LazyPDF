@@ -179,6 +179,12 @@ extension AppViewModel {
         return meta.originalPath.map { URL(fileURLWithPath: $0) }
     }
 
+    /// Waits until the copies queued by the latest edits are on disk; the iPhone and iPad shell calls it when the app goes to
+    /// the background, where it can be ended without a word.
+    public func flushRecovery() {
+        recovery.flush()
+    }
+
     public func discardRecovery() {
         for entry in recoveryOffer ?? [] { recovery.delete(entry.id) }
         recoveryOffer = nil

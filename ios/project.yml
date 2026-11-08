@@ -86,6 +86,8 @@ targets:
     deploymentTarget: "18.0"
     sources:
       - path: LazyPDFiOSUITests
+      - path: ../Tests/Fixtures/golden/text/text-pages.pdf
+        buildPhase: resources
     dependencies:
       - target: LazyPDFiOS
     settings:

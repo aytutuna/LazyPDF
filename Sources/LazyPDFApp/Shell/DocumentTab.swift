@@ -217,6 +217,12 @@ public final class DocumentTab: StripTab {
         old.access = nil
     }
 
+    /// Keeps the grant for the file the tab was just saved to and ends the one for the file it came from.
+    public func take(_ access: FileAccess?) {
+        self.access?.stop()
+        self.access = access
+    }
+
     /// Lets go of the renderer and removes the recovery copy: closing on purpose is not a crash.
     public func dispose() {
         renderer.close()

@@ -280,6 +280,9 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             Button(L10n.t("Save"), action: actions.save).disabled(vm.activeDocument == nil || vm.isBusy)
             Button(L10n.t("Save as…"), action: actions.saveAs).disabled(vm.activeDocument == nil || vm.isBusy)
             Button(L10n.t("Save compact…"), action: actions.saveCompact).disabled(vm.activeDocument == nil || vm.isBusy)
+            if commands.share != nil {
+                Button(L10n.t("Share"), action: actions.share).disabled(vm.activeDocument == nil)
+            }
             Divider()
             Button(actions.undoHelp) { vm.undo() }.disabled(!vm.canUndo || vm.isBusy)
             Button(actions.redoHelp) { vm.redo() }.disabled(!vm.canRedo || vm.isBusy)

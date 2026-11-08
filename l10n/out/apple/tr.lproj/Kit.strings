@@ -59,6 +59,7 @@
 "An ICC profile stream has no usable /N." = "Bir ICC profil akışında kullanılabilir /N yok.";
 "An XMP packet that could not be read" = "Okunamayan bir XMP paketi";
 "An additional-actions dictionary has the key /{0}, which is not allowed." = "Ek eylemler sözlüğünde izin verilmeyen /{0} anahtarı var.";
+"An address cannot open a file here. Share the file to Lazy PDF or open it from Files." = "Bir adres burada dosya açamaz. Dosyayı Lazy PDF ile paylaşın veya Dosyalar'dan açın.";
 "An annotation has /C or /IC and the output intent is not an RGB profile." = "Bir ek açıklamada /C ya da /IC var ve çıktı amacı RGB profili değil.";
 "An annotation has no subtype." = "Bir ek açıklamanın alt türü yok.";
 "An array has {0} elements; the limit is 8191." = "Bir dizide {0} öğe var; sınır 8191.";
@@ -104,6 +105,7 @@
 "Cancelled." = "İptal edildi.";
 "Catalog" = "Katalog";
 "Certificate from {0}." = "Sertifikayı veren: {0}.";
+"Certificate not imported" = "Sertifika içe aktarılmadı";
 "Certificate was not valid when signing" = "Sertifika imza sırasında geçerli değildi";
 "Certificate was revoked" = "Sertifika iptal edildi";
 "Certificates" = "Sertifikalar";
@@ -126,6 +128,7 @@
 "Check the file against PDF/A and convert it." = "Dosyayı PDF/A'ya göre denetleyin ve dönüştürün.";
 "Check the file for screen readers and fix what is missing." = "Dosyayı ekran okuyucular için denetleyin ve eksikleri giderin.";
 "Check the file with the program that signed it." = "Dosyayı imzalayan programla denetleyin.";
+"Check the password, and that the file holds a certificate with its private key." = "Parolayı ve dosyanın özel anahtarlı bir sertifika içerdiğini denetleyin.";
 "Checking the signatures" = "İmzalar denetleniyor";
 "Choose a certificate" = "Sertifika seçin";
 "Clean for sharing" = "Paylaşım için temizle";
@@ -221,6 +224,7 @@
 "File is open" = "Dosya açık";
 "File names and paths" = "Dosya adları ve yolları";
 "File not found" = "Dosya bulunamadı";
+"File not opened" = "Dosya açılmadı";
 "File overhead" = "Dosya yükü";
 "File structure is damaged" = "Dosya yapısı hasarlı";
 "Files carried inside this one." = "Bu dosyanın içinde taşınan dosyalar.";
@@ -232,6 +236,7 @@
 "Filter" = "Filtre";
 "Filter by text or author" = "Metne veya yazara göre süz";
 "Filter comments" = "Yorumları süz";
+"Find" = "Bul";
 "Fit" = "Sığdır";
 "Fit page" = "Sayfaya sığdır";
 "Fit width" = "Genişliğe sığdır";
@@ -273,6 +278,7 @@
 "Highlight" = "Vurgu";
 "Highlight, draw and leave notes on the pages." = "Sayfaları vurgulayın, üzerine çizin ve not bırakın.";
 "Home" = "Ana sayfa";
+"Import" = "İçe aktar";
 "Import a certificate…" = "Sertifika içe aktar…";
 "Insert text" = "Metin ekle";
 "Invisible text" = "Görünmez metin";
@@ -405,6 +411,7 @@
 "Parts of the pages that can be shown or hidden." = "Sayfaların gösterilebilen ya da gizlenebilen parçaları.";
 "Password" = "Parola";
 "Password needed" = "Parola gerekli";
+"Password of the certificate file" = "Sertifika dosyasının parolası";
 "Password protected" = "Parola korumalı";
 "Picture" = "Resim";
 "Picture moved or resized" = "Resim taşındı ya da yeniden boyutlandırıldı";
@@ -501,6 +508,7 @@
 "Set status" = "Durumu ayarla";
 "Settings" = "Ayarlar";
 "Shadings, spot colours and patterns were left in colour." = "Gölgelendirmeler, özel renkler ve desenler renkli bırakıldı.";
+"Share" = "Paylaş";
 "Show cover page" = "Kapak sayfasını göster";
 "Show or hide the side panel" = "Yan paneli göster ya da gizle";
 "Show status" = "Durumu göster";

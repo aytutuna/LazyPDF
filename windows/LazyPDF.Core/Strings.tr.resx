@@ -388,6 +388,9 @@
   <data name="An additional-actions dictionary has the key /{0}, which is not allowed." xml:space="preserve">
     <value>Ek eylemler sözlüğünde izin verilmeyen /{0} anahtarı var.</value>
   </data>
+  <data name="An address cannot open a file here. Share the file to Lazy PDF or open it from Files." xml:space="preserve">
+    <value>Bir adres burada dosya açamaz. Dosyayı Lazy PDF ile paylaşın veya Dosyalar'dan açın.</value>
+  </data>
   <data name="An annotation has /C or /IC and the output intent is not an RGB profile." xml:space="preserve">
     <value>Bir ek açıklamada /C ya da /IC var ve çıktı amacı RGB profili değil.</value>
   </data>
@@ -721,6 +724,9 @@
   <data name="Certificate from {0}." xml:space="preserve">
     <value>Sertifikayı veren: {0}.</value>
   </data>
+  <data name="Certificate not imported" xml:space="preserve">
+    <value>Sertifika içe aktarılmadı</value>
+  </data>
   <data name="Certificate not opened" xml:space="preserve">
     <value>Sertifika açılamadı</value>
   </data>
@@ -879,6 +885,9 @@
   </data>
   <data name="Check the name and the size of the field, then try again." xml:space="preserve">
     <value>Alanın adını ve boyutunu kontrol edin, sonra yeniden deneyin.</value>
+  </data>
+  <data name="Check the password, and that the file holds a certificate with its private key." xml:space="preserve">
+    <value>Parolayı ve dosyanın özel anahtarlı bir sertifika içerdiğini denetleyin.</value>
   </data>
   <data name="Checking the file" xml:space="preserve">
     <value>Dosya denetleniyor</value>
@@ -1740,6 +1749,9 @@
   </data>
   <data name="File not found" xml:space="preserve">
     <value>Dosya bulunamadı</value>
+  </data>
+  <data name="File not opened" xml:space="preserve">
+    <value>Dosya açılmadı</value>
   </data>
   <data name="File not split" xml:space="preserve">
     <value>Dosya bölünemedi</value>
@@ -3354,6 +3366,9 @@
   </data>
   <data name="Password of the PFX file" xml:space="preserve">
     <value>PFX dosyasının parolası</value>
+  </data>
+  <data name="Password of the certificate file" xml:space="preserve">
+    <value>Sertifika dosyasının parolası</value>
   </data>
   <data name="Password of the other file" xml:space="preserve">
     <value>Diğer dosyanın parolası</value>

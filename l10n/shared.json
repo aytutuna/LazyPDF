@@ -6572,5 +6572,20 @@
   },
   "No certificate with a private key was found. Import one from a .p12 or .pfx file.": {
     "tr": "Özel anahtarlı sertifika bulunamadı. Bir .p12 veya .pfx dosyasından içe aktarın."
+  },
+  "File not opened": {
+    "tr": "Dosya açılmadı"
+  },
+  "An address cannot open a file here. Share the file to Lazy PDF or open it from Files.": {
+    "tr": "Bir adres burada dosya açamaz. Dosyayı Lazy PDF ile paylaşın veya Dosyalar'dan açın."
+  },
+  "Password of the certificate file": {
+    "tr": "Sertifika dosyasının parolası"
+  },
+  "Certificate not imported": {
+    "tr": "Sertifika içe aktarılmadı"
+  },
+  "Check the password, and that the file holds a certificate with its private key.": {
+    "tr": "Parolayı ve dosyanın özel anahtarlı bir sertifika içerdiğini denetleyin."
   }
 }
