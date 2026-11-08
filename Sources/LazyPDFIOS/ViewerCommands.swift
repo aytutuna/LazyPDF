@@ -1,5 +1,6 @@
 #if os(iOS)
 import SwiftUI
+import LazyPDFKit
 import LazyPDFApp
 import LazyPDFUI
 
