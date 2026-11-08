@@ -2,7 +2,7 @@ import Foundation
 import LazyPDFKit
 
 // Twin of windows/LazyPDF.App/Viewer/IDocumentViewer.cs, without the WPF element: the views show a viewer, they are not it.
-// TODO: Overlay(page) and FullScreen come with the tools that need them.
+// FullScreen is left to the window; no tool asks for it.
 
 /// Which tool the pointer is, when no `DocumentViewer.pointerTool` has taken it.
 public enum PointerMode: Sendable {
@@ -183,6 +183,9 @@ public protocol DocumentViewer: AnyObject {
     func geometry(_ page: Int) -> PageGeometry
 
     var viewRevision: Int { get }
+
+    /// The layer a tool draws on for a page: made on first use and kept for as long as the document is shown.
+    func overlay(_ page: Int) -> PageOverlay
 
     /// What dragging does. Setting it also drops any `pointerTool`.
     var mode: PointerMode { get set }

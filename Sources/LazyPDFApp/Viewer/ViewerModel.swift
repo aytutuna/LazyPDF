@@ -36,6 +36,9 @@ public final class ViewerModel: DocumentViewer {
     @ObservationIgnored var displayRenderer: DocumentRenderer?
     @ObservationIgnored var layerTicket = 0
 
+    // Marks of the tools
+    @ObservationIgnored var overlays: [Int: PageOverlay] = [:]
+
     // Text
     @ObservationIgnored let selected = ViewerSelection()
     @ObservationIgnored var textTask: Task<TextSource?, Never>?
@@ -104,6 +107,7 @@ public final class ViewerModel: DocumentViewer {
 
     public func show(_ tab: DocumentTab?) {
         endPointerTool()
+        clearOverlays()
         watching += 1
         self.tab = tab
         history.clear()
@@ -150,6 +154,7 @@ public final class ViewerModel: DocumentViewer {
             changed.map { RevisionDiff.touches(document, document.pages[page], $0) } ?? true
         })
         reapplyLayers()
+        refreshOverlays()
         if !search.query.isEmpty { search.restart() }
     }
 

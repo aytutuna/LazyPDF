@@ -88,6 +88,15 @@ final class PanelViewer: DocumentViewer {
         ViewSize(page % 2 == 0 ? 612 : 300, page % 2 == 0 ? 792 : 600)
     }
 
+    @ObservationIgnored private var overlays: [Int: PageOverlay] = [:]
+
+    func overlay(_ page: Int) -> PageOverlay {
+        if let known = overlays[page] { return known }
+        let made = PageOverlay(page: page, size: pageSize(page))
+        overlays[page] = made
+        return made
+    }
+
     func pageToView(_ page: Int) -> ViewMatrix? { nil }
     func viewToPage(_ view: ViewPoint, nearest: Bool) -> PagePoint? { nil }
 
