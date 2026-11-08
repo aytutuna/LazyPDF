@@ -22,36 +22,36 @@ final class DocumentTests: XCTestCase {
     @MainActor
     func testLaunchShowsHome() throws {
         let app = try launch(opening: false)
-        XCTAssertTrue(app.staticTexts["What would you like to do?"].waitForExistence(timeout: 60))
-        XCTAssertTrue(app.buttons["Open"].exists)
+        XCTAssertTrue(app.staticTexts["What would you like to do?"].firstMatch.waitForExistence(timeout: 60))
+        XCTAssertTrue(app.buttons["Open"].firstMatch.exists)
     }
 
     @MainActor
     func testFixtureOpensWithItsFirstPage() throws {
         let app = try launch()
         XCTAssertTrue(firstPage(app).waitForExistence(timeout: 60))
-        XCTAssertFalse(app.staticTexts["What would you like to do?"].exists)
+        XCTAssertFalse(app.staticTexts["What would you like to do?"].firstMatch.exists)
     }
 
     @MainActor
     func testFindFindsAWord() throws {
         let app = try launch()
         XCTAssertTrue(firstPage(app).waitForExistence(timeout: 60))
-        app.buttons["Search"].tap()
-        let field = app.textFields["Search text"]
+        app.buttons["Search"].firstMatch.tap()
+        let field = app.textFields["Search text"].firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 10))
         field.typeText("Quarterly")
-        let count = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", "\d+ of \d+")).firstMatch
+        let count = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", "\\d+ of \\d+")).firstMatch
         XCTAssertTrue(count.waitForExistence(timeout: 30))
-        XCTAssertFalse(app.staticTexts["No results"].exists)
+        XCTAssertFalse(app.staticTexts["No results"].firstMatch.exists)
     }
 
     @MainActor
     func testSidePanelOpensAsASheet() throws {
         let app = try launch()
         XCTAssertTrue(firstPage(app).waitForExistence(timeout: 60))
-        app.buttons["Side panels"].tap()
-        app.buttons["Pages"].tap()
+        app.buttons["Side panels"].firstMatch.tap()
+        app.buttons["Pages"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["Pages"].waitForExistence(timeout: 10))
         app.navigationBars["Pages"].buttons["Done"].tap()
         XCTAssertFalse(app.navigationBars["Pages"].waitForExistence(timeout: 2))
@@ -61,8 +61,8 @@ final class DocumentTests: XCTestCase {
     func testClosingTheDocumentGoesBackToHome() throws {
         let app = try launch()
         XCTAssertTrue(firstPage(app).waitForExistence(timeout: 60))
-        app.buttons["Settings"].tap()
-        app.buttons["Close"].tap()
-        XCTAssertTrue(app.staticTexts["What would you like to do?"].waitForExistence(timeout: 10))
+        app.buttons["Settings"].firstMatch.tap()
+        app.buttons["Close"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["What would you like to do?"].firstMatch.waitForExistence(timeout: 10))
     }
 }
