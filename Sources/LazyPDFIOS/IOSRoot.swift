@@ -42,7 +42,7 @@ struct IOSRoot: View {
 
     private var viewerCommands: ViewerCommandState? {
         let vm = shell.vm
-        guard !vm.isBusy, vm.closeQuestion == nil, vm.recoveryOffer == nil, vm.passwordRequest == nil else { return nil }
+        guard !vm.isBlocked else { return nil }
         let tab = vm.activeDocument
         let viewer = tab.map(shell.viewer(for:))
         return ViewerCommandState(actions: FileActions(vm: vm, commands: shell.commands), open: shell.commands.open,
