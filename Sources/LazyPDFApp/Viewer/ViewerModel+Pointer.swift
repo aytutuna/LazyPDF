@@ -149,6 +149,8 @@ extension ViewerModel {
             if drag == .tool {
                 drag = .none
                 tool?.cancel()
+            } else if findVisible {
+                hideFind()
             } else {
                 clearSelection()
             }

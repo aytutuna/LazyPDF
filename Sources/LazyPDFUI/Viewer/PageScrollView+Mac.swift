@@ -193,6 +193,15 @@ final class PageScrollView: NSScrollView {
         giveScreen()
     }
 
+    // The keys of the pages work as soon as a document is shown, without a click first.
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let window = self.window else { return }
+            window.makeFirstResponder(self.pages)
+        }
+    }
+
     override func viewDidChangeBackingProperties() {
         super.viewDidChangeBackingProperties()
         giveScreen()

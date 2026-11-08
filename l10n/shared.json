@@ -6572,5 +6572,29 @@
   },
   "No certificate with a private key was found. Import one from a .p12 or .pfx file.": {
     "tr": "Özel anahtarlı sertifika bulunamadı. Bir .p12 veya .pfx dosyasından içe aktarın."
+  },
+  "Open Recent": {
+    "tr": "Son Kullanılanları Aç"
+  },
+  "Clear menu": {
+    "tr": "Menüyü temizle"
+  },
+  "Close tab": {
+    "tr": "Sekmeyi kapat"
+  },
+  "Lazy PDF Help": {
+    "tr": "Lazy PDF Yardımı"
+  },
+  "First page": {
+    "tr": "İlk sayfa"
+  },
+  "Last page": {
+    "tr": "Son sayfa"
+  },
+  "{0} was not handed over by the program that sent it, so Lazy PDF cannot read it. Open it from the File menu, or drop it on the window.": {
+    "tr": "{0} dosyası, onu gönderen program tarafından teslim edilmediği için Lazy PDF okuyamıyor. Dosya menüsünden açın ya da pencereye bırakın."
+  },
+  "{0} could not be prepared for printing. Save it and print it from another program.": {
+    "tr": "{0} yazdırmaya hazırlanamadı. Kaydedin ve başka bir programdan yazdırın."
   }
 }

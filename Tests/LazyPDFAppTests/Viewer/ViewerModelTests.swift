@@ -329,6 +329,15 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertTrue(tool.cancelled)
     }
 
+    func test_escapeClosesTheFindBar() throws {
+        let (viewer, _) = try open()
+        viewer.showFind()
+
+        viewer.key(.escape)
+
+        XCTAssertFalse(viewer.findVisible)
+    }
+
     func test_settingAnotherToolCancelsTheOneBefore() throws {
         let (viewer, _) = try open()
         let first = RecordingTool()

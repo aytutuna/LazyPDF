@@ -1,8 +1,18 @@
 #if os(macOS)
 import AppKit
 
-// There is no application(_:open:): once the delegate implements it AppKit sends it every URL and .onOpenURL never fires.
+// With application(_:open:) here AppKit sends the delegate every URL, files and lazypdf: addresses alike, and .onOpenURL
+// never fires.
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    func application(_ application: NSApplication, open urls: [URL]) {
+        MacShell.shared.handle(urls)
+    }
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        MacShell.shared.terminateReply()
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         true
     }

@@ -86,6 +86,20 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$app/Contents/Info.plist" | grep -qx "com.lazypdf.lazypdf"
           test -f "$app/Contents/Resources/tr.lproj/Kit.strings"
           codesign -d --entitlements :- "$app"
+      - name: Run the Mac UI tests
+        timeout-minutes: 10
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project mac/LazyPDFMacApp.xcodeproj \
+            -scheme LazyPDFMacApp \
+            -configuration Release \
+            -destination platform=macOS \
+            -derivedDataPath "$RUNNER_TEMP/mac-ui" \
+            -only-testing:LazyPDFMacUITests \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
       # The newest iOS runtime's first iPhone.
       - name: Pick the simulator
         id: simulator
