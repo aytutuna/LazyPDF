@@ -33,7 +33,10 @@ final class PageOverlayPaintTests: XCTestCase {
         return Shown(viewer: viewer, view: view)
     }
 
+    // Zooming keeps the middle of the view where it is, so the top of the page is scrolled back to before the picture is taken,
+    // and the view and the document view then have the same origin.
     private func bitmap(_ shown: Shown) throws -> NSBitmapImageRep {
+        shown.viewer.scrollTo(x: 0, y: 0)
         shown.view.frame = NSRect(x: 0, y: 0, width: shown.viewer.extent.width, height: shown.viewer.extent.height)
         let area = NSRect(x: 0, y: 0, width: shown.viewer.viewport.width, height: shown.viewer.viewport.height)
         let rep = try XCTUnwrap(shown.view.bitmapImageRepForCachingDisplay(in: area))
@@ -131,8 +134,9 @@ final class PageOverlayPaintTests: XCTestCase {
 
         for zoom in [1.0, 2.0] {
             shown.viewer.zoom = zoom
+            let rep = try bitmap(shown)
             let at = try XCTUnwrap(shown.viewer.pageToView(0)).transform(ViewPoint(60, 60))
-            counts.append(count(try bitmap(shown), in: ViewRect(at.x - 30, at.y - 30, 60, 60), isRed))
+            counts.append(count(rep, in: ViewRect(at.x - 30, at.y - 30, 60, 60), isRed))
         }
 
         XCTAssertEqual(Double(counts[0]), 100, accuracy: 30)
