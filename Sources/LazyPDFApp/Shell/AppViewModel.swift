@@ -70,6 +70,14 @@ public final class AppViewModel {
     /// How the tabs write their files; the Apple shells set a coordinated writer.
     @ObservationIgnored public var fileWriter: FileWriter = PlainFileWriter()
 
+    /// The shell's panels for choosing and saving files and its pasteboard; tools reach them through `ToolHost`.
+    @ObservationIgnored public var filePicker: ToolFilePicker = NoToolServices.shared
+    @ObservationIgnored public var fileExporter: ToolFileExporter = NoToolServices.shared
+    @ObservationIgnored public var clipboard: ToolClipboard = NoToolServices.shared
+
+    /// Asked before the window saves, undoes, closes or exits: the open tool's `handIn`. The window sets it.
+    @ObservationIgnored public var handInTyping: (@MainActor () -> Bool)?
+
     /// Home tiles a shell cannot answer yet.
     @ObservationIgnored public var hiddenTiles: Set<String> = []
 

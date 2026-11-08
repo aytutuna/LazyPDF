@@ -18,17 +18,17 @@ public struct FileActions {
     }
 
     public func save() {
-        guard let tab = vm.activeDocument else { return }
+        guard let tab = vm.activeDocument, vm.handIn() else { return }
         if AppViewModel.needsName(tab) { saveAs() } else { vm.save(tab) }
     }
 
     public func saveAs() {
-        guard let tab = vm.activeDocument else { return }
+        guard let tab = vm.activeDocument, vm.handIn() else { return }
         Task { _ = await commands.saveAs(tab) }
     }
 
     public func saveCompact() {
-        guard let tab = vm.activeDocument else { return }
+        guard let tab = vm.activeDocument, vm.handIn() else { return }
         let commands = commands
         if tab.document.isSigned {
             vm.showNotice(L10n.t("Signatures would be lost"),
@@ -50,11 +50,11 @@ public struct FileActions {
 
     // Cmd+Z belongs to the text being typed in while there is one, as the Windows window skips Z and Y for a text box.
     public func undo() {
-        if !EditFocus.undoInText(redo: false) && !vm.isBlocked { vm.undo() }
+        if !EditFocus.undoInText(redo: false) && !vm.isBlocked && vm.handIn() { vm.undo() }
     }
 
     public func redo() {
-        if !EditFocus.undoInText(redo: true) && !vm.isBlocked { vm.redo() }
+        if !EditFocus.undoInText(redo: true) && !vm.isBlocked && vm.handIn() { vm.redo() }
     }
 
     /// The Save of the close question: a tab with no file asks for a name first. The tab closes once it is saved.

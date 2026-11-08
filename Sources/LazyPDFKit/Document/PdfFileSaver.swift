@@ -19,7 +19,18 @@ public enum PdfFileSaver {
         try save(path, bytes, source: nil, samePages: false) { try PdfDocument.open($0, password: password) }
     }
 
+    /// As above, refused when the bytes read back with repairs the `source` did not need, or with another number of pages
+    /// than the `source` has: for a tool that writes a rewrite of an open file over it.
+    public static func save(_ path: String, _ bytes: [UInt8], password: String?, source: PdfDocument) throws {
+        try save(path, bytes, source: source, samePages: true) { try PdfDocument.open($0, password: password) }
+    }
+
     #if canImport(Security)
+    /// The same, for bytes encrypted for recipients.
+    public static func save(_ path: String, _ bytes: [UInt8], certificate: PdfCertificate, source: PdfDocument) throws {
+        try save(path, bytes, source: source, samePages: true) { try PdfDocument.open($0, certificate: certificate) }
+    }
+
     /// As above, for bytes encrypted for recipients: read back with the private key of `certificate`.
     public static func save(_ path: String, _ bytes: [UInt8], certificate: PdfCertificate) throws {
         try save(path, bytes, source: nil, samePages: false) { try PdfDocument.open($0, certificate: certificate) }

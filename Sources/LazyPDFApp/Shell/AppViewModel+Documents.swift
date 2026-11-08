@@ -309,6 +309,7 @@ extension AppViewModel {
     @discardableResult
     public func requestClose(_ tab: DocumentTab) -> Bool {
         if waitForJob() { return false }
+        if tab === activeDocument && !handIn() { return false }
         if !tab.isDirty && tab.pendingMarks == 0 {
             close(tab)
             return true
@@ -356,8 +357,14 @@ extension AppViewModel {
     /// there.
     public func requestExit() -> Bool {
         if waitForJob() { return false }
+        if !handIn() { return false }
         exiting = true
         return !continueExit(raise: false)
+    }
+
+    /// Has the open tool put what is typed into the document; false when it waits for an answer first.
+    public func handIn() -> Bool {
+        handInTyping?() ?? true
     }
 
     // A job edits the document off the main actor, so what is in it now is not something to save or to throw away.

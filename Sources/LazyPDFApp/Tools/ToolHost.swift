@@ -59,6 +59,17 @@ public protocol ToolHost: AnyObject {
     /// The certificate of an identity the file was opened with, as the engine checks signatures with it; nil when the
     /// platform cannot give it.
     func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate?
+
+    /// The system's panels for choosing files and folders to read, the shell's own.
+    var filePicker: ToolFilePicker { get }
+
+    /// Where finished files go: the save panel, or the document picker on iOS.
+    var fileExporter: ToolFileExporter { get }
+
+    var clipboard: ToolClipboard { get }
+
+    /// How a tool writes a file that is open in a tab, over the file itself.
+    var fileWriter: FileWriter { get }
 }
 
 extension ToolHost {
@@ -69,6 +80,72 @@ extension ToolHost {
     public var isDocumentBusy: Bool { false }
 
     public func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate? { nil }
+
+    public var filePicker: ToolFilePicker { NoToolServices.shared }
+
+    public var fileExporter: ToolFileExporter { NoToolServices.shared }
+
+    public var clipboard: ToolClipboard { NoToolServices.shared }
+
+    public var fileWriter: FileWriter { PlainFileWriter() }
+}
+
+/// A kind of file a panel offers.
+public enum ToolFileKind: Sendable {
+    case pdf, picture, text
+    /// A .p12 or .pfx identity.
+    case certificate
+    case any
+}
+
+/// A file or folder the person chose, with the grant the system gave for it, which the caller stops when it is done.
+public struct ToolFile {
+    public let url: URL
+    public let access: FileAccess?
+
+    public init(url: URL, access: FileAccess? = nil) {
+        self.url = url
+        self.access = access
+    }
+}
+
+/// Create, Batch, Combine and Compare choose files and folders to read.
+@MainActor
+public protocol ToolFilePicker: AnyObject {
+    /// Files of those kinds; empty when the person gave up.
+    func pickFiles(_ kinds: [ToolFileKind], multiple: Bool) async -> [ToolFile]
+
+    /// A folder; nil when the person gave up.
+    func pickFolder() async -> ToolFile?
+}
+
+/// Export and Batch hand over files they wrote.
+@MainActor
+public protocol ToolFileExporter: AnyObject {
+    /// Takes finished files, written to a folder of the app's own, to where the person says: a name for one file, a folder
+    /// for several. The urls of the saved copies; empty when the person gave up.
+    func export(_ files: [URL]) async -> [URL]
+}
+
+/// Create takes a picture or text from the pasteboard.
+@MainActor
+public protocol ToolClipboard: AnyObject {
+    /// The bytes of a picture on the pasteboard, as a PNG or TIFF file.
+    func pictureFile() -> [UInt8]?
+
+    func text() -> String?
+}
+
+/// The services of a platform that has none of them: nobody is chosen, nothing is saved, the pasteboard is empty.
+@MainActor
+public final class NoToolServices: ToolFilePicker, ToolFileExporter, ToolClipboard {
+    public static let shared = NoToolServices()
+
+    public func pickFiles(_ kinds: [ToolFileKind], multiple: Bool) async -> [ToolFile] { [] }
+    public func pickFolder() async -> ToolFile? { nil }
+    public func export(_ files: [URL]) async -> [URL] { [] }
+    public func pictureFile() -> [UInt8]? { nil }
+    public func text() -> String? { nil }
 }
 
 /// A tool's panel in the inspector, or a side panel on the rail: the state behind its view. The shell attaches it when
@@ -81,6 +158,14 @@ public protocol ToolPanelModel: AnyObject {
 
     func attach(_ tab: DocumentTab, _ viewer: DocumentViewer, _ host: ToolHost)
     func detach()
+
+    /// Puts text that is still being typed into the document; the window calls it before it saves, undoes, closes or asks
+    /// about unsaved changes. False when the text waits for an answer and the caller must not go on as if it were kept.
+    func handIn() -> Bool
+}
+
+extension ToolPanelModel {
+    public func handIn() -> Bool { true }
 }
 
 extension AppViewModel: ToolHost {}
