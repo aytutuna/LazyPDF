@@ -71,7 +71,8 @@ final class MacUITests: XCTestCase {
         choose(app, menu: "File", item: "Close tab")
 
         XCTAssertTrue(element(app, "What would you like to do?").waitForExistence(timeout: 10))
-        XCTAssertFalse(app.buttons["plain-3.pdf"].exists)
+        let gone = NSPredicate(format: "exists == false")
+        wait(for: [expectation(for: gone, evaluatedWith: app.buttons["plain-3.pdf"])], timeout: 10)
     }
 
     func testSidePanelsOpenFromTheRail() throws {
