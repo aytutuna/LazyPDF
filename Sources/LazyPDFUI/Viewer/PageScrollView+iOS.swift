@@ -89,6 +89,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         center.addObserver(self, selector: #selector(keyboardMoved(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
         center.addObserver(self, selector: #selector(keyboardGone), name: UIResponder.keyboardWillHideNotification, object: nil)
         center.addObserver(self, selector: #selector(keyboardSettled), name: UIResponder.keyboardDidShowNotification, object: nil)
+        toolChanged()
         follow()
     }
 
