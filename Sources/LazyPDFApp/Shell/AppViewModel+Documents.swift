@@ -116,7 +116,7 @@ extension AppViewModel {
         await open(PendingOpen(source, access: access), password: nil, certificate: nil)
     }
 
-    func tab(of url: URL) -> DocumentTab? {
+    public func tab(of url: URL) -> DocumentTab? {
         documents.first { Self.same($0.url, url) }
     }
 
