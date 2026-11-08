@@ -8,16 +8,21 @@ import LazyPDFKit
 
 /// What the file buttons do. Saving to a name and saving compact go through the platform shell's panels.
 @MainActor
-struct FileActions {
+public struct FileActions {
     let vm: AppViewModel
     let commands: ShellCommands
 
-    func save() {
+    public init(vm: AppViewModel, commands: ShellCommands) {
+        self.vm = vm
+        self.commands = commands
+    }
+
+    public func save() {
         guard let tab = vm.activeDocument else { return }
         if AppViewModel.needsName(tab) { saveAs() } else { vm.save(tab) }
     }
 
-    func saveAs() {
+    public func saveAs() {
         guard let tab = vm.activeDocument else { return }
         Task { _ = await commands.saveAs(tab) }
     }
@@ -34,7 +39,7 @@ struct FileActions {
         }
     }
 
-    func print() {
+    public func print() {
         vm.print()
     }
 
@@ -44,11 +49,11 @@ struct FileActions {
     }
 
     // Cmd+Z belongs to the text being typed in while there is one, as the Windows window skips Z and Y for a text box.
-    func undo() {
+    public func undo() {
         if !EditFocus.undoInText(redo: false) { vm.undo() }
     }
 
-    func redo() {
+    public func redo() {
         if !EditFocus.undoInText(redo: true) { vm.redo() }
     }
 
@@ -77,23 +82,36 @@ struct FileActions {
     }
 }
 
+private struct ShortcutsInMenuKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+public extension EnvironmentValues {
+    /// True where the platform shell has the file commands in its own menu, so the buttons do not claim the keys too.
+    var shortcutsInMenu: Bool {
+        get { self[ShortcutsInMenuKey.self] }
+        set { self[ShortcutsInMenuKey.self] = newValue }
+    }
+}
+
 struct FileButtons: View {
     let vm: AppViewModel
     let commands: ShellCommands
     let settings: () -> Void
+    @Environment(\.shortcutsInMenu) private var inMenu
 
     var body: some View {
         let actions = FileActions(vm: vm, commands: commands)
         let hasDocument = vm.activeDocument != nil
         HStack(spacing: 2) {
             icon("folder", L10n.t("Open a file")) { commands.open() }
-                .keyboardShortcut("o")
+                .keyboardShortcut(inMenu ? nil : KeyboardShortcut("o"))
             icon("square.and.arrow.down", L10n.t("Save"), actions.save)
-                .keyboardShortcut("s")
+                .keyboardShortcut(inMenu ? nil : KeyboardShortcut("s"))
                 .disabled(!hasDocument || vm.isBusy)
             Menu {
                 Button(L10n.t("Save as…"), action: actions.saveAs)
-                    .keyboardShortcut("s", modifiers: [.command, .shift])
+                    .keyboardShortcut(inMenu ? nil : KeyboardShortcut("s", modifiers: [.command, .shift]))
                 Button(L10n.t("Save compact…"), action: actions.saveCompact)
                     .help(L10n.t("Writes the file again without its history of changes."))
                 if commands.share != nil {
@@ -110,13 +128,13 @@ struct FileButtons: View {
             .accessibilityLabel(L10n.t("More ways to save"))
             Divider().frame(height: 16).padding(.horizontal, 4)
             icon("arrow.uturn.backward", actions.undoHelp, actions.undo)
-                .keyboardShortcut("z")
+                .keyboardShortcut(inMenu ? nil : KeyboardShortcut("z"))
                 .disabled(!vm.canUndo || vm.isBusy)
             icon("arrow.uturn.forward", actions.redoHelp, actions.redo)
-                .keyboardShortcut("z", modifiers: [.command, .shift])
+                .keyboardShortcut(inMenu ? nil : KeyboardShortcut("z", modifiers: [.command, .shift]))
                 .disabled(!vm.canRedo || vm.isBusy)
             icon("printer", L10n.t("Print"), actions.print)
-                .keyboardShortcut("p")
+                .keyboardShortcut(inMenu ? nil : KeyboardShortcut("p"))
                 .disabled(!hasDocument)
             Divider().frame(height: 16).padding(.horizontal, 4)
             icon("gearshape", L10n.t("Settings"), settings)

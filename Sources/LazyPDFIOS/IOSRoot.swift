@@ -13,7 +13,7 @@ struct IOSRoot: View {
     var body: some View {
         let vm = shell.vm
         AppWindow(vm, commands: shell.commands, stage: { tab in
-            StageView(viewer: shell.viewer(for: tab), tab: tab)
+            PageViewerView(viewer: shell.viewer(for: tab))
         }, sidePane: { id, tab in
             SidePanelView(id: id, tab: tab, viewer: shell.viewer(for: tab), host: vm, folders: shell.folders)
         }, inspector: { id, _ in
@@ -29,9 +29,11 @@ struct IOSRoot: View {
                 ShareSheet(files: [file])
             }
         }
+        .environment(\.shortcutsInMenu, true)
         .onOpenURL { shell.receive($0) }
         .focusedSceneValue(\.viewerCommands, viewerCommands)
         .onChange(of: vm.documents.map(\.id)) { shell.dropClosedViewers() }
+        .onChange(of: vm.activeDocument.map(ObjectIdentifier.init), initial: true) { shell.showActive() }
         .onChange(of: phase) { _, now in
             if now == .background { vm.flushRecovery() }
         }
@@ -39,20 +41,13 @@ struct IOSRoot: View {
     }
 
     private var viewerCommands: ViewerCommandState? {
-        guard let tab = shell.vm.activeDocument else { return nil }
-        let viewer = shell.viewer(for: tab)
-        return ViewerCommandState(viewer: viewer, canGoBack: viewer.canGoBack, canGoForward: viewer.canGoForward)
-    }
-}
-
-private struct StageView: View {
-    let viewer: ViewerModel
-    let tab: DocumentTab
-
-    var body: some View {
-        PageViewerView(viewer: viewer)
-            .onAppear { viewer.show(tab) }
-            .onDisappear { viewer.show(nil) }
+        let vm = shell.vm
+        guard !vm.isBusy, vm.closeQuestion == nil, vm.recoveryOffer == nil, vm.passwordRequest == nil else { return nil }
+        let tab = vm.activeDocument
+        let viewer = tab.map(shell.viewer(for:))
+        return ViewerCommandState(actions: FileActions(vm: vm, commands: shell.commands), open: shell.commands.open,
+                                  hasDocument: tab != nil, canUndo: vm.canUndo, canRedo: vm.canRedo, viewer: viewer,
+                                  canGoBack: viewer?.canGoBack ?? false, canGoForward: viewer?.canGoForward ?? false)
     }
 }
 
