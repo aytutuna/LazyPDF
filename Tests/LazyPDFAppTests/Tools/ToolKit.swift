@@ -20,7 +20,7 @@ extension Pdfs {
     static func restricted(_ allowed: PdfPermissions) throws -> [UInt8] {
         let document = try PdfDocument.open(text())
         let security = PdfSecurity.create(userPassword: "", ownerPassword: "owner", permissions: allowed, strength: .aes256,
-                                          firstId: document.firstId ?? [])
+                                          firstId: [UInt8](repeating: 7, count: 16))
         return try document.saveRewrite(PdfSaveOptions(security: security))
     }
 }
