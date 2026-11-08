@@ -43,12 +43,14 @@ final class SanitizeModelTests: XCTestCase {
         XCTAssertTrue(model.action!.canRun())
     }
 
-    func test_nothingTickedMeansNothingToRun() async throws {
+    func test_theButtonRunsOnlyWhileSomethingIsTicked() async throws {
         let (model, _) = try await attached()
 
         for row in model.rows { model.setChecked(row, false) }
 
-        XCTAssertFalse(model.action!.canRun())
+        // What is always removed stays ticked, and keeps the button on.
+        XCTAssertEqual(model.rows.filter(\.isChecked).allSatisfy { !$0.canTick }, true)
+        XCTAssertEqual(model.action!.canRun(), model.rows.contains { $0.isChecked })
     }
 
     func test_aRowThatIsAlwaysRemovedCannotBeSwitched() async throws {

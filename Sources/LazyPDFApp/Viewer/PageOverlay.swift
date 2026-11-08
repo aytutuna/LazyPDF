@@ -243,6 +243,7 @@ public final class OverlayField {
     }
 
     private func close(_ result: String?) {
+        if isClosed { return }
         isClosed = true
         overlay?.fieldClosed(self)
         done(result)
