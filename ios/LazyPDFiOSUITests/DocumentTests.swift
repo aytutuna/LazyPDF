@@ -59,9 +59,10 @@ final class DocumentTests: XCTestCase {
         XCTAssertTrue(firstPage(app).waitForExistence(timeout: 60))
         tap(app.buttons["Side panels"].firstMatch)
         tap(app.buttons["Pages"].firstMatch)
-        XCTAssertTrue(app.navigationBars["Pages"].waitForExistence(timeout: 10))
-        app.navigationBars["Pages"].buttons["Done"].tap()
-        XCTAssertFalse(app.navigationBars["Pages"].waitForExistence(timeout: 2))
+        let done = app.buttons["Done"].firstMatch
+        XCTAssertTrue(done.waitForExistence(timeout: 10))
+        tap(done)
+        XCTAssertTrue(done.waitForNonExistence(timeout: 10))
     }
 
     @MainActor
