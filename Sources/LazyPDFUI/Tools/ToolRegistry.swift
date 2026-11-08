@@ -23,6 +23,7 @@ public struct ToolPanel {
     }
 }
 
+@MainActor
 enum ToolRegistry {
     /// The panel of the tool `id`; nil for a tool whose group has not ported it yet, which then shows its title and summary.
     static func panel(for id: String, _ context: ToolContext) -> ToolPanel? {

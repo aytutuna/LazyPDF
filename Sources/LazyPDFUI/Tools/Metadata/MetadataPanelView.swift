@@ -1,6 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 import LazyPDFApp
+import LazyPDFKit
 
 // The view of MetadataModel; follows windows/LazyPDF.App/Tools/Metadata/MetadataPanel.xaml.
 

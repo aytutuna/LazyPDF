@@ -1,6 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 import LazyPDFApp
+import LazyPDFKit
 
 // What the tool panels share: the frame a panel sits in, the label over a field, the line of explanation under one, a heading,
 // and the choice of where a rewritten file goes (windows/LazyPDF.App/Tools/Optimize/OutputChoice.xaml).

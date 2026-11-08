@@ -1,6 +1,7 @@
 #if canImport(SwiftUI)
 import SwiftUI
 import LazyPDFApp
+import LazyPDFKit
 
 // The view of SanitizeModel; follows windows/LazyPDF.App/Tools/Sanitize/SanitizePanel.xaml.
 
