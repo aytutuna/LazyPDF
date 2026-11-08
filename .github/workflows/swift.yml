@@ -86,11 +86,24 @@ jobs:
           /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$app/Contents/Info.plist" | grep -qx "com.lazypdf.lazypdf"
           test -f "$app/Contents/Resources/tr.lproj/Kit.strings"
           codesign -d --entitlements :- "$app"
+      - name: Build the Mac UI tests
+        timeout-minutes: 20
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -project mac/LazyPDFMacApp.xcodeproj \
+            -scheme LazyPDFMacApp \
+            -configuration Release \
+            -destination platform=macOS \
+            -derivedDataPath "$RUNNER_TEMP/mac-ui" \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
       - name: Run the Mac UI tests
         timeout-minutes: 10
         run: |
           set -o pipefail
-          xcodebuild test \
+          xcodebuild test-without-building \
             -project mac/LazyPDFMacApp.xcodeproj \
             -scheme LazyPDFMacApp \
             -configuration Release \
