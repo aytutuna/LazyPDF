@@ -43,7 +43,9 @@ final class MacShell {
                                  print: { [unowned self] in self.systemPrint($0) },
                                  importCertificate: { [unowned self] in self.importCertificate() },
                                  openFiles: { [unowned self] in self.open($0) })
+        #if LAZYPDF_UITESTS
         openTestFile()
+        #endif
     }
 
     func attach(_ window: NSWindow) {
@@ -154,8 +156,10 @@ final class MacShell {
         NSApp.reply(toApplicationShouldTerminate: false)
     }
 
+    #if LAZYPDF_UITESTS
     // The UI tests cannot hand the sandboxed app a path it may read, so the file comes in the arguments and is written to
-    // the app's own temporary folder first: -LazyPDFTestFile name.pdf -LazyPDFTestData <base64>.
+    // the app's own temporary folder first: -LazyPDFTestFile name.pdf -LazyPDFTestData <base64>. Only the UI-test build
+    // compiles it (-DLAZYPDF_UITESTS), so the store binary ignores these arguments.
     private static func argument(_ key: String, in arguments: [String]) -> String? {
         arguments.firstIndex(of: key).flatMap { arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil }
     }
@@ -167,5 +171,6 @@ final class MacShell {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(URL(fileURLWithPath: name).lastPathComponent)
         if (try? data.write(to: url)) != nil { open([url]) }
     }
+    #endif
 }
 #endif

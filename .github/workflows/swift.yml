@@ -96,6 +96,7 @@ jobs:
             -configuration Release \
             -destination platform=macOS \
             -derivedDataPath "$RUNNER_TEMP/mac-ui" \
+            OTHER_SWIFT_FLAGS=-DLAZYPDF_UITESTS \
             CODE_SIGN_IDENTITY=- \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO
