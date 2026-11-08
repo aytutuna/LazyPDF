@@ -70,6 +70,21 @@ final class DocumentTests: XCTestCase {
         XCTAssertTrue(grabber.waitForNonExistence(timeout: 10))
     }
 
+    // The page above a tool's sheet takes the touches, so a tool can be used with the sheet open; a tap there leaves the sheet.
+    @MainActor
+    func testToolSheetStaysOpenWhenThePageBehindItIsTouched() throws {
+        let app = try launch()
+        XCTAssertTrue(firstPage(app).waitForExistence(timeout: 60))
+        tap(app.buttons["Tools"].firstMatch)
+        app.buttons["Properties"].firstMatch.tap()
+        let grabber = app.buttons["Sheet Grabber"].firstMatch
+        XCTAssertTrue(grabber.waitForExistence(timeout: 10))
+
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)).tap()
+
+        XCTAssertFalse(grabber.waitForNonExistence(timeout: 3))
+    }
+
     @MainActor
     func testClosingTheDocumentGoesBackToHome() throws {
         let app = try launch()

@@ -71,4 +71,56 @@ final class HandInTests: XCTestCase {
 
         XCTAssertTrue(f.vm.handIn())
     }
+
+    func test_changingTabOrToolWaitsForTheToolToHandItsTextIn() async throws {
+        let f = ViewModelFixture(self)
+        await f.vm.open(f.pdf("a.pdf"))
+        let first = try XCTUnwrap(f.vm.activeDocument)
+        await f.vm.open(f.pdf("b.pdf"))
+        let second = try XCTUnwrap(f.vm.activeDocument)
+        var answer = false
+        var asked = 0
+        f.vm.handInTyping = {
+            asked += 1
+            return answer
+        }
+
+        f.vm.select(first)
+        f.vm.selectTool("stamps")
+        XCTAssertTrue(f.vm.activeDocument === second)
+        XCTAssertNil(f.vm.activeToolId)
+
+        answer = true
+        f.vm.select(first)
+        f.vm.selectTool("stamps")
+        XCTAssertTrue(f.vm.activeDocument === first)
+        XCTAssertEqual(f.vm.activeToolId, "stamps")
+        XCTAssertEqual(asked, 4)
+    }
+
+    func test_selectingTheTabAlreadyShownAsksNothing() async throws {
+        let f = ViewModelFixture(self)
+        await f.vm.open(f.pdf())
+        let tab = try XCTUnwrap(f.vm.activeDocument)
+        var asked = 0
+        f.vm.handInTyping = {
+            asked += 1
+            return true
+        }
+
+        f.vm.select(tab)
+
+        XCTAssertEqual(asked, 0)
+    }
+
+    func test_aToolHoldsTheStageUntilItIsGivenBack() {
+        let f = ViewModelFixture(self)
+        XCTAssertFalse(f.vm.stageHeld)
+
+        f.vm.holdStage(true)
+        XCTAssertTrue(f.vm.stageHeld)
+
+        f.vm.holdStage(false)
+        XCTAssertFalse(f.vm.stageHeld)
+    }
 }

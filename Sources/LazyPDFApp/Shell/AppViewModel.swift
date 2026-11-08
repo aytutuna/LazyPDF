@@ -139,6 +139,7 @@ public final class AppViewModel {
 
     public func select(_ tab: any StripTab) {
         if activeTab === tab || index(of: tab) == nil { return }
+        if !handIn() { return }
         activeTab = tab
         dropAction()
         if let document = tab as? DocumentTab { lastDocument = document }
@@ -171,8 +172,18 @@ public final class AppViewModel {
     /// Opens the tool whose panel the inspector shows, or closes it when it is the open one.
     public func selectTool(_ id: String?) {
         if let id, ToolCatalog.find(id) == nil { return }
+        if !handIn() { return }
         activeToolId = id == activeToolId ? nil : id
         dropAction()
+        notifyAll()
+    }
+
+    /// True while a tool's stage view stands where the pages are.
+    public internal(set) var stageHeld = false
+
+    public func holdStage(_ on: Bool) {
+        if stageHeld == on { return }
+        stageHeld = on
         notifyAll()
     }
 

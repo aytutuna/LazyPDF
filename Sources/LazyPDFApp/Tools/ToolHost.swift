@@ -70,6 +70,10 @@ public protocol ToolHost: AnyObject {
 
     /// How a tool writes a file that is open in a tab, over the file itself.
     var fileWriter: FileWriter { get }
+
+    /// Puts the stage view of the tool's panel (`ToolPanel.stage`) where the pages are, or gives the pages back. The window
+    /// gives them back by itself when the panel goes.
+    func holdStage(_ on: Bool)
 }
 
 extension ToolHost {
@@ -88,6 +92,8 @@ extension ToolHost {
     public var clipboard: ToolClipboard { NoToolServices.shared }
 
     public var fileWriter: FileWriter { PlainFileWriter() }
+
+    public func holdStage(_ on: Bool) {}
 }
 
 /// A kind of file a panel offers.

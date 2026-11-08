@@ -17,9 +17,20 @@ public struct ToolPanel {
     public let model: ToolPanelModel
     public let view: AnyView
 
+    /// What takes the stage's place while the model holds it (`ToolHost.holdStage`): Pages shows its page grid there.
+    public let stage: AnyView?
+
     public init<Model: ToolPanelModel, Content: View>(_ model: Model, @ViewBuilder view: (Model) -> Content) {
         self.model = model
         self.view = AnyView(view(model))
+        stage = nil
+    }
+
+    public init<Model: ToolPanelModel, Content: View, Stage: View>(_ model: Model, @ViewBuilder stage: (Model) -> Stage,
+                                                                      @ViewBuilder view: (Model) -> Content) {
+        self.model = model
+        self.view = AnyView(view(model))
+        self.stage = AnyView(stage(model))
     }
 }
 

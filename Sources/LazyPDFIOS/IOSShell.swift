@@ -90,7 +90,8 @@ final class IOSShell {
         guard tab !== shownTab else { return }
         shownViewer?.show(nil)
         shownViewer = tab.map(viewer(for:))
-        shownViewer?.show(tab)
+        // The tool panel may have shown it first, and showing again would clear the marks it drew.
+        if shownViewer?.tab !== tab { shownViewer?.show(tab) }
         shownTab = tab
     }
 

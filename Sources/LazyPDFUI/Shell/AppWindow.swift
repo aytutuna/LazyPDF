@@ -11,6 +11,14 @@ import LazyPDFKit
 // tool. Each is made again when the tab or the id changes (`id`), so a view can attach its model in onAppear and detach it
 // in onDisappear, as the shell of the Windows app does.
 
+private struct StageBottom: PreferenceKey {
+    static var defaultValue: CGFloat { 0 }
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
 public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     // Below this width the window is laid out for a phone.
     private static var compactWidth: CGFloat { 700 }
@@ -19,10 +27,13 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     private static var narrowWidth: CGFloat { 900 }
     // Below this width the groups of the tool strip show their symbols only.
     private static var iconsWidth: CGFloat { 1100 }
+    // The height of the lowest detent of a tool sheet: the button and a line of the panel.
+    private static var smallSheet: CGFloat { 150 }
 
     private let vm: AppViewModel
     private let commands: ShellCommands
     private let toolAction: (String) -> ToolAction?
+    private let heldStage: () -> AnyView?
     private let stage: (DocumentTab) -> Stage
     private let sidePane: (String, DocumentTab) -> SidePane
     private let inspector: (String, DocumentTab) -> Inspector
@@ -30,18 +41,23 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     @State private var sheet: Modal?
     @State private var compact = false
     @State private var compactPanel: String?
+    @State private var toolDetent = PresentationDetent.medium
+    @State private var stageBottom: CGFloat = 0
     @State private var dropTargeted = false
     @Environment(\.scenePhase) private var scenePhase
 
     /// - Parameter toolAction: the pinned button of the tool's panel, if it has one.
+    /// - Parameter heldStage: what stands in the stage's place while a tool holds it (`AppViewModel.holdStage`).
     public init(_ vm: AppViewModel, commands: ShellCommands = ShellCommands(),
                 toolAction: @escaping (String) -> ToolAction? = { _ in nil },
+                heldStage: @escaping () -> AnyView? = { nil },
                 @ViewBuilder stage: @escaping (DocumentTab) -> Stage,
                 @ViewBuilder sidePane: @escaping (String, DocumentTab) -> SidePane,
                 @ViewBuilder inspector: @escaping (String, DocumentTab) -> Inspector) {
         self.vm = vm
         self.commands = commands
         self.toolAction = toolAction
+        self.heldStage = heldStage
         self.stage = stage
         self.sidePane = sidePane
         self.inspector = inspector
@@ -51,7 +67,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         GeometryReader { proxy in
             Group {
                 if proxy.size.width < Self.compactWidth {
-                    compactLayout
+                    compactLayout(height: proxy.size.height, bottom: proxy.frame(in: .global).maxY)
                 } else {
                     regularLayout(width: proxy.size.width)
                 }
@@ -191,7 +207,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
                 .frame(width: 260)
                 Divider()
             }
-            stage(tab)
+            stageContent(tab)
                 .id(tab.id)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 8))
@@ -202,6 +218,14 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
                 inspectorPane(tab)
                     .frame(width: 280)
             }
+        }
+    }
+
+    @ViewBuilder private func stageContent(_ tab: DocumentTab) -> some View {
+        if vm.stageHeld, let held = heldStage() {
+            held
+        } else {
+            stage(tab)
         }
     }
 
@@ -232,7 +256,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     @ViewBuilder private func footer(_ tool: ToolInfo) -> some View {
         if let action = toolAction(tool.id) {
             ActionFooter(action: action, running: actionRunning) {
-                if actionRunning { return }
+                if actionRunning || !vm.handIn() { return }
                 actionRunning = true
                 Task {
                     await action.run()
@@ -242,7 +266,22 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         }
     }
 
-    private var compactLayout: some View {
+    // The tool sheet covers the lower part of the page, so the stage ends where the sheet starts and the page is fitted to
+    // what shows. A small detent keeps the page reachable and the touches go through to it up to the medium one.
+    private func sheetInset(height: CGFloat, bottom: CGFloat) -> CGFloat {
+        guard compact, vm.activeTool != nil, vm.activeDocument != nil else { return 0 }
+        let covered: CGFloat
+        if toolDetent == .medium {
+            covered = height / 2
+        } else if toolDetent == .height(Self.smallSheet) {
+            covered = Self.smallSheet
+        } else {
+            return 0
+        }
+        return Swift.max(0, stageBottom - (bottom - covered))
+    }
+
+    private func compactLayout(height: CGFloat, bottom: CGFloat) -> some View {
         VStack(spacing: 0) {
             InfoBar(vm: vm)
             HStack(spacing: 8) {
@@ -258,13 +297,16 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             .disabled(frozen)
             Group {
                 if let tab = vm.activeDocument {
-                    stage(tab)
+                    stageContent(tab)
                         .id(tab.id)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     HomeScreen(vm: vm, chooseTile: chooseTile)
                 }
             }
+            .padding(.bottom, sheetInset(height: height, bottom: bottom))
+            .background(GeometryReader { Color.clear.preference(key: StageBottom.self, value: $0.frame(in: .global).maxY) })
+            .onPreferenceChange(StageBottom.self) { stageBottom = $0 }
             .disabled(frozen)
             if vm.activeDocument != nil {
                 compactBar.disabled(frozen)
@@ -283,8 +325,8 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
                 Button(L10n.t("Share"), action: actions.share).disabled(vm.activeDocument == nil)
             }
             Divider()
-            Button(actions.undoHelp) { vm.undo() }.disabled(!vm.canUndo || vm.isBusy)
-            Button(actions.redoHelp) { vm.redo() }.disabled(!vm.canRedo || vm.isBusy)
+            Button(actions.undoHelp, action: actions.undo).disabled(!vm.canUndo || vm.isBusy)
+            Button(actions.redoHelp, action: actions.redo).disabled(!vm.canRedo || vm.isBusy)
             Button(L10n.t("Print"), action: actions.print).disabled(vm.activeDocument == nil)
             Button(L10n.t("Close")) {
                 if let tab = vm.activeDocument { requestClose(tab) }
@@ -373,7 +415,8 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             .safeAreaInset(edge: .top, spacing: 0) { InfoBar(vm: vm, announces: false) }
             .safeAreaInset(edge: .bottom, spacing: 0) { StatusBar(vm: vm, announces: false) }
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.height(Self.smallSheet), .medium, .large], selection: $toolDetent)
+        .presentationBackgroundInteraction(.enabled(upThrough: .medium))
         .interactiveDismissDisabled(vm.isBusy || actionRunning)
     }
 

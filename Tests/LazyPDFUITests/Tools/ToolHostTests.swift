@@ -163,8 +163,86 @@ final class ToolHostTests: XCTestCase {
         let rig = try ToolViewRig()
         let panels = panels(rig)
 
-        XCTAssertNotNil(panels.make("metadata"))
-        XCTAssertNil(panels.make("nothing"))
+        XCTAssertNotNil(panels.panel("metadata"))
+        XCTAssertNil(panels.panel("nothing"))
+    }
+
+    func test_typedPropertiesComeBackWhenThePanelIsShownAgain() throws {
+        let rig = try ToolViewRig()
+        let panels = panels(rig)
+        let first = try XCTUnwrap(panels.panel("metadata"))
+        panels.show(first, id: "metadata", tab: rig.tab, viewer: rig.viewer)
+        let typed = try XCTUnwrap(first.model as? MetadataModel)
+        typed.hideToolbar = true
+        panels.leave(first)
+
+        let again = try XCTUnwrap(panels.panel("metadata"))
+        panels.show(again, id: "metadata", tab: rig.tab, viewer: rig.viewer)
+
+        XCTAssertTrue(again.model === first.model)
+        XCTAssertTrue(typed.hideToolbar)
+    }
+
+    func test_eachToolHasItsOwnPanel() throws {
+        let rig = try ToolViewRig()
+        let panels = panels(rig)
+
+        XCTAssertFalse(try XCTUnwrap(panels.panel("metadata")).model === (try XCTUnwrap(panels.panel("sanitize"))).model)
+    }
+
+    func test_theViewerShowsTheDocumentBeforeThePanelAttaches() throws {
+        let rig = try ToolViewRig()
+        let viewer = PanelViewer()
+        let panels = panels(rig)
+        let model = FakeModel()
+
+        panels.show(panel(model), id: "stamps", tab: rig.tab, viewer: viewer)
+
+        XCTAssertTrue(viewer.tab === rig.tab)
+        XCTAssertEqual(viewer.shows, 1)
+        XCTAssertTrue(model.attached === rig.tab)
+    }
+
+    func test_aViewerAlreadyShowingTheDocumentIsNotShownAgain() throws {
+        let rig = try ToolViewRig()
+        let panels = panels(rig)
+
+        panels.show(panel(FakeModel()), id: "stamps", tab: rig.tab, viewer: rig.viewer)
+
+        XCTAssertEqual(rig.viewer.shows, 0)
+    }
+
+    func test_leavingEndsTheToolsMarksAndItsOpenFieldsButNotAnotherToolsOnes() throws {
+        let rig = try ToolViewRig()
+        let panels = panels(rig)
+        let shown = panel(FakeModel())
+        panels.show(shown, id: "stamps", tab: rig.tab, viewer: rig.viewer)
+        let layer = rig.viewer.overlay(0)
+        layer.set(OverlayItem("stamps.preview", .rect(ViewRect(0, 0, 10, 10))))
+        layer.set(OverlayItem("measure.line", .rect(ViewRect(0, 0, 10, 10))))
+        var heard: [String?] = []
+        layer.open(OverlayField("stamps.text", area: ViewRect(0, 0, 10, 10), text: "typed") { heard.append($0) })
+
+        panels.leave(shown)
+
+        XCTAssertEqual(layer.items.map(\.id), ["measure.line"])
+        XCTAssertTrue(layer.fields.isEmpty)
+        XCTAssertEqual(heard, ["typed"])
+    }
+
+    func test_leavingGivesTheStageBackAndTheStageViewIsTheShownPanels() throws {
+        let rig = try ToolViewRig()
+        let panels = panels(rig)
+        let model = FakeModel()
+        let shown = ToolPanel(model, stage: { _ in Text("stage") }) { _ in Text("panel") }
+        XCTAssertNil(panels.stage)
+
+        panels.show(shown, id: "pages", tab: rig.tab, viewer: rig.viewer)
+        XCTAssertNotNil(panels.stage)
+
+        panels.leave(shown)
+        XCTAssertNil(panels.stage)
+        XCTAssertEqual(rig.host.stageHolds, [false])
     }
 
     func test_aToolWithNoPanelShowsItsTitleAndWhatItIsFor() throws {

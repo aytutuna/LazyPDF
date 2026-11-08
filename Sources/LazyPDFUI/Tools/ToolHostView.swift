@@ -29,7 +29,7 @@ public struct ToolHostView: View {
             }
         }
         .onAppear {
-            guard let made = panel ?? panels.make(id) else { return }
+            guard let made = panel ?? panels.panel(id) else { return }
             panel = made
             panels.show(made, id: id, tab: tab, viewer: viewer)
         }

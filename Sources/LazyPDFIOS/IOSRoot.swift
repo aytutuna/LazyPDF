@@ -13,7 +13,7 @@ struct IOSRoot: View {
     var body: some View {
         let vm = shell.vm
         let panels = shell.panels
-        AppWindow(vm, commands: shell.commands, toolAction: { panels.action(for: $0) }, stage: { tab in
+        AppWindow(vm, commands: shell.commands, toolAction: { panels.action(for: $0) }, heldStage: { panels.stage }, stage: { tab in
             PageViewerView(viewer: shell.viewer(for: tab))
         }, sidePane: { id, tab in
             SidePanelView(id: id, tab: tab, viewer: shell.viewer(for: tab), host: vm, folders: shell.folders)

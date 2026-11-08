@@ -182,4 +182,15 @@ final class MetadataModelTests: XCTestCase {
         let modified = try XCTUnwrap(DocumentMetadata.read(rig.tab.document).modified)
         XCTAssertGreaterThanOrEqual(modified.year, 2026)
     }
+
+    func test_theButtonAfterAHandInFindsNothingLeftToSave() async throws {
+        let (model, rig) = try attached()
+        model.title = "Report"
+        XCTAssertTrue(model.handIn())
+        let revision = rig.tab.revision
+
+        await model.action!.run()
+
+        XCTAssertEqual(rig.tab.revision, revision)
+    }
 }

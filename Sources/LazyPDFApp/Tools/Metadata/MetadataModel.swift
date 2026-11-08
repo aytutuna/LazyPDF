@@ -173,8 +173,9 @@ public final class MetadataModel: ToolPanelModel {
                               offsetMinutes: calendar.timeZone.secondsFromGMT(for: day) / 60) ?? metadata.created
     }
 
+    // The pinned button hands in what is typed before it runs, so by the time it gets here there may be nothing left to save.
     private func save() {
-        guard let tab, let host else { return }
+        guard let tab, let host, isChanged else { return }
         let (typedMetadata, typedView) = readForm()
         let touch = touchModified
         ChangeGate.run(tab, host, L10n.t("Save properties")) { [self] in
