@@ -10,7 +10,7 @@ import LazyPDFKit
 final class SanitizeModelTests: XCTestCase {
     private func titled() throws -> [UInt8] {
         let session = try PdfEditSession.open(Pdfs.text(2))
-        try Pdfs.retitle(session, "Salary review")
+        try Pdfs.retitle(session, "Salary figures")
         try session.commit("Title")
         return session.current
     }
@@ -80,8 +80,8 @@ final class SanitizeModelTests: XCTestCase {
         XCTAssertTrue(rig.host.notices.last?.text.hasPrefix("Removed: ") == true)
         XCTAssertEqual(rig.host.statuses.last, "File cleaned.")
         let cleaned = try PdfDocument.open(rig.host.openedNew[0].pdf)
-        XCTAssertNotEqual(DocumentMetadata.read(cleaned).title, "Salary review")
-        XCTAssertEqual(DocumentMetadata.read(rig.tab.document).title, "Salary review")
+        XCTAssertNotEqual(DocumentMetadata.read(cleaned).title, "Salary figures")
+        XCTAssertEqual(DocumentMetadata.read(rig.tab.document).title, "Salary figures")
     }
 
     func test_whatWasLeftUntickedIsSaidToHaveStayedIn() async throws {
@@ -97,7 +97,7 @@ final class SanitizeModelTests: XCTestCase {
         let (model, rig) = try await attached(Pdfs.text())
         let before = model.rows.first { $0.item == .metadata }?.count ?? 0
 
-        try Pdfs.retitle(rig.tab.session, "Salary review")
+        try Pdfs.retitle(rig.tab.session, "Salary figures")
         try rig.tab.commit("Properties")
 
         await waitUntil { (model.rows.first { $0.item == .metadata }?.count ?? 0) > before }

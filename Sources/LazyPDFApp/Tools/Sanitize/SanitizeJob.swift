@@ -28,9 +28,9 @@ public enum SanitizeJob {
             externalLinks: ticked.contains(.externalLinks), filePaths: ticked.contains(.filePaths))
     }
 
-    /// "Comments and markup (14)" for each finding, joined.
-    public static func list(_ findings: [SanitizeFinding]) -> String {
-        findings.map { L10n.t("{0} ({1})", OptimizeText.itemName($0.item), $0.count) }.joined(separator: "; ")
+    /// "Comments and markup (14)" for each item, joined.
+    public static func list(_ items: [SanitizeFinding]) -> String {
+        items.map { L10n.t("{0} ({1})", OptimizeText.itemName($0.item), $0.count) }.joined(separator: "; ")
     }
 }
 

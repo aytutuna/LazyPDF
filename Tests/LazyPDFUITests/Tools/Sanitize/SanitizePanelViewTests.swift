@@ -13,7 +13,7 @@ final class SanitizePanelViewTests: XCTestCase {
     private func titled() throws -> [UInt8] {
         let session = try PdfEditSession.open(StandInPdfs.text(2))
         var metadata = DocumentMetadata.read(session.document)
-        metadata.title = "Salary review"
+        metadata.title = "Salary figures"
         try metadata.write(session.document)
         try session.commit("Title")
         return session.current

@@ -69,15 +69,15 @@ public final class SanitizeModel: ToolPanelModel {
         let certificate = tab.certificate.flatMap { host.verifyCertificate($0) }
         let revision = tab.revision
         return Task { [self] in
-            let findings: [SanitizeFinding]
+            let scanned: [SanitizeFinding]
             do {
-                findings = try await Task.detached { try SanitizeJob.scan(file, password: password, certificate: certificate) }.value
+                scanned = try await Task.detached { try SanitizeJob.scan(file, password: password, certificate: certificate) }.value
             } catch {
                 if ticket == mine, self.tab === tab, tab.revision == revision { found = L10n.t("The file could not be searched.") }
                 return
             }
             guard ticket == mine, self.tab === tab, tab.revision == revision else { return }
-            rows = findings.map(SanitizeRow.init)
+            rows = scanned.map(SanitizeRow.init)
             found = rows.isEmpty ? L10n.t("Nothing found. This file has no hidden data.") : L10n.t("Tick what to remove.")
         }
     }

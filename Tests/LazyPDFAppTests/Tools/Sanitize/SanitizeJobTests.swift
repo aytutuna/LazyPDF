@@ -8,7 +8,7 @@ import LazyPDFKit
 final class SanitizeJobTests: XCTestCase {
     private func titled() throws -> [UInt8] {
         let session = try PdfEditSession.open(Pdfs.text(2))
-        try Pdfs.retitle(session, "Salary review")
+        try Pdfs.retitle(session, "Salary figures")
         try session.commit("Title")
         return session.current
     }
@@ -16,9 +16,9 @@ final class SanitizeJobTests: XCTestCase {
     private var all: Set<SanitizeItem> { Set(SanitizeItem.allCases) }
 
     func test_theScanFindsTheTitleAsMetadata() throws {
-        let findings = try SanitizeJob.scan(try titled(), password: nil, certificate: nil)
+        let hits = try SanitizeJob.scan(try titled(), password: nil, certificate: nil)
 
-        XCTAssertTrue(findings.contains { $0.item == .metadata })
+        XCTAssertTrue(hits.contains { $0.item == .metadata })
     }
 
     func test_onlyTheRemovableItemsCanBeSwitchedAndInvisibleTextStartsOff() {
@@ -50,7 +50,7 @@ final class SanitizeJobTests: XCTestCase {
         XCTAssertTrue(SanitizeJob.list(result.removed).contains(OptimizeText.itemName(.metadata)))
         let reopened = try PdfDocument.open(result.bytes)
         XCTAssertEqual(reopened.pages.count, 2)
-        XCTAssertNotEqual(DocumentMetadata.read(reopened).title, "Salary review")
+        XCTAssertNotEqual(DocumentMetadata.read(reopened).title, "Salary figures")
     }
 
     func test_anItemLeftUntickedStaysInTheFile() throws {
@@ -61,7 +61,7 @@ final class SanitizeJobTests: XCTestCase {
 
         XCTAssertTrue(result.kept.contains { $0.item == .metadata })
         let reopened = try PdfDocument.open(result.bytes)
-        XCTAssertEqual(DocumentMetadata.read(reopened).title, "Salary review")
+        XCTAssertEqual(DocumentMetadata.read(reopened).title, "Salary figures")
     }
 
     func test_aRunThatWasCancelledGivesNothing() throws {
