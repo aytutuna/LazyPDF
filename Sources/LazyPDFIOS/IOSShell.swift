@@ -29,6 +29,10 @@ final class IOSShell {
     private let certificates: IOSCertificates
     @ObservationIgnored private var viewers: [UUID: ViewerModel] = [:]
     @ObservationIgnored private var picking: CheckedContinuation<[PickedFile], Never>?
+    @ObservationIgnored private var chosen: [PickedFile] = []
+    @ObservationIgnored private var waiting: [URL] = []
+    @ObservationIgnored private var shownTab: DocumentTab?
+    @ObservationIgnored private var shownViewer: ViewerModel?
 
     init() {
         let keys = IOSCertificates()
@@ -38,7 +42,9 @@ final class IOSShell {
         vm = AppViewModel(renderers: { PdfKitRenderer() }, codec: ImageIOCodec(), fonts: CoreTextFontSource(),
                           sisters: IOSSisterApps(), certificates: keys, bookmarks: IOSBookmarks(), folders: folders)
         vm.fileWriter = CoordinatedFileWriter()
-        try? FileManager.default.removeItem(at: Self.shared)
+        // There is no exit to clean up at: what a kill left behind, copies of attachments among it, goes at launch.
+        try? FileManager.default.removeItem(at: Self.staging)
+        AttachmentsModel.deleteOpenedCopies(in: folders.openedAttachments)
     }
 
     var commands: ShellCommands {
@@ -66,6 +72,17 @@ final class IOSShell {
         return made
     }
 
+    // The viewer of the active tab is shown from here, not from the stage view, which the window rebuilds when it changes
+    // between the phone and tablet layouts.
+    func showActive() {
+        let tab = vm.activeDocument
+        guard tab !== shownTab else { return }
+        shownViewer?.show(nil)
+        shownViewer = tab.map(viewer(for:))
+        shownViewer?.show(tab)
+        shownTab = tab
+    }
+
     func dropClosedViewers() {
         let open = Set(vm.documents.map(\.id))
         viewers = viewers.filter { open.contains($0.key) }
@@ -74,7 +91,9 @@ final class IOSShell {
     // Files from Files, Mail or another app's Open In come with a grant the app can hold. The address names files by path,
     // which the app cannot read and must not open on a caller's say-so, so the file has to come through the system.
     func receive(_ url: URL) {
-        if url.isFileURL {
+        if sheet != nil {
+            waiting.append(url)
+        } else if url.isFileURL {
             Task { await vm.open(url, access: SecurityScopedAccess.start(url)) }
         } else if !LazyPdfAddress.parse(url.absoluteString).isEmpty {
             vm.showNotice(L10n.t("File not opened"), L10n.t("An address cannot open a file here. Share the file to Lazy PDF or open it from Files."))
@@ -89,18 +108,27 @@ final class IOSShell {
         #endif
     }
 
+    // The caller of a picker goes on once its sheet is gone, so what it opens can show its own sheets (a password) at once.
     func finishPicking(_ files: [PickedFile]) {
-        picking?.resume(returning: files)
-        picking = nil
+        chosen = files
         sheet = nil
     }
 
     func sheetClosed() {
-        if sheet == nil { finishPicking([]) }
+        guard sheet == nil else { return }
+        let files = chosen
+        chosen = []
+        picking?.resume(returning: files)
+        picking = nil
+        let urls = waiting
+        waiting = []
+        for url in urls { receive(url) }
     }
 
     private func pick(_ kind: SheetRequest.Kind) async -> [PickedFile] {
-        finishPicking([])
+        picking?.resume(returning: [])
+        picking = nil
+        chosen = []
         return await withCheckedContinuation { continuation in
             picking = continuation
             sheet = SheetRequest(kind: kind)
@@ -113,13 +141,22 @@ final class IOSShell {
         }
     }
 
-    // The picker copies a finished file to the place the person names; the tab then saves there itself, through the
-    // coordinated writer, so its state and its grant follow the new file.
+    // The picker copies a placeholder to the place the person names; the tab then saves there itself, through the
+    // coordinated writer, so its state and its grant follow the new file. The placeholder is the session's bytes and not a
+    // rewritten copy: a file with a password must not reach a synced folder unlocked, even for a moment. A name that is
+    // another tab's file is checked only after the copy, so that file is put back as it was.
     private func saveAs(_ tab: DocumentTab, compact: Bool) async -> Bool {
         let name = (tab.title as NSString).deletingPathExtension + ".pdf"
-        guard let staged = stage(tab, name: name, rewritten: compact) else { return false }
+        guard let staged = stage(tab, name: name) else { return false }
         defer { try? FileManager.default.removeItem(at: staged.deletingLastPathComponent()) }
+        var others: [UUID: Data] = [:]
+        for other in vm.documents where other !== tab {
+            if let url = other.url, let bytes = try? Data(contentsOf: url) { others[other.id] = bytes }
+        }
         guard let file = await pick(.export(staged)).first else { return false }
+        if let other = vm.tab(of: file.url), other !== tab, let bytes = others[other.id] {
+            try? CoordinatedFileWriter().write(to: file.url) { try bytes.write(to: $0) }
+        }
         let saved = compact ? vm.saveCompact(tab, file.url) : vm.saveAs(tab, file.url)
         if saved {
             tab.take(file.access)
@@ -131,21 +168,20 @@ final class IOSShell {
 
     private func share(_ tab: DocumentTab) {
         let name = tab.title.lowercased().hasSuffix(".pdf") ? tab.title : tab.title + ".pdf"
-        guard let file = stage(tab, name: name, rewritten: false, in: Self.shared) else { return }
+        guard let file = stage(tab, name: name) else { return }
         sheet = SheetRequest(kind: .share(file))
     }
 
-    private static var shared: URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent("Share", isDirectory: true)
+    private static var staging: URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("Staging", isDirectory: true)
     }
 
-    private func stage(_ tab: DocumentTab, name: String, rewritten: Bool, in root: URL? = nil) -> URL? {
-        let folder = (root ?? FileManager.default.temporaryDirectory).appendingPathComponent(UUID().uuidString, isDirectory: true)
+    private func stage(_ tab: DocumentTab, name: String) -> URL? {
+        let folder = Self.staging.appendingPathComponent(UUID().uuidString, isDirectory: true)
         let file = folder.appendingPathComponent(name)
         do {
-            let data = rewritten ? try IOSSystemPrint.item(tab.session) : Data(tab.session.current)
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            try data.write(to: file)
+            try Data(tab.session.current).write(to: file)
             return file
         } catch {
             vm.showProblem(Problems.save(error, tab.title))
