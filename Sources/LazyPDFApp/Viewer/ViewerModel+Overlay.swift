@@ -33,6 +33,6 @@ extension ViewerModel {
 extension ViewerModel {
     /// The fields tools have open, with their pages, for the page view that puts a control over each.
     public var openFields: [(page: Int, field: OverlayField)] {
-        overlays.sorted { $0.key < $1.key }.flatMap { page, overlay in overlay.fields.map { (page, $0) } }
+        overlays.sorted { $0.key < $1.key }.flatMap { page, overlay in overlay.fields.map { (page: page, field: $0) } }
     }
 }
