@@ -62,7 +62,11 @@ final class DocumentTests: XCTestCase {
         // The half-height sheet shows its grabber; the buttons inside it are not reachable at that size.
         let grabber = app.buttons["Sheet Grabber"].firstMatch
         XCTAssertTrue(grabber.waitForExistence(timeout: 10))
-        grabber.swipeDown()
+        let bottom = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.99))
+        grabber.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(forDuration: 0.1, thenDragTo: bottom)
+        if grabber.exists {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
+        }
         XCTAssertTrue(grabber.waitForNonExistence(timeout: 10))
     }
 
