@@ -14,6 +14,13 @@ final class DocumentTests: XCTestCase {
         return app
     }
 
+    // The small menu buttons of the phone layout cannot be scrolled to by the accessibility action; a tap at their middle works.
+    @MainActor
+    private func tap(_ element: XCUIElement) {
+        XCTAssertTrue(element.waitForExistence(timeout: 10))
+        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
+
     @MainActor
     private func firstPage(_ app: XCUIApplication) -> XCUIElement {
         app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH 'Page 1 of'")).firstMatch
@@ -50,8 +57,8 @@ final class DocumentTests: XCTestCase {
     func testSidePanelOpensAsASheet() throws {
         let app = try launch()
         XCTAssertTrue(firstPage(app).waitForExistence(timeout: 60))
-        app.buttons["Side panels"].firstMatch.tap()
-        app.buttons["Pages"].firstMatch.tap()
+        tap(app.buttons["Side panels"].firstMatch)
+        tap(app.buttons["Pages"].firstMatch)
         XCTAssertTrue(app.navigationBars["Pages"].waitForExistence(timeout: 10))
         app.navigationBars["Pages"].buttons["Done"].tap()
         XCTAssertFalse(app.navigationBars["Pages"].waitForExistence(timeout: 2))
@@ -61,8 +68,8 @@ final class DocumentTests: XCTestCase {
     func testClosingTheDocumentGoesBackToHome() throws {
         let app = try launch()
         XCTAssertTrue(firstPage(app).waitForExistence(timeout: 60))
-        app.buttons["Settings"].firstMatch.tap()
-        app.buttons["Close"].firstMatch.tap()
+        tap(app.buttons["Settings"].firstMatch)
+        tap(app.buttons["Close"].firstMatch)
         XCTAssertTrue(app.staticTexts["What would you like to do?"].firstMatch.waitForExistence(timeout: 10))
     }
 }
