@@ -76,6 +76,21 @@ final class BusyCloseTests: XCTestCase {
         XCTAssertTrue(f.vm.requestExit())
     }
 
+    func test_aRunningToolActionHoldsTheWindowAndTheTabs() async throws {
+        let f = ViewModelFixture(self)
+        await f.vm.open(f.pdf())
+        let tab = try XCTUnwrap(f.vm.activeDocument)
+        f.vm.actionRunning = true
+
+        XCTAssertFalse(f.vm.requestExit())
+        XCTAssertFalse(f.vm.requestClose(tab))
+
+        XCTAssertEqual(f.vm.message?.title, "Still working")
+        XCTAssertTrue(f.vm.documents.contains { $0 === tab })
+        f.vm.actionRunning = false
+        XCTAssertTrue(f.vm.requestClose(tab))
+    }
+
     func test_aSecondJobKeepsTheBusyBarWhenTheFirstEnds() async throws {
         let f = ViewModelFixture(self)
         let (first, endFirst) = await startJob(f.vm)

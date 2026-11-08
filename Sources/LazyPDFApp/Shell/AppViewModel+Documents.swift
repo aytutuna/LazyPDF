@@ -362,7 +362,7 @@ extension AppViewModel {
 
     // A job edits the document off the main actor, so what is in it now is not something to save or to throw away.
     private func waitForJob() -> Bool {
-        if !isBusy { return false }
+        if !isBusy && !actionRunning { return false }
         showNotice(L10n.t("Still working"), L10n.t("Wait for the job to end, or cancel it, then close."))
         return true
     }
