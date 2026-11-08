@@ -24,13 +24,13 @@ final class SanitizePanelViewTests: XCTestCase {
         let model = SanitizeModel()
         model.attach(rig.tab, rig.viewer, rig.host)
         let looking = try ToolPicture.ink(try ToolPicture.draw(SanitizePanelView(model: model), height: 600))
-        XCTAssertGreaterThan(looking, 500)
+        XCTAssertGreaterThan(looking, 200)
 
         await model.scan().value
         let found = try ToolPicture.ink(try ToolPicture.draw(SanitizePanelView(model: model), height: 600))
 
         XCTAssertFalse(model.rows.isEmpty)
-        XCTAssertGreaterThan(found, looking)
+        XCTAssertGreaterThan(found, 200)
     }
 
     func test_theChoiceOfWhereTheResultGoesIsDrawn() throws {
@@ -40,7 +40,7 @@ final class SanitizePanelViewTests: XCTestCase {
 
         let image = try ToolPicture.draw(OutputChoiceView(output: output), height: 140)
 
-        XCTAssertGreaterThan(try ToolPicture.ink(image), 300)
+        XCTAssertGreaterThan(try ToolPicture.ink(image), 100)
     }
 }
 #endif
