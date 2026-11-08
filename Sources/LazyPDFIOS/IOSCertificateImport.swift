@@ -1,6 +1,7 @@
 #if os(iOS)
 import UIKit
 import UniformTypeIdentifiers
+import LazyPDFKit
 import LazyPDFApp
 
 // Follows MainWindow.Files.cs ImportCertificate: picks a .p12 or .pfx, asks for its password and puts the identity in the
