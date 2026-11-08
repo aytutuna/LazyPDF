@@ -15,6 +15,7 @@ final class MacShell {
     let vm: AppViewModel
     let viewer: ViewerModel
     let folders: AppFolders
+    let panels: ToolPanels
     private let certificates: MacCertificates
     private(set) var commands = ShellCommands()
     private weak var window: NSWindow?
@@ -31,8 +32,15 @@ final class MacShell {
         self.vm = vm
         self.certificates = certificates
         self.folders = folders
+        let panels = ToolPanels(host: vm, folders: folders)
+        self.panels = panels
+        vm.handInTyping = { panels.handIn() }
         viewer = ViewerModel(makeRenderer: { PdfKitRenderer() }, openAddress: { NSWorkspace.shared.open($0) })
         vm.fileWriter = CoordinatedFileWriter()
+        let services = MacToolServices()
+        vm.filePicker = services
+        vm.fileExporter = services
+        vm.clipboard = services
         // TODO: Create and Batch come with the tools; until then their tiles stay off the Home screen.
         vm.hiddenTiles = [AppViewModel.createTile, AppViewModel.batchTile]
         AttachmentsModel.deleteOpenedCopies(in: folders.openedAttachments)

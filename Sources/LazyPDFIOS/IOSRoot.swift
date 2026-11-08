@@ -12,12 +12,13 @@ struct IOSRoot: View {
 
     var body: some View {
         let vm = shell.vm
-        AppWindow(vm, commands: shell.commands, stage: { tab in
+        let panels = shell.panels
+        AppWindow(vm, commands: shell.commands, toolAction: { panels.action(for: $0) }, stage: { tab in
             PageViewerView(viewer: shell.viewer(for: tab))
         }, sidePane: { id, tab in
             SidePanelView(id: id, tab: tab, viewer: shell.viewer(for: tab), host: vm, folders: shell.folders)
-        }, inspector: { id, _ in
-            ToolSummary(id: id)
+        }, inspector: { id, tab in
+            ToolHostView(id: id, tab: tab, viewer: shell.viewer(for: tab), panels: panels)
         })
         .sheet(item: $shell.sheet, onDismiss: shell.sheetClosed) { request in
             switch request.kind {
@@ -48,23 +49,6 @@ struct IOSRoot: View {
         return ViewerCommandState(actions: FileActions(vm: vm, commands: shell.commands), open: shell.commands.open,
                                   hasDocument: tab != nil, canUndo: vm.canUndo, canRedo: vm.canRedo, viewer: viewer,
                                   canGoBack: viewer?.canGoBack ?? false, canGoForward: viewer?.canGoForward ?? false)
-    }
-}
-
-// TODO: the tools' own panels come with the tools; for now the inspector says what the tool will do.
-private struct ToolSummary: View {
-    let id: String
-
-    var body: some View {
-        if let tool = ToolCatalog.find(id) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(tool.title).font(.headline)
-                Text(tool.summary).foregroundStyle(.secondary)
-            }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .combine)
-        }
     }
 }
 #endif

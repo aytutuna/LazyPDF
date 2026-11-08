@@ -29,30 +29,19 @@ struct MacWindow: View {
     var body: some View {
         let vm = shell.vm
         let viewer = shell.viewer
-        AppWindow(vm, commands: shell.commands, stage: { _ in
+        let panels = shell.panels
+        AppWindow(vm, commands: shell.commands, toolAction: { panels.action(for: $0) }, stage: { _ in
             PageViewerView(viewer: viewer)
         }, sidePane: { id, tab in
             SidePanelView(id: id, tab: tab, viewer: viewer, host: vm, folders: shell.folders)
-        }, inspector: { id, _ in
-            ToolSummary(id: id)
+        }, inspector: { id, tab in
+            ToolHostView(id: id, tab: tab, viewer: viewer, panels: panels)
         })
         .frame(minWidth: 640, minHeight: 480)
         .environment(\.shortcutsInMenu, true)
         .onChange(of: ObjectIdentifier(vm.activeTab), initial: true) { viewer.show(vm.activeDocument) }
         .onChange(of: vm.closeQuestion == nil) { shell.closeQuestionChanged() }
         .background(WindowHook { shell.attach($0) })
-    }
-}
-
-// TODO: the panels of the tools; for now the inspector says what the chosen tool is for.
-private struct ToolSummary: View {
-    let id: String
-
-    var body: some View {
-        Text(ToolCatalog.find(id)?.summary ?? "")
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(12)
     }
 }
 #endif

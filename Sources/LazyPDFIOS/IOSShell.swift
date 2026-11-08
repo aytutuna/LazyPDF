@@ -24,6 +24,7 @@ struct SheetRequest: Identifiable {
 final class IOSShell {
     let vm: AppViewModel
     let folders: IOSAppFolders
+    let panels: ToolPanels
     var sheet: SheetRequest?
 
     private let certificates: IOSCertificates
@@ -39,11 +40,19 @@ final class IOSShell {
         let folders = IOSAppFolders()
         certificates = keys
         self.folders = folders
-        vm = AppViewModel(renderers: { PdfKitRenderer() }, codec: ImageIOCodec(), fonts: CoreTextFontSource(),
-                          sisters: IOSSisterApps(), certificates: keys, bookmarks: IOSBookmarks(), folders: folders)
-        vm.fileWriter = CoordinatedFileWriter()
+        let model = AppViewModel(renderers: { PdfKitRenderer() }, codec: ImageIOCodec(), fonts: CoreTextFontSource(),
+                                 sisters: IOSSisterApps(), certificates: keys, bookmarks: IOSBookmarks(), folders: folders)
+        let panels = ToolPanels(host: model, folders: folders)
+        vm = model
+        self.panels = panels
+        model.handInTyping = { panels.handIn() }
+        model.fileWriter = CoordinatedFileWriter()
+        let services = IOSToolServices()
+        model.filePicker = services
+        model.fileExporter = services
+        model.clipboard = services
         // TODO: Create and Batch come with the tools; until then their tiles stay off the Home screen.
-        vm.hiddenTiles = [AppViewModel.createTile, AppViewModel.batchTile]
+        model.hiddenTiles = [AppViewModel.createTile, AppViewModel.batchTile]
         // There is no exit to clean up at: what a kill left behind, copies of attachments among it, goes at launch.
         try? FileManager.default.removeItem(at: Self.staging)
         AttachmentsModel.deleteOpenedCopies(in: folders.openedAttachments)
