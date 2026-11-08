@@ -104,6 +104,8 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
         case .home?: return .home
         case .end?: return .end
         case .carriageReturn?, .enter?: return .enter
+        case .deleteForward?: return .delete
+        case .delete?, .backspace?: return .backspace
         default: break
         }
         if event.keyCode == 53 { return .escape }
@@ -138,9 +140,10 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
     // reading order so it does not depend on what is drawn.
     override func isAccessibilityElement() -> Bool { false }
 
+    // The text views of open fields follow, so a person using VoiceOver can reach what is being typed.
     override func accessibilityChildren() -> [Any]? {
         let offset = viewer.offset
-        return viewer.visiblePages.compactMap { page -> NSAccessibilityElement? in
+        let pages = viewer.visiblePages.compactMap { page -> NSAccessibilityElement? in
             guard let matrix = viewer.pageToView(page) else { return nil }
             let size = viewer.pageSize(page)
             let area = PageSpace.transform(matrix, ViewRect(0, 0, size.width, size.height))
@@ -155,6 +158,7 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
             }
             return element
         }
+        return pages as [Any] + fields.views as [Any]
     }
 }
 

@@ -41,6 +41,10 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
     private var selecting = false
     private var editMenu: UIEditMenuInteraction?
     private lazy var fields = OverlayFieldViews(viewer: viewer, host: self)
+    private let toolPress = UILongPressGestureRecognizer()
+    private var scrollingByFinger = false
+    private var lastTouch = ViewPoint.zero
+    private var keyboardInset: CGFloat = 0
 
     init(viewer: ViewerModel) {
         self.viewer = viewer
@@ -61,7 +65,8 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         let once = UITapGestureRecognizer(target: self, action: #selector(tapped(_:)))
         once.require(toFail: twice)
         let hold = UILongPressGestureRecognizer(target: self, action: #selector(held(_:)))
-        let tool = UILongPressGestureRecognizer(target: self, action: #selector(toolTouched(_:)))
+        let tool = toolPress
+        tool.addTarget(self, action: #selector(toolTouched(_:)))
         tool.minimumPressDuration = 0
         tool.allowableMovement = .greatestFiniteMagnitude
         tool.numberOfTouchesRequired = 1
@@ -79,7 +84,16 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
             self?.canvas.setNeedsDisplay()
             self?.fields.sync()
         }
+        viewer.onToolChange = { [weak self] in self?.toolChanged() }
+        let center = NotificationCenter.default
+        center.addObserver(self, selector: #selector(keyboardMoved(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+        center.addObserver(self, selector: #selector(keyboardGone), name: UIResponder.keyboardWillHideNotification, object: nil)
+        center.addObserver(self, selector: #selector(keyboardSettled), name: UIResponder.keyboardDidShowNotification, object: nil)
         follow()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     required init?(coder: NSCoder) {
@@ -90,7 +104,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         super.layoutSubviews()
         canvas.frame = bounds
         scroll.frame = bounds
-        viewer.setScreen(viewport: ViewSize(bounds.width, bounds.height), pixelsPerDip: Double(window?.screen.scale ?? traitCollection.displayScale))
+        viewer.setScreen(viewport: ViewSize(bounds.width, Swift.max(bounds.height - keyboardInset, 1)), pixelsPerDip: Double(window?.screen.scale ?? traitCollection.displayScale))
     }
 
     override var canBecomeFirstResponder: Bool { true }
@@ -129,12 +143,33 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
     }
 
     func gestureRecognizer(_ recognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
-        recognizer is UIPinchGestureRecognizer || other is UIPinchGestureRecognizer
+        if recognizer is UIPinchGestureRecognizer || other is UIPinchGestureRecognizer { return true }
+        // Two fingers scroll while the first still holds the tool's press, which the scroll then cancels.
+        let pan = scroll.panGestureRecognizer
+        return viewer.pointerTool != nil && (recognizer === pan || other === pan)
+    }
+
+    // One finger belongs to a pointer tool, so the scroll view's own pan needs two while one is set.
+    private func toolChanged() {
+        scroll.panGestureRecognizer.minimumNumberOfTouches = viewer.pointerTool == nil ? 1 : 2
+    }
+
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        cancelToolTouch()
+    }
+
+    private func cancelToolTouch() {
+        guard viewer.pointerTool != nil else { return }
+        viewer.pointerCancel()
+        scrollingByFinger = false
+        toolPress.isEnabled = false
+        toolPress.isEnabled = true
     }
 
     @objc private func pinched(_ recognizer: UIPinchGestureRecognizer) {
         switch recognizer.state {
         case .began:
+            cancelToolTouch()
             lastScale = 1
         case .changed:
             viewer.magnify(by: recognizer.scale / lastScale, about: viewPoint(recognizer))
@@ -152,7 +187,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         becomeFirstResponder()
         endEditing(true)
         let at = viewPoint(recognizer)
-        viewer.pointerDown(at)
+        viewer.pointerDown(at, touch: true)
         viewer.pointerUp(at)
     }
 
@@ -161,7 +196,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         let at = viewPoint(recognizer)
         switch recognizer.state {
         case .began:
-            viewer.pointerDown(at, clicks: 2)
+            viewer.pointerDown(at, clicks: 2, touch: true)
             selecting = true
         case .changed:
             if selecting { viewer.pointerMove(at) }
@@ -178,18 +213,49 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         }
     }
 
-    // A pointer tool takes one finger from the scroll view.
+    // A pointer tool takes one finger from the scroll view, except where it says it has no use for it: there the finger
+    // scrolls the page by hand, since the scroll view's own pan waits for two.
     @objc private func toolTouched(_ recognizer: UILongPressGestureRecognizer) {
         let at = viewPoint(recognizer)
         switch recognizer.state {
         case .began:
             // A field open on the page keeps what was typed when the finger lands somewhere else.
             endEditing(true)
-            viewer.pointerDown(at)
-        case .changed: viewer.pointerMove(at)
-        case .ended: viewer.pointerUp(at)
-        default: viewer.pointerCancel()
+            scrollingByFinger = !viewer.toolTakes(at)
+            lastTouch = at
+            if !scrollingByFinger { viewer.pointerDown(at, touch: true) }
+        case .changed:
+            if scrollingByFinger {
+                viewer.scroll(by: lastTouch.x - at.x, lastTouch.y - at.y)
+                lastTouch = at
+            } else {
+                viewer.pointerMove(at)
+            }
+        case .ended:
+            if !scrollingByFinger { viewer.pointerUp(at) }
+            scrollingByFinger = false
+        default:
+            if !scrollingByFinger { viewer.pointerCancel() }
+            scrollingByFinger = false
         }
+    }
+
+    @objc private func keyboardMoved(_ note: Notification) {
+        guard let end = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect, let space = window?.screen.coordinateSpace else { return }
+        let local = convert(end, from: space)
+        keyboardInset = Swift.max(0, bounds.maxY - local.minY)
+        setNeedsLayout()
+    }
+
+    @objc private func keyboardGone() {
+        keyboardInset = 0
+        setNeedsLayout()
+    }
+
+    // The field that took the focus may sit under the keyboard, or move when the view is refitted to what is left.
+    @objc private func keyboardSettled() {
+        layoutIfNeeded()
+        fields.revealFocused()
     }
 
     func editMenuInteraction(_ interaction: UIEditMenuInteraction, menuFor configuration: UIEditMenuConfiguration, suggestedActions: [UIMenuElement]) -> UIMenu? {
@@ -219,13 +285,15 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         .keyboardUpArrow: .up, .keyboardDownArrow: .down, .keyboardLeftArrow: .left, .keyboardRightArrow: .right,
         .keyboardPageUp: .pageUp, .keyboardPageDown: .pageDown, .keyboardHome: .home, .keyboardEnd: .end,
         .keyboardSpacebar: .space, .keyboardReturnOrEnter: .enter, .keyboardEscape: .escape,
+        .keyboardDeleteForward: .delete, .keyboardDeleteOrBackspace: .backspace,
     ]
 
     // One element for each page in view, named by its place in the file and holding the page's text, read from the engine in
     // reading order so it does not depend on what is drawn.
+    // The text views of open fields follow, so a person using VoiceOver can reach what is being typed.
     override var accessibilityElements: [Any]? {
         get {
-            viewer.visiblePages.compactMap { page -> UIAccessibilityElement? in
+            let pages = viewer.visiblePages.compactMap { page -> UIAccessibilityElement? in
                 guard let matrix = viewer.pageToView(page) else { return nil }
                 let size = viewer.pageSize(page)
                 let area = PageSpace.transform(matrix, ViewRect(0, 0, size.width, size.height))
@@ -235,6 +303,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
                 element.accessibilityFrameInContainerSpace = CGRect(x: area.x, y: area.y, width: area.width, height: area.height)
                 return element
             }
+            return pages as [Any] + fields.views as [Any]
         }
         set {}
     }
