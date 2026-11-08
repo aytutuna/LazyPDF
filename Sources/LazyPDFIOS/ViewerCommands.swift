@@ -67,7 +67,7 @@ struct ViewerCommands: Commands {
         }
         CommandGroup(after: .sidebar) {
             Button(L10n.t("Zoom in")) { state?.viewer?.zoomIn() }
-                .keyboardShortcut("+")
+                .keyboardShortcut("=")
                 .disabled(state?.viewer == nil)
             Button(L10n.t("Zoom out")) { state?.viewer?.zoomOut() }
                 .keyboardShortcut("-")
