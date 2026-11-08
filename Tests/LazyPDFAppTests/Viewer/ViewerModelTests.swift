@@ -338,6 +338,15 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertFalse(viewer.findVisible)
     }
 
+    func test_escapeLeavesReadingMode() throws {
+        let (viewer, _) = try open()
+        viewer.readingMode = true
+
+        viewer.key(.escape)
+
+        XCTAssertFalse(viewer.readingMode)
+    }
+
     func test_settingAnotherToolCancelsTheOneBefore() throws {
         let (viewer, _) = try open()
         let first = RecordingTool()

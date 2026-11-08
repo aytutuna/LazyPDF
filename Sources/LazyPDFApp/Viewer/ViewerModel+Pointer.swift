@@ -151,6 +151,8 @@ extension ViewerModel {
                 tool?.cancel()
             } else if findVisible {
                 hideFind()
+            } else if readingMode {
+                readingMode = false
             } else {
                 clearSelection()
             }

@@ -16,27 +16,48 @@ struct WindowHook: NSViewRepresentable {
 
     private final class HookView: NSView {
         var attach: ((NSWindow) -> Void)?
+        private var observer: NSObjectProtocol?
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
-            if let window { attach?(window) }
+            guard let window else { return }
+            attach?(window)
+            if let observer { NotificationCenter.default.removeObserver(observer) }
+            // SwiftUI can set its own delegate again; the guard is put back when the window next comes forward.
+            observer = NotificationCenter.default.addObserver(forName: NSWindow.didBecomeKeyNotification, object: window, queue: .main) { [weak self] note in
+                guard let window = note.object as? NSWindow else { return }
+                MainActor.assumeIsolated { self?.attach?(window) }
+            }
+        }
+
+        deinit {
+            if let observer { NotificationCenter.default.removeObserver(observer) }
         }
     }
 }
 
-/// Asks the shell before the window closes, so unsaved tabs get their question first. Everything else is left to the
-/// delegate SwiftUI put there.
+/// Sends the red close button down the quit path, so unsaved tabs get their question first and the window stays up while it
+/// is asked. Everything else is left to the delegate SwiftUI put there.
 final class CloseGuard: NSObject, NSWindowDelegate {
-    private weak var original: NSWindowDelegate?
-    private let mayClose: () -> Bool
+    private let original: NSWindowDelegate?
+    private let quit: () -> Void
 
-    init(original: NSWindowDelegate?, mayClose: @escaping () -> Bool) {
+    private init(original: NSWindowDelegate?, quit: @escaping () -> Void) {
         self.original = original
-        self.mayClose = mayClose
+        self.quit = quit
+    }
+
+    /// The guard on `window`: `existing` when it is still the delegate, a new one over whatever delegate is there otherwise.
+    static func ensure(on window: NSWindow, existing: CloseGuard?, quit: @escaping () -> Void) -> CloseGuard {
+        if let existing, window.delegate === existing { return existing }
+        let guarded = CloseGuard(original: window.delegate, quit: quit)
+        window.delegate = guarded
+        return guarded
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        mayClose()
+        quit()
+        return false
     }
 
     override func responds(to selector: Selector!) -> Bool {

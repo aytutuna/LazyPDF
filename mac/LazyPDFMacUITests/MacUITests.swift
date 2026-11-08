@@ -27,6 +27,10 @@ final class MacUITests: XCTestCase {
         app.menuBars.menuItems[item].click()
     }
 
+    private func tab(_ app: XCUIApplication) -> XCUIElement {
+        app.scrollViews["Open files"].buttons["plain-3.pdf"]
+    }
+
     func testLaunchShowsHome() throws {
         let app = try launch(opening: false)
 
@@ -36,7 +40,7 @@ final class MacUITests: XCTestCase {
     func testOpeningAFileShowsItsTabAndFirstPage() throws {
         let app = try launch(opening: true)
 
-        XCTAssertTrue(app.buttons["plain-3.pdf"].waitForExistence(timeout: 30))
+        XCTAssertTrue(tab(app).waitForExistence(timeout: 30))
         XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 30))
     }
 
@@ -66,13 +70,31 @@ final class MacUITests: XCTestCase {
 
     func testCloseTabReturnsToHome() throws {
         let app = try launch(opening: true)
-        XCTAssertTrue(app.buttons["plain-3.pdf"].waitForExistence(timeout: 30))
+        XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 30))
+        XCTAssertTrue(tab(app).exists)
 
         choose(app, menu: "File", item: "Close tab")
 
         XCTAssertTrue(element(app, "What would you like to do?").waitForExistence(timeout: 10))
         let gone = NSPredicate(format: "exists == false")
+        wait(for: [expectation(for: gone, evaluatedWith: tab(app))], timeout: 10)
         wait(for: [expectation(for: gone, evaluatedWith: element(app, "Page 1 of 3"))], timeout: 10)
+    }
+
+    // The sandbox lets the app touch the file it opened but not its folder, so a save has to go through the coordinated writer.
+    func testSaveKeepsTheFileAndItOpensAgain() throws {
+        let app = try launch(opening: true)
+        XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 30))
+
+        choose(app, menu: "File", item: "Save")
+        XCTAssertTrue(element(app, "Saved plain-3.pdf.").waitForExistence(timeout: 20))
+        choose(app, menu: "File", item: "Close tab")
+        XCTAssertTrue(element(app, "What would you like to do?").waitForExistence(timeout: 10))
+        app.menuBars.menuBarItems["File"].click()
+        app.menuBars.menuItems["Open Recent"].click()
+        app.menuBars.menuItems["plain-3.pdf"].click()
+
+        XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 30))
     }
 
     func testSidePanelsOpenFromTheRail() throws {

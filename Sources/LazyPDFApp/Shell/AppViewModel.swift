@@ -67,8 +67,11 @@ public final class AppViewModel {
     @ObservationIgnored let settings: URL
     @ObservationIgnored let printDirectory: URL
 
-    /// How the tabs write their files; the iPhone and iPad shell sets a coordinated writer.
+    /// How the tabs write their files; the Apple shells set a coordinated writer.
     @ObservationIgnored public var fileWriter: FileWriter = PlainFileWriter()
+
+    /// Home tiles a shell cannot answer yet.
+    @ObservationIgnored public var hiddenTiles: Set<String> = []
 
     private(set) var version = 0
 
@@ -145,6 +148,15 @@ public final class AppViewModel {
     public var statusShort: String { StatusLine.short(status) }
 
     public var isBusy: Bool { busy != nil }
+
+    /// Set by the window while the pinned button of a tool runs its job.
+    public var actionRunning = false
+
+    /// A job or a question holds the window: the commands that would edit, close or open stay out of reach, as the
+    /// Windows window refuses its shortcuts while a modal, a job or an action is up.
+    public var isBlocked: Bool {
+        isBusy || actionRunning || closeQuestion != nil || recoveryOffer != nil || passwordRequest != nil
+    }
 
     public var busyText: String { busyLabel }
 

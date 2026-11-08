@@ -13,13 +13,14 @@ struct MacMenus: Commands {
     private var vm: AppViewModel { shell.vm }
     private var viewer: ViewerModel { shell.viewer }
     private var actions: FileActions { FileActions(vm: vm, commands: shell.commands) }
-    private var hasDocument: Bool { vm.activeDocument != nil }
-    private var idle: Bool { hasDocument && !vm.isBusy }
+    private var free: Bool { !vm.isBlocked }
+    private var usable: Bool { vm.activeDocument != nil && free }
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
             Button(L10n.t("Open")) { shell.commands.open() }
                 .keyboardShortcut("o")
+                .disabled(!free)
             Menu(L10n.t("Open Recent")) {
                 ForEach(vm.recent, id: \.url) { item in
                     Button(item.name) { Task { await vm.openRecent(item) } }
@@ -28,47 +29,48 @@ struct MacMenus: Commands {
                 Button(L10n.t("Clear menu")) { vm.clearRecent() }
                     .disabled(vm.recent.isEmpty)
             }
+            .disabled(!free)
         }
         CommandGroup(replacing: .saveItem) {
             Button(L10n.t("Close tab")) {
                 if let tab = vm.activeDocument { vm.requestClose(tab) }
             }
             .keyboardShortcut("w")
-            .disabled(!hasDocument)
+            .disabled(!usable)
             Divider()
             Button(L10n.t("Save"), action: actions.save)
                 .keyboardShortcut("s")
-                .disabled(!idle)
+                .disabled(!usable)
             Button(L10n.t("Save as…"), action: actions.saveAs)
                 .keyboardShortcut("s", modifiers: [.command, .shift])
-                .disabled(!idle)
+                .disabled(!usable)
             Button(L10n.t("Save compact…"), action: actions.saveCompact)
-                .disabled(!idle)
+                .disabled(!usable)
         }
         CommandGroup(replacing: .printItem) {
             Button(L10n.t("Print"), action: actions.print)
                 .keyboardShortcut("p")
-                .disabled(!hasDocument)
+                .disabled(!usable)
         }
         CommandGroup(replacing: .undoRedo) {
+            // Always on: the keys belong to the text being typed in first (FileActions.undo), and the document's own step
+            // does nothing when there is none.
             Button(actions.undoHelp, action: actions.undo)
                 .keyboardShortcut("z")
-                .disabled(!vm.canUndo || vm.isBusy)
             Button(actions.redoHelp, action: actions.redo)
                 .keyboardShortcut("z", modifiers: [.command, .shift])
-                .disabled(!vm.canRedo || vm.isBusy)
         }
         CommandGroup(after: .textEditing) {
             Divider()
             Button(L10n.t("Find")) { viewer.showFind() }
                 .keyboardShortcut("f")
-                .disabled(!hasDocument)
+                .disabled(!usable)
             Button(L10n.t("Next match")) { viewer.search.next() }
                 .keyboardShortcut("g")
-                .disabled(viewer.search.hits.isEmpty)
+                .disabled(viewer.search.hits.isEmpty || !free)
             Button(L10n.t("Previous match")) { viewer.search.previous() }
                 .keyboardShortcut("g", modifiers: [.command, .shift])
-                .disabled(viewer.search.hits.isEmpty)
+                .disabled(viewer.search.hits.isEmpty || !free)
         }
         CommandGroup(after: .toolbar) {
             viewItems
@@ -83,7 +85,7 @@ struct MacMenus: Commands {
                         Toggle(tool.title, isOn: Binding(get: { vm.activeToolId == tool.id }, set: { _ in vm.selectTool(tool.id) }))
                     }
                 }
-                .disabled(!hasDocument)
+                .disabled(!usable)
             }
         }
         CommandGroup(replacing: .appInfo) {
@@ -102,38 +104,38 @@ struct MacMenus: Commands {
     @ViewBuilder private var viewItems: some View {
         Divider()
         Button(L10n.t("Zoom in")) { viewer.zoomIn() }
-            .keyboardShortcut("+")
-            .disabled(!hasDocument)
+            .keyboardShortcut("=")
+            .disabled(!usable)
         Button(L10n.t("Zoom out")) { viewer.zoomOut() }
             .keyboardShortcut("-")
-            .disabled(!hasDocument)
+            .disabled(!usable)
         Button(L10n.t("Actual size")) { viewer.actualSize() }
             .keyboardShortcut("0")
-            .disabled(!hasDocument)
+            .disabled(!usable)
         Button(L10n.t("Fit width")) { viewer.fitWidth() }
             .keyboardShortcut("8")
-            .disabled(!hasDocument)
+            .disabled(!usable)
         Button(L10n.t("Fit page")) { viewer.fitPage() }
             .keyboardShortcut("9")
-            .disabled(!hasDocument)
+            .disabled(!usable)
         Divider()
         Button(L10n.t("Rotate counterclockwise")) { viewer.rotation -= 90 }
             .keyboardShortcut("l")
-            .disabled(!hasDocument)
+            .disabled(!usable)
         Button(L10n.t("Rotate clockwise")) { viewer.rotation += 90 }
             .keyboardShortcut("r")
-            .disabled(!hasDocument)
+            .disabled(!usable)
         Divider()
         Toggle(L10n.t("One page"), isOn: Binding(get: { viewer.columns == 1 && !viewer.continuous },
                                                set: { if $0 { viewer.columns = 1; viewer.continuous = false } }))
-            .disabled(!hasDocument)
+            .disabled(!usable)
         Toggle(L10n.t("Two pages"), isOn: Binding(get: { viewer.columns == 2 }, set: { viewer.columns = $0 ? 2 : 1 }))
-            .disabled(!hasDocument)
+            .disabled(!usable)
         Toggle(L10n.t("Scroll continuously"), isOn: Binding(get: { viewer.continuous }, set: { viewer.continuous = $0 }))
-            .disabled(!hasDocument)
+            .disabled(!usable)
         Toggle(L10n.t("Reading mode"), isOn: Binding(get: { viewer.readingMode }, set: { viewer.readingMode = $0 }))
             .keyboardShortcut("r", modifiers: [.command, .control])
-            .disabled(!hasDocument)
+            .disabled(!usable)
         Divider()
         Menu(L10n.t("Side panels")) {
             ForEach(Array(ToolCatalog.sidePanels.enumerated()), id: \.element.id) { at, panel in
@@ -141,32 +143,32 @@ struct MacMenus: Commands {
                     .keyboardShortcut(KeyEquivalent(Character(String(at + 1))), modifiers: [.command, .option])
             }
         }
-        .disabled(!hasDocument)
+        .disabled(!usable)
     }
 
     @ViewBuilder private var goItems: some View {
         Button(L10n.t("Next page")) { viewer.stepPage(1) }
             .keyboardShortcut(.downArrow, modifiers: .command)
-            .disabled(!hasDocument || viewer.pageIndex >= viewer.pageCount - 1)
+            .disabled(!usable || viewer.pageIndex >= viewer.pageCount - 1)
         Button(L10n.t("Previous page")) { viewer.stepPage(-1) }
             .keyboardShortcut(.upArrow, modifiers: .command)
-            .disabled(!hasDocument || viewer.pageIndex <= 0)
+            .disabled(!usable || viewer.pageIndex <= 0)
         Button(L10n.t("First page")) { viewer.firstPage() }
             .keyboardShortcut(.upArrow, modifiers: [.command, .shift])
-            .disabled(!hasDocument)
+            .disabled(!usable)
         Button(L10n.t("Last page")) { viewer.lastPage() }
             .keyboardShortcut(.downArrow, modifiers: [.command, .shift])
-            .disabled(!hasDocument)
+            .disabled(!usable)
         Button(L10n.t("Go to page")) { viewer.showGoToPage() }
             .keyboardShortcut("g", modifiers: [.command, .option])
-            .disabled(!hasDocument)
+            .disabled(!usable)
         Divider()
         Button(L10n.t("Back")) { viewer.goBack() }
             .keyboardShortcut("[")
-            .disabled(!viewer.canGoBack)
+            .disabled(!viewer.canGoBack || !free)
         Button(L10n.t("Forward")) { viewer.goForward() }
             .keyboardShortcut("]")
-            .disabled(!viewer.canGoForward)
+            .disabled(!viewer.canGoForward || !free)
     }
 }
 #endif
