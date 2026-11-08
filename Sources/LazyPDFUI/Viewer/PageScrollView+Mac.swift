@@ -12,6 +12,7 @@ import LazyPDFKit
 /// The scrolled area. It draws through `PagePainter` in the viewer's view space, so the context is moved by the scroll offset.
 final class PageDocumentView: NSView, NSMenuItemValidation {
     let viewer: ViewerModel
+    private(set) lazy var fields = OverlayFieldViews(viewer: viewer, host: self)
 
     init(viewer: ViewerModel) {
         self.viewer = viewer
@@ -176,7 +177,10 @@ final class PageScrollView: NSScrollView {
         contentView.postsBoundsChangedNotifications = true
         NotificationCenter.default.addObserver(self, selector: #selector(clipMoved), name: NSView.boundsDidChangeNotification, object: contentView)
         viewer.onScroll = { [weak self] in self?.follow() }
-        viewer.onRedraw = { [weak self] in self?.pages.needsDisplay = true }
+        viewer.onRedraw = { [weak self] in
+            self?.pages.needsDisplay = true
+            self?.pages.fields.sync()
+        }
         follow()
     }
 
@@ -231,6 +235,7 @@ final class PageScrollView: NSScrollView {
             contentView.scroll(to: NSPoint(x: offset.x, y: offset.y))
             reflectScrolledClipView(contentView)
         }
+        pages.fields.sync()
     }
 
     // A paged layout turns the page when the wheel runs past the edge, which only the model knows about; momentum is left out

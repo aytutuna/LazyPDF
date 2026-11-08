@@ -40,6 +40,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
     private var lastScale: CGFloat = 1
     private var selecting = false
     private var editMenu: UIEditMenuInteraction?
+    private lazy var fields = OverlayFieldViews(viewer: viewer, host: self)
 
     init(viewer: ViewerModel) {
         self.viewer = viewer
@@ -74,7 +75,10 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         editMenu = menu
 
         viewer.onScroll = { [weak self] in self?.follow() }
-        viewer.onRedraw = { [weak self] in self?.canvas.setNeedsDisplay() }
+        viewer.onRedraw = { [weak self] in
+            self?.canvas.setNeedsDisplay()
+            self?.fields.sync()
+        }
         follow()
     }
 
@@ -102,6 +106,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         if abs(scroll.contentOffset.x - offset.x) > 0.001 || abs(scroll.contentOffset.y - offset.y) > 0.001 {
             scroll.contentOffset = CGPoint(x: offset.x, y: offset.y)
         }
+        fields.sync()
     }
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
@@ -145,6 +150,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
 
     @objc private func tapped(_ recognizer: UITapGestureRecognizer) {
         becomeFirstResponder()
+        endEditing(true)
         let at = viewPoint(recognizer)
         viewer.pointerDown(at)
         viewer.pointerUp(at)
@@ -176,7 +182,10 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
     @objc private func toolTouched(_ recognizer: UILongPressGestureRecognizer) {
         let at = viewPoint(recognizer)
         switch recognizer.state {
-        case .began: viewer.pointerDown(at)
+        case .began:
+            // A field open on the page keeps what was typed when the finger lands somewhere else.
+            endEditing(true)
+            viewer.pointerDown(at)
         case .changed: viewer.pointerMove(at)
         case .ended: viewer.pointerUp(at)
         default: viewer.pointerCancel()

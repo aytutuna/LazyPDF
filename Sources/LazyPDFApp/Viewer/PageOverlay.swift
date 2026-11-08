@@ -116,15 +116,24 @@ public struct OverlayText {
     }
 }
 
-/// A picture stretched over `rect`.
+/// A picture stretched over `rect`. The pixels do not change after the picture is made; a new picture replaces it.
 public struct OverlayPicture {
-    public var image: PdfRgbaImage
+    public let image: PdfRgbaImage
     public var rect: ViewRect
+
+    /// The platform's own form of the image, made when it is first painted and shared by copies of the picture.
+    public let native = NativeCache()
 
     public init(_ image: PdfRgbaImage, rect: ViewRect) {
         self.image = image
         self.rect = rect
     }
+}
+
+public final class NativeCache {
+    public var value: AnyObject?
+
+    public init() {}
 }
 
 public enum OverlayShape {

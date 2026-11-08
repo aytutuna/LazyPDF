@@ -6,7 +6,7 @@ import LazyPDFApp
 import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Viewer/PageSurface.Draw.cs and the Decorate half of PageViewer.Text.cs: for each page in view its
-// paper, the best pictures there are, then the search hits and the selection. Nothing here waits for a tile; what has not come
+// paper, the best pictures there are, then the search hits and the selection, then the marks of the tools. Nothing here waits for a tile; what has not come
 // is drawn from a smaller one. The context is y down and in the viewer's view space, as both platforms' views set it up.
 
 /// What the painter takes from the platform's colours.
@@ -49,6 +49,7 @@ enum PagePainter {
             }
             if drawing.failed { drawFailure(in: rect, dark: viewer.tint == .dark, colors, context) }
             highlight(viewer, page, matrix, colors, context)
+            OverlayPainter.draw(viewer.overlay(page), matrix: matrix, accent: colors.mark, in: context)
             context.restoreGState()
         }
         if let placement = viewer.placement, let matrix = viewer.pageToView(placement.page) {
