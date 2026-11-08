@@ -59,12 +59,11 @@ final class DocumentTests: XCTestCase {
         XCTAssertTrue(firstPage(app).waitForExistence(timeout: 60))
         tap(app.buttons["Side panels"].firstMatch)
         app.buttons["Pages"].firstMatch.tap()
-        sleep(3)
-        print(app.debugDescription)
-        let done = app.buttons["Done"].firstMatch
-        XCTAssertTrue(done.waitForExistence(timeout: 10))
-        tap(done)
-        XCTAssertTrue(done.waitForNonExistence(timeout: 10))
+        // The half-height sheet shows its grabber; the buttons inside it are not reachable at that size.
+        let grabber = app.buttons["Sheet Grabber"].firstMatch
+        XCTAssertTrue(grabber.waitForExistence(timeout: 10))
+        grabber.swipeDown()
+        XCTAssertTrue(grabber.waitForNonExistence(timeout: 10))
     }
 
     @MainActor
