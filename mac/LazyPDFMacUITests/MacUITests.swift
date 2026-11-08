@@ -72,7 +72,7 @@ final class MacUITests: XCTestCase {
 
         XCTAssertTrue(element(app, "What would you like to do?").waitForExistence(timeout: 10))
         let gone = NSPredicate(format: "exists == false")
-        wait(for: [expectation(for: gone, evaluatedWith: app.buttons["plain-3.pdf"])], timeout: 10)
+        wait(for: [expectation(for: gone, evaluatedWith: element(app, "Page 1 of 3"))], timeout: 10)
     }
 
     func testSidePanelsOpenFromTheRail() throws {
