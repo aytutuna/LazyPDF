@@ -175,7 +175,7 @@ final class PageOverlayPaintTests: XCTestCase {
 
     func test_textIsDrawnInsideTheBoxItIsGivenAndFollowsTheZoom() throws {
         let shown = try open()
-        let look = TextLook(family: "Helvetica", size: 20, bold: true, color: OverlayColor(red: 1, green: 0, blue: 0))
+        let look = OverlayTextLook(family: "Helvetica", size: 20, bold: true, color: OverlayColor(red: 1, green: 0, blue: 0))
         shown.viewer.overlay(0).set(OverlayItem("test.text", .text(OverlayText("MMMM", at: ViewPoint(30, 40), look: look))))
         let dark: ((r: Int, g: Int, b: Int)) -> Bool = { $0.r > 200 && $0.g < 100 }
         var heights: [Int] = []

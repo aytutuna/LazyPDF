@@ -195,7 +195,7 @@ enum OverlayPainter {
         context.restoreGState()
     }
 
-    static func font(_ look: TextLook, _ size: Double) -> CTFont {
+    static func font(_ look: OverlayTextLook, _ size: Double) -> CTFont {
         let base: String
         switch look.family {
         case "Helvetica": base = look.bold ? (look.italic ? "Helvetica-BoldOblique" : "Helvetica-Bold") : (look.italic ? "Helvetica-Oblique" : "Helvetica")

@@ -69,7 +69,7 @@ public enum TextAlign: Sendable {
 
 /// The face, size and colour of text on the page, as the Windows tools set them on a TextBlock or a TextBox. `size` is points
 /// of the page; `family` is a PDF base-14 style name ("Helvetica", "Times", "Courier") or any installed family.
-public struct TextLook: Equatable, Sendable {
+public struct OverlayTextLook: Equatable, Sendable {
     public var family: String
     public var size: Double
     public var bold: Bool
@@ -101,11 +101,11 @@ public struct OverlayText {
     public var text: String
     public var at: ViewPoint
     public var anchor: TextAnchor
-    public var look: TextLook
+    public var look: OverlayTextLook
     public var sizeOnScreen: Bool
     public var background: OverlayColor?
 
-    public init(_ text: String, at: ViewPoint, anchor: TextAnchor = .topLeading, look: TextLook = TextLook(),
+    public init(_ text: String, at: ViewPoint, anchor: TextAnchor = .topLeading, look: OverlayTextLook = OverlayTextLook(),
                 sizeOnScreen: Bool = false, background: OverlayColor? = nil) {
         self.text = text
         self.at = at
@@ -182,7 +182,7 @@ public final class OverlayField {
     public let id: String
     public var area: ViewRect { didSet { touch() } }
     public var text: String
-    public var look: TextLook { didSet { touch() } }
+    public var look: OverlayTextLook { didSet { touch() } }
 
     /// The text wraps at the width of `area` instead of growing to the right.
     public var wraps: Bool
@@ -204,7 +204,7 @@ public final class OverlayField {
     weak var overlay: PageOverlay?
     public private(set) var isClosed = false
 
-    public init(_ id: String, area: ViewRect, text: String = "", look: TextLook = TextLook(), wraps: Bool = true, multiline: Bool = false,
+    public init(_ id: String, area: ViewRect, text: String = "", look: OverlayTextLook = OverlayTextLook(), wraps: Bool = true, multiline: Bool = false,
                 border: OverlayColor? = .accent, background: OverlayColor? = nil, label: String = "", done: @escaping (String?) -> Void) {
         self.id = id
         self.area = area
