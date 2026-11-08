@@ -147,10 +147,6 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     }
 
     private func requestClose(_ tab: DocumentTab) {
-        if actionRunning {
-            vm.showNotice(L10n.t("Still working"), L10n.t("Wait for the job to end, or cancel it, then close."))
-            return
-        }
         vm.requestClose(tab)
     }
 
