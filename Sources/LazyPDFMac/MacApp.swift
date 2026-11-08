@@ -37,6 +37,7 @@ struct MacWindow: View {
             ToolSummary(id: id)
         })
         .frame(minWidth: 640, minHeight: 480)
+        .environment(\.shortcutsInMenu, true)
         .onChange(of: ObjectIdentifier(vm.activeTab), initial: true) { viewer.show(vm.activeDocument) }
         .onChange(of: vm.closeQuestion == nil) { shell.closeQuestionChanged() }
         .background(WindowHook { shell.attach($0) })
