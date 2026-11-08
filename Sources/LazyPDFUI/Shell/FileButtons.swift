@@ -8,21 +8,26 @@ import LazyPDFKit
 
 /// What the file buttons do. Saving to a name and saving compact go through the platform shell's panels.
 @MainActor
-struct FileActions {
+public struct FileActions {
     let vm: AppViewModel
     let commands: ShellCommands
 
-    func save() {
+    public init(vm: AppViewModel, commands: ShellCommands) {
+        self.vm = vm
+        self.commands = commands
+    }
+
+    public func save() {
         guard let tab = vm.activeDocument else { return }
         if AppViewModel.needsName(tab) { saveAs() } else { vm.save(tab) }
     }
 
-    func saveAs() {
+    public func saveAs() {
         guard let tab = vm.activeDocument else { return }
         Task { _ = await commands.saveAs(tab) }
     }
 
-    func saveCompact() {
+    public func saveCompact() {
         guard let tab = vm.activeDocument else { return }
         let commands = commands
         if tab.document.isSigned {
@@ -34,7 +39,7 @@ struct FileActions {
         }
     }
 
-    func print() {
+    public func print() {
         vm.print()
     }
 
@@ -44,16 +49,16 @@ struct FileActions {
     }
 
     // Cmd+Z belongs to the text being typed in while there is one, as the Windows window skips Z and Y for a text box.
-    func undo() {
+    public func undo() {
         if !EditFocus.undoInText(redo: false) { vm.undo() }
     }
 
-    func redo() {
+    public func redo() {
         if !EditFocus.undoInText(redo: true) { vm.redo() }
     }
 
     /// The Save of the close question: a tab with no file asks for a name first. The tab closes once it is saved.
-    func saveAndClose(_ tab: DocumentTab) async {
+    public func saveAndClose(_ tab: DocumentTab) async {
         let saved: Bool
         if AppViewModel.needsName(tab) {
             vm.select(tab)
@@ -68,11 +73,11 @@ struct FileActions {
         }
     }
 
-    var undoHelp: String {
+    public var undoHelp: String {
         vm.undoLabel.flatMap { $0.isEmpty ? nil : L10n.t("Undo {0}", $0) } ?? L10n.t("Undo")
     }
 
-    var redoHelp: String {
+    public var redoHelp: String {
         vm.redoLabel.flatMap { $0.isEmpty ? nil : L10n.t("Redo {0}", $0) } ?? L10n.t("Redo")
     }
 }

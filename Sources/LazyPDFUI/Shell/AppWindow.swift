@@ -85,6 +85,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { vm.checkDisk() }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .showAbout)) { _ in sheet = .about }
     }
 
     private var modal: Binding<Modal?> {

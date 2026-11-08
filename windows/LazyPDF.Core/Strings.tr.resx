@@ -955,6 +955,9 @@
   <data name="Clear list" xml:space="preserve">
     <value>Listeyi temizle</value>
   </data>
+  <data name="Clear menu" xml:space="preserve">
+    <value>Menüyü temizle</value>
+  </data>
   <data name="Clear the recent files" xml:space="preserve">
     <value>Son dosyaları temizle</value>
   </data>
@@ -1011,6 +1014,9 @@
   </data>
   <data name="Close" xml:space="preserve">
     <value>Kapat</value>
+  </data>
+  <data name="Close tab" xml:space="preserve">
+    <value>Sekmeyi kapat</value>
   </data>
   <data name="Close the search bar" xml:space="preserve">
     <value>Arama çubuğunu kapat</value>
@@ -1861,6 +1867,9 @@
   <data name="First number" xml:space="preserve">
     <value>İlk numara</value>
   </data>
+  <data name="First page" xml:space="preserve">
+    <value>İlk sayfa</value>
+  </data>
   <data name="First page number" xml:space="preserve">
     <value>İlk sayfa numarası</value>
   </data>
@@ -2338,6 +2347,9 @@
   <data name="Language {0}" xml:space="preserve">
     <value>Dil: {0}</value>
   </data>
+  <data name="Last page" xml:space="preserve">
+    <value>Son sayfa</value>
+  </data>
   <data name="Layer" xml:space="preserve">
     <value>Katman</value>
   </data>
@@ -2346,6 +2358,9 @@
   </data>
   <data name="Layout" xml:space="preserve">
     <value>Düzen</value>
+  </data>
+  <data name="Lazy PDF Help" xml:space="preserve">
+    <value>Lazy PDF Yardımı</value>
   </data>
   <data name="Lazy PDF cannot change this form. Try an earlier copy of the file." xml:space="preserve">
     <value>Lazy PDF bu formu değiştiremiyor. Dosyanın önceki bir kopyasını deneyin.</value>
@@ -3060,6 +3075,9 @@
   </data>
   <data name="Open" xml:space="preserve">
     <value>Aç</value>
+  </data>
+  <data name="Open Recent" xml:space="preserve">
+    <value>Son Kullanılanları Aç</value>
   </data>
   <data name="Open a PDF, a picture or a text file." xml:space="preserve">
     <value>Bir PDF, resim ya da metin dosyası açın.</value>
@@ -6160,6 +6178,9 @@
   <data name="{0} could not be opened." xml:space="preserve">
     <value>{0} açılamadı.</value>
   </data>
+  <data name="{0} could not be prepared for printing. Save it and print it from another program." xml:space="preserve">
+    <value>{0} yazdırmaya hazırlanamadı. Kaydedin ve başka bir programdan yazdırın.</value>
+  </data>
   <data name="{0} could not be read as form data. Pick a file that a form export wrote." xml:space="preserve">
     <value>{0} form verisi olarak okunamadı. Bir form dışa aktarımının yazdığı dosyayı seçin.</value>
   </data>
@@ -6495,6 +6516,9 @@
   </data>
   <data name="{0} was moved or deleted. Save it again to keep your work." xml:space="preserve">
     <value>{0} taşınmış ya da silinmiş. Çalışmanızı korumak için yeniden kaydedin.</value>
+  </data>
+  <data name="{0} was not handed over by the program that sent it, so Lazy PDF cannot read it. Open it from the File menu, or drop it on the window." xml:space="preserve">
+    <value>{0} dosyası, onu gönderen program tarafından teslim edilmediği için Lazy PDF okuyamıyor. Dosya menüsünden açın ya da pencereye bırakın.</value>
   </data>
   <data name="{0} was saved but could not be read again. Open it from disk." xml:space="preserve">
     <value>{0} kaydedildi ama yeniden okunamadı. Diskten açın.</value>

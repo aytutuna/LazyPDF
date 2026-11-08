@@ -133,8 +133,10 @@
 "Choose a certificate" = "Sertifika seçin";
 "Clean for sharing" = "Paylaşım için temizle";
 "Clear list" = "Listeyi temizle";
+"Clear menu" = "Menüyü temizle";
 "Clear the recent files" = "Son dosyaları temizle";
 "Close" = "Kapat";
+"Close tab" = "Sekmeyi kapat";
 "Close the search bar" = "Arama çubuğunu kapat";
 "Close the side panel" = "Yan paneli kapat";
 "Close the tool" = "Aracı kapat";
@@ -237,6 +239,7 @@
 "Filter by text or author" = "Metne veya yazara göre süz";
 "Filter comments" = "Yorumları süz";
 "Find" = "Bul";
+"First page" = "İlk sayfa";
 "Fit" = "Sığdır";
 "Fit page" = "Sayfaya sığdır";
 "Fit width" = "Genişliğe sığdır";
@@ -292,8 +295,10 @@
 "Jobs" = "İşler";
 "Join files into a new one, or split this one." = "Dosyaları yeni bir dosyada birleştirin ya da bunu bölün.";
 "Language is set" = "Dil ayarlı";
+"Last page" = "Son sayfa";
 "Layer" = "Katman";
 "Layers" = "Katmanlar";
+"Lazy PDF Help" = "Lazy PDF Yardımı";
 "Lazy PDF closed before these were saved. Restore them to carry on where you were." = "Lazy PDF bunlar kaydedilmeden kapandı. Kaldığınız yerden devam etmek için geri yükleyin.";
 "Light" = "Açık";
 "Light pages" = "Açık sayfalar";
@@ -348,6 +353,7 @@
 "Not checked" = "Denetlenemeyenler";
 "Not every removed string could be checked." = "Kaldırılan her dize denetlenemedi.";
 "Not found" = "Bulunamadı";
+"Not opened" = "Açılamadı";
 "Not printed" = "Yazdırılmadı";
 "Not protected" = "Korumalı değil";
 "Not saved" = "Kaydedilmedi";
@@ -365,6 +371,7 @@
 "Only the first 5000 differences are marked." = "Yalnızca ilk 5000 fark işaretlendi.";
 "Only the first signature of a file can certify it. Sign without certifying." = "Bir dosyayı yalnızca ilk imza onaylayabilir. Onaylamadan imzalayın.";
 "Open" = "Aç";
+"Open Recent" = "Son Kullanılanları Aç";
 "Open a PDF, a picture or a text file." = "Bir PDF, resim ya da metin dosyası açın.";
 "Open a file" = "Dosya aç";
 "Open a file first" = "Önce bir dosya açın";
@@ -479,6 +486,7 @@
 "Save as Word, Excel, PowerPoint, HTML, text or pictures." = "Word, Excel, PowerPoint, HTML, metin ya da resim olarak kaydedin.";
 "Save as…" = "Farklı kaydet…";
 "Save changes to {0}?" = "{0} dosyasındaki değişiklikler kaydedilsin mi?";
+"Save compact" = "Küçülterek kaydet";
 "Save compact anyway" = "Yine de sıkıştırılmış kaydet";
 "Save compact…" = "Küçülterek kaydet…";
 "Save it" = "Kaydet";
@@ -807,6 +815,7 @@
 "{0} comment|other" = "{0} yorum";
 "{0} could not be opened, so it was not checked." = "{0} açılamadı, bu yüzden denetlenmedi.";
 "{0} could not be opened." = "{0} açılamadı.";
+"{0} could not be prepared for printing. Save it and print it from another program." = "{0} yazdırmaya hazırlanamadı. Kaydedin ve başka bir programdan yazdırın.";
 "{0} could not be read. Close any program that has it open and try again." = "{0} okunamadı. Onu açık tutan programları kapatıp yeniden deneyin.";
 "{0} could not be written. Check that the disk has room and that nothing else has the file open. Your changes are still open." = "{0} yazılamadı. Diskte yer olduğundan ve dosyanın başka yerde açık olmadığından emin olun. Değişiklikleriniz hâlâ açık.";
 "{0} could not be written. Check that the disk has room and try again." = "{0} yazılamadı. Diskte yer olduğundan emin olup yeniden deneyin.";
@@ -857,5 +866,6 @@
 "{0} was changed by another program. Opening that version drops your unsaved changes." = "{0} başka bir program tarafından değiştirildi. O sürümü açarsanız kaydedilmemiş değişiklikleriniz atılır.";
 "{0} was changed by another program. Saving now replaces that version with yours." = "{0} başka bir program tarafından değiştirildi. Şimdi kaydetmek o sürümün yerine sizinkini yazar.";
 "{0} was moved or deleted. Save it again to keep your work." = "{0} taşınmış ya da silinmiş. Çalışmanızı korumak için yeniden kaydedin.";
+"{0} was not handed over by the program that sent it, so Lazy PDF cannot read it. Open it from the File menu, or drop it on the window." = "{0} dosyası, onu gönderen program tarafından teslim edilmediği için Lazy PDF okuyamıyor. Dosya menüsünden açın ya da pencereye bırakın.";
 "{0}, not allowed" = "{0}, izin verilmeyen";
 "{0}, unsaved changes" = "{0}, kaydedilmemiş değişiklikler";

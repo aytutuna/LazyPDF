@@ -2,6 +2,11 @@
 import Foundation
 import LazyPDFApp
 
+public extension Notification.Name {
+    /// Posted by the platform's menu; the window answers with its About sheet.
+    static let showAbout = Notification.Name("LazyPDFShowAbout")
+}
+
 /// What the window asks of the platform shell because it needs a system panel or a security-scoped grant: choosing files,
 /// naming a copy, printing. The shell starts access to a chosen file before it opens it, as AppViewModel.open expects.
 public struct ShellCommands {
