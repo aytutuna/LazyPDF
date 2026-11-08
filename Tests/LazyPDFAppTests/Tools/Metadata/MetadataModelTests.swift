@@ -164,11 +164,22 @@ final class MetadataModelTests: XCTestCase {
 
     func test_theChangedDateIsLeftAloneWhenTheSwitchIsOff() async throws {
         let (model, rig) = try attached()
+        let before = DocumentMetadata.read(rig.tab.document).modified
         model.title = "Report"
         model.touchModified = false
 
         await model.action!.run()
 
-        XCTAssertNil(DocumentMetadata.read(rig.tab.document).modified)
+        XCTAssertEqual(DocumentMetadata.read(rig.tab.document).modified, before)
+    }
+
+    func test_theChangedDateMovesWhenTheSwitchIsOn() async throws {
+        let (model, rig) = try attached()
+        model.title = "Report"
+
+        await model.action!.run()
+
+        let modified = try XCTUnwrap(DocumentMetadata.read(rig.tab.document).modified)
+        XCTAssertGreaterThanOrEqual(modified.year, 2026)
     }
 }
