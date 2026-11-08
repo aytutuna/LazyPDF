@@ -35,9 +35,9 @@ public struct OcrLanguageState: Equatable, Sendable {
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
         let have = Set(supported.map(primary))
         var missing: [String] = []
-        for tag in wanted where !have.contains(primary(tag)) {
-            let name = Locale.current.localizedString(forIdentifier: tag) ?? tag
-            if !missing.contains(name) { missing.append(name) }
+        var seen = Set<String>()
+        for tag in wanted where !have.contains(primary(tag)) && seen.insert(primary(tag)).inserted {
+            missing.append(Locale.current.localizedString(forLanguageCode: primary(tag)) ?? tag)
         }
         return OcrLanguageState(installed: installed, missing: missing)
     }
