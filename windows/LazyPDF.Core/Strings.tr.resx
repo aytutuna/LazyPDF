@@ -2812,6 +2812,9 @@
   <data name="No text found on {0} page. Check the language.|plural" xml:space="preserve">
     <value>{0} sayfada metin bulunamadı. Dili denetleyin.</value>
   </data>
+  <data name="No text recognition for {0}." xml:space="preserve">
+    <value>{0} için metin tanıma yok.</value>
+  </data>
   <data name="No text yet" xml:space="preserve">
     <value>Henüz metin yok</value>
   </data>
@@ -5433,6 +5436,9 @@
   </data>
   <data name="This device cannot read {0} text." xml:space="preserve">
     <value>Bu aygıt {0} metnini okuyamıyor.</value>
+  </data>
+  <data name="This device has no text recognition language." xml:space="preserve">
+    <value>Bu aygıtta metin tanıma dili yok.</value>
   </data>
   <data name="This field does not take that value. Check it and try again." xml:space="preserve">
     <value>Bu alan bu değeri kabul etmiyor. Değeri kontrol edip yeniden deneyin.</value>

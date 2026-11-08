@@ -370,6 +370,7 @@
 "No pages need text recognition." = "Hiçbir sayfa metin tanıma gerektirmiyor.";
 "No results" = "Sonuç yok";
 "No results for {0}" = "{0} için sonuç yok";
+"No text recognition for {0}." = "{0} için metin tanıma yok.";
 "None" = "Yok";
 "None added." = "Hiçbiri eklenmedi.";
 "None of the pictures could be read." = "Resimlerin hiçbiri okunamadı.";
@@ -778,6 +779,7 @@
 "This comment cannot be answered" = "Bu yoruma yanıt verilemiyor";
 "This computer is offline. Connect to the internet and try again." = "Bu bilgisayar çevrimdışı. İnternete bağlanıp yeniden deneyin.";
 "This device cannot read {0} text." = "Bu aygıt {0} metnini okuyamıyor.";
+"This device has no text recognition language." = "Bu aygıtta metin tanıma dili yok.";
 "This field is already signed. Choose another one." = "Bu alan zaten imzalı. Başka bir alan seçin.";
 "This field is not part of the form." = "Bu alan formun parçası değil.";
 "This file" = "Bu dosya";

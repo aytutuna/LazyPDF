@@ -6617,5 +6617,11 @@
   },
   "{0} could not be imported. Check the password.": {
     "tr": "{0} içe aktarılamadı. Parolayı denetleyin."
+  },
+  "This device has no text recognition language.": {
+    "tr": "Bu aygıtta metin tanıma dili yok."
+  },
+  "No text recognition for {0}.": {
+    "tr": "{0} için metin tanıma yok."
   }
 }

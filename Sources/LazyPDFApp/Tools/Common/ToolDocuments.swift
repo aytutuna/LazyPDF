@@ -20,3 +20,56 @@ public enum ToolDocuments {
         return !security.openedAsOwner && security.permissions != .all
     }
 }
+
+extension ToolDocuments {
+    /// Runs `work` off the main actor and gives its result, or throws CancellationError as soon as `token` is cancelled,
+    /// without waiting for the job to notice: `WaitAsync(token)` of the Windows tools. The job goes on until it looks at the
+    /// token itself, so it must still do that between steps.
+    public static func run<T>(_ token: CancelToken, _ work: @escaping @Sendable () throws -> T) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            let once = Once(continuation)
+            Task.detached {
+                do {
+                    once.resume(returning: try work())
+                } catch {
+                    once.resume(throwing: error)
+                }
+            }
+            Task.detached {
+                while !token.isCancelled && !once.isDone { try? await Task.sleep(nanoseconds: 50_000_000) }
+                once.resume(throwing: CancellationError())
+            }
+        }
+    }
+}
+
+private final class Once<T>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<T, Error>?
+
+    init(_ continuation: CheckedContinuation<T, Error>) {
+        self.continuation = continuation
+    }
+
+    var isDone: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return continuation == nil
+    }
+
+    func resume(returning value: T) {
+        take()?.resume(returning: value)
+    }
+
+    func resume(throwing error: Error) {
+        take()?.resume(throwing: error)
+    }
+
+    private func take() -> CheckedContinuation<T, Error>? {
+        lock.lock()
+        defer { lock.unlock() }
+        let held = continuation
+        continuation = nil
+        return held
+    }
+}

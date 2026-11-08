@@ -97,9 +97,9 @@ public final class SanitizeModel: ToolPanelModel {
 
             var result: SanitizeResult?
             try await host.runBusy(L10n.t("Cleaning the file")) { token in
-                result = try await Task.detached {
+                result = try await ToolDocuments.run(token) {
                     try SanitizeJob.run(file, password: password, certificate: certificate, ticked: ticked, token: token)
-                }.value
+                }
             }
             guard let result else { return }
             if !(await OutputWriter.deliver(host, tab, revision: revision, result.bytes, replace: replace, newTitle: title)) { return }
