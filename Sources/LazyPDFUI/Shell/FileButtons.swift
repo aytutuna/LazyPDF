@@ -50,11 +50,11 @@ public struct FileActions {
 
     // Cmd+Z belongs to the text being typed in while there is one, as the Windows window skips Z and Y for a text box.
     public func undo() {
-        if !EditFocus.undoInText(redo: false) { vm.undo() }
+        if !EditFocus.undoInText(redo: false) && !vm.isBlocked { vm.undo() }
     }
 
     public func redo() {
-        if !EditFocus.undoInText(redo: true) { vm.redo() }
+        if !EditFocus.undoInText(redo: true) && !vm.isBlocked { vm.redo() }
     }
 
     /// The Save of the close question: a tab with no file asks for a name first. The tab closes once it is saved.

@@ -15,6 +15,14 @@ final class HomeTilesTests: XCTestCase {
                        ["Open", "Create", "Combine", "Make smaller", "Protect", "Sign", "Fill a form", "Edit", "Export", "Batch"])
     }
 
+    func test_aShellCanHideTilesItCannotAnswer() {
+        let f = ViewModelFixture(self)
+
+        f.vm.hiddenTiles = ["create", "batch"]
+
+        XCTAssertEqual(f.vm.tiles.map(\.id), ["open", "combine", "compress", "protect", "sign", "form", "edit", "export"])
+    }
+
     func test_withNoFileOnlyOpenIsAvailableAndTheOthersSayWhy() {
         let f = ViewModelFixture(self)
 

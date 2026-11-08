@@ -1,5 +1,6 @@
 #if os(macOS)
 import AppKit
+import UniformTypeIdentifiers
 import LazyPDFApp
 import LazyPDFKit
 import LazyPDFUI
@@ -14,6 +15,7 @@ final class MacShell {
     let vm: AppViewModel
     let viewer: ViewerModel
     let folders: AppFolders
+    private let certificates: MacCertificates
     private(set) var commands = ShellCommands()
     private weak var window: NSWindow?
     private var closeGuard: CloseGuard?
@@ -22,32 +24,31 @@ final class MacShell {
     private init() {
         let folders = DefaultAppFolders()
         let sisters = MacSisterApps()
+        let certificates = MacCertificates()
         let vm = AppViewModel(renderers: { PdfKitRenderer() }, codec: ImageIOCodec(), fonts: CoreTextFontSource(), sisters: sisters,
-                              certificates: MacCertificates(), bookmarks: MacBookmarks(), folders: folders)
+                              certificates: certificates, bookmarks: MacBookmarks(), folders: folders)
         sisters.printFailed = { [weak vm] in vm?.lazyPrintFailed($0) }
         self.vm = vm
+        self.certificates = certificates
         self.folders = folders
         viewer = ViewerModel(makeRenderer: { PdfKitRenderer() }, openAddress: { NSWorkspace.shared.open($0) })
+        vm.fileWriter = CoordinatedFileWriter()
+        // TODO: Create and Batch come with the tools; until then their tiles stay off the Home screen.
+        vm.hiddenTiles = [AppViewModel.createTile, AppViewModel.batchTile]
         vm.exitRequested = { [unowned self] in self.finishExit() }
         commands = ShellCommands(open: { [unowned self] in self.openWithPanel() },
                                  saveAs: { [unowned self] in self.saveAs($0) },
                                  saveCompact: { [unowned self] in self.saveCompact($0) },
                                  print: { [unowned self] in self.systemPrint($0) },
+                                 importCertificate: { [unowned self] in self.importCertificate() },
                                  openFiles: { [unowned self] in self.open($0) })
         openTestFile()
     }
 
     func attach(_ window: NSWindow) {
-        if self.window === window { return }
         self.window = window
-        let guarded = CloseGuard(original: window.delegate) { [unowned self] in
-            MainActor.assumeIsolated { self.vm.requestExit() }
-        }
-        closeGuard = guarded
-        window.delegate = guarded
+        closeGuard = CloseGuard.ensure(on: window, existing: closeGuard) { NSApp.terminate(nil) }
     }
-
-    // Files
 
     /// Opens each file with the access its url carries; a url from a panel, a drop or Open With needs none of its own.
     func open(_ urls: [URL]) {
@@ -92,6 +93,28 @@ final class MacShell {
         vm.saveCompact(tab, url)
     }
 
+    private func importCertificate() -> CertificateChoice? {
+        let panel = NSOpenPanel()
+        panel.title = L10n.t("Import")
+        panel.allowedContentTypes = ["p12", "pfx"].compactMap { UTType(filenameExtension: $0) }
+        guard panel.runModal() == .OK, let url = panel.url, let bytes = try? Data(contentsOf: url) else { return nil }
+        let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
+        let alert = NSAlert()
+        alert.messageText = L10n.t("Password of the PFX file")
+        alert.informativeText = url.lastPathComponent
+        alert.accessoryView = field
+        alert.addButton(withTitle: L10n.t("Import"))
+        alert.addButton(withTitle: L10n.t("Cancel"))
+        alert.window.initialFirstResponder = field
+        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        do {
+            return try certificates.importIdentity([UInt8](bytes), password: field.stringValue).choice
+        } catch {
+            vm.showProblem(Problem(L10n.t("Not imported"), L10n.t("{0} could not be imported. Check the password.", url.lastPathComponent)))
+            return nil
+        }
+    }
+
     private func systemPrint(_ tab: DocumentTab) {
         guard tab.canDraw, let operation = MacSystemPrint.operation(tab.session, password: tab.password, title: tab.title) else {
             vm.showProblem(Problem(L10n.t("Not printed"),
@@ -104,8 +127,6 @@ final class MacShell {
             operation.run()
         }
     }
-
-    // Quitting
 
     func terminateReply() -> NSApplication.TerminateReply {
         if vm.requestExit() { return .terminateNow }
@@ -134,9 +155,13 @@ final class MacShell {
 
     // The UI tests cannot hand the sandboxed app a path it may read, so the file comes in the arguments and is written to
     // the app's own temporary folder first: -LazyPDFTestFile name.pdf -LazyPDFTestData <base64>.
+    private static func argument(_ key: String, in arguments: [String]) -> String? {
+        arguments.firstIndex(of: key).flatMap { arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil }
+    }
+
     private func openTestFile() {
-        let defaults = UserDefaults.standard
-        guard let name = defaults.string(forKey: "LazyPDFTestFile"), let text = defaults.string(forKey: "LazyPDFTestData"),
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let name = Self.argument("-LazyPDFTestFile", in: arguments), let text = Self.argument("-LazyPDFTestData", in: arguments),
               let data = Data(base64Encoded: text) else { return }
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(URL(fileURLWithPath: name).lastPathComponent)
         if (try? data.write(to: url)) != nil { open([url]) }

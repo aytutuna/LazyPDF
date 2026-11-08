@@ -19,6 +19,28 @@ final class BusyCloseTests: XCTestCase {
         return (run, finish)
     }
 
+    func test_aJobAndAQuestionBlockTheWindow() async throws {
+        let f = ViewModelFixture(self)
+        await f.vm.open(f.pdf())
+        XCTAssertFalse(f.vm.isBlocked)
+
+        f.vm.actionRunning = true
+        XCTAssertTrue(f.vm.isBlocked)
+        f.vm.actionRunning = false
+
+        let (run, finish) = await startJob(f.vm)
+        XCTAssertTrue(f.vm.isBlocked)
+        finish.release()
+        try await run.value
+        XCTAssertFalse(f.vm.isBlocked)
+
+        let tab = f.vm.activeDocument!
+        try Pdfs.retitle(tab.session, "x")
+        try tab.commit("x")
+        f.vm.requestClose(tab)
+        XCTAssertTrue(f.vm.isBlocked)
+    }
+
     func test_closingATabWaitsForTheJob() async throws {
         let f = ViewModelFixture(self)
         await f.vm.open(f.pdf())

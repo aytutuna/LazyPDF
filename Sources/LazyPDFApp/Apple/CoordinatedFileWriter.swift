@@ -1,10 +1,10 @@
-#if os(iOS)
+#if canImport(Darwin)
 import Foundation
-import LazyPDFApp
 
 // The iPhone and iPad edit a file where another provider keeps it, so the write goes through a file coordinator: the
-// provider is told, and nobody reads half a file. The file is finished in a scratch folder first (the engine checks
-// that it reads back), then put in the file's place.
+// provider is told, and nobody reads half a file. The sandboxed Mac needs the same writer for another reason: it may touch
+// the file it was handed but not its folder, and the item-replacement folder is the one place beside it that it can use.
+// The file is finished there first (the engine checks that it reads back), then put in the file's place.
 
 public struct CoordinatedFileWriter: FileWriter {
     public init() {}

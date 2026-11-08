@@ -2878,6 +2878,9 @@
   <data name="Not found" xml:space="preserve">
     <value>Bulunamadı</value>
   </data>
+  <data name="Not imported" xml:space="preserve">
+    <value>İçe aktarılamadı</value>
+  </data>
   <data name="Not opened" xml:space="preserve">
     <value>Açılamadı</value>
   </data>
@@ -6171,6 +6174,9 @@
   </data>
   <data name="{0} could not be finished. If part of it was done, Undo takes it back." xml:space="preserve">
     <value>{0} tamamlanamadı. Bir kısmı yapıldıysa Geri al onu geri alır.</value>
+  </data>
+  <data name="{0} could not be imported. Check the password." xml:space="preserve">
+    <value>{0} içe aktarılamadı. Parolayı denetleyin.</value>
   </data>
   <data name="{0} could not be opened, so it was not checked." xml:space="preserve">
     <value>{0} açılamadı, bu yüzden denetlenmedi.</value>

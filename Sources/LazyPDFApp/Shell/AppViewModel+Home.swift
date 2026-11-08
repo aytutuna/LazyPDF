@@ -55,7 +55,7 @@ extension AppViewModel {
                         available: true, reason: nil)]
             : []
 
-        return [
+        let all: [HomeTile] = [
             HomeTile(id: Self.openTile, title: L10n.t("Open"), symbol: "folder", description: L10n.t("Open a PDF, a picture or a text file."),
                      available: true, reason: nil),
             HomeTile(id: Self.createTile, title: L10n.t("Create"), symbol: "doc.badge.plus",
@@ -71,6 +71,7 @@ extension AppViewModel {
             HomeTile(id: Self.batchTile, title: L10n.t("Batch"), symbol: "square.stack.3d.up",
                      description: L10n.t("Do the same to every file in a folder."), available: true, reason: nil),
         ]
+        return all.filter { !hiddenTiles.contains($0.id) }
     }
 
     /// Starts the job behind a tile: a tool opens on the document last in use, Scan starts Lazy Scan. Open is the window's,

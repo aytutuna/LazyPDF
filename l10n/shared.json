@@ -6611,5 +6611,11 @@
   },
   "{0} could not be prepared for printing. Save it and print it from another program.": {
     "tr": "{0} yazdırmaya hazırlanamadı. Kaydedin ve başka bir programdan yazdırın."
+  },
+  "Not imported": {
+    "tr": "İçe aktarılamadı"
+  },
+  "{0} could not be imported. Check the password.": {
+    "tr": "{0} içe aktarılamadı. Parolayı denetleyin."
   }
 }

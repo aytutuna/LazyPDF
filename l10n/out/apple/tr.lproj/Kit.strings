@@ -353,6 +353,7 @@
 "Not checked" = "Denetlenemeyenler";
 "Not every removed string could be checked." = "Kaldırılan her dize denetlenemedi.";
 "Not found" = "Bulunamadı";
+"Not imported" = "İçe aktarılamadı";
 "Not opened" = "Açılamadı";
 "Not printed" = "Yazdırılmadı";
 "Not protected" = "Korumalı değil";
@@ -418,6 +419,7 @@
 "Parts of the pages that can be shown or hidden." = "Sayfaların gösterilebilen ya da gizlenebilen parçaları.";
 "Password" = "Parola";
 "Password needed" = "Parola gerekli";
+"Password of the PFX file" = "PFX dosyasının parolası";
 "Password of the certificate file" = "Sertifika dosyasının parolası";
 "Password protected" = "Parola korumalı";
 "Picture" = "Resim";
@@ -813,6 +815,7 @@
 "{0} character|other" = "{0} karakter";
 "{0} comment|one" = "{0} yorum";
 "{0} comment|other" = "{0} yorum";
+"{0} could not be imported. Check the password." = "{0} içe aktarılamadı. Parolayı denetleyin.";
 "{0} could not be opened, so it was not checked." = "{0} açılamadı, bu yüzden denetlenmedi.";
 "{0} could not be opened." = "{0} açılamadı.";
 "{0} could not be prepared for printing. Save it and print it from another program." = "{0} yazdırmaya hazırlanamadı. Kaydedin ve başka bir programdan yazdırın.";

@@ -30,7 +30,6 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     @State private var sheet: Modal?
     @State private var compact = false
     @State private var compactPanel: String?
-    @State private var actionRunning = false
     @State private var dropTargeted = false
     @Environment(\.scenePhase) private var scenePhase
 
@@ -140,8 +139,11 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
 
     // The tab bar, the tool strip and the content are out of reach while a question is up or a job runs; the info bar and
     // the status line stay, since Cancel is there.
-    private var frozen: Bool {
-        vm.isBusy || actionRunning || vm.closeQuestion != nil || vm.recoveryOffer != nil || vm.passwordRequest != nil
+    private var frozen: Bool { vm.isBlocked }
+
+    private var actionRunning: Bool {
+        get { vm.actionRunning }
+        nonmutating set { vm.actionRunning = newValue }
     }
 
     private func requestClose(_ tab: DocumentTab) {
