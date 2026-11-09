@@ -25,6 +25,15 @@ public struct ExportSource {
 }
 
 public enum Exporter {
+    /// Where finished files wait for the file exporter. It is a fixed folder so the shells can clear what a kill left behind.
+    public static var workFolder: URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("lazypdf-export", isDirectory: true)
+    }
+
+    public static func deleteLeftovers() {
+        try? FileManager.default.removeItem(at: workFolder)
+    }
+
     // The sheets XlsxWriter stops at.
     private static let mostSheets = 1000
 
@@ -133,7 +142,7 @@ public enum Exporter {
     }
 
     // A file written beside others never goes over one that is there.
-    private static func unique(_ folder: URL, _ name: String) -> URL {
+    public static func unique(_ folder: URL, _ name: String) -> URL {
         var path = folder.appendingPathComponent(name)
         let stem = (name as NSString).deletingPathExtension, fileExtension = (name as NSString).pathExtension
         var n = 2

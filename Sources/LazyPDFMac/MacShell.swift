@@ -43,6 +43,7 @@ final class MacShell {
         vm.fileExporter = services
         vm.clipboard = services
         AttachmentsModel.deleteOpenedCopies(in: folders.openedAttachments)
+        Exporter.deleteLeftovers()
         vm.exitRequested = { [unowned self] in self.finishExit() }
         commands = ShellCommands(open: { [unowned self] in self.openWithPanel() },
                                  create: { [unowned self] in self.present { CreateSheet(host: self.vm, close: $0) } },

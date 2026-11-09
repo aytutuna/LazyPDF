@@ -148,8 +148,22 @@ public protocol ToolFilePicker: AnyObject {
 @MainActor
 public protocol ToolFileExporter: AnyObject {
     /// Takes finished files, written to a folder of the app's own, to where the person says: a name for one file, a folder
-    /// for several. The urls of the saved copies; empty when the person gave up.
-    func export(_ files: [URL]) async -> [URL]
+    /// for several. Nothing saved and nothing failed means the person gave up.
+    func export(_ files: [URL]) async -> ToolExport
+}
+
+/// What an export came to: the copies that were made, and the targets that could not be written.
+public struct ToolExport {
+    public var saved: [URL]
+    public var failed: [URL]
+    /// True when the system refused the write, as against a full disk or a vanished folder.
+    public var denied: Bool
+
+    public init(saved: [URL] = [], failed: [URL] = [], denied: Bool = false) {
+        self.saved = saved
+        self.failed = failed
+        self.denied = denied
+    }
 }
 
 /// Create takes a picture or text from the pasteboard.
@@ -168,7 +182,7 @@ public final class NoToolServices: ToolFilePicker, ToolFileExporter, ToolClipboa
 
     public func pickFiles(_ kinds: [ToolFileKind], multiple: Bool) async -> [ToolFile] { [] }
     public func pickFolder() async -> ToolFile? { nil }
-    public func export(_ files: [URL]) async -> [URL] { [] }
+    public func export(_ files: [URL]) async -> ToolExport { ToolExport() }
     public func pictureFile() -> [UInt8]? { nil }
     public func text() -> String? { nil }
 }

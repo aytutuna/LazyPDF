@@ -24,33 +24,19 @@ final class MacToolServices: ToolFilePicker, ToolFileExporter, ToolClipboard {
         return panel.runModal() == .OK ? panel.url.map { ToolFile(url: $0) } : nil
     }
 
-    // One file is named in a save panel; several go into a folder the person picks. An existing name is replaced, which the
-    // save panel has already asked about.
-    func export(_ files: [URL]) async -> [URL] {
-        guard let first = files.first else { return [] }
-        let manager = FileManager.default
+    // One file is named in a save panel, which asks before it replaces one; several go into a folder the person picks, beside
+    // whatever is there, and never over it.
+    func export(_ files: [URL]) async -> ToolExport {
+        guard let first = files.first else { return ToolExport() }
         if files.count == 1 {
             let panel = NSSavePanel()
             panel.nameFieldStringValue = first.lastPathComponent
             panel.canCreateDirectories = true
-            guard panel.runModal() == .OK, let target = panel.url else { return [] }
-            return copy(first, to: target, manager) ? [target] : []
+            guard panel.runModal() == .OK, let target = panel.url else { return ToolExport() }
+            return ExportCopy.replace(first, with: target)
         }
-        guard let folder = await pickFolder()?.url else { return [] }
-        return files.compactMap { file in
-            let target = folder.appendingPathComponent(file.lastPathComponent)
-            return copy(file, to: target, manager) ? target : nil
-        }
-    }
-
-    private func copy(_ file: URL, to target: URL, _ manager: FileManager) -> Bool {
-        do {
-            if manager.fileExists(atPath: target.path) { try manager.removeItem(at: target) }
-            try manager.copyItem(at: file, to: target)
-            return true
-        } catch {
-            return false
-        }
+        guard let folder = await pickFolder()?.url else { return ToolExport() }
+        return ExportCopy.into(folder, files)
     }
 
     func pictureFile() -> [UInt8]? {
