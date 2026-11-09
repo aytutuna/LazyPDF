@@ -14,9 +14,9 @@ extension PageGrid {
     }
 
     @discardableResult
-    func applyAsync(busy: String, label: String, select: [Int]?, status: String,
+    func applyAsync(_ tab: DocumentTab, busy: String, label: String, select: [Int]?, status: String,
                     _ change: @escaping @Sendable (PdfDocument) throws -> Void) async -> Bool {
-        guard let tab, let host, await PageJobs.applyAsync(tab, host, busy: busy, label: label, change, status: status) else { return false }
+        guard let host, await PageJobs.applyAsync(tab, host, busy: busy, label: label, change, status: status) else { return false }
         // The person may have gone to another tab while it ran; its pages are then not on show to choose.
         if self.tab === tab {
             rebuild(select: select)
@@ -49,8 +49,8 @@ extension PageGrid {
     }
 
     public func duplicate(_ pages: [Int]) async {
-        guard !pages.isEmpty else { return }
-        await applyAsync(busy: L10n.t("Copying pages"), label: L10n.t("Duplicate pages"), select: PageEdits.duplicated(pages),
+        guard let tab, !pages.isEmpty else { return }
+        await applyAsync(tab, busy: L10n.t("Copying pages"), label: L10n.t("Duplicate pages"), select: PageEdits.duplicated(pages),
                          status: L10n.plural(pages.count, one: "{0} page duplicated", other: "{0} pages duplicated")) { document in
             try PageOperations.duplicate(document, pages)
         }

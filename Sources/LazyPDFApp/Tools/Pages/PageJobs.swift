@@ -18,27 +18,42 @@ public enum PageJobs {
         return commit(tab, host, label, status)
     }
 
-    /// For the edits that copy pages in from another file: the work runs off the main actor and the result goes to the tab it
-    /// started on, wherever the person has moved to meanwhile. The change is made in the tab's own document, which nothing else
-    /// may touch meanwhile, so Cancel is answered when the change ends and then drops it.
+    /// For the edits that copy pages in from another file: the change is made off the main actor on a copy of the file as it
+    /// stands, and only its update goes into the tab it started on, wherever the person has moved to meanwhile. The tab's own
+    /// document is not touched until then, so the window can read it while the job runs and Cancel drops the copy.
     @discardableResult
     public static func applyAsync(_ tab: DocumentTab, _ host: ToolHost, busy: String, label: String,
                                   _ change: @escaping @Sendable (PdfDocument) throws -> Void, status: String) async -> Bool {
-        var done = false
+        let copy = TabCopy(tab, host)
+        var update: [UInt8]?
         do {
             try await host.runBusy(busy) { token in
-                let document = tab.document
-                try token.throwIfCancelled()
-                try await Task.detached { try change(document) }.value
-                done = !token.isCancelled
+                update = try await ToolDocuments.run(token) {
+                    try token.throwIfCancelled()
+                    let document = try copy.open()
+                    try change(document)
+                    try token.throwIfCancelled()
+                    return try PdfEditSession.update(of: document)
+                }
             }
         } catch {
-            refuse(host, tab)
+            host.showProblem(refusal)
             return false
         }
-        if done { return commit(tab, host, label, status) }
-        try? tab.session.discard()
-        return false
+        guard let update, !tab.isDisposed else { return false }
+        do {
+            if try !tab.session.commit(label, update: update, over: copy.file.count) { return false }
+        } catch {
+            host.showProblem(refusal)
+            return false
+        }
+        tab.reload()
+        host.setStatus(status)
+        return true
+    }
+
+    static var refusal: Problem {
+        Problem(L10n.t("Pages not changed"), L10n.t("The file did not take that change. Pick other pages and try again."))
     }
 
     private static func commit(_ tab: DocumentTab, _ host: ToolHost, _ label: String, _ status: String) -> Bool {
@@ -55,7 +70,7 @@ public enum PageJobs {
     /// What was changed in memory is dropped, so a half-done edit cannot be committed later with another one.
     public static func refuse(_ host: ToolHost, _ tab: DocumentTab) {
         try? tab.session.discard()
-        host.showProblem(Problem(L10n.t("Pages not changed"), L10n.t("The file did not take that change. Pick other pages and try again.")))
+        host.showProblem(refusal)
     }
 
     /// The pages as a PDF of their own, made off the main actor. Nil when the file does not allow copying, when it was cancelled

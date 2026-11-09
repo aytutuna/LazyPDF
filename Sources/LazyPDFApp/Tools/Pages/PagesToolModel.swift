@@ -82,7 +82,7 @@ public final class PagesToolModel: ToolPanelModel {
 
     public func openOrganize() {
         guard organize == nil, let tab, let viewer, let host else { return }
-        let view = OrganizeModel()
+        let view = OrganizeModel(asker: asker)
         view.onClose = { [weak self] in self?.closeOrganize() }
         view.attach(tab, viewer, host)
         organize = view
@@ -149,11 +149,11 @@ public final class PagesToolModel: ToolPanelModel {
     }
 
     public func fromFile() async {
-        guard tab != nil, let host else { return }
+        guard let tab, let host else { return }
         let at = PageEdits.insertAt(place, grid.selection, grid.cells.count)
         guard let picked = await pickPages(host) else { return }
         let source = picked.source, pages = picked.pages
-        await grid.applyAsync(busy: L10n.t("Adding pages"), label: L10n.t("Insert pages"), select: Array(at..<at + pages.count),
+        await grid.applyAsync(tab, busy: L10n.t("Adding pages"), label: L10n.t("Insert pages"), select: Array(at..<at + pages.count),
                               status: L10n.plural(pages.count, one: "{0} page added", other: "{0} pages added")) { document in
             try PageOperations.importPages(document, source, pages, min(at, document.pages.count))
         }
@@ -161,11 +161,17 @@ public final class PagesToolModel: ToolPanelModel {
 
     public func replace() async {
         let chosen = grid.selection
-        guard tab != nil, let host, let last = chosen.last else { return }
+        guard let tab, let host, let last = chosen.last else { return }
+        let revision = tab.revision
         guard let picked = await pickPages(host) else { return }
+        // The pages were chosen in the file as it stood before the picker; if it changed meanwhile they may not be there.
+        guard tab.revision == revision, last < tab.pageCount else {
+            host.showProblem(PageJobs.refusal)
+            return
+        }
         let source = picked.source, pages = picked.pages
         let first = last + 1 - chosen.count
-        await grid.applyAsync(busy: L10n.t("Replacing pages"), label: L10n.t("Replace pages"), select: Array(first..<first + pages.count),
+        await grid.applyAsync(tab, busy: L10n.t("Replacing pages"), label: L10n.t("Replace pages"), select: Array(first..<first + pages.count),
                               status: L10n.t("Pages replaced.")) { document in
             try PageEdits.replace(document, chosen, source, pages)
         }

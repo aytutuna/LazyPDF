@@ -36,7 +36,6 @@ struct OrganizeView: View {
             Divider()
             footer
         }
-        .sourceQuestion(model.asker)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(L10n.t("Organize pages"))
     }

@@ -14,7 +14,7 @@ public final class OrganizeModel {
     static let largest = 320.0
 
     public let grid = PageGrid(boxWidth: 140, boxHeight: 140 * boxRatio)
-    public let asker = SourceQuestion()
+    public let asker: SourceQuestion
     public var place = InsertPlace.afterSelection
 
     /// The width of a page picture in the grid.
@@ -28,7 +28,10 @@ public final class OrganizeModel {
     @ObservationIgnored private var viewer: DocumentViewer?
     @ObservationIgnored private var sharpening: Task<Void, Never>?
 
-    public init() {}
+    /// The panel passes its own `asker`, so a question from the stage shows in the sheet of the tool and not in a second one.
+    public init(asker: SourceQuestion = SourceQuestion()) {
+        self.asker = asker
+    }
 
     public var canPaste: Bool { PageClipboard.shared.count > 0 }
 
@@ -116,10 +119,10 @@ public final class OrganizeModel {
     }
 
     public func paste() async {
-        guard let pdf = PageClipboard.shared.pdf, !pdf.isEmpty else { return }
+        guard let tab, let pdf = PageClipboard.shared.pdf, !pdf.isEmpty else { return }
         let at = insertIndex
         let count = PageClipboard.shared.count
-        await grid.applyAsync(busy: L10n.t("Adding pages"), label: L10n.t("Paste pages"), select: Array(at..<at + count),
+        await grid.applyAsync(tab, busy: L10n.t("Adding pages"), label: L10n.t("Paste pages"), select: Array(at..<at + count),
                               status: L10n.plural(count, one: "{0} page pasted", other: "{0} pages pasted")) { document in
             let source = try PdfDocument.open(pdf)
             try Self.importAll(document, source, min(at, document.pages.count))
@@ -147,7 +150,7 @@ public final class OrganizeModel {
 
     /// The files are opened one by one, then all their pages go in at `at` as one step.
     public func insertFiles(_ files: [ToolFile], at: Int) async {
-        guard let host else { return }
+        guard let host, let tab else { return }
         var pdfs: [ToolFile] = []
         for file in files {
             if file.url.pathExtension.lowercased() == "pdf" { pdfs.append(file) } else { file.access?.stop() }
@@ -163,7 +166,7 @@ public final class OrganizeModel {
         let added = sources.reduce(0) { $0 + $1.pages.count }
         if added == 0 { return }
         let taken = sources
-        await grid.applyAsync(busy: L10n.t("Adding pages"), label: L10n.t("Insert pages"), select: Array(at..<at + added),
+        await grid.applyAsync(tab, busy: L10n.t("Adding pages"), label: L10n.t("Insert pages"), select: Array(at..<at + added),
                               status: L10n.plural(added, one: "{0} page added", other: "{0} pages added")) { document in
             var place = min(at, document.pages.count)
             for source in taken {
