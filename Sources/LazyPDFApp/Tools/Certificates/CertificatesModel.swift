@@ -77,7 +77,7 @@ public final class CertificatesModel: ToolPanelModel {
     var host: ToolHost?
     @ObservationIgnored private var watch: ObservationWatch?
     @ObservationIgnored private var tool: SignatureBoxTool?
-    @ObservationIgnored private var box: (page: Int, area: ViewRect)?
+    private var box: (page: Int, area: ViewRect)?
     @ObservationIgnored private var pfx: [UInt8]?
     @ObservationIgnored private let trust: SignatureTrust
     @ObservationIgnored private let fonts: FontSource?
@@ -112,7 +112,7 @@ public final class CertificatesModel: ToolPanelModel {
 
     public var canSign: Bool {
         guard !working, tab != nil else { return false }
-        if useKeychain ? selectedIdentity == nil : pfx == nil { return false }
+        if useKeychain ? selectedIdentity == nil : pfxName.isEmpty { return false }
         if let place, place.place == .box, box == nil { return false }
         return !timestamp || CertificateSigning.isWebAddress(timestampUrl)
     }
