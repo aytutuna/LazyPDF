@@ -65,14 +65,16 @@ public final class TagNode: Identifiable {
 
     public private(set) lazy var label: String = text ?? TagLabels.of(element!, tree)
 
-    public private(set) lazy var children: [TagNode]? = {
+    public private(set) lazy var children: [TagNode]? = makeChildren()
+
+    private func makeChildren() -> [TagNode]? {
         guard let element else { return nil }
         let kids = element.children
         if kids.isEmpty { return nil }
         var nodes = kids.prefix(Self.shown).map { TagNode($0, tree) }
         if kids.count > Self.shown { nodes.append(TagNode(more: kids.count - Self.shown, tree)) }
         return nodes
-    }()
+    }
 
     public var isMore: Bool { element == nil }
 
