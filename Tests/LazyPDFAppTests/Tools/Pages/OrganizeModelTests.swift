@@ -76,6 +76,9 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(model.grid.selection, [1, 4])
         model.grid.toggle(4)
         XCTAssertEqual(model.grid.selection, [1])
+
+        model.grid.extend(to: 2)
+        XCTAssertEqual(model.grid.selection, [2, 3, 4])
     }
 
     func test_aPlainClickChoosesOnePageAndShiftExtendsFromIt() throws {
