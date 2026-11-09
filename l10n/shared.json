@@ -6707,5 +6707,29 @@
   },
   "Undo stroke": {
     "tr": "Çizgiyi geri al"
+  },
+  "The keychain has no certificate with a private key for you. Use a .p12 file.": {
+    "tr": "Anahtar zincirinde sizin için özel anahtarlı bir sertifika yok. Bir .p12 dosyası kullanın."
+  },
+  "The .p12 file could not be opened. Check the password and that the file is a .p12.": {
+    "tr": ".p12 dosyası açılamadı. Parolayı ve dosyanın bir .p12 olduğunu denetleyin."
+  },
+  "The system would not let Lazy PDF use this key. Check the PIN or choose another certificate.": {
+    "tr": "Sistem Lazy PDF'in bu anahtarı kullanmasına izin vermedi. PIN'i denetleyin veya başka bir sertifika seçin."
+  },
+  "Keychain": {
+    "tr": "Anahtar zinciri"
+  },
+  "Certificate from the keychain": {
+    "tr": "Anahtar zincirinden sertifika"
+  },
+  ".p12 file": {
+    "tr": ".p12 dosyası"
+  },
+  "Certificate from a .p12 file": {
+    "tr": ".p12 dosyasından sertifika"
+  },
+  "Password of the .p12 file": {
+    "tr": ".p12 dosyasının parolası"
   }
 }
