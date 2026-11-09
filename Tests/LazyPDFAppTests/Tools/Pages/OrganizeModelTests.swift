@@ -34,6 +34,24 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertFalse(rig.host.holding)
     }
 
+    func test_aQuestionFromTheStageIsAskedInTheSheetOfThePanel() async throws {
+        let dir = TempDir(self)
+        let rig = try PagesRig(Pdfs.text(3))
+        let panel = PagesToolModel()
+        panel.attach(rig.tab, rig.viewer, rig.host)
+        panel.openOrganize()
+        let organize = try XCTUnwrap(panel.organize)
+        XCTAssertTrue(organize.asker === panel.asker)
+        let file = dir.file("locked.pdf", try PagesPdfs.locked())
+
+        let job = Task { await organize.insertFiles([ToolFile(url: file)], at: 1) }
+        await waitUntil { panel.asker.asking != nil }
+        panel.asker.answer(password: "secret")
+        await job.value
+
+        XCTAssertEqual(rig.tab.pageCount, 6)
+    }
+
     func test_everyPageIsATileAndTheSliderResizesThemAll() throws {
         let (model, _) = try attached(40)
         let before = model.grid.cells[0].width
@@ -58,6 +76,56 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(model.grid.selection, [1, 4])
         model.grid.toggle(4)
         XCTAssertEqual(model.grid.selection, [1])
+    }
+
+    func test_aPlainClickChoosesOnePageAndShiftExtendsFromIt() throws {
+        let (model, _) = try attached()
+
+        model.grid.selectAll()
+        model.grid.choose(4)
+        XCTAssertEqual(model.grid.selection, [4])
+
+        model.grid.extend(to: 1)
+        XCTAssertEqual(model.grid.selection, [1, 2, 3, 4])
+        model.grid.extend(to: 5)
+        XCTAssertEqual(model.grid.selection, [4, 5])
+
+        model.grid.toggle(0)
+        model.grid.extend(to: 2)
+        XCTAssertEqual(model.grid.selection, [0, 1, 2])
+    }
+
+    func test_selectNoneEmptiesTheChoiceSoAJobCoversEveryPage() throws {
+        let (model, _) = try attached()
+        model.grid.selectAll()
+        XCTAssertEqual(model.grid.selectedOrAll.count, 6)
+
+        model.grid.selectNone()
+
+        XCTAssertTrue(model.grid.selected.isEmpty)
+        XCTAssertEqual(model.grid.summary, "6 pages")
+    }
+
+    func test_aDragThatLandsAfterThePagesWereRemovedMovesNothing() throws {
+        let (model, rig) = try attached()
+        model.grid.remove([2, 3, 4, 5])
+        let was = rig.tab.order
+
+        model.grid.dragging = [4, 5]
+        model.grid.mark(0, after: false)
+        model.grid.dropPages()
+
+        XCTAssertEqual(rig.tab.order, was)
+        XCTAssertTrue(model.grid.dragging.isEmpty)
+    }
+
+    func test_aDragLeftOverFromBeforeAnEditIsForgotten() throws {
+        let (model, _) = try attached()
+        model.grid.dragging = [3]
+
+        model.grid.remove([0])
+
+        XCTAssertTrue(model.grid.dragging.isEmpty)
     }
 
     func test_deleteRemovesTheSelectedPagesInOneStepThatUndoBringsBack() async throws {
