@@ -68,7 +68,7 @@ final class EditTool: PagePointerTool {
     // A finger that lands anywhere else scrolls the page.
     func takes(_ pointer: PagePointer) -> Bool {
         if let selected = current, selected.pageIndex == pointer.page, handleAt(frame, pointer.point, pointer.page) != nil { return true }
-        return hit(pointer.page, pointer.point) != nil
+        return markAt(pointer.page, pointer.point) != nil
     }
 
     func key(_ key: ViewerKey, modifiers: PointerModifiers) -> Bool {
@@ -93,7 +93,7 @@ final class EditTool: PagePointerTool {
             begin(pointer.point)
             return
         }
-        guard let hit = hit(pointer.page, pointer.point) else {
+        guard let hit = markAt(pointer.page, pointer.point) else {
             if current != nil { select(nil) }
             return
         }
@@ -150,7 +150,7 @@ final class EditTool: PagePointerTool {
     }
 
     // What lies under the point itself wins, as on a mouse; a finger's slop only finds the nearest mark when none does.
-    private func hit(_ page: Int, _ point: ViewPoint) -> PdfAnnotation? {
+    private func markAt(_ page: Int, _ point: ViewPoint) -> PdfAnnotation? {
         let wide = reach(page)
         var by = min(Self.exact, wide)
         while by < wide {
