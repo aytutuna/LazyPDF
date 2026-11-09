@@ -103,7 +103,7 @@ struct ProtectPanelView: View {
                     .buttonStyle(.borderless)
                     .accessibilityLabel(L10n.t("Remove"))
                 }
-                .accessibilityElement(children: .combine)
+                .accessibilityElement(children: .contain)
             }
             if !model.recipientNote.isEmpty { ReasonText(model.recipientNote).accessibilityAddTraits(.updatesFrequently) }
             HStack {
