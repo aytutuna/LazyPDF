@@ -47,6 +47,7 @@ public final class CropTool: PagePointerTool {
         guard dragging else { return }
         dragging = false
         var to = inside(pointer)
+        draw(to)
         var width = abs(to.x - from.x), height = abs(to.y - from.y)
         if pointer.fromKeys && width < 4 && height < 4 {
             // The keyboard sends a click, which gets a box of the usual size.

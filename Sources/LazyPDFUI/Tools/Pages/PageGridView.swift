@@ -19,6 +19,9 @@ struct PageGridView: View {
     /// Set where a double tap on a page does something.
     var open: ((Int) -> Void)?
 
+    /// Set where the Delete key removes the chosen pages.
+    var onDelete: (() -> Void)?
+
     var body: some View {
         ScrollView {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: cellWidth), spacing: 8)], spacing: 6) {
@@ -30,8 +33,17 @@ struct PageGridView: View {
             .padding(8)
         }
         .onDrop(of: [.fileURL], delegate: PageDropDelegate(grid: grid, page: nil, width: 0, onFiles: onFiles))
+        .focusable(onDelete != nil)
+        .onKeyPress(.delete) { removeChosen() }
+        .onKeyPress(.deleteForward) { removeChosen() }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(L10n.t("Pages"))
+    }
+
+    private func removeChosen() -> KeyPress.Result {
+        guard let onDelete, !grid.selected.isEmpty else { return .ignored }
+        onDelete()
+        return .handled
     }
 }
 

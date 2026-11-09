@@ -22,7 +22,7 @@ struct PagesToolPanelView: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .accessibilityAddTraits(.updatesFrequently)
-            PageGridView(grid: model.grid, cellWidth: 108, cellHeight: 160)
+            PageGridView(grid: model.grid, cellWidth: 108, cellHeight: 160, onDelete: { model.remove() })
                 .frame(height: 340)
                 .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
             insertSection
