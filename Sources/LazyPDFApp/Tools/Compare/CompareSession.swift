@@ -72,7 +72,7 @@ public final class CompareSession {
 
     private let before: CompareSide
     private let after: CompareSide
-    private var rows: [(part: CompareParts, row: ChangeRow)] = []
+    private var contentRows: [(part: CompareParts, row: ChangeRow)] = []
     private var pixelRows: [ChangeRow] = []
     private var pixelResult: ComparisonResult?
 
@@ -118,7 +118,7 @@ public final class CompareSession {
             try Self.work(before, after, oldRenderer, newRenderer, options, byPixels, token)
         }
         try token.throwIfCancelled()
-        rows = outcome.rows
+        contentRows = outcome.rows
         pixelRows = outcome.pixelRows
         pixelResult = outcome.pixelResult
         looked = outcome.looked
@@ -129,7 +129,7 @@ public final class CompareSession {
     }
 
     public func rows(_ parts: CompareParts) -> [ChangeRow] {
-        byPixels ? pixelRows : rows.filter { parts.contains($0.part) }.map(\.row)
+        byPixels ? pixelRows : contentRows.filter { parts.contains($0.part) }.map(\.row)
     }
 
     /// The new page drawn with ink only it has in green and ink only the old page has in red; nil when the page has no
