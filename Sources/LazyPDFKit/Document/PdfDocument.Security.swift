@@ -48,7 +48,7 @@ extension PdfDocument {
     /// The first /ID string a save has to keep: the older handlers make the file key from it, so it is the one
     /// the key was made with (an indirect /ID reads garbled once the file is decrypted). Nil when an
     /// unencrypted file has none.
-    var firstId: [UInt8]? {
+    public var firstId: [UInt8]? {
         security == nil ? id.first : securityId
     }
 
