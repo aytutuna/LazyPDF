@@ -36,7 +36,7 @@ public final class CombineModel: ToolPanelModel {
     @ObservationIgnored private var lists: [UUID: Held] = [:]
 
     // Only one job at a time reads the documents of the entries, whose object caches are not safe to share between threads.
-    @ObservationIgnored private let reading = NSLock()
+    private let reading = NSLock()
     @ObservationIgnored private var tab: DocumentTab?
     @ObservationIgnored private var host: ToolHost?
     @ObservationIgnored private var watch: ObservationWatch?
