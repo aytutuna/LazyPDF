@@ -77,7 +77,7 @@ final class CommentModelTests: XCTestCase {
         }
         if marks {
             let marker = Marker(tab.document, FakeFonts(), author: "Ana", date: DateTimeOffset(2026, 11, 4, 10, 0, 0))
-            try marker.add(.rectangle, 0, [pt(60, 80), pt(260, 140)], MarkStyle(color: [0.9, 0.15, 0.15], width: 3))
+            try marker.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], MarkStyle(color: [0.9, 0.15, 0.15], width: 3))
             try tab.commit("Marks")
         }
         let viewer = PanelViewer(tab)
@@ -145,7 +145,7 @@ final class CommentModelTests: XCTestCase {
         rig.model.setColor([0.2, 0.7, 0.3])
         rig.model.setWidth(4)
 
-        click(rig, pt(60, 80), dragTo: pt(260, 140))
+        click(rig, markPt(60, 80), dragTo: markPt(260, 140))
 
         let made = try XCTUnwrap(marks(rig).first)
         XCTAssertEqual(marks(rig).count, 1)
@@ -162,7 +162,7 @@ final class CommentModelTests: XCTestCase {
         let rig = try attached()
         rig.model.pick(.note)
 
-        click(rig, pt(100, 100))
+        click(rig, markPt(100, 100))
         let field = try XCTUnwrap(rig.viewer.overlay(0).fields.first)
         XCTAssertTrue(marks(rig).isEmpty)
         field.commit("Check the total")
@@ -177,9 +177,9 @@ final class CommentModelTests: XCTestCase {
         let rig = try attached()
         rig.model.pick(.note)
 
-        click(rig, pt(100, 100))
+        click(rig, markPt(100, 100))
         rig.viewer.overlay(0).fields[0].commit("   ")
-        click(rig, pt(100, 100))
+        click(rig, markPt(100, 100))
         rig.viewer.overlay(0).fields[0].drop()
 
         XCTAssertTrue(marks(rig).isEmpty)
@@ -189,7 +189,7 @@ final class CommentModelTests: XCTestCase {
     func test_handingInKeepsTheTextBeingTyped() throws {
         let rig = try attached()
         rig.model.pick(.textBox)
-        click(rig, pt(60, 80), dragTo: pt(260, 140))
+        click(rig, markPt(60, 80), dragTo: markPt(260, 140))
         rig.viewer.overlay(0).fields[0].text = "Hello"
 
         XCTAssertTrue(rig.model.handIn())
@@ -202,7 +202,7 @@ final class CommentModelTests: XCTestCase {
     func test_textTheFontsCannotDrawIsToldAndTheFieldOpensAgainWithIt() async throws {
         let rig = try attached()
         rig.model.pick(.textBox)
-        click(rig, pt(60, 80), dragTo: pt(260, 140))
+        click(rig, markPt(60, 80), dragTo: markPt(260, 140))
 
         rig.viewer.overlay(0).fields[0].commit("Çalışma ğ")
 
@@ -216,7 +216,7 @@ final class CommentModelTests: XCTestCase {
         let rig = try attached()
         rig.model.pick(.rectangle)
 
-        click(rig, pt(60, 80), dragTo: pt(260, 80.5))
+        click(rig, markPt(60, 80), dragTo: markPt(260, 80))
 
         XCTAssertTrue(marks(rig).isEmpty)
         XCTAssertEqual(rig.host.problems.map(\.title), ["Nothing to draw"])
@@ -227,9 +227,9 @@ final class CommentModelTests: XCTestCase {
         rig.model.pick(.stamp)
 
         rig.model.setStampName("DRAFT")
-        click(rig, pt(200, 300))
+        click(rig, markPt(200, 300))
         rig.model.setStampName("Paid in full")
-        click(rig, pt(200, 400))
+        click(rig, markPt(200, 400))
 
         let names = marks(rig).map { ($0.dictionary["Name"] as? PdfName)?.value }
         XCTAssertEqual(names, ["Draft", "Paid in full"])
@@ -239,7 +239,7 @@ final class CommentModelTests: XCTestCase {
         let rig = try attached(marks: true)
         rig.model.pick(.eraser)
 
-        click(rig, pt(150, 60), dragTo: pt(150, 100))
+        click(rig, markPt(150, 60), dragTo: markPt(150, 100))
 
         XCTAssertTrue(marks(rig).isEmpty)
         XCTAssertEqual(rig.tab.session.undoLabel, "Erase")
@@ -351,7 +351,7 @@ final class CommentModelTests: XCTestCase {
 
     func test_aSignedFileAsksBeforeFlattening() async throws {
         let f = try CommentFixture()
-        try f.marker.add(.rectangle, 0, [pt(60, 80), pt(260, 140)], red)
+        try f.marker.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], markRed)
         let signed = PdfDictionary()
         f.document.catalog["Perms"] = {
             let perms = PdfDictionary()
@@ -411,9 +411,8 @@ final class CommentModelTests: XCTestCase {
 
     func test_anXfdfExportSaysWhatItHadNoRoomFor() async throws {
         let rig = try attached(marks: true)
-        _ = try rig.f.marker.addAttachment(0, pt(300, 100), "data.csv", [1, 2, 3])
         let marker = Marker(rig.tab.document, FakeFonts(), author: "Ana", date: DateTimeOffset(2026, 11, 4, 10, 0, 0))
-        _ = try marker.addAttachment(0, pt(300, 100), "data.csv", [1, 2, 3])
+        _ = try marker.addAttachment(0, markPt(300, 100), "data.csv", [1, 2, 3])
         try rig.tab.commit("Attach file")
 
         await rig.model.exportComments(xfdf: true)
@@ -481,7 +480,7 @@ final class CommentModelTests: XCTestCase {
         rig.host.files.picked = [ToolFile(url: dir.file("data.csv", [1, 2, 3]))]
         rig.model.pick(.attach)
 
-        click(rig, pt(300, 100))
+        click(rig, markPt(300, 100))
         await waitUntil { rig.tab.session.undoLabel == "Attach file" }
 
         let made = try XCTUnwrap(marks(rig).first)
@@ -500,7 +499,7 @@ final class CommentModelTests: XCTestCase {
         rig.host.files.picked = [ToolFile(url: big)]
         rig.model.pick(.attach)
 
-        click(rig, pt(300, 100))
+        click(rig, markPt(300, 100))
         await waitUntil { !rig.host.problems.isEmpty }
 
         XCTAssertEqual(rig.host.problems.first?.text, "big.bin is over 50 MB. Attach a smaller file.")

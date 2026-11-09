@@ -27,6 +27,6 @@ final class CommentFixture {
     }
 }
 
-let red = MarkStyle(color: [0.9, 0.1, 0.1])
+let markRed = MarkStyle(color: [0.9, 0.1, 0.1])
 
-func pt(_ x: Double, _ y: Double) -> ViewPoint { ViewPoint(x, y) }
+func markPt(_ x: Double, _ y: Double) -> ViewPoint { ViewPoint(x, y) }

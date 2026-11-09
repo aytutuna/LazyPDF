@@ -7,7 +7,7 @@ import XCTest
 
 @MainActor
 final class MarkerTests: XCTestCase {
-    private let drag = [pt(60, 80), pt(260, 140)]
+    private let drag = [markPt(60, 80), markPt(260, 140)]
 
     func test_eachToolMakesItsKindOfMark() throws {
         let cases: [(MarkTool, AnnotationType)] = [
@@ -16,7 +16,7 @@ final class MarkerTests: XCTestCase {
         for (tool, type) in cases {
             let f = try CommentFixture()
 
-            let made = try f.marker.add(tool, 0, drag, red, "Look here")
+            let made = try f.marker.add(tool, 0, drag, markRed, "Look here")
 
             XCTAssertEqual(made.type, type)
             XCTAssertTrue(made.hasAppearance)
@@ -26,12 +26,12 @@ final class MarkerTests: XCTestCase {
     }
 
     func test_toolsThatTakeManyPointsUseAllOfThem() throws {
-        let points = [pt(50, 50), pt(150, 60), pt(140, 160), pt(40, 150)]
+        let points = [markPt(50, 50), markPt(150, 60), markPt(140, 160), markPt(40, 150)]
         let cases: [(MarkTool, AnnotationType)] = [(.polygon, .polygon), (.cloud, .polygon), (.pencil, .ink)]
         for (tool, type) in cases {
             let f = try CommentFixture()
 
-            let made = try f.marker.add(tool, 0, points, red)
+            let made = try f.marker.add(tool, 0, points, markRed)
 
             XCTAssertEqual(made.type, type)
             XCTAssertEqual(made.vertices.count, tool == .pencil ? 0 : 8)
@@ -43,7 +43,7 @@ final class MarkerTests: XCTestCase {
     func test_aDraggedBoxComesBackWhereItWasDrawn() throws {
         let f = try CommentFixture()
 
-        let made = try f.marker.add(.rectangle, 0, drag, red)
+        let made = try f.marker.add(.rectangle, 0, drag, markRed)
 
         let box = f.marker.box(of: made)
         XCTAssertEqual(box.left, 60, accuracy: 0.5)
@@ -57,7 +57,7 @@ final class MarkerTests: XCTestCase {
         let f = try CommentFixture()
         f.document.pages[0].dictionary["Rotate"] = PdfNumber(90)
 
-        let made = try f.marker.add(.rectangle, 0, drag, red)
+        let made = try f.marker.add(.rectangle, 0, drag, markRed)
 
         let box = f.marker.box(of: made)
         XCTAssertEqual(box.left, 60, accuracy: 0.5)
@@ -67,9 +67,9 @@ final class MarkerTests: XCTestCase {
 
     func test_aCalloutSitsAtTheEndOfTheDragAndPointsBack() throws {
         let f = try CommentFixture()
-        let dragged = [pt(100, 100), pt(300, 200)]
+        let dragged = [markPt(100, 100), markPt(300, 200)]
 
-        let made = try f.marker.add(.callout, 0, dragged, red, "See the chart")
+        let made = try f.marker.add(.callout, 0, dragged, markRed, "See the chart")
 
         XCTAssertEqual(made.type, .freeText)
         XCTAssertEqual(made.callout.count, 4)
@@ -84,7 +84,7 @@ final class MarkerTests: XCTestCase {
     func test_textTheFontsCannotDrawIsRefusedAndLeavesNoMark() throws {
         let f = try CommentFixture()
 
-        XCTAssertThrowsError(try f.marker.add(.textBox, 0, drag, red, "Çalışma ğ")) { error in
+        XCTAssertThrowsError(try f.marker.add(.textBox, 0, drag, markRed, "Çalışma ğ")) { error in
             XCTAssertEqual((error as? InvalidOperationException)?.message, AnnotationText.noFont)
         }
 
@@ -94,7 +94,7 @@ final class MarkerTests: XCTestCase {
     func test_aToolThatDoesNotDrawByItselfIsRefused() throws {
         let f = try CommentFixture()
 
-        XCTAssertThrowsError(try f.marker.add(.eraser, 0, drag, red)) { XCTAssertTrue($0 is ArgumentException) }
+        XCTAssertThrowsError(try f.marker.add(.eraser, 0, drag, markRed)) { XCTAssertTrue($0 is ArgumentException) }
     }
 
     func test_aSelectedRunBecomesOneMarkupWithItsQuadsInAcrobatOrder() throws {
@@ -123,8 +123,8 @@ final class MarkerTests: XCTestCase {
     func test_aStampAndAnAttachmentLandWhereTheyWereClicked() throws {
         let f = try CommentFixture()
 
-        let stamp = try f.marker.addStamp(0, pt(200, 300), "Approved", .default)
-        let file = try f.marker.addAttachment(0, pt(400, 100), "data.csv", [1, 2, 3])
+        let stamp = try f.marker.addStamp(0, markPt(200, 300), "Approved", .default)
+        let file = try f.marker.addAttachment(0, markPt(400, 100), "data.csv", [1, 2, 3])
 
         XCTAssertEqual(stamp.type, .stamp)
         XCTAssertEqual(f.marker.box(of: stamp).x + Marker.stampWidth / 2, 200, accuracy: 0.5)
@@ -134,33 +134,33 @@ final class MarkerTests: XCTestCase {
 
     func test_thePointerFindsTheTopmostMarkUnderIt() throws {
         let f = try CommentFixture()
-        try f.marker.add(.rectangle, 0, [pt(50, 50), pt(250, 250)], red)
-        let top = try f.marker.add(.oval, 0, [pt(100, 100), pt(200, 200)], red)
+        try f.marker.add(.rectangle, 0, [markPt(50, 50), markPt(250, 250)], markRed)
+        let top = try f.marker.add(.oval, 0, [markPt(100, 100), markPt(200, 200)], markRed)
 
-        XCTAssertEqual(f.marker.at(0, pt(100, 150), 4)?.reference?.number, top.reference?.number)
-        XCTAssertEqual(f.marker.at(0, pt(50, 150), 4)?.type, .square)
-        XCTAssertNil(f.marker.at(0, pt(400, 400), 4))
+        XCTAssertEqual(f.marker.at(0, markPt(100, 150), 4)?.reference?.number, top.reference?.number)
+        XCTAssertEqual(f.marker.at(0, markPt(50, 150), 4)?.type, .square)
+        XCTAssertNil(f.marker.at(0, markPt(400, 400), 4))
     }
 
     func test_aLineIsFoundNearItsStrokeAndNotInTheEmptyCornerOfItsBox() throws {
         let f = try CommentFixture()
-        try f.marker.add(.line, 0, [pt(100, 100), pt(300, 300)], red)
+        try f.marker.add(.line, 0, [markPt(100, 100), markPt(300, 300)], markRed)
 
-        XCTAssertNotNil(f.marker.at(0, pt(200, 201), 4))
-        XCTAssertNil(f.marker.at(0, pt(300, 100), 4))
+        XCTAssertNotNil(f.marker.at(0, markPt(200, 201), 4))
+        XCTAssertNil(f.marker.at(0, markPt(300, 100), 4))
     }
 
     func test_anInkStrokeIsFoundNearItsPoints() throws {
         let f = try CommentFixture()
-        try f.marker.add(.pencil, 0, [pt(100, 100), pt(200, 100), pt(200, 200)], red)
+        try f.marker.add(.pencil, 0, [markPt(100, 100), markPt(200, 100), markPt(200, 200)], markRed)
 
-        XCTAssertNotNil(f.marker.at(0, pt(150, 101), 4))
-        XCTAssertNil(f.marker.at(0, pt(100, 200), 4))
+        XCTAssertNotNil(f.marker.at(0, markPt(150, 101), 4))
+        XCTAssertNil(f.marker.at(0, markPt(100, 200), 4))
     }
 
     func test_repliesAreNotPickedUpOnThePage() throws {
         let f = try CommentFixture()
-        let note = try f.marker.add(.note, 0, [pt(100, 100)], red, "Question")
+        let note = try f.marker.add(.note, 0, [markPt(100, 100)], markRed, "Question")
         let reply = try PdfComments.reply(f.document, note, "Answer", "Can", DateTimeOffset(2026, 11, 5, 9, 0, 0))
 
         XCTAssertFalse(Marker.selectable(reply))
@@ -169,7 +169,7 @@ final class MarkerTests: XCTestCase {
 
     func test_movingShiftsTheMarkByTheDragInPageSpace() throws {
         let f = try CommentFixture()
-        let made = try f.marker.add(.rectangle, 0, drag, red)
+        let made = try f.marker.add(.rectangle, 0, drag, markRed)
 
         let moved = try f.marker.move(made, 10, 20)
 
@@ -181,7 +181,7 @@ final class MarkerTests: XCTestCase {
 
     func test_resizingFitsTheMarkIntoTheNewBox() throws {
         let f = try CommentFixture()
-        let made = try f.marker.add(.rectangle, 0, drag, red)
+        let made = try f.marker.add(.rectangle, 0, drag, markRed)
 
         let resized = try f.marker.resize(made, ViewRect(50, 70, 300, 120))
 
@@ -193,7 +193,7 @@ final class MarkerTests: XCTestCase {
 
     func test_colourWidthAndOpacityChangeTheMarkAndKeepItsLook() throws {
         let f = try CommentFixture()
-        let made = try f.marker.add(.rectangle, 0, drag, red)
+        let made = try f.marker.add(.rectangle, 0, drag, markRed)
 
         let blue = try f.marker.recolor(made, [0, 0, 1])
         let wide = try f.marker.setWidth(blue, 6)
@@ -207,7 +207,7 @@ final class MarkerTests: XCTestCase {
 
     func test_editedTextIsKeptAndANoteDoesNotNeedAFont() throws {
         let f = try CommentFixture()
-        let note = try f.marker.add(.note, 0, [pt(100, 100)], red, "First")
+        let note = try f.marker.add(.note, 0, [markPt(100, 100)], markRed, "First")
 
         let edited = try f.marker.setText(note, "Second, with ğ")
 
@@ -216,7 +216,7 @@ final class MarkerTests: XCTestCase {
 
     func test_deletingAMarkRemovesItsRepliesToo() throws {
         let f = try CommentFixture()
-        let note = try f.marker.add(.note, 0, [pt(100, 100)], red, "Question")
+        let note = try f.marker.add(.note, 0, [markPt(100, 100)], markRed, "Question")
         _ = try PdfComments.reply(f.document, note, "Answer", "Can", DateTimeOffset(2026, 11, 5, 9, 0, 0))
         XCTAssertEqual(f.marks().count, 2)
 
@@ -227,7 +227,7 @@ final class MarkerTests: XCTestCase {
 
     func test_findingAMarkAgainAfterACommitUsesItsObjectNumber() throws {
         let f = try CommentFixture()
-        let made = try f.marker.add(.rectangle, 0, drag, red)
+        let made = try f.marker.add(.rectangle, 0, drag, markRed)
         let number = try XCTUnwrap(made.reference?.number)
 
         try f.tab.commit("Rectangle")
@@ -239,7 +239,7 @@ final class MarkerTests: XCTestCase {
 
     func test_aMarkIsOneUndoStepAndSurvivesAReread() throws {
         let f = try CommentFixture()
-        try f.marker.add(.rectangle, 0, drag, red)
+        try f.marker.add(.rectangle, 0, drag, markRed)
 
         XCTAssertTrue(try f.tab.commit("Rectangle"))
         let reread = try PdfDocument.open(f.tab.session.current)
