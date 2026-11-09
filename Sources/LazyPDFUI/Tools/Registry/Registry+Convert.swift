@@ -12,6 +12,10 @@ extension ToolRegistry {
             return ToolPanel(ExportModel(codec: ImageIOCodec(), renderers: { PdfKitRenderer() }, reveal: RevealInFinder.action)) { ExportPanelView(model: $0) }
         case "create":
             return ToolPanel(CreatePanelModel(codec: ImageIOCodec(), fonts: CoreTextFontSource())) { CreatePanelView(model: $0.create) }
+        case "batch":
+            return ToolPanel(BatchPanelModel(settings: context.folders.settings, watcher: AppleBatch.watcher, runner: AppleBatch.runner)) {
+                BatchPanelView(model: $0.batch)
+            }
         default: return nil
         }
     }

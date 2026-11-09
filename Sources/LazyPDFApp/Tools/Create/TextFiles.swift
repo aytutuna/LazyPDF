@@ -22,7 +22,6 @@ public enum TextFiles {
         case "tr": return .windowsCP1254
         case "ru", "uk", "bg", "sr", "be": return .windowsCP1251
         case "el": return .windowsCP1253
-        case "ar", "fa", "ur": return .windowsCP1256
         case "ja": return .shiftJIS
         default: return .windowsCP1252
         }

@@ -23,11 +23,6 @@ private final class Stand: ToolFilePicker, ToolClipboard {
     func text() -> String? { board }
 }
 
-private final class Grant: FileAccess {
-    var stopped = false
-    func stop() { stopped = true }
-}
-
 @MainActor
 final class CreateModelTests: XCTestCase {
     private func made(_ f: ViewModelFixture, _ stand: Stand = Stand()) -> CreateModel {
@@ -102,13 +97,13 @@ final class CreateModelTests: XCTestCase {
         stand.files = [ToolFile(url: f.dir.file("a.png", [1]), access: grant)]
         await model.addPictures()
 
-        XCTAssertFalse(grant.stopped)
+        XCTAssertEqual(grant.stops, 0)
         model.selection = model.pictures[0].id
         model.removeSelected()
 
         XCTAssertTrue(model.pictures.isEmpty)
         XCTAssertNil(model.selection)
-        XCTAssertTrue(grant.stopped)
+        XCTAssertEqual(grant.stops, 1)
     }
 
     func test_textNeedsSomethingBesidesSpaces() {

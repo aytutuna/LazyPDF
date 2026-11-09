@@ -65,6 +65,7 @@ public enum PdfMaker {
     }
 }
 
+@MainActor
 public enum CreateJob {
     public static func run(_ host: ToolHost, _ codec: ImageCodec, _ fonts: FontSource?, _ request: CreateRequest) async throws {
         var made: MadePdf?
