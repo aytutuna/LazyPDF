@@ -25,7 +25,8 @@ private final class Stand: ToolFilePicker, ToolClipboard {
 
 @MainActor
 final class CreateModelTests: XCTestCase {
-    private func made(_ f: ViewModelFixture, _ stand: Stand = Stand()) -> CreateModel {
+    private func made(_ f: ViewModelFixture, _ given: Stand? = nil) -> CreateModel {
+        let stand = given ?? Stand()
         f.vm.filePicker = stand
         f.vm.clipboard = stand
         return CreateModel(host: f.vm, codec: FakeCodec(), fonts: FakeFonts())
