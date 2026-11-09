@@ -4167,6 +4167,15 @@
   "Width in percent of the page": {
     "tr": "Sayfanın yüzde kaçı genişlik"
   },
+  "The system does not let Lazy PDF watch this folder. Choose another.": {
+    "tr": "Sistem, Lazy PDF'nin bu klasörü izlemesine izin vermiyor. Başka bir klasör seçin."
+  },
+  "The system cannot draw this file, so its text cannot be read.": {
+    "tr": "Sistem bu dosyayı çizemiyor, bu yüzden metni okunamıyor."
+  },
+  "Choose the folders again. The system gives Lazy PDF access to a folder only when you pick it.": {
+    "tr": "Klasörleri yeniden seçin. Sistem, Lazy PDF'ye bir klasöre erişimi yalnızca siz seçtiğinizde verir."
+  },
   "Windows does not let Lazy PDF watch this folder. Choose another.": {
     "tr": "Windows, Lazy PDF'in bu klasörü izlemesine izin vermiyor. Başka bir klasör seçin."
   },
