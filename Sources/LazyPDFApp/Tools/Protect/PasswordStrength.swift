@@ -1,4 +1,5 @@
 import Foundation
+import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Tools/Protect/PasswordStrength.cs.
 
