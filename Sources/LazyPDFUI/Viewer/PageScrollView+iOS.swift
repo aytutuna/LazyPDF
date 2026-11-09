@@ -44,6 +44,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
     private let toolPress = UILongPressGestureRecognizer()
     private var scrollingByFinger = false
     private var lastTouch = ViewPoint.zero
+    private var touchStart = ViewPoint.zero
     private var keyboardInset: CGFloat = 0
 
     init(viewer: ViewerModel) {
@@ -224,6 +225,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
             endEditing(true)
             scrollingByFinger = !viewer.toolTakes(at)
             lastTouch = at
+            touchStart = at
             if !scrollingByFinger { viewer.pointerDown(at, touch: true) }
         case .changed:
             if scrollingByFinger {
@@ -233,7 +235,11 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
                 viewer.pointerMove(at)
             }
         case .ended:
-            if !scrollingByFinger { viewer.pointerUp(at) }
+            if !scrollingByFinger {
+                viewer.pointerUp(at)
+            } else if hypot(at.x - touchStart.x, at.y - touchStart.y) <= 4 {
+                viewer.followLink(at: at)
+            }
             scrollingByFinger = false
         default:
             if !scrollingByFinger { viewer.pointerCancel() }
