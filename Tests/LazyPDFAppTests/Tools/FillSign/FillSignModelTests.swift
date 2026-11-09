@@ -21,7 +21,7 @@ final class StubSignatureSystem: SignatureSystem {
 
 @MainActor
 final class FillSignMakerTests: XCTestCase {
-    private func maker(_ codec: ImageCodec = PictureCodec(nil)) -> (SignatureMakerModel, StubSignatureSystem) {
+    private func maker(_ codec: ImageCodec = SignaturePictureCodec(nil)) -> (SignatureMakerModel, StubSignatureSystem) {
         let system = StubSignatureSystem()
         return (SignatureMakerModel(system: system, codec: codec), system)
     }
@@ -89,7 +89,7 @@ final class FillSignMakerTests: XCTestCase {
         for x in 5..<25 {
             for c in 0..<3 { pixels[(10 * 30 + x) * 4 + c] = 10 }
         }
-        let (maker, _) = maker(PictureCodec(PdfRgbaImage(30, 20, pixels)))
+        let (maker, _) = maker(SignaturePictureCodec(PdfRgbaImage(30, 20, pixels)))
         let picker = FormsPicker()
         let url = try tempFile()
         defer { try? FileManager.default.removeItem(at: url) }
@@ -106,7 +106,7 @@ final class FillSignMakerTests: XCTestCase {
     }
 
     func test_aFileThatIsNotAPictureSaysSoAndLeavesNoImage() async throws {
-        let (maker, _) = maker(PictureCodec(nil))
+        let (maker, _) = maker(SignaturePictureCodec(nil))
         let picker = FormsPicker()
         let url = try tempFile("notes.txt")
         defer { try? FileManager.default.removeItem(at: url) }
@@ -160,12 +160,12 @@ final class FillSignModelTests: XCTestCase {
 
     private func rig(_ bytes: [UInt8]? = nil, saved: Int = 1, password: String? = nil) throws -> (model: FillSignModel, rig: ToolRig, store: SavedSignatures) {
         cleanUp()
-        let store = SavedSignatures(directory: folder, codec: PictureCodec(wide))
+        let store = SavedSignatures(directory: folder, codec: SignaturePictureCodec(wide))
         for _ in 0..<saved {
             try store.add(.signature, wide)
             Thread.sleep(forTimeInterval: 0.003)
         }
-        let model = FillSignModel(store: store, fonts: FakeFonts(), system: StubSignatureSystem(), codec: PictureCodec(wide))
+        let model = FillSignModel(store: store, fonts: FakeFonts(), system: StubSignatureSystem(), codec: SignaturePictureCodec(wide))
         let rig = try ToolRig(bytes, password: password)
         rig.attach(model)
         return (model, rig, store)
@@ -416,8 +416,8 @@ final class FillSignModelTests: XCTestCase {
         let blocker = folder.appendingPathComponent("blocked")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         try Data([1]).write(to: blocker)
-        let store = SavedSignatures(directory: blocker.appendingPathComponent("inside"), codec: PictureCodec(wide))
-        let model = FillSignModel(store: store, fonts: FakeFonts(), system: StubSignatureSystem(), codec: PictureCodec(wide))
+        let store = SavedSignatures(directory: blocker.appendingPathComponent("inside"), codec: SignaturePictureCodec(wide))
+        let model = FillSignModel(store: store, fonts: FakeFonts(), system: StubSignatureSystem(), codec: SignaturePictureCodec(wide))
         let rig = try ToolRig()
         rig.attach(model)
         model.makeNew()

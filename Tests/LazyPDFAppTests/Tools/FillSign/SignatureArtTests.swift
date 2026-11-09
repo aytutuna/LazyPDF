@@ -7,7 +7,7 @@ import LazyPDFKit
 // its test is wrapped; the codec of the photo tests is a stand-in that hands back the picture it was given.
 
 /// Reads any file as the picture it was made with.
-final class PictureCodec: ImageCodec {
+final class SignaturePictureCodec: ImageCodec {
     var frame: PdfRgbaImage?
 
     init(_ frame: PdfRgbaImage?) {
@@ -115,7 +115,7 @@ final class SignatureArtTests: XCTestCase {
             pixels[at + 2] = 10
         }
 
-        let made = try XCTUnwrap(SignatureArt.fromFile([1], PictureCodec(PdfRgbaImage(30, 20, pixels))))
+        let made = try XCTUnwrap(SignatureArt.fromFile([1], SignaturePictureCodec(PdfRgbaImage(30, 20, pixels))))
 
         XCTAssertTrue((20...30).contains(made.width), "\(made.width)")
         XCTAssertTrue(made.rgba[3] < 8 || made.rgba[3] == 255)
@@ -124,14 +124,14 @@ final class SignatureArtTests: XCTestCase {
     }
 
     func test_aFileThatIsNotAPictureGivesNothing() {
-        XCTAssertNil(SignatureArt.fromFile([1, 2, 3, 4], PictureCodec(nil)))
+        XCTAssertNil(SignatureArt.fromFile([1, 2, 3, 4], SignaturePictureCodec(nil)))
     }
 
     func test_aPhotoIsTurnedTheWayItsCameraSaidWhenItWasTaken() throws {
         let black = PdfRgbaImage(24, 8, (0..<24 * 8).flatMap { _ in [UInt8(0), 0, 0, 255] })
         let cases: [(Int, Int, Int)] = [(1, 24, 8), (3, 24, 8), (6, 8, 24), (8, 8, 24), (5, 8, 24)]
         for (orientation, width, height) in cases {
-            let image = try XCTUnwrap(SignatureArt.fromFile([1], PictureCodec(black), orientation: orientation))
+            let image = try XCTUnwrap(SignatureArt.fromFile([1], SignaturePictureCodec(black), orientation: orientation))
 
             XCTAssertEqual([image.width, image.height], [width, height], "orientation \(orientation)")
         }
@@ -147,7 +147,7 @@ final class SignatureArtTests: XCTestCase {
     func test_aBigPictureIsBroughtDownToTheLimitedWidth() throws {
         let big = PdfRgbaImage(1800, 400, [UInt8](repeating: 0, count: 1800 * 400 * 4).enumerated().map { $0.offset % 4 == 3 ? 255 : 0 })
 
-        let made = try XCTUnwrap(SignatureArt.fromFile([1], PictureCodec(big)))
+        let made = try XCTUnwrap(SignatureArt.fromFile([1], SignaturePictureCodec(big)))
 
         XCTAssertEqual(made.width, 900)
         XCTAssertEqual(made.height, 200)
