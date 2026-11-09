@@ -222,6 +222,20 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(rig.host.problems.map(\.title), ["Nothing to draw"])
     }
 
+    func test_aPolygonIsEndedByTheFinishButtonForAFinger() throws {
+        let rig = try attached()
+        rig.model.pick(.polygon)
+        for corner in [markPt(10, 10), markPt(100, 10)] { click(rig, corner) }
+        XCTAssertFalse(rig.model.canFinishShape)
+
+        click(rig, markPt(100, 100))
+        XCTAssertTrue(rig.model.canFinishShape)
+        rig.model.finishShape()
+
+        XCTAssertEqual(marks(rig).first?.type, .polygon)
+        XCTAssertFalse(rig.model.canFinishShape)
+    }
+
     func test_aStampTakesTheStandardNameOrWhatWasTyped() throws {
         let rig = try attached()
         rig.model.pick(.stamp)
