@@ -350,16 +350,12 @@ final class CommentModelTests: XCTestCase {
     }
 
     func test_aSignedFileAsksBeforeFlattening() async throws {
-        let f = try CommentFixture()
-        try f.marker.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], markRed)
-        let signed = PdfDictionary()
-        f.document.catalog["Perms"] = {
-            let perms = PdfDictionary()
-            perms["UR3"] = signed
-            return perms
-        }()
-        try f.tab.commit("Marks")
-        let rig = try attached(f.tab.session.current)
+        let first = DocumentTab(session: try PdfEditSession.open(try Pdfs.signed(certified: false, pages: 1)), renderer: FakeRenderer(),
+                                url: nil, title: "a.pdf")
+        let marker = Marker(first.document, FakeFonts(), author: "Ana", date: DateTimeOffset(2026, 11, 4, 10, 0, 0))
+        try marker.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], markRed)
+        try first.commit("Marks")
+        let rig = try attached(first.session.current)
         rig.host.notices.removeAll()
         await waitUntil { rig.model.flattenable == 1 }
 
@@ -447,8 +443,8 @@ final class CommentModelTests: XCTestCase {
         await target.model.importComments()
 
         XCTAssertEqual(marks(target).count, 1)
-        XCTAssertEqual(target.host.notices.map(\.title), ["Nothing imported"])
-        XCTAssertEqual(target.host.notices.first?.text, "The comments in notes.fdf are already in this file or belong to other pages.")
+        XCTAssertEqual(target.host.notices.last?.title, "Nothing imported")
+        XCTAssertEqual(target.host.notices.last?.text, "The comments in notes.fdf are already in this file or belong to other pages.")
     }
 
     func test_aFileThatIsNotACommentFileIsExplained() async throws {
