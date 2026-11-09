@@ -10,8 +10,14 @@ import LazyPDFApp
 
 @MainActor
 final class BatchPanelViewTests: XCTestCase {
-    private func model(_ folder: TempDir) -> BatchModel {
-        BatchModel(host: nil, settings: folder.url, bookmarks: nil, watcher: nil, runner: AppleBatch.runner)
+    private var settings: URL {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lazypdf-ui-" + UUID().uuidString, isDirectory: true)
+        addTeardownBlock { try? FileManager.default.removeItem(at: folder) }
+        return folder
+    }
+
+    private func makeModel() -> BatchModel {
+        BatchModel(host: nil, settings: settings, bookmarks: nil, watcher: nil, runner: AppleBatch.runner)
     }
 
     private func ink(_ model: BatchModel, height: Int = 1400) throws -> Int {
@@ -19,7 +25,7 @@ final class BatchPanelViewTests: XCTestCase {
     }
 
     func test_eachKindOfStepAddsItsEditor() throws {
-        let model = model(TempDir(self))
+        let model = makeModel()
         let empty = try ink(model)
         XCTAssertGreaterThan(empty, 200)
 
@@ -34,16 +40,15 @@ final class BatchPanelViewTests: XCTestCase {
     }
 
     func test_theWatchIsDrawnOnlyWhereThePlatformOffersIt() throws {
-        let dir = TempDir(self)
-        let without = model(dir)
-        let with = BatchModel(host: nil, settings: dir.url, bookmarks: nil, watcher: { _, _, _ in throw CocoaError(.fileReadUnknown) },
+        let without = makeModel()
+        let with = BatchModel(host: nil, settings: settings, bookmarks: nil, watcher: { _, _, _ in throw CocoaError(.fileReadUnknown) },
                               runner: AppleBatch.runner)
 
         XCTAssertGreaterThan(try ink(with), try ink(without))
     }
 
     func test_theSheetIsDrawnWithItsButtons() throws {
-        let model = model(TempDir(self))
+        let model = makeModel()
 
         let image = try ToolPicture.draw(BatchSheet(model: model, close: {}), width: 440, height: 640)
 
