@@ -19,7 +19,7 @@ final class ProtectWorkTests: XCTestCase {
         try ProtectWork.withPassword(plain(pages), openPassword: open, ownerPassword: owner, allowed: allowed, strength: strength)
     }
 
-    private func problem(_ error: Error) -> PdfReadProblem? {
+    private nonisolated func problem(_ error: Error) -> PdfReadProblem? {
         (error as? PdfReadException)?.problem
     }
 

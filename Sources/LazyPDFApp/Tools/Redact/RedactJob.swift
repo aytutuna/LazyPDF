@@ -5,29 +5,29 @@ import LazyPDFKit
 // the main actor.
 
 /// A colour the marked places are covered with.
-public struct Cover: Equatable, Sendable {
+public struct RedactCover: Equatable, Sendable {
     public let name: String
     public let fill: [Double]
 
-    public static var all: [Cover] {
-        [Cover(name: L10n.t("Black"), fill: [0]), Cover(name: L10n.t("White"), fill: [1]), Cover(name: L10n.t("Grey"), fill: [0.5])]
+    public static var all: [RedactCover] {
+        [RedactCover(name: L10n.t("Black"), fill: [0]), RedactCover(name: L10n.t("White"), fill: [1]), RedactCover(name: L10n.t("Grey"), fill: [0.5])]
     }
 }
 
 /// A kind of data the finders know by its shape.
-public struct DataKind {
+public struct RedactDataKind {
     public let name: String
     public let kind: RedactionKind
 
-    public static var all: [DataKind] {
+    public static var all: [RedactDataKind] {
         [
-            DataKind(name: L10n.t("Email addresses"), kind: .email),
-            DataKind(name: L10n.t("Phone numbers"), kind: .phone),
-            DataKind(name: L10n.t("US Social Security numbers"), kind: .usSocialSecurity),
-            DataKind(name: L10n.t("Turkish ID numbers"), kind: .turkishId),
-            DataKind(name: L10n.t("IBANs"), kind: .iban),
-            DataKind(name: L10n.t("Card numbers"), kind: .paymentCard),
-            DataKind(name: L10n.t("Dates"), kind: .date),
+            RedactDataKind(name: L10n.t("Email addresses"), kind: .email),
+            RedactDataKind(name: L10n.t("Phone numbers"), kind: .phone),
+            RedactDataKind(name: L10n.t("US Social Security numbers"), kind: .usSocialSecurity),
+            RedactDataKind(name: L10n.t("Turkish ID numbers"), kind: .turkishId),
+            RedactDataKind(name: L10n.t("IBANs"), kind: .iban),
+            RedactDataKind(name: L10n.t("Card numbers"), kind: .paymentCard),
+            RedactDataKind(name: L10n.t("Dates"), kind: .date),
         ]
     }
 }
@@ -35,11 +35,11 @@ public struct DataKind {
 /// `overlayText` is printed on every marked place; nil for none. `flattenAll` makes every marked page a picture, not only the
 /// ones the engine cannot follow.
 public struct RedactSettings {
-    public let cover: Cover
+    public let cover: RedactCover
     public let overlayText: String?
     public let flattenAll: Bool
 
-    public init(cover: Cover, overlayText: String?, flattenAll: Bool) {
+    public init(cover: RedactCover, overlayText: String?, flattenAll: Bool) {
         self.cover = cover
         self.overlayText = overlayText
         self.flattenAll = flattenAll
@@ -48,7 +48,7 @@ public struct RedactSettings {
 
 /// `items` is what was found, to be marked; `pictures` the pages with no text to search: scans and drawings, where the finders
 /// see nothing.
-public struct Found {
+public struct RedactFound {
     public let items: [MarkItem]
     public let pictures: Int
 }
@@ -58,14 +58,14 @@ public enum RedactJob {
         try ToolDocuments.open(file, password: password, certificate: certificate)
     }
 
-    public static func find(_ document: PdfDocument, _ kind: DataKind, token: CancelToken = CancelToken()) throws -> Found {
+    public static func find(_ document: PdfDocument, _ kind: RedactDataKind, token: CancelToken = CancelToken()) throws -> RedactFound {
         let cache = TextCache(document)
         try token.throwIfCancelled()
         return try gather(document, cache, RedactionFinder.find(cache, kind.kind), token)
     }
 
     public static func find(_ document: PdfDocument, words: String, matchCase: Bool, wholeWord: Bool,
-                            token: CancelToken = CancelToken()) throws -> Found {
+                            token: CancelToken = CancelToken()) throws -> RedactFound {
         let cache = TextCache(document)
         try token.throwIfCancelled()
         return try gather(document, cache, RedactionFinder.findWords(cache, [words], wholeWord, matchCase), token)
@@ -116,13 +116,13 @@ public enum RedactJob {
         return one.count <= 40 ? one : String(one.prefix(39)) + "…"
     }
 
-    private static func gather(_ document: PdfDocument, _ cache: TextCache, _ matches: [RedactionMatch], _ token: CancelToken) throws -> Found {
+    private static func gather(_ document: PdfDocument, _ cache: TextCache, _ matches: [RedactionMatch], _ token: CancelToken) throws -> RedactFound {
         var pictures = 0
         for page in 0..<document.pages.count {
             try token.throwIfCancelled()
             if cache.get(page).text.allSatisfy(\.isWhitespace) { pictures += 1 }
         }
-        return Found(items: matches.map { MarkItem($0.mark, clip($0.text)) }, pictures: pictures)
+        return RedactFound(items: matches.map { MarkItem($0.mark, clip($0.text)) }, pictures: pictures)
     }
 }
 

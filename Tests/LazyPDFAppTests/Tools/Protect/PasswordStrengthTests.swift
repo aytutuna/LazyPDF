@@ -5,7 +5,7 @@ import XCTest
 
 final class PasswordStrengthTests: XCTestCase {
     func test_wordsAreRatedByLengthAndVariety() {
-        let cases: [(String, Strength)] = [
+        let cases: [(String, PasswordRating)] = [
             ("", .none), ("aaaaaaaaaaaaaaaa", .weak), ("password1", .weak), ("abcdefgh", .weak), ("12345678901234567890", .weak),
             ("passwordpassword1234", .weak), ("Tr0ub4dor&3", .fair), ("Tr0ub4dor&3x", .good), ("correct horse battery staple", .strong),
         ]
@@ -22,7 +22,7 @@ final class PasswordStrengthTests: XCTestCase {
     }
 
     func test_everyRatingBeyondNoneHasAHint() {
-        for strength in [Strength.weak, .fair, .good, .strong] {
+        for strength in [PasswordRating.weak, .fair, .good, .strong] {
             XCTAssertFalse(PasswordStrength.hint(strength).isEmpty)
         }
         XCTAssertTrue(PasswordStrength.hint(.none).isEmpty)

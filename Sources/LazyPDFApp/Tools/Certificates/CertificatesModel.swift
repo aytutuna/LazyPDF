@@ -13,14 +13,14 @@ public enum SignaturePlace: Equatable {
     case field(String)
 }
 
-public struct PlaceChoice: Equatable, Identifiable {
+public struct SignaturePlaceChoice: Equatable, Identifiable {
     public let text: String
     public let place: SignaturePlace
 
     public var id: String { text }
 }
 
-public struct CertifyChoice: Equatable {
+public struct CertifyLevelChoice: Equatable {
     public let text: String
     public let level: CertificationLevel
 }
@@ -65,7 +65,7 @@ public final class CertificatesModel: ToolPanelModel {
     public var pfxPassword = ""
 
     public private(set) var identities: [CertificateChoice] = []
-    public private(set) var places: [PlaceChoice] = []
+    public private(set) var places: [SignaturePlaceChoice] = []
     public private(set) var pfxName = ""
     public private(set) var boxText = ""
     public private(set) var working = false
@@ -97,16 +97,16 @@ public final class CertificatesModel: ToolPanelModel {
         ToolAction(L10n.t("Sign"), symbol: "signature", canRun: { [self] in canSign }, run: { [self] in await sign() })
     }
 
-    public static var certifyChoices: [CertifyChoice] {
+    public static var certifyChoices: [CertifyLevelChoice] {
         [
-            CertifyChoice(text: L10n.t("Do not certify"), level: .none),
-            CertifyChoice(text: L10n.t("No changes allowed"), level: .noChanges),
-            CertifyChoice(text: L10n.t("Form filling allowed"), level: .formFill),
-            CertifyChoice(text: L10n.t("Form filling and comments allowed"), level: .annotate),
+            CertifyLevelChoice(text: L10n.t("Do not certify"), level: .none),
+            CertifyLevelChoice(text: L10n.t("No changes allowed"), level: .noChanges),
+            CertifyLevelChoice(text: L10n.t("Form filling allowed"), level: .formFill),
+            CertifyLevelChoice(text: L10n.t("Form filling and comments allowed"), level: .annotate),
         ]
     }
 
-    var place: PlaceChoice? { places.indices.contains(placeIndex) ? places[placeIndex] : nil }
+    var place: SignaturePlaceChoice? { places.indices.contains(placeIndex) ? places[placeIndex] : nil }
 
     public var drawsBox: Bool { place?.place == .box }
 
@@ -169,8 +169,8 @@ public final class CertificatesModel: ToolPanelModel {
     private func refill() {
         guard let tab else { return }
         fileVersion += 1
-        var choices = [PlaceChoice(text: L10n.t("Not visible"), place: .invisible), PlaceChoice(text: L10n.t("A box I draw on the page"), place: .box)]
-        choices += CertificateSigning.emptyFields(tab.document).map { PlaceChoice(text: L10n.t("Field {0}", $0), place: .field($0)) }
+        var choices = [SignaturePlaceChoice(text: L10n.t("Not visible"), place: .invisible), SignaturePlaceChoice(text: L10n.t("A box I draw on the page"), place: .box)]
+        choices += CertificateSigning.emptyFields(tab.document).map { SignaturePlaceChoice(text: L10n.t("Field {0}", $0), place: .field($0)) }
         places = choices
         placeIndex = 0
         boxText = ""
@@ -229,7 +229,7 @@ public final class CertificatesModel: ToolPanelModel {
 
     // MARK: Signing
 
-    private func choices(_ certificate: X509Certificate, _ place: PlaceChoice) -> SignChoices {
+    private func choices(_ certificate: X509Certificate, _ place: SignaturePlaceChoice) -> SignChoices {
         var field: String?
         if case .field(let name) = place.place { field = name }
         var rect: PdfRect?

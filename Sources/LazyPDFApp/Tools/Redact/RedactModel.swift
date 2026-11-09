@@ -170,18 +170,18 @@ public final class RedactModel: ToolPanelModel {
     }
 
     public func markKind() async {
-        let kinds = DataKind.all
+        let kinds = RedactDataKind.all
         let kind = kinds[min(max(kindIndex, 0), kinds.count - 1)]
         await search { document, token in try RedactJob.find(document, kind, token: token) }
     }
 
-    private func search(_ find: @escaping @Sendable (PdfDocument, CancelToken) throws -> Found) async {
+    private func search(_ find: @escaping @Sendable (PdfDocument, CancelToken) throws -> RedactFound) async {
         if working { return }
         guard let tab, let host, let state else { return }
         let file = tab.session.current
         let password = tab.password
         let certificate = tab.certificate.flatMap { host.verifyCertificate($0) }
-        var found: Found?
+        var found: RedactFound?
         working = true
         do {
             try await host.runBusy(L10n.t("Searching")) { token in
@@ -268,7 +268,7 @@ public final class RedactModel: ToolPanelModel {
         if working { return }
         guard let tab, let host, let state else { return }
         let items = state.marks.items.map(\.mark)
-        let covers = Cover.all
+        let covers = RedactCover.all
         let settings = RedactSettings(cover: covers[min(max(coverIndex, 0), covers.count - 1)], overlayText: overlayText, flattenAll: flattenAll)
         let file = tab.session.current
         let revision = tab.revision
