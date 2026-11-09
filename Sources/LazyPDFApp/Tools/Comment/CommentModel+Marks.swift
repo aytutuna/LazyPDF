@@ -45,7 +45,8 @@ extension CommentModel {
     }
 
     func drew(_ tool: MarkTool, _ page: Int, _ points: [ViewPoint]) {
-        guard allowed, !MarkWork.shared.running else { return }
+        // Undo can take the page away while a polygon is waiting for Finish.
+        guard allowed, !MarkWork.shared.running, let tab, page >= 0, page < tab.document.pages.count else { return }
         let look = currentStyle()
         let label = tool == .eraser ? L10n.t("Erase") : (palette.first { $0.tool == tool }?.text ?? "")
         switch tool {

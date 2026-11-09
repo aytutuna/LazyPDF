@@ -66,8 +66,9 @@ final class CommentModelTests: XCTestCase {
         let f: CommentFixture
     }
 
-    private func attached(_ bytes: [UInt8]? = nil, password: String? = nil, marks: Bool = false) throws -> Rig {
-        let f = try CommentFixture()
+    private func attached(_ bytes: [UInt8]? = nil, password: String? = nil, marks: Bool = false, pages: Int = 1,
+                          touch: Bool = false) throws -> Rig {
+        let f = try CommentFixture(pages: pages)
         let tab: DocumentTab
         if let bytes {
             tab = DocumentTab(session: try PdfEditSession.open(bytes, password: password), renderer: FakeRenderer(), url: nil,
@@ -82,18 +83,18 @@ final class CommentModelTests: XCTestCase {
         }
         let viewer = PanelViewer(tab)
         let host = MarkHost()
-        let model = CommentModel(fonts: FakeFonts())
+        let model = CommentModel(fonts: FakeFonts(), touch: touch)
         model.author = "Ana"
         model.attach(tab, viewer, host)
         return Rig(model: model, tab: tab, viewer: viewer, host: host, f: f)
     }
 
-    private func click(_ rig: Rig, _ at: ViewPoint, dragTo end: ViewPoint? = nil) {
+    private func click(_ rig: Rig, _ at: ViewPoint, dragTo end: ViewPoint? = nil, page: Int = 0) {
         let tool = rig.viewer.pointerTool!
-        tool.press(PagePointer(page: 0, point: at, view: at, pressed: true, clicks: 1))
-        if let end { tool.move(PagePointer(page: 0, point: end, view: end, pressed: true, clicks: 0)) }
+        tool.press(PagePointer(page: page, point: at, view: at, pressed: true, clicks: 1))
+        if let end { tool.move(PagePointer(page: page, point: end, view: end, pressed: true, clicks: 0)) }
         let last = end ?? at
-        tool.release(PagePointer(page: 0, point: last, view: last, pressed: false, clicks: 0))
+        tool.release(PagePointer(page: page, point: last, view: last, pressed: false, clicks: 0))
     }
 
     private func marks(_ rig: Rig) -> [PdfAnnotation] {
@@ -234,6 +235,85 @@ final class CommentModelTests: XCTestCase {
 
         XCTAssertEqual(marks(rig).first?.type, .polygon)
         XCTAssertFalse(rig.model.canFinishShape)
+    }
+
+    func test_aPolygonOnAPageThatUndoRemovedIsDroppedAndFinishingDoesNotCrash() async throws {
+        let rig = try attached(pages: 3)
+        rig.model.pick(.polygon)
+        for corner in [markPt(10, 10), markPt(100, 10), markPt(100, 100)] { click(rig, corner, page: 2) }
+        XCTAssertTrue(rig.model.canFinishShape)
+
+        try PageOperations.delete(rig.tab.document, [2])
+        try rig.tab.commit("Delete pages")
+        await waitUntil { !rig.model.shapeStarted }
+
+        XCTAssertFalse(rig.model.canFinishShape)
+        rig.model.finishShape()
+        XCTAssertTrue(rig.host.problems.isEmpty)
+    }
+
+    func test_aPolygonThatSlippedPastTheWatchIsStillNotWrittenOnAMissingPage() throws {
+        let rig = try attached(pages: 3)
+
+        rig.model.drew(.polygon, 2, [markPt(10, 10), markPt(100, 10), markPt(100, 100)])
+        XCTAssertEqual(PdfAnnotations.read(rig.tab.document, rig.tab.document.pages[2]).count, 1)
+        try PageOperations.delete(rig.tab.document, [2])
+        rig.model.drew(.polygon, 2, [markPt(10, 10), markPt(100, 10), markPt(100, 100)])
+
+        XCTAssertTrue(rig.host.problems.isEmpty)
+    }
+
+    func test_aShapeUnderWayCanBeCancelledFromThePanel() throws {
+        let rig = try attached()
+        rig.model.pick(.cloud)
+        XCTAssertFalse(rig.model.shapeStarted)
+
+        click(rig, markPt(10, 10))
+        XCTAssertTrue(rig.model.shapeStarted)
+        XCTAssertFalse(rig.model.canFinishShape)
+        rig.model.cancelShape()
+
+        XCTAssertFalse(rig.model.shapeStarted)
+        XCTAssertTrue(rig.viewer.overlay(0).items.isEmpty)
+    }
+
+    func test_switchingToolDropsTheShapeUnderWay() throws {
+        let rig = try attached()
+        rig.model.pick(.polygon)
+        click(rig, markPt(10, 10))
+        click(rig, markPt(100, 10))
+
+        rig.model.pick(.rectangle)
+
+        XCTAssertFalse(rig.model.shapeStarted)
+        XCTAssertTrue(rig.viewer.overlay(0).items.isEmpty)
+    }
+
+    func test_aPhoneTellsPolygonsAreEndedWithTheFinishButtonAndLeavesTheKeyboardOut() throws {
+        let rig = try attached(touch: true)
+
+        rig.model.pick(.polygon)
+        XCTAssertEqual(rig.model.hint, "Tap each corner, then tap Finish shape.")
+        rig.model.pick(.note)
+        XCTAssertEqual(rig.model.hint, "Click where the note goes.")
+    }
+
+    func test_theMovedMarksToolListsTheMarksOfThePageInView() throws {
+        let rig = try attached(marks: true)
+        rig.model.pick(.rectangle)
+        XCTAssertTrue(rig.model.marks.isEmpty)
+
+        rig.model.pick(.edit)
+        let row = try XCTUnwrap(rig.model.marks.first)
+        XCTAssertEqual(rig.model.marks.count, 1)
+        XCTAssertTrue(row.spoken.hasPrefix("Rectangle"))
+        XCTAssertTrue(row.spoken.hasSuffix("Page 1"))
+        XCTAssertFalse(row.isSelected)
+
+        rig.model.select(row)
+
+        XCTAssertEqual(rig.model.selected?.title, "Selected: Rectangle")
+        XCTAssertTrue(try XCTUnwrap(rig.model.marks.first).isSelected)
     }
 
     func test_aStampTakesTheStandardNameOrWhatWasTyped() throws {

@@ -47,6 +47,8 @@ public struct PagePointer {
     public var clicks: Int
     public var modifiers: PointerModifiers
     public var fromKeys: Bool
+
+    /// A finger made it. A tool that adds a point per press waits for the release, since a second finger cancels the press.
     public var touch: Bool
 
     public init(page: Int, point: ViewPoint, view: ViewPoint, pressed: Bool, clicks: Int,

@@ -16,6 +16,12 @@ extension Marker {
         return nil
     }
 
+    /// The marks of a page a person may pick, in the order they were added.
+    public func selectable(on page: Int) -> [PdfAnnotation] {
+        if page < 0 || page >= document.pages.count { return [] }
+        return PdfAnnotations.read(document, document.pages[page]).filter(Self.selectable)
+    }
+
     /// The marks that a stroke of the pointer crosses, also between the points it was sampled at.
     public func along(_ page: Int, _ path: [ViewPoint], _ tolerance: Double) -> [PdfAnnotation] {
         if page < 0 || page >= document.pages.count || path.isEmpty { return [] }

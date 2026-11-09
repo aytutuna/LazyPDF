@@ -194,4 +194,32 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertTrue(model.canStartOver)
         XCTAssertFalse(model.canFinish)
     }
+
+    func test_takeBackCornerDropsTheLastCornerOfTheShapeUnderWay() throws {
+        let (model, _) = try attached()
+        model.pick(.area)
+        let tool = try XCTUnwrap(model.tool)
+        for corner in [ViewPoint(0, 0), ViewPoint(72, 0), ViewPoint(72, 72)] {
+            tool.press(PagePointer(page: 0, point: corner, view: corner, pressed: true, clicks: 1))
+        }
+        XCTAssertTrue(model.canFinish)
+
+        model.takeBack()
+
+        XCTAssertEqual(tool.points.count, 2)
+        XCTAssertFalse(model.canFinish)
+        XCTAssertTrue(model.canStartOver)
+        model.startOver()
+        XCTAssertFalse(model.canStartOver)
+    }
+
+    func test_aPhoneAsksForTapsAndTheStraightSwitch() throws {
+        let rig = try ToolRig(nil)
+        let model = MeasureModel(fonts: FakeFonts(), touch: true)
+        rig.attach(model)
+
+        XCTAssertEqual(model.hint, "Tap the two ends. Turn on Straight lines to keep them straight.")
+        model.pick(.area)
+        XCTAssertEqual(model.hint, "Tap each corner, then tap Finish. Turn on Straight lines to keep them straight.")
+    }
 }

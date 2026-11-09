@@ -12,6 +12,8 @@ final class MeasureTool: PagePointerTool {
     private let viewer: DocumentViewer
     private(set) var snaps: [Int: [ViewPoint]] = [:]
     private var loading = Set<Int>()
+    private var added = false
+    private var waiting: PagePointer?
 
     var kind = MeasureKind.distance
     var snap = true
@@ -43,7 +45,7 @@ final class MeasureTool: PagePointerTool {
     func key(_ key: ViewerKey, modifiers: PointerModifiers) -> Bool {
         guard !points.isEmpty else { return false }
         switch key {
-        case .escape: cancel()
+        case .escape: reset()
         case .backspace: undo()
         default: return false
         }
@@ -51,6 +53,15 @@ final class MeasureTool: PagePointerTool {
     }
 
     func press(_ pointer: PagePointer) {
+        // A second finger cancels the press, so a finger's point is added on release.
+        if pointer.touch {
+            waiting = pointer
+        } else {
+            commit(pointer)
+        }
+    }
+
+    private func commit(_ pointer: PagePointer) {
         if !points.isEmpty && pointer.page != page { return }
         page = pointer.page
         if pointer.clicks >= 2 {
@@ -65,6 +76,7 @@ final class MeasureTool: PagePointerTool {
             return
         }
         points.append(at)
+        added = true
         if kind == .distance && points.count == 2 {
             finish()
         } else {
@@ -80,13 +92,32 @@ final class MeasureTool: PagePointerTool {
         changed?()
     }
 
-    func release(_ pointer: PagePointer) {}
+    func release(_ pointer: PagePointer) {
+        added = false
+        if let tapped = waiting {
+            waiting = nil
+            commit(tapped)
+            added = false
+        }
+    }
 
+    /// The press in flight was taken away (a second finger, another window): the corner it added goes, the others stay.
     func cancel() {
+        waiting = nil
+        if added {
+            added = false
+            undo()
+        }
+    }
+
+    /// Drops the shape under way.
+    func reset() {
         points.removeAll()
         page = -1
         hover = nil
         snapped = false
+        added = false
+        waiting = nil
         changed?()
     }
 
@@ -103,6 +134,7 @@ final class MeasureTool: PagePointerTool {
         let item = MeasureItem(kind, page, points)
         points.removeAll()
         page = -1
+        added = false
         changed?()
         finished?(item)
     }
