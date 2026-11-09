@@ -132,6 +132,7 @@ extension OcrModel {
     public func applyDraft() {
         guard inPanel, let ref = picked else { return }
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        draft = text
         if text != pickedText { apply(ref, text) }
     }
 
