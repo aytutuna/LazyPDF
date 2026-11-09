@@ -15,7 +15,7 @@ public enum BatesPlace: Int, CaseIterable, Codable {
 public enum BatchPreset: Int, CaseIterable, Codable {
     case small, balanced, highQuality
 
-    var preset: OptimizePreset {
+    public var preset: OptimizePreset {
         switch self {
         case .small: return .small
         case .balanced: return .balanced
@@ -27,7 +27,7 @@ public enum BatchPreset: Int, CaseIterable, Codable {
 public enum BatchLevel: Int, CaseIterable, Codable {
     case a1b, a2b, a2u, a3b, a3u, a4
 
-    var level: PdfALevel {
+    public var level: PdfALevel {
         switch self {
         case .a1b: return .a1b
         case .a2b: return .a2b
