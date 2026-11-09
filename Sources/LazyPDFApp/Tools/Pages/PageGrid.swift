@@ -24,6 +24,9 @@ public final class PageGrid {
     /// Called after the cells were made again.
     @ObservationIgnored public var onRebuild: (() -> Void)?
 
+    /// The page a Shift click counts from.
+    @ObservationIgnored private var anchor: Int?
+
     @ObservationIgnored var tab: DocumentTab?
     @ObservationIgnored var host: ToolHost?
     @ObservationIgnored private var watch: ObservationWatch?
@@ -63,6 +66,8 @@ public final class PageGrid {
     public func rebuild(select: [Int]?) {
         for cell in cells { cell.release() }
         marked = nil
+        dragging = []
+        anchor = nil
         guard let tab else { return }
         let document = tab.document
         let labels = PdfPageLabels.labels(document)
@@ -126,6 +131,23 @@ public final class PageGrid {
     public func toggle(_ page: Int) {
         guard page >= 0, page < cells.count else { return }
         if selected.contains(page) { selected.remove(page) } else { selected.insert(page) }
+        anchor = page
+        onSelect?()
+    }
+
+    /// A plain click on a Mac: this page alone is chosen.
+    public func choose(_ page: Int) {
+        guard page >= 0, page < cells.count else { return }
+        selected = [page]
+        anchor = page
+        onSelect?()
+    }
+
+    /// Shift click: every page from the one last clicked to `page` is chosen.
+    public func extend(to page: Int) {
+        guard page >= 0, page < cells.count else { return }
+        let from = anchor.flatMap { $0 < cells.count ? $0 : nil } ?? selection.first ?? page
+        selected = Set(min(from, page)...max(from, page))
         onSelect?()
     }
 
@@ -136,6 +158,7 @@ public final class PageGrid {
 
     public func selectNone() {
         selected = []
+        anchor = nil
         onSelect?()
     }
 
@@ -167,6 +190,7 @@ public final class PageGrid {
         unmark()
         let pages = dragging
         dragging = []
-        if !pages.isEmpty { moveTo(pages, before) }
+        // The pages a drag carried may be gone when it lands, after an undo or an edit from elsewhere.
+        if !pages.isEmpty, pages.allSatisfy({ $0 >= 0 && $0 < cells.count }) { moveTo(pages, before) }
     }
 }
