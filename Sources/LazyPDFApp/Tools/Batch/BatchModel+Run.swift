@@ -71,7 +71,7 @@ extension BatchModel {
                 moved = true
             }
         }
-        guard moved, var saved = store.load().first(where: { $0.name.caseInsensitiveCompare(set.name) == .orderedSame }),
+        guard moved, var saved = store.load().first(where: { $0.name.caseInsensitiveCompare(plan.name) == .orderedSame }),
               saved.steps.count == plan.steps.count else { return }
         for i in saved.steps.indices where saved.steps[i].kind == .bates && plan.steps[i].kind == .bates {
             saved.steps[i].start = plan.steps[i].start
