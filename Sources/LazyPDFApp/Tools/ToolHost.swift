@@ -60,6 +60,9 @@ public protocol ToolHost: AnyObject {
     /// platform cannot give it.
     func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate?
 
+    /// The identities a file for recipients can be opened with; empty when the platform has none to offer.
+    func certificateChoices() -> [CertificateChoice]
+
     /// The system's panels for choosing files and folders to read, the shell's own.
     var filePicker: ToolFilePicker { get }
 
@@ -84,6 +87,8 @@ extension ToolHost {
     public var isDocumentBusy: Bool { false }
 
     public func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate? { nil }
+
+    public func certificateChoices() -> [CertificateChoice] { [] }
 
     public var filePicker: ToolFilePicker { NoToolServices.shared }
 

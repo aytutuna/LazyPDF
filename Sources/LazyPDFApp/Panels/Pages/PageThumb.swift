@@ -5,7 +5,7 @@ import LazyPDFKit
 // Follows windows/LazyPDF.App/Panels/Pages/PageThumb.cs.
 
 /// Thumbnails are drawn two at a time, so scrolling a long list does not queue the whole file.
-private actor DrawTurns {
+actor DrawTurns {
     static let shared = DrawTurns()
 
     private var free = 2
