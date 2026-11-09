@@ -23,13 +23,17 @@ extension ViewerModel {
         last = at
         moved = false
         downLink = hit.flatMap { link(at: $0.page, $0.point) }
-        if tool != nil, hit == nil {
-            return
-        } else if let tool, let over = hit, tool.takes(pointer(over.page, over.point, at, clicks, true, modifiers)) {
-            drag = .tool
-            dragPage = over.page
-            tool.press(pointer(over.page, over.point, at, clicks, true, modifiers))
-        } else if pointerMode == .hand {
+        if let tool {
+            guard let over = hit else { return }
+            let press = pointer(over.page, over.point, at, clicks, true, modifiers)
+            if touch || tool.takes(press) {
+                drag = .tool
+                dragPage = over.page
+                tool.press(press)
+                return
+            }
+        }
+        if pointerMode == .hand {
             drag = .pan
             cursor = .move
         } else {
@@ -81,7 +85,7 @@ extension ViewerModel {
     /// Whether the tool wants a finger that lands at `at`; false over no page or with no tool.
     public func toolTakes(_ at: ViewPoint) -> Bool {
         guard let tool, let over = state.hit(at) else { return false }
-        return tool.takes(pointer(over.page, over.point, at, 1, true, []))
+        return tool.takes(pointer(over.page, over.point, at, 1, true, [], touch: true))
     }
 
     /// The pointer was taken away while the button was down (another window, a popup): the tool gets no release.
@@ -91,8 +95,9 @@ extension ViewerModel {
         touching = false
     }
 
-    private func pointer(_ page: Int, _ point: ViewPoint, _ view: ViewPoint, _ clicks: Int, _ pressed: Bool, _ modifiers: PointerModifiers) -> PagePointer {
-        PagePointer(page: page, point: point, view: view, pressed: pressed, clicks: clicks, modifiers: modifiers)
+    private func pointer(_ page: Int, _ point: ViewPoint, _ view: ViewPoint, _ clicks: Int, _ pressed: Bool, _ modifiers: PointerModifiers,
+                         touch: Bool? = nil) -> PagePointer {
+        PagePointer(page: page, point: point, view: view, pressed: pressed, clicks: clicks, modifiers: modifiers, touch: touch ?? touching)
     }
 
     private func endDrag() {

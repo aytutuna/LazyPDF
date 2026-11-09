@@ -47,9 +47,10 @@ public struct PagePointer {
     public var clicks: Int
     public var modifiers: PointerModifiers
     public var fromKeys: Bool
+    public var touch: Bool
 
     public init(page: Int, point: ViewPoint, view: ViewPoint, pressed: Bool, clicks: Int,
-                modifiers: PointerModifiers = [], fromKeys: Bool = false) {
+                modifiers: PointerModifiers = [], fromKeys: Bool = false, touch: Bool = false) {
         self.page = page
         self.point = point
         self.view = view
@@ -57,6 +58,7 @@ public struct PagePointer {
         self.clicks = clicks
         self.modifiers = modifiers
         self.fromKeys = fromKeys
+        self.touch = touch
     }
 }
 
@@ -77,7 +79,8 @@ public protocol PagePointerTool: AnyObject {
     var cursor: PointerCursor? { get }
 
     /// Whether a touch that lands here is the tool's. A finger the tool does not take scrolls the page, so a tool whose
-    /// targets are small (a check box, a handle) answers true only over them. The Mac asks nothing.
+    /// targets are small (a check box, a handle) answers true only over them. A mouse press the tool does not take goes to
+    /// the viewer (select, pan, links); `pointer.touch` tells the two apart.
     func takes(_ pointer: PagePointer) -> Bool
 
     /// A key the tool uses (Delete, Escape): true if it was taken, else the viewer gets it.
