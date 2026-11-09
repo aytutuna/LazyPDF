@@ -81,7 +81,14 @@ public final class MarkList {
 
     private func cell(_ item: MarkItem) -> Cell {
         let box = item.mark.quads[0].bounds
-        return Cell(page: item.page, x: Int(box.left.rounded(.down)), y: Int(box.bottom.rounded(.down)))
+        return Cell(page: item.page, x: Self.index(box.left), y: Self.index(box.bottom))
+    }
+
+    // Far beyond any page, so a crafted coordinate lands in an edge cell instead of overflowing the conversion.
+    private static func index(_ value: Double) -> Int {
+        let limit = 1e12
+        if !(value > -limit) { return Int(-limit) }
+        return value < limit ? Int(value.rounded(.down)) : Int(limit)
     }
 
     private func neighbours(_ item: MarkItem) -> [MarkItem] {
