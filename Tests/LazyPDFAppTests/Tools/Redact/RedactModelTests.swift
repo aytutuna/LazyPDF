@@ -84,7 +84,7 @@ final class RedactModelTests: XCTestCase {
     }
 
     func test_pagesWithNoTextAreReportedBecauseNothingWasSearchedThere() async throws {
-        let (model, rig) = try attached(PdfFromText.create("ann@example.commore", fonts: FakeFonts()).bytes)
+        let (model, rig) = try attached(PdfFromText.create("ann@example.com\u{0C}\u{0C}more", fonts: FakeFonts()).bytes)
         model.kindIndex = 0
 
         await model.markKind()
@@ -104,8 +104,8 @@ final class RedactModelTests: XCTestCase {
         XCTAssertNil(rig.viewer.overlay(0).item("redact.preview"))
         XCTAssertNotNil(rig.viewer.overlay(0).item("redact.mark.0"))
         let bounds = model.marks[0].mark.quads[0].bounds
-        XCTAssertEqual([bounds.left, bounds.right], [50, 150])
-        XCTAssertEqual([bounds.bottom, bounds.top], [792 - 90, 792 - 60])
+        XCTAssertEqual([bounds.left, bounds.right], [50.0, 150.0])
+        XCTAssertEqual([bounds.bottom, bounds.top], [702.0, 732.0])
     }
 
     func test_aDragThatIsTooSmallMarksNothingAndAKeyboardClickGetsABoxOfTheUsualSize() throws {

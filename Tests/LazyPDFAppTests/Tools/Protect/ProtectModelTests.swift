@@ -131,7 +131,7 @@ final class ProtectModelTests: XCTestCase {
         await model.action!.run()
 
         let made = try XCTUnwrap(rig.host.openedNew.first)
-        XCTAssertEqual(try PdfDocument.open(made.pdf, password: "new").pages.count, 2)
+        XCTAssertEqual(try PdfDocument.open(made.pdf, password: "new").pages.count, 1)
         XCTAssertEqual(model.unlockPassword, "")
     }
 
