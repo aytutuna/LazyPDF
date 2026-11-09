@@ -6695,5 +6695,17 @@
   },
   "Mode": {
     "tr": "Kip"
+  },
+  "Signature not kept": {
+    "tr": "İmza saklanamadı"
+  },
+  "It could not be saved. It can still be placed this time.": {
+    "tr": "Kaydedilemedi. Bu seferlik yine de yerleştirilebilir."
+  },
+  "Choose what to put on the page, then press Place on page.": {
+    "tr": "Sayfaya neyi koyacağınızı seçin, sonra Sayfaya yerleştir düğmesine basın."
+  },
+  "Undo stroke": {
+    "tr": "Çizgiyi geri al"
   }
 }
