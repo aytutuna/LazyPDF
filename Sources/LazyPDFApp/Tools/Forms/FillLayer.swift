@@ -29,7 +29,8 @@ struct FillSlot {
     let noToggleToOff: Bool
     let action: PdfAction?
 
-    func sameWidget(_ other: FillSlot) -> Bool { dictionary === other.dictionary }
+    // The file is read again after every change, so the widget is told by where it is, not by its dictionary.
+    func sameWidget(_ other: FillSlot) -> Bool { page == other.page && name == other.name && index == other.index }
 }
 
 @MainActor
@@ -112,12 +113,15 @@ final class FillLayer {
         return made
     }
 
-    /// The enabled widget under a point of a page: the smallest that holds it, else the closest within `slop` page points.
+    /// The enabled widget under a point of a page: the smallest that holds it, else the closest within `slop` page points. A
+    /// point inside a widget that is off belongs to nothing, so it does not fall to a neighbour.
     func hit(_ page: Int, _ point: ViewPoint, slop: Double) -> FillSlot? {
-        let usable = slots(page).filter { $0.enabled }
-        let inside = usable.filter { $0.rect.contains(point) }.min { $0.rect.width * $0.rect.height < $1.rect.width * $1.rect.height }
-        if let inside { return inside }
-        let near = usable.filter { $0.rect.inflated(slop, slop).contains(point) }
+        let all = slots(page)
+        let holding = all.filter { $0.rect.contains(point) }
+        if !holding.isEmpty {
+            return holding.filter { $0.enabled }.min { $0.rect.width * $0.rect.height < $1.rect.width * $1.rect.height }
+        }
+        let near = all.filter { $0.enabled && $0.rect.inflated(slop, slop).contains(point) }
         return near.min { distance($0.rect, point) < distance($1.rect, point) }
     }
 
