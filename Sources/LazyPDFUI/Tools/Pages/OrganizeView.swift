@@ -3,8 +3,8 @@ import SwiftUI
 import LazyPDFApp
 import LazyPDFKit
 
-// The page grid on the stage; follows windows/LazyPDF.App/Tools/Pages/OrganizeView.xaml. The shortcuts of the buttons are the
-// keys of OrganizeView.Press: Delete, Cut, Copy, Paste and Select all, with Escape for Done.
+// The page grid on the stage; follows windows/LazyPDF.App/Tools/Pages/OrganizeView.xaml. The keys of OrganizeView.Press (Delete, Cut,
+// Copy, Paste and Select all, with Escape for Done) act only while the grid has the focus, so typing in the inspector is not touched.
 
 struct PagesStageView: View {
     let model: PagesToolModel
@@ -32,7 +32,7 @@ struct OrganizeView: View {
             }
             PageGridView(grid: model.grid, cellWidth: model.tileSize + 32, cellHeight: model.tileSize * OrganizeModel.boxRatio + 30,
                          onFiles: { files, before in Task { await model.insertFiles(files, at: before) } },
-                         open: { model.open($0) })
+                         open: { model.open($0) }, onKey: { press($0) })
             Divider()
             footer
         }
@@ -46,30 +46,25 @@ struct OrganizeView: View {
                 Button { model.done() } label: {
                     Label(L10n.t("Done"), systemImage: "checkmark").frame(minHeight: 44)
                 }
-                .keyboardShortcut(.cancelAction)
                 .help(L10n.t("Back to the document (Esc)"))
                 .padding(.trailing, 8)
                 BarButton("rotate.left", L10n.t("Rotate left"), off: !any) { model.turnSelection(-90) }
                 BarButton("rotate.right", L10n.t("Rotate right"), off: !any) { model.turnSelection(90) }
                 BarButton("trash", L10n.t("Delete"), off: !any) { model.remove() }
-                    .keyboardShortcut(.delete, modifiers: [])
                 BarButton("plus.square.on.square", L10n.t("Duplicate"), off: !any) { Task { await model.duplicate() } }
                 BarButton("arrow.up.doc", L10n.t("Extract to a new file"), off: !any) { Task { await model.extract() } }
                 BarButton("arrow.left", L10n.t("Move earlier"), off: !any) { model.grid.earlier(model.grid.selection) }
                 BarButton("arrow.right", L10n.t("Move later"), off: !any) { model.grid.later(model.grid.selection) }
                 BarButton("scissors", L10n.t("Cut"), off: !any) { Task { await model.cut() } }
-                    .keyboardShortcut("x", modifiers: .command)
                 BarButton("doc.on.doc", L10n.t("Copy"), off: !any) { Task { await model.copy() } }
-                    .keyboardShortcut("c", modifiers: .command)
                 BarButton("doc.on.clipboard", L10n.t("Paste"), off: !model.canPaste) { Task { await model.paste() } }
-                    .keyboardShortcut("v", modifiers: .command)
                 BarButton("plus.rectangle", L10n.t("Blank page")) { model.blank() }
                 BarButton("doc.badge.plus", L10n.t("Pages from a file")) { Task { await model.fromFile() } }
                 PlacePicker(place: $model.place)
                     .frame(width: 170)
                     .padding(.leading, 8)
                 BarButton("checkmark.circle", L10n.t("Select all")) { model.grid.selectAll() }
-                    .keyboardShortcut("a", modifiers: .command)
+                BarButton("xmark.circle", L10n.t("Select none"), off: !any) { model.grid.selectNone() }
             }
             .padding(.horizontal, 8)
         }
@@ -77,6 +72,30 @@ struct OrganizeView: View {
     }
 
     private var any: Bool { !model.grid.selected.isEmpty }
+
+    private func press(_ key: KeyPress) -> KeyPress.Result {
+        if key.modifiers == .command {
+            switch key.characters {
+            case "x": Task { await model.cut() }
+            case "c": Task { await model.copy() }
+            case "v": Task { await model.paste() }
+            case "a": model.grid.selectAll()
+            default: return .ignored
+            }
+            return .handled
+        }
+        guard key.modifiers.isEmpty else { return .ignored }
+        switch key.key {
+        case .delete, .deleteForward:
+            guard any else { return .ignored }
+            model.remove()
+        case .escape:
+            model.done()
+        default:
+            return .ignored
+        }
+        return .handled
+    }
 
     private var footer: some View {
         HStack(spacing: 12) {

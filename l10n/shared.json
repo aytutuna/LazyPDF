@@ -6561,6 +6561,9 @@
   "Select all": {
     "tr": "Tümünü seç"
   },
+  "Select none": {
+    "tr": "Seçimi kaldır"
+  },
   "Back": {
     "tr": "Geri"
   },
