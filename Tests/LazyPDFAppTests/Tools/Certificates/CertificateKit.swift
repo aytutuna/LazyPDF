@@ -31,7 +31,7 @@ final class CancelsOnRequest: SignatureTransport {
 }
 
 /// A server that cannot be reached, and says why.
-final class DownTransport: SigningTransport {
+final class DownServer: SigningTransport {
     var lastFailure: String? = "The server did not answer."
     private(set) var cancelled = 0
 
@@ -40,7 +40,7 @@ final class DownTransport: SigningTransport {
     func cancel() { cancelled += 1 }
 }
 
-enum SigningKit {
+enum CertificateKit {
     static let now = DateTimeOffset(2026, 3, 10, 9, 0, 0)
 
     static func ada() throws -> X509Certificate {
@@ -94,7 +94,7 @@ enum SigningKit {
     static func signedByGrace() throws -> PdfEditSession {
         let (signer, authority) = try issued()
         let session = try PdfEditSession.open(Pdfs.text())
-        var request = PdfSignRequest(signer, SigningKit.now)
+        var request = PdfSignRequest(signer, CertificateKit.now)
         request.chain = [authority]
         request.fonts = FakeFonts()
         try PdfSigner.sign(session, request)
