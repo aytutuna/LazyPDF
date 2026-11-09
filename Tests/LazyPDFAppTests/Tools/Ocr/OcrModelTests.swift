@@ -157,7 +157,7 @@ final class OcrModelTests: XCTestCase {
         await read(model, rig, [0])
         await waitUntil { model.words.count == 2 }
 
-        model.pickFromList(model.words[1])
+        model.pick(WordRef(0, 1), edit: true)
 
         XCTAssertEqual(model.picked, WordRef(0, 1))
         XCTAssertEqual(model.pickedText, "beta")
@@ -175,7 +175,7 @@ final class OcrModelTests: XCTestCase {
         let (model, rig) = try await attached(Pdfs.text(1))
         await read(model, rig, [0])
         await waitUntil { model.words.count == 2 }
-        model.pickFromList(model.words[0])
+        model.pick(WordRef(0, 0), edit: true)
 
         rig.viewer.overlay(0).field("ocr.word")?.commit("")
 
@@ -187,7 +187,7 @@ final class OcrModelTests: XCTestCase {
         let (model, rig) = try await attached(Pdfs.text(1))
         await read(model, rig, [0])
         await waitUntil { model.words.count == 2 }
-        model.pickFromList(model.words[0])
+        model.pick(WordRef(0, 0), edit: true)
 
         rig.viewer.overlay(0).field("ocr.word")?.commit("gamma")
         await waitUntil { model.words.first?.text == "gamma" }
@@ -199,7 +199,7 @@ final class OcrModelTests: XCTestCase {
         let (model, rig) = try await attached(Pdfs.text(1))
         await read(model, rig, [0])
         await waitUntil { model.words.count == 2 }
-        model.pickFromList(model.words[0])
+        model.pick(WordRef(0, 0), edit: true)
         rig.viewer.overlay(0).field("ocr.word")?.typed("gamma")
 
         XCTAssertTrue(model.handIn())
@@ -220,9 +220,10 @@ final class OcrModelTests: XCTestCase {
         XCTAssertFalse(model.action!.canRun())
     }
 
-    func test_aFingerOnAWordPicksItAndOneAwayFromWordsScrolls() async throws {
+    // The stand-in renderer lays the page out at 200 by 300 points, so the points tried lie inside that.
+    private func pointerRig(_ bytes: [UInt8]? = nil) async throws -> (model: OcrModel, viewer: ViewerModel, host: RecordingHost, tab: DocumentTab) {
         let host = RecordingHost()
-        let session = try PdfEditSession.open(Pdfs.text(1))
+        let session = try PdfEditSession.open(bytes ?? Pdfs.text(1))
         let tab = DocumentTab(session: session, renderer: FakeRenderer(), url: nil, title: "a.pdf")
         let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
         viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
@@ -232,8 +233,18 @@ final class OcrModelTests: XCTestCase {
         await waitUntil { !model.isLoading }
         await read(model, host, tab, [0])
         await waitUntil { model.words.count == 2 }
+        return (model, viewer, host, tab)
+    }
 
-        // The stand-in renderer lays the page out at 200 by 300 points, so the points tried lie inside that.
+    private func centre(_ word: OcrLayerWord, _ viewer: ViewerModel) throws -> ViewPoint {
+        let matrix = try XCTUnwrap(viewer.pageToView(0))
+        return matrix.transform(ViewPoint(word.box.x + word.box.width / 2, word.box.y + word.box.height / 2))
+    }
+
+    func test_aFingerOnAWordPicksItWhenTheyAskForItAndOneAwayFromWordsScrolls() async throws {
+        let (model, viewer, _, _) = try await pointerRig()
+        model.touchCorrects = true
+
         let box = model.words[0].box
         XCTAssertTrue(box.x <= 100 && box.x + box.width >= 100 && box.y <= 60 && box.y + box.height >= 60)
         let matrix = try XCTUnwrap(viewer.pageToView(0))
@@ -249,5 +260,120 @@ final class OcrModelTests: XCTestCase {
 
         XCTAssertEqual(model.picked, WordRef(0, 0))
         XCTAssertNotNil(viewer.overlay(0).field("ocr.word"))
+    }
+
+    func test_aFingerScrollsWhateverIsUnderItUntilTheyAskToCorrectByTouch() async throws {
+        let (model, viewer, _, _) = try await pointerRig()
+        let onWord = try centre(model.words[0], viewer)
+
+        XCTAssertFalse(viewer.toolTakes(onWord))
+        model.touchCorrects = true
+        XCTAssertTrue(viewer.toolTakes(onWord))
+    }
+
+    func test_aFingerThatDraggedAwayFromAWordOpensNoField() async throws {
+        let (model, viewer, _, _) = try await pointerRig()
+        model.touchCorrects = true
+        let start = try centre(model.words[0], viewer)
+
+        viewer.pointerDown(start, touch: true)
+        viewer.pointerMove(ViewPoint(start.x + 3, start.y + 40))
+        viewer.pointerUp(ViewPoint(start.x + 3, start.y + 40))
+
+        XCTAssertNil(model.picked)
+        XCTAssertNil(viewer.overlay(0).field("ocr.word"))
+    }
+
+    func test_aMousePressTheToolDoesNotTakeStaysWithTheViewer() async throws {
+        let (model, viewer, _, _) = try await pointerRig()
+        let box = model.words[0].box
+        let matrix = try XCTUnwrap(viewer.pageToView(0))
+        let beside = PagePointer(page: 0, point: ViewPoint(box.x + box.width + 5, box.y + box.height / 2), view: ViewPoint(0, 0), pressed: true, clicks: 1)
+        let inside = PagePointer(page: 0, point: ViewPoint(box.x + 1, box.y + box.height / 2), view: ViewPoint(0, 0), pressed: true, clicks: 1)
+        XCTAssertFalse(model.takes(beside))
+        XCTAssertTrue(model.takes(inside))
+
+        let away = matrix.transform(beside.point)
+        viewer.pointerDown(away)
+        viewer.pointerUp(away)
+        XCTAssertNil(model.picked)
+
+        let on = matrix.transform(inside.point)
+        viewer.pointerDown(on)
+        viewer.pointerUp(on)
+        XCTAssertEqual(model.picked, WordRef(0, 0))
+    }
+
+    func test_pickingAnotherWordKeepsWhatWasTypedInTheFirst() async throws {
+        let (model, rig) = try await attached(Pdfs.text(1))
+        await read(model, rig, [0])
+        await waitUntil { model.words.count == 2 }
+        model.pick(WordRef(0, 0), edit: true)
+        rig.viewer.overlay(0).field("ocr.word")?.typed("gamma")
+
+        model.pick(WordRef(0, 1), edit: true)
+
+        XCTAssertEqual(try PdfOcrLayer.words(rig.tab.document, rig.tab.document.pages[0]).map(\.text), ["gamma", "beta"])
+        XCTAssertEqual(rig.viewer.overlay(0).field("ocr.word")?.text, "beta")
+        XCTAssertTrue(model.handIn())
+        XCTAssertNil(rig.viewer.overlay(0).field("ocr.word"))
+    }
+
+    func test_aListRowPicksTheWordForTheBoxOfThePanelAndNotAFieldOnThePage() async throws {
+        let (model, rig) = try await attached(Pdfs.text(1))
+        await read(model, rig, [0])
+        await waitUntil { model.words.count == 2 }
+
+        model.pickFromList(model.words[1])
+
+        XCTAssertEqual(model.picked, WordRef(0, 1))
+        XCTAssertTrue(model.inPanel)
+        XCTAssertEqual(model.draft, "beta")
+        XCTAssertNil(rig.viewer.overlay(0).field("ocr.word"))
+        model.draft = " gamma "
+        model.applyDraft()
+        XCTAssertEqual(try PdfOcrLayer.words(rig.tab.document, rig.tab.document.pages[0]).map(\.text), ["alpha", "gamma"])
+        XCTAssertEqual(rig.tab.session.undoLabel, "Correct word")
+        await waitUntil { model.words.map(\.text) == ["alpha", "gamma"] }
+        XCTAssertEqual(model.draft, "gamma")
+    }
+
+    func test_whatIsTypedInTheBoxOfThePanelGoesInBeforeTheFileIsSaved() async throws {
+        let (model, rig) = try await attached(Pdfs.text(1))
+        await read(model, rig, [0])
+        await waitUntil { model.words.count == 2 }
+        model.pickFromList(model.words[0])
+        model.draft = "gamma"
+
+        XCTAssertTrue(model.handIn())
+
+        XCTAssertEqual(try PdfOcrLayer.words(rig.tab.document, rig.tab.document.pages[0]).map(\.text), ["gamma", "beta"])
+    }
+
+    func test_aWordRemovedByAnEmptyFieldIsGoneFromThePressThatFollowsAtOnce() async throws {
+        let (model, viewer, _, tab) = try await pointerRig()
+        model.pick(WordRef(0, 0), edit: true)
+        let second = try centre(model.words[1], viewer)
+        viewer.overlay(0).field("ocr.word")?.commit("")
+
+        viewer.pointerDown(second)
+        viewer.pointerUp(second)
+
+        XCTAssertEqual(model.picked, WordRef(0, 0))
+        XCTAssertEqual(model.pickedText, "beta")
+        viewer.overlay(0).field("ocr.word")?.commit("beta")
+        XCTAssertEqual(try PdfOcrLayer.words(tab.document, tab.document.pages[0]).map(\.text), ["beta"])
+    }
+
+    func test_aWordLeftAsItWasRaisesNoWarningOnASignedFile() async throws {
+        let (model, viewer, host, tab) = try await pointerRig(Pdfs.signed(certified: false, pages: 1))
+        XCTAssertTrue(tab.document.isSigned)
+        model.pick(WordRef(0, 0), edit: true)
+        host.notices.removeAll()
+
+        XCTAssertTrue(model.handIn())
+
+        XCTAssertTrue(host.notices.isEmpty)
+        XCTAssertNil(viewer.overlay(0).field("ocr.word"))
     }
 }
