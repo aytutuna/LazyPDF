@@ -27,10 +27,17 @@ final class StubExporter: ToolFileExporter {
     var received: [(name: String, bytes: [UInt8])] = []
     var gaveUp = false
 
+    /// Names of files the stand-in cannot write, as a full disk would leave them.
+    var failing: Set<String> = []
+    private(set) var unwritten: [String] = []
+
     func export(_ files: [URL]) async -> [URL] {
         received = files.map { ($0.lastPathComponent, [UInt8]((try? Data(contentsOf: $0)) ?? Data())) }
+        unwritten = []
         if gaveUp { return [] }
-        return files.map { URL(fileURLWithPath: "/saved").appendingPathComponent($0.lastPathComponent) }
+        unwritten = files.map(\.lastPathComponent).filter { failing.contains($0) }
+        return files.filter { !failing.contains($0.lastPathComponent) }
+            .map { URL(fileURLWithPath: "/saved").appendingPathComponent($0.lastPathComponent) }
     }
 }
 

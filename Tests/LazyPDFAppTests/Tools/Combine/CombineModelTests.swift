@@ -196,6 +196,47 @@ final class CombineModelTests: XCTestCase {
         XCTAssertEqual(rig.host.notices.last?.title, "12 files saved")
     }
 
+    func test_theNoticeCountsTheFilesThatWereWrittenAndAFailureIsReported() async throws {
+        let (model, rig) = try attached(12)
+        model.setSplitting(true)
+        model.amount = "1"
+        rig.host.exporter.failing = ["a 03.pdf", "a 04.pdf", "a 05.pdf"]
+
+        await model.action!.run()
+
+        XCTAssertEqual(rig.host.problems.map(\.title), ["Not saved"])
+        XCTAssertTrue(rig.host.problems[0].text.contains("a 03.pdf"))
+        XCTAssertEqual(rig.host.notices.last?.title, "9 files saved")
+    }
+
+    func test_whenNothingIsWrittenTheFailureIsStillReported() async throws {
+        let dir = TempDir(self)
+        let (model, rig) = try attached(3)
+        await add(model, rig, dir, "b.pdf", 2)
+        model.toFolder = true
+        rig.host.exporter.failing = ["Combined.pdf"]
+
+        await model.action!.run()
+
+        XCTAssertEqual(rig.host.problems.map(\.title), ["Not saved"])
+        XCTAssertTrue(rig.host.notices.isEmpty)
+    }
+
+    func test_aClosedTabTakesItsListWithIt() async throws {
+        let dir = TempDir(self)
+        let (model, rig) = try attached(3)
+        await add(model, rig, dir, "b.pdf", 2)
+        let other = try PagesRig(Pdfs.text(2), title: "c.pdf")
+        model.detach()
+        model.attach(other.tab, other.viewer, other.host)
+        XCTAssertEqual(model.heldLists, 2)
+
+        rig.tab.dispose()
+        model.detach()
+
+        XCTAssertEqual(model.heldLists, 1)
+    }
+
     func test_tenPartsStillOpenAsTabs() async throws {
         let (model, rig) = try attached(10)
         model.setSplitting(true)

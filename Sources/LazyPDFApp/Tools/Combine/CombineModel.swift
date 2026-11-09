@@ -26,8 +26,17 @@ public final class CombineModel: ToolPanelModel {
     /// Save the result to files instead of opening it in tabs.
     public var toFolder = false
 
-    // Each document keeps its own list, so a look at another tab does not lose the files that were picked.
-    @ObservationIgnored private var lists: [UUID: [CombineEntry]] = [:]
+    // Each document keeps its own list, so a look at another tab does not lose the files that were picked. A list goes with its tab
+    // (the ConditionalWeakTable of Windows): the files in it may be decrypted.
+    private struct Held {
+        weak var tab: DocumentTab?
+        var entries: [CombineEntry]
+    }
+
+    @ObservationIgnored private var lists: [UUID: Held] = [:]
+
+    // Only one job at a time reads the documents of the entries, whose object caches are not safe to share between threads.
+    @ObservationIgnored private let reading = NSLock()
     @ObservationIgnored private var tab: DocumentTab?
     @ObservationIgnored private var host: ToolHost?
     @ObservationIgnored private var watch: ObservationWatch?
@@ -49,8 +58,9 @@ public final class CombineModel: ToolPanelModel {
         self.tab = tab
         self.host = host
         asker.choices = { [weak host] in host?.certificateChoices() ?? [] }
-        if lists[tab.id] == nil { lists[tab.id] = [CombineEntry(tab.title, tab.pageCount, nil)] }
-        entries = lists[tab.id] ?? []
+        dropClosedTabs()
+        if lists[tab.id] == nil { lists[tab.id] = Held(tab: tab, entries: [CombineEntry(tab.title, tab.pageCount, nil)]) }
+        entries = lists[tab.id]?.entries ?? []
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.refresh() })
         refresh()
     }
@@ -62,7 +72,14 @@ public final class CombineModel: ToolPanelModel {
         tab = nil
         host = nil
         entries = []
+        dropClosedTabs()
     }
+
+    private func dropClosedTabs() {
+        lists = lists.filter { held in held.value.tab.map { !$0.isDisposed } ?? false }
+    }
+
+    var heldLists: Int { lists.count }
 
     // The file may have lost or gained pages while another tab was shown.
     private func refresh() {
@@ -91,7 +108,7 @@ public final class CombineModel: ToolPanelModel {
 
     private func store(_ list: [CombineEntry]) {
         entries = list
-        if let tab { lists[tab.id] = list }
+        if let tab { lists[tab.id] = Held(tab: tab, entries: list) }
     }
 
     public func moveUp(_ entry: CombineEntry) {
@@ -131,9 +148,10 @@ public final class CombineModel: ToolPanelModel {
         for file in files {
             let name = file.url.lastPathComponent
             guard let document = await SourceFile.open(host, file, asker) else { continue }
+            if tab.isDisposed { return }
             let entry = CombineEntry(name, document.pages.count, document)
-            let list = (lists[tab.id] ?? []) + [entry]
-            lists[tab.id] = list
+            let list = (lists[tab.id]?.entries ?? []) + [entry]
+            lists[tab.id] = Held(tab: tab, entries: list)
             if self.tab === tab { entries = list }
         }
     }
@@ -163,10 +181,14 @@ public final class CombineModel: ToolPanelModel {
 
         let copy = TabCopy(tab, host)
         let ordered = sources
+        let gate = reading
         var made: [UInt8]?
         do {
             try await host.runBusy(L10n.t("Combining files")) { token in
                 made = try await ToolDocuments.run(token) { () throws -> [UInt8] in
+                    // A job that was cancelled may still be reading the same documents; this one waits for it.
+                    gate.lock()
+                    defer { gate.unlock() }
                     try token.throwIfCancelled()
                     // The open document is read again here: its pages may be taken twice and the session belongs to the main actor.
                     let again = try copy.open()
@@ -254,11 +276,23 @@ public final class CombineModel: ToolPanelModel {
             host.showProblem(Problems.save(error, files.first?.name ?? ""))
             return
         }
-        let saved = await host.fileExporter.export(written)
+        let exporter = host.fileExporter
+        let saved = await exporter.export(written)
+        // A file that could not be written is not the person giving up, and the files that were written still count.
+        if let failed = exporter.unwritten.first { host.showProblem(Problems.save(CocoaError(.fileWriteUnknown), failed)) }
         guard let first = saved.first else { return }
         let place = first.deletingLastPathComponent().path
-        host.showNotice(L10n.plural(files.count, one: "{0} file saved", other: "{0} files saved"),
+        host.showNotice(L10n.plural(saved.count, one: "{0} file saved", other: "{0} files saved"),
                         protectedSource ? place + ". " + CopyRules.unprotected : place,
-                        NoticeAction(L10n.t("Open the first")) { Task { await host.open(first, access: nil) } })
+                        NoticeAction(L10n.t("Open the first")) { Task { await host.open(first, access: Self.grant(first)) } })
+    }
+
+    // The exporter has let go of the grant of the saved file, so the tab that opens it asks for its own.
+    private static func grant(_ url: URL) -> FileAccess? {
+        #if canImport(Darwin)
+        return SecurityScopedAccess.start(url)
+        #else
+        return nil
+        #endif
     }
 }
