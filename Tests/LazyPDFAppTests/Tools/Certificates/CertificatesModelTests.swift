@@ -9,7 +9,7 @@ import XCTest
 
 @MainActor
 final class CertificatesModelTests: XCTestCase {
-    private var transport = DownTransport()
+    private var transport = DownServer()
 
     private struct Setup {
         let model: CertificatesModel
@@ -20,7 +20,7 @@ final class CertificatesModelTests: XCTestCase {
 
     private func attached(_ bytes: [UInt8]? = nil, password: String? = nil, field: String? = nil) throws -> Setup {
         let rig = try SecurityRig(bytes, password: password)
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let choice = CertificateChoice(ada)
         rig.host.identities = [choice]
         rig.host.keys[choice.id] = ada
@@ -55,7 +55,7 @@ final class CertificatesModelTests: XCTestCase {
 
     func test_withoutAnIdentityTheNoteSaysSoAndTheButtonWaits() throws {
         let rig = try SecurityRig()
-        let model = CertificatesModel(trust: SignatureTrust(directory: TempDir(self).url), transport: { DownTransport() },
+        let model = CertificatesModel(trust: SignatureTrust(directory: TempDir(self).url), transport: { DownServer() },
                                       importIdentity: { _, _ in throw SignatureCryptoException(message: "") })
         rig.attach(model)
 
@@ -182,7 +182,7 @@ final class CertificatesModelTests: XCTestCase {
         let rig = try SecurityRig()
         let folder = TempDir(self)
         SignatureTrust(directory: folder.url).setTimestampUrl("https://tsa.example/stamp")
-        let model = CertificatesModel(trust: SignatureTrust(directory: folder.url), transport: { DownTransport() },
+        let model = CertificatesModel(trust: SignatureTrust(directory: folder.url), transport: { DownServer() },
                                       importIdentity: { _, _ in throw SignatureCryptoException(message: "") })
 
         rig.attach(model)
@@ -237,8 +237,8 @@ final class CertificatesModelTests: XCTestCase {
     }
 
     func test_validationDataThatCouldNotBeProvedSaysWhy() async throws {
-        let (signer, authority) = try SigningKit.issued()
-        var request = PdfSignRequest(signer, SigningKit.now)
+        let (signer, authority) = try CertificateKit.issued()
+        var request = PdfSignRequest(signer, CertificateKit.now)
         request.chain = [authority]
         request.fonts = FakeFonts()
         let session = try PdfEditSession.open(Pdfs.text())
@@ -276,12 +276,12 @@ final class CertificatesModelTests: XCTestCase {
     }
 
     func test_theFailureWordsFollowTheKindOfError() {
-        let down = DownTransport()
+        let down = DownServer()
 
         XCTAssertEqual(CertificatesModel.failure(SignatureCryptoException(message: "x"), down, "Not signed").title, "Key cannot be used")
         XCTAssertEqual(CertificatesModel.failure(PdfReadException(.damaged, "x"), down, "Not signed").title, "File cannot be signed")
         XCTAssertEqual(CertificatesModel.failure(InvalidOperationException("Taken."), down, "Not signed").text, "Taken. The server did not answer.")
-        XCTAssertEqual(CertificatesModel.failure(ArgumentException("Bad page."), DownTransport(), "Not signed").title, "Not signed")
+        XCTAssertEqual(CertificatesModel.failure(ArgumentException("Bad page."), DownServer(), "Not signed").title, "Not signed")
         down.lastFailure = nil
         XCTAssertEqual(CertificatesModel.failure(InvalidOperationException("Taken."), down, "Not signed").text, "Taken.")
         XCTAssertEqual(CertificatesModel.failure(CocoaError(.fileReadUnknown), down, "Not signed").title, "Something went wrong")

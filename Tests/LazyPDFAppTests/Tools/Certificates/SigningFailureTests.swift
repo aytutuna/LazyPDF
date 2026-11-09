@@ -9,20 +9,20 @@ import XCTest
 
 final class SigningFailureTests: XCTestCase {
     private func stamped(_ certificate: X509Certificate) -> SignChoices {
-        var choices = SigningKit.plain(certificate)
+        var choices = CertificateKit.plain(certificate)
         choices.timestampUrl = "https://tsa.example/stamp"
         return choices
     }
 
     private func reports(_ session: PdfEditSession) throws -> [SignatureReport] {
-        try PdfSignatureVerifier.verify(session.current, SigningKit.options())
+        try PdfSignatureVerifier.verify(session.current, CertificateKit.options())
     }
 
     func test_aTimeStampThatFailsLeavesNoSignatureBehind() throws {
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let session = try PdfEditSession.open(Pdfs.text())
 
-        XCTAssertThrowsError(try CertificateSigning.sign(session, stamped(ada), SilentServer(), FakeFonts(), SigningKit.now)) {
+        XCTAssertThrowsError(try CertificateSigning.sign(session, stamped(ada), SilentServer(), FakeFonts(), CertificateKit.now)) {
             XCTAssertTrue($0 is InvalidOperationException)
         }
 
@@ -32,11 +32,11 @@ final class SigningFailureTests: XCTestCase {
     }
 
     func test_signingAgainAfterAFailureMakesOneGoodSignature() throws {
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let session = try PdfEditSession.open(Pdfs.text())
-        XCTAssertThrowsError(try CertificateSigning.sign(session, stamped(ada), SilentServer(), FakeFonts(), SigningKit.now))
+        XCTAssertThrowsError(try CertificateSigning.sign(session, stamped(ada), SilentServer(), FakeFonts(), CertificateKit.now))
 
-        try CertificateSigning.sign(session, SigningKit.plain(ada), SilentServer(), FakeFonts(), SigningKit.now)
+        try CertificateSigning.sign(session, CertificateKit.plain(ada), SilentServer(), FakeFonts(), CertificateKit.now)
 
         let found = try reports(session)
         XCTAssertEqual(found.count, 1)
@@ -44,25 +44,25 @@ final class SigningFailureTests: XCTestCase {
     }
 
     func test_anEmptyFieldIsStillEmptyAfterAFailure() throws {
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let session = try PdfEditSession.open(Pdfs.text())
         _ = try PdfForm.read(session.document).addField(FieldSpec(.signature, "Approval", 0, PdfRect(72, 100, 200, 150)))
         try session.commit("Field")
         var choices = stamped(ada)
         choices.field = "Approval"
 
-        XCTAssertThrowsError(try CertificateSigning.sign(session, choices, SilentServer(), FakeFonts(), SigningKit.now))
+        XCTAssertThrowsError(try CertificateSigning.sign(session, choices, SilentServer(), FakeFonts(), CertificateKit.now))
 
         XCTAssertEqual(CertificateSigning.emptyFields(session.document), ["Approval"])
     }
 
     func test_aCancelledSigningLeavesTheFileAsItWas() throws {
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let session = try PdfEditSession.open(Pdfs.text())
         let token = CancelToken()
         token.cancel()
 
-        XCTAssertThrowsError(try CertificateSigning.sign(session, stamped(ada), CancellableTransport(SilentServer(), token), FakeFonts(), SigningKit.now, token: token)) {
+        XCTAssertThrowsError(try CertificateSigning.sign(session, stamped(ada), CancellableTransport(SilentServer(), token), FakeFonts(), CertificateKit.now, token: token)) {
             XCTAssertTrue($0 is CancellationError)
         }
 
@@ -71,11 +71,11 @@ final class SigningFailureTests: XCTestCase {
     }
 
     func test_aSigningCancelledWhileItRunsIsTakenBack() throws {
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let session = try PdfEditSession.open(Pdfs.text())
         let token = CancelToken()
 
-        XCTAssertThrowsError(try CertificateSigning.sign(session, stamped(ada), CancelsOnRequest(token), FakeFonts(), SigningKit.now, token: token)) {
+        XCTAssertThrowsError(try CertificateSigning.sign(session, stamped(ada), CancelsOnRequest(token), FakeFonts(), CertificateKit.now, token: token)) {
             XCTAssertTrue($0 is CancellationError)
         }
 
@@ -84,11 +84,11 @@ final class SigningFailureTests: XCTestCase {
     }
 
     func test_aCancelledValidationLeavesNoPartOfItPending() throws {
-        let session = try SigningKit.signedByGrace()
+        let session = try CertificateKit.signedByGrace()
         let length = session.current.count
         let token = CancelToken()
 
-        XCTAssertThrowsError(try CertificateSigning.addValidation(session, CancelsOnRequest(token), SigningKit.now, token: token)) {
+        XCTAssertThrowsError(try CertificateSigning.addValidation(session, CancelsOnRequest(token), CertificateKit.now, token: token)) {
             XCTAssertTrue($0 is CancellationError)
         }
 
@@ -97,17 +97,17 @@ final class SigningFailureTests: XCTestCase {
     }
 
     func test_validationWithNoServerAddsCertificatesButIsNotProofOfRevocation() throws {
-        let session = try SigningKit.signedByGrace()
+        let session = try CertificateKit.signedByGrace()
         let length = session.current.count
 
-        try CertificateSigning.addValidation(session, SilentServer(), SigningKit.now)
+        try CertificateSigning.addValidation(session, SilentServer(), CertificateKit.now)
 
         XCTAssertGreaterThan(session.current.count, length)
-        XCTAssertFalse(try CertificateSigning.revocationCovered(session.current, SigningKit.options()))
+        XCTAssertFalse(try CertificateSigning.revocationCovered(session.current, CertificateKit.options()))
     }
 
     func test_aFileWithoutSignaturesIsNotCovered() throws {
-        XCTAssertTrue(try CertificateSigning.revocationCovered(Pdfs.text(), SigningKit.options()))
+        XCTAssertTrue(try CertificateSigning.revocationCovered(Pdfs.text(), CertificateKit.options()))
     }
 
     func test_onlyAWebAddressIsATimeStampServer() {

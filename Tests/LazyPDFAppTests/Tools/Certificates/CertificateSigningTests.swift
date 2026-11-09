@@ -9,20 +9,20 @@ import LazyPDFKit
 
 final class CertificateSigningTests: XCTestCase {
     private func request(_ choices: SignChoices) -> PdfSignRequest {
-        CertificateSigning.request(choices, SilentServer(), FakeFonts(), SigningKit.now)
+        CertificateSigning.request(choices, SilentServer(), FakeFonts(), CertificateKit.now)
     }
 
     private func only(_ session: PdfEditSession, trusting: [X509Certificate] = []) throws -> SignatureReport {
-        let reports = try PdfSignatureVerifier.verify(session.current, SigningKit.options(trusting: trusting))
+        let reports = try PdfSignatureVerifier.verify(session.current, CertificateKit.options(trusting: trusting))
         XCTAssertEqual(reports.count, 1)
         return try XCTUnwrap(reports.first)
     }
 
     func test_anInvisibleSignatureIsMadeByTheCertificate() throws {
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let session = try PdfEditSession.open(Pdfs.text())
 
-        try PdfSigner.sign(session, request(SigningKit.plain(ada)))
+        try PdfSigner.sign(session, request(CertificateKit.plain(ada)))
 
         let report = try only(session)
         XCTAssertEqual(report.signerName, "Ada Lovelace")
@@ -31,17 +31,17 @@ final class CertificateSigningTests: XCTestCase {
     }
 
     func test_addingTheCertificateToTheTrustedOnesMakesItValid() throws {
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let session = try PdfEditSession.open(Pdfs.text())
-        try PdfSigner.sign(session, request(SigningKit.plain(ada)))
+        try PdfSigner.sign(session, request(CertificateKit.plain(ada)))
 
         XCTAssertEqual(try only(session, trusting: [ada]).verdict, .valid)
     }
 
     func test_reasonAndPlaceAreSignedAndBlankOnesLeftOut() throws {
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let session = try PdfEditSession.open(Pdfs.text())
-        var choices = SigningKit.plain(ada)
+        var choices = CertificateKit.plain(ada)
         choices.reason = "  Approved "
         choices.location = "   "
         try PdfSigner.sign(session, request(choices))
@@ -53,10 +53,10 @@ final class CertificateSigningTests: XCTestCase {
     }
 
     func test_aBoxMakesAVisibleSignatureOnThatPage() throws {
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let session = try PdfEditSession.open(Pdfs.text(2))
         let box = PdfRect(72, 600, 272, 660)
-        var choices = SigningKit.plain(ada)
+        var choices = CertificateKit.plain(ada)
         choices.page = 1
         choices.rect = box
 
@@ -70,12 +70,12 @@ final class CertificateSigningTests: XCTestCase {
     }
 
     func test_anEmptyFieldOfTheFileIsSignedWhereItStands() throws {
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let session = try PdfEditSession.open(Pdfs.text())
         _ = try PdfForm.read(session.document).addField(FieldSpec(.signature, "Approval", 0, PdfRect(72, 100, 200, 150)))
         try session.commit("Field")
         XCTAssertEqual(CertificateSigning.emptyFields(session.document), ["Approval"])
-        var choices = SigningKit.plain(ada)
+        var choices = CertificateKit.plain(ada)
         choices.field = "Approval"
 
         try PdfSigner.sign(session, request(choices))
@@ -85,9 +85,9 @@ final class CertificateSigningTests: XCTestCase {
     }
 
     func test_theFirstSignatureCanCertifyTheFile() throws {
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let session = try PdfEditSession.open(Pdfs.text())
-        var choices = SigningKit.plain(ada)
+        var choices = CertificateKit.plain(ada)
         choices.certify = .formFill
 
         try PdfSigner.sign(session, request(choices))
@@ -98,10 +98,10 @@ final class CertificateSigningTests: XCTestCase {
     }
 
     func test_aSecondSignatureCannotCertify() throws {
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let session = try PdfEditSession.open(Pdfs.text())
-        try PdfSigner.sign(session, request(SigningKit.plain(ada)))
-        var second = SigningKit.plain(ada)
+        try PdfSigner.sign(session, request(CertificateKit.plain(ada)))
+        var second = CertificateKit.plain(ada)
         second.certify = .noChanges
 
         XCTAssertThrowsError(try PdfSigner.sign(session, request(second))) {
@@ -110,16 +110,16 @@ final class CertificateSigningTests: XCTestCase {
     }
 
     func test_addressAndLongTermChooseTheLevel() throws {
-        let ada = try SigningKit.ada()
-        var stamped = SigningKit.plain(ada)
+        let ada = try CertificateKit.ada()
+        var stamped = CertificateKit.plain(ada)
         stamped.timestampUrl = "http://tsa.example/stamp"
         var longTerm = stamped
         longTerm.longTerm = true
-        var blank = SigningKit.plain(ada)
+        var blank = CertificateKit.plain(ada)
         blank.timestampUrl = ""
         blank.longTerm = true
 
-        let none = request(SigningKit.plain(ada))
+        let none = request(CertificateKit.plain(ada))
         XCTAssertEqual(none.level, .b)
         XCTAssertNil(none.timestamp)
         XCTAssertEqual(request(stamped).level, .t)
@@ -129,9 +129,9 @@ final class CertificateSigningTests: XCTestCase {
     }
 
     func test_aTimeStampServerThatAnswersNothingIsSaidSo() throws {
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let session = try PdfEditSession.open(Pdfs.text())
-        var choices = SigningKit.plain(ada)
+        var choices = CertificateKit.plain(ada)
         choices.timestampUrl = "http://tsa.example/stamp"
 
         XCTAssertThrowsError(try PdfSigner.sign(session, request(choices))) {
@@ -141,11 +141,11 @@ final class CertificateSigningTests: XCTestCase {
     }
 
     func test_aCertificateWithoutItsKeyIsRefused() throws {
-        let ada = try SigningKit.ada()
+        let ada = try CertificateKit.ada()
         let publicOnly = try XCTUnwrap(X509Certificate(ada.rawData))
         let session = try PdfEditSession.open(Pdfs.text())
 
-        XCTAssertThrowsError(try PdfSigner.sign(session, request(SigningKit.plain(publicOnly)))) {
+        XCTAssertThrowsError(try PdfSigner.sign(session, request(CertificateKit.plain(publicOnly)))) {
             XCTAssertEqual(($0 as? InvalidOperationException)?.message, SignatureText.noPrivateKey)
         }
     }
@@ -178,7 +178,7 @@ final class CertificateSigningTests: XCTestCase {
     func test_aFileWithoutSignaturesTakesNoValidationData() throws {
         let session = try PdfEditSession.open(Pdfs.text())
 
-        XCTAssertThrowsError(try PdfLongTermValidation.add(session, SilentServer(), SigningKit.now)) { XCTAssertTrue($0 is InvalidOperationException) }
+        XCTAssertThrowsError(try PdfLongTermValidation.add(session, SilentServer(), CertificateKit.now)) { XCTAssertTrue($0 is InvalidOperationException) }
     }
 }
 #endif
