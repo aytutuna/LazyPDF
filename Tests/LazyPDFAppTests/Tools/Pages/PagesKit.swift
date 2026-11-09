@@ -103,7 +103,7 @@ enum PagesPdfs {
     }
 
     /// A file with the bookmarks at these pages.
-    static func withBookmarks(_ pages: Int, _ starts: [Int]) throws -> PdfDocument {
+    static func withBookmarksFile(_ pages: Int, _ starts: [Int]) throws -> [UInt8] {
         let session = try PdfEditSession.open(Pdfs.text(pages))
         let outline = Outline.read(session.document)
         for start in starts {
@@ -114,7 +114,11 @@ enum PagesPdfs {
         }
         try outline.write(session.document)
         _ = try session.commit("Bookmarks")
-        return try PdfDocument.open(session.current)
+        return session.current
+    }
+
+    static func withBookmarks(_ pages: Int, _ starts: [Int]) throws -> PdfDocument {
+        try PdfDocument.open(withBookmarksFile(pages, starts))
     }
 }
 
