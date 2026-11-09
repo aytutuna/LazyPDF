@@ -17,6 +17,10 @@ extension AppViewModel {
 
     public var isDocumentBusy: Bool { isBusy }
 
+    public func signingIdentities() -> [CertificateChoice] {
+        certificates.choices()
+    }
+
     public func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate? {
         certificates.verifyCertificate(choice)
     }
