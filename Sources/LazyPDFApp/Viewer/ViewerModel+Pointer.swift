@@ -23,8 +23,7 @@ extension ViewerModel {
         last = at
         moved = false
         downLink = hit.flatMap { link(at: $0.page, $0.point) }
-        if let tool {
-            guard let over = hit else { return }
+        if let tool, let over = hit {
             let press = pointer(over.page, over.point, at, clicks, true, modifiers)
             if touch || tool.takes(press) {
                 drag = .tool
