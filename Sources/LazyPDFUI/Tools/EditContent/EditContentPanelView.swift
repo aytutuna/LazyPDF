@@ -67,7 +67,7 @@ struct EditContentPanelView: View {
         }
     }
 
-    private func modeButton(_ mode: EditMode, _ title: String, _ label: String) -> some View {
+    private func modeButton(_ mode: LazyPDFApp.EditMode, _ title: String, _ label: String) -> some View {
         let on = model.isActive && (model.mode == mode || (mode == .select && model.mode == .crop))
         return Button { model.selectMode(mode) } label: {
             Text(title).frame(maxWidth: .infinity, minHeight: 44)
