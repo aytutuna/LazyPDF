@@ -10,6 +10,7 @@ import LazyPDFKit
 final class SecurityHost: ToolHost, ToolFilePicker, ToolFileExporter {
     var problems: [Problem] = []
     var notices: [(title: String, text: String)] = []
+    var lastNoticeAction: NoticeAction?
     var statuses: [String] = []
     var openedNew: [(pdf: [UInt8], title: String, password: String?, certificate: CertificateChoice?)] = []
     var busyTexts: [String] = []
@@ -36,7 +37,10 @@ final class SecurityHost: ToolHost, ToolFilePicker, ToolFileExporter {
 
     func setBusyText(_ text: String) {}
     func showProblem(_ problem: Problem) { problems.append(problem) }
-    func showNotice(_ title: String, _ text: String, _ action: NoticeAction?) { notices.append((title, text)) }
+    func showNotice(_ title: String, _ text: String, _ action: NoticeAction?) {
+        notices.append((title, text))
+        lastNoticeAction = action
+    }
     func setStatus(_ sentence: String) { statuses.append(sentence) }
     func open(_ url: URL, access: FileAccess?) async {}
 
