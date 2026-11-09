@@ -6635,5 +6635,11 @@
   },
   "From the keychain": {
     "tr": "Anahtar zincirinden"
+  },
+  "Tap a field to change it. Choose a kind below to draw a new one.": {
+    "tr": "Değiştirmek için bir alana dokunun. Yeni alan çizmek için aşağıdan bir tür seçin."
+  },
+  "Tap a field on the page to fill it in, or choose it from the list.": {
+    "tr": "Doldurmak için sayfada bir alana dokunun ya da listeden seçin."
   }
 }
