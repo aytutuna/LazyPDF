@@ -172,8 +172,8 @@ final class ContentEdits {
                     _ token: CancelToken) async throws -> ReplacedCopy {
         try token.throwIfCancelled()
         let password = tab.password
-        let certificate = certificate
-        let fonts = fonts
+        let certificate = self.certificate
+        let fonts = self.fonts
         let job = Task.detached {
             try Self.replace(start, query, replacement, options, password, certificate, fonts)
         }
