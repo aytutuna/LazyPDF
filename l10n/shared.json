@@ -6623,5 +6623,8 @@
   },
   "No text recognition for {0}.": {
     "tr": "{0} için metin tanıma yok."
+  },
+  "Choose pages, then use the buttons. A page can also be dragged to a new place or moved from its menu.": {
+    "tr": "Sayfaları seçip düğmeleri kullanın. Bir sayfa yeni bir yere sürüklenebilir ya da menüsünden taşınabilir."
   }
 }
