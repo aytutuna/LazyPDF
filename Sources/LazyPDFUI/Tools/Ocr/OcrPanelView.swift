@@ -32,7 +32,7 @@ struct OcrPanelView: View {
             }
 
             LabelledField(L10n.t("Pages that are already searchable")) {
-                Picker(L10n.t("Pages that are already searchable"), selection: Binding(get: { model.replacing }, set: model.setReplacing)) {
+                Picker(L10n.t("Pages that are already searchable"), selection: Binding(get: { model.replacing }, set: { model.setReplacing($0) })) {
                     Text(L10n.t("Keep")).tag(false).accessibilityLabel(L10n.t("Keep their text"))
                     Text(L10n.t("Replace")).tag(true).accessibilityLabel(L10n.t("Replace their text"))
                 }
@@ -50,12 +50,15 @@ struct OcrPanelView: View {
             if !model.removeNote.isEmpty { ReasonText(model.removeNote) }
 
             SectionHeading(L10n.t("Correct a word"))
-            Toggle(L10n.t("Show words on the page"), isOn: Binding(get: { model.showWords }, set: model.setShowWords))
+            Toggle(L10n.t("Show words on the page"), isOn: Binding(get: { model.showWords }, set: { model.setShowWords($0) }))
             if model.words.isEmpty {
                 if model.showWords { ReasonText(L10n.t("Click a word on the page or choose one below.")) }
             } else {
                 wordList
-                if model.picked != nil { ReasonText(L10n.t("Leave it empty to remove the word.")) }
+                if let picked = model.picked {
+                    ReasonText(L10n.t("Page {0}", picked.page + 1))
+                    ReasonText(L10n.t("Leave it empty to remove the word."))
+                }
             }
         }
         .disabled(model.isRunning)
