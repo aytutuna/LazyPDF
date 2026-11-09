@@ -13,7 +13,7 @@ extension BatchModel {
 
     public func run() async {
         guard let host, let output = outputFolder else { return }
-        let ran = set
+        let ran = plan
         let queue = files
         var failed = 0
         var cancelled = false
@@ -46,8 +46,8 @@ extension BatchModel {
         await gate.acquire()
         defer { gate.release() }
         var work = ran
-        for i in work.steps.indices where work.steps[i].kind == .bates && set.steps.indices.contains(i) && set.steps[i].kind == .bates {
-            work.steps[i].start = set.steps[i].start
+        for i in work.steps.indices where work.steps[i].kind == .bates && plan.steps.indices.contains(i) && plan.steps[i].kind == .bates {
+            work.steps[i].start = plan.steps[i].start
         }
         let runner = currentRunner
         let now = PanelDates.now()
@@ -65,16 +65,16 @@ extension BatchModel {
     // A Bates step of the set that ran holds the next number; the step on screen takes it on, and so does the saved set of the same name.
     private func continueNumbers(_ ran: BatchSet) {
         var moved = false
-        for i in ran.steps.indices where ran.steps[i].kind == .bates && set.steps.indices.contains(i) && set.steps[i].kind == .bates {
-            if set.steps[i].start != ran.steps[i].start {
-                set.steps[i].start = ran.steps[i].start
+        for i in ran.steps.indices where ran.steps[i].kind == .bates && plan.steps.indices.contains(i) && plan.steps[i].kind == .bates {
+            if plan.steps[i].start != ran.steps[i].start {
+                plan.steps[i].start = ran.steps[i].start
                 moved = true
             }
         }
         guard moved, var saved = store.load().first(where: { $0.name.caseInsensitiveCompare(set.name) == .orderedSame }),
-              saved.steps.count == set.steps.count else { return }
-        for i in saved.steps.indices where saved.steps[i].kind == .bates && set.steps[i].kind == .bates {
-            saved.steps[i].start = set.steps[i].start
+              saved.steps.count == plan.steps.count else { return }
+        for i in saved.steps.indices where saved.steps[i].kind == .bates && plan.steps[i].kind == .bates {
+            saved.steps[i].start = plan.steps[i].start
         }
         store.save(saved)
     }
@@ -107,7 +107,7 @@ extension BatchModel {
     }
 
     private func watchProblem() -> Problem? {
-        if set.steps.isEmpty { return Problem(L10n.t("No steps"), L10n.t("Add at least one step, then watch the folder.")) }
+        if plan.steps.isEmpty { return Problem(L10n.t("No steps"), L10n.t("Add at least one step, then watch the folder.")) }
         var isFolder: ObjCBool = false
         guard let watch = watchFolder?.url, FileManager.default.fileExists(atPath: watch.path, isDirectory: &isFolder), isFolder.boolValue else {
             return Problem(L10n.t("No folder to watch"), L10n.t("Choose an existing folder to watch."))
@@ -183,7 +183,7 @@ extension BatchModel {
             let path = arrived.removeFirst()
             watched += 1
             do {
-                let result = try await runOne(path, set, into: output.url, number: watched, cancel)
+                let result = try await runOne(path, plan, into: output.url, number: watched, cancel)
                 addLog(result)
                 host?.setStatus(result.ok ? L10n.t("Ran {0}", path.lastPathComponent) : L10n.t("{0} failed", path.lastPathComponent))
             } catch {

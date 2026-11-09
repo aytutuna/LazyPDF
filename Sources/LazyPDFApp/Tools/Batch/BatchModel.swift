@@ -37,7 +37,7 @@ public struct BatchLogRow: Identifiable {
 @MainActor
 @Observable
 public final class BatchModel {
-    public var set = BatchSet()
+    public var plan = BatchSet()
     public var setName = ""
     public private(set) var savedNames: [String] = []
     public var selected: Int?
@@ -87,31 +87,31 @@ public final class BatchModel {
 
     public var canWatch: Bool { watcherFactory != nil }
 
-    public var canRun: Bool { !files.isEmpty && !set.steps.isEmpty && outputFolder != nil && !isRunning }
+    public var canRun: Bool { !files.isEmpty && !plan.steps.isEmpty && outputFolder != nil && !isRunning }
 
     public var summary: String { ToolCatalog.find("batch")?.summary ?? "" }
 
     public var templateHint: String { L10n.t("Use {0}, {1} and {2}. A name that is taken gets a number.", "{name}", "{n}", "{date}") }
 
     public var rows: [BatchStepRow] {
-        set.steps.enumerated().map { BatchStepRow(index: $0.offset, step: $0.element) }
+        plan.steps.enumerated().map { BatchStepRow(index: $0.offset, step: $0.element) }
     }
 
     public var step: BatchStep? {
-        guard let selected, set.steps.indices.contains(selected) else { return nil }
-        return set.steps[selected]
+        guard let selected, plan.steps.indices.contains(selected) else { return nil }
+        return plan.steps[selected]
     }
 
     public var canMoveUp: Bool { (selected ?? 0) > 0 }
-    public var canMoveDown: Bool { selected.map { $0 < set.steps.count - 1 } ?? false }
+    public var canMoveDown: Bool { selected.map { $0 < plan.steps.count - 1 } ?? false }
     public var canDeleteSet: Bool { savedNames.contains(setName) }
 
-    public var outputText: String { outputFolder?.url.path ?? set.outputFolder }
-    public var watchText: String { watchFolder?.url.path ?? set.watchFolder }
+    public var outputText: String { outputFolder?.url.path ?? plan.outputFolder }
+    public var watchText: String { watchFolder?.url.path ?? plan.watchFolder }
 
     /// Said when a saved set names a folder the app cannot get into again until the person chooses it.
     public var folderNote: String? {
-        (!set.outputFolder.isEmpty && outputFolder == nil) || (!set.watchFolder.isEmpty && watchFolder == nil)
+        (!plan.outputFolder.isEmpty && outputFolder == nil) || (!plan.watchFolder.isEmpty && watchFolder == nil)
             ? L10n.t("Choose the folders again. The system gives Lazy PDF access to a folder only when you pick it.") : nil
     }
 
@@ -122,27 +122,27 @@ public final class BatchModel {
     // MARK: Steps
 
     public func addStep(_ kind: BatchStepKind) {
-        set.steps.append(BatchStep.of(kind))
-        selected = set.steps.count - 1
+        plan.steps.append(BatchStep.of(kind))
+        selected = plan.steps.count - 1
     }
 
     public func moveSelected(_ by: Int) {
-        guard let from = selected, set.steps.indices.contains(from + by) else { return }
-        set.steps.swapAt(from, from + by)
+        guard let from = selected, plan.steps.indices.contains(from + by) else { return }
+        plan.steps.swapAt(from, from + by)
         selected = from + by
     }
 
     public func removeSelected() {
-        guard let at = selected, set.steps.indices.contains(at) else { return }
-        set.steps.remove(at: at)
+        guard let at = selected, plan.steps.indices.contains(at) else { return }
+        plan.steps.remove(at: at)
         selected = nil
         recheckWatch()
     }
 
     /// Changes the settings of the selected step.
     public func update(_ change: (inout BatchStep) -> Void) {
-        guard let at = selected, set.steps.indices.contains(at) else { return }
-        change(&set.steps[at])
+        guard let at = selected, plan.steps.indices.contains(at) else { return }
+        change(&plan.steps[at])
     }
 
     // A box that holds something that is not a number keeps the setting it had.
@@ -155,9 +155,9 @@ public final class BatchModel {
         if let start = Int(text.trimmingCharacters(in: .whitespaces)), start >= 0 { update { $0.start = start } }
     }
 
-    private func number(_ text: String, _ low: Int, _ high: Int, _ set: (inout BatchStep, Int) -> Void) {
+    private func number(_ text: String, _ low: Int, _ high: Int, _ assign: (inout BatchStep, Int) -> Void) {
         guard let value = Int(text.trimmingCharacters(in: .whitespaces)) else { return }
-        update { set(&$0, min(max(value, low), high)) }
+        update { assign(&$0, min(max(value, low), high)) }
     }
 
     /// The languages the system recognizes, and the one the step names when the system lacks it, so the step shows what it will
@@ -183,7 +183,7 @@ public final class BatchModel {
 
     public func loadSet(_ name: String) {
         guard let saved = store.load().first(where: { $0.name == name }) else { return }
-        set = saved
+        plan = saved
         setName = saved.name
         selected = nil
         outputFolder = grant(saved.outputBookmark)
@@ -197,10 +197,10 @@ public final class BatchModel {
             host?.showProblem(Problem(L10n.t("Set has no name"), L10n.t("Type a name for the set, then save it.")))
             return
         }
-        set.name = name
-        set.outputBookmark = outputFolder.flatMap { bookmarks?.make($0.url) }
-        set.watchBookmark = watchFolder.flatMap { bookmarks?.make($0.url) }
-        store.save(set)
+        plan.name = name
+        plan.outputBookmark = outputFolder.flatMap { bookmarks?.make($0.url) }
+        plan.watchBookmark = watchFolder.flatMap { bookmarks?.make($0.url) }
+        store.save(plan)
         savedNames = store.load().map(\.name)
         host?.setStatus(L10n.t("Saved {0}", name))
     }
@@ -254,14 +254,14 @@ public final class BatchModel {
     public func chooseOutput() async {
         guard let host, let folder = await host.filePicker.pickFolder() else { return }
         outputFolder = folder
-        set.outputFolder = folder.url.path
+        plan.outputFolder = folder.url.path
         recheckWatch()
     }
 
     public func chooseWatch() async {
         guard let host, let folder = await host.filePicker.pickFolder() else { return }
         watchFolder = folder
-        set.watchFolder = folder.url.path
+        plan.watchFolder = folder.url.path
         recheckWatch()
     }
 }
