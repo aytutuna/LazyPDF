@@ -28,6 +28,10 @@ struct IOSRoot: View {
                 ExportPicker(file: file) { shell.finishPicking($0) }
             case .share(let file):
                 ShareSheet(files: [file])
+            case .create:
+                CreateSheet(host: vm) { shell.sheet = nil }
+            case .batch:
+                BatchSheet(host: vm, folders: shell.folders) { shell.sheet = nil }
             }
         }
         .environment(\.shortcutsInMenu, true)

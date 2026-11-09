@@ -1,5 +1,6 @@
 #if os(macOS)
 import AppKit
+import SwiftUI
 import UniformTypeIdentifiers
 import LazyPDFApp
 import LazyPDFKit
@@ -41,11 +42,11 @@ final class MacShell {
         vm.filePicker = services
         vm.fileExporter = services
         vm.clipboard = services
-        // TODO: Create and Batch come with the tools; until then their tiles stay off the Home screen.
-        vm.hiddenTiles = [AppViewModel.createTile, AppViewModel.batchTile]
         AttachmentsModel.deleteOpenedCopies(in: folders.openedAttachments)
         vm.exitRequested = { [unowned self] in self.finishExit() }
         commands = ShellCommands(open: { [unowned self] in self.openWithPanel() },
+                                 create: { [unowned self] in self.present { CreateSheet(host: self.vm, close: $0) } },
+                                 batch: { [unowned self] in self.present { BatchSheet(host: self.vm, folders: self.folders, close: $0) } },
                                  saveAs: { [unowned self] in self.saveAs($0) },
                                  saveCompact: { [unowned self] in self.saveCompact($0) },
                                  print: { [unowned self] in self.systemPrint($0) },
@@ -59,6 +60,19 @@ final class MacShell {
     func attach(_ window: NSWindow) {
         self.window = window
         closeGuard = CloseGuard.ensure(on: window, existing: closeGuard) { NSApp.terminate(nil) }
+    }
+
+    // The sheets of the Create and Batch tiles hang from the window, as a dialog does on Windows.
+    private func present<Content: View>(_ content: (@escaping () -> Void) -> Content) {
+        guard let window, window.attachedSheet == nil else { return }
+        let sheet = NSWindow(contentViewController: NSViewController())
+        let close = { [weak window, weak sheet] in
+            guard let window, let sheet else { return }
+            window.endSheet(sheet)
+            sheet.orderOut(nil)
+        }
+        sheet.contentViewController = NSHostingController(rootView: content(close))
+        window.beginSheet(sheet)
     }
 
     /// Opens each file with the access its url carries; a url from a panel, a drop or Open With needs none of its own.
