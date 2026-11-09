@@ -295,6 +295,7 @@ public final class CommentModel: ToolPanelModel {
 
     /// Writes the look changes waiting for the slider to settle into the selected mark.
     func settle() {
+        settling?.cancel()
         settling = nil
         let pending = unsettled
         unsettled = []

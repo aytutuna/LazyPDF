@@ -10,8 +10,8 @@ import XCTest
 final class ExchangeTests: XCTestCase {
     private func withMarks() throws -> CommentFixture {
         let f = try CommentFixture()
-        try f.marker.add(.rectangle, 0, [pt(60, 80), pt(260, 140)], red)
-        let note = try f.marker.add(.note, 0, [pt(300, 100)], red, "Check the total")
+        try f.marker.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], markRed)
+        let note = try f.marker.add(.note, 0, [markPt(300, 100)], markRed, "Check the total")
         _ = try PdfComments.reply(f.document, note, "Done", "Can", DateTimeOffset(2026, 11, 5, 9, 0, 0))
         try f.tab.commit("Marks")
         return f

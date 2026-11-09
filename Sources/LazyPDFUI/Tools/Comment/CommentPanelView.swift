@@ -23,10 +23,10 @@ struct CommentPanelView: View {
         VStack(alignment: .leading, spacing: 12) {
             SectionHeading(L10n.t("Mark up text"))
             LazyVGrid(columns: two, spacing: 8) {
-                markup(L10n.t("Highlight"), L10n.t("Highlight the selected text."), "highlighter", .highlight)
-                markup(L10n.t("Underline"), L10n.t("Underline the selected text."), "underline", .underline)
-                markup(L10n.t("Strike"), L10n.t("Strike out the selected text."), "strikethrough", .strikeOut)
-                markup(L10n.t("Squiggly"), L10n.t("Underline the selected text with a wavy line."), "scribble", .squiggly)
+                markup(L10n.t("Highlight"), L10n.t("Highlight"), L10n.t("Highlight the selected text."), "highlighter", .highlight)
+                markup(L10n.t("Underline"), L10n.t("Underline"), L10n.t("Underline the selected text."), "underline", .underline)
+                markup(L10n.t("Strike"), L10n.t("Strikethrough"), L10n.t("Strike out the selected text."), "strikethrough", .strikeOut)
+                markup(L10n.t("Squiggly"), L10n.t("Squiggly"), L10n.t("Underline the selected text with a wavy line."), "scribble", .squiggly)
             }
             .disabled(!model.canChange)
         }
@@ -99,13 +99,13 @@ struct CommentPanelView: View {
         }
     }
 
-    private func markup(_ title: String, _ help: String, _ symbol: String, _ kind: AnnotationType) -> some View {
+    private func markup(_ title: String, _ name: String, _ help: String, _ symbol: String, _ kind: AnnotationType) -> some View {
         Button { Task { await model.markup(kind) } } label: {
             Label(title, systemImage: symbol).frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
         }
         .buttonStyle(.bordered)
         .help(help)
-        .accessibilityLabel(title)
+        .accessibilityLabel(name)
         .accessibilityHint(help)
     }
 

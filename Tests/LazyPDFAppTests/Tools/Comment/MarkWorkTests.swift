@@ -79,7 +79,7 @@ final class MarkWorkTests: XCTestCase {
         let marker = f.marker
 
         let made = try await MarkWork.shared.change(f.tab, host, "Adding", isCurrent: { true }) { _, _ in
-            try marker.add(.rectangle, 0, [pt(60, 80), pt(260, 140)], red).type
+            try marker.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], markRed).type
         }
 
         XCTAssertEqual(made, .square)
@@ -96,7 +96,7 @@ final class MarkWorkTests: XCTestCase {
 
         do {
             _ = try await MarkWork.shared.change(f.tab, host, "Adding", isCurrent: { true }) { _, _ -> Int in
-                try marker.add(.rectangle, 0, [pt(60, 80), pt(260, 140)], red)
+                try marker.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], markRed)
                 throw InvalidOperationException("no")
             }
             XCTFail("The failure was swallowed.")
@@ -114,7 +114,7 @@ final class MarkWorkTests: XCTestCase {
         let marker = f.marker
 
         let made = try await MarkWork.shared.change(f.tab, host, "Adding", isCurrent: { false }) { _, _ in
-            try marker.add(.rectangle, 0, [pt(60, 80), pt(260, 140)], red).type
+            try marker.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], markRed).type
         }
 
         XCTAssertNil(made)
@@ -128,7 +128,7 @@ final class MarkWorkTests: XCTestCase {
         let marker = f.marker
 
         let made = try await MarkWork.shared.change(f.tab, host, "Adding", isCurrent: { true }) { _, _ in
-            try marker.add(.rectangle, 0, [pt(60, 80), pt(260, 140)], red).type
+            try marker.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], markRed).type
         }
 
         XCTAssertNil(made)
