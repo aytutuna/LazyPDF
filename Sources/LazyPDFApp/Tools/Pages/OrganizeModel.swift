@@ -29,8 +29,8 @@ public final class OrganizeModel {
     @ObservationIgnored private var sharpening: Task<Void, Never>?
 
     /// The panel passes its own `asker`, so a question from the stage shows in the sheet of the tool and not in a second one.
-    public init(asker: SourceQuestion = SourceQuestion()) {
-        self.asker = asker
+    public init(asker: SourceQuestion? = nil) {
+        self.asker = asker ?? SourceQuestion()
     }
 
     public var canPaste: Bool { PageClipboard.shared.count > 0 }
