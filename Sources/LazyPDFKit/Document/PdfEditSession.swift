@@ -74,6 +74,21 @@ public final class PdfEditSession {
         return try take(label, current + update)
     }
 
+    /// The update that makes `copy`, a document opened from `current` and then changed, into the next step; empty when nothing
+    /// changed. It is built apart from the session so that a long edit can run on a copy off the main thread.
+    public static func update(of copy: PdfDocument) throws -> [UInt8] {
+        try PdfUpdate.build(copy)
+    }
+
+    /// Appends an update from `update(of:)`, built on a copy of the first `length` bytes, as one step called `label`. Throws
+    /// when the session has moved on since, so a stale edit cannot land on a different file.
+    @discardableResult
+    public func commit(_ label: String, update: [UInt8], over length: Int) throws -> Bool {
+        guard length == current.count else { throw InvalidOperationException("The file changed while the edit was made.") }
+        if update.isEmpty { return false }
+        return try take(label, current + update)
+    }
+
     /// Commits a file the caller built on the current bytes, which must be its start (a signed update, whose
     /// bytes depend on where they land). Read back and recorded like `commit`.
     @discardableResult
