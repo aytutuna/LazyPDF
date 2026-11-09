@@ -33,6 +33,13 @@ public final class ViewSync {
         })
     }
 
+    /// A move the sheet made on both views itself, such as going to a row: neither view leads, as on Windows while the pointer
+    /// is on the list.
+    func ownMoves() {
+        echo[ObjectIdentifier(old)] = old.viewRevision
+        echo[ObjectIdentifier(new)] = new.viewRevision
+    }
+
     public func detach() {
         oldWatch?.stop()
         newWatch?.stop()

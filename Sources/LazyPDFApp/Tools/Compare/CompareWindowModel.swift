@@ -73,6 +73,7 @@ public final class CompareWindowModel {
     public func go(_ row: ChangeRow) {
         if !overlayMode { show(oldViewer, row.oldPage, row.oldArea) }
         show(newViewer, row.newPage, row.newArea)
+        sync?.ownMoves()
     }
 
     private func show(_ viewer: ViewerModel, _ page: Int, _ area: ViewRect?) {
