@@ -148,14 +148,10 @@ final class FillSignMakerTests: XCTestCase {
 
 @MainActor
 final class FillSignModelTests: XCTestCase {
-    private var folder: URL!
+    private let folder = FileManager.default.temporaryDirectory.appendingPathComponent("fillsign-\(UUID().uuidString)", isDirectory: true)
 
-    override func setUpWithError() throws {
-        folder = FileManager.default.temporaryDirectory.appendingPathComponent("fillsign-\(UUID().uuidString)", isDirectory: true)
-    }
-
-    override func tearDownWithError() throws {
-        try? FileManager.default.removeItem(at: folder)
+    private func cleanUp() {
+        addTeardownBlock { [folder] in try? FileManager.default.removeItem(at: folder) }
     }
 
     // The stand-in codec reads every saved file as a 150 by 50 picture, so a click places a box of 150 by 50 and the saved list
@@ -163,6 +159,7 @@ final class FillSignModelTests: XCTestCase {
     private let wide = PdfRgbaImage(150, 50, [UInt8](repeating: 0, count: 150 * 50 * 4).enumerated().map { $0.offset % 4 == 3 ? 255 : 0 })
 
     private func rig(_ bytes: [UInt8]? = nil, saved: Int = 1, password: String? = nil) throws -> (model: FillSignModel, rig: ToolRig, store: SavedSignatures) {
+        cleanUp()
         let store = SavedSignatures(directory: folder, codec: PictureCodec(wide))
         for _ in 0..<saved {
             try store.add(.signature, wide)
@@ -415,6 +412,7 @@ final class FillSignModelTests: XCTestCase {
     }
 
     func test_aSignatureThatCannotBeKeptIsStillUsedAndSaysSo() throws {
+        cleanUp()
         let blocker = folder.appendingPathComponent("blocked")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         try Data([1]).write(to: blocker)
