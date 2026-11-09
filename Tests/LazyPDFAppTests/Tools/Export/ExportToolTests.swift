@@ -281,8 +281,9 @@ final class ExportToolTests: XCTestCase {
 
 @MainActor
 final class ExportModelTests: XCTestCase {
-    private func attached(_ f: ViewModelFixture, _ pdf: [UInt8], _ exporter: StubExporter = StubExporter(),
+    private func attached(_ f: ViewModelFixture, _ pdf: [UInt8], _ given: StubExporter? = nil,
                           renderers: @escaping () -> DocumentRenderer = { FakeRenderer() }) async throws -> (model: ExportModel, tab: DocumentTab, exporter: StubExporter) {
+        let exporter = given ?? StubExporter()
         await f.vm.open(f.dir.file("a.pdf", pdf))
         let tab = try XCTUnwrap(f.vm.activeDocument)
         f.vm.fileExporter = exporter
