@@ -32,7 +32,7 @@ struct EditContentPanelView: View {
                 Button {
                     Task { await model.addPicture() }
                 } label: {
-                    Label(L10n.t("Add a picture"), systemImage: "photo.badge.plus").frame(maxWidth: .infinity, minHeight: 32)
+                    Label(L10n.t("Add a picture"), systemImage: "photo.badge.plus").frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
                 .accessibilityLabel(L10n.t("Add a picture"))
@@ -70,7 +70,7 @@ struct EditContentPanelView: View {
     private func modeButton(_ mode: EditMode, _ title: String, _ label: String) -> some View {
         let on = model.isActive && (model.mode == mode || (mode == .select && model.mode == .crop))
         return Button { model.selectMode(mode) } label: {
-            Text(title).frame(maxWidth: .infinity, minHeight: 32)
+            Text(title).frame(maxWidth: .infinity, minHeight: 44)
         }
         .buttonStyle(.bordered)
         .tint(on ? Color.accentColor : Color.secondary)
@@ -95,7 +95,7 @@ struct EditContentPanelView: View {
                             Button(family) { model.chooseFont(family) }
                         }
                     } label: {
-                        Image(systemName: "textformat").frame(minWidth: 32, minHeight: 32)
+                        Image(systemName: "textformat").frame(minWidth: 44, minHeight: 44)
                     }
                     .accessibilityLabel(L10n.t("Font"))
                 }
@@ -113,12 +113,12 @@ struct EditContentPanelView: View {
                 }
                 Spacer()
                 Toggle(isOn: Binding(get: { model.bold }, set: { model.setBold($0) })) {
-                    Text("B").bold().frame(minWidth: 28, minHeight: 28)
+                    Text("B").bold().frame(minWidth: 44, minHeight: 44)
                 }
                 .toggleStyle(.button)
                 .accessibilityLabel(L10n.t("Bold"))
                 Toggle(isOn: Binding(get: { model.italic }, set: { model.setItalic($0) })) {
-                    Text("I").italic().frame(minWidth: 28, minHeight: 28)
+                    Text("I").italic().frame(minWidth: 44, minHeight: 44)
                 }
                 .toggleStyle(.button)
                 .accessibilityLabel(L10n.t("Italic"))
@@ -150,7 +150,7 @@ struct EditContentPanelView: View {
             }
             if model.sections.paragraph {
                 Button { model.reflowParagraph() } label: {
-                    Label(L10n.t("Reflow the paragraph"), systemImage: "text.alignleft").frame(maxWidth: .infinity, minHeight: 32)
+                    Label(L10n.t("Reflow the paragraph"), systemImage: "text.alignleft").frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
                 .disabled(!model.sections.paragraphEnabled)
@@ -199,7 +199,7 @@ struct EditContentPanelView: View {
                     .accessibilityLabel(L10n.t("Opacity"))
                     .accessibilityValue(L10n.t("{0}%", Int(model.opacity)))
                 Text(L10n.t("{0}%", Int(model.opacity))).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-                    .frame(width: 44, alignment: .trailing)
+                    .frame(minWidth: 44, alignment: .trailing)
                     .accessibilityHidden(true)
             }
         }
@@ -221,7 +221,7 @@ struct EditContentPanelView: View {
             pair((L10n.t("Smaller"), L10n.t("Make the selection smaller"), { model.scaleSelection(by: 0.9) }),
                  (L10n.t("Larger"), L10n.t("Make the selection larger"), { model.scaleSelection(by: 1.1) }))
             Button(role: .destructive) { model.deleteSelection() } label: {
-                Label(L10n.t("Delete"), systemImage: "trash").frame(maxWidth: .infinity, minHeight: 32)
+                Label(L10n.t("Delete"), systemImage: "trash").frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(.bordered)
             .accessibilityLabel(L10n.t("Delete the selection"))
@@ -246,7 +246,7 @@ struct EditContentPanelView: View {
                 .onSubmit { if model.canApplyLink { model.applyLink() } }
             if model.sections.removeLink {
                 Button(role: .destructive) { model.removeLink() } label: {
-                    Label(L10n.t("Remove the link"), systemImage: "trash").frame(maxWidth: .infinity, minHeight: 32)
+                    Label(L10n.t("Remove the link"), systemImage: "trash").frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
             }
@@ -260,14 +260,14 @@ struct EditContentPanelView: View {
             DisclosureGroup(L10n.t("Links on this page")) {
                 ForEach(model.linkRows) { row in
                     Button(row.title) { model.selectLink(row) }
-                        .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                 }
             }
         } else if !model.objectRows.isEmpty {
             DisclosureGroup(L10n.t("On this page")) {
                 ForEach(model.objectRows) { row in
                     Button(row.title) { model.selectObject(row) }
-                        .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                 }
             }
         }
@@ -295,7 +295,7 @@ struct EditContentPanelView: View {
             Toggle(L10n.t("Match case"), isOn: $model.matchCase)
             Toggle(L10n.t("Whole words only"), isOn: $model.wholeWord)
             Button { Task { await model.replaceAll() } } label: {
-                Text(L10n.t("Replace all")).frame(maxWidth: .infinity, minHeight: 32)
+                Text(L10n.t("Replace all")).frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(.bordered)
             .disabled(!model.canReplaceAll)
@@ -306,7 +306,7 @@ struct EditContentPanelView: View {
     // MARK: Pieces
 
     private func wide(_ title: String, _ label: String, _ run: @escaping () -> Void) -> some View {
-        Button(action: run) { Text(title).frame(maxWidth: .infinity, minHeight: 32) }
+        Button(action: run) { Text(title).frame(maxWidth: .infinity, minHeight: 44) }
             .buttonStyle(.bordered)
             .accessibilityLabel(label)
     }
