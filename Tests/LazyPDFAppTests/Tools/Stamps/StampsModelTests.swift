@@ -171,7 +171,7 @@ final class StampsModelTests: XCTestCase {
         try Pdfs.retitle(rig.tab.session, "A")
         try rig.tab.commit("Properties")
         let tab = rig.tab
-        rig.host.before = { try? tab.undo() }
+        rig.host.before = { _ = try? tab.undo() }
 
         await model.action?.run()
 

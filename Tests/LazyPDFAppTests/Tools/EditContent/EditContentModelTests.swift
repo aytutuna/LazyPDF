@@ -121,13 +121,14 @@ final class EditContentModelTests: XCTestCase {
     }
 
     func test_aPressElsewhereOnThePageKeepsWhatWasTyped() throws {
-        let (_, rig) = try start()
+        let (model, rig) = try start()
         try click(rig, try lineCenter(rig))
         try field(rig).typed("Typed in place.")
 
         try click(rig, ViewPoint(400, 600))
 
         XCTAssertTrue(try pageText(rig.tab).contains("Typed in place."))
+        model.detach()
     }
 
     func test_thePinnedButtonKeepsTheTypedText() async throws {
@@ -153,16 +154,17 @@ final class EditContentModelTests: XCTestCase {
     }
 
     func test_aFileThatForbidsChangesIsLeftAlone() throws {
-        let (_, rig) = try start(try lockedBy(hello, permissions: .print), password: "")
+        let (model, rig) = try start(try lockedBy(hello, permissions: .print), password: "")
 
         try click(rig, try lineCenter(rig))
 
         XCTAssertEqual(rig.host.problems.first?.title, "This file cannot be changed")
         XCTAssertTrue(rig.viewer.overlay(0).fields.isEmpty)
+        model.detach()
     }
 
     func test_aSignedFileAsksOnceBeforeTheFirstEdit() throws {
-        let (_, rig) = try start(try signed(hello))
+        let (model, rig) = try start(try signed(hello))
         let center = try lineCenter(rig)
 
         try click(rig, center)
@@ -174,6 +176,7 @@ final class EditContentModelTests: XCTestCase {
         try field(rig).commit("Signed and changed.")
         try click(rig, center)
         XCTAssertEqual(rig.host.notices.count, 1)
+        model.detach()
     }
 
     func test_deleteRemovesTheSelectionAndEscapeLetsGoOfIt() throws {
@@ -221,11 +224,12 @@ final class EditContentModelTests: XCTestCase {
     }
 
     func test_theSurfaceTakesAFingerOnlyOverWhatItCanDo() throws {
-        let (_, rig) = try start()
+        let (model, rig) = try start()
         let tool = try XCTUnwrap(rig.viewer.pointerTool)
 
         XCTAssertFalse(tool.takes(pointer(ViewPoint(500, 700))))
         XCTAssertTrue(tool.takes(pointer(try lineCenter(rig))))
+        model.detach()
     }
 
     func test_aLinkIsMadeByDraggingAnAreaAndTypingWhereItGoes() async throws {
