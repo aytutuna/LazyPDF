@@ -51,10 +51,19 @@ struct OcrPanelView: View {
 
             SectionHeading(L10n.t("Correct a word"))
             Toggle(L10n.t("Show words on the page"), isOn: Binding(get: { model.showWords }, set: { model.setShowWords($0) }))
+            #if os(iOS)
+            Toggle(L10n.t("Correct by touching the page"), isOn: $model.touchCorrects)
+            #endif
             if model.words.isEmpty {
                 if model.showWords { ReasonText(L10n.t("Click a word on the page or choose one below.")) }
             } else {
                 wordList
+                if model.inPanel {
+                    TextField(L10n.t("Corrected word"), text: $model.draft)
+                        .onSubmit { model.applyDraft() }
+                    Button(L10n.t("Apply")) { model.applyDraft() }
+                        .accessibilityLabel(L10n.t("Apply the corrected word"))
+                }
                 if let picked = model.picked {
                     ReasonText(L10n.t("Page {0}", picked.page + 1))
                     ReasonText(L10n.t("Leave it empty to remove the word."))

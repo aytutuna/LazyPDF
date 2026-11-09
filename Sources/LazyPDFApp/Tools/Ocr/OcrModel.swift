@@ -32,6 +32,13 @@ public final class OcrModel: ToolPanelModel {
     public internal(set) var words: [OcrLayerWord] = []
     public internal(set) var picked: WordRef?
 
+    /// A word picked from the list is corrected in a box of the panel; `draft` is what the box holds.
+    public internal(set) var inPanel = false
+    public var draft = ""
+
+    /// Whether a finger on a word of the page corrects it; off, a finger scrolls.
+    public var touchCorrects = false
+
     var tab: DocumentTab?
     var host: ToolHost?
     var viewer: DocumentViewer?
@@ -40,6 +47,8 @@ public final class OcrModel: ToolPanelModel {
     @ObservationIgnored var shown: [Int: [OcrLayerWord]] = [:]
     @ObservationIgnored var field: OverlayField?
     @ObservationIgnored var waiting = false
+    @ObservationIgnored var fieldSerial = 0
+    @ObservationIgnored var touchStart: (word: WordRef, at: ViewPoint)?
     @ObservationIgnored var correctedRevision: Int?
     @ObservationIgnored private var ticket = 0
     @ObservationIgnored private let recognizer: TextRecognizer

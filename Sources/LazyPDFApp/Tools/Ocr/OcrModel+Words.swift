@@ -36,6 +36,9 @@ extension OcrModel {
         correctedRevision = nil
         words = []
         picked = nil
+        inPanel = false
+        draft = ""
+        touchStart = nil
     }
 
     // The words and the marks are for one revision of the file; the next change builds them again.
@@ -96,20 +99,40 @@ extension OcrModel {
 
     /// Chooses a word for correction; with `edit` its text opens in a field over the word.
     public func pick(_ word: WordRef?, edit: Bool = false) {
+        if word != nil { field?.finish() }
         if let old = picked { unmark(old) }
         picked = nil
+        inPanel = false
         if let word, let found = shown[word.page]?.first(where: { $0.index == word.index }) {
             picked = word
+            draft = found.text
             mark(word)
             if edit { editWord(word, found) }
         } else {
+            draft = ""
             field?.drop()
         }
     }
 
-    /// The panel's list chose a word of the page in view.
+    /// The panel's list chose a word of the page in view. It is corrected in a box of the panel, since the panel may cover
+    /// the page or the field be out of sight; the page scrolls to show the word.
     public func pickFromList(_ word: OcrLayerWord) {
-        pick(WordRef(viewer?.pageIndex ?? 0, word.index), edit: true)
+        let page = viewer?.pageIndex ?? 0
+        let revision = tab?.revision
+        field?.finish()
+        // A word removed just now renumbers the list, so the row tapped no longer names the word it showed.
+        guard tab?.revision == revision else { return }
+        pick(WordRef(page, word.index))
+        guard picked != nil else { return }
+        inPanel = true
+        viewer?.reveal(page, ViewRect(word.box.x, word.box.y, word.box.width, word.box.height))
+    }
+
+    /// Puts what was typed in the panel's box into the file.
+    public func applyDraft() {
+        guard inPanel, let ref = picked else { return }
+        let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        if text != pickedText { apply(ref, text) }
     }
 
     public var pickedText: String? {
@@ -121,10 +144,15 @@ extension OcrModel {
         guard let viewer else { return }
         let area = ViewRect(word.box.x, word.box.y, word.box.width, word.box.height)
         let look = OverlayTextLook(size: max(word.box.height * 0.8, 6))
+        fieldSerial += 1
+        let mine = fieldSerial
         let made = OverlayField(Self.fieldId, area: area, text: word.text, look: look, wraps: false, label: L10n.t("Corrected word")) { [weak self] text in
             guard let self else { return }
-            self.field = nil
-            if let text { self.apply(ref, text.trimmingCharacters(in: .whitespacesAndNewlines)) }
+            // A field on another page ends after the next one has opened, and must not forget that one.
+            if self.fieldSerial == mine { self.field = nil }
+            guard let text else { return }
+            let typed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            if typed != word.text { self.apply(ref, typed) }
         }
         field = viewer.overlay(ref.page).open(made)
     }
@@ -134,6 +162,7 @@ extension OcrModel {
     public func handIn() -> Bool {
         waiting = false
         field?.finish()
+        applyDraft()
         return !waiting
     }
 
@@ -152,7 +181,11 @@ extension OcrModel {
     private func applyNow(_ tab: DocumentTab, _ host: ToolHost, _ word: WordRef, _ text: String) {
         let before = tab.revision
         ChangeGate.guarded(host, L10n.t("Correct word")) { try OcrWork.correct(tab, word.page, word.index, text) }
-        if tab.revision != before { correctedRevision = tab.revision }
+        if tab.revision != before {
+            correctedRevision = tab.revision
+            // The words are numbered again from the file, and the next press must hit the new numbers.
+            refreshWords()
+        }
         if text.isEmpty { pick(nil) }
     }
 }
@@ -160,22 +193,37 @@ extension OcrModel {
 extension OcrModel: PagePointerTool {
     public var cursor: PointerCursor? { nil }
 
-    // A finger over a word is the tool's; anywhere else it scrolls the page.
+    // A mouse is the tool's only over a word, so selecting text, panning and links stay with the viewer. A finger scrolls
+    // unless the person asked to correct by touch, since word boxes cover most of a page of text.
     public func takes(_ pointer: PagePointer) -> Bool {
-        word(at: pointer, slop: 8) != nil
+        if pointer.touch && !touchCorrects { return false }
+        return word(at: pointer) != nil
     }
 
     public func press(_ pointer: PagePointer) {
-        if let word = word(at: pointer, slop: 24) { pick(word, edit: true) }
+        field?.finish()
+        guard let word = word(at: pointer) else { return }
+        if pointer.touch {
+            touchStart = (word, pointer.view)
+        } else {
+            pick(word, edit: true)
+        }
     }
 
     public func move(_ pointer: PagePointer) {}
-    public func release(_ pointer: PagePointer) {}
-    public func cancel() {}
 
-    private func word(at pointer: PagePointer, slop: Double) -> WordRef? {
+    // A finger that dragged away does not open the keyboard.
+    public func release(_ pointer: PagePointer) {
+        guard let start = touchStart else { return }
+        touchStart = nil
+        if hypot(pointer.view.x - start.at.x, pointer.view.y - start.at.y) <= 10 { pick(start.word, edit: true) }
+    }
+
+    public func cancel() { touchStart = nil }
+
+    private func word(at pointer: PagePointer) -> WordRef? {
         guard showWords, let found = shown[pointer.page], let matrix = viewer?.pageToView(pointer.page) else { return nil }
-        let reach = slop / ViewScale.of(matrix)
+        let reach = (pointer.touch ? 8.0 : 0.0) / ViewScale.of(matrix)
         var best: (word: WordRef, distance: Double)?
         for word in found {
             let box = word.box
