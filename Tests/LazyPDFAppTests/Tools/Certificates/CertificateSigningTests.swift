@@ -4,8 +4,8 @@ import LazyPDFKit
 @testable import LazyPDFApp
 
 // Mirrors windows/LazyPDF.App.Tests/Tools/sign/CertificateSigningTests.cs: signing with what the panel collects, through the real
-// signer and verifier. The cancel test of the Windows file is in CancelTests below: the transport here answers nobody once the
-// token is cancelled, since the engine's transport cannot throw.
+// signer and verifier. The cancel test of the Windows file checks that a cancelled transport answers nobody, since the engine's
+// transport cannot throw.
 
 final class CertificateSigningTests: XCTestCase {
     private func request(_ choices: SignChoices) -> PdfSignRequest {
