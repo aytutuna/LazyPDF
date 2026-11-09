@@ -47,6 +47,13 @@ public final class SignatureTrust {
     /// The certificates added by hand, as the list shows them.
     public var rows: [TrustRow] { load().trustedCertificates.map(Self.describe) }
 
+    /// The last time stamp server the Certificates tool used.
+    public var timestampUrl: String { load().timestampUrl }
+
+    public func setTimestampUrl(_ url: String) {
+        update { $0.timestampUrl = url }
+    }
+
     public func setTrustsSystem(_ on: Bool) {
         update { $0.trustWindowsStore = on }
     }
