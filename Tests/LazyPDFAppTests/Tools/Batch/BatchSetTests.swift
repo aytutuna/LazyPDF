@@ -139,6 +139,8 @@ final class BatchSetTests: XCTestCase {
     func test_aFileThatLeavesAndComesBackIsReportedAgain() async throws {
         let dir = TempDir(self)
         let aside = TempDir(self)
+        try FileManager.default.createDirectory(at: dir.url, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: aside.url, withIntermediateDirectories: true)
         let found = Found()
         let first = expectation(description: "first")
         found.onFirst = { first.fulfill() }
@@ -157,6 +159,7 @@ final class BatchSetTests: XCTestCase {
 
     func test_aFileThatGrowsAfterItWasReportedIsReportedAgainWhenItSettles() async throws {
         let dir = TempDir(self)
+        try FileManager.default.createDirectory(at: dir.url, withIntermediateDirectories: true)
         let found = Found()
         let first = expectation(description: "first")
         found.onFirst = { first.fulfill() }
