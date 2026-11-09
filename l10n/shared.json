@@ -2901,6 +2901,9 @@
   "The margin leaves no room on the page. Pick a smaller margin.": {
     "tr": "Kenar boşluğu sayfada yer bırakmıyor. Daha küçük bir boşluk seçin."
   },
+  "The system does not let Lazy PDF read one of the pictures. Check who may open it.": {
+    "tr": "Sistem, Lazy PDF'nin resimlerden birini okumasına izin vermiyor. Dosyayı kimlerin açabildiğini denetleyin."
+  },
   "Windows does not let Lazy PDF read one of the pictures. Check who may open it.": {
     "tr": "Windows, Lazy PDF'nin resimlerden birini okumasına izin vermiyor. Dosyayı kimlerin açabildiğini denetleyin."
   },
