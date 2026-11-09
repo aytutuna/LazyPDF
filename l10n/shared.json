@@ -6623,5 +6623,35 @@
   },
   "No text recognition for {0}.": {
     "tr": "{0} için metin tanıma yok."
+  },
+  "Text: {0}": {
+    "tr": "Metin: {0}"
+  },
+  "Shape {0}": {
+    "tr": "Şekil {0}"
+  },
+  "Link to {0}": {
+    "tr": "{0} bağlantısı"
+  },
+  "Link to page {0}": {
+    "tr": "{0}. sayfa bağlantısı"
+  },
+  "Smaller": {
+    "tr": "Küçült"
+  },
+  "Make the selection smaller": {
+    "tr": "Seçimi küçült"
+  },
+  "Larger": {
+    "tr": "Büyüt"
+  },
+  "Make the selection larger": {
+    "tr": "Seçimi büyüt"
+  },
+  "Links on this page": {
+    "tr": "Bu sayfadaki bağlantılar"
+  },
+  "On this page": {
+    "tr": "Bu sayfada"
   }
 }
