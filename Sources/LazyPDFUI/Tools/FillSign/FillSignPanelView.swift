@@ -31,7 +31,13 @@ struct FillSignPanelView: View {
             }
         }
         .sheet(isPresented: $model.showMaker) {
-            SignatureMakerView(model: model)
+            ScrollView { SignatureMakerView(model: model) }
+                #if os(macOS)
+                .frame(minWidth: 380, minHeight: 520)
+                #endif
+                #if os(iOS)
+                .presentationDetents([.medium, .large])
+                #endif
         }
     }
 
