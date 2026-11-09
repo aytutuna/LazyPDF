@@ -142,7 +142,7 @@ public final class ExportModel: ToolPanelModel {
     }
 
     // A drive root has no file name; the root is what the folder is called then.
-    static func leaf(_ url: URL) -> String {
+    nonisolated static func leaf(_ url: URL) -> String {
         let name = url.lastPathComponent
         return name.isEmpty ? url.path : name
     }
