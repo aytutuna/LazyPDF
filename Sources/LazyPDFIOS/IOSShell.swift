@@ -13,6 +13,8 @@ struct SheetRequest: Identifiable {
         case open
         case export(URL)
         case share(URL)
+        case create
+        case batch
     }
 
     let id = UUID()
@@ -51,8 +53,6 @@ final class IOSShell {
         model.filePicker = services
         model.fileExporter = services
         model.clipboard = services
-        // TODO: Create and Batch come with the tools; until then their tiles stay off the Home screen.
-        model.hiddenTiles = [AppViewModel.createTile, AppViewModel.batchTile]
         // There is no exit to clean up at: what a kill left behind, copies of attachments among it, goes at launch.
         try? FileManager.default.removeItem(at: Self.staging)
         AttachmentsModel.deleteOpenedCopies(in: folders.openedAttachments)
@@ -61,6 +61,10 @@ final class IOSShell {
     var commands: ShellCommands {
         ShellCommands(open: { [self] in
             Task { await openPicked() }
+        }, create: { [self] in
+            sheet = SheetRequest(kind: .create)
+        }, batch: { [self] in
+            sheet = SheetRequest(kind: .batch)
         }, saveAs: { [self] tab in
             await saveAs(tab, compact: false)
         }, saveCompact: { [self] tab in
