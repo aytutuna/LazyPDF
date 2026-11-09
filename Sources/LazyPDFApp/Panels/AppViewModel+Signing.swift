@@ -24,4 +24,8 @@ extension AppViewModel {
     public func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate? {
         certificates.verifyCertificate(choice)
     }
+
+    public func certificateChoices() -> [CertificateChoice] {
+        certificates.choices()
+    }
 }
