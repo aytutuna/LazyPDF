@@ -32,8 +32,8 @@ public final class NoSpeaker: Speaker {
 }
 
 #if canImport(AVFoundation)
-@MainActor
-public final class SystemSpeaker: NSObject, Speaker, AVSpeechSynthesizerDelegate {
+// Not isolated as a whole: NSObject's own initializer is not. Everything but the delegate calls runs on the main actor.
+public final class SystemSpeaker: NSObject, Speaker, AVSpeechSynthesizerDelegate, @unchecked Sendable {
     private let synthesizer = AVSpeechSynthesizer()
     private var finished: CheckedContinuation<Void, Error>?
 
@@ -42,6 +42,7 @@ public final class SystemSpeaker: NSObject, Speaker, AVSpeechSynthesizerDelegate
         synthesizer.delegate = self
     }
 
+    @MainActor
     public func say(_ text: String) async throws {
         if AVSpeechSynthesisVoice.speechVoices().isEmpty { throw SpeechUnavailable() }
         try Task.checkCancellation()
@@ -55,10 +56,12 @@ public final class SystemSpeaker: NSObject, Speaker, AVSpeechSynthesizerDelegate
         }
     }
 
+    @MainActor
     public func stop() {
         if !synthesizer.stopSpeaking(at: .immediate) { end(CancellationError()) }
     }
 
+    @MainActor
     private func end(_ error: Error?) {
         guard let waiting = finished else { return }
         finished = nil
