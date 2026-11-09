@@ -80,6 +80,17 @@ final class CompareWindowModelTests: XCTestCase {
         XCTAssertEqual(window.oldViewer.pageIndex, 1)
     }
 
+    func test_aRowIsNotUndoneByTheViewsFollowingEachOther() async throws {
+        let (window, session) = try await window()
+        defer { window.close(); session.dispose() }
+
+        window.go(ChangeRow(kind: .changed, title: "Moved", subtitle: "", oldPage: 1, newPage: 0, oldBoxes: [], newBoxes: []))
+        try await Task.sleep(nanoseconds: 400_000_000)
+
+        XCTAssertEqual(window.oldViewer.pageIndex, 1)
+        XCTAssertEqual(window.newViewer.pageIndex, 0)
+    }
+
     func test_aRowWithNoPageOnASideLeavesThatSideAlone() async throws {
         let (window, session) = try await window()
         defer { window.close(); session.dispose() }
