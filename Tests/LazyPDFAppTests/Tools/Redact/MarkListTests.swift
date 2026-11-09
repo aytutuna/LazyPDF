@@ -32,6 +32,16 @@ final class MarkListTests: XCTestCase {
         XCTAssertEqual(changes, 2)
     }
 
+    func test_aBoxFarBeyondAnyPageDoesNotOverflow() {
+        let list = MarkList()
+
+        XCTAssertEqual(list.add([item(0, 1e30, 1e30, "far"), item(0, -1e30, -1e30, "back")]), 2)
+        XCTAssertEqual(list.add([item(0, 1e30, 1e30, "far")]), 0)
+
+        list.remove(list.items[0])
+        XCTAssertEqual(list.items.count, 1)
+    }
+
     func test_removingAndClearingTellTheListeners() {
         let list = MarkList()
         let first = item(0, 10, 100)
