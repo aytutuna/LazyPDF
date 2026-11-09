@@ -271,8 +271,8 @@ public final class Marker {
            let sizeRange = Range(match.range(at: 2), in: da) {
             let name = String(da[nameRange])
             family = name.hasPrefix("Ti") ? "Times New Roman" : name.hasPrefix("Co") ? "Courier New" : "Helvetica"
-            if ["Bo", "BI", "BO"].contains { name.hasSuffix($0) } { font.insert(.bold) }
-            if ["It", "Ob", "BI", "BO"].contains { name.hasSuffix($0) } { font.insert(.italic) }
+            if ["Bo", "BI", "BO"].contains(where: { name.hasSuffix($0) }) { font.insert(.bold) }
+            if ["It", "Ob", "BI", "BO"].contains(where: { name.hasSuffix($0) }) { font.insert(.italic) }
             if let parsed = Double(String(da[sizeRange])) { size = parsed }
         }
         var color: [Double]?
