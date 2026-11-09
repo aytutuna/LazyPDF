@@ -32,7 +32,7 @@ final class FieldTool: PagePointerTool {
     func takes(_ pointer: PagePointer) -> Bool {
         guard let model else { return false }
         if model.newKind != nil { return true }
-        return handleAt(model, pointer.page, pointer.point) != nil || model.widgetAt(pointer.page, pointer.point) != nil
+        return handleAt(model, pointer.page, pointer.point) != nil || model.widgetAt(pointer.page, pointer.point, near: true) != nil
     }
 
     func press(_ pointer: PagePointer) {
@@ -42,7 +42,7 @@ final class FieldTool: PagePointerTool {
         if let selected = model.selectedBox(), selected.page == page, let found = handleAt(model, page, start) {
             begin(.size, selected.box)
             handle = found
-        } else if let hit = model.widgetAt(page, start) {
+        } else if let hit = model.widgetAt(page, start, near: model.newKind == nil) {
             model.select(hit.name, hit.index, hit.ordinal)
             begin(.move, hit.box)
         } else if model.newKind != nil {
