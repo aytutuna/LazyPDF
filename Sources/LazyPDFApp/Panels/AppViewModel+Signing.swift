@@ -15,7 +15,7 @@ extension AppViewModel {
         return signingField
     }
 
-    public var isDocumentBusy: Bool { isBusy }
+    public var isDocumentBusy: Bool { isBusy || MarkWork.shared.running }
 
     public func signingIdentities() -> [CertificateChoice] {
         certificates.choices()
