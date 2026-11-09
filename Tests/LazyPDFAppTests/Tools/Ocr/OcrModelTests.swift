@@ -233,17 +233,19 @@ final class OcrModelTests: XCTestCase {
         await read(model, host, tab, [0])
         await waitUntil { model.words.count == 2 }
 
+        // The stand-in renderer lays the page out at 200 by 300 points, so the points tried lie inside that.
         let box = model.words[0].box
-        let matrix = try XCTUnwrap(viewer.pageToView(0))
-        let onWord = matrix.transform(ViewPoint(box.x + box.width / 2, box.y + box.height / 2))
+        XCTAssertTrue(box.x <= 100 && box.x + box.width >= 100 && box.y <= 60 && box.y + box.height >= 60)
         let bottom = model.words.map { $0.box.y + $0.box.height }.max() ?? 0
-        let far = matrix.transform(ViewPoint(box.x + box.width / 2, bottom + 60))
+        XCTAssertLessThan(bottom + 20, 295)
+        let matrix = try XCTUnwrap(viewer.pageToView(0))
+        let onWord = matrix.transform(ViewPoint(100, 60))
+        let far = matrix.transform(ViewPoint(100, 295))
         let tool = try XCTUnwrap(viewer.pointerTool)
         XCTAssertTrue(tool === model)
 
-        viewer.pointerDown(far, touch: true)
-        viewer.pointerUp(far)
-        XCTAssertNil(model.picked)
+        XCTAssertFalse(viewer.toolTakes(far))
+        XCTAssertTrue(viewer.toolTakes(onWord))
         viewer.pointerDown(onWord, touch: true)
         viewer.pointerUp(onWord)
 
