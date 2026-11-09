@@ -189,7 +189,7 @@ final class RedactJobTests: XCTestCase {
     #endif
 
     func test_pagesWithNoTextAreCountedSoThatNothingFoundIsNotTakenForClean() throws {
-        let pdf = try PdfFromText.create("ann@example.commore", fonts: FakeFonts()).bytes
+        let pdf = try PdfFromText.create("ann@example.com\u{0C}\u{0C}more", fonts: FakeFonts()).bytes
         let document = try RedactJob.open(pdf, password: nil, certificate: nil)
 
         let found = try RedactJob.find(document, RedactDataKind.all[0])
