@@ -3,9 +3,8 @@ import LazyPDFKit
 @testable import LazyPDFApp
 
 // Mirrors windows/LazyPDF.App.Tests/Tools/forms/FormEditsTests.cs: what the Forms panel changes in a tab, against real engine
-// calls: one undoable step each, and the engine's refusals. Left out of the Windows folder: ScanFormTests and ScanFormCorpusTests,
-// which draw scanned pages with Windows.Data.Pdf; the page renderer here is the system's and the engine's own detector tests
-// cover the reading of the pixels.
+// calls: one undoable step each, and the engine's refusals. Left out of the Windows folder: ScanFormCorpusTests, which reads the files a
+// list in LAZYPDF_CORPUS names and does nothing without one; ScanFormTests is in ScanFormTests.swift, drawn by PDFKit.
 
 @MainActor
 final class FormEditsTests: XCTestCase {
@@ -374,6 +373,17 @@ final class FormEditsTests: XCTestCase {
         let tab = try FormPdfs.tab()
 
         XCTAssertTrue(FormEdits.canModify(tab.document))
+    }
+
+    func test_findingFieldsEndsWhenTheJobIsCancelled() async throws {
+        let token = CancelToken()
+        token.cancel()
+
+        do {
+            _ = try await FormEdits.detect(Pdfs.text(2), password: nil, certificate: nil, renderer: FakeRenderer(), token: token)
+            XCTFail("expected a cancellation")
+        } catch is CancellationError {
+        }
     }
 
     func test_aFormWithoutFieldsReadsAsEmpty() throws {
