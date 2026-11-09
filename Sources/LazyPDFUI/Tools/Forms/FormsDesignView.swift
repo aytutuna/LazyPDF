@@ -47,7 +47,8 @@ struct FormsDesignView: View {
             if model.foundShown { found }
         }
         .disabled(!model.canEdit)
-        .onChange(of: focus) { old, _ in
+        .onChange(of: focus) { old, new in
+            model.cardFocus = new
             if let old { model.commit(old) }
         }
     }
