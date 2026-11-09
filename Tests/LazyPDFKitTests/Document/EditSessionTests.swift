@@ -283,6 +283,42 @@ final class EditSessionTests: XCTestCase {
         XCTAssertEqual(try PdfEditSession.open(session.current).versions.count, 1)
     }
 
+    func test_anEditMadeOnACopyLandsAsOneStep() throws {
+        let session = try PdfEditSession.open(SaveFixtures.table())
+        let copy = try PdfDocument.open(session.current)
+        copy.info?["Title"] = PdfString(bytes: Latin1.bytes("From a copy"), isHex: false)
+
+        let update = try PdfEditSession.update(of: copy)
+        XCTAssertTrue(try session.commit("Copy", update: update, over: session.current.count))
+
+        XCTAssertEqual(title(session), "From a copy")
+        XCTAssertEqual(session.undoLabel, "Copy")
+        XCTAssertTrue(try session.undo())
+        XCTAssertEqual(title(session), "Original title")
+    }
+
+    func test_anEditFromACopyOfAnEarlierStateIsRefused() throws {
+        let session = try PdfEditSession.open(SaveFixtures.table())
+        let copy = try PdfDocument.open(session.current)
+        let length = session.current.count
+        copy.info?["Title"] = PdfString(bytes: Latin1.bytes("Late"), isHex: false)
+        retitle(session, "Meanwhile")
+        XCTAssertTrue(try session.commit("Meanwhile"))
+
+        let update = try PdfEditSession.update(of: copy)
+        XCTAssertThrowsError(try session.commit("Copy", update: update, over: length))
+        XCTAssertEqual(title(session), "Meanwhile")
+    }
+
+    func test_aCopyThatChangedNothingAddsNoStep() throws {
+        let session = try PdfEditSession.open(SaveFixtures.table())
+        let copy = try PdfDocument.open(session.current)
+
+        let update = try PdfEditSession.update(of: copy)
+        XCTAssertFalse(try session.commit("Copy", update: update, over: session.current.count))
+        XCTAssertFalse(session.canUndo)
+    }
+
     func test_versionIsNotMadeOfAStartxrefInsideStreamData() throws {
         let pdf = TestPdf()
         pdf.obj(1, "<</Type /Catalog /Pages 2 0 R>>")
