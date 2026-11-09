@@ -2,7 +2,8 @@ import Foundation
 import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Viewer/PageViewer.Input.cs and PageViewer.Placement.cs: the pointer and the keyboard on the pages.
-// Hand pans, Select selects text, a pointer tool takes the button from both; a click on a link follows it in either mode.
+// Hand pans, Select selects text, a pointer tool takes the button from both where it says it has a use for the press; a click on
+// a link follows it in either mode.
 // Points are in the viewer's view (the area the pages show in, y down).
 
 /// A key the pages answer to.
@@ -22,8 +23,9 @@ extension ViewerModel {
         last = at
         moved = false
         downLink = hit.flatMap { link(at: $0.page, $0.point) }
-        if let tool {
-            guard let over = hit else { return }
+        if tool != nil, hit == nil {
+            return
+        } else if let tool, let over = hit, tool.takes(pointer(over.page, over.point, at, clicks, true, modifiers)) {
             drag = .tool
             dragPage = over.page
             tool.press(pointer(over.page, over.point, at, clicks, true, modifiers))
@@ -68,6 +70,12 @@ extension ViewerModel {
         if was == .pan || was == .select, !moved, let link = downLink { followLink(link) }
         hover(at, modifiers)
         touching = false
+    }
+
+    /// A tap the tool did not take still follows a link under it.
+    public func followLink(at: ViewPoint) {
+        guard let hit = state.hit(at), let target = link(at: hit.page, hit.point) else { return }
+        followLink(target)
     }
 
     /// Whether the tool wants a finger that lands at `at`; false over no page or with no tool.
