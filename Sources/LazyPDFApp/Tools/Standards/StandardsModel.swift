@@ -35,6 +35,7 @@ public final class StandardsModel: ToolPanelModel {
     var host: ToolHost?
     @ObservationIgnored private var watch: ObservationWatch?
     @ObservationIgnored private var ticket = 0
+    @ObservationIgnored private var convertedTitle: String?
     @ObservationIgnored private let fonts: FontSource?
 
     public init(fonts: FontSource? = nil) {
@@ -86,6 +87,11 @@ public final class StandardsModel: ToolPanelModel {
         self.host = host
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.clear() })
         clear()
+        // The shell shows the converted copy a moment after it opens it, so its check starts here when it arrives.
+        if let title = convertedTitle, tab.url == nil, tab.title == title {
+            convertedTitle = nil
+            Task { @MainActor [weak self] in await self?.check() }
+        }
     }
 
     public func detach() {
@@ -199,8 +205,13 @@ public final class StandardsModel: ToolPanelModel {
             host.showProblem(Problem(L10n.t("Not converted"), made.refusal ?? L10n.t("The file could not be converted.")))
             return
         }
-        await host.openNew(bytes, title: StandardsText.convertedName(tab.title, level, clean: made.isClean), password: nil, certificate: nil)
+        let title = StandardsText.convertedName(tab.title, level, clean: made.isClean)
+        convertedTitle = title
+        await host.openNew(bytes, title: title, password: nil, certificate: nil)
         host.showNotice(StandardsText.convertedTitle(made), StandardsText.convertedText(made, level), nil)
-        if let now = self.tab, now !== tab { await check() }
+        if let now = self.tab, now !== tab {
+            convertedTitle = nil
+            await check()
+        }
     }
 }
