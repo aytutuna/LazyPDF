@@ -51,6 +51,27 @@ final class ToolDocumentsTests: XCTestCase {
         gate.semaphore.signal()
     }
 
+    func test_cancellingStopsAJobThatChecksItsTask() async throws {
+        let token = CancelToken()
+        let stopped = Gate()
+        Task {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            token.cancel()
+        }
+
+        _ = try? await ToolDocuments.run(token) { () -> Int in
+            while true {
+                do { try Task.checkCancellation() } catch {
+                    stopped.semaphore.signal()
+                    throw error
+                }
+                Thread.sleep(forTimeInterval: 0.01)
+            }
+        }
+
+        XCTAssertEqual(stopped.semaphore.wait(timeout: .now() + 10), .success)
+    }
+
     func test_aCopyIsTheFileAsItWasWhenTheCopyWasMade() throws {
         let rig = try ToolRig()
         let copy = OpenCopy.of(rig.tab, rig.host)

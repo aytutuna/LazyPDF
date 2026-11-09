@@ -23,12 +23,12 @@ public enum ToolDocuments {
 
 extension ToolDocuments {
     /// Runs `work` off the main actor and gives its result, or throws CancellationError as soon as `token` is cancelled,
-    /// without waiting for the job to notice: `WaitAsync(token)` of the Windows tools. The job goes on until it looks at the
-    /// token itself, so it must still do that between steps.
+    /// without waiting for the job to notice: `WaitAsync(token)` of the Windows tools. The job's task is cancelled at the same
+    /// time, which the engine's `Task.checkCancellation` calls see; the job must still look at the token between steps.
     public static func run<T>(_ token: CancelToken, _ work: @escaping @Sendable () throws -> T) async throws -> T {
         try await withCheckedThrowingContinuation { continuation in
             let once = Once(continuation)
-            Task.detached {
+            let job = Task.detached {
                 do {
                     once.resume(returning: try work())
                 } catch {
@@ -37,6 +37,7 @@ extension ToolDocuments {
             }
             Task.detached {
                 while !token.isCancelled && !once.isDone { try? await Task.sleep(nanoseconds: 50_000_000) }
+                if token.isCancelled { job.cancel() }
                 once.resume(throwing: CancellationError())
             }
         }
