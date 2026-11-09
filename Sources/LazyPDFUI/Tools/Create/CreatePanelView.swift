@@ -147,11 +147,16 @@ struct CreatePanelView: View {
 
 /// The Create dialog of the Home tile: the panel with Create and Cancel under it. Create closes it, then makes the document.
 public struct CreateSheet: View {
-    let model: CreateModel
+    @State private var model: CreateModel
     let close: () -> Void
 
-    public init(model: CreateModel, close: @escaping () -> Void) {
-        self.model = model
+    public init(host: AppViewModel, close: @escaping () -> Void) {
+        _model = State(initialValue: CreateModel(host: host, codec: ImageIOCodec(), fonts: CoreTextFontSource()))
+        self.close = close
+    }
+
+    init(model: CreateModel, close: @escaping () -> Void) {
+        _model = State(initialValue: model)
         self.close = close
     }
 
