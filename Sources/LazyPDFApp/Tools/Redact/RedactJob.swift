@@ -15,7 +15,7 @@ public struct Cover: Equatable, Sendable {
 }
 
 /// A kind of data the finders know by its shape.
-public struct DataKind: Sendable {
+public struct DataKind {
     public let name: String
     public let kind: RedactionKind
 
