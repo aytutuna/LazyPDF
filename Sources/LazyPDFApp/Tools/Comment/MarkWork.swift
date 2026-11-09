@@ -51,19 +51,23 @@ public final class MarkWork {
         let document = tab.document
         var result: T?
         var failure: Error?
+        var launched = false
         running = true
         do {
             try await host.runBusy(text) { token in
+                launched = true
                 result = try await ToolDocuments.run(token) {
                     defer { ended.set() }
                     try token.throwIfCancelled()
                     return try job(document, token)
                 }
             }
+        } catch is CancellationError {
+            result = nil
         } catch {
             failure = error
         }
-        while !ended.isSet { try? await Task.sleep(nanoseconds: 10_000_000) }
+        while launched && !ended.isSet { try? await Task.sleep(nanoseconds: 10_000_000) }
         running = false
         if let failure {
             try? tab.session.discard()
