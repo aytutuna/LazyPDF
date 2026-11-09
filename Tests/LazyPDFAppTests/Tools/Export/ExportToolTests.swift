@@ -11,14 +11,14 @@ import LazyPDFKit
 
 @MainActor
 private final class StubExporter: ToolFileExporter {
-    var answer: [URL]?
+    var answer: ToolExport?
     private(set) var offered: [[URL]] = []
     private(set) var contents: [String: Int] = [:]
 
-    func export(_ files: [URL]) async -> [URL] {
+    func export(_ files: [URL]) async -> ToolExport {
         offered.append(files)
         for file in files { contents[file.lastPathComponent] = (try? Data(contentsOf: file))?.count ?? -1 }
-        return answer ?? files.map { URL(fileURLWithPath: "/Users/me/Documents").appendingPathComponent($0.lastPathComponent) }
+        return answer ?? ToolExport(saved: files.map { URL(fileURLWithPath: "/Users/me/Documents").appendingPathComponent($0.lastPathComponent) })
     }
 }
 
@@ -342,7 +342,7 @@ final class ExportModelTests: XCTestCase {
     func test_whenThePersonGivesUpNothingIsSaidAndNothingChanges() async throws {
         let f = ViewModelFixture(self)
         let exporter = StubExporter()
-        exporter.answer = []
+        exporter.answer = ToolExport()
         let (model, tab, _) = try await attached(f, report(2), exporter)
         let revision = tab.revision
 
@@ -351,6 +351,55 @@ final class ExportModelTests: XCTestCase {
         XCTAssertNil(f.vm.message)
         XCTAssertEqual(tab.revision, revision)
         XCTAssertFalse(f.vm.canUndo)
+    }
+
+    func test_aCopyThatFailedIsAProblemNotSilence() async throws {
+        let f = ViewModelFixture(self)
+        let exporter = StubExporter()
+        exporter.answer = ToolExport(failed: [URL(fileURLWithPath: "/Volumes/Locked/a.docx")], denied: true)
+        let (model, _, _) = try await attached(f, report(1), exporter)
+
+        await model.action!.run()
+
+        XCTAssertEqual(f.vm.message?.isError, true)
+        XCTAssertEqual(f.vm.message?.title, "Not exported")
+        XCTAssertEqual(f.vm.message?.text, "The system does not let Lazy PDF write to Locked. Pick another folder.")
+    }
+
+    func test_aDiskThatCannotTakeTheFileSaysTheFileCouldNotBeWritten() async throws {
+        let f = ViewModelFixture(self)
+        let exporter = StubExporter()
+        exporter.answer = ToolExport(failed: [URL(fileURLWithPath: "/Users/me/Documents/a.docx")])
+        let (model, _, _) = try await attached(f, report(1), exporter)
+
+        await model.action!.run()
+
+        XCTAssertEqual(f.vm.message?.title, "Not exported")
+        XCTAssertTrue(f.vm.message?.text.hasPrefix("a.docx could not be written.") == true)
+    }
+
+    func test_filesThatWereNotAllSavedSayHowManyWereNot() async throws {
+        let f = ViewModelFixture(self)
+        let exporter = StubExporter()
+        exporter.answer = ToolExport(saved: [URL(fileURLWithPath: "/Users/me/Documents/a page 1.png")],
+                                     failed: [URL(fileURLWithPath: "/Users/me/Documents/a page 2.png")])
+        let (model, _, _) = try await attached(f, report(2), exporter)
+        model.format = .pictures
+
+        await model.action!.run()
+
+        XCTAssertEqual(f.vm.message?.title, "Exported")
+        XCTAssertTrue(f.vm.message?.text.contains("1 file could not be saved.") == true)
+    }
+
+    func test_whatAKillLeftInTheWorkFolderGoesAtLaunch() throws {
+        let stray = Exporter.workFolder.appendingPathComponent("left-behind", isDirectory: true)
+        try FileManager.default.createDirectory(at: stray, withIntermediateDirectories: true)
+        try Data([1]).write(to: stray.appendingPathComponent("a.docx"))
+
+        Exporter.deleteLeftovers()
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: stray.path))
     }
 
     func test_aFileWithNoPicturesSaysSo() async throws {
@@ -442,5 +491,53 @@ final class ExportModelTests: XCTestCase {
 
         XCTAssertEqual(tab.revision, revision)
         XCTAssertFalse(f.vm.canUndo)
+    }
+}
+
+final class ExportCopyTests: XCTestCase {
+    func test_aSecondExportToTheSameFolderKeepsTheFirst() throws {
+        let dir = TempDir(self)
+        let first = dir.file("work/a page 1.png", [1])
+        let target = dir.sub("out")
+        try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
+
+        let once = ExportCopy.into(target, [first])
+        let twice = ExportCopy.into(target, [first])
+
+        XCTAssertEqual(once.saved.map(\.lastPathComponent), ["a page 1.png"])
+        XCTAssertEqual(twice.saved.map(\.lastPathComponent), ["a page 1 (2).png"])
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: target.path).sorted(), ["a page 1 (2).png", "a page 1.png"])
+    }
+
+    func test_aFileAlreadyInTheFolderIsNotTouched() throws {
+        let dir = TempDir(self)
+        let mine = dir.file("out/a.docx", [9, 9, 9])
+        let made = dir.file("work/a.docx", [1])
+
+        let result = ExportCopy.into(dir.sub("out"), [made])
+
+        XCTAssertEqual(try Data(contentsOf: mine), Data([9, 9, 9]))
+        XCTAssertEqual(result.saved.map(\.lastPathComponent), ["a (2).docx"])
+    }
+
+    func test_aNamedFileReplacesTheOneThePanelAskedAbout() throws {
+        let dir = TempDir(self)
+        let old = dir.file("out/a.docx", [9])
+        let made = dir.file("work/a.docx", [1, 2])
+
+        let result = ExportCopy.replace(made, with: old)
+
+        XCTAssertEqual(result.saved, [old])
+        XCTAssertEqual(try Data(contentsOf: old), Data([1, 2]))
+    }
+
+    func test_aFolderThatIsNotThereReportsEveryFileAsFailed() {
+        let dir = TempDir(self)
+        let made = dir.file("work/a.docx", [1])
+
+        let result = ExportCopy.into(dir.sub("gone"), [made])
+
+        XCTAssertTrue(result.saved.isEmpty)
+        XCTAssertEqual(result.failed.map(\.lastPathComponent), ["a.docx"])
     }
 }

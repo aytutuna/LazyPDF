@@ -56,6 +56,7 @@ final class IOSShell {
         // There is no exit to clean up at: what a kill left behind, copies of attachments among it, goes at launch.
         try? FileManager.default.removeItem(at: Self.staging)
         AttachmentsModel.deleteOpenedCopies(in: folders.openedAttachments)
+        Exporter.deleteLeftovers()
     }
 
     var commands: ShellCommands {

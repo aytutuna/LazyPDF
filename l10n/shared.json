@@ -3019,6 +3019,13 @@
   "{0} could not be written. Check that the disk has room and that nothing else has the file open.": {
     "tr": "{0} yazılamadı. Diskte yer olduğunu ve dosyayı başka bir şeyin açık tutmadığını denetleyin."
   },
+  "The system does not let Lazy PDF write to {0}. Pick another folder.": {
+    "tr": "Sistem, Lazy PDF'nin {0} konumuna yazmasına izin vermiyor. Başka bir klasör seçin."
+  },
+  "{0} file could not be saved.": {
+    "tr": "{0} dosya kaydedilemedi.",
+    "other": "{0} files could not be saved."
+  },
   "Make a PDF from blank pages, pictures, text or the clipboard.": {
     "tr": "Boş sayfalardan, resimlerden, metinden veya panodan PDF yapın."
   },

@@ -11,9 +11,9 @@ private final class StubServices: ToolFilePicker, ToolFileExporter, ToolClipboar
     func pickFiles(_ kinds: [ToolFileKind], multiple: Bool) async -> [ToolFile] { [ToolFile(url: URL(fileURLWithPath: "/tmp/a.pdf"))] }
     func pickFolder() async -> ToolFile? { ToolFile(url: URL(fileURLWithPath: "/tmp")) }
 
-    func export(_ files: [URL]) async -> [URL] {
+    func export(_ files: [URL]) async -> ToolExport {
         exported.append(files)
-        return files
+        return ToolExport(saved: files)
     }
 
     func pictureFile() -> [UInt8]? { [1, 2, 3] }
@@ -31,7 +31,8 @@ final class ToolServicesTests: XCTestCase {
 
         XCTAssertTrue(files.isEmpty)
         XCTAssertNil(folder)
-        XCTAssertTrue(saved.isEmpty)
+        XCTAssertTrue(saved.saved.isEmpty)
+        XCTAssertTrue(saved.failed.isEmpty)
         XCTAssertNil(host.clipboard.pictureFile())
         XCTAssertNil(host.clipboard.text())
     }
@@ -47,7 +48,7 @@ final class ToolServicesTests: XCTestCase {
         let files = await f.vm.filePicker.pickFiles([.certificate], multiple: false)
         XCTAssertEqual(files.map { $0.url.lastPathComponent }, ["a.pdf"])
         let saved = await f.vm.fileExporter.export([URL(fileURLWithPath: "/tmp/b.pdf")])
-        XCTAssertEqual(saved.map(\.lastPathComponent), ["b.pdf"])
+        XCTAssertEqual(saved.saved.map(\.lastPathComponent), ["b.pdf"])
         XCTAssertEqual(f.vm.clipboard.text(), "pasted")
         XCTAssertEqual(f.vm.clipboard.pictureFile() ?? [], [1, 2, 3])
     }

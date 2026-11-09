@@ -21,11 +21,11 @@ final class IOSToolServices: ToolFilePicker, ToolFileExporter, ToolClipboard {
         return await present(picker).first.map { ToolFile(url: $0.url, access: $0.access) }
     }
 
-    func export(_ files: [URL]) async -> [URL] {
-        if files.isEmpty { return [] }
+    func export(_ files: [URL]) async -> ToolExport {
+        if files.isEmpty { return ToolExport() }
         let saved = await present(UIDocumentPickerViewController(forExporting: files, asCopy: true))
         for file in saved { file.access?.stop() }
-        return saved.map(\.url)
+        return ToolExport(saved: saved.map(\.url))
     }
 
     func pictureFile() -> [UInt8]? {

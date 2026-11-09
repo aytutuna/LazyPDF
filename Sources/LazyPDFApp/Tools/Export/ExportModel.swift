@@ -76,7 +76,7 @@ public final class ExportModel: ToolPanelModel {
             let options = options
             let source = Exporter.source(tab, host, codec: codec)
             let makeRenderer = renderers
-            let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lazypdf-export-" + UUID().uuidString, isDirectory: true)
+            let folder = Exporter.workFolder.appendingPathComponent(UUID().uuidString, isDirectory: true)
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             defer { try? FileManager.default.removeItem(at: folder) }
 
@@ -101,13 +101,20 @@ public final class ExportModel: ToolPanelModel {
                 tellNothingWasWritten(result, options, host)
                 return
             }
-            let saved = await host.fileExporter.export(result.files)
-            guard let first = saved.first else { return }
+            let outcome = await host.fileExporter.export(result.files)
+            let saved = outcome.saved
+            guard let first = saved.first else {
+                if let failed = outcome.failed.first { host.showProblem(ExportProblems.notSaved(failed, denied: outcome.denied)) }
+                return
+            }
 
             let place = options.toFolder ? first.deletingLastPathComponent() : first
             var text = saved.count == 1 && !options.toFolder
                 ? L10n.t("Saved as {0}.", first.lastPathComponent)
                 : L10n.plural(saved.count, one: "Saved {0} file in {1}.", other: "Saved {0} files in {1}.", Self.leaf(place))
+            if !outcome.failed.isEmpty {
+                text += " " + L10n.plural(outcome.failed.count, one: "{0} file could not be saved.", other: "{0} files could not be saved.")
+            }
             if result.skipped > 0 {
                 text += " " + L10n.plural(result.skipped, one: "{0} page could not be drawn.", other: "{0} pages could not be drawn.")
             }
@@ -142,6 +149,16 @@ public final class ExportModel: ToolPanelModel {
 }
 
 enum ExportProblems {
+    // The target is a place the person picked, so the message names it; the system does not say more than denied or not.
+    static func notSaved(_ target: URL, denied: Bool) -> Problem {
+        if denied {
+            return Problem(L10n.t("Not exported"), L10n.t("The system does not let Lazy PDF write to {0}. Pick another folder.",
+                                                          ExportModel.leaf(target.deletingLastPathComponent())))
+        }
+        return Problem(L10n.t("Not exported"),
+                       L10n.t("{0} could not be written. Check that the disk has room and that nothing else has the file open.", target.lastPathComponent))
+    }
+
     static func failed(_ error: Error, _ name: String) -> Problem {
         if error is PdfReadException {
             return Problem(L10n.t("Too large to export"), L10n.t("{0} is too big for this format. Export fewer pages or pick another format.", name))
