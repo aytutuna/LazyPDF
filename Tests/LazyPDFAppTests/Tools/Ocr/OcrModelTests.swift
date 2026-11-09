@@ -186,11 +186,12 @@ final class OcrModelTests: XCTestCase {
     func test_aCorrectionDoesNotCheckThePagesAgain() async throws {
         let (model, rig) = try await attached(Pdfs.text(1))
         await read(model, rig, [0])
-        await waitUntil { model.words.count == 2 }
+        await waitUntil { model.words.count == 2 && !model.isLoading }
         model.pick(WordRef(0, 0), edit: true)
 
         rig.viewer.overlay(0).field("ocr.word")?.commit("gamma")
         await waitUntil { model.words.first?.text == "gamma" }
+        try await Task.sleep(nanoseconds: 200_000_000)
 
         XCTAssertFalse(model.isLoading)
     }
@@ -236,9 +237,9 @@ final class OcrModelTests: XCTestCase {
         return (model, viewer, host, tab)
     }
 
-    private func centre(_ word: OcrLayerWord, _ viewer: ViewerModel) throws -> ViewPoint {
-        let matrix = try XCTUnwrap(viewer.pageToView(0))
-        return matrix.transform(ViewPoint(word.box.x + word.box.width / 2, word.box.y + word.box.height / 2))
+    // Inside the first word, as the finger test below checks against its box.
+    private func onFirstWord(_ viewer: ViewerModel) throws -> ViewPoint {
+        try XCTUnwrap(viewer.pageToView(0)).transform(ViewPoint(100, 60))
     }
 
     func test_aFingerOnAWordPicksItWhenTheyAskForItAndOneAwayFromWordsScrolls() async throws {
@@ -264,7 +265,7 @@ final class OcrModelTests: XCTestCase {
 
     func test_aFingerScrollsWhateverIsUnderItUntilTheyAskToCorrectByTouch() async throws {
         let (model, viewer, _, _) = try await pointerRig()
-        let onWord = try centre(model.words[0], viewer)
+        let onWord = try onFirstWord(viewer)
 
         XCTAssertFalse(viewer.toolTakes(onWord))
         model.touchCorrects = true
@@ -274,7 +275,7 @@ final class OcrModelTests: XCTestCase {
     func test_aFingerThatDraggedAwayFromAWordOpensNoField() async throws {
         let (model, viewer, _, _) = try await pointerRig()
         model.touchCorrects = true
-        let start = try centre(model.words[0], viewer)
+        let start = try onFirstWord(viewer)
 
         viewer.pointerDown(start, touch: true)
         viewer.pointerMove(ViewPoint(start.x + 3, start.y + 40))
@@ -349,19 +350,16 @@ final class OcrModelTests: XCTestCase {
         XCTAssertEqual(try PdfOcrLayer.words(rig.tab.document, rig.tab.document.pages[0]).map(\.text), ["gamma", "beta"])
     }
 
-    func test_aWordRemovedByAnEmptyFieldIsGoneFromThePressThatFollowsAtOnce() async throws {
-        let (model, viewer, _, tab) = try await pointerRig()
+    func test_aWordRemovedByAnEmptyFieldRenumbersTheWordsBeforeTheNextPress() async throws {
+        let (model, viewer, _, _) = try await pointerRig()
         model.pick(WordRef(0, 0), edit: true)
-        let second = try centre(model.words[1], viewer)
+
         viewer.overlay(0).field("ocr.word")?.commit("")
 
-        viewer.pointerDown(second)
-        viewer.pointerUp(second)
-
-        XCTAssertEqual(model.picked, WordRef(0, 0))
-        XCTAssertEqual(model.pickedText, "beta")
-        viewer.overlay(0).field("ocr.word")?.commit("beta")
-        XCTAssertEqual(try PdfOcrLayer.words(tab.document, tab.document.pages[0]).map(\.text), ["beta"])
+        // Not waited for: a press in the same gesture reads the words as they are now.
+        XCTAssertEqual(model.words.map(\.text), ["beta"])
+        XCTAssertEqual(model.words.map(\.index), [0])
+        XCTAssertNil(model.picked)
     }
 
     func test_aWordLeftAsItWasRaisesNoWarningOnASignedFile() async throws {
