@@ -22,7 +22,7 @@ jobs:
       - name: Build
         run: swift build
       - name: Test
-        run: swift test --parallel --filter "Protect|PasswordStrength|RecipientSource|Redact|MarkList|Standards|ConvertJob|PdfARows"
+        run: swift test --parallel --filter "Protect|PasswordStrength|RecipientSource|Redact|MarkList|Standards|ConvertJob|PdfARows|Certificate|SigningFailure|SigningSettings"
 
   linux:
     # The engine needs Foundation alone, so the runner's own Swift builds and tests it.
@@ -34,7 +34,7 @@ jobs:
       - name: Build
         run: swift build
       - name: Test
-        run: swift test --parallel --filter "Protect|PasswordStrength|RecipientSource|Redact|MarkList|Standards|ConvertJob|PdfARows"
+        run: swift test --parallel --filter "Protect|PasswordStrength|RecipientSource|Redact|MarkList|Standards|ConvertJob|PdfARows|Certificate|SigningFailure|SigningSettings"
 
   apps:
     # The Mac app and the iPhone and iPad app are Xcode projects written by XcodeGen from mac/project.yml and ios/project.yml.
