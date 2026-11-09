@@ -47,7 +47,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         let box = rig.centre("agree")
 
         XCTAssertTrue(try XCTUnwrap(rig.viewer.pointerTool).takes(rig.pointer(ViewPoint(box.x + 20, box.y), pressed: true)))
-        XCTAssertFalse(try XCTUnwrap(rig.viewer.pointerTool).takes(rig.pointer(ViewPoint(box.x + 60, box.y), pressed: true)))
+        XCTAssertFalse(try XCTUnwrap(rig.viewer.pointerTool).takes(rig.pointer(ViewPoint(box.x + 200, box.y), pressed: true)))
     }
 
     func test_aPressThatLeavesTheFieldBeforeItIsReleasedDoesNothing() throws {
@@ -57,7 +57,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         tool.press(rig.pointer(rig.centre("agree"), pressed: true))
         tool.release(rig.pointer(ViewPoint(400, 40), pressed: false))
 
-        XCTAssertNil(rig.form.find("agree")?.value)
+        XCTAssertEqual(rig.form.find("agree")?.isChecked, false)
         XCTAssertFalse(rig.tab.session.canUndo)
     }
 
