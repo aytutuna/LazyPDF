@@ -59,6 +59,9 @@ public protocol ToolHost: AnyObject {
     /// True while a tool changes the document off the main actor and nothing else may touch it.
     var isDocumentBusy: Bool { get }
 
+    /// True while the info bar shows a notice with a button, which a tool that asked a question through it may be waiting on.
+    var isNoticeWaiting: Bool { get }
+
     /// The certificate of an identity the file was opened with, as the engine checks signatures with it; nil when the
     /// platform cannot give it.
     func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate?
@@ -95,6 +98,8 @@ extension ToolHost {
     public func signingIdentities() -> [CertificateChoice] { [] }
 
     public var isDocumentBusy: Bool { false }
+
+    public var isNoticeWaiting: Bool { true }
 
     public func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate? { nil }
 
@@ -219,4 +224,6 @@ extension AppViewModel: ToolHost {
     public var fontSource: FontSource? { opener.fonts }
 
     public var imageCodec: ImageCodec? { opener.codec }
+
+    public var isNoticeWaiting: Bool { message?.action != nil }
 }

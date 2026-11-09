@@ -25,7 +25,10 @@ final class FormsHost: ToolHost {
     var notices: [(title: String, text: String, action: NoticeAction?)] = []
     var statuses: [String] = []
     var signing: [String] = []
+    var noticeWaits = true
     let picker = FormsPicker()
+
+    var isNoticeWaiting: Bool { noticeWaits }
 
     var filePicker: ToolFilePicker { picker }
     var fileExporter: ToolFileExporter { picker }

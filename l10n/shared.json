@@ -6741,5 +6741,8 @@
   },
   "Password of the .p12 file": {
     "tr": ".p12 dosyasının parolası"
+  },
+  "Choose a value for {0} in the panel.": {
+    "tr": "Panelde {0} için bir değer seçin."
   }
 }

@@ -57,6 +57,57 @@ final class FormsModelTests: XCTestCase {
         XCTAssertNil(rig.form.find("city")?.value)
     }
 
+    func test_aListThatTakesOneChoiceReplacesItAndOneThatTakesSeveralKeepsTheRest() throws {
+        let rig = try FormsRig()
+        try rig.change("Add form field") { form in
+            try form.addField(FieldSpec(.listBox, "size", 0, PdfRect(300, 420, 400, 490), options: [FieldOption("A"), FieldOption("B"), FieldOption("C")]))
+        }
+        func row(_ name: String) throws -> FieldRow { try XCTUnwrap(rig.model.rows.first { $0.name == name }) }
+        XCTAssertFalse(try row("size").multiSelect)
+        rig.model.setChoice(try row("size"), FieldOption("B"), true)
+        rig.model.setChoice(try row("size"), FieldOption("C"), true)
+        XCTAssertEqual(rig.form.find("size")?.selected, ["C"])
+
+        XCTAssertTrue(try row("langs").multiSelect)
+        rig.model.setChoice(try row("langs"), FieldOption("English"), true)
+        rig.model.setChoice(try row("langs"), FieldOption("German"), true)
+        XCTAssertEqual(rig.form.find("langs")?.selected, ["English", "German"])
+        rig.model.setChoice(try row("langs"), FieldOption("English"), false)
+        XCTAssertEqual(rig.form.find("langs")?.selected, ["German"])
+    }
+
+    func test_aFreeValueIsTypedIntoAnEditableDropDownAndShownInItsRow() throws {
+        let rig = try FormsRig()
+        try rig.change("Change typing in the list") { try $0.setFlag(try XCTUnwrap($0.find("city")), .edit, true) }
+        let city = try XCTUnwrap(rig.model.rows.first { $0.name == "city" })
+        XCTAssertTrue(city.isEditable)
+
+        rig.model.typeRow(city, "Bursa")
+
+        XCTAssertEqual(rig.form.find("city")?.value, "Bursa")
+        XCTAssertEqual(rig.model.rows.first { $0.name == "city" }?.value, "Bursa")
+    }
+
+    func test_aFieldsHintIsItsLabelWhenItHasOne() throws {
+        let rig = try FormsRig()
+        XCTAssertEqual(rig.model.rows[0].label, "name")
+        try rig.change("Change field hint") { $0.setTooltip(try XCTUnwrap($0.find("name")), "Date of birth") }
+
+        let row = rig.model.rows[0]
+
+        XCTAssertEqual(row.label, "Date of birth")
+        XCTAssertEqual(row.summary, "Date of birth, Text field, page 1")
+        XCTAssertEqual(row.name, "name")
+    }
+
+    func test_aTapOnAListOnThePageSaysWhereItsChoicesAre() throws {
+        let rig = try FormsRig()
+
+        rig.tap(rig.centre("langs"))
+
+        XCTAssertEqual(rig.host.statuses.last, "Choose a value for langs in the panel.")
+    }
+
     func test_aCheckBoxAndAChoiceAreSetFromTheirRows() throws {
         let rig = try FormsRig()
 
@@ -87,6 +138,30 @@ final class FormsModelTests: XCTestCase {
         rig.model.typeRow(rig.model.rows[1], "12")
         XCTAssertEqual(rig.host.notices.count, 1)
         XCTAssertEqual(rig.form.find("code")?.value, "12")
+    }
+
+    func test_handingInStaysFalseWhileTheSignedQuestionWaitsForItsAnswer() throws {
+        let rig = try FormsRig(FormPdfs.signedForm())
+        rig.tap(rig.centre("name"))
+        try XCTUnwrap(rig.field("name")).typed("Ada")
+
+        XCTAssertFalse(rig.model.handIn())
+        XCTAssertFalse(rig.model.handIn())
+        rig.host.notices[0].action?.run()
+
+        XCTAssertEqual(rig.form.find("name")?.value, "Ada")
+        XCTAssertTrue(rig.model.handIn())
+    }
+
+    func test_handingInGoesOnOnceTheSignedQuestionIsDismissed() throws {
+        let rig = try FormsRig(FormPdfs.signedForm())
+        rig.tap(rig.centre("name"))
+        try XCTUnwrap(rig.field("name")).typed("Ada")
+        XCTAssertFalse(rig.model.handIn())
+
+        rig.host.noticeWaits = false
+
+        XCTAssertTrue(rig.model.handIn())
     }
 
     func test_handingInReportsAPendingSignedQuestion() throws {
@@ -224,6 +299,66 @@ final class FormsModelTests: XCTestCase {
         let rig = try FormsRig(bytes)
         rig.model.setDesigning(true)
         return rig
+    }
+
+    func test_theCardIsWrittenWhenThePanelIsHandedIn() throws {
+        let rig = try designing()
+        rig.model.select("code", 0)
+        rig.model.hintDraft = "Four digits"
+        rig.model.cardFocus = .hint
+
+        XCTAssertTrue(rig.model.handIn())
+
+        XCTAssertEqual(rig.form.find("code")?.tooltip, "Four digits")
+        XCTAssertEqual(rig.tab.session.undoLabel, "Change field hint")
+    }
+
+    func test_theCardIsWrittenBeforeAnotherFieldIsSelected() throws {
+        let rig = try designing()
+        rig.model.select("code", 0)
+        rig.model.hintDraft = "Four digits"
+        rig.model.cardFocus = .hint
+
+        rig.model.select("name", 0)
+
+        XCTAssertEqual(rig.form.find("code")?.tooltip, "Four digits")
+        XCTAssertEqual(rig.model.hintDraft, "")
+        XCTAssertEqual(rig.model.selected, "name")
+    }
+
+    func test_theCardIsWrittenBeforeFillingComesBack() throws {
+        let rig = try designing()
+        rig.model.select("code", 0)
+        rig.model.hintDraft = "Four digits"
+        rig.model.cardFocus = .hint
+
+        rig.model.setDesigning(false)
+
+        XCTAssertEqual(rig.form.find("code")?.tooltip, "Four digits")
+        XCTAssertFalse(rig.model.designing)
+    }
+
+    func test_aFieldBeingTypedInIsInTheFileBeforeItIsExportedResetOrLeftForEditing() async throws {
+        let rig = try FormsRig()
+        rig.tap(rig.centre("name"))
+        try XCTUnwrap(rig.field("name")).typed("Ada")
+
+        await rig.model.exportData()
+
+        let text = String(decoding: try XCTUnwrap(rig.host.picker.exported.first).bytes, as: UTF8.self)
+        XCTAssertTrue(text.contains("Ada"))
+
+        rig.tap(rig.centre("code"))
+        try XCTUnwrap(rig.field("code")).typed("12")
+        await rig.model.resetForm()
+        XCTAssertNil(rig.form.find("code")?.value)
+        XCTAssertNil(rig.form.find("name")?.value)
+
+        rig.tap(rig.centre("code"))
+        try XCTUnwrap(rig.field("code")).typed("34")
+        rig.model.setDesigning(true)
+        XCTAssertEqual(rig.form.find("code")?.value, "34")
+        XCTAssertNil(rig.field("code"))
     }
 
     func test_editingTakesThePointerAndFillingGivesItBack() throws {
@@ -378,6 +513,19 @@ final class FormsModelTests: XCTestCase {
 
         XCTAssertEqual(rig.form.getTabOrder(0), .column)
         XCTAssertEqual(rig.model.tabOrder, .column)
+    }
+
+    func test_proposalsForAPageThatWentAreDroppedAndNotAdded() throws {
+        let rig = try designing()
+        let late = FieldProposal(5, PdfRect(60, 300, 200, 320), .text, "late", nil)
+        rig.model.found = [FoundRow(proposal: late)]
+        rig.model.foundShown = true
+
+        rig.model.reload()
+
+        XCTAssertTrue(rig.model.found.isEmpty)
+        XCTAssertFalse(rig.model.foundShown)
+        XCTAssertThrowsError(try FormEdits.addFound(rig.form, [late])) { XCTAssertTrue($0 is ArgumentException) }
     }
 
     func test_blanksAreFoundAndTheCheckedOnesAdded() async throws {

@@ -55,6 +55,10 @@ public final class FormsModel: ToolPanelModel {
     // Form data files.
     public var dataFormat = DataFormat.fdf
 
+    /// The box of the card that has the keyboard, which the view reports; what is typed in it goes into the file when the panel
+    /// is handed in, since a view that goes away does not report a lost focus.
+    @ObservationIgnored public var cardFocus: CardProperty?
+
     var tab: DocumentTab?
     var host: ToolHost?
     var viewer: DocumentViewer?
@@ -67,7 +71,8 @@ public final class FormsModel: ToolPanelModel {
     @ObservationIgnored var revision = 0
     @ObservationIgnored var loading = false
     @ObservationIgnored var signedOk = false
-    @ObservationIgnored var signedAsked = false
+    @ObservationIgnored var signedPending = false
+    @ObservationIgnored var loaded: PdfDocument?
     @ObservationIgnored private var fileWatch: ObservationWatch?
     @ObservationIgnored private var viewWatch: ObservationWatch?
 
@@ -104,7 +109,8 @@ public final class FormsModel: ToolPanelModel {
         found = []
         foundShown = false
         signedOk = false
-        signedAsked = false
+        signedPending = false
+        cardFocus = nil
         isWorking = false
         activeRow = nil
         defer { if !designing { syncTool() } }
@@ -135,33 +141,48 @@ public final class FormsModel: ToolPanelModel {
         host = nil
     }
 
+    // Waits while a signed file's question is on the info bar, since the text it asks about is held only by its button.
     public func handIn() -> Bool {
-        signedAsked = false
+        if signedPending {
+            if host?.isNoticeWaiting == true { return false }
+            signedPending = false
+        }
+        commitCard()
         fill?.flush()
-        return !signedAsked
+        return !signedPending
     }
 
-    // The viewer hears of a changed file before the panel does; until the panel has read it again its form is the old one.
-    private func viewChanged() {
-        guard let tab, let viewer, tab.revision == revision else { return }
+    // The viewer hears of a changed file before the panel does; until the panel has read it again its form is the old one. An edit
+    // running off the main actor owns the document, so nothing reads it meanwhile; the end of the edit looks again.
+    func viewChanged() {
+        guard let tab, let viewer, tab.revision == revision, !isWorking else { return }
         if designing {
             if viewer.pointerTool !== designTool && canEdit { setDesigning(false) } else { showTabOrder() }
         } else {
+            // A declined press falls through to the viewer's own mode, so the fill tool stays under any pointer the person picks.
+            if viewer.pointerTool == nil && canFillForm { viewer.pointerTool = fillTool }
             fill?.follow()
         }
         frames?.follow()
+    }
+
+    func endWork() {
+        isWorking = false
+        viewChanged()
     }
 
     func reload() {
         guard let tab else { return }
         cached = nil
         revision = tab.revision
+        loaded = tab.document
         let form = self.form
         let open = form.xfa != .dynamic && form.canFill
         canFillForm = open
         canEdit = open && FormEdits.canModify(form.document)
         let made = fieldRows(of: form)
         if made != rows { rows = made }
+        pruneFound(form)
         showSummary(form)
         if let activeRow, !rows.contains(where: { $0.id == activeRow }) { self.activeRow = nil }
         if designing { syncTool() }
@@ -174,8 +195,6 @@ public final class FormsModel: ToolPanelModel {
         }
     }
 
-    // The fill tool is taken when the panel is shown or fill mode is chosen, and not on every reload: a person who picks another
-    // pointer from the toolbar keeps it while the form is filled in from the list.
     private func syncTool() {
         guard let viewer else { return }
         if designing && canEdit {
@@ -188,7 +207,7 @@ public final class FormsModel: ToolPanelModel {
     }
 
     public func setDesigning(_ on: Bool) {
-        guard tab != nil, on != designing else { return }
+        guard tab != nil, on != designing, handIn() else { return }
         designing = on
         selected = nil
         reload()
@@ -213,11 +232,12 @@ public final class FormsModel: ToolPanelModel {
         let page = field.widgets.first?.pageIndex ?? -1
         let kind = FormText.kindName(field.kind)
         let options = field.kind == .radio ? field.widgets.compactMap { ($0.export ?? $0.onState).map { FieldOption($0) } } : field.options
-        return FieldRow(name: field.name, detail: page < 0 ? kind : L10n.t("{0}, page {1}", kind, page + 1), page: page, index: 0,
-                        ordinal: ordinal, kind: field.kind, value: field.value ?? "",
+        return FieldRow(name: field.name, hint: field.tooltip ?? "", detail: page < 0 ? kind : L10n.t("{0}, page {1}", kind, page + 1),
+                        page: page, index: 0, ordinal: ordinal, kind: field.kind, value: field.value ?? "",
                         isOn: field.kind == .checkBox && field.isChecked, selected: field.selected, options: options,
                         canFill: canFillForm && !field.has(.readOnly) && !(field.kind == .signature && field.isSigned),
-                        isRequired: field.has(.required), isSecret: field.has(.password))
+                        isRequired: field.has(.required), isSecret: field.has(.password), multiSelect: field.has(.multiSelect),
+                        isEditable: field.has(.edit))
     }
 
     private func showSummary(_ form: PdfForm) {
@@ -246,6 +266,8 @@ public final class FormsModel: ToolPanelModel {
 
     /// Goes to a field of the list and puts the keyboard in it (filling) or selects it (editing).
     public func focusRow(_ row: FieldRow) {
+        guard !isWorking else { return }
+        commitCard()
         guard let viewer, let widget = field(of: row)?.widgets.first, widget.pageIndex >= 0 else { return }
         let d = viewer.geometry(widget.pageIndex).toDisplay(widget.rect)
         viewer.goToPage(widget.pageIndex)
@@ -283,6 +305,19 @@ public final class FormsModel: ToolPanelModel {
         _ = choose(row.name, exports)
     }
 
+    /// One option of a list turned on or off. A list that takes one choice has the new one replace the old; turning the chosen one
+    /// off is not an answer there, so it does nothing.
+    public func setChoice(_ row: FieldRow, _ option: FieldOption, _ on: Bool) {
+        guard row.canFill else { return }
+        if !row.multiSelect {
+            if on { _ = choose(row.name, [option.export]) }
+            return
+        }
+        var picked = Set(row.chosen)
+        if on { picked.insert(option.export) } else { picked.remove(option.export) }
+        _ = choose(row.name, row.options.map(\.export).filter { picked.contains($0) })
+    }
+
     public func typeRow(_ row: FieldRow, _ text: String) {
         guard row.canFill, text != row.value else { return }
         _ = enter(row.name, text)
@@ -290,7 +325,9 @@ public final class FormsModel: ToolPanelModel {
 
     // A list or drop-down tapped on the page.
     func activate(_ name: String, _ index: Int) {
-        if let row = rows.first(where: { $0.name == name }) { activeRow = row.id }
+        guard let row = rows.first(where: { $0.name == name }) else { return }
+        activeRow = row.id
+        host?.setStatus(L10n.t("Choose a value for {0} in the panel.", row.label))
     }
 
     var view: DocumentViewer { viewer! }
@@ -303,7 +340,12 @@ public final class FormsModel: ToolPanelModel {
     func slop(_ page: Int) -> Double { 24 / max(scale(page), 0.01) }
 
     func fillHit(_ page: Int, _ point: ViewPoint) -> FillSlot? {
-        fill?.hit(page, point, slop: slop(page))
+        isWorking ? nil : fill?.hit(page, point, slop: slop(page))
+    }
+
+    // A finger scrolls where it is not on a field; only a small mark is found a little off.
+    func fillTakes(_ page: Int, _ point: ViewPoint) -> Bool {
+        !isWorking && fill?.hit(page, point, slop: slop(page), exact: true) != nil
     }
 
     func fillActivate(_ slot: FillSlot, at point: ViewPoint) {
@@ -359,11 +401,12 @@ public final class FormsModel: ToolPanelModel {
     // A change to a signed file leaves the signatures not covering what is now in it, and a certified file may forbid the change.
     func signed(_ again: (@MainActor () -> Void)? = nil) -> Bool {
         guard !signedOk, let tab, tab.document.isSigned, let host else { return false }
-        signedAsked = true
+        signedPending = true
         host.showNotice(L10n.t("File is signed"), L10n.t("A change breaks its signatures or its certification. Change it only if that is fine."),
                         NoticeAction(L10n.t("Change anyway")) { [weak self] in
             guard let self else { return }
             self.signedOk = true
+            self.signedPending = false
             if let again { again() } else { self.host?.setStatus(L10n.t("Now make the change again.")) }
         })
         return true
@@ -402,7 +445,7 @@ public final class FormsModel: ToolPanelModel {
     // The panel reads the file again at once, since the tab's own change is only seen on the next turn.
     func afterEdit() {
         cached = nil
-        if let tab, tab.revision != revision { reload() }
+        if let tab, tab.revision != revision || tab.document !== loaded { reload() }
     }
 
     var canFlatten: Bool {
@@ -412,6 +455,7 @@ public final class FormsModel: ToolPanelModel {
     }
 
     func flatten() async {
+        guard handIn() else { return }
         if signed({ [weak self] in Task { await self?.flatten() } }) { return }
         guard let host else { return }
         let burned = await runEdit(L10n.t("Flattening the form"), L10n.t("Flatten form")) { try $0.flatten() }
@@ -419,6 +463,7 @@ public final class FormsModel: ToolPanelModel {
     }
 
     public func resetForm() async {
+        guard handIn() else { return }
         if signed({ [weak self] in Task { await self?.resetForm() } }) { return }
         guard let host else { return }
         let done = await runEdit(L10n.t("Resetting the form"), L10n.t("Reset form")) { try $0.reset() }
@@ -430,7 +475,7 @@ public final class FormsModel: ToolPanelModel {
         guard let tab, let host else { return 0 }
         var done = 0
         isWorking = true
-        defer { isWorking = false }
+        defer { endWork() }
         try? await host.runBusy(busy) { token in
             done = try await guardedAsync { try await FormEdits.applyAsync(tab, fonts, label, token: token, change) } ?? 0
         }
