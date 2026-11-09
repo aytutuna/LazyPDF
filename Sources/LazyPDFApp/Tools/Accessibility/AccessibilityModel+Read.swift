@@ -16,6 +16,7 @@ extension AccessibilityModel {
             let order = (try? await Task.detached { () throws -> String in ReadingOrder.export(try open()) }.value) ?? ""
             if ticket != readTicket { return }
             lines = ReadingLines.of(order)
+            readIndex = nil
             canRead = !lines.isEmpty
             readNote = lines.isEmpty
                 ? L10n.t("The file has no tags, so it has no reading order. Add tags first.")

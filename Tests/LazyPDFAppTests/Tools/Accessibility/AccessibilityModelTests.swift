@@ -297,6 +297,22 @@ final class AccessibilityModelTests: XCTestCase {
         XCTAssertTrue(model.figures.isEmpty)
     }
 
+    func test_cancellingAddTagsLeavesTheFileAsItWas() async throws {
+        let rig = try ToolRig(Pdfs.text(60))
+        let model = AccessibilityModel(speaker: { FakeSpeaker() })
+        model.attach(rig.tab, rig.viewer, CancellingHost())
+        model.setView(.tags)
+        await waitUntil { model.untagged }
+        let before = rig.tab.session.current
+
+        await model.action!.run()
+
+        XCTAssertEqual(rig.tab.session.current, before)
+        XCTAssertFalse(rig.tab.session.canUndo)
+        XCTAssertFalse(model.isTagging)
+        XCTAssertFalse(rig.tab.document.isTagged)
+    }
+
     func test_theReadingOrderIsListedAndReadAloudFromTheStart() async throws {
         let voice = FakeSpeaker()
         let (model, rig) = try await attached(try prose(), speaker: voice)
@@ -358,6 +374,43 @@ final class AccessibilityModelTests: XCTestCase {
         try rig.tab.commit("Properties")
 
         await waitUntil { !model.isReading }
+    }
+
+    func test_theCheckButtonStopsTheReading() async throws {
+        let voice = FakeSpeaker()
+        voice.holdAt = 1
+        let (model, rig) = try await attached(try prose(), speaker: voice)
+        await tag(model, rig)
+        model.setView(.read)
+        await waitUntil { model.canRead }
+        model.toggleReading()
+        await waitUntil { voice.said.count == 1 }
+
+        await model.action!.run()
+
+        await waitUntil { !model.isReading }
+        XCTAssertEqual(model.view, .check)
+        XCTAssertEqual(voice.said.count, 1)
+    }
+
+    func test_aNewDocumentIsReadFromItsFirstLine() async throws {
+        let (model, rig) = try await attached(try prose())
+        await tag(model, rig)
+        model.setView(.read)
+        await waitUntil { model.canRead }
+        model.selectLine(3)
+
+        model.detach()
+        XCTAssertNil(model.readIndex)
+
+        model.attach(rig.tab, rig.viewer, rig.host)
+        model.setView(.read)
+        await waitUntil { model.canRead }
+        model.selectLine(3)
+        try Pdfs.retitle(rig.tab.session, "Other")
+        try rig.tab.commit("Properties")
+
+        await waitUntil { model.readIndex == nil }
     }
 
     func test_aVoiceThatCannotSpeakIsExplained() async throws {
