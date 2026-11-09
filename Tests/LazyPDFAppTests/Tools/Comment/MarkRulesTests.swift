@@ -228,7 +228,7 @@ final class MarkRulesTests: XCTestCase {
     func test_aFileThatIsNotCertifiedTakesComments() throws {
         let f = try CommentFixture()
 
-        XCTAssertTrue(Exchange.canComment(f.document))
+        XCTAssertTrue(CommentExchange.canComment(f.document))
     }
 
     func test_aCertificationSetsWhetherCommentsMayBeAdded() throws {
@@ -238,7 +238,7 @@ final class MarkRulesTests: XCTestCase {
             try certify(f.document, level)
 
             XCTAssertTrue(f.document.isCertified)
-            XCTAssertEqual(Exchange.canComment(f.document), allowed, "level \(String(describing: level))")
+            XCTAssertEqual(CommentExchange.canComment(f.document), allowed, "level \(String(describing: level))")
         }
     }
 
@@ -246,13 +246,13 @@ final class MarkRulesTests: XCTestCase {
         let session = try PdfEditSession.open(Pdfs.restricted(.print), password: "")
         let tab = DocumentTab(session: session, renderer: FakeRenderer(), url: nil, title: "locked.pdf")
 
-        XCTAssertFalse(Exchange.canComment(tab.document))
+        XCTAssertFalse(CommentExchange.canComment(tab.document))
     }
 
     func test_exportingAFileWithNoCommentsCountsNone() throws {
         let f = try CommentFixture()
 
-        XCTAssertEqual(try Exchange.export(f.document, "a.pdf", xfdf: false).count, 0)
+        XCTAssertEqual(try CommentExchange.export(f.document, "a.pdf", xfdf: false).count, 0)
     }
 
     func test_xfdfCountsWhatItCannotHold() throws {
@@ -261,8 +261,8 @@ final class MarkRulesTests: XCTestCase {
         _ = try f.marker.addAttachment(0, markPt(300, 100), "data.csv", [1, 2, 3])
         try f.tab.commit("Marks")
 
-        let xfdf = try Exchange.export(f.document, "a.pdf", xfdf: true)
-        let fdf = try Exchange.export(f.document, "a.pdf", xfdf: false)
+        let xfdf = try CommentExchange.export(f.document, "a.pdf", xfdf: true)
+        let fdf = try CommentExchange.export(f.document, "a.pdf", xfdf: false)
 
         XCTAssertEqual(xfdf.count, 2)
         XCTAssertEqual(xfdf.left, 1)
@@ -274,11 +274,11 @@ final class MarkRulesTests: XCTestCase {
         try source.marker.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], markRed)
         try source.tab.commit("Marks")
         let target = try CommentFixture()
-        let data = try Exchange.export(source.document, nil, xfdf: false).data
-        _ = try Exchange.import(target.document, data, xfdf: false, FakeFonts())
+        let data = try CommentExchange.export(source.document, nil, xfdf: false).data
+        _ = try CommentExchange.import(target.document, data, xfdf: false, FakeFonts())
         try target.tab.commit("Import comments")
 
-        let again = try Exchange.import(target.document, data, xfdf: false, FakeFonts())
+        let again = try CommentExchange.import(target.document, data, xfdf: false, FakeFonts())
 
         XCTAssertEqual(again.imported, 0)
         XCTAssertGreaterThan(again.skipped, 0)
@@ -290,7 +290,7 @@ final class MarkRulesTests: XCTestCase {
         let stop = CancelToken()
         stop.cancel()
 
-        XCTAssertThrowsError(try Exchange.flatten(f.document, stop)) { XCTAssertTrue($0 is CancellationError) }
+        XCTAssertThrowsError(try CommentExchange.flatten(f.document, stop)) { XCTAssertTrue($0 is CancellationError) }
     }
 
     func test_aDiscardedFlattenLeavesTheFileAsItWas() throws {
@@ -298,7 +298,7 @@ final class MarkRulesTests: XCTestCase {
         try f.marker.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], markRed)
         try f.tab.commit("Marks")
 
-        XCTAssertEqual(try Exchange.flatten(f.document, CancelToken()), 1)
+        XCTAssertEqual(try CommentExchange.flatten(f.document, CancelToken()), 1)
         try f.tab.session.discard()
 
         XCTAssertEqual(f.marks().count, 1)
