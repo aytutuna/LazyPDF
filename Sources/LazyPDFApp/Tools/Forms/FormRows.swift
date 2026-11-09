@@ -18,6 +18,7 @@ public struct FieldRow: Equatable, Identifiable {
     public let options: [FieldOption]
     public let canFill: Bool
     public let isRequired: Bool
+    public let isSecret: Bool
 
     public var id: String { "\(ordinal)#\(name)" }
 
