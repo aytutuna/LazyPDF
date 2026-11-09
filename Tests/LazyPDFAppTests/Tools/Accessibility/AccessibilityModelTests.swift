@@ -36,9 +36,10 @@ final class AccessibilityModelTests: XCTestCase {
         return try PdfFromText.create(page, fonts: FakeFonts()).bytes
     }
 
-    private func attached(_ bytes: [UInt8]? = nil, speaker: FakeSpeaker = FakeSpeaker()) async throws -> (model: AccessibilityModel, rig: ToolRig) {
+    private func attached(_ bytes: [UInt8]? = nil, speaker: FakeSpeaker? = nil) async throws -> (model: AccessibilityModel, rig: ToolRig) {
         let rig = try ToolRig(bytes ?? Pdfs.text(2))
-        let model = AccessibilityModel(speaker: { speaker })
+        let voice = speaker ?? FakeSpeaker()
+        let model = AccessibilityModel(speaker: { voice })
         rig.attach(model)
         await waitUntil { !model.rows.isEmpty }
         return (model, rig)
