@@ -30,6 +30,11 @@ extension ToolRegistry {
         case "protect": return ToolPanel(ProtectModel()) { ProtectPanelView(model: $0) }
         case "redact": return ToolPanel(RedactModel(fonts: SystemKit.fonts, images: SystemKit.images)) { RedactPanelView(model: $0) }
         case "standards": return ToolPanel(StandardsModel(fonts: SystemKit.fonts)) { StandardsPanelView(model: $0) }
+        case "certificates":
+            return ToolPanel(CertificatesModel(trust: SignatureTrust(directory: context.folders.settings), fonts: SystemKit.fonts,
+                                               transport: { UrlSessionTransport() }, importIdentity: { try PdfDigitalId.importPfx($0, $1) })) {
+                CertificatesPanelView(model: $0)
+            }
         default: return nil
         }
     }
