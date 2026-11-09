@@ -22,8 +22,8 @@ final class ExchangeTests: XCTestCase {
             let source = try withMarks()
             let target = try CommentFixture()
 
-            let data = try Exchange.export(source.document, "a.pdf", xfdf: xfdf).data
-            let result = try Exchange.import(target.document, data, xfdf: xfdf, FakeFonts())
+            let data = try CommentExchange.export(source.document, "a.pdf", xfdf: xfdf).data
+            let result = try CommentExchange.import(target.document, data, xfdf: xfdf, FakeFonts())
 
             XCTAssertGreaterThanOrEqual(result.imported, 2)
             XCTAssertEqual(result.skipped, 0)
@@ -37,11 +37,11 @@ final class ExchangeTests: XCTestCase {
     func test_importingTheSameFileTwiceAddsNothingTheSecondTime() throws {
         let source = try withMarks()
         let target = try CommentFixture()
-        let data = try Exchange.export(source.document, nil, xfdf: false).data
-        _ = try Exchange.import(target.document, data, xfdf: false, FakeFonts())
+        let data = try CommentExchange.export(source.document, nil, xfdf: false).data
+        _ = try CommentExchange.import(target.document, data, xfdf: false, FakeFonts())
         try target.tab.commit("Import comments")
 
-        let again = try Exchange.import(target.document, data, xfdf: false, FakeFonts())
+        let again = try CommentExchange.import(target.document, data, xfdf: false, FakeFonts())
 
         XCTAssertEqual(again.imported, 0)
     }
@@ -50,38 +50,38 @@ final class ExchangeTests: XCTestCase {
         for xfdf in [false, true] {
             let f = try CommentFixture()
 
-            XCTAssertThrowsError(try Exchange.import(f.document, [1, 2, 3, 4], xfdf: xfdf, FakeFonts())) {
+            XCTAssertThrowsError(try CommentExchange.import(f.document, [1, 2, 3, 4], xfdf: xfdf, FakeFonts())) {
                 XCTAssertTrue($0 is PdfReadException)
             }
         }
     }
 
     func test_theExtensionSaysWhichFormat() {
-        XCTAssertTrue(Exchange.isXfdf("notes.xfdf"))
-        XCTAssertTrue(Exchange.isXfdf("NOTES.XFDF"))
-        XCTAssertFalse(Exchange.isXfdf("notes.fdf"))
-        XCTAssertFalse(Exchange.isXfdf("notes"))
+        XCTAssertTrue(CommentExchange.isXfdf("notes.xfdf"))
+        XCTAssertTrue(CommentExchange.isXfdf("NOTES.XFDF"))
+        XCTAssertFalse(CommentExchange.isXfdf("notes.fdf"))
+        XCTAssertFalse(CommentExchange.isXfdf("notes"))
     }
 
     func test_flatteningBurnsTheMarksIntoThePagesAndOneUndoBringsThemBack() throws {
         let f = try withMarks()
-        let before = Exchange.flattenable(f.document)
+        let before = CommentExchange.flattenable(f.document)
 
-        let burned = try Exchange.flatten(f.document, CancelToken())
+        let burned = try CommentExchange.flatten(f.document, CancelToken())
         try f.tab.commit("Flatten comments")
 
         XCTAssertEqual(burned, before)
         XCTAssertGreaterThanOrEqual(burned, 2)
         XCTAssertTrue(f.marks().isEmpty)
-        XCTAssertEqual(Exchange.flattenable(f.document), 0)
+        XCTAssertEqual(CommentExchange.flattenable(f.document), 0)
         XCTAssertTrue(try f.tab.undo())
-        XCTAssertEqual(Exchange.flattenable(f.document), before)
+        XCTAssertEqual(CommentExchange.flattenable(f.document), before)
     }
 
     func test_aFileWithNoMarksHasNothingToFlatten() throws {
         let f = try CommentFixture()
 
-        XCTAssertEqual(Exchange.flattenable(f.document), 0)
-        XCTAssertEqual(try Exchange.flatten(f.document, CancelToken()), 0)
+        XCTAssertEqual(CommentExchange.flattenable(f.document), 0)
+        XCTAssertEqual(try CommentExchange.flatten(f.document, CancelToken()), 0)
     }
 }

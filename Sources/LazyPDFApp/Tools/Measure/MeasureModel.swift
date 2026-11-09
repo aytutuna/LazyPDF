@@ -246,7 +246,7 @@ public final class MeasureModel: ToolPanelModel {
 
     private func add() {
         guard let tab, let host else { return }
-        if !Exchange.canComment(tab.document) {
+        if !CommentExchange.canComment(tab.document) {
             host.showProblem(Problem(L10n.t("Not allowed"), L10n.t("This file does not let anyone add marks. Ask its owner for a copy that does.")))
             return
         }

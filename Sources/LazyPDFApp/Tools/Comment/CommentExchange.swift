@@ -11,7 +11,7 @@ public struct Exported {
     public let left: Int
 }
 
-public enum Exchange {
+public enum CommentExchange {
     public static func isXfdf(_ path: String) -> Bool {
         (path as NSString).pathExtension.caseInsensitiveCompare("xfdf") == .orderedSame
     }

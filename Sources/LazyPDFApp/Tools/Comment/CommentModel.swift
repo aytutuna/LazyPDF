@@ -131,7 +131,7 @@ public final class CommentModel: ToolPanelModel {
         edit.editRequested = { [weak self] mark in self?.editText(of: mark) }
         edit.deleteRequested = { [weak self] in self?.deleteSelected() }
         editTool = edit
-        allowed = Exchange.canComment(tab.document)
+        allowed = CommentExchange.canComment(tab.document)
         if !allowed {
             tool = .selectText
         } else if let caution = MarkWork.caution(tab.document) {
@@ -198,7 +198,7 @@ public final class CommentModel: ToolPanelModel {
     }
 
     func countFlattenable(_ tab: DocumentTab) {
-        flattenable = Exchange.flattenable(tab.document)
+        flattenable = CommentExchange.flattenable(tab.document)
     }
 
     /// Picks the tool the pointer is, as a button of the palette does.

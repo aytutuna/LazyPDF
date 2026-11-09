@@ -14,13 +14,13 @@ extension CommentModel {
         guard let file = await host.filePicker.pickFiles([.any], multiple: false).first else { return }
         defer { file.access?.stop() }
         let name = file.url.lastPathComponent
-        let xfdf = Exchange.isXfdf(name)
+        let xfdf = CommentExchange.isXfdf(name)
         do {
             let data = [UInt8](try Data(contentsOf: file.url))
             let fonts = fonts
             guard self.tab === tab, let result = try await MarkWork.shared.change(
                 tab, host, L10n.t("Importing comments"), isCurrent: { self.tab === tab },
-                { document, _ in try Exchange.import(document, data, xfdf: xfdf, fonts) }) else { return }
+                { document, _ in try CommentExchange.import(document, data, xfdf: xfdf, fonts) }) else { return }
             if result.imported == 0 {
                 try? tab.session.discard()
                 host.showNotice(L10n.t("Nothing imported"), result.skipped > 0
@@ -54,7 +54,7 @@ extension CommentModel {
         do {
             try await host.runBusy(L10n.t("Exporting comments")) { token in
                 exported = try await ToolDocuments.run(token) {
-                    try Exchange.export(ToolDocuments.open(bytes, password: password, certificate: certificate), title, xfdf: xfdf)
+                    try CommentExchange.export(ToolDocuments.open(bytes, password: password, certificate: certificate), title, xfdf: xfdf)
                 }
             }
             guard let exported else { return }
@@ -98,7 +98,7 @@ extension CommentModel {
         let burned: Int?
         do {
             burned = try await MarkWork.shared.change(tab, host, L10n.t("Flattening comments"), isCurrent: { self.tab === tab },
-                                                      { document, token in try Exchange.flatten(document, token) })
+                                                      { document, token in try CommentExchange.flatten(document, token) })
         } catch where error is PdfReadException || error is InvalidOperationException {
             host.showProblem(Problem(L10n.t("Comments not flattened"), L10n.t("The pages could not be changed. Save a copy of the file and try again.")))
             return
