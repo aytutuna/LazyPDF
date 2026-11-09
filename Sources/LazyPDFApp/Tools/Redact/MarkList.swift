@@ -60,7 +60,7 @@ public final class MarkList {
                 if a.item.page != b.item.page { return a.item.page < b.item.page }
                 if a.top != b.top { return a.top > b.top }
                 return a.left != b.left ? a.left < b.left : a.at < b.at
-            }.map(\.item)
+            }.map { $0.item }
         changed?()
         return added
     }

@@ -14,9 +14,9 @@ public enum StandardsMode {
 @Observable
 public final class StandardsModel: ToolPanelModel {
     /// The most rows listed; the rest are counted.
-    public static let rowsShown = 100
+    public nonisolated static let rowsShown = 100
 
-    public static let levels: [PdfALevel] = [.a1b, .a2b, .a2u, .a3b, .a3u, .a4]
+    public nonisolated static let levels: [PdfALevel] = [.a1b, .a2b, .a2u, .a3b, .a3u, .a4]
 
     public private(set) var mode = StandardsMode.check
     public private(set) var levelIndex = 1
