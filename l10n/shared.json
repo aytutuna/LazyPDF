@@ -6641,5 +6641,8 @@
   },
   "Tap a field on the page to fill it in, or choose it from the list.": {
     "tr": "Doldurmak için sayfada bir alana dokunun ya da listeden seçin."
+  },
+  "Choose pages, then use the buttons. A page can also be dragged to a new place or moved from its menu.": {
+    "tr": "Sayfaları seçip düğmeleri kullanın. Bir sayfa yeni bir yere sürüklenebilir ya da menüsünden taşınabilir."
   }
 }

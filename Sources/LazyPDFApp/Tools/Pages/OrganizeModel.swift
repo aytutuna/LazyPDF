@@ -9,7 +9,7 @@ import LazyPDFKit
 @MainActor
 @Observable
 public final class OrganizeModel {
-    static let boxRatio = 1.4
+    public static let boxRatio = 1.4
     static let smallest = 72.0
     static let largest = 320.0
 
