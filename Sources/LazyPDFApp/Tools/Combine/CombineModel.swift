@@ -122,7 +122,8 @@ public final class CombineModel: ToolPanelModel {
 
     public func addFiles() async {
         guard let host else { return }
-        await add(await host.filePicker.pickFiles([.pdf], multiple: true))
+        let files = await host.filePicker.pickFiles([.pdf], multiple: true)
+        await add(files)
     }
 
     public func add(_ files: [ToolFile]) async {
@@ -161,6 +162,7 @@ public final class CombineModel: ToolPanelModel {
         }
 
         let copy = TabCopy(tab, host)
+        let ordered = sources
         var made: [UInt8]?
         do {
             try await host.runBusy(L10n.t("Combining files")) { token in
@@ -168,7 +170,7 @@ public final class CombineModel: ToolPanelModel {
                     try token.throwIfCancelled()
                     // The open document is read again here: its pages may be taken twice and the session belongs to the main actor.
                     let again = try copy.open()
-                    let bytes = try PageAssembly.merge(sources.map { MergeSource($0.document ?? again, $0.pages) }).saveRewrite()
+                    let bytes = try PageAssembly.merge(ordered.map { MergeSource($0.document ?? again, $0.pages) }).saveRewrite()
                     try token.throwIfCancelled()
                     return bytes
                 }
