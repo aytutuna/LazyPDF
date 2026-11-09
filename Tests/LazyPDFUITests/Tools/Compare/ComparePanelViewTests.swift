@@ -11,7 +11,7 @@ import LazyPDFApp
 
 @MainActor
 final class ComparePanelViewTests: XCTestCase {
-    private func model() -> CompareModel {
+    private func makeModel() -> CompareModel {
         CompareModel(renderers: { StandInRenderer() }, fonts: StandInFonts())
     }
 
@@ -26,7 +26,7 @@ final class ComparePanelViewTests: XCTestCase {
 
     func test_thePanelIsDrawnBeforeAndAfterAComparison() async throws {
         let rig = try ToolViewRig(StandInPdfs.text(2))
-        let model = model()
+        let model = makeModel()
         model.attach(rig.tab, rig.viewer, rig.host)
         let before = try ToolPicture.ink(try ToolPicture.draw(ComparePanelView(model: model), height: 700))
         XCTAssertGreaterThan(before, 200)

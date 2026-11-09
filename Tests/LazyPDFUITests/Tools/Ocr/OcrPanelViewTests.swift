@@ -10,14 +10,14 @@ import LazyPDFApp
 
 @MainActor
 final class OcrPanelViewTests: XCTestCase {
-    private func model() -> OcrModel {
+    private func makeModel() -> OcrModel {
         let state = OcrLanguageState(installed: [OcrLanguage(tag: "en-US", name: "English")], missing: ["Turkish"])
         return OcrModel(languages: { state })
     }
 
     func test_thePanelIsDrawnWhileThePagesAreCheckedAndWithTheirList() async throws {
         let rig = try ToolViewRig(StandInPdfs.text(3))
-        let model = model()
+        let model = makeModel()
         model.attach(rig.tab, rig.viewer, rig.host)
         let looking = try ToolPicture.ink(try ToolPicture.draw(OcrPanelView(model: model), height: 700))
         XCTAssertGreaterThan(looking, 200)
