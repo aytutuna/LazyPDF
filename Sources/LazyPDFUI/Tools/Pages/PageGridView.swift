@@ -3,9 +3,13 @@ import SwiftUI
 import UniformTypeIdentifiers
 import LazyPDFApp
 import LazyPDFKit
+#if os(macOS)
+import AppKit
+#endif
 
 // The grid of pages of the Pages panel and the organize view; follows the ListBox `Thumbs` of PagesPanel.xaml and OrganizeView.xaml
-// with the drag of PageDrag.cs. A tap chooses or unchooses a page, which needs no modifier key and so works with a finger. A page
+// with the drag of PageDrag.cs. A tap on a phone or tablet chooses or unchooses a page, which needs no modifier key and so works with
+// a finger; on a Mac a click chooses the page alone, Shift extends the choice and Command adds to it. A page
 // moves by dragging, and always by the menu of the page and the buttons over the grid too.
 
 struct PageGridView: View {
@@ -19,8 +23,10 @@ struct PageGridView: View {
     /// Set where a double tap on a page does something.
     var open: ((Int) -> Void)?
 
-    /// Set where the Delete key removes the chosen pages.
-    var onDelete: (() -> Void)?
+    /// Set where keys act on the pages. They reach it only while the grid has the focus, so the fields beside it keep theirs.
+    var onKey: ((KeyPress) -> KeyPress.Result)?
+
+    @FocusState private var focused: Bool
 
     var body: some View {
         ScrollView {
@@ -33,17 +39,13 @@ struct PageGridView: View {
             .padding(8)
         }
         .onDrop(of: [.fileURL], delegate: PageDropDelegate(grid: grid, page: nil, width: 0, onFiles: onFiles))
-        .focusable(onDelete != nil)
-        .onKeyPress(.delete) { removeChosen() }
-        .onKeyPress(.deleteForward) { removeChosen() }
+        .focusable(onKey != nil)
+        .focused($focused)
+        .simultaneousGesture(TapGesture().onEnded { if onKey != nil { focused = true } })
+        .onKeyPress { press in onKey?(press) ?? .ignored }
+        .onAppear { if onKey != nil { focused = true } }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(L10n.t("Pages"))
-    }
-
-    private func removeChosen() -> KeyPress.Result {
-        guard let onDelete, !grid.selected.isEmpty else { return .ignored }
-        onDelete()
-        return .handled
     }
 }
 
@@ -75,12 +77,12 @@ struct PageTile: View {
         .onPreferenceChange(TileWidthKey.self) { tileWidth = $0 }
         .contentShape(Rectangle())
         .modifier(DoubleTap(action: open.map { open in { open(cell.index) } }))
-        .onTapGesture { grid.toggle(cell.index) }
+        .onTapGesture { tapped() }
         .onDrag {
             grid.dragging = grid.target(cell.index)
-            return NSItemProvider(object: L10n.t("Pages") as NSString)
+            return NSItemProvider(item: Data() as NSData, typeIdentifier: PageDrag.type.identifier)
         }
-        .onDrop(of: [.plainText, .fileURL], delegate: PageDropDelegate(grid: grid, page: cell.index, width: tileWidth, onFiles: onFiles))
+        .onDrop(of: [PageDrag.type, .fileURL], delegate: PageDropDelegate(grid: grid, page: cell.index, width: tileWidth, onFiles: onFiles))
         .contextMenu { menu }
         .onAppear { cell.appear(displayScale: displayScale) }
         .onDisappear { cell.disappear() }
@@ -91,6 +93,21 @@ struct PageTile: View {
         .accessibilityAction(named: Text(L10n.t("Rotate right"))) { grid.turn([cell.index], 90) }
         .accessibilityAction(named: Text(L10n.t("Move earlier"))) { grid.earlier(grid.target(cell.index)) }
         .accessibilityAction(named: Text(L10n.t("Move later"))) { grid.later(grid.target(cell.index)) }
+    }
+
+    private func tapped() {
+        #if os(macOS)
+        let keys = NSEvent.modifierFlags
+        if keys.contains(.shift) {
+            grid.extend(to: cell.index)
+        } else if keys.contains(.command) {
+            grid.toggle(cell.index)
+        } else {
+            grid.choose(cell.index)
+        }
+        #else
+        grid.toggle(cell.index)
+        #endif
     }
 
     @ViewBuilder
@@ -137,6 +154,12 @@ private struct DoubleTap: ViewModifier {
     }
 }
 
+// The pages a drag carries are in the grid; the item only tells this grid's own drops from text or files from elsewhere (the
+// format "LazyPDF.Pages" of PageDrag.cs).
+private enum PageDrag {
+    static let type = UTType(exportedAs: "com.lazypdf.lazypdf.pages", conformingTo: .data)
+}
+
 private struct DropMark: View {
     var body: some View {
         Capsule()
@@ -157,7 +180,7 @@ private struct PageDropDelegate: DropDelegate {
 
     func validateDrop(info: DropInfo) -> Bool {
         if info.hasItemsConforming(to: [.fileURL]) { return onFiles != nil }
-        return page != nil && !grid.dragging.isEmpty
+        return page != nil && !grid.dragging.isEmpty && info.hasItemsConforming(to: [PageDrag.type])
     }
 
     func dropEntered(info: DropInfo) {

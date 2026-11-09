@@ -22,7 +22,11 @@ struct PagesToolPanelView: View {
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .accessibilityAddTraits(.updatesFrequently)
-            PageGridView(grid: model.grid, cellWidth: 108, cellHeight: 160, onDelete: { model.remove() })
+            PageGridView(grid: model.grid, cellWidth: 108, cellHeight: 160, onKey: { press in
+                guard press.modifiers.isEmpty, press.key == .delete || press.key == .deleteForward, model.canEdit else { return .ignored }
+                model.remove()
+                return .handled
+            })
                 .frame(height: 340)
                 .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
             insertSection
@@ -43,6 +47,7 @@ struct PagesToolPanelView: View {
             BarButton("arrow.left", L10n.t("Move earlier"), off: !model.canMoveEarlier) { model.earlier() }
             BarButton("arrow.right", L10n.t("Move later"), off: !model.canMoveLater) { model.later() }
             BarButton("checkmark.circle", L10n.t("Select all")) { model.grid.selectAll() }
+            BarButton("xmark.circle", L10n.t("Select none"), off: !model.canEdit) { model.grid.selectNone() }
         }
     }
 
