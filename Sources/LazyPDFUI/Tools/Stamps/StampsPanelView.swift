@@ -63,7 +63,7 @@ struct StampsPanelView: View {
         LabelledField(title) {
             HStack {
                 Slider(value: bind(path), in: range, step: step).accessibilityLabel(label)
-                Text(readout).font(.caption.monospacedDigit()).foregroundStyle(.secondary).frame(width: 52, alignment: .trailing)
+                Text(readout).font(.caption.monospacedDigit()).foregroundStyle(.secondary).frame(minWidth: 52, alignment: .trailing)
                     .accessibilityHidden(true)
             }
         }
@@ -109,12 +109,12 @@ struct StampsPanelView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Button { Task { await model.pickPicture() } } label: {
-                    Text(L10n.t("Pick a picture")).frame(minHeight: 32)
+                    Text(L10n.t("Pick a picture")).frame(minHeight: 44)
                 }
                 .buttonStyle(.bordered)
                 Spacer()
                 if model.pictureName != nil {
-                    Button { model.removePicture() } label: { Text(L10n.t("Remove picture")).frame(minHeight: 32) }
+                    Button { model.removePicture() } label: { Text(L10n.t("Remove picture")).frame(minHeight: 44) }
                         .buttonStyle(.plain)
                         .foregroundStyle(Color.accentColor)
                 }
@@ -219,19 +219,19 @@ struct StampsPanelView: View {
             if model.selected != nil { ReasonText(L10n.t("Change the settings above and update it. Pick a picture again if it had one.")) }
             HStack(spacing: 8) {
                 Button { Task { await model.removeSelected() } } label: {
-                    Text(L10n.t("Remove")).frame(maxWidth: .infinity, minHeight: 32)
+                    Text(L10n.t("Remove")).frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
                 .disabled(model.selected == nil)
                 .accessibilityLabel(L10n.t("Remove the selected stamp"))
                 Button { Task { await model.removeAll() } } label: {
-                    Text(L10n.t("Remove all")).frame(maxWidth: .infinity, minHeight: 32)
+                    Text(L10n.t("Remove all")).frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
                 .accessibilityLabel(L10n.t("Remove all stamps"))
             }
             if model.selected != nil {
-                Button { model.addNewInstead() } label: { Text(L10n.t("Add a new one instead")).frame(minHeight: 32) }
+                Button { model.addNewInstead() } label: { Text(L10n.t("Add a new one instead")).frame(minHeight: 44) }
                     .buttonStyle(.plain)
                     .foregroundStyle(Color.accentColor)
             }
