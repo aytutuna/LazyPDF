@@ -164,7 +164,7 @@ public final class AppViewModel {
     /// A job or a question holds the window: the commands that would edit, close or open stay out of reach, as the
     /// Windows window refuses its shortcuts while a modal, a job or an action is up.
     public var isBlocked: Bool {
-        isBusy || actionRunning || closeQuestion != nil || recoveryOffer != nil || passwordRequest != nil
+        isBusy || actionRunning || MarkWork.shared.running || closeQuestion != nil || recoveryOffer != nil || passwordRequest != nil
     }
 
     public var busyText: String { busyLabel }
