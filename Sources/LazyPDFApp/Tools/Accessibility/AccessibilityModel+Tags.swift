@@ -81,8 +81,17 @@ extension AccessibilityModel {
         await ChangeGate.guardedAsync(host, L10n.t("Add tags")) {
             try await host.runBusy(L10n.t("Adding tags")) { token in
                 do {
-                    // The tagger edits the document as it goes, so Cancel waits for it to stop and then takes back what it did.
-                    let found = try await Task.detached { try AutoTagger.tag(document) }.value
+                    // The tagger edits the document as it goes, so Cancel stops it, waits for it to be done and then takes
+                    // back what it did.
+                    let job = Task.detached { try AutoTagger.tag(document) }
+                    let watcher = Task {
+                        while !Task.isCancelled {
+                            if token.isCancelled { return job.cancel() }
+                            try? await Task.sleep(nanoseconds: 20_000_000)
+                        }
+                    }
+                    defer { watcher.cancel() }
+                    let found = try await withTaskCancellationHandler { try await job.value } onCancel: { job.cancel() }
                     if token.isCancelled { throw CancellationError() }
                     result = found
                 } catch let error where error is PdfReadException || error is InvalidOperationException {

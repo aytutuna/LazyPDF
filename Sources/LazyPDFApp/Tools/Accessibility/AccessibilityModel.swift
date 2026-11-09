@@ -114,6 +114,7 @@ public final class AccessibilityModel: ToolPanelModel {
         treeTicket += 1
         readTicket += 1
         stopReading()
+        readIndex = nil
         report = nil
         dropTree()
         drafts = [:]
@@ -162,6 +163,7 @@ public final class AccessibilityModel: ToolPanelModel {
     private func runCheck() async {
         guard let host, tab != nil else { return }
         view = .check
+        stopReading()
         quiet?.cancel()
         var finished = false
         await ChangeGate.guardedAsync(host, L10n.t("Check")) { [self] in
