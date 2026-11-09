@@ -249,6 +249,18 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(names, ["Draft", "Paid in full"])
     }
 
+    func test_aStampFieldEmptiedByTypingStaysEmptyAndStampsTheFirstLabel() throws {
+        let rig = try attached()
+        rig.model.pick(.stamp)
+
+        rig.model.setStampName("")
+        XCTAssertEqual(rig.model.stampName, "")
+        click(rig, markPt(200, 300))
+
+        let names = marks(rig).map { ($0.dictionary["Name"] as? PdfName)?.value }
+        XCTAssertEqual(names, [AnnotationText.standardStamps[0]])
+    }
+
     func test_theEraserTakesTheDrawingsItCrosses() throws {
         let rig = try attached(marks: true)
         rig.model.pick(.eraser)
