@@ -52,13 +52,15 @@ public struct CompareSide {
     }
 }
 
+// Outside the class, which belongs to the main actor, so the comparison on another thread may read them.
+private let pixelRowLimit = 1000
+private let pixelDpi = 96.0
+private let rowsPerPage = 50
+private let reportMarks = 5001
+
 @MainActor
 public final class CompareSession {
-    public static let maxPixelRows = 1000
-
-    private static let pixelDpi = 96.0
-    private static let rowsPerPage = 50
-    private static let reportMarks = 5001
+    public static let maxPixelRows = pixelRowLimit
 
     private struct Outcome {
         var result: ComparisonResult
@@ -138,7 +140,7 @@ public final class CompareSession {
         guard let pair = result?.pages.first(where: { $0.newIndex == newPage && !$0.isAdded }) else { return nil }
         let oldRenderer = old.renderer, newRenderer = new.renderer
         return await Task.detached {
-            try? PixelComparer.compare(oldRenderer, pair.oldIndex, newRenderer, newPage, Self.pixelDpi)?.overlay
+            try? PixelComparer.compare(oldRenderer, pair.oldIndex, newRenderer, newPage, pixelDpi)?.overlay
         }.value
     }
 
@@ -210,8 +212,8 @@ public final class CompareSession {
                 changes.append(pixelChange(pair, difference, newPage))
             }
         }
-        outcome.capped = listed.count > maxPixelRows
-        outcome.pixelRows = Array(listed.prefix(maxPixelRows))
+        outcome.capped = listed.count > pixelRowLimit
+        outcome.pixelRows = Array(listed.prefix(pixelRowLimit))
         let summary = ComparisonSummary(added, removed, areas, 0, 0, 0, areas, 0, added + removed, 0, 0, 0)
         outcome.pixelResult = ComparisonResult(outcome.result.pages, changes, summary, outcome.result.oldPageCount, outcome.result.newPageCount)
     }
