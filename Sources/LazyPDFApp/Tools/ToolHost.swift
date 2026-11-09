@@ -136,6 +136,13 @@ public protocol ToolFileExporter: AnyObject {
     /// Takes finished files, written to a folder of the app's own, to where the person says: a name for one file, a folder
     /// for several. The urls of the saved copies; empty when the person gave up.
     func export(_ files: [URL]) async -> [URL]
+
+    /// The names of the files the last `export` could not write, so that a failure is not taken for the person giving up.
+    var unwritten: [String] { get }
+}
+
+extension ToolFileExporter {
+    public var unwritten: [String] { [] }
 }
 
 /// Create takes a picture or text from the pasteboard.

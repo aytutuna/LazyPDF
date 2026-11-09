@@ -48,4 +48,46 @@ final class MacFilePanelsTests: XCTestCase {
         XCTAssertEqual(panel.directoryURL?.path, "/tmp")
     }
 }
+
+// Not in the Windows tests: Windows writes the parts itself with UniquePath, where the Mac hands them to the exporter.
+@MainActor
+final class MacToolServicesTests: XCTestCase {
+    private func folder() throws -> URL {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("lazypdf-export-" + UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        addTeardownBlock { try? FileManager.default.removeItem(at: url) }
+        return url
+    }
+
+    private func write(_ text: String, _ name: String, in folder: URL) throws -> URL {
+        let url = folder.appendingPathComponent(name)
+        try Data(text.utf8).write(to: url)
+        return url
+    }
+
+    func test_filesPlacedInAFolderNeverReplaceWhatIsThere() throws {
+        let from = try folder(), into = try folder()
+        let old = try write("last week", "report 1.pdf", in: into)
+        let part1 = try write("new one", "report 1.pdf", in: from)
+        let part2 = try write("new two", "report 2.pdf", in: from)
+
+        let placed = MacToolServices.place([part1, part2], in: into)
+
+        XCTAssertEqual(placed.saved.map(\.lastPathComponent), ["report 1 (2).pdf", "report 2.pdf"])
+        XCTAssertTrue(placed.unwritten.isEmpty)
+        XCTAssertEqual(try String(contentsOf: old, encoding: .utf8), "last week")
+        XCTAssertEqual(try String(contentsOf: placed.saved[0], encoding: .utf8), "new one")
+    }
+
+    func test_aFileThatCannotBeWrittenIsNamed() throws {
+        let from = try folder()
+        let part = try write("x", "a.pdf", in: from)
+        let missing = from.appendingPathComponent("gone", isDirectory: true)
+
+        let placed = MacToolServices.place([part], in: missing)
+
+        XCTAssertTrue(placed.saved.isEmpty)
+        XCTAssertEqual(placed.unwritten, ["a.pdf"])
+    }
+}
 #endif

@@ -24,28 +24,43 @@ final class MacToolServices: ToolFilePicker, ToolFileExporter, ToolClipboard {
         return panel.runModal() == .OK ? panel.url.map { ToolFile(url: $0) } : nil
     }
 
-    // One file is named in a save panel; several go into a folder the person picks. An existing name is replaced, which the
-    // save panel has already asked about.
+    private(set) var unwritten: [String] = []
+
+    // One file is named in a save panel, which has asked about an existing name; several go into a folder the person picks,
+    // where nothing that is there is replaced.
     func export(_ files: [URL]) async -> [URL] {
+        unwritten = []
         guard let first = files.first else { return [] }
-        let manager = FileManager.default
         if files.count == 1 {
             let panel = NSSavePanel()
             panel.nameFieldStringValue = first.lastPathComponent
             panel.canCreateDirectories = true
             guard panel.runModal() == .OK, let target = panel.url else { return [] }
-            return copy(first, to: target, manager) ? [target] : []
+            if Self.copy(first, to: target, replacing: true) { return [target] }
+            unwritten = [first.lastPathComponent]
+            return []
         }
         guard let folder = await pickFolder()?.url else { return [] }
-        return files.compactMap { file in
-            let target = folder.appendingPathComponent(file.lastPathComponent)
-            return copy(file, to: target, manager) ? target : nil
-        }
+        let placed = Self.place(files, in: folder)
+        unwritten = placed.unwritten
+        return placed.saved
     }
 
-    private func copy(_ file: URL, to target: URL, _ manager: FileManager) -> Bool {
+    /// Copies `files` into `folder` under their own names, or with a number when the name is taken there.
+    static func place(_ files: [URL], in folder: URL) -> (saved: [URL], unwritten: [String]) {
+        var saved: [URL] = []
+        var unwritten: [String] = []
+        for file in files {
+            let target = CombineJob.uniquePath(folder, file.lastPathComponent)
+            if copy(file, to: target, replacing: false) { saved.append(target) } else { unwritten.append(file.lastPathComponent) }
+        }
+        return (saved, unwritten)
+    }
+
+    private static func copy(_ file: URL, to target: URL, replacing: Bool) -> Bool {
+        let manager = FileManager.default
         do {
-            if manager.fileExists(atPath: target.path) { try manager.removeItem(at: target) }
+            if replacing && manager.fileExists(atPath: target.path) { try manager.removeItem(at: target) }
             try manager.copyItem(at: file, to: target)
             return true
         } catch {
