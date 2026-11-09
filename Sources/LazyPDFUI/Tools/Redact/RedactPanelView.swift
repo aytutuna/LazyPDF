@@ -66,7 +66,7 @@ struct RedactPanelView: View {
             .disabled(!model.canFindWords || model.working)
             LabelledField(L10n.t("Kind of data")) {
                 Picker(L10n.t("Kind of data"), selection: $model.kindIndex) {
-                    ForEach(Array(DataKind.all.enumerated()), id: \.offset) { Text($0.element.name).tag($0.offset) }
+                    ForEach(Array(RedactDataKind.all.enumerated()), id: \.offset) { Text($0.element.name).tag($0.offset) }
                 }
                 .labelsHidden()
             }
@@ -134,7 +134,7 @@ struct RedactPanelView: View {
             SectionHeading(L10n.t("Cover"))
             LabelledField(L10n.t("Colour")) {
                 Picker(L10n.t("Colour"), selection: $model.coverIndex) {
-                    ForEach(Array(Cover.all.enumerated()), id: \.offset) { Text($0.element.name).tag($0.offset) }
+                    ForEach(Array(RedactCover.all.enumerated()), id: \.offset) { Text($0.element.name).tag($0.offset) }
                 }
                 .labelsHidden()
             }

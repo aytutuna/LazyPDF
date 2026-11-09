@@ -25,7 +25,7 @@ final class RedactJobTests: XCTestCase {
         }
     }
 
-    private let plain = RedactSettings(cover: Cover.all[0], overlayText: nil, flattenAll: false)
+    private let plain = RedactSettings(cover: RedactCover.all[0], overlayText: nil, flattenAll: false)
 
     private func textOf(_ pdf: [UInt8], _ page: Int = 0) throws -> String {
         TextCache(try PdfDocument.open(pdf)).get(page).text
@@ -33,7 +33,7 @@ final class RedactJobTests: XCTestCase {
 
     private func findAddresses(_ pdf: [UInt8]) throws -> [MarkItem] {
         let document = try RedactJob.open(pdf, password: nil, certificate: nil)
-        return try RedactJob.find(document, DataKind.all.first { $0.kind == .email }!).items
+        return try RedactJob.find(document, RedactDataKind.all.first { $0.kind == .email }!).items
     }
 
     private func apply(_ pdf: [UInt8], _ marks: [MarkItem], _ settings: RedactSettings) throws -> RedactionResult {
@@ -155,7 +155,7 @@ final class RedactJobTests: XCTestCase {
                                           firstId: [UInt8](repeating: 7, count: 16))
         let pdf = try document.saveRewrite(PdfSaveOptions(security: security))
         let opened = try RedactJob.open(pdf, password: "owner", certificate: nil)
-        let marks = try RedactJob.find(opened, DataKind.all[0]).items
+        let marks = try RedactJob.find(opened, RedactDataKind.all[0]).items
 
         let result = try RedactJob.apply(pdf, password: "owner", certificate: nil, marks: marks.map(\.mark), settings: plain,
                                          renderer: BlankPages(pdf), fonts: FakeFonts(), images: FakeCodec())
@@ -182,7 +182,7 @@ final class RedactJobTests: XCTestCase {
         let pdf = try PdfFromText.create("١٢٣-٤٥-٦٧٨٩", fonts: CoreTextFontSource()).bytes
         let document = try RedactJob.open(pdf, password: nil, certificate: nil)
 
-        let found = try RedactJob.find(document, DataKind.all.first { $0.kind == .usSocialSecurity }!)
+        let found = try RedactJob.find(document, RedactDataKind.all.first { $0.kind == .usSocialSecurity }!)
 
         XCTAssertTrue(found.items.isEmpty)
     }
@@ -192,7 +192,7 @@ final class RedactJobTests: XCTestCase {
         let pdf = try PdfFromText.create("ann@example.commore", fonts: FakeFonts()).bytes
         let document = try RedactJob.open(pdf, password: nil, certificate: nil)
 
-        let found = try RedactJob.find(document, DataKind.all[0])
+        let found = try RedactJob.find(document, RedactDataKind.all[0])
 
         XCTAssertEqual(found.items.count, 1)
         XCTAssertEqual(found.pictures, 1)

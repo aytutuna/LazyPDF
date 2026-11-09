@@ -135,7 +135,7 @@ public final class ProtectModel: ToolPanelModel {
             ? L10n.t("Older readers may not accept these letters. Use AES 256-bit.") : ""
     }
 
-    public var strength: Strength { PasswordStrength.rate(openPassword) }
+    public var strength: PasswordRating { PasswordStrength.rate(openPassword) }
 
     public var strengthHint: String { PasswordStrength.hint(strength) }
 
