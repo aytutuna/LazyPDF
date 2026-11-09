@@ -7,6 +7,7 @@ import LazyPDFApp
 extension ToolRegistry {
     static func content(_ id: String, _ context: ToolContext) -> ToolPanel? {
         switch id {
+        case "editcontent": return ToolPanel(EditContentModel()) { EditContentPanelView(model: $0) }
         default: return nil
         }
     }

@@ -6644,5 +6644,35 @@
   },
   "Choose pages, then use the buttons. A page can also be dragged to a new place or moved from its menu.": {
     "tr": "Sayfaları seçip düğmeleri kullanın. Bir sayfa yeni bir yere sürüklenebilir ya da menüsünden taşınabilir."
+  },
+  "Text: {0}": {
+    "tr": "Metin: {0}"
+  },
+  "Shape {0}": {
+    "tr": "Şekil {0}"
+  },
+  "Link to {0}": {
+    "tr": "{0} bağlantısı"
+  },
+  "Link to page {0}": {
+    "tr": "{0}. sayfa bağlantısı"
+  },
+  "Smaller": {
+    "tr": "Küçült"
+  },
+  "Make the selection smaller": {
+    "tr": "Seçimi küçült"
+  },
+  "Larger": {
+    "tr": "Büyüt"
+  },
+  "Make the selection larger": {
+    "tr": "Seçimi büyüt"
+  },
+  "Links on this page": {
+    "tr": "Bu sayfadaki bağlantılar"
+  },
+  "On this page": {
+    "tr": "Bu sayfada"
   }
 }
