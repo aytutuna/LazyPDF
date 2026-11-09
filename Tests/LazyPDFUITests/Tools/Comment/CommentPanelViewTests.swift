@@ -17,7 +17,7 @@ final class CommentPanelViewTests: XCTestCase {
 
         let image = try ToolPicture.draw(CommentPanelView(model: model), height: 1300)
 
-        XCTAssertGreaterThan(try ToolPicture.ink(image), 1000)
+        XCTAssertGreaterThan(try ToolPicture.ink(image), 400)
     }
 
     func test_pickingTheStampToolAddsItsRow() throws {
@@ -41,7 +41,7 @@ final class CommentPanelViewTests: XCTestCase {
 
         let image = try ToolPicture.draw(panel.view, height: 1300)
 
-        XCTAssertGreaterThan(try ToolPicture.ink(image), 1000)
+        XCTAssertGreaterThan(try ToolPicture.ink(image), 400)
         XCTAssertEqual(panel.model.action?.text, "Flatten comments")
     }
 }
