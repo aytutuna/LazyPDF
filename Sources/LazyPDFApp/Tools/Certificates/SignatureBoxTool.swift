@@ -44,9 +44,11 @@ final class SignatureBoxTool: PagePointerTool {
         if area.width >= Self.minSide && area.height >= Self.minSide { drawn(done, area) }
     }
 
+    // A press that is taken away (a second finger starting a scroll) only drops its preview; the tool waits for the next drag.
     func cancel() {
+        let pressed = page >= 0
         clear()
-        stopped()
+        if !pressed { stopped() }
     }
 
     /// A dashed outline for a box on the page, in the accent colour; the caller removes it.

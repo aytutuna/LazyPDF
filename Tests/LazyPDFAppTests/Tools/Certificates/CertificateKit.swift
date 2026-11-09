@@ -40,6 +40,23 @@ final class DownServer: SigningTransport {
     func cancel() { cancelled += 1 }
 }
 
+/// A server that holds a request until the test lets it go, whatever Cancel says.
+final class HeldServer: SigningTransport {
+    let lastFailure: String? = nil
+    let arrived = DispatchSemaphore(value: 0)
+    private let release = DispatchSemaphore(value: 0)
+
+    func post(_ url: String, _ contentType: String, _ body: [UInt8]) -> [UInt8]? {
+        arrived.signal()
+        release.wait()
+        return nil
+    }
+
+    func get(_ url: String) -> [UInt8]? { nil }
+    func cancel() {}
+    func letGo() { release.signal() }
+}
+
 enum CertificateKit {
     static let now = DateTimeOffset(2026, 3, 10, 9, 0, 0)
 

@@ -9,7 +9,7 @@ import XCTest
 
 @MainActor
 final class CertificatesModelTests: XCTestCase {
-    private var transport = DownServer()
+    private var transport: SigningTransport = DownServer()
 
     private struct Setup {
         let model: CertificatesModel
@@ -263,6 +263,62 @@ final class CertificatesModelTests: XCTestCase {
         await waitUntil { !s.model.working }
         XCTAssertFalse(s.rig.tab.document.isSigned)
         XCTAssertFalse(s.rig.tab.session.canUndo)
+    }
+
+    func test_theBusyBarStaysUntilACancelledJobHasReallyEnded() async throws {
+        let held = HeldServer()
+        transport = held
+        let s = try attached()
+        s.model.timestamp = true
+        s.model.timestampUrl = "https://tsa.example/stamp"
+        var returned = false
+        let running = Task { @MainActor in
+            await s.model.action!.run()
+            returned = true
+        }
+        while held.arrived.wait(timeout: .now()) != .success { await Task.yield() }
+
+        s.rig.host.token.cancel()
+        try await Task.sleep(nanoseconds: 400_000_000)
+
+        XCTAssertFalse(returned)
+        XCTAssertTrue(s.model.working)
+        held.letGo()
+        await running.value
+        XCTAssertFalse(s.model.working)
+        XCTAssertFalse(s.rig.tab.document.isSigned)
+    }
+
+    func test_aBoxToolStopsWhenTheFileChangesUnderIt() async throws {
+        let s = try attached()
+        s.model.setPlace(1)
+        s.model.drawBox()
+        XCTAssertNotNil(s.rig.viewer.pointerTool)
+
+        let session = s.rig.tab.session
+        _ = try PdfForm.read(session.document).addField(FieldSpec(.signature, "Approval", 0, PdfRect(72, 100, 200, 150)))
+        _ = try s.rig.tab.commit("Field")
+
+        await waitUntil { s.rig.viewer.pointerTool == nil }
+        XCTAssertNil(s.rig.viewer.pointerTool)
+        XCTAssertFalse(s.model.drawsBox)
+        XCTAssertEqual(s.model.boxText, "")
+    }
+
+    func test_aPressTakenAwayByASecondFingerKeepsTheBoxTool() throws {
+        let s = try attached()
+        s.model.setPlace(1)
+        s.model.drawBox()
+        let tool = try XCTUnwrap(s.rig.viewer.pointerTool)
+
+        tool.press(PagePointer(page: 0, point: ViewPoint(20, 30), view: ViewPoint(20, 30), pressed: true, clicks: 0))
+        tool.cancel()
+
+        XCTAssertNotNil(s.rig.viewer.pointerTool)
+        XCTAssertEqual(s.model.boxText, "Drag on the page where it goes.")
+        tool.cancel()
+        XCTAssertNil(s.rig.viewer.pointerTool)
+        XCTAssertEqual(s.model.boxText, "No box yet.")
     }
 
     func test_nothingIsSignedWhenTheKeychainWillNotGiveTheKey() async throws {

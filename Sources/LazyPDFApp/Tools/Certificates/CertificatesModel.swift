@@ -169,6 +169,7 @@ public final class CertificatesModel: ToolPanelModel {
     private func refill() {
         guard let tab else { return }
         fileVersion += 1
+        stop()
         var choices = [SignaturePlaceChoice(text: L10n.t("Not visible"), place: .invisible), SignaturePlaceChoice(text: L10n.t("A box I draw on the page"), place: .box)]
         choices += CertificateSigning.emptyFields(tab.document).map { SignaturePlaceChoice(text: L10n.t("Field {0}", $0), place: .field($0)) }
         places = choices
@@ -203,10 +204,15 @@ public final class CertificatesModel: ToolPanelModel {
         guard let viewer else { return }
         stop()
         clearBox()
-        let tool = SignatureBoxTool(viewer, drawn: { [weak self] page, area in self?.boxDrawn(page, area) }, stopped: { [weak self] in self?.stop() })
+        let tool = SignatureBoxTool(viewer, drawn: { [weak self] page, area in self?.boxDrawn(page, area) }, stopped: { [weak self] in self?.toolEnded() })
         self.tool = tool
         viewer.pointerTool = tool
         boxText = L10n.t("Drag on the page where it goes.")
+    }
+
+    private func toolEnded() {
+        stop()
+        if box == nil && place?.place == .box { boxText = L10n.t("No box yet.") }
     }
 
     private func boxDrawn(_ page: Int, _ area: ViewRect) {
@@ -330,6 +336,8 @@ public final class CertificatesModel: ToolPanelModel {
                     finished = true
                 } catch is CancellationError {
                     letGo = true
+                    // The busy bar stays until the job has stopped using the session, so nothing else edits it meanwhile.
+                    await withCheckedContinuation { continuation in handoff.whenEnded { continuation.resume() } }
                     throw CancellationError()
                 }
             }
@@ -337,13 +345,8 @@ public final class CertificatesModel: ToolPanelModel {
             host.showProblem(Self.failure(error, transport, failedTitle))
         }
         if letGo {
-            // The job is still ending: the file is read again, and the panel opens, once it has.
-            handoff.whenEnded { [weak self] in
-                Task { @MainActor in
-                    tab.reload()
-                    self?.working = false
-                }
-            }
+            if !tab.isDisposed { tab.reload() }
+            working = false
             return
         }
         working = false
