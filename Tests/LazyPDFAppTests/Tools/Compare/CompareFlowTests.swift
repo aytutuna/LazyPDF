@@ -6,6 +6,40 @@ import LazyPDFKit
 // does, the busy bar, the problem for a file that cannot be read, the report as a new tab, what the report says about the
 // filters, what it keeps of the new file's protection, and when it is refused or dropped.
 
+private final class LoadThreads: @unchecked Sendable {
+    private let lock = NSLock()
+    private var log: [Bool] = []
+
+    var main: [Bool] {
+        lock.lock()
+        defer { lock.unlock() }
+        return log
+    }
+
+    func add(_ onMain: Bool) {
+        lock.lock()
+        log.append(onMain)
+        lock.unlock()
+    }
+}
+
+private final class ThreadRenderer: DocumentRenderer {
+    private let seen: LoadThreads
+
+    init(_ seen: LoadThreads) {
+        self.seen = seen
+    }
+
+    func load(_ session: PdfEditSession, _ password: String?) -> Bool {
+        seen.add(Thread.isMainThread)
+        return true
+    }
+
+    func pageSize(_ pageIndex: Int) -> (width: Double, height: Double) { (200, 300) }
+    func render(_ pageIndex: Int, _ dpi: Double) -> PdfRgbaImage? { nil }
+    func close() {}
+}
+
 @MainActor
 final class CompareFlowTests: XCTestCase {
     private func makeFlow(_ f: ViewModelFixture) -> CompareFlow {
@@ -117,6 +151,20 @@ final class CompareFlowTests: XCTestCase {
 
         XCTAssertNil(made)
         XCTAssertEqual(f.vm.message?.title, "Not a PDF")
+    }
+
+    func test_theRenderersOfBothFilesLoadOffTheMainThread() async throws {
+        let f = ViewModelFixture(self)
+        let tab = await open(f)
+        let other = f.dir.file("other.pdf", try CompareKit.after())
+        let seen = LoadThreads()
+
+        let madeFound = try await CompareFlow(f.vm, { ThreadRenderer(seen) }, FakeFonts()).run(tab, request(other))
+        let made = try XCTUnwrap(madeFound)
+        defer { made.dispose() }
+
+        XCTAssertEqual(seen.main, [false, false])
+        XCTAssertTrue(made.old.canDraw)
     }
 
     func test_cancellingGivesNothingBack() async throws {

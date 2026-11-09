@@ -93,19 +93,22 @@ public final class CompareSession {
     /// A pixel comparison found more areas than it lists.
     public private(set) var pixelCapped = false
 
-    /// With sessions opened already, off the main actor.
+    /// With sessions opened and renderers loaded already, off the main actor: `drawn` is what each renderer's `load` gave.
     public init(_ before: CompareSide, _ after: CompareSide, oldSession: PdfEditSession, newSession: PdfEditSession,
-                _ renderers: () -> DocumentRenderer) {
+                oldRenderer: DocumentRenderer, newRenderer: DocumentRenderer, drawn: (old: Bool, new: Bool)) {
         self.before = before
         self.after = after
-        old = DocumentTab(session: oldSession, renderer: renderers(), url: nil, title: before.name, password: before.password,
-                          certificate: before.choice)
-        new = DocumentTab(session: newSession, renderer: renderers(), url: nil, title: after.name, password: after.password,
-                          certificate: after.choice)
+        old = DocumentTab(session: oldSession, renderer: oldRenderer, url: nil, title: before.name, password: before.password,
+                          certificate: before.choice, loaded: drawn.old)
+        new = DocumentTab(session: newSession, renderer: newRenderer, url: nil, title: after.name, password: after.password,
+                          certificate: after.choice, loaded: drawn.new)
     }
 
     public convenience init(_ before: CompareSide, _ after: CompareSide, _ renderers: () -> DocumentRenderer) throws {
-        self.init(before, after, oldSession: try before.openSession(), newSession: try after.openSession(), renderers)
+        let first = try before.openSession(), second = try after.openSession()
+        let oldRenderer = renderers(), newRenderer = renderers()
+        self.init(before, after, oldSession: first, newSession: second, oldRenderer: oldRenderer, newRenderer: newRenderer,
+                  drawn: (oldRenderer.load(first, before.password), newRenderer.load(second, after.password)))
     }
 
     /// The report is a copy of the new file; a file that limits what readers may do can only be copied by its owner.

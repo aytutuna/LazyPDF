@@ -54,13 +54,18 @@ public final class CompareFlow {
         var made: CompareSession?
         do {
             try await host.runBusy(L10n.t("Comparing files")) { [self] token in
-                let (before, after, oldSession, newSession) = try await ToolDocuments.run(token) { () throws -> (CompareSide, CompareSide, PdfEditSession, PdfEditSession) in
+                let oldRenderer = renderers(), newRenderer = renderers()
+                // Loading a renderer can decrypt a whole file, so it is part of the step off the main actor.
+                let (before, after, oldSession, newSession, drawn) = try await ToolDocuments.run(token) { () throws -> (CompareSide, CompareSide, PdfEditSession, PdfEditSession, (old: Bool, new: Bool)) in
                     let other = try earlier ?? CompareSide.of(request.url!, password: password, choice: request.certificate, certificate: certificate)
                     let (before, after) = earlier != nil ? (other, open) : request.fileIsOlder ? (open, other) : (other, open)
-                    return (before, after, try before.openSession(), try after.openSession())
+                    let first = try before.openSession(), second = try after.openSession()
+                    try Task.checkCancellation()
+                    return (before, after, first, second, (oldRenderer.load(first, before.password), newRenderer.load(second, after.password)))
                 }
                 try token.throwIfCancelled()
-                let session = CompareSession(before, after, oldSession: oldSession, newSession: newSession, renderers)
+                let session = CompareSession(before, after, oldSession: oldSession, newSession: newSession, oldRenderer: oldRenderer,
+                                             newRenderer: newRenderer, drawn: drawn)
                 do {
                     try await session.compare(request.options, byPixels: request.byPixels, token)
                 } catch {
