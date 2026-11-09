@@ -54,7 +54,8 @@ extension StampsModel {
         guard let tab else { return }
         let keep = selected?.id
         let rows = PdfStamper(tab.document).list().map { RunRow($0, tab.pageCount) }
-        written = written.filter { $0.key.tab != tab.id || rows.contains { row in row.id == $0.key.run } }
+        let present = Set(rows.map(\.id))
+        written = written.filter { $0.key.tab != tab.id || present.contains($0.key.run) }
         runs = rows
         selected = rows.first { $0.id == keep }
     }
