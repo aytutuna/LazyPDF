@@ -12,7 +12,7 @@ final class ContentEditsTests: XCTestCase {
                     title: "t.pdf", password: password)
     }
 
-    private func edits(_ tab: DocumentTab) -> ContentEdits {
+    private func makeEdits(_ tab: DocumentTab) -> ContentEdits {
         ContentEdits(tab, fonts: FakeFonts(), codec: FakeCodec())
     }
 
@@ -26,7 +26,7 @@ final class ContentEditsTests: XCTestCase {
 
     // What the panel does: the copy is made off the document, then adopted by it.
     private func replaceAll(_ tab: DocumentTab, _ find: String, _ replacement: String, _ token: CancelToken = CancelToken()) async throws -> EditOutcome {
-        let edits = edits(tab)
+        let edits = makeEdits(tab)
         let made = try await edits.replaceAll(tab.session.current, find, replacement, TextSearchOptions(), token)
         return try edits.adopt(made)
     }
@@ -41,7 +41,7 @@ final class ContentEditsTests: XCTestCase {
         tab.changed = { raised += 1 }
         let line = try XCTUnwrap((try objects(tab)[0] as? TextObject)?.lines.first)
 
-        let outcome = try edits(tab).replaceLine(0, line, "Goodbye from the tests.")
+        let outcome = try makeEdits(tab).replaceLine(0, line, "Goodbye from the tests.")
 
         XCTAssertTrue(outcome.done)
         XCTAssertTrue(try pageText(tab).contains("Goodbye from the tests."))
@@ -53,7 +53,7 @@ final class ContentEditsTests: XCTestCase {
     func test_undoTakesTheTypedLineBack() throws {
         let tab = try open()
         let line = try XCTUnwrap((try objects(tab)[0] as? TextObject)?.lines.first)
-        _ = try edits(tab).replaceLine(0, line, "Something else entirely.")
+        _ = try makeEdits(tab).replaceLine(0, line, "Something else entirely.")
 
         try tab.undo()
 
@@ -64,7 +64,7 @@ final class ContentEditsTests: XCTestCase {
         let tab = try open()
         let line = try XCTUnwrap((try objects(tab)[0] as? TextObject)?.lines.first)
 
-        let outcome = try edits(tab).replaceLine(0, line, "漢字")
+        let outcome = try makeEdits(tab).replaceLine(0, line, "漢字")
 
         XCTAssertFalse(outcome.done)
         XCTAssertFalse(outcome.problem?.isEmpty ?? true)
@@ -76,7 +76,7 @@ final class ContentEditsTests: XCTestCase {
         let tab = try open(try threeLines())
         let block = try XCTUnwrap(try objects(tab)[0] as? TextObject)
 
-        let outcome = try edits(tab).replaceParagraph(0, block.id, "First line of the text. Second line of the text. Third line of the text. A fourth sentence that needs another line, and a fifth one that needs yet another line, then more.")
+        let outcome = try makeEdits(tab).replaceParagraph(0, block.id, "First line of the text. Second line of the text. Third line of the text. A fourth sentence that needs another line, and a fifth one that needs yet another line, then more.")
 
         XCTAssertTrue(outcome.done)
         XCTAssertNotNil(outcome.note)
@@ -86,7 +86,7 @@ final class ContentEditsTests: XCTestCase {
     func test_anObjectThatIsGoneIsReportedNotThrown() throws {
         let tab = try open()
 
-        let outcome = try edits(tab).style(0, 999, TextStyleChange(size: 20))
+        let outcome = try makeEdits(tab).style(0, 999, TextStyleChange(size: 20))
 
         XCTAssertFalse(outcome.done)
         XCTAssertEqual(outcome.problem, EditingText.staleObject)
@@ -96,7 +96,7 @@ final class ContentEditsTests: XCTestCase {
         let tab = try open()
         let block = try XCTUnwrap(try objects(tab)[0] as? TextObject)
 
-        let outcome = try edits(tab).style(0, block.id, TextStyleChange(size: 24))
+        let outcome = try makeEdits(tab).style(0, block.id, TextStyleChange(size: 24))
 
         XCTAssertTrue(outcome.done)
         XCTAssertEqual(try XCTUnwrap(try objects(tab)[0] as? TextObject).size, 24, accuracy: 0.1)
@@ -104,7 +104,7 @@ final class ContentEditsTests: XCTestCase {
 
     func test_aTextBoxIsAddedAndATooSmallOneSaysItOverflows() throws {
         let tab = try open()
-        let edits = edits(tab)
+        let edits = makeEdits(tab)
 
         let fits = try edits.addTextBox(0, PdfRect(100, 400, 400, 500), "A new box", TextBoxStyle(family: "Arial", size: 12))
         let tight = try edits.addTextBox(0, PdfRect(100, 300, 160, 312), "Far too many words for such a small box", TextBoxStyle(family: "Arial", size: 12))
@@ -118,7 +118,7 @@ final class ContentEditsTests: XCTestCase {
 
     func test_aPictureIsAddedThroughTheCodecAndUnreadableBytesAreRefused() throws {
         let tab = try open()
-        let edits = edits(tab)
+        let edits = makeEdits(tab)
 
         let bad = try edits.addImage(0, PdfRect(50, 400, 250, 500), [])
         let good = try edits.addImage(0, PdfRect(50, 400, 250, 500), [1, 2, 3])
@@ -132,7 +132,7 @@ final class ContentEditsTests: XCTestCase {
     func test_aPictureKeepsItsProportionsInsideTheBox() throws {
         let tab = try open()
 
-        _ = try edits(tab).addImage(0, PdfRect(50, 400, 350, 500), [1])
+        _ = try makeEdits(tab).addImage(0, PdfRect(50, 400, 350, 500), [1])
 
         let image = try XCTUnwrap(try objects(tab).compactMap { $0 as? ImageObject }.first)
         XCTAssertEqual(image.bounds.width, 100, accuracy: 1)
@@ -142,7 +142,7 @@ final class ContentEditsTests: XCTestCase {
 
     func test_objectsAreMovedResizedTurnedAndDeletedAsOneStepEach() throws {
         let tab = try open()
-        let edits = edits(tab)
+        let edits = makeEdits(tab)
         _ = try edits.addImage(0, PdfRect(100, 400, 200, 500), [1])
         let id = try XCTUnwrap(try objects(tab).first { $0 is ImageObject }).id
         let start = try objects(tab)[id].bounds
@@ -168,7 +168,7 @@ final class ContentEditsTests: XCTestCase {
 
     func test_opacityOrderAndShapeColoursReachThePage() throws {
         let tab = try open()
-        let edits = edits(tab)
+        let edits = makeEdits(tab)
         let page = try PageEditor(tab.session, 0, FakeFonts())
         _ = try page.addRectangle(PdfRect(100, 400, 200, 500), ShapeStyle(stroke: RgbColor(0, 0, 255), fill: RgbColor(255, 0, 0), width: 2))
         let id = try XCTUnwrap(try objects(tab).first { $0 is PathObject }).id
@@ -232,7 +232,7 @@ final class ContentEditsTests: XCTestCase {
 
     func test_aLinkIsAddedChangedAndRemoved() throws {
         let tab = try open()
-        let edits = edits(tab)
+        let edits = makeEdits(tab)
         let area = PdfRect(50, 700, 200, 720)
 
         XCTAssertTrue(try edits.setLink(0, area, UriAction("https://example.com"), nil).done)
