@@ -7,6 +7,7 @@ import LazyPDFApp
 extension ToolRegistry {
     static func security(_ id: String, _ context: ToolContext) -> ToolPanel? {
         switch id {
+        case "protect": return ToolPanel(ProtectModel()) { ProtectPanelView(model: $0) }
         default: return nil
         }
     }

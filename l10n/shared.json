@@ -6632,5 +6632,8 @@
   },
   "No text recognition for {0}.": {
     "tr": "{0} için metin tanıma yok."
+  },
+  "From the keychain": {
+    "tr": "Anahtar zincirinden"
   }
 }
