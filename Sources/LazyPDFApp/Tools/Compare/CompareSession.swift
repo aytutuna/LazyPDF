@@ -63,10 +63,10 @@ public final class CompareSession {
     public static let maxPixelRows = pixelRowLimit
 
     private struct Outcome {
-        var result: ComparisonResult
+        var result: LazyPDFKit.ComparisonResult
         var rows: [(part: CompareParts, row: ChangeRow)]
         var pixelRows: [ChangeRow] = []
-        var pixelResult: ComparisonResult?
+        var pixelResult: LazyPDFKit.ComparisonResult?
         var looked = 0
         var undrawn = 0
         var capped = false
@@ -76,13 +76,13 @@ public final class CompareSession {
     private let after: CompareSide
     private var contentRows: [(part: CompareParts, row: ChangeRow)] = []
     private var pixelRows: [ChangeRow] = []
-    private var pixelResult: ComparisonResult?
+    private var pixelResult: LazyPDFKit.ComparisonResult?
 
     public let old: DocumentTab
     public let new: DocumentTab
 
     /// What the content comparison found; the pages of a pixel comparison are paired from it as well.
-    public private(set) var result: ComparisonResult?
+    public private(set) var result: LazyPDFKit.ComparisonResult?
 
     public private(set) var byPixels = false
 
@@ -215,7 +215,7 @@ public final class CompareSession {
         outcome.capped = listed.count > pixelRowLimit
         outcome.pixelRows = Array(listed.prefix(pixelRowLimit))
         let summary = ComparisonSummary(added, removed, areas, 0, 0, 0, areas, 0, added + removed, 0, 0, 0)
-        outcome.pixelResult = ComparisonResult(outcome.result.pages, changes, summary, outcome.result.oldPageCount, outcome.result.newPageCount)
+        outcome.pixelResult = LazyPDFKit.ComparisonResult(outcome.result.pages, changes, summary, outcome.result.oldPageCount, outcome.result.newPageCount)
     }
 
     private nonisolated static func pixelChange(_ pair: PagePair, _ difference: PixelDifference, _ page: PageGeometry) -> CompareChange {
