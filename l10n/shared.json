@@ -6641,5 +6641,8 @@
   },
   "Undo stroke": {
     "tr": "Çizgiyi geri al"
+  },
+  "Choose a value for {0} in the panel.": {
+    "tr": "Panelde {0} için bir değer seçin."
   }
 }

@@ -17,6 +17,8 @@ extension FormsModel {
 
     /// `ordinal` tells apart fields that share a name; most names have one.
     public func select(_ name: String?, _ index: Int, _ ordinal: Int = 0) {
+        guard !isWorking else { return }
+        commitCard()
         selected = name
         selectedIndex = index
         selectedOrdinal = ordinal
@@ -37,8 +39,9 @@ extension FormsModel {
     }
 
     /// The field under a point of a page; the smallest wins, so a check box on a large text field can be picked. With `near`, a
-    /// point a little outside every box finds the closest one, so a finger can pick a small field.
-    func widgetAt(_ page: Int, _ point: ViewPoint, near allowed: Bool = false) -> (name: String, index: Int, ordinal: Int, box: ViewRect)? {
+    /// point a little outside every box finds the closest one, so a finger can pick a small field; with `exact` only a check box or a
+    /// radio button is found that way.
+    func widgetAt(_ page: Int, _ point: ViewPoint, near allowed: Bool = false, exact: Bool = false) -> (name: String, index: Int, ordinal: Int, box: ViewRect)? {
         var inside: (name: String, index: Int, ordinal: Int, box: ViewRect)?
         var near: (name: String, index: Int, ordinal: Int, box: ViewRect)?
         let reach = slop(page)
@@ -51,7 +54,7 @@ extension FormsModel {
                 let candidate = (field.name, i, ordinal, box)
                 if box.contains(point) {
                     if inside == nil || box.width * box.height < inside!.box.width * inside!.box.height { inside = candidate }
-                } else if allowed && box.inflated(reach, reach).contains(point) {
+                } else if allowed && (!exact || field.kind == .checkBox || field.kind == .radio) && box.inflated(reach, reach).contains(point) {
                     if near == nil || box.width * box.height < near!.box.width * near!.box.height { near = candidate }
                 }
             }
@@ -224,7 +227,7 @@ extension FormsModel {
     }
 
     public func findFields() async {
-        guard let tab, let host else { return }
+        guard handIn(), let tab, let host else { return }
         let bytes = tab.session.current
         let password = tab.password
         let certificate = tab.certificate.flatMap { host.verifyCertificate($0) }
@@ -232,9 +235,7 @@ extension FormsModel {
         var proposals: [FieldProposal]?
         do {
             try await host.runBusy(L10n.t("Looking for fields")) { token in
-                proposals = try await ToolDocuments.run(token) {
-                    try FormEdits.detect(bytes, password: password, certificate: certificate, renderer: renderer)
-                }
+                proposals = try await FormEdits.detect(bytes, password: password, certificate: certificate, renderer: renderer, token: token)
             }
         } catch {
             host.showProblem(FormEdits.problem(of: error))
@@ -247,6 +248,26 @@ extension FormsModel {
                 + (proposals.contains { $0.fromPixels } ? " " + L10n.t("Fields on scanned pages are guesses. Check each one.") : "")
         foundShown = true
         showDesign(form)
+    }
+
+    // A page that went with an undo takes its proposals with it.
+    func pruneFound(_ form: PdfForm) {
+        let pages = form.document.pages.count
+        let kept = found.filter { $0.proposal.pageIndex < pages }
+        if kept.count == found.count { return }
+        found = kept
+        if kept.isEmpty {
+            foundShown = false
+        } else {
+            foundText = L10n.plural(kept.count, one: "{0} field found.", other: "{0} fields found.")
+        }
+    }
+
+    /// Writes the box of the card that still has the keyboard.
+    func commitCard() {
+        guard let property = cardFocus else { return }
+        cardFocus = nil
+        commit(property)
     }
 
     public func setFound(_ id: String, _ checked: Bool) {

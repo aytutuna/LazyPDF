@@ -30,13 +30,14 @@ final class FieldTool: PagePointerTool {
     var cursor: PointerCursor? { .crosshair }
 
     func takes(_ pointer: PagePointer) -> Bool {
-        guard let model else { return false }
+        guard let model, !model.isWorking else { return false }
         if model.newKind != nil { return true }
-        return handleAt(model, pointer.page, pointer.point) != nil || model.widgetAt(pointer.page, pointer.point, near: true) != nil
+        return handleAt(model, pointer.page, pointer.point) != nil || model.widgetAt(pointer.page, pointer.point, near: true, exact: true) != nil
     }
 
     func press(_ pointer: PagePointer) {
-        guard let model else { return }
+        guard let model, !model.isWorking else { return }
+        model.commitCard()
         page = pointer.page
         start = pointer.point
         if let selected = model.selectedBox(), selected.page == page, let found = handleAt(model, page, start) {

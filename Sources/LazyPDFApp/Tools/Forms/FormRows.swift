@@ -7,6 +7,7 @@ import LazyPDFKit
 /// shows the state of the field, because a mark on the page is not in the accessibility tree and its row is the way to it.
 public struct FieldRow: Equatable, Identifiable {
     public let name: String
+    public let hint: String
     public let detail: String
     public let page: Int
     public let index: Int
@@ -19,10 +20,20 @@ public struct FieldRow: Equatable, Identifiable {
     public let canFill: Bool
     public let isRequired: Bool
     public let isSecret: Bool
+    public let multiSelect: Bool
+    public let isEditable: Bool
 
     public var id: String { "\(ordinal)#\(name)" }
 
-    public var summary: String { name + ", " + detail }
+    /// What the field is for: its hint when the file has one, else its name. Windows names the control by it.
+    public var label: String { hint.isEmpty ? name : hint }
+
+    public var summary: String { label + ", " + detail }
+
+    /// The exports of the options a list has chosen, in the order the list shows them.
+    public var chosen: [String] {
+        options.filter { selected.contains($0.export) || selected.contains($0.display) }.map(\.export)
+    }
 }
 
 /// A field the detector found, with the box that adds it.

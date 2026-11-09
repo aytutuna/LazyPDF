@@ -7,7 +7,7 @@ import LazyPDFKit
 extension FormsModel {
     /// Writes the values in `dataFormat` and hands the file to the exporter, which asks where it goes.
     public func exportData() async {
-        guard let tab, let host else { return }
+        guard handIn(), let tab, let host else { return }
         let name = ((tab.title as NSString).deletingPathExtension) + "." + dataFormat.fileExtension
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Lazy PDF", isDirectory: true)
             .appendingPathComponent("Form data " + UUID().uuidString, isDirectory: true)
@@ -28,6 +28,7 @@ extension FormsModel {
 
     /// Fills the form from a file the person picks.
     public func importData() async {
+        guard handIn() else { return }
         if signed({ [weak self] in Task { await self?.importData() } }) { return }
         guard let tab, let host else { return }
         guard let file = await host.filePicker.pickFiles([.any], multiple: false).first else { return }
@@ -46,7 +47,7 @@ extension FormsModel {
         }
         var outcome: (result: FormFillResult, rows: Int)?
         isWorking = true
-        defer { isWorking = false }
+        defer { endWork() }
         do {
             try await host.runBusy(L10n.t("Filling in the form")) { token in
                 outcome = try await FormEdits.applyAsync(tab, fonts, L10n.t("Import form data"), token: token) { form in

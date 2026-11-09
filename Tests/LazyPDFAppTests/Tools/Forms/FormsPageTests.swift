@@ -42,6 +42,15 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertFalse(tool.takes(rig.pointer(ViewPoint(400, 300), pressed: true)))
     }
 
+    func test_aFingerBetweenCloseFieldsScrollsInsteadOfTakingEither() throws {
+        let rig = try FormsRig()
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+
+        // The text fields run 640 to 660 and 610 to 630: this is 5 points from each, well inside the reach of a fingertip.
+        XCTAssertFalse(tool.takes(rig.pointer(ViewPoint(100, 792 - 635), pressed: true)))
+        XCTAssertTrue(tool.takes(rig.pointer(ViewPoint(100, 792 - 650), pressed: true)))
+    }
+
     func test_aSmallFieldIsHitByAFingerThatMissesItALittle() throws {
         let rig = try FormsRig()
         let box = rig.centre("agree")
@@ -59,6 +68,63 @@ final class FormsFillOnThePageTests: XCTestCase {
 
         XCTAssertEqual(rig.form.find("agree")?.isChecked, false)
         XCTAssertFalse(rig.tab.session.canUndo)
+    }
+
+    func test_aRowOfThePanelHandsInTheFieldBeingTypedInBeforeItOpensAgain() throws {
+        let rig = try FormsRig()
+        rig.tap(rig.centre("name"))
+        try XCTUnwrap(rig.field("name")).typed("Ada")
+
+        rig.model.focusRow(rig.model.rows[0])
+
+        XCTAssertEqual(rig.form.find("name")?.value, "Ada")
+        XCTAssertEqual(rig.field("name")?.text, "Ada")
+        XCTAssertEqual(rig.tab.session.undoLabel, "Fill form field")
+    }
+
+    func test_aFlagsValueBeyondTheRangeOfAnIntegerDoesNotStopTheFieldsShowing() throws {
+        let rig = try FormsRig()
+
+        try rig.change("Change") { form in
+            let widget = try XCTUnwrap(form.find("name")).widgets[0]
+            widget.dictionary["F"] = PdfNumber("99999999999999999999")
+        }
+
+        XCTAssertTrue(try XCTUnwrap(rig.viewer.pointerTool).takes(rig.pointer(rig.centre("name"), pressed: true)))
+    }
+
+    func test_nothingOnThePageIsTheToolsWhileAnEditRuns() throws {
+        let rig = try FormsRig()
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+
+        rig.model.isWorking = true
+        XCTAssertFalse(tool.takes(rig.pointer(rig.centre("name"), pressed: true)))
+        rig.model.focusRow(rig.model.rows[0])
+        XCTAssertNil(rig.field("name"))
+        rig.model.isWorking = false
+
+        XCTAssertTrue(tool.takes(rig.pointer(rig.centre("name"), pressed: true)))
+    }
+
+    func test_aDocumentSwappedWithoutAChangeIsReadAgain() throws {
+        let rig = try FormsRig()
+        let before = try XCTUnwrap(rig.model.fillHit(0, rig.centre("name")))
+
+        try rig.tab.session.discard()
+        rig.model.afterEdit()
+
+        let after = try XCTUnwrap(rig.model.fillHit(0, rig.centre("name")))
+        XCTAssertFalse(before.dictionary === after.dictionary)
+        XCTAssertTrue(after.dictionary === rig.form.find("name")?.widgets[0].dictionary)
+    }
+
+    func test_aPointerChosenFromTheToolbarDoesNotTakeTheFieldsAway() async throws {
+        let rig = try FormsRig()
+
+        rig.viewer.pointerTool = nil
+        await waitUntil { rig.viewer.pointerTool != nil }
+
+        XCTAssertTrue(try XCTUnwrap(rig.viewer.pointerTool).takes(rig.pointer(rig.centre("name"), pressed: true)))
     }
 
     func test_aTapOnATextFieldOpensItWithItsLimitsAndTheTextIsKeptWhenItEnds() throws {
@@ -337,6 +403,16 @@ final class FormsDesignOnThePageTests: XCTestCase {
         XCTAssertNil(rig.model.selected)
         XCTAssertNil(rig.model.cardKind)
         XCTAssertFalse(rig.tab.session.canUndo)
+    }
+
+    func test_aFingerBetweenCloseFieldsScrollsWhileEditingToo() throws {
+        let rig = try designing()
+        let tool = try XCTUnwrap(rig.viewer.pointerTool)
+        let agree = rig.centre("agree")
+
+        XCTAssertFalse(tool.takes(rig.pointer(ViewPoint(100, 792 - 635), pressed: true)))
+        XCTAssertTrue(tool.takes(rig.pointer(rig.centre("name"), pressed: true)))
+        XCTAssertTrue(tool.takes(rig.pointer(ViewPoint(agree.x + 20, agree.y), pressed: true)))
     }
 
     func test_aFingerIsTheToolsOnlyOverAFieldUnlessAKindIsChosenToDraw() throws {

@@ -31,6 +31,9 @@ struct FillSlot {
 
     // The file is read again after every change, so the widget is told by where it is, not by its dictionary.
     func sameWidget(_ other: FillSlot) -> Bool { page == other.page && name == other.name && index == other.index }
+
+    // Marks too small for a finger to be sure of.
+    var isToggle: Bool { kind == .checkBox || kind == .radio }
 }
 
 @MainActor
@@ -114,14 +117,15 @@ final class FillLayer {
     }
 
     /// The enabled widget under a point of a page: the smallest that holds it, else the closest within `slop` page points. A
-    /// point inside a widget that is off belongs to nothing, so it does not fall to a neighbour.
-    func hit(_ page: Int, _ point: ViewPoint, slop: Double) -> FillSlot? {
+    /// point inside a widget that is off belongs to nothing, so it does not fall to a neighbour. With `exact`, only a check box
+    /// or a radio button is found outside its own rectangle.
+    func hit(_ page: Int, _ point: ViewPoint, slop: Double, exact: Bool = false) -> FillSlot? {
         let all = slots(page)
         let holding = all.filter { $0.rect.contains(point) }
         if !holding.isEmpty {
             return holding.filter { $0.enabled }.min { $0.rect.width * $0.rect.height < $1.rect.width * $1.rect.height }
         }
-        let near = all.filter { $0.enabled && $0.rect.inflated(slop, slop).contains(point) }
+        let near = all.filter { $0.enabled && (!exact || $0.isToggle) && $0.rect.inflated(slop, slop).contains(point) }
         return near.min { distance($0.rect, point) < distance($1.rect, point) }
     }
 
@@ -145,6 +149,8 @@ final class FillLayer {
     /// Puts the keyboard in the field of a widget, or marks it; false when it has no widget here.
     @discardableResult
     func focus(_ name: String, _ index: Int) -> Bool {
+        // A row of the panel does not take the focus from a field being typed in, so that field is handed in before it is reopened.
+        flush()
         guard let widget = widgetAt(name, index), let slot = slot(of: widget) else { return false }
         let old = focused.flatMap { widgetAt($0.name, $0.index) }
         focused = (name, index)
@@ -268,7 +274,7 @@ final class FillLayer {
 
     private static func hidden(_ widget: FormWidget) -> Bool {
         guard let flags = widget.dictionary["F"] as? PdfNumber else { return false }
-        return Int(flags.value) & 0b10_0010 != 0
+        return (Int(exactly: flags.value) ?? 0) & 0b10_0010 != 0
     }
 
     // Size 0 in the field's /DA means fit the text to the field.
@@ -315,7 +321,7 @@ final class FillTool: PagePointerTool {
     var cursor: PointerCursor? { nil }
 
     func takes(_ pointer: PagePointer) -> Bool {
-        model?.fillHit(pointer.page, pointer.point) != nil
+        model?.fillTakes(pointer.page, pointer.point) ?? false
     }
 
     func press(_ pointer: PagePointer) {
