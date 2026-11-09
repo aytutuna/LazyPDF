@@ -6,14 +6,14 @@ import XCTest
 // to the engine's page editor on a document in a tab.
 
 @MainActor
-final class PageEditsTests: XCTestCase {
+final class ContentEditsTests: XCTestCase {
     private func open(_ bytes: [UInt8]? = nil, password: String? = nil) throws -> DocumentTab {
         DocumentTab(session: try PdfEditSession.open(bytes ?? Pdfs.text(), password: password), renderer: FakeRenderer(), url: nil,
                     title: "t.pdf", password: password)
     }
 
-    private func edits(_ tab: DocumentTab) -> PageEdits {
-        PageEdits(tab, fonts: FakeFonts(), codec: FakeCodec())
+    private func edits(_ tab: DocumentTab) -> ContentEdits {
+        ContentEdits(tab, fonts: FakeFonts(), codec: FakeCodec())
     }
 
     private func pageText(_ tab: DocumentTab, _ page: Int = 0) throws -> String {
@@ -258,19 +258,19 @@ final class PageEditsTests: XCTestCase {
             ("example.com:8080/a", "https://example.com:8080/a"),
         ]
         for (typed, expected) in cases {
-            XCTAssertEqual((PageEdits.target(toPage: false, typed, 3) as? UriAction)?.uri, expected, typed)
+            XCTAssertEqual((ContentEdits.target(toPage: false, typed, 3) as? UriAction)?.uri, expected, typed)
         }
     }
 
     func test_aTargetThatIsNeitherAnAddressNorAPageOfTheFileIsRefused() {
         let cases: [(Bool, String)] = [(false, ""), (false, "two words"), (true, "0"), (true, "4"), (true, "x")]
         for (toPage, typed) in cases {
-            XCTAssertNil(PageEdits.target(toPage: toPage, typed, 3), typed)
+            XCTAssertNil(ContentEdits.target(toPage: toPage, typed, 3), typed)
         }
     }
 
     func test_aPageNumberIsCountedFromOne() throws {
-        let target = try XCTUnwrap(PageEdits.target(toPage: true, "3", 3) as? GoToAction)
+        let target = try XCTUnwrap(ContentEdits.target(toPage: true, "3", 3) as? GoToAction)
 
         XCTAssertEqual(target.destination.pageIndex, 2)
     }

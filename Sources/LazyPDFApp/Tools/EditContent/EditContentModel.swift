@@ -5,7 +5,7 @@ import LazyPDFKit
 // Follows windows/LazyPDF.App/Tools/EditContent/EditContentPanel.xaml.cs and its partial files: changes what is on the pages.
 // Click a line of text and type over it, restyle or reflow a paragraph, move, resize, turn, delete and reorder pictures and
 // shapes, add text boxes, pictures and links, and replace words in the whole file. The pointer work is in EditSurface, the
-// typing in InPlaceEditor, the calls to the engine in PageEdits; this model joins them to the panel's state. The text is in
+// typing in InPlaceEditor, the calls to the engine in ContentEdits; this model joins them to the panel's state. The text is in
 // EditContentModel+Text.swift, the objects in +Objects, the links in +Links and replace all in +Find.
 
 /// A sentence the panel shows under the hint, for what an edit came to.
@@ -81,7 +81,7 @@ public final class EditContentModel: ToolPanelModel {
     @ObservationIgnored var tab: DocumentTab?
     @ObservationIgnored var host: ToolHost?
     @ObservationIgnored var viewer: DocumentViewer?
-    @ObservationIgnored var edits: PageEdits?
+    @ObservationIgnored var edits: ContentEdits?
     @ObservationIgnored var surface: EditSurface?
     @ObservationIgnored var editor: InPlaceEditor?
     @ObservationIgnored var watch: ObservationWatch?
@@ -127,7 +127,7 @@ public final class EditContentModel: ToolPanelModel {
         self.viewer = viewer
         signedOk = false
         let certificate = tab.certificate.flatMap { host.verifyCertificate($0) }
-        let edits = PageEdits(tab, fonts: host.fontSource, codec: host.imageCodec, certificate: certificate)
+        let edits = ContentEdits(tab, fonts: host.fontSource, codec: host.imageCodec, certificate: certificate)
         let surface = EditSurface(viewer, edits)
         let editor = InPlaceEditor(viewer)
         self.edits = edits

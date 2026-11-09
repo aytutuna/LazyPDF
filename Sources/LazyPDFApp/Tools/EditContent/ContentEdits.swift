@@ -19,14 +19,14 @@ struct EditOutcome: Equatable {
 }
 
 /// The file a replace-all made on its copy, and the file it started from.
-struct Replacement {
+struct ReplacedCopy {
     let start: [UInt8]
     let report: ReplaceReport
     let file: [UInt8]
 }
 
 @MainActor
-final class PageEdits {
+final class ContentEdits {
     private let tab: DocumentTab
     private let fonts: FontSource?
     private let codec: ImageCodec?
@@ -169,7 +169,7 @@ final class PageEdits {
     /// Replaces on a copy of the file, which holds nothing of the document being shown, so it can run off the main actor and
     /// be cancelled without leaving half an edit behind. `adopt` brings the result in.
     func replaceAll(_ start: [UInt8], _ query: String, _ replacement: String, _ options: TextSearchOptions,
-                    _ token: CancelToken) async throws -> Replacement {
+                    _ token: CancelToken) async throws -> ReplacedCopy {
         try token.throwIfCancelled()
         let password = tab.password
         let certificate = certificate
@@ -186,10 +186,10 @@ final class PageEdits {
     }
 
     private nonisolated static func replace(_ start: [UInt8], _ query: String, _ replacement: String, _ options: TextSearchOptions,
-                                            _ password: String?, _ certificate: X509Certificate?, _ fonts: FontSource?) throws -> Replacement {
+                                            _ password: String?, _ certificate: X509Certificate?, _ fonts: FontSource?) throws -> ReplacedCopy {
         let scratch = try scratchSession(start, password, certificate)
         let report = try TextReplacer.replaceAll(scratch, query, replacement, options, fonts: fonts, label: L10n.t("Replace text"))
-        return Replacement(start: start, report: report, file: report.replaced > 0 ? scratch.current : [])
+        return ReplacedCopy(start: start, report: report, file: report.replaced > 0 ? scratch.current : [])
     }
 
     private nonisolated static func scratchSession(_ bytes: [UInt8], _ password: String?, _ certificate: X509Certificate?) throws -> PdfEditSession {
@@ -200,7 +200,7 @@ final class PageEdits {
     }
 
     /// Makes the replaced copy the document as one undo step, unless the document moved on while it was made.
-    func adopt(_ made: Replacement) throws -> EditOutcome {
+    func adopt(_ made: ReplacedCopy) throws -> EditOutcome {
         if made.report.replaced == 0 { return report(made.report) }
         guard tab.session.current == made.start else {
             return EditOutcome(done: false, problem: L10n.t("The file changed meanwhile. Replace again."))

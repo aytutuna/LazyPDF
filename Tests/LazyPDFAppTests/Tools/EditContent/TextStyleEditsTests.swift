@@ -11,8 +11,8 @@ final class TextStyleEditsTests: XCTestCase {
         DocumentTab(session: try PdfEditSession.open(bytes), renderer: FakeRenderer(), url: nil, title: "t.pdf")
     }
 
-    private func edits(_ tab: DocumentTab) -> PageEdits {
-        PageEdits(tab, fonts: FakeFonts(), codec: FakeCodec())
+    private func edits(_ tab: DocumentTab) -> ContentEdits {
+        ContentEdits(tab, fonts: FakeFonts(), codec: FakeCodec())
     }
 
     private func block(_ tab: DocumentTab) throws -> TextObject {

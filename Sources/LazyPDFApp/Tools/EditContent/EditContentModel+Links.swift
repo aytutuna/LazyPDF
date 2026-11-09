@@ -42,7 +42,7 @@ extension EditContentModel {
     }
 
     func linkTarget() -> PdfAction? {
-        PageEdits.target(toPage: linkToPage, linkText, tab?.pageCount ?? 0)
+        ContentEdits.target(toPage: linkToPage, linkText, tab?.pageCount ?? 0)
     }
 
     /// The link box has an address or a page that can be used.
