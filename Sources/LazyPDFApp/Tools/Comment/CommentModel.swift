@@ -243,7 +243,7 @@ public final class CommentModel: ToolPanelModel {
     }
 
     public func setStampName(_ name: String) {
-        stampName = name.isEmpty ? stamps[0] : name
+        stampName = name
     }
 
     public func setColor(_ rgb: [Double]?) {
