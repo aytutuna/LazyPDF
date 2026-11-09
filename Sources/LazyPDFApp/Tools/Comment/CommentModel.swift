@@ -361,7 +361,7 @@ public final class CommentModel: ToolPanelModel {
         }
         let page = viewer.pageIndex
         let label = L10n.t("Page {0}", viewer.pageLabel(page))
-        marks = makeMarker(tab).selectable(on: page).compactMap { mark in
+        marks = makeMarker(tab).selectableMarks(on: page).compactMap { mark in
             guard let number = mark.reference?.number else { return nil }
             let author = (mark.title ?? "").isEmpty ? [] : [mark.title ?? ""]
             let chosen = edit.current?.reference?.number == number && edit.current?.pageIndex == page

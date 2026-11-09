@@ -17,7 +17,7 @@ extension Marker {
     }
 
     /// The marks of a page a person may pick, in the order they were added.
-    public func selectable(on page: Int) -> [PdfAnnotation] {
+    public func selectableMarks(on page: Int) -> [PdfAnnotation] {
         if page < 0 || page >= document.pages.count { return [] }
         return PdfAnnotations.read(document, document.pages[page]).filter(Self.selectable)
     }
