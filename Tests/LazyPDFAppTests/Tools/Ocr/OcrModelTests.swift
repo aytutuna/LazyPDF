@@ -11,14 +11,14 @@ final class OcrModelTests: XCTestCase {
     private let english = OcrLanguage(tag: "en-US", name: "English")
     private let turkish = OcrLanguage(tag: "tr-TR", name: "Turkish")
 
-    private func model(_ recognizer: FakeRecognizer = FakeRecognizer(), installed: [OcrLanguage]? = nil) -> OcrModel {
+    private func makeModel(_ recognizer: FakeRecognizer = FakeRecognizer(), installed: [OcrLanguage]? = nil) -> OcrModel {
         let state = OcrLanguageState(installed: installed ?? [english, turkish], missing: [])
         return OcrModel(recognizer: recognizer, languages: { state })
     }
 
     private func attached(_ bytes: [UInt8]? = nil, recognizer: FakeRecognizer = FakeRecognizer()) async throws -> (model: OcrModel, rig: ToolRig) {
         let rig = try ToolRig(bytes ?? Pdfs.text(2))
-        let model = model(recognizer)
+        let model = makeModel(recognizer)
         rig.attach(model)
         await waitUntil { !model.isLoading }
         return (model, rig)
@@ -26,11 +26,15 @@ final class OcrModelTests: XCTestCase {
 
     // The test pages already have text, so the first run asks; the answer goes on and the layer is waited for.
     private func read(_ model: OcrModel, _ rig: ToolRig, _ pages: [Int]) async {
+        await read(model, rig.host, rig.tab, pages)
+    }
+
+    private func read(_ model: OcrModel, _ host: RecordingHost, _ tab: DocumentTab, _ pages: [Int]) async {
         for page in pages { model.setSelected(page, true) }
-        rig.host.notices.removeAll()
+        host.notices.removeAll()
         await model.action!.run()
-        rig.host.notices.last?.action?.run()
-        await waitUntil { pages.allSatisfy { PdfOcrLayer.has(rig.tab.document, rig.tab.document.pages[$0]) } && !model.isLoading }
+        host.notices.last?.action?.run()
+        await waitUntil { pages.allSatisfy { PdfOcrLayer.has(tab.document, tab.document.pages[$0]) } && !model.isLoading }
     }
 
     func test_theLanguageStartsOnTheAppsOwnAndTheListHasTheOthers() async throws {
@@ -42,7 +46,7 @@ final class OcrModelTests: XCTestCase {
 
     func test_withNoLanguageThereIsNothingToRun() async throws {
         let rig = try ToolRig()
-        let model = model(installed: [])
+        let model = makeModel(installed: [])
         rig.attach(model)
         await waitUntil { !model.isLoading }
         model.setSelected(0, true)
@@ -62,7 +66,7 @@ final class OcrModelTests: XCTestCase {
 
     func test_whileThePagesAreCheckedThePanelHasNothingToRun() throws {
         let rig = try ToolRig()
-        let model = model()
+        let model = makeModel()
 
         rig.attach(model)
 
@@ -223,10 +227,10 @@ final class OcrModelTests: XCTestCase {
         let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
         viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
         viewer.show(tab)
-        let model = model()
+        let model = makeModel()
         model.attach(tab, viewer, host)
         await waitUntil { !model.isLoading }
-        await read(model, rig, [0])
+        await read(model, host, tab, [0])
         await waitUntil { model.words.count == 2 }
 
         let box = model.words[0].box
