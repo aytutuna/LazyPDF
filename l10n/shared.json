@@ -3004,6 +3004,12 @@
   "Not exported": {
     "tr": "Dışa aktarılmadı"
   },
+  "The system cannot draw this file.": {
+    "tr": "Sistem bu dosyayı çizemiyor."
+  },
+  "The system cannot draw these pages. Try another format.": {
+    "tr": "Sistem bu sayfaları çizemiyor. Başka bir biçim deneyin."
+  },
   "Windows does not let Lazy PDF write to {0}. Pick another folder.": {
     "tr": "Windows, Lazy PDF'nin {0} konumuna yazmasına izin vermiyor. Başka bir klasör seçin."
   },
