@@ -152,7 +152,7 @@ final class MeasureToolTests: XCTestCase {
         let (tool, done, viewer) = try await start(.distance, withText: true)
         let corner = try await firstCorner(viewer)
 
-        tool.press(at(corner.x + 2, corner.y - 2))
+        tool.press(at(corner.x + 1, corner.y - 1))
         tool.press(at(300, 300))
 
         let start = try XCTUnwrap(done.items.first).points[0]
@@ -165,10 +165,10 @@ final class MeasureToolTests: XCTestCase {
         tool.snap = false
         let corner = try await firstCorner(viewer)
 
-        tool.press(at(corner.x + 2, corner.y - 2))
+        tool.press(at(corner.x + 1, corner.y - 1))
         tool.press(at(300, 300))
 
-        XCTAssertEqual(try XCTUnwrap(done.items.first).points[0].x, corner.x + 2, accuracy: 1e-6)
+        XCTAssertEqual(try XCTUnwrap(done.items.first).points[0].x, corner.x + 1, accuracy: 1e-6)
     }
 
     func test_aMouseHoversWithALiveSegmentAndASnapMarkButAFingerLeavesNone() async throws {
@@ -180,7 +180,7 @@ final class MeasureToolTests: XCTestCase {
         XCTAssertNil(tool.hover)
         XCTAssertFalse(tool.snapped)
 
-        tool.move(hover(corner.x + 2, corner.y - 2))
+        tool.move(hover(corner.x + 1, corner.y - 1))
         XCTAssertEqual(try XCTUnwrap(tool.hover).x, corner.x, accuracy: 1e-6)
         XCTAssertTrue(tool.snapped)
         XCTAssertEqual(tool.hoverPage, 0)
