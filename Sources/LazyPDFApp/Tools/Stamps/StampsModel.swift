@@ -10,14 +10,14 @@ import LazyPDFKit
 @MainActor
 @Observable
 public final class StampsModel: ToolPanelModel {
-    public private(set) var form = StampForm()
+    public internal(set) var form = StampForm()
 
     /// What is wrong with the form before the engine could draw it; nil when nothing is.
     public private(set) var problem: String?
-    public private(set) var runs: [RunRow] = []
+    public internal(set) var runs: [RunRow] = []
 
     /// The run picked in the list, whose settings the form shows; nil when the form describes a new stamp.
-    public private(set) var selected: RunRow?
+    public internal(set) var selected: RunRow?
 
     /// The name of the picture the stamp uses; nil for none.
     public private(set) var pictureName: String?
