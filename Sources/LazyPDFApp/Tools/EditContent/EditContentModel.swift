@@ -54,22 +54,22 @@ public final class EditContentModel: ToolPanelModel {
     public var sizeText = ""
     public var spacingText = ""
     public var widthText = ""
-    public private(set) var bold = false
-    public private(set) var italic = false
-    public private(set) var alignment = LazyPDFKit.TextAlignment.left
-    public private(set) var opacity = 100.0
+    public internal(set) var bold = false
+    public internal(set) var italic = false
+    public internal(set) var alignment = LazyPDFKit.TextAlignment.left
+    public internal(set) var opacity = 100.0
 
     public var linkToPage = false
     public var linkText = ""
 
     /// Moves when the link box should take the keyboard.
-    public private(set) var linkFocus = 0
+    public internal(set) var linkFocus = 0
 
     public var findText = ""
     public var replaceText = ""
     public var matchCase = false
     public var wholeWord = false
-    public private(set) var isReplacing = false
+    public internal(set) var isReplacing = false
 
     enum Pending {
         case none, line, paragraph, newBox
