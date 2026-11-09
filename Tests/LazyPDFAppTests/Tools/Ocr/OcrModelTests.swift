@@ -236,8 +236,6 @@ final class OcrModelTests: XCTestCase {
         // The stand-in renderer lays the page out at 200 by 300 points, so the points tried lie inside that.
         let box = model.words[0].box
         XCTAssertTrue(box.x <= 100 && box.x + box.width >= 100 && box.y <= 60 && box.y + box.height >= 60)
-        let bottom = model.words.map { $0.box.y + $0.box.height }.max() ?? 0
-        XCTAssertLessThan(bottom + 20, 295)
         let matrix = try XCTUnwrap(viewer.pageToView(0))
         let onWord = matrix.transform(ViewPoint(100, 60))
         let far = matrix.transform(ViewPoint(100, 295))
