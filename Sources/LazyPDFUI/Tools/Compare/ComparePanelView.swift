@@ -52,9 +52,20 @@ struct ComparePanelView: View {
 
             if model.shown != nil { result }
         }
-        .sheet(isPresented: Binding(get: { model.sheetShown }, set: { if !$0 { model.closeSheet() } })) {
-            if let window = model.shown?.window { CompareSheetView(window: window) { model.closeSheet() } }
-        }
+        #if os(iOS)
+        // A plain sheet is a form sheet on an iPad, too narrow for two pages side by side.
+        .fullScreenCover(isPresented: sheetShown) { sheetContent }
+        #else
+        .sheet(isPresented: sheetShown) { sheetContent }
+        #endif
+    }
+
+    private var sheetShown: Binding<Bool> {
+        Binding(get: { model.sheetShown }, set: { if !$0 { model.closeSheet() } })
+    }
+
+    @ViewBuilder private var sheetContent: some View {
+        if let window = model.shown?.window { CompareSheetView(window: window) { model.closeSheet() } }
     }
 
     private var fileGroup: some View {
