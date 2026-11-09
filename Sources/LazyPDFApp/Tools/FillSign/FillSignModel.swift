@@ -117,6 +117,7 @@ public final class FillSignModel: ToolPanelModel {
     public func remove(_ row: SavedRow) {
         store.remove(row.item)
         fillSaved()
+        stop()
     }
 
     public func makeNew() {

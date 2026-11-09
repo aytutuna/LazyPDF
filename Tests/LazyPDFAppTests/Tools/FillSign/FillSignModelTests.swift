@@ -411,6 +411,18 @@ final class FillSignModelTests: XCTestCase {
         XCTAssertEqual(model.selected, model.saved[0].id)
     }
 
+    func test_removingASignatureWhilePlacingStopsPlacing() async throws {
+        let (model, rig, _) = try rig(saved: 2)
+        await model.action!.run()
+        XCTAssertTrue(model.placing)
+
+        model.remove(model.saved[0])
+
+        XCTAssertFalse(model.placing)
+        XCTAssertNil(rig.viewer.pointerTool)
+        XCTAssertEqual(model.action?.text, "Place on page")
+    }
+
     func test_aSignatureThatCannotBeKeptIsStillUsedAndSaysSo() throws {
         cleanUp()
         let blocker = folder.appendingPathComponent("blocked")
