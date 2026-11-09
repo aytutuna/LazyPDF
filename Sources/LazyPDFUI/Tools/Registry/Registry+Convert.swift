@@ -7,6 +7,7 @@ import LazyPDFApp
 extension ToolRegistry {
     static func convert(_ id: String, _ context: ToolContext) -> ToolPanel? {
         switch id {
+        case "optimize": return ToolPanel(OptimizeModel(codec: ImageIOCodec())) { OptimizePanelView(model: $0) }
         default: return nil
         }
     }
