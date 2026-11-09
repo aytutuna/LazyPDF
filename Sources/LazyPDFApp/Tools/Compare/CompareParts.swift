@@ -38,7 +38,7 @@ public enum ChangeParts {
     }
 
     /// The result with only the changes of `parts`, and the counts of those.
-    public static func only(_ result: ComparisonResult, _ parts: CompareParts) -> ComparisonResult {
+    public static func only(_ result: LazyPDFKit.ComparisonResult, _ parts: CompareParts) -> LazyPDFKit.ComparisonResult {
         if parts == .all { return result }
         let kept = result.changes.filter { parts.contains(of($0)) }
         func kind(_ k: ChangeKind) -> Int { kept.filter { $0.kind == k }.count }
@@ -48,6 +48,6 @@ public enum ChangeParts {
                                         area(.image), area(.annotation), area(.page), area(.document), old.wordsAdded, old.wordsRemoved)
         // The report lists removed pages from the pages, not from the changes.
         let pages = parts.contains(.pages) ? result.pages : result.pages.filter { !$0.isRemoved }
-        return ComparisonResult(pages, kept, summary, result.oldPageCount, result.newPageCount)
+        return LazyPDFKit.ComparisonResult(pages, kept, summary, result.oldPageCount, result.newPageCount)
     }
 }
