@@ -67,20 +67,20 @@ final class BatchModelTests: XCTestCase {
         model.addStep(.clean)
         model.addStep(.watermark)
         model.addStep(.compress)
-        XCTAssertEqual(model.set.steps.map(\.kind), [.clean, .watermark, .compress])
+        XCTAssertEqual(model.plan.steps.map(\.kind), [.clean, .watermark, .compress])
         XCTAssertEqual(model.step?.kind, .compress)
         XCTAssertFalse(model.canMoveDown)
 
         model.moveSelected(-1)
-        XCTAssertEqual(model.set.steps.map(\.kind), [.clean, .compress, .watermark])
+        XCTAssertEqual(model.plan.steps.map(\.kind), [.clean, .compress, .watermark])
         XCTAssertEqual(model.selected, 1)
         model.moveSelected(-1)
         model.moveSelected(-1)
-        XCTAssertEqual(model.set.steps.map(\.kind), [.compress, .clean, .watermark])
+        XCTAssertEqual(model.plan.steps.map(\.kind), [.compress, .clean, .watermark])
         XCTAssertFalse(model.canMoveUp)
 
         model.removeSelected()
-        XCTAssertEqual(model.set.steps.map(\.kind), [.clean, .watermark])
+        XCTAssertEqual(model.plan.steps.map(\.kind), [.clean, .watermark])
         XCTAssertNil(model.step)
         XCTAssertEqual(model.rows.map(\.title), ["Clean for sharing", "Watermark"])
     }
@@ -221,7 +221,7 @@ final class BatchModelTests: XCTestCase {
 
         await model.run()
 
-        XCTAssertEqual(model.set.steps[0].start, 15)
+        XCTAssertEqual(model.plan.steps[0].start, 15)
         XCTAssertEqual(BatchSetStore(directory: f.dir.sub("settings")).load().first?.steps[0].start, 15)
     }
 
@@ -233,7 +233,7 @@ final class BatchModelTests: XCTestCase {
         await model.chooseOutput()
         model.addStep(.watermark)
         model.update { $0.text = "DRAFT" }
-        model.set.nameTemplate = "{name}-b"
+        model.plan.nameTemplate = "{name}-b"
         model.setName = "Cases"
         model.saveSet()
         XCTAssertEqual(model.savedNames, ["Cases"])
@@ -243,8 +243,8 @@ final class BatchModelTests: XCTestCase {
         XCTAssertEqual(again.savedNames, ["Cases"])
         again.loadSet("Cases")
 
-        XCTAssertEqual(again.set.steps.map(\.text), ["DRAFT"])
-        XCTAssertEqual(again.set.nameTemplate, "{name}-b")
+        XCTAssertEqual(again.plan.steps.map(\.text), ["DRAFT"])
+        XCTAssertEqual(again.plan.nameTemplate, "{name}-b")
         XCTAssertEqual(again.outputFolder?.url.path, f.dir.sub("out").path)
         XCTAssertNil(again.folderNote)
         XCTAssertEqual(bookmarks.grants.count, 1)
@@ -341,7 +341,7 @@ final class BatchModelTests: XCTestCase {
         picker.folder = try folder(f, "out")
         await model.chooseOutput()
         model.addStep(.clean)
-        model.set.nameTemplate = "{name}-{n}"
+        model.plan.nameTemplate = "{name}-{n}"
         model.setWatching(true)
 
         log.found?(f.dir.file("in/a.pdf", Pdfs.text()))

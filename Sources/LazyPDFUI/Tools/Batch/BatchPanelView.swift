@@ -23,7 +23,7 @@ struct BatchPanelView: View {
             SectionHeading(L10n.t("Results go to"))
             folder(model.outputText, choose: { await model.chooseOutput() }, label: L10n.t("Results folder"))
             LabelledField(L10n.t("File name")) {
-                TextField(L10n.t("File name"), text: $model.set.nameTemplate).textFieldStyle(.roundedBorder)
+                TextField(L10n.t("File name"), text: $model.plan.nameTemplate).textFieldStyle(.roundedBorder)
                 ReasonText(model.templateHint)
             }
             if let note = model.folderNote { ReasonText(note) }
@@ -88,7 +88,7 @@ struct BatchPanelView: View {
                 .accessibilityAddTraits(model.selected == row.index ? .isSelected : [])
             }
         }
-        if model.set.steps.isEmpty { ReasonText(L10n.t("Add a step to begin.")) }
+        if model.plan.steps.isEmpty { ReasonText(L10n.t("Add a step to begin.")) }
         HStack {
             Menu {
                 ForEach(BatchStepKind.allCases, id: \.self) { kind in Button(BatchText.title(kind)) { model.addStep(kind) } }
