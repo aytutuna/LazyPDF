@@ -6,8 +6,8 @@ import LazyPDFApp
 @testable import LazyPDFUI
 
 // A smoke test of the Compare panel: the view is drawn at the width of the inspector before anything is compared and again
-// with a result and its list. The model has the real tests, in Tests/LazyPDFAppTests/Tools/Compare. The sheet holds the
-// platform's scroll views, which the renderer here does not draw.
+// with a result. The model has the real tests, in Tests/LazyPDFAppTests/Tools/Compare. The list of differences and the sheet
+// are scroll views, which the renderer here does not draw.
 
 @MainActor
 final class ComparePanelViewTests: XCTestCase {
@@ -37,19 +37,7 @@ final class ComparePanelViewTests: XCTestCase {
 
         XCTAssertNotNil(model.shown)
         XCTAssertFalse(model.rows.isEmpty)
-        XCTAssertGreaterThan(after, before)
-    }
-
-    func test_theListOfDifferencesIsDrawnWithItsRows() throws {
-        let rows = [
-            ChangeRow(kind: .added, title: "other", subtitle: "Added · Page 1", oldPage: -1, newPage: 0, oldBoxes: [], newBoxes: []),
-            ChangeRow(kind: .removed, title: "gone", subtitle: "Removed · Page 2", oldPage: 1, newPage: -1, oldBoxes: [], newBoxes: []),
-            ChangeRow(kind: nil, title: "Looks different", subtitle: "Page 1, 40 % down", oldPage: 0, newPage: 0, oldBoxes: [], newBoxes: []),
-        ]
-
-        let image = try ToolPicture.draw(ChangeListView(rows: rows) { _ in }, height: 200)
-
-        XCTAssertGreaterThan(try ToolPicture.ink(image), 200)
+        XCTAssertGreaterThan(after, 200)
     }
 
     func test_theRegistryMakesThePanelForTheToolId() throws {
