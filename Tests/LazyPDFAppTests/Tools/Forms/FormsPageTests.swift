@@ -383,8 +383,7 @@ final class FormsDesignOnThePageTests: XCTestCase {
     }
 
     func test_foundFieldsAreOutlinedDashedUntilTheyAreAdded() async throws {
-        let bytes = try PdfFromText.create("Name: ______________________
-City: ______________________", fonts: FormPdfs.fonts).bytes
+        let bytes = try PdfFromText.create("Name: ______________________\nCity: ______________________", fonts: FormPdfs.fonts).bytes
         let rig = try FormsRig(bytes)
         rig.model.setDesigning(true)
 
