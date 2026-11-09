@@ -20,7 +20,7 @@ final class SavedSignaturesTests: XCTestCase {
         PdfRgbaImage(2, 1, [shade, 0, 0, 255, 0, shade, 0, 128])
     }
 
-    private func saved(_ codec: ImageCodec = PictureCodec(nil)) -> SavedSignatures {
+    private func saved(_ codec: ImageCodec = SignaturePictureCodec(nil)) -> SavedSignatures {
         SavedSignatures(directory: folder.appendingPathComponent("sigs", isDirectory: true), codec: codec)
     }
 
@@ -51,7 +51,7 @@ final class SavedSignaturesTests: XCTestCase {
     }
 
     func test_aRemovedSignatureIsGone() throws {
-        let store = saved(PictureCodec(image(9)))
+        let store = saved(SignaturePictureCodec(image(9)))
         let item = try store.add(.initials, image(9))
         XCTAssertNotNil(store.load(item))
 
