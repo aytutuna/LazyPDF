@@ -5933,6 +5933,9 @@
   "Cannot read aloud": {
     "tr": "Sesli okunamıyor"
   },
+  "This device has no voice ready. Add one in Settings, under Spoken Content.": {
+    "tr": "Bu cihazda hazır bir ses yok. Ayarlar'da Konuşulan İçerik bölümünden bir ses ekleyin."
+  },
   "Check": {
     "tr": "Denetle"
   },
