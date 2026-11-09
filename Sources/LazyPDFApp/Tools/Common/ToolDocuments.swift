@@ -41,6 +41,25 @@ extension ToolDocuments {
             }
         }
     }
+
+    /// As `run`, for a job that awaits (the batch runner's text recognition). Cancelling the token also cancels the job's task.
+    public static func runAsync<T>(_ token: CancelToken, _ work: @escaping @Sendable () async throws -> T) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            let once = Once(continuation)
+            let job = Task.detached {
+                do {
+                    once.resume(returning: try await work())
+                } catch {
+                    once.resume(throwing: error)
+                }
+            }
+            Task.detached {
+                while !token.isCancelled && !once.isDone { try? await Task.sleep(nanoseconds: 50_000_000) }
+                if !once.isDone { job.cancel() }
+                once.resume(throwing: CancellationError())
+            }
+        }
+    }
 }
 
 private final class Once<T>: @unchecked Sendable {

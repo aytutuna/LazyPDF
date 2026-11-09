@@ -49,6 +49,12 @@ final class MacToolServices: ToolFilePicker, ToolFileExporter, ToolClipboard {
         NSPasteboard.general.string(forType: .string)
     }
 
+    func kind() -> ClipboardKind {
+        let board = NSPasteboard.general
+        if board.string(forType: .string)?.isEmpty == false { return .text }
+        return board.canReadItem(withDataConformingToTypes: [UTType.png.identifier, UTType.tiff.identifier]) ? .picture : .nothing
+    }
+
     private static func types(_ kinds: [ToolFileKind]) -> [UTType] {
         var found: [UTType] = []
         for kind in kinds {

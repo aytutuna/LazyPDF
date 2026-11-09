@@ -136,6 +136,45 @@ final class BatchSetTests: XCTestCase {
         XCTAssertEqual(found.all.map(\.lastPathComponent), [made.lastPathComponent])
     }
 
+    func test_aFileThatLeavesAndComesBackIsReportedAgain() async throws {
+        let dir = TempDir(self)
+        let aside = TempDir(self)
+        let found = Found()
+        let first = expectation(description: "first")
+        found.onFirst = { first.fulfill() }
+        let watcher = try FolderWatcher(folder: dir.url, delay: 0.1, found: { found.add($0) }, failed: {})
+        defer { watcher.stop() }
+        let made = dir.file("a.pdf", Pdfs.text())
+        await fulfillment(of: [first], timeout: 10)
+
+        let away = aside.sub("a.pdf")
+        try FileManager.default.moveItem(at: made, to: away)
+        try await Task.sleep(nanoseconds: 600_000_000)
+        try FileManager.default.moveItem(at: away, to: made)
+
+        await waitUntil { found.all.count == 2 }
+    }
+
+    func test_aFileThatGrowsAfterItWasReportedIsReportedAgainWhenItSettles() async throws {
+        let dir = TempDir(self)
+        let found = Found()
+        let first = expectation(description: "first")
+        found.onFirst = { first.fulfill() }
+        let watcher = try FolderWatcher(folder: dir.url, delay: 0.1, found: { found.add($0) }, failed: {})
+        defer { watcher.stop() }
+        let made = dir.file("a.pdf", [UInt8](Pdfs.text(2).prefix(60)))
+        await fulfillment(of: [first], timeout: 10)
+
+        let handle = try FileHandle(forWritingTo: made)
+        try handle.seekToEnd()
+        try handle.write(contentsOf: Data(Pdfs.text(2).dropFirst(60)))
+        try handle.close()
+
+        await waitUntil { found.all.count == 2 }
+        try await Task.sleep(nanoseconds: 500_000_000)
+        XCTAssertEqual(found.all.count, 2)
+    }
+
     func test_nothingIsReportedAfterTheWatcherIsStopped() async throws {
         let dir = TempDir(self)
         dir.file("old.pdf", Pdfs.text())

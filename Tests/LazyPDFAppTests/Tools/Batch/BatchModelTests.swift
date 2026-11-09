@@ -225,6 +225,111 @@ final class BatchModelTests: XCTestCase {
         XCTAssertEqual(BatchSetStore(directory: f.dir.sub("settings")).load().first?.steps[0].start, 15)
     }
 
+    func test_aSetLoadedDuringARunIsLeftAloneWhenTheFileThatRanEnds() throws {
+        let f = ViewModelFixture(self)
+        let (model, _) = make(f)
+        model.addStep(.bates)
+        model.update { $0.start = 500 }
+        model.setName = "B"
+        model.saveSet()
+        model.plan = BatchSet()
+        model.addStep(.bates)
+        model.setName = "A"
+        model.saveSet()
+        let ran = model.plan
+
+        model.loadSet("B")
+        var done = ran
+        done.steps[0].start = 4
+        model.continueNumbers(done)
+
+        XCTAssertEqual(model.plan.steps[0].start, 500)
+        let saved = BatchSetStore(directory: f.dir.sub("settings")).load()
+        XCTAssertEqual(saved.first { $0.name == "B" }?.steps[0].start, 500)
+    }
+
+    func test_aStepMovedDuringARunKeepsItsOwnCount() {
+        let f = ViewModelFixture(self)
+        let (model, _) = make(f)
+        model.addStep(.bates)
+        model.update { $0.text = "A-"; $0.start = 1 }
+        model.addStep(.bates)
+        model.update { $0.text = "B-"; $0.start = 100 }
+        let ran = model.plan
+
+        model.selected = 1
+        model.moveSelected(-1)
+        var done = ran
+        done.steps[0].start = 11
+        model.continueNumbers(done)
+
+        XCTAssertEqual(model.plan.steps.map(\.text), ["B-", "A-"])
+        XCTAssertEqual(model.plan.steps.map(\.start), [100, 11])
+    }
+
+    func test_aStepRemovedDuringARunTakesNothingOn() {
+        let f = ViewModelFixture(self)
+        let (model, _) = make(f)
+        model.addStep(.bates)
+        model.update { $0.start = 1 }
+        model.addStep(.bates)
+        model.update { $0.start = 100 }
+        let ran = model.plan
+
+        model.selected = 0
+        model.removeSelected()
+        var done = ran
+        done.steps[0].start = 11
+        done.steps[1].start = 105
+        model.continueNumbers(done)
+
+        XCTAssertEqual(model.plan.steps.map(\.start), [105])
+    }
+
+    func test_aCancelEndsTheWaitForAFileThatIsStillRunning() async throws {
+        let f = ViewModelFixture(self)
+        let (model, _) = make(f)
+        try await model.gate.acquire(CancelToken())
+        let token = CancelToken()
+        Task {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            token.cancel()
+        }
+
+        do {
+            _ = try await model.runOne(f.dir.sub("a.pdf"), BatchSet(), into: f.dir.sub("out"), number: 1, token)
+            XCTFail("the wait was not ended")
+        } catch {
+            XCTAssertTrue(error is CancellationError)
+        }
+    }
+
+    func test_aCancelDuringALongStepEndsTheRunWithoutWaitingForTheStep() async throws {
+        let f = ViewModelFixture(self)
+        let picker = Picker()
+        f.vm.filePicker = picker
+        let slow = FakeRecognizer(onRead: { Thread.sleep(forTimeInterval: 2) })
+        let model = BatchModel.sheet(window: f.vm, settings: f.dir.sub("settings"), watcher: nil, runner: {
+            BatchRunner(codec: FakeCodec(), fonts: batchFonts(), recognizer: slow, renderers: { FakeRenderer() })
+        })
+        picker.files = [ToolFile(url: f.dir.file("scan.pdf", try PdfFromPictures.create([[1, 2, 3]], FakeCodec()).bytes))]
+        picker.folder = try folder(f, "out")
+        await model.addFiles()
+        await model.chooseOutput()
+        model.addStep(.ocr)
+        let host = try XCTUnwrap(model.sheetHost)
+        let started = Date()
+
+        let running = Task { await model.run() }
+        await waitUntil { host.isBusy }
+        host.cancel()
+        await running.value
+
+        XCTAssertLessThan(Date().timeIntervalSince(started), 1.5)
+        XCTAssertEqual(host.status, "Cancelled.")
+        XCTAssertFalse(model.isRunning)
+    }
+
     func test_aSavedSetComesBackWithItsStepsAndItsFolders() async throws {
         let f = ViewModelFixture(self)
         let bookmarks = PathBookmarks()

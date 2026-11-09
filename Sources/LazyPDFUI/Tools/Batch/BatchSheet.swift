@@ -8,7 +8,8 @@ import LazyPDFKit
 
 enum AppleBatch {
     static func runner() -> BatchRunner {
-        BatchRunner(codec: ImageIOCodec(), fonts: CoreTextFontSource(), recognizer: VisionTextRecognizer(), renderers: { PdfKitRenderer() })
+        BatchRunner(codec: ImageIOCodec(), fonts: CoreTextFontSource(), recognizer: VisionTextRecognizer(), renderers: { PdfKitRenderer() },
+                    writer: CoordinatedFileWriter(), reader: CoordinatedFileReader.read)
     }
 
     static var watcher: FolderWatchFactory? {
@@ -61,7 +62,10 @@ public struct BatchSheet: View {
             HStack {
                 Spacer()
                 if host?.isBusy == true { Button(L10n.t("Cancel")) { host?.cancel() } }
-                Button(L10n.t("Close"), role: .cancel) { finish() }
+                Button(L10n.t("Close"), role: .cancel) {
+                    finish()
+                    close()
+                }
                     .keyboardShortcut(.cancelAction)
                 Button(L10n.t("Run on every file")) { Task { await model.run() } }
                     .buttonStyle(.borderedProminent)
@@ -69,7 +73,8 @@ public struct BatchSheet: View {
             }
             .padding(12)
         }
-        .onDisappear { model.stopWatching() }
+        .interactiveDismissDisabled(host?.isBusy == true)
+        .onDisappear { finish() }
         #if os(macOS)
         .frame(width: 440, height: 640)
         #endif
@@ -78,7 +83,6 @@ public struct BatchSheet: View {
     private func finish() {
         model.sheetHost?.cancel()
         model.stopWatching()
-        close()
     }
 }
 #endif

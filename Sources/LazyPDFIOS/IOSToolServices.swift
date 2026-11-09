@@ -36,6 +36,11 @@ final class IOSToolServices: ToolFilePicker, ToolFileExporter, ToolClipboard {
         UIPasteboard.general.string
     }
 
+    func kind() -> ClipboardKind {
+        let board = UIPasteboard.general
+        return board.hasStrings ? .text : board.hasImages ? .picture : .nothing
+    }
+
     private func present(_ picker: UIDocumentPickerViewController) async -> [PickedFile] {
         guard var top = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first?.keyWindow?.rootViewController else {
             return []

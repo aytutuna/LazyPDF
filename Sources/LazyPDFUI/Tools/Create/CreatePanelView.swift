@@ -1,5 +1,8 @@
 #if canImport(SwiftUI)
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 import LazyPDFApp
 import LazyPDFKit
 
@@ -41,6 +44,10 @@ struct CreatePanelView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { model.peekClipboard() }
         }
+        #if os(macOS)
+        // The sheet hangs from an AppKit window outside any scene, so its scene phase never changes.
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in model.peekClipboard() }
+        #endif
     }
 
     private func blank(_ model: CreateModel) -> some View {

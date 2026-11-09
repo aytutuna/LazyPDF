@@ -39,8 +39,18 @@ public enum BatchLevel: Int, CaseIterable, Codable {
     }
 }
 
+/// Tells a step from the others while a run goes on: the copy a run works on keeps the identity of the step on screen, so the
+/// next Bates number finds its way back to that step whatever has been moved, removed or loaded since. It is not part of what
+/// a step is, so two steps with the same settings are equal and a saved step does not hold one.
+public struct BatchStepID: Equatable {
+    public let value = UUID()
+
+    public static func == (a: BatchStepID, b: BatchStepID) -> Bool { true }
+}
+
 /// One step and the settings it uses; the settings of the other kinds are left alone.
 public struct BatchStep: Codable, Equatable {
+    public let id = BatchStepID()
     public var kind: BatchStepKind
 
     /// The language tag of Ocr, the text of Watermark, the prefix of Bates.

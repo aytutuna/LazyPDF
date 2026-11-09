@@ -31,12 +31,18 @@ public final class BatchRunner: @unchecked Sendable {
     private let fonts: FontSource?
     private let recognizer: TextRecognizer
     private let renderers: () -> DocumentRenderer
+    private let writer: FileWriter
+    private let reader: (URL) throws -> Data
 
-    public init(codec: ImageCodec, fonts: FontSource?, recognizer: TextRecognizer, renderers: @escaping () -> DocumentRenderer) {
+    /// On iOS the files are where a provider keeps them, so the shells hand in a coordinated reader and writer.
+    public init(codec: ImageCodec, fonts: FontSource?, recognizer: TextRecognizer, renderers: @escaping () -> DocumentRenderer,
+                writer: FileWriter = PlainFileWriter(), reader: @escaping (URL) throws -> Data = { try Data(contentsOf: $0) }) {
         self.codec = codec
         self.fonts = fonts
         self.recognizer = recognizer
         self.renderers = renderers
+        self.writer = writer
+        self.reader = reader
     }
 
     /// Throws CancellationError when `token` is cancelled; a file that cannot be done is a result, not an error.
@@ -45,7 +51,7 @@ public final class BatchRunner: @unchecked Sendable {
         var bytes: [UInt8]
         var notes: [String] = []
         do {
-            bytes = [UInt8](try Data(contentsOf: file))
+            bytes = [UInt8](try reader(file))
             try token.throwIfCancelled()
             let source = try PdfDocument.open(bytes)
             if source.isSigned {
@@ -73,9 +79,10 @@ public final class BatchRunner: @unchecked Sendable {
 
         let stem = (name as NSString).deletingPathExtension
         let target = unique(folder.appendingPathComponent(BatchNames.apply(set.nameTemplate, stem, number, now)))
+        try token.throwIfCancelled()
         do {
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            try PdfFileSaver.save(target.path, bytes)
+            try writer.write(to: target) { try PdfFileSaver.save($0.path, bytes) }
         } catch {
             let problem = Problems.save(error, target.lastPathComponent)
             return BatchResult(input: file, output: nil, ok: false, title: problem.title, detail: problem.text)

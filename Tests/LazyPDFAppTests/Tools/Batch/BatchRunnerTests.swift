@@ -16,6 +16,32 @@ struct FakeRecognizer: TextRecognizer {
     }
 }
 
+final class RecordingWriter: FileWriter {
+    private(set) var targets: [URL] = []
+
+    func write(to url: URL, _ write: (URL) throws -> Void) throws {
+        targets.append(url)
+        try write(url)
+    }
+}
+
+final class ReadLog: @unchecked Sendable {
+    private let lock = NSLock()
+    private var found: [URL] = []
+
+    func add(_ url: URL) {
+        lock.lock()
+        found.append(url)
+        lock.unlock()
+    }
+
+    var urls: [URL] {
+        lock.lock()
+        defer { lock.unlock() }
+        return found
+    }
+}
+
 func batchFonts() -> FontSource {
     #if canImport(CoreText)
     return CoreTextFontSource()
@@ -172,6 +198,23 @@ final class BatchRunnerTests: XCTestCase {
 
         XCTAssertFalse(result.ok)
         XCTAssertEqual(result.title, "File not found")
+    }
+
+    func test_theFileIsReadAndTheResultWrittenThroughTheShellsReaderAndWriter() async throws {
+        let dir = TempDir(self)
+        let file = dir.file("a.pdf", Pdfs.text())
+        let writer = RecordingWriter()
+        let read = ReadLog()
+        let made = BatchRunner(codec: FakeCodec(), fonts: batchFonts(), recognizer: FakeRecognizer(), renderers: { FakeRenderer() },
+                               writer: writer, reader: { read.add($0); return try Data(contentsOf: $0) })
+        var set = BatchSet(steps: [step(.clean)])
+
+        let result = try await run(made, file, &set, into: dir.sub("out"))
+
+        XCTAssertTrue(result.ok, result.detail)
+        XCTAssertEqual(read.urls, [file])
+        XCTAssertEqual(writer.targets.map(\.lastPathComponent), ["a.pdf"])
+        XCTAssertTrue(FileManager.default.fileExists(atPath: dir.sub("out/a.pdf").path))
     }
 
     func test_aCancelStopsTheRun() async throws {

@@ -19,8 +19,23 @@ private final class Stand: ToolFilePicker, ToolClipboard {
     }
 
     func pickFolder() async -> ToolFile? { nil }
-    func pictureFile() -> [UInt8]? { picture }
-    func text() -> String? { board }
+    private(set) var reads = 0
+    var peeksOnly = false
+
+    func pictureFile() -> [UInt8]? {
+        reads += 1
+        return picture
+    }
+
+    func text() -> String? {
+        reads += 1
+        return board
+    }
+
+    func kind() -> ClipboardKind {
+        if !peeksOnly { return ClipboardContent.read(self).kind }
+        return picture != nil ? .picture : .nothing
+    }
 }
 
 @MainActor
@@ -190,6 +205,22 @@ final class CreateModelTests: XCTestCase {
         XCTAssertTrue(model.makesText)
         XCTAssertEqual(model.request()?.source, .text)
         XCTAssertEqual(model.request()?.text, "words")
+    }
+
+    func test_lookingAtThePasteboardDoesNotReadIt() {
+        let f = ViewModelFixture(self)
+        let stand = Stand()
+        stand.peeksOnly = true
+        stand.picture = [1, 2, 3]
+        let model = made(f, stand)
+
+        model.choose(.clipboard)
+        model.peekClipboard()
+
+        XCTAssertEqual(model.clipboardState, "The clipboard holds a picture.")
+        XCTAssertEqual(stand.reads, 0)
+        XCTAssertEqual(model.request()?.picture ?? [], [1, 2, 3])
+        XCTAssertGreaterThan(stand.reads, 0)
     }
 
     func test_aPasteboardThatEmptiedGivesNoRequestAndAnEmptyRunSaysSo() async throws {
