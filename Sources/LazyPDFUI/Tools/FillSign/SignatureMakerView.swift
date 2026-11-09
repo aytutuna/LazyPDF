@@ -11,52 +11,44 @@ struct SignatureMakerView: View {
     var maker: SignatureMakerModel { model.maker }
 
     var body: some View {
-        ScrollView {
-            ToolForm {
-                Picker(L10n.t("Make a new one"), selection: Binding(get: { maker.mode }, set: { maker.setMode($0) })) {
-                    Text(L10n.t("Type")).tag(SignatureMakerModel.Mode.type)
-                    Text(L10n.t("Draw")).tag(SignatureMakerModel.Mode.draw)
-                    Text(L10n.t("Picture")).tag(SignatureMakerModel.Mode.picture)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+        ToolForm {
+            Picker(L10n.t("Make a new one"), selection: Binding(get: { maker.mode }, set: { maker.setMode($0) })) {
+                Text(L10n.t("Type")).tag(SignatureMakerModel.Mode.type)
+                Text(L10n.t("Draw")).tag(SignatureMakerModel.Mode.draw)
+                Text(L10n.t("Picture")).tag(SignatureMakerModel.Mode.picture)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
 
-                switch maker.mode {
-                case .type: typePane
-                case .draw: drawPane
-                case .picture: picturePane
-                }
+            switch maker.mode {
+            case .type: typePane
+            case .draw: drawPane
+            case .picture: picturePane
+            }
 
-                FieldLabel(L10n.t("Preview"))
-                ZStack {
-                    RoundedRectangle(cornerRadius: 6).fill(Color.white)
-                    if let image = maker.image { SignaturePicture(image: image).padding(6) }
-                }
-                .frame(height: 96)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(L10n.t("Preview"))
+            FieldLabel(L10n.t("Preview"))
+            ZStack {
+                RoundedRectangle(cornerRadius: 6).fill(Color.white)
+                if let image = maker.image { SignaturePicture(image: image).padding(6) }
+            }
+            .frame(height: 96)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(L10n.t("Preview"))
 
-                Toggle(L10n.t("Keep for next time"), isOn: Binding(get: { maker.keep }, set: { maker.keep = $0 }))
-                HStack {
-                    Button {
-                        model.useMade()
-                    } label: {
-                        Label(L10n.t("Use"), systemImage: "checkmark").frame(minHeight: 44)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(maker.image == nil)
-                    Button(L10n.t("Cancel")) { model.cancelMaker() }
-                        .frame(minHeight: 44)
-                        .keyboardShortcut(.cancelAction)
+            Toggle(L10n.t("Keep for next time"), isOn: Binding(get: { maker.keep }, set: { maker.keep = $0 }))
+            HStack {
+                Button {
+                    model.useMade()
+                } label: {
+                    Label(L10n.t("Use"), systemImage: "checkmark").frame(minHeight: 44)
                 }
+                .buttonStyle(.borderedProminent)
+                .disabled(maker.image == nil)
+                Button(L10n.t("Cancel")) { model.cancelMaker() }
+                    .frame(minHeight: 44)
+                    .keyboardShortcut(.cancelAction)
             }
         }
-        #if os(macOS)
-        .frame(minWidth: 380, minHeight: 520)
-        #endif
-        #if os(iOS)
-        .presentationDetents([.medium, .large])
-        #endif
     }
 
     private var typePane: some View {
