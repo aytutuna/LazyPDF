@@ -219,7 +219,7 @@ public final class FormsModel: ToolPanelModel {
                         ordinal: ordinal, kind: field.kind, value: field.value ?? "",
                         isOn: field.kind == .checkBox && field.isChecked, selected: field.selected, options: options,
                         canFill: canFillForm && !field.has(.readOnly) && !(field.kind == .signature && field.isSigned),
-                        isRequired: field.has(.required))
+                        isRequired: field.has(.required), isSecret: field.has(.password))
     }
 
     private func showSummary(_ form: PdfForm) {
