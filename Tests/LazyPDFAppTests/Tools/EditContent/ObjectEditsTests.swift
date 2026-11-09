@@ -14,7 +14,7 @@ final class ObjectEditsTests: XCTestCase {
         DocumentTab(session: try PdfEditSession.open(bytes ?? EditPdf.make("")), renderer: FakeRenderer(), url: nil, title: "t.pdf")
     }
 
-    private func edits(_ tab: DocumentTab) -> ContentEdits {
+    private func makeEdits(_ tab: DocumentTab) -> ContentEdits {
         ContentEdits(tab, fonts: FakeFonts(), codec: FakeCodec())
     }
 
@@ -28,13 +28,13 @@ final class ObjectEditsTests: XCTestCase {
 
     private func withPicture(_ pageKeys: String = "") throws -> DocumentTab {
         let tab = try open(EditPdf.make("", pageKeys: pageKeys))
-        _ = try edits(tab).addImage(0, PdfRect(100, 500, 200, 600), [1])
+        _ = try makeEdits(tab).addImage(0, PdfRect(100, 500, 200, 600), [1])
         return tab
     }
 
     func test_aCroppedPictureMovesWithItsCrop() throws {
         let tab = try withPicture()
-        let edits = edits(tab)
+        let edits = makeEdits(tab)
         XCTAssertTrue(try edits.crop(0, try picture(tab).id, PdfRect(100, 500, 150, 550)).done)
         let cropped = try picture(tab).bounds
         XCTAssertEqual(cropped.width, 50, accuracy: 1)
@@ -48,7 +48,7 @@ final class ObjectEditsTests: XCTestCase {
 
     func test_aCroppedPictureResizesAndTurnsWithItsCrop() throws {
         let tab = try withPicture()
-        let edits = edits(tab)
+        let edits = makeEdits(tab)
         _ = try edits.crop(0, try picture(tab).id, PdfRect(100, 500, 150, 550))
         let cropped = try picture(tab).bounds
 
@@ -71,7 +71,7 @@ final class ObjectEditsTests: XCTestCase {
             let tab = try withPicture(pageKeys)
             let (right, up) = try directions(tab)
 
-            XCTAssertTrue(try edits(tab).flip(0, [try picture(tab).id], acrossScreen: true, viewRotation: 0).done, pageKeys)
+            XCTAssertTrue(try makeEdits(tab).flip(0, [try picture(tab).id], acrossScreen: true, viewRotation: 0).done, pageKeys)
 
             let (rightAfter, upAfter) = try directions(tab)
             XCTAssertEqual(rightAfter.x, -right.x, accuracy: 1, pageKeys)
@@ -85,7 +85,7 @@ final class ObjectEditsTests: XCTestCase {
         let tab = try withPicture("/Rotate 90")
         let (right, up) = try directions(tab)
 
-        XCTAssertTrue(try edits(tab).flip(0, [try picture(tab).id], acrossScreen: false, viewRotation: 0).done)
+        XCTAssertTrue(try makeEdits(tab).flip(0, [try picture(tab).id], acrossScreen: false, viewRotation: 0).done)
 
         let (rightAfter, upAfter) = try directions(tab)
         XCTAssertEqual(rightAfter.x, right.x, accuracy: 1)
@@ -96,7 +96,7 @@ final class ObjectEditsTests: XCTestCase {
         let tab = try withPicture()
         let (right, up) = try directions(tab)
 
-        XCTAssertTrue(try edits(tab).flip(0, [try picture(tab).id], acrossScreen: true, viewRotation: 90).done)
+        XCTAssertTrue(try makeEdits(tab).flip(0, [try picture(tab).id], acrossScreen: true, viewRotation: 90).done)
 
         let (rightAfter, upAfter) = try directions(tab)
         XCTAssertEqual(rightAfter.x, right.x, accuracy: 1)
@@ -108,8 +108,8 @@ final class ObjectEditsTests: XCTestCase {
         _ = try PageEditor(tab.session, 0, FakeFonts()).addEllipse(PdfRect(100, 400, 200, 500), ShapeStyle(stroke: RgbColor(255, 0, 0), fill: nil, width: 2))
         let id = try XCTUnwrap(try objects(tab).first { $0 is PathObject }).id
 
-        let fill = try edits(tab).pathStyle(0, [id], fill: RgbColor(0, 0, 255), stroke: nil, width: nil)
-        let line = try edits(tab).pathStyle(0, [id], fill: nil, stroke: RgbColor(0, 0, 255), width: nil)
+        let fill = try makeEdits(tab).pathStyle(0, [id], fill: RgbColor(0, 0, 255), stroke: nil, width: nil)
+        let line = try makeEdits(tab).pathStyle(0, [id], fill: nil, stroke: RgbColor(0, 0, 255), width: nil)
 
         XCTAssertFalse(fill.done)
         XCTAssertNotNil(fill.problem)
@@ -119,7 +119,7 @@ final class ObjectEditsTests: XCTestCase {
 
     func test_aLinkGivenDirectlyOnThePageIsChangedWhereItIs() throws {
         let tab = try open(EditPdf.make("", pageKeys: directLink))
-        let edits = edits(tab)
+        let edits = makeEdits(tab)
         let link = try XCTUnwrap(edits.links(0).first)
         XCTAssertEqual(edits.links(0).count, 1)
         XCTAssertNil(link.reference)
@@ -137,7 +137,7 @@ final class ObjectEditsTests: XCTestCase {
 
     func test_aLinkGivenDirectlyOnThePageCanBeRemoved() throws {
         let tab = try open(EditPdf.make("", pageKeys: directLink))
-        let edits = edits(tab)
+        let edits = makeEdits(tab)
 
         XCTAssertTrue(try edits.removeLink(0, try XCTUnwrap(edits.links(0).first)).done)
 
@@ -146,7 +146,7 @@ final class ObjectEditsTests: XCTestCase {
 
     func test_changingALinkKeepsItsAnnotation() throws {
         let tab = try open()
-        let edits = edits(tab)
+        let edits = makeEdits(tab)
         let area = PdfRect(50, 700, 200, 720)
         _ = try edits.setLink(0, area, UriAction("https://one.example"), nil)
         let link = try XCTUnwrap(edits.links(0).first)
@@ -160,7 +160,7 @@ final class ObjectEditsTests: XCTestCase {
 
     func test_aReplaceAllMadeOnACopyIsOneStepOnTheDocument() async throws {
         let tab = try open(Pdfs.text(2, "The tests say hello."))
-        let edits = edits(tab)
+        let edits = makeEdits(tab)
         let made = try await edits.replaceAll(tab.session.current, "hello", "goodbye", TextSearchOptions(), CancelToken())
         XCTAssertFalse(tab.isDirty)
 
@@ -174,7 +174,7 @@ final class ObjectEditsTests: XCTestCase {
 
     func test_aReplaceAllIsRefusedWhenTheDocumentMovedOnWhileItRan() async throws {
         let tab = try open(Pdfs.text(2, "The tests say hello."))
-        let edits = edits(tab)
+        let edits = makeEdits(tab)
         let made = try await edits.replaceAll(tab.session.current, "hello", "goodbye", TextSearchOptions(), CancelToken())
         try Pdfs.retitle(tab.session, "Changed meanwhile")
         try tab.commit("Title")
@@ -190,7 +190,7 @@ final class ObjectEditsTests: XCTestCase {
         let tab = try open(Pdfs.text(2, "The tests say hello."))
         try Pdfs.retitle(tab.session, "First")
         try tab.commit("Title")
-        let edits = edits(tab)
+        let edits = makeEdits(tab)
         let made = try await edits.replaceAll(tab.session.current, "hello", "goodbye", TextSearchOptions(), CancelToken())
         try tab.undo()
 
@@ -207,7 +207,7 @@ final class ObjectEditsTests: XCTestCase {
         let bytes = tab.session.current
 
         do {
-            _ = try await edits(tab).replaceAll(bytes, "hello", "goodbye", TextSearchOptions(), cancelled)
+            _ = try await makeEdits(tab).replaceAll(bytes, "hello", "goodbye", TextSearchOptions(), cancelled)
             XCTFail("The job should have been cancelled.")
         } catch is CancellationError {}
 

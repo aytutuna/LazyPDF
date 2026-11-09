@@ -11,7 +11,7 @@ final class TextStyleEditsTests: XCTestCase {
         DocumentTab(session: try PdfEditSession.open(bytes), renderer: FakeRenderer(), url: nil, title: "t.pdf")
     }
 
-    private func edits(_ tab: DocumentTab) -> ContentEdits {
+    private func makeEdits(_ tab: DocumentTab) -> ContentEdits {
         ContentEdits(tab, fonts: FakeFonts(), codec: FakeCodec())
     }
 
@@ -24,7 +24,7 @@ final class TextStyleEditsTests: XCTestCase {
             let tab = try open(EditPdf.make(EditPdf.paragraph))
             let before = try block(tab)
 
-            let outcome = try edits(tab).style(0, before.id, TextStyleChange(bold: bold ? true : nil, italic: italic ? true : nil))
+            let outcome = try makeEdits(tab).style(0, before.id, TextStyleChange(bold: bold ? true : nil, italic: italic ? true : nil))
 
             XCTAssertTrue(outcome.done, outcome.problem ?? "")
             let after = try block(tab)
@@ -40,7 +40,7 @@ final class TextStyleEditsTests: XCTestCase {
         let start = try block(tab)
         XCTAssertEqual(start.size, 12, accuracy: 1)
 
-        let outcome = try edits(tab).style(0, start.id, TextStyleChange(size: 14))
+        let outcome = try makeEdits(tab).style(0, start.id, TextStyleChange(size: 14))
 
         XCTAssertTrue(outcome.done, outcome.problem ?? "")
         XCTAssertEqual(try block(tab).size, 14, accuracy: 1)
@@ -52,7 +52,7 @@ final class TextStyleEditsTests: XCTestCase {
         let start = try block(tab)
         XCTAssertEqual(start.size, 12, accuracy: 1)
 
-        XCTAssertTrue(try edits(tab).style(0, start.id, TextStyleChange(size: 8)).done)
+        XCTAssertTrue(try makeEdits(tab).style(0, start.id, TextStyleChange(size: 8)).done)
 
         XCTAssertEqual(try block(tab).size, 8, accuracy: 1)
     }
@@ -60,7 +60,7 @@ final class TextStyleEditsTests: XCTestCase {
     func test_aColourReachesEveryLine() throws {
         let tab = try open(EditPdf.make(EditPdf.paragraph))
 
-        XCTAssertTrue(try edits(tab).style(0, try block(tab).id, TextStyleChange(color: RgbColor(200, 30, 30))).done)
+        XCTAssertTrue(try makeEdits(tab).style(0, try block(tab).id, TextStyleChange(color: RgbColor(200, 30, 30))).done)
 
         XCTAssertEqual(try block(tab).color, RgbColor(200, 30, 30))
         XCTAssertEqual(try block(tab).lines.count, 3)
