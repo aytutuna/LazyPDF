@@ -9,6 +9,7 @@ extension ToolRegistry {
         switch id {
         case "ocr": return ToolPanel(OcrModel()) { OcrPanelView(model: $0) }
         case "compare": return ToolPanel(CompareModel()) { ComparePanelView(model: $0) }
+        case "accessibility": return ToolPanel(AccessibilityModel()) { AccessibilityPanelView(model: $0) }
         default: return nil
         }
     }
