@@ -69,7 +69,7 @@ public final class PageGrid {
         let renderer = tab.canDraw ? tab.renderer : nil
         sizes = document.pages.map { page in
             let shown = PageGeometry(page)
-            return (shown.width, shown.height)
+            return (width: shown.width, height: shown.height)
         }
         cells = sizes.indices.map { page in
             let fit = self.fit(page)
