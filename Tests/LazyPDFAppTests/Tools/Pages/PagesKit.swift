@@ -117,3 +117,22 @@ enum PagesPdfs {
         return try PdfDocument.open(session.current)
     }
 }
+
+/// A tab over `bytes` with a viewer and a window that answers the pickers.
+@MainActor
+struct PagesRig {
+    let tab: DocumentTab
+    let viewer: PanelViewer
+    let host = PagesHost()
+
+    init(_ bytes: [UInt8]? = nil, title: String = "a.pdf", password: String? = nil) throws {
+        tab = DocumentTab(session: try PdfEditSession.open(bytes ?? Pdfs.text(2), password: password), renderer: FakeRenderer(), url: nil,
+                          title: title, password: password)
+        viewer = PanelViewer(tab)
+    }
+
+    /// Hands the picker a file made of `bytes`.
+    func pick(_ dir: TempDir, _ name: String, _ bytes: [UInt8]) {
+        host.picker.files = [ToolFile(url: dir.file(name, bytes))]
+    }
+}
