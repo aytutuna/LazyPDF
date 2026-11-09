@@ -6683,5 +6683,14 @@
   },
   "On this page": {
     "tr": "Bu sayfada"
+  },
+  "This device has no font for the text on the boxes. Clear that text and try again.": {
+    "tr": "Bu aygıtta kutulardaki metin için yazı tipi yok. Metni silip yeniden deneyin."
+  },
+  "Draw boxes on the page, select text or search, then redact to a new file.": {
+    "tr": "Sayfaya kutu çizin, metin seçin veya arayın, sonra yeni bir dosyaya karartın."
+  },
+  "Mode": {
+    "tr": "Kip"
   }
 }
