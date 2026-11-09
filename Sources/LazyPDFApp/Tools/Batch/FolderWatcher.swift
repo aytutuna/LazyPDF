@@ -13,13 +13,19 @@ public protocol FolderWatching: AnyObject {
 public typealias FolderWatchFactory = (_ folder: URL, _ found: @escaping @Sendable (URL) -> Void, _ failed: @escaping @Sendable () -> Void) throws -> FolderWatching
 
 #if os(macOS)
-/// Reports each PDF that appears in a folder once it has stopped changing for a moment: a file that is still being copied is
-/// looked at again until its writer lets go. Files already there are not reported. The callbacks come on a queue of the
+/// Reports each PDF that appears in a folder once it has stopped changing for a moment. A file that goes on changing after it
+/// was reported, because its copy stalled or it was written over in place, is reported again when it settles, and one that
+/// leaves the folder and comes back is new. Files already there are not reported. The callbacks come on a queue of the
 /// watcher's own.
 public final class FolderWatcher: FolderWatching, @unchecked Sendable {
     private struct Stamp: Equatable {
         let size: Int
         let modified: Date
+    }
+
+    private struct Seen {
+        let stamp: Stamp
+        let since: Date
     }
 
     private let folder: URL
@@ -30,7 +36,7 @@ public final class FolderWatcher: FolderWatching, @unchecked Sendable {
     private var source: DispatchSourceFileSystemObject?
     private var timer: DispatchSourceTimer?
     private var known: [String: Stamp] = [:]
-    private var waiting: [String: Stamp] = [:]
+    private var waiting: [String: Seen] = [:]
     private var stopped = false
 
     public static let factory: FolderWatchFactory = { folder, found, failed in
@@ -50,6 +56,12 @@ public final class FolderWatcher: FolderWatching, @unchecked Sendable {
         source.setCancelHandler { close(descriptor) }
         self.source = source
         source.resume()
+        // Writing into a file raises no event on its folder, so a file that is still growing or is written over is found by looking.
+        let timer = DispatchSource.makeTimerSource(queue: queue)
+        timer.schedule(deadline: .now() + delay / 2, repeating: delay / 2)
+        timer.setEventHandler { [weak self] in self?.scan() }
+        self.timer = timer
+        timer.resume()
     }
 
     public func stop() {
@@ -85,39 +97,28 @@ public final class FolderWatcher: FolderWatching, @unchecked Sendable {
             failed()
             return
         }
-        for (name, stamp) in listing() where known[name] != stamp {
-            waiting[name] = stamp
-        }
-        schedule()
+        scan()
     }
 
-    private func schedule() {
-        guard !waiting.isEmpty else { return }
-        timer?.cancel()
-        let timer = DispatchSource.makeTimerSource(queue: queue)
-        timer.schedule(deadline: .now() + delay)
-        timer.setEventHandler { [weak self] in self?.check() }
-        self.timer = timer
-        timer.resume()
-    }
-
-    private func check() {
+    // A name that is no longer listed is forgotten, so the same file put back is run again.
+    private func scan() {
         if stopped { return }
         let now = listing()
-        for (name, noted) in waiting {
-            guard let stamp = now[name] else {
-                waiting[name] = nil
+        let date = Date()
+        known = known.filter { now[$0.key] != nil }
+        waiting = waiting.filter { now[$0.key] != nil }
+        for (name, stamp) in now where known[name] != stamp {
+            guard let seen = waiting[name], seen.stamp == stamp else {
+                waiting[name] = Seen(stamp: stamp, since: date)
                 continue
             }
-            if stamp == noted && stamp.size > 0 && FileManager.default.isReadableFile(atPath: folder.appendingPathComponent(name).path) {
+            let file = folder.appendingPathComponent(name)
+            if date.timeIntervalSince(seen.since) >= delay && stamp.size > 0 && FileManager.default.isReadableFile(atPath: file.path) {
                 waiting[name] = nil
                 known[name] = stamp
-                found(folder.appendingPathComponent(name))
-            } else {
-                waiting[name] = stamp
+                found(file)
             }
         }
-        schedule()
     }
 }
 #endif

@@ -41,35 +41,34 @@ extension BatchModel {
                        : L10n.plural(failed, one: "{0} file failed", other: "{0} files failed"))
     }
 
-    // `ran` is the copy of the steps on screen that the run was started with, in the same order.
+    // `ran` is the copy of the steps on screen that the run was started with; a step is found again by its identity, since the
+    // steps on screen may have been moved, removed or replaced by another set since.
     func runOne(_ file: URL, _ ran: BatchSet, into folder: URL, number: Int, _ token: CancelToken) async throws -> BatchResult {
-        await gate.acquire()
+        try await gate.acquire(token)
         defer { gate.release() }
-        var work = ran
-        for i in work.steps.indices where work.steps[i].kind == .bates && plan.steps.indices.contains(i) && plan.steps[i].kind == .bates {
-            work.steps[i].start = plan.steps[i].start
+        var start = ran
+        for i in start.steps.indices where start.steps[i].kind == .bates {
+            if let live = plan.steps.first(where: { $0.id.value == start.steps[i].id.value }) { start.steps[i].start = live.start }
         }
         let runner = currentRunner
         let now = PanelDates.now()
-        let job = Task { try await runner.run(file, &work, into: folder, number: number, now: now, token: token) }
-        let poll = Task {
-            while !token.isCancelled && !Task.isCancelled { try? await Task.sleep(nanoseconds: 50_000_000) }
-            job.cancel()
+        let work = start
+        let (done, result) = try await ToolDocuments.runAsync(token) { () async throws -> (BatchSet, BatchResult) in
+            var set = work
+            let result = try await runner.run(file, &set, into: folder, number: number, now: now, token: token)
+            return (set, result)
         }
-        defer { poll.cancel() }
-        let result = try await job.value
-        continueNumbers(work)
+        continueNumbers(done)
         return result
     }
 
     // A Bates step of the set that ran holds the next number; the step on screen takes it on, and so does the saved set of the same name.
-    private func continueNumbers(_ ran: BatchSet) {
+    func continueNumbers(_ ran: BatchSet) {
         var moved = false
-        for i in ran.steps.indices where ran.steps[i].kind == .bates && plan.steps.indices.contains(i) && plan.steps[i].kind == .bates {
-            if plan.steps[i].start != ran.steps[i].start {
-                plan.steps[i].start = ran.steps[i].start
-                moved = true
-            }
+        for step in ran.steps where step.kind == .bates {
+            guard let i = plan.steps.firstIndex(where: { $0.id.value == step.id.value }), plan.steps[i].start != step.start else { continue }
+            plan.steps[i].start = step.start
+            moved = true
         }
         guard moved, var saved = store.load().first(where: { $0.name.caseInsensitiveCompare(plan.name) == .orderedSame }),
               saved.steps.count == plan.steps.count else { return }

@@ -173,6 +173,14 @@ public protocol ToolClipboard: AnyObject {
     func pictureFile() -> [UInt8]?
 
     func text() -> String?
+
+    /// What the pasteboard holds, without reading it: on iOS, reading another program's content brings up the system's paste
+    /// question, and a picture is encoded each time.
+    func kind() -> ClipboardKind
+}
+
+extension ToolClipboard {
+    public func kind() -> ClipboardKind { ClipboardContent.read(self).kind }
 }
 
 /// The services of a platform that has none of them: nobody is chosen, nothing is saved, the pasteboard is empty.

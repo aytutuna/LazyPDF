@@ -270,22 +270,19 @@ public final class BatchModel {
 @MainActor
 final class RunGate {
     private var held = false
-    private var waiting: [CheckedContinuation<Void, Never>] = []
 
-    func acquire() async {
-        if !held {
-            held = true
-            return
+    /// Waits for its turn; throws CancellationError when `token` is cancelled first, as `WaitAsync(token)` does.
+    func acquire(_ token: CancelToken) async throws {
+        while held {
+            if token.isCancelled { throw CancellationError() }
+            try? await Task.sleep(nanoseconds: 50_000_000)
         }
-        await withCheckedContinuation { waiting.append($0) }
+        if token.isCancelled { throw CancellationError() }
+        held = true
     }
 
     func release() {
-        if waiting.isEmpty {
-            held = false
-        } else {
-            waiting.removeFirst().resume()
-        }
+        held = false
     }
 }
 

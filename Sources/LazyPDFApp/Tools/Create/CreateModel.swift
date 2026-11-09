@@ -89,7 +89,7 @@ public final class CreateModel {
     }
 
     public func peekClipboard() {
-        clipboard = from == .clipboard ? host.map { ClipboardContent.read($0.clipboard).kind } ?? .nothing : .nothing
+        clipboard = from == .clipboard ? host.map { $0.clipboard.kind() } ?? .nothing : .nothing
         if !makesPictures && paper == .picture { paper = .a4 }
     }
 
