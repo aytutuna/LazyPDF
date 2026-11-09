@@ -57,6 +57,19 @@ public enum FormEdits {
         return try FieldDetector.detect(copy, renderer)
     }
 
+    /// As `detect(_:password:certificate:renderer:)` on its own thread, and ended at the next page once `token` is cancelled.
+    public static func detect(_ bytes: [UInt8], password: String?, certificate: X509Certificate?, renderer: PageRenderer,
+                              token: CancelToken) async throws -> [FieldProposal] {
+        if token.isCancelled { throw CancellationError() }
+        let job = Task.detached { try detect(bytes, password: password, certificate: certificate, renderer: renderer) }
+        let watch = Task.detached {
+            while !token.isCancelled && !Task.isCancelled { try? await Task.sleep(nanoseconds: 50_000_000) }
+            job.cancel()
+        }
+        defer { watch.cancel() }
+        return try await job.value
+    }
+
     public static func newName(_ form: PdfForm, _ kind: FieldKind) -> String {
         let stem: String
         switch kind {
@@ -100,11 +113,13 @@ public enum FormEdits {
         return (try form.addField(spec).name, 0)
     }
 
-    /// Adds the fields the detector found; a name another field already holds, or sits under, gets a number.
+    /// Adds the fields the detector found; a name another field already holds, or sits under, gets a number. A proposal for a
+    /// page the file no longer has is refused.
     public static func addFound(_ form: PdfForm, _ found: [FieldProposal]) throws -> Int {
         var added = 0
         for proposal in found {
             var spec = proposal.toSpec()
+            guard spec.pageIndex >= 0 && spec.pageIndex < form.document.pages.count else { throw ArgumentException("pageIndex") }
             let stem = spec.name.replacingOccurrences(of: ".", with: "_")
             var name = taken(form, spec.name) ? stem : spec.name
             var n = 2
