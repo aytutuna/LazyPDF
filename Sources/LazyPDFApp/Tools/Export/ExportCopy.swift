@@ -34,7 +34,7 @@ public enum ExportCopy {
     }
 
     private static func isDenied(_ error: Error) -> Bool {
-        let code = (error as NSError).code
-        return code == NSFileWriteNoPermission || code == NSFileWriteVolumeReadOnly
+        let code = CocoaError.Code(rawValue: (error as NSError).code)
+        return code == .fileWriteNoPermission || code == .fileWriteVolumeReadOnly
     }
 }
