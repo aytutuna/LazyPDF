@@ -135,6 +135,7 @@ public final class StandardsModel: ToolPanelModel {
                 do {
                     report = try await ToolDocuments.run(token) {
                         defer { done() }
+                        try token.throwIfCancelled()
                         return PdfAValidator.validate(try open(), level)
                     }
                 } catch is CancellationError {
@@ -179,6 +180,7 @@ public final class StandardsModel: ToolPanelModel {
                 do {
                     made = try await ToolDocuments.run(token) {
                         defer { done() }
+                        try token.throwIfCancelled()
                         return try job.run(level, fonts)
                     }
                 } catch is CancellationError {
