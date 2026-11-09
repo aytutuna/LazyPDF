@@ -48,10 +48,14 @@ public enum PageEdits {
 
     /// A number as typed in a field, in the digits and decimal mark of `locale`; nil when it is not one.
     public static func number(_ text: String, locale: Locale = .current) -> Double? {
+        let typed = text.trimmingCharacters(in: .whitespaces)
+        // NumberStyles.Float takes no thousands separator: "2,5" in English is refused, not read as 25.
+        if let group = locale.groupingSeparator, typed.contains(group) { return nil }
         let formatter = NumberFormatter()
         formatter.locale = locale
         formatter.numberStyle = .decimal
-        return formatter.number(from: text.trimmingCharacters(in: .whitespaces))?.doubleValue
+        formatter.usesGroupingSeparator = false
+        return formatter.number(from: typed)?.doubleValue
     }
 
     /// A second copy of the file as it stands, for work on another thread.

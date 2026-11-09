@@ -243,4 +243,12 @@ final class PageEditsTests: XCTestCase {
         XCTAssertNil(PageEdits.number("many", locale: Locale(identifier: "en_US")))
         XCTAssertNil(PageEdits.number("", locale: Locale(identifier: "en_US")))
     }
+
+    func test_aThousandsSeparatorIsRefusedAsWindowsRefusesIt() {
+        XCTAssertNil(PageEdits.number("2,5", locale: Locale(identifier: "en_US")))
+        XCTAssertNil(PageEdits.number("1,000", locale: Locale(identifier: "en_US")))
+        XCTAssertNil(PageEdits.number("1.5", locale: Locale(identifier: "tr_TR")))
+        XCTAssertNil(PageEdits.number("29.7", locale: Locale(identifier: "tr_TR")))
+        XCTAssertEqual(PageEdits.number("29,7", locale: Locale(identifier: "tr_TR")), 29.7)
+    }
 }
