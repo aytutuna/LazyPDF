@@ -16,7 +16,7 @@ extension FormsModel {
     }
 
     /// `ordinal` tells apart fields that share a name; most names have one.
-    func select(_ name: String?, _ index: Int, _ ordinal: Int = 0) {
+    public func select(_ name: String?, _ index: Int, _ ordinal: Int = 0) {
         selected = name
         selectedIndex = index
         selectedOrdinal = ordinal
