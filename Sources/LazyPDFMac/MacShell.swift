@@ -66,7 +66,7 @@ final class MacShell {
     // The sheets of the Create and Batch tiles hang from the window, as a dialog does on Windows.
     private func present<Content: View>(_ content: (@escaping () -> Void) -> Content) {
         guard let window, window.attachedSheet == nil else { return }
-        let sheet = NSWindow(contentViewController: NSViewController())
+        let sheet = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: true)
         let close = { [weak window, weak sheet] in
             guard let window, let sheet else { return }
             window.endSheet(sheet)
