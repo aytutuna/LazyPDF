@@ -158,8 +158,6 @@ final class FormsModelTests: XCTestCase {
         XCTAssertEqual(rig.model.rows[0].value, "Grace")
     }
 
-    // MARK: Form data
-
     func test_exportedDataGoesThroughTheExporterUnderTheFilesName() async throws {
         let rig = try FormsRig()
         rig.model.typeRow(rig.model.rows[0], "Ada")
@@ -221,8 +219,6 @@ final class FormsModelTests: XCTestCase {
         XCTAssertTrue(rig.host.problems.isEmpty)
         XCTAssertFalse(rig.tab.isDirty)
     }
-
-    // MARK: Editing
 
     private func designing(_ bytes: [UInt8]? = nil) throws -> FormsRig {
         let rig = try FormsRig(bytes)
