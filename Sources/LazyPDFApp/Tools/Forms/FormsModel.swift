@@ -200,8 +200,6 @@ public final class FormsModel: ToolPanelModel {
         fill?.highlight = on
     }
 
-    // MARK: List
-
     private func fieldRows(of form: PdfForm) -> [FieldRow] {
         var seen: [String: Int] = [:]
         return form.fields.map { field in
@@ -295,8 +293,6 @@ public final class FormsModel: ToolPanelModel {
         if let row = rows.first(where: { $0.name == name }) { activeRow = row.id }
     }
 
-    // MARK: Pointer on the page in fill mode
-
     var view: DocumentViewer { viewer! }
 
     func scale(_ page: Int) -> Double {
@@ -313,8 +309,6 @@ public final class FormsModel: ToolPanelModel {
     func fillActivate(_ slot: FillSlot, at point: ViewPoint) {
         fill?.activate(slot, at: point)
     }
-
-    // MARK: Edits
 
     // What the person did in a field. The answer is whether the field kept it.
     @discardableResult
@@ -410,8 +404,6 @@ public final class FormsModel: ToolPanelModel {
         cached = nil
         if let tab, tab.revision != revision { reload() }
     }
-
-    // MARK: Whole form
 
     var canFlatten: Bool {
         guard let tab, !isWorking else { return false }

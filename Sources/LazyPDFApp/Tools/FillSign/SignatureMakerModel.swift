@@ -76,8 +76,6 @@ public final class SignatureMakerModel {
         rebuild()
     }
 
-    // MARK: Ink
-
     public func beginStroke(_ point: ViewPoint) {
         strokes.begin(point)
     }
@@ -100,8 +98,6 @@ public final class SignatureMakerModel {
         strokes.clear()
         rebuild()
     }
-
-    // MARK: Picture
 
     /// Asks for a picture and makes the signature from it: the paper goes clear and the ink stays.
     public func choosePicture(using picker: ToolFilePicker) async {

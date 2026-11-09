@@ -223,8 +223,6 @@ extension FormsModel {
         } ?? false
     }
 
-    // MARK: Found fields
-
     public func findFields() async {
         guard let tab, let host else { return }
         let bytes = tab.session.current

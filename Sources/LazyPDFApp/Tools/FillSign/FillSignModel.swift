@@ -153,8 +153,6 @@ public final class FillSignModel: ToolPanelModel {
         await maker.choosePicture(using: host.filePicker)
     }
 
-    // MARK: Placing
-
     private func arm() {
         guard let tab, let host else { return }
         if tool != nil {

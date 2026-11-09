@@ -169,8 +169,6 @@ final class FillLayer {
         slots(widget.pageIndex).first { $0.dictionary === widget.dictionary }
     }
 
-    // MARK: Fields
-
     private func open(_ slot: FillSlot, caret: FieldCaret) {
         let align: TextAlign = slot.alignment == 1 ? .center : slot.alignment == 2 ? .trailing : .leading
         let id = Self.fieldPrefix + "\(slot.page).\(slot.name).\(slot.index)"
@@ -240,8 +238,6 @@ final class FillLayer {
         }
     }
 
-    // MARK: Slots
-
     private func makeSlots(_ page: Int) -> [FillSlot] {
         guard let form, page >= 0, page < viewer.pageCount else { return [] }
         let geometry = viewer.geometry(page)
@@ -281,8 +277,6 @@ final class FillLayer {
         if let tf = words.firstIndex(of: "Tf"), tf > 0, let size = Double(words[tf - 1]), size > 0, size <= 200 { return size }
         return tall ? 12 : min(max(height * 0.7, 4), 12)
     }
-
-    // MARK: Marks
 
     private func redrawAll() {
         for page in pages.keys { draw(page) }
