@@ -12,6 +12,8 @@ struct CommentPanelView: View {
 
     var body: some View {
         ToolForm {
+            ReasonText(model.hint)
+                .accessibilityAddTraits(.updatesFrequently)
             markupSection
             drawSection
             lookSection
@@ -41,7 +43,7 @@ struct CommentPanelView: View {
                         Label(item.text, systemImage: item.symbol)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
-                            .frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+                            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                     }
                     .buttonStyle(.bordered)
                     .tint(model.tool == item.tool ? Color.accentColor : Color.secondary)
@@ -50,12 +52,10 @@ struct CommentPanelView: View {
                 }
             }
             .disabled(!model.canChange)
-            ReasonText(model.hint)
-                .accessibilityAddTraits(.updatesFrequently)
             if model.canFinishShape {
                 Button { model.finishShape() } label: {
                     Label(L10n.t("Finish shape"), systemImage: "checkmark")
-                        .frame(maxWidth: .infinity, minHeight: 32)
+                        .frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
             }
@@ -79,7 +79,7 @@ struct CommentPanelView: View {
             SectionHeading(L10n.t("Share"))
             HStack(spacing: 8) {
                 Button { Task { await model.importComments() } } label: {
-                    Label(L10n.t("Import"), systemImage: "square.and.arrow.down").frame(maxWidth: .infinity, minHeight: 32)
+                    Label(L10n.t("Import"), systemImage: "square.and.arrow.down").frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
                 .disabled(!model.canChange)
@@ -89,7 +89,7 @@ struct CommentPanelView: View {
                     Button(L10n.t("FDF file")) { Task { await model.exportComments(xfdf: false) } }
                     Button(L10n.t("XFDF file")) { Task { await model.exportComments(xfdf: true) } }
                 } label: {
-                    Label(L10n.t("Export"), systemImage: "square.and.arrow.up").frame(maxWidth: .infinity, minHeight: 32)
+                    Label(L10n.t("Export"), systemImage: "square.and.arrow.up").frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
                 .disabled(!model.canExport)
@@ -101,7 +101,7 @@ struct CommentPanelView: View {
 
     private func markup(_ title: String, _ name: String, _ help: String, _ symbol: String, _ kind: AnnotationType) -> some View {
         Button { Task { await model.markup(kind) } } label: {
-            Label(title, systemImage: symbol).frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
+            Label(title, systemImage: symbol).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
         }
         .buttonStyle(.bordered)
         .help(help)
@@ -114,12 +114,13 @@ struct CommentPanelView: View {
             HStack {
                 TextField(L10n.t("Stamp text"), text: Binding(get: { model.stampName }, set: { model.setStampName($0) }))
                     .textFieldStyle(.roundedBorder)
+                    .frame(minHeight: 44)
                 Menu {
                     ForEach(model.stamps, id: \.self) { label in
                         Button(label) { model.setStampName(label) }
                     }
                 } label: {
-                    Image(systemName: "chevron.up.chevron.down").frame(minWidth: 32, minHeight: 32)
+                    Image(systemName: "chevron.up.chevron.down").frame(minWidth: 44, minHeight: 44)
                 }
                 .accessibilityLabel(L10n.t("Stamp text"))
             }
@@ -131,12 +132,12 @@ struct CommentPanelView: View {
             SectionHeading(selected.title)
             HStack(spacing: 8) {
                 Button { model.editSelectedText() } label: {
-                    Label(L10n.t("Edit text"), systemImage: "pencil.line").frame(maxWidth: .infinity, minHeight: 32)
+                    Label(L10n.t("Edit text"), systemImage: "pencil.line").frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
                 .disabled(!selected.canEditText || !model.canChange)
                 Button(role: .destructive) { model.deleteSelected() } label: {
-                    Label(L10n.t("Delete"), systemImage: "trash").frame(maxWidth: .infinity, minHeight: 32)
+                    Label(L10n.t("Delete"), systemImage: "trash").frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
                 .disabled(!model.canChange)
@@ -186,7 +187,7 @@ struct CommentPanelView: View {
             Slider(value: Binding(get: { value }, set: set), in: range, step: step)
                 .accessibilityLabel(label)
                 .accessibilityValue(readout)
-                .frame(minHeight: 32)
+                .frame(minHeight: 44)
         }
         .disabled(!model.canChange)
     }
@@ -204,12 +205,12 @@ struct CommentPanelView: View {
             .accessibilityValue(number(model.fontSize))
             HStack(spacing: 8) {
                 Toggle(isOn: Binding(get: { model.bold }, set: { model.setBold($0) })) {
-                    Text("B").bold().frame(minWidth: 32, minHeight: 32)
+                    Text("B").bold().frame(minWidth: 44, minHeight: 44)
                 }
                 .toggleStyle(.button)
                 .accessibilityLabel(L10n.t("Bold"))
                 Toggle(isOn: Binding(get: { model.italic }, set: { model.setItalic($0) })) {
-                    Text("I").italic().frame(minWidth: 32, minHeight: 32)
+                    Text("I").italic().frame(minWidth: 44, minHeight: 44)
                 }
                 .toggleStyle(.button)
                 .accessibilityLabel(L10n.t("Italic"))
