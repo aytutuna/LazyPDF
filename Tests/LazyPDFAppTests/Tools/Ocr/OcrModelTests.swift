@@ -286,10 +286,9 @@ final class OcrModelTests: XCTestCase {
 
     func test_aMousePressTheToolDoesNotTakeStaysWithTheViewer() async throws {
         let (model, viewer, _, _) = try await pointerRig()
-        let box = model.words[0].box
         let matrix = try XCTUnwrap(viewer.pageToView(0))
-        let beside = PagePointer(page: 0, point: ViewPoint(box.x + box.width + 5, box.y + box.height / 2), view: ViewPoint(0, 0), pressed: true, clicks: 1)
-        let inside = PagePointer(page: 0, point: ViewPoint(box.x + 1, box.y + box.height / 2), view: ViewPoint(0, 0), pressed: true, clicks: 1)
+        let beside = PagePointer(page: 0, point: ViewPoint(100, 295), view: ViewPoint(0, 0), pressed: true, clicks: 1)
+        let inside = PagePointer(page: 0, point: ViewPoint(100, 60), view: ViewPoint(0, 0), pressed: true, clicks: 1)
         XCTAssertFalse(model.takes(beside))
         XCTAssertTrue(model.takes(inside))
 
