@@ -6,6 +6,23 @@ import LazyPDFKit
 // The helpers the tools share for work off the main actor. Windows has WaitAsync(token) and OpenCopy.Of; Swift tests them
 // directly since they are not behind a Windows test of their own.
 
+private final class Flag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var on = false
+
+    var value: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return on
+    }
+
+    func set(_ now: Bool) {
+        lock.lock()
+        on = now
+        lock.unlock()
+    }
+}
+
 private final class Gate: @unchecked Sendable {
     let semaphore = DispatchSemaphore(value: 0)
 }
@@ -49,6 +66,25 @@ final class ToolDocumentsTests: XCTestCase {
 
         XCTAssertLessThan(Date().timeIntervalSince(started), 10)
         gate.semaphore.signal()
+    }
+
+    func test_cancellingReachesTheJobsOwnTask() async throws {
+        let token = CancelToken()
+        let seen = Flag()
+        Task {
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            token.cancel()
+        }
+
+        _ = try? await ToolDocuments.run(token) { () -> Int in
+            let until = Date().addingTimeInterval(10)
+            while !Task.isCancelled && Date() < until { Thread.sleep(forTimeInterval: 0.01) }
+            seen.set(Task.isCancelled)
+            return 1
+        }
+
+        await waitUntil { seen.value }
+        XCTAssertTrue(seen.value)
     }
 
     func test_aCopyIsTheFileAsItWasWhenTheCopyWasMade() throws {
