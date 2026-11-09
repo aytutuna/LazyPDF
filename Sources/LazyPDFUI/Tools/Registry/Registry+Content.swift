@@ -8,6 +8,7 @@ extension ToolRegistry {
     static func content(_ id: String, _ context: ToolContext) -> ToolPanel? {
         switch id {
         case "editcontent": return ToolPanel(EditContentModel()) { EditContentPanelView(model: $0) }
+        case "stamps": return ToolPanel(StampsModel()) { StampsPanelView(model: $0) }
         default: return nil
         }
     }
