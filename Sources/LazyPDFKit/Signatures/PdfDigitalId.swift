@@ -86,6 +86,9 @@ public enum PdfDigitalId {
             throw SignatureCryptoException(message: "The PFX file holds no certificate with a key.")
         }
         parsed.privateKey = key
+        #if !os(macOS)
+        parsed.keyHolder = ImportedIdentity(identity)
+        #endif
         return parsed
     }
 
@@ -94,6 +97,24 @@ public enum PdfDigitalId {
         "\"" + value.replacingOccurrences(of: "\"", with: "\"\"") + "\""
     }
 }
+
+#if !os(macOS)
+/// SecPKCS12Import stores the identity in the app's keychain on iOS; this takes it out again once the certificate is let go,
+/// so signing with a .p12 leaves no key behind.
+final class ImportedIdentity: KeyHolder {
+    private let identity: SecIdentity
+
+    init(_ identity: SecIdentity) {
+        self.identity = identity
+    }
+
+    func prepare() {}
+
+    deinit {
+        SecItemDelete([kSecValueRef as String: identity] as CFDictionary)
+    }
+}
+#endif
 
 #if os(macOS)
 /// A keychain file in the temporary folder that lives as long as the key in it is used. The name carries the number
