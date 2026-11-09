@@ -36,9 +36,9 @@ extension FormsModel {
         return (widget.pageIndex, boxOf(widget))
     }
 
-    /// The field under a point of a page; the smallest wins, so a check box on a large text field can be picked. A point a little
-    /// outside every box finds the nearest one, so a finger can pick a small field.
-    func widgetAt(_ page: Int, _ point: ViewPoint) -> (name: String, index: Int, ordinal: Int, box: ViewRect)? {
+    /// The field under a point of a page; the smallest wins, so a check box on a large text field can be picked. With `near`, a
+    /// point a little outside every box finds the closest one, so a finger can pick a small field.
+    func widgetAt(_ page: Int, _ point: ViewPoint, near allowed: Bool = false) -> (name: String, index: Int, ordinal: Int, box: ViewRect)? {
         var inside: (name: String, index: Int, ordinal: Int, box: ViewRect)?
         var near: (name: String, index: Int, ordinal: Int, box: ViewRect)?
         let reach = slop(page)
@@ -51,7 +51,7 @@ extension FormsModel {
                 let candidate = (field.name, i, ordinal, box)
                 if box.contains(point) {
                     if inside == nil || box.width * box.height < inside!.box.width * inside!.box.height { inside = candidate }
-                } else if box.inflated(reach, reach).contains(point) {
+                } else if allowed && box.inflated(reach, reach).contains(point) {
                     if near == nil || box.width * box.height < near!.box.width * near!.box.height { near = candidate }
                 }
             }
