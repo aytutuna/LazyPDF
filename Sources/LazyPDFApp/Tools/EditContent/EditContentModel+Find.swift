@@ -14,7 +14,7 @@ extension EditContentModel {
         let start = tab.session.current
         let find = findText, replacement = replaceText
         let options = TextSearchOptions(matchCase: matchCase, wholeWord: wholeWord)
-        var made: Replacement?
+        var made: ReplacedCopy?
         isReplacing = true
         defer { isReplacing = false }
         do {

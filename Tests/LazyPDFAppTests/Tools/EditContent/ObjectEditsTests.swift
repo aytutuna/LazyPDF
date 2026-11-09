@@ -14,8 +14,8 @@ final class ObjectEditsTests: XCTestCase {
         DocumentTab(session: try PdfEditSession.open(bytes ?? EditPdf.make("")), renderer: FakeRenderer(), url: nil, title: "t.pdf")
     }
 
-    private func edits(_ tab: DocumentTab) -> PageEdits {
-        PageEdits(tab, fonts: FakeFonts(), codec: FakeCodec())
+    private func edits(_ tab: DocumentTab) -> ContentEdits {
+        ContentEdits(tab, fonts: FakeFonts(), codec: FakeCodec())
     }
 
     private func objects(_ tab: DocumentTab) throws -> [PageObject] {

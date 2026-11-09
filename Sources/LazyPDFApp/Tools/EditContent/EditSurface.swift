@@ -31,7 +31,7 @@ final class EditSurface: PagePointerTool {
     static let minSize = 2.0
 
     let viewer: DocumentViewer
-    let edits: PageEdits
+    let edits: ContentEdits
 
     var chromePages = Set<Int>()
     private(set) var selected: [Int] = []
@@ -71,7 +71,7 @@ final class EditSurface: PagePointerTool {
     var onResizeRequested: ((Int, [Int], PdfRect) -> Void)?
     var onKey: ((ViewerKey) -> Bool)?
 
-    init(_ viewer: DocumentViewer, _ edits: PageEdits) {
+    init(_ viewer: DocumentViewer, _ edits: ContentEdits) {
         self.viewer = viewer
         self.edits = edits
     }

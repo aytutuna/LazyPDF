@@ -49,7 +49,7 @@ final class EditContentModelTests: XCTestCase {
 
     // Added behind the model's back, as another tool would; picking the mode again makes it read the page.
     private func addPicture(_ rig: ContentRig, _ model: EditContentModel) throws -> Int {
-        let outcome = try PageEdits(rig.tab, fonts: FakeFonts(), codec: FakeCodec()).addImage(0, PdfRect(100, 400, 200, 500), [1])
+        let outcome = try ContentEdits(rig.tab, fonts: FakeFonts(), codec: FakeCodec()).addImage(0, PdfRect(100, 400, 200, 500), [1])
         XCTAssertTrue(outcome.done)
         model.selectMode(.select)
         return try XCTUnwrap(try PageEditor(rig.tab.session, 0).objects.last { $0 is ImageObject }).id
@@ -252,7 +252,7 @@ final class EditContentModelTests: XCTestCase {
 
     func test_clickingALinkLoadsItAndItCanBeRemoved() throws {
         let (model, rig) = try start()
-        _ = try PageEdits(rig.tab, fonts: FakeFonts(), codec: FakeCodec()).setLink(0, PdfRect(100, 600, 200, 640), UriAction("https://old.example"), nil)
+        _ = try ContentEdits(rig.tab, fonts: FakeFonts(), codec: FakeCodec()).setLink(0, PdfRect(100, 600, 200, 640), UriAction("https://old.example"), nil)
         model.selectMode(.link)
         XCTAssertEqual(model.linkRows.map(\.title), ["Link to https://old.example"])
 
