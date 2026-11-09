@@ -80,6 +80,22 @@ final class StandardsModelTests: XCTestCase {
         XCTAssertFalse(rig.tab.isDirty)
     }
 
+    func test_theConvertedCopyIsCheckedWhenTheShellAttachesItLater() async throws {
+        let (model, rig) = try attached()
+        model.setMode(.convert)
+        await model.action!.run()
+        let made = try XCTUnwrap(rig.host.openedNew.first)
+        XCTAssertFalse(model.showsResult)
+
+        let copy = try SecurityRig(made.pdf, title: made.title)
+        model.detach()
+        copy.attach(model)
+
+        await waitUntil { model.showsResult }
+        XCTAssertTrue(model.showsResult)
+        XCTAssertNotNil(copy.host.statuses.last)
+    }
+
     func test_aFileWithoutOwnerRightsIsRefusedInTheEngineWords() async throws {
         let (model, rig) = try attached(try Pdfs.restricted(.print), password: "")
         model.setMode(.convert)
