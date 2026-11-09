@@ -6626,5 +6626,29 @@
   },
   "No text recognition for {0}.": {
     "tr": "{0} için metin tanıma yok."
+  },
+  "Tap the two ends. Turn on Straight lines to keep them straight.": {
+    "tr": "İki ucuna dokunun. Düz tutmak için Düz çizgiler'i açın."
+  },
+  "Tap each corner, then tap Finish. Turn on Straight lines to keep them straight.": {
+    "tr": "Her köşeye dokunun, sonra Bitir'e dokunun. Düz tutmak için Düz çizgiler'i açın."
+  },
+  "Take back corner": {
+    "tr": "Köşeyi geri al"
+  },
+  "Take back the last corner (Backspace)": {
+    "tr": "Son köşeyi geri al (Backspace)"
+  },
+  "Take back the last corner": {
+    "tr": "Son köşeyi geri al"
+  },
+  "Tap each corner, then tap Finish shape.": {
+    "tr": "Her köşeye dokunun, sonra Şekli bitir'e dokunun."
+  },
+  "Cancel shape": {
+    "tr": "Şekli iptal et"
+  },
+  "Marks on this page": {
+    "tr": "Bu sayfadaki işaretler"
   }
 }

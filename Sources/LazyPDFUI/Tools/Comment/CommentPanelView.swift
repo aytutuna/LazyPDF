@@ -14,6 +14,7 @@ struct CommentPanelView: View {
         ToolForm {
             ReasonText(model.hint)
                 .accessibilityAddTraits(.updatesFrequently)
+            if model.shapeStarted { shapeRow }
             markupSection
             drawSection
             lookSection
@@ -52,15 +53,44 @@ struct CommentPanelView: View {
                 }
             }
             .disabled(!model.canChange)
-            if model.canFinishShape {
-                Button { model.finishShape() } label: {
-                    Label(L10n.t("Finish shape"), systemImage: "checkmark")
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                }
-                .buttonStyle(.bordered)
-            }
             if model.showsStamp { stampRow }
             if let selected = model.selected { selectedRow(selected) }
+            if !model.marks.isEmpty { markList }
+        }
+    }
+
+    // Under the hint, so that it shows at the small detent of the phone's sheet.
+    private var shapeRow: some View {
+        HStack(spacing: 8) {
+            Button { model.finishShape() } label: {
+                Label(L10n.t("Finish shape"), systemImage: "checkmark")
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(!model.canFinishShape)
+            Button(role: .cancel) { model.cancelShape() } label: {
+                Label(L10n.t("Cancel shape"), systemImage: "xmark")
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .buttonStyle(.bordered)
+        }
+    }
+
+    private var markList: some View {
+        LabelledField(L10n.t("Marks on this page")) {
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(model.marks) { row in
+                    Button { model.select(row) } label: {
+                        Text(row.spoken)
+                            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(row.isSelected ? Color.accentColor : Color.secondary)
+                    .accessibilityLabel(row.spoken)
+                    .accessibilityAddTraits(row.isSelected ? .isSelected : [])
+                }
+            }
+            .accessibilityElement(children: .contain)
         }
     }
 

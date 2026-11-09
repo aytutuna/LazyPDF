@@ -84,7 +84,7 @@ extension ViewerModel {
     }
 
     private func pointer(_ page: Int, _ point: ViewPoint, _ view: ViewPoint, _ clicks: Int, _ pressed: Bool, _ modifiers: PointerModifiers) -> PagePointer {
-        PagePointer(page: page, point: point, view: view, pressed: pressed, clicks: clicks, modifiers: modifiers)
+        PagePointer(page: page, point: point, view: view, pressed: pressed, clicks: clicks, modifiers: modifiers, touch: touching)
     }
 
     private func endDrag() {

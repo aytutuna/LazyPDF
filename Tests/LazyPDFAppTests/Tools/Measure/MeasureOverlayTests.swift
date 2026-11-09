@@ -69,7 +69,7 @@ final class MeasureOverlayTests: XCTestCase {
         overlay.draw([], .actual)
         XCTAssertTrue(ids(viewer).contains("measure.snap"))
 
-        tool.cancel()
+        tool.reset()
         overlay.draw([], .actual)
         XCTAssertFalse(ids(viewer).contains("measure.snap"))
     }

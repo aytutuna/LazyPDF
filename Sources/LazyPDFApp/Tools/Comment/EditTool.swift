@@ -9,6 +9,7 @@ import LazyPDFKit
 final class EditTool: PagePointerTool {
     static let selectionPrefix = "comment.sel."
     private static let slop = 24.0
+    private static let exact = 4.0
     private static let grip = 9.0
     private static let minSize = 8.0
 
@@ -67,7 +68,7 @@ final class EditTool: PagePointerTool {
     // A finger that lands anywhere else scrolls the page.
     func takes(_ pointer: PagePointer) -> Bool {
         if let selected = current, selected.pageIndex == pointer.page, handleAt(frame, pointer.point, pointer.page) != nil { return true }
-        return marker().at(pointer.page, pointer.point, reach(pointer.page)) != nil
+        return hit(pointer.page, pointer.point) != nil
     }
 
     func key(_ key: ViewerKey, modifiers: PointerModifiers) -> Bool {
@@ -92,7 +93,7 @@ final class EditTool: PagePointerTool {
             begin(pointer.point)
             return
         }
-        guard let hit = marker().at(pointer.page, pointer.point, reach(pointer.page)) else {
+        guard let hit = hit(pointer.page, pointer.point) else {
             if current != nil { select(nil) }
             return
         }
@@ -146,6 +147,17 @@ final class EditTool: PagePointerTool {
         guard let matrix = viewer.pageToView(page) else { return 1 }
         let scale = ViewScale.of(matrix)
         return scale > 0 ? scale : 1
+    }
+
+    // What lies under the point itself wins, as on a mouse; a finger's slop only finds the nearest mark when none does.
+    private func hit(_ page: Int, _ point: ViewPoint) -> PdfAnnotation? {
+        let wide = reach(page)
+        var by = min(Self.exact, wide)
+        while by < wide {
+            if let mark = marker().at(page, point, by) { return mark }
+            by = min(by * 2, wide)
+        }
+        return marker().at(page, point, wide)
     }
 
     // The reach of a finger, in page space.

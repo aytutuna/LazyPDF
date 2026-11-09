@@ -60,8 +60,12 @@ public final class MeasureModel: ToolPanelModel {
         weak var tab: DocumentTab?
     }
 
-    public init(fonts: FontSource) {
+    /// Set for a phone or tablet, where the hints speak of taps and the buttons, not of double clicks and Shift.
+    @ObservationIgnored private let touch: Bool
+
+    public init(fonts: FontSource, touch: Bool = false) {
         self.fonts = fonts
+        self.touch = touch
     }
 
     public var summary: String { ToolCatalog.find("measure")?.summary ?? "" }
@@ -100,7 +104,7 @@ public final class MeasureModel: ToolPanelModel {
         toolWatch = ObservationWatch(track: { _ = viewer.pointerTool }, changed: { [weak self] in
             guard let self, let tool = self.tool, let viewer = self.viewer, self.kind != nil else { return }
             if viewer.pointerTool.map({ ObjectIdentifier($0) }) != ObjectIdentifier(tool) {
-                tool.cancel()
+                tool.reset()
                 self.kind = nil
                 self.showReadout()
             }
@@ -140,7 +144,7 @@ public final class MeasureModel: ToolPanelModel {
     public func pick(_ next: MeasureKind) {
         guard let tool, let viewer else { return }
         kind = next
-        tool.cancel()
+        tool.reset()
         tool.kind = next
         if viewer.pointerTool.map({ ObjectIdentifier($0) }) != ObjectIdentifier(tool) { viewer.pointerTool = tool }
         showReadout()
@@ -200,7 +204,12 @@ public final class MeasureModel: ToolPanelModel {
     }
 
     public func startOver() {
-        tool?.cancel()
+        tool?.reset()
+    }
+
+    /// Takes back the last corner.
+    public func takeBack() {
+        tool?.undo()
     }
 
     public func remove(_ row: MeasureRow) {
@@ -284,8 +293,10 @@ public final class MeasureModel: ToolPanelModel {
         canStartOver = tool?.points.isEmpty == false
         switch kind {
         case nil: hint = L10n.t("Pick Distance, Perimeter or Area to measure again.")
-        case .distance?: hint = L10n.t("Click the two ends. Hold Shift for straight lines.")
-        default: hint = L10n.t("Click each corner, then double-click to finish. Hold Shift for straight lines.")
+        case .distance?: hint = touch ? L10n.t("Tap the two ends. Turn on Straight lines to keep them straight.")
+            : L10n.t("Click the two ends. Hold Shift for straight lines.")
+        default: hint = touch ? L10n.t("Tap each corner, then tap Finish. Turn on Straight lines to keep them straight.")
+            : L10n.t("Click each corner, then double-click to finish. Hold Shift for straight lines.")
         }
         guard let tool, !tool.points.isEmpty else {
             readout = "—"

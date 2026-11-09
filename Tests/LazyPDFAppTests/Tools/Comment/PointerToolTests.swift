@@ -20,6 +20,10 @@ final class PointerToolTests: XCTestCase {
         PagePointer(page: page, point: at, view: at, pressed: false, clicks: 0)
     }
 
+    private func finger(_ at: ViewPoint, page: Int = 0, pressed: Bool = true) -> PagePointer {
+        PagePointer(page: page, point: at, view: at, pressed: pressed, clicks: pressed ? 1 : 0, touch: true)
+    }
+
     private final class Drawn {
         var marks: [(tool: MarkTool, page: Int, points: [ViewPoint])] = []
     }
@@ -189,9 +193,74 @@ final class PointerToolTests: XCTestCase {
         tool.release(drag(markPt(10, 10)))
         XCTAssertTrue(tool.started)
 
-        tool.cancel()
+        tool.reset()
         XCTAssertFalse(tool.started)
         XCTAssertTrue(viewer.overlay(0).items.isEmpty)
+    }
+
+    func test_aFingersCornerIsAddedOnReleaseAndACancelledPressAddsNone() throws {
+        let (tool, _, drawn) = try drawing(.polygon)
+        tool.press(press(markPt(10, 10)))
+        tool.release(drag(markPt(10, 10)))
+        tool.press(finger(markPt(100, 10)))
+        tool.release(finger(markPt(100, 10), pressed: false))
+        tool.press(finger(markPt(100, 100)))
+        tool.release(finger(markPt(100, 100), pressed: false))
+        XCTAssertTrue(tool.canFinish)
+
+        tool.press(finger(markPt(50, 150)))
+        tool.cancel()
+        tool.release(finger(markPt(50, 150), pressed: false))
+        tool.finishShape()
+
+        XCTAssertEqual(drawn.marks.count, 1)
+        XCTAssertEqual(drawn.marks[0].points.count, 3)
+    }
+
+    func test_aMousePressThatIsCancelledTakesBackOnlyItsCorner() throws {
+        let (tool, _, _) = try drawing(.polygon)
+        tool.press(press(markPt(10, 10)))
+        tool.release(drag(markPt(10, 10)))
+        tool.press(press(markPt(100, 10)))
+        tool.release(drag(markPt(100, 10)))
+        tool.press(press(markPt(100, 100)))
+
+        tool.cancel()
+
+        XCTAssertTrue(tool.started)
+        XCTAssertFalse(tool.canFinish)
+        tool.press(press(markPt(10, 100)))
+        tool.release(drag(markPt(10, 100)))
+        XCTAssertTrue(tool.canFinish)
+    }
+
+    func test_aFirstCornerCancelledByASecondFingerLeavesNothingStarted() throws {
+        let (tool, viewer, _) = try drawing(.polygon)
+        tool.press(finger(markPt(10, 10)))
+
+        tool.cancel()
+
+        XCTAssertFalse(tool.started)
+        XCTAssertTrue(viewer.overlay(0).items.isEmpty)
+    }
+
+    func test_aPolygonWhosePageWasUndoneAwayCannotBeFinished() throws {
+        let (tool, viewer, drawn) = try drawing(.polygon, pages: 3)
+        for corner in [markPt(10, 10), markPt(100, 10), markPt(100, 100)] {
+            tool.press(press(corner, page: 2))
+            tool.release(drag(corner, page: 2))
+        }
+        XCTAssertTrue(tool.canFinish)
+        let tab = try XCTUnwrap(viewer.tab)
+        try PageOperations.delete(tab.document, [2])
+        try tab.commit("Delete pages")
+
+        XCTAssertFalse(tool.canFinish)
+        tool.finishShape()
+        tool.press(press(markPt(20, 20), page: 0))
+
+        XCTAssertTrue(drawn.marks.isEmpty)
+        XCTAssertFalse(tool.canFinish)
     }
 
     func test_escapeDropsAShapeThatWasStartedAndIsLeftAloneOtherwise() throws {
@@ -412,6 +481,30 @@ final class PointerToolTests: XCTestCase {
 
         XCTAssertEqual(moves, 1)
         XCTAssertEqual(resizes, 0)
+    }
+
+    func test_aClickBetweenTwoMarksPicksTheOneUnderIt() throws {
+        let f = try CommentFixture()
+        let viewer = PanelViewer(f.tab)
+        let first = try f.marker.add(.textBox, 0, [markPt(100, 100), markPt(200, 140)], markRed, "First")
+        let second = try f.marker.add(.textBox, 0, [markPt(100, 150), markPt(200, 190)], markRed, "Second")
+        try f.tab.commit("Text boxes")
+        let tool = EditTool(viewer: viewer, marker: { f.marker })
+
+        tool.press(press(markPt(150, 135)))
+        XCTAssertEqual(tool.current?.reference?.number, first.reference?.number)
+        tool.release(drag(markPt(150, 135)))
+        tool.press(press(markPt(150, 185)))
+
+        XCTAssertEqual(tool.current?.reference?.number, second.reference?.number)
+    }
+
+    func test_aFingerNearAMarkStillPicksItWhenNothingLiesUnderIt() throws {
+        let (tool, _, _, made) = try editing()
+
+        tool.press(press(markPt(150, 175)))
+
+        XCTAssertEqual(tool.current?.reference?.number, made.reference?.number)
     }
 
     func test_aFingerIsTheToolsOnlyOverAMarkOrAHandle() throws {

@@ -48,8 +48,11 @@ public struct PagePointer {
     public var modifiers: PointerModifiers
     public var fromKeys: Bool
 
+    /// A finger made it. A tool that adds a point per press waits for the release, since a second finger cancels the press.
+    public var touch: Bool
+
     public init(page: Int, point: ViewPoint, view: ViewPoint, pressed: Bool, clicks: Int,
-                modifiers: PointerModifiers = [], fromKeys: Bool = false) {
+                modifiers: PointerModifiers = [], fromKeys: Bool = false, touch: Bool = false) {
         self.page = page
         self.point = point
         self.view = view
@@ -57,6 +60,7 @@ public struct PagePointer {
         self.clicks = clicks
         self.modifiers = modifiers
         self.fromKeys = fromKeys
+        self.touch = touch
     }
 }
 

@@ -22,6 +22,14 @@ public struct SelectedMark: Equatable {
     public let canEditText: Bool
 }
 
+/// A mark of the page in view, listed while Move marks is the tool, so that a person without the pointer can pick one.
+public struct MarkRow: Identifiable {
+    public let id: Int
+    public let mark: PdfAnnotation
+    public let spoken: String
+    public let isSelected: Bool
+}
+
 @MainActor
 @Observable
 public final class CommentModel: ToolPanelModel {
@@ -44,6 +52,12 @@ public final class CommentModel: ToolPanelModel {
     /// A polygon or cloud is under way and has corners enough to be finished.
     public private(set) var canFinishShape = false
 
+    /// A polygon or cloud is under way, with any number of corners.
+    public private(set) var shapeStarted = false
+
+    /// The marks of the page in view while Move marks is the tool.
+    public private(set) var marks: [MarkRow] = []
+
     /// The name put on new marks; the system's user name until the view gives a better one.
     @ObservationIgnored public var author = NSFullUserName()
 
@@ -57,6 +71,8 @@ public final class CommentModel: ToolPanelModel {
     @ObservationIgnored private var active: PagePointerTool?
     @ObservationIgnored private var watch: ObservationWatch?
     @ObservationIgnored private var toolWatch: ObservationWatch?
+    @ObservationIgnored private var pageWatch: ObservationWatch?
+    @ObservationIgnored private let touch: Bool
     @ObservationIgnored private var settling: Task<Void, Never>?
     @ObservationIgnored private var unsettled = Set<LookPart>()
     @ObservationIgnored private var loading = false
@@ -65,8 +81,10 @@ public final class CommentModel: ToolPanelModel {
         case colour, width, opacity, font
     }
 
-    public init(fonts: FontSource) {
+    /// `touch` is set for a phone or tablet, where the hints speak of taps and the Finish button, not of double clicks.
+    public init(fonts: FontSource, touch: Bool = false) {
         self.fonts = fonts
+        self.touch = touch
     }
 
     public var palette: [MarkPaletteItem] {
@@ -139,6 +157,7 @@ public final class CommentModel: ToolPanelModel {
         }
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in
             guard let self, let tab = self.tab else { return }
+            self.drawTool?.dropIfPageGone()
             self.editTool?.refresh()
             self.showSelected()
             self.countFlattenable(tab)
@@ -151,6 +170,7 @@ public final class CommentModel: ToolPanelModel {
                 self.choose(setMode: false)
             }
         })
+        pageWatch = ObservationWatch(track: { _ = viewer.pageIndex }, changed: { [weak self] in self?.listMarks() })
         countFlattenable(tab)
         choose()
     }
@@ -164,6 +184,8 @@ public final class CommentModel: ToolPanelModel {
         watch = nil
         toolWatch?.stop()
         toolWatch = nil
+        pageWatch?.stop()
+        pageWatch = nil
         if let viewer, active != nil, Self.same(viewer.pointerTool, active) { viewer.pointerTool = nil }
         editTool?.clear()
         editTool = nil
@@ -171,7 +193,9 @@ public final class CommentModel: ToolPanelModel {
         active = nil
         field = nil
         selected = nil
+        marks = []
         canFinishShape = false
+        shapeStarted = false
         tab = nil
         viewer = nil
         host = nil
@@ -213,12 +237,24 @@ public final class CommentModel: ToolPanelModel {
         drawTool?.finishShape()
     }
 
+    /// Drops a polygon or cloud under way.
+    public func cancelShape() {
+        drawTool?.reset()
+    }
+
+    /// Selects a mark from the list, as a press on it does.
+    public func select(_ row: MarkRow) {
+        editTool?.select(row.mark)
+    }
+
     private func choose(setMode: Bool = true) {
         guard let viewer, let edit = editTool else { return }
         field?.finish()
         if tool != .edit { edit.clear() }
+        drawTool?.reset()
         drawTool = nil
         canFinishShape = false
+        shapeStarted = false
         switch tool {
         case .selectText:
             active = nil
@@ -230,15 +266,18 @@ public final class CommentModel: ToolPanelModel {
         default:
             let draw = DrawTool(viewer: viewer, tool: tool, style: { [unowned self] in self.currentStyle() },
                                 done: { [weak self] tool, page, points in self?.drew(tool, page, points) })
-            draw.changed = { [weak self, weak draw] in self?.canFinishShape = draw?.canFinish ?? false }
+            draw.changed = { [weak self, weak draw] in
+                self?.canFinishShape = draw?.canFinish ?? false
+                self?.shapeStarted = draw?.started ?? false
+            }
             drawTool = draw
             active = draw
             viewer.pointerTool = draw
         }
         let item = palette.first { $0.tool == tool }
-        let sentence = item?.hint ?? ""
+        let sentence = touch && [.polygon, .cloud].contains(tool) ? L10n.t("Tap each corner, then tap Finish shape.") : item?.hint ?? ""
         hint = !allowed ? L10n.t("This file does not allow comments.")
-            : [.note, .textBox, .stamp, .attach].contains(tool) ? "\(sentence) \(L10n.t("Or press Enter on the page."))" : sentence
+            : !touch && [.note, .textBox, .stamp, .attach].contains(tool) ? "\(sentence) \(L10n.t("Or press Enter on the page."))" : sentence
         showSelected()
     }
 
@@ -314,7 +353,25 @@ public final class CommentModel: ToolPanelModel {
         text.family != look.family || text.size != look.size || text.font != look.font
     }
 
+    // The marks a pointer would reach, for the person who has none.
+    func listMarks() {
+        guard tool == .edit, let tab, let viewer, let edit = editTool else {
+            marks = []
+            return
+        }
+        let page = viewer.pageIndex
+        let label = L10n.t("Page {0}", viewer.pageLabel(page))
+        marks = makeMarker(tab).selectable(on: page).compactMap { mark in
+            guard let number = mark.reference?.number else { return nil }
+            let author = (mark.title ?? "").isEmpty ? [] : [mark.title ?? ""]
+            let chosen = edit.current?.reference?.number == number && edit.current?.pageIndex == page
+            return MarkRow(id: number, mark: mark, spoken: ([AnnotationText.kindName(mark.type)] + author + [label]).joined(separator: ", "),
+                           isSelected: chosen)
+        }
+    }
+
     func showSelected() {
+        listMarks()
         guard let mark = editTool?.current else {
             selected = nil
             return

@@ -18,6 +18,8 @@ final class DrawTool: PagePointerTool {
     private var points: [ViewPoint] = []
     private var page = -1
     private var now = ViewPoint.zero
+    private var added = false
+    private var waiting: PagePointer?
 
     /// Called when a shape was started, finished or dropped, for the button that finishes a polygon.
     var changed: (() -> Void)?
@@ -32,7 +34,7 @@ final class DrawTool: PagePointerTool {
     var cursor: PointerCursor? { .crosshair }
 
     /// A polygon or cloud has corners and waits for more.
-    var started: Bool { page >= 0 }
+    var started: Bool { page >= 0 && page < viewer.pageCount }
 
     /// A polygon or cloud with corners enough to be finished.
     var canFinish: Bool { many && started && points.count >= 3 }
@@ -43,23 +45,28 @@ final class DrawTool: PagePointerTool {
 
     func key(_ key: ViewerKey, modifiers: PointerModifiers) -> Bool {
         guard key == .escape, started else { return false }
-        cancel()
+        reset()
         return true
     }
 
     func press(_ pointer: PagePointer) {
+        dropIfPageGone()
         if many && page >= 0 {
             if pointer.page != page { return }
-            if pointer.clicks >= 2 || (points.count >= 3 && Self.close(pointer.point, points[0])) {
-                finish()
+            // A second finger cancels the press, so a finger's corner is added on release.
+            if pointer.touch {
+                waiting = pointer
             } else {
-                extend(pointer.point)
+                let before = points.count
+                corner(pointer)
+                added = points.count > before
             }
             return
         }
         clear()
         page = pointer.page
         points.append(pointer.point)
+        added = true
         now = pointer.point
         if !byClick { show() }
         changed?()
@@ -75,6 +82,12 @@ final class DrawTool: PagePointerTool {
     }
 
     func release(_ pointer: PagePointer) {
+        added = false
+        if let tapped = waiting {
+            waiting = nil
+            if page >= 0 { corner(tapped) }
+            return
+        }
         guard page >= 0 else { return }
         if pointer.page == page { now = pointer.point }
         if many {
@@ -104,14 +117,46 @@ final class DrawTool: PagePointerTool {
         finish()
     }
 
+    /// The press in flight was taken away (a second finger, another window). A polygon keeps the corners of earlier presses.
     func cancel() {
+        waiting = nil
+        if !many {
+            reset()
+        } else if added {
+            added = false
+            if points.count > 1 {
+                points.removeLast()
+                show()
+                changed?()
+            } else {
+                reset()
+            }
+        }
+    }
+
+    /// Drops the shape under way, whatever presses made it.
+    func reset() {
         clear()
         changed?()
     }
 
     /// Ends a polygon or cloud at the corner it has, as a double click does.
     func finishShape() {
+        dropIfPageGone()
         if canFinish { finish() }
+    }
+
+    /// An edit of the file can take the page a polygon is on away.
+    func dropIfPageGone() {
+        if page >= viewer.pageCount { reset() }
+    }
+
+    private func corner(_ pointer: PagePointer) {
+        if pointer.clicks >= 2 || (points.count >= 3 && Self.close(pointer.point, points[0])) {
+            finish()
+        } else {
+            extend(pointer.point)
+        }
     }
 
     private static func close(_ a: ViewPoint, _ b: ViewPoint) -> Bool { distance(a, b) < 6 }
@@ -144,6 +189,8 @@ final class DrawTool: PagePointerTool {
         }
         points.removeAll()
         page = -1
+        added = false
+        waiting = nil
     }
 
     // The preview is redrawn whole on every move: the shapes are small and a page rarely holds more than a few points.

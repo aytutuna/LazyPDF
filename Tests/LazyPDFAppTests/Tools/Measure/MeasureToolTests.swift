@@ -85,7 +85,7 @@ final class MeasureToolTests: XCTestCase {
 
         tool.press(at(0, 0))
         tool.press(at(72, 0))
-        tool.cancel()
+        tool.reset()
         XCTAssertTrue(tool.points.isEmpty)
 
         tool.press(at(0, 0))
@@ -93,6 +93,62 @@ final class MeasureToolTests: XCTestCase {
         XCTAssertEqual(tool.page, 0)
         XCTAssertEqual(tool.points.count, 1)
         XCTAssertTrue(done.items.isEmpty)
+    }
+
+    private func touchTap(_ viewer: ViewerModel, _ x: Double, _ y: Double) throws {
+        let view = try XCTUnwrap(viewer.pageToView(0)).transform(ViewPoint(x, y))
+        viewer.pointerDown(view, touch: true)
+        viewer.pointerUp(view)
+    }
+
+    func test_aFingerAddsItsCornerOnReleaseNotOnPress() async throws {
+        let (tool, _, viewer) = try await start(.area)
+        viewer.pointerTool = tool
+        let view = try XCTUnwrap(viewer.pageToView(0)).transform(ViewPoint(50, 50))
+
+        viewer.pointerDown(view, touch: true)
+        XCTAssertTrue(tool.points.isEmpty)
+        viewer.pointerUp(view)
+
+        XCTAssertEqual(tool.points.count, 1)
+    }
+
+    func test_aSecondFingerTakesBackOnlyThePressInFlight() async throws {
+        let (tool, _, viewer) = try await start(.area)
+        viewer.pointerTool = tool
+        for corner in [(50.0, 50.0), (150, 50), (150, 150), (50, 150)] { try touchTap(viewer, corner.0, corner.1) }
+        XCTAssertEqual(tool.points.count, 4)
+
+        viewer.pointerDown(try XCTUnwrap(viewer.pageToView(0)).transform(ViewPoint(100, 100)), touch: true)
+        viewer.pointerCancel()
+
+        XCTAssertEqual(tool.points.count, 4)
+        XCTAssertEqual(tool.page, 0)
+    }
+
+    func test_aFingerScrollingOnAfterOneEndOfADistanceMakesNoSecondEnd() async throws {
+        let (tool, done, viewer) = try await start(.distance)
+        viewer.pointerTool = tool
+        try touchTap(viewer, 50, 50)
+
+        viewer.pointerDown(try XCTUnwrap(viewer.pageToView(0)).transform(ViewPoint(200, 200)), touch: true)
+        viewer.pointerCancel()
+
+        XCTAssertTrue(done.items.isEmpty)
+        XCTAssertEqual(tool.points.count, 1)
+    }
+
+    func test_aCancelledMousePressTakesBackTheCornerItAdded() async throws {
+        let (tool, _, _) = try await start(.area)
+        tool.press(at(0, 0))
+        tool.release(at(0, 0, clicks: 0))
+        tool.press(at(72, 0))
+
+        tool.cancel()
+
+        XCTAssertEqual(tool.points.count, 1)
+        tool.cancel()
+        XCTAssertEqual(tool.points.count, 1)
     }
 
     func test_undoTakesBackTheLastCornerAndTheLastOneFreesThePage() async throws {
@@ -188,7 +244,7 @@ final class MeasureToolTests: XCTestCase {
         tool.move(PagePointer(page: 0, point: ViewPoint(5, 5), view: ViewPoint(10, 10), pressed: true, clicks: 0))
         XCTAssertEqual(try XCTUnwrap(tool.hover).x, corner.x, accuracy: 1e-6)
 
-        tool.cancel()
+        tool.reset()
         XCTAssertNil(tool.hover)
         XCTAssertFalse(tool.snapped)
     }

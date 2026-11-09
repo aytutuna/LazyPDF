@@ -14,9 +14,9 @@ struct MeasurePanelView: View {
                 .accessibilityAddTraits(.updatesFrequently)
             ReasonText(model.summary)
             kindPicker
+            drawingSection
             scaleSection
             optionsSection
-            drawingSection
             waitingSection
         }
     }
@@ -72,13 +72,20 @@ struct MeasurePanelView: View {
                 .disabled(!model.canStartOver)
                 .help(L10n.t("Start over (Esc)"))
                 .accessibilityLabel(L10n.t("Start the shape over"))
-                Button { model.finish() } label: {
-                    Text(L10n.t("Finish")).frame(maxWidth: .infinity, minHeight: 44)
+                Button { model.takeBack() } label: {
+                    Text(L10n.t("Take back corner")).frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
-                .disabled(!model.canFinish)
-                .accessibilityLabel(L10n.t("Finish shape"))
+                .disabled(!model.canStartOver)
+                .help(L10n.t("Take back the last corner (Backspace)"))
+                .accessibilityLabel(L10n.t("Take back the last corner"))
             }
+            Button { model.finish() } label: {
+                Text(L10n.t("Finish")).frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .buttonStyle(.bordered)
+            .disabled(!model.canFinish)
+            .accessibilityLabel(L10n.t("Finish shape"))
             Text(model.readout)
                 .font(.title3)
                 .lineLimit(1)
