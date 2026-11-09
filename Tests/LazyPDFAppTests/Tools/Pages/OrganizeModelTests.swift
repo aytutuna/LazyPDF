@@ -46,7 +46,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(model.tileSize, 320)
     }
 
-    func test_selectingAllAndAddingAPage() throws {
+    func test_controlAndShiftSelectAndCtrlASelectsAll() throws {
         let (model, _) = try attached()
 
         model.grid.selectAll()
@@ -84,7 +84,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(rig.host.problems.map(\.title), ["Cannot delete every page"])
     }
 
-    func test_theBarTurnsTheSelectionAndTheMenuOverAPageTurnsOnePage() throws {
+    func test_theBarTurnsTheSelectionAndTheHoverBarTurnsOnePage() throws {
         let (model, rig) = try attached()
         model.grid.select([0, 2])
 
