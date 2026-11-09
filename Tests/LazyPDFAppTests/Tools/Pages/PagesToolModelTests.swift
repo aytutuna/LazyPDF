@@ -388,6 +388,92 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertEqual(rig.host.statuses.last, "Pages replaced.")
     }
 
+    func test_aReplaceStaysWithTheFileItStartedOnWhenAnotherOpensMeanwhile() async throws {
+        let dir = TempDir(self)
+        let (model, rig) = try attached(4)
+        let other = try PagesRig(Pdfs.text(2, "Other"), title: "b.pdf")
+        let was = rig.tab.order
+        rig.pick(dir, "extra.pdf", Pdfs.text(1, "Extra"))
+        rig.host.picker.during = {
+            model.detach()
+            model.attach(other.tab, other.viewer, other.host)
+        }
+        model.grid.select([3])
+
+        await model.replace()
+
+        XCTAssertEqual(rig.tab.pageCount, 4)
+        XCTAssertNotEqual(rig.tab.text(3), was[3])
+        XCTAssertEqual(other.tab.pageCount, 2)
+        XCTAssertFalse(other.tab.isDirty)
+        XCTAssertTrue(other.host.problems.isEmpty)
+    }
+
+    func test_aReplaceIsRefusedWhenTheFileChangedWhileThePickerWasUp() async throws {
+        let dir = TempDir(self)
+        let (model, rig) = try attached(4)
+        rig.pick(dir, "extra.pdf", Pdfs.text(1, "Extra"))
+        rig.host.picker.during = { model.grid.remove([0, 1]) }
+        model.grid.select([3])
+
+        await model.replace()
+
+        XCTAssertEqual(rig.tab.pageCount, 2)
+        XCTAssertEqual(rig.host.problems.map(\.title), ["Pages not changed"])
+    }
+
+    func test_pagesFromAFileGoToTheFileTheJobStartedOnWhenAnotherTabIsShownMeanwhile() async throws {
+        let dir = TempDir(self)
+        let (model, rig) = try attached(2)
+        let other = try PagesRig(Pdfs.text(1, "Other"), title: "b.pdf")
+        rig.pick(dir, "extra.pdf", Pdfs.text(3, "Extra"))
+        rig.host.picker.during = {
+            model.detach()
+            model.attach(other.tab, other.viewer, other.host)
+        }
+
+        await model.fromFile()
+
+        XCTAssertEqual(rig.tab.pageCount, 5)
+        XCTAssertEqual(other.tab.pageCount, 1)
+    }
+
+    func test_theTabsDocumentIsUntouchedWhileTheChangeRuns() async throws {
+        let rig = try PagesRig(Pdfs.text(3))
+        let running = PagesFlag(), release = DispatchSemaphore(value: 0)
+        let job = Task { @MainActor in
+            await PageJobs.applyAsync(rig.tab, rig.host, busy: "Adding", label: "Duplicate", { document in
+                try PageOperations.duplicate(document, [0])
+                running.raise()
+                _ = release.wait(timeout: .now() + 20)
+            }, status: "Done")
+        }
+
+        await waitUntil { running.isRaised }
+        XCTAssertEqual(rig.tab.pageCount, 3)
+        XCTAssertFalse(rig.tab.session.isDirty)
+        release.signal()
+        let done = await job.value
+
+        XCTAssertTrue(done)
+        XCTAssertEqual(rig.tab.pageCount, 4)
+    }
+
+    func test_aCancelledChangeLeavesTheTabAsItWas() async throws {
+        let rig = try PagesRig(Pdfs.text(3))
+        let before = rig.tab.session.current
+        rig.host.cancelsBusy = true
+
+        let done = await PageJobs.applyAsync(rig.tab, rig.host, busy: "Adding", label: "Duplicate", { document in
+            try PageOperations.duplicate(document, [0])
+            Thread.sleep(forTimeInterval: 0.3)
+        }, status: "Done")
+
+        XCTAssertFalse(done)
+        XCTAssertEqual(rig.tab.session.current, before)
+        XCTAssertFalse(rig.tab.isDirty)
+    }
+
     func test_replacingWithNothingChosenDoesNothing() async throws {
         let dir = TempDir(self)
         let (model, rig) = try attached(3)

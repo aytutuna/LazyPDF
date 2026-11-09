@@ -10,7 +10,14 @@ import LazyPDFKit
 final class StubPicker: ToolFilePicker {
     var files: [ToolFile] = []
 
-    func pickFiles(_ kinds: [ToolFileKind], multiple: Bool) async -> [ToolFile] { files }
+    /// Runs while the picker is up, as whatever the person does meanwhile.
+    var during: (() -> Void)?
+
+    func pickFiles(_ kinds: [ToolFileKind], multiple: Bool) async -> [ToolFile] {
+        during?()
+        return files
+    }
+
     func pickFolder() async -> ToolFile? { nil }
 }
 
@@ -24,6 +31,23 @@ final class StubExporter: ToolFileExporter {
         received = files.map { ($0.lastPathComponent, [UInt8]((try? Data(contentsOf: $0)) ?? Data())) }
         if gaveUp { return [] }
         return files.map { URL(fileURLWithPath: "/saved").appendingPathComponent($0.lastPathComponent) }
+    }
+}
+
+final class PagesFlag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var raised = false
+
+    var isRaised: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return raised
+    }
+
+    func raise() {
+        lock.lock()
+        raised = true
+        lock.unlock()
     }
 }
 
@@ -41,8 +65,22 @@ final class PagesHost: ToolHost {
     var filePicker: ToolFilePicker { picker }
     var fileExporter: ToolFileExporter { exporter }
 
+    /// Presses Cancel shortly after the job starts.
+    var cancelsBusy = false
+
     func runBusy(_ text: String, _ work: @MainActor (CancelToken) async throws -> Void) async throws {
-        try await work(CancelToken())
+        let token = CancelToken()
+        if cancelsBusy {
+            Task {
+                try? await Task.sleep(nanoseconds: 100_000_000)
+                token.cancel()
+            }
+        }
+        do {
+            try await work(token)
+        } catch is CancellationError {
+            setStatus("Cancelled.")
+        }
     }
 
     func setBusyText(_ text: String) {}
