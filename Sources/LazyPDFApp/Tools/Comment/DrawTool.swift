@@ -137,7 +137,7 @@ final class DrawTool: PagePointerTool {
     }
 
     private func clear() {
-        if page >= 0 {
+        if page >= 0 && page < viewer.pageCount {
             let overlay = viewer.overlay(page)
             overlay.remove(Self.previewId)
             overlay.remove(Self.boxId)
@@ -148,7 +148,7 @@ final class DrawTool: PagePointerTool {
 
     // The preview is redrawn whole on every move: the shapes are small and a page rarely holds more than a few points.
     private func show() {
-        guard page >= 0, let first = points.first else { return }
+        guard page >= 0, page < viewer.pageCount, let first = points.first else { return }
         let overlay = viewer.overlay(page)
         let look = style()
         let rgb = Marker.rgb(of: look.color) ?? [0, 0, 0]
