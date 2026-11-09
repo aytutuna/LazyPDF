@@ -7,6 +7,22 @@ public enum ExportFormat: CaseIterable {
     case word, excel, powerPoint, html, markdown, rtf, text, pictures, images
 }
 
+extension ExportFormat {
+    public var label: String {
+        switch self {
+        case .word: return "Word (.docx)"
+        case .excel: return "Excel (.xlsx)"
+        case .powerPoint: return "PowerPoint (.pptx)"
+        case .html: return L10n.t("Web page (.html)")
+        case .markdown: return "Markdown (.md)"
+        case .rtf: return L10n.t("Rich text (.rtf)")
+        case .text: return L10n.t("Plain text (.txt)")
+        case .pictures: return L10n.t("Pictures of the pages")
+        case .images: return L10n.t("Pictures in the file")
+        }
+    }
+}
+
 public enum PictureFormat { case png, jpeg }
 
 public struct ExportOptions: Equatable {
