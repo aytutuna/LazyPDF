@@ -395,6 +395,25 @@ final class PointerToolTests: XCTestCase {
         XCTAssertNil(tool.current)
     }
 
+    func test_aSmallMarkKeepsMostOfItsAreaForMovingInsteadOfResizing() throws {
+        let f = try CommentFixture()
+        let viewer = PanelViewer(f.tab)
+        try f.marker.add(.note, 0, [markPt(100, 100)], markRed, "Look")
+        try f.tab.commit("Note")
+        let tool = EditTool(viewer: viewer, marker: { f.marker })
+        var moves = 0
+        var resizes = 0
+        tool.moved = { _, _, _ in moves += 1 }
+        tool.resized = { _, _ in resizes += 1 }
+
+        tool.press(press(markPt(110, 110)))
+        tool.move(drag(markPt(130, 110)))
+        tool.release(drag(markPt(130, 110)))
+
+        XCTAssertEqual(moves, 1)
+        XCTAssertEqual(resizes, 0)
+    }
+
     func test_aFingerIsTheToolsOnlyOverAMarkOrAHandle() throws {
         let (tool, _, _, _) = try editing()
 
