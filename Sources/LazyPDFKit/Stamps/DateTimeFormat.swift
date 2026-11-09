@@ -59,7 +59,7 @@ private enum Names {
 }
 
 extension DateTimeOffset {
-    func toString(_ format: String, _ culture: CultureInfo) throws -> String {
+    public func toString(_ format: String, _ culture: CultureInfo) throws -> String {
         let patterns = culture.patterns
         // An empty format is the general pattern and the offset, for a DateTimeOffset.
         if format.isEmpty { return try custom(Array((patterns.shortDate + " " + patterns.longTime + " zzz").unicodeScalars), culture) }

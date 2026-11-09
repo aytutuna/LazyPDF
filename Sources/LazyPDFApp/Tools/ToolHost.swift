@@ -68,6 +68,11 @@ public protocol ToolHost: AnyObject {
 
     var clipboard: ToolClipboard { get }
 
+    /// The installed fonts and the picture reader the engine's editors take when they add text or pictures; nil where the
+    /// platform has none.
+    var fontSource: FontSource? { get }
+    var imageCodec: ImageCodec? { get }
+
     /// How a tool writes a file that is open in a tab, over the file itself.
     var fileWriter: FileWriter { get }
 
@@ -90,6 +95,10 @@ extension ToolHost {
     public var fileExporter: ToolFileExporter { NoToolServices.shared }
 
     public var clipboard: ToolClipboard { NoToolServices.shared }
+
+    public var fontSource: FontSource? { nil }
+
+    public var imageCodec: ImageCodec? { nil }
 
     public var fileWriter: FileWriter { PlainFileWriter() }
 
@@ -174,4 +183,8 @@ extension ToolPanelModel {
     public func handIn() -> Bool { true }
 }
 
-extension AppViewModel: ToolHost {}
+extension AppViewModel: ToolHost {
+    public var fontSource: FontSource? { opener.fonts }
+
+    public var imageCodec: ImageCodec? { opener.codec }
+}

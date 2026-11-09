@@ -77,7 +77,7 @@ public final class PdfEditSession {
     /// Commits a file the caller built on the current bytes, which must be its start (a signed update, whose
     /// bytes depend on where they land). Read back and recorded like `commit`.
     @discardableResult
-    func commitBytes(_ label: String, _ next: [UInt8]) throws -> Bool {
+    public func commitBytes(_ label: String, _ next: [UInt8]) throws -> Bool {
         precondition(next.count > current.count && Array(next[0..<current.count]) == current, "The file does not continue the current one.")
         return try take(label, next)
     }

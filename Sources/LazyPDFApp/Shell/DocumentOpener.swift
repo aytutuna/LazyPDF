@@ -46,8 +46,8 @@ public struct OpenSource: Sendable {
 
 /// Reads what the open panel and the drop target hand over: PDFs as they are, pictures and text turned into a PDF.
 public final class DocumentOpener {
-    private let codec: ImageCodec
-    private let fonts: FontSource
+    let codec: ImageCodec
+    let fonts: FontSource
 
     public init(_ codec: ImageCodec, _ fonts: FontSource) {
         self.codec = codec
