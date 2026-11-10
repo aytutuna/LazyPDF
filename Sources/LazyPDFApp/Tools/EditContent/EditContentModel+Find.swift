@@ -19,7 +19,8 @@ extension EditContentModel {
         defer { isReplacing = false }
         do {
             try await host.runBusy(L10n.t("Replacing text")) { token in
-                made = try await edits.replaceAll(start, find, replacement, options, token)
+                let copy = try await edits.replaceAll(start, find, replacement, options, token)
+                if !token.isCancelled { made = copy }
             }
             guard let made else { return }
             let outcome = try edits.adopt(made)

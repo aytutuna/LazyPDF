@@ -175,15 +175,12 @@ final class ContentEdits {
         let password = tab.password
         let certificate = self.certificate
         let fonts = self.fonts
-        let job = Task.detached {
-            try Self.replace(start, query, replacement, options, password, certificate, fonts)
+        return try await ToolDocuments.run(token) {
+            try token.throwIfCancelled()
+            let made = try Self.replace(start, query, replacement, options, password, certificate, fonts)
+            try token.throwIfCancelled()
+            return made
         }
-        let watch = Task.detached {
-            while !token.isCancelled && !Task.isCancelled { try? await Task.sleep(nanoseconds: 50_000_000) }
-            if token.isCancelled { job.cancel() }
-        }
-        defer { watch.cancel() }
-        return try await job.value
     }
 
     private nonisolated static func replace(_ start: [UInt8], _ query: String, _ replacement: String, _ options: TextSearchOptions,
