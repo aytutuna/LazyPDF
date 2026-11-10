@@ -473,6 +473,55 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertEqual(rig.host.status, "Text box added.")
     }
 
+    func test_aNewBoxThatLosesTheFocusToTheSizeFieldKeepsItsTextAndTakesTheNewSize() throws {
+        let (model, rig) = try start()
+        model.selectMode(.textBox)
+        try drag(rig, from: ViewPoint(100, 300), to: ViewPoint(300, 360))
+        let open = try field(rig)
+        open.typed("A new box of text")
+
+        open.commit("A new box of text", focusLost: true)
+
+        XCTAssertTrue(rig.viewer.overlay(0).fields.isEmpty)
+        XCTAssertEqual(model.action?.canRun(), true)
+        XCTAssertFalse(try pageText(rig.tab).contains("A new box of text"))
+        model.sizeText = "30"
+        model.commitSize()
+
+        let again = try field(rig)
+        XCTAssertEqual(again.text, "A new box of text")
+        XCTAssertEqual(again.look.size, 30)
+        again.commit("A new box of text")
+        XCTAssertTrue(try pageText(rig.tab).contains("A new box of text"))
+    }
+
+    func test_aNewBoxThatLosesTheFocusWhileEmptyIsNotDropped() throws {
+        let (model, rig) = try start()
+        model.selectMode(.textBox)
+        try drag(rig, from: ViewPoint(100, 300), to: ViewPoint(300, 360))
+
+        try field(rig).commit("", focusLost: true)
+        model.setBold(true)
+
+        XCTAssertEqual(try field(rig).text, "")
+        XCTAssertTrue(try field(rig).look.bold)
+        model.detach()
+    }
+
+    func test_aLineTheEngineRefusesAfterTheFocusWentStaysClosedUntilTheLookChanges() throws {
+        let (model, rig) = try start()
+        try click(rig, try lineCenter(rig))
+
+        try field(rig).commit("漢字", focusLost: true)
+
+        XCTAssertTrue(rig.viewer.overlay(0).fields.isEmpty)
+        XCTAssertEqual(model.message?.caution, true)
+        XCTAssertEqual(model.action?.canRun(), true)
+        model.setBold(true)
+        XCTAssertEqual(try field(rig).text, "漢字")
+        model.detach()
+    }
+
     func test_aPictureIsAddedFromTheFilePickerAndSelected() async throws {
         let (model, rig) = try start()
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lazypdf-" + UUID().uuidString)
