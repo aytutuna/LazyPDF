@@ -450,6 +450,17 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertEqual(rig.host.status, "Size changed.")
     }
 
+    func test_aSizeTypedWithoutReturnIsKeptWhenTheTextIsHandedIn() throws {
+        let (model, rig) = try start()
+        model.selectObject(try XCTUnwrap(model.objectRows.first))
+
+        model.sizeText = "20"
+        XCTAssertTrue(model.handIn())
+
+        XCTAssertEqual(try XCTUnwrap(try PageEditor(rig.tab.session, 0).objects[0] as? TextObject).size, 20, accuracy: 0.5)
+        XCTAssertEqual(rig.host.status, "Size changed.")
+    }
+
     func test_aNewTextBoxIsDraggedOutAndTyped() throws {
         let (model, rig) = try start()
         model.selectMode(.textBox)
