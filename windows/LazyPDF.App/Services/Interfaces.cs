@@ -20,6 +20,8 @@ public interface ISisterApps
 {
     bool LazyScanInstalled { get; }
 
+    bool LazyPrintInstalled { get; }
+
     void OpenLazyScan();
 
     /// <summary>Hands the file to Lazy Print. False when it is not there to take it.</summary>

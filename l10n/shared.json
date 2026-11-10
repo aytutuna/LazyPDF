@@ -1473,9 +1473,6 @@
   "Change the words and pictures on a page.": {
     "tr": "Bir sayfadaki sözcükleri ve resimleri değiştirin."
   },
-  "Scan": {
-    "tr": "Tara"
-  },
   "Scan paper into a PDF with Lazy Scan.": {
     "tr": "Kâğıdı Lazy Scan ile PDF olarak tarayın."
   },
@@ -6789,5 +6786,14 @@
   },
   "Two fingers scroll the page.": {
     "tr": "Sayfayı iki parmakla kaydırın."
+  },
+  "Lazy Scan": {
+    "tr": "Lazy Scan"
+  },
+  "Lazy Print (Ctrl+P)": {
+    "tr": "Lazy Print (Ctrl+P)"
+  },
+  "Lazy Print": {
+    "tr": "Lazy Print"
   }
 }

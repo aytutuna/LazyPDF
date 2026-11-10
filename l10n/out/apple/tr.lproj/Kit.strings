@@ -772,6 +772,8 @@
 "Lazy PDF Help" = "Lazy PDF Yardımı";
 "Lazy PDF cannot change this form. Try an earlier copy of the file." = "Lazy PDF bu formu değiştiremiyor. Dosyanın önceki bir kopyasını deneyin.";
 "Lazy PDF closed before these were saved. Restore them to carry on where you were." = "Lazy PDF bunlar kaydedilmeden kapandı. Kaldığınız yerden devam etmek için geri yükleyin.";
+"Lazy Print" = "Lazy Print";
+"Lazy Scan" = "Lazy Scan";
 "Leave it empty to fit the text to the field." = "Metni alana sığdırmak için boş bırakın.";
 "Leave it empty to remove the word." = "Sözcüğü kaldırmak için boş bırakın.";
 "Left" = "Sol";
@@ -1355,7 +1357,6 @@
 "Saved {0}." = "{0} kaydedildi.";
 "Saved." = "Kaydedildi.";
 "Scale the content" = "İçeriği ölçekle";
-"Scan" = "Tara";
 "Scan and OCR" = "Tara ve OCR";
 "Scan paper into a PDF with Lazy Scan." = "Kâğıdı Lazy Scan ile PDF olarak tarayın.";
 "Scan|noun" = "Tarama";

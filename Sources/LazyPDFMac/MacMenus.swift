@@ -48,7 +48,7 @@ struct MacMenus: Commands {
                 .disabled(!usable)
         }
         CommandGroup(replacing: .printItem) {
-            Button(L10n.t("Print"), action: actions.print)
+            Button(vm.printLabel, action: actions.print)
                 .keyboardShortcut("p")
                 .disabled(!usable)
         }

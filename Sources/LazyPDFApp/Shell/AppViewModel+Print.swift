@@ -5,6 +5,9 @@ import LazyPDFKit
 // asked to print the document itself.
 
 extension AppViewModel {
+    /// What a print control says: the name of the app it opens when that is Lazy Print.
+    public var printLabel: String { sisters.lazyPrintInstalled ? L10n.t("Lazy Print") : L10n.t("Print") }
+
     public func print() {
         guard let tab = activeDocument else { return }
         if let security = tab.document.security, !security.openedAsOwner, !security.permissions.contains(.print) {

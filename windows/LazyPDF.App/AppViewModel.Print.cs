@@ -10,6 +10,9 @@ public sealed partial class AppViewModel
     /// <summary>Raised when Lazy Print did not take the document: the window prints it itself.</summary>
     public event EventHandler<DocumentTab>? SystemPrintRequested;
 
+    /// <summary>Print hands the document to Lazy Print, so the control says so.</summary>
+    public bool PrintsInLazyPrint => _sisters.LazyPrintInstalled;
+
     public void Print()
     {
         if (ActiveDocument is not { } tab) return;

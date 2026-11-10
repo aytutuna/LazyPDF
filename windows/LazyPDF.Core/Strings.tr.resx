@@ -2413,6 +2413,15 @@
   <data name="Lazy PDF closed before these were saved. Restore them to carry on where you were." xml:space="preserve">
     <value>Lazy PDF bunlar kaydedilmeden kapandı. Kaldığınız yerden devam etmek için geri yükleyin.</value>
   </data>
+  <data name="Lazy Print" xml:space="preserve">
+    <value>Lazy Print</value>
+  </data>
+  <data name="Lazy Print (Ctrl+P)" xml:space="preserve">
+    <value>Lazy Print (Ctrl+P)</value>
+  </data>
+  <data name="Lazy Scan" xml:space="preserve">
+    <value>Lazy Scan</value>
+  </data>
   <data name="Leave it empty to fit the text to the field." xml:space="preserve">
     <value>Metni alana sığdırmak için boş bırakın.</value>
   </data>
@@ -4200,9 +4209,6 @@
   </data>
   <data name="Scale the content" xml:space="preserve">
     <value>İçeriği ölçekle</value>
-  </data>
-  <data name="Scan" xml:space="preserve">
-    <value>Tara</value>
   </data>
   <data name="Scan and OCR" xml:space="preserve">
     <value>Tara ve OCR</value>

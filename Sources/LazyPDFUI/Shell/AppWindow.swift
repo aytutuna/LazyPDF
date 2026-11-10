@@ -327,7 +327,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             Divider()
             Button(actions.undoHelp, action: actions.undo).disabled(!vm.canUndo || vm.isBusy)
             Button(actions.redoHelp, action: actions.redo).disabled(!vm.canRedo || vm.isBusy)
-            Button(L10n.t("Print"), action: actions.print).disabled(vm.activeDocument == nil)
+            Button(vm.printLabel, action: actions.print).disabled(vm.activeDocument == nil)
             Button(L10n.t("Close")) {
                 if let tab = vm.activeDocument { requestClose(tab) }
             }

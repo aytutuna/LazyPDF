@@ -16,16 +16,17 @@ public sealed class SisterApps : ISisterApps
 
     private static readonly string PrintPipe = $"LazyPrint.Open.{Process.GetCurrentProcess().SessionId}";
 
-    private (DateTime At, bool Found) _scan;
+    private (DateTime At, bool Found) _scan, _print;
 
-    // Asked of Windows when the classes key has no entry, which takes a moment, and the Home tab asks often.
-    public bool LazyScanInstalled
+    // Asked of Windows when the classes key has no entry, which takes a moment, and the Home tab and the toolbar ask often.
+    public bool LazyScanInstalled => Cached(ref _scan, ScanScheme);
+
+    public bool LazyPrintInstalled => Cached(ref _print, PrintScheme);
+
+    private static bool Cached(ref (DateTime At, bool Found) slot, string scheme)
     {
-        get
-        {
-            if (DateTime.UtcNow - _scan.At > TimeSpan.FromSeconds(30)) _scan = (DateTime.UtcNow, HasScheme(ScanScheme));
-            return _scan.Found;
-        }
+        if (DateTime.UtcNow - slot.At > TimeSpan.FromSeconds(30)) slot = (DateTime.UtcNow, HasScheme(scheme));
+        return slot.Found;
     }
 
     public void OpenLazyScan()

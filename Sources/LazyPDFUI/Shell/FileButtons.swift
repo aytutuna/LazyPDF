@@ -133,7 +133,7 @@ struct FileButtons: View {
             icon("arrow.uturn.forward", actions.redoHelp, actions.redo)
                 .keyboardShortcut(inMenu ? nil : KeyboardShortcut("z", modifiers: [.command, .shift]))
                 .disabled(!vm.canRedo || vm.isBusy)
-            icon("printer", L10n.t("Print"), actions.print)
+            icon("printer", vm.printLabel, actions.print)
                 .keyboardShortcut(inMenu ? nil : KeyboardShortcut("p"))
                 .disabled(!hasDocument)
             Divider().frame(height: 16).padding(.horizontal, 4)

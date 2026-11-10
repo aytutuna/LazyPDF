@@ -133,6 +133,8 @@ public partial class MainWindow : Window
         SaveButton.IsEnabled = tab is not null && !_vm.IsBusy;
         SaveMenuButton.IsEnabled = tab is not null && !_vm.IsBusy;
         PrintButton.IsEnabled = tab is not null;
+        PrintButton.ToolTip = Loc.T(_vm.PrintsInLazyPrint ? "Lazy Print (Ctrl+P)" : "Print (Ctrl+P)");
+        AutomationProperties.SetName(PrintButton, Loc.T(_vm.PrintsInLazyPrint ? "Lazy Print" : "Print"));
         UndoButton.IsEnabled = _vm.CanUndo && !_vm.IsBusy;
         RedoButton.IsEnabled = _vm.CanRedo && !_vm.IsBusy;
         UndoButton.ToolTip = _vm.UndoLabel is { Length: > 0 } undo ? Loc.T("Undo {0} (Ctrl+Z)", undo) : Loc.T("Undo (Ctrl+Z)");

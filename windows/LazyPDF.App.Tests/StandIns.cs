@@ -68,6 +68,7 @@ internal sealed class FakeFonts : IFontSource
 internal sealed class FakeSisters : ISisterApps
 {
     public bool LazyScanInstalled { get; set; }
+    public bool LazyPrintInstalled { get; set; }
     public bool PrintTaken { get; set; }
     public List<string> Printed { get; } = [];
     public int ScanOpened { get; private set; }
