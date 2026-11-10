@@ -510,11 +510,29 @@ final class PointerToolTests: XCTestCase {
     func test_aFingerIsTheToolsOnlyOverAMarkOrAHandle() throws {
         let (tool, _, _, _) = try editing()
 
-        XCTAssertTrue(tool.takes(press(markPt(150, 130))))
-        XCTAssertFalse(tool.takes(press(markPt(400, 400))))
+        XCTAssertTrue(tool.takes(finger(markPt(150, 130))))
+        XCTAssertFalse(tool.takes(finger(markPt(400, 400))))
+        XCTAssertTrue(tool.takes(press(markPt(400, 400))))
         tool.press(press(markPt(150, 130)))
         tool.release(drag(markPt(150, 130)))
-        XCTAssertTrue(tool.takes(press(markPt(200, 160))))
+        XCTAssertTrue(tool.takes(finger(markPt(200, 160))))
+    }
+
+    func test_aMousePressOnEmptyPageThroughTheViewerLetsGoOfTheSelection() throws {
+        let (tool, f, _, _) = try editing()
+        let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
+        viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
+        viewer.show(f.tab)
+        viewer.pointerTool = tool
+        let matrix = try XCTUnwrap(viewer.pageToView(0))
+
+        viewer.pointerDown(matrix.transform(markPt(150, 130)))
+        viewer.pointerUp(matrix.transform(markPt(150, 130)))
+        XCTAssertNotNil(tool.current)
+        viewer.pointerDown(matrix.transform(markPt(400, 400)))
+        viewer.pointerUp(matrix.transform(markPt(400, 400)))
+
+        XCTAssertNil(tool.current)
     }
 
     func test_deleteAndEscapeAreTheToolsOnlyWhileAMarkIsSelected() throws {
