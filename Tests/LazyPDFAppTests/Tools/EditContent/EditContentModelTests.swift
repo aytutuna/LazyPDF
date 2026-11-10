@@ -319,6 +319,38 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.session.undoLabel, "Replace text")
     }
 
+    func test_aCancelledTokenStopsReplaceAllBeforeItStarts() async throws {
+        let rig = try ContentRig(hello)
+        let edits = ContentEdits(rig.tab, fonts: FakeFonts(), codec: FakeCodec())
+        let token = CancelToken()
+        token.cancel()
+
+        do {
+            _ = try await edits.replaceAll(rig.tab.session.current, "Hello", "Goodbye", TextSearchOptions(), token)
+            XCTFail("A cancelled job should not give a copy.")
+        } catch is CancellationError {}
+
+        XCTAssertEqual(rig.tab.revision, 0)
+    }
+
+    func test_aReplaceAllThatEndsOnAnotherDocumentLeavesTheNewOnesRevisionAlone() async throws {
+        let (model, rig) = try start()
+        let other = try ContentRig(hello)
+        rig.host.before = { model.attach(other.tab, other.viewer, other.host) }
+        model.findText = "Hello"
+        model.replaceText = "Goodbye"
+
+        await model.replaceAll()
+        try click(other, try lineCenter(other))
+        try field(other).typed("Not yet in the file.")
+        try Pdfs.retitle(other.tab.session, "Changed elsewhere")
+        try other.tab.commit("Properties")
+        await waitUntil { !other.host.problems.isEmpty }
+
+        XCTAssertEqual(other.host.problems.first?.title, "Typed text was not kept")
+        model.detach()
+    }
+
     func test_aCancelledReplaceAllChangesNothing() async throws {
         let (model, rig) = try start()
         rig.host.cancelled = true

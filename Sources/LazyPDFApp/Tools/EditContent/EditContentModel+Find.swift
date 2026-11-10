@@ -24,9 +24,9 @@ extension EditContentModel {
             }
             guard let made else { return }
             let outcome = try edits.adopt(made)
-            ownRevision = tab.revision
             if outcome.done { host.setStatus(L10n.t("Text replaced.")) }
             if self.tab !== tab { return }
+            ownRevision = tab.revision
             surface?.clear()
             showOutcome(outcome)
         } catch is CancellationError {
