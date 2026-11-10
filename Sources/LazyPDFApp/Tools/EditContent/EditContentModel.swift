@@ -99,6 +99,10 @@ public final class EditContentModel: ToolPanelModel {
     @ObservationIgnored var pendingLine: TextObjectLine?
     @ObservationIgnored var pendingOriginal = ""
     @ObservationIgnored var pendingArea = PdfRect(0, 0, 0, 0)
+
+    // The text of a box that lost the keyboard to the panel, or that the engine refused: kept, with the box closed, until the
+    // person restyles it (which opens it again), presses the page or uses the pinned button.
+    var parked: String?
     @ObservationIgnored var opened: (page: Int, area: ViewRect, look: OverlayTextLook, wrap: Bool)?
     @ObservationIgnored var newStyle = TextBoxStyle(family: "Helvetica")
     @ObservationIgnored var linkPage = 0
@@ -112,7 +116,7 @@ public final class EditContentModel: ToolPanelModel {
     public var action: ToolAction? {
         switch pending {
         case .line, .paragraph, .newBox:
-            return ToolAction(L10n.t("Apply text"), symbol: "checkmark", canRun: { [self] in editor?.isOpen == true },
+            return ToolAction(L10n.t("Apply text"), symbol: "checkmark", canRun: { [self] in editor?.isOpen == true || parked != nil },
                               run: { [self] in commitEditor() })
         case .none:
             guard mode == .link, linkArea != nil else { return nil }
@@ -145,7 +149,7 @@ public final class EditContentModel: ToolPanelModel {
             self?.apply({ try edits.resize(page, ids, bounds) }, L10n.t("Resized."))
         }
         surface.onKey = { [weak self] key in self?.keyed(key) ?? false }
-        editor.onKept = { [weak self] text in self?.editorKept(text) }
+        editor.onKept = { [weak self] text, focusLost in self?.editorKept(text, focusLost: focusLost) }
         editor.onDropped = { [weak self] in self?.cancelEditor() }
         ownRevision = tab.revision
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.tabChanged() })
@@ -163,6 +167,7 @@ public final class EditContentModel: ToolPanelModel {
         flushOpacity()
         editor?.close()
         pending = .none
+        parked = nil
         linkArea = nil
         linkOld = nil
         surface?.detach()
@@ -236,6 +241,7 @@ public final class EditContentModel: ToolPanelModel {
         }
         editor.close()
         pending = .none
+        parked = nil
         endLink()
         surface.clear()
         surface.refresh()

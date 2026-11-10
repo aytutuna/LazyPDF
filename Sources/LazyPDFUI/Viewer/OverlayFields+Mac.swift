@@ -27,7 +27,7 @@ final class FieldTextView: NSTextView {
 
     override func resignFirstResponder() -> Bool {
         let resigned = super.resignFirstResponder()
-        if resigned { field?.commit(string) }
+        if resigned { field?.commit(string, focusLost: true) }
         return resigned
     }
 }

@@ -227,6 +227,10 @@ public final class OverlayField {
     private let done: (String?) -> Void
     weak var overlay: PageOverlay?
     public private(set) var isClosed = false
+
+    /// The control lost the keyboard to something else, as against Return: `done` heard the text, but the person may not be
+    /// finished with it.
+    public private(set) var endedByFocusLoss = false
     private var typing = false
 
     public init(_ id: String, area: ViewRect, text: String = "", look: OverlayTextLook = OverlayTextLook(), wraps: Bool = true, multiline: Bool = false,
@@ -264,8 +268,9 @@ public final class OverlayField {
     }
 
     /// Ends the field with `text` kept.
-    public func commit(_ text: String) {
+    public func commit(_ text: String, focusLost: Bool = false) {
         if isClosed { return }
+        endedByFocusLoss = focusLost
         self.text = text
         close(text)
     }

@@ -13,8 +13,8 @@ final class InPlaceEditor {
     private var field: OverlayField?
     private var closing = false
 
-    /// The text was kept: Return, or the control lost the focus. The editor is closed when this is called.
-    var onKept: ((String) -> Void)?
+    /// The text was kept: Return, or the control lost the focus (`focusLost`). The editor is closed when this is called.
+    var onKept: ((String, Bool) -> Void)?
 
     /// Escape, or Cancel on the keyboard bar.
     var onDropped: (() -> Void)?
@@ -61,8 +61,9 @@ final class InPlaceEditor {
     // The field is closed already when its result comes, whoever ended it.
     private func ended(_ result: String?) {
         if closing { return }
+        let lost = field?.endedByFocusLoss ?? false
         field = nil
-        if let result { onKept?(result) } else { onDropped?() }
+        if let result { onKept?(result, lost) } else { onDropped?() }
     }
 
     // Light text gets a dark box and the other way round.

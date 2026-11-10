@@ -163,7 +163,7 @@ final class OverlayFieldViews: NSObject, UITextViewDelegate {
 
     func textViewDidEndEditing(_ textView: UITextView) {
         guard let view = textView as? FieldTextView else { return }
-        view.field?.commit(view.text)
+        view.field?.commit(view.text, focusLost: true)
     }
 
     // Return ends a field of one line.

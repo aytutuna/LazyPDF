@@ -73,15 +73,35 @@ extension EditContentModel {
         }
     }
 
-    // Return, or the control losing the focus: the field has ended with this text. If the engine refuses it the box comes back
-    // with what was typed and the reason stays shown.
-    func editorKept(_ text: String) {
+    // Return, or the control losing the focus: the field has ended with this text. A new box that lost the focus waits for the
+    // panel's size or font to be set first. If the engine refuses the text after a Return the box comes back with what was typed;
+    // after a lost focus it stays closed, so that the panel can be used, and comes back with the next change of look. The reason
+    // stays shown.
+    func editorKept(_ text: String, focusLost: Bool) {
         if pending == .none { return }
+        if focusLost && pending == .newBox {
+            parked = text
+            return
+        }
         if commit(text) {
             cancelEditor()
+        } else if focusLost {
+            parked = text
         } else if let opened {
             editor?.open(page: opened.page, area: opened.area, text: text, look: opened.look, wrap: opened.wrap)
         }
+    }
+
+    private func reopenParked() {
+        guard let text = parked, let opened else { return }
+        parked = nil
+        let look = pending == .newBox ? newLook() : opened.look
+        openEditor(opened.page, opened.area, text, look, wrap: opened.wrap)
+    }
+
+    private func restyleBox() {
+        guard pending == .newBox else { return }
+        if parked != nil { reopenParked() } else { editor?.restyle(newLook()) }
     }
 
     // A press elsewhere on the page keeps what was typed; if the engine refuses it the editor goes, and the reason stays shown.
@@ -91,24 +111,30 @@ extension EditContentModel {
 
     // True when the editor holds text that is not in the file yet.
     func hasTyped() -> Bool {
-        guard let editor, editor.isOpen else { return false }
+        guard let text = typedText() else { return false }
         switch pending {
-        case .line: return editor.text != pendingLine?.text
-        case .paragraph: return editor.text != pendingOriginal
-        case .newBox: return !editor.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .line: return text != pendingLine?.text
+        case .paragraph: return text != pendingOriginal
+        case .newBox: return !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case .none: return false
         }
+    }
+
+    private func typedText() -> String? {
+        if let editor, editor.isOpen { return editor.text }
+        return parked
     }
 
     func cancelEditor() {
         editor?.close()
         pending = .none
+        parked = nil
     }
 
     @discardableResult
     func commitEditor() -> Bool {
-        guard pending != .none, let editor, editor.isOpen else { return true }
-        if !commit(editor.text) { return false }
+        guard pending != .none, let text = typedText() else { return true }
+        if !commit(text) { return false }
         cancelEditor()
         return true
     }
@@ -146,12 +172,15 @@ extension EditContentModel {
         newStyle.size = change.size ?? newStyle.size
         newStyle.color = change.color ?? newStyle.color
         newStyle.style = flags
-        if pending == .newBox { editor?.restyle(newLook()) }
+        restyleBox()
     }
 
     // What is typed in the box is kept first, so that the change is made to the page as it will be and not as it was.
     private func editSelectedText(_ status: String, _ edit: @escaping (Int, Int) throws -> EditOutcome) {
-        if (pending == .line || pending == .paragraph) && !commitEditor() { return }
+        if (pending == .line || pending == .paragraph) && !commitEditor() {
+            reopenParked()
+            return
+        }
         guard let text = selectedText(), let surface else { return }
         let page = surface.page, id = text.id
         apply({ try edit(page, id) }, status)
@@ -216,6 +245,6 @@ extension EditContentModel {
             return
         }
         newStyle.alignment = new
-        if pending == .newBox { editor?.restyle(newLook()) }
+        restyleBox()
     }
 }
