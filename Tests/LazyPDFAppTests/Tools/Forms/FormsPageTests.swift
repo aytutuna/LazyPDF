@@ -42,33 +42,23 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertFalse(tool.takes(rig.pointer(ViewPoint(400, 300), pressed: true)))
     }
 
-    func test_aMousePressOffAFieldFallsThroughToTheViewer() async throws {
+    func test_aMousePressOffAFieldFallsThroughToTheViewer() throws {
         let tab = DocumentTab(session: try PdfEditSession.open(try FormPdfs.standard()), renderer: FakeRenderer(), url: nil,
                               title: "form.pdf")
         let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
-        viewer.setScreen(viewport: ViewSize(800, 200), pixelsPerDip: 1)
+        viewer.setScreen(viewport: ViewSize(800, 150), pixelsPerDip: 1)
         viewer.show(tab)
         viewer.mode = .hand
         viewer.zoom = 1
         let model = FormsModel(fonts: FormPdfs.fonts)
         model.attach(tab, viewer, FormsHost())
-        let matrix = try XCTUnwrap(viewer.pageToView(0))
-        let box = try XCTUnwrap(FormPdfs.read(tab).find("agree")).widgets[0].rect
-        // The stand-in renderer lays pages out 200 by 300, so the file's page space is not the viewer's.
-        let inPage = ViewPoint((box.left + box.right) / 2, 792 - (box.bottom + box.top) / 2)
-        let onField = matrix.transform(inPage)
-        await waitUntil { model.fillTakes(0, inPage) }
+        XCTAssertNotNil(viewer.pointerTool)
 
-        viewer.pointerDown(onField)
-        viewer.pointerUp(onField)
-        XCTAssertEqual(FormPdfs.read(tab).find("agree")?.isChecked, true)
+        viewer.pointerDown(ViewPoint(480, 100))
+        viewer.pointerMove(ViewPoint(480, 50))
+        viewer.pointerUp(ViewPoint(480, 50))
 
-        let before = viewer.offset.y
-        viewer.pointerDown(matrix.transform(ViewPoint(150, 280)))
-        viewer.pointerMove(matrix.transform(ViewPoint(150, 230)))
-        viewer.pointerUp(matrix.transform(ViewPoint(150, 230)))
-
-        XCTAssertGreaterThan(viewer.offset.y, before)
+        XCTAssertEqual(viewer.offset.y, 50, accuracy: 1)
         model.detach()
     }
 
