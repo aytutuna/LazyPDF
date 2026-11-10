@@ -51,7 +51,7 @@ extension AppViewModel {
 
         // Lazy Scan is a separate app: its tile is there only when it is.
         let scan = sisters.lazyScanInstalled
-            ? [HomeTile(id: Self.scanTile, title: L10n.t("Scan"), symbol: "scanner", description: L10n.t("Scan paper into a PDF with Lazy Scan."),
+            ? [HomeTile(id: Self.scanTile, title: L10n.t("Lazy Scan"), symbol: "scanner", description: L10n.t("Scan paper into a PDF with Lazy Scan."),
                         available: true, reason: nil)]
             : []
 

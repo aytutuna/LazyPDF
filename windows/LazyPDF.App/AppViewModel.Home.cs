@@ -48,7 +48,7 @@ public sealed partial class AppViewModel
 
             // Lazy Scan is a separate app: its tile is there only when it is.
             HomeTile[] scan = _sisters.LazyScanInstalled
-                ? [new(ScanTile, Loc.T("Scan"), "", Loc.T("Scan paper into a PDF with Lazy Scan."), true, null)]
+                ? [new(ScanTile, Loc.T("Lazy Scan"), "", Loc.T("Scan paper into a PDF with Lazy Scan."), true, null)]
                 : [];
 
             return
