@@ -118,8 +118,9 @@ final class EditSurface: PagePointerTool {
     // MARK: Pointer
 
     // A finger scrolls the page unless it lands on what the surface moves. Every text block is an object and covers most of a
-    // page, so text is left to the panel's rows; the drawing modes need the finger anywhere.
+    // page, so text is left to the panel's rows; the drawing modes need the finger anywhere. A mouse press is always the surface's.
     func takes(_ pointer: PagePointer) -> Bool {
+        if !pointer.touch { return true }
         guard mode == .select else { return true }
         if !selected.isEmpty, pointer.page == page {
             let bounds = selectionBounds()

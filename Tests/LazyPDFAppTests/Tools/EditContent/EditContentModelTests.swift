@@ -26,8 +26,8 @@ final class EditContentModelTests: XCTestCase {
         return ViewPoint(d.x + d.width / 2, d.y + d.height / 2)
     }
 
-    private func pointer(_ at: ViewPoint, pressed: Bool = true) -> PagePointer {
-        PagePointer(page: 0, point: at, view: at, pressed: pressed, clicks: 1)
+    private func pointer(_ at: ViewPoint, pressed: Bool = true, touch: Bool = false) -> PagePointer {
+        PagePointer(page: 0, point: at, view: at, pressed: pressed, clicks: 1, touch: touch)
     }
 
     private func click(_ rig: ContentRig, _ at: ViewPoint) throws {
@@ -227,12 +227,55 @@ final class EditContentModelTests: XCTestCase {
         let (model, rig) = try start()
         let tool = try XCTUnwrap(rig.viewer.pointerTool)
 
-        XCTAssertFalse(tool.takes(pointer(ViewPoint(500, 700))))
-        XCTAssertFalse(tool.takes(pointer(try lineCenter(rig))))
+        XCTAssertFalse(tool.takes(pointer(ViewPoint(500, 700), touch: true)))
+        XCTAssertFalse(tool.takes(pointer(try lineCenter(rig), touch: true)))
         let id = try addPicture(rig, model)
         let bounds = try XCTUnwrap(try PageEditor(rig.tab.session, 0).objects.first { $0.id == id }).bounds
         let d = rig.viewer.geometry(0).toDisplay(bounds)
-        XCTAssertTrue(tool.takes(pointer(ViewPoint(d.x + d.width / 2, d.y + d.height / 2))))
+        XCTAssertTrue(tool.takes(pointer(ViewPoint(d.x + d.width / 2, d.y + d.height / 2), touch: true)))
+        model.detach()
+    }
+
+    private func routed() throws -> (model: EditContentModel, tab: DocumentTab, viewer: ViewerModel) {
+        let tab = DocumentTab(session: try PdfEditSession.open(hello), renderer: FakeRenderer(), url: nil, title: "a.pdf")
+        let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
+        viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
+        viewer.show(tab)
+        let model = EditContentModel()
+        model.attach(tab, viewer, ContentHost())
+        return (model, tab, viewer)
+    }
+
+    private func onScreen(_ viewer: ViewerModel, _ point: ViewPoint) throws -> ViewPoint {
+        try XCTUnwrap(viewer.pageToView(0)).transform(point)
+    }
+
+    func test_aMouseClickOnALineThroughTheViewerOpensTheEditor() throws {
+        let (model, tab, viewer) = try routed()
+        let block = try XCTUnwrap(try PageEditor(tab.session, 0).objects.first as? TextObject)
+        let d = viewer.geometry(0).toDisplay(try XCTUnwrap(block.lines.first).bounds)
+        let at = try onScreen(viewer, ViewPoint(d.x + d.width / 2, d.y + d.height / 2))
+
+        viewer.pointerDown(at)
+        viewer.pointerUp(at)
+
+        XCTAssertEqual(viewer.overlay(0).fields.first?.text, "Hello from the tests.")
+        model.detach()
+    }
+
+    func test_aMouseBandThroughTheViewerSelectsSeveralObjects() throws {
+        let (model, tab, viewer) = try routed()
+        let outcome = try ContentEdits(tab, fonts: FakeFonts(), codec: FakeCodec()).addImage(0, PdfRect(100, 400, 200, 500), [1])
+        XCTAssertTrue(outcome.done)
+        model.selectMode(.select)
+
+        let from = try onScreen(viewer, ViewPoint(5, 5))
+        let to = try onScreen(viewer, ViewPoint(600, 780))
+        viewer.pointerDown(from)
+        viewer.pointerMove(to)
+        viewer.pointerUp(to)
+
+        XCTAssertEqual(model.selectedObjects().count, 2)
         model.detach()
     }
 
