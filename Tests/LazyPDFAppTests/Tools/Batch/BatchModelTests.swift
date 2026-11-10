@@ -42,7 +42,7 @@ private final class WatchLog {
 @MainActor
 final class BatchModelTests: XCTestCase {
     private func runner() -> BatchRunner {
-        BatchRunner(codec: FakeCodec(), fonts: batchFonts(), recognizer: FakeRecognizer(), renderers: { FakeRenderer() })
+        BatchRunner(codec: FakeCodec(), fonts: batchFonts(), recognizer: BatchRecognizer(), renderers: { FakeRenderer() })
     }
 
     private func make(_ f: ViewModelFixture, watch: WatchLog? = nil, bookmarks: Bookmarks? = nil) -> (model: BatchModel, picker: Picker) {
@@ -308,7 +308,7 @@ final class BatchModelTests: XCTestCase {
         let f = ViewModelFixture(self)
         let picker = Picker()
         f.vm.filePicker = picker
-        let slow = FakeRecognizer(onRead: { Thread.sleep(forTimeInterval: 2) })
+        let slow = BatchRecognizer(onRead: { Thread.sleep(forTimeInterval: 2) })
         let model = BatchModel.sheet(window: f.vm, settings: f.dir.sub("settings"), watcher: nil, runner: {
             BatchRunner(codec: FakeCodec(), fonts: batchFonts(), recognizer: slow, renderers: { FakeRenderer() })
         })

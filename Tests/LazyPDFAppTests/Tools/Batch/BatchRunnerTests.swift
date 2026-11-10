@@ -6,7 +6,7 @@ import LazyPDFKit
 // files. The two PDF/A tests need the system's fonts and run where CoreText is. The runner is given the folder the results go
 // to, since the Mac and iOS apps get it from the person and not from the set.
 
-struct FakeRecognizer: TextRecognizer {
+struct BatchRecognizer: TextRecognizer {
     var words: [OcrWord] = [OcrWord("Invoice", OcrBox(0, 0, 2, 1))]
     var onRead: (@Sendable () -> Void)?
 
@@ -53,7 +53,7 @@ func batchFonts() -> FontSource {
 final class BatchRunnerTests: XCTestCase {
     private let now = DateTimeOffset(2026, 3, 9, 12, 0, 0)
 
-    private func runner(_ recognizer: TextRecognizer = FakeRecognizer()) -> BatchRunner {
+    private func runner(_ recognizer: TextRecognizer = BatchRecognizer()) -> BatchRunner {
         BatchRunner(codec: FakeCodec(), fonts: batchFonts(), recognizer: recognizer, renderers: { FakeRenderer() })
     }
 
@@ -205,7 +205,7 @@ final class BatchRunnerTests: XCTestCase {
         let file = dir.file("a.pdf", Pdfs.text())
         let writer = RecordingWriter()
         let read = ReadLog()
-        let made = BatchRunner(codec: FakeCodec(), fonts: batchFonts(), recognizer: FakeRecognizer(), renderers: { FakeRenderer() },
+        let made = BatchRunner(codec: FakeCodec(), fonts: batchFonts(), recognizer: BatchRecognizer(), renderers: { FakeRenderer() },
                                writer: writer, reader: { read.add($0); return try Data(contentsOf: $0) })
         var set = BatchSet(steps: [step(.clean)])
 
@@ -259,7 +259,7 @@ final class BatchRunnerTests: XCTestCase {
     func test_aCancelDuringAStepStopsTheRunBeforeAnythingIsWritten() async throws {
         let dir = TempDir(self)
         let token = CancelToken()
-        let cancelling = FakeRecognizer(onRead: { token.cancel() })
+        let cancelling = BatchRecognizer(onRead: { token.cancel() })
         let file = dir.file("scan.pdf", try PdfFromPictures.create([[1, 2, 3]], FakeCodec()).bytes)
         var set = BatchSet(steps: [step(.ocr, "en-US"), step(.clean), step(.compress)])
 
@@ -278,7 +278,7 @@ final class BatchRunnerTests: XCTestCase {
         let file = dir.file("scan.pdf", try PdfFromPictures.create([[1, 2, 3]], FakeCodec()).bytes)
         var set = BatchSet(steps: [step(.ocr, "en-US")])
 
-        let result = try await run(runner(FakeRecognizer(words: [])), file, &set, into: dir.sub("out"))
+        let result = try await run(runner(BatchRecognizer(words: [])), file, &set, into: dir.sub("out"))
 
         XCTAssertTrue(result.ok)
         XCTAssertEqual(result.title, "Done, with notes")
