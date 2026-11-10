@@ -42,6 +42,33 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertFalse(tool.takes(rig.pointer(ViewPoint(400, 300), pressed: true)))
     }
 
+    func test_aMousePressOffAFieldFallsThroughToTheViewer() throws {
+        let tab = DocumentTab(session: try PdfEditSession.open(try FormPdfs.standard()), renderer: FakeRenderer(), url: nil,
+                              title: "form.pdf")
+        let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
+        viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
+        viewer.show(tab)
+        viewer.mode = .hand
+        viewer.zoom = 1
+        let model = FormsModel(fonts: FormPdfs.fonts)
+        model.attach(tab, viewer, FormsHost())
+        let matrix = try XCTUnwrap(viewer.pageToView(0))
+        let box = try XCTUnwrap(FormPdfs.read(tab).find("agree")).widgets[0].rect
+        let onField = matrix.transform(ViewPoint((box.left + box.right) / 2, 792 - (box.bottom + box.top) / 2))
+
+        viewer.pointerDown(onField)
+        viewer.pointerUp(onField)
+        XCTAssertEqual(FormPdfs.read(tab).find("agree")?.isChecked, true)
+
+        let before = viewer.offset.y
+        viewer.pointerDown(matrix.transform(ViewPoint(400, 500)))
+        viewer.pointerMove(matrix.transform(ViewPoint(400, 450)))
+        viewer.pointerUp(matrix.transform(ViewPoint(400, 450)))
+
+        XCTAssertGreaterThan(viewer.offset.y, before)
+        model.detach()
+    }
+
     func test_aFingerBetweenCloseFieldsScrollsInsteadOfTakingEither() throws {
         let rig = try FormsRig()
         let tool = try XCTUnwrap(rig.viewer.pointerTool)
