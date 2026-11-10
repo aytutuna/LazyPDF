@@ -328,8 +328,8 @@ final class EditContentModelTests: XCTestCase {
         model.startLink(1, PdfRect(100, 600, 200, 640), nil)
         XCTAssertNotNil(model.linkArea)
 
-        _ = try rig.tab.session.commitBytes("Delete page", Pdfs.text(1))
-        rig.tab.refresh()
+        try PageOperations.delete(rig.tab.document, [1])
+        try rig.tab.commit("Delete page")
         await waitUntil { model.linkArea == nil }
 
         model.linkText = "example.com"
@@ -533,12 +533,12 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertTrue(rig.viewer.overlay(0).fields.isEmpty)
         XCTAssertEqual(model.action?.canRun(), true)
         XCTAssertFalse(try pageText(rig.tab).contains("A new box of text"))
-        model.sizeText = "30"
+        model.sizeText = "18"
         model.commitSize()
 
         let again = try field(rig)
         XCTAssertEqual(again.text, "A new box of text")
-        XCTAssertEqual(again.look.size, 30)
+        XCTAssertEqual(again.look.size, 18)
         again.commit("A new box of text")
         XCTAssertTrue(try pageText(rig.tab).contains("A new box of text"))
     }
