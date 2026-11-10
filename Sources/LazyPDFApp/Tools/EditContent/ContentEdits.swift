@@ -175,7 +175,7 @@ final class ContentEdits {
         let password = tab.password
         let certificate = self.certificate
         let fonts = self.fonts
-        return try await ToolDocuments.run(token) {
+        return try await ToolDocuments.run(token) { () throws -> ReplacedCopy in
             try token.throwIfCancelled()
             let made = try Self.replace(start, query, replacement, options, password, certificate, fonts)
             try token.throwIfCancelled()
