@@ -190,7 +190,7 @@ final class ContentEdits {
         return ReplacedCopy(start: start, report: report, file: report.replaced > 0 ? scratch.current : [])
     }
 
-    private nonisolated static func scratchSession(_ bytes: [UInt8], _ password: String?, _ certificate: X509Certificate?) throws -> PdfEditSession {
+    nonisolated static func scratchSession(_ bytes: [UInt8], _ password: String?, _ certificate: X509Certificate?) throws -> PdfEditSession {
         #if canImport(Security)
         if let certificate, let held = PdfCertificate(certificate) { return try PdfEditSession.open(bytes, certificate: held) }
         #endif

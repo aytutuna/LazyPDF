@@ -163,6 +163,7 @@ final class StampsModelTests: XCTestCase {
         XCTAssertTrue(stamps(rig.tab).isEmpty)
         XCTAssertFalse(rig.tab.session.canUndo)
         XCTAssertEqual(rig.host.status, "Cancelled.")
+        XCTAssertFalse(rig.tab.document.hasChanges)
         XCTAssertFalse(model.isBusy)
     }
 
@@ -177,6 +178,7 @@ final class StampsModelTests: XCTestCase {
 
         XCTAssertTrue(stamps(rig.tab).isEmpty)
         XCTAssertFalse(rig.host.statuses.contains { $0.contains("Stamped") })
+        XCTAssertFalse(rig.tab.document.hasChanges)
     }
 
     func test_aPageRangeThatMatchesNothingStopsTheStamp() throws {
