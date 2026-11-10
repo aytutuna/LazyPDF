@@ -233,6 +233,7 @@ public final class EditContentModel: ToolPanelModel {
         }
         editor.close()
         pending = .none
+        endLink()
         surface.clear()
         surface.refresh()
         refreshPanel()

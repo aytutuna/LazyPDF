@@ -261,7 +261,7 @@ final class EditSurface: PagePointerTool {
 
     func links(_ page: Int) -> [PdfLink] {
         if let known = linkCache[page] { return known }
-        let read = page >= 0 && page < viewer.pageCount ? edits.links(page) : []
+        let read = edits.links(page)
         linkCache[page] = read
         return read
     }

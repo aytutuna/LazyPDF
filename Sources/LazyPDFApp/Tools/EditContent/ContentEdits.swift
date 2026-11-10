@@ -121,6 +121,7 @@ final class ContentEdits {
     // The engine mirrors in page space; on a page turned a quarter, by /Rotate or by the viewer, that is the other way round
     // on the screen.
     func flip(_ page: Int, _ ids: [Int], acrossScreen: Bool, viewRotation: Int) throws -> EditOutcome {
+        guard page < tab.pageCount else { return stale() }
         let turned = PageGeometry(tab.document.pages[page]).rotation + viewRotation
         return result(try editor(page).flip(objects(page, ids), acrossScreen != (turned / 90 % 2 == 1)))
     }
@@ -223,11 +224,13 @@ final class ContentEdits {
     // MARK: Links
 
     func links(_ page: Int) -> [PdfLink] {
-        PdfLinks.read(tab.document, tab.document.pages[page])
+        guard page >= 0, page < tab.pageCount else { return [] }
+        return PdfLinks.read(tab.document, tab.document.pages[page])
     }
 
     /// Adds a link over `area`, or points `old` somewhere else when it is given.
     func setLink(_ page: Int, _ area: PdfRect, _ target: PdfAction, _ old: PdfLink?) throws -> EditOutcome {
+        guard page < tab.pageCount else { return stale() }
         let document = tab.document
         let p = document.pages[page]
         let label: String
@@ -244,6 +247,7 @@ final class ContentEdits {
     }
 
     func removeLink(_ page: Int, _ link: PdfLink) throws -> EditOutcome {
+        guard page < tab.pageCount else { return stale() }
         let document = tab.document
         let p = document.pages[page]
         var removed = false
