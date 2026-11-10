@@ -53,9 +53,6 @@ public protocol ToolHost: AnyObject {
     /// The field `openSigning` named, once: the tool asks for it when it is shown.
     func takeSigningField() -> String?
 
-    /// The identities of the keychain a file can be signed with, valid ones first.
-    func signingIdentities() -> [CertificateChoice]
-
     /// True while a tool changes the document off the main actor and nothing else may touch it.
     var isDocumentBusy: Bool { get }
 
@@ -66,7 +63,8 @@ public protocol ToolHost: AnyObject {
     /// platform cannot give it.
     func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate?
 
-    /// The identities a file for recipients can be opened with; empty when the platform has none to offer.
+    /// The identities of the keychain a file can be signed with, valid ones first, and a file for recipients opened with;
+    /// empty when the platform has none to offer.
     func certificateChoices() -> [CertificateChoice]
 
     /// The system's panels for choosing files and folders to read, the shell's own.
@@ -94,8 +92,6 @@ extension ToolHost {
     public func openSigning(_ field: String) {}
 
     public func takeSigningField() -> String? { nil }
-
-    public func signingIdentities() -> [CertificateChoice] { [] }
 
     public var isDocumentBusy: Bool { false }
 

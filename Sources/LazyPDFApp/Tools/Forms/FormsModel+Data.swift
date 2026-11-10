@@ -18,7 +18,7 @@ extension FormsModel {
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             let file = folder.appendingPathComponent(name)
             try Data(bytes).write(to: file)
-            saved = await host.fileExporter.export([file])
+            saved = await host.fileExporter.export([file]).saved
         } catch {
             host.showProblem(Problem(L10n.t("Not exported"), L10n.t("{0} could not be written. Check the folder and try again.", name)))
             return

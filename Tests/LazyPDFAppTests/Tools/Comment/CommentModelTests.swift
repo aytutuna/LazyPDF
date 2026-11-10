@@ -17,10 +17,10 @@ final class MarkHost: ToolHost {
         func pickFiles(_ kinds: [ToolFileKind], multiple: Bool) async -> [ToolFile] { picked }
         func pickFolder() async -> ToolFile? { nil }
 
-        func export(_ files: [URL]) async -> [URL] {
-            if gaveUp { return [] }
+        func export(_ files: [URL]) async -> ToolExport {
+            if gaveUp { return ToolExport() }
             for file in files { exported.append((file.lastPathComponent, (try? Data(contentsOf: file)) ?? Data())) }
-            return files
+            return ToolExport(saved: files)
         }
     }
 

@@ -6,18 +6,6 @@ import LazyPDFKit
 // own earlier versions. The list of differences jumps to each in the stage and, when the side by side sheet is open, in both of
 // its views. A finished comparison stays with the tab it was run for until that tab is compared again.
 
-/// What lists the identities a file for recipients can be opened with; the window answers it.
-@MainActor
-public protocol CertificateLister: AnyObject {
-    func certificateChoices() -> [CertificateChoice]
-}
-
-extension AppViewModel: CertificateLister {
-    public func certificateChoices() -> [CertificateChoice] {
-        certificates.choices()
-    }
-}
-
 public enum CompareSource {
     case file, version
 }
@@ -191,7 +179,7 @@ public final class CompareModel: ToolPanelModel {
             : L10n.t("{0} is locked. Type its password.", name)
         unlockNeedsCertificate = certificate
         if certificate && certificates.isEmpty {
-            certificates = (host as? CertificateLister)?.certificateChoices() ?? []
+            certificates = host?.certificateChoices() ?? []
             if certificates.isEmpty { text = L10n.t("No certificate with a private key was found on this computer.") }
         }
         unlockText = text

@@ -13,9 +13,9 @@ final class FormsPicker: ToolFilePicker, ToolFileExporter {
     func pickFiles(_ kinds: [ToolFileKind], multiple: Bool) async -> [ToolFile] { picked }
     func pickFolder() async -> ToolFile? { nil }
 
-    func export(_ files: [URL]) async -> [URL] {
+    func export(_ files: [URL]) async -> ToolExport {
         for file in files { exported.append((file.lastPathComponent, [UInt8](try! Data(contentsOf: file)))) }
-        return files
+        return ToolExport(saved: files)
     }
 }
 

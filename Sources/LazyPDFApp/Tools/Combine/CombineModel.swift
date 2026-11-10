@@ -276,10 +276,12 @@ public final class CombineModel: ToolPanelModel {
             host.showProblem(Problems.save(error, files.first?.name ?? ""))
             return
         }
-        let exporter = host.fileExporter
-        let saved = await exporter.export(written)
+        let outcome = await host.fileExporter.export(written)
+        let saved = outcome.saved
         // A file that could not be written is not the person giving up, and the files that were written still count.
-        if let failed = exporter.unwritten.first { host.showProblem(Problems.save(CocoaError(.fileWriteUnknown), failed)) }
+        if let failed = outcome.failed.first {
+            host.showProblem(Problems.save(CocoaError(outcome.denied ? .fileWriteNoPermission : .fileWriteUnknown), failed.lastPathComponent))
+        }
         guard let first = saved.first else { return }
         let place = first.deletingLastPathComponent().path
         host.showNotice(L10n.plural(saved.count, one: "{0} file saved", other: "{0} files saved"),

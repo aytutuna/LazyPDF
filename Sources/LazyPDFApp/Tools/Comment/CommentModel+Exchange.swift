@@ -67,7 +67,7 @@ extension CommentModel {
             defer { try? FileManager.default.removeItem(at: folder) }
             let written = folder.appendingPathComponent(name)
             try Data(exported.data).write(to: written)
-            if await host.fileExporter.export([written]).isEmpty { return }
+            if await host.fileExporter.export([written]).saved.isEmpty { return }
             host.setStatus(L10n.t("Comments exported."))
             if exported.left > 0 {
                 host.showNotice(L10n.t("Some content left out"), L10n.plural(

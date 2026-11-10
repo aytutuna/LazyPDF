@@ -74,7 +74,7 @@ extension EditContentModel {
             host.showProblem(Problem(L10n.t("Picture not saved"), L10n.t("{0} could not be written. Choose another folder.", name)))
             return
         }
-        if !(await host.fileExporter.export([file])).isEmpty { host.setStatus(L10n.t("Picture saved.")) }
+        if !(await host.fileExporter.export([file])).saved.isEmpty { host.setStatus(L10n.t("Picture saved.")) }
     }
 
     public func cropImage() {

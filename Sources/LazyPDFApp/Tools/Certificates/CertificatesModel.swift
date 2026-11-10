@@ -142,7 +142,7 @@ public final class CertificatesModel: ToolPanelModel {
         self.host = host
         if timestampUrl.isEmpty { timestampUrl = trust.timestampUrl }
         let chosen = selectedIdentity
-        identities = host.signingIdentities()
+        identities = host.certificateChoices()
         selectedIdentity = identities.contains { $0.id == chosen } ? chosen : identities.first?.id
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in
             self?.clearBox()

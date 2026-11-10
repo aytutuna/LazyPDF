@@ -61,9 +61,9 @@ final class ContentPicker: ToolFilePicker, ToolFileExporter {
     func pickFiles(_ kinds: [ToolFileKind], multiple: Bool) async -> [ToolFile] { host.picked }
     func pickFolder() async -> ToolFile? { nil }
 
-    func export(_ files: [URL]) async -> [URL] {
+    func export(_ files: [URL]) async -> ToolExport {
         host.exported = files.map { URL(fileURLWithPath: $0.lastPathComponent) }
-        return host.exported
+        return ToolExport(saved: host.exported)
     }
 }
 

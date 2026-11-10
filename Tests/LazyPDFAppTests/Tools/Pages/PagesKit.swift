@@ -23,21 +23,20 @@ final class StubPicker: ToolFilePicker {
 
 /// Reads what it was given at once, since the files are taken down when the call returns.
 @MainActor
-final class StubExporter: ToolFileExporter {
+final class PagesExporter: ToolFileExporter {
     var received: [(name: String, bytes: [UInt8])] = []
     var gaveUp = false
 
     /// Names of files the stand-in cannot write, as a full disk would leave them.
     var failing: Set<String> = []
-    private(set) var unwritten: [String] = []
 
-    func export(_ files: [URL]) async -> [URL] {
+    func export(_ files: [URL]) async -> ToolExport {
         received = files.map { ($0.lastPathComponent, [UInt8]((try? Data(contentsOf: $0)) ?? Data())) }
-        unwritten = []
-        if gaveUp { return [] }
-        unwritten = files.map(\.lastPathComponent).filter { failing.contains($0) }
-        return files.filter { !failing.contains($0.lastPathComponent) }
-            .map { URL(fileURLWithPath: "/saved").appendingPathComponent($0.lastPathComponent) }
+        if gaveUp { return ToolExport() }
+        return ToolExport(
+            saved: files.filter { !failing.contains($0.lastPathComponent) }
+                .map { URL(fileURLWithPath: "/saved").appendingPathComponent($0.lastPathComponent) },
+            failed: files.filter { failing.contains($0.lastPathComponent) })
     }
 }
 
@@ -67,7 +66,7 @@ final class PagesHost: ToolHost {
     var openedNew: [(pdf: [UInt8], title: String)] = []
     var holding = false
     let picker = StubPicker()
-    let exporter = StubExporter()
+    let exporter = PagesExporter()
 
     var filePicker: ToolFilePicker { picker }
     var fileExporter: ToolFileExporter { exporter }

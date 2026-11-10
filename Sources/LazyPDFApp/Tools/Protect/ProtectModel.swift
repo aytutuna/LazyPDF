@@ -268,6 +268,6 @@ public final class ProtectModel: ToolPanelModel {
             host.showProblem(Problems.save(error, title))
             return false
         }
-        return !(await host.fileExporter.export([file])).isEmpty
+        return !(await host.fileExporter.export([file])).saved.isEmpty
     }
 }

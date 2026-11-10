@@ -51,7 +51,7 @@ final class SecurityHost: ToolHost, ToolFilePicker, ToolFileExporter {
     func tryReload(_ tab: DocumentTab) async -> Bool { true }
 
     func verifyCertificate(_ choice: CertificateChoice) -> X509Certificate? { keys[choice.id] }
-    func signingIdentities() -> [CertificateChoice] { identities }
+    func certificateChoices() -> [CertificateChoice] { identities }
     func takeSigningField() -> String? {
         defer { signingField = nil }
         return signingField
@@ -64,10 +64,10 @@ final class SecurityHost: ToolHost, ToolFilePicker, ToolFileExporter {
 
     func pickFolder() async -> ToolFile? { nil }
 
-    func export(_ files: [URL]) async -> [URL] {
+    func export(_ files: [URL]) async -> ToolExport {
         exportedUrls = files
         exported = files.map { ($0.lastPathComponent, [UInt8]((try? Data(contentsOf: $0)) ?? Data())) }
-        return exportAnswers ? files : []
+        return exportAnswers ? ToolExport(saved: files) : ToolExport()
     }
 }
 
