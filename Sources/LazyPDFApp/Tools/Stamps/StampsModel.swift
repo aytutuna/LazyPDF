@@ -197,36 +197,46 @@ public final class StampsModel: ToolPanelModel {
         try await run()
     }
 
-    // The job runs on the document being shown, off the main actor. False when the work was cancelled or failed, or the document
-    // was swapped by Undo meanwhile; the document goes back to its last commit then.
-    func editDocument<T>(_ tab: DocumentTab, _ host: ToolHost, _ busy: String, _ work: @escaping @Sendable (PdfDocument) throws -> T) async throws -> T? {
-        let document = tab.document
-        var made: T?
-        do {
-            try await host.runBusy(busy) { token in
-                let value = try await ToolDocuments.run(token) { () throws -> T in
-                    try token.throwIfCancelled()
-                    return try work(document)
-                }
-                if !token.isCancelled { made = value }
+    // The job runs on a copy of the file made from the session's bytes, off the main actor, so the document being shown is not
+    // touched until the result is committed. Nil when the work was cancelled, or Undo or another tool changed the file meanwhile;
+    // `file` is nil when the copy came out unchanged. The caller commits it with `commitCopy` before it yields.
+    func editDocument<T>(_ tab: DocumentTab, _ host: ToolHost, _ busy: String, _ label: String,
+                         _ work: @escaping @Sendable (PdfDocument) throws -> T) async throws -> (value: T, file: [UInt8]?)? {
+        let start = tab.session.current
+        let password = tab.password
+        let certificate = tab.certificate.flatMap { host.verifyCertificate($0) }
+        var made: (value: T, file: [UInt8]?)?
+        try await host.runBusy(busy) { token in
+            let value = try await ToolDocuments.run(token) { () throws -> (value: T, file: [UInt8]?) in
+                try token.throwIfCancelled()
+                let scratch = try ContentEdits.scratchSession(start, password, certificate)
+                let value = try work(scratch.document)
+                try token.throwIfCancelled()
+                return (value, try scratch.commit(label) ? scratch.current : nil)
             }
-        } catch {
-            try? tab.session.discard()
-            throw error
+            if !token.isCancelled { made = value }
         }
         guard let made else {
-            try? tab.session.discard()
             host.setStatus(L10n.t("Cancelled."))
             return nil
         }
-        return tab.document === document ? made : nil
+        return tab.session.current == start ? made : nil
+    }
+
+    // False when the copy changed nothing.
+    func commitCopy(_ tab: DocumentTab, _ label: String, _ file: [UInt8]?) throws -> Bool {
+        guard let file else { return false }
+        _ = try tab.session.commitBytes(label, file)
+        tab.refresh()
+        return true
     }
 
     private func stamp(_ tab: DocumentTab, _ host: ToolHost, _ draft: StampDraft, _ replace: Int?) async throws {
         let fonts = host.fontSource, codec = host.imageCodec
-        let run: StampRun?
+        let label = replace == nil ? draft.addText : L10n.t("Update stamp")
+        let made: (value: StampRun, file: [UInt8]?)?
         do {
-            run = try await editDocument(tab, host, L10n.t("Stamping pages")) { document in
+            made = try await editDocument(tab, host, L10n.t("Stamping pages"), label) { document in
                 try draft.apply(document, fonts: fonts, codec: codec, replace: replace)
             }
         } catch is InvalidOperationException {
@@ -236,13 +246,13 @@ public final class StampsModel: ToolPanelModel {
             host.showProblem(Problem(L10n.t("Picture cannot be read"), L10n.t("Pick a PNG, JPEG or another common picture.")))
             return
         }
-        guard let run else { return }
+        guard let made else { return }
+        let run = made.value
 
         // The page now carries the stamp; the preview would only draw it twice.
         previewOn = false
         clearPreviews()
-        let label = replace == nil ? draft.addText : L10n.t("Update stamp")
-        if try !tab.commit(label) {
+        if try !commitCopy(tab, label, made.file) {
             host.setStatus(L10n.t("Nothing was stamped."))
             return
         }

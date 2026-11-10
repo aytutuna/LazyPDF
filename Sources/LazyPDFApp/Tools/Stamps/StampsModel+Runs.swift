@@ -185,10 +185,10 @@ extension StampsModel {
         guard let tab, let host else { return }
         await ChangeGate.runAsync(tab, host, label) { [self] in
             try await working {
-                guard try await editDocument(tab, host, busy, remove) != nil else { return }
+                guard let made = try await editDocument(tab, host, busy, label, remove) else { return }
                 previewOn = false
                 clearPreviews()
-                if try tab.commit(label) { host.setStatus(status) }
+                if try commitCopy(tab, label, made.file) { host.setStatus(status) }
                 buildRuns()
                 refresh()
             }
