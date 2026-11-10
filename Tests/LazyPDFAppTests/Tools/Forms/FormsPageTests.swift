@@ -42,11 +42,11 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertFalse(tool.takes(rig.pointer(ViewPoint(400, 300), pressed: true)))
     }
 
-    func test_aMousePressOffAFieldFallsThroughToTheViewer() throws {
+    func test_aMousePressOffAFieldFallsThroughToTheViewer() async throws {
         let tab = DocumentTab(session: try PdfEditSession.open(try FormPdfs.standard()), renderer: FakeRenderer(), url: nil,
                               title: "form.pdf")
         let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
-        viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
+        viewer.setScreen(viewport: ViewSize(800, 200), pixelsPerDip: 1)
         viewer.show(tab)
         viewer.mode = .hand
         viewer.zoom = 1
@@ -54,16 +54,19 @@ final class FormsFillOnThePageTests: XCTestCase {
         model.attach(tab, viewer, FormsHost())
         let matrix = try XCTUnwrap(viewer.pageToView(0))
         let box = try XCTUnwrap(FormPdfs.read(tab).find("agree")).widgets[0].rect
-        let onField = matrix.transform(ViewPoint((box.left + box.right) / 2, 792 - (box.bottom + box.top) / 2))
+        // The stand-in renderer lays pages out 200 by 300, so the file's page space is not the viewer's.
+        let inPage = ViewPoint((box.left + box.right) / 2, 792 - (box.bottom + box.top) / 2)
+        let onField = matrix.transform(inPage)
+        await waitUntil { model.fillTakes(0, inPage) }
 
         viewer.pointerDown(onField)
         viewer.pointerUp(onField)
         XCTAssertEqual(FormPdfs.read(tab).find("agree")?.isChecked, true)
 
         let before = viewer.offset.y
-        viewer.pointerDown(matrix.transform(ViewPoint(400, 500)))
-        viewer.pointerMove(matrix.transform(ViewPoint(400, 450)))
-        viewer.pointerUp(matrix.transform(ViewPoint(400, 450)))
+        viewer.pointerDown(matrix.transform(ViewPoint(150, 280)))
+        viewer.pointerMove(matrix.transform(ViewPoint(150, 230)))
+        viewer.pointerUp(matrix.transform(ViewPoint(150, 230)))
 
         XCTAssertGreaterThan(viewer.offset.y, before)
         model.detach()

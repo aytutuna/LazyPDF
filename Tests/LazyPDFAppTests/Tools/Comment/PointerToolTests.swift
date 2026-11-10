@@ -529,8 +529,8 @@ final class PointerToolTests: XCTestCase {
         viewer.pointerDown(matrix.transform(markPt(150, 130)))
         viewer.pointerUp(matrix.transform(markPt(150, 130)))
         XCTAssertNotNil(tool.current)
-        viewer.pointerDown(matrix.transform(markPt(400, 400)))
-        viewer.pointerUp(matrix.transform(markPt(400, 400)))
+        viewer.pointerDown(matrix.transform(markPt(20, 280)))
+        viewer.pointerUp(matrix.transform(markPt(20, 280)))
 
         XCTAssertNil(tool.current)
     }
