@@ -271,7 +271,7 @@ final class EditContentModelTests: XCTestCase {
         let (model, _) = try start()
         let mouse = model.hint
 
-        model.prefersTouch = true
+        model.useTouch()
         XCTAssertNotEqual(model.hint, mouse)
         XCTAssertFalse(model.hint.contains("Drag to select"))
         model.selectMode(.textBox)

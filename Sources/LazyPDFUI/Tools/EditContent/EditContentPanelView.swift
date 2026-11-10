@@ -49,7 +49,7 @@ struct EditContentPanelView: View {
         .disabled(model.isReplacing)
         .onAppear {
             #if os(iOS)
-            model.prefersTouch = true
+            model.useTouch()
             #endif
         }
         // Leaving a field puts what was typed into the page.

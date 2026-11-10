@@ -69,8 +69,11 @@ public final class EditContentModel: ToolPanelModel {
     public internal(set) var opacity = 100.0
 
     /// The view is used with a finger: the hint leaves out what only a mouse can do.
-    public var prefersTouch = false {
-        didSet { refreshPanel() }
+    public private(set) var prefersTouch = false
+
+    public func useTouch() {
+        prefersTouch = true
+        refreshPanel()
     }
 
     public var linkToPage = false
