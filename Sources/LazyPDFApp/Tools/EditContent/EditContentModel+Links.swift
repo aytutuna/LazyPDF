@@ -62,7 +62,7 @@ extension EditContentModel {
         if apply({ try edits.removeLink(page, link) }, L10n.t("Link removed.")) { endLink() }
     }
 
-    private func endLink() {
+    func endLink() {
         linkArea = nil
         linkOld = nil
         surface?.showArea(-1, nil)

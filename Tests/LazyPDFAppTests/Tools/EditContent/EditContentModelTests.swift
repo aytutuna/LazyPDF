@@ -272,6 +272,39 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertEqual(rig.host.status, "Link removed.")
     }
 
+    func test_aLinkAreaOnAPageThatWentIsLetGoOf() async throws {
+        let rig = try ContentRig(Pdfs.text(2))
+        let model = EditContentModel()
+        rig.attach(model)
+        model.selectMode(.link)
+        model.startLink(1, PdfRect(100, 600, 200, 640), nil)
+        XCTAssertNotNil(model.linkArea)
+
+        _ = try rig.tab.session.commitBytes("Delete page", Pdfs.text(1))
+        rig.tab.refresh()
+        await waitUntil { model.linkArea == nil }
+
+        model.linkText = "example.com"
+        model.applyLink()
+        XCTAssertEqual(rig.tab.pageCount, 1)
+        XCTAssertNil(model.action)
+        model.detach()
+    }
+
+    func test_aLinkEditOnAPageThatWentIsRefused() throws {
+        let rig = try ContentRig(Pdfs.text(1))
+        let edits = ContentEdits(rig.tab, fonts: FakeFonts(), codec: FakeCodec())
+        let link = PdfLink(PdfRect(0, 0, 10, 10), nil, UriAction("https://a.example"), nil)
+
+        let added = try edits.setLink(3, PdfRect(100, 600, 200, 640), UriAction("https://example.com"), nil)
+        let removed = try edits.removeLink(3, link)
+
+        XCTAssertFalse(added.done)
+        XCTAssertFalse(removed.done)
+        XCTAssertTrue(edits.links(3).isEmpty)
+        XCTAssertEqual(rig.tab.revision, 0)
+    }
+
     func test_replaceAllChangesTheWordsAndSaysHowMany() async throws {
         let (model, rig) = try start()
         model.findText = "Hello"
