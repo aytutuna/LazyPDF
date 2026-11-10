@@ -182,6 +182,9 @@ public final class EditContentModel: ToolPanelModel {
 
     public func handIn() -> Bool {
         flushOpacity()
+        commitSize()
+        commitSpacing()
+        commitWidth()
         if pending != .none && !commitEditor(), let host, let message {
             host.showProblem(Problem(L10n.t("Typed text was not kept"), message.text))
         }
