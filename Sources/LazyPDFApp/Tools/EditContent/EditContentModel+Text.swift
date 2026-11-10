@@ -25,6 +25,14 @@ extension EditContentModel {
         openEditor(page, lineRect(page, line), line.text, look, wrap: false, caret: at)
     }
 
+    /// Opens a line of the selected block for typing, as a click in its middle does.
+    public func editLine(_ row: EditRow) {
+        finishPending()
+        guard let text = selectedText(), let surface, row.id < text.lines.count else { return }
+        let r = lineRect(surface.page, text.lines[row.id])
+        textClicked(surface.page, text.id, ViewPoint(r.x + r.width / 2, r.y + r.height / 2))
+    }
+
     private func lineRect(_ page: Int, _ line: TextObjectLine) -> ViewRect {
         guard let viewer else { return .empty }
         let d = viewer.geometry(page).toDisplay(line.bounds)

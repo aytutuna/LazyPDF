@@ -48,6 +48,15 @@ public final class EditContentModel: ToolPanelModel {
     public private(set) var sections = EditSections()
     public private(set) var objectRows: [EditRow] = []
     public private(set) var linkRows: [EditRow] = []
+
+    /// The lines of the one text block selected, to open each for typing without the pointer.
+    public private(set) var lineRows: [EditRow] = []
+
+    /// The ids of `objectRows` that are selected.
+    public private(set) var selectedRowIds = Set<Int>()
+
+    /// A row of the list adds to the selection or takes from it instead of replacing it.
+    public var selectSeveral = false
     public private(set) var hasSelection = false
 
     public var fontName = ""
@@ -58,6 +67,11 @@ public final class EditContentModel: ToolPanelModel {
     public internal(set) var italic = false
     public internal(set) var alignment = LazyPDFKit.TextAlignment.left
     public internal(set) var opacity = 100.0
+
+    /// The view is used with a finger: the hint leaves out what only a mouse can do.
+    public var prefersTouch = false {
+        didSet { refreshPanel() }
+    }
 
     public var linkToPage = false
     public var linkText = ""
@@ -379,9 +393,11 @@ public final class EditContentModel: ToolPanelModel {
             case .link: hint = L10n.t("Drag an area to make a link, or click a link to change it.")
             case .crop: hint = L10n.t("Drag the part of the picture to keep.")
             case .select:
-                hint = objects.isEmpty ? L10n.t("Click text or a picture to change it. Drag to select several.")
-                    : L10n.t("Drag to move. Drag a handle to resize.")
+                let first = prefersTouch ? L10n.t("Tap a picture, or pick text from the list. The list can select several.")
+                    : L10n.t("Click text or a picture to change it. Drag to select several.")
+                hint = objects.isEmpty ? first : L10n.t("Drag to move. Drag a handle to resize.")
             }
+            if prefersTouch && mode != .select { hint += " " + L10n.t("Two fingers scroll the page.") }
         }
         var shown = EditSections()
         shown.addPicture = inSelect
@@ -394,6 +410,7 @@ public final class EditContentModel: ToolPanelModel {
         shown.link = mode == .link && linkArea != nil
         shown.removeLink = linkOld != nil
         if shown.text { fillText(text, &shown) }
+        lineRows = (text?.lines ?? []).prefix(200).enumerated().map { EditRow(id: $0.offset, title: Self.snippet($0.element.text)) }
         sections = shown
         if let image {
             opacity = (image.opacity * 100).rounded()
@@ -429,6 +446,7 @@ public final class EditContentModel: ToolPanelModel {
         guard let viewer, let edits, viewer.pageCount > 0 else {
             objectRows = []
             linkRows = []
+            selectedRowIds = []
             return
         }
         let page = min(max(viewer.pageIndex, 0), viewer.pageCount - 1)
@@ -446,6 +464,7 @@ public final class EditContentModel: ToolPanelModel {
                 return EditRow(id: object.id, title: L10n.t("Shape {0}", shapes))
             }
         }
+        selectedRowIds = surface?.page == page ? Set(surface?.selected ?? []) : []
         guard mode == .link else {
             linkRows = []
             return
@@ -458,8 +477,13 @@ public final class EditContentModel: ToolPanelModel {
         guard let surface, let viewer, let edits else { return }
         let page = min(max(viewer.pageIndex, 0), viewer.pageCount - 1)
         finishPending()
-        surface.select(page, [row.id])
-        if let object = edits.object(page, row.id) { viewer.reveal(page, surface.pageRect(page, object.bounds)) }
+        var ids = [row.id]
+        if selectSeveral && surface.page == page {
+            ids = surface.selected
+            if let at = ids.firstIndex(of: row.id) { ids.remove(at: at) } else { ids.append(row.id) }
+        }
+        surface.select(page, ids)
+        if ids.contains(row.id), let object = edits.object(page, row.id) { viewer.reveal(page, surface.pageRect(page, object.bounds)) }
     }
 
     static func snippet(_ text: String) -> String {

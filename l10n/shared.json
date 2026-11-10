@@ -6774,5 +6774,20 @@
   },
   "Marks on this page": {
     "tr": "Bu sayfadaki işaretler"
+  },
+  "Lines": {
+    "tr": "Satırlar"
+  },
+  "Edit line: {0}": {
+    "tr": "Satırı düzenle: {0}"
+  },
+  "Select several": {
+    "tr": "Birkaçını seç"
+  },
+  "Tap a picture, or pick text from the list. The list can select several.": {
+    "tr": "Bir resme dokunun ya da metni listeden seçin. Listeden birkaçı seçilebilir."
+  },
+  "Two fingers scroll the page.": {
+    "tr": "Sayfayı iki parmakla kaydırın."
   }
 }

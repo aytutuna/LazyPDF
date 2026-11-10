@@ -228,7 +228,55 @@ final class EditContentModelTests: XCTestCase {
         let tool = try XCTUnwrap(rig.viewer.pointerTool)
 
         XCTAssertFalse(tool.takes(pointer(ViewPoint(500, 700))))
-        XCTAssertTrue(tool.takes(pointer(try lineCenter(rig))))
+        XCTAssertFalse(tool.takes(pointer(try lineCenter(rig))))
+        let id = try addPicture(rig, model)
+        let bounds = try XCTUnwrap(try PageEditor(rig.tab.session, 0).objects.first { $0.id == id }).bounds
+        let d = rig.viewer.geometry(0).toDisplay(bounds)
+        XCTAssertTrue(tool.takes(pointer(ViewPoint(d.x + d.width / 2, d.y + d.height / 2))))
+        model.detach()
+    }
+
+    func test_theListAddsAndTakesFromTheSelectionWhenSeveralAreWanted() throws {
+        let (model, rig) = try start()
+        _ = try addPicture(rig, model)
+        let rows = model.objectRows
+        XCTAssertEqual(rows.count, 2)
+
+        model.selectSeveral = true
+        model.selectObject(rows[0])
+        model.selectObject(rows[1])
+        XCTAssertEqual(model.selectedRowIds, Set(rows.map(\.id)))
+        model.selectObject(rows[0])
+        XCTAssertEqual(model.selectedRowIds, [rows[1].id])
+        model.selectSeveral = false
+        model.selectObject(rows[0])
+
+        XCTAssertEqual(model.selectedRowIds, [rows[0].id])
+        model.detach()
+    }
+
+    func test_aLineOfTheSelectedBlockIsOpenedFromTheList() throws {
+        let (model, rig) = try start()
+        model.selectObject(try XCTUnwrap(model.objectRows.first))
+
+        let row = try XCTUnwrap(model.lineRows.first)
+        model.editLine(row)
+
+        XCTAssertEqual(row.title, "Hello from the tests.")
+        XCTAssertEqual(try field(rig).text, "Hello from the tests.")
+        model.detach()
+    }
+
+    func test_aFingersHintDoesNotPromiseADrag() throws {
+        let (model, _) = try start()
+        let mouse = model.hint
+
+        model.prefersTouch = true
+        XCTAssertNotEqual(model.hint, mouse)
+        XCTAssertFalse(model.hint.contains("Drag to select"))
+        model.selectMode(.textBox)
+
+        XCTAssertTrue(model.hint.hasSuffix("Two fingers scroll the page."))
         model.detach()
     }
 

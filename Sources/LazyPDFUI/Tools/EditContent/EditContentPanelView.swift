@@ -47,6 +47,11 @@ struct EditContentPanelView: View {
             replaceAll
         }
         .disabled(model.isReplacing)
+        .onAppear {
+            #if os(iOS)
+            model.prefersTouch = true
+            #endif
+        }
         // Leaving a field puts what was typed into the page.
         .onChange(of: focus) { old, _ in
             switch old {
@@ -155,6 +160,16 @@ struct EditContentPanelView: View {
                 .buttonStyle(.bordered)
                 .disabled(!model.sections.paragraphEnabled)
                 if let reason = model.paragraphReason { ReasonText(reason) }
+            }
+            if !model.lineRows.isEmpty {
+                DisclosureGroup(L10n.t("Lines")) {
+                    ForEach(model.lineRows) { row in
+                        Button { model.editLine(row) } label: {
+                            Text(row.title).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        }
+                        .accessibilityLabel(L10n.t("Edit line: {0}", row.title))
+                    }
+                }
             }
         }
     }
@@ -265,9 +280,19 @@ struct EditContentPanelView: View {
             }
         } else if !model.objectRows.isEmpty {
             DisclosureGroup(L10n.t("On this page")) {
+                Toggle(L10n.t("Select several"), isOn: $model.selectSeveral)
+                    .frame(minHeight: 44)
                 ForEach(model.objectRows) { row in
-                    Button(row.title) { model.selectObject(row) }
+                    let picked = model.selectedRowIds.contains(row.id)
+                    Button { model.selectObject(row) } label: {
+                        HStack {
+                            Text(row.title)
+                            Spacer()
+                            if picked { Image(systemName: "checkmark") }
+                        }
                         .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                    }
+                    .accessibilityAddTraits(picked ? .isSelected : [])
                 }
             }
         }
