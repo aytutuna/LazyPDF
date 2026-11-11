@@ -6,7 +6,7 @@ import XCTest
 final class PageCarryTests: XCTestCase {
     // Six pages (objects 4 to 9). Bookmarks: Part A (Ch1, Ch2), Part B (Ch3, Ch4 by action), Ch5 by name, Ch6.
     // Labels are i, ii, iii and then 1, 2, 3. Names: three and five.
-    private static func fixture(_ title: String? = nil) throws -> PdfDocument {
+    private static func fixture(_ title: String? = nil, brokenFile: Bool = false) throws -> PdfDocument {
         try PdfDocument.open(PageTestFiles.make(6,
             "/Outlines 16 0 R /PageLabels <</Nums [0 <</S /r>> 3 <</S /D>>]>> /Lang (en-CA) /Metadata 25 0 R " +
             "/Names <</Dests <</Names [(five) [8 0 R /Fit] (three) [6 0 R /Fit]]>> /EmbeddedFiles <</Names [(note.txt) 27 0 R]>>>>",
@@ -21,7 +21,7 @@ final class PageCarryTests: XCTestCase {
                 pdf.obj(23, "<</Title (Ch5) /Parent 16 0 R /Prev 20 0 R /Next 24 0 R /Dest (five)>>")
                 pdf.obj(24, "<</Title (Ch6) /Parent 16 0 R /Prev 23 0 R /Dest [9 0 R /Fit]>>")
                 pdf.stream(25, "/Type /Metadata /Subtype /XML", "<x:xmpmeta>fixture</x:xmpmeta>")
-                pdf.stream(26, "/Type /EmbeddedFile", "hello")
+                pdf.stream(26, brokenFile ? "/Type /EmbeddedFile /Filter /FlateDecode" : "/Type /EmbeddedFile", "hello")
                 pdf.obj(27, "<</Type /Filespec /F (note.txt) /UF (note.txt) /EF <</F 26 0 R>>>>")
                 pdf.obj(28, "<</Title (\(title ?? ""))>>")
             },
@@ -130,6 +130,16 @@ final class PageCarryTests: XCTestCase {
         let again = try PdfDocument.open(try merged.saveRewrite())
         XCTAssertNotNil(again.catalog["Metadata"])
         XCTAssertEqual(PageTestFiles.text(try XCTUnwrap(again.info)["Title"]), "First")
+    }
+
+    func test_anAttachmentThatDoesNotDecodeIsSkippedAndCounted() throws {
+        let part = try PageAssembly.extract(try Self.fixture(brokenFile: true), [2, 3])
+        XCTAssertEqual(try files(part), "")
+        XCTAssertEqual(part.skippedAttachments, 1)
+        let merged = try PageAssembly.merge([MergeSource(try Self.fixture(brokenFile: true)), MergeSource(try Self.fixture(), [5])])
+        XCTAssertEqual(try files(merged), "note.txt=hello")
+        XCTAssertEqual(merged.skippedAttachments, 1)
+        for p in try PageAssembly.splitAt(try Self.fixture(brokenFile: true), [3]) { XCTAssertEqual(p.skippedAttachments, 1) }
     }
 
     func test_eachPartOfASplitCarriesItsOwn() throws {

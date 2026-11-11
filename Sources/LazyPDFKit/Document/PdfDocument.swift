@@ -24,6 +24,8 @@ public final class PdfDocument {
     var password: String?
     var headerVersionEnd = 0
     var hadInfo = false
+    /// How many attachments a page assembly left out of this document because they would not decode or were over the size limit.
+    public internal(set) var skippedAttachments = 0
 
     // Cross-references
     /// Where the newest cross-reference section starts, as the file said; 0 when the table was rebuilt.

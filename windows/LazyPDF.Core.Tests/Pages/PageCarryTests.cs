@@ -8,7 +8,7 @@ public class PageCarryTests
 {
     // Six pages (objects 4 to 9). Bookmarks: Part A (Ch1, Ch2), Part B (Ch3, Ch4 by action), Ch5 by name, Ch6.
     // Labels are i, ii, iii and then 1, 2, 3. Names: three and five.
-    private static PdfDocument Fixture(string? title = null) => PdfDocument.Open(PageTestFiles.Make(6,
+    private static PdfDocument Fixture(string? title = null, bool brokenFile = false) => PdfDocument.Open(PageTestFiles.Make(6,
         "/Outlines 16 0 R /PageLabels <</Nums [0 <</S /r>> 3 <</S /D>>]>> /Lang (en-CA) /Metadata 25 0 R " +
         "/Names <</Dests <</Names [(five) [8 0 R /Fit] (three) [6 0 R /Fit]]>> /EmbeddedFiles <</Names [(note.txt) 27 0 R]>>>>",
         add: pdf => pdf
@@ -22,7 +22,7 @@ public class PageCarryTests
             .Obj(23, "<</Title (Ch5) /Parent 16 0 R /Prev 20 0 R /Next 24 0 R /Dest (five)>>")
             .Obj(24, "<</Title (Ch6) /Parent 16 0 R /Prev 23 0 R /Dest [9 0 R /Fit]>>")
             .Stream(25, "/Type /Metadata /Subtype /XML", "<x:xmpmeta>fixture</x:xmpmeta>")
-            .Stream(26, "/Type /EmbeddedFile", "hello")
+            .Stream(26, brokenFile ? "/Type /EmbeddedFile /Filter /FlateDecode" : "/Type /EmbeddedFile", "hello")
             .Obj(27, "<</Type /Filespec /F (note.txt) /UF (note.txt) /EF <</F 26 0 R>>>>")
             .Obj(28, $"<</Title ({title})>>"),
         trailerExtra: title is null ? "" : "/Info 28 0 R"));
@@ -132,6 +132,18 @@ public class PageCarryTests
         var again = PdfDocument.Open(merged.SaveRewrite());
         Assert.NotNull(again.Catalog["Metadata"]);
         Assert.Equal("First", Encoding.Latin1.GetString(((PdfString)again.Info!["Title"]!).Bytes));
+    }
+
+    [Fact]
+    public void AnAttachmentThatDoesNotDecodeIsSkippedAndCounted()
+    {
+        var part = PageAssembly.Extract(Fixture(brokenFile: true), [2, 3]);
+        Assert.Equal("", Files(part));
+        Assert.Equal(1, part.SkippedAttachments);
+        var merged = PageAssembly.Merge([new MergeSource(Fixture(brokenFile: true)), new MergeSource(Fixture(), [5])]);
+        Assert.Equal("note.txt=hello", Files(merged));
+        Assert.Equal(1, merged.SkippedAttachments);
+        Assert.All(PageAssembly.SplitAt(Fixture(brokenFile: true), [3]), p => Assert.Equal(1, p.SkippedAttachments));
     }
 
     [Fact]

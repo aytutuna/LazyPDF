@@ -20,7 +20,10 @@ internal static class PageCarry
         NamedDestinations(source, target, newIndex);
         foreach (var file in PdfAttachments.List(source).Where(a => a.PageIndex is null))
         {
-            PdfAttachments.Add(target, file.FileName, PdfAttachments.Extract(source, file), file.MimeType, file.Description, file.Created, file.Modified);
+            byte[] data;
+            try { data = PdfAttachments.Extract(source, file); }
+            catch (Exception e) when (e is PdfReadException or InvalidOperationException) { target.SkippedAttachments++; continue; }
+            PdfAttachments.Add(target, file.FileName, data, file.MimeType, file.Description, file.Created, file.Modified);
         }
     }
 

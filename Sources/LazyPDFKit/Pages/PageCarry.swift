@@ -15,7 +15,11 @@ enum PageCarry {
         if mergeTitle == nil { try labels(source, target, sourcePages) }
         try namedDestinations(source, target, newIndex)
         for file in PdfAttachments.list(source) where file.pageIndex == nil {
-            try PdfAttachments.add(target, file.fileName, try PdfAttachments.extract(source, file), mimeType: file.mimeType,
+            let data: [UInt8]
+            do { data = try PdfAttachments.extract(source, file) }
+            catch is PdfReadException { target.skippedAttachments += 1; continue }
+            catch is InvalidOperationException { target.skippedAttachments += 1; continue }
+            try PdfAttachments.add(target, file.fileName, data, mimeType: file.mimeType,
                                    description: file.description, created: file.created, modified: file.modified)
         }
     }
