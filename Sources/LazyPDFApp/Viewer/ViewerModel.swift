@@ -50,6 +50,7 @@ public final class ViewerModel: DocumentViewer {
     @ObservationIgnored var selectionShapes: [Int: [[ViewPoint]]] = [:]
     @ObservationIgnored var preloadTask: Task<Void, Never>?
     @ObservationIgnored var anchorWaiting: PagePoint?
+    @ObservationIgnored var pressTicket = 0
     @ObservationIgnored var multi: (start: Caret, end: Caret, clicks: Int)?
 
     // Pointer
@@ -59,6 +60,7 @@ public final class ViewerModel: DocumentViewer {
     @ObservationIgnored var last = ViewPoint.zero
     @ObservationIgnored var downLink: PdfLink?
     @ObservationIgnored var moved = false
+    @ObservationIgnored var linkClickedAt: Double?
     @ObservationIgnored var autoScroll: Task<Void, Never>?
     @ObservationIgnored var touching = false
 

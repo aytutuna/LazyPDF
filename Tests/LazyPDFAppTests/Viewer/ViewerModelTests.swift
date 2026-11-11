@@ -622,6 +622,66 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertFalse(viewer.highlights(of: 0).hits.isEmpty)
     }
 
+    func test_aDoubleClickBeforeTheTextHasLoadedSelectsTheWordOnceItHas() async throws {
+        let (known, _) = try open()
+        let at = try await pointOnFirstLine(known, 1)
+        let (viewer, _) = try open()
+
+        viewer.pointerDown(at, clicks: 2)
+        viewer.pointerUp(at)
+
+        await waitFor { viewer.hasSelection }
+        let copied = await viewer.selectedText()
+        XCTAssertEqual(copied, "Hello")
+    }
+
+    func test_aNewerPressBeforeTheTextHasLoadedLeavesTheDoubleClickUnanswered() async throws {
+        let (known, _) = try open()
+        let at = try await pointOnFirstLine(known, 1)
+        let (viewer, _) = try open()
+
+        viewer.pointerDown(at, clicks: 2)
+        viewer.pointerUp(at)
+        viewer.pointerDown(ViewPoint(at.x, at.y + 200))
+        viewer.pointerUp(ViewPoint(at.x, at.y + 200))
+        _ = await viewer.text(0)
+        await Task.yield()
+
+        XCTAssertFalse(viewer.hasSelection)
+    }
+
+    func test_theSecondClickOfADoubleClickOnALinkIsIgnored() async throws {
+        let (known, _) = try open()
+        let at = try await pointOnFirstLine(known, 1)
+        let (viewer, _) = try open()
+        viewer.links[0] = [PdfLink(PdfRect(0, 0, 800, 800), PdfDestination(1), nil, nil)]
+        _ = await viewer.text(0)
+
+        viewer.pointerDown(at)
+        viewer.pointerUp(at)
+        XCTAssertEqual(viewer.pageIndex, 1)
+        viewer.pointerDown(at, clicks: 2)
+        viewer.pointerUp(at)
+
+        XCTAssertFalse(viewer.hasSelection)
+        XCTAssertEqual(viewer.pageIndex, 1)
+    }
+
+    func test_aLongPressOnALinkStillSelectsAWord() async throws {
+        let (known, _) = try open()
+        let at = try await pointOnFirstLine(known, 1)
+        let (viewer, _) = try open()
+        viewer.links[0] = [PdfLink(PdfRect(0, 0, 800, 800), PdfDestination(1), nil, nil)]
+        _ = await viewer.text(0)
+
+        viewer.pointerDown(at, touch: true)
+        viewer.pointerUp(at)
+        viewer.pointerDown(at, clicks: 2, touch: true)
+        viewer.pointerUp(at)
+
+        XCTAssertTrue(viewer.hasSelection)
+    }
+
     func test_findSeedsItselfFromAWordSelectedOnOnePage() async throws {
         let (viewer, _) = try open()
         let at = try await pointOnFirstLine(viewer, 1)

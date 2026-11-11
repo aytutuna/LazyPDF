@@ -23,6 +23,13 @@ extension ViewerModel {
         last = at
         moved = false
         downLink = hit.flatMap { link(at: $0.page, $0.point) }
+        if clicks == 1 { linkClickedAt = nil }
+        // The first click of a double click followed the link; the second would act on the page it led to.
+        if !touch, clicks >= 2, let at = linkClickedAt, ProcessInfo.processInfo.systemUptime - at < 0.6 {
+            downLink = nil
+            drag = .none
+            return
+        }
         if let tool, let over = hit {
             let press = pointer(over.page, over.point, at, clicks, true, modifiers)
             if touch || tool.takes(press) {
@@ -70,7 +77,10 @@ extension ViewerModel {
             }
         }
         endDrag()
-        if was == .pan || was == .select, !moved, let link = downLink { followLink(link) }
+        if was == .pan || was == .select, !moved, let link = downLink {
+            linkClickedAt = ProcessInfo.processInfo.systemUptime
+            followLink(link)
+        }
         hover(at, modifiers)
         touching = false
     }

@@ -96,12 +96,23 @@ extension ViewerModel {
     }
 
     func beginSelection(_ at: ViewPoint, clicks: Int, extend wanted: Bool) {
+        pressTicket += 1
+        let ticket = pressTicket
         anchorWaiting = nil
         multi = nil
         guard let hit = state.hit(at, nearest: true) else { return }
         dragPage = hit.page
         let extend = wanted && !selected.isEmpty
         guard let text = source?.peek(hit.page) else {
+            if clicks >= 2 {
+                let sameTab = tab
+                Task {
+                    await loadPage(hit.page)
+                    guard pressTicket == ticket, tab === sameTab, let text = source?.peek(hit.page) else { return }
+                    selectUnit(hit, text, clicks)
+                }
+                return
+            }
             Task { await loadPage(hit.page) }
             if !extend {
                 selected.clear()
@@ -109,20 +120,25 @@ extension ViewerModel {
             }
             return
         }
-        let (x, y) = geometry(hit.page).toUser(hit.point.x, hit.point.y)
         if clicks >= 2 {
-            let chosen = clicks == 2 ? TextSelection.wordAt(text, x, y) : TextSelection.lineAt(text, x, y)
-            guard let first = chosen.ranges.first, let last = chosen.ranges.last else {
-                selected.clear()
-                return
-            }
-            let (from, to) = (Caret(hit.page, first.start), Caret(hit.page, last.end))
-            selected.set(from, to)
-            multi = (from, to, clicks)
+            selectUnit(hit, text, clicks)
             return
         }
+        let (x, y) = geometry(hit.page).toUser(hit.point.x, hit.point.y)
         let caret = Caret(hit.page, text.caretAt(x, y))
         if extend { selected.extend(caret) } else { selected.set(caret, caret) }
+    }
+
+    private func selectUnit(_ hit: (page: Int, point: ViewPoint), _ text: TextPage, _ clicks: Int) {
+        let (x, y) = geometry(hit.page).toUser(hit.point.x, hit.point.y)
+        let chosen = clicks == 2 ? TextSelection.wordAt(text, x, y) : TextSelection.lineAt(text, x, y)
+        guard let first = chosen.ranges.first, let last = chosen.ranges.last else {
+            selected.clear()
+            return
+        }
+        let (from, to) = (Caret(hit.page, first.start), Caret(hit.page, last.end))
+        selected.set(from, to)
+        multi = (from, to, clicks)
     }
 
     func dragSelection(_ at: ViewPoint) {
