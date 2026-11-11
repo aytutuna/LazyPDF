@@ -283,6 +283,19 @@ final class SignatureVerificationTests: XCTestCase {
         XCTAssertFalse(SignatureChecker.hasWeakKey(try certificate("1.2.840.10045.3.1.7")))
     }
 
+    func test_curvesOf224BitsAndMoreAreNotCalledWeakAndSmallerOnesAre() throws {
+        let key = try SignatureCrypto.newRsaKey(2048)
+        func certificate(_ curve: String) throws -> X509Certificate {
+            let algorithm = DerWriter.sequence([DerWriter.oid(Oids.ecPublicKey), DerWriter.oid(curve)])
+            return try selfSigned(DerWriter.sequence([algorithm, DerWriter.bitString([4] + [UInt8](repeating: 1, count: 40))]), key: key)
+        }
+
+        XCTAssertTrue(SignatureChecker.hasWeakKey(try certificate("1.3.36.3.3.2.8.1.1.3")))
+        XCTAssertTrue(SignatureChecker.hasWeakKey(try certificate("1.3.132.0.30")))
+        XCTAssertFalse(SignatureChecker.hasWeakKey(try certificate("1.3.36.3.3.2.8.1.1.5")))
+        XCTAssertFalse(SignatureChecker.hasWeakKey(try certificate("1.3.132.0.16")))
+    }
+
     func test_aWeakKeyHasItsOwnWords() {
         XCTAssertNotEqual(SignatureText.title(.weakDigest), SignatureText.title(.weakKey))
         XCTAssertNotEqual(SignatureText.advice(.weakDigest), SignatureText.advice(.weakKey))
