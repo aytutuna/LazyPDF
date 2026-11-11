@@ -113,13 +113,14 @@ struct DocumentSwitcher: View {
         Menu {
             ForEach(vm.strip.map { TabEntry(tab: $0) }) { entry in
                 Toggle(isOn: Binding(get: { vm.activeTab === entry.tab }, set: { _ in vm.select(entry.tab) })) {
-                    Label(entry.tab.title, systemImage: entry.tab.symbol)
+                    Label(entry.tab.isDirty ? entry.tab.title + " \u{2022}" : entry.tab.title, systemImage: entry.tab.symbol)
                 }
                 .accessibilityLabel(entry.tab.automationName)
             }
         } label: {
             if showsTitle {
-                Label(vm.activeTab.title, systemImage: vm.activeTab.symbol)
+                Label(vm.activeTab.isDirty ? vm.activeTab.title + " \u{2022}" : vm.activeTab.title, systemImage: vm.activeTab.symbol)
+                    .accessibilityLabel(vm.activeTab.automationName)
             } else {
                 Image(systemName: "list.bullet")
             }
