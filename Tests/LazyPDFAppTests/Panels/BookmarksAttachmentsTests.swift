@@ -96,10 +96,15 @@ final class BookmarksModelTests: XCTestCase {
 @MainActor
 final class AttachmentsModelTests: XCTestCase {
     private func attached(_ dir: TempDir, _ bytes: [UInt8] = PanelPdfs.full()) throws -> AttachmentsModel {
+        try rig(dir, bytes).model
+    }
+
+    private func rig(_ dir: TempDir, _ bytes: [UInt8] = PanelPdfs.full()) throws -> (model: AttachmentsModel, host: RecordingHost, tab: DocumentTab) {
         let tab = try PanelPdfs.tab(bytes)
+        let host = RecordingHost()
         let model = AttachmentsModel(openedFolder: dir.sub("opened"))
-        model.attach(tab, PanelViewer(tab), RecordingHost())
-        return model
+        model.attach(tab, PanelViewer(tab), host)
+        return (model, host, tab)
     }
 
     func test_theListHasEachFileWithItsSizeAndNote() throws {
@@ -117,19 +122,36 @@ final class AttachmentsModelTests: XCTestCase {
         XCTAssertTrue(model.rows.isEmpty)
     }
 
-    func test_openingWritesACopyUnderASafeNameAndHandsItOver() throws {
-        let dir = TempDir(self)
-        let model = try attached(dir)
+    func test_openingAsksFirstThenWritesACopyUnderASafeNameAndHandsItOver() throws {
+        let (model, host, _) = try rig(TempDir(self))
         var handed: URL?
         model.launch = { handed = $0; return true }
         model.selected = 0
 
         model.open()
 
+        XCTAssertNil(handed)
+        let notice = try XCTUnwrap(host.notices.first)
+        XCTAssertEqual(notice.title, "Open this attachment?")
+        notice.action?.run()
         let url = try XCTUnwrap(handed)
         XCTAssertEqual(url.lastPathComponent, "note.txt")
         XCTAssertEqual(try Data(contentsOf: url), Data("hello".utf8))
         XCTAssertNil(model.note)
+    }
+
+    func test_anAnswerAfterTheFileChangedOpensNothing() throws {
+        let (model, host, tab) = try rig(TempDir(self))
+        var handed = false
+        model.launch = { _ in handed = true; return true }
+        model.selected = 0
+        model.open()
+
+        tab.refresh()
+        try XCTUnwrap(host.notices.first?.action).run()
+
+        XCTAssertFalse(handed)
+        XCTAssertEqual(model.note, "The file changed meanwhile. Try again.")
     }
 
     func test_aFileThatCouldRunIsNotOpenedButCanBeSaved() throws {
@@ -149,11 +171,12 @@ final class AttachmentsModelTests: XCTestCase {
     }
 
     func test_whenNothingCanOpenTheCopyTheNoteSaysSo() throws {
-        let model = try attached(TempDir(self))
+        let (model, host, _) = try rig(TempDir(self))
         model.launch = { _ in false }
         model.selected = 0
 
         model.open()
+        try XCTUnwrap(host.notices.first?.action).run()
 
         XCTAssertEqual(model.note, "This attachment could not be opened.")
     }
@@ -170,10 +193,11 @@ final class AttachmentsModelTests: XCTestCase {
 
     func test_theCopiesMadeToOpenFilesCanBeRemoved() throws {
         let dir = TempDir(self)
-        let model = try attached(dir)
+        let (model, host, _) = try rig(dir)
         model.launch = { _ in true }
         model.selected = 0
         model.open()
+        try XCTUnwrap(host.notices.first?.action).run()
         let folder = dir.sub("opened")
         XCTAssertFalse(try FileManager.default.contentsOfDirectory(atPath: folder.path).isEmpty)
 

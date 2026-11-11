@@ -39,6 +39,7 @@ public final class AttachmentsModel: ToolPanelModel {
 
     @ObservationIgnored private let openedFolder: URL
     @ObservationIgnored private var tab: DocumentTab?
+    @ObservationIgnored private var host: ToolHost?
     @ObservationIgnored private var watch: ObservationWatch?
 
     public init(openedFolder: URL) {
@@ -55,6 +56,7 @@ public final class AttachmentsModel: ToolPanelModel {
 
     public func attach(_ tab: DocumentTab, _ viewer: DocumentViewer, _ host: ToolHost) {
         self.tab = tab
+        self.host = host
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.build() })
         build()
     }
@@ -65,6 +67,7 @@ public final class AttachmentsModel: ToolPanelModel {
         rows = []
         selected = nil
         tab = nil
+        host = nil
     }
 
     public var selectedRow: AttachmentRow? {
@@ -89,6 +92,19 @@ public final class AttachmentsModel: ToolPanelModel {
         let name = AttachmentFiles.safeName(row.name)
         if AttachmentFiles.couldRun(name) {
             note = L10n.t("This file could run as a program. Save it instead.")
+            return
+        }
+        guard let tab, let host else { return }
+        let revision = tab.revision
+        host.showNotice(L10n.t("Open this attachment?"), L10n.t("{0} came inside this PDF. Open it only if you trust where the PDF came from.", row.name),
+                        NoticeAction(L10n.t("Open"), { [weak self] in self?.openCopy(row, name, tab, revision) }))
+    }
+
+    private func openCopy(_ row: AttachmentRow, _ name: String, _ tab: DocumentTab, _ revision: Int) {
+        guard self.tab === tab else { return }
+        // A commit or undo may have renumbered the objects, so the row could now be another file.
+        if tab.revision != revision {
+            note = L10n.t("The file changed meanwhile. Try again.")
             return
         }
         guard let bytes = read(row) else { return }

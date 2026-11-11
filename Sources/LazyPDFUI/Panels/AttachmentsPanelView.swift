@@ -5,6 +5,7 @@ import LazyPDFApp
 import LazyPDFKit
 #if os(macOS)
 import AppKit
+import CoreServices
 #else
 import QuickLook
 #endif
@@ -77,6 +78,10 @@ public struct AttachmentsPanelView: View {
 
     private func launch(_ url: URL) -> Bool {
         #if os(macOS)
+        var values = URLResourceValues()
+        values.quarantineProperties = [kLSQuarantineTypeKey as String: kLSQuarantineTypeOtherDownload as String]
+        var copy = url
+        try? copy.setResourceValues(values)
         return NSWorkspace.shared.open(url)
         #else
         preview = url
