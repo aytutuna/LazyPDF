@@ -31,7 +31,7 @@ public static class Problems
 
     public static Problem Tool(Exception error, string action) => error switch
     {
-        PdfReadException => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished because the file could not be read back. Your file was not changed.", action)),
+        PdfReadException => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished because the file could not be read back. If part of it was done, Undo takes it back.", action)),
         UnauthorizedAccessException => Restricted(),
         IOException => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished. Check that the disk has room and that no other program has the file open.", action)),
         _ => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished. If part of it was done, Undo takes it back.", action)),
