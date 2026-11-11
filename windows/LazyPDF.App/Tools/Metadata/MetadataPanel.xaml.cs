@@ -13,7 +13,17 @@ public sealed partial class MetadataPanel : ToolPanel
     private static readonly DateTime FirstDay = new(1900, 1, 1);
     private static readonly DateTime LastDay = new(2100, 1, 1);
 
+    private const int MaxCustom = 100;
+
+    private sealed class CustomRow
+    {
+        public string Name { get; set; } = "";
+        public string Value { get; set; } = "";
+    }
+
     private readonly ToolAction _action;
+    private readonly System.Collections.ObjectModel.ObservableCollection<CustomRow> _custom = [];
+    private string? _customProblem;
     private DocumentMetadata _metadata = null!;
     private ViewerSettings _view = null!;
     private bool _loading = true;
@@ -24,7 +34,8 @@ public sealed partial class MetadataPanel : ToolPanel
     public MetadataPanel()
     {
         InitializeComponent();
-        _action = new ToolAction(Loc.T("Save properties"), "", () => _changed, () => RunAsync(true));
+        _action = new ToolAction(Loc.T("Save properties"), "", () => _changed && _customProblem is null, () => RunAsync(true));
+        CustomList.ItemsSource = _custom;
         ModeBox.ItemsSource = MetadataEdit.Modes.Select(MetadataEdit.ModeName).ToList();
         LayoutBox.ItemsSource = MetadataEdit.Layouts.Select(MetadataEdit.LayoutName).ToList();
         SidesBox.ItemsSource = MetadataEdit.Sides.Select(MetadataEdit.SidesName).ToList();
@@ -50,7 +61,7 @@ public sealed partial class MetadataPanel : ToolPanel
     private bool Store(bool notify)
     {
         if (Tab is null) return true;
-        if (!_changed)
+        if (!_changed || _customProblem is not null)
         {
             if (MetadataEdit.ShowDropNotice(notify, _dropped == Tab.Id)) ShowDropNotice();
             return true;
@@ -96,6 +107,8 @@ public sealed partial class MetadataPanel : ToolPanel
         AuthorBox.Text = _metadata.Author ?? "";
         SubjectBox.Text = _metadata.Subject ?? "";
         KeywordsBox.Text = _metadata.Keywords ?? "";
+        _custom.Clear();
+        foreach (var (name, value) in _metadata.Custom) _custom.Add(new CustomRow { Name = name, Value = value });
         CreatedPicker.SelectedDate = _metadata.Created?.LocalDateTime.Date;
         ModeBox.SelectedIndex = Array.IndexOf(MetadataEdit.Modes, _view.PageMode);
         LayoutBox.SelectedIndex = Array.IndexOf(MetadataEdit.Layouts, _view.PageLayout);
@@ -126,6 +139,7 @@ public sealed partial class MetadataPanel : ToolPanel
             Subject = Text(SubjectBox.Text),
             Keywords = Text(KeywordsBox.Text),
             Created = created,
+            Custom = MetadataEdit.Custom(CustomPairs()),
         };
         var view = _view with
         {
@@ -150,9 +164,38 @@ public sealed partial class MetadataPanel : ToolPanel
     {
         if (_loading || Tab is null) return;
         var (metadata, view) = ReadForm();
-        _changed = metadata != _metadata || view != _view;
+        _changed = !MetadataEdit.Same(metadata, _metadata) || view != _view;
+        _customProblem = MetadataEdit.CustomProblem(CustomPairs());
+        CustomNote.Text = MetadataEdit.CustomNote(CustomPairs()) ?? "";
+        AddCustomButton.IsEnabled = _custom.Count < MaxCustom;
         if (_changed) _editing = Tab.Id;
         RaiseActionChanged();
+    }
+
+    private List<(string Name, string Value)> CustomPairs() => _custom.Select(row => (row.Name, row.Value)).ToList();
+
+    private void CustomName_Changed(object sender, TextChangedEventArgs e)
+    {
+        ((CustomRow)((TextBox)sender).DataContext).Name = ((TextBox)sender).Text;
+        Field_Changed(sender, e);
+    }
+
+    private void CustomValue_Changed(object sender, TextChangedEventArgs e)
+    {
+        ((CustomRow)((TextBox)sender).DataContext).Value = ((TextBox)sender).Text;
+        Field_Changed(sender, e);
+    }
+
+    private void AddCustom_Click(object sender, RoutedEventArgs e)
+    {
+        _custom.Add(new CustomRow());
+        Field_Changed(sender, e);
+    }
+
+    private void RemoveCustom_Click(object sender, RoutedEventArgs e)
+    {
+        _custom.Remove((CustomRow)((Button)sender).DataContext);
+        Field_Changed(sender, e);
     }
 
     private Task RunAsync(bool notify)
@@ -179,6 +222,6 @@ public sealed partial class MetadataPanel : ToolPanel
     private void ShowDropNotice()
     {
         _dropped = Guid.Empty;
-        Host!.ShowNotice(Loc.T("Old values are still in the file"), Loc.T("The earlier title, author, subject or keywords can still be found in the file's history. Clean for sharing removes them."));
+        Host!.ShowNotice(Loc.T("Old values are still in the file"), Loc.T("The earlier title, author, subject, keywords or custom values can still be found in the file's history. Clean for sharing removes them."));
     }
 }

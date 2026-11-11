@@ -118,6 +118,9 @@
   <data name="A path that clips cannot be changed." xml:space="preserve">
     <value>Kırpan bir yol değiştirilemez.</value>
   </data>
+  <data name="A property with no value is not kept." xml:space="preserve">
+    <value>Değeri olmayan özellik saklanmaz.</value>
+  </data>
   <data name="A protected file cannot open as a copy. Save the signed version, then open it." xml:space="preserve">
     <value>Korumalı bir dosya kopya olarak açılamaz. İmzalı sürümü kaydedip sonra açın.</value>
   </data>
@@ -282,6 +285,9 @@
   </data>
   <data name="Add pictures" xml:space="preserve">
     <value>Resim ekle</value>
+  </data>
+  <data name="Add property" xml:space="preserve">
+    <value>Özellik ekle</value>
   </data>
   <data name="Add step" xml:space="preserve">
     <value>Adım ekle</value>
@@ -1398,6 +1404,9 @@
   </data>
   <data name="Custom" xml:space="preserve">
     <value>Özel</value>
+  </data>
+  <data name="Custom properties" xml:space="preserve">
+    <value>Özel özellikler</value>
   </data>
   <data name="Custom size" xml:space="preserve">
     <value>Özel boyut</value>
@@ -4171,6 +4180,12 @@
   <data name="Properties changed." xml:space="preserve">
     <value>Özellikler değişti.</value>
   </data>
+  <data name="Property name" xml:space="preserve">
+    <value>Özellik adı</value>
+  </data>
+  <data name="Property value" xml:space="preserve">
+    <value>Özellik değeri</value>
+  </data>
   <data name="Protect" xml:space="preserve">
     <value>Koru</value>
   </data>
@@ -4395,6 +4410,9 @@
   </data>
   <data name="Remove private keys" xml:space="preserve">
     <value>Özel anahtarları kaldır</value>
+  </data>
+  <data name="Remove property" xml:space="preserve">
+    <value>Özelliği kaldır</value>
   </data>
   <data name="Remove protection" xml:space="preserve">
     <value>Korumayı kaldır</value>
@@ -5680,8 +5698,8 @@
   <data name="The document language is set." xml:space="preserve">
     <value>Belgenin dili ayarlı.</value>
   </data>
-  <data name="The earlier title, author, subject or keywords can still be found in the file's history. Clean for sharing removes them." xml:space="preserve">
-    <value>Önceki başlık, yazar, konu veya anahtar sözcükler dosyanın geçmişinde hâlâ bulunabilir. Paylaşım için temizle bunları kaldırır.</value>
+  <data name="The earlier title, author, subject, keywords or custom values can still be found in the file's history. Clean for sharing removes them." xml:space="preserve">
+    <value>Önceki başlık, yazar, konu, anahtar sözcükler veya özel değerler dosyanın geçmişinde hâlâ bulunabilir. Paylaşım için temizle bunları kaldırır.</value>
   </data>
   <data name="The embedded font program could not be read." xml:space="preserve">
     <value>Gömülü yazı tipi programı okunamadı.</value>
@@ -6604,6 +6622,9 @@
   <data name="Two pages at a time, cover alone" xml:space="preserve">
     <value>Aynı anda iki sayfa, kapak tek başına</value>
   </data>
+  <data name="Two properties are named {0}." xml:space="preserve">
+    <value>İki özelliğin adı {0}.</value>
+  </data>
   <data name="Type" xml:space="preserve">
     <value>Yaz</value>
   </data>
@@ -7320,6 +7341,9 @@
   </data>
   <data name="{0} is a folder, not a file. Open the files inside it, or use Batch to work on a whole folder." xml:space="preserve">
     <value>{0} bir dosya değil, klasör. İçindeki dosyaları açın ya da bir klasörün tamamında çalışmak için Toplu işlem'i kullanın.</value>
+  </data>
+  <data name="{0} is a name the file keeps for itself. Choose another." xml:space="preserve">
+    <value>{0} adını dosya kendisi için kullanıyor. Başka bir ad seçin.</value>
   </data>
   <data name="{0} is encrypted for the holders of certain certificates. Pick the certificate that can open it." xml:space="preserve">
     <value>{0}, belirli sertifikaların sahipleri için şifrelenmiş. Onu açabilen sertifikayı seçin.</value>

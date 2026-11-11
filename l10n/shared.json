@@ -6590,8 +6590,32 @@
   "Old values are still in the file": {
     "tr": "Eski değerler hâlâ dosyada"
   },
-  "The earlier title, author, subject or keywords can still be found in the file's history. Clean for sharing removes them.": {
-    "tr": "Önceki başlık, yazar, konu veya anahtar sözcükler dosyanın geçmişinde hâlâ bulunabilir. Paylaşım için temizle bunları kaldırır."
+  "The earlier title, author, subject, keywords or custom values can still be found in the file's history. Clean for sharing removes them.": {
+    "tr": "Önceki başlık, yazar, konu, anahtar sözcükler veya özel değerler dosyanın geçmişinde hâlâ bulunabilir. Paylaşım için temizle bunları kaldırır."
+  },
+  "Custom properties": {
+    "tr": "Özel özellikler"
+  },
+  "Property name": {
+    "tr": "Özellik adı"
+  },
+  "Property value": {
+    "tr": "Özellik değeri"
+  },
+  "Remove property": {
+    "tr": "Özelliği kaldır"
+  },
+  "Add property": {
+    "tr": "Özellik ekle"
+  },
+  "{0} is a name the file keeps for itself. Choose another.": {
+    "tr": "{0} adını dosya kendisi için kullanıyor. Başka bir ad seçin."
+  },
+  "Two properties are named {0}.": {
+    "tr": "İki özelliğin adı {0}."
+  },
+  "A property with no value is not kept.": {
+    "tr": "Değeri olmayan özellik saklanmaz."
   },
   "Add watermark": {
     "tr": "Filigran ekle"
