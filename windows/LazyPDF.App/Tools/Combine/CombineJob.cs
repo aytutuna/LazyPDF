@@ -33,6 +33,8 @@ internal static class CombineJob
             .Where(page => page >= 0 && page < document.Pages.Count)];
 
     /// <summary>How many parts a split at the bookmarks makes: bookmarks on the same page, or on the first, add none.</summary>
+    public static int PartsOver(IEnumerable<byte[]> parts, long limit) => parts.Count(part => part.Length > limit);
+
     public static int BookmarkParts(PdfDocument document) => BookmarkStarts(document).Where(page => page != 0).Distinct().Count() + 1;
 
     public static string PartName(string stem, int part, int parts) =>

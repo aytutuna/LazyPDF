@@ -6799,6 +6799,9 @@
   <data name="{0} page|plural" xml:space="preserve">
     <value>{0} sayfa</value>
   </data>
+  <data name="{0} part is bigger than {1} MB. A single page is too large to fit.|plural" xml:space="preserve">
+    <value>{0} parça {1} MB'tan büyük. Tek bir sayfa sığmayacak kadar büyük.</value>
+  </data>
   <data name="{0} parts opened." xml:space="preserve">
     <value>{0} parça açıldı.</value>
   </data>

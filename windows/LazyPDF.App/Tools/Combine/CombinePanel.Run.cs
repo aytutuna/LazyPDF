@@ -60,7 +60,7 @@ public partial class CombinePanel
         bool protectedSource = documents.Any(document => document.IsEncrypted);
         if (folder is not null)
         {
-            Saved(host, folder, [(name, bytes)], protectedSource);
+            Saved(host, folder, [(name, bytes)], protectedSource, "");
             return;
         }
         if (!await host.OpenNewAsync(bytes, name)) return;
@@ -123,6 +123,13 @@ public partial class CombinePanel
             return;
         }
 
+        string big = "";
+        if (kind == SplitBy.Size)
+        {
+            int over = CombineJob.PartsOver(parts, (long)(amount * CombineJob.MegabyteBytes));
+            if (over > 0) big = Loc.Plural(over, "{0} part is bigger than {1} MB. A single page is too large to fit.", "{0} parts are bigger than {1} MB. A single page is too large to fit.", amount);
+        }
+
         string stem = System.IO.Path.GetFileNameWithoutExtension(tab.Title);
         var named = parts.Select((bytes, i) => (CombineJob.PartName(stem, i, parts.Count), bytes)).ToList();
         if (folder is null && parts.Count > MostTabs)
@@ -133,7 +140,7 @@ public partial class CombinePanel
         }
         if (folder is not null)
         {
-            Saved(host, folder, named, tab.Document.IsEncrypted);
+            Saved(host, folder, named, tab.Document.IsEncrypted, big);
             return;
         }
         int opened = 0;
@@ -146,10 +153,12 @@ public partial class CombinePanel
         {
             // The info bar still says which part failed, so the word on protection goes in the status.
             string some = Loc.T("{0} of {1} parts opened.", opened, parts.Count);
+            if (big.Length > 0) some += " " + big;
             host.SetStatus(tab.Document.IsEncrypted ? some + " " + CopyRules.Unprotected : some);
             return;
         }
-        host.SetStatus(Loc.T("{0} parts opened.", opened));
+        string all = Loc.T("{0} parts opened.", opened);
+        host.SetStatus(big.Length > 0 ? all + " " + big : all);
         CopyRules.NoteUnprotected(tab.Document, host);
     }
 
@@ -161,7 +170,7 @@ public partial class CombinePanel
         return _folder;
     }
 
-    private static void Saved(IToolHost host, string folder, IReadOnlyList<(string Name, byte[] Bytes)> files, bool protectedSource)
+    private static void Saved(IToolHost host, string folder, IReadOnlyList<(string Name, byte[] Bytes)> files, bool protectedSource, string extra)
     {
         string first = "";
         try
@@ -178,6 +187,8 @@ public partial class CombinePanel
             host.ShowProblem(Problems.Save(error, System.IO.Path.GetFileName(folder)));
             return;
         }
-        host.ShowNotice(Loc.Plural(files.Count, "{0} file saved", "{0} files saved", files.Count), protectedSource ? folder + ". " + CopyRules.Unprotected : folder, new NoticeAction(Loc.T("Open the first"), () => _ = host.OpenAsync(first)));
+        string body = protectedSource ? folder + ". " + CopyRules.Unprotected : folder;
+        if (extra.Length > 0) body += " " + extra;
+        host.ShowNotice(Loc.Plural(files.Count, "{0} file saved", "{0} files saved", files.Count), body, new NoticeAction(Loc.T("Open the first"), () => _ = host.OpenAsync(first)));
     }
 }

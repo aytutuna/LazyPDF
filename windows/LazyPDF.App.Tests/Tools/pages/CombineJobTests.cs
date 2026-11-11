@@ -249,4 +249,11 @@ public sealed class CombineJobTests
 
         public void Dispose() => System.Globalization.CultureInfo.CurrentCulture = _before;
     }
+
+    [Fact]
+    public void PartsOverCountsOnlyThoseBiggerThanTheLimit()
+    {
+        var parts = new List<byte[]> { new byte[99], new byte[100], new byte[101], new byte[500] };
+        Assert.Equal(2, CombineJob.PartsOver(parts, 100));
+    }
 }

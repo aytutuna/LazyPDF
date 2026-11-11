@@ -4622,6 +4622,10 @@
   "{0} of {1} parts opened.": {
     "tr": "{1} parçadan {0} tanesi açıldı."
   },
+  "{0} part is bigger than {1} MB. A single page is too large to fit.": {
+    "other": "{0} parts are bigger than {1} MB. A single page is too large to fit.",
+    "tr": "{0} parça {1} MB'tan büyük. Tek bir sayfa sığmayacak kadar büyük."
+  },
   "Save to a folder": {
     "tr": "Klasöre kaydet"
   },
