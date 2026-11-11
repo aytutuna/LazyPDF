@@ -321,13 +321,16 @@ public partial class PageViewer
 
     public bool CanCopy => _tab is null || Exporter.Allowed(_tab.Document);
 
-    private async Task CopySelectionAsync()
+    private bool RefuseCopy()
     {
-        if (!CanCopy)
-        {
-            Tell(Loc.T("The owner of this file does not allow copying."), null);
-            return;
-        }
+        if (CanCopy) return false;
+        Tell(Loc.T("The owner of this file does not allow copying."), null);
+        return true;
+    }
+
+    internal async Task CopySelectionAsync()
+    {
+        if (_selection.IsEmpty || RefuseCopy()) return;
         var runs = await GetSelectionAsync();
         if (runs.Count == 0) return;
         string text = string.Join("\n", runs.Select(r => r.Text));

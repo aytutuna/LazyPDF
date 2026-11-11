@@ -195,7 +195,7 @@ public partial class PageViewer
         if (_tab is null) return;
         if (_reading) ReadingMode = false;
         Find.Visibility = Visibility.Visible;
-        string? selected = _selection.IsEmpty || _selection.Start.Page != _selection.End.Page ? null : SelectedOnOnePage();
+        string? selected = _selection.IsEmpty || _selection.Start.Page != _selection.End.Page || !CanCopy ? null : SelectedOnOnePage();
         Find.Open(selected);
     }
 

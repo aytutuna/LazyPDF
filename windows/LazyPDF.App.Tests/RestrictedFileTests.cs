@@ -66,6 +66,36 @@ public sealed class RestrictedFileTests
         return Task.CompletedTask;
     });
 
+    [Fact]
+    public Task CopyingWithNothingSelectedSaysNothing() => Sta.Run(async () =>
+    {
+        var viewer = new PageViewer();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Restricted(PdfPermissions.All & ~PdfPermissions.Copy)), new FakeRenderer(), null, "a.pdf");
+        viewer.Show(tab);
+
+        await viewer.CopySelectionAsync();
+
+        Assert.Equal(Visibility.Collapsed, ((FrameworkElement)viewer.FindName("LinkCard")).Visibility);
+    });
+
+    [Fact]
+    public Task CopyingASelectionIsRefusedAndTheFindBoxStaysEmpty() => Sta.Run(async () =>
+    {
+        var viewer = new PageViewer();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Restricted(PdfPermissions.All & ~PdfPermissions.Copy)), new FakeRenderer(), null, "a.pdf");
+        viewer.Show(tab);
+        viewer.SelectAll();
+        await viewer.GetSelectionAsync();
+        Clipboard.SetText("before");
+
+        await viewer.CopySelectionAsync();
+        viewer.ShowFind();
+
+        Assert.Equal("before", Clipboard.GetText());
+        AssertCard(viewer, "The owner of this file does not allow copying.");
+        Assert.Equal("", ((FindBar)viewer.FindName("Find")).Query.Text);
+    });
+
     [Theory]
     [InlineData("SetOCGState", "This link shows or hides a layer. Use the Layers panel for that.")]
     [InlineData("GoToE", "This link goes to a file inside this file, which Lazy PDF does not open from here.")]
