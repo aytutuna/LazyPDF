@@ -46,6 +46,33 @@ public partial class MainWindow
         return _vm.SaveAs(tab, path);
     }
 
+    private void SaveCopy_Click(object sender, RoutedEventArgs e)
+    {
+        if (_inspectorPanel?.HandIn() == false || _vm.ActiveDocument is not { } tab) return;
+        string name = Loc.T("{0} - copy", System.IO.Path.GetFileNameWithoutExtension(tab.Title));
+        if (AskForPath(tab, Loc.T("Save a copy"), name) is { } path) _vm.SaveCopy(tab, path);
+    }
+
+    private void SaveAll_Click(object sender, RoutedEventArgs e) => SaveAllWithDialogs();
+
+    private bool SaveAllWithDialogs()
+    {
+        int saved = 0;
+        bool all = true;
+        foreach (var tab in _vm.Documents.Where(d => d.IsDirty).ToList())
+        {
+            _vm.ActiveTab = tab;
+            if (_inspectorPanel?.HandIn() == false || !(AppViewModel.NeedsName(tab) ? SaveAsWithDialog() : _vm.Save(tab)))
+            {
+                all = false;
+                break;
+            }
+            saved++;
+        }
+        if (saved > 0) _vm.SetStatus(Loc.Plural(saved, "Saved {0} file.", "Saved {0} files."));
+        return all;
+    }
+
     private void SaveCompact_Click(object sender, RoutedEventArgs e)
     {
         if (_vm.ActiveDocument is not { } tab || _inspectorPanel?.HandIn() == false) return;
@@ -63,7 +90,7 @@ public partial class MainWindow
         if (AskForPath(tab, Loc.T("Save compact")) is { } path) _vm.SaveCompact(tab, path);
     }
 
-    private string? AskForPath(DocumentTab tab, string title)
+    private string? AskForPath(DocumentTab tab, string title, string? name = null)
     {
         var dialog = new SaveFileDialog
         {
@@ -72,7 +99,7 @@ public partial class MainWindow
             DefaultExt = ".pdf",
             AddExtension = true,
             OverwritePrompt = true,
-            FileName = System.IO.Path.GetFileNameWithoutExtension(tab.Title),
+            FileName = name ?? System.IO.Path.GetFileNameWithoutExtension(tab.Title),
             InitialDirectory = tab.Path is { } path ? System.IO.Path.GetDirectoryName(path) : null,
         };
         return dialog.ShowDialog(this) == true ? dialog.FileName : null;
@@ -81,7 +108,8 @@ public partial class MainWindow
     private void SaveMenu_Click(object sender, RoutedEventArgs e)
     {
         bool open = _vm.ActiveDocument is not null;
-        SaveAsItem.IsEnabled = SaveCompactItem.IsEnabled = open;
+        SaveAsItem.IsEnabled = SaveCopyItem.IsEnabled = SaveCompactItem.IsEnabled = open;
+        SaveAllItem.IsEnabled = !_vm.IsBusy && _vm.Documents.Any(d => d.IsDirty);
         SaveMenu.PlacementTarget = SaveMenuButton;
         SaveMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
         SaveMenu.IsOpen = true;

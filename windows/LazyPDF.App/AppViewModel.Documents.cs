@@ -283,6 +283,27 @@ public sealed partial class AppViewModel
 
     public bool SaveAs(DocumentTab tab, string path) => !OpenElsewhere(tab, path) && Write(tab, () => tab.SaveAs(path));
 
+    public bool SaveCopy(DocumentTab tab, string path)
+    {
+        if (SamePath(tab.Path, path))
+        {
+            ShowProblem(new Problem(Loc.T("File is open"), Loc.T("{0} is the file this copy would replace. Pick another name.", tab.Title)));
+            return false;
+        }
+        if (OpenElsewhere(tab, path)) return false;
+        try
+        {
+            tab.SaveCopy(path);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or PdfReadException)
+        {
+            ShowProblem(Problems.Save(e, tab.Title));
+            return false;
+        }
+        SetStatus(Loc.T("Saved a copy of {0}.", tab.Title));
+        return true;
+    }
+
     public bool SaveCompact(DocumentTab tab, string path)
     {
         if (OpenElsewhere(tab, path) || !Write(tab, () => tab.SaveCompact(path))) return false;

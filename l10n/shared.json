@@ -1739,6 +1739,25 @@
   "Saved compact": {
     "tr": "Küçülterek kaydedildi"
   },
+  "Save a copy": {
+    "tr": "Kopya kaydet"
+  },
+  "Saved a copy of {0}.": {
+    "tr": "{0} dosyasının kopyası kaydedildi."
+  },
+  "{0} - copy": {
+    "tr": "{0} - kopya"
+  },
+  "{0} is the file this copy would replace. Pick another name.": {
+    "tr": "Bu kopya {0} dosyasının yerine yazılırdı. Başka bir ad seçin."
+  },
+  "Save all": {
+    "tr": "Tümünü kaydet"
+  },
+  "Saved {0} file.": {
+    "other": "Saved {0} files.",
+    "tr": "{0} dosya kaydedildi."
+  },
   "{0} was saved without its history, so the earlier steps can no longer be undone.": {
     "tr": "{0} geçmişi olmadan kaydedildi, bu yüzden önceki adımlar artık geri alınamaz."
   },
@@ -1850,8 +1869,17 @@
   "Save compact…": {
     "tr": "Küçülterek kaydet…"
   },
+  "Save a copy…": {
+    "tr": "Kopya kaydet…"
+  },
+  "Writes the file as it is now under another name and keeps this one as it is.": {
+    "tr": "Dosyayı şu anki haliyle başka bir adla yazar, bunu olduğu gibi bırakır."
+  },
   "Writes the file again without its history of changes.": {
     "tr": "Dosyayı değişiklik geçmişi olmadan yeniden yazar."
+  },
+  "Saves every file that has changes.": {
+    "tr": "Değişiklik yapılmış tüm dosyaları kaydeder."
   },
   "Undo (Ctrl+Z)": {
     "tr": "Geri al (Ctrl+Z)"
@@ -2218,9 +2246,6 @@
   },
   "The attachment could not be saved. Check the folder and try again.": {
     "tr": "Ek kaydedilemedi. Klasörü denetleyip yeniden deneyin."
-  },
-  "Save all": {
-    "tr": "Tümünü kaydet"
   },
   "Save all attachments to a folder": {
     "tr": "Tüm ekleri bir klasöre kaydet"

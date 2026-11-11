@@ -4645,6 +4645,12 @@
   <data name="Save (Ctrl+S)" xml:space="preserve">
     <value>Kaydet (Ctrl+S)</value>
   </data>
+  <data name="Save a copy" xml:space="preserve">
+    <value>Kopya kaydet</value>
+  </data>
+  <data name="Save a copy…" xml:space="preserve">
+    <value>Kopya kaydet…</value>
+  </data>
   <data name="Save a summary of the comments" xml:space="preserve">
     <value>Yorumların özetini kaydet</value>
   </data>
@@ -4732,6 +4738,9 @@
   <data name="Saved" xml:space="preserve">
     <value>Kayıtlı</value>
   </data>
+  <data name="Saved a copy of {0}." xml:space="preserve">
+    <value>{0} dosyasının kopyası kaydedildi.</value>
+  </data>
   <data name="Saved as {0}." xml:space="preserve">
     <value>{0} olarak kaydedildi.</value>
   </data>
@@ -4753,11 +4762,17 @@
   <data name="Saved {0} file in {1}.|plural" xml:space="preserve">
     <value>{0} dosya {1} klasörüne kaydedildi.</value>
   </data>
+  <data name="Saved {0} file.|plural" xml:space="preserve">
+    <value>{0} dosya kaydedildi.</value>
+  </data>
   <data name="Saved {0}." xml:space="preserve">
     <value>{0} kaydedildi.</value>
   </data>
   <data name="Saved." xml:space="preserve">
     <value>Kaydedildi.</value>
+  </data>
+  <data name="Saves every file that has changes." xml:space="preserve">
+    <value>Değişiklik yapılmış tüm dosyaları kaydeder.</value>
   </data>
   <data name="Saving attachments" xml:space="preserve">
     <value>Ekler kaydediliyor</value>
@@ -7027,6 +7042,9 @@
   <data name="Writes the file again without its history of changes." xml:space="preserve">
     <value>Dosyayı değişiklik geçmişi olmadan yeniden yazar.</value>
   </data>
+  <data name="Writes the file as it is now under another name and keeps this one as it is." xml:space="preserve">
+    <value>Dosyayı şu anki haliyle başka bir adla yazar, bunu olduğu gibi bırakır.</value>
+  </data>
   <data name="Writing report" xml:space="preserve">
     <value>Rapor yazılıyor</value>
   </data>
@@ -7134,6 +7152,9 @@
   </data>
   <data name="{0} ({1})" xml:space="preserve">
     <value>{0} ({1})</value>
+  </data>
+  <data name="{0} - copy" xml:space="preserve">
+    <value>{0} - kopya</value>
   </data>
   <data name="{0} KB" xml:space="preserve">
     <value>{0} KB</value>
@@ -7392,6 +7413,9 @@
   </data>
   <data name="{0} is signed. Saving it compact writes it again and the signatures no longer hold. Save and Save as keep them." xml:space="preserve">
     <value>{0} imzalı. Sıkıştırılmış kaydetmek dosyayı yeniden yazar ve imzalar geçerliliğini yitirir. Kaydet ve Farklı kaydet imzaları korur.</value>
+  </data>
+  <data name="{0} is the file this copy would replace. Pick another name." xml:space="preserve">
+    <value>Bu kopya {0} dosyasının yerine yazılırdı. Başka bir ad seçin.</value>
   </data>
   <data name="{0} is too big for this format. Export fewer pages or pick another format." xml:space="preserve">
     <value>{0} bu biçim için çok büyük. Daha az sayfa aktarın veya başka bir biçim seçin.</value>

@@ -153,8 +153,13 @@
                     <Button.ContextMenu>
                         <ContextMenu x:Name="SaveMenu">
                             <MenuItem x:Name="SaveAsItem" Header="{loc:T Save as…}" AutomationProperties.Name="{loc:T Save as}" Click="SaveAs_Click" />
+                            <MenuItem x:Name="SaveCopyItem" Header="{loc:T Save a copy…}" AutomationProperties.Name="{loc:T Save a copy}"
+                                      ToolTip="{loc:T Writes the file as it is now under another name and keeps this one as it is.}" Click="SaveCopy_Click" />
                             <MenuItem x:Name="SaveCompactItem" Header="{loc:T Save compact…}" AutomationProperties.Name="{loc:T Save compact}"
                                       ToolTip="{loc:T Writes the file again without its history of changes.}" Click="SaveCompact_Click" />
+                            <Separator />
+                            <MenuItem x:Name="SaveAllItem" Header="{loc:T Save all}" AutomationProperties.Name="{loc:T Save all}"
+                                      ToolTip="{loc:T Saves every file that has changes.}" Click="SaveAll_Click" />
                         </ContextMenu>
                     </Button.ContextMenu>
                 </Button>

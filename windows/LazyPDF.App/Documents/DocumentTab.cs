@@ -142,6 +142,14 @@ public sealed class DocumentTab : ITab, IDisposable
         Saved();
     }
 
+    /// <summary>Writes the current content to <paramref name="path"/> and changes nothing about the tab.</summary>
+    public void SaveCopy(string path)
+    {
+        byte[] bytes = Session.Current.ToArray();
+        if (Certificate is { } certificate) PdfFileSaver.Save(path, bytes, certificate);
+        else PdfFileSaver.Save(path, bytes, Password);
+    }
+
     /// <summary>The file this tab holds was renamed or moved: follow it without touching the content.</summary>
     public void MoveTo(string path)
     {
