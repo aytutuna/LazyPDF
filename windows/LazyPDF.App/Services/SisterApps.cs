@@ -16,17 +16,39 @@ public sealed class SisterApps : ISisterApps
 
     private static readonly string PrintPipe = $"LazyPrint.Open.{Process.GetCurrentProcess().SessionId}";
 
-    private (DateTime At, bool Found) _scan, _print;
+    private readonly object _lock = new();
+    private (DateTime At, bool Found, bool Busy) _scan, _print;
+
+    public SisterApps()
+    {
+        _ = LazyScanInstalled;
+        _ = LazyPrintInstalled;
+    }
 
     // Asked of Windows when the classes key has no entry, which takes a moment, and the Home tab and the toolbar ask often.
+    // A stale answer is returned at once and refreshed in the background; the next refresh of the window sees the new one.
     public bool LazyScanInstalled => Cached(ref _scan, ScanScheme);
 
     public bool LazyPrintInstalled => Cached(ref _print, PrintScheme);
 
-    private static bool Cached(ref (DateTime At, bool Found) slot, string scheme)
+    private bool Cached(ref (DateTime At, bool Found, bool Busy) slot, string scheme)
     {
-        if (DateTime.UtcNow - slot.At > TimeSpan.FromSeconds(30)) slot = (DateTime.UtcNow, HasScheme(scheme));
-        return slot.Found;
+        lock (_lock)
+        {
+            if (DateTime.UtcNow - slot.At <= TimeSpan.FromSeconds(30) || slot.Busy) return slot.Found;
+            slot.Busy = true;
+        }
+        // A ref cannot be captured, so the slot is picked again by scheme.
+        Task.Run(() =>
+        {
+            var result = HasScheme(scheme);
+            lock (_lock)
+            {
+                if (scheme == ScanScheme) _scan = (DateTime.UtcNow, result, false);
+                else _print = (DateTime.UtcNow, result, false);
+            }
+        });
+        lock (_lock) return slot.Found;
     }
 
     public bool OpenLazyScan()
