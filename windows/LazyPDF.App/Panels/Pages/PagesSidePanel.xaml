@@ -7,7 +7,9 @@
     <ListBox x:Name="Thumbs" BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Center"
              ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True"
              VirtualizingPanel.ScrollUnit="Pixel" AutomationProperties.Name="{loc:T Page thumbnails}"
-             SelectionChanged="Thumbs_SelectionChanged">
+             SelectionChanged="Thumbs_SelectionChanged"
+             PreviewMouseLeftButtonDown="Thumbs_PreviewMouseLeftButtonDown"
+             PreviewMouseLeftButtonUp="Thumbs_PreviewMouseLeftButtonUp">
         <ListBox.ItemContainerStyle>
             <Style TargetType="ListBoxItem" BasedOn="{StaticResource ThumbnailListItemStyle}">
                 <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />

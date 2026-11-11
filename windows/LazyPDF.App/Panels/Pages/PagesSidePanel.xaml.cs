@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using LazyPDF.App.Services;
 using LazyPDF.App.Tools;
@@ -13,6 +14,7 @@ public partial class PagesSidePanel : ToolPanel
     private const double BoxHeight = 190;
 
     private bool _syncing;
+    private PageThumb? _downThumb;
 
     public PagesSidePanel() => InitializeComponent();
 
@@ -72,6 +74,20 @@ public partial class PagesSidePanel : ToolPanel
     {
         if (_syncing || Thumbs.SelectedIndex < 0 || Viewer is not { } viewer) return;
         if (viewer.PageIndex != Thumbs.SelectedIndex) viewer.GoToPage(Thumbs.SelectedIndex);
+    }
+
+    // Clicking the row already selected raises no SelectionChanged, so it is handled here.
+    private void Thumbs_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        var item = ItemsControl.ContainerFromElement(Thumbs, (DependencyObject)e.OriginalSource) as ListBoxItem;
+        _downThumb = item is { IsSelected: true } ? item.DataContext as PageThumb : null;
+    }
+
+    private void Thumbs_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        var item = ItemsControl.ContainerFromElement(Thumbs, (DependencyObject)e.OriginalSource) as ListBoxItem;
+        if (_downThumb is { } thumb && item?.DataContext == thumb) Viewer?.GoToPage(thumb.Index);
+        _downThumb = null;
     }
 
     private void Thumb_Unloaded(object sender, RoutedEventArgs e)
