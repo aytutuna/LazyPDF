@@ -85,6 +85,7 @@ public sealed class OneTabPerFileTests
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
         f.Vm.SelectTool("stamps");
+        await f.SettledAsync();
         File.WriteAllBytes(path, Pdfs.Text(pages: 3));
         File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddMinutes(10));
         string moved = Path.Combine(Path.GetDirectoryName(path)!, "moved.pdf");

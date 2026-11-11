@@ -18,6 +18,7 @@ public sealed class DiskNoticeTests
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
         f.Vm.SelectTool("stamps");
+        await f.SettledAsync();
         Touch(path, 2, 10);
         await f.Vm.CheckDiskAsync();
         f.Vm.DismissMessage();
@@ -35,7 +36,7 @@ public sealed class DiskNoticeTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
-        await f.Vm.DiskCheck; // the check the open started must not meet the touch
+        await f.SettledAsync();
         Touch(path, 2, 10);
         await f.Vm.CheckDiskAsync();
         f.Vm.DismissMessage();
@@ -53,11 +54,12 @@ public sealed class DiskNoticeTests
         string a = f.Pdf("a.pdf");
         await f.Vm.OpenFilesAsync([a, f.Pdf("b.pdf")]);
         f.Vm.SelectTool("stamps");
+        await f.SettledAsync();
         Touch(a, 2, 10);
         f.Vm.DismissMessage();
 
         f.Vm.ActiveTab = f.Vm.Documents.First();
-        for (int i = 0; i < 100 && f.Vm.Message is null; i++) await Task.Delay(50);
+        await f.SettledAsync();
 
         Assert.Equal("File changed", f.Vm.Message?.Title);
     }
@@ -69,6 +71,7 @@ public sealed class DiskNoticeTests
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
         f.Vm.SelectTool("stamps");
+        await f.SettledAsync();
         Touch(path, 2, 10);
         await f.Vm.CheckDiskAsync();
         await f.Vm.ReloadAsync(f.Vm.ActiveDocument!);

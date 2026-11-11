@@ -12,6 +12,7 @@ public sealed class CloseFlowTests
         var tab = f.Vm.ActiveDocument!;
         Pdfs.Retitle(tab.Session, "Changed");
         tab.Commit("Properties");
+        await f.SettledAsync();
         return tab;
     }
 

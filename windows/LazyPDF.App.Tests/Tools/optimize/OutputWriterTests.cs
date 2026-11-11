@@ -94,6 +94,7 @@ public sealed class OutputWriterTests
         string path = f.Pdf("report.pdf", 1);
         await f.Vm.OpenAsync(path);
         var tab = f.Vm.ActiveDocument!;
+        await f.SettledAsync();
         File.WriteAllBytes(path, Pdfs.Text(3));
         File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddMinutes(5));
         byte[] theirs = File.ReadAllBytes(path);

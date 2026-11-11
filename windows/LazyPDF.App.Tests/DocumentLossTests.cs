@@ -114,7 +114,7 @@ public sealed class DocumentLossTests
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
         var tab = f.Vm.ActiveDocument!;
-        await f.Vm.DiskCheck; // the check the open started must not meet the reload
+        await f.SettledAsync();
         Touch(path, "%PDF-1.7\n"u8.ToArray());
 
         await f.Vm.ReloadAsync(tab);
@@ -131,7 +131,7 @@ public sealed class DocumentLossTests
         await f.Vm.OpenAsync(path);
         await f.Vm.SubmitPasswordAsync("secret");
         var tab = f.Vm.ActiveDocument!;
-        await f.Vm.DiskCheck; // the check the open started must not meet the reload
+        await f.SettledAsync();
         Touch(path, File.ReadAllBytes(Pdfs.Fixture("locked.pdf")));
 
         await f.Vm.ReloadAsync(tab);
@@ -150,6 +150,7 @@ public sealed class DocumentLossTests
         var tab = f.Vm.ActiveDocument!;
         Pdfs.Retitle(tab.Session, "Mine");
         tab.Commit("Properties");
+        await f.SettledAsync();
         Touch(path, Pdfs.Text(pages: 3));
 
         bool saved = f.Vm.Save(tab);
@@ -171,6 +172,7 @@ public sealed class DocumentLossTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        await f.SettledAsync();
         Touch(path, Pdfs.Text(pages: 2));
 
         Assert.False(f.Vm.Save(f.Vm.ActiveDocument!));
@@ -183,6 +185,7 @@ public sealed class DocumentLossTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        await f.SettledAsync();
         File.Delete(path);
 
         Assert.True(f.Vm.Save(f.Vm.ActiveDocument!));

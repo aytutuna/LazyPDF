@@ -30,6 +30,7 @@ public sealed class DiskChangeTests
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
         f.Vm.SelectTool("stamps");
+        await f.SettledAsync();
         Touch(path, Pdfs.Text(pages: 3));
 
         await f.Vm.CheckDiskAsync();
@@ -50,7 +51,7 @@ public sealed class DiskChangeTests
         await f.Vm.OpenFilesAsync([path, f.Pdf("b.pdf")]);
         f.Vm.ActiveTab = f.Vm.Documents.First();
         var old = f.Vm.ActiveDocument!;
-        await f.Vm.DiskCheck;
+        await f.SettledAsync();
         Touch(path, Pdfs.Text(pages: 3));
 
         await f.Vm.CheckDiskAsync();
@@ -69,7 +70,7 @@ public sealed class DiskChangeTests
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
         var old = f.Vm.ActiveDocument!;
-        await f.Vm.DiskCheck;
+        await f.SettledAsync();
         Touch(path, "%PDF-1.7 half"u8.ToArray());
 
         await f.Vm.CheckDiskAsync();
@@ -88,6 +89,7 @@ public sealed class DiskChangeTests
         var tab = f.Vm.ActiveDocument!;
         Pdfs.Retitle(tab.Session, "x");
         tab.Commit("x");
+        await f.SettledAsync();
         Touch(path, Pdfs.Text(pages: 3));
 
         await f.Vm.CheckDiskAsync();
@@ -105,6 +107,7 @@ public sealed class DiskChangeTests
         await f.Vm.OpenAsync(path);
         var tab = f.Vm.ActiveDocument!;
         f.Vm.SelectTool("stamps");
+        await f.SettledAsync();
         Touch(path, Pdfs.Text(pages: 3));
 
         await f.Vm.CheckDiskAsync();
@@ -121,6 +124,7 @@ public sealed class DiskChangeTests
         await f.Vm.OpenAsync(path);
         var tab = f.Vm.ActiveDocument!;
         tab.PendingMeasurements = 2;
+        await f.SettledAsync();
         Touch(path, Pdfs.Text(pages: 3));
 
         await f.Vm.CheckDiskAsync();
@@ -139,7 +143,7 @@ public sealed class DiskChangeTests
             using var f = new ViewModelFixture();
             string path = f.Pdf();
             await f.Vm.OpenAsync(path);
-            await f.Vm.DiskCheck;
+            await f.SettledAsync();
             Touch(path, Pdfs.Text(pages: 3));
 
             await Task.WhenAll(f.Vm.CheckDiskAsync(), f.Vm.CheckDiskAsync());
@@ -155,6 +159,7 @@ public sealed class DiskChangeTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        await f.SettledAsync();
         Touch(path, File.ReadAllBytes(path));
 
         await f.Vm.CheckDiskAsync();
@@ -171,6 +176,7 @@ public sealed class DiskChangeTests
         f.Vm.SelectTool("stamps");
         var bytes = File.ReadAllBytes(path);
         bytes[^1] ^= 1;
+        await f.SettledAsync();
         Touch(path, bytes);
 
         await f.Vm.CheckDiskAsync();
@@ -187,6 +193,7 @@ public sealed class DiskChangeTests
         f.Vm.SelectTool("stamps");
         var bytes = File.ReadAllBytes(path);
         bytes[^1] ^= 1;
+        await f.SettledAsync();
         Touch(path, bytes);
         await f.Vm.CheckDiskAsync();
         f.Vm.DismissMessage();
@@ -208,6 +215,7 @@ public sealed class DiskChangeTests
         tab.Commit("x");
         f.Vm.Save(tab);
         f.Vm.DismissMessage();
+        await f.SettledAsync();
         Touch(path, File.ReadAllBytes(path));
 
         await f.Vm.CheckDiskAsync();
@@ -224,6 +232,7 @@ public sealed class DiskChangeTests
         var tab = f.Vm.ActiveDocument!;
         Pdfs.Retitle(tab.Session, "x");
         tab.Commit("x");
+        await f.SettledAsync();
         Touch(path, Pdfs.Text(pages: 3));
 
         await f.Vm.CheckDiskAsync();
@@ -237,6 +246,7 @@ public sealed class DiskChangeTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        await f.SettledAsync();
         File.Delete(path);
 
         await f.Vm.CheckDiskAsync();
@@ -252,6 +262,7 @@ public sealed class DiskChangeTests
         string path = f.Pdf("a.pdf");
         await f.Vm.OpenFilesAsync([path, f.Pdf("b.pdf")]);
         var old = f.Vm.Documents.First();
+        await f.SettledAsync();
         Touch(path, Pdfs.Text(pages: 3));
 
         await f.Vm.ReloadAsync(old);
@@ -270,6 +281,7 @@ public sealed class DiskChangeTests
         var old = f.Vm.ActiveDocument!;
         old.PageIndex = 1;
         old.Rotation = 90;
+        await f.SettledAsync();
         Touch(path, Pdfs.Text(pages: 3));
 
         await f.Vm.ReloadAsync(old);
@@ -285,6 +297,7 @@ public sealed class DiskChangeTests
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
         var old = f.Vm.ActiveDocument!;
+        await f.SettledAsync();
         Touch(path, Pdfs.Text(pages: 3));
         var seen = new List<DocumentTab?>();
         f.Vm.PropertyChanged += (_, _) => seen.Add(f.Vm.ActiveDocument);
@@ -303,6 +316,7 @@ public sealed class DiskChangeTests
         await f.Vm.OpenAsync(path);
         f.Vm.SelectTool("stamps");
         var tab = f.Vm.ActiveDocument!;
+        await f.SettledAsync();
         Touch(path, Pdfs.Text(pages: 3));
         await f.Vm.CheckDiskAsync();
         Assert.NotNull(f.Vm.Message?.Action);
@@ -348,6 +362,7 @@ public sealed class DiskChangeTests
             string a = f.Pdf("a.pdf");
             await f.Vm.OpenFilesAsync([f.Pdf("b.pdf"), a]);
             Assert.Equal(a, f.Vm.ActiveDocument!.Path);
+            await f.SettledAsync();
             Touch(a, Pdfs.Text(pages: 3));
 
             var check = f.Vm.CheckDiskAsync();

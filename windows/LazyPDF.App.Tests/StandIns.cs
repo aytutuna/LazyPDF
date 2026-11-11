@@ -120,6 +120,18 @@ internal sealed class ViewModelFixture : IDisposable
 
     public string Pdf(string name = "a.pdf", int pages = 1) => Dir.File(name, Pdfs.Text(pages));
 
+    /// <summary>Waits for the check a tab coming forward starts, and for the ones a reload in it starts after that.</summary>
+    public async Task SettledAsync()
+    {
+        Task seen;
+        do
+        {
+            seen = Vm.DiskCheck;
+            await seen;
+        }
+        while (!ReferenceEquals(seen, Vm.DiskCheck));
+    }
+
     public void Dispose() => Dir.Dispose();
 }
 
