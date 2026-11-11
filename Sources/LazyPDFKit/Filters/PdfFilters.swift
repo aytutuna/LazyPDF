@@ -110,15 +110,16 @@ public enum PdfFilters {
         // The deflate stream is read bare, past a valid zlib header: the Adler-32 check would throw away
         // the last block of a file whose checksum is wrong (ISO 32000-1 7.4.4).
         let header = data.count >= 2 && (data[0] & 0x0F) == 8 && (Int(data[0]) * 256 + Int(data[1])) % 31 == 0 ? 2 : 0
-        try inflateFrom(data, header, output, strict)
-        if output.count == 0 && header > 0 { try inflateFrom(data, 0, output, strict) }
-        if output.count == 0 { throw PdfReadException.damaged("A compressed stream does not inflate.") }
+        var ended = try inflateFrom(data, header, output, strict)
+        if output.count == 0 && !ended && header > 0 { ended = try inflateFrom(data, 0, output, strict) }
+        if output.count == 0 && !ended { throw PdfReadException.damaged("A compressed stream does not inflate.") }
         return output.toArray()
     }
 
-    private static func inflateFrom(_ data: [UInt8], _ start: Int, _ output: FilterBuffer, _ strict: Bool) throws {
+    private static func inflateFrom(_ data: [UInt8], _ start: Int, _ output: FilterBuffer, _ strict: Bool) throws -> Bool {
         let ended = try Flate.inflate(data, start, output)
         if !ended && strict && output.count > 0 { throw PdfReadException.damaged("A compressed stream breaks off.") }
+        return ended
     }
 
     /// Undoes a /Predictor (ISO 32000-1 7.4.4.4): 2 (TIFF) or 10-15 (PNG, each row with its own
