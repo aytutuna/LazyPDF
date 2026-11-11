@@ -374,6 +374,39 @@ public sealed class KeyboardPlacementTests
         return Task.CompletedTask;
     });
 
+    private static bool PressKey(PageViewer viewer, Key key)
+    {
+        using var source = new HwndSource(new HwndSourceParameters("key-test"));
+        var args = new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, key) { RoutedEvent = Keyboard.KeyDownEvent };
+        typeof(PageViewer).GetMethod("Surface_KeyDown", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(viewer, [viewer, args]);
+        return args.Handled;
+    }
+
+    [Fact]
+    public Task TabWalksTheLinksAndEnterFollowsTheFocusedOne() => Sta.Run(() =>
+    {
+        var document = PdfDocument.Open(Pdfs.Text(3));
+        PdfLinks.Add(document, document.Pages[0], new PdfRect(50, 300, 150, 350), new PdfDestination(1));
+        PdfLinks.Add(document, document.Pages[0], new PdfRect(50, 600, 150, 650), new PdfDestination(2));
+        using var tab = new DocumentTab(PdfEditSession.Open(document.SaveRewrite()), new FakeRenderer(), null, "a.pdf");
+        var (viewer, _) = Open(tab);
+        viewer.PointerTool = null;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var focus = typeof(PageViewer).GetField("_focusLink", flags)!;
+
+        Assert.True(PressKey(viewer, Key.Tab));
+        Assert.Equal(new PdfRect(50, 600, 150, 650), ((ValueTuple<int, PdfLink>)focus.GetValue(viewer)!).Item2.Rect);
+        Assert.True(PressKey(viewer, Key.Tab));
+        Assert.Equal(new PdfRect(50, 300, 150, 350), ((ValueTuple<int, PdfLink>)focus.GetValue(viewer)!).Item2.Rect);
+        Assert.True(PressKey(viewer, Key.Enter));
+        Assert.Equal(1, tab.PageIndex);
+
+        viewer.GoToPage(0);
+        Assert.False(PressKey(viewer, Key.Tab));
+        Assert.Null(focus.GetValue(viewer));
+        return Task.CompletedTask;
+    });
+
     private static void PressEnterInZoomBox(PageViewer viewer)
     {
         using var source = new HwndSource(new HwndSourceParameters("zoom-test"));
