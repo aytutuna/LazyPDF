@@ -135,6 +135,11 @@ public partial class PageViewer
     {
         Surface.Focus();
         if (_tab is null) return;
+        if (_middlePan)
+        {
+            e.Handled = true;
+            return;
+        }
         if (e.ClickCount == 1) _linkClick = false;
         else if (_linkClick)
         {
