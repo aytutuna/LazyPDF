@@ -76,7 +76,11 @@ internal sealed partial class PageSurface
         }
         else if (_failed.Contains(preview.Key))
         {
-            DrawFailure(dc, pageRect);
+            DrawFailure(dc, pageRect, Loc.T("This page cannot be shown."), false);
+        }
+        else if (_failed.Any(key => key.Page == page && !key.IsPreview && key.Scale == ppp))
+        {
+            DrawFailure(dc, pageRect, Loc.T("Part of this page could not be drawn sharply."), true);
         }
     }
 
@@ -116,14 +120,15 @@ internal sealed partial class PageSurface
         dc.Pop();
     }
 
-    private void DrawFailure(DrawingContext dc, Rect pageRect)
+    private void DrawFailure(DrawingContext dc, Rect pageRect, string message, bool atBottom)
     {
-        var text = new FormattedText(Loc.T("This page cannot be shown."), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
+        var text = new FormattedText(message, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
             new Typeface(TextElement.GetFontFamily(this), System.Windows.FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), 14, _tint == PageTint.Dark ? Brushes.Gainsboro : Brushes.DimGray, Dpi)
         {
             MaxTextWidth = Math.Max(10, pageRect.Width - 24),
             TextAlignment = System.Windows.TextAlignment.Center,
         };
-        dc.DrawText(text, new Point(pageRect.Left + 12, pageRect.Top + Math.Min(pageRect.Height / 2, 120) - text.Height / 2));
+        double top = atBottom ? pageRect.Bottom - text.Height - 8 : pageRect.Top + Math.Min(pageRect.Height / 2, 120) - text.Height / 2;
+        dc.DrawText(text, new Point(pageRect.Left + 12, top));
     }
 }

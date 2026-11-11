@@ -3553,6 +3553,9 @@
   <data name="Paragraph changed." xml:space="preserve">
     <value>Paragraf değişti.</value>
   </data>
+  <data name="Part of this page could not be drawn sharply." xml:space="preserve">
+    <value>Bu sayfanın bir kısmı net çizilemedi.</value>
+  </data>
   <data name="Parts of the pages that can be shown or hidden." xml:space="preserve">
     <value>Sayfaların gösterilebilen ya da gizlenebilen parçaları.</value>
   </data>

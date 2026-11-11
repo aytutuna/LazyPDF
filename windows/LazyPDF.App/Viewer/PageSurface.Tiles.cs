@@ -42,6 +42,7 @@ internal sealed partial class PageSurface
         {
             _settle.Stop();
             _settling = false;
+            _failed.RemoveWhere(key => !key.IsPreview);
             PlanTiles();
         };
         NewScheduler();

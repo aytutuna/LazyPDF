@@ -2169,6 +2169,9 @@
   "This page cannot be shown.": {
     "tr": "Bu sayfa gösterilemiyor."
   },
+  "Part of this page could not be drawn sharply.": {
+    "tr": "Bu sayfanın bir kısmı net çizilemedi."
+  },
   "Open this link?": {
     "tr": "Bu bağlantı açılsın mı?"
   },
