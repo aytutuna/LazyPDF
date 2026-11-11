@@ -18,6 +18,8 @@ public partial class MainWindow : Window
     private readonly AppViewModel _vm;
     private readonly IDocumentViewer _viewer = ViewerFactory.Create();
     private bool _refreshing;
+    private List<DocumentTab>? _exitTabs;
+    private DocumentTab? _exitActive;
     private bool _refreshAgain;
     private DocumentTab? _shownTab;
     private InfoMessage? _messageShown;
@@ -120,8 +122,11 @@ public partial class MainWindow : Window
         var preferences = AppPreferencesStore.Load();
         // A crash offer comes first and wins.
         if (!preferences.ReopenLast || App.StartupFiles.Count > 0 || _vm.RecoveryOffer is not null) return;
-        await _vm.OpenFilesAsync(preferences.LastFiles.Where(File.Exists));
-        if (preferences.LastActive is { } active && File.Exists(active)) await _vm.OpenAsync(active);
+        // A share that is offline can make each check wait, so they run off the UI thread.
+        var (files, last) = await Task.Run(() => (preferences.LastFiles.Where(File.Exists).ToList(),
+            preferences.LastActive is { } a && File.Exists(a) ? a : null));
+        await _vm.OpenFilesAsync(files);
+        if (last is not null) await _vm.OpenAsync(last);
     }
 
     /// <summary>Opens the files (from the command line or a second start) and brings the window forward; no files just brings it forward.</summary>
@@ -134,8 +139,16 @@ public partial class MainWindow : Window
 
     public void ShowProblem(Problem problem) => _vm.ShowProblem(problem);
 
+    private void ForgetExitSession()
+    {
+        _exitTabs = null;
+        _exitActive = null;
+    }
+
     private void RefreshFromViewModel()
     {
+        // An exit that was called off leaves nothing to keep.
+        if (!_vm.IsExiting) ForgetExitSession();
         if (_refreshing)
         {
             _refreshAgain = true;
@@ -342,15 +355,19 @@ public partial class MainWindow : Window
             ReleaseHeld();
             return;
         }
+        // Answering the exit question closes the tabs one by one, so the session is taken before it starts.
+        _exitTabs ??= _vm.Documents.ToList();
+        _exitActive ??= _vm.ActiveDocument;
         if (!HandInTyping(_vm.ActiveDocument) || !_vm.RequestExit())
         {
             e.Cancel = true;
+            if (!_vm.IsExiting) ForgetExitSession();
             return;
         }
         // RestoreBounds is empty once the window has closed, so the place is taken here.
         var placement = PlacementOf(WindowState == WindowState.Maximized, new Rect(Left, Top, Width, Height), RestoreBounds);
-        var session = _vm.SessionPaths().ToList();
-        string? active = _vm.ActiveDocument?.Path;
+        var session = _exitTabs.Where(d => d.Path is not null).Select(d => d.Path!).ToList();
+        string? active = _exitActive?.Path;
         AppPreferencesStore.Update(p =>
         {
             p.Window = placement;
