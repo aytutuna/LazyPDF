@@ -136,7 +136,7 @@ extension ViewerModel {
         }
     }
 
-    private func startAutoScroll() {
+    func startAutoScroll() {
         autoScroll?.cancel()
         autoScroll = Task { [weak self] in
             while !Task.isCancelled {

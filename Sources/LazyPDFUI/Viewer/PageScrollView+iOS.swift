@@ -27,7 +27,7 @@ final class PageCanvasView: UIView {
         guard let context = UIGraphicsGetCurrentContext() else { return }
         let colors = PageColors(edge: UIColor.separator.resolvedColor(with: traitCollection).cgColor,
                                 selection: tintColor.withAlphaComponent(0.35).cgColor, mark: tintColor.cgColor,
-                                failure: UIColor.secondaryLabel.resolvedColor(with: traitCollection).cgColor)
+                                failure: UIColor.secondaryLabel.resolvedColor(with: traitCollection).cgColor, showsHandles: true)
         PagePainter.draw(viewer, in: context, dirty: rect, colors: colors)
     }
 }
@@ -42,6 +42,8 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
     private var editMenu: UIEditMenuInteraction?
     private lazy var fields = OverlayFieldViews(viewer: viewer, host: self)
     private let toolPress = UILongPressGestureRecognizer()
+    private let handlePan = UIPanGestureRecognizer()
+    private var handleDragging = false
     private var scrollingByFinger = false
     private var lastTouch = ViewPoint.zero
     private var touchStart = ViewPoint.zero
@@ -71,10 +73,14 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         tool.minimumPressDuration = 0
         tool.allowableMovement = .greatestFiniteMagnitude
         tool.numberOfTouchesRequired = 1
-        for recognizer in [pinch, twice, once, hold, tool] as [UIGestureRecognizer] {
+        let handle = handlePan
+        handle.addTarget(self, action: #selector(handleMoved(_:)))
+        handle.maximumNumberOfTouches = 1
+        for recognizer in [pinch, twice, once, hold, tool, handle] as [UIGestureRecognizer] {
             recognizer.delegate = self
             scroll.addGestureRecognizer(recognizer)
         }
+        scroll.panGestureRecognizer.require(toFail: handle)
 
         let menu = UIEditMenuInteraction(delegate: self)
         addInteraction(menu)
@@ -141,6 +147,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
             return press.minimumPressDuration == 0 ? viewer.pointerTool != nil : viewer.pointerTool == nil && viewer.mode == .select
         }
         if recognizer is UITapGestureRecognizer { return viewer.pointerTool == nil }
+        if recognizer === handlePan { return viewer.handle(at: viewPoint(recognizer), within: 24) != nil }
         return super.gestureRecognizerShouldBegin(recognizer)
     }
 
@@ -212,6 +219,30 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         default:
             if selecting { viewer.pointerCancel() }
             selecting = false
+        }
+    }
+
+    // Dragging a handle of the selection moves that end; the edit menu is out of the way meanwhile and comes back where it ends.
+    @objc private func handleMoved(_ recognizer: UIPanGestureRecognizer) {
+        let at = viewPoint(recognizer)
+        switch recognizer.state {
+        case .began:
+            guard let start = viewer.handle(at: at, within: .infinity) else { return }
+            handleDragging = true
+            editMenu?.dismissMenu()
+            viewer.beginHandleDrag(start: start, at: at)
+        case .changed:
+            if handleDragging { viewer.pointerMove(at) }
+        case .ended:
+            guard handleDragging else { return }
+            handleDragging = false
+            viewer.pointerUp(at)
+            if viewer.hasSelection {
+                editMenu?.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: CGPoint(x: at.x, y: at.y)))
+            }
+        default:
+            if handleDragging { viewer.pointerCancel() }
+            handleDragging = false
         }
     }
 

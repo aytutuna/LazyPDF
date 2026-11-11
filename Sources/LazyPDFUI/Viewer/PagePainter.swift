@@ -15,6 +15,7 @@ struct PageColors {
     var selection: CGColor
     var mark: CGColor
     var failure: CGColor
+    var showsHandles = false
 }
 
 enum PagePainter {
@@ -58,6 +59,10 @@ enum PagePainter {
         }
         if let placement = viewer.placement, let matrix = viewer.pageToView(placement.page) {
             drawMark(at: matrix.transform(placement.point), colors, context)
+        }
+        if colors.showsHandles, let handles = viewer.selectionHandles() {
+            drawHandle(at: handles.start, colors, context)
+            drawHandle(at: handles.end, colors, context)
         }
     }
 
@@ -126,6 +131,19 @@ enum PagePainter {
         }
         context.setFillColor(color)
         context.fillPath()
+    }
+
+    // A stem up from the baseline with a ball on its free end, as a touch selection has at each end.
+    private static func drawHandle(at point: ViewPoint, _ colors: PageColors, _ context: CGContext) {
+        context.saveGState()
+        context.setStrokeColor(colors.mark)
+        context.setFillColor(colors.mark)
+        context.setLineWidth(2)
+        context.move(to: CGPoint(x: point.x, y: point.y))
+        context.addLine(to: CGPoint(x: point.x, y: point.y - 14))
+        context.strokePath()
+        context.fillEllipse(in: CGRect(x: point.x - 5, y: point.y - 19, width: 10, height: 10))
+        context.restoreGState()
     }
 
     // The cross a keyboard placement stands on.

@@ -186,6 +186,40 @@ extension ViewerModel {
         pointerUp(point)
     }
 
+    /// Where the two handles of the selection stand, in view space: the lower left of its first line and the lower right of its last.
+    public func selectionHandles() -> (start: ViewPoint, end: ViewPoint)? {
+        guard !selected.isEmpty,
+              let first = highlights(of: selected.start.page).selection.first,
+              let last = highlights(of: selected.end.page).selection.last,
+              let from = pageToView(selected.start.page), let to = pageToView(selected.end.page) else { return nil }
+        let start = ViewPoint(first.map(\.x).min() ?? 0, first.map(\.y).max() ?? 0)
+        let end = ViewPoint(last.map(\.x).max() ?? 0, last.map(\.y).max() ?? 0)
+        return (from.transform(start), to.transform(end))
+    }
+
+    /// True for the start handle and false for the end handle when one is within `radius` of the point, the nearer of the two.
+    public func handle(at point: ViewPoint, within radius: Double) -> Bool? {
+        guard let handles = selectionHandles() else { return nil }
+        let toStart = hypot(point.x - handles.start.x, point.y - handles.start.y)
+        let toEnd = hypot(point.x - handles.end.x, point.y - handles.end.y)
+        if Swift.min(toStart, toEnd) > radius { return nil }
+        return toStart < toEnd
+    }
+
+    /// Takes hold of a handle: the other end stays where it is and the dragged one follows the pointer.
+    public func beginHandleDrag(start: Bool, at: ViewPoint) {
+        guard !selected.isEmpty else { return }
+        selected.set(start ? selected.end : selected.start, start ? selected.start : selected.end)
+        anchorWaiting = nil
+        multi = nil
+        drag = .select
+        down = at
+        last = at
+        moved = true
+        touching = true
+        startAutoScroll()
+    }
+
     // Moves the focus end of the selection as a text caret would. False for a key that is not one of its.
     func extendSelection(_ key: ViewerKey, big: Bool) -> Bool {
         let focus = selected.focus

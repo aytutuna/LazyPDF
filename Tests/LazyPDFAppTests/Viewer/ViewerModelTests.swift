@@ -674,6 +674,43 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertFalse(viewer.highlights(of: 0).selection.isEmpty)
     }
 
+    func test_aSelectedWordHasAHandleAtEachEnd() async throws {
+        let (viewer, _) = try open()
+        let at = try await pointOnFirstLine(viewer, 1)
+        XCTAssertNil(viewer.selectionHandles())
+
+        viewer.selectWord(at: at)
+
+        let handles = try XCTUnwrap(viewer.selectionHandles())
+        XCTAssertLessThan(handles.start.x, handles.end.x)
+        XCTAssertEqual(viewer.handle(at: handles.start, within: 24), true)
+        XCTAssertEqual(viewer.handle(at: handles.end, within: 24), false)
+        XCTAssertNil(viewer.handle(at: ViewPoint(handles.end.x + 200, handles.end.y + 200), within: 24))
+    }
+
+    func test_draggingTheStartHandleKeepsTheEndAndSwapsPastIt() async throws {
+        let (viewer, _) = try open()
+        let at = try await pointOnFirstLine(viewer, 1)
+        let later = try await pointOnFirstLine(viewer, 3)
+        let past = try await pointOnFirstLine(viewer, 12)
+        viewer.selectWord(at: at)
+        let (start, end) = (viewer.selected.start, viewer.selected.end)
+        let handles = try XCTUnwrap(viewer.selectionHandles())
+
+        viewer.beginHandleDrag(start: true, at: handles.start)
+        viewer.pointerMove(later)
+
+        XCTAssertEqual(viewer.selected.end, end)
+        XCTAssertGreaterThan(viewer.selected.start.index, start.index)
+        XCTAssertLessThan(viewer.selected.start.index, end.index)
+
+        viewer.pointerMove(past)
+        viewer.pointerUp(past)
+
+        XCTAssertEqual(viewer.selected.start, end)
+        XCTAssertGreaterThan(viewer.selected.end.index, end.index)
+    }
+
     func test_selectAllReachesEveryPage() async throws {
         let (viewer, _) = try open(pages: 3)
 
