@@ -5,8 +5,8 @@ import LazyPDFApp
 import LazyPDFKit
 #if os(macOS)
 import AppKit
-#else
-import QuickLook
+import Security
+import SecurityInterface
 #endif
 
 // The view of SignaturesModel; follows windows/LazyPDF.App/Panels/Signatures/SignaturesSidePanel.xaml.
@@ -17,7 +17,8 @@ public struct SignaturesPanelView: View {
     @State private var file = BytesDocument()
     @State private var fileName = ""
     @State private var choosing = false
-    @State private var preview: URL?
+    @State private var facts: [String] = []
+    @State private var showingFacts = false
 
     public init(model: SignaturesModel) {
         self.model = model
@@ -48,10 +49,8 @@ public struct SignaturesPanelView: View {
             }
         }
         .accessibilityLabel(L10n.t("Signatures"))
-        .onAppear { model.launch = launch }
-        #if os(iOS)
-        .quickLookPreview($preview)
-        #endif
+        .onAppear { model.showCertificate = show }
+        .sheet(isPresented: $showingFacts) { certificateSheet }
         .fileExporter(isPresented: $saving, document: file, contentType: .pdf, defaultFilename: fileName) { model.signedVersionSaved($0, access: { SecurityScopedAccess.start($0) }) }
         .fileImporter(isPresented: $choosing, allowedContentTypes: [.x509Certificate, .data]) { result in
             if case .success(let url) = result { model.addTrusted(read(url)) }
@@ -135,13 +134,29 @@ public struct SignaturesPanelView: View {
         saving = true
     }
 
-    private func launch(_ url: URL) -> Bool {
+    private func show(_ certificate: X509Certificate) -> Bool {
         #if os(macOS)
-        return NSWorkspace.shared.open(url)
+        guard let system = SecCertificateCreateWithData(nil, Data(certificate.rawData) as CFData) else { return false }
+        _ = SFCertificatePanel.shared().runModal(forCertificates: [system], showGroup: false)
+        return true
         #else
-        preview = url
+        facts = SignaturesModel.facts(of: certificate)
+        showingFacts = true
         return true
         #endif
+    }
+
+    private var certificateSheet: some View {
+        NavigationStack {
+            List(facts, id: \.self) { Text($0).textSelection(.enabled) }
+                .navigationTitle(L10n.t("View certificate"))
+                #if os(iOS)
+                .navigationBarTitleDisplayMode(.inline)
+                #endif
+                .toolbar {
+                    Button(L10n.t("Done")) { showingFacts = false }
+                }
+        }
     }
 
     private func read(_ url: URL) -> [UInt8] {

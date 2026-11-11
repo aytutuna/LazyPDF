@@ -740,6 +740,8 @@
 "Insert, delete and rotate pages" = "Sayfa ekle, sil ve döndür";
 "Invisible text" = "Görünmez metin";
 "Invisible text in a text object that also shows visible text was left." = "Görünür metin de gösteren bir metin nesnesindeki görünmez metin bırakıldı.";
+"Issued by {0}" = "Veren: {0}";
+"Issued to {0}" = "Verilen: {0}";
 "It could not be saved. It can still be placed this time." = "Kaydedilemedi. Bu seferlik yine de yerleştirilebilir.";
 "It is already there." = "Zaten orada.";
 "It is off the list." = "Listeden kaldırıldı.";
@@ -1938,6 +1940,7 @@
 "This text includes annotation text, which the page's content does not hold. Build the page without IncludeAnnotations to edit or redact it." = "Bu metin, sayfa içeriğinde bulunmayan ek açıklama metnini de içeriyor. Düzenlemek ya da karartmak için sayfayı IncludeAnnotations olmadan oluşturun.";
 "Thumbnail size" = "Küçük resim boyutu";
 "Thumbnails of every page." = "Her sayfanın küçük resmi.";
+"Thumbprint {0}" = "Parmak izi: {0}";
 "Tick what to remove." = "Kaldırılacakları işaretleyin.";
 "Time stamp" = "Zaman damgası";
 "Time stamp is not valid" = "Zaman damgası geçerli değil";
@@ -2014,6 +2017,7 @@
 "Use a web address that starts with http:// or https://." = "http:// veya https:// ile başlayan bir web adresi yazın.";
 "Use other text, or install a font that has these letters." = "Başka bir metin kullanın ya da bu harfleri içeren bir yazı tipi yükleyin.";
 "Use {0}, {1} and {2}. A name that is taken gets a number." = "{0}, {1} ve {2} kullanın. Alınmış bir ada numara eklenir.";
+"Valid from {0} to {1}" = "Geçerlilik: {0} - {1}";
 "Validation data" = "Doğrulama verisi";
 "Validation data added" = "Doğrulama verisi eklendi";
 "Validation data added." = "Doğrulama verisi eklendi.";

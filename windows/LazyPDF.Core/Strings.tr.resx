@@ -2731,8 +2731,14 @@
   <data name="Invisible text in a text object that also shows visible text was left." xml:space="preserve">
     <value>Görünür metin de gösteren bir metin nesnesindeki görünmez metin bırakıldı.</value>
   </data>
+  <data name="Issued by {0}" xml:space="preserve">
+    <value>Veren: {0}</value>
+  </data>
   <data name="Issued by: {0}" xml:space="preserve">
     <value>Veren: {0}</value>
+  </data>
+  <data name="Issued to {0}" xml:space="preserve">
+    <value>Verilen: {0}</value>
   </data>
   <data name="Issued to: {0}" xml:space="preserve">
     <value>Verilen: {0}</value>
@@ -6955,6 +6961,9 @@
   <data name="Thumbnails of every page." xml:space="preserve">
     <value>Her sayfanın küçük resmi.</value>
   </data>
+  <data name="Thumbprint {0}" xml:space="preserve">
+    <value>Parmak izi: {0}</value>
+  </data>
   <data name="Tick what to remove." xml:space="preserve">
     <value>Kaldırılacakları işaretleyin.</value>
   </data>
@@ -7274,7 +7283,7 @@
     <value>{0} kullanılıyor ({1} MB). Burada gösterilemeyecek kadar uzun.</value>
   </data>
   <data name="Valid from {0} to {1}" xml:space="preserve">
-    <value>{0} ile {1} arasında geçerli</value>
+    <value>Geçerlilik: {0} - {1}</value>
   </data>
   <data name="Validation data" xml:space="preserve">
     <value>Doğrulama verisi</value>

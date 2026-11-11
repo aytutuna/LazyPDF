@@ -195,25 +195,32 @@ final class SignaturesModelTests: XCTestCase {
         await settle { rig.model.rows.first?.level == .caution }
     }
 
-    func test_theSignersCertificateIsWrittenAndHandedToTheSystem() async throws {
+    func test_theSignersCertificateIsHandedToTheView() async throws {
         let (file, certificate) = try signedFile(comment: false)
         let rig = try await attached(file)
-        var launched: [URL] = []
-        rig.model.launch = { launched.append($0); return true }
+        var shown: [X509Certificate] = []
+        rig.model.showCertificate = { shown.append($0); return true }
 
         rig.model.viewCertificate()
 
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Lazy PDF signer " + certificate.thumbprint + ".cer")
-        XCTAssertEqual(launched, [url])
-        XCTAssertEqual(try Data(contentsOf: url), Data(certificate.rawData))
+        XCTAssertEqual(shown.map(\.rawData), [certificate.rawData])
         XCTAssertNil(rig.model.versionProblem)
-        try? FileManager.default.removeItem(at: url)
+    }
+
+    func test_aCertificateIsDescribedByItsOwnFields() throws {
+        let (_, certificate) = try signedFile(comment: false)
+
+        let facts = SignaturesModel.facts(of: certificate)
+
+        XCTAssertEqual(facts.count, 4)
+        XCTAssertEqual(facts[0], "Issued to " + certificate.subject)
+        XCTAssertEqual(facts[3], "Thumbprint " + certificate.thumbprint)
     }
 
     func test_aCertificateThatCannotBeShownIsToldInTheNote() async throws {
         let (file, _) = try signedFile(comment: false)
         let rig = try await attached(file)
-        rig.model.launch = { _ in false }
+        rig.model.showCertificate = { _ in false }
 
         rig.model.viewCertificate()
 

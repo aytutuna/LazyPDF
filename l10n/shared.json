@@ -6516,6 +6516,21 @@
   "Add a certificate": {
     "tr": "Sertifika ekle"
   },
+  "The certificate could not be shown.": {
+    "tr": "Sertifika gösterilemedi."
+  },
+  "Issued to {0}": {
+    "tr": "Verilen: {0}"
+  },
+  "Issued by {0}": {
+    "tr": "Veren: {0}"
+  },
+  "Valid from {0} to {1}": {
+    "tr": "Geçerlilik: {0} - {1}"
+  },
+  "Thumbprint {0}": {
+    "tr": "Parmak izi: {0}"
+  },
   "Add validation data": {
     "tr": "Doğrulama verisi ekle"
   },
@@ -6947,9 +6962,6 @@
   },
   "Issued by: {0}": {
     "tr": "Veren: {0}"
-  },
-  "Valid from {0} to {1}": {
-    "tr": "{0} ile {1} arasında geçerli"
   },
   "Serial number: {0}": {
     "tr": "Seri numarası: {0}"
@@ -8337,8 +8349,5 @@
   },
   "This bookmark does something Lazy PDF cannot do.": {
     "tr": "Bu yer imi, Lazy PDF'nin yapamadığı bir işlem yapıyor."
-  },
-  "The certificate could not be shown.": {
-    "tr": "Sertifika gösterilemedi."
   }
 }

@@ -23,8 +23,8 @@ public final class SignaturesModel: ToolPanelModel {
     public private(set) var trusted: [TrustRow]
     public private(set) var trustNote: String?
 
-    /// Hands the signer's certificate file to the system's viewer; false when nothing could show it. The view sets it.
-    @ObservationIgnored public var launch: ((URL) -> Bool)?
+    /// Shows the signer's certificate without adding it to anything; false when nothing could. The view sets it.
+    @ObservationIgnored public var showCertificate: ((X509Certificate) -> Bool)?
 
     var tab: DocumentTab?
     var viewer: DocumentViewer?
@@ -134,17 +134,23 @@ public final class SignaturesModel: ToolPanelModel {
         await host.openNew(bytes, title: L10n.t("{0} (signed by {1})", stem, row.title), password: nil, certificate: nil)
     }
 
-    /// Shows the picked signature's certificate in the system's viewer.
+    /// Shows the picked signature's certificate.
     public func viewCertificate() {
         guard let certificate = selectedRow?.report.certificate else { return }
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Lazy PDF signer " + certificate.thumbprint + ".cer")
-        do {
-            try Data(certificate.rawData).write(to: url)
-        } catch {
-            versionProblem = L10n.t("The certificate could not be shown.")
-            return
-        }
-        if launch?(url) != true { versionProblem = L10n.t("The certificate could not be shown.") }
+        if showCertificate?(certificate) != true { versionProblem = L10n.t("The certificate could not be shown.") }
+    }
+
+    /// What a certificate says about itself, a line each, for a view with no system panel to show it.
+    public static func facts(of certificate: X509Certificate) -> [String] {
+        let format = DateFormatter()
+        format.dateStyle = .medium
+        format.timeStyle = .none
+        return [
+            L10n.t("Issued to {0}", certificate.subject),
+            L10n.t("Issued by {0}", certificate.issuer),
+            L10n.t("Valid from {0} to {1}", format.string(from: PanelDates.date(certificate.notBefore)), format.string(from: PanelDates.date(certificate.notAfter))),
+            L10n.t("Thumbprint {0}", certificate.thumbprint),
+        ]
     }
 
     /// The signed version of the picked signature and the name to offer for it; nil when it is not in the history, which the
