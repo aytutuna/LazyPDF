@@ -253,7 +253,8 @@ public partial class MainWindow
             TabBar.IsEnabled = !Modal;
         }
         RefreshAction();
-        ReleaseHeld();
+        // Opening a held file would clear the job's message; it opens once the message is dismissed.
+        if (_vm.Message is null) ReleaseHeld();
     }
 
     private void InspectorClose_Click(object sender, RoutedEventArgs e) => _vm.SelectTool(_vm.ActiveToolId);
