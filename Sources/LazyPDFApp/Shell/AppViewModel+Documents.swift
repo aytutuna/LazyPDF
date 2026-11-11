@@ -279,7 +279,9 @@ extension AppViewModel {
 
     @discardableResult
     public func saveCompact(_ tab: DocumentTab, _ url: URL) -> Bool {
-        !openElsewhere(tab, url) && write(tab) { try tab.saveCompact(url) }
+        guard !openElsewhere(tab, url), write(tab, { try tab.saveCompact(url) }) else { return false }
+        showNotice(L10n.t("Saved compact"), L10n.t("{0} was saved without its history, so the earlier steps can no longer be undone.", tab.title))
+        return true
     }
 
     // Two tabs on one file would each save over the other.

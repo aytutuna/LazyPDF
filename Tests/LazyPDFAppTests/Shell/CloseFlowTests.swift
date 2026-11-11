@@ -164,6 +164,7 @@ final class CloseFlowTests: XCTestCase {
         XCTAssertFalse(tab.isDirty)
         XCTAssertTrue(f.vm.recent.contains { samePath($0.url, target) })
         XCTAssertTrue(f.vm.statusFull.contains("pic.pdf"))
+        XCTAssertNil(f.vm.message)
     }
 
     func test_saveCompactWritesTheDocumentAnewAndForgetsItsHistory() async throws {
@@ -174,6 +175,7 @@ final class CloseFlowTests: XCTestCase {
 
         XCTAssertFalse(f.vm.canUndo)
         XCTAssertEqual(tab.title, "small.pdf")
+        XCTAssertEqual(f.vm.message?.title, "Saved compact")
     }
 
     func test_tabsCanBeMovedButHomeStaysFirst() async {
