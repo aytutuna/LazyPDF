@@ -35,6 +35,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     private string _sidePanelId;
     private string _lastSidePanelId;
     private InfoMessage? _message;
+    private DocumentTab? _messageTab;
     private UIElement? _stage;
     private string _status = "";
     private CancellationTokenSource? _busy;
@@ -76,6 +77,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
             if (value is null || ReferenceEquals(_activeTab, value) || !Strip.Contains(value)) return;
             _activeTab = value;
             DropAction();
+            if (_message is { IsError: false } && !ReferenceEquals(_messageTab, value as DocumentTab)) _message = null;
             if (value is DocumentTab document) _lastDocument = document;
             NotifyAll();
             _ = CheckDiskAsync();
@@ -171,6 +173,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     public void ShowNotice(string title, string text, NoticeAction? action = null)
     {
         _message = new InfoMessage(title, text, false, action);
+        _messageTab = ActiveDocument;
         NotifyAll();
     }
 

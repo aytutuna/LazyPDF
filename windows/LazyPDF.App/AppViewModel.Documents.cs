@@ -314,12 +314,20 @@ public sealed partial class AppViewModel
 
     public void Undo()
     {
-        if (ActiveDocument is { } tab && tab.Undo()) NotifyAll();
+        if (ActiveDocument is { } tab && tab.Undo())
+        {
+            if (_message is { IsError: false }) _message = null;
+            NotifyAll();
+        }
     }
 
     public void Redo()
     {
-        if (ActiveDocument is { } tab && tab.Redo()) NotifyAll();
+        if (ActiveDocument is { } tab && tab.Redo())
+        {
+            if (_message is { IsError: false }) _message = null;
+            NotifyAll();
+        }
     }
 
     /// <summary>Closes the tab if it has nothing unsaved and no redaction marks waiting; otherwise sets <see cref="CloseQuestion"/> and returns false.</summary>
