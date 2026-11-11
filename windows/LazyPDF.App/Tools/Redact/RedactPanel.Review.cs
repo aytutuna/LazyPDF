@@ -115,7 +115,7 @@ public partial class RedactPanel
         var marks = _state!.Marks;
         marks.Remove(item);
         Host!.ShowNotice(Loc.T("Mark removed"), Loc.T("It is off the list."),
-                         new NoticeAction(Loc.T("Put it back"), () => marks.Add([item])));
+                         new NoticeAction(Loc.T("Put it back"), PutBack([item])));
     }
 
     private void Clear_Click(object sender, RoutedEventArgs e)
@@ -124,6 +124,17 @@ public partial class RedactPanel
         var removed = marks.Items.ToList();
         marks.Clear();
         Host!.ShowNotice(Loc.Plural(removed.Count, "{0} mark removed", "{0} marks removed"), Loc.T("The list is empty now."),
-                         new NoticeAction(Loc.T("Put them back"), () => marks.Add(removed)));
+                         new NoticeAction(Loc.T("Put them back"), PutBack(removed)));
+    }
+
+    // The marks keep page numbers, so they go back only while the pages are as they were.
+    private Action PutBack(IReadOnlyList<MarkItem> items)
+    {
+        var state = _state!;
+        var pages = state.Pages;
+        return () =>
+        {
+            if (pages is not null && pages.SequenceEqual(state.Pages ?? [])) state.Marks.Add(items);
+        };
     }
 }
