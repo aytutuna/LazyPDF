@@ -1,9 +1,11 @@
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Automation;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.Core;
@@ -28,6 +30,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
     private (int Columns, bool Cover, bool Continuous, FitMode Fit, double Zoom) _beforeReading;
 
     private readonly string? _preferencesDirectory;
+    private readonly DispatcherTimer _toast = new();
 
     public PageViewer() : this(StoreFiles.DefaultDirectory)
     {
@@ -50,6 +53,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         Surface.PageText = page => LoadedText(page)?.Text;
         InitInput();
         InitText();
+        _toast.Tick += (_, _) => HideToast();
         if (preferencesDirectory is not null)
         {
             var preferences = AppPreferencesStore.Load(preferencesDirectory);
@@ -86,6 +90,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         ResetLayers();
         HideFind();
         HideLink();
+        HideToast();
         Search.Clear();
         ViewState? state = null;
         if (tab is not null) _states.TryGetValue(tab, out state);
@@ -103,6 +108,34 @@ public partial class PageViewer : UserControl, IDocumentViewer
         RefreshBar();
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    private void ShowToast(string text, int milliseconds = 3000)
+    {
+        if (_tab is null) return;
+        ToastText.Text = text;
+        Toast.Visibility = Visibility.Visible;
+        RaiseLiveRegionChanged(ToastText);
+        _toast.Stop();
+        _toast.Interval = TimeSpan.FromMilliseconds(milliseconds);
+        _toast.Start();
+    }
+
+    private void HideToast()
+    {
+        _toast.Stop();
+        Toast.Visibility = Visibility.Collapsed;
+    }
+
+    private void Speak(string text)
+    {
+        if (_tab is null) return;
+        Speech.Text = "";
+        Speech.Text = text;
+        RaiseLiveRegionChanged(Speech);
+    }
+
+    private static void RaiseLiveRegionChanged(UIElement element) =>
+        (UIElementAutomationPeer.FromElement(element) ?? UIElementAutomationPeer.CreatePeerForElement(element))?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged);
 
     private void Tab_Changed(object? sender, EventArgs e)
     {

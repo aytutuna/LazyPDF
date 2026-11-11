@@ -254,6 +254,53 @@ public sealed class KeyboardPlacementTests
         return Task.CompletedTask;
     });
 
+    private static object Call(PageViewer viewer, string name, params object[] args) =>
+        typeof(PageViewer).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(viewer, args)!;
+
+    [Fact]
+    public Task AToastShowsItsTextUntilTheTimerHidesIt() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        var toast = (UIElement)viewer.FindName("Toast");
+        var text = (System.Windows.Controls.TextBlock)viewer.FindName("ToastText");
+
+        Call(viewer, "ShowToast", "Copied", 3000);
+
+        Assert.Equal(Visibility.Visible, toast.Visibility);
+        Assert.Equal("Copied", text.Text);
+        Call(viewer, "HideToast");
+        Assert.Equal(Visibility.Collapsed, toast.Visibility);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task SpeakSetsTheHiddenLine() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        var speech = (System.Windows.Controls.TextBlock)viewer.FindName("Speech");
+
+        Call(viewer, "Speak", "Page 2");
+
+        Assert.Equal("Page 2", speech.Text);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ToastAndSpeechDoNothingWithoutAFile() => Sta.Run(() =>
+    {
+        var viewer = new PageViewer(null);
+        viewer.Show(null);
+
+        Call(viewer, "ShowToast", "Copied", 3000);
+        Call(viewer, "Speak", "Page 2");
+
+        Assert.Equal(Visibility.Collapsed, ((UIElement)viewer.FindName("Toast")).Visibility);
+        Assert.Equal("", ((System.Windows.Controls.TextBlock)viewer.FindName("Speech")).Text);
+        return Task.CompletedTask;
+    });
+
     private static MouseButtonEventArgs Click(RoutedEvent routed, int clicks)
     {
         var e = new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = routed };
