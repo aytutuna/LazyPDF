@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using LazyPDF.App.Panels.Comments;
 using LazyPDF.App.Tools.Comment;
 using LazyPDF.App.Tests.Tools.Comment;
+using LazyPDF.Core;
 using Xunit;
 
 namespace LazyPDF.App.Tests;
@@ -29,6 +30,24 @@ public sealed class CommentsPanelTests
         var full = (TextBox)panel.FindName("FullText");
         Assert.Equal(text, full.Text);
         Assert.Equal(hasText ? Visibility.Visible : Visibility.Collapsed, full.Visibility);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task MarkedCommentShowsItsStatus() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        f.Marker.Add(MarkTool.Note, 0, [new Point(60, 80)], Red, "check");
+        f.Tab.Commit("Mark");
+        var parent = PdfComments.List(f.Document)[0].Annotation;
+        PdfComments.SetStatus(f.Document, parent, ReviewStatus.Marked, "Ana", DateTimeOffset.Now);
+        var panel = new CommentsSidePanel();
+        panel.Attach(f.Tab, FakeViewer.Create().Viewer, new RecordingHost());
+
+        ((ListBox)panel.FindName("Comments")).SelectedIndex = 0;
+
+        var box = (ComboBox)panel.FindName("StatusBox");
+        Assert.Equal(5, box.SelectedIndex);
         return Task.CompletedTask;
     });
 }
