@@ -121,19 +121,19 @@ public static class PageAssembly
         if (maxBytes < 1) throw new ArgumentOutOfRangeException(nameof(maxBytes));
         int total = source.Pages.Count;
         bool tags = PageCarry.HasTags(source);
-        var fitted = new Dictionary<(int Start, int Length), PdfDocument>();
+        (int Length, PdfDocument Doc)? fitted = null;
         bool Fits(int start, int length)
         {
             var candidate = Extract(source, [.. Enumerable.Range(start, length)], start == 0, tags, cancel);
             if (candidate.SaveRewrite(options, cancel: cancel).Length > maxBytes) return false;
-            fitted[(start, length)] = candidate;
+            if (fitted is null || length > fitted.Value.Length) fitted = (length, candidate);
             return true;
         }
 
         var parts = new List<PdfDocument>();
         for (int at = 0; at < total;)
         {
-            fitted.Clear();
+            fitted = null;
             int remaining = total - at;
             int low = 1, high = remaining + 1;
             if (remaining > 1)
@@ -164,7 +164,7 @@ public static class PageAssembly
                     else high = mid;
                 }
             }
-            parts.Add(fitted.TryGetValue((at, low), out var part) ? part : Extract(source, [.. Enumerable.Range(at, low)], at == 0, tags, cancel));
+            parts.Add(fitted is { } f && f.Length == low ? f.Doc : Extract(source, [.. Enumerable.Range(at, low)], at == 0, tags, cancel));
             at += low;
         }
         return parts;

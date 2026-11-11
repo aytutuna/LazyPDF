@@ -141,18 +141,18 @@ public enum PageAssembly {
         precondition(maxBytes >= 1, "maxBytes")
         let total = source.pages.count
         let tags = PageCarry.hasTags(source)
-        var fitted: [Int: PdfDocument] = [:]
+        var fitted: (length: Int, doc: PdfDocument)?
         func fits(_ start: Int, _ length: Int) throws -> Bool {
             let candidate = try extract(source, Array(start..<start + length), files: start == 0, tags: tags)
             if try candidate.saveRewrite(options).count > maxBytes { return false }
-            fitted[length] = candidate
+            if length > (fitted?.length ?? 0) { fitted = (length, candidate) }
             return true
         }
 
         var parts: [PdfDocument] = []
         var at = 0
         while at < total {
-            fitted.removeAll()
+            fitted = nil
             let remaining = total - at
             var low = 1, high = remaining + 1
             if remaining > 1 {
@@ -186,7 +186,7 @@ public enum PageAssembly {
                     if try fits(at, mid) { low = mid } else { high = mid }
                 }
             }
-            parts.append(try fitted[low] ?? extract(source, Array(at..<at + low), files: at == 0, tags: tags))
+            parts.append(try fitted.flatMap { $0.length == low ? $0.doc : nil } ?? extract(source, Array(at..<at + low), files: at == 0, tags: tags))
             at += low
         }
         return parts
