@@ -2386,6 +2386,9 @@
   <data name="Hint" xml:space="preserve">
     <value>İpucu</value>
   </data>
+  <data name="Hold to show the password" xml:space="preserve">
+    <value>Parolayı göstermek için basılı tutun</value>
+  </data>
   <data name="Home" xml:space="preserve">
     <value>Ana sayfa</value>
   </data>

@@ -1,6 +1,7 @@
 using System.Security.Cryptography.X509Certificates;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using LazyPDF.App.Documents;
 using LazyPDF.Core;
 using Microsoft.Win32;
@@ -52,6 +53,7 @@ public partial class ProtectPanel : ToolPanel
     protected override void OnDetach()
     {
         Tab!.Changed -= Tab_Changed;
+        HideAll();
         UnlockBox.Clear();
         OpenBox.Clear();
         RepeatBox.Clear();
@@ -59,6 +61,46 @@ public partial class ProtectPanel : ToolPanel
         _typed = false;
         _recipients.Clear();
         ShowRecipients();
+    }
+
+    private void HideAll()
+    {
+        foreach (var button in new[] { UnlockReveal, OpenReveal, RepeatReveal, OwnerReveal }) Reveal(button, false);
+    }
+
+    private void Reveal_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        var button = (Button)sender;
+        Mouse.Capture(button);
+        Reveal(button, true);
+    }
+
+    private void Reveal_MouseUp(object sender, MouseButtonEventArgs e) => Reveal((Button)sender, false);
+
+    private void Reveal_Release(object sender, RoutedEventArgs e) => Reveal((Button)sender, false);
+
+    private void Reveal_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key is not (Key.Space or Key.Enter)) return;
+        e.Handled = true;
+        if (!e.IsRepeat) Reveal((Button)sender, true);
+    }
+
+    private void Reveal_KeyUp(object sender, KeyEventArgs e)
+    {
+        if (e.Key is not (Key.Space or Key.Enter)) return;
+        e.Handled = true;
+        Reveal((Button)sender, false);
+    }
+
+    private static void Reveal(Button button, bool show)
+    {
+        var grid = (Grid)button.Parent;
+        var box = grid.Children.OfType<PasswordBox>().First();
+        var plain = grid.Children.OfType<TextBox>().First();
+        plain.Text = show ? box.Password : "";
+        box.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
+        plain.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private bool Locked => Tab is { } tab && ProtectWork.IsLockedAgainstChange(tab.Document);
@@ -237,6 +279,7 @@ public partial class ProtectPanel : ToolPanel
             host.ShowNotice(mode == ProtectMode.Remove ? Loc.T("Copy without protection") : Loc.T("Copy with protection"),
                             Loc.T("The original is unchanged. Save the copy to keep it."));
         }
+        HideAll();
         UnlockBox.Clear();
         OpenBox.Clear();
         RepeatBox.Clear();

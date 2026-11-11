@@ -5419,6 +5419,9 @@
   "Permissions password": {
     "tr": "İzin parolası"
   },
+  "Hold to show the password": {
+    "tr": "Parolayı göstermek için basılı tutun"
+  },
   "Print in high quality": {
     "tr": "Yüksek kalitede yazdır"
   },
