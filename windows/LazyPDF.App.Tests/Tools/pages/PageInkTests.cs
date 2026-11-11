@@ -59,6 +59,43 @@ public sealed class PageInkTests
     }
 
     [Fact]
+    public void InkOnOneRowGivesThatRow()
+    {
+        var image = White(100, 80);
+        Black(image, 10, 40, 1, 1);
+        Black(image, 60, 40, 1, 1);
+        Assert.Equal((10, 40, 61, 41), PageInk.Bounds(image));
+    }
+
+    [Fact]
+    public void InkAtTheTopAndBottomInDifferentColumnsDoesNotRunOut()
+    {
+        var image = White(100, 80);
+        Black(image, 5, 10, 1, 1);
+        Black(image, 30, 10, 1, 1);
+        Black(image, 50, 60, 1, 1);
+        Black(image, 70, 60, 1, 1);
+        Assert.Equal((0, 10, 100, 61), PageInk.Bounds(image));
+    }
+
+    [Fact]
+    public void AThinVerticalRuleIsNotEmpty()
+    {
+        var image = White(100, 80);
+        Black(image, 40, 10, 1, 50);
+        Assert.Equal((40, 10, 41, 60), PageInk.Bounds(image));
+    }
+
+    [Fact]
+    public void AThinStrokeAboveTheTextStaysInTheBox()
+    {
+        var image = White(100, 80);
+        Black(image, 30, 20, 20, 10);
+        Black(image, 40, 10, 1, 10);
+        Assert.Equal((30, 10, 50, 30), PageInk.Bounds(image));
+    }
+
+    [Fact]
     public void APageWithABlockOfInkIsNotBlank()
     {
         var image = White(595, 842);
