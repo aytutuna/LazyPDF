@@ -18,19 +18,26 @@ public sealed class TextEditor
     {
         _overlay = overlay;
         _done = done;
+        double width = Math.Max(area.Width, 120);
+        double minHeight = Math.Max(area.Height, 40);
+        // The overlay clips to the page, so keep the box inside it and let a long note scroll.
+        double left = Math.Clamp(area.X, 0, Math.Max(0, overlay.Width - width));
+        double top = Math.Clamp(area.Y, 0, Math.Max(0, overlay.Height - minHeight));
         _box = new TextBox
         {
             Text = text,
-            Width = Math.Max(area.Width, 120),
-            MinHeight = Math.Max(area.Height, 40),
+            Width = width,
+            MinHeight = minHeight,
+            MaxHeight = Math.Max(minHeight, overlay.Height - top),
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
             FontSize = fontSize,
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
             Padding = new Thickness(2),
         };
         AutomationProperties.SetName(_box, Loc.T("Text of the mark"));
-        Canvas.SetLeft(_box, area.X);
-        Canvas.SetTop(_box, area.Y);
+        Canvas.SetLeft(_box, left);
+        Canvas.SetTop(_box, top);
         _box.PreviewKeyDown += Box_PreviewKeyDown;
         _box.LostKeyboardFocus += Box_LostKeyboardFocus;
         overlay.Children.Add(_box);

@@ -48,7 +48,14 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
             AcceptsReturn = lineBreaks,
             UndoLimit = 100,
         };
-        if (wrap) box.Width = area.Width;
+        var overlay = viewer.Overlay(page);
+        box.MaxWidth = Math.Max(area.Width, overlay.Width - area.X);
+        if (wrap)
+        {
+            box.Width = area.Width;
+            box.MaxHeight = Math.Max(area.Height, overlay.Height - area.Y);
+            box.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+        }
         System.Windows.Automation.AutomationProperties.SetName(box, Loc.T("Text on the page"));
         if (lineBreaks)
         {
@@ -66,8 +73,8 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
             box.CaretIndex = caret is { } at ? box.GetCharacterIndexFromPoint(new Point(at.X - area.X, at.Y - area.Y), true) : box.Text.Length;
         });
         _box = box;
-        _overlay = viewer.Overlay(page);
-        _overlay.Children.Add(box);
+        _overlay = overlay;
+        overlay.Children.Add(box);
     }
 
     /// <summary>Shows the text in another font, size or colour while it is open.</summary>
