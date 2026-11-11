@@ -29,6 +29,7 @@ public partial class PageViewer
     private PdfLink? _downLink;
     private bool _moved;
     private bool _linkClick;
+    private bool _middlePan;
 
     public event EventHandler? ModeChanged;
 
@@ -87,6 +88,8 @@ public partial class PageViewer
         Surface.MouseLeftButtonDown += Surface_MouseDown;
         Surface.MouseMove += Surface_MouseMove;
         Surface.MouseLeftButtonUp += Surface_MouseUp;
+        Surface.MouseDown += Surface_ExtraButtonDown;
+        Surface.MouseUp += Surface_MiddleButtonUp;
         Surface.LostMouseCapture += Surface_LostMouseCapture;
         Surface.PreviewMouseWheel += Surface_MouseWheel;
         Surface.KeyDown += Surface_KeyDown;
@@ -141,6 +144,42 @@ public partial class PageViewer
             BeginSelection(at, e.ClickCount);
             _autoScroll.Start();
         }
+        e.Handled = true;
+    }
+
+    private void Surface_ExtraButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (_drag != Drag.None) return;
+        switch (e.ChangedButton)
+        {
+            case MouseButton.XButton1:
+                GoBack();
+                e.Handled = true;
+                break;
+            case MouseButton.XButton2:
+                GoForward();
+                e.Handled = true;
+                break;
+            case MouseButton.Middle when _tab is not null:
+                Surface.Focus();
+                _drag = Drag.Pan;
+                _middlePan = true;
+                _down = _last = e.GetPosition(Surface);
+                _moved = false;
+                _downLink = null;
+                Surface.CaptureMouse();
+                Surface.Cursor = Cursors.ScrollAll;
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private void Surface_MiddleButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Middle || !_middlePan) return;
+        EndDrag();
+        Surface.ReleaseMouseCapture();
+        Hover(e.GetPosition(Surface));
         e.Handled = true;
     }
 
@@ -208,6 +247,7 @@ public partial class PageViewer
     private void EndDrag()
     {
         _drag = Drag.None;
+        _middlePan = false;
         _anchorWaiting = null;
         _autoScroll.Stop();
     }
