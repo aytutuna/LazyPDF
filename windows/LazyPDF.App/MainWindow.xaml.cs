@@ -265,6 +265,7 @@ public partial class MainWindow : Window
     {
         if (id == AppViewModel.OpenTile) OpenWithDialog();
         else if (id == AppViewModel.CreateTile) _ = CreateWindow.RunAsync(this, _vm);
+        else if (id == "combine" && !_vm.Documents.Any()) OpenWithDialog(() => _vm.StartTile(id));
         else if (id == AppViewModel.BatchTile) BatchWindow.Open(this, _vm);
         else
         {

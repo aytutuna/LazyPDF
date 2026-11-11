@@ -22,13 +22,23 @@ public sealed class HomeTilesTests
     {
         using var f = new ViewModelFixture();
 
-        foreach (var tile in f.Vm.Tiles.Where(t => t.Id is not ("open" or "create" or "batch")))
+        foreach (var tile in f.Vm.Tiles.Where(t => t.Id is not ("open" or "create" or "batch" or "combine")))
         {
             Assert.False(tile.Available);
             Assert.Equal("Open a file first", tile.Reason);
         }
         Assert.True(f.Vm.Tiles[0].Available);
         Assert.Null(f.Vm.Tiles[0].Reason);
+    }
+
+    [Fact]
+    public void CombineNeedsNoFile()
+    {
+        using var f = new ViewModelFixture();
+        var combine = f.Vm.Tiles.Single(t => t.Id == "combine");
+
+        Assert.True(combine.Available);
+        Assert.Null(combine.Reason);
     }
 
     [Fact]
@@ -46,7 +56,7 @@ public sealed class HomeTilesTests
     {
         using var f = new ViewModelFixture();
 
-        Assert.Equal("Join files into a new one, or split this one. Not available: Open a file first", f.Vm.Tiles.Single(t => t.Id == "combine").HelpText);
+        Assert.Equal("Make the file smaller. Not available: Open a file first", f.Vm.Tiles.Single(t => t.Id == "compress").HelpText);
         Assert.Equal("Open a PDF, a picture or a text file.", f.Vm.Tiles[0].HelpText);
     }
 
@@ -120,7 +130,7 @@ public sealed class HomeTilesTests
     {
         using var f = new ViewModelFixture();
 
-        f.Vm.StartTile("combine");
+        f.Vm.StartTile("compress");
 
         Assert.Null(f.Vm.ActiveToolId);
         Assert.True(f.Vm.IsHome);
@@ -158,7 +168,7 @@ public sealed class HomeTilesTests
     {
         using var f = new ViewModelFixture();
 
-        f.Vm.StartTile("combine");
+        f.Vm.StartTile("compress");
 
         Assert.Contains("Open a file first", f.Vm.StatusFull);
     }
@@ -170,6 +180,6 @@ public sealed class HomeTilesTests
         await f.Vm.OpenAsync(f.Pdf());
         f.Vm.Close(f.Vm.ActiveDocument!);
 
-        Assert.False(f.Vm.Tiles.Single(t => t.Id == "combine").Available);
+        Assert.False(f.Vm.Tiles.Single(t => t.Id == "compress").Available);
     }
 }

@@ -12,14 +12,21 @@ public partial class MainWindow
 {
     private void Open_Click(object sender, RoutedEventArgs e) => OpenWithDialog();
 
-    private void OpenWithDialog()
+    private void OpenWithDialog(Action? then = null)
     {
         var dialog = new OpenFileDialog
         {
             Multiselect = true,
             Filter = FileKinds.OpenFilter(Loc.T("PDF files"), Loc.T("Pictures"), Loc.T("Text files"), Loc.T("All supported files")),
         };
-        if (dialog.ShowDialog(this) == true) _ = _vm.OpenFilesAsync(dialog.FileNames);
+        if (dialog.ShowDialog(this) != true) return;
+        _ = OpenThenAsync(dialog.FileNames, then);
+    }
+
+    private async Task OpenThenAsync(string[] paths, Action? then)
+    {
+        await _vm.OpenFilesAsync(paths);
+        if (then is not null && _vm.ActiveDocument is not null) then();
     }
 
     private void Save_Click(object sender, RoutedEventArgs e) => SaveWithDialog();
