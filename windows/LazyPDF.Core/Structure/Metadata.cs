@@ -7,10 +7,11 @@ namespace LazyPDF.Core;
 /// The descriptive metadata of a document (ISO 32000-1 14.3): the /Info dictionary and, kept in
 /// step with it, the XMP packet. <see cref="Custom"/> holds the /Info entries with other keys whose
 /// value is a string.
+/// <see cref="XmpUnreadable"/> is true when the file has an XMP packet that could not be read.
 /// </summary>
 public sealed record DocumentMetadata(
     string? Title, string? Author, string? Subject, string? Keywords, string? Creator, string? Producer,
-    DateTimeOffset? Created, DateTimeOffset? Modified, IReadOnlyDictionary<string, string> Custom)
+    DateTimeOffset? Created, DateTimeOffset? Modified, IReadOnlyDictionary<string, string> Custom, bool XmpUnreadable = false)
 {
     private static readonly string[] Standard = ["Title", "Author", "Subject", "Keywords", "Creator", "Producer", "CreationDate", "ModDate", "Trapped"];
 
@@ -33,7 +34,8 @@ public sealed record DocumentMetadata(
         return new DocumentMetadata(
             Text("Title", XmpPacket.Dc, "title"), Text("Author", XmpPacket.Dc, "creator"), Text("Subject", XmpPacket.Dc, "description"),
             Text("Keywords", XmpPacket.Pdf, "Keywords"), Text("Creator", XmpPacket.Xmp, "CreatorTool"), Text("Producer", XmpPacket.Pdf, "Producer"),
-            Date("CreationDate", "CreateDate"), Date("ModDate", "ModifyDate"), custom);
+            Date("CreationDate", "CreateDate"), Date("ModDate", "ModifyDate"), custom,
+            xmp is null && XmpPacket.IsPresent(document));
     }
 
     /// <summary>

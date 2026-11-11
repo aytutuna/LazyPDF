@@ -25,6 +25,8 @@ internal sealed class XmpPacket
         _rdf = rdf;
     }
 
+    public static bool IsPresent(PdfDocument document) => document.Stream(document.Catalog, "Metadata") is not null;
+
     /// <summary>The packet in the catalog's /Metadata, or null when there is none, it is not well-formed, or it has no rdf:RDF.</summary>
     public static XmpPacket? Load(PdfDocument document)
     {

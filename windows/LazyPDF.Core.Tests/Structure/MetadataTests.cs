@@ -228,6 +228,26 @@ public class MetadataTests
     }
 
     [Fact]
+    public void NoXmpIsNotUnreadable() => Assert.False(DocumentMetadata.Read(StructureFixtures.Open()).XmpUnreadable);
+
+    [Fact]
+    public void ReadableXmpIsNotUnreadable() => Assert.False(DocumentMetadata.Read(WithXmp(Packet)).XmpUnreadable);
+
+    [Theory]
+    [InlineData("this is not xml <<<")]
+    [InlineData("<x:xmpmeta xmlns:x=\"adobe:ns:meta/\"><nothing/></x:xmpmeta>")]
+    [InlineData("TOO BIG")]
+    public void XmpThatCannotBeReadIsReported(string xml)
+    {
+        if (xml == "TOO BIG") xml = "<x/>" + new string(' ', (1 << 24) + 1);
+        var document = WithXmp(xml, info: "<</Title (From info)>>");
+        document.Trailer["Info"] = new PdfReference(31, 0);
+        var read = DocumentMetadata.Read(document);
+        Assert.True(read.XmpUnreadable);
+        Assert.Equal("From info", read.Title);
+    }
+
+    [Fact]
     public void XmpBehindACryptFilterIsLeftAlone()
     {
         var document = StructureFixtures.File("/Metadata 30 0 R", pdf =>
