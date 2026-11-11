@@ -123,7 +123,7 @@ public sealed class HttpSignatureTransportTests
     }
 
     [Fact]
-    public void AnHttpsFetchThroughALocalProxyReachesTheProxy()
+    public async Task AnHttpsFetchThroughALocalProxyReachesTheProxy()
     {
         if (HttpSignatureTransport.IsOffline) return;
         var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -137,7 +137,7 @@ public sealed class HttpSignatureTransportTests
 
             Assert.Null(transport.Get("https://ocsp.example/"));
 
-            Assert.True(accepted.IsCompleted);
+            await accepted.WaitAsync(TimeSpan.FromSeconds(10));
             Assert.DoesNotContain("this computer", transport.LastFailure);
         }
         finally
