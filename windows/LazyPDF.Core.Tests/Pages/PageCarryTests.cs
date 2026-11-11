@@ -67,6 +67,22 @@ public class PageCarryTests
     }
 
     [Fact]
+    public void ImportAddsTheBookmarksOfTheImportedPagesAtTheEnd()
+    {
+        var target = Fixture();
+        PageOperations.ImportPages(target, Fixture(), [3, 0], 1);
+        Assert.Equal("Part A[Ch1>0,Ch2>3],Part B[Ch3>4,Ch4>5],Ch5>6,Ch6>7,Part A[Ch1>2],Part B[Ch4>1]", Bookmarks(target));
+    }
+
+    [Fact]
+    public void ImportFromTheSameDocumentAddsNoBookmarks()
+    {
+        var target = Fixture();
+        PageOperations.ImportPages(target, target, [0], 1);
+        Assert.Equal("Part A[Ch1>0,Ch2>2],Part B[Ch3>3,Ch4>4],Ch5>5,Ch6>6", Bookmarks(target));
+    }
+
+    [Fact]
     public void NothingThatReachesAPageLeftOutIsWritten()
     {
         byte[] bytes = PageAssembly.Extract(Fixture(), [2, 3]).SaveRewrite();

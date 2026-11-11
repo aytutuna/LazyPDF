@@ -141,7 +141,8 @@ enum PageCarry {
         return found
     }
 
-    private static func bookmarks(_ source: PdfDocument, _ target: PdfDocument, _ newIndex: [Int: Int], _ mergeTitle: String?) throws {
+    /// Adds the source's bookmarks that reach the pages in `newIndex` (source index to target index) at the end of the target's top level, under `mergeTitle` when set.
+    static func bookmarks(_ source: PdfDocument, _ target: PdfDocument, _ newIndex: [Int: Int], _ mergeTitle: String?) throws {
         let outline = Outline.read(target)
         let kept = try Outline.read(source).items.compactMap { try keep(outline, $0, newIndex) }
         if kept.isEmpty { return }

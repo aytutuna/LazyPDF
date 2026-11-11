@@ -76,6 +76,18 @@ final class PageCarryTests: XCTestCase {
         XCTAssertTrue(Latin1.string(try again.data(try XCTUnwrap(again.stream(again.catalog, "Metadata")))).contains("fixture"))
     }
 
+    func test_importAddsTheBookmarksOfTheImportedPagesAtTheEnd() throws {
+        let target = try Self.fixture()
+        try PageOperations.importPages(target, try Self.fixture(), [3, 0], 1)
+        XCTAssertEqual(try bookmarks(target), "Part A[Ch1>0,Ch2>3],Part B[Ch3>4,Ch4>5],Ch5>6,Ch6>7,Part A[Ch1>2],Part B[Ch4>1]")
+    }
+
+    func test_importFromTheSameDocumentAddsNoBookmarks() throws {
+        let target = try Self.fixture()
+        try PageOperations.importPages(target, target, [0], 1)
+        XCTAssertEqual(try bookmarks(target), "Part A[Ch1>0,Ch2>2],Part B[Ch3>3,Ch4>4],Ch5>5,Ch6>6")
+    }
+
     func test_nothingThatReachesAPageLeftOutIsWritten() throws {
         let bytes = try PageAssembly.extract(try Self.fixture(), [2, 3]).saveRewrite()
         for marker in ["Page 1", "Page 2", "Ch1", "Ch2", "Part A", "Ch5", "Ch6", "five"] {

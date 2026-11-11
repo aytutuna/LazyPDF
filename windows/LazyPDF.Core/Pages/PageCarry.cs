@@ -156,7 +156,8 @@ internal static class PageCarry
         }
     }
 
-    private static void Bookmarks(PdfDocument source, PdfDocument target, Dictionary<int, int> newIndex, string? mergeTitle)
+    /// <summary>Adds the source's bookmarks that reach the pages in <paramref name="newIndex"/> (source index to target index) at the end of the target's top level, under <paramref name="mergeTitle"/> when set.</summary>
+    public static void Bookmarks(PdfDocument source, PdfDocument target, Dictionary<int, int> newIndex, string? mergeTitle)
     {
         var outline = Outline.Read(target);
         var kept = Outline.Read(source).Items.Select(i => Keep(outline, i, newIndex)).OfType<OutlineItem>().ToList();
