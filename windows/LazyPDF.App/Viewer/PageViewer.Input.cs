@@ -253,6 +253,11 @@ public partial class PageViewer
 
     private void Surface_MouseUp(object sender, MouseButtonEventArgs e)
     {
+        if (_middlePan)
+        {
+            e.Handled = true;
+            return;
+        }
         var drag = _drag;
         var at = e.GetPosition(Surface);
         if (drag == Drag.Tool)

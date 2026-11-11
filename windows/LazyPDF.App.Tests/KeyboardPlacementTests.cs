@@ -230,4 +230,26 @@ public sealed class KeyboardPlacementTests
         Assert.Null(field.GetValue(viewer));
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public Task ALeftReleaseDoesNotEndAMiddlePan() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var drag = typeof(PageViewer).GetField("_drag", flags)!;
+        var middlePan = typeof(PageViewer).GetField("_middlePan", flags)!;
+        var pan = Enum.ToObject(drag.FieldType, 1);
+        drag.SetValue(viewer, pan);
+        middlePan.SetValue(viewer, true);
+        var up = typeof(PageViewer).GetMethod("Surface_MouseUp", flags)!;
+        var e = new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Mouse.MouseUpEvent };
+
+        up.Invoke(viewer, [viewer, e]);
+
+        Assert.True((bool)middlePan.GetValue(viewer)!);
+        Assert.Equal(pan, drag.GetValue(viewer));
+        Assert.True(e.Handled);
+        return Task.CompletedTask;
+    });
 }
