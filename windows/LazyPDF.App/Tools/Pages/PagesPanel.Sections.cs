@@ -127,6 +127,8 @@ public partial class PagesPanel
     {
         if (_crop?.Box is not { } box) return;
         var pages = CropAll.IsChecked == true ? [.. Enumerable.Range(0, Cells.Count)] : Selected().Count > 0 ? Selected() : [box.Page];
+        // The box outlives edits that remove its page.
+        pages = [.. pages.Where(p => p < Tab!.Document.Pages.Count)];
         var targets = PageEdits.CropTargets(Tab!.Document, pages, box.Area);
         if (targets.Count == 0)
         {
