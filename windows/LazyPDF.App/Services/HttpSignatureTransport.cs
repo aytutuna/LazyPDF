@@ -21,10 +21,12 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
 
     private readonly HttpClient _client;
     private readonly Dictionary<(string Method, string Url, string Body), (byte[]? Bytes, string? Failure)> _answers = [];
+    private readonly Func<bool> _offline;
     private int _requests;
 
-    public HttpSignatureTransport(HttpMessageHandler? handler = null)
+    public HttpSignatureTransport(HttpMessageHandler? handler = null, Func<bool>? offline = null)
     {
+        _offline = offline ?? (() => IsOffline);
         _client = handler is null ? new HttpClient(new SocketsHttpHandler { AllowAutoRedirect = false, ConnectCallback = ConnectAsync }) : new HttpClient(handler);
         _client.Timeout = Timeout.InfiniteTimeSpan;
     }
@@ -49,7 +51,7 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
         LastFailure = null;
         if (!Uri.TryCreate(url, UriKind.Absolute, out var address))
             return NotAWebAddress();
-        if (IsOffline)
+        if (_offline())
         {
             LastFailure = Loc.T("This computer is offline. Connect to the internet and try again.");
             return null;

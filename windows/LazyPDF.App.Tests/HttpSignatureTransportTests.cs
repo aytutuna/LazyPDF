@@ -34,9 +34,8 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void APostSendsTheBodyWithItsContentTypeAndGivesTheAnswer()
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var handler = new Handler(_ => Ok([9, 8, 7]));
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
 
         byte[]? answer = transport.Post("https://tsa.example/stamp", "application/timestamp-query", [1, 2, 3]);
 
@@ -47,10 +46,20 @@ public sealed class HttpSignatureTransportTests
     }
 
     [Fact]
+    public void WithNoNetworkNothingIsSentAndTheReasonIsGiven()
+    {
+        var handler = new Handler(_ => Ok([1]));
+        using var transport = new HttpSignatureTransport(handler, () => true);
+
+        Assert.Null(transport.Get("https://tsa.example/stamp"));
+        Assert.Equal("This computer is offline. Connect to the internet and try again.", transport.LastFailure);
+        Assert.Empty(handler.Requests);
+    }
+
+    [Fact]
     public void AGetGivesTheBody()
     {
-        if (HttpSignatureTransport.IsOffline) return;
-        using var transport = new HttpSignatureTransport(new Handler(_ => Ok([5])));
+        using var transport = new HttpSignatureTransport(new Handler(_ => Ok([5])), () => false);
 
         Assert.Equal(new byte[] { 5 }, transport.Get("http://crl.example/ca.crl"));
     }
@@ -58,8 +67,7 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void AnErrorStatusGivesNullAndTheCode()
     {
-        if (HttpSignatureTransport.IsOffline) return;
-        using var transport = new HttpSignatureTransport(new Handler(_ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)));
+        using var transport = new HttpSignatureTransport(new Handler(_ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)), () => false);
 
         Assert.Null(transport.Get("https://ocsp.example/"));
         Assert.Contains("503", transport.LastFailure);
@@ -68,8 +76,7 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void AServerThatCannotBeReachedGivesNullAndSaysSo()
     {
-        if (HttpSignatureTransport.IsOffline) return;
-        using var transport = new HttpSignatureTransport(new Handler(_ => throw new HttpRequestException("no route")));
+        using var transport = new HttpSignatureTransport(new Handler(_ => throw new HttpRequestException("no route")), () => false);
 
         Assert.Null(transport.Get("https://ocsp.example/"));
         Assert.Contains("could not be reached", transport.LastFailure);
@@ -78,8 +85,7 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void ASlowServerGivesNullAndSaysItDidNotAnswer()
     {
-        if (HttpSignatureTransport.IsOffline) return;
-        using var transport = new HttpSignatureTransport(new Handler(_ => throw new TaskCanceledException()));
+        using var transport = new HttpSignatureTransport(new Handler(_ => throw new TaskCanceledException()), () => false);
 
         Assert.Null(transport.Get("https://ocsp.example/"));
         Assert.Contains("did not answer", transport.LastFailure);
@@ -88,9 +94,8 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void TheSameGetIsAskedOnce()
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var handler = new Handler(_ => Ok([4]));
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
 
         Assert.Equal(new byte[] { 4 }, transport.Get("http://crl.example/ca.crl"));
         Assert.Equal(new byte[] { 4 }, transport.Get("http://crl.example/ca.crl"));
@@ -101,9 +106,8 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void PostsWithDifferentBodiesAreBothSent()
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var handler = new Handler(_ => Ok([4]));
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
 
         transport.Post("https://tsa.example/stamp", "application/timestamp-query", [1]);
         transport.Post("https://tsa.example/stamp", "application/timestamp-query", [2]);
@@ -114,9 +118,8 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void AFailingServerIsAskedOnceAndKeepsItsFailureText()
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var handler = new Handler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
 
         for (int i = 0; i < 3; i++)
         {
@@ -130,9 +133,8 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void RepeatedAskingOfFewAddressesNeverHitsTheRequestCap()
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var handler = new Handler(_ => Ok([1]));
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
 
         for (int i = 0; i < 250; i++)
         {
@@ -146,9 +148,8 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void ACancelledCallIsNotRemembered()
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var handler = new Handler(_ => Ok([1]));
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
         using var source = new CancellationTokenSource();
         source.Cancel();
         transport.Cancel = source.Token;
@@ -165,7 +166,7 @@ public sealed class HttpSignatureTransportTests
     public void OnlyWebAddressesAreFetched(string url)
     {
         var handler = new Handler(_ => Ok([1]));
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
 
         Assert.Null(transport.Get(url));
         Assert.Empty(handler.Requests);
@@ -183,7 +184,7 @@ public sealed class HttpSignatureTransportTests
     public void AddressesOnThisComputerAreRefused(string url)
     {
         var handler = new Handler(_ => Ok([1]));
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
 
         Assert.Null(transport.Get(url));
         Assert.Empty(handler.Requests);
@@ -193,7 +194,7 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void ALocalNetworkAddressIsNotRefusedAsThisComputer()
     {
-        using var transport = new HttpSignatureTransport(new Handler(_ => Ok([1])));
+        using var transport = new HttpSignatureTransport(new Handler(_ => Ok([1])), () => false);
 
         transport.Get("http://192.168.1.5/ca.crl");
 
@@ -203,7 +204,6 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public async Task AnHttpsFetchThroughALocalProxyReachesTheProxy()
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var saved = HttpClient.DefaultProxy;
@@ -211,7 +211,7 @@ public sealed class HttpSignatureTransportTests
         {
             HttpClient.DefaultProxy = new WebProxy($"http://127.0.0.1:{((IPEndPoint)listener.LocalEndpoint).Port}");
             var accepted = Task.Run(() => listener.AcceptTcpClient().Dispose());
-            using var transport = new HttpSignatureTransport();
+            using var transport = new HttpSignatureTransport(null, () => false);
 
             Assert.Null(transport.Get("https://ocsp.example/"));
 
@@ -228,9 +228,8 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void TheTwoHundredFirstRequestIsRefused()
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var handler = new Handler(_ => Ok([1]));
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
 
         for (int i = 0; i < 200; i++)
             Assert.NotNull(transport.Get($"https://a.example/{i}"));
@@ -258,10 +257,9 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void ABodyWithoutALengthIsNotReadPastTheLimit()
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var body = new Endless();
         using var transport = new HttpSignatureTransport(new Handler(_ =>
-            new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(body) }));
+            new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(body) }), () => false);
 
         Assert.Null(transport.Get("https://ocsp.example/"));
         Assert.Contains("too large", transport.LastFailure);
@@ -271,9 +269,8 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void ARedirectToThisComputerIsRefused()
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var handler = new Handler(_ => new HttpResponseMessage(HttpStatusCode.Found) { Headers = { Location = new Uri("http://127.0.0.1:8080/x") } });
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
 
         Assert.Null(transport.Get("http://crl.example/ca.crl"));
         Assert.Single(handler.Requests);
@@ -283,11 +280,10 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void ARedirectToAnotherWebAddressIsFollowed()
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var handler = new Handler(r => r.RequestUri!.Host == "crl.example"
             ? new HttpResponseMessage(HttpStatusCode.Found) { Headers = { Location = new Uri("https://cdn.example/ca.crl") } }
             : Ok([4]));
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
 
         Assert.Equal(new byte[] { 4 }, transport.Get("http://crl.example/ca.crl"));
     }
@@ -297,11 +293,10 @@ public sealed class HttpSignatureTransportTests
     [InlineData(HttpStatusCode.PermanentRedirect)]
     public void APostIsRepeatedWithTheSameBodyAfterA307Or308(HttpStatusCode status)
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var handler = new Handler(r => r.RequestUri!.Host == "tsa.example"
             ? new HttpResponseMessage(status) { Headers = { Location = new Uri("https://tsa2.example/stamp") } }
             : Ok([9]));
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
 
         byte[]? answer = transport.Post("http://tsa.example/stamp", "application/timestamp-query", [1, 2, 3]);
 
@@ -315,9 +310,8 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void APostAnsweredWith302IsNotRepeated()
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var handler = new Handler(_ => new HttpResponseMessage(HttpStatusCode.Found) { Headers = { Location = new Uri("https://tsa2.example/stamp") } });
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
 
         Assert.Null(transport.Post("https://tsa.example/stamp", "application/timestamp-query", [1]));
         Assert.Single(handler.Requests);
@@ -329,9 +323,8 @@ public sealed class HttpSignatureTransportTests
     [InlineData(HttpStatusCode.TemporaryRedirect)]
     public void ARedirectFromHttpsToHttpIsRefused(HttpStatusCode status)
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var handler = new Handler(_ => new HttpResponseMessage(status) { Headers = { Location = new Uri("http://tsa.example/stamp") } });
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
 
         Assert.Null(transport.Get("https://tsa.example/stamp"));
         Assert.Contains("not encrypted", transport.LastFailure);
@@ -345,9 +338,8 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void ALoopOf307AnswersStopsAtTheRedirectLimit()
     {
-        if (HttpSignatureTransport.IsOffline) return;
         var handler = new Handler(_ => new HttpResponseMessage(HttpStatusCode.TemporaryRedirect) { Headers = { Location = new Uri("https://tsa.example/stamp") } });
-        using var transport = new HttpSignatureTransport(handler);
+        using var transport = new HttpSignatureTransport(handler, () => false);
 
         Assert.Null(transport.Post("https://tsa.example/stamp", "application/timestamp-query", [1]));
         Assert.Equal(6, handler.Requests.Count);
@@ -357,8 +349,7 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void AnAnswerThatIsTooLargeIsRefused()
     {
-        if (HttpSignatureTransport.IsOffline) return;
-        using var transport = new HttpSignatureTransport(new Handler(_ => Ok(new byte[9 << 20])));
+        using var transport = new HttpSignatureTransport(new Handler(_ => Ok(new byte[9 << 20])), () => false);
 
         Assert.Null(transport.Get("https://ocsp.example/"));
         Assert.Contains("too large", transport.LastFailure);
@@ -367,9 +358,8 @@ public sealed class HttpSignatureTransportTests
     [Fact]
     public void ASuccessClearsTheLastFailure()
     {
-        if (HttpSignatureTransport.IsOffline) return;
         int calls = 0;
-        using var transport = new HttpSignatureTransport(new Handler(_ => ++calls == 1 ? new HttpResponseMessage(HttpStatusCode.NotFound) : Ok([1])));
+        using var transport = new HttpSignatureTransport(new Handler(_ => ++calls == 1 ? new HttpResponseMessage(HttpStatusCode.NotFound) : Ok([1])), () => false);
 
         transport.Get("https://a.example/1");
         Assert.NotNull(transport.LastFailure);
