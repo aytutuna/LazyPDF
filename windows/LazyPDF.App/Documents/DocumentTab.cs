@@ -171,7 +171,7 @@ public sealed class DocumentTab : ITab, IDisposable
             using var stream = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             return System.Security.Cryptography.SHA256.HashData(stream).AsSpan().SequenceEqual(_diskHash);
         }
-        catch (IOException)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return false;
         }

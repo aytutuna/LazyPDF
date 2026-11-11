@@ -415,6 +415,7 @@ public sealed partial class AppViewModel
     {
         if (ActiveDocument is not { Path: { } path } tab) return;
         var known = tab.Known;
+        _warnedAboutDisk.TryGetValue(tab, out var seen);
         DiskStamp? found;
         bool touched;
         try
@@ -431,7 +432,7 @@ public sealed partial class AppViewModel
                 {
                     now = null;
                 }
-                return (now, now is not null && tab.IsChangedFrom(now) && tab.IsOnlyTouched(now));
+                return (now, now is not null && now != seen && tab.IsChangedFrom(now) && tab.IsOnlyTouched(now));
             });
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -446,7 +447,7 @@ public sealed partial class AppViewModel
             tab.AcceptDiskState(found);
             return;
         }
-        if (_warnedAboutDisk.TryGetValue(tab, out var seen) && seen == found) return;
+        if (_warnedAboutDisk.TryGetValue(tab, out seen) && seen == found) return;
         _warnedAboutDisk[tab] = found;
         if (found is null)
         {

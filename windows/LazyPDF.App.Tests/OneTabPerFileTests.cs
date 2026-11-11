@@ -120,7 +120,7 @@ public sealed class OneTabPerFileTests
         });
     }
 
-    private sealed class OneThread : SynchronizationContext
+    internal sealed class OneThread : SynchronizationContext
     {
         private readonly BlockingCollection<(SendOrPostCallback, object?)> _queue = new();
 

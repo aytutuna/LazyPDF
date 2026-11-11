@@ -70,6 +70,23 @@ public sealed class DiskChangeTests
     }
 
     [Fact]
+    public async Task ASameLengthChangeAlreadyToldIsNotCheckedAgain()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        var bytes = File.ReadAllBytes(path);
+        bytes[^1] ^= 1;
+        Touch(path, bytes);
+        await f.Vm.CheckDiskAsync();
+        f.Vm.DismissMessage();
+
+        await f.Vm.CheckDiskAsync();
+
+        Assert.Null(f.Vm.Message);
+    }
+
+    [Fact]
     public async Task ASavedTabWithATouchedFileIsStillNoticed()
     {
         using var f = new ViewModelFixture();
@@ -193,18 +210,22 @@ public sealed class DiskChangeTests
     }
 
     [Fact]
-    public async Task ALeftTabIsNotToldAboutAfterTheCheckFinishes()
+    public void ALeftTabIsNotToldAboutAfterTheCheckFinishes()
     {
-        using var f = new ViewModelFixture();
-        string a = f.Pdf("a.pdf");
-        await f.Vm.OpenFilesAsync([f.Pdf("b.pdf"), a]);
-        Assert.Equal(a, f.Vm.ActiveDocument!.Path);
-        Touch(a, Pdfs.Text(pages: 3));
+        // In the app the check comes back on the window's thread, after the tab is left, never before.
+        OneTabPerFileTests.OneThread.Run(async () =>
+        {
+            using var f = new ViewModelFixture();
+            string a = f.Pdf("a.pdf");
+            await f.Vm.OpenFilesAsync([f.Pdf("b.pdf"), a]);
+            Assert.Equal(a, f.Vm.ActiveDocument!.Path);
+            Touch(a, Pdfs.Text(pages: 3));
 
-        var check = f.Vm.CheckDiskAsync();
-        f.Vm.ActiveTab = f.Vm.Documents.First();
-        await check;
+            var check = f.Vm.CheckDiskAsync();
+            f.Vm.ActiveTab = f.Vm.Documents.First();
+            await check;
 
-        Assert.Null(f.Vm.Message);
+            Assert.Null(f.Vm.Message);
+        });
     }
 }
