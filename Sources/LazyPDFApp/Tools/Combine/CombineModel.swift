@@ -204,7 +204,32 @@ public final class CombineModel: ToolPanelModel {
                 }
             }
         } catch {
-            host.showProblem(Problem(L10n.t("Files not combined"), L10n.t("The files could not be put into one. Try fewer pages or files.")))
+            // Each file alone, in order, to name the first one the merge cannot take.
+            let names = entries.map(\.name)
+            var bad: String?
+            var checked = false
+            try? await host.runBusy(L10n.t("Checking the files")) { token in
+                bad = try await ToolDocuments.run(token) { () throws -> String? in
+                    gate.lock()
+                    defer { gate.unlock() }
+                    let again = try copy.open()
+                    for (name, source) in zip(names, ordered) {
+                        try token.throwIfCancelled()
+                        do {
+                            _ = try PageAssembly.merge([MergeSource(source.document ?? again, source.pages)]).saveRewrite()
+                        } catch is PdfReadException {
+                            return name
+                        } catch is ArgumentException {
+                            return name
+                        }
+                    }
+                    return nil
+                }
+                checked = true
+            }
+            if !checked { return }
+            host.showProblem(Problem(L10n.t("Files not combined"), bad.map { L10n.t("{0} could not be put into the file. Leave it out, or try fewer of its pages.", $0) }
+                ?? L10n.t("The files could not be put into one. Try fewer pages or files.")))
             return
         }
         guard let bytes = made else { return }

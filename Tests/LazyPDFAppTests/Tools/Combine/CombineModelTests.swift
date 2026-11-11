@@ -114,6 +114,21 @@ final class CombineModelTests: XCTestCase {
         XCTAssertTrue(rig.host.problems[0].text.hasPrefix("b.pdf: "))
     }
 
+    func test_theFileThatCannotBeMergedIsNamed() async throws {
+        let dir = TempDir(self)
+        let (model, rig) = try attached(3)
+        await add(model, rig, dir, "b.pdf", 2)
+        await add(model, rig, dir, "c.pdf", 2)
+        model.entries[1].pages = 99
+        model.entries[1].range = "99"
+
+        await model.action!.run()
+
+        XCTAssertTrue(rig.host.openedNew.isEmpty)
+        XCTAssertEqual(rig.host.problems.map(\.title), ["Files not combined"])
+        XCTAssertEqual(rig.host.problems[0].text, "b.pdf could not be put into the file. Leave it out, or try fewer of its pages.")
+    }
+
     func test_aFileThatLimitsCopyingIsNotCombined() async throws {
         let (model, rig) = try attached(bytes: try Pdfs.restricted(.print))
 
