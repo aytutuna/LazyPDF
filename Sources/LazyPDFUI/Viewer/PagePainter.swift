@@ -51,7 +51,7 @@ enum PagePainter {
             if drawing.failed {
                 drawFailure(L10n.t("This page cannot be shown."), atBottom: false, in: rect, colors, context)
             } else if drawing.partFailed {
-                drawFailure(L10n.t("Part of this page could not be drawn sharply."), atBottom: true, in: rect, colors, context)
+                drawFailure(L10n.t("Part of this page could not be drawn sharply."), atBottom: true, in: rect.intersection(CGRect(x: 0, y: 0, width: viewer.viewport.width, height: viewer.viewport.height)), colors, context)
             }
             highlight(viewer, page, matrix, colors, context)
             OverlayPainter.draw(viewer.overlay(page), matrix: matrix, accent: colors.mark, in: context)
