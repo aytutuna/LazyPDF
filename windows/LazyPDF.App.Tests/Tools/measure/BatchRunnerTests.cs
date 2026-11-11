@@ -101,7 +101,7 @@ public sealed class BatchRunnerTests
         Assert.False(result.Ok);
         Assert.Equal("File is locked", result.Title);
         Assert.Contains("locked.pdf", result.Detail);
-        Assert.Contains("cannot ask", result.Detail);
+        Assert.Contains("Password for locked files", result.Detail);
     }
 
     private static byte[] Locked() =>

@@ -7834,6 +7834,9 @@
   <data name="{0} is locked for certificate holders. Pick one that opens it." xml:space="preserve">
     <value>{0} sertifika sahipleri için kilitli. Dosyayı açan bir sertifika seçin.</value>
   </data>
+  <data name="{0} is locked. Type its password in Password for locked files, then run again." xml:space="preserve">
+    <value>{0} kilitli. Parolasını Kilitli dosyalar için parola kutusuna yazın, sonra yeniden çalıştırın.</value>
+  </data>
   <data name="{0} is locked. Type its password." xml:space="preserve">
     <value>{0} kilitli. Parolasını yazın.</value>
   </data>

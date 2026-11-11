@@ -4713,6 +4713,9 @@
   "Password for locked files": {
     "tr": "Kilitli dosyalar için parola"
   },
+  "{0} is locked. Type its password in Password for locked files, then run again.": {
+    "tr": "{0} kilitli. Parolasını Kilitli dosyalar için parola kutusuna yazın, sonra yeniden çalıştırın."
+  },
   "Used for files that ask for one. The results are saved without a password; add a Protect step to lock them again. The password is not saved.": {
     "tr": "Parola isteyen dosyalar için kullanılır. Sonuçlar parolasız kaydedilir; yeniden kilitlemek için bir Koru adımı ekleyin. Parola kaydedilmez."
   },
