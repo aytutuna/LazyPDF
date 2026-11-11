@@ -2685,6 +2685,9 @@
   "{0} is open in another tab. Close that tab first, or pick another name.": {
     "tr": "{0} başka bir sekmede açık. Önce o sekmeyi kapatın ya da başka bir ad seçin."
   },
+  "{0} is open in another tab and the name you picked replaced it. Close that tab, then save it again from there to get it back.": {
+    "tr": "{0} başka bir sekmede açık ve seçtiğiniz ad onun yerine geçti. O sekmeyi kapatın, ardından dosyayı geri almak için oradan yeniden kaydedin."
+  },
   "{0} Not available: {1}": {
     "tr": "{0} Kullanılamıyor: {1}"
   },
@@ -7130,6 +7133,9 @@
   },
   "Old values are still in the file": {
     "tr": "Eski değerler hâlâ dosyada"
+  },
+  "The earlier title, author, subject or keywords can still be found in the file's history. Clean for sharing removes them.": {
+    "tr": "Önceki başlık, yazar, konu veya anahtar sözcükler dosyanın geçmişinde hâlâ bulunabilir. Paylaşım için temizle aracı bunları kaldırır."
   },
   "The earlier title, author, subject, keywords or custom values can still be found in the file's history. Clean for sharing removes them.": {
     "tr": "Önceki başlık, yazar, konu, anahtar sözcükler veya özel değerler dosyanın geçmişinde hâlâ bulunabilir. Paylaşım için temizle aracı bunları kaldırır."

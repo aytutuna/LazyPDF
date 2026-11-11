@@ -6100,6 +6100,9 @@
   <data name="The document language is set." xml:space="preserve">
     <value>Belgenin dili ayarlı.</value>
   </data>
+  <data name="The earlier title, author, subject or keywords can still be found in the file's history. Clean for sharing removes them." xml:space="preserve">
+    <value>Önceki başlık, yazar, konu veya anahtar sözcükler dosyanın geçmişinde hâlâ bulunabilir. Paylaşım için temizle aracı bunları kaldırır.</value>
+  </data>
   <data name="The earlier title, author, subject, keywords or custom values can still be found in the file's history. Clean for sharing removes them." xml:space="preserve">
     <value>Önceki başlık, yazar, konu, anahtar sözcükler veya özel değerler dosyanın geçmişinde hâlâ bulunabilir. Paylaşım için temizle aracı bunları kaldırır.</value>
   </data>
@@ -7911,6 +7914,9 @@
   </data>
   <data name="{0} is not there any more. It may have been moved or deleted." xml:space="preserve">
     <value>{0} artık yok. Taşınmış ya da silinmiş olabilir.</value>
+  </data>
+  <data name="{0} is open in another tab and the name you picked replaced it. Close that tab, then save it again from there to get it back." xml:space="preserve">
+    <value>{0} başka bir sekmede açık ve seçtiğiniz ad onun yerine geçti. O sekmeyi kapatın, ardından dosyayı geri almak için oradan yeniden kaydedin.</value>
   </data>
   <data name="{0} is open in another tab. Close that tab first, or pick another name." xml:space="preserve">
     <value>{0} başka bir sekmede açık. Önce o sekmeyi kapatın ya da başka bir ad seçin.</value>

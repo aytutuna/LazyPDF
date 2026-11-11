@@ -413,6 +413,7 @@
 "Dark pages" = "Koyu sayfalar";
 "Data follows the last %%EOF." = "Son %%EOF'tan sonra veri var.";
 "Data not read" = "Veriler okunamadı";
+"Data the program that made the file keeps for its own editing. Reading the file does not need it. Keep this off if you open the file in that program." = "Dosyayı oluşturan programın kendi düzenlemesi için sakladığı veriler. Dosyayı okumak için gerekmez. Dosyayı o programda açıyorsanız bunu kapalı tutun.";
 "Date" = "Tarih";
 "Date format" = "Tarih biçimi";
 "Dates" = "Tarihler";
@@ -533,6 +534,7 @@
 "Exported" = "Dışa aktarıldı";
 "Exporting" = "Dışa aktarılıyor";
 "Exporting comments" = "Yorumlar dışa aktarılıyor";
+"Extra private entries other programs added. Reading the file does not need them." = "Başka programların eklediği özel girdiler. Dosyayı okumak için gerekmezler.";
 "Extract to a new file" = "Yeni dosyaya ayıkla";
 "Extracting pages" = "Sayfalar ayıklanıyor";
 "FDF file" = "FDF dosyası";
@@ -1003,6 +1005,7 @@
 "Numbering" = "Numaralandırma";
 "Object {0}" = "Nesne {0}";
 "Odd pages" = "Tek sayfalar";
+"Old values are still in the file" = "Eski değerler hâlâ dosyada";
 "Old: {0}" = "Eski: {0}";
 "Older readers may not accept these letters. Use AES 256-bit." = "Eski okuyucular bu harfleri kabul etmeyebilir. AES 256 bit kullanın.";
 "On pages" = "Sayfalarda";
@@ -1262,9 +1265,11 @@
 "Remove all stamps" = "Tüm damgaları kaldır";
 "Remove application data" = "Uygulama verisini kaldır";
 "Remove crop" = "Kırpmayı kaldır";
+"Remove editing data of the program that made the file" = "Dosyayı oluşturan programın düzenleme verilerini kaldır";
 "Remove from list" = "Listeden kaldır";
 "Remove from the list" = "Listeden kaldır";
 "Remove link" = "Bağlantıyı kaldır";
+"Remove other hidden program data" = "Başka programların gizli verilerini kaldır";
 "Remove page labels" = "Sayfa etiketlerini kaldır";
 "Remove picture" = "Resmi kaldır";
 "Remove private keys" = "Özel anahtarları kaldır";
@@ -1626,6 +1631,7 @@
 "The XMP says part {0}; part {1} is checked." = "XMP {0}. bölümü söylüyor; {1}. bölüm denetleniyor.";
 "The XMP uses properties of {0} with no extension schema." = "XMP, {0} özelliklerini uzantı şeması olmadan kullanıyor.";
 "The address is not a web address." = "Adres bir web adresi değil.";
+"The address points to this computer, so it was not used." = "Adres bu bilgisayarı gösteriyor, bu yüzden kullanılmadı.";
 "The annotation has no normal appearance stream." = "Ek açıklamanın normal görünüm akışı yok.";
 "The annotation is hidden, invisible or not shown on screen." = "Ek açıklama gizli, görünmez ya da ekranda gösterilmiyor.";
 "The annotation type {0} is not allowed." = "{0} ek açıklama türüne izin verilmiyor.";
@@ -1663,6 +1669,7 @@
 "The document is tagged." = "Belge etiketli.";
 "The document language is missing or not valid. Set it so a screen reader picks the right voice." = "Belgenin dili eksik ya da geçersiz. Ekran okuyucu doğru sesi seçsin diye dili ayarlayın.";
 "The document language is set." = "Belgenin dili ayarlı.";
+"The earlier title, author, subject or keywords can still be found in the file's history. Clean for sharing removes them." = "Önceki başlık, yazar, konu veya anahtar sözcükler dosyanın geçmişinde hâlâ bulunabilir. Paylaşım için temizle aracı bunları kaldırır.";
 "The embedded font program could not be read." = "Gömülü yazı tipi programı okunamadı.";
 "The encryption was removed." = "Şifreleme kaldırıldı.";
 "The export value cannot be empty or Off." = "Dışa aktarma değeri boş veya Off olamaz.";
@@ -1917,6 +1924,7 @@
 "Today" = "Bugün";
 "Too large to export" = "Dışa aktarmak için çok büyük";
 "Too many parts for tabs" = "Sekmeler için çok fazla parça";
+"Too many requests for one file. Stopped." = "Tek bir dosya için çok fazla istek yapıldı. Durduruldu.";
 "Tools" = "Araçlar";
 "Top" = "Üst";
 "Top left" = "Sol üst";
@@ -2144,6 +2152,7 @@
 "{0} is not an FDF, XFDF, CSV or JSON file. Pick another file." = "{0} bir FDF, XFDF, CSV veya JSON dosyası değil. Başka bir dosya seçin.";
 "{0} is not an RSA certificate. Ask for the person's certificate file." = "{0} bir RSA sertifikası değil. Kişiden sertifika dosyasını isteyin.";
 "{0} is not there any more. It may have been moved or deleted." = "{0} artık yok. Taşınmış ya da silinmiş olabilir.";
+"{0} is open in another tab and the name you picked replaced it. Close that tab, then save it again from there to get it back." = "{0} başka bir sekmede açık ve seçtiğiniz ad onun yerine geçti. O sekmeyi kapatın, ardından dosyayı geri almak için oradan yeniden kaydedin.";
 "{0} is open in another tab. Close that tab first, or pick another name." = "{0} başka bir sekmede açık. Önce o sekmeyi kapatın ya da başka bir ad seçin.";
 "{0} is over 50 MB. Attach a smaller file." = "{0} 50 MB'ı aşıyor. Daha küçük bir dosya ekleyin.";
 "{0} is protected. Type its password to open it." = "{0} korumalı. Açmak için parolasını yazın.";

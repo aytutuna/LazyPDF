@@ -183,13 +183,34 @@ final class IOSShell {
         let name = (tab.title as NSString).deletingPathExtension + ".pdf"
         guard let staged = stage(tab, name: name) else { return false }
         defer { try? FileManager.default.removeItem(at: staged.deletingLastPathComponent()) }
-        var others: [UUID: Data] = [:]
+        var backups: [UUID: URL] = [:]
+        var unprotected: Set<UUID> = []
         for other in vm.documents where other !== tab {
-            if let url = other.url, let bytes = try? Data(contentsOf: url) { others[other.id] = bytes }
+            guard let url = other.url else { continue }
+            let backup = staged.deletingLastPathComponent().appendingPathComponent(other.id.uuidString)
+            do {
+                try CoordinatedFileReader.read(url).write(to: backup)
+                backups[other.id] = backup
+            } catch {
+                unprotected.insert(other.id)
+            }
         }
         guard let file = await pick(.export(staged)).first else { return false }
-        if let other = vm.tab(of: file.url), other !== tab, let bytes = others[other.id] {
-            try? CoordinatedFileWriter().write(to: file.url) { try bytes.write(to: $0) }
+        if let other = vm.tab(of: file.url), other !== tab {
+            var restored = false
+            if let backup = backups[other.id] {
+                do {
+                    try CoordinatedFileWriter().write(to: file.url) { try Data(contentsOf: backup).write(to: $0) }
+                    other.acceptDiskState()
+                    restored = true
+                } catch {}
+            }
+            if !restored {
+                file.access?.stop()
+                vm.showProblem(Problem(L10n.t("Not saved"),
+                    L10n.t("{0} is open in another tab and the name you picked replaced it. Close that tab, then save it again from there to get it back.", other.title)))
+                return false
+            }
         }
         let saved = compact ? vm.saveCompact(tab, file.url) : vm.saveAs(tab, file.url)
         if saved {
