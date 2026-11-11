@@ -9,8 +9,9 @@ namespace LazyPDF.App.Tools.Certificates;
 /// <param name="Rect">The box of a new visible signature in user space; null with no field makes it invisible.</param>
 /// <param name="TimestampUrl">Null or empty for no time stamp.</param>
 /// <param name="LongTerm">Adds the revocation data (PAdES B-LT); needs a time stamp.</param>
+/// <param name="Look">What a visible signature shows; null writes the signer's text only.</param>
 internal sealed record SignChoices(X509Certificate2 Certificate, string? Field, int Page, PdfRect? Rect, string Reason, string Location,
-    CertificationLevel Certify, string? TimestampUrl, bool LongTerm);
+    CertificationLevel Certify, string? TimestampUrl, bool LongTerm, SignatureLook? Look = null);
 
 internal static class CertificateSigning
 {
@@ -22,6 +23,7 @@ internal static class CertificateSigning
             FieldName = choices.Field,
             PageIndex = choices.Page,
             Rect = choices.Rect,
+            Look = choices.Look,
             Reason = Blank(choices.Reason),
             Location = Blank(choices.Location),
             Certify = choices.Certify,

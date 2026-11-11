@@ -3,7 +3,8 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:loc="clr-namespace:LazyPDF.App"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
-                 xmlns:services="clr-namespace:LazyPDF.App.Services">
+                 xmlns:services="clr-namespace:LazyPDF.App.Services"
+                 xmlns:fill="clr-namespace:LazyPDF.App.Tools.FillSign">
     <StackPanel Margin="{StaticResource PanePadding}">
         <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Sign with}" />
         <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,0,0,8">
@@ -47,6 +48,32 @@
                 <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE7C9;" Content="{loc:T Draw the box}" AutomationProperties.Name="{loc:T Draw the box}" Padding="10,3,10,4"
                         HorizontalAlignment="Left" Click="DrawBox_Click" />
                 <TextBlock x:Name="BoxText" Style="{StaticResource ReasonText}" Margin="0,6,0,0" AutomationProperties.LiveSetting="Polite" />
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel x:Name="LookRow">
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Look of the signature}" />
+            <StackPanel Margin="{StaticResource FieldSpacing}">
+                <ComboBox x:Name="LookBox" DisplayMemberPath="Text" AutomationProperties.Name="{loc:T Look of the signature}" SelectionChanged="LookBox_SelectionChanged" />
+                <StackPanel x:Name="LookPage" Visibility="Collapsed" Margin="0,8,0,0">
+                    <ListBox x:Name="SavedList" MaxHeight="168" AutomationProperties.Name="{loc:T Saved}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch"
+                             SelectionChanged="SavedList_SelectionChanged">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type fill:SavedRow}">
+                                <Border Background="White" CornerRadius="4" Height="40" Margin="0,2,8,2" Padding="4">
+                                    <Image Source="{Binding Picture}" Stretch="Uniform" HorizontalAlignment="Left" />
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock x:Name="NoneSaved" Style="{StaticResource ReasonText}" Margin="0,4,0,0" Text="{loc:T No saved signatures yet. Add one in Fill and sign.}" />
+                </StackPanel>
             </StackPanel>
         </StackPanel>
 

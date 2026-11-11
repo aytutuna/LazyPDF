@@ -5821,6 +5821,27 @@
   "Signature on the page": {
     "tr": "Sayfadaki imza"
   },
+  "Look of the signature": {
+    "tr": "İmzanın görünümü"
+  },
+  "Text only": {
+    "tr": "Yalnızca yazı"
+  },
+  "Picture and text": {
+    "tr": "Resim ve yazı"
+  },
+  "Picture only": {
+    "tr": "Yalnızca resim"
+  },
+  "No saved signatures yet. Add one in Fill and sign.": {
+    "tr": "Henüz kayıtlı imza yok. Doldur ve imzala aracında bir tane ekleyin."
+  },
+  "Signature not read": {
+    "tr": "İmza okunamadı"
+  },
+  "That saved signature could not be read. Choose another.": {
+    "tr": "Kayıtlı imza okunamadı. Başka bir tane seçin."
+  },
   "Signatures already in the file": {
     "tr": "Dosyadaki mevcut imzalar"
   },

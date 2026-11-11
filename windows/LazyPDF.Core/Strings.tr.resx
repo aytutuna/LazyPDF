@@ -2680,6 +2680,9 @@
   <data name="Look at" xml:space="preserve">
     <value>Karşılaştırma yöntemi</value>
   </data>
+  <data name="Look of the signature" xml:space="preserve">
+    <value>İmzanın görünümü</value>
+  </data>
   <data name="Looking for fields" xml:space="preserve">
     <value>Alanlar aranıyor</value>
   </data>
@@ -3012,6 +3015,9 @@
   </data>
   <data name="No results for {0}" xml:space="preserve">
     <value>{0} için sonuç yok</value>
+  </data>
+  <data name="No saved signatures yet. Add one in Fill and sign." xml:space="preserve">
+    <value>Henüz kayıtlı imza yok. Doldur ve imzala aracında bir tane ekleyin.</value>
   </data>
   <data name="No steps" xml:space="preserve">
     <value>Adım yok</value>
@@ -3712,6 +3718,9 @@
   <data name="Picture added." xml:space="preserve">
     <value>Resim eklendi.</value>
   </data>
+  <data name="Picture and text" xml:space="preserve">
+    <value>Resim ve yazı</value>
+  </data>
   <data name="Picture cannot be read" xml:space="preserve">
     <value>Resim okunamıyor</value>
   </data>
@@ -3729,6 +3738,9 @@
   </data>
   <data name="Picture of the figure" xml:space="preserve">
     <value>Şeklin resmi</value>
+  </data>
+  <data name="Picture only" xml:space="preserve">
+    <value>Yalnızca resim</value>
   </data>
   <data name="Picture quality" xml:space="preserve">
     <value>Resim kalitesi</value>
@@ -4678,6 +4690,9 @@
   <data name="Signature not kept" xml:space="preserve">
     <value>İmza saklanamadı</value>
   </data>
+  <data name="Signature not read" xml:space="preserve">
+    <value>İmza okunamadı</value>
+  </data>
   <data name="Signature on the page" xml:space="preserve">
     <value>Sayfadaki imza</value>
   </data>
@@ -5071,6 +5086,9 @@
   <data name="Text on the page" xml:space="preserve">
     <value>Sayfadaki metin</value>
   </data>
+  <data name="Text only" xml:space="preserve">
+    <value>Yalnızca yazı</value>
+  </data>
   <data name="Text outside the tables was left out." xml:space="preserve">
     <value>Tabloların dışındaki metin dışarıda kaldı.</value>
   </data>
@@ -5139,6 +5157,9 @@
   </data>
   <data name="That picture is too large. Pick a smaller one." xml:space="preserve">
     <value>Bu resim çok büyük. Daha küçük bir resim seçin.</value>
+  </data>
+  <data name="That saved signature could not be read. Choose another." xml:space="preserve">
+    <value>Kayıtlı imza okunamadı. Başka bir tane seçin.</value>
   </data>
   <data name="The .p12 file could not be opened. Check the password and that the file is a .p12." xml:space="preserve">
     <value>.p12 dosyası açılamadı. Parolayı ve dosyanın bir .p12 olduğunu denetleyin.</value>

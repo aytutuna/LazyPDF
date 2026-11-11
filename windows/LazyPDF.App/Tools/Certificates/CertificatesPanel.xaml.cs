@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Shapes;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.FillSign;
 using LazyPDF.Core;
 using Microsoft.Win32;
 
@@ -24,7 +25,10 @@ public partial class CertificatesPanel : ToolPanel
 
     private sealed record CertifyChoice(string Text, CertificationLevel Level);
 
+    private sealed record LookChoice(string Text, bool Picture, bool Words);
+
     private readonly SystemFontSource _fonts = new();
+    private readonly SavedSignatures _saved = new(SavedSignatures.DefaultDirectory);
     private string? _pfx;
     private SignatureBoxTool? _tool;
     private int _boxPage;
@@ -45,6 +49,13 @@ public partial class CertificatesPanel : ToolPanel
             new(Loc.T("Form filling and comments allowed"), CertificationLevel.Annotate),
         };
         CertifyBox.SelectedIndex = 0;
+        LookBox.ItemsSource = new LookChoice[]
+        {
+            new(Loc.T("Text only"), false, true),
+            new(Loc.T("Picture and text"), true, true),
+            new(Loc.T("Picture only"), true, false),
+        };
+        LookBox.SelectedIndex = 0;
     }
 
     public override ToolAction? Action => new(Loc.T("Sign"), "\uEB95", () => CanSign, SignAsync);
@@ -53,8 +64,11 @@ public partial class CertificatesPanel : ToolPanel
 
     private WhereChoice? Where => WhereBox.SelectedItem as WhereChoice;
 
+    private LookChoice? Look => LookBox.SelectedItem as LookChoice;
+
     private bool CanSign =>
         !_working
+        && (Look is not { Picture: true } || Where?.Kind == WhereKind.Invisible || SavedList.SelectedItem is not null)
         && (UseStore ? CertBox.SelectedItem is not null : _pfx is not null)
         && (Where is { Kind: not WhereKind.Box } || _box is not null)
         && (StampSwitch.IsChecked != true || CertificateSigning.IsWebAddress(UrlBox.Text));
@@ -69,6 +83,7 @@ public partial class CertificatesPanel : ToolPanel
         int again = certificates.ToList().FindIndex(c => c.Thumbprint == chosen);
         CertBox.SelectedIndex = again >= 0 ? again : certificates.Count > 0 ? 0 : -1;
         ShowCertificateNote();
+        FillSaved();
         Refill();
         if (Host!.TakeSigningField() is { } field && WhereBox.ItemsSource is IEnumerable<WhereChoice> places)
         {
@@ -84,6 +99,32 @@ public partial class CertificatesPanel : ToolPanel
         WhereBox.ItemsSource = null;
         FilePassword.Clear();
     }
+
+    private void FillSaved()
+    {
+        var rows = new List<SavedRow>();
+        foreach (var item in _saved.List(SavedKind.Signature))
+        {
+            if (_saved.Load(item) is { } image) rows.Add(new SavedRow(item, SignatureArt.ToBitmap(image)));
+        }
+        SavedList.ItemsSource = rows;
+        SavedList.SelectedIndex = rows.Count > 0 ? 0 : -1;
+        NoneSaved.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void ShowLook()
+    {
+        LookRow.Visibility = Where?.Kind == WhereKind.Invisible ? Visibility.Collapsed : Visibility.Visible;
+        LookPage.Visibility = Look is { Picture: true } ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void LookBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        ShowLook();
+        RaiseActionChanged();
+    }
+
+    private void SavedList_SelectionChanged(object sender, SelectionChangedEventArgs e) => RaiseActionChanged();
 
     private void Tab_Changed(object? sender, EventArgs e)
     {
@@ -117,6 +158,7 @@ public partial class CertificatesPanel : ToolPanel
         if (keepBox) Viewer!.Overlay(_boxPage).Children.Add(_outline!);
         else if (kept == 1) BoxText.Text = Loc.T("No box yet.");
         BoxRow.Visibility = Where?.Kind == WhereKind.Box ? Visibility.Visible : Visibility.Collapsed;
+        ShowLook();
         bool signed = document.IsSigned;
         CertifyBox.IsEnabled = !signed;
         if (signed) CertifyBox.SelectedIndex = 0;
@@ -174,6 +216,7 @@ public partial class CertificatesPanel : ToolPanel
         ClearBox();
         BoxRow.Visibility = Where?.Kind == WhereKind.Box ? Visibility.Visible : Visibility.Collapsed;
         BoxText.Text = Loc.T("No box yet.");
+        ShowLook();
         RaiseActionChanged();
     }
 
@@ -226,14 +269,14 @@ public partial class CertificatesPanel : ToolPanel
         RaiseActionChanged();
     }
 
-    private SignChoices Choices(X509Certificate2 certificate)
+    private SignChoices Choices(X509Certificate2 certificate, SignatureLook? look)
     {
         var where = Where!;
         PdfRect? rect = where.Kind == WhereKind.Box && _box is { } box
             ? Viewer!.Geometry(_boxPage).ToUser(new DisplayRect(box.X, box.Y, box.Width, box.Height))
             : null;
         return new SignChoices(certificate, where.Field, where.Kind == WhereKind.Box ? _boxPage : 0, rect, ReasonBox.Text, PlaceBox.Text,
-            ((CertifyChoice)CertifyBox.SelectedItem).Level, StampSwitch.IsChecked == true ? UrlBox.Text.Trim() : null, LongSwitch.IsChecked == true);
+            ((CertifyChoice)CertifyBox.SelectedItem).Level, StampSwitch.IsChecked == true ? UrlBox.Text.Trim() : null, LongSwitch.IsChecked == true, look);
     }
 
     private async Task SignAsync()
@@ -246,6 +289,17 @@ public partial class CertificatesPanel : ToolPanel
             return;
         }
         // The controls can change while the signing waits on a server, so what they say is read now.
+        SignatureLook? look = null;
+        if (Where!.Kind != WhereKind.Invisible && Look is { Picture: true } choice)
+        {
+            var row = (SavedRow)SavedList.SelectedItem;
+            if (_saved.Load(row.Item) is not { } image)
+            {
+                host.ShowProblem(new Problem(Loc.T("Signature not read"), Loc.T("That saved signature could not be read. Choose another.")));
+                return;
+            }
+            look = choice.Words ? new SignatureLook { Image = image } : new SignatureLook { Image = image, Text = "" };
+        }
         bool fromStore = UseStore, stamped = StampSwitch.IsChecked == true;
         X509Certificate2 certificate;
         try
@@ -257,7 +311,7 @@ public partial class CertificatesPanel : ToolPanel
             host.ShowProblem(new Problem(Loc.T("Certificate not opened"), Loc.T("The PFX file could not be opened. Check the password and that the file is a PFX.")));
             return;
         }
-        var choices = Choices(certificate);
+        var choices = Choices(certificate, look);
         var verify = SigningSettingsStore.Load().Verify(tab.Password, tab.Certificate, DateTimeOffset.Now);
         int before = tab.Session.Current.Length;
         bool finished = false, covered = true;
