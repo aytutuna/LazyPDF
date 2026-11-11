@@ -345,4 +345,45 @@ final class EditSessionTests: XCTestCase {
             XCTAssertEqual(SaveFixtures.title(reopened), "Title \(PdfDocument.maxSections + 4)", kind)
             XCTAssertEqual(reopened.pages.count, 2, kind)
         }
-    }}
+    }
+
+    func test_commitPastTheLimitIsRefusedAndKeepsTheChanges() throws {
+        let session = try PdfEditSession.open(SaveFixtures.table())
+        retitle(session, "One")
+        XCTAssertTrue(try session.commit("Title one"))
+        let afterOne = session.current
+
+        session.maxBytes = afterOne.count + 10
+        retitle(session, "Two")
+        do {
+            _ = try session.commit("Title two")
+            XCTFail("expected a refusal")
+        } catch let e as PdfReadException {
+            XCTAssertEqual(e.problem, .unsupported)
+            XCTAssertEqual(e.message, "The file is too large to change further.")
+        }
+        XCTAssertTrue(session.isDirty)
+        XCTAssertTrue(session.canUndo)
+        XCTAssertEqual(session.undoLabel, "Title one")
+        XCTAssertEqual(session.current, afterOne)
+
+        session.maxBytes = Int.max
+        XCTAssertTrue(try session.commit("Title two"))
+        XCTAssertEqual(title(session), "Two")
+    }
+
+    func test_fileLargerThanTheLimitIsNotRead() throws {
+        let huge = path("huge.pdf")
+        FileManager.default.createFile(atPath: huge, contents: nil)
+        let file = try FileHandle(forWritingTo: URL(fileURLWithPath: huge))
+        try file.truncate(atOffset: UInt64(Int32.max) + 1)
+        try file.close()
+        do {
+            _ = try PdfEditSession.open(path: huge)
+            XCTFail("expected a refusal")
+        } catch let e as PdfReadException {
+            XCTAssertEqual(e.problem, .unsupported)
+            XCTAssertEqual(e.message, "The file is too large.")
+        }
+    }
+}

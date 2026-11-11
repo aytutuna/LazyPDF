@@ -16,6 +16,8 @@ public final class PdfEditSession {
     private var floor: Int
     private var position = 0
     private var savedPosition = 0
+    // Settable so a test need not build a file of 2 GB.
+    var maxBytes = Int(Int32.max)
 
     /// The document at the current state, to read and to change. Changes wait here until `commit`.
     public private(set) var document: PdfDocument
@@ -42,7 +44,15 @@ public final class PdfEditSession {
     }
 
     public static func open(path: String, password: String? = nil) throws -> PdfEditSession {
-        try open([UInt8](try Data(contentsOf: URL(fileURLWithPath: path))), password: password)
+        try open(try readFile(path), password: password)
+    }
+
+    private static func readFile(_ path: String) throws -> [UInt8] {
+        let file = try FileHandle(forReadingFrom: URL(fileURLWithPath: path))
+        defer { try? file.close() }
+        if try file.seekToEnd() > UInt64(Int32.max) { throw PdfReadException(.unsupported, "The file is too large.") }
+        try file.seek(toOffset: 0)
+        return [UInt8](try file.readToEnd() ?? Data())
     }
 
     #if canImport(Security)
@@ -52,7 +62,7 @@ public final class PdfEditSession {
     }
 
     public static func open(path: String, certificate: PdfCertificate) throws -> PdfEditSession {
-        try open([UInt8](try Data(contentsOf: URL(fileURLWithPath: path))), certificate: certificate)
+        try open(try readFile(path), certificate: certificate)
     }
     #endif
 
@@ -71,6 +81,7 @@ public final class PdfEditSession {
     public func commit(_ label: String) throws -> Bool {
         let update = try PdfUpdate.build(document)
         if update.isEmpty { return false }
+        if current.count + update.count > maxBytes { throw tooLarge() }
         return try take(label, current + update)
     }
 
@@ -86,6 +97,7 @@ public final class PdfEditSession {
     public func commit(_ label: String, update: [UInt8], over length: Int) throws -> Bool {
         guard length == current.count else { throw InvalidOperationException("The file changed while the edit was made.") }
         if update.isEmpty { return false }
+        if current.count + update.count > maxBytes { throw tooLarge() }
         return try take(label, current + update)
     }
 
@@ -94,7 +106,12 @@ public final class PdfEditSession {
     @discardableResult
     public func commitBytes(_ label: String, _ next: [UInt8]) throws -> Bool {
         precondition(next.count > current.count && Array(next[0..<current.count]) == current, "The file does not continue the current one.")
+        if next.count > maxBytes { throw tooLarge() }
         return try take(label, next)
+    }
+
+    private func tooLarge() -> PdfReadException {
+        PdfReadException(.unsupported, "The file is too large to change further.")
     }
 
     private func take(_ label: String, _ next: [UInt8]) throws -> Bool {
