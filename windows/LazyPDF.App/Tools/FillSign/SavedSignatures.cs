@@ -8,15 +8,18 @@ internal enum SavedKind
 {
     Signature,
     Initials,
+    Stamp,
 }
 
-/// <summary>A signature or initials kept for reuse. The kind and the time are in the file name.</summary>
+/// <summary>A signature, initials or stamp picture kept for reuse. The kind and the time are in the file name.</summary>
 internal sealed record SavedItem(SavedKind Kind, string Path);
 
 /// <summary>Signatures and initials the user keeps, one PNG each in a folder of their own under %APPDATA%\Lazy PDF.</summary>
 internal sealed class SavedSignatures(string directory)
 {
     public static string DefaultDirectory => System.IO.Path.Combine(StoreFiles.DefaultDirectory, "Signatures");
+
+    public static string StampsDirectory => System.IO.Path.Combine(StoreFiles.DefaultDirectory, "Stamps");
 
     /// <summary>Newest first.</summary>
     public IReadOnlyList<SavedItem> List(SavedKind kind)

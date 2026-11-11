@@ -136,10 +136,10 @@ internal static class SignatureArt
         return Read(picture);
     }
 
-    private static PdfRgbaImage Shrink(PdfRgbaImage image)
+    internal static PdfRgbaImage Shrink(PdfRgbaImage image, int maxWidth = MaxPictureWidth)
     {
-        if (image.Width <= MaxPictureWidth) return image;
-        double factor = (double)MaxPictureWidth / image.Width;
+        if (image.Width <= maxWidth) return image;
+        double factor = (double)maxWidth / image.Width;
         return Read(new TransformedBitmap(ToBitmap(image), new ScaleTransform(factor, factor)));
     }
 

@@ -5,6 +5,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
+using LazyPDF.App.Tools.FillSign;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using FontStyles = LazyPDF.Core.FontStyles;
@@ -64,6 +66,13 @@ public partial class CommentPanel
                 break;
             case MarkTool.Note or MarkTool.TextBox or MarkTool.Callout:
                 Type(tool, page, points, look);
+                break;
+            case MarkTool.Stamp when _picture is { } picture:
+                Added(Change(label, m =>
+                {
+                    made = m.AddPictureStamp(page, points[0], picture);
+                    if (look.Opacity < 1) made = m.SetOpacity(made, look.Opacity);
+                }), made);
                 break;
             case MarkTool.Stamp:
                 string stamp = StampValue();
@@ -155,6 +164,60 @@ public partial class CommentPanel
         {
             host.ShowProblem(tooBig);
         }
+    }
+
+    private void FillPictures()
+    {
+        var rows = new List<SavedRow>();
+        foreach (var item in _pictures.List(SavedKind.Stamp))
+        {
+            if (_pictures.Load(item) is { } image) rows.Add(new SavedRow(item, SignatureArt.ToBitmap(image)));
+        }
+        PictureList.ItemsSource = rows;
+        NonePictures.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        PictureList.Visibility = rows.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void PictureList_SelectionChanged(object sender, SelectionChangedEventArgs e) =>
+        _picture = PictureList.SelectedItem is SavedRow row ? _pictures.Load(row.Item) : null;
+
+    private async void AddPicture_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog { Title = Loc.T("Add a picture"), Filter = Loc.T("Pictures") + "|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff" };
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+        string path = dialog.FileName;
+        PdfRgbaImage? image;
+        try
+        {
+            image = await Task.Run(() =>
+            {
+                byte[] file = SignatureArt.UprightFile(File.ReadAllBytes(path));
+                return new WicImageCodec().DecodeFile(file) is { Count: > 0 } frames ? SignatureArt.Shrink(frames[0], 600) : null;
+            });
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            Host?.ShowProblem(Problems.Open(error, Path.GetFileName(path)));
+            return;
+        }
+        if (image is null)
+        {
+            Host?.ShowProblem(new Problem(Loc.T("Choose a picture"), Loc.T("That file is not a picture Lazy PDF can read. Choose a PNG or JPEG.")));
+            return;
+        }
+        var item = _pictures.Add(SavedKind.Stamp, image);
+        FillPictures();
+        PictureList.SelectedIndex = ((List<SavedRow>)PictureList.ItemsSource).FindIndex(r => r.Item == item);
+    }
+
+    private void RemovePicture_Click(object sender, RoutedEventArgs e)
+    {
+        if (((FrameworkElement)sender).DataContext is not SavedRow row || Host is null) return;
+        Host.ShowNotice(Loc.T("Delete this stamp?"), Loc.T("A saved copy cannot be brought back."), new NoticeAction(Loc.T("Delete"), () =>
+        {
+            _pictures.Remove(row.Item);
+            FillPictures();
+        }));
     }
 
     private async void Markup_Click(object sender, RoutedEventArgs e)

@@ -1456,6 +1456,9 @@
   <data name="Delete this signature?" xml:space="preserve">
     <value>İmza silinsin mi?</value>
   </data>
+  <data name="Delete this stamp?" xml:space="preserve">
+    <value>Damga silinsin mi?</value>
+  </data>
   <data name="Deleted {0}" xml:space="preserve">
     <value>{0} silindi</value>
   </data>

@@ -41,12 +41,18 @@ internal static class FillSignPlacement
 
     public static bool PlaceImage(DocumentTab tab, int page, DisplayRect box, PdfRgbaImage image, DateTimeOffset now)
     {
-        var document = tab.Document;
+        AddImage(tab.Document, page, box, image, null, now);
+        return tab.Commit(Loc.T("Place signature"));
+    }
+
+    /// <summary>A picture stamp in the box, turned to stand upright on a turned page. The caller commits.</summary>
+    public static PdfAnnotation AddImage(PdfDocument document, int page, DisplayRect box, PdfRgbaImage image, string? author, DateTimeOffset now)
+    {
         var target = document.Pages[page];
         var rect = new PageGeometry(target).ToUser(box);
-        var stamp = new PdfAnnotationWriter(document).AddImageStamp(target, AsShown(rect, box), image.Width, image.Height, image.Rgba, new AnnotationInfo(Date: now));
+        var stamp = new PdfAnnotationWriter(document).AddImageStamp(target, AsShown(rect, box), image.Width, image.Height, image.Rgba, new AnnotationInfo(author, Date: now));
         TurnToPage(document, stamp, rect, target.Rotate);
-        return tab.Commit(Loc.T("Place signature"));
+        return stamp;
     }
 
     /// <summary>One or more lines of text with its left edge at the click, centred on it vertically.</summary>

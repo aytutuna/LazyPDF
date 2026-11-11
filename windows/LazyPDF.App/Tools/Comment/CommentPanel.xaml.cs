@@ -6,6 +6,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.FillSign;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using FontStyles = LazyPDF.Core.FontStyles;
@@ -69,6 +70,8 @@ public partial class CommentPanel : ToolPanel
     });
 
     private readonly SystemFontSource _fonts = new();
+    private readonly SavedSignatures _pictures = new(SavedSignatures.StampsDirectory);
+    private PdfRgbaImage? _picture;
     private readonly DispatcherTimer _settle = new() { Interval = TimeSpan.FromMilliseconds(350) };
     private readonly HashSet<object> _unsettled = [];
     private readonly Dictionary<MarkTool, RadioButton> _buttons = [];
@@ -136,6 +139,7 @@ public partial class CommentPanel : ToolPanel
         FontSizeBox.Text = "12";
         StampName.ItemsSource = AnnotationText.StandardStamps.Select(AnnotationText.StampLabel).ToList();
         StampName.SelectedIndex = 0;
+        FillPictures();
         StampDate.Content = Loc.T("Add today's date");
         AutomationProperties.SetName(StampDate, Loc.T("Add today's date"));
         _settle.Tick += Settle_Tick;
@@ -297,6 +301,7 @@ public partial class CommentPanel : ToolPanel
 
     private void Stamp_Changed(object sender, RoutedEventArgs e)
     {
+        if (e is SelectionChangedEventArgs { AddedItems.Count: > 0 }) PictureList.SelectedIndex = -1;
         if (StampName.Text.Length == 0) StampName.SelectedIndex = 0;
     }
 

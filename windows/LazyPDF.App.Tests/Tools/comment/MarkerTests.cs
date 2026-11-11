@@ -79,6 +79,38 @@ public sealed class MarkerTests
     }
 
     [Fact]
+    public void APictureStampIsAnImageStampOfTheStampWidth()
+    {
+        using var f = new CommentFixture();
+        var picture = new PdfRgbaImage(2, 1, [255, 0, 0, 255, 0, 255, 0, 255]);
+
+        var made = f.Marker.AddPictureStamp(0, new Point(200, 200), picture);
+
+        var read = Assert.Single(f.Marks());
+        Assert.Equal(AnnotationType.Stamp, read.Type);
+        Assert.Equal(Marker.StampWidth, read.Rect.Width, 0.5);
+        Assert.Equal(Marker.StampWidth / 2, read.Rect.Height, 0.5);
+        Assert.True(read.HasAppearance);
+        Assert.Equal("Ana", made.Title);
+    }
+
+    [Fact]
+    public void APictureStampOnATurnedPageKeepsItsAppearance()
+    {
+        using var f = new CommentFixture();
+        f.Document.Pages[0].Dictionary["Rotate"] = new PdfNumber(90);
+        var picture = new PdfRgbaImage(2, 1, [255, 0, 0, 255, 0, 255, 0, 255]);
+
+        f.Marker.AddPictureStamp(0, new Point(200, 200), picture);
+
+        var read = Assert.Single(f.Marks());
+        Assert.Equal(AnnotationType.Stamp, read.Type);
+        Assert.True(read.HasAppearance);
+        Assert.Equal(Marker.StampWidth / 2, read.Rect.Width, 0.5);
+        Assert.Equal(Marker.StampWidth, read.Rect.Height, 0.5);
+    }
+
+    [Fact]
     public void ACalloutSitsAtTheEndOfTheDragAndPointsBack()
     {
         using var f = new CommentFixture();

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Windows;
+using LazyPDF.App.Tools.FillSign;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using FontStyles = LazyPDF.Core.FontStyles;
@@ -161,6 +162,14 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         double width = dated ? DatedStampWidth : StampWidth;
         var box = Standing(geometry, new Rect(center.X - width / 2, center.Y - StampHeight / 2, width, StampHeight));
         return Faded(_writer.AddStamp(target, box, name, Upright(geometry), style.Color), style);
+    }
+
+    public PdfAnnotation AddPictureStamp(int page, Point center, PdfRgbaImage image)
+    {
+        var geometry = new PageGeometry(document.Pages[page]);
+        double aspect = image.Width / (double)image.Height;
+        var box = FillSignPlacement.Around(center, Math.Min(StampWidth, StampWidth * aspect), aspect, new Size(geometry.Width, geometry.Height));
+        return FillSignPlacement.AddImage(document, page, box, image, author, date);
     }
 
     // Core picks a stamp's colour by its exact name, which a dated name no longer is.

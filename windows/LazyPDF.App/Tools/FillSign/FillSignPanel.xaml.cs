@@ -11,7 +11,12 @@ namespace LazyPDF.App.Tools.FillSign;
 /// <summary>A saved signature in the list.</summary>
 internal sealed record SavedRow(SavedItem Item, BitmapSource Picture)
 {
-    public string Name => Item.Kind == SavedKind.Initials ? Loc.T("Saved initials") : Loc.T("Saved signature");
+    public string Name => Item.Kind switch
+    {
+        SavedKind.Initials => Loc.T("Saved initials"),
+        SavedKind.Stamp => Loc.T("Stamp"),
+        _ => Loc.T("Saved signature"),
+    };
 }
 
 internal sealed record DateChoice(string Pattern, string Sample);
