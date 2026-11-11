@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Viewer;
@@ -40,6 +41,9 @@ public partial class PageViewer : UserControl, IDocumentViewer
         Surface.PageText = page => LoadedText(page)?.Text;
         InitInput();
         InitText();
+        var preferences = AppPreferencesStore.Load();
+        Surface.SetTint(preferences.Tint);
+        Surface.SetArrangement(preferences.Columns == 2 ? 2 : 1, preferences.Cover, preferences.Continuous);
         foreach (var item in new[] { Preset25, Preset50, Preset75, Preset100, Preset125, Preset150, Preset200, Preset400 })
             item.Header = Loc.T("{0} %", double.Parse((string)item.Tag, System.Globalization.CultureInfo.InvariantCulture) * 100);
         RefreshBar();
@@ -314,7 +318,11 @@ public partial class PageViewer : UserControl, IDocumentViewer
 
     private void RotateLeft_Click(object sender, RoutedEventArgs e) => Surface.SetRotation(Surface.Rotation - 90);
 
-    private void Tint_Click(object sender, RoutedEventArgs e) => Surface.SetTint(Enum.Parse<PageTint>((string)((MenuItem)sender).Tag));
+    private void Tint_Click(object sender, RoutedEventArgs e)
+    {
+        Surface.SetTint(Enum.Parse<PageTint>((string)((MenuItem)sender).Tag));
+        SaveView();
+    }
 
     private void Reading_Click(object sender, RoutedEventArgs e) => ReadingMode = !ReadingMode;
 
@@ -342,7 +350,16 @@ public partial class PageViewer : UserControl, IDocumentViewer
                 break;
         }
         Surface.SetArrangement(columns, cover, continuous);
+        SaveView();
     }
+
+    private void SaveView() => AppPreferencesStore.Update(p =>
+    {
+        p.Tint = Surface.Tint;
+        p.Columns = Surface.Columns;
+        p.Cover = Surface.Cover;
+        p.Continuous = Surface.Continuous;
+    });
 
     private void MoreMenu_Opened(object sender, RoutedEventArgs e)
     {

@@ -19,6 +19,18 @@ public sealed class AppPreferences
 
     /// <summary>Which inspector sections the user left open or closed: a tool's own key, open. No entry is the default.</summary>
     public Dictionary<string, bool> InspectorSections { get; set; } = [];
+
+    /// <summary>The page tint picked in the viewer.</summary>
+    public Viewer.PageTint Tint { get; set; } = Viewer.PageTint.None;
+
+    /// <summary>Pages side by side in the viewer, 1 or 2.</summary>
+    public int Columns { get; set; } = 1;
+
+    /// <summary>Whether the first page stands alone when two columns are shown.</summary>
+    public bool Cover { get; set; }
+
+    /// <summary>Whether pages run on in one scroll rather than one at a time.</summary>
+    public bool Continuous { get; set; } = true;
 }
 
 /// <summary>preferences.json in %APPDATA%\Lazy PDF, read and written by the rules of Lazy Scan's settings files.</summary>

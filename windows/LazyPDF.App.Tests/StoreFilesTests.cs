@@ -23,6 +23,20 @@ public sealed class StoreFilesTests
     }
 
     [Fact]
+    public void ViewSettingsAreReadBackAsWritten()
+    {
+        using var dir = new TempDir();
+        AppPreferencesStore.Update(p => { p.Tint = Viewer.PageTint.Sepia; p.Columns = 2; p.Cover = true; p.Continuous = false; }, dir.Path);
+
+        var loaded = AppPreferencesStore.Load(dir.Path);
+
+        Assert.Equal(Viewer.PageTint.Sepia, loaded.Tint);
+        Assert.Equal(2, loaded.Columns);
+        Assert.True(loaded.Cover);
+        Assert.False(loaded.Continuous);
+    }
+
+    [Fact]
     public void NoFileGivesTheDefaults()
     {
         using var dir = new TempDir();
@@ -31,6 +45,10 @@ public sealed class StoreFilesTests
 
         Assert.Equal(AppAppearance.System, loaded.Appearance);
         Assert.Equal("pages", loaded.SidePanel);
+        Assert.Equal(Viewer.PageTint.None, loaded.Tint);
+        Assert.Equal(1, loaded.Columns);
+        Assert.False(loaded.Cover);
+        Assert.True(loaded.Continuous);
     }
 
     [Fact]
