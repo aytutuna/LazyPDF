@@ -1,4 +1,5 @@
 using LazyPDF.App.Services;
+using LazyPDF.Core;
 using Xunit;
 
 namespace LazyPDF.App.Tests;
@@ -80,10 +81,52 @@ public sealed class ThumbnailsTests
         string path = dir.File("a.pdf", Pdfs.Text());
         await Make(dir).GetAsync(path);
         string cached = Directory.GetFiles(dir.Sub("thumbs")).Single();
-        File.SetLastAccessTimeUtc(cached, DateTime.UtcNow.AddDays(-90));
+        File.SetLastWriteTimeUtc(cached, DateTime.UtcNow.AddDays(-90));
 
         _ = Make(dir);
 
         Assert.Empty(Directory.GetFiles(dir.Sub("thumbs")));
+    }
+
+    [Fact]
+    public async Task ForgettingAFileDeletesOnlyItsPicture()
+    {
+        using var dir = new TempDir();
+        string a = dir.File("a.pdf", Pdfs.Text());
+        string b = dir.File("b.pdf", Pdfs.Text(line: "Other"));
+        var thumbnails = Make(dir);
+        await thumbnails.GetAsync(a);
+        await thumbnails.GetAsync(b);
+        var both = Directory.GetFiles(dir.Sub("thumbs"));
+
+        thumbnails.Forget(a);
+
+        var left = Directory.GetFiles(dir.Sub("thumbs")).Single();
+        Assert.Contains(left, both);
+        thumbnails.Forget(b);
+        Assert.Empty(Directory.GetFiles(dir.Sub("thumbs")));
+    }
+
+    [Fact]
+    public async Task ClearingEmptiesTheFolder()
+    {
+        using var dir = new TempDir();
+        var thumbnails = Make(dir);
+        await thumbnails.GetAsync(dir.File("a.pdf", Pdfs.Text()));
+        await thumbnails.GetAsync(dir.File("b.pdf", Pdfs.Text(line: "Other")));
+
+        thumbnails.Clear();
+
+        Assert.Empty(Directory.GetFiles(dir.Sub("thumbs")));
+    }
+
+    [Fact]
+    public async Task AFileWithAnOwnerPasswordHasNoPicture()
+    {
+        using var dir = new TempDir();
+        string path = dir.File("owner.pdf", Pdfs.Restricted(PdfPermissions.All & ~PdfPermissions.Copy));
+
+        Assert.Null(await Make(dir).GetAsync(path));
+        Assert.False(Directory.Exists(dir.Sub("thumbs")) && Directory.GetFiles(dir.Sub("thumbs")).Length > 0);
     }
 }

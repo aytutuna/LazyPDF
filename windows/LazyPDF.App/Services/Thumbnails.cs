@@ -29,10 +29,14 @@ public sealed class Thumbnails
         var info = new FileInfo(path);
         if (!info.Exists) return null;
         string key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{info.FullName}|{info.Length}|{info.LastWriteTimeUtc.Ticks}|{width}")))[..32];
-        string cached = System.IO.Path.Combine(_directory, key + ".png");
+        string cached = System.IO.Path.Combine(_directory, $"{PathHash(info.FullName)}-{key}.png");
         try
         {
-            if (File.Exists(cached)) return await File.ReadAllBytesAsync(cached);
+            if (File.Exists(cached))
+            {
+                File.SetLastWriteTimeUtc(cached, DateTime.UtcNow);
+                return await File.ReadAllBytesAsync(cached);
+            }
             byte[]? png = await Task.Run(() => Draw(path, width));
             if (png is not null)
             {
@@ -47,12 +51,33 @@ public sealed class Thumbnails
         }
     }
 
+    public void Forget(string path) => Delete($"{PathHash(new FileInfo(path).FullName)}-*.png");
+
+    public void Clear() => Delete("*.png");
+
+    private static string PathHash(string fullName) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(fullName.ToUpperInvariant())))[..16];
+
+    private void Delete(string pattern)
+    {
+        if (!Directory.Exists(_directory)) return;
+        foreach (string file in Directory.EnumerateFiles(_directory, pattern))
+        {
+            try
+            {
+                File.Delete(file);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        }
+    }
+
     private byte[]? Draw(string path, int width)
     {
         try
         {
             var session = PdfEditSession.Open(path);
             using var renderer = _renderers();
+            if (session.Document.IsEncrypted) return null;
             if (!renderer.Load(session, null)) return null;
             var (pointsWide, _) = renderer.PageSize(0);
             if (renderer.Render(0, width / (pointsWide / 72)) is not { } image) return null;
@@ -75,7 +100,7 @@ public sealed class Thumbnails
         {
             try
             {
-                if (DateTime.UtcNow - File.GetLastAccessTimeUtc(file) > KeepFor) File.Delete(file);
+                if (DateTime.UtcNow - File.GetLastWriteTimeUtc(file) > KeepFor) File.Delete(file);
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
         }

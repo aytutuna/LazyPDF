@@ -227,9 +227,17 @@ public partial class MainWindow : Window
 
     private void Home_FileChosen(object? sender, string path) => _ = _vm.OpenAsync(path);
 
-    private void Home_FileForgotten(object? sender, string path) => _vm.ForgetRecent(path);
+    private void Home_FileForgotten(object? sender, string path)
+    {
+        _vm.ForgetRecent(path);
+        Home.Thumbnails?.Forget(path);
+    }
 
-    private void Home_RecentCleared(object? sender, EventArgs e) => _vm.ClearRecent();
+    private void Home_RecentCleared(object? sender, EventArgs e)
+    {
+        _vm.ClearRecent();
+        Home.Thumbnails?.Clear();
+    }
 
     private void InfoBarClose_Click(object sender, RoutedEventArgs e) => _vm.DismissMessage();
 
