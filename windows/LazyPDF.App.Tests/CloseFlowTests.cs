@@ -248,7 +248,7 @@ public sealed class CloseFlowTests
     }
 
     [Fact]
-    public async Task SaveAnywayDuringAnExitGoesOnWithTheExit()
+    public async Task SaveAnywayAfterBackingOutOfAnExitOnlyClosesTheTab()
     {
         using var f = new ViewModelFixture();
         var tab = await OpenDirty(f);
@@ -257,6 +257,8 @@ public sealed class CloseFlowTests
         await f.Vm.CheckDiskAsync();
         bool exited = false;
         f.Vm.ExitRequested += (_, _) => exited = true;
+        int closed = 0;
+        f.Vm.CloseRequested += (_, _) => closed++;
         f.Vm.CloseRequested += (_, t) => f.Vm.RequestClose(t);
         f.Vm.RequestExit();
 
@@ -264,7 +266,9 @@ public sealed class CloseFlowTests
         f.Vm.CancelClose();
         f.Vm.Message!.Action!.Run();
 
-        Assert.True(exited);
+        Assert.False(exited);
+        Assert.Equal(1, closed);
+        Assert.Empty(f.Vm.Documents);
     }
 
     [Fact]
@@ -288,7 +292,7 @@ public sealed class CloseFlowTests
     }
 
     [Fact]
-    public async Task SaveAnywayDuringAnExitLeavesNoExitUnderWayWhenTheWindowRefuses()
+    public async Task SaveAnywayAfterBackingOutOfAnExitLeavesNoExitUnderWay()
     {
         using var f = new ViewModelFixture();
         var tab = await OpenDirty(f);
@@ -307,8 +311,8 @@ public sealed class CloseFlowTests
         f.Vm.Message!.Action!.Run();
         f.Vm.Close(other);
 
-        Assert.Equal(0, asks);
-        Assert.Equal(1, exits);
+        Assert.Equal(1, asks);
+        Assert.Equal(0, exits);
     }
 
     [Fact]

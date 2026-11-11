@@ -253,7 +253,6 @@ public sealed partial class AppViewModel
     public bool Save(DocumentTab tab, bool closeAfter = false)
     {
         if (tab.Path is null) return false;
-        bool wasExiting = _exiting;
         if (tab.ChangedOnDisk && File.Exists(tab.Path))
         {
             ShowNotice(Loc.T("File changed"), Loc.T("{0} was changed by another program. Saving now replaces that version with yours.", tab.Title),
@@ -263,8 +262,7 @@ public sealed partial class AppViewModel
                     // The close question already named the marks; they count again if the window leaves the tab open.
                     int marks = tab.PendingMarks;
                     tab.PendingMarks = 0;
-                    if (wasExiting) RaiseExit();
-                    else CloseRequested?.Invoke(this, tab);
+                    CloseRequested?.Invoke(this, tab);
                     if (Strip.Contains(tab)) tab.PendingMarks = marks;
                 }));
             return false;
