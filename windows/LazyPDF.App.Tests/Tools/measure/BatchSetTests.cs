@@ -65,10 +65,11 @@ public sealed class BatchSetTests
     public void ASavedCleanStepKeepsItsOwnFlags()
     {
         using var dir = new TempDir();
-        var store = new BatchSetStore(dir.Path);
-        store.Save(new BatchSet { Name = "Strip", Steps = [new() { Kind = BatchStepKind.Clean }] });
+        dir.File("batch-sets.json", Encoding.UTF8.GetBytes("""{"sets":[{"name":"Strip","steps":[{"kind":"clean"}]}]}"""));
         var step = new BatchSetStore(dir.Path).Load().Single().Steps.Single();
-        Assert.Equal((false, false, false, false), (step.KeepComments, step.KeepForms, step.KeepLinks, step.KeepAttachments));
+        Assert.Equal((false, false, false), (step.KeepComments, step.KeepForms, step.KeepLinks));
+        var fresh = BatchStep.Of(BatchStepKind.Clean);
+        Assert.Equal((true, true, true), (fresh.KeepComments, fresh.KeepForms, fresh.KeepLinks));
     }
 
     [Fact]

@@ -180,7 +180,7 @@ public partial class BatchPanel
     }
 
     // <paramref name="live"/> are the steps on screen that <paramref name="set"/> was copied from, in the same order.
-    private async Task<BatchResult> RunOneAsync(string path, BatchSet set, IReadOnlyList<BatchStep> live, int number, CancellationToken token)
+    internal async Task<BatchResult> RunOneAsync(string path, BatchSet set, IReadOnlyList<BatchStep> live, int number, CancellationToken token)
     {
         await _gate.WaitAsync(token);
         try

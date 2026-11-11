@@ -116,6 +116,41 @@ public sealed class BatchDropTests
         return Task.CompletedTask;
     });
 
+    [Fact]
+    public Task AFailedFileLeavesTheBatesStartAndTheSavedSetAlone() => Sta.Run(async () =>
+    {
+        using var dir = new TempDir();
+        var store = new BatchSetStore(dir.Path);
+        store.Save(new BatchSet { Name = "Cases", Steps = [new() { Kind = BatchStepKind.Bates, Start = 5 }, new() { Kind = BatchStepKind.Watermark }] });
+        var panel = new BatchPanel();
+        Field<BatchSetStore>(panel, "_store", store);
+        var set = Field<BatchSet>(panel, "_set");
+        var saved = store.Load().Single();
+        set.Name = saved.Name;
+        set.Steps = saved.Steps;
+        set.OutputFolder = dir.Sub("out");
+        var live = set.Steps.ToList();
+
+        var failed = await panel.RunOneAsync(dir.File("a.pdf", Pdfs.Text(2)), set.Copy(), live, 1, CancellationToken.None);
+
+        Assert.False(failed.Ok);
+        Assert.Equal(5, live[0].Start);
+        Assert.Equal(5, store.Load().Single().Steps[0].Start);
+
+        set.Steps = [live[0]];
+        var good = await panel.RunOneAsync(dir.File("b.pdf", Pdfs.Text(2)), set.Copy(), set.Steps, 2, CancellationToken.None);
+
+        Assert.True(good.Ok, good.Detail);
+        Assert.Equal(7, set.Steps[0].Start);
+    });
+
+    private static T Field<T>(BatchPanel panel, string name, T? value = null) where T : class
+    {
+        var field = typeof(BatchPanel).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!;
+        if (value is not null) field.SetValue(panel, value);
+        return (T)field.GetValue(panel)!;
+    }
+
     private sealed class RecordingHost : IToolHost
     {
         public List<Problem> Problems { get; } = [];
