@@ -48,6 +48,22 @@ public sealed class RedactBoxEditorTests
         Assert.Equal(new Rect(50, 40, 60, 4), RedactBoxEditor.Drag(Box, RedactBoxEditor.Handle.Bottom, new Vector(0, -500), Page));
     }
 
+    [Fact]
+    public void AMinimumBoxAGrainShortOfThePageEdgeCanStillBeDragged()
+    {
+        var page = new Size(595.276, 841.89);
+        var right = new Rect(page.Width - 3.9999999999999996, 100, 3.9999999999999996, 30);
+        var bottom = new Rect(100, page.Height - 3.9999999999999996, 30, 3.9999999999999996);
+
+        var wider = RedactBoxEditor.Drag(right, RedactBoxEditor.Handle.Right, new Vector(-10, 0), page);
+        var taller = RedactBoxEditor.Drag(bottom, RedactBoxEditor.Handle.Bottom, new Vector(0, -10), page);
+
+        Assert.True(wider.Width >= 3.99 && wider.Right <= page.Width + 1e-9);
+        Assert.True(taller.Height >= 3.99 && taller.Bottom <= page.Height + 1e-9);
+        Assert.True(RedactBoxEditor.Drag(right, RedactBoxEditor.Handle.Left, new Vector(10, 0), page).Width >= 3.99);
+        Assert.True(RedactBoxEditor.Drag(bottom, RedactBoxEditor.Handle.Top, new Vector(0, 10), page).Height >= 3.99);
+    }
+
     [Theory]
     [InlineData(Key.Left, ModifierKeys.None, 49, 40, 60, 30)]
     [InlineData(Key.Right, ModifierKeys.None, 51, 40, 60, 30)]

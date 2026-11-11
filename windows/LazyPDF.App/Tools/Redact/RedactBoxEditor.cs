@@ -106,10 +106,10 @@ public sealed class RedactBoxEditor
             return new Rect(x, y, rect.Width, rect.Height);
         }
         double left = rect.Left, top = rect.Top, right = rect.Right, bottom = rect.Bottom;
-        if (handle is Handle.TopLeft or Handle.Left or Handle.BottomLeft) left = Math.Clamp(left + delta.X, 0, right - smallest);
-        if (handle is Handle.TopRight or Handle.Right or Handle.BottomRight) right = Math.Clamp(right + delta.X, left + smallest, page.Width);
-        if (handle is Handle.TopLeft or Handle.Top or Handle.TopRight) top = Math.Clamp(top + delta.Y, 0, bottom - smallest);
-        if (handle is Handle.BottomLeft or Handle.Bottom or Handle.BottomRight) bottom = Math.Clamp(bottom + delta.Y, top + smallest, page.Height);
+        if (handle is Handle.TopLeft or Handle.Left or Handle.BottomLeft) left = Math.Clamp(left + delta.X, 0, Math.Max(0, right - smallest));
+        if (handle is Handle.TopRight or Handle.Right or Handle.BottomRight) right = Math.Clamp(right + delta.X, left + smallest, Math.Max(left + smallest, page.Width));
+        if (handle is Handle.TopLeft or Handle.Top or Handle.TopRight) top = Math.Clamp(top + delta.Y, 0, Math.Max(0, bottom - smallest));
+        if (handle is Handle.BottomLeft or Handle.Bottom or Handle.BottomRight) bottom = Math.Clamp(bottom + delta.Y, top + smallest, Math.Max(top + smallest, page.Height));
         return new Rect(left, top, right - left, bottom - top);
     }
 
