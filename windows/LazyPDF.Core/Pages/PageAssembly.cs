@@ -74,35 +74,61 @@ public static class PageAssembly
     /// <summary>
     /// Parts that each save (<see cref="PdfDocument.SaveRewrite"/> with <paramref name="options"/>) to
     /// no more than <paramref name="maxBytes"/>, as many pages as fit. A page that is bigger alone
-    /// is a part of its own. The size of a part is measured by saving it, so the work is a few saves of each part; <paramref name="cancel"/> is checked before each.
+    /// is a part of its own. The size of a part is measured by saving it, starting from an estimate
+    /// out of the size of the source, so the work is a few saves of each part; the document that fit is the part.
+    /// <paramref name="cancel"/> is checked before each save.
     /// </summary>
     public static IReadOnlyList<PdfDocument> SplitBySize(PdfDocument source, long maxBytes, PdfSaveOptions? options = null, CancellationToken cancel = default)
     {
         if (maxBytes < 1) throw new ArgumentOutOfRangeException(nameof(maxBytes));
         int total = source.Pages.Count;
-        bool Fits(int start, int length) =>
-            Extract(source, [.. Enumerable.Range(start, length)], cancel).SaveRewrite(options).Length <= maxBytes;
+        var fitted = new Dictionary<(int Start, int Length), PdfDocument>();
+        bool Fits(int start, int length)
+        {
+            var candidate = Extract(source, [.. Enumerable.Range(start, length)], cancel);
+            if (candidate.SaveRewrite(options, cancel: cancel).Length > maxBytes) return false;
+            fitted[(start, length)] = candidate;
+            return true;
+        }
 
-        var parts = new List<IReadOnlyList<int>>();
+        var parts = new List<PdfDocument>();
         for (int at = 0; at < total;)
         {
-            int low = 1, high = total - at;
-            for (int probe = 2; probe <= total - at; probe *= 2)
+            fitted.Clear();
+            int remaining = total - at;
+            int low = 1, high = remaining + 1;
+            if (remaining > 1)
             {
-                if (Fits(at, probe)) { low = probe; continue; }
-                high = probe - 1;
-                break;
+                int guess = (int)Math.Clamp((double)maxBytes * total / Math.Max(source.Length, 1), 2, remaining);
+                if (Fits(at, guess))
+                {
+                    low = guess;
+                    for (int step = 1; low + step < high; step *= 2)
+                    {
+                        if (Fits(at, low + step)) low += step;
+                        else { high = low + step; break; }
+                    }
+                }
+                else
+                {
+                    high = guess;
+                    for (int step = 1; high - step > low; step *= 2)
+                    {
+                        if (Fits(at, high - step)) { low = high - step; break; }
+                        high -= step;
+                    }
+                }
+                while (low + 1 < high)
+                {
+                    int mid = (low + high) / 2;
+                    if (Fits(at, mid)) low = mid;
+                    else high = mid;
+                }
             }
-            while (low < high)
-            {
-                int mid = (low + high + 1) / 2;
-                if (Fits(at, mid)) low = mid;
-                else high = mid - 1;
-            }
-            parts.Add([.. Enumerable.Range(at, low)]);
+            parts.Add(fitted.TryGetValue((at, low), out var part) ? part : Extract(source, [.. Enumerable.Range(at, low)], cancel));
             at += low;
         }
-        return SplitByRanges(source, parts, cancel);
+        return parts;
     }
 
     // A file of a catalog and an empty tree, with a proper table so that opening it needs no repair.
