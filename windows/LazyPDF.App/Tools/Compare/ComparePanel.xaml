@@ -46,6 +46,17 @@
         </Border>
         <TextBlock x:Name="HowText" Style="{StaticResource ReasonText}" Margin="0,0,0,8" />
 
+        <StackPanel x:Name="DetailGroup" Visibility="Collapsed" Margin="0,0,0,8">
+            <TextBlock Text="{loc:T Detail}" Style="{StaticResource FieldLabelText}" />
+            <ComboBox x:Name="PixelDetail" SelectedIndex="1" Margin="0,4,0,0" AutomationProperties.Name="{loc:T Detail}">
+                <ComboBoxItem Tag="72" Content="{loc:T Draft (72 dpi)}" />
+                <ComboBoxItem Tag="96" Content="{loc:T Normal (96 dpi)}" />
+                <ComboBoxItem Tag="150" Content="{loc:T Fine (150 dpi)}" />
+                <ComboBoxItem Tag="300" Content="{loc:T Very fine (300 dpi)}" />
+            </ComboBox>
+            <TextBlock Style="{StaticResource ReasonText}" Margin="0,4,0,0" Text="{loc:T Finer detail finds smaller changes and takes longer.}" />
+        </StackPanel>
+
         <StackPanel x:Name="OptionGroup">
             <CheckBox x:Name="IgnoreCase" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Ignore capitals}" AutomationProperties.Name="{loc:T Ignore capitals}" />
             <CheckBox x:Name="IgnoreSpace" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Ignore spacing}" AutomationProperties.Name="{loc:T Ignore spacing}" />

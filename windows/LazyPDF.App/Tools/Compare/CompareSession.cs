@@ -22,9 +22,8 @@ internal sealed record Side(byte[] Bytes, string Name, string? Password, X509Cer
 /// </summary>
 internal sealed class CompareSession : IDisposable
 {
-    public const int MaxPixelRows = 1000;
+    public const int MaxPixelRows = 5000;
 
-    private const double PixelDpi = 96;
     private const int RowsPerPage = 50;
     private const int ReportMarks = 5001;
 
@@ -33,6 +32,7 @@ internal sealed class CompareSession : IDisposable
     private List<(Parts Part, ChangeRow Row)> _rows = [];
     private List<ChangeRow> _pixelRows = [];
     private ComparisonResult? _pixelResult;
+    private double _pixelDpi = 96;
 
     public CompareSession(Side before, Side after, Func<IDocumentRenderer> renderers)
     {
@@ -70,7 +70,7 @@ internal sealed class CompareSession : IDisposable
     /// <summary>The report is a copy of the new file; a file that limits what readers may do can only be copied by its owner.</summary>
     public bool CanReport => New.Document.Security is not { OpenedAsOwner: false, Permissions: not PdfPermissions.All };
 
-    public void Compare(CompareOptions options, bool byPixels, CancellationToken token)
+    public void Compare(CompareOptions options, bool byPixels, double dpi, CancellationToken token)
     {
         var result = PdfComparer.Compare(Old.Document, New.Document, options, token);
         _rows = [.. result.Changes.Select(c => (ChangeParts.Of(c), ChangeRow.Of(c, Old.Document, New.Document)))];
@@ -79,6 +79,7 @@ internal sealed class CompareSession : IDisposable
         Looked = 0;
         Undrawn = 0;
         PixelCapped = false;
+        _pixelDpi = dpi;
         if (byPixels) ComparePixels(result, token);
         ByPixels = byPixels;
         Result = result;
@@ -91,7 +92,7 @@ internal sealed class CompareSession : IDisposable
     public PdfRgbaImage? Overlay(int newPage)
     {
         var pair = Result?.Pages.FirstOrDefault(p => p.NewIndex == newPage && !p.IsAdded);
-        return pair is null ? null : PixelComparer.Compare(Old.Renderer, pair.OldIndex, New.Renderer, newPage, PixelDpi)?.Overlay;
+        return pair is null ? null : PixelComparer.Compare(Old.Renderer, pair.OldIndex, New.Renderer, newPage, _pixelDpi)?.Overlay;
     }
 
     /// <summary>
@@ -134,7 +135,7 @@ internal sealed class CompareSession : IDisposable
                 else removed++;
                 continue;
             }
-            if (PixelComparer.Compare(Old.Renderer, pair.OldIndex, New.Renderer, pair.NewIndex, PixelDpi) is not { } found)
+            if (PixelComparer.Compare(Old.Renderer, pair.OldIndex, New.Renderer, pair.NewIndex, _pixelDpi) is not { } found)
             {
                 Undrawn++;
                 continue;
@@ -145,7 +146,7 @@ internal sealed class CompareSession : IDisposable
             areas += found.Differences.Count;
             // A page of scanner noise must not use up the list, so each page gives its largest areas.
             foreach (var difference in found.Differences.OrderByDescending(d => d.Pixels).Take(RowsPerPage).OrderBy(d => d.Region.Y).ThenBy(d => d.Region.X))
-                rows.Add(ChangeRow.Of(pair, difference, found.Alignment, PixelDpi, oldPage, newPage));
+                rows.Add(ChangeRow.Of(pair, difference, found.Alignment, _pixelDpi, oldPage, newPage));
             foreach (var difference in found.Differences.Take(ReportMarks - changes.Count))
                 changes.Add(PixelChange(pair, difference, newPage));
         }

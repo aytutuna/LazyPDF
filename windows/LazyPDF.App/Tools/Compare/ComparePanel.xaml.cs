@@ -72,7 +72,8 @@ public partial class ComparePanel : ToolPanel
         var options = new CompareOptions(IgnoreCase.IsChecked == true, IgnoreSpace.IsChecked == true, IgnoreEdges.IsChecked == true);
         string? password = OtherPassword.Password.Length > 0 ? OtherPassword.Password : null;
         var request = new CompareRequest(version ? null : _path, version ? _versions[VersionBox.SelectedIndex] : null, !version && OlderToggle.IsChecked == true, options,
-            PixelMode.IsChecked == true, password, (OtherCertificate.SelectedItem as CertificateChoice)?.Certificate);
+            PixelMode.IsChecked == true, password, (OtherCertificate.SelectedItem as CertificateChoice)?.Certificate,
+            int.Parse((string)((ComboBoxItem)PixelDetail.SelectedItem).Tag));
         int revision = tab.Revision;
         var made = await flow.RunAsync(tab, request);
         bool here = ReferenceEquals(Tab, tab);
@@ -229,6 +230,7 @@ public partial class ComparePanel : ToolPanel
         OptionGroup.IsEnabled = !pixels;
         FilterGrid.IsEnabled = !pixels;
         ShowLabel.Opacity = pixels ? 0.5 : 1;
+        DetailGroup.Visibility = pixels ? Visibility.Visible : Visibility.Collapsed;
         ShowHow();
     }
 

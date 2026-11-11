@@ -24,7 +24,7 @@ internal static class CompareKit
     public static CompareSession Session(byte[] before, byte[] after, Func<IDocumentRenderer>? renderers = null)
     {
         var session = new CompareSession(new Side(before, "old.pdf", null, null), new Side(after, "new.pdf", null, null), renderers ?? (() => new FakeRenderer()));
-        session.Compare(new CompareOptions(), byPixels: false, CancellationToken.None);
+        session.Compare(new CompareOptions(), byPixels: false, dpi: 96, CancellationToken.None);
         return session;
     }
 
@@ -43,10 +43,47 @@ internal static class CompareKit
         return () => new SpeckledRenderer(made++ > 0);
     }
 
+    public static Func<IDocumentRenderer> Scaled(bool specks = false)
+    {
+        int made = 0;
+        return () => new ScaledRenderer(made++ > 0, specks);
+    }
+
     public static Func<IDocumentRenderer> Painted()
     {
         int made = 0;
         return () => new PaintedRenderer(made++ > 0);
+    }
+}
+
+/// <summary>Draws a 200 x 300 point page at whatever dpi it is asked for; the new file has a block, or specks on every page.</summary>
+internal sealed class ScaledRenderer(bool ink, bool specks) : IDocumentRenderer
+{
+    public bool Load(PdfEditSession session, string? password) => true;
+
+    public (double Width, double Height) PageSize(int pageIndex) => (200, 300);
+
+    public PdfRgbaImage? Render(int pageIndex, double dpi)
+    {
+        double scale = dpi / 72;
+        int w = (int)(200 * scale), h = (int)(300 * scale);
+        var rgba = new byte[w * h * 4];
+        Array.Fill(rgba, (byte)255);
+        for (int y = 0; ink && y < h; y++)
+        {
+            double py = y / scale;
+            for (int x = 0; x < w; x++)
+            {
+                double px = x / scale;
+                bool on = specks ? px % 12 < 4 && py % 12 < 4 : px is >= 60 and < 120 && py is >= 100 and < 140;
+                if (on) Array.Fill(rgba, (byte)0, (y * w + x) * 4, 3);
+            }
+        }
+        return new PdfRgbaImage(w, h, rgba);
+    }
+
+    public void Dispose()
+    {
     }
 }
 

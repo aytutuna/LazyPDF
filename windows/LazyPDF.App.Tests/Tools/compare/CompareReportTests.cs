@@ -12,7 +12,7 @@ public sealed class CompareReportTests
     private static CompareSession Session(byte[] before, byte[] after, string? password = null)
     {
         var session = new CompareSession(new Side(before, "old.pdf", null, null), new Side(after, "new.pdf", password, null), () => new FakeRenderer());
-        session.Compare(new CompareOptions(), byPixels: false, CancellationToken.None);
+        session.Compare(new CompareOptions(), byPixels: false, dpi: 96, CancellationToken.None);
         return session;
     }
 
@@ -125,7 +125,7 @@ public sealed class CompareReportTests
         var session = new CompareSession(new Side(CompareKit.Before(), "old.pdf", null, null), new Side(CompareKit.Before(), "new.pdf", null, null), CompareKit.Painted());
         using (session)
         {
-            session.Compare(new CompareOptions(), byPixels: true, CancellationToken.None);
+            session.Compare(new CompareOptions(), byPixels: true, dpi: 96, CancellationToken.None);
 
             await Flow(f).WriteReportAsync(session, Parts.All);
 

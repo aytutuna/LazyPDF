@@ -74,7 +74,7 @@ public sealed class CompareSessionTests
         var session = new CompareSession(new Side(CompareKit.Before(), "old.pdf", null, null), new Side(CompareKit.Before(), "new.pdf", null, null), CompareKit.Painted());
         using (session)
         {
-            session.Compare(new CompareOptions(), byPixels: true, CancellationToken.None);
+            session.Compare(new CompareOptions(), byPixels: true, dpi: 96, CancellationToken.None);
 
             var rows = session.Rows(Parts.Text);
 
@@ -93,7 +93,7 @@ public sealed class CompareSessionTests
         var session = new CompareSession(new Side(CompareKit.Before(), "old.pdf", null, null), new Side(CompareKit.Before(), "new.pdf", null, null), CompareKit.Painted());
         using (session)
         {
-            session.Compare(new CompareOptions(), byPixels: false, CancellationToken.None);
+            session.Compare(new CompareOptions(), byPixels: false, dpi: 96, CancellationToken.None);
 
             var overlay = session.Overlay(0)!;
 
@@ -148,7 +148,7 @@ public sealed class CompareSessionTests
             new Side(Pdfs.Text(2, "Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda."), "new.pdf", null, null), CompareKit.Painted());
         using (session)
         {
-            session.Compare(new CompareOptions(), byPixels: true, CancellationToken.None);
+            session.Compare(new CompareOptions(), byPixels: true, dpi: 96, CancellationToken.None);
 
             var rows = session.Rows(Parts.All);
 
@@ -164,7 +164,7 @@ public sealed class CompareSessionTests
         var session = new CompareSession(new Side(CompareKit.Before(), "old.pdf", null, null), new Side(CompareKit.Before(), "new.pdf", null, null), () => new FakeRenderer { Draws = false });
         using (session)
         {
-            session.Compare(new CompareOptions(), byPixels: true, CancellationToken.None);
+            session.Compare(new CompareOptions(), byPixels: true, dpi: 96, CancellationToken.None);
 
             Assert.Empty(session.Rows(Parts.All));
             Assert.Equal("Pages could not be drawn.", CompareFlow.Headline(session, 0));
@@ -178,13 +178,64 @@ public sealed class CompareSessionTests
         var session = new CompareSession(new Side(CompareKit.Before(), "old.pdf", null, null), new Side(CompareKit.Before(), "new.pdf", null, null), CompareKit.Speckled());
         using (session)
         {
-            session.Compare(new CompareOptions(), byPixels: true, CancellationToken.None);
+            session.Compare(new CompareOptions(), byPixels: true, dpi: 96, CancellationToken.None);
 
             var rows = session.Rows(Parts.All);
 
             Assert.Equal([0, 1], rows.Select(r => r.NewPage).Distinct().Order());
             Assert.Equal(50, rows.Count(r => r.NewPage == 0));
             Assert.Null(CompareFlow.Note(session));
+        }
+    }
+
+    [Fact]
+    public void ADifferenceHasTheSameSizeInPointsAtAnyDetail()
+    {
+        var found = new List<double>();
+        foreach (double dpi in new[] { 72.0, 150 })
+        {
+            var session = new CompareSession(new Side(CompareKit.Before(), "old.pdf", null, null), new Side(CompareKit.Before(), "new.pdf", null, null), CompareKit.Scaled());
+            using (session)
+            {
+                session.Compare(new CompareOptions(), byPixels: true, dpi, CancellationToken.None);
+
+                found.Add(session.Rows(Parts.All)[0].NewArea!.Value.Width);
+            }
+        }
+
+        Assert.Equal(found[0], found[1], 4);
+    }
+
+    [Fact]
+    public void TheOverlayIsDrawnAtTheChosenDetail()
+    {
+        var widths = new List<int>();
+        foreach (double dpi in new[] { 72.0, 150 })
+        {
+            var session = new CompareSession(new Side(CompareKit.Before(), "old.pdf", null, null), new Side(CompareKit.Before(), "new.pdf", null, null), CompareKit.Scaled());
+            using (session)
+            {
+                session.Compare(new CompareOptions(), byPixels: true, dpi, CancellationToken.None);
+
+                widths.Add(session.Overlay(0)!.Width);
+            }
+        }
+
+        Assert.Equal(200, widths[0]);
+        Assert.Equal(416, widths[1]);
+    }
+
+    [Fact]
+    public void ThousandsOfAreasAreListedUpToTheLimit()
+    {
+        var session = new CompareSession(new Side(Pdfs.Text(30, "Same on every page."), "old.pdf", null, null), new Side(Pdfs.Text(30, "Same on every page."), "new.pdf", null, null), CompareKit.Scaled(specks: true));
+        using (session)
+        {
+            session.Compare(new CompareOptions(), byPixels: true, dpi: 96, CancellationToken.None);
+
+            Assert.Equal(1500, session.Rows(Parts.All).Count);
+            Assert.False(session.PixelCapped);
+            Assert.Equal(5000, CompareSession.MaxPixelRows);
         }
     }
 }

@@ -10,8 +10,9 @@ namespace LazyPDF.App.Tools.Compare;
 /// <param name="FileIsOlder">With <paramref name="Path"/>, the open file is the old side and the other file the new one.</param>
 /// <param name="Password">Opens the other file; the open file's own password is tried when null.</param>
 /// <param name="Certificate">Opens the other file when it is encrypted for recipients.</param>
+/// <param name="PixelDpi">The detail a pixel comparison draws the pages at.</param>
 internal sealed record CompareRequest(string? Path, PdfVersion? Version, bool FileIsOlder, CompareOptions Options, bool ByPixels,
-    string? Password = null, X509Certificate2? Certificate = null);
+    string? Password = null, X509Certificate2? Certificate = null, double PixelDpi = 96);
 
 /// <summary>The long parts of the tool: running a comparison and writing its report, with the busy bar and the messages.</summary>
 internal sealed class CompareFlow(IToolHost host, Func<IDocumentRenderer> renderers, IFontSource fonts)
@@ -36,7 +37,7 @@ internal sealed class CompareFlow(IToolHost host, Func<IDocumentRenderer> render
                 var session = new CompareSession(before, after, renderers);
                 try
                 {
-                    session.Compare(request.Options, request.ByPixels, token);
+                    session.Compare(request.Options, request.ByPixels, request.PixelDpi, token);
                 }
                 catch
                 {

@@ -3281,6 +3281,24 @@
   "Compares how the pages look. Use it for scans and drawings.": {
     "tr": "Sayfaların görünüşünü karşılaştırır. Taramalar ve çizimler için kullanın."
   },
+  "Detail": {
+    "tr": "Ayrıntı"
+  },
+  "Draft (72 dpi)": {
+    "tr": "Taslak (72 dpi)"
+  },
+  "Normal (96 dpi)": {
+    "tr": "Normal (96 dpi)"
+  },
+  "Fine (150 dpi)": {
+    "tr": "İnce (150 dpi)"
+  },
+  "Very fine (300 dpi)": {
+    "tr": "Çok ince (300 dpi)"
+  },
+  "Finer detail finds smaller changes and takes longer.": {
+    "tr": "Daha ince ayrıntı daha küçük değişiklikleri bulur ve daha uzun sürer."
+  },
   "Compares words, fonts, pictures, notes and form values.": {
     "tr": "Sözcükleri, yazı tiplerini, resimleri, notları ve form değerlerini karşılaştırır."
   },

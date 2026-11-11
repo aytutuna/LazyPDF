@@ -1609,6 +1609,9 @@
   <data name="Descriptions, links and names" xml:space="preserve">
     <value>Açıklamalar, bağlantılar ve adlar</value>
   </data>
+  <data name="Detail" xml:space="preserve">
+    <value>Ayrıntı</value>
+  </data>
   <data name="Diamond" xml:space="preserve">
     <value>Eşkenar dörtgen</value>
   </data>
@@ -1704,6 +1707,9 @@
   </data>
   <data name="Dotted" xml:space="preserve">
     <value>Noktalı</value>
+  </data>
+  <data name="Draft (72 dpi)" xml:space="preserve">
+    <value>Taslak (72 dpi)</value>
   </data>
   <data name="Drag a box on a page." xml:space="preserve">
     <value>Bir sayfa üzerinde kutu çizin.</value>
@@ -2238,6 +2244,12 @@
   </data>
   <data name="Finds pages with nothing on them, or only white. You check the list before anything is deleted." xml:space="preserve">
     <value>Üzerinde hiçbir şey olmayan veya yalnızca beyaz olan sayfaları bulur. Hiçbir şey silinmeden önce listeyi siz kontrol edersiniz.</value>
+  </data>
+  <data name="Fine (150 dpi)" xml:space="preserve">
+    <value>İnce (150 dpi)</value>
+  </data>
+  <data name="Finer detail finds smaller changes and takes longer." xml:space="preserve">
+    <value>Daha ince ayrıntı daha küçük değişiklikleri bulur ve daha uzun sürer.</value>
   </data>
   <data name="Fingerprint (SHA-256): {0}" xml:space="preserve">
     <value>Parmak izi (SHA-256): {0}</value>
@@ -3450,6 +3462,9 @@
   </data>
   <data name="Normal" xml:space="preserve">
     <value>Normal</value>
+  </data>
+  <data name="Normal (96 dpi)" xml:space="preserve">
+    <value>Normal (96 dpi)</value>
   </data>
   <data name="Not a PDF" xml:space="preserve">
     <value>PDF değil</value>
@@ -7068,6 +7083,9 @@
   </data>
   <data name="Vertical text cannot be changed." xml:space="preserve">
     <value>Dikey metin değiştirilemez.</value>
+  </data>
+  <data name="Very fine (300 dpi)" xml:space="preserve">
+    <value>Çok ince (300 dpi)</value>
   </data>
   <data name="View certificate" xml:space="preserve">
     <value>Sertifikayı göster</value>
