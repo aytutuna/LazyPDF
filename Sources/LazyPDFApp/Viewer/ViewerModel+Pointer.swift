@@ -50,6 +50,7 @@ extension ViewerModel {
     }
 
     public func pointerMove(_ at: ViewPoint, modifiers: PointerModifiers = []) {
+        let at = ViewPoint(at.x + grip.x, at.y + grip.y)
         if drag != .none, hypot(at.x - down.x, at.y - down.y) > Self.clickSlop { moved = true }
         switch drag {
         case .pan:
@@ -111,6 +112,7 @@ extension ViewerModel {
 
     private func endDrag() {
         drag = .none
+        grip = .zero
         anchorWaiting = nil
         autoScroll?.cancel()
         autoScroll = nil

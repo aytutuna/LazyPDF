@@ -709,7 +709,7 @@ final class ViewerModelTests: XCTestCase {
         let (start, end) = (viewer.selected.start, viewer.selected.end)
         let handles = try XCTUnwrap(viewer.selectionHandles())
 
-        viewer.beginHandleDrag(start: true, at: handles.start)
+        viewer.beginHandleDrag(start: true, at: ViewPoint(handles.start.x, handles.start.y - 7))
         viewer.pointerMove(later)
 
         XCTAssertEqual(viewer.selected.end, end)
@@ -721,6 +721,22 @@ final class ViewerModelTests: XCTestCase {
 
         XCTAssertEqual(viewer.selected.start, end)
         XCTAssertGreaterThan(viewer.selected.end.index, end.index)
+    }
+
+    func test_aHandleDragGrabbedAtTheBallKeepsTheSelectionUntilTheFingerMoves() async throws {
+        let (viewer, _) = try open()
+        let at = try await pointOnFirstLine(viewer, 1)
+        viewer.selectWord(at: at)
+        let before = (viewer.selected.start, viewer.selected.end)
+        let handles = try XCTUnwrap(viewer.selectionHandles())
+        let ball = ViewPoint(handles.end.x, handles.end.y - 14)
+        XCTAssertEqual(viewer.handle(at: ball, within: 24), false)
+
+        viewer.beginHandleDrag(start: false, at: ball)
+        viewer.pointerMove(ball)
+
+        XCTAssertEqual(viewer.selected.start, before.0)
+        XCTAssertEqual(viewer.selected.end, before.1)
     }
 
     func test_selectAllReachesEveryPage() async throws {

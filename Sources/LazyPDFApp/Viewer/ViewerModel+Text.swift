@@ -200,15 +200,22 @@ extension ViewerModel {
     /// True for the start handle and false for the end handle when one is within `radius` of the point, the nearer of the two.
     public func handle(at point: ViewPoint, within radius: Double) -> Bool? {
         guard let handles = selectionHandles() else { return nil }
-        let toStart = hypot(point.x - handles.start.x, point.y - handles.start.y)
-        let toEnd = hypot(point.x - handles.end.x, point.y - handles.end.y)
+        // Measured to the middle of the stem, which is 14 points long, so a touch on the ball counts as well as one on the line.
+        let toStart = hypot(point.x - handles.start.x, point.y - (handles.start.y - 7))
+        let toEnd = hypot(point.x - handles.end.x, point.y - (handles.end.y - 7))
         if Swift.min(toStart, toEnd) > radius { return nil }
         return toStart < toEnd
     }
 
-    /// Takes hold of a handle: the other end stays where it is and the dragged one follows the pointer.
+    /// Takes hold of a handle: the other end stays where it is and the dragged one follows the pointer, which keeps its distance
+    /// from the middle of the handle's line, so the end does not jump to where the finger lies.
     public func beginHandleDrag(start: Bool, at: ViewPoint) {
-        guard !selected.isEmpty else { return }
+        let page = start ? selected.start.page : selected.end.page
+        let quad = start ? highlights(of: page).selection.first : highlights(of: page).selection.last
+        guard !selected.isEmpty, let quad, let matrix = pageToView(page) else { return }
+        let x = start ? quad.map(\.x).min() : quad.map(\.x).max()
+        let middle = matrix.transform(ViewPoint(x ?? 0, ((quad.map(\.y).min() ?? 0) + (quad.map(\.y).max() ?? 0)) / 2))
+        grip = ViewPoint(middle.x - at.x, middle.y - at.y)
         selected.set(start ? selected.end : selected.start, start ? selected.start : selected.end)
         anchorWaiting = nil
         multi = nil

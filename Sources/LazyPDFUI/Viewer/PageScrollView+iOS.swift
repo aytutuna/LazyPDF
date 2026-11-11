@@ -146,12 +146,21 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         return ViewPoint(point.x, point.y)
     }
 
+    // Where the finger first touched, since a pan reports its position only after it has moved off.
+    private func touchDown(_ recognizer: UIPanGestureRecognizer) -> ViewPoint {
+        let at = viewPoint(recognizer)
+        let moved = recognizer.translation(in: self)
+        return ViewPoint(at.x - moved.x, at.y - moved.y)
+    }
+
     override func gestureRecognizerShouldBegin(_ recognizer: UIGestureRecognizer) -> Bool {
         if let press = recognizer as? UILongPressGestureRecognizer {
-            return press.minimumPressDuration == 0 ? viewer.pointerTool != nil : viewer.pointerTool == nil && viewer.mode == .select
+            if press.minimumPressDuration == 0 { return viewer.pointerTool != nil }
+            // A finger resting on a handle is about to drag it, not to select a word.
+            return viewer.pointerTool == nil && viewer.mode == .select && viewer.handle(at: viewPoint(recognizer), within: 24) == nil
         }
         if recognizer is UITapGestureRecognizer { return viewer.pointerTool == nil }
-        if recognizer === handlePan { return viewer.handle(at: viewPoint(recognizer), within: 24) != nil }
+        if recognizer === handlePan { return viewer.handle(at: touchDown(handlePan), within: 24) != nil }
         return super.gestureRecognizerShouldBegin(recognizer)
     }
 
@@ -234,10 +243,11 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         let at = viewPoint(recognizer)
         switch recognizer.state {
         case .began:
-            guard let start = viewer.handle(at: at, within: .infinity) else { return }
+            let down = touchDown(recognizer)
+            guard let start = viewer.handle(at: down, within: .infinity) else { return }
             handleDragging = true
             editMenu?.dismissMenu()
-            viewer.beginHandleDrag(start: start, at: at)
+            viewer.beginHandleDrag(start: start, at: down)
         case .changed:
             if handleDragging { viewer.pointerMove(at) }
         case .ended:

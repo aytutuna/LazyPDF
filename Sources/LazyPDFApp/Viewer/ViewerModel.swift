@@ -58,6 +58,7 @@ public final class ViewerModel: DocumentViewer {
     @ObservationIgnored var dragPage = 0
     @ObservationIgnored var down = ViewPoint.zero
     @ObservationIgnored var last = ViewPoint.zero
+    @ObservationIgnored var grip = ViewPoint.zero
     @ObservationIgnored var downLink: PdfLink?
     @ObservationIgnored var moved = false
     @ObservationIgnored var linkClickedAt: Double?
