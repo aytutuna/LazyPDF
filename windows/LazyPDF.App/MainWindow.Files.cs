@@ -60,6 +60,8 @@ public partial class MainWindow
 
     private bool SaveAllWithDialogs()
     {
+        // Typed words belong to the tab in view; they go in before the dirty list is made, since the first tab may be this one.
+        if (!HandedIn()) return false;
         int saved = 0;
         bool all = true;
         foreach (var tab in _vm.Documents.Where(d => d.IsDirty).ToList())
