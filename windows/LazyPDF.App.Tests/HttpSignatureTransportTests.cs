@@ -136,15 +136,56 @@ public sealed class HttpSignatureTransportTests
         Assert.Equal(200, handler.Requests.Count);
     }
 
+    private sealed class Endless : Stream
+    {
+        public long Served { get; private set; }
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        public override void Flush() { }
+        public override int Read(byte[] buffer, int offset, int count) { Served += count; return count; }
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
     [Fact]
-    public void ABodyWithoutALengthThatRunsPastTheLimitIsRefused()
+    public void ABodyWithoutALengthIsNotReadPastTheLimit()
     {
         if (HttpSignatureTransport.IsOffline) return;
+        var body = new Endless();
         using var transport = new HttpSignatureTransport(new Handler(_ =>
-            new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new MemoryStream(new byte[9 << 20])) }));
+            new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(body) }));
 
         Assert.Null(transport.Get("https://ocsp.example/"));
         Assert.Contains("too large", transport.LastFailure);
+        Assert.InRange(body.Served, 8 << 20, (8 << 20) + (256 << 10));
+    }
+
+    [Fact]
+    public void ARedirectToThisComputerIsRefused()
+    {
+        if (HttpSignatureTransport.IsOffline) return;
+        var handler = new Handler(_ => new HttpResponseMessage(HttpStatusCode.Found) { Headers = { Location = new Uri("http://127.0.0.1:8080/x") } });
+        using var transport = new HttpSignatureTransport(handler);
+
+        Assert.Null(transport.Get("http://crl.example/ca.crl"));
+        Assert.Single(handler.Requests);
+        Assert.Contains("this computer", transport.LastFailure);
+    }
+
+    [Fact]
+    public void ARedirectToAnotherWebAddressIsFollowed()
+    {
+        if (HttpSignatureTransport.IsOffline) return;
+        var handler = new Handler(r => r.RequestUri!.Host == "crl.example"
+            ? new HttpResponseMessage(HttpStatusCode.Found) { Headers = { Location = new Uri("https://cdn.example/ca.crl") } }
+            : Ok([4]));
+        using var transport = new HttpSignatureTransport(handler);
+
+        Assert.Equal(new byte[] { 4 }, transport.Get("http://crl.example/ca.crl"));
     }
 
     [Fact]

@@ -14,14 +14,15 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
 {
     private const int MaxResponseBytes = 8 << 20;
     private const int MaxRequests = 200;
+    private const int MaxRedirects = 5;
 
     private readonly HttpClient _client;
     private int _requests;
 
     public HttpSignatureTransport(HttpMessageHandler? handler = null)
     {
-        _client = handler is null ? new HttpClient() : new HttpClient(handler);
-        _client.Timeout = TimeSpan.FromSeconds(20);
+        _client = handler is null ? new HttpClient(new SocketsHttpHandler { AllowAutoRedirect = false }) : new HttpClient(handler);
+        _client.Timeout = Timeout.InfiniteTimeSpan;
     }
 
     /// <summary>Why the last request gave nothing; null after one that worked.</summary>
@@ -44,56 +45,74 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
     private byte[]? Send(HttpMethod method, string url, HttpContent? content)
     {
         LastFailure = null;
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var address) || address.Scheme is not ("http" or "https"))
-        {
-            LastFailure = Loc.T("The address is not a web address.");
-            return null;
-        }
-        if (PointsHere(address))
-        {
-            LastFailure = Loc.T("The address points to this computer, so it was not used.");
-            return null;
-        }
-        if (++_requests > MaxRequests)
-        {
-            LastFailure = Loc.T("Too many requests for one file. Stopped.");
-            return null;
-        }
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var address))
+            return NotAWebAddress();
         if (IsOffline)
         {
             LastFailure = Loc.T("This computer is offline. Connect to the internet and try again.");
             return null;
         }
+        // The timeout has to cover reading the body too, which HttpClient.Timeout does not once headers are read.
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(Cancel);
+        limit.CancelAfter(TimeSpan.FromSeconds(20));
         try
         {
-            using var request = new HttpRequestMessage(method, address) { Content = content };
-            using var response = _client.Send(request, Cancel);
-            if (!response.IsSuccessStatusCode)
+            for (int hop = 0; ; hop++)
             {
-                LastFailure = Loc.T("The server answered with an error ({0}).", (int)response.StatusCode);
-                return null;
-            }
-            if (response.Content.Headers.ContentLength > MaxResponseBytes)
-                return TooLarge();
-            using var body = new MemoryStream();
-            using var stream = response.Content.ReadAsStream(Cancel);
-            var buffer = new byte[80 * 1024];
-            int read;
-            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                body.Write(buffer, 0, read);
-                if (body.Length > MaxResponseBytes)
+                if (address.Scheme is not ("http" or "https"))
+                    return NotAWebAddress();
+                if (PointsHere(address))
+                {
+                    LastFailure = Loc.T("The address points to this computer, so it was not used.");
+                    return null;
+                }
+                if (++_requests > MaxRequests)
+                {
+                    LastFailure = Loc.T("Too many requests for one file. Stopped.");
+                    return null;
+                }
+                using var request = new HttpRequestMessage(method, address) { Content = content };
+                using var response = _client.Send(request, HttpCompletionOption.ResponseHeadersRead, limit.Token);
+                // Redirects are followed here so every address gets the checks above. Only a fetch is repeated.
+                if (response.Headers.Location is { } next && (int)response.StatusCode is >= 300 and < 400 && method == HttpMethod.Get && hop < MaxRedirects)
+                {
+                    address = new Uri(address, next);
+                    continue;
+                }
+                if (!response.IsSuccessStatusCode)
+                {
+                    LastFailure = Loc.T("The server answered with an error ({0}).", (int)response.StatusCode);
+                    return null;
+                }
+                if (response.Content.Headers.ContentLength > MaxResponseBytes)
                     return TooLarge();
+                using var stop = limit.Token.Register(response.Dispose);
+                using var body = new MemoryStream();
+                using var stream = response.Content.ReadAsStream(limit.Token);
+                var buffer = new byte[80 * 1024];
+                int read;
+                while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    body.Write(buffer, 0, read);
+                    if (body.Length > MaxResponseBytes)
+                        return TooLarge();
+                }
+                return body.ToArray();
             }
-            return body.ToArray();
         }
-        catch (Exception e) when (e is HttpRequestException or TaskCanceledException or IOException)
+        catch (Exception e) when (e is HttpRequestException or OperationCanceledException or IOException or ObjectDisposedException)
         {
-            LastFailure = e is TaskCanceledException
+            LastFailure = e is OperationCanceledException || limit.IsCancellationRequested
                 ? Loc.T("The server did not answer in time. Try again later.")
                 : Loc.T("The server could not be reached. Check the connection and try again.");
             return null;
         }
+    }
+
+    private byte[]? NotAWebAddress()
+    {
+        LastFailure = Loc.T("The address is not a web address.");
+        return null;
     }
 
     private byte[]? TooLarge()
