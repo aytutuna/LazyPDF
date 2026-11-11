@@ -1,4 +1,5 @@
 import Foundation
+import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Tools/Measure/MeasureScale.cs.
 
@@ -70,6 +71,37 @@ public struct MeasureScale: Equatable {
 
     public var ratio: String {
         "\(Self.invariant(page, 4)) \(pageUnit.symbol) = \(Self.invariant(real, 4)) \(realUnit.symbol)"
+    }
+
+    /// The scale a `ratio` text writes; nil for any other text.
+    public static func tryParse(_ ratio: String) -> MeasureScale? {
+        let sides = ratio.split(separator: "=", omittingEmptySubsequences: false)
+        guard sides.count == 2, let (page, pageUnit) = side(sides[0]), let (real, realUnit) = side(sides[1]) else { return nil }
+        let scale = MeasureScale(page, pageUnit, real, realUnit)
+        return scale.isValid ? scale : nil
+    }
+
+    /// The scale of the first measurement already in the file, looking at no more than 200 marks; nil when there is none or its page unit is not one the panel offers.
+    public static func find(_ document: PdfDocument) -> MeasureScale? {
+        var seen = 0
+        for page in document.pages {
+            guard let annots = document.array(page.dictionary, "Annots") else { continue }
+            for item in annots.items {
+                seen += 1
+                if seen > 200 { return nil }
+                if let mark = document.resolve(item) as? PdfDictionary, let measure = document.dict(mark, "Measure"),
+                   let ratio = PdfText.read(document, measure, "R"), let scale = tryParse(ratio) {
+                    return MeasureModel.pageUnits.contains(scale.pageUnit) ? scale : nil
+                }
+            }
+        }
+        return nil
+    }
+
+    private static func side(_ text: Substring) -> (Double, LengthUnit)? {
+        let parts = text.trimmingCharacters(in: .whitespaces).split(separator: " ", omittingEmptySubsequences: false)
+        guard parts.count == 2, let value = Double(parts[0]), let unit = LengthUnit.allCases.first(where: { $0.symbol == parts[1] }) else { return nil }
+        return (value, unit)
     }
 
     private static func number(_ value: Double) -> String {

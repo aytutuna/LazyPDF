@@ -173,6 +173,52 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertEqual(model.rows.count, 1)
     }
 
+    func test_eachTabKeepsTheScaleTypedForIt() throws {
+        let (model, rig) = try attached()
+        model.setPageValue("2")
+        model.setRealUnit(.metre)
+        model.detach()
+
+        let other = try ToolRig()
+        other.attach(model)
+        XCTAssertEqual(model.pageValue, "1")
+        XCTAssertEqual(model.realUnit, .millimetre)
+        model.setRealValue("5")
+        model.detach()
+
+        rig.attach(model)
+        XCTAssertEqual(model.pageValue, "2")
+        XCTAssertEqual(model.realValue, "1")
+        XCTAssertEqual(model.realUnit, .metre)
+        model.detach()
+        other.attach(model)
+        XCTAssertEqual(model.realValue, "5")
+    }
+
+    private func marked(_ scale: MeasureScale) throws -> [UInt8] {
+        let session = try PdfEditSession.open(Pdfs.text())
+        let line = MeasureItem(.distance, 0, [ViewPoint(100, 100), ViewPoint(172, 100)])
+        _ = try MeasureWriter.write(session.document, [line], scale, author: "Sam", date: DateTimeOffset(2026, 1, 5, 9, 0, 0))
+        _ = try session.commit("Measure")
+        return session.current
+    }
+
+    func test_aFileWithMeasurementsStartsWithTheirScale() throws {
+        let (model, _) = try attached(try marked(MeasureScale(1, .centimetre, 2, .metre)))
+
+        XCTAssertEqual(model.pageValue, "1")
+        XCTAssertEqual(model.pageUnit, .centimetre)
+        XCTAssertEqual(model.realValue, "2")
+        XCTAssertEqual(model.realUnit, .metre)
+    }
+
+    func test_aPageUnitThePanelDoesNotOfferStartsAtActualSize() throws {
+        let (model, _) = try attached(try marked(MeasureScale(1, .metre, 2, .metre)))
+
+        XCTAssertEqual(model.pageUnit, .millimetre)
+        XCTAssertEqual(model.realValue, "1")
+    }
+
     func test_aTurnedPageDropsItsMeasurementsAndSaysSo() async throws {
         let (model, rig) = try attached()
         try measure(model, ViewPoint(0, 0), ViewPoint(72, 0))

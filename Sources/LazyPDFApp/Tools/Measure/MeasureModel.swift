@@ -55,6 +55,7 @@ public final class MeasureModel: ToolPanelModel {
 
     // Kept per tab, so that measuring in one file and looking at another loses nothing.
     @ObservationIgnored private var lists: [ObjectIdentifier: (tab: WeakTab, list: PendingList)] = [:]
+    @ObservationIgnored private var scales: [ObjectIdentifier: (tab: WeakTab, scale: MeasureScale)] = [:]
 
     private struct WeakTab {
         weak var tab: DocumentTab?
@@ -85,6 +86,10 @@ public final class MeasureModel: ToolPanelModel {
             waiting = PendingList()
             lists[ObjectIdentifier(tab)] = (WeakTab(tab: tab), waiting)
         }
+        scales = scales.filter { $0.value.tab.tab != nil }
+        let shown = scales[ObjectIdentifier(tab)]?.scale ?? MeasureScale.find(tab.document) ?? .actual
+        scales[ObjectIdentifier(tab)] = (WeakTab(tab: tab), shown)
+        show(shown)
         if kind == nil { kind = .distance }
         let tool = MeasureTool(viewer: viewer)
         tool.kind = kind ?? .distance
@@ -187,7 +192,26 @@ public final class MeasureModel: ToolPanelModel {
         scaleProblem = !good
         if !good { return }
         scale = made
+        if let tab { scales[ObjectIdentifier(tab)] = (WeakTab(tab: tab), made) }
         rebuild()
+    }
+
+    private func show(_ shown: MeasureScale) {
+        pageValue = Self.format(shown.page)
+        realValue = Self.format(shown.real)
+        pageUnit = shown.pageUnit
+        realUnit = shown.realUnit
+        scaleProblem = false
+        scale = shown
+    }
+
+    private static func format(_ value: Double) -> String {
+        let format = NumberFormatter()
+        format.numberStyle = .decimal
+        format.locale = MeasureScale.locale
+        format.usesGroupingSeparator = false
+        format.maximumFractionDigits = 4
+        return format.string(from: NSNumber(value: value)) ?? String(value)
     }
 
     private static func parse(_ text: String) -> Double? {

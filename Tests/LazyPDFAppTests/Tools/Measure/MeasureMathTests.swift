@@ -23,6 +23,19 @@ final class MeasureMathTests: XCTestCase {
         XCTAssertEqual(MeasureScale.actual.length(25 / 25.4 * 72), "25 mm")
     }
 
+    func test_aRatioReadsBackAsTheScaleThatWroteIt() {
+        for scale in [MeasureScale(1, .inch, 10, .foot), MeasureScale(2.5, .centimetre, 1000, .kilometre), MeasureScale(1, .millimetre, 50, .metre),
+                      MeasureScale(0.25, .inch, 1, .mile), MeasureScale(1, .centimetre, 3, .yard)] {
+            XCTAssertEqual(MeasureScale.tryParse(scale.ratio), scale)
+        }
+    }
+
+    func test_textThatIsNoRatioReadsAsNothing() {
+        for text in ["x", "1 mm", "0 mm = 1 m", "1 mm = 2 parsec", "1mm = 2 m", "1 mm = 2 m = 3 m"] {
+            XCTAssertNil(MeasureScale.tryParse(text), text)
+        }
+    }
+
     func test_aScaleNeedsPositiveNumbers() {
         for (page, real) in [(0.0, 1.0), (1, 0), (-2, 1), (Double.nan, 1)] {
             XCTAssertFalse(MeasureScale(page, .inch, real, .metre).isValid, "\(page) \(real)")
