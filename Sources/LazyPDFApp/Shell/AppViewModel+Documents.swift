@@ -90,7 +90,7 @@ extension AppViewModel {
 
     /// A file the system or a drop hands over opens at once, or waits until the job, question or message in the way is gone.
     public func openOrHold(_ url: URL, access: FileAccess?) async {
-        if !holdsFiles {
+        if !(isBlocked || sheetOpen || !held.isEmpty) {
             await open(url, access: access)
             return
         }

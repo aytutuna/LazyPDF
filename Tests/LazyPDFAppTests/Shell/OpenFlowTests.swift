@@ -270,4 +270,13 @@ final class OpenFlowTests: XCTestCase {
         await f.vm.releaseHeld()
         XCTAssertEqual(f.vm.documents.map(\.title), ["a.pdf", "b.pdf"])
     }
+
+    func test_aFileOpensAtOnceWhileOnlyAMessageIsUp() async {
+        let f = ViewModelFixture(self)
+        f.vm.showNotice("Up", "Just a message.")
+
+        await f.vm.openOrHold(f.pdf("a.pdf"), access: nil)
+
+        XCTAssertEqual(f.vm.documents.map(\.title), ["a.pdf"])
+    }
 }
