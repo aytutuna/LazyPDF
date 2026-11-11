@@ -168,6 +168,46 @@ final class PdfSearchableTests: XCTestCase {
         XCTAssertTrue(recognizer.calls.isEmpty)
     }
 
+    func test_cancelKeepsTheFinishedPagesWhenAsked() async throws {
+        let session = try PdfEditSession.open(OcrKit.scanBytes(3))
+        let recognizer = FakeRecognizer(OcrKit.words())
+        recognizer.before = { call in
+            if call == 2 { withUnsafeCurrentTask { $0?.cancel() } }
+            try Task.checkCancellation()
+        }
+        let task = Task { try await PdfSearchable.readAsync(session.document, recognizer, FakeRenderer(session.document), OcrOptions(dpi: 72), keepPartial: true) }
+        let read = try await task.value
+        XCTAssertTrue(read.stopped)
+        XCTAssertEqual(read.pages.map { $0.pageIndex }, [0, 1])
+        XCTAssertEqual(read.result, OcrResult(2, 0, 0, 0, 0, false))
+        XCTAssertFalse(session.document.hasChanges)
+
+        let again = FakeRecognizer(OcrKit.words())
+        again.before = recognizer.before
+        let plain = Task { try await PdfSearchable.readAsync(session.document, again, FakeRenderer(session.document), OcrOptions(dpi: 72)) }
+        do {
+            _ = try await plain.value
+            XCTFail("the read was not cancelled")
+        } catch {
+            XCTAssertTrue(error is CancellationError, "\(error)")
+        }
+    }
+
+    func test_cancelBeforeStartKeepsNothingWhenAsked() async throws {
+        let session = try PdfEditSession.open(OcrKit.scanBytes(2))
+        let recognizer = FakeRecognizer(OcrKit.words())
+        let task = Task { () -> OcrRead in
+            while !Task.isCancelled { await Task.yield() }
+            return try await PdfSearchable.readAsync(session.document, recognizer, FakeRenderer(session.document), OcrOptions(dpi: 72), keepPartial: true)
+        }
+        task.cancel()
+        let read = try await task.value
+        XCTAssertTrue(read.stopped)
+        XCTAssertTrue(read.pages.isEmpty)
+        XCTAssertEqual(read.result, OcrResult(0, 0, 0, 0, 0, false))
+        XCTAssertTrue(recognizer.calls.isEmpty)
+    }
+
     func test_recognizerFailureLeavesTheDocumentAsItWas() async throws {
         let session = try PdfEditSession.open(OcrKit.scanBytes(3))
         let recognizer = FakeRecognizer(OcrKit.words())
