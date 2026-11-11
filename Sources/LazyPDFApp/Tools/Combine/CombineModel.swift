@@ -169,10 +169,10 @@ public final class CombineModel: ToolPanelModel {
         }
         if documents.contains(where: { CopyRules.refused($0, host) }) { return }
 
-        var sources: [(document: PdfDocument?, pages: [Int]?)] = []
+        var sources: [(document: PdfDocument?, pages: [Int]?, title: String)] = []
         for entry in entries {
             if entry.range.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                sources.append((entry.document, nil))
+                sources.append((entry.document, nil, entry.title))
                 continue
             }
             let range = PageRange.parse(entry.range, entry.pages)
@@ -180,7 +180,7 @@ public final class CombineModel: ToolPanelModel {
                 host.showProblem(Problem(L10n.t("Pages not understood"), L10n.t("{0}: {1}", entry.name, error.message)))
                 return
             }
-            sources.append((entry.document, range.pages))
+            sources.append((entry.document, range.pages, entry.title))
         }
 
         let copy = TabCopy(tab, host)
@@ -197,7 +197,7 @@ public final class CombineModel: ToolPanelModel {
                     try token.throwIfCancelled()
                     // The open document is read again here: its pages may be taken twice and the session belongs to the main actor.
                     let again = try copy.open()
-                    let merged = try PageAssembly.merge(ordered.map { MergeSource($0.document ?? again, $0.pages) })
+                    let merged = try PageAssembly.merge(ordered.map { MergeSource($0.document ?? again, $0.pages) }, titles: ordered.map(\.title))
                     let bytes = try merged.saveRewrite()
                     try token.throwIfCancelled()
                     return (bytes, merged.skippedAttachments)

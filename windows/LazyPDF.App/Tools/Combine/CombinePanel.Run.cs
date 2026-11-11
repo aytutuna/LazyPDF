@@ -43,7 +43,7 @@ public partial class CombinePanel
             {
                 // The open document is read again here: its pages may be taken twice and the session belongs to the UI thread.
                 var again = PageEdits.Reopen(tab);
-                using var merged = PageAssembly.Merge([.. sources.Select(s => new MergeSource(s.Entry.Document ?? again, s.Pages))], token);
+                using var merged = PageAssembly.Merge([.. sources.Select(s => new MergeSource(s.Entry.Document ?? again, s.Pages))], token, [.. sources.Select(s => Path.GetFileNameWithoutExtension(s.Entry.Name))]);
                 if (bookmarks) CombineJob.AddFileBookmarks(merged, [.. sources.Select(s => (s.Entry.Name, s.Pages?.Count ?? (s.Entry.Document ?? again).Pages.Count))]);
                 byte[] made = merged.SaveRewrite();
                 token.ThrowIfCancellationRequested();
@@ -96,7 +96,7 @@ public partial class CombinePanel
         {
             try
             {
-                using var merged = PageAssembly.Merge([new MergeSource(entry.Document ?? open, pages)], token);
+                using var merged = PageAssembly.Merge([new MergeSource(entry.Document ?? open, pages)], token, [Path.GetFileNameWithoutExtension(entry.Name)]);
                 merged.SaveRewrite();
             }
             catch (Exception error) when (error is PdfReadException or ArgumentException)

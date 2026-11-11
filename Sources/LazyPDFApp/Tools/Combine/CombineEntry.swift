@@ -27,5 +27,6 @@ public final class CombineEntry: Identifiable {
 
     public var detail: String { L10n.plural(pages, one: "{0} page", other: "{0} pages") }
 
+    public var title: String { URL(fileURLWithPath: name).deletingPathExtension().lastPathComponent }
     public var rangeName: String { L10n.t("Pages of {0}", name) }
 }
