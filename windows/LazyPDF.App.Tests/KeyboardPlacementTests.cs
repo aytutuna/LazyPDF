@@ -89,6 +89,25 @@ public sealed class KeyboardPlacementTests
     });
 
     [Fact]
+    public Task TheCrossStaysInViewWhenZoomedIn() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, tool) = Open(tab);
+        viewer.Zoom = 4;
+        viewer.UpdateLayout();
+
+        viewer.PlaceWithKeys(Key.Enter);
+        for (int i = 0; i < 50; i++) viewer.PlaceWithKeys(Key.Down);
+        viewer.UpdateLayout();
+        viewer.PlaceWithKeys(Key.Enter);
+
+        var at = tool.Calls[0].Pointer.View;
+        Assert.InRange(at.X, 0, 800);
+        Assert.InRange(at.Y, 0, 600);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task EscapeLetsGoWithoutAClick() => Sta.Run(() =>
     {
         using var tab = NewTab();

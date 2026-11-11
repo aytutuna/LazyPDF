@@ -27,6 +27,7 @@ public partial class PageViewer
             _keyPage = centre.Page;
             _keyPoint = centre.Point;
             ShowCross();
+            Reveal(_keyPage, new Rect(_keyPoint.X - 24, _keyPoint.Y - 24, 48, 48));
             PlaceCue.Visibility = Visibility.Visible;
             (UIElementAutomationPeer.FromElement(PlaceCueText) ?? UIElementAutomationPeer.CreatePeerForElement(PlaceCueText))?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged);
             return true;
@@ -86,6 +87,7 @@ public partial class PageViewer
         var back = matrix.Transform(moved);
         _keyPoint = new Point(Math.Clamp(back.X, 0, size.Width), Math.Clamp(back.Y, 0, size.Height));
         ShowCross();
+        Reveal(_keyPage, new Rect(_keyPoint.X - 24, _keyPoint.Y - 24, 48, 48));
     }
 
     private void ShowCross()
