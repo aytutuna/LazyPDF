@@ -796,6 +796,9 @@
   <data name="C_reate" xml:space="preserve">
     <value>_Oluştur</value>
   </data>
+  <data name="Calibrate" xml:space="preserve">
+    <value>Ölçeği ayarla</value>
+  </data>
   <data name="Callout" xml:space="preserve">
     <value>Balon</value>
   </data>
@@ -1164,6 +1167,9 @@
   </data>
   <data name="Click the page, or drag a box, to place it." xml:space="preserve">
     <value>Yerleştirmek için sayfaya tıklayın ya da bir kutu sürükleyin.</value>
+  </data>
+  <data name="Click the two ends of something whose real length you know." xml:space="preserve">
+    <value>Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna tıklayın.</value>
   </data>
   <data name="Click the two ends. Hold Shift for straight lines." xml:space="preserve">
     <value>İki ucuna tıklayın. Düz çizgiler için Shift tuşunu basılı tutun.</value>
@@ -5092,6 +5098,9 @@
   <data name="Set has no name" xml:space="preserve">
     <value>Kümenin adı yok</value>
   </data>
+  <data name="Set scale" xml:space="preserve">
+    <value>Ölçeği uygula</value>
+  </data>
   <data name="Set status" xml:space="preserve">
     <value>Durumu ayarla</value>
   </data>
@@ -6855,6 +6864,9 @@
   </data>
   <data name="Type a Permissions password to apply the limits." xml:space="preserve">
     <value>Sınırları uygulamak için bir İzin parolası yazın.</value>
+  </data>
+  <data name="Type a length above zero." xml:space="preserve">
+    <value>Sıfırdan büyük bir uzunluk yazın.</value>
   </data>
   <data name="Type a name for the set, then save it." xml:space="preserve">
     <value>Küme için bir ad yazın, sonra kaydedin.</value>

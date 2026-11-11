@@ -29,11 +29,17 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
 
     public bool Snapped { get; private set; }
 
+    /// <summary>A distance of two points reports its length through Calibrated instead of becoming an item.</summary>
+    public bool Calibrate { get; set; }
+
     public bool CanFinish => Kind != MeasureKind.Distance && _points.Count >= 3;
 
     public Cursor? Cursor => Cursors.Cross;
 
     public event Action<MeasureItem>? Finished;
+
+    /// <summary>The page and the length in points of the two ends clicked in calibrate mode.</summary>
+    public event Action<int, double>? Calibrated;
 
     public event EventHandler? Changed;
 
@@ -92,10 +98,12 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
     {
         if (!CanFinish && !(Kind == MeasureKind.Distance && _points.Count == 2)) return;
         var item = new MeasureItem(Kind, Page, [.. _points]);
+        int page = Page;
         _points.Clear();
         Page = -1;
         Changed?.Invoke(this, EventArgs.Empty);
-        Finished?.Invoke(item);
+        if (Calibrate) Calibrated?.Invoke(page, (item.Points[1] - item.Points[0]).Length);
+        else Finished?.Invoke(item);
     }
 
     /// <summary>Drops the snap points, which belong to the file as it was.</summary>

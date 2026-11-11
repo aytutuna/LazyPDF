@@ -45,6 +45,20 @@
                 <TextBlock Text="{loc:T Enter a scale above zero.}" Style="{StaticResource ReasonText}" />
             </DockPanel>
 
+            <Button x:Name="CalibrateButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE7B8;" Content="{loc:T Calibrate}"
+                    AutomationProperties.Name="{loc:T Calibrate}" HorizontalAlignment="Left" Margin="0,0,0,8" Click="Calibrate_Click" />
+            <StackPanel x:Name="CalibrateRow" Margin="0,0,0,8" Visibility="Collapsed">
+                <TextBox x:Name="CalibrateValue" AutomationProperties.Name="{loc:T Real length}" KeyDown="CalibrateValue_KeyDown" Margin="0,0,0,8" />
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Set scale}" AutomationProperties.Name="{loc:T Set scale}" Click="SetScale_Click" />
+                    <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Cancel}" AutomationProperties.Name="{loc:T Cancel}" Click="CancelCalibrate_Click" />
+                </StackPanel>
+                <DockPanel x:Name="CalibrateProblem" Margin="0,8,0,0" Visibility="Collapsed">
+                    <TextBlock Text="&#xE7BA;" Style="{StaticResource ReasonGlyph}" DockPanel.Dock="Left" Foreground="{DynamicResource SystemFillColorCautionBrush}" />
+                    <TextBlock Text="{loc:T Type a length above zero.}" Style="{StaticResource ReasonText}" />
+                </DockPanel>
+            </StackPanel>
+
             <CheckBox x:Name="SnapToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Snap to text}" IsChecked="True"
                       AutomationProperties.Name="{loc:T Snap to text}" Click="Snap_Click" />
             <DockPanel Margin="0,4,0,12">

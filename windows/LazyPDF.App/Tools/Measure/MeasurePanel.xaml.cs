@@ -36,6 +36,7 @@ public partial class MeasurePanel : ToolPanel
     private MeasureScale _scale = MeasureScale.Actual;
     private bool _ready;
     private bool _paused;
+    private double _calibrated;
 
     public MeasurePanel()
     {
@@ -65,6 +66,7 @@ public partial class MeasurePanel : ToolPanel
         _overlay = new MeasureOverlay(Viewer!, _tool);
         _tool.Changed += Tool_Changed;
         _tool.Finished += Tool_Finished;
+        _tool.Calibrated += Tool_Calibrated;
         Viewer!.PointerTool = _tool;
         Viewer.ViewChanged += Viewer_ViewChanged;
         Viewer.ModeChanged += Viewer_ModeChanged;
@@ -82,6 +84,8 @@ public partial class MeasurePanel : ToolPanel
         Tab!.Changed -= Tab_Changed;
         _tool!.Changed -= Tool_Changed;
         _tool.Finished -= Tool_Finished;
+        _tool.Calibrated -= Tool_Calibrated;
+        EndCalibrate();
         if (ReferenceEquals(Viewer.PointerTool, _tool)) Viewer.PointerTool = null;
         _overlay!.Clear();
         _tool = null;
@@ -102,6 +106,7 @@ public partial class MeasurePanel : ToolPanel
     {
         if (!_ready) return;
         _paused = false;
+        EndCalibrate();
         if (_tool is not null)
         {
             _tool.Cancel();
@@ -159,12 +164,75 @@ public partial class MeasurePanel : ToolPanel
         Rebuild();
     }
 
+    private void Tool_Calibrated(int page, double points)
+    {
+        _calibrated = points;
+        CalibrateProblem.Visibility = Visibility.Collapsed;
+        CalibrateRow.Visibility = Visibility.Visible;
+        CalibrateValue.Focus();
+        CalibrateValue.SelectAll();
+    }
+
+    // Two points of a page and the length a person says they stand for make the scale.
+    internal static MeasureScale ScaleFrom(double points, double length, LengthUnit pageUnit, LengthUnit realUnit) =>
+        new(points * LengthUnits.PointInMetres / pageUnit.Metres(), pageUnit, length, realUnit);
+
+    private void Calibrate_Click(object sender, RoutedEventArgs e)
+    {
+        if (_tool is null) return;
+        _paused = false;
+        if (DistanceMode.IsChecked != true) DistanceMode.IsChecked = true;
+        EndCalibrate();
+        _tool.Cancel();
+        _tool.Calibrate = true;
+        if (!ReferenceEquals(Viewer!.PointerTool, _tool)) Viewer.PointerTool = _tool;
+        ShowReadout();
+    }
+
+    private void EndCalibrate()
+    {
+        if (_tool is not null) _tool.Calibrate = false;
+        _calibrated = 0;
+        CalibrateRow.Visibility = Visibility.Collapsed;
+        ShowReadout();
+    }
+
+    private void SetScale_Click(object sender, RoutedEventArgs e)
+    {
+        if (!double.TryParse(CalibrateValue.Text, CultureInfo.CurrentCulture, out double length) || !(length > 0))
+        {
+            CalibrateProblem.Visibility = Visibility.Visible;
+            return;
+        }
+        var scale = ScaleFrom(_calibrated, length, UnitOf(PageUnit), UnitOf(RealUnit));
+        if (!scale.IsValid)
+        {
+            CalibrateProblem.Visibility = Visibility.Visible;
+            return;
+        }
+        Scales.AddOrUpdate(Tab!, scale);
+        ShowScale(scale);
+        EndCalibrate();
+        Rebuild();
+    }
+
+    private void CancelCalibrate_Click(object sender, RoutedEventArgs e) => EndCalibrate();
+
+    private void CalibrateValue_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter) SetScale_Click(sender, e);
+        else if (e.Key == Key.Escape) EndCalibrate();
+        else return;
+        e.Handled = true;
+    }
+
     private void Viewer_ViewChanged(object? sender, EventArgs e) => _overlay?.Draw(Items, _scale);
 
     // The viewer's own Hand and Select buttons took the pointer: none of the kinds is armed until one is picked again.
     private void Viewer_ModeChanged(object? sender, EventArgs e)
     {
         _tool?.Cancel();
+        EndCalibrate();
         _paused = true;
         foreach (var button in new[] { DistanceMode, PerimeterMode, AreaMode }) button.IsChecked = false;
         ShowReadout();
@@ -260,7 +328,8 @@ public partial class MeasurePanel : ToolPanel
         var tool = _tool;
         FinishButton.IsEnabled = tool?.CanFinish == true;
         StartOverButton.IsEnabled = tool?.Points.Count > 0;
-        Hint.Text = _paused ? Loc.T("Pick Distance, Perimeter or Area to measure again.")
+        Hint.Text = tool?.Calibrate == true ? Loc.T("Click the two ends of something whose real length you know.")
+            : _paused ? Loc.T("Pick Distance, Perimeter or Area to measure again.")
             : Kind() == MeasureKind.Distance
             ? Loc.T("Click the two ends. Hold Shift for straight lines.")
             : Loc.T("Click each corner, then double-click to finish. Hold Shift for straight lines.");

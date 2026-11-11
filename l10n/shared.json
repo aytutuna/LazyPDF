@@ -4728,6 +4728,18 @@
   "Enter a scale above zero.": {
     "tr": "Sıfırdan büyük bir ölçek girin."
   },
+  "Type a length above zero.": {
+    "tr": "Sıfırdan büyük bir uzunluk yazın."
+  },
+  "Calibrate": {
+    "tr": "Ölçeği ayarla"
+  },
+  "Set scale": {
+    "tr": "Ölçeği uygula"
+  },
+  "Click the two ends of something whose real length you know.": {
+    "tr": "Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna tıklayın."
+  },
   "Snap to text": {
     "tr": "Metne yapış"
   },

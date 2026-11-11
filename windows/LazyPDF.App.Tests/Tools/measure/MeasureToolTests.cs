@@ -61,6 +61,31 @@ public sealed class MeasureToolTests
     }
 
     [Fact]
+    public void CalibrateModeReportsTheLengthAndAddsNoItem()
+    {
+        var (tool, done, _) = Start(MeasureKind.Distance);
+        var reported = new List<(int Page, double Points)>();
+        tool.Calibrated += (page, points) => reported.Add((page, points));
+        tool.Calibrate = true;
+
+        tool.Press(At(0, 0));
+        tool.Press(At(72, 0));
+
+        Assert.Empty(done);
+        Assert.Equal((0, 72d), Assert.Single(reported));
+        Assert.Empty(tool.Points);
+    }
+
+    [Fact]
+    public void ACalibratedLineSetsWhatLaterDistancesRead()
+    {
+        var scale = MeasurePanel.ScaleFrom(72, 1, LengthUnit.Inch, LengthUnit.Inch);
+        var longer = new MeasureItem(MeasureKind.Distance, 0, [new Point(0, 0), new Point(144, 0)]);
+
+        Assert.Equal("2 in", longer.Value(scale));
+    }
+
+    [Fact]
     public void ADoubleClickEndsAnAreaWithoutAddingTheCornerTwice()
     {
         var (tool, done, _) = Start(MeasureKind.Area);
