@@ -33,6 +33,7 @@ public sealed class ViewerSearch
     private readonly Action<Action> _post;
     private CancellationTokenSource? _cancel;
     private bool _quiet;
+    private int _landed = -1;
 
     /// <param name="source">The text of the file; null when it cannot be read.</param>
     /// <param name="startPage">The page the first current hit is taken from.</param>
@@ -77,6 +78,7 @@ public sealed class ViewerSearch
         _cancel?.Cancel();
         Hits.Clear();
         Current = -1;
+        _landed = -1;
         Wrapped = SearchWrap.None;
         Query = query;
         Options = options;
@@ -118,7 +120,7 @@ public sealed class ViewerSearch
         int start = _startPage();
         int index;
         Wrapped = SearchWrap.None;
-        if (Current >= 0 && Math.Abs(Hits[Current].Page - start) > 1)
+        if (Current >= 0 && start != _landed && Math.Abs(Hits[Current].Page - start) > 1)
         {
             // The reader scrolled away after finding, so step from the page in view.
             index = step > 0 ? Hits.ToList().FindIndex(h => h.Page >= start) : Hits.ToList().FindLastIndex(h => h.Page <= start);
@@ -134,16 +136,29 @@ public sealed class ViewerSearch
             if (Current >= 0 && (index < 0 || index >= count)) Wrapped = step > 0 ? SearchWrap.Start : SearchWrap.End;
             index = (index + count) % count;
         }
-        Select(index);
+        SelectAt(index);
     }
 
     public void Select(int index)
     {
         if ((uint)index >= (uint)Hits.Count) return;
+        Wrapped = SearchWrap.None;
+        SelectAt(index);
+    }
+
+    private void SelectAt(int index)
+    {
         _quiet = false;
         Current = index;
         Changed?.Invoke(this, EventArgs.Empty);
+        MoveView();
+    }
+
+    // The page in view once the view has gone to the hit: Next steps on from the hit while it is still there, even when the hit was already on screen.
+    private void MoveView()
+    {
         CurrentChanged?.Invoke(this, EventArgs.Empty);
+        _landed = _startPage();
     }
 
     private async Task RunAsync(Task<TextSource?> sourceTask, string query, TextSearchOptions options, int start, CancellationToken cancel)
@@ -187,7 +202,7 @@ public sealed class ViewerSearch
             if (Current < 0 && Hits.Count > 0)
             {
                 Current = 0;
-                if (!_quiet) CurrentChanged?.Invoke(this, EventArgs.Empty);
+                if (!_quiet) MoveView();
             }
             Changed?.Invoke(this, EventArgs.Empty);
         });
@@ -208,7 +223,7 @@ public sealed class ViewerSearch
                 if (Current < 0 && hit.Page >= start) Current = Hits.Count - 1;
             }
             Changed?.Invoke(this, EventArgs.Empty);
-            if (first && Current >= 0 && !_quiet) CurrentChanged?.Invoke(this, EventArgs.Empty);
+            if (first && Current >= 0 && !_quiet) MoveView();
         });
     }
 

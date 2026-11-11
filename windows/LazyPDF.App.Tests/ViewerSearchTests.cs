@@ -135,6 +135,35 @@ public sealed class ViewerSearchTests
     }
 
     [Fact]
+    public async Task NextVisitsEveryHitWhenTheViewDoesNotMove()
+    {
+        var search = Searching(Pages(5));
+        await search.Start("fox", new TextSearchOptions());
+
+        var seen = new List<int>();
+        for (int i = 0; i < 4; i++)
+        {
+            search.Next();
+            seen.Add(search.Current);
+        }
+
+        Assert.Equal([1, 2, 3, 4], seen);
+    }
+
+    [Fact]
+    public async Task SelectingAHitAfterWrappingClearsTheWrap()
+    {
+        var search = Searching(Pages(5), startPage: 4);
+        await search.Start("fox", new TextSearchOptions());
+        search.Next();
+        Assert.Equal(SearchWrap.Start, search.Wrapped);
+
+        search.Select(2);
+
+        Assert.Equal(SearchWrap.None, search.Wrapped);
+    }
+
+    [Fact]
     public async Task NextFromTheLastHitSaysItWrapped()
     {
         var search = Searching(Pages(3), startPage: 2);
