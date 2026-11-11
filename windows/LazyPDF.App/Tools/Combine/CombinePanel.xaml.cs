@@ -75,7 +75,7 @@ public partial class CombinePanel : ToolPanel
         AmountLabel.Text = Kind == SplitBy.Size ? Loc.T("Megabytes per part")
             : Kind == SplitBy.Ranges ? Loc.T("Ranges, one file each") : Loc.T("Pages per part");
         SplitHint.Text = Kind == SplitBy.Bookmarks ? BookmarkHint(Tab.Document)
-            : Kind == SplitBy.Ranges ? RangesHint()
+            : Kind == SplitBy.Ranges ? RangesHint(Amount.Text, Tab.PageCount)
             : Tab.PageCount < 2 ? Loc.T("A file of one page cannot be split.") : "";
         SplitHint.Visibility = SplitHint.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         BookmarkEach.Visibility = _entries.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
@@ -108,9 +108,12 @@ public partial class CombinePanel : ToolPanel
         return CombineJob.TryAmount(Kind, Amount.Text, out double amount, Tab!.PageCount) ? CombineJob.EstimatedParts(Kind, Tab.PageCount, amount) ?? 0 : 0;
     }
 
-    private string RangesHint() => Tab!.PageCount < 2 ? Loc.T("A file of one page cannot be split.")
-        : CombineJob.TryAmount(SplitBy.Ranges, Amount.Text, out _, Tab.PageCount) ? Loc.T("Pages not in a range are left out.")
-        : Loc.T("Separate files with semicolons, for example 1-3; 4-6, 9; 10-12.");
+    internal static string RangesHint(string text, int pageCount)
+    {
+        if (pageCount < 2) return Loc.T("A file of one page cannot be split.");
+        if (string.IsNullOrWhiteSpace(text)) return Loc.T("Separate files with semicolons, for example 1-3; 4-6, 9; 10-12.");
+        return CombineJob.ParseRanges(text, pageCount).Error ?? Loc.T("Pages not in a range are left out.");
+    }
 
     private static string BookmarkHint(PdfDocument document)
     {

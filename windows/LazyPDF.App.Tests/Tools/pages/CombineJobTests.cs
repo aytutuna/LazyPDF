@@ -500,6 +500,17 @@ public sealed class CombineJobTests
         Assert.Equal(expected, CombinePanel.TargetIndex(from, over, lowerHalf));
     }
 
+    [Theory]
+    [InlineData("", "Separate files with semicolons, for example 1-3; 4-6, 9; 10-12.")]
+    [InlineData("1-5; 12", "12: Page 12 is past the end (10 pages)")]
+    [InlineData("1-5; 6", "Pages not in a range are left out.")]
+    public void TheRangesHintNamesTheRangeThatIsWrong(string text, string expected)
+    {
+        using var culture = new CultureScope("en-US");
+
+        Assert.StartsWith(expected, CombinePanel.RangesHint(text, 10));
+    }
+
     [Fact]
     public void ASizeSplitWithAnOversizePageSaysSoInTheFolderNotice()
     {
