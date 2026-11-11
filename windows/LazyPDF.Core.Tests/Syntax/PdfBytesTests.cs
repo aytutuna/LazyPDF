@@ -67,6 +67,13 @@ public class PdfBytesTests
     }
 
     [Fact]
+    public void NonFiniteNumbersWriteZero()
+    {
+        foreach (double value in new[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity })
+            Assert.Equal("0", new PdfNumber(value).Text);
+    }
+
+    [Fact]
     public void LexerFarOutsideTheBytesReadsTheEnd()
     {
         foreach (long position in new long[] { long.MaxValue, long.MaxValue - 1, long.MinValue, -5, 3, 1000 })

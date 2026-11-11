@@ -51,6 +51,7 @@ public sealed class PdfNumber : PdfObject
 
     private static string Format(double value)
     {
+        if (!double.IsFinite(value)) return "0";
         string text = Math.Round(value, 6).ToString("0.######", CultureInfo.InvariantCulture);
         return text == "-0" ? "0" : text;
     }
