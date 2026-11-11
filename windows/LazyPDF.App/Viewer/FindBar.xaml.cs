@@ -36,6 +36,8 @@ public partial class FindBar : UserControl
     public void Open(string? selection = null)
     {
         if (selection is { Length: > 0 } && !selection.Contains('\n') && selection != Query.Text) Query.Text = selection;
+        // Closing the bar cleared the search but left the text, so run it again for Enter and F3.
+        if (_search is { Query.Length: 0 } && Query.Text.Length > 0 && !_typing.IsEnabled) Run();
         Query.Focus();
         Query.SelectAll();
     }
