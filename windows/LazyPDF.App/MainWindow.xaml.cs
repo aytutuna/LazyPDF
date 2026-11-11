@@ -356,13 +356,21 @@ public partial class MainWindow : Window
         {
             e.Cancel = true;
             _vm.CancelClose();
-            ReleaseHeld();
+            ReleaseHeld(true);
+            if (_held.Count > 0) _vm.ShowNotice(Loc.T("Still working"), Loc.T("Wait for the job to end, or cancel it, then close."));
+            return;
+        }
+        // Handing in can show a notice, which forgets the session, so it comes first.
+        if (!HandInTyping(_vm.ActiveDocument))
+        {
+            e.Cancel = true;
+            if (!_vm.IsExiting) ForgetExitSession();
             return;
         }
         // Answering the exit question closes the tabs one by one, so the session is taken before it starts.
-        _exitTabs ??= _vm.Documents.ToList();
+        var tabs = _exitTabs ??= _vm.Documents.ToList();
         _exitActive ??= _vm.ActiveDocument;
-        if (!HandInTyping(_vm.ActiveDocument) || !_vm.RequestExit())
+        if (!_vm.RequestExit())
         {
             e.Cancel = true;
             if (!_vm.IsExiting) ForgetExitSession();
@@ -370,7 +378,7 @@ public partial class MainWindow : Window
         }
         // RestoreBounds is empty once the window has closed, so the place is taken here.
         var placement = PlacementOf(WindowState == WindowState.Maximized, new Rect(Left, Top, Width, Height), RestoreBounds);
-        var session = _exitTabs.Where(d => d.Path is not null).Select(d => d.Path!).ToList();
+        var session = tabs.Where(d => d.Path is not null).Select(d => d.Path!).ToList();
         string? active = _exitActive?.Path;
         AppPreferencesStore.Update(p =>
         {

@@ -258,7 +258,7 @@ public partial class MainWindow
     internal static bool MayRelease(InfoMessage? showing, InfoMessage? atHold, InfoMessage? atEnd) =>
         showing is null || ReferenceEquals(showing, atHold) || atEnd is not null && !ReferenceEquals(showing, atEnd);
 
-    private void ReleaseHeld()
+    private void ReleaseHeld(bool closing = false)
     {
         if (Modal || _vm.IsBusy || _actionRunning)
         {
@@ -266,7 +266,7 @@ public partial class MainWindow
             return;
         }
         if (_held.Count == 0) return;
-        if (!MayRelease(_vm.Message, _heldMessage, _settledMessage))
+        if (!closing && !MayRelease(_vm.Message, _heldMessage, _settledMessage))
         {
             _settledMessage ??= _vm.Message;
             return;
