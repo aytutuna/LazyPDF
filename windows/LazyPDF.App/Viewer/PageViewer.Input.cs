@@ -22,7 +22,7 @@ public partial class PageViewer
 
     private readonly Dictionary<int, IReadOnlyList<PdfLink>> _links = [];
     private readonly DispatcherTimer _autoScroll = new() { Interval = TimeSpan.FromMilliseconds(30) };
-    private readonly System.Windows.Controls.ToolTip _linkTip = new() { Placement = System.Windows.Controls.Primitives.PlacementMode.Mouse };
+    private readonly System.Windows.Controls.ToolTip _linkTip = new() { Placement = System.Windows.Controls.Primitives.PlacementMode.Relative };
     private PointerMode _mode = PointerMode.Select;
     private IPagePointerTool? _tool;
     private Drag _drag;
@@ -146,6 +146,7 @@ public partial class PageViewer
 
     private void Surface_MouseDown(object sender, MouseButtonEventArgs e)
     {
+        _linkTip.IsOpen = false;
         Surface.Focus();
         if (_tab is null) return;
         if (_middlePan)
@@ -321,11 +322,16 @@ public partial class PageViewer
         var link = hit is { } h ? LinkAt(h.Page, h.Point) : null;
         var tip = link is null ? null : LinkTip(link);
         if (tip is null) _linkTip.IsOpen = false;
-        else if (!Equals(_linkTip.Content, tip) || !_linkTip.IsOpen)
+        else
         {
-            _linkTip.Content = tip;
-            _linkTip.PlacementTarget = Surface;
-            _linkTip.IsOpen = true;
+            _linkTip.HorizontalOffset = at.X + 12;
+            _linkTip.VerticalOffset = at.Y + 18;
+            if (!Equals(_linkTip.Content, tip) || !_linkTip.IsOpen)
+            {
+                _linkTip.Content = tip;
+                _linkTip.PlacementTarget = Surface;
+                _linkTip.IsOpen = true;
+            }
         }
         if (link is not null) Surface.Cursor = Cursors.Hand;
         else if (_mode == PointerMode.Hand) Surface.Cursor = Cursors.Hand;
@@ -337,10 +343,7 @@ public partial class PageViewer
         if (_tab is null) return null;
         if (link.Action is UriAction uri)
         {
-            var address = uri.Uri.Trim();
-            if (!Uri.TryCreate(address, UriKind.Absolute, out _) && address.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
-                address = "https://" + address;
-            return address;
+            return WebAddress(uri.Uri);
         }
         var destination = link.Action is GoToAction go ? go.Destination : link.Action is null ? link.Destination : null;
         if (destination is null || PdfDestinations.Locate(_tab.Document, destination) is not { } place) return null;

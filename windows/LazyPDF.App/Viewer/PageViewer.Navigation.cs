@@ -219,9 +219,8 @@ public partial class PageViewer
     // An address in a file is the file's, not the reader's: it is shown and asked about, and only the usual schemes are opened.
     private void AskToOpen(string address)
     {
-        address = address.Trim();
-        if (!Uri.TryCreate(address, UriKind.Absolute, out _) && address.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
-            address = "https://" + address;
+        _linkTip.IsOpen = false;
+        address = WebAddress(address);
         bool openable = Uri.TryCreate(address, UriKind.Absolute, out var uri) && OpenableSchemes.Contains(uri.Scheme);
         _pendingAddress = openable ? address : null;
         LinkTitle.Text = openable ? Loc.T("Open this link?") : Loc.T("This link cannot be opened.");
@@ -245,8 +244,17 @@ public partial class PageViewer
         LinkCancel.Focus();
     }
 
+    private static string WebAddress(string address)
+    {
+        address = address.Trim();
+        if (!Uri.TryCreate(address, UriKind.Absolute, out _) && address.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+            address = "https://" + address;
+        return address;
+    }
+
     private void HideLink()
     {
+        _linkTip.IsOpen = false;
         _pendingAddress = null;
         LinkCard.Visibility = Visibility.Collapsed;
     }

@@ -277,6 +277,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
 
     private void Surface_ViewChanged(object? sender, EventArgs e)
     {
+        _linkTip.IsOpen = false;
         ViewChanged?.Invoke(this, EventArgs.Empty);
         _source?.Retain(Surface.Layout.PageCount == 0 ? 0 : Surface.Layout.PagesIn(Surface.ViewRect).Count());
         PreloadText();
