@@ -81,7 +81,14 @@ public partial class App : Application
     {
         var all = args.Where(arg => arg.Length > 0).ToList();
         if (all.Count > 0 && LazyPdfAddress.IsAddress(all[0])) return [.. LazyPdfAddress.Parse(all[0])];
-        return [.. all.SelectMany(arg => LazyPdfAddress.IsAddress(arg) ? LazyPdfAddress.Parse(arg) : [Path.GetFullPath(arg)])];
+        return [.. all.SelectMany(arg => LazyPdfAddress.IsAddress(arg) ? LazyPdfAddress.Parse(arg) : FullPath(arg))];
+
+        // An argument that is not a usable path is skipped: no window exists yet to say so.
+        static string[] FullPath(string arg)
+        {
+            try { return [Path.GetFullPath(arg)]; }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) { return []; }
+        }
     }
 
     /// <summary>Files handed over by a second start: opened at once, or kept for the window if it is not open yet.</summary>
