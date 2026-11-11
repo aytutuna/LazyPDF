@@ -56,6 +56,20 @@ public sealed class CombineJobTests
     }
 
     [Fact]
+    public void TheEntryThatCannotBeMergedIsNamed()
+    {
+        var good = PdfDocument.Open(Pdfs.Text(3));
+        var bad = PdfDocument.Open(Pdfs.Text(2));
+        var open = PdfDocument.Open(Pdfs.Text(1));
+
+        var fine = new[] { (new CombineEntry("a.pdf", 3, good), (List<int>?)null) };
+        var broken = new[] { (new CombineEntry("a.pdf", 3, good), (List<int>?)null), (new CombineEntry("b.pdf", 2, bad), (List<int>?)[99]) };
+
+        Assert.Null(CombinePanel.FirstUnmergeable(open, fine));
+        Assert.Equal("b.pdf", CombinePanel.FirstUnmergeable(open, broken));
+    }
+
+    [Fact]
     public void SplittingByCountMakesPartsOfThatManyPages()
     {
         var source = PdfDocument.Open(Pdfs.Text(7));

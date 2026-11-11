@@ -4908,6 +4908,9 @@
   "The files could not be put into one. Try fewer pages or files.": {
     "tr": "Dosyalar tek bir dosyada birleştirilemedi. Daha az sayfa ya da dosya deneyin."
   },
+  "{0} could not be put into the file. Leave it out, or try fewer of its pages.": {
+    "tr": "{0} dosyaya eklenemedi. Onu çıkarın ya da daha az sayfasını deneyin."
+  },
   "File not split": {
     "tr": "Dosya bölünemedi"
   },

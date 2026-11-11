@@ -48,7 +48,10 @@ public partial class CombinePanel
         }
         catch (Exception error) when (error is PdfReadException or ArgumentException)
         {
-            host.ShowProblem(new Problem(Loc.T("Files not combined"), Loc.T("The files could not be put into one. Try fewer pages or files.")));
+            string? bad = await Task.Run(() => FirstUnmergeable(PageEdits.Reopen(tab), sources));
+            host.ShowProblem(new Problem(Loc.T("Files not combined"), bad is null
+                ? Loc.T("The files could not be put into one. Try fewer pages or files.")
+                : Loc.T("{0} could not be put into the file. Leave it out, or try fewer of its pages.", bad)));
             return;
         }
         if (bytes is null) return;
@@ -62,6 +65,22 @@ public partial class CombinePanel
         }
         if (!await host.OpenNewAsync(bytes, name)) return;
         if (protectedSource) host.ShowNotice(Loc.T("Copy is not protected"), CopyRules.Unprotected);
+    }
+
+    internal static string? FirstUnmergeable(PdfDocument open, IEnumerable<(CombineEntry Entry, List<int>? Pages)> sources)
+    {
+        foreach (var (entry, pages) in sources)
+        {
+            try
+            {
+                PageAssembly.Merge([new MergeSource(entry.Document ?? open, pages)]).SaveRewrite();
+            }
+            catch (Exception error) when (error is PdfReadException or ArgumentException)
+            {
+                return entry.Name;
+            }
+        }
+        return null;
     }
 
     private async Task SplitAsync()

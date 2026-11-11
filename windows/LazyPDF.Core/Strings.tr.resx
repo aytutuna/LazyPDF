@@ -6499,6 +6499,9 @@
   <data name="{0} could not be prepared for printing. Save it and print it from another program." xml:space="preserve">
     <value>{0} yazdırmaya hazırlanamadı. Kaydedin ve başka bir programdan yazdırın.</value>
   </data>
+  <data name="{0} could not be put into the file. Leave it out, or try fewer of its pages." xml:space="preserve">
+    <value>{0} dosyaya eklenemedi. Onu çıkarın ya da daha az sayfasını deneyin.</value>
+  </data>
   <data name="{0} could not be read as form data. Pick a file that a form export wrote." xml:space="preserve">
     <value>{0} form verisi olarak okunamadı. Bir form dışa aktarımının yazdığı dosyayı seçin.</value>
   </data>
