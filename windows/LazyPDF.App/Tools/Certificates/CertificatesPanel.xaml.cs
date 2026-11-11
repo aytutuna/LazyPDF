@@ -106,7 +106,7 @@ public partial class CertificatesPanel : ToolPanel
 
     private void ShowCertificateNote()
     {
-        string? note = CertBox.Items.Count == 0 ? Loc.T("Windows has no certificate with a private key for you. Use a PFX file.")
+        string? note = CertBox.Items.Count == 0 ? Loc.T("Windows has no certificate you can sign with. Use a PFX file.")
             : CertBox.SelectedItem is CertificateChoice { IsValidNow: false } ? Loc.T("This certificate is not valid today. The signature will show as not trusted.")
             : null;
         CertNoteText.Text = note ?? "";

@@ -5654,8 +5654,8 @@
   "Whether the certificate was withdrawn.": {
     "tr": "Sertifikanın geri çekilip çekilmediği."
   },
-  "Windows has no certificate with a private key for you. Use a PFX file.": {
-    "tr": "Windows'ta sizin için özel anahtarlı sertifika yok. PFX dosyası kullanın."
+  "Windows has no certificate you can sign with. Use a PFX file.": {
+    "tr": "Windows'ta imzalayabileceğiniz bir sertifika yok. PFX dosyası kullanın."
   },
   "Windows would not let Lazy PDF use this key. Check the PIN or choose another certificate.": {
     "tr": "Windows, Lazy PDF'nin bu anahtarı kullanmasına izin vermedi. PIN'i denetleyin veya başka bir sertifika seçin."

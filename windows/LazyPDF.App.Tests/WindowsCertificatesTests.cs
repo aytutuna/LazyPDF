@@ -7,10 +7,12 @@ namespace LazyPDF.App.Tests;
 
 public sealed class WindowsCertificatesTests
 {
-    private static X509Certificate2 Make(string name, DateTimeOffset from, DateTimeOffset to, bool withKey)
+    private static X509Certificate2 Make(string name, DateTimeOffset from, DateTimeOffset to, bool withKey, X509KeyUsageFlags? usage = null)
     {
         using var key = RSA.Create(2048);
         var request = new CertificateRequest("CN=" + name, key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        if (usage is { } flags)
+            request.CertificateExtensions.Add(new X509KeyUsageExtension(flags, critical: true));
         using var made = request.CreateSelfSigned(from, to);
         return withKey
             ? X509CertificateLoader.LoadPkcs12(made.Export(X509ContentType.Pfx), null)
@@ -30,6 +32,22 @@ public sealed class WindowsCertificatesTests
         var choices = WindowsCertificates.Choices(certificates);
 
         Assert.Equal(["With key"], choices.Select(c => c.Name));
+    }
+
+    [Fact]
+    public void CertificatesMadeOnlyForEncryptionAreLeftOut()
+    {
+        var now = DateTimeOffset.Now;
+        var certificates = new[]
+        {
+            Make("Encrypt", now.AddDays(-1), now.AddYears(1), withKey: true, X509KeyUsageFlags.KeyEncipherment),
+            Make("Sign", now.AddDays(-1), now.AddYears(1), withKey: true, X509KeyUsageFlags.DigitalSignature),
+            Make("Plain", now.AddDays(-1), now.AddYears(1), withKey: true),
+        };
+
+        var choices = WindowsCertificates.Choices(certificates);
+
+        Assert.Equal(["Plain", "Sign"], choices.Select(c => c.Name));
     }
 
     [Fact]

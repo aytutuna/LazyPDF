@@ -6241,8 +6241,8 @@
   <data name="Windows does not let Lazy PDF write {0}. Save it under another name or in another folder." xml:space="preserve">
     <value>Windows, Lazy PDF'nin {0} dosyasına yazmasına izin vermiyor. Başka bir adla ya da başka bir klasöre kaydedin.</value>
   </data>
-  <data name="Windows has no certificate with a private key for you. Use a PFX file." xml:space="preserve">
-    <value>Windows'ta sizin için özel anahtarlı sertifika yok. PFX dosyası kullanın.</value>
+  <data name="Windows has no certificate you can sign with. Use a PFX file." xml:space="preserve">
+    <value>Windows'ta imzalayabileceğiniz bir sertifika yok. PFX dosyası kullanın.</value>
   </data>
   <data name="Windows has no font for the text on the boxes. Clear that text and try again." xml:space="preserve">
     <value>Windows'ta kutulardaki metin için yazı tipi yok. Bu metni temizleyip yeniden deneyin.</value>
