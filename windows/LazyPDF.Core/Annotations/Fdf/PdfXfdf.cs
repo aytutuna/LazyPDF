@@ -84,7 +84,7 @@ public static class PdfXfdf
         var d = new PdfDictionary { ["Type"] = new PdfName("Annot"), ["Subtype"] = new PdfName(subtype) };
         string? A(string name) => e.Attribute(name)?.Value;
         void Text(string attribute, string key) { if (A(attribute) is { } v) d[key] = PdfText.ToObject(v); }
-        void Name(string attribute, string key) { if (A(attribute) is { Length: > 0 } v) d[key] = new PdfName(v); }
+        void Name(string attribute, string key) { if (A(attribute) is { Length: > 0 } v) d[key] = PdfName.FromText(v); }
         void Number(string attribute, string key) { if (Parse(A(attribute)) is { } n) d[key] = new PdfNumber(n); }
 
         Text("name", "NM"); Text("title", "T"); Text("subject", "Subj"); Text("date", "M"); Text("creationdate", "CreationDate");
@@ -212,7 +212,7 @@ public static class PdfXfdf
             if (value is not null) e.SetAttributeValue(attribute, Clean(value));
         }
         string? TextOf(string key) => V(key) is PdfString s ? PdfText.Decode(s.Bytes) : null;
-        string? NameOf(string key) => (V(key) as PdfName)?.Value;
+        string? NameOf(string key) => (V(key) as PdfName)?.Text;
         string? NumberOf(string key) => (V(key) as PdfNumber)?.Text;
         string? List(string key) => V(key) is PdfArray a ? string.Join(',', a.Items.Select(i => (fdf.Resolve(i) as PdfNumber)?.Text ?? "0")) : null;
 

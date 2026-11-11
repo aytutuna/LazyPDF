@@ -96,4 +96,13 @@ public class PdfBytesTests
         var latin = (PdfName)new PdfLexer(new PdfArrayBytes(TestPdf.Latin("/#FC"))).ReadObject();
         Assert.Equal(latin.Value, latin.Text);
     }
+
+    [Fact]
+    public void NameMixingLatin1AndAboveIsWrittenAsUtf8Throughout()
+    {
+        var name = new PdfName("GÖZDEN GEÇİRİLDİ");
+        Assert.DoesNotContain("#D6", name.ToString());
+        var read = (PdfName)new PdfLexer(new PdfArrayBytes(TestPdf.Latin(name.ToString()))).ReadObject();
+        Assert.Equal("GÖZDEN GEÇİRİLDİ", read.Text);
+    }
 }

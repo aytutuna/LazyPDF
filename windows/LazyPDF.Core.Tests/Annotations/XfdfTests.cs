@@ -80,6 +80,18 @@ public class XfdfTests
     }
 
     [Fact]
+    public void ATurkishStampNameSurvivesAnXfdfRoundTrip()
+    {
+        var source = Blank(1);
+        new PdfAnnotationWriter(source, new ArialSource()).AddStamp(source.Pages[0], new PdfRect(100, 600, 360, 660), "ŞİFRELİ GİZLİ");
+        byte[] xml = PdfXfdf.Write(PdfFdf.Export(source, "doc.pdf"));
+        Assert.Contains("icon=\"ŞİFRELİ GİZLİ\"", Encoding.UTF8.GetString(xml));
+        var target = Blank(1);
+        PdfFdf.Import(target, PdfXfdf.Read(xml), new ArialSource());
+        Assert.Equal("ŞİFRELİ GİZLİ", PdfAnnotations.ReadAll(Reopen(target)).Single().IconName);
+    }
+
+    [Fact]
     public void ReadsAnXfdfAsAcrobatWritesIt()
     {
         const string xml = """

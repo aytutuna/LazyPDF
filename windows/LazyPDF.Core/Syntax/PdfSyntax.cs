@@ -94,13 +94,16 @@ public sealed class PdfName(string value) : PdfObject
     public override void WriteTo(StringBuilder output)
     {
         output.Append('/');
+        // A char above 0xFF has no byte of its own, so its UTF-8 bytes go; then every non-ASCII char
+        // goes that way, or the mix would not read back as UTF-8.
+        bool wide = Value.Any(c => c > 0xFF);
         for (int i = 0; i < Value.Length; i++)
         {
             char c = Value[i];
             // Regular characters as they are; '#', delimiters, white space and anything outside
-            // printable ASCII as #xx. A char above 0xFF has no byte of its own, so its UTF-8 bytes go.
+            // printable ASCII as #xx.
             if (c > 0x20 && c < 0x7F && c != '#' && !PdfLexer.IsDelimiter((byte)c)) output.Append(c);
-            else if (c <= 0xFF) output.Append('#').Append(((int)c).ToString("X2", CultureInfo.InvariantCulture));
+            else if (c <= 0xFF && !(wide && c > 0x7F)) output.Append('#').Append(((int)c).ToString("X2", CultureInfo.InvariantCulture));
             else
             {
                 int length = char.IsHighSurrogate(c) && i + 1 < Value.Length && char.IsLowSurrogate(Value[i + 1]) ? 2 : 1;
