@@ -189,6 +189,47 @@ public sealed class CommentsPanelTests
     });
 
     [Fact]
+    public Task EditingANoteDropsItsRichText() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        f.Marker.Add(MarkTool.Note, 0, [new Point(60, 80)], Red, "check");
+        f.Tab.Commit("Mark");
+        PdfComments.List(f.Document)[0].Annotation.Dictionary["RC"] = PdfText.ToObject("<body><p>check</p></body>");
+        f.Tab.Commit("Rich text");
+        var panel = Open(f, new RecordingHost());
+
+        Click(panel, "EditButton");
+        ((TextBox)panel.FindName("FullText")).Text = "checked";
+        Click(panel, "SaveEditButton");
+
+        var annotation = PdfComments.List(f.Document)[0].Annotation;
+        Assert.Equal("checked", PdfComments.List(f.Document)[0].Text);
+        Assert.Null(annotation.Dictionary["RC"]);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TextNoFontCanDrawIsAProblemAndKeepsTheBoxEditable() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        f.Marker.Add(MarkTool.TextBox, 0, [new Point(60, 80), new Point(260, 140)], Red, "check");
+        f.Tab.Commit("Mark");
+        var host = new RecordingHost();
+        var panel = Open(f, host);
+        panel.Fonts = new FakeFonts();
+
+        Click(panel, "EditButton");
+        var full = (TextBox)panel.FindName("FullText");
+        full.Text = "Çalışma ğ";
+        Click(panel, "SaveEditButton");
+
+        Assert.Equal(AnnotationText.NoFont, host.Problems.Single().Text);
+        Assert.False(full.IsReadOnly);
+        Assert.Equal("check", PdfComments.List(f.Document)[0].Text);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task ASignedFileAsksBeforeTheCommentIsDeleted() => Sta.Run(() =>
     {
         using var f = new CommentFixture();

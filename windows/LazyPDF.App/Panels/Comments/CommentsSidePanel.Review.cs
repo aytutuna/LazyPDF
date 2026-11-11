@@ -15,7 +15,7 @@ namespace LazyPDF.App.Panels.Comments;
 
 public partial class CommentsSidePanel
 {
-    private readonly SystemFontSource _fonts = new();
+    internal IFontSource Fonts { get; set; } = new SystemFontSource();
     private int? _detailNumber;
 
     private void Comments_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -104,11 +104,17 @@ public partial class CommentsSidePanel
         if (!ReferenceEquals(Tab, tab) || MarkWork.Running) return;
         try
         {
-            new PdfAnnotationWriter(tab.Document, _fonts).SetContents(row.Comment.Annotation, text, DateTimeOffset.Now);
+            var annotation = new PdfAnnotationWriter(tab.Document, Fonts).SetContents(row.Comment.Annotation, text, DateTimeOffset.Now);
+            // Viewers show the rich text before /Contents, so an old /RC would keep the old words on screen.
+            annotation.Dictionary.Remove("RC");
+        }
+        catch (InvalidOperationException error) when (error.Message == AnnotationText.NoFont)
+        {
+            host.ShowProblem(new Problem(Loc.T("Text not drawn"), AnnotationText.NoFont));
+            return;
         }
         catch (Exception error) when (error is ArgumentException or PdfReadException)
         {
-            tab.Session.Discard();
             host.ShowProblem(new Problem(Loc.T("Comment not changed"), Loc.T("The file would not take that text. Try other words.")));
             return;
         }
@@ -128,7 +134,7 @@ public partial class CommentsSidePanel
     {
         if (!ReferenceEquals(Tab, tab) || MarkWork.Running) return;
         int index = Comments.SelectedIndex;
-        if (!new PdfAnnotationWriter(tab.Document, _fonts).Delete(row.Comment.Annotation))
+        if (!new PdfAnnotationWriter(tab.Document, Fonts).Delete(row.Comment.Annotation))
         {
             host.SetStatus(Loc.T("That comment is no longer in the file."));
             return;
@@ -313,7 +319,7 @@ public partial class CommentsSidePanel
             {
                 try
                 {
-                    await Task.Run(() => result = Exchange.Import(tab.Document, data, xfdf, _fonts));
+                    await Task.Run(() => result = Exchange.Import(tab.Document, data, xfdf, Fonts));
                     ct.ThrowIfCancellationRequested();
                 }
                 catch
