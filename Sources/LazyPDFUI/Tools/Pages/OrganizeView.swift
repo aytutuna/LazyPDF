@@ -52,19 +52,33 @@ struct OrganizeView: View {
                 BarButton("rotate.right", L10n.t("Rotate right"), off: !any) { model.turnSelection(90) }
                 BarButton("trash", L10n.t("Delete"), off: !any) { model.remove() }
                 BarButton("plus.square.on.square", L10n.t("Duplicate"), off: !any) { Task { await model.duplicate() } }
-                BarButton("arrow.up.doc", L10n.t("Extract to a new file"), off: !any) { Task { await model.extract() } }
-                BarButton("arrow.left", L10n.t("Move earlier"), off: !model.grid.canMove(-1)) { model.grid.earlier(model.grid.selection) }
-                BarButton("arrow.right", L10n.t("Move later"), off: !model.grid.canMove(1)) { model.grid.later(model.grid.selection) }
-                BarButton("scissors", L10n.t("Cut"), off: !any) { Task { await model.cut() } }
-                BarButton("doc.on.doc", L10n.t("Copy"), off: !any) { Task { await model.copy() } }
-                BarButton("doc.on.clipboard", L10n.t("Paste"), off: !model.canPaste) { Task { await model.paste() } }
                 BarButton("plus.rectangle", L10n.t("Blank page")) { model.blank() }
                 BarButton("doc.badge.plus", L10n.t("Pages from a file")) { Task { await model.fromFile() } }
                 PlacePicker(place: $model.place)
                     .frame(width: 170)
                     .padding(.leading, 8)
-                BarButton("checkmark.circle", L10n.t("Select all")) { model.grid.selectAll() }
-                BarButton("xmark.circle", L10n.t("Select none"), off: !any) { model.grid.selectNone() }
+                Menu {
+                    Button(L10n.t("Extract to a new file"), systemImage: "arrow.up.doc") { Task { await model.extract() } }
+                        .disabled(!any)
+                    Button(L10n.t("Move earlier"), systemImage: "arrow.left") { model.grid.earlier(model.grid.selection) }
+                        .disabled(!model.grid.canMove(-1))
+                    Button(L10n.t("Move later"), systemImage: "arrow.right") { model.grid.later(model.grid.selection) }
+                        .disabled(!model.grid.canMove(1))
+                    Button(L10n.t("Cut"), systemImage: "scissors") { Task { await model.cut() } }
+                        .disabled(!any)
+                    Button(L10n.t("Copy"), systemImage: "doc.on.doc") { Task { await model.copy() } }
+                        .disabled(!any)
+                    Button(L10n.t("Paste"), systemImage: "doc.on.clipboard") { Task { await model.paste() } }
+                        .disabled(!model.canPaste)
+                    Button(L10n.t("Select all"), systemImage: "checkmark.circle") { model.grid.selectAll() }
+                    Button(L10n.t("Select none"), systemImage: "xmark.circle") { model.grid.selectNone() }
+                        .disabled(!any)
+                } label: {
+                    Label(L10n.t("More"), systemImage: "ellipsis.circle").frame(minHeight: 44)
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .padding(.leading, 8)
             }
             .padding(.horizontal, 8)
         }
