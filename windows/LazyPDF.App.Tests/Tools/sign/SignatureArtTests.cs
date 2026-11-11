@@ -213,6 +213,55 @@ public sealed class SignatureArtTests
         return stream.ToArray();
     }
 
+    // A 16x8 picture whose top left quarter is red and the rest white, so no turn or mirror leaves it looking the same.
+    private static byte[] CornerJpeg(ushort orientation)
+    {
+        var pixels = new byte[16 * 8 * 3];
+        Array.Fill(pixels, (byte)255);
+        for (int y = 0; y < 4; y++)
+        {
+            for (int x = 0; x < 8; x++) (pixels[(y * 16 + x) * 3], pixels[(y * 16 + x) * 3 + 1]) = (0, 0);
+        }
+        var metadata = new BitmapMetadata("jpg");
+        metadata.SetQuery("System.Photo.Orientation", orientation);
+        var encoder = new JpegBitmapEncoder { QualityLevel = 100 };
+        encoder.Frames.Add(BitmapFrame.Create(BitmapSource.Create(16, 8, 96, 96, PixelFormats.Bgr24, null, pixels, 16 * 3), null, metadata, null));
+        using var stream = new MemoryStream();
+        encoder.Save(stream);
+        var file = stream.ToArray();
+        using var read = new MemoryStream(file);
+        var stored = (BitmapDecoder.Create(read, BitmapCreateOptions.None, BitmapCacheOption.None).Frames[0].Metadata as BitmapMetadata)?.GetQuery("System.Photo.Orientation");
+        Assert.Equal(orientation, stored);
+        return file;
+    }
+
+    [Theory]
+    [InlineData(1, 16, 8, 0, 0)]
+    [InlineData(2, 16, 8, 1, 0)]
+    [InlineData(3, 16, 8, 1, 1)]
+    [InlineData(4, 16, 8, 0, 1)]
+    [InlineData(5, 8, 16, 0, 0)]
+    [InlineData(6, 8, 16, 1, 0)]
+    [InlineData(7, 8, 16, 1, 1)]
+    [InlineData(8, 8, 16, 0, 1)]
+    public void EachOrientationPutsTheRedCornerWhereItsTurnOrMirrorSays(ushort orientation, int width, int height, int right, int bottom)
+    {
+        OnSta.Run(() =>
+        {
+            var upright = SignatureArt.UprightFile(CornerJpeg(orientation));
+
+            var image = new WicImageCodec().DecodeFile(upright)![0];
+            Assert.Equal((width, height), (image.Width, image.Height));
+            foreach (var (x, y) in new[] { (0, 0), (width - 1, 0), (0, height - 1), (width - 1, height - 1) })
+            {
+                bool red = x == right * (width - 1) && y == bottom * (height - 1);
+                int at = (y * width + x) * 4;
+                Assert.Equal(red, image.Rgba[at + 1] < 100);
+                Assert.True(image.Rgba[at] > 200);
+            }
+        });
+    }
+
     [Fact]
     public void ASidewaysCameraJpegIsTurnedUpright()
     {

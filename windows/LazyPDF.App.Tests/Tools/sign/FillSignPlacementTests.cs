@@ -1,12 +1,15 @@
+using System.Reflection;
 using System.Windows;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Tools.FillSign;
+using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using Xunit;
 
 namespace LazyPDF.App.Tests;
 
 // Where a signature or a line of text lands on the page, and that the placing is one undoable step.
+[Collection("Application")]
 public sealed class FillSignPlacementTests
 {
     private static readonly Size Page = new(612, 792);
@@ -116,11 +119,35 @@ public sealed class FillSignPlacementTests
             using var tab = NewTab();
 
             Assert.Throws<InvalidOperationException>(() => FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "Çağrı", 12, [0, 0, 0], DateTimeOffset.Now));
-            tab.Session.Discard();
 
             Assert.False(tab.IsDirty);
             Assert.Empty(PdfAnnotations.ReadAll(tab.Document));
         });
+    }
+
+    // A page the viewer has not laid out has no size, so the box is empty, which is found after the picture is in the file.
+    [Fact]
+    public Task APlacementThatFailsAfterAddingToTheFileIsTakenBack() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var host = new RecordingHost();
+        var panel = new FillSignPanel(dir.Sub("sigs"));
+        panel.Attach(tab, DispatchProxy.Create<IDocumentViewer, FlatViewer>(), host);
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        typeof(FillSignPanel).GetField("_image", flags)!.SetValue(panel, Ink);
+
+        typeof(FillSignPanel).GetMethod("Placed", flags)!.Invoke(panel, [0, new Point(50, 50), null]);
+
+        Assert.Equal("Nothing to place", host.Problems.Single().Title);
+        Assert.False(tab.Document.HasChanges);
+        Assert.Empty(PdfAnnotations.ReadAll(tab.Document));
+        return Task.CompletedTask;
+    });
+
+    private class FlatViewer : FakeViewer
+    {
+        protected override object? Invoke(MethodInfo? method, object?[]? args) => method!.Name == "PageSize" ? new Size(0, 0) : base.Invoke(method, args);
     }
 
     private static DocumentTab Turned(int degrees)

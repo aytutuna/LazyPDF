@@ -26,7 +26,8 @@ public sealed class FillLayerButtonTests
         layer.Show(form, true);
 
         var button = Buttons(overlay).SingleOrDefault();
-        button?.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+        // A person's click toggles the button before it raises Click.
+        typeof(ButtonBase).GetMethod("OnClick", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(button, null);
         return button;
     }
 

@@ -73,14 +73,18 @@ public sealed class MeasurePendingTests
         var panel = new MeasurePanel();
         panel.Attach(tab, FakeViewer.Create().Viewer, host);
         var waiting = (List<Pending>)typeof(MeasurePanel).GetField("_waiting", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(panel)!;
-        waiting.Add(On(tab.Document, 0) with { Item = new MeasureItem(MeasureKind.Distance, 5, [new(0, 0), new(10, 0)]) });
+        // The first is written before the second, an area of two points, is refused.
+        waiting.Add(On(tab.Document, 0));
+        waiting.Add(On(tab.Document, 0) with { Item = new MeasureItem(MeasureKind.Area, 0, [new(0, 0), new(10, 0)]) });
         int revision = tab.Revision;
 
         typeof(MeasurePanel).GetMethod("Add", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(panel, [tab]);
 
         Assert.Equal(revision, tab.Revision);
         Assert.Single(host.Problems);
-        Assert.Single(waiting);
+        Assert.Equal(2, waiting.Count);
+        Assert.False(tab.Document.HasChanges);
+        Assert.Empty(PdfAnnotations.ReadAll(tab.Document));
         return Task.CompletedTask;
     });
 }

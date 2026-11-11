@@ -47,6 +47,52 @@ public sealed class CommentPanelTests
         return Task.CompletedTask;
     });
 
+    private static PdfAnnotation BigItalicText(CommentFixture f, CommentPanel panel)
+    {
+        var style = StyleOf(panel) with { Family = "Arial", Size = 20, Font = LazyPDF.Core.FontStyles.Bold | LazyPDF.Core.FontStyles.Italic };
+        var made = f.Marker.Add(MarkTool.TextBox, 0, [new Point(60, 80), new Point(260, 140)], style, "Hello");
+        return f.Marks().Single(m => m.Reference?.Number == made.Reference?.Number);
+    }
+
+    [Fact]
+    public Task ASelectedFreeTextShowsItsFontSizeBoldAndItalic() => Sta.Run(() =>
+    {
+        if (!System.Windows.Media.Fonts.SystemFontFamilies.Any(x => x.Source == "Arial")) return Task.CompletedTask;
+        using var f = new CommentFixture();
+        var panel = Attached(f);
+        var mark = BigItalicText(f, panel);
+
+        Get<EditTool>(panel, "_edit").Select(mark);
+
+        Assert.Equal("Arial", Get<ComboBox>(panel, "FontFamilyBox").SelectedItem);
+        Assert.Equal("20", Get<ComboBox>(panel, "FontSizeBox").Text);
+        Assert.True(Get<System.Windows.Controls.Primitives.ToggleButton>(panel, "BoldToggle").IsChecked);
+        Assert.True(Get<System.Windows.Controls.Primitives.ToggleButton>(panel, "ItalicToggle").IsChecked);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task SwitchingToolsDropsTheSelectionAndBringsBackTheFontOfTheNextMark() => Sta.Run(() =>
+    {
+        if (!System.Windows.Media.Fonts.SystemFontFamilies.Any(x => x.Source == "Arial")) return Task.CompletedTask;
+        using var f = new CommentFixture();
+        var panel = Attached(f);
+        var before = StyleOf(panel);
+        var mark = BigItalicText(f, panel);
+        var edit = Get<EditTool>(panel, "_edit");
+        edit.Select(mark);
+        Assert.Equal("20", Get<ComboBox>(panel, "FontSizeBox").Text);
+
+        Get<Dictionary<MarkTool, RadioButton>>(panel, "_buttons")[MarkTool.Rectangle].IsChecked = true;
+
+        Assert.Null(edit.Current);
+        var after = StyleOf(panel);
+        Assert.Equal(before.Family, after.Family);
+        Assert.Equal(before.Size, after.Size);
+        Assert.Equal(before.Font, after.Font);
+        return Task.CompletedTask;
+    });
+
     [Fact]
     public Task ChoosingDashedChangesTheSelectedMarkInOneUndoStep() => Sta.Run(() =>
     {

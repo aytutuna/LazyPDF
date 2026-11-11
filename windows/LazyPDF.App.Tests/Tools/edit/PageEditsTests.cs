@@ -1,4 +1,5 @@
 using LazyPDF.App.Documents;
+using LazyPDF.App.Tests.Tools.Comment;
 using LazyPDF.App.Tools.EditContent;
 using LazyPDF.Core;
 using Xunit;
@@ -6,6 +7,7 @@ using Xunit;
 namespace LazyPDF.App.Tests.Tools.Edit;
 
 // The edits of the Edit text and images panel, each a real call to Core's page editor on a document in a tab.
+[Collection("Application")]
 public sealed class PageEditsTests
 {
     private static DocumentTab Open(byte[]? bytes = null, string? password = null) =>
@@ -106,17 +108,64 @@ public sealed class PageEditsTests
         Assert.Equal(24, ((TextObject)Objects(tab)[0]).Size, 1);
     }
 
+    private static System.Windows.Input.KeyEventArgs Pressed(System.Windows.Input.Key key) =>
+        new(System.Windows.Input.Keyboard.PrimaryDevice, new System.Windows.Interop.HwndSource(new System.Windows.Interop.HwndSourceParameters()), 0, key) { RoutedEvent = System.Windows.Input.Keyboard.PreviewKeyDownEvent };
+
+    private static InPlaceEditor NewBox(out ViewerStandIn stand)
+    {
+        var viewer = ViewerStandIn.Create(out stand);
+        var look = new EditorLook(new System.Windows.Media.FontFamily("Arial"), 12, System.Windows.Media.Colors.Black, false, false, TextAlignment.Left);
+        var editor = new InPlaceEditor(viewer);
+        editor.Open(0, new System.Windows.Rect(10, 10, 100, 20), "one", look, wrap: true, lineBreaks: true);
+        return editor;
+    }
+
+    // The box makes \r\n for Shift+Enter by itself, and Enter keeps the text.
     [Fact]
-    public void ATextBoxKeepsALineBreakAsTwoLines()
+    public Task ATextBoxKeepsALineBreakAsTwoLines() => Sta.Run(() =>
     {
         using var tab = Open();
-        var edits = Edits(tab);
+        var editor = NewBox(out var stand);
+        var box = Assert.IsType<System.Windows.Controls.TextBox>(Assert.Single(stand.Overlays[0].Children));
+        bool kept = false;
+        editor.Committed += (_, _) => kept = true;
 
-        var outcome = edits.AddTextBox(0, new PdfRect(100, 400, 400, 500), "one\ntwo", new TextBoxStyle("Arial", Size: 12));
+        var shift = Pressed(System.Windows.Input.Key.Enter);
+        editor.PressKey(shift, System.Windows.Input.ModifierKeys.Shift);
+        Assert.False(shift.Handled);
+        Assert.False(kept);
+        box.Text = "one\r\ntwo";
+
+        var plain = Pressed(System.Windows.Input.Key.Enter);
+        editor.PressKey(plain, System.Windows.Input.ModifierKeys.None);
+        Assert.True(plain.Handled);
+        Assert.True(kept);
+
+        var outcome = Edits(tab).AddTextBox(0, new PdfRect(100, 400, 400, 500), editor.Text, new TextBoxStyle("Arial", Size: 12));
 
         Assert.True(outcome.Done);
-        Assert.Equal(2, ((TextObject)Objects(tab)[^1]).Lines.Count);
-    }
+        Assert.Equal(["one", "two"], ((TextObject)Objects(tab)[^1]).Lines.Select(l => l.Text));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task CtrlShiftEnterInATextBoxAddsALineBreakWithoutKeepingIt() => Sta.Run(() =>
+    {
+        var editor = NewBox(out var stand);
+        var box = Assert.IsType<System.Windows.Controls.TextBox>(Assert.Single(stand.Overlays[0].Children));
+        box.CaretIndex = 3;
+        bool kept = false;
+        editor.Committed += (_, _) => kept = true;
+
+        var ctrl = Pressed(System.Windows.Input.Key.Enter);
+        editor.PressKey(ctrl, System.Windows.Input.ModifierKeys.Control | System.Windows.Input.ModifierKeys.Shift);
+        box.Text += "two";
+
+        Assert.True(ctrl.Handled);
+        Assert.False(kept);
+        Assert.Equal("one" + Environment.NewLine + "two", editor.Text);
+        return Task.CompletedTask;
+    });
 
     [Fact]
     public void ATextBoxIsAddedAndATooSmallOneSaysItOverflows()
