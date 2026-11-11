@@ -33,6 +33,11 @@ extension PdfDocument {
         let size: Int
         let offsets: [Int: Int]
         let numbers: [Int]
+        lazy var numberIndex: [Int: Int] = {
+            var index: [Int: Int] = [:]
+            for (i, number) in numbers.enumerated() where index[number] == nil { index[number] = i }
+            return index
+        }()
 
         init(_ bytes: PdfArrayBytes, _ size: Int, _ offsets: [Int: Int], _ numbers: [Int]) {
             self.bytes = bytes

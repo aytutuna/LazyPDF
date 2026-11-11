@@ -34,6 +34,6 @@ extension PdfDocument {
     /// The place of object `number` in its object stream; 0 when that cannot be told.
     func indexInObjectStream(_ number: Int) -> Int {
         guard let entry = entries[number], entry.kind == .compressed else { return 0 }
-        return Swift.max(0, loadObjectStream(entry.streamNumber)?.numbers.firstIndex(of: number) ?? 0)
+        return loadObjectStream(entry.streamNumber)?.numberIndex[number] ?? 0
     }
 }

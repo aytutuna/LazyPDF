@@ -229,6 +229,55 @@ final class SaveIncrementalTests: XCTestCase {
         XCTAssertEqual(text(reopened.pages[0].contents()), SaveFixtures.pageOne)
     }
 
+    /// Objects 1 to `members` in one object stream, the page's content and the stream itself after them, no cross-reference data.
+    private func bigObjectStreamFile(_ members: Int) -> [UInt8] {
+        let first = [
+            "<</Type /Catalog /Pages 2 0 R>>",
+            "<</Type /Pages /Kids [3 0 R] /Count 1>>",
+            "<</Type /Page /Parent 2 0 R /Contents \(members + 1) 0 R /MediaBox [0 0 100 100]>>",
+        ]
+        var header = ""
+        var body = ""
+        for n in 1...members {
+            header += "\(n) \(body.utf8.count) "
+            body += (n <= first.count ? first[n - 1] : String(n)) + "\n"
+        }
+        let pdf = TestPdf("%PDF-1.5\n")
+        pdf.stream(members + 1, "", "q Q")
+        pdf.stream(members + 2, "/Type /ObjStm /N \(members) /First \(header.count) /Filter /FlateDecode", TestPdf.deflate(TestPdf.latin(header + body)))
+        return pdf.finishWithoutXref() + TestPdf.latin("startxref\n12\n%%EOF\n")
+    }
+
+    func test_objectStreamIndexesPastTheTwoByteRangeAreWrittenInFullAfterARebuild() throws {
+        let document = try PdfDocument.open(bigObjectStreamFile(70000))
+        XCTAssertTrue(document.xrefRebuilt)
+        document.set(70001, PdfNumber(1))
+        let saved = try document.saveIncremental()
+        XCTAssertTrue(text(saved).contains("/W [1 3 3]"))
+
+        let reopened = try PdfDocument.open(saved)
+        XCTAssertFalse(reopened.xrefRebuilt)
+        XCTAssertEqual((reopened.get(70000) as? PdfNumber)?.integer, 70000)
+        XCTAssertEqual((reopened.get(40000) as? PdfNumber)?.integer, 40000)
+        XCTAssertEqual(reopened.name(reopened.catalog, "Type"), "Catalog")
+    }
+
+    func test_smallRebuiltFileKeepsATwoByteIndexField() throws {
+        let document = try PdfDocument.open(TestPdf.replace(try SaveFixtures.make("objects"), "startxref", "startxxxxx"))
+        document.info?["Title"] = PdfString(bytes: [67], isHex: false)
+        XCTAssertTrue(text(try document.saveIncremental()).contains("/W [1 2 2]"))
+    }
+
+    func test_objectStreamIndexesOfThousandsOfMembersAreFound() throws {
+        let document = try PdfDocument.open(bigObjectStreamFile(20000))
+        XCTAssertTrue(document.xrefRebuilt)
+        document.set(20001, PdfNumber(1))
+        let started = Date()
+        let saved = try document.saveIncremental()
+        XCTAssertLessThan(Date().timeIntervalSince(started), 1)
+        XCTAssertEqual((try PdfDocument.open(saved).get(20000) as? PdfNumber)?.integer, 20000)
+    }
+
     func test_fileThatDoesNotEndInALineBreakStillGetsAnUpdateOnItsOwnLine() throws {
         let original = SaveFixtures.table()
         let trimmed = Array(original.dropLast())

@@ -43,8 +43,8 @@ enum PdfXrefWriter {
         writer.writeAscii("\nstartxref\n\(start)\n%%EOF\n")
     }
 
-    /// A cross-reference stream, object `number`, written last and listing itself. /W is [1 w 2] with w wide
-    /// enough for the largest offset. `dictionary` holds /Size, /Root and the rest of what a trailer holds.
+    /// A cross-reference stream, object `number`, written last and listing itself. /W is [1 w x] with w wide
+    /// enough for the largest offset and x 2 bytes, more for an index past 65535. `dictionary` holds /Size, /Root and the rest of what a trailer holds.
     static func writeStream(_ writer: PdfObjectWriter, _ number: Int, _ entries: [XrefEntry], _ dictionary: PdfDictionary, compress: Bool) {
         let start = writer.position
         var entries = entries
@@ -53,13 +53,16 @@ enum PdfXrefWriter {
         for entry in entries {
             while width < 8 && entry.second >= 1 << (width * 8) { width += 1 }
         }
+        var thirdWidth = 2
+        for entry in entries {
+            while thirdWidth < 4 && entry.third >= 1 << (thirdWidth * 8) { thirdWidth += 1 }
+        }
         var data: [UInt8] = []
-        data.reserveCapacity(entries.count * (width + 3))
+        data.reserveCapacity(entries.count * (width + 1 + thirdWidth))
         for entry in entries {
             data.append(UInt8(truncatingIfNeeded: entry.type))
             for b in stride(from: width - 1, through: 0, by: -1) { data.append(UInt8(truncatingIfNeeded: entry.second >> (b * 8))) }
-            data.append(UInt8(truncatingIfNeeded: entry.third >> 8))
-            data.append(UInt8(truncatingIfNeeded: entry.third))
+            for b in stride(from: thirdWidth - 1, through: 0, by: -1) { data.append(UInt8(truncatingIfNeeded: entry.third >> (b * 8))) }
         }
 
         var index: [PdfObject] = []
@@ -69,7 +72,7 @@ enum PdfXrefWriter {
         }
         let head = PdfDictionary()
         head.add("Type", PdfName("XRef"))
-        head.add("W", PdfArray([PdfNumber(1), PdfNumber(width), PdfNumber(2)]))
+        head.add("W", PdfArray([PdfNumber(1), PdfNumber(width), PdfNumber(thirdWidth)]))
         head.add("Index", PdfArray(index))
         for (key, value) in dictionary.entries { head.add(key, value) }
         if compress {
