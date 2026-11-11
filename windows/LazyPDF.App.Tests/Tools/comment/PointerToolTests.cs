@@ -110,6 +110,48 @@ public sealed class PointerToolTests
     }
 
     [Fact]
+    public void ShiftOnAStraightDragStillMakesASquare()
+    {
+        OnSta(() =>
+        {
+            var tool = Drawing(MarkTool.Rectangle, out _, out _, out var drawn);
+
+            tool.Press(Press(new Point(10, 10)));
+            tool.Release(new PagePointer(0, new Point(60, 10), new Point(60, 10), true, 0, ModifierKeys.Shift));
+
+            Assert.Equal([new Point(10, 10), new Point(60, 60)], Assert.Single(drawn.Marks).Points);
+        });
+    }
+
+    [Fact]
+    public void ShiftNearThePageEdgeShrinksTheWholeSquare()
+    {
+        OnSta(() =>
+        {
+            var tool = Drawing(MarkTool.Rectangle, out _, out _, out var drawn);
+
+            tool.Press(Press(new Point(580, 100)));
+            tool.Release(new PagePointer(0, new Point(590, 140), new Point(590, 140), true, 0, ModifierKeys.Shift));
+
+            Assert.Equal([new Point(580, 100), new Point(595, 115)], Assert.Single(drawn.Marks).Points);
+        });
+    }
+
+    [Fact]
+    public void ShiftMakesACalloutLeaderFlat()
+    {
+        OnSta(() =>
+        {
+            var tool = Drawing(MarkTool.Callout, out _, out _, out var drawn);
+
+            tool.Press(Press(new Point(100, 100)));
+            tool.Release(new PagePointer(0, new Point(200, 130), new Point(200, 130), true, 0, ModifierKeys.Shift));
+
+            Assert.Equal([new Point(100, 100), new Point(200, 100)], Assert.Single(drawn.Marks).Points);
+        });
+    }
+
+    [Fact]
     public void WithoutShiftTheEndStaysWhereItIs()
     {
         OnSta(() =>

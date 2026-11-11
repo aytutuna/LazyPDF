@@ -95,12 +95,16 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
     {
         if (!pointer.Modifiers.HasFlag(ModifierKeys.Shift) || _points.Count == 0) return pointer.Point;
         var first = _points[0];
-        if (tool is MarkTool.Line or MarkTool.Arrow or MarkTool.Callout) return MeasureShape.Straighten(first, pointer.Point);
-        if (tool is not (MarkTool.Rectangle or MarkTool.Oval or MarkTool.TextBox)) return pointer.Point;
+        if (tool is MarkTool.Line or MarkTool.Arrow) return MeasureShape.Straighten(first, pointer.Point);
         var d = pointer.Point - first;
-        double side = Math.Max(Math.Abs(d.X), Math.Abs(d.Y));
+        if (tool is MarkTool.Callout) return Math.Abs(d.X) >= Math.Abs(d.Y) ? new Point(pointer.Point.X, first.Y) : new Point(first.X, pointer.Point.Y);
+        if (tool is not (MarkTool.Rectangle or MarkTool.Oval or MarkTool.TextBox)) return pointer.Point;
         var page = viewer.PageSize(_page);
-        return new Point(Math.Clamp(first.X + Math.Sign(d.X) * side, 0, page.Width), Math.Clamp(first.Y + Math.Sign(d.Y) * side, 0, page.Height));
+        int sx = d.X >= 0 ? 1 : -1, sy = d.Y >= 0 ? 1 : -1;
+        double roomX = sx > 0 ? page.Width - first.X : first.X;
+        double roomY = sy > 0 ? page.Height - first.Y : first.Y;
+        double side = Math.Min(Math.Max(Math.Abs(d.X), Math.Abs(d.Y)), Math.Min(roomX, roomY));
+        return new Point(first.X + sx * side, first.Y + sy * side);
     }
 
     private static bool Close(Point a, Point b) => (a - b).Length < 6;
