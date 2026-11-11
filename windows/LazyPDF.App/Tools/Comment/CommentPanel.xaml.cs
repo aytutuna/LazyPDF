@@ -157,7 +157,7 @@ public partial class CommentPanel : ToolPanel
         _edit.Resized += Edit_Resized;
         _edit.VertexMoved += Edit_VertexMoved;
         _edit.EditRequested += Edit_EditRequested;
-        _bar = new SelectionBar(Viewer, () => _tool == MarkTool.SelectText && _allowed, MarkSelection);
+        _bar = new SelectionBar(Viewer!, () => _tool == MarkTool.SelectText && _allowed, MarkSelection);
         Tab!.Changed += Tab_Changed;
         _allowed = Exchange.CanComment(Tab.Document);
         if (!_allowed) Pick(MarkTool.SelectText);
