@@ -377,6 +377,8 @@ public sealed partial class AppViewModel
         if (_exiting) ContinueExit(raise: true);
     }
 
+    public bool IsExiting => _exiting;
+
     /// <summary>The answer to <see cref="CloseQuestion"/> that keeps the document open.</summary>
     public void CancelClose()
     {

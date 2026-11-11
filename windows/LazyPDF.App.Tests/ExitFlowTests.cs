@@ -56,6 +56,21 @@ public sealed class ExitFlowTests
     }
 
     [Fact]
+    public async Task TheViewModelKnowsWhileAnExitIsInProgress()
+    {
+        using var f = new ViewModelFixture();
+        await Dirty(f, "one.pdf");
+
+        Assert.False(f.Vm.IsExiting);
+        f.Vm.RequestExit();
+        Assert.True(f.Vm.IsExiting);
+        f.Vm.CancelClose();
+
+        Assert.False(f.Vm.IsExiting);
+        Assert.Null(f.Vm.CloseQuestion);
+    }
+
+    [Fact]
     public async Task CancellingTheQuestionCallsOffTheExit()
     {
         using var f = new ViewModelFixture();

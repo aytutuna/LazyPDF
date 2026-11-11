@@ -176,6 +176,8 @@ public partial class MainWindow
     {
         if (Modal || _vm.IsBusy || _actionRunning)
         {
+            // A file arriving means the person is still working, and held files would be lost on exit.
+            if (_vm.IsExiting) _vm.CancelClose();
             if (_held.Count == 0) _heldMessage = _vm.Message;
             _held.AddRange(paths);
             _vm.SetStatus(Loc.T("Will open when you are done here."));
