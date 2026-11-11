@@ -29,8 +29,8 @@ public sealed class Thumbnails
     /// <summary>The PNG of the first page, <paramref name="width"/> pixels wide; null when the file cannot be opened without a password or drawn.</summary>
     public async Task<byte[]?> GetAsync(string path, int width = 224)
     {
-        var info = new FileInfo(path);
-        if (!info.Exists) return null;
+        var info = await Task.Run(() => new FileInfo(path) is { Exists: true } file ? file : null);
+        if (info is null) return null;
         string key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{info.FullName}|{info.Length}|{info.LastWriteTimeUtc.Ticks}|{width}")))[..32];
         string cached = System.IO.Path.Combine(_directory, $"{PathHash(info.FullName)}-{key}.png");
         try

@@ -225,13 +225,13 @@ public sealed class OpenFlowTests
         await f.Vm.OpenAsync(path);
 
         Assert.Equal(["kept.pdf"], f.Vm.Recent.Select(r => r.Name));
-        Assert.True(f.Vm.Recent[0].Exists);
+        Assert.Equal(path, f.Vm.Recent[0].Path);
 
         File.Delete(path);
         await f.Vm.OpenAsync(path.Replace("kept", "kept2"));
         f.Vm.Close(f.Vm.ActiveDocument!);
         Assert.Equal(["kept.pdf"], f.Vm.Recent.Select(r => r.Name));
-        Assert.False(f.Vm.Recent[0].Exists);
+        Assert.Equal("kept.pdf", f.Vm.Recent[0].Name);
 
         await f.Vm.OpenAsync(path);
         Assert.Empty(f.Vm.Recent);

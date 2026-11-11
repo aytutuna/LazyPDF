@@ -9,7 +9,7 @@ using LazyPDF.Core;
 namespace LazyPDF.App;
 
 /// <summary>A file in the recent list, with the words the Home tab shows for it.</summary>
-public sealed record RecentItem(string Path, string Name, string Folder, string Opened, bool Exists);
+public sealed record RecentItem(string Path, string Name, string Folder, string Opened);
 
 /// <summary>A job on the Home tab. <paramref name="Reason"/> says why it cannot be started, null when it can.</summary>
 public sealed record HomeTile(string Id, string Title, string Glyph, string Description, bool Available, string? Reason)
@@ -109,7 +109,7 @@ public sealed partial class AppViewModel
 
     private IReadOnlyList<RecentItem> BuildRecent() =>
         [.. _recentFiles.Load().Select(f => new RecentItem(
-            f.Path, System.IO.Path.GetFileName(f.Path), FolderName(f.Path), When(f.Opened), File.Exists(f.Path)))];
+            f.Path, System.IO.Path.GetFileName(f.Path), FolderName(f.Path), When(f.Opened)))];
 
     private static string FolderName(string path)
     {

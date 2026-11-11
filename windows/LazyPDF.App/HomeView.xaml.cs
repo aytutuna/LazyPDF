@@ -12,11 +12,22 @@ namespace LazyPDF.App;
 public sealed class RecentCard(RecentItem item) : INotifyPropertyChanged
 {
     private ImageSource? _thumbnail;
+    private bool _exists = true;
 
     public RecentItem Item { get; } = item;
 
     /// <summary>When it was opened and where it is, or that it is gone.</summary>
-    public string Caption { get; } = item.Exists ? $"{item.Opened} · {item.Folder}" : Loc.T("Not found");
+    public string Caption => _exists ? $"{Item.Opened} · {Item.Folder}" : Loc.T("Not found");
+
+    public bool Exists
+    {
+        get => _exists;
+        set
+        {
+            _exists = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Caption)));
+        }
+    }
 
     public ImageSource? Thumbnail
     {
@@ -70,7 +81,7 @@ public partial class HomeView : UserControl
             {
                 var card = new RecentCard(item);
                 _cards.Add(card);
-                if (item.Exists) _ = LoadThumbnailAsync(card);
+                _ = LoadThumbnailAsync(card);
             }
         }
         RecentHeader.Visibility = _cards.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -79,7 +90,15 @@ public partial class HomeView : UserControl
 
     private async Task LoadThumbnailAsync(RecentCard card)
     {
-        if (Thumbnails is null || await Thumbnails.GetAsync(card.Item.Path) is not { } png || !_cards.Contains(card)) return;
+        string path = card.Item.Path;
+        bool exists = await Task.Run(() =>
+        {
+            try { return File.Exists(path); }
+            catch { return true; }
+        });
+        card.Exists = exists;
+        if (!exists) return;
+        if (Thumbnails is null || await Thumbnails.GetAsync(path) is not { } png || !_cards.Contains(card)) return;
         using var stream = new MemoryStream(png);
         var image = new BitmapImage();
         image.BeginInit();
