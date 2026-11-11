@@ -158,11 +158,13 @@ public sealed class DocumentTab : ITab, IDisposable
         else PdfFileSaver.Save(path, bytes, Password);
     }
 
-    /// <summary>The file this tab holds was renamed or moved: follow it without touching the content.</summary>
-    public void MoveTo(string path)
+    /// <summary>The file this tab holds was renamed or moved: follow it without touching the content. The state read at the new path is taken as known only when it is what this tab read.</summary>
+    public void MoveTo(string path, DiskStamp? stamp, byte[]? hash)
     {
         _path = path;
-        _disk = DiskStamp.Of(path);
+        bool same = stamp is not null && stamp == _disk
+            || hash is not null && _diskHash is not null && hash.AsSpan().SequenceEqual(_diskHash);
+        if (same) _disk = stamp;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     }
 

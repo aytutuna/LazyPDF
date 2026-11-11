@@ -79,6 +79,24 @@ public sealed class OneTabPerFileTests
     }
 
     [Fact]
+    public async Task AFileChangedInPlaceBeforeItWasMovedStillShowsAsChanged()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        f.Vm.SelectTool("stamps");
+        File.WriteAllBytes(path, Pdfs.Text(pages: 3));
+        File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddMinutes(10));
+        string moved = Path.Combine(Path.GetDirectoryName(path)!, "moved.pdf");
+        File.Move(path, moved);
+
+        await f.Vm.OpenAsync(moved);
+
+        Assert.True(f.Vm.ActiveDocument!.ChangedOnDisk);
+        Assert.Equal("File changed", f.Vm.Message?.Title);
+    }
+
+    [Fact]
     public void TwoFilesHaveTwoIdsAndOneFileByTwoSpellingsHasOne()
     {
         using var f = new ViewModelFixture();

@@ -152,7 +152,7 @@ public sealed partial class AppViewModel
             {
                 if (same.Path is { } old && !File.Exists(old))
                 {
-                    same.MoveTo(path);
+                    same.MoveTo(path, source.Stamp, source.Hash);
                     _recentFiles.Remove(old);
                     _recentFiles.Add(path);
                     JumpLists.Note(path);
