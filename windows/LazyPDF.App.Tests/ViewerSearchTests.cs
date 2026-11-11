@@ -27,6 +27,28 @@ public sealed class ViewerSearchTests
     }
 
     [Fact]
+    public async Task AFileWithoutAnyTextSaysSoWhenNothingIsFound()
+    {
+        var search = Searching(PdfFromText.Create("", new FakeFonts()).Bytes);
+
+        await search.Start("fox", new TextSearchOptions());
+
+        Assert.Empty(search.Hits);
+        Assert.True(search.NoText);
+    }
+
+    [Fact]
+    public async Task AMissingWordInAFileWithTextIsNotNoText()
+    {
+        var search = Searching(Pages(2));
+
+        await search.Start("giraffe", new TextSearchOptions());
+
+        Assert.Empty(search.Hits);
+        Assert.False(search.NoText);
+    }
+
+    [Fact]
     public async Task TheFirstCurrentHitIsTheFirstOneAtOrAfterTheStartPage()
     {
         var search = Searching(Pages(3), startPage: 1);

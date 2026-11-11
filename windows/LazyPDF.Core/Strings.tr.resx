@@ -5776,6 +5776,9 @@
   <data name="This file has no text to export. Run Make searchable first, or save the pages as pictures." xml:space="preserve">
     <value>Bu dosyada dışa aktarılacak metin yok. Önce Aranabilir yap'ı çalıştırın veya sayfaları resim olarak kaydedin.</value>
   </data>
+  <data name="This file has no text to search. Try Make searchable." xml:space="preserve">
+    <value>Bu dosyada aranacak metin yok. Aranabilir yap'ı deneyin.</value>
+  </data>
   <data name="This file is as small as it gets." xml:space="preserve">
     <value>Bu dosya zaten olabildiğince küçük.</value>
   </data>

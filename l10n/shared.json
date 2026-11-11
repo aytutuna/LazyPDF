@@ -2139,6 +2139,9 @@
   "No results": {
     "tr": "Sonuç yok"
   },
+  "This file has no text to search. Try Make searchable.": {
+    "tr": "Bu dosyada aranacak metin yok. Aranabilir yap'ı deneyin."
+  },
   "{0} found": {
     "tr": "{0} bulundu"
   },

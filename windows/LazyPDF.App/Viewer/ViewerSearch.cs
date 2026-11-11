@@ -61,6 +61,9 @@ public sealed class ViewerSearch
     /// <summary>The query is a regular expression that does not parse.</summary>
     public bool BadPattern { get; private set; }
 
+    /// <summary>The search found nothing and no page of the file has text, as in a scan.</summary>
+    public bool NoText { get; private set; }
+
     /// <summary>Raised when the query, the hits or whether it is still running changed.</summary>
     public event EventHandler? Changed;
 
@@ -78,6 +81,7 @@ public sealed class ViewerSearch
         Query = query;
         Options = options;
         BadPattern = false;
+        NoText = false;
         if (query.Length == 0)
         {
             Running = false;
@@ -145,17 +149,25 @@ public sealed class ViewerSearch
     private async Task RunAsync(Task<TextSource?> sourceTask, string query, TextSearchOptions options, int start, CancellationToken cancel)
     {
         bool bad = false;
+        bool noText = false;
         try
         {
             if (await sourceTask is { } source)
             {
                 var batch = new List<SearchHit>();
+                bool found = false;
                 foreach (var match in source.Find(query, options, cancel))
                 {
+                    found = true;
                     batch.Add(new SearchHit(match, Around(source, match, -1), Around(source, match, 1)));
                     if (batch.Count >= Batch) Flush(batch, start, cancel);
                 }
                 Flush(batch, start, cancel);
+                if (!found && !cancel.IsCancellationRequested)
+                {
+                    noText = true;
+                    for (int i = 0; i < source.PageCount && noText; i++) noText = source.Page(i).Chars.Count == 0;
+                }
             }
         }
         catch (OperationCanceledException)
@@ -171,6 +183,7 @@ public sealed class ViewerSearch
             if (cancel.IsCancellationRequested) return;
             Running = false;
             BadPattern = bad;
+            NoText = noText;
             if (Current < 0 && Hits.Count > 0)
             {
                 Current = 0;
