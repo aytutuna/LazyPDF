@@ -487,6 +487,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         TintDarkItem.IsChecked = Surface.Tint == PageTint.Dark;
         TintSepiaItem.IsChecked = Surface.Tint == PageTint.Sepia;
         ReadingItem.IsChecked = _reading;
+        ReadAloudItem.IsChecked = Speaking;
         FullScreenItem.IsChecked = FullScreen;
         PresentItem.IsChecked = _presenting;
         ForgetLinksItem.IsEnabled = _preferencesDirectory is not null && AppPreferencesStore.Load(_preferencesDirectory).AllowedLinkHosts.Count > 0;

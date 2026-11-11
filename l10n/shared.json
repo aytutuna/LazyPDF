@@ -2430,6 +2430,12 @@
   "This file has no text to search. Try Make searchable.": {
     "tr": "Bu dosyada aranacak metin yok. Aranabilir yap'ı deneyin."
   },
+  "This file has no text to read. Try Make searchable.": {
+    "tr": "Bu dosyada okunacak metin yok. Aranabilir yap'ı deneyin."
+  },
+  "Windows has no voice to read with.": {
+    "tr": "Windows'ta okumak için bir ses yok."
+  },
   "{0} found": {
     "tr": "{0} bulundu"
   },
@@ -2585,6 +2591,9 @@
   },
   "Reading mode": {
     "tr": "Okuma modu"
+  },
+  "Read aloud (Ctrl+Shift+Y)": {
+    "tr": "Sesli oku (Ctrl+Shift+Y)"
   },
   "Full screen (F11)": {
     "tr": "Tam ekran (F11)"

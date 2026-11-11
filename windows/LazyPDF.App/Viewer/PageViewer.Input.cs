@@ -82,6 +82,7 @@ public partial class PageViewer
     private void EndPointerTool()
     {
         CancelPendingSelection();
+        StopSpeech();
         EndKeyPlacement();
         if (_drag == Drag.Tool)
         {
@@ -585,6 +586,9 @@ public partial class PageViewer
             case Key.L when ctrl && !typing && _tool is null:
                 Presenting = !Presenting;
                 break;
+            case Key.Y when ctrl && shift && !typing:
+                ToggleReadAloud();
+                break;
             case Key.F when ctrl:
                 ShowFind();
                 break;
@@ -611,6 +615,9 @@ public partial class PageViewer
                 break;
             case Key.Escape when FullScreen:
                 FullScreen = false;
+                break;
+            case Key.Escape when Speaking:
+                StopSpeech();
                 break;
             case Key.Escape when _reading:
                 ReadingMode = false;

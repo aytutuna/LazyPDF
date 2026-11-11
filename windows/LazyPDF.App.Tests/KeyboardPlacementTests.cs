@@ -275,6 +275,80 @@ public sealed class KeyboardPlacementTests
     });
 
     [Fact]
+    public Task ReadAloudSaysEachPageInOrderUntilStopped() => Sta.Run(async () =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(3)), new FakeRenderer(), null, "a.pdf");
+        var (viewer, _) = Open(tab);
+        var said = new List<string>();
+        var second = new TaskCompletionSource();
+        viewer.Say = async (text, cancel) =>
+        {
+            said.Add(text);
+            if (said.Count == 2) second.SetResult();
+            if (said.Count >= 2) await Task.Delay(Timeout.Infinite, cancel);
+        };
+
+        viewer.ToggleReadAloud();
+        await second.Task;
+        Assert.True(viewer.Speaking);
+        Assert.Contains("Page 1", said[0]);
+        Assert.Contains("Page 2", said[1]);
+        Assert.Equal(1, viewer.PageIndex);
+
+        Call(viewer, "StopSpeech");
+        Assert.False(viewer.Speaking);
+    });
+
+    [Fact]
+    public Task SwitchingTabsStopsReadAloud() => Sta.Run(async () =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        var started = new TaskCompletionSource<CancellationToken>();
+        viewer.Say = async (_, cancel) =>
+        {
+            started.SetResult(cancel);
+            await Task.Delay(Timeout.Infinite, cancel);
+        };
+
+        viewer.ToggleReadAloud();
+        var token = await started.Task;
+        viewer.Show(null);
+
+        Assert.True(token.IsCancellationRequested);
+        Assert.False(viewer.Speaking);
+    });
+
+    [Fact]
+    public Task ReadAloudOfAFileWithNoTextShowsAToast() => Sta.Run(async () =>
+    {
+        var session = PdfEditSession.Open(Pdfs.Text(1));
+        PageOperations.InsertBlank(session.Document, 1, 612, 792, 2);
+        PageOperations.Delete(session.Document, [0]);
+        session.Commit("Delete");
+        using var tab = new DocumentTab(session, new FakeRenderer(), null, "a.pdf");
+        var (viewer, _) = Open(tab);
+        var said = new List<string>();
+        viewer.Say = (text, _) =>
+        {
+            said.Add(text);
+            return Task.CompletedTask;
+        };
+
+        viewer.ToggleReadAloud();
+        while (viewer.Speaking) await Task.Delay(10);
+
+        Assert.Empty(said);
+        Assert.Equal("This file has no text to read. Try Make searchable.", ((System.Windows.Controls.TextBlock)viewer.FindName("ToastText")).Text);
+    });
+
+    [Fact]
+    public void PiecesSplitOnABlankLine()
+    {
+        Assert.Equal(["One two", "Three"], PageViewer.Pieces("One\ntwo\r\n\r\n \nThree\n"));
+    }
+
+    [Fact]
     public Task SpeakSetsTheHiddenLine() => Sta.Run(() =>
     {
         using var tab = NewTab();

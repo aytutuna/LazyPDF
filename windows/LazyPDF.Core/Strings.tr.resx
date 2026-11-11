@@ -4420,6 +4420,9 @@
   <data name="Read aloud" xml:space="preserve">
     <value>Sesli oku</value>
   </data>
+  <data name="Read aloud (Ctrl+Shift+Y)" xml:space="preserve">
+    <value>Sesli oku (Ctrl+Shift+Y)</value>
+  </data>
   <data name="Read only" xml:space="preserve">
     <value>Salt okunur</value>
   </data>
@@ -6577,6 +6580,9 @@
   <data name="This file has no text to export. Run Make searchable first, or save the pages as pictures." xml:space="preserve">
     <value>Bu dosyada dışa aktarılacak metin yok. Önce Aranabilir yap'ı çalıştırın veya sayfaları resim olarak kaydedin.</value>
   </data>
+  <data name="This file has no text to read. Try Make searchable." xml:space="preserve">
+    <value>Bu dosyada okunacak metin yok. Aranabilir yap'ı deneyin.</value>
+  </data>
   <data name="This file has no text to search. Try Make searchable." xml:space="preserve">
     <value>Bu dosyada aranacak metin yok. Aranabilir yap'ı deneyin.</value>
   </data>
@@ -7230,6 +7236,9 @@
   </data>
   <data name="Windows has no voice ready. Add one under Time and language, Speech." xml:space="preserve">
     <value>Windows'ta hazır bir ses yok. Zaman ve dil, Konuşma bölümünden ekleyin.</value>
+  </data>
+  <data name="Windows has no voice to read with." xml:space="preserve">
+    <value>Windows'ta okumak için bir ses yok.</value>
   </data>
   <data name="Windows would not let Lazy PDF change this setting. Your account may be managed by someone else." xml:space="preserve">
     <value>Windows, Lazy PDF'nin bu ayarı değiştirmesine izin vermedi. Hesabınız başkası tarafından yönetiliyor olabilir.</value>

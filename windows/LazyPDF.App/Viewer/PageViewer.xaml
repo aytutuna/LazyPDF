@@ -67,6 +67,7 @@
                                 <MenuItem x:Name="TintSepiaItem" Header="{loc:T Sepia pages}" IsCheckable="True" Click="Tint_Click" Tag="Sepia" />
                                 <Separator />
                                 <MenuItem x:Name="ReadingItem" Header="{loc:T Reading mode}" IsCheckable="True" Click="Reading_Click" />
+                                <MenuItem x:Name="ReadAloudItem" Header="{loc:T Read aloud (Ctrl+Shift+Y)}" IsCheckable="True" Click="ReadAloud_Click" />
                                 <MenuItem x:Name="FullScreenItem" Header="{loc:T Full screen (F11)}" IsCheckable="True" Click="FullScreen_Click" />
                                 <MenuItem x:Name="PresentItem" Header="{loc:T Present (Ctrl+L)}" IsCheckable="True" Click="Present_Click" />
                                 <Separator />
