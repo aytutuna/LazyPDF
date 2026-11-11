@@ -6,6 +6,12 @@
                  xmlns:panel="clr-namespace:LazyPDF.App.Panels.Bookmarks">
     <DockPanel>
         <WrapPanel x:Name="Toolbar" DockPanel.Dock="Top" Margin="8,0,8,4">
+            <Button x:Name="AddButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE710;" Click="Add_Click"
+                    ToolTip="{loc:T Add a bookmark for this page}" AutomationProperties.Name="{loc:T Add bookmark}" />
+            <Button x:Name="RenameButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE70F;" Click="Rename_Click" IsEnabled="False"
+                    ToolTip="{loc:T Rename}" AutomationProperties.Name="{loc:T Rename}" />
+            <Button x:Name="DeleteButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE74D;" Click="Delete_Click" IsEnabled="False"
+                    ToolTip="{loc:T Delete (Del)}" AutomationProperties.Name="{loc:T Delete}" />
             <Button x:Name="ExpandAllButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE70D;" Click="ExpandAll_Click"
                     ToolTip="{loc:T Expand all}" AutomationProperties.Name="{loc:T Expand all}" />
             <Button x:Name="CollapseAllButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE70E;" Click="CollapseAll_Click"
@@ -14,16 +20,50 @@
         <Grid>
         <TreeView x:Name="Tree" BorderThickness="0" Background="Transparent" Padding="4,4,4,8" AutomationProperties.Name="{loc:T Bookmarks}"
                   VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling"
-                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" PreviewMouseLeftButtonUp="Tree_PreviewMouseLeftButtonUp" PreviewKeyDown="Tree_PreviewKeyDown">
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" PreviewMouseLeftButtonUp="Tree_PreviewMouseLeftButtonUp" PreviewKeyDown="Tree_PreviewKeyDown"
+                  SelectedItemChanged="Tree_SelectedItemChanged">
+            <TreeView.ContextMenu>
+                <ContextMenu>
+                    <MenuItem x:Name="AddItem" Header="{loc:T Add bookmark}" Click="Add_Click" />
+                    <MenuItem x:Name="RenameItem" Header="{loc:T Rename}" InputGestureText="F2" Click="Rename_Click" />
+                    <MenuItem x:Name="DeleteItem" Header="{loc:T Delete}" InputGestureText="Del" Click="Delete_Click" />
+                </ContextMenu>
+            </TreeView.ContextMenu>
             <TreeView.ItemContainerStyle>
                 <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
                     <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                     <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
                 </Style>
             </TreeView.ItemContainerStyle>
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type panel:BookmarkNode}" ItemsSource="{Binding Children}">
-                    <TextBlock Text="{Binding Title}" FontWeight="{Binding Weight}" FontStyle="{Binding Style}" TextWrapping="Wrap" Margin="0,3" />
+                    <Grid>
+                        <TextBlock Text="{Binding Title}" FontWeight="{Binding Weight}" FontStyle="{Binding Style}" TextWrapping="Wrap" Margin="0,3">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBox Text="{Binding EditText, UpdateSourceTrigger=PropertyChanged}" MinWidth="120" Margin="0,1" AutomationProperties.Name="{loc:T Rename}"
+                                 PreviewKeyDown="EditBox_KeyDown" LostFocus="EditBox_LostFocus" IsVisibleChanged="EditBox_IsVisibleChanged">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                    </Grid>
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
         </TreeView>

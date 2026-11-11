@@ -205,6 +205,9 @@
   <data name="Add Bates numbers" xml:space="preserve">
     <value>Bates numarası ekle</value>
   </data>
+  <data name="Add a bookmark for this page" xml:space="preserve">
+    <value>Bu sayfa için yer imi ekleyin</value>
+  </data>
   <data name="Add a certificate" xml:space="preserve">
     <value>Sertifika ekle</value>
   </data>
@@ -237,6 +240,9 @@
   </data>
   <data name="Add background" xml:space="preserve">
     <value>Arka plan ekle</value>
+  </data>
+  <data name="Add bookmark" xml:space="preserve">
+    <value>Yer imi ekle</value>
   </data>
   <data name="Add checked fields" xml:space="preserve">
     <value>İşaretli alanları ekle</value>
@@ -651,6 +657,9 @@
   </data>
   <data name="Bookmark" xml:space="preserve">
     <value>Yer imi</value>
+  </data>
+  <data name="Bookmark deleted." xml:space="preserve">
+    <value>Yer imi silindi.</value>
   </data>
   <data name="Bookmark goes to another page" xml:space="preserve">
     <value>Yer imi başka bir sayfaya gidiyor</value>
@@ -1422,6 +1431,9 @@
   </data>
   <data name="Delete blank pages" xml:space="preserve">
     <value>Boş sayfaları sil</value>
+  </data>
+  <data name="Delete bookmark" xml:space="preserve">
+    <value>Yer imini sil</value>
   </data>
   <data name="Delete checked pages" xml:space="preserve">
     <value>İşaretli sayfaları sil</value>
@@ -4356,6 +4368,12 @@
   </data>
   <data name="Removing the stamps" xml:space="preserve">
     <value>Damgalar kaldırılıyor</value>
+  </data>
+  <data name="Rename" xml:space="preserve">
+    <value>Yeniden adlandır</value>
+  </data>
+  <data name="Rename bookmark" xml:space="preserve">
+    <value>Yer imini yeniden adlandır</value>
   </data>
   <data name="Rename field" xml:space="preserve">
     <value>Alanı yeniden adlandır</value>

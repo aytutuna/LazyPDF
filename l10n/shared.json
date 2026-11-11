@@ -2108,6 +2108,24 @@
   "Collapse all": {
     "tr": "Tümünü daralt"
   },
+  "Add bookmark": {
+    "tr": "Yer imi ekle"
+  },
+  "Add a bookmark for this page": {
+    "tr": "Bu sayfa için yer imi ekleyin"
+  },
+  "Rename": {
+    "tr": "Yeniden adlandır"
+  },
+  "Rename bookmark": {
+    "tr": "Yer imini yeniden adlandır"
+  },
+  "Delete bookmark": {
+    "tr": "Yer imini sil"
+  },
+  "Bookmark deleted.": {
+    "tr": "Yer imi silindi."
+  },
   "Files carried inside this one.": {
     "tr": "Bu dosyanın içinde taşınan dosyalar."
   },
