@@ -402,13 +402,39 @@ final class FillSignModelTests: XCTestCase {
         XCTAssertEqual(model.selected, before)
     }
 
-    func test_aRemovedSignatureLeavesTheList() throws {
-        let (model, _, _) = try rig(saved: 2)
+    func test_aRemovedSignatureLeavesTheListOnceConfirmed() throws {
+        let (model, rig, _) = try rig(saved: 2)
 
         model.remove(model.saved[0])
 
+        XCTAssertEqual(model.saved.count, 2)
+        XCTAssertEqual(rig.host.notices.last?.title, "Delete this signature?")
+        let confirm = try XCTUnwrap(rig.host.notices.last?.action)
+        XCTAssertEqual(confirm.text, "Delete")
+        confirm.run()
         XCTAssertEqual(model.saved.count, 1)
         XCTAssertEqual(model.selected, model.saved[0].id)
+    }
+
+    func test_removingInitialsAsksAboutInitials() throws {
+        let (model, rig, store) = try rig(saved: 0)
+        try store.add(.initials, wide)
+        model.selectKind(.initials)
+
+        model.remove(model.saved[0])
+
+        XCTAssertEqual(rig.host.notices.last?.title, "Delete these initials?")
+    }
+
+    func test_confirmingAfterTheToolIsDetachedDeletesNothing() throws {
+        let (model, rig, _) = try rig(saved: 2)
+        model.remove(model.saved[0])
+        let confirm = try XCTUnwrap(rig.host.notices.last?.action)
+
+        model.detach()
+        confirm.run()
+
+        XCTAssertEqual(model.saved.count, 2)
     }
 
     func test_removingASignatureWhilePlacingStopsPlacing() async throws {
@@ -417,6 +443,7 @@ final class FillSignModelTests: XCTestCase {
         XCTAssertTrue(model.placing)
 
         model.remove(model.saved[0])
+        try XCTUnwrap(rig.host.notices.last?.action).run()
 
         XCTAssertFalse(model.placing)
         XCTAssertNil(rig.viewer.pointerTool)

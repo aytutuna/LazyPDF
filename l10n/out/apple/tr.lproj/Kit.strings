@@ -34,6 +34,7 @@
 "A path that clips cannot be changed." = "Kırpan bir yol değiştirilemez.";
 "A protected file cannot open as a copy. Save the signed version, then open it." = "Korumalı bir dosya kopya olarak açılamaz. İmzalı sürümü kaydedip sonra açın.";
 "A red outline marks a required field that is empty." = "Kırmızı çerçeve, boş bırakılmış zorunlu alanı gösterir.";
+"A saved copy cannot be brought back." = "Kayıtlı kopya geri getirilemez.";
 "A setting between them would change it." = "Aralarındaki bir ayar bunu değiştirirdi.";
 "A signed file is not replaced. The result opens in a new tab." = "İmzalı dosyanın üzerine yazılmaz. Sonuç yeni sekmede açılır.";
 "A soft mask needs transparency." = "Yumuşak maske saydamlık gerektirir.";
@@ -421,6 +422,8 @@
 "Delete set" = "Kümeyi sil";
 "Delete the selected mark." = "Seçili işareti silin.";
 "Delete the selection" = "Seçimi sil";
+"Delete these initials?" = "Bu baş harfler silinsin mi?";
+"Delete this signature?" = "İmza silinsin mi?";
 "Deleted {0}" = "{0} silindi";
 "Deleted." = "Silindi.";
 "Describe figures" = "Şekilleri tanımla";
@@ -1357,6 +1360,7 @@
 "Save to a folder" = "Klasöre kaydet";
 "Saved" = "Kayıtlı";
 "Saved as {0}." = "{0} olarak kaydedildi.";
+"Saved compact" = "Küçülterek kaydedildi";
 "Saved initials" = "Kayıtlı baş harfler";
 "Saved sets" = "Kayıtlı kümeler";
 "Saved signature" = "Kayıtlı imza";
@@ -2231,6 +2235,7 @@
 "{0} was moved or deleted. Save it again to keep your work." = "{0} taşınmış ya da silinmiş. Çalışmanızı korumak için yeniden kaydedin.";
 "{0} was not handed over by the program that sent it, so Lazy PDF cannot read it. Open it from the File menu, or drop it on the window." = "{0} dosyası, onu gönderen program tarafından teslim edilmediği için Lazy PDF okuyamıyor. Dosya menüsünden açın ya da pencereye bırakın.";
 "{0} was saved but could not be read again. Open it from disk." = "{0} kaydedildi ama yeniden okunamadı. Diskten açın.";
+"{0} was saved without its history, so the earlier steps can no longer be undone." = "{0} geçmişi olmadan kaydedildi, bu yüzden önceki adımlar artık geri alınamaz.";
 "{0} × {1} in" = "{0} × {1} inç";
 "{0} × {1} mm" = "{0} × {1} mm";
 "{0}%" = "%{0}";

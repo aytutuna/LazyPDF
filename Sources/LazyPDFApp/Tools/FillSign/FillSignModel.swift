@@ -115,6 +115,15 @@ public final class FillSignModel: ToolPanelModel {
     }
 
     public func remove(_ row: SavedRow) {
+        guard let host else { return }
+        host.showNotice(row.item.kind == .initials ? L10n.t("Delete these initials?") : L10n.t("Delete this signature?"), L10n.t("A saved copy cannot be brought back."),
+                        NoticeAction(L10n.t("Delete")) { [weak self] in
+            guard let self, self.tab != nil else { return }
+            self.delete(row)
+        })
+    }
+
+    private func delete(_ row: SavedRow) {
         store.remove(row.item)
         fillSaved()
         stop()
