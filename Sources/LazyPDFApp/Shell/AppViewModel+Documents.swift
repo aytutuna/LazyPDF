@@ -339,7 +339,8 @@ extension AppViewModel {
         warnedAboutDisk[ObjectIdentifier(tab)] = nil
         if let url = tab.url { recentFiles.add(url) }
         recent = buildRecent()
-        message = nil
+        // A plain notice may have been raised by the hand-in just before this save, so it stays.
+        if let shown = message, shown.isError || shown.action != nil { message = nil }
         setStatus(L10n.t("Saved {0}.", tab.title))
         return true
     }
