@@ -70,6 +70,22 @@ public partial class BatchPanel
         AddFiles(Directory.EnumerateFiles(dialog.FolderName, "*.pdf"));
     }
 
+    private void Panel_DragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void Panel_Drop(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
+        e.Handled = true;
+        var pdfs = paths.SelectMany(p => Directory.Exists(p) ? Directory.EnumerateFiles(p, "*.pdf") : [p])
+            .Where(p => string.Equals(System.IO.Path.GetExtension(p), ".pdf", StringComparison.OrdinalIgnoreCase)).ToList();
+        if (pdfs.Count == 0) Host?.SetStatus(Loc.T("Only PDF files can be added."));
+        else AddFiles(pdfs);
+    }
+
     internal void AddFiles(IEnumerable<string> paths)
     {
         foreach (var path in paths)

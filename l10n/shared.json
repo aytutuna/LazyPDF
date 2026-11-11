@@ -6516,6 +6516,9 @@
   "The pages could not be copied. Try fewer pages.": {
     "tr": "Sayfalar kopyalanamadı. Daha az sayfa deneyin."
   },
+  "Only PDF files can be added.": {
+    "tr": "Yalnızca PDF dosyaları eklenebilir."
+  },
   "Only PDF files can be added between pages.": {
     "tr": "Sayfaların arasına yalnızca PDF dosyaları eklenebilir."
   },

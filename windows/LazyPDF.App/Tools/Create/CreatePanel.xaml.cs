@@ -196,6 +196,22 @@ public partial class CreatePanel : ToolPanel
         Refresh();
     }
 
+    private void Panel_DragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void Panel_Drop(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
+        e.Handled = true;
+        if (Source != (int)CreateSource.Pictures) SourceBox.SelectedIndex = (int)CreateSource.Pictures;
+        string[] kinds = [".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".gif", ".heic", ".heif"];
+        foreach (string file in paths.Where(p => kinds.Contains(System.IO.Path.GetExtension(p), StringComparer.OrdinalIgnoreCase))) _pictures.Add(new PictureItem(file));
+        Refresh();
+    }
+
     private void PictureList_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateMoveButtons();
 
     private void UpdateMoveButtons()

@@ -3181,6 +3181,9 @@
   <data name="Only PDF files can be added between pages." xml:space="preserve">
     <value>Sayfaların arasına yalnızca PDF dosyaları eklenebilir.</value>
   </data>
+  <data name="Only PDF files can be added." xml:space="preserve">
+    <value>Yalnızca PDF dosyaları eklenebilir.</value>
+  </data>
   <data name="Only a button can have an action." xml:space="preserve">
     <value>Yalnızca bir düğmenin işlemi olabilir.</value>
   </data>

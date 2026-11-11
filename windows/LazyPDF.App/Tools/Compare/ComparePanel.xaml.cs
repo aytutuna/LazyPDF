@@ -231,6 +231,25 @@ public partial class ComparePanel : ToolPanel
         RaiseActionChanged();
     }
 
+    private void Panel_DragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void Panel_Drop(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
+        e.Handled = true;
+        string? pdf = paths.FirstOrDefault(p => string.Equals(System.IO.Path.GetExtension(p), ".pdf", StringComparison.OrdinalIgnoreCase));
+        if (pdf is null) return;
+        FileMode.IsChecked = true;
+        Source_Click(this, e);
+        SetPath(pdf);
+        HideUnlock();
+        RaiseActionChanged();
+    }
+
     private void Filter_Click(object sender, RoutedEventArgs e) => Refresh();
 
     private void View_Click(object sender, RoutedEventArgs e)

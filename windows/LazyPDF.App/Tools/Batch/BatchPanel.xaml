@@ -3,7 +3,8 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:loc="clr-namespace:LazyPDF.App"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
-                 xmlns:batch="clr-namespace:LazyPDF.App.Tools.Batch">
+                 xmlns:batch="clr-namespace:LazyPDF.App.Tools.Batch"
+                 AllowDrop="True" DragOver="Panel_DragOver" Drop="Panel_Drop">
     <ScrollViewer AutomationProperties.Name="{loc:T Batch}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="12,8,12,12">
             <TextBlock x:Name="Summary" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,0,0,12" />

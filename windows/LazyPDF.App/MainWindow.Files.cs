@@ -126,7 +126,7 @@ public partial class MainWindow
     // Combine and a view that holds the stage take dropped files into their own lists, so over them they do not open as tabs.
     private bool OverFileTarget(DragEventArgs e)
     {
-        UIElement? target = _vm.HeldStage ?? InspectorHost.Content as Tools.Combine.CombinePanel;
+        UIElement? target = _vm.HeldStage ?? (InspectorHost.Content is UIElement { AllowDrop: true } panel ? panel : null);
         if (target is null) return false;
         for (var node = e.OriginalSource as DependencyObject; node is not null;
              node = node is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))

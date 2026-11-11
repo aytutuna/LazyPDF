@@ -3,6 +3,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:loc="clr-namespace:LazyPDF.App"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
+                 AllowDrop="True" DragOver="Panel_DragOver" Drop="Panel_Drop"
                  Loaded="CreatePanel_Loaded" Unloaded="CreatePanel_Unloaded">
     <StackPanel Margin="12,4,12,12">
         <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Make a PDF from}" />

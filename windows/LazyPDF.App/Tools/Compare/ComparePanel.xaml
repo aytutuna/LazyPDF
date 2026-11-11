@@ -3,7 +3,8 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:loc="clr-namespace:LazyPDF.App"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
-                 xmlns:compare="clr-namespace:LazyPDF.App.Tools.Compare">
+                 xmlns:compare="clr-namespace:LazyPDF.App.Tools.Compare"
+                 AllowDrop="True" DragOver="Panel_DragOver" Drop="Panel_Drop">
     <StackPanel Margin="12,4,12,12">
         <TextBlock Text="{loc:T Compare with}" Style="{StaticResource FieldLabelText}" />
         <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,4,0,8" HorizontalAlignment="Left">
