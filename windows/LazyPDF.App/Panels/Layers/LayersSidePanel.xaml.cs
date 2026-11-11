@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Input;
 using LazyPDF.App.Tools;
 using LazyPDF.Core;
 
@@ -34,6 +35,7 @@ public sealed class LayerRow(string name, PdfLayer? layer, List<LayerRow> childr
         {
             if (_on == value) return;
             _on = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsChecked)));
             Toggled?.Invoke(this);
         }
     }
@@ -91,6 +93,14 @@ public partial class LayersSidePanel : ToolPanel
     private void Row_Toggled(LayerRow row)
     {
         if (row.Layer is { } layer) Viewer?.SetLayerVisible(layer.Reference, row.IsChecked);
+    }
+
+    // Focus sits on the tree item, not the box inside it, so the space bar does the ticking.
+    private void Tree_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Space || Keyboard.Modifiers != ModifierKeys.None || Tree.SelectedItem is not LayerRow { CanToggle: true } row) return;
+        row.IsChecked = !row.IsChecked;
+        e.Handled = true;
     }
 
     // The view changed the layers (a radio group, or the file itself): the boxes follow.

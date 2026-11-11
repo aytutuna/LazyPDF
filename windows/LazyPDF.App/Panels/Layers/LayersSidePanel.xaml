@@ -7,7 +7,7 @@
     <DockPanel>
         <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource ReasonText}" Margin="12,8,12,12" Text="{loc:T Showing or hiding a layer changes the view only. The file stays as it is.}" />
         <Grid>
-            <TreeView x:Name="Tree" BorderThickness="0" Background="Transparent" Padding="4,4,4,8" AutomationProperties.Name="{loc:T Layers}"
+            <TreeView x:Name="Tree" BorderThickness="0" Background="Transparent" Padding="4,4,4,8" AutomationProperties.Name="{loc:T Layers}" PreviewKeyDown="Tree_PreviewKeyDown"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <TreeView.ItemContainerStyle>
                     <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
