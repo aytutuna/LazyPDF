@@ -19,6 +19,8 @@ public sealed class LayerRow(string name, PdfLayer? layer, List<LayerRow> childr
 
     public bool CanToggle => Layer is { Locked: false };
 
+    public string? LockedTip => Layer is { Locked: true } ? Loc.T("The file does not allow this layer to be shown or hidden.") : null;
+
     public Visibility CheckVisibility => Layer is null ? Visibility.Collapsed : Visibility.Visible;
 
     public Visibility LabelVisibility => Layer is null ? Visibility.Visible : Visibility.Collapsed;
@@ -84,7 +86,7 @@ public partial class LayersSidePanel : ToolPanel
 
     private LayerRow Row(LayerNode node)
     {
-        var row = new LayerRow(node.Layer?.Name ?? node.Label ?? "", node.Layer, [.. node.Children.Select(Row)]);
+        var row = new LayerRow(node.Layer?.Name ?? (string.IsNullOrWhiteSpace(node.Label) ? Loc.T("Group") : node.Label), node.Layer, [.. node.Children.Select(Row)]);
         row.Toggled += Row_Toggled;
         _rows.Add(row);
         return row;

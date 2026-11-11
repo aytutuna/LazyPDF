@@ -70,4 +70,31 @@ public sealed class LayersPanelTests
         Assert.Empty(switched);
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public Task LockedLayerHasATipAndAnUnlockedOneHasNone() => Sta.Run(() =>
+    {
+        var locked = new LayerRow("a", new PdfLayer(LayeredPdf.BlackBox, "a", true, true, null), []);
+        var open = new LayerRow("b", new PdfLayer(LayeredPdf.BlackBox, "b", true, false, null), []);
+
+        Assert.Equal(Loc.T("The file does not allow this layer to be shown or hidden."), locked.LockedTip);
+        Assert.Null(open.LockedTip);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task UnlabelledGroupIsNamedGroup() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(LayeredPdf.Make()), new FakeRenderer(), null, "a.pdf", null);
+        var layer = new PdfLayer(LayeredPdf.BlackBox, "Black box", true, false, null);
+        var viewer = DispatchProxy.Create<IDocumentViewer, LayerViewer>();
+        ((LayerViewer)(object)viewer).Set = new LayerSet([layer], [new LayerNode(" ", null, [new LayerNode(null, layer, [])])]);
+        var panel = new LayersSidePanel();
+        panel.Attach(tab, viewer, new RecordingHost());
+
+        var rows = (List<LayerRow>)((TreeView)panel.FindName("Tree")).ItemsSource;
+
+        Assert.Equal(Loc.T("Group"), rows[0].Name);
+        return Task.CompletedTask;
+    });
 }

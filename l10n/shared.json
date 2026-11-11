@@ -2078,6 +2078,12 @@
   "This file has no layers.": {
     "tr": "Bu dosyada katman yok."
   },
+  "The file does not allow this layer to be shown or hidden.": {
+    "tr": "Dosya bu katmanın gösterilmesine ya da gizlenmesine izin vermiyor."
+  },
+  "Group": {
+    "tr": "Grup"
+  },
   "Find": {
     "tr": "Bul"
   },

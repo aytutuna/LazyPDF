@@ -2146,6 +2146,9 @@
   <data name="Grey" xml:space="preserve">
     <value>Gri</value>
   </data>
+  <data name="Group" xml:space="preserve">
+    <value>Grup</value>
+  </data>
   <data name="Group by" xml:space="preserve">
     <value>Grupla</value>
   </data>
@@ -5259,6 +5262,9 @@
   </data>
   <data name="The file did not take that change. Pick other pages and try again." xml:space="preserve">
     <value>Dosya bu değişikliği kabul etmedi. Başka sayfalar seçip yeniden deneyin.</value>
+  </data>
+  <data name="The file does not allow this layer to be shown or hidden." xml:space="preserve">
+    <value>Dosya bu katmanın gösterilmesine ya da gizlenmesine izin vermiyor.</value>
   </data>
   <data name="The file does not end with %%EOF." xml:space="preserve">
     <value>Dosya %%EOF ile bitmiyor.</value>
