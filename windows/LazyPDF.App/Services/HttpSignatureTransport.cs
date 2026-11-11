@@ -151,8 +151,8 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
         var uri = context.InitialRequestMessage?.RequestUri;
         var port = context.DnsEndPoint.Port;
         List<EndPoint> targets = [];
-        // A different endpoint than the request's own is a proxy, which the user configured.
-        if (uri is null || port != uri.Port || !context.DnsEndPoint.Host.Equals(uri.IdnHost, StringComparison.OrdinalIgnoreCase))
+        // A different endpoint than the request's own is a proxy, which the user configured. So is the CONNECT request that opens an https tunnel through one.
+        if (uri is null || context.InitialRequestMessage!.Method == HttpMethod.Connect || port != uri.Port || !context.DnsEndPoint.Host.Equals(uri.IdnHost, StringComparison.OrdinalIgnoreCase))
             targets.Add(context.DnsEndPoint);
         else
             targets.AddRange((await Dns.GetHostAddressesAsync(context.DnsEndPoint.Host, token)).Where(a => !PointsHere(a)).Select(a => new IPEndPoint(a, port)));

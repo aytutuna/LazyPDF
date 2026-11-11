@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using LazyPDF.App.Services;
 using Xunit;
 
@@ -119,6 +120,31 @@ public sealed class HttpSignatureTransportTests
         transport.Get("http://192.168.1.5/ca.crl");
 
         Assert.DoesNotContain("this computer, so", transport.LastFailure);
+    }
+
+    [Fact]
+    public void AnHttpsFetchThroughALocalProxyReachesTheProxy()
+    {
+        if (HttpSignatureTransport.IsOffline) return;
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var saved = HttpClient.DefaultProxy;
+        try
+        {
+            HttpClient.DefaultProxy = new WebProxy($"http://127.0.0.1:{((IPEndPoint)listener.LocalEndpoint).Port}");
+            var accepted = Task.Run(() => listener.AcceptTcpClient().Dispose());
+            using var transport = new HttpSignatureTransport();
+
+            Assert.Null(transport.Get("https://ocsp.example/"));
+
+            Assert.True(accepted.IsCompleted);
+            Assert.DoesNotContain("this computer", transport.LastFailure);
+        }
+        finally
+        {
+            HttpClient.DefaultProxy = saved;
+            listener.Stop();
+        }
     }
 
     [Fact]
