@@ -184,7 +184,7 @@ final class PageCarryTests: XCTestCase {
         let merged = try PageAssembly.merge([MergeSource(try Self.fixture(brokenFile: true)), MergeSource(try Self.fixture(), [5])])
         XCTAssertEqual(try files(merged), "note.txt=hello")
         XCTAssertEqual(merged.skippedAttachments, 1)
-        for p in try PageAssembly.splitAt(try Self.fixture(brokenFile: true), [3]) { XCTAssertEqual(p.skippedAttachments, 1) }
+        XCTAssertEqual(try PageAssembly.splitAt(try Self.fixture(brokenFile: true), [3]).map(\.skippedAttachments), [1, 0])
     }
 
     func test_eachPartOfASplitCarriesItsOwn() throws {
@@ -195,6 +195,17 @@ final class PageCarryTests: XCTestCase {
         XCTAssertEqual(PdfPageLabels.labels(try PdfDocument.open(try parts[1].saveRewrite())), ["1", "2", "3"])
         XCTAssertEqual(try names(parts[0]), "three>2")
         XCTAssertEqual(try names(parts[1]), "five>1")
-        for part in parts { XCTAssertEqual(try files(part), "note.txt=hello") }
+        XCTAssertEqual(try parts.map(files), ["note.txt=hello", ""])
+    }
+
+    func test_attachmentsGoIntoTheFirstPartOfASplitBySizeOnly() throws {
+        let document = try Self.fixture()
+        let one = try PageAssembly.extract(document, [0]).saveRewrite().count
+        let parts = try PageAssembly.splitBySize(document, one + 200)
+        XCTAssertTrue(parts.count > 1)
+        XCTAssertEqual(try files(parts[0]), "note.txt=hello")
+        for part in parts.dropFirst() { XCTAssertEqual(try files(part), "") }
+        let byRanges = try PageAssembly.splitByRanges(document, [[0, 1], [2], [3]])
+        XCTAssertEqual(try byRanges.map(files), ["note.txt=hello", "", ""])
     }
 }
