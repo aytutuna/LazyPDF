@@ -5537,7 +5537,7 @@
     <value>Durum: {0}</value>
   </data>
   <data name="Stay in placing mode after each one, until Stop placing." xml:space="preserve">
-    <value>Her birinden sonra, Yerleştirmeyi bırak düğmesine basana kadar yerleştirme kipinde kalır.</value>
+    <value>Her birinden sonra, Yerleştirmeyi bırak düğmesine basana kadar yerleştirme modunda kalır.</value>
   </data>
   <data name="Steps" xml:space="preserve">
     <value>Adımlar</value>
@@ -6575,7 +6575,7 @@
     <value>Bu yer imi bir betik çalıştırıyor veya form gönderiyor; Lazy PDF bunları yapmaz.</value>
   </data>
   <data name="This button does nothing here" xml:space="preserve">
-    <value>Bu düğme burada bir şey yapmaz</value>
+    <value>Bu düğmenin burada etkisi yok</value>
   </data>
   <data name="This certificate has no private key. Choose another one or sign with a token." xml:space="preserve">
     <value>Bu sertifikanın özel anahtarı yok. Başka bir sertifika seçin ya da bir belirteçle imzalayın.</value>

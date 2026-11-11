@@ -4403,7 +4403,7 @@
     "tr": "Form sıfırlanıyor"
   },
   "This button does nothing here": {
-    "tr": "Bu düğme burada bir şey yapmaz"
+    "tr": "Bu düğmenin burada etkisi yok"
   },
   "It sends the form to a web address, which Lazy PDF does not do. Save the file and send it yourself.": {
     "tr": "Formu bir web adresine gönderir; Lazy PDF bunu yapmaz. Dosyayı kaydedip kendiniz gönderin."
@@ -6634,7 +6634,7 @@
     "tr": "Yerleştirmeyi bırak"
   },
   "Stay in placing mode after each one, until Stop placing.": {
-    "tr": "Her birinden sonra, Yerleştirmeyi bırak düğmesine basana kadar yerleştirme kipinde kalır."
+    "tr": "Her birinden sonra, Yerleştirmeyi bırak düğmesine basana kadar yerleştirme modunda kalır."
   },
   "Style": {
     "tr": "Stil"
