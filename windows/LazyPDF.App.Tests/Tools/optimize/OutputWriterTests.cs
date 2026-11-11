@@ -28,6 +28,7 @@ public sealed class OutputWriterTests
         using var f = new ViewModelFixture();
         string path = f.Pdf("report.pdf", 4);
         await f.Vm.OpenAsync(path);
+        await f.SettledAsync();
         var tab = f.Vm.ActiveDocument!;
         byte[] replacement = Pdfs.Text(4);
 
@@ -149,6 +150,7 @@ public sealed class OutputWriterTests
         using var f = new ViewModelFixture();
         string path = f.Pdf("report.pdf", 4);
         await f.Vm.OpenAsync(path);
+        await f.SettledAsync();
         var tab = f.Vm.ActiveDocument!;
         tab.PageIndex = 2;
         tab.Zoom = 1.5;
