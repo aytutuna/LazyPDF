@@ -59,6 +59,7 @@ public partial class AccessibilityPanel : ToolPanel
         StopReading();
         _report = null;
         DropTree();
+        _checked = [];
         _drafts.Clear();
         _figureNumber = 0;
         CheckList.ItemsSource = null;

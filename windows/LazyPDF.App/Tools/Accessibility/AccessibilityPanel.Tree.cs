@@ -9,6 +9,7 @@ public partial class AccessibilityPanel
     private StructureTree? _tree;
     private PdfDocument? _treeCopy;
     private IReadOnlyList<FigureRow> _figures = [];
+    private IReadOnlyList<FigureRow> _checked = [];
     private int _treeCount;
     private bool _treeFailed;
     private int _treeTicket;
@@ -17,7 +18,7 @@ public partial class AccessibilityPanel
     {
         int ticket = ++_treeTicket;
         _treeStale = false;
-        var before = _figures;
+        var before = _checked;
         DropTree();
         TagTree.Items.Clear();
         FigureList.ItemsSource = null;
@@ -45,6 +46,7 @@ public partial class AccessibilityPanel
             // A draft stays while its figure is still there with the description it was typed against.
             else foreach (int key in _drafts.Keys.ToList())
                 if (figures.FirstOrDefault(f => f.Key == key) is not { } now || before.FirstOrDefault(f => f.Key == key)?.Alt != now.Alt) _drafts.Remove(key);
+            _checked = figures;
         }
         catch (Exception error) when (error is PdfReadException or InvalidOperationException)
         {
