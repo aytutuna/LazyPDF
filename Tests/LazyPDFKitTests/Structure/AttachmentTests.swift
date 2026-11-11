@@ -36,6 +36,14 @@ final class AttachmentTests: XCTestCase {
         XCTAssertNil(list[0].created)
     }
 
+    func test_extractReadsPastTheDefaultDecodeCap() throws {
+        let document = try StructureFixtures.open()
+        let big = [UInt8](repeating: 0, count: 300 << 20)
+        try PdfAttachments.add(document, "big.bin", big)
+        let reopened = try StructureFixtures.reopen(document)
+        XCTAssertEqual(try PdfAttachments.extract(reopened, PdfAttachments.list(reopened)[0]).count, big.count)
+    }
+
     func test_emptyFile() throws {
         let document = try StructureFixtures.open()
         try PdfAttachments.add(document, "empty", [])
