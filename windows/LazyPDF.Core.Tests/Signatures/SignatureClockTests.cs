@@ -36,6 +36,16 @@ public class SignatureClockTests
     }
 
     [Fact]
+    public void A_claimed_time_before_1601_is_not_valid_and_does_not_throw()
+    {
+        byte[] signed = PdfSigner.Sign(SignatureKit.Plain(), new PdfSignRequest(Pki.Leaf, new DateTimeOffset(1500, 1, 1, 0, 0, 0, TimeSpan.Zero)) { Chain = Pki.Chain });
+
+        var report = Assert.Single(PdfSignatureVerifier.Verify(signed, new VerifyOptions { TrustAnchors = [Pki.Root], Now = Pki.Signing }));
+
+        Assert.Contains(SignatureProblem.CertificateNotValid, report.Problems);
+    }
+
+    [Fact]
     public void A_stamped_signature_is_not_flagged_for_a_certificate_that_has_since_expired()
     {
         var network = new FakeNetwork { StampTime = Pki.Signing.AddMinutes(1) };

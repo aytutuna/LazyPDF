@@ -102,6 +102,7 @@ internal static class CertificateTrust
     private const X509ChainStatusFlags Harmless = X509ChainStatusFlags.NoError | X509ChainStatusFlags.NotTimeValid
         | X509ChainStatusFlags.RevocationStatusUnknown | X509ChainStatusFlags.OfflineRevocation;
 
+    private static readonly DateTime FileTimeEpoch = new(1601, 1, 1, 0, 0, 0, DateTimeKind.Utc);
     private const int MaxFetches = 4;
     private const string TimeStamping = "1.3.6.1.5.5.7.3.8";
     private static readonly string[] SigningPurposes =
@@ -166,7 +167,8 @@ internal static class CertificateTrust
         var policy = chain.ChainPolicy;
         policy.RevocationMode = X509RevocationMode.NoCheck;
         policy.DisableCertificateDownloads = true;
-        if (time is { } t) policy.VerificationTime = t.UtcDateTime;
+        // Windows converts the time to a file time, which cannot hold a date before 1601; no certificate is valid then either.
+        if (time is { } t) policy.VerificationTime = t.UtcDateTime < FileTimeEpoch ? FileTimeEpoch : t.UtcDateTime;
         policy.TrustMode = system ? X509ChainTrustMode.System : X509ChainTrustMode.CustomRootTrust;
         foreach (var anchor in anchors) policy.CustomTrustStore.Add(anchor);
         foreach (var c in extra) policy.ExtraStore.Add(c);
