@@ -26,6 +26,9 @@ public partial class MainWindow
     private async Task OpenThenAsync(string[] paths, Action? then)
     {
         await _vm.OpenFilesAsync(paths);
+        // Opening leaves the last file active; a tool that starts here should begin on the first one chosen.
+        if (then is not null && paths.Length > 0 && _vm.Documents.FirstOrDefault(d => string.Equals(d.Path, paths[0], StringComparison.OrdinalIgnoreCase)) is { } first)
+            _vm.ActiveTab = first;
         if (then is not null && _vm.ActiveDocument is not null) then();
     }
 
