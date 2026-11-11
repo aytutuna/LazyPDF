@@ -6184,6 +6184,9 @@
   <data name="These limits are a request, not a lock. Some programs ignore them. Only the certificates keep the file private." xml:space="preserve">
     <value>Bu sınırlar bir istektir, kilit değildir. Bazı programlar yok sayar. Dosyayı yalnızca sertifikalar gizli tutar.</value>
   </data>
+  <data name="These make {0} files. Pick a folder for them." xml:space="preserve">
+    <value>Bunlar {0} dosya yapıyor. Dosyalar için bir klasör seçin.</value>
+  </data>
   <data name="These pages" xml:space="preserve">
     <value>Şu sayfalar</value>
   </data>
@@ -6390,6 +6393,9 @@
   </data>
   <data name="This link shows or hides part of the page, which Lazy PDF does not do." xml:space="preserve">
     <value>Bu bağlantı sayfanın bir bölümünü gösteriyor veya gizliyor; Lazy PDF bunu yapmaz.</value>
+  </data>
+  <data name="This makes about {0} files, so they are saved to a folder." xml:space="preserve">
+    <value>Bu yaklaşık {0} dosya yapıyor, bu yüzden bir klasöre kaydedilir.</value>
   </data>
   <data name="This page" xml:space="preserve">
     <value>Bu sayfa</value>

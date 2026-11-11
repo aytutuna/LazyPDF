@@ -25,6 +25,8 @@ public partial class CombinePanel : ToolPanel
     private Point _dragStart;
     private CombineEntry? _dragEntry;
     private CombineEntry? _marked;
+    private bool _outputChosen;
+    private bool _setting;
 
     public CombinePanel()
     {
@@ -77,7 +79,33 @@ public partial class CombinePanel : ToolPanel
             : Tab.PageCount < 2 ? Loc.T("A file of one page cannot be split.") : "";
         SplitHint.Visibility = SplitHint.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         BookmarkEach.Visibility = _entries.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        ChooseOutput();
         RaiseActionChanged();
+    }
+
+    private void ChooseOutput()
+    {
+        int parts = Splitting ? EstimatedParts() : 0;
+        bool many = parts > MostTabs;
+        if (!_outputChosen)
+        {
+            _setting = true;
+            Output.SelectedIndex = many ? 1 : 0;
+            _setting = false;
+        }
+        OutputReason.Text = many && !_outputChosen ? Loc.T("This makes about {0} files, so they are saved to a folder.", parts) : "";
+        OutputReason.Visibility = OutputReason.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private int EstimatedParts()
+    {
+        if (Kind == SplitBy.Bookmarks) return CombineJob.BookmarkParts(Tab!.Document);
+        if (Kind == SplitBy.Ranges)
+        {
+            var (ranges, error) = CombineJob.ParseRanges(Amount.Text, Tab!.PageCount);
+            return error is null ? ranges.Count : 0;
+        }
+        return CombineJob.TryAmount(Kind, Amount.Text, out double amount, Tab!.PageCount) ? CombineJob.EstimatedParts(Kind, Tab.PageCount, amount) ?? 0 : 0;
     }
 
     private string RangesHint() => Tab!.PageCount < 2 ? Loc.T("A file of one page cannot be split.")
@@ -96,6 +124,14 @@ public partial class CombinePanel : ToolPanel
     {
         if (Tab is null) return;
         Amount.Text = Kind == SplitBy.Size ? "5" : Kind == SplitBy.Ranges ? "" : "10";
+        _outputChosen = false;
+        Refresh();
+    }
+
+    private void Output_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_setting || Tab is null) return;
+        _outputChosen = true;
         Refresh();
     }
 

@@ -63,6 +63,14 @@ internal static class CombineJob
     /// <summary>How many of the parts are bigger than <paramref name="limit"/> bytes.</summary>
     public static int PartsOver(IEnumerable<byte[]> parts, long limit) => parts.Count(part => part.Length > limit);
 
+    /// <summary>How many parts a split by pages or at each page makes, before it runs; null for the kinds that need more than the page count.</summary>
+    public static int? EstimatedParts(SplitBy by, int pages, double amount) => by switch
+    {
+        SplitBy.Count => (int)Math.Ceiling(pages / amount),
+        SplitBy.EachPage => pages,
+        _ => null,
+    };
+
     /// <summary>How many parts a split at the bookmarks makes: bookmarks on the same page, or on the first, add none.</summary>
     public static int BookmarkParts(PdfDocument document) => BookmarkStarts(document).Where(page => page != 0).Distinct().Count() + 1;
 

@@ -8,6 +8,7 @@ using Xunit;
 namespace LazyPDF.App.Tests;
 
 // Combine and split against the real engine: the parts a file is cut into, their names, and the files that are read in.
+[Collection("Application")]
 public sealed class CombineJobTests
 {
     private sealed class RecordingHost : IToolHost
@@ -470,4 +471,32 @@ public sealed class CombineJobTests
 
         Assert.Equal(dir.Path + ". 2 parts are bigger than 1 MB. A single page is too large to fit.", host.Notices.Single().Text);
     }
+
+    [Theory]
+    [InlineData(SplitBy.Count, 100, 10, 10)]
+    [InlineData(SplitBy.Count, 7, 10, 1)]
+    [InlineData(SplitBy.EachPage, 40, 0, 40)]
+    [InlineData(SplitBy.Size, 40, 5, null)]
+    public void TheNumberOfPartsIsKnownBeforeTheSplitRunsOnlyForPagesAndEachPage(SplitBy by, int pages, double amount, int? expected)
+    {
+        Assert.Equal(expected, CombineJob.EstimatedParts(by, pages, amount));
+    }
+
+    [Fact]
+    public Task ManyPartsSwitchTheResultToAFolderUntilThePersonPicks() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(50)), new FakeRenderer(), null, "a.pdf", null);
+        var panel = new CombinePanel();
+        panel.Attach(tab, FakeViewer.Create().Viewer, new RecordingHost());
+        var output = (System.Windows.Controls.ComboBox)panel.FindName("Output");
+        ((System.Windows.Controls.RadioButton)panel.FindName("ModeSplit")).IsChecked = true;
+
+        Assert.Equal(1, output.SelectedIndex);
+
+        output.SelectedIndex = 0;
+        ((System.Windows.Controls.TextBox)panel.FindName("Amount")).Text = "5";
+
+        Assert.Equal(0, output.SelectedIndex);
+        return Task.CompletedTask;
+    });
 }

@@ -10,7 +10,7 @@ namespace LazyPDF.App.Tools.Combine;
 public partial class CombinePanel
 {
     // Parts open as tabs only up to this many; more than that goes to a folder.
-    private const int MostTabs = 10;
+    private const int MostTabs = 3;
 
     private bool ToFolder => Output.SelectedIndex == 1;
 
@@ -152,7 +152,7 @@ public partial class CombinePanel
         var named = parts.Select((bytes, i) => (CombineJob.PartName(stem, i, parts.Count, i < titles.Count ? titles[i] : null), bytes)).ToList();
         if (folder is null && parts.Count > MostTabs)
         {
-            host.ShowNotice(Loc.T("Too many parts for tabs"), Loc.T("Pick a folder for the parts."));
+            host.ShowNotice(Loc.T("Too many parts for tabs"), Loc.T("These make {0} files. Pick a folder for them.", parts.Count));
             folder = PickFolder();
             if (folder is null) return;
         }

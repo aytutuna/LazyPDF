@@ -88,9 +88,10 @@
         </StackPanel>
 
         <TextBlock Text="{loc:T Result}" Style="{StaticResource FieldLabelText}" />
-        <ComboBox x:Name="Output" SelectedIndex="0" AutomationProperties.Name="{loc:T Result}">
+        <ComboBox x:Name="Output" SelectedIndex="0" AutomationProperties.Name="{loc:T Result}" SelectionChanged="Output_SelectionChanged">
             <ComboBoxItem Content="{loc:T Open in new tabs}" />
             <ComboBoxItem Content="{loc:T Save to a folder}" />
         </ComboBox>
+        <TextBlock x:Name="OutputReason" Style="{StaticResource ReasonText}" Margin="0,6,0,0" Visibility="Collapsed" />
     </StackPanel>
 </tools:ToolPanel>

@@ -4984,6 +4984,12 @@
   "Pick a folder for the parts.": {
     "tr": "Parçalar için bir klasör seçin."
   },
+  "These make {0} files. Pick a folder for them.": {
+    "tr": "Bunlar {0} dosya yapıyor. Dosyalar için bir klasör seçin."
+  },
+  "This makes about {0} files, so they are saved to a folder.": {
+    "tr": "Bu yaklaşık {0} dosya yapıyor, bu yüzden bir klasöre kaydedilir."
+  },
   "{0} parts opened.": {
     "tr": "{0} parça açıldı."
   },
