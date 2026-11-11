@@ -211,7 +211,7 @@ public partial class AccessibilityPanel : ToolPanel
             Host!.ShowProblem(new Problem(Loc.T("Title is empty"), Loc.T("Type a title for the file, then save it.")));
             return;
         }
-        await Apply(tab, row, row.EditorName);
+        await Apply(tab, row.Editor, row.Action, row.Value.Trim(), row.EditorName);
     }
 
     private async void RowAction_Click(object sender, RoutedEventArgs e)
@@ -226,7 +226,7 @@ public partial class AccessibilityPanel : ToolPanel
                 ShowFigures.IsChecked = true;
                 break;
             default:
-                await Apply(tab, row, row.ActionText);
+                await Apply(tab, row.Editor, row.Action, row.Value.Trim(), row.ActionText);
                 break;
         }
     }
@@ -242,12 +242,12 @@ public partial class AccessibilityPanel : ToolPanel
 
     private static CheckRow? Row(object sender) => (sender as FrameworkElement)?.DataContext as CheckRow;
 
-    private Task Apply(DocumentTab tab, CheckRow row, string label) => ChangeGate.RunAsync(tab, Host!, label, () =>
+    private Task Apply(DocumentTab tab, RowEditor editor, RowAction action, string value, string label) => ChangeGate.RunAsync(tab, Host!, label, () =>
     {
         if (!ReferenceEquals(tab, Tab)) return Task.CompletedTask;
         try
         {
-            if (AccessibilityEdits.Apply(tab.Document, row) && tab.Commit(label)) Host!.SetStatus(Loc.T("Saved."));
+            if (AccessibilityEdits.Apply(tab.Document, editor, action, value) && tab.Commit(label)) Host!.SetStatus(Loc.T("Saved."));
             else Host!.SetStatus(Loc.T("Nothing to change."));
         }
         catch (ArgumentException)

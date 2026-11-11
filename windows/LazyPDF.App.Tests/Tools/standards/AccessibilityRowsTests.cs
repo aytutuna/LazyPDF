@@ -1,4 +1,6 @@
+using LazyPDF.App.Documents;
 using LazyPDF.App.Tools.Accessibility;
+using LazyPDF.App.Tools.Stamps;
 using LazyPDF.Core;
 using Xunit;
 
@@ -44,7 +46,7 @@ public sealed class AccessibilityRowsTests
         Assert.Equal("Lease agreement", row.Value);
 
         row.Value = "Lease for the flat";
-        Assert.True(AccessibilityEdits.Apply(document, row));
+        Assert.True(AccessibilityEdits.Apply(document, row.Editor, row.Action, row.Value.Trim()));
 
         var after = AccessibilityChecker.Check(PdfDocument.Open(document.SaveIncremental()))[AccessibilityRule.Title];
         Assert.Equal(AccessibilityStatus.Passed, after.Status);
@@ -58,7 +60,7 @@ public sealed class AccessibilityRowsTests
         var row = Row(Rows(document), AccessibilityRule.Title);
         row.Value = "  ";
 
-        Assert.False(AccessibilityEdits.Apply(document, row));
+        Assert.False(AccessibilityEdits.Apply(document, row.Editor, row.Action, row.Value.Trim()));
     }
 
     [Fact]
@@ -67,13 +69,47 @@ public sealed class AccessibilityRowsTests
         var document = PdfDocument.Open(Pdfs.Text());
         var row = Row(Rows(document), AccessibilityRule.Language);
 
-        row.Value = "not a tag!";
-        Assert.Throws<ArgumentException>(() => AccessibilityEdits.Apply(document, row));
+        Assert.Throws<ArgumentException>(() => AccessibilityEdits.Apply(document, row.Editor, row.Action, "not a tag!"));
 
-        row.Value = "tr-TR";
-        Assert.True(AccessibilityEdits.Apply(document, row));
+        Assert.True(AccessibilityEdits.Apply(document, row.Editor, row.Action, "tr-TR"));
         Assert.Equal("tr-TR", AccessibilityEdits.LanguageOf(document));
     }
+
+    [Fact]
+    public void AnEditOfTheBoxAfterTheCaptureIsNotWritten()
+    {
+        var document = PdfDocument.Open(Pdfs.Text());
+        var row = Row(Rows(document), AccessibilityRule.Title);
+        row.Value = "Lease for the flat";
+        string captured = row.Value.Trim();
+
+        row.Value = "Something typed later";
+        Assert.True(AccessibilityEdits.Apply(document, row.Editor, row.Action, captured));
+
+        Assert.Equal("Lease for the flat", DocumentMetadata.Read(document).Title);
+    }
+
+    [Fact]
+    public Task ASignedFileIsNotChangedUntilTheNoticeIsAnswered() => Sta.Run(async () =>
+    {
+        var host = new RecordingHost();
+        using var tab = new DocumentTab(PdfEditSession.Open(StampsPanelTests.Signed(false)), new FakeRenderer(), null, "a.pdf");
+        var row = Row(Rows(tab.Document), AccessibilityRule.Title);
+        row.Value = "First";
+        string captured = row.Value.Trim();
+
+        await ChangeGate.RunAsync(tab, host, "Title", () =>
+        {
+            AccessibilityEdits.Apply(tab.Document, row.Editor, row.Action, captured);
+            return Task.CompletedTask;
+        });
+        row.Value = "Typed while the notice was up";
+
+        Assert.Equal(["Check before going on"], host.Notices);
+        Assert.NotEqual("First", DocumentMetadata.Read(tab.Document).Title);
+        host.Actions.Single()!.Run();
+        await Sta.Until(() => DocumentMetadata.Read(tab.Document).Title == "First");
+    });
 
     [Fact]
     public async Task ASavedFixIsOneUndoStepOnTheTab()
@@ -84,7 +120,7 @@ public sealed class AccessibilityRowsTests
         var row = Row(Rows(tab.Document), AccessibilityRule.Language);
         row.Value = "en-GB";
 
-        Assert.True(AccessibilityEdits.Apply(tab.Document, row));
+        Assert.True(AccessibilityEdits.Apply(tab.Document, row.Editor, row.Action, row.Value.Trim()));
         Assert.True(tab.Commit("Language"));
 
         Assert.Equal("Language", tab.Session.UndoLabel);

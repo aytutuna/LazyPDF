@@ -6,17 +6,13 @@ namespace LazyPDF.App.Tools.Accessibility;
 /// <summary>The changes the accessibility panel makes to a document, kept apart from the controls.</summary>
 internal static class AccessibilityEdits
 {
-    /// <summary>Makes the fix a failed row offers; for the title and language rows, with the text of their box. False when nothing changed.</summary>
-    public static bool Apply(PdfDocument document, CheckRow row)
+    /// <summary>Makes the fix a failed row offers; for the title and language rows, with the text of their box as it was when the button was pressed. False when nothing changed.</summary>
+    public static bool Apply(PdfDocument document, RowEditor editor, RowAction action, string value) => editor switch
     {
-        string value = row.Value.Trim();
-        return row.Editor switch
-        {
-            RowEditor.Title => value.Length > 0 && AccessibilityChecker.Fix(document, AccessibilityFix.SetTitle, value),
-            RowEditor.Language => AccessibilityChecker.Fix(document, AccessibilityFix.SetLanguage, value),
-            _ => row.Action == RowAction.SetTabOrder && AccessibilityChecker.Fix(document, AccessibilityFix.SetTabOrder),
-        };
-    }
+        RowEditor.Title => value.Length > 0 && AccessibilityChecker.Fix(document, AccessibilityFix.SetTitle, value),
+        RowEditor.Language => AccessibilityChecker.Fix(document, AccessibilityFix.SetLanguage, value),
+        _ => action == RowAction.SetTabOrder && AccessibilityChecker.Fix(document, AccessibilityFix.SetTabOrder),
+    };
 
     /// <summary>What the title box starts with: the file's title, else its name.</summary>
     public static string TitleOf(PdfDocument document, string fileName)

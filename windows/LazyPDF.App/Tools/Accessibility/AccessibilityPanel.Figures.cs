@@ -113,8 +113,8 @@ public partial class AccessibilityPanel
         await ChangeGate.RunAsync(tab, Host!, Loc.T("Figure description"), () =>
         {
             if (!ReferenceEquals(tab, Tab) || !WriteAlts(tab, [(row, text)])) return Task.CompletedTask;
-            _state.Drafts.Remove(row.Key);
-            _figureNumber = text.Trim().Length > 0 ? NextBareAfter(row.Number, row.Number) : row.Number;
+            if (_state.Drafts.TryGetValue(row.Key, out var draft) && draft.Trim() == text.Trim()) _state.Drafts.Remove(row.Key);
+            if (Selected?.Key == row.Key) _figureNumber = text.Trim().Length > 0 ? NextBareAfter(row.Number, row.Number) : row.Number;
             return Task.CompletedTask;
         });
     }
