@@ -172,7 +172,7 @@ public partial class MeasurePanel : ToolPanel
 
     private void View_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (_tool is null || _tool.Points.Count == 0) return;
+        if (_tool is null || _tool.Points.Count == 0 || Keyboard.FocusedElement is TextBox or ComboBox or PasswordBox) return;
         if (e.Key == Key.Escape) _tool.Cancel();
         else if (e.Key == Key.Back) _tool.Undo();
         else return;
