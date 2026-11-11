@@ -279,7 +279,7 @@ public partial class MainWindow
         }
         if (ReferenceEquals(current, panel) && ReferenceEquals(attached, tab)) return;
         // The tab can change under the panel (open, close, Save all), so words still being typed go in before it lets go.
-        current?.HandIn();
+        if (attached is not null && _vm.Strip.Contains(attached)) current?.HandIn();
         current?.Detach();
         current = panel;
         attached = tab;
