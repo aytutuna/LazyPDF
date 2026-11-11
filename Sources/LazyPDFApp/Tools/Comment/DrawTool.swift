@@ -74,7 +74,7 @@ final class DrawTool: PagePointerTool {
 
     func move(_ pointer: PagePointer) {
         guard page >= 0, pointer.page == page else { return }
-        now = pointer.point
+        now = constrained(pointer)
         if pointer.pressed && (tool == .pencil || tool == .eraser), let last = points.last, Self.distance(now, last) >= 1 {
             points.append(now)
         }
@@ -89,7 +89,7 @@ final class DrawTool: PagePointerTool {
             return
         }
         guard page >= 0 else { return }
-        if pointer.page == page { now = pointer.point }
+        if pointer.page == page { now = constrained(pointer) }
         if many {
             if points.count == 1 { extend(now) }
             return
@@ -149,6 +149,23 @@ final class DrawTool: PagePointerTool {
     /// An edit of the file can take the page a polygon is on away.
     func dropIfPageGone() {
         if page >= viewer.pageCount { reset() }
+    }
+
+    /// Shift keeps a line on a multiple of 45 degrees and a box square.
+    private func constrained(_ pointer: PagePointer) -> ViewPoint {
+        guard pointer.modifiers.contains(.shift), let first = points.first else { return pointer.point }
+        switch tool {
+        case .line, .arrow, .callout:
+            return MeasureShape.straighten(first, pointer.point)
+        case .rectangle, .oval, .textBox:
+            let dx = pointer.point.x - first.x, dy = pointer.point.y - first.y
+            let side = max(abs(dx), abs(dy))
+            let size = viewer.pageSize(page)
+            return ViewPoint(min(max(first.x + (dx < 0 ? -side : side), 0), size.width),
+                             min(max(first.y + (dy < 0 ? -side : side), 0), size.height))
+        default:
+            return pointer.point
+        }
     }
 
     private func corner(_ pointer: PagePointer) {

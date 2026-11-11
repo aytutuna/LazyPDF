@@ -50,6 +50,35 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(drawn.marks[0].points, [markPt(50, 60), markPt(150, 120)])
     }
 
+    func test_shiftStraightensALine() throws {
+        let (tool, _, drawn) = try drawing(.line)
+
+        tool.press(press(markPt(10, 10)))
+        tool.release(PagePointer(page: 0, point: markPt(100, 40), view: markPt(100, 40), pressed: true, clicks: 0, modifiers: [.shift]))
+
+        XCTAssertEqual(drawn.marks[0].points[1].y, 10, accuracy: 0.001)
+    }
+
+    func test_shiftSquaresABoxInsideThePage() throws {
+        let (tool, _, drawn) = try drawing(.rectangle)
+
+        tool.press(press(markPt(500, 700)))
+        tool.release(PagePointer(page: 0, point: markPt(600, 710), view: markPt(600, 710), pressed: true, clicks: 0, modifiers: [.shift]))
+
+        let end = drawn.marks[0].points[1]
+        XCTAssertEqual(end.x, 600, accuracy: 0.001)
+        XCTAssertEqual(end.y, 792, accuracy: 0.001)
+    }
+
+    func test_withoutShiftTheEndIsUnchanged() throws {
+        let (tool, _, drawn) = try drawing(.line)
+
+        tool.press(press(markPt(10, 10)))
+        tool.release(drag(markPt(100, 40)))
+
+        XCTAssertEqual(drawn.marks[0].points[1], markPt(100, 40))
+    }
+
     func test_aClickWithoutADragDrawsNothingForAShape() throws {
         let (tool, viewer, drawn) = try drawing(.oval)
 
