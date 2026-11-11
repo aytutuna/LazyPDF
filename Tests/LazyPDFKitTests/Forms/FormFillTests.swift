@@ -74,6 +74,15 @@ final class FormFillTests: XCTestCase {
         try AnnotationFixtures.reopen(form.document)
     }
 
+    func test_fontNameWithReplacementSyntaxGoesIntoTheDefaultAppearanceLiterally() throws {
+        let form = try open()
+        let holder = PdfDictionary()
+
+        form.setFontName(holder, "/Helv 12 Tf 0 g", "A$1B")
+
+        XCTAssertEqual(PdfText.read(form.document, holder, "DA"), "/A$1B 12 Tf 0 g")
+    }
+
     func test_fieldsOfOneBatchShareOneAddedFont() throws {
         let form = try open(fonts: try AnnotationFixtures.ArialSource())
 
