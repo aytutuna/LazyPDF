@@ -243,7 +243,7 @@ public partial class MeasurePanel : ToolPanel
             return;
         }
         // Whatever was written is one step, so Undo takes all of it back.
-        if (!tab.Commit(Loc.T("Measure"))) return;
+        if (!MarkWork.Commit(tab, Host!, Loc.T("Measure"))) return;
         _waiting.Clear();
         Rebuild();
         Host!.SetStatus(Loc.Plural(count, "Added {0} measurement", "Added {0} measurements"));
