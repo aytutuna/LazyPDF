@@ -249,6 +249,6 @@ public sealed partial class MetadataPanel : ToolPanel
     {
         _dropped = Guid.Empty;
         RaiseActionChanged();
-        Host!.ShowNotice(Loc.T("Old values are still in the file"), Loc.T("The earlier title, author, subject, keywords or custom values can still be found in the file's history. Clean for sharing removes them."));
+        Host?.ShowNotice(Loc.T("Old values are still in the file"), Loc.T("The earlier title, author, subject, keywords or custom values can still be found in the file's history. Clean for sharing removes them."));
     }
 }

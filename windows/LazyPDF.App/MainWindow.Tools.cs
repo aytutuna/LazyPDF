@@ -282,9 +282,9 @@ public partial class MainWindow
         // A running job edits the session on another thread, so nothing is written to it from here.
         if (attached is not null && _vm.Strip.Contains(attached) && !_vm.IsBusy && current?.HandIn() == false)
         {
-            // A signed file asked before taking the words; its button would act on a panel that is about to let go.
-            _vm.DropAction();
-            if (!current.KeepsDrafts) _vm.SetStatus(Loc.T("Typed text was not kept."));
+            // A signed file asked before taking the words. On the same tab the panel keeps them and its button still works.
+            if (!ReferenceEquals(attached, tab)) _vm.DropAction();
+            if (!ReferenceEquals(attached, tab) && !current.KeepsDrafts) _vm.SetStatus(Loc.T("Typed text was not kept."));
         }
         current?.Detach();
         current = panel;
