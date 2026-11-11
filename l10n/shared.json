@@ -5863,6 +5863,9 @@
   "Words and numbers on those pages were not searched. Draw boxes over them instead.": {
     "tr": "Bu sayfalardaki sözcükler ve sayılar aranmadı. Bunun yerine üzerlerine kutu çizin."
   },
+  "Words and numbers on those pages were not searched. Run Make searchable, then search again. Or draw boxes over them.": {
+    "tr": "Bu sayfalardaki sözcükler ve sayılar aranmadı. Aranabilir yap işlemini çalıştırıp yeniden arayın ya da üzerlerine kutu çizin."
+  },
   "{0} mark removed": {
     "other": "{0} marks removed",
     "tr": "{0} işaret kaldırıldı"

@@ -6895,6 +6895,9 @@
   <data name="Words and numbers on those pages were not searched. Draw boxes over them instead." xml:space="preserve">
     <value>Bu sayfalardaki sözcükler ve sayılar aranmadı. Bunun yerine üzerlerine kutu çizin.</value>
   </data>
+  <data name="Words and numbers on those pages were not searched. Run Make searchable, then search again. Or draw boxes over them." xml:space="preserve">
+    <value>Bu sayfalardaki sözcükler ve sayılar aranmadı. Aranabilir yap işlemini çalıştırıp yeniden arayın ya da üzerlerine kutu çizin.</value>
+  </data>
   <data name="Words on this page" xml:space="preserve">
     <value>Bu sayfadaki sözcükler</value>
   </data>

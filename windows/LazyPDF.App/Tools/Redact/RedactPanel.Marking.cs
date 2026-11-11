@@ -146,7 +146,8 @@ public partial class RedactPanel
         if (found.Pictures > 0)
         {
             host.ShowNotice(Loc.Plural(found.Pictures, "{0} page has no text", "{0} pages have no text"),
-                            Loc.T("Words and numbers on those pages were not searched. Draw boxes over them instead."));
+                            Loc.T("Words and numbers on those pages were not searched. Run Make searchable, then search again. Or draw boxes over them."),
+                            new NoticeAction(Loc.T("Make searchable"), () => host.OpenTool("ocr")));
         }
     }
 
