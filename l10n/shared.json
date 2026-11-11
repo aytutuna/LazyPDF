@@ -7562,6 +7562,27 @@
   "Keeps detail for printing. Pictures stay up to 300 dpi.": {
     "tr": "Baskı için ayrıntıyı korur. Resimler 300 dpi'ye kadar kalır."
   },
+  "Good for email and screens. Pictures drop to 150 dpi and are saved as JPEG at 75%, and black and white pictures become 1-bit. Some detail is lost.": {
+    "tr": "E-posta ve ekran için uygun. Resimler 150 dpi'ye düşer ve %75 JPEG olarak kaydedilir, siyah beyaz resimler 1 bite çevrilir. Bir miktar ayrıntı kaybolur."
+  },
+  "Keeps detail for printing. Pictures stay up to 300 dpi. Very little is lost.": {
+    "tr": "Baskı için ayrıntıyı korur. Resimler 300 dpi'ye kadar kalır. Çok az şey kaybolur."
+  },
+  "Lower numbers lose detail.": {
+    "tr": "Düşük değerler ayrıntıyı azaltır."
+  },
+  "Nothing you can see is lost. Text cannot be edited in other programs with the missing letters.": {
+    "tr": "Görebildiğiniz hiçbir şey kaybolmaz. Eksik harfler yüzünden metin başka programlarda düzenlenemez."
+  },
+  "Grey shades in those pictures are lost.": {
+    "tr": "Bu resimlerdeki gri tonlar kaybolur."
+  },
+  "Nothing you can see is lost.": {
+    "tr": "Görebildiğiniz hiçbir şey kaybolmaz."
+  },
+  "Colour is lost.": {
+    "tr": "Renk kaybolur."
+  },
   "Smallest file. Pictures drop to 96 dpi and lose some detail.": {
     "tr": "En küçük dosya. Resimler 96 dpi'ye düşer ve biraz ayrıntı kaybeder."
   },

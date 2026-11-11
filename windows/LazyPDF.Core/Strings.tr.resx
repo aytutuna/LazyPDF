@@ -1240,6 +1240,9 @@
   <data name="Colour contrast is not checked here. Look at the pages and make sure text stands out from its background." xml:space="preserve">
     <value>Renk karşıtlığı burada denetlenmez. Sayfalara bakın ve metnin arka plandan ayrıldığından emin olun.</value>
   </data>
+  <data name="Colour is lost." xml:space="preserve">
+    <value>Renk kaybolur.</value>
+  </data>
   <data name="Colour {0} to {1}" xml:space="preserve">
     <value>Renk {0} iken {1} oldu</value>
   </data>
@@ -2431,6 +2434,9 @@
   <data name="Go to page {0}" xml:space="preserve">
     <value>{0}. sayfaya git</value>
   </data>
+  <data name="Good for email and screens. Pictures drop to 150 dpi and are saved as JPEG at 75%, and black and white pictures become 1-bit. Some detail is lost." xml:space="preserve">
+    <value>E-posta ve ekran için uygun. Resimler 150 dpi'ye düşer ve %75 JPEG olarak kaydedilir, siyah beyaz resimler 1 bite çevrilir. Bir miktar ayrıntı kaybolur.</value>
+  </data>
   <data name="Good for email and screens. Pictures drop to 150 dpi." xml:space="preserve">
     <value>E-posta ve ekran için uygun. Resimler 150 dpi'ye düşer.</value>
   </data>
@@ -2451,6 +2457,9 @@
   </data>
   <data name="Grey" xml:space="preserve">
     <value>Gri</value>
+  </data>
+  <data name="Grey shades in those pictures are lost." xml:space="preserve">
+    <value>Bu resimlerdeki gri tonlar kaybolur.</value>
   </data>
   <data name="Group" xml:space="preserve">
     <value>Grup</value>
@@ -2728,6 +2737,9 @@
   <data name="Keeps detail for printing. Pictures stay up to 300 dpi." xml:space="preserve">
     <value>Baskı için ayrıntıyı korur. Resimler 300 dpi'ye kadar kalır.</value>
   </data>
+  <data name="Keeps detail for printing. Pictures stay up to 300 dpi. Very little is lost." xml:space="preserve">
+    <value>Baskı için ayrıntıyı korur. Resimler 300 dpi'ye kadar kalır. Çok az şey kaybolur.</value>
+  </data>
   <data name="Keeps some private data" xml:space="preserve">
     <value>Bazı özel verileri korur</value>
   </data>
@@ -2991,6 +3003,9 @@
   </data>
   <data name="Looks different" xml:space="preserve">
     <value>Farklı görünüyor</value>
+  </data>
+  <data name="Lower numbers lose detail." xml:space="preserve">
+    <value>Düşük değerler ayrıntıyı azaltır.</value>
   </data>
   <data name="Made {0} page searchable|plural" xml:space="preserve">
     <value>{0} sayfa aranabilir yapıldı</value>
@@ -3567,6 +3582,12 @@
   </data>
   <data name="Nothing was under the marks." xml:space="preserve">
     <value>İşaretlerin altında bir şey yoktu.</value>
+  </data>
+  <data name="Nothing you can see is lost." xml:space="preserve">
+    <value>Görebildiğiniz hiçbir şey kaybolmaz.</value>
+  </data>
+  <data name="Nothing you can see is lost. Text cannot be edited in other programs with the missing letters." xml:space="preserve">
+    <value>Görebildiğiniz hiçbir şey kaybolmaz. Eksik harfler yüzünden metin başka programlarda düzenlenemez.</value>
   </data>
   <data name="Nothing, just the page" xml:space="preserve">
     <value>Hiçbiri, yalnızca sayfa</value>
