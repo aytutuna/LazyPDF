@@ -198,6 +198,11 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         a.IsMarkup && a.Reference is not null && a.InReplyTo is null && !a.Flags.HasFlag(AnnotationFlags.Hidden)
         && !a.Flags.HasFlag(AnnotationFlags.Locked) && !a.Flags.HasFlag(AnnotationFlags.ReadOnly);
 
+    /// <summary>A mark the eraser takes: ink, lines and shapes, but not a measurement, which the Measure tool owns.</summary>
+    public static bool Erasable(PdfAnnotation a) =>
+        a.Type is AnnotationType.Ink or AnnotationType.Line or AnnotationType.PolyLine or AnnotationType.Polygon or AnnotationType.Square or AnnotationType.Circle
+        && !a.Dictionary.ContainsKey("Measure");
+
     private static bool Covers(PdfAnnotation a, double x, double y, double tolerance)
     {
         double reach = tolerance + a.Border.Width / 2;

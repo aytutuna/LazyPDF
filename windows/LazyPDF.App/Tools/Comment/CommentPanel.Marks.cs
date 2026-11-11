@@ -58,7 +58,7 @@ public partial class CommentPanel
             case MarkTool.Eraser:
                 Change(label, m =>
                 {
-                    foreach (var mark in m.Along(page, points, EraserReach)) m.Delete(mark);
+                    foreach (var mark in m.Along(page, points, EraserReach).Where(Marker.Erasable)) m.Delete(mark);
                 });
                 break;
             case MarkTool.Note or MarkTool.TextBox or MarkTool.Callout:
