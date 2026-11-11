@@ -58,8 +58,8 @@ public sealed class PagesPanelCropTests
         Assert.NotEqual(page.MediaBox, crop);
         Assert.True(crop.Left >= page.MediaBox.Left && crop.Right <= page.MediaBox.Right);
         Assert.True(crop.Bottom >= page.MediaBox.Bottom && crop.Top <= page.MediaBox.Top);
-        // The line starts at the 72 point margin of the page and is a few lines tall at most.
-        Assert.InRange(crop.Left, 72 - 12, 72);
+        // The line starts at the 36 point margin of the page and is a few lines tall at most.
+        Assert.InRange(crop.Left, 36 - 12, 36);
         Assert.True(crop.Top - crop.Bottom < 60);
         panel.Detach();
     });
