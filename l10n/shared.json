@@ -5461,6 +5461,15 @@
   "The passwords do not match.": {
     "tr": "Parolalar eşleşmiyor."
   },
+  "Type a password to open the file.": {
+    "tr": "Dosyayı açmak için bir parola yazın."
+  },
+  "No password to open. Anyone can open the file; only the limits apply.": {
+    "tr": "Açmak için parola yok. Dosyayı herkes açabilir; yalnızca sınırlar geçerli."
+  },
+  "A password this short can be guessed in seconds. Use at least 8 characters.": {
+    "tr": "Bu kadar kısa bir parola saniyeler içinde tahmin edilebilir. En az 8 karakter kullanın."
+  },
   "These limits are a request, not a lock. Some programs ignore them. Only a password to open keeps the file private.": {
     "tr": "Bu sınırlar bir istektir, kilit değildir. Bazı programlar bunları yok sayar. Dosyayı yalnızca açma parolası gizli tutar."
   },

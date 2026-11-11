@@ -16,6 +16,7 @@ public enum ProtectMode { Password, Certificates, Remove }
 public partial class ProtectPanel : ToolPanel
 {
     private readonly List<Recipient> _recipients = [];
+    private bool _typed;
 
     public ProtectPanel()
     {
@@ -55,6 +56,7 @@ public partial class ProtectPanel : ToolPanel
         OpenBox.Clear();
         RepeatBox.Clear();
         OwnerBox.Clear();
+        _typed = false;
         _recipients.Clear();
         ShowRecipients();
     }
@@ -100,8 +102,10 @@ public partial class ProtectPanel : ToolPanel
 
         var strength = PasswordStrength.Rate(Opening);
         StrengthBar.Value = (int)strength;
-        StrengthHint.Text = PasswordStrength.Hint(strength);
-        PasswordNote.Text = RepeatBox.Password.Length > 0 && RepeatBox.Password != Opening ? Loc.T("The passwords do not match.") : "";
+        bool noOpening = mode == ProtectMode.Password && Opening.Length == 0;
+        StrengthHint.Text = noOpening && Limited ? Loc.T("No password to open. Anyone can open the file; only the limits apply.") : PasswordStrength.Hint(strength);
+        PasswordNote.Text = RepeatBox.Password.Length > 0 && RepeatBox.Password != Opening ? Loc.T("The passwords do not match.")
+            : noOpening && !Limited && _typed ? Loc.T("Type a password to open the file.") : "";
         OwnerNote.Text = !Limited || mode != ProtectMode.Password ? ""
             : OwnerBox.Password.Length == 0 ? Loc.T("Type a Permissions password to apply the limits.")
             : OwnerBox.Password == Opening ? Loc.T("Use a different password here.") : "";
@@ -120,6 +124,7 @@ public partial class ProtectPanel : ToolPanel
         {
             document.IsSigned ? Loc.T("The copy will not keep the signatures.") : null,
             document.PdfAPart is not null && mode != ProtectMode.Remove ? Loc.T("The copy will no longer be PDF/A.") : null,
+            mode == ProtectMode.Password && PasswordStrength.VeryShort(Opening) ? Loc.T("A password this short can be guessed in seconds. Use at least 8 characters.") : null,
         }.OfType<string>());
         WarnRow.Visibility = WarnNote.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         RaiseActionChanged();
@@ -129,7 +134,11 @@ public partial class ProtectPanel : ToolPanel
 
     private void Mode_Checked(object sender, RoutedEventArgs e) => UpdateState();
 
-    private void Password_Changed(object sender, RoutedEventArgs e) => UpdateState();
+    private void Password_Changed(object sender, RoutedEventArgs e)
+    {
+        if (sender == OpenBox || sender == RepeatBox) _typed = true;
+        UpdateState();
+    }
 
     private void Limit_Click(object sender, RoutedEventArgs e) => UpdateState();
 

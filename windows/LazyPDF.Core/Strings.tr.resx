@@ -112,6 +112,9 @@
   <data name="A page or form has a transparency group." xml:space="preserve">
     <value>Bir sayfada ya da formda saydamlık grubu var.</value>
   </data>
+  <data name="A password this short can be guessed in seconds. Use at least 8 characters." xml:space="preserve">
+    <value>Bu kadar kısa bir parola saniyeler içinde tahmin edilebilir. En az 8 karakter kullanın.</value>
+  </data>
   <data name="A path that clips cannot be changed." xml:space="preserve">
     <value>Kırpan bir yol değiştirilemez.</value>
   </data>
@@ -3111,6 +3114,9 @@
   </data>
   <data name="No pages need text recognition." xml:space="preserve">
     <value>Hiçbir sayfa metin tanıma gerektirmiyor.</value>
+  </data>
+  <data name="No password to open. Anyone can open the file; only the limits apply." xml:space="preserve">
+    <value>Açmak için parola yok. Dosyayı herkes açabilir; yalnızca sınırlar geçerli.</value>
   </data>
   <data name="No picture" xml:space="preserve">
     <value>Resim yok</value>
@@ -6393,6 +6399,9 @@
   </data>
   <data name="Type a number from 1 to {0}." xml:space="preserve">
     <value>1 ile {0} arasında bir sayı yazın.</value>
+  </data>
+  <data name="Type a password to open the file." xml:space="preserve">
+    <value>Dosyayı açmak için bir parola yazın.</value>
   </data>
   <data name="Type a title for the file, then save it." xml:space="preserve">
     <value>Dosya için bir başlık yazın, sonra kaydedin.</value>
