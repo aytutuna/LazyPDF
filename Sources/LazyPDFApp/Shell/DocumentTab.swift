@@ -202,7 +202,7 @@ public final class DocumentTab: StripTab {
     // The bytes of a save are the ones already shown, so only the state of the tab changes, unless the save rewrote the file.
     private func saved(rewritten: Bool = false) {
         unsaved = false
-        diskHash = nil
+        diskHash = DocumentOpener.digest(session.current)
         acceptDiskState()
         recovery?.delete(id)
         if rewritten {

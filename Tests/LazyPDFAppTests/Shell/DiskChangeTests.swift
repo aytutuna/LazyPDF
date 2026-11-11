@@ -49,6 +49,21 @@ final class DiskChangeTests: XCTestCase {
         XCTAssertFalse(tab.isDirty)
     }
 
+    func test_aFileOnlyTouchedAfterASaveSaysNothing() async throws {
+        let f = ViewModelFixture(self)
+        let url = f.pdf()
+        await f.vm.open(url)
+        let tab = f.vm.activeDocument!
+        try Pdfs.retitle(tab.session, "x")
+        try tab.commit("x")
+        XCTAssertTrue(f.vm.save(tab))
+        try touch(url, [UInt8](try Data(contentsOf: url)))
+
+        f.vm.checkDisk()
+
+        XCTAssertNil(f.vm.message)
+    }
+
     func test_aRewriteOfTheSameLengthStillSaysChanged() async throws {
         let f = ViewModelFixture(self)
         let url = f.pdf()
