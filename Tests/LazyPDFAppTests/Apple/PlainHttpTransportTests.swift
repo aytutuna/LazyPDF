@@ -378,11 +378,7 @@ final class PlainHttpTransportTests: XCTestCase {
 
     func test_aRedirectToALinkLocalAddressIsRefused() throws {
         let server = try Server { _ in
-            .send("HTTP/1.1 302 Found
-Location: http://169.254.169.254/latest
-Content-Length: 0
-
-")
+            .send("HTTP/1.1 302 Found\r\nLocation: http://169.254.169.254/latest\r\nContent-Length: 0\r\n\r\n")
         }
         let transport = transport(server)
 

@@ -8,10 +8,10 @@ import Network
 // Network.framework with a small HTTP/1.1 client: one request per connection, no proxy, no keep-alive.
 //
 // The addresses come from the PDF, so loopback, link-local and unspecified ones (and localhost names) are refused, as
-// on Windows; private LAN ranges stay allowed, since company PKI serves CRLs from them. A plain request connects to the
-// first allowed address it resolved, so the address that was checked is the one used. URLSession cannot be told which
-// address to use, so for https the name is only checked before the request and a DNS answer that changes in between is
-// not caught. A system proxy is not used here and is not checked for https either.
+// on Windows; private LAN ranges stay allowed, since company PKI serves CRLs from them. A plain request connects only
+// to the allowed addresses it resolved, one after another, so the address that was checked is the one used. URLSession
+// cannot be told which address to use, so for https the name is only checked before the request and a DNS answer that
+// changes in between is not caught. A system proxy is not used here and is not checked for https either.
 
 final class PlainHttpTransport {
     enum Failure: Equatable {
@@ -62,21 +62,30 @@ final class PlainHttpTransport {
             return .failed(.unreachable)
         }
         if !countRequest() { return .failed(.tooMany) }
-        let found = addresses(host)
-        if found?.isEmpty == true { return .failed(.local) }
-        let exchange = Exchange(host: found?.first ?? NWEndpoint.Host(host), port: port,
-                                request: Self.request(url, host, method, contentType, body), timeout: timeout)
-        lock.lock()
-        if cancelled {
+        guard let found = addresses(host) else { return .failed(.unreachable) }
+        if found.isEmpty { return .failed(.local) }
+        let request = Self.request(url, host, method, contentType, body)
+        let deadline = Date().addingTimeInterval(timeout)
+        var outcome = Outcome.failed(.unreachable)
+        for address in found {
+            let left = deadline.timeIntervalSinceNow
+            if left <= 0 { return .failed(.timedOut) }
+            let exchange = Exchange(host: address, port: port, request: request, timeout: left)
+            lock.lock()
+            if cancelled {
+                lock.unlock()
+                return .failed(.timedOut)
+            }
+            running = exchange
             lock.unlock()
-            return .failed(.timedOut)
+            outcome = exchange.run()
+            lock.lock()
+            running = nil
+            lock.unlock()
+            // Only a connection that never opened is retried on the next address; a sent request is not repeated.
+            guard !exchange.connected, case .failed(let failure) = outcome, failure == .unreachable || failure == .offline
+            else { break }
         }
-        running = exchange
-        lock.unlock()
-        let outcome = exchange.run()
-        lock.lock()
-        running = nil
-        lock.unlock()
         return outcome
     }
 
@@ -159,6 +168,7 @@ private final class Exchange {
     private let timeout: TimeInterval
     private let done = DispatchSemaphore(value: 0)
     private var outcome: PlainHttpTransport.Outcome?
+    private(set) var connected = false
 
     private var buffer = [UInt8]()
     private var headersDone = false
@@ -188,6 +198,7 @@ private final class Exchange {
         connection.stateUpdateHandler = { [self] state in
             switch state {
             case .ready:
+                connected = true
                 connection.send(content: request, completion: .contentProcessed { [self] error in
                     if error != nil { finish(.failed(.unreachable)) }
                 })
