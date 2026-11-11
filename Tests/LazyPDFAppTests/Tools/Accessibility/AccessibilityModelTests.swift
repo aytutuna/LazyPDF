@@ -334,6 +334,64 @@ final class AccessibilityModelTests: XCTestCase {
         XCTAssertEqual(rig.viewer.sent.last, 0)
     }
 
+    private func removeFigure(_ tab: DocumentTab, _ index: Int) throws {
+        let tree = try XCTUnwrap(StructureTree.read(tab.document))
+        tree.remove(FigureFinder.list(tree)[index].element)
+        try tree.write(tab.document)
+    }
+
+    func test_aDraftForAnotherFigureSurvivesTheSaveOfThisOne() async throws {
+        let (model, rig) = try await attached(try pictures(2))
+        await tag(model, rig)
+        model.setView(.figures)
+        await waitUntil { model.selectedFigure == 1 }
+        model.selectFigure(2)
+        model.typeAlt("Half written")
+        model.selectFigure(1)
+        model.typeAlt("A grey square.")
+
+        model.saveAlt()
+        await waitUntil { model.figures.first?.hasAlt == true }
+        model.selectFigure(2)
+
+        XCTAssertEqual(model.altText, "Half written")
+        XCTAssertTrue(model.canSaveAlt)
+    }
+
+    func test_removingAFigureDropsItsDraftAndKeepsTheOthersUnderTheirNewNumber() async throws {
+        let (model, rig) = try await attached(try pictures(2))
+        await tag(model, rig)
+        model.setView(.figures)
+        await waitUntil { model.selectedFigure == 1 }
+        model.typeAlt("For the first")
+        model.selectFigure(2)
+        model.typeAlt("For the second")
+
+        try removeFigure(rig.tab, 0)
+        XCTAssertTrue(try rig.tab.commit("Remove figure"))
+        await waitUntil { model.figures.count == 1 }
+
+        model.selectFigure(1)
+        XCTAssertEqual(model.altText, "For the second")
+        XCTAssertEqual(model.drafts.count, 1)
+    }
+
+    func test_aFigureThatVanishedIsNotDescribed() async throws {
+        let (model, rig) = try await attached(try pictures(2))
+        await tag(model, rig)
+        model.setView(.figures)
+        await waitUntil { model.selectedFigure == 1 }
+        model.selectFigure(2)
+        model.typeAlt("Words")
+        try removeFigure(rig.tab, 1)
+        let before = rig.tab.session.undoLabel
+
+        model.saveAlt()
+
+        XCTAssertEqual(rig.host.problems.last?.text, "The figure is no longer in the file.")
+        XCTAssertEqual(rig.tab.session.undoLabel, before)
+    }
+
     func test_nextWithoutOneWrapsRoundToTheFigureThatLacksIt() async throws {
         let (model, rig) = try await attached(try pictures(3))
         await tag(model, rig)

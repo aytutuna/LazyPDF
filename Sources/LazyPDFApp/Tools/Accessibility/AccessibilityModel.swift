@@ -63,8 +63,11 @@ public final class AccessibilityModel: ToolPanelModel {
     @ObservationIgnored var pictureTicket = 0
     @ObservationIgnored var readTicket = 0
 
-    /// Text typed for a figure and not saved yet, by figure number, so moving to another figure does not lose it.
+    /// Text typed for a figure and not saved yet, by FigureRow.key, so moving to another figure does not lose it.
     @ObservationIgnored var drafts: [Int: String] = [:]
+
+    /// The figures the drafts were typed against, to tell whether a tag change touched one.
+    @ObservationIgnored var checkedFigures: [FigureRow] = []
 
     /// The figure to show when the list is built: the one that was shown, or the next one after a save.
     @ObservationIgnored var figureNumber = 0
@@ -118,6 +121,7 @@ public final class AccessibilityModel: ToolPanelModel {
         report = nil
         dropTree()
         drafts = [:]
+        checkedFigures = []
         figureNumber = 0
         rows = []
         tagNodes = []

@@ -18,6 +18,9 @@ public struct FigureRow: Identifiable {
 
     public var id: Int { number }
 
+    /// What a draft is filed under: the object number of the figure, which a tag change elsewhere does not move.
+    public var key: Int { element.reference?.number ?? -number }
+
     public var alt: String { element.alt?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "" }
 
     public var hasAlt: Bool { !alt.isEmpty }

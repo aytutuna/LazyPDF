@@ -40,9 +40,19 @@ extension AccessibilityModel {
             } else {
                 treeFailed = true
             }
+            keepDrafts(read?.figures ?? [])
             renderTags()
             renderFigures()
         }
+    }
+
+    // A draft stays only while its figure is in the new list on the same page with the same description.
+    private func keepDrafts(_ fresh: [FigureRow]) {
+        drafts = drafts.filter { key, _ in
+            guard let old = checkedFigures.first(where: { $0.key == key }) else { return false }
+            return fresh.contains { $0.key == key && $0.page == old.page && $0.alt == old.alt }
+        }
+        checkedFigures = fresh
     }
 
     // The copy is let go, not closed: a picture being found may still be reading it.

@@ -37,7 +37,7 @@ extension AccessibilityModel {
         guard let row = figures.first(where: { $0.number == number }) else { return }
         selectedFigure = number
         figureNumber = number
-        altText = drafts[number] ?? row.alt
+        altText = drafts[row.key] ?? row.alt
         rememberDraft()
         canFindBare = figures.contains { !$0.hasDescription }
         if row.page >= 0 { viewer?.goToPage(row.page) }
@@ -76,7 +76,7 @@ extension AccessibilityModel {
             return
         }
         let changed = altText.trimmingCharacters(in: .whitespacesAndNewlines) != row.alt
-        drafts[row.number] = changed ? altText : nil
+        drafts[row.key] = changed ? altText : nil
         canSaveAlt = changed
     }
 
@@ -89,18 +89,18 @@ extension AccessibilityModel {
                 // The tree on the screen was read from a copy; the edit goes to the open document's own.
                 let tree = StructureTree.read(tab.document)
                 let list = tree.map { FigureFinder.list($0) } ?? []
-                guard let tree, list.indices.contains(row.number - 1) else {
+                guard let tree, let figure = list.first(where: { $0.key == row.key }), figure.alt == row.alt else {
                     host.showProblem(Problem(L10n.t("Description not saved"), L10n.t("The figure is no longer in the file.")))
                     return
                 }
-                try AccessibilityEdits.setAlt(tab.document, tree, list[row.number - 1].element, text)
+                try AccessibilityEdits.setAlt(tab.document, tree, figure.element, text)
                 if try tab.commit(L10n.t("Figure description")) { host.setStatus(L10n.t("Description saved.")) }
             } catch let error where error is InvalidOperationException || error is PdfReadException {
                 try? tab.session.discard()
                 host.showProblem(Problem(L10n.t("Description not saved"), L10n.t("The tags of this file are too large to change here.")))
                 return
             }
-            drafts[row.number] = nil
+            drafts[row.key] = nil
             figureNumber = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? row.number : nextBareAfter(row.number, row.number)
         }
     }
