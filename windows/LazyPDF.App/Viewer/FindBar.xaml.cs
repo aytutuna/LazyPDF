@@ -40,6 +40,7 @@ public partial class FindBar : UserControl
         {
             Query.Text = running.Query;
             (CaseToggle.IsChecked, WordToggle.IsChecked, RegexToggle.IsChecked) = (running.Options.MatchCase, running.Options.WholeWord, running.Options.Regex);
+            _typing.Stop();
         }
         if (selection is { Length: > 0 } && !selection.Contains('\n') && selection != Query.Text) Query.Text = selection;
         // Closing the bar cleared the search but left the text, so run it again for Enter and F3.

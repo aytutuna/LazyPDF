@@ -46,6 +46,11 @@ public sealed class FindBarTests
         Assert.True(bar.WordToggle.IsChecked);
         Assert.False(bar.RegexToggle.IsChecked);
 
+        int changes = 0;
+        search.Changed += (_, _) => changes++;
+        await Task.Delay(500);
+        Assert.Equal(0, changes);
+
         bar.Query.Text = "dog";
         bar.Open();
 
