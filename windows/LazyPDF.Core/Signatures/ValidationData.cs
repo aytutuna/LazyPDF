@@ -115,7 +115,11 @@ internal static class CertificateTrust
     public static TrustResult Evaluate(X509Certificate2 certificate, IEnumerable<X509Certificate2> extra, DateTimeOffset? time, VerifyOptions options, bool timestamp = false)
     {
         var certificates = extra.ToList();
-        var result = Build(certificate, certificates, time, options.TrustAnchors, system: false);
+        // X509Chain keeps going past an anchor that is not self-signed, so a signer the caller trusts by itself is settled here.
+        var at = time ?? DateTimeOffset.UtcNow;
+        var result = options.TrustAnchors.Any(a => a.RawData.AsSpan().SequenceEqual(certificate.RawData))
+            ? new TrustResult(true, certificate.NotBefore <= at && at <= certificate.NotAfter, [certificate])
+            : Build(certificate, certificates, time, options.TrustAnchors, system: false);
         if (!result.Trusted && options.UseSystemStore)
         {
             var viaSystem = Build(certificate, [.. certificates, .. options.TrustAnchors], time, [], system: true);

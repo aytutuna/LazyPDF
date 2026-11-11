@@ -90,6 +90,36 @@ public class ChainExtensionRulesTests
         Assert.False(CertificateTrust.Evaluate(leaf, [link], Pki.Signing, new VerifyOptions { TrustAnchors = [link] }).Trusted);
     }
 
+    [Fact]
+    public void A_signer_in_the_anchors_is_trusted_whatever_signed_it()
+    {
+        var options = new VerifyOptions { TrustAnchors = [Pki.Leaf] };
+
+        var result = CertificateTrust.Evaluate(Pki.Leaf, [], Pki.Signing, options);
+
+        Assert.True(result.Trusted);
+        Assert.True(result.TimeValid);
+        Assert.Single(result.Chain);
+        Assert.False(CertificateTrust.Evaluate(Pki.LeafEc, [], Pki.Signing, options).Trusted);
+    }
+
+    [Fact]
+    public void A_signer_in_the_anchors_still_needs_a_key_usage_for_signing()
+    {
+        using var encipher = Pki.Issued("Encipher", X509KeyUsageFlags.KeyEncipherment);
+
+        Assert.False(CertificateTrust.Evaluate(encipher, [], Pki.Signing, new VerifyOptions { TrustAnchors = [encipher] }).Trusted);
+    }
+
+    [Fact]
+    public void A_signer_in_the_anchors_is_not_time_valid_after_it_expires()
+    {
+        var result = CertificateTrust.Evaluate(Pki.ShortLived, [], Pki.Expiry.AddDays(1), new VerifyOptions { TrustAnchors = [Pki.ShortLived] });
+
+        Assert.True(result.Trusted);
+        Assert.False(result.TimeValid);
+    }
+
     private sealed class PssGenerator(RSA key, byte[] algorithm, bool spoil) : X509SignatureGenerator
     {
         protected override PublicKey BuildPublicKey() => PublicKey.CreateFromSubjectPublicKeyInfo(key.ExportSubjectPublicKeyInfo(), out _);

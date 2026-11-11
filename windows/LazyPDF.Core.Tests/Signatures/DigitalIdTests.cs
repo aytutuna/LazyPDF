@@ -61,4 +61,13 @@ public class DigitalIdTests
         var trusted = Assert.Single(PdfSignatureVerifier.Verify(signed, new VerifyOptions { TrustAnchors = [id] }));
         Assert.Equal(SignatureVerdict.Valid, trusted.Verdict);
     }
+
+    [Fact]
+    public void A_signature_by_a_certificate_the_caller_trusts_is_valid_though_its_issuer_is_not_an_anchor()
+    {
+        byte[] signed = PdfSigner.Sign(SignatureKit.Plain(), new PdfSignRequest(Pki.Instance.Leaf, Pki.Signing));
+
+        var report = Assert.Single(PdfSignatureVerifier.Verify(signed, new VerifyOptions { TrustAnchors = [Pki.Instance.Leaf], Now = Pki.Signing }));
+        Assert.Equal(SignatureVerdict.Valid, report.Verdict);
+    }
 }
