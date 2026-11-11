@@ -184,4 +184,24 @@ public class PageTagTests
         Assert.False(document.Catalog.ContainsKey("MarkInfo"));
         Assert.False(document.Pages[0].Dictionary.ContainsKey("StructParents"));
     }
+
+    [Fact]
+    public void DeletingAPageKeepsTheParentTreeKeyOfAFormOnAKeptPage()
+    {
+        var pdf = new TestPdf();
+        pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R /StructTreeRoot 12 0 R /MarkInfo <</Marked true>>>>");
+        pdf.Obj(2, "<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300]>>");
+        pdf.Obj(4, "<</Type /Page /Parent 2 0 R /StructParents 0 /Contents 8 0 R /Resources <</XObject <</Fm1 9 0 R>>>>>>");
+        pdf.Obj(5, "<</Type /Page /Parent 2 0 R /StructParents 1>>");
+        pdf.Stream(8, "", "/Fm1 Do");
+        pdf.Stream(9, "/Type /XObject /Subtype /Form /BBox [0 0 100 100] /StructParents 7", "/P <</MCID 0>> BDC EMC");
+        pdf.Obj(12, "<</Type /StructTreeRoot /K 13 0 R /ParentTree 30 0 R>>");
+        pdf.Obj(13, "<</Type /StructElem /S /Document /P 12 0 R /K [14 0 R 15 0 R]>>");
+        pdf.Obj(14, "<</Type /StructElem /S /P /P 13 0 R /Pg 4 0 R /K <</Type /MCR /Pg 4 0 R /Stm 9 0 R /MCID 0>>>>");
+        pdf.Obj(15, "<</Type /StructElem /S /P /P 13 0 R /Pg 5 0 R /K 0>>");
+        pdf.Obj(30, "<</Nums [0 [] 1 [15 0 R] 7 [14 0 R]]>>");
+        var document = PdfDocument.Open(pdf.Finish());
+        PageOperations.Delete(document, [1]);
+        Assert.Equal([0L, 7L], Keys(document));
+    }
 }

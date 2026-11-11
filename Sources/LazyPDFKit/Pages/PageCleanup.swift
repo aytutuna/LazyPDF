@@ -226,19 +226,26 @@ enum PageCleanup {
         }
     }
 
-    // The parent tree keeps the keys of the pages and annotations that stay.
+    // Only the keys of the pages and annotations that go are removed; a form or image that owns a key stays mapped.
     private static func keepKeys(_ document: PdfDocument, _ doomed: [PdfPage]) throws {
         guard let parents = document.dict(document.dict(document.catalog, "StructTreeRoot"), "ParentTree") else { return }
-        var used = Set<Int>()
         let gone = Set(doomed.map { $0.reference.number })
-        for page in document.pages where !gone.contains(page.reference.number) {
-            if let key = document.integer(page.dictionary, "StructParents") { used.insert(key) }
+        let used = pageKeys(document, document.pages.filter { !gone.contains($0.reference.number) })
+        let dropped = pageKeys(document, doomed).subtracting(used)
+        if dropped.isEmpty { return }
+        _ = try PdfNumberTree.write(document, parents, PdfNumberTree.read(document, parents).filter { !dropped.contains($0.key) })
+    }
+
+    private static func pageKeys(_ document: PdfDocument, _ pages: [PdfPage]) -> Set<Int> {
+        var keys = Set<Int>()
+        for page in pages {
+            if let key = document.integer(page.dictionary, "StructParents") { keys.insert(key) }
             guard let annots = document.array(page.dictionary, "Annots") else { continue }
             for item in annots.items {
-                if let annotation = document.resolve(item) as? PdfDictionary, let own = document.integer(annotation, "StructParent") { used.insert(own) }
+                if let annotation = document.resolve(item) as? PdfDictionary, let own = document.integer(annotation, "StructParent") { keys.insert(own) }
             }
         }
-        _ = try PdfNumberTree.write(document, parents, PdfNumberTree.read(document, parents).filter { used.contains($0.key) })
+        return keys
     }
 
     // A bead on a page that goes leaves its article; an article with no bead left goes too.

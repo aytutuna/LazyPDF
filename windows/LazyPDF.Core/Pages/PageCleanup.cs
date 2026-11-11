@@ -228,22 +228,31 @@ internal static class PageCleanup
         }
     }
 
-    // The parent tree keeps the keys of the pages and annotations that stay.
+    // Only the keys of the pages and annotations that go are removed; a form or image that owns a key stays mapped.
     private static void KeepKeys(PdfDocument document, IReadOnlyList<PdfPage> doomed)
     {
         if (document.Dict(document.Dict(document.Catalog, "StructTreeRoot"), "ParentTree") is not { } parents) return;
-        var used = new HashSet<long>();
         var gone = doomed.Select(p => p.Reference.Number).ToHashSet();
-        foreach (var page in document.Pages.Where(p => !gone.Contains(p.Reference.Number)))
+        var used = PageKeys(document, document.Pages.Where(p => !gone.Contains(p.Reference.Number)));
+        var dropped = PageKeys(document, doomed);
+        dropped.ExceptWith(used);
+        if (dropped.Count == 0) return;
+        PdfNumberTree.Write(document, parents, PdfNumberTree.Read(document, parents).Where(e => !dropped.Contains(e.Key)).ToList());
+    }
+
+    private static HashSet<long> PageKeys(PdfDocument document, IEnumerable<PdfPage> pages)
+    {
+        var keys = new HashSet<long>();
+        foreach (var page in pages)
         {
-            if (document.Integer(page.Dictionary, "StructParents") is { } key) used.Add(key);
+            if (document.Integer(page.Dictionary, "StructParents") is { } key) keys.Add(key);
             if (document.Array(page.Dictionary, "Annots") is not { } annots) continue;
             foreach (var item in annots.Items)
             {
-                if (document.Resolve(item) is PdfDictionary annotation && document.Integer(annotation, "StructParent") is { } own) used.Add(own);
+                if (document.Resolve(item) is PdfDictionary annotation && document.Integer(annotation, "StructParent") is { } own) keys.Add(own);
             }
         }
-        PdfNumberTree.Write(document, parents, PdfNumberTree.Read(document, parents).Where(e => used.Contains(e.Key)).ToList());
+        return keys;
     }
 
     // A bead on a page that goes leaves its article; an article with no bead left goes too.
