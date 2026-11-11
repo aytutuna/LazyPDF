@@ -350,7 +350,7 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
             if (double.TryParse(face.Groups[2].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed)) size = parsed;
         }
         // Writing /DA keeps only the three standard families, but /DS still names the one another app used.
-        if (family == "Helvetica" && StyleFamily().Match(a.DefaultStyle ?? "") is { Success: true } named) family = named.Groups[1].Value.Trim().Trim('"');
+        if (family == "Helvetica" && StyleFamily().Match(a.DefaultStyle ?? "") is { Success: true } named) family = FirstFamily(named.Groups[1].Value);
         double[]? color = null;
         if (FillOperator().Matches(da).LastOrDefault() is { } fill)
         {
@@ -359,6 +359,18 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
             if (values.All(double.IsFinite)) color = values;
         }
         return new FreeTextStyle(family, size, font, color, a.Alignment, a.RichText);
+    }
+
+    private static string FirstFamily(string list)
+    {
+        string first = list.Split(',')[0].Trim().Trim('"', '\'').Trim();
+        return first.ToLowerInvariant() switch
+        {
+            "serif" or "times" or "times new roman" => "Times New Roman",
+            "monospace" or "courier" or "courier new" => "Courier New",
+            "sans-serif" or "cursive" or "fantasy" or "helvetica" => "Helvetica",
+            _ => first,
+        };
     }
 
     /// <summary>A colour of gray, RGB or CMYK as RGB; null for anything else, and for none.</summary>

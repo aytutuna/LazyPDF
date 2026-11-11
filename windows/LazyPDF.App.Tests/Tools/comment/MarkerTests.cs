@@ -96,6 +96,20 @@ public sealed class MarkerTests
         Assert.Equal(200, box.Y + box.Height / 2, 0.01);
     }
 
+    [Theory]
+    [InlineData("font-family: 'Calibri', sans-serif", "Calibri")]
+    [InlineData("font-family: 'helvetica'", "Helvetica")]
+    [InlineData("font-family: monospace", "Courier New")]
+    public void TheFirstFontOfAStyleListIsTheFamily(string style, string family)
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(MarkTool.TextBox, 0, Drag, Red, "Look here");
+
+        var read = Marker.TextOf(made with { DefaultStyle = style });
+
+        Assert.Equal(family, read.Family);
+    }
+
     [Fact]
     public void TextTheFontsCannotDrawIsRefusedAndLeavesNoMark()
     {
