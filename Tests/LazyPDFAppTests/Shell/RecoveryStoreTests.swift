@@ -86,4 +86,53 @@ final class RecoveryStoreTests: XCTestCase {
 
         XCTAssertTrue(RecoveryStore(directory: dir.url).list().isEmpty)
     }
+
+    private func age(_ url: URL, hours: Double) throws {
+        try FileManager.default.setAttributes([.modificationDate: Date().addingTimeInterval(-hours * 3600)], ofItemAtPath: url.path)
+    }
+
+    func test_sweepRemovesOldTemporaryFilesOnly() throws {
+        let dir = TempDir(self)
+        dir.file("x.pdf.sb-1234", [1])
+        dir.file("y.pdf.sb-5678", [1])
+        try age(dir.sub("x.pdf.sb-1234"), hours: 2)
+
+        RecoveryStore(directory: dir.url).sweep()
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: dir.sub("x.pdf.sb-1234").path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: dir.sub("y.pdf.sb-5678").path))
+    }
+
+    func test_sweepRemovesALoneFileOnceADayOld() throws {
+        let dir = TempDir(self)
+        let old = UUID().uuidString + ".json"
+        let fresh = UUID().uuidString + ".json"
+        let lonePdf = UUID().uuidString + ".pdf"
+        dir.file(old, [1])
+        dir.file(fresh, [1])
+        dir.file(lonePdf, [1])
+        try age(dir.sub(old), hours: 25)
+        try age(dir.sub(lonePdf), hours: 25)
+        try age(dir.sub(fresh), hours: 2)
+
+        RecoveryStore(directory: dir.url).sweep()
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: dir.sub(old).path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: dir.sub(lonePdf).path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: dir.sub(fresh).path))
+    }
+
+    func test_sweepKeepsACompletePairOfAnyAge() throws {
+        let dir = TempDir(self)
+        let id = UUID().uuidString
+        dir.file(id + ".pdf", [1])
+        dir.file(id + ".json", [1])
+        try age(dir.sub(id + ".pdf"), hours: 500)
+        try age(dir.sub(id + ".json"), hours: 500)
+
+        RecoveryStore(directory: dir.url).sweep()
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: dir.sub(id + ".pdf").path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: dir.sub(id + ".json").path))
+    }
 }

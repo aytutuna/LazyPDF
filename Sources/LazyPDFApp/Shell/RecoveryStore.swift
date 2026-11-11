@@ -117,6 +117,25 @@ public final class RecoveryStore: @unchecked Sendable {
         list().filter { !ProcessCheck.isRunning($0.meta.processId, started: $0.meta.started) }
     }
 
+    /// Removes what a crash or a full disk left: temporary files over an hour old, and a pdf or json whose partner has
+    /// been missing for a day. A complete pair is never touched, whatever its age.
+    public func sweep(now: Date = Date()) {
+        let names = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
+        for url in names {
+            guard let written = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate else { continue }
+            let age = now.timeIntervalSince(written)
+            let ext = url.pathExtension
+            if ext != "pdf" && ext != "json" {
+                if age > 3600 { try? FileManager.default.removeItem(at: url) }
+                continue
+            }
+            let partner = url.deletingPathExtension().appendingPathExtension(ext == "pdf" ? "json" : "pdf")
+            if age > 86400 && !FileManager.default.fileExists(atPath: partner.path) {
+                try? FileManager.default.removeItem(at: url)
+            }
+        }
+    }
+
     private func drain() {
         while true {
             lock.lock()

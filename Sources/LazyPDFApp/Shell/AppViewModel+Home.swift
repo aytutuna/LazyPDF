@@ -145,6 +145,7 @@ extension AppViewModel {
     /// Looks in the recovery folder: anything there is what a crash left, because a document closed on purpose removes its
     /// copy.
     public func checkRecovery() {
+        recovery.sweep()
         let found = recovery.abandoned()
         recoveryOffer = found.isEmpty ? nil : found
         notifyAll()

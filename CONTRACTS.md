@@ -107,7 +107,7 @@ About is reached from the settings and shows the name, version, copyright, "Free
 
 The Home tab leaves the Lazy Scan tile out when Lazy Scan is not installed; the tool tiles that cannot start without an open file stay in place with their reason under the title, and choosing one puts the reason in the status line instead of doing nothing.
 
-`RecoveryStore` keeps each open document as `id.pdf` and `id.json` in `%LOCALAPPDATA%\Lazy PDF\Recovery`, written after every edit on a background worker. Closing or saving on purpose removes the entry. At start, entries whose process is gone are offered back as documents with unsaved changes, and a file that is already open comes back as a copy that needs a name.
+`RecoveryStore` keeps each open document as `id.pdf` and `id.json` in `%LOCALAPPDATA%\Lazy PDF\Recovery`, written after every edit on a background worker. Closing or saving on purpose removes the entry. At start, entries whose process is gone are offered back as documents with unsaved changes, and a file that is already open comes back as a copy that needs a name. Leftovers (temporary files over an hour old, a pdf or json whose partner is missing for a day) are removed at start.
 
 ### The Store package
 
