@@ -176,9 +176,10 @@ public partial class MainWindow
         _ = _vm.OpenFilesAsync(paths);
     }
 
+    // Opening a held file would replace a message on the info bar, so they open once it is dismissed.
     private void ReleaseHeld()
     {
-        if (Modal || _vm.IsBusy || _actionRunning || _held.Count == 0) return;
+        if (Modal || _vm.IsBusy || _actionRunning || _vm.Message is not null || _held.Count == 0) return;
         var paths = _held.ToList();
         _held.Clear();
         _ = _vm.OpenFilesAsync(paths);
