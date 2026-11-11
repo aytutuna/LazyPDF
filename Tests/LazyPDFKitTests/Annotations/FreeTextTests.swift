@@ -41,6 +41,37 @@ final class FreeTextTests: XCTestCase {
         try AnnotationFixtures.reopen(document)
     }
 
+    private final class CjkSource: FontSource {
+        private let lacking: [UInt8]
+        private let covering: [UInt8]?
+
+        init(covering: Bool) throws {
+            lacking = try SyntheticFonts.onlyA()
+            self.covering = covering ? try SyntheticFonts.ttf() : nil
+        }
+
+        func find(_ family: String, _ style: FontStyles) -> FontFile? {
+            if family == "Microsoft YaHei", let covering { return FontFile(covering) }
+            return FontFile(lacking)
+        }
+    }
+
+    func test_textTheFontLacksIsDrawnInAFallbackFont() throws {
+        let (document, writer, page) = try start(try CjkSource(covering: true))
+        let box = try writer.addFreeText(page, PdfRect(100, 600, 400, 640), turkish, font: FreeTextStyle(family: "Arial", size: 14))
+        XCTAssertEqual(try AnnotationFixtures.draw(document, box).text, turkish)
+        XCTAssertEqual(try fonts(document, box).count, 1)
+        XCTAssertEqual(writer.takeUndrawn(), "")
+    }
+
+    func test_charactersNoFontHasAreReportedOnce() throws {
+        let (document, writer, page) = try start(try CjkSource(covering: false))
+        let box = try writer.addFreeText(page, PdfRect(100, 600, 400, 640), "BğBğ", font: FreeTextStyle(family: "Arial", size: 14))
+        XCTAssertEqual(writer.takeUndrawn(), "Bğ")
+        XCTAssertEqual(writer.takeUndrawn(), "")
+        XCTAssertEqual(document.name(try fonts(document, box)[0], "Subtype"), "Type0")
+    }
+
     func test_turkishTextWithoutAFontSourceSaysSo() throws {
         let (_, writer, page) = try start()
         XCTAssertThrowsError(try writer.addFreeText(page, PdfRect(100, 600, 500, 640), turkish)) {

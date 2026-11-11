@@ -38,6 +38,10 @@ public protocol FontSource: AnyObject {
 public final class PdfFontEmbedder {
     private static let winAnsiCodes = buildWinAnsi()
 
+    private static let fallbackFamilies = [
+        "Arial", "Segoe UI", "Microsoft YaHei", "Yu Gothic", "Malgun Gothic", "Arial Unicode MS", "PingFang SC", "Hiragino Sans", "Apple SD Gothic Neo",
+    ]
+
     private let document: PdfDocument
     private let source: FontSource?
 
@@ -62,6 +66,26 @@ public final class PdfFontEmbedder {
         guard let built = EmbeddedFontBuilder.build(file.data, texts, file.collectionIndex).font,
               let measure = TrueTypeFont.tryParse(file.data, file.collectionIndex) else { return nil }
         return PdfDrawFont(try addType0(built), built, measure)
+    }
+
+    /// Like `add`, but for text the family has no glyphs for it tries `fallbackFamilies` and takes the first font that
+    /// covers all of it, else the one that misses least. One font draws the whole text. Only the font chosen is added
+    /// to the document; check `missing` on it.
+    public func addCovering(_ family: String, _ style: FontStyles, _ texts: [String]) throws -> PdfDrawFont? {
+        if let standard = Self.findStandard(family, style), !standard.isSymbolic, texts.allSatisfy(Self.fits) {
+            return try add(family, style, texts)
+        }
+        var best: (built: EmbeddedFont, measure: TrueTypeFont)?
+        var tried: Set<String> = []
+        for name in [family] + Self.fallbackFamilies where tried.insert(name.lowercased()).inserted {
+            guard let file = source?.find(name, style) else { continue }
+            guard let built = EmbeddedFontBuilder.build(file.data, texts, file.collectionIndex).font,
+                  let measure = TrueTypeFont.tryParse(file.data, file.collectionIndex) else { continue }
+            if best == nil || built.missing.count < best!.built.missing.count { best = (built, measure) }
+            if built.missing.isEmpty { break }
+        }
+        guard let chosen = best else { return nil }
+        return PdfDrawFont(try addType0(chosen.built), chosen.built, chosen.measure)
     }
 
     private static func findStandard(_ family: String, _ style: FontStyles) -> Standard14? {

@@ -27,6 +27,10 @@ public struct InvalidOperationException: Error, CustomStringConvertible {
 }
 
 public enum AnnotationText {
+    public static func undrawn(_ characters: String) -> String {
+        L10n.t("No installed font has these characters, so they are left blank: {0}", characters)
+    }
+
     public static var noFont: String { L10n.t("No font can draw this text. Choose another font.") }
 
     public static func kindName(_ type: AnnotationType) -> String {

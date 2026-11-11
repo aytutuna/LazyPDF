@@ -913,6 +913,7 @@
 "No font has {0}." = "Hiçbir yazı tipinde {0} yok.";
 "No font on this computer can draw the text of {0}." = "Bu bilgisayardaki hiçbir yazı tipi {0} metnini çizemiyor.";
 "No font on this computer can draw the text. Remove the letters it cannot show." = "Bu bilgisayardaki hiçbir yazı tipi metni çizemiyor. Gösteremediği harfleri kaldırın.";
+"No installed font has these characters, so they are left blank: {0}" = "Yüklü hiçbir yazı tipinde bu karakterler yok, bu yüzden boş bırakıldı: {0}";
 "No page could be tagged. Scans need text recognition first. Pages that share content cannot be tagged." = "Hiçbir sayfa etiketlenemedi. Taramalar için önce metin tanıma gerekir. İçerik paylaşan sayfalar etiketlenemez.";
 "No page has a text layer from here." = "Hiçbir sayfada buradan eklenmiş metin katmanı yok.";
 "No page in this file matches." = "Bu dosyada uyan sayfa yok.";

@@ -140,9 +140,10 @@ extension AppearanceBuilder {
     private func fontFor(_ format: TextFormat, _ texts: [String], _ cache: inout [FontKey: PdfDrawFont]) throws -> PdfDrawFont {
         let key = FontKey(family: format.family, style: format.style.rawValue)
         if let known = cache[key] { return known }
-        var font = try embedder.add(format.family, format.style, texts)
+        var font = try embedder.addCovering(format.family, format.style, texts)
         if font == nil { font = try embedder.add("Helvetica", format.style, texts) }
         guard let found = font else { throw InvalidOperationException(AnnotationText.noFont) }
+        undrawn.formUnion(found.missing)
         cache[key] = found
         return found
     }
