@@ -36,10 +36,10 @@ public partial class FindBar : UserControl
     public void Open(string? selection = null)
     {
         // The Search panel shares the search, so show what it is running.
-        if (_search is { Query.Length: > 0 } running && running.Query != Query.Text)
+        if (_search is { Query.Length: > 0 } running && running.Query != Query.Text && !_typing.IsEnabled)
         {
             Query.Text = running.Query;
-            _typing.Stop();
+            (CaseToggle.IsChecked, WordToggle.IsChecked, RegexToggle.IsChecked) = (running.Options.MatchCase, running.Options.WholeWord, running.Options.Regex);
         }
         if (selection is { Length: > 0 } && !selection.Contains('\n') && selection != Query.Text) Query.Text = selection;
         // Closing the bar cleared the search but left the text, so run it again for Enter and F3.
