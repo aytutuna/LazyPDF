@@ -80,7 +80,7 @@ internal sealed partial class PageSurface
         }
         else if (_failed.Any(key => key.Page == page && !key.IsPreview && key.Scale == ppp))
         {
-            DrawFailure(dc, pageRect, Loc.T("Part of this page could not be drawn sharply."), true);
+            DrawFailure(dc, visible, Loc.T("Part of this page could not be drawn sharply."), true);
         }
     }
 
