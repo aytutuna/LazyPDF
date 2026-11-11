@@ -12,6 +12,8 @@ namespace LazyPDF.App.Panels.Comments;
 
 public partial class CommentsSidePanel
 {
+    private int? _detailNumber;
+
     private void Comments_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!_loading) ShowDetail();
@@ -22,11 +24,15 @@ public partial class CommentsSidePanel
         if (Comments.SelectedItem is not CommentRow row)
         {
             Detail.Visibility = Visibility.Collapsed;
+            _detailNumber = null;
             return;
         }
         Detail.Visibility = Visibility.Visible;
         // An annotation written straight into the page's list has no object number to answer.
-        Detail.IsEnabled = _allowed && row.Comment.Annotation.Reference is not null;
+        Answering.IsEnabled = _allowed && row.Comment.Annotation.Reference is not null;
+        int? number = row.Comment.Annotation.Reference?.Number;
+        if (number is null || number != _detailNumber) TextScroll.ScrollToTop();
+        _detailNumber = number;
         FullText.Text = row.Text;
         FullText.Visibility = row.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         Replies.ItemsSource = row.Comment.Replies.Where(r => r.State is null && !string.IsNullOrWhiteSpace(r.Contents))

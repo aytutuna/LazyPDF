@@ -63,7 +63,7 @@
 
         <Border x:Name="Detail" Grid.Row="2" Style="{StaticResource CardStyle}" Margin="8,0,8,8" Visibility="Collapsed">
             <StackPanel>
-                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="160">
+                <ScrollViewer x:Name="TextScroll" VerticalScrollBarVisibility="Auto" MaxHeight="160">
                     <StackPanel>
                         <TextBox x:Name="FullText" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" IsReadOnly="True"
                                  AutomationProperties.Name="{loc:T Comment}" />
@@ -76,12 +76,14 @@
                         </ItemsControl>
                     </StackPanel>
                 </ScrollViewer>
-                <TextBlock Text="{loc:T Status}" Style="{StaticResource FieldLabelText}" />
-                <ComboBox x:Name="StatusBox" DisplayMemberPath="Name" AutomationProperties.Name="{loc:T Status}" SelectionChanged="Status_Changed" />
-                <TextBox x:Name="ReplyBox" Margin="0,8,0,0" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="72" VerticalScrollBarVisibility="Auto"
-                         AutomationProperties.Name="{loc:T Reply}" TextChanged="ReplyBox_TextChanged" />
-                <Button x:Name="ReplyButton" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Reply}" Margin="0,6,0,0" HorizontalAlignment="Right" IsEnabled="False"
-                        AutomationProperties.Name="{loc:T Send reply}" Click="Reply_Click" />
+                <StackPanel x:Name="Answering">
+                    <TextBlock Text="{loc:T Status}" Style="{StaticResource FieldLabelText}" />
+                    <ComboBox x:Name="StatusBox" DisplayMemberPath="Name" AutomationProperties.Name="{loc:T Status}" SelectionChanged="Status_Changed" />
+                    <TextBox x:Name="ReplyBox" Margin="0,8,0,0" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="72" VerticalScrollBarVisibility="Auto"
+                             AutomationProperties.Name="{loc:T Reply}" TextChanged="ReplyBox_TextChanged" />
+                    <Button x:Name="ReplyButton" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Reply}" Margin="0,6,0,0" HorizontalAlignment="Right" IsEnabled="False"
+                            AutomationProperties.Name="{loc:T Send reply}" Click="Reply_Click" />
+                </StackPanel>
             </StackPanel>
         </Border>
     </Grid>
