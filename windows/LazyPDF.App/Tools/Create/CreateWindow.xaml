@@ -14,9 +14,9 @@
             <create:CreatePanel x:Name="Panel" />
         </ScrollViewer>
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="12">
-            <Button x:Name="CreateButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Create}" MinWidth="88" IsDefault="True" Margin="0,0,8,0"
+            <Button x:Name="CreateButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T C_reate}" MinWidth="88" IsDefault="True" Margin="0,0,8,0"
                     AutomationProperties.Name="{loc:T Create}" Click="CreateButton_Click" />
-            <Button Content="{loc:T Cancel}" MinWidth="88" IsCancel="True" AutomationProperties.Name="{loc:T Cancel}" />
+            <Button Content="{loc:T _Cancel}" MinWidth="88" IsCancel="True" AutomationProperties.Name="{loc:T Cancel}" />
         </StackPanel>
     </Grid>
 </Window>

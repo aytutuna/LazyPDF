@@ -139,9 +139,8 @@ public partial class MainWindow
         if (tab.PendingMeasurements > 0) parts.Add(Loc.Plural(tab.PendingMeasurements, "{0} measurement is not added to the page yet.", "{0} measurements are not added to the page yet."));
         CloseBody.Text = string.Join(" ", parts);
         CloseSaveButton.Visibility = marksOnly ? Visibility.Collapsed : Visibility.Visible;
-        string discard = marksOnly ? Loc.T("Close") : Loc.T("Don't save");
-        CloseDiscardButton.Content = discard;
-        AutomationProperties.SetName(CloseDiscardButton, discard);
+        CloseDiscardButton.Content = marksOnly ? Loc.T("C_lose") : Loc.T("Do_n't save");
+        AutomationProperties.SetName(CloseDiscardButton, marksOnly ? Loc.T("Close") : Loc.T("Don't save"));
         if (!ReferenceEquals(_shownQuestion, tab)) (marksOnly ? CloseCancelButton : CloseSaveButton).Focus();
         _shownQuestion = tab;
     }

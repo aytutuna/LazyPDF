@@ -1510,6 +1510,9 @@
   "Open": {
     "tr": "Aç"
   },
+  "_Open": {
+    "tr": "_Aç"
+  },
   "Open a PDF, a picture or a text file.": {
     "tr": "Bir PDF, resim ya da metin dosyası açın."
   },
@@ -1842,6 +1845,9 @@
   "Close": {
     "tr": "Kapat"
   },
+  "C_lose": {
+    "tr": "Kap_at"
+  },
   "Unsaved changes": {
     "tr": "Kaydedilmemiş değişiklikler"
   },
@@ -1859,6 +1865,9 @@
   },
   "Save": {
     "tr": "Kaydet"
+  },
+  "_Save": {
+    "tr": "_Kaydet"
   },
   "More ways to save": {
     "tr": "Diğer kaydetme yolları"
@@ -1926,6 +1935,9 @@
   "Cancel": {
     "tr": "İptal"
   },
+  "_Cancel": {
+    "tr": "İ_ptal"
+  },
   "Password": {
     "tr": "Parola"
   },
@@ -1935,14 +1947,23 @@
   "Don't save": {
     "tr": "Kaydetme"
   },
+  "Do_n't save": {
+    "tr": "Kaydet_me"
+  },
   "Your changes are lost if you do not save them.": {
     "tr": "Kaydetmezseniz değişiklikleriniz kaybolur."
   },
   "Restore": {
     "tr": "Geri yükle"
   },
+  "_Restore": {
+    "tr": "_Geri yükle"
+  },
   "Discard": {
     "tr": "Sil"
+  },
+  "_Discard": {
+    "tr": "_Sil"
   },
   "Lazy PDF closed before these were saved. Restore them to carry on where you were.": {
     "tr": "Lazy PDF bunlar kaydedilmeden kapandı. Kaldığınız yerden devam etmek için geri yükleyin."
@@ -3330,6 +3351,9 @@
   },
   "Create": {
     "tr": "Oluştur"
+  },
+  "C_reate": {
+    "tr": "_Oluştur"
   },
   "The clipboard holds text.": {
     "tr": "Panoda metin var."

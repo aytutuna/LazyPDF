@@ -23,9 +23,9 @@
         </StackPanel>
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="12">
             <Button x:Name="RunButton" Style="{StaticResource AccentButtonStyle}" MinWidth="88" Margin="0,0,8,0" Click="RunButton_Click" />
-            <Button x:Name="CancelButton" Content="{loc:T Cancel}" MinWidth="88" Margin="0,0,8,0" Visibility="Collapsed"
+            <Button x:Name="CancelButton" Content="{loc:T _Cancel}" MinWidth="88" Margin="0,0,8,0" Visibility="Collapsed"
                     AutomationProperties.Name="{loc:T Cancel}" Click="CancelButton_Click" />
-            <Button Content="{loc:T Close}" MinWidth="88" IsCancel="True" AutomationProperties.Name="{loc:T Close}" Click="CloseButton_Click" />
+            <Button Content="{loc:T C_lose}" MinWidth="88" IsCancel="True" AutomationProperties.Name="{loc:T Close}" Click="CloseButton_Click" />
         </StackPanel>
     </Grid>
 </Window>

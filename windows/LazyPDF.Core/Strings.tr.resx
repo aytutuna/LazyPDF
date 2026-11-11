@@ -763,6 +763,12 @@
   <data name="CSV files" xml:space="preserve">
     <value>CSV dosyaları</value>
   </data>
+  <data name="C_lose" xml:space="preserve">
+    <value>Kap_at</value>
+  </data>
+  <data name="C_reate" xml:space="preserve">
+    <value>_Oluştur</value>
+  </data>
   <data name="Callout" xml:space="preserve">
     <value>Balon</value>
   </data>
@@ -1581,6 +1587,9 @@
   </data>
   <data name="Do the same to every file in a folder." xml:space="preserve">
     <value>Bir klasördeki her dosyaya aynısını yapın.</value>
+  </data>
+  <data name="Do_n't save" xml:space="preserve">
+    <value>Kaydet_me</value>
   </data>
   <data name="Document" xml:space="preserve">
     <value>Belge</value>
@@ -7110,6 +7119,21 @@
   </data>
   <data name="Zoom presets" xml:space="preserve">
     <value>Yakınlaştırma ön ayarları</value>
+  </data>
+  <data name="_Cancel" xml:space="preserve">
+    <value>İ_ptal</value>
+  </data>
+  <data name="_Discard" xml:space="preserve">
+    <value>_Sil</value>
+  </data>
+  <data name="_Open" xml:space="preserve">
+    <value>_Aç</value>
+  </data>
+  <data name="_Restore" xml:space="preserve">
+    <value>_Geri yükle</value>
+  </data>
+  <data name="_Save" xml:space="preserve">
+    <value>_Kaydet</value>
   </data>
   <data name="an attached file (object {0})" xml:space="preserve">
     <value>ekli bir dosya (nesne {0})</value>
