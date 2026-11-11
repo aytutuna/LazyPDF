@@ -104,6 +104,24 @@ public class ChainExtensionRulesTests
     }
 
     [Fact]
+    public void A_signer_in_the_anchors_keeps_its_full_chain_when_a_root_is_trusted_too()
+    {
+        var result = CertificateTrust.Evaluate(Pki.Leaf, Pki.Chain, Pki.Signing, new VerifyOptions { TrustAnchors = [Pki.Root, Pki.Leaf] });
+
+        Assert.True(result.Trusted);
+        Assert.True(result.Chain.Count > 1);
+    }
+
+    [Fact]
+    public void A_signer_in_the_anchors_the_system_store_does_not_know_is_trusted_by_itself()
+    {
+        var result = CertificateTrust.Evaluate(Pki.Leaf, [], Pki.Signing, new VerifyOptions { TrustAnchors = [Pki.Leaf], UseSystemStore = true });
+
+        Assert.True(result.Trusted);
+        Assert.Single(result.Chain);
+    }
+
+    [Fact]
     public void A_signer_in_the_anchors_still_needs_a_key_usage_for_signing()
     {
         using var encipher = Pki.Issued("Encipher", X509KeyUsageFlags.KeyEncipherment);

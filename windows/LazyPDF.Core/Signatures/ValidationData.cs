@@ -130,15 +130,17 @@ internal static class CertificateTrust
 
     private static TrustResult Settle(X509Certificate2 certificate, List<X509Certificate2> certificates, DateTimeOffset? time, VerifyOptions options)
     {
-        // X509Chain keeps going past an anchor that is not self-signed, so a signer the caller trusts by itself is settled here.
-        var at = time ?? DateTimeOffset.UtcNow;
-        var result = options.TrustAnchors.Any(a => a.RawData.AsSpan().SequenceEqual(certificate.RawData))
-            ? new TrustResult(true, certificate.NotBefore <= at && at <= certificate.NotAfter, [certificate])
-            : Build(certificate, certificates, time, options.TrustAnchors, system: false);
+        var result = Build(certificate, certificates, time, options.TrustAnchors, system: false);
         if (!result.Trusted && options.UseSystemStore)
         {
             var viaSystem = Build(certificate, [.. certificates, .. options.TrustAnchors], time, [], system: true);
             result = viaSystem.Trusted ? viaSystem : result with { Partial = result.Partial || viaSystem.Partial };
+        }
+        // X509Chain keeps going past an anchor that is not self-signed, so a signer the caller trusts by itself is settled here, last.
+        if (!result.Trusted && options.TrustAnchors.Any(a => a.RawData.AsSpan().SequenceEqual(certificate.RawData)))
+        {
+            var at = time ?? DateTimeOffset.UtcNow;
+            return new TrustResult(true, certificate.NotBefore <= at && at <= certificate.NotAfter, [certificate]);
         }
         return result;
     }
