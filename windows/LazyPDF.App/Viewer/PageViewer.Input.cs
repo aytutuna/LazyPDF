@@ -106,6 +106,28 @@ public partial class PageViewer
         Surface.ManipulationDelta += Surface_ManipulationDelta;
     }
 
+    private void Surface_ContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
+    {
+        if (_tab is null || _tool is not null || _drag != Drag.None)
+        {
+            e.Handled = true;
+            return;
+        }
+        CopyItem.IsEnabled = HasSelection && CanCopy;
+        BackItem.IsEnabled = CanGoBack;
+        ForwardItem.IsEnabled = CanGoForward;
+    }
+
+    private void CopyItem_Click(object sender, RoutedEventArgs e) => _ = CopySelectionAsync();
+
+    private void SelectAllItem_Click(object sender, RoutedEventArgs e) => SelectAll();
+
+    private void BackItem_Click(object sender, RoutedEventArgs e) => GoBack();
+
+    private void ForwardItem_Click(object sender, RoutedEventArgs e) => GoForward();
+
+    private void FindItem_Click(object sender, RoutedEventArgs e) => ShowFind();
+
     private PagePointer Pointer(PagePoint hit, Point surfacePoint, int clicks, bool pressed) =>
         new(hit.Page, hit.Point, Surface.TranslatePoint(surfacePoint, this), pressed, clicks, Keyboard.Modifiers);
 

@@ -90,7 +90,19 @@
         <Grid Grid.Row="1">
             <ScrollViewer x:Name="Scroller" CanContentScroll="True" PanningMode="None" Focusable="False" IsTabStop="False" AutomationProperties.Name="{loc:T Pages}"
                           HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                <v:PageSurface x:Name="Surface" AutomationProperties.Name="{loc:T Pages}" />
+                <v:PageSurface x:Name="Surface" AutomationProperties.Name="{loc:T Pages}" ContextMenuOpening="Surface_ContextMenuOpening">
+                    <v:PageSurface.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem x:Name="CopyItem" Header="{loc:T Copy}" Click="CopyItem_Click" />
+                            <MenuItem Header="{loc:T Select all}" Click="SelectAllItem_Click" />
+                            <Separator />
+                            <MenuItem x:Name="BackItem" Header="{loc:T Back}" Click="BackItem_Click" />
+                            <MenuItem x:Name="ForwardItem" Header="{loc:T Forward}" Click="ForwardItem_Click" />
+                            <Separator />
+                            <MenuItem Header="{loc:T Search (Ctrl+F)}" Click="FindItem_Click" />
+                        </ContextMenu>
+                    </v:PageSurface.ContextMenu>
+                </v:PageSurface>
             </ScrollViewer>
 
             <v:FindBar x:Name="Find" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="12,8,24,0" />
