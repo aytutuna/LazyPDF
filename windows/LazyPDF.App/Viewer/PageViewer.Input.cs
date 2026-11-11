@@ -218,14 +218,33 @@ public partial class PageViewer
         if (_tool is not null)
         {
             Surface.Cursor = _tool.Cursor;
+            Surface.ToolTip = null;
             if (Surface.Hit(at) is { } over && Surface.PageMatrix(over.Page) is not null)
                 _tool.Move(Pointer(new PagePoint(over.Page, over.Point), at, 0, false));
             return;
         }
         var hit = Surface.Hit(at);
-        if (hit is { } h && LinkAt(h.Page, h.Point) is not null) Surface.Cursor = Cursors.Hand;
+        var link = hit is { } h ? LinkAt(h.Page, h.Point) : null;
+        var tip = link is null ? null : LinkTip(link);
+        if (!Equals(Surface.ToolTip, tip)) Surface.ToolTip = tip;
+        if (link is not null) Surface.Cursor = Cursors.Hand;
         else if (_mode == PointerMode.Hand) Surface.Cursor = Cursors.Hand;
         else Surface.Cursor = hit is { } t && IsOverText(t.Page, t.Point) ? Cursors.IBeam : null;
+    }
+
+    private string? LinkTip(PdfLink link)
+    {
+        if (_tab is null) return null;
+        if (link.Action is UriAction uri)
+        {
+            var address = uri.Uri.Trim();
+            if (!Uri.TryCreate(address, UriKind.Absolute, out _) && address.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+                address = "https://" + address;
+            return address;
+        }
+        var destination = link.Action is GoToAction go ? go.Destination : link.Action is null ? link.Destination : null;
+        if (destination is null || PdfDestinations.Locate(_tab.Document, destination) is not { } place) return null;
+        return Loc.T("Go to page {0}", PageLabel(place.PageIndex));
     }
 
     private PdfLink? LinkAt(int page, Point point)
