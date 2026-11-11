@@ -53,6 +53,7 @@ public partial class HomeView : UserControl
     private readonly ObservableCollection<RecentCard> _cards = [];
     private IReadOnlyList<HomeTile> _tiles = [];
     private double _width;
+    private int _generation;
 
     public HomeView()
     {
@@ -88,23 +89,45 @@ public partial class HomeView : UserControl
             {
                 var card = new RecentCard(item);
                 _cards.Add(card);
-                _ = LoadThumbnailAsync(card);
             }
+            _ = RecheckAsync();
         }
         RecentHeader.Visibility = _cards.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         NoRecent.Visibility = _cards.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
+    /// <summary>Looks at the cards one by one, so a share that does not answer holds at most one thread.</summary>
+    public async Task RecheckAsync()
+    {
+        int generation = ++_generation;
+        var slow = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var card in _cards.ToList())
+        {
+            string path = card.Item.Path;
+            string root = "";
+            try { root = Path.GetPathRoot(path) ?? ""; }
+            catch { }
+            if (slow.Contains(root)) continue;
+            var check = Task.Run(() =>
+            {
+                try { return File.Exists(path); }
+                catch { return true; }
+            });
+            if (await Task.WhenAny(check, Task.Delay(TimeSpan.FromSeconds(2))) != check)
+            {
+                slow.Add(root);
+                continue;
+            }
+            if (generation != _generation) return;
+            bool exists = await check;
+            card.Exists = exists;
+            if (exists && card.Thumbnail is null) _ = LoadThumbnailAsync(card);
+        }
+    }
+
     private async Task LoadThumbnailAsync(RecentCard card)
     {
         string path = card.Item.Path;
-        bool exists = await Task.Run(() =>
-        {
-            try { return File.Exists(path); }
-            catch { return true; }
-        });
-        card.Exists = exists;
-        if (!exists) return;
         if (Thumbnails is null || await Thumbnails.GetAsync(path) is not { } png || !_cards.Contains(card)) return;
         using var stream = new MemoryStream(png);
         var image = new BitmapImage();

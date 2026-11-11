@@ -148,7 +148,11 @@ public partial class MainWindow : Window
             Workspace.Visibility = home ? Visibility.Collapsed : Visibility.Visible;
             ToolStrip.Visibility = home ? Visibility.Collapsed : Visibility.Visible;
             if (home) Home.Show(_vm.Tiles, _vm.Recent);
-            if (home && !_homeShown) Dispatcher.BeginInvoke(FocusHome, System.Windows.Threading.DispatcherPriority.Loaded);
+            if (home && !_homeShown)
+            {
+                _ = Home.RecheckAsync();
+                Dispatcher.BeginInvoke(FocusHome, System.Windows.Threading.DispatcherPriority.Loaded);
+            }
             _homeShown = home;
             ViewerHost.Content = _vm.HeldStage ?? _viewer.View;
             if (!ReferenceEquals(_shownTab, _vm.ActiveDocument))

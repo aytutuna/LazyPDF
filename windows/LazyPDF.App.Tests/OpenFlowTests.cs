@@ -256,10 +256,23 @@ public sealed class OpenFlowTests
         await f.Vm.OpenAsync(path.Replace("kept", "kept2"));
         f.Vm.Close(f.Vm.ActiveDocument!);
         Assert.Equal(["kept.pdf"], f.Vm.Recent.Select(r => r.Name));
-        Assert.Equal("kept.pdf", f.Vm.Recent[0].Name);
+        Assert.Equal(path, f.Vm.Recent[0].Path);
 
         await f.Vm.OpenAsync(path);
         Assert.Empty(f.Vm.Recent);
+    }
+
+    [Fact]
+    public void ARecentCardForAMissingFileSaysSo()
+    {
+        var card = new RecentCard(new RecentItem(Path.Combine(Path.GetTempPath(), "gone.pdf"), "", "", "", false));
+        var changed = new List<string?>();
+        card.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+        card.Exists = false;
+
+        Assert.Contains(nameof(RecentCard.Caption), changed);
+        Assert.Equal(Loc.T("Not found"), card.Caption);
     }
 
     [Fact]
