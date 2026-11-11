@@ -135,6 +135,7 @@ public partial class RedactPanel
         return () =>
         {
             if (pages is not null && pages.SequenceEqual(state.Pages ?? [])) state.Marks.Add(items);
+            else Host!.ShowNotice(Loc.T("Marks removed"), Loc.T("The pages changed, so the marks no longer fit. Mark them again."));
         };
     }
 }

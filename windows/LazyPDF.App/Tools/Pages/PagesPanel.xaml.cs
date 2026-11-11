@@ -41,6 +41,7 @@ public partial class PagesPanel : ToolPanel
     protected override void OnAttach()
     {
         Tab!.Changed += Tab_Changed;
+        _pages = PageNumbers();
         _dpr = VisualTreeHelper.GetDpi(this).DpiScaleX;
         Build();
         Arm();
@@ -80,9 +81,15 @@ public partial class PagesPanel : ToolPanel
         var select = _reselect;
         _reselect = null;
         Build(select);
-        // The box holds a page index, which an edit moves.
-        _crop?.Clear();
+        // The box holds a page index, which an edit to the page list moves.
+        int[] pages = PageNumbers();
+        if (!pages.SequenceEqual(_pages)) _crop?.Clear();
+        _pages = pages;
     }
+
+    private int[] _pages = [];
+
+    private int[] PageNumbers() => [.. Tab!.Document.Pages.Select(p => p.Reference.Number)];
 
     private void Build(IEnumerable<int>? select = null)
     {
