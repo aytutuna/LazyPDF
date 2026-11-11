@@ -51,8 +51,26 @@ public partial class RedactPanel
         host.SetStatus(Added(added));
     }
 
-    private void QueryBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) =>
+    private void QueryBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
         FindWordsButton.IsEnabled = !string.IsNullOrWhiteSpace(QueryBox.Text);
+        ShowQueryNote(null);
+    }
+
+    private void RegexBox_Changed(object sender, RoutedEventArgs e)
+    {
+        bool regex = RegexBox.IsChecked == true;
+        WholeWordBox.IsEnabled = !regex;
+        QueryLabel.Text = regex ? Loc.T("Patterns, one per line") : Loc.T("Words or phrases, one per line");
+        RegexNote.Visibility = regex ? Visibility.Visible : Visibility.Collapsed;
+        ShowQueryNote(null);
+    }
+
+    private void ShowQueryNote(string? text)
+    {
+        QueryNote.Text = text;
+        QueryNote.Visibility = text is null ? Visibility.Collapsed : Visibility.Visible;
+    }
 
     private void QueryBox_PreviewKeyDown(object sender, KeyEventArgs e)
     {
@@ -63,13 +81,25 @@ public partial class RedactPanel
 
     private async void FindWords_Click(object sender, RoutedEventArgs e)
     {
-        var terms = QueryBox.Text.Split(['\r', '\n'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Distinct(StringComparer.Ordinal).ToList();
+        bool regex = RegexBox.IsChecked == true;
+        var terms = QueryBox.Text.Split(['\r', '\n'], regex ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Distinct(StringComparer.Ordinal).ToList();
         if (terms.Count > 200)
         {
             Host!.ShowProblem(new(Loc.T("Too many lines"), Loc.T("Use 200 or fewer words or phrases.")));
             return;
         }
         bool matchCase = MatchCaseBox.IsChecked == true, whole = WholeWordBox.IsChecked == true;
+        if (regex)
+        {
+            if (RedactJob.CheckPatterns(QueryBox.Text.ReplaceLineEndings("\n").Split('\n')) is { } problem)
+            {
+                ShowQueryNote(problem);
+                QueryBox.Focus();
+                return;
+            }
+            await FindAsync((document, token) => RedactJob.FindPatterns(document, terms, matchCase, token));
+            return;
+        }
         await FindAsync((document, token) => RedactJob.Find(document, terms, matchCase, whole, token));
     }
 

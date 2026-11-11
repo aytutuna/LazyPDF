@@ -1,4 +1,5 @@
 using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
 using LazyPDF.App.Documents;
 using LazyPDF.Core;
 
@@ -54,6 +55,32 @@ public static class RedactJob
     {
         var cache = new TextCache(document);
         return Gather(document, cache, RedactionFinder.FindWords(cache, terms, wholeWord, matchCase, cancel));
+    }
+
+    public static Found FindPatterns(PdfDocument document, IReadOnlyList<string> patterns, bool matchCase, CancellationToken cancel)
+    {
+        var cache = new TextCache(document);
+        var matches = patterns.SelectMany(p => RedactionFinder.FindRegex(cache, p, matchCase, cancel)).ToList();
+        return Gather(document, cache, matches);
+    }
+
+    /// <summary>What is wrong with the first bad pattern among the lines of the box, or null when all can run. Blank lines are skipped but counted.</summary>
+    public static string? CheckPatterns(IReadOnlyList<string> lines)
+    {
+        for (int i = 0; i < lines.Count; i++)
+        {
+            if (string.IsNullOrWhiteSpace(lines[i])) continue;
+            try
+            {
+                if (new Regex(lines[i], RegexOptions.CultureInvariant).IsMatch(""))
+                    return Loc.T("Line {0} would match everywhere. Make it more specific.", i + 1);
+            }
+            catch (RegexParseException error)
+            {
+                return Loc.T("Line {0} is not a valid pattern. The problem is at character {1}.", i + 1, error.Offset);
+            }
+        }
+        return null;
     }
 
     /// <summary>True when the file lets this opener read it but not change it, so that Core would refuse to write a copy.</summary>

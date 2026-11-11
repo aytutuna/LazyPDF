@@ -78,6 +78,36 @@ public sealed class RedactJobTests
     }
 
     [Fact]
+    public void PatternsMarkWhatTheyMatch()
+    {
+        var pdf = PdfFromText.Create("code 1234 and 56 and Beta", new FakeFonts()).Bytes;
+        using var document = RedactJob.Open(pdf, null, null);
+
+        var digits = RedactJob.FindPatterns(document, [@"\d{4}"], false, CancellationToken.None).Items;
+        var wrongCase = RedactJob.FindPatterns(document, ["beta"], true, CancellationToken.None).Items;
+        var anyCase = RedactJob.FindPatterns(document, ["beta"], false, CancellationToken.None).Items;
+
+        Assert.Equal(["1234"], digits.Select(m => m.Label));
+        Assert.Empty(wrongCase);
+        Assert.Single(anyCase);
+    }
+
+    [Fact]
+    public void ABadPatternIsNamedByLineAndPlace()
+    {
+        Assert.Equal("Line 2 is not a valid pattern. The problem is at character 1.", RedactJob.CheckPatterns(["a", "(", "b"]));
+    }
+
+    [Fact]
+    public void APatternThatMatchesNothingInParticularIsRefused()
+    {
+        Assert.Equal("Line 1 would match everywhere. Make it more specific.", RedactJob.CheckPatterns(["a*"]));
+    }
+
+    [Fact]
+    public void GoodPatternsAndBlankLinesPass() => Assert.Null(RedactJob.CheckPatterns([@"\d{3}-\d{4}", "", "  ", "ab+"]));
+
+    [Fact]
     public void ALongLabelIsClippedToOneLine()
     {
         string label = RedactJob.Clip("one\ntwo   three " + new string('x', 80));

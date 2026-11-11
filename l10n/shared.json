@@ -5693,6 +5693,18 @@
   "Whole word": {
     "tr": "Tam sözcük"
   },
+  "Patterns, one per line": {
+    "tr": "Desenler, her satıra bir tane"
+  },
+  "Uses .NET patterns, for example \\d{3}-\\d{4}.": {
+    "tr": ".NET desenleri kullanılır, örneğin \\d{3}-\\d{4}."
+  },
+  "Line {0} is not a valid pattern. The problem is at character {1}.": {
+    "tr": "{0}. satır geçerli bir desen değil. Sorun {1}. karakterde."
+  },
+  "Line {0} would match everywhere. Make it more specific.": {
+    "tr": "{0}. satır her yerde eşleşir. Daha belirgin yapın."
+  },
   "Mark every match": {
     "tr": "Tüm eşleşmeleri işaretle"
   },

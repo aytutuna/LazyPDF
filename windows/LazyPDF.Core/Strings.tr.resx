@@ -2746,6 +2746,12 @@
   <data name="Line width in points" xml:space="preserve">
     <value>Punto olarak çizgi kalınlığı</value>
   </data>
+  <data name="Line {0} is not a valid pattern. The problem is at character {1}." xml:space="preserve">
+    <value>{0}. satır geçerli bir desen değil. Sorun {1}. karakterde.</value>
+  </data>
+  <data name="Line {0} would match everywhere. Make it more specific." xml:space="preserve">
+    <value>{0}. satır her yerde eşleşir. Daha belirgin yapın.</value>
+  </data>
   <data name="Lines" xml:space="preserve">
     <value>Satırlar</value>
   </data>
@@ -3864,6 +3870,9 @@
   </data>
   <data name="Paste pages" xml:space="preserve">
     <value>Sayfaları yapıştır</value>
+  </data>
+  <data name="Patterns, one per line" xml:space="preserve">
+    <value>Desenler, her satıra bir tane</value>
   </data>
   <data name="Pencil" xml:space="preserve">
     <value>Kalem</value>
@@ -6603,6 +6612,9 @@
   </data>
   <data name="Use {0}, {1} and {2}. A name that is taken gets a number." xml:space="preserve">
     <value>{0}, {1} ve {2} kullanın. Alınmış bir ada numara eklenir.</value>
+  </data>
+  <data name="Uses .NET patterns, for example \d{3}-\d{4}." xml:space="preserve">
+    <value>.NET desenleri kullanılır, örneğin \d{3}-\d{4}.</value>
   </data>
   <data name="Valid from {0} to {1}" xml:space="preserve">
     <value>{0} ile {1} arasında geçerli</value>
