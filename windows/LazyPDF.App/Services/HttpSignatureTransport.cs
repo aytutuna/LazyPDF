@@ -16,10 +16,10 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
     private const int MaxResponseBytes = 8 << 20;
     private const int MaxRequests = 200;
     private const int MaxRedirects = 5;
+    private static readonly HttpRequestOptionsKey<bool> Refused = new("LazyPDF.Refused");
 
     private readonly HttpClient _client;
     private int _requests;
-    private bool _refused;
 
     public HttpSignatureTransport(HttpMessageHandler? handler = null)
     {
@@ -47,7 +47,6 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
     private byte[]? Send(HttpMethod method, string url, HttpContent? content)
     {
         LastFailure = null;
-        _refused = false;
         if (!Uri.TryCreate(url, UriKind.Absolute, out var address))
             return NotAWebAddress();
         if (IsOffline)
@@ -58,6 +57,7 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
         // The timeout has to cover reading the body too, which HttpClient.Timeout does not once headers are read.
         using var limit = CancellationTokenSource.CreateLinkedTokenSource(Cancel);
         limit.CancelAfter(TimeSpan.FromSeconds(20));
+        HttpRequestMessage? sent = null;
         try
         {
             for (int hop = 0; ; hop++)
@@ -75,6 +75,7 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
                     return null;
                 }
                 using var request = new HttpRequestMessage(method, address) { Content = content };
+                sent = request;
                 using var response = _client.Send(request, HttpCompletionOption.ResponseHeadersRead, limit.Token);
                 // Redirects are followed here so every address gets the checks above. Only a fetch is repeated.
                 if (response.Headers.Location is { } next && (int)response.StatusCode is >= 300 and < 400 && method == HttpMethod.Get && hop < MaxRedirects)
@@ -105,7 +106,7 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
         }
         catch (Exception e) when (e is HttpRequestException or OperationCanceledException or IOException or ObjectDisposedException)
         {
-            LastFailure = _refused ? Loc.T("The address points to this computer, so it was not used.")
+            LastFailure = sent is not null && sent.Options.TryGetValue(Refused, out var refused) && refused ? Loc.T("The address points to this computer, so it was not used.")
                 : e is OperationCanceledException || limit.IsCancellationRequested
                 ? Loc.T("The server did not answer in time. Try again later.")
                 : Loc.T("The server could not be reached. Check the connection and try again.");
@@ -144,37 +145,43 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
         return b.Length == 4 && b[0] == 169 && b[1] == 254;
     }
 
-    // Checks the address the name resolves to, which the host text cannot show, and connects to that one.
+    // Checks the addresses the name resolves to, which the host text cannot show, and connects to the first allowed one that answers.
     private async ValueTask<Stream> ConnectAsync(SocketsHttpConnectionContext context, CancellationToken token)
     {
-        var host = context.DnsEndPoint.Host;
         var uri = context.InitialRequestMessage?.RequestUri;
+        var port = context.DnsEndPoint.Port;
+        List<EndPoint> targets = [];
         // A different endpoint than the request's own is a proxy, which the user configured.
-        if (uri is null || context.DnsEndPoint.Port != uri.Port || !host.Equals(uri.IdnHost, StringComparison.OrdinalIgnoreCase))
-            return await ConnectAsync(context.DnsEndPoint, token);
-        var found = await Dns.GetHostAddressesAsync(host, token);
-        var ip = found.FirstOrDefault(a => !PointsHere(a));
-        if (ip is null)
+        if (uri is null || port != uri.Port || !context.DnsEndPoint.Host.Equals(uri.IdnHost, StringComparison.OrdinalIgnoreCase))
+            targets.Add(context.DnsEndPoint);
+        else
+            targets.AddRange((await Dns.GetHostAddressesAsync(context.DnsEndPoint.Host, token)).Where(a => !PointsHere(a)).Select(a => new IPEndPoint(a, port)));
+        if (targets.Count == 0)
         {
-            _refused = true;
+            context.InitialRequestMessage?.Options.Set(Refused, true);
             throw new HttpRequestException("The address points to this computer.");
         }
-        return await ConnectAsync(new IPEndPoint(ip, context.DnsEndPoint.Port), token);
-    }
-
-    private static async ValueTask<Stream> ConnectAsync(EndPoint target, CancellationToken token)
-    {
-        var socket = new Socket(SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
-        try
+        SocketException? last = null;
+        foreach (var target in targets)
         {
-            await socket.ConnectAsync(target, token);
-            return new NetworkStream(socket, true);
+            var socket = new Socket(SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
+            try
+            {
+                await socket.ConnectAsync(target, token);
+                return new NetworkStream(socket, true);
+            }
+            catch (SocketException e)
+            {
+                socket.Dispose();
+                last = e;
+            }
+            catch
+            {
+                socket.Dispose();
+                throw;
+            }
         }
-        catch
-        {
-            socket.Dispose();
-            throw;
-        }
+        throw last!;
     }
 
     public void Dispose() => _client.Dispose();
