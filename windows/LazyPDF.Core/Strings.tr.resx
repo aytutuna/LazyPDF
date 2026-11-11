@@ -2215,6 +2215,9 @@
   <data name="Footer, right" xml:space="preserve">
     <value>Alt bilgi, sağ</value>
   </data>
+  <data name="For example 1-3, 5, 8-. Use 1- for every page." xml:space="preserve">
+    <value>Örneğin 1-3, 5, 8-. Her sayfa için 1- yazın.</value>
+  </data>
   <data name="Form" xml:space="preserve">
     <value>Form</value>
   </data>
@@ -2919,6 +2922,9 @@
   </data>
   <data name="Mark selected text" xml:space="preserve">
     <value>Seçili metni işaretle</value>
+  </data>
+  <data name="Mark these pages" xml:space="preserve">
+    <value>Bu sayfaları işaretle</value>
   </data>
   <data name="Mark up text" xml:space="preserve">
     <value>Metni işaretle</value>
@@ -3804,6 +3810,9 @@
   </data>
   <data name="Pages to export" xml:space="preserve">
     <value>Dışa aktarılacak sayfalar</value>
+  </data>
+  <data name="Pages to mark" xml:space="preserve">
+    <value>İşaretlenecek sayfalar</value>
   </data>
   <data name="Pages to read" xml:space="preserve">
     <value>Okunacak sayfalar</value>
@@ -6772,6 +6781,12 @@
   <data name="Who signed the file and whether it changed since." xml:space="preserve">
     <value>Dosyayı kimin imzaladığı ve o zamandan beri değişip değişmediği.</value>
   </data>
+  <data name="Whole page" xml:space="preserve">
+    <value>Tüm sayfa</value>
+  </data>
+  <data name="Whole pages" xml:space="preserve">
+    <value>Tüm sayfalar</value>
+  </data>
   <data name="Whole word" xml:space="preserve">
     <value>Tam sözcük</value>
   </data>
@@ -7272,6 +7287,9 @@
   </data>
   <data name="{0} mark removed|plural" xml:space="preserve">
     <value>{0} işaret kaldırıldı</value>
+  </data>
+  <data name="{0} marks added. The page outlines are drawn for the first 300." xml:space="preserve">
+    <value>{0} işaret eklendi. Sayfa çerçeveleri ilk 300 sayfa için çizilir.</value>
   </data>
   <data name="{0} mark|plural" xml:space="preserve">
     <value>{0} işaret</value>

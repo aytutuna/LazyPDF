@@ -150,6 +150,37 @@ public partial class RedactPanel
         }
     }
 
+    private void PagesBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        MarkPagesButton.IsEnabled = !string.IsNullOrWhiteSpace(PagesBox.Text);
+        PagesNote.Visibility = Visibility.Collapsed;
+    }
+
+    private void PagesBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || !MarkPagesButton.IsEnabled) return;
+        e.Handled = true;
+        MarkPages_Click(sender, e);
+    }
+
+    private void MarkPages_Click(object sender, RoutedEventArgs e)
+    {
+        var tab = Tab!;
+        var range = PageRange.Parse(PagesBox.Text, tab.PageCount);
+        if (range.Error is { } error)
+        {
+            PagesNote.Text = error.Message;
+            PagesNote.Visibility = Visibility.Visible;
+            PagesBox.Focus();
+            return;
+        }
+        var marks = _state!.Marks;
+        int added = marks.Add(RedactJob.WholePages(tab.Document, range.Pages));
+        Host!.SetStatus(added > OutlinePages
+            ? Loc.T("{0} marks added. The page outlines are drawn for the first 300.", added)
+            : Added(added));
+    }
+
     private static string Added(int count) =>
         count == 0 ? Loc.T("Nothing new to mark.") : Loc.Plural(count, "{0} mark added.", "{0} marks added.");
 }

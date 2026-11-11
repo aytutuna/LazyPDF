@@ -41,6 +41,23 @@ public sealed class RedactJobTests
         RedactJob.Apply(pdf, null, null, [.. marks.Select(m => m.Mark)], settings, new BlankPages(pdf), fonts ?? new FakeFonts(), new FakeCodec());
 
     [Fact]
+    public void AWholePageIsMarkedByItsMediaBoxWhateverTheCropBoxAndTurn()
+    {
+        using var document = PdfDocument.Open(Pdfs.Text(3));
+        PageOperations.Rotate(document, [1], 90);
+        PageOperations.SetBox(document, [1], PageBox.Crop, new PdfRect(100, 100, 200, 200));
+
+        var marks = RedactJob.WholePages(document, [0, 1, 1, 2]);
+
+        Assert.Equal([0, 1, 2], marks.Select(m => m.Page));
+        for (int page = 0; page < 3; page++)
+        {
+            Assert.Equal(RedactionMark.FromRect(page, document.Pages[page].MediaBox).Quads, marks[page].Mark.Quads);
+        }
+        Assert.NotEqual(document.Pages[1].CropBox, document.Pages[1].MediaBox);
+    }
+
+    [Fact]
     public void AKindOfDataIsFoundOnEveryPage()
     {
         var found = FindAddresses(Pdfs.Text(2, Line));

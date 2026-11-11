@@ -57,6 +57,10 @@ public static class RedactJob
         return Gather(document, cache, RedactionFinder.FindWords(cache, terms, wholeWord, matchCase, cancel));
     }
 
+    /// <summary>One mark over the whole /MediaBox of each page, so content outside a CropBox is covered too.</summary>
+    public static IReadOnlyList<MarkItem> WholePages(PdfDocument document, IReadOnlyList<int> pages) =>
+        [.. pages.Distinct().Select(page => new MarkItem(RedactionMark.FromRect(page, document.Pages[page].MediaBox), Loc.T("Whole page")))];
+
     public static Found FindPatterns(PdfDocument document, IReadOnlyList<string> patterns, bool matchCase, CancellationToken cancel)
     {
         var cache = new TextCache(document);

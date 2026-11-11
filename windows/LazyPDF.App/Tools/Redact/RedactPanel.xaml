@@ -53,6 +53,16 @@
                     HorizontalAlignment="Left" Padding="10,3,10,4" Margin="0,6,0,0" AutomationProperties.Name="{loc:T Mark all of this kind}"
                     Click="FindKind_Click" />
 
+            <TextBlock Text="{loc:T Whole pages}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,8" />
+            <TextBox x:Name="PagesBox" MinHeight="30" VerticalContentAlignment="Center" AutomationProperties.Name="{loc:T Pages to mark}"
+                     PreviewKeyDown="PagesBox_PreviewKeyDown" TextChanged="PagesBox_TextChanged" />
+            <TextBlock Text="{loc:T 'For example 1-3, 5, 8-. Use 1- for every page.'}" Style="{StaticResource ReasonText}" Margin="0,4,0,0" />
+            <TextBlock x:Name="PagesNote" Style="{StaticResource ReasonText}" Margin="0,2,0,0" Visibility="Collapsed" TextWrapping="Wrap"
+                       Foreground="{DynamicResource SystemFillColorCriticalBrush}" AutomationProperties.LiveSetting="Polite" />
+            <Button x:Name="MarkPagesButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE710;" Content="{loc:T Mark these pages}"
+                    HorizontalAlignment="Left" Padding="10,3,10,4" Margin="0,6,0,0" IsEnabled="False" AutomationProperties.Name="{loc:T Mark these pages}"
+                    Click="MarkPages_Click" />
+
             <DockPanel Margin="0,16,0,8">
                 <Button x:Name="UndoButton" DockPanel.Dock="Right" Style="{StaticResource SubtleButtonStyle}" Padding="8,2" Content="{loc:T Undo}"
                         AutomationProperties.Name="{loc:T Undo the last change to the marks}" Click="Undo_Click" Visibility="Collapsed" />

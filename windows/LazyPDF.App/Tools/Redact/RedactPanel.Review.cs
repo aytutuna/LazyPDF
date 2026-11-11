@@ -12,6 +12,9 @@ public partial class RedactPanel
     private static readonly Brush MarkFill = Frozen(Color.FromArgb(0x55, 0xC4, 0x2B, 0x1C));
     private static readonly Brush MarkStroke = Frozen(Color.FromRgb(0xC4, 0x2B, 0x1C));
 
+    // Each Overlay call walks every overlay, so a mark on every page of a long file is listed but not outlined past this many pages.
+    private const int OutlinePages = 300;
+
     private sealed record Drawn(Panel Layer, IReadOnlyList<MarkItem> Items, List<UIElement> Shapes);
 
     private readonly Dictionary<int, Drawn> _drawn = [];
@@ -41,7 +44,7 @@ public partial class RedactPanel
     {
         if (redrawAll) ClearOverlays();
         if (Viewer is not { } viewer || _state is null) return;
-        var byPage = _state.Marks.Items.Where(m => m.Page < viewer.PageCount).GroupBy(m => m.Page).ToDictionary(g => g.Key, g => (IReadOnlyList<MarkItem>)g.ToList());
+        var byPage = _state.Marks.Items.Where(m => m.Page < viewer.PageCount).GroupBy(m => m.Page).OrderBy(g => g.Key).Take(OutlinePages).ToDictionary(g => g.Key, g => (IReadOnlyList<MarkItem>)g.ToList());
         foreach (int page in _drawn.Keys.Where(p => !byPage.ContainsKey(p)).ToList()) Erase(page);
         foreach (var (page, items) in byPage)
         {

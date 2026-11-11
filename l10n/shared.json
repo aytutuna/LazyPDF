@@ -5747,6 +5747,24 @@
   "Mark all of this kind": {
     "tr": "Bu türdekilerin hepsini işaretle"
   },
+  "Whole pages": {
+    "tr": "Tüm sayfalar"
+  },
+  "Pages to mark": {
+    "tr": "İşaretlenecek sayfalar"
+  },
+  "For example 1-3, 5, 8-. Use 1- for every page.": {
+    "tr": "Örneğin 1-3, 5, 8-. Her sayfa için 1- yazın."
+  },
+  "Mark these pages": {
+    "tr": "Bu sayfaları işaretle"
+  },
+  "Whole page": {
+    "tr": "Tüm sayfa"
+  },
+  "{0} marks added. The page outlines are drawn for the first 300.": {
+    "tr": "{0} işaret eklendi. Sayfa çerçeveleri ilk 300 sayfa için çizilir."
+  },
   "Remove all": {
     "tr": "Hepsini kaldır"
   },
