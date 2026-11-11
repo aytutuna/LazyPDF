@@ -46,6 +46,7 @@ struct PageThumbView: View {
                 picture
                     .frame(width: thumb.width, height: thumb.height)
                     .background(Color.white)
+                    .overlay(Rectangle().fill(Color.accentColor.opacity(isCurrent ? 0.2 : 0)))
                     .overlay(Rectangle().stroke(Color.accentColor, lineWidth: isCurrent ? 3 : 0))
                     .shadow(color: .black.opacity(0.25), radius: 2, y: 1)
                 Text(thumb.label)
@@ -63,7 +64,7 @@ struct PageThumbView: View {
 
     @ViewBuilder
     private var picture: some View {
-        if let image = thumb.image.flatMap(PanelImage.make) {
+        if let image = thumb.shown.flatMap(PanelImage.make) {
             Image(decorative: image, scale: 1).resizable().aspectRatio(contentMode: .fit)
         } else {
             Color.clear

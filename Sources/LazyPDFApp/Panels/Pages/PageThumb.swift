@@ -30,6 +30,7 @@ actor DrawTurns {
 @Observable
 public final class PageThumb: Identifiable {
     public let index: Int
+    public let objectNumber: Int
 
     /// A rebuilt list has new thumbnails for the same pages, and a list keyed by page would not ask them for their pictures.
     public nonisolated var id: ObjectIdentifier { ObjectIdentifier(self) }
@@ -44,15 +45,24 @@ public final class PageThumb: Identifiable {
     @ObservationIgnored private var loading = false
 
     public private(set) var image: PdfRgbaImage?
+    /// The picture of the same page from the list this one replaced, shown until its own is made.
+    public private(set) var stale: PdfRgbaImage?
 
-    public init(index: Int, label: String, width: Double, height: Double, dpi: Double, renderer: DocumentRenderer?) {
+    public var shown: PdfRgbaImage? { image ?? stale }
+
+    public init(index: Int, objectNumber: Int, label: String, width: Double, height: Double, dpi: Double, renderer: DocumentRenderer?) {
         self.index = index
+        self.objectNumber = objectNumber
         self.label = label
         name = L10n.t("Page {0}", label)
         self.width = width
         self.height = height
         self.dpi = dpi
         self.renderer = renderer
+    }
+
+    public func inherit(_ old: PageThumb) {
+        if old.objectNumber == objectNumber && old.width == width && old.height == height { stale = old.image ?? old.stale }
     }
 
     /// Starts drawing the picture if it is not there and not coming.
@@ -72,6 +82,7 @@ public final class PageThumb: Identifiable {
             guard let self, self.ticket == started else { return }
             // A page that could not be drawn stays marked as loading, so the list does not ask again and again.
             self.image = picture
+            if picture != nil { self.stale = nil }
         }
     }
 
@@ -80,5 +91,6 @@ public final class PageThumb: Identifiable {
         ticket += 1
         loading = false
         image = nil
+        stale = nil
     }
 }

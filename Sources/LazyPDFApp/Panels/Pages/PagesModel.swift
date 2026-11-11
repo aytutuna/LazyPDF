@@ -51,7 +51,7 @@ public final class PagesModel: ToolPanelModel {
     }
 
     public func select(_ page: Int) {
-        guard let viewer, page >= 0, page < thumbs.count, viewer.pageIndex != page else { return }
+        guard let viewer, page >= 0, page < thumbs.count else { return }
         viewer.goToPage(page)
     }
 
@@ -60,12 +60,17 @@ public final class PagesModel: ToolPanelModel {
         guard let tab else { return }
         let sizes = PageSurfaceState.pageSizes(tab.document, tab.canDraw ? tab.renderer : nil)
         let labels = PdfPageLabels.labels(tab.document)
-        thumbs = sizes.indices.map { page in
+        let objects = PageSurfaceState.pageObjects(tab.document)
+        let fresh = sizes.indices.map { page in
             let size = sizes[page]
             let fit = min(Self.boxWidth / max(size.width, 1), Self.boxHeight / max(size.height, 1))
             let label = page < labels.count && !labels[page].isEmpty ? labels[page] : String(page + 1)
-            return PageThumb(index: page, label: label, width: (size.width * fit).rounded(),
+            return PageThumb(index: page, objectNumber: objects[page], label: label, width: (size.width * fit).rounded(),
                              height: (size.height * fit).rounded(), dpi: fit * 72 * scale, renderer: tab.renderer)
         }
+        if fresh.count == thumbs.count {
+            for (thumb, old) in zip(fresh, thumbs) { thumb.inherit(old) }
+        }
+        thumbs = fresh
     }
 }

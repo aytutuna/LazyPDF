@@ -37,13 +37,13 @@ final class PagesModelTests: XCTestCase {
         XCTAssertEqual(model.thumbs.map { $0.label }, ["i", "ii", "iii", "iv"])
     }
 
-    func test_choosingAThumbnailGoesToThePageOnce() throws {
+    func test_choosingAThumbnailGoesToThePageEvenWhenItIsTheCurrentOne() throws {
         let (model, viewer, _) = try attached()
 
         model.select(2)
         model.select(2)
 
-        XCTAssertEqual(viewer.sent, [2])
+        XCTAssertEqual(viewer.sent, [2, 2])
     }
 
     func test_theCurrentPageFollowsTheViewer() throws {
@@ -80,6 +80,42 @@ final class PagesModelTests: XCTestCase {
         XCTAssertNil(thumb.image)
         thumb.load()
         await settle { thumb.image != nil }
+    }
+
+    func test_aRebuiltThumbnailShowsTheOldPictureUntilItsOwnIsMade() async throws {
+        let (model, _, tab) = try attached(renderer: DpiRenderer())
+        let first = model.thumbs[0]
+        first.load()
+        await settle { first.image != nil }
+
+        try Pdfs.retitle(tab.session, "New title")
+        try tab.commit("Properties")
+        await settle { model.thumbs.first !== first }
+
+        let rebuilt = model.thumbs[0]
+        XCTAssertNil(rebuilt.image)
+        XCTAssertEqual(rebuilt.shown?.width, first.image?.width)
+        XCTAssertNotNil(rebuilt.shown)
+        rebuilt.load()
+        await settle { rebuilt.image != nil }
+        XCTAssertEqual(rebuilt.shown?.width, rebuilt.image?.width)
+        rebuilt.release()
+        XCTAssertNil(rebuilt.shown)
+    }
+
+    func test_aThumbnailOfAnotherPageObjectDoesNotInherit() async throws {
+        let (model, _, tab) = try attached(pages: 3, renderer: DpiRenderer())
+        for thumb in model.thumbs {
+            thumb.load()
+            await settle { thumb.image != nil }
+        }
+
+        try PageOperations.delete(tab.document, [1])
+        try tab.commit("Delete")
+        await settle { model.thumbs.count == 2 }
+
+        XCTAssertNil(model.thumbs[0].shown)
+        XCTAssertNil(model.thumbs[1].shown)
     }
 
     func test_aPageThatCannotBeDrawnIsNotAskedForAgain() async throws {
