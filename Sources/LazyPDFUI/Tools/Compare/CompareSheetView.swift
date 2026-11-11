@@ -12,19 +12,22 @@ struct CompareSheetView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 16) {
-                Picker(L10n.t("Side by side"), selection: Binding(get: { window.overlayMode }, set: { window.setOverlay($0) })) {
-                    Text(L10n.t("Side by side")).tag(false)
-                    Text(L10n.t("Overlay")).tag(true)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 16) {
+                    overlayPicker.frame(maxWidth: 260)
+                    linkToggle
+                    Spacer()
+                    doneButton
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(maxWidth: 260)
-                Toggle(L10n.t("Scroll together"), isOn: Binding(get: { window.linked }, set: { window.setLinked($0) }))
-                    .disabled(window.overlayMode)
-                Spacer()
-                Button(L10n.t("Done"), action: close)
-                    .keyboardShortcut(.cancelAction)
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(maxWidth: .infinity)
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 16) {
+                        overlayPicker.frame(maxWidth: .infinity)
+                        doneButton
+                    }
+                    linkToggle
+                }
             }
             .padding(12)
             Divider()
@@ -37,6 +40,25 @@ struct CompareSheetView: View {
         #endif
         .accessibilityElement(children: .contain)
         .accessibilityLabel(window.title)
+    }
+
+    private var overlayPicker: some View {
+        Picker(L10n.t("Side by side"), selection: Binding(get: { window.overlayMode }, set: { window.setOverlay($0) })) {
+            Text(L10n.t("Side by side")).tag(false)
+            Text(L10n.t("Overlay")).tag(true)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+    }
+
+    private var linkToggle: some View {
+        Toggle(L10n.t("Scroll together"), isOn: Binding(get: { window.linked }, set: { window.setLinked($0) }))
+            .disabled(window.overlayMode)
+    }
+
+    private var doneButton: some View {
+        Button(L10n.t("Done"), action: close)
+            .keyboardShortcut(.cancelAction)
     }
 
     private var wide: some View {
