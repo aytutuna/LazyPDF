@@ -293,12 +293,13 @@ public sealed class CloseFlowTests
         using var f = new ViewModelFixture();
         var tab = await OpenDirty(f);
         var other = await OpenDirty(f, "b.pdf");
-        other.PendingMarks = 0;
+        f.Vm.Save(other);
         File.WriteAllBytes(tab.Path!, Pdfs.Text(2));
         File.SetLastWriteTimeUtc(tab.Path!, DateTime.UtcNow.AddMinutes(10));
         await f.Vm.CheckDiskAsync();
-        int exits = 0;
+        int exits = 0, asks = 0;
         f.Vm.ExitRequested += (_, _) => exits++;
+        f.Vm.CloseRequested += (_, _) => asks++;
         f.Vm.RequestExit();
 
         Assert.False(f.Vm.Save(tab, closeAfter: true));
@@ -306,6 +307,7 @@ public sealed class CloseFlowTests
         f.Vm.Message!.Action!.Run();
         f.Vm.Close(other);
 
+        Assert.Equal(0, asks);
         Assert.Equal(1, exits);
     }
 
