@@ -56,4 +56,25 @@ public sealed class FindBarTests
 
         Assert.Equal("dog", bar.Query.Text);
     });
+
+    [Fact]
+    public Task OpeningShowsTheOptionsOfASearchRunUnderTheSameText() => Sta.Run(async () =>
+    {
+        var bytes = Pdfs.Text(2, "The quick brown fox jumps over the lazy dog.");
+        var ui = Dispatcher.CurrentDispatcher;
+        var search = new ViewerSearch(() => TextSource.OpenAsync(bytes, null), () => 0, action => ui.InvokeAsync(action));
+        var bar = new FindBar();
+        bar.Attach(search);
+        bar.Query.Text = "fox";
+        await Sta.Until(() => search.Query == "fox");
+        await Sta.Until(() => !search.Running);
+        await search.Start("fox", new TextSearchOptions(MatchCase: true));
+        await Sta.Until(() => !search.Running);
+
+        bar.Open();
+
+        Assert.Equal("fox", bar.Query.Text);
+        Assert.True(bar.CaseToggle.IsChecked);
+        Assert.True(search.Options.MatchCase);
+    });
 }

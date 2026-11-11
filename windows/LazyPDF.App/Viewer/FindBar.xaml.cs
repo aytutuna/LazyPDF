@@ -36,9 +36,9 @@ public partial class FindBar : UserControl
     public void Open(string? selection = null)
     {
         // The Search panel shares the search, so show what it is running.
-        if (_search is { Query.Length: > 0 } running && running.Query != Query.Text && !_typing.IsEnabled)
+        if (_search is { Query.Length: > 0 } running && !_typing.IsEnabled)
         {
-            Query.Text = running.Query;
+            if (running.Query != Query.Text) Query.Text = running.Query;
             (CaseToggle.IsChecked, WordToggle.IsChecked, RegexToggle.IsChecked) = (running.Options.MatchCase, running.Options.WholeWord, running.Options.Regex);
             _typing.Stop();
         }
