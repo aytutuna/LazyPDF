@@ -161,6 +161,14 @@ public enum PageEdits {
         }
     }
 
+    /// The pages the display rectangle (page space of the page it was drawn on) touches, which are the ones a crop can use it on.
+    public static func cropTargets(_ document: PdfDocument, _ pages: [Int], _ area: DisplayRect) -> [Int] {
+        pages.filter { page in
+            let shown = document.pages[page]
+            return !PageGeometry(shown).toUser(area).intersect(shown.mediaBox).isEmpty
+        }
+    }
+
     /// Numbers pages `first` to `last` as given. The pages after keep the labels they had: a range that started inside is
     /// cut, and the one in force after `last` is started again there.
     public static func relabel(_ document: PdfDocument, _ first: Int, _ last: Int, _ style: PageLabelStyle, _ prefix: String,

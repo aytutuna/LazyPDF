@@ -157,7 +157,7 @@ final class PagesToolModelTests: XCTestCase {
 
         XCTAssertTrue(rig.viewer.pointerTool === tool)
         XCTAssertTrue(model.cropDrawing)
-        XCTAssertEqual(model.cropHint, "Drag a box on a page.")
+        XCTAssertEqual(model.cropHint, "Drag a box on a page. The rest of the page stays in the file, only hidden. Redact removes it for good.")
         XCTAssertFalse(model.action!.canRun())
 
         try draw(model)
@@ -200,7 +200,9 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertNil(model.cropBox)
 
         model.grid.select([1, 2])
-        try draw(model)
+        let tool = try XCTUnwrap(model.crop)
+        press(tool, 50, 60, page: 1)
+        release(tool, 150, 160, page: 1)
         await model.action!.run()
         XCTAssertEqual(PageGeometry(rig.tab.document.pages[1]).width, 100, accuracy: 0.1)
         XCTAssertEqual(PageGeometry(rig.tab.document.pages[2]).width, 100, accuracy: 0.1)
@@ -209,10 +211,78 @@ final class PagesToolModelTests: XCTestCase {
         model.grid.selectNone()
         model.cropAll = true
         try draw(model)
-        XCTAssertTrue(model.cropHint.hasSuffix("Every page is changed."))
+        XCTAssertTrue(model.cropHint.contains("Every page is changed."))
         await model.action!.run()
         XCTAssertTrue(rig.host.problems.isEmpty)
         XCTAssertEqual(rig.host.statuses.last, "3 pages cropped")
+    }
+
+    func test_theBoxFollowsItsPageThroughEditsToThePageList() throws {
+        let (model, _) = try attached(3)
+        model.setExpanded(.crop, true)
+        let tool = try XCTUnwrap(model.crop)
+        press(tool, 50, 60, page: 2)
+        release(tool, 150, 160, page: 2)
+        XCTAssertNotNil(model.cropBox)
+
+        model.grid.select([0])
+        model.remove()
+
+        XCTAssertNil(model.cropBox)
+    }
+
+    func test_turningAPageClearsOnlyTheBoxOnThatPage() throws {
+        let (model, _) = try attached(3)
+        model.setExpanded(.crop, true)
+        let tool = try XCTUnwrap(model.crop)
+        press(tool, 50, 60, page: 1)
+        release(tool, 150, 160, page: 1)
+
+        model.grid.select([0])
+        model.turn(90)
+        XCTAssertNotNil(model.cropBox)
+
+        model.grid.select([1])
+        model.turn(90)
+        XCTAssertNil(model.cropBox)
+    }
+
+    func test_aBoxThatMissesAPageLeavesItAloneAndSaysSo() async throws {
+        let (model, rig) = try attached(2)
+        model.setExpanded(.crop, true)
+        try PageOperations.setBox(rig.tab.document, [1], .media, PdfRect(0, 0, 40, 40))
+        try rig.tab.commit("Shrink")
+        try draw(model)
+        model.grid.select([0, 1])
+
+        await model.action!.run()
+
+        XCTAssertEqual(rig.host.statuses.last,
+                       "1 page cropped 1 page was left alone because the box is outside it.")
+    }
+
+    func test_aBoxThatMissesEveryPageIsRefusedWithAReason() async throws {
+        let (model, rig) = try attached(2)
+        model.setExpanded(.crop, true)
+        try PageOperations.setBox(rig.tab.document, [1], .media, PdfRect(0, 0, 40, 40))
+        try rig.tab.commit("Shrink")
+        try draw(model)
+        model.grid.select([1])
+
+        await model.action!.run()
+
+        XCTAssertEqual(rig.host.problems.map(\.title), ["Box is off the pages"])
+    }
+
+    func test_drawingOnAPageChoosesIt() throws {
+        let (model, _) = try attached(4)
+        model.setExpanded(.crop, true)
+        let tool = try XCTUnwrap(model.crop)
+
+        press(tool, 50, 60, page: 3)
+        release(tool, 150, 160, page: 3)
+
+        XCTAssertEqual(model.grid.selection, [3])
     }
 
     func test_removingTheCropCoversEveryPageWhenNoneIsChosen() async throws {
@@ -335,7 +405,7 @@ final class PagesToolModelTests: XCTestCase {
         let (model, rig) = try attached(5)
         model.grid.select([1, 2])
         model.setExpanded(.labels, true)
-        XCTAssertEqual(model.labelHint, "Pages 2 to 3 are numbered.")
+        XCTAssertEqual(model.labelHint, "Pages 2 to 3 are numbered. This sets the page numbers viewers show. Nothing is printed on the pages.")
 
         model.labelStart = "0"
         XCTAssertFalse(model.action!.canRun())
@@ -357,7 +427,7 @@ final class PagesToolModelTests: XCTestCase {
     func test_withNothingChosenEveryPageIsNumbered() throws {
         let (model, _) = try attached()
 
-        XCTAssertEqual(model.labelHint, "Every page is numbered.")
+        XCTAssertEqual(model.labelHint, "Every page is numbered. This sets the page numbers viewers show. Nothing is printed on the pages.")
     }
 
     func test_pagesFromAFileGoWhereTheChoiceSaysWithTheRangeTyped() async throws {

@@ -203,6 +203,7 @@
 "Bottom right" = "Sağ alt";
 "Box" = "Kutu";
 "Box drawn on page {0}." = "Kutu {0}. sayfaya çizildi.";
+"Box is off the pages" = "Kutu sayfaların dışında";
 "Box of {0} by {1} mm." = "{0} x {1} mm kutu.";
 "Bring forward" = "Bir öne getir";
 "Bring to front" = "En öne getir";
@@ -1121,6 +1122,7 @@
 "Pages {0} to {1} are numbered." = "{0}. ile {1}. sayfalar numaralanır.";
 "Paper" = "Kağıt";
 "Paragraph changed." = "Paragraf değişti.";
+"Part of this page could not be drawn sharply." = "Bu sayfanın bir kısmı net çizilemedi.";
 "Parts of the pages that can be shown or hidden." = "Sayfaların gösterilebilen ya da gizlenebilen parçaları.";
 "Passed" = "Geçti";
 "Passes Lazy PDF's checks for {0}." = "{0} için Lazy PDF denetimlerini geçiyor.";
@@ -1633,6 +1635,7 @@
 "The bookmarks make {0} part.|one" = "Yer imleri {0} parça oluşturuyor.";
 "The bookmarks make {0} part.|other" = "Yer imleri {0} parça oluşturuyor.";
 "The bookmarks of the file." = "Dosyanın yer imleri.";
+"The box does not touch the pages to crop. Draw it again on a page." = "Kutu kırpılacak sayfalara değmiyor. Bir sayfa üzerinde yeniden çizin.";
 "The catalog has /NeedsRendering." = "Katalogda /NeedsRendering var.";
 "The catalog has /OCProperties." = "Katalogda /OCProperties var.";
 "The catalog has an /AA entry." = "Katalogda /AA girdisi var.";
@@ -1772,6 +1775,7 @@
 "The redaction could not be finished. Mark fewer places and try again. The file was not changed." = "Karartma tamamlanamadı. Daha az yer işaretleyip yeniden deneyin. Dosya değiştirilmedi.";
 "The rendering intent {0} is not one of the four standard ones." = "{0} çizim amacı dört standart amaçtan biri değil.";
 "The report could not be built from this comparison. Run the comparison again." = "Rapor bu karşılaştırmadan oluşturulamadı. Karşılaştırmayı yeniden yapın.";
+"The rest of the page stays in the file, only hidden. Redact removes it for good." = "Sayfanın geri kalanı dosyada durur, yalnızca gizlenir. Karart onu kalıcı olarak siler.";
 "The result opens as a new file. This file is not changed." = "Sonuç yeni bir dosya olarak açılır. Bu dosya değişmez.";
 "The same form is painted twice." = "Aynı form iki kez çizilmiş.";
 "The second line must be a comment of four bytes above 127." = "İkinci satır, 127'nin üzerinde dört bayttan oluşan bir yorum olmalı.";
@@ -1884,6 +1888,7 @@
 "This page cannot be shown." = "Bu sayfa gösterilemiyor.";
 "This picture cannot be read." = "Bu resim okunamıyor.";
 "This script did not run. Only built-in format and calculate functions run." = "Bu betik çalışmadı. Yalnızca yerleşik biçim ve hesaplama işlevleri çalışır.";
+"This sets the page numbers viewers show. Nothing is printed on the pages." = "Bu, görüntüleyicilerin gösterdiği sayfa numaralarını ayarlar. Sayfalara hiçbir şey basılmaz.";
 "This shape has no fill. Use the line colour instead." = "Bu şeklin dolgusu yok. Çizgi rengini kullanın.";
 "This shape has no line. Use the fill colour instead." = "Bu şeklin çizgisi yok. Dolgu rengini kullanın.";
 "This signature could not be checked." = "Bu imza denetlenemedi.";
@@ -2196,6 +2201,8 @@
 "{0} page resized|other" = "{0} sayfa yeniden boyutlandırıldı";
 "{0} page rotated|one" = "{0} sayfa döndürüldü";
 "{0} page rotated|other" = "{0} sayfa döndürüldü";
+"{0} page was left alone because the box is outside it.|one" = "{0} sayfa, kutunun dışında kaldığı için olduğu gibi bırakıldı.";
+"{0} page was left alone because the box is outside it.|other" = "{0} sayfa, kutunun dışında kaldığı için olduğu gibi bırakıldı.";
 "{0} pages and {1} pages" = "{0} sayfa ve {1} sayfa";
 "{0} pages tagged: {1} headings, {2} paragraphs, {3} lists, {4} tables, {5} figures." = "{0} sayfa etiketlendi: {1} başlık, {2} paragraf, {3} liste, {4} tablo, {5} şekil.";
 "{0} pages were left as they were." = "{0} sayfa olduğu gibi bırakıldı.";

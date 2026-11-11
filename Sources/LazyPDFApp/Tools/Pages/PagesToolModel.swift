@@ -26,7 +26,9 @@ public final class PagesToolModel: ToolPanelModel {
     public internal(set) var section = Section.none
     public internal(set) var cropDrawing = false
     public internal(set) var cropBox: CropBox?
-    public var cropAll = false
+    public var cropAll = false {
+        didSet { if !cropAll { selectBoxPage() } }
+    }
     public var paperIndex = 0
     public var customWidth = "210"
     public var customHeight = "297"
@@ -43,6 +45,8 @@ public final class PagesToolModel: ToolPanelModel {
     @ObservationIgnored var viewer: DocumentViewer?
     @ObservationIgnored var crop: CropTool?
     @ObservationIgnored var modeWatch: ObservationWatch?
+    @ObservationIgnored var pageNumbers: [Int] = []
+    @ObservationIgnored var boxSpace: (mediaBox: PdfRect, cropBox: PdfRect, rotate: Int, userUnit: Double)?
 
     public init() {}
 
@@ -50,6 +54,7 @@ public final class PagesToolModel: ToolPanelModel {
         self.tab = tab
         self.viewer = viewer
         self.host = host
+        pageNumbers = tab.document.pages.map { $0.reference.number }
         asker.choices = { [weak host] in host?.certificateChoices() ?? [] }
         grid.onSelect = { [weak self] in self?.selectionChanged() }
         grid.onRebuild = { [weak self] in self?.pagesChanged() }
@@ -75,9 +80,20 @@ public final class PagesToolModel: ToolPanelModel {
         viewer.goToPage(page)
     }
 
-    // A box drawn on a page that is gone cannot be used.
+    // The box holds a page index and display points, which an edit to the page list or to its page's shape moves.
     private func pagesChanged() {
-        if let box = crop?.box, box.page >= grid.cells.count { crop?.clear() }
+        guard let tab else { return }
+        let numbers = tab.document.pages.map { $0.reference.number }
+        let same = numbers == pageNumbers
+        pageNumbers = numbers
+        guard let box = crop?.box else { return }
+        if !same || box.page >= numbers.count { crop?.clear(); return }
+        if let was = boxSpace, was != space(box.page, tab.document) { crop?.clear() }
+    }
+
+    func space(_ index: Int, _ document: PdfDocument) -> (mediaBox: PdfRect, cropBox: PdfRect, rotate: Int, userUnit: Double) {
+        let page = document.pages[index]
+        return (page.mediaBox, page.cropBox, page.rotate, page.userUnit)
     }
 
     public func openOrganize() {

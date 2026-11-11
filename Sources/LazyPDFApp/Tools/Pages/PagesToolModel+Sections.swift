@@ -35,7 +35,12 @@ extension PagesToolModel {
     func arm() {
         guard section == .crop, let viewer else { return }
         let tool = CropTool(viewer)
-        tool.onChange = { [weak self, weak tool] in self?.cropBox = tool?.box }
+        tool.onChange = { [weak self, weak tool] in
+            guard let self else { return }
+            self.cropBox = tool?.box
+            if let box = tool?.box, let tab = self.tab { self.boxSpace = self.space(box.page, tab.document) }
+            self.selectBoxPage()
+        }
         crop = tool
         modeWatch = ObservationWatch(track: { _ = viewer.pointerTool }, changed: { [weak self] in
             // The viewer's Hand and Select buttons took the pointer; the box stays until the switch is turned on again.
@@ -67,18 +72,24 @@ extension PagesToolModel {
         }
     }
 
+    func selectBoxPage() {
+        guard let box = cropBox, !cropAll, box.page < grid.cells.count, !grid.selected.contains(box.page) else { return }
+        grid.select([box.page])
+    }
+
     public var cropHint: String {
         let pages = grid.selection
         let every = L10n.t("Every page is changed.")
+        let kept = " " + L10n.t("The rest of the page stays in the file, only hidden. Redact removes it for good.")
         let covered = pages.isEmpty ? every
             : L10n.plural(pages.count, one: "{0} selected page is changed.", other: "{0} selected pages are changed.")
         if let box = cropBox {
             let width = Int((box.area.width / PageEdits.pointsPerMillimetre).rounded())
             let height = Int((box.area.height / PageEdits.pointsPerMillimetre).rounded())
             let changed = cropAll ? every : !pages.isEmpty ? covered : L10n.t("Page {0} is changed.", box.page + 1)
-            return L10n.t("Box of {0} by {1} mm.", width, height) + " " + changed
+            return L10n.t("Box of {0} by {1} mm.", width, height) + " " + changed + kept
         }
-        return cropDrawing ? L10n.t("Drag a box on a page.") : L10n.t("Turn on drawing to drag a box.")
+        return (cropDrawing ? L10n.t("Drag a box on a page.") : L10n.t("Turn on drawing to drag a box.")) + kept
     }
 
     public var resizeHint: String {
@@ -90,8 +101,9 @@ extension PagesToolModel {
 
     public var labelHint: String {
         let pages = grid.selection
-        guard let first = pages.first, let last = pages.last else { return L10n.t("Every page is numbered.") }
-        return L10n.t("Pages {0} to {1} are numbered.", first + 1, last + 1)
+        let note = " " + L10n.t("This sets the page numbers viewers show. Nothing is printed on the pages.")
+        guard let first = pages.first, let last = pages.last else { return L10n.t("Every page is numbered.") + note }
+        return L10n.t("Pages {0} to {1} are numbered.", first + 1, last + 1) + note
     }
 
     public var showsCustomSize: Bool { paperIndex == PaperSize.all.count }
@@ -115,11 +127,21 @@ extension PagesToolModel {
         guard let box = cropBox, let crop else { return }
         let count = grid.cells.count
         let chosen = grid.selection
-        let pages = cropAll ? Array(0..<count) : chosen.isEmpty ? [box.page] : chosen
-        guard pages.allSatisfy({ $0 < count }) else { return }
-        let done = grid.apply(L10n.t("Crop pages"), select: chosen,
-                              status: L10n.plural(pages.count, one: "{0} page cropped", other: "{0} pages cropped")) { document in
-            try PageEdits.crop(document, pages, box.area)
+        let pages = (cropAll ? Array(0..<count) : chosen.isEmpty ? [box.page] : chosen).filter { $0 < count }
+        guard let tab, let host else { return }
+        let targets = PageEdits.cropTargets(tab.document, pages, box.area)
+        if targets.isEmpty {
+            host.showProblem(Problem(L10n.t("Box is off the pages"), L10n.t("The box does not touch the pages to crop. Draw it again on a page.")))
+            return
+        }
+        let left = pages.count - targets.count
+        var status = L10n.plural(targets.count, one: "{0} page cropped", other: "{0} pages cropped")
+        if left > 0 {
+            status += " " + L10n.plural(left, one: "{0} page was left alone because the box is outside it.",
+                                        other: "{0} pages were left alone because the box is outside them.")
+        }
+        let done = grid.apply(L10n.t("Crop pages"), select: chosen, status: status) { document in
+            try PageEdits.crop(document, targets, box.area)
         }
         if done { crop.clear() }
     }
