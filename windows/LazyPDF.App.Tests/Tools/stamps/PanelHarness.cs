@@ -1,9 +1,11 @@
 using System.Reflection;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Threading;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Tools;
 using LazyPDF.App.Viewer;
+using LazyPDF.Core;
 
 namespace LazyPDF.App.Tests;
 
@@ -97,6 +99,17 @@ public class FakeViewer : DispatchProxy
 
     public ViewerSearch? Search { get; private set; }
 
+    public List<SelectedRun> Selected { get; } = [];
+
+    private EventHandler? _selectionChanged;
+
+    public void Select(params SelectedRun[] runs)
+    {
+        Selected.Clear();
+        Selected.AddRange(runs);
+        _selectionChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     internal static IDocumentViewer Create(ViewerSearch search)
     {
         var viewer = Create<IDocumentViewer, FakeViewer>();
@@ -116,8 +129,33 @@ public class FakeViewer : DispatchProxy
         "PageSize" => new Size(200, 300),
         "Overlay" => Overlay,
         "get_View" => View,
+        "get_HasSelection" => Selected.Count > 0,
+        "GetSelectionAsync" => Task.FromResult<IReadOnlyList<SelectedRun>>([.. Selected]),
+        "ClearSelection" => Clear(),
+        "add_SelectionChanged" => Subscribe((EventHandler)args![0]!),
+        "remove_SelectionChanged" => Unsubscribe((EventHandler)args![0]!),
+        "PageToView" => (Matrix?)Matrix.Identity,
+        "Geometry" => new PageGeometry(new PdfRect(0, 0, 200, 300), 0),
         "get_Search" => Search,
         _ when method.ReturnType == typeof(void) || !method.ReturnType.IsValueType => null,
         _ => Activator.CreateInstance(method.ReturnType),
     };
+
+    private object? Clear()
+    {
+        Select();
+        return null;
+    }
+
+    private object? Subscribe(EventHandler handler)
+    {
+        _selectionChanged += handler;
+        return null;
+    }
+
+    private object? Unsubscribe(EventHandler handler)
+    {
+        _selectionChanged -= handler;
+        return null;
+    }
 }

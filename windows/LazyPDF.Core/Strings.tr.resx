@@ -5095,6 +5095,9 @@
   <data name="Strike" xml:space="preserve">
     <value>Üstü çizili</value>
   </data>
+  <data name="Strike out" xml:space="preserve">
+    <value>Üstü çizili</value>
+  </data>
   <data name="Strike out the selected text." xml:space="preserve">
     <value>Seçili metnin üstünü çizin.</value>
   </data>

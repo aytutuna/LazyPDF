@@ -152,9 +152,14 @@ public partial class CommentPanel
 
     private async void Markup_Click(object sender, RoutedEventArgs e)
     {
-        if (Tab is not { } tab || Viewer is not { } viewer || !_allowed || MarkWork.Running) return;
         var kind = sender == MarkHighlight ? AnnotationType.Highlight : sender == MarkUnderline ? AnnotationType.Underline
             : sender == MarkStrikeOut ? AnnotationType.StrikeOut : AnnotationType.Squiggly;
+        await MarkSelection(kind);
+    }
+
+    private async Task MarkSelection(AnnotationType kind)
+    {
+        if (Tab is not { } tab || Viewer is not { } viewer || !_allowed || MarkWork.Running) return;
         var runs = await viewer.GetSelectionAsync();
         if (!ReferenceEquals(Tab, tab)) return;
         if (runs.Count == 0)
@@ -202,6 +207,7 @@ public partial class CommentPanel
     private void View_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (Keyboard.FocusedElement is TextBox) return;
+        if (e.Key == Key.Escape) _bar?.Hide();
         if (e.Key == Key.Escape && _active is DrawTool { Started: true } drawing)
         {
             drawing.Cancel();

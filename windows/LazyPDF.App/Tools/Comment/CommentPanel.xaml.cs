@@ -73,6 +73,7 @@ public partial class CommentPanel : ToolPanel
     private readonly HashSet<object> _unsettled = [];
     private readonly Dictionary<MarkTool, RadioButton> _buttons = [];
     private EditTool? _edit;
+    private SelectionBar? _bar;
     private IPagePointerTool? _active;
     private TextEditor? _editor;
     private ToolAction? _action;
@@ -150,6 +151,7 @@ public partial class CommentPanel : ToolPanel
         _edit.Resized += Edit_Resized;
         _edit.VertexMoved += Edit_VertexMoved;
         _edit.EditRequested += Edit_EditRequested;
+        _bar = new SelectionBar(Viewer, () => _tool == MarkTool.SelectText && _allowed, MarkSelection);
         Tab!.Changed += Tab_Changed;
         _allowed = Exchange.CanComment(Tab.Document);
         if (!_allowed) Pick(MarkTool.SelectText);
@@ -180,6 +182,8 @@ public partial class CommentPanel : ToolPanel
         if (ReferenceEquals(Viewer.PointerTool, _active)) Viewer.PointerTool = null;
         _edit?.Clear();
         _edit = null;
+        _bar?.Dispose();
+        _bar = null;
     }
 
     private void UpdateEnabled()
@@ -243,6 +247,7 @@ public partial class CommentPanel : ToolPanel
             : Tools.First(t => t.Tool == _tool).Hint;
         Hint.Visibility = Visibility.Visible;
         ShowSelected();
+        _bar?.Refresh();
     }
 
     private void Tool_Checked(object sender, RoutedEventArgs e)
@@ -260,7 +265,11 @@ public partial class CommentPanel : ToolPanel
         Choose(setMode: false);
     }
 
-    private void Viewer_ViewChanged(object? sender, EventArgs e) => _edit?.Redraw();
+    private void Viewer_ViewChanged(object? sender, EventArgs e)
+    {
+        _edit?.Redraw();
+        _bar?.Move();
+    }
 
     private void Tab_Changed(object? sender, EventArgs e)
     {

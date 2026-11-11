@@ -162,4 +162,49 @@ public sealed class CommentPanelTests
         Assert.Equal(f.Marks()[1].Reference?.Number, edit.Current?.Reference?.Number);
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public async Task ASelectionShowsTheBarAndAButtonMarksItAndHidesIt() => await Sta.Run(async () =>
+    {
+        using var f = new CommentFixture();
+        var (viewer, stand) = Selecting();
+        var panel = new CommentPanel();
+        panel.Attach(f.Tab, viewer, new RecordingHost());
+        var bar = Get<SelectionBar>(panel, "_bar");
+
+        stand.Select(new SelectedRun(0, default, "Hello", [new TextQuad(100, 700, 180, 700, 180, 712, 100, 712)]));
+        Assert.False(bar.IsOpen);
+        await Sta.Until(() => bar.IsOpen);
+
+        var row = (Panel)((Border)Get<System.Windows.Controls.Primitives.Popup>(bar, "_popup").Child).Child;
+        var highlight = (Button)row.Children[0];
+        Assert.Equal("Highlight", System.Windows.Automation.AutomationProperties.GetName(highlight));
+        highlight.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        await Sta.Until(() => f.Marks().Count == 1);
+
+        Assert.Equal(AnnotationType.Highlight, f.Marks().Single().Type);
+        await Sta.Until(() => !bar.IsOpen);
+    });
+
+    [Fact]
+    public async Task ClearingTheSelectionHidesTheBar() => await Sta.Run(async () =>
+    {
+        using var f = new CommentFixture();
+        var (viewer, stand) = Selecting();
+        var panel = new CommentPanel();
+        panel.Attach(f.Tab, viewer, new RecordingHost());
+        var bar = Get<SelectionBar>(panel, "_bar");
+        stand.Select(new SelectedRun(0, default, "Hello", [new TextQuad(100, 700, 180, 700, 180, 712, 100, 712)]));
+        await Sta.Until(() => bar.IsOpen);
+
+        stand.Select();
+
+        Assert.False(bar.IsOpen);
+    });
+
+    private static (IDocumentViewer Viewer, FakeViewer Stand) Selecting()
+    {
+        var viewer = FakeViewer.Create().Viewer;
+        return (viewer, (FakeViewer)(object)viewer);
+    }
 }
