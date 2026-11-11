@@ -67,7 +67,7 @@ internal sealed partial class PageSurface
             var dest = Destination(key, bitmap, matrix, _sizes[page]);
             if (!dest.IntersectsWith(visible)) continue;
             _cache.Get(key);
-            DrawBitmap(dc, bitmap, dest);
+            DrawBitmap(dc, bitmap, dest, key.IsPreview);
         }
 
         if (complete)
@@ -102,14 +102,31 @@ internal sealed partial class PageSurface
 
     private static readonly int TileStep = LazyPDF.App.Services.WindowsPageRenderer.Reachable(TilePlan.TileSize);
 
-    private void DrawBitmap(DrawingContext dc, BitmapSource bitmap, Rect dest)
+    private void DrawBitmap(DrawingContext dc, BitmapSource bitmap, Rect dest, bool isPreview)
     {
         double ppd = Dpi;
         var snapped = new Rect(new Point(Math.Round(dest.Left * ppd) / ppd, Math.Round(dest.Top * ppd) / ppd),
                                new Point(Math.Round(dest.Right * ppd) / ppd, Math.Round(dest.Bottom * ppd) / ppd));
         if (_rotation == 0)
         {
-            dc.DrawImage(bitmap, snapped);
+            if (isPreview)
+            {
+                dc.DrawImage(bitmap, snapped);
+                return;
+            }
+            // Aliased edges and an unscaled copy keep neighbouring tiles from showing a seam.
+            var group = new DrawingGroup();
+            RenderOptions.SetEdgeMode(group, EdgeMode.Aliased);
+            if (Math.Round(snapped.Width * ppd) == bitmap.PixelWidth && Math.Round(snapped.Height * ppd) == bitmap.PixelHeight)
+            {
+                RenderOptions.SetBitmapScalingMode(group, BitmapScalingMode.NearestNeighbor);
+            }
+            using (var inner = group.Open())
+            {
+                inner.DrawImage(bitmap, snapped);
+            }
+            group.Freeze();
+            dc.DrawDrawing(group);
             return;
         }
         // The picture is of the page upright; it is turned about its own centre into the rectangle the matrix gave.
