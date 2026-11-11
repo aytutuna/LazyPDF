@@ -136,6 +136,8 @@ public partial class CommentPanel : ToolPanel
         FontSizeBox.Text = "12";
         StampName.ItemsSource = AnnotationText.StandardStamps.Select(AnnotationText.StampLabel).ToList();
         StampName.SelectedIndex = 0;
+        StampDate.Content = Loc.T("Add today's date");
+        AutomationProperties.SetName(StampDate, Loc.T("Add today's date"));
         _settle.Tick += Settle_Tick;
         _loading = false;
         ShowReadouts();

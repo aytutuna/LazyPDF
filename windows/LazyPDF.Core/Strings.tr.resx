@@ -283,6 +283,9 @@
   <data name="Add to page" xml:space="preserve">
     <value>Sayfaya ekle</value>
   </data>
+  <data name="Add today's date" xml:space="preserve">
+    <value>Bugünün tarihini ekle</value>
+  </data>
   <data name="Add validation data" xml:space="preserve">
     <value>Doğrulama verisi ekle</value>
   </data>

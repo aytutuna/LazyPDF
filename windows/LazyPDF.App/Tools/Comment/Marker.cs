@@ -61,6 +61,7 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
     public const double CalloutWidth = 150;
     public const double CalloutHeight = 50;
     public const double StampWidth = 130;
+    public const double DatedStampWidth = 220;
     public const double StampHeight = 44;
 
     private readonly PdfAnnotationWriter _writer = new(document, fonts);
@@ -153,13 +154,22 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         }
     }
 
-    public PdfAnnotation AddStamp(int page, Point center, string name, MarkStyle style)
+    public PdfAnnotation AddStamp(int page, Point center, string name, MarkStyle style, bool dated = false)
     {
         var target = document.Pages[page];
         var geometry = new PageGeometry(target);
-        var box = Standing(geometry, new Rect(center.X - StampWidth / 2, center.Y - StampHeight / 2, StampWidth, StampHeight));
+        double width = dated ? DatedStampWidth : StampWidth;
+        var box = Standing(geometry, new Rect(center.X - width / 2, center.Y - StampHeight / 2, width, StampHeight));
         return Faded(_writer.AddStamp(target, box, name, Upright(geometry), style.Color), style);
     }
+
+    // Core picks a stamp's colour by its exact name, which a dated name no longer is.
+    public static double[] StampColor(string name) => name switch
+    {
+        "Approved" or "Final" or "ForPublicRelease" => [0, 0.5, 0.15],
+        "AsIs" or "Experimental" or "Sold" or "Departmental" or "ForComment" => [0, 0.2, 0.7],
+        _ => [0.75, 0, 0],
+    };
 
     public PdfAnnotation AddAttachment(int page, Point at, string fileName, byte[] data)
     {

@@ -66,7 +66,14 @@ public partial class CommentPanel
                 Type(tool, page, points, look);
                 break;
             case MarkTool.Stamp:
-                Added(Change(label, m => made = m.AddStamp(page, points[0], StampValue(), look)), made);
+                string stamp = StampValue();
+                bool dated = StampDate.IsChecked == true;
+                if (dated)
+                {
+                    look = look with { Color = look.Color ?? Marker.StampColor(stamp) };
+                    stamp = AnnotationText.StampLabel(stamp) + " " + DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                }
+                Added(Change(label, m => made = m.AddStamp(page, points[0], stamp, look, dated)), made);
                 break;
             case MarkTool.Attach:
                 _ = AttachAsync(page, points[0]);

@@ -170,6 +170,20 @@ public sealed class MarkerTests
     }
 
     [Fact]
+    public void ADatedStampIsWiderAndKeepsTheColourOfItsStandardName()
+    {
+        using var f = new CommentFixture();
+
+        var stamp = f.Marker.AddStamp(0, new Point(200, 300), "APPROVED 2026-11-11", MarkStyle.Default with { Color = Marker.StampColor("Approved") }, dated: true);
+
+        var read = f.Marks().Single();
+        Assert.Equal("APPROVED 2026-11-11", read.IconName);
+        Assert.Equal(Marker.DatedStampWidth, f.Marker.BoxOf(stamp).Width, 0.5);
+        Assert.Equal([0, 0.5, 0.15], Marker.StampColor("Approved"));
+        Assert.Equal([0.75, 0, 0], Marker.StampColor("Draft"));
+    }
+
+    [Fact]
     public void ThePointerFindsTheTopmostMarkUnderIt()
     {
         using var f = new CommentFixture();

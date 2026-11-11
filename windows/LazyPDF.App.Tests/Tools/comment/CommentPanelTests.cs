@@ -121,6 +121,24 @@ public sealed class CommentPanelTests
     }
 
     [Fact]
+    public Task ATickedStampDateAddsTodayToTheName() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var panel = Attached(f);
+        Get<CheckBox>(panel, "StampDate").IsChecked = true;
+        Get<Dictionary<MarkTool, RadioButton>>(panel, "_buttons")[MarkTool.Stamp].IsChecked = true;
+
+        var tool = Get<IPagePointerTool>(panel, "_active");
+        tool.Press(At(new Point(200, 300)));
+        tool.Release(At(new Point(200, 300)));
+
+        var stamp = f.Marks().Single();
+        Assert.Equal("APPROVED " + DateTime.Today.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture), stamp.IconName);
+        Assert.Equal(Marker.DatedStampWidth, f.Marker.BoxOf(stamp).Width, 0.5);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task AMarkJustDrawnStaysSelectedAndMovesWithTheSameTool() => Sta.Run(() =>
     {
         using var f = new CommentFixture();

@@ -53,6 +53,7 @@
         <StackPanel x:Name="StampRow" Margin="0,8,0,0" Visibility="Collapsed">
             <TextBlock Text="{loc:T Stamp text}" Style="{StaticResource FieldLabelText}" />
             <ComboBox x:Name="StampName" IsEditable="True" AutomationProperties.Name="{loc:T Stamp text}" SelectionChanged="Stamp_Changed" LostFocus="Stamp_Changed" />
+            <CheckBox x:Name="StampDate" Style="{StaticResource ToggleSwitchStyle}" Margin="0,8,0,0" />
         </StackPanel>
 
         <StackPanel x:Name="SelectedRow" Visibility="Collapsed">
