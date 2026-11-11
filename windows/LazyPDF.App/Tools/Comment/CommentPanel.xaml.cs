@@ -85,6 +85,7 @@ public partial class CommentPanel : ToolPanel
     private MarkStyle? _drawing;
     private bool _loading = true;
     private bool _choosing;
+    private bool _fresh;
     private bool _allowed = true;
     private int _flattenable;
 
@@ -238,6 +239,7 @@ public partial class CommentPanel : ToolPanel
                 if (setMode) viewer.Mode = PointerMode.Select;
                 break;
             case MarkTool.Edit:
+                _fresh = false;
                 viewer.PointerTool = _active = _edit;
                 _edit.Redraw();
                 break;
@@ -328,6 +330,11 @@ public partial class CommentPanel : ToolPanel
         if (_loading) return;
         ShowReadouts();
         if (_edit?.Current is null) return;
+        if (_fresh)
+        {
+            _drawing = CurrentStyle();
+            return;
+        }
         _unsettled.Add(sender is RadioButton ? "colour" : sender is Slider || sender == FillBox || sender == LineStyleBox || sender == HeadBox || sender == IconBox ? sender : "font");
         _settle.Stop();
         _settle.Start();

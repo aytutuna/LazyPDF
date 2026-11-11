@@ -94,10 +94,12 @@ public partial class CommentPanel
     }
 
     // A mark just drawn stays selected, so a press on it moves it without changing the tool.
+    // Look changes made while it is the one just drawn are for the next mark, not for it.
     private void Added(bool done, PdfAnnotation? made)
     {
         if (!done || made?.Reference is not { } reference || Tab is not { } tab) return;
         _edit?.Select(NewMarker(tab).Find(made.PageIndex, reference.Number));
+        _fresh = _edit?.Current is not null;
     }
 
     private string StampValue()
@@ -242,7 +244,11 @@ public partial class CommentPanel
         viewer.ClearSelection();
     }
 
-    private void Edit_SelectionChanged(object? sender, EventArgs e) => ShowSelected();
+    private void Edit_SelectionChanged(object? sender, EventArgs e)
+    {
+        _fresh = false;
+        ShowSelected();
+    }
 
     private void Edit_Moved(PdfAnnotation mark, Vector shift) => Change(Loc.T("Move"), m => m.Move(mark, shift));
 
