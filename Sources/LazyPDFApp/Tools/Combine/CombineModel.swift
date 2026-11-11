@@ -209,6 +209,7 @@ public final class CombineModel: ToolPanelModel {
         let copy = TabCopy(tab, host)
         let ordered = sources
         let gate = reading
+        let names = entries.map(\.name)
         var made: [UInt8]?
         var skipped = 0
         do {
@@ -228,7 +229,6 @@ public final class CombineModel: ToolPanelModel {
             }
         } catch {
             // Each file alone, in order, to name the first one the merge cannot take.
-            let names = entries.map(\.name)
             var bad: String?
             var checked = false
             do {
