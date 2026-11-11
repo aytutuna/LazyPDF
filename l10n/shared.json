@@ -2322,7 +2322,22 @@
     "tr": "Bu bağlantı başka bir dosyaya gidiyor; Lazy PDF onu buradan açmaz."
   },
   "This link runs a script or sends a form, which Lazy PDF does not do.": {
-    "tr": "Bu bağlantı bir betik çalıştırıyor veya form gönderiyor; Lazy PDF bunları yapmaz."
+    "tr": "Bu bağlantı bir komut dosyası çalıştırıyor veya form gönderiyor; Lazy PDF bunları yapmaz."
+  },
+  "This link cannot be followed.": {
+    "tr": "Bu bağlantı izlenemiyor."
+  },
+  "This link shows or hides a layer. Use the Layers panel for that.": {
+    "tr": "Bu bağlantı bir katmanı gösteriyor veya gizliyor. Bunun için Katmanlar bölmesini kullanın."
+  },
+  "This link goes to a file inside this file, which Lazy PDF does not open from here.": {
+    "tr": "Bu bağlantı bu dosyanın içindeki bir dosyaya gidiyor; Lazy PDF onu buradan açmaz."
+  },
+  "This link plays sound, video or 3D content, which Lazy PDF does not do.": {
+    "tr": "Bu bağlantı ses, video veya 3B içerik oynatıyor; Lazy PDF bunu yapmaz."
+  },
+  "This link shows or hides part of the page, which Lazy PDF does not do.": {
+    "tr": "Bu bağlantı sayfanın bir bölümünü gösteriyor veya gizliyor; Lazy PDF bunu yapmaz."
   },
   "This link goes to a page that is not in the file.": {
     "tr": "Bu bağlantı dosyada olmayan bir sayfaya gidiyor."

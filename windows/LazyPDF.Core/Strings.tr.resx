@@ -6193,11 +6193,17 @@
   <data name="This kind of action cannot be set here." xml:space="preserve">
     <value>Bu tür bir işlem burada ayarlanamaz.</value>
   </data>
+  <data name="This link cannot be followed." xml:space="preserve">
+    <value>Bu bağlantı izlenemiyor.</value>
+  </data>
   <data name="This link cannot be opened." xml:space="preserve">
     <value>Bu bağlantı açılamıyor.</value>
   </data>
   <data name="This link does something else. Saving replaces it." xml:space="preserve">
     <value>Bu bağlantı başka bir iş yapıyor. Kaydetmek onu değiştirir.</value>
+  </data>
+  <data name="This link goes to a file inside this file, which Lazy PDF does not open from here." xml:space="preserve">
+    <value>Bu bağlantı bu dosyanın içindeki bir dosyaya gidiyor; Lazy PDF onu buradan açmaz.</value>
   </data>
   <data name="This link goes to a page that is not in the file." xml:space="preserve">
     <value>Bu bağlantı dosyada olmayan bir sayfaya gidiyor.</value>
@@ -6205,8 +6211,17 @@
   <data name="This link goes to another file, which Lazy PDF does not open from here." xml:space="preserve">
     <value>Bu bağlantı başka bir dosyaya gidiyor; Lazy PDF onu buradan açmaz.</value>
   </data>
+  <data name="This link plays sound, video or 3D content, which Lazy PDF does not do." xml:space="preserve">
+    <value>Bu bağlantı ses, video veya 3B içerik oynatıyor; Lazy PDF bunu yapmaz.</value>
+  </data>
   <data name="This link runs a script or sends a form, which Lazy PDF does not do." xml:space="preserve">
-    <value>Bu bağlantı bir betik çalıştırıyor veya form gönderiyor; Lazy PDF bunları yapmaz.</value>
+    <value>Bu bağlantı bir komut dosyası çalıştırıyor veya form gönderiyor; Lazy PDF bunları yapmaz.</value>
+  </data>
+  <data name="This link shows or hides a layer. Use the Layers panel for that." xml:space="preserve">
+    <value>Bu bağlantı bir katmanı gösteriyor veya gizliyor. Bunun için Katmanlar bölmesini kullanın.</value>
+  </data>
+  <data name="This link shows or hides part of the page, which Lazy PDF does not do." xml:space="preserve">
+    <value>Bu bağlantı sayfanın bir bölümünü gösteriyor veya gizliyor; Lazy PDF bunu yapmaz.</value>
   </data>
   <data name="This page" xml:space="preserve">
     <value>Bu sayfa</value>

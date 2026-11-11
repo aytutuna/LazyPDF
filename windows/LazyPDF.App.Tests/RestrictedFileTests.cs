@@ -1,6 +1,8 @@
 using LazyPDF.App.Documents;
 using LazyPDF.App.Tools.Stamps;
 using LazyPDF.App.Viewer;
+using System.Windows;
+using System.Windows.Automation;
 using LazyPDF.Core;
 using Xunit;
 
@@ -63,6 +65,45 @@ public sealed class RestrictedFileTests
         Assert.True(viewer.CanCopy);
         return Task.CompletedTask;
     });
+
+    [Theory]
+    [InlineData("SetOCGState", "This link shows or hides a layer. Use the Layers panel for that.")]
+    [InlineData("GoToE", "This link goes to a file inside this file, which Lazy PDF does not open from here.")]
+    [InlineData("Movie", "This link plays sound, video or 3D content, which Lazy PDF does not do.")]
+    [InlineData("Hide", "This link shows or hides part of the page, which Lazy PDF does not do.")]
+    [InlineData("Thread", "This link cannot be followed.")]
+    public Task ALinkThatCannotBeFollowedSaysWhyByKind(string type, string expected) => Sta.Run(() =>
+    {
+        var viewer = new PageViewer();
+
+        viewer.FollowAction(new OtherAction(type));
+
+        AssertCard(viewer, expected);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ANullActionAndAnUnlistedNamedActionAreToldAsNotFollowable() => Sta.Run(() =>
+    {
+        var viewer = new PageViewer();
+
+        viewer.FollowAction(null);
+        AssertCard(viewer, "This link cannot be followed.");
+
+        viewer.FollowAction(new NamedAction("Print"));
+        AssertCard(viewer, "This link cannot be followed.");
+        return Task.CompletedTask;
+    });
+
+    private static void AssertCard(PageViewer viewer, string expected)
+    {
+        var card = (FrameworkElement)viewer.FindName("LinkCard");
+        var title = (System.Windows.Controls.TextBlock)viewer.FindName("LinkTitle");
+
+        Assert.Equal(expected, title.Text);
+        Assert.Equal(expected, AutomationProperties.GetName(card));
+        Assert.Equal(Visibility.Visible, card.Visibility);
+    }
 
     [Fact]
     public void TheMessageSaysWhatToDo()

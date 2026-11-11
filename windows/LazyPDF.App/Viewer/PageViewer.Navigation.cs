@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Input;
 using LazyPDF.Core;
 
@@ -76,8 +77,14 @@ public partial class PageViewer
             case SubmitFormAction submit:
                 Tell(Loc.T("This link runs a script or sends a form, which Lazy PDF does not do."), submit.Url);
                 break;
-            case JavaScriptAction or ResetFormAction or OtherAction:
+            case JavaScriptAction or ResetFormAction:
                 Tell(Loc.T("This link runs a script or sends a form, which Lazy PDF does not do."), null);
+                break;
+            case OtherAction other:
+                Tell(OtherText(other.Type), null);
+                break;
+            default:
+                Tell(Loc.T("This link cannot be followed."), null);
                 break;
         }
     }
@@ -93,8 +100,18 @@ public partial class PageViewer
             case "GoBack": GoBack(); break;
             case "GoForward": GoForward(); break;
             case "Find": ShowFind(); break;
+            default: Tell(Loc.T("This link cannot be followed."), null); break;
         }
     }
+
+    private static string OtherText(string type) => type switch
+    {
+        "SetOCGState" => Loc.T("This link shows or hides a layer. Use the Layers panel for that."),
+        "GoToE" => Loc.T("This link goes to a file inside this file, which Lazy PDF does not open from here."),
+        "Sound" or "Movie" or "Rendition" or "GoTo3DView" or "Screen" => Loc.T("This link plays sound, video or 3D content, which Lazy PDF does not do."),
+        "Hide" => Loc.T("This link shows or hides part of the page, which Lazy PDF does not do."),
+        _ => Loc.T("This link cannot be followed."),
+    };
 
     public void GoBack()
     {
@@ -224,10 +241,12 @@ public partial class PageViewer
         bool openable = Uri.TryCreate(address, UriKind.Absolute, out var uri) && OpenableSchemes.Contains(uri.Scheme);
         _pendingAddress = openable ? address : null;
         LinkTitle.Text = openable ? Loc.T("Open this link?") : Loc.T("This link cannot be opened.");
+        AutomationProperties.SetName(LinkCard, LinkTitle.Text);
         LinkAddress.Text = address;
         LinkAddress.Visibility = Visibility.Visible;
         LinkOpen.Visibility = openable ? Visibility.Visible : Visibility.Collapsed;
         LinkCancel.Content = openable ? Loc.T("Cancel") : Loc.T("Close");
+        AutomationProperties.SetName(LinkCancel, (string)LinkCancel.Content);
         LinkCard.Visibility = Visibility.Visible;
         (openable ? LinkOpen : LinkCancel).Focus();
     }
@@ -236,10 +255,12 @@ public partial class PageViewer
     {
         _pendingAddress = null;
         LinkTitle.Text = title;
+        AutomationProperties.SetName(LinkCard, title);
         LinkAddress.Text = detail;
         LinkAddress.Visibility = string.IsNullOrEmpty(detail) ? Visibility.Collapsed : Visibility.Visible;
         LinkOpen.Visibility = Visibility.Collapsed;
         LinkCancel.Content = Loc.T("Close");
+        AutomationProperties.SetName(LinkCancel, (string)LinkCancel.Content);
         LinkCard.Visibility = Visibility.Visible;
         LinkCancel.Focus();
     }
