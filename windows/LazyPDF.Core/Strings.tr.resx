@@ -3004,6 +3004,9 @@
   <data name="Nothing exported" xml:space="preserve">
     <value>Dışa aktarılan bir şey yok</value>
   </data>
+  <data name="Nothing found of the kinds listed here. Text inside pictures is not looked at." xml:space="preserve">
+    <value>Burada sayılan türlerden bir şey bulunamadı. Resimlerin içindeki yazıya bakılmaz.</value>
+  </data>
   <data name="Nothing found to replace." xml:space="preserve">
     <value>Değiştirilecek bir şey bulunamadı.</value>
   </data>
