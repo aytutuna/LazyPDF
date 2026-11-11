@@ -69,7 +69,11 @@
                 <Button x:Name="ViewButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8A0;" Content="{loc:T Side by side}"
                         Margin="0,0,8,0" Padding="10,3,10,4" AutomationProperties.Name="{loc:T Side by side}" Click="View_Click" />
                 <Button x:Name="ReportButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE9F9;" Content="{loc:T Write report}"
-                        Padding="10,3,10,4" AutomationProperties.Name="{loc:T Write report}" Click="Report_Click" />
+                        Margin="0,0,8,0" Padding="10,3,10,4" AutomationProperties.Name="{loc:T Write report}" Click="Report_Click" />
+                <Button x:Name="PreviousButton" Style="{StaticResource IconButtonStyle}" Content="&#xE70E;" ToolTip="{loc:T Previous difference (Alt+Up)}"
+                        AutomationProperties.Name="{loc:T Previous difference (Alt+Up)}" Click="Previous_Click" />
+                <Button x:Name="NextButton" Style="{StaticResource IconButtonStyle}" Content="&#xE70D;" ToolTip="{loc:T Next difference (Alt+Down)}"
+                        AutomationProperties.Name="{loc:T Next difference (Alt+Down)}" Click="Next_Click" />
             </WrapPanel>
             <compare:ChangeList x:Name="Changes" MaxHeight="300" />
         </StackPanel>

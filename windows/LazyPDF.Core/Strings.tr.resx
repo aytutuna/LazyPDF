@@ -619,6 +619,12 @@
   <data name="Back (Alt+Left)" xml:space="preserve">
     <value>Geri (Alt+Sol)</value>
   </data>
+  <data name="Back at the first difference." xml:space="preserve">
+    <value>İlk farka dönüldü.</value>
+  </data>
+  <data name="Back at the last difference." xml:space="preserve">
+    <value>Son farka dönüldü.</value>
+  </data>
   <data name="Back to the document (Esc)" xml:space="preserve">
     <value>Belgeye dön (Esc)</value>
   </data>
@@ -3256,6 +3262,9 @@
   <data name="New: {0}" xml:space="preserve">
     <value>Yeni: {0}</value>
   </data>
+  <data name="Next difference (Alt+Down)" xml:space="preserve">
+    <value>Sonraki fark (Alt+Aşağı)</value>
+  </data>
   <data name="Next match" xml:space="preserve">
     <value>Sonraki eşleşme</value>
   </data>
@@ -4287,6 +4296,9 @@
   </data>
   <data name="Preview" xml:space="preserve">
     <value>Önizleme</value>
+  </data>
+  <data name="Previous difference (Alt+Up)" xml:space="preserve">
+    <value>Önceki fark (Alt+Yukarı)</value>
   </data>
   <data name="Previous match" xml:space="preserve">
     <value>Önceki eşleşme</value>

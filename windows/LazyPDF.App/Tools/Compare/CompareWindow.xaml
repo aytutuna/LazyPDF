@@ -8,7 +8,8 @@
         Icon="{x:Static loc:AppIcon.Image}"
         FontFamily="{StaticResource TextFontFamily}"
         Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
-        Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+        Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+        PreviewKeyDown="Window_PreviewKeyDown">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -16,7 +17,14 @@
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" BorderThickness="0,0,0,1" Padding="12,6" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
-            <StackPanel Orientation="Horizontal">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button x:Name="PreviousButton" Style="{StaticResource IconButtonStyle}" Content="&#xE70E;" ToolTip="{loc:T Previous difference (Alt+Up)}"
+                            AutomationProperties.Name="{loc:T Previous difference (Alt+Up)}" Click="Previous_Click" />
+                    <Button x:Name="NextButton" Style="{StaticResource IconButtonStyle}" Content="&#xE70D;" ToolTip="{loc:T Next difference (Alt+Down)}"
+                            AutomationProperties.Name="{loc:T Next difference (Alt+Down)}" Click="Next_Click" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
                 <Border Style="{StaticResource SegmentedTrackStyle}">
                     <StackPanel Orientation="Horizontal">
                         <RadioButton x:Name="SideButton" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Side by side}" IsChecked="True"
@@ -27,7 +35,8 @@
                 </Border>
                 <CheckBox x:Name="LinkToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Scroll together}" IsChecked="True" Margin="20,0,0,0"
                           AutomationProperties.Name="{loc:T Scroll together}" Click="Link_Click" />
-            </StackPanel>
+                </StackPanel>
+            </DockPanel>
         </Border>
 
         <Grid Grid.Row="1">

@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 
@@ -47,6 +48,7 @@ internal sealed partial class CompareWindow : Window
         {
             _rows = value;
             Changes.Rows = value;
+            PreviousButton.IsEnabled = NextButton.IsEnabled = value.Count > 0;
             DrawMarks();
         }
     }
@@ -72,6 +74,12 @@ internal sealed partial class CompareWindow : Window
         LinkToggle.IsEnabled = !_overlay;
         ShowOverlays();
     }
+
+    private void Previous_Click(object sender, RoutedEventArgs e) => Changes.Step(-1);
+
+    private void Next_Click(object sender, RoutedEventArgs e) => Changes.Step(1);
+
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e) => Changes.HandleKey(e);
 
     private void Link_Click(object sender, RoutedEventArgs e) => _sync.Enabled = LinkToggle.IsChecked == true;
 

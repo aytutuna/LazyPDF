@@ -3175,6 +3175,18 @@
   "Differences": {
     "tr": "Farklar"
   },
+  "Previous difference (Alt+Up)": {
+    "tr": "Önceki fark (Alt+Yukarı)"
+  },
+  "Next difference (Alt+Down)": {
+    "tr": "Sonraki fark (Alt+Aşağı)"
+  },
+  "Back at the first difference.": {
+    "tr": "İlk farka dönüldü."
+  },
+  "Back at the last difference.": {
+    "tr": "Son farka dönüldü."
+  },
   "Looks different": {
     "tr": "Farklı görünüyor"
   },

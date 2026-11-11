@@ -36,6 +36,8 @@ public partial class ComparePanel : ToolPanel
         _action = new ToolAction(Loc.T("Compare"), "", CanRun, RunAsync);
         InitializeComponent();
         Changes.Picked += (_, row) => Go(row);
+        Changes.Wrapped += (_, first) => Host?.SetStatus(Loc.T(first ? "Back at the first difference." : "Back at the last difference."));
+        PreviewKeyDown += (_, e) => Changes.HandleKey(e);
         ShowHow();
     }
 
@@ -96,7 +98,7 @@ public partial class ComparePanel : ToolPanel
     {
         _shown = held;
         ResultGroup.Visibility = held is null ? Visibility.Collapsed : Visibility.Visible;
-        if (held is null) Changes.Rows = [];
+        if (held is null) SetRows([]);
         else Refresh();
     }
 
@@ -156,11 +158,21 @@ public partial class ComparePanel : ToolPanel
         return parts;
     }
 
+    private void SetRows(IReadOnlyList<ChangeRow> rows)
+    {
+        Changes.Rows = rows;
+        PreviousButton.IsEnabled = NextButton.IsEnabled = rows.Count > 0;
+    }
+
+    private void Previous_Click(object sender, RoutedEventArgs e) => Changes.Step(-1);
+
+    private void Next_Click(object sender, RoutedEventArgs e) => Changes.Step(1);
+
     private void Refresh()
     {
         if (_shown is not { } held) return;
         var rows = held.Session.Rows(CurrentParts());
-        Changes.Rows = rows;
+        SetRows(rows);
         SummaryText.Text = CompareFlow.Headline(held.Session, rows.Count);
         string? note = CompareFlow.Note(held.Session);
         NoteText.Text = note;
