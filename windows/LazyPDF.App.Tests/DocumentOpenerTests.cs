@@ -106,7 +106,7 @@ public sealed class DocumentOpenerTests
     [Fact]
     public void TurkishCodePageTextIsReadOnATurkishCulture()
     {
-        byte[] bytes = Encoding.GetEncoding(1254).GetBytes("şğİ");
+        byte[] bytes = [0xFE, 0xF0, 0xDD];
         var saved = CultureInfo.CurrentCulture;
         CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("tr-TR");
         try { Assert.Equal("şğİ", DocumentOpener.Decode(bytes)); }
