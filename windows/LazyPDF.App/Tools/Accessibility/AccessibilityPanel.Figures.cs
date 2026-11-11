@@ -107,7 +107,7 @@ public partial class AccessibilityPanel
             {
                 // The tree on the screen was read from a copy; the edit goes to the open document's own.
                 var tree = StructureTree.Read(tab.Document);
-                var figure = tree is null ? null : FigureFinder.List(tree).ElementAtOrDefault(row.Number - 1);
+                var figure = tree is null ? null : FigureFinder.List(tree).FirstOrDefault(f => f.Key == row.Key);
                 if (tree is null || AccessibilityEdits.FigureChanged(figure?.Element, row.Alt))
                 {
                     Host!.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The figure is no longer in the file.")));
