@@ -301,18 +301,20 @@ public partial class AttachmentsSidePanel : ToolPanel
         if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
         string folder = dialog.FolderName;
         int saved = 0, unreadable = 0;
-        bool failed = false;
+        bool failed = false, completed = false;
         await host.RunBusyAsync(Loc.T("Saving attachments"), token => Task.Run(() =>
         {
             try
             {
                 (saved, unreadable) = SaveAllTo(tab.Document, rows, folder, token);
+                completed = true;
             }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException)
             {
                 failed = true;
             }
         }, token));
+        if (!completed && !failed) return;
         if (failed) Tell(Loc.T("The attachments could not be saved. Check the folder and try again."));
         else
         {
