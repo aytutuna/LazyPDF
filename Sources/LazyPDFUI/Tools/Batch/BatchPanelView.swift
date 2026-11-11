@@ -32,6 +32,12 @@ struct BatchPanelView: View {
             if model.canWatch { watch(model) }
             results(model)
         }
+        .dropDestination(for: URL.self) { urls, _ in
+            let files = urls.filter(\.isFileURL).map { ToolFile(url: $0, access: SecurityScopedAccess.start($0)) }
+            if files.isEmpty { return false }
+            model.drop(files)
+            return true
+        }
     }
 
     private func folder(_ path: String, choose: @escaping () async -> Void, label: String) -> some View {

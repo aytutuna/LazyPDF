@@ -108,6 +108,18 @@ public final class CompareModel: ToolPanelModel {
         choose(file)
     }
 
+    /// The files dropped on the panel: the first PDF is the one to compare with.
+    public func drop(_ files: [ToolFile]) {
+        let pdf = files.first { $0.url.pathExtension.lowercased() == "pdf" }
+        for file in files where file.url != pdf?.url { file.access?.stop() }
+        guard let pdf else {
+            host?.setStatus(L10n.t("Only PDF files can be added."))
+            return
+        }
+        source = .file
+        choose(pdf)
+    }
+
     public func choose(_ file: ToolFile) {
         other = file
         hideUnlock()

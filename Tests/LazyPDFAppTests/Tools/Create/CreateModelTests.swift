@@ -299,4 +299,17 @@ final class CreateModelTests: XCTestCase {
         panel.detach()
         XCTAssertNil(panel.create.host)
     }
+
+    func test_droppedPicturesSwitchToPicturesAndOtherFilesAreSaidToBeLeftOut() {
+        let f = ViewModelFixture(self)
+        let model = made(f)
+
+        model.drop([ToolFile(url: f.dir.file("a.txt", [1]))])
+        XCTAssertEqual(model.from, .blank)
+        XCTAssertEqual(f.vm.statusFull, "Only picture files can be added.")
+
+        model.drop([ToolFile(url: f.dir.file("a.JPG", [1])), ToolFile(url: f.dir.file("b.txt", [1])), ToolFile(url: f.dir.file("c.heic", [1]))])
+        XCTAssertEqual(model.from, .pictures)
+        XCTAssertEqual(model.pictures.map(\.name), ["a.JPG", "c.heic"])
+    }
 }

@@ -610,4 +610,19 @@ final class BatchModelTests: XCTestCase {
 
         XCTAssertNotNil(panel.batch.host)
     }
+
+    func test_droppedFoldersGiveTheirPdfsInNameOrderAndOtherFilesAreSaidToBeLeftOut() {
+        let f = ViewModelFixture(self)
+        let (model, _) = make(f)
+        f.dir.file("in/b10.pdf", Pdfs.text())
+        f.dir.file("in/b2.pdf", Pdfs.text())
+        f.dir.file("in/note.txt", [1])
+
+        model.drop([ToolFile(url: f.dir.sub("in"))])
+        XCTAssertEqual(model.files.map(\.name), ["b2.pdf", "b10.pdf"])
+
+        model.drop([ToolFile(url: f.dir.file("note.txt", [1]))])
+        XCTAssertEqual(model.files.count, 2)
+        XCTAssertEqual(f.vm.statusFull, "Only PDF files can be added.")
+    }
 }

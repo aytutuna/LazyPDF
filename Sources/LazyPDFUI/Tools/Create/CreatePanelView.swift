@@ -41,6 +41,12 @@ struct CreatePanelView: View {
             }
             if model.showsSetup { setup(model) }
         }
+        .dropDestination(for: URL.self) { urls, _ in
+            let files = urls.filter(\.isFileURL).map { ToolFile(url: $0, access: SecurityScopedAccess.start($0)) }
+            if files.isEmpty { return false }
+            model.drop(files)
+            return true
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { model.peekClipboard() }
         }

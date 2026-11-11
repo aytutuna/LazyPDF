@@ -251,4 +251,17 @@ final class CompareModelTests: XCTestCase {
         XCTAssertEqual(model.shown?.session.byPixels, true)
         XCTAssertEqual(model.howText, "Compares how the pages look. Use it for scans and drawings.")
     }
+
+    func test_aDroppedPdfIsTheFileToCompareWithAndOtherFilesAreSaidToBeLeftOut() throws {
+        let (model, rig, dir) = try attached()
+        model.source = .version
+
+        model.drop([ToolFile(url: dir.file("a.txt", [1]))])
+        XCTAssertEqual(rig.host.statuses.last, "Only PDF files can be added.")
+        XCTAssertNil(model.other)
+
+        model.drop([ToolFile(url: dir.file("a.txt", [1])), ToolFile(url: dir.file("other.pdf", CompareKit.before()))])
+        XCTAssertEqual(model.source, .file)
+        XCTAssertEqual(model.chosenText, "other.pdf")
+    }
 }

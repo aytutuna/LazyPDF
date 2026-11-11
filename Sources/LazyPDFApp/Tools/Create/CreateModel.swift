@@ -97,6 +97,19 @@ public final class CreateModel {
         fileProblem = nil
     }
 
+    /// The files dropped on the panel: the pictures are added to the list.
+    public func drop(_ files: [ToolFile]) {
+        let kinds = ["jpg", "jpeg", "png", "tif", "tiff", "bmp", "gif", "heic", "heif"]
+        let pictures = files.filter { kinds.contains($0.url.pathExtension.lowercased()) }
+        for file in files where !pictures.contains(where: { $0.url == file.url }) { file.access?.stop() }
+        if pictures.isEmpty {
+            host?.setStatus(L10n.t("Only picture files can be added."))
+            return
+        }
+        from = .pictures
+        for file in pictures { self.pictures.append(CreatePicture(file: file)) }
+    }
+
     public func addPictures() async {
         guard let host else { return }
         for file in await host.filePicker.pickFiles([.picture], multiple: true) { pictures.append(CreatePicture(file: file)) }

@@ -52,6 +52,12 @@ struct ComparePanelView: View {
 
             if model.shown != nil { result }
         }
+        .dropDestination(for: URL.self) { urls, _ in
+            let files = urls.filter(\.isFileURL).map { ToolFile(url: $0, access: SecurityScopedAccess.start($0)) }
+            if files.isEmpty { return false }
+            model.drop(files)
+            return true
+        }
         #if os(iOS)
         // A plain sheet is a form sheet on an iPad, too narrow for two pages side by side.
         .fullScreenCover(isPresented: sheetShown) { sheetContent }

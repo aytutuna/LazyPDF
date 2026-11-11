@@ -233,6 +233,28 @@ public final class BatchModel {
         add(names.map { ToolFile(url: $0, access: folder.access) })
     }
 
+    /// The files and folders dropped on the panel: a folder gives its PDFs.
+    public func drop(_ dropped: [ToolFile]) {
+        var list: [ToolFile] = []
+        for file in dropped {
+            if (try? file.url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true {
+                let names = ((try? FileManager.default.contentsOfDirectory(at: file.url, includingPropertiesForKeys: nil)) ?? [])
+                    .filter { $0.pathExtension.lowercased() == "pdf" }
+                    .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+                list += names.map { ToolFile(url: $0, access: file.access) }
+            } else if file.url.pathExtension.lowercased() == "pdf" {
+                list.append(file)
+            } else {
+                file.access?.stop()
+            }
+        }
+        if list.isEmpty {
+            host?.setStatus(L10n.t("Only PDF files can be added."))
+            return
+        }
+        add(list)
+    }
+
     func add(_ picked: [ToolFile]) {
         for file in picked where !files.contains(where: { $0.url.path.caseInsensitiveCompare(file.url.path) == .orderedSame }) {
             files.append(BatchFile(url: file.url, access: file.access))

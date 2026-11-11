@@ -1022,10 +1022,12 @@
 "One page at a time" = "Aynı anda tek sayfa";
 "One side" = "Tek yüz";
 "Only PDF files can be added between pages." = "Sayfaların arasına yalnızca PDF dosyaları eklenebilir.";
+"Only PDF files can be added." = "Yalnızca PDF dosyaları eklenebilir.";
 "Only a button can have an action." = "Yalnızca bir düğmenin işlemi olabilir.";
 "Only a check box or radio button has an export value." = "Dışa aktarma değeri yalnızca onay kutusunda veya seçenek düğmesinde bulunur.";
 "Only an element can sit at the root." = "Kökte yalnızca bir öğe bulunabilir.";
 "Only in the other file." = "Yalnızca diğer dosyada.";
+"Only picture files can be added." = "Yalnızca resim dosyaları eklenebilir.";
 "Only reported. Redact removes it." = "Yalnızca bildirilir. Karart aracı kaldırır.";
 "Only the first 5000 differences are marked." = "Yalnızca ilk 5000 fark işaretlendi.";
 "Only the first signature of a file can certify it." = "Bir dosyayı yalnızca ilk imza sertifikalandırabilir.";
