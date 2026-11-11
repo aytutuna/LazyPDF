@@ -44,6 +44,39 @@ public sealed class CreateToolTests
     }
 
     [Fact]
+    public void ABlankPageTakesTheSizeAskedAndTheOrientation()
+    {
+        var a3 = PdfMaker.Make(new(CreateSource.Blank, new PdfPageSetup(PdfPaper.A4, PdfOrientation.Landscape), "Blank.pdf", Pages: 2, Width: 841.89, Height: 1190.551), new FakeCodec(), new FakeFonts());
+        var custom = PdfMaker.Make(new(CreateSource.Blank, A4, "Blank.pdf", Width: 100 * 72 / 25.4, Height: 150 * 72 / 25.4), new FakeCodec(), new FakeFonts());
+
+        var page = Open(a3).Pages[1];
+        Assert.Equal((1190.55, 841.89), (Math.Round(page.MediaBox.Width, 2), Math.Round(page.MediaBox.Height, 2)));
+        page = Open(custom).Pages[0];
+        Assert.Equal((283.46, 425.2), (Math.Round(page.MediaBox.Width, 2), Math.Round(page.MediaBox.Height, 2)));
+    }
+
+    [Fact]
+    public Task TheBlankPaperListHoldsMoreSizesAndACustomOne() => Sta.Run(() =>
+    {
+        var panel = new CreatePanel();
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Blank;
+        panel.PaperBox.SelectedIndex = panel.PaperBox.Items.Count - 1;
+        panel.CustomWidth.Text = "100";
+        panel.CustomHeight.Text = "150";
+
+        var request = panel.Request()!;
+        Assert.Contains("A3", panel.PaperBox.Items.Cast<string>());
+        Assert.Equal((283.46, 425.2), (Math.Round(request.Width!.Value, 2), Math.Round(request.Height!.Value, 2)));
+
+        panel.CustomWidth.Text = "2";
+        Assert.False(panel.Action!.CanRun());
+
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+        Assert.DoesNotContain("A3", panel.PaperBox.Items.Cast<string>());
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public void PicturesBecomePagesInTheOrderGiven()
     {
         using var dir = new TempDir();

@@ -1,9 +1,11 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Pages;
 using LazyPDF.Core;
 using Microsoft.Win32;
 
@@ -57,18 +59,43 @@ public partial class CreatePanel : ToolPanel
     private bool TryBlankPages(out int pages) =>
         int.TryParse(BlankPagesBox.Text, out pages) && pages is >= 1 and <= PdfMaker.MostBlankPages;
 
+    private bool CustomPicked => Source == (int)CreateSource.Blank && PaperBox.SelectedIndex == PaperSize.All.Count;
+
+    // The custom size in points; null while it is not a number within what a page can be.
+    private (double Width, double Height)? CustomPoints()
+    {
+        if (!double.TryParse(CustomWidth.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double width)
+            || !double.TryParse(CustomHeight.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double height)) return null;
+        width *= PageEdits.PointsPerMillimetre;
+        height *= PageEdits.PointsPerMillimetre;
+        return width is >= 10 and <= 14400 && height is >= 10 and <= 14400 ? (width, height) : null;
+    }
+
+    // A blank size other than A4 and Letter, which the page setup draws itself.
+    private (double Width, double Height)? BlankSize()
+    {
+        int at = PaperBox.SelectedIndex;
+        if (CustomPicked) return CustomPoints();
+        return at is < 0 or 0 or 3 ? null : (PaperSize.All[at].Width, PaperSize.All[at].Height);
+    }
+
     private bool CanRun() => Source switch
     {
-        (int)CreateSource.Blank => TryBlankPages(out _),
+        (int)CreateSource.Blank => TryBlankPages(out _) && (!CustomPicked || CustomPoints() is not null),
         (int)CreateSource.Pictures => _pictures.Count > 0,
         (int)CreateSource.Text => TypedText.Text.Trim().Length > 0,
         _ => _clipboard != ClipboardKind.Nothing,
     };
 
     private string? Blocker() =>
-        _fileProblem ?? (Source == (int)CreateSource.Blank && !TryBlankPages(out _)
-            ? Loc.T("Type a number from 1 to {0}.", PdfMaker.MostBlankPages)
+        _fileProblem ?? (Source != (int)CreateSource.Blank ? null
+            : !TryBlankPages(out _) ? Loc.T("Type a number from 1 to {0}.", PdfMaker.MostBlankPages)
+            : CustomPicked && CustomPoints() is null ? Loc.T("Type a size from 10 to 5080 mm.")
             : null);
+
+    private List<string> PaperNames() => Source == (int)CreateSource.Blank ? [.. PaperSize.All.Select(p => p.Name), Loc.T("Custom size")]
+        : MakesPictures ? ["A4", Loc.T("Letter"), Loc.T("Size of the picture")]
+        : ["A4", Loc.T("Letter")];
 
     private void PeekClipboard()
     {
@@ -89,9 +116,15 @@ public partial class CreatePanel : ToolPanel
         TextOptions.Visibility = When(Source == (int)CreateSource.Text);
         ClipboardOptions.Visibility = When(Source == ClipboardIndex);
         SetupOptions.Visibility = When(Source != ClipboardIndex || _clipboard != ClipboardKind.Nothing);
-        PicturePaper.Visibility = When(MakesPictures);
-        if (!MakesPictures && PaperBox.SelectedItem == PicturePaper) PaperBox.SelectedIndex = 0;
-        OrientationBox.IsEnabled = PaperBox.SelectedItem != PicturePaper;
+        var names = PaperNames();
+        if (PaperBox.ItemsSource is not List<string> shown || !shown.SequenceEqual(names))
+        {
+            int kept = names.IndexOf(PaperBox.SelectedItem as string ?? "");
+            PaperBox.ItemsSource = names;
+            PaperBox.SelectedIndex = Math.Max(kept, 0);
+        }
+        CustomSize.Visibility = When(CustomPicked);
+        OrientationBox.IsEnabled = !(MakesPictures && PaperBox.SelectedIndex == 2);
         MarginRow.Visibility = When(Source != (int)CreateSource.Blank);
         FontRow.Visibility = When(MakesText);
         string? blocker = Blocker();
@@ -107,7 +140,12 @@ public partial class CreatePanel : ToolPanel
     }
 
     private PdfPageSetup Setup() => new(
-        PaperBox.SelectedIndex switch { 1 => PdfPaper.Letter, 2 => PdfPaper.Picture, _ => PdfPaper.A4 },
+        (PaperBox.SelectedItem as string) switch
+        {
+            var name when name == Loc.T("Letter") => PdfPaper.Letter,
+            var name when name == Loc.T("Size of the picture") => PdfPaper.Picture,
+            _ => PdfPaper.A4,
+        },
         OrientationBox.SelectedIndex switch { 1 => PdfOrientation.Portrait, 2 => PdfOrientation.Landscape, _ => PdfOrientation.Auto },
         Source == (int)CreateSource.Blank ? 36 : Tagged(MarginBox));
 
@@ -123,7 +161,8 @@ public partial class CreatePanel : ToolPanel
         {
             case (int)CreateSource.Blank:
                 TryBlankPages(out int pages);
-                return new(CreateSource.Blank, setup, Loc.T("Blank.pdf"), pages);
+                var size = BlankSize();
+                return new(CreateSource.Blank, setup, Loc.T("Blank.pdf"), pages, Width: size?.Width, Height: size?.Height);
             case (int)CreateSource.Pictures:
                 return new(CreateSource.Pictures, setup, PicturesTitle(), Files: [.. _pictures.Select(p => p.Path)]);
             case (int)CreateSource.Text:

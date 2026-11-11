@@ -12,7 +12,8 @@ public enum CreateSource
 /// <param name="Files">Picture files to read, in page order.</param>
 /// <param name="Picture">A picture already in memory that stands for <paramref name="Files"/>: the clipboard's.</param>
 public sealed record CreateRequest(CreateSource Source, PdfPageSetup Setup, string Title, int Pages = 1, IReadOnlyList<string>? Files = null,
-                                   byte[]? Picture = null, string Text = "", double FontSize = 11, string Family = "Arial");
+                                   byte[]? Picture = null, string Text = "", double FontSize = 11, string Family = "Arial",
+                                   double? Width = null, double? Height = null);
 
 /// <param name="Unreadable">Pictures that could not be read, or letters the font lacks.</param>
 public sealed record MadePdf(byte[] Bytes, int Pages, int Unreadable);
@@ -31,7 +32,11 @@ public static class PdfMaker
             case CreateSource.Blank:
                 // A form feed ends a page, so n of them make n empty pages.
                 var blank = PdfFromText.Create(new string('\f', request.Pages), fonts, request.Setup);
-                return new MadePdf(blank.Bytes, blank.Pages, 0);
+                if (request.Width is not { } width || request.Height is not { } height) return new MadePdf(blank.Bytes, blank.Pages, 0);
+                var sized = PdfDocument.Open(blank.Bytes);
+                if (request.Setup.Orientation == PdfOrientation.Landscape) (width, height) = (height, width);
+                PageOperations.Resize(sized, Enumerable.Range(0, sized.Pages.Count), width, height, ResizeMode.ChangeBox);
+                return new MadePdf(sized.SaveRewrite(), blank.Pages, 0);
             case CreateSource.Pictures:
                 var files = request.Picture is { } picture ? [picture] : request.Files!.Select(file =>
                 {

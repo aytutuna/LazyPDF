@@ -3482,6 +3482,9 @@
   "Type a number from 1 to {0}.": {
     "tr": "1 ile {0} arasında bir sayı yazın."
   },
+  "Type a size from 10 to 5080 mm.": {
+    "tr": "10 ile 5080 mm arasında bir boyut yazın."
+  },
   "That file is too big. Pick a text file under 1 MB.": {
     "tr": "Bu dosya çok büyük. 1 MB'den küçük bir metin dosyası seçin."
   },

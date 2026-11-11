@@ -6616,6 +6616,9 @@
   <data name="Type a password to open the file." xml:space="preserve">
     <value>Dosyayı açmak için bir parola yazın.</value>
   </data>
+  <data name="Type a size from 10 to 5080 mm." xml:space="preserve">
+    <value>10 ile 5080 mm arasında bir boyut yazın.</value>
+  </data>
   <data name="Type a title for the file, then save it." xml:space="preserve">
     <value>Dosya için bir başlık yazın, sonra kaydedin.</value>
   </data>
