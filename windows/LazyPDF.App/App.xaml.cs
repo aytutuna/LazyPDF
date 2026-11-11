@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 
@@ -24,6 +26,7 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        EventManager.RegisterClassHandler(typeof(UIElement), AccessKeyManager.AccessKeyPressedEvent, new AccessKeyPressedEventHandler(RequireAlt));
         if (Unattended)
         {
             ThemeService.Initialize();
@@ -63,6 +66,14 @@ public partial class App : Application
         // Apply the saved appearance before the first window is created.
         ThemeService.Initialize();
         base.OnStartup(e);
+    }
+
+    // WPF fires an access key on a plain letter while a button has focus; a stray key must not discard work.
+    private static void RequireAlt(object sender, AccessKeyPressedEventArgs e)
+    {
+        if (Keyboard.FocusedElement is not Button || Keyboard.Modifiers.HasFlag(ModifierKeys.Alt)) return;
+        e.Target = null;
+        e.Handled = true;
     }
 
     // One failed handler should not take every open tab with it. Before the window is up there is nothing to show it in.
