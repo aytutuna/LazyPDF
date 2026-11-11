@@ -53,6 +53,15 @@ public sealed class ToolCatalogTests
         Assert.Equal(["pages", "bookmarks", "attachments", "layers", "comments", "signatures", "search"], ToolCatalog.SidePanels.Select(p => p.Id));
 
     [Fact]
+    public void ToolGlyphsAreDistinct() =>
+        Assert.Equal(ToolCatalog.Tools.Count, ToolCatalog.Tools.Select(t => t.Glyph).Distinct().Count());
+
+    [Fact]
+    public void SidePanelGlyphsDifferFromToolGlyphsExceptComments() =>
+        Assert.All(ToolCatalog.SidePanels, p =>
+            Assert.DoesNotContain(ToolCatalog.Tools, t => t.Glyph == p.Glyph && !(t.Id == "comment" && p.Id == "comments")));
+
+    [Fact]
     public void ToolsAndSidePanelsAreFoundById()
     {
         Assert.Equal("Combine files", ToolCatalog.Find("combine")?.Title);
