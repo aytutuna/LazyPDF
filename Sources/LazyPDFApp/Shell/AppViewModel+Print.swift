@@ -30,6 +30,7 @@ extension AppViewModel {
         if sisters.tryPrint(file) {
             setStatus(L10n.t("Sent to Lazy Print."))
         } else {
+            try? FileManager.default.removeItem(at: file.deletingLastPathComponent())
             systemPrintRequested?(tab)
         }
     }
@@ -37,6 +38,7 @@ extension AppViewModel {
     /// Lazy Print could not be started with the copy of a document: the window prints that document itself.
     public func lazyPrintFailed(_ file: URL) {
         guard let tab = printCopyOwners[file.standardizedFileURL.path]?.tab, index(of: tab) != nil else { return }
+        try? FileManager.default.removeItem(at: file.deletingLastPathComponent())
         systemPrintRequested?(tab)
     }
 

@@ -8,6 +8,10 @@ import LazyPDFKit
 
 @MainActor
 final class PrintFlowTests: XCTestCase {
+    private func printFolders(_ f: ViewModelFixture) throws -> [URL] {
+        try FileManager.default.contentsOfDirectory(at: f.folders.printCopies, includingPropertiesForKeys: nil)
+    }
+
     func test_lazyPrintIsHandedAFileOfTheDocumentAsItStands() async throws {
         let f = ViewModelFixture(self)
         f.sisters.printTaken = true
@@ -39,6 +43,17 @@ final class PrintFlowTests: XCTestCase {
 
         XCTAssertTrue(asked === f.vm.activeDocument)
         XCTAssertEqual(f.sisters.printed.count, 1)
+        XCTAssertTrue(try printFolders(f).isEmpty)
+    }
+
+    func test_aCopyLazyPrintTookIsKept() async throws {
+        let f = ViewModelFixture(self)
+        f.sisters.printTaken = true
+        await f.vm.open(f.pdf())
+
+        f.vm.print()
+
+        XCTAssertEqual(try printFolders(f).count, 1)
     }
 
     func test_withoutLazyPrintNoCopyIsWrittenAndTheWindowPrints() async {
@@ -55,7 +70,7 @@ final class PrintFlowTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: f.folders.printCopies.path))
     }
 
-    func test_aLaunchOfLazyPrintThatFailsPrintsTheDocumentInTheWindow() async {
+    func test_aLaunchOfLazyPrintThatFailsPrintsTheDocumentInTheWindow() async throws {
         let f = ViewModelFixture(self)
         f.sisters.printTaken = true
         await f.vm.open(f.pdf())
@@ -66,6 +81,7 @@ final class PrintFlowTests: XCTestCase {
         f.vm.lazyPrintFailed(f.sisters.printed[0])
 
         XCTAssertTrue(asked === f.vm.activeDocument)
+        XCTAssertTrue(try printFolders(f).isEmpty)
     }
 
     func test_aFailedLaunchForAFileNoTabOwnsPrintsNothing() async {
