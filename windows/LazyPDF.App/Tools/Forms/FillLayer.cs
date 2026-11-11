@@ -118,7 +118,8 @@ internal sealed partial class FillLayer
     private void Add(int page)
     {
         if (_pages.ContainsKey(page)) return;
-        var host = new Canvas();
+        var size = _viewer.PageSize(page);
+        var host = new Canvas { Clip = new RectangleGeometry(new Rect(0, 0, size.Width, size.Height)) };
         var slots = new List<Slot>();
         // The page's tab order is the order the controls are added in.
         foreach (var widget in _form.TabSequence(page))
