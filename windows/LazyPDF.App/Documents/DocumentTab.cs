@@ -236,7 +236,8 @@ public sealed class DocumentTab : ITab, IDisposable
     {
         if (Session.Document.IsEncrypted)
         {
-            CanDraw = Renderer.Load(Session, _password);
+            try { CanDraw = Renderer.Load(Session, _password); }
+            catch (Exception) { CanDraw = false; }
             Drawn?.Invoke(this, EventArgs.Empty);
             return;
         }
@@ -247,7 +248,9 @@ public sealed class DocumentTab : ITab, IDisposable
     {
         await previous;
         if (_disposed || revision != Revision) return;
-        CanDraw = await Renderer.LoadAsync(Session, _password);
+        // A load that throws leaves the tab undrawn but must not fault the chain the later loads wait on.
+        try { CanDraw = await Renderer.LoadAsync(Session, _password); }
+        catch (Exception) { CanDraw = false; }
         if (_disposed || revision != Revision) return;
         Drawn?.Invoke(this, EventArgs.Empty);
     }
