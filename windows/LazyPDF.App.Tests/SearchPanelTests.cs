@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Panels.Search;
@@ -77,5 +78,38 @@ public sealed class SearchPanelTests
         Assert.Equal(Visibility.Visible, ((UIElement)panel.FindName("StageNote")).Visibility);
         window.Close();
         return Task.CompletedTask;
+    });
+
+    // The panel listens to the left-button events, which WPF raises from the generic ones.
+    private static void Click(ListBoxItem item)
+    {
+        item.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = UIElement.PreviewMouseDownEvent });
+        item.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = UIElement.MouseDownEvent });
+        item.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = UIElement.PreviewMouseUpEvent });
+    }
+
+    [Fact]
+    public Task ClickingTheCurrentResultGoesToItAgain() => Sta.Run(async () =>
+    {
+        var (panel, search, tab) = Open(Pdfs.Text(3, "The quick brown fox jumps over the lazy dog."));
+        using var _ = tab;
+        var window = new Window { Content = panel };
+        window.Show();
+        await search.Start("fox", new TextSearchOptions());
+        await Sta.Until(() => !search.Running);
+        var results = (ListBox)panel.FindName("Results");
+        results.UpdateLayout();
+        int moves = 0;
+        search.CurrentChanged += (_, _) => moves++;
+        Assert.Equal(3, search.Hits.Count);
+
+        Click((ListBoxItem)results.ItemContainerGenerator.ContainerFromIndex(search.Current));
+        Assert.Equal(1, moves);
+
+        int other = search.Current == 2 ? 1 : 2;
+        Click((ListBoxItem)results.ItemContainerGenerator.ContainerFromIndex(other));
+        Assert.Equal(2, moves);
+        Assert.Equal(other, search.Current);
+        window.Close();
     });
 }
