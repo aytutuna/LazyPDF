@@ -237,6 +237,18 @@ public sealed class CombineJobTests
     }
 
     [Fact]
+    public void ALongStemLeavesTheWholeNameUnderTheLimit()
+    {
+        string stem = new('s', 200);
+
+        string name = CombineJob.PartName(stem, 1, 3, new string('x', 200));
+
+        Assert.True(name.Length + " (2)".Length <= 255);
+        Assert.StartsWith(stem + " - x", name);
+        Assert.Equal($"{new string('s', 250)} 2.pdf", CombineJob.PartName(new string('s', 250), 1, 3, "Part"));
+    }
+
+    [Fact]
     public void ANameTakenInTheFolderGetsANumber()
     {
         using var dir = new TempDir();

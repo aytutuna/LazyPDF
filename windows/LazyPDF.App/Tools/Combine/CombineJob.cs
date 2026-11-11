@@ -118,7 +118,9 @@ internal static class CombineJob
         {
             string clean = string.Join("_", title.Split(Path.GetInvalidFileNameChars()));
             while (clean.Contains("  ")) clean = clean.Replace("  ", " ");
-            clean = clean.Length > 80 ? clean[..80] : clean;
+            // 255 is the NTFS name limit; 4 is left for " (n)" and the rest for " - " and ".pdf".
+            int room = Math.Min(80, 255 - stem.Length - 3 - 4 - 4);
+            clean = room <= 0 ? "" : clean.Length > room ? clean[..room] : clean;
             clean = clean.Trim('.', ' ');
             if (clean.Length > 0 && !Reserved.IsMatch(clean)) return $"{stem} - {clean}.pdf";
         }
