@@ -44,6 +44,7 @@ public partial class PageViewer
             _screen.WindowStartupLocation = WindowStartupLocation.Manual;
             _screen.Left = centre.X;
             _screen.Top = centre.Y;
+            _screen.Width = _screen.Height = 1;
         }
         _screen.SetResourceReference(Window.BackgroundProperty, "SolidBackgroundFillColorBaseBrush");
         _screen.SetResourceReference(Window.FontFamilyProperty, "TextFontFamily");
