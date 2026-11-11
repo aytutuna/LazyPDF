@@ -35,6 +35,21 @@ public sealed class KeyboardPlacementTests
         public void Cancel() => Cancelled = true;
     }
 
+    private sealed class GatedRenderer : IDocumentRenderer
+    {
+        public TaskCompletionSource<bool> Gate { get; } = new();
+
+        public bool Load(PdfEditSession session, string? password) => true;
+
+        public Task<bool> LoadAsync(PdfEditSession session, string? password) => Gate.Task;
+
+        public (double Width, double Height) PageSize(int pageIndex) => (200, 300);
+
+        public PdfRgbaImage? Render(int pageIndex, double dpi) => null;
+
+        public void Dispose() { }
+    }
+
     private static (PageViewer Viewer, RecordingTool Tool) Open(DocumentTab tab)
     {
         var viewer = new PageViewer(null);
@@ -67,6 +82,23 @@ public sealed class KeyboardPlacementTests
         Assert.InRange(click.Point.Y, 0, size.Height);
         Assert.Equal(click.Point, tool.Calls[1].Pointer.Point);
         return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task NoClickIsPlacedWhileTheNewPagesAreStillLoading() => Sta.Run(async () =>
+    {
+        var renderer = new GatedRenderer();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(2)), renderer, null, "a.pdf");
+        var (viewer, tool) = Open(tab);
+        Pdfs.Retitle(tab.Session, "New title");
+        tab.Commit("Properties");
+
+        Assert.False(viewer.PlaceWithKeys(Key.Enter));
+        renderer.Gate.SetResult(true);
+        await tab.Drawing;
+
+        Assert.True(viewer.PlaceWithKeys(Key.Enter));
+        Assert.Empty(tool.Calls);
     });
 
     [Fact]

@@ -194,7 +194,7 @@ public partial class PageViewer
         _downLink = hit is { } h ? LinkAt(h.Page, h.Point) : null;
         if (_tool is { } tool)
         {
-            if (hit is not { } over) return;
+            if (_stale || hit is not { } over) return;
             _drag = Drag.Tool;
             _dragPage = over.Page;
             Surface.CaptureMouse();
@@ -202,7 +202,7 @@ public partial class PageViewer
         }
         else if (_mode is PointerMode.Zoom or PointerMode.Snapshot)
         {
-            if (Surface.Hit(at, true) is not { } over) return;
+            if (_stale || Surface.Hit(at, true) is not { } over) return;
             _drag = Drag.Area;
             _dragPage = over.Page;
             Surface.CaptureMouse();

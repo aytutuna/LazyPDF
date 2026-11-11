@@ -24,6 +24,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
 
     private readonly ConditionalWeakTable<DocumentTab, ViewState> _states = new();
     private DocumentTab? _tab;
+    private bool _stale;
     private string[] _labels = [];
     private bool _reading;
     private string _shownZoom = "";
@@ -91,6 +92,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         }
         EndPointerTool();
         _tab = tab;
+        _stale = tab is not null && !tab.Drawing.IsCompleted;
         _history.Clear();
         ReadLabels();
         ResetText();
@@ -197,6 +199,8 @@ public partial class PageViewer : UserControl, IDocumentViewer
     private void Tab_Changed(object? sender, EventArgs e)
     {
         if (_tab is not { } tab) return;
+        _stale = true;
+        EndKeyPlacement();
         ReadLabels();
         if (Search.Query.Length > 0) _ = Search.Restart();
         RefreshBar();
@@ -206,6 +210,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
     private void Tab_Drawn(object? sender, EventArgs e)
     {
         if (_tab is not { } tab) return;
+        _stale = false;
         ResetText();
         Surface.Reload();
         Surface.SetRightToLeft(ViewerSettings.Read(tab.Document).RightToLeft);

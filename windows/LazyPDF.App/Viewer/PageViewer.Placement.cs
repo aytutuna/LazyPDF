@@ -20,7 +20,7 @@ public partial class PageViewer
 
     internal bool PlaceWithKeys(Key key)
     {
-        if (_tool is not { } tool || _tab is null || _drag != Drag.None) return false;
+        if (_tool is not { } tool || _tab is null || _stale || _drag != Drag.None) return false;
         if (_keyPage < 0)
         {
             if (key != Key.Enter || CentreOfPage() is not { } centre) return false;
