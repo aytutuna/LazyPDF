@@ -351,6 +351,35 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.session.undoLabel, "Erase")
     }
 
+    func test_theEraserLeavesWhatIsNotADrawing() throws {
+        let rig = try attached(marks: true)
+        let marker = rig.f.marker
+        _ = try marker.add(.textBox, 0, [markPt(100, 70), markPt(220, 130)], markRed, "Hi")
+        let measured = try marker.add(.line, 0, [markPt(100, 100), markPt(200, 100)], markRed)
+        measured.dictionary["Measure"] = PdfDictionary()
+        try rig.tab.commit("Marks")
+        rig.model.pick(.eraser)
+
+        click(rig, markPt(150, 60), dragTo: markPt(150, 120))
+
+        XCTAssertEqual(marks(rig).map(\.type), [.freeText, .line])
+    }
+
+    func test_onlyDrawingsAreErasable() throws {
+        let f = try CommentFixture()
+        let marker = f.marker
+        let box = [markPt(60, 80), markPt(260, 140)]
+        XCTAssertTrue(Marker.erasable(try marker.add(.rectangle, 0, box, markRed)))
+        XCTAssertTrue(Marker.erasable(try marker.add(.pencil, 0, box, markRed)))
+        XCTAssertFalse(Marker.erasable(try marker.add(.textBox, 0, box, markRed, "Hi")))
+        XCTAssertFalse(Marker.erasable(try marker.add(.note, 0, [markPt(60, 80)], markRed, "Hi")))
+        XCTAssertFalse(Marker.erasable(try marker.addStamp(0, markPt(100, 100), "Draft", markRed)))
+        let measured = try marker.add(.line, 0, box, markRed)
+        XCTAssertTrue(Marker.erasable(measured))
+        measured.dictionary["Measure"] = PdfDictionary()
+        XCTAssertFalse(Marker.erasable(measured))
+    }
+
     func test_aFileThatDoesNotAllowCommentsTakesNone() throws {
         let rig = try attached(try Pdfs.restricted(.print), password: "")
 

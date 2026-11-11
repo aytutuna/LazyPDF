@@ -257,6 +257,14 @@ public final class Marker {
         writer.delete(a)
     }
 
+    /// What the eraser may take: drawings, but not measurements, which belong to the Measure tool.
+    public static func erasable(_ a: PdfAnnotation) -> Bool {
+        switch a.type {
+        case .ink, .line, .polyLine, .polygon, .square, .circle: return !a.dictionary.containsKey("Measure")
+        default: return false
+        }
+    }
+
     private static let face = try! NSRegularExpression(pattern: #"/(\w+)\s+([\d.]+)\s+Tf"#)
     private static let fill = try! NSRegularExpression(pattern: #"((?:-?[\d.]+\s+){1,4})(?:g|rg|k)\b"#)
 

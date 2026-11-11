@@ -52,7 +52,7 @@ extension CommentModel {
         switch tool {
         case .eraser:
             change(label) { m in
-                for mark in m.along(page, points, Self.eraserReach) { m.delete(mark) }
+                for mark in m.along(page, points, Self.eraserReach).filter(Marker.erasable) { m.delete(mark) }
             }
         case .note, .textBox, .callout:
             type(tool, page, points, look, label)
