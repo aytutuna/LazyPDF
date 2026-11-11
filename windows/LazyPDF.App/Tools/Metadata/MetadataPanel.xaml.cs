@@ -56,7 +56,12 @@ public sealed partial class MetadataPanel : ToolPanel
 
     // Typed properties go into the file on Save, on leaving the panel and on close, as one undo step each time.
     // A signed file asks first, so there the caller is told to wait and leaving the panel does not ask again.
-    public override bool HandIn() => Store(false);
+    public override bool HandIn()
+    {
+        if (Tab is null || !_changed || _customProblem is null) return Store(false);
+        Host!.ShowNotice(Loc.T("Properties not saved"), _customProblem);
+        return false;
+    }
 
     private bool Store(bool notify)
     {
@@ -174,15 +179,22 @@ public sealed partial class MetadataPanel : ToolPanel
 
     private List<(string Name, string Value)> CustomPairs() => _custom.Select(row => (row.Name, row.Value)).ToList();
 
+    // A new row sets its text once, which is no edit; reading the form for each of thousands of rows would take minutes.
     private void CustomName_Changed(object sender, TextChangedEventArgs e)
     {
-        ((CustomRow)((TextBox)sender).DataContext).Name = ((TextBox)sender).Text;
+        var box = (TextBox)sender;
+        var row = (CustomRow)box.DataContext;
+        if (row.Name == box.Text) return;
+        row.Name = box.Text;
         Field_Changed(sender, e);
     }
 
     private void CustomValue_Changed(object sender, TextChangedEventArgs e)
     {
-        ((CustomRow)((TextBox)sender).DataContext).Value = ((TextBox)sender).Text;
+        var box = (TextBox)sender;
+        var row = (CustomRow)box.DataContext;
+        if (row.Value == box.Text) return;
+        row.Value = box.Text;
         Field_Changed(sender, e);
     }
 

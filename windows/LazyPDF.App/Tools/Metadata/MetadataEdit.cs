@@ -51,6 +51,7 @@ public static class MetadataEdit
         foreach (var key in rows.Select(row => row.Name.Trim()).Where(name => name.Length > 0))
         {
             if (Reserved.Contains(key)) return Loc.T("{0} is a name the file keeps for itself. Choose another.", key);
+            if (key.Any(c => c < ' ' || c > '~')) return Loc.T("{0} has characters a property name cannot hold. Use plain letters, digits and punctuation.", key);
             if (!seen.Add(key)) return Loc.T("Two properties are named {0}.", key);
         }
         return null;

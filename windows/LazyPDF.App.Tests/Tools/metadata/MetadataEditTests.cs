@@ -64,6 +64,8 @@ public sealed class MetadataEditTests
         Assert.NotNull(MetadataEdit.CustomProblem([("Title", "1")]));
         Assert.NotNull(MetadataEdit.CustomProblem([("A", "1"), (" A ", "2")]));
         Assert.Null(MetadataEdit.CustomProblem([("A", "")]));
+        Assert.NotNull(MetadataEdit.CustomProblem([("Müşteri", "1")]));
+        Assert.Null(MetadataEdit.CustomProblem([("Project-1", "1")]));
         Assert.NotNull(MetadataEdit.CustomNote([("A", "")]));
         Assert.Equal("2", MetadataEdit.Custom([("A", "1"), ("A ", "2"), ("B", "")])["A"]);
         Assert.Single(MetadataEdit.Custom([("A", "1"), ("A ", "2"), ("B", "")]));

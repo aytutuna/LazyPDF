@@ -4342,6 +4342,9 @@
   <data name="Properties changed." xml:space="preserve">
     <value>Özellikler değişti.</value>
   </data>
+  <data name="Properties not saved" xml:space="preserve">
+    <value>Özellikler kaydedilmedi</value>
+  </data>
   <data name="Property name" xml:space="preserve">
     <value>Özellik adı</value>
   </data>
@@ -7608,6 +7611,9 @@
   </data>
   <data name="{0} has a signature that these steps would break. Open it and sign it again afterwards." xml:space="preserve">
     <value>{0} imzalı; bu adımlar imzayı bozar. Dosyayı açıp adımlardan sonra yeniden imzalayın.</value>
+  </data>
+  <data name="{0} has characters a property name cannot hold. Use plain letters, digits and punctuation." xml:space="preserve">
+    <value>{0} adında özellik adının taşıyamayacağı karakterler var. Yalnızca harf, rakam ve noktalama işareti kullanın.</value>
   </data>
   <data name="{0} has no comments for the pages of this file." xml:space="preserve">
     <value>{0} dosyasında bu belgenin sayfalarına ait yorum yok.</value>
