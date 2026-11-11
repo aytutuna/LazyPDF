@@ -42,6 +42,10 @@ public sealed class AttachmentFilesTests
     [InlineData("console.txt", "console.txt")]
     [InlineData("NULL.txt", "NULL.txt")]
     [InlineData("com10.txt", "com10.txt")]
+    [InlineData("CON .txt", "_CON .txt")]
+    [InlineData("COM¹.txt", "_COM¹.txt")]
+    [InlineData("LPT³", "_LPT³")]
+    [InlineData("COM11.txt", "COM11.txt")]
     public void ReservedDeviceNamesGetAPrefix(string name, string expected) =>
         Assert.Equal(expected, AttachmentFiles.SafeName(name));
 
