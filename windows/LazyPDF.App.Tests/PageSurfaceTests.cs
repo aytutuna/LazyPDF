@@ -680,6 +680,39 @@ public sealed class PageSurfaceTests
     }
 
     [Fact]
+    public void ThePeerStillListsTheControlsOnAPage()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(1);
+            surface.PageLinks = _ => [new LinkTarget(new Rect(50, 100, 100, 40), "Go to page 1", () => { }, () => { })];
+            surface.Overlay(0).Children.Add(new System.Windows.Controls.TextBox());
+
+            var peer = UIElementAutomationPeer.CreatePeerForElement(surface);
+
+            Assert.Contains(peer.GetChildren(), c => c.GetClassName() == "TextBox");
+            Assert.Contains(peer.GetChildren(), c => c.GetAutomationControlType() == AutomationControlType.Hyperlink);
+        });
+    }
+
+    [Fact]
+    public void ThePeerFollowsTheLinksToAnotherPage()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(3);
+            surface.SetArrangement(1, false, continuous: false);
+            surface.PageLinks = page => [new LinkTarget(new Rect(50, 100, 100, 40), $"Link {page}", () => { }, () => { })];
+            var peer = UIElementAutomationPeer.CreatePeerForElement(surface);
+            Assert.Equal("Link 0", Assert.Single(peer.GetChildren()).GetName());
+
+            surface.GoToPage(2);
+
+            Assert.Equal("Link 2", Assert.Single(peer.GetChildren()).GetName());
+        });
+    }
+
+    [Fact]
     public void ThePeerNamesThePageByItsLabelWhenItDiffers()
     {
         OnSta(() =>

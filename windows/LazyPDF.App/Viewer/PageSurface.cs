@@ -390,6 +390,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         ScrollOwner?.InvalidateScrollInfo();
         if (_tab is not null) _tab.PageIndex = page;
         PageChanged?.Invoke(this, EventArgs.Empty);
+        TellLinks();
     }
 
     /// <summary>Zooms so that <paramref name="area"/> (page space) fills the view, and centres it.</summary>
@@ -421,6 +422,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         ScrollOwner?.InvalidateScrollInfo();
         if (_tab is not null) _tab.PageIndex = page;
         PageChanged?.Invoke(this, EventArgs.Empty);
+        TellLinks();
     }
 
     /// <summary>Scrolls by the user's doing. In a paged layout, running past the edge turns the page.</summary>

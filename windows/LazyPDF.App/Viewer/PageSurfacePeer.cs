@@ -26,10 +26,10 @@ internal sealed class PageSurfacePeer(PageSurface owner) : FrameworkElementAutom
 
     protected override List<AutomationPeer>? GetChildrenCore()
     {
-        if (owner.PageLinks is not { } links || owner.PageCount == 0) return null;
-        var peers = new List<AutomationPeer>();
-        foreach (int page in owner.Layout.PagesIn(owner.ViewRect))
-            foreach (var link in links(page)) peers.Add(new LinkPeer(owner, page, link));
+        var peers = base.GetChildrenCore() ?? [];
+        if (owner.PageLinks is { } links && owner.PageCount > 0)
+            foreach (int page in owner.Layout.PagesIn(owner.ViewRect))
+                foreach (var link in links(page)) peers.Add(new LinkPeer(owner, page, link));
         return peers.Count == 0 ? null : peers;
     }
 

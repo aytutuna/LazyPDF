@@ -92,6 +92,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         EndPointerTool();
         _tab = tab;
         _history.Clear();
+        ReadLabels();
         ResetText();
         ResetLayers();
         HideFind();
@@ -114,7 +115,6 @@ public partial class PageViewer : UserControl, IDocumentViewer
             StoreZoom(tab);
             tab.PageIndex = Surface.CurrentPage;
         }
-        ReadLabels();
         Note.Text = Loc.T("This file's pages cannot be shown here. You can still edit and save it.");
         Note.Visibility = tab is { CanDraw: false } ? Visibility.Visible : Visibility.Collapsed;
         RefreshBar();
