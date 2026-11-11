@@ -1678,6 +1678,9 @@
   <data name="Exporting comments" xml:space="preserve">
     <value>Yorumlar dışa aktarılıyor</value>
   </data>
+  <data name="Extra private entries other programs added. Reading the file does not need them. Keep this off if you open the file in the program that made it." xml:space="preserve">
+    <value>Başka programların eklediği özel girdiler. Dosyayı okumak için gerekmezler. Dosyayı oluşturan programda açıyorsanız bunu kapalı tutun.</value>
+  </data>
   <data name="Extract to a new file" xml:space="preserve">
     <value>Yeni dosyaya ayıkla</value>
   </data>
@@ -3067,6 +3070,9 @@
   <data name="Note" xml:space="preserve">
     <value>Not</value>
   </data>
+  <data name="Notes that the program which made the file stored on each page. Reading the file does not need them." xml:space="preserve">
+    <value>Dosyayı oluşturan programın her sayfada sakladığı notlar. Dosyayı okumak için gerekmezler.</value>
+  </data>
   <data name="Notes, highlights, drawings, stamps and text boxes on the pages. Off unless you tick it." xml:space="preserve">
     <value>Sayfalardaki notlar, vurgular, çizimler, damgalar ve metin kutuları. İşaretlemezseniz kapalıdır.</value>
   </data>
@@ -3991,6 +3997,9 @@
   <data name="Remove crop" xml:space="preserve">
     <value>Kırpmayı kaldır</value>
   </data>
+  <data name="Remove data other programs left on pages" xml:space="preserve">
+    <value>Sayfalarda başka programların bıraktığı verileri kaldır</value>
+  </data>
   <data name="Remove from list" xml:space="preserve">
     <value>Listeden kaldır</value>
   </data>
@@ -3999,6 +4008,9 @@
   </data>
   <data name="Remove link" xml:space="preserve">
     <value>Bağlantıyı kaldır</value>
+  </data>
+  <data name="Remove other hidden program data" xml:space="preserve">
+    <value>Başka programların gizli verilerini kaldır</value>
   </data>
   <data name="Remove page labels" xml:space="preserve">
     <value>Sayfa etiketlerini kaldır</value>

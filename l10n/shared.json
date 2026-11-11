@@ -549,6 +549,18 @@
   "Remove private keys": {
     "tr": "Özel anahtarları kaldır"
   },
+  "Remove data other programs left on pages": {
+    "tr": "Sayfalarda başka programların bıraktığı verileri kaldır"
+  },
+  "Notes that the program which made the file stored on each page. Reading the file does not need them.": {
+    "tr": "Dosyayı oluşturan programın her sayfada sakladığı notlar. Dosyayı okumak için gerekmezler."
+  },
+  "Remove other hidden program data": {
+    "tr": "Başka programların gizli verilerini kaldır"
+  },
+  "Extra private entries other programs added. Reading the file does not need them. Keep this off if you open the file in the program that made it.": {
+    "tr": "Başka programların eklediği özel girdiler. Dosyayı okumak için gerekmezler. Dosyayı oluşturan programda açıyorsanız bunu kapalı tutun."
+  },
   "Drop unused resources": {
     "tr": "Kullanılmayan kaynakları at"
   },
