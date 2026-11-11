@@ -212,7 +212,7 @@ public sealed class CommentsPanelTests
 
         Assert.True(groupBy.IsEnabled);
         Assert.True(((Button)panel.FindName("MoreButton")).IsEnabled);
-        Assert.Equal(1, ((ListBox)panel.FindName("Comments")).Items.Count);
+        Assert.Single(((ListBox)panel.FindName("Comments")).Items);
     });
 
     [Fact]

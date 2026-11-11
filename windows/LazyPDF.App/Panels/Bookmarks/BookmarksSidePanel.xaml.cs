@@ -35,8 +35,8 @@ public sealed class BookmarkNode(OutlineItem item, string path, Dictionary<strin
 
     public bool IsExpanded
     {
-        get => opened.TryGetValue(path, out bool open) ? open : Item.IsOpen;
-        set => opened[path] = value;
+        get => opened.TryGetValue(Path, out bool open) ? open : Item.IsOpen;
+        set => opened[Path] = value;
     }
 
     public bool IsEditing
