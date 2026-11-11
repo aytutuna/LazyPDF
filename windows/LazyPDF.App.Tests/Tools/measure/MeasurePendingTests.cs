@@ -67,6 +67,22 @@ public sealed class MeasurePendingTests
     }
 
     [Fact]
+    public void UseForAllBeatsAScaleWrittenOnThePage()
+    {
+        var document = PdfDocument.Open(Pdfs.Text(2));
+        var found = new MeasureScale(1, LengthUnit.Millimetre, 100, LengthUnit.Millimetre);
+        var all = new MeasureScale(1, LengthUnit.Millimetre, 50, LengthUnit.Millimetre);
+        var scales = new PageScales(MeasureScale.Actual);
+        typeof(PageScales).GetField("_found", BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(scales,
+            new Dictionary<int, MeasureScale?> { [PageScales.Key(document, 1)] = found });
+        Assert.Equal(found, scales.For(document, 1));
+
+        scales.SetAll(all);
+
+        Assert.Equal(all, scales.For(document, 1));
+    }
+
+    [Fact]
     public Task AFailedWriteChangesNothingAndKeepsTheList() => Sta.Run(() =>
     {
         using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);

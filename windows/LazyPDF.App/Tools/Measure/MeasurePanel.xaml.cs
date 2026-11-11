@@ -21,6 +21,7 @@ internal sealed class PageScales(MeasureScale start)
 {
     private readonly Dictionary<int, MeasureScale> _typed = [];
     private readonly Dictionary<int, MeasureScale?> _found = [];
+    private bool _overridden;
 
     public MeasureScale Default { get; private set; } = start;
 
@@ -33,7 +34,7 @@ internal sealed class PageScales(MeasureScale start)
         int key = Key(document, page);
         if (_typed.TryGetValue(key, out var typed)) return typed;
         if (!_found.TryGetValue(key, out var found)) _found[key] = found = MeasureScale.FindOnPage(document, document.Pages[page]);
-        return found ?? Default;
+        return _overridden ? Default : found ?? Default;
     }
 
     public void Set(int key, MeasureScale scale) => _typed[key] = scale;
@@ -42,6 +43,7 @@ internal sealed class PageScales(MeasureScale start)
     {
         Default = scale;
         _typed.Clear();
+        _overridden = true;
     }
 
     // Writing marks changes what the pages hold.
