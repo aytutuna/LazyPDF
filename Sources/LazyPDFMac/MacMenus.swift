@@ -148,8 +148,8 @@ struct MacMenus: Commands {
             .keyboardShortcut("r")
             .disabled(!usable)
         Divider()
-        Toggle(L10n.t("One page"), isOn: Binding(get: { viewer.columns == 1 && !viewer.continuous },
-                                               set: { if $0 { viewer.columns = 1; viewer.continuous = false } }))
+        Toggle(L10n.t("One page"), isOn: Binding(get: { viewer.columns == 1 },
+                                               set: { if $0 { viewer.columns = 1 } }))
             .disabled(!usable)
         Toggle(L10n.t("Two pages"), isOn: Binding(get: { viewer.columns == 2 }, set: { viewer.columns = $0 ? 2 : 1 }))
             .disabled(!usable)
