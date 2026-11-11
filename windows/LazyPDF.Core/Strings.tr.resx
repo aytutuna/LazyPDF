@@ -572,7 +572,7 @@
     <value>İmzalayandan sertifikayı da ekleyerek yeniden imzalamasını isteyin.</value>
   </data>
   <data name="Ask them" xml:space="preserve">
-    <value>Sorulsun</value>
+    <value>Sor</value>
   </data>
   <data name="Asking the certificate servers" xml:space="preserve">
     <value>Sertifika sunucularına soruluyor</value>
@@ -2693,7 +2693,7 @@
     <value>Zaten orada.</value>
   </data>
   <data name="It is off the list." xml:space="preserve">
-    <value>Listeden çıkarıldı.</value>
+    <value>Listeden kaldırıldı.</value>
   </data>
   <data name="It is open in a new tab. Save it to keep it." xml:space="preserve">
     <value>Yeni bir sekmede açık. Saklamak için kaydedin.</value>
@@ -2864,7 +2864,7 @@
     <value>Lazy PDF bağlantıları açmadan önce yeniden soracak.</value>
   </data>
   <data name="Lazy PDF will contact {0}. Servers named by certificates found on the way may be asked too. The file itself is not sent." xml:space="preserve">
-    <value>Lazy PDF {0} sunucusuna bağlanacak. Yol üzerinde bulunan sertifikalarda adı geçen sunuculara da sorulabilir. Dosyanın kendisi gönderilmez.</value>
+    <value>Lazy PDF şu sunuculara bağlanacak: {0}. Yol üzerinde bulunan sertifikalarda adı geçen sunuculara da sorulabilir. Dosyanın kendisi gönderilmez.</value>
   </data>
   <data name="Lazy Print" xml:space="preserve">
     <value>Lazy Print</value>
@@ -3415,8 +3415,8 @@
   <data name="No results for {0}" xml:space="preserve">
     <value>{0} için sonuç yok</value>
   </data>
-  <data name="No saved signatures yet. Add one in Fill and sign." xml:space="preserve">
-    <value>Henüz kayıtlı imza yok. Doldur ve imzala aracında bir tane ekleyin.</value>
+  <data name="No saved signatures yet. Make a new one below." xml:space="preserve">
+    <value>Henüz kayıtlı imza yok. Aşağıdan yeni bir tane yapın.</value>
   </data>
   <data name="No steps" xml:space="preserve">
     <value>Adım yok</value>

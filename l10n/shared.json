@@ -6237,7 +6237,7 @@
     "tr": "İşaret kaldırıldı"
   },
   "It is off the list.": {
-    "tr": "Listeden çıkarıldı."
+    "tr": "Listeden kaldırıldı."
   },
   "Put it back": {
     "tr": "Geri koy"
@@ -6530,8 +6530,8 @@
   "Picture only": {
     "tr": "Yalnızca resim"
   },
-  "No saved signatures yet. Add one in Fill and sign.": {
-    "tr": "Henüz kayıtlı imza yok. Doldur ve imzala aracında bir tane ekleyin."
+  "No saved signatures yet. Make a new one below.": {
+    "tr": "Henüz kayıtlı imza yok. Aşağıdan yeni bir tane yapın."
   },
   "Signature not read": {
     "tr": "İmza okunamadı"
@@ -6660,10 +6660,10 @@
     "tr": "Bu sunuculara sorulacak"
   },
   "Lazy PDF will contact {0}. Servers named by certificates found on the way may be asked too. The file itself is not sent.": {
-    "tr": "Lazy PDF {0} sunucusuna bağlanacak. Yol üzerinde bulunan sertifikalarda adı geçen sunuculara da sorulabilir. Dosyanın kendisi gönderilmez."
+    "tr": "Lazy PDF şu sunuculara bağlanacak: {0}. Yol üzerinde bulunan sertifikalarda adı geçen sunuculara da sorulabilir. Dosyanın kendisi gönderilmez."
   },
   "Ask them": {
-    "tr": "Sorulsun"
+    "tr": "Sor"
   },
   "Check online": {
     "tr": "Çevrimiçi denetle"
