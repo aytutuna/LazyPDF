@@ -59,6 +59,40 @@ internal static class PageEdits
     public static IEnumerable<int> MovedTo(IReadOnlyCollection<int> pages, int before) =>
         Enumerable.Range(before - pages.Count(p => p < before), pages.Count);
 
+    /// <summary>Moves each chosen page one place past the unchosen page next to it; a run of pages at the edge stays.</summary>
+    public static void Nudge(PdfDocument document, IReadOnlyCollection<int> pages, int step)
+    {
+        int total = document.Pages.Count;
+        var runs = new List<List<int>>();
+        foreach (int page in pages.Order())
+        {
+            if (runs.Count > 0 && runs[^1][^1] == page - 1) runs[^1].Add(page);
+            else runs.Add([page]);
+        }
+        if (step > 0) runs.Reverse();
+        foreach (var run in runs)
+        {
+            if (step < 0 ? run[0] == 0 : run[^1] == total - 1) continue;
+            PageOperations.Move(document, run, step < 0 ? run[0] - 1 : run[^1] + 2);
+        }
+    }
+
+    /// <summary>Where the chosen pages stand after <see cref="Nudge"/>.</summary>
+    public static IEnumerable<int> Nudged(IReadOnlyCollection<int> pages, int step, int total)
+    {
+        var chosen = pages.ToHashSet();
+        foreach (int page in pages)
+        {
+            int end = page;
+            while (chosen.Contains(end + step)) end += step;
+            yield return end + step < 0 || end + step >= total ? page : page + step;
+        }
+    }
+
+    /// <summary>Whether any chosen page has an unchosen page to step past.</summary>
+    public static bool CanNudge(IReadOnlyCollection<int> pages, int step, int total) =>
+        pages.Any(p => p + step >= 0 && p + step < total && !pages.Contains(p + step));
+
     /// <summary>Where the pages and their copies stand after <see cref="PageOperations.Duplicate"/>.</summary>
     public static IEnumerable<int> Duplicated(IReadOnlyCollection<int> pages)
     {

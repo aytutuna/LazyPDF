@@ -67,16 +67,15 @@ public partial class PagesPanel
         Apply(Loc.T("Delete pages"), d => PageOperations.Delete(d, pages), null, Loc.Plural(pages.Count, "{0} page deleted", "{0} pages deleted", pages.Count));
     }
 
-    private void Earlier_Click(object sender, RoutedEventArgs e)
-    {
-        var pages = Selected();
-        MoveTo(pages, pages[0] - 1);
-    }
+    private void Earlier_Click(object sender, RoutedEventArgs e) => Nudge(-1);
 
-    private void Later_Click(object sender, RoutedEventArgs e)
+    private void Later_Click(object sender, RoutedEventArgs e) => Nudge(1);
+
+    private void Nudge(int step)
     {
         var pages = Selected();
-        MoveTo(pages, pages[^1] + 2);
+        Apply(Loc.T("Move pages"), d => PageEdits.Nudge(d, pages, step), PageEdits.Nudged(pages, step, Cells.Count),
+              Loc.Plural(pages.Count, "{0} page moved", "{0} pages moved", pages.Count));
     }
 
     private bool MoveTo(IReadOnlyCollection<int> pages, int before) =>

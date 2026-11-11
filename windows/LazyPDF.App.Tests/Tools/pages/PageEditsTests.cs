@@ -70,6 +70,32 @@ public sealed class PageEditsTests
         Assert.Equal(marked[4], TextOf(document, landed[1]));
     }
 
+    [Theory]
+    [InlineData(new[] { 1, 3 }, -1, new[] { 1, 0, 3, 2, 4 })]
+    [InlineData(new[] { 0, 2 }, -1, new[] { 0, 2, 1, 3, 4 })]
+    [InlineData(new[] { 0, 1 }, -1, new[] { 0, 1, 2, 3, 4 })]
+    [InlineData(new[] { 3, 4 }, 1, new[] { 0, 1, 2, 3, 4 })]
+    [InlineData(new[] { 1, 3 }, 1, new[] { 0, 2, 1, 4, 3 })]
+    public void EachChosenPageStepsOnePlace(int[] pages, int step, int[] order)
+    {
+        var document = Open();
+        var marked = Enumerable.Range(0, 5).Select(i => TextOf(document, i)).ToList();
+
+        PageEdits.Nudge(document, pages, step);
+
+        Assert.Equal(order.Select(i => marked[i]), Enumerable.Range(0, 5).Select(i => TextOf(document, i)));
+        foreach (var (page, landed) in pages.Zip(PageEdits.Nudged(pages, step, 5)))
+            Assert.Equal(marked[page], TextOf(document, landed));
+    }
+
+    [Fact]
+    public void NudgingNeedsAnUnchosenPageToStepPast()
+    {
+        Assert.False(PageEdits.CanNudge([0, 1], -1, 5));
+        Assert.True(PageEdits.CanNudge([0, 2], -1, 5));
+        Assert.False(PageEdits.CanNudge([3, 4], 1, 5));
+    }
+
     [Fact]
     public void DuplicatedPagesAreFoundBesideTheirCopies()
     {

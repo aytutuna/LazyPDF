@@ -138,8 +138,8 @@ public partial class PagesPanel : ToolPanel
         int total = Cells.Count;
         bool any = pages.Count > 0;
         TurnLeft.IsEnabled = TurnRight.IsEnabled = Copy.IsEnabled = Extract.IsEnabled = Remove.IsEnabled = any;
-        Earlier.IsEnabled = any && pages[0] > 0;
-        Later.IsEnabled = any && pages[^1] < total - 1;
+        Earlier.IsEnabled = PageEdits.CanNudge(pages, -1, total);
+        Later.IsEnabled = PageEdits.CanNudge(pages, 1, total);
         Replace.IsEnabled = any;
         SignedRow.Visibility = Tab.Document.IsSigned ? Visibility.Visible : Visibility.Collapsed;
         Summary.Text = any ? Loc.T("{0} of {1} selected", pages.Count, total) : Loc.Plural(total, "{0} page", "{0} pages", total);
