@@ -100,13 +100,22 @@ public partial class RedactPanel
     private void MarkedList_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key != Key.Delete || MarkedList.SelectedItem is not MarkItem item) return;
-        _state!.Marks.Remove(item);
+        RemoveOne(item);
+        MarkedList.Focus();
         e.Handled = true;
     }
 
     private void RemoveMark_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as FrameworkElement)?.DataContext is MarkItem item) _state!.Marks.Remove(item);
+        if ((sender as FrameworkElement)?.DataContext is MarkItem item) RemoveOne(item);
+    }
+
+    private void RemoveOne(MarkItem item)
+    {
+        var marks = _state!.Marks;
+        marks.Remove(item);
+        Host!.ShowNotice(Loc.T("Mark removed"), Loc.T("It is off the list."),
+                         new NoticeAction(Loc.T("Put it back"), () => marks.Add([item])));
     }
 
     private void Clear_Click(object sender, RoutedEventArgs e)

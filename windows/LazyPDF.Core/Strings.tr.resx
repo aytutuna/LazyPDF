@@ -2281,6 +2281,9 @@
   <data name="It is already there." xml:space="preserve">
     <value>Zaten orada.</value>
   </data>
+  <data name="It is off the list." xml:space="preserve">
+    <value>Listeden çıktı.</value>
+  </data>
   <data name="It is open in a new tab. Save it to keep it." xml:space="preserve">
     <value>Yeni bir sekmede açık. Saklamak için kaydedin.</value>
   </data>
@@ -2625,6 +2628,9 @@
   </data>
   <data name="Mark every match" xml:space="preserve">
     <value>Tüm eşleşmeleri işaretle</value>
+  </data>
+  <data name="Mark removed" xml:space="preserve">
+    <value>İşaret kaldırıldı</value>
   </data>
   <data name="Mark selected text" xml:space="preserve">
     <value>Seçili metni işaretle</value>
@@ -3765,6 +3771,9 @@
   </data>
   <data name="Purple" xml:space="preserve">
     <value>Mor</value>
+  </data>
+  <data name="Put it back" xml:space="preserve">
+    <value>Geri koy</value>
   </data>
   <data name="Put them back" xml:space="preserve">
     <value>Geri koy</value>
