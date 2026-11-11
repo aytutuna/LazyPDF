@@ -209,6 +209,38 @@ public sealed class PageSurfaceTests
     }
 
     [Fact]
+    public void WheelEventsInARowTurnAtMostOnePage()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(5);
+            surface.SetArrangement(1, false, continuous: false);
+            surface.GoToPage(1);
+            surface.SetZoom(2);
+
+            for (int i = 0; i < 4; i++) surface.ScrollBy(0, 1_000_000, wheel: true);
+
+            Assert.True(surface.CurrentPage <= 2);
+        });
+    }
+
+    [Fact]
+    public void ScrollsOtherThanTheWheelTurnEveryTime()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(5);
+            surface.SetArrangement(1, false, continuous: false);
+            surface.GoToPage(1);
+            surface.SetZoom(2);
+
+            for (int i = 0; i < 4; i++) surface.ScrollBy(0, 1_000_000);
+
+            Assert.Equal(3, surface.CurrentPage);
+        });
+    }
+
+    [Fact]
     public void FacingPagesWithACoverGoByTheirSpreads()
     {
         OnSta(() =>

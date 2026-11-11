@@ -279,13 +279,13 @@ public partial class PageViewer
         {
             Surface.SetZoom(Surface.Zoom * Math.Pow(1.1, e.Delta / 120.0), e.GetPosition(Surface));
         }
-        else if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
-        {
-            Surface.ScrollBy(-e.Delta * 0.6, 0);
-        }
         else
         {
-            Surface.ScrollBy(0, -e.Delta * 0.6);
+            double notches = e.Delta / 120.0;
+            int lines = SystemParameters.WheelScrollLines;
+            double distance = notches * (lines < 0 ? Surface.Viewport.Height * 0.9 : lines * 24);
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) Surface.ScrollBy(-distance, 0, wheel: true);
+            else Surface.ScrollBy(0, -distance, wheel: true);
         }
         e.Handled = true;
     }

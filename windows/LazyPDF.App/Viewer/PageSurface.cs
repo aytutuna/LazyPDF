@@ -32,6 +32,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
     private ViewLayout _layout = ViewLayout.Build([], new LayoutOptions(1, false, true, 0, 1, new Size(0, 0)));
     private Size _viewport;
     private double _offsetX, _offsetY;
+    private long _lastWheel;
     private double _zoom = 1;
     private FitMode _fit;
     private int _rotation;
@@ -383,15 +384,19 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
     }
 
     /// <summary>Scrolls by the user's doing. In a paged layout, running past the edge turns the page.</summary>
-    public void ScrollBy(double dx, double dy)
+    public void ScrollBy(double dx, double dy, bool wheel = false)
     {
+        long now = Environment.TickCount64;
+        // A touchpad's inertia keeps sending wheel events; only a pause lets the next one turn the page.
+        bool mayTurn = !wheel || now - _lastWheel >= 250;
+        if (wheel) _lastWheel = now;
         double maxY = Math.Max(0, _layout.Extent.Height - _viewport.Height);
-        if (!_continuous && dy > 0 && _offsetY >= maxY - 0.5 && _layout.LastSpread < _layout.SpreadCount - 1)
+        if (mayTurn && !_continuous && dy > 0 && _offsetY >= maxY - 0.5 && _layout.LastSpread < _layout.SpreadCount - 1)
         {
             GoToPage(ViewLayout.PagesOf(_columns, _cover, _layout.LastSpread + 1, _sizes.Length).First);
             return;
         }
-        if (!_continuous && dy < 0 && _offsetY <= 0.5 && _layout.FirstSpread > 0)
+        if (mayTurn && !_continuous && dy < 0 && _offsetY <= 0.5 && _layout.FirstSpread > 0)
         {
             GoToPage(ViewLayout.PagesOf(_columns, _cover, _layout.FirstSpread - 1, _sizes.Length).First);
             _offsetY = Math.Max(0, _layout.Extent.Height - _viewport.Height);
