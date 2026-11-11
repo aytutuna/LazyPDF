@@ -12,8 +12,16 @@
         </Grid.RowDefinitions>
         <StackPanel Margin="12,0,12,6">
             <DockPanel>
-                <Button x:Name="ExportButton" DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE898;" Margin="6,0,0,0"
-                        ToolTip="{loc:T Save a summary of the comments}" AutomationProperties.Name="{loc:T Export summary}" Click="Export_Click" />
+                <Button x:Name="MoreButton" DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE712;" Margin="6,0,0,0" IsEnabled="False"
+                        ToolTip="{loc:T Share}" AutomationProperties.Name="{loc:T Share}" Click="More_Click">
+                    <Button.ContextMenu>
+                        <ContextMenu Placement="Bottom">
+                            <MenuItem Header="{loc:T Save summary…}" Click="Export_Click" />
+                            <MenuItem Header="{loc:T Export as XFDF…}" Click="ExportXfdf_Click" />
+                            <MenuItem x:Name="ImportItem" Header="{loc:T Import comments…}" Click="Import_Click" />
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
                 <Grid>
                     <TextBox x:Name="Search" AutomationProperties.Name="{loc:T Filter comments}" ToolTip="{loc:T Filter by text or author}" TextChanged="Filter_Changed" />
                     <TextBlock x:Name="SearchHint" Text="{loc:T Filter}" Style="{StaticResource PlaceholderText}" />

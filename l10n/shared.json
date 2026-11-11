@@ -2633,6 +2633,9 @@
   "Export comments": {
     "tr": "Yorumları dışa aktar"
   },
+  "Export as XFDF…": {
+    "tr": "XFDF olarak dışa aktar…"
+  },
   "Export summary": {
     "tr": "Özeti dışa aktar"
   },
@@ -2671,6 +2674,9 @@
   },
   "Import comments": {
     "tr": "Yorumları içe aktar"
+  },
+  "Import comments…": {
+    "tr": "Yorumları içe aktar…"
   },
   "Importing comments": {
     "tr": "Yorumlar içe aktarılıyor"
@@ -2824,6 +2830,9 @@
   },
   "Summary of {0} of {1} comments saved.": {
     "tr": "{1} yorumdan {0} tanesinin özeti kaydedildi."
+  },
+  "Save summary…": {
+    "tr": "Özeti kaydet…"
   },
   "Save summary of the comments": {
     "tr": "Yorumların özetini kaydedin"

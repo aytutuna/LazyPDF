@@ -147,6 +147,26 @@ public sealed class CommentsPanelTests
     });
 
     [Fact]
+    public Task ImportingAnXfdfAddsTheCommentsAsOneUndoStep() => Sta.Run(async () =>
+    {
+        using var source = new CommentFixture();
+        source.Marker.Add(MarkTool.Note, 0, [new Point(60, 80)], Red, "check");
+        source.Tab.Commit("Mark");
+        var exported = Exchange.Export(source.Document, "a.pdf", xfdf: true);
+        using var f = new CommentFixture();
+        var host = new RecordingHost();
+        var panel = new CommentsSidePanel();
+        panel.Attach(f.Tab, FakeViewer.Create().Viewer, host);
+
+        await panel.ImportAsync(f.Tab, host, exported.Data, "a.xfdf", xfdf: true);
+
+        Assert.Equal("check", Assert.Single(PdfComments.List(f.Document)).Annotation.Contents);
+        Assert.Equal("Imported 1 comment.", host.Status);
+        Assert.True(f.Tab.Undo());
+        Assert.Empty(PdfComments.List(f.Document));
+    });
+
+    [Fact]
     public Task EditingTheTextIsOneUndoStep() => Sta.Run(() =>
     {
         using var f = new CommentFixture();

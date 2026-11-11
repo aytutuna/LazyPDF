@@ -43,12 +43,15 @@ public partial class CommentsSidePanel : ToolPanel
     {
         Tab!.Changed += Tab_Changed;
         _allowed = Exchange.CanComment(Tab.Document);
+        MoreButton.IsEnabled = true;
+        ImportItem.IsEnabled = _allowed;
         Load();
     }
 
     protected override void OnDetach()
     {
         _typing.Stop();
+        MoreButton.IsEnabled = false;
         Tab!.Changed -= Tab_Changed;
         Comments.ItemsSource = null;
         _all = [];

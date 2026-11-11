@@ -1762,6 +1762,9 @@
   <data name="Export" xml:space="preserve">
     <value>Dışa aktar</value>
   </data>
+  <data name="Export as XFDF…" xml:space="preserve">
+    <value>XFDF olarak dışa aktar…</value>
+  </data>
   <data name="Export comments" xml:space="preserve">
     <value>Yorumları dışa aktar</value>
   </data>
@@ -2409,6 +2412,9 @@
   </data>
   <data name="Import comments" xml:space="preserve">
     <value>Yorumları içe aktar</value>
+  </data>
+  <data name="Import comments…" xml:space="preserve">
+    <value>Yorumları içe aktar…</value>
   </data>
   <data name="Import form data" xml:space="preserve">
     <value>Form verilerini içe aktar</value>
@@ -4518,6 +4524,9 @@
   </data>
   <data name="Save summary of the comments" xml:space="preserve">
     <value>Yorumların özetini kaydedin</value>
+  </data>
+  <data name="Save summary…" xml:space="preserve">
+    <value>Özeti kaydet…</value>
   </data>
   <data name="Save the comments as an FDF or XFDF file." xml:space="preserve">
     <value>Yorumları FDF veya XFDF dosyası olarak kaydedin.</value>

@@ -1,4 +1,4 @@
-// Answering, editing and deleting the comment that is picked, and the summary file.
+// Answering, editing and deleting the comment that is picked, and the summary and exchange files.
 
 using System.Windows;
 using System.Windows.Controls;
@@ -189,6 +189,13 @@ public partial class CommentsSidePanel
         return MarkWork.Commit(tab, host, label);
     }
 
+    private void More_Click(object sender, RoutedEventArgs e)
+    {
+        var menu = MoreButton.ContextMenu;
+        menu.PlacementTarget = MoreButton;
+        menu.IsOpen = true;
+    }
+
     private void Export_Click(object sender, RoutedEventArgs e)
     {
         if (Tab is not { } tab || Viewer is not { } viewer || Host is not { } host) return;
@@ -218,6 +225,133 @@ public partial class CommentsSidePanel
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
             host.ShowProblem(new Problem(Loc.T("Not saved"), Loc.T("{0} could not be written. Check that the disk has room and try again.", Path.GetFileName(dialog.FileName))));
+        }
+    }
+
+    private async void ExportXfdf_Click(object sender, RoutedEventArgs e)
+    {
+        if (Tab is not { } tab || Host is not { } host) return;
+        var dialog = new SaveFileDialog
+        {
+            Filter = Loc.T("XFDF file") + "|*.xfdf",
+            DefaultExt = ".xfdf",
+            AddExtension = true,
+            OverwritePrompt = true,
+            FileName = Path.GetFileNameWithoutExtension(tab.Title),
+        };
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+        string path = dialog.FileName;
+        // The export reads a copy of the file, so the open document is not touched while it runs.
+        byte[] bytes = tab.Session.Current.ToArray();
+        string? password = tab.Password;
+        var certificate = tab.Certificate;
+        string title = tab.Title;
+        Exported? exported = null;
+        try
+        {
+            await host.RunBusyAsync(Loc.T("Exporting comments"), async ct =>
+            {
+                var made = await Task.Run(() => Exchange.Export(Exchange.Open(bytes, password, certificate), title, xfdf: true));
+                ct.ThrowIfCancellationRequested();
+                exported = made;
+            });
+            if (exported is null) return;
+            if (exported.Count == 0)
+            {
+                host.SetStatus(Loc.T("No comments to export."));
+                return;
+            }
+            await File.WriteAllBytesAsync(path, exported.Data);
+            host.SetStatus(Loc.T("Comments exported."));
+            if (exported.Left > 0)
+            {
+                host.ShowNotice(Loc.T("Some content left out"), Loc.Plural(exported.Left, "{0} attachment or picture stamp is not in an XFDF file. Export as FDF to keep it.", "{0} attachments or picture stamps are not in an XFDF file. Export as FDF to keep them."));
+            }
+        }
+        catch (PdfReadException)
+        {
+            host.ShowProblem(new Problem(Loc.T("Comments not exported"), Loc.T("The file could not be read for export. Save a copy and try again.")));
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            host.ShowProblem(new Problem(Loc.T("Not saved"), Loc.T("{0} could not be written. Check that the disk has room and try again.", Path.GetFileName(path))));
+        }
+    }
+
+    private void Import_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_allowed || Tab is not { } tab || Host is not { } host || MarkWork.Running) return;
+        if (MarkWork.Cautioned(tab, host, () => PickImport(tab, host))) return;
+        PickImport(tab, host);
+    }
+
+    private async void PickImport(DocumentTab tab, IToolHost host)
+    {
+        if (!ReferenceEquals(Tab, tab) || MarkWork.Running) return;
+        var dialog = new OpenFileDialog { Filter = Loc.T("Comment files") + "|*.fdf;*.xfdf" };
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+        string path = dialog.FileName;
+        string name = Path.GetFileName(path);
+        try
+        {
+            await ImportAsync(tab, host, await File.ReadAllBytesAsync(path), name, Exchange.IsXfdf(path));
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            host.ShowProblem(Problems.Open(error, name));
+        }
+    }
+
+    internal async Task ImportAsync(DocumentTab tab, IToolHost host, byte[] data, string name, bool xfdf)
+    {
+        if (!ReferenceEquals(Tab, tab) || MarkWork.Running) return;
+        FdfImportResult? result = null;
+        MarkWork.Running = true;
+        try
+        {
+            await host.RunBusyAsync(Loc.T("Importing comments"), async ct =>
+            {
+                try
+                {
+                    await Task.Run(() => result = Exchange.Import(tab.Document, data, xfdf, _fonts));
+                    ct.ThrowIfCancellationRequested();
+                }
+                catch
+                {
+                    tab.Session.Discard();
+                    result = null;
+                    throw;
+                }
+            });
+        }
+        catch (PdfReadException)
+        {
+            host.ShowProblem(new Problem(Loc.T("Not a comment file"), Loc.T("{0} could not be read. Pick an FDF or XFDF file.", name)));
+            return;
+        }
+        finally
+        {
+            MarkWork.Running = false;
+        }
+        if (result is null) return;
+        if (!ReferenceEquals(Tab, tab))
+        {
+            tab.Session.Discard();
+            return;
+        }
+        if (result.Imported == 0)
+        {
+            tab.Session.Discard();
+            host.ShowNotice(Loc.T("Nothing imported"), result.Skipped > 0
+                ? Loc.T("The comments in {0} are already in this file or belong to other pages.", name)
+                : Loc.T("{0} has no comments for the pages of this file.", name));
+            return;
+        }
+        if (!MarkWork.Commit(tab, host, Loc.T("Import comments"))) return;
+        host.SetStatus(Loc.Plural(result.Imported, "Imported {0} comment.", "Imported {0} comments."));
+        if (result.Skipped > 0 || result.WithoutAppearance > 0)
+        {
+            host.ShowNotice(Loc.T("Some comments left out"), Loc.T("{0} skipped as copies or for other pages. {1} without a drawing.", result.Skipped, result.WithoutAppearance));
         }
     }
 }
