@@ -13,7 +13,8 @@ public partial class RedactPanel
         var tab = Tab!;
         var host = Host!;
         var state = _state!;
-        var marks = state.Marks.Items.Select(m => m.Mark).ToList();
+        var applied = state.Marks.Items.ToList();
+        var marks = applied.Select(m => m.Mark).ToList();
         var settings = new RedactSettings((Cover)CoverBox.SelectedItem, OverlayBox.Text, FlattenBox.IsChecked == true);
         byte[] bytes = tab.Session.Current.ToArray();
         int revision = tab.Revision;
@@ -56,8 +57,10 @@ public partial class RedactPanel
         }
 
         // The marks are done with once the copy is open; the panel may be detached by now, so the count is set here too.
-        state.Marks.Clear();
-        tab.PendingMarks = 0;
+        // One drawn while the copy was opening is not in it and stays.
+        if (state.Marks.Items.SequenceEqual(applied)) state.Marks.Clear();
+        else foreach (var item in applied) state.Marks.Remove(item);
+        tab.PendingMarks = state.Marks.Items.Count;
         host.SetStatus(summary.Clean ? Loc.T("Redacted copy opened.") : Loc.T("Redacted copy has problems."));
         if (encrypted) host.ShowNotice(Loc.T("The copy has no password"), Loc.T("Protect it before you share it."));
     }
