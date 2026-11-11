@@ -83,6 +83,8 @@ public sealed class WindowsPageRenderer : IDocumentRenderer
 
     private volatile Loaded? _loaded;
     private volatile bool _disposed;
+    private readonly object _acceptGate = new();
+    private int _generation;
 
     /// <summary>Pixels the system makes of one unit of a requested size; 1.4 until a document has been loaded.</summary>
     public static double Scale => s_scale ?? 1.4;
@@ -105,7 +107,8 @@ public sealed class WindowsPageRenderer : IDocumentRenderer
         var document = session.Document;
         var current = session.Current;
         var units = UnitsOf(document);
-        return Task.Run(() => OpenAsync(current, units, document.IsEncrypted ? document : null, password)).GetAwaiter().GetResult();
+        int generation = Interlocked.Increment(ref _generation);
+        return Task.Run(() => OpenAsync(current, units, document.IsEncrypted ? document : null, password, generation)).GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -115,36 +118,40 @@ public sealed class WindowsPageRenderer : IDocumentRenderer
     public Task<bool> LoadAsync(PdfEditSession session, string? password)
     {
         if (session.Document.IsEncrypted) return Task.FromResult(Load(session, password));
-        return OpenAsync(session.Current, UnitsOf(session.Document), null, password);
+        var current = session.Current;
+        var units = UnitsOf(session.Document);
+        int generation = Interlocked.Increment(ref _generation);
+        return Task.Run(() => OpenAsync(current, units, null, password, generation));
     }
 
     private static double[] UnitsOf(PdfDocument document) => [.. document.Pages.Select(p => p.UserUnit)];
 
     // The document is given only when it is encrypted, and then the caller waits for the result.
-    private async Task<bool> OpenAsync(ReadOnlyMemory<byte> current, double[] units, PdfDocument? encrypted, string? password)
+    private async Task<bool> OpenAsync(ReadOnlyMemory<byte> current, double[] units, PdfDocument? encrypted, string? password, int generation)
     {
         if (encrypted is null || encrypted.Security is { IsPublicKey: false, Revision: < 6 })
         {
-            if (await TryOpenAsync(current, password) is { } direct) return Accept(direct, units);
+            if (await TryOpenAsync(current, password) is { } direct) return Accept(direct, units, generation);
         }
         if (encrypted is not null)
         {
             try
             {
                 // Only for drawing: the copy is never saved, so the permissions on changing the encryption do not apply.
-                return Accept(await TryOpenAsync(new PdfRewriter(encrypted, new PdfSaveOptions()).Run(), null), units);
+                return Accept(await TryOpenAsync(new PdfRewriter(encrypted, new PdfSaveOptions()).Run(), null), units, generation);
             }
             catch (PdfReadException)
             {
                 // The engine cannot rewrite it; the page stays undrawn.
             }
         }
-        return Accept(null, units);
+        return Accept(null, units, generation);
     }
 
-    private bool Accept(Loaded? loaded, double[] pageUnits)
+    private bool Accept(Loaded? loaded, double[] pageUnits, int generation)
     {
-        if (_disposed)
+        // A load that was overtaken by a later one must not replace its result.
+        if (_disposed || Volatile.Read(ref _generation) != generation)
         {
             loaded?.Retire();
             return false;
@@ -155,7 +162,15 @@ public sealed class WindowsPageRenderer : IDocumentRenderer
             for (int i = 0; i < units.Length; i++) units[i] = i < pageUnits.Length ? pageUnits[i] : 1;
             loaded = loaded.With([.. loaded.Sizes.Select((s, i) => (s.Width * units[i], s.Height * units[i]))], units);
         }
-        Interlocked.Exchange(ref _loaded, loaded)?.Retire();
+        lock (_acceptGate)
+        {
+            if (Volatile.Read(ref _generation) != generation)
+            {
+                loaded?.Retire();
+                return false;
+            }
+            Interlocked.Exchange(ref _loaded, loaded)?.Retire();
+        }
         return loaded is not null;
     }
 

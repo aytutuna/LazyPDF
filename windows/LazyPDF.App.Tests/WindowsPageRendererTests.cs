@@ -53,6 +53,18 @@ public sealed class WindowsPageRendererTests
     }
 
     [Fact]
+    public async Task OverlappingLoadsLeaveTheLastStarted()
+    {
+        using var renderer = new WindowsPageRenderer();
+
+        var slow = renderer.LoadAsync(PdfEditSession.Open(Pdfs.Text(pages: 40)), null);
+        var fast = renderer.LoadAsync(PdfEditSession.Open(Pdfs.Text(pages: 2)), null);
+        await Task.WhenAll(slow, fast);
+
+        Assert.Equal(2, renderer.PageCount);
+    }
+
+    [Fact]
     public void APageIsDrawnWithTextOnWhite()
     {
         using var renderer = Load(PdfEditSession.Open(Pdfs.Text()));
