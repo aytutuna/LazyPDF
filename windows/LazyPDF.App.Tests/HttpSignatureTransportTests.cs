@@ -81,6 +81,80 @@ public sealed class HttpSignatureTransportTests
         Assert.Contains("did not answer", transport.LastFailure);
     }
 
+    [Fact]
+    public void TheSameGetIsAskedOnce()
+    {
+        if (HttpSignatureTransport.IsOffline) return;
+        var handler = new Handler(_ => Ok([4]));
+        using var transport = new HttpSignatureTransport(handler);
+
+        Assert.Equal(new byte[] { 4 }, transport.Get("http://crl.example/ca.crl"));
+        Assert.Equal(new byte[] { 4 }, transport.Get("http://crl.example/ca.crl"));
+
+        Assert.Single(handler.Requests);
+    }
+
+    [Fact]
+    public void PostsWithDifferentBodiesAreBothSent()
+    {
+        if (HttpSignatureTransport.IsOffline) return;
+        var handler = new Handler(_ => Ok([4]));
+        using var transport = new HttpSignatureTransport(handler);
+
+        transport.Post("https://tsa.example/stamp", "application/timestamp-query", [1]);
+        transport.Post("https://tsa.example/stamp", "application/timestamp-query", [2]);
+
+        Assert.Equal(2, handler.Requests.Count);
+    }
+
+    [Fact]
+    public void AFailingServerIsAskedOnceAndKeepsItsFailureText()
+    {
+        if (HttpSignatureTransport.IsOffline) return;
+        var handler = new Handler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
+        using var transport = new HttpSignatureTransport(handler);
+
+        for (int i = 0; i < 3; i++)
+        {
+            Assert.Null(transport.Get("https://ocsp.example/"));
+            Assert.Contains("500", transport.LastFailure);
+        }
+
+        Assert.Single(handler.Requests);
+    }
+
+    [Fact]
+    public void RepeatedAskingOfFewAddressesNeverHitsTheRequestCap()
+    {
+        if (HttpSignatureTransport.IsOffline) return;
+        var handler = new Handler(_ => Ok([1]));
+        using var transport = new HttpSignatureTransport(handler);
+
+        for (int i = 0; i < 250; i++)
+        {
+            Assert.NotNull(transport.Get($"https://crl.example/{i % 10}.crl"));
+            Assert.Null(transport.LastFailure);
+        }
+
+        Assert.Equal(10, handler.Requests.Count);
+    }
+
+    [Fact]
+    public void ACancelledCallIsNotRemembered()
+    {
+        if (HttpSignatureTransport.IsOffline) return;
+        var handler = new Handler(_ => Ok([1]));
+        using var transport = new HttpSignatureTransport(handler);
+        using var source = new CancellationTokenSource();
+        source.Cancel();
+        transport.Cancel = source.Token;
+
+        Assert.Null(transport.Get("https://ocsp.example/"));
+        transport.Cancel = CancellationToken.None;
+
+        Assert.Equal(new byte[] { 1 }, transport.Get("https://ocsp.example/"));
+    }
+
     [Theory]
     [InlineData("file:///C:/secret.txt")]
     [InlineData("ftp://host/a")]
@@ -155,9 +229,9 @@ public sealed class HttpSignatureTransportTests
         using var transport = new HttpSignatureTransport(handler);
 
         for (int i = 0; i < 200; i++)
-            Assert.NotNull(transport.Get("https://a.example/"));
+            Assert.NotNull(transport.Get($"https://a.example/{i}"));
 
-        Assert.Null(transport.Get("https://a.example/"));
+        Assert.Null(transport.Get("https://a.example/200"));
         Assert.Contains("Too many requests", transport.LastFailure);
         Assert.Equal(200, handler.Requests.Count);
     }
@@ -231,9 +305,9 @@ public sealed class HttpSignatureTransportTests
         int calls = 0;
         using var transport = new HttpSignatureTransport(new Handler(_ => ++calls == 1 ? new HttpResponseMessage(HttpStatusCode.NotFound) : Ok([1])));
 
-        transport.Get("https://a.example/");
+        transport.Get("https://a.example/1");
         Assert.NotNull(transport.LastFailure);
-        transport.Get("https://a.example/");
+        transport.Get("https://a.example/2");
 
         Assert.Null(transport.LastFailure);
     }

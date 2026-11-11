@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Services;
@@ -19,6 +20,7 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
     private static readonly HttpRequestOptionsKey<bool> Refused = new("LazyPDF.Refused");
 
     private readonly HttpClient _client;
+    private readonly Dictionary<(string Method, string Url, string Body), (byte[]? Bytes, string? Failure)> _answers = [];
     private int _requests;
 
     public HttpSignatureTransport(HttpMessageHandler? handler = null)
@@ -39,12 +41,12 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
     {
         var content = new ByteArrayContent(body);
         content.Headers.TryAddWithoutValidation("Content-Type", contentType);
-        return Send(HttpMethod.Post, url, content);
+        return Send(HttpMethod.Post, url, content, Convert.ToHexString(SHA256.HashData(body)));
     }
 
-    public byte[]? Get(string url) => Send(HttpMethod.Get, url, null);
+    public byte[]? Get(string url) => Send(HttpMethod.Get, url, null, "");
 
-    private byte[]? Send(HttpMethod method, string url, HttpContent? content)
+    private byte[]? Send(HttpMethod method, string url, HttpContent? content, string bodyHash)
     {
         LastFailure = null;
         if (!Uri.TryCreate(url, UriKind.Absolute, out var address))
@@ -54,6 +56,23 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
             LastFailure = Loc.T("This computer is offline. Connect to the internet and try again.");
             return null;
         }
+        // A dead server is asked once per file, not once per signature.
+        var key = (method.Method, address.AbsoluteUri, bodyHash);
+        if (_answers.TryGetValue(key, out var known))
+        {
+            LastFailure = known.Failure;
+            return known.Bytes;
+        }
+        var bytes = Fetch(method, address, content, out bool keep);
+        if (keep)
+            _answers[key] = (bytes, LastFailure);
+        return bytes;
+    }
+
+    // keep says the outcome is final; a cancel or a timeout may work on a later try.
+    private byte[]? Fetch(HttpMethod method, Uri address, HttpContent? content, out bool keep)
+    {
+        keep = false;
         // The timeout has to cover reading the body too, which HttpClient.Timeout does not once headers are read.
         using var limit = CancellationTokenSource.CreateLinkedTokenSource(Cancel);
         limit.CancelAfter(TimeSpan.FromSeconds(20));
@@ -67,6 +86,7 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
                 if (PointsHere(address))
                 {
                     LastFailure = Loc.T("The address points to this computer, so it was not used.");
+                    keep = true;
                     return null;
                 }
                 if (++_requests > MaxRequests)
@@ -86,10 +106,14 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
                 if (!response.IsSuccessStatusCode)
                 {
                     LastFailure = Loc.T("The server answered with an error ({0}).", (int)response.StatusCode);
+                    keep = true;
                     return null;
                 }
                 if (response.Content.Headers.ContentLength > MaxResponseBytes)
+                {
+                    keep = true;
                     return TooLarge();
+                }
                 using var stop = limit.Token.Register(response.Dispose);
                 using var body = new MemoryStream();
                 using var stream = response.Content.ReadAsStream(limit.Token);
@@ -99,17 +123,23 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
                 {
                     body.Write(buffer, 0, read);
                     if (body.Length > MaxResponseBytes)
+                    {
+                        keep = true;
                         return TooLarge();
+                    }
                 }
+                keep = true;
                 return body.ToArray();
             }
         }
         catch (Exception e) when (e is HttpRequestException or OperationCanceledException or IOException or ObjectDisposedException)
         {
+            bool timedOut = e is OperationCanceledException || limit.IsCancellationRequested;
             LastFailure = sent is not null && sent.Options.TryGetValue(Refused, out var refused) && refused ? Loc.T("The address points to this computer, so it was not used.")
-                : e is OperationCanceledException || limit.IsCancellationRequested
+                : timedOut
                 ? Loc.T("The server did not answer in time. Try again later.")
                 : Loc.T("The server could not be reached. Check the connection and try again.");
+            keep = !timedOut;
             return null;
         }
     }
