@@ -131,6 +131,26 @@ public class PageTagTests
     }
 
     [Fact]
+    public void DeleteDropsAFormContentItemOfTheDeletedPage()
+    {
+        var pdf = new TestPdf();
+        pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R /StructTreeRoot 12 0 R /MarkInfo <</Marked true>>>>");
+        pdf.Obj(2, "<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300]>>");
+        pdf.Obj(4, "<</Type /Page /Parent 2 0 R /StructParents 0>>");
+        pdf.Obj(5, "<</Type /Page /Parent 2 0 R /StructParents 1>>");
+        pdf.Stream(8, "/Type /XObject /Subtype /Form /BBox [0 0 200 300]", "BT (SECRETFORM) Tj ET");
+        pdf.Obj(12, "<</Type /StructTreeRoot /K 13 0 R /ParentTree 30 0 R>>");
+        pdf.Obj(13, "<</Type /StructElem /S /Div /P 12 0 R /K 14 0 R>>");
+        pdf.Obj(14, "<</Type /StructElem /S /Figure /P 13 0 R /Alt (SECRETALT) /K <</Type /MCR /Pg 5 0 R /Stm 8 0 R /MCID 0>>>>");
+        pdf.Obj(30, "<</Nums [0 [] 1 []]>>");
+        var document = PdfDocument.Open(pdf.Finish());
+        PageOperations.Delete(document, [1]);
+        Saved(document, out string text);
+        Assert.DoesNotContain("SECRETALT", text);
+        Assert.DoesNotContain("SECRETFORM", text);
+    }
+
+    [Fact]
     public void MergeGivesEachSourceKeysOfItsOwn()
     {
         var merged = Saved(PageAssembly.Merge([new MergeSource(Tagged()), new MergeSource(Tagged())]), out _);
