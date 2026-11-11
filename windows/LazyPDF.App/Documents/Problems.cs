@@ -31,8 +31,11 @@ public static class Problems
 
     public static Problem Tool(Exception error, string action) => error switch
     {
+        PdfPermissionException => Restricted(),
         PdfReadException => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished because the file could not be read back. If part of it was done, Undo takes it back.", action)),
-        UnauthorizedAccessException => Restricted(),
+        UnauthorizedAccessException => new(Loc.T("No access"), Loc.T("Windows did not let Lazy PDF finish {0}. Check who may change the file and its folder.", action)),
+        FileNotFoundException or DirectoryNotFoundException => new(Loc.T("File not found"), Loc.T("{0} could not be finished because the file is not there any more. It may have been moved or deleted.", action)),
+        EndOfStreamException => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished. If part of it was done, Undo takes it back.", action)),
         IOException => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished. Check that the disk has room and that no other program has the file open.", action)),
         _ => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished. If part of it was done, Undo takes it back.", action)),
     };

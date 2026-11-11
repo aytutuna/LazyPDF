@@ -2502,7 +2502,13 @@
     "tr": "{0} tamamlanamadı. Bir kısmı yapıldıysa Geri al onu geri alır."
   },
   "{0} could not be finished because the file could not be read back. If part of it was done, Undo takes it back.": {
-    "tr": "{0} tamamlanamadı çünkü dosya geri okunamadı. Bir kısmı yapıldıysa Geri al onu geri alır."
+    "tr": "{0} tamamlanamadı çünkü dosya yeniden okunamadı. Bir kısmı yapıldıysa Geri al onu geri alır."
+  },
+  "Windows did not let Lazy PDF finish {0}. Check who may change the file and its folder.": {
+    "tr": "Windows, Lazy PDF'nin {0} işlemini tamamlamasına izin vermedi. Dosyayı ve klasörünü kimlerin değiştirebildiğini kontrol edin."
+  },
+  "{0} could not be finished because the file is not there any more. It may have been moved or deleted.": {
+    "tr": "{0} tamamlanamadı çünkü dosya artık yok. Taşınmış ya da silinmiş olabilir."
   },
   "{0} could not be finished. Check that the disk has room and that no other program has the file open.": {
     "tr": "{0} tamamlanamadı. Diskte yer olduğundan ve dosyanın başka bir programda açık olmadığından emin olun."

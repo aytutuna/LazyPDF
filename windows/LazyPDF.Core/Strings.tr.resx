@@ -6769,6 +6769,9 @@
   <data name="Windows could not open {0}." xml:space="preserve">
     <value>Windows şunu açamadı: {0}</value>
   </data>
+  <data name="Windows did not let Lazy PDF finish {0}. Check who may change the file and its folder." xml:space="preserve">
+    <value>Windows, Lazy PDF'nin {0} işlemini tamamlamasına izin vermedi. Dosyayı ve klasörünü kimlerin değiştirebildiğini kontrol edin.</value>
+  </data>
   <data name="Windows does not let Lazy PDF read one of the pictures. Check who may open it." xml:space="preserve">
     <value>Windows, Lazy PDF'nin resimlerden birini okumasına izin vermiyor. Dosyayı kimlerin açabildiğini denetleyin.</value>
   </data>
@@ -6986,7 +6989,10 @@
     <value>{0} yorum</value>
   </data>
   <data name="{0} could not be finished because the file could not be read back. If part of it was done, Undo takes it back." xml:space="preserve">
-    <value>{0} tamamlanamadı çünkü dosya geri okunamadı. Bir kısmı yapıldıysa Geri al onu geri alır.</value>
+    <value>{0} tamamlanamadı çünkü dosya yeniden okunamadı. Bir kısmı yapıldıysa Geri al onu geri alır.</value>
+  </data>
+  <data name="{0} could not be finished because the file is not there any more. It may have been moved or deleted." xml:space="preserve">
+    <value>{0} tamamlanamadı çünkü dosya artık yok. Taşınmış ya da silinmiş olabilir.</value>
   </data>
   <data name="{0} could not be finished. Check that the disk has room and that no other program has the file open." xml:space="preserve">
     <value>{0} tamamlanamadı. Diskte yer olduğundan ve dosyanın başka bir programda açık olmadığından emin olun.</value>
