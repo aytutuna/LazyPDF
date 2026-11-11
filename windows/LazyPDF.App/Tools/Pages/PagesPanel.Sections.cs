@@ -94,6 +94,7 @@ public partial class PagesPanel
 
     private void Crop_BoxChanged(object? sender, EventArgs e)
     {
+        if (_crop?.Box is { } box) _boxSpace = BoxSpace(box.Page);
         SelectBoxPage();
         Refresh();
     }

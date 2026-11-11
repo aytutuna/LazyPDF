@@ -81,10 +81,18 @@ public partial class PagesPanel : ToolPanel
         var select = _reselect;
         _reselect = null;
         Build(select);
-        // The box holds a page index, which an edit to the page list moves.
+        // The box holds a page index and display points, which an edit to the page list or to its page's shape moves.
         int[] pages = PageNumbers();
-        if (!pages.SequenceEqual(_pages)) _crop?.Clear();
+        if (!pages.SequenceEqual(_pages) || _crop?.Box is { } box && BoxSpace(box.Page) != _boxSpace) _crop?.Clear();
         _pages = pages;
+    }
+
+    private (PdfRect, PdfRect, int, double) _boxSpace;
+
+    private (PdfRect, PdfRect, int, double) BoxSpace(int index)
+    {
+        var page = Tab!.Document.Pages[index];
+        return (page.MediaBox, page.CropBox, page.Rotate, page.UserUnit);
     }
 
     private int[] _pages = [];
