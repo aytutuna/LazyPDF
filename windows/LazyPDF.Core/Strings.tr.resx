@@ -2353,6 +2353,9 @@
   <data name="Keep links" xml:space="preserve">
     <value>Bağlantıları koru</value>
   </data>
+  <data name="Keep placing" xml:space="preserve">
+    <value>Yerleştirmeye devam et</value>
+  </data>
   <data name="Keep their text" xml:space="preserve">
     <value>Metinlerini koru</value>
   </data>
@@ -3658,6 +3661,9 @@
   <data name="Placed on page {0}." xml:space="preserve">
     <value>{0}. sayfaya yerleştirildi.</value>
   </data>
+  <data name="Placed on page {0}. Click for the next one." xml:space="preserve">
+    <value>{0}. sayfaya yerleştirildi. Sonrakini yerleştirmek için tıklayın.</value>
+  </data>
   <data name="Plain text (.txt)" xml:space="preserve">
     <value>Düz metin (.txt)</value>
   </data>
@@ -4710,6 +4716,9 @@
   </data>
   <data name="Status: {0}" xml:space="preserve">
     <value>Durum: {0}</value>
+  </data>
+  <data name="Stay in placing mode after each one, until Stop placing or Escape." xml:space="preserve">
+    <value>Her birinden sonra, Yerleştirmeyi bırak düğmesine ya da Esc tuşuna basana kadar yerleştirme kipinde kalır.</value>
   </data>
   <data name="Steps" xml:space="preserve">
     <value>Adımlar</value>

@@ -157,6 +157,12 @@ public partial class FillSignPanel : ToolPanel
             Host!.ShowProblem(new Problem(Loc.T("Nothing to place"), error.Message));
             return;
         }
+        if (KeepPlacing.IsChecked == true)
+        {
+            Begin();
+            Host!.SetStatus(Loc.T("Placed on page {0}. Click for the next one.", page + 1));
+            return;
+        }
         Host!.SetStatus(Loc.T("Placed on page {0}.", page + 1));
     }
 

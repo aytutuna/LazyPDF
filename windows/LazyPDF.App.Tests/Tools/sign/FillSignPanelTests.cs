@@ -36,4 +36,33 @@ public sealed class FillSignPanelTests
         Assert.False(File.Exists(item.Path));
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public Task KeepPlacingStaysArmedAfterEachPlacementUntilItIsUnticked() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var panel = new FillSignPanel(dir.Sub("sigs"));
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, new RecordingHost());
+        ((RadioButton)panel.FindName("TextKind")).IsChecked = true;
+        ((TextBox)panel.FindName("WordsBox")).Text = "AB";
+        var keep = (CheckBox)panel.FindName("KeepPlacing");
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var begin = typeof(FillSignPanel).GetMethod("Begin", flags)!;
+        var placed = typeof(FillSignPanel).GetMethod("Placed", flags)!;
+
+        keep.IsChecked = true;
+        begin.Invoke(panel, []);
+        placed.Invoke(panel, [0, new Point(50, 50), null]);
+
+        Assert.Equal("Stop placing", panel.Action!.Text);
+        Assert.Equal("Place text", tab.Session.UndoLabel);
+
+        keep.IsChecked = false;
+        placed.Invoke(panel, [0, new Point(50, 100), null]);
+
+        Assert.Equal("Place on page", panel.Action!.Text);
+        return Task.CompletedTask;
+    });
 }

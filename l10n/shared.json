@@ -4162,6 +4162,9 @@
   "Keep links": {
     "tr": "Bağlantıları koru"
   },
+  "Keep placing": {
+    "tr": "Yerleştirmeye devam et"
+  },
   "Keeps some private data": {
     "tr": "Bazı özel verileri korur"
   },
@@ -5480,6 +5483,9 @@
   "Placed on page {0}.": {
     "tr": "{0}. sayfaya yerleştirildi."
   },
+  "Placed on page {0}. Click for the next one.": {
+    "tr": "{0}. sayfaya yerleştirildi. Sonrakini yerleştirmek için tıklayın."
+  },
   "Preview": {
     "tr": "Önizleme"
   },
@@ -5542,6 +5548,9 @@
   },
   "Stop placing": {
     "tr": "Yerleştirmeyi bırak"
+  },
+  "Stay in placing mode after each one, until Stop placing or Escape.": {
+    "tr": "Her birinden sonra, Yerleştirmeyi bırak düğmesine ya da Esc tuşuna basana kadar yerleştirme kipinde kalır."
   },
   "Style": {
     "tr": "Stil"
