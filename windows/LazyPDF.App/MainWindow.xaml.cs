@@ -301,6 +301,8 @@ public partial class MainWindow : Window
                 case Key.Z: Undo(); break;
                 case Key.Y: Redo(); break;
                 case Key.Tab: CycleTab(shift ? -1 : 1); break;
+                case Key.PageDown: CycleTab(1); break;
+                case Key.PageUp: CycleTab(-1); break;
                 default: return;
             }
             e.Handled = true;
