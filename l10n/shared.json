@@ -6624,6 +6624,9 @@
   "Arrow keys move it. Enter places it. Escape cancels.": {
     "tr": "Ok tuşları taşır. Enter yerleştirir. Esc iptal eder."
   },
+  "Enter keeps the text. Shift+Enter starts a new line.": {
+    "tr": "Enter metni kaydeder. Shift+Enter yeni satır açar."
+  },
   "Or press Enter on the page.": {
     "tr": "Ya da sayfada Enter'a basın."
   },

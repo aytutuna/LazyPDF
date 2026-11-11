@@ -93,7 +93,7 @@ public sealed partial class EditContentPanel
                 var d = Viewer!.Geometry(page).ToDisplay(area);
                 _pending = Pending.NewBox;
                 (_pendingPage, _pendingArea) = (page, area);
-                _editor!.Open(page, new Rect(d.X, d.Y, d.Width, d.Height), "", NewLook(), wrap: true);
+                _editor!.Open(page, new Rect(d.X, d.Y, d.Width, d.Height), "", NewLook(), wrap: true, lineBreaks: true);
                 RaiseActionChanged();
                 break;
             case EditMode.Link:

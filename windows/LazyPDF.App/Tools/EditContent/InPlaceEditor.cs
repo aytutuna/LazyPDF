@@ -30,7 +30,8 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
     /// <param name="area">Where the text is, in page space.</param>
     /// <param name="caret">Where on the page the caret goes; the end of the text when null.</param>
     /// <param name="wrap">The text wraps inside the width of <paramref name="area"/> instead of growing to the right.</param>
-    public void Open(int page, Rect area, string text, EditorLook look, bool wrap, Point? caret = null)
+    /// <param name="lineBreaks">Shift+Enter starts a new line; Enter still keeps the text.</param>
+    public void Open(int page, Rect area, string text, EditorLook look, bool wrap, Point? caret = null, bool lineBreaks = false)
     {
         Close();
         Page = page;
@@ -44,11 +45,17 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
             Padding = new Thickness(0),
             MinWidth = area.Width,
             TextWrapping = wrap ? TextWrapping.Wrap : TextWrapping.NoWrap,
-            AcceptsReturn = false,
+            AcceptsReturn = lineBreaks,
             UndoLimit = 100,
         };
         if (wrap) box.Width = area.Width;
         System.Windows.Automation.AutomationProperties.SetName(box, Loc.T("Text on the page"));
+        if (lineBreaks)
+        {
+            string hint = Loc.T("Enter keeps the text. Shift+Enter starts a new line.");
+            box.ToolTip = hint;
+            System.Windows.Automation.AutomationProperties.SetHelpText(box, hint);
+        }
         Canvas.SetLeft(box, area.X);
         Canvas.SetTop(box, area.Y);
         Look(box, look);
@@ -99,7 +106,7 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
 
     private void Box_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter)
+        if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Shift) == 0)
         {
             e.Handled = true;
             Committed?.Invoke(this, EventArgs.Empty);

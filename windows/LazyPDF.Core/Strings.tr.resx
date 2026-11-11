@@ -1570,6 +1570,9 @@
   <data name="Enter a value of at most {0}." xml:space="preserve">
     <value>En çok {0} olan bir değer girin.</value>
   </data>
+  <data name="Enter keeps the text. Shift+Enter starts a new line." xml:space="preserve">
+    <value>Enter metni kaydeder. Shift+Enter yeni satır açar.</value>
+  </data>
   <data name="Enter the permissions password, then try again." xml:space="preserve">
     <value>İzin parolasını girip yeniden deneyin.</value>
   </data>

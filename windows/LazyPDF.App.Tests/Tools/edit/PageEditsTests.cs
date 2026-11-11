@@ -107,6 +107,18 @@ public sealed class PageEditsTests
     }
 
     [Fact]
+    public void ATextBoxKeepsALineBreakAsTwoLines()
+    {
+        using var tab = Open();
+        var edits = Edits(tab);
+
+        var outcome = edits.AddTextBox(0, new PdfRect(100, 400, 400, 500), "one\ntwo", new TextBoxStyle("Arial", Size: 12));
+
+        Assert.True(outcome.Done);
+        Assert.Equal(2, ((TextObject)Objects(tab)[^1]).Lines.Count);
+    }
+
+    [Fact]
     public void ATextBoxIsAddedAndATooSmallOneSaysItOverflows()
     {
         using var tab = Open();
