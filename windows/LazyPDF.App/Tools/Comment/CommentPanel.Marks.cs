@@ -216,7 +216,7 @@ public partial class CommentPanel
         var text = mark.Type == AnnotationType.FreeText ? Marker.TextOf(mark) : null;
         if (text is not null)
         {
-            FontFamilyBox.SelectedItem = Families.Contains(text.Family) ? text.Family : FontFamilyBox.SelectedItem;
+            FontFamilyBox.SelectedItem = Families.Contains(text.Family) ? text.Family : null;
             FontSizeBox.Text = Math.Round(text.Size, 1).ToString(CultureInfo.CurrentCulture);
             BoldToggle.IsChecked = text.Font.HasFlag(FontStyles.Bold);
             ItalicToggle.IsChecked = text.Font.HasFlag(FontStyles.Italic);

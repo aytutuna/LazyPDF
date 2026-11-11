@@ -269,6 +269,7 @@ public partial class CommentPanel : ToolPanel
         _unsettled.Clear();
         if (_edit?.Current is not { } mark || Tab is null) return;
         var look = CurrentStyle();
+        if (FontFamilyBox.SelectedItem is null) look = look with { Family = Marker.TextOf(mark).Family };
         Change(Loc.T("Change look"), m =>
         {
             var current = mark;

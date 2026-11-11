@@ -328,6 +328,9 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
     [GeneratedRegex(@"/(\w+)\s+([\d.]+)\s+Tf")]
     private static partial Regex FaceOperator();
 
+    [GeneratedRegex(@"font-family:\s*([^;]+)")]
+    private static partial Regex StyleFamily();
+
     [GeneratedRegex(@"((?:-?[\d.]+\s+){1,4})(?:g|rg|k)\b")]
     private static partial Regex FillOperator();
 
@@ -346,6 +349,8 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
             if (name.EndsWith("It") || name.EndsWith("Ob") || name.EndsWith("BI") || name.EndsWith("BO")) font |= FontStyles.Italic;
             if (double.TryParse(face.Groups[2].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed)) size = parsed;
         }
+        // Writing /DA keeps only the three standard families, but /DS still names the one another app used.
+        if (family == "Helvetica" && StyleFamily().Match(a.DefaultStyle ?? "") is { Success: true } named) family = named.Groups[1].Value.Trim().Trim('"');
         double[]? color = null;
         if (FillOperator().Matches(da).LastOrDefault() is { } fill)
         {
