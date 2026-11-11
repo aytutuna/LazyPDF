@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using LazyPDF.App.Documents;
 using LazyPDF.App.Tools.Measure;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
@@ -19,12 +20,14 @@ public sealed class MeasureToolTests
         public double Zoom { get; set; } = 2;
         public TextPage? Text { get; set; }
         public PageGeometry Geometry { get; set; } = null!;
+        public DocumentTab? Tab { get; set; }
 
         protected override object? Invoke(MethodInfo? method, object?[]? args) => method!.Name switch
         {
             "PageToView" => new Matrix(Zoom, 0, 0, Zoom, 0, 0),
             "GetTextAsync" => Task.FromResult(Text),
             "Geometry" => Geometry,
+            "get_Tab" => Tab,
             _ => throw new NotSupportedException(method.Name),
         };
     }
@@ -201,5 +204,29 @@ public sealed class MeasureToolTests
         tool.Press(At(300, 300));
 
         Assert.Equal(corner.X + 2, Assert.Single(done).Points[0].X, 6);
+    }
+
+    [Fact]
+    public void ClicksSnapToTheEndsOfDrawnLines()
+    {
+        var session = PdfEditSession.Open(Pdfs.Text());
+        new PageEditor(session, 0).AddLine(100, 100, 300, 100);
+        using var tab = new DocumentTab(session, new FakeRenderer(), null, "a.pdf", null);
+        var proxy = DispatchProxy.Create<IDocumentViewer, Viewer>();
+        var viewer = (Viewer)(object)proxy;
+        viewer.Tab = tab;
+        viewer.Geometry = new PageGeometry(session.Document.Pages[0]);
+        viewer.Text = TextPage.Create(session.Document, session.Document.Pages[0]);
+        var tool = new MeasureTool(proxy);
+        var end = viewer.Geometry.ToDisplay(300, 100);
+
+        tool.Move(At(0, 0));
+        tool.Move(At(end.X + 3, end.Y - 3));
+        Assert.True(tool.Snapped);
+        Assert.Equal(end.X, tool.Hover!.Value.X, 6);
+        Assert.Equal(end.Y, tool.Hover!.Value.Y, 6);
+
+        tool.Move(At(end.X + 30, end.Y - 30));
+        Assert.False(tool.Snapped);
     }
 }

@@ -1,13 +1,15 @@
 using System.Windows;
 using System.Windows.Input;
 using LazyPDF.App.Viewer;
+using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Measure;
 
-/// <summary>Takes the pointer on the pages: each click adds a point, snapping to the corners of the words on the page, until the shape is done.</summary>
+/// <summary>Takes the pointer on the pages: each click adds a point, snapping to the corners of the words and the ends of the lines and pictures on the page, until the shape is done.</summary>
 internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
 {
     private const double SnapPixels = 10;
+    private const int MaxDrawn = 20000;
 
     private readonly Dictionary<int, Point[]> _snaps = [];
     private readonly HashSet<int> _loading = [];
@@ -141,11 +143,38 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
             return;
         }
         var geometry = viewer.Geometry(page);
-        _snaps[page] =
-        [
-            .. text.Words.SelectMany(w => new[] { (w.Bounds.Left, w.Bounds.Bottom), (w.Bounds.Right, w.Bounds.Bottom), (w.Bounds.Left, w.Bounds.Top), (w.Bounds.Right, w.Bounds.Top) })
-                .Select(c => geometry.ToDisplay(c.Item1, c.Item2))
-                .Select(c => new Point(c.X, c.Y)),
-        ];
+        var corners = text.Words.SelectMany(w => new[] { (w.Bounds.Left, w.Bounds.Bottom), (w.Bounds.Right, w.Bounds.Bottom), (w.Bounds.Left, w.Bounds.Top), (w.Bounds.Right, w.Bounds.Top) }).ToList();
+        if (viewer.Tab is { } tab) AddDrawn(corners, new PageEditor(tab.Session, page));
+        _snaps[page] = [.. corners.Select(c => geometry.ToDisplay(c.Item1, c.Item2)).Select(c => new Point(c.X, c.Y))];
+    }
+
+    private static void AddDrawn(List<(double, double)> corners, PageEditor editor)
+    {
+        var drawn = new List<(double, double)>();
+        try
+        {
+            foreach (var o in editor.Objects)
+            {
+                if (drawn.Count >= MaxDrawn) break;
+                if (o is ImageObject image)
+                {
+                    var b = image.Bounds;
+                    drawn.AddRange([(b.Left, b.Bottom), (b.Right, b.Bottom), (b.Left, b.Top), (b.Right, b.Top)]);
+                }
+                else if (o is PathObject { Clips: false } path)
+                {
+                    foreach (var s in path.Segments)
+                    {
+                        if (s.Kind is PathSegmentKind.Move or PathSegmentKind.Line) drawn.Add((s.X1, s.Y1));
+                        else if (s.Kind == PathSegmentKind.Curve) drawn.Add((s.X3, s.Y3));
+                    }
+                }
+            }
+        }
+        catch (PdfReadException)
+        {
+            return;
+        }
+        corners.AddRange(drawn.Take(MaxDrawn));
     }
 }
