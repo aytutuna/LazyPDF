@@ -103,12 +103,14 @@ extension AppViewModel {
     /// Takes a file out of the recent list.
     public func forgetRecent(_ url: URL) {
         recentFiles.remove(url)
+        thumbnails.forget(url)
         recent = buildRecent()
         notifyAll()
     }
 
     public func clearRecent() {
         recentFiles.clear()
+        thumbnails.clear()
         recent = buildRecent()
         notifyAll()
     }
