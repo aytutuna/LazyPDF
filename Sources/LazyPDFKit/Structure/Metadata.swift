@@ -46,7 +46,8 @@ public struct OrderedStrings: Equatable, Sequence, ExpressibleByDictionaryLitera
     }
 }
 
-/// `custom` holds the /Info entries with other keys whose value is a string.
+/// `custom` holds the /Info entries with other keys whose value is a string. `xmpUnreadable` is true when the file has an
+/// XMP packet that could not be read.
 public struct DocumentMetadata: Equatable {
     private static let standard = ["Title", "Author", "Subject", "Keywords", "Creator", "Producer", "CreationDate", "ModDate", "Trapped"]
 
@@ -59,9 +60,10 @@ public struct DocumentMetadata: Equatable {
     public var created: DateTimeOffset?
     public var modified: DateTimeOffset?
     public var custom: OrderedStrings
+    public var xmpUnreadable: Bool
 
     public init(_ title: String?, _ author: String?, _ subject: String?, _ keywords: String?, _ creator: String?, _ producer: String?,
-                _ created: DateTimeOffset?, _ modified: DateTimeOffset?, _ custom: OrderedStrings) {
+                _ created: DateTimeOffset?, _ modified: DateTimeOffset?, _ custom: OrderedStrings, _ xmpUnreadable: Bool = false) {
         self.title = title
         self.author = author
         self.subject = subject
@@ -71,6 +73,7 @@ public struct DocumentMetadata: Equatable {
         self.created = created
         self.modified = modified
         self.custom = custom
+        self.xmpUnreadable = xmpUnreadable
     }
 
     /// The metadata from /Info; what it lacks is taken from the XMP packet. Dates without a zone count as UTC.
@@ -95,7 +98,8 @@ public struct DocumentMetadata: Equatable {
         return DocumentMetadata(
             text("Title", XmpPacket.dc, "title"), text("Author", XmpPacket.dc, "creator"), text("Subject", XmpPacket.dc, "description"),
             text("Keywords", XmpPacket.pdf, "Keywords"), text("Creator", XmpPacket.xmp, "CreatorTool"), text("Producer", XmpPacket.pdf, "Producer"),
-            date("CreationDate", "CreateDate"), date("ModDate", "ModifyDate"), custom)
+            date("CreationDate", "CreateDate"), date("ModDate", "ModifyDate"), custom,
+            xmp == nil && XmpPacket.isPresent(document))
     }
 
     /// Stores the metadata: /Info is made if the file has none, a key set to nil or empty is taken out, and an /Info entry

@@ -21,6 +21,8 @@ final class XmpPacket {
         rdfElement = rdf
     }
 
+    static func isPresent(_ document: PdfDocument) -> Bool { document.stream(document.catalog, "Metadata") != nil }
+
     /// The packet in the catalog's /Metadata, or nil when there is none, it is not well-formed, or it has no rdf:RDF.
     static func load(_ document: PdfDocument) -> XmpPacket? {
         guard let stream = document.stream(document.catalog, "Metadata") else { return nil }

@@ -228,6 +228,29 @@ final class MetadataTests: XCTestCase {
         }
     }
 
+    func test_noXmpIsNotUnreadable() throws {
+        XCTAssertFalse(DocumentMetadata.read(try StructureFixtures.open()).xmpUnreadable)
+    }
+
+    func test_readableXmpIsNotUnreadable() throws {
+        XCTAssertFalse(DocumentMetadata.read(try withXmp(Self.packet)).xmpUnreadable)
+    }
+
+    func test_xmpThatCannotBeReadIsReported() throws {
+        let cases = [
+            "this is not xml <<<",
+            "<x:xmpmeta xmlns:x=\"adobe:ns:meta/\"><nothing/></x:xmpmeta>",
+            "<x/>" + String(repeating: " ", count: (1 << 24) + 1),
+        ]
+        for xml in cases {
+            let document = try withXmp(xml, info: "<</Title (From info)>>")
+            document.trailer["Info"] = PdfReference(31, 0)
+            let read = DocumentMetadata.read(document)
+            XCTAssertTrue(read.xmpUnreadable)
+            XCTAssertEqual(read.title, "From info")
+        }
+    }
+
     func test_xmpBehindACryptFilterIsLeftAlone() throws {
         let document = try StructureFixtures.file("/Metadata 30 0 R", { pdf in
             pdf.stream(30, "/Type /Metadata /Subtype /XML /Filter [/Crypt] /DecodeParms [<</Name /Identity>>]", Self.packet)
