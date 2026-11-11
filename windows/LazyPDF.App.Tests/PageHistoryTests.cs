@@ -33,6 +33,17 @@ public sealed class PageHistoryTests
     }
 
     [Fact]
+    public void JumpSaysWhetherItMadeAnEntry()
+    {
+        var history = new PageHistory();
+
+        Assert.False(history.Jump(At(2, 100), At(2, 120)));
+        Assert.False(history.CanGoBack);
+        Assert.True(history.Jump(At(2, 100), At(2, 400)));
+        Assert.True(history.CanGoBack);
+    }
+
+    [Fact]
     public void BackWalksThroughSeveralJumpsInReverse()
     {
         var history = new PageHistory();
