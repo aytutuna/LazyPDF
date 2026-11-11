@@ -117,27 +117,33 @@ final class SignatureChecker {
             stamped = checkToken(first, cms.signature, extra, &problems)
         }
         let signingTime = cms.signingTime() ?? report.signingTime
-        // The signer's own clock proves nothing; without a trusted time stamp the chain is judged now.
-        let time = stamped ?? options.now
+        // Without a trusted time stamp the signer's claim sets the time the chain is judged at; revocation is still judged now.
+        let time = stamped ?? signingTime ?? options.now
 
         let trust = CertificateTrust.evaluate(signer, extra, time, options)
         if !trust.trusted { problems.append(.untrustedSigner) }
         var claimedOutside = false
         if stamped == nil, let claimed = signingTime { claimedOutside = claimed < signer.notBefore || claimed > signer.notAfter }
-        if !trust.timeValid || claimedOutside { problems.append(.certificateNotValid) }
+        if !trust.timeValid || claimedOutside {
+            problems.append(.certificateNotValid)
+        } else if stamped == nil, signingTime != nil, time != options.now,
+                  !CertificateTrust.evaluate(signer, extra, options.now, options).timeValid {
+            problems.append(.certificateExpired)
+        }
 
         let evidence = ValidationData()
         evidence.readArchival(cms)
         evidence.certificates += dss.certificates
         evidence.ocsps += dss.ocsps
         evidence.crls += dss.crls
+        let revocationTime = stamped ?? options.now
         var checkedAll = trust.chain.count > 1
         var i = 0
         while i + 1 < trust.chain.count {
-            let (state, at) = evidence.check(trust.chain[i], trust.chain[i + 1], time)
+            let (state, at) = evidence.check(trust.chain[i], trust.chain[i + 1], revocationTime)
             if state == .revoked {
                 var sinceThen = true
-                if let time, let at { sinceThen = at <= time }
+                if let revocationTime, let at { sinceThen = at <= revocationTime }
                 if sinceThen { problems.append(.certificateRevoked) }
             }
             checkedAll = checkedAll && state == .good

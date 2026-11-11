@@ -232,6 +232,8 @@
 "Certificate from a .p12 file" = ".p12 dosyasından sertifika";
 "Certificate from the keychain" = "Anahtar zincirinden sertifika";
 "Certificate from {0}." = "Sertifikayı veren: {0}.";
+"Certificate has expired" = "Sertifikanın süresi doldu";
+"Certificate has expired since" = "Sertifikanın süresi sonradan doldu";
 "Certificate not imported" = "Sertifika içe aktarılmadı";
 "Certificate not opened" = "Sertifika açılamadı";
 "Certificate of the other file" = "Diğer dosyanın sertifikası";
@@ -1624,6 +1626,7 @@
 "The catalog has /OCProperties." = "Katalogda /OCProperties var.";
 "The catalog has an /AA entry." = "Katalogda /AA girdisi var.";
 "The catalog has no /Metadata stream." = "Katalogda /Metadata akışı yok.";
+"The certificate has expired since." = "Sertifikanın süresi sonradan doldu.";
 "The change could not be written. Save a copy of the file and try again." = "Değişiklik yazılamadı. Dosyanın bir kopyasını kaydedip yeniden deneyin.";
 "The clipboard holds a picture." = "Panoda resim var.";
 "The clipboard holds text." = "Panoda metin var.";
@@ -1775,6 +1778,7 @@
 "The signatures no longer hold." = "İmzalar artık geçerli değil.";
 "The signed version is not in the file's history." = "İmzalı sürüm dosyanın geçmişinde yok.";
 "The signer is not trusted." = "İmzalayan güvenilir değil.";
+"The signing time is the signer's own claim. Check that the file was signed before the certificate expired." = "İmza zamanı imzalayanın kendi beyanıdır. Dosyanın sertifikanın süresi dolmadan önce imzalandığını denetleyin.";
 "The stream keyword must be followed by CRLF or LF." = "stream anahtar sözcüğünden sonra CRLF ya da LF gelmeli.";
 "The structure tree is too large to edit." = "Yapı ağacı düzenlenemeyecek kadar büyük.";
 "The system cannot draw these pages. Try another format." = "Sistem bu sayfaları çizemiyor. Başka bir biçim deneyin.";

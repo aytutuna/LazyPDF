@@ -61,6 +61,7 @@ public enum SignatureProblem {
     case noCertificate
     case untrustedSigner
     case certificateNotValid
+    case certificateExpired
     case certificateRevoked
     case changedAfterSigning
     case damagedStructure

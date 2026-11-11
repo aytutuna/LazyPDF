@@ -216,7 +216,7 @@ final class SignatureHardeningTests: XCTestCase {
         let report = try single(PdfSignatureVerifier.verify(signed, options))
 
         XCTAssertNil(report.timestampTime)
-        XCTAssertEqual(report.timeUsed, options.now)
+        XCTAssertEqual(report.timeUsed, Pki.signing)
     }
 
     func test_aRevocationAfterTheClaimedTimeCountsWhenNothingProvesTheTime() throws {

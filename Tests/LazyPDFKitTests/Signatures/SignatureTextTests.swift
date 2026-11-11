@@ -12,7 +12,7 @@ final class SignatureTextTests: XCTestCase {
 
     private let problems: [SignatureProblem] = [
         .unsupportedFormat, .badByteRange, .digestMismatch, .badSignature, .noCertificate, .untrustedSigner,
-        .certificateNotValid, .certificateRevoked, .changedAfterSigning, .damagedStructure, .timestampInvalid, .weakDigest,
+        .certificateNotValid, .certificateExpired, .certificateRevoked, .changedAfterSigning, .damagedStructure, .timestampInvalid, .weakDigest,
     ]
 
     private let kinds: [SignatureChangeKind] = [
@@ -54,6 +54,18 @@ final class SignatureTextTests: XCTestCase {
         stamp.kind = .documentTimestamp
         stamp.timestampTime = time
         XCTAssertEqual(stamp.sentence, "Time stamped on 10 Mar 2026. Not changed since.")
+    }
+
+    func test_aSignerThatOnlyHasAnExpiredCertificateSaysSo() {
+        var expired = report(.validButUntrusted)
+        expired.problems = [.certificateExpired]
+        XCTAssertEqual(expired.sentence, "Signed by Ada Lovelace on 10 Mar 2026. The certificate has expired since.")
+        XCTAssertEqual(SignatureText.status(expired), "Certificate has expired")
+
+        var more = expired
+        more.problems = [.certificateExpired, .weakDigest]
+        XCTAssertEqual(more.sentence, "Signed by Ada Lovelace on 10 Mar 2026. The signer is not trusted.")
+        XCTAssertEqual(SignatureText.status(more), "Signer is not trusted")
     }
 
     func test_aStatusLineIsSixWordsAtMost() {
