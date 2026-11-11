@@ -796,6 +796,9 @@
   <data name="CSV files" xml:space="preserve">
     <value>CSV dosyaları</value>
   </data>
+  <data name="CSV list" xml:space="preserve">
+    <value>CSV listesi</value>
+  </data>
   <data name="C_lose" xml:space="preserve">
     <value>Kap_at</value>
   </data>
@@ -2818,6 +2821,9 @@
   <data name="Keywords" xml:space="preserve">
     <value>Anahtar sözcükler</value>
   </data>
+  <data name="Kind" xml:space="preserve">
+    <value>Tür</value>
+  </data>
   <data name="Kind of data" xml:space="preserve">
     <value>Veri türü</value>
   </data>
@@ -3271,6 +3277,9 @@
   <data name="New file" xml:space="preserve">
     <value>Yeni dosya</value>
   </data>
+  <data name="New page" xml:space="preserve">
+    <value>Yeni sayfa</value>
+  </data>
   <data name="New paragraph" xml:space="preserve">
     <value>Yeni paragraf</value>
   </data>
@@ -3673,6 +3682,9 @@
   <data name="Odd pages" xml:space="preserve">
     <value>Tek sayfalar</value>
   </data>
+  <data name="Old page" xml:space="preserve">
+    <value>Eski sayfa</value>
+  </data>
   <data name="Old values are still in the file" xml:space="preserve">
     <value>Eski değerler hâlâ dosyada</value>
   </data>
@@ -3867,6 +3879,9 @@
   </data>
   <data name="PDF files and pictures" xml:space="preserve">
     <value>PDF dosyaları ve resimler</value>
+  </data>
+  <data name="PDF report" xml:space="preserve">
+    <value>PDF raporu</value>
   </data>
   <data name="PDF version" xml:space="preserve">
     <value>PDF sürümü</value>
@@ -4764,6 +4779,9 @@
   </data>
   <data name="Report not written" xml:space="preserve">
     <value>Rapor yazılmadı</value>
+  </data>
+  <data name="Report saved." xml:space="preserve">
+    <value>Rapor kaydedildi.</value>
   </data>
   <data name="Required" xml:space="preserve">
     <value>Zorunlu</value>
@@ -5712,6 +5730,9 @@
   </data>
   <data name="Text replaced." xml:space="preserve">
     <value>Metin değiştirildi.</value>
+  </data>
+  <data name="Text report" xml:space="preserve">
+    <value>Metin raporu</value>
   </data>
   <data name="Text size" xml:space="preserve">
     <value>Metin boyutu</value>
@@ -7165,6 +7186,9 @@
   <data name="Website" xml:space="preserve">
     <value>Web sitesi</value>
   </data>
+  <data name="What" xml:space="preserve">
+    <value>Ne</value>
+  </data>
   <data name="What was found" xml:space="preserve">
     <value>Bulunanlar</value>
   </data>
@@ -7515,6 +7539,9 @@
   </data>
   <data name="{0} comment|plural" xml:space="preserve">
     <value>{0} yorum</value>
+  </data>
+  <data name="{0} comparison" xml:space="preserve">
+    <value>{0} karşılaştırması</value>
   </data>
   <data name="{0} could not be finished because the file could not be read back. If part of it was done, Undo takes it back." xml:space="preserve">
     <value>{0} tamamlanamadı çünkü dosya yeniden okunamadı. Bir kısmı yapıldıysa Geri al onu geri alır.</value>

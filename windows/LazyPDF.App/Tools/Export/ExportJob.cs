@@ -57,7 +57,7 @@ public static class ExportJob
     // A drive root has no file name; the root is what the folder is called then.
     internal static string Leaf(string path) => Path.GetFileName(path.TrimEnd('\\', '/')) is { Length: > 0 } name ? name : path;
 
-    private static void Reveal(string path, bool folder)
+    internal static void Reveal(string path, bool folder)
     {
         var start = new ProcessStartInfo("explorer.exe");
         start.ArgumentList.Add(folder ? path : "/select," + path);

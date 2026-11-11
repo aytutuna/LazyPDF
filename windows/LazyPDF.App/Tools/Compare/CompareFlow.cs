@@ -1,6 +1,8 @@
+using System.Text;
 using System.Security.Cryptography.X509Certificates;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Export;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Compare;
@@ -67,19 +69,50 @@ internal sealed class CompareFlow(IToolHost host, Func<IDocumentRenderer> render
         return made;
     }
 
-    public async Task WriteReportAsync(CompareSession session, Parts parts)
+    /// <summary>Whether a report may be written now; when not, the person is told why.</summary>
+    public bool CanWriteReport(CompareSession session, Parts parts)
     {
         if (!session.CanReport)
         {
             host.ShowProblem(new Problem(Loc.T("Report not allowed"), Loc.T("{0} limits what readers may do. Open it with its owner password to write a report.", session.New.Title)));
-            return;
+            return false;
         }
-        bool filtered = !session.ByPixels && parts != Parts.All;
-        if (filtered && ChangeParts.Only(session.Result!, parts).IsIdentical && !session.Result!.IsIdentical)
+        if (!session.ByPixels && parts != Parts.All && ChangeParts.Only(session.Result!, parts).IsIdentical && !session.Result!.IsIdentical)
         {
             host.ShowProblem(new Problem(Loc.T("Nothing to report"), Loc.T("No difference matches the kinds switched on. Switch on more kinds under Show.")));
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>Writes the report as a text file, or as CSV of the rows shown, to <paramref name="path"/>.</summary>
+    public async Task SaveReportAsync(CompareSession session, Parts parts, bool csv, string path)
+    {
+        if (!CanWriteReport(session, parts)) return;
+        bool done = false;
+        try
+        {
+            await host.RunBusyAsync(Loc.T("Writing report"), async token =>
+            {
+                await Task.Run(() => Exporter.Save(path, csv ? session.Csv(parts) : new UTF8Encoding(false).GetBytes(session.TextReport(parts))));
+                token.ThrowIfCancellationRequested();
+                done = true;
+            });
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            host.ShowProblem(Problems.Save(e, System.IO.Path.GetFileName(path)));
             return;
         }
+        if (!done) return;
+        host.ShowNotice(Loc.T("Report saved."), Loc.T("Saved as {0}.", System.IO.Path.GetFileName(path)), new NoticeAction(Loc.T("Show in folder"), () => ExportJob.Reveal(path, false)));
+        host.SetStatus(Loc.T("Report saved."));
+    }
+
+    public async Task WriteReportAsync(CompareSession session, Parts parts)
+    {
+        if (!CanWriteReport(session, parts)) return;
+        bool filtered = !session.ByPixels && parts != Parts.All;
         byte[]? report = null;
         try
         {

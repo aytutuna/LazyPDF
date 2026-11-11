@@ -134,4 +134,73 @@ public sealed class CompareReportTests
             Assert.True(tab.PageCount > session.New.PageCount);
         }
     }
+
+    [Fact]
+    public void TheCsvQuotesWhatNeedsItAndStartsWithTheByteOrderMark()
+    {
+        using var session = Session(Pdfs.Text(1, "Say \"hi\", friend, once."), Pdfs.Text(1, "Say \"bye\", friend, twice."));
+
+        byte[] csv = session.Csv(Parts.All);
+
+        Assert.Equal(new byte[] { 0xEF, 0xBB, 0xBF }, csv[..3]);
+        string text = System.Text.Encoding.UTF8.GetString(csv, 3, csv.Length - 3);
+        string[] lines = text.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal("Kind,Old page,New page,What,Detail", lines[0]);
+        Assert.Equal(session.Rows(Parts.All).Count + 1, lines.Length);
+        Assert.Contains(lines.Skip(1), l => l.Contains("\"Say \"\"") || l.Contains("\"\"hi\"\"") || l.Contains("\"\"bye\"\""));
+        Assert.All(lines.Skip(1), l => Assert.Matches("^[A-Za-z ]+,[0-9]*,[0-9]*,", l));
+    }
+
+    [Fact]
+    public void ARowOfAPixelComparisonSaysItLooksDifferent()
+    {
+        using var session = new CompareSession(new Side(CompareKit.Before(), "old.pdf", null, null), new Side(CompareKit.Before(), "new.pdf", null, null), CompareKit.Painted());
+        session.Compare(new CompareOptions(), byPixels: true, dpi: 96, CancellationToken.None);
+
+        string text = System.Text.Encoding.UTF8.GetString(session.Csv(Parts.All));
+
+        Assert.NotEmpty(session.Rows(Parts.All));
+        Assert.Contains("\r\nLooks different,", text);
+    }
+
+    [Fact]
+    public void TheTextReportNamesBothFiles()
+    {
+        using var session = Session(CompareKit.Before(), CompareKit.After());
+
+        string text = session.TextReport(Parts.All);
+
+        Assert.Contains("old.pdf", text);
+        Assert.Contains("new.pdf", text);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AFileThatLimitsReadersGetsNoTextOrCsvReport(bool csv)
+    {
+        using var f = new ViewModelFixture();
+        using var session = Session(CompareKit.Before(), Pdfs.Restricted(PdfPermissions.Print));
+        string path = Path.Combine(f.Dir.Path, "report.out");
+
+        await Flow(f).SaveReportAsync(session, Parts.All, csv, path);
+
+        Assert.Equal("Report not allowed", f.Vm.Message!.Title);
+        Assert.False(File.Exists(path));
+    }
+
+    [Fact]
+    public async Task ATextReportIsWrittenWithoutOpeningATab()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Dir.File("open.pdf", CompareKit.Before()));
+        using var session = Session(CompareKit.Before(), CompareKit.After());
+        string path = Path.Combine(f.Dir.Path, "report.txt");
+
+        await Flow(f).SaveReportAsync(session, Parts.All, csv: false, path);
+
+        Assert.Contains("new.pdf", File.ReadAllText(path));
+        Assert.Equal("Report saved.", f.Vm.Message!.Title);
+        Assert.Equal("open.pdf", f.Vm.ActiveDocument!.Title);
+    }
 }

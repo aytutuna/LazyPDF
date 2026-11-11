@@ -1,4 +1,5 @@
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.Core;
@@ -111,6 +112,20 @@ internal sealed class CompareSession : IDisposable
         return plain.SaveRewrite(new PdfSaveOptions(Security: security, DocumentId: after.FirstId));
     }
 
+    public string TextReport(Parts parts) =>
+        ComparisonReport.ToText(ByPixels ? _pixelResult! : ChangeParts.Only(Result!, parts), Old.Title, New.Title);
+
+    /// <summary>The shown rows as CSV with a byte order mark, so Excel reads the letters as UTF-8.</summary>
+    public byte[] Csv(Parts parts)
+    {
+        var text = new StringBuilder();
+        AppendCsv(text, Loc.T("Kind"), Loc.T("Old page"), Loc.T("New page"), Loc.T("What"), Loc.T("Detail"));
+        foreach (var row in Rows(parts))
+            AppendCsv(text, row.Kind is { } kind ? CompareText.KindName(kind) : Loc.T("Looks different"), PageNumber(row.OldPage), PageNumber(row.NewPage), row.Title, row.Subtitle);
+        var utf8 = new UTF8Encoding(true);
+        return [.. utf8.GetPreamble(), .. utf8.GetBytes(text.ToString())];
+    }
+
     public void Dispose()
     {
         Old.Dispose();
@@ -164,6 +179,14 @@ internal sealed class CompareSession : IDisposable
         var (x2, y2) = page.ToUser(r.X + r.Width, r.Y);
         var (x3, y3) = page.ToUser(r.X, r.Y);
         return new CompareChange(ChangeKind.Changed, ChangeArea.Image, pair.OldIndex, pair.NewIndex, "", "", [], [new TextQuad(x0, y0, x1, y1, x2, y2, x3, y3)], Loc.T("Looks different"));
+    }
+
+    private static string PageNumber(int page) => page < 0 ? "" : (page + 1).ToString();
+
+    private static void AppendCsv(StringBuilder text, params string[] fields)
+    {
+        text.AppendJoin(',', fields.Select(f => f.IndexOfAny([',', '"', '\r', '\n']) < 0 ? f : "\"" + f.Replace("\"", "\"\"") + "\""));
+        text.Append("\r\n");
     }
 
     private static PdfDocument Reopen(Side side) =>

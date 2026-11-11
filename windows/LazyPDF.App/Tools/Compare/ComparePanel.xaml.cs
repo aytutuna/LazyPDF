@@ -315,13 +315,44 @@ public partial class ComparePanel : ToolPanel
         window.Show();
     }
 
-    private async void Report_Click(object sender, RoutedEventArgs e)
+    private void Report_Click(object sender, RoutedEventArgs e)
+    {
+        var menu = new ContextMenu { PlacementTarget = ReportButton, Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom };
+        foreach (var (name, kind) in new[] { (Loc.T("PDF report"), 0), (Loc.T("Text report"), 1), (Loc.T("CSV list"), 2) })
+        {
+            var item = new MenuItem { Header = name };
+            System.Windows.Automation.AutomationProperties.SetName(item, name);
+            item.Click += async (_, _) => await WriteReport(kind);
+            menu.Items.Add(item);
+        }
+        menu.IsOpen = true;
+    }
+
+    private async Task WriteReport(int kind)
     {
         if (_shown is not { } held || _flow is not { } flow) return;
+        var parts = CurrentParts();
+        string? path = null;
+        if (kind != 0)
+        {
+            if (!flow.CanWriteReport(held.Session, parts)) return;
+            bool csv = kind == 2;
+            var dialog = new SaveFileDialog
+            {
+                Filter = csv ? Loc.T("CSV files") + "|*.csv" : Loc.T("Text files") + "|*.txt",
+                DefaultExt = csv ? ".csv" : ".txt",
+                AddExtension = true,
+                OverwritePrompt = true,
+                FileName = Loc.T("{0} comparison", Path.GetFileNameWithoutExtension(held.Session.New.Title)),
+            };
+            if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+            path = dialog.FileName;
+        }
         ReportButton.IsEnabled = false;
         try
         {
-            await flow.WriteReportAsync(held.Session, CurrentParts());
+            if (path is null) await flow.WriteReportAsync(held.Session, parts);
+            else await flow.SaveReportAsync(held.Session, parts, kind == 2, path);
         }
         finally
         {

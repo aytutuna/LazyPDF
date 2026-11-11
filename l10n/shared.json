@@ -3269,6 +3269,33 @@
   "Write report": {
     "tr": "Rapor yaz"
   },
+  "PDF report": {
+    "tr": "PDF raporu"
+  },
+  "Text report": {
+    "tr": "Metin raporu"
+  },
+  "CSV list": {
+    "tr": "CSV listesi"
+  },
+  "Report saved.": {
+    "tr": "Rapor kaydedildi."
+  },
+  "{0} comparison": {
+    "tr": "{0} karşılaştırması"
+  },
+  "Kind": {
+    "tr": "Tür"
+  },
+  "Old page": {
+    "tr": "Eski sayfa"
+  },
+  "New page": {
+    "tr": "Yeni sayfa"
+  },
+  "What": {
+    "tr": "Ne"
+  },
   "Version {0}": {
     "tr": "Sürüm {0}"
   },

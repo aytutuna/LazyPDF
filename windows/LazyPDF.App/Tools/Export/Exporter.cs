@@ -126,7 +126,7 @@ public static class Exporter
 
     private static void SaveText(string path, string text) => Save(path, new UTF8Encoding(false).GetBytes(text));
 
-    private static void Save(string path, byte[] bytes)
+    internal static void Save(string path, byte[] bytes)
     {
         string temp = $"{path}.{Guid.NewGuid():N}.tmp";
         try
