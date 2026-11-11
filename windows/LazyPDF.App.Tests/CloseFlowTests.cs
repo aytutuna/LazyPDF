@@ -308,4 +308,24 @@ public sealed class CloseFlowTests
 
         Assert.Equal(1, exits);
     }
+
+    [Fact]
+    public async Task SaveAnywayKeepsTheMarksCountedWhenTheWindowLeavesTheTabOpen()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await OpenDirty(f);
+        tab.PendingMarks = 2;
+        File.WriteAllBytes(tab.Path!, Pdfs.Text(2));
+        File.SetLastWriteTimeUtc(tab.Path!, DateTime.UtcNow.AddMinutes(10));
+        await f.Vm.CheckDiskAsync();
+        f.Vm.CloseRequested += (_, _) => { };
+        f.Vm.RequestClose(tab);
+
+        Assert.False(f.Vm.Save(tab, closeAfter: true));
+        f.Vm.CancelClose();
+        f.Vm.Message!.Action!.Run();
+
+        Assert.Equal(2, tab.PendingMarks);
+        Assert.False(f.Vm.RequestClose(tab));
+    }
 }

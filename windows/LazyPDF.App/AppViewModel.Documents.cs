@@ -249,10 +249,12 @@ public sealed partial class AppViewModel
                 new NoticeAction(Loc.T("Save anyway"), () =>
                 {
                     if (!Write(tab, tab.Save) || !closeAfter) return;
-                    // The close question already named the marks, as it does on the plain Save path.
+                    // The close question already named the marks; they count again if the window leaves the tab open.
+                    int marks = tab.PendingMarks;
                     tab.PendingMarks = 0;
                     if (wasExiting) RaiseExit();
                     else CloseRequested?.Invoke(this, tab);
+                    if (Strip.Contains(tab)) tab.PendingMarks = marks;
                 }));
             return false;
         }
