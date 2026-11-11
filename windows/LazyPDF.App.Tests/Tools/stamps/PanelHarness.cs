@@ -104,6 +104,7 @@ public class FakeViewer : DispatchProxy
         "get_VisiblePages" => new[] { 0 },
         "PageSize" => new Size(200, 300),
         "Overlay" => Overlay,
+        "get_View" => new FrameworkElement(),
         _ when method.ReturnType == typeof(void) || !method.ReturnType.IsValueType => null,
         _ => Activator.CreateInstance(method.ReturnType),
     };

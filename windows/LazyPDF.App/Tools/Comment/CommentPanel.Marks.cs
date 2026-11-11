@@ -202,7 +202,12 @@ public partial class CommentPanel
     {
         var mark = _edit?.Current;
         SelectedRow.Visibility = mark is null ? Visibility.Collapsed : Visibility.Visible;
-        if (mark is null) return;
+        if (mark is null)
+        {
+            if (_drawing is { } kept) RestoreDrawing(kept);
+            return;
+        }
+        _drawing ??= CurrentStyle();
         SelectedTitle.Text = Loc.T("Selected: {0}", AnnotationText.KindName(mark.Type));
         EditText.IsEnabled = mark.Type is AnnotationType.Text or AnnotationType.FreeText || mark.Contents is { Length: > 0 };
         _loading = true;
@@ -217,6 +222,22 @@ public partial class CommentPanel
             ItalicToggle.IsChecked = text.Font.HasFlag(FontStyles.Italic);
         }
         ShowColour(Marker.RgbOf(text is null ? mark.Color : text.TextColor ?? [0]));
+        _loading = false;
+        ShowReadouts();
+    }
+
+    // Looking at a mark must not change the look of the next one drawn.
+    private void RestoreDrawing(MarkStyle kept)
+    {
+        _loading = true;
+        WidthSlider.Value = kept.Width;
+        OpacitySlider.Value = kept.Opacity * 100;
+        ShowColour(kept.Color);
+        FontFamilyBox.SelectedItem = kept.Family;
+        FontSizeBox.Text = kept.Size.ToString(CultureInfo.CurrentCulture);
+        BoldToggle.IsChecked = kept.Font.HasFlag(FontStyles.Bold);
+        ItalicToggle.IsChecked = kept.Font.HasFlag(FontStyles.Italic);
+        _drawing = null;
         _loading = false;
         ShowReadouts();
     }

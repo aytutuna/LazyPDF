@@ -52,6 +52,7 @@ public partial class CommentPanel : ToolPanel
     private ToolAction? _action;
     private MarkTool _tool = MarkTool.SelectText;
     private double[]? _color;
+    private MarkStyle? _drawing;
     private bool _loading = true;
     private bool _choosing;
     private bool _allowed = true;
