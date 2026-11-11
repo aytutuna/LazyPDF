@@ -127,7 +127,11 @@ enum CertificateTrust {
 
     /// The chain of `certificate`, trusted only when it is also meant for the job: signing documents, or for a time stamp authority `timestamp`.
     static func evaluate(_ certificate: X509Certificate, _ extra: [X509Certificate], _ time: DateTimeOffset?, _ options: VerifyOptions, timestamp: Bool = false) -> TrustResult {
-        var result = build(certificate, extra, time, options.trustAnchors, system: false)
+        // The walk keeps going past an anchor that is not self-issued, so a signer the caller trusts by itself is settled here.
+        let at = time ?? currentTime()
+        var result = options.trustAnchors.contains(where: { $0.sameBytes(certificate) })
+            ? TrustResult(trusted: true, timeValid: certificate.notBefore <= at && at <= certificate.notAfter, chain: [certificate])
+            : build(certificate, extra, time, options.trustAnchors, system: false)
         if !result.trusted && options.useSystemStore {
             let viaSystem = build(certificate, extra + options.trustAnchors, time, [], system: true)
             if viaSystem.trusted { result = viaSystem }

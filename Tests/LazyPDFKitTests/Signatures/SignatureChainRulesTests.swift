@@ -71,7 +71,7 @@ final class SignatureChainRulesTests: XCTestCase {
 
     func test_anAnchorThatIsNotARootLeavesTheChainPartial() throws {
         let file = try PdfSigner.sign(SignatureKit.plain(), SignatureKit.request(pki))
-        for anchor in [pki.intermediate, pki.leaf] {
+        for anchor in [pki.intermediate] {
             var options = VerifyOptions()
             options.trustAnchors = [anchor]
             let reports = try PdfSignatureVerifier.verify(file, options)
@@ -80,6 +80,36 @@ final class SignatureChainRulesTests: XCTestCase {
             XCTAssertTrue(reports.first?.problems.contains(.untrustedSigner) ?? false, anchor.subject)
         }
         XCTAssertEqual(try SignatureKit.verify(file).first?.verdict, .valid)
+    }
+
+    func test_aSignerInTheAnchorsIsTrustedWhateverSignedIt() throws {
+        var options = VerifyOptions()
+        options.trustAnchors = [pki.leaf]
+
+        let result = CertificateTrust.evaluate(pki.leaf, [], Pki.signing, options)
+
+        XCTAssertTrue(result.trusted)
+        XCTAssertTrue(result.timeValid)
+        XCTAssertEqual(result.chain.count, 1)
+        XCTAssertFalse(CertificateTrust.evaluate(pki.leafEc, [], Pki.signing, options).trusted)
+    }
+
+    func test_aSignerInTheAnchorsStillNeedsAKeyUsageForSigning() throws {
+        let encipher = try pki.issued("Encipher", [.keyEncipherment])
+        var options = VerifyOptions()
+        options.trustAnchors = [encipher]
+
+        XCTAssertFalse(CertificateTrust.evaluate(encipher, [], Pki.signing, options).trusted)
+    }
+
+    func test_aSignerInTheAnchorsIsNotTimeValidAfterItExpires() throws {
+        var options = VerifyOptions()
+        options.trustAnchors = [pki.shortLived]
+
+        let result = CertificateTrust.evaluate(pki.shortLived, [], try XCTUnwrap(Pki.expiry.adding(days: 1)), options)
+
+        XCTAssertTrue(result.trusted)
+        XCTAssertFalse(result.timeValid)
     }
 
     func test_aCriticalSubjectDirectoryAttributesExtensionMakesTheSignerUntrusted() throws {

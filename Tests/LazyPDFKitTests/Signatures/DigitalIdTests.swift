@@ -194,5 +194,17 @@ final class DigitalIdTests: XCTestCase {
         XCTAssertEqual(trusted.count, 1)
         XCTAssertEqual(trusted.first?.verdict, .valid)
     }
+
+    func test_aSignatureByACertificateTheCallerTrustsIsValidThoughItsIssuerIsNotAnAnchor() throws {
+        let pki = Pki.instance
+        let signed = try PdfSigner.sign(SignatureKit.plain(), PdfSignRequest(pki.leaf, Pki.signing))
+
+        var options = VerifyOptions()
+        options.trustAnchors = [pki.leaf]
+        options.now = Pki.signing
+        let reports = try PdfSignatureVerifier.verify(signed, options)
+        XCTAssertEqual(reports.count, 1)
+        XCTAssertEqual(reports.first?.verdict, .valid)
+    }
 }
 #endif
