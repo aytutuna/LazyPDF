@@ -14,6 +14,7 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
 {
     private TextBox? _box;
     private PageOverlay? _overlay;
+    private bool _lineBreaks;
 
     public bool IsOpen => _box is not null;
 
@@ -34,6 +35,7 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
     public void Open(int page, Rect area, string text, EditorLook look, bool wrap, Point? caret = null, bool lineBreaks = false)
     {
         Close();
+        _lineBreaks = lineBreaks;
         Page = page;
         double scale = ViewScale.Of(viewer, page);
         var box = new TextBox
@@ -113,7 +115,7 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
 
     private void Box_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Shift) == 0)
+        if (e.Key == Key.Enter && !(_lineBreaks && (Keyboard.Modifiers & ModifierKeys.Shift) != 0))
         {
             e.Handled = true;
             Committed?.Invoke(this, EventArgs.Empty);
