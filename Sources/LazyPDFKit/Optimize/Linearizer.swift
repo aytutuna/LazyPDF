@@ -144,6 +144,10 @@ final class Linearizer {
             return PdfArray(array.items.map { remap($0) })
         case let dictionary as PdfDictionary:
             return remapDictionary(dictionary, false)
+        case let stream as PdfStream:
+            // A stream the flattened parameters met (/JBIG2Globals) is written as the reference it came from.
+            if let item = index[stream.number] { return PdfReference(number[item], 0) }
+            return PdfNull.instance
         case let number as PdfNumber:
             // An integer too big for 64 bits is a real as far as a strict reader is concerned.
             if number.isInteger && number.integer == nil && number.value != 0 && number.value.isFinite { return PdfNumber(number.text + ".0") }
@@ -172,8 +176,8 @@ final class Linearizer {
             dictionary.remove("Filter")
             return true
         }
-        dictionary["Filter"] = filter
-        if let parameters, !(parameters is PdfNull) { dictionary["DecodeParms"] = parameters }
+        dictionary["Filter"] = filter.map(remap)
+        if let parameters, !(parameters is PdfNull) { dictionary["DecodeParms"] = remap(parameters) }
         return true
     }
 
