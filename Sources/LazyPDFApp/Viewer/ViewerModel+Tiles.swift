@@ -42,6 +42,7 @@ extension ViewerModel {
             try? await Task.sleep(nanoseconds: 140_000_000)
             guard !Task.isCancelled, let self else { return }
             self.settling = false
+            self.failed = self.failed.filter { $0.isPreview }
             self.planTiles()
         }
     }
@@ -63,7 +64,7 @@ extension ViewerModel {
     /// The pictures of a page to draw over its paper, and whether none could be made. A tile that has not come is stood in for
     /// by a smaller picture; once the sharp ones are all there, the others are let go.
     public func drawing(of page: Int) -> PageDrawing {
-        let none = PageDrawing(pictures: [], failed: false)
+        let none = PageDrawing(pictures: [], failed: false, partFailed: false)
         guard let matrix = state.pageMatrix(page) else { return none }
         let size = state.sizes[page]
         let ppp = state.scale * state.pixelsPerDip
@@ -92,12 +93,14 @@ extension ViewerModel {
             let dest = Self.destination(key, picture, matrix, size)
             if !dest.intersectsWith(visible) { continue }
             _ = cache.get(key)
-            pictures.append(PagePicture(picture: picture, rect: snapped(dest)))
+            pictures.append(PagePicture(picture: picture, rect: snapped(dest), isPreview: key.isPreview))
         }
         if complete {
             cache.removeWhere(page) { $0.tint != tint || $0.version != version || (!sharp($0) && !$0.isPreview) }
         }
-        return PageDrawing(pictures: pictures, failed: !complete && failed.contains(preview.key))
+        let previewFailed = failed.contains(preview.key)
+        let partFailed = !previewFailed && failed.contains { $0.page == page && !$0.isPreview && $0.scale == ppp && $0.version == version }
+        return PageDrawing(pictures: pictures, failed: !complete && previewFailed, partFailed: partFailed)
     }
 
     // Older pictures first, then the smaller ones, the current page's own preview, other zooms by how near they are, the sharp tiles last.

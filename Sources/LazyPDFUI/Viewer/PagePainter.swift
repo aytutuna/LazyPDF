@@ -44,10 +44,14 @@ enum PagePainter {
             let drawing = viewer.drawing(of: page)
             for picture in drawing.pictures {
                 if let image = image(of: picture.picture) {
-                    draw(image, in: CGRect(picture.rect), turned: viewer.rotation, context)
+                    draw(image, in: CGRect(picture.rect), turned: viewer.rotation, sharp: !picture.isPreview, context)
                 }
             }
-            if drawing.failed { drawFailure(in: rect, dark: viewer.tint == .dark, colors, context) }
+            if drawing.failed {
+                drawFailure(L10n.t("This page cannot be shown."), atBottom: false, in: rect, colors, context)
+            } else if drawing.partFailed {
+                drawFailure(L10n.t("Part of this page could not be drawn sharply."), atBottom: true, in: rect, colors, context)
+            }
             highlight(viewer, page, matrix, colors, context)
             OverlayPainter.draw(viewer.overlay(page), matrix: matrix, accent: colors.mark, in: context)
             context.restoreGState()
@@ -67,26 +71,36 @@ enum PagePainter {
 
     // The picture is of the page upright; it is turned about its own centre into the rectangle the matrix gave. A Core Graphics
     // image is drawn with its bottom up, which a y down context shows upside down, so it is flipped back.
-    private static func draw(_ image: CGImage, in rect: CGRect, turned rotation: Int, _ context: CGContext) {
+    private static func draw(_ image: CGImage, in rect: CGRect, turned rotation: Int, sharp: Bool, _ context: CGContext) {
         context.saveGState()
+        if sharp { context.setShouldAntialias(false) }
         context.translateBy(x: rect.midX, y: rect.midY)
         context.rotate(by: CGFloat(rotation) * .pi / 180)
         context.scaleBy(x: 1, y: -1)
         let upright = rotation == 90 || rotation == 270 ? CGSize(width: rect.height, height: rect.width) : rect.size
+        if sharp {
+            let across = context.convertToDeviceSpace(CGSize(width: upright.width, height: 0))
+            let down = context.convertToDeviceSpace(CGSize(width: 0, height: upright.height))
+            if Int(hypot(across.width, across.height).rounded()) == image.width && Int(hypot(down.width, down.height).rounded()) == image.height {
+                context.interpolationQuality = .none
+            }
+        }
         context.draw(image, in: CGRect(x: -upright.width / 2, y: -upright.height / 2, width: upright.width, height: upright.height))
         context.restoreGState()
     }
 
-    private static func drawFailure(in page: CGRect, dark: Bool, _ colors: PageColors, _ context: CGContext) {
+    private static func drawFailure(_ message: String, atBottom: Bool, in page: CGRect, _ colors: PageColors, _ context: CGContext) {
         let attributes: [NSAttributedString.Key: Any] = [
             NSAttributedString.Key(kCTFontAttributeName as String): CTFontCreateWithName("Helvetica" as CFString, 14, nil),
             NSAttributedString.Key(kCTForegroundColorAttributeName as String): colors.failure,
         ]
-        let line = CTLineCreateWithAttributedString(NSAttributedString(string: L10n.t("This page cannot be shown."), attributes: attributes))
-        let width = CTLineGetTypographicBounds(line, nil, nil, nil)
+        let line = CTLineCreateWithAttributedString(NSAttributedString(string: message, attributes: attributes))
+        var ascent: CGFloat = 0, descent: CGFloat = 0
+        let width = CTLineGetTypographicBounds(line, &ascent, &descent, nil)
         context.saveGState()
         context.textMatrix = CGAffineTransform(scaleX: 1, y: -1)
-        context.textPosition = CGPoint(x: page.midX - width / 2, y: page.minY + Swift.min(page.height / 2, 120))
+        let y = atBottom ? page.maxY - descent - 8 : page.minY + Swift.min(page.height / 2, 120)
+        context.textPosition = CGPoint(x: page.midX - width / 2, y: y)
         CTLineDraw(line, context)
         context.restoreGState()
     }

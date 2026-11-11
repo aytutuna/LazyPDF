@@ -14,6 +14,19 @@ private func waitFor(_ condition: () -> Bool, file: StaticString = #filePath, li
     XCTAssertTrue(condition(), file: file, line: line)
 }
 
+private final class HalfRenderer: TileRenderer {
+    var previews = true
+    var tiles = true
+
+    func load(_ session: PdfEditSession, _ password: String?) -> Bool { true }
+    func pageSize(_ pageIndex: Int) -> (width: Double, height: Double) { (200, 300) }
+    func render(_ pageIndex: Int, _ dpi: Double) -> PdfRgbaImage? { previews ? PdfRgbaImage(4, 6, [UInt8](repeating: 255, count: 96)) : nil }
+    func renderTile(_ pageIndex: Int, _ pixelsPerPoint: Double, _ x: Int, _ y: Int, _ width: Int, _ height: Int) -> PdfRgbaImage? {
+        tiles ? PdfRgbaImage(width, height, [UInt8](repeating: 255, count: width * height * 4)) : nil
+    }
+    func close() {}
+}
+
 @MainActor
 private final class RecordingTool: PagePointerTool {
     var calls: [(kind: String, pointer: PagePointer)] = []
@@ -805,6 +818,38 @@ final class ViewerModelTests: XCTestCase {
 
         XCTAssertTrue(viewer.cannotDraw)
         XCTAssertTrue(viewer.drawing(of: 0).pictures.isEmpty)
+    }
+
+    private func openHalf(previews: Bool, tiles: Bool) throws -> ViewerModel {
+        let renderer = HalfRenderer()
+        renderer.previews = previews
+        renderer.tiles = tiles
+        let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text(1)), renderer: renderer, url: nil, title: "a.pdf")
+        let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
+        viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
+        viewer.show(tab)
+        return viewer
+    }
+
+    func test_aSharpTileThatFailsIsSaidSoAndAskedForAgainAfterTheZoomSettles() async throws {
+        let viewer = try openHalf(previews: true, tiles: false)
+        await waitFor { viewer.tilesPending == 0 && !viewer.drawing(of: 0).pictures.isEmpty }
+
+        viewer.zoom = 3
+        await waitFor { viewer.drawing(of: 0).partFailed }
+        XCTAssertFalse(viewer.drawing(of: 0).failed)
+        let scale = viewer.failed.first { !$0.isPreview }?.scale
+
+        viewer.zoom = 3.5
+        await waitFor { !viewer.failed.contains { !$0.isPreview && $0.scale == scale } }
+    }
+
+    func test_aPreviewThatFailsIsAPageThatCannotBeShownNotAPartOfOne() async throws {
+        let viewer = try openHalf(previews: false, tiles: true)
+
+        await waitFor { viewer.tilesPending == 0 && viewer.drawing(of: 0).failed }
+
+        XCTAssertFalse(viewer.drawing(of: 0).partFailed)
     }
 
     func test_aCommitDrawsTheNewStateAndKeepsThePlace() async throws {

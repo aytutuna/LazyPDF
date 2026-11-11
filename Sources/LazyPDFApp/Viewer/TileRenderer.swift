@@ -73,10 +73,13 @@ public final class TilePicture: PixelSized {
 public struct PagePicture {
     public let picture: TilePicture
     public let rect: ViewRect
+    public let isPreview: Bool
 }
 
 /// What to draw for one page: its pictures, oldest and smallest first, and whether it could not be drawn at all.
 public struct PageDrawing {
     public let pictures: [PagePicture]
     public let failed: Bool
+    /// Some sharp tiles of the page could not be drawn.
+    public let partFailed: Bool
 }
