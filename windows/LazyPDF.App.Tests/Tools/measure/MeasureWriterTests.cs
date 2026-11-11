@@ -130,6 +130,34 @@ public sealed class MeasureWriterTests
     }
 
     [Fact]
+    public void EachPageKeepsTheScaleOfItsOwnMeasurements()
+    {
+        var session = PdfEditSession.Open(Pdfs.Text(2));
+        var small = new MeasureScale(1, LengthUnit.Millimetre, 50, LengthUnit.Millimetre);
+        var onSecond = Line with { Page = 1 };
+
+        MeasureWriter.Write(session.Document, [Line, onSecond], i => i.Page == 0 ? Scale : small, "Sam", Date);
+        Assert.True(session.Commit("Measure"));
+
+        var reopened = PdfDocument.Open(session.Current.ToArray());
+        Assert.Equal(Scale, MeasureScale.FindOnPage(reopened, reopened.Pages[0]));
+        Assert.Equal(small, MeasureScale.FindOnPage(reopened, reopened.Pages[1]));
+        var labels = new[] { 0, 1 }.Select(p => Assert.Single(PdfAnnotations.Read(reopened, reopened.Pages[p]), a => a.Type == AnnotationType.FreeText).Contents);
+        Assert.Equal([Line.Value(Scale), Line.Value(small)], labels);
+    }
+
+    [Fact]
+    public void APageWithoutMeasurementsHasNoScaleOfItsOwn()
+    {
+        var session = PdfEditSession.Open(Pdfs.Text(2));
+        MeasureWriter.Write(session.Document, [Line], Scale, "Sam", Date);
+        Assert.True(session.Commit("Measure"));
+
+        var reopened = PdfDocument.Open(session.Current.ToArray());
+        Assert.Null(MeasureScale.FindOnPage(reopened, reopened.Pages[1]));
+    }
+
+    [Fact]
     public void AGroupSeparatorThatNoStandardFontHasDoesNotCostTheValueBox()
     {
         var before = System.Globalization.CultureInfo.CurrentCulture;

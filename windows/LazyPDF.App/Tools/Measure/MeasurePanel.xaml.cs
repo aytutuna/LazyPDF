@@ -16,6 +16,34 @@ public sealed record MeasureRow(MeasureItem Item, string Value, string Place, st
     public string Spoken => $"{Item.Title}, {Value}, {Place}";
 }
 
+/// <summary>The scale of each page: one typed for it, else one written on it, else the one for the file.</summary>
+internal sealed class PageScales(MeasureScale start)
+{
+    private readonly Dictionary<int, MeasureScale> _typed = [];
+    private readonly Dictionary<int, MeasureScale?> _found = [];
+
+    public MeasureScale Default { get; private set; } = start;
+
+    public MeasureScale For(PdfDocument document, int page)
+    {
+        int key = document.Pages[page].Reference.Number;
+        if (_typed.TryGetValue(key, out var typed)) return typed;
+        if (!_found.TryGetValue(key, out var found)) _found[key] = found = MeasureScale.FindOnPage(document, document.Pages[page]);
+        return found ?? Default;
+    }
+
+    public void Set(PdfDocument document, int page, MeasureScale scale) => _typed[document.Pages[page].Reference.Number] = scale;
+
+    public void SetAll(MeasureScale scale)
+    {
+        Default = scale;
+        _typed.Clear();
+    }
+
+    // Writing marks changes what the pages hold.
+    public void Forget() => _found.Clear();
+}
+
 /// <summary>
 /// Distance, perimeter and area on the pages. The pointer draws on an overlay; the measurements wait in the list
 /// until Add to page writes them as annotations with a /Measure scale, in one undoable step.
@@ -27,16 +55,17 @@ public partial class MeasurePanel : ToolPanel
     // Kept per tab, so that measuring in one file and looking at another loses nothing.
     private static readonly ConditionalWeakTable<DocumentTab, List<Pending>> Waiting = [];
 
-    // The scale a person typed for a file; one read from marks in the file is only the start.
-    private static readonly ConditionalWeakTable<DocumentTab, MeasureScale> Scales = [];
+    // What a person typed stays; a scale read from marks in the file is only the start.
+    private static readonly ConditionalWeakTable<DocumentTab, PageScales> Scales = [];
 
     private List<Pending> _waiting = [];
     private MeasureTool? _tool;
     private MeasureOverlay? _overlay;
-    private MeasureScale _scale = MeasureScale.Actual;
+    private PageScales _scales = new(MeasureScale.Actual);
     private bool _ready;
     private bool _paused;
     private double _calibrated;
+    private int _calibratedPage;
 
     public MeasurePanel()
     {
@@ -57,10 +86,11 @@ public partial class MeasurePanel : ToolPanel
         _paused = false;
         if (!Scales.TryGetValue(Tab!, out var kept))
         {
-            kept = MeasureScale.Find(Tab!.Document) ?? MeasureScale.Actual;
+            kept = new PageScales(MeasureScale.Find(Tab!.Document) ?? MeasureScale.Actual);
             Scales.Add(Tab!, kept);
         }
-        ShowScale(kept);
+        _scales = kept;
+        ShowScale(ScaleOf(Viewer!.PageIndex));
         if (PerimeterMode.IsChecked != true && AreaMode.IsChecked != true) DistanceMode.IsChecked = true;
         _tool = new MeasureTool(Viewer!) { Kind = Kind(), Snap = SnapToggle.IsChecked == true };
         _overlay = new MeasureOverlay(Viewer!, _tool);
@@ -69,6 +99,7 @@ public partial class MeasurePanel : ToolPanel
         _tool.Calibrated += Tool_Calibrated;
         Viewer!.PointerTool = _tool;
         Viewer.ViewChanged += Viewer_ViewChanged;
+        Viewer.PageChanged += Viewer_PageChanged;
         Viewer.ModeChanged += Viewer_ModeChanged;
         Viewer.View.PreviewKeyDown += View_PreviewKeyDown;
         Tab!.Changed += Tab_Changed;
@@ -79,6 +110,7 @@ public partial class MeasurePanel : ToolPanel
     protected override void OnDetach()
     {
         Viewer!.ViewChanged -= Viewer_ViewChanged;
+        Viewer.PageChanged -= Viewer_PageChanged;
         Viewer.ModeChanged -= Viewer_ModeChanged;
         Viewer.View.PreviewKeyDown -= View_PreviewKeyDown;
         Tab!.Changed -= Tab_Changed;
@@ -91,6 +123,8 @@ public partial class MeasurePanel : ToolPanel
         _tool = null;
         _overlay = null;
     }
+
+    private MeasureScale ScaleOf(int page) => _scales.For(Tab!.Document, page);
 
     private List<MeasureItem> Items => [.. _waiting.Select(p => p.Item)];
 
@@ -130,10 +164,21 @@ public partial class MeasurePanel : ToolPanel
         good &= scale.IsValid;
         ScaleProblem.Visibility = good ? Visibility.Collapsed : Visibility.Visible;
         if (!good) return;
-        _scale = scale;
-        Scales.AddOrUpdate(Tab!, scale);
+        _scales.Set(Tab!.Document, Viewer!.PageIndex, scale);
         Rebuild();
     }
+
+    private void UseForAll_Click(object sender, RoutedEventArgs e)
+    {
+        if (!double.TryParse(PageValue.Text, CultureInfo.CurrentCulture, out double page)
+            || !double.TryParse(RealValue.Text, CultureInfo.CurrentCulture, out double real)) return;
+        var scale = new MeasureScale(page, UnitOf(PageUnit), real, UnitOf(RealUnit));
+        if (!scale.IsValid) return;
+        _scales.SetAll(scale);
+        Rebuild();
+    }
+
+    private void Viewer_PageChanged(object? sender, EventArgs e) => ShowScale(ScaleOf(Viewer!.PageIndex));
 
     private void ShowScale(MeasureScale scale)
     {
@@ -142,8 +187,8 @@ public partial class MeasurePanel : ToolPanel
         RealValue.Text = scale.Real.ToString(CultureInfo.CurrentCulture);
         SelectUnit(PageUnit, scale.PageUnit);
         SelectUnit(RealUnit, scale.RealUnit);
-        _scale = scale;
         _ready = true;
+        ScaleHeading.Text = Loc.T("Scale for page {0}", Viewer!.PageLabel(Viewer.PageIndex));
         ScaleProblem.Visibility = Visibility.Collapsed;
     }
 
@@ -154,7 +199,7 @@ public partial class MeasurePanel : ToolPanel
 
     private void Tool_Changed(object? sender, EventArgs e)
     {
-        _overlay?.Draw(Items, _scale);
+        _overlay?.Draw(Items, ScaleOf);
         ShowReadout();
     }
 
@@ -167,6 +212,7 @@ public partial class MeasurePanel : ToolPanel
     private void Tool_Calibrated(int page, double points)
     {
         _calibrated = points;
+        _calibratedPage = page;
         CalibrateProblem.Visibility = Visibility.Collapsed;
         CalibrateRow.Visibility = Visibility.Visible;
         CalibrateValue.Focus();
@@ -210,8 +256,8 @@ public partial class MeasurePanel : ToolPanel
             CalibrateProblem.Visibility = Visibility.Visible;
             return;
         }
-        Scales.AddOrUpdate(Tab!, scale);
-        ShowScale(scale);
+        _scales.Set(Tab!.Document, _calibratedPage, scale);
+        ShowScale(ScaleOf(Viewer!.PageIndex));
         EndCalibrate();
         Rebuild();
     }
@@ -226,7 +272,7 @@ public partial class MeasurePanel : ToolPanel
         e.Handled = true;
     }
 
-    private void Viewer_ViewChanged(object? sender, EventArgs e) => _overlay?.Draw(Items, _scale);
+    private void Viewer_ViewChanged(object? sender, EventArgs e) => _overlay?.Draw(Items, ScaleOf);
 
     // The viewer's own Hand and Select buttons took the pointer: none of the kinds is armed until one is picked again.
     private void Viewer_ModeChanged(object? sender, EventArgs e)
@@ -250,6 +296,7 @@ public partial class MeasurePanel : ToolPanel
     private void Tab_Changed(object? sender, EventArgs e)
     {
         _tool?.Forget();
+        _scales.Forget();
         DropStale();
         Rebuild();
     }
@@ -278,11 +325,11 @@ public partial class MeasurePanel : ToolPanel
     // Reads the list again after it or the scale changed.
     private void Rebuild()
     {
-        Results.ItemsSource = Items.Select(i => new MeasureRow(i, i.Value(_scale), Loc.T("Page {0}", Viewer?.PageLabel(i.Page) ?? (i.Page + 1).ToString()),
+        Results.ItemsSource = Items.Select(i => new MeasureRow(i, i.Value(ScaleOf(i.Page)), Loc.T("Page {0}", Viewer?.PageLabel(i.Page) ?? (i.Page + 1).ToString()),
                                                                 Loc.T("Remove {0}", i.Title))).ToList();
         Empty.Visibility = _waiting.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         Tab!.PendingMeasurements = _waiting.Count;
-        _overlay?.Draw(Items, _scale);
+        _overlay?.Draw(Items, ScaleOf);
         RaiseActionChanged();
         ShowReadout();
     }
@@ -307,7 +354,7 @@ public partial class MeasurePanel : ToolPanel
         int count;
         try
         {
-            count = MeasureWriter.Write(tab.Document, Items, _scale, Environment.UserName, DateTimeOffset.Now, new SystemFontSource());
+            count = MeasureWriter.Write(tab.Document, Items, item => ScaleOf(item.Page), Environment.UserName, DateTimeOffset.Now, new SystemFontSource());
         }
         catch (Exception error) when (error is InvalidOperationException or ArgumentException or PdfPermissionException)
         {
@@ -341,7 +388,7 @@ public partial class MeasurePanel : ToolPanel
         }
         var points = tool.Points.ToList();
         if (tool.Hover is { } hover && tool.HoverPage == tool.Page) points.Add(hover);
-        Readout.Text = points.Count < 2 ? "—" : new MeasureItem(tool.Kind, tool.Page, points).Value(_scale);
+        Readout.Text = points.Count < 2 ? "—" : new MeasureItem(tool.Kind, tool.Page, points).Value(ScaleOf(tool.Page));
         AngleReadout.Text = MeasureShape.Angle(points, tool.Kind) is { } angle
             ? Loc.T("{0}°", Math.Round(angle, 1).ToString("0.0", CultureInfo.CurrentCulture)) : "—";
     }

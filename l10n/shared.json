@@ -4779,6 +4779,12 @@
   "Set scale": {
     "tr": "Ölçeği uygula"
   },
+  "Scale for page {0}": {
+    "tr": "Sayfa {0} için ölçek"
+  },
+  "Use for all pages": {
+    "tr": "Tüm sayfalarda kullan"
+  },
   "Click the two ends of something whose real length you know.": {
     "tr": "Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna tıklayın."
   },

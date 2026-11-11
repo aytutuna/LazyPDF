@@ -12,7 +12,10 @@ public static class MeasureWriter
 {
     private static readonly double[] Blue = [0.05, 0.38, 0.75];
 
-    public static int Write(PdfDocument document, IEnumerable<MeasureItem> items, MeasureScale scale, string author, DateTimeOffset date, IFontSource? fonts = null)
+    public static int Write(PdfDocument document, IEnumerable<MeasureItem> items, MeasureScale scale, string author, DateTimeOffset date, IFontSource? fonts = null) =>
+        Write(document, items, _ => scale, author, date, fonts);
+
+    public static int Write(PdfDocument document, IEnumerable<MeasureItem> items, Func<MeasureItem, MeasureScale> scaleOf, string author, DateTimeOffset date, IFontSource? fonts = null)
     {
         var all = items.ToList();
         // Nothing is written unless every page is still there, so a refusal leaves the document as it was.
@@ -22,6 +25,7 @@ public static class MeasureWriter
         foreach (var item in all)
         {
             var page = document.Pages[item.Page];
+            var scale = scaleOf(item);
             var geometry = new PageGeometry(page);
             var points = item.Points.Select(p => geometry.ToUser(p.X, p.Y)).ToList();
             string value = item.Value(scale);

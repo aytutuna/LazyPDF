@@ -47,6 +47,25 @@ public sealed class MeasurePendingTests
     }
 
     [Fact]
+    public void ThePanelScaleFollowsThePageAndYieldsToWhatWasTypedForIt()
+    {
+        var document = PdfDocument.Open(Pdfs.Text(3));
+        var start = new MeasureScale(1, LengthUnit.Millimetre, 2, LengthUnit.Metre);
+        var typed = new MeasureScale(1, LengthUnit.Millimetre, 5, LengthUnit.Metre);
+        var scales = new PageScales(start);
+
+        scales.Set(document, 1, typed);
+        Assert.Equal([start, typed, start], new[] { 0, 1, 2 }.Select(p => scales.For(document, p)));
+
+        PageOperations.Delete(document, [0]);
+        Assert.Equal(typed, scales.For(document, 0));
+
+        var all = new MeasureScale(1, LengthUnit.Centimetre, 1, LengthUnit.Metre);
+        scales.SetAll(all);
+        Assert.Equal([all, all], new[] { 0, 1 }.Select(p => scales.For(document, p)));
+    }
+
+    [Fact]
     public Task AFailedWriteChangesNothingAndKeepsTheList() => Sta.Run(() =>
     {
         using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);

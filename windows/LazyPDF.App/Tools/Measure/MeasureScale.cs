@@ -79,14 +79,28 @@ public sealed record MeasureScale(double Page, LengthUnit PageUnit, double Real,
             foreach (var item in annots.Items)
             {
                 if (++seen > 200) return null;
-                if (document.Resolve(item) is PdfDictionary mark && document.Dict(mark, "Measure") is { } measure && PdfText.Read(document, measure, "R") is { } ratio && TryParse(ratio) is { } scale && scale.PageUnit is LengthUnit.Millimetre or LengthUnit.Centimetre or LengthUnit.Inch)
-                {
-                    return scale;
-                }
+                if (Of(document, item) is { } scale) return scale;
             }
         }
         return null;
     }
+
+    /// <summary>Like <see cref="Find"/>, but for the marks of this one page.</summary>
+    public static MeasureScale? FindOnPage(PdfDocument document, PdfPage page)
+    {
+        if (document.Array(page.Dictionary, "Annots") is not { } annots) return null;
+        int seen = 0;
+        foreach (var item in annots.Items)
+        {
+            if (++seen > 200) return null;
+            if (Of(document, item) is { } scale) return scale;
+        }
+        return null;
+    }
+
+    private static MeasureScale? Of(PdfDocument document, PdfObject item) =>
+        document.Resolve(item) is PdfDictionary mark && document.Dict(mark, "Measure") is { } measure && PdfText.Read(document, measure, "R") is { } ratio
+            && TryParse(ratio) is { } scale && scale.PageUnit is LengthUnit.Millimetre or LengthUnit.Centimetre or LengthUnit.Inch ? scale : null;
 
     private static bool Side(string text, out double value, out LengthUnit unit)
     {

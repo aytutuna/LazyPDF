@@ -20,6 +20,7 @@
                 </UniformGrid>
             </Border>
 
+            <TextBlock x:Name="ScaleHeading" Style="{StaticResource BodyStrongText}" Margin="0,0,0,8" />
             <TextBlock Text="{loc:T On the page}" Style="{StaticResource FieldLabelText}" />
             <Grid Margin="0,0,0,8">
                 <Grid.ColumnDefinitions>
@@ -45,6 +46,8 @@
                 <TextBlock Text="{loc:T Enter a scale above zero.}" Style="{StaticResource ReasonText}" />
             </DockPanel>
 
+            <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Use for all pages}" AutomationProperties.Name="{loc:T Use for all pages}"
+                    HorizontalAlignment="Left" Margin="0,0,0,8" Click="UseForAll_Click" />
             <Button x:Name="CalibrateButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE7B8;" Content="{loc:T Calibrate}"
                     AutomationProperties.Name="{loc:T Calibrate}" HorizontalAlignment="Left" Margin="0,0,0,8" Click="Calibrate_Click" />
             <StackPanel x:Name="CalibrateRow" Margin="0,0,0,8" Visibility="Collapsed">

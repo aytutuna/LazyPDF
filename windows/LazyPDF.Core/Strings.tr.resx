@@ -4996,6 +4996,9 @@
   <data name="Saving attachments" xml:space="preserve">
     <value>Ekler kaydediliyor</value>
   </data>
+  <data name="Scale for page {0}" xml:space="preserve">
+    <value>Sayfa {0} için ölçek</value>
+  </data>
   <data name="Scale the content" xml:space="preserve">
     <value>İçeriği ölçekle</value>
   </data>
@@ -7041,6 +7044,9 @@
   </data>
   <data name="Use a web address that starts with https://." xml:space="preserve">
     <value>https:// ile başlayan bir web adresi yazın.</value>
+  </data>
+  <data name="Use for all pages" xml:space="preserve">
+    <value>Tüm sayfalarda kullan</value>
   </data>
   <data name="Use other text, or install a font that has these letters." xml:space="preserve">
     <value>Başka bir metin kullanın ya da bu harfleri içeren bir yazı tipi yükleyin.</value>
