@@ -67,7 +67,7 @@ internal sealed partial class PageSurface
             var dest = Destination(key, bitmap, matrix, _sizes[page]);
             if (!dest.IntersectsWith(visible)) continue;
             _cache.Get(key);
-            DrawBitmap(dc, bitmap, dest, key.IsPreview);
+            DrawBitmap(dc, bitmap, dest);
         }
 
         if (complete)
@@ -92,7 +92,7 @@ internal sealed partial class PageSurface
         return rank + 500 - Math.Abs(Math.Log(key.Scale / ppp)) * 10;
     }
 
-    private static Rect Destination(TileKey key, BitmapSource bitmap, Matrix matrix, Size page)
+    internal static Rect Destination(TileKey key, BitmapSource bitmap, Matrix matrix, Size page)
     {
         var points = key.IsPreview
             ? new Rect(0, 0, page.Width, page.Height)
@@ -102,39 +102,35 @@ internal sealed partial class PageSurface
 
     private static readonly int TileStep = LazyPDF.App.Services.WindowsPageRenderer.Reachable(TilePlan.TileSize);
 
-    private void DrawBitmap(DrawingContext dc, BitmapSource bitmap, Rect dest, bool isPreview)
+    // Away from zero, so that the edge two neighbours share lands on the same device pixel for both.
+    internal static Rect SnapRect(Rect dest, double ppd)
+    {
+        double snap(double v) => Math.Round(v * ppd, MidpointRounding.AwayFromZero) / ppd;
+        return new Rect(new Point(snap(dest.Left), snap(dest.Top)), new Point(snap(dest.Right), snap(dest.Bottom)));
+    }
+
+    private void DrawBitmap(DrawingContext dc, BitmapSource bitmap, Rect dest)
     {
         double ppd = Dpi;
-        var snapped = new Rect(new Point(Math.Round(dest.Left * ppd) / ppd, Math.Round(dest.Top * ppd) / ppd),
-                               new Point(Math.Round(dest.Right * ppd) / ppd, Math.Round(dest.Bottom * ppd) / ppd));
-        if (_rotation == 0)
-        {
-            if (isPreview)
-            {
-                dc.DrawImage(bitmap, snapped);
-                return;
-            }
-            // Aliased edges and an unscaled copy keep neighbouring tiles from showing a seam.
-            var group = new DrawingGroup();
-            RenderOptions.SetEdgeMode(group, EdgeMode.Aliased);
-            if (Math.Round(snapped.Width * ppd) == bitmap.PixelWidth && Math.Round(snapped.Height * ppd) == bitmap.PixelHeight)
-            {
-                RenderOptions.SetBitmapScalingMode(group, BitmapScalingMode.NearestNeighbor);
-            }
-            using (var inner = group.Open())
-            {
-                inner.DrawImage(bitmap, snapped);
-            }
-            group.Freeze();
-            dc.DrawDrawing(group);
-            return;
-        }
-        // The picture is of the page upright; it is turned about its own centre into the rectangle the matrix gave.
+        var snapped = SnapRect(dest, ppd);
+        // The picture is of the page upright; it is turned about the centre of the rectangle the matrix gave.
         var c = new Point(snapped.Left + snapped.Width / 2, snapped.Top + snapped.Height / 2);
-        var upright = _rotation == 180 ? snapped : new Rect(c.X - snapped.Height / 2, c.Y - snapped.Width / 2, snapped.Height, snapped.Width);
-        dc.PushTransform(new RotateTransform(_rotation, c.X, c.Y));
-        dc.DrawImage(bitmap, upright);
-        dc.Pop();
+        bool sideways = _rotation == 90 || _rotation == 270;
+        var upright = sideways ? new Rect(c.X - snapped.Height / 2, c.Y - snapped.Width / 2, snapped.Height, snapped.Width) : snapped;
+        // Aliased edges and an unscaled copy keep neighbouring tiles from showing a seam.
+        var group = new DrawingGroup();
+        RenderOptions.SetEdgeMode(group, EdgeMode.Aliased);
+        if (Math.Round(upright.Width * ppd) == bitmap.PixelWidth && Math.Round(upright.Height * ppd) == bitmap.PixelHeight)
+        {
+            RenderOptions.SetBitmapScalingMode(group, BitmapScalingMode.NearestNeighbor);
+        }
+        if (_rotation != 0) group.Transform = new RotateTransform(_rotation, c.X, c.Y);
+        using (var inner = group.Open())
+        {
+            inner.DrawImage(bitmap, upright);
+        }
+        group.Freeze();
+        dc.DrawDrawing(group);
     }
 
     private void DrawFailure(DrawingContext dc, Rect pageRect, string message, bool atBottom)

@@ -1,5 +1,7 @@
 using System.Runtime.ExceptionServices;
 using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
@@ -68,6 +70,65 @@ public sealed class PageSurfaceTests
             surface.GoToPage(place!.Value.Page, place.Value.Point);
             Assert.Equal(90, surface.Rotation);
             Assert.Equal(place, surface.TopPlace());
+        });
+    }
+
+    [Theory]
+    [InlineData(0, 1.57, 1)]
+    [InlineData(0, 1.25, 1.25)]
+    [InlineData(0, 2.5, 1.5)]
+    [InlineData(90, 1.57, 1)]
+    [InlineData(90, 1.25, 1.25)]
+    [InlineData(90, 2.5, 1.5)]
+    [InlineData(90, 1.57, 1.5)]
+    [InlineData(0, 1.57, 1.25)]
+    public void TilesMeetOnTheSameDevicePixelEdge(int rotation, double zoom, double dpi)
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(3);
+            VisualTreeHelper.SetRootDpi(surface, new DpiScale(dpi, dpi));
+            surface.SetRotation(rotation);
+            surface.SetZoom(zoom);
+            double ppp = surface.Zoom * PageSpace.DipPerPoint * dpi;
+            for (int page = 0; page < 3; page++)
+            {
+                var size = surface.PageSize(page);
+                var matrix = surface.PageMatrix(page)!.Value;
+                var area = new Rect(0, 0, size.Width * ppp, size.Height * ppp);
+                var tiles = TilePlan.Cover(page, 0, PageTint.None, size, ppp, area, WindowsPageRenderer.Reachable);
+                var snapped = new Dictionary<(int, int), Rect>();
+                var pixels = new Dictionary<(int, int), int>();
+                foreach (var tile in tiles)
+                {
+                    var bitmap = BitmapSource.Create(tile.Width, tile.Height, 96, 96, PixelFormats.Gray8, null, new byte[tile.Width * tile.Height], tile.Width);
+                    snapped[(tile.Key.Column, tile.Key.Row)] = PageSurface.SnapRect(PageSurface.Destination(tile.Key, bitmap, matrix, size), dpi);
+                    pixels[(tile.Key.Column, tile.Key.Row)] = tile.Width;
+                }
+
+                int columns = tiles.Max(t => t.Key.Column) + 1, rows = tiles.Max(t => t.Key.Row) + 1;
+                for (int row = 0; row < rows; row++)
+                {
+                    for (int column = 0; column < columns; column++)
+                    {
+                        var a = snapped[(column, row)];
+                        if (column + 1 < columns)
+                        {
+                            var b = snapped[(column + 1, row)];
+                            if (rotation == 0) Assert.Equal(a.Right, b.Left, 6);
+                            else Assert.Equal(a.Bottom, b.Top, 6);
+                            double across = rotation == 0 ? a.Width : a.Height;
+                            Assert.Equal(pixels[(column, row)], Math.Round(across * dpi));
+                        }
+                        if (row + 1 < rows)
+                        {
+                            var b = snapped[(column, row + 1)];
+                            if (rotation == 0) Assert.Equal(a.Bottom, b.Top, 6);
+                            else Assert.Equal(b.Right, a.Left, 6);
+                        }
+                    }
+                }
+            }
         });
     }
 
