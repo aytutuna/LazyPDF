@@ -12,7 +12,7 @@ public sealed class PageThumbTests
     {
         var renderer = new WindowsPageRenderer();
         renderer.Load(PdfEditSession.Open(Pdfs.Text()), null);
-        var thumb = new PageThumb(0, "1", width, height, 36, renderer);
+        var thumb = new PageThumb(0, "1", width, height, 36, 5, renderer);
         var done = new TaskCompletionSource();
         thumb.PropertyChanged += (_, _) => done.TrySetResult();
         _ = thumb.Image;
@@ -27,7 +27,7 @@ public sealed class PageThumbTests
         using var _ = renderer;
         Assert.NotNull(old.Image);
 
-        var thumb = new PageThumb(0, "1", 100, 140, 36, null);
+        var thumb = new PageThumb(0, "1", 100, 140, 36, 5, null);
         thumb.Inherit(old);
 
         Assert.Same(old.Image, thumb.Image);
@@ -39,7 +39,7 @@ public sealed class PageThumbTests
         var (old, renderer) = await Loaded();
         using var _ = renderer;
 
-        var thumb = new PageThumb(0, "1", 140, 100, 36, null);
+        var thumb = new PageThumb(0, "1", 140, 100, 36, 5, null);
         thumb.Inherit(old);
 
         Assert.Null(thumb.Image);
@@ -51,9 +51,21 @@ public sealed class PageThumbTests
         var (old, renderer) = await Loaded();
         using var _ = renderer;
 
-        var thumb = new PageThumb(0, "1", 100, 140, 36, null);
+        var thumb = new PageThumb(0, "1", 100, 140, 36, 5, null);
         thumb.Inherit(old);
         thumb.Release();
+
+        Assert.Null(thumb.Image);
+    }
+
+    [Fact]
+    public async Task ADifferentPageInheritsNothing()
+    {
+        var (old, renderer) = await Loaded();
+        using var _ = renderer;
+
+        var thumb = new PageThumb(0, "1", 100, 140, 36, 6, null);
+        thumb.Inherit(old);
 
         Assert.Null(thumb.Image);
     }

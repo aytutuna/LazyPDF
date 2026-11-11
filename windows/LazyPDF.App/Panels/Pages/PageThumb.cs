@@ -8,7 +8,7 @@ namespace LazyPDF.App.Panels.Pages;
 /// One page in the thumbnail list. The picture is made the first time the list asks for it and let go of when the
 /// row scrolls away, so a long file holds only the thumbnails near the window.
 /// </summary>
-public sealed class PageThumb(int index, string label, double width, double height, double dpi, WindowsPageRenderer? renderer) : INotifyPropertyChanged
+public sealed class PageThumb(int index, string label, double width, double height, double dpi, int objectNumber, WindowsPageRenderer? renderer) : INotifyPropertyChanged
 {
     // Thumbnails are drawn two at a time, so scrolling a long list does not queue the whole file.
     private static readonly SemaphoreSlim Turns = new(2);
@@ -19,6 +19,8 @@ public sealed class PageThumb(int index, string label, double width, double heig
     private bool _loading;
 
     public int Index { get; } = index;
+
+    public int ObjectNumber { get; } = objectNumber;
 
     public string Label { get; } = label;
 
@@ -42,7 +44,7 @@ public sealed class PageThumb(int index, string label, double width, double heig
     /// <summary>Shows the picture of the thumb this one replaces until its own is made.</summary>
     public void Inherit(PageThumb old)
     {
-        if (old.Width == Width && old.Height == Height) _stale = old._image ?? old._stale;
+        if (old.ObjectNumber == ObjectNumber && old.Width == Width && old.Height == Height) _stale = old._image ?? old._stale;
     }
 
     /// <summary>Drops the picture; asking for it again makes it again.</summary>
