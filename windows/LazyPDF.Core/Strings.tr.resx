@@ -3469,6 +3469,12 @@
   <data name="Pages that are already searchable" xml:space="preserve">
     <value>Zaten aranabilir olan sayfalar</value>
   </data>
+  <data name="Pages that are turned sideways cannot be read." xml:space="preserve">
+    <value>Yan çevrilmiş sayfalar okunamaz.</value>
+  </data>
+  <data name="Pages that are turned sideways cannot be read. Rotate them in Pages first." xml:space="preserve">
+    <value>Yan çevrilmiş sayfalar okunamaz. Önce Sayfalar'da döndürün.</value>
+  </data>
   <data name="Pages to export" xml:space="preserve">
     <value>Dışa aktarılacak sayfalar</value>
   </data>

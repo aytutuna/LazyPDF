@@ -171,8 +171,19 @@ public sealed class OcrWorkTests
 
         await Make(tab, f, new FakeRecognizer { Words = [] }, All());
 
-        Assert.Equal("No text found on 1 page. Check the language.", f.Vm.Message!.Text);
+        Assert.StartsWith("No text found on 1 page. Check the language.", f.Vm.Message!.Text);
         Assert.False(tab.Session.CanUndo);
+    }
+
+    [Fact]
+    public async Task PagesWithoutWordsSuggestRotatingSidewaysOnes()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 1);
+
+        await Make(tab, f, new FakeRecognizer { Words = [] }, All());
+
+        Assert.Contains("sideways", f.Vm.Message!.Text);
     }
 
     [Fact]

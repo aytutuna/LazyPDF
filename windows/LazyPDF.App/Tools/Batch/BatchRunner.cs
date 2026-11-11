@@ -142,6 +142,7 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         }
         if (result.NotRendered > 0) notes.Add(Loc.Plural(result.NotRendered, "{0} page could not be drawn.", "{0} pages could not be drawn."));
         if (result.NoWords > 0) notes.Add(Loc.Plural(result.NoWords, "No text found on {0} page. Check the language.", "No text found on {0} pages. Check the language."));
+        if (result.NoWords > 0) notes.Add(Loc.T("Pages that are turned sideways cannot be read."));
         return session.Current.ToArray();
     }
 

@@ -4315,6 +4315,12 @@
     "other": "No text found on {0} pages. Check the language.",
     "tr": "{0} sayfada metin bulunamadı. Dili denetleyin."
   },
+  "Pages that are turned sideways cannot be read. Rotate them in Pages first.": {
+    "tr": "Yan çevrilmiş sayfalar okunamaz. Önce Sayfalar'da döndürün."
+  },
+  "Pages that are turned sideways cannot be read.": {
+    "tr": "Yan çevrilmiş sayfalar okunamaz."
+  },
   "Correct word": {
     "tr": "Sözcüğü düzelt"
   },
