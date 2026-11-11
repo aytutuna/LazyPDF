@@ -22,6 +22,7 @@ internal sealed class PlacementTool(IDocumentViewer viewer, double aspect, Actio
 
     public void Press(PagePointer pointer)
     {
+        if (pointer.Clicks >= 2) return;
         _page = pointer.Page;
         _from = pointer.Point;
     }

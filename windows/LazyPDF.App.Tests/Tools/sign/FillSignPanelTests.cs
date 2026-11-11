@@ -4,6 +4,7 @@ using LazyPDF.App.Documents;
 using LazyPDF.App.Tools.Certificates;
 using LazyPDF.App.Services;
 using LazyPDF.App.Tools.FillSign;
+using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using Xunit;
 
@@ -95,6 +96,34 @@ public sealed class FillSignPanelTests
         Assert.Single(saved.List(SavedKind.Signature));
         Assert.Single(list.Items);
         Assert.IsType<SavedRow>(list.SelectedItem);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheSecondPressOfADoubleClickDoesNotPlaceAgainWhileKeepPlacing() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var panel = new FillSignPanel(dir.Sub("sigs"));
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, new RecordingHost());
+        ((RadioButton)panel.FindName("TextKind")).IsChecked = true;
+        ((TextBox)panel.FindName("WordsBox")).Text = "AB";
+        ((CheckBox)panel.FindName("KeepPlacing")).IsChecked = true;
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        typeof(FillSignPanel).GetMethod("Begin", flags)!.Invoke(panel, []);
+        var armed = typeof(FillSignPanel).GetField("_tool", flags)!;
+        var point = new Point(50, 50);
+
+        var first = (IPagePointerTool)armed.GetValue(panel)!;
+        first.Press(new PagePointer(0, point, point, true, 1, System.Windows.Input.ModifierKeys.None));
+        first.Release(new PagePointer(0, point, point, false, 1, System.Windows.Input.ModifierKeys.None));
+        var second = (IPagePointerTool)armed.GetValue(panel)!;
+        second.Press(new PagePointer(0, point, point, true, 2, System.Windows.Input.ModifierKeys.None));
+        second.Release(new PagePointer(0, point, point, false, 2, System.Windows.Input.ModifierKeys.None));
+
+        Assert.True(tab.Session.Undo());
+        Assert.False(tab.Session.CanUndo);
         return Task.CompletedTask;
     });
 
