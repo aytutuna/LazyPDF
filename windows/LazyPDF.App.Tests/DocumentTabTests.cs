@@ -122,6 +122,21 @@ public sealed class DocumentTabTests
     }
 
     [Fact]
+    public async Task ADrawnHandlerThatThrowsDoesNotSkipTheOnesAfterIt()
+    {
+        using var tab = OpenSlow(out var renderer);
+        int later = 0;
+        tab.Drawn += (_, _) => throw new InvalidOperationException();
+        tab.Drawn += (_, _) => later++;
+        Pdfs.Retitle(tab.Session, "One");
+        tab.Commit("One");
+        renderer.Pending[0].SetResult(true);
+        await tab.Drawing;
+
+        Assert.Equal(1, later);
+    }
+
+    [Fact]
     public async Task DisposingBeforeTheLoadEndsRaisesNothing()
     {
         var tab = OpenSlow(out var renderer);
