@@ -666,6 +666,20 @@ public sealed class KeyboardPlacementTests
     });
 
     [Fact]
+    public Task ShowingAnotherTabEndsReadingMode() => Sta.Run(() =>
+    {
+        var viewer = new PageViewer(null);
+        Click(viewer, "Arrangement_Click", viewer.TwoPageItem);
+        viewer.ReadingMode = true;
+
+        viewer.Show(null);
+
+        Assert.False(viewer.ReadingMode);
+        Assert.Equal(2, viewer.Surface.Columns);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task OnePageFromTwoPagesContinuousStaysContinuousInTheMenu() => Sta.Run(() =>
     {
         var viewer = new PageViewer(null);

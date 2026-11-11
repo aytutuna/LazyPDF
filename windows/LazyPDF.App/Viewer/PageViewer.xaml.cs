@@ -83,6 +83,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
     public void Show(DocumentTab? tab)
     {
         Presenting = false;
+        ReadingMode = false;
         if (_tab is not null)
         {
             _tab.Changed -= Tab_Changed;
