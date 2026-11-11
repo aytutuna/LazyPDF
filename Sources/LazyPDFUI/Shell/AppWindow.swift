@@ -77,6 +77,9 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         Self.isCompact(width: width, verticalCompact: verticalSizeClass == .compact)
     }
 
+    // A sheet is full height on a phone held sideways, so the tool sits beside the page there.
+    private var toolBeside: Bool { verticalSizeClass == .compact }
+
     public var body: some View {
         GeometryReader { proxy in
             Group {
@@ -123,7 +126,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     private var modal: Binding<Modal?> {
         Binding(get: {
             Modal.current(passwordAsked: vm.passwordRequest != nil, local: sheet, compact: compact,
-                          toolOpen: vm.activeTool != nil && vm.activeDocument != nil,
+                          toolOpen: vm.activeTool != nil && vm.activeDocument != nil && !toolBeside,
                           panelOpen: compactPanel != nil && vm.activeDocument != nil)
         }, set: { shown in
             if shown != nil { return }
@@ -286,7 +289,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     // The tool sheet covers the lower part of the page, so the stage ends where the sheet starts and the page is fitted to
     // what shows. A small detent keeps the page reachable and the touches go through to it up to the medium one.
     private func sheetInset(height: CGFloat, bottom: CGFloat) -> CGFloat {
-        guard compact, vm.activeTool != nil, vm.activeDocument != nil else { return 0 }
+        guard compact, !toolBeside, vm.activeTool != nil, vm.activeDocument != nil else { return 0 }
         let covered: CGFloat
         if toolDetent == .medium {
             covered = height / 2
@@ -312,18 +315,25 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .disabled(frozen)
-            Group {
-                if let tab = vm.activeDocument {
-                    stageContent(tab)
-                        .id(tab.id)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    HomeScreen(vm: vm, chooseTile: chooseTile)
+            HStack(spacing: 0) {
+                Group {
+                    if let tab = vm.activeDocument {
+                        stageContent(tab)
+                            .id(tab.id)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        HomeScreen(vm: vm, chooseTile: chooseTile)
+                    }
+                }
+                .padding(.bottom, sheetInset(height: height, bottom: bottom))
+                .background(GeometryReader { Color.clear.preference(key: StageBottom.self, value: $0.frame(in: .global).maxY) })
+                .onPreferenceChange(StageBottom.self) { stageBottom = $0 }
+                if toolBeside, vm.activeTool != nil, let tab = vm.activeDocument {
+                    Divider()
+                    inspectorPane(tab)
+                        .frame(width: 280)
                 }
             }
-            .padding(.bottom, sheetInset(height: height, bottom: bottom))
-            .background(GeometryReader { Color.clear.preference(key: StageBottom.self, value: $0.frame(in: .global).maxY) })
-            .onPreferenceChange(StageBottom.self) { stageBottom = $0 }
             .disabled(frozen)
             if vm.activeDocument != nil {
                 compactBar.disabled(frozen)
