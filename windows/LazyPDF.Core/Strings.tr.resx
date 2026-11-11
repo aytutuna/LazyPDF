@@ -1219,6 +1219,9 @@
   <data name="Converting to {0}" xml:space="preserve">
     <value>{0} biçimine dönüştürülüyor</value>
   </data>
+  <data name="Copied." xml:space="preserve">
+    <value>Kopyalandı.</value>
+  </data>
   <data name="Copies" xml:space="preserve">
     <value>Kopya</value>
   </data>
@@ -1227,6 +1230,9 @@
   </data>
   <data name="Copy (Ctrl+C)" xml:space="preserve">
     <value>Kopyala (Ctrl+C)</value>
+  </data>
+  <data name="Copy fingerprint" xml:space="preserve">
+    <value>Parmak izini kopyala</value>
   </data>
   <data name="Copy for the others" xml:space="preserve">
     <value>Diğerleri için kopya</value>
@@ -1993,6 +1999,9 @@
   <data name="Find fields in the file" xml:space="preserve">
     <value>Dosyadaki alanları bul</value>
   </data>
+  <data name="Fingerprint (SHA-256): {0}" xml:space="preserve">
+    <value>Parmak izi (SHA-256): {0}</value>
+  </data>
   <data name="Finish" xml:space="preserve">
     <value>Bitir</value>
   </data>
@@ -2296,6 +2305,9 @@
   <data name="Hide all" xml:space="preserve">
     <value>Tümünü gizle</value>
   </data>
+  <data name="Hide certificate" xml:space="preserve">
+    <value>Sertifikayı gizle</value>
+  </data>
   <data name="Hide the menu bar" xml:space="preserve">
     <value>Menü çubuğunu gizle</value>
   </data>
@@ -2394,6 +2406,12 @@
   </data>
   <data name="Invisible text in a text object that also shows visible text was left." xml:space="preserve">
     <value>Görünür metin de gösteren bir metin nesnesindeki görünmez metin bırakıldı.</value>
+  </data>
+  <data name="Issued by: {0}" xml:space="preserve">
+    <value>Veren: {0}</value>
+  </data>
+  <data name="Issued to: {0}" xml:space="preserve">
+    <value>Verilen: {0}</value>
   </data>
   <data name="It could not be saved. It can still be placed this time." xml:space="preserve">
     <value>Kaydedilemedi. Bu seferlik yine de yerleştirilebilir.</value>
@@ -2496,6 +2514,9 @@
   </data>
   <data name="Key cannot be used" xml:space="preserve">
     <value>Anahtar kullanılamıyor</value>
+  </data>
+  <data name="Key: {0}" xml:space="preserve">
+    <value>Anahtar: {0}</value>
   </data>
   <data name="Keychain" xml:space="preserve">
     <value>Anahtar zinciri</value>
@@ -2808,6 +2829,9 @@
   </data>
   <data name="May be the text layer of a scan. Off unless you tick it." xml:space="preserve">
     <value>Bir taramanın metin katmanı olabilir. İşaretlemezseniz kapalıdır.</value>
+  </data>
+  <data name="Meant for: {0}" xml:space="preserve">
+    <value>Kullanım amacı: {0}</value>
   </data>
   <data name="Measure" xml:space="preserve">
     <value>Ölç</value>
@@ -3165,6 +3189,9 @@
   </data>
   <data name="Not signed" xml:space="preserve">
     <value>İmzalanmadı</value>
+  </data>
+  <data name="Not stated" xml:space="preserve">
+    <value>Belirtilmemiş</value>
   </data>
   <data name="Not supported yet" xml:space="preserve">
     <value>Henüz desteklenmiyor</value>
@@ -4618,6 +4645,9 @@
   <data name="Sepia pages" xml:space="preserve">
     <value>Sepya sayfalar</value>
   </data>
+  <data name="Serial number: {0}" xml:space="preserve">
+    <value>Seri numarası: {0}</value>
+  </data>
   <data name="Set a password and decide what others may do." xml:space="preserve">
     <value>Bir parola belirleyin ve başkalarının neler yapabileceğine karar verin.</value>
   </data>
@@ -5353,9 +5383,6 @@
   <data name="The catalog has no /Metadata stream." xml:space="preserve">
     <value>Katalogda /Metadata akışı yok.</value>
   </data>
-  <data name="The certificate could not be shown." xml:space="preserve">
-    <value>Sertifika gösterilemedi.</value>
-  </data>
   <data name="The change could not be written. Save a copy of the file and try again." xml:space="preserve">
     <value>Değişiklik yazılamadı. Dosyanın bir kopyasını kaydedip yeniden deneyin.</value>
   </data>
@@ -5568,6 +5595,9 @@
   </data>
   <data name="The files could not be put into one. Try fewer pages or files." xml:space="preserve">
     <value>Dosyalar tek bir dosyada birleştirilemedi. Daha az sayfa ya da dosya deneyin.</value>
+  </data>
+  <data name="The fingerprint could not be copied." xml:space="preserve">
+    <value>Parmak izi kopyalanamadı.</value>
   </data>
   <data name="The first number must be 0 or more." xml:space="preserve">
     <value>İlk numara 0 veya daha büyük olmalı.</value>
@@ -6091,6 +6121,9 @@
   <data name="This is a dynamic XFA form. Lazy PDF cannot fill it." xml:space="preserve">
     <value>Bu dinamik bir XFA formu. Lazy PDF bunu dolduramaz.</value>
   </data>
+  <data name="This is the certificate stored in the file. Whether it is trusted is shown above." xml:space="preserve">
+    <value>Bu, dosyada saklanan sertifikadır. Güvenilir olup olmadığı yukarıda gösterilir.</value>
+  </data>
   <data name="This is the signed version." xml:space="preserve">
     <value>Bu, imzalı sürümün kendisi.</value>
   </data>
@@ -6409,6 +6442,9 @@
   <data name="Use {0}, {1} and {2}. A name that is taken gets a number." xml:space="preserve">
     <value>{0}, {1} ve {2} kullanın. Alınmış bir ada numara eklenir.</value>
   </data>
+  <data name="Valid from {0} to {1}" xml:space="preserve">
+    <value>{0} ile {1} arasında geçerli</value>
+  </data>
   <data name="Validation data" xml:space="preserve">
     <value>Doğrulama verisi</value>
   </data>
@@ -6441,6 +6477,9 @@
   </data>
   <data name="View the signer's certificate" xml:space="preserve">
     <value>İmzalayanın sertifikasını göster</value>
+  </data>
+  <data name="View the time stamp authority's certificate" xml:space="preserve">
+    <value>Zaman damgası otoritesinin sertifikasını göster</value>
   </data>
   <data name="Wait for the job to end, or cancel it, then close." xml:space="preserve">
     <value>İşin bitmesini bekleyin ya da iptal edin, sonra kapatın.</value>

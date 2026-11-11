@@ -1,6 +1,6 @@
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -24,7 +24,6 @@ public partial class SignaturesSidePanel : ToolPanel
     public SignaturesSidePanel()
     {
         InitializeComponent();
-        AutomationProperties.SetName(CertificateButton, Loc.T("View the signer's certificate"));
         ShowTrust();
     }
 
@@ -105,6 +104,9 @@ public partial class SignaturesSidePanel : ToolPanel
         ViewButton.IsEnabled = copy && !locked;
         RestoreButton.IsEnabled = copy;
         CertificateButton.IsEnabled = row.Report.Certificate is not null;
+        CertificateButton.Content = Loc.T("View certificate");
+        CertificateInfo.Visibility = Visibility.Collapsed;
+        AutomationProperties.SetName(CertificateButton, row.Report.Kind == SignatureKind.DocumentTimestamp ? Loc.T("View the time stamp authority's certificate") : Loc.T("View the signer's certificate"));
         VersionNote.Text = !copy ? Loc.T("This is the signed version.") : locked ? Loc.T("A protected file cannot open as a copy. Save the signed version, then open it.") : "";
         VersionNote.Visibility = VersionNote.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
@@ -173,15 +175,23 @@ public partial class SignaturesSidePanel : ToolPanel
     private void Certificate_Click(object sender, RoutedEventArgs e)
     {
         if (List.SelectedItem is not SignatureRow { Report.Certificate: { } certificate }) return;
+        bool show = CertificateInfo.Visibility != Visibility.Visible;
+        if (show) CertificateText.ItemsSource = CertificateLines.Of(certificate);
+        CertificateInfo.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        CertificateButton.Content = show ? Loc.T("Hide certificate") : Loc.T("View certificate");
+    }
+
+    private void CopyFingerprint_Click(object sender, RoutedEventArgs e)
+    {
+        if (List.SelectedItem is not SignatureRow { Report.Certificate: { } certificate }) return;
         try
         {
-            string path = Path.Combine(Path.GetTempPath(), "Lazy PDF signer " + certificate.Thumbprint + ".cer");
-            File.WriteAllBytes(path, certificate.RawData);
-            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+            Clipboard.SetText(CertificateLines.Fingerprint(certificate));
+            Tell(Loc.T("Copied."));
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception)
+        catch (COMException)
         {
-            Tell(Loc.T("The certificate could not be shown."));
+            Tell(Loc.T("The fingerprint could not be copied."));
         }
     }
 

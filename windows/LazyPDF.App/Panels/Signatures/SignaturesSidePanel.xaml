@@ -68,6 +68,18 @@
                     <Button x:Name="CertificateButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8D7;" Content="{loc:T View certificate}"
                             Padding="10,3,10,4" Margin="0,0,8,4" Click="Certificate_Click" />
                 </WrapPanel>
+                <StackPanel x:Name="CertificateInfo" Visibility="Collapsed" Margin="0,4,0,4">
+                    <TextBlock Text="{loc:T Certificate}" Style="{StaticResource FieldLabelText}" FontWeight="SemiBold" AutomationProperties.HeadingLevel="Level3" />
+                    <ItemsControl x:Name="CertificateText" IsTabStop="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,0,0,2" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Copy fingerprint}" AutomationProperties.Name="{loc:T Copy fingerprint}"
+                            Padding="10,3,10,4" HorizontalAlignment="Left" Margin="0,4,0,0" Click="CopyFingerprint_Click" />
+                </StackPanel>
                 <TextBlock x:Name="VersionNote" Style="{StaticResource ReasonText}" Margin="0,6,0,0" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
             </StackPanel>
 

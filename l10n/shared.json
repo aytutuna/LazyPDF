@@ -5659,9 +5659,6 @@
   "Add a certificate": {
     "tr": "Sertifika ekle"
   },
-  "The certificate could not be shown.": {
-    "tr": "Sertifika gösterilemedi."
-  },
   "Add validation data": {
     "tr": "Doğrulama verisi ekle"
   },
@@ -6054,6 +6051,48 @@
   },
   "View certificate": {
     "tr": "Sertifikayı göster"
+  },
+  "Issued to: {0}": {
+    "tr": "Verilen: {0}"
+  },
+  "Issued by: {0}": {
+    "tr": "Veren: {0}"
+  },
+  "Valid from {0} to {1}": {
+    "tr": "{0} ile {1} arasında geçerli"
+  },
+  "Serial number: {0}": {
+    "tr": "Seri numarası: {0}"
+  },
+  "Fingerprint (SHA-256): {0}": {
+    "tr": "Parmak izi (SHA-256): {0}"
+  },
+  "Key: {0}": {
+    "tr": "Anahtar: {0}"
+  },
+  "Meant for: {0}": {
+    "tr": "Kullanım amacı: {0}"
+  },
+  "Not stated": {
+    "tr": "Belirtilmemiş"
+  },
+  "This is the certificate stored in the file. Whether it is trusted is shown above.": {
+    "tr": "Bu, dosyada saklanan sertifikadır. Güvenilir olup olmadığı yukarıda gösterilir."
+  },
+  "Hide certificate": {
+    "tr": "Sertifikayı gizle"
+  },
+  "Copy fingerprint": {
+    "tr": "Parmak izini kopyala"
+  },
+  "Copied.": {
+    "tr": "Kopyalandı."
+  },
+  "The fingerprint could not be copied.": {
+    "tr": "Parmak izi kopyalanamadı."
+  },
+  "View the time stamp authority's certificate": {
+    "tr": "Zaman damgası otoritesinin sertifikasını göster"
   },
   "View the signer's certificate": {
     "tr": "İmzalayanın sertifikasını göster"
