@@ -369,11 +369,11 @@ public partial class PageViewer
         if (DraggedArea(box) is { } area) Surface.ZoomToArea(_dragPage, area);
     }
 
-    // One shot like the zoom; a box under 8 points is a slip of the hand.
+    // One shot like the zoom; a box under 8 device-independent pixels is a slip of the hand.
     private void SnapshotDrag(Rect box)
     {
         SetMode(_modeBeforeArea);
-        if (DraggedArea(box) is { Width: >= 8, Height: >= 8 } area) _ = CopyAreaAsync(_dragPage, area);
+        if (box is { Width: >= 8, Height: >= 8 } && DraggedArea(box) is { } area) _ = CopyAreaAsync(_dragPage, area);
     }
 
     private Rect? DraggedArea(Rect box)

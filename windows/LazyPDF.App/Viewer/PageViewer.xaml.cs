@@ -511,13 +511,13 @@ public partial class PageViewer : UserControl, IDocumentViewer
 
     private void ZoomArea_Click(object sender, RoutedEventArgs e)
     {
-        if (_mode != PointerMode.Zoom) _modeBeforeArea = _mode;
+        if (_mode is not (PointerMode.Zoom or PointerMode.Snapshot)) _modeBeforeArea = _mode;
         SetMode(PointerMode.Zoom);
     }
 
     private void Snapshot_Click(object sender, RoutedEventArgs e)
     {
-        if (_mode != PointerMode.Snapshot) _modeBeforeArea = _mode;
+        if (_mode is not (PointerMode.Zoom or PointerMode.Snapshot)) _modeBeforeArea = _mode;
         SetMode(PointerMode.Snapshot);
     }
 }
