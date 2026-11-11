@@ -393,12 +393,12 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
     }
 
     /// <summary>Scrolls by the user's doing. In a paged layout, running past the edge turns the page.</summary>
-    public void ScrollBy(double dx, double dy, bool wheel = false)
+    public void ScrollBy(double dx, double dy, bool smooth = false)
     {
         long now = Environment.TickCount64;
-        // A touchpad's inertia keeps sending wheel events; only a pause lets the next one turn the page.
-        bool mayTurn = !wheel || now - _lastWheel >= 250;
-        if (wheel) _lastWheel = now;
+        // A touchpad's inertia keeps sending small wheel events; only a pause lets the next one turn the page.
+        bool mayTurn = !smooth || now - _lastWheel >= 250;
+        if (smooth) _lastWheel = now;
         double maxY = Math.Max(0, _layout.Extent.Height - _viewport.Height);
         if (mayTurn && !_continuous && dy > 0 && _offsetY >= maxY - 0.5 && _layout.LastSpread < _layout.SpreadCount - 1)
         {

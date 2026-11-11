@@ -249,18 +249,49 @@ public sealed class PageSurfaceTests
     }
 
     [Fact]
-    public void WheelEventsInARowTurnAtMostOnePage()
+    public void WheelNotchesTurnOnePageEach()
     {
         OnSta(() =>
         {
             var (surface, _) = Open(5);
             surface.SetArrangement(1, false, continuous: false);
-            surface.GoToPage(1);
+            surface.SetFit(FitMode.Page);
+
+            for (int i = 0; i < 3; i++) surface.ScrollBy(0, 120, smooth: false);
+
+            Assert.Equal(3, surface.CurrentPage);
+        });
+    }
+
+    [Fact]
+    public void SmoothWheelEventsInARowTurnOnePage()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(5);
+            surface.SetArrangement(1, false, continuous: false);
+            surface.SetFit(FitMode.Page);
+
+            for (int i = 0; i < 5; i++) surface.ScrollBy(0, 30, smooth: true);
+
+            Assert.Equal(1, surface.CurrentPage);
+        });
+    }
+
+    [Fact]
+    public void ANotchUpAtTheTopLandsAtTheBottomOfThePageBefore()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(5);
+            surface.SetArrangement(1, false, continuous: false);
             surface.SetZoom(2);
+            surface.GoToPage(2);
 
-            for (int i = 0; i < 4; i++) surface.ScrollBy(0, 1_000_000, wheel: true);
+            surface.ScrollBy(0, -120, smooth: false);
 
-            Assert.True(surface.CurrentPage <= 2);
+            Assert.Equal(1, surface.CurrentPage);
+            Assert.True(surface.VerticalOffset > 0);
         });
     }
 

@@ -356,7 +356,7 @@ public partial class PageViewer
         if (msg != 0x020E || !Surface.IsMouseOver || Surface.Layout.PageCount == 0) return IntPtr.Zero;
         double notches = (short)((wParam.ToInt64() >> 16) & 0xFFFF) / 120.0;
         int lines = SystemParameters.WheelScrollLines;
-        Surface.ScrollBy(notches * (lines < 0 ? Surface.Viewport.Width * 0.9 : lines * 24), 0, wheel: true);
+        Surface.ScrollBy(notches * (lines < 0 ? Surface.Viewport.Width * 0.9 : lines * 24), 0, smooth: false);
         handled = true;
         return IntPtr.Zero;
     }
@@ -372,8 +372,9 @@ public partial class PageViewer
             double notches = e.Delta / 120.0;
             int lines = SystemParameters.WheelScrollLines;
             double distance = notches * (lines < 0 ? Surface.Viewport.Height * 0.9 : lines * 24);
-            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) Surface.ScrollBy(-distance, 0, wheel: true);
-            else Surface.ScrollBy(0, -distance, wheel: true);
+            bool smooth = e.Delta % 120 != 0;
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) Surface.ScrollBy(-distance, 0, smooth);
+            else Surface.ScrollBy(0, -distance, smooth);
         }
         e.Handled = true;
     }
