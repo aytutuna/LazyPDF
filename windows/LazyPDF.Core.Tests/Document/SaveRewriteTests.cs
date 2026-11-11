@@ -268,4 +268,48 @@ public class SaveRewriteTests
         Assert.Equal("Direct", SaveFixtures.Title(reopened));
         Assert.IsType<PdfReference>(reopened.Trailer["Info"]);
     }
-}
+    private static void AssertDropped(byte[] file, int expected)
+    {
+        var document = PdfDocument.Open(file);
+        var options = new PdfSaveOptions(false, null, new byte[16]);
+        byte[] bytes = document.SaveRewrite(options, out int dropped);
+        Assert.Equal(expected, dropped);
+        // The second half of the /ID is random.
+        string WithoutId(byte[] file) => System.Text.RegularExpressions.Regex.Replace(Text(file), @"/ID\s*\[[^\]]*\]", "");
+        Assert.Equal(WithoutId(document.SaveRewrite(options)), WithoutId(bytes));
+    }
+
+    [Fact]
+    public void ASoundFileDropsNothing() => AssertDropped(TestPdf.Simple(), 0);
+
+    [Fact]
+    public void AnUnreadableContentStreamIsCounted()
+    {
+        var pdf = new TestPdf();
+        pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R>>");
+        pdf.Obj(2, "<</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 100 100]>>");
+        pdf.Obj(3, "<</Type /Page /Parent 2 0 R /Contents 4 0 R>>");
+        pdf.Obj(4, "<</Broken (never closed");
+        AssertDropped(pdf.Finish(), 1);
+    }
+
+    [Fact]
+    public void AnUnreadableObjectStreamMemberIsCounted()
+    {
+        string[] bodies = ["<</Type /Catalog /Pages 2 0 R /Extra 9 0 R>>", "<</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 100 100]>>", "<</Broken (never closed"];
+        string header = $"1 0 2 {bodies[0].Length + 1} 9 {bodies[0].Length + bodies[1].Length + 2} ";
+        var pdf = new TestPdf("%PDF-1.5\n");
+        pdf.Stream(5, $"/Type /ObjStm /N 3 /First {header.Length}", header + string.Join(" ", bodies));
+        pdf.Obj(3, "<</Type /Page /Parent 2 0 R>>");
+        AssertDropped(pdf.FinishWithoutXref(), 1);
+    }
+
+    [Fact]
+    public void AReferenceToAFreeObjectIsNotCounted()
+    {
+        var pdf = new TestPdf();
+        pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R /Extra 9 0 R>>");
+        pdf.Obj(2, "<</Type /Pages /Kids [] /Count 0>>");
+        pdf.Obj(10, "<</Orphan true>>");
+        AssertDropped(pdf.Finish(), 0);
+    }}

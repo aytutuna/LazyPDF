@@ -37,7 +37,7 @@ public sealed class PdfOptimizer(PdfDocument document, IImageCodec? codec = null
     {
         cancel.ThrowIfCancellationRequested();
         var audit = Audit();
-        byte[] plain = document.SaveRewrite(cancel: cancel);
+        byte[] plain = document.SaveRewrite(null, out int dropped, cancel);
         using var working = PdfDocument.Open(plain);
         var results = new List<OptimizeStepResult> { new(OptimizeStepKind.RemoveUnreferenced, UnreferencedCount()) };
         var notes = new List<string>();
@@ -90,7 +90,7 @@ public sealed class PdfOptimizer(PdfDocument document, IImageCodec? codec = null
         }
         // A plain rewrite is the floor, unless the file was asked to change its look or to be encrypted or given an id.
         if (best.Length > plain.Length && !options.Grayscale && options.Security is null && options.DocumentId is null) best = plain;
-        return new OptimizeResult(best, document.Length, best.Length, audit, results, notes);
+        return new OptimizeResult(best, document.Length, best.Length, audit, results, notes, dropped);
     }
 
     private static byte[] Save(PdfDocument working, OptimizeOptions options, bool objectStreams, CancellationToken cancel) =>

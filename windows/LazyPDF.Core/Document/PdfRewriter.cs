@@ -18,6 +18,9 @@ internal sealed class PdfRewriter(PdfDocument document, PdfSaveOptions options, 
     private readonly List<PdfObject> _items = [];
     private int _followed;
 
+    /// <summary>The numbers reached that the table lists and that could not be read.</summary>
+    public HashSet<int> Dropped { get; } = [];
+
     public byte[] Run()
     {
         int root = Intern(document.Trailer["Root"]);
@@ -124,7 +127,11 @@ internal sealed class PdfRewriter(PdfDocument document, PdfSaveOptions options, 
         if (entry is PdfReference reference)
         {
             if (_numbers.TryGetValue(reference.Number, out int known)) return known;
-            if (document.Get(reference.Number) is not { } value || value is PdfNull) return 0;
+            if (document.Get(reference.Number) is not { } value || value is PdfNull)
+            {
+                if (document.Entries.TryGetValue(reference.Number, out var listed) && listed.Kind is PdfDocument.EntryKind.InUse or PdfDocument.EntryKind.Compressed) Dropped.Add(reference.Number);
+                return 0;
+            }
             _items.Add(value);
             return _numbers[reference.Number] = _items.Count;
         }

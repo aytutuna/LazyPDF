@@ -24,11 +24,22 @@ public sealed partial class PdfDocument
     /// Another handler than the file's own, or none, needs the owner's rights when the file restricts
     /// its permissions, and throws <see cref="PdfPermissionException"/> without them.
     /// </summary>
-    public byte[] SaveRewrite(PdfSaveOptions? options = null, CancellationToken cancel = default)
+    public byte[] SaveRewrite(PdfSaveOptions? options = null, CancellationToken cancel = default) =>
+        SaveRewrite(options, out _, cancel);
+
+    /// <summary>
+    /// As <see cref="SaveRewrite(PdfSaveOptions?, CancellationToken)"/>, and says in <paramref name="dropped"/>
+    /// how many objects the rewrite reached that the file's table lists but that could not be read, and so
+    /// are left out. A free or unlisted object is not counted. The bytes are the same.
+    /// </summary>
+    public byte[] SaveRewrite(PdfSaveOptions? options, out int dropped, CancellationToken cancel = default)
     {
         options ??= new PdfSaveOptions();
         RequireEncryptionRights(options.Security);
-        return new PdfRewriter(this, options, cancel).Run();
+        var rewriter = new PdfRewriter(this, options, cancel);
+        byte[] bytes = rewriter.Run();
+        dropped = rewriter.Dropped.Count;
+        return bytes;
     }
 
     internal IReadOnlyDictionary<int, Entry> Entries => _entries;

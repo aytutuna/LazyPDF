@@ -84,7 +84,7 @@ public sealed record OptimizePlan(SpaceAudit Audit, IReadOnlyList<OptimizeStepKi
 public sealed record OptimizeStepResult(OptimizeStepKind Kind, int Count);
 
 public sealed record OptimizeResult(byte[] Bytes, long SizeBefore, long SizeAfter, SpaceAudit Audit,
-    IReadOnlyList<OptimizeStepResult> Steps, IReadOnlyList<string> Notes);
+    IReadOnlyList<OptimizeStepResult> Steps, IReadOnlyList<string> Notes, int Dropped = 0);
 
 public enum SanitizeItem
 {
