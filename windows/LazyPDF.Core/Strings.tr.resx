@@ -913,6 +913,9 @@
   <data name="Checking the file" xml:space="preserve">
     <value>Dosya denetleniyor</value>
   </data>
+  <data name="Checking the files" xml:space="preserve">
+    <value>Dosyalar denetleniyor</value>
+  </data>
   <data name="Checking the signatures" xml:space="preserve">
     <value>İmzalar denetleniyor</value>
   </data>
