@@ -54,7 +54,12 @@ public partial class MeasurePanel : ToolPanel
     {
         _waiting = Waiting.GetOrCreateValue(Tab!);
         _paused = false;
-        ShowScale(Scales.TryGetValue(Tab!, out var kept) ? kept : MeasureScale.Find(Tab!.Document) ?? MeasureScale.Actual);
+        if (!Scales.TryGetValue(Tab!, out var kept))
+        {
+            kept = MeasureScale.Find(Tab!.Document) ?? MeasureScale.Actual;
+            Scales.Add(Tab!, kept);
+        }
+        ShowScale(kept);
         if (PerimeterMode.IsChecked != true && AreaMode.IsChecked != true) DistanceMode.IsChecked = true;
         _tool = new MeasureTool(Viewer!) { Kind = Kind(), Snap = SnapToggle.IsChecked == true };
         _overlay = new MeasureOverlay(Viewer!, _tool);
