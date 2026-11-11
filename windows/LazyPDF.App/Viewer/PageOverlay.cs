@@ -8,7 +8,7 @@ namespace LazyPDF.App.Viewer;
 /// points, (0, 0) is the top left of the page as shown before the viewer rotates it, y grows downwards. Position
 /// elements with <see cref="Canvas.SetLeft"/> and <see cref="Canvas.SetTop"/>. The viewer scales and rotates the
 /// whole layer with the page, so a 1 point line is 1 point at 100 % and thicker on screen at 400 %; divide by the zoom
-/// for a line that keeps its width. The layer is clipped to the page. It takes part in the visual tree only while its
+/// for a line that keeps its width. Elements may draw past the page edge; the PageSurface still clips to the viewport. The layer takes part in the visual tree only while its
 /// page is near the window, and keeps its children the rest of the time. Elements that should not catch the pointer
 /// need <c>IsHitTestVisible = false</c>.
 /// </summary>
@@ -19,7 +19,7 @@ public sealed class PageOverlay : Canvas
         Page = page;
         Width = size.Width;
         Height = size.Height;
-        ClipToBounds = true;
+        ClipToBounds = false;
     }
 
     /// <summary>The page this layer belongs to, 0-based.</summary>

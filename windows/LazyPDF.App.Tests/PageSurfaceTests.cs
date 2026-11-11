@@ -374,6 +374,26 @@ public sealed class PageSurfaceTests
     }
 
     [Fact]
+    public void AnOverlayDoesNotClipWhatTouchesThePageEdge()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(2);
+            surface.SetZoom(1);
+            var overlay = surface.Overlay(0);
+            var mark = new System.Windows.Shapes.Rectangle { Width = 10, Height = 10 };
+            System.Windows.Controls.Canvas.SetLeft(mark, -5);
+            overlay.Children.Add(mark);
+
+            surface.Measure(Window);
+            surface.Arrange(new Rect(Window));
+
+            Assert.False(overlay.ClipToBounds);
+            Assert.Contains(mark, overlay.Children.Cast<UIElement>());
+        });
+    }
+
+    [Fact]
     public void AFileTheSystemCannotDrawStillHasItsPagesLaidOut()
     {
         OnSta(() =>
