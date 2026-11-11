@@ -159,4 +159,70 @@ public sealed class ThumbnailsTests
 
         Assert.All(pngs, png => Assert.Equal(PngSignature, png!.AsSpan(0, 4).ToArray()));
     }
+
+    [Fact]
+    public async Task NoMoreThanTwoPicturesAreDrawnAtOnce()
+    {
+        using var dir = new TempDir();
+        int now = 0, peak = 0;
+        var thumbnails = new Thumbnails(() => new SlowRenderer(() =>
+        {
+            int n = Interlocked.Increment(ref now);
+            lock (dir) peak = Math.Max(peak, n);
+            Thread.Sleep(150);
+            Interlocked.Decrement(ref now);
+        }), dir.Sub("thumbs"));
+
+        var pngs = await Task.WhenAll(Enumerable.Range(0, 6)
+            .Select(i => thumbnails.GetAsync(dir.File($"f{i}.pdf", Pdfs.Text(line: $"Text {i}")))));
+
+        Assert.All(pngs, Assert.NotNull);
+        Assert.Equal(2, peak);
+    }
+
+    [Fact]
+    public async Task AnEncryptedFileIsNotOpenedAgain()
+    {
+        using var dir = new TempDir();
+        int made = 0;
+        var thumbnails = new Thumbnails(() =>
+        {
+            made++;
+            return new FakeRenderer();
+        }, dir.Sub("thumbs"));
+        string path = dir.File("owner.pdf", Pdfs.Restricted(PdfPermissions.All & ~PdfPermissions.Copy));
+
+        Assert.Null(await thumbnails.GetAsync(path));
+        Assert.Null(await thumbnails.GetAsync(path));
+        Assert.Equal(1, made);
+
+        thumbnails.Forget(path);
+        Assert.Null(await thumbnails.GetAsync(path));
+        Assert.Equal(2, made);
+    }
+
+    [Fact]
+    public void ForgettingAndClearingWithoutTheFolderDoNotThrow()
+    {
+        using var dir = new TempDir();
+        var thumbnails = Make(dir);
+
+        thumbnails.Forget(dir.Sub("a.pdf"));
+        thumbnails.Clear();
+    }
+
+    private sealed class SlowRenderer(Action onRender) : IDocumentRenderer
+    {
+        public bool Load(PdfEditSession session, string? password) => true;
+
+        public (double Width, double Height) PageSize(int pageIndex) => (200, 300);
+
+        public PdfRgbaImage? Render(int pageIndex, double dpi)
+        {
+            onRender();
+            return new PdfRgbaImage(4, 6, Enumerable.Repeat((byte)255, 4 * 6 * 4).ToArray());
+        }
+
+        public void Dispose() { }
+    }
 }
