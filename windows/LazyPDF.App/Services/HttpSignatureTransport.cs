@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Services;
@@ -18,10 +19,11 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
 
     private readonly HttpClient _client;
     private int _requests;
+    private bool _refused;
 
     public HttpSignatureTransport(HttpMessageHandler? handler = null)
     {
-        _client = handler is null ? new HttpClient(new SocketsHttpHandler { AllowAutoRedirect = false }) : new HttpClient(handler);
+        _client = handler is null ? new HttpClient(new SocketsHttpHandler { AllowAutoRedirect = false, ConnectCallback = ConnectAsync }) : new HttpClient(handler);
         _client.Timeout = Timeout.InfiniteTimeSpan;
     }
 
@@ -45,6 +47,7 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
     private byte[]? Send(HttpMethod method, string url, HttpContent? content)
     {
         LastFailure = null;
+        _refused = false;
         if (!Uri.TryCreate(url, UriKind.Absolute, out var address))
             return NotAWebAddress();
         if (IsOffline)
@@ -102,7 +105,8 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
         }
         catch (Exception e) when (e is HttpRequestException or OperationCanceledException or IOException or ObjectDisposedException)
         {
-            LastFailure = e is OperationCanceledException || limit.IsCancellationRequested
+            LastFailure = _refused ? Loc.T("The address points to this computer, so it was not used.")
+                : e is OperationCanceledException || limit.IsCancellationRequested
                 ? Loc.T("The server did not answer in time. Try again later.")
                 : Loc.T("The server could not be reached. Check the connection and try again.");
             return null;
@@ -127,14 +131,41 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
         string host = address.DnsSafeHost.TrimEnd('.');
         if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase) || host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase))
             return true;
-        if (!IPAddress.TryParse(host, out var ip))
-            return false;
+        return IPAddress.TryParse(host, out var ip) && PointsHere(ip);
+    }
+
+    private static bool PointsHere(IPAddress ip)
+    {
         if (ip.IsIPv4MappedToIPv6)
             ip = ip.MapToIPv4();
         if (IPAddress.IsLoopback(ip) || ip.IsIPv6LinkLocal)
             return true;
         byte[] b = ip.GetAddressBytes();
         return b.Length == 4 && b[0] == 169 && b[1] == 254;
+    }
+
+    // Checks the address the name resolves to, which the host text cannot show, and connects to that one.
+    private async ValueTask<Stream> ConnectAsync(SocketsHttpConnectionContext context, CancellationToken token)
+    {
+        var host = context.DnsEndPoint.Host;
+        var found = await Dns.GetHostAddressesAsync(host, token);
+        var ip = found.FirstOrDefault(a => !PointsHere(a));
+        if (ip is null)
+        {
+            _refused = true;
+            throw new HttpRequestException("The address points to this computer.");
+        }
+        var socket = new Socket(SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
+        try
+        {
+            await socket.ConnectAsync(new IPEndPoint(ip, context.DnsEndPoint.Port), token);
+            return new NetworkStream(socket, true);
+        }
+        catch
+        {
+            socket.Dispose();
+            throw;
+        }
     }
 
     public void Dispose() => _client.Dispose();
