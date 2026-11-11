@@ -129,4 +129,34 @@ public sealed class ThumbnailsTests
         Assert.Null(await Make(dir).GetAsync(path));
         Assert.False(Directory.Exists(dir.Sub("thumbs")) && Directory.GetFiles(dir.Sub("thumbs")).Length > 0);
     }
+
+    [Fact]
+    public async Task AFileOverTheSizeLimitHasNoPicture()
+    {
+        using var dir = new TempDir();
+        string path = dir.File("a.pdf", Pdfs.Text());
+        long limit = Thumbnails.MaxFileBytes;
+        Thumbnails.MaxFileBytes = 10;
+        try
+        {
+            Assert.Null(await Make(dir).GetAsync(path));
+        }
+        finally
+        {
+            Thumbnails.MaxFileBytes = limit;
+        }
+    }
+
+    [Fact]
+    public async Task FilesAskedForTogetherAllGetAPicture()
+    {
+        using var dir = new TempDir();
+        var thumbnails = Make(dir);
+
+        var pngs = await Task.WhenAll(
+            thumbnails.GetAsync(dir.File("a.pdf", Pdfs.Text())),
+            thumbnails.GetAsync(dir.File("b.pdf", Pdfs.Text(line: "Other"))));
+
+        Assert.All(pngs, png => Assert.Equal(PngSignature, png!.AsSpan(0, 4).ToArray()));
+    }
 }

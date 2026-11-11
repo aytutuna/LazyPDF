@@ -79,7 +79,7 @@ public partial class HomeView : UserControl
 
     private async Task LoadThumbnailAsync(RecentCard card)
     {
-        if (Thumbnails is null || await Thumbnails.GetAsync(card.Item.Path) is not { } png) return;
+        if (Thumbnails is null || await Thumbnails.GetAsync(card.Item.Path) is not { } png || !_cards.Contains(card)) return;
         using var stream = new MemoryStream(png);
         var image = new BitmapImage();
         image.BeginInit();

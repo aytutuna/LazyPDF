@@ -12,6 +12,9 @@ namespace LazyPDF.App.Services;
 public sealed class Thumbnails
 {
     private static readonly TimeSpan KeepFor = TimeSpan.FromDays(60);
+    private static readonly SemaphoreSlim Drawing = new(2);
+
+    internal static long MaxFileBytes = 64L * 1024 * 1024;
 
     private readonly Func<IDocumentRenderer> _renderers;
     private readonly string _directory;
@@ -37,7 +40,17 @@ public sealed class Thumbnails
                 File.SetLastWriteTimeUtc(cached, DateTime.UtcNow);
                 return await File.ReadAllBytesAsync(cached);
             }
-            byte[]? png = await Task.Run(() => Draw(path, width));
+            if (info.Length > MaxFileBytes) return null;
+            byte[]? png;
+            await Drawing.WaitAsync();
+            try
+            {
+                png = await Task.Run(() => Draw(path, width));
+            }
+            finally
+            {
+                Drawing.Release();
+            }
             if (png is not null)
             {
                 Directory.CreateDirectory(_directory);
