@@ -3,8 +3,9 @@
      replaces them and the version when it packs; the file stays as it is in the repository. -->
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
          xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-         IgnorableNamespaces="uap rescap">
+         IgnorableNamespaces="uap uap3 rescap">
 
   <Identity Name="PartnerCenterIdentityName"
             Publisher="CN=PartnerCenterPublisher"
@@ -39,18 +40,24 @@
       </uap:VisualElements>
 
       <Extensions>
+        <!-- Lazy Scan and Lazy Print hand files over through this address. The quotes keep a path with spaces one argument. -->
+        <uap3:Extension Category="windows.protocol" EntryPoint="Windows.FullTrustApplication" Executable="LazyPDF.exe">
+          <uap3:Protocol Name="lazypdf" Parameters="&quot;%1&quot;">
+            <uap:DisplayName>Lazy PDF</uap:DisplayName>
+          </uap3:Protocol>
+        </uap3:Extension>
         <!-- Open with entries. Windows keeps the user's default program; an app cannot take it from the manifest. -->
-        <uap:Extension Category="windows.fileTypeAssociation">
-          <uap:FileTypeAssociation Name="pdf">
+        <uap3:Extension Category="windows.fileTypeAssociation" EntryPoint="Windows.FullTrustApplication" Executable="LazyPDF.exe">
+          <uap3:FileTypeAssociation Name="pdf" Parameters="&quot;%1&quot;">
             <uap:DisplayName>PDF document</uap:DisplayName>
             <uap:Logo>Assets\Square44x44Logo.png</uap:Logo>
             <uap:SupportedFileTypes>
               <uap:FileType>.pdf</uap:FileType>
             </uap:SupportedFileTypes>
-          </uap:FileTypeAssociation>
-        </uap:Extension>
-        <uap:Extension Category="windows.fileTypeAssociation">
-          <uap:FileTypeAssociation Name="picture">
+          </uap3:FileTypeAssociation>
+        </uap3:Extension>
+        <uap3:Extension Category="windows.fileTypeAssociation" EntryPoint="Windows.FullTrustApplication" Executable="LazyPDF.exe">
+          <uap3:FileTypeAssociation Name="picture" Parameters="&quot;%1&quot;">
             <uap:DisplayName>Picture</uap:DisplayName>
             <uap:Logo>Assets\Square44x44Logo.png</uap:Logo>
             <uap:SupportedFileTypes>
@@ -64,8 +71,8 @@
               <uap:FileType>.heic</uap:FileType>
               <uap:FileType>.heif</uap:FileType>
             </uap:SupportedFileTypes>
-          </uap:FileTypeAssociation>
-        </uap:Extension>
+          </uap3:FileTypeAssociation>
+        </uap3:Extension>
       </Extensions>
     </Application>
   </Applications>
