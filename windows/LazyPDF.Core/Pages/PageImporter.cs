@@ -164,7 +164,7 @@ internal sealed partial class PageImporter
         var value = _source.Get(reference.Number);
         if (value is null or PdfNull)
         {
-            if (_source.Entries.TryGetValue(reference.Number, out var listed) && listed.Kind is PdfDocument.EntryKind.InUse or PdfDocument.EntryKind.Compressed) _dropped.Add(reference.Number);
+            NoteUnreadable(reference);
             return PdfNull.Instance;
         }
         if (_sourcePages.Contains(reference.Number) || IsStructure(value)) return PdfNull.Instance;
@@ -172,6 +172,19 @@ internal sealed partial class PageImporter
         _map[reference.Number] = made;
         _pending.Enqueue((reference.Number, made.Number));
         return made;
+    }
+
+    // The source's object for a value, counting a reference it lists but cannot read among the dropped.
+    private PdfObject? Read(PdfObject? value)
+    {
+        var found = _source.Resolve(value);
+        if (found is null && value is PdfReference reference) NoteUnreadable(reference);
+        return found;
+    }
+
+    private void NoteUnreadable(PdfReference reference)
+    {
+        if (_source.Entries.TryGetValue(reference.Number, out var listed) && listed.Kind is PdfDocument.EntryKind.InUse or PdfDocument.EntryKind.Compressed) _dropped.Add(reference.Number);
     }
 
     private bool IsStructure(PdfObject value) =>

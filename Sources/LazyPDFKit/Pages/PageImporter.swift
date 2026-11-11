@@ -206,7 +206,7 @@ final class PageImporter {
         if let done = map[reference.number] ?? newPages[reference.number] { return done }
         // A page that did not come across, the tree above it and the catalog would drag the whole file in.
         guard let value = source.get(reference.number), !(value is PdfNull) else {
-            if let listed = source.entries[reference.number], listed.kind == .inUse || listed.kind == .compressed { droppedNumbers.insert(reference.number) }
+            noteUnreadable(reference)
             return PdfNull.instance
         }
         guard !sourcePages.contains(reference.number), !isStructure(value) else { return PdfNull.instance }
@@ -214,6 +214,17 @@ final class PageImporter {
         map[reference.number] = made
         pending.append((reference.number, made.number))
         return made
+    }
+
+    // The source's object for a value, counting a reference it lists but cannot read among the dropped.
+    func read(_ value: PdfObject?) -> PdfObject? {
+        let found = source.resolve(value)
+        if found == nil, let reference = value as? PdfReference { noteUnreadable(reference) }
+        return found
+    }
+
+    private func noteUnreadable(_ reference: PdfReference) {
+        if let listed = source.entries[reference.number], listed.kind == .inUse || listed.kind == .compressed { droppedNumbers.insert(reference.number) }
     }
 
     private func isStructure(_ value: PdfObject) -> Bool {

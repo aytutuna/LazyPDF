@@ -11,12 +11,12 @@ extension PageImporter {
     private static let defaultAppearanceFont = try? NSRegularExpression(pattern: #"/([^\s/<>\[\]()]+)(\s+[-+\d.]+\s+Tf)"#)
 
     func copyAnnotations(_ page: PdfPage, _ pageRef: PdfReference, _ dict: PdfDictionary) throws {
-        guard let annots = source.resolve(page.dictionary["Annots"]) as? PdfArray else { return }
+        guard let annots = read(page.dictionary["Annots"]) as? PdfArray else { return }
         local.removeAll()
         var items: [(ref: PdfReference, dict: PdfDictionary)] = []
         var direct = 0
         for item in annots.items {
-            if let reference = item as? PdfReference, let annotation = source.resolve(reference) as? PdfDictionary {
+            if let reference = item as? PdfReference, let annotation = read(reference) as? PdfDictionary {
                 items.append((reference, annotation))
             } else if let inline = item as? PdfDictionary {
                 // No number to key it by, so a direct annotation gets a negative one that no object has.
@@ -90,13 +90,13 @@ extension PageImporter {
     private func isDeadLink(_ annotation: PdfDictionary) throws -> Bool {
         if source.name(annotation, "Subtype") != "Link" { return false }
         if annotation.containsKey("Dest"), try fixDestination(annotation["Dest"]) == nil { return true }
-        if let action = source.dict(annotation, "A"), source.name(action, "S") == "GoTo" { return try fixDestination(action["D"]) == nil }
+        if let action = read(annotation["A"]) as? PdfDictionary, source.name(action, "S") == "GoTo" { return try fixDestination(action["D"]) == nil }
         return false
     }
 
     private func fixAction(_ value: PdfObject, _ depth: Int = 0) throws -> PdfObject? {
         if depth == 0 { actionNodes = 0 }
-        guard let action = source.resolve(value) as? PdfDictionary, depth <= Self.maxActionChain else { return nil }
+        guard let action = read(value) as? PdfDictionary, depth <= Self.maxActionChain else { return nil }
         actionNodes += 1
         if actionNodes > Self.maxActionNodes { return nil }
         let type = source.name(action, "S")
@@ -122,7 +122,7 @@ extension PageImporter {
     }
 
     private func fixNext(_ value: PdfObject, _ depth: Int) throws -> PdfObject? {
-        if let list = source.resolve(value) as? PdfArray {
+        if let list = read(value) as? PdfArray {
             let kept = try list.items.prefix(Self.maxActionChain).compactMap { try fixAction($0, depth + 1) }
             return kept.isEmpty ? nil : PdfArray(kept)
         }
@@ -130,7 +130,7 @@ extension PageImporter {
     }
 
     private func fixAdditional(_ value: PdfObject) throws -> PdfObject? {
-        guard let triggers = source.resolve(value) as? PdfDictionary else { return nil }
+        guard let triggers = read(value) as? PdfDictionary else { return nil }
         let made = PdfDictionary()
         for (key, item) in triggers.entries where triggers[key] === item {
             if let action = try fixAction(item) { made.add(key, action) }
@@ -166,7 +166,7 @@ extension PageImporter {
     private func fixDestination(_ value: PdfObject?) throws -> PdfObject? {
         guard let value else { return nil }
         if same { return try copy(value) }
-        var resolved = source.resolve(value)
+        var resolved = read(value)
         if resolved is PdfName || resolved is PdfString {
             if names == nil { names = DestContext(source) }
             resolved = source.resolve(names.flatMap { PageDestinations.lookup(source, $0, value) })
@@ -178,7 +178,7 @@ extension PageImporter {
     }
 
     private func attachWidget(_ widget: PdfDictionary, _ fresh: PdfDictionary, _ own: PdfReference, _ sourceRef: PdfReference) throws {
-        if let parentRef = widget["Parent"] as? PdfReference, let parentSource = source.resolve(parentRef) as? PdfDictionary {
+        if let parentRef = widget["Parent"] as? PdfReference, let parentSource = read(parentRef) as? PdfDictionary {
             let parent = try fieldNode(parentRef, parentSource, 1)
             fresh["Parent"] = parent.ref
             parent.kids.items.append(own)
@@ -213,7 +213,7 @@ extension PageImporter {
         groupOrder.append(group)
         record(reference.number, own)
         dropSignature(node, fresh)
-        if let up = node["Parent"] as? PdfReference, depth < Self.maxFieldDepth, let upNode = source.resolve(up) as? PdfDictionary {
+        if let up = node["Parent"] as? PdfReference, depth < Self.maxFieldDepth, let upNode = read(up) as? PdfDictionary {
             let parent = try fieldNode(up, upNode, depth + 1)
             fresh["Parent"] = parent.ref
             parent.kids.items.append(own)

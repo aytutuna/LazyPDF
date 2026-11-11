@@ -28,13 +28,13 @@ internal sealed partial class PageImporter
 
     private void CopyAnnotations(PdfPage page, PdfReference pageRef, PdfDictionary dict)
     {
-        if (_source.Resolve(page.Dictionary["Annots"]) is not PdfArray annots) return;
+        if (Read(page.Dictionary["Annots"]) is not PdfArray annots) return;
         _local.Clear();
         var items = new List<(PdfReference Source, PdfDictionary Dict)>();
         int direct = 0;
         foreach (var item in annots.Items)
         {
-            if (item is PdfReference reference && _source.Resolve(reference) is PdfDictionary annotation) items.Add((reference, annotation));
+            if (item is PdfReference reference && Read(reference) is PdfDictionary annotation) items.Add((reference, annotation));
             // No number to key it by, so a direct annotation gets a negative one that no object has.
             else if (item is PdfDictionary inline) items.Add((new PdfReference(--direct, 0), inline));
         }
@@ -99,13 +99,13 @@ internal sealed partial class PageImporter
     {
         if (_source.Name(annotation, "Subtype") != "Link") return false;
         if (annotation.ContainsKey("Dest") && FixDestination(annotation["Dest"]) is null) return true;
-        return _source.Dict(annotation, "A") is { } action && _source.Name(action, "S") == "GoTo" && FixDestination(action["D"]) is null;
+        return Read(annotation["A"]) is PdfDictionary action && _source.Name(action, "S") == "GoTo" && FixDestination(action["D"]) is null;
     }
 
     private PdfObject? FixAction(PdfObject value, int depth = 0)
     {
         if (depth == 0) _actionNodes = 0;
-        if (_source.Resolve(value) is not PdfDictionary action || depth > MaxActionChain || ++_actionNodes > MaxActionNodes) return null;
+        if (Read(value) is not PdfDictionary action || depth > MaxActionChain || ++_actionNodes > MaxActionNodes) return null;
         string? type = _source.Name(action, "S");
         var copy = new PdfDictionary();
         foreach (var (key, item) in action.Entries)
@@ -131,7 +131,7 @@ internal sealed partial class PageImporter
 
     private PdfObject? FixNext(PdfObject value, int depth)
     {
-        if (_source.Resolve(value) is PdfArray list)
+        if (Read(value) is PdfArray list)
         {
             var kept = list.Items.Take(MaxActionChain).Select(i => FixAction(i, depth + 1)).OfType<PdfObject>().ToList();
             return kept.Count == 0 ? null : new PdfArray(kept);
@@ -141,7 +141,7 @@ internal sealed partial class PageImporter
 
     private PdfObject? FixAdditional(PdfObject value)
     {
-        if (_source.Resolve(value) is not PdfDictionary triggers) return null;
+        if (Read(value) is not PdfDictionary triggers) return null;
         var copy = new PdfDictionary();
         foreach (var (key, item) in triggers.Entries)
         {
@@ -181,7 +181,7 @@ internal sealed partial class PageImporter
     {
         if (value is null) return null;
         if (_same) return Copy(value);
-        var resolved = _source.Resolve(value);
+        var resolved = Read(value);
         if (resolved is PdfName or PdfString) resolved = _source.Resolve(PageDestinations.Lookup(_source, _names ??= new DestContext(_source), value));
         if (resolved is PdfDictionary named) resolved = _source.Resolve(named["D"]);
         if (resolved is not PdfArray { Items.Count: > 0 } array) return null;
@@ -191,7 +191,7 @@ internal sealed partial class PageImporter
 
     private void AttachWidget(PdfDictionary source, PdfDictionary copy, PdfReference self, PdfReference sourceRef)
     {
-        if (source["Parent"] is PdfReference parentRef && _source.Resolve(parentRef) is PdfDictionary parentSource)
+        if (source["Parent"] is PdfReference parentRef && Read(parentRef) is PdfDictionary parentSource)
         {
             var parent = FieldNode(parentRef, 1);
             copy["Parent"] = parent.Ref;
@@ -225,7 +225,7 @@ internal sealed partial class PageImporter
         _groups[kids] = new FieldCopy(node, copy, []);
         Record(source.Number, reference);
         DropSignature(node, copy);
-        if (node["Parent"] is PdfReference up && depth < MaxFieldDepth && _source.Resolve(up) is PdfDictionary)
+        if (node["Parent"] is PdfReference up && depth < MaxFieldDepth && Read(up) is PdfDictionary)
         {
             var parent = FieldNode(up, depth + 1);
             copy["Parent"] = parent.Ref;

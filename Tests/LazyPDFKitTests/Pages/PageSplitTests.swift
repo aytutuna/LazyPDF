@@ -188,6 +188,16 @@ final class PageSplitTests: XCTestCase {
         try PageTestFiles.open(2, pageExtra: { _ in "/Thumb 8 0 R" }, add: { $0.obj(8, "<</Broken (never closed") })
     }
 
+    func test_anAnnotationOrActionThatCannotBeReadIsCounted() throws {
+        let annotation = try PageTestFiles.open(2, pageExtra: { _ in "/Annots [8 0 R]" }, add: { $0.obj(8, "<</Broken (never closed") })
+        XCTAssertEqual(try PageAssembly.extract(annotation, [0]).droppedObjects, 1)
+        let action = try PageTestFiles.open(2, pageExtra: { _ in "/Annots [9 0 R]" }, add: {
+            $0.obj(8, "<</Broken (never closed")
+            $0.obj(9, "<</Type /Annot /Subtype /Link /Rect [0 0 10 10] /A 8 0 R>>")
+        })
+        XCTAssertEqual(try PageAssembly.extract(action, [0]).droppedObjects, 1)
+    }
+
     func test_objectsThatCannotBeReadAreCountedWhereTheyAreLeftOut() throws {
         XCTAssertEqual(try PageAssembly.extract(try PageTestFiles.open(2), [0, 1]).droppedObjects, 0)
         XCTAssertEqual(try PageAssembly.extract(try withUnreadableObject(), [0, 1]).droppedObjects, 1)

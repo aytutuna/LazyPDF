@@ -192,6 +192,19 @@ public class PageSplitTests
     private static PdfDocument WithUnreadableObject() => PageTestFiles.Open(2, pageExtra: _ => "/Thumb 8 0 R", add: pdf => pdf.Obj(8, "<</Broken (never closed"));
 
     [Fact]
+    public void AnAnnotationOrActionThatCannotBeReadIsCounted()
+    {
+        var annotation = PageTestFiles.Open(2, pageExtra: _ => "/Annots [8 0 R]", add: pdf => pdf.Obj(8, "<</Broken (never closed"));
+        Assert.Equal(1, PageAssembly.Extract(annotation, [0]).DroppedObjects);
+        var action = PageTestFiles.Open(2, pageExtra: _ => "/Annots [9 0 R]", add: pdf =>
+        {
+            pdf.Obj(8, "<</Broken (never closed");
+            pdf.Obj(9, "<</Type /Annot /Subtype /Link /Rect [0 0 10 10] /A 8 0 R>>");
+        });
+        Assert.Equal(1, PageAssembly.Extract(action, [0]).DroppedObjects);
+    }
+
+    [Fact]
     public void ObjectsThatCannotBeReadAreCountedWhereTheyAreLeftOut()
     {
         Assert.Equal(0, PageAssembly.Extract(PageTestFiles.Open(2), [0, 1]).DroppedObjects);
