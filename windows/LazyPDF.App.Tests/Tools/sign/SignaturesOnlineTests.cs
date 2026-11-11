@@ -17,15 +17,16 @@ public sealed class SignaturesOnlineTests
     public void TheAnswerKeepsTheOfflineChangesAndRevision()
     {
         var changes = new SignatureChangeReport([], 2);
-        var offline = new SignatureReport { Index = 0, Revision = 1, CoversWholeFile = false, Changes = changes };
+        var offline = new SignatureReport { Index = 0, Revision = 1, CoversWholeFile = false, Level = PadesLevel.T, Changes = changes };
         var other = new SignatureReport { Index = 1, Revision = 2 };
-        var asked = new SignatureReport { Index = 0, Revision = 3, CoversWholeFile = true, RevocationChecked = true };
+        var asked = new SignatureReport { Index = 0, Revision = 3, CoversWholeFile = true, Level = PadesLevel.LT, RevocationChecked = true };
 
         var merged = SignaturesSidePanel.Merge([offline, other], [asked]);
 
         Assert.Equal(2, merged.Count);
         Assert.True(merged[0].RevocationChecked);
         Assert.Equal(1, merged[0].Revision);
+        Assert.Equal(PadesLevel.T, merged[0].Level);
         Assert.False(merged[0].CoversWholeFile);
         Assert.Same(changes, merged[0].Changes);
         Assert.Same(other, merged[1]);

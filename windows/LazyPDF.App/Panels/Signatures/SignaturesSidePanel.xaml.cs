@@ -108,7 +108,7 @@ public partial class SignaturesSidePanel : ToolPanel
     // Add writes a later revision, which would show as a change after every signature.
     internal static IReadOnlyList<SignatureReport> Merge(IReadOnlyList<SignatureReport> reports, IReadOnlyList<SignatureReport> asked) =>
         reports.Select(r => asked.FirstOrDefault(a => a.Index == r.Index) is { } a
-            ? a with { Changes = r.Changes, Revision = r.Revision, CoversWholeFile = r.CoversWholeFile }
+            ? a with { Changes = r.Changes, Revision = r.Revision, Level = r.Level, CoversWholeFile = r.CoversWholeFile }
             : r).ToList();
 
     private SignatureRow Row(SignatureReport report, Dictionary<string, (int Page, PdfRect Rect)> fields)
@@ -244,6 +244,7 @@ public partial class SignaturesSidePanel : ToolPanel
             return;
         }
         var hosts = await ServerPreview.HostsAsync(tab.Session.Current.ToArray(), tab.Password);
+        if (!ReferenceEquals(Tab, tab)) return;
         if (hosts.Count == 0)
         {
             Note.Text = Loc.T("The certificates name no servers to ask.");
@@ -252,7 +253,10 @@ public partial class SignaturesSidePanel : ToolPanel
         }
         host.ShowNotice(Loc.T("These servers will be asked"),
             Loc.T("Lazy PDF will contact {0}. Servers named by certificates found on the way may be asked too. The file itself is not sent.", ServerPreview.Describe(hosts)),
-            new NoticeAction(Loc.T("Ask them"), () => _ = BuildAsync(online: true)));
+            new NoticeAction(Loc.T("Ask them"), () =>
+            {
+                if (ReferenceEquals(Tab, tab)) _ = BuildAsync(online: true);
+            }));
     }
 
     private void Tell(string text)
