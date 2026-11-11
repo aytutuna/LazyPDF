@@ -299,6 +299,7 @@ public partial class CombinePanel : ToolPanel
         foreach (string path in paths)
         {
             string name = System.IO.Path.GetFileName(path);
+            string full = System.IO.Path.GetFullPath(path);
             PdfDocument? document;
             if (IsPicture(path))
             {
@@ -306,14 +307,16 @@ public partial class CombinePanel : ToolPanel
                 (document, cancelled) = await ReadPictureAsync(host, path, name);
                 if (cancelled) return false;
             }
-            else document = await SourceFile.OpenAsync(host, path);
+            // A file listed again shares the first copy, so Merge sees one document and carries its attachments once.
+            else document = list.FirstOrDefault(x => x.Document is not null && string.Equals(x.Path, full, StringComparison.OrdinalIgnoreCase))?.Document
+                ?? await SourceFile.OpenAsync(host, path);
             if (document is null) all = false;
             else if (document.Pages.Count == 0)
             {
                 host.ShowNotice(Loc.T("Nothing to add"), Loc.T("{0} has no pages, so it was left out.", name));
                 all = false;
             }
-            else list.Add(new CombineEntry(name, document.Pages.Count, document));
+            else list.Add(new CombineEntry(name, document.Pages.Count, document, IsPicture(path) ? null : full));
         }
         return all;
     }

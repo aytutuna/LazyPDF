@@ -11,16 +11,18 @@ public final class CombineEntry: Identifiable {
     public let id = UUID()
     public let name: String
     public let document: PdfDocument?
+    public let path: String?
 
     /// Pages to take, as typed ("1-3, 5"); empty takes all.
     public var range = ""
 
     public var pages: Int
 
-    public init(_ name: String, _ pages: Int, _ document: PdfDocument?) {
+    public init(_ name: String, _ pages: Int, _ document: PdfDocument?, path: String? = nil) {
         self.name = name
         self.pages = pages
         self.document = document
+        self.path = path
     }
 
     public var detail: String { L10n.plural(pages, one: "{0} page", other: "{0} pages") }

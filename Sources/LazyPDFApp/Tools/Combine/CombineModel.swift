@@ -147,9 +147,13 @@ public final class CombineModel: ToolPanelModel {
         guard let host, let tab else { return }
         for file in files {
             let name = file.url.lastPathComponent
-            guard let document = await SourceFile.open(host, file, asker) else { continue }
+            let path = file.url.standardizedFileURL.path
+            // A file listed again shares the first copy, so merge sees one document and carries its attachments once.
+            let shared = (lists[tab.id]?.entries ?? []).first { $0.path == path }?.document
+            let opened = if let shared { shared } else { await SourceFile.open(host, file, asker) }
+            guard let document = opened else { continue }
             if tab.isDisposed { return }
-            let entry = CombineEntry(name, document.pages.count, document)
+            let entry = CombineEntry(name, document.pages.count, document, path: path)
             let list = (lists[tab.id]?.entries ?? []) + [entry]
             lists[tab.id] = Held(tab: tab, entries: list)
             if self.tab === tab { entries = list }

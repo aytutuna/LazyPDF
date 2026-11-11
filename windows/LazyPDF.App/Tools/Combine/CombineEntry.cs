@@ -4,7 +4,7 @@ using LazyPDF.Core;
 namespace LazyPDF.App.Tools.Combine;
 
 /// <summary>A file in the list to combine. <see cref="Document"/> is null for the open document, which is read again when the work starts.</summary>
-public sealed class CombineEntry(string name, int pages, PdfDocument? document) : INotifyPropertyChanged
+public sealed class CombineEntry(string name, int pages, PdfDocument? document, string? path = null) : INotifyPropertyChanged
 {
     private int _pages = pages;
     private string _range = "";
@@ -14,6 +14,8 @@ public sealed class CombineEntry(string name, int pages, PdfDocument? document) 
     public string Name { get; } = name;
 
     public PdfDocument? Document { get; } = document;
+
+    public string? Path { get; } = path;
 
     /// <summary>Pages to take, as typed ("1-3, 5"); empty takes all.</summary>
     public string Range
