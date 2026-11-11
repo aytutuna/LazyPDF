@@ -269,7 +269,7 @@
 > decode Fl - x\xda\xf3,Q(O,V(\xc9HUHJ-.Q\xc8OS(\xc9\xccM-\xd6Q\xc8D\xc8\x94\xe7\x17!I\xe9)x\x8ej
 < 497420776173207468652062657374206F662074696D65732C206974207761732074686520776F727374206F662074696D65732E2049
 > decode Fl - x\xda\x03\x00\x00\x00\x00\x01
-< error damaged: A compressed stream does not inflate.
+< 
 > decode Fl - x\x9c
 < error damaged: A compressed stream does not inflate.
 > decode Fl - x
