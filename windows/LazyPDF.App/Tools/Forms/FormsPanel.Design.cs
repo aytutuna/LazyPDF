@@ -70,6 +70,7 @@ public sealed partial class FormsPanel
 
     internal void Reshape(int page, Rect box)
     {
+        if (_selected is null || SelectedField(Form) is null) return;
         var rect = UserRect(page, box);
         int index = _selectedIndex;
         ChangeField(Loc.T("Move form field"), (form, field) => form.Resize(field.Widgets[index], rect));
@@ -220,7 +221,7 @@ public sealed partial class FormsPanel
 
     private void View_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (!Designing || !_canEdit || _working || SelectedField(Form) is null) return;
+        if (!Designing || !_canEdit || _working || SelectedField(Form) is null || _tool?.Dragging == true) return;
         if (Keyboard.FocusedElement is TextBox or ComboBox or PasswordBox) return;
         if (e.Key != Key.Delete || Keyboard.Modifiers != ModifierKeys.None) return;
         Delete_Click(sender, e);

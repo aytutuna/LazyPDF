@@ -33,6 +33,8 @@ internal sealed class FieldTool(FormsPanel panel) : IPagePointerTool
 
     public Cursor? Cursor => Cursors.Cross;
 
+    internal bool Dragging => _drag != Drag.None;
+
     public void Press(PagePointer pointer)
     {
         _page = pointer.Page;
