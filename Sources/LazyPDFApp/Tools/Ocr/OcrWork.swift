@@ -120,6 +120,7 @@ public enum OcrWork {
             parts.append(L10n.plural(result.noWords, one: "No text found on {0} page. Check the language.",
                                      other: "No text found on {0} pages. Check the language."))
             if dropsLayers { parts.append(L10n.t("Text read earlier on those pages was removed. Undo brings it back.")) }
+            parts.append(L10n.t("Pages that are turned sideways cannot be read. Rotate them in Organize pages first."))
         }
         return parts.isEmpty ? nil : parts.joined(separator: " ")
     }

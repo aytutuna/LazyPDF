@@ -164,8 +164,20 @@ final class OcrWorkTests: XCTestCase {
 
         _ = try await OcrWork.makeSearchable(tab, f.vm, recognizer, all())
 
-        XCTAssertEqual(f.vm.message?.text, "No text found on 1 page. Check the language.")
+        XCTAssertEqual(f.vm.message?.text, "No text found on 1 page. Check the language. "
+            + "Pages that are turned sideways cannot be read. Rotate them in Organize pages first.")
         XCTAssertFalse(tab.session.canUndo)
+    }
+
+    func test_theSidewaysSentenceComesLast() async throws {
+        let f = ViewModelFixture(self)
+        let tab = await open(f, pages: 1)
+        _ = try await OcrWork.makeSearchable(tab, f.vm, FakeRecognizer(), all())
+        let empty = FakeRecognizer()
+        empty.words = []
+
+        _ = try await OcrWork.makeSearchable(tab, f.vm, empty, all(.replace))
+        XCTAssertEqual(f.vm.message?.text.hasSuffix("Undo brings it back. Pages that are turned sideways cannot be read. Rotate them in Organize pages first."), true)
     }
 
     func test_nothingToDoIsSaidInTheStatus() async throws {
