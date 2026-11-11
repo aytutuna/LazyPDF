@@ -467,7 +467,7 @@
     </Style>
     <!-- Placeholder over an empty text box (the box shows it while it is empty; see Placeholders). -->
     <Style x:Key="PlaceholderText" TargetType="TextBlock" BasedOn="{StaticResource BodyText}">
-        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         <Setter Property="IsHitTestVisible" Value="False" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Margin" Value="12,0,12,0" />
