@@ -1789,6 +1789,9 @@
   "Close the tool": {
     "tr": "Aracı kapat"
   },
+  "Close the tool to use the find bar.": {
+    "tr": "Arama çubuğunu kullanmak için aracı kapatın."
+  },
   "Cancel": {
     "tr": "İptal"
   },

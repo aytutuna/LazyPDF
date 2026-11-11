@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Threading;
 using LazyPDF.App.Tools;
 using LazyPDF.App.Viewer;
 
@@ -8,9 +10,19 @@ namespace LazyPDF.App.Panels.Search;
 /// <summary>The hits of the find bar's search, with the words around each; a click goes to the hit.</summary>
 public partial class SearchSidePanel : ToolPanel
 {
+    private readonly DispatcherTimer _typing = new() { Interval = TimeSpan.FromMilliseconds(220) };
     private bool _syncing;
+    private bool _following;
 
-    public SearchSidePanel() => InitializeComponent();
+    public SearchSidePanel()
+    {
+        InitializeComponent();
+        _typing.Tick += (_, _) =>
+        {
+            _typing.Stop();
+            Run();
+        };
+    }
 
     protected override void OnAttach()
     {
@@ -22,6 +34,7 @@ public partial class SearchSidePanel : ToolPanel
 
     protected override void OnDetach()
     {
+        _typing.Stop();
         Viewer!.Search.Changed -= Search_Changed;
         Results.ItemsSource = null;
     }
@@ -29,8 +42,15 @@ public partial class SearchSidePanel : ToolPanel
     private void Search_Changed(object? sender, EventArgs e)
     {
         var search = Viewer!.Search;
+        if (!Query.IsKeyboardFocused && Query.Text != search.Query)
+        {
+            _following = true;
+            Query.Text = search.Query;
+            _following = false;
+        }
         Summary.Text = search.Query.Length == 0 ? Loc.T("Search the file to list every match here.")
             : search.BadPattern ? Loc.T("Not a valid pattern")
+            : search.Running && search.Hits.Count > 0 ? Loc.T("{0} found", search.Hits.Count)
             : search.Running ? Loc.T("Searching for {0}", search.Query)
             : search.Hits.Count == 0 ? Loc.T("No results for {0}", search.Query)
             : Loc.Plural(search.Hits.Count, "{0} result for {1}", "{0} results for {1}", search.Hits.Count, search.Query);
@@ -46,9 +66,33 @@ public partial class SearchSidePanel : ToolPanel
         if (!_syncing && Results.SelectedIndex >= 0) Viewer?.Search.Select(Results.SelectedIndex);
     }
 
+    private void Run() => Viewer?.Search.Start(Query.Text, Viewer.Search.Options);
+
+    private void Query_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        QueryHint.Visibility = Query.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        if (_following) return;
+        _typing.Stop();
+        _typing.Start();
+    }
+
+    private void Query_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        if (_typing.IsEnabled)
+        {
+            _typing.Stop();
+            Run();
+        }
+        else if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) Viewer?.Search.Previous();
+        else Viewer?.Search.Next();
+        e.Handled = true;
+    }
+
     // The viewer is out of the tree while a tool holds the stage, so its find bar would open unseen.
     private void Find_Click(object sender, RoutedEventArgs e)
     {
         if (Viewer is { View.IsVisible: true } viewer) viewer.ShowFind();
+        else Host?.SetStatus(Loc.T("Close the tool to use the find bar."));
     }
 }

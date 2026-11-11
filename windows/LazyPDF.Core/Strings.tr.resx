@@ -1060,6 +1060,9 @@
   <data name="Close the tool" xml:space="preserve">
     <value>Aracı kapat</value>
   </data>
+  <data name="Close the tool to use the find bar." xml:space="preserve">
+    <value>Arama çubuğunu kullanmak için aracı kapatın.</value>
+  </data>
   <data name="Close {0}?" xml:space="preserve">
     <value>{0} kapatılsın mı?</value>
   </data>

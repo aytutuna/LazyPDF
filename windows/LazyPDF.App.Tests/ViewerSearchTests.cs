@@ -1,3 +1,9 @@
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Threading;
+using LazyPDF.App.Documents;
+using LazyPDF.App.Panels.Search;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using Xunit;
@@ -5,6 +11,7 @@ using Xunit;
 namespace LazyPDF.App.Tests;
 
 // The search the find bar and the Search panel share, over the text of a file read for the viewer.
+[Collection("Application")]
 public sealed class ViewerSearchTests
 {
     private static byte[] Pages(int count) => Pdfs.Text(count, "The quick brown fox jumps over the lazy dog.");
@@ -226,4 +233,28 @@ public sealed class ViewerSearchTests
         Assert.Empty(search.Hits);
         Assert.False(search.Running);
     }
+
+    [Fact]
+    public Task TypingInThePanelSearchesAndEnterMovesOn() => Sta.Run(async () =>
+    {
+        var ui = Dispatcher.CurrentDispatcher;
+        var bytes = Pages(3);
+        var search = new ViewerSearch(() => TextSource.OpenAsync(bytes, null), () => 0, action => ui.InvokeAsync(action));
+        using var tab = new DocumentTab(PdfEditSession.Open(bytes), new FakeRenderer(), null, "a.pdf", null);
+        var panel = new SearchSidePanel();
+        panel.Attach(tab, FakeViewer.Create(search), new RecordingHost());
+        var window = new Window { Content = panel, Width = 300, Height = 300 };
+        window.Show();
+        var box = (TextBox)panel.FindName("Query");
+
+        box.Text = "fox";
+        await Sta.Until(() => search.Query == "fox" && !search.Running);
+        Assert.Equal(3, search.Hits.Count);
+        var first = search.Current;
+
+        box.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(panel)!, 0, Key.Enter) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
+
+        Assert.NotEqual(first, search.Current);
+        window.Close();
+    });
 }
