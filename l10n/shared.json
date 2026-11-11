@@ -4080,6 +4080,10 @@
     "other": "Added {0} fields.",
     "tr": "Eklenen alan: {0}."
   },
+  "Pasted {0} field.": {
+    "other": "Pasted {0} fields.",
+    "tr": "Yapıştırılan alan: {0}."
+  },
   "Button caption": {
     "tr": "Düğme yazısı"
   },
@@ -4157,6 +4161,12 @@
   },
   "Delete form fields": {
     "tr": "Form alanlarını sil"
+  },
+  "Duplicate form fields": {
+    "tr": "Form alanlarını çoğalt"
+  },
+  "Paste form fields": {
+    "tr": "Form alanlarını yapıştır"
   },
   "Drag on the page to draw it. With a radio group selected the button joins it.": {
     "tr": "Çizmek için sayfada sürükleyin. Bir seçenek grubu seçiliyse düğme gruba katılır."

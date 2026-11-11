@@ -158,6 +158,8 @@ public sealed partial class FormsPanel
         Card.Visibility = field is null || many ? Visibility.Collapsed : Visibility.Visible;
         PickedText.Visibility = ArrangeRow.Visibility = many ? Visibility.Visible : Visibility.Collapsed;
         SpaceAcrossButton.IsEnabled = SpaceDownButton.IsEnabled = _picked.Count > 2;
+        CopyButton.IsEnabled = DuplicateButton.IsEnabled = _picked.Count > 0;
+        PasteButton.IsEnabled = _clip.Count > 0;
         if (many) PickedText.Text = Loc.Plural(_picked.Count, "{0} field selected", "{0} fields selected");
         if (field is null || many) return;
         bool text = field.Kind == FieldKind.Text;
@@ -284,6 +286,9 @@ public sealed partial class FormsPanel
         if (Keyboard.FocusedElement is TextBox or ComboBox or PasswordBox) return;
         if (e.Key == Key.A && Keyboard.Modifiers == ModifierKeys.Control)
             Pick([.. FormEdits.Widgets(Form, Viewer!.PageIndex, BoxOf).Select(w => (w.Name, w.Index, w.Ordinal))]);
+        else if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.Control && _picked.Count > 0) Copy_Click(sender, e);
+        else if (e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.Control && _clip.Count > 0) Paste_Click(sender, e);
+        else if (e.Key == Key.D && Keyboard.Modifiers == ModifierKeys.Control && _picked.Count > 0) Duplicate_Click(sender, e);
         else if (e.Key == Key.Escape && Keyboard.Modifiers == ModifierKeys.None && _picked.Count > 0) Select(null, 0);
         else if (e.Key == Key.Delete && Keyboard.Modifiers == ModifierKeys.None && _picked.Count > 0) Delete_Click(sender, e);
         else return;
@@ -311,6 +316,46 @@ public sealed partial class FormsPanel
             else form.Remove(field);
         })) return;
         Select(null, 0);
+    }
+
+    // Kept here and not on the system clipboard so the fields can go into another file.
+    private static List<FieldSpec> _clip = [];
+    private static int _pasted;
+
+    private bool CopyPicked()
+    {
+        var specs = new List<FieldSpec>();
+        foreach (var (name, index, ordinal) in _picked)
+        {
+            if (Form.FindAll(name).ElementAtOrDefault(ordinal) is not { } field || field.Widgets.ElementAtOrDefault(index) is not { } widget) return false;
+            specs.Add(FormEdits.CopySpec(Form, field, widget));
+        }
+        _clip = specs;
+        _pasted = 0;
+        PasteButton.IsEnabled = true;
+        return true;
+    }
+
+    private void Copy_Click(object sender, RoutedEventArgs e) => CopyPicked();
+
+    private void Paste_Click(object sender, RoutedEventArgs e) => PasteClip(false);
+
+    private void Duplicate_Click(object sender, RoutedEventArgs e)
+    {
+        if (CopyPicked()) PasteClip(true);
+    }
+
+    private void PasteClip(bool duplicate)
+    {
+        if (_clip.Count == 0) return;
+        var specs = _clip;
+        int view = Viewer!.PageIndex;
+        int step = _pasted + 1;
+        var added = Edit(duplicate ? Loc.T("Duplicate form fields") : Loc.T("Paste form fields"), form => FormEdits.Paste(form, specs, view, duplicate, step));
+        if (added is null) return;
+        _pasted = step;
+        Pick([.. added.Select(a => (a.Name, a.Widget, 0))]);
+        Host!.SetStatus(Loc.Plural(added.Count, "Pasted {0} field.", "Pasted {0} fields."));
     }
 
     private bool ChangeField(string label, Action<PdfForm, FormField> edit)

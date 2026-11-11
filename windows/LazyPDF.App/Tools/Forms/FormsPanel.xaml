@@ -145,6 +145,15 @@
                 </UniformGrid>
             </StackPanel>
 
+            <UniformGrid Rows="1" Margin="0,0,0,12">
+                <Button x:Name="CopyButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8C8;" Margin="0,0,4,0"
+                        ToolTip="{loc:T Copy (Ctrl+C)}" Content="{loc:T Copy}" AutomationProperties.Name="{loc:T Copy}" Click="Copy_Click" />
+                <Button x:Name="PasteButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE77F;" Margin="0,0,4,0"
+                        ToolTip="{loc:T Paste (Ctrl+V)}" Content="{loc:T Paste}" AutomationProperties.Name="{loc:T Paste}" Click="Paste_Click" />
+                <Button x:Name="DuplicateButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE923;"
+                        ToolTip="{loc:T Duplicate (Ctrl+D)}" Content="{loc:T Duplicate}" AutomationProperties.Name="{loc:T Duplicate}" Click="Duplicate_Click" />
+            </UniformGrid>
+
             <TextBlock Text="{loc:T Tab order on this page}" Style="{StaticResource FieldLabelText}" />
             <ComboBox x:Name="TabBox" HorizontalAlignment="Stretch" SelectionChanged="TabBox_SelectionChanged" AutomationProperties.Name="{loc:T Tab order on this page}" />
 

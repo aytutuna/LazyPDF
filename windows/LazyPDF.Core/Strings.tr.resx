@@ -1771,6 +1771,9 @@
   <data name="Duplicate (Ctrl+D)" xml:space="preserve">
     <value>Çoğalt (Ctrl+D)</value>
   </data>
+  <data name="Duplicate form fields" xml:space="preserve">
+    <value>Form alanlarını çoğalt</value>
+  </data>
   <data name="Duplicate pages" xml:space="preserve">
     <value>Sayfaları çoğalt</value>
   </data>
@@ -4075,8 +4078,14 @@
   <data name="Paste (Ctrl+V)" xml:space="preserve">
     <value>Yapıştır (Ctrl+V)</value>
   </data>
+  <data name="Paste form fields" xml:space="preserve">
+    <value>Form alanlarını yapıştır</value>
+  </data>
   <data name="Paste pages" xml:space="preserve">
     <value>Sayfaları yapıştır</value>
+  </data>
+  <data name="Pasted {0} field.|plural" xml:space="preserve">
+    <value>Yapıştırılan alan: {0}.</value>
   </data>
   <data name="Patterns, one per line" xml:space="preserve">
     <value>Desenler, her satıra bir tane</value>

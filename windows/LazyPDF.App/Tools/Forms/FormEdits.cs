@@ -190,6 +190,65 @@ internal static class FormEdits
         return added;
     }
 
+    /// <summary>What it takes to make the widget again: the field's settings and the look the widget itself carries.</summary>
+    public static FieldSpec CopySpec(PdfForm form, FormField field, FormWidget widget)
+    {
+        var document = form.Document;
+        var look = form.GetTextLook(field);
+        var mk = document.Dict(widget.Dictionary, "MK");
+        var bs = document.Dict(widget.Dictionary, "BS");
+        double[]? Colour(string key) => document.Array(mk, key) is { Items.Count: 1 or 3 or 4 } array
+            ? [.. array.Items.Select(i => (document.Resolve(i) as PdfNumber)?.Value ?? 0)] : null;
+        return new FieldSpec(field.Kind, field.Name, widget.PageIndex, widget.Rect)
+        {
+            DefaultValue = field.DefaultValue,
+            Options = field.Options,
+            Flags = field.Flags,
+            MaxLength = field.MaxLength,
+            Tooltip = field.Tooltip,
+            Font = look.Font,
+            FontSize = look.Size,
+            TextColor = look.Color,
+            BorderColor = Colour("BC"),
+            Background = Colour("BG"),
+            BorderWidth = document.Number(bs, "W") ?? 1,
+            BorderStyle = document.Name(bs, "S") switch { "D" => BorderStyle.Dashed, "B" => BorderStyle.Beveled, "I" => BorderStyle.Inset, "U" => BorderStyle.Underline, _ => BorderStyle.Solid },
+            Alignment = field.Alignment,
+            Caption = CaptionOf(form, field) is { Length: > 0 } caption ? caption : null,
+            ExportValue = field.Kind is FieldKind.CheckBox or FieldKind.Radio ? widget.Export : null,
+        };
+    }
+
+    /// <summary>
+    /// Adds the copies 12 points right and down for each step, kept on the page. They go on their own page when
+    /// <paramref name="ownPage"/> is set and the file has it, else on <paramref name="view"/>. A radio button joins
+    /// the group of its name. Returns the name and widget index of each.
+    /// </summary>
+    public static List<(string Name, int Widget)> Paste(PdfForm form, IEnumerable<FieldSpec> specs, int view, bool ownPage, int step)
+    {
+        var added = new List<(string, int)>();
+        foreach (var spec in specs)
+        {
+            int page = ownPage && spec.PageIndex < form.Document.Pages.Count ? spec.PageIndex : view;
+            var crop = form.Document.Pages[page].CropBox;
+            var r = spec.Rect;
+            double left = Math.Clamp(r.Left + 12 * step, crop.Left, Math.Max(crop.Left, crop.Right - (r.Right - r.Left)));
+            double bottom = Math.Clamp(r.Bottom - 12 * step, crop.Bottom, Math.Max(crop.Bottom, crop.Top - (r.Top - r.Bottom)));
+            var rect = new PdfRect(left, bottom, left + (r.Right - r.Left), bottom + (r.Top - r.Bottom));
+            if (spec.Kind == FieldKind.Radio && form.Find(spec.Name) is { Kind: FieldKind.Radio } group)
+            {
+                form.AddWidget(group, page, rect);
+                added.Add((group.Name, form.Find(group.Name)!.Widgets.Count - 1));
+                continue;
+            }
+            string stem = spec.Name.Replace('.', '_');
+            string name = Taken(form, spec.Name) ? stem : spec.Name;
+            for (int n = 2; Taken(form, name); n++) name = stem + "_" + n;
+            added.Add((form.AddField(spec with { Name = name, PageIndex = page, Rect = rect, Rotation = PageRotation(form, page) }).Name, 0));
+        }
+        return added;
+    }
+
     // A widget is drawn along the page as the person sees it, so a turned page turns the widget the same way.
     private static int PageRotation(PdfForm form, int page) => (form.Document.Pages[page].Rotate % 360 + 360) % 360;
 

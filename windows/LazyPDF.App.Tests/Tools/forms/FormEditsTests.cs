@@ -539,6 +539,81 @@ public sealed class FormEditsTests
     }
 
     [Fact]
+    public void DuplicatingATextFieldKeepsItsLookUnderANewName()
+    {
+        using var tab = FormPdfs.Tab();
+        FormEdits.Apply(tab, Fonts, "Add", form =>
+        {
+            var spec = new FieldSpec(FieldKind.Text, "note", 0, new PdfRect(60, 300, 200, 320))
+            {
+                Flags = FieldFlags.Required | FieldFlags.Multiline, Tooltip = "Say more", FontSize = 11, BorderColor = [1, 0, 0], Background = [1, 1, 0.5], BorderWidth = 2,
+            };
+            form.AddField(spec);
+            return true;
+        });
+
+        var added = FormEdits.Apply(tab, Fonts, "Duplicate form fields", form =>
+        {
+            var field = form.Find("note")!;
+            return FormEdits.Paste(form, [FormEdits.CopySpec(form, field, field.Widgets[0])], 0, true, 1);
+        });
+
+        var read = FormPdfs.Read(tab);
+        var copy = read.Find("note_2")!;
+        Assert.Equal([("note_2", 0)], added);
+        Assert.Equal(read.Find("note")!.Flags, copy.Flags);
+        Assert.Equal("Say more", copy.Tooltip);
+        Assert.Equal(11, read.GetTextLook(copy).Size);
+        var spec = FormEdits.CopySpec(read, copy, copy.Widgets[0]);
+        Assert.Equal([1, 0, 0], spec.BorderColor!);
+        Assert.Equal([1, 1, 0.5], spec.Background!);
+        Assert.Equal(2, spec.BorderWidth);
+        var old = read.Find("note")!.Widgets[0].Rect;
+        Assert.Equal(old.Left + 12, copy.Widgets[0].Rect.Left, 3);
+        Assert.Equal(old.Bottom - 12, copy.Widgets[0].Rect.Bottom, 3);
+        Assert.Equal(old.Right - old.Left, copy.Widgets[0].Rect.Right - copy.Widgets[0].Rect.Left, 3);
+        Assert.Equal("Duplicate form fields", tab.Session.UndoLabel);
+        tab.Undo();
+        Assert.Null(FormPdfs.Read(tab).Find("note_2"));
+        Assert.NotNull(FormPdfs.Read(tab).Find("note"));
+    }
+
+    [Fact]
+    public void ACopiedRadioButtonJoinsItsGroup()
+    {
+        using var tab = FormPdfs.Tab();
+
+        FormEdits.Apply(tab, Fonts, "Paste form fields", form =>
+        {
+            var plan = form.Find("plan")!;
+            return FormEdits.Paste(form, [FormEdits.CopySpec(form, plan, plan.Widgets[0])], 0, false, 1);
+        });
+
+        var read = FormPdfs.Read(tab);
+        Assert.Equal(3, read.Find("plan")!.Widgets.Count);
+        Assert.Null(read.Find("plan_2"));
+    }
+
+    [Fact]
+    public void PastingAgainStepsFurtherAndStaysOnThePage()
+    {
+        using var tab = FormPdfs.Tab();
+        var form = FormPdfs.Read(tab);
+        var specs = new[] { FormEdits.CopySpec(form, form.Find("code")!, form.Find("code")!.Widgets[0]) };
+
+        FormEdits.Apply(tab, Fonts, "Paste form fields", f => FormEdits.Paste(f, specs, 1, false, 2));
+        FormEdits.Apply(tab, Fonts, "Paste form fields", f => FormEdits.Paste(f, specs, 1, false, 100000));
+
+        var read = FormPdfs.Read(tab);
+        var first = read.Find("code_2")!.Widgets[0];
+        Assert.Equal(1, first.PageIndex);
+        Assert.Equal(specs[0].Rect.Left + 24, first.Rect.Left, 3);
+        var crop = read.Document.Pages[1].CropBox;
+        Assert.Equal(crop.Right, read.Find("code_3")!.Widgets[0].Rect.Right, 3);
+        Assert.Equal(crop.Bottom, read.Find("code_3")!.Widgets[0].Rect.Bottom, 3);
+    }
+
+    [Fact]
     public void ChangingFieldsNeedsPermissionToModifyTheFile()
     {
         using var tab = FormPdfs.Tab();
