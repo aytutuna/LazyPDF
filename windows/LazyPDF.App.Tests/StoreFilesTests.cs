@@ -37,6 +37,22 @@ public sealed class StoreFilesTests
     }
 
     [Fact]
+    public void TheWindowPlacementIsReadBackAsWritten()
+    {
+        using var dir = new TempDir();
+        AppPreferencesStore.Update(p => p.Window = new WindowPlacement { Left = -20, Top = 30, Width = 900, Height = 600, Maximized = true }, dir.Path);
+
+        var window = AppPreferencesStore.Load(dir.Path).Window;
+
+        Assert.NotNull(window);
+        Assert.Equal(-20, window.Left);
+        Assert.Equal(30, window.Top);
+        Assert.Equal(900, window.Width);
+        Assert.Equal(600, window.Height);
+        Assert.True(window.Maximized);
+    }
+
+    [Fact]
     public void NoFileGivesTheDefaults()
     {
         using var dir = new TempDir();

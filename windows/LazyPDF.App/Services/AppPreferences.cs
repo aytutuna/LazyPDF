@@ -31,6 +31,19 @@ public sealed class AppPreferences
 
     /// <summary>Whether pages run on in one scroll rather than one at a time.</summary>
     public bool Continuous { get; set; } = true;
+
+    /// <summary>Where the main window was left; null until it has been closed once.</summary>
+    public WindowPlacement? Window { get; set; }
+}
+
+/// <summary>The main window's normal bounds in device-independent pixels, and whether it was maximised.</summary>
+public sealed class WindowPlacement
+{
+    public double Left { get; set; }
+    public double Top { get; set; }
+    public double Width { get; set; }
+    public double Height { get; set; }
+    public bool Maximized { get; set; }
 }
 
 /// <summary>preferences.json in %APPDATA%\Lazy PDF, read and written by the rules of Lazy Scan's settings files.</summary>

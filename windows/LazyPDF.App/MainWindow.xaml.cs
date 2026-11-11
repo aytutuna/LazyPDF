@@ -48,6 +48,49 @@ public partial class MainWindow : Window
         Loaded += Window_Loaded;
     }
 
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        var work = SystemParameters.WorkArea;
+        var saved = AppPreferencesStore.Load().Window;
+        Rect bounds = saved is null
+            ? new Rect(0, 0, Math.Min(1200, work.Width), Math.Min(800, work.Height))
+            : new Rect(saved.Left, saved.Top, saved.Width, saved.Height);
+        if (saved is null)
+        {
+            bounds.X = work.X + (work.Width - bounds.Width) / 2;
+            bounds.Y = work.Y + (work.Height - bounds.Height) / 2;
+        }
+        bounds = Fit(bounds, new Rect(SystemParameters.VirtualScreenLeft, SystemParameters.VirtualScreenTop,
+            SystemParameters.VirtualScreenWidth, SystemParameters.VirtualScreenHeight), work);
+        Left = bounds.X;
+        Top = bounds.Y;
+        Width = bounds.Width;
+        Height = bounds.Height;
+        if (saved?.Maximized == true) WindowState = WindowState.Maximized;
+        Closed += (_, _) =>
+        {
+            var normal = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
+            bool maximized = WindowState == WindowState.Maximized;
+            AppPreferencesStore.Update(p => p.Window = new WindowPlacement
+            {
+                Left = normal.X, Top = normal.Y, Width = normal.Width, Height = normal.Height, Maximized = maximized,
+            });
+        };
+    }
+
+    // Sizes below match MinWidth and MinHeight in MainWindow.xaml.
+    internal static Rect Fit(Rect saved, Rect virtualScreen, Rect workArea)
+    {
+        double width = Math.Max(700, Math.Min(saved.Width, workArea.Width));
+        double height = Math.Max(560, Math.Min(saved.Height, workArea.Height));
+        double shown = Math.Min(saved.Right, virtualScreen.Right) - Math.Max(saved.Left, virtualScreen.Left);
+        bool topShown = shown >= 100 && saved.Top >= virtualScreen.Top && saved.Top < virtualScreen.Bottom - 40;
+        if (!topShown)
+            return new Rect(workArea.X + (workArea.Width - width) / 2, workArea.Y + (workArea.Height - height) / 2, width, height);
+        return new Rect(saved.X, saved.Y, width, height);
+    }
+
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => RefreshFromViewModel();
 
     private void ViewModel_ExitRequested(object? sender, EventArgs e) => Close();
