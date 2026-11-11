@@ -18,6 +18,27 @@ public sealed class MeasureMathTests
         Assert.Equal("1 in = 10 ft", scale.Ratio);
     }
 
+    [Theory]
+    [InlineData(1, LengthUnit.Inch, 10, LengthUnit.Foot)]
+    [InlineData(1.5, LengthUnit.Millimetre, 2, LengthUnit.Metre)]
+    [InlineData(2, LengthUnit.Centimetre, 0.25, LengthUnit.Kilometre)]
+    [InlineData(1, LengthUnit.Inch, 3, LengthUnit.Mile)]
+    public void ARatioReadsBackAsTheScaleThatWroteIt(double page, LengthUnit pageUnit, double real, LengthUnit realUnit)
+    {
+        var scale = new MeasureScale(page, pageUnit, real, realUnit);
+
+        Assert.Equal(scale, MeasureScale.TryParse(scale.Ratio));
+    }
+
+    [Theory]
+    [InlineData("garbage")]
+    [InlineData("0 mm = 1 m")]
+    [InlineData("-1 mm = 1 m")]
+    [InlineData("1 mm = -2 m")]
+    [InlineData("1 mm = 2 parsec")]
+    [InlineData("1 mm = 2 m = 3 m")]
+    public void OtherTextIsNotAScale(string text) => Assert.Null(MeasureScale.TryParse(text));
+
     [Fact]
     public void MillimetresOnThePageAreMillimetresInTheWorldByDefault()
     {

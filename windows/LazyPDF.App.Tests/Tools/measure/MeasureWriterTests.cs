@@ -26,6 +26,15 @@ public sealed class MeasureWriterTests
     }
 
     [Fact]
+    public void TheScaleIsFoundAgainInTheFile()
+    {
+        WriteAndReopen(out var document, Line);
+
+        Assert.Equal(Scale, MeasureScale.Find(document));
+        Assert.Null(MeasureScale.Find(PdfDocument.Open(Pdfs.Text())));
+    }
+
+    [Fact]
     public void ADistanceIsALineWithItsScale()
     {
         var all = WriteAndReopen(out var document, Line);

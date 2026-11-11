@@ -27,6 +27,9 @@ public partial class MeasurePanel : ToolPanel
     // Kept per tab, so that measuring in one file and looking at another loses nothing.
     private static readonly ConditionalWeakTable<DocumentTab, List<Pending>> Waiting = [];
 
+    // The scale a person typed for a file; one read from marks in the file is only the start.
+    private static readonly ConditionalWeakTable<DocumentTab, MeasureScale> Scales = [];
+
     private List<Pending> _waiting = [];
     private MeasureTool? _tool;
     private MeasureOverlay? _overlay;
@@ -51,6 +54,7 @@ public partial class MeasurePanel : ToolPanel
     {
         _waiting = Waiting.GetOrCreateValue(Tab!);
         _paused = false;
+        ShowScale(Scales.TryGetValue(Tab!, out var kept) ? kept : MeasureScale.Find(Tab!.Document) ?? MeasureScale.Actual);
         if (PerimeterMode.IsChecked != true && AreaMode.IsChecked != true) DistanceMode.IsChecked = true;
         _tool = new MeasureTool(Viewer!) { Kind = Kind(), Snap = SnapToggle.IsChecked == true };
         _overlay = new MeasureOverlay(Viewer!, _tool);
@@ -117,8 +121,24 @@ public partial class MeasurePanel : ToolPanel
         ScaleProblem.Visibility = good ? Visibility.Collapsed : Visibility.Visible;
         if (!good) return;
         _scale = scale;
+        Scales.AddOrUpdate(Tab!, scale);
         Rebuild();
     }
+
+    private void ShowScale(MeasureScale scale)
+    {
+        _ready = false;
+        PageValue.Text = scale.Page.ToString(CultureInfo.CurrentCulture);
+        RealValue.Text = scale.Real.ToString(CultureInfo.CurrentCulture);
+        SelectUnit(PageUnit, scale.PageUnit);
+        SelectUnit(RealUnit, scale.RealUnit);
+        _scale = scale;
+        _ready = true;
+        ScaleProblem.Visibility = Visibility.Collapsed;
+    }
+
+    private static void SelectUnit(ComboBox box, LengthUnit unit) =>
+        box.SelectedItem = box.Items.Cast<ComboBoxItem>().FirstOrDefault(i => (LengthUnit)i.Tag == unit) ?? box.SelectedItem;
 
     private static LengthUnit UnitOf(ComboBox box) => (LengthUnit)((ComboBoxItem)box.SelectedItem).Tag;
 

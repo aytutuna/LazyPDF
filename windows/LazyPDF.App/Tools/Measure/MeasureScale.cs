@@ -1,4 +1,5 @@
 using System.Globalization;
+using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Measure;
 
@@ -58,6 +59,45 @@ public sealed record MeasureScale(double Page, LengthUnit PageUnit, double Real,
     public string Area(double squarePoints) => Number(squarePoints * PerPoint * PerPoint) + " " + RealUnit.Symbol() + "²";
 
     public string Ratio => string.Create(CultureInfo.InvariantCulture, $"{Page:0.####} {PageUnit.Symbol()} = {Real:0.####} {RealUnit.Symbol()}");
+
+    /// <summary>The scale a <see cref="Ratio"/> text writes; null for any other text.</summary>
+    public static MeasureScale? TryParse(string ratio)
+    {
+        var sides = ratio.Split('=');
+        if (sides.Length != 2 || !Side(sides[0], out double page, out var pageUnit) || !Side(sides[1], out double real, out var realUnit)) return null;
+        var scale = new MeasureScale(page, pageUnit, real, realUnit);
+        return scale.IsValid ? scale : null;
+    }
+
+    /// <summary>The scale of the first measurement already in the file, looking at no more than 200 marks; null when there is none.</summary>
+    public static MeasureScale? Find(PdfDocument document)
+    {
+        int seen = 0;
+        foreach (var page in document.Pages)
+        {
+            foreach (var mark in PdfAnnotations.Read(document, page))
+            {
+                if (++seen > 200) return null;
+                if (document.Dict(mark.Dictionary, "Measure") is { } measure && PdfText.Read(document, measure, "R") is { } ratio && TryParse(ratio) is { } scale) return scale;
+            }
+        }
+        return null;
+    }
+
+    private static bool Side(string text, out double value, out LengthUnit unit)
+    {
+        value = 0;
+        unit = default;
+        var parts = text.Trim().Split(' ');
+        if (parts.Length != 2 || !double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out value)) return false;
+        foreach (var candidate in Enum.GetValues<LengthUnit>())
+        {
+            if (candidate.Symbol() != parts[1]) continue;
+            unit = candidate;
+            return true;
+        }
+        return false;
+    }
 
     private static string Number(double value) => value.ToString(value >= 100 ? "#,0" : "#,0.##", CultureInfo.CurrentCulture);
 }
