@@ -213,10 +213,11 @@ public sealed class ViewerSearch
             if (await sourceTask is { } source)
             {
                 var batch = new List<SearchHit>();
-                // Only the hits nearest the view are kept before it, or a search from a late page builds them all.
+                // The first hits before the view are listed as they come, so Stop keeps them; past that only the ones nearest the view are kept.
                 var early = new Queue<SearchMatch>();
                 int count = 0;
                 int after = 0;
+                int streamed = 0;
                 void Add(SearchMatch match)
                 {
                     batch.Add(new SearchHit(match, Around(source, match, -1), Around(source, match, 1)));
@@ -227,6 +228,12 @@ public sealed class ViewerSearch
                     count++;
                     if (match.Page < start)
                     {
+                        if (streamed < MaxHits)
+                        {
+                            streamed++;
+                            Add(match);
+                            continue;
+                        }
                         if (early.Count >= MaxHits)
                         {
                             early.Dequeue();

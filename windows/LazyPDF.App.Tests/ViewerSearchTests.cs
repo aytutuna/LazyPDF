@@ -396,9 +396,21 @@ public sealed class ViewerSearchTests
         await search.Start("fox", new TextSearchOptions());
 
         Assert.True(search.Capped);
-        Assert.Equal(ViewerSearch.MaxHits + 100, search.Hits.Count);
+        Assert.Equal(2 * ViewerSearch.MaxHits + 100, search.Hits.Count);
         Assert.Equal(2300, search.Hits[search.Current].Page);
         Assert.Equal(2299, search.Hits[search.Current - 1].Page);
+    }
+
+    [Fact]
+    public async Task HitsBeforeTheStartPageAreListedWhileTheSearchStillRuns()
+    {
+        var search = Searching(Pdfs.Text(40, "fox"), startPage: 39);
+        int listed = -1;
+        search.Changed += (_, _) => { if (listed < 0 && search.Running && search.Hits.Count > 0) listed = search.Hits.Count; };
+
+        await search.Start("fox", new TextSearchOptions());
+
+        Assert.True(listed > 0);
     }
 
     [Fact]
