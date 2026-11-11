@@ -123,7 +123,14 @@ public partial class CombinePanel
             if (await host.OpenNewAsync(bytes, name)) opened++;
         }
         if (opened == 0) return;
-        host.SetStatus(opened == parts.Count ? Loc.T("{0} parts opened.", opened) : Loc.T("{0} of {1} parts opened.", opened, parts.Count));
+        if (opened < parts.Count)
+        {
+            // The info bar still says which part failed, so the word on protection goes in the status.
+            string some = Loc.T("{0} of {1} parts opened.", opened, parts.Count);
+            host.SetStatus(tab.Document.IsEncrypted ? some + " " + CopyRules.Unprotected : some);
+            return;
+        }
+        host.SetStatus(Loc.T("{0} parts opened.", opened));
         CopyRules.NoteUnprotected(tab.Document, host);
     }
 
