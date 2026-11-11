@@ -125,6 +125,13 @@ public sealed class RedactJobTests
     public void GoodPatternsAndBlankLinesPass() => Assert.Null(RedactJob.CheckPatterns([@"\d{3}-\d{4}", "", "  ", "ab+"]));
 
     [Fact]
+    public void ALineOfOnlySpacesIsNoTermInEitherMode()
+    {
+        Assert.Equal([@"\d{4}", " a "], RedactJob.Terms("""\d{4}""" + "\r\n \n a \n", true));
+        Assert.Equal(["a", "b"], RedactJob.Terms(" a \n  \n\nb\na", false));
+    }
+
+    [Fact]
     public void ALongLabelIsClippedToOneLine()
     {
         string label = RedactJob.Clip("one\ntwo   three " + new string('x', 80));

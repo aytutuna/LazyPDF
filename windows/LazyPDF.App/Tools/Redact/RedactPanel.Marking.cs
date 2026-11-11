@@ -1,5 +1,6 @@
 // Putting marks on: the drawing tool, the selection and the two kinds of search.
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Input;
 using LazyPDF.Core;
 
@@ -70,6 +71,8 @@ public partial class RedactPanel
     {
         QueryNote.Text = text;
         QueryNote.Visibility = text is null ? Visibility.Collapsed : Visibility.Visible;
+        if (text is null) return;
+        (UIElementAutomationPeer.FromElement(QueryNote) ?? UIElementAutomationPeer.CreatePeerForElement(QueryNote))?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged);
     }
 
     private void QueryBox_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -82,7 +85,7 @@ public partial class RedactPanel
     private async void FindWords_Click(object sender, RoutedEventArgs e)
     {
         bool regex = RegexBox.IsChecked == true;
-        var terms = QueryBox.Text.Split(['\r', '\n'], regex ? StringSplitOptions.RemoveEmptyEntries : StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Distinct(StringComparer.Ordinal).ToList();
+        var terms = RedactJob.Terms(QueryBox.Text, regex);
         if (terms.Count > 200)
         {
             Host!.ShowProblem(new(Loc.T("Too many lines"), Loc.T("Use 200 or fewer words or phrases.")));

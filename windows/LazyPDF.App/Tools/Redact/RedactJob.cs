@@ -80,6 +80,14 @@ public static class RedactJob
         return Gather(document, cache, matches);
     }
 
+    /// <summary>The lines of the search box to run. Patterns keep their spaces, but a line of only spaces is no pattern.</summary>
+    public static List<string> Terms(string text, bool regex)
+    {
+        var lines = text.ReplaceLineEndings("\n").Split('\n');
+        var terms = regex ? lines.Where(l => !string.IsNullOrWhiteSpace(l)) : lines.Select(l => l.Trim()).Where(l => l.Length > 0);
+        return [.. terms.Distinct(StringComparer.Ordinal)];
+    }
+
     /// <summary>What is wrong with the first bad pattern among the lines of the box, or null when all can run. Blank lines are skipped but counted.</summary>
     public static string? CheckPatterns(IReadOnlyList<string> lines)
     {
