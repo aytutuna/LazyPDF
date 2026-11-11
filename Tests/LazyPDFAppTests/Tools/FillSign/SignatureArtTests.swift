@@ -137,6 +137,47 @@ final class SignatureArtTests: XCTestCase {
         }
     }
 
+    private func jpeg(orientation: Int, little: Bool = false) -> [UInt8] {
+        func short(_ v: Int) -> [UInt8] { little ? [UInt8(v & 255), UInt8(v >> 8)] : [UInt8(v >> 8), UInt8(v & 255)] }
+        var tiff: [UInt8] = little ? [0x49, 0x49, 42, 0, 8, 0, 0, 0] : [0x4D, 0x4D, 0, 42, 0, 0, 0, 8]
+        tiff += short(1)
+        tiff += short(0x0112)
+        tiff += short(3)
+        tiff += little ? [1, 0, 0, 0] : [0, 0, 0, 1]
+        tiff += short(orientation)
+        tiff += [0, 0, 0, 0, 0, 0]
+        let body: [UInt8] = [0x45, 0x78, 0x69, 0x66, 0, 0] + tiff
+        let length = body.count + 2
+        return [0xFF, 0xD8, 0xFF, 0xE1, UInt8(length >> 8), UInt8(length & 255)] + body + [0xFF, 0xD9]
+    }
+
+    func test_theOrientationIsReadFromTheExifOfAJpegInEitherByteOrder() {
+        XCTAssertEqual(SignatureArt.exifOrientation(jpeg(orientation: 6)), 6)
+        XCTAssertEqual(SignatureArt.exifOrientation(jpeg(orientation: 8, little: true)), 8)
+        XCTAssertEqual(SignatureArt.exifOrientation(jpeg(orientation: 9)), 8)
+    }
+
+    func test_aFileWithoutExifOrTruncatedIsTheUsualOrientation() {
+        XCTAssertEqual(SignatureArt.exifOrientation([0xFF, 0xD8, 0xFF, 0xD9]), 1)
+        XCTAssertEqual(SignatureArt.exifOrientation([0x89, 0x50, 0x4E, 0x47, 0, 0, 0, 0]), 1)
+        XCTAssertEqual(SignatureArt.exifOrientation(Array(jpeg(orientation: 6).prefix(20))), 1)
+        XCTAssertEqual(SignatureArt.exifOrientation([]), 1)
+    }
+
+    func test_aSidewaysJpegIsTurnedBeforeItIsUsed() throws {
+        final class Codec: ImageCodec {
+            func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+            func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { [PdfRgbaImage(24, 8, [UInt8](repeating: 0, count: 24 * 8 * 4))] }
+            func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [UInt8(image.width), UInt8(image.height)] }
+        }
+
+        XCTAssertEqual(SignatureArt.uprightFile(jpeg(orientation: 6), Codec()), [8, 24])
+        let straight = jpeg(orientation: 1)
+        XCTAssertEqual(SignatureArt.uprightFile(straight, Codec()), straight)
+        let png: [UInt8] = [0x89, 0x50, 0x4E, 0x47, 1, 2, 3]
+        XCTAssertEqual(SignatureArt.uprightFile(png, Codec()), png)
+    }
+
     func test_aMirroredOrientationFlipsTheLeftAndRight() {
         let image = PdfRgbaImage(2, 1, [1, 0, 0, 255, 2, 0, 0, 255])
 

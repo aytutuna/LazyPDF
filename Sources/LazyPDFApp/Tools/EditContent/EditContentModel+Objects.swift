@@ -111,7 +111,8 @@ extension EditContentModel {
     private func readPicture(_ file: ToolFile) -> [UInt8]? {
         defer { file.access?.stop() }
         do {
-            return [UInt8](try Data(contentsOf: file.url))
+            let bytes = [UInt8](try Data(contentsOf: file.url))
+            return host?.imageCodec.map { SignatureArt.uprightFile(bytes, $0) } ?? bytes
         } catch {
             showMessage(L10n.t("{0} could not be read. Check that the file is still there.", file.url.lastPathComponent), caution: true)
             return nil
