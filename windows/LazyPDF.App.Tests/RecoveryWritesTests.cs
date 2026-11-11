@@ -26,6 +26,24 @@ public sealed class RecoveryWritesTests
     }
 
     [Fact]
+    public void TheWrittenFileHoldsTheBytesAndTheNewestWriteWins()
+    {
+        using var dir = new TempDir();
+        var store = new RecoveryStore(dir.Path);
+        var id = Guid.NewGuid();
+        byte[] first = [1, 2, 3];
+        byte[] second = [4, 5, 6, 7];
+
+        store.Write(id, first, new RecoveryMeta { Title = "first" });
+        store.Write(id, second, new RecoveryMeta { Title = "second" });
+        store.Flush();
+
+        var entry = Assert.Single(store.List());
+        Assert.Equal("second", entry.Meta.Title);
+        Assert.Equal(second, File.ReadAllBytes(entry.PdfPath));
+    }
+
+    [Fact]
     public void UndoingBackToTheSavedStateRemovesTheCopy()
     {
         using var dir = new TempDir();

@@ -32,16 +32,17 @@ public sealed class RecoveryStore(string? directory = null)
 {
     private readonly string _directory = directory ?? AppFolders.Recovery;
     private readonly object _gate = new();
-    private readonly Dictionary<Guid, (byte[] Bytes, RecoveryMeta Meta)> _waiting = [];
+    private readonly Dictionary<Guid, (ReadOnlyMemory<byte> Bytes, RecoveryMeta Meta)> _waiting = [];
     private Task _worker = Task.CompletedTask;
     private bool _running;
 
     /// <summary>Queues the bytes to be written; a newer write for the same document replaces one still waiting.</summary>
+    // The bytes are not copied, so the caller must not change the array after handing it over.
     public void Write(Guid id, ReadOnlyMemory<byte> bytes, RecoveryMeta meta)
     {
         lock (_gate)
         {
-            _waiting[id] = (bytes.ToArray(), meta);
+            _waiting[id] = (bytes, meta);
             if (!_running)
             {
                 _running = true;
@@ -128,7 +129,7 @@ public sealed class RecoveryStore(string? directory = null)
         while (true)
         {
             Guid id;
-            (byte[] Bytes, RecoveryMeta Meta) job;
+            (ReadOnlyMemory<byte> Bytes, RecoveryMeta Meta) job;
             lock (_gate)
             {
                 if (_waiting.Count == 0)
@@ -153,10 +154,10 @@ public sealed class RecoveryStore(string? directory = null)
         }
     }
 
-    private static void Replace(string path, byte[] bytes)
+    private static void Replace(string path, ReadOnlyMemory<byte> bytes)
     {
         string temp = path + ".tmp";
-        File.WriteAllBytes(temp, bytes);
+        File.WriteAllBytes(temp, bytes.Span);
         File.Move(temp, path, overwrite: true);
     }
 
