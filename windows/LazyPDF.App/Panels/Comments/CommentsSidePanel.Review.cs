@@ -3,6 +3,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Microsoft.Win32;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Tools;
@@ -62,7 +63,10 @@ public partial class CommentsSidePanel
     private void Reply(DocumentTab tab, IToolHost host, CommentRow row, string text)
     {
         if (!ReferenceEquals(Tab, tab) || MarkWork.Running) return;
-        if (Answer(tab, host, Loc.T("Reply"), () => PdfComments.Reply(tab.Document, row.Comment.Annotation, text, Environment.UserName, DateTimeOffset.Now))) ReplyBox.Clear();
+        if (!Answer(tab, host, Loc.T("Reply"), () => PdfComments.Reply(tab.Document, row.Comment.Annotation, text, Environment.UserName, DateTimeOffset.Now))) return;
+        ReplyBox.Clear();
+        // The card was rebuilt; the new reply sits at the end and only has a place once laid out.
+        Dispatcher.BeginInvoke(TextScroll.ScrollToEnd, DispatcherPriority.Loaded);
     }
 
     private void Status_Changed(object sender, SelectionChangedEventArgs e)
