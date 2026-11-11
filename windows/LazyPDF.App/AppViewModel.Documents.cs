@@ -287,7 +287,12 @@ public sealed partial class AppViewModel
             return false;
         }
         _warnedAboutDisk.Remove(tab);
-        if (tab.Path is { } path) _recentFiles.Add(path);
+        if (tab.Path is { } path)
+        {
+            // A save puts a new file in place, so the index read at open no longer matches.
+            tab.FileId = DocumentOpener.Identity(path);
+            _recentFiles.Add(path);
+        }
         Recent = BuildRecent();
         _message = null;
         SetStatus(Loc.T("Saved {0}.", tab.Title));

@@ -63,12 +63,13 @@ public sealed class DocumentOpener(IImageCodec codec, IFontSource fonts)
                           Hash: bytes.Length <= DocumentTab.HashLimit ? System.Security.Cryptography.SHA256.HashData(bytes) : null);
     }
 
-    private static string? Identity(string path)
+    internal static string? Identity(string path)
     {
         try
         {
             using var handle = File.OpenHandle(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-            return GetFileInformationByHandle(handle, out var info)
+            // Some file systems report an index of 0 for every file, which says nothing.
+            return GetFileInformationByHandle(handle, out var info) && (info.FileIndexHigh | info.FileIndexLow) != 0
                 ? $"{info.VolumeSerialNumber}:{info.FileIndexHigh}:{info.FileIndexLow}"
                 : null;
         }
