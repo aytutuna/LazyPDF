@@ -26,6 +26,7 @@ public partial class PageViewer
     private PointerMode _mode = PointerMode.Select;
     private IPagePointerTool? _tool;
     private Drag _drag;
+    private HwndSource? _hooked;
     private int _dragPage;
     private Point _down, _last;
     private PdfLink? _downLink;
@@ -95,8 +96,17 @@ public partial class PageViewer
         Surface.MouseUp += Surface_MiddleButtonUp;
         Surface.LostMouseCapture += Surface_LostMouseCapture;
         Surface.PreviewMouseWheel += Surface_MouseWheel;
-        Loaded += (_, _) => (PresentationSource.FromVisual(this) as HwndSource)?.AddHook(TiltHook);
-        Unloaded += (_, _) => (PresentationSource.FromVisual(this) as HwndSource)?.RemoveHook(TiltHook);
+        Loaded += (_, _) =>
+        {
+            _hooked?.RemoveHook(TiltHook);
+            _hooked = PresentationSource.FromVisual(this) as HwndSource;
+            _hooked?.AddHook(TiltHook);
+        };
+        Unloaded += (_, _) =>
+        {
+            _hooked?.RemoveHook(TiltHook);
+            _hooked = null;
+        };
         Surface.KeyDown += Surface_KeyDown;
         Surface.ManipulationStarting += (_, e) =>
         {
@@ -351,6 +361,7 @@ public partial class PageViewer
         DragSelection(at);
     }
 
+    // The window procedure must return TRUE for a driver to repeat a held tilt.
     private IntPtr TiltHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         if (msg != 0x020E || !Surface.IsMouseOver || Surface.Layout.PageCount == 0) return IntPtr.Zero;
@@ -358,7 +369,7 @@ public partial class PageViewer
         int lines = SystemParameters.WheelScrollLines;
         Surface.ScrollBy(notches * (lines < 0 ? Surface.Viewport.Width * 0.9 : lines * 24), 0, smooth: false);
         handled = true;
-        return IntPtr.Zero;
+        return new IntPtr(1);
     }
 
     private void Surface_MouseWheel(object sender, MouseWheelEventArgs e)

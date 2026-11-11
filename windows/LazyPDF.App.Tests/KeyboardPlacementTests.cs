@@ -1,5 +1,7 @@
+using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Tools.Certificates;
 using LazyPDF.App.Tools.Pages;
@@ -196,6 +198,36 @@ public sealed class KeyboardPlacementTests
         tool.Release(new PagePointer(0, at, at, false, 0, ModifierKeys.None));
 
         Assert.False(drawn);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheTiltHookLeavesTheMessageAloneWithoutTheMouseOver() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        var hook = typeof(PageViewer).GetMethod("TiltHook", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        object?[] args = [IntPtr.Zero, 0x020E, new IntPtr(120 << 16), IntPtr.Zero, false];
+
+        var result = (IntPtr)hook.Invoke(viewer, args)!;
+
+        Assert.Equal(IntPtr.Zero, result);
+        Assert.False((bool)args[4]!);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task UnloadingDropsTheHookedSource() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        var field = typeof(PageViewer).GetField("_hooked", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        using var source = new HwndSource(new HwndSourceParameters("hook-test"));
+        field.SetValue(viewer, source);
+
+        viewer.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
+
+        Assert.Null(field.GetValue(viewer));
         return Task.CompletedTask;
     });
 }
