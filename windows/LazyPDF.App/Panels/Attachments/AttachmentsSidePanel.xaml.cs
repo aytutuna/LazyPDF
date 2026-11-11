@@ -87,7 +87,7 @@ public partial class AttachmentsSidePanel : ToolPanel
         {
             return PdfAttachments.Extract(Tab!.Document, row.Item);
         }
-        catch (PdfReadException)
+        catch (Exception error) when (error is PdfReadException or InvalidOperationException)
         {
             Tell(Loc.T("This attachment could not be read."));
             return null;
@@ -103,8 +103,13 @@ public partial class AttachmentsSidePanel : ToolPanel
             Tell(Loc.T("This file could run as a program. Save it instead."));
             return;
         }
+        var tab = Tab;
+        // The question stays on the info bar after the panel is detached or the row is undone.
         Host!.ShowNotice(Loc.T("Open this attachment?"), Loc.T("{0} came inside this PDF. Open it only if you trust where the PDF came from.", row.Name),
-            new NoticeAction(Loc.T("Open"), () => OpenCopy(row, name)));
+            new NoticeAction(Loc.T("Open"), () =>
+            {
+                if (ReferenceEquals(Tab, tab)) OpenCopy(row, name);
+            }));
     }
 
     private void OpenCopy(AttachmentRow row, string name)

@@ -6350,7 +6350,7 @@
     <value>{0} bayt</value>
   </data>
   <data name="{0} came inside this PDF. Open it only if you trust where the PDF came from." xml:space="preserve">
-    <value>{0} bu PDF'in içinden çıktı. Yalnızca PDF'in nereden geldiğine güveniyorsanız açın.</value>
+    <value>{0} bu PDF'nin içinde geldi. Yalnızca PDF'nin nereden geldiğine güveniyorsanız açın.</value>
   </data>
   <data name="{0} cannot be repaired. Try an earlier copy of it." xml:space="preserve">
     <value>{0} onarılamıyor. Daha eski bir kopyasını deneyin.</value>
