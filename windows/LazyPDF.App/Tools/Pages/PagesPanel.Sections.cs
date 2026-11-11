@@ -88,7 +88,18 @@ public partial class PagesPanel
 
     private void CropAll_Click(object sender, RoutedEventArgs e) => Refresh();
 
-    private void Crop_BoxChanged(object? sender, EventArgs e) => Refresh();
+    private void Crop_BoxChanged(object? sender, EventArgs e)
+    {
+        if (_crop?.Box is { } box && CropAll.IsChecked != true && Cells.Count > box.Page && !Selected().Contains(box.Page))
+        {
+            _syncing = true;
+            Thumbs.SelectedItems.Clear();
+            Thumbs.SelectedItems.Add(Cells[box.Page]);
+            _syncing = false;
+            Thumbs.ScrollIntoView(Cells[box.Page]);
+        }
+        Refresh();
+    }
 
     private void RefreshHints(IReadOnlyList<int> pages)
     {
