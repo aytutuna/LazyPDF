@@ -95,21 +95,11 @@ public static class PdfLongTermValidation
             chainCertificates = [.. chain.ChainElements.Select(e => X509CertificateLoader.LoadCertificate(e.Certificate.RawData))];
             var last = chainCertificates[^1];
             if (last.SubjectName.RawData.AsSpan().SequenceEqual(last.IssuerName.RawData)) break;
-            X509Certificate2? issuer = null;
-            foreach (string url in CertificateLinks.IssuerUrls(last))
-            {
-                if (transport.Get(url) is { } bytes && Load(bytes) is { } loaded) { issuer = loaded; break; }
-            }
+            var issuer = CertificateLinks.FetchIssuer(last, transport);
             if (issuer is null || pool.Any(c => c.Thumbprint == issuer.Thumbprint)) break;
             pool.Add(issuer);
         }
         return chainCertificates;
-    }
-
-    private static X509Certificate2? Load(byte[] bytes)
-    {
-        try { return X509CertificateLoader.LoadCertificate(bytes); }
-        catch (CryptographicException) { return null; }
     }
 
     private static void Revocation(X509Certificate2 certificate, X509Certificate2 issuer, ISignatureTransport transport, DssWriter dss, DssWriter.Entry entry)

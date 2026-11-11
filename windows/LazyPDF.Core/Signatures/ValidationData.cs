@@ -95,13 +95,14 @@ internal sealed class ValidationData
 }
 
 /// <summary>A certificate chain built for a signature, and whether it can be trusted at a given time.</summary>
-internal sealed record TrustResult(bool Trusted, bool TimeValid, IReadOnlyList<X509Certificate2> Chain);
+internal sealed record TrustResult(bool Trusted, bool TimeValid, IReadOnlyList<X509Certificate2> Chain, bool Partial = false);
 
 internal static class CertificateTrust
 {
     private const X509ChainStatusFlags Harmless = X509ChainStatusFlags.NoError | X509ChainStatusFlags.NotTimeValid
         | X509ChainStatusFlags.RevocationStatusUnknown | X509ChainStatusFlags.OfflineRevocation;
 
+    private const int MaxFetches = 4;
     private const string TimeStamping = "1.3.6.1.5.5.7.3.8";
     private static readonly string[] SigningPurposes =
     [
@@ -115,6 +116,19 @@ internal static class CertificateTrust
     public static TrustResult Evaluate(X509Certificate2 certificate, IEnumerable<X509Certificate2> extra, DateTimeOffset? time, VerifyOptions options, bool timestamp = false)
     {
         var certificates = extra.ToList();
+        var result = Settle(certificate, certificates, time, options);
+        for (int round = 0; round < MaxFetches && !result.Trusted && result.Partial && options.Transport is { } transport; round++)
+        {
+            if (CertificateLinks.FetchIssuer(result.Chain[^1], transport) is not { } issuer
+                || certificates.Any(c => c.Thumbprint == issuer.Thumbprint)) break;
+            certificates.Add(issuer);
+            result = Settle(certificate, certificates, time, options);
+        }
+        return Suits(certificate, timestamp) ? result : result with { Trusted = false };
+    }
+
+    private static TrustResult Settle(X509Certificate2 certificate, List<X509Certificate2> certificates, DateTimeOffset? time, VerifyOptions options)
+    {
         // X509Chain keeps going past an anchor that is not self-signed, so a signer the caller trusts by itself is settled here.
         var at = time ?? DateTimeOffset.UtcNow;
         var result = options.TrustAnchors.Any(a => a.RawData.AsSpan().SequenceEqual(certificate.RawData))
@@ -123,9 +137,9 @@ internal static class CertificateTrust
         if (!result.Trusted && options.UseSystemStore)
         {
             var viaSystem = Build(certificate, [.. certificates, .. options.TrustAnchors], time, [], system: true);
-            if (viaSystem.Trusted) result = viaSystem;
+            result = viaSystem.Trusted ? viaSystem : result with { Partial = result.Partial || viaSystem.Partial };
         }
-        return Suits(certificate, timestamp) ? result : result with { Trusted = false };
+        return result;
     }
 
     // RFC 5280 4.2.1.3 and 4.2.1.12; RFC 3161 2.3 asks a time stamp authority for the one purpose.
@@ -160,6 +174,6 @@ internal static class CertificateTrust
 
         var statuses = chain.ChainStatus.Aggregate(X509ChainStatusFlags.NoError, (all, s) => all | s.Status);
         var elements = chain.ChainElements.Select(e => X509CertificateLoader.LoadCertificate(e.Certificate.RawData)).ToList();
-        return new TrustResult((statuses & ~Harmless) == 0, (statuses & X509ChainStatusFlags.NotTimeValid) == 0, elements);
+        return new TrustResult((statuses & ~Harmless) == 0, (statuses & X509ChainStatusFlags.NotTimeValid) == 0, elements, (statuses & X509ChainStatusFlags.PartialChain) != 0);
     }
 }

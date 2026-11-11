@@ -203,6 +203,9 @@ public sealed record VerifyOptions
     /// <summary>The time used for certificates when a signature carries no time of its own; the caller's clock.</summary>
     public DateTimeOffset? Now { get; init; }
 
+    /// <summary>When given, asked for the certificate of an issuer a chain lacks; without it verifying never downloads.</summary>
+    public ISignatureTransport? Transport { get; init; }
+
     public string? Password { get; init; }
 
     /// <summary>For a file encrypted to recipients: the certificate of one of them, with its private key.</summary>

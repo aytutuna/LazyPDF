@@ -175,6 +175,18 @@ internal static class CertificateLinks
 
     public static IEnumerable<string> IssuerUrls(X509Certificate2 certificate) => AccessUrls(certificate, CaIssuers);
 
+    /// <summary>The first certificate the issuer links of <paramref name="certificate"/> give, or null.</summary>
+    public static X509Certificate2? FetchIssuer(X509Certificate2 certificate, ISignatureTransport transport)
+    {
+        foreach (string url in IssuerUrls(certificate))
+        {
+            if (transport.Get(url) is not { } bytes) continue;
+            try { return X509CertificateLoader.LoadCertificate(bytes); }
+            catch (CryptographicException) { }
+        }
+        return null;
+    }
+
     private static IEnumerable<string> AccessUrls(X509Certificate2 certificate, string method)
     {
         var urls = new List<string>();
