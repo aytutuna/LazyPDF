@@ -3337,6 +3337,9 @@
   <data name="Nothing new to mark." xml:space="preserve">
     <value>İşaretlenecek yeni bir şey yok.</value>
   </data>
+  <data name="Nothing to add" xml:space="preserve">
+    <value>Eklenecek bir şey yok</value>
+  </data>
   <data name="Nothing to change." xml:space="preserve">
     <value>Değiştirilecek bir şey yok.</value>
   </data>
@@ -7116,6 +7119,9 @@
   </data>
   <data name="{0} has no comments for the pages of this file." xml:space="preserve">
     <value>{0} dosyasında bu belgenin sayfalarına ait yorum yok.</value>
+  </data>
+  <data name="{0} has no pages, so it was left out." xml:space="preserve">
+    <value>{0} dosyasında sayfa yok, bu yüzden dışarıda bırakıldı.</value>
   </data>
   <data name="{0} has no pages." xml:space="preserve">
     <value>{0} dosyasında sayfa yok.</value>

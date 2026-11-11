@@ -104,7 +104,7 @@ public partial class CombinePanel : ToolPanel
     private async void AddFiles_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFileDialog { Filter = Loc.T("PDF files") + "|*.pdf", Multiselect = true, CheckFileExists = true };
-        if (dialog.ShowDialog() == true) await AddAsync(dialog.FileNames);
+        if (dialog.ShowDialog() == true) await AddAsync(Host, _entries, dialog.FileNames);
     }
 
     private void Panel_DragOver(object sender, DragEventArgs e)
@@ -118,22 +118,27 @@ public partial class CombinePanel : ToolPanel
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
         e.Handled = true;
         var pdfs = paths.Where(p => string.Equals(System.IO.Path.GetExtension(p), ".pdf", StringComparison.OrdinalIgnoreCase)).ToList();
-        bool opened = await AddAsync(pdfs);
+        bool opened = await AddAsync(Host, _entries, pdfs);
         int skipped = paths.Count(p => !pdfs.Contains(p) && !System.IO.Directory.Exists(p));
         if (opened && skipped > 0)
             Host?.ShowNotice(Loc.T("Not a PDF"), Loc.Plural(skipped, "{0} dropped file is not a PDF and was left out.", "{0} dropped files are not PDFs and were left out.", skipped));
     }
 
-    // False when a file could not be opened; its problem is already on screen.
-    private async Task<bool> AddAsync(IEnumerable<string> paths)
+    // False when a file could not be opened or has no pages; what happened is already on screen.
+    internal static async Task<bool> AddAsync(IToolHost? host, ICollection<CombineEntry> list, IEnumerable<string> paths)
     {
-        if (Host is not { } host) return false;
-        var list = _entries;
+        if (host is null) return false;
         bool all = true;
         foreach (string path in paths)
         {
-            if (await SourceFile.OpenAsync(host, path) is { } document) list.Add(new CombineEntry(System.IO.Path.GetFileName(path), document.Pages.Count, document));
-            else all = false;
+            string name = System.IO.Path.GetFileName(path);
+            if (await SourceFile.OpenAsync(host, path) is not { } document) all = false;
+            else if (document.Pages.Count == 0)
+            {
+                host.ShowNotice(Loc.T("Nothing to add"), Loc.T("{0} has no pages, so it was left out.", name));
+                all = false;
+            }
+            else list.Add(new CombineEntry(name, document.Pages.Count, document));
         }
         return all;
     }

@@ -50,12 +50,21 @@ public partial class CombinePanel
         {
             string? bad = null;
             bool checkedAll = false;
-            await host.RunBusyAsync(Loc.T("Checking the files"), token => Task.Run(() =>
+            try
             {
-                using var open = PageEdits.Reopen(tab);
-                bad = FirstUnmergeable(open, sources, token);
-                checkedAll = true;
-            }, token));
+                await host.RunBusyAsync(Loc.T("Checking the files"), token => Task.Run(() =>
+                {
+                    using var open = PageEdits.Reopen(tab);
+                    bad = FirstUnmergeable(open, sources, token);
+                    checkedAll = true;
+                }, token));
+            }
+            catch (Exception again) when (again is PdfReadException or ArgumentException)
+            {
+                // Reopening failed again, so no file can be named.
+                host.ShowProblem(new Problem(Loc.T("Files not combined"), Loc.T("The files could not be put into one. Try fewer pages or files.")));
+                return;
+            }
             if (!checkedAll) return;
             host.ShowProblem(new Problem(Loc.T("Files not combined"), bad is null
                 ? Loc.T("The files could not be put into one. Try fewer pages or files.")
@@ -132,12 +141,7 @@ public partial class CombinePanel
             return;
         }
 
-        string big = "";
-        if (kind == SplitBy.Size)
-        {
-            int over = CombineJob.PartsOver(parts, (long)(amount * CombineJob.MegabyteBytes));
-            if (over > 0) big = Loc.Plural(over, "{0} part is bigger than {1} MB. A single page is too large to fit.", "{0} parts are bigger than {1} MB. A single page is too large to fit.", amount);
-        }
+        string big = kind == SplitBy.Size ? CombineJob.Oversize(parts, amount) : "";
 
         string stem = System.IO.Path.GetFileNameWithoutExtension(tab.Title);
         var named = parts.Select((bytes, i) => (CombineJob.PartName(stem, i, parts.Count), bytes)).ToList();
@@ -179,7 +183,7 @@ public partial class CombinePanel
         return _folder;
     }
 
-    private static void Saved(IToolHost host, string folder, IReadOnlyList<(string Name, byte[] Bytes)> files, bool protectedSource, string extra)
+    internal static void Saved(IToolHost host, string folder, IReadOnlyList<(string Name, byte[] Bytes)> files, bool protectedSource, string extra)
     {
         string first = "";
         try
@@ -196,8 +200,6 @@ public partial class CombinePanel
             host.ShowProblem(Problems.Save(error, System.IO.Path.GetFileName(folder)));
             return;
         }
-        string body = protectedSource ? folder + ". " + CopyRules.Unprotected : folder;
-        if (extra.Length > 0) body += " " + extra;
-        host.ShowNotice(Loc.Plural(files.Count, "{0} file saved", "{0} files saved", files.Count), body, new NoticeAction(Loc.T("Open the first"), () => _ = host.OpenAsync(first)));
+        host.ShowNotice(Loc.Plural(files.Count, "{0} file saved", "{0} files saved", files.Count), CombineJob.FolderNote(folder, protectedSource, extra), new NoticeAction(Loc.T("Open the first"), () => _ = host.OpenAsync(first)));
     }
 }

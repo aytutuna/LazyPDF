@@ -1,4 +1,5 @@
 using System.Globalization;
+using LazyPDF.App.Tools.Pages;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Combine;
@@ -32,10 +33,25 @@ internal static class CombineJob
             .Select(item => item.Destination?.PageIndex ?? (item.Action as GoToAction)?.Destination.PageIndex ?? -1)
             .Where(page => page >= 0 && page < document.Pages.Count)];
 
-    /// <summary>How many parts a split at the bookmarks makes: bookmarks on the same page, or on the first, add none.</summary>
+    /// <summary>How many of the parts are bigger than <paramref name="limit"/> bytes.</summary>
     public static int PartsOver(IEnumerable<byte[]> parts, long limit) => parts.Count(part => part.Length > limit);
 
+    /// <summary>How many parts a split at the bookmarks makes: bookmarks on the same page, or on the first, add none.</summary>
     public static int BookmarkParts(PdfDocument document) => BookmarkStarts(document).Where(page => page != 0).Distinct().Count() + 1;
+
+    public static string Oversize(IReadOnlyList<byte[]> parts, double megabytes)
+    {
+        int over = PartsOver(parts, (long)(megabytes * MegabyteBytes));
+        return over == 0 ? "" : Loc.Plural(over, "{0} part is bigger than {1} MB. A single page is too large to fit.", "{0} parts are bigger than {1} MB. A single page is too large to fit.", megabytes);
+    }
+
+    public static string FolderNote(string folder, bool protectedSource, string extra)
+    {
+        var sentences = new List<string>();
+        if (protectedSource) sentences.Add(CopyRules.Unprotected);
+        if (extra.Length > 0) sentences.Add(extra);
+        return sentences.Count == 0 ? folder : folder + ". " + string.Join(" ", sentences);
+    }
 
     public static string PartName(string stem, int part, int parts) =>
         $"{stem} {(part + 1).ToString("D" + Math.Max(parts.ToString(CultureInfo.InvariantCulture).Length, 1), CultureInfo.InvariantCulture)}.pdf";

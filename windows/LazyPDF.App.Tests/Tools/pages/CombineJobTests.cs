@@ -18,7 +18,9 @@ public sealed class CombineJobTests
 
         public void ShowProblem(Problem problem) => Problems.Add(problem);
 
-        public void ShowNotice(string title, string text, NoticeAction? action = null) { }
+        public List<(string Title, string Text)> Notices { get; } = [];
+
+        public void ShowNotice(string title, string text, NoticeAction? action = null) => Notices.Add((title, text));
 
         public void SetStatus(string sentence) { }
 
@@ -255,5 +257,42 @@ public sealed class CombineJobTests
     {
         var parts = new List<byte[]> { new byte[99], new byte[100], new byte[101], new byte[500] };
         Assert.Equal(2, CombineJob.PartsOver(parts, 100));
+    }
+
+    [Fact]
+    public async Task AFileWithNoPagesIsRefusedAndNotListed()
+    {
+        using var dir = new TempDir();
+        var host = new RecordingHost();
+        string noPages = dir.File("empty.pdf", ExportPdf.NewDocument().SaveRewrite());
+        string good = dir.File("good.pdf", Pdfs.Text(2));
+        var list = new List<CombineEntry>();
+
+        bool all = await CombinePanel.AddAsync(host, list, [noPages, good]);
+
+        Assert.False(all);
+        Assert.Equal(["good.pdf"], list.Select(e => e.Name));
+        Assert.Equal([("Nothing to add", "empty.pdf has no pages, so it was left out.")], host.Notices);
+    }
+
+    [Fact]
+    public void TheFolderNoticeJoinsItsSentencesWithFullStops()
+    {
+        Assert.Equal("out", CombineJob.FolderNote("out", false, ""));
+        Assert.Equal("out. Big.", CombineJob.FolderNote("out", false, "Big."));
+        Assert.Equal("out. " + CopyRules.Unprotected + " Big.", CombineJob.FolderNote("out", true, "Big."));
+    }
+
+    [Fact]
+    public void ASizeSplitWithAnOversizePageSaysSoInTheFolderNotice()
+    {
+        using var dir = new TempDir();
+        var host = new RecordingHost();
+        var parts = new List<byte[]> { new byte[10], new byte[2_000_000], new byte[3_000_000] };
+
+        Directory.CreateDirectory(dir.Path);
+        CombinePanel.Saved(host, dir.Path, [("a.pdf", parts[0])], false, CombineJob.Oversize(parts, 1));
+
+        Assert.Equal(dir.Path + ". 2 parts are bigger than 1 MB. A single page is too large to fit.", host.Notices.Single().Text);
     }
 }

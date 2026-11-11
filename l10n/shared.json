@@ -2453,6 +2453,12 @@
   "{0} has no pages.": {
     "tr": "{0} dosyasında sayfa yok."
   },
+  "Nothing to add": {
+    "tr": "Eklenecek bir şey yok"
+  },
+  "{0} has no pages, so it was left out.": {
+    "tr": "{0} dosyasında sayfa yok, bu yüzden dışarıda bırakıldı."
+  },
   "{0} was changed by another program. Saving now replaces that version with yours.": {
     "tr": "{0} başka bir program tarafından değiştirildi. Şimdi kaydetmek o sürümün yerine sizinkini yazar."
   },
