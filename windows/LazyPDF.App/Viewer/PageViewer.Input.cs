@@ -98,7 +98,7 @@ public partial class PageViewer
         _hidePointer.Tick += (_, _) => HidePointer();
         PreviewMouseMove += (_, _) => ShowPointer();
         Surface.MouseLeftButtonDown += Surface_MouseDown;
-        Surface.PreviewMouseRightButtonDown += (_, _) => Surface.Focus();
+        Surface.PreviewMouseRightButtonDown += (_, _) => { if (!Surface.IsKeyboardFocusWithin) Surface.Focus(); };
         Surface.MouseMove += Surface_MouseMove;
         Surface.MouseLeave += (_, _) => _linkTip.IsOpen = false;
         Surface.MouseLeftButtonUp += Surface_MouseUp;
