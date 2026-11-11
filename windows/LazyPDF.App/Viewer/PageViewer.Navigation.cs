@@ -21,6 +21,7 @@ public partial class PageViewer
         page = Math.Clamp(page, 0, Surface.PageCount - 1);
         if (Surface.TopPlace() is { } from) _history.Jump(from, new PagePoint(page, new Point(0, 0)));
         Surface.GoToPage(page);
+        RefreshBar();
     }
 
     // The next or previous page, or spread when facing pages show.
@@ -43,6 +44,7 @@ public partial class PageViewer
         var to = new Point(place.X, Math.Max(0, place.Y - 12));
         if (Surface.TopPlace() is { } from) _history.Jump(from, new PagePoint(place.PageIndex, to));
         Surface.GoToPage(place.PageIndex, to);
+        RefreshBar();
     }
 
     public void FollowAction(PdfAction? action)
@@ -89,12 +91,20 @@ public partial class PageViewer
 
     public void GoBack()
     {
-        if (Surface.TopPlace() is { } from && _history.Back(from) is { } place) Surface.GoToPage(place.Page, place.Point);
+        if (Surface.TopPlace() is { } from && _history.Back(from) is { } place)
+        {
+            Surface.GoToPage(place.Page, place.Point);
+            RefreshBar();
+        }
     }
 
     public void GoForward()
     {
-        if (Surface.TopPlace() is { } from && _history.Forward(from) is { } place) Surface.GoToPage(place.Page, place.Point);
+        if (Surface.TopPlace() is { } from && _history.Forward(from) is { } place)
+        {
+            Surface.GoToPage(place.Page, place.Point);
+            RefreshBar();
+        }
     }
 
     public void Reveal(int page, Rect area) => Surface.Reveal(page, area);

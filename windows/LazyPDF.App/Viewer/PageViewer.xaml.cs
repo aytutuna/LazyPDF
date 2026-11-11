@@ -229,8 +229,9 @@ public partial class PageViewer : UserControl, IDocumentViewer
         PreviousButton.IsEnabled = open && page > 0;
         NextButton.IsEnabled = open && page < Surface.PageCount - 1;
         bool room = Bar.ActualWidth >= 330;
-        BackButton.Visibility = room && CanGoBack ? Visibility.Visible : Visibility.Collapsed;
-        ForwardButton.Visibility = room && CanGoForward ? Visibility.Visible : Visibility.Collapsed;
+        BackButton.Visibility = ForwardButton.Visibility = room ? Visibility.Visible : Visibility.Collapsed;
+        BackButton.IsEnabled = CanGoBack;
+        ForwardButton.IsEnabled = CanGoForward;
         foreach (var control in new Control[] { PageBox, ZoomBox, ZoomMenuButton, ZoomInButton, ZoomOutButton, FindButton, MoreButton, SelectButton, HandButton }) control.IsEnabled = open;
         SelectButton.IsChecked = open && Mode == PointerMode.Select && PointerTool is null;
         HandButton.IsChecked = open && Mode == PointerMode.Hand && PointerTool is null;
