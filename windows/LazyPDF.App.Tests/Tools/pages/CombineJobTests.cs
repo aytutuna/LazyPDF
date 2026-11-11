@@ -103,6 +103,47 @@ public sealed class CombineJobTests
     }
 
     [Fact]
+    public void SplittingByEachPageMakesOnePagePerPart()
+    {
+        var parts = CombineJob.Split(PdfDocument.Open(Pdfs.Text(4)), SplitBy.EachPage, 0);
+
+        Assert.Equal([1, 1, 1, 1], parts.Select(p => p.Pages.Count));
+    }
+
+    [Fact]
+    public void TypedRangesAreSplitAtSemicolons()
+    {
+        var (ranges, error) = CombineJob.ParseRanges("1-3; 4-6, 9", 10);
+
+        Assert.Null(error);
+        Assert.Equal([[0, 1, 2], [3, 4, 5, 8]], ranges.Select(r => r.ToArray()));
+    }
+
+    [Fact]
+    public void ARangeThatCannotBeReadNamesItself()
+    {
+        using var culture = new CultureScope("en-US");
+
+        var (_, error) = CombineJob.ParseRanges("1-3; x", 10);
+
+        Assert.StartsWith("x: ", error);
+        Assert.Equal("Type at least one range.", CombineJob.ParseRanges(" ; ", 10).Error);
+        Assert.False(CombineJob.TryAmount(SplitBy.Ranges, "", out _, 10));
+        Assert.True(CombineJob.TryAmount(SplitBy.Ranges, "2", out _, 10));
+    }
+
+    [Fact]
+    public void OverlappingRangesShareAPage()
+    {
+        var source = PdfDocument.Open(Pdfs.Text(6));
+        var (ranges, _) = CombineJob.ParseRanges("1-3; 3-5", 6);
+
+        var parts = CombineJob.Split(source, SplitBy.Ranges, 0, ranges: ranges);
+
+        Assert.Equal([3, 3], parts.Select(p => p.Pages.Count));
+    }
+
+    [Fact]
     public void BookmarksThatPointNowhereAreIgnored()
     {
         var source = WithBookmarks(3, 1);

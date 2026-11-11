@@ -77,6 +77,8 @@
                 <ComboBoxItem Content="{loc:T Number of pages}" />
                 <ComboBoxItem Content="{loc:T File size}" />
                 <ComboBoxItem Content="{loc:T Bookmarks}" />
+                <ComboBoxItem Content="{loc:T Each page}" />
+                <ComboBoxItem Content="{loc:T Page ranges}" />
             </ComboBox>
             <StackPanel x:Name="AmountView" Margin="0,0,0,12">
                 <TextBlock x:Name="AmountLabel" Style="{StaticResource FieldLabelText}" />

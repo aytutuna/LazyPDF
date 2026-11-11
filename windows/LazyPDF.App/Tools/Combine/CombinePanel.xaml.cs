@@ -36,7 +36,7 @@ public partial class CombinePanel : ToolPanel
     private SplitBy Kind => (SplitBy)SplitKind.SelectedIndex;
 
     public override ToolAction? Action => Splitting
-        ? new(Loc.T("Split file"), "", () => Tab is { PageCount: > 1 } && CombineJob.TryAmount(Kind, Amount.Text, out _), SplitAsync)
+        ? new(Loc.T("Split file"), "", () => Tab is { PageCount: > 1 } && CombineJob.TryAmount(Kind, Amount.Text, out _, Tab.PageCount), SplitAsync)
         : new(Loc.T("Combine files"), "", () => _entries.Count > 1, CombineAsync);
 
     protected override void OnAttach()
@@ -69,14 +69,20 @@ public partial class CombinePanel : ToolPanel
         SignedRow.Visibility = Tab.Document.IsSigned ? Visibility.Visible : Visibility.Collapsed;
         CombineView.Visibility = Splitting ? Visibility.Collapsed : Visibility.Visible;
         SplitView.Visibility = Splitting ? Visibility.Visible : Visibility.Collapsed;
-        AmountView.Visibility = Kind == SplitBy.Bookmarks ? Visibility.Collapsed : Visibility.Visible;
-        AmountLabel.Text = Kind == SplitBy.Size ? Loc.T("Megabytes per part") : Loc.T("Pages per part");
+        AmountView.Visibility = Kind is SplitBy.Bookmarks or SplitBy.EachPage ? Visibility.Collapsed : Visibility.Visible;
+        AmountLabel.Text = Kind == SplitBy.Size ? Loc.T("Megabytes per part")
+            : Kind == SplitBy.Ranges ? Loc.T("Ranges, one file each") : Loc.T("Pages per part");
         SplitHint.Text = Kind == SplitBy.Bookmarks ? BookmarkHint(Tab.Document)
+            : Kind == SplitBy.Ranges ? RangesHint()
             : Tab.PageCount < 2 ? Loc.T("A file of one page cannot be split.") : "";
         SplitHint.Visibility = SplitHint.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         BookmarkEach.Visibility = _entries.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
         RaiseActionChanged();
     }
+
+    private string RangesHint() => Tab!.PageCount < 2 ? Loc.T("A file of one page cannot be split.")
+        : CombineJob.TryAmount(SplitBy.Ranges, Amount.Text, out _, Tab.PageCount) ? Loc.T("Pages not in a range are left out.")
+        : Loc.T("Separate files with semicolons, for example 1-3; 4-6, 9; 10-12.");
 
     private static string BookmarkHint(PdfDocument document)
     {
@@ -89,11 +95,11 @@ public partial class CombinePanel : ToolPanel
     private void SplitKind_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (Tab is null) return;
-        Amount.Text = Kind == SplitBy.Size ? "5" : "10";
+        Amount.Text = Kind == SplitBy.Size ? "5" : Kind == SplitBy.Ranges ? "" : "10";
         Refresh();
     }
 
-    private void Amount_TextChanged(object sender, TextChangedEventArgs e) => RaiseActionChanged();
+    private void Amount_TextChanged(object sender, TextChangedEventArgs e) => Refresh();
 
     private static CombineEntry Entry(object sender) => (CombineEntry)((FrameworkElement)sender).DataContext;
 

@@ -2150,6 +2150,12 @@
   "Move in": {
     "tr": "İçeri taşı"
   },
+  "Each page": {
+    "tr": "Her sayfa"
+  },
+  "Page ranges": {
+    "tr": "Sayfa aralıkları"
+  },
   "Files carried inside this one.": {
     "tr": "Bu dosyanın içinde taşınan dosyalar."
   },
@@ -4951,6 +4957,9 @@
   "{0}: {1}": {
     "tr": "{0}: {1}"
   },
+  "Type at least one range.": {
+    "tr": "En az bir aralık yazın."
+  },
   "Combining files": {
     "tr": "Dosyalar birleştiriliyor"
   },
@@ -5039,6 +5048,15 @@
   },
   "Pages per part": {
     "tr": "Parça başına sayfa"
+  },
+  "Ranges, one file each": {
+    "tr": "Aralıklar, her biri ayrı dosya"
+  },
+  "Separate files with semicolons, for example 1-3; 4-6, 9; 10-12.": {
+    "tr": "Dosyaları noktalı virgülle ayırın, örneğin 1-3; 4-6, 9; 10-12."
+  },
+  "Pages not in a range are left out.": {
+    "tr": "Hiçbir aralıkta olmayan sayfalar dışarıda bırakılır."
   },
   "A file of one page cannot be split.": {
     "tr": "Tek sayfalık bir dosya bölünemez."

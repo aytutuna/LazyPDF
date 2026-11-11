@@ -4,28 +4,44 @@ using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Combine;
 
-public enum SplitBy { Count, Size, Bookmarks }
+public enum SplitBy { Count, Size, Bookmarks, EachPage, Ranges }
 
 /// <summary>The parts of Combine that do not need a window: how a file is cut, and what the parts are called.</summary>
 internal static class CombineJob
 {
     public const long MegabyteBytes = 1024 * 1024;
 
-    /// <summary>Pages per part, or megabytes per part, as typed; false when it is not a number that makes sense for <paramref name="by"/>.</summary>
-    public static bool TryAmount(SplitBy by, string text, out double amount)
+    /// <summary>Pages per part, or megabytes per part, as typed; false when it is not a number that makes sense for <paramref name="by"/>. Ranges are checked against <paramref name="pageCount"/>.</summary>
+    public static bool TryAmount(SplitBy by, string text, out double amount, int pageCount = 0)
     {
         amount = 0;
-        if (by == SplitBy.Bookmarks) return true;
+        if (by is SplitBy.Bookmarks or SplitBy.EachPage) return true;
+        if (by == SplitBy.Ranges) return ParseRanges(text, pageCount).Error is null;
         if (!double.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out amount)) return false;
         return by == SplitBy.Count ? amount >= 1 && amount == Math.Floor(amount) && amount <= int.MaxValue : amount >= 0.01 && amount <= 100_000;
     }
 
-    public static IReadOnlyList<PdfDocument> Split(PdfDocument source, SplitBy by, double amount, CancellationToken cancel = default) => by switch
+    public static IReadOnlyList<PdfDocument> Split(PdfDocument source, SplitBy by, double amount, CancellationToken cancel = default, IReadOnlyList<IReadOnlyList<int>>? ranges = null) => by switch
     {
         SplitBy.Count => PageAssembly.SplitEvery(source, (int)amount, cancel),
         SplitBy.Size => PageAssembly.SplitBySize(source, (long)(amount * MegabyteBytes), cancel: cancel),
+        SplitBy.EachPage => PageAssembly.SplitEvery(source, 1, cancel),
+        SplitBy.Ranges => PageAssembly.SplitByRanges(source, ranges ?? [], cancel),
         _ => PageAssembly.SplitAt(source, BookmarkStarts(source), cancel),
     };
+
+    /// <summary>The pages of each range typed between semicolons, or the message for the first one that cannot be read.</summary>
+    public static (IReadOnlyList<IReadOnlyList<int>> Ranges, string? Error) ParseRanges(string text, int pageCount)
+    {
+        var ranges = new List<IReadOnlyList<int>>();
+        foreach (string segment in text.Split(';').Select(s => s.Trim()).Where(s => s.Length > 0))
+        {
+            var range = PageRange.Parse(segment, pageCount);
+            if (range.Error is { } error) return ([], Loc.T("{0}: {1}", segment, error.Message));
+            ranges.Add(range.Pages);
+        }
+        return ranges.Count == 0 ? ([], Loc.T("Type at least one range.")) : (ranges, null);
+    }
 
     /// <summary>The pages the top-level bookmarks point at, in the order of the outline.</summary>
     public static IReadOnlyList<int> BookmarkStarts(PdfDocument document) =>

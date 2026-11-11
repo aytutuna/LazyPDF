@@ -108,8 +108,9 @@ public partial class CombinePanel
     {
         var tab = Tab!;
         var host = Host!;
-        if (!CombineJob.TryAmount(Kind, Amount.Text, out double amount)) return;
+        if (!CombineJob.TryAmount(Kind, Amount.Text, out double amount, tab.PageCount)) return;
         var kind = Kind;
+        var ranges = CombineJob.ParseRanges(kind == SplitBy.Ranges ? Amount.Text : "", tab.PageCount).Ranges;
         if (CopyRules.Refused(tab.Document, host)) return;
         if (kind == SplitBy.Bookmarks && CombineJob.BookmarkParts(tab.Document) < 2)
         {
@@ -124,7 +125,7 @@ public partial class CombinePanel
             await host.RunBusyAsync(Loc.T("Splitting file"), token => Task.Run(() =>
             {
                 var saved = new List<byte[]>();
-                foreach (var part in CombineJob.Split(PageEdits.Reopen(tab), kind, amount, token))
+                foreach (var part in CombineJob.Split(PageEdits.Reopen(tab), kind, amount, token, ranges))
                 {
                     token.ThrowIfCancellationRequested();
                     saved.Add(part.SaveRewrite());
@@ -138,7 +139,7 @@ public partial class CombinePanel
             return;
         }
         if (parts is null) return;
-        if (parts.Count < 2)
+        if (parts.Count < 2 && kind != SplitBy.Ranges)
         {
             host.ShowNotice(Loc.T("Nothing to split"), Loc.T("The whole file fits in one part. Use a smaller amount."));
             return;
