@@ -6529,6 +6529,9 @@
   <data name="{0} dpi" xml:space="preserve">
     <value>{0} dpi</value>
   </data>
+  <data name="{0} dropped file is not a PDF and was left out.|plural" xml:space="preserve">
+    <value>Bırakılan {0} dosya PDF değil ve dışarıda bırakıldı.</value>
+  </data>
   <data name="{0} embedded files were given a relationship and a type." xml:space="preserve">
     <value>{0} gömülü dosyaya ilişki ve tür verildi.</value>
   </data>

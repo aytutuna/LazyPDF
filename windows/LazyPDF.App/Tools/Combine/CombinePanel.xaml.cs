@@ -117,7 +117,11 @@ public partial class CombinePanel : ToolPanel
     {
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
         e.Handled = true;
-        await AddAsync(paths.Where(p => string.Equals(System.IO.Path.GetExtension(p), ".pdf", StringComparison.OrdinalIgnoreCase)));
+        var pdfs = paths.Where(p => string.Equals(System.IO.Path.GetExtension(p), ".pdf", StringComparison.OrdinalIgnoreCase)).ToList();
+        await AddAsync(pdfs);
+        int skipped = paths.Length - pdfs.Count;
+        if (skipped > 0)
+            Host?.ShowNotice(Loc.T("Not a PDF"), Loc.Plural(skipped, "{0} dropped file is not a PDF and was left out.", "{0} dropped files are not PDFs and were left out.", skipped));
     }
 
     private async Task AddAsync(IEnumerable<string> paths)
