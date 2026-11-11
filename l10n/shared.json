@@ -1554,6 +1554,12 @@
   "{0} could not be read. Close any program that has it open and try again.": {
     "tr": "{0} okunamadı. Onu açık tutan programları kapatıp yeniden deneyin."
   },
+  "That is a folder": {
+    "tr": "Bu bir klasör"
+  },
+  "{0} is a folder, not a file. Open the files inside it, or use Batch to work on a whole folder.": {
+    "tr": "{0} bir dosya değil, klasör. İçindeki dosyaları açın ya da bir klasörün tamamında çalışmak için Toplu işlem'i kullanın."
+  },
   "Nothing to open": {
     "tr": "Açılacak bir şey yok"
   },

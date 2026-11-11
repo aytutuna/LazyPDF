@@ -101,6 +101,20 @@ public sealed class OpenFlowTests
     }
 
     [Fact]
+    public async Task AFolderIsSaidToBeAFolderAndIsNotRemembered()
+    {
+        using var f = new ViewModelFixture();
+        string folder = f.Dir.Sub("inside");
+        Directory.CreateDirectory(folder);
+
+        await f.Vm.OpenAsync(folder);
+
+        Assert.Empty(f.Vm.Documents);
+        Assert.Empty(f.Vm.Recent);
+        Assert.Equal("That is a folder", f.Vm.Message?.Title);
+    }
+
+    [Fact]
     public async Task AFileThatIsNotThereIsSaidInWordsAndOpensNothing()
     {
         using var f = new ViewModelFixture();

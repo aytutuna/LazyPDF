@@ -19,6 +19,7 @@ public static class Problems
         FileNotFoundException or DirectoryNotFoundException => new(Loc.T("File not found"), Loc.T("{0} is not there any more. It may have been moved or deleted.", name)),
         UnauthorizedAccessException => new(Loc.T("No access"), Loc.T("Windows does not let Lazy PDF read {0}. Check who may open it.", name)),
         IOException => new(Loc.T("File cannot be read"), Loc.T("{0} could not be read. Close any program that has it open and try again.", name)),
+        InvalidDataException { Message: DocumentOpener.IsFolder } => new(Loc.T("That is a folder"), Loc.T("{0} is a folder, not a file. Open the files inside it, or use Batch to work on a whole folder.", name)),
         InvalidDataException => new(Loc.T("Nothing to open"), Loc.T("{0} has no picture Lazy PDF can read.", name)),
         InvalidOperationException => new(Loc.T("Nothing to open"), Loc.T("No font on this computer can draw the text of {0}.", name)),
         _ => new(Loc.T("File cannot be opened"), Loc.T("{0} could not be opened.", name)),

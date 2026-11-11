@@ -30,8 +30,11 @@ public sealed class DocumentOpener(IImageCodec codec, IFontSource fonts)
     /// <summary>What Core says of a file it cannot hold in one array; <see cref="Problems.Open"/> tells it from other unsupported files by this.</summary>
     internal const string TooLarge = "The file is too large.";
 
+    internal const string IsFolder = "The path is a folder.";
+
     public OpenSource Read(string path)
     {
+        if (Directory.Exists(path)) throw new InvalidDataException(IsFolder);
         if (new FileInfo(path).Length > int.MaxValue) throw new PdfReadException(PdfReadProblem.Unsupported, TooLarge);
         var stamp = DiskStamp.Of(path);
         byte[] bytes = File.ReadAllBytes(path);

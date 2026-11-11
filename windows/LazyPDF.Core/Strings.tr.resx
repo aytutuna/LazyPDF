@@ -4966,6 +4966,9 @@
   <data name="That file is too big. Pick a text file under 1 MB." xml:space="preserve">
     <value>Bu dosya çok büyük. 1 MB'den küçük bir metin dosyası seçin.</value>
   </data>
+  <data name="That is a folder" xml:space="preserve">
+    <value>Bu bir klasör</value>
+  </data>
   <data name="That is not the permissions password. Check it and try again." xml:space="preserve">
     <value>Bu izin parolası değil. Kontrol edip yeniden deneyin.</value>
   </data>
@@ -6603,6 +6606,9 @@
   </data>
   <data name="{0} integers beyond 32 bits were cut to the limit." xml:space="preserve">
     <value>32 bit sınırını aşan {0} tamsayı sınıra çekildi.</value>
+  </data>
+  <data name="{0} is a folder, not a file. Open the files inside it, or use Batch to work on a whole folder." xml:space="preserve">
+    <value>{0} bir dosya değil, klasör. İçindeki dosyaları açın ya da bir klasörün tamamında çalışmak için Toplu işlem'i kullanın.</value>
   </data>
   <data name="{0} is encrypted for the holders of certain certificates. Pick the certificate that can open it." xml:space="preserve">
     <value>{0}, belirli sertifikaların sahipleri için şifrelenmiş. Onu açabilen sertifikayı seçin.</value>
