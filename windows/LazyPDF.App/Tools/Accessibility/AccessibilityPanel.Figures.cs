@@ -20,6 +20,7 @@ public partial class AccessibilityPanel
     {
         public Dictionary<int, string> Drafts { get; } = [];
         public IReadOnlyList<FigureRow> Checked { get; set; } = [];
+        public Dictionary<int, string> Written { get; } = [];
         public int Rewrites { get; set; }
     }
 
@@ -110,11 +111,13 @@ public partial class AccessibilityPanel
     {
         if (Selected is not { } row || Tab is not { } tab) return;
         string text = AltBox.Text;
+        bool shown = false;
         await ChangeGate.RunAsync(tab, Host!, Loc.T("Figure description"), () =>
         {
+            shown = Selected?.Key == row.Key;
             if (!ReferenceEquals(tab, Tab) || !WriteAlts(tab, [(row, text)])) return Task.CompletedTask;
             if (_state.Drafts.TryGetValue(row.Key, out var draft) && draft.Trim() == text.Trim()) _state.Drafts.Remove(row.Key);
-            if (Selected?.Key == row.Key) _figureNumber = text.Trim().Length > 0 ? NextBareAfter(row.Number, row.Number) : row.Number;
+            if (shown) _figureNumber = text.Trim().Length > 0 ? NextBareAfter(row.Number, row.Number) : row.Number;
             return Task.CompletedTask;
         });
     }
@@ -147,7 +150,11 @@ public partial class AccessibilityPanel
                 Host!.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The figure is no longer in the file.")));
                 return false;
             }
-            for (int i = 0; i < edits.Count; i++) AccessibilityEdits.SetAlt(tab.Document, tree, found[i]!.Element, edits[i].Text);
+            for (int i = 0; i < edits.Count; i++)
+            {
+                AccessibilityEdits.SetAlt(tab.Document, tree, found[i]!.Element, edits[i].Text);
+                _state.Written[edits[i].Row.Key] = edits[i].Text.Trim();
+            }
             if (tab.Commit(Loc.T("Figure description"))) Host!.SetStatus(Loc.T("Description saved."));
             return true;
         }

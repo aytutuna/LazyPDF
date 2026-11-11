@@ -42,9 +42,11 @@ public partial class AccessibilityPanel
                 foreach (var (key, text) in kept)
                     if (before.FirstOrDefault(f => f.Key == key) is { } old && figures.FirstOrDefault(f => f.Number == old.Number && f.Page == old.Page && f.Alt == old.Alt) is { } now) _state.Drafts[now.Key] = text;
             }
-            // A draft stays while its figure is still there with the description it was typed against.
+            // A draft stays while its figure is still there with the description it was typed against, or the one just saved from here.
             else foreach (int key in _state.Drafts.Keys.ToList())
-                if (figures.FirstOrDefault(f => f.Key == key) is not { } now || before.FirstOrDefault(f => f.Key == key)?.Alt != now.Alt) _state.Drafts.Remove(key);
+                if (figures.FirstOrDefault(f => f.Key == key) is not { } now
+                    || (before.FirstOrDefault(f => f.Key == key)?.Alt != now.Alt && !(_state.Written.TryGetValue(key, out var written) && written == now.Alt))) _state.Drafts.Remove(key);
+            _state.Written.Clear();
             _state.Checked = figures;
         }
         catch (Exception error) when (error is PdfReadException or InvalidOperationException)
