@@ -8,13 +8,13 @@ enum PageCarry {
 
     /// Carries what belongs to the source pages at `sourcePages`, which are the target's pages from `firstNewIndex` on.
     /// `mergeTitle` is set for one source of a merge: its bookmarks go under an item with that title and no labels are written.
-    static func carry(_ source: PdfDocument, _ target: PdfDocument, _ sourcePages: [Int], _ firstNewIndex: Int, _ mergeTitle: String? = nil) throws {
+    static func carry(_ source: PdfDocument, _ target: PdfDocument, _ sourcePages: [Int], _ firstNewIndex: Int, _ mergeTitle: String? = nil, files: Bool = true) throws {
         var newIndex: [Int: Int] = [:]
         for (i, page) in sourcePages.enumerated() where newIndex[page] == nil { newIndex[page] = firstNewIndex + i }
         try bookmarks(source, target, newIndex, mergeTitle)
         if mergeTitle == nil { try labels(source, target, sourcePages) }
         try namedDestinations(source, target, newIndex)
-        for file in PdfAttachments.list(source) where file.pageIndex == nil {
+        for file in PdfAttachments.list(source) where files && file.pageIndex == nil {
             let data: [UInt8]
             do { data = try PdfAttachments.extract(source, file) }
             catch is PdfReadException { target.skippedAttachments += 1; continue }

@@ -23,6 +23,11 @@ public enum PageAssembly {
     /// A document of the pages at these indexes, in this order. Keeps the source's /Info. Throws `CancellationError`
     /// when the task is cancelled.
     public static func extract(_ source: PdfDocument, _ pages: [Int]) throws -> PdfDocument {
+        try extract(source, pages, files: true)
+    }
+
+    // A split keeps the document's attached files in its first part only.
+    private static func extract(_ source: PdfDocument, _ pages: [Int], files: Bool) throws -> PdfDocument {
         if pages.isEmpty { throw PdfReadException.damaged("There are no pages to take.") }
         let target = try blank(source.version)
         let importer = PageImporter(source, target)
@@ -31,7 +36,7 @@ public enum PageAssembly {
         if let info = source.trailer["Info"], source.info != nil { target.trailer["Info"] = try importer.copyValue(info) }
         try PageCarry.catalog(source, target, importer)
         try PageTree.set(target, copies)
-        try PageCarry.carry(source, target, pages, 0)
+        try PageCarry.carry(source, target, pages, 0, files: files)
         if importer.keepTags { try PageCarry.tags(source, target, importer, copies) }
         target.droppedObjects = importer.dropped
         return target
@@ -101,7 +106,7 @@ public enum PageAssembly {
 
     /// One part for each list of pages.
     public static func splitByRanges(_ source: PdfDocument, _ parts: [[Int]]) throws -> [PdfDocument] {
-        try parts.map { try extract(source, $0) }
+        try parts.enumerated().map { try extract(source, $1, files: $0 == 0) }
     }
 
     /// A new part starts at each of these pages (0-based); the first part starts at page 0. Where bookmarks of the top
@@ -124,7 +129,7 @@ public enum PageAssembly {
         let total = source.pages.count
         var fitted: [Int: PdfDocument] = [:]
         func fits(_ start: Int, _ length: Int) throws -> Bool {
-            let candidate = try extract(source, Array(start..<start + length))
+            let candidate = try extract(source, Array(start..<start + length), files: start == 0)
             if try candidate.saveRewrite(options).count > maxBytes { return false }
             fitted[length] = candidate
             return true
@@ -167,7 +172,7 @@ public enum PageAssembly {
                     if try fits(at, mid) { low = mid } else { high = mid }
                 }
             }
-            parts.append(try fitted[low] ?? extract(source, Array(at..<at + low)))
+            parts.append(try fitted[low] ?? extract(source, Array(at..<at + low), files: at == 0))
             at += low
         }
         return parts

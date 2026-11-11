@@ -143,7 +143,7 @@ public class PageCarryTests
         var merged = PageAssembly.Merge([new MergeSource(Fixture(brokenFile: true)), new MergeSource(Fixture(), [5])]);
         Assert.Equal("note.txt=hello", Files(merged));
         Assert.Equal(1, merged.SkippedAttachments);
-        Assert.All(PageAssembly.SplitAt(Fixture(brokenFile: true), [3]), p => Assert.Equal(1, p.SkippedAttachments));
+        Assert.Equal([1, 0], PageAssembly.SplitAt(Fixture(brokenFile: true), [3]).Select(p => p.SkippedAttachments));
     }
 
     [Fact]
@@ -156,6 +156,19 @@ public class PageCarryTests
         Assert.Equal(["1", "2", "3"], PdfPageLabels.Labels(PdfDocument.Open(parts[1].SaveRewrite())));
         Assert.Equal("three>2", Names(parts[0]));
         Assert.Equal("five>1", Names(parts[1]));
-        Assert.All(parts, p => Assert.Equal("note.txt=hello", Files(p)));
+        Assert.Equal(["note.txt=hello", ""], parts.Select(Files));
+    }
+
+    [Fact]
+    public void AttachmentsGoIntoTheFirstPartOfASplitBySizeOnly()
+    {
+        var document = Fixture();
+        long one = PageAssembly.Extract(document, [0]).SaveRewrite().Length;
+        var parts = PageAssembly.SplitBySize(document, one + 200);
+        Assert.True(parts.Count > 1);
+        Assert.Equal("note.txt=hello", Files(parts[0]));
+        Assert.All(parts.Skip(1), p => Assert.Equal("", Files(p)));
+        var byRanges = PageAssembly.SplitByRanges(document, [[0, 1], [2], [3]]);
+        Assert.Equal(["note.txt=hello", "", ""], byRanges.Select(Files));
     }
 }

@@ -11,14 +11,14 @@ internal static class PageCarry
     /// Carries what belongs to the source pages at <paramref name="sourcePages"/>, which are the target's pages from
     /// <paramref name="firstNewIndex"/> on. <paramref name="mergeTitle"/> is set for one source of a merge: its bookmarks go under an item with that title and no labels are written.
     /// </summary>
-    public static void Carry(PdfDocument source, PdfDocument target, IReadOnlyList<int> sourcePages, int firstNewIndex, string? mergeTitle = null)
+    public static void Carry(PdfDocument source, PdfDocument target, IReadOnlyList<int> sourcePages, int firstNewIndex, string? mergeTitle = null, bool files = true)
     {
         var newIndex = new Dictionary<int, int>();
         for (int i = 0; i < sourcePages.Count; i++) newIndex.TryAdd(sourcePages[i], firstNewIndex + i);
         Bookmarks(source, target, newIndex, mergeTitle);
         if (mergeTitle is null) Labels(source, target, sourcePages);
         NamedDestinations(source, target, newIndex);
-        foreach (var file in PdfAttachments.List(source).Where(a => a.PageIndex is null))
+        foreach (var file in files ? PdfAttachments.List(source).Where(a => a.PageIndex is null) : [])
         {
             byte[] data;
             try { data = PdfAttachments.Extract(source, file); }

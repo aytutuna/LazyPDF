@@ -14,7 +14,11 @@ public sealed record MergeSource(PdfDocument Document, IReadOnlyList<int>? Pages
 public static class PageAssembly
 {
     /// <summary>A document of the pages at these indexes, in this order. Keeps the source's /Info. Throws <see cref="OperationCanceledException"/> when <paramref name="cancel"/> is raised.</summary>
-    public static PdfDocument Extract(PdfDocument source, IReadOnlyList<int> pages, CancellationToken cancel = default)
+    public static PdfDocument Extract(PdfDocument source, IReadOnlyList<int> pages, CancellationToken cancel = default) =>
+        Extract(source, pages, true, cancel);
+
+    // A split keeps the document's attached files in its first part only.
+    private static PdfDocument Extract(PdfDocument source, IReadOnlyList<int> pages, bool files, CancellationToken cancel)
     {
         if (pages.Count == 0) throw new ArgumentException("There are no pages to take.", nameof(pages));
         var target = Blank(source.Version);
@@ -23,7 +27,7 @@ public static class PageAssembly
         if (source.Trailer["Info"] is { } info && source.Info is not null) target.Trailer["Info"] = importer.CopyValue(info);
         PageCarry.Catalog(source, target, importer);
         PageTree.Set(target, copies);
-        PageCarry.Carry(source, target, pages, 0);
+        PageCarry.Carry(source, target, pages, 0, files: files);
         if (importer.KeepTags) PageCarry.Tags(source, target, importer, copies);
         target.DroppedObjects = importer.Dropped;
         return target;
@@ -83,7 +87,7 @@ public static class PageAssembly
 
     /// <summary>One part for each list of pages.</summary>
     public static IReadOnlyList<PdfDocument> SplitByRanges(PdfDocument source, IReadOnlyList<IReadOnlyList<int>> parts, CancellationToken cancel = default) =>
-        [.. parts.Select(p => Extract(source, p, cancel))];
+        [.. parts.Select((p, i) => Extract(source, p, i == 0, cancel))];
 
     /// <summary>A new part starts at each of these pages (0-based); the first part starts at page 0. Where bookmarks of the top level point is a good list.</summary>
     public static IReadOnlyList<PdfDocument> SplitAt(PdfDocument source, IEnumerable<int> starts, CancellationToken cancel = default)
@@ -110,7 +114,7 @@ public static class PageAssembly
         var fitted = new Dictionary<(int Start, int Length), PdfDocument>();
         bool Fits(int start, int length)
         {
-            var candidate = Extract(source, [.. Enumerable.Range(start, length)], cancel);
+            var candidate = Extract(source, [.. Enumerable.Range(start, length)], start == 0, cancel);
             if (candidate.SaveRewrite(options, cancel: cancel).Length > maxBytes) return false;
             fitted[(start, length)] = candidate;
             return true;
@@ -150,7 +154,7 @@ public static class PageAssembly
                     else high = mid;
                 }
             }
-            parts.Add(fitted.TryGetValue((at, low), out var part) ? part : Extract(source, [.. Enumerable.Range(at, low)], cancel));
+            parts.Add(fitted.TryGetValue((at, low), out var part) ? part : Extract(source, [.. Enumerable.Range(at, low)], at == 0, cancel));
             at += low;
         }
         return parts;
