@@ -180,7 +180,6 @@ public final class CommentModel: ToolPanelModel {
         settling?.cancel()
         settling = nil
         unsettled = []
-        drawingLook = nil
         field?.finish()
         watch?.stop()
         watch = nil
