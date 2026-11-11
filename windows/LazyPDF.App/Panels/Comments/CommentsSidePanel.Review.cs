@@ -99,6 +99,17 @@ public partial class CommentsSidePanel
         SaveText(tab, host, row, text);
     }
 
+    // Words still being typed go into the file before it is saved, closed or undone; a signed file asks first, so the caller waits.
+    public override bool HandIn()
+    {
+        if (FullText.IsReadOnly || Tab is not { } tab || Host is not { } host || MarkWork.Running || Comments.SelectedItem is not CommentRow row) return true;
+        string text = FullText.Text;
+        if (text == row.Text) return true;
+        if (MarkWork.Cautioned(tab, host, () => SaveText(tab, host, row, text))) return false;
+        SaveText(tab, host, row, text);
+        return true;
+    }
+
     private void SaveText(DocumentTab tab, IToolHost host, CommentRow row, string text)
     {
         if (!ReferenceEquals(Tab, tab) || MarkWork.Running) return;

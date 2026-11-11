@@ -238,7 +238,23 @@ public sealed class CommentsPanelTests
     });
 
     [Fact]
-    public Task EditingANoteDropsItsRichText() => Sta.Run(() =>
+    public Task TypedTextIsHandedInBeforeLeaving() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        f.Marker.Add(MarkTool.Note, 0, [new Point(60, 80)], Red, "check");
+        f.Tab.Commit("Mark");
+        var panel = Open(f, new RecordingHost());
+
+        Click(panel, "EditButton");
+        ((TextBox)panel.FindName("FullText")).Text = "checked";
+
+        Assert.True(panel.HandIn());
+        Assert.Equal("checked", PdfComments.List(f.Document)[0].Text);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task EditingANoteDropsItsRichText()=> Sta.Run(() =>
     {
         using var f = new CommentFixture();
         f.Marker.Add(MarkTool.Note, 0, [new Point(60, 80)], Red, "check");
