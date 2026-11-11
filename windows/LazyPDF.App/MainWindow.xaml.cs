@@ -31,6 +31,7 @@ public partial class MainWindow : Window
     public MainWindow(AppViewModel viewModel, Thumbnails? thumbnails)
     {
         InitializeComponent();
+        JumpLists.Install();
         _vm = viewModel;
         Home.Thumbnails = thumbnails;
         Home.TileChosen += Home_TileChosen;

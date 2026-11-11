@@ -93,6 +93,7 @@ public sealed partial class AppViewModel
                     same.MoveTo(path);
                     _recentFiles.Remove(old);
                     _recentFiles.Add(path);
+                    JumpLists.Note(path);
                     Recent = BuildRecent();
                     ActiveTab = same;
                     ShowNotice(Loc.T("File moved"), Loc.T("{0} was moved. This tab now follows it.", same.Title));
@@ -203,6 +204,7 @@ public sealed partial class AppViewModel
         if (path is not null && pending.Recovery is null && pending.Replacing is null)
         {
             _recentFiles.Add(path);
+            JumpLists.Note(path);
             Recent = BuildRecent();
         }
         if (pending.Replacing is { } was)
@@ -313,6 +315,7 @@ public sealed partial class AppViewModel
             // A save puts a new file in place, so the index read at open no longer matches.
             tab.FileId = DocumentOpener.Identity(path);
             _recentFiles.Add(path);
+            JumpLists.Note(path);
             _recentFiles.RememberView(path, tab.PageIndex, tab.Zoom, (int)tab.Fit);
         }
         Recent = BuildRecent();
