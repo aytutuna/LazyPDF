@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.App.Tools;
+using LazyPDF.App.Tools.Combine;
 using LazyPDF.App.Tools.Comment;
 using LazyPDF.App.Tools.EditContent;
 using LazyPDF.Core;
@@ -68,6 +69,7 @@ public partial class AttachmentsSidePanel : ToolPanel
     private void Build()
     {
         var list = PdfAttachments.List(Tab!.Document);
+        SaveAllButton.IsEnabled = list.Count > 0;
         Files.ItemsSource = list.Select(a => new AttachmentRow(a, a.PageIndex is { } page ? Loc.T("Page {0}", page + 1) : "")).ToList();
         Empty.Visibility = list.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         Note.Visibility = Visibility.Collapsed;
@@ -278,5 +280,57 @@ public partial class AttachmentsSidePanel : ToolPanel
         {
             Tell(Loc.T("The attachment could not be saved. Check the folder and try again."));
         }
+    }
+
+    private async void SaveAll_Click(object sender, RoutedEventArgs e)
+    {
+        if (Tab is not { } tab || Host is not { } host || Files.ItemsSource is not List<AttachmentRow> rows) return;
+        var dialog = new OpenFolderDialog { Title = Loc.T("Choose a folder for the attachments") };
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+        string folder = dialog.FolderName;
+        int saved = 0, unreadable = 0;
+        bool failed = false;
+        await host.RunBusyAsync(Loc.T("Saving attachments"), token => Task.Run(() =>
+        {
+            try
+            {
+                (saved, unreadable) = SaveAllTo(tab.Document, rows, folder, token);
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            {
+                failed = true;
+            }
+        }, token));
+        if (failed) Tell(Loc.T("The attachments could not be saved. Check the folder and try again."));
+        else
+        {
+            Note.Visibility = Visibility.Collapsed;
+            host.SetStatus(Loc.Plural(saved, "{0} attachment saved.", "{0} attachments saved."));
+        }
+        if (unreadable > 0) Tell(Loc.T("{0} could not be read.", unreadable));
+    }
+
+    // An attachment that cannot be read is counted and skipped; nothing in the folder is overwritten.
+    internal static (int Saved, int Unreadable) SaveAllTo(PdfDocument document, IEnumerable<AttachmentRow> rows, string folder, CancellationToken token)
+    {
+        int saved = 0, unreadable = 0;
+        foreach (var row in rows)
+        {
+            token.ThrowIfCancellationRequested();
+            byte[] bytes;
+            try
+            {
+                bytes = PdfAttachments.Extract(document, row.Item);
+            }
+            catch (Exception error) when (error is PdfReadException or InvalidOperationException)
+            {
+                unreadable++;
+                continue;
+            }
+            string name = AttachmentFiles.SafeName(row.Name);
+            File.WriteAllBytes(CombineJob.UniquePath(folder, name.Length > 0 ? name : "attachment"), bytes);
+            saved++;
+        }
+        return (saved, unreadable);
     }
 }

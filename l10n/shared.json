@@ -2126,6 +2126,28 @@
   "The attachment could not be saved. Check the folder and try again.": {
     "tr": "Ek kaydedilemedi. Klasörü denetleyip yeniden deneyin."
   },
+  "Save all": {
+    "tr": "Tümünü kaydet"
+  },
+  "Save all attachments to a folder": {
+    "tr": "Tüm ekleri bir klasöre kaydet"
+  },
+  "Choose a folder for the attachments": {
+    "tr": "Ekler için bir klasör seçin"
+  },
+  "Saving attachments": {
+    "tr": "Ekler kaydediliyor"
+  },
+  "The attachments could not be saved. Check the folder and try again.": {
+    "tr": "Ekler kaydedilemedi. Klasörü denetleyip yeniden deneyin."
+  },
+  "{0} attachment saved.": {
+    "other": "{0} attachments saved.",
+    "tr": "{0} ek kaydedildi."
+  },
+  "{0} could not be read.": {
+    "tr": "{0} ek okunamadı."
+  },
   "This file has no bookmarks.": {
     "tr": "Bu dosyada yer imi yok."
   },

@@ -146,4 +146,26 @@ public sealed class AttachmentsPanelTests
         Assert.Single(PdfAttachments.List(tab.Document));
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public void SaveAllKeepsTwoAttachmentsWithOneName()
+    {
+        var document = PdfEditSession.Open(Pdfs.Text(1)).Document;
+        PdfAttachments.Add(document, "a.txt", Encoding.UTF8.GetBytes("one"));
+        PdfAttachments.Add(document, "a.txt", Encoding.UTF8.GetBytes("two"));
+        var rows = PdfAttachments.List(document).Select(a => new AttachmentRow(a, "")).ToList();
+        string folder = Directory.CreateTempSubdirectory().FullName;
+        try
+        {
+            var (saved, unreadable) = AttachmentsSidePanel.SaveAllTo(document, rows, folder, CancellationToken.None);
+
+            Assert.Equal((2, 0), (saved, unreadable));
+            Assert.Equal("one", File.ReadAllText(Path.Combine(folder, "a.txt")));
+            Assert.Equal("two", File.ReadAllText(Path.Combine(folder, "a (2).txt")));
+        }
+        finally
+        {
+            Directory.Delete(folder, true);
+        }
+    }
 }

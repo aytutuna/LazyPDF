@@ -10,6 +10,8 @@
                     ToolTip="{loc:T Add a file}" AutomationProperties.Name="{loc:T Add a file}" Click="Add_Click" />
             <Button x:Name="DeleteButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE74D;" Margin="6,0,0,0" IsEnabled="False"
                     ToolTip="{loc:T Delete (Del)}" AutomationProperties.Name="{loc:T Delete}" Click="Delete_Click" />
+            <Button x:Name="SaveAllButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE896;" Margin="6,0,0,0" IsEnabled="False"
+                    ToolTip="{loc:T Save all attachments to a folder}" AutomationProperties.Name="{loc:T Save all}" Click="SaveAll_Click" />
         </StackPanel>
         <StackPanel DockPanel.Dock="Bottom" Margin="12,8,12,12">
             <StackPanel Orientation="Horizontal">

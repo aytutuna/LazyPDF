@@ -952,6 +952,9 @@
   <data name="Choose a file" xml:space="preserve">
     <value>Dosya seç</value>
   </data>
+  <data name="Choose a folder for the attachments" xml:space="preserve">
+    <value>Ekler için bir klasör seçin</value>
+  </data>
   <data name="Choose a folder for the pictures" xml:space="preserve">
     <value>Resimler için bir klasör seçin</value>
   </data>
@@ -4276,6 +4279,12 @@
   <data name="Save a summary of the comments" xml:space="preserve">
     <value>Yorumların özetini kaydet</value>
   </data>
+  <data name="Save all" xml:space="preserve">
+    <value>Tümünü kaydet</value>
+  </data>
+  <data name="Save all attachments to a folder" xml:space="preserve">
+    <value>Tüm ekleri bir klasöre kaydet</value>
+  </data>
   <data name="Save anyway" xml:space="preserve">
     <value>Yine de kaydet</value>
   </data>
@@ -4377,6 +4386,9 @@
   </data>
   <data name="Saved." xml:space="preserve">
     <value>Kaydedildi.</value>
+  </data>
+  <data name="Saving attachments" xml:space="preserve">
+    <value>Ekler kaydediliyor</value>
   </data>
   <data name="Scale the content" xml:space="preserve">
     <value>İçeriği ölçekle</value>
@@ -5178,6 +5190,9 @@
   </data>
   <data name="The attachment could not be saved. Check the folder and try again." xml:space="preserve">
     <value>Ek kaydedilemedi. Klasörü denetleyip yeniden deneyin.</value>
+  </data>
+  <data name="The attachments could not be saved. Check the folder and try again." xml:space="preserve">
+    <value>Ekler kaydedilemedi. Klasörü denetleyip yeniden deneyin.</value>
   </data>
   <data name="The blend mode {0} is not one of the standard ones." xml:space="preserve">
     <value>{0} karışım kipi standart kiplerden biri değil.</value>
@@ -6595,6 +6610,9 @@
   <data name="{0} attachment or picture stamp is not in an XFDF file. Export as FDF to keep it.|plural" xml:space="preserve">
     <value>{0} ek veya resimli damga XFDF dosyasında yer almıyor. Korumak için FDF olarak dışa aktarın.</value>
   </data>
+  <data name="{0} attachment saved.|plural" xml:space="preserve">
+    <value>{0} ek kaydedildi.</value>
+  </data>
   <data name="{0} bytes" xml:space="preserve">
     <value>{0} bayt</value>
   </data>
@@ -6642,6 +6660,9 @@
   </data>
   <data name="{0} could not be read as form data. Pick a file that a form export wrote." xml:space="preserve">
     <value>{0} form verisi olarak okunamadı. Bir form dışa aktarımının yazdığı dosyayı seçin.</value>
+  </data>
+  <data name="{0} could not be read." xml:space="preserve">
+    <value>{0} ek okunamadı.</value>
   </data>
   <data name="{0} could not be read. Check that the file is still there." xml:space="preserve">
     <value>{0} okunamadı. Dosyanın yerinde olduğunu kontrol edin.</value>
