@@ -15,7 +15,8 @@
             <TextBlock x:Name="Summary" Style="{StaticResource ReasonText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
         <ListBox x:Name="Results" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Search results}"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" SelectionChanged="Results_SelectionChanged">
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" SelectionChanged="Results_SelectionChanged"
+                 PreviewMouseLeftButtonDown="Results_PreviewMouseDown" PreviewMouseLeftButtonUp="Results_PreviewMouseUp">
             <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
                     <Setter Property="AutomationProperties.Name" Value="{Binding Spoken}" />

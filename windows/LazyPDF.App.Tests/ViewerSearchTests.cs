@@ -83,6 +83,19 @@ public sealed class ViewerSearchTests
     }
 
     [Fact]
+    public async Task SelectingTheCurrentHitMovesTheViewAgain()
+    {
+        var search = Searching(Pages(3));
+        await search.Start("fox", new TextSearchOptions());
+        int moves = 0;
+        search.CurrentChanged += (_, _) => moves++;
+
+        search.Select(search.Current);
+
+        Assert.Equal(1, moves);
+    }
+
+    [Fact]
     public async Task AStepAfterARestartGoesToTheHitAgain()
     {
         var search = Searching(Pages(3));

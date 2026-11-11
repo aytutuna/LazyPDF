@@ -13,6 +13,8 @@ public partial class SearchSidePanel : ToolPanel
     private readonly DispatcherTimer _typing = new() { Interval = TimeSpan.FromMilliseconds(220) };
     private bool _syncing;
     private bool _following;
+    private ListBoxItem? _pressed;
+    private bool _pressedSelected;
 
     public SearchSidePanel()
     {
@@ -64,6 +66,21 @@ public partial class SearchSidePanel : ToolPanel
     private void Results_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!_syncing && Results.SelectedIndex >= 0) Viewer?.Search.Select(Results.SelectedIndex);
+    }
+
+    // Clicking the hit that is already current raises no SelectionChanged, so the click goes to it here.
+    private void Results_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        _pressed = ItemsControl.ContainerFromElement(Results, (DependencyObject)e.OriginalSource) as ListBoxItem;
+        _pressedSelected = _pressed?.IsSelected == true;
+    }
+
+    private void Results_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+    {
+        var item = ItemsControl.ContainerFromElement(Results, (DependencyObject)e.OriginalSource) as ListBoxItem;
+        if (item is not null && item == _pressed && _pressedSelected)
+            Viewer?.Search.Select(Results.ItemContainerGenerator.IndexFromContainer(item));
+        _pressed = null;
     }
 
     private void Run() => Viewer?.Search.Start(Query.Text, Viewer.Search.Options);
