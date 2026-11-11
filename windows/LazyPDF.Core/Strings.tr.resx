@@ -3127,6 +3127,9 @@
   <data name="Odd pages" xml:space="preserve">
     <value>Tek sayfalar</value>
   </data>
+  <data name="Old values are still in the file" xml:space="preserve">
+    <value>Eski değerler hâlâ dosyada</value>
+  </data>
   <data name="Old: {0}" xml:space="preserve">
     <value>Eski: {0}</value>
   </data>
@@ -5124,6 +5127,9 @@
   </data>
   <data name="The document language is set." xml:space="preserve">
     <value>Belgenin dili ayarlı.</value>
+  </data>
+  <data name="The earlier title, author, subject or keywords can still be found in the file's history. Clean for sharing removes them." xml:space="preserve">
+    <value>Önceki başlık, yazar, konu veya anahtar sözcükler dosyanın geçmişinde hâlâ bulunabilir. Paylaşım için temizle bunları kaldırır.</value>
   </data>
   <data name="The embedded font program could not be read." xml:space="preserve">
     <value>Gömülü yazı tipi programı okunamadı.</value>

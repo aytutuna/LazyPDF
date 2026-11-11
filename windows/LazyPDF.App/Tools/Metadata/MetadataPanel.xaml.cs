@@ -23,7 +23,7 @@ public sealed partial class MetadataPanel : ToolPanel
     public MetadataPanel()
     {
         InitializeComponent();
-        _action = new ToolAction(Loc.T("Save properties"), "", () => _changed, RunAsync);
+        _action = new ToolAction(Loc.T("Save properties"), "", () => _changed, () => RunAsync(true));
         ModeBox.ItemsSource = MetadataEdit.Modes.Select(MetadataEdit.ModeName).ToList();
         LayoutBox.ItemsSource = MetadataEdit.Layouts.Select(MetadataEdit.LayoutName).ToList();
         SidesBox.ItemsSource = MetadataEdit.Sides.Select(MetadataEdit.SidesName).ToList();
@@ -44,11 +44,13 @@ public sealed partial class MetadataPanel : ToolPanel
 
     // Typed properties go into the file on Save, on leaving a field and on close, as one undo step each time.
     // A signed file asks first, so there the caller is told to wait and leaving a field does not ask again.
-    public override bool HandIn()
+    public override bool HandIn() => Store(true);
+
+    private bool Store(bool notify)
     {
         if (!_changed || Tab is null) return true;
         bool asks = AsksFirst;
-        _ = RunAsync();
+        _ = RunAsync(notify);
         return !asks;
     }
 
@@ -56,7 +58,7 @@ public sealed partial class MetadataPanel : ToolPanel
 
     private void Fields_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
     {
-        if (e.OriginalSource is TextBox && !AsksFirst) HandIn();
+        if (e.OriginalSource is TextBox && !AsksFirst) Store(false);
     }
 
     private void Tab_Changed(object? sender, EventArgs e) => Load(_changed);
@@ -147,16 +149,21 @@ public sealed partial class MetadataPanel : ToolPanel
         RaiseActionChanged();
     }
 
-    private Task RunAsync()
+    private Task RunAsync(bool notify)
     {
         var tab = Tab!;
         var host = Host!;
         var (metadata, view) = ReadForm();
         bool touch = TouchModifiedBox.IsChecked == true;
+        bool drops = notify && MetadataEdit.DropsText(_metadata, metadata);
         return ChangeGate.RunAsync(tab, host, _action.Text, () =>
         {
             MetadataEdit.Write(tab.Document, metadata, view, touch, DateTimeOffset.Now);
-            if (tab.Commit(Loc.T("Properties"))) host.SetStatus(Loc.T("Properties changed."));
+            if (tab.Commit(Loc.T("Properties")))
+            {
+                host.SetStatus(Loc.T("Properties changed."));
+                if (drops) host.ShowNotice(Loc.T("Old values are still in the file"), Loc.T("The earlier title, author, subject or keywords can still be found in the file's history. Clean for sharing removes them."));
+            }
             return Task.CompletedTask;
         });
     }

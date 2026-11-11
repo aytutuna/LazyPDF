@@ -5780,6 +5780,12 @@
   "Properties changed.": {
     "tr": "Özellikler değişti."
   },
+  "Old values are still in the file": {
+    "tr": "Eski değerler hâlâ dosyada"
+  },
+  "The earlier title, author, subject or keywords can still be found in the file's history. Clean for sharing removes them.": {
+    "tr": "Önceki başlık, yazar, konu veya anahtar sözcükler dosyanın geçmişinde hâlâ bulunabilir. Paylaşım için temizle bunları kaldırır."
+  },
   "Add watermark": {
     "tr": "Filigran ekle"
   },

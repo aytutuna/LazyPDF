@@ -19,6 +19,13 @@ public static class MetadataEdit
         view.Write(document);
     }
 
+    /// <summary>Whether a title, author, subject or keywords text that was there is cleared or changed; the old text stays in the file's history.</summary>
+    public static bool DropsText(DocumentMetadata before, DocumentMetadata after) =>
+        Drops(before.Title, after.Title) || Drops(before.Author, after.Author) ||
+        Drops(before.Subject, after.Subject) || Drops(before.Keywords, after.Keywords);
+
+    private static bool Drops(string? before, string? after) => !string.IsNullOrEmpty(before) && before != after;
+
     public static string ModeName(PageMode mode) => mode switch
     {
         PageMode.UseOutlines => Loc.T("Bookmarks"),
