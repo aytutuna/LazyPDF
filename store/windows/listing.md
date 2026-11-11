@@ -10,13 +10,13 @@ Text for Partner Center. The limits are the Store's: name 100 characters, short 
 
 **Description:**
 
-Lazy PDF opens PDF files and lets you change them. It is free, it works without an internet connection, and it has no account, no ads and no analytics.
+Lazy PDF opens PDF files and lets you change them. It is free, it works without an internet connection, and it has no account, no ads and no analytics. Only two things use the internet, and only when you ask: getting a time stamp for a signature, and adding validation data to a signed file.
 
 Pick a job on the Home tab, or open a file and choose a tool from the strip under the tabs. You can highlight and leave notes, fill in forms, sign with a drawn signature or a certificate, rearrange pages, join and split files, change the words and pictures already on a page, add stamps, watermarks and page numbers, set a password, remove text and pictures for good, take hidden data out before a file goes to someone else, make a file smaller, save it as Word, Excel, PowerPoint, HTML, text or pictures, make scanned pages searchable, compare two files, and check a file for screen readers and PDF/A.
 
 Every change is a step you can undo. While you work, an unsaved copy is kept on your PC, and the app offers it back if it closes by accident.
 
-Lazy PDF is free, and its source is available under PolyForm Noncommercial 1.0.0. It is a sister app of Lazy Scan and Lazy Print: when Lazy Print is installed, Print hands the file to it, and when Lazy Scan is installed, a Scan tile appears on the Home tab.
+Lazy PDF is free, and its source is available under PolyForm Noncommercial 1.0.0. It is a sister app of Lazy Scan and Lazy Print: when Lazy Print is installed, the Print button opens the file in Lazy Print, and when Lazy Scan is installed, a Lazy Scan tile appears on the Home tab.
 
 Lazy PDF is new. If a file does not open or change as it should, write to support@alazy.app.
 
@@ -43,9 +43,9 @@ Lazy PDF is new. If a file does not open or change as it should, write to suppor
 
 **Support contact:** support@alazy.app
 
-**Website:** https://pdf.alazy.app
+**Website:** https://alazy.app/pdf/
 
-**Privacy policy URL:** https://pdf.alazy.app/privacy.html
+**Privacy policy URL:** https://alazy.app/pdf/privacy.html
 
 **Screenshots:** `screenshots/` in this folder, 1920x1080, light. Retake them before submitting, from a neutral folder and with a sample document that has real text on its pages (not a file from `Tests/Fixtures/Documents`), so that no local path or test file name shows. The captions below say what each picture is about.
 
@@ -70,13 +70,13 @@ Lazy PDF is new. If a file does not open or change as it should, write to suppor
 
 **Açıklama:**
 
-Lazy PDF, PDF dosyalarını açar ve değiştirmenizi sağlar. Ücretsizdir, internet bağlantısı olmadan çalışır; hesap, reklam ve analiz yoktur.
+Lazy PDF, PDF dosyalarını açar ve değiştirmenizi sağlar. Ücretsizdir, internet bağlantısı olmadan çalışır; hesap, reklam ve analiz yoktur. İnterneti yalnızca iki şey kullanır, o da siz istediğinizde: bir imza için zaman damgası almak ve imzalı bir dosyaya doğrulama verisi eklemek.
 
 Ana sayfadan bir iş seçin ya da bir dosya açıp sekmelerin altındaki şeritten bir araç seçin. Vurgu yapabilir ve not bırakabilir, form doldurabilir, çizdiğiniz imzayla ya da bir sertifikayla imzalayabilir, sayfaları yeniden düzenleyebilir, dosyaları birleştirip bölebilir, sayfadaki yazıları ve resimleri değiştirebilir, damga, filigran ve sayfa numarası ekleyebilir, parola koyabilir, metin ve resimleri kalıcı olarak silebilir, dosya başkasına gitmeden önce gizli verileri çıkarabilir, dosyayı küçültebilir, Word, Excel, PowerPoint, HTML, metin ya da resim olarak kaydedebilir, taranmış sayfaları aranabilir yapabilir, iki dosyayı karşılaştırabilir ve dosyayı ekran okuyucular ile PDF/A için denetleyebilirsiniz.
 
 Her değişiklik geri alınabilen bir adımdır. Çalışırken kaydedilmemiş bir kopya bilgisayarınızda tutulur; uygulama kazara kapanırsa kopyayı size geri sunar.
 
-Lazy PDF ücretsizdir ve kaynak kodu PolyForm Noncommercial 1.0.0 lisansıyla erişilebilir. Lazy Scan ve Lazy Print uygulamalarının kardeşidir: Lazy Print yüklüyse Yazdır dosyayı ona verir, Lazy Scan yüklüyse Ana sayfada bir Tara kutusu görünür.
+Lazy PDF ücretsizdir ve kaynak kodu PolyForm Noncommercial 1.0.0 lisansıyla erişilebilir. Lazy Scan ve Lazy Print uygulamalarının kardeşidir: Lazy Print yüklüyse Yazdır düğmesi dosyayı Lazy Print'te açar, Lazy Scan yüklüyse Ana sayfada bir Lazy Scan kutusu görünür.
 
 Lazy PDF yenidir. Bir dosya olması gerektiği gibi açılmaz ya da değişmezse support@alazy.app adresine yazın.
 
@@ -103,7 +103,7 @@ Lazy PDF yenidir. Bir dosya olması gerektiği gibi açılmaz ya da değişmezse
 
 **Destek iletişimi:** support@alazy.app
 
-**Gizlilik ilkesi adresi:** https://pdf.alazy.app/privacy.html
+**Gizlilik ilkesi adresi:** https://alazy.app/pdf/privacy.html
 
 **Ekran görüntüsü başlıkları:** 1-home: Ana sayfa: sık yapılan işler ve son açtığınız dosyalar. 2-view: Yanında sayfalarıyla bir belge. 3-protect: Koru: parola koyun, başkalarının neler yapabileceğine karar verin. 3-redact: Karart: metin ve resimleri dosyadan kalıcı olarak silin. 3-optimize: Küçült: yerin nereye gittiğini görün. 4-settings: Ayarlar: açık, koyu ya da Windows'u izle. 5-about: Hakkında: sürüm, bağlantılar ve üçüncü taraf bildirimleri. 6-password: Kilitli bir dosya parolasını ister.
 
