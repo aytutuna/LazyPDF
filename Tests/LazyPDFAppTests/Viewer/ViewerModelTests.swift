@@ -791,7 +791,7 @@ final class ViewerModelTests: XCTestCase {
         viewer.pointerDown(at, clicks: 2, touch: true)
         viewer.pointerUp(at)
 
-        XCTAssertTrue(viewer.hasSelection)
+        await waitFor { viewer.hasSelection }
     }
 
     func test_findSeedsItselfFromAWordSelectedOnOnePage() async throws {
