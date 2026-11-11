@@ -112,14 +112,10 @@ public partial class MainWindow
             _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("Windows cannot draw the pages of {0}, so it would come out blank. Install Lazy Print or print it from another program.", tab.Title)));
             return;
         }
-        var dialog = new PrintDialog { UserPageRangeEnabled = true, MinPage = 1, MaxPage = (uint)tab.PageCount };
+        var dialog = new PrintDialog { UserPageRangeEnabled = true, CurrentPageEnabled = true, MinPage = 1, MaxPage = (uint)tab.PageCount };
         if (dialog.ShowDialog() != true) return;
-        List<int>? pages = null;
-        if (dialog.PageRangeSelection == PageRangeSelection.UserPages)
-        {
-            int from = Math.Clamp(dialog.PageRange.PageFrom, 1, tab.PageCount), to = Math.Clamp(dialog.PageRange.PageTo, 1, tab.PageCount);
-            pages = [.. Enumerable.Range(from - 1, Math.Max(0, to - from + 1))];
-        }
+        var pages = PagePaginator.PagesFor(dialog.PageRangeSelection, dialog.PageRange.PageFrom, dialog.PageRange.PageTo, tab.PageIndex, tab.PageCount);
+        if (pages is { Count: 0 }) return;
         var paginator = new PagePaginator(tab.Renderer, tab.PageCount, pages)
         {
             PageSize = new Size(dialog.PrintableAreaWidth, dialog.PrintableAreaHeight),

@@ -1,3 +1,4 @@
+using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
@@ -26,6 +27,18 @@ internal sealed class PagePaginator(IDocumentRenderer renderer, int pageCount, I
     }
 
     public override IDocumentPaginatorSource? Source => null;
+
+    /// <summary>The zero-based pages the print dialog asks for, or null for all of them.</summary>
+    public static List<int>? PagesFor(PageRangeSelection selection, int from, int to, int current, int count)
+    {
+        if (selection == PageRangeSelection.CurrentPage) return [current];
+        if (selection != PageRangeSelection.UserPages) return null;
+        if (count < 1) return [];
+        from = Math.Clamp(from, 1, count);
+        to = Math.Clamp(to, 1, count);
+        if (from > to) (from, to) = (to, from);
+        return [.. Enumerable.Range(from - 1, to - from + 1)];
+    }
 
     public override DocumentPage GetPage(int pageNumber)
     {
