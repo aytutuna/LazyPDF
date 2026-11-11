@@ -74,9 +74,14 @@ public partial class BookmarksSidePanel : ToolPanel
             return;
         }
         if (destination is null && node.Item.Action is null) return;
+        if (destination is null && node.Item.Action is GoToRemoteAction or LaunchAction)
+        {
+            Host?.SetStatus(Loc.T("This bookmark goes to another file, which Lazy PDF does not open from here."));
+            return;
+        }
         if (destination is null && node.Item.Action is not (GoToAction or UriAction or NamedAction))
         {
-            Host?.SetStatus(Loc.T("This bookmark does something Lazy PDF cannot do."));
+            Host?.SetStatus(Loc.T("This bookmark runs a script or sends a form, which Lazy PDF does not do."));
             return;
         }
         if (node.Item.Destination is { } own) viewer.GoToDestination(own);

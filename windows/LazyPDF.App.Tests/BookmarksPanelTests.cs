@@ -10,11 +10,13 @@ namespace LazyPDF.App.Tests;
 [Collection("Application")]
 public sealed class BookmarksPanelTests
 {
-    private static string EnterOnEntry(PdfDestination destination)
+    private static string EnterOnEntry(PdfDestination destination) => EnterOnEntry(new OutlineItem { Title = "Entry", Destination = destination });
+
+    private static string EnterOnEntry(OutlineItem item)
     {
         using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(2)), new FakeRenderer(), null, "a.pdf", null);
         var outline = Outline.Read(tab.Document);
-        outline.Add(new OutlineItem { Title = "Entry", Destination = destination });
+        outline.Add(item);
         outline.Write(tab.Document);
         tab.Commit("Bookmark");
         var host = new RecordingHost();
@@ -43,6 +45,25 @@ public sealed class BookmarksPanelTests
     public Task AGoodEntryIsSilent() => Sta.Run(() =>
     {
         Assert.Equal("", EnterOnEntry(new PdfDestination(1)));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AnotherFileIsSaid() => Sta.Run(() =>
+    {
+        const string said = "This bookmark goes to another file, which Lazy PDF does not open from here.";
+        Assert.Equal(said, EnterOnEntry(new OutlineItem { Title = "Entry", Action = new GoToRemoteAction("b.pdf", null, null) }));
+        Assert.Equal(said, EnterOnEntry(new OutlineItem { Title = "Entry", Action = new LaunchAction("b.exe", null) }));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AScriptOrFormIsSaid() => Sta.Run(() =>
+    {
+        const string said = "This bookmark runs a script or sends a form, which Lazy PDF does not do.";
+        Assert.Equal(said, EnterOnEntry(new OutlineItem { Title = "Entry", Action = new JavaScriptAction("app.alert(1)") }));
+        Assert.Equal(said, EnterOnEntry(new OutlineItem { Title = "Entry", Action = new SubmitFormAction("http://x", 0, []) }));
+        Assert.Equal(said, EnterOnEntry(new OutlineItem { Title = "Entry", Action = new ResetFormAction(0, []) }));
         return Task.CompletedTask;
     });
 }

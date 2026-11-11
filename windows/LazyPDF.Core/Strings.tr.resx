@@ -6082,11 +6082,14 @@
   <data name="This attachment could not be read." xml:space="preserve">
     <value>Bu ek okunamadı.</value>
   </data>
-  <data name="This bookmark does something Lazy PDF cannot do." xml:space="preserve">
-    <value>Bu yer imi, Lazy PDF'nin yapamadığı bir işlem yapıyor.</value>
+  <data name="This bookmark goes to another file, which Lazy PDF does not open from here." xml:space="preserve">
+    <value>Bu yer imi başka bir dosyaya gidiyor; Lazy PDF onu buradan açmaz.</value>
   </data>
   <data name="This bookmark points to a page that is not in the file." xml:space="preserve">
     <value>Bu yer imi dosyada olmayan bir sayfayı gösteriyor.</value>
+  </data>
+  <data name="This bookmark runs a script or sends a form, which Lazy PDF does not do." xml:space="preserve">
+    <value>Bu yer imi bir betik çalıştırıyor veya form gönderiyor; Lazy PDF bunları yapmaz.</value>
   </data>
   <data name="This button does nothing here" xml:space="preserve">
     <value>Bu düğme burada bir şey yapmaz</value>

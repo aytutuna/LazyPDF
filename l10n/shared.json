@@ -2187,8 +2187,11 @@
   "This bookmark points to a page that is not in the file.": {
     "tr": "Bu yer imi dosyada olmayan bir sayfayı gösteriyor."
   },
-  "This bookmark does something Lazy PDF cannot do.": {
-    "tr": "Bu yer imi, Lazy PDF'nin yapamadığı bir işlem yapıyor."
+  "This bookmark goes to another file, which Lazy PDF does not open from here.": {
+    "tr": "Bu yer imi başka bir dosyaya gidiyor; Lazy PDF onu buradan açmaz."
+  },
+  "This bookmark runs a script or sends a form, which Lazy PDF does not do.": {
+    "tr": "Bu yer imi bir betik çalıştırıyor veya form gönderiyor; Lazy PDF bunları yapmaz."
   },
   "This file has no comments.": {
     "tr": "Bu dosyada yorum yok."
