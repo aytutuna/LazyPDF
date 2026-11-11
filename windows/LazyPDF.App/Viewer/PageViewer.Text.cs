@@ -72,6 +72,7 @@ public partial class PageViewer
         _text = null;
         _source = null;
         _links.Clear();
+        _focusLink = null;
         _selectionGeometry.Clear();
         _hitGeometry.Clear();
         CancelPendingSelection();
@@ -423,7 +424,8 @@ public partial class PageViewer
         bool hasHits = Search.Hits.Count > 0;
         bool selected = _selection.Covers(page);
         bool caret = _caretMode && _selection.Focus.Page == page;
-        if (!hasHits && !selected && !caret) return;
+        bool ringed = _focusLink is { } ring && ring.Page == page;
+        if (!hasHits && !selected && !caret && !ringed) return;
         dc.PushTransform(new MatrixTransform(matrix));
         if (hasHits)
         {
@@ -444,7 +446,16 @@ public partial class PageViewer
             _ = LoadPageAsync(page);
         }
         if (caret && LoadedText(page) is { } caretText) DrawCaret(dc, page, caretText, matrix.M11 * VisualTreeHelper.GetDpi(Surface).DpiScaleX);
+        if (ringed) DrawLinkRing(dc, page, matrix.M11 * VisualTreeHelper.GetDpi(Surface).DpiScaleX);
         dc.Pop();
+    }
+
+    private void DrawLinkRing(DrawingContext dc, int page, double pixelsPerUnit)
+    {
+        var area = Surface.Geometry(page).ToDisplay(_focusLink!.Value.Link.Rect);
+        var ring = new Rect(area.X - 2, area.Y - 2, area.Width + 4, area.Height + 4);
+        dc.DrawRectangle(null, new Pen(Brushes.White, 3 / pixelsPerUnit), ring);
+        dc.DrawRectangle(null, new Pen(Brushes.Black, 1.5 / pixelsPerUnit), ring);
     }
 
     private void DrawCaret(DrawingContext dc, int page, TextPage text, double pixelsPerUnit)

@@ -23,6 +23,7 @@ public partial class PageViewer
     private readonly Dictionary<int, IReadOnlyList<PdfLink>> _links = [];
     private readonly DispatcherTimer _autoScroll = new() { Interval = TimeSpan.FromMilliseconds(30) };
     private readonly System.Windows.Controls.ToolTip _linkTip = new() { Placement = System.Windows.Controls.Primitives.PlacementMode.Relative };
+    private (int Page, PdfLink Link)? _focusLink;
     private PointerMode _mode = PointerMode.Select;
     private IPagePointerTool? _tool;
     private Drag _drag;
@@ -150,6 +151,7 @@ public partial class PageViewer
     {
         _linkTip.IsOpen = false;
         Surface.Focus();
+        ClearLinkFocus();
         if (_tab is null) return;
         if (_middlePan)
         {
@@ -352,13 +354,53 @@ public partial class PageViewer
         return Loc.T("Go to page {0}", PageLabel(place.PageIndex));
     }
 
+    private IReadOnlyList<PdfLink> LinksOf(int page)
+    {
+        if (!_links.TryGetValue(page, out var links)) _links[page] = links = PdfLinks.Read(_tab!.Document, _tab.Document.Pages[page]);
+        return links;
+    }
+
     private PdfLink? LinkAt(int page, Point point)
     {
         if (_tab is null) return null;
-        if (!_links.TryGetValue(page, out var links)) _links[page] = links = PdfLinks.Read(_tab.Document, _tab.Document.Pages[page]);
+        var links = LinksOf(page);
         if (links.Count == 0) return null;
         var (x, y) = Surface.Geometry(page).ToUser(point.X, point.Y);
         return links.FirstOrDefault(l => x >= l.Rect.Left && x <= l.Rect.Right && y >= l.Rect.Bottom && y <= l.Rect.Top);
+    }
+
+    private void ClearLinkFocus()
+    {
+        if (_focusLink is null) return;
+        _focusLink = null;
+        Surface.InvalidateVisual();
+    }
+
+    // Moves the focus ring to the next (or previous) link in reading order; false once it leaves the ends.
+    private bool TabToLink(bool backwards)
+    {
+        if (_tab is null) return false;
+        var all = new List<(int Page, PdfLink Link, DisplayRect Area)>();
+        foreach (int page in VisiblePages)
+        {
+            var geometry = Surface.Geometry(page);
+            foreach (var link in LinksOf(page)) all.Add((page, link, geometry.ToDisplay(link.Rect)));
+        }
+        all.Sort((a, b) => a.Page != b.Page ? a.Page.CompareTo(b.Page)
+            : a.Area.Y != b.Area.Y ? a.Area.Y.CompareTo(b.Area.Y) : a.Area.X.CompareTo(b.Area.X));
+        int at = _focusLink is { } current ? all.FindIndex(l => l.Page == current.Page && ReferenceEquals(l.Link, current.Link)) : -1;
+        int next = at < 0 ? (backwards ? all.Count - 1 : 0) : at + (backwards ? -1 : 1);
+        if (next < 0 || next >= all.Count)
+        {
+            ClearLinkFocus();
+            return false;
+        }
+        var target = all[next];
+        _focusLink = (target.Page, target.Link);
+        Surface.Reveal(target.Page, new Rect(target.Area.X, target.Area.Y, target.Area.Width, target.Area.Height));
+        Surface.InvalidateVisual();
+        Speak(LinkTip(target.Link) ?? Loc.T("Link"));
+        return true;
     }
 
     private void FollowLink(PdfLink link)
@@ -500,6 +542,17 @@ public partial class PageViewer
             e.Handled = true;
             return;
         }
+        if (_tool is null && e.Key == Key.Tab && !ctrl && TabToLink(shift))
+        {
+            e.Handled = true;
+            return;
+        }
+        if (e.Key == Key.Enter && _focusLink is { } focus)
+        {
+            FollowLink(focus.Link);
+            e.Handled = true;
+            return;
+        }
         bool flips = !Surface.Continuous && Surface.Layout.Extent.Width <= Surface.Viewport.Width + 1;
         switch (e.Key)
         {
@@ -521,7 +574,7 @@ public partial class PageViewer
                 Surface.ReleaseMouseCapture();
                 _tool?.Cancel();
                 break;
-            case Key.Escape: ClearSelection(); break;
+            case Key.Escape: ClearLinkFocus(); ClearSelection(); break;
             default: return;
         }
         e.Handled = true;
