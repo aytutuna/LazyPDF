@@ -22,6 +22,16 @@ final class DocumentOpenerTests: XCTestCase {
         XCTAssertFalse(source.made)
     }
 
+    func test_aFolderIsRefusedInWords() throws {
+        let dir = TempDir(self)
+        let folder = dir.sub("folder")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+
+        XCTAssertThrowsError(try opener.read(folder)) {
+            XCTAssertEqual(($0 as? InvalidDataException)?.message, DocumentOpener.isFolder)
+        }
+    }
+
     func test_aPictureBecomesAPdfWithNoFileOfItsOwn() throws {
         for name in ["scan.jpg", "scan.PNG", "scan.tif", "scan.heic"] {
             let dir = TempDir(self)

@@ -102,6 +102,17 @@ final class OpenFlowTests: XCTestCase {
         XCTAssertTrue(f.vm.message?.text.contains("gone.pdf") == true)
     }
 
+    func test_aFolderIsSaidToBeAFolderAndOpensNothing() async throws {
+        let f = ViewModelFixture(self)
+        let folder = f.dir.sub("folder")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+
+        await f.vm.open(folder)
+
+        XCTAssertTrue(f.vm.documents.isEmpty)
+        XCTAssertEqual(f.vm.message?.title, "That is a folder")
+    }
+
     func test_aFileThatIsNotAPdfIsSaidInWords() async {
         let f = ViewModelFixture(self)
         let url = f.dir.file("fake.pdf", Array("just words".utf8))

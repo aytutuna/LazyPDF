@@ -1070,6 +1070,7 @@
 "Page thumbnails" = "Sayfa küçük resimleri";
 "Page viewer" = "Sayfa görüntüleyici";
 "Page {0}" = "Sayfa {0}";
+"Page {0} ({1} of {2})" = "Sayfa {0} ({1}/{2})";
 "Page {0} cannot be redacted as text. It needs a page renderer to be turned into a picture." = "Sayfa {0} metin olarak karartılamaz. Resme çevrilmesi için sayfa çizicisi gerekir.";
 "Page {0} could not be drawn, so it cannot be turned into a picture." = "Sayfa {0} çizilemedi, bu yüzden resme çevrilemez.";
 "Page {0} could not be followed to its end, so it was not fully checked." = "Sayfa {0} sonuna kadar izlenemedi, bu yüzden tam denetlenmedi.";
@@ -1585,6 +1586,7 @@
 "That file is not a certificate. Choose a .cer or .crt file." = "Bu dosya bir sertifika değil. .cer veya .crt dosyası seçin.";
 "That file is not a picture Lazy PDF can read. Choose a PNG or JPEG." = "Bu dosya Lazy PDF'nin okuyabildiği bir resim değil. PNG veya JPEG seçin.";
 "That file is too big. Pick a text file under 1 MB." = "Bu dosya çok büyük. 1 MB'den küçük bir metin dosyası seçin.";
+"That is a folder" = "Bu bir klasör";
 "That is not the permissions password. Check it and try again." = "Bu izin parolası değil. Kontrol edip yeniden deneyin.";
 "That is the open file. Choose another name." = "Bu, açık olan dosya. Başka bir ad seçin.";
 "That mark has no area. Drag farther and try again." = "Bu işaretin bir alanı yok. Daha uzağa sürükleyip yeniden deneyin.";
@@ -2112,6 +2114,7 @@
 "{0} held removed text. It was replaced." = "{0} kaldırılan metni içeriyordu. Değiştirildi.";
 "{0} holds removed text." = "{0} kaldırılan metni içeriyor.";
 "{0} integers beyond 32 bits were cut to the limit." = "32 bit sınırını aşan {0} tamsayı sınıra çekildi.";
+"{0} is a folder, not a file. Open the files inside it, or use Batch to work on a whole folder." = "{0} bir dosya değil, klasör. İçindeki dosyaları açın ya da bir klasörün tamamında çalışmak için Toplu işlem'i kullanın.";
 "{0} is encrypted for the holders of certain certificates. Pick the certificate that can open it." = "{0}, belirli sertifikaların sahipleri için şifrelenmiş. Onu açabilen sertifikayı seçin.";
 "{0} is locked for certificate holders. Pick one that opens it." = "{0} sertifika sahipleri için kilitli. Dosyayı açan bir sertifika seçin.";
 "{0} is locked. Type its password." = "{0} kilitli. Parolasını yazın.";
@@ -2217,6 +2220,8 @@
 "{0} was moved or deleted. Save it again to keep your work." = "{0} taşınmış ya da silinmiş. Çalışmanızı korumak için yeniden kaydedin.";
 "{0} was not handed over by the program that sent it, so Lazy PDF cannot read it. Open it from the File menu, or drop it on the window." = "{0} dosyası, onu gönderen program tarafından teslim edilmediği için Lazy PDF okuyamıyor. Dosya menüsünden açın ya da pencereye bırakın.";
 "{0} was saved but could not be read again. Open it from disk." = "{0} kaydedildi ama yeniden okunamadı. Diskten açın.";
+"{0} × {1} in" = "{0} × {1} inç";
+"{0} × {1} mm" = "{0} × {1} mm";
 "{0}%" = "%{0}";
 "{0}, and {1} more" = "{0} ve {1} tane daha";
 "{0}, expired {1}" = "{0}, {1} tarihinde doldu";

@@ -54,7 +54,12 @@ public final class DocumentOpener {
         self.fonts = fonts
     }
 
+    static let isFolder = "The path is a folder."
+
     public func read(_ url: URL) throws -> OpenSource {
+        if (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
+            throw InvalidDataException(Self.isFolder)
+        }
         let stamp = DiskStamp.of(url)
         let bytes = [UInt8](try Data(contentsOf: url))
         let stem = url.deletingPathExtension().lastPathComponent

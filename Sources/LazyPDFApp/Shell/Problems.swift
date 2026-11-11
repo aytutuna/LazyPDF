@@ -49,6 +49,9 @@ public enum Problems {
         if isFileSystem(error) {
             return Problem(L10n.t("File cannot be read"), L10n.t("{0} could not be read. Close any program that has it open and try again.", name))
         }
+        if (error as? InvalidDataException)?.message == DocumentOpener.isFolder {
+            return Problem(L10n.t("That is a folder"), L10n.t("{0} is a folder, not a file. Open the files inside it, or use Batch to work on a whole folder.", name))
+        }
         if error is InvalidDataException {
             return Problem(L10n.t("Nothing to open"), L10n.t("{0} has no picture Lazy PDF can read.", name))
         }
