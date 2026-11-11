@@ -114,13 +114,18 @@ final class CombineModelTests: XCTestCase {
         XCTAssertTrue(rig.host.problems[0].text.hasPrefix("b.pdf: "))
     }
 
+    // Two files without pages: the merge has nothing to take, and the first of them alone is the one that says so.
     func test_theFileThatCannotBeMergedIsNamed() async throws {
         let dir = TempDir(self)
         let (model, rig) = try attached(3)
-        await add(model, rig, dir, "b.pdf", 2)
-        await add(model, rig, dir, "c.pdf", 2)
-        model.entries[1].pages = 99
-        model.entries[1].range = "99"
+        let empty = Array(("%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+            + "2 0 obj\n<< /Type /Pages /Kids [] /Count 0 >>\nendobj\n"
+            + "trailer\n<< /Root 1 0 R /Size 3 >>\n%%EOF\n").utf8)
+        rig.pick(dir, "b.pdf", empty)
+        await model.addFiles()
+        rig.pick(dir, "c.pdf", empty)
+        await model.addFiles()
+        model.remove(model.entries[0])
 
         await model.action!.run()
 

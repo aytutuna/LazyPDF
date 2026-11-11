@@ -231,23 +231,27 @@ public final class CombineModel: ToolPanelModel {
             let names = entries.map(\.name)
             var bad: String?
             var checked = false
-            try? await host.runBusy(L10n.t("Checking the files")) { token in
-                bad = try await ToolDocuments.run(token) { () throws -> String? in
-                    gate.lock()
-                    defer { gate.unlock() }
-                    let again = try copy.open()
-                    for (name, source) in zip(names, ordered) {
-                        try token.throwIfCancelled()
-                        do {
-                            _ = try PageAssembly.merge([MergeSource(source.document ?? again, source.pages)]).saveRewrite()
-                        } catch is PdfReadException {
-                            return name
-                        } catch is ArgumentException {
-                            return name
+            do {
+                try await host.runBusy(L10n.t("Checking the files")) { token in
+                    bad = try await ToolDocuments.run(token) { () throws -> String? in
+                        gate.lock()
+                        defer { gate.unlock() }
+                        let again = try copy.open()
+                        for (name, source) in zip(names, ordered) {
+                            try token.throwIfCancelled()
+                            do {
+                                _ = try PageAssembly.merge([MergeSource(source.document ?? again, source.pages)]).saveRewrite()
+                            } catch is PdfReadException {
+                                return name
+                            } catch is ArgumentException {
+                                return name
+                            }
                         }
+                        return nil
                     }
-                    return nil
+                    checked = true
                 }
+            } catch {
                 checked = true
             }
             if !checked { return }
