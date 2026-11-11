@@ -23,6 +23,8 @@ public partial class ComparePanel : ToolPanel
     private CompareFlow? _flow;
     private HeldComparison? _shown;
     private string? _path;
+    private DocumentTab? _other;
+    private IReadOnlyList<DocumentTab> _tabs = [];
     private IReadOnlyList<PdfVersion> _versions = [];
 
     public ComparePanel() : this(() => new WindowsPageRenderer(), new SystemFontSource())
@@ -49,6 +51,8 @@ public partial class ComparePanel : ToolPanel
         Tab!.Changed += Tab_Changed;
         ShowVersions(null);
         HideUnlock();
+        _other = null;
+        ShowTabs();
         _held.TryGetValue(Tab, out var held);
         SetPath(held?.Path);
         Show(held);
@@ -62,7 +66,7 @@ public partial class ComparePanel : ToolPanel
         _flow = null;
     }
 
-    private bool CanRun() => Tab is not null && (VersionMode.IsChecked == true ? VersionBox.SelectedIndex >= 0 : _path is not null);
+    private bool CanRun() => Tab is not null && (VersionMode.IsChecked == true ? VersionBox.SelectedIndex >= 0 : _path is not null || _other is not null);
 
     private async Task RunAsync()
     {
@@ -73,7 +77,7 @@ public partial class ComparePanel : ToolPanel
         string? password = OtherPassword.Password.Length > 0 ? OtherPassword.Password : null;
         var request = new CompareRequest(version ? null : _path, version ? _versions[VersionBox.SelectedIndex] : null, !version && OlderToggle.IsChecked == true, options,
             PixelMode.IsChecked == true, password, (OtherCertificate.SelectedItem as CertificateChoice)?.Certificate,
-            int.Parse((string)((ComboBoxItem)PixelDetail.SelectedItem).Tag));
+            int.Parse((string)((ComboBoxItem)PixelDetail.SelectedItem).Tag), version ? null : _other);
         int revision = tab.Revision;
         var made = await flow.RunAsync(tab, request);
         bool here = ReferenceEquals(Tab, tab);
@@ -113,11 +117,34 @@ public partial class ComparePanel : ToolPanel
         NoVersions.Visibility = _versions.Count > 0 ? Visibility.Collapsed : Visibility.Visible;
     }
 
+    private void ShowTabs()
+    {
+        _tabs = [.. Host!.OpenDocuments.Where(d => !ReferenceEquals(d, Tab))];
+        OpenTabs.ItemsSource = _tabs.Count == 0 ? null : (string[])[Loc.T("Pick an open file"), .. _tabs.Select(d => d.Title)];
+        OpenTabs.SelectedIndex = _other is null ? 0 : _tabs.ToList().IndexOf(_other) + 1;
+        OpenTabs.Visibility = _tabs.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
     private void SetPath(string? path)
     {
         _path = path;
-        ChosenText.Text = path is null ? Loc.T("No file chosen") : System.IO.Path.GetFileName(path);
+        ChosenText.Text = path is not null ? System.IO.Path.GetFileName(path) : _other?.Title ?? Loc.T("No file chosen");
         ChosenText.ToolTip = path;
+    }
+
+    private void OpenTabs_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (OpenTabs.SelectedIndex < 1) return;
+        _other = _tabs[OpenTabs.SelectedIndex - 1];
+        SetPath(null);
+        HideUnlock();
+        RaiseActionChanged();
+    }
+
+    private void ClearOther()
+    {
+        _other = null;
+        OpenTabs.SelectedIndex = 0;
     }
 
     private void AskToUnlock(PdfReadProblem problem, bool tried)
@@ -213,6 +240,7 @@ public partial class ComparePanel : ToolPanel
     private void Tab_Changed(object? sender, EventArgs e)
     {
         ShowVersions(VersionBox.SelectedIndex >= 0 ? _versions[VersionBox.SelectedIndex].Number : null);
+        ShowTabs();
         RaiseActionChanged();
     }
 
@@ -240,6 +268,7 @@ public partial class ComparePanel : ToolPanel
     {
         var dialog = new OpenFileDialog { Filter = Loc.T("PDF files") + "|*.pdf" };
         if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+        ClearOther();
         SetPath(dialog.FileName);
         HideUnlock();
         RaiseActionChanged();
@@ -264,6 +293,7 @@ public partial class ComparePanel : ToolPanel
         }
         FileMode.IsChecked = true;
         Source_Click(this, e);
+        ClearOther();
         SetPath(pdf);
         HideUnlock();
         RaiseActionChanged();

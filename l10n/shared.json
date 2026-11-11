@@ -7761,6 +7761,15 @@
   "Open files": {
     "tr": "Açık dosyalar"
   },
+  "Pick an open file": {
+    "tr": "Açık bir dosya seçin"
+  },
+  "File closed": {
+    "tr": "Dosya kapatıldı"
+  },
+  "That file was closed. Pick another.": {
+    "tr": "Bu dosya kapatıldı. Başka bir dosya seçin."
+  },
   "All open files": {
     "tr": "Açık tüm dosyalar"
   },

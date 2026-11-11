@@ -79,6 +79,8 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     /// <summary>The files of the open tabs in strip order; a tab made from pictures or text has none.</summary>
     public IEnumerable<string> SessionPaths() => Documents.Where(d => d.Path is not null).Select(d => d.Path!);
 
+    IReadOnlyList<DocumentTab> IToolHost.OpenDocuments => [.. Documents];
+
     public ITab ActiveTab
     {
         get => _activeTab;

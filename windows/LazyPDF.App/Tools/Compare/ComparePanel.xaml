@@ -17,6 +17,8 @@
         </Border>
 
         <StackPanel x:Name="FileGroup">
+            <ComboBox x:Name="OpenTabs" Visibility="Collapsed" HorizontalAlignment="Stretch" Margin="0,0,0,6" AutomationProperties.Name="{loc:T Open files}"
+                      SelectionChanged="OpenTabs_Changed" />
             <Button x:Name="ChooseButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8E5;" Content="{loc:T Choose file}"
                     HorizontalAlignment="Left" Padding="10,3,10,4" AutomationProperties.Name="{loc:T Choose file}" Click="Choose_Click" />
             <TextBlock x:Name="ChosenText" Style="{StaticResource ReasonText}" Margin="0,6,0,4" TextTrimming="CharacterEllipsis" />

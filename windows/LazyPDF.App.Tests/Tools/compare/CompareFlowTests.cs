@@ -173,4 +173,39 @@ public sealed class CompareFlowTests
         Assert.Null(await flow.RunAsync(f.Vm.ActiveDocument!, Request(f.Dir.File("locked.pdf", CompareKit.Locked("pw"))) with { Password = "nope" }));
         Assert.Equal(PdfReadProblem.PasswordRequired, flow.Locked);
     }
+
+    [Fact]
+    public async Task AnotherOpenTabIsComparedAsItIsNowWithItsUnsavedEdits()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Dir.File("open.pdf", CompareKit.Before()));
+        var open = f.Vm.ActiveDocument!;
+        await f.Vm.OpenAsync(f.Dir.File("other.pdf", CompareKit.Before()));
+        var other = f.Vm.ActiveDocument!;
+        using var same = (await Flow(f).RunAsync(open, Request(null) with { OtherTab = other }))!;
+        Pdfs.Retitle(other.Session, "Edited");
+        other.Commit("Properties");
+
+        using var made = (await Flow(f).RunAsync(open, Request(null) with { OtherTab = other }))!;
+
+        Assert.True(same.Result!.IsIdentical);
+        Assert.Equal("other.pdf", made.Old.Title);
+        Assert.Contains(made.Result!.Changes, c => c.NewText == "" && c.OldText == "Edited");
+    }
+
+    [Fact]
+    public async Task ATabClosedBeforeRunningIsAProblem()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf("open.pdf"));
+        var open = f.Vm.ActiveDocument!;
+        await f.Vm.OpenAsync(f.Pdf("other.pdf"));
+        var other = f.Vm.ActiveDocument!;
+        f.Vm.Close(other);
+
+        var made = await Flow(f).RunAsync(open, Request(null) with { OtherTab = other });
+
+        Assert.Null(made);
+        Assert.Equal("File closed", f.Vm.Message!.Title);
+    }
 }

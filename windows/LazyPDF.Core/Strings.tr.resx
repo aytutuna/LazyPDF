@@ -2071,6 +2071,9 @@
   <data name="File cleaned." xml:space="preserve">
     <value>Dosya temizlendi.</value>
   </data>
+  <data name="File closed" xml:space="preserve">
+    <value>Dosya kapatıldı</value>
+  </data>
   <data name="File details" xml:space="preserve">
     <value>Dosya bilgileri</value>
   </data>
@@ -4174,6 +4177,9 @@
   <data name="Pick a picture" xml:space="preserve">
     <value>Resim seç</value>
   </data>
+  <data name="Pick an open file" xml:space="preserve">
+    <value>Açık bir dosya seçin</value>
+  </data>
   <data name="Picture" xml:space="preserve">
     <value>Resim</value>
   </data>
@@ -5754,6 +5760,9 @@
   </data>
   <data name="That file is too big. Pick a text file under 20 MB." xml:space="preserve">
     <value>Bu dosya çok büyük. 20 MB'den küçük bir metin dosyası seçin.</value>
+  </data>
+  <data name="That file was closed. Pick another." xml:space="preserve">
+    <value>Bu dosya kapatıldı. Başka bir dosya seçin.</value>
   </data>
   <data name="That is a folder" xml:space="preserve">
     <value>Bu bir klasör</value>

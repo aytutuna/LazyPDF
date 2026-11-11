@@ -22,6 +22,9 @@ public interface IToolHost
 
     void SetStatus(string sentence);
 
+    /// <summary>The documents open in tabs, for a tool that picks another one.</summary>
+    IReadOnlyList<DocumentTab> OpenDocuments => [];
+
     /// <summary>Opens a file in a tab, or shows the tab it is already in.</summary>
     Task OpenAsync(string path);
 
