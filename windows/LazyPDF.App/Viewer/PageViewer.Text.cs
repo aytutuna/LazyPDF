@@ -26,6 +26,7 @@ public partial class PageViewer
     private readonly DispatcherTimer _preload = new() { Interval = TimeSpan.FromMilliseconds(150) };
     private Task<TextSource?>? _text;
     private TextSource? _source;
+    private bool _caretMode;
 
     public event EventHandler? SelectionChanged;
 
@@ -75,6 +76,7 @@ public partial class PageViewer
         _hitGeometry.Clear();
         CancelPendingSelection();
         _selection.Clear();
+        _caretMode = false;
     }
 
     private Task<TextSource?> TextAsync()
@@ -237,11 +239,47 @@ public partial class PageViewer
         _selection.Clear();
     }
 
-    // Moves the focus end of the selection as a text caret would. False for a key that is not one of its.
-    private bool ExtendSelection(Key key, bool ctrl)
+    // F7: the caret can be moved, and a selection started, with the arrow keys.
+    internal async Task ToggleCaret()
     {
+        if (_tab is null) return;
+        if (_caretMode)
+        {
+            _caretMode = false;
+            Surface.InvalidateVisual();
+            ShowToast(Loc.T("Caret browsing is off."));
+            return;
+        }
+        if (_selection.IsEmpty)
+        {
+            var tab = _tab;
+            if (Surface.Hit(new Point(24, 24), nearest: true) is not { } hit) return;
+            await LoadPageAsync(hit.Page);
+            if (!ReferenceEquals(tab, _tab) || LoadedText(hit.Page) is not { } text) return;
+            if (text.Chars.Count == 0)
+            {
+                ShowToast(Loc.T("This page has no text to move through."));
+                return;
+            }
+            var (x, y) = Surface.Geometry(hit.Page).ToUser(hit.Point.X, hit.Point.Y);
+            var caret = new Caret(hit.Page, text.CaretAt(x, y));
+            _selection.Set(caret, caret);
+        }
+        _caretMode = true;
+        Surface.InvalidateVisual();
+        ShowToast(Loc.T("Caret browsing is on. Arrow keys move the caret and Shift selects. F7 turns it off."));
+    }
+
+    // Moves the focus end of the selection as a text caret would. False for a key that is not one of its.
+    internal bool MoveCaret(Key key, bool ctrl, bool extend)
+    {
+        if (key is not (Key.Left or Key.Right or Key.Up or Key.Down or Key.Home or Key.End)) return false;
         var focus = _selection.Focus;
-        if (LoadedText(focus.Page) is not { } text) return false;
+        if (LoadedText(focus.Page) is not { } text)
+        {
+            _ = LoadPageAsync(focus.Page);
+            return false;
+        }
         int count = text.Chars.Count;
         int index = Math.Min(focus.Index, count);
         Caret? next = key switch
@@ -258,14 +296,23 @@ public partial class PageViewer
             Key.End => new Caret(focus.Page, LineEdge(text, index, start: false)),
             _ => null,
         };
-        if (key is not (Key.Left or Key.Right or Key.Up or Key.Down or Key.Home or Key.End)) return false;
         if (next is { } caret)
         {
             CancelPendingSelection();
-            _selection.Extend(caret);
+            if (extend) _selection.Extend(caret);
+            else _selection.Set(caret, caret);
             RevealCaret(caret);
+            if (caret.Page == focus.Page) Speak(Moved(text, key, index, Math.Min(caret.Index, count)));
         }
         return true;
+    }
+
+    // What the caret went over: the character, the word, or the line it is on now.
+    private static string Moved(TextPage text, Key key, int from, int to)
+    {
+        if (key is Key.Left or Key.Right) return text.GetText(new TextRange(Math.Min(from, to), Math.Max(from, to))).Trim();
+        if (text.Chars.Count == 0) return "";
+        return text.Lines[LineOf(text, to == text.Chars.Count ? to - 1 : to)].Text;
     }
 
     private static int NextWord(TextPage text, int index) =>
@@ -375,7 +422,8 @@ public partial class PageViewer
     {
         bool hasHits = Search.Hits.Count > 0;
         bool selected = _selection.Covers(page);
-        if (!hasHits && !selected) return;
+        bool caret = _caretMode && _selection.Focus.Page == page;
+        if (!hasHits && !selected && !caret) return;
         dc.PushTransform(new MatrixTransform(matrix));
         if (hasHits)
         {
@@ -395,7 +443,21 @@ public partial class PageViewer
         {
             _ = LoadPageAsync(page);
         }
+        if (caret && LoadedText(page) is { } caretText) DrawCaret(dc, page, caretText, matrix.M11 * VisualTreeHelper.GetDpi(Surface).DpiScaleX);
         dc.Pop();
+    }
+
+    private void DrawCaret(DrawingContext dc, int page, TextPage text, double pixelsPerUnit)
+    {
+        int count = text.Chars.Count;
+        if (count == 0) return;
+        int index = Math.Min(_selection.Focus.Index, count);
+        bool atEnd = index == count;
+        var area = PageBounds(page, text.Quads(new TextRange(atEnd ? index - 1 : index, atEnd ? index : index + 1)));
+        if (area.IsEmpty) return;
+        double width = 1.5 / pixelsPerUnit;
+        var brush = Surface.Tint == PageTint.Dark ? Brushes.White : Brushes.Black;
+        dc.DrawRectangle(brush, null, new Rect(atEnd ? area.Right : area.Left, area.Top, width, area.Height));
     }
 
     private (System.Windows.Media.Geometry? Others, System.Windows.Media.Geometry? Current) HitGeometry(int page)

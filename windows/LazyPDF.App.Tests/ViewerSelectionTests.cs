@@ -1,3 +1,7 @@
+using System.Reflection;
+using System.Windows;
+using System.Windows.Input;
+using LazyPDF.App.Documents;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using Xunit;
@@ -116,4 +120,78 @@ public sealed class ViewerSelectionTests
         Assert.Equal(2, raised);
         Assert.True(selection.IsEmpty);
     }
+}
+
+// Caret browsing: F7 puts a caret on the text and the arrow keys move it, with Shift they select.
+[Collection("Application")]
+public sealed class CaretBrowsingTests
+{
+    private static async Task<(PageViewer Viewer, ViewerSelection Selection, DocumentTab Tab)> OpenAsync(string text)
+    {
+        var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1, text)), new FakeRenderer(), null, "a.pdf");
+        var viewer = new PageViewer(null);
+        viewer.Show(tab);
+        viewer.Measure(new Size(800, 600));
+        viewer.Arrange(new Rect(0, 0, 800, 600));
+        viewer.UpdateLayout();
+        await viewer.ToggleCaret();
+        var selection = (ViewerSelection)typeof(PageViewer).GetField("_selection", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(viewer)!;
+        return (viewer, selection, tab);
+    }
+
+    [Fact]
+    public Task TheArrowKeysMoveTheCaretAndLeaveNothingSelected() => Sta.Run(async () =>
+    {
+        var (viewer, selection, tab) = await OpenAsync("Hello from the tests.");
+        using var _ = tab;
+
+        for (int i = 0; i < 3; i++) Assert.True(viewer.MoveCaret(Key.Right, false, false));
+
+        Assert.Equal(3, selection.Focus.Index);
+        Assert.True(selection.IsEmpty);
+    });
+
+    [Fact]
+    public Task ShiftTakesTheCharactersItPassesOver() => Sta.Run(async () =>
+    {
+        var (viewer, selection, tab) = await OpenAsync("Hello from the tests.");
+        using var _ = tab;
+
+        for (int i = 0; i < 3; i++) viewer.MoveCaret(Key.Right, false, true);
+
+        Assert.Equal(new TextRange(0, 3), selection.On(0, 100));
+    });
+
+    [Fact]
+    public Task ControlRightLandsOnTheStartOfTheNextWord() => Sta.Run(async () =>
+    {
+        var (viewer, selection, tab) = await OpenAsync("Hello from the tests.");
+        using var _ = tab;
+
+        viewer.MoveCaret(Key.Right, true, false);
+
+        Assert.Equal(6, selection.Focus.Index);
+    });
+
+    [Fact]
+    public Task DownMovesToTheNextLine() => Sta.Run(async () =>
+    {
+        var (viewer, selection, tab) = await OpenAsync("Hello there\nand again");
+        using var _ = tab;
+
+        viewer.MoveCaret(Key.Down, false, false);
+
+        Assert.InRange(selection.Focus.Index, 12, 21);
+    });
+
+    [Fact]
+    public Task ToggleTwiceTurnsCaretBrowsingOff() => Sta.Run(async () =>
+    {
+        var (viewer, selection, tab) = await OpenAsync("Hello from the tests.");
+        using var _ = tab;
+
+        await viewer.ToggleCaret();
+
+        Assert.True(selection.IsEmpty);
+    });
 }

@@ -775,6 +775,12 @@
   <data name="Card numbers" xml:space="preserve">
     <value>Kart numaraları</value>
   </data>
+  <data name="Caret browsing is off." xml:space="preserve">
+    <value>Metin imleciyle gezinme kapalı.</value>
+  </data>
+  <data name="Caret browsing is on. Arrow keys move the caret and Shift selects. F7 turns it off." xml:space="preserve">
+    <value>Metin imleciyle gezinme açık. Ok tuşları imleci taşır, Shift seçer. F7 kapatır.</value>
+  </data>
   <data name="Catalog" xml:space="preserve">
     <value>Katalog</value>
   </data>
@@ -6402,6 +6408,9 @@
   </data>
   <data name="This page cannot be shown." xml:space="preserve">
     <value>Bu sayfa gösterilemiyor.</value>
+  </data>
+  <data name="This page has no text to move through." xml:space="preserve">
+    <value>Bu sayfada gezinilecek metin yok.</value>
   </data>
   <data name="This picture cannot be read." xml:space="preserve">
     <value>Bu resim okunamıyor.</value>

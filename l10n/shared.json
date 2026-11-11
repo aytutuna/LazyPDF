@@ -2414,6 +2414,15 @@
   "The owner of this file does not allow copying.": {
     "tr": "Bu dosyanın sahibi kopyalamaya izin vermiyor."
   },
+  "Caret browsing is on. Arrow keys move the caret and Shift selects. F7 turns it off.": {
+    "tr": "Metin imleciyle gezinme açık. Ok tuşları imleci taşır, Shift seçer. F7 kapatır."
+  },
+  "Caret browsing is off.": {
+    "tr": "Metin imleciyle gezinme kapalı."
+  },
+  "This page has no text to move through.": {
+    "tr": "Bu sayfada gezinilecek metin yok."
+  },
   "Previous page": {
     "tr": "Önceki sayfa"
   },

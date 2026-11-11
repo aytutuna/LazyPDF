@@ -440,6 +440,9 @@ public partial class PageViewer
                 else if (shift) Search.Previous();
                 else Search.Next();
                 break;
+            case Key.F7 when !typing && _tool is null:
+                _ = ToggleCaret();
+                break;
             case Key.F11:
                 FullScreen = !FullScreen;
                 break;
@@ -492,7 +495,7 @@ public partial class PageViewer
             return;
         }
         bool ctrl = Keyboard.Modifiers.HasFlag(ModifierKeys.Control), shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
-        if (shift && !_selection.IsEmpty && ExtendSelection(e.Key, ctrl))
+        if (((shift && !_selection.IsEmpty) || _caretMode) && MoveCaret(e.Key, ctrl, shift))
         {
             e.Handled = true;
             return;
