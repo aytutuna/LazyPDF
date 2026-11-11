@@ -188,9 +188,15 @@ public partial class FillSignPanel : ToolPanel
     private void Remove_Click(object sender, RoutedEventArgs e)
     {
         if (((FrameworkElement)sender).DataContext is not SavedRow row) return;
-        _saved.Remove(row.Item);
-        FillSaved();
-        RaiseActionChanged();
+        if (Host is null) return;
+        var title = row.Item.Kind == SavedKind.Initials ? Loc.T("Delete these initials?") : Loc.T("Delete this signature?");
+        Host.ShowNotice(title, Loc.T("A saved copy cannot be brought back."), new NoticeAction(Loc.T("Delete"), () =>
+        {
+            if (Tab is null) return;
+            _saved.Remove(row.Item);
+            FillSaved();
+            RaiseActionChanged();
+        }));
     }
 
     private void New_Click(object sender, RoutedEventArgs e)

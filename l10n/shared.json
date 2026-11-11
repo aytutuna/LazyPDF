@@ -2318,6 +2318,15 @@
   "Delete": {
     "tr": "Sil"
   },
+  "Delete this signature?": {
+    "tr": "İmza silinsin mi?"
+  },
+  "Delete these initials?": {
+    "tr": "Bu baş harfler silinsin mi?"
+  },
+  "A saved copy cannot be brought back.": {
+    "tr": "Kayıtlı kopya geri getirilemez."
+  },
   "Delete the selected mark.": {
     "tr": "Seçili işareti silin."
   },

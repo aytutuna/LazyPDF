@@ -118,6 +118,9 @@
   <data name="A red outline marks a required field that is empty." xml:space="preserve">
     <value>Kırmızı çerçeve, boş bırakılmış zorunlu alanı gösterir.</value>
   </data>
+  <data name="A saved copy cannot be brought back." xml:space="preserve">
+    <value>Kayıtlı kopya geri getirilemez.</value>
+  </data>
   <data name="A setting between them would change it." xml:space="preserve">
     <value>Aralarındaki bir ayar bunu değiştirirdi.</value>
   </data>
@@ -1317,6 +1320,12 @@
   </data>
   <data name="Delete the selection" xml:space="preserve">
     <value>Seçimi sil</value>
+  </data>
+  <data name="Delete these initials?" xml:space="preserve">
+    <value>Bu baş harfler silinsin mi?</value>
+  </data>
+  <data name="Delete this signature?" xml:space="preserve">
+    <value>İmza silinsin mi?</value>
   </data>
   <data name="Deleted {0}" xml:space="preserve">
     <value>{0} silindi</value>
