@@ -6466,6 +6466,9 @@
   <data name="This file is protected. Open it with its owner password to use this tool." xml:space="preserve">
     <value>Bu dosya korumalı. Bu aracı kullanmak için sahip parolasıyla açın.</value>
   </data>
+  <data name="This file is read-only. The result opens in a new tab." xml:space="preserve">
+    <value>Bu dosya salt okunur. Sonuç yeni bir sekmede açılır.</value>
+  </data>
   <data name="This file is signed, so changing it breaks the signatures." xml:space="preserve">
     <value>Bu dosya imzalı, bu yüzden değiştirmek imzaları bozar.</value>
   </data>

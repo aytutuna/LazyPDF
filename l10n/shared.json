@@ -7559,6 +7559,9 @@
   "The file changed": {
     "tr": "Dosya değişti"
   },
+  "This file is read-only. The result opens in a new tab.": {
+    "tr": "Bu dosya salt okunur. Sonuç yeni bir sekmede açılır."
+  },
   "This file is not saved yet.": {
     "tr": "Bu dosya henüz kaydedilmedi."
   },
