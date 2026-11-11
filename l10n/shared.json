@@ -7894,6 +7894,9 @@
   "Copy": {
     "tr": "Kopyala"
   },
+  "Look Up": {
+    "tr": "Sözlükte ara"
+  },
   "Paste (Ctrl+V)": {
     "tr": "Yapıştır (Ctrl+V)"
   },
@@ -8306,5 +8309,11 @@
   },
   "Lazy Print": {
     "tr": "Lazy Print"
+  },
+  "Pages that are turned sideways cannot be read. Rotate them in Organize pages first.": {
+    "tr": "Yan çevrilmiş sayfalar okunamaz. Önce Sayfaları yönet aracında döndürün."
+  },
+  "Pages that are turned sideways cannot be read.": {
+    "tr": "Yan çevrilmiş sayfalar okunamaz."
   }
 }

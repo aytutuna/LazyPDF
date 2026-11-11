@@ -387,6 +387,7 @@
 "Correct by touching the page" = "Sayfaya dokunarak düzelt";
 "Correct word" = "Sözcüğü düzelt";
 "Corrected word" = "Düzeltilmiş sözcük";
+"Could not be made smaller, so it was left as it was." = "Küçültülemedi, bu yüzden olduğu gibi bırakıldı.";
 "Could not protect the file" = "Dosya korunamadı";
 "Cover" = "Örtü";
 "Cover the page" = "Sayfayı kapla";
@@ -831,6 +832,7 @@
 "Longest text" = "En uzun metin";
 "Longest text not a number" = "En uzun metin sayı değil";
 "Look" = "Görünüm";
+"Look Up" = "Sözlükte ara";
 "Look at" = "Karşılaştırma yöntemi";
 "Looking for fields" = "Alanlar aranıyor";
 "Looking through the file." = "Dosya taranıyor.";
@@ -1119,6 +1121,8 @@
 "Pages per part" = "Parça başına sayfa";
 "Pages replaced." = "Sayfalar değiştirildi.";
 "Pages that are already searchable" = "Zaten aranabilir olan sayfalar";
+"Pages that are turned sideways cannot be read." = "Yan çevrilmiş sayfalar okunamaz.";
+"Pages that are turned sideways cannot be read. Rotate them in Organize pages first." = "Yan çevrilmiş sayfalar okunamaz. Önce Sayfaları yönet aracında döndürün.";
 "Pages to export" = "Dışa aktarılacak sayfalar";
 "Pages to read" = "Okunacak sayfalar";
 "Pages to stamp" = "Damgalanacak sayfalar";
@@ -2181,6 +2185,7 @@
 "{0} name matches no field: {1}.|one" = "Hiçbir alanla eşleşmeyen ad: {0} ({1}).";
 "{0} name matches no field: {1}.|other" = "Hiçbir alanla eşleşmeyen ad: {0} ({1}).";
 "{0} needs a password or certificate that was not given." = "{0} için verilmeyen bir parola ya da sertifika gerekiyor.";
+"{0} needs a password or certificate, and Batch cannot ask for one. Take the lock off first, then add the file again." = "{0} için parola ya da sertifika gerekiyor ve Toplu işlem bunu soramaz. Önce kilidi kaldırın, sonra dosyayı yeniden ekleyin.";
 "{0} needs a password to open." = "{0} dosyasını açmak için parola gerekir.";
 "{0} note|one" = "{0} not";
 "{0} note|other" = "{0} not";

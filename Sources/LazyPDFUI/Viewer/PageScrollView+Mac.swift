@@ -13,6 +13,7 @@ import LazyPDFKit
 final class PageDocumentView: NSView, NSMenuItemValidation {
     let viewer: ViewerModel
     private(set) lazy var fields = OverlayFieldViews(viewer: viewer, host: self)
+    private var menuPoint = NSPoint.zero
 
     init(viewer: ViewerModel) {
         self.viewer = viewer
@@ -115,8 +116,11 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
     override func menu(for event: NSEvent) -> NSMenu? {
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: L10n.t("Copy"), action: #selector(copy(_:)), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: L10n.t("Look Up"), action: #selector(lookUpSelection(_:)), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: L10n.t("Share"), action: #selector(shareSelection(_:)), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: L10n.t("Select all"), action: #selector(selectAll(_:)), keyEquivalent: ""))
         for item in menu.items { item.target = self }
+        menuPoint = convert(event.locationInWindow, from: nil)
         return menu
     }
 
@@ -128,12 +132,26 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
         }
     }
 
+    @objc private func lookUpSelection(_ sender: Any?) {
+        Task { @MainActor in
+            guard let text = await viewer.selectedText() else { return }
+            showDefinition(for: NSAttributedString(string: text), at: menuPoint)
+        }
+    }
+
+    @objc private func shareSelection(_ sender: Any?) {
+        Task { @MainActor in
+            guard let text = await viewer.selectedText() else { return }
+            NSSharingServicePicker(items: [text]).show(relativeTo: NSRect(origin: menuPoint, size: .zero), of: self, preferredEdge: .minY)
+        }
+    }
+
     override func selectAll(_ sender: Any?) {
         viewer.selectAll()
     }
 
     func validateMenuItem(_ item: NSMenuItem) -> Bool {
-        item.action == #selector(copy(_:)) ? viewer.hasSelection : viewer.tab != nil
+        item.action == #selector(selectAll(_:)) ? viewer.tab != nil : viewer.hasSelection
     }
 
     // One element for each page in view, named by its place in the file and holding the page's text, read from the engine in

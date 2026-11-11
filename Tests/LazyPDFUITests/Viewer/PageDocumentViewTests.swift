@@ -134,6 +134,17 @@ final class PageDocumentViewTests: XCTestCase {
         XCTAssertEqual(names.first, "Page 1 of 2")
     }
 
+    func test_theMenuOffersCopyLookUpShareAndSelectAll() async throws {
+        let shown = try await open()
+        let event = try XCTUnwrap(NSEvent.mouseEvent(with: .rightMouseDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: 0, context: nil, eventNumber: 0, clickCount: 1, pressure: 1))
+
+        let menu = try XCTUnwrap(shown.view.menu(for: event))
+
+        XCTAssertEqual(menu.items.map(\.title), ["Copy", "Look Up", "Share", "Select all"])
+        XCTAssertFalse(shown.view.validateMenuItem(menu.items[1]))
+        XCTAssertTrue(shown.view.validateMenuItem(menu.items[3]))
+    }
+
     func test_theScrollViewAndTheModelFollowEachOther() async throws {
         let shown = try await open(pages: 3)
         let scroll = PageScrollView(viewer: shown.viewer)

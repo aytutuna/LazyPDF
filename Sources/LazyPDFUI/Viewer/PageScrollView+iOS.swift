@@ -266,12 +266,40 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
     }
 
     func editMenuInteraction(_ interaction: UIEditMenuInteraction, menuFor configuration: UIEditMenuConfiguration, suggestedActions: [UIMenuElement]) -> UIMenu? {
+        let point = configuration.sourcePoint
         let copy = UIAction(title: L10n.t("Copy")) { [viewer] _ in
             Task { @MainActor in
                 if let text = await viewer.selectedText() { UIPasteboard.general.string = text }
             }
         }
-        return UIMenu(children: [copy])
+        let lookUp = UIAction(title: L10n.t("Look Up")) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, let text = await self.viewer.selectedText() else { return }
+                self.present(UIReferenceLibraryViewController(term: text))
+            }
+        }
+        let share = UIAction(title: L10n.t("Share")) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, let text = await self.viewer.selectedText() else { return }
+                let sheet = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+                sheet.popoverPresentationController?.sourceView = self
+                sheet.popoverPresentationController?.sourceRect = CGRect(origin: point, size: .zero)
+                self.present(sheet)
+            }
+        }
+        let selectAll = UIAction(title: L10n.t("Select all")) { [weak self] _ in
+            self?.viewer.selectAll()
+            DispatchQueue.main.async {
+                self?.editMenu?.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: point))
+            }
+        }
+        return UIMenu(children: viewer.hasSelection ? [copy, lookUp, share, selectAll] : [copy, selectAll])
+    }
+
+    private func present(_ controller: UIViewController) {
+        var top = window?.rootViewController
+        while let next = top?.presentedViewController { top = next }
+        top?.present(controller, animated: true)
     }
 
     override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
