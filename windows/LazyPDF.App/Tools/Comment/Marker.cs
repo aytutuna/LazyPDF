@@ -26,12 +26,30 @@ public enum MarkTool
     Attach,
 }
 
+public enum LineStyle
+{
+    Solid,
+    Dashed,
+    Dotted,
+}
+
 /// <summary>How a new mark looks. A null colour takes the default of its kind.</summary>
-public sealed record MarkStyle(double[]? Color, double Width, double Opacity, string Family, double Size, FontStyles Font)
+public sealed record MarkStyle(double[]? Color, double Width, double Opacity, string Family, double Size, FontStyles Font, double[]? Fill = null, LineStyle Dash = LineStyle.Solid)
 {
     public static MarkStyle Default { get; } = new(null, 2, 1, "Helvetica", 12, FontStyles.Regular);
 
-    public AnnotationStyle ToAnnotation() => new(Color, Width, Opacity: Opacity);
+    public AnnotationStyle ToAnnotation() => new(Color, Width, DashesOf(Dash, Width), Fill, Opacity);
+
+    public static double[]? DashesOf(LineStyle style, double width)
+    {
+        double w = Math.Max(width, 1);
+        return style switch
+        {
+            LineStyle.Dashed => [3 * w, 2 * w],
+            LineStyle.Dotted => [w, w + 1],
+            _ => null,
+        };
+    }
 
     public FreeTextStyle ToText() => new(Family, Size, Font, Color ?? [0, 0, 0]);
 }
@@ -95,7 +113,7 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
             case MarkTool.Note:
                 return Faded(_writer.AddNote(target, UserRect(new Rect(points[0], new Size(NoteSize, NoteSize))), Info(text), "Note", style.Color), style);
             case MarkTool.TextBox:
-                return _writer.AddFreeText(target, Standing(geometry, BoxOf(tool, points)), text, style.ToText(), shape with { Width = 0 }, upright);
+                return _writer.AddFreeText(target, Standing(geometry, BoxOf(tool, points)), text, style.ToText(), shape with { Width = 0, Dash = null, Fill = null }, upright);
             case MarkTool.Callout:
             {
                 var box = BoxOf(tool, points);
@@ -125,7 +143,7 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
             case MarkTool.Cloud:
                 return _writer.AddCloud(target, [.. points.Select(User)], shape with { Cloud = 2 }, Info());
             case MarkTool.Pencil:
-                return _writer.AddInk(target, [[.. points.Select(User)]], shape, Info());
+                return _writer.AddInk(target, [[.. points.Select(User)]], shape with { Fill = null }, Info());
             default:
                 throw new ArgumentException("This tool does not draw by itself.", nameof(tool));
         }
@@ -293,18 +311,48 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         return Find(a.PageIndex, a.Reference!.Number) ?? resized;
     }
 
-    /// <summary>Paints the mark; a text box takes the colour for its frame and its text.</summary>
+    /// <summary>Paints the mark's outline, not its fill; a text box takes the colour for its frame and its text.</summary>
     public PdfAnnotation Recolor(PdfAnnotation a, double[] color)
     {
-        if (a.Type != AnnotationType.FreeText) return SetColor(a, color);
         var painted = _writer.SetColor(a, color);
-        return _writer.SetFreeTextStyle(painted, TextOf(painted) with { TextColor = color, RichText = null });
+        return a.Type != AnnotationType.FreeText ? painted : _writer.SetFreeTextStyle(painted, TextOf(painted) with { TextColor = color, RichText = null });
     }
 
-    private PdfAnnotation SetColor(PdfAnnotation a, double[] color) =>
-        a.Type is AnnotationType.Square or AnnotationType.Circle or AnnotationType.Polygon && a.InteriorColor is { Count: > 0 }
-            ? _writer.SetColor(a, color, color)
-            : _writer.SetColor(a, color);
+    /// <summary>Fills the mark with the colour, or takes the fill away for null.</summary>
+    public PdfAnnotation SetFill(PdfAnnotation a, double[]? rgb)
+    {
+        if (rgb is null) a.Dictionary.Remove("IC");
+        else a.Dictionary["IC"] = new PdfArray([.. rgb.Select(v => (PdfObject)new PdfNumber(v))]);
+        _writer.Regenerate(a);
+        return Find(a.PageIndex, a.Reference!.Number) ?? a;
+    }
+
+    public PdfAnnotation SetDash(PdfAnnotation a, LineStyle style)
+    {
+        var border = (document.Dict(a.Dictionary, "BS") ?? new PdfDictionary()).Copy();
+        var dashes = MarkStyle.DashesOf(style, a.Border.Width);
+        border["S"] = new PdfName(dashes is null ? "S" : "D");
+        if (dashes is null) border.Remove("D");
+        else border["D"] = new PdfArray([.. dashes.Select(v => (PdfObject)new PdfNumber(v))]);
+        a.Dictionary["BS"] = border;
+        _writer.Regenerate(a);
+        return Find(a.PageIndex, a.Reference!.Number) ?? a;
+    }
+
+    /// <summary>How the mark's outline is drawn; a dash as long as three line widths is dashed, a shorter one dotted.</summary>
+    public static LineStyle LineOf(PdfAnnotation a) =>
+        a.Border.Style != BorderStyle.Dashed ? LineStyle.Solid
+        : a.Border.Dash.Count > 0 && a.Border.Dash[0] >= 2 * Math.Max(a.Border.Width, 1) ? LineStyle.Dashed : LineStyle.Dotted;
+
+    public static bool TakesLine(MarkTool tool) =>
+        tool is MarkTool.Callout or MarkTool.Line or MarkTool.Arrow or MarkTool.Rectangle or MarkTool.Oval or MarkTool.Polygon or MarkTool.Cloud or MarkTool.Pencil;
+
+    public static bool TakesFill(MarkTool tool) => tool != MarkTool.Pencil && TakesLine(tool);
+
+    public static bool TakesLine(PdfAnnotation a) =>
+        a.Type is AnnotationType.Line or AnnotationType.PolyLine or AnnotationType.Polygon or AnnotationType.Square or AnnotationType.Circle or AnnotationType.Ink;
+
+    public static bool TakesFill(PdfAnnotation a) => a.Type != AnnotationType.Ink && TakesLine(a);
 
     public PdfAnnotation SetOpacity(PdfAnnotation a, double opacity) => _writer.SetOpacity(a, opacity);
 

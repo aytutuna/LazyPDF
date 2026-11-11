@@ -46,6 +46,38 @@ public sealed class CommentPanelTests
     });
 
     [Fact]
+    public Task ChoosingDashedChangesTheSelectedMarkInOneUndoStep() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var mark = f.Marker.Add(MarkTool.Rectangle, 0, [new Point(60, 80), new Point(260, 140)], MarkStyle.Default with { Color = [0.9, 0.1, 0.1] });
+        Assert.True(f.Tab.Commit("Rectangle"));
+        var panel = Attached(f);
+        Get<EditTool>(panel, "_edit").Select(f.Marks().Single(m => m.Reference?.Number == mark.Reference?.Number));
+
+        Get<ComboBox>(panel, "LineStyleBox").SelectedIndex = (int)LineStyle.Dashed;
+        typeof(CommentPanel).GetMethod("Settle_Tick", Private)!.Invoke(panel, [null, EventArgs.Empty]);
+
+        Assert.Equal(LineStyle.Dashed, Marker.LineOf(f.Marks().Single()));
+        Assert.True(f.Tab.Undo());
+        Assert.Equal(LineStyle.Solid, Marker.LineOf(f.Marks().Single()));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheTwoLookListsFollowTheToolThatIsPicked() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var panel = Attached(f);
+
+        Assert.False(Get<ComboBox>(panel, "FillBox").IsEnabled);
+        Assert.True(Marker.TakesLine(MarkTool.Pencil));
+        Assert.False(Marker.TakesFill(MarkTool.Pencil));
+        Assert.True(Marker.TakesFill(MarkTool.Rectangle));
+        Assert.False(Marker.TakesLine(MarkTool.TextBox));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task TheFontListStartsWithHelveticaAndHasTheInstalledFamilies() => Sta.Run(() =>
     {
         using var f = new CommentFixture();

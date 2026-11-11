@@ -21,6 +21,11 @@ public partial class CommentPanel : ToolPanel
         (Loc.T("Green"), [0.2, 0.7, 0.3]), (Loc.T("Blue"), [0.15, 0.4, 0.9]), (Loc.T("Purple"), [0.6, 0.3, 0.8]), (Loc.T("Black"), [0, 0, 0]),
     ];
 
+    private static readonly (string Name, double[]? Rgb)[] Fills =
+    [
+        (Loc.T("None"), null), .. Colours[1..7], (Loc.T("White"), [1, 1, 1]), Colours[7],
+    ];
+
     private static readonly (MarkTool Tool, string Text, string Glyph, string Hint)[] Tools =
     [
         (MarkTool.SelectText, Loc.T("Select text"), "\uE8E4", Loc.T("Select text, then pick a markup above.")),
@@ -104,6 +109,10 @@ public partial class CommentPanel : ToolPanel
         LazyPDF.App.Icon.SetGlyph(DeleteMark, "\uE74D");
         LazyPDF.App.Icon.SetGlyph(ImportButton, "\uE896");
         LazyPDF.App.Icon.SetGlyph(ExportButton, "\uE898");
+        FillBox.ItemsSource = Fills.Select(f => f.Name).ToList();
+        FillBox.SelectedIndex = 0;
+        LineStyleBox.ItemsSource = new[] { Loc.T("Solid"), Loc.T("Dashed"), Loc.T("Dotted") };
+        LineStyleBox.SelectedIndex = 0;
         FontFamilyBox.ItemsSource = Families.Value;
         FontFamilyBox.SelectedIndex = 0;
         FontSizeBox.ItemsSource = new[] { 8, 10, 12, 14, 18, 24, 36 };
@@ -178,7 +187,9 @@ public partial class CommentPanel : ToolPanel
     {
         double size = double.TryParse(FontSizeBox.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double typed) ? Math.Clamp(typed, 4, 144) : 12;
         var font = (BoldToggle.IsChecked == true ? FontStyles.Bold : FontStyles.Regular) | (ItalicToggle.IsChecked == true ? FontStyles.Italic : FontStyles.Regular);
-        return new MarkStyle(_color, WidthSlider.Value, OpacitySlider.Value / 100, FontFamilyBox.SelectedItem as string ?? Families.Value[0], size, font);
+        var line = (LineStyle)Math.Max(LineStyleBox.SelectedIndex, 0);
+        return new MarkStyle(_color, WidthSlider.Value, OpacitySlider.Value / 100, FontFamilyBox.SelectedItem as string ?? Families.Value[0], size, font,
+            Fills[Math.Max(FillBox.SelectedIndex, 0)].Rgb, line);
     }
 
     private void ShowReadouts()
@@ -267,7 +278,7 @@ public partial class CommentPanel : ToolPanel
         if (_loading) return;
         ShowReadouts();
         if (_edit?.Current is null) return;
-        _unsettled.Add(sender is RadioButton ? "colour" : sender is Slider ? sender : "font");
+        _unsettled.Add(sender is RadioButton ? "colour" : sender is Slider || sender == FillBox || sender == LineStyleBox ? sender : "font");
         _settle.Stop();
         _settle.Start();
     }
@@ -285,7 +296,9 @@ public partial class CommentPanel : ToolPanel
             var current = mark;
             if (pending.Contains("colour") && look.Color is { } rgb) current = m.Recolor(current, rgb);
             if (pending.Contains("font") && current.Type == AnnotationType.FreeText && Differs(Marker.TextOf(current), look)) current = m.Restyle(current, look);
+            if (pending.Contains(FillBox) && Marker.TakesFill(current)) current = m.SetFill(current, look.Fill);
             if (pending.Contains(WidthSlider)) current = m.SetWidth(current, look.Width);
+            if (pending.Contains(LineStyleBox) && Marker.TakesLine(current)) current = m.SetDash(current, look.Dash);
             if (pending.Contains(OpacitySlider)) m.SetOpacity(current, look.Opacity);
         });
     }

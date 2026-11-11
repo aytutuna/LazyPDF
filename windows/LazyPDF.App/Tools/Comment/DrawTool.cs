@@ -165,12 +165,19 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
         var shape = Outline(brush, thickness);
         if (shape is null) return;
         shape.IsHitTestVisible = false;
+        var dashes = Marker.TakesLine(tool) ? Dashes(look.Dash, thickness) : null;
+        if (dashes is not null) shape.StrokeDashArray = dashes;
+        if (Marker.TakesFill(tool) && look.Fill is { } f)
+        {
+            shape.Fill = new SolidColorBrush(Color.FromRgb(Byte(f, 0), Byte(f, 1), Byte(f, 2))) { Opacity = look.Opacity };
+        }
         _preview = shape;
         overlay.Children.Add(shape);
         if (tool == MarkTool.Callout)
         {
             var area = Marker.BoxOf(tool, [_points[0], _now]);
-            var frame = new Rectangle { Width = area.Width, Height = area.Height, Stroke = brush, StrokeThickness = thickness, IsHitTestVisible = false };
+            var frame = new Rectangle { Width = area.Width, Height = area.Height, Stroke = brush, StrokeThickness = thickness, StrokeDashArray = dashes, IsHitTestVisible = false };
+            if (look.Fill is { } filling) frame.Fill = new SolidColorBrush(Color.FromRgb(Byte(filling, 0), Byte(filling, 1), Byte(filling, 2))) { Opacity = look.Opacity };
             Canvas.SetLeft(frame, area.X);
             Canvas.SetTop(frame, area.Y);
             _box = frame;
@@ -206,6 +213,14 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
                 return null;
         }
     }
+
+    // WPF counts dashes in line widths; the file counts them in points, with a dot one point longer than wide.
+    private static DoubleCollection? Dashes(LineStyle style, double thickness) => style switch
+    {
+        LineStyle.Dashed => [3, 2],
+        LineStyle.Dotted => [1, 1 + 1 / thickness],
+        _ => null,
+    };
 
     private static byte Byte(double[] color, int i) => (byte)Math.Round(Math.Clamp(color.Length == 1 ? color[0] : color.Length >= 3 ? color[i] : 0, 0, 1) * 255);
 }

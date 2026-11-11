@@ -68,12 +68,16 @@
         <TextBlock Text="{loc:T Look}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,6" AutomationProperties.HeadingLevel="Level2" />
         <TextBlock Text="{loc:T Colour}" Style="{StaticResource FieldLabelText}" />
         <WrapPanel x:Name="Swatches" />
+        <TextBlock Text="{loc:T Fill}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
+        <ComboBox x:Name="FillBox" AutomationProperties.Name="{loc:T Fill}" SelectionChanged="Look_Changed" />
         <DockPanel Margin="0,6,0,0">
             <TextBlock x:Name="WidthReadout" DockPanel.Dock="Right" Style="{StaticResource ReadoutText}" Width="48" />
             <TextBlock Text="{loc:T Width}" Style="{StaticResource FieldLabelText}" VerticalAlignment="Center" />
         </DockPanel>
         <Slider x:Name="WidthSlider" Minimum="0.5" Maximum="12" Value="2" SmallChange="0.5" LargeChange="1" TickFrequency="0.5" IsSnapToTickEnabled="True"
                 AutomationProperties.Name="{loc:T Width}" ValueChanged="Look_Changed" />
+        <TextBlock Text="{loc:T Line}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
+        <ComboBox x:Name="LineStyleBox" AutomationProperties.Name="{loc:T Line}" SelectionChanged="Look_Changed" />
         <DockPanel Margin="0,6,0,0">
             <TextBlock x:Name="OpacityReadout" DockPanel.Dock="Right" Style="{StaticResource ReadoutText}" Width="48" />
             <TextBlock Text="{loc:T Opacity}" Style="{StaticResource FieldLabelText}" VerticalAlignment="Center" />

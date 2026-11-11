@@ -207,6 +207,8 @@ public partial class CommentPanel
     {
         var mark = _edit?.Current;
         SelectedRow.Visibility = mark is null ? Visibility.Collapsed : Visibility.Visible;
+        LineStyleBox.IsEnabled = mark is null ? Marker.TakesLine(_tool) : Marker.TakesLine(mark);
+        FillBox.IsEnabled = mark is null ? Marker.TakesFill(_tool) : Marker.TakesFill(mark);
         if (mark is null)
         {
             if (_drawing is { } kept) RestoreDrawing(kept);
@@ -227,6 +229,8 @@ public partial class CommentPanel
             ItalicToggle.IsChecked = text.Font.HasFlag(FontStyles.Italic);
         }
         ShowColour(Marker.RgbOf(text is null ? mark.Color : text.TextColor ?? [0]));
+        ShowFill(Marker.RgbOf(mark.InteriorColor));
+        LineStyleBox.SelectedIndex = (int)Marker.LineOf(mark);
         _loading = false;
         ShowReadouts();
     }
@@ -238,6 +242,8 @@ public partial class CommentPanel
         WidthSlider.Value = kept.Width;
         OpacitySlider.Value = kept.Opacity * 100;
         ShowColour(kept.Color);
+        ShowFill(kept.Fill);
+        LineStyleBox.SelectedIndex = (int)kept.Dash;
         FontFamilyBox.SelectedItem = kept.Family;
         FontSizeBox.Text = kept.Size.ToString(CultureInfo.CurrentCulture);
         BoldToggle.IsChecked = kept.Font.HasFlag(FontStyles.Bold);
@@ -256,4 +262,8 @@ public partial class CommentPanel
         }
         _color = rgb;
     }
+
+    // A fill the list does not have shows as no choice.
+    private void ShowFill(double[]? rgb) =>
+        FillBox.SelectedIndex = Array.FindIndex(Fills, f => f.Rgb is null ? rgb is null : rgb is not null && f.Rgb.Zip(rgb, (a, b) => Math.Abs(a - b)).All(d => d < 0.03));
 }

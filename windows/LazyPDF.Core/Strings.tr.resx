@@ -1327,6 +1327,9 @@
   <data name="Dark pages" xml:space="preserve">
     <value>Koyu sayfalar</value>
   </data>
+  <data name="Dashed" xml:space="preserve">
+    <value>Kesikli</value>
+  </data>
   <data name="Data follows the last %%EOF." xml:space="preserve">
     <value>Son %%EOF'tan sonra veri var.</value>
   </data>
@@ -1476,6 +1479,9 @@
   </data>
   <data name="Done." xml:space="preserve">
     <value>Bitti.</value>
+  </data>
+  <data name="Dotted" xml:space="preserve">
+    <value>Noktalı</value>
   </data>
   <data name="Drag a box on a page." xml:space="preserve">
     <value>Bir sayfa üzerinde kutu çizin.</value>
@@ -4767,6 +4773,9 @@
   </data>
   <data name="Snap to text" xml:space="preserve">
     <value>Metne yapış</value>
+  </data>
+  <data name="Solid" xml:space="preserve">
+    <value>Düz</value>
   </data>
   <data name="Some characters are missing" xml:space="preserve">
     <value>Bazı karakterler eksik</value>

@@ -257,6 +257,58 @@ public sealed class MarkerTests
     }
 
     [Fact]
+    public void AFilledDashedRectangleKeepsItsFillAndDashAfterReading()
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(MarkTool.Rectangle, 0, Drag, Red with { Fill = [1, 0.92, 0.2], Dash = LineStyle.Dashed, Width = 2 });
+
+        var read = f.Marks().Single(m => m.Reference?.Number == made.Reference?.Number);
+
+        Assert.Equal([1, 0.92, 0.2], read.InteriorColor!);
+        Assert.Equal(BorderStyle.Dashed, read.Border.Style);
+        Assert.Equal([6.0, 4], read.Border.Dash);
+        Assert.Equal(LineStyle.Dashed, Marker.LineOf(read));
+    }
+
+    [Fact]
+    public void ADottedLineIsReadBackAsDotted()
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(MarkTool.Line, 0, Drag, Red with { Dash = LineStyle.Dotted });
+
+        Assert.Equal(LineStyle.Dotted, Marker.LineOf(f.Marks().Single(m => m.Reference?.Number == made.Reference?.Number)));
+    }
+
+    [Fact]
+    public void TheFillAndTheDashCanBeChangedAndTakenAway()
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(MarkTool.Oval, 0, Drag, Red);
+
+        var filled = f.Marker.SetFill(made, [0, 0, 1]);
+        var dotted = f.Marker.SetDash(filled, LineStyle.Dotted);
+        Assert.Equal([0.0, 0, 1], dotted.InteriorColor!);
+        Assert.Equal(LineStyle.Dotted, Marker.LineOf(dotted));
+
+        var plain = f.Marker.SetDash(f.Marker.SetFill(dotted, null), LineStyle.Solid);
+        Assert.False(plain.Dictionary.ContainsKey("IC"));
+        Assert.Equal(BorderStyle.Solid, plain.Border.Style);
+        Assert.Equal([0.9, 0.1, 0.1], plain.Color!);
+    }
+
+    [Fact]
+    public void RecolouringAFilledShapeLeavesItsFill()
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(MarkTool.Rectangle, 0, Drag, Red with { Fill = [1, 0, 0] });
+
+        var blue = f.Marker.Recolor(made, [0, 0, 1]);
+
+        Assert.Equal([0.0, 0, 1], blue.Color!);
+        Assert.Equal([1.0, 0, 0], blue.InteriorColor!);
+    }
+
+    [Fact]
     public void EditedTextIsKeptAndANoteDoesNotNeedAFont()
     {
         using var f = new CommentFixture();

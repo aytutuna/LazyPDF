@@ -2750,6 +2750,15 @@
   "Width": {
     "tr": "Kalınlık"
   },
+  "Solid": {
+    "tr": "Düz"
+  },
+  "Dashed": {
+    "tr": "Kesikli"
+  },
+  "Dotted": {
+    "tr": "Noktalı"
+  },
   "XFDF file": {
     "tr": "XFDF dosyası"
   },
