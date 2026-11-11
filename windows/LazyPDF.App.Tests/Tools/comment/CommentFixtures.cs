@@ -50,6 +50,8 @@ internal class ViewerStandIn : DispatchProxy
                 int page = (int)args![0]!;
                 if (!Overlays.TryGetValue(page, out var overlay)) Overlays[page] = overlay = new PageOverlay(page, new Size(595, 842));
                 return overlay;
+            case "PageSize":
+                return new Size(595, 842);
             case "PageToView":
                 return null;
             case "get_Zoom":

@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using LazyPDF.App.Tools.Measure;
 using LazyPDF.App.Viewer;
 
 namespace LazyPDF.App.Tools.Comment;
@@ -48,7 +49,7 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
     public void Move(PagePointer pointer)
     {
         if (_page < 0 || pointer.Page != _page) return;
-        _now = pointer.Point;
+        _now = Constrain(pointer);
         if (pointer.Pressed && (tool == MarkTool.Pencil || tool == MarkTool.Eraser) && (_now - _points[^1]).Length >= 1) _points.Add(_now);
         Show();
     }
@@ -56,7 +57,7 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
     public void Release(PagePointer pointer)
     {
         if (_page < 0) return;
-        if (pointer.Page == _page) _now = pointer.Point;
+        if (pointer.Page == _page) _now = Constrain(pointer);
         if (Many)
         {
             if (_points.Count == 1) Extend(_now);
@@ -89,6 +90,18 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
     }
 
     public void Cancel() => Clear();
+
+    private Point Constrain(PagePointer pointer)
+    {
+        if (!pointer.Modifiers.HasFlag(ModifierKeys.Shift) || _points.Count == 0) return pointer.Point;
+        var first = _points[0];
+        if (tool is MarkTool.Line or MarkTool.Arrow or MarkTool.Callout) return MeasureShape.Straighten(first, pointer.Point);
+        if (tool is not (MarkTool.Rectangle or MarkTool.Oval or MarkTool.TextBox)) return pointer.Point;
+        var d = pointer.Point - first;
+        double side = Math.Max(Math.Abs(d.X), Math.Abs(d.Y));
+        var page = viewer.PageSize(_page);
+        return new Point(Math.Clamp(first.X + Math.Sign(d.X) * side, 0, page.Width), Math.Clamp(first.Y + Math.Sign(d.Y) * side, 0, page.Height));
+    }
 
     private static bool Close(Point a, Point b) => (a - b).Length < 6;
 

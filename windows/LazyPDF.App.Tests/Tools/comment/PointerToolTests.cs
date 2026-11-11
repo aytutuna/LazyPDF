@@ -78,6 +78,52 @@ public sealed class PointerToolTests
     }
 
     [Fact]
+    public void ShiftMakesALineStraight()
+    {
+        OnSta(() =>
+        {
+            var tool = Drawing(MarkTool.Line, out _, out _, out var drawn);
+            var held = new PagePointer(0, new Point(50, 18), new Point(50, 18), true, 0, ModifierKeys.Shift);
+
+            tool.Press(Press(new Point(10, 10)));
+            tool.Move(held);
+            tool.Release(held);
+
+            var points = Assert.Single(drawn.Marks).Points;
+            Assert.Equal(10, points[1].Y, 6);
+        });
+    }
+
+    [Fact]
+    public void ShiftMakesARectangleASquare()
+    {
+        OnSta(() =>
+        {
+            var tool = Drawing(MarkTool.Rectangle, out _, out _, out var drawn);
+            var held = new PagePointer(0, new Point(50, 30), new Point(50, 30), true, 0, ModifierKeys.Shift);
+
+            tool.Press(Press(new Point(10, 10)));
+            tool.Release(held);
+
+            Assert.Equal([new Point(10, 10), new Point(50, 50)], Assert.Single(drawn.Marks).Points);
+        });
+    }
+
+    [Fact]
+    public void WithoutShiftTheEndStaysWhereItIs()
+    {
+        OnSta(() =>
+        {
+            var tool = Drawing(MarkTool.Rectangle, out _, out _, out var drawn);
+
+            tool.Press(Press(new Point(10, 10)));
+            tool.Release(Drag(new Point(50, 30)));
+
+            Assert.Equal([new Point(10, 10), new Point(50, 30)], Assert.Single(drawn.Marks).Points);
+        });
+    }
+
+    [Fact]
     public void AClickWithoutADragDrawsNothingForAShape()
     {
         OnSta(() =>
