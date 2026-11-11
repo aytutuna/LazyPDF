@@ -31,6 +31,8 @@ public partial class CertificatesPanel : ToolPanel
     private Rect? _box;
     private Rectangle? _outline;
     private bool _working;
+    private bool _refilling;
+    private int _pages;
 
     public CertificatesPanel()
     {
@@ -84,7 +86,6 @@ public partial class CertificatesPanel : ToolPanel
 
     private void Tab_Changed(object? sender, EventArgs e)
     {
-        ClearBox();
         Refill();
     }
 
@@ -94,8 +95,24 @@ public partial class CertificatesPanel : ToolPanel
         var document = Tab!.Document;
         var choices = new List<WhereChoice> { new(Loc.T("Not visible"), WhereKind.Invisible), new(Loc.T("A box I draw on the page"), WhereKind.Box) };
         choices.AddRange(CertificateSigning.EmptyFields(document).Select(name => new WhereChoice(Loc.T("Field {0}", name), WhereKind.Field, name)));
-        WhereBox.ItemsSource = choices;
-        WhereBox.SelectedIndex = 0;
+        int kept = CertificateSigning.KeptPlace(WhereBox.SelectedIndex, Where?.Field, choices.Skip(2).Select(c => c.Field!).ToList());
+        bool keepBox = kept == 1 && _box is not null && Tab.PageCount == _pages;
+        if (keepBox) Viewer!.Overlay(_boxPage).Children.Remove(_outline!);
+        else ClearBox();
+        _pages = Tab.PageCount;
+        _refilling = true;
+        try
+        {
+            WhereBox.ItemsSource = choices;
+            WhereBox.SelectedIndex = kept;
+        }
+        finally
+        {
+            _refilling = false;
+        }
+        if (keepBox) Viewer!.Overlay(_boxPage).Children.Add(_outline!);
+        else if (kept == 1) BoxText.Text = Loc.T("No box yet.");
+        BoxRow.Visibility = Where?.Kind == WhereKind.Box ? Visibility.Visible : Visibility.Collapsed;
         bool signed = document.IsSigned;
         CertifyBox.IsEnabled = !signed;
         if (signed) CertifyBox.SelectedIndex = 0;
@@ -140,6 +157,7 @@ public partial class CertificatesPanel : ToolPanel
 
     private void WhereBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (_refilling) return;
         Stop();
         ClearBox();
         BoxRow.Visibility = Where?.Kind == WhereKind.Box ? Visibility.Visible : Visibility.Collapsed;

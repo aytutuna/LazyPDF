@@ -63,6 +63,14 @@ internal static class CertificateSigning
     public static IReadOnlyList<string> EmptyFields(PdfDocument document) =>
         [.. PdfForm.Read(document).Fields.Where(f => f.Kind == FieldKind.Signature && !f.IsSigned).Select(f => f.Name)];
 
+    /// <summary>The place choice to keep after the file changed: 0 not visible, 1 a drawn box, 2 and up the fields in order.</summary>
+    internal static int KeptPlace(int oldIndex, string? oldField, IReadOnlyList<string> fields)
+    {
+        if (oldIndex is 0 or 1) return oldIndex;
+        int at = oldField is null ? -1 : fields.ToList().IndexOf(oldField);
+        return at >= 0 ? at + 2 : 0;
+    }
+
     private static void DropOnFailure(PdfEditSession session, Action work)
     {
         bool done = false;

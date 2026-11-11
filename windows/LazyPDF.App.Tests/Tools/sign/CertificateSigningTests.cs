@@ -182,4 +182,15 @@ public sealed class CertificateSigningTests
 
         Assert.Throws<InvalidOperationException>(() => PdfLongTermValidation.Add(session, new NoServer(), Now));
     }
+
+    [Theory]
+    [InlineData(-1, null, 0)]
+    [InlineData(0, null, 0)]
+    [InlineData(1, null, 1)]
+    [InlineData(2, "B", 3)]
+    [InlineData(2, "Gone", 0)]
+    public void ThePlaceChoiceSurvivesAChange(int oldIndex, string? oldField, int expected)
+    {
+        Assert.Equal(expected, CertificateSigning.KeptPlace(oldIndex, oldField, ["A", "B"]));
+    }
 }
