@@ -52,7 +52,7 @@ public final class SavedSignatures {
 
     public func load(_ item: SavedItem) -> PdfRgbaImage? {
         guard let data = try? Data(contentsOf: item.url) else { return nil }
-        return codec.decodeFile([UInt8](data))?.first
+        return codec.decodeFile([UInt8](data))?.first(where: { !$0.tooBig })
     }
 
     public func remove(_ item: SavedItem) {

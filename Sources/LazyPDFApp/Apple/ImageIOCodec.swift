@@ -23,7 +23,8 @@ public final class ImageIOCodec: ImageCodec {
 
     public func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? {
         guard codec == "DCTDecode" || codec == "JPXDecode" else { return nil }
-        return decodeFile(data)?.first
+        guard let first = decodeFile(data)?.first, !first.tooBig else { return nil }
+        return first
     }
 
     public func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? {
@@ -37,7 +38,10 @@ public final class ImageIOCodec: ImageCodec {
                   let width = properties[kCGImagePropertyPixelWidth] as? Int,
                   let height = properties[kCGImagePropertyPixelHeight] as? Int else { return nil }
             let (size, overflow) = width.multipliedReportingOverflow(by: height)
-            if overflow || size < 0 || size > PdfImageSamples.maxPixels { continue }
+            if overflow || size < 0 || size > PdfImageSamples.maxPixels {
+                frames.append(PdfRgbaImage(width, height, []))
+                continue
+            }
             guard let image = CGImageSourceCreateImageAtIndex(source, index, nil), let frame = Self.rgba(image) else { return nil }
             let dpiX = properties[kCGImagePropertyDPIWidth] as? Double ?? 0, dpiY = properties[kCGImagePropertyDPIHeight] as? Double ?? 0
             frames.append(PdfRgbaImage(frame.width, frame.height, frame.rgba, dpiX: dpiX, dpiY: dpiY))

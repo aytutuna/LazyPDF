@@ -94,7 +94,7 @@ final class ImageIOCodecTests: XCTestCase {
         XCTAssertNil(codec.decodeFile(try ApplePdfs.text()))
     }
 
-    func test_aTiffWhoseSizeOverflowsIsLeftUnreadAndNotATrap() {
+    func test_aTiffWhoseSizeOverflowsComesBackAsAPlaceholderAndNotATrap() {
         func entry(_ tag: UInt16, _ type: UInt16, _ value: UInt32) -> [UInt8] {
             var bytes: [UInt8] = []
             for part in [UInt32(tag) | UInt32(type) << 16, 1, value] { bytes += withUnsafeBytes(of: part.littleEndian) { Array($0) } }
@@ -106,7 +106,7 @@ final class ImageIOCodecTests: XCTestCase {
                   entry(273, 4, 200), entry(277, 3, 1), entry(278, 4, big), entry(279, 4, 1)] { tiff += e }
         tiff += [0, 0, 0, 0]
 
-        XCTAssertEqual((codec.decodeFile(tiff) ?? []).count, 0)
+        XCTAssertTrue((codec.decodeFile(tiff) ?? []).allSatisfy(\.tooBig))
     }
 
     func test_aTiffGivesEveryFrame() throws {
@@ -150,10 +150,13 @@ final class ImageIOCodecTests: XCTestCase {
         XCTAssertEqual(try PdfDocument.open(made.bytes).pages.count, 2)
     }
 
-    func test_aPictureWithTooManyPixelsIsLeftUnreadAndNotAnError() throws {
+    func test_aPictureWithTooManyPixelsComesBackAsAPlaceholder() throws {
         let png = try encode("public.png", [blank(16384)])
 
-        XCTAssertEqual((codec.decodeFile(png) ?? []).count, 0)
+        let frames = try XCTUnwrap(codec.decodeFile(png))
+
+        XCTAssertEqual(frames.map(\.tooBig), [true])
+        XCTAssertEqual(frames.map(\.width), [16384])
     }
 
     func test_aFrameWithTooManyPixelsDoesNotTakeTheOtherFramesWithIt() throws {
@@ -161,7 +164,8 @@ final class ImageIOCodecTests: XCTestCase {
 
         let frames = codec.decodeFile(tiff)
 
-        XCTAssertEqual(frames?.map(\.width), [8, 16])
+        XCTAssertEqual(frames?.map(\.width), [8, 16384, 16])
+        XCTAssertEqual(frames?.map(\.tooBig), [false, true, false])
     }
 }
 #endif

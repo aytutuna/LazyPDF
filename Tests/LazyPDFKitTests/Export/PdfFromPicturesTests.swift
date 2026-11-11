@@ -86,6 +86,20 @@ final class PdfFromPicturesTests: XCTestCase {
         XCTAssertEqual(reopened.rawData(stream), ExportKit.jpeg)
     }
 
+    func test_aFrameTooBigToDecodeIsLeftOutAndCounted() throws {
+        let made = try PdfFromPictures.create([[UInt8(ascii: "B"), 2]], codec)
+        XCTAssertEqual(made.pages, 2)
+        XCTAssertEqual(made.skippedFrames, 1)
+        XCTAssertTrue(made.unreadable.isEmpty)
+    }
+
+    func test_aFileOfOnlyTooBigFramesIsUnreadableAndCounted() throws {
+        let made = try PdfFromPictures.create([ExportFakeCodec.picture(4, 4), [UInt8(ascii: "B"), 0]], codec)
+        XCTAssertEqual(made.pages, 1)
+        XCTAssertEqual(made.skippedFrames, 1)
+        XCTAssertEqual(made.unreadable, [1])
+    }
+
     func test_aFileOnlyTheCodecKnowsIsDecodedAndKeptLossless() throws {
         let made = try PdfFromPictures.create([ExportFakeCodec.picture(3, 2, 77)], codec)
         let (document, images) = try reopen(made)

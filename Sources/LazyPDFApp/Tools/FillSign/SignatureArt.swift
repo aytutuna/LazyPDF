@@ -102,7 +102,7 @@ public enum SignatureArt {
     /// A picture of a signature on paper: the paper becomes see-through, the ink stays. `orientation` is the one the camera
     /// stored in the file (EXIF 1 to 8), which the pixels do not show.
     public static func fromFile(_ file: [UInt8], _ codec: ImageCodec, orientation: Int = 1) -> PdfRgbaImage? {
-        guard let first = codec.decodeFile(file)?.first else { return nil }
+        guard let first = codec.decodeFile(file)?.first(where: { !$0.tooBig }) else { return nil }
         return trim(paperToClear(shrink(upright(first, orientation))))
     }
 

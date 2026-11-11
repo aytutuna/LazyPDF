@@ -30,16 +30,18 @@ public struct PdfPageSetup {
     }
 }
 
-/// A made PDF: its bytes, page count and the files in the list that could not be read (by index).
+/// A made PDF: its bytes, page count and the files in the list that could not be read (by index) and how many frames were too big to decode and left out.
 public struct PicturesPdf {
     public let bytes: [UInt8]
     public let pages: Int
     public let unreadable: [Int]
+    public let skippedFrames: Int
 
-    public init(_ bytes: [UInt8], _ pages: Int, _ unreadable: [Int]) {
+    public init(_ bytes: [UInt8], _ pages: Int, _ unreadable: [Int], skippedFrames: Int = 0) {
         self.bytes = bytes
         self.pages = pages
         self.unreadable = unreadable
+        self.skippedFrames = skippedFrames
     }
 }
 
@@ -66,12 +68,14 @@ public enum PdfFromPictures {
         let document = try ExportPdf.newDocument()
         var pictures: [Picture] = []
         var unreadable: [Int] = []
+        var skipped = 0
         for i in 0..<files.count {
             let before = pictures.count
             if isJpeg(files[i]), let jpeg = try PdfImageWriter.addJpeg(document, files[i]) {
                 let (dpiX, dpiY) = JpegMeta.density(files[i])
                 pictures.append(Picture(image: jpeg, dpiX: dpiX, dpiY: dpiY, orientation: JpegMeta.orientation(files[i])))
             } else if let frames = codec.decodeFile(files[i]) {
+                skipped += frames.filter { $0.tooBig }.count
                 for frame in frames where fits(frame) {
                     pictures.append(Picture(image: try PdfImageWriter.addRgba(document, frame.width, frame.height, frame.rgba), dpiX: storedDpi(frame).x, dpiY: storedDpi(frame).y, orientation: 1))
                 }
@@ -98,7 +102,7 @@ public enum PdfFromPictures {
             let content = ContentWriter().paint(name, JpegMeta.placement(pictures[i].orientation, w, h, (width - w) / 2, (height - h) / 2))
             page.dictionary["Contents"] = try document.add(PdfStream(PdfDictionary(), data: content.toArray()))
         }
-        return PicturesPdf(try document.saveRewrite(), pictures.count, unreadable)
+        return PicturesPdf(try document.saveRewrite(), pictures.count, unreadable, skippedFrames: skipped)
     }
 
     private static func fits(_ frame: PdfRgbaImage) -> Bool {

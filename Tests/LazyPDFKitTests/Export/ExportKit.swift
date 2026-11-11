@@ -26,7 +26,13 @@ final class ExportFakeCodec: ImageCodec {
     }
 
     // A "picture file" of the tests is the bytes P, width, height, then width * height gray levels and optionally the two densities as 16 bits.
+    // The bytes B, n are n small frames with a frame too big to decode among them (alone when n is 0).
     func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? {
+        if file.count == 2, file[0] == UInt8(ascii: "B") {
+            var frames = [PdfRgbaImage](repeating: PdfRgbaImage(4, 4, [UInt8](repeating: 0, count: 64)), count: Int(file[1]))
+            frames.insert(PdfRgbaImage(20000, 20000, []), at: Int(file[1]) / 2)
+            return frames
+        }
         if file.count < 3 || file[0] != UInt8(ascii: "P") { return nil }
         let w = Int(file[1]), h = Int(file[2])
         var rgba = [UInt8](repeating: 0, count: w * h * 4)
