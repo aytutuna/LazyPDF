@@ -96,7 +96,7 @@ public partial class SearchSidePanel : ToolPanel
     private void Query_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key != Key.Enter) return;
-        if (_typing.IsEnabled)
+        if (_typing.IsEnabled || Query.Text != Viewer?.Search.Query)
         {
             _typing.Stop();
             Run();
