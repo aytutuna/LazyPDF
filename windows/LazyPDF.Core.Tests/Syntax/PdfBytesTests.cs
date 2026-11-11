@@ -78,4 +78,15 @@ public class PdfBytesTests
             Assert.Throws<PdfReadException>(() => lexer.ReadObjectHeader());
         }
     }
+
+    [Fact]
+    public void NameAboveLatin1IsWrittenAsItsUtf8Bytes()
+    {
+        Assert.Equal("/#C5#9E", new PdfName("Ş").ToString());
+        Assert.Equal("/#C5#9E", PdfName.FromText("Ş").ToString());
+        var read = (PdfName)new PdfLexer(new PdfArrayBytes(TestPdf.Latin("/#C5#9E"))).ReadObject();
+        Assert.Equal("Ş", read.Text);
+        var latin = (PdfName)new PdfLexer(new PdfArrayBytes(TestPdf.Latin("/#FC"))).ReadObject();
+        Assert.Equal(latin.Value, latin.Text);
+    }
 }
