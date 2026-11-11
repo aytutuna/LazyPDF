@@ -21,4 +21,17 @@ public sealed class TextEditorTests
         Assert.True(box.MaxHeight <= 200 - Canvas.GetTop(box) || box.MaxHeight == box.MinHeight);
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public Task ALargeFontAtThePageBottomKeepsRoomForALine() => Sta.Run(() =>
+    {
+        var overlay = new PageOverlay(0, new Size(400, 600));
+
+        TextEditor.Open(overlay, new Rect(10, 590, 100, 10), 72, "", _ => { });
+
+        var box = Assert.IsType<TextBox>(Assert.Single(overlay.Children));
+        Assert.True(box.MinHeight >= 72);
+        Assert.True(Canvas.GetTop(box) + box.MinHeight <= 600);
+        return Task.CompletedTask;
+    });
 }
