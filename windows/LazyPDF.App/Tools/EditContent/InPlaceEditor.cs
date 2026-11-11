@@ -68,6 +68,7 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
         Canvas.SetLeft(box, area.X);
         Canvas.SetTop(box, area.Y);
         Look(box, look);
+        PageOverlay.KeepUpright(box, viewer.Rotation);
         box.PreviewKeyDown += Box_PreviewKeyDown;
         box.Loaded += (_, _) => box.Dispatcher.BeginInvoke(() =>
         {
@@ -83,6 +84,11 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
     public void Restyle(EditorLook look)
     {
         if (_box is not null) Look(_box, look);
+    }
+
+    public void Upright()
+    {
+        if (_box is not null) PageOverlay.KeepUpright(_box, viewer.Rotation);
     }
 
     public void Close()

@@ -41,4 +41,21 @@ public sealed class InPlaceEditorTests
         Assert.False(committed);
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public Task ARotatedViewTurnsTheBoxBack() => Sta.Run(() =>
+    {
+        var viewer = ViewerStandIn.Create(out var stand);
+        stand.Rotation = 90;
+        var look = new EditorLook(new System.Windows.Media.FontFamily("Arial"), 12, System.Windows.Media.Colors.Black, false, false, LazyPDF.Core.TextAlignment.Left);
+        var editor = new InPlaceEditor(viewer);
+        editor.Open(0, new System.Windows.Rect(10, 10, 100, 20), "", look, wrap: true);
+
+        var box = Assert.IsType<TextBox>(Assert.Single(stand.Overlays[0].Children));
+        Assert.Equal(-90, Assert.IsType<System.Windows.Media.RotateTransform>(box.RenderTransform).Angle);
+        stand.Rotation = 0;
+        editor.Upright();
+        Assert.Null(box.RenderTransform);
+        return Task.CompletedTask;
+    });
 }

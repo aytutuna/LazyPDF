@@ -14,7 +14,7 @@ public sealed class TextEditor
     private readonly Action<string?> _done;
     private bool _closed;
 
-    private TextEditor(PageOverlay overlay, Rect area, double fontSize, string text, Action<string?> done)
+    private TextEditor(PageOverlay overlay, Rect area, double fontSize, string text, int rotation, Action<string?> done)
     {
         _overlay = overlay;
         _done = done;
@@ -37,6 +37,7 @@ public sealed class TextEditor
             Padding = new Thickness(2),
         };
         AutomationProperties.SetName(_box, Loc.T("Text of the mark"));
+        PageOverlay.KeepUpright(_box, rotation);
         Canvas.SetLeft(_box, left);
         Canvas.SetTop(_box, top);
         _box.PreviewKeyDown += Box_PreviewKeyDown;
@@ -45,9 +46,9 @@ public sealed class TextEditor
     }
 
     /// <summary>Opens the editor; <paramref name="done"/> gets the text, or null when it was dropped, and is called once.</summary>
-    public static TextEditor Open(PageOverlay overlay, Rect area, double fontSize, string text, Action<string?> done)
+    public static TextEditor Open(PageOverlay overlay, Rect area, double fontSize, string text, int rotation, Action<string?> done)
     {
-        var editor = new TextEditor(overlay, area, fontSize, text, done);
+        var editor = new TextEditor(overlay, area, fontSize, text, rotation, done);
         editor._box.Dispatcher.BeginInvoke(() =>
         {
             editor._box.Focus();
@@ -56,6 +57,8 @@ public sealed class TextEditor
         }, System.Windows.Threading.DispatcherPriority.Input);
         return editor;
     }
+
+    public void Upright(int rotation) => PageOverlay.KeepUpright(_box, rotation);
 
     /// <summary>Closes the box and hands over what was typed.</summary>
     public void Finish() => Close(_box.Text);

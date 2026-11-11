@@ -124,7 +124,7 @@ public partial class CommentPanel
     // The box opens again with the text when the file would not take it, so that nothing typed is lost.
     private void Compose(DocumentTab tab, PageOverlay overlay, Rect area, double size, string text, Func<string, bool> keep)
     {
-        _editor = TextEditor.Open(overlay, area, size, text, typed =>
+        _editor = TextEditor.Open(overlay, area, size, text, Viewer?.Rotation ?? 0, typed =>
         {
             _editor = null;
             if (typed is null || !ReferenceEquals(Tab, tab) || keep(typed)) return;

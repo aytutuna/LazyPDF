@@ -67,6 +67,7 @@ public sealed partial class EditContentPanel : ToolPanel
         _tab.Changed += Tab_Changed;
         Viewer!.View.PreviewKeyDown += View_PreviewKeyDown;
         Viewer.ModeChanged += Viewer_ModeChanged;
+        Viewer.ViewChanged += Viewer_ViewChanged;
         _surface.Attach();
         ModeSelect.IsChecked = true;
         HideMessage();
@@ -94,6 +95,7 @@ public sealed partial class EditContentPanel : ToolPanel
         _tab!.Changed -= Tab_Changed;
         Viewer!.View.PreviewKeyDown -= View_PreviewKeyDown;
         Viewer.ModeChanged -= Viewer_ModeChanged;
+        Viewer.ViewChanged -= Viewer_ViewChanged;
         _edits = null;
         _surface = null;
         _editor = null;
@@ -114,6 +116,8 @@ public sealed partial class EditContentPanel : ToolPanel
     }
 
     // The Hand or Select button of the viewer took the pointer; it comes back when a mode here is picked.
+    private void Viewer_ViewChanged(object? sender, EventArgs e) => _editor?.Upright();
+
     private void Viewer_ModeChanged(object? sender, EventArgs e)
     {
         if (_surface is not { IsActive: false }) return;

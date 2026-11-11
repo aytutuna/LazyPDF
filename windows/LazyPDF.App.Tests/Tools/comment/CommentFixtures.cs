@@ -35,6 +35,8 @@ internal class ViewerStandIn : DispatchProxy
 
     public double Zoom { get; set; } = 1;
 
+    public int Rotation { get; set; }
+
     public static IDocumentViewer Create(out ViewerStandIn stand)
     {
         var viewer = Create<IDocumentViewer, ViewerStandIn>();
@@ -56,6 +58,8 @@ internal class ViewerStandIn : DispatchProxy
                 return null;
             case "get_Zoom":
                 return Zoom;
+            case "get_Rotation":
+                return Rotation;
             default:
                 throw new NotSupportedException(method.Name);
         }

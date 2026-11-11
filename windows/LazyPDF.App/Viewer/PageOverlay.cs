@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace LazyPDF.App.Viewer;
 
@@ -24,4 +25,11 @@ public sealed class PageOverlay : Canvas
 
     /// <summary>The page this layer belongs to, 0-based.</summary>
     public int Page { get; }
+
+    /// <summary>Turns a box against the viewer's rotation so its text reads upright.</summary>
+    public static void KeepUpright(FrameworkElement box, int viewRotation)
+    {
+        box.RenderTransformOrigin = new Point(0.5, 0.5);
+        box.RenderTransform = viewRotation == 0 ? null : new RotateTransform(-viewRotation);
+    }
 }
