@@ -25,12 +25,14 @@ final class StubPicker: ToolFilePicker {
 @MainActor
 final class PagesExporter: ToolFileExporter {
     var received: [(name: String, bytes: [UInt8])] = []
+    private(set) var urls: [URL] = []
     var gaveUp = false
 
     /// Names of files the stand-in cannot write, as a full disk would leave them.
     var failing: Set<String> = []
 
     func export(_ files: [URL]) async -> ToolExport {
+        urls = files
         received = files.map { ($0.lastPathComponent, [UInt8]((try? Data(contentsOf: $0)) ?? Data())) }
         if gaveUp { return ToolExport() }
         return ToolExport(

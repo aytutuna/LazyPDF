@@ -258,7 +258,7 @@ public final class ProtectModel: ToolPanelModel {
     // The copy is for other people's keys, so it cannot be a tab here: nobody could open it. It is written to a folder of its
     // own, handed to the exporter and removed again.
     private func saveCopy(_ host: ToolHost, _ bytes: [UInt8], _ title: String) async -> Bool {
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let folder = Exporter.workFolder.appendingPathComponent(UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: folder) }
         let file = folder.appendingPathComponent(title)
         do {

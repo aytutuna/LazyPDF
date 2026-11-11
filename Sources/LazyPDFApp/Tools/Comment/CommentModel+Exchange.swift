@@ -62,7 +62,7 @@ extension CommentModel {
                 host.setStatus(L10n.t("No comments to export."))
                 return
             }
-            let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+            let folder = Exporter.workFolder.appendingPathComponent(UUID().uuidString, isDirectory: true)
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             defer { try? FileManager.default.removeItem(at: folder) }
             let written = folder.appendingPathComponent(name)

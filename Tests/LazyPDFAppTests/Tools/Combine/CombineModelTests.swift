@@ -148,6 +148,8 @@ final class CombineModelTests: XCTestCase {
 
         XCTAssertTrue(rig.host.openedNew.isEmpty)
         XCTAssertEqual(rig.host.exporter.received.map(\.name), ["Combined.pdf"])
+        XCTAssertTrue(rig.host.exporter.urls.allSatisfy { $0.path.hasPrefix(Exporter.workFolder.path) })
+        XCTAssertFalse(rig.host.exporter.urls.contains { FileManager.default.fileExists(atPath: $0.deletingLastPathComponent().path) })
         XCTAssertEqual(rig.host.notices.map(\.title), ["1 file saved"])
         XCTAssertEqual(rig.host.notices[0].text, "/saved")
         XCTAssertNotNil(rig.host.notices[0].action)

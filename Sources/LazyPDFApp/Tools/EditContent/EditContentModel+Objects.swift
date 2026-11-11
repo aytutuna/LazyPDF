@@ -64,7 +64,7 @@ extension EditContentModel {
             return
         }
         let name = "picture." + picture.fileExtension
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lazypdf-" + UUID().uuidString, isDirectory: true)
+        let folder = Exporter.workFolder.appendingPathComponent(UUID().uuidString, isDirectory: true)
         let file = folder.appendingPathComponent(name)
         defer { try? FileManager.default.removeItem(at: folder) }
         do {

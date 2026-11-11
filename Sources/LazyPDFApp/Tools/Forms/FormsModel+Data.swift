@@ -9,8 +9,7 @@ extension FormsModel {
     public func exportData() async {
         guard handIn(), let tab, let host else { return }
         let name = ((tab.title as NSString).deletingPathExtension) + "." + dataFormat.fileExtension
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Lazy PDF", isDirectory: true)
-            .appendingPathComponent("Form data " + UUID().uuidString, isDirectory: true)
+        let folder = Exporter.workFolder.appendingPathComponent(UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: folder) }
         let saved: [URL]
         do {

@@ -25,7 +25,7 @@ public struct ExportSource {
 }
 
 public enum Exporter {
-    /// Where finished files wait for the file exporter. It is a fixed folder so the shells can clear what a kill left behind.
+    /// Where every tool's files wait for the file exporter. It is a fixed folder so the shells can clear what a kill left behind.
     public static var workFolder: URL {
         FileManager.default.temporaryDirectory.appendingPathComponent("lazypdf-export", isDirectory: true)
     }

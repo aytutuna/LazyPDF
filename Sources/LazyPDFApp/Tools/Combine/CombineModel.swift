@@ -330,7 +330,7 @@ public final class CombineModel: ToolPanelModel {
 
     // The files are written to a folder of the app's own and handed to the exporter, which asks where they go.
     private func save(_ host: ToolHost, _ files: [(name: String, bytes: [UInt8])], _ protectedSource: Bool, _ extra: String) async {
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lazypdf-" + UUID().uuidString, isDirectory: true)
+        let folder = Exporter.workFolder.appendingPathComponent(UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: folder) }
         var written: [URL] = []
         do {

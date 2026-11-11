@@ -336,6 +336,7 @@ final class ExportModelTests: XCTestCase {
         await model.action!.run()
 
         XCTAssertGreaterThan(exporter.contents["a.docx"] ?? 0, 20)
+        XCTAssertTrue(try XCTUnwrap(exporter.offered.first?.first).path.hasPrefix(Exporter.workFolder.path))
         XCTAssertFalse(FileManager.default.fileExists(atPath: try XCTUnwrap(exporter.offered.first?.first).path))
     }
 
