@@ -85,6 +85,51 @@ final class ViewerSearchTests: XCTestCase {
         XCTAssertEqual(moved, 4)
     }
 
+    func test_aStepStartsFromThePageInViewAfterTheReaderScrolled() async throws {
+        let bytes = try PdfFromText.create("fox\u{0C}fox\u{0C}a\u{0C}b\u{0C}c\u{0C}fox", fonts: FakeFonts()).bytes
+        var page = 0
+        let search = ViewerSearch(source: { Task { await TextSource.open(bytes, password: nil) } }, startPage: { page })
+        await search.start("fox", TextSearchOptions()).value
+        search.select(0)
+        page = 4
+
+        search.next()
+
+        XCTAssertEqual(search.hits[search.current].page, 5)
+        XCTAssertEqual(search.wrapped, .none)
+    }
+
+    func test_aStepPastTheEndsSaysItWrapped() async throws {
+        let search = searching(try pages(3))
+        await search.start("fox", TextSearchOptions()).value
+        search.select(2)
+
+        search.next()
+
+        XCTAssertEqual(search.current, 0)
+        XCTAssertEqual(search.wrapped, .start)
+
+        search.previous()
+
+        XCTAssertEqual(search.current, 2)
+        XCTAssertEqual(search.wrapped, .end)
+
+        search.select(1)
+
+        XCTAssertEqual(search.wrapped, .none)
+    }
+
+    func test_aFileWithoutTextSaysSo() async throws {
+        let blank = searching(try PdfFromText.create("\u{0C}\u{0C}", fonts: FakeFonts()).bytes)
+        let words = searching(Pdfs.text(2))
+
+        await blank.start("fox", TextSearchOptions()).value
+        await words.start("zebra", TextSearchOptions()).value
+
+        XCTAssertTrue(blank.noText)
+        XCTAssertFalse(words.noText)
+    }
+
     func test_selectingAHitMakesItCurrent() async throws {
         let search = searching(try pages(3))
         await search.start("fox", TextSearchOptions()).value

@@ -98,8 +98,13 @@ struct FindBar: View {
         let search = viewer.search
         if search.query.isEmpty { return "" }
         if search.badPattern { return L10n.t("Not a valid pattern") }
-        if search.hits.isEmpty { return search.isRunning ? L10n.t("Searching") : L10n.t("No results") }
+        if search.hits.isEmpty {
+            return search.isRunning ? L10n.t("Searching")
+                : search.noText ? L10n.t("This file has no text to search. Try Make searchable.") : L10n.t("No results")
+        }
         if search.isRunning { return L10n.t("{0} found", search.hits.count) }
+        if search.wrapped == .start { return L10n.t("{0} of {1}, from the start", search.current + 1, search.hits.count) }
+        if search.wrapped == .end { return L10n.t("{0} of {1}, from the end", search.current + 1, search.hits.count) }
         return L10n.t("{0} of {1}", search.current + 1, search.hits.count)
     }
 }

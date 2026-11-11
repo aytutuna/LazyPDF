@@ -20,6 +20,9 @@ public struct SearchHit {
     public var spoken: String { "\(pageText). \(before)\(text)\(after)" }
 }
 
+/// Which end a step came round from.
+public enum SearchWrap { case none, start, end }
+
 /// One search of the open file, shared by the find bar, the highlights on the pages and the Search panel. It runs off the
 /// main actor and delivers hits in batches; starting another search cancels the one running.
 @MainActor
@@ -33,6 +36,7 @@ public final class ViewerSearch {
     @ObservationIgnored private var running: Task<Void, Never>?
     @ObservationIgnored private var generation = 0
     @ObservationIgnored private var quiet = false
+    @ObservationIgnored private var landed = -1
 
     public private(set) var hits: [SearchHit] = []
 
@@ -44,6 +48,12 @@ public final class ViewerSearch {
     public private(set) var current = -1
 
     public private(set) var isRunning = false
+
+    /// The last step went round past the first or last hit.
+    public private(set) var wrapped = SearchWrap.none
+
+    /// The search found nothing and no page of the file has text.
+    public private(set) var noText = false
 
     /// The query is a regular expression that does not parse.
     public private(set) var badPattern = false
@@ -69,6 +79,9 @@ public final class ViewerSearch {
         self.query = query
         self.options = options
         badPattern = false
+        wrapped = .none
+        noText = false
+        landed = -1
         if query.isEmpty {
             isRunning = false
             return Task {}
@@ -102,24 +115,51 @@ public final class ViewerSearch {
     }
 
     private func move(_ step: Int) {
-        if hits.isEmpty { return }
+        let count = hits.count
+        if count == 0 { return }
         quiet = false
-        select(((current < 0 ? (step > 0 ? -1 : 0) : current) + step + hits.count) % hits.count)
+        let start = startPage()
+        wrapped = .none
+        var index: Int
+        if current >= 0 && start != landed && abs(hits[current].page - start) > 1 {
+            // The reader scrolled away: step from the page in view, not from the last hit.
+            let found = step > 0 ? hits.firstIndex { $0.page >= start } : hits.lastIndex { $0.page <= start }
+            if let found {
+                index = found
+            } else {
+                index = step > 0 ? 0 : count - 1
+                wrapped = step > 0 ? .start : .end
+            }
+        } else {
+            index = (current < 0 ? (step > 0 ? -1 : 0) : current) + step
+            if current >= 0 && (index < 0 || index >= count) { wrapped = step > 0 ? .start : .end }
+            index = (index + count) % count
+        }
+        selectAt(index)
     }
 
     public func select(_ index: Int) {
         guard index >= 0 && index < hits.count else { return }
+        wrapped = .none
+        selectAt(index)
+    }
+
+    private func selectAt(_ index: Int) {
         quiet = false
         current = index
         onCurrentChanged?()
+        landed = startPage()
     }
 
     private nonisolated func run(_ text: Task<TextSource?, Never>, _ query: String, _ options: TextSearchOptions, _ start: Int, _ id: Int) async {
         var bad = false
+        var found = false
+        var noText = false
         do {
             if let source = await text.value {
                 var batch: [SearchHit] = []
                 for try await match in try source.find(query, options) {
+                    found = true
                     batch.append(SearchHit(match: match, before: Self.around(source, match, -1), after: Self.around(source, match, 1)))
                     if batch.count >= Self.batch {
                         await deliver(batch, start, id)
@@ -127,13 +167,14 @@ public final class ViewerSearch {
                     }
                 }
                 await deliver(batch, start, id)
+                noText = !found && (0..<source.pageCount).allSatisfy { source.page($0).chars.isEmpty }
             }
         } catch is CancellationError {
             return
         } catch {
             bad = true
         }
-        await finish(bad, id)
+        await finish(bad, noText, id)
     }
 
     private func deliver(_ batch: [SearchHit], _ start: Int, _ id: Int) {
@@ -143,16 +184,23 @@ public final class ViewerSearch {
             hits.append(hit)
             if current < 0 && hit.page >= start { current = hits.count - 1 }
         }
-        if first && current >= 0 && !quiet { onCurrentChanged?() }
+        if first && current >= 0 && !quiet {
+            onCurrentChanged?()
+            landed = startPage()
+        }
     }
 
-    private func finish(_ bad: Bool, _ id: Int) {
+    private func finish(_ bad: Bool, _ noText: Bool, _ id: Int) {
         guard id == generation else { return }
         isRunning = false
         badPattern = bad
+        self.noText = noText
         if current < 0 && !hits.isEmpty {
             current = 0
-            if !quiet { onCurrentChanged?() }
+            if !quiet {
+                onCurrentChanged?()
+                landed = startPage()
+            }
         }
     }
 

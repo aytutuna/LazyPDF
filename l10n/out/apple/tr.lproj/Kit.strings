@@ -1850,6 +1850,7 @@
 "This file has no pictures to save." = "Bu dosyada kaydedilecek resim yok.";
 "This file has no signatures." = "Bu dosyada imza yok.";
 "This file has no text to export. Run Make searchable first, or save the pages as pictures." = "Bu dosyada dışa aktarılacak metin yok. Önce Aranabilir yap'ı çalıştırın veya sayfaları resim olarak kaydedin.";
+"This file has no text to search. Try Make searchable." = "Bu dosyada aranacak metin yok. Aranabilir yap'ı deneyin.";
 "This file is as small as it gets." = "Bu dosya zaten olabildiğince küçük.";
 "This file is certified so that nothing may change. Another signature would break that." = "Bu dosya hiçbir şey değişmeyecek şekilde onaylı. Bir imza daha bunu bozar.";
 "This file is certified, so changing it makes viewers report it as altered." = "Bu dosya onaylı, bu yüzden değiştirmek görüntüleyicilerde değiştirilmiş olarak görünür.";
@@ -2153,6 +2154,8 @@
 "{0} of {1} figures have no description." = "{1} şeklin {0} tanesinin açıklaması yok.";
 "{0} of {1} pages need it." = "{1} sayfadan {0} tanesi buna ihtiyaç duyuyor.";
 "{0} of {1} selected" = "{0} / {1} seçili";
+"{0} of {1}, from the end" = "{0} / {1}, sondan";
+"{0} of {1}, from the start" = "{0} / {1}, baştan";
 "{0} opens for editing, but its pages cannot be shown here." = "{0} düzenleme için açıldı, ancak sayfaları burada gösterilemiyor.";
 "{0} page added|one" = "{0} sayfa eklendi";
 "{0} page added|other" = "{0} sayfa eklendi";
