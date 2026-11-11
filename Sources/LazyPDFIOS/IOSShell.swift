@@ -54,6 +54,22 @@ final class IOSShell {
         model.filePicker = services
         model.fileExporter = services
         model.clipboard = services
+        model.backgroundWork = { name, expired in
+            nonisolated(unsafe) var task = UIBackgroundTaskIdentifier.invalid
+            nonisolated(unsafe) let end = {
+                if task == .invalid { return }
+                UIApplication.shared.endBackgroundTask(task)
+                task = .invalid
+            }
+            task = UIApplication.shared.beginBackgroundTask(withName: name) {
+                MainActor.assumeIsolated {
+                    model.flushRecovery()
+                    expired()
+                    end()
+                }
+            }
+            return end
+        }
         // There is no exit to clean up at: what a kill left behind, copies of attachments among it, goes at launch.
         try? FileManager.default.removeItem(at: Self.staging)
         AttachmentsModel.deleteOpenedCopies(in: folders.openedAttachments)

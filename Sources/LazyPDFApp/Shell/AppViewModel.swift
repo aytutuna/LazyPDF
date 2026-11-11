@@ -115,6 +115,9 @@ public final class AppViewModel {
 
     /// Called once everything that had unsaved changes has been dealt with.
     @ObservationIgnored public var exitRequested: (() -> Void)?
+    /// Begins work the system should let finish in the background and returns the closure that ends it; `expired` runs when
+    /// the system takes the time back.
+    @ObservationIgnored public var backgroundWork: ((_ name: String, _ expired: @escaping @MainActor () -> Void) -> (() -> Void))?
 
     /// Called when Lazy Print did not take the document: the window prints it itself.
     @ObservationIgnored public var systemPrintRequested: (@MainActor (DocumentTab) -> Void)?
@@ -258,7 +261,9 @@ public final class AppViewModel {
         busy = token
         busyLabel = text
         notifyAll()
+        let end = backgroundWork?(text) { token.cancel() }
         defer {
+            end?()
             // A job that started over this one must keep the bar.
             if busy === token {
                 busy = nil

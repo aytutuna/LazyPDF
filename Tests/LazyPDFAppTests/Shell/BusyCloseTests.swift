@@ -140,4 +140,56 @@ final class BusyCloseTests: XCTestCase {
         XCTAssertEqual(f.vm.statusFull, "Cancelled.")
         XCTAssertFalse(f.vm.isBusy)
     }
+
+    func test_aJobIsProtectedInTheBackgroundUntilItEnds() async throws {
+        let f = ViewModelFixture(self)
+        let begun = Recorder()
+        let ended = Counter()
+        f.vm.backgroundWork = { name, _ in
+            begun.names.append(name)
+            return { ended.count += 1 }
+        }
+
+        let (run, finish) = await startJob(f.vm)
+        XCTAssertEqual(begun.names, ["Working"])
+        XCTAssertEqual(ended.count, 0)
+        finish.release()
+        try await run.value
+        XCTAssertEqual(ended.count, 1)
+
+        let vm = f.vm!
+        try? await vm.runBusy("Failing") { _ in throw CocoaError(.fileReadUnknown) }
+        XCTAssertEqual(begun.names, ["Working", "Failing"])
+        XCTAssertEqual(ended.count, 2)
+    }
+
+    func test_theSystemTakingTheTimeBackCancelsTheJob() async throws {
+        let f = ViewModelFixture(self)
+        let expire = Recorder()
+        f.vm.backgroundWork = { _, expired in
+            expire.expired = expired
+            return {}
+        }
+        let started = Latch()
+        let vm = f.vm!
+        let run = Task {
+            try await vm.runBusy("Working") { token in
+                started.release()
+                while !token.isCancelled { await Task.yield() }
+                try token.throwIfCancelled()
+            }
+        }
+        await started.wait()
+
+        expire.expired?()
+        try await run.value
+
+        XCTAssertEqual(f.vm.statusFull, "Cancelled.")
+    }
+}
+
+@MainActor
+private final class Recorder {
+    var names: [String] = []
+    var expired: (@MainActor () -> Void)?
 }
