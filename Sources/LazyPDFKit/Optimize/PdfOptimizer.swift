@@ -41,6 +41,7 @@ public final class PdfOptimizer {
     public func audit() -> SpaceAudit { PdfSpaceAudit(document).run() }
 
     public func run(_ options: OptimizeOptions) throws -> OptimizeResult {
+        try Task.checkCancellation()
         let before = self.audit()
         let plain = try document.saveRewrite()
         let working = try PdfDocument.open(plain)
@@ -48,35 +49,41 @@ public final class PdfOptimizer {
         var notes: [String] = []
         func did(_ kind: OptimizeStepKind, _ count: Int) { results.append(OptimizeStepResult(kind, count)) }
 
+        try Task.checkCancellation()
         if options.stripThumbnails { did(.stripThumbnails, OptimizeStrip.thumbnails(working)) }
         if options.stripPieceInfo { did(.stripPieceInfo, OptimizeStrip.pieceInfo(working)) }
         if options.stripPrivateData { did(.stripPrivateData, OptimizeStrip.privateData(working)) }
         if options.pruneResources { did(.pruneResources, OptimizeResources(working).run()) }
-        let merged = options.removeDuplicates ? OptimizeDuplicates.run(working) : 0
+        try Task.checkCancellation()
+        let merged = options.removeDuplicates ? try OptimizeDuplicates.run(working) : 0
         if options.subsetFonts {
-            let (trimmed, partial) = OptimizeFonts(working).run()
+            try Task.checkCancellation()
+            let (trimmed, partial) = try OptimizeFonts(working).run()
             did(.subsetFonts, trimmed)
             if partial { notes.append(OptimizeText.leftPartialFonts) }
         }
         if options.grayscale {
+            try Task.checkCancellation()
             let gray = OptimizeGray(working, codec, options.jpegQuality)
-            gray.run()
+            try gray.run()
             did(.grayscale, gray.streams + gray.images)
             if gray.left > 0 { notes.append(OptimizeText.leftColor) }
             if gray.needsCodec { notes.append(OptimizeText.needsCodec) }
         }
         if options.bilevelTolerance >= 0 || options.imageDpi > 0 {
+            try Task.checkCancellation()
             let images = OptimizeImages(working, options, codec)
-            images.run()
+            try images.run()
             if options.bilevelTolerance >= 0 { did(.bilevelImages, images.bilevel) }
             if options.imageDpi > 0 { did(.downsampleImages, images.downsampled) }
             if images.partial { notes.append(OptimizeText.leftPartialImages) }
             if images.needsCodec && !notes.contains(OptimizeText.needsCodec) { notes.append(OptimizeText.needsCodec) }
         }
-        let (recompressed, converted) = OptimizeStreams.run(working, options.recompressStreams, options.convertOldFilters)
+        try Task.checkCancellation()
+        let (recompressed, converted) = try OptimizeStreams.run(working, options.recompressStreams, options.convertOldFilters)
         if options.recompressStreams { did(.recompressStreams, recompressed) }
         if options.convertOldFilters { did(.convertOldFilters, converted) }
-        if options.removeDuplicates { did(.removeDuplicates, merged + OptimizeDuplicates.run(working)) }
+        if options.removeDuplicates { did(.removeDuplicates, merged + (try OptimizeDuplicates.run(working))) }
 
         var best = try save(working, options, false)
         if options.objectStreams && document.pdfAPart != 1 {

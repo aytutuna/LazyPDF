@@ -18,7 +18,7 @@ extension PdfDocument {
     /// permissions, and throws `PdfPermissionException` without them.
     public func saveRewrite(_ options: PdfSaveOptions = PdfSaveOptions()) throws -> [UInt8] {
         try requireEncryptionRights(options.security)
-        return PdfRewriter(self, options).run()
+        return try PdfRewriter(self, options).run()
     }
 
     /// The file had an /Info and the trailer has none now. Readers fill a missing key in from an older trailer,

@@ -76,7 +76,7 @@ public final class PdfKitRenderer: DocumentRenderer {
         }
         if document == nil, source.isEncrypted {
             // Only for drawing: the copy is never saved, so the permissions on changing the encryption do not apply.
-            document = open(PdfRewriter(source, PdfSaveOptions()).run(), nil)
+            if let copy = try? PdfRewriter(source, PdfSaveOptions()).run() { document = open(copy, nil) }
         }
         return document
     }

@@ -9,11 +9,12 @@ enum OptimizeStreams {
     private static let predictorKeys = ["Predictor", "Colors", "BitsPerComponent", "Columns"]
 
     /// Returns (streams recompressed, streams converted from the old filters).
-    static func run(_ document: PdfDocument, _ recompress: Bool, _ convert: Bool) -> (recompressed: Int, converted: Int) {
+    static func run(_ document: PdfDocument, _ recompress: Bool, _ convert: Bool) throws -> (recompressed: Int, converted: Int) {
         var recompressed = 0
         var converted = 0
         for (_, value) in PdfGraph.objects(document) {
             guard let stream = value as? PdfStream else { continue }
+            try Task.checkCancellation()
             guard let names = filters(document, stream), !names.isEmpty else { continue }
             let isOld = names.contains { old.contains($0) }
             if isOld ? !convert : !recompress { continue }

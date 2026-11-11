@@ -7,7 +7,7 @@ import Foundation
 enum OptimizeDuplicates {
     private static let rounds = 8
 
-    static func run(_ document: PdfDocument) -> Int {
+    static func run(_ document: PdfDocument) throws -> Int {
         var merged = 0
         var hashes: [Int: String] = [:]
         for _ in 0..<rounds {
@@ -15,6 +15,7 @@ enum OptimizeDuplicates {
             var order: [String] = []
             let live = reachable(document)
             for (number, value) in PdfGraph.objects(document) {
+                try Task.checkCancellation()
                 if !live.contains(number) || !mergeable(document, value) { continue }
                 var key = PdfGraph.canonical(value, { $0 }, true)
                 if let stream = value as? PdfStream {

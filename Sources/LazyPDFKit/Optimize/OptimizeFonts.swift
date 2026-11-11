@@ -29,7 +29,7 @@ final class OptimizeFonts {
         self.document = document
     }
 
-    func run() -> (trimmed: Int, partial: Bool) {
+    func run() throws -> (trimmed: Int, partial: Bool) {
         var partial = false
         let (listed, outside) = listedFonts()
         var seen = Set<ObjectIdentifier>()
@@ -73,6 +73,7 @@ final class OptimizeFonts {
 
         var trimmed = 0
         for program in order {
+            try Task.checkCancellation()
             if program.tagged { continue }
             if program.blocked {
                 partial = true

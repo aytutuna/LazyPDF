@@ -22,7 +22,7 @@ extension ViewerModel {
             return { plain }
         }
         let document = tab.document
-        return { (PdfRewriter(document, PdfSaveOptions()).run(), nil) }
+        return { ((try? PdfRewriter(document, PdfSaveOptions()).run()) ?? [], nil) }
     }
 
     // The file changed or another one is shown: what was read is stale.

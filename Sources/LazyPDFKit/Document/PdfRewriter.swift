@@ -24,7 +24,7 @@ public final class PdfRewriter {
         self.options = options
     }
 
-    public func run() -> [UInt8] {
+    public func run() throws -> [UInt8] {
         let root = intern(document.trailer["Root"])
         let info = document.info == nil ? 0 : intern(document.trailer["Info"])
         follow()
@@ -63,6 +63,7 @@ public final class PdfRewriter {
         var entries = [XrefEntry(0, 0, 0, 65535)]
 
         for n in stride(from: 1, through: items.count, by: 1) {
+            if n % 256 == 0 { try Task.checkCancellation() }
             if packedSet.contains(n) { continue }
             let at: Int
             if let stream = items[n - 1] as? PdfStream {
@@ -78,6 +79,7 @@ public final class PdfRewriter {
         }
         var s = 0
         while s * Self.objectsPerStream < packed.count {
+            try Task.checkCancellation()
             let members = Array(packed.dropFirst(s * Self.objectsPerStream).prefix(Self.objectsPerStream))
             let number = firstStream + s
             let (dictionary, data) = pack(members)

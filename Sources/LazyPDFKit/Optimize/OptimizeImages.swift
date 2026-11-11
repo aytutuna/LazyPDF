@@ -29,7 +29,7 @@ final class OptimizeImages {
         self.codec = codec
     }
 
-    func run() {
+    func run() throws {
         var images: [PdfStream] = []
         for (_, value) in PdfGraph.objects(document) {
             if let stream = value as? PdfStream, document.name(stream.dictionary, "Subtype") == "Image",
@@ -38,7 +38,10 @@ final class OptimizeImages {
             }
         }
         if options.bilevelTolerance >= 0 {
-            for image in images where tryBilevel(image) { bilevel += 1 }
+            for image in images {
+                try Task.checkCancellation()
+                if tryBilevel(image) { bilevel += 1 }
+            }
         }
         if options.imageDpi <= 0 { return }
         let placed = PlacedImages.measure(document)
@@ -51,6 +54,7 @@ final class OptimizeImages {
         }
         let unseen = self.unseen(placed)
         for image in images {
+            try Task.checkCancellation()
             guard let placement = placed.found[ObjectIdentifier(image)] else { continue }
             if unseen.contains(ObjectIdentifier(image)) {
                 if exceeds(placement) { partial = true }

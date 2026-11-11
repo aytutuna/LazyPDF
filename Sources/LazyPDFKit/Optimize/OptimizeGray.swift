@@ -114,7 +114,7 @@ final class OptimizeGray {
         self.jpegQuality = jpegQuality
     }
 
-    func run() {
+    func run() throws {
         for dictionary in PdfGraph.allDictionaries(document) {
             for (_, space) in document.dict(dictionary, "ColorSpace")?.entries ?? [] {
                 let (family, components) = ImageKit.describe(document, space)
@@ -141,17 +141,18 @@ final class OptimizeGray {
         }
 
         analysing = true
-        pass(pages, forms)
+        try pass(pages, forms)
         settle()
         analysing = false
         left = 0
-        pass(pages, forms)
+        try pass(pages, forms)
         for id in outputOrder {
             guard let written = output[id] else { continue }
             PdfGraph.setData(written.stream, written.data)
             streams += 1
         }
         for stream in all {
+            try Task.checkCancellation()
             let dictionary = stream.dictionary
             if document.integer(dictionary, "PatternType") == 2 {
                 left += 1
@@ -161,8 +162,9 @@ final class OptimizeGray {
         }
     }
 
-    private func pass(_ pages: [PageRun], _ forms: [PdfStream]) {
+    private func pass(_ pages: [PageRun], _ forms: [PdfStream]) throws {
         for page in pages {
+            try Task.checkCancellation()
             if page.straddles {
                 left += 1
                 continue
@@ -178,6 +180,7 @@ final class OptimizeGray {
             }
         }
         for form in forms {
+            try Task.checkCancellation()
             let inherited = Slot(space: .inherited, at: nil)
             convert(form, document.dict(form.dictionary, "Resources"), State(inherited, inherited))
         }

@@ -65,6 +65,59 @@ final class OptimizerTests: XCTestCase {
         XCTAssertEqual(before, describe(document))
     }
 
+    func test_aCancelledTokenThrowsBeforeAnyStep() async throws {
+        let file = sample()
+        let task = Task { () throws -> Int in
+            let document = try PdfDocument.open(file)
+            let codec = OptimizeFakeCodec()
+            while !Task.isCancelled { await Task.yield() }
+            do {
+                _ = try PdfOptimizer(document, codec).run(OptimizeOptions.for(.small))
+            } catch is CancellationError {
+                return codec.decodes
+            }
+            return -1
+        }
+        task.cancel()
+        let decodes = try await task.value
+        XCTAssertEqual(0, decodes)
+    }
+
+    func test_cancellingInsideTheImagesStopsTheRest() async throws {
+        let dictionary = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode"
+        let file = OptimizeKit.build("q 72 0 0 72 10 10 cm /Im0 Do Q q 72 0 0 72 10 10 cm /Im1 Do Q q 72 0 0 72 10 10 cm /Im2 Do Q q 72 0 0 72 10 10 cm /Im3 Do Q",
+                                     "/XObject <</Im0 5 0 R /Im1 6 0 R /Im2 7 0 R /Im3 8 0 R>>", { pdf in
+            for i in 5...8 { pdf.stream(i, dictionary, OptimizeKit.tinyJpeg) }
+        })
+        let task = Task { () throws -> Int in
+            let document = try PdfDocument.open(file)
+            let codec = OptimizeFakeCodec()
+            codec.onDecode = { withUnsafeCurrentTask { $0?.cancel() } }
+            let options = OptimizeKit.off.with { $0.imageDpi = 8; $0.imageDpiAbove = 10 }
+            do {
+                _ = try PdfOptimizer(document, codec).run(options)
+            } catch is CancellationError {
+                return codec.decodes
+            }
+            return -1
+        }
+        let decodes = try await task.value
+        XCTAssertEqual(1, decodes)
+    }
+
+    func test_aLiveTokenChangesNothingInTheResult() async throws {
+        let file = sample()
+        let options = OptimizeOptions.for(.balanced).with { $0.objectStreams = false; $0.documentId = Array(repeating: 0, count: 16) }
+        let plain = try PdfOptimizer(PdfDocument.open(file), OptimizeFakeCodec()).run(options).bytes
+        let task = Task { () throws -> [UInt8] in
+            try PdfOptimizer(PdfDocument.open(file), OptimizeFakeCodec()).run(options).bytes
+        }
+        let watched = try await task.value
+        // The second half of the trailer id is random, so the bytes differ there and nowhere else.
+        XCTAssertEqual(plain.count, watched.count)
+        XCTAssertTrue(zip(plain, watched).filter { $0 != $1 }.count <= 32)
+    }
+
     private func describe(_ document: PdfDocument) -> String {
         document.objectNumbers.map { n -> String in
             let value = document.get(n)
