@@ -70,11 +70,24 @@ internal static class PageEdits
             else runs.Add([page]);
         }
         if (step > 0) runs.Reverse();
+        var order = Enumerable.Range(0, total).ToList();
         foreach (var run in runs)
         {
             if (step < 0 ? run[0] == 0 : run[^1] == total - 1) continue;
-            PageOperations.Move(document, run, step < 0 ? run[0] - 1 : run[^1] + 2);
+            if (step < 0)
+            {
+                int other = order[run[0] - 1];
+                order.RemoveAt(run[0] - 1);
+                order.Insert(run[^1], other);
+            }
+            else
+            {
+                int other = order[run[^1] + 1];
+                order.RemoveAt(run[^1] + 1);
+                order.Insert(run[0], other);
+            }
         }
+        PageOperations.Reorder(document, order);
     }
 
     /// <summary>Where the chosen pages stand after <see cref="Nudge"/>.</summary>
@@ -90,8 +103,11 @@ internal static class PageEdits
     }
 
     /// <summary>Whether any chosen page has an unchosen page to step past.</summary>
-    public static bool CanNudge(IReadOnlyCollection<int> pages, int step, int total) =>
-        pages.Any(p => p + step >= 0 && p + step < total && !pages.Contains(p + step));
+    public static bool CanNudge(IReadOnlyCollection<int> pages, int step, int total)
+    {
+        var chosen = pages.ToHashSet();
+        return chosen.Any(p => p + step >= 0 && p + step < total && !chosen.Contains(p + step));
+    }
 
     /// <summary>Where the pages and their copies stand after <see cref="PageOperations.Duplicate"/>.</summary>
     public static IEnumerable<int> Duplicated(IReadOnlyCollection<int> pages)

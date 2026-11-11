@@ -74,8 +74,9 @@ public partial class PagesPanel
     private void Nudge(int step)
     {
         var pages = Selected();
+        int moved = pages.Zip(PageEdits.Nudged(pages, step, Cells.Count)).Count(z => z.First != z.Second);
         Apply(Loc.T("Move pages"), d => PageEdits.Nudge(d, pages, step), PageEdits.Nudged(pages, step, Cells.Count),
-              Loc.Plural(pages.Count, "{0} page moved", "{0} pages moved", pages.Count));
+              Loc.Plural(moved, "{0} page moved", "{0} pages moved", moved));
     }
 
     private bool MoveTo(IReadOnlyCollection<int> pages, int before) =>

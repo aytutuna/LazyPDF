@@ -88,6 +88,64 @@ public sealed class PageEditsTests
             Assert.Equal(marked[page], TextOf(document, landed));
     }
 
+    private static void NudgeByMoves(PdfDocument document, int[] pages, int step)
+    {
+        int total = document.Pages.Count;
+        var runs = new List<List<int>>();
+        foreach (int page in pages.Order())
+        {
+            if (runs.Count > 0 && runs[^1][^1] == page - 1) runs[^1].Add(page);
+            else runs.Add([page]);
+        }
+        if (step > 0) runs.Reverse();
+        foreach (var run in runs)
+        {
+            if (step < 0 ? run[0] == 0 : run[^1] == total - 1) continue;
+            PageOperations.Move(document, run, step < 0 ? run[0] - 1 : run[^1] + 2);
+        }
+    }
+
+    [Theory]
+    [InlineData(new[] { 0, 1, 5 }, -1)]
+    [InlineData(new[] { 3, 4, 9 }, 1)]
+    [InlineData(new[] { 2, 8, 9 }, 1)]
+    [InlineData(new[] { 0, 4, 5, 9 }, -1)]
+    public void NudgingInOneRewriteGivesTheOrderOfOneMoveAtATime(int[] pages, int step)
+    {
+        var once = Open(10);
+        var each = Open(10);
+
+        PageEdits.Nudge(once, pages, step);
+        NudgeByMoves(each, pages, step);
+
+        Assert.Equal(Enumerable.Range(0, 10).Select(i => TextOf(each, i)), Enumerable.Range(0, 10).Select(i => TextOf(once, i)));
+    }
+
+    [Fact]
+    public void NudgingEveryOtherPageOfABigFileIsQuick()
+    {
+        var document = Open(2000);
+        var marked = Enumerable.Range(0, 2000).Select(i => TextOf(document, i)).ToList();
+        var pages = Enumerable.Range(0, 1000).Select(i => i * 2 + 1).ToList();
+
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        Assert.True(PageEdits.CanNudge(pages, -1, 2000));
+        PageEdits.Nudge(document, pages, -1);
+        clock.Stop();
+
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(1));
+        Assert.Equal(marked[1], TextOf(document, 0));
+        Assert.Equal(marked[0], TextOf(document, 1));
+        Assert.Equal(marked[1999], TextOf(document, 1998));
+    }
+
+    [Fact]
+    public void OnlyPagesThatChangePlaceAreCountedAsMoved()
+    {
+        int[] pages = [0, 1, 5];
+        Assert.Equal(1, pages.Zip(PageEdits.Nudged(pages, -1, 10)).Count(z => z.First != z.Second));
+    }
+
     [Fact]
     public void NudgingNeedsAnUnchosenPageToStepPast()
     {

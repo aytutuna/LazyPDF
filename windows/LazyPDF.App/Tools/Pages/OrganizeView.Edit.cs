@@ -54,9 +54,10 @@ public sealed partial class OrganizeView
     private void Nudge(int step)
     {
         var pages = Selected();
+        int moved = pages.Zip(PageEdits.Nudged(pages, step, Cells.Count)).Count(z => z.First != z.Second);
         if (Tab is not { } tab || Host is not { } host || !PageEdits.CanNudge(pages, step, Cells.Count)) return;
         if (PageJobs.Apply(tab, host, Loc.T("Move pages"), d => PageEdits.Nudge(d, pages, step),
-                           Loc.Plural(pages.Count, "{0} page moved", "{0} pages moved", pages.Count))) Reselect(tab, PageEdits.Nudged(pages, step, Cells.Count));
+                           Loc.Plural(moved, "{0} page moved", "{0} pages moved", moved))) Reselect(tab, PageEdits.Nudged(pages, step, Cells.Count));
     }
 
     private bool MoveTo(IReadOnlyCollection<int> pages, int before)
