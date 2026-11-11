@@ -438,12 +438,13 @@ extension AppViewModel {
     public func checkDisk() {
         guard let tab = activeDocument, let url = tab.url, tab.changedOnDisk else { return }
         let found = tab.onDisk
+        let key = ObjectIdentifier(tab)
+        // A stamp already warned about is not read and hashed again on every tab switch.
+        if let seen = warnedAboutDisk[key], seen == found { return }
         if let found, tab.isOnlyTouched(found) {
             tab.acceptDiskState()
             return
         }
-        let key = ObjectIdentifier(tab)
-        if let seen = warnedAboutDisk[key], seen == found { return }
         warnedAboutDisk[key] = .some(found)
         if !FileManager.default.fileExists(atPath: url.path) {
             showNotice(L10n.t("File is gone"), L10n.t("{0} was moved or deleted. Save it again to keep your work.", tab.title))
