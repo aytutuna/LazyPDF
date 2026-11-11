@@ -226,7 +226,7 @@ public sealed class WicImageCodecTests
         using var stream = new MemoryStream();
         encoder.Save(stream);
         var frames = Codec.DecodeFile(stream.ToArray());
-        Assert.Equal([8, side, 16], frames.Select(f => f.Width));
+        Assert.Equal([8, side, 16], frames!.Select(f => f.Width));
         Assert.Equal([false, true, false], frames!.Select(f => f.TooBig));
     }
 }
