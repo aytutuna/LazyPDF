@@ -157,6 +157,42 @@ public sealed class ViewerSearchTests
         Assert.Equal(SearchWrap.None, search.Wrapped);
     }
 
+    private static SearchHit HitOn(int page) => new(new SearchMatch(page, new TextRange(0, 3), "fox", []), "", "");
+
+    [Fact]
+    public void NextDoesNotWrapWhileTheSearchIsStillRunning()
+    {
+        int page = 1;
+        var search = new ViewerSearch(() => new TaskCompletionSource<TextSource?>().Task, () => page, action => action());
+        _ = search.Start("fox", new TextSearchOptions());
+        search.Hits.Add(HitOn(0));
+        search.Hits.Add(HitOn(1));
+        search.Select(1);
+        page = 5;
+
+        search.Next();
+
+        Assert.True(search.Running);
+        Assert.Equal(1, search.Current);
+        Assert.Equal(SearchWrap.None, search.Wrapped);
+    }
+
+    [Fact]
+    public void NextAfterScrollingAwaySkipsTheHitAlreadyInView()
+    {
+        int page = 10;
+        var search = new ViewerSearch(() => Task.FromResult<TextSource?>(null), () => page, action => action());
+        search.Hits.Add(HitOn(10));
+        search.Hits.Add(HitOn(14));
+        search.Select(0);
+        page = 8;
+
+        search.Next();
+
+        Assert.Equal(1, search.Current);
+        Assert.Equal(SearchWrap.None, search.Wrapped);
+    }
+
     [Fact]
     public async Task NextVisitsEveryHitWhenTheViewDoesNotMove()
     {

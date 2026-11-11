@@ -125,23 +125,33 @@ public sealed class ViewerSearch
         _quiet = false;
         int start = _startPage();
         int index;
-        Wrapped = SearchWrap.None;
         if (Current >= 0 && start != _landed && Math.Abs(Hits[Current].Page - start) > 1)
         {
             // The reader scrolled away after finding, so step from the page in view.
-            index = step > 0 ? Hits.ToList().FindIndex(h => h.Page >= start) : Hits.ToList().FindLastIndex(h => h.Page <= start);
-            if (index < 0)
+            index = step > 0 ? count : -1;
+            if (step > 0)
             {
-                index = step > 0 ? 0 : count - 1;
-                Wrapped = step > 0 ? SearchWrap.Start : SearchWrap.End;
+                for (int i = 0; i < count; i++)
+                    if (Hits[i].Page >= start) { index = i; break; }
             }
+            else
+            {
+                for (int i = count - 1; i >= 0; i--)
+                    if (Hits[i].Page <= start) { index = i; break; }
+            }
+            // The hit in view is already shown, so go one further.
+            if (index == Current) index += step;
         }
-        else
+        else index = (Current < 0 ? (step > 0 ? -1 : 0) : Current) + step;
+        var wrap = SearchWrap.None;
+        if (index < 0 || index >= count)
         {
-            index = (Current < 0 ? (step > 0 ? -1 : 0) : Current) + step;
-            if (Current >= 0 && (index < 0 || index >= count)) Wrapped = step > 0 ? SearchWrap.Start : SearchWrap.End;
+            // More hits may still arrive, so only a finished search wraps.
+            if (Running && Current >= 0) return;
+            if (Current >= 0) wrap = step > 0 ? SearchWrap.Start : SearchWrap.End;
             index = (index + count) % count;
         }
+        Wrapped = wrap;
         SelectAt(index);
     }
 
