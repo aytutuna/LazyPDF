@@ -113,14 +113,18 @@ internal static class CertificateTrust
         "2.5.29.37.0", // any purpose
     ];
 
-    /// <summary>The chain of <paramref name="certificate"/>, trusted only when it is also meant for the job: signing documents, or for a time stamp authority <paramref name="timestamp"/>.</summary>
-    public static TrustResult Evaluate(X509Certificate2 certificate, IEnumerable<X509Certificate2> extra, DateTimeOffset? time, VerifyOptions options, bool timestamp = false)
+    /// <summary>The chain of <paramref name="certificate"/>, trusted only when it is also meant for the job: signing documents, or for a time stamp authority <paramref name="timestamp"/>. <paramref name="fetched"/> holds the issuers fetched so far by the certificate they were fetched for.</summary>
+    public static TrustResult Evaluate(X509Certificate2 certificate, IEnumerable<X509Certificate2> extra, DateTimeOffset? time, VerifyOptions options, bool timestamp = false, Dictionary<string, X509Certificate2?>? fetched = null)
     {
+        fetched ??= [];
         var certificates = extra.ToList();
         var result = Settle(certificate, certificates, time, options);
         for (int round = 0; round < MaxFetches && !result.Trusted && result.Partial && options.Transport is { } transport; round++)
         {
-            if (CertificateLinks.FetchIssuer(result.Chain[^1], transport) is not { } issuer
+            var last = result.Chain[^1];
+            // Kept by the caller across the whole verify, a miss included, so a signer repeated in a file is not fetched for again.
+            if (!fetched.TryGetValue(last.Thumbprint, out var issuer)) fetched[last.Thumbprint] = issuer = CertificateLinks.FetchIssuer(last, transport);
+            if (issuer is null
                 || certificates.Any(c => c.Thumbprint == issuer.Thumbprint)) break;
             certificates.Add(issuer);
             result = Settle(certificate, certificates, time, options);

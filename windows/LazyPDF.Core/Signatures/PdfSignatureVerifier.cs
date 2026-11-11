@@ -42,6 +42,7 @@ internal sealed class SignatureChecker
     private readonly VerifyOptions _options;
     private readonly ValidationData _dss;
     private readonly HashSet<long> _signatures;
+    private readonly Dictionary<string, X509Certificate2?> _fetched = [];
     private Dictionary<int, string>? _fieldNames;
 
     public SignatureChecker(PdfDocument document, byte[] file, IReadOnlyList<PdfRevision> revisions, VerifyOptions options, IReadOnlyList<FoundSignature> found)
@@ -115,10 +116,10 @@ internal sealed class SignatureChecker
         // Without a trusted time stamp the signer's claim sets the time the chain is judged at; revocation is still judged now.
         var time = stamped ?? signingTime ?? _options.Now;
 
-        var trust = CertificateTrust.Evaluate(signer, extra, time, _options);
+        var trust = CertificateTrust.Evaluate(signer, extra, time, _options, fetched: _fetched);
         if (!trust.Trusted) problems.Add(SignatureProblem.UntrustedSigner);
         if (!trust.TimeValid || stamped is null && signingTime is { } claimed && (claimed < signer.NotBefore || claimed > signer.NotAfter)) problems.Add(SignatureProblem.CertificateNotValid);
-        else if (stamped is null && signingTime is not null && time != _options.Now && !CertificateTrust.Evaluate(signer, extra, _options.Now, _options).TimeValid) problems.Add(SignatureProblem.CertificateExpired);
+        else if (stamped is null && signingTime is not null && time != _options.Now && !CertificateTrust.Evaluate(signer, extra, _options.Now, _options, fetched: _fetched).TimeValid) problems.Add(SignatureProblem.CertificateExpired);
         var evidence = new ValidationData();
         evidence.ReadArchival(cms);
         evidence.Certificates.AddRange(_dss.Certificates);
@@ -169,7 +170,7 @@ internal sealed class SignatureChecker
 
         var problems = new List<SignatureProblem>();
         var time = token.TokenInfo.Timestamp;
-        var trust = CertificateTrust.Evaluate(tsa, _dss.Certificates.Concat(carried), time, _options, timestamp: true);
+        var trust = CertificateTrust.Evaluate(tsa, _dss.Certificates.Concat(carried), time, _options, timestamp: true, fetched: _fetched);
         if (!trust.Trusted) problems.Add(SignatureProblem.UntrustedSigner);
         if (!trust.TimeValid) problems.Add(SignatureProblem.CertificateNotValid);
         return report with
@@ -198,7 +199,7 @@ internal sealed class SignatureChecker
             return null;
         }
         var time = token.TokenInfo.Timestamp;
-        var trust = CertificateTrust.Evaluate(tsa, extra.Concat(TokenCertificates(token)), time, _options, timestamp: true);
+        var trust = CertificateTrust.Evaluate(tsa, extra.Concat(TokenCertificates(token)), time, _options, timestamp: true, fetched: _fetched);
         if (!trust.Trusted || !trust.TimeValid)
         {
             problems.Add(SignatureProblem.TimestampInvalid);

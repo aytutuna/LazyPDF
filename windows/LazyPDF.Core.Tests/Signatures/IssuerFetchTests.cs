@@ -88,7 +88,7 @@ public class IssuerFetchTests
     }
 
     [Fact]
-    public void Fetching_stops_after_four_certificates()
+    public void Fetching_stops_when_an_issuer_does_not_extend_the_chain()
     {
         var endless = new Answering(_ =>
         {
@@ -100,6 +100,16 @@ public class IssuerFetchTests
         var report = Verify(SignedWithoutIntermediate(), endless);
 
         Assert.Contains(SignatureProblem.UntrustedSigner, report.Problems);
-        Assert.Equal(4, endless.Gets);
+        Assert.Equal(1, endless.Gets);
+    }
+
+    [Fact]
+    public void A_signature_is_not_fetched_for_twice_while_it_is_checked_at_two_times()
+    {
+        var network = new Answering(_ => null);
+
+        PdfSignatureVerifier.Verify(SignedWithoutIntermediate(), Pki.Trusting with { Now = Pki.Signing.AddDays(1), Transport = network });
+
+        Assert.Equal(1, network.Gets);
     }
 }
