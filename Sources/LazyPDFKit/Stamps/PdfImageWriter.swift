@@ -24,14 +24,19 @@ public enum PdfImageWriter {
         return PdfImage(reference, header.width, header.height)
     }
 
-    /// A picture file as an upright image: a JPEG without an Exif turn as it is, a turned JPEG decoded and stored turned back,
-    /// any other file as the codec reads it. Nil when nothing reads it or its pixels do not fit.
+    /// A picture file as an upright image: a JPEG without an Exif turn as it is, a turned JPEG decoded and stored turned back
+    /// (as a quality 92 JPEG when the codec encodes one, else as pixels), any other file as the codec reads it. Nil when nothing reads it or its pixels do not fit.
     public static func addPicture(_ document: PdfDocument, _ file: [UInt8], _ codec: ImageCodec?) throws -> PdfImage? {
         let jpeg = file.count > 2 && file[0] == 0xFF && file[1] == 0xD8
         let orientation = jpeg ? JpegMeta.orientation(file) : 1
         if jpeg && (orientation == 1 || codec == nil), let direct = try addJpeg(document, file) { return direct }
         guard let frame = codec?.decodeFile(file)?.first, ObjectEditor.fits(frame) else { return nil }
         let upright = JpegMeta.upright(frame, orientation)
+        // A turned photo goes back in as a JPEG, not as raw pixels many times its size; a codec that cannot encode gives none.
+        if orientation > 1, let codec {
+            let turned = codec.encodeJpeg(upright, 92)
+            if !turned.isEmpty, let encoded = try addJpeg(document, turned) { return encoded }
+        }
         return try addRgba(document, upright.width, upright.height, upright.rgba)
     }
 

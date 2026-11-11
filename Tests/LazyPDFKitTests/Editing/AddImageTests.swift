@@ -28,6 +28,18 @@ final class AddImageTests: XCTestCase {
         func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [] }
     }
 
+    // Like RowsCodec, and encodes any picture as the sample JPEG, noting the size it was asked to encode.
+    private final class EncodingCodec: ImageCodec {
+        var asked: [Int]?
+
+        func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+        func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { RowsCodec().decodeFile(file) }
+        func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] {
+            asked = [image.width, image.height, quality]
+            return ExportKit.jpeg
+        }
+    }
+
     // The sample JPEG with an Exif block after its JFIF header that carries the given orientation.
     private func oriented(_ orientation: Int) -> [UInt8] {
         let jpeg = ExportKit.jpeg
@@ -54,6 +66,18 @@ final class AddImageTests: XCTestCase {
 
         XCTAssertEqual([image.width, image.height], [2, 4])
         XCTAssertEqual(gray, [14, 10, 15, 11, 16, 12, 17, 13])
+    }
+
+    func test_aTurnedJpegIsStoredAsAJpegWhenTheCodecEncodes() throws {
+        let document = try ExportKit.open("")
+        let codec = EncodingCodec()
+
+        let image = try XCTUnwrap(PdfImageWriter.addPicture(document, oriented(6), codec))
+
+        XCTAssertEqual(codec.asked, [2, 4, 92])
+        let stream = try XCTUnwrap(document.resolve(image.reference) as? PdfStream)
+        XCTAssertEqual((stream.dictionary["Filter"] as? PdfName)?.value, "DCTDecode")
+        XCTAssertEqual(document.rawData(stream), ExportKit.jpeg)
     }
 
     func test_aJpegTurnedByThreeKeepsItsSizeAndReversesRowsAndColumns() throws {
