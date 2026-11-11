@@ -122,8 +122,10 @@ public partial class PagesPanel
         if (selection.Count == 0) return;
         if (await PickPagesAsync(host, Taken.Text) is not { } picked) return;
         var (source, taken) = picked;
-        await ApplyAsync(tab, host, Loc.T("Replacing pages"), Loc.T("Replace pages"), d => PageEdits.Replace(d, selection, source, taken),
-                         Enumerable.Range(selection.Max() + 1 - selection.Count, taken.Count), Loc.T("Pages replaced."));
+        bool tagged = PageJobs.IsTagged(tab);
+        if (await ApplyAsync(tab, host, Loc.T("Replacing pages"), Loc.T("Replace pages"), d => PageEdits.Replace(d, selection, source, taken),
+                             Enumerable.Range(selection.Max() + 1 - selection.Count, taken.Count), Loc.T("Pages replaced.")))
+            PageJobs.NoticeIfUntagged(tab, host, tagged);
     }
 
     // A PDF chosen by the person, opened off the UI thread, with the pages the box asks for. Null when there is none to use.

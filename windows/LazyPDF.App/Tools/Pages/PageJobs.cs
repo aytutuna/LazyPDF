@@ -22,9 +22,15 @@ internal static class PageJobs
 
     public static void Delete(DocumentTab tab, IToolHost host, string label, IReadOnlyCollection<int> pages, string status)
     {
-        bool tagged = tab.Document.Dict(tab.Document.Catalog, "StructTreeRoot") is not null;
-        if (!Apply(tab, host, label, d => PageOperations.Delete(d, pages), status)) return;
-        if (tagged && tab.Document.Dict(tab.Document.Catalog, "StructTreeRoot") is null)
+        bool tagged = IsTagged(tab);
+        if (Apply(tab, host, label, d => PageOperations.Delete(d, pages), status)) NoticeIfUntagged(tab, host, tagged);
+    }
+
+    public static bool IsTagged(DocumentTab tab) => tab.Document.Dict(tab.Document.Catalog, "StructTreeRoot") is not null;
+
+    public static void NoticeIfUntagged(DocumentTab tab, IToolHost host, bool wasTagged)
+    {
+        if (wasTagged && !IsTagged(tab))
             host.ShowNotice(Loc.T("Tags removed"), Loc.T("This file was tagged for screen readers. A deleted page was tagged, so the tags are gone. Undo brings them back."));
     }
 
