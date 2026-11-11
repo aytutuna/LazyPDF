@@ -72,9 +72,8 @@ public final class PdfFontEmbedder {
     /// covers all of it, else the one that misses least. One font draws the whole text. Only the font chosen is added
     /// to the document; check `missing` on it.
     public func addCovering(_ family: String, _ style: FontStyles, _ texts: [String]) throws -> PdfDrawFont? {
-        if let standard = Self.findStandard(family, style), !standard.isSymbolic, texts.allSatisfy(Self.fits) {
-            return try add(family, style, texts)
-        }
+        // Text that fits WinAnsi needs no fallback; nil lets the caller's Helvetica retry run.
+        if texts.allSatisfy(Self.fits) { return try add(family, style, texts) }
         var best: (built: EmbeddedFont, measure: TrueTypeFont)?
         var tried: Set<String> = []
         for name in [family] + Self.fallbackFamilies where tried.insert(name.lowercased()).inserted {

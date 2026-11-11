@@ -64,6 +64,15 @@ final class FreeTextTests: XCTestCase {
         XCTAssertEqual(writer.takeUndrawn(), "")
     }
 
+    func test_aRunThatFitsItsFamilyKeepsItWhenAnotherRunNeedsAFallback() throws {
+        let (document, writer, page) = try start(try CjkSource(covering: true))
+        let rich = "<body xmlns=\"http://www.w3.org/1999/xhtml\"><p><span style=\"font-family:Times New Roman\">AB</span><span style=\"font-family:Microsoft YaHei\">ğİ</span></p></body>"
+        let box = try writer.addFreeText(page, PdfRect(100, 600, 400, 640), "", font: FreeTextStyle(richText: rich))
+        XCTAssertEqual(try AnnotationFixtures.draw(document, box).text, "ABğİ")
+        XCTAssertEqual(try fonts(document, box).compactMap { document.name($0, "Subtype") }.sorted(), ["Type0", "Type1"])
+        XCTAssertEqual(writer.takeUndrawn(), "")
+    }
+
     func test_charactersNoFontHasAreReportedOnce() throws {
         let (document, writer, page) = try start(try CjkSource(covering: false))
         let box = try writer.addFreeText(page, PdfRect(100, 600, 400, 640), "BğBğ", font: FreeTextStyle(family: "Arial", size: 14))

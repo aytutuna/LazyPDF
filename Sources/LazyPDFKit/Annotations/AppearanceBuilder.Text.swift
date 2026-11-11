@@ -35,10 +35,13 @@ extension AppearanceBuilder {
         let textBox = PdfRect(box.left + inset, box.bottom + inset, box.right - inset, box.top - inset)
         if textBox.isEmpty || paragraphs.isEmpty { return c }
 
-        let texts = paragraphs.flatMap { $0.map { $0.text } }
+        let runs = paragraphs.flatMap { $0 }
         var cache: [FontKey: PdfDrawFont] = [:]
         var names: [Int: String] = [:]
-        let lines = try TextLayout.layout(paragraphs, textBox.width, format) { try self.fontFor($0, texts, &cache) }
+        // A font only has to cover the runs that are set in it.
+        let lines = try TextLayout.layout(paragraphs, textBox.width, format) { f in
+            try self.fontFor(f, runs.filter { $0.format.family == f.family && $0.format.style == f.style }.map { $0.text }, &cache)
+        }
 
         c.w.save()
         c.w.rect(c.x(box.left), c.y(box.bottom), box.width, box.height).clip()

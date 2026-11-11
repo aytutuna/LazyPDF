@@ -175,6 +175,13 @@ final class PdfFontEmbedderTests: XCTestCase {
         XCTAssertFalse(font.isEmbedded)
     }
 
+    func test_addCoveringGivesNullForTextThatFitsWhenTheFamilyHasNoFont() throws {
+        let document = try blank()
+        let before = type0Count(document)
+        XCTAssertNil(try PdfFontEmbedder(document, try CoveringFonts(covering: true)).addCovering("Minion Pro", .regular, ["Hello"]))
+        XCTAssertEqual(type0Count(document), before)
+    }
+
     func test_eachCallAddsItsOwnFont() throws {
         let document = try blank()
         let embedder = PdfFontEmbedder(document, try FixtureFonts())
