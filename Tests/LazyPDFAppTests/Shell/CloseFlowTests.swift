@@ -101,6 +101,20 @@ final class CloseFlowTests: XCTestCase {
         XCTAssertNil(f.vm.closeQuestion)
     }
 
+    func test_saveAnywayKeepsTheTabWhileTheToolStillHoldsTyping() async throws {
+        let f = ViewModelFixture(self)
+        let tab = try await openDirty(f)
+        try touch(f.dir.sub("a.pdf"), Pdfs.text(3))
+        f.vm.checkDisk()
+        f.vm.requestClose(tab)
+        XCTAssertFalse(f.vm.save(tab, closeAfter: true))
+        f.vm.handInTyping = { false }
+
+        f.vm.message?.action?.run()
+
+        XCTAssertEqual(f.vm.documents.count, 1)
+    }
+
     func test_saveAnywayOutsideTheCloseQuestionKeepsTheTab() async throws {
         let f = ViewModelFixture(self)
         let tab = try await openDirty(f)

@@ -296,8 +296,9 @@ extension AppViewModel {
             showNotice(L10n.t("File changed"), L10n.t("{0} was changed by another program. Saving now replaces that version with yours.", tab.title),
                        NoticeAction(L10n.t("Save anyway")) { [weak self] in
                            guard let self, write(tab, { try tab.save() }), closeAfter else { return }
+                           if waitForJob() || (tab === activeDocument && !handIn()) { return }
                            exiting = wasExiting
-                           close(tab)
+                           requestClose(tab)
                        })
             return false
         }
