@@ -214,17 +214,23 @@ public sealed class ViewerSearch
             {
                 var batch = new List<SearchHit>();
                 int count = 0;
+                int before = 0;
                 int after = 0;
                 foreach (var match in source.Find(query, options, cancel))
                 {
                     count++;
-                    batch.Add(new SearchHit(match, Around(source, match, -1), Around(source, match, 1)));
-                    if (batch.Count >= Batch) Flush(batch, start, cancel);
-                    if (match.Page >= start && ++after >= MaxHits)
+                    bool ahead = match.Page >= start;
+                    // Hits before the view are capped as well, or a search from a late page builds them all.
+                    if (ahead ? after >= MaxHits : before >= MaxHits)
                     {
                         capped = true;
-                        break;
+                        if (ahead) break;
+                        continue;
                     }
+                    if (ahead) after++;
+                    else before++;
+                    batch.Add(new SearchHit(match, Around(source, match, -1), Around(source, match, 1)));
+                    if (batch.Count >= Batch) Flush(batch, start, cancel);
                 }
                 Flush(batch, start, cancel);
                 if (count == 0 && !cancel.IsCancellationRequested)
