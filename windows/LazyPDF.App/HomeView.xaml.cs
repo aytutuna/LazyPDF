@@ -53,6 +53,7 @@ public partial class HomeView : UserControl
     private readonly ObservableCollection<RecentCard> _cards = [];
     private IReadOnlyList<HomeTile> _tiles = [];
     private double _width;
+    private readonly Dictionary<string, Task<bool>> _checks = new(StringComparer.OrdinalIgnoreCase);
     private int _generation;
 
     public HomeView()
@@ -100,22 +101,28 @@ public partial class HomeView : UserControl
     public async Task RecheckAsync()
     {
         int generation = ++_generation;
-        var slow = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var card in _cards.ToList())
         {
+            if (generation != _generation) return;
             string path = card.Item.Path;
             string root = "";
             try { root = Path.GetPathRoot(path) ?? ""; }
             catch { }
-            if (slow.Contains(root)) continue;
-            var check = Task.Run(() =>
+            // A check that has not answered yet counts as present, and its root is not touched again until it does.
+            if (_checks.TryGetValue(root, out var check) && !check.IsCompleted)
+            {
+                card.Exists = true;
+                continue;
+            }
+            check = Task.Run(() =>
             {
                 try { return File.Exists(path); }
                 catch { return true; }
             });
+            _checks[root] = check;
             if (await Task.WhenAny(check, Task.Delay(TimeSpan.FromSeconds(2))) != check)
             {
-                slow.Add(root);
+                card.Exists = true;
                 continue;
             }
             if (generation != _generation) return;
