@@ -182,9 +182,13 @@ public partial class PageViewer
 
     private void Search_Changed(object? sender, EventArgs e)
     {
+        if (Search.Query.Length == 0) _searchJumped = false;
         _hitGeometry.Clear();
         Surface.InvalidateVisual();
     }
+
+    // Back from a find returns to where the search began, so only its first move is a history entry.
+    private bool _searchJumped;
 
     private void Search_CurrentChanged(object? sender, EventArgs e)
     {
@@ -192,6 +196,11 @@ public partial class PageViewer
         var hit = Search.Hits[Search.Current].Match;
         if (_tab is null || hit.Quads.Count == 0) return;
         var area = PageBounds(hit.Page, hit.Quads);
+        if (!_searchJumped && Surface.TopPlace() is { } from)
+        {
+            _history.Jump(from, new PagePoint(hit.Page, new Point(0, area.Top)));
+            _searchJumped = true;
+        }
         Surface.Reveal(hit.Page, area);
         _hitGeometry.Clear();
         Surface.InvalidateVisual();
