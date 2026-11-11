@@ -274,6 +274,37 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertEqual(rig.tab.session.undoLabel, "Reset form")
     }
 
+    private func buttonWith(_ rig: FormsRig, _ action: PdfAction) throws {
+        try rig.change("Add form field") { form in
+            let (name, _) = try FormEdits.add(form, .pushButton, 0, PdfRect(300, 300, 400, 324), nil)
+            let widget = try XCTUnwrap(form.find(name)).widgets[0]
+            widget.dictionary["A"] = try PdfActions.toObject(form.document, action)
+        }
+    }
+
+    func test_aButtonThatSubmitsRunsAScriptOrLaunchesSaysItDoesNothing() throws {
+        let cases: [(PdfAction, String)] = [
+            (SubmitFormAction("https://example.com/in", 0, []), "It sends the form to a web address, which Lazy PDF does not do. Save the file and send it yourself."),
+            (JavaScriptAction("app.alert(1)"), "It runs a script, which Lazy PDF does not do."),
+            (LaunchAction("tool.exe", false), "It opens another file or program, which Lazy PDF does not do."),
+        ]
+        for (action, text) in cases {
+            let rig = try FormsRig()
+            rig.model.typeRow(rig.model.rows[0], "Ada")
+            try buttonWith(rig, action)
+            let undo = rig.tab.session.undoLabel
+
+            rig.tap(rig.centre("Button1"))
+            let row = try XCTUnwrap(rig.model.rows.first { $0.name == "Button1" })
+            rig.model.pressRow(row)
+
+            XCTAssertEqual(rig.host.notices.map(\.title), ["This button does nothing here", "This button does nothing here"])
+            XCTAssertEqual(rig.host.notices.map(\.text), [text, text])
+            XCTAssertEqual(rig.form.find("name")?.value, "Ada")
+            XCTAssertEqual(rig.tab.session.undoLabel, undo)
+        }
+    }
+
     func test_aTapOnADropDownOrAListShowsItsChoicesInThePanel() throws {
         let rig = try FormsRig()
 

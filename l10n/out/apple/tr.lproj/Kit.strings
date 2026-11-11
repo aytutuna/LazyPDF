@@ -744,6 +744,9 @@
 "It is already there." = "Zaten orada.";
 "It is off the list." = "Listeden kaldırıldı.";
 "It is open in a new tab. Save it to keep it." = "Yeni bir sekmede açık. Saklamak için kaydedin.";
+"It opens another file or program, which Lazy PDF does not do." = "Başka bir dosyayı veya programı açar; Lazy PDF bunu yapmaz.";
+"It runs a script, which Lazy PDF does not do." = "Bir betik çalıştırır; Lazy PDF bunu yapmaz.";
+"It sends the form to a web address, which Lazy PDF does not do. Save the file and send it yourself." = "Formu bir web adresine gönderir; Lazy PDF bunu yapmaz. Dosyayı kaydedip kendiniz gönderin.";
 "It shares its group with other content." = "Grubunu başka içerikle paylaşıyor.";
 "Italic" = "İtalik";
 "Italic changed." = "Eğiklik değişti.";
@@ -1869,6 +1872,7 @@
 "This attachment could not be read." = "Bu ek okunamadı.";
 "This bookmark does something Lazy PDF cannot do." = "Bu yer imi, Lazy PDF'nin yapamadığı bir işlem yapıyor.";
 "This bookmark points to a page that is not in the file." = "Bu yer imi dosyada olmayan bir sayfayı gösteriyor.";
+"This button does nothing here" = "Bu düğmenin burada etkisi yok";
 "This certificate has no private key. Choose another one or sign with a token." = "Bu sertifikanın özel anahtarı yok. Başka bir sertifika seçin ya da bir belirteçle imzalayın.";
 "This certificate is not valid today. The signature will show as not trusted." = "Bu sertifika bugün geçerli değil. İmza güvenilmez görünecek.";
 "This comment cannot be answered" = "Bu yoruma yanıt verilemiyor";

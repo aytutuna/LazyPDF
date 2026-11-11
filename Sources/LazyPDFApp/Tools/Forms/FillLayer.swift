@@ -28,6 +28,7 @@ struct FillSlot {
     let export: String?
     let noToggleToOff: Bool
     let action: PdfAction?
+    let unsupported: String?
 
     // The file is read again after every change, so the widget is told by where it is, not by its dictionary.
     func sameWidget(_ other: FillSlot) -> Bool { page == other.page && name == other.name && index == other.index }
@@ -47,6 +48,7 @@ final class FillLayer {
     private let reset: ([String]?) -> Void
     private let sign: (String) -> Void
     private let pick: (String, Int) -> Void
+    private let unsupported: (String) -> Void
 
     private var form: PdfForm?
     private var canFill = false
@@ -63,13 +65,15 @@ final class FillLayer {
     ///   - reset: Clears the named fields, or every field for nil; what a Reset button on the page asks for.
     ///   - sign: Opens signing with the named empty signature field chosen.
     ///   - pick: A list or a drop-down was tapped: the panel shows its choices.
+    ///   - unsupported: A button whose action Lazy PDF does not do was pressed: says why nothing happens.
     init(_ viewer: DocumentViewer, enter: @escaping (String, String?) -> Bool, reset: @escaping ([String]?) -> Void,
-         sign: @escaping (String) -> Void, pick: @escaping (String, Int) -> Void) {
+         sign: @escaping (String) -> Void, pick: @escaping (String, Int) -> Void, unsupported: @escaping (String) -> Void) {
         self.viewer = viewer
         self.enter = enter
         self.reset = reset
         self.sign = sign
         self.pick = pick
+        self.unsupported = unsupported
     }
 
     /// Shows the form. Fields being typed in are not disturbed: they are the viewer's, and end by themselves.
@@ -227,6 +231,10 @@ final class FillLayer {
     }
 
     private func perform(_ slot: FillSlot) {
+        if let text = slot.unsupported {
+            unsupported(text)
+            return
+        }
         guard let action = slot.action, let form else { return }
         if let clear = action as? ResetFormAction {
             let names: [String]?
@@ -251,9 +259,16 @@ final class FillLayer {
             guard !Self.hidden(widget), let field = widget.field else { return nil }
             let kind = field.kind
             var action: PdfAction?
+            var unsupported: String?
             if kind == .pushButton {
                 action = PdfActions.read(form.document, widget.dictionary["A"])
-                guard action is GoToAction || action is UriAction || action is NamedAction || action is ResetFormAction else { return nil }
+                switch action {
+                case is SubmitFormAction: unsupported = L10n.t("It sends the form to a web address, which Lazy PDF does not do. Save the file and send it yourself.")
+                case is JavaScriptAction: unsupported = L10n.t("It runs a script, which Lazy PDF does not do.")
+                case is LaunchAction, is GoToRemoteAction: unsupported = L10n.t("It opens another file or program, which Lazy PDF does not do.")
+                default: break
+                }
+                guard unsupported != nil || action is GoToAction || action is UriAction || action is NamedAction || action is ResetFormAction else { return nil }
             }
             if kind == .signature && field.isSigned { return nil }
             let d = geometry.toDisplay(widget.rect)
@@ -264,7 +279,7 @@ final class FillLayer {
                             value: field.value ?? "", isOn: widget.isOn, missing: Self.missing(field),
                             multiline: field.has(.multiline), secure: field.has(.password), maxLength: field.maxLength,
                             alignment: field.alignment, fontSize: Self.fontSize(field, d.height, tall: field.has(.multiline)),
-                            onState: widget.onState, export: widget.export, noToggleToOff: field.has(.noToggleToOff), action: action)
+                            onState: widget.onState, export: widget.export, noToggleToOff: field.has(.noToggleToOff), action: action, unsupported: unsupported)
         }
     }
 

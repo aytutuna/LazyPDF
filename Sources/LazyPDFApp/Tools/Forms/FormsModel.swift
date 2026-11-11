@@ -100,7 +100,8 @@ public final class FormsModel: ToolPanelModel {
         fill = FillLayer(viewer, enter: { [weak self] name, text in self?.enter(name, text) ?? false },
                          reset: { [weak self] names in self?.resetFields(names) },
                          sign: { [weak self] name in self?.host?.openSigning(name) },
-                         pick: { [weak self] name, index in self?.activate(name, index) })
+                         pick: { [weak self] name, index in self?.activate(name, index) },
+                         unsupported: { [weak self] text in self?.host?.showNotice(L10n.t("This button does nothing here"), text, nil) })
         fill?.highlight = highlight
         frames = FieldFrames(viewer)
         designTool = FieldTool(self)
