@@ -242,7 +242,7 @@ public partial class CommentPanel : ToolPanel
                 _edit.Redraw();
                 break;
             default:
-                viewer.PointerTool = _active = new DrawTool(viewer, _tool, CurrentStyle, Drew, p => _edit is { } e && e.Holds(p) ? e : null);
+                viewer.PointerTool = _active = new DrawTool(viewer, _tool, CurrentStyle, Drew, Grab);
                 break;
         }
         _choosing = false;
@@ -256,6 +256,18 @@ public partial class CommentPanel : ToolPanel
         ShowSelected();
         _bar?.Refresh();
     }
+
+    // A press that does not take hold of the selected mark lets it go, so a look change cannot reach a mark out of view.
+    private IPagePointerTool? Grab(PagePointer pointer)
+    {
+        if (_edit is not { Current: not null } edit) return null;
+        if (CanGrab(_tool) && edit.Holds(pointer)) return edit;
+        if (!pointer.FromKeys) edit.Select(null);
+        return null;
+    }
+
+    // Strokes of handwriting and chained lines start on the last one, so those tools never take hold of it.
+    internal static bool CanGrab(MarkTool tool) => tool is not (MarkTool.Pencil or MarkTool.Line or MarkTool.Arrow);
 
     private void Tool_Checked(object sender, RoutedEventArgs e)
     {

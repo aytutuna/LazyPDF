@@ -235,6 +235,32 @@ public sealed class CommentPanelTests
     });
 
     [Fact]
+    public Task APressThatDrawsNothingStillDropsTheSelection() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var panel = Attached(f);
+        var tool = Rectangles(panel);
+        var edit = Get<EditTool>(panel, "_edit");
+        Drag(tool, new Point(40, 50), new Point(120, 100));
+        Assert.NotNull(edit.Current);
+
+        Drag(tool, new Point(10, 200), new Point(11, 200));
+
+        Assert.Null(edit.Current);
+        Assert.Single(f.Marks());
+        return Task.CompletedTask;
+    });
+
+    [Theory]
+    [InlineData(MarkTool.Pencil, false)]
+    [InlineData(MarkTool.Line, false)]
+    [InlineData(MarkTool.Arrow, false)]
+    [InlineData(MarkTool.Rectangle, true)]
+    [InlineData(MarkTool.Oval, true)]
+    public void OnlyToolsThatDoNotChainStrokesTakeHoldOfTheSelectedMark(MarkTool tool, bool grabs) =>
+        Assert.Equal(grabs, CommentPanel.CanGrab(tool));
+
+    [Fact]
     public Task APressOnEmptyPageDrawsANewMarkAndDropsTheSelection() => Sta.Run(() =>
     {
         using var f = new CommentFixture();
