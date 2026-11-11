@@ -65,6 +65,23 @@ public sealed class HomeTilesTests
     }
 
     [Fact]
+    public void ALateAnswerFromLazyScanRefreshesTheWindow()
+    {
+        var context = SynchronizationContext.Current;
+        SynchronizationContext.SetSynchronizationContext(null);
+        using var f = new ViewModelFixture();
+        SynchronizationContext.SetSynchronizationContext(context);
+        var raised = new List<string?>();
+        f.Vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+        f.Sisters.LazyScanInstalled = true;
+        f.Sisters.RaiseChanged();
+
+        Assert.Equal([string.Empty], raised);
+        Assert.Contains(f.Vm.Tiles, t => t.Id == "scan");
+    }
+
+    [Fact]
     public async Task OnceAFileIsOpenTheToolTilesAreAvailable()
     {
         using var f = new ViewModelFixture();

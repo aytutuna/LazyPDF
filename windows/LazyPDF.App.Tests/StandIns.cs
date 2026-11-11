@@ -70,6 +70,10 @@ internal sealed class FakeSisters : ISisterApps
     public bool LazyScanInstalled { get; set; }
     public bool LazyPrintInstalled { get; set; }
     public bool PrintTaken { get; set; }
+
+    public event EventHandler? Changed;
+
+    public void RaiseChanged() => Changed?.Invoke(this, EventArgs.Empty);
     public List<string> Printed { get; } = [];
     public int ScanOpened { get; private set; }
 

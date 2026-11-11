@@ -27,6 +27,8 @@ public sealed class SisterApps : ISisterApps
 
     // Asked of Windows when the classes key has no entry, which takes a moment, and the Home tab and the toolbar ask often.
     // A stale answer is returned at once and refreshed in the background; the next refresh of the window sees the new one.
+    public event EventHandler? Changed;
+
     public bool LazyScanInstalled => Cached(ref _scan, ScanScheme);
 
     public bool LazyPrintInstalled => Cached(ref _print, PrintScheme);
@@ -41,12 +43,26 @@ public sealed class SisterApps : ISisterApps
         // A ref cannot be captured, so the slot is picked again by scheme.
         Task.Run(() =>
         {
-            var result = HasScheme(scheme);
-            lock (_lock)
+            var result = false;
+            var changed = false;
+            try
             {
-                if (scheme == ScanScheme) _scan = (DateTime.UtcNow, result, false);
-                else _print = (DateTime.UtcNow, result, false);
+                result = HasScheme(scheme);
             }
+            catch (Exception)
+            {
+            }
+            finally
+            {
+                lock (_lock)
+                {
+                    var old = scheme == ScanScheme ? _scan.Found : _print.Found;
+                    changed = old != result;
+                    if (scheme == ScanScheme) _scan = (DateTime.UtcNow, result, false);
+                    else _print = (DateTime.UtcNow, result, false);
+                }
+            }
+            if (changed) Changed?.Invoke(this, EventArgs.Empty);
         });
         lock (_lock) return slot.Found;
     }
@@ -67,7 +83,7 @@ public sealed class SisterApps : ISisterApps
     public bool TryPrint(string path)
     {
         if (InstanceChannel.Send([path], PrintPipe, timeout: 300)) return true;
-        if (!HasScheme(PrintScheme)) return false;
+        if (!LazyPrintInstalled) return false;
         try
         {
             using var process = Process.Start(new ProcessStartInfo($"{PrintScheme}:open?file={Uri.EscapeDataString(path)}") { UseShellExecute = true });

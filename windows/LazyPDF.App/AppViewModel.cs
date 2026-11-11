@@ -39,6 +39,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     private string _status = "";
     private CancellationTokenSource? _busy;
     private string _busyText = "";
+    private readonly SynchronizationContext? _context = SynchronizationContext.Current;
 
     public AppViewModel(Func<IDocumentRenderer> renderers, IImageCodec codec, IFontSource fonts, ISisterApps sisters,
                         string? settingsDirectory = null, string? recoveryDirectory = null, string? printDirectory = null)
@@ -53,6 +54,11 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
         _sidePanelId = AppPreferencesStore.Load(settingsDirectory ?? StoreFiles.DefaultDirectory).SidePanel;
         _lastSidePanelId = _sidePanelId.Length > 0 ? _sidePanelId : "pages";
         Recent = BuildRecent();
+        _sisters.Changed += (_, _) =>
+        {
+            if (_context is null) NotifyAll();
+            else _context.Post(_ => NotifyAll(), null);
+        };
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

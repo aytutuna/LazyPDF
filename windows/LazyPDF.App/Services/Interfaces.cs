@@ -22,6 +22,9 @@ public interface ISisterApps
 
     bool LazyPrintInstalled { get; }
 
+    /// <summary>Raised from a background thread when a refreshed answer differs from the one given before.</summary>
+    event EventHandler? Changed { add { } remove { } }
+
     bool OpenLazyScan();
 
     /// <summary>Hands the file to Lazy Print. False when it is not there to take it.</summary>
