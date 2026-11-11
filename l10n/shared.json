@@ -6093,6 +6093,24 @@
   "Ask them": {
     "tr": "Sorulsun"
   },
+  "Check online": {
+    "tr": "Çevrimiçi denetle"
+  },
+  "Asks the certificate servers whether each certificate was withdrawn. The file is not changed.": {
+    "tr": "Sertifika sunucularına her sertifikanın geri çekilip çekilmediğini sorar. Dosya değiştirilmez."
+  },
+  "A file protected for certificates cannot be checked online here.": {
+    "tr": "Sertifikalarla korunan bir dosya burada çevrimiçi denetlenemez."
+  },
+  "The certificates name no servers to ask.": {
+    "tr": "Sertifikalar sorulacak bir sunucu belirtmiyor."
+  },
+  "Asking the certificate servers": {
+    "tr": "Sertifika sunucularına soruluyor"
+  },
+  "Checked with the certificate servers just now. The file is not changed.": {
+    "tr": "Az önce sertifika sunucularıyla denetlendi. Dosya değiştirilmez."
+  },
   "the servers named in its certificates": {
     "tr": "sertifikalarında adı geçen sunucular"
   },

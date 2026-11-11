@@ -85,6 +85,9 @@
   <data name="A file of one page cannot be split." xml:space="preserve">
     <value>Tek sayfalık bir dosya bölünemez.</value>
   </data>
+  <data name="A file protected for certificates cannot be checked online here." xml:space="preserve">
+    <value>Sertifikalarla korunan bir dosya burada çevrimiçi denetlenemez.</value>
+  </data>
   <data name="A file specification has no /AFRelationship." xml:space="preserve">
     <value>Bir dosya belirtiminde /AFRelationship yok.</value>
   </data>
@@ -523,8 +526,14 @@
   <data name="Ask them" xml:space="preserve">
     <value>Sorulsun</value>
   </data>
+  <data name="Asking the certificate servers" xml:space="preserve">
+    <value>Sertifika sunucularına soruluyor</value>
+  </data>
   <data name="Asks the certificate servers for proof and stores it in the file." xml:space="preserve">
     <value>Sertifika sunucularından kanıt ister ve dosyaya kaydeder.</value>
+  </data>
+  <data name="Asks the certificate servers whether each certificate was withdrawn. The file is not changed." xml:space="preserve">
+    <value>Sertifika sunucularına her sertifikanın geri çekilip çekilmediğini sorar. Dosya değiştirilmez.</value>
   </data>
   <data name="At the end" xml:space="preserve">
     <value>Sona</value>
@@ -916,6 +925,9 @@
   <data name="Check found problems" xml:space="preserve">
     <value>Kontrol sorun buldu</value>
   </data>
+  <data name="Check online" xml:space="preserve">
+    <value>Çevrimiçi denetle</value>
+  </data>
   <data name="Check passed" xml:space="preserve">
     <value>Denetim başarılı</value>
   </data>
@@ -939,6 +951,9 @@
   </data>
   <data name="Check the password, and that the file holds a certificate with its private key." xml:space="preserve">
     <value>Parolayı ve dosyanın özel anahtarlı bir sertifika içerdiğini denetleyin.</value>
+  </data>
+  <data name="Checked with the certificate servers just now. The file is not changed." xml:space="preserve">
+    <value>Az önce sertifika sunucularıyla denetlendi. Dosya değiştirilmez.</value>
   </data>
   <data name="Checking the file" xml:space="preserve">
     <value>Dosya denetleniyor</value>
@@ -5415,6 +5430,9 @@
   </data>
   <data name="The catalog has no /Metadata stream." xml:space="preserve">
     <value>Katalogda /Metadata akışı yok.</value>
+  </data>
+  <data name="The certificates name no servers to ask." xml:space="preserve">
+    <value>Sertifikalar sorulacak bir sunucu belirtmiyor.</value>
   </data>
   <data name="The change could not be written. Save a copy of the file and try again." xml:space="preserve">
     <value>Değişiklik yazılamadı. Dosyanın bir kopyasını kaydedip yeniden deneyin.</value>

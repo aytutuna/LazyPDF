@@ -6,6 +6,7 @@ using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools;
 using LazyPDF.App.Tools.Certificates;
 using LazyPDF.Core;
@@ -43,7 +44,7 @@ public partial class SignaturesSidePanel : ToolPanel
 
     private void Tab_Changed(object? sender, EventArgs e) => _ = BuildAsync();
 
-    private async Task BuildAsync()
+    private async Task BuildAsync(bool online = false)
     {
         int ticket = ++_ticket;
         var tab = Tab!;
@@ -52,19 +53,33 @@ public partial class SignaturesSidePanel : ToolPanel
         string? password = tab.Password;
         var certificate = tab.Certificate;
         var options = SigningSettingsStore.Load().Verify(password, certificate, DateTimeOffset.Now);
-        IReadOnlyList<SignatureReport>? reports;
+        IReadOnlyList<SignatureReport>? reports = null;
         Dictionary<string, (int Page, PdfRect Rect)> fields = [];
+        using var transport = online ? new HttpSignatureTransport() : null;
+        Task Work(CancellationToken token)
+        {
+            if (transport is not null) transport.Cancel = token;
+            return Task.Run(() =>
+            {
+                reports = PdfSignatureVerifier.Verify(bytes, options);
+                fields = SignatureFields.Locate(bytes, password, certificate);
+                if (transport is not null) reports = Ask(bytes, password, transport, options, reports);
+            });
+        }
         try
         {
-            (reports, fields) = await Task.Run(() => (PdfSignatureVerifier.Verify(bytes, options), SignatureFields.Locate(bytes, password, certificate)));
+            if (online) await Host!.RunBusyAsync(Loc.T("Asking the certificate servers"), Work);
+            else await Work(CancellationToken.None);
         }
         catch (PdfReadException)
         {
             reports = null;
         }
         if (ticket != _ticket) return;
+        string? note = reports is { Count: 0 } ? Loc.T("This file has no signatures.") : null;
+        if (online && reports is { Count: > 0 }) note = Loc.T("Checked with the certificate servers just now. The file is not changed.") + (transport!.LastFailure is { } failure ? " " + failure : "");
         if (reports is null) Show(null, Loc.T("The signatures could not be checked."));
-        else Show(reports.Select(r => Row(r, fields)).ToList(), reports.Count == 0 ? Loc.T("This file has no signatures.") : null);
+        else Show(reports.Select(r => Row(r, fields)).ToList(), note);
         if (reports is { Count: > 0 }) List.SelectedIndex = 0;
     }
 
@@ -74,7 +89,27 @@ public partial class SignaturesSidePanel : ToolPanel
         Details.Visibility = Visibility.Collapsed;
         Note.Text = note ?? "";
         Note.Visibility = note is null ? Visibility.Collapsed : Visibility.Visible;
+        Online.Visibility = rows is { Count: > 0 } ? Visibility.Visible : Visibility.Collapsed;
     }
+
+    /// <summary>Asks the certificate servers on a copy of the file and takes only their revocation answers into the reports.</summary>
+    internal static IReadOnlyList<SignatureReport> Ask(byte[] file, string? password, ISignatureTransport transport, VerifyOptions options, IReadOnlyList<SignatureReport> reports)
+    {
+        try
+        {
+            return Merge(reports, PdfSignatureVerifier.Verify(PdfLongTermValidation.Add(file, transport, DateTimeOffset.Now, password), options));
+        }
+        catch (Exception error) when (error is InvalidOperationException or PdfReadException)
+        {
+            return reports;
+        }
+    }
+
+    // Add writes a later revision, which would show as a change after every signature.
+    internal static IReadOnlyList<SignatureReport> Merge(IReadOnlyList<SignatureReport> reports, IReadOnlyList<SignatureReport> asked) =>
+        reports.Select(r => asked.FirstOrDefault(a => a.Index == r.Index) is { } a
+            ? a with { Changes = r.Changes, Revision = r.Revision, CoversWholeFile = r.CoversWholeFile }
+            : r).ToList();
 
     private SignatureRow Row(SignatureReport report, Dictionary<string, (int Page, PdfRect Rect)> fields)
     {
@@ -193,6 +228,27 @@ public partial class SignaturesSidePanel : ToolPanel
         {
             Tell(Loc.T("The fingerprint could not be copied."));
         }
+    }
+
+    private async void CheckOnline_Click(object sender, RoutedEventArgs e)
+    {
+        var tab = Tab!;
+        var host = Host!;
+        if (tab.Certificate is not null)
+        {
+            Tell(Loc.T("A file protected for certificates cannot be checked online here."));
+            return;
+        }
+        var hosts = await ServerPreview.HostsAsync(tab.Session.Current.ToArray(), tab.Password);
+        if (hosts.Count == 0)
+        {
+            Note.Text = Loc.T("The certificates name no servers to ask.");
+            Note.Visibility = Visibility.Visible;
+            return;
+        }
+        host.ShowNotice(Loc.T("These servers will be asked"),
+            Loc.T("Lazy PDF will contact {0}. Servers named by certificates found on the way may be asked too. The file itself is not sent.", ServerPreview.Describe(hosts)),
+            new NoticeAction(Loc.T("Ask them"), () => _ = BuildAsync(online: true)));
     }
 
     private void Tell(string text)

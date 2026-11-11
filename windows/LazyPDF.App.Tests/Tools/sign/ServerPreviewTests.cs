@@ -12,7 +12,7 @@ public sealed class ServerPreviewTests
 {
     private static readonly DateTimeOffset Now = new(2026, 3, 10, 9, 0, 0, TimeSpan.Zero);
 
-    private static byte[] Signed(string ocsp, string crl)
+    internal static byte[] Signed(string ocsp, string crl)
     {
         using var rootKey = RSA.Create(2048);
         var rootRequest = new CertificateRequest("CN=Test Root", rootKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);

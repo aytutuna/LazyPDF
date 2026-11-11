@@ -83,6 +83,12 @@
                 <TextBlock x:Name="VersionNote" Style="{StaticResource ReasonText}" Margin="0,6,0,0" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
             </StackPanel>
 
+            <StackPanel x:Name="Online" Visibility="Collapsed" Margin="12,4,12,8">
+                <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE774;" Content="{loc:T Check online}" AutomationProperties.Name="{loc:T Check online}"
+                        Padding="10,3,10,4" HorizontalAlignment="Left" Click="CheckOnline_Click" />
+                <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T Asks the certificate servers whether each certificate was withdrawn. The file is not changed.}" Margin="0,4,0,0" />
+            </StackPanel>
+
             <Expander x:Name="Trust" Header="{loc:T Trust settings}" Margin="8,4,8,8" AutomationProperties.Name="{loc:T Trust settings}">
                 <StackPanel Margin="4,4,4,0">
                     <CheckBox x:Name="WindowsTrust" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Trust what Windows trusts}"
