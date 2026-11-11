@@ -35,6 +35,7 @@ public sealed class DiskNoticeTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        await Task.Delay(100); // the check the open started must not meet the touch
         Touch(path, 2, 10);
         await f.Vm.CheckDiskAsync();
         f.Vm.DismissMessage();
