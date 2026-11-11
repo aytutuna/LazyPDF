@@ -182,7 +182,7 @@ final class BatchRunnerTests: XCTestCase {
 
     func test_aFileThatCannotBeMadeSmallerIsSaidInTheLog() async throws {
         let dir = TempDir(self)
-        var set = BatchSet(steps: [step(.compress)])
+        var set = BatchSet(steps: [step(.compress), step(.compress)])
 
         let result = try await run(runner(), dir.file("a.pdf", Pdfs.text()), &set, into: dir.sub("out"))
 
@@ -246,7 +246,7 @@ final class BatchRunnerTests: XCTestCase {
     func test_aFileThatLimitsWhatMayBeDoneIsRefusedAndNothingIsWritten() async throws {
         let dir = TempDir(self)
         let file = dir.file("a.pdf", try Pdfs.restricted(.print))
-        var set = BatchSet(steps: [step(.compress)])
+        var set = BatchSet(steps: [step(.compress), step(.compress)])
 
         let result = try await run(runner(), file, &set, into: dir.sub("out"))
 
