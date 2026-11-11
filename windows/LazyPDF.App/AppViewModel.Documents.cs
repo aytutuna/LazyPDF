@@ -399,14 +399,24 @@ public sealed partial class AppViewModel
     /// </summary>
     public async Task CheckDiskAsync()
     {
-        if (ActiveDocument is not { Path: not null } tab) return;
+        if (ActiveDocument is not { Path: { } path } tab) return;
+        var known = tab.Known;
         DiskStamp? found;
         bool touched;
         try
         {
             (found, touched) = await Task.Run(() =>
             {
-                var now = tab.OnDisk;
+                DiskStamp? now;
+                try
+                {
+                    File.GetAttributes(path);
+                    now = DiskStamp.Of(path);
+                }
+                catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
+                {
+                    now = null;
+                }
                 return (now, now is not null && tab.IsChangedFrom(now) && tab.IsOnlyTouched(now));
             });
         }
@@ -414,6 +424,8 @@ public sealed partial class AppViewModel
         {
             return;
         }
+        // A save made while the file was being looked at changes both.
+        if (tab.Path != path || tab.Known != known) return;
         if (!ReferenceEquals(ActiveDocument, tab) || !Strip.Contains(tab) || !tab.IsChangedFrom(found)) return;
         if (touched)
         {
