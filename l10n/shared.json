@@ -1946,6 +1946,9 @@
   "The server answered with an error ({0}).": {
     "tr": "Sunucu bir hatayla yanıt verdi ({0})."
   },
+  "The server tried to move the request to an address that is not encrypted, so it was not used.": {
+    "tr": "Sunucu isteği şifrelenmemiş bir adrese taşımaya çalıştı, bu yüzden kullanılmadı."
+  },
   "The server's answer is too large.": {
     "tr": "Sunucunun yanıtı çok büyük."
   },

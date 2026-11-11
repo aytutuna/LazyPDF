@@ -12,12 +12,16 @@ public sealed class HttpSignatureTransportTests
     private sealed class Handler(Func<HttpRequestMessage, HttpResponseMessage> answer) : HttpMessageHandler
     {
         public List<HttpRequestMessage> Requests { get; } = [];
+        public List<byte[]?> Bodies { get; } = [];
+        public List<string?> ContentTypes { get; } = [];
         public byte[]? LastBody { get; private set; }
 
         protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Requests.Add(request);
             LastBody = request.Content?.ReadAsByteArrayAsync(cancellationToken).GetAwaiter().GetResult();
+            Bodies.Add(LastBody);
+            ContentTypes.Add(request.Content?.Headers.ContentType?.MediaType);
             return answer(request);
         }
 
@@ -286,6 +290,68 @@ public sealed class HttpSignatureTransportTests
         using var transport = new HttpSignatureTransport(handler);
 
         Assert.Equal(new byte[] { 4 }, transport.Get("http://crl.example/ca.crl"));
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.TemporaryRedirect)]
+    [InlineData(HttpStatusCode.PermanentRedirect)]
+    public void APostIsRepeatedWithTheSameBodyAfterA307Or308(HttpStatusCode status)
+    {
+        if (HttpSignatureTransport.IsOffline) return;
+        var handler = new Handler(r => r.RequestUri!.Host == "tsa.example"
+            ? new HttpResponseMessage(status) { Headers = { Location = new Uri("https://tsa2.example/stamp") } }
+            : Ok([9]));
+        using var transport = new HttpSignatureTransport(handler);
+
+        byte[]? answer = transport.Post("http://tsa.example/stamp", "application/timestamp-query", [1, 2, 3]);
+
+        Assert.Equal(new byte[] { 9 }, answer);
+        Assert.Equal(2, handler.Requests.Count);
+        Assert.All(handler.Requests, r => Assert.Equal(HttpMethod.Post, r.Method));
+        Assert.Equal(new byte[] { 1, 2, 3 }, handler.Bodies[1]);
+        Assert.Equal("application/timestamp-query", handler.ContentTypes[1]);
+    }
+
+    [Fact]
+    public void APostAnsweredWith302IsNotRepeated()
+    {
+        if (HttpSignatureTransport.IsOffline) return;
+        var handler = new Handler(_ => new HttpResponseMessage(HttpStatusCode.Found) { Headers = { Location = new Uri("https://tsa2.example/stamp") } });
+        using var transport = new HttpSignatureTransport(handler);
+
+        Assert.Null(transport.Post("https://tsa.example/stamp", "application/timestamp-query", [1]));
+        Assert.Single(handler.Requests);
+        Assert.Contains("302", transport.LastFailure);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.MovedPermanently)]
+    [InlineData(HttpStatusCode.TemporaryRedirect)]
+    public void ARedirectFromHttpsToHttpIsRefused(HttpStatusCode status)
+    {
+        if (HttpSignatureTransport.IsOffline) return;
+        var handler = new Handler(_ => new HttpResponseMessage(status) { Headers = { Location = new Uri("http://tsa.example/stamp") } });
+        using var transport = new HttpSignatureTransport(handler);
+
+        Assert.Null(transport.Get("https://tsa.example/stamp"));
+        Assert.Contains("not encrypted", transport.LastFailure);
+        if (status == HttpStatusCode.TemporaryRedirect)
+        {
+            Assert.Null(transport.Post("https://tsa.example/other", "application/timestamp-query", [1]));
+            Assert.Contains("not encrypted", transport.LastFailure);
+        }
+    }
+
+    [Fact]
+    public void ALoopOf307AnswersStopsAtTheRedirectLimit()
+    {
+        if (HttpSignatureTransport.IsOffline) return;
+        var handler = new Handler(_ => new HttpResponseMessage(HttpStatusCode.TemporaryRedirect) { Headers = { Location = new Uri("https://tsa.example/stamp") } });
+        using var transport = new HttpSignatureTransport(handler);
+
+        Assert.Null(transport.Post("https://tsa.example/stamp", "application/timestamp-query", [1]));
+        Assert.Equal(6, handler.Requests.Count);
+        Assert.Contains("307", transport.LastFailure);
     }
 
     [Fact]

@@ -5662,6 +5662,9 @@
   <data name="The server did not answer in time. Try again later." xml:space="preserve">
     <value>Sunucu zamanında yanıt vermedi. Daha sonra yeniden deneyin.</value>
   </data>
+  <data name="The server tried to move the request to an address that is not encrypted, so it was not used." xml:space="preserve">
+    <value>Sunucu isteği şifrelenmemiş bir adrese taşımaya çalıştı, bu yüzden kullanılmadı.</value>
+  </data>
   <data name="The server's answer is too large." xml:space="preserve">
     <value>Sunucunun yanıtı çok büyük.</value>
   </data>

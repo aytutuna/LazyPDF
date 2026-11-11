@@ -39,14 +39,12 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
 
     public byte[]? Post(string url, string contentType, byte[] body)
     {
-        var content = new ByteArrayContent(body);
-        content.Headers.TryAddWithoutValidation("Content-Type", contentType);
-        return Send(HttpMethod.Post, url, content, Convert.ToHexString(SHA256.HashData(body)));
+        return Send(HttpMethod.Post, url, body, contentType, Convert.ToHexString(SHA256.HashData(body)));
     }
 
-    public byte[]? Get(string url) => Send(HttpMethod.Get, url, null, "");
+    public byte[]? Get(string url) => Send(HttpMethod.Get, url, null, null, "");
 
-    private byte[]? Send(HttpMethod method, string url, HttpContent? content, string bodyHash)
+    private byte[]? Send(HttpMethod method, string url, byte[]? payload, string? contentType, string bodyHash)
     {
         LastFailure = null;
         if (!Uri.TryCreate(url, UriKind.Absolute, out var address))
@@ -63,14 +61,14 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
             LastFailure = known.Failure;
             return known.Bytes;
         }
-        var bytes = Fetch(method, address, content, out bool keep);
+        var bytes = Fetch(method, address, payload, contentType, out bool keep);
         if (keep)
             _answers[key] = (bytes, LastFailure);
         return bytes;
     }
 
     // keep says the outcome is final; a cancel or a timeout may work on a later try.
-    private byte[]? Fetch(HttpMethod method, Uri address, HttpContent? content, out bool keep)
+    private byte[]? Fetch(HttpMethod method, Uri address, byte[]? payload, string? contentType, out bool keep)
     {
         keep = false;
         // The timeout has to cover reading the body too, which HttpClient.Timeout does not once headers are read.
@@ -94,13 +92,27 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
                     LastFailure = Loc.T("Too many requests for one file. Stopped.");
                     return null;
                 }
-                using var request = new HttpRequestMessage(method, address) { Content = content };
+                // A request disposes its content, so every hop gets a new one.
+                using var request = new HttpRequestMessage(method, address);
+                if (payload is not null)
+                {
+                    request.Content = new ByteArrayContent(payload);
+                    request.Content.Headers.TryAddWithoutValidation("Content-Type", contentType);
+                }
                 sent = request;
                 using var response = _client.Send(request, HttpCompletionOption.ResponseHeadersRead, limit.Token);
-                // Redirects are followed here so every address gets the checks above. Only a fetch is repeated.
-                if (response.Headers.Location is { } next && (int)response.StatusCode is >= 300 and < 400 && method == HttpMethod.Get && hop < MaxRedirects)
+                // Redirects are followed here so every address gets the checks above. A post is only repeated for 307 and 308, which keep method and body.
+                if (response.Headers.Location is { } next && (int)response.StatusCode is >= 300 and < 400
+                    && (method == HttpMethod.Get || response.StatusCode is HttpStatusCode.TemporaryRedirect or HttpStatusCode.PermanentRedirect) && hop < MaxRedirects)
                 {
-                    address = new Uri(address, next);
+                    var target = new Uri(address, next);
+                    if (address.Scheme == "https" && target.Scheme == "http")
+                    {
+                        LastFailure = Loc.T("The server tried to move the request to an address that is not encrypted, so it was not used.");
+                        keep = true;
+                        return null;
+                    }
+                    address = target;
                     continue;
                 }
                 if (!response.IsSuccessStatusCode)
