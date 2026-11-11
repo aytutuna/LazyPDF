@@ -152,13 +152,19 @@ public partial class PageViewer
             e.Handled = true;
             return;
         }
-        if (e.ClickCount == 1) _linkClick = false;
-        else if (_linkClick)
+        var clicks = e.ClickCount;
+        if (_linkClick && clicks == 2)
         {
             // The first click of a double click jumped to a link; the second lands on the new page.
             _downLink = null;
             e.Handled = true;
             return;
+        }
+        if (_linkClick)
+        {
+            // A third quick press at the same spot is a new click, e.g. a "next" link in the same place on every page.
+            _linkClick = false;
+            clicks = 1;
         }
         var at = e.GetPosition(Surface);
         var hit = Surface.Hit(at);
@@ -171,7 +177,7 @@ public partial class PageViewer
             _drag = Drag.Tool;
             _dragPage = over.Page;
             Surface.CaptureMouse();
-            tool.Press(Pointer(new PagePoint(over.Page, over.Point), at, e.ClickCount, true));
+            tool.Press(Pointer(new PagePoint(over.Page, over.Point), at, clicks, true));
         }
         else if (_mode == PointerMode.Hand)
         {
@@ -183,7 +189,7 @@ public partial class PageViewer
         {
             _drag = Drag.Select;
             Surface.CaptureMouse();
-            BeginSelection(at, e.ClickCount);
+            BeginSelection(at, clicks);
             _autoScroll.Start();
         }
         e.Handled = true;

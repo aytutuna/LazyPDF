@@ -252,4 +252,46 @@ public sealed class KeyboardPlacementTests
         Assert.True(e.Handled);
         return Task.CompletedTask;
     });
+
+    private static MouseButtonEventArgs Click(RoutedEvent routed, int clicks)
+    {
+        var e = new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = routed };
+        typeof(MouseButtonEventArgs).GetProperty(nameof(MouseButtonEventArgs.ClickCount))!.GetSetMethod(true)!.Invoke(e, [clicks]);
+        return e;
+    }
+
+    [Fact]
+    public Task AQuickThirdPressOnALinkFollowsItAgain() => Sta.Run(() =>
+    {
+        var document = PdfDocument.Open(Pdfs.Text(3));
+        foreach (var page in document.Pages) PdfLinks.Add(document, page, new PdfRect(0, 0, 10000, 10000), new PdfDestination(2));
+        using var tab = new DocumentTab(PdfEditSession.Open(document.SaveRewrite()), new FakeRenderer(), null, "a.pdf");
+        var (viewer, _) = Open(tab);
+        viewer.PointerTool = null;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var surface = (PageSurface)typeof(PageViewer).GetField("Surface", flags)!.GetValue(viewer)!;
+        surface.SetZoom(4);
+        // A press lands at the surface's origin, so put a spot inside page 0 there.
+        void Back() => surface.GoToPage(0, new Point(100, 100));
+        var down = typeof(PageViewer).GetMethod("Surface_MouseDown", flags)!;
+        var up = typeof(PageViewer).GetMethod("Surface_MouseUp", flags)!;
+        void Press(int clicks)
+        {
+            down.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, clicks)]);
+            up.Invoke(viewer, [viewer, Click(Mouse.MouseUpEvent, clicks)]);
+        }
+
+        Back();
+        Press(1);
+        Assert.Equal(2, tab.PageIndex);
+
+        Back();
+        Press(2);
+        Assert.Equal(0, tab.PageIndex);
+        Assert.False(viewer.HasSelection);
+
+        Press(3);
+        Assert.Equal(2, tab.PageIndex);
+        return Task.CompletedTask;
+    });
 }
