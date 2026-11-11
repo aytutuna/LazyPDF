@@ -5038,6 +5038,9 @@
   <data name="The address is not a web address." xml:space="preserve">
     <value>Adres bir web adresi değil.</value>
   </data>
+  <data name="The address points to this computer, so it was not used." xml:space="preserve">
+    <value>Adres bu bilgisayarı gösteriyor, bu yüzden kullanılmadı.</value>
+  </data>
   <data name="The annotation has no normal appearance stream." xml:space="preserve">
     <value>Ek açıklamanın normal görünüm akışı yok.</value>
   </data>
@@ -5889,6 +5892,9 @@
   </data>
   <data name="Too many parts for tabs" xml:space="preserve">
     <value>Sekmeler için çok fazla parça</value>
+  </data>
+  <data name="Too many requests for one file. Stopped." xml:space="preserve">
+    <value>Tek bir dosya için çok fazla istek yapıldı. Durduruldu.</value>
   </data>
   <data name="Tools" xml:space="preserve">
     <value>Araçlar</value>

@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http;
 using System.Net.NetworkInformation;
 using LazyPDF.Core;
@@ -12,8 +13,10 @@ namespace LazyPDF.App.Services;
 public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
 {
     private const int MaxResponseBytes = 8 << 20;
+    private const int MaxRequests = 200;
 
     private readonly HttpClient _client;
+    private int _requests;
 
     public HttpSignatureTransport(HttpMessageHandler? handler = null)
     {
@@ -46,6 +49,16 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
             LastFailure = Loc.T("The address is not a web address.");
             return null;
         }
+        if (PointsHere(address))
+        {
+            LastFailure = Loc.T("The address points to this computer, so it was not used.");
+            return null;
+        }
+        if (++_requests > MaxRequests)
+        {
+            LastFailure = Loc.T("Too many requests for one file. Stopped.");
+            return null;
+        }
         if (IsOffline)
         {
             LastFailure = Loc.T("This computer is offline. Connect to the internet and try again.");
@@ -60,12 +73,17 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
                 LastFailure = Loc.T("The server answered with an error ({0}).", (int)response.StatusCode);
                 return null;
             }
+            if (response.Content.Headers.ContentLength > MaxResponseBytes)
+                return TooLarge();
             using var body = new MemoryStream();
-            response.Content.ReadAsStream().CopyTo(body);
-            if (body.Length > MaxResponseBytes)
+            using var stream = response.Content.ReadAsStream(Cancel);
+            var buffer = new byte[80 * 1024];
+            int read;
+            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
             {
-                LastFailure = Loc.T("The server's answer is too large.");
-                return null;
+                body.Write(buffer, 0, read);
+                if (body.Length > MaxResponseBytes)
+                    return TooLarge();
             }
             return body.ToArray();
         }
@@ -76,6 +94,28 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
                 : Loc.T("The server could not be reached. Check the connection and try again.");
             return null;
         }
+    }
+
+    private byte[]? TooLarge()
+    {
+        LastFailure = Loc.T("The server's answer is too large.");
+        return null;
+    }
+
+    // Private LAN ranges stay allowed, since company PKI serves its CRLs from them.
+    private static bool PointsHere(Uri address)
+    {
+        string host = address.DnsSafeHost.TrimEnd('.');
+        if (host.Equals("localhost", StringComparison.OrdinalIgnoreCase) || host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (!IPAddress.TryParse(host, out var ip))
+            return false;
+        if (ip.IsIPv4MappedToIPv6)
+            ip = ip.MapToIPv4();
+        if (IPAddress.IsLoopback(ip) || ip.IsIPv6LinkLocal)
+            return true;
+        byte[] b = ip.GetAddressBytes();
+        return b.Length == 4 && b[0] == 169 && b[1] == 254;
     }
 
     public void Dispose() => _client.Dispose();

@@ -93,6 +93,60 @@ public sealed class HttpSignatureTransportTests
         Assert.NotNull(transport.LastFailure);
     }
 
+    [Theory]
+    [InlineData("http://localhost/a")]
+    [InlineData("https://crl.localhost/a")]
+    [InlineData("http://127.0.0.1:8080/a")]
+    [InlineData("http://[::1]/a")]
+    [InlineData("http://169.254.169.254/latest")]
+    [InlineData("http://[fe80::1]/a")]
+    [InlineData("http://[::ffff:127.0.0.1]/a")]
+    public void AddressesOnThisComputerAreRefused(string url)
+    {
+        var handler = new Handler(_ => Ok([1]));
+        using var transport = new HttpSignatureTransport(handler);
+
+        Assert.Null(transport.Get(url));
+        Assert.Empty(handler.Requests);
+        Assert.Contains("this computer", transport.LastFailure);
+    }
+
+    [Fact]
+    public void ALocalNetworkAddressIsNotRefusedAsThisComputer()
+    {
+        using var transport = new HttpSignatureTransport(new Handler(_ => Ok([1])));
+
+        transport.Get("http://192.168.1.5/ca.crl");
+
+        Assert.DoesNotContain("this computer, so", transport.LastFailure);
+    }
+
+    [Fact]
+    public void TheTwoHundredFirstRequestIsRefused()
+    {
+        if (HttpSignatureTransport.IsOffline) return;
+        var handler = new Handler(_ => Ok([1]));
+        using var transport = new HttpSignatureTransport(handler);
+
+        for (int i = 0; i < 200; i++)
+            Assert.NotNull(transport.Get("https://a.example/"));
+
+        Assert.Null(transport.Get("https://a.example/"));
+        Assert.Contains("Too many requests", transport.LastFailure);
+        Assert.Equal(200, handler.Requests.Count);
+    }
+
+    [Fact]
+    public void ABodyWithoutALengthThatRunsPastTheLimitIsRefused()
+    {
+        if (HttpSignatureTransport.IsOffline) return;
+        using var transport = new HttpSignatureTransport(new Handler(_ =>
+            new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new MemoryStream(new byte[9 << 20])) }));
+
+        Assert.Null(transport.Get("https://ocsp.example/"));
+        Assert.Contains("too large", transport.LastFailure);
+    }
+
     [Fact]
     public void AnAnswerThatIsTooLargeIsRefused()
     {

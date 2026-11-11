@@ -1863,6 +1863,12 @@
   "The server's answer is too large.": {
     "tr": "Sunucunun yanıtı çok büyük."
   },
+  "Too many requests for one file. Stopped.": {
+    "tr": "Tek bir dosya için çok fazla istek yapıldı. Durduruldu."
+  },
+  "The address points to this computer, so it was not used.": {
+    "tr": "Adres bu bilgisayarı gösteriyor, bu yüzden kullanılmadı."
+  },
   "The server did not answer in time. Try again later.": {
     "tr": "Sunucu zamanında yanıt vermedi. Daha sonra yeniden deneyin."
   },
