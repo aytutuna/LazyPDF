@@ -53,8 +53,8 @@ internal static class SignatureArt
     /// <summary>A picture of a signature on paper: the paper becomes see-through, the ink stays.</summary>
     public static PdfRgbaImage? FromFile(byte[] file)
     {
-        if (new WicImageCodec().DecodeFile(file) is not { Count: > 0 } frames) return null;
-        return Trim(PaperToClear(Shrink(Upright(frames[0], Orientation(file)))));
+        if (new WicImageCodec().DecodeFile(file)?.FirstOrDefault(f => !f.TooBig) is not { } frame) return null;
+        return Trim(PaperToClear(Shrink(Upright(frame, Orientation(file)))));
     }
 
     /// <summary>A camera JPEG turned upright and saved without its orientation tag; any other file as it is.</summary>
@@ -64,8 +64,8 @@ internal static class SignatureArt
         int orientation = Orientation(file);
         if (orientation is < 2 or > 8) return file;
         var codec = new WicImageCodec();
-        if (codec.DecodeFile(file) is not { Count: > 0 } frames) return file;
-        return codec.EncodeJpeg(Upright(frames[0], orientation), 92);
+        if (codec.DecodeFile(file)?.FirstOrDefault(f => !f.TooBig) is not { } frame) return file;
+        return codec.EncodeJpeg(Upright(frame, orientation), 92);
     }
 
     /// <summary>The picture turned a quarter clockwise.</summary>

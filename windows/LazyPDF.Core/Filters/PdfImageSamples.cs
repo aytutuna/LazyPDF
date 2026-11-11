@@ -1,7 +1,11 @@
 namespace LazyPDF.Core;
 
 /// <summary>An image as straight (not premultiplied) RGBA8, rows top to bottom.</summary>
-public sealed record PdfRgbaImage(int Width, int Height, byte[] Rgba, double DpiX = 0, double DpiY = 0);
+public sealed record PdfRgbaImage(int Width, int Height, byte[] Rgba, double DpiX = 0, double DpiY = 0)
+{
+    /// <summary>A frame too big to decode: it keeps its size and has no pixels.</summary>
+    public bool TooBig => Rgba.Length == 0 && Width > 0 && Height > 0;
+}
 
 /// <summary>Image XObject samples (ISO 32000-1 8.9) turned into RGBA8.</summary>
 public static class PdfImageSamples

@@ -19,8 +19,8 @@ public enum PdfOrientation
 /// <summary>Page size, orientation and margin (points) of a PDF made from pictures or text.</summary>
 public sealed record PdfPageSetup(PdfPaper Paper = PdfPaper.A4, PdfOrientation Orientation = PdfOrientation.Auto, double Margin = 36);
 
-/// <summary>A made PDF: its bytes, page count and the files in the list that could not be read (by index).</summary>
-public sealed record PicturesPdf(byte[] Bytes, int Pages, IReadOnlyList<int> Unreadable);
+/// <summary>A made PDF: its bytes, page count and the files in the list that could not be read (by index) and how many frames were too big to decode and left out.</summary>
+public sealed record PicturesPdf(byte[] Bytes, int Pages, IReadOnlyList<int> Unreadable, int SkippedFrames = 0);
 
 /// <summary>A PDF page for each picture or each frame of a picture file.</summary>
 public static class PdfFromPictures
@@ -44,6 +44,7 @@ public static class PdfFromPictures
         var document = ExportPdf.NewDocument();
         var pictures = new List<(PdfImage Image, double DpiX, double DpiY, int Orientation)>();
         var unreadable = new List<int>();
+        int skipped = 0;
         for (int i = 0; i < files.Count; i++)
         {
             int before = pictures.Count;
@@ -54,6 +55,7 @@ public static class PdfFromPictures
             }
             else if (codec.DecodeFile(files[i]) is { } frames)
             {
+                skipped += frames.Count(f => f.TooBig);
                 foreach (var frame in frames.Where(f => f.Width > 0 && f.Height > 0 && (long)f.Width * f.Height <= PdfImageSamples.MaxPixels && f.Rgba.Length == (long)f.Width * f.Height * 4))
                     pictures.Add((PdfImageWriter.AddRgba(document, frame.Width, frame.Height, frame.Rgba), StoredDpi(frame).X, StoredDpi(frame).Y, 1));
             }
@@ -80,7 +82,7 @@ public static class PdfFromPictures
             var content = new ContentWriter().Paint(name, JpegMeta.Placement(orientation, w, h, (width - w) / 2, (height - h) / 2));
             page.Dictionary["Contents"] = document.Add(new PdfStream(new PdfDictionary(), content.ToArray()));
         }
-        return new PicturesPdf(document.SaveRewrite(), pictures.Count, unreadable);
+        return new PicturesPdf(document.SaveRewrite(), pictures.Count, unreadable, skipped);
     }
 
     // The size on the page, after the picture is turned.

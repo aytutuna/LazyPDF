@@ -47,7 +47,7 @@ internal sealed class SavedSignatures(string directory)
     {
         try
         {
-            return new WicImageCodec().DecodeFile(File.ReadAllBytes(item.Path)) is { Count: > 0 } frames ? frames[0] : null;
+            return new WicImageCodec().DecodeFile(File.ReadAllBytes(item.Path))?.FirstOrDefault(f => !f.TooBig);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {

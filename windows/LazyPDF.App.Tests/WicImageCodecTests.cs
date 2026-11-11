@@ -203,7 +203,7 @@ public sealed class WicImageCodecTests
     }
 
     [Fact]
-    public void APictureWithTooManyPixelsIsLeftUnreadAndNotAnException()
+    public void APictureWithTooManyPixelsComesBackAsAPlaceholder()
     {
         const int side = 16384;
         var bitmap = BitmapSource.Create(side, side, 96, 96, PixelFormats.BlackWhite, null, new byte[side / 8 * side], side / 8);
@@ -211,7 +211,9 @@ public sealed class WicImageCodecTests
         encoder.Frames.Add(BitmapFrame.Create(bitmap));
         using var stream = new MemoryStream();
         encoder.Save(stream);
-        Assert.Empty(Codec.DecodeFile(stream.ToArray()) ?? []);
+        var frame = Assert.Single(Codec.DecodeFile(stream.ToArray())!);
+        Assert.True(frame.TooBig);
+        Assert.Equal((side, side), (frame.Width, frame.Height));
     }
 
     [Fact]
@@ -224,6 +226,7 @@ public sealed class WicImageCodecTests
         using var stream = new MemoryStream();
         encoder.Save(stream);
         var frames = Codec.DecodeFile(stream.ToArray());
-        Assert.Equal([8, 16], frames!.Select(f => f.Width));
+        Assert.Equal([8, side, 16], frames.Select(f => f.Width));
+        Assert.Equal([false, true, false], frames!.Select(f => f.TooBig));
     }
 }

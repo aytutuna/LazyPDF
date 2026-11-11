@@ -15,7 +15,7 @@ public sealed class WicImageCodec : IImageCodec
     private const int MaxFrames = 2000;
 
     public PdfRgbaImage? Decode(byte[] data, string codec) =>
-        codec is "DCTDecode" or "JPXDecode" ? DecodeFile(data) is { Count: > 0 } frames ? frames[0] : null : null;
+        codec is "DCTDecode" or "JPXDecode" ? DecodeFile(data)?.FirstOrDefault() is { TooBig: false } first ? first : null : null;
 
     public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file)
     {
@@ -24,7 +24,7 @@ public sealed class WicImageCodec : IImageCodec
             using var stream = new MemoryStream(file);
             var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.None);
             // A frame is decoded when it is read, so one too big to hold is passed over by its header size alone.
-            return [.. decoder.Frames.Take(MaxFrames).Where(f => (long)f.PixelWidth * f.PixelHeight <= PdfImageSamples.MaxPixels).Select(ToRgba)];
+            return [.. decoder.Frames.Take(MaxFrames).Select(f => (long)f.PixelWidth * f.PixelHeight > PdfImageSamples.MaxPixels ? new PdfRgbaImage(f.PixelWidth, f.PixelHeight, []) : ToRgba(f))];
         }
         catch (Exception e) when (e is NotSupportedException or FileFormatException or InvalidOperationException or ArgumentException or IOException or OutOfMemoryException or OverflowException)
         {

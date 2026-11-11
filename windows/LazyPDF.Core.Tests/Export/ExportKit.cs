@@ -26,8 +26,15 @@ internal sealed class ExportFakeCodec : IImageCodec
     }
 
     // A "picture file" of the tests is the bytes P, width, height, then width * height gray levels and optionally the two densities as 16 bits.
+    // The bytes B, n are n small frames with a frame too big to decode among them (alone when n is 0).
     public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file)
     {
+        if (file is [(byte)'B', var kept])
+        {
+            var frames = Enumerable.Repeat(new PdfRgbaImage(4, 4, new byte[64]), kept).ToList();
+            frames.Insert(kept / 2, new PdfRgbaImage(20000, 20000, []));
+            return frames;
+        }
         if (file.Length < 3 || file[0] != (byte)'P') return null;
         int w = file[1], h = file[2];
         var rgba = new byte[w * h * 4];

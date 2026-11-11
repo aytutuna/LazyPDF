@@ -94,6 +94,24 @@ public class PdfFromPicturesTests
     }
 
     [Fact]
+    public void AFrameTooBigToDecodeIsLeftOutAndCounted()
+    {
+        var made = PdfFromPictures.Create([[(byte)'B', 2]], Codec);
+        Assert.Equal(2, made.Pages);
+        Assert.Equal(1, made.SkippedFrames);
+        Assert.Empty(made.Unreadable);
+    }
+
+    [Fact]
+    public void AFileOfOnlyTooBigFramesIsUnreadableAndCounted()
+    {
+        var made = PdfFromPictures.Create([ExportFakeCodec.Picture(4, 4), [(byte)'B', 0]], Codec);
+        Assert.Equal(1, made.Pages);
+        Assert.Equal(1, made.SkippedFrames);
+        Assert.Equal([1], made.Unreadable);
+    }
+
+    [Fact]
     public void AFileOnlyTheCodecKnowsIsDecodedAndKeptLossless()
     {
         var made = PdfFromPictures.Create([ExportFakeCodec.Picture(3, 2, 77)], Codec);
