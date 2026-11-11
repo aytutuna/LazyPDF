@@ -147,7 +147,8 @@ public sealed class FormWidget
 /// <param name="Rejected">Names whose value does not fit the field: an unknown radio choice, a button, a signature.</param>
 /// <param name="Calculated">Fields the calculation order changed afterwards.</param>
 /// <param name="NotRun">Scripts that were not run because they are not built-in functions.</param>
-public sealed record FormFillResult(int Filled, IReadOnlyList<string> UnknownFields, IReadOnlyList<string> Rejected, int Calculated, IReadOnlyList<FormScript> NotRun);
+/// <param name="Undrawn">Characters no installed font has, left blank in the appearances.</param>
+public sealed record FormFillResult(int Filled, IReadOnlyList<string> UnknownFields, IReadOnlyList<string> Rejected, int Calculated, IReadOnlyList<FormScript> NotRun, string Undrawn = "");
 
 /// <summary>The font name (a /DR name such as Helv), size in points (0 fits the text to the field) and colour a field's /DA gives.</summary>
 public sealed record TextLook(string Font, double Size, double[] Color);

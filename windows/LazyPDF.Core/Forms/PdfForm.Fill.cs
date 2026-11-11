@@ -29,9 +29,12 @@ public sealed partial class PdfForm
     /// <summary>Sets a list box or combo box to several choices (export values or display texts).</summary>
     public FormFillResult SetChoices(string name, IReadOnlyList<string> choices) => Fill([(name, null, choices)]);
 
+    private readonly SortedSet<int> _undrawn = [];
+
     private FormFillResult Fill(IEnumerable<(string Name, string? Text, IReadOnlyList<string>? Choices)> entries)
     {
         RequireFillable();
+        _undrawn.Clear();
         var unknown = new List<string>();
         var rejected = new List<string>();
         var plan = new List<Change>();
@@ -51,7 +54,7 @@ public sealed partial class PdfForm
         }
         Commit(plan);
         var calculation = Recalculate();
-        return new FormFillResult(plan.Count, unknown, [.. rejected.Distinct()], calculation.Changed, calculation.NotRun);
+        return new FormFillResult(plan.Count, unknown, [.. rejected.Distinct()], calculation.Changed, calculation.NotRun, string.Concat(_undrawn.Select(char.ConvertFromUtf32)));
     }
 
     /// <summary>
@@ -337,7 +340,8 @@ public sealed partial class PdfForm
             }
             var (family, style) = current is null ? Known(name) : FormFont.FamilyOf(_document, resources, name);
             var embedder = new PdfFontEmbedder(_document, _fonts);
-            var added = embedder.Add(family, style, texts) ?? embedder.Add("Helvetica", style, texts) ?? throw new InvalidOperationException(FormText.NoFont);
+            var added = embedder.AddCovering(family, style, texts) ?? embedder.Add("Helvetica", style, texts) ?? throw new InvalidOperationException(FormText.NoFont);
+            _undrawn.UnionWith(added.Missing);
             // A name already taken (a Type0 subset that FromResource cannot read) keeps its font.
             if (current is null && !added.IsEmbedded && _document.Dict(resources, "Font")?.ContainsKey(name) != true)
             {

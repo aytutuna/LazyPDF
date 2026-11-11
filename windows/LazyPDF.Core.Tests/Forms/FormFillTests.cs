@@ -72,6 +72,49 @@ public class FormFillTests
         Reopen(form.Document);
     }
 
+    private sealed class CjkSource(bool covering) : IFontSource
+    {
+        public FontFile? Find(string family, FontStyles style)
+        {
+            string fonts = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+            string file = covering && family == "Microsoft YaHei" ? "msyh.ttc" : "arial.ttf";
+            return new FontFile(File.ReadAllBytes(Path.Combine(fonts, file)));
+        }
+    }
+
+    [Fact]
+    public void TextTheFormFontLacksIsDrawnInAFallbackFont()
+    {
+        var form = Open(fonts: new CjkSource(covering: true));
+
+        var result = form.SetValue("name", "中文 text");
+
+        Assert.Equal("", result.Undrawn);
+        Assert.Equal("中文 text", FormFixtures.Drawn(form.Document, Widget(form, "name")));
+        var stream = Normal(form, Widget(form, "name"));
+        var used = form.Document.Dict(form.Document.Dict(stream.Dictionary, "Resources"), "Font")!.Entries.Single().Value;
+        Assert.Equal("Type0", form.Document.Name((PdfDictionary)form.Document.Resolve(used)!, "Subtype"));
+    }
+
+    [Fact]
+    public void CharactersNoFontHasAreReportedAndTheFillSucceeds()
+    {
+        var form = Open(fonts: new CjkSource(covering: false));
+
+        var result = form.SetValue("name", "文中文 ab");
+
+        Assert.Equal(1, result.Filled);
+        Assert.Equal("中文", result.Undrawn);
+        Assert.Equal("文中文 ab", form.Find("name")!.Value);
+    }
+
+    [Fact]
+    public void OrdinaryTurkishFillLeavesNothingUndrawn()
+    {
+        var form = Open(fonts: new ArialSource());
+
+        Assert.Equal("", form.SetValue("name", "Şükrü ığ İĞ").Undrawn);
+    }
     [Fact]
     public void FontNameWithReplacementSyntaxGoesIntoTheDefaultAppearanceLiterally()
     {
