@@ -149,6 +149,18 @@ public sealed class CommentPanelTests
     });
 
     [Fact]
+    public Task EveryFamilyOfTheListIsOneTheEngineCanEmbed() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var source = new LazyPDF.App.Services.SystemFontSource();
+        var refused = Get<ComboBox>(Attached(f), "FontFamilyBox").ItemsSource.Cast<string>().Skip(3)
+            .Where(name => source.Find(name, LazyPDF.Core.FontStyles.Regular) is null).ToList();
+
+        Assert.Empty(refused);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task AnInstalledFamilyIsTheOneAFreshTextBoxIsDrawnIn() => Sta.Run(() =>
     {
         if (!System.Windows.Media.Fonts.SystemFontFamilies.Any(x => x.Source == "Arial")) return Task.CompletedTask;

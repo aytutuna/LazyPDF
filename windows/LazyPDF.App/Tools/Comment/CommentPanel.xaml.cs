@@ -62,7 +62,8 @@ public partial class CommentPanel : ToolPanel
     {
         string[] first = ["Helvetica", "Times New Roman", "Courier New"];
         var installed = Fonts.SystemFontFamilies
-            .Where(f => !f.Source.StartsWith('@') && !first.Contains(f.Source) && !f.GetTypefaces().Any(t => t.TryGetGlyphTypeface(out var g) && g.Symbol))
+            .Where(f => !f.Source.StartsWith('@') && !first.Contains(f.Source) && !f.GetTypefaces().Any(t => t.TryGetGlyphTypeface(out var g) && g.Symbol)
+                && f.GetTypefaces().Any(t => t.TryGetGlyphTypeface(out var g) && g.FontUri.IsFile))
             .Select(f => f.Source)
             .ToList();
         installed.Sort(string.Compare);
