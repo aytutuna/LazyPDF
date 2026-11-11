@@ -48,7 +48,10 @@
             <ComboBox x:Name="PictureTypeBox" SelectedIndex="0" AutomationProperties.Name="{loc:T Picture type}" SelectionChanged="PictureTypeBox_SelectionChanged">
                 <ComboBoxItem Content="PNG" />
                 <ComboBoxItem Content="JPEG" />
+                <ComboBoxItem Content="TIFF" />
+                <ComboBoxItem Content="BMP" />
             </ComboBox>
+            <TextBlock x:Name="SizeHint" Style="{StaticResource ReasonText}" Margin="0,4,0,0" Visibility="Collapsed" Text="{loc:T These files are large. Lower the resolution if you do not need print quality.}" />
             <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Resolution}" Margin="0,12,0,4" />
             <ComboBox x:Name="DpiBox" SelectedIndex="2" AutomationProperties.Name="{loc:T Resolution}">
                 <ComboBoxItem Tag="72" Content="72 dpi" />

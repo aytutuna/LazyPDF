@@ -50,6 +50,35 @@ public sealed class WicImageCodecTests
     }
 
     [Fact]
+    public void ATiffIsMadeAndReadBack()
+    {
+        var back = Assert.Single(Codec.DecodeFile(Codec.EncodeTiff(Gradient(64, 48)))!);
+
+        Assert.Equal((64, 48), (back.Width, back.Height));
+        Assert.Equal(20 * 255 / 63, back.Rgba[(10 * 64 + 20) * 4]);
+    }
+
+    [Fact]
+    public void ABmpIsMadeAndReadBack()
+    {
+        byte[] bmp = Codec.EncodeBmp(Gradient(64, 48));
+
+        Assert.Equal((byte)'B', bmp[0]);
+        var back = Assert.Single(Codec.DecodeFile(bmp)!);
+        Assert.Equal((64, 48), (back.Width, back.Height));
+        Assert.Equal(20 * 255 / 63, back.Rgba[(10 * 64 + 20) * 4]);
+    }
+
+    [Fact]
+    public void TransparentPixelsAreWhiteInTiffAndBmp()
+    {
+        var clear = Gradient(8, 8, alpha: 0);
+
+        foreach (var bytes in new[] { Codec.EncodeTiff(clear), Codec.EncodeBmp(clear) })
+            Assert.Equal([255, 255, 255, 255], Assert.Single(Codec.DecodeFile(bytes)!).Rgba[..4]);
+    }
+
+    [Fact]
     public void ALowerQualityIsSmaller()
     {
         var image = Gradient(128, 128);

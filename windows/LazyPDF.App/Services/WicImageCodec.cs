@@ -6,7 +6,7 @@ namespace LazyPDF.App.Services;
 
 /// <summary>
 /// The picture codecs Core leaves to the system, on WIC through WPF's decoders: JPEG, PNG, TIFF (every
-/// frame), BMP, GIF and HEIC where Windows has the extension, and JPEG encoding. WPF finds the decoder
+/// frame), BMP, GIF and HEIC where Windows has the extension, and JPEG, TIFF and BMP encoding. WPF finds the decoder
 /// by the bytes, not the name.
 /// </summary>
 public sealed class WicImageCodec : IImageCodec
@@ -33,7 +33,15 @@ public sealed class WicImageCodec : IImageCodec
 
     public byte[] EncodeJpeg(PdfRgbaImage image, int quality)
     {
-        var encoder = new JpegBitmapEncoder { QualityLevel = Math.Clamp(quality, 1, 100) };
+        return Encode(new JpegBitmapEncoder { QualityLevel = Math.Clamp(quality, 1, 100) }, image);
+    }
+
+    public byte[] EncodeTiff(PdfRgbaImage image) => Encode(new TiffBitmapEncoder { Compression = TiffCompressOption.Lzw }, image);
+
+    public byte[] EncodeBmp(PdfRgbaImage image) => Encode(new BmpBitmapEncoder(), image);
+
+    private static byte[] Encode(BitmapEncoder encoder, PdfRgbaImage image)
+    {
         encoder.Frames.Add(BitmapFrame.Create(OverWhite(image)));
         using var stream = new MemoryStream();
         encoder.Save(stream);
@@ -52,7 +60,7 @@ public sealed class WicImageCodec : IImageCodec
         return new PdfRgbaImage(width, height, pixels);
     }
 
-    // JPEG has no alpha: what is see-through goes onto white, as it would on paper.
+    // These formats have no alpha: what is see-through goes onto white, as it would on paper.
     private static BitmapSource OverWhite(PdfRgbaImage image)
     {
         var bgr = new byte[image.Width * image.Height * 3];

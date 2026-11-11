@@ -25,6 +25,14 @@ public partial class ExportPanel : ToolPanel
 
     private ExportFormat Format => Enum.Parse<ExportFormat>((string)((ComboBoxItem)FormatBox.SelectedItem).Tag);
 
+    private PictureFormat Picture => PictureTypeBox.SelectedIndex switch
+    {
+        1 => PictureFormat.Jpeg,
+        2 => PictureFormat.Tiff,
+        3 => PictureFormat.Bmp,
+        _ => PictureFormat.Png,
+    };
+
     private PageScope Scope => TypedPages.IsChecked == true ? PageScope.Typed : CurrentPage.IsChecked == true ? PageScope.Current : PageScope.All;
 
     protected override void OnAttach()
@@ -57,7 +65,9 @@ public partial class ExportPanel : ToolPanel
         HtmlOptions.Visibility = format == ExportFormat.Html ? Visibility.Visible : Visibility.Collapsed;
         MarkdownPicturesBox.Visibility = format == ExportFormat.Markdown ? Visibility.Visible : Visibility.Collapsed;
         PictureOptions.Visibility = format == ExportFormat.Pictures ? Visibility.Visible : Visibility.Collapsed;
-        QualityRow.Visibility = PictureTypeBox.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+        var picture = Picture;
+        QualityRow.Visibility = picture == PictureFormat.Jpeg ? Visibility.Visible : Visibility.Collapsed;
+        SizeHint.Visibility = picture is PictureFormat.Tiff or PictureFormat.Bmp ? Visibility.Visible : Visibility.Collapsed;
 
         string? blocker = Blocker();
         Reason.Text = blocker ?? "";
@@ -70,7 +80,7 @@ public partial class ExportPanel : ToolPanel
         pages,
         FixedHtml: HtmlLayoutBox.SelectedIndex == 1,
         MarkdownPictures: MarkdownPicturesBox.IsChecked == true,
-        Picture: PictureTypeBox.SelectedIndex == 1 ? PictureFormat.Jpeg : PictureFormat.Png,
+        Picture: Picture,
         Dpi: int.Parse((string)((ComboBoxItem)DpiBox.SelectedItem).Tag),
         Quality: (int)QualityBox.Value,
         NamePattern: NameBox.Text,

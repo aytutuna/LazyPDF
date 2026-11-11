@@ -3491,6 +3491,9 @@
   "Picture type": {
     "tr": "Resim türü"
   },
+  "These files are large. Lower the resolution if you do not need print quality.": {
+    "tr": "Bu dosyalar büyüktür. Yazdırma kalitesine ihtiyacınız yoksa çözünürlüğü düşürün."
+  },
   "Resolution": {
     "tr": "Çözünürlük"
   },

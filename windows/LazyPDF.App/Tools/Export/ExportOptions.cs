@@ -17,6 +17,8 @@ public enum PictureFormat
 {
     Png,
     Jpeg,
+    Tiff,
+    Bmp,
 }
 
 /// <param name="Pages">0-based pages in the order wanted; null for all of them.</param>

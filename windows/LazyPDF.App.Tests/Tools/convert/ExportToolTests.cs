@@ -177,6 +177,19 @@ public sealed class ExportToolTests
     }
 
     [Fact]
+    public void TiffPicturesAreOneFilePerPage()
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(dir.Path);
+
+        var result = Exporter.Write(SourceOf("doc", Report(2), new WicImageCodec()), new ExportOptions(ExportFormat.Pictures, Picture: PictureFormat.Tiff, Dpi: 72), dir.Path, CancellationToken.None);
+
+        Assert.Equal(2, result.Files);
+        foreach (string name in new[] { "doc page 1.tif", "doc page 2.tif" })
+            Assert.Single(new WicImageCodec().DecodeFile(File.ReadAllBytes(Path.Combine(dir.Path, name)))!);
+    }
+
+    [Fact]
     public void PagesTheSystemCannotDrawAreCounted()
     {
         using var dir = new TempDir();

@@ -69,14 +69,17 @@ public static class Exporter
     {
         var pages = options.Pages ?? [.. Enumerable.Range(0, document.Pages.Count)];
         int digits = document.Pages.Count.ToString().Length;
-        string extension = options.Picture == PictureFormat.Png ? ".png" : ".jpg";
+        string extension = options.Picture switch { PictureFormat.Png => ".png", PictureFormat.Jpeg => ".jpg", PictureFormat.Tiff => ".tif", _ => ".bmp" };
         int written = 0, skipped = 0;
         foreach (int page in pages)
         {
             cancel.ThrowIfCancellationRequested();
-            byte[]? bytes = options.Picture == PictureFormat.Png
-                ? PageImages.Png(source.Renderer, page, options.Dpi)
-                : PageImages.Jpeg(source.Renderer, source.Codec, page, options.Dpi, options.Quality);
+            byte[]? bytes = options.Picture switch
+            {
+                PictureFormat.Png => PageImages.Png(source.Renderer, page, options.Dpi),
+                PictureFormat.Jpeg => PageImages.Jpeg(source.Renderer, source.Codec, page, options.Dpi, options.Quality),
+                _ => Uncompressed(source, page, options),
+            };
             if (bytes is null)
             {
                 skipped++;
@@ -87,6 +90,13 @@ public static class Exporter
             written++;
         }
         return new ExportResult(written, folder, skipped);
+    }
+
+    private static byte[]? Uncompressed(ExportSource source, int page, ExportOptions options)
+    {
+        if (source.Renderer.Render(page, options.Dpi) is not { } image) return null;
+        var codec = source.Codec as WicImageCodec ?? new WicImageCodec();
+        return options.Picture == PictureFormat.Tiff ? codec.EncodeTiff(image) : codec.EncodeBmp(image);
     }
 
     // One page at a time: the extractor holds every picture of a call in memory under one budget, which a long scan would use up.
