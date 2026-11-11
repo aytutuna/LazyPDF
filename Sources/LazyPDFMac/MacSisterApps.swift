@@ -25,9 +25,12 @@ final class MacSisterApps: SisterApps {
 
     var lazyPrintInstalled: Bool { location(printId) != nil }
 
-    func openLazyScan() {
+    func openLazyScan(_ failed: @escaping @MainActor () -> Void) {
         guard let app = location(scanId) else { return }
-        NSWorkspace.shared.openApplication(at: app, configuration: NSWorkspace.OpenConfiguration())
+        NSWorkspace.shared.openApplication(at: app, configuration: NSWorkspace.OpenConfiguration()) { _, error in
+            guard error != nil else { return }
+            Task { @MainActor in failed() }
+        }
     }
 
     func tryPrint(_ file: URL) -> Bool {

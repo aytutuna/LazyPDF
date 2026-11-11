@@ -17,8 +17,13 @@ public struct IOSSisterApps: SisterApps {
 
     public var lazyPrintInstalled: Bool { false }
 
-    public func openLazyScan() {
-        MainActor.assumeIsolated { UIApplication.shared.open(Self.scan) }
+    public func openLazyScan(_ failed: @escaping @MainActor () -> Void) {
+        MainActor.assumeIsolated {
+            UIApplication.shared.open(Self.scan, options: [:]) { success in
+                guard !success else { return }
+                Task { @MainActor in failed() }
+            }
+        }
     }
 
     public func tryPrint(_ file: URL) -> Bool {

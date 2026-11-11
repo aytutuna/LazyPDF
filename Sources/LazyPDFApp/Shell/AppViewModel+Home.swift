@@ -78,7 +78,11 @@ extension AppViewModel {
     /// since it needs the file panel. A tile that cannot be started says why in the status line.
     public func startTile(_ id: String) {
         if id == Self.scanTile {
-            if sisters.lazyScanInstalled { sisters.openLazyScan() }
+            guard sisters.lazyScanInstalled else { return }
+            sisters.openLazyScan { [weak self] in
+                self?.showProblem(Problem(L10n.t("Lazy Scan did not start"),
+                                          L10n.t("Lazy Scan could not be opened. Open it yourself, or reinstall it.")))
+            }
             return
         }
         guard let tool = Self.toolTiles.first(where: { $0.tile == id })?.tool else { return }

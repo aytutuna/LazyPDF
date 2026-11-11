@@ -107,6 +107,20 @@ final class HomeTilesTests: XCTestCase {
         XCTAssertEqual(f.sisters.scanOpened, 1)
     }
 
+    func test_scanSaysSoWhenLazyScanDoesNotStart() {
+        let f = ViewModelFixture(self)
+        f.sisters.lazyScanInstalled = true
+
+        f.vm.startTile("scan")
+        XCTAssertNil(f.vm.message)
+        XCTAssertEqual(f.sisters.scanOpened, 1)
+
+        f.sisters.scanFails = true
+        f.vm.startTile("scan")
+        XCTAssertEqual(f.vm.message?.title, "Lazy Scan did not start")
+        XCTAssertEqual(f.vm.message?.isError, true)
+    }
+
     func test_aToolTileWithoutAFileSaysToOpenOne() {
         let f = ViewModelFixture(self)
 

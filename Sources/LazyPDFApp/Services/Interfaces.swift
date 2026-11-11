@@ -22,7 +22,8 @@ public protocol SisterApps {
     /// Whether `tryPrint` has anywhere to send a file.
     var lazyPrintInstalled: Bool { get }
 
-    func openLazyScan()
+    /// `failed` runs on the main actor when the system could not start Lazy Scan.
+    func openLazyScan(_ failed: @escaping @MainActor () -> Void)
 
     /// Hands the file to Lazy Print. False when it is not there to take it.
     func tryPrint(_ file: URL) -> Bool

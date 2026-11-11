@@ -1573,6 +1573,9 @@
   "Lazy Scan did not start": {
     "tr": "Lazy Scan açılmadı"
   },
+  "Lazy Scan could not be opened. Open it yourself, or reinstall it.": {
+    "tr": "Lazy Scan açılamadı. Kendiniz açın ya da yeniden yükleyin."
+  },
   "Windows could not open Lazy Scan. Open it from the Start menu, or reinstall it.": {
     "tr": "Windows Lazy Scan'i açamadı. Başlat menüsünden açın veya yeniden yükleyin."
   },

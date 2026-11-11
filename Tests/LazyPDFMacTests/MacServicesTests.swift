@@ -12,7 +12,7 @@ final class MacSisterAppsTests: XCTestCase {
 
         XCTAssertFalse(sisters.lazyScanInstalled)
         XCTAssertFalse(sisters.tryPrint(URL(fileURLWithPath: "/tmp/a.pdf")))
-        sisters.openLazyScan()
+        sisters.openLazyScan {}
     }
 }
 

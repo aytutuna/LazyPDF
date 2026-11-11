@@ -2929,6 +2929,9 @@
   <data name="Lazy Scan" xml:space="preserve">
     <value>Lazy Scan</value>
   </data>
+  <data name="Lazy Scan could not be opened. Open it yourself, or reinstall it." xml:space="preserve">
+    <value>Lazy Scan açılamadı. Kendiniz açın ya da yeniden yükleyin.</value>
+  </data>
   <data name="Lazy Scan did not start" xml:space="preserve">
     <value>Lazy Scan açılmadı</value>
   </data>

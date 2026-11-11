@@ -33,7 +33,7 @@ struct StandInSisters: SisterApps {
     var lazyScanInstalled: Bool { false }
     var lazyPrintInstalled: Bool { false }
 
-    func openLazyScan() {}
+    func openLazyScan(_ failed: @escaping @MainActor () -> Void) {}
 
     func tryPrint(_ file: URL) -> Bool { false }
 }

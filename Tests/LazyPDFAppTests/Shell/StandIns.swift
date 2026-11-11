@@ -84,7 +84,12 @@ final class FakeSisters: SisterApps {
     var printed: [URL] = []
     var scanOpened = 0
 
-    func openLazyScan() { scanOpened += 1 }
+    var scanFails = false
+
+    func openLazyScan(_ failed: @escaping @MainActor () -> Void) {
+        scanOpened += 1
+        if scanFails { MainActor.assumeIsolated { failed() } }
+    }
 
     func tryPrint(_ file: URL) -> Bool {
         printed.append(file)
