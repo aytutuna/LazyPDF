@@ -687,6 +687,7 @@
 "Green" = "Yeşil";
 "Green is added, red is removed, amber is changed or moved." = "Yeşil eklenen, kırmızı kaldırılan, sarı değişen ya da taşınandır.";
 "Grey" = "Gri";
+"Group" = "Grup";
 "Group by" = "Grupla";
 "Group name" = "Grup adı";
 "Hand tool" = "El aracı";
@@ -741,6 +742,7 @@
 "Invisible text in a text object that also shows visible text was left." = "Görünür metin de gösteren bir metin nesnesindeki görünmez metin bırakıldı.";
 "It could not be saved. It can still be placed this time." = "Kaydedilemedi. Bu seferlik yine de yerleştirilebilir.";
 "It is already there." = "Zaten orada.";
+"It is off the list." = "Listeden kaldırıldı.";
 "It is open in a new tab. Save it to keep it." = "Yeni bir sekmede açık. Saklamak için kaydedin.";
 "It shares its group with other content." = "Grubunu başka içerikle paylaşıyor.";
 "Italic" = "İtalik";
@@ -857,6 +859,7 @@
 "Mark" = "İşaretle";
 "Mark all of this kind" = "Bu türdekilerin hepsini işaretle";
 "Mark every match" = "Tüm eşleşmeleri işaretle";
+"Mark removed" = "İşaret kaldırıldı";
 "Mark selected text" = "Seçili metni işaretle";
 "Mark up text" = "Metni işaretle";
 "Marked" = "İşaretli";
@@ -999,7 +1002,7 @@
 "Nothing to split" = "Bölünecek bir şey yok";
 "Nothing to tag" = "Etiketlenecek bir şey yok";
 "Nothing was added. Run it again." = "Hiçbir şey eklenmedi. Yeniden çalıştırın.";
-"Nothing was found inside the marked places." = "İşaretli yerlerde hiçbir şey bulunamadı.";
+"Nothing was found inside the marked places. Read what was not checked below before you share it." = "İşaretli yerlerde hiçbir şey bulunamadı. Paylaşmadan önce aşağıda nelerin denetlenmediğini okuyun.";
 "Nothing was removed." = "Hiçbir şey kaldırılmadı.";
 "Nothing was stamped." = "Hiçbir şey damgalanmadı.";
 "Nothing was under the marks." = "İşaretlerin altında bir şey yoktu.";
@@ -1232,6 +1235,7 @@
 "Protection is locked" = "Koruma kilitli";
 "Protection removed from a copy." = "Koruma kopyadan kaldırıldı.";
 "Purple" = "Mor";
+"Put it back" = "Geri koy";
 "Put them back" = "Geri koy";
 "Quality" = "Kalite";
 "Radio button" = "Seçenek düğmesi";
@@ -1713,6 +1717,7 @@
 "The file could not be searched." = "Dosyada arama yapılamadı.";
 "The file could not be searched. Close it and open it again." = "Dosyada arama yapılamadı. Dosyayı kapatıp yeniden açın.";
 "The file did not take that change. Pick other pages and try again." = "Dosya bu değişikliği kabul etmedi. Başka sayfalar seçip yeniden deneyin.";
+"The file does not allow this layer to be shown or hidden." = "Dosya bu katmanın gösterilmesine ya da gizlenmesine izin vermiyor.";
 "The file does not end with %%EOF." = "Dosya %%EOF ile bitmiyor.";
 "The file embeds another file, which this level does not allow." = "Dosya başka bir dosya gömüyor; bu düzey buna izin vermiyor.";
 "The file has no figures." = "Dosyada şekil yok.";
@@ -1858,6 +1863,8 @@
 "Third-party notices" = "Üçüncü taraf bildirimleri";
 "This attachment could not be opened." = "Bu ek açılamadı.";
 "This attachment could not be read." = "Bu ek okunamadı.";
+"This bookmark does something Lazy PDF cannot do." = "Bu yer imi, Lazy PDF'nin yapamadığı bir işlem yapıyor.";
+"This bookmark points to a page that is not in the file." = "Bu yer imi dosyada olmayan bir sayfayı gösteriyor.";
 "This certificate has no private key. Choose another one or sign with a token." = "Bu sertifikanın özel anahtarı yok. Başka bir sertifika seçin ya da bir belirteçle imzalayın.";
 "This certificate is not valid today. The signature will show as not trusted." = "Bu sertifika bugün geçerli değil. İmza güvenilmez görünecek.";
 "This comment cannot be answered" = "Bu yoruma yanıt verilemiyor";

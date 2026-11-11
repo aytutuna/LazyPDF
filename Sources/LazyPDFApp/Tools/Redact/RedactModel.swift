@@ -217,7 +217,11 @@ public final class RedactModel: ToolPanelModel {
     }
 
     public func remove(_ item: MarkItem) {
-        state?.marks.remove(item)
+        guard let state, let host else { return }
+        let pages = Self.pageNumbers(state)
+        state.marks.remove(item)
+        host.showNotice(L10n.t("Mark removed"), L10n.t("It is off the list."),
+                        NoticeAction(L10n.t("Put it back")) { [weak self] in self?.putBack([item], in: state, pages: pages) })
     }
 
     public func removeSelected() {
@@ -227,9 +231,23 @@ public final class RedactModel: ToolPanelModel {
     public func clearMarks() {
         guard let state, let host else { return }
         let removed = state.marks.items
+        let pages = Self.pageNumbers(state)
         state.marks.clear()
         host.showNotice(L10n.plural(removed.count, one: "{0} mark removed", other: "{0} marks removed"), L10n.t("The list is empty now."),
-                        NoticeAction(L10n.t("Put them back")) { state.marks.add(removed) })
+                        NoticeAction(L10n.t("Put them back")) { [weak self] in self?.putBack(removed, in: state, pages: pages) })
+    }
+
+    private static func pageNumbers(_ state: State) -> [Int]? {
+        state.tab?.document.pages.map { $0.reference.number }
+    }
+
+    // Marks are placed on pages, so they only fit while the page list is what it was when they were removed.
+    private func putBack(_ items: [MarkItem], in state: State, pages: [Int]?) {
+        if Self.pageNumbers(state) == pages {
+            state.marks.add(items)
+        } else {
+            host?.showNotice(L10n.t("Marks removed"), L10n.t("The pages changed, so the marks no longer fit. Mark them again."), nil)
+        }
     }
 
     // The viewer may have rebuilt its layers (redrawAll); otherwise only the pages whose marks changed are drawn again.

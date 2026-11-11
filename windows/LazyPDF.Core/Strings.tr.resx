@@ -3694,9 +3694,6 @@
   <data name="Nothing was added. Run it again." xml:space="preserve">
     <value>Hiçbir şey eklenmedi. Yeniden çalıştırın.</value>
   </data>
-  <data name="Nothing was found inside the marked places." xml:space="preserve">
-    <value>İşaretli yerlerde hiçbir şey bulunamadı.</value>
-  </data>
   <data name="Nothing was found inside the marked places. Read what was not checked below before you share it." xml:space="preserve">
     <value>İşaretli yerlerde hiçbir şey bulunamadı. Paylaşmadan önce aşağıda nelerin denetlenmediğini okuyun.</value>
   </data>
@@ -6708,6 +6705,9 @@
   </data>
   <data name="This attachment could not be read." xml:space="preserve">
     <value>Bu ek okunamadı.</value>
+  </data>
+  <data name="This bookmark does something Lazy PDF cannot do." xml:space="preserve">
+    <value>Bu yer imi, Lazy PDF'nin yapamadığı bir işlem yapıyor.</value>
   </data>
   <data name="This bookmark goes to another file, which Lazy PDF does not open from here." xml:space="preserve">
     <value>Bu yer imi başka bir dosyaya gidiyor; Lazy PDF onu buradan açmaz.</value>

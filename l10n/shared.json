@@ -6420,9 +6420,6 @@
     "other": "Pages {1} are now pictures. Their text can no longer be selected.",
     "tr": "{1}. sayfa artık bir resim. Metni artık seçilemez."
   },
-  "Nothing was found inside the marked places.": {
-    "tr": "İşaretli yerlerde hiçbir şey bulunamadı."
-  },
   "Nothing was found inside the marked places. Read what was not checked below before you share it.": {
     "tr": "İşaretli yerlerde hiçbir şey bulunamadı. Paylaşmadan önce aşağıda nelerin denetlenmediğini okuyun."
   },
@@ -8337,5 +8334,8 @@
   "{0} dropped file is not a PDF and was left out.": {
     "other": "{0} dropped files are not PDFs and were left out.",
     "tr": "Bırakılan {0} dosya PDF olmadığı için eklenmedi."
+  },
+  "This bookmark does something Lazy PDF cannot do.": {
+    "tr": "Bu yer imi, Lazy PDF'nin yapamadığı bir işlem yapıyor."
   }
 }

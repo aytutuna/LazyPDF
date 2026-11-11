@@ -239,6 +239,7 @@ final class RedactJobTests: XCTestCase {
 
         XCTAssertTrue(summary.clean)
         XCTAssertFalse(summary.advice.contains("left in the copy"))
+        XCTAssertEqual(summary.advice, "Nothing was found inside the marked places. Read what was not checked below before you share it.")
         XCTAssertTrue(summary.notChecked.contains("not marked"))
     }
 

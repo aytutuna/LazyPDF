@@ -148,7 +148,7 @@ public struct RedactSummary: Equatable {
         return RedactSummary(
             clean: clean,
             title: clean ? L10n.t("Check passed") : L10n.t("Check found problems"),
-            advice: clean ? L10n.t("Nothing was found inside the marked places.") : failureAdvice(flattenedAll),
+            advice: clean ? L10n.t("Nothing was found inside the marked places. Read what was not checked below before you share it.") : failureAdvice(flattenedAll),
             report: lines.joined(separator: "\n"),
             problems: result.verification.problems.joined(separator: "\n"),
             notChecked: L10n.t("Not checked: the same words in places that are not marked, words inside pictures, and font files."))

@@ -156,6 +156,12 @@ final class RedactModelTests: XCTestCase {
         model.removeSelected()
         XCTAssertEqual(model.marks.count, 1)
         XCTAssertNil(rig.viewer.overlay(1).item("redact.mark.0"))
+        XCTAssertEqual(rig.host.notices.last?.title, "Mark removed")
+        let one = try XCTUnwrap(rig.host.lastNoticeAction)
+        XCTAssertEqual(one.text, "Put it back")
+        one.run()
+        XCTAssertEqual(model.marks.count, 2)
+        model.remove(model.marks[1])
 
         model.clearMarks()
         XCTAssertTrue(model.marks.isEmpty)
@@ -166,6 +172,21 @@ final class RedactModelTests: XCTestCase {
         XCTAssertEqual(back.text, "Put them back")
         back.run()
         XCTAssertEqual(model.marks.count, 1)
+    }
+
+    func test_aMarkIsNotPutBackOnceThePagesHaveChanged() async throws {
+        let (model, rig) = try attached()
+        model.query = "example"
+        await model.markWords()
+
+        model.remove(model.marks[0])
+        let back = try XCTUnwrap(rig.host.lastNoticeAction)
+        try PageOperations.delete(rig.tab.document, [1])
+        try rig.tab.commit("Delete")
+        back.run()
+
+        XCTAssertEqual(rig.host.notices.last?.title, "Marks removed")
+        XCTAssertTrue(model.marks.isEmpty)
     }
 
     func test_marksAreDroppedWhenThePagesMoveUnderThem() async throws {

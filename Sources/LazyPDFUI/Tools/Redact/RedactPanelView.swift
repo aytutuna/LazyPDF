@@ -164,9 +164,9 @@ private struct ResultCard: View {
                 .foregroundStyle(result.clean ? Color.green : Color.orange)
                 .accessibilityAddTraits(.updatesFrequently)
             Text(result.advice).font(.callout)
+            Text(result.notChecked).font(.callout)
             if !result.report.isEmpty { Text(result.report).font(.callout) }
             if !result.problems.isEmpty { Text(result.problems).font(.callout).foregroundStyle(.red) }
-            ReasonText(result.notChecked)
         }
         .padding(10)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
