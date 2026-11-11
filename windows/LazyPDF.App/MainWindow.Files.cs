@@ -169,6 +169,7 @@ public partial class MainWindow
     {
         if (Modal || _vm.IsBusy || _actionRunning)
         {
+            if (_held.Count == 0) _heldMessage = _vm.Message;
             _held.AddRange(paths);
             _vm.SetStatus(Loc.T("Will open when you are done here."));
             return;
@@ -176,10 +177,10 @@ public partial class MainWindow
         _ = _vm.OpenFilesAsync(paths);
     }
 
-    // Opening a held file would replace a message on the info bar, so they open once it is dismissed.
+    // Opening a held file would replace a message that appeared after they were held, so they open once it is dismissed.
     private void ReleaseHeld()
     {
-        if (Modal || _vm.IsBusy || _actionRunning || _vm.Message is not null || _held.Count == 0) return;
+        if (Modal || _vm.IsBusy || _actionRunning || _vm.Message is not null && !ReferenceEquals(_vm.Message, _heldMessage) || _held.Count == 0) return;
         var paths = _held.ToList();
         _held.Clear();
         _ = _vm.OpenFilesAsync(paths);
