@@ -42,7 +42,7 @@ public partial class AccessibilityPanel : ToolPanel
     protected override void OnAttach()
     {
         Tab!.Changed += Tab_Changed;
-        _rewrites = Tab.Rewrites;
+        _state = States.GetValue(Tab, tab => new FigureState { Rewrites = tab.Rewrites });
         _checkStale = _treeStale = _readStale = true;
         ShowCheck.IsChecked = true;
         Refresh();
@@ -59,8 +59,6 @@ public partial class AccessibilityPanel : ToolPanel
         StopReading();
         _report = null;
         DropTree();
-        _checked = [];
-        _drafts.Clear();
         _figureNumber = 0;
         CheckList.ItemsSource = null;
         TagTree.Items.Clear();

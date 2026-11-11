@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -13,9 +14,18 @@ public partial class AccessibilityPanel
 {
     private int _pictureTicket;
 
-    // Text typed for a figure and not saved yet, by the figure's key, so moving to another figure does not lose it.
-    private readonly Dictionary<int, string> _drafts = [];
-    private int _rewrites;
+    // What a tab keeps while another tab or tool is shown: the text typed for its figures and not saved yet, by the
+    // figure's key, the figures it was checked against, and the rewrite count the keys belong to.
+    private sealed class FigureState
+    {
+        public Dictionary<int, string> Drafts { get; } = [];
+        public IReadOnlyList<FigureRow> Checked { get; set; } = [];
+        public int Rewrites { get; set; }
+    }
+
+    private static readonly ConditionalWeakTable<DocumentTab, FigureState> States = [];
+
+    private FigureState _state = new();
 
     // The figure to show when the list is built: the one that was shown, or the next one after a save.
     private int _figureNumber;
@@ -47,7 +57,7 @@ public partial class AccessibilityPanel
         FigureButtons.Visibility = shown;
         if (row is null) return;
         _figureNumber = row.Number;
-        AltBox.Text = _drafts.TryGetValue(row.Key, out string? draft) ? draft : row.Alt;
+        AltBox.Text = _state.Drafts.TryGetValue(row.Key, out string? draft) ? draft : row.Alt;
         RememberDraft();
         NextBare.IsEnabled = _figures.Any(r => !r.HasDescription);
         if (row.Page >= 0) Viewer?.GoToPage(row.Page);
@@ -91,8 +101,8 @@ public partial class AccessibilityPanel
             return;
         }
         bool changed = AltBox.Text.Trim() != row.Alt;
-        if (changed) _drafts[row.Key] = AltBox.Text;
-        else _drafts.Remove(row.Key);
+        if (changed) _state.Drafts[row.Key] = AltBox.Text;
+        else _state.Drafts.Remove(row.Key);
         SaveAlt.IsEnabled = changed;
     }
 
@@ -102,30 +112,51 @@ public partial class AccessibilityPanel
         string text = AltBox.Text;
         await ChangeGate.RunAsync(tab, Host!, Loc.T("Figure description"), () =>
         {
-            if (!ReferenceEquals(tab, Tab)) return Task.CompletedTask;
-            try
-            {
-                // The tree on the screen was read from a copy; the edit goes to the open document's own.
-                var tree = StructureTree.Read(tab.Document);
-                var figure = tree is null ? null : FigureFinder.List(tree).FirstOrDefault(f => f.Key == row.Key);
-                if (tree is null || AccessibilityEdits.FigureChanged(figure?.Element, row.Alt))
-                {
-                    Host!.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The figure is no longer in the file.")));
-                    return Task.CompletedTask;
-                }
-                AccessibilityEdits.SetAlt(tab.Document, tree, figure!.Element, text);
-                if (tab.Commit(Loc.T("Figure description"))) Host!.SetStatus(Loc.T("Description saved."));
-            }
-            catch (Exception error) when (error is InvalidOperationException or PdfReadException)
-            {
-                tab.Session.Discard();
-                Host!.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The tags of this file are too large to change here.")));
-                return Task.CompletedTask;
-            }
-            _drafts.Remove(row.Key);
+            if (!ReferenceEquals(tab, Tab) || !WriteAlts(tab, [(row, text)])) return Task.CompletedTask;
+            _state.Drafts.Remove(row.Key);
             _figureNumber = text.Trim().Length > 0 ? NextBareAfter(row.Number, row.Number) : row.Number;
             return Task.CompletedTask;
         });
+    }
+
+    // Typed descriptions go into the file with Save's rules, as one undo step; a signed file asks first, so the caller is told to wait.
+    public override bool HandIn()
+    {
+        if (Tab is not { } tab || _state.Drafts.Count == 0) return true;
+        var edits = _state.Checked.Where(r => _state.Drafts.ContainsKey(r.Key)).Select(r => (r, _state.Drafts[r.Key])).ToList();
+        if (edits.Count == 0) return true;
+        bool asks = tab.Document.IsSigned && ChangeGate.Refusal(tab.Document) is null;
+        _ = ChangeGate.RunAsync(tab, Host!, Loc.T("Figure description"), () =>
+        {
+            if (ReferenceEquals(tab, Tab) && WriteAlts(tab, edits)) foreach (var (row, _) in edits) _state.Drafts.Remove(row.Key);
+            return Task.CompletedTask;
+        });
+        return !asks;
+    }
+
+    private bool WriteAlts(DocumentTab tab, IReadOnlyList<(FigureRow Row, string Text)> edits)
+    {
+        try
+        {
+            // The tree on the screen was read from a copy; the edit goes to the open document's own.
+            var tree = StructureTree.Read(tab.Document);
+            var figures = tree is null ? [] : FigureFinder.List(tree);
+            var found = edits.Select(e => figures.FirstOrDefault(f => f.Key == e.Row.Key)).ToList();
+            if (tree is null || edits.Where((e, i) => AccessibilityEdits.FigureChanged(found[i]?.Element, e.Row.Alt)).Any())
+            {
+                Host!.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The figure is no longer in the file.")));
+                return false;
+            }
+            for (int i = 0; i < edits.Count; i++) AccessibilityEdits.SetAlt(tab.Document, tree, found[i]!.Element, edits[i].Text);
+            if (tab.Commit(Loc.T("Figure description"))) Host!.SetStatus(Loc.T("Description saved."));
+            return true;
+        }
+        catch (Exception error) when (error is InvalidOperationException or PdfReadException)
+        {
+            tab.Session.Discard();
+            Host!.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The tags of this file are too large to change here.")));
+            return false;
+        }
     }
 
     private void NextBare_Click(object sender, RoutedEventArgs e)

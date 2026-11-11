@@ -9,7 +9,6 @@ public partial class AccessibilityPanel
     private StructureTree? _tree;
     private PdfDocument? _treeCopy;
     private IReadOnlyList<FigureRow> _figures = [];
-    private IReadOnlyList<FigureRow> _checked = [];
     private int _treeCount;
     private bool _treeFailed;
     private int _treeTicket;
@@ -18,7 +17,7 @@ public partial class AccessibilityPanel
     {
         int ticket = ++_treeTicket;
         _treeStale = false;
-        var before = _checked;
+        var before = _state.Checked;
         DropTree();
         TagTree.Items.Clear();
         FigureList.ItemsSource = null;
@@ -34,19 +33,19 @@ public partial class AccessibilityPanel
             });
             if (ticket != _treeTicket) return;
             (_treeCopy, _tree, _figures, _treeCount) = (copy, tree, figures, count);
-            if (Tab!.Rewrites != _rewrites)
+            if (Tab!.Rewrites != _state.Rewrites)
             {
                 // Save compact numbers the objects again, so a draft follows its figure by place.
-                _rewrites = Tab.Rewrites;
-                var kept = _drafts.ToList();
-                _drafts.Clear();
+                _state.Rewrites = Tab.Rewrites;
+                var kept = _state.Drafts.ToList();
+                _state.Drafts.Clear();
                 foreach (var (key, text) in kept)
-                    if (before.FirstOrDefault(f => f.Key == key) is { } old && figures.FirstOrDefault(f => f.Number == old.Number && f.Page == old.Page && f.Alt == old.Alt) is { } now) _drafts[now.Key] = text;
+                    if (before.FirstOrDefault(f => f.Key == key) is { } old && figures.FirstOrDefault(f => f.Number == old.Number && f.Page == old.Page && f.Alt == old.Alt) is { } now) _state.Drafts[now.Key] = text;
             }
             // A draft stays while its figure is still there with the description it was typed against.
-            else foreach (int key in _drafts.Keys.ToList())
-                if (figures.FirstOrDefault(f => f.Key == key) is not { } now || before.FirstOrDefault(f => f.Key == key)?.Alt != now.Alt) _drafts.Remove(key);
-            _checked = figures;
+            else foreach (int key in _state.Drafts.Keys.ToList())
+                if (figures.FirstOrDefault(f => f.Key == key) is not { } now || before.FirstOrDefault(f => f.Key == key)?.Alt != now.Alt) _state.Drafts.Remove(key);
+            _state.Checked = figures;
         }
         catch (Exception error) when (error is PdfReadException or InvalidOperationException)
         {
