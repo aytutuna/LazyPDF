@@ -77,13 +77,17 @@ public partial class MainWindow : Window
     // Sizes below match MinWidth and MinHeight in MainWindow.xaml.
     internal static Rect Fit(Rect saved, Rect virtualScreen, Rect workArea)
     {
-        double width = Math.Max(700, Math.Min(saved.Width, workArea.Width));
-        double height = Math.Max(560, Math.Min(saved.Height, workArea.Height));
         double shown = Math.Min(saved.Right, virtualScreen.Right) - Math.Max(saved.Left, virtualScreen.Left);
         bool topShown = shown >= 100 && saved.Top >= virtualScreen.Top && saved.Top < virtualScreen.Bottom - 40;
         if (!topShown)
-            return new Rect(workArea.X + (workArea.Width - width) / 2, workArea.Y + (workArea.Height - height) / 2, width, height);
-        return new Rect(saved.X, saved.Y, width, height);
+        {
+            double w = Math.Max(700, Math.Min(saved.Width, workArea.Width));
+            double h = Math.Max(560, Math.Min(saved.Height, workArea.Height));
+            return new Rect(workArea.X + (workArea.Width - w) / 2, workArea.Y + (workArea.Height - h) / 2, w, h);
+        }
+        // The work area is the primary monitor's only; a window kept on a larger second screen must not shrink.
+        return new Rect(saved.X, saved.Y, Math.Max(700, Math.Min(saved.Width, virtualScreen.Width)),
+            Math.Max(560, Math.Min(saved.Height, virtualScreen.Height)));
     }
 
     private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => RefreshFromViewModel();
@@ -314,12 +318,17 @@ public partial class MainWindow : Window
             return;
         }
         // RestoreBounds is empty once the window has closed, so the place is taken here.
-        var normal = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
-        bool maximized = WindowState == WindowState.Maximized;
-        AppPreferencesStore.Update(p => p.Window = new WindowPlacement
+        var placement = PlacementOf(WindowState == WindowState.Maximized, new Rect(Left, Top, Width, Height), RestoreBounds);
+        AppPreferencesStore.Update(p => p.Window = placement);
+    }
+
+    internal static WindowPlacement PlacementOf(bool maximized, Rect current, Rect restore)
+    {
+        var normal = maximized ? restore : current;
+        return new WindowPlacement
         {
             Left = normal.X, Top = normal.Y, Width = normal.Width, Height = normal.Height, Maximized = maximized,
-        });
+        };
     }
 
     // Text still being typed in a tool has to be in the document before the question about unsaved changes.

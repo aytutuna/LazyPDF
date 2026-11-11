@@ -16,12 +16,46 @@ public sealed class WindowPlacementTests
     }
 
     [Fact]
-    public void ASizeLargerThanTheWorkAreaIsCut()
+    public void ASizeLargerThanTheScreensIsCut()
     {
-        var fitted = MainWindow.Fit(new Rect(0, 0, 1200, 800), new Rect(0, 0, 1366, 768), Primary);
+        var fitted = MainWindow.Fit(new Rect(0, 0, 1200, 900), new Rect(0, 0, 1366, 768), Primary);
 
         Assert.Equal(1200, fitted.Width);
-        Assert.Equal(728, fitted.Height);
+        Assert.Equal(768, fitted.Height);
+    }
+
+    [Fact]
+    public void AWindowOnALargerSecondMonitorKeepsItsSize()
+    {
+        var saved = new Rect(1400, 50, 2400, 1300);
+
+        Assert.Equal(saved, MainWindow.Fit(saved, new Rect(0, 0, 4480, 1440), new Rect(0, 0, 1280, 688)));
+    }
+
+    [Fact]
+    public void AWindowOffEveryScreenIsCentredAndCutToTheWorkArea()
+    {
+        var fitted = MainWindow.Fit(new Rect(9000, 9000, 2400, 1300), new Rect(0, 0, 4480, 1440), new Rect(0, 0, 1280, 688));
+
+        Assert.Equal(new Rect(0, 0, 1280, 688), fitted);
+    }
+
+    [Fact]
+    public void AMaximisedWindowIsSavedWithItsRestoreBounds()
+    {
+        var placement = MainWindow.PlacementOf(true, new Rect(0, 0, 1366, 728), new Rect(100, 80, 900, 600));
+
+        Assert.True(placement.Maximized);
+        Assert.Equal((100, 80, 900, 600), (placement.Left, placement.Top, placement.Width, placement.Height));
+    }
+
+    [Fact]
+    public void ANormalWindowIsSavedWithItsCurrentBounds()
+    {
+        var placement = MainWindow.PlacementOf(false, new Rect(10, 20, 800, 600), new Rect(100, 80, 900, 600));
+
+        Assert.False(placement.Maximized);
+        Assert.Equal((10, 20, 800, 600), (placement.Left, placement.Top, placement.Width, placement.Height));
     }
 
     [Fact]
