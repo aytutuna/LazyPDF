@@ -405,6 +405,14 @@ public sealed partial class AppViewModel
 
     public bool IsExiting => _exiting;
 
+    public int Unsettled => Documents.Count(d => d.IsDirty || d.HasUnappliedWork);
+
+    /// <summary>Closes every document with changes, marks and measurements included; with an exit under way the last one carries it on.</summary>
+    public void DiscardAll()
+    {
+        foreach (var tab in Documents.Where(d => d.IsDirty || d.HasUnappliedWork).ToList()) Close(tab);
+    }
+
     /// <summary>The answer to <see cref="CloseQuestion"/> that keeps the document open.</summary>
     public void CancelClose()
     {

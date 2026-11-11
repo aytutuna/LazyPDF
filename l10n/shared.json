@@ -1950,6 +1950,9 @@
   "Do_n't save": {
     "tr": "Kaydet_me"
   },
+  "Don't save any": {
+    "tr": "Hiçbirini kaydetme"
+  },
   "Your changes are lost if you do not save them.": {
     "tr": "Kaydetmezseniz değişiklikleriniz kaybolur."
   },

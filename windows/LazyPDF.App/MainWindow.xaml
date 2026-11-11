@@ -292,16 +292,24 @@
 
             <!-- What to do with the changes of a document that is closing. -->
             <Grid x:Name="CloseOverlay" Style="{StaticResource OverlayScrimStyle}" PreviewKeyDown="CloseOverlay_PreviewKeyDown">
-                <Border Style="{StaticResource DialogCardStyle}" MaxWidth="440" MinWidth="340" Margin="24"
+                <Border Style="{StaticResource DialogCardStyle}" MaxWidth="560" MinWidth="340" Margin="24"
                         HorizontalAlignment="Center" VerticalAlignment="Center">
                     <DockPanel>
                         <Border DockPanel.Dock="Bottom" Style="{StaticResource DialogFooterStyle}">
+                          <DockPanel>
+                            <StackPanel x:Name="CloseAllGroup" DockPanel.Dock="Left" Orientation="Horizontal" Visibility="Collapsed">
+                                <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Save all}" AutomationProperties.Name="{loc:T Save all}" Margin="0,0,8,0"
+                                        Click="CloseSaveAll_Click" />
+                                <Button x:Name="CloseDiscardAllButton" Style="{StaticResource SubtleButtonStyle}" Margin="0,0,8,0"
+                                        Click="CloseDiscardAll_Click" />
+                            </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                 <Button x:Name="CloseSaveButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T _Save}" AutomationProperties.Name="{loc:T Save}" MinWidth="88" Margin="0,0,8,0"
                                         IsDefault="True" Click="CloseSave_Click" />
                                 <Button x:Name="CloseDiscardButton" MinWidth="88" Margin="0,0,8,0" Click="CloseDiscard_Click" />
                                 <Button x:Name="CloseCancelButton" Content="{loc:T _Cancel}" AutomationProperties.Name="{loc:T Cancel}" MinWidth="88" IsCancel="True" Click="CloseCancel_Click" />
                             </StackPanel>
+                          </DockPanel>
                         </Border>
                         <StackPanel Margin="24,20,24,20">
                             <TextBlock x:Name="CloseTitle" Style="{StaticResource SubtitleText}" TextWrapping="Wrap" Margin="0,0,0,8"

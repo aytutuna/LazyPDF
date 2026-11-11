@@ -57,6 +57,33 @@ public sealed class CloseFlowTests
     }
 
     [Fact]
+    public async Task DiscardAllClosesEveryTabWithChangesAndCarriesOnTheExit()
+    {
+        using var f = new ViewModelFixture();
+        for (int i = 0; i < 3; i++) await OpenDirty(f, $"{i}.pdf");
+        bool exited = false;
+        f.Vm.ExitRequested += (_, _) => exited = true;
+
+        Assert.False(f.Vm.RequestExit());
+        Assert.Equal(3, f.Vm.Unsettled);
+        f.Vm.DiscardAll();
+
+        Assert.True(exited);
+        Assert.Empty(f.Vm.Documents);
+    }
+
+    [Fact]
+    public async Task UnsettledCountsOnlyTabsWithChanges()
+    {
+        using var f = new ViewModelFixture();
+        await OpenDirty(f, "a.pdf");
+        await OpenDirty(f, "b.pdf");
+        await f.Vm.OpenAsync(f.Pdf("c.pdf"));
+
+        Assert.Equal(2, f.Vm.Unsettled);
+    }
+
+    [Fact]
     public async Task ExitAsksAboutAnUnappliedRedactionMarkToo()
     {
         using var f = new ViewModelFixture();

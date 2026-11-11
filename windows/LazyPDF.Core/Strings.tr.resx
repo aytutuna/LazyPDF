@@ -1618,6 +1618,9 @@
   <data name="Don't save" xml:space="preserve">
     <value>Kaydetme</value>
   </data>
+  <data name="Don't save any" xml:space="preserve">
+    <value>Hiçbirini kaydetme</value>
+  </data>
   <data name="Done" xml:space="preserve">
     <value>Bitti</value>
   </data>
