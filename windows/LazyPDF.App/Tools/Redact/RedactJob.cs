@@ -37,7 +37,7 @@ public sealed record RedactSettings(Cover Cover, string? OverlayText, bool Flatt
 
 /// <param name="Items">What was found, to be marked.</param>
 /// <param name="Pictures">Pages with no text to search: scans and drawings, where the finders see nothing.</param>
-public sealed record Found(IReadOnlyList<MarkItem> Items, int Pictures);
+public sealed record Found(IReadOnlyList<MarkItem> Items, int Pictures, int Recognized);
 
 /// <summary>The work behind the panel's buttons, on bytes so that it can run off the UI thread.</summary>
 public static class RedactJob
@@ -149,6 +149,7 @@ public static class RedactJob
     private static Found Gather(PdfDocument document, TextCache cache, IReadOnlyList<RedactionMatch> matches)
     {
         int pictures = Enumerable.Range(0, document.Pages.Count).Count(i => string.IsNullOrWhiteSpace(cache.Get(i).Text));
-        return new([.. matches.Select(m => new MarkItem(m.Mark, Clip(m.Text)))], pictures);
+        int recognized = document.Pages.Count(page => PdfOcrLayer.Has(document, page));
+        return new([.. matches.Select(m => new MarkItem(m.Mark, Clip(m.Text)))], pictures, recognized);
     }
 }

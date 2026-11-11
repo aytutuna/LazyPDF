@@ -4468,6 +4468,9 @@
   <data name="Recognize the text of scanned pages." xml:space="preserve">
     <value>Taranmış sayfaların metnini tanıyın.</value>
   </data>
+  <data name="Recognized text can miss words. Check those pages and draw boxes over anything left." xml:space="preserve">
+    <value>Tanınan metinde bazı sözcükler kaçabilir. Bu sayfaları kontrol edin ve kalan her şeyin üzerine kutu çizin.</value>
+  </data>
   <data name="Recognizing the text on page {0} of {1}." xml:space="preserve">
     <value>{1} sayfadan {0}. sayfanın metni tanınıyor.</value>
   </data>
@@ -7782,6 +7785,9 @@
   </data>
   <data name="{0} page was left alone because the box is outside it.|plural" xml:space="preserve">
     <value>{0} sayfa, kutunun dışında kaldığı için olduğu gibi bırakıldı.</value>
+  </data>
+  <data name="{0} page was searched in recognized text|plural" xml:space="preserve">
+    <value>{0} sayfada tanınan metinde arama yapıldı</value>
   </data>
   <data name="{0} pages and {1} pages" xml:space="preserve">
     <value>{0} sayfa ve {1} sayfa</value>

@@ -286,6 +286,17 @@ public sealed class RedactJobTests
     }
 
     [Fact]
+    public void PagesSearchedInRecognizedTextAreCounted()
+    {
+        using var document = RedactJob.Open(Pdfs.Text(2), null, null);
+        PdfOcrLayer.Add(document, [new OcrPageWords(1, [new OcrWord("Hello", new OcrBox(10, 10, 100, 20))], 400, 600)], "en");
+
+        var found = RedactJob.Find(document, ["Hello"], false, false, CancellationToken.None);
+
+        Assert.Equal(1, found.Recognized);
+    }
+
+    [Fact]
     public void AFileThatForbidsChangesIsKnownBeforeAnythingIsMarked()
     {
         using var restricted = PdfDocument.Open(Pdfs.Restricted(PdfPermissions.Print));

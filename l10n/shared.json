@@ -6173,6 +6173,13 @@
   "Words and numbers on those pages were not searched. Run Make searchable, then search again. Or draw boxes over them.": {
     "tr": "Bu sayfalardaki sözcükler ve sayılar aranmadı. Aranabilir yap işlemini çalıştırıp yeniden arayın ya da üzerlerine kutu çizin."
   },
+  "{0} page was searched in recognized text": {
+    "other": "{0} pages were searched in recognized text",
+    "tr": "{0} sayfada tanınan metinde arama yapıldı"
+  },
+  "Recognized text can miss words. Check those pages and draw boxes over anything left.": {
+    "tr": "Tanınan metinde bazı sözcükler kaçabilir. Bu sayfaları kontrol edin ve kalan her şeyin üzerine kutu çizin."
+  },
   "{0} mark removed": {
     "other": "{0} marks removed",
     "tr": "{0} işaret kaldırıldı"

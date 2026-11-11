@@ -152,6 +152,11 @@ public partial class RedactPanel
                             Loc.T("Words and numbers on those pages were not searched. Run Make searchable, then search again. Or draw boxes over them."),
                             new NoticeAction(Loc.T("Make searchable"), () => host.OpenTool("ocr")));
         }
+        else if (found.Recognized > 0)
+        {
+            host.ShowNotice(Loc.Plural(found.Recognized, "{0} page was searched in recognized text", "{0} pages were searched in recognized text"),
+                            Loc.T("Recognized text can miss words. Check those pages and draw boxes over anything left."));
+        }
     }
 
     private void PagesBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
