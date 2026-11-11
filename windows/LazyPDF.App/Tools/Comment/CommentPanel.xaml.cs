@@ -40,7 +40,16 @@ public partial class CommentPanel : ToolPanel
         (MarkTool.Attach, Loc.T("Attach file"), "\uE723", Loc.T("Click where the file goes.")),
     ];
 
-    private static readonly string[] Families = ["Helvetica", "Times New Roman", "Courier New"];
+    private static readonly Lazy<string[]> Families = new(() =>
+    {
+        string[] first = ["Helvetica", "Times New Roman", "Courier New"];
+        var installed = Fonts.SystemFontFamilies
+            .Where(f => !f.Source.StartsWith('@') && !first.Contains(f.Source) && !f.GetTypefaces().Any(t => t.TryGetGlyphTypeface(out var g) && g.Symbol))
+            .Select(f => f.Source)
+            .ToList();
+        installed.Sort(string.Compare);
+        return [.. first, .. installed];
+    });
 
     private readonly SystemFontSource _fonts = new();
     private readonly DispatcherTimer _settle = new() { Interval = TimeSpan.FromMilliseconds(350) };
@@ -95,7 +104,7 @@ public partial class CommentPanel : ToolPanel
         LazyPDF.App.Icon.SetGlyph(DeleteMark, "\uE74D");
         LazyPDF.App.Icon.SetGlyph(ImportButton, "\uE896");
         LazyPDF.App.Icon.SetGlyph(ExportButton, "\uE898");
-        FontFamilyBox.ItemsSource = Families;
+        FontFamilyBox.ItemsSource = Families.Value;
         FontFamilyBox.SelectedIndex = 0;
         FontSizeBox.ItemsSource = new[] { 8, 10, 12, 14, 18, 24, 36 };
         FontSizeBox.Text = "12";
@@ -169,7 +178,7 @@ public partial class CommentPanel : ToolPanel
     {
         double size = double.TryParse(FontSizeBox.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double typed) ? Math.Clamp(typed, 4, 144) : 12;
         var font = (BoldToggle.IsChecked == true ? FontStyles.Bold : FontStyles.Regular) | (ItalicToggle.IsChecked == true ? FontStyles.Italic : FontStyles.Regular);
-        return new MarkStyle(_color, WidthSlider.Value, OpacitySlider.Value / 100, FontFamilyBox.SelectedItem as string ?? Families[0], size, font);
+        return new MarkStyle(_color, WidthSlider.Value, OpacitySlider.Value / 100, FontFamilyBox.SelectedItem as string ?? Families.Value[0], size, font);
     }
 
     private void ShowReadouts()

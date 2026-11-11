@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Windows;
+using System.Windows.Controls;
 using LazyPDF.App.Tools.Comment;
 using LazyPDF.Core;
 using Xunit;
@@ -41,6 +42,32 @@ public sealed class CommentPanelTests
         Assert.Equal(before.Opacity, after.Opacity);
         Assert.Equal(before.Color, after.Color);
         Assert.Equal(before.Family, after.Family);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheFontListStartsWithHelveticaAndHasTheInstalledFamilies() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var box = Get<ComboBox>(Attached(f), "FontFamilyBox");
+        var families = box.ItemsSource.Cast<string>().ToList();
+
+        Assert.Equal("Helvetica", families[0]);
+        if (System.Windows.Media.Fonts.SystemFontFamilies.Any(x => x.Source == "Arial")) Assert.Contains("Arial", families);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AnInstalledFamilyIsTheOneAFreshTextBoxIsDrawnIn() => Sta.Run(() =>
+    {
+        if (!System.Windows.Media.Fonts.SystemFontFamilies.Any(x => x.Source == "Arial")) return Task.CompletedTask;
+        using var f = new CommentFixture();
+        var panel = Attached(f);
+        Get<ComboBox>(panel, "FontFamilyBox").SelectedItem = "Arial";
+
+        var made = f.Marker.Add(MarkTool.TextBox, 0, [new Point(60, 80), new Point(260, 140)], StyleOf(panel), "Hello");
+
+        Assert.Equal("Arial", Marker.TextOf(made).Family);
         return Task.CompletedTask;
     });
 }
