@@ -32,6 +32,37 @@ public sealed class SignatureArtTests
         });
     }
 
+    private static void AssertInk(PdfRgbaImage image, int channel)
+    {
+        var solid = Enumerable.Range(0, image.Width * image.Height).Where(i => image.Rgba[i * 4 + 3] > 128).ToList();
+        Assert.NotEmpty(solid);
+        Assert.All(solid, i =>
+        {
+            for (int c = 0; c < 3; c++) if (c != channel) Assert.True(image.Rgba[i * 4 + channel] > image.Rgba[i * 4 + c] + 100);
+        });
+    }
+
+    [Fact]
+    public void ATypedNameTakesTheChosenInk()
+    {
+        OnSta.Run(() =>
+        {
+            AssertInk(SignatureArt.Typed("Ada Lovelace", "Segoe UI", Colors.Blue)!, 2);
+            var black = SignatureArt.Typed("Ada Lovelace", "Segoe UI", Colors.Black)!;
+            Assert.Equal(black.Rgba, SignatureArt.Typed("Ada Lovelace", "Segoe UI")!.Rgba);
+        });
+    }
+
+    [Fact]
+    public void AStrokeTakesTheChosenInk()
+    {
+        OnSta.Run(() =>
+        {
+            var stroke = new Stroke(new StylusPointCollection([new StylusPoint(10, 10), new StylusPoint(110, 40)]));
+            AssertInk(SignatureArt.Drawn(new StrokeCollection([stroke]), Colors.Red)!, 0);
+        });
+    }
+
     [Fact]
     public void NothingTypedIsNoSignature()
     {

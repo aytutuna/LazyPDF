@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Ink;
+using System.Windows.Media;
 using LazyPDF.Core;
 using Microsoft.Win32;
 
@@ -36,6 +37,7 @@ public partial class SignatureMaker : UserControl
     {
         NameBox.Text = "";
         Ink.Strokes.Clear();
+        InkColourBox.SelectedIndex = 0;
         _picture = null;
         TurnButton.IsEnabled = false;
         PictureNote.Text = Loc.T("Sign on white paper and take a photo. The paper is made see-through.");
@@ -53,10 +55,14 @@ public partial class SignatureMaker : UserControl
     private void Rebuild()
     {
         if (!IsInitialized) return;
-        Show(TypeMode.IsChecked == true ? SignatureArt.Typed(NameBox.Text, FontBox.SelectedItem as string ?? "Segoe UI")
-            : DrawMode.IsChecked == true ? SignatureArt.Drawn(Ink.Strokes)
+        var colour = InkColour();
+        Ink.DefaultDrawingAttributes.Color = colour;
+        Show(TypeMode.IsChecked == true ? SignatureArt.Typed(NameBox.Text, FontBox.SelectedItem as string ?? "Segoe UI", colour)
+            : DrawMode.IsChecked == true ? SignatureArt.Drawn(Ink.Strokes, colour)
             : _picture);
     }
+
+    private Color InkColour() => InkColourBox.SelectedIndex switch { 1 => Colors.Blue, 2 => Colors.Red, _ => Colors.Black };
 
     private void Mode_Checked(object sender, RoutedEventArgs e)
     {
@@ -64,12 +70,15 @@ public partial class SignatureMaker : UserControl
         TypePage.Visibility = TypeMode.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         DrawPage.Visibility = DrawMode.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         PicturePage.Visibility = PictureMode.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        InkRow.Visibility = PictureMode.IsChecked == true ? Visibility.Collapsed : Visibility.Visible;
         Rebuild();
     }
 
     private void NameBox_TextChanged(object sender, TextChangedEventArgs e) => Rebuild();
 
     private void FontBox_SelectionChanged(object sender, SelectionChangedEventArgs e) => Rebuild();
+
+    private void InkColourBox_SelectionChanged(object sender, SelectionChangedEventArgs e) => Rebuild();
 
     private void Ink_StrokeCollected(object sender, InkCanvasStrokeCollectedEventArgs e) => Rebuild();
 

@@ -2545,6 +2545,9 @@
   <data name="Initials" xml:space="preserve">
     <value>Baş harfler</value>
   </data>
+  <data name="Ink" xml:space="preserve">
+    <value>Mürekkep</value>
+  </data>
   <data name="Insert" xml:space="preserve">
     <value>Ekle</value>
   </data>

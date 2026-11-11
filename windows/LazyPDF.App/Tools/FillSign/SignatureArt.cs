@@ -18,10 +18,10 @@ internal static class SignatureArt
     private const int MaxPictureWidth = 900;
     private const int Margin = 4;
 
-    public static PdfRgbaImage? Typed(string text, string family)
+    public static PdfRgbaImage? Typed(string text, string family, Color? ink = null)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
-        var line = new FormattedText(text.Trim(), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface(family), 40, Brushes.Black, 1.0);
+        var line = new FormattedText(text.Trim(), CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface(family), 40, new SolidColorBrush(ink ?? Colors.Black), 1.0);
         var visual = new DrawingVisual();
         using (var dc = visual.RenderOpen())
         {
@@ -31,7 +31,7 @@ internal static class SignatureArt
         return Trim(Render(visual, line.WidthIncludingTrailingWhitespace + 2 * Margin, line.Height + 2 * Margin));
     }
 
-    public static PdfRgbaImage? Drawn(StrokeCollection strokes)
+    public static PdfRgbaImage? Drawn(StrokeCollection strokes, Color? ink = null)
     {
         if (strokes.Count == 0) return null;
         var bounds = strokes.GetBounds();
@@ -42,9 +42,9 @@ internal static class SignatureArt
             dc.PushTransform(new TranslateTransform(Margin - bounds.X, Margin - bounds.Y));
             foreach (var stroke in strokes)
             {
-                var ink = stroke.Clone();
-                ink.DrawingAttributes.Color = Colors.Black;
-                ink.Draw(dc);
+                var copy = stroke.Clone();
+                copy.DrawingAttributes.Color = ink ?? Colors.Black;
+                copy.Draw(dc);
             }
         }
         return Trim(Render(visual, bounds.Width + 2 * Margin, bounds.Height + 2 * Margin));
