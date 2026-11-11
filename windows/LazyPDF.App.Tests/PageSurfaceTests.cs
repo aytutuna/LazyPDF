@@ -50,6 +50,28 @@ public sealed class PageSurfaceTests
     }
 
     [Fact]
+    public void ATabComesBackWithItsRotationAndPlace()
+    {
+        OnSta(() =>
+        {
+            var (surface, a) = Open(4);
+            surface.SetRotation(90);
+            surface.GoToPage(2);
+            var place = surface.TopPlace();
+            int rotation = surface.Rotation;
+
+            var b = new DocumentTab(PdfEditSession.Open(Pdfs.Text(2)), new WindowsPageRenderer(), null, "b.pdf");
+            surface.Show(b);
+            Assert.Equal(0, surface.Rotation);
+
+            surface.Show(a, rotation);
+            surface.GoToPage(place!.Value.Page, place.Value.Point);
+            Assert.Equal(90, surface.Rotation);
+            Assert.Equal(place, surface.TopPlace());
+        });
+    }
+
+    [Fact]
     public void AFileOpensFittedToTheWidth()
     {
         OnSta(() =>

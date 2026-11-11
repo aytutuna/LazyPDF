@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -16,6 +17,9 @@ namespace LazyPDF.App.Viewer;
 /// </summary>
 public partial class PageViewer : UserControl, IDocumentViewer
 {
+    private sealed record ViewState(int Rotation, PagePoint? Place);
+
+    private readonly ConditionalWeakTable<DocumentTab, ViewState> _states = new();
     private DocumentTab? _tab;
     private string[] _labels = [];
     private bool _reading;
@@ -53,7 +57,11 @@ public partial class PageViewer : UserControl, IDocumentViewer
 
     public void Show(DocumentTab? tab)
     {
-        if (_tab is not null) _tab.Changed -= Tab_Changed;
+        if (_tab is not null)
+        {
+            _tab.Changed -= Tab_Changed;
+            _states.AddOrUpdate(_tab, new ViewState(Surface.Rotation, Surface.TopPlace()));
+        }
         EndPointerTool();
         _tab = tab;
         _history.Clear();
@@ -62,7 +70,10 @@ public partial class PageViewer : UserControl, IDocumentViewer
         HideFind();
         HideLink();
         Search.Clear();
-        Surface.Show(tab);
+        ViewState? state = null;
+        if (tab is not null) _states.TryGetValue(tab, out state);
+        Surface.Show(tab, state?.Rotation ?? 0);
+        if (state?.Place is { } place) Surface.GoToPage(place.Page, place.Point);
         if (tab is not null)
         {
             tab.Changed += Tab_Changed;

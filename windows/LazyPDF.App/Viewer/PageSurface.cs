@@ -102,9 +102,10 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
 
     // ----- Showing a document
 
-    public void Show(DocumentTab? tab)
+    public void Show(DocumentTab? tab, int rotation = 0)
     {
         ResetTiles();
+        _rotation = PageSpace.NormalizeRotation(rotation);
         _tab = tab;
         _renderer = tab?.Renderer as WindowsPageRenderer;
         _display = null;
