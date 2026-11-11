@@ -50,6 +50,7 @@ public sealed class DiskChangeTests
         await f.Vm.OpenFilesAsync([path, f.Pdf("b.pdf")]);
         f.Vm.ActiveTab = f.Vm.Documents.First();
         var old = f.Vm.ActiveDocument!;
+        await f.Vm.DiskCheck;
         Touch(path, Pdfs.Text(pages: 3));
 
         await f.Vm.CheckDiskAsync();
@@ -68,6 +69,7 @@ public sealed class DiskChangeTests
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
         var old = f.Vm.ActiveDocument!;
+        await f.Vm.DiskCheck;
         Touch(path, "%PDF-1.7 half"u8.ToArray());
 
         await f.Vm.CheckDiskAsync();
@@ -137,12 +139,10 @@ public sealed class DiskChangeTests
             using var f = new ViewModelFixture();
             string path = f.Pdf();
             await f.Vm.OpenAsync(path);
+            await f.Vm.DiskCheck;
             Touch(path, Pdfs.Text(pages: 3));
 
             await Task.WhenAll(f.Vm.CheckDiskAsync(), f.Vm.CheckDiskAsync());
-
-            // The check the open itself started may hold the reload.
-            for (int i = 0; i < 200 && f.Vm.ActiveDocument!.PageCount != 3; i++) await Task.Delay(10);
 
             Assert.Single(f.Vm.Documents);
             Assert.Equal(3, f.Vm.ActiveDocument!.PageCount);

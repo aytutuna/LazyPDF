@@ -114,7 +114,7 @@ public sealed class DocumentLossTests
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
         var tab = f.Vm.ActiveDocument!;
-        await Task.Delay(100); // the check the open started must not meet the reload
+        await f.Vm.DiskCheck; // the check the open started must not meet the reload
         Touch(path, "%PDF-1.7\n"u8.ToArray());
 
         await f.Vm.ReloadAsync(tab);
@@ -131,7 +131,7 @@ public sealed class DocumentLossTests
         await f.Vm.OpenAsync(path);
         await f.Vm.SubmitPasswordAsync("secret");
         var tab = f.Vm.ActiveDocument!;
-        await Task.Delay(100); // the check the open started must not meet the reload
+        await f.Vm.DiskCheck; // the check the open started must not meet the reload
         Touch(path, File.ReadAllBytes(Pdfs.Fixture("locked.pdf")));
 
         await f.Vm.ReloadAsync(tab);

@@ -81,6 +81,9 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
 
     IReadOnlyList<DocumentTab> IToolHost.OpenDocuments => [.. Documents];
 
+    // The check a change of tab started, for tests to wait on.
+    internal Task DiskCheck { get; private set; } = Task.CompletedTask;
+
     public ITab ActiveTab
     {
         get => _activeTab;
@@ -92,7 +95,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
             if (_message is { IsError: false } && !ReferenceEquals(_messageTab, value as DocumentTab)) _message = null;
             if (value is DocumentTab document) _lastDocument = document;
             NotifyAll();
-            _ = CheckDiskAsync();
+            DiskCheck = CheckDiskAsync();
         }
     }
 
