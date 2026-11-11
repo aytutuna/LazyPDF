@@ -252,7 +252,7 @@ public final class ViewerModel: DocumentViewer {
     /// A wheel turns a page at the edge at most once in a quarter of a second, so one flick does not skip pages.
     public func scroll(by dx: Double, _ dy: Double, wheel: Bool = false, now: Double = ProcessInfo.processInfo.systemUptime) {
         let mayTurn = !wheel || now - lastWheel >= 0.25
-        if wheel { lastWheel = now }
+        if wheel && (dx != 0 || dy != 0) { lastWheel = now }
         let change = state.scrollBy(dx, dy, mayTurn: mayTurn)
         apply(change, redraw: drawsAfterScroll(change))
     }

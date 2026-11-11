@@ -269,14 +269,16 @@ final class PageScrollView: NSScrollView {
             super.scrollWheel(with: event)
         } else if event.momentumPhase.isEmpty {
             // With nothing to scroll sideways, a two-finger swipe turns the page, as in Preview.
-            if event.hasPreciseScrollingDeltas && viewer.extent.width <= viewer.viewport.width + 1,
-               let step = swipe.add(dx: event.scrollingDeltaX, dy: event.scrollingDeltaY, began: event.phase == .began, ended: event.phase == .ended) {
+            let swipes = event.hasPreciseScrollingDeltas && viewer.extent.width <= viewer.viewport.width + 1
+            if swipes, let step = swipe.add(dx: event.scrollingDeltaX, dy: event.scrollingDeltaY, began: event.phase == .began, ended: event.phase == .ended) {
                 viewer.stepPage(step)
                 return
             }
-            // A wheel with notches reports lines; a trackpad reports points.
+            // A sideways swipe is the swipe's alone; its drift up or down must not turn the page as well.
+            if swipes && abs(event.scrollingDeltaX) > abs(event.scrollingDeltaY) { return }
+            // A wheel with notches reports lines; a trackpad reports points. Only smooth scrolling waits between page turns.
             let unit = event.hasPreciseScrollingDeltas ? 1 : PageSurfaceState.lineStep
-            viewer.scroll(by: -event.scrollingDeltaX * unit, -event.scrollingDeltaY * unit, wheel: true)
+            viewer.scroll(by: -event.scrollingDeltaX * unit, -event.scrollingDeltaY * unit, wheel: event.hasPreciseScrollingDeltas)
         }
     }
 
