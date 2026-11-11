@@ -87,4 +87,28 @@ public class SyntaxEditTests
         Assert.Equal(3, new PdfNumber("+3").Integer);
         Assert.Null(new PdfNumber("9223372036854775808").Integer);
     }
+
+    [Fact]
+    public void ANameFromTextIsWrittenAsEscapedUtf8AndReadsBack()
+    {
+        var name = PdfName.FromText("Ş İ");
+        Assert.Equal("/#C5#9E#20#C4#B0", name.ToString());
+        var read = (PdfName)new PdfLexer(new PdfArrayBytes(Encoding.Latin1.GetBytes(name.ToString()))).ReadObject();
+        Assert.Equal("Ş İ", read.Text);
+        Assert.Equal(name, read);
+    }
+
+    [Fact]
+    public void ALatin1NameIsWrittenAsBefore()
+    {
+        Assert.Equal("/Caf#E9", new PdfName("Café").ToString());
+        Assert.Equal("Café", new PdfName("Café").Text);
+    }
+
+    [Fact]
+    public void ANameWithCharsAboveLatin1IsNeverTruncated()
+    {
+        Assert.Equal("/#C5#9E", new PdfName("Ş").ToString());
+        Assert.Equal("/A#C3#A9#C5#9E", new PdfName("AéŞ").ToString());
+    }
 }
