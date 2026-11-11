@@ -51,6 +51,14 @@ public sealed partial class OrganizeView
                                       Loc.Plural(pages.Count, "{0} page duplicated", "{0} pages duplicated", pages.Count))) Reselect(tab, PageEdits.Duplicated(pages));
     }
 
+    private void Nudge(int step)
+    {
+        var pages = Selected();
+        if (Tab is not { } tab || Host is not { } host || !PageEdits.CanNudge(pages, step, Cells.Count)) return;
+        if (PageJobs.Apply(tab, host, Loc.T("Move pages"), d => PageEdits.Nudge(d, pages, step),
+                           Loc.Plural(pages.Count, "{0} page moved", "{0} pages moved", pages.Count))) Reselect(tab, PageEdits.Nudged(pages, step, Cells.Count));
+    }
+
     private bool MoveTo(IReadOnlyCollection<int> pages, int before)
     {
         if (Tab is not { } tab || Host is not { } host) return false;

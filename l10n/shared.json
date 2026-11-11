@@ -4853,6 +4853,15 @@
   "Duplicate": {
     "tr": "Çoğalt"
   },
+  "Duplicate (Ctrl+D)": {
+    "tr": "Çoğalt (Ctrl+D)"
+  },
+  "Rotate left (Ctrl+Shift+Left)": {
+    "tr": "Sola döndür (Ctrl+Shift+Sol)"
+  },
+  "Rotate right (Ctrl+Shift+Right)": {
+    "tr": "Sağa döndür (Ctrl+Shift+Sağ)"
+  },
   "Extract to a new file": {
     "tr": "Yeni dosyaya ayıkla"
   },

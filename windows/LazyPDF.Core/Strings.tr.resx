@@ -1525,6 +1525,9 @@
   <data name="Duplicate" xml:space="preserve">
     <value>Çoğalt</value>
   </data>
+  <data name="Duplicate (Ctrl+D)" xml:space="preserve">
+    <value>Çoğalt (Ctrl+D)</value>
+  </data>
   <data name="Duplicate pages" xml:space="preserve">
     <value>Sayfaları çoğalt</value>
   </data>
@@ -4183,11 +4186,17 @@
   <data name="Rotate left" xml:space="preserve">
     <value>Sola döndür</value>
   </data>
+  <data name="Rotate left (Ctrl+Shift+Left)" xml:space="preserve">
+    <value>Sola döndür (Ctrl+Shift+Sol)</value>
+  </data>
   <data name="Rotate pages" xml:space="preserve">
     <value>Sayfaları döndür</value>
   </data>
   <data name="Rotate right" xml:space="preserve">
     <value>Sağa döndür</value>
+  </data>
+  <data name="Rotate right (Ctrl+Shift+Right)" xml:space="preserve">
+    <value>Sağa döndür (Ctrl+Shift+Sağ)</value>
   </data>
   <data name="Rotate, move, delete, crop and extract pages." xml:space="preserve">
     <value>Sayfaları döndürün, taşıyın, silin, kırpın ve ayıklayın.</value>

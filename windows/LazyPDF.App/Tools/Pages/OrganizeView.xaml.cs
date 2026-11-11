@@ -219,6 +219,9 @@ public sealed partial class OrganizeView : ToolPanel
             case Key.X when modifiers == ModifierKeys.Control && any: Cut_Click(this, new RoutedEventArgs()); return true;
             case Key.C when modifiers == ModifierKeys.Control && any: Copy_Click(this, new RoutedEventArgs()); return true;
             case Key.V when modifiers == ModifierKeys.Control: Paste_Click(this, new RoutedEventArgs()); return true;
+            case Key.Left or Key.Right when modifiers == ModifierKeys.Control && any: Nudge(key == Key.Left ? -1 : 1); return true;
+            case Key.Left or Key.Right when modifiers == (ModifierKeys.Control | ModifierKeys.Shift) && any: Turn(Selected(), key == Key.Left ? -90 : 90); return true;
+            case Key.D when modifiers == ModifierKeys.Control && any: Duplicate_Click(this, new RoutedEventArgs()); return true;
             case Key.Escape when modifiers == ModifierKeys.None: Done_Click(this, new RoutedEventArgs()); return true;
             default: return false;
         }

@@ -12,17 +12,17 @@
                 <Button x:Name="Done" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Done}" loc:Icon.Glyph="&#xE72B;" Margin="0,0,8,0"
                         ToolTip="{loc:T Back to the document (Esc)}" AutomationProperties.Name="{loc:T Done}" Click="Done_Click" />
                 <Button x:Name="TurnLeft" Style="{StaticResource IconButtonStyle}" Content="&#xE7AD;"
-                        ToolTip="{loc:T Rotate left}" AutomationProperties.Name="{loc:T Rotate left}" Click="TurnLeft_Click">
+                        ToolTip="{loc:T Rotate left (Ctrl+Shift+Left)}" AutomationProperties.Name="{loc:T Rotate left}" Click="TurnLeft_Click">
                     <Button.LayoutTransform>
                         <ScaleTransform ScaleX="-1" />
                     </Button.LayoutTransform>
                 </Button>
                 <Button x:Name="TurnRight" Style="{StaticResource IconButtonStyle}" Content="&#xE7AD;"
-                        ToolTip="{loc:T Rotate right}" AutomationProperties.Name="{loc:T Rotate right}" Click="TurnRight_Click" />
+                        ToolTip="{loc:T Rotate right (Ctrl+Shift+Right)}" AutomationProperties.Name="{loc:T Rotate right}" Click="TurnRight_Click" />
                 <Button x:Name="Remove" Style="{StaticResource IconButtonStyle}" Content="&#xE74D;"
                         ToolTip="{loc:T Delete}" AutomationProperties.Name="{loc:T Delete}" Click="Remove_Click" />
                 <Button x:Name="Duplicate" Style="{StaticResource IconButtonStyle}" Content="&#xE923;"
-                        ToolTip="{loc:T Duplicate}" AutomationProperties.Name="{loc:T Duplicate}" Click="Duplicate_Click" />
+                        ToolTip="{loc:T Duplicate (Ctrl+D)}" AutomationProperties.Name="{loc:T Duplicate}" Click="Duplicate_Click" />
                 <Button x:Name="Extract" Style="{StaticResource IconButtonStyle}" Content="&#xE8A7;"
                         ToolTip="{loc:T Extract to a new file}" AutomationProperties.Name="{loc:T Extract to a new file}" Click="Extract_Click" />
                 <Button x:Name="Cut" Style="{StaticResource IconButtonStyle}" Content="&#xE8C6;"
