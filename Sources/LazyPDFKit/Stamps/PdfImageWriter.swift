@@ -35,6 +35,12 @@ public enum PdfImageWriter {
         return try addRgba(document, upright.width, upright.height, upright.rgba)
     }
 
+    /// The first frame of a picture file that is not too big, turned upright by its Exif turn; the Windows app turns the file itself.
+    public static func decodeUpright(_ file: [UInt8], _ codec: ImageCodec) -> PdfRgbaImage? {
+        guard let frame = codec.decodeFile(file)?.first(where: { !$0.tooBig }) else { return nil }
+        return JpegMeta.upright(frame, JpegMeta.orientation(file))
+    }
+
     /// `rgba` is straight RGBA8, top row first. A size that is not positive or does not fit the data is the caller's
     /// mistake, a precondition where the C# throws ArgumentException; a picture with too many pixels is the user's choice
     /// and throws `InvalidOperationException`.

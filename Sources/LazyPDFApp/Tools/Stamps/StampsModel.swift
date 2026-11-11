@@ -159,7 +159,7 @@ public final class StampsModel: ToolPanelModel {
         guard let host else { return }
         guard let chosen = await host.filePicker.pickFiles([.picture], multiple: false).first else { return }
         defer { chosen.access?.stop() }
-        guard let bytes = try? [UInt8](Data(contentsOf: chosen.url)), let frame = host.imageCodec?.decodeFile(bytes)?.first(where: { !$0.tooBig }) else {
+        guard let bytes = try? [UInt8](Data(contentsOf: chosen.url)), let frame = host.imageCodec.flatMap({ PdfImageWriter.decodeUpright(bytes, $0) }) else {
             host.showProblem(Problem(L10n.t("Picture cannot be read"), L10n.t("Pick a PNG, JPEG or another common picture.")))
             return
         }
@@ -176,7 +176,7 @@ public final class StampsModel: ToolPanelModel {
 
     func setPicture(_ bytes: [UInt8]?) {
         picture = bytes
-        pictureImage = bytes.flatMap { host?.imageCodec?.decodeFile($0)?.first(where: { !$0.tooBig }) }
+        pictureImage = bytes.flatMap { bytes in host?.imageCodec.flatMap { PdfImageWriter.decodeUpright(bytes, $0) } }
         pictureName = bytes == nil ? nil : L10n.t("Picture")
     }
 

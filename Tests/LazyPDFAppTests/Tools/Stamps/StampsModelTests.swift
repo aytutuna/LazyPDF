@@ -217,6 +217,24 @@ final class StampsModelTests: XCTestCase {
         XCTAssertEqual(stamps(rig.tab).map(\.label), ["image"])
     }
 
+    // Decodes any file as a 4 by 2 picture, as a codec that ignores the Exif turn does.
+    private final class WideCodec: ImageCodec {
+        func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+        func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { [PdfRgbaImage(4, 2, [UInt8](repeating: 128, count: 4 * 2 * 4))] }
+        func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [] }
+    }
+
+    func test_aTurnedPictureIsPreviewedUprightAsItIsStamped() throws {
+        let (model, rig) = try attach()
+        rig.host.imageCodec = WideCodec()
+        let turned: [UInt8] = [0xFF, 0xD8, 0xFF, 0xE1, 0, 34] + Array("Exif".utf8) + [0, 0] + Array("MM".utf8)
+            + [0, 42, 0, 0, 0, 8, 0, 1, 0x01, 0x12, 0, 3, 0, 0, 0, 1, 0, 6, 0, 0, 0, 0, 0, 0]
+
+        model.setPicture(turned)
+
+        XCTAssertEqual([model.pictureImage?.width, model.pictureImage?.height], [2, 4])
+    }
+
     func test_thePreviewFollowsThePageInView() throws {
         let (model, rig) = try attach()
         XCTAssertEqual(previews(rig).count, 1)
