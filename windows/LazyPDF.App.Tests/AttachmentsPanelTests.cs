@@ -53,4 +53,26 @@ public sealed class AttachmentsPanelTests
         Assert.Equal(copies, after);
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public Task AnswerAfterTheDocumentChangedDoesNothing() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        PdfAttachments.Add(tab.Document, "notes.txt", Encoding.UTF8.GetBytes("hello"));
+        tab.Commit("Attach");
+        var host = new RecordingHost();
+        var panel = new AttachmentsSidePanel();
+        panel.Attach(tab, FakeViewer.Create().Viewer, host);
+        ((ListBox)panel.FindName("Files")).SelectedIndex = 0;
+        ((Button)panel.FindName("OpenButton")).RaiseEvent(new System.Windows.RoutedEventArgs(Button.ClickEvent));
+        PdfAttachments.Add(tab.Document, "other.txt", Encoding.UTF8.GetBytes("world"));
+        tab.Commit("Attach");
+        int copies = Directory.Exists(AppFolders.OpenedAttachments) ? Directory.GetDirectories(AppFolders.OpenedAttachments).Length : 0;
+
+        host.Actions.Single()!.Run();
+
+        int after = Directory.Exists(AppFolders.OpenedAttachments) ? Directory.GetDirectories(AppFolders.OpenedAttachments).Length : 0;
+        Assert.Equal(copies, after);
+        return Task.CompletedTask;
+    });
 }

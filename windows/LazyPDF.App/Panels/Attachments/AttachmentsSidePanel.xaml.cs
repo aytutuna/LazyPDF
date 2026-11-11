@@ -104,11 +104,13 @@ public partial class AttachmentsSidePanel : ToolPanel
             return;
         }
         var tab = Tab;
+        var document = tab!.Document;
         // The question stays on the info bar after the panel is detached or the row is undone.
+        // Every commit, undo and redo brings a new document, and the row's object number may now be another file.
         Host!.ShowNotice(Loc.T("Open this attachment?"), Loc.T("{0} came inside this PDF. Open it only if you trust where the PDF came from.", row.Name),
             new NoticeAction(Loc.T("Open"), () =>
             {
-                if (ReferenceEquals(Tab, tab)) OpenCopy(row, name);
+                if (ReferenceEquals(Tab, tab) && ReferenceEquals(tab!.Document, document)) OpenCopy(row, name);
             }));
     }
 
