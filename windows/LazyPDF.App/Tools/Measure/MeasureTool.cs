@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using LazyPDF.App.Documents;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 
@@ -144,15 +145,16 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
         }
         var geometry = viewer.Geometry(page);
         var corners = text.Words.SelectMany(w => new[] { (w.Bounds.Left, w.Bounds.Bottom), (w.Bounds.Right, w.Bounds.Bottom), (w.Bounds.Left, w.Bounds.Top), (w.Bounds.Right, w.Bounds.Top) }).ToList();
-        if (viewer.Tab is { } tab) AddDrawn(corners, new PageEditor(tab.Session, page));
+        if (viewer.Tab is { } tab) AddDrawn(corners, tab, page);
         _snaps[page] = [.. corners.Select(c => geometry.ToDisplay(c.Item1, c.Item2)).Select(c => new Point(c.X, c.Y))];
     }
 
-    private static void AddDrawn(List<(double, double)> corners, PageEditor editor)
+    private static void AddDrawn(List<(double, double)> corners, DocumentTab tab, int page)
     {
         var drawn = new List<(double, double)>();
         try
         {
+            var editor = new PageEditor(tab.Session, page);
             foreach (var o in editor.Objects)
             {
                 if (drawn.Count >= MaxDrawn) break;
@@ -171,7 +173,7 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
                 }
             }
         }
-        catch (PdfReadException)
+        catch (Exception e) when (e is ArgumentException or InvalidOperationException or PdfReadException)
         {
             return;
         }
