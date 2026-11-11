@@ -329,10 +329,10 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         _ => null,
     };
 
-    /// <summary>The ends of a line or the corners of a polygon in display space; null for a mark that moves only by its box, and for a measurement.</summary>
+    /// <summary>The ends of a line or the corners of a polygon in display space; null for a mark that moves only by its box, and for a measurement or a cloud.</summary>
     public Point[]? PointsOf(PdfAnnotation a)
     {
-        if (UserPoints(a) is not { } xy || a.Dictionary.ContainsKey("Measure")) return null;
+        if (UserPoints(a) is not { } xy || a.Dictionary.ContainsKey("Measure") || a.Cloud > 0 || a.Intent == "PolygonCloud") return null;
         var geometry = new PageGeometry(document.Pages[a.PageIndex]);
         int count = a.Type == AnnotationType.Line ? 2 : xy.Count / 2;
         return [.. Enumerable.Range(0, count).Select(i =>

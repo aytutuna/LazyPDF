@@ -507,6 +507,16 @@ public sealed class MarkerTests
     }
 
     [Fact]
+    public void ACloudHasNoPointsToMove()
+    {
+        using var f = new CommentFixture();
+        var cloud = f.Marker.Add(MarkTool.Cloud, 0, [new Point(100, 100), new Point(300, 100), new Point(300, 300), new Point(100, 300)], Red);
+
+        Assert.Null(f.Marker.PointsOf(cloud));
+        Assert.Throws<ArgumentException>(() => f.Marker.MovePoint(cloud, 0, new Point(10, 10)));
+    }
+
+    [Fact]
     public void AMeasurementAndABoxHaveNoPointsToMove()
     {
         using var f = new CommentFixture();
