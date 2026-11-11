@@ -194,8 +194,15 @@ internal sealed class CompareSession : IDisposable
 
     private static void AppendCsv(StringBuilder text, params string[] fields)
     {
-        text.AppendJoin(',', fields.Select(f => f.IndexOfAny([',', '"', '\r', '\n']) < 0 ? f : "\"" + f.Replace("\"", "\"\"") + "\""));
+        text.AppendJoin(',', fields.Select(Field));
         text.Append("\r\n");
+    }
+
+    // A leading apostrophe keeps a spreadsheet from reading text such as "- item" or "=x" as a formula.
+    internal static string Field(string f)
+    {
+        if (f.Length > 0 && f[0] is '=' or '+' or '-' or '@' or '\t' or '\r') f = "'" + f;
+        return f.IndexOfAny([',', '"', '\r', '\n']) < 0 ? f : "\"" + f.Replace("\"", "\"\"") + "\"";
     }
 
     private static PdfDocument Reopen(Side side) =>

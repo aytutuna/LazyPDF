@@ -94,8 +94,8 @@ internal sealed class CompareFlow(IToolHost host, Func<IDocumentRenderer> render
         {
             await host.RunBusyAsync(Loc.T("Writing report"), async token =>
             {
-                await Task.Run(() => Exporter.Save(path, csv ? session.Csv(parts) : new UTF8Encoding(false).GetBytes(session.TextReport(parts))));
                 token.ThrowIfCancellationRequested();
+                await Task.Run(() => Exporter.Save(path, csv ? session.Csv(parts) : new UTF8Encoding(false).GetBytes(session.TextReport(parts))));
                 done = true;
             });
         }

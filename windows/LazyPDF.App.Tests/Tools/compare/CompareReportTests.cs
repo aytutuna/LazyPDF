@@ -151,6 +151,14 @@ public sealed class CompareReportTests
         Assert.All(lines.Skip(1), l => Assert.Matches("^[A-Za-z ]+,[0-9]*,[0-9]*,", l));
     }
 
+    [Theory]
+    [InlineData("- item", "'- item")]
+    [InlineData("=HYPERLINK(\"x\")", "\"'=HYPERLINK(\"\"x\"\")\"")]
+    [InlineData("+90 532", "'+90 532")]
+    [InlineData("plain", "plain")]
+    public void ACsvFieldThatCouldRunAsAFormulaIsKeptAsText(string field, string expected) =>
+        Assert.Equal(expected, CompareSession.Field(field));
+
     [Fact]
     public void ARowOfAPixelComparisonSaysItLooksDifferent()
     {
