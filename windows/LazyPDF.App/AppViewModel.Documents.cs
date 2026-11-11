@@ -193,8 +193,10 @@ public sealed partial class AppViewModel
             tab.Zoom = was.Zoom;
             tab.Fit = was.Fit;
         }
+        tab.ReadOnly = source.ReadOnly;
         ActiveTab = tab;
         if (source.Note is not null) ShowNotice(Loc.T("Opened with changes"), source.Note);
+        else if (tab.ReadOnly) ShowNotice(Loc.T("File is read-only"), Loc.T("{0} is read-only. You can work on it, but save your changes with Save as.", tab.Title));
         else if (!tab.CanDraw) ShowNotice(Loc.T("Pages cannot be shown"), Loc.T("{0} opens for editing, but Windows cannot draw its pages.", tab.Title));
         return true;
     }
@@ -227,8 +229,8 @@ public sealed partial class AppViewModel
 
     private void Tab_Changed(object? sender, EventArgs e) => NotifyAll();
 
-    /// <summary>True when <paramref name="tab"/> was made from pictures or text, or has no file yet, so saving needs a name.</summary>
-    public static bool NeedsName(DocumentTab tab) => tab.Path is null;
+    /// <summary>True when <paramref name="tab"/> was made from pictures or text, has no file yet, or was read from a read-only file, so saving needs a name.</summary>
+    public static bool NeedsName(DocumentTab tab) => tab.Path is null || tab.ReadOnly;
 
     /// <summary>Saves over the file the tab was read from. Call <see cref="NeedsName"/> first; false also when the save failed and the info bar says why.</summary>
     public bool Save(DocumentTab tab)

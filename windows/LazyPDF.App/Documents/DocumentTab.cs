@@ -71,6 +71,9 @@ public sealed class DocumentTab : ITab, IDisposable
     /// <summary>How the viewer's zoom follows the window; none while a zoom of its own is set.</summary>
     public LazyPDF.App.Viewer.FitMode Fit { get; set; }
 
+    /// <summary>The file was read with the read-only attribute, so saving needs a new name; cleared once the tab has a file of its own.</summary>
+    public bool ReadOnly { get; set; }
+
     public string? Path => _path;
 
     public string Title => _path is null ? _title : System.IO.Path.GetFileName(_path);
@@ -117,6 +120,7 @@ public sealed class DocumentTab : ITab, IDisposable
     {
         Session.Save(path);
         _path = path;
+        ReadOnly = false;
         Saved();
     }
 
@@ -125,6 +129,7 @@ public sealed class DocumentTab : ITab, IDisposable
     {
         Session.SaveCompact(path);
         _path = path;
+        ReadOnly = false;
         Saved(rewritten: true);
     }
 

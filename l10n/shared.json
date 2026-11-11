@@ -1413,6 +1413,12 @@
   "Saved {0}.": {
     "tr": "{0} kaydedildi."
   },
+  "File is read-only": {
+    "tr": "Dosya salt okunur"
+  },
+  "{0} is read-only. You can work on it, but save your changes with Save as.": {
+    "tr": "{0} salt okunur. Üzerinde çalışabilirsiniz, ancak değişikliklerinizi Farklı kaydet ile kaydedin."
+  },
   "File is gone": {
     "tr": "Dosya yok"
   },

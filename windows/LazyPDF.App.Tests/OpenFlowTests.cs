@@ -34,6 +34,31 @@ public sealed class OpenFlowTests
     }
 
     [Fact]
+    public async Task AReadOnlyFileOpensWithAWarningAndSavesAsANewFile()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf("locked.pdf");
+        File.SetAttributes(path, FileAttributes.ReadOnly);
+        try
+        {
+            await f.Vm.OpenAsync(path);
+
+            var tab = f.Vm.ActiveDocument!;
+            Assert.True(tab.ReadOnly);
+            Assert.Equal("File is read-only", f.Vm.Message?.Title);
+            Assert.True(AppViewModel.NeedsName(tab));
+
+            Assert.True(f.Vm.SaveAs(tab, f.Dir.Sub("copy.pdf")));
+            Assert.False(tab.ReadOnly);
+            Assert.False(AppViewModel.NeedsName(tab));
+        }
+        finally
+        {
+            File.SetAttributes(path, FileAttributes.Normal);
+        }
+    }
+
+    [Fact]
     public async Task OpeningTheSameFileAgainShowsTheTabItAlreadyHas()
     {
         using var f = new ViewModelFixture();

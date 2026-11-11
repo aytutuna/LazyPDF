@@ -1801,6 +1801,9 @@
   <data name="File is protected" xml:space="preserve">
     <value>Dosya korumalı</value>
   </data>
+  <data name="File is read-only" xml:space="preserve">
+    <value>Dosya salt okunur</value>
+  </data>
   <data name="File is signed" xml:space="preserve">
     <value>Dosya imzalı</value>
   </data>
@@ -6726,6 +6729,9 @@
   </data>
   <data name="{0} is protected. Type its password to open it." xml:space="preserve">
     <value>{0} korumalı. Açmak için parolasını yazın.</value>
+  </data>
+  <data name="{0} is read-only. You can work on it, but save your changes with Save as." xml:space="preserve">
+    <value>{0} salt okunur. Üzerinde çalışabilirsiniz, ancak değişikliklerinizi Farklı kaydet ile kaydedin.</value>
   </data>
   <data name="{0} is signed. Saving it compact writes it again and the signatures no longer hold. Save and Save as keep them." xml:space="preserve">
     <value>{0} imzalı. Sıkıştırılmış kaydetmek dosyayı yeniden yazar ve imzalar geçerliliğini yitirir. Kaydet ve Farklı kaydet imzaları korur.</value>
