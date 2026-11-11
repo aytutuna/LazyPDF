@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Threading;
 using LazyPDF.Core;
 
@@ -92,6 +93,8 @@ public partial class PageViewer
         Surface.MouseUp += Surface_MiddleButtonUp;
         Surface.LostMouseCapture += Surface_LostMouseCapture;
         Surface.PreviewMouseWheel += Surface_MouseWheel;
+        Loaded += (_, _) => (PresentationSource.FromVisual(this) as HwndSource)?.AddHook(TiltHook);
+        Unloaded += (_, _) => (PresentationSource.FromVisual(this) as HwndSource)?.RemoveHook(TiltHook);
         Surface.KeyDown += Surface_KeyDown;
         Surface.ManipulationStarting += (_, e) =>
         {
@@ -311,6 +314,16 @@ public partial class PageViewer
         if (dx == 0 && dy == 0) return;
         Surface.ScrollBy(dx / 3, dy / 3);
         DragSelection(at);
+    }
+
+    private IntPtr TiltHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        if (msg != 0x020E || !Surface.IsMouseOver || Surface.Layout.PageCount == 0) return IntPtr.Zero;
+        double notches = (short)((wParam.ToInt64() >> 16) & 0xFFFF) / 120.0;
+        int lines = SystemParameters.WheelScrollLines;
+        Surface.ScrollBy(notches * (lines < 0 ? Surface.Viewport.Width * 0.9 : lines * 24), 0, wheel: true);
+        handled = true;
+        return IntPtr.Zero;
     }
 
     private void Surface_MouseWheel(object sender, MouseWheelEventArgs e)
