@@ -27,8 +27,9 @@ public partial class CommentsSidePanel : ToolPanel
         GroupBy.ItemsSource = new Grouping[] { new(CommentOrder.Page, Loc.T("By page")), new(CommentOrder.Author, Loc.T("By author")), new(CommentOrder.Type, Loc.T("By type")) };
         GroupBy.DisplayMemberPath = nameof(Grouping.Name);
         GroupBy.SelectedIndex = 0;
-        var statuses = new[] { ReviewStatus.None, ReviewStatus.Accepted, ReviewStatus.Rejected, ReviewStatus.Cancelled, ReviewStatus.Completed, ReviewStatus.Marked, ReviewStatus.Unmarked };
-        StatusFilter.ItemsSource = new[] { new StatusChoice(null, Loc.T("Any status")) }.Concat(statuses.Select(s => new StatusChoice(s, AnnotationText.StatusName(s)))).ToList();
+        var statuses = new[] { ReviewStatus.None, ReviewStatus.Accepted, ReviewStatus.Rejected, ReviewStatus.Cancelled, ReviewStatus.Completed };
+        // Marked is a separate model, but the list shows only the newest state, so it can be filtered on and not set.
+        StatusFilter.ItemsSource = new[] { new StatusChoice(null, Loc.T("Any status")) }.Concat(statuses.Concat([ReviewStatus.Marked, ReviewStatus.Unmarked]).Select(s => new StatusChoice(s, AnnotationText.StatusName(s)))).ToList();
         StatusFilter.DisplayMemberPath = nameof(StatusChoice.Name);
         StatusFilter.SelectedIndex = 0;
         StatusBox.ItemsSource = statuses.Select(s => new StatusChoice(s, AnnotationText.StatusName(s))).ToList();

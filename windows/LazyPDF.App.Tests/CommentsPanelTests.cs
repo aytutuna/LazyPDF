@@ -34,7 +34,7 @@ public sealed class CommentsPanelTests
     });
 
     [Fact]
-    public Task MarkedCommentShowsItsStatus() => Sta.Run(() =>
+    public Task MarkedCanBeFilteredButNotSet() => Sta.Run(() =>
     {
         using var f = new CommentFixture();
         f.Marker.Add(MarkTool.Note, 0, [new Point(60, 80)], Red, "check");
@@ -46,8 +46,8 @@ public sealed class CommentsPanelTests
 
         ((ListBox)panel.FindName("Comments")).SelectedIndex = 0;
 
-        var box = (ComboBox)panel.FindName("StatusBox");
-        Assert.Equal(5, box.SelectedIndex);
+        Assert.Equal(5, ((ComboBox)panel.FindName("StatusBox")).Items.Count);
+        Assert.Equal(8, ((ComboBox)panel.FindName("StatusFilter")).Items.Count);
         return Task.CompletedTask;
     });
 }

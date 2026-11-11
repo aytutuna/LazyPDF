@@ -73,6 +73,7 @@ public partial class BookmarksSidePanel : ToolPanel
             Host?.SetStatus(Loc.T("This bookmark points to a page that is not in the file."));
             return;
         }
+        if (destination is null && node.Item.Action is null) return;
         if (destination is null && node.Item.Action is not (GoToAction or UriAction or NamedAction))
         {
             Host?.SetStatus(Loc.T("This bookmark does something Lazy PDF cannot do."));

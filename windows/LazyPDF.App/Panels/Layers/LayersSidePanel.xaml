@@ -21,7 +21,7 @@
                             <CheckBox IsChecked="{Binding IsChecked}" IsEnabled="{Binding CanToggle}" Content="{Binding Name}" Margin="0,3"
                                       Visibility="{Binding CheckVisibility}" AutomationProperties.Name="{Binding Name}"
                                       ToolTip="{Binding LockedTip}" ToolTipService.ShowOnDisabled="True"
-                                      AutomationProperties.HelpText="{loc:T The file does not allow this layer to be shown or hidden.}" />
+                                      AutomationProperties.HelpText="{Binding LockedTip}" />
                             <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongText}" Margin="0,3" Visibility="{Binding LabelVisibility}" />
                         </Grid>
                     </HierarchicalDataTemplate>
