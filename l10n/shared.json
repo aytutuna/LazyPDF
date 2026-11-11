@@ -7946,6 +7946,9 @@
   "Or press Enter on the page.": {
     "tr": "Ya da sayfada Enter'a basın."
   },
+  "With the keyboard, press Enter at each end.": {
+    "tr": "Klavyeyle her uçta Enter'a basın."
+  },
   "The XMP metadata does not name {0}, because rules are still broken.": {
     "tr": "XMP üst verisi {0} adını vermiyor, çünkü kurallar hâlâ ihlal ediliyor."
   },

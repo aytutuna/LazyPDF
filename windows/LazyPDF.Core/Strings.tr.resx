@@ -7405,6 +7405,9 @@
   <data name="With the keyboard, press Enter at each corner and Ctrl+Enter to finish." xml:space="preserve">
     <value>Klavyeyle her köşede Enter'a, bitirmek için Ctrl+Enter'a basın.</value>
   </data>
+  <data name="With the keyboard, press Enter at each end." xml:space="preserve">
+    <value>Klavyeyle her uçta Enter'a basın.</value>
+  </data>
   <data name="Word or phrase" xml:space="preserve">
     <value>Sözcük veya ifade</value>
   </data>

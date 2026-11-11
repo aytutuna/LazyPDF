@@ -138,6 +138,17 @@ public sealed class CommentPanelTests
     });
 
     [Fact]
+    public Task ADragToolSaysTheKeyboardNeedsAnEnterAtEachEnd() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var panel = Attached(f);
+        Get<Dictionary<MarkTool, RadioButton>>(panel, "_buttons")[MarkTool.Line].IsChecked = true;
+
+        Assert.Contains("press Enter at each end", Get<System.Windows.Controls.TextBlock>(panel, "Hint").Text);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task AnInstalledFamilyIsTheOneAFreshTextBoxIsDrawnIn() => Sta.Run(() =>
     {
         if (!System.Windows.Media.Fonts.SystemFontFamilies.Any(x => x.Source == "Arial")) return Task.CompletedTask;
