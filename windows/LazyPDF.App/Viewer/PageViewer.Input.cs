@@ -700,7 +700,7 @@ public partial class PageViewer
                 Surface.ReleaseMouseCapture();
                 SetMode(_modeBeforeArea);
                 break;
-            case Key.Escape: ClearLinkFocus(); ClearSelection(); break;
+            case Key.Escape: ClearLinkFocus(); EscapeSelection(); break;
             default: return;
         }
         e.Handled = true;

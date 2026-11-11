@@ -194,4 +194,47 @@ public sealed class CaretBrowsingTests
 
         Assert.True(selection.IsEmpty);
     });
+
+    [Theory]
+    [InlineData(90)]
+    [InlineData(180)]
+    [InlineData(270)]
+    public Task TheCaretDrawsInARotatedView(int degrees) => Sta.Run(async () =>
+    {
+        var (viewer, _, tab) = await OpenAsync("Hello from the tests.");
+        using var __ = tab;
+        var decorate = typeof(PageViewer).GetMethod("Decorate", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var matrix = degrees switch { 90 => new System.Windows.Media.Matrix(0, 1, -1, 0, 0, 0), 180 => new System.Windows.Media.Matrix(-1, 0, 0, -1, 0, 0), _ => new System.Windows.Media.Matrix(0, -1, 1, 0, 0, 0) };
+
+        var visual = new System.Windows.Media.DrawingVisual();
+        using (var dc = visual.RenderOpen()) decorate.Invoke(viewer, [dc, 0, matrix]);
+
+        Assert.NotNull(visual.Drawing);
+    });
+
+    [Fact]
+    public Task EscapeKeepsTheCaretWhereItIs() => Sta.Run(async () =>
+    {
+        var (viewer, selection, tab) = await OpenAsync("Hello from the tests.");
+        using var _ = tab;
+        for (int i = 0; i < 4; i++) viewer.MoveCaret(Key.Right, false, true);
+
+        viewer.EscapeSelection();
+
+        Assert.True(selection.IsEmpty);
+        Assert.Equal(4, selection.Focus.Index);
+    });
+
+    [Fact]
+    public Task EscapeClearsTheSelectionWithoutCaretBrowsing() => Sta.Run(async () =>
+    {
+        var (viewer, selection, tab) = await OpenAsync("Hello from the tests.");
+        using var _ = tab;
+        await viewer.ToggleCaret();
+        viewer.SelectAll();
+
+        viewer.EscapeSelection();
+
+        Assert.True(selection.IsEmpty);
+    });
 }

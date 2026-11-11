@@ -144,7 +144,8 @@ public partial class PageViewer
             _ = LoadPageAsync(hit.Page);
             if (!extend)
             {
-                _selection.Clear();
+                if (_caretMode) _selection.Set(new Caret(hit.Page, 0), new Caret(hit.Page, 0));
+                else _selection.Clear();
                 _anchorWaiting = new PagePoint(hit.Page, hit.Point);
             }
             return;
@@ -239,6 +240,18 @@ public partial class PageViewer
     {
         CancelPendingSelection();
         _selection.Clear();
+    }
+
+    // With caret browsing on, the caret stays where it is; clearing would send it back to the start of the file.
+    internal void EscapeSelection()
+    {
+        if (!_caretMode)
+        {
+            ClearSelection();
+            return;
+        }
+        CancelPendingSelection();
+        _selection.Set(_selection.Focus, _selection.Focus);
     }
 
     // F7: the caret can be moved, and a selection started, with the arrow keys.
@@ -478,8 +491,9 @@ public partial class PageViewer
         {
             _ = LoadPageAsync(page);
         }
-        if (caret && LoadedText(page) is { } caretText) DrawCaret(dc, page, caretText, matrix.M11 * VisualTreeHelper.GetDpi(Surface).DpiScaleX);
-        if (ringed) DrawLinkRing(dc, page, matrix.M11 * VisualTreeHelper.GetDpi(Surface).DpiScaleX);
+        double pixelsPerUnit = Math.Sqrt(matrix.M11 * matrix.M11 + matrix.M12 * matrix.M12) * VisualTreeHelper.GetDpi(Surface).DpiScaleX;
+        if (caret && LoadedText(page) is { } caretText) DrawCaret(dc, page, caretText, pixelsPerUnit);
+        if (ringed) DrawLinkRing(dc, page, pixelsPerUnit);
         dc.Pop();
     }
 
