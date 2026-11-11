@@ -28,6 +28,7 @@ public partial class PageViewer
     private Point _down, _last;
     private PdfLink? _downLink;
     private bool _moved;
+    private bool _linkClick;
 
     public event EventHandler? ModeChanged;
 
@@ -106,6 +107,14 @@ public partial class PageViewer
     {
         Surface.Focus();
         if (_tab is null) return;
+        if (e.ClickCount == 1) _linkClick = false;
+        else if (_linkClick)
+        {
+            // The first click of a double click jumped to a link; the second lands on the new page.
+            _downLink = null;
+            e.Handled = true;
+            return;
+        }
         var at = e.GetPosition(Surface);
         var hit = Surface.Hit(at);
         _down = _last = at;
@@ -180,7 +189,11 @@ public partial class PageViewer
         }
         EndDrag();
         Surface.ReleaseMouseCapture();
-        if (drag is Drag.Pan or Drag.Select && !_moved && _downLink is { } link) FollowLink(link);
+        if (drag is Drag.Pan or Drag.Select && !_moved && _downLink is { } link)
+        {
+            _linkClick = true;
+            FollowLink(link);
+        }
         Hover(at);
         e.Handled = true;
     }
