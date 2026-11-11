@@ -2489,7 +2489,7 @@
     <value>Zaten orada.</value>
   </data>
   <data name="It is off the list." xml:space="preserve">
-    <value>Listeden çıktı.</value>
+    <value>Listeden çıkarıldı.</value>
   </data>
   <data name="It is open in a new tab. Save it to keep it." xml:space="preserve">
     <value>Yeni bir sekmede açık. Saklamak için kaydedin.</value>

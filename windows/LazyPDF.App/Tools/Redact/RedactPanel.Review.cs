@@ -101,7 +101,6 @@ public partial class RedactPanel
     {
         if (e.Key != Key.Delete || MarkedList.SelectedItem is not MarkItem item) return;
         RemoveOne(item);
-        MarkedList.Focus();
         e.Handled = true;
     }
 
@@ -113,9 +112,24 @@ public partial class RedactPanel
     private void RemoveOne(MarkItem item)
     {
         var marks = _state!.Marks;
+        var index = MarkedList.Items.IndexOf(item);
         marks.Remove(item);
         Host!.ShowNotice(Loc.T("Mark removed"), Loc.T("It is off the list."),
                          new NoticeAction(Loc.T("Put it back"), PutBack([item])));
+        FocusNeighbour(index);
+    }
+
+    private void FocusNeighbour(int index)
+    {
+        if (MarkedList.Items.Count == 0)
+        {
+            DrawToggle.Focus();
+            return;
+        }
+        index = Math.Clamp(index, 0, MarkedList.Items.Count - 1);
+        MarkedList.SelectedIndex = index;
+        MarkedList.UpdateLayout();
+        (MarkedList.ItemContainerGenerator.ContainerFromIndex(index) as FrameworkElement)?.Focus();
     }
 
     private void Clear_Click(object sender, RoutedEventArgs e)
