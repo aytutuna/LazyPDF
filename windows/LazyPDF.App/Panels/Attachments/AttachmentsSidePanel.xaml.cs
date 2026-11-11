@@ -110,7 +110,9 @@ public partial class AttachmentsSidePanel : ToolPanel
         Host!.ShowNotice(Loc.T("Open this attachment?"), Loc.T("{0} came inside this PDF. Open it only if you trust where the PDF came from.", row.Name),
             new NoticeAction(Loc.T("Open"), () =>
             {
-                if (ReferenceEquals(Tab, tab) && ReferenceEquals(tab!.Document, document)) OpenCopy(row, name);
+                if (!ReferenceEquals(Tab, tab)) return;
+                if (ReferenceEquals(tab!.Document, document)) OpenCopy(row, name);
+                else Tell(Loc.T("The file changed meanwhile. Try again."));
             }));
     }
 
