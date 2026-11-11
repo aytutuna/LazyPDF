@@ -184,6 +184,9 @@
                      SelectionChanged="TabList_SelectionChanged" PreviewMouseDown="TabList_PreviewMouseDown" PreviewKeyDown="TabList_PreviewKeyDown"
                      PreviewMouseLeftButtonDown="TabList_PreviewMouseLeftButtonDown" PreviewMouseMove="TabList_PreviewMouseMove"
                      Drop="TabList_Drop" DragOver="TabList_DragOver" ContextMenuOpening="TabList_ContextMenuOpening">
+                <ListBox.ContextMenu>
+                    <ContextMenu />
+                </ListBox.ContextMenu>
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <local:TabStripPanel />

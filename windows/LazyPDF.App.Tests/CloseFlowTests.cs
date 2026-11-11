@@ -450,6 +450,27 @@ public sealed class CloseFlowTests
     }
 
     [Fact]
+    public async Task ClosingManyAsksAboutEveryTabWithChanges()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf("a.pdf"));
+        var clean = f.Vm.ActiveDocument!;
+        var first = await OpenDirty(f, "b.pdf");
+        var second = await OpenDirty(f, "c.pdf");
+        await f.Vm.OpenAsync(f.Pdf("d.pdf"));
+        var keep = f.Vm.ActiveDocument!;
+
+        f.Vm.RequestCloseMany([clean, first, second]);
+
+        Assert.Same(first, f.Vm.CloseQuestion);
+        f.Vm.Close(first);
+        Assert.Same(second, f.Vm.CloseQuestion);
+        f.Vm.Close(second);
+        Assert.Null(f.Vm.CloseQuestion);
+        Assert.Same(keep, Assert.Single(f.Vm.Documents));
+    }
+
+    [Fact]
     public async Task CancellingTheQuestionDropsTheRestOfTheTabsToClose()
     {
         using var f = new ViewModelFixture();

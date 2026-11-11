@@ -518,7 +518,8 @@ public sealed partial class AppViewModel
 
     private void ContinueClosing()
     {
-        while (_closeQueue.Count > 0)
+        // Close() carries on with the queue itself, so a question set inside it ends this loop.
+        while (_closeQueue.Count > 0 && CloseQuestion is null)
         {
             var tab = _closeQueue[0];
             _closeQueue.RemoveAt(0);
