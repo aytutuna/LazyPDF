@@ -5272,6 +5272,9 @@
   <data name="Settings" xml:space="preserve">
     <value>Ayarlar</value>
   </data>
+  <data name="Settings…" xml:space="preserve">
+    <value>Ayarlar…</value>
+  </data>
   <data name="Several choices" xml:space="preserve">
     <value>Birden çok seçim</value>
   </data>

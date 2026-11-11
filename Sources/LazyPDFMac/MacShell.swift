@@ -61,7 +61,14 @@ final class MacShell {
 
     func attach(_ window: NSWindow) {
         self.window = window
+        update(WindowState(vm.activeDocument))
         closeGuard = CloseGuard.ensure(on: window, existing: closeGuard, hasTabs: { !self.vm.documents.isEmpty }) { NSApp.terminate(nil) }
+    }
+
+    func update(_ state: WindowState) {
+        window?.title = state.title
+        window?.representedURL = state.url
+        window?.isDocumentEdited = state.dirty
     }
 
     func showWindow() {

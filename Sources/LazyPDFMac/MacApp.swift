@@ -23,6 +23,18 @@ public struct MacApp: App {
     }
 }
 
+struct WindowState: Equatable {
+    let title: String
+    let url: URL?
+    let dirty: Bool
+
+    init(_ tab: DocumentTab?) {
+        title = tab?.title ?? "Lazy PDF"
+        url = tab?.url
+        dirty = tab?.isDirty ?? false
+    }
+}
+
 struct MacWindow: View {
     let shell: MacShell
 
@@ -43,6 +55,7 @@ struct MacWindow: View {
             // The tool panel may have shown it first, and showing again would clear the marks it drew.
             if viewer.tab !== vm.activeDocument { viewer.show(vm.activeDocument) }
         }
+        .onChange(of: WindowState(vm.activeDocument), initial: true) { _, state in shell.update(state) }
         .onChange(of: vm.closeQuestion == nil) { shell.closeQuestionChanged() }
         .background(WindowHook { shell.attach($0) })
     }

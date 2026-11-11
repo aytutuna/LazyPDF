@@ -293,6 +293,7 @@
 "Check the name and the size of the field, then try again." = "Alanın adını ve boyutunu kontrol edin, sonra yeniden deneyin.";
 "Check the password, and that the file holds a certificate with its private key." = "Parolayı ve dosyanın özel anahtarlı bir sertifika içerdiğini denetleyin.";
 "Checking the file" = "Dosya denetleniyor";
+"Checking the files" = "Dosyalar denetleniyor";
 "Checking the signatures" = "İmzalar denetleniyor";
 "Checking {0}" = "{0} denetleniyor";
 "Choices" = "Seçenekler";
@@ -1428,6 +1429,7 @@
 "Set status" = "Durumu ayarla";
 "Set the tab order" = "Sekme sırasını ayarla";
 "Settings" = "Ayarlar";
+"Settings…" = "Ayarlar…";
 "Several choices" = "Birden çok seçim";
 "Several lines" = "Birden çok satır";
 "Shadings, spot colours and patterns were left in colour." = "Gölgelendirmeler, özel renkler ve desenler renkli bırakıldı.";
@@ -2100,6 +2102,7 @@
 "{0} could not be opened, so it was not checked." = "{0} açılamadı, bu yüzden denetlenmedi.";
 "{0} could not be opened." = "{0} açılamadı.";
 "{0} could not be prepared for printing. Save it and print it from another program." = "{0} yazdırmaya hazırlanamadı. Kaydedin ve başka bir programdan yazdırın.";
+"{0} could not be put into the file. Leave it out, or try fewer of its pages." = "{0} dosyaya eklenemedi. Listeden kaldırın ya da daha az sayfasını deneyin.";
 "{0} could not be read as form data. Pick a file that a form export wrote." = "{0} form verisi olarak okunamadı. Bir form dışa aktarımının yazdığı dosyayı seçin.";
 "{0} could not be read. Check that the file is still there." = "{0} okunamadı. Dosyanın yerinde olduğunu kontrol edin.";
 "{0} could not be read. Close any program that has it open and try again." = "{0} okunamadı. Onu açık tutan programları kapatıp yeniden deneyin.";

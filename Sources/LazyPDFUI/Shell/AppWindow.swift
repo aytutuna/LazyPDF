@@ -116,6 +116,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             if phase == .active { vm.checkDisk() }
         }
         .onReceive(NotificationCenter.default.publisher(for: .showAbout)) { _ in sheet = .about }
+        .onReceive(NotificationCenter.default.publisher(for: .showSettings)) { _ in if !frozen { sheet = .settings } }
     }
 
     private var modal: Binding<Modal?> {

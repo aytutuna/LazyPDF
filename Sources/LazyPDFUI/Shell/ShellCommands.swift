@@ -5,6 +5,8 @@ import LazyPDFApp
 public extension Notification.Name {
     /// Posted by the platform's menu; the window answers with its About sheet.
     static let showAbout = Notification.Name("LazyPDFShowAbout")
+    /// Posted by the platform's menu; the window answers with its Settings sheet.
+    static let showSettings = Notification.Name("LazyPDFShowSettings")
 }
 
 /// What the window asks of the platform shell because it needs a system panel or a security-scoped grant: choosing files,

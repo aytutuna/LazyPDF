@@ -94,6 +94,13 @@ struct MacMenus: Commands {
                 NotificationCenter.default.post(name: .showAbout, object: nil)
             }
         }
+        CommandGroup(replacing: .appSettings) {
+            Button(L10n.t("Settings…")) {
+                NSApp.activate(ignoringOtherApps: true)
+                NotificationCenter.default.post(name: .showSettings, object: nil)
+            }
+            .keyboardShortcut(",")
+        }
         CommandGroup(replacing: .help) {
             Button(L10n.t("Lazy PDF Help")) {
                 if let site = URL(string: AppInfo.site) { NSWorkspace.shared.open(site) }
