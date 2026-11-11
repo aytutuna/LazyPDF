@@ -88,6 +88,31 @@ public sealed class CreateToolTests
     }
 
     [Fact]
+    public void TheFamilyAskedForIsTheOneEmbedded()
+    {
+        var made = PdfMaker.Make(new(CreateSource.Text, A4, "Text.pdf", Text: "Hello", Family: "Courier New"), new FakeCodec(), new SystemFontSource());
+
+        var document = Open(made);
+        var fonts = document.Dict(document.Pages[0].Resources, "Font")!;
+        Assert.Contains(fonts.Entries, f => document.Name(document.Resolve(f.Value) as PdfDictionary, "BaseFont")!.Contains("Courier"));
+    }
+
+    [Fact]
+    public Task TheFontListHoldsOnlyInstalledFamiliesAndTheRequestCarriesTheChoice() => Sta.Run(() =>
+    {
+        var installed = System.Windows.Media.Fonts.SystemFontFamilies.SelectMany(f => f.FamilyNames.Values).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var panel = new CreatePanel();
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+
+        var families = panel.FontBox.Items.Cast<string>().ToList();
+        Assert.All(families, family => Assert.Contains(family, installed));
+        Assert.Equal(families[0], panel.Request()!.Family);
+        panel.FontBox.SelectedIndex = families.Count - 1;
+        Assert.Equal(families[^1], panel.Request()!.Family);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public void ALongTextRunsOverToMorePages()
     {
         string text = string.Join("\n", Enumerable.Range(0, 200).Select(n => $"Line {n}"));

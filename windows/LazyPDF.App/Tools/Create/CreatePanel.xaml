@@ -88,6 +88,8 @@
                 </ComboBox>
             </StackPanel>
             <StackPanel x:Name="FontRow">
+                <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Font}" Margin="0,12,0,4" />
+                <ComboBox x:Name="FontBox" AutomationProperties.Name="{loc:T Font}" />
                 <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Text size}" Margin="0,12,0,4" />
                 <ComboBox x:Name="FontSizeBox" SelectedIndex="2" AutomationProperties.Name="{loc:T Text size}">
                     <ComboBoxItem Tag="9" Content="9 pt" />

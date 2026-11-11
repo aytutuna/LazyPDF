@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.Core;
@@ -31,6 +32,9 @@ public partial class CreatePanel : ToolPanel
     {
         InitializeComponent();
         PictureList.ItemsSource = _pictures;
+        var installed = Fonts.SystemFontFamilies.SelectMany(f => f.FamilyNames.Values).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        FontBox.ItemsSource = new[] { "Arial", "Times New Roman", "Courier New", "Calibri", "Cambria", "Consolas", "Georgia", "Verdana", "Tahoma", "Segoe UI" }.Where(installed.Contains).ToList();
+        FontBox.SelectedIndex = 0;
         _action = new ToolAction(Loc.T("Create"), "", CanRun, RunAsync);
         _ready = true;
         ShowSource();
@@ -107,6 +111,8 @@ public partial class CreatePanel : ToolPanel
         OrientationBox.SelectedIndex switch { 1 => PdfOrientation.Portrait, 2 => PdfOrientation.Landscape, _ => PdfOrientation.Auto },
         Source == (int)CreateSource.Blank ? 36 : Tagged(MarginBox));
 
+    private string Family => FontBox.SelectedItem as string ?? "Arial";
+
     private static int Tagged(ComboBox box) => int.Parse((string)((ComboBoxItem)box.SelectedItem).Tag);
 
     /// <summary>What the panel is set to make; null when the clipboard emptied since it was looked at.</summary>
@@ -121,10 +127,10 @@ public partial class CreatePanel : ToolPanel
             case (int)CreateSource.Pictures:
                 return new(CreateSource.Pictures, setup, PicturesTitle(), Files: [.. _pictures.Select(p => p.Path)]);
             case (int)CreateSource.Text:
-                return new(CreateSource.Text, setup, Loc.T("Text.pdf"), Text: TypedText.Text, FontSize: Tagged(FontSizeBox));
+                return new(CreateSource.Text, setup, Loc.T("Text.pdf"), Text: TypedText.Text, FontSize: Tagged(FontSizeBox), Family: Family);
         }
         var content = ClipboardContent.Read();
-        if (content.Text is { } text) return new(CreateSource.Text, setup, Loc.T("Clipboard.pdf"), Text: text, FontSize: Tagged(FontSizeBox));
+        if (content.Text is { } text) return new(CreateSource.Text, setup, Loc.T("Clipboard.pdf"), Text: text, FontSize: Tagged(FontSizeBox), Family: Family);
         if (content.Picture is { } picture) return new(CreateSource.Pictures, setup, Loc.T("Clipboard.pdf"), Picture: picture);
         PeekClipboard();
         Refresh();

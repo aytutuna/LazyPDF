@@ -12,7 +12,7 @@ public enum CreateSource
 /// <param name="Files">Picture files to read, in page order.</param>
 /// <param name="Picture">A picture already in memory that stands for <paramref name="Files"/>: the clipboard's.</param>
 public sealed record CreateRequest(CreateSource Source, PdfPageSetup Setup, string Title, int Pages = 1, IReadOnlyList<string>? Files = null,
-                                   byte[]? Picture = null, string Text = "", double FontSize = 11);
+                                   byte[]? Picture = null, string Text = "", double FontSize = 11, string Family = "Arial");
 
 /// <param name="Unreadable">Pictures that could not be read, or letters the font lacks.</param>
 public sealed record MadePdf(byte[] Bytes, int Pages, int Unreadable);
@@ -41,7 +41,7 @@ public static class PdfMaker
                 var pictures = PdfFromPictures.Create(files, codec, request.Setup);
                 return new MadePdf(pictures.Bytes, pictures.Pages, pictures.Unreadable.Count);
             default:
-                var text = PdfFromText.Create(request.Text, fonts, request.Setup, size: request.FontSize);
+                var text = PdfFromText.Create(request.Text, fonts, request.Setup, family: request.Family, size: request.FontSize);
                 return new MadePdf(text.Bytes, text.Pages, text.Missing.Count);
         }
     }
