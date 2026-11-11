@@ -359,4 +359,46 @@ public sealed class MarkerTests
         Assert.True(f.Tab.Undo());
         Assert.Empty(f.Marks());
     }
+
+    [Fact]
+    public void AnArrowTakesTheChosenHeadAndStaysAnArrowToOtherReaders()
+    {
+        using var f = new CommentFixture();
+
+        var made = f.Marker.Add(MarkTool.Arrow, 0, Drag, Red with { Head = LineEnding.ClosedArrow });
+
+        var read = f.Marks().Single();
+        Assert.Equal(LineEnding.ClosedArrow, read.EndEnding);
+        Assert.Equal(LineEnding.None, read.StartEnding);
+        Assert.Equal("LineArrow", read.Intent);
+        Assert.True(made.HasAppearance);
+    }
+
+    [Fact]
+    public void ANoteTakesTheChosenIcon()
+    {
+        using var f = new CommentFixture();
+
+        f.Marker.Add(MarkTool.Note, 0, Drag, Red with { Icon = "Key" });
+
+        Assert.Equal("Key", f.Marks().Single().IconName);
+    }
+
+    [Fact]
+    public void TheHeadAndTheIconOfAMarkAreChanged()
+    {
+        using var f = new CommentFixture();
+        var line = f.Marker.Add(MarkTool.Line, 0, Drag, Red);
+        var note = f.Marker.Add(MarkTool.Note, 0, [new(200, 300)], Red);
+        double width = line.Rect.Width;
+
+        var headed = f.Marker.SetEnding(line, LineEnding.Diamond);
+        var iconed = f.Marker.SetIcon(note, "Help");
+
+        Assert.Equal(LineEnding.Diamond, headed.EndEnding);
+        Assert.Equal(LineEnding.None, headed.StartEnding);
+        Assert.True(headed.Rect.Width > width);
+        Assert.True(headed.HasAppearance);
+        Assert.Equal("Help", iconed.IconName);
+    }
 }

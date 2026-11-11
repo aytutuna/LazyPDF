@@ -26,6 +26,18 @@ public partial class CommentPanel : ToolPanel
         (Loc.T("None"), null), .. Colours[1..7], (Loc.T("White"), [1, 1, 1]), Colours[7],
     ];
 
+    private static readonly (string Name, LineEnding Value)[] Heads =
+    [
+        (Loc.T("Open arrow"), LineEnding.OpenArrow), (Loc.T("Closed arrow"), LineEnding.ClosedArrow), (Loc.T("Circle"), LineEnding.Circle),
+        (Loc.T("Square"), LineEnding.Square), (Loc.T("Diamond"), LineEnding.Diamond), (Loc.T("Slash"), LineEnding.Slash), (Loc.T("None"), LineEnding.None),
+    ];
+
+    private static readonly (string Name, string Value)[] Icons =
+    [
+        (Loc.T("Note"), "Note"), (Loc.T("Comment"), "Comment"), (Loc.T("Help"), "Help"), (Loc.T("Key"), "Key"),
+        (Loc.T("Paragraph"), "Paragraph"), (Loc.T("Insert"), "Insert"), (Loc.T("New paragraph"), "NewParagraph"),
+    ];
+
     private static readonly (MarkTool Tool, string Text, string Glyph, string Hint)[] Tools =
     [
         (MarkTool.SelectText, Loc.T("Select text"), "\uE8E4", Loc.T("Select text, then pick a markup above.")),
@@ -113,6 +125,10 @@ public partial class CommentPanel : ToolPanel
         FillBox.SelectedIndex = 0;
         LineStyleBox.ItemsSource = new[] { Loc.T("Solid"), Loc.T("Dashed"), Loc.T("Dotted") };
         LineStyleBox.SelectedIndex = 0;
+        HeadBox.ItemsSource = Heads.Select(h => h.Name).ToList();
+        HeadBox.SelectedIndex = 0;
+        IconBox.ItemsSource = Icons.Select(i => i.Name).ToList();
+        IconBox.SelectedIndex = 0;
         FontFamilyBox.ItemsSource = Families.Value;
         FontFamilyBox.SelectedIndex = 0;
         FontSizeBox.ItemsSource = new[] { 8, 10, 12, 14, 18, 24, 36 };
@@ -189,7 +205,7 @@ public partial class CommentPanel : ToolPanel
         var font = (BoldToggle.IsChecked == true ? FontStyles.Bold : FontStyles.Regular) | (ItalicToggle.IsChecked == true ? FontStyles.Italic : FontStyles.Regular);
         var line = (LineStyle)Math.Max(LineStyleBox.SelectedIndex, 0);
         return new MarkStyle(_color, WidthSlider.Value, OpacitySlider.Value / 100, FontFamilyBox.SelectedItem as string ?? Families.Value[0], size, font,
-            Fills[Math.Max(FillBox.SelectedIndex, 0)].Rgb, line);
+            Fills[Math.Max(FillBox.SelectedIndex, 0)].Rgb, line, Heads[Math.Max(HeadBox.SelectedIndex, 0)].Value, Icons[Math.Max(IconBox.SelectedIndex, 0)].Value);
     }
 
     private void ShowReadouts()
@@ -278,7 +294,7 @@ public partial class CommentPanel : ToolPanel
         if (_loading) return;
         ShowReadouts();
         if (_edit?.Current is null) return;
-        _unsettled.Add(sender is RadioButton ? "colour" : sender is Slider || sender == FillBox || sender == LineStyleBox ? sender : "font");
+        _unsettled.Add(sender is RadioButton ? "colour" : sender is Slider || sender == FillBox || sender == LineStyleBox || sender == HeadBox || sender == IconBox ? sender : "font");
         _settle.Stop();
         _settle.Start();
     }
@@ -299,9 +315,14 @@ public partial class CommentPanel : ToolPanel
             if (pending.Contains(FillBox) && Marker.TakesFill(current)) current = m.SetFill(current, look.Fill);
             if (pending.Contains(WidthSlider)) current = m.SetWidth(current, look.Width);
             if (pending.Contains(LineStyleBox) && Marker.TakesLine(current)) current = m.SetDash(current, look.Dash);
+            if (pending.Contains(HeadBox) && HasHead(current)) current = m.SetEnding(current, look.Head);
+            if (pending.Contains(IconBox) && current.Type == AnnotationType.Text) current = m.SetIcon(current, look.Icon);
             if (pending.Contains(OpacitySlider)) m.SetOpacity(current, look.Opacity);
         });
     }
+
+    // A head chosen on the start of a line is another app's; only the end is offered.
+    private static bool HasHead(PdfAnnotation a) => a.Type == AnnotationType.Line && a.StartEnding == LineEnding.None;
 
     private static bool Differs(FreeTextStyle text, MarkStyle look) => text.Family != look.Family || text.Size != look.Size || text.Font != look.Font;
 }

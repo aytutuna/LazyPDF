@@ -78,6 +78,14 @@
                 AutomationProperties.Name="{loc:T Width}" ValueChanged="Look_Changed" />
         <TextBlock Text="{loc:T Line}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
         <ComboBox x:Name="LineStyleBox" AutomationProperties.Name="{loc:T Line}" SelectionChanged="Look_Changed" />
+        <StackPanel x:Name="HeadRow" Visibility="Collapsed">
+            <TextBlock Text="{loc:T Arrow head}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
+            <ComboBox x:Name="HeadBox" AutomationProperties.Name="{loc:T Arrow head}" SelectionChanged="Look_Changed" />
+        </StackPanel>
+        <StackPanel x:Name="IconRow" Visibility="Collapsed">
+            <TextBlock Text="{loc:T Note icon}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
+            <ComboBox x:Name="IconBox" AutomationProperties.Name="{loc:T Note icon}" SelectionChanged="Look_Changed" />
+        </StackPanel>
         <DockPanel Margin="0,6,0,0">
             <TextBlock x:Name="OpacityReadout" DockPanel.Dock="Right" Style="{StaticResource ReadoutText}" Width="48" />
             <TextBlock Text="{loc:T Opacity}" Style="{StaticResource FieldLabelText}" VerticalAlignment="Center" />

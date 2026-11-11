@@ -34,7 +34,7 @@ public enum LineStyle
 }
 
 /// <summary>How a new mark looks. A null colour takes the default of its kind.</summary>
-public sealed record MarkStyle(double[]? Color, double Width, double Opacity, string Family, double Size, FontStyles Font, double[]? Fill = null, LineStyle Dash = LineStyle.Solid)
+public sealed record MarkStyle(double[]? Color, double Width, double Opacity, string Family, double Size, FontStyles Font, double[]? Fill = null, LineStyle Dash = LineStyle.Solid, LineEnding Head = LineEnding.OpenArrow, string Icon = "Note")
 {
     public static MarkStyle Default { get; } = new(null, 2, 1, "Helvetica", 12, FontStyles.Regular);
 
@@ -111,7 +111,7 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         switch (tool)
         {
             case MarkTool.Note:
-                return Faded(_writer.AddNote(target, UserRect(new Rect(points[0], new Size(NoteSize, NoteSize))), Info(text), "Note", style.Color), style);
+                return Faded(_writer.AddNote(target, UserRect(new Rect(points[0], new Size(NoteSize, NoteSize))), Info(text), style.Icon, style.Color), style);
             case MarkTool.TextBox:
                 return _writer.AddFreeText(target, Standing(geometry, BoxOf(tool, points)), text, style.ToText(), shape with { Width = 0, Dash = null, Fill = null }, upright);
             case MarkTool.Callout:
@@ -133,7 +133,11 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
             case MarkTool.Line:
                 return _writer.AddLine(target, User(points[0]), User(points[^1]), shape, Info());
             case MarkTool.Arrow:
-                return _writer.AddArrow(target, User(points[0]), User(points[^1]), shape, Info());
+            {
+                var arrow = _writer.AddLine(target, User(points[0]), User(points[^1]), shape, Info(), LineEnding.None, style.Head);
+                arrow.Dictionary["IT"] = new PdfName("LineArrow");
+                return arrow;
+            }
             case MarkTool.Rectangle:
                 return _writer.AddSquare(target, UserRect(new Rect(points[0], points[^1])), shape, Info());
             case MarkTool.Oval:
@@ -335,6 +339,23 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         if (dashes is null) border.Remove("D");
         else border["D"] = new PdfArray([.. dashes.Select(v => (PdfObject)new PdfNumber(v))]);
         a.Dictionary["BS"] = border;
+        _writer.Regenerate(a);
+        return Find(a.PageIndex, a.Reference!.Number) ?? a;
+    }
+
+    /// <summary>Gives a line the head at its end and room in its box to show it.</summary>
+    public PdfAnnotation SetEnding(PdfAnnotation a, LineEnding head)
+    {
+        a.Dictionary["LE"] = new PdfArray([new PdfName(LineEnding.None.ToString()), new PdfName(head.ToString())]);
+        double grow = 4 * a.Border.Width;
+        a.Dictionary["Rect"] = new PdfRect(a.Rect.Left - grow, a.Rect.Bottom - grow, a.Rect.Right + grow, a.Rect.Top + grow).ToArray();
+        _writer.Regenerate(a);
+        return Find(a.PageIndex, a.Reference!.Number) ?? a;
+    }
+
+    public PdfAnnotation SetIcon(PdfAnnotation a, string name)
+    {
+        a.Dictionary["Name"] = new PdfName(name);
         _writer.Regenerate(a);
         return Find(a.PageIndex, a.Reference!.Number) ?? a;
     }

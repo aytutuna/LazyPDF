@@ -508,6 +508,9 @@
   <data name="Arrow" xml:space="preserve">
     <value>Ok</value>
   </data>
+  <data name="Arrow head" xml:space="preserve">
+    <value>Ok ucu</value>
+  </data>
   <data name="Arrow keys move it. Enter places it. Escape cancels." xml:space="preserve">
     <value>Ok tuşları taşır. Enter yerleştirir. Esc iptal eder.</value>
   </data>
@@ -1003,6 +1006,9 @@
   <data name="Choose where the results go, then watch the folder." xml:space="preserve">
     <value>Sonuçların nereye gideceğini seçin, sonra klasörü izleyin.</value>
   </data>
+  <data name="Circle" xml:space="preserve">
+    <value>Daire</value>
+  </data>
   <data name="Clean file" xml:space="preserve">
     <value>Dosyayı temizle</value>
   </data>
@@ -1095,6 +1101,9 @@
   </data>
   <data name="Close {0}?" xml:space="preserve">
     <value>{0} kapatılsın mı?</value>
+  </data>
+  <data name="Closed arrow" xml:space="preserve">
+    <value>Kapalı ok</value>
   </data>
   <data name="Cloud" xml:space="preserve">
     <value>Bulut</value>
@@ -1401,6 +1410,9 @@
   </data>
   <data name="Descriptions, links and names" xml:space="preserve">
     <value>Açıklamalar, bağlantılar ve adlar</value>
+  </data>
+  <data name="Diamond" xml:space="preserve">
+    <value>Eşkenar dörtgen</value>
   </data>
   <data name="Differences" xml:space="preserve">
     <value>Farklar</value>
@@ -2260,6 +2272,9 @@
   <data name="Height in mm" xml:space="preserve">
     <value>Yükseklik (mm)</value>
   </data>
+  <data name="Help" xml:space="preserve">
+    <value>Yardım</value>
+  </data>
   <data name="Hidden layers" xml:space="preserve">
     <value>Gizli katmanlar</value>
   </data>
@@ -2346,6 +2361,9 @@
   </data>
   <data name="Initials" xml:space="preserve">
     <value>Baş harfler</value>
+  </data>
+  <data name="Insert" xml:space="preserve">
+    <value>Ekle</value>
   </data>
   <data name="Insert and replace" xml:space="preserve">
     <value>Ekle ve değiştir</value>
@@ -2463,6 +2481,9 @@
   </data>
   <data name="Keeps the proof that the certificate was good. The signature can then be checked after it expires. It asks the servers named in the certificates." xml:space="preserve">
     <value>Sertifikanın geçerli olduğunun kanıtını saklar. İmza, sertifikanın süresi dolduktan sonra da denetlenebilir. Sertifikalarda adı geçen sunuculara sorar.</value>
+  </data>
+  <data name="Key" xml:space="preserve">
+    <value>Anahtar</value>
   </data>
   <data name="Key cannot be used" xml:space="preserve">
     <value>Anahtar kullanılamıyor</value>
@@ -2872,6 +2893,9 @@
   <data name="New file" xml:space="preserve">
     <value>Yeni dosya</value>
   </data>
+  <data name="New paragraph" xml:space="preserve">
+    <value>Yeni paragraf</value>
+  </data>
   <data name="New: {0}" xml:space="preserve">
     <value>Yeni: {0}</value>
   </data>
@@ -3130,6 +3154,9 @@
   <data name="Note" xml:space="preserve">
     <value>Not</value>
   </data>
+  <data name="Note icon" xml:space="preserve">
+    <value>Not simgesi</value>
+  </data>
   <data name="Notes, highlights, drawings, stamps and text boxes on the pages. Off unless you tick it." xml:space="preserve">
     <value>Sayfalardaki notlar, vurgular, çizimler, damgalar ve metin kutuları. İşaretlemezseniz kapalıdır.</value>
   </data>
@@ -3345,6 +3372,9 @@
   </data>
   <data name="Open a text file" xml:space="preserve">
     <value>Metin dosyası aç</value>
+  </data>
+  <data name="Open arrow" xml:space="preserve">
+    <value>Açık ok</value>
   </data>
   <data name="Open files" xml:space="preserve">
     <value>Açık dosyalar</value>
@@ -3624,6 +3654,9 @@
   </data>
   <data name="Paper" xml:space="preserve">
     <value>Kağıt</value>
+  </data>
+  <data name="Paragraph" xml:space="preserve">
+    <value>Paragraf</value>
   </data>
   <data name="Paragraph changed." xml:space="preserve">
     <value>Paragraf değişti.</value>
@@ -4774,6 +4807,9 @@
   <data name="Size {0} x {1} pt to {2} x {3} pt" xml:space="preserve">
     <value>Boyut {0} x {1} pt iken {2} x {3} pt oldu</value>
   </data>
+  <data name="Slash" xml:space="preserve">
+    <value>Eğik çizgi</value>
+  </data>
   <data name="Slide {0}" xml:space="preserve">
     <value>Slayt {0}</value>
   </data>
@@ -4842,6 +4878,9 @@
   </data>
   <data name="Splitting file" xml:space="preserve">
     <value>Dosya bölünüyor</value>
+  </data>
+  <data name="Square" xml:space="preserve">
+    <value>Kare</value>
   </data>
   <data name="Squiggly" xml:space="preserve">
     <value>Dalgalı</value>

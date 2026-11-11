@@ -200,6 +200,24 @@
   "Note": {
     "tr": "Not"
   },
+  "Note icon": {
+    "tr": "Not simgesi"
+  },
+  "Help": {
+    "tr": "Yardım"
+  },
+  "Key": {
+    "tr": "Anahtar"
+  },
+  "Paragraph": {
+    "tr": "Paragraf"
+  },
+  "Insert": {
+    "tr": "Ekle"
+  },
+  "New paragraph": {
+    "tr": "Yeni paragraf"
+  },
   "Text box": {
     "tr": "Metin kutusu"
   },
@@ -2458,6 +2476,27 @@
   },
   "Arrow": {
     "tr": "Ok"
+  },
+  "Arrow head": {
+    "tr": "Ok ucu"
+  },
+  "Open arrow": {
+    "tr": "Açık ok"
+  },
+  "Closed arrow": {
+    "tr": "Kapalı ok"
+  },
+  "Circle": {
+    "tr": "Daire"
+  },
+  "Square": {
+    "tr": "Kare"
+  },
+  "Diamond": {
+    "tr": "Eşkenar dörtgen"
+  },
+  "Slash": {
+    "tr": "Eğik çizgi"
   },
   "Attach file": {
     "tr": "Dosya ekle"

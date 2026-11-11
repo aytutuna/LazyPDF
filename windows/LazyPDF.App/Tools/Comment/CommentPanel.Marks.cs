@@ -209,6 +209,8 @@ public partial class CommentPanel
         SelectedRow.Visibility = mark is null ? Visibility.Collapsed : Visibility.Visible;
         LineStyleBox.IsEnabled = mark is null ? Marker.TakesLine(_tool) : Marker.TakesLine(mark);
         FillBox.IsEnabled = mark is null ? Marker.TakesFill(_tool) : Marker.TakesFill(mark);
+        HeadRow.Visibility = (mark is null ? _tool == MarkTool.Arrow : HasHead(mark)) ? Visibility.Visible : Visibility.Collapsed;
+        IconRow.Visibility = (mark is null ? _tool == MarkTool.Note : mark.Type == AnnotationType.Text) ? Visibility.Visible : Visibility.Collapsed;
         if (mark is null)
         {
             if (_drawing is { } kept) RestoreDrawing(kept);
@@ -231,6 +233,8 @@ public partial class CommentPanel
         ShowColour(Marker.RgbOf(text is null ? mark.Color : text.TextColor ?? [0]));
         ShowFill(Marker.RgbOf(mark.InteriorColor));
         LineStyleBox.SelectedIndex = (int)Marker.LineOf(mark);
+        HeadBox.SelectedIndex = Array.FindIndex(Heads, h => h.Value == mark.EndEnding);
+        IconBox.SelectedIndex = Array.FindIndex(Icons, i => i.Value == mark.IconName);
         _loading = false;
         ShowReadouts();
     }
@@ -244,6 +248,8 @@ public partial class CommentPanel
         ShowColour(kept.Color);
         ShowFill(kept.Fill);
         LineStyleBox.SelectedIndex = (int)kept.Dash;
+        HeadBox.SelectedIndex = Array.FindIndex(Heads, h => h.Value == kept.Head);
+        IconBox.SelectedIndex = Array.FindIndex(Icons, i => i.Value == kept.Icon);
         FontFamilyBox.SelectedItem = kept.Family;
         FontSizeBox.Text = kept.Size.ToString(CultureInfo.CurrentCulture);
         BoldToggle.IsChecked = kept.Font.HasFlag(FontStyles.Bold);
