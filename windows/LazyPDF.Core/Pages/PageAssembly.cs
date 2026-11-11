@@ -7,8 +7,9 @@ public sealed record MergeSource(PdfDocument Document, IReadOnlyList<int>? Pages
 
 /// <summary>
 /// New documents made of pages of others. A new document holds the pages asked for and what they
-/// use and nothing else: no tree, outlines, names or tags of the source, no resource a page only
-/// lists. Page labels, bookmarks and article threads are not carried over.
+/// use and nothing else: no tree, names or tags of the source, no resource a page only lists. Of
+/// the rest of the source it carries what belongs to those pages (see <see cref="PageCarry"/>);
+/// article threads are not carried over.
 /// </summary>
 public static class PageAssembly
 {
@@ -20,30 +21,42 @@ public static class PageAssembly
         var importer = new PageImporter(source, target);
         var copies = importer.Import(pages, cancel);
         if (source.Trailer["Info"] is { } info && source.Info is not null) target.Trailer["Info"] = importer.CopyValue(info);
+        PageCarry.Catalog(source, target, importer);
         PageTree.Set(target, copies);
+        PageCarry.Carry(source, target, pages, 0);
         return target;
     }
 
-    /// <summary>The pages of each source one after the other. A document listed twice is copied once. <paramref name="cancel"/> is checked between documents and between pages.</summary>
-    public static PdfDocument Merge(IReadOnlyList<MergeSource> sources, CancellationToken cancel = default)
+    /// <summary>The pages of each source one after the other. A document listed twice is copied once. <paramref name="cancel"/> is checked between documents and between pages. Each source with bookmarks adds one under the title in its /Info, else the one in <paramref name="titles"/> at its place.</summary>
+    public static PdfDocument Merge(IReadOnlyList<MergeSource> sources, CancellationToken cancel = default, IReadOnlyList<string>? titles = null)
     {
         if (sources.Count == 0) throw new ArgumentException("There is nothing to merge.", nameof(sources));
         var target = Blank(sources.Select(s => s.Document.Version).MaxBy(v => Version.TryParse(v, out var parsed) ? parsed : new Version(1, 0))!);
         var importers = new Dictionary<PdfDocument, PageImporter>(ReferenceEqualityComparer.Instance);
         var order = new List<PdfReference>();
         var origins = new List<object>();
+        var taken = new List<(IReadOnlyList<int> Pages, int Start)>();
         foreach (var (document, pages) in sources)
         {
             cancel.ThrowIfCancellationRequested();
             if (!importers.TryGetValue(document, out var importer)) importers[document] = importer = new PageImporter(document, target);
-            var copies = importer.Import(pages ?? [.. Enumerable.Range(0, document.Pages.Count)], cancel);
+            var indexes = pages ?? [.. Enumerable.Range(0, document.Pages.Count)];
+            var copies = importer.Import(indexes, cancel);
+            taken.Add((indexes, order.Count));
             order.AddRange(copies);
             origins.AddRange(copies.Select(_ => (object)document));
         }
         if (order.Count == 0) throw new ArgumentException("The sources have no pages.", nameof(sources));
         var first = sources[0].Document;
         if (first.Trailer["Info"] is { } info && first.Info is not null) target.Trailer["Info"] = importers[first].CopyValue(info);
+        PageCarry.Catalog(first, target, importers[first]);
         PageTree.Set(target, order);
+        for (int i = 0; i < sources.Count; i++)
+        {
+            var document = sources[i].Document;
+            string? title = document.Info is { } own ? PdfText.Read(document, own, "Title") : null;
+            PageCarry.Carry(document, target, taken[i].Pages, taken[i].Start, string.IsNullOrEmpty(title) ? titles?.ElementAtOrDefault(i) ?? "" : title);
+        }
         StampRuns.Separate(target, [.. target.Pages.Select((p, i) => (p, origins[i]))]);
         return target;
     }
