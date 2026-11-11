@@ -32,7 +32,7 @@ public partial class CertificatesPanel : ToolPanel
     private Rectangle? _outline;
     private bool _working;
     private bool _refilling;
-    private int _pages;
+    private object? _boxPageKey;
 
     public CertificatesPanel()
     {
@@ -96,10 +96,9 @@ public partial class CertificatesPanel : ToolPanel
         var choices = new List<WhereChoice> { new(Loc.T("Not visible"), WhereKind.Invisible), new(Loc.T("A box I draw on the page"), WhereKind.Box) };
         choices.AddRange(CertificateSigning.EmptyFields(document).Select(name => new WhereChoice(Loc.T("Field {0}", name), WhereKind.Field, name)));
         int kept = CertificateSigning.KeptPlace(WhereBox.SelectedIndex, Where?.Field, choices.Skip(2).Select(c => c.Field!).ToList());
-        bool keepBox = kept == 1 && _box is not null && Tab.PageCount == _pages;
+        bool keepBox = kept == 1 && _box is not null && _boxPage < Tab.PageCount && PageKey(_boxPage).Equals(_boxPageKey);
         if (keepBox) Viewer!.Overlay(_boxPage).Children.Remove(_outline!);
         else ClearBox();
-        _pages = Tab.PageCount;
         _refilling = true;
         try
         {
@@ -119,6 +118,14 @@ public partial class CertificatesPanel : ToolPanel
         CertifyNote.Visibility = signed ? Visibility.Visible : Visibility.Collapsed;
         ExistingPage.Visibility = signed ? Visibility.Visible : Visibility.Collapsed;
         RaiseActionChanged();
+    }
+
+    // The box is in page space, so it only holds while the page keeps its object, size and turn.
+    private object PageKey(int page)
+    {
+        var p = Tab!.Document.Pages[page];
+        var g = new PageGeometry(p);
+        return (p.Reference, g.Matrix, g.Width, g.Height);
     }
 
     private void ShowCertificateNote()
@@ -178,6 +185,7 @@ public partial class CertificatesPanel : ToolPanel
     {
         Stop();
         _boxPage = page;
+        _boxPageKey = PageKey(page);
         _box = box;
         _outline = SignatureBoxTool.Outline();
         SignatureBoxTool.Place(_outline, box);
@@ -271,6 +279,7 @@ public partial class CertificatesPanel : ToolPanel
         {
             if (!fromStore) certificate.Dispose();
             SetWorking(false);
+            if (tab.Session.Current.Length != before) ClearBox();
             if (!finished || tab.Session.Current.Length != before) tab.Reload();
         }
         if (tab.Session.Current.Length == before) return;
