@@ -23,6 +23,7 @@
                                 <TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis" />
                                 <TextBlock Text="{Binding Status}" Style="{StaticResource SecondaryBodyText}" FontSize="12" />
                                 <TextBlock Text="{Binding Sentence}" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding Caveat}" Visibility="{Binding CaveatVisibility}" Style="{StaticResource SecondaryBodyText}" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
                             </StackPanel>
                         </DockPanel>
                         <DataTemplate.Triggers>

@@ -2998,6 +2998,9 @@
   <data name="Not every removed string could be checked." xml:space="preserve">
     <value>Kaldırılan her dize denetlenemedi.</value>
   </data>
+  <data name="Not everything could be checked. See the details." xml:space="preserve">
+    <value>Her şey denetlenemedi. Ayrıntılara bakın.</value>
+  </data>
   <data name="Not exported" xml:space="preserve">
     <value>Dışa aktarılmadı</value>
   </data>

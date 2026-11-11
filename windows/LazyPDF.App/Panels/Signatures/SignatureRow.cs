@@ -32,7 +32,11 @@ public sealed class SignatureRow(SignatureReport report, int page, Rect where)
 
     public string Sentence => Flaw is { } flaw ? SignatureText.Title(flaw) + ". " + SignatureText.Advice(flaw) : Report.Sentence;
 
-    public string Summary => Title + ", " + Status + ". " + Sentence;
+    public string Caveat => Level == SignatureLevel.Good && NotChecked().Count > 0 ? Loc.T("Not everything could be checked. See the details.") : "";
+
+    public Visibility CaveatVisibility => Caveat.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+
+    public string Summary => Title + ", " + Status + ". " + Sentence + (Caveat.Length == 0 ? "" : " " + Caveat);
 
     public SignatureLevel Level => Report.Verdict switch
     {

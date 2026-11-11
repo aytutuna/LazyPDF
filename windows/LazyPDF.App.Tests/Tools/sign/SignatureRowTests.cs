@@ -57,6 +57,15 @@ public sealed class SignatureRowTests
     }
 
     [Fact]
+    public void AGoodSignatureSaysWhenSomethingWasNotChecked()
+    {
+        var (_, report) = Signed(comment: false, trusted: true);
+
+        Assert.NotEmpty(new SignatureRow(report with { RevocationChecked = false }, 0, Rect.Empty).Caveat);
+        Assert.Empty(new SignatureRow(report with { RevocationChecked = true, TimestampTime = Now }, 0, Rect.Empty).Caveat);
+    }
+
+    [Fact]
     public void ALaterCommentIsListedAsAChangeSinceSigning()
     {
         var (_, report) = Signed(comment: true);
