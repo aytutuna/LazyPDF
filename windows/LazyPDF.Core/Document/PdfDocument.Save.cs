@@ -49,6 +49,6 @@ public sealed partial class PdfDocument
     internal int IndexInObjectStream(int number)
     {
         if (!_entries.TryGetValue(number, out var entry) || entry.Kind != EntryKind.Compressed) return 0;
-        return Math.Max(0, LoadObjectStream(entry.StreamNumber)?.Numbers.IndexOf(number) ?? 0);
+        return LoadObjectStream(entry.StreamNumber)?.NumberIndex.GetValueOrDefault(number) ?? 0;
     }
 }

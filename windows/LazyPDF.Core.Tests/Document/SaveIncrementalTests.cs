@@ -270,6 +270,64 @@ public class SaveIncrementalTests
         Assert.Equal(SaveFixtures.PageOne, Text(reopened.Pages[0].Contents()));
     }
 
+    /// <summary>Objects 1 to <paramref name="members"/> in one object stream, the page's content and the stream itself after them, no cross-reference data.</summary>
+    private static byte[] BigObjectStreamFile(int members)
+    {
+        string[] first =
+        [
+            "<</Type /Catalog /Pages 2 0 R>>",
+            "<</Type /Pages /Kids [3 0 R] /Count 1>>",
+            $"<</Type /Page /Parent 2 0 R /Contents {members + 1} 0 R /MediaBox [0 0 100 100]>>",
+        ];
+        var header = new StringBuilder();
+        var body = new StringBuilder();
+        for (int n = 1; n <= members; n++)
+        {
+            header.Append(n).Append(' ').Append(body.Length).Append(' ');
+            body.Append(n <= first.Length ? first[n - 1] : n.ToString()).Append('\n');
+        }
+        var pdf = new TestPdf("%PDF-1.5\n");
+        pdf.Stream(members + 1, "", "q Q");
+        pdf.Stream(members + 2, $"/Type /ObjStm /N {members} /First {header.Length} /Filter /FlateDecode", TestPdf.Deflate(TestPdf.Latin(header.ToString() + body)));
+        return [.. pdf.FinishWithoutXref(), .. TestPdf.Latin("startxref\n12\n%%EOF\n")];
+    }
+
+    [Fact]
+    public void ObjectStreamIndexesPastTheTwoByteRangeAreWrittenInFullAfterARebuild()
+    {
+        var document = PdfDocument.Open(BigObjectStreamFile(70000));
+        Assert.True(document.XrefRebuilt);
+        document.Set(70001, new PdfNumber(1));
+        byte[] saved = document.SaveIncremental();
+        Assert.Contains("/W [1 3 3]", Text(saved));
+
+        var reopened = PdfDocument.Open(saved);
+        Assert.False(reopened.XrefRebuilt);
+        Assert.Equal(70000, ((PdfNumber)reopened.Get(70000)!).Integer);
+        Assert.Equal(40000, ((PdfNumber)reopened.Get(40000)!).Integer);
+        Assert.Equal("Catalog", reopened.Name(reopened.Catalog, "Type"));
+    }
+
+    [Fact]
+    public void SmallRebuiltFileKeepsATwoByteIndexField()
+    {
+        var document = PdfDocument.Open(TestPdf.Replace(SaveFixtures.Make("objects"), "startxref", "startxxxxx"));
+        document.Info!["Title"] = new PdfString([67], isHex: false);
+        Assert.Contains("/W [1 2 2]", Text(document.SaveIncremental()));
+    }
+
+    [Fact]
+    public void ObjectStreamIndexesOfThousandsOfMembersAreFound()
+    {
+        var document = PdfDocument.Open(BigObjectStreamFile(20000));
+        Assert.True(document.XrefRebuilt);
+        document.Set(20001, new PdfNumber(1));
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        byte[] saved = document.SaveIncremental();
+        Assert.True(watch.ElapsedMilliseconds < 1000, $"took {watch.ElapsedMilliseconds} ms");
+        Assert.Equal(20000, ((PdfNumber)PdfDocument.Open(saved).Get(20000)!).Integer);
+    }
+
     [Fact]
     public void FileThatDoesNotEndInALineBreakStillGetsAnUpdateOnItsOwnLine()
     {

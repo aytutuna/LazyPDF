@@ -29,6 +29,15 @@ public sealed partial class PdfDocument
         public int Size { get; } = size;
         public Dictionary<int, int> Offsets { get; } = offsets;
         public List<int> Numbers { get; } = numbers;
+        public Dictionary<int, int> NumberIndex => _numberIndex ??= BuildNumberIndex();
+        private Dictionary<int, int>? _numberIndex;
+
+        private Dictionary<int, int> BuildNumberIndex()
+        {
+            var index = new Dictionary<int, int>(Numbers.Count);
+            for (int i = 0; i < Numbers.Count; i++) index.TryAdd(Numbers[i], i);
+            return index;
+        }
     }
 
     private readonly Dictionary<int, Slot> _objects = [];
