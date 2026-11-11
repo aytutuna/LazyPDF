@@ -60,7 +60,7 @@ public sealed partial class SanitizePanel : ToolPanel
         if (!ReferenceEquals(Tab, tab) || tab.Revision != revision) return;
         _rows = [.. findings.Select(f => new SanitizeRow(f))];
         Rows.ItemsSource = _rows;
-        Found.Text = _rows.Count == 0 ? Loc.T("Nothing found of the kinds listed here. Text inside pictures is not looked at.") : Loc.T("Tick what to remove.");
+        Found.Text = _rows.Count == 0 ? Loc.T("Nothing found. Text inside pictures is not looked at.") : Loc.T("Tick what to remove.");
         RaiseActionChanged();
     }
 
