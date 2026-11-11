@@ -29,7 +29,7 @@ public static class Problems
         new(Loc.T("This file cannot be changed"), Loc.T("Its permissions do not allow it. Open it with the owner password."));
 
     public static Problem Crashed() =>
-        new(Loc.T("Something went wrong"), Loc.T("Lazy PDF could not finish what it was doing. Your changes are still open. Save them, then close and reopen the app."));
+        new(Loc.T("Something went wrong"), Loc.T("Lazy PDF could not finish what it was doing. Your changes are still open. Use Save as to keep a copy, then close and reopen the app."));
 
     public static Problem Save(Exception error, string name) => error switch
     {

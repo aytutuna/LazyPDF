@@ -62,9 +62,14 @@ public partial class App : Application
     {
         System.Diagnostics.Trace.TraceError(e.Exception.ToString());
         if (e.Exception is OutOfMemoryException || MainWindow is not MainWindow { IsLoaded: true } window) return;
+        // A failure in layout or rendering comes back on every pass; let a repeat end the process so recovery takes over.
+        if (DateTime.UtcNow - _lastHandled < TimeSpan.FromSeconds(5)) return;
+        _lastHandled = DateTime.UtcNow;
         window.ShowProblem(Problems.Crashed());
         e.Handled = true;
     }
+
+    private DateTime _lastHandled;
 
     /// <summary>
     /// The files a command line asks for: each argument is a path, except one that starts with <c>lazypdf:</c>, which
