@@ -23,10 +23,18 @@ struct MacMenus: Commands {
                 .disabled(!free)
             Menu(L10n.t("Open Recent")) {
                 ForEach(vm.recent, id: \.url) { item in
-                    Button(item.name) { Task { await vm.openRecent(item) } }
+                    Button(item.name) {
+                        Task {
+                            await vm.openRecent(item)
+                            if vm.tab(of: item.url) != nil { NSDocumentController.shared.noteNewRecentDocumentURL(item.url) }
+                        }
+                    }
                 }
                 Divider()
-                Button(L10n.t("Clear menu")) { vm.clearRecent() }
+                Button(L10n.t("Clear menu")) {
+                    vm.clearRecent()
+                    NSDocumentController.shared.clearRecentDocuments(nil)
+                }
                     .disabled(vm.recent.isEmpty)
             }
             .disabled(!free)

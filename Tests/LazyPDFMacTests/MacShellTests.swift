@@ -35,6 +35,28 @@ final class MacAddressTests: XCTestCase {
     }
 }
 @MainActor
+final class MacSystemRecentsTests: XCTestCase {
+    override func tearDown() async throws {
+        NSDocumentController.shared.clearRecentDocuments(nil)
+    }
+
+    func test_anOpenedFileIsInTheSystemRecentList() async throws {
+        let shell = MacShell.shared
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("recent-\(UUID().uuidString).pdf")
+        try Data(MacPdfs.text()).write(to: file)
+        defer { try? FileManager.default.removeItem(at: file) }
+
+        shell.open([file])
+        for _ in 0..<100 where shell.vm.tab(of: file) == nil { try await Task.sleep(nanoseconds: 50_000_000) }
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        XCTAssertTrue(NSDocumentController.shared.recentDocumentURLs.contains { $0.lastPathComponent == file.lastPathComponent })
+        NSDocumentController.shared.clearRecentDocuments(nil)
+        XCTAssertTrue(NSDocumentController.shared.recentDocumentURLs.isEmpty)
+    }
+}
+
+@MainActor
 final class MacWindowStateTests: XCTestCase {
     func test_theWindowFollowsTheActiveDocument() async throws {
         let shell = MacShell.shared
