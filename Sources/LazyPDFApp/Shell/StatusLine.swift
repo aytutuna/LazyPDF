@@ -1,4 +1,5 @@
 import Foundation
+import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Services/StatusLine.cs: the status line shows at most six words of the status sentence,
 // facts only, and the whole sentence stays the line's accessible name.
@@ -33,6 +34,18 @@ public enum StatusLine {
         }
         let line = kept.joined(separator: " ")
         return String(line.reversed().drop(while: { ",:;. ".contains($0) }).reversed()) + "\u{2026}"
+    }
+
+    /// The page's own label when the file has one that differs from its number.
+    public static func page(label: String, index: Int, count: Int) -> String {
+        label == String(index + 1) ? L10n.t("Page {0} of {1}", index + 1, count) : L10n.t("Page {0} ({1} of {2})", label, index + 1, count)
+    }
+
+    public static func size(widthPt: Double, heightPt: Double, metric: Bool) -> String {
+        if metric {
+            return L10n.t("{0} × {1} mm", (widthPt * 25.4 / 72).rounded(), (heightPt * 25.4 / 72).rounded())
+        }
+        return L10n.t("{0} × {1} in", (widthPt / 72 * 10).rounded() / 10, (heightPt / 72 * 10).rounded() / 10)
     }
 
     private static func isWord(_ token: Substring) -> Bool {

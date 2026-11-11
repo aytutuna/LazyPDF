@@ -32,6 +32,16 @@ final class StatusLineTests: XCTestCase {
     func test_wordsCountOnlyTokensWithALetterOrDigit() {
         XCTAssertEqual(StatusLine.words("Page 3 \u{B7} done \u{2014}"), 3)
     }
+
+    func test_aPageLabelThatDiffersFromTheNumberIsShownWithIt() {
+        XCTAssertEqual(StatusLine.page(label: "iv", index: 3, count: 10), "Page iv (4 of 10)")
+        XCTAssertEqual(StatusLine.page(label: "4", index: 3, count: 10), "Page 4 of 10")
+    }
+
+    func test_thePageSizeIsInMillimetresOrInches() {
+        XCTAssertEqual(StatusLine.size(widthPt: 595.3, heightPt: 841.9, metric: true), "210 × 297 mm")
+        XCTAssertEqual(StatusLine.size(widthPt: 612, heightPt: 792, metric: false), "8.5 × 11 in")
+    }
 }
 
 final class AttachmentFilesTests: XCTestCase {

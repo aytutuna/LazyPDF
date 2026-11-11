@@ -39,6 +39,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     private let commands: ShellCommands
     private let toolAction: (String) -> ToolAction?
     private let heldStage: () -> AnyView?
+    private let readout: ((DocumentTab) -> (label: String, zoom: Double)?)?
     private let stage: (DocumentTab) -> Stage
     private let sidePane: (String, DocumentTab) -> SidePane
     private let inspector: (String, DocumentTab) -> Inspector
@@ -57,6 +58,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     public init(_ vm: AppViewModel, commands: ShellCommands = ShellCommands(),
                 toolAction: @escaping (String) -> ToolAction? = { _ in nil },
                 heldStage: @escaping () -> AnyView? = { nil },
+                readout: ((DocumentTab) -> (label: String, zoom: Double)?)? = nil,
                 @ViewBuilder stage: @escaping (DocumentTab) -> Stage,
                 @ViewBuilder sidePane: @escaping (String, DocumentTab) -> SidePane,
                 @ViewBuilder inspector: @escaping (String, DocumentTab) -> Inspector) {
@@ -64,6 +66,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         self.commands = commands
         self.toolAction = toolAction
         self.heldStage = heldStage
+        self.readout = readout
         self.stage = stage
         self.sidePane = sidePane
         self.inspector = inspector
@@ -198,7 +201,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             } else {
                 HomeScreen(vm: vm, chooseTile: chooseTile).disabled(frozen)
             }
-            StatusBar(vm: vm)
+            StatusBar(vm: vm, readout: readout)
         }
     }
 
@@ -321,7 +324,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             if vm.activeDocument != nil {
                 compactBar.disabled(frozen)
             }
-            StatusBar(vm: vm)
+            StatusBar(vm: vm, readout: readout)
         }
     }
 
@@ -403,7 +406,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
                     }
                 }
                 .safeAreaInset(edge: .top, spacing: 0) { InfoBar(vm: vm, announces: false) }
-                .safeAreaInset(edge: .bottom, spacing: 0) { StatusBar(vm: vm, announces: false) }
+                .safeAreaInset(edge: .bottom, spacing: 0) { StatusBar(vm: vm, announces: false, readout: readout) }
         }
         .presentationDetents([.medium, .large])
         .interactiveDismissDisabled(vm.isBusy)
@@ -423,7 +426,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
                 }
             }
             .safeAreaInset(edge: .top, spacing: 0) { InfoBar(vm: vm, announces: false) }
-            .safeAreaInset(edge: .bottom, spacing: 0) { StatusBar(vm: vm, announces: false) }
+            .safeAreaInset(edge: .bottom, spacing: 0) { StatusBar(vm: vm, announces: false, readout: readout) }
         }
         .presentationDetents([.height(Self.smallSheet), .medium, .large], selection: $toolDetent)
         .presentationBackgroundInteraction(.enabled(upThrough: .medium))

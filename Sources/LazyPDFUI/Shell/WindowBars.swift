@@ -49,6 +49,8 @@ struct InfoBar: View {
 struct StatusBar: View {
     let vm: AppViewModel
     var announces = true
+    var readout: ((DocumentTab) -> (label: String, zoom: Double)?)?
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
         let spoken = vm.isBusy ? vm.busyText : vm.statusFull
@@ -61,8 +63,12 @@ struct StatusBar: View {
                 .accessibilityLabel(spoken)
             Spacer(minLength: 12)
             if let tab = vm.activeDocument {
-                let page = pageText(tab)
-                let zoom = zoomText(tab)
+                let shown = readout?(tab)
+                let page = pageText(tab, label: shown?.label)
+                let zoom = zoomText(tab, shown?.zoom)
+                if sizeClass != .compact, let size = sizeText(tab) {
+                    Text(size).font(.callout).fixedSize().accessibilityLabel("\(L10n.t("Page size")) \(size)")
+                }
                 Text(page).font(.callout).fixedSize()
                 Text(zoom).font(.callout).fixedSize().accessibilityLabel("\(L10n.t("Zoom")) \(zoom)")
             }
@@ -88,15 +94,24 @@ struct StatusBar: View {
     }
 
     // Reading the revision makes the line follow the tab when its bytes change.
-    private func pageText(_ tab: DocumentTab) -> String {
+    private func pageText(_ tab: DocumentTab, label: String?) -> String {
         _ = tab.revision
         let count = tab.pageCount
         let index = min(max(tab.pageIndex, 0), max(0, count - 1))
-        return L10n.t("Page {0} of {1}", index + 1, count)
+        return StatusLine.page(label: label ?? String(index + 1), index: index, count: count)
     }
 
-    private func zoomText(_ tab: DocumentTab) -> String {
-        tab.zoom > 0 ? L10n.t("{0} %", Int((tab.zoom * 100).rounded())) : L10n.t("Fit")
+    private func zoomText(_ tab: DocumentTab, _ shown: Double?) -> String {
+        let zoom = shown ?? tab.zoom
+        return zoom > 0 ? L10n.t("{0} %", Int((zoom * 100).rounded())) : L10n.t("Fit")
+    }
+
+    private func sizeText(_ tab: DocumentTab) -> String? {
+        _ = tab.revision
+        let pages = tab.document.pages
+        guard !pages.isEmpty else { return nil }
+        let geometry = PageGeometry(pages[min(max(tab.pageIndex, 0), pages.count - 1)])
+        return StatusLine.size(widthPt: geometry.width, heightPt: geometry.height, metric: Locale.current.measurementSystem == .metric)
     }
 }
 #endif

@@ -30,7 +30,7 @@ struct MacWindow: View {
         let vm = shell.vm
         let viewer = shell.viewer
         let panels = shell.panels
-        AppWindow(vm, commands: shell.commands, toolAction: { panels.action(for: $0) }, heldStage: { panels.stage }, stage: { _ in
+        AppWindow(vm, commands: shell.commands, toolAction: { panels.action(for: $0) }, heldStage: { panels.stage }, readout: { (viewer.pageLabel($0.pageIndex), viewer.zoom) }, stage: { _ in
             PageViewerView(viewer: viewer)
         }, sidePane: { id, tab in
             SidePanelView(id: id, tab: tab, viewer: viewer, host: vm, folders: shell.folders)
