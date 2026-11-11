@@ -43,7 +43,7 @@ public final class ImageIOCodec: ImageCodec {
                 continue
             }
             guard let image = CGImageSourceCreateImageAtIndex(source, index, nil), let frame = Self.rgba(image) else { return nil }
-            let dpiX = properties[kCGImagePropertyDPIWidth] as? Double ?? 0, dpiY = properties[kCGImagePropertyDPIHeight] as? Double ?? 0
+            let (dpiX, dpiY) = Self.density(properties)
             frames.append(PdfRgbaImage(frame.width, frame.height, frame.rgba, dpiX: dpiX, dpiY: dpiY))
         }
         return frames
@@ -56,6 +56,27 @@ public final class ImageIOCodec: ImageCodec {
         let options = [kCGImageDestinationLossyCompressionQuality: Double(min(max(quality, 1), 100)) / 100]
         CGImageDestinationAddImage(destination, picture, options as CFDictionary)
         return CGImageDestinationFinalize(destination) ? [UInt8](data as Data) : []
+    }
+
+    // Only a density the file stores: the DPIWidth property says 72 for a file with none, where WIC says 96.
+    private static func density(_ properties: [CFString: Any]) -> (Double, Double) {
+        func number(_ dictionary: CFString, _ key: CFString) -> Double? { (properties[dictionary] as? [CFString: Any])?[key] as? Double }
+        if let x = number(kCGImagePropertyPNGDictionary, kCGImagePropertyPNGXPixelsPerMeter),
+           let y = number(kCGImagePropertyPNGDictionary, kCGImagePropertyPNGYPixelsPerMeter) { return (x * 0.0254, y * 0.0254) }
+        // JFIF unit 0 only gives the aspect ratio.
+        if let unit = number(kCGImagePropertyJFIFDictionary, kCGImagePropertyJFIFDensityUnit), unit == 1 || unit == 2,
+           let x = number(kCGImagePropertyJFIFDictionary, kCGImagePropertyJFIFXDensity),
+           let y = number(kCGImagePropertyJFIFDictionary, kCGImagePropertyJFIFYDensity) {
+            let scale = unit == 2 ? 2.54 : 1
+            return (x * scale, y * scale)
+        }
+        let unit = number(kCGImagePropertyTIFFDictionary, kCGImagePropertyTIFFResolutionUnit) ?? 2
+        if unit == 2 || unit == 3, let x = number(kCGImagePropertyTIFFDictionary, kCGImagePropertyTIFFXResolution),
+           let y = number(kCGImagePropertyTIFFDictionary, kCGImagePropertyTIFFYResolution) {
+            let scale = unit == 3 ? 2.54 : 1
+            return (x * scale, y * scale)
+        }
+        return (0, 0)
     }
 
     private static func rgba(_ image: CGImage) -> PdfRgbaImage? {

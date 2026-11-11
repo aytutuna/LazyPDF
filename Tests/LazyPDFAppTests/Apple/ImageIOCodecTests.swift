@@ -123,6 +123,23 @@ final class ImageIOCodecTests: XCTestCase {
         XCTAssertEqual(codec.decodeFile(try encode("com.compuserve.gif", [cgImage(gradient(9, 9))]))?.count, 1)
     }
 
+    func test_aPngWithoutADensityHasNoResolution() throws {
+        let frame = try XCTUnwrap(codec.decodeFile(try encode("public.png", [cgImage(gradient(9, 9))]))?.first)
+        XCTAssertEqual(frame.dpiX, 0)
+        XCTAssertEqual(frame.dpiY, 0)
+    }
+
+    func test_aPngKeepsTheDensityItStores() throws {
+        let data = NSMutableData()
+        let destination = try XCTUnwrap(CGImageDestinationCreateWithData(data, "public.png" as CFString, 1, nil))
+        let density = [kCGImagePropertyPNGXPixelsPerMeter: 11811, kCGImagePropertyPNGYPixelsPerMeter: 11811]
+        CGImageDestinationAddImage(destination, cgImage(gradient(9, 9)), [kCGImagePropertyPNGDictionary: density] as CFDictionary)
+        XCTAssertTrue(CGImageDestinationFinalize(destination))
+        let frame = try XCTUnwrap(codec.decodeFile([UInt8](data as Data))?.first)
+        XCTAssertEqual(frame.dpiX, 300, accuracy: 0.1)
+        XCTAssertEqual(frame.dpiY, 300, accuracy: 0.1)
+    }
+
     func test_aDctStreamIsDecodedAsAJpeg() throws {
         let jpeg = codec.encodeJpeg(gradient(32, 32), 90)
 
