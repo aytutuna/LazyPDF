@@ -2863,6 +2863,9 @@
   <data name="Move pages" xml:space="preserve">
     <value>Sayfaları taşı</value>
   </data>
+  <data name="Move point" xml:space="preserve">
+    <value>Noktayı taşı</value>
+  </data>
   <data name="Move step down" xml:space="preserve">
     <value>Adımı aşağı taşı</value>
   </data>

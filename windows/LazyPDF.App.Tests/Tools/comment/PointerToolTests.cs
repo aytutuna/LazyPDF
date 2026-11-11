@@ -405,6 +405,32 @@ public sealed class PointerToolTests
     }
 
     [Fact]
+    public void ALineShowsRoundHandlesAtItsEndsAndMovingOneAsksForThePoint()
+    {
+        OnSta(() =>
+        {
+            using var f = new CommentFixture();
+            var viewer = ViewerStandIn.Create(out var stand);
+            f.Marker.Add(MarkTool.Line, 0, [new Point(100, 100), new Point(300, 200)], Red);
+            f.Tab.Commit("Line");
+            var tool = new EditTool(viewer, () => f.Marker);
+            tool.Press(Press(new Point(200, 150)));
+            tool.Release(Drag(new Point(200, 150)));
+            var moves = new List<(int, Point)>();
+            tool.VertexMoved += (_, index, to) => moves.Add((index, to));
+
+            Assert.Equal(3, stand.Overlays[0].Children.Count);
+            tool.Press(Press(new Point(300, 200)));
+            tool.Move(Drag(new Point(340, 260)));
+            tool.Release(Drag(new Point(340, 260)));
+
+            var (index, at) = Assert.Single(moves);
+            Assert.Equal(1, index);
+            Assert.Equal(new Point(340, 260), at);
+        });
+    }
+
+    [Fact]
     public void RedrawingAfterTheMarksPageWentAwayDrawsNothing()
     {
         OnSta(() =>

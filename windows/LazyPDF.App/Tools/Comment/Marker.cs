@@ -301,6 +301,46 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         return _writer.Move(a, x1 - x0, y1 - y0);
     }
 
+    private static string PointKey(PdfAnnotation a) => a.Type == AnnotationType.Line ? "L" : "Vertices";
+
+    private static IReadOnlyList<double>? UserPoints(PdfAnnotation a) => a.Type switch
+    {
+        AnnotationType.Line when a.Line.Count >= 4 => a.Line,
+        AnnotationType.PolyLine or AnnotationType.Polygon when a.Vertices.Count >= 4 => a.Vertices,
+        _ => null,
+    };
+
+    /// <summary>The ends of a line or the corners of a polygon in display space; null for a mark that moves only by its box, and for a measurement.</summary>
+    public Point[]? PointsOf(PdfAnnotation a)
+    {
+        if (UserPoints(a) is not { } xy || a.Dictionary.ContainsKey("Measure")) return null;
+        var geometry = new PageGeometry(document.Pages[a.PageIndex]);
+        int count = a.Type == AnnotationType.Line ? 2 : xy.Count / 2;
+        return [.. Enumerable.Range(0, count).Select(i =>
+        {
+            var (x, y) = geometry.ToDisplay(xy[2 * i], xy[2 * i + 1]);
+            return new Point(x, y);
+        })];
+    }
+
+    /// <summary>Moves one end or corner and keeps the room the box had around the points for the border and the heads.</summary>
+    public PdfAnnotation MovePoint(PdfAnnotation a, int index, Point to)
+    {
+        if (PointsOf(a) is null || UserPoints(a) is not { } old) throw new ArgumentException("This mark has no points to move.", nameof(a));
+        var (x, y) = new PageGeometry(document.Pages[a.PageIndex]).ToUser(to.X, to.Y);
+        double[] xy = [.. old];
+        xy[2 * index] = x;
+        xy[2 * index + 1] = y;
+        double[] oldX = [.. old.Where((_, i) => i % 2 == 0)], oldY = [.. old.Where((_, i) => i % 2 == 1)];
+        double[] newX = [.. xy.Where((_, i) => i % 2 == 0)], newY = [.. xy.Where((_, i) => i % 2 == 1)];
+        a.Dictionary[PointKey(a)] = new PdfArray([.. xy.Select(v => (PdfObject)new PdfNumber(v))]);
+        a.Dictionary["Rect"] = new PdfRect(
+            newX.Min() - (oldX.Min() - a.Rect.Left), newY.Min() - (oldY.Min() - a.Rect.Bottom),
+            newX.Max() + (a.Rect.Right - oldX.Max()), newY.Max() + (a.Rect.Top - oldY.Max())).ToArray();
+        _writer.Regenerate(a);
+        return Find(a.PageIndex, a.Reference!.Number) ?? a;
+    }
+
     public PdfAnnotation Resize(PdfAnnotation a, Rect box)
     {
         var geometry = new PageGeometry(document.Pages[a.PageIndex]);

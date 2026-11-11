@@ -2660,6 +2660,9 @@
   "Move": {
     "tr": "Taşı"
   },
+  "Move point": {
+    "tr": "Noktayı taşı"
+  },
   "Move marks": {
     "tr": "İşaretleri taşı"
   },

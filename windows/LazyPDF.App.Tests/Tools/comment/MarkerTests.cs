@@ -401,4 +401,51 @@ public sealed class MarkerTests
         Assert.True(headed.HasAppearance);
         Assert.Equal("Help", iconed.IconName);
     }
+
+    [Fact]
+    public void MovingOneEndOfALineLeavesTheOtherAndKeepsBothInTheBox()
+    {
+        using var f = new CommentFixture();
+        var line = f.Marker.Add(MarkTool.Line, 0, [new Point(100, 100), new Point(300, 300)], Red);
+
+        var moved = f.Marker.MovePoint(line, 1, new Point(400, 200));
+
+        var ends = f.Marker.PointsOf(moved)!;
+        Assert.Equal(100, ends[0].X, 0.5);
+        Assert.Equal(100, ends[0].Y, 0.5);
+        Assert.Equal(400, ends[1].X, 0.5);
+        Assert.Equal(200, ends[1].Y, 0.5);
+        var box = f.Marker.BoxOf(moved);
+        Assert.True(box.Contains(ends[0]) && box.Contains(ends[1]));
+        Assert.True(moved.HasAppearance);
+    }
+
+    [Fact]
+    public void MovingACornerOfAPolygonChangesOnlyThatCorner()
+    {
+        using var f = new CommentFixture();
+        var shape = f.Marker.Add(MarkTool.Polygon, 0, [new Point(100, 100), new Point(300, 100), new Point(300, 300), new Point(100, 300)], Red);
+
+        var moved = f.Marker.MovePoint(shape, 2, new Point(350, 350));
+
+        var corners = f.Marker.PointsOf(moved)!;
+        Assert.Equal(4, corners.Length);
+        Assert.Equal(350, corners[2].X, 0.5);
+        Assert.Equal(350, corners[2].Y, 0.5);
+        Assert.Equal(300, corners[1].X, 0.5);
+        Assert.Equal(100, corners[3].X, 0.5);
+    }
+
+    [Fact]
+    public void AMeasurementAndABoxHaveNoPointsToMove()
+    {
+        using var f = new CommentFixture();
+        var line = f.Marker.Add(MarkTool.Line, 0, Drag, Red);
+        line.Dictionary["Measure"] = new PdfDictionary();
+        var box = f.Marker.Add(MarkTool.Rectangle, 0, Drag, Red);
+
+        Assert.Null(f.Marker.PointsOf(line));
+        Assert.Null(f.Marker.PointsOf(box));
+        Assert.Throws<ArgumentException>(() => f.Marker.MovePoint(line, 0, new Point(10, 10)));
+    }
 }

@@ -148,6 +148,7 @@ public partial class CommentPanel : ToolPanel
         _edit.SelectionChanged += Edit_SelectionChanged;
         _edit.Moved += Edit_Moved;
         _edit.Resized += Edit_Resized;
+        _edit.VertexMoved += Edit_VertexMoved;
         _edit.EditRequested += Edit_EditRequested;
         Tab!.Changed += Tab_Changed;
         _allowed = Exchange.CanComment(Tab.Document);
