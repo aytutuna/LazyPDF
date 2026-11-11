@@ -4759,6 +4759,12 @@
   "Only the first 5000 files were added.": {
     "tr": "Yalnızca ilk 5000 dosya eklendi."
   },
+  "The results folder was left out.": {
+    "tr": "Sonuç klasörü dışarıda bırakıldı."
+  },
+  "Looking for PDFs": {
+    "tr": "PDF dosyaları aranıyor"
+  },
   "Files to run on": {
     "tr": "İşlenecek dosyalar"
   },

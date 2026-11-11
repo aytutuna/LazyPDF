@@ -1,5 +1,6 @@
 // The files, the results folder, running the steps and the watched folder.
 
+using System.IO.Enumeration;
 using System.Windows;
 using System.Windows.Controls;
 using LazyPDF.App.Documents;
@@ -9,6 +10,8 @@ namespace LazyPDF.App.Tools.Batch;
 
 public partial class BatchPanel
 {
+    private const int MaxFiles = 5000;
+
     // One file at a time, so a run and the watcher never share the Bates numbers or the output names.
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly Queue<string> _arrived = new();
@@ -66,11 +69,11 @@ public partial class BatchPanel
         AddFiles(dialog.FileNames);
     }
 
-    private void AddFolder_Click(object sender, RoutedEventArgs e)
+    private async void AddFolder_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFolderDialog { Title = Loc.T("Folder of PDFs") };
         if (dialog.ShowDialog() != true) return;
-        AddFiles(PdfsIn(dialog.FolderName, IncludeSubfolders.IsChecked == true), dialog.FolderName);
+        AddFiles(await PdfsInAsync(dialog.FolderName, IncludeSubfolders.IsChecked == true), dialog.FolderName);
     }
 
     private void Panel_DragOver(object sender, DragEventArgs e)
@@ -80,7 +83,7 @@ public partial class BatchPanel
         e.Handled = true;
     }
 
-    private void Panel_Drop(object sender, DragEventArgs e)
+    private async void Panel_Drop(object sender, DragEventArgs e)
     {
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
         e.Handled = true;
@@ -88,7 +91,7 @@ public partial class BatchPanel
         bool added = false;
         foreach (var folder in paths.Where(Directory.Exists))
         {
-            var inside = PdfsIn(folder, IncludeSubfolders.IsChecked == true);
+            var inside = await PdfsInAsync(folder, IncludeSubfolders.IsChecked == true);
             AddFiles(inside, folder);
             added |= inside.Count > 0;
         }
@@ -97,30 +100,73 @@ public partial class BatchPanel
         if (!added && singles.Count == 0 && !_folderFailed) Host?.SetStatus(Loc.T("Only PDF files can be added."));
     }
 
-    internal List<string> PdfsIn(string folder, bool recurse)
+    internal async Task<List<string>> PdfsInAsync(string folder, bool recurse)
     {
-        const int Limit = 5000;
+        string? results = _set.OutputFolder.Length > 0 ? Path.TrimEndingDirectorySeparator(Path.GetFullPath(_set.OutputFolder)) : null;
         try
         {
-            // Links are skipped so a folder that points back up cannot loop.
-            var options = new EnumerationOptions { RecurseSubdirectories = recurse, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint | FileAttributes.System };
-            var found = Directory.EnumerateFiles(folder, "*.pdf", options).Take(Limit + 1).ToList();
-            if (found.Count > Limit)
+            List<string>? found = null;
+            bool leftOut = false;
+            if (Host is null) found = Walk(folder, recurse, results, out leftOut, CancellationToken.None);
+            else await Host.RunBusyAsync(Loc.T("Looking for PDFs"), async token =>
             {
-                found.RemoveAt(Limit);
+                var walked = await Task.Run(() => (Files: Walk(folder, recurse, results, out bool skipped, token), Skipped: skipped));
+                (found, leftOut) = (walked.Files, walked.Skipped);
+            });
+            if (found is null)
+            {
+                _folderFailed = true;
+                return [];
+            }
+            if (found.Count > MaxFiles)
+            {
+                found.RemoveAt(MaxFiles);
                 Host?.SetStatus(Loc.T("Only the first 5000 files were added."));
             }
-            found.Sort((a, b) => string.Compare(System.IO.Path.GetRelativePath(folder, a), System.IO.Path.GetRelativePath(folder, b), StringComparison.CurrentCultureIgnoreCase));
+            else if (leftOut)
+            {
+                _folderFailed = true;
+                Host?.SetStatus(Loc.T("The results folder was left out."));
+            }
+            found.Sort((a, b) => string.Compare(Path.GetRelativePath(folder, a), Path.GetRelativePath(folder, b), StringComparison.CurrentCultureIgnoreCase));
             return found;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             _folderFailed = true;
-            var leaf = System.IO.Path.GetFileName(folder.TrimEnd('\\', '/'));
+            var leaf = Path.GetFileName(folder.TrimEnd('\\', '/'));
             Host?.ShowProblem(new Problem(Loc.T("Folder not read"),
                 Loc.T("{0} could not be read. Check that it is there and that you may open it.", leaf.Length > 0 ? leaf : folder)));
             return [];
         }
+    }
+
+    // Links to folders are not followed so a folder that points back up cannot loop, and the results folder is left out so results never run again.
+    internal static List<string> Walk(string folder, bool recurse, string? results, out bool leftOut, CancellationToken token)
+    {
+        bool skipped = false;
+        var options = new EnumerationOptions { RecurseSubdirectories = recurse, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.Hidden | FileAttributes.System };
+        var files = new FileSystemEnumerable<string>(folder, (ref FileSystemEntry e) => e.ToFullPath(), options)
+        {
+            ShouldIncludePredicate = (ref FileSystemEntry e) =>
+            {
+                token.ThrowIfCancellationRequested();
+                if (e.IsDirectory || !e.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)) return false;
+                bool inResults = results is not null && e.ToFullPath().StartsWith(results + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+                skipped |= inResults;
+                return !inResults;
+            },
+            ShouldRecursePredicate = (ref FileSystemEntry e) =>
+            {
+                if ((e.Attributes & FileAttributes.ReparsePoint) != 0) return false;
+                bool inResults = results is not null && string.Equals(e.ToFullPath(), results, StringComparison.OrdinalIgnoreCase);
+                skipped |= inResults;
+                return !inResults;
+            },
+        };
+        var found = files.Take(MaxFiles + 1).ToList();
+        leftOut = skipped;
+        return found;
     }
 
     internal void AddFiles(IEnumerable<string> paths, string? root = null)

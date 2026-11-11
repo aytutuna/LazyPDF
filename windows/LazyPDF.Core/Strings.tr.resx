@@ -3064,6 +3064,9 @@
   <data name="Looking at the pages" xml:space="preserve">
     <value>Sayfalara bakılıyor</value>
   </data>
+  <data name="Looking for PDFs" xml:space="preserve">
+    <value>PDF dosyaları aranıyor</value>
+  </data>
   <data name="Looking for blank pages" xml:space="preserve">
     <value>Boş sayfalar aranıyor</value>
   </data>
@@ -6429,6 +6432,9 @@
   </data>
   <data name="The result opens as a new file. This file is not changed." xml:space="preserve">
     <value>Sonuç yeni bir dosya olarak açılır. Bu dosya değişmez.</value>
+  </data>
+  <data name="The results folder was left out." xml:space="preserve">
+    <value>Sonuç klasörü dışarıda bırakıldı.</value>
   </data>
   <data name="The same form is painted twice." xml:space="preserve">
     <value>Aynı form iki kez çizilmiş.</value>

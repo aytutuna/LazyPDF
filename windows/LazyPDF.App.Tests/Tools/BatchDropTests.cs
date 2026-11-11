@@ -72,34 +72,32 @@ public sealed class BatchDropTests
     });
 
     [Fact]
-    public Task AFolderThatCannotBeListedShowsAProblem() => Sta.Run(() =>
+    public Task AFolderThatCannotBeListedShowsAProblem() => Sta.Run(async () =>
     {
         var host = new RecordingHost();
         var panel = new BatchPanel();
         panel.AttachHost(host);
         var missing = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "scans");
 
-        Assert.Empty(panel.PdfsIn(missing, true));
+        Assert.Empty(await panel.PdfsInAsync(missing, true));
         var problem = Assert.Single(host.Problems);
         Assert.Contains("scans", problem.Text);
-        return Task.CompletedTask;
     });
 
     [Fact]
-    public Task AFolderIsListedInNameOrder() => Sta.Run(() =>
+    public Task AFolderIsListedInNameOrder() => Sta.Run(async () =>
     {
         var folder = Directory.CreateTempSubdirectory();
         try
         {
             foreach (var name in new[] { "b.pdf", "A.pdf", "c.txt" }) File.WriteAllText(Path.Combine(folder.FullName, name), "x");
             var panel = new BatchPanel();
-            Assert.Equal(["A.pdf", "b.pdf"], panel.PdfsIn(folder.FullName, false).Select(Path.GetFileName));
+            Assert.Equal(["A.pdf", "b.pdf"], (await panel.PdfsInAsync(folder.FullName, false)).Select(Path.GetFileName));
         }
         finally
         {
             folder.Delete(true);
         }
-        return Task.CompletedTask;
     });
 
     [Fact]
@@ -117,7 +115,7 @@ public sealed class BatchDropTests
     });
 
     [Fact]
-    public Task AFolderLinkThatLoopsBackIsNotFollowed() => Sta.Run(() =>
+    public Task AFolderLinkThatLoopsBackIsNotFollowed() => Sta.Run(async () =>
     {
         using var dir = new TempDir();
         string file = dir.File("in\\a.pdf", Pdfs.Text());
@@ -127,11 +125,44 @@ public sealed class BatchDropTests
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return Task.CompletedTask;
+            return;
         }
-        Assert.Equal([file], new BatchPanel().PdfsIn(dir.Sub("in"), true));
-        return Task.CompletedTask;
+        Assert.Equal([file], await new BatchPanel().PdfsInAsync(dir.Sub("in"), true));
     });
+
+    [Fact]
+    public void TheResultsFolderInsideTheSourceIsLeftOut()
+    {
+        using var dir = new TempDir();
+        string top = dir.File("scans\\a.pdf", Pdfs.Text());
+        dir.File("scans\\done\\a.pdf", Pdfs.Text());
+
+        var found = BatchPanel.Walk(dir.Sub("scans"), true, dir.Sub("scans\\done"), out bool leftOut, CancellationToken.None);
+
+        Assert.Equal([top], found);
+        Assert.True(leftOut);
+    }
+
+    [Fact]
+    public void HiddenFoldersAreNotWalked()
+    {
+        using var dir = new TempDir();
+        string top = dir.File("in\\a.pdf", Pdfs.Text());
+        dir.File("in\\secret\\b.pdf", Pdfs.Text());
+        File.SetAttributes(dir.Sub("in\\secret"), FileAttributes.Hidden);
+
+        Assert.Equal([top], BatchPanel.Walk(dir.Sub("in"), true, null, out _, CancellationToken.None));
+    }
+
+    [Fact]
+    public void AWalkStopsWhenCancelled()
+    {
+        using var dir = new TempDir();
+        dir.File("in\\a.pdf", Pdfs.Text());
+        using var source = new CancellationTokenSource(0);
+
+        Assert.Throws<OperationCanceledException>(() => BatchPanel.Walk(dir.Sub("in"), true, null, out _, source.Token));
+    }
 
     [Fact]
     public Task ThreeThousandPathsAreAddedQuickly() => Sta.Run(() =>
