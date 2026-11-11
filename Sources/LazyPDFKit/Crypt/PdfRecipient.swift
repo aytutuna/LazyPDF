@@ -51,5 +51,16 @@ public struct PdfRecipient {
         self.permissions = permissions
         self.canChangeEncryption = canChangeEncryption
     }
+
+    /// Whether a file can be encrypted for `certificate`: it has an RSA key, and its key usage, if it states one,
+    /// allows enciphering. Key agreement (EC) certificates are not supported.
+    public static func canProtect(_ certificate: PdfCertificate) -> Bool {
+        guard let key = SecCertificateCopyKey(certificate.certificate),
+              (SecKeyCopyAttributes(key) as? [CFString: Any])?[kSecAttrKeyType] as? String == kSecAttrKeyTypeRSA as String,
+              let parsed = X509Certificate([UInt8](SecCertificateCopyData(certificate.certificate) as Data))
+        else { return false }
+        guard let usage = (try? parsed.keyUsage()) ?? nil else { return true }
+        return !usage.isDisjoint(with: [.keyEncipherment, .dataEncipherment])
+    }
 }
 #endif

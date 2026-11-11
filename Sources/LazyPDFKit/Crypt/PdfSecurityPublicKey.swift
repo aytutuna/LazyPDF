@@ -82,10 +82,13 @@ extension PdfSecurity {
     /// `PdfCryptStrength.aes256` makes V 5 (s5), `aes128` V 4 (also s5). The seed and the CMS content keys come
     /// from the system generator, so two calls never give the same file. The new handler is an owner:
     /// `openedAsOwner` is true and its permissions are all. Throws `PdfReadException` for a certificate that is
-    /// not an RSA one.
+    /// not an RSA one that may encipher.
     public static func createPublicKey(_ recipients: [PdfRecipient], _ strength: PdfCryptStrength) throws -> PdfSecurity {
         precondition(recipients.count >= 1 && recipients.count <= maxRecipients,
                      "A file has between 1 and \(maxRecipients) recipients.")
+        for recipient in recipients where !PdfRecipient.canProtect(recipient.certificate) {
+            throw PdfReadException(.unsupported, "This certificate cannot be used to protect a file. Choose a certificate with an RSA key.")
+        }
         let modern = strength == .aes256
         let v = modern ? 5 : 4
         let keyBytes = modern ? 32 : 16
