@@ -87,7 +87,6 @@ public sealed partial class EditContentPanel : ToolPanel
 
     protected override void OnDetach()
     {
-        HandIn();
         _editor!.Close();
         _pending = Pending.None;
         _linkArea = null;

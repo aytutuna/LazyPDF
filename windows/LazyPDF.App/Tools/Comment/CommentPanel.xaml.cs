@@ -181,7 +181,7 @@ public partial class CommentPanel : ToolPanel
     {
         _settle.Stop();
         _unsettled.Clear();
-        _editor?.Finish();
+        _editor?.Drop();
         Tab!.Changed -= Tab_Changed;
         Viewer!.ModeChanged -= Viewer_ModeChanged;
         Viewer.ViewChanged -= Viewer_ViewChanged;

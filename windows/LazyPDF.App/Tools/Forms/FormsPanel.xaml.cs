@@ -85,7 +85,6 @@ public sealed partial class FormsPanel : ToolPanel
     {
         InputManager.Current.PreProcessInput -= Input_PreProcess;
         Viewer!.View.PreviewKeyDown -= View_PreviewKeyDown;
-        _fill!.Flush();
         Tab!.Changed -= Tab_Changed;
         Viewer!.ViewChanged -= Viewer_ViewChanged;
         Viewer.PageChanged -= Viewer_PageChanged;
