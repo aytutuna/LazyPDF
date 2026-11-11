@@ -1210,6 +1210,9 @@
   <data name="Corrected word" xml:space="preserve">
     <value>Düzeltilmiş sözcük</value>
   </data>
+  <data name="Could not be made smaller, so it was left as it was." xml:space="preserve">
+    <value>Küçültülemedi, bu yüzden olduğu gibi bırakıldı.</value>
+  </data>
   <data name="Could not protect the file" xml:space="preserve">
     <value>Dosya korunamadı</value>
   </data>

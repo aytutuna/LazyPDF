@@ -77,7 +77,11 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
                     var options = OptimizeOptions.For(step.Preset) with { Security = document.Security, DocumentId = document.Security is null ? null : document.FirstId };
                     var result = new PdfOptimizer(document, codec).Run(options);
                     cancellation.ThrowIfCancellationRequested();
-                    if (result.Bytes.Length >= bytes.Length) return bytes;
+                    if (result.Bytes.Length >= bytes.Length)
+                    {
+                        notes.Add(Loc.T("Could not be made smaller, so it was left as it was."));
+                        return bytes;
+                    }
                     notes.AddRange(result.Notes);
                     return result.Bytes;
                 }

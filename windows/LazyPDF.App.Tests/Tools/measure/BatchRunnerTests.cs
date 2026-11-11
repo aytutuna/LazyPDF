@@ -225,6 +225,19 @@ public sealed class BatchRunnerTests
     }
 
     [Fact]
+    public async Task ACompressThatCannotShrinkTheFileIsSaidInTheLog()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text());
+
+        var result = await Run(Runner(), file, Set(dir, Step(BatchStepKind.Compress), Step(BatchStepKind.Compress)));
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Equal("Done, with notes", result.Title);
+        Assert.Contains("Could not be made smaller, so it was left as it was.", result.Detail);
+    }
+
+    [Fact]
     public async Task ACancelDuringAStepStopsTheRunBeforeAnythingIsWritten()
     {
         using var dir = new TempDir();

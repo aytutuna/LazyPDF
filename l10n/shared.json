@@ -4464,6 +4464,9 @@
   "These settings cannot make this file smaller. Try the Small preset.": {
     "tr": "Bu ayarlarla dosya küçülmüyor. Küçük ayarını deneyin."
   },
+  "Could not be made smaller, so it was left as it was.": {
+    "tr": "Küçültülemedi, bu yüzden olduğu gibi bırakıldı."
+  },
   "This file": {
     "tr": "Bu dosya"
   },
