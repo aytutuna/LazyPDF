@@ -148,6 +148,10 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
     private async ValueTask<Stream> ConnectAsync(SocketsHttpConnectionContext context, CancellationToken token)
     {
         var host = context.DnsEndPoint.Host;
+        var uri = context.InitialRequestMessage?.RequestUri;
+        // A different endpoint than the request's own is a proxy, which the user configured.
+        if (uri is null || context.DnsEndPoint.Port != uri.Port || !host.Equals(uri.IdnHost, StringComparison.OrdinalIgnoreCase))
+            return await ConnectAsync(context.DnsEndPoint, token);
         var found = await Dns.GetHostAddressesAsync(host, token);
         var ip = found.FirstOrDefault(a => !PointsHere(a));
         if (ip is null)
@@ -155,10 +159,15 @@ public sealed class HttpSignatureTransport : ISignatureTransport, IDisposable
             _refused = true;
             throw new HttpRequestException("The address points to this computer.");
         }
+        return await ConnectAsync(new IPEndPoint(ip, context.DnsEndPoint.Port), token);
+    }
+
+    private static async ValueTask<Stream> ConnectAsync(EndPoint target, CancellationToken token)
+    {
         var socket = new Socket(SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
         try
         {
-            await socket.ConnectAsync(new IPEndPoint(ip, context.DnsEndPoint.Port), token);
+            await socket.ConnectAsync(target, token);
             return new NetworkStream(socket, true);
         }
         catch
