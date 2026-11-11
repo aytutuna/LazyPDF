@@ -4870,6 +4870,9 @@
   <data name="Tags not added" xml:space="preserve">
     <value>Etiketler eklenemedi</value>
   </data>
+  <data name="Tags removed" xml:space="preserve">
+    <value>Etiketler kaldırıldı</value>
+  </data>
   <data name="Take back corner" xml:space="preserve">
     <value>Köşeyi geri al</value>
   </data>
@@ -5856,6 +5859,9 @@
   </data>
   <data name="This file is the older one" xml:space="preserve">
     <value>Bu dosya eski olan</value>
+  </data>
+  <data name="This file was tagged for screen readers. A deleted page was tagged, so the tags are gone. Undo brings them back." xml:space="preserve">
+    <value>Bu dosya ekran okuyucular için etiketlenmişti. Silinen sayfa etiketliydi, bu yüzden etiketler kalktı. Geri alırsanız etiketler geri gelir.</value>
   </data>
   <data name="This file's pages cannot be shown here. You can still edit and save it." xml:space="preserve">
     <value>Bu dosyanın sayfaları burada gösterilemiyor. Yine de düzenleyip kaydedebilirsiniz.</value>

@@ -4726,6 +4726,12 @@
   "Delete pages": {
     "tr": "Sayfaları sil"
   },
+  "Tags removed": {
+    "tr": "Etiketler kaldırıldı"
+  },
+  "This file was tagged for screen readers. A deleted page was tagged, so the tags are gone. Undo brings them back.": {
+    "tr": "Bu dosya ekran okuyucular için etiketlenmişti. Silinen sayfa etiketliydi, bu yüzden etiketler kalktı. Geri alırsanız etiketler geri gelir."
+  },
   "Move pages": {
     "tr": "Sayfaları taşı"
   },

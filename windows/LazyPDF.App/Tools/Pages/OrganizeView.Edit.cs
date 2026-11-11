@@ -33,7 +33,7 @@ public sealed partial class OrganizeView
         var pages = Selected();
         if (Tab is not { } tab || Host is not { } host || pages.Count == 0) return;
         if (NoneLeft(pages, host)) return;
-        PageJobs.Apply(tab, host, Loc.T("Delete pages"), d => PageOperations.Delete(d, pages), Loc.Plural(pages.Count, "{0} page deleted", "{0} pages deleted", pages.Count));
+        PageJobs.Delete(tab, host, Loc.T("Delete pages"), pages, Loc.Plural(pages.Count, "{0} page deleted", "{0} pages deleted", pages.Count));
     }
 
     private bool NoneLeft(List<int> pages, IToolHost host)
@@ -86,7 +86,7 @@ public sealed partial class OrganizeView
         var pages = Selected();
         if (Tab is not { } tab || Host is not { } host || pages.Count == 0 || NoneLeft(pages, host)) return;
         if (!await CopyAsync(pages)) return;
-        PageJobs.Apply(tab, host, Loc.T("Cut pages"), d => PageOperations.Delete(d, pages), Loc.Plural(pages.Count, "{0} page cut", "{0} pages cut", pages.Count));
+        PageJobs.Delete(tab, host, Loc.T("Cut pages"), pages, Loc.Plural(pages.Count, "{0} page cut", "{0} pages cut", pages.Count));
     }
 
     // True when the pages are on the clipboard.

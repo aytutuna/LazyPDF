@@ -20,6 +20,14 @@ internal static class PageJobs
         return Commit(tab, host, label, status);
     }
 
+    public static void Delete(DocumentTab tab, IToolHost host, string label, IReadOnlyCollection<int> pages, string status)
+    {
+        bool tagged = tab.Document.Dict(tab.Document.Catalog, "StructTreeRoot") is not null;
+        if (!Apply(tab, host, label, d => PageOperations.Delete(d, pages), status)) return;
+        if (tagged && tab.Document.Dict(tab.Document.Catalog, "StructTreeRoot") is null)
+            host.ShowNotice(Loc.T("Tags removed"), Loc.T("This file was tagged for screen readers. A deleted page was tagged, so the tags are gone. Undo brings them back."));
+    }
+
     // For the edits that copy pages in from another file: the work runs off the UI thread and the result goes to the tab it started on,
     // wherever the person has moved to meanwhile.
     public static async Task<bool> ApplyAsync(DocumentTab tab, IToolHost host, string busy, string label, Action<PdfDocument> change, string status)

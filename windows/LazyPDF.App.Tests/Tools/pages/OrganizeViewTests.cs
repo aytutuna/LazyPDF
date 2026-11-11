@@ -131,6 +131,25 @@ public sealed class OrganizeViewTests
     }
 
     [Fact]
+    public void DeletingATaggedPageSaysTheTagsWentAndAPageWithoutTagsDoesNot()
+    {
+        using var tab = Open(3);
+        AutoTagger.Tag(tab.Document);
+        PageOperations.InsertBlank(tab.Document, 3, 612, 792);
+        tab.Document.Pages[0].Dictionary["StructParents"] = new PdfNumber(0);
+        Assert.True(tab.Commit("Tag"));
+        var host = new StageHost();
+
+        PageJobs.Delete(tab, host, "Delete pages", [3], "done");
+        Assert.NotNull(tab.Document.Dict(tab.Document.Catalog, "StructTreeRoot"));
+        Assert.Empty(host.Notices);
+
+        PageJobs.Delete(tab, host, "Delete pages", [0], "done");
+        Assert.Null(tab.Document.Dict(tab.Document.Catalog, "StructTreeRoot"));
+        Assert.Equal(["Tags removed"], host.Notices);
+    }
+
+    [Fact]
     public Task TheButtonHoldsTheStageAndDoneGivesItBack() => Sta.Run(() =>
     {
         using var tab = Open();

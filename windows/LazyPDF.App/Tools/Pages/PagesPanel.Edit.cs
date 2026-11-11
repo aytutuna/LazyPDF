@@ -64,7 +64,7 @@ public partial class PagesPanel
             Host!.ShowProblem(new Problem(Loc.T("Cannot delete every page"), Loc.T("A file needs at least one page. Leave one page out of the selection.")));
             return;
         }
-        Apply(Loc.T("Delete pages"), d => PageOperations.Delete(d, pages), null, Loc.Plural(pages.Count, "{0} page deleted", "{0} pages deleted", pages.Count));
+        PageJobs.Delete(Tab!, Host!, Loc.T("Delete pages"), pages, Loc.Plural(pages.Count, "{0} page deleted", "{0} pages deleted", pages.Count));
     }
 
     private void Earlier_Click(object sender, RoutedEventArgs e) => Nudge(-1);
