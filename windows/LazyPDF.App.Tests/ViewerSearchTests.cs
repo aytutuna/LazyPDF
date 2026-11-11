@@ -402,6 +402,17 @@ public sealed class ViewerSearchTests
     }
 
     [Fact]
+    public async Task WithNothingAfterTheViewAndMoreThanTheCapBeforeItTheNearestHitIsCurrent()
+    {
+        var search = Searching(Pdfs.Text(2400, "fox"), startPage: 2400);
+
+        await search.Start("fox", new TextSearchOptions());
+
+        Assert.True(search.Capped);
+        Assert.Equal(2399, search.Hits[search.Current].Page);
+    }
+
+    [Fact]
     public async Task HitsBeforeTheStartPageAreListedWhileTheSearchStillRuns()
     {
         var search = Searching(Pdfs.Text(40, "fox"), startPage: 39);

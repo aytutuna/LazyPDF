@@ -277,7 +277,8 @@ public sealed class ViewerSearch
             Capped = capped;
             if (Current < 0 && Hits.Count > 0)
             {
-                Current = 0;
+                // Nothing at or after the view: go on to the hit nearest it, or back to the first one when none was dropped.
+                Current = capped ? Hits.Count - 1 : 0;
                 if (!_quiet) MoveView();
             }
             Changed?.Invoke(this, EventArgs.Empty);
