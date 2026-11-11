@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -33,6 +34,26 @@ public sealed class CommentsPanelTests
         var full = (TextBox)panel.FindName("FullText");
         Assert.Equal(text, full.Text);
         Assert.Equal(hasText ? Visibility.Visible : Visibility.Collapsed, full.Visibility);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ByDateListsTheNewestFirstUnderItsDay() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var older = new DateTimeOffset(2026, 11, 2, 12, 0, 0, TimeSpan.Zero);
+        var newer = new DateTimeOffset(2026, 11, 6, 12, 0, 0, TimeSpan.Zero);
+        new Marker(f.Document, new FakeFonts(), "Ana", older).Add(MarkTool.Note, 0, [new Point(60, 80)], Red, "old");
+        new Marker(f.Document, new FakeFonts(), "Ana", newer).Add(MarkTool.Note, 0, [new Point(60, 200)], Red, "new");
+        f.Tab.Commit("Mark");
+        var panel = new CommentsSidePanel();
+        panel.Attach(f.Tab, FakeViewer.Create().Viewer, new RecordingHost());
+
+        ((ComboBox)panel.FindName("GroupBy")).SelectedIndex = 1;
+
+        var rows = ((ListBox)panel.FindName("Comments")).Items.Cast<CommentRow>().ToList();
+        Assert.Equal("new", rows[0].Text);
+        Assert.Equal(newer.ToLocalTime().Date.ToString("d", CultureInfo.CurrentCulture), rows[0].Group);
         return Task.CompletedTask;
     });
 

@@ -2519,6 +2519,9 @@
   "By page": {
     "tr": "Sayfaya göre"
   },
+  "By date": {
+    "tr": "Tarihe göre"
+  },
   "By type": {
     "tr": "Türe göre"
   },
@@ -2665,6 +2668,9 @@
   },
   "Move marks": {
     "tr": "İşaretleri taşı"
+  },
+  "No date": {
+    "tr": "Tarih yok"
   },
   "No author": {
     "tr": "Yazar yok"

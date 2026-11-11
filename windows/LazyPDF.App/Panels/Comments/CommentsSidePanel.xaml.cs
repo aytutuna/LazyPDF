@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -24,7 +25,7 @@ public partial class CommentsSidePanel : ToolPanel
     public CommentsSidePanel()
     {
         InitializeComponent();
-        GroupBy.ItemsSource = new Grouping[] { new(CommentOrder.Page, Loc.T("By page")), new(CommentOrder.Author, Loc.T("By author")), new(CommentOrder.Type, Loc.T("By type")) };
+        GroupBy.ItemsSource = new Grouping[] { new(CommentOrder.Page, Loc.T("By page")), new(CommentOrder.Date, Loc.T("By date")), new(CommentOrder.Author, Loc.T("By author")), new(CommentOrder.Type, Loc.T("By type")) };
         GroupBy.DisplayMemberPath = nameof(Grouping.Name);
         GroupBy.SelectedIndex = 0;
         var statuses = new[] { ReviewStatus.None, ReviewStatus.Accepted, ReviewStatus.Rejected, ReviewStatus.Cancelled, ReviewStatus.Completed };
@@ -78,7 +79,7 @@ public partial class CommentsSidePanel : ToolPanel
     private void Load()
     {
         var order = (GroupBy.SelectedItem as Grouping)?.Order ?? CommentOrder.Page;
-        _all = PdfComments.List(Tab!.Document, null, order);
+        _all = PdfComments.List(Tab!.Document, null, order, descending: order == CommentOrder.Date);
         Build();
     }
 
@@ -115,6 +116,7 @@ public partial class CommentsSidePanel : ToolPanel
 
     private static string GroupOf(PdfComment comment, CommentOrder order, Viewer.IDocumentViewer viewer) => order switch
     {
+        CommentOrder.Date => comment.Date is { } d ? d.ToLocalTime().Date.ToString("d", CultureInfo.CurrentCulture) : Loc.T("No date"),
         CommentOrder.Author => string.IsNullOrEmpty(comment.Author) ? Loc.T("No author") : comment.Author,
         CommentOrder.Type => AnnotationText.KindName(comment.Type),
         _ => Loc.T("Page {0}", viewer.PageLabel(comment.PageIndex)),

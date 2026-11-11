@@ -697,6 +697,9 @@
   <data name="By column" xml:space="preserve">
     <value>Sütuna göre</value>
   </data>
+  <data name="By date" xml:space="preserve">
+    <value>Tarihe göre</value>
+  </data>
   <data name="By page" xml:space="preserve">
     <value>Sayfaya göre</value>
   </data>
@@ -2976,6 +2979,9 @@
   </data>
   <data name="No comments to export." xml:space="preserve">
     <value>Dışa aktarılacak yorum yok.</value>
+  </data>
+  <data name="No date" xml:space="preserve">
+    <value>Tarih yok</value>
   </data>
   <data name="No description" xml:space="preserve">
     <value>Açıklama yok</value>
