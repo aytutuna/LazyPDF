@@ -212,6 +212,9 @@ public partial class PageViewer : UserControl, IDocumentViewer
         AutomationProperties.SetName(ZoomButton, open ? $"{Loc.T("Zoom")} {ZoomButton.Content}" : Loc.T("Zoom"));
         PreviousButton.IsEnabled = open && page > 0;
         NextButton.IsEnabled = open && page < Surface.PageCount - 1;
+        bool room = Bar.ActualWidth >= 330;
+        BackButton.Visibility = room && CanGoBack ? Visibility.Visible : Visibility.Collapsed;
+        ForwardButton.Visibility = room && CanGoForward ? Visibility.Visible : Visibility.Collapsed;
         foreach (var control in new Control[] { PageBox, ZoomButton, ZoomInButton, ZoomOutButton, FindButton, MoreButton, SelectButton, HandButton }) control.IsEnabled = open;
         SelectButton.IsChecked = open && Mode == PointerMode.Select && PointerTool is null;
         HandButton.IsChecked = open && Mode == PointerMode.Hand && PointerTool is null;
@@ -238,6 +241,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
     {
         ModeGroup.Visibility = e.NewSize.Width < 470 ? Visibility.Collapsed : Visibility.Visible;
         ZoomInButton.Visibility = ZoomOutButton.Visibility = e.NewSize.Width < 400 ? Visibility.Collapsed : Visibility.Visible;
+        RefreshBar();
     }
 
     private void Surface_PageChanged(object? sender, EventArgs e)
@@ -264,6 +268,10 @@ public partial class PageViewer : UserControl, IDocumentViewer
     private void Previous_Click(object sender, RoutedEventArgs e) => StepPage(-1);
 
     private void Next_Click(object sender, RoutedEventArgs e) => StepPage(1);
+
+    private void Back_Click(object sender, RoutedEventArgs e) => GoBack();
+
+    private void Forward_Click(object sender, RoutedEventArgs e) => GoForward();
 
     private void ZoomOut_Click(object sender, RoutedEventArgs e) => Surface.SetZoom(ZoomMath.Step(Surface.Zoom, -1));
 

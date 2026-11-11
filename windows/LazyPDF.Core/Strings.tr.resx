@@ -538,6 +538,9 @@
   <data name="Back" xml:space="preserve">
     <value>Geri</value>
   </data>
+  <data name="Back (Alt+Left)" xml:space="preserve">
+    <value>Geri (Alt+Sol)</value>
+  </data>
   <data name="Back to the document (Esc)" xml:space="preserve">
     <value>Belgeye dön (Esc)</value>
   </data>
@@ -2083,6 +2086,9 @@
   <data name="Forward" xml:space="preserve">
     <value>Öne</value>
   </data>
+  <data name="Forward (Alt+Right)" xml:space="preserve">
+    <value>İleri (Alt+Sağ)</value>
+  </data>
   <data name="Free. Source available under PolyForm Noncommercial 1.0.0." xml:space="preserve">
     <value>Ücretsiz. Kaynak kodu PolyForm Noncommercial 1.0.0 lisansıyla erişilebilir.</value>
   </data>
@@ -2106,6 +2112,9 @@
   </data>
   <data name="Go" xml:space="preserve">
     <value>Git</value>
+  </data>
+  <data name="Go forward" xml:space="preserve">
+    <value>İleri git</value>
   </data>
   <data name="Go on anyway" xml:space="preserve">
     <value>Yine de devam et</value>

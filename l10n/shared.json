@@ -2168,6 +2168,15 @@
   "Next page": {
     "tr": "Sonraki sayfa"
   },
+  "Back (Alt+Left)": {
+    "tr": "Geri (Alt+Sol)"
+  },
+  "Forward (Alt+Right)": {
+    "tr": "İleri (Alt+Sağ)"
+  },
+  "Go forward": {
+    "tr": "İleri git"
+  },
   "View options": {
     "tr": "Görünüm seçenekleri"
   },

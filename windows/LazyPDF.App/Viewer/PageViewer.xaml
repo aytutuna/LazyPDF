@@ -24,6 +24,10 @@
                     <TextBlock x:Name="PageCountText" Style="{StaticResource CaptionText}" VerticalAlignment="Center" Margin="2,0,6,0" />
                     <Button x:Name="NextButton" Style="{StaticResource IconButtonStyle}" Content="&#xE70D;"
                             ToolTip="{loc:T Next page}" AutomationProperties.Name="{loc:T Next page}" Click="Next_Click" />
+                    <Button x:Name="BackButton" Style="{StaticResource IconButtonStyle}" Content="&#xE72B;" Visibility="Collapsed"
+                            ToolTip="{loc:T Back (Alt+Left)}" AutomationProperties.Name="{loc:T Back}" Click="Back_Click" />
+                    <Button x:Name="ForwardButton" Style="{StaticResource IconButtonStyle}" Content="&#xE72A;" Visibility="Collapsed"
+                            ToolTip="{loc:T Forward (Alt+Right)}" AutomationProperties.Name="{loc:T Go forward}" Click="Forward_Click" />
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" KeyboardNavigation.TabIndex="3">
                     <Button x:Name="FindButton" Style="{StaticResource IconButtonStyle}" Content="&#xE721;"
