@@ -517,8 +517,9 @@ public sealed class KeyboardPlacementTests
 
     [Theory]
     [InlineData(360)]
-    [InlineData(440)]
-    [InlineData(520)]
+    [InlineData(410)]
+    [InlineData(475)]
+    [InlineData(550)]
     public Task TheZoomGroupFitsAtNarrowWidths(int width) => Sta.Run(() =>
     {
         using var tab = NewTab();
@@ -527,10 +528,11 @@ public sealed class KeyboardPlacementTests
         viewer.Measure(new Size(width, 600));
         viewer.Arrange(new Rect(0, 0, width, 600));
         viewer.UpdateLayout();
-        double actual = viewer.ZoomGroup.ActualWidth;
-        viewer.ZoomGroup.Measure(new Size(double.PositiveInfinity, 600));
 
-        Assert.Equal(viewer.ZoomGroup.DesiredSize.Width - 16, actual, 1.5);
+        Assert.Null(System.Windows.Controls.Primitives.LayoutInformation.GetLayoutClip(viewer.ZoomGroup));
+        double given = viewer.ZoomGroup.DesiredSize.Width;
+        viewer.ZoomGroup.Measure(new Size(double.PositiveInfinity, 600));
+        Assert.Equal(viewer.ZoomGroup.DesiredSize.Width, given, 0.5);
         return Task.CompletedTask;
     });
 

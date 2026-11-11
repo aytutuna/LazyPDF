@@ -335,7 +335,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         AutomationProperties.SetName(ZoomBox, open ? $"{Loc.T("Zoom")} {zoom}" : Loc.T("Zoom"));
         PreviousButton.IsEnabled = open && page > 0;
         NextButton.IsEnabled = open && page < Surface.PageCount - 1;
-        bool room = Bar.ActualWidth >= 366;
+        bool room = Bar.ActualWidth >= 410;
         BackButton.Visibility = ForwardButton.Visibility = room ? Visibility.Visible : Visibility.Collapsed;
         BackButton.IsEnabled = CanGoBack;
         ForwardButton.IsEnabled = CanGoForward;
@@ -363,8 +363,8 @@ public partial class PageViewer : UserControl, IDocumentViewer
 
     private void Bar_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        ModeGroup.Visibility = e.NewSize.Width < 506 ? Visibility.Collapsed : Visibility.Visible;
-        ZoomInButton.Visibility = ZoomOutButton.Visibility = e.NewSize.Width < 436 ? Visibility.Collapsed : Visibility.Visible;
+        ModeGroup.Visibility = e.NewSize.Width < 550 ? Visibility.Collapsed : Visibility.Visible;
+        ZoomInButton.Visibility = ZoomOutButton.Visibility = e.NewSize.Width < 475 ? Visibility.Collapsed : Visibility.Visible;
         RefreshBar();
     }
 
