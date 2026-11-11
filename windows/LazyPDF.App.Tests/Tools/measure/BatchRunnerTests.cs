@@ -103,6 +103,50 @@ public sealed class BatchRunnerTests
         Assert.Contains("cannot ask", result.Detail);
     }
 
+    private static byte[] Locked() =>
+        LazyPDF.App.Tools.Protect.ProtectWork.WithPassword(PdfDocument.Open(Pdfs.Text()), "x", "owner", PdfPermissions.All, PdfCryptStrength.Aes256);
+
+    [Fact]
+    public async Task ALockedFileRunsWithItsPasswordAndIsSavedUnprotected()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("locked.pdf", Locked());
+
+        var result = await Runner().RunAsync(file, Set(dir, Step(BatchStepKind.Clean)), 1, Now, CancellationToken.None, "", "x");
+
+        Assert.True(result.Ok, result.Detail);
+        using var made = PdfDocument.Open(File.ReadAllBytes(result.Output!));
+        Assert.Null(made.Security);
+    }
+
+    [Fact]
+    public async Task AWrongPasswordIsRefusedWithoutNamingIt()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("locked.pdf", Locked());
+
+        var result = await Runner().RunAsync(file, Set(dir, Step(BatchStepKind.Clean)), 1, Now, CancellationToken.None, "", "y");
+
+        Assert.False(result.Ok);
+        Assert.Equal("File is locked", result.Title);
+        Assert.Equal("The password does not open locked.pdf.", result.Detail);
+    }
+
+    [Fact]
+    public async Task ASavedSetHoldsNoPassword()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, Step(BatchStepKind.Clean));
+        set.Name = "Locked";
+        await Runner().RunAsync(dir.File("locked.pdf", Locked()), set, 1, Now, CancellationToken.None, "", "x");
+        var store = new BatchSetStore(dir.Path);
+
+        store.Save(set);
+
+        Assert.DoesNotContain("\"x\"", File.ReadAllText(Path.Combine(dir.Path, "batch-sets.json")), StringComparison.Ordinal);
+        Assert.DoesNotContain("assword", File.ReadAllText(Path.Combine(dir.Path, "batch-sets.json")));
+    }
+
     [Fact]
     public async Task ANameThatIsTakenGetsANumberAndNothingIsOverwritten()
     {

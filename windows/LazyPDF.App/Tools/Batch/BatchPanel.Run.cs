@@ -216,6 +216,10 @@ public partial class BatchPanel
         Host?.SetStatus(cancelled ? Loc.T("Cancelled.") : failed == 0 ? Loc.T("All files done") : Loc.Plural(failed, "{0} file failed", "{0} files failed"));
     }
 
+    private void Panel_Unloaded(object sender, RoutedEventArgs e) => ClearPassword();
+
+    internal void ClearPassword() => OpenPassword.Clear();
+
     private string RelativeDir(string path)
     {
         if (!_roots.TryGetValue(path, out var root)) return "";
@@ -229,11 +233,12 @@ public partial class BatchPanel
         await _gate.WaitAsync(token);
         try
         {
+            string password = OpenPassword.Password;
             for (int i = 0; i < live.Count; i++)
             {
                 if (live[i].Kind == BatchStepKind.Bates) set.Steps[i].Start = live[i].Start;
             }
-            var result = await Task.Run(() => Runner.RunAsync(path, set, number, DateTimeOffset.Now, token, relativeDir), token);
+            var result = await Task.Run(() => Runner.RunAsync(path, set, number, DateTimeOffset.Now, token, relativeDir, password), token);
             if (result.Ok) ContinueNumbers(set, live);
             return result;
         }

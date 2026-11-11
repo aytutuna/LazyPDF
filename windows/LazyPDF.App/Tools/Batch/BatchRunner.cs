@@ -15,7 +15,7 @@ public sealed record BatchResult(string Input, string? Output, bool Ok, string T
 /// </summary>
 internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRecognizer recognizer, Func<IDocumentRenderer> renderers)
 {
-    public async Task<BatchResult> RunAsync(string path, BatchSet set, int number, DateTimeOffset now, CancellationToken cancellation, string relativeDir = "")
+    public async Task<BatchResult> RunAsync(string path, BatchSet set, int number, DateTimeOffset now, CancellationToken cancellation, string relativeDir = "", string? password = null)
     {
         string name = Path.GetFileName(path);
         byte[] bytes;
@@ -23,11 +23,24 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         try
         {
             bytes = await File.ReadAllBytesAsync(path, cancellation);
-            using (var source = PdfDocument.Open(bytes))
+            PdfDocument source;
+            bool unlocked = false;
+            try
+            {
+                source = PdfDocument.Open(bytes);
+            }
+            catch (PdfReadException e) when (e.Problem == PdfReadProblem.PasswordRequired && !string.IsNullOrEmpty(password))
+            {
+                source = PdfDocument.Open(bytes, password);
+                unlocked = true;
+            }
+            using (source)
             {
                 if (source.IsSigned) return new(path, null, false, Loc.T("File is signed"), Loc.T("{0} has a signature that these steps would break. Open it and sign it again afterwards.", name));
                 if (source.Security is { OpenedAsOwner: false, Permissions: not PdfPermissions.All })
                     return new(path, null, false, Loc.T("File is protected"), Loc.T("{0} limits what may be done to it. Ask its owner for a copy without limits.", name));
+                // Every step reopens the bytes with no password.
+                if (unlocked) bytes = source.SaveRewrite();
             }
             for (int i = 0; i < set.Steps.Count; i++)
             {
@@ -40,6 +53,10 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         catch (StepFailed failed)
         {
             return new(path, null, false, failed.Problem.Title, failed.Problem.Text);
+        }
+        catch (PdfReadException e) when (e.Problem == PdfReadProblem.PasswordRequired && !string.IsNullOrEmpty(password))
+        {
+            return new(path, null, false, Loc.T("File is locked"), Loc.T("The password does not open {0}.", name));
         }
         catch (PdfReadException e) when (e.Problem is PdfReadProblem.PasswordRequired or PdfReadProblem.CertificateRequired)
         {

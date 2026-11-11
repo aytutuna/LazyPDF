@@ -48,6 +48,7 @@ public partial class BatchWindow : Window, IToolHost
     {
         _busy?.Cancel();
         Panel.StopWatching();
+        Panel.ClearPassword();
         _open = null;
     }
 

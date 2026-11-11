@@ -4710,6 +4710,15 @@
   "Include subfolders": {
     "tr": "Alt klasörleri dahil et"
   },
+  "Password for locked files": {
+    "tr": "Kilitli dosyalar için parola"
+  },
+  "Used for files that ask for one. The results are saved without a password; add a Protect step to lock them again. The password is not saved.": {
+    "tr": "Parola isteyen dosyalar için kullanılır. Sonuçlar parolasız kaydedilir; yeniden kilitlemek için bir Koru adımı ekleyin. Parola kaydedilmez."
+  },
+  "The password does not open {0}.": {
+    "tr": "Parola {0} dosyasını açmıyor."
+  },
   "Only the first 5000 files were added.": {
     "tr": "Yalnızca ilk 5000 dosya eklendi."
   },

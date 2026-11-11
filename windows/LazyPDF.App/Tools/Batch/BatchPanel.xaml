@@ -4,7 +4,7 @@
                  xmlns:loc="clr-namespace:LazyPDF.App"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
                  xmlns:batch="clr-namespace:LazyPDF.App.Tools.Batch"
-                 AllowDrop="True" PreviewDragOver="Panel_DragOver" PreviewDrop="Panel_Drop">
+                 AllowDrop="True" PreviewDragOver="Panel_DragOver" PreviewDrop="Panel_Drop" Unloaded="Panel_Unloaded">
     <ScrollViewer AutomationProperties.Name="{loc:T Batch}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="12,8,12,12">
             <TextBlock x:Name="Summary" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,0,0,12" />
@@ -141,6 +141,10 @@
             </StackPanel>
             <CheckBox x:Name="IncludeSubfolders" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Include subfolders}" AutomationProperties.Name="{loc:T Include subfolders}"
                       IsChecked="True" Margin="0,0,0,8" />
+            <TextBlock Text="{loc:T Password for locked files}" Style="{StaticResource FieldLabelText}" />
+            <PasswordBox x:Name="OpenPassword" AutomationProperties.Name="{loc:T Password for locked files}" />
+            <TextBlock Style="{StaticResource ReasonText}" Margin="0,4,0,8"
+                       Text="{loc:T Used for files that ask for one. The results are saved without a password; add a Protect step to lock them again. The password is not saved.}" />
             <ListBox x:Name="FileList" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Files to run on}" MaxHeight="120"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
                 <ListBox.ItemTemplate>

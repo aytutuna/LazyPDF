@@ -4126,6 +4126,9 @@
   <data name="Password" xml:space="preserve">
     <value>Parola</value>
   </data>
+  <data name="Password for locked files" xml:space="preserve">
+    <value>Kilitli dosyalar için parola</value>
+  </data>
   <data name="Password needed" xml:space="preserve">
     <value>Parola gerekli</value>
   </data>
@@ -6349,6 +6352,9 @@
   <data name="The parts could not be made. Try a different amount." xml:space="preserve">
     <value>Parçalar oluşturulamadı. Başka bir değer deneyin.</value>
   </data>
+  <data name="The password does not open {0}." xml:space="preserve">
+    <value>Parola {0} dosyasını açmıyor.</value>
+  </data>
   <data name="The passwords do not match." xml:space="preserve">
     <value>Parolalar eşleşmiyor.</value>
   </data>
@@ -7104,6 +7110,9 @@
   </data>
   <data name="Use {0}, {1} and {2}. A name that is taken gets a number." xml:space="preserve">
     <value>{0}, {1} ve {2} kullanın. Alınmış bir ada numara eklenir.</value>
+  </data>
+  <data name="Used for files that ask for one. The results are saved without a password; add a Protect step to lock them again. The password is not saved." xml:space="preserve">
+    <value>Parola isteyen dosyalar için kullanılır. Sonuçlar parolasız kaydedilir; yeniden kilitlemek için bir Koru adımı ekleyin. Parola kaydedilmez.</value>
   </data>
   <data name="Uses .NET patterns, for example \d{3}-\d{4}." xml:space="preserve">
     <value>.NET desenleri kullanılır, örneğin \d{3}-\d{4}.</value>
