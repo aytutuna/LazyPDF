@@ -58,6 +58,26 @@ public sealed class CommentsPanelTests
     });
 
     [Fact]
+    public Task ByDateKeepsNoDateLastAndPageOrderWithinOneMoment() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var at = new DateTimeOffset(2026, 11, 2, 12, 0, 0, TimeSpan.Zero);
+        var marker = new Marker(f.Document, new FakeFonts(), "Ana", at);
+        marker.Add(MarkTool.Note, 0, [new Point(60, 80)], Red, "upper");
+        marker.Add(MarkTool.Note, 0, [new Point(60, 300)], Red, "lower");
+        marker.Add(MarkTool.Note, 0, [new Point(60, 200)], Red, "undated");
+        f.Tab.Commit("Mark");
+        var undated = PdfAnnotations.ReadAll(f.Document).Single(a => a.Contents == "undated");
+        undated.Dictionary["M"] = null;
+        undated.Dictionary["CreationDate"] = null;
+
+        var list = PdfComments.List(f.Document, null, CommentOrder.Date);
+
+        Assert.Equal(["upper", "lower", "undated"], CommentsSidePanel.NewestFirst(list).Select(c => c.Text));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task MarkedCanBeFilteredButNotSet() => Sta.Run(() =>
     {
         using var f = new CommentFixture();

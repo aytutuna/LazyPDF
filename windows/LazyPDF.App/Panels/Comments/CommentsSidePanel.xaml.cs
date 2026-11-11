@@ -96,9 +96,14 @@ public partial class CommentsSidePanel : ToolPanel
         }
         _stale = false;
         var order = (GroupBy.SelectedItem as Grouping)?.Order ?? CommentOrder.Page;
-        _all = PdfComments.List(Tab!.Document, null, order, descending: order == CommentOrder.Date);
+        var list = PdfComments.List(Tab!.Document, null, order);
+        _all = order == CommentOrder.Date ? NewestFirst(list) : list;
         Build();
     }
+
+    // OrderByDescending is stable, so comments of one moment stay in page order.
+    internal static IReadOnlyList<PdfComment> NewestFirst(IReadOnlyList<PdfComment> comments) =>
+        [.. comments.Where(c => c.Date is not null).OrderByDescending(c => c.Date), .. comments.Where(c => c.Date is null)];
 
     private IReadOnlyList<PdfComment> Visible()
     {
