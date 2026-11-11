@@ -247,6 +247,9 @@ public partial class MainWindow
         SetPane(Inspector, InspectorSplitter, InspectorColumn, _vm.ActiveTool is not null || (!_narrow && _vm.ShowFileInfo), _vm.InspectorWidth);
         if (_vm.ActiveTool is not { } tool)
         {
+            // Closing the tool does not go through Place, so words still being typed go in here.
+            if (_inspectorTab is not null && _vm.Strip.Contains(_inspectorTab) && !_vm.IsBusy && _inspectorPanel?.HandIn() == false)
+                _vm.DropAction();
             _inspectorPanel?.Detach();
             _inspectorPanel = null;
             _inspectorTab = null;
