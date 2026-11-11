@@ -77,7 +77,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         ViewState? state = null;
         if (tab is not null) _states.TryGetValue(tab, out state);
         Surface.Show(tab, state?.Rotation ?? 0);
-        if (state?.Place is { } place) Surface.GoToPage(place.Page, place.Point);
+        if (state?.Place is { } place) Surface.GoToPage(place.Page, place.Point, keepX: true);
         if (tab is not null)
         {
             tab.Changed += Tab_Changed;

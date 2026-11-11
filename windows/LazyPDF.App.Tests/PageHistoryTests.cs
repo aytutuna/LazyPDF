@@ -69,6 +69,17 @@ public sealed class PageHistoryTests
     }
 
     [Fact]
+    public void OnARotatedViewTheAcrossAxisIsTheOneThatCounts()
+    {
+        var history = new PageHistory();
+        var from = new PagePoint(1, new Point(100, 100));
+
+        Assert.False(history.Jump(from, new PagePoint(1, new Point(110, 400)), 90));
+        Assert.True(history.Jump(from, new PagePoint(1, new Point(300, 110)), 90));
+        Assert.False(history.Jump(from, new PagePoint(1, new Point(110, 100)), 0));
+    }
+
+    [Fact]
     public void AJumpWithinFiftyPointsOfTheSamePageIsNotAJump()
     {
         var history = new PageHistory();

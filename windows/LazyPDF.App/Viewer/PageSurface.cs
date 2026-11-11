@@ -346,8 +346,8 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
 
     // ----- Going places
 
-    /// <summary>Scrolls to a page. With <paramref name="at"/> (page space) that point comes to the top of the view, whatever the rotation.</summary>
-    public void GoToPage(int page, Point? at = null)
+    /// <summary>Scrolls to a page. With <paramref name="at"/> (page space) that point comes to the top of the view, whatever the rotation; <paramref name="keepX"/> also keeps its column when the layout is wider than the view.</summary>
+    public void GoToPage(int page, Point? at = null, bool keepX = false)
     {
         if (_sizes.Length == 0) return;
         page = Math.Clamp(page, 0, _sizes.Length - 1);
@@ -362,7 +362,8 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         var rect = _layout.PageRect(page);
         if (at is { } point) _offsetY = ContentMatrix(page).Transform(point).Y;
         else _offsetY = _continuous ? rect.Top - ViewLayout.Margin : 0;
-        if (_layout.Extent.Width > _viewport.Width) _offsetX = Math.Max(0, rect.Left + rect.Width / 2 - _viewport.Width / 2);
+        if (keepX && at is { } kept) _offsetX = ContentMatrix(page).Transform(kept).X;
+        else if (_layout.Extent.Width > _viewport.Width) _offsetX = Math.Max(0, rect.Left + rect.Width / 2 - _viewport.Width / 2);
         ClampOffset();
         AfterScroll(user: false);
         ScrollOwner?.InvalidateScrollInfo();

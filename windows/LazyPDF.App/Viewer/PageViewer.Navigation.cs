@@ -19,7 +19,7 @@ public partial class PageViewer
     {
         if (_tab is null || Surface.PageCount == 0) return;
         page = Math.Clamp(page, 0, Surface.PageCount - 1);
-        if (Surface.TopPlace() is { } from) _history.Jump(from, new PagePoint(page, new Point(0, 0)));
+        if (Surface.TopPlace() is { } from) _history.Jump(from, new PagePoint(page, new Point(0, 0)), Surface.Rotation);
         Surface.GoToPage(page);
         RefreshBar();
     }
@@ -41,8 +41,15 @@ public partial class PageViewer
             Tell(Loc.T("This link goes to a page that is not in the file."), null);
             return;
         }
-        var to = new Point(place.X, Math.Max(0, place.Y - 12));
-        if (Surface.TopPlace() is { } from) _history.Jump(from, new PagePoint(place.PageIndex, to));
+        var size = Surface.PageSize(place.PageIndex);
+        var to = Surface.Rotation switch
+        {
+            90 => new Point(Math.Max(0, place.X - 12), place.Y),
+            180 => new Point(place.X, Math.Min(size.Height, place.Y + 12)),
+            270 => new Point(Math.Min(size.Width, place.X + 12), place.Y),
+            _ => new Point(place.X, Math.Max(0, place.Y - 12)),
+        };
+        if (Surface.TopPlace() is { } from) _history.Jump(from, new PagePoint(place.PageIndex, to), Surface.Rotation);
         Surface.GoToPage(place.PageIndex, to);
         RefreshBar();
     }
@@ -93,7 +100,7 @@ public partial class PageViewer
     {
         if (Surface.TopPlace() is { } from && _history.Back(from) is { } place)
         {
-            Surface.GoToPage(place.Page, place.Point);
+            Surface.GoToPage(place.Page, place.Point, keepX: true);
             RefreshBar();
         }
     }
@@ -102,7 +109,7 @@ public partial class PageViewer
     {
         if (Surface.TopPlace() is { } from && _history.Forward(from) is { } place)
         {
-            Surface.GoToPage(place.Page, place.Point);
+            Surface.GoToPage(place.Page, place.Point, keepX: true);
             RefreshBar();
         }
     }
@@ -198,7 +205,7 @@ public partial class PageViewer
         var area = PageBounds(hit.Page, hit.Quads);
         if (!_searchJumped && Surface.TopPlace() is { } from)
         {
-            _searchJumped = _history.Jump(from, new PagePoint(hit.Page, new Point(0, area.Top)));
+            _searchJumped = _history.Jump(from, new PagePoint(hit.Page, new Point(0, area.Top)), Surface.Rotation);
         }
         Surface.Reveal(hit.Page, area);
         _hitGeometry.Clear();

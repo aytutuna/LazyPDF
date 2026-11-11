@@ -103,6 +103,24 @@ public sealed class PageSurfaceTests
     }
 
     [Fact]
+    public void GoingBackKeepsTheColumnWhenZoomedIn()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(4);
+            surface.SetZoom(3);
+            surface.SetHorizontalOffset(surface.HorizontalOffset + 150);
+            double offset = surface.HorizontalOffset;
+            var place = surface.TopPlace()!.Value;
+
+            surface.GoToPage(0);
+            surface.GoToPage(place.Page, place.Point, keepX: true);
+
+            Assert.Equal(offset, surface.HorizontalOffset, 3);
+        });
+    }
+
+    [Fact]
     public void GoingToAPageScrollsItsTopIntoView()
     {
         OnSta(() =>

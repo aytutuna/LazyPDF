@@ -13,10 +13,11 @@ public sealed class PageHistory
 
     public bool CanGoForward => _forward.Count > 0;
 
-    /// <summary>Notes a jump from <paramref name="from"/> to <paramref name="to"/>; a jump within the same page's 50 points, or the forward list, is forgotten. True when an entry was made.</summary>
-    public bool Jump(PagePoint from, PagePoint to)
+    /// <summary>Notes a jump from <paramref name="from"/> to <paramref name="to"/>; a jump within the same page's 50 points along the screen's up axis, or the forward list, is forgotten. True when an entry was made.</summary>
+    public bool Jump(PagePoint from, PagePoint to, int rotation = 0)
     {
-        if (from.Page == to.Page && Math.Abs(from.Point.Y - to.Point.Y) < NearPoints) return false;
+        double apart = rotation is 90 or 270 ? Math.Abs(from.Point.X - to.Point.X) : Math.Abs(from.Point.Y - to.Point.Y);
+        if (from.Page == to.Page && apart < NearPoints) return false;
         _back.Add(from);
         if (_back.Count > Limit) _back.RemoveAt(0);
         _forward.Clear();
