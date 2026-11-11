@@ -27,6 +27,8 @@ public partial class CommentsSidePanel
         Detail.Visibility = Visibility.Visible;
         // An annotation written straight into the page's list has no object number to answer.
         Detail.IsEnabled = _allowed && row.Comment.Annotation.Reference is not null;
+        FullText.Text = row.Text;
+        FullText.Visibility = row.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         Replies.ItemsSource = row.Comment.Replies.Where(r => r.State is null && !string.IsNullOrWhiteSpace(r.Contents))
             .Select(r => string.IsNullOrEmpty(r.Title) ? r.Contents : r.Title + ": " + r.Contents).ToList();
         _loading = true;

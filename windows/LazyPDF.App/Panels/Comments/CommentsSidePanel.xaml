@@ -63,13 +63,19 @@
 
         <Border x:Name="Detail" Grid.Row="2" Style="{StaticResource CardStyle}" Margin="8,0,8,8" Visibility="Collapsed">
             <StackPanel>
-                <ItemsControl x:Name="Replies" AutomationProperties.Name="{loc:T Replies}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,0,0,4" Text="{Binding}" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="160">
+                    <StackPanel>
+                        <TextBox x:Name="FullText" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" IsReadOnly="True"
+                                 AutomationProperties.Name="{loc:T Comment}" />
+                        <ItemsControl x:Name="Replies" AutomationProperties.Name="{loc:T Replies}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,0,0,4" Text="{Binding}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
                 <TextBlock Text="{loc:T Status}" Style="{StaticResource FieldLabelText}" />
                 <ComboBox x:Name="StatusBox" DisplayMemberPath="Name" AutomationProperties.Name="{loc:T Status}" SelectionChanged="Status_Changed" />
                 <TextBox x:Name="ReplyBox" Margin="0,8,0,0" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="72" VerticalScrollBarVisibility="Auto"
