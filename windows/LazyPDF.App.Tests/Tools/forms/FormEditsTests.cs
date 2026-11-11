@@ -595,6 +595,27 @@ public sealed class FormEditsTests
     }
 
     [Fact]
+    public void APastedRadioGroupKeepsItsButtonValues()
+    {
+        using var tab = FormPdfs.Tab();
+        FormEdits.Apply(tab, Fonts, "Rename buttons", f =>
+        {
+            var widgets = f.Find("plan")!.Widgets;
+            f.SetExportValue(widgets[0], "Basic");
+            f.SetExportValue(widgets[1], "Pro");
+            return true;
+        });
+        var form = FormPdfs.Read(tab);
+        var plan = form.Find("plan")!;
+        var specs = plan.Widgets.Select(w => FormEdits.CopySpec(form, plan, w) with { Name = "tier" }).ToList();
+        var states = plan.Widgets.Select(w => w.OnState).ToList();
+
+        FormEdits.Apply(tab, Fonts, "Paste form fields", f => FormEdits.Paste(f, specs, 0, false, 1));
+
+        Assert.Equal(states, FormPdfs.Read(tab).Find("tier")!.Widgets.Select(w => w.OnState));
+    }
+
+    [Fact]
     public void PastingAgainStepsFurtherAndStaysOnThePage()
     {
         using var tab = FormPdfs.Tab();

@@ -237,7 +237,8 @@ internal static class FormEdits
             var rect = new PdfRect(left, bottom, left + (r.Right - r.Left), bottom + (r.Top - r.Bottom));
             if (spec.Kind == FieldKind.Radio && form.Find(spec.Name) is { Kind: FieldKind.Radio } group)
             {
-                form.AddWidget(group, page, rect);
+                bool free = spec.ExportValue is not null && group.Widgets.All(w => w.OnState != spec.ExportValue);
+                form.AddWidget(group, page, rect, free ? spec.ExportValue : null);
                 added.Add((group.Name, form.Find(group.Name)!.Widgets.Count - 1));
                 continue;
             }
