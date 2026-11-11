@@ -103,6 +103,12 @@ public partial class AttachmentsSidePanel : ToolPanel
             Tell(Loc.T("This file could run as a program. Save it instead."));
             return;
         }
+        Host!.ShowNotice(Loc.T("Open this attachment?"), Loc.T("{0} came inside this PDF. Open it only if you trust where the PDF came from.", row.Name),
+            new NoticeAction(Loc.T("Open"), () => OpenCopy(row, name)));
+    }
+
+    private void OpenCopy(AttachmentRow row, string name)
+    {
         if (Read(row) is not { } bytes) return;
         try
         {
