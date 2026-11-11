@@ -213,25 +213,38 @@ public sealed class ViewerSearch
             if (await sourceTask is { } source)
             {
                 var batch = new List<SearchHit>();
+                // Only the hits nearest the view are kept before it, or a search from a late page builds them all.
+                var early = new Queue<SearchMatch>();
                 int count = 0;
-                int before = 0;
                 int after = 0;
-                foreach (var match in source.Find(query, options, cancel))
+                void Add(SearchMatch match)
                 {
-                    count++;
-                    bool ahead = match.Page >= start;
-                    // Hits before the view are capped as well, or a search from a late page builds them all.
-                    if (ahead ? after >= MaxHits : before >= MaxHits)
-                    {
-                        capped = true;
-                        if (ahead) break;
-                        continue;
-                    }
-                    if (ahead) after++;
-                    else before++;
                     batch.Add(new SearchHit(match, Around(source, match, -1), Around(source, match, 1)));
                     if (batch.Count >= Batch) Flush(batch, start, cancel);
                 }
+                foreach (var match in source.Find(query, options, cancel))
+                {
+                    count++;
+                    if (match.Page < start)
+                    {
+                        if (early.Count >= MaxHits)
+                        {
+                            early.Dequeue();
+                            capped = true;
+                        }
+                        early.Enqueue(match);
+                        continue;
+                    }
+                    while (early.Count > 0) Add(early.Dequeue());
+                    if (after >= MaxHits)
+                    {
+                        capped = true;
+                        break;
+                    }
+                    after++;
+                    Add(match);
+                }
+                while (early.Count > 0) Add(early.Dequeue());
                 Flush(batch, start, cancel);
                 if (count == 0 && !cancel.IsCancellationRequested)
                 {
