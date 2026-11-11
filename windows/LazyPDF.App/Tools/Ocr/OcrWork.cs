@@ -1,4 +1,6 @@
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Pages;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Ocr;
@@ -36,11 +38,12 @@ public static class OcrWork
         {
             // A cancel is swallowed by the host, so the pages read so far are all that is left of the run.
             if (reading.Pages.Count == 0 || tab.Revision != revision) return null;
-            PdfOcrLayer.Add(tab.Document, reading.Pages, options.Language);
+            Write(tab.Document, reading.Pages, reading.Turns, options.Language);
             tab.Commit(OcrStatusText.Label);
             int stopped = reading.Pages.Count;
             host.SetStatus(Loc.Plural(stopped, "Made {0} page searchable", "Made {0} pages searchable"));
-            host.ShowNotice(Loc.T("Reading stopped"), Loc.Plural(stopped, "Stopped after {0} page. The page was kept. Undo takes it back.", "Stopped after {0} pages. The pages were kept. Undo takes them back."));
+            string stoppedText = Loc.Plural(stopped, "Stopped after {0} page. The page was kept. Undo takes it back.", "Stopped after {0} pages. The pages were kept. Undo takes them back.");
+            host.ShowNotice(Loc.T("Reading stopped"), reading.Turns.Count == 0 ? stoppedText : $"{stoppedText} {Turned(reading.Turns.Count)}");
             return null;
         }
         if (tab.Revision != revision)
@@ -52,14 +55,33 @@ public static class OcrWork
         var result = read.Result;
         if (read.Pages.Count > 0)
         {
-            int words = PdfOcrLayer.Add(tab.Document, read.Pages, options.Language);
+            int words = Write(tab.Document, read.Pages, reading.Turns, options.Language);
             result = result with { Words = words, Committed = tab.Commit(OcrStatusText.Label) };
         }
         if (result.Committed) host.SetStatus(Loc.Plural(result.Added, "Made {0} page searchable", "Made {0} pages searchable"));
         else if (result.NoWords == 0 && result.NotRendered == 0) host.SetStatus(OcrStatusText.Nothing);
-        if (Left(result, dropsLayers) is { } text) host.ShowNotice(Loc.T("Not every page was read"), text);
+        if (Left(result, dropsLayers) is { } text) host.ShowNotice(Loc.T("Not every page was read"), reading.Turns.Count == 0 ? text : $"{text} {Turned(reading.Turns.Count)}");
+        else if (reading.Turns.Count > 0) host.ShowNotice(Loc.T("Pages turned"), Turned(reading.Turns.Count));
         return result;
     }
+
+    /// <summary>Reads like <see cref="PdfSearchable.ReadAsync"/>, and tries a page that gives no words turned by 90, 180 and 270 degrees. The turns are in quarter turns by 0-based page.</summary>
+    internal static async Task<(OcrRead Read, IReadOnlyDictionary<int, int> Turns)> ReadAsync(PdfDocument document, IPageRenderer renderer, ITextRecognizer recognizer,
+                                                                                               OcrOptions options, IProgress<OcrProgress>? progress, CancellationToken cancellation)
+    {
+        var reading = new Reading(renderer, recognizer);
+        var read = await PdfSearchable.ReadAsync(document, reading, reading, options, progress, cancellation);
+        return (read, reading.Turns);
+    }
+
+    /// <summary>Turns the pages that were read sideways upright, then adds the layers in that frame. Returns the words added; the caller commits.</summary>
+    internal static int Write(PdfDocument document, IReadOnlyList<OcrPageWords> pages, IReadOnlyDictionary<int, int> turns, string language)
+    {
+        foreach (var (page, turn) in turns) PageOperations.Rotate(document, [page], turn * 90);
+        return PdfOcrLayer.Add(document, pages, language);
+    }
+
+    private static string Turned(int pages) => Loc.Plural(pages, "{0} page was turned upright.", "{0} pages were turned upright.");
 
     /// <summary>Why the file may not be changed; null when it may.</summary>
     public static Problem? Refusal(PdfDocument document) =>
@@ -104,10 +126,13 @@ public static class OcrWork
     }
 
     // ReadAsync renders and reads one page after the other, so the page drawn last is the one being read.
+    private const int MinTurnedWords = 3;
+
     private sealed class Reading(IPageRenderer inner, ITextRecognizer recognizer) : IPageRenderer, ITextRecognizer
     {
         private int _last;
         public List<OcrPageWords> Pages { get; } = [];
+        public Dictionary<int, int> Turns { get; } = [];
 
         public PdfRgbaImage? Render(int pageIndex, double dpi)
         {
@@ -118,7 +143,20 @@ public static class OcrWork
         public async Task<IReadOnlyList<OcrWord>> RecognizeAsync(PdfRgbaImage image, string language, CancellationToken cancellation = default)
         {
             var words = await recognizer.RecognizeAsync(image, language, cancellation).ConfigureAwait(false);
-            Pages.Add(new OcrPageWords(_last, words, image.Width, image.Height));
+            int turn = 0;
+            var read = image;
+            if (words.Count == 0 && !PageInk.IsBlank(image))
+            {
+                for (int t = 1; t < 4; t++)
+                {
+                    var turned = WindowsOcr.Turn(image, t);
+                    var found = await recognizer.RecognizeAsync(turned, language, cancellation).ConfigureAwait(false);
+                    if (found.Count > words.Count) (words, turn, read) = (found, t, turned);
+                }
+                if (words.Count < MinTurnedWords) (words, turn, read) = (Array.Empty<OcrWord>(), 0, image);
+            }
+            if (turn != 0) Turns[_last] = turn;
+            Pages.Add(new OcrPageWords(_last, words, read.Width, read.Height));
             return words;
         }
     }
@@ -132,7 +170,6 @@ public static class OcrWork
         if (result.NotRendered > 0) parts.Add(Loc.Plural(result.NotRendered, "{0} page could not be drawn.", "{0} pages could not be drawn."));
         if (result.NoWords > 0) parts.Add(Loc.Plural(result.NoWords, "No text found on {0} page. Check the language.", "No text found on {0} pages. Check the language."));
         if (result.NoWords > 0 && dropsLayers) parts.Add(Loc.T("Text read earlier on those pages was removed. Undo brings it back."));
-        if (result.NoWords > 0) parts.Add(Loc.T("Pages that are turned sideways cannot be read. Rotate them in Organize pages first."));
         return parts.Count == 0 ? null : string.Join(" ", parts);
     }
 }

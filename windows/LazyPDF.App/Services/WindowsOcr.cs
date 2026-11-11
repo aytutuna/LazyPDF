@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices.WindowsRuntime;
 using LazyPDF.Core;
 using Windows.Globalization;
@@ -37,12 +38,36 @@ public sealed class WindowsOcr : ITextRecognizer
         return words;
     }
 
+    // A page can be read four times, so the engine is made once per language. A missing language is asked for again, since it can be added meanwhile.
+    private static readonly ConcurrentDictionary<string, OcrEngine> Engines = new();
+
+    /// <summary>The picture turned clockwise by <paramref name="quarterTurns"/> times 90 degrees.</summary>
+    internal static PdfRgbaImage Turn(PdfRgbaImage image, int quarterTurns)
+    {
+        int turns = (quarterTurns % 4 + 4) % 4;
+        if (turns == 0) return image;
+        int w = image.Width, h = image.Height;
+        int width = turns == 2 ? w : h;
+        var rgba = new byte[image.Rgba.Length];
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                var (tx, ty) = turns switch { 1 => (h - 1 - y, x), 2 => (w - 1 - x, h - 1 - y), _ => (y, w - 1 - x) };
+                Array.Copy(image.Rgba, (y * w + x) * 4, rgba, (ty * width + tx) * 4, 4);
+            }
+        }
+        return new PdfRgbaImage(width, turns == 2 ? h : w, rgba);
+    }
+
     private static OcrEngine? Engine(string language)
     {
+        if (Engines.TryGetValue(language, out var cached)) return cached;
         try
         {
             var requested = new Language(language);
-            return OcrEngine.IsLanguageSupported(requested) ? OcrEngine.TryCreateFromLanguage(requested) : null;
+            var engine = OcrEngine.IsLanguageSupported(requested) ? OcrEngine.TryCreateFromLanguage(requested) : null;
+            return engine is null ? null : Engines.GetOrAdd(language, engine);
         }
         catch (ArgumentException)
         {

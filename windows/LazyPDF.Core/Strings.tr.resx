@@ -4012,12 +4012,6 @@
   <data name="Pages that are already searchable" xml:space="preserve">
     <value>Zaten aranabilir olan sayfalar</value>
   </data>
-  <data name="Pages that are turned sideways cannot be read." xml:space="preserve">
-    <value>Yan çevrilmiş sayfalar okunamaz.</value>
-  </data>
-  <data name="Pages that are turned sideways cannot be read. Rotate them in Organize pages first." xml:space="preserve">
-    <value>Yan çevrilmiş sayfalar okunamaz. Önce Sayfaları yönet aracında döndürün.</value>
-  </data>
   <data name="Pages to export" xml:space="preserve">
     <value>Dışa aktarılacak sayfalar</value>
   </data>
@@ -4032,6 +4026,9 @@
   </data>
   <data name="Pages to take (empty is all)" xml:space="preserve">
     <value>Alınacak sayfalar (boşsa tümü)</value>
+  </data>
+  <data name="Pages turned" xml:space="preserve">
+    <value>Sayfalar döndürüldü</value>
   </data>
   <data name="Pages with content not in the tags: {0}{1}. Tag it or mark it as an artifact." xml:space="preserve">
     <value>İçeriği etiketlerde olmayan sayfalar: {0}{1}. İçeriği etiketleyin ya da yapay öğe olarak işaretleyin.</value>
@@ -7812,6 +7809,9 @@
   </data>
   <data name="{0} page was searched in recognized text|plural" xml:space="preserve">
     <value>{0} sayfada tanınan metinde arama yapıldı</value>
+  </data>
+  <data name="{0} page was turned upright.|plural" xml:space="preserve">
+    <value>{0} sayfa dik duracak şekilde döndürüldü.</value>
   </data>
   <data name="{0} pages and {1} pages" xml:space="preserve">
     <value>{0} sayfa ve {1} sayfa</value>

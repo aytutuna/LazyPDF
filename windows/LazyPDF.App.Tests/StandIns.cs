@@ -33,6 +33,7 @@ internal sealed class FakeRenderer : IDocumentRenderer
 {
     public int Loads { get; private set; }
     public bool Draws { get; set; } = true;
+    public PdfRgbaImage? Image { get; set; }
     public bool Disposed { get; private set; }
 
     public bool Load(PdfEditSession session, string? password)
@@ -44,7 +45,7 @@ internal sealed class FakeRenderer : IDocumentRenderer
     public (double Width, double Height) PageSize(int pageIndex) => (200, 300);
 
     public PdfRgbaImage? Render(int pageIndex, double dpi) =>
-        Draws ? new PdfRgbaImage(4, 6, Enumerable.Repeat((byte)255, 4 * 6 * 4).ToArray()) : null;
+        Draws ? Image ?? new PdfRgbaImage(4, 6, Enumerable.Repeat((byte)255, 4 * 6 * 4).ToArray()) : null;
 
     public void Dispose() => Disposed = true;
 }

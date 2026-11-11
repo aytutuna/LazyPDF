@@ -1,5 +1,6 @@
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Ocr;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Batch;
@@ -132,9 +133,17 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         if (!renderer.Load(session, null)) throw new StepFailed(new(Loc.T("Pages cannot be drawn"), Loc.T("Windows cannot draw this file, so its text cannot be read.")));
         var options = new OcrOptions(step.Text.Length == 0 ? "en-US" : step.Text);
         OcrResult result;
+        IReadOnlyDictionary<int, int> turns;
         try
         {
-            result = await PdfSearchable.RunAsync(session, recognizer, renderer, options, cancellation: cancellation);
+            var (read, turned) = await OcrWork.ReadAsync(session.Document, renderer, recognizer, options, null, cancellation);
+            result = read.Result;
+            turns = turned;
+            if (read.Pages.Count > 0)
+            {
+                int words = OcrWork.Write(session.Document, read.Pages, turns, options.Language);
+                result = result with { Words = words, Committed = session.Commit(OcrStatusText.Label) };
+            }
         }
         catch (InvalidOperationException e)
         {
@@ -142,7 +151,7 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         }
         if (result.NotRendered > 0) notes.Add(Loc.Plural(result.NotRendered, "{0} page could not be drawn.", "{0} pages could not be drawn."));
         if (result.NoWords > 0) notes.Add(Loc.Plural(result.NoWords, "No text found on {0} page. Check the language.", "No text found on {0} pages. Check the language."));
-        if (result.NoWords > 0) notes.Add(Loc.T("Pages that are turned sideways cannot be read."));
+        if (turns.Count > 0) notes.Add(Loc.Plural(turns.Count, "{0} page was turned upright.", "{0} pages were turned upright."));
         return session.Current.ToArray();
     }
 

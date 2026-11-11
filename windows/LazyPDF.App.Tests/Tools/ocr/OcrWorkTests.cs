@@ -19,6 +19,8 @@ public sealed class OcrWorkTests
         public string[] Words { get; set; } = ["alpha", "beta"];
         public Exception? Fails { get; set; }
         public Action? OnRead { get; set; }
+        // Words only for an image taller than wide, as a page that was scanned sideways reads once it is turned.
+        public bool PortraitOnly { get; set; }
         public List<string> Languages { get; } = [];
 
         public Task<IReadOnlyList<OcrWord>> RecognizeAsync(PdfRgbaImage image, string language, CancellationToken cancellation = default)
@@ -27,7 +29,7 @@ public sealed class OcrWorkTests
             cancellation.ThrowIfCancellationRequested();
             if (Fails is not null) throw Fails;
             Languages.Add(language);
-            IReadOnlyList<OcrWord> words = [.. Words.Select((w, i) => new OcrWord(w, new OcrBox(0, i, image.Width, 1)))];
+            IReadOnlyList<OcrWord> words = PortraitOnly && image.Width >= image.Height ? [] : [.. Words.Select((w, i) => new OcrWord(w, new OcrBox(0, i, image.Width, 1)))];
             return Task.FromResult(words);
         }
     }
@@ -201,14 +203,86 @@ public sealed class OcrWorkTests
     }
 
     [Fact]
-    public async Task PagesWithoutWordsSuggestRotatingSidewaysOnes()
+    public async Task PagesWithoutWordsAreNotToldToRotate()
     {
         using var f = new ViewModelFixture();
         var tab = await Open(f, 1);
 
         await Make(tab, f, new FakeRecognizer { Words = [] }, All());
 
-        Assert.Contains("sideways", f.Vm.Message!.Text);
+        Assert.DoesNotContain("sideways", f.Vm.Message!.Text);
+    }
+
+    private static PdfRgbaImage Landscape(bool ink)
+    {
+        var rgba = new byte[6 * 4 * 4];
+        Array.Fill(rgba, (byte)255);
+        if (ink) for (int i = 0; i < 12; i++) rgba[i * 4] = rgba[i * 4 + 1] = rgba[i * 4 + 2] = 0;
+        return new PdfRgbaImage(6, 4, rgba);
+    }
+
+    [Fact]
+    public async Task ASidewaysPageIsTurnedUprightAndGetsALayer()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 1);
+        ((FakeRenderer)tab.Renderer).Image = Landscape(ink: true);
+        var recognizer = new FakeRecognizer { PortraitOnly = true, Words = ["alpha", "beta", "gamma"] };
+
+        var result = await Make(tab, f, recognizer, All());
+
+        Assert.Equal(1, result!.Added);
+        Assert.Equal(90, tab.Document.Pages[0].Rotate);
+        Assert.True(PdfOcrLayer.Has(tab.Document, tab.Document.Pages[0]));
+        Assert.Equal(["alpha", "beta", "gamma"], Words(tab));
+        Assert.Equal("Pages turned", f.Vm.Message!.Title);
+        Assert.Equal("1 page was turned upright.", f.Vm.Message.Text);
+    }
+
+    [Fact]
+    public async Task UndoPutsTheTurnAndTheLayerBackTogether()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 1);
+        ((FakeRenderer)tab.Renderer).Image = Landscape(ink: true);
+
+        await Make(tab, f, new FakeRecognizer { PortraitOnly = true, Words = ["alpha", "beta", "gamma"] }, All());
+        Assert.True(tab.Undo());
+
+        Assert.Equal(0, tab.Document.Pages[0].Rotate);
+        Assert.False(PdfOcrLayer.Has(tab.Document, tab.Document.Pages[0]));
+        Assert.False(tab.Session.CanUndo);
+    }
+
+    [Fact]
+    public async Task ABlankPageIsReadOnlyOnce()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 1);
+        ((FakeRenderer)tab.Renderer).Image = Landscape(ink: false);
+        var recognizer = new FakeRecognizer { PortraitOnly = true, Words = ["alpha", "beta", "gamma"] };
+
+        var result = await Make(tab, f, recognizer, All());
+
+        Assert.Equal(1, result!.NoWords);
+        Assert.Single(recognizer.Languages);
+        Assert.Equal(0, tab.Document.Pages[0].Rotate);
+    }
+
+    [Fact]
+    public async Task ATurnedReadWithTooFewWordsIsNotTaken()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 1);
+        ((FakeRenderer)tab.Renderer).Image = Landscape(ink: true);
+
+        await Make(tab, f, new FakeRecognizer { PortraitOnly = true, Words = ["alpha", "beta", "gamma"] }, All());
+        Assert.Equal(90, tab.Document.Pages[0].Rotate);
+        Assert.True(tab.Undo());
+
+        await Make(tab, f, new FakeRecognizer { PortraitOnly = true, Words = ["alpha", "beta"] }, All());
+        Assert.Equal(0, tab.Document.Pages[0].Rotate);
+        Assert.False(PdfOcrLayer.Has(tab.Document, tab.Document.Pages[0]));
     }
 
     [Fact]
