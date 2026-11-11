@@ -71,6 +71,18 @@ public class FreeTextTests
     }
 
     [Fact]
+    public void ARunThatFitsItsFamilyKeepsItWhenAnotherRunNeedsAFallback()
+    {
+        var (document, writer, page) = Start(new CjkSource(covering: true));
+        var box = writer.AddFreeText(page, new PdfRect(100, 600, 400, 640), "", new FreeTextStyle(RichText:
+            "<body xmlns=\"http://www.w3.org/1999/xhtml\"><p><span style=\"font-family:Times New Roman\">Hello</span><span style=\"font-family:Microsoft YaHei\">中文</span></p></body>"));
+        Assert.Equal("Hello中文", Draw(document, box).Text);
+        var fonts = Fonts(document, box);
+        Assert.Equal(["Type0", "Type1"], fonts.Select(f => document.Name(f, "Subtype")).Order());
+        Assert.Equal("", writer.TakeUndrawn());
+    }
+
+    [Fact]
     public void CharactersNoFontHasAreReportedOnce()
     {
         var (document, writer, page) = Start(new CjkSource(covering: false));

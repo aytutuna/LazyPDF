@@ -31,10 +31,12 @@ internal sealed partial class AppearanceBuilder
         var textBox = new PdfRect(box.Left + inset, box.Bottom + inset, box.Right - inset, box.Top - inset);
         if (textBox.IsEmpty || paragraphs.Count == 0) return c;
 
-        var texts = paragraphs.SelectMany(p => p.Select(r => r.Text)).ToList();
+        var runs = paragraphs.SelectMany(p => p).ToList();
         var cache = new Dictionary<(string, FontStyles), PdfDrawFont>();
         var names = new Dictionary<int, string>();
-        var lines = TextLayout.Layout(paragraphs, textBox.Width, format, f => FontFor(f, texts, cache));
+        // A font only has to cover the runs that are set in it.
+        var lines = TextLayout.Layout(paragraphs, textBox.Width, format,
+            f => FontFor(f, [.. runs.Where(r => r.Format.Family == f.Family && r.Format.Style == f.Style).Select(r => r.Text)], cache));
 
         c.W.Save();
         c.W.Rect(c.X(box.Left), c.Y(box.Bottom), box.Width, box.Height).Clip();

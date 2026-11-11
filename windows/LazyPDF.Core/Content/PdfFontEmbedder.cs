@@ -65,7 +65,8 @@ public sealed class PdfFontEmbedder(PdfDocument document, IFontSource? source = 
     public PdfDrawFont? AddCovering(string family, FontStyles style, IEnumerable<string> texts)
     {
         var all = texts.ToList();
-        if (FindStandard(family, style) is { IsSymbolic: false } && all.All(Fits)) return Add(family, style, all);
+        // Text that fits WinAnsi needs no fallback; null lets the caller's Helvetica retry run.
+        if (all.All(Fits)) return Add(family, style, all);
         (EmbeddedFont Built, TrueTypeFont Measure)? best = null;
         foreach (string name in FallbackFamilies.Prepend(family).Distinct(StringComparer.OrdinalIgnoreCase))
         {

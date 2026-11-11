@@ -199,6 +199,15 @@ public class PdfFontEmbedderTests
     }
 
     [Fact]
+    public void AddCoveringGivesNullForTextThatFitsWhenTheFamilyHasNoFont()
+    {
+        var document = Blank();
+        int before = Type0Count(document);
+        Assert.Null(new PdfFontEmbedder(document, new CjkViaArial(covering: true)).AddCovering("Minion Pro", FontStyles.Regular, ["Hello"]));
+        Assert.Equal(before, Type0Count(document));
+    }
+
+    [Fact]
     public void EachCallAddsItsOwnFont()
     {
         var document = Blank();
