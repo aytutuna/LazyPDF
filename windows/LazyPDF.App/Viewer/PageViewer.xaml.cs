@@ -85,6 +85,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         if (_tab is not null)
         {
             _tab.Changed -= Tab_Changed;
+            _tab.Drawn -= Tab_Drawn;
             _states.AddOrUpdate(_tab, new ViewState(Surface.Rotation, Surface.TopPlace(), Surface.Columns, Surface.Cover, Surface.Continuous));
             _tab.Rotation = Surface.Rotation;
         }
@@ -109,6 +110,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         if (tab is not null)
         {
             tab.Changed += Tab_Changed;
+            tab.Drawn += Tab_Drawn;
             StoreZoom(tab);
             tab.PageIndex = Surface.CurrentPage;
         }
@@ -193,13 +195,18 @@ public partial class PageViewer : UserControl, IDocumentViewer
         if (_tab is not { } tab) return;
         ResetText();
         ReadLabels();
+        if (Search.Query.Length > 0) _ = Search.Restart();
+        RefreshBar();
+        StateChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void Tab_Drawn(object? sender, EventArgs e)
+    {
+        if (_tab is not { } tab) return;
         Surface.Reload();
         Surface.SetRightToLeft(ViewerSettings.Read(tab.Document).RightToLeft);
         ReapplyLayers();
         Note.Visibility = tab.CanDraw ? Visibility.Collapsed : Visibility.Visible;
-        if (Search.Query.Length > 0) _ = Search.Restart();
-        RefreshBar();
-        StateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void StoreZoom(DocumentTab tab)

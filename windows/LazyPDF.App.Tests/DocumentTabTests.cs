@@ -15,6 +15,89 @@ public sealed class DocumentTabTests
         return new DocumentTab(session, renderer, path, "Untitled.pdf", recovery: recovery, unsaved: unsaved);
     }
 
+    private sealed class SlowRenderer : IDocumentRenderer
+    {
+        public List<TaskCompletionSource<bool>> Pending { get; } = [];
+
+        public bool Load(PdfEditSession session, string? password) => true;
+
+        public Task<bool> LoadAsync(PdfEditSession session, string? password)
+        {
+            var gate = new TaskCompletionSource<bool>();
+            Pending.Add(gate);
+            return gate.Task;
+        }
+
+        public (double Width, double Height) PageSize(int pageIndex) => (200, 300);
+
+        public PdfRgbaImage? Render(int pageIndex, double dpi) => null;
+
+        public void Dispose() { }
+    }
+
+    private static DocumentTab OpenSlow(out SlowRenderer renderer)
+    {
+        renderer = new SlowRenderer();
+        return new DocumentTab(PdfEditSession.Open(Pdfs.Text()), renderer, null, "Untitled.pdf");
+    }
+
+    [Fact]
+    public async Task ACommitAnnouncesAtOnceAndDrawsWhenTheLoadEnds()
+    {
+        using var tab = OpenSlow(out var renderer);
+        int changed = 0, drawn = 0;
+        tab.Changed += (_, _) => changed++;
+        tab.Drawn += (_, _) => drawn++;
+        Pdfs.Retitle(tab.Session, "New title");
+
+        tab.Commit("Properties");
+
+        Assert.Equal(1, changed);
+        Assert.Equal(1, tab.Revision);
+        Assert.Equal(0, drawn);
+        renderer.Pending[0].SetResult(false);
+        await tab.Drawing;
+        Assert.Equal(1, drawn);
+        Assert.False(tab.CanDraw);
+    }
+
+    [Fact]
+    public async Task TwoQuickCommitsDrawOnlyTheLastRevision()
+    {
+        using var tab = OpenSlow(out var renderer);
+        int drawn = 0;
+        tab.Drawn += (_, _) => drawn++;
+        Pdfs.Retitle(tab.Session, "One");
+        tab.Commit("One");
+        Pdfs.Retitle(tab.Session, "Two");
+        tab.Commit("Two");
+
+        renderer.Pending[0].SetResult(true);
+        await Task.Yield();
+        Assert.Equal(0, drawn);
+        renderer.Pending[1].SetResult(true);
+        await tab.Drawing;
+
+        Assert.Equal(1, drawn);
+        Assert.Equal(2, tab.Revision);
+    }
+
+    [Fact]
+    public async Task DisposingBeforeTheLoadEndsRaisesNothing()
+    {
+        var tab = OpenSlow(out var renderer);
+        int drawn = 0;
+        tab.Drawn += (_, _) => drawn++;
+        Pdfs.Retitle(tab.Session, "New title");
+        tab.Commit("Properties");
+
+        tab.Dispose();
+        renderer.Pending[0].SetResult(true);
+        await tab.Drawing;
+
+        Assert.Equal(0, drawn);
+    }
+
     private static string Written(TempDir dir, string name = "a.pdf") => dir.File(name, Pdfs.Text());
 
     [Fact]

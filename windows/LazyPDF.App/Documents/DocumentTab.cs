@@ -19,6 +19,8 @@ public sealed class DocumentTab : ITab, IDisposable
     private bool _unsaved;
     private DiskStamp? _disk;
     private byte[]? _diskHash;
+    private Task _drawing = Task.CompletedTask;
+    private bool _disposed;
 
     internal const int HashLimit = 256 * 1024 * 1024;
 
@@ -109,6 +111,12 @@ public sealed class DocumentTab : ITab, IDisposable
 
     /// <summary>Raised when the file's bytes changed.</summary>
     public event EventHandler? Changed;
+
+    /// <summary>Raised once the renderer has loaded the state that <see cref="Changed"/> announced; until then it still draws the earlier one.</summary>
+    public event EventHandler? Drawn;
+
+    /// <summary>Completes when the renderer has loaded every change made so far.</summary>
+    public Task Drawing => _drawing;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -208,11 +216,32 @@ public sealed class DocumentTab : ITab, IDisposable
     /// <summary>For a tool whose engine call committed on the session itself: draws the new state and tells the window.</summary>
     public void Refresh()
     {
-        CanDraw = Renderer.Load(Session, _password);
         Revision++;
         WriteRecovery();
         Changed?.Invoke(this, EventArgs.Empty);
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
+        StartLoad();
+    }
+
+    // An encrypted document is read on this thread, as the renderer needs its live document.
+    private void StartLoad()
+    {
+        if (Session.Document.IsEncrypted)
+        {
+            CanDraw = Renderer.Load(Session, _password);
+            Drawn?.Invoke(this, EventArgs.Empty);
+            return;
+        }
+        _drawing = LoadAfter(_drawing, Revision);
+    }
+
+    private async Task LoadAfter(Task previous, int revision)
+    {
+        await previous;
+        if (_disposed || revision != Revision) return;
+        CanDraw = await Renderer.LoadAsync(Session, _password);
+        if (_disposed || revision != Revision) return;
+        Drawn?.Invoke(this, EventArgs.Empty);
     }
 
     // The bytes of a save are the ones already shown, so only the state of the tab changes, unless the save rewrote the file.
@@ -255,6 +284,7 @@ public sealed class DocumentTab : ITab, IDisposable
     /// <summary>Lets go of the renderer and removes the recovery copy: closing on purpose is not a crash.</summary>
     public void Dispose()
     {
+        _disposed = true;
         Renderer.Dispose();
         _recovery?.Delete(Id);
     }
