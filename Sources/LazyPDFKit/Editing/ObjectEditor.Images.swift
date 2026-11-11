@@ -22,19 +22,9 @@ extension ObjectEditor {
         return !overflow && area <= PdfImageSamples.maxPixels && frame.rgba.count == area * 4
     }
 
-    /// The image `file` holds, added to the document: JPEG data as it is, anything else through `codec`.
-    static func addPicture(_ document: PdfDocument, _ file: [UInt8], _ codec: ImageCodec?) throws -> PdfImage? {
-        var added: PdfImage?
-        if file.count > 2 && file[0] == 0xFF && file[1] == 0xD8 { added = try PdfImageWriter.addJpeg(document, file) }
-        if added == nil, let frame = codec?.decodeFile(file)?.first, fits(frame) {
-            added = try PdfImageWriter.addRgba(document, frame.width, frame.height, frame.rgba)
-        }
-        return added
-    }
-
     /// Paints another picture where the object is, fitted inside its place with the proportions of the new one.
     func replaceImage(_ image: ImageObject, _ file: [UInt8], _ fit: Bool) throws {
-        guard let added = try Self.addPicture(document, file, codec) else { throw EditConflictException(EditingText.noImage) }
+        guard let added = try PdfImageWriter.addPicture(document, file, codec) else { throw EditConflictException(EditingText.noImage) }
         let place = Self.placeOf(image)
         guard let name = batch.addResource(place, "XObject", added.reference) else { throw EditConflictException(EditingText.sharedForm) }
         let w = ContentWriter()

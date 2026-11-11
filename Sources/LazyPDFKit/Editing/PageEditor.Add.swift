@@ -93,11 +93,11 @@ extension PageEditor {
     }
 
     /// Adds a picture inside `box` (user space), upright on the page as it is shown, centred and keeping its
-    /// proportions. JPEG data is embedded as it is; other files go through the editor's `ImageCodec`.
+    /// proportions. A JPEG with an Exif turn is stored upright; other JPEGs are embedded as they are and other files go through the editor's `ImageCodec`.
     public func addImage(_ box: PdfRect, _ file: [UInt8]) throws -> ObjectEditResult {
         if box.isEmpty { return ObjectEditResult(0, [SkippedObject(id: -1, reason: EditingText.tooBig)]) }
         let model = try self.model
-        guard let added = try ObjectEditor.addPicture(model.document, file, codec) else {
+        guard let added = try PdfImageWriter.addPicture(model.document, file, codec) else {
             return ObjectEditResult(0, [SkippedObject(id: -1, reason: EditingText.noImage)])
         }
 

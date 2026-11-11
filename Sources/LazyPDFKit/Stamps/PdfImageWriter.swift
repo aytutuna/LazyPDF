@@ -24,6 +24,17 @@ public enum PdfImageWriter {
         return PdfImage(reference, header.width, header.height)
     }
 
+    /// A picture file as an upright image: a JPEG without an Exif turn as it is, a turned JPEG decoded and stored turned back,
+    /// any other file as the codec reads it. Nil when nothing reads it or its pixels do not fit.
+    public static func addPicture(_ document: PdfDocument, _ file: [UInt8], _ codec: ImageCodec?) throws -> PdfImage? {
+        let jpeg = file.count > 2 && file[0] == 0xFF && file[1] == 0xD8
+        let orientation = jpeg ? JpegMeta.orientation(file) : 1
+        if jpeg && (orientation == 1 || codec == nil), let direct = try addJpeg(document, file) { return direct }
+        guard let frame = codec?.decodeFile(file)?.first, ObjectEditor.fits(frame) else { return nil }
+        let upright = JpegMeta.upright(frame, orientation)
+        return try addRgba(document, upright.width, upright.height, upright.rgba)
+    }
+
     /// `rgba` is straight RGBA8, top row first. A size that is not positive or does not fit the data is the caller's
     /// mistake, a precondition where the C# throws ArgumentException; a picture with too many pixels is the user's choice
     /// and throws `InvalidOperationException`.

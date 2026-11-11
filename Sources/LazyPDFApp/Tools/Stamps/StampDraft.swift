@@ -68,10 +68,7 @@ public struct StampDraft {
     }
 
     private func addPicture(_ document: PdfDocument, _ codec: ImageCodec?) throws -> PdfImage {
-        let file = picture ?? []
-        let jpeg = file.count > 2 && file[0] == 0xFF && file[1] == 0xD8
-        if jpeg, let direct = try PdfImageWriter.addJpeg(document, file) { return direct }
-        guard let frame = codec?.decodeFile(file)?.first else { throw InvalidDataException("The picture cannot be read.") }
-        return try PdfImageWriter.addRgba(document, frame.width, frame.height, frame.rgba)
+        guard let added = try PdfImageWriter.addPicture(document, picture ?? [], codec) else { throw InvalidDataException("The picture cannot be read.") }
+        return added
     }
 }
