@@ -181,7 +181,7 @@ public sealed class ViewerSearchTests
     public void NextAfterScrollingAwaySkipsTheHitAlreadyInView()
     {
         int page = 10;
-        var search = new ViewerSearch(() => Task.FromResult<TextSource?>(null), () => page, action => action());
+        var search = new ViewerSearch(() => Task.FromResult<TextSource?>(null), () => page, action => action(), shown: p => p >= page && p <= page + 3);
         search.Hits.Add(HitOn(10));
         search.Hits.Add(HitOn(14));
         search.Select(0);
@@ -191,6 +191,36 @@ public sealed class ViewerSearchTests
 
         Assert.Equal(1, search.Current);
         Assert.Equal(SearchWrap.None, search.Wrapped);
+    }
+
+    [Fact]
+    public async Task NextAfterARestartGoesToAHitAheadOfTheView()
+    {
+        int page = 0;
+        var bytes = Pages(8);
+        var search = new ViewerSearch(() => TextSource.OpenAsync(bytes, null), () => page, action => action(), shown: p => p == page);
+        var options = new TextSearchOptions(Regex: true);
+        await search.Start(@"Page (3|7)\.", options);
+        await search.Restart();
+
+        search.Next();
+
+        Assert.Equal(2, search.Hits[search.Current].Page);
+    }
+
+    [Fact]
+    public void NextWaitsForTheFirstHitAfterTheViewWhileTheSearchRuns()
+    {
+        var search = new ViewerSearch(() => new TaskCompletionSource<TextSource?>().Task, () => 5, action => action());
+        _ = search.Start("fox", new TextSearchOptions());
+        search.Hits.Add(HitOn(2));
+        int moves = 0;
+        search.CurrentChanged += (_, _) => moves++;
+
+        search.Next();
+
+        Assert.Equal(-1, search.Current);
+        Assert.Equal(0, moves);
     }
 
     [Fact]

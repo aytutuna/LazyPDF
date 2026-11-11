@@ -38,6 +38,7 @@ public sealed class ViewerSearch
     private readonly Func<int> _startPage;
     private readonly Action<Action> _post;
     private readonly Func<int, string>? _pageLabel;
+    private readonly Func<int, bool>? _shown;
     private CancellationTokenSource? _cancel;
     private bool _quiet;
     private int _landed = -1;
@@ -46,12 +47,14 @@ public sealed class ViewerSearch
     /// <param name="startPage">The page the first current hit is taken from.</param>
     /// <param name="post">Runs an action on the thread the hits and events belong to.</param>
     /// <param name="pageLabel">The label of a page, read on the post thread; null numbers hits by page.</param>
-    public ViewerSearch(Func<Task<TextSource?>> source, Func<int> startPage, Action<Action> post, Func<int, string>? pageLabel = null)
+    /// <param name="shown">Whether a page is on screen; null counts none as shown.</param>
+    public ViewerSearch(Func<Task<TextSource?>> source, Func<int> startPage, Action<Action> post, Func<int, string>? pageLabel = null, Func<int, bool>? shown = null)
     {
         _source = source;
         _startPage = startPage;
         _post = post;
         _pageLabel = pageLabel;
+        _shown = shown;
     }
 
     public ObservableCollection<SearchHit> Hits { get; } = [];
@@ -148,6 +151,8 @@ public sealed class ViewerSearch
     {
         int count = Hits.Count;
         if (count == 0) return;
+        // The first hit at or after the view is still to come, and it is the one to go to.
+        if (Running && Current < 0) return;
         _quiet = false;
         int start = _startPage();
         int index;
@@ -165,8 +170,8 @@ public sealed class ViewerSearch
                 for (int i = count - 1; i >= 0; i--)
                     if (Hits[i].Page <= start) { index = i; break; }
             }
-            // The hit in view is already shown, so go one further.
-            if (index == Current) index += step;
+            // The hit the reader landed on is still on screen, so go one further.
+            if (index == Current && _landed >= 0 && _shown?.Invoke(Hits[Current].Page) == true) index += step;
         }
         else index = (Current < 0 ? (step > 0 ? -1 : 0) : Current) + step;
         var wrap = SearchWrap.None;
