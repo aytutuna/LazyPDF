@@ -41,6 +41,47 @@ public sealed class FillSignPanelTests
     });
 
     [Fact]
+    public Task DeletingAnotherSignatureKeepsTheChosenOneAndTheRunningPlacement() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        var saved = new SavedSignatures(dir.Sub("sigs"));
+        var older = saved.Add(SavedKind.Signature, new PdfRgbaImage(2, 1, [1, 0, 0, 255, 0, 1, 0, 128]));
+        Thread.Sleep(50);
+        saved.Add(SavedKind.Signature, new PdfRgbaImage(1, 1, [0, 0, 1, 255]));
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var host = new RecordingHost();
+        var panel = new FillSignPanel(dir.Sub("sigs"));
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, host);
+        var list = (ListBox)panel.FindName("SavedList");
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var remove = typeof(FillSignPanel).GetMethod("Remove_Click", flags)!;
+        var image = typeof(FillSignPanel).GetField("_image", flags)!;
+        var rows = list.Items.Cast<SavedRow>().ToList();
+        var olderRow = rows.Single(r => r.Item.Path == older.Path);
+        var newerRow = rows.Single(r => r.Item.Path != older.Path);
+        list.SelectedItem = olderRow;
+        typeof(FillSignPanel).GetMethod("Begin", flags)!.Invoke(panel, []);
+        var chosen = image.GetValue(panel);
+
+        remove.Invoke(panel, [new Button { DataContext = newerRow }, new RoutedEventArgs()]);
+        host.Actions[0]!.Run();
+
+        Assert.Equal(older.Path, ((SavedRow)list.SelectedItem!).Item.Path);
+        Assert.Same(chosen, image.GetValue(panel));
+        Assert.Equal("Stop placing", panel.Action!.Text);
+
+        remove.Invoke(panel, [new Button { DataContext = list.SelectedItem }, new RoutedEventArgs()]);
+        host.Actions[1]!.Run();
+
+        Assert.Equal(-1, list.SelectedIndex);
+        Assert.Null(image.GetValue(panel));
+        Assert.Equal("Place on page", panel.Action!.Text);
+        Assert.False(panel.Action!.CanRun());
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task KeepPlacingStaysArmedAfterEachPlacementUntilItIsUnticked() => Sta.Run(() =>
     {
         using var dir = new TempDir();

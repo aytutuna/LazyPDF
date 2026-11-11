@@ -32,6 +32,7 @@ public partial class FillSignPanel : ToolPanel
     private PdfRgbaImage? _image;
     private PlacementTool? _tool;
     private bool _cautioned;
+    private bool _loading;
 
     public FillSignPanel()
         : this(SavedSignatures.DefaultDirectory)
@@ -75,17 +76,33 @@ public partial class FillSignPanel : ToolPanel
         RaiseActionChanged();
     }
 
-    private void FillSaved()
+    private void FillSaved(string? keepPath = null)
     {
         var rows = new List<SavedRow>();
         foreach (var item in _saved.List(Kind))
         {
             if (_saved.Load(item) is { } image) rows.Add(new SavedRow(item, SignatureArt.ToBitmap(image)));
         }
+        _loading = true;
         SavedList.ItemsSource = rows;
+        _loading = false;
         NoneSaved.Visibility = rows.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         SavedList.Visibility = rows.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
-        if (rows.Count > 0) SavedList.SelectedIndex = 0;
+        if (keepPath is null)
+        {
+            if (rows.Count > 0) SavedList.SelectedIndex = 0;
+            return;
+        }
+        int kept = rows.FindIndex(r => r.Item.Path == keepPath);
+        if (kept >= 0)
+        {
+            _loading = true;
+            SavedList.SelectedIndex = kept;
+            _loading = false;
+            return;
+        }
+        _image = null;
+        Stop();
     }
 
     private Task Arm()
@@ -197,6 +214,7 @@ public partial class FillSignPanel : ToolPanel
 
     private void SavedList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (_loading) return;
         _image = SavedList.SelectedItem is SavedRow row ? _saved.Load(row.Item) : null;
         Stop();
         RaiseActionChanged();
@@ -211,7 +229,7 @@ public partial class FillSignPanel : ToolPanel
         {
             if (Tab is null) return;
             _saved.Remove(row.Item);
-            FillSaved();
+            FillSaved((SavedList.SelectedItem as SavedRow)?.Item.Path ?? "");
             RaiseActionChanged();
         }));
     }
