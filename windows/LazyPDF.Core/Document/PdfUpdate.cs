@@ -37,8 +37,8 @@ internal static class PdfUpdate
         }
         if (freed.Count > 0) entries.Add(new XrefEntry(0, 0, freed[0], 65535));
 
-        // After a rebuild the file's own sections cannot be built on, so this one lists everything.
-        bool full = document.XrefRebuilt;
+        // After a rebuild the file's own sections cannot be built on, and past the reader's chain limit it would not read back, so this one lists everything.
+        bool full = document.XrefRebuilt || document.SectionOffsets.Count >= PdfDocument.MaxSections;
         if (full)
         {
             var written = new HashSet<int>(entries.Select(e => e.Number));

@@ -307,4 +307,24 @@ public class EditSessionTests : IDisposable
         var session = PdfEditSession.Open(pdf.Finish());
         Assert.Single(session.Versions);
     }
-}
+
+    [Theory]
+    [InlineData("table")]
+    [InlineData("stream")]
+    public void PastTheSectionLimitTheNextUpdateIsAFullSection(string kind)
+    {
+        var session = PdfEditSession.Open(SaveFixtures.Make(kind));
+        for (int i = 1; i <= PdfDocument.MaxSections + 4; i++)
+        {
+            Retitle(session, "Title " + i);
+            Assert.True(session.Commit("Title"));
+            if (i % 500 == 0) Assert.False(session.Document.XrefRebuilt);
+        }
+        Assert.False(session.Document.XrefRebuilt);
+        Assert.True(session.Document.SectionOffsets.Count < PdfDocument.MaxSections);
+
+        var reopened = PdfDocument.Open(session.Current.ToArray());
+        Assert.False(reopened.XrefRebuilt);
+        Assert.Equal("Title " + (PdfDocument.MaxSections + 4), SaveFixtures.Title(reopened));
+        Assert.Equal(2, reopened.Pages.Count);
+    }}
