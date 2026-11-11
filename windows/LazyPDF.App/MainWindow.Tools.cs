@@ -279,7 +279,8 @@ public partial class MainWindow
         }
         if (ReferenceEquals(current, panel) && ReferenceEquals(attached, tab)) return;
         // The tab can change under the panel (open, close, Save all), so words still being typed go in before it lets go.
-        if (attached is not null && _vm.Strip.Contains(attached)) current?.HandIn();
+        // A running job edits the session on another thread, so nothing is written to it from here.
+        if (attached is not null && _vm.Strip.Contains(attached) && !_vm.IsBusy && !_actionRunning) current?.HandIn();
         current?.Detach();
         current = panel;
         attached = tab;
