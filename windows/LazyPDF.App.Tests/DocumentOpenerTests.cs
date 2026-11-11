@@ -93,6 +93,19 @@ public sealed class DocumentOpenerTests
     }
 
     [Fact]
+    public void AFileLongerThanAnArrayCanBeIsRefusedBeforeItIsRead()
+    {
+        using var dir = new TempDir();
+        string path = dir.File("huge.pdf", []);
+        using (var stream = new FileStream(path, FileMode.Open)) stream.SetLength(int.MaxValue + 1L);
+
+        var error = Assert.Throws<PdfReadException>(() => Opener.Read(path));
+
+        Assert.Equal(PdfReadProblem.Unsupported, error.Problem);
+        Assert.Equal(DocumentOpener.TooLarge, error.Message);
+    }
+
+    [Fact]
     public void AMissingFileThrowsFileNotFound()
     {
         using var dir = new TempDir();

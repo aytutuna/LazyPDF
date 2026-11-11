@@ -1554,6 +1554,12 @@
   "No font on this computer can draw the text of {0}.": {
     "tr": "Bu bilgisayardaki hiçbir yazı tipi {0} metnini çizemiyor."
   },
+  "File is too large": {
+    "tr": "Dosya çok büyük"
+  },
+  "{0} is too large for Lazy PDF to open.": {
+    "tr": "{0}, Lazy PDF'nin açamayacağı kadar büyük."
+  },
   "File cannot be opened": {
     "tr": "Dosya açılamıyor"
   },

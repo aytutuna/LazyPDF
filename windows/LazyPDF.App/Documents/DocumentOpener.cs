@@ -26,8 +26,12 @@ public sealed record DiskStamp(DateTime Write, long Length)
 /// <summary>Reads what the open dialog and the drop target hand over: PDFs as they are, pictures and text turned into a PDF.</summary>
 public sealed class DocumentOpener(IImageCodec codec, IFontSource fonts)
 {
+    /// <summary>What Core says of a file it cannot hold in one array; <see cref="Problems.Open"/> tells it from other unsupported files by this.</summary>
+    internal const string TooLarge = "The file is too large.";
+
     public OpenSource Read(string path)
     {
+        if (new FileInfo(path).Length > int.MaxValue) throw new PdfReadException(PdfReadProblem.Unsupported, TooLarge);
         var stamp = DiskStamp.Of(path);
         byte[] bytes = File.ReadAllBytes(path);
         string stem = System.IO.Path.GetFileNameWithoutExtension(path);

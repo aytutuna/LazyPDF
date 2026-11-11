@@ -1,4 +1,5 @@
 using LazyPDF.App.Documents;
+using LazyPDF.Core;
 using Xunit;
 
 namespace LazyPDF.App.Tests;
@@ -109,6 +110,59 @@ public sealed class OpenFlowTests
         Assert.Empty(f.Vm.Documents);
         Assert.Equal("File not found", f.Vm.Message?.Title);
         Assert.Contains("gone.pdf", f.Vm.Message?.Text);
+    }
+
+    [Fact]
+    public async Task AFileTooLargeToHoldIsSaidInWordsAndOpensNothing()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Dir.File("huge.pdf", []);
+        using (var stream = new FileStream(path, FileMode.Open)) stream.SetLength(int.MaxValue + 1L);
+
+        await f.Vm.OpenAsync(path);
+
+        Assert.Empty(f.Vm.Documents);
+        Assert.Equal("File is too large", f.Vm.Message?.Title);
+        Assert.Contains("huge.pdf", f.Vm.Message?.Text);
+    }
+
+    [Fact]
+    public async Task ATabThatCannotBeBuiltIsSaidInWordsNotLost()
+    {
+        using var dir = new TempDir();
+        var vm = new AppViewModel(() => throw new NotSupportedException(), new FakeCodec(), new FakeFonts(), new FakeSisters(),
+                                  dir.Sub("settings"), dir.Sub("recovery"), dir.Sub("print"));
+
+        await vm.OpenAsync(dir.File("a.pdf", Pdfs.Text()));
+
+        Assert.Empty(vm.Documents);
+        Assert.Equal("File cannot be opened", vm.Message?.Title);
+        Assert.True(vm.Message?.IsError);
+        Assert.Contains("a.pdf", vm.Message?.Text);
+    }
+
+    [Fact]
+    public void AnUnknownErrorSaysTheFileCouldNotBeOpened()
+    {
+        var problem = Problems.Open(new NotSupportedException(), "a.pdf");
+
+        Assert.Equal("File cannot be opened", problem.Title);
+        Assert.Equal("a.pdf could not be opened.", problem.Text);
+    }
+
+    [Theory]
+    [InlineData(typeof(OutOfMemoryException))]
+    [InlineData(typeof(PdfReadException))]
+    public void AFileTooLargeIsNotReportedAsOneAnotherProgramHolds(Type kind)
+    {
+        Exception error = kind == typeof(PdfReadException)
+            ? new PdfReadException(PdfReadProblem.Unsupported, DocumentOpener.TooLarge)
+            : new OutOfMemoryException();
+
+        var problem = Problems.Open(error, "a.pdf");
+
+        Assert.Equal("File is too large", problem.Title);
+        Assert.Equal("a.pdf is too large for Lazy PDF to open.", problem.Text);
     }
 
     [Fact]

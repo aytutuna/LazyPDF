@@ -73,8 +73,9 @@ public sealed partial class AppViewModel
             {
                 source = await Task.Run(() => _opener.Read(path));
             }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException or InvalidOperationException or PdfReadException)
+            catch (Exception e) when (e is not OperationCanceledException)
             {
+                System.Diagnostics.Trace.TraceError(e.ToString());
                 ShowProblem(Problems.Open(e, name));
                 if (e is FileNotFoundException or DirectoryNotFoundException)
                 {
@@ -122,6 +123,14 @@ public sealed partial class AppViewModel
         try
         {
             await OpenCoreAsync(pending, password, certificate);
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            // OpenCoreAsync has already said what it knows; this is what it did not expect.
+            _pending.Remove(pending);
+            System.Diagnostics.Trace.TraceError(e.ToString());
+            ShowProblem(Problems.Open(e, pending.Source.Title));
+            NotifyAll();
         }
         finally
         {

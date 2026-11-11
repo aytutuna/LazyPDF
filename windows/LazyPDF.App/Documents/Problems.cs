@@ -10,6 +10,8 @@ public static class Problems
 {
     public static Problem Open(Exception error, string name) => error switch
     {
+        PdfReadException { Problem: PdfReadProblem.Unsupported, Message: DocumentOpener.TooLarge } or OutOfMemoryException =>
+            new(Loc.T("File is too large"), Loc.T("{0} is too large for Lazy PDF to open.", name)),
         PdfReadException { Problem: PdfReadProblem.NotPdf } => new(Loc.T("Not a PDF"), Loc.T("{0} is not a PDF file. Pick a PDF, a picture or a text file.", name)),
         PdfReadException { Problem: PdfReadProblem.Damaged } => new(Loc.T("File is damaged"), Loc.T("{0} cannot be repaired. Try an earlier copy of it.", name)),
         PdfReadException { Problem: PdfReadProblem.Unsupported } => new(Loc.T("Not supported yet"), Loc.T("{0} uses something Lazy PDF cannot read yet.", name)),

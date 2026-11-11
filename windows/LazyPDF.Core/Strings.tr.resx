@@ -1774,6 +1774,9 @@
   <data name="File is signed" xml:space="preserve">
     <value>Dosya imzalı</value>
   </data>
+  <data name="File is too large" xml:space="preserve">
+    <value>Dosya çok büyük</value>
+  </data>
   <data name="File made smaller" xml:space="preserve">
     <value>Dosya küçültüldü</value>
   </data>
@@ -6513,6 +6516,9 @@
   </data>
   <data name="{0} is too big for this format. Export fewer pages or pick another format." xml:space="preserve">
     <value>{0} bu biçim için çok büyük. Daha az sayfa aktarın veya başka bir biçim seçin.</value>
+  </data>
+  <data name="{0} is too large for Lazy PDF to open." xml:space="preserve">
+    <value>{0}, Lazy PDF'nin açamayacağı kadar büyük.</value>
   </data>
   <data name="{0} is used and the file has no output intent or default space for it." xml:space="preserve">
     <value>{0} kullanılıyor ve dosyada bunun için çıktı amacı ya da varsayılan uzay yok.</value>
