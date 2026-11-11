@@ -34,8 +34,8 @@ public partial class AccessibilityPanel
             if (ticket != _treeTicket) return;
             (_treeCopy, _tree, _figures, _treeCount) = (copy, tree, figures, count);
             // A draft stays while its figure is still there with the description it was typed against.
-            foreach (int number in _drafts.Keys.ToList())
-                if (figures.ElementAtOrDefault(number - 1) is not { } now || before.ElementAtOrDefault(number - 1)?.Alt != now.Alt) _drafts.Remove(number);
+            foreach (int key in _drafts.Keys.ToList())
+                if (figures.FirstOrDefault(f => f.Key == key) is not { } now || before.FirstOrDefault(f => f.Key == key)?.Alt != now.Alt) _drafts.Remove(key);
         }
         catch (Exception error) when (error is PdfReadException or InvalidOperationException)
         {

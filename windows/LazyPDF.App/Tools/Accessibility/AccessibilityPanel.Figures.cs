@@ -13,7 +13,7 @@ public partial class AccessibilityPanel
 {
     private int _pictureTicket;
 
-    // Text typed for a figure and not saved yet, by figure number, so moving to another figure does not lose it.
+    // Text typed for a figure and not saved yet, by the figure's key, so moving to another figure does not lose it.
     private readonly Dictionary<int, string> _drafts = [];
 
     // The figure to show when the list is built: the one that was shown, or the next one after a save.
@@ -46,7 +46,7 @@ public partial class AccessibilityPanel
         FigureButtons.Visibility = shown;
         if (row is null) return;
         _figureNumber = row.Number;
-        AltBox.Text = _drafts.TryGetValue(row.Number, out string? draft) ? draft : row.Alt;
+        AltBox.Text = _drafts.TryGetValue(row.Key, out string? draft) ? draft : row.Alt;
         RememberDraft();
         NextBare.IsEnabled = _figures.Any(r => !r.HasDescription);
         if (row.Page >= 0) Viewer?.GoToPage(row.Page);
@@ -90,8 +90,8 @@ public partial class AccessibilityPanel
             return;
         }
         bool changed = AltBox.Text.Trim() != row.Alt;
-        if (changed) _drafts[row.Number] = AltBox.Text;
-        else _drafts.Remove(row.Number);
+        if (changed) _drafts[row.Key] = AltBox.Text;
+        else _drafts.Remove(row.Key);
         SaveAlt.IsEnabled = changed;
     }
 
@@ -121,7 +121,7 @@ public partial class AccessibilityPanel
                 Host!.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The tags of this file are too large to change here.")));
                 return Task.CompletedTask;
             }
-            _drafts.Remove(row.Number);
+            _drafts.Remove(row.Key);
             _figureNumber = text.Trim().Length > 0 ? NextBareAfter(row.Number, row.Number) : row.Number;
             return Task.CompletedTask;
         });
