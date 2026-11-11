@@ -42,12 +42,20 @@ public static class OcrWork
         {
             // A cancel is swallowed by the host, so the pages read so far are all that is left of the run.
             if (reading.Pages.Count == 0 || tab.Revision != revision) return null;
-            Write(tab.Document, reading.Pages, reading.Turns, options.Language);
-            tab.Commit(OcrStatusText.Label);
-            int stopped = reading.Pages.Count;
-            host.SetStatus(Loc.Plural(stopped, "Made {0} page searchable", "Made {0} pages searchable"));
-            string stoppedText = Loc.Plural(stopped, "Stopped after {0} page. The page was kept. Undo takes it back.", "Stopped after {0} pages. The pages were kept. Undo takes them back.");
-            host.ShowNotice(Loc.T("Reading stopped"), reading.Turns.Count == 0 ? stoppedText : $"{stoppedText} {Turned(reading.Turns.Count)}");
+            var document = tab.Document;
+            var had = reading.Pages.Where(p => PdfOcrLayer.Has(document, document.Pages[p.PageIndex])).ToList();
+            Write(document, reading.Pages, reading.Turns, options.Language);
+            if (!tab.Commit(OcrStatusText.Label)) return null;
+            int stopped = reading.Pages.Count(p => PdfOcrLayer.Has(document, document.Pages[p.PageIndex]));
+            var parts = new List<string>();
+            if (stopped > 0)
+            {
+                host.SetStatus(Loc.Plural(stopped, "Made {0} page searchable", "Made {0} pages searchable"));
+                parts.Add(Loc.Plural(stopped, "Stopped after {0} page. The page was kept. Undo takes it back.", "Stopped after {0} pages. The pages were kept. Undo takes them back."));
+            }
+            if (had.Any(p => !PdfOcrLayer.Has(document, document.Pages[p.PageIndex]))) parts.Add(Loc.T("Text read earlier on those pages was removed. Undo brings it back."));
+            if (reading.Turns.Count > 0) parts.Add(Turned(reading.Turns.Count));
+            host.ShowNotice(Loc.T("Reading stopped"), string.Join(" ", parts));
             return null;
         }
         if (tab.Revision != revision)

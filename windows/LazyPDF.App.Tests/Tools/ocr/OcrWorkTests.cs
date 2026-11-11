@@ -148,6 +148,25 @@ public sealed class OcrWorkTests
     }
 
     [Fact]
+    public async Task ACancelAfterPagesWithoutWordsChangesNothingAndSaysNothing()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 3);
+        var recognizer = new FakeRecognizer { Words = [] };
+        int reads = 0;
+        recognizer.OnRead = () =>
+        {
+            if (++reads == 2) f.Vm.CancelBusy();
+        };
+
+        await Make(tab, f, recognizer, new("en-US", OcrWork.Dpi, OcrExisting.Skip, [0, 1, 2], Force: true));
+
+        Assert.Equal("Cancelled.", f.Vm.StatusFull);
+        Assert.Null(f.Vm.Message);
+        Assert.False(tab.Session.CanUndo);
+    }
+
+    [Fact]
     public async Task ACancelOnTheFirstPageLeavesTheDocumentAsItWas()
     {
         using var f = new ViewModelFixture();
