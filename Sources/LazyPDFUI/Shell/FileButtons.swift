@@ -59,12 +59,15 @@ public struct FileActions {
 
     /// The Save of the close question: a tab with no file asks for a name first. The tab closes once it is saved.
     public func saveAndClose(_ tab: DocumentTab) async {
-        let saved: Bool
+        var saved: Bool
         if AppViewModel.needsName(tab) {
             vm.select(tab)
             saved = await commands.saveAs(tab)
         } else {
-            saved = vm.save(tab)
+            saved = vm.save(tab, closeAfter: true)
+            if !saved, vm.message?.isError == true {
+                saved = await commands.saveAs(tab)
+            }
         }
         if saved {
             vm.close(tab)

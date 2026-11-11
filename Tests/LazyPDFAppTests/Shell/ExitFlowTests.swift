@@ -32,6 +32,23 @@ final class ExitFlowTests: XCTestCase {
         XCTAssertEqual(f.vm.activeDocument?.title, "edited.pdf")
     }
 
+    func test_saveAnywayFromTheQuestionGoesOnWithTheExit() async throws {
+        let f = ViewModelFixture(self)
+        try await dirty(f, "one.pdf")
+        let tab = f.vm.activeDocument!
+        try touch(f.dir.sub("one.pdf"), Pdfs.text(3))
+        f.vm.checkDisk()
+        let exits = Counter()
+        f.vm.exitRequested = { exits.count += 1 }
+        XCTAssertFalse(f.vm.requestExit())
+
+        XCTAssertFalse(f.vm.save(tab, closeAfter: true))
+        f.vm.message?.action?.run()
+
+        XCTAssertTrue(f.vm.documents.isEmpty)
+        XCTAssertEqual(exits.count, 1)
+    }
+
     func test_answeringEachQuestionEndsInTheExit() async throws {
         let f = ViewModelFixture(self)
         try await dirty(f, "one.pdf")

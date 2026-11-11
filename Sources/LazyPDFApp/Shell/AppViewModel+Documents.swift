@@ -251,17 +251,22 @@ extension AppViewModel {
     }
 
     /// Saves over the file the tab was read from. Call `needsName` first; false also when the save failed and the info bar
-    /// says why.
+    /// says why. With `closeAfter`, the Save anyway button closes the tab too, and goes on with a quit that was waiting.
     @discardableResult
-    public func save(_ tab: DocumentTab) -> Bool {
+    public func save(_ tab: DocumentTab, closeAfter: Bool = false) -> Bool {
         guard let url = tab.url else { return false }
         if tab.changedOnDisk && FileManager.default.fileExists(atPath: url.path) {
             if let found = tab.onDisk, tab.isOnlyTouched(found) {
                 tab.acceptDiskState()
                 return write(tab) { try tab.save() }
             }
+            let wasExiting = exiting
             showNotice(L10n.t("File changed"), L10n.t("{0} was changed by another program. Saving now replaces that version with yours.", tab.title),
-                       NoticeAction(L10n.t("Save anyway")) { [weak self] in _ = self?.write(tab) { try tab.save() } })
+                       NoticeAction(L10n.t("Save anyway")) { [weak self] in
+                           guard let self, write(tab, { try tab.save() }), closeAfter else { return }
+                           exiting = wasExiting
+                           close(tab)
+                       })
             return false
         }
         return write(tab) { try tab.save() }
