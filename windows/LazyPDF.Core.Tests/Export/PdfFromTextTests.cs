@@ -124,4 +124,32 @@ public class PdfFromTextTests
         Assert.Throws<ArgumentException>(() => PdfFromText.Create("x", setup: new PdfPageSetup(Margin: -5)));
         Assert.Throws<ArgumentException>(() => PdfFromText.Create("x", size: 0));
     }
-}
+
+    [Fact]
+    public void ACancelledTokenStopsTheMakingOfThePdf()
+    {
+        using var source = new CancellationTokenSource();
+        source.Cancel();
+        Assert.Throws<OperationCanceledException>(() => PdfFromText.Create("Hello\fWorld", cancellation: source.Token));
+    }
+
+    [Fact]
+    public void ACancelDuringTheFontLookupStopsBeforeThePages()
+    {
+        using var source = new CancellationTokenSource();
+        var fonts = new CancellingFonts(source);
+        Assert.Throws<OperationCanceledException>(() => PdfFromText.Create("Çağrı\fŞanlıurfa", fonts, cancellation: source.Token));
+        Assert.Equal(1, fonts.Asked);
+    }
+
+    private sealed class CancellingFonts(CancellationTokenSource source) : IFontSource
+    {
+        public int Asked { get; private set; }
+
+        public FontFile? Find(string family, FontStyles style)
+        {
+            Asked++;
+            source.Cancel();
+            return new ExportArialSource().Find(family, style);
+        }
+    }}

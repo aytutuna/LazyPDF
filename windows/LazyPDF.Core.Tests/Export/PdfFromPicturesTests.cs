@@ -218,4 +218,37 @@ public class PdfFromPicturesTests
     {
         Assert.Throws<ArgumentException>(() => PdfFromPictures.Create([Jpeg()], Codec, new PdfPageSetup(Margin: margin)));
     }
-}
+
+    [Fact]
+    public void ACancelledTokenStopsTheMakingOfThePdf()
+    {
+        using var source = new CancellationTokenSource();
+        source.Cancel();
+        Assert.Throws<OperationCanceledException>(() => PdfFromPictures.Create([Jpeg()], Codec, cancellation: source.Token));
+    }
+
+    [Fact]
+    public void ACancelDuringTheFirstDecodeStopsBeforeTheThirdFile()
+    {
+        using var source = new CancellationTokenSource();
+        var codec = new CancellingCodec(source);
+        var file = ExportFakeCodec.Picture(4, 4);
+        Assert.Throws<OperationCanceledException>(() => PdfFromPictures.Create([file, file, file], codec, cancellation: source.Token));
+        Assert.Equal(1, codec.Files);
+    }
+
+    private sealed class CancellingCodec(CancellationTokenSource source) : IImageCodec
+    {
+        public int Files { get; private set; }
+
+        public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+
+        public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file)
+        {
+            Files++;
+            source.Cancel();
+            return Codec.DecodeFile(file);
+        }
+
+        public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [];
+    }}

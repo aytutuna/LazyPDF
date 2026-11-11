@@ -15,8 +15,9 @@ public static class PdfFromText
     /// family's font from <paramref name="fonts"/>; text a Standard 14 font can draw needs no source.
     /// </summary>
     /// <exception cref="InvalidOperationException">No font can draw the text; the message is <see cref="ExportText.NoFont"/>.</exception>
+    /// <exception cref="OperationCanceledException"><paramref name="cancellation"/> was cancelled; no bytes are made.</exception>
     /// <exception cref="ArgumentException">The margin or size leaves no room on the page.</exception>
-    public static TextPdf Create(string text, IFontSource? fonts = null, PdfPageSetup? setup = null, string family = "Arial", double size = 11)
+    public static TextPdf Create(string text, IFontSource? fonts = null, PdfPageSetup? setup = null, string family = "Arial", double size = 11, CancellationToken cancellation = default)
     {
         setup ??= new PdfPageSetup();
         var (width, height) = ExportPdf.Paper(setup, landscape: setup.Orientation == PdfOrientation.Landscape);
@@ -41,6 +42,7 @@ public static class PdfFromText
         PageOperations.InsertBlank(document, 0, width, height, pages.Count);
         for (int i = 0; i < pages.Count; i++)
         {
+            cancellation.ThrowIfCancellationRequested();
             var page = document.Pages[i];
             string name = ContentResources.Add(document, ContentResources.ForEdit(document, page), "Font", font.Reference, "F");
             var content = new ContentWriter().BeginText().Font(name, size).MoveText(setup.Margin, height - setup.Margin - font.Ascent * size);

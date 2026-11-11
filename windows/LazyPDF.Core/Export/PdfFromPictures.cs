@@ -36,8 +36,9 @@ public static class PdfFromPictures
     /// otherwise, shrunk to fit the page inside its margin, never enlarged, centred. A JPEG's Exif
     /// orientation is applied by the way it is placed, so its bytes stay as they are.
     /// </summary>
+    /// <exception cref="OperationCanceledException"><paramref name="cancellation"/> was cancelled; no bytes are made.</exception>
     /// <exception cref="ArgumentException">No file could be read, or the margin is negative or leaves no room on the page.</exception>
-    public static PicturesPdf Create(IReadOnlyList<byte[]> files, IImageCodec codec, PdfPageSetup? setup = null)
+    public static PicturesPdf Create(IReadOnlyList<byte[]> files, IImageCodec codec, PdfPageSetup? setup = null, CancellationToken cancellation = default)
     {
         setup ??= new PdfPageSetup();
         if (!(setup.Margin >= 0)) throw new ArgumentException("The margin cannot be negative.", nameof(setup));
@@ -47,6 +48,7 @@ public static class PdfFromPictures
         int skipped = 0;
         for (int i = 0; i < files.Count; i++)
         {
+            cancellation.ThrowIfCancellationRequested();
             int before = pictures.Count;
             if (IsJpeg(files[i]) && PdfImageWriter.AddJpeg(document, files[i]) is { } jpeg)
             {
@@ -63,6 +65,7 @@ public static class PdfFromPictures
         }
         if (pictures.Count == 0) throw new ArgumentException(ExportText.NoUsablePicture, nameof(files));
 
+        cancellation.ThrowIfCancellationRequested();
         var natural = pictures.Select(Natural).ToList();
         var sizes = natural.Select(n => PageSize(setup, n.Width, n.Height)).ToList();
         // Picture paper is the picture plus margins, so a tiny picture is room enough; only the clamp can take it away.
@@ -82,6 +85,7 @@ public static class PdfFromPictures
             var content = new ContentWriter().Paint(name, JpegMeta.Placement(orientation, w, h, (width - w) / 2, (height - h) / 2));
             page.Dictionary["Contents"] = document.Add(new PdfStream(new PdfDictionary(), content.ToArray()));
         }
+        cancellation.ThrowIfCancellationRequested();
         return new PicturesPdf(document.SaveRewrite(), pictures.Count, unreadable, skipped);
     }
 
