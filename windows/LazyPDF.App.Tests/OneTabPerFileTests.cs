@@ -143,7 +143,12 @@ public sealed class OneTabPerFileTests
     {
         private readonly BlockingCollection<(SendOrPostCallback, object?)> _queue = new();
 
-        public override void Post(SendOrPostCallback d, object? state) => _queue.Add((d, state));
+        public override void Post(SendOrPostCallback d, object? state)
+        {
+            // A load started by the body can finish after the body did; nobody is left to run its callback.
+            try { _queue.Add((d, state)); }
+            catch (InvalidOperationException) { }
+        }
 
         public static void Run(Func<Task> body)
         {
