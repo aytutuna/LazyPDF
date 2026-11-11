@@ -120,6 +120,20 @@ public sealed class HomeTilesTests
         f.Sisters.LazyScanInstalled = true;
         f.Vm.StartTile("scan");
         Assert.Equal(1, f.Sisters.ScanOpened);
+        Assert.Null(f.Vm.Message);
+    }
+
+    [Fact]
+    public void ScanSaysSoWhenLazyScanDoesNotStart()
+    {
+        using var f = new ViewModelFixture();
+        f.Sisters.LazyScanInstalled = true;
+        f.Sisters.ScanResult = false;
+
+        f.Vm.StartTile("scan");
+
+        Assert.NotNull(f.Vm.Message);
+        Assert.True(f.Vm.Message.IsError);
     }
 
     [Fact]

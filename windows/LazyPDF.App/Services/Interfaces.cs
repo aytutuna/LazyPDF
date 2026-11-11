@@ -22,7 +22,7 @@ public interface ISisterApps
 
     bool LazyPrintInstalled { get; }
 
-    void OpenLazyScan();
+    bool OpenLazyScan();
 
     /// <summary>Hands the file to Lazy Print. False when it is not there to take it.</summary>
     bool TryPrint(string path);

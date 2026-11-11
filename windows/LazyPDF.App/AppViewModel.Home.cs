@@ -76,7 +76,8 @@ public sealed partial class AppViewModel
     {
         if (id == ScanTile)
         {
-            if (_sisters.LazyScanInstalled) _sisters.OpenLazyScan();
+            if (_sisters.LazyScanInstalled && !_sisters.OpenLazyScan())
+                ShowProblem(new Problem(Loc.T("Lazy Scan did not start"), Loc.T("Windows could not open Lazy Scan. Open it from the Start menu, or reinstall it.")));
             return;
         }
         var tool = ToolTiles.FirstOrDefault(t => t.Tile == id).Tool;

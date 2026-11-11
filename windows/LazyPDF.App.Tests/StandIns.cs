@@ -73,7 +73,13 @@ internal sealed class FakeSisters : ISisterApps
     public List<string> Printed { get; } = [];
     public int ScanOpened { get; private set; }
 
-    public void OpenLazyScan() => ScanOpened++;
+    public bool ScanResult { get; set; } = true;
+
+    public bool OpenLazyScan()
+    {
+        ScanOpened++;
+        return ScanResult;
+    }
 
     public bool TryPrint(string path)
     {

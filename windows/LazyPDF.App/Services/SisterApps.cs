@@ -29,14 +29,16 @@ public sealed class SisterApps : ISisterApps
         return slot.Found;
     }
 
-    public void OpenLazyScan()
+    public bool OpenLazyScan()
     {
         try
         {
             using var process = Process.Start(new ProcessStartInfo(ScanScheme + ":") { UseShellExecute = true });
+            return true;
         }
         catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException)
         {
+            return false;
         }
     }
 

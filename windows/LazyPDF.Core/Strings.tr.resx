@@ -2449,6 +2449,9 @@
   <data name="Lazy Scan" xml:space="preserve">
     <value>Lazy Scan</value>
   </data>
+  <data name="Lazy Scan did not start" xml:space="preserve">
+    <value>Lazy Scan başlamadı</value>
+  </data>
   <data name="Leave it empty to fit the text to the field." xml:space="preserve">
     <value>Metni alana sığdırmak için boş bırakın.</value>
   </data>
@@ -6249,6 +6252,9 @@
   </data>
   <data name="Windows cannot read {0} text yet. Add the language under Settings, Time and language." xml:space="preserve">
     <value>Windows henüz {0} metnini okuyamıyor. Ayarlar, Saat ve dil altından dili ekleyin.</value>
+  </data>
+  <data name="Windows could not open Lazy Scan. Open it from the Start menu, or reinstall it." xml:space="preserve">
+    <value>Windows Lazy Scan'i açamadı. Başlat menüsünden açın veya yeniden yükleyin.</value>
   </data>
   <data name="Windows could not open {0}." xml:space="preserve">
     <value>Windows şunu açamadı: {0}</value>
