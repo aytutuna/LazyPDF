@@ -162,4 +162,9 @@ final class CombineJobTests: XCTestCase {
         XCTAssertEqual(entry.detail, "5 pages")
         XCTAssertEqual(changed.count, 1)
     }
+
+    func test_partsOverCountsOnlyThoseBiggerThanTheLimit() {
+        let parts = [[UInt8](repeating: 0, count: 99), [UInt8](repeating: 0, count: 100), [UInt8](repeating: 0, count: 101), [UInt8](repeating: 0, count: 500)]
+        XCTAssertEqual(CombineJob.partsOver(parts, 100), 2)
+    }
 }

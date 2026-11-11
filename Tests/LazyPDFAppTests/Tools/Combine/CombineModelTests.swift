@@ -311,4 +311,51 @@ final class CombineModelTests: XCTestCase {
 
         XCTAssertTrue(signed.isSigned)
     }
+
+    func test_aSplitBySizeSaysWhenAPartIsStillOverTheSize() async throws {
+        let source = try PdfDocument.open(Pdfs.text(2))
+        let noise = (0..<20_000).map { _ in UInt8.random(in: 0...255) }
+        source.pages[0].dictionary["Noise"] = try source.add(PdfStream(PdfDictionary(), data: noise))
+        let (model, rig) = try attached(bytes: try source.saveRewrite())
+        model.setSplitting(true)
+        model.setKind(.size)
+        model.amount = "0.01"
+
+        await model.action!.run()
+
+        XCTAssertEqual(rig.host.openedNew.count, 2)
+        XCTAssertEqual(rig.host.statuses.last, "2 parts opened. 1 part is bigger than 0.01 MB. A single page is too large to fit.")
+    }
+
+    func test_droppedFilesThatAreNotPdfsAreSaidToBeLeftOut() async throws {
+        let dir = TempDir(self)
+        let (model, rig) = try attached(3)
+
+        await model.drop([ToolFile(url: dir.file("b.pdf", Pdfs.text(2))), ToolFile(url: dir.file("c.txt", [65]))])
+
+        XCTAssertEqual(model.entries.map(\.name), ["a.pdf", "b.pdf"])
+        XCTAssertEqual(rig.host.notices.map(\.title), ["Not a PDF"])
+        XCTAssertEqual(rig.host.notices[0].text, "1 dropped file is not a PDF and was left out.")
+    }
+
+    func test_droppedPdfsAloneSayNothing() async throws {
+        let dir = TempDir(self)
+        let (model, rig) = try attached(3)
+
+        await model.drop([ToolFile(url: dir.file("b.pdf", Pdfs.text(2)))])
+
+        XCTAssertEqual(model.entries.count, 2)
+        XCTAssertTrue(rig.host.notices.isEmpty)
+    }
+
+    func test_aDroppedPdfThatCannotBeReadGivesItsProblemAndNoNotice() async throws {
+        let dir = TempDir(self)
+        let (model, rig) = try attached(3)
+
+        await model.drop([ToolFile(url: dir.file("bad.pdf", [1, 2, 3])), ToolFile(url: dir.file("c.txt", [65]))])
+
+        XCTAssertEqual(model.entries.count, 1)
+        XCTAssertEqual(rig.host.problems.map(\.title), ["Not a PDF"])
+        XCTAssertTrue(rig.host.notices.isEmpty)
+    }
 }

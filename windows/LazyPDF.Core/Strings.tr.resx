@@ -7810,6 +7810,9 @@
   <data name="{0} dpi" xml:space="preserve">
     <value>{0} dpi</value>
   </data>
+  <data name="{0} dropped file is not a PDF and was left out.|plural" xml:space="preserve">
+    <value>Bırakılan {0} dosya PDF olmadığı için eklenmedi.</value>
+  </data>
   <data name="{0} dropped file is not a PDF or a picture and was left out.|plural" xml:space="preserve">
     <value>Bırakılan {0} dosya PDF ya da resim olmadığı için eklenmedi.</value>
   </data>

@@ -30,6 +30,10 @@ public enum CombineJob {
         }
     }
 
+    public static func partsOver(_ parts: [[UInt8]], _ limit: Int) -> Int {
+        parts.filter { $0.count > limit }.count
+    }
+
     /// The pages the top-level bookmarks point at, in the order of the outline.
     public static func bookmarkStarts(_ document: PdfDocument) -> [Int] {
         Outline.read(document).items

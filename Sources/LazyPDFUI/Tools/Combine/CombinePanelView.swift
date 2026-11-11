@@ -28,9 +28,9 @@ struct CombinePanelView: View {
         }
         .sourceQuestion(model.asker)
         .dropDestination(for: URL.self) { urls, _ in
-            let files = urls.filter { $0.pathExtension.lowercased() == "pdf" }.map { ToolFile(url: $0, access: SecurityScopedAccess.start($0)) }
+            let files = urls.filter(\.isFileURL).map { ToolFile(url: $0, access: SecurityScopedAccess.start($0)) }
             if files.isEmpty { return false }
-            Task { await model.add(files) }
+            Task { await model.drop(files) }
             return true
         }
     }

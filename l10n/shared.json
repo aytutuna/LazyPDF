@@ -8333,5 +8333,9 @@
   },
   "Pages that are turned sideways cannot be read.": {
     "tr": "Yan çevrilmiş sayfalar okunamaz."
+  },
+  "{0} dropped file is not a PDF and was left out.": {
+    "other": "{0} dropped files are not PDFs and were left out.",
+    "tr": "Bırakılan {0} dosya PDF olmadığı için eklenmedi."
   }
 }

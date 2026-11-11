@@ -143,21 +143,44 @@ public final class CombineModel: ToolPanelModel {
         await add(files)
     }
 
-    public func add(_ files: [ToolFile]) async {
-        guard let host, let tab else { return }
+    /// The files dropped on the panel: the PDFs are added, and the others are said to be left out once the PDFs have all opened.
+    public func drop(_ files: [ToolFile]) async {
+        let pdfs = files.filter { $0.url.pathExtension.lowercased() == "pdf" }
+        var other = 0
+        for file in files where !pdfs.contains(where: { $0.url == file.url }) {
+            if (try? file.url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true { continue }
+            file.access?.stop()
+            other += 1
+        }
+        let all = await add(pdfs)
+        if all && other > 0 {
+            host?.showNotice(L10n.t("Not a PDF"),
+                             L10n.plural(other, one: "{0} dropped file is not a PDF and was left out.", other: "{0} dropped files are not PDFs and were left out."), nil)
+        }
+    }
+
+    /// False when a file could not be opened; its problem is already on screen.
+    @discardableResult
+    public func add(_ files: [ToolFile]) async -> Bool {
+        guard let host, let tab else { return false }
+        var all = true
         for file in files {
             let name = file.url.lastPathComponent
             let path = file.url.standardizedFileURL.path
             // A file listed again shares the first copy, so merge sees one document and carries its attachments once.
             let shared = (lists[tab.id]?.entries ?? []).first { $0.path == path }?.document
             let opened = if let shared { shared } else { await SourceFile.open(host, file, asker) }
-            guard let document = opened else { continue }
-            if tab.isDisposed { return }
+            guard let document = opened else {
+                all = false
+                continue
+            }
+            if tab.isDisposed { return false }
             let entry = CombineEntry(name, document.pages.count, document, path: path)
             let list = (lists[tab.id]?.entries ?? []) + [entry]
             lists[tab.id] = Held(tab: tab, entries: list)
             if self.tab === tab { entries = list }
         }
+        return all
     }
 
     func combine() async {
@@ -238,7 +261,7 @@ public final class CombineModel: ToolPanelModel {
         let name = L10n.t("Combined.pdf")
         let protectedSource = documents.contains { $0.isEncrypted }
         if toFolder {
-            await save(host, [(name, bytes)], protectedSource)
+            await save(host, [(name, bytes)], protectedSource, "")
             return
         }
         await host.openNew(bytes, title: name, password: nil, certificate: nil)
@@ -280,6 +303,15 @@ public final class CombineModel: ToolPanelModel {
             return
         }
 
+        var big = ""
+        if kind == .size {
+            let over = CombineJob.partsOver(parts, Int(perPart * Double(CombineJob.megabyteBytes)))
+            if over > 0 {
+                big = L10n.plural(over, one: "{0} part is bigger than {1} MB. A single page is too large to fit.",
+                                  other: "{0} parts are bigger than {1} MB. A single page is too large to fit.", amount.trimmingCharacters(in: .whitespaces))
+            }
+        }
+
         let stem = (tab.title as NSString).deletingPathExtension
         let named = parts.enumerated().map { (name: CombineJob.partName(stem, $0.offset, parts.count), bytes: $0.element) }
         var saveThem = toFolder
@@ -288,16 +320,16 @@ public final class CombineModel: ToolPanelModel {
             saveThem = true
         }
         if saveThem {
-            await save(host, named, tab.document.isEncrypted)
+            await save(host, named, tab.document.isEncrypted, big)
             return
         }
         for part in named { await host.openNew(part.bytes, title: part.name, password: nil, certificate: nil) }
-        host.setStatus(L10n.t("{0} parts opened.", parts.count))
+        host.setStatus(([L10n.t("{0} parts opened.", parts.count), big]).filter { !$0.isEmpty }.joined(separator: " "))
         CopyRules.noteUnprotected(tab.document, host)
     }
 
     // The files are written to a folder of the app's own and handed to the exporter, which asks where they go.
-    private func save(_ host: ToolHost, _ files: [(name: String, bytes: [UInt8])], _ protectedSource: Bool) async {
+    private func save(_ host: ToolHost, _ files: [(name: String, bytes: [UInt8])], _ protectedSource: Bool, _ extra: String) async {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("lazypdf-" + UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: folder) }
         var written: [URL] = []
@@ -320,8 +352,9 @@ public final class CombineModel: ToolPanelModel {
         }
         guard let first = saved.first else { return }
         let place = first.deletingLastPathComponent().path
-        host.showNotice(L10n.plural(saved.count, one: "{0} file saved", other: "{0} files saved"),
-                        protectedSource ? place + ". " + CopyRules.unprotected : place,
+        var text = protectedSource ? place + ". " + CopyRules.unprotected : place
+        if !extra.isEmpty { text += ". " + extra }
+        host.showNotice(L10n.plural(saved.count, one: "{0} file saved", other: "{0} files saved"), text,
                         NoticeAction(L10n.t("Open the first")) { Task { await host.open(first, access: Self.grant(first)) } })
     }
 

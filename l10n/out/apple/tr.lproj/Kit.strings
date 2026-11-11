@@ -2122,6 +2122,8 @@
 "{0} difference|one" = "{0} fark";
 "{0} difference|other" = "{0} fark";
 "{0} dpi" = "{0} dpi";
+"{0} dropped file is not a PDF and was left out.|one" = "Bırakılan {0} dosya PDF olmadığı için eklenmedi.";
+"{0} dropped file is not a PDF and was left out.|other" = "Bırakılan {0} dosya PDF olmadığı için eklenmedi.";
 "{0} embedded files were given a relationship and a type." = "{0} gömülü dosyaya ilişki ve tür verildi.";
 "{0} embedded files were removed." = "{0} gömülü dosya kaldırıldı.";
 "{0} extract.pdf" = "Ayıklanan {0}.pdf";
@@ -2237,6 +2239,8 @@
 "{0} pages were left as they were." = "{0} sayfa olduğu gibi bırakıldı.";
 "{0} page|one" = "{0} sayfa";
 "{0} page|other" = "{0} sayfa";
+"{0} part is bigger than {1} MB. A single page is too large to fit.|one" = "{0} parça {1} MB'tan büyük. Tek bir sayfa sığmayacak kadar büyük.";
+"{0} part is bigger than {1} MB. A single page is too large to fit.|other" = "{0} parça {1} MB'tan büyük. Tek bir sayfa sığmayacak kadar büyük.";
 "{0} parts opened." = "{0} parça açıldı.";
 "{0} passed, {1} failed, {2} need a person." = "{0} geçti, {1} başarısız, {2} için kişi bakmalı.";
 "{0} picture could not be read.|one" = "{0} resim okunamadı.";
