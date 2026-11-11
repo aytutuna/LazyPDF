@@ -622,6 +622,9 @@
   <data name="Attachments" xml:space="preserve">
     <value>Ekler</value>
   </data>
+  <data name="Attachments left out" xml:space="preserve">
+    <value>Ekler dışarıda bırakıldı</value>
+  </data>
   <data name="Author" xml:space="preserve">
     <value>Yazar</value>
   </data>
@@ -7653,6 +7656,9 @@
   </data>
   <data name="{0} at {1} dpi" xml:space="preserve">
     <value>{0}, {1} dpi</value>
+  </data>
+  <data name="{0} attachment could not be read and was left out.|plural" xml:space="preserve">
+    <value>{0} ek okunamadı ve dışarıda bırakıldı.</value>
   </data>
   <data name="{0} attachment or picture stamp is not in an XFDF file. Export as FDF to keep it.|plural" xml:space="preserve">
     <value>{0} ek veya resimli damga XFDF dosyasında yer almıyor. Korumak için FDF olarak dışa aktarın.</value>

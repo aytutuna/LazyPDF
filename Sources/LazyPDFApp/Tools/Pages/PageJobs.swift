@@ -78,20 +78,29 @@ public enum PageJobs {
     public static func copyOut(_ tab: DocumentTab, _ host: ToolHost, _ pages: [Int], busy: String, failed: Problem) async -> [UInt8]? {
         if CopyRules.refused(tab.document, host) { return nil }
         var bytes: [UInt8]?
+        var skipped = 0
         let copy = TabCopy(tab, host)
         do {
             try await host.runBusy(busy) { token in
-                bytes = try await ToolDocuments.run(token) {
+                (bytes, skipped) = try await ToolDocuments.run(token) {
                     try token.throwIfCancelled()
-                    let made = try PageAssembly.extract(copy.open(), pages).saveRewrite()
+                    let extract = try PageAssembly.extract(copy.open(), pages)
+                    let made = try extract.saveRewrite()
                     try token.throwIfCancelled()
-                    return made
+                    return (made, extract.skippedAttachments)
                 }
             }
         } catch {
             host.showProblem(failed)
             return nil
         }
+        noteSkippedAttachments(host, skipped)
         return bytes
+    }
+
+    public static func noteSkippedAttachments(_ host: ToolHost, _ skipped: Int) {
+        if skipped == 0 { return }
+        host.showNotice(L10n.t("Attachments left out"),
+                        L10n.plural(skipped, one: "{0} attachment could not be read and was left out.", other: "{0} attachments could not be read and were left out."), nil)
     }
 }

@@ -5938,6 +5938,13 @@
   "The copies are not password protected.": {
     "tr": "Kopyalar parolayla korunmuyor."
   },
+  "Attachments left out": {
+    "tr": "Ekler dışarıda bırakıldı"
+  },
+  "{0} attachment could not be read and was left out.": {
+    "other": "{0} attachments could not be read and were left out.",
+    "tr": "{0} ek okunamadı ve dışarıda bırakıldı."
+  },
   "Copy is not protected": {
     "tr": "Kopya korumasız"
   },

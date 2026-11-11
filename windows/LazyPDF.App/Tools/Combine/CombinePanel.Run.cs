@@ -36,17 +36,19 @@ public partial class CombinePanel
         bool bookmarks = BookmarkEach.IsChecked == true;
 
         byte[]? bytes = null;
+        int skipped = 0;
         try
         {
             await host.RunBusyAsync(Loc.T("Combining files"), token => Task.Run(() =>
             {
                 // The open document is read again here: its pages may be taken twice and the session belongs to the UI thread.
                 var again = PageEdits.Reopen(tab);
-                var merged = PageAssembly.Merge([.. sources.Select(s => new MergeSource(s.Entry.Document ?? again, s.Pages))], token);
+                using var merged = PageAssembly.Merge([.. sources.Select(s => new MergeSource(s.Entry.Document ?? again, s.Pages))], token);
                 if (bookmarks) CombineJob.AddFileBookmarks(merged, [.. sources.Select(s => (s.Entry.Name, s.Pages?.Count ?? (s.Entry.Document ?? again).Pages.Count))]);
                 byte[] made = merged.SaveRewrite();
                 token.ThrowIfCancellationRequested();
                 bytes = made;
+                skipped = merged.SkippedAttachments;
             }, token));
         }
         catch (Exception error) when (error is PdfReadException or ArgumentException)
@@ -75,6 +77,7 @@ public partial class CombinePanel
             return;
         }
         if (bytes is null) return;
+        PageJobs.NoteSkippedAttachments(host, skipped);
 
         string name = Loc.T("Combined.pdf");
         bool protectedSource = documents.Any(document => document.IsEncrypted);
@@ -121,6 +124,7 @@ public partial class CombinePanel
         string? folder = ToFolder ? PickFolder() : null;
         if (ToFolder && folder is null) return;
         List<byte[]>? parts = null;
+        int skipped = 0;
         try
         {
             await host.RunBusyAsync(Loc.T("Splitting file"), token => Task.Run(() =>
@@ -130,6 +134,7 @@ public partial class CombinePanel
                 {
                     token.ThrowIfCancellationRequested();
                     saved.Add(part.SaveRewrite());
+                    skipped += part.SkippedAttachments;
                 }
                 parts = saved;
             }, token));
@@ -140,6 +145,7 @@ public partial class CombinePanel
             return;
         }
         if (parts is null) return;
+        PageJobs.NoteSkippedAttachments(host, skipped);
         if (parts.Count < 2 && kind != SplitBy.Ranges)
         {
             host.ShowNotice(Loc.T("Nothing to split"), Loc.T("The whole file fits in one part. Use a smaller amount."));

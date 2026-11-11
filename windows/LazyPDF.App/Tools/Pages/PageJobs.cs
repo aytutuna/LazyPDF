@@ -113,13 +113,16 @@ internal static class PageJobs
     {
         if (CopyRules.Refused(tab.Document, host)) return null;
         byte[]? bytes = null;
+        int skipped = 0;
         try
         {
             await host.RunBusyAsync(busy, token => Task.Run(() =>
             {
-                byte[] made = PageAssembly.Extract(PageEdits.Reopen(tab), pages, token).SaveRewrite();
+                using var copy = PageAssembly.Extract(PageEdits.Reopen(tab), pages, token);
+                byte[] made = copy.SaveRewrite();
                 token.ThrowIfCancellationRequested();
                 bytes = made;
+                skipped = copy.SkippedAttachments;
             }, token));
         }
         catch (Exception error) when (error is PdfReadException or ArgumentException)
@@ -127,6 +130,13 @@ internal static class PageJobs
             host.ShowProblem(failed);
             return null;
         }
+        NoteSkippedAttachments(host, skipped);
         return bytes;
+    }
+
+    internal static void NoteSkippedAttachments(IToolHost host, int skipped)
+    {
+        if (skipped == 0) return;
+        host.ShowNotice(Loc.T("Attachments left out"), Loc.Plural(skipped, "{0} attachment could not be read and was left out.", "{0} attachments could not be read and were left out."));
     }
 }

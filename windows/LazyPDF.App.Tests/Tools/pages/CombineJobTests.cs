@@ -563,4 +563,15 @@ public sealed class CombineJobTests
         Assert.Equal(0, output.SelectedIndex);
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public void LeftOutAttachmentsAreReportedOnlyWhenThereAreAny()
+    {
+        var host = new RecordingHost();
+        PageJobs.NoteSkippedAttachments(host, 0);
+        Assert.Empty(host.Notices);
+
+        PageJobs.NoteSkippedAttachments(host, 2);
+        Assert.Contains("2", Assert.Single(host.Notices).Text);
+    }
 }

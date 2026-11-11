@@ -183,18 +183,20 @@ public final class CombineModel: ToolPanelModel {
         let ordered = sources
         let gate = reading
         var made: [UInt8]?
+        var skipped = 0
         do {
             try await host.runBusy(L10n.t("Combining files")) { token in
-                made = try await ToolDocuments.run(token) { () throws -> [UInt8] in
+                (made, skipped) = try await ToolDocuments.run(token) { () throws -> ([UInt8], Int) in
                     // A job that was cancelled may still be reading the same documents; this one waits for it.
                     gate.lock()
                     defer { gate.unlock() }
                     try token.throwIfCancelled()
                     // The open document is read again here: its pages may be taken twice and the session belongs to the main actor.
                     let again = try copy.open()
-                    let bytes = try PageAssembly.merge(ordered.map { MergeSource($0.document ?? again, $0.pages) }).saveRewrite()
+                    let merged = try PageAssembly.merge(ordered.map { MergeSource($0.document ?? again, $0.pages) })
+                    let bytes = try merged.saveRewrite()
                     try token.throwIfCancelled()
-                    return bytes
+                    return (bytes, merged.skippedAttachments)
                 }
             }
         } catch {
@@ -202,6 +204,7 @@ public final class CombineModel: ToolPanelModel {
             return
         }
         guard let bytes = made else { return }
+        PageJobs.noteSkippedAttachments(host, skipped)
 
         let name = L10n.t("Combined.pdf")
         let protectedSource = documents.contains { $0.isEncrypted }
@@ -223,15 +226,18 @@ public final class CombineModel: ToolPanelModel {
         }
         let copy = TabCopy(tab, host)
         var made: [[UInt8]]?
+        var skipped = 0
         do {
             try await host.runBusy(L10n.t("Splitting file")) { token in
-                made = try await ToolDocuments.run(token) { () throws -> [[UInt8]] in
+                (made, skipped) = try await ToolDocuments.run(token) { () throws -> ([[UInt8]], Int) in
                     var saved: [[UInt8]] = []
+                    var left = 0
                     for part in try CombineJob.split(copy.open(), kind, perPart, token) {
                         try token.throwIfCancelled()
                         saved.append(try part.saveRewrite())
+                        left += part.skippedAttachments
                     }
-                    return saved
+                    return (saved, left)
                 }
             }
         } catch {
@@ -239,6 +245,7 @@ public final class CombineModel: ToolPanelModel {
             return
         }
         guard let parts = made else { return }
+        PageJobs.noteSkippedAttachments(host, skipped)
         if parts.count < 2 {
             host.showNotice(L10n.t("Nothing to split"), L10n.t("The whole file fits in one part. Use a smaller amount."), nil)
             return

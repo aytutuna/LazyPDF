@@ -166,6 +166,7 @@
 "Attaching file" = "Dosya ekleniyor";
 "Attachment" = "Ek";
 "Attachments" = "Ekler";
+"Attachments left out" = "Ekler dışarıda bırakıldı";
 "Author" = "Yazar";
 "Automatic" = "Otomatik";
 "Back" = "Geri";
@@ -2042,6 +2043,8 @@
 "{0} annotations of a kind this level does not allow were removed." = "Bu düzeyin izin vermediği türden {0} ek açıklama kaldırıldı.";
 "{0} area differs|one" = "{0} alan farklı";
 "{0} area differs|other" = "{0} alan farklı";
+"{0} attachment could not be read and was left out.|one" = "{0} ek okunamadı ve dışarıda bırakıldı.";
+"{0} attachment could not be read and was left out.|other" = "{0} ek okunamadı ve dışarıda bırakıldı.";
 "{0} attachment or picture stamp is not in an XFDF file. Export as FDF to keep it.|one" = "{0} ek veya resimli damga XFDF dosyasında yer almıyor. Korumak için FDF olarak dışa aktarın.";
 "{0} attachment or picture stamp is not in an XFDF file. Export as FDF to keep it.|other" = "{0} ek veya resimli damga XFDF dosyasında yer almıyor. Korumak için FDF olarak dışa aktarın.";
 "{0} bytes" = "{0} bayt";
