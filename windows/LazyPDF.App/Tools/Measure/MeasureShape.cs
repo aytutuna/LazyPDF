@@ -50,6 +50,24 @@ public static class MeasureShape
         return Math.Abs(twice) / 2;
     }
 
+    /// <summary>Degrees as seen on the page: a line against the horizontal, or the inner angle at the latest corner of a shape.</summary>
+    public static double? Angle(IReadOnlyList<Point> points, MeasureKind kind)
+    {
+        if (kind == MeasureKind.Distance)
+        {
+            if (points.Count < 2) return null;
+            var d = points[^1] - points[0];
+            if (d.Length == 0) return null;
+            double degrees = Math.Atan2(-d.Y, d.X) * 180 / Math.PI;
+            return (degrees % 180 + 180) % 180;
+        }
+        if (points.Count < 3) return null;
+        var u = points[^3] - points[^2];
+        var v = points[^1] - points[^2];
+        if (u.Length == 0 || v.Length == 0) return null;
+        return Math.Acos(Math.Clamp(u * v / (u.Length * v.Length), -1, 1)) * 180 / Math.PI;
+    }
+
     public static Point? Nearest(IEnumerable<Point> candidates, Point at, double radius)
     {
         Point? best = null;

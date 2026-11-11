@@ -106,4 +106,15 @@ public sealed class MeasureMathTests
         Assert.Equal(new Point(72, 0), line.Middle);
         Assert.Equal(new Point(36, 36), area.Middle);
     }
+
+    [Fact]
+    public void AnAngleReadsAsSeenOnThePage()
+    {
+        Assert.Equal(45, MeasureShape.Angle([new(0, 0), new(10, -10)], MeasureKind.Distance)!.Value, 9);
+        Assert.Equal(135, MeasureShape.Angle([new(0, 0), new(10, 10)], MeasureKind.Distance)!.Value, 9);
+        Assert.Equal(90, MeasureShape.Angle([new(0, 0), new(10, 0), new(10, 10)], MeasureKind.Perimeter)!.Value, 9);
+        Assert.Equal(180, MeasureShape.Angle([new(0, 0), new(5, 0), new(10, 0)], MeasureKind.Area)!.Value, 9);
+        Assert.Null(MeasureShape.Angle([new(0, 0), new(10, 0)], MeasureKind.Area));
+        Assert.Null(MeasureShape.Angle([new(0, 0)], MeasureKind.Distance));
+    }
 }

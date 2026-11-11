@@ -267,10 +267,13 @@ public partial class MeasurePanel : ToolPanel
         if (tool is null || tool.Points.Count == 0)
         {
             Readout.Text = "—";
+            AngleReadout.Text = "—";
             return;
         }
         var points = tool.Points.ToList();
         if (tool.Hover is { } hover && tool.HoverPage == tool.Page) points.Add(hover);
         Readout.Text = points.Count < 2 ? "—" : new MeasureItem(tool.Kind, tool.Page, points).Value(_scale);
+        AngleReadout.Text = MeasureShape.Angle(points, tool.Kind) is { } angle
+            ? Loc.T("{0}°", Math.Round(angle, 1).ToString("0.0", CultureInfo.CurrentCulture)) : "—";
     }
 }
