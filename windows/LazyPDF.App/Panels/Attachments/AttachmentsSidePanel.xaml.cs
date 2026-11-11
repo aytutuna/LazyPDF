@@ -121,6 +121,7 @@ public partial class AttachmentsSidePanel : ToolPanel
             Directory.CreateDirectory(folder);
             string path = System.IO.Path.Combine(folder, name.Length > 0 ? name : "attachment");
             File.WriteAllBytes(path, bytes);
+            MarkFromInternet(path);
             Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
             Note.Visibility = Visibility.Collapsed;
         }
@@ -128,6 +129,16 @@ public partial class AttachmentsSidePanel : ToolPanel
         {
             Tell(Loc.T("This attachment could not be opened."));
         }
+    }
+
+    // Zone 3 makes Office open the copy in Protected View and SmartScreen check it.
+    private static void MarkFromInternet(string path)
+    {
+        try
+        {
+            File.WriteAllText(path + ":Zone.Identifier", "[ZoneTransfer]\r\nZoneId=3\r\n");
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or NotSupportedException) { }
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)

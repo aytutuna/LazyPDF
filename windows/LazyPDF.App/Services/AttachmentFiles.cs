@@ -15,6 +15,7 @@ internal static class AttachmentFiles
         ".py", ".pyw", ".ws", ".sct", ".wsc", ".psm1", ".psd1", ".ps1xml", ".vb",
         ".library-ms", ".search-ms", ".scf", ".inf", ".theme", ".themepack", ".msix", ".msixbundle", ".appx", ".appxbundle",
         ".appinstaller", ".msu", ".cab",
+        ".iqy", ".slk", ".rdp", ".xbap", ".vsto", ".xla", ".mde", ".accde", ".ade", ".adp", ".mht", ".mhtml",
     ];
 
     /// <summary>The file name only, with characters Windows refuses replaced. Windows drops trailing dots and spaces when it writes a file, so they are dropped here and the name checked is the name written.</summary>

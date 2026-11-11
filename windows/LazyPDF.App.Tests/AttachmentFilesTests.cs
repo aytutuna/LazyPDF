@@ -20,6 +20,9 @@ public sealed class AttachmentFilesTests
     [InlineData("search.search-ms")]
     [InlineData("update.msix")]
     [InlineData("notes.one")]
+    [InlineData("query.iqy")]
+    [InlineData("connect.RDP")]
+    [InlineData("page.mhtml")]
     [InlineData(@"..\..\tools\run.bat")]
     public void ProgramsAreRecognisedWhateverTheyEndWith(string name) =>
         Assert.True(AttachmentFiles.CouldRun(AttachmentFiles.SafeName(name)));
