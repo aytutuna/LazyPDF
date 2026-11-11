@@ -307,42 +307,57 @@ public partial class CertificatesPanel : ToolPanel
             host.ShowProblem(refusal);
             return;
         }
-        var verify = SigningSettingsStore.Load().Verify(tab.Password, tab.Certificate, DateTimeOffset.Now);
-        int before = tab.Session.Current.Length;
-        bool finished = false, covered = true;
-        using var transport = new HttpSignatureTransport();
-        SetWorking(true);
-        try
+        string where;
+        if (tab.Certificate is not null) where = Loc.T("the servers named in its certificates");
+        else
         {
-            await host.RunBusyAsync(Loc.T("Adding validation data"), token =>
+            var hosts = await ServerPreview.HostsAsync(tab.Session.Current.ToArray(), tab.Password);
+            where = hosts.Count == 0 ? "" : ServerPreview.Describe(hosts);
+        }
+        if (where.Length == 0) await Start();
+        else host.ShowNotice(Loc.T("These servers will be asked"),
+            Loc.T("Lazy PDF will contact {0}. Servers named by certificates found on the way may be asked too. The file itself is not sent.", where),
+            new NoticeAction(Loc.T("Ask them"), () => _ = Start()));
+
+        async Task Start()
+        {
+            var verify = SigningSettingsStore.Load().Verify(tab.Password, tab.Certificate, DateTimeOffset.Now);
+            int before = tab.Session.Current.Length;
+            bool finished = false, covered = true;
+            using var transport = new HttpSignatureTransport();
+            SetWorking(true);
+            try
             {
-                transport.Cancel = token;
-                return Task.Run(() =>
+                await host.RunBusyAsync(Loc.T("Adding validation data"), token =>
                 {
-                    CertificateSigning.AddValidation(tab.Session, new CancellableTransport(transport, token), DateTimeOffset.Now);
-                    finished = true;
-                    covered = CertificateSigning.RevocationCovered(tab.Session.Current.ToArray(), verify);
-                }, token);
-            });
+                    transport.Cancel = token;
+                    return Task.Run(() =>
+                    {
+                        CertificateSigning.AddValidation(tab.Session, new CancellableTransport(transport, token), DateTimeOffset.Now);
+                        finished = true;
+                        covered = CertificateSigning.RevocationCovered(tab.Session.Current.ToArray(), verify);
+                    }, token);
+                });
+            }
+            catch (Exception error) when (error is not OutOfMemoryException)
+            {
+                host.ShowProblem(Failure(error, transport, Loc.T("Validation data not added")));
+                return;
+            }
+            finally
+            {
+                SetWorking(false);
+                if (!finished || tab.Session.Current.Length != before) tab.Reload();
+            }
+            if (!finished) return;
+            if (tab.Session.Current.Length == before)
+            {
+                host.SetStatus(Loc.T("Nothing new to add."));
+                return;
+            }
+            if (covered) host.SetStatus(Loc.T("Validation data added."));
+            else NoProof(host, transport);
         }
-        catch (Exception error) when (error is not OutOfMemoryException)
-        {
-            host.ShowProblem(Failure(error, transport, Loc.T("Validation data not added")));
-            return;
-        }
-        finally
-        {
-            SetWorking(false);
-            if (!finished || tab.Session.Current.Length != before) tab.Reload();
-        }
-        if (!finished) return;
-        if (tab.Session.Current.Length == before)
-        {
-            host.SetStatus(Loc.T("Nothing new to add."));
-            return;
-        }
-        if (covered) host.SetStatus(Loc.T("Validation data added."));
-        else NoProof(host, transport);
     }
 
     // The panel stays shut while the file is being worked on, so nothing else touches the session the worker uses.

@@ -5923,6 +5923,21 @@
   "Validation data added.": {
     "tr": "Doğrulama verisi eklendi."
   },
+  "These servers will be asked": {
+    "tr": "Bu sunuculara sorulacak"
+  },
+  "Lazy PDF will contact {0}. Servers named by certificates found on the way may be asked too. The file itself is not sent.": {
+    "tr": "Lazy PDF {0} sunucusuna bağlanacak. Yol üzerinde bulunan sertifikalarda adı geçen sunuculara da sorulabilir. Dosyanın kendisi gönderilmez."
+  },
+  "Ask them": {
+    "tr": "Sorulsun"
+  },
+  "the servers named in its certificates": {
+    "tr": "sertifikalarında adı geçen sunucular"
+  },
+  "{0} (not encrypted)": {
+    "tr": "{0} (şifrelenmemiş)"
+  },
   "Validation data not added": {
     "tr": "Doğrulama verisi eklenemedi"
   },
