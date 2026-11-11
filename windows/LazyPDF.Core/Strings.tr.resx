@@ -118,6 +118,9 @@
   <data name="A page or form has a transparency group." xml:space="preserve">
     <value>Bir sayfada ya da formda saydamlık grubu var.</value>
   </data>
+  <data name="A password breaks PDF/A. Leave out either the PDF/A step or the Protect step." xml:space="preserve">
+    <value>Parola PDF/A'yı bozar. PDF/A adımını ya da Koru adımını çıkarın.</value>
+  </data>
   <data name="A password this short can be guessed in seconds. Use at least 8 characters." xml:space="preserve">
     <value>Bu kadar kısa bir parola saniyeler içinde tahmin edilebilir. En az 8 karakter kullanın.</value>
   </data>
@@ -135,6 +138,9 @@
   </data>
   <data name="A saved copy cannot be brought back." xml:space="preserve">
     <value>Kayıtlı kopya geri getirilemez.</value>
+  </data>
+  <data name="A set locks its files once. Change the password in the Protect step." xml:space="preserve">
+    <value>Bir küme dosyalarını yalnızca bir kez kilitler. Parolayı Koru adımında değiştirin.</value>
   </data>
   <data name="A setting between them would change it." xml:space="preserve">
     <value>Aralarındaki bir ayar bunu değiştirirdi.</value>
@@ -1965,6 +1971,9 @@
   </data>
   <data name="Export pictures" xml:space="preserve">
     <value>Resim olarak dışa aktar</value>
+  </data>
+  <data name="Export pictures leaves no PDF to lock. Leave out either Export pictures or the Protect step." xml:space="preserve">
+    <value>Resim olarak dışa aktarma kilitlenecek PDF bırakmaz. Resim olarak dışa aktarma adımını ya da Koru adımını çıkarın.</value>
   </data>
   <data name="Export pictures must be the last step" xml:space="preserve">
     <value>Resim olarak dışa aktarma son adım olmalıdır</value>
@@ -3913,6 +3922,9 @@
   <data name="PDF/A" xml:space="preserve">
     <value>PDF/A</value>
   </data>
+  <data name="PDF/A cannot be locked" xml:space="preserve">
+    <value>PDF/A kilitlenemez</value>
+  </data>
   <data name="PDF/A level" xml:space="preserve">
     <value>PDF/A düzeyi</value>
   </data>
@@ -4294,6 +4306,9 @@
   <data name="Pictures" xml:space="preserve">
     <value>Resimler</value>
   </data>
+  <data name="Pictures cannot be locked" xml:space="preserve">
+    <value>Resimler kilitlenemez</value>
+  </data>
   <data name="Pictures in JPEG and JPEG 2000 need the system codec and were left." xml:space="preserve">
     <value>JPEG ve JPEG 2000 resimler sistem kodekini gerektirir ve olduğu gibi bırakıldı.</value>
   </data>
@@ -4446,6 +4461,9 @@
   </data>
   <data name="Protect for them" xml:space="preserve">
     <value>Onlar için koru</value>
+  </data>
+  <data name="Protect is already there" xml:space="preserve">
+    <value>Koru adımı zaten var</value>
   </data>
   <data name="Protect it before you share it." xml:space="preserve">
     <value>Paylaşmadan önce koruyun.</value>

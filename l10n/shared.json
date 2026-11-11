@@ -4737,6 +4737,24 @@
   "The steps after it could not read the locked file. Move Protect to the end.": {
     "tr": "Ondan sonraki adımlar kilitli dosyayı okuyamaz. Koru adımını sona taşıyın."
   },
+  "PDF/A cannot be locked": {
+    "tr": "PDF/A kilitlenemez"
+  },
+  "A password breaks PDF/A. Leave out either the PDF/A step or the Protect step.": {
+    "tr": "Parola PDF/A'yı bozar. PDF/A adımını ya da Koru adımını çıkarın."
+  },
+  "Pictures cannot be locked": {
+    "tr": "Resimler kilitlenemez"
+  },
+  "Export pictures leaves no PDF to lock. Leave out either Export pictures or the Protect step.": {
+    "tr": "Resim olarak dışa aktarma kilitlenecek PDF bırakmaz. Resim olarak dışa aktarma adımını ya da Koru adımını çıkarın."
+  },
+  "Protect is already there": {
+    "tr": "Koru adımı zaten var"
+  },
+  "A set locks its files once. Change the password in the Protect step.": {
+    "tr": "Bir küme dosyalarını yalnızca bir kez kilitler. Parolayı Koru adımında değiştirin."
+  },
   "Export pictures must be the last step": {
     "tr": "Resim olarak dışa aktarma son adım olmalıdır"
   },

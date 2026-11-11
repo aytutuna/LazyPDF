@@ -213,9 +213,9 @@ public partial class BatchPanel
             System.Windows.Automation.AutomationProperties.SetName(item, TitleOf(kind));
             item.Click += (_, _) =>
             {
-                if (_set.Steps.Any(s => s.Kind == BatchStepKind.Protect))
+                if (BatchRunner.CannotAdd(_set, kind) is { } refused)
                 {
-                    Host?.ShowProblem(BatchRunner.ProtectNotLast());
+                    Host?.ShowProblem(refused);
                     return;
                 }
                 if (_set.Steps.Any(s => s.Kind == BatchStepKind.ExportPictures))
@@ -224,7 +224,8 @@ public partial class BatchPanel
                     return;
                 }
                 var step = BatchStep.Of(kind);
-                _set.Steps.Add(step);
+                int protect = _set.Steps.FindIndex(s => s.Kind == BatchStepKind.Protect);
+                _set.Steps.Insert(protect < 0 ? _set.Steps.Count : protect, step);
                 ShowSteps(step);
             };
             menu.Items.Add(item);

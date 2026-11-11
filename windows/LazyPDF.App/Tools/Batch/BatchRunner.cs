@@ -121,12 +121,33 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
     internal static Problem? Check(BatchSet set)
     {
         int at = set.Steps.FindIndex(s => s.Kind == BatchStepKind.Protect);
+        if (at >= 0 && set.Steps.Any(s => s.Kind == BatchStepKind.PdfA)) return PdfALocked();
+        if (at >= 0 && set.Steps.Any(s => s.Kind == BatchStepKind.ExportPictures)) return PicturesLocked();
         if (at >= 0 && at < set.Steps.Count - 1) return ProtectNotLast();
         if (set.Steps.Any(s => s.Kind == BatchStepKind.Protect && s.Password.Length == 0))
             return new(Loc.T("No password"), Loc.T("Type the password in the Protect step, then run again."));
         if (set.Steps.FindIndex(s => s.Kind == BatchStepKind.ExportPictures) is >= 0 and var export && export < set.Steps.Count - 1) return ExportNotLast();
         return null;
     }
+
+    /// <summary>Why a step of this kind cannot join a set that has a Protect step; null when it can go before it.</summary>
+    internal static Problem? CannotAdd(BatchSet set, BatchStepKind kind)
+    {
+        if (!set.Steps.Any(s => s.Kind == BatchStepKind.Protect)) return null;
+        return kind switch
+        {
+            BatchStepKind.Protect => new(Loc.T("Protect is already there"), Loc.T("A set locks its files once. Change the password in the Protect step.")),
+            BatchStepKind.PdfA => PdfALocked(),
+            BatchStepKind.ExportPictures => PicturesLocked(),
+            _ => null,
+        };
+    }
+
+    private static Problem PdfALocked() =>
+        new(Loc.T("PDF/A cannot be locked"), Loc.T("A password breaks PDF/A. Leave out either the PDF/A step or the Protect step."));
+
+    private static Problem PicturesLocked() =>
+        new(Loc.T("Pictures cannot be locked"), Loc.T("Export pictures leaves no PDF to lock. Leave out either Export pictures or the Protect step."));
 
     internal static Problem ExportNotLast() =>
         new(Loc.T("Export pictures must be the last step"), Loc.T("There is no PDF left for the steps after it. Move Export pictures to the end."));

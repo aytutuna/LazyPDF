@@ -203,6 +203,11 @@ public partial class BatchPanel
 
     private async Task RunAsync()
     {
+        if (BatchRunner.Check(_set) is { } refused)
+        {
+            Host?.ShowProblem(refused);
+            return;
+        }
         var set = _set.Copy();
         var live = _set.Steps.ToList();
         var files = _files.ToList();
@@ -361,6 +366,7 @@ public partial class BatchPanel
     private Problem? WatchProblem()
     {
         if (_set.Steps.Count == 0) return new Problem(Loc.T("No steps"), Loc.T("Add at least one step, then watch the folder."));
+        if (BatchRunner.Check(_set) is { } refused) return refused;
         if (!Directory.Exists(_set.WatchFolder)) return new Problem(Loc.T("No folder to watch"), Loc.T("Choose an existing folder to watch."));
         if (_set.OutputFolder.Length == 0) return new Problem(Loc.T("No results folder"), Loc.T("Choose where the results go, then watch the folder."));
         if (SameFolder(_set.OutputFolder, _set.WatchFolder)) return new Problem(Loc.T("Same folder"), Loc.T("Choose a results folder other than the watched one, or the results would run again."));

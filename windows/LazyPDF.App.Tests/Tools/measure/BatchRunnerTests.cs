@@ -556,6 +556,32 @@ public sealed class BatchRunnerTests
     }
 
     [Fact]
+    public async Task ProtectWithPdfARefusesTheRun()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text());
+
+        var result = await Run(Runner(), file, Set(dir, new BatchStep { Kind = BatchStepKind.PdfA, Level = PdfALevel.A2b }, new BatchStep { Kind = BatchStepKind.Protect, Password = "pw" }));
+
+        Assert.False(result.Ok);
+        Assert.Equal("PDF/A cannot be locked", result.Title);
+        Assert.False(Directory.Exists(dir.Sub("out")));
+    }
+
+    [Fact]
+    public void AStepCanJoinASetWithProtectExceptAnotherProtectPdfAOrPictures()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.Protect, Password = "pw" });
+
+        Assert.Null(BatchRunner.CannotAdd(set, BatchStepKind.Compress));
+        Assert.Equal("Protect is already there", BatchRunner.CannotAdd(set, BatchStepKind.Protect)?.Title);
+        Assert.Equal("PDF/A cannot be locked", BatchRunner.CannotAdd(set, BatchStepKind.PdfA)?.Title);
+        Assert.Equal("Pictures cannot be locked", BatchRunner.CannotAdd(set, BatchStepKind.ExportPictures)?.Title);
+        Assert.Null(BatchRunner.CannotAdd(Set(dir), BatchStepKind.PdfA));
+    }
+
+    [Fact]
     public async Task ProtectWithNoPasswordRefusesTheRun()
     {
         using var dir = new TempDir();
