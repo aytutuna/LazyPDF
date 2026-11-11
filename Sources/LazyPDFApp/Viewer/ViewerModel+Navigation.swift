@@ -105,7 +105,8 @@ extension ViewerModel {
     public func showFind() {
         guard tab != nil else { return }
         if readingMode { readingMode = false }
-        findSeed = selected.isEmpty || selected.start.page != selected.end.page ? nil : selectedOnOnePage()
+        let seed = selected.isEmpty || selected.start.page != selected.end.page ? nil : selectedOnOnePage()
+        findSeed = seed?.contains("\n") == true ? nil : seed
         findVisible = true
         findRequest += 1
     }
@@ -114,7 +115,17 @@ extension ViewerModel {
         guard findVisible else { return }
         findVisible = false
         searchJumped = false
+        if !search.query.isEmpty { lastFind = (search.query, search.options) }
         search.clear()
+    }
+
+    /// With the bar closed, opens it on the last search instead of stepping.
+    public func findNext() {
+        if findVisible { search.next() } else { showFind() }
+    }
+
+    public func findPrevious() {
+        if findVisible { search.previous() } else { showFind() }
     }
 
     func watchSearch() {

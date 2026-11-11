@@ -578,6 +578,42 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertFalse(viewer.findVisible)
     }
 
+    func test_aSelectionOverTwoLinesDoesNotSeedFind() async throws {
+        let (viewer, _) = try open(bytes: try Pdfs.text(1, "First line\nSecond line"))
+        let from = try await pointOnFirstLine(viewer, 0)
+        let to = try await pointOnFirstLine(viewer, 15)
+        viewer.pointerDown(from)
+        viewer.pointerMove(to)
+        viewer.pointerUp(to)
+
+        viewer.showFind()
+
+        XCTAssertNil(viewer.findSeed)
+    }
+
+    func test_theLastSearchSurvivesClosingTheBar() async throws {
+        let (viewer, _) = try open()
+        viewer.showFind()
+        await viewer.search.start("tests", TextSearchOptions(matchCase: true)).value
+
+        viewer.hideFind()
+
+        XCTAssertEqual(viewer.lastFind?.text, "tests")
+        XCTAssertEqual(viewer.lastFind?.options.matchCase, true)
+        XCTAssertEqual(viewer.search.query, "")
+    }
+
+    func test_findNextWithTheBarClosedOpensItWithoutStepping() throws {
+        let (viewer, _) = try open()
+        let before = viewer.findRequest
+
+        viewer.findNext()
+
+        XCTAssertTrue(viewer.findVisible)
+        XCTAssertEqual(viewer.findRequest, before + 1)
+        XCTAssertEqual(viewer.search.current, -1)
+    }
+
     func test_thePagesInViewGetTheirPictures() async throws {
         let (viewer, _) = try open(pages: 2)
 

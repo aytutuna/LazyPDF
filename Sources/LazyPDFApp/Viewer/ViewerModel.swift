@@ -85,6 +85,9 @@ public final class ViewerModel: DocumentViewer {
     /// Moves each time Find is asked for, so the field takes the focus again.
     public internal(set) var findRequest = 0
     public internal(set) var findSeed: String?
+
+    /// The last query searched before the bar closed; the bar comes back with it.
+    public internal(set) var lastFind: (text: String, options: TextSearchOptions)?
     public var goToPageVisible = false
 
     /// The address a link wants opened, until the person says yes or no.

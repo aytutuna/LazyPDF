@@ -65,12 +65,12 @@ struct MacMenus: Commands {
             Button(L10n.t("Find")) { viewer.showFind() }
                 .keyboardShortcut("f")
                 .disabled(!usable)
-            Button(L10n.t("Next match")) { viewer.search.next() }
+            Button(L10n.t("Next match")) { viewer.findNext() }
                 .keyboardShortcut("g")
-                .disabled(viewer.search.hits.isEmpty || !free)
-            Button(L10n.t("Previous match")) { viewer.search.previous() }
+                .disabled(!usable)
+            Button(L10n.t("Previous match")) { viewer.findPrevious() }
                 .keyboardShortcut("g", modifiers: [.command, .shift])
-                .disabled(viewer.search.hits.isEmpty || !free)
+                .disabled(!usable)
         }
         CommandGroup(after: .toolbar) {
             viewItems

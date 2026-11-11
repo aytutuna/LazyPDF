@@ -66,7 +66,16 @@ struct FindBar: View {
         .background(.bar)
         .task(id: request) { await search() }
         .onChange(of: viewer.findRequest, initial: true) {
-            if let seed = viewer.findSeed, seed != request.text { request.text = seed }
+            if let seed = viewer.findSeed {
+                if seed != request.text { request.text = seed }
+            } else if !viewer.search.query.isEmpty {
+                let running = viewer.search
+                request = Request(text: running.query, matchCase: running.options.matchCase,
+                                  wholeWord: running.options.wholeWord, regex: running.options.regex)
+            } else if request.text.isEmpty, let last = viewer.lastFind {
+                request = Request(text: last.text, matchCase: last.options.matchCase,
+                                  wholeWord: last.options.wholeWord, regex: last.options.regex)
+            }
             focused = true
         }
     }
