@@ -1,5 +1,6 @@
 using LazyPDF.App.Services;
 using LazyPDF.App.Tools.Batch;
+using LazyPDF.App.Tools.Export;
 using LazyPDF.Core;
 using Xunit;
 
@@ -552,5 +553,74 @@ public sealed class BatchRunnerTests
         Assert.False(result.Ok);
         Assert.Equal("No password", result.Title);
         Assert.False(Directory.Exists(dir.Sub("out")));
+    }
+
+    [Fact]
+    public async Task ExportPicturesWritesAFolderOfPicturesAndNoPdf()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("name.pdf", Pdfs.Text(2));
+        var set = Set(dir, Step(BatchStepKind.Watermark, "DRAFT"), Step(BatchStepKind.ExportPictures));
+
+        var result = await Run(Runner(), file, set);
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Equal(dir.Sub("out\name"), result.Output);
+        Assert.Equal([dir.Sub("out\name\name page 1.png"), dir.Sub("out\name\name page 2.png")], Directory.GetFiles(result.Output!).Order());
+        Assert.Empty(Directory.GetFiles(dir.Sub("out"), "*.pdf"));
+        Assert.Contains("Saved 2 pictures in name.", result.Detail);
+    }
+
+    [Fact]
+    public async Task ASecondRunOfExportPicturesMakesANewFolder()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("name.pdf", Pdfs.Text());
+        var set = Set(dir, Step(BatchStepKind.ExportPictures));
+
+        await Run(Runner(), file, set);
+        var second = await Run(Runner(), file, set);
+
+        Assert.Equal(dir.Sub("out\name (2)"), second.Output);
+        Assert.True(File.Exists(dir.Sub("out\name (2)\name page 1.png")));
+        Assert.Contains("Saved 1 picture in", second.Detail);
+    }
+
+    [Fact]
+    public async Task ExportPicturesFailsWhenThePagesCannotBeDrawn()
+    {
+        using var dir = new TempDir();
+        var runner = new BatchRunner(new FakeCodec(), new SystemFontSource(), new FakeRecognizer(), () => new FakeRenderer { Draws = false });
+
+        var result = await Run(runner, dir.File("a.pdf", Pdfs.Text()), Set(dir, Step(BatchStepKind.ExportPictures)));
+
+        Assert.False(result.Ok);
+        Assert.Equal("Pages cannot be drawn", result.Title);
+    }
+
+    [Fact]
+    public async Task ExportPicturesThatIsNotLastRefusesTheRun()
+    {
+        using var dir = new TempDir();
+
+        var result = await Run(Runner(), dir.File("a.pdf", Pdfs.Text()), Set(dir, Step(BatchStepKind.ExportPictures), Step(BatchStepKind.Clean)));
+
+        Assert.False(result.Ok);
+        Assert.Equal("Export pictures must be the last step", result.Title);
+        Assert.False(Directory.Exists(dir.Sub("out")));
+    }
+
+    [Fact]
+    public void ThePictureSettingsOfASetAreSaved()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.ExportPictures, Picture = PictureFormat.Jpeg, Dpi = 300, Quality = 70 });
+        set.Name = "Pictures";
+        var store = new BatchSetStore(dir.Path);
+
+        store.Save(set);
+
+        var step = Assert.Single(Assert.Single(store.Load()).Steps);
+        Assert.Equal((BatchStepKind.ExportPictures, PictureFormat.Jpeg, 300, 70), (step.Kind, step.Picture, step.Dpi, step.Quality));
     }
 }

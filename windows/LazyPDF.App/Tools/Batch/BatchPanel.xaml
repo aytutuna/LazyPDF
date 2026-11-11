@@ -76,6 +76,20 @@
                     <TextBlock Style="{StaticResource ReasonText}" Margin="0,4,0,0"
                                Text="{loc:T The password is not saved with the set. You are asked again next time.}" />
                 </StackPanel>
+                <StackPanel x:Name="PicturesEditor">
+                    <TextBlock Text="{loc:T Picture type}" Style="{StaticResource FieldLabelText}" />
+                    <ComboBox x:Name="PictureBox" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Picture type}" SelectionChanged="Setting_Changed" />
+                    <TextBlock Text="{loc:T Resolution}" Style="{StaticResource FieldLabelText}" />
+                    <ComboBox x:Name="DpiBox" AutomationProperties.Name="{loc:T Resolution}" SelectionChanged="Setting_Changed" />
+                    <StackPanel x:Name="QualityRow">
+                        <DockPanel Margin="0,8,0,4">
+                            <TextBlock DockPanel.Dock="Right" Style="{StaticResource ReadoutText}" Text="{Binding Value, ElementName=QualityBox, StringFormat={}{0:0}}" />
+                            <TextBlock Style="{StaticResource FieldLabelText}" Margin="0" Text="{loc:T Quality}" />
+                        </DockPanel>
+                        <Slider x:Name="QualityBox" Minimum="1" Maximum="100" SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True"
+                                AutomationProperties.Name="{loc:T Quality}" ValueChanged="Setting_Changed" />
+                    </StackPanel>
+                </StackPanel>
                 <StackPanel x:Name="WatermarkEditor">
                     <TextBlock Text="{loc:T Text}" Style="{StaticResource FieldLabelText}" />
                     <TextBox x:Name="WatermarkBox" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Watermark text}" TextChanged="Setting_Changed" />

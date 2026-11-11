@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Export;
 using LazyPDF.App.Tools.Ocr;
 using LazyPDF.Core;
 
@@ -16,6 +17,7 @@ public enum BatchStepKind
     PdfA,
     Rotate,
     Protect,
+    ExportPictures,
 }
 
 public enum BatchPages
@@ -73,6 +75,12 @@ public sealed class BatchStep
     public int Turn { get; set; } = 90;
 
     public BatchPages Pages { get; set; }
+
+    public PictureFormat Picture { get; set; } = PictureFormat.Png;
+
+    public int Dpi { get; set; } = 150;
+
+    public int Quality { get; set; } = 85;
 
     public bool KeepComments { get; set; }
 

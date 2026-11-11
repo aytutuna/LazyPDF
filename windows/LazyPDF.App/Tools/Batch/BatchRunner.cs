@@ -1,5 +1,6 @@
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Export;
 using LazyPDF.App.Tools.Ocr;
 using LazyPDF.App.Tools.Protect;
 using LazyPDF.Core;
@@ -71,6 +72,8 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         }
 
         if (relativeDir.StartsWith("..") || Path.IsPathRooted(relativeDir)) relativeDir = "";
+        if (set.Steps.LastOrDefault() is { Kind: BatchStepKind.ExportPictures } export)
+            return ExportPictures(path, export, bytes, Path.Combine(set.OutputFolder, relativeDir, Path.GetFileNameWithoutExtension(path)), set.OutputFolder, notes, cancellation);
         string target = Unique(Path.Combine(set.OutputFolder, relativeDir, BatchNames.Apply(set.NameTemplate, Path.GetFileNameWithoutExtension(path), number, now)));
         try
         {
@@ -85,6 +88,31 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         return new(path, target, true, notes.Count == 0 ? Loc.T("Done") : Loc.T("Done, with notes"), string.Join(" ", [Path.GetRelativePath(set.OutputFolder, target), .. notes]));
     }
 
+    private BatchResult ExportPictures(string path, BatchStep step, byte[] bytes, string folder, string root, List<string> notes, CancellationToken cancellation)
+    {
+        string unique = folder;
+        for (int i = 2; Directory.Exists(unique); i++) unique = $"{folder} ({i})";
+        try
+        {
+            var session = PdfEditSession.Open(bytes);
+            using var renderer = renderers();
+            if (!renderer.Load(session, null))
+                return new(path, null, false, Loc.T("Pages cannot be drawn"), Loc.T("Windows cannot draw {0}, so it cannot be saved as pictures.", Path.GetFileName(path)));
+            var source = new ExportSource(bytes, null, null, renderer, codec, Path.GetFileNameWithoutExtension(path));
+            var options = new ExportOptions(ExportFormat.Pictures, null, Picture: step.Picture, Dpi: step.Dpi, Quality: step.Quality, NamePattern: "{name} page {n}");
+            Directory.CreateDirectory(unique);
+            var result = Exporter.Write(source, options, unique, cancellation);
+            if (result.Skipped > 0) notes.Add(Loc.Plural(result.Skipped, "{0} page could not be drawn.", "{0} pages could not be drawn."));
+            string saved = Loc.Plural(result.Files, "Saved {0} picture in {1}.", "Saved {0} pictures in {1}.", Path.GetRelativePath(root, unique));
+            return new(path, unique, true, notes.Count == 0 ? Loc.T("Done") : Loc.T("Done, with notes"), string.Join(" ", [saved, .. notes]));
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            var problem = Problems.Save(e, Path.GetFileName(unique));
+            return new(path, null, false, problem.Title, problem.Text);
+        }
+    }
+
     /// <summary>What stops a set from running as it is; null when it can run.</summary>
     internal static Problem? Check(BatchSet set)
     {
@@ -92,8 +120,12 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         if (at >= 0 && at < set.Steps.Count - 1) return ProtectNotLast();
         if (set.Steps.Any(s => s.Kind == BatchStepKind.Protect && s.Password.Length == 0))
             return new(Loc.T("No password"), Loc.T("Type the password in the Protect step, then run again."));
+        if (set.Steps.FindIndex(s => s.Kind == BatchStepKind.ExportPictures) is >= 0 and var export && export < set.Steps.Count - 1) return ExportNotLast();
         return null;
     }
+
+    internal static Problem ExportNotLast() =>
+        new(Loc.T("Export pictures must be the last step"), Loc.T("There is no PDF left for the steps after it. Move Export pictures to the end."));
 
     internal static Problem ProtectNotLast() =>
         new(Loc.T("Protect must be the last step"), Loc.T("The steps after it could not read the locked file. Move Protect to the end."));
@@ -146,6 +178,8 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
                     using var document = PdfDocument.Open(bytes);
                     return ProtectWork.WithPassword(document, step.Password, step.Password, PermissionChoices.Everything.ToPermissions(), PdfCryptStrength.Aes256);
                 }
+            case BatchStepKind.ExportPictures:
+                return bytes;
             default:
                 {
                     var converted = new PdfAConverter(fonts).Convert(bytes, step.Level, now);

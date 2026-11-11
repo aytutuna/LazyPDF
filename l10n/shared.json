@@ -4749,6 +4749,25 @@
   "The steps after it could not read the locked file. Move Protect to the end.": {
     "tr": "Ondan sonraki adımlar kilitli dosyayı okuyamaz. Koru adımını sona taşıyın."
   },
+  "Export pictures must be the last step": {
+    "tr": "Resim olarak dışa aktarma son adım olmalıdır"
+  },
+  "There is no PDF left for the steps after it. Move Export pictures to the end.": {
+    "tr": "Ondan sonraki adımlara PDF kalmaz. Resim olarak dışa aktarma adımını sona taşıyın."
+  },
+  "Export pictures": {
+    "tr": "Resim olarak dışa aktar"
+  },
+  "{0} at {1} dpi": {
+    "tr": "{0}, {1} dpi"
+  },
+  "Windows cannot draw {0}, so it cannot be saved as pictures.": {
+    "tr": "Windows {0} dosyasını çizemiyor, bu yüzden resim olarak kaydedilemez."
+  },
+  "Saved {0} picture in {1}.": {
+    "tr": "{0} resim {1} klasörüne kaydedildi.",
+    "other": "Saved {0} pictures in {1}."
+  },
   "The password does not open {0}.": {
     "tr": "Parola {0} dosyasını açmıyor."
   },

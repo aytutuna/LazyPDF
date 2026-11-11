@@ -1963,6 +1963,12 @@
   <data name="Export form data" xml:space="preserve">
     <value>Form verilerini dışa aktar</value>
   </data>
+  <data name="Export pictures" xml:space="preserve">
+    <value>Resim olarak dışa aktar</value>
+  </data>
+  <data name="Export pictures must be the last step" xml:space="preserve">
+    <value>Resim olarak dışa aktarma son adım olmalıdır</value>
+  </data>
   <data name="Export saved." xml:space="preserve">
     <value>Dışa aktarma kaydedildi.</value>
   </data>
@@ -5056,6 +5062,9 @@
   <data name="Saved {0} file.|plural" xml:space="preserve">
     <value>{0} dosya kaydedildi.</value>
   </data>
+  <data name="Saved {0} picture in {1}.|plural" xml:space="preserve">
+    <value>{0} resim {1} klasörüne kaydedildi.</value>
+  </data>
   <data name="Saved {0}." xml:space="preserve">
     <value>{0} kaydedildi.</value>
   </data>
@@ -6568,6 +6577,9 @@
   <data name="There are no tags to check. Tag the document first." xml:space="preserve">
     <value>Denetlenecek etiket yok. Önce belgeyi etiketleyin.</value>
   </data>
+  <data name="There is no PDF left for the steps after it. Move Export pictures to the end." xml:space="preserve">
+    <value>Ondan sonraki adımlara PDF kalmaz. Resim olarak dışa aktarma adımını sona taşıyın.</value>
+  </data>
   <data name="There is no text or picture to place." xml:space="preserve">
     <value>Yerleştirilecek metin veya resim yok.</value>
   </data>
@@ -7357,6 +7369,9 @@
   <data name="Windows cannot draw this file." xml:space="preserve">
     <value>Windows bu dosyayı çizemiyor.</value>
   </data>
+  <data name="Windows cannot draw {0}, so it cannot be saved as pictures." xml:space="preserve">
+    <value>Windows {0} dosyasını çizemiyor, bu yüzden resim olarak kaydedilemez.</value>
+  </data>
   <data name="Windows cannot read {0} text yet. Add the language under Settings, Time and language." xml:space="preserve">
     <value>Windows henüz {0} metnini okuyamıyor. Ayarlar, Saat ve dil altından dili ekleyin.</value>
   </data>
@@ -7587,6 +7602,9 @@
   </data>
   <data name="{0} area differs|plural" xml:space="preserve">
     <value>{0} alan farklı</value>
+  </data>
+  <data name="{0} at {1} dpi" xml:space="preserve">
+    <value>{0}, {1} dpi</value>
   </data>
   <data name="{0} attachment or picture stamp is not in an XFDF file. Export as FDF to keep it.|plural" xml:space="preserve">
     <value>{0} ek veya resimli damga XFDF dosyasında yer almıyor. Korumak için FDF olarak dışa aktarın.</value>
