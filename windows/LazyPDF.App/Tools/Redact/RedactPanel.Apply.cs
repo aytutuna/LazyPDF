@@ -44,13 +44,20 @@ public partial class RedactPanel
             return;
         }
 
-        // The marks are done with once the copy exists; the panel may be detached by now, so the count is set here too.
-        state.Marks.Clear();
-        tab.PendingMarks = 0;
         var summary = RedactSummary.Of(result, settings.FlattenAll);
+        var (oldIncoming, oldTitle) = (_incoming, _incomingTitle);
+        // Set before the open: the new tab picks the summary up while it attaches.
         _incoming = summary;
         _incomingTitle = Loc.T("{0} (redacted).pdf", System.IO.Path.GetFileNameWithoutExtension(tab.Title));
-        if (!await host.OpenNewAsync(result.Bytes, _incomingTitle)) return;
+        if (!await host.OpenNewAsync(result.Bytes, _incomingTitle))
+        {
+            (_incoming, _incomingTitle) = (oldIncoming, oldTitle);
+            return;
+        }
+
+        // The marks are done with once the copy is open; the panel may be detached by now, so the count is set here too.
+        state.Marks.Clear();
+        tab.PendingMarks = 0;
         host.SetStatus(summary.Clean ? Loc.T("Redacted copy opened.") : Loc.T("Redacted copy has problems."));
         if (encrypted) host.ShowNotice(Loc.T("The copy has no password"), Loc.T("Protect it before you share it."));
     }
