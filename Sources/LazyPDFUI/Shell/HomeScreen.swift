@@ -68,7 +68,7 @@ private struct TileButton: View {
     let tile: HomeTile
     let start: () -> Void
 
-    @ScaledMetric(relativeTo: .body) private var tileHeight = 84
+    @ScaledMetric(relativeTo: .body) private var tileHeight: CGFloat = 84
 
     var body: some View {
         Button(action: start) {
@@ -103,7 +103,7 @@ private struct RecentCard: View {
     let open: () -> Void
 
     @State private var picture: CGImage?
-    @ScaledMetric(relativeTo: .body) private var pictureHeight = 110
+    @ScaledMetric(relativeTo: .body) private var pictureHeight: CGFloat = 110
 
     var body: some View {
         let caption = item.exists ? "\(item.opened) \u{00B7} \(item.folder)" : L10n.t("Not found")
