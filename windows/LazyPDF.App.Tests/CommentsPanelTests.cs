@@ -117,4 +117,72 @@ public sealed class CommentsPanelTests
         Assert.False(((UIElement)panel.FindName("Answering")).IsEnabled);
         return Task.CompletedTask;
     });
+
+    private static CommentsSidePanel Open(CommentFixture f, RecordingHost host)
+    {
+        var panel = new CommentsSidePanel();
+        panel.Attach(f.Tab, FakeViewer.Create().Viewer, host);
+        ((ListBox)panel.FindName("Comments")).SelectedIndex = 0;
+        return panel;
+    }
+
+    private static void Click(CommentsSidePanel panel, string name) => ((Button)panel.FindName(name)).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+    [Fact]
+    public Task DeletingACommentTakesItOutAndUndoBringsItBack() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        f.Marker.Add(MarkTool.Note, 0, [new Point(60, 80)], Red, "check");
+        f.Tab.Commit("Mark");
+        var host = new RecordingHost();
+        var panel = Open(f, host);
+
+        Click(panel, "DeleteButton");
+
+        Assert.Empty(PdfComments.List(f.Document));
+        Assert.Equal("Comment deleted.", host.Status);
+        Assert.True(f.Tab.Undo());
+        Assert.Single(PdfComments.List(f.Document));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task EditingTheTextIsOneUndoStep() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        f.Marker.Add(MarkTool.Note, 0, [new Point(60, 80)], Red, "check");
+        f.Tab.Commit("Mark");
+        var host = new RecordingHost();
+        var panel = Open(f, host);
+
+        Click(panel, "EditButton");
+        var full = (TextBox)panel.FindName("FullText");
+        Assert.False(full.IsReadOnly);
+        full.Text = "checked";
+        Click(panel, "SaveEditButton");
+
+        Assert.Equal("checked", PdfComments.List(f.Document)[0].Text);
+        Assert.True(full.IsReadOnly);
+        Assert.True(f.Tab.Undo());
+        Assert.Equal("check", PdfComments.List(f.Document)[0].Text);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ASignedFileAsksBeforeTheCommentIsDeleted() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        f.Marker.Add(MarkTool.Note, 0, [new Point(60, 80)], Red, "check");
+        f.Tab.Commit("Mark");
+        using var ada = PdfDigitalId.Create("Ada", null, DateTimeOffset.Now.AddDays(-1), years: 1, keyBits: 2048);
+        PdfSigner.Sign(f.Tab.Session, new PdfSignRequest(ada, DateTimeOffset.Now) { Fonts = new FakeFonts() });
+        var host = new RecordingHost();
+        var panel = Open(f, host);
+
+        Click(panel, "DeleteButton");
+
+        Assert.Single(host.Notices);
+        Assert.Single(PdfComments.List(f.Document));
+        return Task.CompletedTask;
+    });
 }

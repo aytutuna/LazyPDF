@@ -2744,6 +2744,30 @@
   "Send reply": {
     "tr": "Yanıtı gönder"
   },
+  "Edit comment": {
+    "tr": "Yorumu düzenle"
+  },
+  "Delete comment": {
+    "tr": "Yorumu sil"
+  },
+  "Delete comment (Del)": {
+    "tr": "Yorumu sil (Del)"
+  },
+  "Comment not changed": {
+    "tr": "Yorum değiştirilmedi"
+  },
+  "The file would not take that text. Try other words.": {
+    "tr": "Dosya bu metni kabul etmedi. Başka sözcükler deneyin."
+  },
+  "Comment changed.": {
+    "tr": "Yorum değiştirildi."
+  },
+  "Comment deleted.": {
+    "tr": "Yorum silindi."
+  },
+  "That comment is no longer in the file.": {
+    "tr": "Bu yorum artık dosyada değil."
+  },
   "Set status": {
     "tr": "Durumu ayarla"
   },

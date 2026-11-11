@@ -63,9 +63,15 @@
 
         <Border x:Name="Detail" Grid.Row="2" Style="{StaticResource CardStyle}" Margin="8,0,8,8" Visibility="Collapsed">
             <StackPanel>
+                <DockPanel HorizontalAlignment="Right">
+                    <Button x:Name="DeleteButton" DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE74D;" Margin="4,0,0,0"
+                            ToolTip="{loc:T Delete comment (Del)}" AutomationProperties.Name="{loc:T Delete comment}" Click="Delete_Click" />
+                    <Button x:Name="EditButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE70F;"
+                            ToolTip="{loc:T Edit comment}" AutomationProperties.Name="{loc:T Edit comment}" Click="Edit_Click" />
+                </DockPanel>
                 <ScrollViewer x:Name="TextScroll" VerticalScrollBarVisibility="Auto" MaxHeight="160">
                     <StackPanel>
-                        <TextBox x:Name="FullText" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" IsReadOnly="True" PreviewMouseWheel="FullText_MouseWheel"
+                        <TextBox x:Name="FullText" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" IsReadOnly="True" PreviewMouseWheel="FullText_MouseWheel" PreviewKeyDown="FullText_PreviewKeyDown"
                                  AutomationProperties.Name="{loc:T Comment}" />
                         <ItemsControl x:Name="Replies" AutomationProperties.Name="{loc:T Replies}">
                             <ItemsControl.ItemTemplate>
@@ -83,6 +89,10 @@
                              AutomationProperties.Name="{loc:T Reply}" TextChanged="ReplyBox_TextChanged" />
                     <Button x:Name="ReplyButton" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Reply}" Margin="0,6,0,0" HorizontalAlignment="Right" IsEnabled="False"
                             AutomationProperties.Name="{loc:T Send reply}" Click="Reply_Click" />
+                </StackPanel>
+                <StackPanel x:Name="Editing" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0" Visibility="Collapsed">
+                    <Button x:Name="CancelEditButton" Content="{loc:T Cancel}" Margin="0,0,6,0" Click="CancelEdit_Click" />
+                    <Button x:Name="SaveEditButton" Style="{StaticResource AccentButtonStyle}" Content="{loc:T Save}" Click="SaveEdit_Click" />
                 </StackPanel>
             </StackPanel>
         </Border>

@@ -1147,8 +1147,17 @@
   <data name="Comment changed" xml:space="preserve">
     <value>Yorum değişti</value>
   </data>
+  <data name="Comment changed." xml:space="preserve">
+    <value>Yorum değiştirildi.</value>
+  </data>
+  <data name="Comment deleted." xml:space="preserve">
+    <value>Yorum silindi.</value>
+  </data>
   <data name="Comment files" xml:space="preserve">
     <value>Yorum dosyaları</value>
+  </data>
+  <data name="Comment not changed" xml:space="preserve">
+    <value>Yorum değiştirilmedi</value>
   </data>
   <data name="Comment text" xml:space="preserve">
     <value>Yorum metni</value>
@@ -1381,6 +1390,12 @@
   <data name="Delete attachment" xml:space="preserve">
     <value>Eki sil</value>
   </data>
+  <data name="Delete comment" xml:space="preserve">
+    <value>Yorumu sil</value>
+  </data>
+  <data name="Delete comment (Del)" xml:space="preserve">
+    <value>Yorumu sil (Del)</value>
+  </data>
   <data name="Delete field" xml:space="preserve">
     <value>Alanı sil</value>
   </data>
@@ -1611,6 +1626,9 @@
   </data>
   <data name="Edit" xml:space="preserve">
     <value>Düzenle</value>
+  </data>
+  <data name="Edit comment" xml:space="preserve">
+    <value>Yorumu düzenle</value>
   </data>
   <data name="Edit fields" xml:space="preserve">
     <value>Alanları düzenle</value>
@@ -5224,6 +5242,9 @@
   <data name="That certificate does not open this file." xml:space="preserve">
     <value>Bu sertifika bu dosyayı açmıyor.</value>
   </data>
+  <data name="That comment is no longer in the file." xml:space="preserve">
+    <value>Bu yorum artık dosyada değil.</value>
+  </data>
   <data name="That file could not be read. Check that no other program has it open." xml:space="preserve">
     <value>Bu dosya okunamadı. Başka bir programda açık olmadığına bakın.</value>
   </data>
@@ -5589,6 +5610,9 @@
   </data>
   <data name="The file would not read back with that change. Save a copy and try again." xml:space="preserve">
     <value>Dosya bu değişiklikle yeniden okunamadı. Bir kopya kaydedip yeniden deneyin.</value>
+  </data>
+  <data name="The file would not take that text. Try other words." xml:space="preserve">
+    <value>Dosya bu metni kabul etmedi. Başka sözcükler deneyin.</value>
   </data>
   <data name="The file's permissions do not allow changing it, so it cannot be converted." xml:space="preserve">
     <value>Dosyanın izinleri değiştirilmesine izin vermiyor, bu yüzden dönüştürülemez.</value>

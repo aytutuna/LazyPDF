@@ -1,4 +1,4 @@
-// Answering the comment that is picked, and the summary file.
+// Answering, editing and deleting the comment that is picked, and the summary file.
 
 using System.Windows;
 using System.Windows.Controls;
@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools;
 using LazyPDF.App.Tools.Comment;
 using LazyPDF.Core;
@@ -14,6 +15,7 @@ namespace LazyPDF.App.Panels.Comments;
 
 public partial class CommentsSidePanel
 {
+    private readonly SystemFontSource _fonts = new();
     private int? _detailNumber;
 
     private void Comments_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -23,6 +25,7 @@ public partial class CommentsSidePanel
 
     private void ShowDetail()
     {
+        EndEdit();
         if (Comments.SelectedItem is not CommentRow row)
         {
             Detail.Visibility = Visibility.Collapsed;
@@ -32,6 +35,7 @@ public partial class CommentsSidePanel
         Detail.Visibility = Visibility.Visible;
         // An annotation written straight into the page's list has no object number to answer.
         Answering.IsEnabled = _allowed && row.Comment.Annotation.Reference is not null;
+        EditButton.IsEnabled = DeleteButton.IsEnabled = _allowed;
         int? number = row.Comment.Annotation.Reference?.Number;
         if (number is null || number != _detailNumber) TextScroll.ScrollToTop();
         _detailNumber = number;
@@ -49,6 +53,89 @@ public partial class CommentsSidePanel
     {
         TextScroll.ScrollToVerticalOffset(TextScroll.VerticalOffset - e.Delta);
         e.Handled = true;
+    }
+
+    private void EndEdit()
+    {
+        FullText.IsReadOnly = true;
+        FullText.AcceptsReturn = false;
+        Editing.Visibility = Visibility.Collapsed;
+        Answering.Visibility = Visibility.Visible;
+    }
+
+    private void Edit_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_allowed || Comments.SelectedItem is null) return;
+        FullText.IsReadOnly = false;
+        FullText.AcceptsReturn = true;
+        FullText.Visibility = Visibility.Visible;
+        Answering.Visibility = Visibility.Collapsed;
+        Editing.Visibility = Visibility.Visible;
+        FullText.Focus();
+        FullText.CaretIndex = FullText.Text.Length;
+    }
+
+    private void CancelEdit_Click(object sender, RoutedEventArgs e) => ShowDetail();
+
+    private void FullText_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (FullText.IsReadOnly) return;
+        if (e.Key == Key.Escape) ShowDetail();
+        else if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control) SaveEdit_Click(sender, e);
+        else return;
+        e.Handled = true;
+    }
+
+    private void SaveEdit_Click(object sender, RoutedEventArgs e)
+    {
+        if (Tab is not { } tab || Host is not { } host || MarkWork.Running || Comments.SelectedItem is not CommentRow row) return;
+        string text = FullText.Text;
+        if (text == row.Text)
+        {
+            ShowDetail();
+            return;
+        }
+        if (MarkWork.Cautioned(tab, host, () => SaveText(tab, host, row, text))) return;
+        SaveText(tab, host, row, text);
+    }
+
+    private void SaveText(DocumentTab tab, IToolHost host, CommentRow row, string text)
+    {
+        if (!ReferenceEquals(Tab, tab) || MarkWork.Running) return;
+        try
+        {
+            new PdfAnnotationWriter(tab.Document, _fonts).SetContents(row.Comment.Annotation, text, DateTimeOffset.Now);
+        }
+        catch (Exception error) when (error is ArgumentException or PdfReadException)
+        {
+            tab.Session.Discard();
+            host.ShowProblem(new Problem(Loc.T("Comment not changed"), Loc.T("The file would not take that text. Try other words.")));
+            return;
+        }
+        if (MarkWork.Commit(tab, host, Loc.T("Edit comment"))) host.SetStatus(Loc.T("Comment changed."));
+    }
+
+    private void Delete_Click(object sender, RoutedEventArgs e) => DeleteSelected();
+
+    private void DeleteSelected()
+    {
+        if (!_allowed || Tab is not { } tab || Host is not { } host || MarkWork.Running || Comments.SelectedItem is not CommentRow row) return;
+        if (MarkWork.Cautioned(tab, host, () => Delete(tab, host, row))) return;
+        Delete(tab, host, row);
+    }
+
+    private void Delete(DocumentTab tab, IToolHost host, CommentRow row)
+    {
+        if (!ReferenceEquals(Tab, tab) || MarkWork.Running) return;
+        int index = Comments.SelectedIndex;
+        if (!new PdfAnnotationWriter(tab.Document, _fonts).Delete(row.Comment.Annotation))
+        {
+            host.SetStatus(Loc.T("That comment is no longer in the file."));
+            return;
+        }
+        if (!MarkWork.Commit(tab, host, Loc.T("Delete comment"))) return;
+        if (Comments.Items.Count > 0) Comments.SelectedIndex = Math.Min(index, Comments.Items.Count - 1);
+        host.SetStatus(Loc.T("Comment deleted."));
     }
 
     private void ReplyBox_TextChanged(object sender, TextChangedEventArgs e) => ReplyButton.IsEnabled = ReplyBox.Text.Trim().Length > 0;

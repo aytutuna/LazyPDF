@@ -143,5 +143,10 @@ public partial class CommentsSidePanel : ToolPanel
             Go(row);
             e.Handled = true;
         }
+        else if (e.Key == Key.Delete)
+        {
+            DeleteSelected();
+            e.Handled = true;
+        }
     }
 }
