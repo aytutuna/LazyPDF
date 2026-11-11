@@ -43,7 +43,7 @@ public struct FileActions {
         vm.print()
     }
 
-    func share() {
+    public func share() {
         guard let tab = vm.activeDocument else { return }
         commands.share?(tab)
     }

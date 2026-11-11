@@ -54,11 +54,17 @@ struct MacMenus: Commands {
                 .disabled(!usable)
             Button(L10n.t("Save compact…"), action: actions.saveCompact)
                 .disabled(!usable)
+            Button(L10n.t("Share"), action: actions.share)
+                .disabled(!usable)
         }
         CommandGroup(replacing: .printItem) {
             Button(vm.printLabel, action: actions.print)
                 .keyboardShortcut("p")
                 .disabled(!usable)
+            if vm.lazyPrintInstalled {
+                Button(L10n.t("Print here…"), action: vm.printHere)
+                    .disabled(!usable)
+            }
         }
         CommandGroup(replacing: .undoRedo) {
             // Always on: the keys belong to the text being typed in first (FileActions.undo), and the document's own step

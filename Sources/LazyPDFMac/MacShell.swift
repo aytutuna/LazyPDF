@@ -52,6 +52,7 @@ final class MacShell {
                                  saveAs: { [unowned self] in self.saveAs($0) },
                                  saveCompact: { [unowned self] in self.saveCompact($0) },
                                  print: { [unowned self] in self.systemPrint($0) },
+                                 share: { [unowned self] in self.share($0) },
                                  importCertificate: { [unowned self] in self.importCertificate() },
                                  openFiles: { [unowned self] in self.open($0) })
         #if LAZYPDF_UITESTS
@@ -168,6 +169,21 @@ final class MacShell {
         } else {
             operation.run()
         }
+    }
+
+    private func share(_ tab: DocumentTab) {
+        guard let view = window?.contentView else { return }
+        let folder = folders.printCopies.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let name = tab.title.lowercased().hasSuffix(".pdf") ? tab.title : tab.title + ".pdf"
+        let file = folder.appendingPathComponent(name)
+        do {
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            try Data(tab.session.current).write(to: file)
+        } catch {
+            vm.showProblem(Problems.save(error, tab.title))
+            return
+        }
+        NSSharingServicePicker(items: [file]).show(relativeTo: .zero, of: view, preferredEdge: .minY)
     }
 
     func terminateReply() -> NSApplication.TerminateReply {

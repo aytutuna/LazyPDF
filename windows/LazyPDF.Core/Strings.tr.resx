@@ -4438,6 +4438,9 @@
   <data name="Print at actual size" xml:space="preserve">
     <value>Gerçek boyutta yazdır</value>
   </data>
+  <data name="Print here…" xml:space="preserve">
+    <value>Burada yazdır…</value>
+  </data>
   <data name="Print in high quality" xml:space="preserve">
     <value>Yüksek kalitede yazdır</value>
   </data>

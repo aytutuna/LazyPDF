@@ -8,12 +8,24 @@ extension AppViewModel {
     /// What a print control says: the name of the app it opens when that is Lazy Print.
     public var printLabel: String { sisters.lazyPrintInstalled ? L10n.t("Lazy Print") : L10n.t("Print") }
 
-    public func print() {
-        guard let tab = activeDocument else { return }
+    public var lazyPrintInstalled: Bool { sisters.lazyPrintInstalled }
+
+    /// The system's print dialog, for when Lazy Print is installed and print() would hand the file over.
+    public func printHere() {
+        guard let tab = activeDocument, canPrint(tab) else { return }
+        systemPrintRequested?(tab)
+    }
+
+    private func canPrint(_ tab: DocumentTab) -> Bool {
         if let security = tab.document.security, !security.openedAsOwner, !security.permissions.contains(.print) {
             showProblem(Problem(L10n.t("Printing is not allowed"), L10n.t("The owner of {0} did not allow it to be printed.", tab.title)))
-            return
+            return false
         }
+        return true
+    }
+
+    public func print() {
+        guard let tab = activeDocument, canPrint(tab) else { return }
         guard sisters.lazyPrintInstalled else {
             systemPrintRequested?(tab)
             return

@@ -70,6 +70,35 @@ final class PrintFlowTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: f.folders.printCopies.path))
     }
 
+    func test_printHereAsksTheWindowEvenWithLazyPrintAndWritesNoCopy() async throws {
+        let f = ViewModelFixture(self)
+        f.sisters.printTaken = true
+        await f.vm.open(f.pdf())
+        var asked: DocumentTab?
+        f.vm.systemPrintRequested = { asked = $0 }
+
+        f.vm.printHere()
+
+        XCTAssertTrue(asked === f.vm.activeDocument)
+        XCTAssertTrue(f.sisters.printed.isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: f.folders.printCopies.path))
+    }
+
+    func test_printHereOfAFileThatForbidsPrintingShowsTheProblem() async throws {
+        let f = ViewModelFixture(self)
+        let document = try PdfDocument.open(Pdfs.text())
+        let security = PdfSecurity.create(userPassword: "", ownerPassword: "owner", permissions: PdfPermissions.all.subtracting(.print),
+                                          strength: .aes256, firstId: [UInt8](repeating: 7, count: 16))
+        await f.vm.open(f.dir.file("nope.pdf", try document.saveRewrite(PdfSaveOptions(security: security))))
+        var asked: DocumentTab?
+        f.vm.systemPrintRequested = { asked = $0 }
+
+        f.vm.printHere()
+
+        XCTAssertNil(asked)
+        XCTAssertEqual(f.vm.message?.title, "Printing is not allowed")
+    }
+
     func test_aLaunchOfLazyPrintThatFailsPrintsTheDocumentInTheWindow() async throws {
         let f = ViewModelFixture(self)
         f.sisters.printTaken = true
