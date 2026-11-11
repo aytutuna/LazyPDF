@@ -93,6 +93,7 @@ public sealed class OneTabPerFileTests
         await f.Vm.OpenAsync(moved);
 
         Assert.True(f.Vm.ActiveDocument!.ChangedOnDisk);
+        await f.Vm.CheckDiskAsync();
         Assert.Equal("File changed", f.Vm.Message?.Title);
     }
 
