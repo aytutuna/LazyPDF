@@ -519,6 +519,15 @@ public sealed class PageEditsTests
         Assert.Equal((9, true), TilePanel.Locate(new System.Windows.Point(10, 700), 0, 116, 166, 4, 10));
     }
 
+    [Fact]
+    public void BlankPagesAreThoseWithNoContentOrNoInkAndAFailedDrawIsLeftOut()
+    {
+        OcrPageKind[] kinds = [OcrPageKind.Text, OcrPageKind.Blank, OcrPageKind.Drawing, OcrPageKind.Text, OcrPageKind.Blank];
+        bool?[] white = [false, true, true, false, null];
+
+        Assert.Equal([1, 2], PageEdits.BlankPages(kinds, white));
+    }
+
     private sealed class RecordingHost : IToolHost
     {
         public List<Problem> Problems { get; } = [];

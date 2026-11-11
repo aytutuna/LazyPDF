@@ -196,5 +196,18 @@
                         loc:Icon.Glyph="&#xE74D;" AutomationProperties.Name="{loc:T Remove all labels}" Click="LabelClear_Click" />
             </StackPanel>
         </Expander>
+
+        <Expander x:Name="BlankSection" Header="{loc:T Blank pages}" AutomationProperties.Name="{loc:T Blank pages}"
+                  Expanded="Section_Expanded" Collapsed="Section_Collapsed">
+            <StackPanel Margin="0,4,0,8">
+                <TextBlock Style="{StaticResource ReasonText}" Margin="0,0,0,8"
+                           Text="{loc:T 'Finds pages with nothing on them, or only white. You check the list before anything is deleted.'}" />
+                <Button x:Name="FindBlank" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Find blank pages}"
+                        loc:Icon.Glyph="&#xE721;" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Find blank pages}" Click="FindBlank_Click" />
+                <ListBox x:Name="BlankList" MaxHeight="160" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Blank pages found}"
+                         ButtonBase.Click="BlankCheck_Click" />
+                <TextBlock x:Name="BlankHint" Style="{StaticResource ReasonText}" />
+            </StackPanel>
+        </Expander>
     </StackPanel>
 </tools:ToolPanel>

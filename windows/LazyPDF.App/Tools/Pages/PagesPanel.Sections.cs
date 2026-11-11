@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.App.Tools.Export;
+using LazyPDF.App.Tools.Ocr;
 using LazyPDF.Core;
 using ResizeMode = LazyPDF.Core.ResizeMode;
 
@@ -13,7 +14,7 @@ namespace LazyPDF.App.Tools.Pages;
 
 public partial class PagesPanel
 {
-    private enum Section { None, Insert, Crop, Resize, Labels }
+    private enum Section { None, Insert, Crop, Resize, Labels, Blank }
 
     private Section _section;
     private CropTool? _crop;
@@ -23,6 +24,7 @@ public partial class PagesPanel
         Section.Crop => new(Loc.T("Crop pages"), "", () => _crop?.Box is not null, () => Run(Crop)),
         Section.Resize => new(Loc.T("Resize pages"), "", () => Size() is not null, () => Run(Resize)),
         Section.Labels => new(Loc.T("Number pages"), "", () => Start() is not null, () => Run(Number)),
+        Section.Blank => new(Loc.T("Delete checked pages"), "", () => BlankList.Items.Cast<CheckBox>().Any(c => c.IsChecked == true), () => Run(DeleteBlank)),
         _ => null,
     };
 
@@ -30,6 +32,7 @@ public partial class PagesPanel
         ReferenceEquals(expander, InsertSection) ? Section.Insert
         : ReferenceEquals(expander, CropSection) ? Section.Crop
         : ReferenceEquals(expander, ResizeSection) ? Section.Resize
+        : ReferenceEquals(expander, BlankSection) ? Section.Blank
         : Section.Labels;
 
     private void Section_Expanded(object sender, RoutedEventArgs e)
@@ -37,7 +40,7 @@ public partial class PagesPanel
         var section = SectionOf(sender);
         Disarm();
         _section = section;
-        foreach (var other in new[] { InsertSection, CropSection, ResizeSection, LabelSection })
+        foreach (var other in new[] { InsertSection, CropSection, ResizeSection, LabelSection, BlankSection })
         {
             if (!ReferenceEquals(other, sender)) other.IsExpanded = false;
         }
@@ -65,6 +68,7 @@ public partial class PagesPanel
 
     private void Disarm()
     {
+        ClearBlank();
         if (_crop is null) return;
         _crop.BoxChanged -= Crop_BoxChanged;
         if (Viewer is { } viewer)
@@ -137,6 +141,8 @@ public partial class PagesPanel
             ? Loc.T("Crops each page to what is printed on it, plus a small border. The rest stays in the file, only hidden.")
             : Loc.T("Windows cannot draw this file.");
         ResizeHint.Text = Loc.T("Pages keep their orientation.") + " " + covered;
+        if (!Tab.CanDraw) BlankHint.Text = Loc.T("Windows cannot draw this file.");
+        FindBlank.IsEnabled = Tab.CanDraw;
         LabelHint.Text = pages.Count == 0 ? Loc.T("Every page is numbered.") : Loc.T("Pages {0} to {1} are numbered.", pages[0] + 1, pages[^1] + 1);
         LabelHint.Text += " " + Loc.T("This sets the page numbers viewers show. Nothing is printed on the pages.");
         CustomSize.Visibility = Paper.SelectedIndex == PaperSize.All.Count ? Visibility.Visible : Visibility.Collapsed;
@@ -302,4 +308,55 @@ public partial class PagesPanel
 
     private void LabelClear_Click(object sender, RoutedEventArgs e) =>
         Apply(Loc.T("Remove page labels"), PageEdits.ClearLabels, Selected(), Loc.T("Labels removed."));
+
+    private void ClearBlank()
+    {
+        BlankList.Items.Clear();
+        BlankHint.Text = "";
+    }
+
+    private async void FindBlank_Click(object sender, RoutedEventArgs e) => await FindBlanks();
+
+    private async Task FindBlanks()
+    {
+        if (Tab is not { CanDraw: true } tab || Host is not { } host) return;
+        byte[] bytes = tab.Session.Current.ToArray();
+        int revision = tab.Revision;
+        var source = Exporter.Source(tab, new WicImageCodec());
+        List<int>? blank = null;
+        await host.RunBusyAsync(Loc.T("Looking for blank pages"), token => Task.Run(() =>
+        {
+            var kinds = OcrPages.Classify(bytes, tab.Password, tab.Certificate);
+            using var drawn = Exporter.Snapshot(source);
+            if (drawn is null) return;
+            var ink = new bool?[kinds.Count];
+            for (int i = 0; i < kinds.Count; i++)
+            {
+                token.ThrowIfCancellationRequested();
+                int done = i + 1;
+                if (i % 10 == 0) Dispatcher.BeginInvoke(() => host.SetBusyText(Loc.T("Looking at page {0} of {1}", done, kinds.Count)));
+                if (drawn.Render(i, 72) is { } image) ink[i] = PageInk.IsBlank(image);
+            }
+            blank = PageEdits.BlankPages(kinds, ink);
+        }, token));
+        if (blank is null || !ReferenceEquals(Tab, tab) || tab.Revision != revision) return;
+        ClearBlank();
+        foreach (int page in blank) BlankList.Items.Add(new CheckBox { Content = Cells[page].Name, Tag = page, IsChecked = true, Margin = new Thickness(0, 2, 0, 2) });
+        BlankHint.Text = blank.Count == 0 ? Loc.T("No blank pages found.") : Loc.Plural(blank.Count, "{0} blank page found.", "{0} blank pages found.", blank.Count);
+        if (blank.Count == Cells.Count)
+        {
+            ((CheckBox)BlankList.Items[0]!).IsChecked = false;
+            BlankHint.Text = Loc.T("Every page looks blank. The first is kept.");
+        }
+        Refresh();
+    }
+
+    private void BlankCheck_Click(object sender, RoutedEventArgs e) => Refresh();
+
+    private void DeleteBlank()
+    {
+        var pages = BlankList.Items.Cast<CheckBox>().Where(c => c.IsChecked == true).Select(c => (int)c.Tag).ToList();
+        if (pages.Count == 0 || pages.Count == Cells.Count) return;
+        PageJobs.Delete(Tab!, Host!, Loc.T("Delete blank pages"), pages, Loc.Plural(pages.Count, "{0} blank page deleted", "{0} blank pages deleted", pages.Count));
+    }
 }

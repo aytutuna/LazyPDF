@@ -195,6 +195,10 @@ internal static class PageEdits
         return new DisplayRect(left, top, right - left, bottom - top);
     }
 
+    /// <summary>The pages that hold nothing or only white; <paramref name="inkFree"/> is null for a page that could not be drawn, which is never listed.</summary>
+    public static List<int> BlankPages(IReadOnlyList<OcrPageKind> kinds, IReadOnlyList<bool?> inkFree) =>
+        [.. Enumerable.Range(0, kinds.Count).Where(i => inkFree[i] is { } white && (white || kinds[i] == OcrPageKind.Blank))];
+
     /// <summary>
     /// Numbers pages <paramref name="first"/> to <paramref name="last"/> as given. The pages after keep the labels they had:
     /// a range that started inside is cut, and the one in force after <paramref name="last"/> is started again there.

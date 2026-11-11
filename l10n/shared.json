@@ -5247,6 +5247,38 @@
   "Remove all labels": {
     "tr": "Tüm etiketleri kaldır"
   },
+  "Finds pages with nothing on them, or only white. You check the list before anything is deleted.": {
+    "tr": "Üzerinde hiçbir şey olmayan veya yalnızca beyaz olan sayfaları bulur. Hiçbir şey silinmeden önce listeyi siz kontrol edersiniz."
+  },
+  "Find blank pages": {
+    "tr": "Boş sayfaları bul"
+  },
+  "Blank pages found": {
+    "tr": "Bulunan boş sayfalar"
+  },
+  "Looking for blank pages": {
+    "tr": "Boş sayfalar aranıyor"
+  },
+  "No blank pages found.": {
+    "tr": "Boş sayfa bulunamadı."
+  },
+  "{0} blank page found.": {
+    "other": "{0} blank pages found.",
+    "tr": "{0} boş sayfa bulundu."
+  },
+  "Every page looks blank. The first is kept.": {
+    "tr": "Tüm sayfalar boş görünüyor. İlk sayfa korunur."
+  },
+  "Delete checked pages": {
+    "tr": "İşaretli sayfaları sil"
+  },
+  "Delete blank pages": {
+    "tr": "Boş sayfaları sil"
+  },
+  "{0} blank page deleted": {
+    "other": "{0} blank pages deleted",
+    "tr": "{0} boş sayfa silindi"
+  },
   "Custom size": {
     "tr": "Özel boyut"
   },

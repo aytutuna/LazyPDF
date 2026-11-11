@@ -628,6 +628,9 @@
   <data name="Blank pages" xml:space="preserve">
     <value>Boş sayfalar</value>
   </data>
+  <data name="Blank pages found" xml:space="preserve">
+    <value>Bulunan boş sayfalar</value>
+  </data>
   <data name="Blank.pdf" xml:space="preserve">
     <value>Boş.pdf</value>
   </data>
@@ -1411,6 +1414,12 @@
   <data name="Delete attachment" xml:space="preserve">
     <value>Eki sil</value>
   </data>
+  <data name="Delete blank pages" xml:space="preserve">
+    <value>Boş sayfaları sil</value>
+  </data>
+  <data name="Delete checked pages" xml:space="preserve">
+    <value>İşaretli sayfaları sil</value>
+  </data>
   <data name="Delete comment" xml:space="preserve">
     <value>Yorumu sil</value>
   </data>
@@ -1744,6 +1753,9 @@
   <data name="Every page is numbered." xml:space="preserve">
     <value>Tüm sayfalar numaralanır.</value>
   </data>
+  <data name="Every page looks blank. The first is kept." xml:space="preserve">
+    <value>Tüm sayfalar boş görünüyor. İlk sayfa korunur.</value>
+  </data>
   <data name="Every page with pictures also has text." xml:space="preserve">
     <value>Resim içeren her sayfada metin de var.</value>
   </data>
@@ -2038,11 +2050,17 @@
   <data name="Find" xml:space="preserve">
     <value>Bul</value>
   </data>
+  <data name="Find blank pages" xml:space="preserve">
+    <value>Boş sayfaları bul</value>
+  </data>
   <data name="Find fields" xml:space="preserve">
     <value>Alanları bul</value>
   </data>
   <data name="Find fields in the file" xml:space="preserve">
     <value>Dosyadaki alanları bul</value>
+  </data>
+  <data name="Finds pages with nothing on them, or only white. You check the list before anything is deleted." xml:space="preserve">
+    <value>Üzerinde hiçbir şey olmayan veya yalnızca beyaz olan sayfaları bulur. Hiçbir şey silinmeden önce listeyi siz kontrol edersiniz.</value>
   </data>
   <data name="Fingerprint (SHA-256): {0}" xml:space="preserve">
     <value>Parmak izi (SHA-256): {0}</value>
@@ -2794,6 +2812,9 @@
   <data name="Looking at the pages" xml:space="preserve">
     <value>Sayfalara bakılıyor</value>
   </data>
+  <data name="Looking for blank pages" xml:space="preserve">
+    <value>Boş sayfalar aranıyor</value>
+  </data>
   <data name="Looking for fields" xml:space="preserve">
     <value>Alanlar aranıyor</value>
   </data>
@@ -3030,6 +3051,9 @@
   </data>
   <data name="No author" xml:space="preserve">
     <value>Yazar yok</value>
+  </data>
+  <data name="No blank pages found." xml:space="preserve">
+    <value>Boş sayfa bulunamadı.</value>
   </data>
   <data name="No blanks found." xml:space="preserve">
     <value>Boşluk bulunamadı.</value>
@@ -6912,6 +6936,12 @@
   </data>
   <data name="{0} attachment saved.|plural" xml:space="preserve">
     <value>{0} ek kaydedildi.</value>
+  </data>
+  <data name="{0} blank page deleted|plural" xml:space="preserve">
+    <value>{0} boş sayfa silindi</value>
+  </data>
+  <data name="{0} blank page found.|plural" xml:space="preserve">
+    <value>{0} boş sayfa bulundu.</value>
   </data>
   <data name="{0} bytes" xml:space="preserve">
     <value>{0} bayt</value>
