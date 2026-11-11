@@ -15,6 +15,9 @@ public sealed class RecoveryMeta
 
     /// <summary>The process that wrote the entry; one still running is not a crash.</summary>
     public int ProcessId { get; set; }
+
+    /// <summary>When that process started (UTC), since a process id can be given to another process after a restart.</summary>
+    public DateTime ProcessStarted { get; set; }
 }
 
 /// <summary>A document left in the recovery folder.</summary>
@@ -81,19 +84,42 @@ public sealed class RecoveryStore(string? directory = null)
     }
 
     /// <summary>The entries whose process is gone: what a crash left, as opposed to the documents of an instance that is still open.</summary>
-    public IReadOnlyList<RecoveryEntry> Abandoned() => [.. List().Where(e => !IsRunning(e.Meta.ProcessId))];
+    public IReadOnlyList<RecoveryEntry> Abandoned() => [.. List().Where(e => !IsRunning(e.Meta))];
 
-    private static bool IsRunning(int processId)
+    private static bool IsRunning(RecoveryMeta meta)
     {
-        if (processId == 0) return false;
+        if (meta.ProcessId == 0) return false;
         try
         {
-            using var process = System.Diagnostics.Process.GetProcessById(processId);
-            return !process.HasExited;
+            using var process = System.Diagnostics.Process.GetProcessById(meta.ProcessId);
+            if (process.HasExited) return false;
+            return meta.ProcessStarted == default || (process.StartTime.ToUniversalTime() - meta.ProcessStarted).Duration() < TimeSpan.FromSeconds(2);
         }
-        catch (ArgumentException)
+        catch (Exception e) when (e is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception)
         {
             return false;
+        }
+    }
+
+    /// <summary>Removes what a crash or a full disk left behind: half-written temp files and a pdf or json whose partner is gone.</summary>
+    public void Sweep()
+    {
+        if (!Directory.Exists(_directory)) return;
+        var now = DateTime.UtcNow;
+        foreach (string file in Directory.EnumerateFiles(_directory))
+        {
+            string extension = System.IO.Path.GetExtension(file);
+            TimeSpan age = now - File.GetLastWriteTimeUtc(file);
+            bool orphan = extension switch
+            {
+                ".tmp" => age > TimeSpan.FromHours(1),
+                ".pdf" => age > TimeSpan.FromDays(1) && !File.Exists(System.IO.Path.ChangeExtension(file, ".json")),
+                ".json" => age > TimeSpan.FromDays(1) && !File.Exists(System.IO.Path.ChangeExtension(file, ".pdf")),
+                _ => false,
+            };
+            if (!orphan) continue;
+            try { File.Delete(file); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
         }
     }
 

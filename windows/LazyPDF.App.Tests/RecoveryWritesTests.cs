@@ -58,6 +58,42 @@ public sealed class RecoveryWritesTests
     }
 
     [Fact]
+    public void ARecycledProcessIdDoesNotHideACrashCopy()
+    {
+        using var dir = new TempDir();
+        var store = new RecoveryStore(dir.Path);
+        var started = System.Diagnostics.Process.GetCurrentProcess().StartTime.ToUniversalTime();
+        store.Write(Guid.NewGuid(), new byte[] { 1 }, new RecoveryMeta { Title = "recycled", ProcessId = Environment.ProcessId, ProcessStarted = started.AddYears(-1) });
+        store.Write(Guid.NewGuid(), new byte[] { 1 }, new RecoveryMeta { Title = "live", ProcessId = Environment.ProcessId, ProcessStarted = started });
+        store.Flush();
+
+        Assert.Equal(["recycled"], store.Abandoned().Select(e => e.Meta.Title));
+    }
+
+    [Fact]
+    public void SweepRemovesStaleLeftoversAndKeepsEntries()
+    {
+        using var dir = new TempDir();
+        var store = new RecoveryStore(dir.Path);
+        store.Write(Guid.NewGuid(), new byte[] { 1 }, new RecoveryMeta { Title = "pair" });
+        store.Flush();
+        string staleTemp = dir.File("a.pdf.tmp", [1]);
+        string freshTemp = dir.File("b.pdf.tmp", [1]);
+        string lonePdf = dir.File(Guid.NewGuid().ToString("N") + ".pdf", [1]);
+        File.SetLastWriteTimeUtc(staleTemp, DateTime.UtcNow.AddHours(-2));
+        File.SetLastWriteTimeUtc(lonePdf, DateTime.UtcNow.AddDays(-2));
+        foreach (var file in Directory.GetFiles(dir.Path).Where(f => !f.EndsWith(".tmp") && f != lonePdf))
+            File.SetLastWriteTimeUtc(file, DateTime.UtcNow.AddDays(-2));
+
+        store.Sweep();
+
+        Assert.False(File.Exists(staleTemp));
+        Assert.False(File.Exists(lonePdf));
+        Assert.True(File.Exists(freshTemp));
+        Assert.Single(store.List());
+    }
+
+    [Fact]
     public async Task AWindowBesideALiveOneDoesNotOfferItsDocuments()
     {
         using var f = new ViewModelFixture();

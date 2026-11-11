@@ -163,6 +163,8 @@ public sealed class DocumentTab : ITab, IDisposable
         else PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     }
 
+    private static readonly DateTime _processStarted = System.Diagnostics.Process.GetCurrentProcess().StartTime.ToUniversalTime();
+
     private void WriteRecovery()
     {
         if (_recovery is null) return;
@@ -179,6 +181,7 @@ public sealed class DocumentTab : ITab, IDisposable
             OriginalWrite = _disk?.Write ?? default,
             OriginalLength = _disk?.Length ?? 0,
             ProcessId = Environment.ProcessId,
+            ProcessStarted = _processStarted,
         });
     }
 

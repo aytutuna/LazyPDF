@@ -133,6 +133,7 @@ public sealed partial class AppViewModel
     /// <summary>Looks in the recovery folder: anything there is what a crash left, because a document closed on purpose removes its copy.</summary>
     public void CheckRecovery()
     {
+        _recovery.Sweep();
         var found = _recovery.Abandoned();
         RecoveryOffer = found.Count == 0 ? null : found;
         NotifyAll();
