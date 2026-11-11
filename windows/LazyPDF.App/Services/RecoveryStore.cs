@@ -73,8 +73,11 @@ public sealed class RecoveryStore(string? directory = null)
     public IReadOnlyList<RecoveryEntry> List()
     {
         if (!Directory.Exists(_directory)) return [];
+        List<string> files;
+        try { files = [.. Directory.EnumerateFiles(_directory, "*.json")]; }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return []; }
         var entries = new List<RecoveryEntry>();
-        foreach (string meta in Directory.EnumerateFiles(_directory, "*.json"))
+        foreach (string meta in files)
         {
             string pdf = System.IO.Path.ChangeExtension(meta, ".pdf");
             if (!Guid.TryParse(System.IO.Path.GetFileNameWithoutExtension(meta), out var id) || !File.Exists(pdf)) continue;
@@ -106,20 +109,25 @@ public sealed class RecoveryStore(string? directory = null)
     public void Sweep()
     {
         if (!Directory.Exists(_directory)) return;
+        List<string> files;
+        try { files = [.. Directory.EnumerateFiles(_directory)]; }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return; }
         var now = DateTime.UtcNow;
-        foreach (string file in Directory.EnumerateFiles(_directory))
+        foreach (string file in files)
         {
-            string extension = System.IO.Path.GetExtension(file);
-            TimeSpan age = now - File.GetLastWriteTimeUtc(file);
-            bool orphan = extension switch
+            try
             {
-                ".tmp" => age > TimeSpan.FromHours(1),
-                ".pdf" => age > TimeSpan.FromDays(1) && !File.Exists(System.IO.Path.ChangeExtension(file, ".json")),
-                ".json" => age > TimeSpan.FromDays(1) && !File.Exists(System.IO.Path.ChangeExtension(file, ".pdf")),
-                _ => false,
-            };
-            if (!orphan) continue;
-            try { File.Delete(file); }
+                string extension = System.IO.Path.GetExtension(file);
+                TimeSpan age = now - File.GetLastWriteTimeUtc(file);
+                bool orphan = extension switch
+                {
+                    ".tmp" => age > TimeSpan.FromHours(1),
+                    ".pdf" => age > TimeSpan.FromDays(1) && !File.Exists(System.IO.Path.ChangeExtension(file, ".json")),
+                    ".json" => age > TimeSpan.FromDays(1) && !File.Exists(System.IO.Path.ChangeExtension(file, ".pdf")),
+                    _ => false,
+                };
+                if (orphan) File.Delete(file);
+            }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
         }
     }
