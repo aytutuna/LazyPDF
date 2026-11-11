@@ -47,6 +47,7 @@ extension CommentsModel {
             host.setStatus(L10n.t("No comments to export."))
             return nil
         }
+        lastSummary = (shown: comments.count, all: all.count)
         return CommentSummary.text(tab.title, comments, { viewer.pageLabel($0) })
     }
 
@@ -59,7 +60,8 @@ extension CommentsModel {
     public func summarySaved(_ result: Result<URL, Error>) {
         switch result {
         case .success:
-            host?.setStatus(L10n.t("Summary saved."))
+            let (shown, total) = lastSummary
+            host?.setStatus(shown < total ? L10n.t("Summary of {0} of {1} comments saved.", shown, total) : L10n.t("Summary saved."))
         case .failure:
             host?.showProblem(Problem(L10n.t("Not saved"),
                                       L10n.t("{0} could not be written. Check that the disk has room and try again.", summaryName + ".txt")))

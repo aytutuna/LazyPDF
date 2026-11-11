@@ -128,6 +128,19 @@ final class CommentsModelTests: XCTestCase {
         XCTAssertEqual(rig.model.rows.count, 2)
     }
 
+    func test_theMarkedStateCanBeFilteredBy() async throws {
+        let rig = try attached()
+        rig.model.select(rig.model.rows[0].id)
+        rig.model.setStatus(.marked)
+        await settle { rig.model.selectedRow?.comment.status == .marked }
+
+        rig.model.setStatusFilter(.marked)
+
+        XCTAssertEqual(rig.model.rows.map { $0.comment.author }, ["Ada"])
+        rig.model.setStatusFilter(.unmarked)
+        XCTAssertTrue(rig.model.isEmpty)
+    }
+
     func test_aSignedFileAsksBeforeAReplyBreaksItsSignatures() async throws {
         let rig = try attached(signed: true)
         rig.model.select(rig.model.rows[0].id)
@@ -172,6 +185,21 @@ final class CommentsModelTests: XCTestCase {
 
         XCTAssertNil(rig.model.summaryText())
         XCTAssertEqual(rig.host.statuses, ["No comments to export."])
+    }
+
+    func test_aFilteredSummaryIsSavedWithItsCounts() async throws {
+        let rig = try attached()
+        rig.model.setQuery("check")
+        await settle { rig.model.rows.count == 1 }
+
+        _ = rig.model.summaryText()
+        rig.model.summarySaved(.success(URL(fileURLWithPath: "/tmp/a.txt")))
+        rig.model.setQuery("")
+        await settle { rig.model.rows.count == 2 }
+        _ = rig.model.summaryText()
+        rig.model.summarySaved(.success(URL(fileURLWithPath: "/tmp/a.txt")))
+
+        XCTAssertEqual(rig.host.statuses, ["Summary of 1 of 2 comments saved.", "Summary saved."])
     }
 
     func test_theOutcomeOfSavingTheSummaryIsToldToTheWindow() throws {

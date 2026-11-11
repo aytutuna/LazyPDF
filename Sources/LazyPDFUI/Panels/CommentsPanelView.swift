@@ -13,6 +13,7 @@ public struct CommentsPanelView: View {
     @State private var summary = BytesDocument()
 
     private static let statuses: [ReviewStatus] = [.none, .accepted, .rejected, .cancelled, .completed]
+    private static let filterStatuses = statuses + [.marked, .unmarked]
 
     public init(model: CommentsModel) {
         self.model = model
@@ -58,7 +59,7 @@ public struct CommentsPanelView: View {
                 .help(L10n.t("Group by"))
                 Picker(L10n.t("Show status"), selection: Binding(get: { model.statusFilter }, set: { model.setStatusFilter($0) })) {
                     Text(L10n.t("Any status")).tag(ReviewStatus?.none)
-                    ForEach(Self.statuses, id: \.self) { Text(AnnotationText.statusName($0)).tag(Optional($0)) }
+                    ForEach(Self.filterStatuses, id: \.self) { Text(AnnotationText.statusName($0)).tag(Optional($0)) }
                 }
                 .help(L10n.t("Show status"))
             }
@@ -89,29 +90,41 @@ public struct CommentsPanelView: View {
 
     private func detail(_ row: CommentRow) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            VStack(alignment: .leading, spacing: 4) {
-                ForEach(Array(model.replies.enumerated()), id: \.offset) { _, text in
-                    Text(text).font(.callout)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 4) {
+                    if !row.text.isEmpty {
+                        Text(row.text)
+                            .textSelection(.enabled)
+                            .accessibilityLabel(L10n.t("Comment"))
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(Array(model.replies.enumerated()), id: \.offset) { _, text in
+                            Text(text).font(.callout)
+                        }
+                    }
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel(L10n.t("Replies"))
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .accessibilityElement(children: .contain)
-            .accessibilityLabel(L10n.t("Replies"))
+            .frame(maxHeight: 160)
             Picker(L10n.t("Status"), selection: Binding(get: { row.comment.status }, set: { model.setStatus($0) })) {
                 ForEach(Self.statuses, id: \.self) { Text(AnnotationText.statusName($0)).tag($0) }
             }
+            .disabled(!model.canAnswer)
             TextEditor(text: $reply)
                 .frame(height: 56)
                 .accessibilityLabel(L10n.t("Reply"))
+                .disabled(!model.canAnswer)
             HStack {
                 Spacer()
                 Button(L10n.t("Reply")) {
                     if model.reply(reply) { reply = "" }
                 }
-                .disabled(reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(!model.canAnswer || reply.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 .accessibilityLabel(L10n.t("Send reply"))
             }
         }
-        .disabled(!model.canAnswer)
         .padding(12)
         .background(.quaternary.opacity(0.4))
     }

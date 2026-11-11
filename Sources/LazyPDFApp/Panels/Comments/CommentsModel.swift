@@ -34,7 +34,8 @@ public final class CommentsModel: ToolPanelModel {
     var host: ToolHost?
     @ObservationIgnored private var watch: ObservationWatch?
     @ObservationIgnored private var typing: Task<Void, Never>?
-    @ObservationIgnored private var all: [PdfComment] = []
+    @ObservationIgnored var all: [PdfComment] = []
+    @ObservationIgnored var lastSummary = (shown: 0, all: 0)
 
     public init() {}
 
