@@ -73,6 +73,17 @@ public class FormFillTests
     }
 
     [Fact]
+    public void FontNameWithReplacementSyntaxGoesIntoTheDefaultAppearanceLiterally()
+    {
+        var form = Open();
+        var holder = new PdfDictionary();
+
+        PdfForm.SetFontName(holder, "/Helv 12 Tf 0 g", "A$1B");
+
+        Assert.Equal("/A$1B 12 Tf 0 g", PdfText.Read(form.Document, holder, "DA"));
+    }
+
+    [Fact]
     public void FieldsOfOneBatchShareOneAddedFont()
     {
         var form = Open(fonts: new ArialSource());

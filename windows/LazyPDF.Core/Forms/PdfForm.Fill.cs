@@ -361,10 +361,10 @@ public sealed partial class PdfForm
 
     private static void SetFontName(FormField field, string name) => SetFontName(field.Dictionary, field.DefaultAppearance, name);
 
-    private static void SetFontName(PdfDictionary holder, string? current, string name)
+    internal static void SetFontName(PdfDictionary holder, string? current, string name)
     {
         string da = current ?? "/Helv 0 Tf 0 g";
-        string updated = Regex.Replace(da, @"/[^\s/<>\[\]()]+(\s+[-+\d.]+\s+Tf)", $"/{name}$1");
+        string updated = Regex.Replace(da, @"/[^\s/<>\[\]()]+(\s+[-+\d.]+\s+Tf)", m => "/" + name + m.Groups[1].Value);
         if (updated == da && !da.Contains("Tf")) updated = $"/{name} 0 Tf " + da;
         holder["DA"] = PdfText.ToObject(updated);
     }
