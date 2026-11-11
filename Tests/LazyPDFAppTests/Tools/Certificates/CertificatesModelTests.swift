@@ -343,11 +343,12 @@ final class CertificatesModelTests: XCTestCase {
         XCTAssertTrue(s.model.action!.canRun())
     }
 
-    func test_aBoxIsDroppedWhenItsPageIsRotatedOrGone() throws {
+    func test_aBoxIsDroppedWhenItsPageIsRotatedOrGone() async throws {
         let s = try attached()
         try drawnBox(s)
         PageOperations.rotate(s.rig.tab.document, [1], 90)
         _ = try s.rig.tab.commit("Rotate")
+        await waitUntil { s.model.boxText == "No box yet." }
 
         XCTAssertEqual(s.model.placeIndex, 1)
         XCTAssertEqual(s.model.boxText, "No box yet.")
@@ -356,6 +357,7 @@ final class CertificatesModelTests: XCTestCase {
         try drawnBox(s)
         try PageOperations.delete(s.rig.tab.document, [1])
         _ = try s.rig.tab.commit("Delete")
+        await waitUntil { s.model.boxText == "No box yet." }
 
         XCTAssertEqual(s.model.boxText, "No box yet.")
         XCTAssertFalse(s.model.action!.canRun())
@@ -366,6 +368,7 @@ final class CertificatesModelTests: XCTestCase {
         try drawnBox(s)
 
         await s.model.action!.run()
+        await waitUntil { s.model.boxText == "No box yet." }
 
         XCTAssertNil(s.rig.viewer.overlay(1).item("certificates.box"))
         XCTAssertEqual(s.model.boxText, "No box yet.")
