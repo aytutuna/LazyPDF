@@ -308,6 +308,7 @@ public sealed partial class AppViewModel
     public bool RequestClose(DocumentTab tab)
     {
         if (WaitForJob()) return false;
+        DropAction();
         if (!tab.IsDirty && tab.PendingMarks == 0)
         {
             Close(tab);
@@ -359,6 +360,7 @@ public sealed partial class AppViewModel
     public bool RequestExit()
     {
         if (WaitForJob()) return false;
+        DropAction();
         _exiting = true;
         return !ContinueExit(raise: false);
     }
