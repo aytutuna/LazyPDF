@@ -36,6 +36,15 @@ final class AccessibilityModelTests: XCTestCase {
         return try PdfFromText.create(page, fonts: FakeFonts()).bytes
     }
 
+    private func signedPictures() throws -> [UInt8] {
+        let document = try PdfDocument.open(try pictures())
+        _ = try AutoTagger.tag(document)
+        let perms = PdfDictionary()
+        perms["UR3"] = try document.add(PdfDictionary())
+        document.catalog["Perms"] = perms
+        return try document.saveRewrite(PdfSaveOptions())
+    }
+
     private func attached(_ bytes: [UInt8]? = nil, speaker: FakeSpeaker? = nil) async throws -> (model: AccessibilityModel, rig: ToolRig) {
         let rig = try ToolRig(bytes ?? Pdfs.text(2))
         let voice = speaker ?? FakeSpeaker()
@@ -241,6 +250,58 @@ final class AccessibilityModelTests: XCTestCase {
         XCTAssertEqual(rig.host.statuses.last, "Description saved.")
         await waitUntil { model.selectedFigure == 2 && model.figures.first?.hasAlt == true }
         XCTAssertEqual(model.figuresNote, "1 of 2 figures have no description.")
+    }
+
+    func test_aDescriptionOnASignedFileWaitsForTheAnswer() async throws {
+        let (model, rig) = try await attached(try signedPictures())
+        model.setView(.figures)
+        await waitUntil { model.selectedFigure == 1 }
+        model.typeAlt("A grey square.")
+
+        model.saveAlt()
+
+        XCTAssertEqual(rig.host.notices.last?.title, "Check before going on")
+        XCTAssertFalse(rig.tab.session.canUndo)
+
+        rig.host.notices[0].action?.run()
+        XCTAssertEqual(rig.tab.session.undoLabel, "Figure description")
+    }
+
+    func test_aDescriptionIsNotWrittenWhenAnotherTabIsShownBeforeTheAnswer() async throws {
+        let (model, rig) = try await attached(try signedPictures())
+        model.setView(.figures)
+        await waitUntil { model.selectedFigure == 1 }
+        model.typeAlt("A grey square.")
+        model.saveAlt()
+
+        try ToolRig().attach(model)
+        rig.host.notices[0].action?.run()
+
+        XCTAssertFalse(rig.tab.session.canUndo)
+    }
+
+    func test_addingTagsToAFileThatForbidsChangesSaysSo() async throws {
+        let rig = try ToolRig(try Pdfs.restricted(PdfPermissions.all.subtracting(.modify)), password: "")
+        let model = AccessibilityModel(speaker: { FakeSpeaker() })
+        rig.attach(model)
+
+        await model.addTags()
+
+        XCTAssertEqual(rig.host.problems.last?.title, "This file cannot be changed")
+        XCTAssertFalse(rig.tab.session.canUndo)
+    }
+
+    func test_addingTagsToASignedFileWaitsForTheAnswer() async throws {
+        let (model, rig) = try await attached(try Pdfs.signed(certified: false))
+
+        await model.addTags()
+        XCTAssertEqual(rig.host.notices.last?.title, "Check before going on")
+        XCTAssertFalse(rig.tab.session.canUndo)
+
+        rig.host.notices[0].action?.run()
+        await waitUntil { rig.tab.document.isTagged }
+        await waitUntil { rig.host.notices.last?.title == "Tags added" }
+        XCTAssertFalse(model.isTagging)
     }
 
     func test_whenEveryFigureHasADescriptionThePanelSaysSo() async throws {

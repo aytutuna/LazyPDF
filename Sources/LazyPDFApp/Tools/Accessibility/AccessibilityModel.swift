@@ -259,7 +259,8 @@ public final class AccessibilityModel: ToolPanelModel {
     }
 
     private func apply(_ tab: DocumentTab, _ host: ToolHost, _ row: CheckRow, _ label: String) {
-        ChangeGate.guarded(host, label) {
+        ChangeGate.run(tab, host, label) { [self] in
+            guard self.tab === tab else { return }
             do {
                 if try AccessibilityEdits.apply(tab.document, row), try tab.commit(label) {
                     host.setStatus(L10n.t("Saved."))

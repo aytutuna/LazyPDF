@@ -83,7 +83,8 @@ extension AccessibilityModel {
     public func saveAlt() {
         guard let row = selectedRow, let tab, let host else { return }
         let text = altText
-        ChangeGate.guarded(host, L10n.t("Save description")) {
+        ChangeGate.run(tab, host, L10n.t("Figure description")) { [self] in
+            guard self.tab === tab else { return }
             do {
                 // The tree on the screen was read from a copy; the edit goes to the open document's own.
                 let tree = StructureTree.read(tab.document)

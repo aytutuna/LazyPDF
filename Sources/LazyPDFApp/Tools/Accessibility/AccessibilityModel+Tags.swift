@@ -73,12 +73,13 @@ extension AccessibilityModel {
 
     func addTags() async {
         guard let tab, let host else { return }
-        let document = tab.document
-        let signed = document.isSigned
-        var result: AutoTagResult?
-        isTagging = true
-        defer { isTagging = false }
-        await ChangeGate.guardedAsync(host, L10n.t("Add tags")) {
+        await ChangeGate.runAsync(tab, host, L10n.t("Add tags")) { [self] in
+            guard self.tab === tab else { return }
+            let document = tab.document
+            let signed = document.isSigned
+            var result: AutoTagResult?
+            isTagging = true
+            defer { isTagging = false }
             try await host.runBusy(L10n.t("Adding tags")) { token in
                 do {
                     // The tagger edits the document as it goes, so Cancel stops it, waits for it to be done and then takes
@@ -102,8 +103,8 @@ extension AccessibilityModel {
                     throw error
                 }
             }
+            if let result { showTagResult(tab, host, result, signed) }
         }
-        if let result { showTagResult(tab, host, result, signed) }
     }
 
     private static func notTagged(_ host: ToolHost) {
