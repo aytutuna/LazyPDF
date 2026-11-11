@@ -20,7 +20,7 @@ namespace LazyPDF.App.Viewer;
 /// </summary>
 public partial class PageViewer : UserControl, IDocumentViewer
 {
-    private sealed record ViewState(int Rotation, PagePoint? Place);
+    private sealed record ViewState(int Rotation, PagePoint? Place, int Columns, bool Cover, bool Continuous);
 
     private readonly ConditionalWeakTable<DocumentTab, ViewState> _states = new();
     private DocumentTab? _tab;
@@ -28,6 +28,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
     private bool _reading;
     private string _shownZoom = "";
     private (int Columns, bool Cover, bool Continuous, FitMode Fit, double Zoom) _beforeReading;
+    private (int Columns, bool Cover, bool Continuous) _arrangement = (1, false, true);
 
     private readonly string? _preferencesDirectory;
     private readonly DispatcherTimer _toast = new();
@@ -62,6 +63,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
             Surface.SetTint(preferences.Tint);
             Surface.SetArrangement(preferences.Columns == 2 ? 2 : 1, preferences.Cover, preferences.Continuous);
         }
+        _arrangement = (Surface.Columns, Surface.Cover, Surface.Continuous);
         foreach (var item in new[] { Preset25, Preset50, Preset75, Preset100, Preset125, Preset150, Preset200, Preset400 })
             item.Header = Loc.T("{0} %", double.Parse((string)item.Tag, System.Globalization.CultureInfo.InvariantCulture) * 100);
         RefreshBar();
@@ -82,7 +84,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         if (_tab is not null)
         {
             _tab.Changed -= Tab_Changed;
-            _states.AddOrUpdate(_tab, new ViewState(Surface.Rotation, Surface.TopPlace()));
+            _states.AddOrUpdate(_tab, new ViewState(Surface.Rotation, Surface.TopPlace(), Surface.Columns, Surface.Cover, Surface.Continuous));
             _tab.Rotation = Surface.Rotation;
         }
         EndPointerTool();
@@ -96,8 +98,13 @@ public partial class PageViewer : UserControl, IDocumentViewer
         Search.Clear();
         ViewState? state = null;
         if (tab is not null) _states.TryGetValue(tab, out state);
+        bool fresh = tab is not null && state is null && tab.Fit == FitMode.None && tab.Zoom == 0;
+        var (columns, cover, continuous) = state is null ? _arrangement : (state.Columns, state.Cover, state.Continuous);
+        if (fresh && FileLayout(tab!.Document) is { } declared) (columns, cover, continuous) = declared;
+        Surface.SetArrangement(columns, cover, continuous);
         Surface.Show(tab, state?.Rotation ?? tab?.Rotation ?? 0, tab is not null && ViewerSettings.Read(tab.Document).RightToLeft);
         if (state?.Place is { } place) Surface.GoToPage(place.Page, place.Point, keepX: true);
+        else if (fresh) FollowOpenAction(tab!.Document);
         if (tab is not null)
         {
             tab.Changed += Tab_Changed;
@@ -109,6 +116,47 @@ public partial class PageViewer : UserControl, IDocumentViewer
         Note.Visibility = tab is { CanDraw: false } ? Visibility.Visible : Visibility.Collapsed;
         RefreshBar();
         StateChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    // What the file's /PageLayout asks for, or null when it says nothing; a cover only where there is a spread to put it in.
+    private static (int Columns, bool Cover, bool Continuous)? FileLayout(PdfDocument document)
+    {
+        bool spreads = document.Pages.Count >= 2;
+        return document.Name(document.Catalog, "PageLayout") switch
+        {
+            "SinglePage" => (1, false, false),
+            "OneColumn" => (1, false, true),
+            "TwoColumnLeft" => (2, false, true),
+            "TwoColumnRight" => (2, spreads, true),
+            "TwoPageLeft" => (2, false, false),
+            "TwoPageRight" => (2, spreads, false),
+            _ => null,
+        };
+    }
+
+    // Applies the file's /OpenAction when it is a go-to; scripts and other actions are not run.
+    private void FollowOpenAction(PdfDocument document)
+    {
+        try
+        {
+            if (PdfActions.ReadDocument(document).OpenAction is not GoToAction go || PdfDestinations.Locate(document, go.Destination) is not { } place) return;
+            switch (go.Destination.Fit)
+            {
+                case DestinationFit.Fit or DestinationFit.FitB:
+                    Surface.SetFit(FitMode.Page);
+                    break;
+                case DestinationFit.FitH or DestinationFit.FitBH:
+                    Surface.SetFit(FitMode.Width);
+                    break;
+                case DestinationFit.Xyz when place.Zoom is { } zoom:
+                    Surface.SetZoom(zoom);
+                    break;
+            }
+            Surface.GoToPage(place.PageIndex, new Point(place.X, place.Y));
+        }
+        catch (PdfReadException)
+        {
+        }
     }
 
     private void ShowToast(string text, int milliseconds = 3000)
@@ -408,6 +456,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
 
     private void SaveView()
     {
+        _arrangement = (Surface.Columns, Surface.Cover, Surface.Continuous);
         if (_preferencesDirectory is null) return;
         AppPreferencesStore.Update(p =>
         {

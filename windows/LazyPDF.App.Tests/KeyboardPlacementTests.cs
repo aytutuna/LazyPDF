@@ -565,4 +565,54 @@ public sealed class KeyboardPlacementTests
         Assert.Equal(page, first.PageIndex);
         return Task.CompletedTask;
     });
+
+    private static DocumentTab TabAsking()
+    {
+        var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(4)), new FakeRenderer(), null, "a.pdf");
+        var document = tab.Document;
+        (ViewerSettings.Read(document) with { PageLayout = PageLayout.TwoPageRight }).Write(document);
+        document.Catalog["OpenAction"] = PdfDestinations.ToObject(document, new PdfDestination(2))!;
+        return tab;
+    }
+
+    private static PageViewer ArrangedViewer()
+    {
+        var viewer = new PageViewer(null);
+        viewer.Measure(new Size(800, 600));
+        viewer.Arrange(new Rect(0, 0, 800, 600));
+        viewer.UpdateLayout();
+        return viewer;
+    }
+
+    [Fact]
+    public Task AFileOpensInTheLayoutAndAtThePageItAsksForAndEachTabKeepsItsOwn() => Sta.Run(() =>
+    {
+        using var asking = TabAsking();
+        using var plain = NewTab();
+        var viewer = ArrangedViewer();
+
+        viewer.Show(asking);
+        Assert.Equal((2, true, false, 2), (viewer.Surface.Columns, viewer.Surface.Cover, viewer.Surface.Continuous, viewer.Surface.CurrentPage));
+
+        viewer.Show(plain);
+        Assert.Equal((1, false, true), (viewer.Surface.Columns, viewer.Surface.Cover, viewer.Surface.Continuous));
+
+        viewer.Show(asking);
+        Assert.Equal((2, true, false), (viewer.Surface.Columns, viewer.Surface.Cover, viewer.Surface.Continuous));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ATabThatWasViewedBeforeDoesNotTakeTheFilesLayoutAgain() => Sta.Run(() =>
+    {
+        using var asking = TabAsking();
+        asking.Zoom = 1.5;
+        var viewer = ArrangedViewer();
+
+        viewer.Show(asking);
+
+        Assert.Equal(1, viewer.Surface.Columns);
+        Assert.Equal(0, viewer.Surface.CurrentPage);
+        return Task.CompletedTask;
+    });
 }
