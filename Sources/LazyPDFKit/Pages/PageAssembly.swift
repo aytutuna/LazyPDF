@@ -53,6 +53,7 @@ public enum PageAssembly {
         }
         let target = try blank(version)
         var importers: [ObjectIdentifier: PageImporter] = [:]
+        var spare: [PageImporter] = []
         var order: [PdfReference] = []
         var origins: [AnyObject] = []
         var taken: [(pages: [Int], start: Int)] = []
@@ -61,12 +62,22 @@ public enum PageAssembly {
         for source in sources {
             try Task.checkCancellation()
             let id = ObjectIdentifier(source.document)
-            // A document listed again shares the tree of its first listing, so its later pages stay untagged.
-            let fresh = importers[id] == nil
-            let importer = importers[id] ?? PageImporter(source.document, target)
-            importers[id] = importer
             let indexes = source.pages ?? Array(0..<source.document.pages.count)
-            importer.keepTags = fresh && !indexes.isEmpty && PageCarry.hasTags(source.document)
+            let tags = !indexes.isEmpty && PageCarry.hasTags(source.document)
+            // A tree is copied once for each importer, so a tagged listing of a document seen before gets an importer of its own.
+            let importer: PageImporter
+            if let shared = importers[id] {
+                if tags {
+                    importer = PageImporter(source.document, target)
+                    spare.append(importer)
+                } else {
+                    importer = shared
+                }
+            } else {
+                importer = PageImporter(source.document, target)
+                importers[id] = importer
+            }
+            importer.keepTags = tags
             let copies = try importer.importPages(indexes)
             if importer.keepTags {
                 tagged.append((source.document, importer, copies))
@@ -92,7 +103,7 @@ public enum PageAssembly {
             try PageCarry.carry(document, target, taken[i].pages, taken[i].start, title, files: filed.insert(ObjectIdentifier(document)).inserted)
         }
         try PageCarry.mergeTags(target, tagged, all)
-        target.droppedObjects = importers.values.reduce(0) { $0 + $1.dropped }
+        target.droppedObjects = (Array(importers.values) + spare).reduce(0) { $0 + $1.dropped }
         try StampRuns.separate(target, zip(target.pages, origins).map { (page: $0, origin: $1) })
         return target
     }

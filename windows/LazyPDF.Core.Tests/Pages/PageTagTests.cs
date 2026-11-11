@@ -165,6 +165,16 @@ public class PageTagTests
     }
 
     [Fact]
+    public void MergeOfOneDocumentListedTwiceKeepsBothTagged()
+    {
+        var document = Tagged();
+        var merged = Saved(PageAssembly.Merge([new MergeSource(document, [0, 1]), new MergeSource(document, [2, 3])]), out _);
+        Assert.True(Marked(merged));
+        Assert.All(merged.Pages, p => Assert.True(p.Dictionary.ContainsKey("StructParents")));
+        Assert.Equal(AccessibilityStatus.Passed, AccessibilityChecker.Check(merged)[AccessibilityRule.TaggedContent].Status);
+    }
+
+    [Fact]
     public void MergeWithAnUntaggedSourceIsNotMarked()
     {
         var merged = Saved(PageAssembly.Merge([new MergeSource(Tagged(), [1]), new MergeSource(PageTestFiles.Open(2))]), out _);
