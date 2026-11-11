@@ -31,6 +31,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     private ITab _activeTab = HomeTab.Instance;
     private DocumentTab? _lastDocument;
     private string? _activeToolId;
+    private string? _signingField;
     private string _sidePanelId;
     private string _lastSidePanelId;
     private InfoMessage? _message;
@@ -114,6 +115,26 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
         _activeToolId = id == _activeToolId ? null : id;
         DropAction();
         NotifyAll();
+    }
+
+    public void OpenTool(string id)
+    {
+        if (ToolCatalog.Find(id) is null) return;
+        if (_activeToolId == id) SelectTool(null);
+        SelectTool(id);
+    }
+
+    public void OpenSigning(string field)
+    {
+        _signingField = field;
+        OpenTool("certificates");
+    }
+
+    public string? TakeSigningField()
+    {
+        var field = _signingField;
+        _signingField = null;
+        return field;
     }
 
     /// <summary>Opens the side panel <paramref name="id"/>, or closes the rail's panel when that one is open already.</summary>
