@@ -162,9 +162,8 @@ public final class ViewerModel: DocumentViewer {
             bytes = tab.session.current
             seenRevision = tab.revision
             labels = PdfPageLabels.labels(tab.document)
-            apply(state.show(sizes: pageSizes(tab), pageObjects: PageSurfaceState.pageObjects(tab.document), page: tab.pageIndex, zoom: tab.zoom, fit: tab.fit))
             let saved = views[ObjectIdentifier(tab)].flatMap { $0.tab === tab ? $0 : nil }
-            apply(state.setRotation(saved?.rotation ?? 0))
+            apply(state.show(sizes: pageSizes(tab), pageObjects: PageSurfaceState.pageObjects(tab.document), page: tab.pageIndex, zoom: tab.zoom, fit: tab.fit, rotation: saved?.rotation ?? 0))
             if let place = saved?.place { apply(state.goToPage(place.page, at: place.point)) }
             storeZoom(tab)
             tab.pageIndex = state.currentPage

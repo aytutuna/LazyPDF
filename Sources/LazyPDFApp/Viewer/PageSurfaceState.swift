@@ -100,8 +100,9 @@ public struct PageSurfaceState {
 
     /// Shows a document. `zoom` and `fit` are what the tab remembers: a zoom with no fit is kept, anything else fits the width
     /// unless the tab was fitted to the page.
-    public mutating func show(sizes: [ViewSize], pageObjects: [Int], page: Int, zoom tabZoom: Double, fit tabFit: FitMode) -> SurfaceChange {
+    public mutating func show(sizes: [ViewSize], pageObjects: [Int], page: Int, zoom tabZoom: Double, fit tabFit: FitMode, rotation turned: Int = 0) -> SurfaceChange {
         collecting { s in
+            s.rotation = PageSpace.normalizeRotation(turned)
             s.offsetX = 0
             s.offsetY = 0
             s.sizes = sizes
