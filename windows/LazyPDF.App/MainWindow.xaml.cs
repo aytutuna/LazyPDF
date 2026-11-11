@@ -75,6 +75,15 @@ public partial class MainWindow : Window
     }
 
     // Sizes below match MinWidth and MinHeight in MainWindow.xaml.
+    internal static string PageReadout(string label, int index, int count) =>
+        label == (index + 1).ToString()
+            ? Loc.T("Page {0} of {1}", index + 1, count)
+            : Loc.T("Page {0} ({1} of {2})", label, index + 1, count);
+
+    internal static string SizeReadout(double widthPt, double heightPt, bool metric) => metric
+        ? Loc.T("{0} × {1} mm", Math.Round(widthPt * 25.4 / 72), Math.Round(heightPt * 25.4 / 72))
+        : Loc.T("{0} × {1} in", Math.Round(widthPt / 72, 1), Math.Round(heightPt / 72, 1));
+
     internal static Rect Fit(Rect saved, Rect virtualScreen, Rect workArea)
     {
         double shown = Math.Min(saved.Right, virtualScreen.Right) - Math.Max(saved.Left, virtualScreen.Left);
@@ -239,13 +248,9 @@ public partial class MainWindow : Window
         }
         int index = Math.Clamp(tab.PageIndex, 0, Math.Max(0, tab.PageCount - 1));
         string label = _viewer.PageLabel(index);
-        PageText.Text = label == (index + 1).ToString()
-            ? Loc.T("Page {0} of {1}", index + 1, tab.PageCount)
-            : Loc.T("Page {0} ({1} of {2})", label, index + 1, tab.PageCount);
+        PageText.Text = PageReadout(label, index, tab.PageCount);
         var size = new LazyPDF.Core.PageGeometry(tab.Document.Pages[index]);
-        PageBoxText.Text = System.Globalization.RegionInfo.CurrentRegion.IsMetric
-            ? Loc.T("{0} × {1} mm", Math.Round(size.Width * 25.4 / 72), Math.Round(size.Height * 25.4 / 72))
-            : Loc.T("{0} × {1} in", Math.Round(size.Width / 72, 1), Math.Round(size.Height / 72, 1));
+        PageBoxText.Text = SizeReadout(size.Width, size.Height, System.Globalization.RegionInfo.CurrentRegion.IsMetric);
         double zoom = ReferenceEquals(_shownTab, tab) ? _viewer.Zoom : tab.Zoom;
         ZoomText.Text = Loc.T("{0} %", Math.Round(zoom * 100));
         NameReadouts();
