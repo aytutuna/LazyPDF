@@ -9,6 +9,7 @@ using LazyPDF.App.Tools.Comment;
 using LazyPDF.App.Tools.EditContent;
 using LazyPDF.App.Tools.Pages;
 using LazyPDF.Core;
+using Microsoft.Win32;
 
 namespace LazyPDF.App.Panels.Pages;
 
@@ -286,5 +287,52 @@ public partial class PagesSidePanel : ToolPanel
         if (!await host.OpenNewAsync(bytes, Loc.T("{0} extract.pdf", System.IO.Path.GetFileNameWithoutExtension(tab.Title)))) return;
         host.SetStatus(Loc.Plural(pages.Count, "{0} page extracted", "{0} pages extracted", pages.Count));
         CopyRules.NoteUnprotected(tab.Document, host);
+    }
+
+    private void Blank_Click(object sender, RoutedEventArgs e) => InsertBlank();
+
+    internal void InsertBlank()
+    {
+        var pages = Selected();
+        if (Editable(InsertBlank) is not var (tab, host)) return;
+        int at = Tools.Pages.PageEdits.InsertAt(InsertPlace.AfterSelection, pages, Thumbs.Items.Count);
+        _reselect = [at];
+        try
+        {
+            PageJobs.Apply(tab, host, Loc.T("Insert blank page"), d =>
+            {
+                var (width, height) = Tools.Pages.PageEdits.NeighbourSize(d, at);
+                PageOperations.InsertBlank(d, at, width, height);
+            }, Loc.T("Blank page added."));
+        }
+        finally
+        {
+            _reselect = null;
+        }
+    }
+
+    private void FromFile_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog { Filter = Loc.T("PDF files") + "|*.pdf", CheckFileExists = true, Multiselect = true };
+        if (dialog.ShowDialog() == true) _ = InsertFilesAsync(dialog.FileNames);
+    }
+
+    internal async Task InsertFilesAsync(IEnumerable<string> paths)
+    {
+        var pages = Selected();
+        if (Editable(() => _ = InsertFilesAsync(paths)) is not var (tab, host)) return;
+        int at = Tools.Pages.PageEdits.InsertAt(InsertPlace.AfterSelection, pages, Thumbs.Items.Count);
+        int added = await PageJobs.InsertFilesAsync(tab, host, paths, at);
+        if (added > 0) Select(Enumerable.Range(at, added));
+    }
+
+    private void Select(IEnumerable<int> pages)
+    {
+        _syncing = true;
+        Thumbs.SelectedItems.Clear();
+        foreach (int page in pages)
+            if (page >= 0 && page < Thumbs.Items.Count) Thumbs.SelectedItems.Add(Thumbs.Items[page]);
+        _syncing = false;
+        if (Thumbs.SelectedItem is { } kept) Thumbs.ScrollIntoView(kept);
     }
 }

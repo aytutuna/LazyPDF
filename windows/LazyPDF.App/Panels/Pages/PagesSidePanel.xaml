@@ -18,6 +18,9 @@
                 <MenuItem Header="{loc:T Rotate right}" Click="TurnRight_Click" />
                 <MenuItem Header="{loc:T Delete}" InputGestureText="Del" Click="Delete_Click" />
                 <MenuItem Header="{loc:T Extract to a new file}" Click="Extract_Click" />
+                <Separator />
+                <MenuItem Header="{loc:T Insert blank page}" Click="Blank_Click" />
+                <MenuItem Header="{loc:T Pages from a file...}" Click="FromFile_Click" />
             </ContextMenu>
         </ListBox.ContextMenu>
         <ListBox.ItemContainerStyle>

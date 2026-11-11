@@ -3811,6 +3811,9 @@
   <data name="Pages from a file" xml:space="preserve">
     <value>Dosyadan sayfalar</value>
   </data>
+  <data name="Pages from a file..." xml:space="preserve">
+    <value>Dosyadan sayfalar...</value>
+  </data>
   <data name="Pages have text" xml:space="preserve">
     <value>Sayfalarda metin var</value>
   </data>

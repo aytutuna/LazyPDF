@@ -80,6 +80,34 @@ internal static class PageJobs
         host.ShowProblem(new Problem(Loc.T("Pages not changed"), Loc.T("The file did not take that change. Pick other pages and try again.")));
     }
 
+    // The files are opened one by one, then all their pages go in at <paramref name="at"/> as one step. Returns the pages added.
+    public static async Task<int> InsertFilesAsync(DocumentTab tab, IToolHost host, IEnumerable<string> paths, int at)
+    {
+        var files = paths.Where(p => System.IO.Path.GetExtension(p).Equals(".pdf", StringComparison.OrdinalIgnoreCase)).ToList();
+        if (files.Count == 0)
+        {
+            host.ShowProblem(new Problem(Loc.T("Not a PDF"), Loc.T("Only PDF files can be added between pages.")));
+            return 0;
+        }
+        var sources = new List<PdfDocument>();
+        foreach (string path in files)
+        {
+            if (await SourceFile.OpenAsync(host, path) is { } source) sources.Add(source);
+        }
+        int added = sources.Sum(s => s.Pages.Count);
+        if (added == 0) return 0;
+        bool done = await ApplyAsync(tab, host, Loc.T("Adding pages"), Loc.T("Insert pages"), d =>
+        {
+            int place = at;
+            foreach (var source in sources)
+            {
+                PageOperations.ImportPages(d, source, [.. Enumerable.Range(0, source.Pages.Count)], place);
+                place += source.Pages.Count;
+            }
+        }, Loc.Plural(added, "{0} page added", "{0} pages added", added));
+        return done ? added : 0;
+    }
+
     /// <summary>The pages as a PDF of their own, made off the UI thread. Null when the file does not allow copying, when it was cancelled or when it failed, with <paramref name="failed"/> shown.</summary>
     public static async Task<byte[]?> CopyOutAsync(DocumentTab tab, IToolHost host, IReadOnlyList<int> pages, string busy, Problem failed)
     {

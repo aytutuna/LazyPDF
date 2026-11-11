@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Panels.Pages;
+using LazyPDF.App.Tools.Pages;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using Xunit;
@@ -142,5 +143,57 @@ public sealed class PagesSidePanelTests
         Assert.False(tab.IsDirty);
         panel.Detach();
         return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ABlankPageGoesAfterTheSelectionAndIsPicked() => Sta.Run(() =>
+    {
+        using var tab = Open(3);
+        var panel = Show(tab, new RecordingHost());
+        Select(panel, 0);
+
+        panel.InsertBlank();
+
+        Assert.Equal(4, tab.PageCount);
+        var picked = Thumbs(panel).SelectedItems.Cast<PageThumb>().Select(t => t.Index);
+        Assert.Equal([1], picked);
+        tab.Undo();
+        Assert.Equal(3, tab.PageCount);
+        panel.Detach();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task PagesFromAFileGoInAfterTheSelectionAsOneStep() => Sta.Run(async () =>
+    {
+        using var dir = new TempDir();
+        string file = dir.File("extra.pdf", Pdfs.Text(2, "Extra"));
+        using var tab = Open(3);
+        var panel = Show(tab, new RecordingHost());
+        Select(panel, 0);
+
+        await panel.InsertFilesAsync([file]);
+
+        Assert.Equal(5, tab.PageCount);
+        var picked = Thumbs(panel).SelectedItems.Cast<PageThumb>().Select(t => t.Index);
+        Assert.Equal([1, 2], picked);
+        tab.Undo();
+        Assert.Equal(3, tab.PageCount);
+        panel.Detach();
+    });
+
+    [Fact]
+    public Task InsertFilesAsyncReturnsThePagesAdded() => Sta.Run(async () =>
+    {
+        using var dir = new TempDir();
+        string one = dir.File("one.pdf", Pdfs.Text(2, "One"));
+        string two = dir.File("two.pdf", Pdfs.Text(1, "Two"));
+        using var tab = Open(3);
+        var host = new RecordingHost();
+
+        Assert.Equal(3, await PageJobs.InsertFilesAsync(tab, host, [one, two], 3));
+        Assert.Equal(6, tab.PageCount);
+        Assert.Equal(0, await PageJobs.InsertFilesAsync(tab, host, ["notes.txt"], 0));
+        Assert.Equal("Not a PDF", Assert.Single(host.Problems).Title);
     });
 }

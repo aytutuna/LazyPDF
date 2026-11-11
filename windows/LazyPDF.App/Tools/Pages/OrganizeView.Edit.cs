@@ -135,31 +135,10 @@ public sealed partial class OrganizeView
         await InsertFilesAsync(dialog.FileNames, InsertIndex());
     }
 
-    // The files are opened one by one, then all their pages go in at <paramref name="at"/> as one step.
     internal async Task InsertFilesAsync(IEnumerable<string> paths, int at)
     {
         if (Tab is not { } tab || Host is not { } host) return;
-        var files = paths.Where(p => System.IO.Path.GetExtension(p).Equals(".pdf", StringComparison.OrdinalIgnoreCase)).ToList();
-        if (files.Count == 0)
-        {
-            host.ShowProblem(new Problem(Loc.T("Not a PDF"), Loc.T("Only PDF files can be added between pages.")));
-            return;
-        }
-        var sources = new List<PdfDocument>();
-        foreach (string path in files)
-        {
-            if (await SourceFile.OpenAsync(host, path) is { } source) sources.Add(source);
-        }
-        int added = sources.Sum(s => s.Pages.Count);
-        if (added == 0) return;
-        if (await PageJobs.ApplyAsync(tab, host, Loc.T("Adding pages"), Loc.T("Insert pages"), d =>
-        {
-            int place = at;
-            foreach (var source in sources)
-            {
-                ImportAll(d, source, place);
-                place += source.Pages.Count;
-            }
-        }, Loc.Plural(added, "{0} page added", "{0} pages added", added))) Reselect(tab, Enumerable.Range(at, added));
+        int added = await PageJobs.InsertFilesAsync(tab, host, paths, at);
+        if (added > 0) Reselect(tab, Enumerable.Range(at, added));
     }
 }
