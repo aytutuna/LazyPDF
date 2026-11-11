@@ -35,8 +35,11 @@ public struct OpenSource: Sendable {
     public let stamp: DiskStamp?
     /// The file cannot be written to, so saving goes to Save as.
     public let readOnly: Bool
+    /// A digest of the bytes of a file read from disk, to tell a file only touched from one rewritten; nil when too large.
+    public let hash: Int?
 
-    public init(bytes: [UInt8], url: URL?, title: String, made: Bool, note: String? = nil, stamp: DiskStamp? = nil, readOnly: Bool = false) {
+    public init(bytes: [UInt8], url: URL?, title: String, made: Bool, note: String? = nil, stamp: DiskStamp? = nil, readOnly: Bool = false,
+                hash: Int? = nil) {
         self.bytes = bytes
         self.url = url
         self.title = title
@@ -44,6 +47,7 @@ public struct OpenSource: Sendable {
         self.note = note
         self.stamp = stamp
         self.readOnly = readOnly
+        self.hash = hash
     }
 }
 
@@ -57,6 +61,16 @@ public final class DocumentOpener {
     public init(_ codec: ImageCodec, _ fonts: FontSource) {
         self.codec = codec
         self.fonts = fonts
+    }
+
+    /// Process-local: not to be kept or compared across launches. Nil above 64 MB.
+    static func digest<B: ContiguousBytes>(_ bytes: B) -> Int? {
+        bytes.withUnsafeBytes { buffer in
+            guard buffer.count <= 64 * 1024 * 1024 else { return nil }
+            var hasher = Hasher()
+            hasher.combine(bytes: buffer)
+            return hasher.finalize()
+        }
     }
 
     static let isFolder = "The path is a folder."
@@ -84,7 +98,7 @@ public final class DocumentOpener {
                               note: made.missing.isEmpty ? nil : L10n.t("Some characters have no letter in the font and were left out."))
         }
         return OpenSource(bytes: bytes, url: url, title: url.lastPathComponent, made: false, stamp: stamp,
-                          readOnly: !FileManager.default.isWritableFile(atPath: url.path))
+                          readOnly: !FileManager.default.isWritableFile(atPath: url.path), hash: Self.digest(bytes))
     }
 
     /// UTF-16 with a byte order mark, else UTF-8 when valid, else the Windows code page of the locale.

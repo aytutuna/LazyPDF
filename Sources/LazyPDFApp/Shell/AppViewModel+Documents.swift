@@ -205,7 +205,7 @@ extension AppViewModel {
             return
         }
         let tab = DocumentTab(session: session, renderer: renderer, url: url, title: source.title, password: password,
-                              recovery: recovery, unsaved: unsaved, known: source.stamp, certificate: certificate, loaded: loaded,
+                              recovery: recovery, unsaved: unsaved, known: source.stamp, diskHash: source.hash, certificate: certificate, loaded: loaded,
                               bookmarks: bookmarks, access: pending.access, writer: fileWriter, readOnly: source.readOnly)
         pending.access = nil
         tab.changed = { [weak self] in self?.notifyAll() }
@@ -256,6 +256,10 @@ extension AppViewModel {
     public func save(_ tab: DocumentTab) -> Bool {
         guard let url = tab.url else { return false }
         if tab.changedOnDisk && FileManager.default.fileExists(atPath: url.path) {
+            if let found = tab.onDisk, tab.isOnlyTouched(found) {
+                tab.acceptDiskState()
+                return write(tab) { try tab.save() }
+            }
             showNotice(L10n.t("File changed"), L10n.t("{0} was changed by another program. Saving now replaces that version with yours.", tab.title),
                        NoticeAction(L10n.t("Save anyway")) { [weak self] in _ = self?.write(tab) { try tab.save() } })
             return false
@@ -394,6 +398,10 @@ extension AppViewModel {
     public func checkDisk() {
         guard let tab = activeDocument, let url = tab.url, tab.changedOnDisk else { return }
         let found = tab.onDisk
+        if let found, tab.isOnlyTouched(found) {
+            tab.acceptDiskState()
+            return
+        }
         let key = ObjectIdentifier(tab)
         if let seen = warnedAboutDisk[key], seen == found { return }
         warnedAboutDisk[key] = .some(found)

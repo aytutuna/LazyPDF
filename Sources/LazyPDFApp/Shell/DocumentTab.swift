@@ -29,6 +29,7 @@ public final class DocumentTab: StripTab {
     private let name: String
     private var unsaved: Bool
     private var disk: DiskStamp?
+    private var diskHash: Int?
 
     /// Bumped by every change of state the derived properties show.
     private var version = 0
@@ -65,7 +66,7 @@ public final class DocumentTab: StripTab {
     ///   - loaded: What `renderer.load` gave, when the caller loaded it already, off the main actor; the tab loads it when
     ///     not given.
     public init(session: PdfEditSession, renderer: DocumentRenderer, url: URL?, title: String, password: String? = nil,
-                recovery: RecoveryStore? = nil, unsaved: Bool = false, known: DiskStamp? = nil,
+                recovery: RecoveryStore? = nil, unsaved: Bool = false, known: DiskStamp? = nil, diskHash: Int? = nil,
                 certificate: CertificateChoice? = nil, loaded: Bool? = nil, bookmarks: Bookmarks? = nil, access: FileAccess? = nil,
                 writer: FileWriter = PlainFileWriter(), readOnly: Bool = false) {
         self.session = session
@@ -83,6 +84,7 @@ public final class DocumentTab: StripTab {
         self.certificate = certificate
         let stamp = known ?? DiskStamp.of(url)
         self.disk = stamp
+        self.diskHash = diskHash
         self.canDraw = loaded ?? renderer.load(session, password)
         if unsaved {
             recovery?.write(id, session.current, Self.meta(title: url?.lastPathComponent ?? title, url: url, stamp: stamp, bookmark: locationBookmark))
@@ -172,6 +174,17 @@ public final class DocumentTab: StripTab {
     /// The file as it is now; nil when it is gone or the tab has no file.
     public var onDisk: DiskStamp? { DiskStamp.of(location) }
 
+    /// The file has the length and the bytes that were read, so only its time moved, as a sync tool does.
+    public func isOnlyTouched(_ found: DiskStamp) -> Bool {
+        guard let diskHash, let location, found.length == disk?.length else { return false }
+#if canImport(Darwin)
+        let data = try? CoordinatedFileReader.read(location)
+#else
+        let data = try? Data(contentsOf: location)
+#endif
+        return data.flatMap { DocumentOpener.digest($0) } == diskHash
+    }
+
     /// Takes the file as it is now for the one that was read.
     public func acceptDiskState() {
         disk = onDisk
@@ -189,6 +202,7 @@ public final class DocumentTab: StripTab {
     // The bytes of a save are the ones already shown, so only the state of the tab changes, unless the save rewrote the file.
     private func saved(rewritten: Bool = false) {
         unsaved = false
+        diskHash = nil
         acceptDiskState()
         recovery?.delete(id)
         if rewritten {

@@ -32,6 +32,36 @@ final class DiskChangeTests: XCTestCase {
         XCTAssertNil(f.vm.message)
     }
 
+    func test_aFileOnlyTouchedSaysNothingAndSaves() async throws {
+        let f = ViewModelFixture(self)
+        let url = f.pdf()
+        await f.vm.open(url)
+        let tab = f.vm.activeDocument!
+        try touch(url, [UInt8](try Data(contentsOf: url)))
+        try Pdfs.retitle(tab.session, "x")
+        try tab.commit("x")
+
+        f.vm.checkDisk()
+        XCTAssertNil(f.vm.message)
+        XCTAssertTrue(f.vm.save(tab))
+
+        XCTAssertNil(f.vm.message)
+        XCTAssertFalse(tab.isDirty)
+    }
+
+    func test_aRewriteOfTheSameLengthStillSaysChanged() async throws {
+        let f = ViewModelFixture(self)
+        let url = f.pdf()
+        await f.vm.open(url)
+        var bytes = [UInt8](try Data(contentsOf: url))
+        bytes[bytes.count - 1] ^= 1
+        try touch(url, bytes)
+
+        f.vm.checkDisk()
+
+        XCTAssertEqual(f.vm.message?.title, "File changed")
+    }
+
     func test_withUnsavedChangesTheNoticeSaysTheyWouldBeLost() async throws {
         let f = ViewModelFixture(self)
         let url = f.pdf()
