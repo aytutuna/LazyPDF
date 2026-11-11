@@ -272,9 +272,11 @@ internal sealed class SignatureChecker
     private static readonly HashSet<string> SmallCurves =
     [
         "1.2.840.10045.3.1.1",
-        "1.3.132.0.1", "1.3.132.0.2", "1.3.132.0.3", "1.3.132.0.4", "1.3.132.0.5", "1.3.132.0.6", "1.3.132.0.7",
-        "1.3.132.0.8", "1.3.132.0.9", "1.3.132.0.15", "1.3.132.0.16", "1.3.132.0.24", "1.3.132.0.25", "1.3.132.0.28",
-        "1.3.132.0.29", "1.3.36.3.3.2.8.1.1.1", "1.3.36.3.3.2.8.1.1.3", "1.3.36.3.3.2.8.1.1.5",
+        "1.2.840.10045.3.1.2", "1.2.840.10045.3.1.3",
+        "1.3.132.0.1", "1.3.132.0.2", "1.3.132.0.4", "1.3.132.0.5", "1.3.132.0.6", "1.3.132.0.7", "1.3.132.0.8",
+        "1.3.132.0.9", "1.3.132.0.15", "1.3.132.0.22", "1.3.132.0.23", "1.3.132.0.24", "1.3.132.0.25", "1.3.132.0.28",
+        "1.3.132.0.29", "1.3.132.0.30", "1.3.132.0.31",
+        "1.3.36.3.3.2.8.1.1.1", "1.3.36.3.3.2.8.1.1.2", "1.3.36.3.3.2.8.1.1.3", "1.3.36.3.3.2.8.1.1.4",
     ];
 
     internal static bool HasWeakKey(X509Certificate2 certificate)
@@ -285,7 +287,7 @@ internal sealed class SignatureChecker
         }
         if (certificate.GetECDsaPublicKey() is { } ec)
         {
-            using (ec) return ec.ExportParameters(false).Curve.Oid.Value is { } oid && SmallCurves.Contains(oid);
+            using (ec) return ec.ExportParameters(false).Curve.Oid?.Value is { } oid && SmallCurves.Contains(oid);
         }
         return false;
     }

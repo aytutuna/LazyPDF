@@ -288,6 +288,18 @@ public class SignatureVerificationTests
     }
 
     [Fact]
+    public void Curves_of_224_bits_and_more_are_not_called_weak_and_smaller_ones_are()
+    {
+        using var small = ECDsa.Create(ECCurve.NamedCurves.brainpoolP192r1);
+        using var edge = ECDsa.Create(ECCurve.NamedCurves.brainpoolP224r1);
+        using var weak = SelfSignedWith(small);
+        using var fine = SelfSignedWith(edge);
+
+        Assert.True(SignatureChecker.HasWeakKey(weak));
+        Assert.False(SignatureChecker.HasWeakKey(fine));
+    }
+
+    [Fact]
     public void A_weak_key_has_its_own_words()
     {
         Assert.NotEqual(SignatureText.Title(SignatureProblem.WeakDigest), SignatureText.Title(SignatureProblem.WeakKey));
