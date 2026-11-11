@@ -69,6 +69,8 @@ public sealed class AccessibilityRowsTests
         var document = PdfDocument.Open(Pdfs.Text());
         var row = Row(Rows(document), AccessibilityRule.Language);
 
+        Assert.Equal("", AccessibilityEdits.LanguageOf(document));
+        Assert.False(AccessibilityEdits.Apply(document, row.Editor, row.Action, ""));
         Assert.Throws<ArgumentException>(() => AccessibilityEdits.Apply(document, row.Editor, row.Action, "not a tag!"));
 
         Assert.True(AccessibilityEdits.Apply(document, row.Editor, row.Action, "tr-TR"));

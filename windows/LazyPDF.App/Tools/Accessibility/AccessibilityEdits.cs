@@ -1,4 +1,3 @@
-using System.Globalization;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Accessibility;
@@ -10,7 +9,7 @@ internal static class AccessibilityEdits
     public static bool Apply(PdfDocument document, RowEditor editor, RowAction action, string value) => editor switch
     {
         RowEditor.Title => value.Length > 0 && AccessibilityChecker.Fix(document, AccessibilityFix.SetTitle, value),
-        RowEditor.Language => AccessibilityChecker.Fix(document, AccessibilityFix.SetLanguage, value),
+        RowEditor.Language => value.Length > 0 && AccessibilityChecker.Fix(document, AccessibilityFix.SetLanguage, value),
         _ => action == RowAction.SetTabOrder && AccessibilityChecker.Fix(document, AccessibilityFix.SetTabOrder),
     };
 
@@ -21,12 +20,8 @@ internal static class AccessibilityEdits
         return title.Trim().Length > 0 ? title : Path.GetFileNameWithoutExtension(fileName);
     }
 
-    /// <summary>What the language box starts with: the file's language, else the one Windows speaks.</summary>
-    public static string LanguageOf(PdfDocument document)
-    {
-        string language = PdfText.Read(document, document.Catalog, "Lang") ?? "";
-        return language.Length > 0 ? language : CultureInfo.CurrentUICulture.Name;
-    }
+    /// <summary>What the language box starts with: the file's language, else nothing.</summary>
+    public static string LanguageOf(PdfDocument document) => PdfText.Read(document, document.Catalog, "Lang") ?? "";
 
     /// <summary>Whether tags can be added: the file has neither the tagged mark nor a tree, which is what the tagger needs.</summary>
     public static bool CanAddTags(PdfDocument document) => !document.IsTagged && document.Dict(document.Catalog, "StructTreeRoot") is null;

@@ -42,6 +42,7 @@
                                 <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="0,6,0,0"
                                          AutomationProperties.Name="{Binding EditorName}"
                                          Visibility="{Binding HasEditor, Converter={StaticResource BoolToVisibility}}" />
+                                <TextBlock x:Name="LanguageHint" Style="{StaticResource ReasonText}" Text="{loc:T A code such as en-US or tr-TR.}" Margin="0,4,0,0" TextWrapping="Wrap" Visibility="Collapsed" />
                                 <WrapPanel Margin="0,6,0,0">
                                     <Button Content="{Binding SaveText}" AutomationProperties.Name="{Binding SaveText}" Margin="0,0,8,0" Click="RowSave_Click"
                                             Visibility="{Binding HasEditor, Converter={StaticResource BoolToVisibility}}" />
@@ -53,6 +54,9 @@
                             </StackPanel>
                         </Grid>
                         <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Editor}" Value="Language">
+                                <Setter TargetName="LanguageHint" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
                             <DataTrigger Binding="{Binding Level}" Value="Passed">
                                 <Setter TargetName="Mark" Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}" />
                             </DataTrigger>
