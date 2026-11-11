@@ -85,6 +85,11 @@ public sealed partial class AppViewModel
                 }
                 return;
             }
+            if (source.FileId is not null && Documents.FirstOrDefault(d => d.FileId == source.FileId) is { } same)
+            {
+                ActiveTab = same;
+                return;
+            }
             await OpenAsync(new PendingOpen(source), password: null, certificate: null);
         }
         finally
@@ -177,6 +182,7 @@ public sealed partial class AppViewModel
         string? path = source.Path;
         var tab = await Task.Run(() => new DocumentTab(session, _renderers(), path, source.Title, password, _recovery,
                                                         unsaved: source.Made || pending.Recovery is not null, source.Stamp, certificate));
+        if (pending.Recovery is null) tab.FileId = source.FileId;
         tab.Changed += Tab_Changed;
         int at = pending.Replacing is { } old ? Strip.IndexOf(old) : -1;
         if (at >= 0) Replace(at, tab);

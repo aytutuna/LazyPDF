@@ -41,6 +41,9 @@ public sealed class DocumentTab : ITab, IDisposable
 
     public Guid Id { get; } = Guid.NewGuid();
 
+    /// <summary>Which file on disk the tab was read from, however its path was spelled; null for recovery copies and made documents.</summary>
+    public string? FileId { get; set; }
+
     public PdfEditSession Session { get; }
 
     public IDocumentRenderer Renderer { get; }

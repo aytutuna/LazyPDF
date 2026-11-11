@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text;
 using LazyPDF.App.Services;
 using LazyPDF.Core;
@@ -11,7 +12,7 @@ namespace LazyPDF.App.Documents;
 /// <param name="Note">Something the person should hear about how the file was read.</param>
 /// <param name="ReadOnly">The file has the read-only attribute, so saving over it fails.</param>
 /// <param name="Stamp">What the file looked like just before it was read, so a later change by someone else shows.</param>
-public sealed record OpenSource(byte[] Bytes, string? Path, string Title, bool Made, string? Note = null, DiskStamp? Stamp = null, bool ReadOnly = false);
+public sealed record OpenSource(byte[] Bytes, string? Path, string Title, bool Made, string? Note = null, DiskStamp? Stamp = null, bool ReadOnly = false, string? FileId = null);
 
 /// <summary>When a file was last written and how long it was, the two things that tell a program it changed.</summary>
 public sealed record DiskStamp(DateTime Write, long Length)
@@ -57,8 +58,42 @@ public sealed class DocumentOpener(IImageCodec codec, IFontSource fonts)
             var made = PdfFromText.Create(Decode(bytes), fonts);
             return new OpenSource(made.Bytes, null, stem + ".pdf", true, made.Missing.Count > 0 ? Loc.T("Some characters have no letter in the font and were left out.") : null);
         }
-        return new OpenSource(bytes, path, System.IO.Path.GetFileName(path), false, Stamp: stamp, ReadOnly: new FileInfo(path).IsReadOnly);
+        return new OpenSource(bytes, path, System.IO.Path.GetFileName(path), false, Stamp: stamp, ReadOnly: new FileInfo(path).IsReadOnly, FileId: Identity(path));
     }
+
+    private static string? Identity(string path)
+    {
+        try
+        {
+            using var handle = File.OpenHandle(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            return GetFileInformationByHandle(handle, out var info)
+                ? $"{info.VolumeSerialNumber}:{info.FileIndexHigh}:{info.FileIndexLow}"
+                : null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ByHandleFileInformation
+    {
+        public uint FileAttributes;
+        public long CreationTime;
+        public long LastAccessTime;
+        public long LastWriteTime;
+        public uint VolumeSerialNumber;
+        public uint FileSizeHigh;
+        public uint FileSizeLow;
+        public uint NumberOfLinks;
+        public uint FileIndexHigh;
+        public uint FileIndexLow;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetFileInformationByHandle(Microsoft.Win32.SafeHandles.SafeFileHandle file, out ByHandleFileInformation info);
 
     static DocumentOpener() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 

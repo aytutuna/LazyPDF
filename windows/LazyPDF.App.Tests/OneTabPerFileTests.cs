@@ -20,6 +20,20 @@ public sealed class OneTabPerFileTests
     }
 
     [Fact]
+    public async Task TheSameFileSpelledAnotherWayOpensNoSecondTab()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        var first = f.Vm.ActiveDocument;
+
+        await f.Vm.OpenAsync(@"\\?\" + Path.GetFullPath(path));
+
+        Assert.Single(f.Vm.Documents);
+        Assert.Same(first, f.Vm.ActiveDocument);
+    }
+
+    [Fact]
     public async Task AskingForALockedFileWhileItsQuestionIsUpAddsNoSecondQuestion()
     {
         using var f = new ViewModelFixture();
