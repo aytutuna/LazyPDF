@@ -105,7 +105,7 @@ public partial class MainWindow
 
     private void Print_Click(object sender, RoutedEventArgs e) => _vm.Print();
 
-    private void ViewModel_SystemPrintRequested(object? sender, DocumentTab tab)
+    private async void ViewModel_SystemPrintRequested(object? sender, DocumentTab tab)
     {
         if (!tab.CanDraw)
         {
@@ -116,14 +116,48 @@ public partial class MainWindow
         if (dialog.ShowDialog() != true) return;
         var pages = PagePaginator.PagesFor(dialog.PageRangeSelection, dialog.PageRange.PageFrom, dialog.PageRange.PageTo, tab.PageIndex, tab.PageCount);
         if (pages is { Count: 0 }) return;
-        var paginator = new PagePaginator(tab.Renderer, tab.PageCount, pages)
-        {
-            PageSize = new Size(dialog.PrintableAreaWidth, dialog.PrintableAreaHeight),
-        };
+        var queue = dialog.PrintQueue;
+        var ticket = dialog.PrintTicket;
+        var size = new Size(dialog.PrintableAreaWidth, dialog.PrintableAreaHeight);
+        PagePaginator? paginator = null;
+        var written = false;
         try
         {
-            dialog.PrintDocument(paginator, tab.Title);
-            if (paginator.Blank > 0) _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("Some pages of {0} could not be drawn and came out blank.", tab.Title)));
+            await _vm.RunBusyAsync(Loc.T("Printing {0}…", tab.Title), token =>
+            {
+                var shown = Environment.TickCount64;
+                paginator = new PagePaginator(tab.Renderer, tab.PageCount, pages, token, (n, count) =>
+                {
+                    var now = Environment.TickCount64;
+                    if (now - shown < 100 && n < count) return;
+                    shown = now;
+                    Dispatcher.BeginInvoke(() => _vm.SetBusyText(Loc.T("Printing page {0} of {1}", n, count)), System.Windows.Threading.DispatcherPriority.Background);
+                })
+                {
+                    PageSize = size,
+                };
+                var done = new TaskCompletionSource();
+                var thread = new Thread(() =>
+                {
+                    try
+                    {
+                        queue.CurrentJobSettings.Description = tab.Title;
+                        System.Printing.PrintQueue.CreateXpsDocumentWriter(queue).Write(paginator, ticket);
+                        written = true;
+                        done.SetResult();
+                    }
+                    catch (Exception ex)
+                    {
+                        done.SetException(ex);
+                    }
+                });
+                thread.SetApartmentState(ApartmentState.STA);
+                thread.IsBackground = true;
+                thread.Start();
+                return done.Task;
+            });
+            if (!written) return;
+            if (paginator!.Blank > 0) _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("Some pages of {0} could not be drawn and came out blank.", tab.Title)));
             else _vm.SetStatus(Loc.T("Sent {0} to the printer.", tab.Title));
         }
         catch (System.Printing.PrintQueueException)

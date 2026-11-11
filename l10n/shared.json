@@ -1742,6 +1742,12 @@
   "{0} was saved without its history, so the earlier steps can no longer be undone.": {
     "tr": "{0} geçmişi olmadan kaydedildi, bu yüzden önceki adımlar artık geri alınamaz."
   },
+  "Printing {0}…": {
+    "tr": "{0} yazdırılıyor…"
+  },
+  "Printing page {0} of {1}": {
+    "tr": "{0}. sayfa yazdırılıyor, toplam {1}"
+  },
   "Sent {0} to the printer.": {
     "tr": "{0} yazıcıya gönderildi."
   },

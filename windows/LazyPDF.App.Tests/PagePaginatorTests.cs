@@ -67,4 +67,23 @@ public sealed class PagePaginatorTests
         Assert.Equal(2, paginator.PageCount);
         Assert.Equal([2, 0], renderer.Asked);
     }
+
+    [Fact]
+    public void A_cancelled_token_stops_the_next_page()
+    {
+        using var source = new CancellationTokenSource();
+        var paginator = new PagePaginator(new SizedRenderer(612, 792), 3, null, source.Token);
+        paginator.GetPage(0);
+        source.Cancel();
+        Assert.Throws<OperationCanceledException>(() => paginator.GetPage(1));
+    }
+
+    [Fact]
+    public void Progress_is_reported_once_per_page()
+    {
+        var seen = new List<(int, int)>();
+        var paginator = new PagePaginator(new SizedRenderer(612, 792), 3, null, default, (n, count) => seen.Add((n, count)));
+        for (int i = 0; i < 3; i++) paginator.GetPage(i);
+        Assert.Equal([(1, 3), (2, 3), (3, 3)], seen);
+    }
 }

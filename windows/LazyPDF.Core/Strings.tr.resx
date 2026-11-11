@@ -4144,6 +4144,12 @@
   <data name="Printing is not allowed" xml:space="preserve">
     <value>Yazdırmaya izin verilmiyor</value>
   </data>
+  <data name="Printing page {0} of {1}" xml:space="preserve">
+    <value>{0}. sayfa yazdırılıyor, toplam {1}</value>
+  </data>
+  <data name="Printing {0}…" xml:space="preserve">
+    <value>{0} yazdırılıyor…</value>
+  </data>
   <data name="Privacy" xml:space="preserve">
     <value>Gizlilik</value>
   </data>
