@@ -99,6 +99,29 @@ public sealed class DocumentTabTests
     }
 
     [Fact]
+    public async Task ADrawnHandlerThatThrowsDoesNotStopLaterLoads()
+    {
+        using var tab = OpenSlow(out var renderer);
+        int drawn = 0;
+        tab.Drawn += (_, _) =>
+        {
+            drawn++;
+            if (drawn == 1) throw new InvalidOperationException();
+        };
+        Pdfs.Retitle(tab.Session, "One");
+        tab.Commit("One");
+        renderer.Pending[0].SetResult(true);
+        await tab.Drawing;
+
+        Pdfs.Retitle(tab.Session, "Two");
+        tab.Commit("Two");
+        renderer.Pending[1].SetResult(true);
+        await tab.Drawing;
+
+        Assert.Equal(2, drawn);
+    }
+
+    [Fact]
     public async Task DisposingBeforeTheLoadEndsRaisesNothing()
     {
         var tab = OpenSlow(out var renderer);

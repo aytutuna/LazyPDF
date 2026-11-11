@@ -246,13 +246,20 @@ public sealed class DocumentTab : ITab, IDisposable
 
     private async Task LoadAfter(Task previous, int revision)
     {
-        await previous;
+        try { await previous; }
+        catch (Exception) { }
         if (_disposed || revision != Revision) return;
         // A load that throws leaves the tab undrawn but must not fault the chain the later loads wait on.
         try { CanDraw = await Renderer.LoadAsync(Session, _password); }
         catch (Exception) { CanDraw = false; }
         if (_disposed || revision != Revision) return;
-        Drawn?.Invoke(this, EventArgs.Empty);
+        // A handler that throws goes to the app's crash handler from the dispatcher, so it cannot fault the chain the later loads wait on.
+        try { Drawn?.Invoke(this, EventArgs.Empty); }
+        catch (Exception e)
+        {
+            var failure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(e);
+            _ = System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(new Action(failure.Throw));
+        }
     }
 
     // The bytes of a save are the ones already shown, so only the state of the tab changes, unless the save rewrote the file.
