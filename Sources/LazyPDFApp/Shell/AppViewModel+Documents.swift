@@ -89,13 +89,13 @@ extension AppViewModel {
     }
 
     /// A file the system or a drop hands over opens at once, or waits until the job, question or message in the way is gone.
-    public func openOrHold(_ url: URL, access: FileAccess?) async {
+    public func openOrHold(_ url: URL, access: FileAccess?, asCopy: Bool = false) async {
         if !(isBlocked || sheetOpen || !held.isEmpty) {
-            await open(url, access: access)
+            if asCopy { await openCopy(url, access: access) } else { await open(url, access: access) }
             return
         }
         if held.isEmpty { heldMessage = messageSerial }
-        held.append((url, access))
+        held.append((url, access, asCopy))
         setStatus(L10n.t("Will open when you are done here."))
     }
 
@@ -103,7 +103,9 @@ extension AppViewModel {
         if holdsFiles || held.isEmpty { return }
         let files = held
         held = []
-        for file in files { await open(file.url, access: file.access) }
+        for file in files {
+            if file.asCopy { await openCopy(file.url, access: file.access) } else { await open(file.url, access: file.access) }
+        }
     }
 
     public func open(_ url: URL, access: FileAccess? = nil) async {

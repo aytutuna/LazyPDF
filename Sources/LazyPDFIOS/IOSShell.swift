@@ -129,11 +129,7 @@ final class IOSShell {
             waiting.append(url)
         } else if url.isFileURL {
             let access = SecurityScopedAccess.start(url)
-            if Self.isTemporary(url) {
-                Task { await vm.openCopy(url, access: access) }
-            } else {
-                Task { await vm.openOrHold(url, access: access) }
-            }
+            Task { await vm.openOrHold(url, access: access, asCopy: Self.isTemporary(url)) }
         } else if !LazyPdfAddress.parse(url.absoluteString).isEmpty {
             vm.showNotice(L10n.t("File not opened"), L10n.t("An address cannot open a file here. Share the file to Lazy PDF or open it from Files."))
         }
@@ -143,7 +139,9 @@ final class IOSShell {
     // of the original.
     static func isTemporary(_ url: URL) -> Bool {
         let path = url.standardizedFileURL.path
-        return path.hasPrefix(FileManager.default.temporaryDirectory.standardizedFileURL.path) || path.contains("/Inbox/")
+        let inbox = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Inbox")
+        return path.hasPrefix(FileManager.default.temporaryDirectory.standardizedFileURL.path)
+            || path.hasPrefix(inbox.standardizedFileURL.path + "/")
     }
 
     // A hidden launch argument for the UI tests, `-uitestOpen <path>`, honoured in the simulator only.

@@ -99,7 +99,7 @@ public final class AppViewModel {
     public internal(set) var message: InfoMessage?
     @ObservationIgnored var messageSerial = 0
     @ObservationIgnored var heldMessage: Int?
-    @ObservationIgnored var held: [(url: URL, access: FileAccess?)] = []
+    @ObservationIgnored var held: [(url: URL, access: FileAccess?, asCopy: Bool)] = []
     private var status = ""
     private var busy: CancelToken?
     private var busyLabel = ""

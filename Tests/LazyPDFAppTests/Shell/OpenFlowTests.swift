@@ -222,6 +222,29 @@ final class OpenFlowTests: XCTestCase {
         XCTAssertEqual(announced.count, 1)
     }
 
+    func test_aCopyOpenedByTheSystemWaitsForTheJobToo() async throws {
+        let f = ViewModelFixture(self)
+        let vm = f.vm!
+        let started = Latch()
+        let finish = Latch()
+        let run = Task {
+            try await vm.runBusy("Working") { _ in
+                started.release()
+                await finish.wait()
+            }
+        }
+        await started.wait()
+
+        await vm.openOrHold(f.pdf("inbox.pdf"), access: nil, asCopy: true)
+
+        XCTAssertTrue(vm.documents.isEmpty)
+        finish.release()
+        try await run.value
+        await vm.releaseHeld()
+        XCTAssertEqual(vm.documents.map(\.title), ["inbox.pdf"])
+        XCTAssertNil(vm.documents[0].url)
+    }
+
     func test_aFileOpenedByTheSystemWaitsForTheJobAndThenOpens() async throws {
         let f = ViewModelFixture(self)
         let vm = f.vm!
