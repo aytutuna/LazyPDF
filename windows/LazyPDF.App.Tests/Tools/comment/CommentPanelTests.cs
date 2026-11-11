@@ -219,7 +219,7 @@ public sealed class CommentPanelTests
         var drawn = f.Marks().Single();
         Assert.Equal(drawn.Reference?.Number, edit.Current?.Reference?.Number);
 
-        Drag(tool, new Point(80, 75), new Point(100, 95));
+        Drag(tool, new Point(60, 50), new Point(80, 70));
 
         Assert.Same(tool, Get<IPagePointerTool>(panel, "_active"));
         var moved = Assert.Single(f.Marks());

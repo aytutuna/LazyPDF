@@ -136,6 +136,7 @@ public class FakeViewer : DispatchProxy
         "get_VisiblePages" => new[] { 0 },
         "PageSize" => new Size(200, 300),
         "Overlay" => Overlay,
+        "get_Zoom" => 1.0,
         "get_View" => View,
         "get_HasSelection" => Selected.Count > 0,
         "GetSelectionAsync" => Task.FromResult<IReadOnlyList<SelectedRun>>([.. Selected]),
