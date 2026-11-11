@@ -287,7 +287,8 @@ public partial class PageViewer
                 ShowGoToPage();
                 break;
             case Key.F3:
-                if (shift) Search.Previous();
+                if (Find.Visibility != Visibility.Visible) ShowFind();
+                else if (shift) Search.Previous();
                 else Search.Next();
                 break;
             case Key.F11:
