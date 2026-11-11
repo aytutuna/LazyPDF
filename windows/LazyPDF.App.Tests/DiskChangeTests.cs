@@ -42,6 +42,52 @@ public sealed class DiskChangeTests
     }
 
     [Fact]
+    public async Task AFileOnlyTouchedIsNotAChange()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        Touch(path, File.ReadAllBytes(path));
+
+        await f.Vm.CheckDiskAsync();
+
+        Assert.Null(f.Vm.Message);
+    }
+
+    [Fact]
+    public async Task DifferentBytesOfTheSameLengthAreAChange()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        var bytes = File.ReadAllBytes(path);
+        bytes[^1] ^= 1;
+        Touch(path, bytes);
+
+        await f.Vm.CheckDiskAsync();
+
+        Assert.Equal("File changed", f.Vm.Message?.Title);
+    }
+
+    [Fact]
+    public async Task ASavedTabWithATouchedFileIsStillNoticed()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        var tab = f.Vm.ActiveDocument!;
+        Pdfs.Retitle(tab.Session, "x");
+        tab.Commit("x");
+        f.Vm.Save(tab);
+        f.Vm.DismissMessage();
+        Touch(path, File.ReadAllBytes(path));
+
+        await f.Vm.CheckDiskAsync();
+
+        Assert.Equal("File changed", f.Vm.Message?.Title);
+    }
+
+    [Fact]
     public async Task WithUnsavedChangesTheNoticeSaysTheyWouldBeLost()
     {
         using var f = new ViewModelFixture();

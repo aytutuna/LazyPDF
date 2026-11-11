@@ -18,13 +18,16 @@ public sealed class DocumentTab : ITab, IDisposable
     private string _title;
     private bool _unsaved;
     private DiskStamp? _disk;
+    private byte[]? _diskHash;
+
+    internal const int HashLimit = 256 * 1024 * 1024;
 
     /// <param name="path">Where the file lives; null for a document made from pictures or text, which has to be saved as a new file.</param>
     /// <param name="unsaved">The state differs from the file on disk although the session has no history: a document restored after a crash, or one that was just made.</param>
     /// <param name="known">What the file looked like when its bytes were read; the tab's creation time when not given.</param>
     /// <param name="certificate">The certificate the file was opened with, kept for the readers that open the bytes again.</param>
     public DocumentTab(PdfEditSession session, IDocumentRenderer renderer, string? path, string title, string? password = null, RecoveryStore? recovery = null, bool unsaved = false,
-                       DiskStamp? known = null, X509Certificate2? certificate = null)
+                       DiskStamp? known = null, X509Certificate2? certificate = null, byte[]? diskHash = null)
     {
         Session = session;
         Renderer = renderer;
@@ -35,6 +38,7 @@ public sealed class DocumentTab : ITab, IDisposable
         _unsaved = unsaved;
         Certificate = certificate;
         _disk = known ?? DiskStamp.Of(path);
+        _diskHash = diskHash;
         CanDraw = renderer.Load(session, password);
         if (unsaved) WriteRecovery();
     }
@@ -144,6 +148,21 @@ public sealed class DocumentTab : ITab, IDisposable
     /// <summary>The file as it is now; null when it is gone or the tab has no file.</summary>
     public DiskStamp? OnDisk => DiskStamp.Of(_path);
 
+    /// <summary>The file has the length that was read and the very bytes, so only its write time moved. Reads the file.</summary>
+    public bool IsOnlyTouched(DiskStamp found)
+    {
+        if (_path is null || _diskHash is null || found.Length != _disk?.Length) return false;
+        try
+        {
+            using var stream = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            return System.Security.Cryptography.SHA256.HashData(stream).AsSpan().SequenceEqual(_diskHash);
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>Takes the file as it is now for the one that was read.</summary>
     public void AcceptDiskState() => _disk = OnDisk;
 
@@ -167,6 +186,7 @@ public sealed class DocumentTab : ITab, IDisposable
     private void Saved(bool rewritten = false)
     {
         _unsaved = false;
+        _diskHash = null;
         AcceptDiskState();
         _recovery?.Delete(Id);
         if (rewritten) Refresh();

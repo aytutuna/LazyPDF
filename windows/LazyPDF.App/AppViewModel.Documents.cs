@@ -181,7 +181,7 @@ public sealed partial class AppViewModel
         }
         string? path = source.Path;
         var tab = await Task.Run(() => new DocumentTab(session, _renderers(), path, source.Title, password, _recovery,
-                                                        unsaved: source.Made || pending.Recovery is not null, source.Stamp, certificate));
+                                                        unsaved: source.Made || pending.Recovery is not null, source.Stamp, certificate, source.Hash));
         if (pending.Recovery is null) tab.FileId = source.FileId;
         tab.Changed += Tab_Changed;
         int at = pending.Replacing is { } old ? Strip.IndexOf(old) : -1;
@@ -394,15 +394,25 @@ public sealed partial class AppViewModel
     {
         if (ActiveDocument is not { Path: not null } tab) return;
         DiskStamp? found;
+        bool touched;
         try
         {
-            found = await Task.Run(() => tab.OnDisk);
+            (found, touched) = await Task.Run(() =>
+            {
+                var now = tab.OnDisk;
+                return (now, now is not null && tab.IsChangedFrom(now) && tab.IsOnlyTouched(now));
+            });
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return;
         }
         if (!ReferenceEquals(ActiveDocument, tab) || !Strip.Contains(tab) || !tab.IsChangedFrom(found)) return;
+        if (touched)
+        {
+            tab.AcceptDiskState();
+            return;
+        }
         if (_warnedAboutDisk.TryGetValue(tab, out var seen) && seen == found) return;
         _warnedAboutDisk[tab] = found;
         if (found is null)

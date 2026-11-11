@@ -11,8 +11,9 @@ namespace LazyPDF.App.Documents;
 /// <param name="Made">The bytes were made from a picture or a text file, so they differ from anything on disk.</param>
 /// <param name="Note">Something the person should hear about how the file was read.</param>
 /// <param name="ReadOnly">The file has the read-only attribute, so saving over it fails.</param>
+/// <param name="Hash">SHA256 of the bytes read from a PDF on disk, so a file that was only touched is told from one that changed; null for anything else and for files too large to hash.</param>
 /// <param name="Stamp">What the file looked like just before it was read, so a later change by someone else shows.</param>
-public sealed record OpenSource(byte[] Bytes, string? Path, string Title, bool Made, string? Note = null, DiskStamp? Stamp = null, bool ReadOnly = false, string? FileId = null);
+public sealed record OpenSource(byte[] Bytes, string? Path, string Title, bool Made, string? Note = null, DiskStamp? Stamp = null, bool ReadOnly = false, string? FileId = null, byte[]? Hash = null);
 
 /// <summary>When a file was last written and how long it was, the two things that tell a program it changed.</summary>
 public sealed record DiskStamp(DateTime Write, long Length)
@@ -58,7 +59,8 @@ public sealed class DocumentOpener(IImageCodec codec, IFontSource fonts)
             var made = PdfFromText.Create(Decode(bytes), fonts);
             return new OpenSource(made.Bytes, null, stem + ".pdf", true, made.Missing.Count > 0 ? Loc.T("Some characters have no letter in the font and were left out.") : null);
         }
-        return new OpenSource(bytes, path, System.IO.Path.GetFileName(path), false, Stamp: stamp, ReadOnly: new FileInfo(path).IsReadOnly, FileId: Identity(path));
+        return new OpenSource(bytes, path, System.IO.Path.GetFileName(path), false, Stamp: stamp, ReadOnly: new FileInfo(path).IsReadOnly, FileId: Identity(path),
+                          Hash: bytes.Length <= DocumentTab.HashLimit ? System.Security.Cryptography.SHA256.HashData(bytes) : null);
     }
 
     private static string? Identity(string path)
