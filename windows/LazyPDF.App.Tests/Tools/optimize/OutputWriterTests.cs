@@ -158,4 +158,42 @@ public sealed class OutputWriterTests
         Assert.Equal(2, reloaded.PageIndex);
         Assert.Equal(1.5, reloaded.Zoom);
     }
+
+    [Fact]
+    public async Task NothingIsAskedWhenTheResultGoesToANewFile()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf("report.pdf"));
+        int ran = 0;
+
+        bool now = OutputWriter.ConfirmReplace(f.Vm, f.Vm.ActiveDocument!, replace: false, () => ran++);
+
+        Assert.True(now);
+        Assert.Equal(0, ran);
+        Assert.Null(f.Vm.Message);
+    }
+
+    [Fact]
+    public async Task ReplacingTheFileAsksFirstAndRunsOnlyOnAYes()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf("report.pdf", 2);
+        await f.Vm.OpenAsync(path);
+        byte[] before = File.ReadAllBytes(path);
+        int ran = 0;
+
+        bool now = OutputWriter.ConfirmReplace(f.Vm, f.Vm.ActiveDocument!, replace: true, () => ran++);
+
+        Assert.False(now);
+        Assert.Equal(0, ran);
+        var message = f.Vm.Message!;
+        Assert.False(message.IsError);
+        Assert.Equal("Replace", message.Action!.Text);
+        Assert.Equal(before, File.ReadAllBytes(path));
+
+        message.Action.Run();
+
+        Assert.Equal(1, ran);
+        Assert.Equal(before, File.ReadAllBytes(path));
+    }
 }

@@ -5075,6 +5075,12 @@
   "Replaces the file on disk and clears Undo.": {
     "tr": "Diskteki dosyanın yerine geçer ve Geri al geçmişini siler."
   },
+  "Replace the file?": {
+    "tr": "Dosyanın yerine yazılsın mı?"
+  },
+  "{0} will be replaced on disk and Undo is cleared. The old version is not kept.": {
+    "tr": "{0} diskte değiştirilir ve Geri al geçmişi silinir. Eski sürüm saklanmaz."
+  },
   "Signatures are removed from the result.": {
     "tr": "İmzalar sonuçtan kaldırılır."
   },

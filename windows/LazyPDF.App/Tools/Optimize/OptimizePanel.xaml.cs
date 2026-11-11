@@ -1,4 +1,5 @@
 using System.Windows;
+using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.Core;
 
@@ -101,13 +102,16 @@ public sealed partial class OptimizePanel : ToolPanel
         PresetNote.Visibility = PresetNote.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private async Task RunAsync()
+    private async Task RunAsync() => await Run(confirmed: false);
+
+    private async Task Run(bool confirmed)
     {
         if (Tab is not { } tab || Host is not { } host) return;
         var choice = Choice();
         bool replace = Output.Replace;
         if (OutputWriter.Refuses(host, tab, replace)) return;
         int revision = tab.Revision;
+        if (!confirmed && !OutputWriter.ConfirmReplace(host, tab, replace, () => RunConfirmed(tab, revision))) return;
         byte[] file = tab.Session.Current.ToArray();
         string? password = tab.Password;
         var certificate = tab.Certificate;
@@ -133,5 +137,20 @@ public sealed partial class OptimizePanel : ToolPanel
             : Loc.T("{0} to {1}.", SizeText.Of(result.SizeBefore), SizeText.Of(result.SizeAfter));
         host.ShowNotice(saved > 0 ? Loc.T("File made smaller") : Loc.T("File rewritten"), string.Join(" ", [sizes, .. result.Notes]));
         host.SetStatus(saved > 0 ? Loc.T("{0} smaller.", SizeText.Of(saved)) : Loc.T("Done."));
+    }
+
+    // Runs from the info bar, which the shell's handling of a failed action does not reach.
+    private async void RunConfirmed(DocumentTab tab, int revision)
+    {
+        if (!ReferenceEquals(Tab, tab) || tab.Revision != revision) return;
+        try
+        {
+            await Run(confirmed: true);
+        }
+        catch (Exception error) when (error is not OutOfMemoryException)
+        {
+            Host?.ShowProblem(new Problem(Loc.T("Something went wrong"), Loc.T("{0} could not be finished. If part of it was done, Undo takes it back.", _action.Text)));
+            System.Diagnostics.Trace.TraceError(error.ToString());
+        }
     }
 }

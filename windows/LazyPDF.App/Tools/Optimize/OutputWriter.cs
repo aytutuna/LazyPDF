@@ -14,6 +14,15 @@ internal static class OutputWriter
         return true;
     }
 
+    // False when the question is on the info bar; go runs on a yes. Nothing to ask unless the file on disk is replaced.
+    public static bool ConfirmReplace(IToolHost host, DocumentTab tab, bool replace, Action go)
+    {
+        if (!replace || tab.Path is null) return true;
+        host.ShowNotice(Loc.T("Replace the file?"), Loc.T("{0} will be replaced on disk and Undo is cleared. The old version is not kept.", tab.Title),
+            new NoticeAction(Loc.T("Replace"), go));
+        return false;
+    }
+
     /// <summary>
     /// False when the result was not delivered; the info bar says why and the open document is as it was.
     /// <paramref name="revision"/> is the one the bytes were made from.

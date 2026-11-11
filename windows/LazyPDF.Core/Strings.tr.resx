@@ -4642,6 +4642,9 @@
   <data name="Replace text" xml:space="preserve">
     <value>Metni değiştir</value>
   </data>
+  <data name="Replace the file?" xml:space="preserve">
+    <value>Dosyanın yerine yazılsın mı?</value>
+  </data>
   <data name="Replace the picture" xml:space="preserve">
     <value>Resmi değiştir</value>
   </data>
@@ -7839,6 +7842,9 @@
   </data>
   <data name="{0} was saved without its history, so the earlier steps can no longer be undone." xml:space="preserve">
     <value>{0} geçmişi olmadan kaydedildi, bu yüzden önceki adımlar artık geri alınamaz.</value>
+  </data>
+  <data name="{0} will be replaced on disk and Undo is cleared. The old version is not kept." xml:space="preserve">
+    <value>{0} diskte değiştirilir ve Geri al geçmişi silinir. Eski sürüm saklanmaz.</value>
   </data>
   <data name="{0} × {1} in" xml:space="preserve">
     <value>{0} × {1} inç</value>
