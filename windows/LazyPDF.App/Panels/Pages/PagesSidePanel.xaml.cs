@@ -14,6 +14,17 @@ using Microsoft.Win32;
 
 namespace LazyPDF.App.Panels.Pages;
 
+/// <summary>A list that can move its shift-click anchor, which setting the selection in code does not do in Extended mode.</summary>
+public sealed class ThumbList : ListBox
+{
+    // The anchor has to be a row that exists, and a virtualized list makes it only once it is scrolled to.
+    public void Anchor(object item)
+    {
+        UpdateLayout();
+        if (ItemContainerGenerator.ContainerFromItem(item) is not null) AnchorItem = item;
+    }
+}
+
 /// <summary>Every page as a small picture, the page in view marked; a click goes to the page; Ctrl or Shift picks more, to turn, delete or extract. The list shows only the rows in view.</summary>
 public partial class PagesSidePanel : ToolPanel
 {
@@ -109,6 +120,7 @@ public partial class PagesSidePanel : ToolPanel
         Thumbs.SelectedIndex = page;
         _syncing = false;
         Thumbs.ScrollIntoView(Thumbs.SelectedItem);
+        Thumbs.Anchor(Thumbs.SelectedItem);
     }
 
     private void Viewer_PageChanged(object? sender, EventArgs e) => Mark();
@@ -221,7 +233,13 @@ public partial class PagesSidePanel : ToolPanel
 
     internal void MovePages(List<int> pages, int before)
     {
-        if (pages.Count == 0 || Editable(() => MovePages(pages, before)) is not var (tab, host)) return;
+        if (pages.Count == 0 || Editable() is not var (tab, host) || MarkWork.Cautioned(tab, host, () => Move(tab, host, pages, before))) return;
+        Move(tab, host, pages, before);
+    }
+
+    private void Move(DocumentTab tab, IToolHost host, List<int> pages, int before)
+    {
+        if (!Still(tab, pages)) return;
         pages.Sort();
         // Pages that already stand together at that spot would only get a step that changes nothing.
         if (pages[^1] - pages[0] == pages.Count - 1 && before >= pages[0] && before <= pages[^1] + 1) return;
@@ -265,8 +283,8 @@ public partial class PagesSidePanel : ToolPanel
 
     private void Delete_Click(object sender, RoutedEventArgs e) => Delete();
 
-    // Null when the file may be changed now; otherwise the change waits or is refused, with the reason shown.
-    private (DocumentTab Tab, IToolHost Host)? Editable(Action again)
+    // Null when the file may not be changed now; a refusal is shown with its reason.
+    private (DocumentTab Tab, IToolHost Host)? Editable()
     {
         if (Tab is not { } tab || Host is not { } host || MarkWork.Running) return null;
         if (Clearance.Refusal(tab.Document) is { } problem)
@@ -274,13 +292,23 @@ public partial class PagesSidePanel : ToolPanel
             host.ShowProblem(problem);
             return null;
         }
-        return MarkWork.Cautioned(tab, host, again) ? null : (tab, host);
+        return (tab, host);
     }
+
+    // For a change held back by the notice: the same tab is open and still has the pages that were picked.
+    private bool Still(DocumentTab tab, List<int> pages) =>
+        ReferenceEquals(Tab, tab) && !MarkWork.Running && Clearance.Refusal(tab.Document) is null && pages.All(p => p < Thumbs.Items.Count);
 
     internal void Turn(int degrees)
     {
         var pages = Selected();
-        if (pages.Count == 0 || Editable(() => Turn(degrees)) is not var (tab, host)) return;
+        if (pages.Count == 0 || Editable() is not var (tab, host) || MarkWork.Cautioned(tab, host, () => Rotate(tab, host, pages, degrees))) return;
+        Rotate(tab, host, pages, degrees);
+    }
+
+    private void Rotate(DocumentTab tab, IToolHost host, List<int> pages, int degrees)
+    {
+        if (!Still(tab, pages)) return;
         _reselect = pages;
         try
         {
@@ -296,7 +324,13 @@ public partial class PagesSidePanel : ToolPanel
     private void Delete()
     {
         var pages = Selected();
-        if (pages.Count == 0 || Editable(Delete) is not var (tab, host)) return;
+        if (pages.Count == 0 || Editable() is not var (tab, host) || MarkWork.Cautioned(tab, host, () => Remove(tab, host, pages))) return;
+        Remove(tab, host, pages);
+    }
+
+    private void Remove(DocumentTab tab, IToolHost host, List<int> pages)
+    {
+        if (!Still(tab, pages)) return;
         if (pages.Count == Thumbs.Items.Count)
         {
             host.ShowProblem(new Problem(Loc.T("Cannot delete every page"), Loc.T("A file needs at least one page. Leave one page out of the selection.")));
@@ -321,7 +355,13 @@ public partial class PagesSidePanel : ToolPanel
     internal void InsertBlank()
     {
         var pages = Selected();
-        if (Editable(InsertBlank) is not var (tab, host)) return;
+        if (Editable() is not var (tab, host) || MarkWork.Cautioned(tab, host, () => AddBlank(tab, host, pages))) return;
+        AddBlank(tab, host, pages);
+    }
+
+    private void AddBlank(DocumentTab tab, IToolHost host, List<int> pages)
+    {
+        if (!Still(tab, pages)) return;
         int at = Tools.Pages.PageEdits.InsertAt(InsertPlace.AfterSelection, pages, Thumbs.Items.Count);
         _reselect = [at];
         try
@@ -347,7 +387,14 @@ public partial class PagesSidePanel : ToolPanel
     internal async Task InsertFilesAsync(IEnumerable<string> paths)
     {
         var pages = Selected();
-        if (Editable(() => _ = InsertFilesAsync(paths)) is not var (tab, host)) return;
+        if (Editable() is not var (tab, host)) return;
+        if (MarkWork.Cautioned(tab, host, () => _ = AddFilesAsync(tab, host, paths, pages))) return;
+        await AddFilesAsync(tab, host, paths, pages);
+    }
+
+    private async Task AddFilesAsync(DocumentTab tab, IToolHost host, IEnumerable<string> paths, List<int> pages)
+    {
+        if (!Still(tab, pages)) return;
         int at = Tools.Pages.PageEdits.InsertAt(InsertPlace.AfterSelection, pages, Thumbs.Items.Count);
         int added = await PageJobs.InsertFilesAsync(tab, host, paths, at);
         if (added > 0) Select(Enumerable.Range(at, added));

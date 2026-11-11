@@ -7,7 +7,7 @@
     <DockPanel>
     <Slider x:Name="ThumbSize" DockPanel.Dock="Bottom" Margin="12,4,12,8" Minimum="72" Maximum="192" SmallChange="12" LargeChange="36"
             ToolTip="{loc:T Thumbnail size}" AutomationProperties.Name="{loc:T Thumbnail size}" ValueChanged="ThumbSize_ValueChanged" />
-    <ListBox x:Name="Thumbs" BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Center"
+    <panel:ThumbList x:Name="Thumbs" BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Center"
              ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True"
              VirtualizingPanel.ScrollUnit="Pixel" AutomationProperties.Name="{loc:T Page thumbnails}"
              AllowDrop="True" SelectionMode="Extended" SelectionChanged="Thumbs_SelectionChanged" PreviewKeyDown="Thumbs_PreviewKeyDown"
@@ -15,7 +15,7 @@
              PreviewMouseLeftButtonDown="Thumbs_PreviewMouseLeftButtonDown"
              PreviewMouseLeftButtonUp="Thumbs_PreviewMouseLeftButtonUp"
              PreviewMouseMove="Thumbs_PreviewMouseMove" DragOver="Thumbs_DragOver" DragLeave="Thumbs_DragLeave" Drop="Thumbs_Drop">
-        <ListBox.ContextMenu>
+        <panel:ThumbList.ContextMenu>
             <ContextMenu>
                 <MenuItem Header="{loc:T Rotate left}" Click="TurnLeft_Click" />
                 <MenuItem Header="{loc:T Rotate right}" Click="TurnRight_Click" />
@@ -25,13 +25,13 @@
                 <MenuItem Header="{loc:T Insert blank page}" Click="Blank_Click" />
                 <MenuItem Header="{loc:T Pages from a file...}" Click="FromFile_Click" />
             </ContextMenu>
-        </ListBox.ContextMenu>
-        <ListBox.ItemContainerStyle>
+        </panel:ThumbList.ContextMenu>
+        <panel:ThumbList.ItemContainerStyle>
             <Style TargetType="ListBoxItem" BasedOn="{StaticResource ThumbnailListItemStyle}">
                 <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />
             </Style>
-        </ListBox.ItemContainerStyle>
-        <ListBox.ItemTemplate>
+        </panel:ThumbList.ItemContainerStyle>
+        <panel:ThumbList.ItemTemplate>
             <DataTemplate DataType="{x:Type panel:PageThumb}">
                 <Grid>
                     <StackPanel Margin="8,8,8,4" HorizontalAlignment="Center">
@@ -53,7 +53,7 @@
                     </DataTrigger>
                 </DataTemplate.Triggers>
             </DataTemplate>
-        </ListBox.ItemTemplate>
-    </ListBox>
+        </panel:ThumbList.ItemTemplate>
+    </panel:ThumbList>
     </DockPanel>
 </tools:ToolPanel>

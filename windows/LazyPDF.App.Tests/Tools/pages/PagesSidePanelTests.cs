@@ -125,6 +125,64 @@ public sealed class PagesSidePanelTests
         return Task.CompletedTask;
     });
 
+    [Fact]
+    public Task GoingOnAnywayTurnsTheSignedPagesThatWerePicked() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(StampsPanelTests.Signed(certified: false, pages: 3)), new FakeRenderer(), null, "a.pdf");
+        var host = new RecordingHost();
+        var panel = Show(tab, host);
+        Select(panel, 0, 2);
+
+        panel.Turn(90);
+        Assert.Equal(["Check before going on"], host.Notices);
+        Assert.Equal(0, tab.Document.Pages[0].Rotate);
+        Select(panel, 1);
+        host.Actions.Single()!.Run();
+
+        Assert.Equal(90, tab.Document.Pages[0].Rotate);
+        Assert.Equal(0, tab.Document.Pages[1].Rotate);
+        Assert.Equal(90, tab.Document.Pages[2].Rotate);
+        panel.Detach();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task GoingOnAnywayDeletesFromASignedFile() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(StampsPanelTests.Signed(certified: true, pages: 3)), new FakeRenderer(), null, "a.pdf");
+        var host = new RecordingHost();
+        var panel = Show(tab, host);
+        Select(panel, 0, 2);
+
+        panel.Press(Key.Delete, ModifierKeys.None);
+        Assert.Equal(3, tab.PageCount);
+        host.Actions.Single()!.Run();
+
+        Assert.Equal(1, tab.PageCount);
+        Assert.Single(host.Notices);
+        panel.Detach();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task MarkingThePageInViewMovesTheShiftClickAnchor() => Sta.Run(() =>
+    {
+        using var tab = Open(5);
+        var panel = Show(tab, new RecordingHost());
+        var window = new Window { Content = panel, Width = 300, Height = 400 };
+        window.Show();
+        Select(panel, 4);
+
+        panel.Resized();
+
+        var anchor = typeof(ListBox).GetProperty("AnchorItem", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var held = anchor.GetValue(Thumbs(panel))!;
+        var item = held.GetType().GetProperty("Item", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!.GetValue(held);
+        Assert.Same(((List<PageThumb>)Thumbs(panel).ItemsSource)[0], item);
+        window.Close();
+        return Task.CompletedTask;
+    });
+
     // Four pages of 100, 200, 300 and 400 points wide.
     private static DocumentTab Sized()
     {
