@@ -67,7 +67,7 @@ public static class OcrWork
         var result = read.Result;
         if (read.Pages.Count > 0)
         {
-            int words = Write(tab.Document, read.Pages, reading.Turns, options.Language);
+            int words = Write(tab.Document, reading.Pages, reading.Turns, options.Language);
             result = result with { Words = words, Committed = tab.Commit(OcrStatusText.Label) };
         }
         if (result.Committed) host.SetStatus(Loc.Plural(result.Added, "Made {0} page searchable", "Made {0} pages searchable"));
@@ -84,7 +84,7 @@ public static class OcrWork
     {
         var reading = new Reading(renderer, recognizer, languages ?? [options.Language]);
         var read = await PdfSearchable.ReadAsync(document, reading, reading, options, progress, cancellation);
-        return (read, reading.Turns);
+        return (read with { Pages = reading.Pages }, reading.Turns);
     }
 
     /// <summary>Turns the pages that were read sideways upright, then adds the layers in that frame. Returns the words added; the caller commits.</summary>

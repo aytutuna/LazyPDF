@@ -290,6 +290,22 @@ public sealed class OcrWorkTests
     }
 
     [Fact]
+    public async Task TheWordsOfATurnedPageLieOnThePageInItsNewShape()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 1);
+        ((FakeRenderer)tab.Renderer).Image = Landscape(ink: true);
+
+        await Make(tab, f, new FakeRecognizer { PortraitOnly = true, Words = ["alpha", "beta", "gamma"] }, All());
+
+        var geometry = new PageGeometry(tab.Document.Pages[0]);
+        var boxes = PdfOcrLayer.Words(tab.Document, tab.Document.Pages[0]).Select(w => w.Box).ToList();
+        Assert.Equal(3, boxes.Count);
+        Assert.All(boxes, b => Assert.InRange(b.X + b.Width, geometry.Width - 1, geometry.Width + 1));
+        Assert.All(boxes, b => Assert.InRange(b.Y + b.Height, 0, geometry.Height + 1));
+    }
+
+    [Fact]
     public async Task UndoPutsTheTurnAndTheLayerBackTogether()
     {
         using var f = new ViewModelFixture();
