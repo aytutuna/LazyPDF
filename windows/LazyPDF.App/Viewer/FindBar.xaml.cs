@@ -35,6 +35,12 @@ public partial class FindBar : UserControl
     /// <summary>Puts the cursor in the box with its text selected.</summary>
     public void Open(string? selection = null)
     {
+        // The Search panel shares the search, so show what it is running.
+        if (_search is { Query.Length: > 0 } running && running.Query != Query.Text)
+        {
+            Query.Text = running.Query;
+            _typing.Stop();
+        }
         if (selection is { Length: > 0 } && !selection.Contains('\n') && selection != Query.Text) Query.Text = selection;
         // Closing the bar cleared the search but left the text, so run it again for Enter and F3.
         if (_search is { Query.Length: 0 } && Query.Text.Length > 0 && !_typing.IsEnabled) Run();
