@@ -1867,6 +1867,12 @@
   "Adds Lazy PDF to the Open with list of PDF files and registers lazypdf: addresses, for your account only. It never becomes the default program.": {
     "tr": "Lazy PDF'yi PDF dosyalarının Birlikte aç listesine ekler ve lazypdf: adreslerini kaydeder; yalnızca hesabınız için. Hiçbir zaman varsayılan program olmaz."
   },
+  "Choose default apps": {
+    "tr": "Varsayılan uygulamaları seçin"
+  },
+  "Opens Windows settings, where you can pick the program that opens PDF files.": {
+    "tr": "PDF dosyalarını açacak programı seçebileceğiniz Windows ayarlarını açar."
+  },
   "Drop files to open them": {
     "tr": "Açmak için dosyaları bırakın"
   },

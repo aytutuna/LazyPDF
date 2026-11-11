@@ -264,6 +264,8 @@ public partial class MainWindow
 
     private void SupportLink_Click(object sender, RoutedEventArgs e) => Launch("mailto:" + AppInfo.SupportAddress);
 
+    private void DefaultApps_Click(object sender, RoutedEventArgs e) => Launch("ms-settings:defaultapps");
+
     private void Launch(string address)
     {
         try

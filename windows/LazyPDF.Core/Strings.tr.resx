@@ -952,6 +952,9 @@
   <data name="Choose an existing folder to watch." xml:space="preserve">
     <value>İzlenecek, var olan bir klasör seçin.</value>
   </data>
+  <data name="Choose default apps" xml:space="preserve">
+    <value>Varsayılan uygulamaları seçin</value>
+  </data>
   <data name="Choose file" xml:space="preserve">
     <value>Dosya seç</value>
   </data>
@@ -3321,6 +3324,9 @@
   </data>
   <data name="Opened with limited rights. Your certificate may not change the protection." xml:space="preserve">
     <value>Sınırlı haklarla açıldı. Sertifikanız korumayı değiştiremeyebilir.</value>
+  </data>
+  <data name="Opens Windows settings, where you can pick the program that opens PDF files." xml:space="preserve">
+    <value>PDF dosyalarını açacak programı seçebileceğiniz Windows ayarlarını açar.</value>
   </data>
   <data name="Opens in a new tab. You name it when you save." xml:space="preserve">
     <value>Yeni sekmede açılır. Adını kaydederken verirsiniz.</value>
