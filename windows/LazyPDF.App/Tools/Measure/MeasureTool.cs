@@ -138,9 +138,19 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
         if (!Snap || _snaps.ContainsKey(page) || !_loading.Add(page)) return;
         var tab = viewer.Tab;
         var document = tab?.Document;
-        var text = await viewer.GetTextAsync(page);
-        var drawn = text is not null && tab is not null ? await Task.Run(() => Drawn(tab, page)) : [];
-        _loading.Remove(page);
+        List<(double, double)> drawn = [];
+        TextPage? text;
+        try
+        {
+            text = await viewer.GetTextAsync(page);
+            // The live document is not for other threads, so the worker reads its own copy of the bytes.
+            if (text is not null && tab is not null)
+            {
+                var (bytes, password, certificate) = (PageSurface.Bytes(tab), tab.Password, tab.Certificate);
+                drawn = await Task.Run(() => Drawn(bytes, password, certificate, page));
+            }
+        }
+        finally { _loading.Remove(page); }
         if (!ReferenceEquals(viewer.Tab, tab) || !ReferenceEquals(tab?.Document, document)) return;
         if (text is null)
         {
@@ -153,12 +163,13 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
         _snaps[page] = [.. corners.Select(c => geometry.ToDisplay(c.Item1, c.Item2)).Select(c => new Point(c.X, c.Y))];
     }
 
-    private static List<(double, double)> Drawn(DocumentTab tab, int page)
+    private static List<(double, double)> Drawn(byte[] bytes, string? password, System.Security.Cryptography.X509Certificates.X509Certificate2? certificate, int page)
     {
         var drawn = new List<(double, double)>();
         try
         {
-            var editor = new PageEditor(tab.Session, page);
+            var session = certificate is null ? PdfEditSession.Open(bytes, password) : PdfEditSession.Open(bytes, certificate);
+            var editor = new PageEditor(session, page);
             foreach (var o in editor.Objects)
             {
                 if (drawn.Count >= MaxDrawn) break;

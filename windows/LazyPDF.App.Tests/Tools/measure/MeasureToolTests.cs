@@ -211,6 +211,7 @@ public sealed class MeasureToolTests
     {
         var session = PdfEditSession.Open(Pdfs.Text());
         new PageEditor(session, 0).AddLine(100, 100, 300, 100);
+        session.Commit("Line");
         using var tab = new DocumentTab(session, new FakeRenderer(), null, "a.pdf", null);
         var proxy = DispatchProxy.Create<IDocumentViewer, Viewer>();
         var viewer = (Viewer)(object)proxy;
@@ -221,7 +222,12 @@ public sealed class MeasureToolTests
         var end = viewer.Geometry.ToDisplay(300, 100);
 
         tool.Move(At(0, 0));
-        tool.Move(At(end.X + 3, end.Y - 3));
+        // The corners are read on another thread.
+        for (int i = 0; i < 500 && !tool.Snapped; i++)
+        {
+            Thread.Sleep(10);
+            tool.Move(At(end.X + 3, end.Y - 3));
+        }
         Assert.True(tool.Snapped);
         Assert.Equal(end.X, tool.Hover!.Value.X, 6);
         Assert.Equal(end.Y, tool.Hover!.Value.Y, 6);
