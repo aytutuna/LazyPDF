@@ -64,8 +64,12 @@ struct OptimizePanelView: View {
         }
         Toggle(L10n.t("Trim fonts"), isOn: $model.trimFonts)
         Toggle(L10n.t("Make black and white pictures 1-bit"), isOn: $model.blackWhite)
-        Toggle(L10n.t("Remove application data"), isOn: $model.dropAppData)
-        Toggle(L10n.t("Remove private keys"), isOn: $model.dropPrivateKeys)
+        Toggle(L10n.t("Remove editing data of the program that made the file"), isOn: $model.dropAppData)
+            .help(L10n.t("Data the program that made the file keeps for its own editing. Reading the file does not need it. Keep this off if you open the file in that program."))
+            .accessibilityHint(L10n.t("Data the program that made the file keeps for its own editing. Reading the file does not need it. Keep this off if you open the file in that program."))
+        Toggle(L10n.t("Remove other hidden program data"), isOn: $model.dropPrivateKeys)
+            .help(L10n.t("Extra private entries other programs added. Reading the file does not need them."))
+            .accessibilityHint(L10n.t("Extra private entries other programs added. Reading the file does not need them."))
     }
 }
 #endif
