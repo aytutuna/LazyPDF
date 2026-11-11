@@ -89,6 +89,15 @@ internal sealed partial class PageImporter
         }
         var mapped = _sourcePages.Where(n => _newPages.TryAdd(n, ghost)).ToList();
         foreach (var (number, annotation) in _taggedCopies) _map.TryAdd(number, annotation);
+        // An annotation the importer dropped must not come back through the tree as a copy that is on no page.
+        foreach (var page in _source.Pages)
+        {
+            if (_source.Resolve(page.Dictionary["Annots"]) is not PdfArray annots) continue;
+            foreach (var item in annots.Items)
+            {
+                if (item is PdfReference r && !_taggedCopies.ContainsKey(r.Number)) _skip.Add(r.Number);
+            }
+        }
         var copy = CopyValue(root);
         foreach (int number in mapped) _newPages.Remove(number);
         _cut.Clear();

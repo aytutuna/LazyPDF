@@ -7,7 +7,7 @@ namespace LazyPDF.Core.Tests;
 public class PageTagTests
 {
     // Four pages with a heading each, a table across pages 2 and 3 and a link annotation on page 2.
-    private static PdfDocument Tagged()
+    private static PdfDocument Tagged(string link = "/A <</S /URI /URI (http://example.com)>>")
     {
         var pdf = new TestPdf();
         pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R /StructTreeRoot 12 0 R /MarkInfo <</Marked true>> /Lang (en)>>");
@@ -27,7 +27,7 @@ public class PageTagTests
         pdf.Obj(19, "<</Type /StructElem /S /TR /P 18 0 R /Pg 5 0 R /K 1>>");
         pdf.Obj(20, "<</Type /StructElem /S /TR /P 18 0 R /Pg 6 0 R /K 1>>");
         pdf.Obj(21, "<</Type /StructElem /S /Link /P 13 0 R /Pg 5 0 R /K <</Type /OBJR /Pg 5 0 R /Obj 22 0 R>>>>");
-        pdf.Obj(22, "<</Type /Annot /Subtype /Link /Rect [10 10 50 30] /Border [0 0 0] /StructParent 5 /A <</S /URI /URI (http://example.com)>>>>");
+        pdf.Obj(22, $"<</Type /Annot /Subtype /Link /Rect [10 10 50 30] /Border [0 0 0] /StructParent 5 {link}>>");
         pdf.Obj(30, "<</Nums [0 [14 0 R] 1 [15 0 R 19 0 R] 2 [16 0 R 20 0 R] 3 [17 0 R] 5 21 0 R]>>");
         return PdfDocument.Open(pdf.Finish());
     }
@@ -97,6 +97,17 @@ public class PageTagTests
         Assert.DoesNotContain(objects, d => part.Name(d, "Subtype") == "Link");
         Assert.DoesNotContain(objects, d => part.Name(d, "S") is "Table" or "TR" or "Link");
         Assert.Equal(1, objects.Count(d => part.Name(d, "S") == "H1"));
+    }
+
+    [Fact]
+    public void ExtractDropsTheTagsOfALinkToAPageLeftOut()
+    {
+        var part = Saved(PageAssembly.Extract(Tagged("/Dest [7 0 R /Fit]"), [1]), out _);
+        Assert.Equal("Document H1 Table TR", Roles(part, Root(part)));
+        Assert.Equal([1L], Keys(part));
+        Assert.Null(part.Array(part.Pages[0].Dictionary, "Annots"));
+        var objects = part.ObjectNumbers.Select(n => part.Get(n)).OfType<PdfDictionary>().ToList();
+        Assert.DoesNotContain(objects, d => part.Name(d, "Subtype") == "Link" || part.Name(d, "S") == "Link");
     }
 
     [Fact]

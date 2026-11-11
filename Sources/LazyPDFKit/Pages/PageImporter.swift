@@ -134,6 +134,13 @@ final class PageImporter {
         let added = sourcePages.sorted().filter { newPages[$0] == nil }
         for number in added { newPages[number] = ghost }
         for entry in taggedCopies.entries where map[entry.key] == nil { map[entry.key] = entry.value }
+        // An annotation the importer dropped must not come back through the tree as a copy that is on no page.
+        for page in source.pages {
+            guard let annots = source.resolve(page.dictionary["Annots"]) as? PdfArray else { continue }
+            for item in annots.items {
+                if let r = item as? PdfReference, taggedCopies[r.number] == nil { skip.insert(r.number) }
+            }
+        }
         let made = try copyValue(root)
         for number in added { newPages[number] = nil }
         cut.removeAll()
