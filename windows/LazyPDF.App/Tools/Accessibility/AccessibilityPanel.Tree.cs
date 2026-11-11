@@ -17,6 +17,7 @@ public partial class AccessibilityPanel
     {
         int ticket = ++_treeTicket;
         _treeStale = false;
+        var before = _figures;
         DropTree();
         TagTree.Items.Clear();
         FigureList.ItemsSource = null;
@@ -32,6 +33,9 @@ public partial class AccessibilityPanel
             });
             if (ticket != _treeTicket) return;
             (_treeCopy, _tree, _figures, _treeCount) = (copy, tree, figures, count);
+            // A draft stays while its figure is still there with the description it was typed against.
+            foreach (int number in _drafts.Keys.ToList())
+                if (figures.ElementAtOrDefault(number - 1) is not { } now || before.ElementAtOrDefault(number - 1)?.Alt != now.Alt) _drafts.Remove(number);
         }
         catch (Exception error) when (error is PdfReadException or InvalidOperationException)
         {

@@ -19,9 +19,6 @@ public partial class AccessibilityPanel
     // The figure to show when the list is built: the one that was shown, or the next one after a save.
     private int _figureNumber;
 
-    // Set while this panel's own save commits, so its change does not clear the drafts.
-    private bool _ownSave;
-
     private FigureRow? Selected => FigureList.SelectedItem as FigureRow;
 
     private void RenderFigures()
@@ -116,12 +113,7 @@ public partial class AccessibilityPanel
                     return Task.CompletedTask;
                 }
                 AccessibilityEdits.SetAlt(tab.Document, tree, figure!.Element, text);
-                _ownSave = true;
-                try
-                {
-                    if (tab.Commit(Loc.T("Figure description"))) Host!.SetStatus(Loc.T("Description saved."));
-                }
-                finally { _ownSave = false; }
+                if (tab.Commit(Loc.T("Figure description"))) Host!.SetStatus(Loc.T("Description saved."));
             }
             catch (Exception error) when (error is InvalidOperationException or PdfReadException)
             {
