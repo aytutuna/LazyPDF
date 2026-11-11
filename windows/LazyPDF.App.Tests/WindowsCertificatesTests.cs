@@ -45,9 +45,20 @@ public sealed class WindowsCertificatesTests
             Make("Plain", now.AddDays(-1), now.AddYears(1), withKey: true),
         };
 
-        var choices = WindowsCertificates.Choices(certificates);
+        var choices = WindowsCertificates.Choices(certificates, forSigning: true);
 
         Assert.Equal(["Plain", "Sign"], choices.Select(c => c.Name));
+    }
+
+    [Fact]
+    public void ACertificateMadeOnlyForEncryptionStillOpensAFile()
+    {
+        var now = DateTimeOffset.Now;
+        var certificates = new[] { Make("Encrypt", now.AddDays(-1), now.AddYears(1), withKey: true, X509KeyUsageFlags.KeyEncipherment) };
+
+        var choices = WindowsCertificates.Choices(certificates);
+
+        Assert.Equal(["Encrypt"], choices.Select(c => c.Name));
     }
 
     [Fact]

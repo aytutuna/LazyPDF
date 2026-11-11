@@ -64,7 +64,7 @@ public partial class CertificatesPanel : ToolPanel
         Tab!.Changed += Tab_Changed;
         if (UrlBox.Text.Length == 0) UrlBox.Text = SigningSettingsStore.Load().TimestampUrl;
         string? chosen = (CertBox.SelectedItem as CertificateChoice)?.Thumbprint;
-        var certificates = WindowsCertificates.WithPrivateKey();
+        var certificates = WindowsCertificates.WithPrivateKey(forSigning: true);
         CertBox.ItemsSource = certificates;
         int again = certificates.ToList().FindIndex(c => c.Thumbprint == chosen);
         CertBox.SelectedIndex = again >= 0 ? again : certificates.Count > 0 ? 0 : -1;
