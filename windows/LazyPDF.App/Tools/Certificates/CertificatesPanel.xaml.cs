@@ -81,6 +81,7 @@ public partial class CertificatesPanel : ToolPanel
         Tab!.Changed -= Tab_Changed;
         Stop();
         ClearBox();
+        WhereBox.ItemsSource = null;
         FilePassword.Clear();
     }
 
@@ -98,7 +99,11 @@ public partial class CertificatesPanel : ToolPanel
         int kept = CertificateSigning.KeptPlace(WhereBox.SelectedIndex, Where?.Field, choices.Skip(2).Select(c => c.Field!).ToList());
         bool keepBox = kept == 1 && _box is not null && _boxPage < Tab.PageCount && PageKey(_boxPage).Equals(_boxPageKey);
         if (keepBox) Viewer!.Overlay(_boxPage).Children.Remove(_outline!);
-        else ClearBox();
+        else
+        {
+            Stop();
+            ClearBox();
+        }
         _refilling = true;
         try
         {
