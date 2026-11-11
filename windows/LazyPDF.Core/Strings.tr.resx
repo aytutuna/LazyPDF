@@ -2989,6 +2989,9 @@
   <data name="Move" xml:space="preserve">
     <value>Taşı</value>
   </data>
+  <data name="Move bookmark" xml:space="preserve">
+    <value>Yer imini taşı</value>
+  </data>
   <data name="Move down" xml:space="preserve">
     <value>Aşağı taşı</value>
   </data>
@@ -2998,11 +3001,17 @@
   <data name="Move form field" xml:space="preserve">
     <value>Form alanını taşı</value>
   </data>
+  <data name="Move in" xml:space="preserve">
+    <value>İçeri taşı</value>
+  </data>
   <data name="Move later" xml:space="preserve">
     <value>Sonraya taşı</value>
   </data>
   <data name="Move marks" xml:space="preserve">
     <value>İşaretleri taşı</value>
+  </data>
+  <data name="Move out" xml:space="preserve">
+    <value>Dışarı taşı</value>
   </data>
   <data name="Move pages" xml:space="preserve">
     <value>Sayfaları taşı</value>

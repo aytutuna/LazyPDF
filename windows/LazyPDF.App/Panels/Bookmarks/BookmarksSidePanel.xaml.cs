@@ -107,6 +107,20 @@ public partial class BookmarksSidePanel : ToolPanel
         AddButton.IsEnabled = AddItem.IsEnabled = editable;
         RenameButton.IsEnabled = RenameItem.IsEnabled = selected;
         DeleteButton.IsEnabled = DeleteItem.IsEnabled = selected;
+        var (canUp, canDown, canOut, canIn) = Shifts(selected ? (BookmarkNode)Tree.SelectedItem : null);
+        MoveUpButton.IsEnabled = MoveUpItem.IsEnabled = canUp;
+        MoveDownButton.IsEnabled = MoveDownItem.IsEnabled = canDown;
+        OutdentButton.IsEnabled = OutdentItem.IsEnabled = canOut;
+        IndentButton.IsEnabled = IndentItem.IsEnabled = canIn;
+    }
+
+    private (bool Up, bool Down, bool Out, bool In) Shifts(BookmarkNode? node)
+    {
+        if (node is null) return default;
+        int dot = node.Path.LastIndexOf('.');
+        int index = int.Parse(node.Path[(dot + 1)..]);
+        int count = dot < 0 ? ((List<BookmarkNode>)Tree.ItemsSource).Count : NodeAt(node.Path[..dot])!.Children.Count;
+        return (index > 0, index < count - 1, dot >= 0, index > 0);
     }
 
     private void Tree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
@@ -229,6 +243,50 @@ public partial class BookmarksSidePanel : ToolPanel
         if (next is not null) next.IsSelected = true;
     }
 
+    private void MoveUp_Click(object sender, RoutedEventArgs e) => Shift(0, -1);
+
+    private void MoveDown_Click(object sender, RoutedEventArgs e) => Shift(0, 1);
+
+    private void Outdent_Click(object sender, RoutedEventArgs e) => Shift(-1, 0);
+
+    private void Indent_Click(object sender, RoutedEventArgs e) => Shift(1, 0);
+
+    // dy moves among the siblings; dx -1 makes it the next sibling of its parent, 1 the last child of the sibling before it.
+    private void Shift(int dx, int dy)
+    {
+        var (up, down, outdent, indent) = Shifts(Tree.SelectedItem as BookmarkNode);
+        if (Tree.SelectedItem is not BookmarkNode node || !(dy < 0 ? up : dy > 0 ? down : dx < 0 ? outdent : indent)) return;
+        if (Editable(() => Shift(dx, dy)) is not var (tab, host)) return;
+        var outline = ReadForEdit(tab);
+        if (Find(outline, node.Path) is not { Parent: { } parent } item) return;
+        int dot = node.Path.LastIndexOf('.');
+        string parentPath = dot < 0 ? "" : node.Path[..dot];
+        int at = parent.Children.ToList().IndexOf(item);
+        string moved;
+        if (dy != 0)
+        {
+            outline.Move(item, ReferenceEquals(parent, outline.Root) ? null : parent, at + (dy < 0 ? -1 : 2));
+            moved = Join(parentPath, at + dy);
+        }
+        else if (dx > 0)
+        {
+            var previous = parent.Children[at - 1];
+            moved = Join(Join(parentPath, at - 1), previous.Children.Count);
+            previous.IsOpen = true;
+            outline.Move(item, previous);
+        }
+        else
+        {
+            int gdot = parentPath.LastIndexOf('.');
+            string grandPath = gdot < 0 ? "" : parentPath[..gdot];
+            int parentIndex = int.Parse(parentPath[(gdot + 1)..]);
+            outline.Move(item, ReferenceEquals(parent.Parent, outline.Root) ? null : parent.Parent, parentIndex + 1);
+            moved = Join(grandPath, parentIndex + 1);
+        }
+        outline.Write(tab.Document);
+        if (MarkWork.Commit(tab, host, Loc.T("Move bookmark")) && NodeAt(moved) is { } now) now.IsSelected = true;
+    }
+
     private void EditBox_KeyDown(object sender, KeyEventArgs e)
     {
         if (((FrameworkElement)sender).DataContext is not BookmarkNode node || e.Key is not (Key.Enter or Key.Escape)) return;
@@ -316,6 +374,21 @@ public partial class BookmarksSidePanel : ToolPanel
     private void Tree_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.OriginalSource is TextBox || Tree.SelectedItem is not BookmarkNode node) return;
+        if (Keyboard.Modifiers == ModifierKeys.Alt)
+        {
+            Action? shift = (e.Key == Key.System ? e.SystemKey : e.Key) switch
+            {
+                Key.Up => () => Shift(0, -1),
+                Key.Down => () => Shift(0, 1),
+                Key.Left => () => Shift(-1, 0),
+                Key.Right => () => Shift(1, 0),
+                _ => null,
+            };
+            if (shift is null) return;
+            shift();
+            e.Handled = true;
+            return;
+        }
         switch (e.Key)
         {
             case Key.Enter:

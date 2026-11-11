@@ -229,4 +229,90 @@ public sealed class BookmarksPanelTests
         window.Close();
         return Task.CompletedTask;
     });
+
+    private static bool Enabled(BookmarksSidePanel panel, string name) => ((Button)panel.FindName(name)).IsEnabled;
+
+    [Fact]
+    public Task MovingUpSwapsWithThePreviousAndIsOneUndoStep() => Sta.Run(() =>
+    {
+        var (tab, panel, tree, window) = Edited("One", "Two", "Three");
+        using var _ = tab;
+        ((BookmarkNode)tree.Items[2]!).IsSelected = true;
+
+        Click(panel, "MoveUpButton");
+
+        Assert.Equal(["One", "Three", "Two"], Titles(tab));
+        Assert.True(((BookmarkNode)tree.Items[1]!).IsSelected);
+        tab.Undo();
+        Assert.Equal(["One", "Two", "Three"], Titles(tab));
+        window.Close();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task MovingDownSwapsWithTheNext() => Sta.Run(() =>
+    {
+        var (tab, panel, tree, window) = Edited("One", "Two", "Three");
+        using var _ = tab;
+        ((BookmarkNode)tree.Items[0]!).IsSelected = true;
+
+        Click(panel, "MoveDownButton");
+
+        Assert.Equal(["Two", "One", "Three"], Titles(tab));
+        Assert.True(((BookmarkNode)tree.Items[1]!).IsSelected);
+        window.Close();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task IndentingMakesAChildAndOutdentingReversesIt() => Sta.Run(() =>
+    {
+        var (tab, panel, tree, window) = Edited("One", "Two", "Three");
+        using var _ = tab;
+        ((BookmarkNode)tree.Items[1]!).IsSelected = true;
+
+        Click(panel, "IndentButton");
+
+        Assert.Equal(["One", "Three"], Titles(tab));
+        var parent = Outline.Read(tab.Document).Items[0];
+        Assert.Equal(["Two"], parent.Children.Select(c => c.Title));
+        Assert.True(parent.IsOpen);
+        tree.UpdateLayout();
+        var moved = (BookmarkNode)((BookmarkNode)tree.Items[0]!).Children[0];
+        Assert.True(moved.IsSelected);
+        Assert.False(Enabled(panel, "IndentButton"));
+        Assert.True(Enabled(panel, "OutdentButton"));
+
+        Click(panel, "OutdentButton");
+
+        Assert.Equal(["One", "Two", "Three"], Titles(tab));
+        Assert.True(((BookmarkNode)tree.Items[1]!).IsSelected);
+        tab.Undo();
+        Assert.Equal(["One", "Three"], Titles(tab));
+        tab.Undo();
+        Assert.Equal(["One", "Two", "Three"], Titles(tab));
+        window.Close();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ButtonsAreOffWhereTheMoveCannotGo() => Sta.Run(() =>
+    {
+        var (tab, panel, tree, window) = Edited("One", "Two", "Three");
+        using var _ = tab;
+        Assert.False(Enabled(panel, "MoveUpButton"));
+
+        ((BookmarkNode)tree.Items[0]!).IsSelected = true;
+        Assert.False(Enabled(panel, "MoveUpButton"));
+        Assert.False(Enabled(panel, "IndentButton"));
+        Assert.False(Enabled(panel, "OutdentButton"));
+        Assert.True(Enabled(panel, "MoveDownButton"));
+
+        ((BookmarkNode)tree.Items[2]!).IsSelected = true;
+        Assert.False(Enabled(panel, "MoveDownButton"));
+        Assert.True(Enabled(panel, "MoveUpButton"));
+        Assert.True(Enabled(panel, "IndentButton"));
+        window.Close();
+        return Task.CompletedTask;
+    });
 }

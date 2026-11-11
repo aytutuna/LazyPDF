@@ -2132,6 +2132,15 @@
   "Bookmark deleted.": {
     "tr": "Yer imi silindi."
   },
+  "Move bookmark": {
+    "tr": "Yer imini taşı"
+  },
+  "Move out": {
+    "tr": "Dışarı taşı"
+  },
+  "Move in": {
+    "tr": "İçeri taşı"
+  },
   "Files carried inside this one.": {
     "tr": "Bu dosyanın içinde taşınan dosyalar."
   },
