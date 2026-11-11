@@ -58,6 +58,20 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertEqual(model.grid.selection, [3])
     }
 
+    func test_pagesApartEachMoveOneStepAsOneUndo() throws {
+        let (model, rig) = try attached(6)
+        let was = rig.tab.order
+        model.grid.select([2, 5])
+
+        model.earlier()
+
+        XCTAssertEqual(rig.tab.order, [was[0], was[2], was[1], was[3], was[5], was[4]])
+        XCTAssertEqual(model.grid.selection, [1, 4])
+        XCTAssertEqual(rig.host.statuses.last, "2 pages moved")
+        try rig.tab.undo()
+        XCTAssertEqual(rig.tab.order, was)
+    }
+
     func test_thePagesAtTheEdgesCannotMovePastIt() throws {
         let (model, _) = try attached()
 

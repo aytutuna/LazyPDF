@@ -97,8 +97,8 @@ public final class PagesToolModel: ToolPanelModel {
     }
 
     public var canEdit: Bool { !grid.selected.isEmpty }
-    public var canMoveEarlier: Bool { (grid.selection.first ?? 0) > 0 }
-    public var canMoveLater: Bool { canEdit && (grid.selection.last ?? 0) < grid.cells.count - 1 }
+    public var canMoveEarlier: Bool { grid.canMove(-1) }
+    public var canMoveLater: Bool { canEdit && grid.canMove(1) }
 
     public func turn(_ degrees: Int) {
         grid.turn(grid.selection, degrees)

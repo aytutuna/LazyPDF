@@ -59,6 +59,42 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(text(document, landed[1]), marked[4])
     }
 
+    func test_eachChosenRunStepsOnAndPagesApartStayApart() throws {
+        let document = try open(6)
+        let marked = (0..<6).map { text(document, $0) }
+
+        try PageEdits.nudge(document, [2, 5], -1)
+
+        XCTAssertEqual((0..<6).map { text(document, $0) }, [marked[0], marked[2], marked[1], marked[3], marked[5], marked[4]])
+        XCTAssertEqual(PageEdits.nudged([2, 5], -1, 6), [1, 4])
+        XCTAssertEqual(PageEdits.nudged([0, 3], 1, 6), [1, 4])
+    }
+
+    func test_aRunAtTheEdgeStaysWhereItIs() throws {
+        let document = try open(6)
+        let marked = (0..<6).map { text(document, $0) }
+
+        try PageEdits.nudge(document, [0, 1], -1)
+        try PageEdits.nudge(document, [4, 5], 1)
+
+        XCTAssertEqual((0..<6).map { text(document, $0) }, marked)
+        XCTAssertEqual(PageEdits.nudged([0, 1], -1, 6), [0, 1])
+        XCTAssertEqual(PageEdits.nudged([4, 5], 1, 6), [4, 5])
+        XCTAssertFalse(PageEdits.canNudge([0, 1], -1, 6))
+        XCTAssertFalse(PageEdits.canNudge([4, 5], 1, 6))
+        XCTAssertTrue(PageEdits.canNudge([0, 3], -1, 6))
+        XCTAssertTrue(PageEdits.canNudge([0, 3], 1, 6))
+    }
+
+    func test_nudgingLaterMovesTheLastRunFirst() throws {
+        let document = try open(6)
+        let marked = (0..<6).map { text(document, $0) }
+
+        try PageEdits.nudge(document, [0, 3], 1)
+
+        XCTAssertEqual((0..<6).map { text(document, $0) }, [marked[1], marked[0], marked[2], marked[4], marked[3], marked[5]])
+    }
+
     func test_duplicatedPagesAreFoundBesideTheirCopies() throws {
         let document = try open(4)
         let marked = (0..<4).map { text(document, $0) }

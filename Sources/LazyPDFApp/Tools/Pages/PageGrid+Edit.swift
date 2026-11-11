@@ -66,14 +66,20 @@ extension PageGrid {
         }
     }
 
-    public func earlier(_ pages: [Int]) {
-        guard let first = pages.min(), first > 0 else { return }
-        moveTo(pages.sorted(), first - 1)
+    public func earlier(_ pages: [Int]) { nudge(pages, -1) }
+
+    public func later(_ pages: [Int]) { nudge(pages, 1) }
+
+    public func canMove(_ step: Int) -> Bool {
+        PageEdits.canNudge(selection, step, cells.count)
     }
 
-    public func later(_ pages: [Int]) {
-        guard let last = pages.max(), last < cells.count - 1 else { return }
-        moveTo(pages.sorted(), last + 2)
+    private func nudge(_ pages: [Int], _ step: Int) {
+        guard PageEdits.canNudge(pages, step, cells.count) else { return }
+        apply(L10n.t("Move pages"), select: PageEdits.nudged(pages, step, cells.count),
+              status: L10n.plural(pages.count, one: "{0} page moved", other: "{0} pages moved")) { document in
+            try PageEdits.nudge(document, pages, step)
+        }
     }
 
     public func extract(_ pages: [Int]) async {

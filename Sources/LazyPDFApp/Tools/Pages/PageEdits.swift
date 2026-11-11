@@ -94,6 +94,41 @@ public enum PageEdits {
         return Array(first..<first + pages.count)
     }
 
+    /// Moves each run of neighbouring pages one place, so pages apart stay apart; a run at the edge stays.
+    public static func nudge(_ document: PdfDocument, _ pages: [Int], _ step: Int) throws {
+        var runs: [[Int]] = []
+        for page in Set(pages).sorted() {
+            if let last = runs.last?.last, last + 1 == page {
+                runs[runs.count - 1].append(page)
+            } else {
+                runs.append([page])
+            }
+        }
+        if step > 0 { runs.reverse() }
+        let total = document.pages.count
+        for run in runs {
+            guard let first = run.first, let last = run.last else { continue }
+            if step < 0 ? first == 0 : last == total - 1 { continue }
+            try PageOperations.move(document, run, step < 0 ? first - 1 : last + 2)
+        }
+    }
+
+    /// Where the pages stand after `nudge`.
+    public static func nudged(_ pages: [Int], _ step: Int, _ total: Int) -> [Int] {
+        let chosen = Set(pages)
+        return pages.sorted().map { page in
+            var end = page
+            while chosen.contains(end + step) { end += step }
+            return end + step < 0 || end + step >= total ? page : page + step
+        }
+    }
+
+    /// True when `nudge` would move at least one page.
+    public static func canNudge(_ pages: [Int], _ step: Int, _ total: Int) -> Bool {
+        let chosen = Set(pages)
+        return pages.contains { $0 + step >= 0 && $0 + step < total && !chosen.contains($0 + step) }
+    }
+
     /// Where the pages and their copies stand after `PageOperations.duplicate`.
     public static func duplicated(_ pages: [Int]) -> [Int] {
         var found: [Int] = []

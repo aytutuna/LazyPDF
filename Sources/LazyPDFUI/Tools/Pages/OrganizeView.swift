@@ -53,8 +53,8 @@ struct OrganizeView: View {
                 BarButton("trash", L10n.t("Delete"), off: !any) { model.remove() }
                 BarButton("plus.square.on.square", L10n.t("Duplicate"), off: !any) { Task { await model.duplicate() } }
                 BarButton("arrow.up.doc", L10n.t("Extract to a new file"), off: !any) { Task { await model.extract() } }
-                BarButton("arrow.left", L10n.t("Move earlier"), off: !any) { model.grid.earlier(model.grid.selection) }
-                BarButton("arrow.right", L10n.t("Move later"), off: !any) { model.grid.later(model.grid.selection) }
+                BarButton("arrow.left", L10n.t("Move earlier"), off: !model.grid.canMove(-1)) { model.grid.earlier(model.grid.selection) }
+                BarButton("arrow.right", L10n.t("Move later"), off: !model.grid.canMove(1)) { model.grid.later(model.grid.selection) }
                 BarButton("scissors", L10n.t("Cut"), off: !any) { Task { await model.cut() } }
                 BarButton("doc.on.doc", L10n.t("Copy"), off: !any) { Task { await model.copy() } }
                 BarButton("doc.on.clipboard", L10n.t("Paste"), off: !model.canPaste) { Task { await model.paste() } }
@@ -74,12 +74,26 @@ struct OrganizeView: View {
     private var any: Bool { !model.grid.selected.isEmpty }
 
     private func press(_ key: KeyPress) -> KeyPress.Result {
+        let selection = model.grid.selection
+        if any, key.modifiers == .command || key.modifiers == [.command, .shift] {
+            let turning = key.modifiers != .command
+            switch key.key {
+            case .leftArrow:
+                if turning { model.grid.turn(selection, -90) } else { model.grid.earlier(selection) }
+                return .handled
+            case .rightArrow:
+                if turning { model.grid.turn(selection, 90) } else { model.grid.later(selection) }
+                return .handled
+            default: break
+            }
+        }
         if key.modifiers == .command {
             switch key.characters {
             case "x": Task { await model.cut() }
             case "c": Task { await model.copy() }
             case "v": Task { await model.paste() }
             case "a": model.grid.selectAll()
+            case "d" where any: Task { await model.duplicate() }
             default: return .ignored
             }
             return .handled
