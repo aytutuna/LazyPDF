@@ -104,8 +104,12 @@ public partial class PageViewer : UserControl, IDocumentViewer
         bool fresh = tab is not null && state is null && tab.Fit == FitMode.None && tab.Zoom == 0;
         var (columns, cover, continuous) = state is null ? _arrangement : (state.Columns, state.Cover, state.Continuous);
         if (fresh && FileLayout(tab!.Document) is { } declared) (columns, cover, continuous) = declared;
+        // Changing the arrangement under the old document would store its zoom on the new tab.
+        var (fit, zoom) = tab is null ? (FitMode.None, 0) : (tab.Fit, tab.Zoom);
+        var rotation = state?.Rotation ?? tab?.Rotation ?? 0;
         Surface.SetArrangement(columns, cover, continuous);
-        Surface.Show(tab, state?.Rotation ?? tab?.Rotation ?? 0, tab is not null && ViewerSettings.Read(tab.Document).RightToLeft);
+        if (tab is not null) (tab.Fit, tab.Zoom) = (fit, zoom);
+        Surface.Show(tab, rotation, tab is not null && ViewerSettings.Read(tab.Document).RightToLeft);
         if (state?.Place is { } place) Surface.GoToPage(place.Page, place.Point, keepX: true);
         else if (fresh) FollowOpenAction(tab!.Document);
         if (tab is not null)
@@ -430,7 +434,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
     private void Tint_Click(object sender, RoutedEventArgs e)
     {
         Surface.SetTint(Enum.Parse<PageTint>((string)((MenuItem)sender).Tag));
-        SaveView();
+        if (_preferencesDirectory is not null) AppPreferencesStore.Update(p => p.Tint = Surface.Tint, _preferencesDirectory);
     }
 
     private void Reading_Click(object sender, RoutedEventArgs e) => ReadingMode = !ReadingMode;
@@ -461,16 +465,15 @@ public partial class PageViewer : UserControl, IDocumentViewer
                 break;
         }
         Surface.SetArrangement(columns, cover, continuous);
-        SaveView();
+        SaveArrangement();
     }
 
-    private void SaveView()
+    private void SaveArrangement()
     {
         _arrangement = (Surface.Columns, Surface.Cover, Surface.Continuous);
         if (_preferencesDirectory is null) return;
         AppPreferencesStore.Update(p =>
         {
-            p.Tint = Surface.Tint;
             p.Columns = Surface.Columns;
             p.Cover = Surface.Cover;
             p.Continuous = Surface.Continuous;

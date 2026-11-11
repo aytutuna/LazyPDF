@@ -672,6 +672,48 @@ public sealed class KeyboardPlacementTests
         return Task.CompletedTask;
     });
 
+    [Fact]
+    public Task SwitchingTabsKeepsEachOnesZoomWhateverItsLayout() => Sta.Run(() =>
+    {
+        using var asking = TabAsking();
+        using var plain = NewTab();
+        var viewer = ArrangedViewer();
+        viewer.Show(plain);
+        viewer.Surface.SetZoom(1.75);
+        viewer.Show(asking);
+        Assert.Equal(FitMode.Page, viewer.Surface.Fit);
+
+        viewer.Show(plain);
+
+        Assert.Equal((FitMode.None, 1.75), (viewer.Surface.Fit, plain.Zoom));
+        Assert.Equal(1.75, viewer.Surface.Zoom, 3);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ATintDoesNotSaveTheLayoutAFileAskedFor() => Sta.Run(() =>
+    {
+        string directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        try
+        {
+            using var asking = TabAsking();
+            var viewer = new PageViewer(directory);
+            viewer.Show(asking);
+            var dark = new System.Windows.Controls.MenuItem { Tag = "Dark" };
+
+            typeof(PageViewer).GetMethod("Tint_Click", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(viewer, [dark, new RoutedEventArgs()]);
+
+            var saved = AppPreferencesStore.Load(directory);
+            Assert.Equal(PageTint.Dark, saved.Tint);
+            Assert.Equal((1, false, true), (saved.Columns, saved.Cover, saved.Continuous));
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
+        return Task.CompletedTask;
+    });
+
     private static DocumentTab TabAsking()
     {
         var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(4)), new FakeRenderer(), null, "a.pdf");
