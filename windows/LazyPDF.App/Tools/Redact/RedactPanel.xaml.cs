@@ -103,9 +103,11 @@ public partial class RedactPanel : ToolPanel
         int[] pages = [.. Tab!.Document.Pages.Select(p => p.Reference.Number)];
         bool moved = state.Pages is { } before && !before.SequenceEqual(pages);
         state.Pages = pages;
-        if (!moved || state.Marks.Items.Count == 0) return;
+        if (!moved) return;
+        bool any = state.Marks.Items.Count > 0;
         state.Marks.Clear();
         state.Marks.Forget();
+        if (!any) return;
         Host!.ShowNotice(Loc.T("Marks removed"), Loc.T("The pages changed, so the marks no longer fit. Mark them again."));
     }
 

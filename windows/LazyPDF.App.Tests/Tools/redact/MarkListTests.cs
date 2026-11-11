@@ -157,6 +157,19 @@ public sealed class MarkListTests
     }
 
     [Fact]
+    public void ForgettingAfterAClearLeavesNothingToUndo()
+    {
+        var list = new MarkList();
+        list.Add([Item(4, 10, 100)]);
+        list.Clear();
+
+        list.Forget();
+
+        Assert.False(list.CanUndo);
+        Assert.Empty(list.Items);
+    }
+
+    [Fact]
     public void UndoBringsBackAClearedList()
     {
         var list = new MarkList();
