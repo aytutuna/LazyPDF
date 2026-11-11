@@ -78,10 +78,18 @@ internal sealed partial class PageSurface
         {
             DrawFailure(dc, pageRect, Loc.T("This page cannot be shown."), false);
         }
-        else if (_failed.Any(key => key.Page == page && !key.IsPreview && key.Scale == ppp))
+        else if (NoteShown(page))
         {
             DrawFailure(dc, visible, Loc.T("Part of this page could not be drawn sharply."), true);
         }
+    }
+
+    // A tile that failed under an older version or tint says nothing about what is drawn now.
+    internal bool NoteShown(int page)
+    {
+        double ppp = Scale * Dpi;
+        int version = _versions[page];
+        return _failed.Any(key => key.Page == page && !key.IsPreview && key.Scale == ppp && key.Version == version && key.Tint == _tint);
     }
 
     // Older pictures first, then the smaller ones, the current page's own preview, other zooms by how near they are, the sharp tiles last.

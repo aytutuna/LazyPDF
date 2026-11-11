@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Windows;
 using System.Windows.Media;
@@ -533,6 +534,65 @@ public sealed class PageSurfaceTests
 
             Assert.Null(surface.Hit(gap));
             Assert.Equal(0, surface.Hit(gap, nearest: true)!.Value.Page);
+        });
+    }
+
+    private static T Private<T>(PageSurface surface, string name)
+    {
+        var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var type = typeof(PageSurface);
+        object? value = type.GetField(name, flags)?.GetValue(surface) ?? type.GetProperty(name, flags)!.GetValue(surface);
+        return (T)value!;
+    }
+
+    private static TileKey SharpKey(PageSurface surface, int version) =>
+        new(0, version, Private<double>(surface, "Scale") * Private<double>(surface, "Dpi"), 0, 0, surface.Tint);
+
+    [Fact]
+    public void AFailedTileOfAnOlderVersionShowsNoNote()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(1);
+            var failed = Private<HashSet<TileKey>>(surface, "_failed");
+
+            failed.Add(SharpKey(surface, surface.VersionOf(0) - 1));
+            Assert.False(surface.NoteShown(0));
+
+            failed.Add(SharpKey(surface, surface.VersionOf(0)));
+            Assert.True(surface.NoteShown(0));
+        });
+    }
+
+    [Fact]
+    public void TheSettleTickForgetsFailedTilesAndAsksForTilesAgain()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(1);
+            var cache = Private<TileCache>(surface, "_cache");
+            var failed = Private<HashSet<TileKey>>(surface, "_failed");
+            cache.Add(new TileKey(0, surface.VersionOf(0), 0.25, 0, 0, surface.Tint), BitmapSource.Create(1, 1, 96, 96, PixelFormats.Gray8, null, new byte[1], 1));
+
+            surface.SetZoom(surface.Zoom * 3);
+            failed.Add(SharpKey(surface, surface.VersionOf(0)));
+            Assert.True(Private<bool>(surface, "_settling"));
+
+            int pending = -1;
+            var frame = new DispatcherFrame();
+            var poll = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(5) };
+            poll.Tick += (_, _) =>
+            {
+                if (Private<bool>(surface, "_settling")) return;
+                pending = surface.TilesPending;
+                poll.Stop();
+                frame.Continue = false;
+            };
+            poll.Start();
+            Dispatcher.PushFrame(frame);
+
+            Assert.Empty(failed);
+            Assert.True(pending > 0);
         });
     }
 }

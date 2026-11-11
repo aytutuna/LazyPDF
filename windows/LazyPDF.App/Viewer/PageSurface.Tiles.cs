@@ -99,8 +99,12 @@ internal sealed partial class PageSurface
         Dispatcher.InvokeAsync(() =>
         {
             if (generation != _generation) return;
-            if (bitmap is null) _failed.Add(spec.Key);
-            else _cache.Add(spec.Key, bitmap);
+            var key = spec.Key;
+            if (bitmap is null)
+            {
+                if ((uint)key.Page < _versions.Length && _versions[key.Page] == key.Version && key.Tint == _tint) _failed.Add(key);
+            }
+            else _cache.Add(key, bitmap);
             InvalidateVisual();
         }, DispatcherPriority.Input);
     }
