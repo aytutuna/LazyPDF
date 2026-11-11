@@ -84,11 +84,12 @@ public enum PageAssembly {
         }
         if let importer = importers[ObjectIdentifier(first)] { try PageCarry.catalog(first, target, importer) }
         try PageTree.set(target, order)
+        var filed = Set<ObjectIdentifier>()
         for (i, source) in sources.enumerated() {
             let document = source.document
             let own = document.info.flatMap { PdfText.read(document, $0, "Title") }
             let title = own.flatMap { $0.isEmpty ? nil : $0 } ?? titles.flatMap { i < $0.count ? $0[i] : nil } ?? ""
-            try PageCarry.carry(document, target, taken[i].pages, taken[i].start, title)
+            try PageCarry.carry(document, target, taken[i].pages, taken[i].start, title, files: filed.insert(ObjectIdentifier(document)).inserted)
         }
         try PageCarry.mergeTags(target, tagged, all)
         target.droppedObjects = importers.values.reduce(0) { $0 + $1.dropped }

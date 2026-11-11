@@ -168,6 +168,14 @@ public class PageCarryTests
     }
 
     [Fact]
+    public void ADocumentListedTwiceCarriesItsAttachmentsOnce()
+    {
+        var same = Fixture("Same");
+        var merged = PageAssembly.Merge([new MergeSource(same, [0]), new MergeSource(same, [5]), new MergeSource(Fixture("Other"), [1])]);
+        Assert.Equal("note (2).txt=hello,note.txt=hello", Files(merged));
+    }
+
+    [Fact]
     public void AnAttachmentThatDoesNotDecodeIsSkippedAndCounted()
     {
         var part = PageAssembly.Extract(Fixture(brokenFile: true), [2, 3]);

@@ -65,11 +65,12 @@ public static class PageAssembly
         if (first.Trailer["Info"] is { } info && first.Info is not null) target.Trailer["Info"] = importers[first].CopyValue(info);
         PageCarry.Catalog(first, target, importers[first]);
         PageTree.Set(target, order);
+        var filed = new HashSet<PdfDocument>(ReferenceEqualityComparer.Instance);
         for (int i = 0; i < sources.Count; i++)
         {
             var document = sources[i].Document;
             string? title = document.Info is { } own ? PdfText.Read(document, own, "Title") : null;
-            PageCarry.Carry(document, target, taken[i].Pages, taken[i].Start, string.IsNullOrEmpty(title) ? titles?.ElementAtOrDefault(i) ?? "" : title);
+            PageCarry.Carry(document, target, taken[i].Pages, taken[i].Start, string.IsNullOrEmpty(title) ? titles?.ElementAtOrDefault(i) ?? "" : title, files: filed.Add(document));
         }
         PageCarry.MergeTags(target, tagged, all);
         target.DroppedObjects = importers.Values.Sum(i => i.Dropped);
