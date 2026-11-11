@@ -505,6 +505,21 @@ final class FormsModelTests: XCTestCase {
         XCTAssertNil(rig.form.find("plan"))
     }
 
+    func test_deleteRemovesTheSelectedFieldAsOneStepAndOtherwiseDoesNothing() throws {
+        let rig = try designing()
+        let tool = try XCTUnwrap(rig.model.designTool)
+        XCTAssertFalse(tool.key(.delete, modifiers: []))
+        rig.model.select("name", 0)
+        XCTAssertFalse(tool.key(.delete, modifiers: .shift))
+        XCTAssertFalse(tool.key(.escape, modifiers: []))
+        XCTAssertNotNil(rig.form.find("name"))
+
+        XCTAssertTrue(tool.key(.delete, modifiers: []))
+        XCTAssertNil(rig.form.find("name"))
+        try rig.tab.undo()
+        XCTAssertNotNil(rig.form.find("name"))
+    }
+
     func test_theTabOrderOfThePageIsShownAndSet() throws {
         let rig = try designing()
         XCTAssertEqual(rig.model.tabOrder, .annotations)

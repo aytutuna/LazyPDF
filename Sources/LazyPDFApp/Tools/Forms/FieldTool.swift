@@ -35,6 +35,12 @@ final class FieldTool: PagePointerTool {
         return handleAt(model, pointer.page, pointer.point) != nil || model.widgetAt(pointer.page, pointer.point, near: true, exact: true) != nil
     }
 
+    func key(_ key: ViewerKey, modifiers: PointerModifiers) -> Bool {
+        guard key == .delete || key == .backspace, modifiers.isEmpty, let model, !model.isWorking, model.selectedBox() != nil else { return false }
+        model.deleteSelected()
+        return true
+    }
+
     func press(_ pointer: PagePointer) {
         guard let model, !model.isWorking else { return }
         model.commitCard()
