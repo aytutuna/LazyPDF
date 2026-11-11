@@ -12,6 +12,7 @@ public partial class BatchPanel
     // One file at a time, so a run and the watcher never share the Bates numbers or the output names.
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly Queue<string> _arrived = new();
+    private readonly Dictionary<string, string> _roots = new(StringComparer.OrdinalIgnoreCase);
     private FolderWatcher? _watcher;
     private CancellationTokenSource? _watchCancel;
     private bool _draining;
@@ -67,7 +68,7 @@ public partial class BatchPanel
     {
         var dialog = new OpenFolderDialog { Title = Loc.T("Folder of PDFs") };
         if (dialog.ShowDialog() != true) return;
-        AddFiles(PdfsIn(dialog.FolderName));
+        AddFiles(PdfsIn(dialog.FolderName, IncludeSubfolders.IsChecked == true), dialog.FolderName);
     }
 
     private void Panel_DragOver(object sender, DragEventArgs e)
@@ -82,18 +83,32 @@ public partial class BatchPanel
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
         e.Handled = true;
         _folderFailed = false;
-        var pdfs = paths.SelectMany(p => Directory.Exists(p) ? PdfsIn(p) : [p])
-            .Where(p => string.Equals(System.IO.Path.GetExtension(p), ".pdf", StringComparison.OrdinalIgnoreCase)).ToList();
-        if (pdfs.Count > 0) AddFiles(pdfs);
-        else if (!_folderFailed) Host?.SetStatus(Loc.T("Only PDF files can be added."));
+        bool added = false;
+        foreach (var folder in paths.Where(Directory.Exists))
+        {
+            var inside = PdfsIn(folder, IncludeSubfolders.IsChecked == true);
+            AddFiles(inside, folder);
+            added |= inside.Count > 0;
+        }
+        var singles = paths.Where(p => !Directory.Exists(p) && string.Equals(System.IO.Path.GetExtension(p), ".pdf", StringComparison.OrdinalIgnoreCase)).ToList();
+        AddFiles(singles);
+        if (!added && singles.Count == 0 && !_folderFailed) Host?.SetStatus(Loc.T("Only PDF files can be added."));
     }
 
-    internal List<string> PdfsIn(string folder)
+    internal List<string> PdfsIn(string folder, bool recurse)
     {
+        const int Limit = 5000;
         try
         {
-            var found = Directory.EnumerateFiles(folder, "*.pdf").ToList();
-            found.Sort(StringComparer.CurrentCultureIgnoreCase);
+            // Links are skipped so a folder that points back up cannot loop.
+            var options = new EnumerationOptions { RecurseSubdirectories = recurse, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint | FileAttributes.System };
+            var found = Directory.EnumerateFiles(folder, "*.pdf", options).Take(Limit + 1).ToList();
+            if (found.Count > Limit)
+            {
+                found.RemoveAt(Limit);
+                Host?.SetStatus(Loc.T("Only the first 5000 files were added."));
+            }
+            found.Sort((a, b) => string.Compare(System.IO.Path.GetRelativePath(folder, a), System.IO.Path.GetRelativePath(folder, b), StringComparison.CurrentCultureIgnoreCase));
             return found;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -106,11 +121,13 @@ public partial class BatchPanel
         }
     }
 
-    internal void AddFiles(IEnumerable<string> paths)
+    internal void AddFiles(IEnumerable<string> paths, string? root = null)
     {
         foreach (var path in paths)
         {
-            if (_known.Add(path)) _files.Add(path);
+            if (!_known.Add(path)) continue;
+            _files.Add(path);
+            if (root is not null) _roots[path] = root;
         }
         ShowFiles();
     }
@@ -120,6 +137,7 @@ public partial class BatchPanel
         if (((FrameworkElement)sender).DataContext is not FileRow row) return;
         _files.Remove(row.Path);
         _known.Remove(row.Path);
+        _roots.Remove(row.Path);
         ShowFiles();
     }
 
@@ -154,7 +172,7 @@ public partial class BatchPanel
                     BatchResult result;
                     try
                     {
-                        result = await RunOneAsync(files[i], set, live, i + 1, token);
+                        result = await RunOneAsync(files[i], set, live, i + 1, token, RelativeDir(files[i]));
                     }
                     catch (OperationCanceledException)
                     {
@@ -166,6 +184,7 @@ public partial class BatchPanel
                     {
                         _files.Remove(files[i]);
                         _known.Remove(files[i]);
+                        _roots.Remove(files[i]);
                     }
                     else failed++;
                 }
@@ -179,8 +198,15 @@ public partial class BatchPanel
         Host?.SetStatus(cancelled ? Loc.T("Cancelled.") : failed == 0 ? Loc.T("All files done") : Loc.Plural(failed, "{0} file failed", "{0} files failed"));
     }
 
+    private string RelativeDir(string path)
+    {
+        if (!_roots.TryGetValue(path, out var root)) return "";
+        var dir = System.IO.Path.GetRelativePath(root, System.IO.Path.GetDirectoryName(path)!);
+        return dir == "." ? "" : dir;
+    }
+
     // <paramref name="live"/> are the steps on screen that <paramref name="set"/> was copied from, in the same order.
-    internal async Task<BatchResult> RunOneAsync(string path, BatchSet set, IReadOnlyList<BatchStep> live, int number, CancellationToken token)
+    internal async Task<BatchResult> RunOneAsync(string path, BatchSet set, IReadOnlyList<BatchStep> live, int number, CancellationToken token, string relativeDir = "")
     {
         await _gate.WaitAsync(token);
         try
@@ -189,7 +215,7 @@ public partial class BatchPanel
             {
                 if (live[i].Kind == BatchStepKind.Bates) set.Steps[i].Start = live[i].Start;
             }
-            var result = await Task.Run(() => Runner.RunAsync(path, set, number, DateTimeOffset.Now, token), token);
+            var result = await Task.Run(() => Runner.RunAsync(path, set, number, DateTimeOffset.Now, token, relativeDir), token);
             if (result.Ok) ContinueNumbers(set, live);
             return result;
         }

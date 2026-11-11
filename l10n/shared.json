@@ -4697,6 +4697,12 @@
   "Add every PDF in a folder": {
     "tr": "Bir klasördeki tüm PDF'leri ekle"
   },
+  "Include subfolders": {
+    "tr": "Alt klasörleri dahil et"
+  },
+  "Only the first 5000 files were added.": {
+    "tr": "Yalnızca ilk 5000 dosya eklendi."
+  },
   "Files to run on": {
     "tr": "İşlenecek dosyalar"
   },

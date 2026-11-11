@@ -51,6 +51,44 @@ public sealed class BatchRunnerTests
     }
 
     [Fact]
+    public async Task AFileFromASubfolderKeepsItsFolderInTheResults()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a\\b\\x.pdf", Pdfs.Text());
+        var set = Set(dir, Step(BatchStepKind.Clean));
+
+        var result = await Runner().RunAsync(file, set, 1, Now, CancellationToken.None, "b");
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Equal(dir.Sub("out\\b\\x.pdf"), result.Output);
+        Assert.StartsWith("b\\x.pdf", result.Detail);
+    }
+
+    [Fact]
+    public async Task SameNamedFilesInDifferentFoldersDoNotCollide()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, Step(BatchStepKind.Clean));
+
+        var one = await Runner().RunAsync(dir.File("a\\x.pdf", Pdfs.Text()), set, 1, Now, CancellationToken.None, "a");
+        var two = await Runner().RunAsync(dir.File("b\\x.pdf", Pdfs.Text()), set, 2, Now, CancellationToken.None, "b");
+
+        Assert.Equal(dir.Sub("out\\a\\x.pdf"), one.Output);
+        Assert.Equal(dir.Sub("out\\b\\x.pdf"), two.Output);
+    }
+
+    [Fact]
+    public async Task AFolderAboveTheResultsFolderIsNotUsed()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, Step(BatchStepKind.Clean));
+
+        var result = await Runner().RunAsync(dir.File("x.pdf", Pdfs.Text()), set, 1, Now, CancellationToken.None, "..\\up");
+
+        Assert.Equal(dir.Sub("out\\x.pdf"), result.Output);
+    }
+
+    [Fact]
     public async Task ALockedFileIsRefusedWithAPlainReason()
     {
         using var dir = new TempDir();

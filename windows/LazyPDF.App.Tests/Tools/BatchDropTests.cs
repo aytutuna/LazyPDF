@@ -79,7 +79,7 @@ public sealed class BatchDropTests
         panel.AttachHost(host);
         var missing = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "scans");
 
-        Assert.Empty(panel.PdfsIn(missing));
+        Assert.Empty(panel.PdfsIn(missing, true));
         var problem = Assert.Single(host.Problems);
         Assert.Contains("scans", problem.Text);
         return Task.CompletedTask;
@@ -93,12 +93,43 @@ public sealed class BatchDropTests
         {
             foreach (var name in new[] { "b.pdf", "A.pdf", "c.txt" }) File.WriteAllText(Path.Combine(folder.FullName, name), "x");
             var panel = new BatchPanel();
-            Assert.Equal(["A.pdf", "b.pdf"], panel.PdfsIn(folder.FullName).Select(Path.GetFileName));
+            Assert.Equal(["A.pdf", "b.pdf"], panel.PdfsIn(folder.FullName, false).Select(Path.GetFileName));
         }
         finally
         {
             folder.Delete(true);
         }
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ADroppedFolderAddsItsSubfoldersInPathOrder() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        string top = dir.File("in\\b.pdf", Pdfs.Text());
+        string inner = dir.File("in\\a\\x.pdf", Pdfs.Text());
+        var panel = new BatchPanel();
+        panel.RaiseEvent(Drop(panel, dir.Sub("in")));
+
+        var rows = Assert.IsAssignableFrom<IEnumerable<FileRow>>(panel.FileList.ItemsSource);
+        Assert.Equal([inner, top], rows.Select(r => r.Path));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AFolderLinkThatLoopsBackIsNotFollowed() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        string file = dir.File("in\\a.pdf", Pdfs.Text());
+        try
+        {
+            Directory.CreateSymbolicLink(dir.Sub("in\\loop"), dir.Sub("in"));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return Task.CompletedTask;
+        }
+        Assert.Equal([file], new BatchPanel().PdfsIn(dir.Sub("in"), true));
         return Task.CompletedTask;
     });
 

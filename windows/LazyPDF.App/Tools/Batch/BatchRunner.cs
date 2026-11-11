@@ -15,7 +15,7 @@ public sealed record BatchResult(string Input, string? Output, bool Ok, string T
 /// </summary>
 internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRecognizer recognizer, Func<IDocumentRenderer> renderers)
 {
-    public async Task<BatchResult> RunAsync(string path, BatchSet set, int number, DateTimeOffset now, CancellationToken cancellation)
+    public async Task<BatchResult> RunAsync(string path, BatchSet set, int number, DateTimeOffset now, CancellationToken cancellation, string relativeDir = "")
     {
         string name = Path.GetFileName(path);
         byte[] bytes;
@@ -51,10 +51,11 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
             return new(path, null, false, problem.Title, problem.Text);
         }
 
-        string target = Unique(Path.Combine(set.OutputFolder, BatchNames.Apply(set.NameTemplate, Path.GetFileNameWithoutExtension(path), number, now)));
+        if (relativeDir.StartsWith("..") || Path.IsPathRooted(relativeDir)) relativeDir = "";
+        string target = Unique(Path.Combine(set.OutputFolder, relativeDir, BatchNames.Apply(set.NameTemplate, Path.GetFileNameWithoutExtension(path), number, now)));
         try
         {
-            Directory.CreateDirectory(set.OutputFolder);
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
             PdfFileSaver.Save(target, bytes);
         }
         catch (Exception e) when (e is not OperationCanceledException)
@@ -62,7 +63,7 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
             var problem = Problems.Save(e, Path.GetFileName(target));
             return new(path, null, false, problem.Title, problem.Text);
         }
-        return new(path, target, true, notes.Count == 0 ? Loc.T("Done") : Loc.T("Done, with notes"), string.Join(" ", [Path.GetFileName(target), .. notes]));
+        return new(path, target, true, notes.Count == 0 ? Loc.T("Done") : Loc.T("Done, with notes"), string.Join(" ", [Path.GetRelativePath(set.OutputFolder, target), .. notes]));
     }
 
     private async Task<byte[]> ApplyAsync(BatchStep step, bool last, byte[] bytes, DateTimeOffset now, List<string> notes, CancellationToken cancellation)

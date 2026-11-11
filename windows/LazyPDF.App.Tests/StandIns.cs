@@ -14,8 +14,8 @@ internal sealed class TempDir : IDisposable
 
     public string File(string name, byte[] bytes)
     {
-        Directory.CreateDirectory(Path);
         string file = Sub(name);
+        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(file)!);
         System.IO.File.WriteAllBytes(file, bytes);
         return file;
     }

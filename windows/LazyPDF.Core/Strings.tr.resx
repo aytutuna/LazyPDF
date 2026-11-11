@@ -2668,6 +2668,9 @@
   <data name="Include pictures" xml:space="preserve">
     <value>Resimleri ekle</value>
   </data>
+  <data name="Include subfolders" xml:space="preserve">
+    <value>Alt klasörleri dahil et</value>
+  </data>
   <data name="Initials" xml:space="preserve">
     <value>Baş harfler</value>
   </data>
@@ -3747,6 +3750,9 @@
   </data>
   <data name="Only the first 5000 differences are marked." xml:space="preserve">
     <value>Yalnızca ilk 5000 fark işaretlendi.</value>
+  </data>
+  <data name="Only the first 5000 files were added." xml:space="preserve">
+    <value>Yalnızca ilk 5000 dosya eklendi.</value>
   </data>
   <data name="Only the first signature of a file can certify it." xml:space="preserve">
     <value>Bir dosyayı yalnızca ilk imza sertifikalandırabilir.</value>

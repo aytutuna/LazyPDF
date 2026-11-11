@@ -137,6 +137,8 @@
                 <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8B7;" Content="{loc:T Add folder}" Padding="10,3,10,4" Margin="8,0,0,0"
                         AutomationProperties.Name="{loc:T Add every PDF in a folder}" Click="AddFolder_Click" />
             </StackPanel>
+            <CheckBox x:Name="IncludeSubfolders" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Include subfolders}" AutomationProperties.Name="{loc:T Include subfolders}"
+                      IsChecked="True" Margin="0,0,0,8" />
             <ListBox x:Name="FileList" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Files to run on}" MaxHeight="120"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch">
                 <ListBox.ItemTemplate>
