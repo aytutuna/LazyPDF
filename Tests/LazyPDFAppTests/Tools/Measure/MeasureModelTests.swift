@@ -1,4 +1,4 @@
-import XCTest
+﻿import XCTest
 @testable import LazyPDFKit
 @testable import LazyPDFApp
 
@@ -109,6 +109,28 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertEqual(rig.host.statuses, ["Added 2 measurements"])
         XCTAssertTrue(try rig.tab.undo())
         XCTAssertTrue(PdfAnnotations.read(rig.tab.document, rig.tab.document.pages[0]).isEmpty)
+    }
+
+    func test_aWriteThatFailsChangesNothingAndKeepsTheList() async throws {
+        let (model, rig) = try attached()
+        try measure(model, ViewPoint(100, 100), ViewPoint(172, 100))
+        let tool = try XCTUnwrap(model.tool)
+        for x in [100.0, 172] {
+            tool.press(PagePointer(page: 1, point: ViewPoint(x, 200), view: ViewPoint(x, 200), pressed: true, clicks: 1))
+        }
+        try PageOperations.delete(rig.tab.document, [1])
+        let before = rig.tab.session.current
+        let canUndo = rig.tab.session.canUndo
+
+        await model.action?.run()
+
+        XCTAssertEqual(rig.host.problems.map(\.title), ["Measurements not added"])
+        XCTAssertEqual(rig.tab.session.current, before)
+        XCTAssertEqual(rig.tab.document.pages.count, 2)
+        XCTAssertTrue(PdfAnnotations.read(rig.tab.document, rig.tab.document.pages[0]).isEmpty)
+        XCTAssertEqual(model.rows.count, 2)
+        XCTAssertEqual(rig.tab.session.canUndo, canUndo)
+        XCTAssertTrue(rig.host.statuses.isEmpty)
     }
 
     func test_addToPageOfAFileThatTakesNoMarksIsRefused() async throws {

@@ -265,22 +265,25 @@ public final class MeasureModel: ToolPanelModel {
     }
 
     private func write(_ tab: DocumentTab, _ host: ToolHost) {
-        var count = 0
-        var failure: Error?
+        let count: Int
         do {
             count = try MeasureWriter.write(tab.document, items, scale, author: author, date: PanelDates.now(), fonts: fonts)
+        } catch let error as PdfPermissionException {
+            try? tab.session.discard()
+            ChangeGate.guarded(host, L10n.t("Measure")) { throw error }
+            return
         } catch {
-            failure = error
+            try? tab.session.discard()
+            host.showProblem(Problem(L10n.t("Measurements not added"), L10n.t("They could not be written to the file. Nothing was changed.")))
+            rebuild()
+            return
         }
         // Whatever was written is one step, so Undo takes all of it back.
         do {
             try tab.commit(L10n.t("Measure"))
         } catch {
             try? tab.session.discard()
-            failure = failure ?? error
-        }
-        if let failure {
-            ChangeGate.guarded(host, L10n.t("Measure")) { throw failure }
+            ChangeGate.guarded(host, L10n.t("Measure")) { throw error }
             return
         }
         waiting.items.removeAll()
