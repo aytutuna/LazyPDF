@@ -20,6 +20,7 @@ public partial class BatchPanel
         BatchStepKind.Clean => Loc.T("Clean for sharing"),
         BatchStepKind.Watermark => Loc.T("Watermark"),
         BatchStepKind.Bates => Loc.T("Bates numbers"),
+        BatchStepKind.Rotate => Loc.T("Rotate pages"),
         _ => Loc.T("PDF/A"),
     };
 
@@ -38,8 +39,25 @@ public partial class BatchPanel
             ? Loc.T("Keeps some private data") : Loc.T("Removes hidden and private data"),
         BatchStepKind.Watermark => step.Text.Length == 0 ? Loc.T("No text yet") : step.Text,
         BatchStepKind.Bates => Loc.T("Starts at {0}", new BatesSpec(step.Text, step.Suffix, step.Digits, step.Start).Format(step.Start)),
+        BatchStepKind.Rotate => TurnDetail(step),
         _ => step.Level.Name(),
     };
+
+    private static string TurnDetail(BatchStep step)
+    {
+        string turn = step.Turn switch
+        {
+            180 => Loc.T("{0} degrees", step.Turn),
+            270 => Loc.T("{0} degrees clockwise (90 anticlockwise)", step.Turn),
+            _ => Loc.T("{0} degrees clockwise", step.Turn),
+        };
+        return step.Pages switch
+        {
+            BatchPages.Odd => turn + Loc.T(", odd pages only"),
+            BatchPages.Even => turn + Loc.T(", even pages only"),
+            _ => turn,
+        };
+    }
 
     private static string AnchorName(StampAnchor anchor) => anchor switch
     {
@@ -66,6 +84,10 @@ public partial class BatchPanel
 
     private void FillChoices()
     {
+        foreach (var (turn, text) in new[] { (90, Loc.T("Right (90 degrees)")), (180, Loc.T("Upside down (180 degrees)")), (270, Loc.T("Left (270 degrees)")) })
+            TurnBox.Items.Add(new ComboBoxItem { Content = text, Tag = turn });
+        foreach (var (pages, text) in new[] { (BatchPages.All, Loc.T("All pages")), (BatchPages.Odd, Loc.T("Odd pages")), (BatchPages.Even, Loc.T("Even pages")) })
+            RotatePagesBox.Items.Add(new ComboBoxItem { Content = text, Tag = pages });
         foreach (var preset in Enum.GetValues<OptimizePreset>()) PresetBox.Items.Add(new ComboBoxItem { Content = PresetName(preset), Tag = preset });
         foreach (var level in Levels) LevelBox.Items.Add(new ComboBoxItem { Content = level.Name(), Tag = level });
         foreach (var anchor in Enum.GetValues<StampAnchor>()) AnchorBox.Items.Add(new ComboBoxItem { Content = AnchorName(anchor), Tag = anchor });
@@ -98,6 +120,7 @@ public partial class BatchPanel
         WatermarkEditor.Visibility = Show(step.Kind == BatchStepKind.Watermark);
         BatesEditor.Visibility = Show(step.Kind == BatchStepKind.Bates);
         LevelEditor.Visibility = Show(step.Kind == BatchStepKind.PdfA);
+        RotateEditor.Visibility = Show(step.Kind == BatchStepKind.Rotate);
 
         _loading = true;
         if (step.Kind == BatchStepKind.Ocr) ShowLanguages(step);
@@ -117,6 +140,8 @@ public partial class BatchPanel
         DigitsBox.Text = step.Digits.ToString(CultureInfo.CurrentCulture);
         StartBox.Text = step.Start.ToString(CultureInfo.CurrentCulture);
         LevelBox.SelectedIndex = Array.IndexOf(Levels, step.Level);
+        TurnBox.SelectedIndex = step.Turn / 90 - 1;
+        RotatePagesBox.SelectedIndex = (int)step.Pages;
         _loading = false;
     }
 
@@ -221,6 +246,10 @@ public partial class BatchPanel
                 if (PlaceBox.SelectedItem is ComboBoxItem { Tag: BatesPlace place }) step.Place = place;
                 if (int.TryParse(DigitsBox.Text, CultureInfo.CurrentCulture, out int digits)) step.Digits = Math.Clamp(digits, 1, 18);
                 if (long.TryParse(StartBox.Text, CultureInfo.CurrentCulture, out long start) && start >= 0) step.Start = start;
+                break;
+            case BatchStepKind.Rotate:
+                if (TurnBox.SelectedItem is ComboBoxItem { Tag: int turn }) step.Turn = turn;
+                if (RotatePagesBox.SelectedItem is ComboBoxItem { Tag: BatchPages pages }) step.Pages = pages;
                 break;
             case BatchStepKind.PdfA when LevelBox.SelectedItem is ComboBoxItem { Tag: PdfALevel level }:
                 step.Level = level;

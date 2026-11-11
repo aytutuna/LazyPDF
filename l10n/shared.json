@@ -5448,6 +5448,33 @@
   "Rotate pages": {
     "tr": "Sayfaları döndür"
   },
+  "Right (90 degrees)": {
+    "tr": "Sağa (90 derece)"
+  },
+  "Upside down (180 degrees)": {
+    "tr": "Ters (180 derece)"
+  },
+  "Left (270 degrees)": {
+    "tr": "Sola (270 derece)"
+  },
+  "{0} degrees clockwise": {
+    "tr": "Saat yönünde {0} derece"
+  },
+  "{0} degrees": {
+    "tr": "{0} derece"
+  },
+  "{0} degrees clockwise (90 anticlockwise)": {
+    "tr": "Saat yönünde {0} derece (saat yönünün tersine 90)"
+  },
+  ", odd pages only": {
+    "tr": ", yalnızca tek sayfalar"
+  },
+  ", even pages only": {
+    "tr": ", yalnızca çift sayfalar"
+  },
+  "No page matched, so nothing was turned.": {
+    "tr": "Eşleşen sayfa olmadığından hiçbir şey döndürülmedi."
+  },
   "Duplicate pages": {
     "tr": "Sayfaları çoğalt"
   },

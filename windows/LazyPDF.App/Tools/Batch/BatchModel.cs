@@ -12,6 +12,14 @@ public enum BatchStepKind
     Watermark,
     Bates,
     PdfA,
+    Rotate,
+}
+
+public enum BatchPages
+{
+    All,
+    Odd,
+    Even,
 }
 
 public enum BatesPlace
@@ -54,6 +62,11 @@ public sealed class BatchStep
     public int Size { get; set; } = 60;
 
     public StampAnchor Anchor { get; set; } = StampAnchor.Center;
+
+    /// <summary>Clockwise degrees of Rotate: 90, 180 or 270.</summary>
+    public int Turn { get; set; } = 90;
+
+    public BatchPages Pages { get; set; }
 
     public bool KeepComments { get; set; }
 

@@ -394,4 +394,64 @@ public sealed class BatchRunnerTests
         Assert.False(result.Ok);
         Assert.Equal("Not saved", result.Title);
     }
+
+    private static List<int> Turns(string path)
+    {
+        using var document = PdfDocument.Open(File.ReadAllBytes(path));
+        return [.. document.Pages.Select(p => p.Rotate)];
+    }
+
+    [Fact]
+    public async Task RotateTurnsEveryPageOrOnlyTheOddOrEvenOnes()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text(3));
+
+        var all = await Run(Runner(), file, Set(dir, new BatchStep { Kind = BatchStepKind.Rotate, Turn = 90 }));
+        var even = await Run(Runner(), file, Set(dir, new BatchStep { Kind = BatchStepKind.Rotate, Turn = 180, Pages = BatchPages.Even }), 2);
+
+        Assert.Equal([90, 90, 90], Turns(all.Output!));
+        Assert.Equal([0, 180, 0], Turns(even.Output!));
+    }
+
+    [Fact]
+    public async Task RotateAddsToThePageTurnItAlreadyHas()
+    {
+        using var dir = new TempDir();
+        var session = PdfEditSession.Open(Pdfs.Text());
+        PageOperations.Rotate(session.Document, [0], 270);
+        session.Commit("Rotate");
+        string file = dir.File("a.pdf", session.Current.ToArray());
+
+        var result = await Run(Runner(), file, Set(dir, new BatchStep { Kind = BatchStepKind.Rotate, Turn = 90 }));
+
+        Assert.Equal([0], Turns(result.Output!));
+    }
+
+    [Fact]
+    public async Task RotatePassesAFileWithNoMatchingPageThroughWithANote()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text());
+
+        var result = await Run(Runner(), file, Set(dir, new BatchStep { Kind = BatchStepKind.Rotate, Pages = BatchPages.Even }));
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Contains("No page matched", result.Detail, StringComparison.Ordinal);
+        Assert.Equal([0], Turns(result.Output!));
+    }
+
+    [Fact]
+    public void ARotateStepSurvivesBeingSaved()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.Rotate, Turn = 270, Pages = BatchPages.Odd });
+        set.Name = "Turn";
+        var store = new BatchSetStore(dir.Path);
+
+        store.Save(set);
+
+        var step = Assert.Single(Assert.Single(store.Load()).Steps);
+        Assert.Equal((BatchStepKind.Rotate, 270, BatchPages.Odd), (step.Kind, step.Turn, step.Pages));
+    }
 }

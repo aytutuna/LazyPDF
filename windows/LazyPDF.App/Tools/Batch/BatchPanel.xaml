@@ -64,6 +64,12 @@
                     <TextBlock Text="{loc:T Size}" Style="{StaticResource FieldLabelText}" />
                     <ComboBox x:Name="PresetBox" AutomationProperties.Name="{loc:T Size of the file}" SelectionChanged="Setting_Changed" />
                 </StackPanel>
+                <StackPanel x:Name="RotateEditor">
+                    <TextBlock Text="{loc:T Turn}" Style="{StaticResource FieldLabelText}" />
+                    <ComboBox x:Name="TurnBox" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Turn}" SelectionChanged="Setting_Changed" />
+                    <TextBlock Text="{loc:T Pages}" Style="{StaticResource FieldLabelText}" />
+                    <ComboBox x:Name="RotatePagesBox" AutomationProperties.Name="{loc:T Pages}" SelectionChanged="Setting_Changed" />
+                </StackPanel>
                 <StackPanel x:Name="WatermarkEditor">
                     <TextBlock Text="{loc:T Text}" Style="{StaticResource FieldLabelText}" />
                     <TextBox x:Name="WatermarkBox" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Watermark text}" TextChanged="Setting_Changed" />

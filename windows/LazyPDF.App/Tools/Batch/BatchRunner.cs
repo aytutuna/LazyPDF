@@ -122,6 +122,8 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
                 return Watermark(step, bytes, notes);
             case BatchStepKind.Bates:
                 return Bates(step, bytes, notes);
+            case BatchStepKind.Rotate:
+                return Rotate(step, bytes, notes);
             default:
                 {
                     var converted = new PdfAConverter(fonts).Convert(bytes, step.Level, now);
@@ -186,6 +188,25 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
             Anchor = step.Anchor,
         };
         Stamp(session, notes, "Watermark", stamper => stamper.AddWatermark(spec));
+        return session.Current.ToArray();
+    }
+
+    private static byte[] Rotate(BatchStep step, byte[] bytes, List<string> notes)
+    {
+        var session = PdfEditSession.Open(bytes);
+        var pages = Enumerable.Range(0, session.Document.Pages.Count).Where(i => step.Pages switch
+        {
+            BatchPages.Odd => i % 2 == 0,
+            BatchPages.Even => i % 2 == 1,
+            _ => true,
+        }).ToList();
+        if (pages.Count == 0)
+        {
+            notes.Add(Loc.T("No page matched, so nothing was turned."));
+            return bytes;
+        }
+        PageOperations.Rotate(session.Document, pages, step.Turn);
+        session.Commit(Loc.T("Rotate pages"));
         return session.Current.ToArray();
     }
 

@@ -19,8 +19,14 @@
   <data name=" on page {0}" xml:space="preserve">
     <value> {0}. sayfada</value>
   </data>
+  <data name=", even pages only" xml:space="preserve">
+    <value>, yalnızca çift sayfalar</value>
+  </data>
   <data name=", first on page {0}" xml:space="preserve">
     <value>, ilki {0}. sayfada</value>
+  </data>
+  <data name=", odd pages only" xml:space="preserve">
+    <value>, yalnızca tek sayfalar</value>
   </data>
   <data name=", page {0}" xml:space="preserve">
     <value>, sayfa {0}</value>
@@ -2914,6 +2920,9 @@
   <data name="Left" xml:space="preserve">
     <value>Sol</value>
   </data>
+  <data name="Left (270 degrees)" xml:space="preserve">
+    <value>Sola (270 derece)</value>
+  </data>
   <data name="Left ({0})" xml:space="preserve">
     <value>Sol ({0})</value>
   </data>
@@ -3420,6 +3429,9 @@
   </data>
   <data name="No page in this file matches." xml:space="preserve">
     <value>Bu dosyada uyan sayfa yok.</value>
+  </data>
+  <data name="No page matched, so nothing was turned." xml:space="preserve">
+    <value>Eşleşen sayfa olmadığından hiçbir şey döndürülmedi.</value>
   </data>
   <data name="No pages need text recognition." xml:space="preserve">
     <value>Hiçbir sayfa metin tanıma gerektirmiyor.</value>
@@ -4851,6 +4863,9 @@
   </data>
   <data name="Right" xml:space="preserve">
     <value>Sağ</value>
+  </data>
+  <data name="Right (90 degrees)" xml:space="preserve">
+    <value>Sağa (90 derece)</value>
   </data>
   <data name="Right ({0})" xml:space="preserve">
     <value>Sağ ({0})</value>
@@ -7078,6 +7093,9 @@
   <data name="Update the changed date" xml:space="preserve">
     <value>Değiştirilme tarihini güncelle</value>
   </data>
+  <data name="Upside down (180 degrees)" xml:space="preserve">
+    <value>Ters (180 derece)</value>
+  </data>
   <data name="Use" xml:space="preserve">
     <value>Kullan</value>
   </data>
@@ -7629,6 +7647,15 @@
   </data>
   <data name="{0} could not be written. Choose another folder." xml:space="preserve">
     <value>{0} yazılamadı. Başka bir klasör seçin.</value>
+  </data>
+  <data name="{0} degrees" xml:space="preserve">
+    <value>{0} derece</value>
+  </data>
+  <data name="{0} degrees clockwise" xml:space="preserve">
+    <value>Saat yönünde {0} derece</value>
+  </data>
+  <data name="{0} degrees clockwise (90 anticlockwise)" xml:space="preserve">
+    <value>Saat yönünde {0} derece (saat yönünün tersine 90)</value>
   </data>
   <data name="{0} did not open. Check it and compare again." xml:space="preserve">
     <value>{0} açılmadı. Denetleyip yeniden karşılaştırın.</value>
