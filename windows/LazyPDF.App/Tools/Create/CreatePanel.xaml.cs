@@ -206,9 +206,15 @@ public partial class CreatePanel : ToolPanel
     {
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
         e.Handled = true;
-        if (Source != (int)CreateSource.Pictures) SourceBox.SelectedIndex = (int)CreateSource.Pictures;
         string[] kinds = [".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".gif", ".heic", ".heif"];
-        foreach (string file in paths.Where(p => kinds.Contains(System.IO.Path.GetExtension(p), StringComparer.OrdinalIgnoreCase))) _pictures.Add(new PictureItem(file));
+        var pictures = paths.Where(p => kinds.Contains(System.IO.Path.GetExtension(p), StringComparer.OrdinalIgnoreCase)).ToList();
+        if (pictures.Count == 0)
+        {
+            Host?.SetStatus(Loc.T("Only picture files can be added."));
+            return;
+        }
+        if (Source != (int)CreateSource.Pictures) SourceBox.SelectedIndex = (int)CreateSource.Pictures;
+        foreach (string file in pictures) _pictures.Add(new PictureItem(file));
         Refresh();
     }
 

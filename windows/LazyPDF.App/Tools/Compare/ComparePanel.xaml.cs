@@ -242,7 +242,11 @@ public partial class ComparePanel : ToolPanel
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
         e.Handled = true;
         string? pdf = paths.FirstOrDefault(p => string.Equals(System.IO.Path.GetExtension(p), ".pdf", StringComparison.OrdinalIgnoreCase));
-        if (pdf is null) return;
+        if (pdf is null)
+        {
+            Host?.SetStatus(Loc.T("Only PDF files can be added."));
+            return;
+        }
         FileMode.IsChecked = true;
         Source_Click(this, e);
         SetPath(pdf);
