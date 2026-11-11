@@ -206,7 +206,7 @@ extension AppViewModel {
         }
         let tab = DocumentTab(session: session, renderer: renderer, url: url, title: source.title, password: password,
                               recovery: recovery, unsaved: unsaved, known: source.stamp, certificate: certificate, loaded: loaded,
-                              bookmarks: bookmarks, access: pending.access, writer: fileWriter)
+                              bookmarks: bookmarks, access: pending.access, writer: fileWriter, readOnly: source.readOnly)
         pending.access = nil
         tab.changed = { [weak self] in self?.notifyAll() }
         if let old = pending.replacing, let at = index(of: old) {
@@ -227,6 +227,8 @@ extension AppViewModel {
         select(tab)
         if let note = source.note {
             showNotice(L10n.t("Opened with changes"), note)
+        } else if tab.readOnly {
+            showNotice(L10n.t("File is read-only"), L10n.t("{0} is read-only. You can work on it, but save your changes with Save as.", tab.title))
         } else if !tab.canDraw {
             showNotice(L10n.t("Pages cannot be shown"), L10n.t("{0} opens for editing, but its pages cannot be shown here.", tab.title))
         }
@@ -243,9 +245,9 @@ extension AppViewModel {
         old.dispose()
     }
 
-    /// True when `tab` was made from pictures or text, or has no file yet, so saving needs a name.
+    /// True when `tab` was made from pictures or text, or has no file yet, or is read-only, so saving needs a name.
     public static func needsName(_ tab: DocumentTab) -> Bool {
-        tab.url == nil
+        tab.url == nil || tab.readOnly
     }
 
     /// Saves over the file the tab was read from. Call `needsName` first; false also when the save failed and the info bar

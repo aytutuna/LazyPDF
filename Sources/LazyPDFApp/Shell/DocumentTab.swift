@@ -67,7 +67,7 @@ public final class DocumentTab: StripTab {
     public init(session: PdfEditSession, renderer: DocumentRenderer, url: URL?, title: String, password: String? = nil,
                 recovery: RecoveryStore? = nil, unsaved: Bool = false, known: DiskStamp? = nil,
                 certificate: CertificateChoice? = nil, loaded: Bool? = nil, bookmarks: Bookmarks? = nil, access: FileAccess? = nil,
-                writer: FileWriter = PlainFileWriter()) {
+                writer: FileWriter = PlainFileWriter(), readOnly: Bool = false) {
         self.session = session
         self.renderer = renderer
         self.location = url
@@ -77,6 +77,7 @@ public final class DocumentTab: StripTab {
         self.bookmarks = bookmarks
         self.writer = writer
         self.access = access
+        self.readOnly = readOnly
         self.locationBookmark = url.flatMap { bookmarks?.make($0) }
         self.unsaved = unsaved
         self.certificate = certificate
@@ -97,6 +98,9 @@ public final class DocumentTab: StripTab {
         _ = version
         return location
     }
+
+    /// The file cannot be written to; the tab has a file of its own once it is saved under another name.
+    public internal(set) var readOnly: Bool
 
     public var title: String {
         _ = version
@@ -205,6 +209,7 @@ public final class DocumentTab: StripTab {
 
     private func move(to url: URL) {
         location = url
+        readOnly = false
         locationBookmark = bookmarks?.make(url)
     }
 

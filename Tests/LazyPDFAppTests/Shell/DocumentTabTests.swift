@@ -102,6 +102,17 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertThrowsError(try tab.save()) { XCTAssertTrue($0 is InvalidOperationException) }
     }
 
+    func test_saveAsEndsTheReadOnlyState() throws {
+        let dir = TempDir(self)
+        let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text()), renderer: FakeRenderer(), url: written(dir),
+                              title: "a.pdf", readOnly: true)
+        XCTAssertTrue(tab.readOnly)
+
+        try tab.saveAs(dir.sub("b.pdf"))
+
+        XCTAssertFalse(tab.readOnly)
+    }
+
     func test_saveAsGivesTheTabItsFileAndName() throws {
         let dir = TempDir(self)
         let (tab, _) = try open(unsaved: true)

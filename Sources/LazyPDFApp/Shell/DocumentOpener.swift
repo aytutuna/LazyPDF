@@ -33,14 +33,17 @@ public struct OpenSource: Sendable {
     public let note: String?
     /// What the file looked like just before it was read, so a later change by someone else shows.
     public let stamp: DiskStamp?
+    /// The file cannot be written to, so saving goes to Save as.
+    public let readOnly: Bool
 
-    public init(bytes: [UInt8], url: URL?, title: String, made: Bool, note: String? = nil, stamp: DiskStamp? = nil) {
+    public init(bytes: [UInt8], url: URL?, title: String, made: Bool, note: String? = nil, stamp: DiskStamp? = nil, readOnly: Bool = false) {
         self.bytes = bytes
         self.url = url
         self.title = title
         self.made = made
         self.note = note
         self.stamp = stamp
+        self.readOnly = readOnly
     }
 }
 
@@ -80,7 +83,8 @@ public final class DocumentOpener {
             return OpenSource(bytes: made.bytes, url: nil, title: stem + ".pdf", made: true,
                               note: made.missing.isEmpty ? nil : L10n.t("Some characters have no letter in the font and were left out."))
         }
-        return OpenSource(bytes: bytes, url: url, title: url.lastPathComponent, made: false, stamp: stamp)
+        return OpenSource(bytes: bytes, url: url, title: url.lastPathComponent, made: false, stamp: stamp,
+                          readOnly: !FileManager.default.isWritableFile(atPath: url.path))
     }
 
     /// UTF-16 with a byte order mark, else UTF-8 when valid, else the Windows code page of the locale.

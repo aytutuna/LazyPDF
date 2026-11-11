@@ -71,6 +71,23 @@ final class OpenFlowTests: XCTestCase {
         XCTAssertTrue(f.vm.recent.isEmpty)
     }
 
+    func test_aReadOnlyFileOpensWithANoticeAndSavesAsANewFile() async throws {
+        try XCTSkipIf(getuid() == 0, "root can write to any file")
+        let f = ViewModelFixture(self)
+        let url = f.pdf("locked.pdf")
+        try FileManager.default.setAttributes([.posixPermissions: 0o444], ofItemAtPath: url.path)
+
+        await f.vm.open(url)
+
+        let tab = try XCTUnwrap(f.vm.activeDocument)
+        XCTAssertEqual(f.vm.message?.title, "File is read-only")
+        XCTAssertTrue(tab.readOnly)
+        XCTAssertTrue(AppViewModel.needsName(tab))
+        XCTAssertTrue(f.vm.saveAs(tab, f.dir.sub("copy.pdf")))
+        XCTAssertFalse(tab.readOnly)
+        XCTAssertFalse(AppViewModel.needsName(tab))
+    }
+
     func test_aTextFileOpensAsAnUnsavedDocument() async {
         let f = ViewModelFixture(self)
         let url = f.dir.file("notes.txt", Array("Some notes.".utf8))
