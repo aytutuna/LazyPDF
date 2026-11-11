@@ -114,6 +114,7 @@ public partial class FillSignPanel : ToolPanel
             if (rows.Count > 0) SavedList.SelectedIndex = 0;
             return;
         }
+        if (keepPath.Length == 0) return; // nothing was selected, so a drawn signature stays
         int kept = rows.FindIndex(r => r.Item.Path == keepPath);
         if (kept >= 0)
         {
