@@ -1,4 +1,3 @@
-using System.Globalization;
 using Windows.Globalization;
 using Windows.Media.Ocr;
 using Windows.System.UserProfile;
@@ -29,7 +28,7 @@ public sealed record OcrLanguageState(IReadOnlyList<OcrLanguage> Installed, IRea
     /// <summary>The one the list starts on: the language of the app, else English, else the first.</summary>
     public OcrLanguage? Preferred()
     {
-        string own = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+        string own = App.WindowsLanguage.TwoLetterISOLanguageName;
         return Installed.FirstOrDefault(l => Same(l, own)) ?? Installed.FirstOrDefault(l => Same(l, "en")) ?? Installed.FirstOrDefault();
     }
 

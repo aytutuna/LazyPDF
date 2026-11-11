@@ -82,19 +82,19 @@ public sealed class OcrLanguageStateTests
     [Fact]
     public void TheListStartsOnTheLanguageOfTheAppElseEnglish()
     {
-        var old = System.Globalization.CultureInfo.CurrentUICulture;
+        var old = App.WindowsLanguage;
         try
         {
-            System.Globalization.CultureInfo.CurrentUICulture = new("tr-TR");
+            App.WindowsLanguage = new("tr-TR");
             Assert.Equal(Turkish, new OcrLanguageState([English, Turkish], []).Preferred());
 
-            System.Globalization.CultureInfo.CurrentUICulture = new("fr-FR");
+            App.WindowsLanguage = new("fr-FR");
             Assert.Equal(English, new OcrLanguageState([Turkish, English], []).Preferred());
             Assert.Equal(Turkish, new OcrLanguageState([Turkish], []).Preferred());
         }
         finally
         {
-            System.Globalization.CultureInfo.CurrentUICulture = old;
+            App.WindowsLanguage = old;
         }
     }
 }

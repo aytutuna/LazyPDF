@@ -21,6 +21,9 @@ public partial class App : Application
     /// </summary>
     public static bool Unattended { get; set; }
 
+    /// <summary>The language Windows speaks, kept apart from the one the texts are shown in.</summary>
+    internal static CultureInfo WindowsLanguage { get; set; } = CultureInfo.CurrentUICulture;
+
     /// <summary>The files named on the command line; the main window takes them once it is open.</summary>
     public static IReadOnlyList<string> StartupFiles { get; private set; } = [];
 
@@ -56,6 +59,7 @@ public partial class App : Application
             args.SetObserved();
         };
         if (first) _channel = new InstanceChannel(Opened);
+        WindowsLanguage = CultureInfo.CurrentUICulture;
         if (AppPreferencesStore.Load().Language is ("en" or "tr") and var language)
         {
             // Only the texts change; number and date formats stay Windows'.
