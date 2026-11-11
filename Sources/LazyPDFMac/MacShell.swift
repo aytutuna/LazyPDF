@@ -22,6 +22,7 @@ final class MacShell {
     private weak var window: NSWindow?
     private var closeGuard: CloseGuard?
     private var terminateAnswer = false
+    var noteRecent: (URL) -> Void = { NSDocumentController.shared.noteNewRecentDocumentURL($0) }
 
     private init() {
         let folders = DefaultAppFolders()
@@ -96,7 +97,7 @@ final class MacShell {
         Task {
             for url in urls {
                 await vm.openOrHold(url, access: SecurityScopedAccess.start(url))
-                if vm.tab(of: url) != nil { NSDocumentController.shared.noteNewRecentDocumentURL(url) }
+                if vm.tab(of: url) != nil { noteRecent(url) }
             }
         }
     }

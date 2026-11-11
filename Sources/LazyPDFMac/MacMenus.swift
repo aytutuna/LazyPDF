@@ -27,7 +27,7 @@ struct MacMenus: Commands {
                         shell.showWindow()
                         Task {
                             await vm.openRecent(item)
-                            if vm.tab(of: item.url) != nil { NSDocumentController.shared.noteNewRecentDocumentURL(item.url) }
+                            if vm.tab(of: item.url) != nil { shell.noteRecent(item.url) }
                         }
                     }
                 }
