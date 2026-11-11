@@ -73,7 +73,7 @@ public partial class MainWindow : Window
     {
         if (WindowState == WindowState.Minimized) WindowState = WindowState.Normal;
         Activate();
-        if (paths.Count > 0) _ = _vm.OpenFilesAsync(paths);
+        if (paths.Count > 0) OpenOrHold(paths);
     }
 
     public void ShowProblem(Problem problem) => _vm.ShowProblem(problem);
@@ -126,6 +126,7 @@ public partial class MainWindow : Window
             RefreshInspector();
             RefreshStatus();
             RefreshOverlays();
+            ReleaseHeld();
         }
     }
 

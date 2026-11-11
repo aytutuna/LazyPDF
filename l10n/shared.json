@@ -1404,6 +1404,9 @@
   "This text includes annotation text, which the page's content does not hold. Build the page without IncludeAnnotations to edit or redact it.": {
     "tr": "Bu metin, sayfa içeriğinde bulunmayan ek açıklama metnini de içeriyor. Düzenlemek ya da karartmak için sayfayı IncludeAnnotations olmadan oluşturun."
   },
+  "Will open when you are done here.": {
+    "tr": "Burada işiniz bitince açılacak."
+  },
   "Cancelled.": {
     "tr": "İptal edildi."
   },

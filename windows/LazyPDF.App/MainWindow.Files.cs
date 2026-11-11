@@ -162,6 +162,25 @@ public partial class MainWindow
         DropOverlay.Visibility = Visibility.Collapsed;
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths || OverFileTarget(e)) return;
         e.Handled = true;
+        OpenOrHold(paths);
+    }
+
+    private void OpenOrHold(IEnumerable<string> paths)
+    {
+        if (Modal || _vm.IsBusy || _actionRunning)
+        {
+            _held.AddRange(paths);
+            _vm.SetStatus(Loc.T("Will open when you are done here."));
+            return;
+        }
+        _ = _vm.OpenFilesAsync(paths);
+    }
+
+    private void ReleaseHeld()
+    {
+        if (Modal || _vm.IsBusy || _actionRunning || _held.Count == 0) return;
+        var paths = _held.ToList();
+        _held.Clear();
         _ = _vm.OpenFilesAsync(paths);
     }
 }

@@ -6352,6 +6352,9 @@
   <data name="Width in percent of the page" xml:space="preserve">
     <value>Sayfanın yüzde kaçı genişlik</value>
   </data>
+  <data name="Will open when you are done here." xml:space="preserve">
+    <value>Burada işiniz bitince açılacak.</value>
+  </data>
   <data name="Windows" xml:space="preserve">
     <value>Windows</value>
   </data>

@@ -23,6 +23,7 @@ public partial class MainWindow
 
     private bool _narrow;
     private bool _actionRunning;
+    private readonly List<string> _held = new();
 
     private readonly Dictionary<ToolGroup, Button> _groupButtons = [];
     private readonly Dictionary<string, ToggleButton> _railButtons = [];
@@ -193,6 +194,7 @@ public partial class MainWindow
         InspectorClose.Visibility = Visibility.Visible;
         Place("tool:" + tool.Id, tool.Create, InspectorHost, ref _inspectorPanel, ref _inspectorTab, tab);
         RefreshAction();
+        ReleaseHeld();
     }
 
     // Shows the panel under <key> in the host, attached to the tab; the panel that was there is detached first.
