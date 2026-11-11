@@ -44,7 +44,7 @@ public partial class SearchSidePanel : ToolPanel
     private void Search_Changed(object? sender, EventArgs e)
     {
         var search = Viewer!.Search;
-        if (!Query.IsKeyboardFocused && Query.Text != search.Query)
+        if (!_typing.IsEnabled && !Query.IsKeyboardFocused && Query.Text != search.Query)
         {
             _following = true;
             Query.Text = search.Query;
@@ -54,6 +54,7 @@ public partial class SearchSidePanel : ToolPanel
             : search.BadPattern ? Loc.T("Not a valid pattern")
             : search.Running && search.Hits.Count > 0 ? Loc.T("{0} found", search.Hits.Count)
             : search.Running ? Loc.T("Searching for {0}", search.Query)
+            : search.NoText ? Loc.T("This file has no text to search. Try Make searchable.")
             : search.Hits.Count == 0 ? Loc.T("No results for {0}", search.Query)
             : Loc.Plural(search.Hits.Count, "{0} result for {1}", "{0} results for {1}", search.Hits.Count, search.Query);
         if (Results.SelectedIndex == search.Current) return;
