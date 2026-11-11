@@ -57,6 +57,11 @@
                 <ComboBoxItem Tag="300" Content="300 dpi" />
                 <ComboBoxItem Tag="600" Content="600 dpi" />
             </ComboBox>
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T File names}" Margin="0,12,0,4" />
+            <TextBox x:Name="NameBox" Text="{}{name} page {n}" AutomationProperties.Name="{loc:T File names}" TextChanged="NameBox_TextChanged" />
+            <TextBlock x:Name="NameHint" Style="{StaticResource ReasonText}" Margin="0,4,0,0" />
+            <CheckBox x:Name="ReplaceBox" Margin="0,12,0,0" Style="{StaticResource ToggleSwitchStyle}"
+                      Content="{loc:T Replace files with the same name}" AutomationProperties.Name="{loc:T Replace files with the same name}" />
             <StackPanel x:Name="QualityRow" Visibility="Collapsed">
                 <DockPanel Margin="0,12,0,4">
                     <TextBlock DockPanel.Dock="Right" Style="{StaticResource ReadoutText}" Text="{Binding Value, ElementName=QualityBox, StringFormat={}{0:0}}" />

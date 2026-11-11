@@ -82,7 +82,8 @@ public static class Exporter
                 skipped++;
                 continue;
             }
-            Save(Unique(folder, $"{source.Stem} page {(page + 1).ToString().PadLeft(digits, '0')}{extension}"), bytes);
+            string name = ExportNames.Apply(options.NamePattern, source.Stem, page + 1, digits) + extension;
+            Save(options.Replace ? Path.Combine(folder, name) : Unique(folder, name), bytes);
             written++;
         }
         return new ExportResult(written, folder, skipped);
@@ -128,5 +129,27 @@ public static class Exporter
             File.Delete(temp);
             throw;
         }
+    }
+}
+
+internal static class ExportNames
+{
+    private const string Default = "{name} page {n}";
+
+    public static string Apply(string pattern, string stem, int page, int digits)
+    {
+        string name = Fill(pattern, stem, page, digits);
+        return name.Length > 0 ? name : Fill(Default, stem, page, digits);
+    }
+
+    /// <summary>Null when every page gets a file of its own.</summary>
+    public static string? Error(string pattern, int pages) =>
+        pages > 1 && !pattern.Contains("{n}") ? Loc.T("Add {0} to the name so each page gets its own file.", "{n}") : null;
+
+    private static string Fill(string pattern, string stem, int page, int digits)
+    {
+        string name = pattern.Replace("{name}", stem).Replace("{n}", page.ToString().PadLeft(digits, '0'));
+        foreach (char c in Path.GetInvalidFileNameChars()) name = name.Replace(c, '_');
+        return name.Trim(' ', '.');
     }
 }

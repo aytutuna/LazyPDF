@@ -16,6 +16,7 @@ public partial class ExportPanel : ToolPanel
     public ExportPanel()
     {
         InitializeComponent();
+        NameHint.Text = Loc.T("Use {0} and {1}. A name that is taken gets a number.", "{name}", "{n}");
         _action = new ToolAction(Loc.T("Export"), "", CanRun, RunAsync);
         _ready = true;
     }
@@ -43,7 +44,9 @@ public partial class ExportPanel : ToolPanel
         if (Tab is not { } tab) return null;
         if (!Exporter.Allowed(tab.Document)) return Loc.T("This file does not allow copying its content.");
         if (Format == ExportFormat.Pictures && !tab.CanDraw) return Loc.T("Windows cannot draw this file.");
-        return Pages().Error;
+        var pages = Pages();
+        if (pages.Error is not null) return pages.Error;
+        return Format == ExportFormat.Pictures ? ExportNames.Error(NameBox.Text, pages.Pages?.Count ?? tab.PageCount) : null;
     }
 
     private bool CanRun() => Tab is not null && Blocker() is null;
@@ -69,7 +72,9 @@ public partial class ExportPanel : ToolPanel
         MarkdownPictures: MarkdownPicturesBox.IsChecked == true,
         Picture: PictureTypeBox.SelectedIndex == 1 ? PictureFormat.Jpeg : PictureFormat.Png,
         Dpi: int.Parse((string)((ComboBoxItem)DpiBox.SelectedItem).Tag),
-        Quality: (int)QualityBox.Value);
+        Quality: (int)QualityBox.Value,
+        NamePattern: NameBox.Text,
+        Replace: ReplaceBox.IsChecked == true);
 
     private async Task RunAsync()
     {
@@ -104,6 +109,11 @@ public partial class ExportPanel : ToolPanel
     }
 
     private void PictureTypeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_ready) Refresh();
+    }
+
+    private void NameBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         if (_ready) Refresh();
     }

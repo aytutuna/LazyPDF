@@ -307,6 +307,9 @@
   <data name="Add watermark" xml:space="preserve">
     <value>Filigran ekle</value>
   </data>
+  <data name="Add {0} to the name so each page gets its own file." xml:space="preserve">
+    <value>Her sayfa kendi dosyasını alsın diye ada {0} ekleyin.</value>
+  </data>
   <data name="Added" xml:space="preserve">
     <value>Eklendi</value>
   </data>
@@ -2037,6 +2040,9 @@
   </data>
   <data name="File name of the results" xml:space="preserve">
     <value>Sonuçların dosya adı</value>
+  </data>
+  <data name="File names" xml:space="preserve">
+    <value>Dosya adları</value>
   </data>
   <data name="File names and paths" xml:space="preserve">
     <value>Dosya adları ve yolları</value>
@@ -4531,6 +4537,9 @@
   <data name="Replace all" xml:space="preserve">
     <value>Tümünü değiştir</value>
   </data>
+  <data name="Replace files with the same name" xml:space="preserve">
+    <value>Aynı adlı dosyaların üzerine yaz</value>
+  </data>
   <data name="Replace in the whole file" xml:space="preserve">
     <value>Tüm dosyada değiştir</value>
   </data>
@@ -6825,6 +6834,9 @@
   </data>
   <data name="Use typed text instead" xml:space="preserve">
     <value>Bunun yerine yazılan metni kullan</value>
+  </data>
+  <data name="Use {0} and {1}. A name that is taken gets a number." xml:space="preserve">
+    <value>{0} ve {1} kullanın. Alınmış bir ada numara eklenir.</value>
   </data>
   <data name="Use {0}, {1} and {2}. A name that is taken gets a number." xml:space="preserve">
     <value>{0}, {1} ve {2} kullanın. Alınmış bir ada numara eklenir.</value>

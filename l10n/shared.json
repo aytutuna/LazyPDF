@@ -3491,6 +3491,18 @@
   "Resolution": {
     "tr": "Çözünürlük"
   },
+  "File names": {
+    "tr": "Dosya adları"
+  },
+  "Use {0} and {1}. A name that is taken gets a number.": {
+    "tr": "{0} ve {1} kullanın. Alınmış bir ada numara eklenir."
+  },
+  "Add {0} to the name so each page gets its own file.": {
+    "tr": "Her sayfa kendi dosyasını alsın diye ada {0} ekleyin."
+  },
+  "Replace files with the same name": {
+    "tr": "Aynı adlı dosyaların üzerine yaz"
+  },
   "Quality": {
     "tr": "Kalite"
   },

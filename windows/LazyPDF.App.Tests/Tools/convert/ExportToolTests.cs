@@ -126,6 +126,45 @@ public sealed class ExportToolTests
     }
 
     [Fact]
+    public void PicturesFollowTheNamePattern()
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(dir.Path);
+
+        Exporter.Write(SourceOf("doc", Report(12)), new ExportOptions(ExportFormat.Pictures, [0], Dpi: 72, NamePattern: "{name}-{n}"), dir.Path, CancellationToken.None);
+
+        Assert.Equal(["doc-01.png"], Directory.GetFiles(dir.Path).Select(Path.GetFileName));
+        Assert.Equal("a_b1", ExportNames.Apply("a/b{n}", "x", 1, 1));
+        Assert.Equal("x_1", ExportNames.Apply(" {name}/{n}. ", "x", 1, 1));
+        Assert.Equal("x page 1", ExportNames.Apply(" . ", "x", 1, 1));
+    }
+
+    [Fact]
+    public void ReplaceKeepsTheFileCountAndOtherwiseCopiesAreNumbered()
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(dir.Path);
+        var source = SourceOf("doc", Report(2));
+
+        var keep = new ExportOptions(ExportFormat.Pictures, Dpi: 72, Replace: true);
+        Exporter.Write(source, keep, dir.Path, CancellationToken.None);
+        Exporter.Write(source, keep, dir.Path, CancellationToken.None);
+        Assert.Equal(2, Directory.GetFiles(dir.Path).Length);
+
+        var copy = keep with { Replace = false };
+        Exporter.Write(source, copy, dir.Path, CancellationToken.None);
+        Assert.Equal(4, Directory.GetFiles(dir.Path).Length);
+    }
+
+    [Fact]
+    public void ManyPagesNeedTheNumberInTheName()
+    {
+        Assert.Equal("Add {n} to the name so each page gets its own file.", ExportNames.Error("page", 3));
+        Assert.Null(ExportNames.Error("page", 1));
+        Assert.Null(ExportNames.Error("page {n}", 3));
+    }
+
+    [Fact]
     public void JpegPicturesAreJpeg()
     {
         using var dir = new TempDir();
