@@ -239,16 +239,16 @@ public sealed partial class MetadataPanel : ToolPanel
                     _dropped = tab.Id;
                     RaiseActionChanged();
                 }
-                if (MetadataEdit.ShowDropNotice(notify, _dropped == tab.Id)) ShowDropNotice();
+                if (MetadataEdit.ShowDropNotice(notify, _dropped == tab.Id)) ShowDropNotice(host);
             }
             return Task.CompletedTask;
         });
     }
 
-    private void ShowDropNotice()
+    private void ShowDropNotice(IToolHost? host = null)
     {
         _dropped = Guid.Empty;
         RaiseActionChanged();
-        Host?.ShowNotice(Loc.T("Old values are still in the file"), Loc.T("The earlier title, author, subject, keywords or custom values can still be found in the file's history. Clean for sharing removes them."));
+        (host ?? Host)?.ShowNotice(Loc.T("Old values are still in the file"), Loc.T("The earlier title, author, subject, keywords or custom values can still be found in the file's history. Clean for sharing removes them."));
     }
 }
