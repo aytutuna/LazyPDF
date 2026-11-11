@@ -4,6 +4,9 @@
                  xmlns:loc="clr-namespace:LazyPDF.App"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
                  xmlns:panel="clr-namespace:LazyPDF.App.Panels.Pages">
+    <DockPanel>
+    <Slider x:Name="ThumbSize" DockPanel.Dock="Bottom" Margin="12,4,12,8" Minimum="72" Maximum="192" SmallChange="12" LargeChange="36"
+            ToolTip="{loc:T Thumbnail size}" AutomationProperties.Name="{loc:T Thumbnail size}" ValueChanged="ThumbSize_ValueChanged" />
     <ListBox x:Name="Thumbs" BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Center"
              ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True"
              VirtualizingPanel.ScrollUnit="Pixel" AutomationProperties.Name="{loc:T Page thumbnails}"
@@ -52,4 +55,5 @@
             </DataTemplate>
         </ListBox.ItemTemplate>
     </ListBox>
+    </DockPanel>
 </tools:ToolPanel>

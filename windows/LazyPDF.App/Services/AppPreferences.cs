@@ -35,6 +35,9 @@ public sealed class AppPreferences
     /// <summary>Web sites whose links open without asking: "https://" and the lower-case host, at most 100, oldest first.</summary>
     public List<string> AllowedLinkHosts { get; set; } = [];
 
+    /// <summary>The width of a page picture in the Pages panel, 72 to 192.</summary>
+    public double ThumbnailWidth { get; set; } = 132;
+
     /// <summary>Where the main window was left; null until it has been closed once.</summary>
     public WindowPlacement? Window { get; set; }
 }
@@ -59,8 +62,12 @@ public static class AppPreferencesStore
     /// <summary>Re-reads the file, applies <paramref name="change"/> and saves, so each part of the app changes only its own preference.</summary>
     public static void Update(Action<AppPreferences> change) => Update(change, StoreFiles.DefaultDirectory);
 
-    internal static AppPreferences Load(string directory) =>
-        StoreFiles.Load<AppPreferences>(Path(directory)) ?? new AppPreferences();
+    internal static AppPreferences Load(string directory)
+    {
+        var preferences = StoreFiles.Load<AppPreferences>(Path(directory)) ?? new AppPreferences();
+        preferences.ThumbnailWidth = Math.Clamp(preferences.ThumbnailWidth, 72, 192);
+        return preferences;
+    }
 
     internal static void Update(Action<AppPreferences> change, string directory)
     {

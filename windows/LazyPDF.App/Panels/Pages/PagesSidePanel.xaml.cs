@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.App.Tools;
@@ -16,9 +17,7 @@ namespace LazyPDF.App.Panels.Pages;
 /// <summary>Every page as a small picture, the page in view marked; a click goes to the page; Ctrl or Shift picks more, to turn, delete or extract. The list shows only the rows in view.</summary>
 public partial class PagesSidePanel : ToolPanel
 {
-    private const double BoxWidth = 132;
-    private const double BoxHeight = 190;
-
+    private readonly DispatcherTimer _resize = new() { Interval = TimeSpan.FromMilliseconds(150) };
     private bool _syncing;
     private PageThumb? _downThumb;
     private PageThumb? _pressed;
@@ -28,7 +27,34 @@ public partial class PagesSidePanel : ToolPanel
     private bool _after;
     private IEnumerable<int>? _reselect;
 
-    public PagesSidePanel() => InitializeComponent();
+    public PagesSidePanel()
+    {
+        InitializeComponent();
+        _syncing = true;
+        ThumbSize.Value = AppPreferencesStore.Load().ThumbnailWidth;
+        _syncing = false;
+        _resize.Tick += (_, _) => Resized();
+    }
+
+    private double BoxWidth => ThumbSize.Value;
+
+    private double BoxHeight => ThumbSize.Value * 190 / 132;
+
+    // The pictures are drawn again at the new size once the slider stops, not at every step of it.
+    private void ThumbSize_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (_syncing) return;
+        _resize.Stop();
+        _resize.Start();
+    }
+
+    internal void Resized()
+    {
+        _resize.Stop();
+        double width = ThumbSize.Value;
+        AppPreferencesStore.Update(p => p.ThumbnailWidth = width);
+        if (Tab is not null) Build();
+    }
 
     protected override void OnAttach()
     {
@@ -39,6 +65,7 @@ public partial class PagesSidePanel : ToolPanel
 
     protected override void OnDetach()
     {
+        _resize.Stop();
         Viewer!.PageChanged -= Viewer_PageChanged;
         Tab!.Changed -= Tab_Changed;
         Thumbs.ItemsSource = null;

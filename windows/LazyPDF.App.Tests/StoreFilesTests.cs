@@ -23,6 +23,16 @@ public sealed class StoreFilesTests
     }
 
     [Fact]
+    public void ThumbnailWidthDefaultsAndIsClamped()
+    {
+        using var dir = new TempDir();
+        Assert.Equal(132, AppPreferencesStore.Load(dir.Path).ThumbnailWidth);
+
+        AppPreferencesStore.Update(p => p.ThumbnailWidth = 500, dir.Path);
+        Assert.Equal(192, AppPreferencesStore.Load(dir.Path).ThumbnailWidth);
+    }
+
+    [Fact]
     public void ViewSettingsAreReadBackAsWritten()
     {
         using var dir = new TempDir();

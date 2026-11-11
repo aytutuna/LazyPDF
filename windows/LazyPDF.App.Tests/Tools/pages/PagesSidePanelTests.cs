@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Panels.Pages;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools.Pages;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
@@ -49,6 +50,29 @@ public sealed class PagesSidePanelTests
     }
 
     private static DocumentTab Open(int pages) => new(PdfEditSession.Open(Pdfs.Text(pages)), new FakeRenderer(), null, "a.pdf");
+
+    [Fact]
+    public Task ThumbnailSizeIsSavedAndResizesTheThumbnails() => Sta.Run(() =>
+    {
+        double before = AppPreferencesStore.Load().ThumbnailWidth;
+        try
+        {
+            using var tab = Open(2);
+            var panel = Show(tab, new RecordingHost());
+            ((Slider)panel.FindName("ThumbSize")).Value = 96;
+
+            panel.Resized();
+
+            Assert.Equal(96, AppPreferencesStore.Load().ThumbnailWidth);
+            Assert.All((List<PageThumb>)Thumbs(panel).ItemsSource, t => Assert.Equal(138, t.Height));
+            panel.Detach();
+        }
+        finally
+        {
+            AppPreferencesStore.Update(p => p.ThumbnailWidth = before);
+        }
+        return Task.CompletedTask;
+    });
 
     [Fact]
     public Task DeleteKeyRemovesTheSelectedPagesInOneStep() => Sta.Run(() =>
