@@ -94,6 +94,17 @@ public sealed class BatchSetTests
     }
 
     [Fact]
+    public void StopOnErrorSurvivesTheStoreAndACopy()
+    {
+        using var dir = new TempDir();
+        new BatchSetStore(dir.Path).Save(new BatchSet { Name = "Cases", StopOnError = true });
+
+        Assert.True(new BatchSetStore(dir.Path).Load().Single().StopOnError);
+        Assert.True(new BatchSet { StopOnError = true }.Copy().StopOnError);
+        Assert.False(new BatchSet().StopOnError);
+    }
+
+    [Fact]
     public async Task TheWatcherReportsANewPdfOnceAndNotTheOnesAlreadyThere()
     {
         using var dir = new TempDir();

@@ -128,7 +128,9 @@
             </DockPanel>
             <TextBlock Text="{loc:T File name}" Style="{StaticResource FieldLabelText}" />
             <TextBox x:Name="TemplateBox" AutomationProperties.Name="{loc:T File name of the results}" TextChanged="Template_Changed" />
-            <TextBlock x:Name="TemplateHint" Style="{StaticResource ReasonText}" Margin="0,4,0,16" />
+            <TextBlock x:Name="TemplateHint" Style="{StaticResource ReasonText}" Margin="0,4,0,8" />
+            <CheckBox x:Name="StopBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Stop at the first file that fails}" AutomationProperties.Name="{loc:T Stop at the first file that fails}"
+                      Margin="0,0,0,16" Click="Stop_Click" />
 
             <TextBlock Text="{loc:T Files}" Style="{StaticResource SectionHeaderText}" AutomationProperties.HeadingLevel="Level2" />
             <StackPanel Orientation="Horizontal" Margin="0,0,0,8">

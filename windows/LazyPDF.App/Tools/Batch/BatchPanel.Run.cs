@@ -47,6 +47,8 @@ public partial class BatchPanel
         if (!_loading) _set.NameTemplate = TemplateBox.Text;
     }
 
+    private void Stop_Click(object sender, RoutedEventArgs e) => _set.StopOnError = StopBox.IsChecked == true;
+
     private void BrowseOutput_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFolderDialog { Title = Loc.T("Results folder"), InitialDirectory = _set.OutputFolder };
@@ -160,6 +162,8 @@ public partial class BatchPanel
         var files = _files.ToList();
         int failed = 0;
         bool cancelled = false;
+        string? stoppedAt = null;
+        int rest = 0;
         _running = true;
         RaiseActionChanged();
         try
@@ -186,7 +190,16 @@ public partial class BatchPanel
                         _known.Remove(files[i]);
                         _roots.Remove(files[i]);
                     }
-                    else failed++;
+                    else
+                    {
+                        failed++;
+                        if (set.StopOnError && i + 1 < files.Count)
+                        {
+                            stoppedAt = Path.GetFileName(files[i]);
+                            rest = files.Count - i - 1;
+                            return;
+                        }
+                    }
                 }
             });
         }
@@ -194,6 +207,11 @@ public partial class BatchPanel
         {
             _running = false;
             ShowFiles();
+        }
+        if (stoppedAt is not null)
+        {
+            Host?.SetStatus(Loc.T("Stopped at {0}. {1}", stoppedAt, Loc.Plural(rest, "{0} file was not run.", "{0} files were not run.")));
+            return;
         }
         Host?.SetStatus(cancelled ? Loc.T("Cancelled.") : failed == 0 ? Loc.T("All files done") : Loc.Plural(failed, "{0} file failed", "{0} files failed"));
     }

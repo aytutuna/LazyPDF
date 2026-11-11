@@ -4577,6 +4577,16 @@
     "other": "{0} files failed",
     "tr": "{0} dosya başarısız"
   },
+  "Stopped at {0}. {1}": {
+    "tr": "{0} dosyasında durdu. {1}"
+  },
+  "{0} file was not run.": {
+    "other": "{0} files were not run.",
+    "tr": "{0} dosya çalıştırılmadı."
+  },
+  "Stop at the first file that fails": {
+    "tr": "İlk başarısız dosyada dur"
+  },
   "Watermark": {
     "tr": "Filigran"
   },

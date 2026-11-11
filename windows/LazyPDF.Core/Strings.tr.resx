@@ -5545,6 +5545,9 @@
   <data name="Still working" xml:space="preserve">
     <value>Hâlâ çalışıyor</value>
   </data>
+  <data name="Stop at the first file that fails" xml:space="preserve">
+    <value>İlk başarısız dosyada dur</value>
+  </data>
   <data name="Stop placing" xml:space="preserve">
     <value>Yerleştirmeyi bırak</value>
   </data>
@@ -5559,6 +5562,9 @@
   </data>
   <data name="Stopped after {0} page. The page was kept. Undo takes it back.|plural" xml:space="preserve">
     <value>{0} sayfadan sonra durduruldu. Sayfa korundu. Geri alma onu kaldırır.</value>
+  </data>
+  <data name="Stopped at {0}. {1}" xml:space="preserve">
+    <value>{0} dosyasında durdu. {1}</value>
   </data>
   <data name="Straight lines" xml:space="preserve">
     <value>Düz çizgiler</value>
@@ -7677,6 +7683,9 @@
   </data>
   <data name="{0} file saved|plural" xml:space="preserve">
     <value>{0} dosya kaydedildi</value>
+  </data>
+  <data name="{0} file was not run.|plural" xml:space="preserve">
+    <value>{0} dosya çalıştırılmadı.</value>
   </data>
   <data name="{0} fonts were corrected." xml:space="preserve">
     <value>{0} yazı tipi düzeltildi.</value>

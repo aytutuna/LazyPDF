@@ -88,6 +88,8 @@ public partial class BatchPanel : ToolPanel
         _set.OutputFolder = saved.OutputFolder;
         _set.NameTemplate = saved.NameTemplate;
         _set.WatchFolder = saved.WatchFolder;
+        _set.StopOnError = saved.StopOnError;
+        StopBox.IsChecked = saved.StopOnError;
         _loading = true;
         TemplateBox.Text = _set.NameTemplate;
         _loading = false;

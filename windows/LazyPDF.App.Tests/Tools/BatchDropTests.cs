@@ -175,6 +175,32 @@ public sealed class BatchDropTests
         Assert.Equal(7, set.Steps[0].Start);
     });
 
+    [Theory]
+    [InlineData(true, 2, "Stopped at b.txt. 1 file was not run.")]
+    [InlineData(false, 3, "1 file failed")]
+    public Task AFailedFileStopsTheRunOnlyWhenAsked(bool stop, int rows, string status) => Sta.Run(async () =>
+    {
+        using var dir = new TempDir();
+        var host = new RecordingHost();
+        var panel = new BatchPanel();
+        panel.AttachHost(host);
+        var set = Field<BatchSet>(panel, "_set");
+        set.Steps = [new() { Kind = BatchStepKind.Watermark, Text = "X" }];
+        set.OutputFolder = dir.Sub("out");
+        set.StopOnError = stop;
+        string a = dir.File("a.pdf", Pdfs.Text());
+        string b = dir.File("b.txt", "not a pdf"u8.ToArray());
+        string c = dir.File("c.pdf", Pdfs.Text());
+        panel.AddFiles([a, b, c]);
+
+        await panel.Action!.Run();
+
+        Assert.Equal(rows, panel.LogList.Items.Count);
+        var left = Assert.IsAssignableFrom<IEnumerable<FileRow>>(panel.FileList.ItemsSource).Select(r => r.Path);
+        Assert.Equal(stop ? [b, c] : [b], left);
+        Assert.Equal(status, host.Statuses[^1]);
+    });
+
     private static T Field<T>(BatchPanel panel, string name, T? value = null) where T : class
     {
         var field = typeof(BatchPanel).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!;

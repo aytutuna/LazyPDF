@@ -89,6 +89,8 @@ public sealed class BatchSet
 
     public string WatchFolder { get; set; } = "";
 
+    public bool StopOnError { get; set; }
+
     /// <summary>A copy that later edits to the steps do not reach.</summary>
     public BatchSet Copy() => new()
     {
@@ -97,6 +99,7 @@ public sealed class BatchSet
         OutputFolder = OutputFolder,
         NameTemplate = NameTemplate,
         WatchFolder = WatchFolder,
+        StopOnError = StopOnError,
     };
 }
 
