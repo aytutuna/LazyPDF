@@ -6,6 +6,19 @@
              IsTabStop="False" PreviewKeyDown="Viewer_PreviewKeyDown"
              AutomationProperties.Name="{loc:T Page viewer}">
 
+    <UserControl.Resources>
+        <Style x:Key="PageFocusVisual">
+            <Setter Property="Control.Template">
+                <Setter.Value>
+                    <ControlTemplate>
+                        <Rectangle Margin="3" Stroke="{DynamicResource AccentFillColorDefaultBrush}" StrokeThickness="2"
+                                   RadiusX="2" RadiusY="2" IsHitTestVisible="False" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -99,7 +112,7 @@
         <Grid Grid.Row="1">
             <ScrollViewer x:Name="Scroller" CanContentScroll="True" PanningMode="None" Focusable="False" IsTabStop="False" AutomationProperties.Name="{loc:T Pages}"
                           HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                <v:PageSurface x:Name="Surface" AutomationProperties.Name="{loc:T Pages}" ContextMenuOpening="Surface_ContextMenuOpening">
+                <v:PageSurface x:Name="Surface" FocusVisualStyle="{StaticResource PageFocusVisual}" AutomationProperties.Name="{loc:T Pages}" ContextMenuOpening="Surface_ContextMenuOpening">
                     <v:PageSurface.ContextMenu>
                         <ContextMenu>
                             <MenuItem x:Name="CopyItem" Header="{loc:T Copy}" Click="CopyItem_Click" />

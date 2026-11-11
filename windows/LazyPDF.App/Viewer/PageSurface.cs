@@ -49,7 +49,6 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         ClipToBounds = true;
         SnapsToDevicePixels = true;
         IsManipulationEnabled = true;
-        FocusVisualStyle = null;
         InitTiles();
     }
 
