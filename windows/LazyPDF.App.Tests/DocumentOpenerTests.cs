@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
@@ -78,6 +79,38 @@ public sealed class DocumentOpenerTests
         var source = Opener.Read(path);
 
         Assert.Single(PdfDocument.Open(source.Bytes).Pages);
+    }
+
+    [Fact]
+    public void Utf16TextWithABomIsDecoded()
+    {
+        byte[] bytes = [.. Encoding.Unicode.GetPreamble(), .. Encoding.Unicode.GetBytes("héllo")];
+
+        Assert.Equal("héllo", DocumentOpener.Decode(bytes));
+    }
+
+    [Fact]
+    public void Utf8TextLosesItsBom()
+    {
+        byte[] bytes = [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes("héllo")];
+
+        Assert.Equal("héllo", DocumentOpener.Decode(bytes));
+    }
+
+    [Fact]
+    public void AsciiIsUnchanged()
+    {
+        Assert.Equal("plain text", DocumentOpener.Decode(Encoding.ASCII.GetBytes("plain text")));
+    }
+
+    [Fact]
+    public void TurkishCodePageTextIsReadOnATurkishCulture()
+    {
+        byte[] bytes = Encoding.GetEncoding(1254).GetBytes("şğİ");
+        var saved = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("tr-TR");
+        try { Assert.Equal("şğİ", DocumentOpener.Decode(bytes)); }
+        finally { CultureInfo.CurrentCulture = saved; }
     }
 
     [Fact]
