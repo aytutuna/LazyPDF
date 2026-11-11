@@ -78,7 +78,9 @@ public enum PdfLayers {
         var off = Set(current.layers.filter { !$0.isOn }.map { $0.reference.number })
         if visible {
             off.remove(layer.number)
-            for group in groups(document, layer.number) { off.formUnion(group.filter { $0 != layer.number }) }
+            for group in current.radioGroups where group.contains(where: { $0.number == layer.number }) {
+                off.formUnion(group.map { $0.number }.filter { $0 != layer.number })
+            }
         } else {
             off.insert(layer.number)
         }
@@ -157,17 +159,6 @@ public enum PdfLayers {
             return nil
         default: return nil
         }
-    }
-
-    private static func groups(_ document: PdfDocument, _ number: Int) -> [Set<Int>] {
-        let config = document.dict(document.dict(document.catalog, "OCProperties"), "D")
-        var result: [Set<Int>] = []
-        for group in (document.array(config, "RBGroups")?.items ?? []).prefix(maxLayers) {
-            guard let members = document.resolve(group) as? PdfArray else { continue }
-            let found = Set(members.items.compactMap { ($0 as? PdfReference)?.number })
-            if found.contains(number) { result.append(found) }
-        }
-        return result
     }
 }
 

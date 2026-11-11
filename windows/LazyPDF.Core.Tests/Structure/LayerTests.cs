@@ -154,6 +154,23 @@ public class LayerTests
     }
 
     [Fact]
+    public void TurningALayerOnReadsRepeatedGroupsOnce()
+    {
+        var refs = string.Join(' ', Enumerable.Repeat("34 0 R", 20000));
+        var members = string.Join(' ', Enumerable.Repeat("30 0 R", 20000));
+        var document = StructureFixtures.File($"/OCProperties <</OCGs [30 0 R 31 0 R] /D <</OFF [30 0 R] /RBGroups [{refs}]>>>>", pdf =>
+        {
+            pdf.Obj(30, "<</Type /OCG /Name (A)>>");
+            pdf.Obj(31, "<</Type /OCG /Name (B)>>");
+            pdf.Obj(34, $"[31 0 R {members}]");
+        });
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        Assert.True(PdfLayers.SetVisible(document, new PdfReference(30, 0), true));
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(5));
+        Assert.Equal([true, false], PdfLayers.Read(document).Layers.Select(l => l.IsOn));
+    }
+
+    [Fact]
     public void UnknownLayerIsRefused()
     {
         var document = Sample();

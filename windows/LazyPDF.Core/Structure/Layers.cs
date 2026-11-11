@@ -67,7 +67,10 @@ public static class PdfLayers
         if (visible)
         {
             off.Remove(layer.Number);
-            foreach (var group in Groups(document, layer.Number)) off.UnionWith(group.Where(n => n != layer.Number));
+            foreach (var group in current.RadioGroups)
+            {
+                if (group.Any(r => r.Number == layer.Number)) off.UnionWith(group.Select(r => r.Number).Where(n => n != layer.Number));
+            }
         }
         else off.Add(layer.Number);
 
@@ -144,17 +147,6 @@ public static class PdfLayers
         PdfArray a when a.Items.Count > 0 && document.Resolve(a.Items[0]) is PdfName first => first.Value,
         _ => null,
     };
-
-    private static IEnumerable<HashSet<int>> Groups(PdfDocument document, int number)
-    {
-        var config = document.Dict(document.Dict(document.Catalog, "OCProperties"), "D");
-        foreach (var group in document.Array(config, "RBGroups")?.Items.Take(MaxLayers) ?? [])
-        {
-            if (document.Resolve(group) is not PdfArray members) continue;
-            var numbers = members.Items.OfType<PdfReference>().Select(r => r.Number).ToHashSet();
-            if (numbers.Contains(number)) yield return numbers;
-        }
-    }
 }
 
 /// <summary>Which optional content is off in the default view: the groups that are, and the membership dictionaries (8.11.2.2) that follow from them.</summary>
