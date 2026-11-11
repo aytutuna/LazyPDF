@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools.Certificates;
 using LazyPDF.App.Tools.Pages;
 using LazyPDF.App.Tools.Redact;
@@ -36,7 +37,7 @@ public sealed class KeyboardPlacementTests
 
     private static (PageViewer Viewer, RecordingTool Tool) Open(DocumentTab tab)
     {
-        var viewer = new PageViewer();
+        var viewer = new PageViewer(null);
         viewer.Show(tab);
         viewer.Measure(new Size(800, 600));
         viewer.Arrange(new Rect(0, 0, 800, 600));
@@ -367,7 +368,7 @@ public sealed class KeyboardPlacementTests
     public Task TheZoomGroupFitsAtNarrowWidths(int width) => Sta.Run(() =>
     {
         using var tab = NewTab();
-        var viewer = new PageViewer();
+        var viewer = new PageViewer(null);
         viewer.Show(tab);
         viewer.Measure(new Size(width, 600));
         viewer.Arrange(new Rect(0, 0, width, 600));
@@ -376,6 +377,112 @@ public sealed class KeyboardPlacementTests
         viewer.ZoomGroup.Measure(new Size(double.PositiveInfinity, 600));
 
         Assert.Equal(viewer.ZoomGroup.DesiredSize.Width - 16, actual, 1.5);
+        return Task.CompletedTask;
+    });
+
+    private static void Click(PageViewer viewer, string handler, object item) =>
+        typeof(PageViewer).GetMethod(handler, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(viewer, [item, new RoutedEventArgs()]);
+
+    [Fact]
+    public Task TheViewerOpensInTheSavedTintAndLayout() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        AppPreferencesStore.Update(p => { p.Tint = PageTint.Dark; p.Columns = 2; p.Cover = true; p.Continuous = false; }, dir.Path);
+
+        var viewer = new PageViewer(dir.Path);
+
+        Assert.Equal(PageTint.Dark, viewer.Surface.Tint);
+        Assert.Equal(2, viewer.Surface.Columns);
+        Assert.True(viewer.Surface.Cover);
+        Assert.False(viewer.Surface.Continuous);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AViewerWithoutASettingsFolderStartsPlainAndSavesNothing() => Sta.Run(() =>
+    {
+        var viewer = new PageViewer(null);
+
+        Click(viewer, "Tint_Click", viewer.TintDarkItem);
+        Click(viewer, "Arrangement_Click", viewer.TwoPageItem);
+
+        Assert.Equal(PageTint.Dark, viewer.Surface.Tint);
+        Assert.Equal(2, viewer.Surface.Columns);
+        Assert.Equal(PageTint.None, new PageViewer(null).Surface.Tint);
+        Assert.Equal(1, new PageViewer(null).Surface.Columns);
+        Assert.True(new PageViewer(null).Surface.Continuous);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheTintAndTheLayoutPickedInTheMenuAreSaved() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        var viewer = new PageViewer(dir.Path);
+
+        Click(viewer, "Tint_Click", viewer.TintSepiaItem);
+        Click(viewer, "Arrangement_Click", viewer.TwoPageItem);
+        Click(viewer, "Arrangement_Click", viewer.CoverItem);
+
+        var saved = AppPreferencesStore.Load(dir.Path);
+        Assert.Equal(PageTint.Sepia, saved.Tint);
+        Assert.Equal(2, saved.Columns);
+        Assert.True(saved.Cover);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ReadingModesOneColumnLayoutIsNotSaved() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        AppPreferencesStore.Update(p => { p.Columns = 2; p.Continuous = false; }, dir.Path);
+        var viewer = new PageViewer(dir.Path);
+
+        viewer.ReadingMode = true;
+        Assert.Equal(1, viewer.Surface.Columns);
+
+        var saved = AppPreferencesStore.Load(dir.Path);
+        Assert.Equal(2, saved.Columns);
+        Assert.False(saved.Continuous);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task OnePageFromTwoPagesContinuousStaysContinuousInTheMenu() => Sta.Run(() =>
+    {
+        var viewer = new PageViewer(null);
+        Click(viewer, "Arrangement_Click", viewer.TwoPageItem);
+        Assert.True(viewer.Surface.Continuous);
+
+        Click(viewer, "Arrangement_Click", viewer.OnePageItem);
+        typeof(PageViewer).GetMethod("MoreMenu_Opened", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(viewer, [viewer, new RoutedEventArgs()]);
+
+        Assert.True(viewer.Surface.Continuous);
+        Assert.True(viewer.OnePageItem.IsChecked);
+        Assert.True(viewer.ContinuousItem.IsChecked);
+        Assert.False(viewer.TwoPageItem.IsChecked);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ATabComesBackThroughShowWithItsRotationAndPage() => Sta.Run(() =>
+    {
+        using var first = NewTab();
+        using var second = NewTab();
+        var viewer = new PageViewer(null);
+        viewer.Show(first);
+        viewer.Measure(new Size(800, 600));
+        viewer.Arrange(new Rect(0, 0, 800, 600));
+        viewer.UpdateLayout();
+        viewer.Surface.SetRotation(90);
+        int page = first.PageIndex;
+
+        viewer.Show(second);
+        Assert.Equal(0, viewer.Surface.Rotation);
+        viewer.Show(first);
+
+        Assert.Equal(90, viewer.Surface.Rotation);
+        Assert.Equal(page, first.PageIndex);
         return Task.CompletedTask;
     });
 }

@@ -54,7 +54,7 @@ public sealed class RestrictedFileTests
     [Fact]
     public Task CopyingIsRefusedOnlyWhenTheFileForbidsIt() => Sta.Run(() =>
     {
-        var viewer = new PageViewer();
+        var viewer = new PageViewer(null);
         using var forbidden = new DocumentTab(PdfEditSession.Open(Pdfs.Restricted(PdfPermissions.All & ~PdfPermissions.Copy)), new FakeRenderer(), null, "a.pdf");
         using var allowed = new DocumentTab(PdfEditSession.Open(Pdfs.Restricted(PdfPermissions.Copy)), new FakeRenderer(), null, "b.pdf");
 
@@ -69,7 +69,7 @@ public sealed class RestrictedFileTests
     [Fact]
     public Task CopyingWithNothingSelectedSaysNothing() => Sta.Run(async () =>
     {
-        var viewer = new PageViewer();
+        var viewer = new PageViewer(null);
         using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Restricted(PdfPermissions.All & ~PdfPermissions.Copy)), new FakeRenderer(), null, "a.pdf");
         viewer.Show(tab);
 
@@ -81,7 +81,7 @@ public sealed class RestrictedFileTests
     [Fact]
     public Task CopyingASelectionIsRefusedAndTheFindBoxStaysEmpty() => Sta.Run(async () =>
     {
-        var viewer = new PageViewer();
+        var viewer = new PageViewer(null);
         using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Restricted(PdfPermissions.All & ~PdfPermissions.Copy)), new FakeRenderer(), null, "a.pdf");
         viewer.Show(tab);
         viewer.SelectAll();
@@ -104,7 +104,7 @@ public sealed class RestrictedFileTests
     [InlineData("Thread", "This link cannot be followed.")]
     public Task ALinkThatCannotBeFollowedSaysWhyByKind(string type, string expected) => Sta.Run(() =>
     {
-        var viewer = new PageViewer();
+        var viewer = new PageViewer(null);
 
         viewer.FollowAction(new OtherAction(type));
 
@@ -115,7 +115,7 @@ public sealed class RestrictedFileTests
     [Fact]
     public Task ANullActionAndAnUnlistedNamedActionAreToldAsNotFollowable() => Sta.Run(() =>
     {
-        var viewer = new PageViewer();
+        var viewer = new PageViewer(null);
 
         viewer.FollowAction(null);
         AssertCard(viewer, "This link cannot be followed.");

@@ -27,8 +27,16 @@ public partial class PageViewer : UserControl, IDocumentViewer
     private string _shownZoom = "";
     private (int Columns, bool Cover, bool Continuous, FitMode Fit, double Zoom) _beforeReading;
 
-    public PageViewer()
+    private readonly string? _preferencesDirectory;
+
+    public PageViewer() : this(StoreFiles.DefaultDirectory)
     {
+    }
+
+    // A null directory keeps the viewer's look out of the settings, for viewers that only compare.
+    internal PageViewer(string? preferencesDirectory)
+    {
+        _preferencesDirectory = preferencesDirectory;
         InitializeComponent();
         Search = new ViewerSearch(TextAsync, () => Surface.CurrentPage, action => Dispatcher.InvokeAsync(action), PageLabel);
         Find.Attach(Search);
@@ -42,9 +50,12 @@ public partial class PageViewer : UserControl, IDocumentViewer
         Surface.PageText = page => LoadedText(page)?.Text;
         InitInput();
         InitText();
-        var preferences = AppPreferencesStore.Load();
-        Surface.SetTint(preferences.Tint);
-        Surface.SetArrangement(preferences.Columns == 2 ? 2 : 1, preferences.Cover, preferences.Continuous);
+        if (preferencesDirectory is not null)
+        {
+            var preferences = AppPreferencesStore.Load(preferencesDirectory);
+            Surface.SetTint(preferences.Tint);
+            Surface.SetArrangement(preferences.Columns == 2 ? 2 : 1, preferences.Cover, preferences.Continuous);
+        }
         foreach (var item in new[] { Preset25, Preset50, Preset75, Preset100, Preset125, Preset150, Preset200, Preset400 })
             item.Header = Loc.T("{0} %", double.Parse((string)item.Tag, System.Globalization.CultureInfo.InvariantCulture) * 100);
         RefreshBar();
@@ -359,13 +370,17 @@ public partial class PageViewer : UserControl, IDocumentViewer
         SaveView();
     }
 
-    private void SaveView() => AppPreferencesStore.Update(p =>
+    private void SaveView()
     {
-        p.Tint = Surface.Tint;
-        p.Columns = Surface.Columns;
-        p.Cover = Surface.Cover;
-        p.Continuous = Surface.Continuous;
-    });
+        if (_preferencesDirectory is null) return;
+        AppPreferencesStore.Update(p =>
+        {
+            p.Tint = Surface.Tint;
+            p.Columns = Surface.Columns;
+            p.Cover = Surface.Cover;
+            p.Continuous = Surface.Continuous;
+        }, _preferencesDirectory);
+    }
 
     private void MoreMenu_Opened(object sender, RoutedEventArgs e)
     {

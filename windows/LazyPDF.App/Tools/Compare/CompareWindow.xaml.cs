@@ -11,8 +11,8 @@ namespace LazyPDF.App.Tools.Compare;
 internal sealed partial class CompareWindow : Window
 {
     private readonly CompareSession _session;
-    private readonly IDocumentViewer _old = ViewerFactory.Create();
-    private readonly IDocumentViewer _new = ViewerFactory.Create();
+    private readonly IDocumentViewer _old = ViewerFactory.Create(false);
+    private readonly IDocumentViewer _new = ViewerFactory.Create(false);
     private readonly ViewSync _sync;
     private IReadOnlyList<ChangeRow> _rows;
     private bool _overlay;
