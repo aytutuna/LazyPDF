@@ -4798,6 +4798,12 @@
   "Pages {0} to {1} are numbered.": {
     "tr": "{0}. ile {1}. sayfalar numaralanır."
   },
+  "The rest of the page stays in the file, only hidden. Redact removes it for good.": {
+    "tr": "Sayfanın geri kalanı dosyada durur, yalnızca gizlenir. Karart onu kalıcı olarak siler."
+  },
+  "This sets the page numbers viewers show. Nothing is printed on the pages.": {
+    "tr": "Bu, görüntüleyicilerin gösterdiği sayfa numaralarını ayarlar. Sayfalara hiçbir şey basılmaz."
+  },
   "Remove crop": {
     "tr": "Kırpmayı kaldır"
   },

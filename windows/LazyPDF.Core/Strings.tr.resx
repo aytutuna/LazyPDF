@@ -5542,6 +5542,9 @@
   <data name="The report could not be built from this comparison. Run the comparison again." xml:space="preserve">
     <value>Rapor bu karşılaştırmadan oluşturulamadı. Karşılaştırmayı yeniden yapın.</value>
   </data>
+  <data name="The rest of the page stays in the file, only hidden. Redact removes it for good." xml:space="preserve">
+    <value>Sayfanın geri kalanı dosyada durur, yalnızca gizlenir. Karart onu kalıcı olarak siler.</value>
+  </data>
   <data name="The result opens as a new file. This file is not changed." xml:space="preserve">
     <value>Sonuç yeni bir dosya olarak açılır. Bu dosya değişmez.</value>
   </data>
@@ -5880,6 +5883,9 @@
   </data>
   <data name="This script did not run. Only built-in format and calculate functions run." xml:space="preserve">
     <value>Bu betik çalışmadı. Yalnızca yerleşik biçim ve hesaplama işlevleri çalışır.</value>
+  </data>
+  <data name="This sets the page numbers viewers show. Nothing is printed on the pages." xml:space="preserve">
+    <value>Bu, görüntüleyicilerin gösterdiği sayfa numaralarını ayarlar. Sayfalara hiçbir şey basılmaz.</value>
   </data>
   <data name="This shape has no fill. Use the line colour instead." xml:space="preserve">
     <value>Bu şeklin dolgusu yok. Çizgi rengini kullanın.</value>

@@ -108,8 +108,10 @@ public partial class PagesPanel
             ? Loc.T("Box of {0} by {1} mm.", Math.Round(box.Area.Width / PageEdits.PointsPerMillimetre), Math.Round(box.Area.Height / PageEdits.PointsPerMillimetre))
                 + " " + (CropAll.IsChecked == true ? Loc.T("Every page is changed.") : pages.Count > 0 ? covered : Loc.T("Page {0} is changed.", box.Page + 1))
             : CropDraw.IsChecked == true ? Loc.T("Drag a box on a page.") : Loc.T("Turn on drawing to drag a box.");
+        CropHint.Text += " " + Loc.T("The rest of the page stays in the file, only hidden. Redact removes it for good.");
         ResizeHint.Text = Loc.T("Pages keep their orientation.") + " " + covered;
         LabelHint.Text = pages.Count == 0 ? Loc.T("Every page is numbered.") : Loc.T("Pages {0} to {1} are numbered.", pages[0] + 1, pages[^1] + 1);
+        LabelHint.Text += " " + Loc.T("This sets the page numbers viewers show. Nothing is printed on the pages.");
         CustomSize.Visibility = Paper.SelectedIndex == PaperSize.All.Count ? Visibility.Visible : Visibility.Collapsed;
     }
 
