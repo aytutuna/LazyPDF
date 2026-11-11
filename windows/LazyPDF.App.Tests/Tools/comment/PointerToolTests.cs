@@ -222,6 +222,75 @@ public sealed class PointerToolTests
         });
     }
 
+    private static PagePointer Keyed(Point at, int page = 0) => new(page, at, at, true, 1, ModifierKeys.None, true);
+
+    [Theory]
+    [InlineData(MarkTool.Line)]
+    [InlineData(MarkTool.Rectangle)]
+    public void TwoKeyedClicksDrawADragMark(MarkTool kind)
+    {
+        OnSta(() =>
+        {
+            var tool = Drawing(kind, out _, out _, out var drawn);
+
+            tool.Press(Keyed(new Point(20, 30)));
+            tool.Release(Keyed(new Point(20, 30)));
+            Assert.Empty(drawn.Marks);
+            Assert.True(tool.Started);
+            tool.Press(Keyed(new Point(120, 90)));
+            tool.Release(Keyed(new Point(120, 90)));
+
+            var made = Assert.Single(drawn.Marks);
+            Assert.Equal([new Point(20, 30), new Point(120, 90)], made.Points);
+            Assert.False(tool.Started);
+        });
+    }
+
+    [Fact]
+    public void AKeyedStartIsDroppedByCancelAndRestartedOnAnotherPage()
+    {
+        OnSta(() =>
+        {
+            var tool = Drawing(MarkTool.Line, out _, out _, out var drawn);
+
+            tool.Press(Keyed(new Point(20, 30)));
+            tool.Release(Keyed(new Point(20, 30)));
+            tool.Cancel();
+            tool.Press(Keyed(new Point(120, 90)));
+            tool.Release(Keyed(new Point(120, 90)));
+            Assert.Empty(drawn.Marks);
+
+            tool.Press(Keyed(new Point(5, 5), page: 1));
+            tool.Release(Keyed(new Point(5, 5), page: 1));
+            tool.Press(Keyed(new Point(50, 50), page: 1));
+            tool.Release(Keyed(new Point(50, 50), page: 1));
+            Assert.Equal(1, Assert.Single(drawn.Marks).Page);
+        });
+    }
+
+    [Fact]
+    public void KeyedPolygonCornersAreFinishedByFinish()
+    {
+        OnSta(() =>
+        {
+            var tool = Drawing(MarkTool.Polygon, out _, out _, out var drawn);
+
+            foreach (var at in new[] { new Point(10, 10), new Point(100, 10) })
+            {
+                tool.Press(Keyed(at));
+                tool.Release(Keyed(at));
+            }
+            tool.Finish();
+            Assert.Empty(drawn.Marks);
+            tool.Press(Keyed(new Point(100, 100)));
+            tool.Release(Keyed(new Point(100, 100)));
+            tool.Finish();
+
+            var made = Assert.Single(drawn.Marks);
+            Assert.Equal([new Point(10, 10), new Point(100, 10), new Point(100, 100)], made.Points);
+        });
+    }
+
     [Fact]
     public void APolygonClosesWhenTheFirstCornerIsClickedAgain()
     {

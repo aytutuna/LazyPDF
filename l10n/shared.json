@@ -2443,6 +2443,9 @@
   "Click each corner, double-click to finish.": {
     "tr": "Her köşeye tıklayın, bitirmek için çift tıklayın."
   },
+  "With the keyboard, press Enter at each corner and Ctrl+Enter to finish.": {
+    "tr": "Klavyeyle her köşede Enter'a, bitirmek için Ctrl+Enter'a basın."
+  },
   "Click where the file goes.": {
     "tr": "Dosyanın yerleşeceği yere tıklayın."
   },

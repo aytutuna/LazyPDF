@@ -201,7 +201,8 @@ public partial class CommentPanel : ToolPanel
         _choosing = false;
         StampRow.Visibility = _tool == MarkTool.Stamp ? Visibility.Visible : Visibility.Collapsed;
         Hint.Text = !_allowed ? Loc.T("This file does not allow comments.")
-            : _tool is MarkTool.Note or MarkTool.TextBox or MarkTool.Stamp or MarkTool.Attach ? $"{Tools.First(t => t.Tool == _tool).Hint} {Loc.T("Or press Enter on the page.")}"
+            : _tool is MarkTool.Note or MarkTool.TextBox or MarkTool.Stamp or MarkTool.Attach or MarkTool.Line or MarkTool.Arrow or MarkTool.Rectangle or MarkTool.Oval or MarkTool.Callout ? $"{Tools.First(t => t.Tool == _tool).Hint} {Loc.T("Or press Enter on the page.")}"
+            : _tool is MarkTool.Polygon or MarkTool.Cloud ? $"{Tools.First(t => t.Tool == _tool).Hint} {Loc.T("With the keyboard, press Enter at each corner and Ctrl+Enter to finish.")}"
             : Tools.First(t => t.Tool == _tool).Hint;
         Hint.Visibility = Visibility.Visible;
         ShowSelected();

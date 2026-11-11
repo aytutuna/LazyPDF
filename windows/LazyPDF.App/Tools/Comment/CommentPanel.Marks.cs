@@ -191,6 +191,11 @@ public partial class CommentPanel
             drawing.Cancel();
             e.Handled = true;
         }
+        else if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control && _active is DrawTool { Started: true } corners)
+        {
+            corners.Finish();
+            e.Handled = true;
+        }
         else if (e.Key == Key.Delete && _edit?.Current is not null)
         {
             DeleteSelected();

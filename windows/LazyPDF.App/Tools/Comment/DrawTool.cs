@@ -20,6 +20,7 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
     private Point _now;
     private Shape? _preview;
     private Shape? _box;
+    private bool _keyed;
 
     public Cursor? Cursor => tool == MarkTool.Pencil ? Cursors.Pen : Cursors.Cross;
 
@@ -32,10 +33,15 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
 
     public void Press(PagePointer pointer)
     {
+        if (_keyed && pointer.FromKeys && pointer.Page == _page)
+        {
+            _now = pointer.Point;
+            return;
+        }
         if (Many && _page >= 0)
         {
             if (pointer.Page != _page) return;
-            if (pointer.Clicks >= 2 || (_points.Count >= 3 && Close(pointer.Point, _points[0]))) Finish();
+            if (pointer.Clicks >= 2 || (_points.Count >= 3 && Close(pointer.Point, _points[0]))) Complete();
             else Extend(pointer.Point);
             return;
         }
@@ -65,31 +71,38 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
         }
         if (ByClick)
         {
-            Finish();
+            Complete();
             return;
         }
         if (tool is MarkTool.Pencil or MarkTool.Eraser)
         {
             if (_points.Count < 2) _points.Add(_now + new Vector(0.1, 0));
-            Finish();
+            Complete();
             return;
         }
         if ((_now - _points[0]).Length < MinDrag)
         {
-            // A click makes a box of the usual size, so the keyboard can place one too.
+            // A keyed click on a drag tool only sets the start; the next one on the page ends it.
             if (tool != MarkTool.TextBox)
             {
-                Clear();
+                if (pointer.FromKeys && !_keyed) _keyed = true;
+                else Clear();
                 return;
             }
+            // A click makes a box of the usual size, so the keyboard can place one too.
             var page = viewer.PageSize(_page);
             _now = new Point(Math.Min(_points[0].X + DefaultBox.Width, page.Width), Math.Min(_points[0].Y + DefaultBox.Height, page.Height));
         }
         _points.Add(_now);
-        Finish();
+        Complete();
     }
 
     public void Cancel() => Clear();
+
+    public void Finish()
+    {
+        if (Many && _points.Count >= 3) Complete();
+    }
 
     private Point Constrain(PagePointer pointer)
     {
@@ -116,7 +129,7 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
         Show();
     }
 
-    private void Finish()
+    private void Complete()
     {
         int page = _page;
         var points = _points.ToArray();
@@ -133,6 +146,7 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
         _box = null;
         _points.Clear();
         _page = -1;
+        _keyed = false;
     }
 
     // The preview is redrawn whole on every move: the shapes are small and a page rarely holds more than a few points.
