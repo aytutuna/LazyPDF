@@ -1598,6 +1598,12 @@
   "The folder {0} could not be read.": {
     "tr": "{0} klasörü okunamadı."
   },
+  "Folder not read": {
+    "tr": "Klasör okunamadı"
+  },
+  "{0} could not be read. Check that it is there and that you may open it.": {
+    "tr": "{0} okunamadı. Orada olduğunu ve açma yetkinizin bulunduğunu denetleyin."
+  },
   "{0} is not a PDF file. Pick a PDF, a picture or a text file.": {
     "tr": "{0} bir PDF dosyası değil. Bir PDF, resim ya da metin dosyası seçin."
   },

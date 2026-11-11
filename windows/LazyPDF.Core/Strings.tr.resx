@@ -2329,6 +2329,9 @@
   <data name="Folder cannot be watched" xml:space="preserve">
     <value>Klasör izlenemiyor</value>
   </data>
+  <data name="Folder not read" xml:space="preserve">
+    <value>Klasör okunamadı</value>
+  </data>
   <data name="Folder of PDFs" xml:space="preserve">
     <value>PDF klasörü</value>
   </data>
@@ -7578,6 +7581,9 @@
   </data>
   <data name="{0} could not be read." xml:space="preserve">
     <value>{0} ek okunamadı.</value>
+  </data>
+  <data name="{0} could not be read. Check that it is there and that you may open it." xml:space="preserve">
+    <value>{0} okunamadı. Orada olduğunu ve açma yetkinizin bulunduğunu denetleyin.</value>
   </data>
   <data name="{0} could not be read. Check that the file is still there." xml:space="preserve">
     <value>{0} okunamadı. Dosyanın yerinde olduğunu kontrol edin.</value>

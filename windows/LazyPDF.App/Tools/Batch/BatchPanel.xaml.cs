@@ -42,6 +42,8 @@ public partial class BatchPanel : ToolPanel
     private readonly BatchSetStore _store = new();
     private readonly BatchSet _set = new();
     private readonly List<string> _files = [];
+    private readonly HashSet<string> _known = new(StringComparer.OrdinalIgnoreCase);
+    private bool _folderFailed;
     private readonly ObservableCollection<LogRow> _log = [];
     private BatchRunner? _runner;
     private bool _running;

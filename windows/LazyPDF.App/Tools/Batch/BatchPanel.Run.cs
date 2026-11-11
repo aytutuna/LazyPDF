@@ -67,7 +67,7 @@ public partial class BatchPanel
     {
         var dialog = new OpenFolderDialog { Title = Loc.T("Folder of PDFs") };
         if (dialog.ShowDialog() != true) return;
-        AddFiles(Directory.EnumerateFiles(dialog.FolderName, "*.pdf"));
+        AddFiles(PdfsIn(dialog.FolderName));
     }
 
     private void Panel_DragOver(object sender, DragEventArgs e)
@@ -81,17 +81,36 @@ public partial class BatchPanel
     {
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
         e.Handled = true;
-        var pdfs = paths.SelectMany(p => Directory.Exists(p) ? Directory.EnumerateFiles(p, "*.pdf") : [p])
+        _folderFailed = false;
+        var pdfs = paths.SelectMany(p => Directory.Exists(p) ? PdfsIn(p) : [p])
             .Where(p => string.Equals(System.IO.Path.GetExtension(p), ".pdf", StringComparison.OrdinalIgnoreCase)).ToList();
-        if (pdfs.Count == 0) Host?.SetStatus(Loc.T("Only PDF files can be added."));
-        else AddFiles(pdfs);
+        if (pdfs.Count > 0) AddFiles(pdfs);
+        else if (!_folderFailed) Host?.SetStatus(Loc.T("Only PDF files can be added."));
+    }
+
+    internal List<string> PdfsIn(string folder)
+    {
+        try
+        {
+            var found = Directory.EnumerateFiles(folder, "*.pdf").ToList();
+            found.Sort(StringComparer.CurrentCultureIgnoreCase);
+            return found;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            _folderFailed = true;
+            var leaf = System.IO.Path.GetFileName(folder.TrimEnd('\\', '/'));
+            Host?.ShowProblem(new Problem(Loc.T("Folder not read"),
+                Loc.T("{0} could not be read. Check that it is there and that you may open it.", leaf.Length > 0 ? leaf : folder)));
+            return [];
+        }
     }
 
     internal void AddFiles(IEnumerable<string> paths)
     {
         foreach (var path in paths)
         {
-            if (!_files.Contains(path, StringComparer.OrdinalIgnoreCase)) _files.Add(path);
+            if (_known.Add(path)) _files.Add(path);
         }
         ShowFiles();
     }
@@ -100,6 +119,7 @@ public partial class BatchPanel
     {
         if (((FrameworkElement)sender).DataContext is not FileRow row) return;
         _files.Remove(row.Path);
+        _known.Remove(row.Path);
         ShowFiles();
     }
 
@@ -142,7 +162,11 @@ public partial class BatchPanel
                         return;
                     }
                     AddLog(result);
-                    if (result.Ok) _files.Remove(files[i]);
+                    if (result.Ok)
+                    {
+                        _files.Remove(files[i]);
+                        _known.Remove(files[i]);
+                    }
                     else failed++;
                 }
             });
