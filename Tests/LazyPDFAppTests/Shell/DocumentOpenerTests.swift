@@ -80,6 +80,27 @@ final class DocumentOpenerTests: XCTestCase {
         XCTAssertEqual(DocumentOpener.decode([0xEF, 0xBB, 0xBF, 0x61]), "a")
     }
 
+    func test_utf16TextWithAByteOrderMarkIsRead() {
+        let little: [UInt8] = [0xFF, 0xFE] + "Şeker".utf16.flatMap { [UInt8($0 & 0xFF), UInt8($0 >> 8)] }
+        let big: [UInt8] = [0xFE, 0xFF] + "Şeker".utf16.flatMap { [UInt8($0 >> 8), UInt8($0 & 0xFF)] }
+
+        XCTAssertEqual(DocumentOpener.decode(little), "Şeker")
+        XCTAssertEqual(DocumentOpener.decode(big), "Şeker")
+    }
+
+    func test_otherBytesAreReadAsAWindowsCodePage() {
+        let en = Locale(identifier: "en_US")
+        let tr = Locale(identifier: "tr_TR")
+
+        XCTAssertEqual(DocumentOpener.decode([0x93, 0x68, 0x69, 0x94], locale: en), "\u{201C}hi\u{201D}")
+        XCTAssertEqual(DocumentOpener.decode([0xFD], locale: tr), "\u{131}")
+        XCTAssertEqual(DocumentOpener.decode([0xFD], locale: en), "\u{FD}")
+    }
+
+    func test_utf8WithoutAByteOrderMarkIsRead() {
+        XCTAssertEqual(DocumentOpener.decode([0xC5, 0x9E, 0x61]), "\u{15E}a")
+    }
+
     func test_turkishTextNeedsAFontFromTheSource() {
         let dir = TempDir(self)
         let url = dir.file("tr.txt", Array("\u{C7}al\u{131}\u{15F}ma \u{11F} \u{15F} \u{131} \u{130}".utf8))

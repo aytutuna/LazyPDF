@@ -79,11 +79,19 @@ public final class DocumentOpener {
         return OpenSource(bytes: bytes, url: url, title: url.lastPathComponent, made: false, stamp: stamp)
     }
 
-    /// UTF-8 when the bytes are valid UTF-8, Latin-1 otherwise.
-    static func decode(_ bytes: [UInt8]) -> String {
-        guard let text = String(data: Data(bytes), encoding: .utf8) else {
-            return String(String.UnicodeScalarView(bytes.map { Unicode.Scalar($0) }))
+    /// UTF-16 with a byte order mark, else UTF-8 when valid, else the Windows code page of the locale.
+    static func decode(_ bytes: [UInt8], locale: Locale = .current) -> String {
+        if bytes.starts(with: [0xFF, 0xFE]) || bytes.starts(with: [0xFE, 0xFF]) {
+            let little = bytes[0] == 0xFF
+            if let text = String(data: Data(bytes.dropFirst(2)), encoding: little ? .utf16LittleEndian : .utf16BigEndian) {
+                return text
+            }
         }
-        return String(text.drop(while: { $0 == "\u{FEFF}" }))
+        if let text = String(data: Data(bytes), encoding: .utf8) {
+            return String(text.drop(while: { $0 == "\u{FEFF}" }))
+        }
+        let windows: String.Encoding = locale.language.languageCode?.identifier == "tr" ? .windowsCP1254 : .windowsCP1252
+        return String(data: Data(bytes), encoding: windows)
+            ?? String(String.UnicodeScalarView(bytes.map { Unicode.Scalar($0) }))
     }
 }
