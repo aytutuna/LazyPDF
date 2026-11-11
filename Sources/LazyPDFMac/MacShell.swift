@@ -38,6 +38,7 @@ final class MacShell {
         vm.handInTyping = { panels.handIn() }
         viewer = ViewerModel(makeRenderer: { PdfKitRenderer() }, openAddress: { NSWorkspace.shared.open($0) })
         vm.fileWriter = CoordinatedFileWriter()
+        vm.fileReader = CoordinatedFileReader.read
         let services = MacToolServices()
         vm.filePicker = services
         vm.fileExporter = services

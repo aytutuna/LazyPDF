@@ -49,6 +49,7 @@ final class IOSShell {
         self.panels = panels
         model.handInTyping = { panels.handIn() }
         model.fileWriter = CoordinatedFileWriter()
+        model.fileReader = CoordinatedFileReader.read
         let services = IOSToolServices()
         model.filePicker = services
         model.fileExporter = services

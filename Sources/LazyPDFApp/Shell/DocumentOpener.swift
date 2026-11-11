@@ -48,6 +48,8 @@ public struct OpenSource: Sendable {
 public final class DocumentOpener {
     let codec: ImageCodec
     let fonts: FontSource
+    /// How the bytes are read; the Apple shells set a coordinated reader.
+    public var reader: (URL) throws -> Data = { try Data(contentsOf: $0) }
 
     public init(_ codec: ImageCodec, _ fonts: FontSource) {
         self.codec = codec
@@ -60,8 +62,10 @@ public final class DocumentOpener {
         if (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
             throw InvalidDataException(Self.isFolder)
         }
-        let stamp = DiskStamp.of(url)
-        let bytes = [UInt8](try Data(contentsOf: url))
+        var stamp = DiskStamp.of(url)
+        let bytes = [UInt8](try reader(url))
+        // A file fetched from the cloud was a placeholder when the first stamp was taken.
+        if stamp?.length != Int64(bytes.count) { stamp = DiskStamp.of(url) }
         let stem = url.deletingPathExtension().lastPathComponent
         if FileKinds.isPicture(url) {
             do {

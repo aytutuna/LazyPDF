@@ -70,6 +70,12 @@ public final class AppViewModel {
     /// How the tabs write their files; the Apple shells set a coordinated writer.
     @ObservationIgnored public var fileWriter: FileWriter = PlainFileWriter()
 
+    /// How opened files are read; the Apple shells set a coordinated reader.
+    @ObservationIgnored public var fileReader: (URL) throws -> Data {
+        get { opener.reader }
+        set { opener.reader = newValue }
+    }
+
     /// The shell's panels for choosing and saving files and its pasteboard; tools reach them through `ToolHost`.
     @ObservationIgnored public var filePicker: ToolFilePicker = NoToolServices.shared
     @ObservationIgnored public var fileExporter: ToolFileExporter = NoToolServices.shared

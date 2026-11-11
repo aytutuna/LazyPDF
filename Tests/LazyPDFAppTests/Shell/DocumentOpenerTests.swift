@@ -22,6 +22,32 @@ final class DocumentOpenerTests: XCTestCase {
         XCTAssertFalse(source.made)
     }
 
+    func test_theBytesComeFromTheReader() throws {
+        let dir = TempDir(self)
+        let bytes = Pdfs.text()
+        let url = dir.file("a.pdf", bytes)
+        var calls = 0
+        let counting = DocumentOpener(FakeCodec(), FakeFonts())
+        counting.reader = { calls += 1; return try Data(contentsOf: $0) }
+
+        let source = try counting.read(url)
+
+        XCTAssertEqual(calls, 1)
+        XCTAssertEqual(source.bytes, bytes)
+    }
+
+    func test_theStampIsTakenAgainWhenTheReaderDownloadedTheFile() throws {
+        let dir = TempDir(self)
+        let bytes = Pdfs.text()
+        let url = dir.file("a.pdf", [])
+        let downloading = DocumentOpener(FakeCodec(), FakeFonts())
+        downloading.reader = { try Data(bytes).write(to: $0); return Data(bytes) }
+
+        let source = try downloading.read(url)
+
+        XCTAssertEqual(source.stamp?.length, Int64(bytes.count))
+    }
+
     func test_aFolderIsRefusedInWords() throws {
         let dir = TempDir(self)
         let folder = dir.sub("folder")
