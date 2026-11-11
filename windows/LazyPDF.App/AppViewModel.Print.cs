@@ -32,7 +32,13 @@ public sealed partial class AppViewModel
             return;
         }
         if (_sisters.TryPrint(file)) SetStatus(Loc.T("Sent to Lazy Print."));
-        else SystemPrintRequested?.Invoke(this, tab);
+        else
+        {
+            // The system dialog prints from the renderer, so the copy is no use.
+            try { Directory.Delete(System.IO.Path.GetDirectoryName(file)!, recursive: true); }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+            SystemPrintRequested?.Invoke(this, tab);
+        }
     }
 
     // The file as it stands now, unsaved changes included, in a folder of its own so the name stays the document's.

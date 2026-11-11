@@ -28,6 +28,7 @@ public sealed class PrintFlowTests
         Assert.Equal("Unsaved edit", DocumentMetadata.Read(PdfDocument.Open(copy)).Title);
         Assert.Null(asked);
         Assert.Equal("Sent to Lazy Print.", f.Vm.StatusFull);
+        Assert.True(File.Exists(copy));
     }
 
     [Fact]
@@ -42,6 +43,7 @@ public sealed class PrintFlowTests
 
         Assert.Same(f.Vm.ActiveDocument, asked);
         Assert.Single(f.Sisters.Printed);
+        Assert.Empty(Directory.GetDirectories(f.Dir.Sub("print")));
     }
 
     [Fact]
