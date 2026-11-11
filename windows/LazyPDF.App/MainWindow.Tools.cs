@@ -243,7 +243,7 @@ public partial class MainWindow
         }
         catch (Exception error) when (error is not OutOfMemoryException)
         {
-            _vm.ShowProblem(new Problem(Loc.T("Something went wrong"), Loc.T("{0} could not be finished. If part of it was done, Undo takes it back.", action.Text)));
+            _vm.ShowProblem(Problems.Tool(error, action.Text));
             System.Diagnostics.Trace.TraceError(error.ToString());
         }
         finally

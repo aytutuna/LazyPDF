@@ -2304,6 +2304,12 @@
   "{0} could not be finished. If part of it was done, Undo takes it back.": {
     "tr": "{0} tamamlanamadı. Bir kısmı yapıldıysa Geri al onu geri alır."
   },
+  "{0} could not be finished because the file could not be read back. Your file was not changed.": {
+    "tr": "{0} tamamlanamadı çünkü dosya geri okunamadı. Dosyanız değiştirilmedi."
+  },
+  "{0} could not be finished. Check that the disk has room and that no other program has the file open.": {
+    "tr": "{0} tamamlanamadı. Diskte yer olduğundan ve dosyanın başka bir programda açık olmadığından emin olun."
+  },
   "Add comments from an FDF or XFDF file.": {
     "tr": "Yorumları bir FDF veya XFDF dosyasından ekleyin."
   },

@@ -6478,6 +6478,12 @@
   <data name="{0} comment|plural" xml:space="preserve">
     <value>{0} yorum</value>
   </data>
+  <data name="{0} could not be finished because the file could not be read back. Your file was not changed." xml:space="preserve">
+    <value>{0} tamamlanamadı çünkü dosya geri okunamadı. Dosyanız değiştirilmedi.</value>
+  </data>
+  <data name="{0} could not be finished. Check that the disk has room and that no other program has the file open." xml:space="preserve">
+    <value>{0} tamamlanamadı. Diskte yer olduğundan ve dosyanın başka bir programda açık olmadığından emin olun.</value>
+  </data>
   <data name="{0} could not be finished. If part of it was done, Undo takes it back." xml:space="preserve">
     <value>{0} tamamlanamadı. Bir kısmı yapıldıysa Geri al onu geri alır.</value>
   </data>

@@ -29,6 +29,14 @@ public static class Problems
     public static Problem Restricted() =>
         new(Loc.T("This file cannot be changed"), Loc.T("Its permissions do not allow it. Open it with the owner password."));
 
+    public static Problem Tool(Exception error, string action) => error switch
+    {
+        PdfReadException => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished because the file could not be read back. Your file was not changed.", action)),
+        UnauthorizedAccessException => Restricted(),
+        IOException => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished. Check that the disk has room and that no other program has the file open.", action)),
+        _ => new(Loc.T("Something went wrong"), Loc.T("{0} could not be finished. If part of it was done, Undo takes it back.", action)),
+    };
+
     public static Problem Crashed() =>
         new(Loc.T("Something went wrong"), Loc.T("Lazy PDF could not finish what it was doing. Your changes are still open. Use Save as to keep a copy, then close and reopen the app."));
 
