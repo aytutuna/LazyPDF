@@ -13,6 +13,7 @@ struct ViewerCommandState {
     let actions: FileActions
     let open: () -> Void
     let close: () -> Void
+    let cycleTab: (Int) -> Void
     let hasDocument: Bool
     let canUndo: Bool
     let canRedo: Bool
@@ -53,6 +54,14 @@ struct ViewerCommands: Commands {
             Button(L10n.t("Close")) { state?.close() }
                 .keyboardShortcut("w")
                 .disabled(state?.hasDocument != true)
+        }
+        CommandGroup(after: .sidebar) {
+            Button(L10n.t("Show previous tab")) { state?.cycleTab(-1) }
+                .keyboardShortcut("[", modifiers: [.command, .shift])
+                .disabled(state == nil)
+            Button(L10n.t("Show next tab")) { state?.cycleTab(1) }
+                .keyboardShortcut("]", modifiers: [.command, .shift])
+                .disabled(state == nil)
         }
         CommandGroup(replacing: .printItem) {
             Button(L10n.t("Print")) { state?.actions.print() }
