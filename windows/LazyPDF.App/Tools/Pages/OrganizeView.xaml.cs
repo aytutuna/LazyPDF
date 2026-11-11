@@ -61,8 +61,23 @@ public sealed partial class OrganizeView : ToolPanel
 
     private void Tab_Changed(object? sender, EventArgs e)
     {
+        bool hadFocus = Thumbs.IsKeyboardFocusWithin;
         Build();
         Refresh();
+        if (hadFocus) Dispatcher.BeginInvoke(FocusSelected, DispatcherPriority.Loaded);
+    }
+
+    // Build replaces the items, which drops the tile that had the keyboard focus.
+    private void FocusSelected()
+    {
+        if (Tab is null) return;
+        if (Thumbs.SelectedItems.Count > 0)
+        {
+            int first = Thumbs.Items.IndexOf(Thumbs.SelectedItems[0]);
+            Thumbs.ScrollIntoView(Thumbs.SelectedItems[0]);
+            if (Thumbs.ItemContainerGenerator.ContainerFromIndex(first) is ListBoxItem item && item.Focus()) return;
+        }
+        Thumbs.Focus();
     }
 
     // The window disables its workspace while a job runs, which takes the keyboard focus with it and does not give it back.

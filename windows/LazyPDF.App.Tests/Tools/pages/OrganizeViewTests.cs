@@ -264,6 +264,84 @@ public sealed class OrganizeViewTests
         return Task.CompletedTask;
     });
 
+    [Fact]
+    public Task ControlArrowsMovePagesAndControlShiftArrowsTurnThem() => Sta.Run(() =>
+    {
+        using var tab = Open();
+        var was = Order(tab);
+        using var shown = new Shown(tab, new StageHost());
+        shown.Select(2);
+
+        Assert.True(shown.View.Press(Key.Right, ModifierKeys.Control));
+        Assert.Equal([was[0], was[1], was[3], was[2], was[4], was[5]], Order(tab));
+        Assert.True(shown.View.Press(Key.Left, ModifierKeys.Control));
+        Assert.Equal(was, Order(tab));
+
+        Assert.True(shown.View.Press(Key.Right, ModifierKeys.Control | ModifierKeys.Shift));
+        Assert.Equal(90, tab.Document.Pages[2].Rotate);
+        Assert.True(shown.View.Press(Key.Left, ModifierKeys.Control | ModifierKeys.Shift));
+        Assert.Equal(0, tab.Document.Pages[2].Rotate);
+        Assert.Equal(was, Order(tab));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ControlDDuplicatesTheSelectionAndSelectsItWithTheCopy() => Sta.Run(async () =>
+    {
+        using var tab = Open(3);
+        var was = Order(tab);
+        using var shown = new Shown(tab, new StageHost());
+        shown.Select(1);
+
+        Assert.True(shown.View.Press(Key.D, ModifierKeys.Control));
+        await Duplicated(shown, 3);
+
+        Assert.Equal(4, tab.PageCount);
+        Assert.Equal(was[1], TextOf(tab, 2));
+        Assert.Equal([1, 2], shown.Grid.SelectedItems.Cast<PageCell>().Select(c => c.Index).Order());
+    });
+
+    [Fact]
+    public Task FocusStaysInTheGridAfterAKeyEditAndTheNextKeyActsOnTheSelection() => Sta.Run(async () =>
+    {
+        using var tab = Open(3);
+        var was = Order(tab);
+        using var shown = new Shown(tab, new StageHost());
+        shown.Select(1);
+        Assert.True(shown.Grid.Focus());
+        Assert.True(shown.Grid.IsKeyboardFocusWithin);
+
+        shown.View.Press(Key.D, ModifierKeys.Control);
+        await Duplicated(shown, 3);
+        Assert.True(shown.Grid.IsKeyboardFocusWithin);
+
+        shown.View.Press(Key.Delete, ModifierKeys.None);
+        Assert.Equal([was[0], was[2]], Order(tab));
+    });
+
+    [Fact]
+    public Task FocusOnTheBarIsLeftAloneByAnEdit() => Sta.Run(async () =>
+    {
+        using var tab = Open(3);
+        using var shown = new Shown(tab, new StageHost());
+        shown.Select(1);
+        await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+        Assert.True(shown.Button("Duplicate").Focus());
+
+        shown.View.Press(Key.D, ModifierKeys.Control);
+        await Duplicated(shown, 3);
+
+        Assert.False(shown.Grid.IsKeyboardFocusWithin);
+    });
+
+    // Duplicating runs on a worker; the view is rebuilt and the selection set once the commit is back on the dispatcher.
+    private static async Task Duplicated(Shown shown, int before)
+    {
+        for (int i = 0; i < 200 && (shown.Cells.Count == before || shown.Grid.SelectedItems.Count < 2); i++)
+            await Task.Delay(10);
+        await Dispatcher.Yield(DispatcherPriority.ContextIdle);
+    }
+
     private static IEnumerable<Button> AllButtons(DependencyObject parent)
     {
         for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
