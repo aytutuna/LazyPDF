@@ -266,7 +266,8 @@ public partial class MainWindow : Window
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && !Modal && !_actionRunning && !_vm.IsBusy)
+        // AltGr arrives as Ctrl+Alt, so a key typed with it is not a shortcut.
+        if ((Keyboard.Modifiers & (ModifierKeys.Control | ModifierKeys.Alt)) == ModifierKeys.Control && !Modal && !_actionRunning && !_vm.IsBusy)
         {
             bool shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
             switch (e.Key)
@@ -279,6 +280,7 @@ public partial class MainWindow : Window
                 case Key.P: _vm.Print(); break;
                 case Key.F when _vm.ActiveDocument is not null && _vm.HeldStage is null: _viewer.ShowFind(); break;
                 case Key.G when _vm.ActiveDocument is not null && _vm.HeldStage is null: _viewer.ShowGoToPage(); break;
+                case Key.Z when shift: Redo(); break;
                 case Key.Z: Undo(); break;
                 case Key.Y: Redo(); break;
                 case Key.Tab: CycleTab(shift ? -1 : 1); break;
