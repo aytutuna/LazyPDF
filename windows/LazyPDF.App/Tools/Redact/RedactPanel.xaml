@@ -18,7 +18,7 @@
                         <TextBlock x:Name="ResultTitle" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
                     </DockPanel>
                     <TextBlock x:Name="ResultAdvice" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,4,0,0" />
-                    <TextBlock x:Name="ResultNotChecked" Style="{StaticResource BodyText}" Margin="0,8,0,0" />
+                    <TextBlock x:Name="ResultNotChecked" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,8,0,0" />
                     <TextBlock x:Name="ResultReport" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,8,0,0" />
                     <TextBlock x:Name="ResultProblems" Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,8,0,0"
                                Foreground="{DynamicResource SystemFillColorCriticalBrush}" />
