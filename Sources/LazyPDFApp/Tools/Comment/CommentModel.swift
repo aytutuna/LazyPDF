@@ -76,6 +76,7 @@ public final class CommentModel: ToolPanelModel {
     @ObservationIgnored private var settling: Task<Void, Never>?
     @ObservationIgnored private var unsettled = Set<LookPart>()
     @ObservationIgnored private var loading = false
+    @ObservationIgnored private var drawingLook: MarkStyle?
 
     enum LookPart {
         case colour, width, opacity, font
@@ -179,6 +180,7 @@ public final class CommentModel: ToolPanelModel {
         settling?.cancel()
         settling = nil
         unsettled = []
+        drawingLook = nil
         field?.finish()
         watch?.stop()
         watch = nil
@@ -339,7 +341,8 @@ public final class CommentModel: ToolPanelModel {
         let pending = unsettled
         unsettled = []
         guard let mark = editTool?.current, tab != nil else { return }
-        let look = currentStyle()
+        var look = currentStyle()
+        if look.family.isEmpty { look.family = Marker.textOf(mark).family }
         _ = change(L10n.t("Change look")) { m in
             var current = mark
             if pending.contains(.colour), let rgb = look.color { current = try m.recolor(current, rgb) }
@@ -374,8 +377,21 @@ public final class CommentModel: ToolPanelModel {
         listMarks()
         guard let mark = editTool?.current else {
             selected = nil
+            if let back = drawingLook {
+                loading = true
+                width = back.width
+                opacity = back.opacity * 100
+                color = back.color
+                family = back.family
+                fontSize = back.size
+                bold = back.font.contains(.bold)
+                italic = back.font.contains(.italic)
+                loading = false
+                drawingLook = nil
+            }
             return
         }
+        if drawingLook == nil { drawingLook = currentStyle() }
         let text = mark.type == .freeText ? Marker.textOf(mark) : nil
         selected = SelectedMark(title: L10n.t("Selected: {0}", AnnotationText.kindName(mark.type)),
                                 canEditText: mark.type == .text || mark.type == .freeText || !(mark.contents ?? "").isEmpty)
@@ -383,7 +399,7 @@ public final class CommentModel: ToolPanelModel {
         width = min(max(mark.border.width, 0.5), 12)
         opacity = min(max((mark.opacity * 20).rounded(.toNearestOrEven) * 5, 10), 100)
         if let text {
-            if Self.families.contains(text.family) { family = text.family }
+            family = Self.families.contains(text.family) ? text.family : ""
             fontSize = (text.size * 10).rounded() / 10
             bold = text.font.contains(.bold)
             italic = text.font.contains(.italic)

@@ -421,6 +421,18 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.session.undoLabel, "Change look")
     }
 
+    func test_lookingAtAMarkDoesNotChangeTheLookOfTheNextOne() throws {
+        let rig = try attached(marks: true)
+        rig.model.pick(.edit)
+        rig.model.setWidth(5)
+
+        rig.model.editTool?.select(marks(rig)[0])
+        XCTAssertEqual(rig.model.width, 3)
+        rig.model.editTool?.select(nil)
+
+        XCTAssertEqual(rig.model.width, 5)
+    }
+
     func test_aMarkIsDeletedAndTheSelectionGoesWithIt() async throws {
         let rig = try attached(marks: true)
         rig.model.pick(.edit)

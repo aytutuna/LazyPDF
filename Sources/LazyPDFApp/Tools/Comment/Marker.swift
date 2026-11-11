@@ -266,6 +266,7 @@ public final class Marker {
     }
 
     private static let face = try! NSRegularExpression(pattern: #"/(\w+)\s+([\d.]+)\s+Tf"#)
+    private static let css = try! NSRegularExpression(pattern: #"font-family:\s*([^;]+)"#)
     private static let fill = try! NSRegularExpression(pattern: #"((?:-?[\d.]+\s+){1,4})(?:g|rg|k)\b"#)
 
     /// What a text box is set in, read from its /DA.
@@ -282,6 +283,11 @@ public final class Marker {
             if ["Bo", "BI", "BO"].contains(where: { name.hasSuffix($0) }) { font.insert(.bold) }
             if ["It", "Ob", "BI", "BO"].contains(where: { name.hasSuffix($0) }) { font.insert(.italic) }
             if let parsed = Double(String(da[sizeRange])) { size = parsed }
+        }
+        if family == "Helvetica", let ds = a.defaultStyle, let match = css.firstMatch(in: ds, range: NSRange(ds.startIndex..., in: ds)),
+           let nameRange = Range(match.range(at: 1), in: ds) {
+            let name = ds[nameRange].trimmingCharacters(in: CharacterSet(charactersIn: " \t\"'"))
+            if !name.isEmpty { family = name }
         }
         var color: [Double]?
         if let match = fill.matches(in: da, range: whole).last, let valuesRange = Range(match.range(at: 1), in: da) {

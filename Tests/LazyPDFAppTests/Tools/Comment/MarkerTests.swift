@@ -214,6 +214,15 @@ final class MarkerTests: XCTestCase {
         XCTAssertEqual(edited.contents, "Second, with ğ")
     }
 
+    func test_aTextBoxFromAnotherAppKeepsTheFamilyOfItsStyleString() throws {
+        let f = try CommentFixture()
+        var box = try f.marker.add(.textBox, 0, drag, markRed, "Hello")
+        box.defaultAppearance = "0 g /Helv 12 Tf"
+        box.defaultStyle = "font: 12pt; font-family: 'Georgia' ; color: #000000"
+
+        XCTAssertEqual(Marker.textOf(box).family, "Georgia")
+    }
+
     func test_deletingAMarkRemovesItsRepliesToo() throws {
         let f = try CommentFixture()
         let note = try f.marker.add(.note, 0, [markPt(100, 100)], markRed, "Question")
