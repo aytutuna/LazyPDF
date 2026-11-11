@@ -334,6 +334,14 @@ public partial class MainWindow : Window
 
     private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
+        // Files still held would be lost, so the window stays and they open.
+        if (_held.Count > 0)
+        {
+            e.Cancel = true;
+            _vm.CancelClose();
+            ReleaseHeld();
+            return;
+        }
         if (!HandInTyping(_vm.ActiveDocument) || !_vm.RequestExit())
         {
             e.Cancel = true;
