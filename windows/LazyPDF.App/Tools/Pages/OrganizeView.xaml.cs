@@ -24,6 +24,7 @@ public sealed partial class OrganizeView : ToolPanel
     private readonly DispatcherTimer _sharpen;
     private List<(double Width, double Height)> _sizes = [];
     private bool _syncing;
+    private bool _stale;
 
     public OrganizeView()
     {
@@ -47,6 +48,7 @@ public sealed partial class OrganizeView : ToolPanel
     {
         Tab!.Changed += Tab_Changed;
         Tab!.Drawn += Tab_Drawn;
+        _stale = !Tab.Drawing.IsCompleted;
         Build();
         Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
         Refresh();
@@ -65,6 +67,7 @@ public sealed partial class OrganizeView : ToolPanel
     private void Tab_Changed(object? sender, EventArgs e)
     {
         bool hadFocus = Thumbs.IsKeyboardFocusWithin;
+        _stale = true;
         Build();
         Refresh();
         if (hadFocus) Dispatcher.BeginInvoke(FocusSelected, DispatcherPriority.Loaded);
@@ -84,7 +87,11 @@ public sealed partial class OrganizeView : ToolPanel
     }
 
     // The renderer draws the new pages only once the tab says so; a picture made before would be of the old ones.
-    private void Tab_Drawn(object? sender, EventArgs e) => Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
+    private void Tab_Drawn(object? sender, EventArgs e)
+    {
+        _stale = false;
+        Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
+    }
 
     // The window disables its workspace while a job runs, which takes the keyboard focus with it and does not give it back.
     private void View_IsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -162,7 +169,7 @@ public sealed partial class OrganizeView : ToolPanel
     // Tiles in view and a row either side get a picture; the rest let theirs go.
     private void LoadVisible()
     {
-        if (Tab?.Renderer is not WindowsPageRenderer renderer || PageDrag.Descendant<TilePanel>(Thumbs) is not { } tiles) return;
+        if (_stale || Tab?.Renderer is not WindowsPageRenderer renderer || PageDrag.Descendant<TilePanel>(Thumbs) is not { } tiles) return;
         var (first, last) = tiles.Window(1);
         double dpr = VisualTreeHelper.GetDpi(this).DpiScaleX;
         var cells = Cells;

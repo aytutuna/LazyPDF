@@ -27,6 +27,7 @@ public partial class PagesPanel : ToolPanel
     private bool _boxSelected;
     private IEnumerable<int>? _reselect;
     private double _dpr = 1;
+    private bool _stale;
 
     public PagesPanel()
     {
@@ -44,6 +45,7 @@ public partial class PagesPanel : ToolPanel
     {
         Tab!.Changed += Tab_Changed;
         Tab!.Drawn += Tab_Drawn;
+        _stale = !Tab.Drawing.IsCompleted;
         _pages = PageNumbers();
         _dpr = VisualTreeHelper.GetDpi(this).DpiScaleX;
         Build();
@@ -83,6 +85,7 @@ public partial class PagesPanel : ToolPanel
 
     private void Tab_Changed(object? sender, EventArgs e)
     {
+        _stale = true;
         var select = _reselect;
         _reselect = null;
         int[] pages = PageNumbers();
@@ -94,7 +97,11 @@ public partial class PagesPanel : ToolPanel
     }
 
     // The renderer draws the new pages only once the tab says so; a picture made before would be of the old ones.
-    private void Tab_Drawn(object? sender, EventArgs e) => Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
+    private void Tab_Drawn(object? sender, EventArgs e)
+    {
+        _stale = false;
+        Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
+    }
 
     private (PdfRect, PdfRect, int, double) _boxSpace;
 
@@ -176,7 +183,7 @@ public partial class PagesPanel : ToolPanel
     // Tiles in view and one row either side get a picture; the rest let theirs go.
     private void LoadVisible()
     {
-        if (Tab?.Renderer is not WindowsPageRenderer renderer || Scroller() is not { } scroll) return;
+        if (_stale || Tab?.Renderer is not WindowsPageRenderer renderer || Scroller() is not { } scroll) return;
         int columns = Math.Max(1, (int)(scroll.ViewportWidth / ColumnStep));
         int first = Math.Max(0, (int)(scroll.VerticalOffset / RowStep) - 1) * columns;
         int last = ((int)((scroll.VerticalOffset + scroll.ViewportHeight) / RowStep) + 2) * columns;
