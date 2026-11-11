@@ -21,6 +21,7 @@ Cancel is İptal on Windows. Words shared with Lazy Scan and Lazy Print keep the
 | time stamp | Zaman damgası |
 | bookmark | Yer imi |
 | attachment | Ek |
+| script | Betik |
 | layer | Katman |
 | comment | Yorum |
 | annotation | Ek açıklama |

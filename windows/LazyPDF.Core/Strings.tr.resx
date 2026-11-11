@@ -2348,7 +2348,7 @@
     <value>Başka bir dosyayı veya programı açar; Lazy PDF bunu yapmaz.</value>
   </data>
   <data name="It runs a script, which Lazy PDF does not do." xml:space="preserve">
-    <value>Bir komut dosyası çalıştırır; Lazy PDF bunu yapmaz.</value>
+    <value>Bir betik çalıştırır; Lazy PDF bunu yapmaz.</value>
   </data>
   <data name="It sends the form to a web address, which Lazy PDF does not do. Save the file and send it yourself." xml:space="preserve">
     <value>Formu bir web adresine gönderir; Lazy PDF bunu yapmaz. Dosyayı kaydedip kendiniz gönderin.</value>

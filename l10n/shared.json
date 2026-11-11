@@ -3817,7 +3817,7 @@
     "tr": "Formu bir web adresine gönderir; Lazy PDF bunu yapmaz. Dosyayı kaydedip kendiniz gönderin."
   },
   "It runs a script, which Lazy PDF does not do.": {
-    "tr": "Bir komut dosyası çalıştırır; Lazy PDF bunu yapmaz."
+    "tr": "Bir betik çalıştırır; Lazy PDF bunu yapmaz."
   },
   "It opens another file or program, which Lazy PDF does not do.": {
     "tr": "Başka bir dosyayı veya programı açar; Lazy PDF bunu yapmaz."
