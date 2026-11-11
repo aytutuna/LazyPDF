@@ -3494,6 +3494,15 @@
   "That file is too big. Pick a text file under 1 MB.": {
     "tr": "Bu dosya çok büyük. 1 MB'den küçük bir metin dosyası seçin."
   },
+  "That file is too big. Pick a text file under 20 MB.": {
+    "tr": "Bu dosya çok büyük. 20 MB'den küçük bir metin dosyası seçin."
+  },
+  "Using {0} ({1} MB). It is too long to show here.": {
+    "tr": "{0} kullanılıyor ({1} MB). Burada gösterilemeyecek kadar uzun."
+  },
+  "Use typed text instead": {
+    "tr": "Bunun yerine yazılan metni kullan"
+  },
   "That file could not be read. Check that no other program has it open.": {
     "tr": "Bu dosya okunamadı. Başka bir programda açık olmadığına bakın."
   },

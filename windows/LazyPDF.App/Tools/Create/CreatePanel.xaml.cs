@@ -28,6 +28,7 @@ public partial class CreatePanel : ToolPanel
     private readonly bool _ready;
     private ClipboardKind _clipboard;
     private string? _fileProblem;
+    private string? _longText;
     private Window? _owner;
 
     public CreatePanel()
@@ -83,7 +84,7 @@ public partial class CreatePanel : ToolPanel
     {
         (int)CreateSource.Blank => TryBlankPages(out _) && (!CustomPicked || CustomPoints() is not null),
         (int)CreateSource.Pictures => _pictures.Count > 0,
-        (int)CreateSource.Text => TypedText.Text.Trim().Length > 0,
+        (int)CreateSource.Text => _longText is not null || TypedText.Text.Trim().Length > 0,
         _ => _clipboard != ClipboardKind.Nothing,
     };
 
@@ -114,6 +115,8 @@ public partial class CreatePanel : ToolPanel
         BlankOptions.Visibility = When(Source == (int)CreateSource.Blank);
         PictureOptions.Visibility = When(Source == (int)CreateSource.Pictures);
         TextOptions.Visibility = When(Source == (int)CreateSource.Text);
+        TypedText.Visibility = When(_longText is null);
+        LongTextRow.Visibility = When(_longText is not null);
         ClipboardOptions.Visibility = When(Source == ClipboardIndex);
         SetupOptions.Visibility = When(Source != ClipboardIndex || _clipboard != ClipboardKind.Nothing);
         var names = PaperNames();
@@ -166,7 +169,7 @@ public partial class CreatePanel : ToolPanel
             case (int)CreateSource.Pictures:
                 return new(CreateSource.Pictures, setup, PicturesTitle(), Files: [.. _pictures.Select(p => p.Path)]);
             case (int)CreateSource.Text:
-                return new(CreateSource.Text, setup, Loc.T("Text.pdf"), Text: TypedText.Text, FontSize: Tagged(FontSizeBox), Family: Family);
+                return new(CreateSource.Text, setup, Loc.T("Text.pdf"), Text: _longText ?? TypedText.Text, FontSize: Tagged(FontSizeBox), Family: Family);
         }
         var content = ClipboardContent.Read();
         if (content.Text is { } text) return new(CreateSource.Text, setup, Loc.T("Clipboard.pdf"), Text: text, FontSize: Tagged(FontSizeBox), Family: Family);
@@ -213,6 +216,7 @@ public partial class CreatePanel : ToolPanel
     {
         if (!_ready) return;
         _fileProblem = null;
+        _longText = null;
         PeekClipboard();
         Refresh();
     }
@@ -294,26 +298,45 @@ public partial class CreatePanel : ToolPanel
         Refresh();
     }
 
-    private void OpenTextFile_Click(object sender, RoutedEventArgs e)
+    private async void OpenTextFile_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog { Filter = Loc.T("Text files") + "|*.txt" };
-        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+        var dialog = new OpenFileDialog { Filter = TextFiles.Filter };
+        if (dialog.ShowDialog(Window.GetWindow(this)) == true) await LoadTextFileAsync(dialog.FileName);
+    }
+
+    internal async Task LoadTextFileAsync(string path)
+    {
         try
         {
-            if (new FileInfo(dialog.FileName).Length > TextFiles.MostBytes)
+            long size = new FileInfo(path).Length;
+            if (size > TextFiles.MostFileBytes)
             {
-                _fileProblem = Loc.T("That file is too big. Pick a text file under 1 MB.");
+                _fileProblem = Loc.T("That file is too big. Pick a text file under 20 MB.");
+            }
+            else if (size > TextFiles.MostBytes)
+            {
+                string text = await Task.Run(() => TextFiles.Decode(File.ReadAllBytes(path)));
+                _fileProblem = null;
+                _longText = text;
+                LongTextNote.Text = Loc.T("Using {0} ({1} MB). It is too long to show here.", System.IO.Path.GetFileName(path), (size / (double)(1 << 20)).ToString("0.#"));
             }
             else
             {
                 _fileProblem = null;
-                TypedText.Text = TextFiles.Decode(File.ReadAllBytes(dialog.FileName));
+                _longText = null;
+                TypedText.Text = TextFiles.Decode(File.ReadAllBytes(path));
             }
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
             _fileProblem = Loc.T("That file could not be read. Check that no other program has it open.");
         }
+        Refresh();
+    }
+
+    private void UseTypedText_Click(object sender, RoutedEventArgs e)
+    {
+        _longText = null;
         Refresh();
     }
 }

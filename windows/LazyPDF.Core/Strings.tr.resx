@@ -5491,6 +5491,9 @@
   <data name="That file is too big. Pick a text file under 1 MB." xml:space="preserve">
     <value>Bu dosya çok büyük. 1 MB'den küçük bir metin dosyası seçin.</value>
   </data>
+  <data name="That file is too big. Pick a text file under 20 MB." xml:space="preserve">
+    <value>Bu dosya çok büyük. 20 MB'den küçük bir metin dosyası seçin.</value>
+  </data>
   <data name="That is a folder" xml:space="preserve">
     <value>Bu bir klasör</value>
   </data>
@@ -6766,11 +6769,17 @@
   <data name="Use other text, or install a font that has these letters." xml:space="preserve">
     <value>Başka bir metin kullanın ya da bu harfleri içeren bir yazı tipi yükleyin.</value>
   </data>
+  <data name="Use typed text instead" xml:space="preserve">
+    <value>Bunun yerine yazılan metni kullan</value>
+  </data>
   <data name="Use {0}, {1} and {2}. A name that is taken gets a number." xml:space="preserve">
     <value>{0}, {1} ve {2} kullanın. Alınmış bir ada numara eklenir.</value>
   </data>
   <data name="Uses .NET patterns, for example \d{3}-\d{4}." xml:space="preserve">
     <value>.NET desenleri kullanılır, örneğin \d{3}-\d{4}.</value>
+  </data>
+  <data name="Using {0} ({1} MB). It is too long to show here." xml:space="preserve">
+    <value>{0} kullanılıyor ({1} MB). Burada gösterilemeyecek kadar uzun.</value>
   </data>
   <data name="Valid from {0} to {1}" xml:space="preserve">
     <value>{0} ile {1} arasında geçerli</value>

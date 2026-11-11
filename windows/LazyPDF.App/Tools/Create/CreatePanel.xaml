@@ -51,6 +51,11 @@
             <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Text for the pages}" />
             <TextBox x:Name="TypedText" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MinHeight="120" MaxHeight="200"
                      AutomationProperties.Name="{loc:T Text for the pages}" TextChanged="Input_Changed" />
+            <StackPanel x:Name="LongTextRow" Visibility="Collapsed">
+                <TextBlock x:Name="LongTextNote" Style="{StaticResource ReasonText}" AutomationProperties.LiveSetting="Polite" />
+                <Button Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Use typed text instead}" Padding="10,3,10,4" HorizontalAlignment="Left"
+                        Margin="0,8,0,0" AutomationProperties.Name="{loc:T Use typed text instead}" Click="UseTypedText_Click" />
+            </StackPanel>
             <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8E5;" Content="{loc:T Open a text file}" Padding="10,3,10,4" HorizontalAlignment="Left"
                     Margin="0,8,0,0" AutomationProperties.Name="{loc:T Open a text file}" Click="OpenTextFile_Click" />
         </StackPanel>

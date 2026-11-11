@@ -293,6 +293,74 @@ public sealed class CreateToolTests
     }
 
     [Fact]
+    public Task ATextFileOverWhatTheBoxTakesIsKeptAsideAndUsed() => Sta.Run(async () =>
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(dir.Path);
+        string file = dir.File("long.txt", Encoding.ASCII.GetBytes(new string('a', 2 << 20)));
+        var panel = new CreatePanel();
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+
+        await panel.LoadTextFileAsync(file);
+
+        Assert.Equal(2 << 20, panel.Request()!.Text.Length);
+        Assert.Equal(System.Windows.Visibility.Collapsed, panel.TypedText.Visibility);
+        Assert.Equal(System.Windows.Visibility.Visible, panel.LongTextRow.Visibility);
+        Assert.Contains("long.txt", panel.LongTextNote.Text);
+        Assert.True(panel.Action!.CanRun());
+    });
+
+    [Fact]
+    public Task TheTypedTextComesBackFromTheNoteOrOnPickingAnotherSource() => Sta.Run(async () =>
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(dir.Path);
+        string big = dir.File("long.txt", Encoding.ASCII.GetBytes(new string('a', 2 << 20)));
+        string small = dir.File("short.txt", "hello"u8.ToArray());
+        var panel = new CreatePanel();
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+
+        await panel.LoadTextFileAsync(big);
+        panel.LongTextRow.Children.OfType<System.Windows.Controls.Button>().Single().RaiseEvent(new(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        Assert.Equal(System.Windows.Visibility.Visible, panel.TypedText.Visibility);
+        Assert.Equal(System.Windows.Visibility.Collapsed, panel.LongTextRow.Visibility);
+        Assert.False(panel.Action!.CanRun());
+
+        await panel.LoadTextFileAsync(big);
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Blank;
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+        Assert.Equal("", panel.Request()!.Text);
+
+        await panel.LoadTextFileAsync(big);
+        await panel.LoadTextFileAsync(small);
+        Assert.Equal("hello", panel.Request()!.Text);
+        Assert.Equal(System.Windows.Visibility.Visible, panel.TypedText.Visibility);
+    });
+
+    [Fact]
+    public Task ATextFileOver20MbIsRefused() => Sta.Run(async () =>
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(dir.Path);
+        string file = dir.File("huge.txt", new byte[21 << 20]);
+        var panel = new CreatePanel();
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+
+        await panel.LoadTextFileAsync(file);
+
+        Assert.Equal(Loc.T("That file is too big. Pick a text file under 20 MB."), panel.Reason.Text);
+        Assert.False(panel.Action!.CanRun());
+    });
+
+    [Fact]
+    public Task TheTextFileFilterListsTheCommonExtensions() => Sta.Run(() =>
+    {
+        Assert.Contains("*.csv", TextFiles.Filter);
+        Assert.Contains("*.md", TextFiles.Filter);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public void TextInUtf8OrWithAByteOrderMarkReadsAsWritten()
     {
         string text = "Çalışma notları: ğ ş ı İ ö ü";
