@@ -50,10 +50,10 @@ public static class RedactJob
         return Gather(document, cache, RedactionFinder.Find(cache, kind.Kind, cancel));
     }
 
-    public static Found Find(PdfDocument document, string words, bool matchCase, bool wholeWord, CancellationToken cancel)
+    public static Found Find(PdfDocument document, IReadOnlyList<string> terms, bool matchCase, bool wholeWord, CancellationToken cancel)
     {
         var cache = new TextCache(document);
-        return Gather(document, cache, RedactionFinder.FindWords(cache, [words], wholeWord, matchCase, cancel));
+        return Gather(document, cache, RedactionFinder.FindWords(cache, terms, wholeWord, matchCase, cancel));
     }
 
     /// <summary>True when the file lets this opener read it but not change it, so that Core would refuse to write a copy.</summary>

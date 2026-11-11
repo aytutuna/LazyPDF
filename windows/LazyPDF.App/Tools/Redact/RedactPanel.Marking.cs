@@ -52,20 +52,25 @@ public partial class RedactPanel
     }
 
     private void QueryBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) =>
-        FindWordsButton.IsEnabled = QueryBox.Text.Trim().Length > 0;
+        FindWordsButton.IsEnabled = !string.IsNullOrWhiteSpace(QueryBox.Text);
 
     private void QueryBox_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Enter || !FindWordsButton.IsEnabled) return;
+        if (e.Key != Key.Enter || Keyboard.Modifiers != ModifierKeys.Control || !FindWordsButton.IsEnabled) return;
         e.Handled = true;
         FindWords_Click(sender, e);
     }
 
     private async void FindWords_Click(object sender, RoutedEventArgs e)
     {
-        string words = QueryBox.Text.Trim();
+        var terms = QueryBox.Text.Split(['\r', '\n'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Distinct(StringComparer.Ordinal).ToList();
+        if (terms.Count > 200)
+        {
+            Host!.ShowProblem(new(Loc.T("Too many lines"), Loc.T("Use 200 or fewer words or phrases.")));
+            return;
+        }
         bool matchCase = MatchCaseBox.IsChecked == true, whole = WholeWordBox.IsChecked == true;
-        await FindAsync((document, token) => RedactJob.Find(document, words, matchCase, whole, token));
+        await FindAsync((document, token) => RedactJob.Find(document, terms, matchCase, whole, token));
     }
 
     private async void FindKind_Click(object sender, RoutedEventArgs e)

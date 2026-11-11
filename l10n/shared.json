@@ -5675,6 +5675,18 @@
   "Word or phrase": {
     "tr": "Sözcük veya ifade"
   },
+  "Words or phrases, one per line": {
+    "tr": "Sözcükler veya ifadeler, her satıra bir tane"
+  },
+  "Enter starts a new line. Ctrl+Enter marks every match.": {
+    "tr": "Enter yeni satır başlatır. Ctrl+Enter tüm eşleşmeleri işaretler."
+  },
+  "Too many lines": {
+    "tr": "Çok fazla satır"
+  },
+  "Use 200 or fewer words or phrases.": {
+    "tr": "En fazla 200 sözcük veya ifade kullanın."
+  },
   "Whole word": {
     "tr": "Tam sözcük"
   },

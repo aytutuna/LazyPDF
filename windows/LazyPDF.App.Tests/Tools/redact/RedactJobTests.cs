@@ -55,13 +55,26 @@ public sealed class RedactJobTests
         var pdf = Pdfs.Text(1, Line);
         using var document = RedactJob.Open(pdf, null, null);
 
-        var inside = RedactJob.Find(document, "to", false, false, CancellationToken.None).Items;
-        var whole = RedactJob.Find(document, "to", false, true, CancellationToken.None).Items;
-        var wrongCase = RedactJob.Find(document, "WRITE", true, true, CancellationToken.None).Items;
+        var inside = RedactJob.Find(document, ["to"], false, false, CancellationToken.None).Items;
+        var whole = RedactJob.Find(document, ["to"], false, true, CancellationToken.None).Items;
+        var wrongCase = RedactJob.Find(document, ["WRITE"], true, true, CancellationToken.None).Items;
 
         Assert.Equal(2, inside.Count);
         Assert.Single(whole);
         Assert.Empty(wrongCase);
+    }
+
+    [Fact]
+    public void SeveralWordsAreFoundInOneCall()
+    {
+        var pdf = PdfFromText.Create("alpha onebeta two", new FakeFonts()).Bytes;
+        using var document = RedactJob.Open(pdf, null, null);
+
+        var both = RedactJob.Find(document, ["alpha", "beta"], false, false, CancellationToken.None).Items;
+        var oneWrongCase = RedactJob.Find(document, ["alpha", "BETA"], true, true, CancellationToken.None).Items;
+
+        Assert.Equal([0, 1], both.Select(m => m.Page));
+        Assert.Equal([0], oneWrongCase.Select(m => m.Page));
     }
 
     [Fact]

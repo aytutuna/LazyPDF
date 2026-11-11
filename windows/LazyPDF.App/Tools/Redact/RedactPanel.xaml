@@ -33,9 +33,10 @@
             <TextBlock x:Name="SelectionNote" Text="{loc:T Select text on the page first.}" Style="{StaticResource ReasonText}" Margin="0,6,0,0" />
 
             <TextBlock Text="{loc:T Find}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,8" />
-            <TextBlock Text="{loc:T Word or phrase}" Style="{StaticResource FieldLabelText}" />
-            <TextBox x:Name="QueryBox" MinHeight="30" VerticalContentAlignment="Center" AutomationProperties.Name="{loc:T Word or phrase}"
-                     PreviewKeyDown="QueryBox_PreviewKeyDown" TextChanged="QueryBox_TextChanged" />
+            <TextBlock Text="{loc:T 'Words or phrases, one per line'}" Style="{StaticResource FieldLabelText}" />
+            <TextBox x:Name="QueryBox" MinHeight="30" MinLines="2" MaxLines="6" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                     AutomationProperties.Name="{loc:T 'Words or phrases, one per line'}" PreviewKeyDown="QueryBox_PreviewKeyDown" TextChanged="QueryBox_TextChanged" />
+            <TextBlock Text="{loc:T 'Enter starts a new line. Ctrl+Enter marks every match.'}" Style="{StaticResource ReasonText}" Margin="0,4,0,0" />
             <CheckBox x:Name="MatchCaseBox" Content="{loc:T Match case}" Margin="0,6,0,0" AutomationProperties.Name="{loc:T Match case}" />
             <CheckBox x:Name="WholeWordBox" Content="{loc:T Whole word}" AutomationProperties.Name="{loc:T Whole word}" />
             <Button x:Name="FindWordsButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE721;" Content="{loc:T Mark every match}"

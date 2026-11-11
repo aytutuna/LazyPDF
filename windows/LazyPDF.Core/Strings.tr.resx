@@ -1711,6 +1711,9 @@
   <data name="Enter keeps the text. Shift+Enter starts a new line." xml:space="preserve">
     <value>Enter metni kaydeder. Shift+Enter yeni satır açar.</value>
   </data>
+  <data name="Enter starts a new line. Ctrl+Enter marks every match." xml:space="preserve">
+    <value>Enter yeni satır başlatır. Ctrl+Enter tüm eşleşmeleri işaretler.</value>
+  </data>
   <data name="Enter the permissions password, then try again." xml:space="preserve">
     <value>İzin parolasını girip yeniden deneyin.</value>
   </data>
@@ -6370,6 +6373,9 @@
   <data name="Too large to export" xml:space="preserve">
     <value>Dışa aktarmak için çok büyük</value>
   </data>
+  <data name="Too many lines" xml:space="preserve">
+    <value>Çok fazla satır</value>
+  </data>
   <data name="Too many parts for tabs" xml:space="preserve">
     <value>Sekmeler için çok fazla parça</value>
   </data>
@@ -6573,6 +6579,9 @@
   </data>
   <data name="Use" xml:space="preserve">
     <value>Kullan</value>
+  </data>
+  <data name="Use 200 or fewer words or phrases." xml:space="preserve">
+    <value>En fazla 200 sözcük veya ifade kullanın.</value>
   </data>
   <data name="Use a different password here." xml:space="preserve">
     <value>Burada farklı bir parola kullanın.</value>
@@ -6813,6 +6822,9 @@
   </data>
   <data name="Words on this page" xml:space="preserve">
     <value>Bu sayfadaki sözcükler</value>
+  </data>
+  <data name="Words or phrases, one per line" xml:space="preserve">
+    <value>Sözcükler veya ifadeler, her satıra bir tane</value>
   </data>
   <data name="Words: {0} added, {1} removed" xml:space="preserve">
     <value>Sözcük: {0} eklendi, {1} kaldırıldı</value>
