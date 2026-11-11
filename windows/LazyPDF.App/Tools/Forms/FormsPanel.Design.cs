@@ -220,7 +220,7 @@ public sealed partial class FormsPanel
 
     private void View_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (!Designing || !_canEdit || _working || _selected is null) return;
+        if (!Designing || !_canEdit || _working || SelectedField(Form) is null) return;
         if (Keyboard.FocusedElement is TextBox or ComboBox or PasswordBox) return;
         if (e.Key != Key.Delete || Keyboard.Modifiers != ModifierKeys.None) return;
         Delete_Click(sender, e);
