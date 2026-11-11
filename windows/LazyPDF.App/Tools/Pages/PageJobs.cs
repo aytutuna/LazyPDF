@@ -109,7 +109,7 @@ internal static class PageJobs
     }
 
     /// <summary>The pages as a PDF of their own, made off the UI thread. Null when the file does not allow copying, when it was cancelled or when it failed, with <paramref name="failed"/> shown.</summary>
-    public static async Task<byte[]?> CopyOutAsync(DocumentTab tab, IToolHost host, IReadOnlyList<int> pages, string busy, Problem failed)
+    public static async Task<byte[]?> CopyOutAsync(DocumentTab tab, IToolHost host, IReadOnlyList<int> pages, string busy, Problem failed, bool files = true)
     {
         if (CopyRules.Refused(tab.Document, host)) return null;
         byte[]? bytes = null;
@@ -118,7 +118,7 @@ internal static class PageJobs
         {
             await host.RunBusyAsync(busy, token => Task.Run(() =>
             {
-                using var copy = PageAssembly.Extract(PageEdits.Reopen(tab), pages, token);
+                using var copy = PageAssembly.Extract(PageEdits.Reopen(tab), pages, token, files);
                 byte[] made = copy.SaveRewrite();
                 token.ThrowIfCancellationRequested();
                 bytes = made;

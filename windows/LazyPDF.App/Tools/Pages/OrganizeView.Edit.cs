@@ -95,7 +95,7 @@ public sealed partial class OrganizeView
     {
         if (Tab is not { } tab || Host is not { } host || pages.Count == 0) return false;
         var failed = new Problem(Loc.T("Pages not copied"), Loc.T("The pages could not be copied. Try fewer pages."));
-        if (await PageJobs.CopyOutAsync(tab, host, pages, Loc.T("Copying pages"), failed) is not { } bytes) return false;
+        if (await PageJobs.CopyOutAsync(tab, host, pages, Loc.T("Copying pages"), failed, files: false) is not { } bytes) return false;
         PageClipboard.Set(bytes, pages.Count);
         Refresh();
         host.SetStatus(Loc.Plural(pages.Count, "{0} page copied", "{0} pages copied", pages.Count));

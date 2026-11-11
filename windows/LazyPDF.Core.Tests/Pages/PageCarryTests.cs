@@ -192,6 +192,14 @@ public class PageCarryTests
     }
 
     [Fact]
+    public void ExtractWithoutFilesNeitherCarriesNorReadsAttachments()
+    {
+        var part = PageAssembly.Extract(Fixture(brokenFile: true), [2, 3], files: false);
+        Assert.Equal("", Files(part));
+        Assert.Equal(0, part.SkippedAttachments);
+    }
+
+    [Fact]
     public void AnAttachmentThatDoesNotDecodeIsSkippedAndCounted()
     {
         var part = PageAssembly.Extract(Fixture(brokenFile: true), [2, 3]);

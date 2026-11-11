@@ -22,8 +22,8 @@ public struct MergeSource {
 public enum PageAssembly {
     /// A document of the pages at these indexes, in this order. Keeps the source's /Info. Throws `CancellationError`
     /// when the task is cancelled.
-    public static func extract(_ source: PdfDocument, _ pages: [Int]) throws -> PdfDocument {
-        try extract(source, pages, files: true, tags: PageCarry.hasTags(source))
+    public static func extract(_ source: PdfDocument, _ pages: [Int], files: Bool = true) throws -> PdfDocument {
+        try extract(source, pages, files: files, tags: PageCarry.hasTags(source))
     }
 
     // A split keeps the document's attached files in its first part only.

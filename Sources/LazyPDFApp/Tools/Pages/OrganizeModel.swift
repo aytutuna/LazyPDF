@@ -111,7 +111,7 @@ public final class OrganizeModel {
     func copyPages(_ pages: [Int]) async -> Bool {
         guard let tab, let host, !pages.isEmpty else { return false }
         let failed = Problem(L10n.t("Pages not copied"), L10n.t("The pages could not be copied. Try fewer pages."))
-        guard let bytes = await PageJobs.copyOut(tab, host, pages, busy: L10n.t("Copying pages"), failed: failed) else { return false }
+        guard let bytes = await PageJobs.copyOut(tab, host, pages, busy: L10n.t("Copying pages"), failed: failed, files: false) else { return false }
         PageClipboard.shared.set(bytes, pages.count)
         host.setStatus(L10n.plural(pages.count, one: "{0} page copied", other: "{0} pages copied"))
         CopyRules.noteUnprotected(tab.document, host)

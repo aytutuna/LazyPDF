@@ -75,7 +75,7 @@ public enum PageJobs {
 
     /// The pages as a PDF of their own, made off the main actor. Nil when the file does not allow copying, when it was cancelled
     /// or when it failed, with `failed` shown.
-    public static func copyOut(_ tab: DocumentTab, _ host: ToolHost, _ pages: [Int], busy: String, failed: Problem) async -> [UInt8]? {
+    public static func copyOut(_ tab: DocumentTab, _ host: ToolHost, _ pages: [Int], busy: String, failed: Problem, files: Bool = true) async -> [UInt8]? {
         if CopyRules.refused(tab.document, host) { return nil }
         var bytes: [UInt8]?
         var skipped = 0
@@ -84,7 +84,7 @@ public enum PageJobs {
             try await host.runBusy(busy) { token in
                 (bytes, skipped) = try await ToolDocuments.run(token) {
                     try token.throwIfCancelled()
-                    let extract = try PageAssembly.extract(copy.open(), pages)
+                    let extract = try PageAssembly.extract(copy.open(), pages, files: files)
                     let made = try extract.saveRewrite()
                     try token.throwIfCancelled()
                     return (made, extract.skippedAttachments)

@@ -13,9 +13,9 @@ public sealed record MergeSource(PdfDocument Document, IReadOnlyList<int>? Pages
 /// </summary>
 public static class PageAssembly
 {
-    /// <summary>A document of the pages at these indexes, in this order. Keeps the source's /Info. Throws <see cref="OperationCanceledException"/> when <paramref name="cancel"/> is raised.</summary>
-    public static PdfDocument Extract(PdfDocument source, IReadOnlyList<int> pages, CancellationToken cancel = default) =>
-        Extract(source, pages, true, PageCarry.HasTags(source), cancel);
+    /// <summary>A document of the pages at these indexes, in this order. Keeps the source's /Info. <paramref name="files"/> false leaves the attached files out, for a copy that only goes back in as pages. Throws <see cref="OperationCanceledException"/> when <paramref name="cancel"/> is raised.</summary>
+    public static PdfDocument Extract(PdfDocument source, IReadOnlyList<int> pages, CancellationToken cancel = default, bool files = true) =>
+        Extract(source, pages, files, PageCarry.HasTags(source), cancel);
 
     // A split keeps the document's attached files in its first part only.
     private static PdfDocument Extract(PdfDocument source, IReadOnlyList<int> pages, bool files, bool tags, CancellationToken cancel)
