@@ -53,7 +53,8 @@
         <TextBlock x:Name="Hint" Style="{StaticResource ReasonText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" Visibility="Collapsed" />
         <StackPanel x:Name="StampRow" Margin="0,8,0,0" Visibility="Collapsed">
             <TextBlock Text="{loc:T Stamp text}" Style="{StaticResource FieldLabelText}" />
-            <ComboBox x:Name="StampName" IsEditable="True" AutomationProperties.Name="{loc:T Stamp text}" SelectionChanged="Stamp_Changed" LostFocus="Stamp_Changed" />
+            <ComboBox x:Name="StampName" IsEditable="True" AutomationProperties.Name="{loc:T Stamp text}" SelectionChanged="Stamp_Changed" LostFocus="Stamp_Changed"
+                      DropDownClosed="Stamp_Touched" GotKeyboardFocus="Stamp_Touched" TextBoxBase.TextChanged="Stamp_Touched" />
             <CheckBox x:Name="StampDate" Style="{StaticResource ToggleSwitchStyle}" Margin="0,8,0,0" />
             <TextBlock Text="{loc:T Pictures}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,0" />
             <ListBox x:Name="PictureList" MaxHeight="168" Margin="0,0,0,4" AutomationProperties.Name="{loc:T Pictures}"

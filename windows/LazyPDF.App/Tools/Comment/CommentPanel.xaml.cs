@@ -319,6 +319,9 @@ public partial class CommentPanel : ToolPanel
         if (StampName.Text.Length == 0) StampName.SelectedIndex = 0;
     }
 
+    // A text stamp the user touched last wins over a picture picked before.
+    private void Stamp_Touched(object? sender, EventArgs e) => PictureList.SelectedIndex = -1;
+
     // The sliders settle for a moment before they change the selected mark, so a drag is one undo step.
     private void Look_Changed(object sender, RoutedEventArgs e)
     {
