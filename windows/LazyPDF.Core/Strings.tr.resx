@@ -2413,6 +2413,9 @@
   <data name="Lazy PDF closed before these were saved. Restore them to carry on where you were." xml:space="preserve">
     <value>Lazy PDF bunlar kaydedilmeden kapandı. Kaldığınız yerden devam etmek için geri yükleyin.</value>
   </data>
+  <data name="Lazy PDF could not finish what it was doing. Your changes are still open. Save them, then close and reopen the app." xml:space="preserve">
+    <value>Lazy PDF yaptığı işi tamamlayamadı. Değişiklikleriniz hâlâ açık. Kaydedin, ardından uygulamayı kapatıp yeniden açın.</value>
+  </data>
   <data name="Lazy Print" xml:space="preserve">
     <value>Lazy Print</value>
   </data>

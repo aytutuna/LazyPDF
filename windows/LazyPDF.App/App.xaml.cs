@@ -1,4 +1,5 @@
 using System.Windows;
+using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 
 namespace LazyPDF.App;
@@ -44,10 +45,25 @@ public partial class App : Application
             }
         }
         StartupFiles = files;
+        DispatcherUnhandledException += App_DispatcherUnhandledException;
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            System.Diagnostics.Trace.TraceError(args.Exception.ToString());
+            args.SetObserved();
+        };
         if (first) _channel = new InstanceChannel(Opened);
         // Apply the saved appearance before the first window is created.
         ThemeService.Initialize();
         base.OnStartup(e);
+    }
+
+    // One failed handler should not take every open tab with it. Before the window is up there is nothing to show it in.
+    private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+    {
+        System.Diagnostics.Trace.TraceError(e.Exception.ToString());
+        if (e.Exception is OutOfMemoryException || MainWindow is not MainWindow { IsLoaded: true } window) return;
+        window.ShowProblem(Problems.Crashed());
+        e.Handled = true;
     }
 
     /// <summary>

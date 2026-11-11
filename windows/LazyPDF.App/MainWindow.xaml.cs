@@ -76,6 +76,8 @@ public partial class MainWindow : Window
         if (paths.Count > 0) _ = _vm.OpenFilesAsync(paths);
     }
 
+    public void ShowProblem(Problem problem) => _vm.ShowProblem(problem);
+
     private void RefreshFromViewModel()
     {
         if (_refreshing)
