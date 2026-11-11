@@ -72,7 +72,7 @@ public partial class AttachmentsSidePanel : ToolPanel
 
     private void Files_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        if (Files.SelectedItem is not null) Open_Click(sender, e);
+        if (e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(Files, source) is ListBoxItem) Open_Click(sender, e);
     }
 
     private void Tell(string text)
