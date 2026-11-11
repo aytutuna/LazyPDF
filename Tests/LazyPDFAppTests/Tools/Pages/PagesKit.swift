@@ -164,6 +164,27 @@ enum PagesPdfs {
     static func withBookmarks(_ pages: Int, _ starts: [Int]) throws -> PdfDocument {
         try PdfDocument.open(withBookmarksFile(pages, starts))
     }
+
+    /// Two pages and a tag tree; only the first page is tagged.
+    static func tagged() -> [UInt8] {
+        var file = "%PDF-1.7\n"
+        var offsets: [Int] = []
+        func obj(_ body: String) {
+            offsets.append(file.utf8.count)
+            file += "\(offsets.count) 0 obj\n\(body)\nendobj\n"
+        }
+        obj("<</Type /Catalog /Pages 2 0 R /MarkInfo <</Marked true>> /StructTreeRoot 5 0 R>>")
+        obj("<</Type /Pages /Kids [3 0 R 4 0 R] /Count 2>>")
+        obj("<</Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /StructParents 0>>")
+        obj("<</Type /Page /Parent 2 0 R /MediaBox [0 0 612 792]>>")
+        obj("<</Type /StructTreeRoot /K 6 0 R /ParentTree <</Nums [0 [6 0 R]]>>>>")
+        obj("<</Type /StructElem /S /P /P 5 0 R /Pg 3 0 R /K 0>>")
+        let xref = file.utf8.count
+        file += "xref\n0 \(offsets.count + 1)\n0000000000 65535 f \n"
+        for offset in offsets { file += String(repeating: "0", count: 10 - String(offset).count) + "\(offset) 00000 n \n" }
+        file += "trailer\n<</Size \(offsets.count + 1) /Root 1 0 R>>\nstartxref\n\(xref)\n%%EOF\n"
+        return Array(file.utf8)
+    }
 }
 
 /// A tab over `bytes` with a viewer and a window that answers the pickers.

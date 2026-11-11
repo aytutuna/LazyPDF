@@ -52,6 +52,16 @@ public enum PageJobs {
         return true
     }
 
+    static func isTagged(_ tab: DocumentTab) -> Bool {
+        tab.document.dict(tab.document.catalog, "StructTreeRoot") != nil
+    }
+
+    static func noteUntagged(_ tab: DocumentTab, _ host: ToolHost, wasTagged: Bool) {
+        guard wasTagged, !isTagged(tab) else { return }
+        host.showNotice(L10n.t("Tags removed"),
+                        L10n.t("This file was tagged for screen readers. A deleted page was tagged, so the tags are gone. Undo brings them back."), nil)
+    }
+
     static var refusal: Problem {
         Problem(L10n.t("Pages not changed"), L10n.t("The file did not take that change. Pick other pages and try again."))
     }

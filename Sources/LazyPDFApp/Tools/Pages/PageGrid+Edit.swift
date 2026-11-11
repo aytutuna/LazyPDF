@@ -35,10 +35,12 @@ extension PageGrid {
 
     public func remove(_ pages: [Int]) {
         guard !pages.isEmpty, !noneLeft(pages) else { return }
-        apply(L10n.t("Delete pages"), select: nil,
-              status: L10n.plural(pages.count, one: "{0} page deleted", other: "{0} pages deleted")) { document in
+        let wasTagged = tab.map(PageJobs.isTagged) ?? false
+        let done = apply(L10n.t("Delete pages"), select: nil,
+                         status: L10n.plural(pages.count, one: "{0} page deleted", other: "{0} pages deleted")) { document in
             try PageOperations.delete(document, pages)
         }
+        if done, let tab, let host { PageJobs.noteUntagged(tab, host, wasTagged: wasTagged) }
     }
 
     /// True, with the reason shown, when `pages` are every page there is.

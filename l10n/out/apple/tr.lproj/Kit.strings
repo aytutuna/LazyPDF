@@ -1552,6 +1552,7 @@
 "Tags added" = "Etiketler eklendi";
 "Tags added." = "Etiketler eklendi.";
 "Tags not added" = "Etiketler eklenemedi";
+"Tags removed" = "Etiketler kaldırıldı";
 "Take back corner" = "Köşeyi geri al";
 "Take back the last corner" = "Son köşeyi geri al";
 "Take back the last corner (Backspace)" = "Son köşeyi geri al (Backspace)";
@@ -1876,6 +1877,7 @@
 "This file is signed. Changing its pages breaks the signatures." = "Bu dosya imzalı. Sayfaları değiştirmek imzaları bozar.";
 "This file is signed. The new files do not keep its signatures." = "Bu dosya imzalı. Yeni dosyalar imzalarını taşımaz.";
 "This file is the older one" = "Bu dosya eski olan";
+"This file was tagged for screen readers. A deleted page was tagged, so the tags are gone. Undo brings them back." = "Bu dosya ekran okuyucular için etiketlenmişti. Silinen sayfaların etiketleri de gittiği için dosyanın etiketleri kaldırıldı. Geri alırsanız etiketler geri gelir.";
 "This file's pages cannot be shown here. You can still edit and save it." = "Bu dosyanın sayfaları burada gösterilemiyor. Yine de düzenleyip kaydedebilirsiniz.";
 "This form also has XFA data. Changing a field removes it." = "Bu formda XFA verisi de var. Bir alanı değiştirmek onu kaldırır.";
 "This is a dynamic XFA form. Lazy PDF cannot fill it." = "Bu dinamik bir XFA formu. Lazy PDF bunu dolduramaz.";

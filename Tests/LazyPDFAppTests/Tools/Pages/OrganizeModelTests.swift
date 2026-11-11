@@ -145,6 +145,47 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.order, was)
     }
 
+    func test_deletingATaggedPageSaysTheTagsAreGoneAndUndoBringsThemBack() throws {
+        let (model, rig) = try attached(bytes: PagesPdfs.tagged())
+        model.grid.select([0])
+
+        model.remove()
+
+        XCTAssertFalse(PageJobs.isTagged(rig.tab))
+        XCTAssertEqual(rig.host.notices.map { $0.title }, ["Tags removed"])
+        try rig.tab.undo()
+        XCTAssertTrue(PageJobs.isTagged(rig.tab))
+    }
+
+    func test_deletingAPageThatIsNotTaggedLeavesTheTagsAndSaysNothing() throws {
+        let (model, rig) = try attached(bytes: PagesPdfs.tagged())
+        model.grid.select([1])
+
+        model.remove()
+
+        XCTAssertTrue(PageJobs.isTagged(rig.tab))
+        XCTAssertTrue(rig.host.notices.isEmpty)
+    }
+
+    func test_cuttingATaggedPageSaysTheTagsAreGone() async throws {
+        let (model, rig) = try attached(bytes: PagesPdfs.tagged())
+        model.grid.select([0])
+
+        await model.cut()
+
+        XCTAssertFalse(PageJobs.isTagged(rig.tab))
+        XCTAssertEqual(rig.host.notices.map { $0.title }, ["Tags removed"])
+    }
+
+    func test_deletingFromAFileThatWasNotTaggedSaysNothing() throws {
+        let (model, rig) = try attached()
+        model.grid.select([1])
+
+        model.remove()
+
+        XCTAssertTrue(rig.host.notices.isEmpty)
+    }
+
     func test_everyPageCannotBeDeleted() throws {
         let (model, rig) = try attached(3)
 

@@ -101,9 +101,11 @@ public final class OrganizeModel {
     public func cut() async {
         let pages = grid.selection
         guard !pages.isEmpty, !grid.noneLeft(pages), await copyPages(pages) else { return }
-        grid.apply(L10n.t("Cut pages"), select: nil, status: L10n.plural(pages.count, one: "{0} page cut", other: "{0} pages cut")) { document in
+        let wasTagged = tab.map(PageJobs.isTagged) ?? false
+        let done = grid.apply(L10n.t("Cut pages"), select: nil, status: L10n.plural(pages.count, one: "{0} page cut", other: "{0} pages cut")) { document in
             try PageOperations.delete(document, pages)
         }
+        if done, let tab, let host { PageJobs.noteUntagged(tab, host, wasTagged: wasTagged) }
     }
 
     /// True when the pages are on the clipboard.
