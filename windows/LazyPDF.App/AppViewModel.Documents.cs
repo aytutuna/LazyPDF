@@ -360,6 +360,8 @@ public sealed partial class AppViewModel
         if (tab.Path is null) return false;
         if (tab.ChangedOnDisk && File.Exists(tab.Path))
         {
+            // So a disk check still running does not replace this notice with its own.
+            _warnedAboutDisk[tab] = tab.OnDisk;
             ShowNotice(Loc.T("File changed"), Loc.T("{0} was changed by another program. Saving now replaces that version with yours.", tab.Title),
                 new NoticeAction(Loc.T("Save anyway"), () =>
                 {
