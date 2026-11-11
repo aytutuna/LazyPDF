@@ -126,6 +126,7 @@ public partial class MainWindow
 
     private void ContentArea_SizeChanged(object sender, SizeChangedEventArgs e)
     {
+        SettingsScroll.MaxHeight = Math.Max(0, e.NewSize.Height - 48);
         if (_narrow == e.NewSize.Width < NarrowWidth) return;
         _narrow = !_narrow;
         RefreshFromViewModel();

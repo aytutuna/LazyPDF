@@ -33,6 +33,18 @@ public sealed class StoreFilesTests
     }
 
     [Fact]
+    public void LanguageIsReadBackAsWrittenAndAnOldFileHasNone()
+    {
+        using var dir = new TempDir();
+        dir.File("preferences.json", Bytes("{\"appearance\":\"dark\"}"));
+        Assert.Equal("", AppPreferencesStore.Load(dir.Path).Language);
+
+        AppPreferencesStore.Update(p => p.Language = "tr", dir.Path);
+
+        Assert.Equal("tr", AppPreferencesStore.Load(dir.Path).Language);
+    }
+
+    [Fact]
     public void ViewSettingsAreReadBackAsWritten()
     {
         using var dir = new TempDir();

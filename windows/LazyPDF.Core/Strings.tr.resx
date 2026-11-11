@@ -5425,6 +5425,9 @@
   <data name="Take the recognized text off the chosen pages" xml:space="preserve">
     <value>Seçili sayfalardaki tanınan metni kaldırın</value>
   </data>
+  <data name="Takes effect the next time Lazy PDF starts." xml:space="preserve">
+    <value>Lazy PDF'yi bir sonraki başlatışınızda geçerli olur.</value>
+  </data>
   <data name="Tap a field on the page to fill it in, or choose it from the list." xml:space="preserve">
     <value>Doldurmak için sayfada bir alana dokunun ya da listeden seçin.</value>
   </data>

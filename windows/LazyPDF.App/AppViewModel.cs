@@ -169,6 +169,11 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
         NotifyAll();
     }
 
+    public void SetLanguage(string language)
+    {
+        AppPreferencesStore.Update(preferences => preferences.Language = language, _settingsDirectory ?? StoreFiles.DefaultDirectory);
+    }
+
     // A button on the info bar acts on the tab and tool it was made for, so it goes when they do.
     private void DropAction()
     {

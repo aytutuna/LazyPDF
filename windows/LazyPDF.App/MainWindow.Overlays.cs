@@ -249,6 +249,12 @@ public partial class MainWindow
             AppAppearance.Dark => AppearanceDark,
             _ => AppearanceSystem,
         }).IsChecked = true;
+        (AppPreferencesStore.Load().Language switch
+        {
+            "en" => LanguageEnglish,
+            "tr" => LanguageTurkish,
+            _ => LanguageSystem,
+        }).IsChecked = true;
         // In the Store package the manifest registers the Open with entry and the address.
         OpenWithSection.Visibility = Packaging.IsPackaged ? Visibility.Collapsed : Visibility.Visible;
         OpenWithToggle.IsChecked = !Packaging.IsPackaged && FileAssociation.IsRegisteredForCurrentUser();
@@ -329,6 +335,12 @@ public partial class MainWindow
     {
         if (_loadingSettings) return;
         _vm.SetAppearance(sender == AppearanceLight ? AppAppearance.Light : sender == AppearanceDark ? AppAppearance.Dark : AppAppearance.System);
+    }
+
+    private void Language_Checked(object sender, RoutedEventArgs e)
+    {
+        if (_loadingSettings) return;
+        _vm.SetLanguage(sender == LanguageEnglish ? "en" : sender == LanguageTurkish ? "tr" : "");
     }
 
     private void OpenWith_Click(object sender, RoutedEventArgs e)

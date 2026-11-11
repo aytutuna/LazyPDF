@@ -355,36 +355,52 @@
                             <Button x:Name="SettingsDoneButton" Content="{loc:T Done}" AutomationProperties.Name="{loc:T Done}" MinWidth="88" HorizontalAlignment="Right" IsDefault="True" IsCancel="True"
                                     Click="SettingsDone_Click" />
                         </Border>
-                        <StackPanel Margin="24,20,24,20">
-                            <TextBlock Text="{loc:T Settings}" Style="{StaticResource SubtitleText}" Margin="0,0,0,16"
-                                       AutomationProperties.HeadingLevel="Level1" />
-                            <TextBlock Text="{loc:T Appearance}" Style="{StaticResource FieldLabelText}" />
-                            <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,4,0,16" HorizontalAlignment="Left">
-                                <StackPanel Orientation="Horizontal">
-                                    <RadioButton x:Name="AppearanceSystem" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Windows}"
-                                                 GroupName="Appearance" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Follow Windows}"
-                                                 Checked="Appearance_Checked" />
-                                    <RadioButton x:Name="AppearanceLight" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Light}"
-                                                 GroupName="Appearance" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Light}"
-                                                 Checked="Appearance_Checked" />
-                                    <RadioButton x:Name="AppearanceDark" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Dark}"
-                                                 GroupName="Appearance" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Dark}"
-                                                 Checked="Appearance_Checked" />
+                        <ScrollViewer x:Name="SettingsScroll" VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="24,20,24,20">
+                                <TextBlock Text="{loc:T Settings}" Style="{StaticResource SubtitleText}" Margin="0,0,0,16"
+                                           AutomationProperties.HeadingLevel="Level1" />
+                                <TextBlock Text="{loc:T Appearance}" Style="{StaticResource FieldLabelText}" />
+                                <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,4,0,16" HorizontalAlignment="Left">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton x:Name="AppearanceSystem" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Windows}"
+                                                     GroupName="Appearance" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Follow Windows}"
+                                                     Checked="Appearance_Checked" />
+                                        <RadioButton x:Name="AppearanceLight" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Light}"
+                                                     GroupName="Appearance" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Light}"
+                                                     Checked="Appearance_Checked" />
+                                        <RadioButton x:Name="AppearanceDark" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Dark}"
+                                                     GroupName="Appearance" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Dark}"
+                                                     Checked="Appearance_Checked" />
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="{loc:T Language}" Style="{StaticResource FieldLabelText}" />
+                                <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,4,0,0" HorizontalAlignment="Left">
+                                    <StackPanel Orientation="Horizontal">
+                                        <RadioButton x:Name="LanguageSystem" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Windows}"
+                                                     GroupName="Language" Padding="14,5,14,6" AutomationProperties.Name="{loc:T Follow Windows}"
+                                                     Checked="Language_Checked" />
+                                        <RadioButton x:Name="LanguageEnglish" Style="{StaticResource SegmentedTextItemStyle}" Content="English"
+                                                     GroupName="Language" Padding="14,5,14,6" Checked="Language_Checked" />
+                                        <RadioButton x:Name="LanguageTurkish" Style="{StaticResource SegmentedTextItemStyle}" Content="Türkçe"
+                                                     GroupName="Language" Padding="14,5,14,6" Checked="Language_Checked" />
+                                    </StackPanel>
+                                </Border>
+                                <TextBlock Text="{loc:T Takes effect the next time Lazy PDF starts.}" Style="{StaticResource ReasonText}" Margin="0,6,0,16" />
+                                <StackPanel x:Name="OpenWithSection">
+                                    <CheckBox x:Name="OpenWithToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Show Lazy PDF in Open with}"
+                                              AutomationProperties.Name="{loc:T Show Lazy PDF in Open with}" Click="OpenWith_Click" />
+                                    <TextBlock Text="{loc:T 'Adds Lazy PDF to the Open with list of PDF files and registers lazypdf: addresses, for your account only. It never becomes the default program.'}"
+                                               Style="{StaticResource ReasonText}" Margin="0,6,0,0" />
                                 </StackPanel>
-                            </Border>
-                            <StackPanel x:Name="OpenWithSection">
-                                <CheckBox x:Name="OpenWithToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Show Lazy PDF in Open with}"
-                                          AutomationProperties.Name="{loc:T Show Lazy PDF in Open with}" Click="OpenWith_Click" />
-                                <TextBlock Text="{loc:T 'Adds Lazy PDF to the Open with list of PDF files and registers lazypdf: addresses, for your account only. It never becomes the default program.'}"
+                                <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Choose default apps}"
+                                        AutomationProperties.Name="{loc:T Choose default apps}" HorizontalAlignment="Left" Margin="0,12,0,0" Click="DefaultApps_Click" />
+                                <TextBlock Text="{loc:T 'Opens Windows settings, where you can pick the program that opens PDF files.'}"
                                            Style="{StaticResource ReasonText}" Margin="0,6,0,0" />
+                                <Button x:Name="AboutButton" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T About Lazy PDF}"
+                                        AutomationProperties.Name="{loc:T About Lazy PDF}" HorizontalAlignment="Left" Margin="0,16,0,0" Click="About_Click" />
+
                             </StackPanel>
-                            <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Choose default apps}"
-                                    AutomationProperties.Name="{loc:T Choose default apps}" HorizontalAlignment="Left" Margin="0,12,0,0" Click="DefaultApps_Click" />
-                            <TextBlock Text="{loc:T 'Opens Windows settings, where you can pick the program that opens PDF files.'}"
-                                       Style="{StaticResource ReasonText}" Margin="0,6,0,0" />
-                            <Button x:Name="AboutButton" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T About Lazy PDF}"
-                                    AutomationProperties.Name="{loc:T About Lazy PDF}" HorizontalAlignment="Left" Margin="0,16,0,0" Click="About_Click" />
-                        </StackPanel>
+                        </ScrollViewer>
                     </DockPanel>
                 </Border>
             </Grid>

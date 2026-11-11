@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
@@ -52,6 +53,13 @@ public partial class App : Application
             args.SetObserved();
         };
         if (first) _channel = new InstanceChannel(Opened);
+        if (AppPreferencesStore.Load().Language is ("en" or "tr") and var language)
+        {
+            // Only the texts change; number and date formats stay Windows'.
+            var culture = CultureInfo.GetCultureInfo(language);
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
+            Thread.CurrentThread.CurrentUICulture = culture;
+        }
         // Apply the saved appearance before the first window is created.
         ThemeService.Initialize();
         base.OnStartup(e);

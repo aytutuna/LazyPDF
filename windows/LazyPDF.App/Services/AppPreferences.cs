@@ -14,6 +14,9 @@ public sealed class AppPreferences
 {
     public AppAppearance Appearance { get; set; } = AppAppearance.System;
 
+    /// <summary>"" follows Windows; "en" or "tr" forces that language from the next start.</summary>
+    public string Language { get; set; } = "";
+
     /// <summary>The side panel left open (an id of <see cref="Tools.ToolCatalog.SidePanels"/>); empty when the rail is collapsed.</summary>
     public string SidePanel { get; set; } = "pages";
 

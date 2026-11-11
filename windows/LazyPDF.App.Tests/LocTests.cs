@@ -28,6 +28,10 @@ public sealed class LocTests
         Assert.Equal("No entry for this", InTurkish(() => Loc.T("No entry for this")));
 
     [Fact]
+    public void LanguageIsDilInTurkish() =>
+        Assert.Equal("Dil", InTurkish(() => Loc.T("Language")));
+
+    [Fact]
     public void CancelIsIptalInTurkish() =>
         Assert.Equal("İptal", InTurkish(() => Loc.T("Cancel")));
 

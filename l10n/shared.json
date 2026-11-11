@@ -1986,6 +1986,9 @@
   "Follow Windows": {
     "tr": "Windows'u izle"
   },
+  "Takes effect the next time Lazy PDF starts.": {
+    "tr": "Lazy PDF'yi bir sonraki başlatışınızda geçerli olur."
+  },
   "Light": {
     "tr": "Açık"
   },
