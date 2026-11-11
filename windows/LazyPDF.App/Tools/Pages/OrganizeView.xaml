@@ -10,7 +10,7 @@
         <Border DockPanel.Dock="Top" Padding="8,6" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
             <WrapPanel VerticalAlignment="Center">
                 <Button x:Name="Done" Style="{StaticResource IconTextButtonStyle}" Content="{loc:T Done}" loc:Icon.Glyph="&#xE72B;" Margin="0,0,8,0"
-                        ToolTip="{loc:T Back to the document (Esc)}" AutomationProperties.Name="{loc:T Done}" Click="Done_Click" />
+                        ToolTip="{loc:T Back to the file (Esc)}" AutomationProperties.Name="{loc:T Done}" Click="Done_Click" />
                 <Button x:Name="TurnLeft" Style="{StaticResource IconButtonStyle}" Content="&#xE7AD;"
                         ToolTip="{loc:T Rotate left (Ctrl+Shift+Left)}" AutomationProperties.Name="{loc:T Rotate left}" Click="TurnLeft_Click">
                     <Button.LayoutTransform>

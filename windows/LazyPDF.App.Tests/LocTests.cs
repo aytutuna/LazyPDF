@@ -32,6 +32,10 @@ public sealed class LocTests
         Assert.Equal("İptal", InTurkish(() => Loc.T("Cancel")));
 
     [Fact]
+    public void BackToTheFileTooltipInTurkish() =>
+        Assert.Equal("Dosyaya dön (Esc)", InTurkish(() => Loc.T("Back to the file (Esc)")));
+
+    [Fact]
     public void ValuesFillTheNumberedPlaces()
     {
         Assert.Equal("Page 3 of 12", InEnglish(() => Loc.T("Page {0} of {1}", 3, 12)));

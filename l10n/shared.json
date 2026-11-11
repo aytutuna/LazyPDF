@@ -6705,6 +6705,9 @@
   "Back to the document (Esc)": {
     "tr": "Belgeye dön (Esc)"
   },
+  "Back to the file (Esc)": {
+    "tr": "Dosyaya dön (Esc)"
+  },
   "Cut (Ctrl+X)": {
     "tr": "Kes (Ctrl+X)"
   },
