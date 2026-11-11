@@ -116,8 +116,14 @@ private final class RedirectTarget: URLProtocol {
 }
 
 final class PlainHttpTransportTests: XCTestCase {
+    private func plain(timeout: TimeInterval) -> PlainHttpTransport {
+        let plain = PlainHttpTransport(timeout: timeout)
+        plain.allowLoopback = true
+        return plain
+    }
+
     private func transport(_ server: Server, timeout: TimeInterval = 20) -> UrlSessionTransport {
-        UrlSessionTransport(configuration: .ephemeral, plain: PlainHttpTransport(timeout: timeout))
+        UrlSessionTransport(configuration: .ephemeral, plain: plain(timeout: timeout))
     }
 
     private func ok(_ body: String, extra: String = "") -> String {
@@ -326,7 +332,7 @@ final class PlainHttpTransportTests: XCTestCase {
     }
 
     func test_aPortOutOfRangeFailsInsteadOfTrapping() {
-        let transport = UrlSessionTransport(configuration: .ephemeral, plain: PlainHttpTransport(timeout: 2))
+        let transport = UrlSessionTransport(configuration: .ephemeral, plain: plain(timeout: 2))
 
         L10n.english {
             XCTAssertNil(transport.get("http://127.0.0.1:99999/"))
@@ -351,10 +357,53 @@ final class PlainHttpTransportTests: XCTestCase {
         RedirectTarget.hosts = []
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [RedirectTarget.self]
-        let chained = UrlSessionTransport(configuration: configuration, plain: PlainHttpTransport(timeout: 5))
+        let chained = UrlSessionTransport(configuration: configuration, plain: plain(timeout: 5))
 
         XCTAssertEqual(chained.get(server.url()), Array("secure".utf8))
         XCTAssertEqual(RedirectTarget.hosts, ["secure.example"])
+    }
+
+    func test_addressesThatPointToThisComputerAreNotSentTo() throws {
+        let server = try Server { _ in .send(self.ok("x")) }
+        let transport = UrlSessionTransport(configuration: .ephemeral, plain: PlainHttpTransport(timeout: 5))
+
+        L10n.english {
+            for host in ["127.0.0.1", "localhost", "[::1]", "[::ffff:127.0.0.1]", "0.0.0.0", "169.254.169.254", "[fe80::1]"] {
+                XCTAssertNil(transport.get("http://\(host):\(server.port)/x"), host)
+                XCTAssertEqual(transport.lastFailure, "The address points to this computer, so it was not used.", host)
+            }
+        }
+        XCTAssertTrue(server.seen.isEmpty)
+    }
+
+    func test_aRedirectToALinkLocalAddressIsRefused() throws {
+        let server = try Server { _ in
+            .send("HTTP/1.1 302 Found
+Location: http://169.254.169.254/latest
+Content-Length: 0
+
+")
+        }
+        let transport = transport(server)
+
+        L10n.english {
+            XCTAssertNil(transport.get(server.url()))
+            XCTAssertEqual(transport.lastFailure, "The address points to this computer, so it was not used.")
+        }
+        XCTAssertEqual(server.seen.count, 1)
+    }
+
+    func test_theTwoHundredAndFirstRequestIsRefused() throws {
+        let server = try Server { _ in .send(self.ok("x")) }
+        let transport = transport(server)
+
+        for index in 1...200 { XCTAssertNotNil(transport.get(server.url()), "\(index)") }
+
+        L10n.english {
+            XCTAssertNil(transport.get(server.url()))
+            XCTAssertEqual(transport.lastFailure, "Too many requests for one file. Stopped.")
+        }
+        XCTAssertEqual(server.seen.count, 200)
     }
 
     func test_aCancelledTransportFailsTheRequestsAfterIt() throws {

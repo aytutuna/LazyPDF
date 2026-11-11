@@ -40,6 +40,26 @@ private final class Stub: URLProtocol {
     override func stopLoading() {}
 }
 
+private final class Redirecting: URLProtocol {
+    static var seen = [String]()
+    static var firstTarget: URL?
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        let url = request.url!
+        Self.seen.append(url.absoluteString)
+        let hop = Int(url.lastPathComponent) ?? 0
+        let next = (hop == 0 ? Self.firstTarget : nil) ?? url.deletingLastPathComponent().appendingPathComponent("\(hop + 1)")
+        let response = HTTPURLResponse(url: url, statusCode: 301, httpVersion: "HTTP/1.1",
+                                       headerFields: ["Location": next.absoluteString])!
+        client?.urlProtocol(self, wasRedirectedTo: URLRequest(url: next), redirectResponse: response)
+    }
+
+    override func stopLoading() {}
+}
+
 final class UrlSessionTransportTests: XCTestCase {
     private func transport(_ answer: @escaping (URLRequest) throws -> (status: Int, body: Data)) -> UrlSessionTransport {
         Stub.answer = answer
@@ -154,6 +174,58 @@ final class UrlSessionTransportTests: XCTestCase {
             XCTAssertTrue(transport.lastFailure?.contains("did not answer") == true)
         }
         XCTAssertTrue(Stub.seen.isEmpty)
+    }
+
+    func test_httpsAddressesThatPointToThisComputerAreNotSentTo() {
+        let transport = transport { _ in (200, Data([1])) }
+
+        L10n.english {
+            for host in ["127.0.0.1", "localhost", "[::1]", "a.localhost", "169.254.169.254"] {
+                XCTAssertNil(transport.get("https://\(host)/x"), host)
+                XCTAssertEqual(transport.lastFailure, "The address points to this computer, so it was not used.", host)
+            }
+        }
+        XCTAssertTrue(Stub.seen.isEmpty)
+    }
+
+    func test_anHttpsRedirectToThisComputerIsRefused() {
+        Redirecting.seen = []
+        Redirecting.firstTarget = URL(string: "https://169.254.169.254/latest")
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [Redirecting.self]
+        let transport = UrlSessionTransport(configuration: configuration)
+
+        L10n.english {
+            XCTAssertNil(transport.get("https://93.184.216.34/r/0"))
+            XCTAssertEqual(transport.lastFailure, "The address points to this computer, so it was not used.")
+        }
+        XCTAssertEqual(Redirecting.seen, ["https://93.184.216.34/r/0"])
+    }
+
+    func test_aChainOfSixHttpsRedirectsFails() {
+        Redirecting.seen = []
+        Redirecting.firstTarget = nil
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [Redirecting.self]
+        let transport = UrlSessionTransport(configuration: configuration)
+
+        L10n.english {
+            XCTAssertNil(transport.get("https://93.184.216.34/r/0"))
+            XCTAssertEqual(transport.lastFailure, "The server answered with an error (301).")
+        }
+        XCTAssertEqual(Redirecting.seen.count, 6)
+    }
+
+    func test_theTwoHundredAndFirstRequestIsRefused() {
+        let transport = transport { _ in (200, Data([1])) }
+
+        for index in 1...200 { XCTAssertNotNil(transport.get("https://93.184.216.34/"), "\(index)") }
+
+        L10n.english {
+            XCTAssertNil(transport.get("https://93.184.216.34/"))
+            XCTAssertEqual(transport.lastFailure, "Too many requests for one file. Stopped.")
+        }
+        XCTAssertEqual(Stub.seen.count, 200)
     }
 }
 #endif

@@ -6,10 +6,16 @@ import Network
 // their answers are signed, so the transport does not need TLS (windows/LazyPDF.App/Services/HttpSignatureTransport.cs
 // takes http for the same reason). App Transport Security only covers URLSession, so these requests go over
 // Network.framework with a small HTTP/1.1 client: one request per connection, no proxy, no keep-alive.
+//
+// The addresses come from the PDF, so loopback, link-local and unspecified ones (and localhost names) are refused, as
+// on Windows; private LAN ranges stay allowed, since company PKI serves CRLs from them. A plain request connects to the
+// first allowed address it resolved, so the address that was checked is the one used. URLSession cannot be told which
+// address to use, so for https the name is only checked before the request and a DNS answer that changes in between is
+// not caught. A system proxy is not used here and is not checked for https either.
 
 final class PlainHttpTransport {
     enum Failure: Equatable {
-        case timedOut, unreachable, offline, tooLarge
+        case timedOut, unreachable, offline, tooLarge, local, tooMany
         case status(Int)
     }
 
@@ -20,9 +26,14 @@ final class PlainHttpTransport {
     }
 
     static let maxResponseBytes = 8 << 20
+    private static let maxRequests = 200
+
+    /// For tests that talk to a listener on this computer.
+    var allowLoopback = false
 
     private let timeout: TimeInterval
     private let lock = NSLock()
+    private var requests = 0
     private var running: Exchange?
     private var cancelled = false
 
@@ -39,13 +50,22 @@ final class PlainHttpTransport {
         current?.stop()
     }
 
+    /// Counts a request for the https half, which sends its own; nil when it may go ahead.
+    func refusal(_ host: String) -> Failure? {
+        if !countRequest() { return .tooMany }
+        return addresses(host)?.isEmpty == true ? .local : nil
+    }
+
     func send(_ url: URL, method: String, contentType: String?, body: Data?) -> Outcome {
         guard let host = url.host,
               let port = UInt16(exactly: url.port ?? 80).flatMap(NWEndpoint.Port.init(rawValue:)) else {
             return .failed(.unreachable)
         }
-        let exchange = Exchange(host: host, port: port, request: Self.request(url, host, method, contentType, body),
-                                timeout: timeout)
+        if !countRequest() { return .failed(.tooMany) }
+        let found = addresses(host)
+        if found?.isEmpty == true { return .failed(.local) }
+        let exchange = Exchange(host: found?.first ?? NWEndpoint.Host(host), port: port,
+                                request: Self.request(url, host, method, contentType, body), timeout: timeout)
         lock.lock()
         if cancelled {
             lock.unlock()
@@ -58,6 +78,60 @@ final class PlainHttpTransport {
         running = nil
         lock.unlock()
         return outcome
+    }
+
+    private func countRequest() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        requests += 1
+        return requests <= Self.maxRequests
+    }
+
+    /// The allowed addresses of a host, empty when all are refused; nil when the name does not resolve.
+    private func addresses(_ host: String) -> [NWEndpoint.Host]? {
+        let name = host.lowercased()
+        if !allowLoopback, name == "localhost" || name.hasSuffix(".localhost") { return [] }
+        var hints = addrinfo()
+        hints.ai_family = AF_UNSPEC
+        hints.ai_socktype = SOCK_STREAM
+        var list: UnsafeMutablePointer<addrinfo>?
+        guard getaddrinfo(host, nil, &hints, &list) == 0 else { return nil }
+        defer { freeaddrinfo(list) }
+        var allowed = [NWEndpoint.Host]()
+        var entry = list
+        while let current = entry?.pointee {
+            entry = current.ai_next
+            guard let sockAddress = current.ai_addr else { continue }
+            var bytes = [UInt8]()
+            if current.ai_family == AF_INET {
+                bytes = sockAddress.withMemoryRebound(to: sockaddr_in.self, capacity: 1) {
+                    withUnsafeBytes(of: $0.pointee.sin_addr) { Array($0) }
+                }
+            } else if current.ai_family == AF_INET6 {
+                bytes = sockAddress.withMemoryRebound(to: sockaddr_in6.self, capacity: 1) {
+                    withUnsafeBytes(of: $0.pointee.sin6_addr) { Array($0) }
+                }
+            }
+            if bytes.isEmpty || (!allowLoopback && Self.isLocal(bytes)) { continue }
+            if bytes.count == 4, let address = IPv4Address(Data(bytes)) {
+                allowed.append(.ipv4(address))
+            } else if bytes.count == 16, let address = IPv6Address(Data(bytes)) {
+                allowed.append(.ipv6(address))
+            }
+        }
+        return allowed
+    }
+
+    /// Loopback, link-local and unspecified addresses, also as IPv4-mapped IPv6.
+    private static func isLocal(_ bytes: [UInt8]) -> Bool {
+        if bytes.count == 16 {
+            if bytes.prefix(10).allSatisfy({ $0 == 0 }), bytes[10] == 0xff, bytes[11] == 0xff {
+                return isLocal(Array(bytes[12...]))
+            }
+            if bytes.prefix(15).allSatisfy({ $0 == 0 }), bytes[15] <= 1 { return true }
+            return bytes[0] == 0xfe && bytes[1] & 0xc0 == 0x80
+        }
+        return bytes[0] == 127 || (bytes[0] == 169 && bytes[1] == 254) || bytes.allSatisfy { $0 == 0 }
     }
 
     private static func request(_ url: URL, _ host: String, _ method: String, _ contentType: String?,
@@ -93,8 +167,8 @@ private final class Exchange {
     private var length: Int?
     private var body = [UInt8]()
 
-    init(host: String, port: NWEndpoint.Port, request: Data, timeout: TimeInterval) {
-        connection = NWConnection(host: NWEndpoint.Host(host), port: port, using: .tcp)
+    init(host: NWEndpoint.Host, port: NWEndpoint.Port, request: Data, timeout: TimeInterval) {
+        connection = NWConnection(host: host, port: port, using: .tcp)
         self.request = request
         self.timeout = timeout
     }

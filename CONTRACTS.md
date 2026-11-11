@@ -76,7 +76,7 @@ Everything that touches the system sits in `Services/` behind a small interface 
 
 - `WindowsPageRenderer` draws pages through `Windows.Data.Pdf` (`IDocumentRenderer`); `Thumbnails` and the viewer's tile cache sit on it.
 - `WicImageCodec`, `SystemFontSource`, `WindowsOcr` and `WindowsCertificates` give Core its images, fonts, text recognition and certificate store.
-- `HttpSignatureTransport` fetches time stamps and validation data; it is cancellable.
+- `HttpSignatureTransport` fetches time stamps and validation data; it is cancellable. The transports refuse loopback and link-local addresses, follow at most 5 redirects, checking each, and stop after 200 requests per instance.
 - `InstanceChannel` hands a second launch's files to the running window; `FileAssociation` and `LazyPdfAddress` handle Open with and `lazypdf:`.
 - `SisterApps` starts Lazy Scan and hands a file to Lazy Print; the window prints itself when Print is not there. It finds a sister by its address under the classes key, and failing that by asking Windows (`Launcher.QueryUriSupportAsync`), since an app from the Store registers its address in its package. The answer is kept for 30 seconds.
 - `Packaging.IsPackaged` says whether the process has a package identity (`GetCurrentPackageFullName`). `AppFolders` names the folders the app writes to. `AppInfo` gives About its version (the assembly's, from `Version` in `windows/Directory.Build.props`), copyright, addresses and the `THIRD-PARTY-NOTICES.txt` shipped beside the exe.
