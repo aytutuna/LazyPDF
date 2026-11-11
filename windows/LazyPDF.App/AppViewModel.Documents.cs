@@ -4,6 +4,7 @@
 using System.Security.Cryptography.X509Certificates;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 
 namespace LazyPDF.App;
@@ -211,6 +212,13 @@ public sealed partial class AppViewModel
             tab.Fit = was.Fit;
             tab.Rotation = was.Rotation;
         }
+        else if (path is not null && pending.Recovery is null
+                 && _recentFiles.Load().FirstOrDefault(f => string.Equals(f.Path, Path.GetFullPath(path), StringComparison.OrdinalIgnoreCase)) is { } seen)
+        {
+            tab.PageIndex = Math.Clamp(seen.Page, 0, tab.PageCount - 1);
+            tab.Zoom = seen.Zoom;
+            tab.Fit = Enum.IsDefined((FitMode)seen.Fit) ? (FitMode)seen.Fit : FitMode.Width;
+        }
         tab.ReadOnly = source.ReadOnly;
         ActiveTab = tab;
         if (source.Note is not null) ShowNotice(Loc.T("Opened with changes"), source.Note);
@@ -305,6 +313,7 @@ public sealed partial class AppViewModel
             // A save puts a new file in place, so the index read at open no longer matches.
             tab.FileId = DocumentOpener.Identity(path);
             _recentFiles.Add(path);
+            _recentFiles.RememberView(path, tab.PageIndex, tab.Zoom, (int)tab.Fit);
         }
         Recent = BuildRecent();
         _message = null;
@@ -359,6 +368,7 @@ public sealed partial class AppViewModel
         DropAction();
         _warnedAboutDisk.Remove(tab);
         tab.Changed -= Tab_Changed;
+        RememberView(tab);
         tab.Dispose();
         NotifyAll();
         if (_exiting) ContinueExit(raise: true);
@@ -399,6 +409,11 @@ public sealed partial class AppViewModel
         return true;
     }
 
+    private void RememberView(DocumentTab tab)
+    {
+        if (tab.Path is { } path && tab.PageCount > 1) _recentFiles.RememberView(path, tab.PageIndex, tab.Zoom, (int)tab.Fit);
+    }
+
     private bool ContinueExit(bool raise)
     {
         if (Documents.FirstOrDefault(d => d.IsDirty || d.HasUnappliedWork) is { } dirty)
@@ -408,7 +423,11 @@ public sealed partial class AppViewModel
             NotifyAll();
             return true;
         }
-        foreach (var tab in Documents.ToList()) tab.Dispose();
+        foreach (var tab in Documents.ToList())
+        {
+            RememberView(tab);
+            tab.Dispose();
+        }
         _exiting = false;
         if (raise) RaiseExit();
         return false;

@@ -30,6 +30,33 @@ public sealed class RecentFilesTests
     }
 
     [Fact]
+    public void TheViewIsRememberedAndKeptWhenOpenedAgain()
+    {
+        using var dir = new TempDir();
+        var recent = new RecentFiles(dir.Path);
+        recent.Add(@"C:\docs\a.pdf");
+        recent.Add(@"C:\docs\b.pdf");
+        recent.RememberView(@"C:\DOCS\A.pdf", 4, 1.5, 0);
+
+        var files = new RecentFiles(dir.Path).Load();
+        Assert.Equal([@"C:\docs\b.pdf", @"C:\docs\a.pdf"], files.Select(f => f.Path));
+        Assert.Equal((4, 1.5), (files[1].Page, files[1].Zoom));
+
+        recent.Add(@"C:\docs\a.pdf");
+        Assert.Equal((4, 1.5), (recent.Load()[0].Page, recent.Load()[0].Zoom));
+    }
+
+    [Fact]
+    public void AViewForAnUnlistedFileIsIgnored()
+    {
+        using var dir = new TempDir();
+        var recent = new RecentFiles(dir.Path);
+        recent.RememberView(@"C:\docs.pdf", 2, 1, 1);
+
+        Assert.Empty(recent.Load());
+    }
+
+    [Fact]
     public void TheListIsCutAtItsLimit()
     {
         using var dir = new TempDir();

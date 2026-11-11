@@ -263,6 +263,25 @@ public sealed class OpenFlowTests
     }
 
     [Fact]
+    public async Task AFileComesBackAtThePageItWasLeftOn()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf("long.pdf", pages: 3);
+        await f.Vm.OpenAsync(path);
+        var tab = f.Vm.ActiveDocument!;
+        tab.PageIndex = 2;
+        f.Vm.Close(tab);
+
+        await f.Vm.OpenAsync(path);
+        Assert.Equal(2, f.Vm.ActiveDocument!.PageIndex);
+        f.Vm.Close(f.Vm.ActiveDocument!);
+
+        File.WriteAllBytes(path, Pdfs.Text(1));
+        await f.Vm.OpenAsync(path);
+        Assert.Equal(0, f.Vm.ActiveDocument!.PageIndex);
+    }
+
+    [Fact]
     public async Task TheRecentListCanBeEdited()
     {
         using var f = new ViewModelFixture();
