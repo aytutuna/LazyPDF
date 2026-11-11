@@ -243,6 +243,56 @@ public class SignatureVerificationTests
         Assert.Equal(SignatureVerdict.ValidButUntrusted, report.Verdict);
     }
 
+    private static X509Certificate2 SelfSignedWith(AsymmetricAlgorithm key)
+    {
+        var request = key is RSA rsa
+            ? new CertificateRequest("CN=Weak Signer", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)
+            : new CertificateRequest("CN=Weak Signer", (ECDsa)key, HashAlgorithmName.SHA256);
+        request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, true));
+        return request.CreateSelfSigned(Pki.NotBefore, Pki.NotAfter);
+    }
+
+    [Fact]
+    public void An_rsa_key_under_2048_bits_is_called_weak()
+    {
+        using var key = RSA.Create(1024);
+        using var weak = SelfSignedWith(key);
+        byte[] signed = PdfSigner.Sign(SignatureKit.Plain(), new PdfSignRequest(weak, Pki.Signing));
+
+        var report = Assert.Single(PdfSignatureVerifier.Verify(signed, new VerifyOptions { TrustAnchors = [weak] }));
+        Assert.Contains(SignatureProblem.WeakKey, report.Problems);
+        Assert.Equal(SignatureVerdict.ValidButUntrusted, report.Verdict);
+    }
+
+    [Fact]
+    public void Rsa_2048_and_p256_signers_are_not_called_weak()
+    {
+        var rsa = Assert.Single(SignatureKit.Verify(Signed()));
+        var ec = Assert.Single(SignatureKit.Verify(PdfSigner.Sign(SignatureKit.Plain(), new PdfSignRequest(Pki.LeafEc, Pki.Signing) { Chain = Pki.Chain })));
+
+        Assert.DoesNotContain(SignatureProblem.WeakKey, rsa.Problems);
+        Assert.DoesNotContain(SignatureProblem.WeakKey, ec.Problems);
+        Assert.Equal(SignatureVerdict.Valid, ec.Verdict);
+    }
+
+    [Fact]
+    public void An_ecdsa_key_on_a_small_curve_is_called_weak()
+    {
+        using var small = ECDsa.Create(ECCurve.NamedCurves.brainpoolP160r1);
+        using var strong = ECDsa.Create(ECCurve.NamedCurves.brainpoolP256r1);
+        using var weak = SelfSignedWith(small);
+        using var fine = SelfSignedWith(strong);
+
+        Assert.True(SignatureChecker.HasWeakKey(weak));
+        Assert.False(SignatureChecker.HasWeakKey(fine));
+    }
+
+    [Fact]
+    public void A_weak_key_has_its_own_words()
+    {
+        Assert.NotEqual(SignatureText.Title(SignatureProblem.WeakDigest), SignatureText.Title(SignatureProblem.WeakKey));
+        Assert.NotEqual(SignatureText.Advice(SignatureProblem.WeakDigest), SignatureText.Advice(SignatureProblem.WeakKey));
+    }
     [Fact]
     public void A_signature_over_other_bytes_does_not_verify_whoever_made_it()
     {

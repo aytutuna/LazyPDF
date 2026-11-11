@@ -72,7 +72,8 @@ public static class SignatureText
         SignatureProblem.ChangedAfterSigning => Loc.T("File changed after signing"),
         SignatureProblem.DamagedStructure => Loc.T("File structure is damaged"),
         SignatureProblem.TimestampInvalid => Loc.T("Time stamp is not valid"),
-        _ => Loc.T("Signature uses a weak digest"),
+        SignatureProblem.WeakDigest => Loc.T("Signature uses a weak digest"),
+        _ => Loc.T("Signature uses a weak key"),
     };
 
     /// <summary>What to do about it.</summary>
@@ -89,7 +90,8 @@ public static class SignatureText
         SignatureProblem.ChangedAfterSigning => Loc.T("Open the signed version from the file's history."),
         SignatureProblem.DamagedStructure => Loc.T("Open the signed version from the file's history."),
         SignatureProblem.TimestampInvalid => Loc.T("Treat the signing time as the signer's claim."),
-        _ => Loc.T("Ask the signer to sign again with SHA-256."),
+        SignatureProblem.WeakDigest => Loc.T("Ask the signer to sign again with SHA-256."),
+        _ => Loc.T("Ask the signer to sign again with an RSA key of 2048 bits or more, or an ECDSA key on P-256 or a stronger curve."),
     };
 
     /// <summary>A change in words.</summary>

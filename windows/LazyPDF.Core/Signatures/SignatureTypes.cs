@@ -74,6 +74,7 @@ public enum SignatureProblem
     DamagedStructure,
     TimestampInvalid,
     WeakDigest,
+    WeakKey,
 }
 
 /// <summary>Signs a digest for a key that is not in this process: a smart card, a token, a remote service.</summary>

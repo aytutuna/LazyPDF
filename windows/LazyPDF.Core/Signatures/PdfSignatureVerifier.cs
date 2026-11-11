@@ -103,6 +103,7 @@ internal sealed class SignatureChecker
             case CmsCheck.Unsupported: return Fail(report, SignatureVerdict.Unknown, SignatureProblem.UnsupportedFormat);
         }
         if (cms.DigestOid == "1.3.14.3.2.26") problems.Add(SignatureProblem.WeakDigest);
+        if (HasWeakKey(signer)) problems.Add(SignatureProblem.WeakKey);
 
         var extra = cms.Certificates.Concat(_dss.Certificates).ToList();
         DateTimeOffset? stamped = null;
@@ -267,6 +268,26 @@ internal sealed class SignatureChecker
         return (level, reference.Number == signatureNumber);
     }
 
+    private static readonly HashSet<string> SmallCurves =
+    [
+        "1.2.840.10045.3.1.1",
+        "1.3.132.0.1", "1.3.132.0.2", "1.3.132.0.3", "1.3.132.0.4", "1.3.132.0.5", "1.3.132.0.6", "1.3.132.0.7",
+        "1.3.132.0.8", "1.3.132.0.9", "1.3.132.0.15", "1.3.132.0.16", "1.3.132.0.24", "1.3.132.0.25", "1.3.132.0.28",
+        "1.3.132.0.29", "1.3.36.3.3.2.8.1.1.1", "1.3.36.3.3.2.8.1.1.3", "1.3.36.3.3.2.8.1.1.5",
+    ];
+
+    internal static bool HasWeakKey(X509Certificate2 certificate)
+    {
+        if (certificate.GetRSAPublicKey() is { } rsa)
+        {
+            using (rsa) return rsa.KeySize < 2048;
+        }
+        if (certificate.GetECDsaPublicKey() is { } ec)
+        {
+            using (ec) return ec.ExportParameters(false).Curve.Oid.Value is { } oid && SmallCurves.Contains(oid);
+        }
+        return false;
+    }
     private static SignatureReport Fail(SignatureReport report, SignatureVerdict verdict, SignatureProblem problem) =>
         report with { Verdict = verdict, Problems = [problem] };
 

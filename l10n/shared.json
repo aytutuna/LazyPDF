@@ -901,6 +901,9 @@
   "Signature uses a weak digest": {
     "tr": "İmza zayıf bir özet kullanıyor"
   },
+  "Signature uses a weak key": {
+    "tr": "İmza zayıf bir anahtar kullanıyor"
+  },
   "Check the file with the program that signed it.": {
     "tr": "Dosyayı imzalayan programla denetleyin."
   },
@@ -930,6 +933,9 @@
   },
   "Ask the signer to sign again with SHA-256.": {
     "tr": "İmzalayandan SHA-256 ile yeniden imzalamasını isteyin."
+  },
+  "Ask the signer to sign again with an RSA key of 2048 bits or more, or an ECDSA key on P-256 or a stronger curve.": {
+    "tr": "İmzalayandan en az 2048 bitlik bir RSA anahtarıyla ya da P-256 veya daha güçlü bir eğri üzerinde bir ECDSA anahtarıyla yeniden imzalamasını isteyin."
   },
   " in field {0}": {
     "tr": " {0} alanında"
