@@ -195,9 +195,11 @@ final class IOSShell {
         defer { try? FileManager.default.removeItem(at: staged.deletingLastPathComponent()) }
         var backups: [UUID: URL] = [:]
         var unprotected: Set<UUID> = []
+        var unchanged: Set<UUID> = []
         for other in vm.documents where other !== tab {
             guard let url = other.url else { continue }
             let backup = staged.deletingLastPathComponent().appendingPathComponent(other.id.uuidString)
+            if !other.changedOnDisk { unchanged.insert(other.id) }
             do {
                 try CoordinatedFileReader.read(url).write(to: backup)
                 backups[other.id] = backup
@@ -211,14 +213,15 @@ final class IOSShell {
             if let backup = backups[other.id] {
                 do {
                     try CoordinatedFileWriter().write(to: file.url) { try Data(contentsOf: backup).write(to: $0) }
-                    other.acceptDiskState()
+                    // A file another program changed keeps its notice.
+                    if unchanged.contains(other.id) { other.acceptDiskState() }
                     restored = true
                 } catch {}
             }
             if !restored {
                 file.access?.stop()
                 vm.showProblem(Problem(L10n.t("Not saved"),
-                    L10n.t("{0} is open in another tab and the name you picked replaced it. Close that tab, then save it again from there to get it back.", other.title)))
+                    L10n.t("{0} is open in another tab and the name you picked replaced it. Go to that tab and save it to put it back.", other.title)))
                 return false
             }
         }

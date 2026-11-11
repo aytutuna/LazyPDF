@@ -2189,7 +2189,7 @@
 "{0} is not an FDF, XFDF, CSV or JSON file. Pick another file." = "{0} bir FDF, XFDF, CSV veya JSON dosyası değil. Başka bir dosya seçin.";
 "{0} is not an RSA certificate. Ask for the person's certificate file." = "{0} bir RSA sertifikası değil. Kişiden sertifika dosyasını isteyin.";
 "{0} is not there any more. It may have been moved or deleted." = "{0} artık yok. Taşınmış ya da silinmiş olabilir.";
-"{0} is open in another tab and the name you picked replaced it. Close that tab, then save it again from there to get it back." = "{0} başka bir sekmede açık ve seçtiğiniz ad onun yerine geçti. O sekmeyi kapatın, ardından dosyayı geri almak için oradan yeniden kaydedin.";
+"{0} is open in another tab and the name you picked replaced it. Go to that tab and save it to put it back." = "{0} başka bir sekmede açık ve seçtiğiniz ad onun yerine geçti. O sekmeye gidip kaydederek dosyayı geri getirin.";
 "{0} is open in another tab. Close that tab first, or pick another name." = "{0} başka bir sekmede açık. Önce o sekmeyi kapatın ya da başka bir ad seçin.";
 "{0} is over 50 MB. Attach a smaller file." = "{0} 50 MB'ı aşıyor. Daha küçük bir dosya ekleyin.";
 "{0} is protected. Type its password to open it." = "{0} korumalı. Açmak için parolasını yazın.";
