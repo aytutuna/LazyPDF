@@ -332,7 +332,20 @@ public partial class CommentPanel : ToolPanel
         if (_edit?.Current is null) return;
         if (_fresh)
         {
-            _drawing = CurrentStyle();
+            // The controls show the fresh mark's look, so only the one touched goes into the kept look.
+            var look = CurrentStyle();
+            var kept = _drawing ?? look;
+            _drawing = sender switch
+            {
+                RadioButton => kept with { Color = look.Color },
+                _ when sender == WidthSlider => kept with { Width = look.Width },
+                _ when sender == OpacitySlider => kept with { Opacity = look.Opacity },
+                _ when sender == FillBox => kept with { Fill = look.Fill },
+                _ when sender == LineStyleBox => kept with { Dash = look.Dash },
+                _ when sender == HeadBox => kept with { Head = look.Head },
+                _ when sender == IconBox => kept with { Icon = look.Icon },
+                _ => kept with { Family = look.Family, Size = look.Size, Font = look.Font },
+            };
             return;
         }
         _unsettled.Add(sender is RadioButton ? "colour" : sender is Slider || sender == FillBox || sender == LineStyleBox || sender == HeadBox || sender == IconBox ? sender : "font");

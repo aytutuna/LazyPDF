@@ -235,6 +235,28 @@ public sealed class CommentPanelTests
     });
 
     [Fact]
+    public Task AColourPickedOnAMarkJustDrawnKeepsTheRestOfTheDrawingLook() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var panel = Attached(f);
+        var fill = Get<ComboBox>(panel, "FillBox");
+        fill.SelectedIndex = 1;
+        Drag(Rectangles(panel), new Point(40, 50), new Point(120, 100));
+        var loading = panel.GetType().GetField("_loading", Private)!;
+        loading.SetValue(panel, true);
+        fill.SelectedIndex = 0;
+        loading.SetValue(panel, false);
+
+        var blue = Get<Panel>(panel, "Swatches").Children.OfType<RadioButton>().Last();
+        blue.IsChecked = true;
+        Get<EditTool>(panel, "_edit").Select(null);
+
+        Assert.Equal(1, fill.SelectedIndex);
+        Assert.Equal(blue.Tag, StyleOf(panel).Color);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task APressThatDrawsNothingStillDropsTheSelection() => Sta.Run(() =>
     {
         using var f = new CommentFixture();
