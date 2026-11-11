@@ -118,7 +118,7 @@
                         </StackPanel>
                     </StackPanel>
                     <Button x:Name="DeleteButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE74D;" HorizontalAlignment="Left" Margin="0,12,0,0"
-                            Content="{loc:T Delete field}" AutomationProperties.Name="{loc:T Delete field}" Click="Delete_Click" />
+                            ToolTip="{loc:T Delete (Del)}" Content="{loc:T Delete field}" AutomationProperties.Name="{loc:T Delete field}" Click="Delete_Click" />
                 </StackPanel>
             </Border>
 

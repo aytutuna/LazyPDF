@@ -218,6 +218,15 @@ public sealed partial class FormsPanel
         if (!ChangeField(label, (form, f) => form.SetFlag(f, flag, on))) ShowCard(Form);
     }
 
+    private void View_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (!Designing || !_canEdit || _working || _selected is null) return;
+        if (Keyboard.FocusedElement is TextBox or ComboBox or PasswordBox) return;
+        if (e.Key != Key.Delete || Keyboard.Modifiers != ModifierKeys.None) return;
+        Delete_Click(sender, e);
+        e.Handled = true;
+    }
+
     private void Delete_Click(object sender, RoutedEventArgs e)
     {
         if (_selected is null) return;

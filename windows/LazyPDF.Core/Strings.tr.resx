@@ -1312,6 +1312,9 @@
   <data name="Delete" xml:space="preserve">
     <value>Sil</value>
   </data>
+  <data name="Delete (Del)" xml:space="preserve">
+    <value>Sil (Del)</value>
+  </data>
   <data name="Delete field" xml:space="preserve">
     <value>Alanı sil</value>
   </data>

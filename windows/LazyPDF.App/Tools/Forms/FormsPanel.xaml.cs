@@ -65,6 +65,7 @@ public sealed partial class FormsPanel : ToolPanel
         Viewer.PageChanged += Viewer_PageChanged;
         Viewer.ModeChanged += Viewer_ModeChanged;
         InputManager.Current.PreProcessInput += Input_PreProcess;
+        Viewer.View.PreviewKeyDown += View_PreviewKeyDown;
         _selected = null;
         _found = [];
         _signedOk = false;
@@ -82,6 +83,7 @@ public sealed partial class FormsPanel : ToolPanel
     protected override void OnDetach()
     {
         InputManager.Current.PreProcessInput -= Input_PreProcess;
+        Viewer!.View.PreviewKeyDown -= View_PreviewKeyDown;
         _fill!.Flush();
         Tab!.Changed -= Tab_Changed;
         Viewer!.ViewChanged -= Viewer_ViewChanged;
