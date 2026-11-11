@@ -274,7 +274,8 @@ public partial class PageViewer
         if (_tab is null) return;
         bool ctrl = Keyboard.Modifiers.HasFlag(ModifierKeys.Control), shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift), alt = Keyboard.Modifiers.HasFlag(ModifierKeys.Alt);
         bool typing = Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase;
-        switch (e.Key)
+        // With Alt held the key arrives as Key.System and the real one in SystemKey.
+        switch (e.Key == Key.System ? e.SystemKey : e.Key)
         {
             case Key.F when ctrl:
                 ShowFind();
