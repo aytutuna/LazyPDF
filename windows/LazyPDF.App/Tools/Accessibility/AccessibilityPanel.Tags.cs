@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Tools.Stamps;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Accessibility;
@@ -68,32 +69,36 @@ public partial class AccessibilityPanel
     private async Task AddTagsAsync()
     {
         if (Tab is not { } tab || Host is not { } host) return;
-        var document = tab.Document;
-        bool signed = document.IsSigned;
-        AutoTagResult? result = null;
-        IsEnabled = false;
-        try
+        await ChangeGate.RunAsync(tab, host, _tag.Text, async () =>
         {
-            await host.RunBusyAsync(Loc.T("Adding tags"), async token =>
+            if (!ReferenceEquals(tab, Tab)) return;
+            var document = tab.Document;
+            bool signed = document.IsSigned;
+            AutoTagResult? result = null;
+            IsEnabled = false;
+            try
             {
-                try
+                await host.RunBusyAsync(Loc.T("Adding tags"), async token =>
                 {
-                    result = await Task.Run(() => AutoTagger.Tag(document, null, token));
-                }
-                catch (Exception error) when (error is OperationCanceledException or PdfReadException or InvalidOperationException)
-                {
-                    // Tagging edits the document as it goes, so a stop or a failure takes back what it did.
-                    tab.Session.Discard();
-                    if (error is OperationCanceledException) throw;
-                    NotTagged(host);
-                }
-            });
-        }
-        finally
-        {
-            IsEnabled = true;
-        }
-        if (result is not null) Report(tab, host, result, signed);
+                    try
+                    {
+                        result = await Task.Run(() => AutoTagger.Tag(document, null, token));
+                    }
+                    catch (Exception error) when (error is OperationCanceledException or PdfReadException or InvalidOperationException)
+                    {
+                        // Tagging edits the document as it goes, so a stop or a failure takes back what it did.
+                        tab.Session.Discard();
+                        if (error is OperationCanceledException) throw;
+                        NotTagged(host);
+                    }
+                });
+            }
+            finally
+            {
+                IsEnabled = true;
+            }
+            if (result is not null) Report(tab, host, result, signed);
+        });
     }
 
     private static void NotTagged(IToolHost host) =>

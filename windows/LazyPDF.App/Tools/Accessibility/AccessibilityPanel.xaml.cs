@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Tools.Stamps;
 using LazyPDF.App.Tools.Standards;
 using LazyPDF.Core;
 
@@ -202,7 +203,7 @@ public partial class AccessibilityPanel : ToolPanel
 
     private string CheckStatus() => Loc.T("{0} failed, {1} passed", _report?.Failed ?? 0, _report?.Passed ?? 0);
 
-    private void RowSave_Click(object sender, RoutedEventArgs e)
+    private async void RowSave_Click(object sender, RoutedEventArgs e)
     {
         if (Row(sender) is not { } row || Tab is not { } tab) return;
         if (row.Editor == RowEditor.Title && row.Value.Trim().Length == 0)
@@ -210,10 +211,10 @@ public partial class AccessibilityPanel : ToolPanel
             Host!.ShowProblem(new Problem(Loc.T("Title is empty"), Loc.T("Type a title for the file, then save it.")));
             return;
         }
-        Apply(tab, row, row.EditorName);
+        await Apply(tab, row, row.EditorName);
     }
 
-    private void RowAction_Click(object sender, RoutedEventArgs e)
+    private async void RowAction_Click(object sender, RoutedEventArgs e)
     {
         if (Row(sender) is not { } row || Tab is not { } tab) return;
         switch (row.Action)
@@ -225,7 +226,7 @@ public partial class AccessibilityPanel : ToolPanel
                 ShowFigures.IsChecked = true;
                 break;
             default:
-                Apply(tab, row, row.ActionText);
+                await Apply(tab, row, row.ActionText);
                 break;
         }
     }
@@ -241,8 +242,9 @@ public partial class AccessibilityPanel : ToolPanel
 
     private static CheckRow? Row(object sender) => (sender as FrameworkElement)?.DataContext as CheckRow;
 
-    private void Apply(DocumentTab tab, CheckRow row, string label)
+    private Task Apply(DocumentTab tab, CheckRow row, string label) => ChangeGate.RunAsync(tab, Host!, label, () =>
     {
+        if (!ReferenceEquals(tab, Tab)) return Task.CompletedTask;
         try
         {
             if (AccessibilityEdits.Apply(tab.Document, row) && tab.Commit(label)) Host!.SetStatus(Loc.T("Saved."));
@@ -257,5 +259,6 @@ public partial class AccessibilityPanel : ToolPanel
             tab.Session.Discard();
             Host!.ShowProblem(new Problem(Loc.T("Not saved"), Loc.T("The change could not be written. Save a copy of the file and try again.")));
         }
-    }
+        return Task.CompletedTask;
+    });
 }

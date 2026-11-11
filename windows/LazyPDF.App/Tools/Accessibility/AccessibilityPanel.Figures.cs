@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Stamps;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Accessibility;
@@ -94,31 +95,36 @@ public partial class AccessibilityPanel
         SaveAlt.IsEnabled = changed;
     }
 
-    private void SaveAlt_Click(object sender, RoutedEventArgs e)
+    private async void SaveAlt_Click(object sender, RoutedEventArgs e)
     {
         if (Selected is not { } row || Tab is not { } tab) return;
         string text = AltBox.Text;
-        try
+        await ChangeGate.RunAsync(tab, Host!, Loc.T("Figure description"), () =>
         {
-            // The tree on the screen was read from a copy; the edit goes to the open document's own.
-            var tree = StructureTree.Read(tab.Document);
-            var figure = tree is null ? null : FigureFinder.List(tree).ElementAtOrDefault(row.Number - 1);
-            if (tree is null || figure is null)
+            if (!ReferenceEquals(tab, Tab)) return Task.CompletedTask;
+            try
             {
-                Host!.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The figure is no longer in the file.")));
-                return;
+                // The tree on the screen was read from a copy; the edit goes to the open document's own.
+                var tree = StructureTree.Read(tab.Document);
+                var figure = tree is null ? null : FigureFinder.List(tree).ElementAtOrDefault(row.Number - 1);
+                if (tree is null || figure is null)
+                {
+                    Host!.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The figure is no longer in the file.")));
+                    return Task.CompletedTask;
+                }
+                AccessibilityEdits.SetAlt(tab.Document, tree, figure.Element, text);
+                if (tab.Commit(Loc.T("Figure description"))) Host!.SetStatus(Loc.T("Description saved."));
             }
-            AccessibilityEdits.SetAlt(tab.Document, tree, figure.Element, text);
-            if (tab.Commit(Loc.T("Figure description"))) Host!.SetStatus(Loc.T("Description saved."));
-        }
-        catch (Exception error) when (error is InvalidOperationException or PdfReadException)
-        {
-            tab.Session.Discard();
-            Host!.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The tags of this file are too large to change here.")));
-            return;
-        }
-        _drafts.Remove(row.Number);
-        _figureNumber = text.Trim().Length > 0 ? NextBareAfter(row.Number, row.Number) : row.Number;
+            catch (Exception error) when (error is InvalidOperationException or PdfReadException)
+            {
+                tab.Session.Discard();
+                Host!.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The tags of this file are too large to change here.")));
+                return Task.CompletedTask;
+            }
+            _drafts.Remove(row.Number);
+            _figureNumber = text.Trim().Length > 0 ? NextBareAfter(row.Number, row.Number) : row.Number;
+            return Task.CompletedTask;
+        });
     }
 
     private void NextBare_Click(object sender, RoutedEventArgs e)
