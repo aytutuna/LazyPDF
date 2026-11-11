@@ -121,6 +121,26 @@ public sealed class PageEditsTests
     }
 
     [Fact]
+    public void OnlyThePagesTheBoxTouchesAreCropTargets()
+    {
+        var document = Open(2);
+        PageOperations.SetBox(document, [1], PageBox.Crop, new PdfRect(0, 0, 100, 100));
+        PageOperations.SetBox(document, [1], PageBox.Media, new PdfRect(0, 0, 100, 100));
+
+        Assert.Equal([0], PageEdits.CropTargets(document, [0, 1], new DisplayRect(300, 300, 100, 100)));
+    }
+
+    [Fact]
+    public void ARotatedPageIsStillHitByABoxInsideItsDisplayedArea()
+    {
+        var document = Open(1);
+        PageOperations.Rotate(document, [0], 90);
+        var shown = new PageGeometry(document.Pages[0]);
+
+        Assert.Equal([0], PageEdits.CropTargets(document, [0], new DisplayRect(shown.Width / 2, shown.Height / 2, 50, 50)));
+    }
+
+    [Fact]
     public void LabelsCoverTheSelectionAndLeaveTheRestAsTheyWere()
     {
         var document = Open(8);

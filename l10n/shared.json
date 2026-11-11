@@ -4803,6 +4803,16 @@
     "other": "{0} pages cropped",
     "tr": "{0} sayfa kırpıldı"
   },
+  "{0} page was left alone because the box is outside it.": {
+    "other": "{0} pages were left alone because the box is outside them.",
+    "tr": "{0} sayfa, kutunun dışında kaldığı için olduğu gibi bırakıldı."
+  },
+  "Box is off the pages": {
+    "tr": "Kutu sayfaların dışında"
+  },
+  "The box does not touch the pages to crop. Draw it again on a page.": {
+    "tr": "Kutu kırpılacak sayfalara değmiyor. Bir sayfa üzerinde yeniden çizin."
+  },
   "{0} page resized": {
     "other": "{0} pages resized",
     "tr": "{0} sayfa yeniden boyutlandırıldı"

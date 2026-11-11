@@ -85,6 +85,10 @@ internal static class PageEdits
         if (landscape.Count > 0) PageOperations.Resize(document, landscape, longSide, shortSide, mode);
     }
 
+    /// <summary>The pages the display rectangle touches; the others would refuse it as a crop box.</summary>
+    public static List<int> CropTargets(PdfDocument document, IReadOnlyCollection<int> pages, DisplayRect area) =>
+        [.. pages.Where(p => !new PageGeometry(document.Pages[p]).ToUser(area).Intersect(document.Pages[p].MediaBox).IsEmpty)];
+
     /// <summary>Sets the display rectangle (page space of the page it was drawn on) as the crop box of every page, each through its own geometry.</summary>
     public static void Crop(PdfDocument document, IReadOnlyCollection<int> pages, DisplayRect area)
     {

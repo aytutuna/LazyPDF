@@ -114,7 +114,16 @@ public partial class PagesPanel
     {
         if (_crop?.Box is not { } box) return;
         var pages = CropAll.IsChecked == true ? [.. Enumerable.Range(0, Cells.Count)] : Selected().Count > 0 ? Selected() : [box.Page];
-        if (Apply(Loc.T("Crop pages"), d => PageEdits.Crop(d, pages, box.Area), Selected(), Loc.Plural(pages.Count, "{0} page cropped", "{0} pages cropped", pages.Count))) _crop.Clear();
+        var targets = PageEdits.CropTargets(Tab!.Document, pages, box.Area);
+        if (targets.Count == 0)
+        {
+            Host!.ShowProblem(new Problem(Loc.T("Box is off the pages"), Loc.T("The box does not touch the pages to crop. Draw it again on a page.")));
+            return;
+        }
+        int left = pages.Count - targets.Count;
+        string status = Loc.Plural(targets.Count, "{0} page cropped", "{0} pages cropped", targets.Count);
+        if (left > 0) status += " " + Loc.Plural(left, "{0} page was left alone because the box is outside it.", "{0} pages were left alone because the box is outside them.", left);
+        if (Apply(Loc.T("Crop pages"), d => PageEdits.Crop(d, targets, box.Area), Selected(), status)) _crop.Clear();
     }
 
     private void CropReset_Click(object sender, RoutedEventArgs e)

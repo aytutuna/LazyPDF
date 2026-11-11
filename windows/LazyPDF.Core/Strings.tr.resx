@@ -637,6 +637,9 @@
   <data name="Box drawn on page {0}." xml:space="preserve">
     <value>Kutu {0}. sayfaya çizildi.</value>
   </data>
+  <data name="Box is off the pages" xml:space="preserve">
+    <value>Kutu sayfaların dışında</value>
+  </data>
   <data name="Box of {0} by {1} mm." xml:space="preserve">
     <value>{0} x {1} mm kutu.</value>
   </data>
@@ -5101,6 +5104,9 @@
   <data name="The bookmarks of the file." xml:space="preserve">
     <value>Dosyanın yer imleri.</value>
   </data>
+  <data name="The box does not touch the pages to crop. Draw it again on a page." xml:space="preserve">
+    <value>Kutu kırpılacak sayfalara değmiyor. Bir sayfa üzerinde yeniden çizin.</value>
+  </data>
   <data name="The catalog has /NeedsRendering." xml:space="preserve">
     <value>Katalogda /NeedsRendering var.</value>
   </data>
@@ -6792,6 +6798,9 @@
   </data>
   <data name="{0} page rotated|plural" xml:space="preserve">
     <value>{0} sayfa döndürüldü</value>
+  </data>
+  <data name="{0} page was left alone because the box is outside it.|plural" xml:space="preserve">
+    <value>{0} sayfa, kutunun dışında kaldığı için olduğu gibi bırakıldı.</value>
   </data>
   <data name="{0} pages and {1} pages" xml:space="preserve">
     <value>{0} sayfa ve {1} sayfa</value>
