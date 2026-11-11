@@ -166,6 +166,7 @@ final class PageScrollView: NSScrollView {
     let viewer: ViewerModel
     let pages: PageDocumentView
     private var syncing = false
+    private var swipe = PageSwipe()
 
     init(viewer: ViewerModel) {
         self.viewer = viewer
@@ -249,9 +250,15 @@ final class PageScrollView: NSScrollView {
         if viewer.continuous {
             super.scrollWheel(with: event)
         } else if event.momentumPhase.isEmpty {
+            // With nothing to scroll sideways, a two-finger swipe turns the page, as in Preview.
+            if event.hasPreciseScrollingDeltas && viewer.extent.width <= viewer.viewport.width + 1,
+               let step = swipe.add(dx: event.scrollingDeltaX, dy: event.scrollingDeltaY, began: event.phase == .began, ended: event.phase == .ended) {
+                viewer.stepPage(step)
+                return
+            }
             // A wheel with notches reports lines; a trackpad reports points.
             let unit = event.hasPreciseScrollingDeltas ? 1 : PageSurfaceState.lineStep
-            viewer.scroll(by: -event.scrollingDeltaX * unit, -event.scrollingDeltaY * unit)
+            viewer.scroll(by: -event.scrollingDeltaX * unit, -event.scrollingDeltaY * unit, wheel: true)
         }
     }
 

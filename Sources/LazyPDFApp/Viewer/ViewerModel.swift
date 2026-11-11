@@ -73,6 +73,8 @@ public final class ViewerModel: DocumentViewer {
     /// False where the view moves its own pixels on a scroll and draws only the strip that comes into view.
     @ObservationIgnored public var redrawsOnScroll = true
 
+    private var lastWheel = -1.0
+
     /// A pointer tool was taken or given back, for a view that handles touches differently while one is set.
     @ObservationIgnored public var onToolChange: (() -> Void)?
 
@@ -248,8 +250,11 @@ public final class ViewerModel: DocumentViewer {
         apply(change, redraw: drawsAfterScroll(change))
     }
 
-    public func scroll(by dx: Double, _ dy: Double) {
-        let change = state.scrollBy(dx, dy)
+    /// A wheel turns a page at the edge at most once in a quarter of a second, so one flick does not skip pages.
+    public func scroll(by dx: Double, _ dy: Double, wheel: Bool = false, now: Double = ProcessInfo.processInfo.systemUptime) {
+        let mayTurn = !wheel || now - lastWheel >= 0.25
+        if wheel { lastWheel = now }
+        let change = state.scrollBy(dx, dy, mayTurn: mayTurn)
         apply(change, redraw: drawsAfterScroll(change))
     }
 

@@ -277,6 +277,18 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.offset.y, 120)
     }
 
+    func test_twoWheelScrollsPastTheEdgeTurnOnePage() throws {
+        let (viewer, _) = try open(pages: 5)
+        viewer.continuous = false
+        viewer.zoom = 2
+        viewer.scroll(by: 0, 1_000_000)
+
+        viewer.scroll(by: 0, 100, wheel: true, now: 10)
+        viewer.scroll(by: 0, 100, wheel: true, now: 10.1)
+
+        XCTAssertEqual(viewer.pageIndex, 1)
+    }
+
     func test_aJumpIsInTheHistoryAndScrollingIsNot() throws {
         let (viewer, _) = try open(pages: 3)
         XCTAssertFalse(viewer.canGoBack)

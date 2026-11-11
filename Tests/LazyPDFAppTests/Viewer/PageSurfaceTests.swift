@@ -196,6 +196,17 @@ final class PageSurfaceTests: XCTestCase {
         XCTAssertEqual(surface.state.offsetY, 0)
     }
 
+    func test_aScrollThatMayNotTurnStaysOnThePageAtTheEdge() throws {
+        let surface = try OpenSurface(pages: 5)
+        _ = surface.state.setArrangement(columns: 1, cover: false, continuous: false)
+        _ = surface.state.setZoom(2)
+        _ = surface.state.scrollBy(0, 1_000_000)
+
+        _ = surface.state.scrollBy(0, 100, mayTurn: false)
+
+        XCTAssertEqual(surface.state.currentPage, 0)
+    }
+
     func test_facingPagesWithACoverGoByTheirSpreads() throws {
         let surface = try OpenSurface(pages: 6)
         _ = surface.state.setArrangement(columns: 2, cover: true, continuous: true)

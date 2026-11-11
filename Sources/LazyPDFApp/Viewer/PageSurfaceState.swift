@@ -375,15 +375,15 @@ public struct PageSurfaceState {
         }
     }
 
-    /// Scrolls by the user's doing. In a paged layout, running past the edge turns the page.
-    public mutating func scrollBy(_ dx: Double, _ dy: Double) -> SurfaceChange {
+    /// Scrolls by the user's doing. In a paged layout, running past the edge turns the page unless `mayTurn` is false.
+    public mutating func scrollBy(_ dx: Double, _ dy: Double, mayTurn: Bool = true) -> SurfaceChange {
         collecting { s in
             let maxY = Swift.max(0, s.layout.extent.height - s.viewport.height)
-            if !s.continuous && dy > 0 && s.offsetY >= maxY - 0.5 && s.layout.lastSpread < s.layout.spreadCount - 1 {
+            if mayTurn && !s.continuous && dy > 0 && s.offsetY >= maxY - 0.5 && s.layout.lastSpread < s.layout.spreadCount - 1 {
                 s.goToPageInner(ViewLayout.pagesOf(s.columns, s.cover, s.layout.lastSpread + 1, s.sizes.count).first, nil)
                 return
             }
-            if !s.continuous && dy < 0 && s.offsetY <= 0.5 && s.layout.firstSpread > 0 {
+            if mayTurn && !s.continuous && dy < 0 && s.offsetY <= 0.5 && s.layout.firstSpread > 0 {
                 s.goToPageInner(ViewLayout.pagesOf(s.columns, s.cover, s.layout.firstSpread - 1, s.sizes.count).first, nil)
                 s.offsetY = Swift.max(0, s.layout.extent.height - s.viewport.height)
                 s.afterScroll(user: false)
