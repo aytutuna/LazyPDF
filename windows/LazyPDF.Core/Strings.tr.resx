@@ -4189,6 +4189,9 @@
   <data name="Rejected" xml:space="preserve">
     <value>Reddedildi</value>
   </data>
+  <data name="Reloaded {0}." xml:space="preserve">
+    <value>{0} yeniden yüklendi.</value>
+  </data>
   <data name="Remove" xml:space="preserve">
     <value>Kaldır</value>
   </data>

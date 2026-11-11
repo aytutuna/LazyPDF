@@ -447,6 +447,13 @@ public sealed partial class AppViewModel
             tab.AcceptDiskState(found);
             return;
         }
+        // Nothing to lose: take the new version without asking. A tool open may write the file itself and reload.
+        if (found is not null && !tab.IsDirty && tab.PendingMarks == 0 && _activeToolId is null && !IsBusy
+            && await TryReloadAsync(tab, quiet: true))
+        {
+            SetStatus(Loc.T("Reloaded {0}.", tab.Title));
+            return;
+        }
         if (_warnedAboutDisk.TryGetValue(tab, out seen) && seen == found) return;
         _warnedAboutDisk[tab] = found;
         if (found is null)
@@ -462,8 +469,10 @@ public sealed partial class AppViewModel
 
     public Task ReloadAsync(DocumentTab tab) => TryReloadAsync(tab);
 
-    /// <summary>Reads the file again from disk and, once that worked, puts it in the place of the tab, keeping its page and zoom; unsaved changes are dropped then, not before. False when the tab was not replaced.</summary>
-    public async Task<bool> TryReloadAsync(DocumentTab tab)
+    /// <summary>Reads the file again from disk and, once that worked, puts it in the place of the tab, keeping its page and zoom; unsaved changes are dropped then, not before. False when the tab was not replaced. Quiet shows nothing when the read fails, as the other program may still be writing.</summary>
+    public Task<bool> TryReloadAsync(DocumentTab tab) => TryReloadAsync(tab, quiet: false);
+
+    private async Task<bool> TryReloadAsync(DocumentTab tab, bool quiet)
     {
         if (tab.Path is not { } path || !Strip.Contains(tab)) return false;
         OpenSource source;
@@ -473,7 +482,7 @@ public sealed partial class AppViewModel
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or PdfReadException)
         {
-            ShowProblem(Problems.Open(e, tab.Title));
+            if (!quiet) ShowProblem(Problems.Open(e, tab.Title));
             return false;
         }
         if (Strip.Contains(tab)) await OpenAsync(new PendingOpen(source, replacing: tab), tab.Password, tab.Certificate);

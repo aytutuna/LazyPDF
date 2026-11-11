@@ -29,6 +29,7 @@ public sealed class DiskChangeTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        f.Vm.SelectTool("stamps");
         Touch(path, Pdfs.Text(pages: 3));
 
         await f.Vm.CheckDiskAsync();
@@ -39,6 +40,75 @@ public sealed class DiskChangeTests
         f.Vm.DismissMessage();
         await f.Vm.CheckDiskAsync();
         Assert.Null(f.Vm.Message);
+    }
+
+    [Fact]
+    public async Task ACleanTabWithAChangedFileIsReloadedQuietly()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf("a.pdf");
+        await f.Vm.OpenFilesAsync([path, f.Pdf("b.pdf")]);
+        f.Vm.ActiveTab = f.Vm.Documents.First();
+        var old = f.Vm.ActiveDocument!;
+        Touch(path, Pdfs.Text(pages: 3));
+
+        await f.Vm.CheckDiskAsync();
+
+        Assert.NotSame(old, f.Vm.Documents.First());
+        Assert.Equal(3, f.Vm.Documents.First().PageCount);
+        Assert.Equal(["a.pdf", "b.pdf"], f.Vm.Documents.Select(d => d.Title));
+        Assert.Equal("Reloaded a.pdf", f.Vm.StatusShort);
+        Assert.Null(f.Vm.Message);
+    }
+
+    [Fact]
+    public async Task AGarbageFileFallsBackToTheNotice()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        var old = f.Vm.ActiveDocument!;
+        Touch(path, "%PDF-1.7 half"u8.ToArray());
+
+        await f.Vm.CheckDiskAsync();
+
+        Assert.Same(old, f.Vm.ActiveDocument);
+        Assert.Equal("File changed", f.Vm.Message?.Title);
+        Assert.NotNull(f.Vm.Message?.Action);
+    }
+
+    [Fact]
+    public async Task ADirtyTabIsNotReloaded()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        var tab = f.Vm.ActiveDocument!;
+        Pdfs.Retitle(tab.Session, "x");
+        tab.Commit("x");
+        Touch(path, Pdfs.Text(pages: 3));
+
+        await f.Vm.CheckDiskAsync();
+
+        Assert.Same(tab, f.Vm.ActiveDocument);
+        Assert.Equal("File changed", f.Vm.Message?.Title);
+        Assert.NotNull(f.Vm.Message?.Action);
+    }
+
+    [Fact]
+    public async Task WithAToolOpenTheTabIsNotReloaded()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        var tab = f.Vm.ActiveDocument!;
+        f.Vm.SelectTool("stamps");
+        Touch(path, Pdfs.Text(pages: 3));
+
+        await f.Vm.CheckDiskAsync();
+
+        Assert.Same(tab, f.Vm.ActiveDocument);
+        Assert.Equal("File changed", f.Vm.Message?.Title);
     }
 
     [Fact]
@@ -60,6 +130,7 @@ public sealed class DiskChangeTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        f.Vm.SelectTool("stamps");
         var bytes = File.ReadAllBytes(path);
         bytes[^1] ^= 1;
         Touch(path, bytes);
@@ -75,6 +146,7 @@ public sealed class DiskChangeTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        f.Vm.SelectTool("stamps");
         var bytes = File.ReadAllBytes(path);
         bytes[^1] ^= 1;
         Touch(path, bytes);
@@ -92,6 +164,7 @@ public sealed class DiskChangeTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        f.Vm.SelectTool("stamps");
         var tab = f.Vm.ActiveDocument!;
         Pdfs.Retitle(tab.Session, "x");
         tab.Commit("x");
@@ -173,6 +246,7 @@ public sealed class DiskChangeTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        f.Vm.SelectTool("stamps");
         var tab = f.Vm.ActiveDocument!;
         Touch(path, Pdfs.Text(pages: 3));
         await f.Vm.CheckDiskAsync();

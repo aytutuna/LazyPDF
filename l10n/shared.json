@@ -1501,6 +1501,9 @@
   "Open that version": {
     "tr": "O sürümü aç"
   },
+  "Reloaded {0}.": {
+    "tr": "{0} yeniden yüklendi."
+  },
   "Open a file first": {
     "tr": "Önce bir dosya açın"
   },
