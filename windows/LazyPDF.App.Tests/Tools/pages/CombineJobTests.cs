@@ -283,6 +283,18 @@ public sealed class CombineJobTests
         Assert.Equal("out. " + CopyRules.Unprotected + " Big.", CombineJob.FolderNote("out", true, "Big."));
     }
 
+    [Theory]
+    [InlineData(0, 2, true, 2)]
+    [InlineData(0, 2, false, 1)]
+    [InlineData(2, 0, false, 0)]
+    [InlineData(2, 0, true, 1)]
+    [InlineData(1, 1, false, 1)]
+    [InlineData(1, 1, true, 1)]
+    public void ADroppedCardLandsOnTheSideOfTheCardUnderIt(int from, int over, bool lowerHalf, int expected)
+    {
+        Assert.Equal(expected, CombinePanel.TargetIndex(from, over, lowerHalf));
+    }
+
     [Fact]
     public void ASizeSplitWithAnOversizePageSaysSoInTheFolderNotice()
     {

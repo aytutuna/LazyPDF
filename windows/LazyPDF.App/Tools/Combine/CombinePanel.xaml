@@ -25,7 +25,10 @@
             <ItemsControl x:Name="Files" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Files to combine}" IsTabStop="False">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type combine:CombineEntry}">
-                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,6" Padding="10,8">
+                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,6" Padding="10,8" AllowDrop="True"
+                                PreviewMouseLeftButtonDown="Card_PreviewMouseLeftButtonDown" PreviewMouseMove="Card_PreviewMouseMove"
+                                DragLeave="Card_DragLeave" Drop="Card_Drop">
+                            <Grid>
                             <StackPanel>
                                 <DockPanel>
                                     <Button DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE711;" ToolTip="{loc:T Remove from the list}"
@@ -44,10 +47,19 @@
                                     <TextBlock x:Name="Hint" Text="{loc:T All pages}" Style="{StaticResource PlaceholderText}" Visibility="Collapsed" />
                                 </Grid>
                             </StackPanel>
+                            <Border x:Name="Before" Height="2" VerticalAlignment="Top" Margin="-10,-8,-10,0" Background="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Collapsed" />
+                            <Border x:Name="After" Height="2" VerticalAlignment="Bottom" Margin="-10,0,-10,-8" Background="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Collapsed" />
+                            </Grid>
                         </Border>
                         <DataTemplate.Triggers>
                             <DataTrigger Binding="{Binding Range}" Value="">
                                 <Setter TargetName="Hint" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DropBefore}" Value="True">
+                                <Setter TargetName="Before" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DropAfter}" Value="True">
+                                <Setter TargetName="After" Property="Visibility" Value="Visible" />
                             </DataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>

@@ -8,6 +8,8 @@ public sealed class CombineEntry(string name, int pages, PdfDocument? document) 
 {
     private int _pages = pages;
     private string _range = "";
+    private bool _dropBefore;
+    private bool _dropAfter;
 
     public string Name { get; } = name;
 
@@ -22,6 +24,18 @@ public sealed class CombineEntry(string name, int pages, PdfDocument? document) 
             _range = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Range)));
         }
+    }
+
+    public bool DropBefore
+    {
+        get => _dropBefore;
+        set => Set(ref _dropBefore, value, nameof(DropBefore));
+    }
+
+    public bool DropAfter
+    {
+        get => _dropAfter;
+        set => Set(ref _dropAfter, value, nameof(DropAfter));
     }
 
     public int Pages
@@ -39,4 +53,11 @@ public sealed class CombineEntry(string name, int pages, PdfDocument? document) 
     public string RangeName => Loc.T("Pages of {0}", Name);
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void Set(ref bool field, bool value, string name)
+    {
+        if (field == value) return;
+        field = value;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+    }
 }

@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Tools.Pages;
 using LazyPDF.Core;
@@ -12,10 +14,15 @@ namespace LazyPDF.App.Tools.Combine;
 /// <summary>Puts this file and others into one, with the pages and the order the person picks, or cuts this file into parts.</summary>
 public partial class CombinePanel : ToolPanel
 {
+    private const string EntryFormat = "LazyPDF.CombineEntry";
+
     // Each document keeps its own list, so a look at another tab does not lose the files that were picked.
     private readonly ConditionalWeakTable<DocumentTab, ObservableCollection<CombineEntry>> _lists = [];
     private ObservableCollection<CombineEntry> _entries = [];
     private string? _folder;
+    private Point _dragStart;
+    private CombineEntry? _dragEntry;
+    private CombineEntry? _marked;
 
     public CombinePanel()
     {
@@ -107,8 +114,83 @@ public partial class CombinePanel : ToolPanel
         if (dialog.ShowDialog() == true) await AddAsync(Host, _entries, dialog.FileNames);
     }
 
+    private void Card_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _dragStart = e.GetPosition(null);
+        _dragEntry = _entries.Count > 1 && e.OriginalSource is DependencyObject source && !InsideEditor(source) ? Entry(sender) : null;
+    }
+
+    private static bool InsideEditor(DependencyObject node)
+    {
+        for (; node is not null; node = VisualTreeHelper.GetParent(node) ?? LogicalTreeHelper.GetParent(node))
+        {
+            if (node is TextBox or Button) return true;
+        }
+        return false;
+    }
+
+    private void Card_PreviewMouseMove(object sender, MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || _dragEntry is not { } entry) return;
+        var now = e.GetPosition(null);
+        if (Math.Abs(now.X - _dragStart.X) < SystemParameters.MinimumHorizontalDragDistance
+            && Math.Abs(now.Y - _dragStart.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+        _dragEntry = null;
+        DragDrop.DoDragDrop((DependencyObject)sender, new DataObject(EntryFormat, entry), DragDropEffects.Move);
+        Mark(null, false);
+    }
+
+    private void Card_DragLeave(object sender, DragEventArgs e) => Mark(null, false);
+
+    private void Card_Drop(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetData(EntryFormat) is not CombineEntry moved) return;
+        e.Handled = true;
+        Mark(null, false);
+        var card = (FrameworkElement)sender;
+        int from = _entries.IndexOf(moved);
+        int to = TargetIndex(from, _entries.IndexOf(Entry(sender)), e.GetPosition(card).Y >= card.ActualHeight / 2);
+        if (from >= 0 && to != from) _entries.Move(from, to);
+    }
+
+    // Where the moved entry ends up when it is dropped on the upper or lower half of the entry at over.
+    internal static int TargetIndex(int from, int over, bool lowerHalf)
+    {
+        int at = over + (lowerHalf ? 1 : 0);
+        return from < at ? at - 1 : at;
+    }
+
+    private void Mark(CombineEntry? entry, bool after)
+    {
+        if (_marked is not null && !ReferenceEquals(_marked, entry)) _marked.DropBefore = _marked.DropAfter = false;
+        _marked = entry;
+        if (entry is null) return;
+        entry.DropBefore = !after;
+        entry.DropAfter = after;
+    }
+
+    // The panel handles PreviewDragOver first, so the card's own DragOver never runs and the line is set from here.
+    private void MarkUnder(DragEventArgs e)
+    {
+        if (e.OriginalSource is not DependencyObject source || ItemsControl.ContainerFromElement(Files, source) is not { } holder
+            || VisualTreeHelper.GetChild(holder, 0) is not FrameworkElement card)
+        {
+            Mark(null, false);
+            return;
+        }
+        var entry = Entry(card);
+        Mark(ReferenceEquals(entry, e.Data.GetData(EntryFormat)) ? null : entry, e.GetPosition(card).Y >= card.ActualHeight / 2);
+    }
+
     private void Panel_DragOver(object sender, DragEventArgs e)
     {
+        if (e.Data.GetDataPresent(EntryFormat))
+        {
+            e.Effects = DragDropEffects.Move;
+            e.Handled = true;
+            MarkUnder(e);
+            return;
+        }
         if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
         e.Effects = DragDropEffects.Copy;
         e.Handled = true;
