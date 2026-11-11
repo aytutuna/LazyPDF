@@ -86,19 +86,26 @@ public partial class PagesPanel
     // The viewer's Hand and Select buttons took the pointer; the box stays until the switch is turned on again.
     private void Viewer_ModeChanged(object? sender, EventArgs e) => CropDraw.IsChecked = false;
 
-    private void CropAll_Click(object sender, RoutedEventArgs e) => Refresh();
+    private void CropAll_Click(object sender, RoutedEventArgs e)
+    {
+        SelectBoxPage();
+        Refresh();
+    }
 
     private void Crop_BoxChanged(object? sender, EventArgs e)
     {
-        if (_crop?.Box is { } box && CropAll.IsChecked != true && Cells.Count > box.Page && !Selected().Contains(box.Page))
-        {
-            _syncing = true;
-            Thumbs.SelectedItems.Clear();
-            Thumbs.SelectedItems.Add(Cells[box.Page]);
-            _syncing = false;
-            Thumbs.ScrollIntoView(Cells[box.Page]);
-        }
+        SelectBoxPage();
         Refresh();
+    }
+
+    private void SelectBoxPage()
+    {
+        if (_crop?.Box is not { } box || CropAll.IsChecked == true || Cells.Count <= box.Page || Selected().Contains(box.Page)) return;
+        _syncing = true;
+        Thumbs.SelectedItems.Clear();
+        Thumbs.SelectedItems.Add(Cells[box.Page]);
+        _syncing = false;
+        Thumbs.ScrollIntoView(Cells[box.Page]);
     }
 
     private void RefreshHints(IReadOnlyList<int> pages)
