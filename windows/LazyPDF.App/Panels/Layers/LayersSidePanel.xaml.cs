@@ -101,6 +101,11 @@ public partial class LayersSidePanel : ToolPanel
     private void Tree_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key != Key.Space || Keyboard.Modifiers != ModifierKeys.None || Tree.SelectedItem is not LayerRow { CanToggle: true } row) return;
+        if (e.IsRepeat)
+        {
+            e.Handled = true;
+            return;
+        }
         row.IsChecked = !row.IsChecked;
         e.Handled = true;
     }

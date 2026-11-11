@@ -26,7 +26,7 @@ public sealed class LayersPanelTests
         }
     }
 
-    private static List<(PdfReference Layer, bool On)> SpaceOnFirstRow(bool locked, out bool checkedAfter, out bool checkedBefore)
+    private static List<(PdfReference Layer, bool On)> SpaceOnFirstRow(bool locked, out bool checkedAfter, out bool checkedBefore, bool heldDown = false, List<string?>? raised = null)
     {
         using var tab = new DocumentTab(PdfEditSession.Open(LayeredPdf.Make()), new FakeRenderer(), null, "a.pdf", null);
         var layer = new PdfLayer(LayeredPdf.BlackBox, "Black box", true, locked, null);
@@ -43,7 +43,16 @@ public sealed class LayersPanelTests
         var row = (LayerRow)tree.SelectedItem;
         checkedBefore = row.IsChecked;
 
-        tree.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, System.Windows.PresentationSource.FromVisual(panel)!, 0, Key.Space) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
+        if (raised != null) row.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+        var source = System.Windows.PresentationSource.FromVisual(panel)!;
+        tree.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, Key.Space) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
+        if (heldDown)
+        {
+            var repeat = new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, Key.Space) { RoutedEvent = Keyboard.PreviewKeyDownEvent };
+            typeof(KeyEventArgs).GetField("_isRepeat", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.SetValue(repeat, true);
+            tree.RaiseEvent(repeat);
+        }
 
         checkedAfter = row.IsChecked;
         window.Close();
@@ -58,6 +67,18 @@ public sealed class LayersPanelTests
         Assert.True(before);
         Assert.False(after);
         Assert.Equal([(LayeredPdf.BlackBox, false)], switched);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task HeldSpaceSwitchesTheLayerOnce() => Sta.Run(() =>
+    {
+        var raised = new List<string?>();
+        var switched = SpaceOnFirstRow(false, out bool after, out _, heldDown: true, raised: raised);
+
+        Assert.False(after);
+        Assert.Single(switched);
+        Assert.Single(raised, "IsChecked");
         return Task.CompletedTask;
     });
 
