@@ -104,7 +104,7 @@
                             <MenuItem Header="{loc:T Select all}" Click="SelectAllItem_Click" />
                             <Separator />
                             <MenuItem x:Name="BackItem" Header="{loc:T Back}" Click="BackItem_Click" />
-                            <MenuItem x:Name="ForwardItem" Header="{loc:T Forward}" Click="ForwardItem_Click" />
+                            <MenuItem x:Name="ForwardItem" Header="{loc:T Go forward}" Click="ForwardItem_Click" />
                             <Separator />
                             <MenuItem Header="{loc:T Search (Ctrl+F)}" Click="FindItem_Click" />
                         </ContextMenu>
