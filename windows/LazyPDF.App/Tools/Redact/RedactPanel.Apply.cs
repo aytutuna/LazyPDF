@@ -50,7 +50,7 @@ public partial class RedactPanel
         var summary = RedactSummary.Of(result, settings.FlattenAll);
         _incoming = summary;
         _incomingTitle = Loc.T("{0} (redacted).pdf", System.IO.Path.GetFileNameWithoutExtension(tab.Title));
-        await host.OpenNewAsync(result.Bytes, _incomingTitle);
+        if (!await host.OpenNewAsync(result.Bytes, _incomingTitle)) return;
         host.SetStatus(summary.Clean ? Loc.T("Redacted copy opened.") : Loc.T("Redacted copy has problems."));
         if (encrypted) host.ShowNotice(Loc.T("The copy has no password"), Loc.T("Protect it before you share it."));
     }

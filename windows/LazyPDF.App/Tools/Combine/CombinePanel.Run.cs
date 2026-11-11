@@ -60,7 +60,7 @@ public partial class CombinePanel
             Saved(host, folder, [(name, bytes)], protectedSource);
             return;
         }
-        await host.OpenNewAsync(bytes, name);
+        if (!await host.OpenNewAsync(bytes, name)) return;
         if (protectedSource) host.ShowNotice(Loc.T("Copy is not protected"), CopyRules.Unprotected);
     }
 
@@ -117,7 +117,10 @@ public partial class CombinePanel
             Saved(host, folder, named, tab.Document.IsEncrypted);
             return;
         }
-        foreach (var (name, bytes) in named) await host.OpenNewAsync(bytes, name);
+        foreach (var (name, bytes) in named)
+        {
+            if (!await host.OpenNewAsync(bytes, name)) return;
+        }
         host.SetStatus(Loc.T("{0} parts opened.", parts.Count));
         CopyRules.NoteUnprotected(tab.Document, host);
     }

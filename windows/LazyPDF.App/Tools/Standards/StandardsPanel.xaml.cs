@@ -156,7 +156,7 @@ public partial class StandardsPanel : ToolPanel
                 host.ShowProblem(new Problem(Loc.T("Not converted"), made.Refusal ?? Loc.T("The file could not be converted.")));
                 return;
             }
-            await host.OpenNewAsync(made.Bytes, StandardsText.ConvertedName(tab.Title, level, made.IsClean));
+            if (!await host.OpenNewAsync(made.Bytes, StandardsText.ConvertedName(tab.Title, level, made.IsClean))) return;
             host.ShowNotice(StandardsText.ConvertedTitle(made), StandardsText.ConvertedText(made, level));
             opened = Tab is { } now && !ReferenceEquals(now, tab);
         }

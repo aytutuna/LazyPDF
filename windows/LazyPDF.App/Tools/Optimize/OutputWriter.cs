@@ -27,8 +27,7 @@ internal static class OutputWriter
         }
         if (!replace || tab.Path is not { } path)
         {
-            await host.OpenNewAsync(bytes, newTitle, tab.Password, tab.Certificate);
-            return true;
+            return await host.OpenNewAsync(bytes, newTitle, tab.Password, tab.Certificate);
         }
         if (Refuses(host, tab, replace)) return false;
         try

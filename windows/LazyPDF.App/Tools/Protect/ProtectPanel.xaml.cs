@@ -223,7 +223,7 @@ public partial class ProtectPanel : ToolPanel
         }
         else
         {
-            await host.OpenNewAsync(made, title, mode == ProtectMode.Password && open.Length > 0 ? open : null, opener);
+            if (!await host.OpenNewAsync(made, title, mode == ProtectMode.Password && open.Length > 0 ? open : null, opener)) return;
             host.SetStatus(mode == ProtectMode.Remove ? Loc.T("Protection removed from a copy.") : Loc.T("Protected copy made."));
             host.ShowNotice(mode == ProtectMode.Remove ? Loc.T("Copy without protection") : Loc.T("Copy with protection"),
                             Loc.T("The original is unchanged. Save the copy to keep it."));

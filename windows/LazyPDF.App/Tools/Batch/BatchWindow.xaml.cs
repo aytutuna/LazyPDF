@@ -82,7 +82,7 @@ public partial class BatchWindow : Window, IToolHost
 
     public Task OpenAsync(string path) => _vm.OpenAsync(path);
 
-    public Task OpenNewAsync(byte[] pdf, string title) => _vm.OpenNewAsync(pdf, title);
+    public Task<bool> OpenNewAsync(byte[] pdf, string title) => _vm.OpenNewAsync(pdf, title);
 
     public Task ReloadAsync(DocumentTab tab) => _vm.ReloadAsync(tab);
 

@@ -21,8 +21,7 @@ public static class CreateJob
         }
         if (made is null) return;
 
-        await host.OpenNewAsync(made.Bytes, request.Title);
-        if (made.Unreadable == 0) return;
+        if (!await host.OpenNewAsync(made.Bytes, request.Title) || made.Unreadable == 0) return;
         host.ShowNotice(Loc.T("Some left out"), request.Source == CreateSource.Pictures
             ? Loc.Plural(made.Unreadable, "{0} picture could not be read.", "{0} pictures could not be read.")
             : Loc.T("Some letters have no shape in the font and were left out."));

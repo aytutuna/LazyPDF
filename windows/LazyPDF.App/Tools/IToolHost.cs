@@ -25,11 +25,11 @@ public interface IToolHost
     /// <summary>Opens a file in a tab, or shows the tab it is already in.</summary>
     Task OpenAsync(string path);
 
-    /// <summary>Opens PDF bytes as a new document with unsaved changes and no file, so saving asks for a name: the result of Combine, Compare, Export or Create.</summary>
-    Task OpenNewAsync(byte[] pdf, string title);
+    /// <summary>Opens PDF bytes as a new document with unsaved changes and no file, so saving asks for a name: the result of Combine, Compare, Export or Create. False when no tab could be made, with the problem already shown.</summary>
+    Task<bool> OpenNewAsync(byte[] pdf, string title);
 
     /// <summary>As above, for encrypted bytes: the password or certificate that opens them is kept for the tab, so nothing is asked again.</summary>
-    Task OpenNewAsync(byte[] pdf, string title, string? password, X509Certificate2? certificate) => OpenNewAsync(pdf, title);
+    Task<bool> OpenNewAsync(byte[] pdf, string title, string? password, X509Certificate2? certificate) => OpenNewAsync(pdf, title);
 
     /// <summary>Opens the Certificates tool with the empty signature field of that name chosen as the place to sign.</summary>
     void OpenSigning(string field) { }

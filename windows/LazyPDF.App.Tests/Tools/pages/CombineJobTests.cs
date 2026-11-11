@@ -24,7 +24,7 @@ public sealed class CombineJobTests
 
         public Task OpenAsync(string path) => Task.CompletedTask;
 
-        public Task OpenNewAsync(byte[] pdf, string title) => Task.CompletedTask;
+        public Task<bool> OpenNewAsync(byte[] pdf, string title) => Task.FromResult(true);
 
         public Task ReloadAsync(DocumentTab tab) => Task.CompletedTask;
     }

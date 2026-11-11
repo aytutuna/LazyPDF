@@ -49,10 +49,10 @@ public sealed class OrganizeViewTests
 
         public Task OpenAsync(string path) => Task.CompletedTask;
 
-        public Task OpenNewAsync(byte[] pdf, string title)
+        public Task<bool> OpenNewAsync(byte[] pdf, string title)
         {
             Opened.Add(title);
-            return Task.CompletedTask;
+            return Task.FromResult(true);
         }
 
         public Task ReloadAsync(DocumentTab tab) => Task.CompletedTask;

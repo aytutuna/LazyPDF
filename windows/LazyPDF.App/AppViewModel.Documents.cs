@@ -52,9 +52,9 @@ public sealed partial class AppViewModel
         foreach (string path in paths) await OpenAsync(path);
     }
 
-    public Task OpenNewAsync(byte[] pdf, string title) => OpenNewAsync(pdf, title, null, null);
+    public Task<bool> OpenNewAsync(byte[] pdf, string title) => OpenNewAsync(pdf, title, null, null);
 
-    public Task OpenNewAsync(byte[] pdf, string title, string? password, X509Certificate2? certificate) =>
+    public Task<bool> OpenNewAsync(byte[] pdf, string title, string? password, X509Certificate2? certificate) =>
         OpenAsync(new PendingOpen(new OpenSource(pdf, null, title, Made: true)), password, certificate);
 
     public async Task OpenAsync(string path)
@@ -116,13 +116,14 @@ public sealed partial class AppViewModel
         NotifyAll();
     }
 
-    private async Task OpenAsync(PendingOpen pending, string? password, X509Certificate2? certificate)
+    // True when a tab was opened, or the file waits for its password or certificate; false when it failed or was given up on.
+    private async Task<bool> OpenAsync(PendingOpen pending, string? password, X509Certificate2? certificate)
     {
-        if (pending.Submitting) return;
+        if (pending.Submitting) return false;
         pending.Submitting = true;
         try
         {
-            await OpenCoreAsync(pending, password, certificate);
+            return await OpenCoreAsync(pending, password, certificate);
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {
@@ -131,6 +132,7 @@ public sealed partial class AppViewModel
             System.Diagnostics.Trace.TraceError(e.ToString());
             ShowProblem(Problems.Open(e, pending.Source.Title));
             NotifyAll();
+            return false;
         }
         finally
         {
@@ -138,7 +140,7 @@ public sealed partial class AppViewModel
         }
     }
 
-    private async Task OpenCoreAsync(PendingOpen pending, string? password, X509Certificate2? certificate)
+    private async Task<bool> OpenCoreAsync(PendingOpen pending, string? password, X509Certificate2? certificate)
     {
         var source = pending.Source;
         PdfEditSession session;
@@ -148,7 +150,7 @@ public sealed partial class AppViewModel
         }
         catch (PdfReadException e) when (e.Problem is PdfReadProblem.PasswordRequired or PdfReadProblem.CertificateRequired)
         {
-            if (pending.Cancelled) return;
+            if (pending.Cancelled) return false;
             bool asked = _pending.Contains(pending);
             if (!asked) _pending.Add(pending);
             pending.NeedsCertificate = e.Problem == PdfReadProblem.CertificateRequired;
@@ -156,21 +158,21 @@ public sealed partial class AppViewModel
             pending.Problem = asked ? (pending.NeedsCertificate ? Loc.T("That certificate does not open this file.") : Loc.T("That password is not right.")) : null;
             if (asked) pending.Attempts++;
             NotifyAll();
-            return;
+            return true;
         }
         catch (PdfReadException e)
         {
             _pending.Remove(pending);
             ShowProblem(Problems.Open(e, source.Title));
-            return;
+            return false;
         }
 
-        if (pending.Cancelled) return;
+        if (pending.Cancelled) return false;
         _pending.Remove(pending);
         if (session.Document.Pages.Count == 0)
         {
             ShowProblem(new Problem(Loc.T("Nothing to show"), Loc.T("{0} has no pages.", source.Title)));
-            return;
+            return false;
         }
         string? path = source.Path;
         var tab = await Task.Run(() => new DocumentTab(session, _renderers(), path, source.Title, password, _recovery,
@@ -194,6 +196,7 @@ public sealed partial class AppViewModel
         ActiveTab = tab;
         if (source.Note is not null) ShowNotice(Loc.T("Opened with changes"), source.Note);
         else if (!tab.CanDraw) ShowNotice(Loc.T("Pages cannot be shown"), Loc.T("{0} opens for editing, but Windows cannot draw its pages.", tab.Title));
+        return true;
     }
 
     private OpenRequest Describe(PendingOpen pending) => new(
