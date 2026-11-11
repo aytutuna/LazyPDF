@@ -73,7 +73,7 @@ final class MacUITests: XCTestCase {
         XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 30))
         XCTAssertTrue(tab(app).exists)
 
-        choose(app, menu: "File", item: "Close tab")
+        choose(app, menu: "File", item: "Close")
 
         XCTAssertTrue(element(app, "What would you like to do?").waitForExistence(timeout: 10))
         let gone = NSPredicate(format: "exists == false")
@@ -88,7 +88,7 @@ final class MacUITests: XCTestCase {
 
         choose(app, menu: "File", item: "Save")
         XCTAssertTrue(element(app, "Saved plain-3.pdf.").waitForExistence(timeout: 20))
-        choose(app, menu: "File", item: "Close tab")
+        choose(app, menu: "File", item: "Close")
         XCTAssertTrue(element(app, "What would you like to do?").waitForExistence(timeout: 10))
         app.menuBars.menuBarItems["File"].click()
         app.menuBars.menuItems["Open Recent"].click()

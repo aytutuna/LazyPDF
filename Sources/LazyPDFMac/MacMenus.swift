@@ -32,11 +32,11 @@ struct MacMenus: Commands {
             .disabled(!free)
         }
         CommandGroup(replacing: .saveItem) {
-            Button(L10n.t("Close tab")) {
-                if let tab = vm.activeDocument { vm.requestClose(tab) }
+            Button(L10n.t("Close")) {
+                if let tab = vm.activeDocument { vm.requestClose(tab) } else { NSApp.keyWindow?.performClose(nil) }
             }
             .keyboardShortcut("w")
-            .disabled(!usable)
+            .disabled(!free)
             Divider()
             Button(L10n.t("Save"), action: actions.save)
                 .keyboardShortcut("s")

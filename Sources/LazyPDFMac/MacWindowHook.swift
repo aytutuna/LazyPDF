@@ -36,27 +36,30 @@ struct WindowHook: NSViewRepresentable {
     }
 }
 
-/// Sends the red close button down the quit path, so unsaved tabs get their question first and the window stays up while it
-/// is asked. Everything else is left to the delegate SwiftUI put there.
+/// Sends the red close button down the quit path while tabs are open, so unsaved tabs get their question first and the window
+/// stays up while it is asked. With none open the window is hidden and the app stays in the Dock. Everything else is left to
+/// the delegate SwiftUI put there.
 final class CloseGuard: NSObject, NSWindowDelegate {
     private let original: NSWindowDelegate?
+    private let hasTabs: () -> Bool
     private let quit: () -> Void
 
-    private init(original: NSWindowDelegate?, quit: @escaping () -> Void) {
+    private init(original: NSWindowDelegate?, hasTabs: @escaping () -> Bool, quit: @escaping () -> Void) {
         self.original = original
+        self.hasTabs = hasTabs
         self.quit = quit
     }
 
     /// The guard on `window`: `existing` when it is still the delegate, a new one over whatever delegate is there otherwise.
-    static func ensure(on window: NSWindow, existing: CloseGuard?, quit: @escaping () -> Void) -> CloseGuard {
+    static func ensure(on window: NSWindow, existing: CloseGuard?, hasTabs: @escaping () -> Bool, quit: @escaping () -> Void) -> CloseGuard {
         if let existing, window.delegate === existing { return existing }
-        let guarded = CloseGuard(original: window.delegate, quit: quit)
+        let guarded = CloseGuard(original: window.delegate, hasTabs: hasTabs, quit: quit)
         window.delegate = guarded
         return guarded
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        quit()
+        if hasTabs() { quit() } else { sender.orderOut(nil) }
         return false
     }
 

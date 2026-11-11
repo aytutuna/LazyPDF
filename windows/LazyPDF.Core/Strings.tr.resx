@@ -1237,9 +1237,6 @@
   <data name="Close other tabs" xml:space="preserve">
     <value>Diğer sekmeleri kapat</value>
   </data>
-  <data name="Close tab" xml:space="preserve">
-    <value>Sekmeyi kapat</value>
-  </data>
   <data name="Close tabs to the right" xml:space="preserve">
     <value>Sağdaki sekmeleri kapat</value>
   </data>

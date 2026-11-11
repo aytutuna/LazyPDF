@@ -61,7 +61,12 @@ final class MacShell {
 
     func attach(_ window: NSWindow) {
         self.window = window
-        closeGuard = CloseGuard.ensure(on: window, existing: closeGuard) { NSApp.terminate(nil) }
+        closeGuard = CloseGuard.ensure(on: window, existing: closeGuard, hasTabs: { !self.vm.documents.isEmpty }) { NSApp.terminate(nil) }
+    }
+
+    func showWindow() {
+        window?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     // The sheets of the Create and Batch tiles hang from the window, as a dialog does on Windows.
@@ -90,7 +95,7 @@ final class MacShell {
 
     /// Finder, the Dock and other programs: files, and lazypdf: addresses.
     func handle(_ urls: [URL]) {
-        NSApp.activate(ignoringOtherApps: true)
+        showWindow()
         open(urls.filter(\.isFileURL))
         for url in urls where !url.isFileURL && LazyPdfAddress.isAddress(url.absoluteString) {
             let files = Self.split(url.absoluteString)
