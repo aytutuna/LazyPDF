@@ -16,6 +16,11 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
     private readonly HashSet<int> _loading = [];
     private readonly List<Point> _points = [];
 
+    // One parsed copy of the bytes serves every page, read one after another since the copy is not for several threads.
+    private Task _reading = Task.CompletedTask;
+    private byte[]? _copyOf;
+    private PdfEditSession? _copy;
+
     public MeasureKind Kind { get; set; }
 
     public bool Snap { get; set; } = true;
@@ -110,7 +115,11 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
     }
 
     /// <summary>Drops the snap points, which belong to the file as it was.</summary>
-    public void Forget() => _snaps.Clear();
+    public void Forget()
+    {
+        _snaps.Clear();
+        _reading = _reading.ContinueWith(_ => (_copyOf, _copy) = (null, null), TaskScheduler.Default);
+    }
 
     /// <summary>View pixels per point of the page; 0 while the page is not laid out.</summary>
     public double Scale(int page) => viewer.PageToView(page) is { } m ? Math.Sqrt(m.M11 * m.M11 + m.M12 * m.M12) : 0;
@@ -147,7 +156,15 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
             if (text is not null && tab is not null)
             {
                 var (bytes, password, certificate) = (PageSurface.Bytes(tab), tab.Password, tab.Certificate);
-                drawn = await Task.Run(() => Drawn(bytes, password, certificate, page));
+                var previous = _reading;
+                var read = Task.Run(async () =>
+                {
+                    try { await previous; }
+                    catch (Exception) { }
+                    return Drawn(bytes, password, certificate, page);
+                });
+                _reading = read;
+                drawn = await read;
             }
         }
         finally { _loading.Remove(page); }
@@ -163,13 +180,19 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
         _snaps[page] = [.. corners.Select(c => geometry.ToDisplay(c.Item1, c.Item2)).Select(c => new Point(c.X, c.Y))];
     }
 
-    private static List<(double, double)> Drawn(byte[] bytes, string? password, System.Security.Cryptography.X509Certificates.X509Certificate2? certificate, int page)
+    private List<(double, double)> Drawn(byte[] bytes, string? password, System.Security.Cryptography.X509Certificates.X509Certificate2? certificate, int page)
     {
         var drawn = new List<(double, double)>();
         try
         {
-            var session = certificate is null ? PdfEditSession.Open(bytes, password) : PdfEditSession.Open(bytes, certificate);
-            var editor = new PageEditor(session, page);
+            if (!ReferenceEquals(_copyOf, bytes))
+            {
+                _copyOf = bytes;
+                _copy = null;
+                _copy = certificate is null ? PdfEditSession.Open(bytes, password) : PdfEditSession.Open(bytes, certificate);
+            }
+            if (_copy is null) return [];
+            var editor = new PageEditor(_copy, page);
             foreach (var o in editor.Objects)
             {
                 if (drawn.Count >= MaxDrawn) break;
