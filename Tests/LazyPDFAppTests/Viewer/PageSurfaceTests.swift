@@ -90,7 +90,7 @@ final class PageSurfaceTests: XCTestCase {
         let place = try XCTUnwrap(surface.state.topPlace())
 
         XCTAssertEqual(place.page, 2)
-        XCTAssertEqual(place.point.y, 200 + ViewLayout.margin, accuracy: 1.5)
+        XCTAssertEqual(place.point.y, (200 - ViewLayout.margin) / surface.state.scale, accuracy: 1.5)
     }
 
     func test_theTopPlaceMayLieAboveItsPage() throws {
