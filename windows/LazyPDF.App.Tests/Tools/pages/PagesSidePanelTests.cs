@@ -99,4 +99,48 @@ public sealed class PagesSidePanelTests
         panel.Detach();
         return Task.CompletedTask;
     });
+
+    // Four pages of 100, 200, 300 and 400 points wide.
+    private static DocumentTab Sized()
+    {
+        var text = new System.Text.StringBuilder("%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R 4 0 R 5 0 R 6 0 R] /Count 4 >>\nendobj\n");
+        for (int i = 0; i < 4; i++) text.Append($"{i + 3} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {(i + 1) * 100} 100] >>\nendobj\n");
+        text.Append("trailer\n<< /Root 1 0 R /Size 7 >>\n%%EOF\n");
+        return new(PdfEditSession.Open(System.Text.Encoding.ASCII.GetBytes(text.ToString())), new FakeRenderer(), null, "a.pdf");
+    }
+
+    private static double[] Widths(DocumentTab tab) => [.. tab.Document.Pages.Select(p => p.MediaBox.Width)];
+
+    [Fact]
+    public Task DroppingPagesElsewhereMovesThemInOneStep() => Sta.Run(() =>
+    {
+        using var tab = Sized();
+        var panel = Show(tab, new RecordingHost());
+
+        panel.MovePages([0], 3);
+
+        Assert.Equal([200, 300, 100, 400], Widths(tab));
+        var picked = Thumbs(panel).SelectedItems.Cast<PageThumb>().Select(t => t.Index);
+        Assert.Equal([2], picked);
+        tab.Undo();
+        Assert.Equal([100, 200, 300, 400], Widths(tab));
+        panel.Detach();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task DroppingPagesWhereTheyAreMakesNoStep() => Sta.Run(() =>
+    {
+        using var tab = Sized();
+        var panel = Show(tab, new RecordingHost());
+
+        panel.MovePages([1, 2], 1);
+        panel.MovePages([1, 2], 3);
+        panel.MovePages([0], 1);
+
+        Assert.Equal([100, 200, 300, 400], Widths(tab));
+        Assert.False(tab.IsDirty);
+        panel.Detach();
+        return Task.CompletedTask;
+    });
 }

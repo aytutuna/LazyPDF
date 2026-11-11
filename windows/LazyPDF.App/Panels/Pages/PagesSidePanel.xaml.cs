@@ -20,6 +20,11 @@ public partial class PagesSidePanel : ToolPanel
 
     private bool _syncing;
     private PageThumb? _downThumb;
+    private PageThumb? _pressed;
+    private Point _pressAt;
+    private bool _keptSelection;
+    private PageThumb? _marked;
+    private bool _after;
     private IEnumerable<int>? _reselect;
 
     public PagesSidePanel() => InitializeComponent();
@@ -62,7 +67,8 @@ public partial class PagesSidePanel : ToolPanel
             foreach (int page in select)
                 if (page >= 0 && page < items.Count) Thumbs.SelectedItems.Add(items[page]);
         _syncing = false;
-        Mark();
+        if (Thumbs.SelectedItem is { } kept && select is not null) Thumbs.ScrollIntoView(kept);
+        else Mark();
     }
 
     // The page in view gets the ring and is scrolled into the list.
@@ -92,13 +98,115 @@ public partial class PagesSidePanel : ToolPanel
     {
         var item = ItemsControl.ContainerFromElement(Thumbs, (DependencyObject)e.OriginalSource) as ListBoxItem;
         _downThumb = item is { IsSelected: true } && Keyboard.Modifiers == ModifierKeys.None && Thumbs.SelectedItems.Count == 1 ? item.DataContext as PageThumb : null;
+        _pressed = item?.DataContext as PageThumb;
+        _pressAt = e.GetPosition(Thumbs);
+        _keptSelection = false;
+        // Pressing on one of several selected pages must not drop the others yet: it may be the start of a drag.
+        if (item is not { IsSelected: true } || Keyboard.Modifiers != ModifierKeys.None || Thumbs.SelectedItems.Count < 2) return;
+        _keptSelection = true;
+        Thumbs.Focus();
+        e.Handled = true;
     }
 
     private void Thumbs_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
         var item = ItemsControl.ContainerFromElement(Thumbs, (DependencyObject)e.OriginalSource) as ListBoxItem;
         if (_downThumb is { } thumb && item?.DataContext == thumb) Viewer?.GoToPage(thumb.Index);
+        if (_keptSelection && _pressed is { } only) Thumbs.SelectedItem = only;
         _downThumb = null;
+        _pressed = null;
+        _keptSelection = false;
+    }
+
+    private void Thumbs_PreviewMouseMove(object sender, MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || _pressed is not { } thumb) return;
+        var moved = e.GetPosition(Thumbs) - _pressAt;
+        if (Math.Abs(moved.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(moved.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+        _pressed = null;
+        _downThumb = null;
+        _keptSelection = false;
+        if (!Thumbs.SelectedItems.Contains(thumb)) Thumbs.SelectedItem = thumb;
+        DragDrop.DoDragDrop(Thumbs, new DataObject(PageDrag.Format, Selected()), DragDropEffects.Move);
+        Unmark();
+    }
+
+    private void Thumbs_DragOver(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        if (!e.Data.GetDataPresent(PageDrag.Format))
+        {
+            e.Effects = DragDropEffects.None;
+            return;
+        }
+        e.Effects = DragDropEffects.Move;
+        Unmark();
+        var at = e.GetPosition(Thumbs);
+        if (RowAt(at) is { } row)
+        {
+            _marked = (PageThumb)row.DataContext;
+            _after = e.GetPosition(row).Y >= row.ActualHeight / 2;
+        }
+        else if (Thumbs.Items.Count > 0)
+        {
+            _marked = (PageThumb)Thumbs.Items[^1];
+            _after = true;
+        }
+        if (_marked is not null)
+        {
+            if (_after) _marked.DropAfter = true;
+            else _marked.DropBefore = true;
+        }
+        if (PageDrag.Descendant<ScrollViewer>(Thumbs) is not { } scroll) return;
+        if (at.Y < 28) scroll.ScrollToVerticalOffset(scroll.VerticalOffset - 24);
+        else if (at.Y > Thumbs.ActualHeight - 28) scroll.ScrollToVerticalOffset(scroll.VerticalOffset + 24);
+    }
+
+    // The gap between two rows belongs to the row above it.
+    private ListBoxItem? RowAt(Point at)
+    {
+        foreach (double nudge in new[] { 0, -4, 4 })
+        {
+            if (Thumbs.InputHitTest(new Point(at.X, at.Y + nudge)) is DependencyObject hit
+                && ItemsControl.ContainerFromElement(Thumbs, hit) is ListBoxItem row) return row;
+        }
+        return null;
+    }
+
+    private void Thumbs_DragLeave(object sender, DragEventArgs e) => Unmark();
+
+    private void Thumbs_Drop(object sender, DragEventArgs e)
+    {
+        int before = _marked is null ? Thumbs.Items.Count : _after ? _marked.Index + 1 : _marked.Index;
+        Unmark();
+        if (e.Data.GetData(PageDrag.Format) is List<int> pages && pages.Count > 0) MovePages(pages, before);
+        e.Handled = true;
+    }
+
+    private void Unmark()
+    {
+        if (_marked is null) return;
+        _marked.DropBefore = false;
+        _marked.DropAfter = false;
+        _marked = null;
+    }
+
+    internal void MovePages(List<int> pages, int before)
+    {
+        if (pages.Count == 0 || Editable(() => MovePages(pages, before)) is not var (tab, host)) return;
+        pages.Sort();
+        // Pages that already stand together at that spot would only get a step that changes nothing.
+        if (pages[^1] - pages[0] == pages.Count - 1 && before >= pages[0] && before <= pages[^1] + 1) return;
+        _reselect = Tools.Pages.PageEdits.MovedTo(pages, before).ToList();
+        try
+        {
+            PageJobs.Apply(tab, host, Loc.T("Move pages"), d => PageOperations.Move(d, pages, before),
+                           Loc.Plural(pages.Count, "{0} page moved", "{0} pages moved", pages.Count));
+        }
+        finally
+        {
+            _reselect = null;
+        }
     }
 
     private void Thumb_Unloaded(object sender, RoutedEventArgs e)

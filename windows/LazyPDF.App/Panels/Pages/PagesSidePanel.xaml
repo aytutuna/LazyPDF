@@ -7,10 +7,11 @@
     <ListBox x:Name="Thumbs" BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Center"
              ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True"
              VirtualizingPanel.ScrollUnit="Pixel" AutomationProperties.Name="{loc:T Page thumbnails}"
-             SelectionMode="Extended" SelectionChanged="Thumbs_SelectionChanged" PreviewKeyDown="Thumbs_PreviewKeyDown"
+             AllowDrop="True" SelectionMode="Extended" SelectionChanged="Thumbs_SelectionChanged" PreviewKeyDown="Thumbs_PreviewKeyDown"
              PreviewMouseRightButtonDown="Thumbs_PreviewMouseRightButtonDown"
              PreviewMouseLeftButtonDown="Thumbs_PreviewMouseLeftButtonDown"
-             PreviewMouseLeftButtonUp="Thumbs_PreviewMouseLeftButtonUp">
+             PreviewMouseLeftButtonUp="Thumbs_PreviewMouseLeftButtonUp"
+             PreviewMouseMove="Thumbs_PreviewMouseMove" DragOver="Thumbs_DragOver" DragLeave="Thumbs_DragLeave" Drop="Thumbs_Drop">
         <ListBox.ContextMenu>
             <ContextMenu>
                 <MenuItem Header="{loc:T Rotate left}" Click="TurnLeft_Click" />
@@ -26,13 +27,25 @@
         </ListBox.ItemContainerStyle>
         <ListBox.ItemTemplate>
             <DataTemplate DataType="{x:Type panel:PageThumb}">
-                <StackPanel Margin="8,8,8,4" HorizontalAlignment="Center">
-                    <Border Width="{Binding Width}" Height="{Binding Height}" CornerRadius="{StaticResource ThumbnailCornerRadius}" Background="White"
-                            BorderThickness="1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" SnapsToDevicePixels="True">
-                        <Image Source="{Binding Image}" Stretch="Uniform" Unloaded="Thumb_Unloaded" AutomationProperties.Name="{Binding Name}" />
-                    </Border>
-                    <TextBlock Text="{Binding Label}" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" Margin="0,4,0,0" />
-                </StackPanel>
+                <Grid>
+                    <StackPanel Margin="8,8,8,4" HorizontalAlignment="Center">
+                        <Border Width="{Binding Width}" Height="{Binding Height}" CornerRadius="{StaticResource ThumbnailCornerRadius}" Background="White"
+                                BorderThickness="1" BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" SnapsToDevicePixels="True">
+                            <Image Source="{Binding Image}" Stretch="Uniform" Unloaded="Thumb_Unloaded" AutomationProperties.Name="{Binding Name}" />
+                        </Border>
+                        <TextBlock Text="{Binding Label}" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                    </StackPanel>
+                    <Border x:Name="Before" Height="2" VerticalAlignment="Top" Margin="4,0" Background="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Collapsed" />
+                    <Border x:Name="After" Height="2" VerticalAlignment="Bottom" Margin="4,0" Background="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Collapsed" />
+                </Grid>
+                <DataTemplate.Triggers>
+                    <DataTrigger Binding="{Binding DropBefore}" Value="True">
+                        <Setter TargetName="Before" Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding DropAfter}" Value="True">
+                        <Setter TargetName="After" Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                </DataTemplate.Triggers>
             </DataTemplate>
         </ListBox.ItemTemplate>
     </ListBox>

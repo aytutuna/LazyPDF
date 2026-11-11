@@ -17,6 +17,8 @@ public sealed class PageThumb(int index, string label, double width, double heig
     private ImageSource? _stale;
     private int _ticket;
     private bool _loading;
+    private bool _dropBefore;
+    private bool _dropAfter;
 
     public int Index { get; } = index;
 
@@ -29,6 +31,18 @@ public sealed class PageThumb(int index, string label, double width, double heig
     public double Width { get; } = width;
 
     public double Height { get; } = height;
+
+    public bool DropBefore
+    {
+        get => _dropBefore;
+        set => Set(ref _dropBefore, value, nameof(DropBefore));
+    }
+
+    public bool DropAfter
+    {
+        get => _dropAfter;
+        set => Set(ref _dropAfter, value, nameof(DropAfter));
+    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -75,5 +89,12 @@ public sealed class PageThumb(int index, string label, double width, double heig
         _image = image;
         _stale = null;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Image)));
+    }
+
+    private void Set(ref bool field, bool value, string name)
+    {
+        if (field == value) return;
+        field = value;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }
