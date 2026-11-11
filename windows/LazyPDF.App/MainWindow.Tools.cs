@@ -197,12 +197,16 @@ public partial class MainWindow
     // The side pane has no room beside an open tool on a narrow window, so the tool gives way.
     private void ShowSidePanel(string? id)
     {
+        if (!HandedIn()) return;
         if (_narrow && _vm.ActiveTool is not null) _vm.SelectTool(_vm.ActiveToolId);
         if (id is null) _vm.ToggleSidePanel();
         else _vm.SetSidePanel(id);
     }
 
-    private void SidePaneClose_Click(object sender, RoutedEventArgs e) => _vm.SetSidePanel(_vm.SidePanelId);
+    private void SidePaneClose_Click(object sender, RoutedEventArgs e)
+    {
+        if (HandedIn()) _vm.SetSidePanel(_vm.SidePanelId);
+    }
 
     private void RefreshSidePane()
     {

@@ -23,8 +23,15 @@ public partial class MainWindow
     private void TabList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         _tabPanel?.InvalidateArrange();
-        if (_refreshing) return;
-        if (TabList.SelectedItem is ITab tab) _vm.ActiveTab = tab;
+        if (_refreshing || TabList.SelectedItem is not ITab tab) return;
+        if (!HandedIn())
+        {
+            _refreshing = true;
+            try { TabList.SelectedItem = _vm.ActiveTab; }
+            finally { _refreshing = false; }
+            return;
+        }
+        _vm.ActiveTab = tab;
     }
 
     // The panel is made by the list's template, so it is found once the list has been laid out.
@@ -57,7 +64,10 @@ public partial class MainWindow
             var item = new MenuItem { Header = tab.Title, IsChecked = ReferenceEquals(tab, _vm.ActiveTab) };
             AutomationProperties.SetName(item, tab.AutomationName);
             var picked = tab;
-            item.Click += (_, _) => _vm.ActiveTab = picked;
+            item.Click += (_, _) =>
+            {
+                if (HandedIn()) _vm.ActiveTab = picked;
+            };
             menu.Items.Add(item);
         }
         menu.IsOpen = true;
