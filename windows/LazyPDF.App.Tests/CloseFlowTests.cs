@@ -256,6 +256,22 @@ public sealed class CloseFlowTests
     }
 
     [Fact]
+    public async Task ATabThatLeftTheStripWritesNothing()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Dir.File("a.pdf", Pdfs.Text(1, "fox")));
+        var tab = f.Vm.ActiveDocument!;
+        f.Vm.RequestClose(tab);
+        string target = f.Dir.Sub("late.pdf");
+
+        Assert.False(f.Vm.SaveAs(tab, target));
+        Assert.False(f.Vm.SaveCopy(tab, target));
+
+        Assert.False(System.IO.File.Exists(target));
+        Assert.Equal("File reloaded", f.Vm.Message!.Title);
+    }
+
+    [Fact]
     public async Task SaveCompactWritesTheDocumentAnewAndForgetsItsHistory()
     {
         using var f = new ViewModelFixture();

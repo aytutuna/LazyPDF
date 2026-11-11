@@ -396,7 +396,7 @@ public sealed partial class AppViewModel
             ShowProblem(new Problem(Loc.T("File is open"), Loc.T("{0} is the file this copy would replace. Pick another name.", tab.Title)));
             return false;
         }
-        if (OpenElsewhere(tab, path)) return false;
+        if (Replaced(tab) || OpenElsewhere(tab, path)) return false;
         try
         {
             tab.SaveCopy(path);
@@ -428,8 +428,17 @@ public sealed partial class AppViewModel
     /// <summary>Why the last write failed, null after one that worked.</summary>
     public Exception? LastSaveError { get; private set; }
 
+    // A reload that finished while a dialog was open has put a new tab in place of this one; its file is not the one the user saw.
+    private bool Replaced(DocumentTab tab)
+    {
+        if (Strip.Contains(tab)) return false;
+        ShowNotice(Loc.T("File reloaded"), Loc.T("{0} was reloaded from disk while you were choosing a name, so nothing was saved. Try again.", tab.Title));
+        return true;
+    }
+
     private bool Write(DocumentTab tab, Action save)
     {
+        if (Replaced(tab)) return false;
         try
         {
             save();

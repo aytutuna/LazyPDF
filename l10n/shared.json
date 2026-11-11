@@ -1489,6 +1489,12 @@
   "File changed": {
     "tr": "Dosya değişti"
   },
+  "File reloaded": {
+    "tr": "Dosya yeniden yüklendi"
+  },
+  "{0} was reloaded from disk while you were choosing a name, so nothing was saved. Try again.": {
+    "tr": "{0}, siz ad seçerken diskten yeniden yüklendi, bu yüzden hiçbir şey kaydedilmedi. Yeniden deneyin."
+  },
   "Open that version": {
     "tr": "O sürümü aç"
   },

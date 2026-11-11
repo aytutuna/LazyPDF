@@ -2167,6 +2167,9 @@
   <data name="File overhead" xml:space="preserve">
     <value>Dosya yükü</value>
   </data>
+  <data name="File reloaded" xml:space="preserve">
+    <value>Dosya yeniden yüklendi</value>
+  </data>
   <data name="File rewritten" xml:space="preserve">
     <value>Dosya yeniden yazıldı</value>
   </data>
@@ -8133,6 +8136,9 @@
   </data>
   <data name="{0} was not handed over by the program that sent it, so Lazy PDF cannot read it. Open it from the File menu, or drop it on the window." xml:space="preserve">
     <value>{0} dosyası, onu gönderen program tarafından teslim edilmediği için Lazy PDF okuyamıyor. Dosya menüsünden açın ya da pencereye bırakın.</value>
+  </data>
+  <data name="{0} was reloaded from disk while you were choosing a name, so nothing was saved. Try again." xml:space="preserve">
+    <value>{0}, siz ad seçerken diskten yeniden yüklendi, bu yüzden hiçbir şey kaydedilmedi. Yeniden deneyin.</value>
   </data>
   <data name="{0} was saved but could not be read again. Open it from disk." xml:space="preserve">
     <value>{0} kaydedildi ama yeniden okunamadı. Diskten açın.</value>
