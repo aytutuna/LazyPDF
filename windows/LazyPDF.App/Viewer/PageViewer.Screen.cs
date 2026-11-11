@@ -140,6 +140,7 @@ public partial class PageViewer
         ShowToast(Loc.T("Click or press Right to go on. Esc to leave."));
         SetThreadExecutionState(EsContinuous | EsDisplayRequired);
         _hidePointer.Start();
+        Surface.Focus();
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -164,6 +165,7 @@ public partial class PageViewer
         }
         SetThreadExecutionState(EsContinuous);
         HideToast();
+        Surface.Focus();
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
 
