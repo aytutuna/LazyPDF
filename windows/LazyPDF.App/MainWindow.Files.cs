@@ -147,7 +147,8 @@ public partial class MainWindow
         if (dialog.ShowDialog() != true) return;
         var pages = PagePaginator.PagesFor(dialog.PageRangeSelection, dialog.PageRange.PageFrom, dialog.PageRange.PageTo, tab.PageIndex, tab.PageCount);
         if (pages is { Count: 0 }) return;
-        var queue = dialog.PrintQueue;
+        // A print queue belongs to the thread that made it, so the worker opens its own from the names.
+        string server = dialog.PrintQueue.HostingPrintServer.Name, printer = dialog.PrintQueue.Name;
         var ticket = dialog.PrintTicket;
         var size = new Size(dialog.PrintableAreaWidth, dialog.PrintableAreaHeight);
         PagePaginator? paginator = null;
@@ -172,6 +173,8 @@ public partial class MainWindow
                 {
                     try
                     {
+                        using var host = new System.Printing.PrintServer(server);
+                        using var queue = host.GetPrintQueue(printer);
                         queue.CurrentJobSettings.Description = tab.Title;
                         System.Printing.PrintQueue.CreateXpsDocumentWriter(queue).Write(paginator, ticket);
                         written = true;
