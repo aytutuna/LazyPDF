@@ -621,6 +621,8 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
                     <Grid Background="Transparent">
+                        <Border x:Name="Tint" CornerRadius="{StaticResource CardCornerRadius}"
+                                Background="{StaticResource MarqueeFillBrush}" IsHitTestVisible="False" Visibility="Collapsed" />
                         <ContentPresenter />
                         <Border x:Name="Ring" CornerRadius="{StaticResource CardCornerRadius}" BorderThickness="2"
                                 BorderBrush="{DynamicResource AccentFillColorDefaultBrush}" IsHitTestVisible="False"
@@ -629,8 +631,10 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Ring" Property="Visibility" Value="Visible" />
+                            <Setter TargetName="Tint" Property="Visibility" Value="Visible" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Tint" Property="Visibility" Value="Collapsed" />
                             <Setter TargetName="Ring" Property="BorderBrush" Value="{DynamicResource AccentFillColorDisabledBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
