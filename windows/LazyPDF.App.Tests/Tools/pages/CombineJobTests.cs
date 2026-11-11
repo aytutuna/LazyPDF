@@ -15,7 +15,18 @@ public sealed class CombineJobTests
     {
         public List<Problem> Problems { get; } = [];
 
-        public Task RunBusyAsync(string text, Func<CancellationToken, Task> work) => work(CancellationToken.None);
+        public bool Cancel { get; set; }
+
+        public async Task RunBusyAsync(string text, Func<CancellationToken, Task> work)
+        {
+            try
+            {
+                await work(Cancel ? new CancellationToken(true) : CancellationToken.None);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
 
         public void ShowProblem(Problem problem) => Problems.Add(problem);
 
@@ -403,6 +414,36 @@ public sealed class CombineJobTests
 
         Assert.Empty(list);
         Assert.Equal([("Picture not read", "broken.png could not be read as a picture.")], host.Notices);
+    }
+
+    [Fact]
+    public async Task APictureThatIsGoneIsReportedAndTheNextOneIsStillRead()
+    {
+        using var dir = new TempDir();
+        var host = new RecordingHost();
+        string gone = System.IO.Path.Combine(dir.Path, "gone.png");
+        string png = dir.File("photo.png", PngWriter.Encode(new PdfRgbaImage(8, 8, Enumerable.Repeat((byte)200, 8 * 8 * 4).ToArray())));
+        var list = new List<CombineEntry>();
+
+        Assert.False(await CombinePanel.AddAsync(host, list, [gone, png]));
+
+        Assert.Equal(["photo.png"], list.Select(e => e.Name));
+        Assert.Equal("File not found", host.Problems.Single().Title);
+    }
+
+    [Fact]
+    public async Task CancellingWhileAPictureIsReadStopsTheWholeDrop()
+    {
+        using var dir = new TempDir();
+        var host = new RecordingHost { Cancel = true };
+        byte[] bytes = PngWriter.Encode(new PdfRgbaImage(8, 8, Enumerable.Repeat((byte)200, 8 * 8 * 4).ToArray()));
+        var list = new List<CombineEntry>();
+
+        Assert.False(await CombinePanel.AddAsync(host, list, [dir.File("a.png", bytes), dir.File("b.png", bytes)]));
+
+        Assert.Empty(list);
+        Assert.Empty(host.Notices);
+        Assert.Empty(host.Problems);
     }
 
     [Fact]

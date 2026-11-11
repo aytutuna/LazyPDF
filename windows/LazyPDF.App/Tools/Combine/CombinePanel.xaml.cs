@@ -296,7 +296,14 @@ public partial class CombinePanel : ToolPanel
         foreach (string path in paths)
         {
             string name = System.IO.Path.GetFileName(path);
-            var document = IsPicture(path) ? await ReadPictureAsync(host, path, name) : await SourceFile.OpenAsync(host, path);
+            PdfDocument? document;
+            if (IsPicture(path))
+            {
+                bool cancelled;
+                (document, cancelled) = await ReadPictureAsync(host, path, name);
+                if (cancelled) return false;
+            }
+            else document = await SourceFile.OpenAsync(host, path);
             if (document is null) all = false;
             else if (document.Pages.Count == 0)
             {
@@ -308,23 +315,38 @@ public partial class CombinePanel : ToolPanel
         return all;
     }
 
-    private static async Task<PdfDocument?> ReadPictureAsync(IToolHost host, string path, string name)
+    private static async Task<(PdfDocument? Document, bool Cancelled)> ReadPictureAsync(IToolHost host, string path, string name)
     {
         PdfDocument? document = null;
-        await host.RunBusyAsync(Loc.T("Reading picture"), async _ =>
+        bool cancelled = false;
+        try
         {
-            var setup = new PdfPageSetup(PdfPaper.Picture, PdfOrientation.Auto, 0);
-            var request = new CreateRequest(CreateSource.Pictures, setup, name, Files: [path]);
-            try
+            await host.RunBusyAsync(Loc.T("Reading picture"), async token =>
             {
-                var made = await Task.Run(() => PdfMaker.Make(request, new WicImageCodec(), new SystemFontSource()));
-                if (made.Unreadable == 0) document = PdfDocument.Open(made.Bytes);
-            }
-            catch (ArgumentException)
-            {
-            }
-        });
-        if (document is null) host.ShowNotice(Loc.T("Picture not read"), Loc.T("{0} could not be read as a picture.", name));
-        return document;
+                var setup = new PdfPageSetup(PdfPaper.Picture, PdfOrientation.Auto, 0);
+                var request = new CreateRequest(CreateSource.Pictures, setup, name, Files: [path]);
+                try
+                {
+                    // The engine cannot be stopped part way, so a cancel stops the wait and the result is dropped.
+                    var made = await Task.Run(() => PdfMaker.Make(request, new WicImageCodec(), new SystemFontSource(), token), token).WaitAsync(token);
+                    if (made.Unreadable == 0) document = PdfDocument.Open(made.Bytes);
+                }
+                catch (OperationCanceledException)
+                {
+                    cancelled = true;
+                    throw;
+                }
+                catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+                {
+                }
+            });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            host.ShowProblem(Problems.Open(ex, name));
+            return (null, false);
+        }
+        if (document is null && !cancelled) host.ShowNotice(Loc.T("Picture not read"), Loc.T("{0} could not be read as a picture.", name));
+        return (document, cancelled);
     }
 }
