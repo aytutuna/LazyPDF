@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Tools.Certificates;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools.FillSign;
 using LazyPDF.Core;
 using Xunit;
@@ -96,4 +97,43 @@ public sealed class FillSignPanelTests
         Assert.IsType<SavedRow>(list.SelectedItem);
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public Task ACommitThatWillNotReadBackIsAProblemAndLeavesNothingBehind() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        var renderer = new FailingRenderer();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), renderer, null, "a.pdf", null);
+        var host = new RecordingHost();
+        var panel = new FillSignPanel(dir.Sub("sigs"));
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, host);
+        ((RadioButton)panel.FindName("TextKind")).IsChecked = true;
+        ((TextBox)panel.FindName("WordsBox")).Text = "AB";
+        ((CheckBox)panel.FindName("KeepPlacing")).IsChecked = true;
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        typeof(FillSignPanel).GetMethod("Begin", flags)!.Invoke(panel, []);
+        renderer.Fails = true;
+
+        typeof(FillSignPanel).GetMethod("Placed", flags)!.Invoke(panel, [0, new Point(50, 50), null]);
+
+        Assert.Equal("Change not kept", host.Problems.Single().Title);
+        Assert.False(tab.Document.HasChanges);
+        Assert.Equal("Place on page", panel.Action!.Text);
+        return Task.CompletedTask;
+    });
+
+    private sealed class FailingRenderer : IDocumentRenderer
+    {
+        public bool Fails { get; set; }
+
+        public bool Load(PdfEditSession session, string? password) =>
+            Fails ? throw PdfReadException.Damaged("The update does not read back.") : true;
+
+        public (double Width, double Height) PageSize(int pageIndex) => (200, 300);
+
+        public PdfRgbaImage? Render(int pageIndex, double dpi) => null;
+
+        public void Dispose() { }
+    }
 }

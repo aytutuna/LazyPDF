@@ -1024,6 +1024,9 @@
   <data name="Choose an existing folder to watch." xml:space="preserve">
     <value>İzlenecek, var olan bir klasör seçin.</value>
   </data>
+  <data name="Choose another font or shorter text." xml:space="preserve">
+    <value>Başka bir yazı tipi veya daha kısa bir metin seçin.</value>
+  </data>
   <data name="Choose default apps" xml:space="preserve">
     <value>Varsayılan uygulamaları seçin</value>
   </data>

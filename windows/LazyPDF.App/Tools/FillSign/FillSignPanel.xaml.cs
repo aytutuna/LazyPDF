@@ -153,13 +153,19 @@ public partial class FillSignPanel : ToolPanel
         catch (InvalidOperationException error)
         {
             tab.Session.Discard();
-            Host!.ShowProblem(new Problem(Loc.T("Text cannot be drawn"), error.Message));
+            Host!.ShowProblem(new Problem(Loc.T("Text cannot be drawn"), error.Message == AnnotationText.NoFont ? error.Message : Loc.T("Choose another font or shorter text.")));
             return;
         }
         catch (ArgumentException)
         {
             tab.Session.Discard();
             Host!.ShowProblem(new Problem(Loc.T("Nothing to place"), Loc.T("There is no text or picture to place.")));
+            return;
+        }
+        catch (PdfReadException)
+        {
+            tab.Session.Discard();
+            Host!.ShowProblem(new Problem(Loc.T("Change not kept"), Loc.T("The file would not read back with that change. Save a copy and try again.")));
             return;
         }
         if (KeepPlacing.IsChecked == true)
