@@ -162,8 +162,14 @@ final class CertificatesModelTests: XCTestCase {
         let s = try attached()
         s.model.timestamp = true
         s.model.timestampUrl = "timestamp.example"
-        XCTAssertEqual(s.model.urlNote, "Use a web address that starts with https://.")
+        XCTAssertEqual(s.model.urlNote, "Use a web address that starts with http:// or https://.")
         XCTAssertFalse(s.model.action!.canRun())
+
+        s.model.timestampUrl = "http://timestamp.example"
+        XCTAssertEqual(s.model.urlNote, "")
+
+        s.model.timestampUrl = ""
+        XCTAssertEqual(s.model.urlNote, "")
 
         s.model.timestampUrl = "https://tsa.example/stamp"
         XCTAssertEqual(s.model.urlNote, "")

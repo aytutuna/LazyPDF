@@ -7210,9 +7210,6 @@
   <data name="Use a web address that starts with http:// or https://." xml:space="preserve">
     <value>http:// veya https:// ile başlayan bir web adresi yazın.</value>
   </data>
-  <data name="Use a web address that starts with https://." xml:space="preserve">
-    <value>https:// ile başlayan bir web adresi yazın.</value>
-  </data>
   <data name="Use for all pages" xml:space="preserve">
     <value>Tüm sayfalarda kullan</value>
   </data>

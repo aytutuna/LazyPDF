@@ -133,7 +133,7 @@ public final class CertificatesModel: ToolPanelModel {
 
     public var urlNote: String {
         !timestampUrl.trimmingCharacters(in: .whitespaces).isEmpty && !CertificateSigning.isWebAddress(timestampUrl)
-            ? L10n.t("Use a web address that starts with https://.") : ""
+            ? L10n.t("Use a web address that starts with http:// or https://.") : ""
     }
 
     public func attach(_ tab: DocumentTab, _ viewer: DocumentViewer, _ host: ToolHost) {

@@ -1950,7 +1950,7 @@
 "Update the changed date" = "Değiştirilme tarihini güncelle";
 "Use" = "Kullan";
 "Use a different password here." = "Burada farklı bir parola kullanın.";
-"Use a web address that starts with https://." = "https:// ile başlayan bir web adresi yazın.";
+"Use a web address that starts with http:// or https://." = "http:// veya https:// ile başlayan bir web adresi yazın.";
 "Use other text, or install a font that has these letters." = "Başka bir metin kullanın ya da bu harfleri içeren bir yazı tipi yükleyin.";
 "Use {0}, {1} and {2}. A name that is taken gets a number." = "{0}, {1} ve {2} kullanın. Alınmış bir ada numara eklenir.";
 "Validation data" = "Doğrulama verisi";
