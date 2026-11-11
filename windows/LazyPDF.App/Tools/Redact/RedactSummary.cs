@@ -20,7 +20,7 @@ public sealed record RedactSummary(bool Clean, string Title, string Advice, stri
         return new RedactSummary(
             clean,
             clean ? Loc.T("Check passed") : Loc.T("Check found problems"),
-            clean ? Loc.T("Nothing was found inside the marked places.") : FailureAdvice(flattenedAll),
+            clean ? Loc.T("Nothing was found inside the marked places. Read what was not checked below before you share it.") : FailureAdvice(flattenedAll),
             string.Join('\n', lines),
             string.Join('\n', result.Verification.Problems),
             Loc.T("Not checked: the same words in places that are not marked, words inside pictures, and font files."));

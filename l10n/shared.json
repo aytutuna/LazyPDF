@@ -5202,6 +5202,9 @@
   "Nothing was found inside the marked places.": {
     "tr": "İşaretli yerlerde hiçbir şey bulunamadı."
   },
+  "Nothing was found inside the marked places. Read what was not checked below before you share it.": {
+    "tr": "İşaretli yerlerde hiçbir şey bulunamadı. Paylaşmadan önce aşağıda nelerin denetlenmediğini okuyun."
+  },
   "Not checked: the same words in places that are not marked, words inside pictures, and font files.": {
     "tr": "Denetlenmedi: işaretli olmayan yerlerdeki aynı sözcükler, resimlerin içindeki sözcükler ve yazı tipi dosyaları."
   },

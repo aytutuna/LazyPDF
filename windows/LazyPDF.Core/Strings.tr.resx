@@ -3076,6 +3076,9 @@
   <data name="Nothing was found inside the marked places." xml:space="preserve">
     <value>İşaretli yerlerde hiçbir şey bulunamadı.</value>
   </data>
+  <data name="Nothing was found inside the marked places. Read what was not checked below before you share it." xml:space="preserve">
+    <value>İşaretli yerlerde hiçbir şey bulunamadı. Paylaşmadan önce aşağıda nelerin denetlenmediğini okuyun.</value>
+  </data>
   <data name="Nothing was removed." xml:space="preserve">
     <value>Hiçbir şey kaldırılmadı.</value>
   </data>
