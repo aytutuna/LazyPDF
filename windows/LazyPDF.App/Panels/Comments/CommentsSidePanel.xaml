@@ -65,7 +65,7 @@
             <StackPanel>
                 <ScrollViewer x:Name="TextScroll" VerticalScrollBarVisibility="Auto" MaxHeight="160">
                     <StackPanel>
-                        <TextBox x:Name="FullText" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" IsReadOnly="True"
+                        <TextBox x:Name="FullText" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" IsReadOnly="True" PreviewMouseWheel="FullText_MouseWheel"
                                  AutomationProperties.Name="{loc:T Comment}" />
                         <ItemsControl x:Name="Replies" AutomationProperties.Name="{loc:T Replies}">
                             <ItemsControl.ItemTemplate>

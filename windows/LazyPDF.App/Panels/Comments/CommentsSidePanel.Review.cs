@@ -2,6 +2,7 @@
 
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using Microsoft.Win32;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Tools;
@@ -40,6 +41,13 @@ public partial class CommentsSidePanel
         _loading = true;
         StatusBox.SelectedItem = StatusBox.Items.Cast<StatusChoice>().FirstOrDefault(s => s.Status == row.Comment.Status);
         _loading = false;
+    }
+
+    // The text box's own scroller would swallow the wheel without moving anything.
+    private void FullText_MouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        TextScroll.ScrollToVerticalOffset(TextScroll.VerticalOffset - e.Delta);
+        e.Handled = true;
     }
 
     private void ReplyBox_TextChanged(object sender, TextChangedEventArgs e) => ReplyButton.IsEnabled = ReplyBox.Text.Trim().Length > 0;
