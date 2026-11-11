@@ -4519,6 +4519,9 @@
   "{0} parts opened.": {
     "tr": "{0} parça açıldı."
   },
+  "{0} of {1} parts opened.": {
+    "tr": "{1} parçadan {0} tanesi açıldı."
+  },
   "Save to a folder": {
     "tr": "Klasöre kaydet"
   },

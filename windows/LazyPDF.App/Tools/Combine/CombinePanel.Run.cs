@@ -117,11 +117,13 @@ public partial class CombinePanel
             Saved(host, folder, named, tab.Document.IsEncrypted);
             return;
         }
+        int opened = 0;
         foreach (var (name, bytes) in named)
         {
-            if (!await host.OpenNewAsync(bytes, name)) return;
+            if (await host.OpenNewAsync(bytes, name)) opened++;
         }
-        host.SetStatus(Loc.T("{0} parts opened.", parts.Count));
+        if (opened == 0) return;
+        host.SetStatus(opened == parts.Count ? Loc.T("{0} parts opened.", opened) : Loc.T("{0} of {1} parts opened.", opened, parts.Count));
         CopyRules.NoteUnprotected(tab.Document, host);
     }
 

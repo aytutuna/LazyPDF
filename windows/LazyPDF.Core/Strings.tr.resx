@@ -6589,6 +6589,9 @@
   <data name="{0} of {1} pages need it." xml:space="preserve">
     <value>{1} sayfadan {0} tanesi buna ihtiyaç duyuyor.</value>
   </data>
+  <data name="{0} of {1} parts opened." xml:space="preserve">
+    <value>{1} parçadan {0} tanesi açıldı.</value>
+  </data>
   <data name="{0} of {1} selected" xml:space="preserve">
     <value>{0} / {1} seçili</value>
   </data>
