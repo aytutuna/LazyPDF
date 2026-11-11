@@ -1324,6 +1324,9 @@
   <data name="Crop the picture" xml:space="preserve">
     <value>Resmi kırp</value>
   </data>
+  <data name="Crops each page to what is printed on it, plus a small border. The rest stays in the file, only hidden." xml:space="preserve">
+    <value>Her sayfayı üzerinde basılı olan kısma, küçük bir kenar payıyla kırpar. Geri kalanı dosyada durur, yalnızca gizlenir.</value>
+  </data>
   <data name="Cross-reference" xml:space="preserve">
     <value>Çapraz başvuru</value>
   </data>
@@ -2757,6 +2760,12 @@
   </data>
   <data name="Look of the signature" xml:space="preserve">
     <value>İmzanın görünümü</value>
+  </data>
+  <data name="Looking at page {0} of {1}" xml:space="preserve">
+    <value>Sayfalara bakılıyor: {0} / {1}</value>
+  </data>
+  <data name="Looking at the pages" xml:space="preserve">
+    <value>Sayfalara bakılıyor</value>
   </data>
   <data name="Looking for fields" xml:space="preserve">
     <value>Alanlar aranıyor</value>
@@ -5515,6 +5524,9 @@
   <data name="The file changed while you typed. Type it again." xml:space="preserve">
     <value>Siz yazarken dosya değişti. Yeniden yazın.</value>
   </data>
+  <data name="The file changed. Nothing was trimmed." xml:space="preserve">
+    <value>Dosya değişti. Hiçbir şey kırpılmadı.</value>
+  </data>
   <data name="The file could not be changed. Try again or open it again." xml:space="preserve">
     <value>Dosya değiştirilemedi. Yeniden deneyin ya da dosyayı yeniden açın.</value>
   </data>
@@ -6288,6 +6300,12 @@
   </data>
   <data name="Trim fonts" xml:space="preserve">
     <value>Yazı tiplerini kırp</value>
+  </data>
+  <data name="Trim margins" xml:space="preserve">
+    <value>Payları kırp</value>
+  </data>
+  <data name="Trim white margins" xml:space="preserve">
+    <value>Beyaz payları kırp</value>
   </data>
   <data name="Trust settings" xml:space="preserve">
     <value>Güven ayarları</value>
@@ -7153,6 +7171,9 @@
   <data name="{0} page extracted|plural" xml:space="preserve">
     <value>{0} sayfa ayıklandı</value>
   </data>
+  <data name="{0} page had nothing to trim and was left alone.|plural" xml:space="preserve">
+    <value>{0} sayfada kırpılacak bir şey yoktu, olduğu gibi bırakıldı.</value>
+  </data>
   <data name="{0} page has no text|plural" xml:space="preserve">
     <value>{0} sayfada metin yok</value>
   </data>
@@ -7167,6 +7188,9 @@
   </data>
   <data name="{0} page rotated|plural" xml:space="preserve">
     <value>{0} sayfa döndürüldü</value>
+  </data>
+  <data name="{0} page trimmed|plural" xml:space="preserve">
+    <value>{0} sayfa kırpıldı</value>
   </data>
   <data name="{0} page was left alone because the box is outside it.|plural" xml:space="preserve">
     <value>{0} sayfa, kutunun dışında kaldığı için olduğu gibi bırakıldı.</value>

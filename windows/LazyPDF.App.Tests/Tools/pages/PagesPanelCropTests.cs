@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools.Pages;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
@@ -41,6 +42,27 @@ public sealed class PagesPanelCropTests
 
     private static void RunCrop(PagesPanel panel) =>
         typeof(PagesPanel).GetMethod("Crop", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(panel, null);
+
+    [Fact]
+    public Task TrimmingCropsToTheTextWithASixPointBorder() => Sta.Run(async () =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text()), new WindowsPageRenderer(), null, "a.pdf");
+        var host = new RecordingHost();
+        var panel = new PagesPanel();
+        panel.Attach(tab, FakeViewer.Create().Viewer, host);
+
+        await (Task)typeof(PagesPanel).GetMethod("TrimMargins", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(panel, null)!;
+
+        var page = tab.Document.Pages[0];
+        var crop = page.CropBox;
+        Assert.NotEqual(page.MediaBox, crop);
+        Assert.True(crop.Left >= page.MediaBox.Left && crop.Right <= page.MediaBox.Right);
+        Assert.True(crop.Bottom >= page.MediaBox.Bottom && crop.Top <= page.MediaBox.Top);
+        // The line starts at the 72 point margin of the page and is a few lines tall at most.
+        Assert.InRange(crop.Left, 72 - 12, 72);
+        Assert.True(crop.Top - crop.Bottom < 60);
+        panel.Detach();
+    });
 
     [Fact]
     public Task TheBoxSelectsItsPageWhenNothingIsSelected() => Sta.Run(() =>

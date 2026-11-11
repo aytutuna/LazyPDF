@@ -4,6 +4,8 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Export;
 using LazyPDF.Core;
 using ResizeMode = LazyPDF.Core.ResizeMode;
 
@@ -130,6 +132,10 @@ public partial class PagesPanel
         CropHint.Text += " " + Loc.T("The rest of the page stays in the file, only hidden. Redact removes it for good.");
         CropMargins.IsEnabled = Margins() is not null;
         if (!CropMargins.IsEnabled) CropHint.Text += " " + Loc.T("Type margins as numbers, 0 or more.");
+        TrimWhite.IsEnabled = Tab!.CanDraw;
+        TrimHint.Text = Tab.CanDraw
+            ? Loc.T("Crops each page to what is printed on it, plus a small border. The rest stays in the file, only hidden.")
+            : Loc.T("Windows cannot draw this file.");
         ResizeHint.Text = Loc.T("Pages keep their orientation.") + " " + covered;
         LabelHint.Text = pages.Count == 0 ? Loc.T("Every page is numbered.") : Loc.T("Pages {0} to {1} are numbered.", pages[0] + 1, pages[^1] + 1);
         LabelHint.Text += " " + Loc.T("This sets the page numbers viewers show. Nothing is printed on the pages.");
@@ -204,6 +210,49 @@ public partial class PagesPanel
         string status = Loc.Plural(targets.Count, "{0} page cropped", "{0} pages cropped", targets.Count);
         if (left > 0) status += " " + Loc.Plural(left, "{0} page was left alone because the box is outside it.", "{0} pages were left alone because the box is outside them.", left);
         Apply(Loc.T("Crop pages"), d => PageEdits.CropMargins(d, targets, m.Left, m.Top, m.Right, m.Bottom), Selected(), status);
+    }
+
+    private async void TrimWhite_Click(object sender, RoutedEventArgs e) => await TrimMargins();
+
+    private async Task TrimMargins()
+    {
+        if (Tab is not { CanDraw: true } tab || Host is not { } host) return;
+        var pages = SelectedOrAll();
+        var sizes = pages.Select(p => new PageGeometry(tab.Document.Pages[p])).Select(g => (g.Width, g.Height)).ToList();
+        int revision = tab.Revision;
+        var source = Exporter.Source(tab, new WicImageCodec());
+        var boxes = new Dictionary<int, DisplayRect>();
+        bool scanned = false;
+        await host.RunBusyAsync(Loc.T("Looking at the pages"), token => Task.Run(() =>
+        {
+            using var drawn = Exporter.Snapshot(source);
+            if (drawn is null) return;
+            for (int i = 0; i < pages.Count; i++)
+            {
+                token.ThrowIfCancellationRequested();
+                int done = i + 1;
+                if (i % 10 == 0) Dispatcher.BeginInvoke(() => host.SetBusyText(Loc.T("Looking at page {0} of {1}", done, pages.Count)));
+                if (drawn.Render(pages[i], PageEdits.TrimDpi) is { } image && PageEdits.TrimBox(image, sizes[i].Width, sizes[i].Height) is { } area)
+                    boxes[pages[i]] = area;
+            }
+            scanned = true;
+        }, token));
+        if (!scanned) return;
+        if (!ReferenceEquals(Tab, tab) || tab.Revision != revision)
+        {
+            host.ShowNotice(Loc.T("Trim margins"), Loc.T("The file changed. Nothing was trimmed."));
+            return;
+        }
+        int left = pages.Count - boxes.Count;
+        string untouched = Loc.Plural(left, "{0} page had nothing to trim and was left alone.", "{0} pages had nothing to trim and were left alone.", left);
+        if (boxes.Count == 0)
+        {
+            host.ShowNotice(Loc.T("Trim margins"), untouched);
+            return;
+        }
+        string status = Loc.Plural(boxes.Count, "{0} page trimmed", "{0} pages trimmed", boxes.Count);
+        if (left > 0) status += " " + untouched;
+        Apply(Loc.T("Trim margins"), d => PageEdits.CropEach(d, boxes), Selected(), status);
     }
 
     private void CropReset_Click(object sender, RoutedEventArgs e)

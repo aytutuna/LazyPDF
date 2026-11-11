@@ -131,6 +131,9 @@
                 </Grid>
                 <Button x:Name="CropMargins" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Crop by margins}"
                         loc:Icon.Glyph="&#xE7A8;" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Crop by margins}" Click="CropMargins_Click" />
+                <Button x:Name="TrimWhite" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Trim white margins}"
+                        loc:Icon.Glyph="&#xE7A8;" AutomationProperties.Name="{loc:T Trim white margins}" Click="TrimWhite_Click" />
+                <TextBlock x:Name="TrimHint" Style="{StaticResource ReasonText}" Margin="0,4,0,8" />
                 <Button x:Name="CropReset" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Remove the crop}"
                         loc:Icon.Glyph="&#xE7A7;" AutomationProperties.Name="{loc:T Remove the crop}" Click="CropReset_Click" />
             </StackPanel>

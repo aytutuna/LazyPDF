@@ -170,6 +170,31 @@ internal static class PageEdits
         }
     }
 
+    /// <summary>Sets each page's own display rectangle as its crop box.</summary>
+    public static void CropEach(PdfDocument document, Dictionary<int, DisplayRect> boxes)
+    {
+        foreach (var (page, area) in boxes)
+        {
+            var box = new PageGeometry(document.Pages[page]).ToUser(area);
+            PageOperations.SetBox(document, [page], PageBox.Crop, box);
+        }
+    }
+
+    /// <summary>Resolution the pages are drawn at to look for ink.</summary>
+    public const double TrimDpi = 50;
+
+    /// <summary>The ink of a page drawn at <see cref="TrimDpi"/> with a 6 point border, in points as shown; null for a blank page or one that is trimmed to almost nothing.</summary>
+    public static DisplayRect? TrimBox(PdfRgbaImage image, double width, double height)
+    {
+        if (PageInk.Bounds(image) is not { } ink) return null;
+        const double border = 6;
+        double scale = 72 / TrimDpi;
+        double left = Math.Max(0, ink.Left * scale - border), top = Math.Max(0, ink.Top * scale - border);
+        double right = Math.Min(width, ink.Right * scale + border), bottom = Math.Min(height, ink.Bottom * scale + border);
+        if ((right - left) * (bottom - top) >= 0.95 * width * height) return null;
+        return new DisplayRect(left, top, right - left, bottom - top);
+    }
+
     /// <summary>
     /// Numbers pages <paramref name="first"/> to <paramref name="last"/> as given. The pages after keep the labels they had:
     /// a range that started inside is cut, and the one in force after <paramref name="last"/> is started again there.

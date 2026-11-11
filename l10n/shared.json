@@ -5161,6 +5161,32 @@
   "The margins leave nothing of the page. Type smaller numbers.": {
     "tr": "Paylar sayfadan hiçbir şey bırakmıyor. Daha küçük sayılar yazın."
   },
+  "Trim white margins": {
+    "tr": "Beyaz payları kırp"
+  },
+  "Crops each page to what is printed on it, plus a small border. The rest stays in the file, only hidden.": {
+    "tr": "Her sayfayı üzerinde basılı olan kısma, küçük bir kenar payıyla kırpar. Geri kalanı dosyada durur, yalnızca gizlenir."
+  },
+  "Trim margins": {
+    "tr": "Payları kırp"
+  },
+  "Looking at the pages": {
+    "tr": "Sayfalara bakılıyor"
+  },
+  "Looking at page {0} of {1}": {
+    "tr": "Sayfalara bakılıyor: {0} / {1}"
+  },
+  "{0} page trimmed": {
+    "other": "{0} pages trimmed",
+    "tr": "{0} sayfa kırpıldı"
+  },
+  "{0} page had nothing to trim and was left alone.": {
+    "other": "{0} pages had nothing to trim and were left alone.",
+    "tr": "{0} sayfada kırpılacak bir şey yoktu, olduğu gibi bırakıldı."
+  },
+  "The file changed. Nothing was trimmed.": {
+    "tr": "Dosya değişti. Hiçbir şey kırpılmadı."
+  },
   "Remove the crop": {
     "tr": "Kırpmayı kaldır"
   },

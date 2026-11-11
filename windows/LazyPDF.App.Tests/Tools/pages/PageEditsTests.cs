@@ -186,6 +186,48 @@ public sealed class PageEditsTests
     }
 
     [Fact]
+    public void EachPageTakesItsOwnBoxThroughItsOwnTurn()
+    {
+        var document = Open(3);
+        PageOperations.Rotate(document, [1], 90);
+        var boxes = new Dictionary<int, DisplayRect> { [0] = new(10, 20, 100, 200), [1] = new(30, 40, 150, 50) };
+
+        PageEdits.CropEach(document, boxes);
+
+        var first = new PageGeometry(document.Pages[0]);
+        var second = new PageGeometry(document.Pages[1]);
+        Assert.Equal((100, 200), (Math.Round(first.Width), Math.Round(first.Height)));
+        Assert.Equal((150, 50), (Math.Round(second.Width), Math.Round(second.Height)));
+        Assert.Equal(document.Pages[2].MediaBox, document.Pages[2].CropBox);
+    }
+
+    [Fact]
+    public void TheInkGetsASixPointBorderAndIsClampedToThePage()
+    {
+        var image = new PdfRgbaImage(100, 100, Enumerable.Repeat((byte)255, 100 * 100 * 4).ToArray());
+        for (int y = 10; y < 20; y++)
+            for (int x = 0; x < 30; x++)
+                for (int c = 0; c < 3; c++) image.Rgba[(y * 100 + x) * 4 + c] = 0;
+
+        var box = PageEdits.TrimBox(image, 144, 144);
+
+        Assert.NotNull(box);
+        Assert.Equal(0, box.Value.X, 3);
+        Assert.Equal(10 * 1.44 - 6, box.Value.Y, 3);
+        Assert.Equal(30 * 1.44 + 6, box.Value.Width, 3);
+        Assert.Equal(10 * 1.44 + 12, box.Value.Height, 3);
+    }
+
+    [Fact]
+    public void ABlankPageOrOneInkedEdgeToEdgeIsLeftAlone()
+    {
+        var blank = new PdfRgbaImage(100, 100, Enumerable.Repeat((byte)255, 100 * 100 * 4).ToArray());
+        Assert.Null(PageEdits.TrimBox(blank, 144, 144));
+        var full = new PdfRgbaImage(100, 100, Enumerable.Repeat((byte)0, 100 * 100 * 4).ToArray());
+        Assert.Null(PageEdits.TrimBox(full, 144, 144));
+    }
+
+    [Fact]
     public void ADrawnBoxBecomesTheCropBoxOfEveryPageThroughItsOwnTurn()
     {
         var document = Open(2);
