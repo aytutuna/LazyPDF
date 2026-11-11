@@ -45,6 +45,17 @@ final class SignatureClockTests: XCTestCase {
         XCTAssertFalse(report.problems.contains(.certificateExpired))
     }
 
+    func test_aClaimedTimeBefore1601IsNotValidAndDoesNotThrow() throws {
+        var request = PdfSignRequest(pki.leaf, DateTimeOffset(1500, 1, 1, 0, 0, 0))
+        request.chain = pki.chain
+        let signed = try PdfSigner.sign(SignatureKit.plain(), request)
+
+        let reports = try PdfSignatureVerifier.verify(signed, options(now: Pki.signing))
+
+        XCTAssertEqual(reports.count, 1)
+        XCTAssertTrue(try XCTUnwrap(reports.first).problems.contains(.certificateNotValid))
+    }
+
     func test_aStampedSignatureIsNotFlaggedForACertificateThatHasSinceExpired() throws {
         let network = FakeNetwork()
         network.stampTime = Pki.signing.adding(minutes: 1)!
