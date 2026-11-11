@@ -50,6 +50,7 @@ final class SignatureChecker {
     private let dss: ValidationData
     private let signatures: Set<Int>
     private var fieldNamesCache: [Int: String]?
+    private var fetched: [String: X509Certificate?] = [:]
 
     init(_ document: PdfDocument, _ file: [UInt8], _ revisions: [PdfRevision], _ options: VerifyOptions, _ found: [FoundSignature]) {
         self.document = document
@@ -120,14 +121,14 @@ final class SignatureChecker {
         // Without a trusted time stamp the signer's claim sets the time the chain is judged at; revocation is still judged now.
         let time = stamped ?? signingTime ?? options.now
 
-        let trust = CertificateTrust.evaluate(signer, extra, time, options)
+        let trust = CertificateTrust.evaluate(signer, extra, time, options, timestamp: false, fetched: &fetched)
         if !trust.trusted { problems.append(.untrustedSigner) }
         var claimedOutside = false
         if stamped == nil, let claimed = signingTime { claimedOutside = claimed < signer.notBefore || claimed > signer.notAfter }
         if !trust.timeValid || claimedOutside {
             problems.append(.certificateNotValid)
         } else if stamped == nil, signingTime != nil, time != options.now,
-                  !CertificateTrust.evaluate(signer, extra, options.now, options).timeValid {
+                  !CertificateTrust.evaluate(signer, extra, options.now, options, timestamp: false, fetched: &fetched).timeValid {
             problems.append(.certificateExpired)
         }
 
@@ -185,7 +186,7 @@ final class SignatureChecker {
 
         var problems: [SignatureProblem] = []
         let time = token.timestamp
-        let trust = CertificateTrust.evaluate(tsa, dss.certificates + carried, time, options, timestamp: true)
+        let trust = CertificateTrust.evaluate(tsa, dss.certificates + carried, time, options, timestamp: true, fetched: &fetched)
         if !trust.trusted { problems.append(.untrustedSigner) }
         if !trust.timeValid { problems.append(.certificateNotValid) }
         var result = report
@@ -209,7 +210,7 @@ final class SignatureChecker {
             return nil
         }
         let time = token.timestamp
-        let trust = CertificateTrust.evaluate(tsa, extra + token.cms.certificates, time, options, timestamp: true)
+        let trust = CertificateTrust.evaluate(tsa, extra + token.cms.certificates, time, options, timestamp: true, fetched: &fetched)
         if !trust.trusted || !trust.timeValid {
             problems.append(.timestampInvalid)
             return nil

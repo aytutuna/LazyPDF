@@ -129,12 +129,26 @@ enum CertificateTrust {
 
     /// The chain of `certificate`, trusted only when it is also meant for the job: signing documents, or for a time stamp authority `timestamp`.
     static func evaluate(_ certificate: X509Certificate, _ extra: [X509Certificate], _ time: DateTimeOffset?, _ options: VerifyOptions, timestamp: Bool = false) -> TrustResult {
+        var fetched: [String: X509Certificate?] = [:]
+        return evaluate(certificate, extra, time, options, timestamp: timestamp, fetched: &fetched)
+    }
+
+    /// `fetched` holds the issuers fetched so far by the certificate they were fetched for.
+    static func evaluate(_ certificate: X509Certificate, _ extra: [X509Certificate], _ time: DateTimeOffset?, _ options: VerifyOptions, timestamp: Bool, fetched: inout [String: X509Certificate?]) -> TrustResult {
         var certificates = extra
         var result = settle(certificate, certificates, time, options)
         var round = 0
         while round < maxFetches, !result.trusted, result.partial, let transport = options.transport {
-            guard let last = result.chain.last, let issuer = CertificateLinks.fetchIssuer(last, transport),
-                  !certificates.contains(where: { $0.thumbprint == issuer.thumbprint }) else { break }
+            guard let last = result.chain.last else { break }
+            // Kept by the caller across the whole verify, a miss included, so a signer repeated in a file is not fetched for again.
+            let issuer: X509Certificate?
+            if let known = fetched[last.thumbprint] {
+                issuer = known
+            } else {
+                issuer = CertificateLinks.fetchIssuer(last, transport)
+                fetched[last.thumbprint] = .some(issuer)
+            }
+            guard let issuer, !certificates.contains(where: { $0.thumbprint == issuer.thumbprint }) else { break }
             certificates.append(issuer)
             result = settle(certificate, certificates, time, options)
             round += 1

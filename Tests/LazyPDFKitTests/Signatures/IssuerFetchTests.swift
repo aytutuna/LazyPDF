@@ -86,14 +86,25 @@ final class IssuerFetchTests: XCTestCase {
         XCTAssertEqual(network.gets, 0)
     }
 
-    func test_fetchingStopsAfterFourCertificates() throws {
+    func test_fetchingStopsWhenAnIssuerDoesNotExtendTheChain() throws {
         let pki = self.pki
         let endless = Answering { _ in try? pki.issued("Elsewhere", [.digitalSignature]).rawData }
 
         let report = try verify(signedWithoutIntermediate(), endless)
 
         XCTAssertTrue(report.problems.contains(.untrustedSigner))
-        XCTAssertEqual(endless.gets, 4)
+        XCTAssertEqual(endless.gets, 1)
+    }
+
+    func test_aSignatureIsNotFetchedForTwiceWhileItIsCheckedAtTwoTimes() throws {
+        let network = Answering { _ in nil }
+        var options = pki.trusting
+        options.now = Pki.signing.adding(days: 1)
+        options.transport = network
+
+        _ = try PdfSignatureVerifier.verify(signedWithoutIntermediate(), options)
+
+        XCTAssertEqual(network.gets, 1)
     }
 }
 #endif
