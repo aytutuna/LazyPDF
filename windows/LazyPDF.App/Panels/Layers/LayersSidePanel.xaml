@@ -6,6 +6,12 @@
                  xmlns:panel="clr-namespace:LazyPDF.App.Panels.Layers">
     <DockPanel>
         <TextBlock DockPanel.Dock="Bottom" Style="{StaticResource ReasonText}" Margin="12,8,12,12" Text="{loc:T Showing or hiding a layer changes the view only. The file stays as it is.}" />
+        <WrapPanel x:Name="Actions" DockPanel.Dock="Top" Margin="12,0,12,6">
+            <Button x:Name="ShowAllButton" Content="{loc:T Show all}" Padding="10,3,10,4" Margin="0,0,8,4" Click="ShowAll_Click" />
+            <Button x:Name="HideAllButton" Content="{loc:T Hide all}" Padding="10,3,10,4" Margin="0,0,8,4" Click="HideAll_Click" />
+            <Button x:Name="ResetButton" Content="{loc:T Reset}" Padding="10,3,10,4" Margin="0,0,8,4" Click="Reset_Click"
+                    ToolTip="{loc:T Put the layers back as the file sets them}" />
+        </WrapPanel>
         <Grid>
             <TreeView x:Name="Tree" BorderThickness="0" Background="Transparent" Padding="4,4,4,8" AutomationProperties.Name="{loc:T Layers}" PreviewKeyDown="Tree_PreviewKeyDown"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">

@@ -82,7 +82,31 @@ public partial class LayersSidePanel : ToolPanel
         Tree.ItemsSource = roots;
         Empty.Visibility = set.Layers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         Tree.Visibility = set.Layers.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        Actions.Visibility = Tree.Visibility;
+        RefreshButtons();
     }
+
+    private void RefreshButtons()
+    {
+        var layers = Viewer!.Layers.Layers;
+        ShowAllButton.IsEnabled = layers.Any(l => !l.Locked && !l.IsOn);
+        HideAllButton.IsEnabled = layers.Any(l => !l.Locked && l.IsOn);
+        var inFile = PdfLayers.Read(Tab!.Document).Layers.ToDictionary(l => l.Reference, l => l.IsOn);
+        ResetButton.IsEnabled = layers.Any(l => inFile.TryGetValue(l.Reference, out bool on) && on != l.IsOn);
+    }
+
+    private void ShowAll_Click(object sender, RoutedEventArgs e) => SetAll(_ => true);
+
+    private void HideAll_Click(object sender, RoutedEventArgs e) => SetAll(_ => false);
+
+    private void Reset_Click(object sender, RoutedEventArgs e)
+    {
+        var inFile = PdfLayers.Read(Tab!.Document).Layers.ToDictionary(l => l.Reference, l => l.IsOn);
+        SetAll(l => inFile.GetValueOrDefault(l.Reference, l.IsOn));
+    }
+
+    private void SetAll(Func<PdfLayer, bool> state) =>
+        Viewer!.SetLayersVisible(Viewer.Layers.Layers.Where(l => !l.Locked).Select(l => new KeyValuePair<PdfReference, bool>(l.Reference, state(l))));
 
     private LayerRow Row(LayerNode node)
     {
@@ -118,5 +142,6 @@ public partial class LayersSidePanel : ToolPanel
         {
             if (row.Layer is { } layer && state.TryGetValue(layer.Reference, out bool on)) row.Follow(on);
         }
+        RefreshButtons();
     }
 }

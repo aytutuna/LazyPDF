@@ -18,9 +18,12 @@ public sealed class LayersPanelTests
 
         public List<(PdfReference Layer, bool On)> Switched { get; } = [];
 
+        public List<KeyValuePair<PdfReference, bool>[]> Batches { get; } = [];
+
         protected override object? Invoke(MethodInfo? method, object?[]? args)
         {
             if (method!.Name == "get_Layers") return Set;
+            if (method.Name == "SetLayersVisible") Batches.Add([.. (IEnumerable<KeyValuePair<PdfReference, bool>>)args![0]!]);
             if (method.Name == "SetLayerVisible") Switched.Add(((PdfReference)args![0]!, (bool)args[1]!));
             return method.ReturnType == typeof(void) || !method.ReturnType.IsValueType ? null : Activator.CreateInstance(method.ReturnType);
         }
@@ -116,6 +119,34 @@ public sealed class LayersPanelTests
         var rows = (List<LayerRow>)((TreeView)panel.FindName("Tree")).ItemsSource;
 
         Assert.Equal(Loc.T("Group"), rows[0].Name);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ShowAllAndResetSendOneBatchWithoutLockedLayers() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(LayeredPdf.Make()), new FakeRenderer(), null, "a.pdf", null);
+        var inFile = PdfLayers.Read(tab.Document).Layers[0];
+        var shown = new PdfLayer(inFile.Reference, "a", !inFile.IsOn, false, null);
+        var locked = new PdfLayer(new PdfReference(990, 0), "b", false, true, null);
+        var viewer = DispatchProxy.Create<IDocumentViewer, LayerViewer>();
+        var recorder = (LayerViewer)(object)viewer;
+        recorder.Set = new LayerSet([shown, locked], [new LayerNode(null, shown, []), new LayerNode(null, locked, [])]);
+        var panel = new LayersSidePanel();
+        panel.Attach(tab, viewer, new RecordingHost());
+        var showAll = (Button)panel.FindName("ShowAllButton");
+        var hideAll = (Button)panel.FindName("HideAllButton");
+        var reset = (Button)panel.FindName("ResetButton");
+
+        Assert.Equal(!shown.IsOn, showAll.IsEnabled);
+        Assert.Equal(shown.IsOn, hideAll.IsEnabled);
+        Assert.True(reset.IsEnabled);
+
+        showAll.RaiseEvent(new System.Windows.RoutedEventArgs(Button.ClickEvent));
+        reset.RaiseEvent(new System.Windows.RoutedEventArgs(Button.ClickEvent));
+
+        Assert.Equal([[new(shown.Reference, true)], [new(shown.Reference, inFile.IsOn)]], recorder.Batches);
+        Assert.Empty(recorder.Switched);
         return Task.CompletedTask;
     });
 }

@@ -2257,6 +2257,9 @@
   <data name="Hide a field" xml:space="preserve">
     <value>Alanı gizle</value>
   </data>
+  <data name="Hide all" xml:space="preserve">
+    <value>Tümünü gizle</value>
+  </data>
   <data name="Hide the menu bar" xml:space="preserve">
     <value>Menü çubuğunu gizle</value>
   </data>
@@ -3901,6 +3904,9 @@
   <data name="Put it back" xml:space="preserve">
     <value>Geri koy</value>
   </data>
+  <data name="Put the layers back as the file sets them" xml:space="preserve">
+    <value>Katmanları dosyanın belirlediği hale döndürür</value>
+  </data>
   <data name="Put them back" xml:space="preserve">
     <value>Geri koy</value>
   </data>
@@ -4188,6 +4194,9 @@
   </data>
   <data name="Required" xml:space="preserve">
     <value>Zorunlu</value>
+  </data>
+  <data name="Reset" xml:space="preserve">
+    <value>Sıfırla</value>
   </data>
   <data name="Reset form" xml:space="preserve">
     <value>Formu sıfırla</value>
@@ -4563,6 +4572,9 @@
   </data>
   <data name="Show a field" xml:space="preserve">
     <value>Alanı göster</value>
+  </data>
+  <data name="Show all" xml:space="preserve">
+    <value>Tümünü göster</value>
   </data>
   <data name="Show beside the page" xml:space="preserve">
     <value>Sayfanın yanında göster</value>

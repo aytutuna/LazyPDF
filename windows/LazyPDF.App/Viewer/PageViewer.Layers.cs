@@ -16,12 +16,17 @@ public partial class PageViewer
 
     public LayerSet Layers => _tab is null ? new LayerSet([], []) : PdfLayers.Read(_displaySession?.Document ?? _tab.Document);
 
-    public void SetLayerVisible(PdfReference layer, bool visible)
+    public void SetLayerVisible(PdfReference layer, bool visible) => SetLayersVisible([new(layer, visible)]);
+
+    public void SetLayersVisible(IEnumerable<KeyValuePair<PdfReference, bool>> changes)
     {
         if (_tab is null) return;
-        bool inFile = PdfLayers.Read(_tab.Document).Layers.FirstOrDefault(l => l.Reference.Equals(layer))?.IsOn ?? visible;
-        if (visible == inFile) _layerChanges.Remove(layer);
-        else _layerChanges[layer] = visible;
+        var inFile = PdfLayers.Read(_tab.Document).Layers;
+        foreach (var (layer, visible) in changes)
+        {
+            if (visible == (inFile.FirstOrDefault(l => l.Reference.Equals(layer))?.IsOn ?? visible)) _layerChanges.Remove(layer);
+            else _layerChanges[layer] = visible;
+        }
         _ = RebuildDisplayAsync();
     }
 

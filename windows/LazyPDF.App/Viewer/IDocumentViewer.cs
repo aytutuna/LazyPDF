@@ -211,6 +211,9 @@ public interface IDocumentViewer
     /// </summary>
     void SetLayerVisible(PdfReference layer, bool visible);
 
+    /// <summary>Like <see cref="SetLayerVisible"/> for several layers at once, with one rebuild of the view.</summary>
+    void SetLayersVisible(IEnumerable<KeyValuePair<PdfReference, bool>> changes);
+
     /// <summary>The layers as the view shows them: the file's, with what <see cref="SetLayerVisible"/> changed.</summary>
     LayerSet Layers { get; }
 

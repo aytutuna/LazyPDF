@@ -2176,6 +2176,18 @@
   "The file does not allow this layer to be shown or hidden.": {
     "tr": "Dosya bu katmanın gösterilmesine ya da gizlenmesine izin vermiyor."
   },
+  "Show all": {
+    "tr": "Tümünü göster"
+  },
+  "Hide all": {
+    "tr": "Tümünü gizle"
+  },
+  "Reset": {
+    "tr": "Sıfırla"
+  },
+  "Put the layers back as the file sets them": {
+    "tr": "Katmanları dosyanın belirlediği hale döndürür"
+  },
   "Group": {
     "tr": "Grup"
   },
