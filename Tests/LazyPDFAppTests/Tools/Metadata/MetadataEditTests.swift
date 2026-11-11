@@ -83,6 +83,24 @@ final class MetadataEditTests: XCTestCase {
         XCTAssertEqual(DocumentMetadata.read(tab.document).title, before)
     }
 
+    func test_clearedOrChangedTextIsDroppedButAddedTextIsNot() {
+        let none = DocumentMetadata(nil, nil, nil, nil, nil, nil, nil, nil, OrderedStrings())
+        var old = none
+        old.title = "Report"
+        old.author = "Ann"
+        var cleared = old
+        cleared.title = nil
+        var changed = old
+        changed.author = "Bob"
+        var added = old
+        added.subject = "Tax"
+
+        XCTAssertTrue(MetadataEdit.dropsText(old, cleared))
+        XCTAssertTrue(MetadataEdit.dropsText(old, changed))
+        XCTAssertFalse(MetadataEdit.dropsText(old, added))
+        XCTAssertFalse(MetadataEdit.dropsText(none, old))
+    }
+
     func test_everyChoiceHasWordsAndNoTwoShareThem() {
         XCTAssertEqual(Set(MetadataEdit.modes.map(MetadataEdit.modeName)).count, MetadataEdit.modes.count)
         XCTAssertEqual(Set(MetadataEdit.layouts.map(MetadataEdit.layoutName)).count, MetadataEdit.layouts.count)

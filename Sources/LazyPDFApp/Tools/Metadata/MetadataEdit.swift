@@ -21,6 +21,13 @@ public enum MetadataEdit {
         view.write(document)
     }
 
+    /// An earlier title, author, subject or keywords stays in the file's older revisions when it is cleared or changed.
+    public static func dropsText(_ before: DocumentMetadata, _ after: DocumentMetadata) -> Bool {
+        func drops(_ old: String?, _ new: String?) -> Bool { !(old ?? "").isEmpty && old != new }
+        return drops(before.title, after.title) || drops(before.author, after.author) || drops(before.subject, after.subject)
+            || drops(before.keywords, after.keywords)
+    }
+
     public static func modeName(_ mode: PageMode) -> String {
         switch mode {
         case .useOutlines: return L10n.t("Bookmarks")

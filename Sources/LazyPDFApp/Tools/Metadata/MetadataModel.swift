@@ -45,11 +45,12 @@ public final class MetadataModel: ToolPanelModel {
     var host: ToolHost?
     @ObservationIgnored private var watch: ObservationWatch?
     @ObservationIgnored private var editedTab: UUID?
+    @ObservationIgnored private var droppedTab: UUID?
 
     public init() {}
 
     public var action: ToolAction? {
-        ToolAction(L10n.t("Save properties"), symbol: "checkmark", canRun: { [self] in isChanged }, run: { [self] in save() })
+        ToolAction(L10n.t("Save properties"), symbol: "checkmark", canRun: { [self] in isChanged }, run: { [self] in save(notify: true) })
     }
 
     /// The form differs from the file.
@@ -82,11 +83,24 @@ public final class MetadataModel: ToolPanelModel {
 
     // Typed properties go into the file on Save, on leaving a field and on close, as one undo step each time. A signed file
     // asks first, so there the caller is told to wait.
-    public func handIn() -> Bool {
-        guard isChanged, tab != nil else { return true }
+    public func handIn() -> Bool { store(notify: true) }
+
+    // Leaving one field for another stores without the notice about old values; leaving the fields, Save and close tell it.
+    public func store(notify: Bool) -> Bool {
+        guard isChanged, tab != nil else {
+            if notify { tellDropped() }
+            return true
+        }
         let asks = asksFirst
-        save()
+        save(notify: notify)
         return !asks
+    }
+
+    private func tellDropped() {
+        guard let tab, let host, droppedTab == tab.id else { return }
+        droppedTab = nil
+        host.showNotice(L10n.t("Old values are still in the file"),
+                        L10n.t("The earlier title, author, subject or keywords can still be found in the file's history. Clean for sharing removes them."), nil)
     }
 
     // Typed properties are not in the file yet, so a change made elsewhere reads the file again but keeps them.
@@ -174,15 +188,18 @@ public final class MetadataModel: ToolPanelModel {
     }
 
     // The pinned button hands in what is typed before it runs, so by the time it gets here there may be nothing left to save.
-    private func save() {
+    private func save(notify: Bool) {
         guard let tab, let host, isChanged else { return }
         let (typedMetadata, typedView) = readForm()
+        let drops = MetadataEdit.dropsText(metadata, typedMetadata)
         let touch = touchModified
         ChangeGate.run(tab, host, L10n.t("Save properties")) { [self] in
             try MetadataEdit.write(tab.document, typedMetadata, typedView, touchModified: touch, now: PanelDates.now())
             if try tab.commit(L10n.t("Properties")) {
                 host.setStatus(L10n.t("Properties changed."))
                 load(keepEdits: true)
+                if drops { droppedTab = tab.id }
+                if notify { tellDropped() }
             }
         }
     }

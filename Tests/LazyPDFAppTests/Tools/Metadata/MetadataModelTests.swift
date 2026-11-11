@@ -75,6 +75,43 @@ final class MetadataModelTests: XCTestCase {
         XCTAssertTrue(model.handIn())
     }
 
+    func test_savingAfterClearingTheTitleSaysTheOldOneStaysInTheFile() async throws {
+        let (model, rig) = try attached()
+        model.title = "Report"
+        _ = model.handIn()
+        XCTAssertTrue(rig.host.notices.isEmpty)
+
+        model.title = ""
+        await model.action!.run()
+        XCTAssertEqual(rig.host.notices.count, 1)
+        XCTAssertEqual(rig.host.notices[0].0, "Old values are still in the file")
+
+        _ = model.handIn()
+        XCTAssertEqual(rig.host.notices.count, 1)
+    }
+
+    func test_leavingOneFieldForAnotherWaitsForSaveToSayIt() throws {
+        let (model, rig) = try attached()
+        model.title = "Report"
+        _ = model.handIn()
+
+        model.title = ""
+        _ = model.store(notify: false)
+        XCTAssertTrue(rig.host.notices.isEmpty)
+
+        _ = model.handIn()
+        XCTAssertEqual(rig.host.notices.count, 1)
+    }
+
+    func test_addingTextSaysNothingAboutOldValues() throws {
+        let (model, rig) = try attached()
+        model.title = "Report"
+        model.author = "Ann"
+        _ = model.handIn()
+
+        XCTAssertTrue(rig.host.notices.isEmpty)
+    }
+
     func test_handingInWithNothingTypedChangesNothing() throws {
         let (model, rig) = try attached()
 

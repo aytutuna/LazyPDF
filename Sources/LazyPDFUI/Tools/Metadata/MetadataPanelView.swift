@@ -81,8 +81,8 @@ struct MetadataPanelView: View {
             }
         }
         // Leaving a text field puts what was typed into the file, unless a signed file has to be asked first.
-        .onChange(of: focus) { old, _ in
-            if old != nil && !model.asksFirst { _ = model.handIn() }
+        .onChange(of: focus) { old, new in
+            if old != nil && !model.asksFirst { _ = model.store(notify: new == nil) }
         }
     }
 
