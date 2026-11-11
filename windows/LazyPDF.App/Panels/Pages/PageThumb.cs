@@ -14,6 +14,7 @@ public sealed class PageThumb(int index, string label, double width, double heig
     private static readonly SemaphoreSlim Turns = new(2);
 
     private ImageSource? _image;
+    private ImageSource? _stale;
     private int _ticket;
     private bool _loading;
 
@@ -34,8 +35,14 @@ public sealed class PageThumb(int index, string label, double width, double heig
         get
         {
             if (_image is null && !_loading && renderer is not null) _ = LoadAsync();
-            return _image;
+            return _image ?? _stale;
         }
+    }
+
+    /// <summary>Shows the picture of the thumb this one replaces until its own is made.</summary>
+    public void Inherit(PageThumb old)
+    {
+        if (old.Width == Width && old.Height == Height) _stale = old._image ?? old._stale;
     }
 
     /// <summary>Drops the picture; asking for it again makes it again.</summary>
@@ -44,6 +51,7 @@ public sealed class PageThumb(int index, string label, double width, double heig
         _ticket++;
         _loading = false;
         _image = null;
+        _stale = null;
     }
 
     private async Task LoadAsync()
@@ -63,6 +71,7 @@ public sealed class PageThumb(int index, string label, double width, double heig
         if (ticket != _ticket) return;
         // A page that could not be drawn stays marked as loading, so the list does not ask again and again.
         _image = image;
+        _stale = null;
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Image)));
     }
 }

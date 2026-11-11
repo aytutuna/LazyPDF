@@ -43,6 +43,9 @@ public partial class PagesSidePanel : ToolPanel
             double scale = Math.Min(BoxWidth / Math.Max(size.Width, 1), BoxHeight / Math.Max(size.Height, 1));
             items.Add(new PageThumb(i, viewer.PageLabel(i), Math.Round(size.Width * scale), Math.Round(size.Height * scale), scale * 72 * dpr, renderer));
         }
+        // Same page count means the same pages, so the old pictures cover the gap until the new ones are drawn.
+        if (Thumbs.ItemsSource is List<PageThumb> old && old.Count == items.Count)
+            for (int i = 0; i < items.Count; i++) items[i].Inherit(old[i]);
         _syncing = true;
         Thumbs.ItemsSource = items;
         _syncing = false;
