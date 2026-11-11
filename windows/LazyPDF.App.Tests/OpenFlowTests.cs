@@ -18,6 +18,17 @@ public sealed class OpenFlowTests
     }
 
     [Fact]
+    public void CancellingWhenNothingOpensDoesNothing()
+    {
+        using var f = new ViewModelFixture();
+
+        f.Vm.CancelOpening();
+
+        Assert.Null(f.Vm.Opening);
+        Assert.Equal([HomeTab.Instance], f.Vm.Strip);
+    }
+
+    [Fact]
     public async Task SessionPathsSkipsATabWithoutAPathAndKeepsStripOrder()
     {
         using var f = new ViewModelFixture();

@@ -12,6 +12,9 @@ namespace LazyPDF.App;
 /// <summary>What the password overlay shows: which file, whether it wants a certificate, and why the last try failed.</summary>
 public sealed record OpenRequest(string Name, bool NeedsCertificate, int Attempts, string? Problem, IReadOnlyList<CertificateChoice> Certificates);
 
+/// <summary>A file being opened that has taken long enough to show; a null fraction means the bytes are read and the engine is parsing.</summary>
+public sealed record OpeningState(string Name, double? Fraction);
+
 public sealed partial class AppViewModel
 {
     /// <param name="recovery">The recovery entry the bytes came from; it stays until a tab holds them.</param>
@@ -30,6 +33,8 @@ public sealed partial class AppViewModel
     }
 
     private readonly List<PendingOpen> _pending = [];
+    private readonly List<CancellationTokenSource> _reads = [];
+    private readonly List<PendingOpen> _parsing = [];
     private readonly HashSet<string> _opening = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<DocumentTab, DiskStamp?> _warnedAboutDisk = [];
     private readonly List<string> _closedFiles = [];
@@ -78,6 +83,17 @@ public sealed partial class AppViewModel
     public Task<bool> OpenNewAsync(byte[] pdf, string title, string? password, X509Certificate2? certificate) =>
         OpenAsync(new PendingOpen(new OpenSource(pdf, null, title, Made: true)), password, certificate);
 
+    public OpeningState? Opening { get; private set; }
+
+    /// <summary>Stops every file that is still being read or parsed; nothing happens when none is.</summary>
+    public void CancelOpening()
+    {
+        foreach (var read in _reads.ToList()) read.Cancel();
+        if (_parsing.Count == 0) return;
+        foreach (var pending in _parsing) pending.Cancelled = true;
+        SetStatus(Loc.T("Cancelled."));
+    }
+
     public async Task OpenAsync(string path)
     {
         string name = System.IO.Path.GetFileName(path);
@@ -87,14 +103,40 @@ public sealed partial class AppViewModel
             return;
         }
         if (_pending.Any(p => SamePath(p.Source.Path, path)) || !_opening.Add(path)) return;
+        using var reading = new CancellationTokenSource();
+        _reads.Add(reading);
+        OpeningState? shown = null;
+        double? fraction = 0;
+        bool finished = false;
+        var progress = new Progress<double>(f =>
+        {
+            fraction = f;
+            if (shown is null || finished) return;
+            shown = Opening = new OpeningState(name, f);
+            NotifyAll();
+        });
+        _ = ShowLater();
+        async Task ShowLater()
+        {
+            await Task.Delay(300);
+            if (finished) return;
+            shown = Opening = new OpeningState(name, fraction);
+            NotifyAll();
+        }
+        PendingOpen? pending = null;
         try
         {
             OpenSource source;
             try
             {
-                source = await Task.Run(() => _opener.Read(path));
+                source = await Task.Run(() => _opener.ReadAsync(path, progress, reading.Token));
             }
-            catch (Exception e) when (e is not OperationCanceledException)
+            catch (OperationCanceledException)
+            {
+                SetStatus(Loc.T("Cancelled."));
+                return;
+            }
+            catch (Exception e)
             {
                 System.Diagnostics.Trace.TraceError(e.ToString());
                 ShowProblem(Problems.Open(e, name));
@@ -123,11 +165,27 @@ public sealed partial class AppViewModel
                 return;
             }
             if (source.FileId is not null && _pending.Any(p => p.Source.FileId == source.FileId)) return;
-            await OpenAsync(new PendingOpen(source), password: null, certificate: null);
+            fraction = null;
+            if (shown is not null)
+            {
+                shown = Opening = new OpeningState(name, null);
+                NotifyAll();
+            }
+            pending = new PendingOpen(source);
+            _parsing.Add(pending);
+            await OpenAsync(pending, password: null, certificate: null);
         }
         finally
         {
+            finished = true;
             _opening.Remove(path);
+            _reads.Remove(reading);
+            if (pending is not null) _parsing.Remove(pending);
+            if (shown is not null && ReferenceEquals(Opening, shown))
+            {
+                Opening = null;
+                NotifyAll();
+            }
         }
     }
 

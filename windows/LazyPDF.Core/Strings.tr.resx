@@ -3781,6 +3781,9 @@
   <data name="Opened with limited rights. Your certificate may not change the protection." xml:space="preserve">
     <value>Sınırlı haklarla açıldı. Sertifikanız korumayı değiştiremeyebilir.</value>
   </data>
+  <data name="Opening {0}…" xml:space="preserve">
+    <value>{0} açılıyor…</value>
+  </data>
   <data name="Opens Windows settings, where you can pick the program that opens PDF files." xml:space="preserve">
     <value>PDF dosyalarını açacak programı seçebileceğiniz Windows ayarlarını açar.</value>
   </data>

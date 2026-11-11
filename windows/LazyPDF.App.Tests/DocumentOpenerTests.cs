@@ -172,4 +172,50 @@ public sealed class DocumentOpenerTests
 
         Assert.Throws<FileNotFoundException>(() => Opener.Read(dir.Sub("none.pdf")));
     }
+
+    [Fact]
+    public async Task ReadingInStepsReportsProgressUpToTheWholeFile()
+    {
+        using var dir = new TempDir();
+        string path = dir.File("big.pdf", new byte[5 << 20]);
+        var seen = new Steps();
+
+        var source = await Opener.ReadAsync(path, seen, CancellationToken.None);
+
+        Assert.Equal(5 << 20, source.Bytes.Length);
+        Assert.Equal(1.0, seen.Values[^1]);
+        Assert.Equal(seen.Values.Order(), seen.Values);
+    }
+
+    [Fact]
+    public async Task ACancelledReadThrows()
+    {
+        using var dir = new TempDir();
+        string path = dir.File("a.pdf", Pdfs.Text());
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Opener.ReadAsync(path, null, cancelled.Token));
+    }
+
+    [Fact]
+    public async Task ReadAndReadAsyncGiveTheSameBytes()
+    {
+        using var dir = new TempDir();
+        string path = dir.File("a.pdf", Pdfs.Text());
+
+        var sync = Opener.Read(path);
+        var async = await Opener.ReadAsync(path, null, CancellationToken.None);
+
+        Assert.Equal(sync.Bytes, async.Bytes);
+        Assert.Equal(sync.Title, async.Title);
+        Assert.Equal(sync.Hash, async.Hash);
+    }
+
+    private sealed class Steps : IProgress<double>
+    {
+        public List<double> Values { get; } = [];
+
+        public void Report(double value) => Values.Add(value);
+    }
 }

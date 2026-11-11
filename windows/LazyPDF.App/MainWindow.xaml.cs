@@ -236,15 +236,23 @@ public partial class MainWindow : Window
     private void RefreshStatus()
     {
         var tab = _vm.ActiveDocument;
-        StatusText.Text = _vm.IsBusy ? _vm.BusyText : _vm.StatusShort;
-        string spoken = _vm.IsBusy ? _vm.BusyText : _vm.StatusFull;
+        var opening = _vm.IsBusy ? null : _vm.Opening;
+        string running = opening is null ? _vm.BusyText : Loc.T("Opening {0}…", opening.Name);
+        StatusText.Text = _vm.IsBusy || opening is not null ? running : _vm.StatusShort;
+        string spoken = _vm.IsBusy || opening is not null ? running : _vm.StatusFull;
         AutomationProperties.SetName(StatusText, spoken);
         if (spoken != _statusShown)
         {
             _statusShown = spoken;
             if (spoken.Length > 0) Announce(StatusText);
         }
-        BusyBar.Visibility = CancelButton.Visibility = _vm.IsBusy ? Visibility.Visible : Visibility.Collapsed;
+        BusyBar.Visibility = CancelButton.Visibility = _vm.IsBusy || opening is not null ? Visibility.Visible : Visibility.Collapsed;
+        if (opening is not null)
+        {
+            BusyBar.IsIndeterminate = opening.Fraction is null;
+            BusyBar.Maximum = 100;
+            BusyBar.Value = (opening.Fraction ?? 0) * 100;
+        }
         if (tab is null)
         {
             PageText.Text = PageBoxText.Text = ZoomText.Text = "";
@@ -316,7 +324,11 @@ public partial class MainWindow : Window
         action?.Run();
     }
 
-    private void Cancel_Click(object sender, RoutedEventArgs e) => _vm.CancelBusy();
+    private void Cancel_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.IsBusy) _vm.CancelBusy();
+        else _vm.CancelOpening();
+    }
 
     private void Window_Activated(object? sender, EventArgs e) => _ = _vm.CheckDiskAsync();
 

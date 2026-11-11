@@ -36,10 +36,42 @@ public sealed class DocumentOpener(IImageCodec codec, IFontSource fonts)
 
     public OpenSource Read(string path)
     {
+        var stamp = Check(path);
+        return Make(path, File.ReadAllBytes(path), stamp);
+    }
+
+    /// <summary>Like <see cref="Read"/>, but reads in 1 MB steps, tells how far it is and stops when the token is cancelled.</summary>
+    public async Task<OpenSource> ReadAsync(string path, IProgress<double>? progress, CancellationToken token)
+    {
+        var stamp = Check(path);
+        byte[] bytes;
+        await using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
+        {
+            bytes = new byte[stream.Length];
+            int done = 0;
+            if (bytes.Length == 0) progress?.Report(1);
+            while (done < bytes.Length)
+            {
+                token.ThrowIfCancellationRequested();
+                int step = Math.Min(1 << 20, bytes.Length - done);
+                await stream.ReadExactlyAsync(bytes.AsMemory(done, step), token);
+                done += step;
+                progress?.Report((double)done / bytes.Length);
+            }
+        }
+        token.ThrowIfCancellationRequested();
+        return Make(path, bytes, stamp);
+    }
+
+    private static DiskStamp? Check(string path)
+    {
         if (Directory.Exists(path)) throw new InvalidDataException(IsFolder);
         if (new FileInfo(path).Length > int.MaxValue) throw new PdfReadException(PdfReadProblem.Unsupported, TooLarge);
-        var stamp = DiskStamp.Of(path);
-        byte[] bytes = File.ReadAllBytes(path);
+        return DiskStamp.Of(path);
+    }
+
+    private OpenSource Make(string path, byte[] bytes, DiskStamp? stamp)
+    {
         string stem = System.IO.Path.GetFileNameWithoutExtension(path);
         if (FileKinds.IsPicture(path))
         {

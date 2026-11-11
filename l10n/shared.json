@@ -1453,6 +1453,9 @@
   "Cancelled.": {
     "tr": "İptal edildi."
   },
+  "Opening {0}…": {
+    "tr": "{0} açılıyor…"
+  },
   "That certificate does not open this file.": {
     "tr": "Bu sertifika bu dosyayı açmıyor."
   },
