@@ -53,6 +53,8 @@
                                 <Separator />
                                 <MenuItem x:Name="ReadingItem" Header="{loc:T Reading mode}" IsCheckable="True" Click="Reading_Click" />
                                 <MenuItem x:Name="FullScreenItem" Header="{loc:T Full screen (F11)}" IsCheckable="True" Click="FullScreen_Click" />
+                                <Separator />
+                                <MenuItem x:Name="ForgetLinksItem" Header="{loc:T Ask about links again}" Click="ForgetLinks_Click" />
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
@@ -119,6 +121,7 @@
                 <StackPanel>
                     <TextBlock x:Name="LinkTitle" Style="{StaticResource BodyStrongText}" />
                     <TextBlock x:Name="LinkAddress" Style="{StaticResource SecondaryBodyText}" TextWrapping="Wrap" Margin="0,4,0,10" />
+                    <CheckBox x:Name="LinkRemember" Visibility="Collapsed" Margin="0,0,0,10" />
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button x:Name="LinkCancel" Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Cancel}" Padding="12,4" Click="LinkCancel_Click" />
                         <Button x:Name="LinkOpen" Style="{StaticResource AccentIconTextButtonStyle}" Content="{loc:T Open}" AutomationProperties.Name="{loc:T Open}" Margin="8,0,0,0" Padding="12,4" Click="LinkOpen_Click" />

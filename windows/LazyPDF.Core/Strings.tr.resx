@@ -532,6 +532,9 @@
   <data name="Arrow keys move it. Enter places it. Escape cancels." xml:space="preserve">
     <value>Ok tuşları taşır. Enter yerleştirir. Esc iptal eder.</value>
   </data>
+  <data name="Ask about links again" xml:space="preserve">
+    <value>Bağlantılar için yeniden sor</value>
+  </data>
   <data name="Ask the signer to sign again with SHA-256." xml:space="preserve">
     <value>İmzalayandan SHA-256 ile yeniden imzalamasını isteyin.</value>
   </data>
@@ -1563,6 +1566,9 @@
   </data>
   <data name="Does not pass the checks for {0}. Rules broken: {1}." xml:space="preserve">
     <value>{0} denetimlerini geçmiyor. Bozulan kurallar: {1}.</value>
+  </data>
+  <data name="Don't ask again for {0}" xml:space="preserve">
+    <value>{0} için bir daha sorma</value>
   </data>
   <data name="Don't save" xml:space="preserve">
     <value>Kaydetme</value>
@@ -2685,6 +2691,9 @@
   </data>
   <data name="Lazy PDF could not finish what it was doing. Your changes are still open. Use Save as to keep a copy, then close and reopen the app." xml:space="preserve">
     <value>Lazy PDF yaptığı işi tamamlayamadı. Değişiklikleriniz hâlâ açık. Farklı kaydet ile bir kopya saklayın, ardından uygulamayı kapatıp yeniden açın.</value>
+  </data>
+  <data name="Lazy PDF will ask before opening links again." xml:space="preserve">
+    <value>Lazy PDF bağlantıları açmadan önce yeniden soracak.</value>
   </data>
   <data name="Lazy PDF will contact {0}. Servers named by certificates found on the way may be asked too. The file itself is not sent." xml:space="preserve">
     <value>Lazy PDF {0} sunucusuna bağlanacak. Yol üzerinde bulunan sertifikalarda adı geçen sunuculara da sorulabilir. Dosyanın kendisi gönderilmez.</value>

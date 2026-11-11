@@ -2360,6 +2360,15 @@
   "Open this link?": {
     "tr": "Bu bağlantı açılsın mı?"
   },
+  "Don't ask again for {0}": {
+    "tr": "{0} için bir daha sorma"
+  },
+  "Ask about links again": {
+    "tr": "Bağlantılar için yeniden sor"
+  },
+  "Lazy PDF will ask before opening links again.": {
+    "tr": "Lazy PDF bağlantıları açmadan önce yeniden soracak."
+  },
   "This link cannot be opened.": {
     "tr": "Bu bağlantı açılamıyor."
   },

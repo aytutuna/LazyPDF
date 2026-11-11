@@ -32,6 +32,9 @@ public sealed class AppPreferences
     /// <summary>Whether pages run on in one scroll rather than one at a time.</summary>
     public bool Continuous { get; set; } = true;
 
+    /// <summary>Web sites whose links open without asking: "https://" and the lower-case host, at most 100, oldest first.</summary>
+    public List<string> AllowedLinkHosts { get; set; } = [];
+
     /// <summary>Where the main window was left; null until it has been closed once.</summary>
     public WindowPlacement? Window { get; set; }
 }

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Input;
+using LazyPDF.App.Services;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Viewer;
@@ -11,6 +12,7 @@ public partial class PageViewer
 {
     private readonly PageHistory _history = new();
     private string? _pendingAddress;
+    private string? _pendingSite;
 
     public bool CanGoBack => _history.CanGoBack;
 
@@ -237,16 +239,27 @@ public partial class PageViewer
     private static readonly string[] OpenableSchemes = ["http", "https", "mailto"];
 
     // An address in a file is the file's, not the reader's: it is shown and asked about, and only the usual schemes are opened.
-    private void AskToOpen(string address)
+    internal void AskToOpen(string address)
     {
         _linkTip.IsOpen = false;
         address = WebAddress(address);
         bool openable = Uri.TryCreate(address, UriKind.Absolute, out var uri) && OpenableSchemes.Contains(uri.Scheme);
+        string? site = openable ? SiteKey(uri!) : null;
+        if (site is not null && _preferencesDirectory is not null
+            && AppPreferencesStore.Load(_preferencesDirectory).AllowedLinkHosts.Contains(site))
+        {
+            OpenAddress(address);
+            return;
+        }
         _pendingAddress = openable ? address : null;
         LinkTitle.Text = openable ? Loc.T("Open this link?") : Loc.T("This link cannot be opened.");
         AutomationProperties.SetName(LinkCard, LinkTitle.Text);
         LinkAddress.Text = address;
         LinkAddress.Visibility = Visibility.Visible;
+        _pendingSite = _preferencesDirectory is null ? null : site;
+        LinkRemember.IsChecked = false;
+        LinkRemember.Visibility = _pendingSite is null ? Visibility.Collapsed : Visibility.Visible;
+        LinkRemember.Content = Loc.T("Don't ask again for {0}", uri?.IdnHost);
         LinkOpen.Visibility = openable ? Visibility.Visible : Visibility.Collapsed;
         LinkCancel.Content = openable ? Loc.T("Cancel") : Loc.T("Close");
         AutomationProperties.SetName(LinkCancel, (string)LinkCancel.Content);
@@ -254,9 +267,14 @@ public partial class PageViewer
         (openable ? LinkOpen : LinkCancel).Focus();
     }
 
+    // Only https sites are remembered; the punycode host shows a look-alike name for what it is.
+    private static string? SiteKey(Uri uri) => uri.Scheme == "https" ? "https://" + uri.IdnHost.ToLowerInvariant() : null;
+
     private void Tell(string title, string? detail)
     {
         _pendingAddress = null;
+        _pendingSite = null;
+        LinkRemember.Visibility = Visibility.Collapsed;
         LinkTitle.Text = title;
         AutomationProperties.SetName(LinkCard, title);
         LinkAddress.Text = detail;
@@ -292,9 +310,24 @@ public partial class PageViewer
     private void LinkOpen_Click(object sender, RoutedEventArgs e)
     {
         string? address = _pendingAddress;
+        string? site = LinkRemember.IsChecked == true ? _pendingSite : null;
         HideLink();
         Surface.Focus();
         if (address is null) return;
+        if (site is not null && _preferencesDirectory is not null)
+        {
+            AppPreferencesStore.Update(p =>
+            {
+                p.AllowedLinkHosts.Remove(site);
+                p.AllowedLinkHosts.Add(site);
+                if (p.AllowedLinkHosts.Count > 100) p.AllowedLinkHosts.RemoveAt(0);
+            }, _preferencesDirectory);
+        }
+        OpenAddress(address);
+    }
+
+    internal Action<string> OpenAddress { get; set; } = address =>
+    {
         try
         {
             Process.Start(new ProcessStartInfo(address) { UseShellExecute = true });
@@ -303,5 +336,11 @@ public partial class PageViewer
         {
             // No program is set up for the address; nothing more to do.
         }
+    };
+
+    private void ForgetLinks_Click(object sender, RoutedEventArgs e)
+    {
+        if (_preferencesDirectory is not null) AppPreferencesStore.Update(p => p.AllowedLinkHosts.Clear(), _preferencesDirectory);
+        Tell(Loc.T("Lazy PDF will ask before opening links again."), null);
     }
 }

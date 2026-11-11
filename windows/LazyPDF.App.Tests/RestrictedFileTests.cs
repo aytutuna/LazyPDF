@@ -1,4 +1,5 @@
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools.Stamps;
 using LazyPDF.App.Viewer;
 using System.Windows;
@@ -122,6 +123,43 @@ public sealed class RestrictedFileTests
 
         viewer.FollowAction(new NamedAction("Print"));
         AssertCard(viewer, "This link cannot be followed.");
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AllowingASiteSkipsTheCardOnlyForThatHttpsSite() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        var viewer = new PageViewer(dir.Path);
+        var opened = new List<string>();
+        viewer.OpenAddress = opened.Add;
+        var card = (FrameworkElement)viewer.FindName("LinkCard");
+        var remember = (System.Windows.Controls.CheckBox)viewer.FindName("LinkRemember");
+
+        viewer.AskToOpen("https://Example.org/a");
+        Assert.Equal(Visibility.Visible, card.Visibility);
+        Assert.Equal(Visibility.Visible, remember.Visibility);
+        remember.IsChecked = true;
+        ((System.Windows.Controls.Button)viewer.FindName("LinkOpen")).RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        Assert.Equal(["https://Example.org/a"], opened);
+        Assert.Equal(["https://example.org"], AppPreferencesStore.Load(dir.Path).AllowedLinkHosts);
+
+        opened.Clear();
+        viewer.AskToOpen("https://example.org/b");
+        Assert.Equal(["https://example.org/b"], opened);
+        Assert.Equal(Visibility.Collapsed, card.Visibility);
+
+        viewer.AskToOpen("http://example.org/");
+        Assert.Equal(Visibility.Visible, card.Visibility);
+        Assert.Equal(Visibility.Collapsed, remember.Visibility);
+        viewer.AskToOpen("https://other.example/");
+        Assert.Equal(Visibility.Visible, card.Visibility);
+        Assert.False(remember.IsChecked);
+        Assert.Single(opened);
+
+        var item = (System.Windows.Controls.MenuItem)viewer.FindName("ForgetLinksItem");
+        item.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.MenuItem.ClickEvent));
+        Assert.Empty(AppPreferencesStore.Load(dir.Path).AllowedLinkHosts);
         return Task.CompletedTask;
     });
 

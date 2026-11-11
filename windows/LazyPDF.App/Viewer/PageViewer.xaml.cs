@@ -396,6 +396,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         TintSepiaItem.IsChecked = Surface.Tint == PageTint.Sepia;
         ReadingItem.IsChecked = _reading;
         FullScreenItem.IsChecked = FullScreen;
+        ForgetLinksItem.IsEnabled = _preferencesDirectory is not null && AppPreferencesStore.Load(_preferencesDirectory).AllowedLinkHosts.Count > 0;
     }
 
     private void Find_Click(object sender, RoutedEventArgs e) => ShowFind();
