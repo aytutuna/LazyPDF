@@ -89,6 +89,7 @@ public partial class PageViewer
     {
         _autoScroll.Tick += (_, _) => AutoScrollStep();
         Surface.MouseLeftButtonDown += Surface_MouseDown;
+        Surface.PreviewMouseRightButtonDown += (_, _) => Surface.Focus();
         Surface.MouseMove += Surface_MouseMove;
         Surface.MouseLeave += (_, _) => _linkTip.IsOpen = false;
         Surface.MouseLeftButtonUp += Surface_MouseUp;
