@@ -4226,6 +4226,12 @@
   "Measurements dropped": {
     "tr": "Ölçümler bırakıldı"
   },
+  "Measurements not added": {
+    "tr": "Ölçümler eklenmedi"
+  },
+  "They could not be written to the file. Nothing was changed.": {
+    "tr": "Dosyaya yazılamadılar. Hiçbir şey değiştirilmedi."
+  },
   "Opacity %": {
     "tr": "Opaklık %"
   },

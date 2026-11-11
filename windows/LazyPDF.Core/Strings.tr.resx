@@ -2698,6 +2698,9 @@
   <data name="Measurements dropped" xml:space="preserve">
     <value>Ölçümler bırakıldı</value>
   </data>
+  <data name="Measurements not added" xml:space="preserve">
+    <value>Ölçümler eklenmedi</value>
+  </data>
   <data name="Megabytes per part" xml:space="preserve">
     <value>Parça başına megabayt</value>
   </data>
@@ -5667,6 +5670,9 @@
   </data>
   <data name="These settings cannot make this file smaller. Try the Small preset." xml:space="preserve">
     <value>Bu ayarlarla dosya küçülmüyor. Küçük ayarını deneyin.</value>
+  </data>
+  <data name="They could not be written to the file. Nothing was changed." xml:space="preserve">
+    <value>Dosyaya yazılamadılar. Hiçbir şey değiştirilmedi.</value>
   </data>
   <data name="Third-party notices" xml:space="preserve">
     <value>Üçüncü taraf bildirimleri</value>

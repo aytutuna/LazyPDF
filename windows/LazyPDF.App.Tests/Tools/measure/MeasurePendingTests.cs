@@ -1,3 +1,5 @@
+using System.Reflection;
+using LazyPDF.App.Documents;
 using LazyPDF.App.Tools.Measure;
 using LazyPDF.Core;
 using Xunit;
@@ -5,6 +7,7 @@ using Xunit;
 namespace LazyPDF.App.Tests;
 
 // Measurements waiting in the panel against the file changing under them.
+[Collection("Application")]
 public sealed class MeasurePendingTests
 {
     private static Pending On(PdfDocument document, int page) =>
@@ -42,4 +45,23 @@ public sealed class MeasurePendingTests
 
         Assert.Single(Pending.Keep(waiting, PdfDocument.Open(bytes)));
     }
+
+    [Fact]
+    public Task AFailedWriteChangesNothingAndKeepsTheList() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var host = new RecordingHost();
+        var panel = new MeasurePanel();
+        panel.Attach(tab, FakeViewer.Create().Viewer, host);
+        var waiting = (List<Pending>)typeof(MeasurePanel).GetField("_waiting", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(panel)!;
+        waiting.Add(On(tab.Document, 0) with { Item = new MeasureItem(MeasureKind.Distance, 5, [new(0, 0), new(10, 0)]) });
+        int revision = tab.Revision;
+
+        typeof(MeasurePanel).GetMethod("Add", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(panel, [tab]);
+
+        Assert.Equal(revision, tab.Revision);
+        Assert.Single(host.Problems);
+        Assert.Single(waiting);
+        return Task.CompletedTask;
+    });
 }

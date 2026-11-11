@@ -215,11 +215,15 @@ public partial class MeasurePanel : ToolPanel
         {
             count = MeasureWriter.Write(tab.Document, Items, _scale, Environment.UserName, DateTimeOffset.Now, new SystemFontSource());
         }
-        finally
+        catch (Exception error) when (error is InvalidOperationException or ArgumentException or PdfPermissionException)
         {
-            // Whatever was written is one step, so Undo takes all of it back.
-            tab.Commit(Loc.T("Measure"));
+            tab.Session.Discard();
+            Host!.ShowProblem(new Problem(Loc.T("Measurements not added"), Loc.T("They could not be written to the file. Nothing was changed.")));
+            Rebuild();
+            return;
         }
+        // Whatever was written is one step, so Undo takes all of it back.
+        if (!tab.Commit(Loc.T("Measure"))) return;
         _waiting.Clear();
         Rebuild();
         Host!.SetStatus(Loc.Plural(count, "Added {0} measurement", "Added {0} measurements"));
