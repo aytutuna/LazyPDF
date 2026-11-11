@@ -72,10 +72,10 @@ public partial class App : Application
         base.OnStartup(e);
     }
 
-    // WPF fires an access key on a plain letter unless a text box has focus; a stray key must not discard work.
+    // WPF fires an access key on a plain letter unless a text box has focus; a stray key must not discard work. Enter and Escape reach the default and cancel buttons the same way and stay.
     private static void RequireAlt(object sender, AccessKeyPressedEventArgs e)
     {
-        if (Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase or PasswordBox ||Keyboard.Modifiers.HasFlag(ModifierKeys.Alt)) return;
+        if (e.Key is "\r" or "\u001B" || Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase or PasswordBox || Keyboard.Modifiers.HasFlag(ModifierKeys.Alt)) return;
         e.Target = null;
         e.Handled = true;
     }
