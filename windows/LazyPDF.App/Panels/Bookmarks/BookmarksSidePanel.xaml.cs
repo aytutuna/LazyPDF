@@ -67,7 +67,18 @@ public partial class BookmarksSidePanel : ToolPanel
     private void Go(BookmarkNode node)
     {
         if (Viewer is not { } viewer) return;
-        if (node.Item.Destination is { } destination) viewer.GoToDestination(destination);
+        var destination = node.Item.Destination ?? (node.Item.Action as GoToAction)?.Destination;
+        if (destination is not null && PdfDestinations.Locate(Tab!.Document, destination) is null)
+        {
+            Host?.SetStatus(Loc.T("This bookmark points to a page that is not in the file."));
+            return;
+        }
+        if (destination is null && node.Item.Action is not (GoToAction or UriAction or NamedAction))
+        {
+            Host?.SetStatus(Loc.T("This bookmark does something Lazy PDF cannot do."));
+            return;
+        }
+        if (node.Item.Destination is { } own) viewer.GoToDestination(own);
         else viewer.FollowAction(node.Item.Action);
     }
 

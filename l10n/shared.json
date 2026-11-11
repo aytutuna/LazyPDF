@@ -2037,6 +2037,12 @@
   "This file has no bookmarks.": {
     "tr": "Bu dosyada yer imi yok."
   },
+  "This bookmark points to a page that is not in the file.": {
+    "tr": "Bu yer imi dosyada olmayan bir sayfayı gösteriyor."
+  },
+  "This bookmark does something Lazy PDF cannot do.": {
+    "tr": "Bu yer imi, Lazy PDF'nin yapamadığı bir işlem yapıyor."
+  },
   "This file has no comments.": {
     "tr": "Bu dosyada yorum yok."
   },
