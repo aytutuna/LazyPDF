@@ -93,6 +93,8 @@ public class FakeViewer : DispatchProxy
 {
     public PageOverlay Overlay { get; } = new(0, new Size(200, 300));
 
+    public FrameworkElement View { get; } = new();
+
     public ViewerSearch? Search { get; private set; }
 
     internal static IDocumentViewer Create(ViewerSearch search)
@@ -113,7 +115,7 @@ public class FakeViewer : DispatchProxy
         "get_VisiblePages" => new[] { 0 },
         "PageSize" => new Size(200, 300),
         "Overlay" => Overlay,
-        "get_View" => new FrameworkElement(),
+        "get_View" => View,
         "get_Search" => Search,
         _ when method.ReturnType == typeof(void) || !method.ReturnType.IsValueType => null,
         _ => Activator.CreateInstance(method.ReturnType),

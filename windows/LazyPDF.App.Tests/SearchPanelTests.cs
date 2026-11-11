@@ -47,4 +47,35 @@ public sealed class SearchPanelTests
 
         Assert.Equal(Loc.T("This file has no text to search. Try Make searchable."), ((System.Windows.Controls.TextBlock)panel.FindName("Summary")).Text);
     });
+
+    [Fact]
+    public Task APageHiddenBehindAToolIsSaid() => Sta.Run(() =>
+    {
+        var (panel, _, tab) = Open(Pdfs.Text(1, "fox"));
+        using var _ = tab;
+
+        Assert.Equal(Visibility.Visible, ((UIElement)panel.FindName("StageNote")).Visibility);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AShownPageSaysNothing() => Sta.Run(() =>
+    {
+        var bytes = Pdfs.Text(1, "fox");
+        var ui = Dispatcher.CurrentDispatcher;
+        var search = new ViewerSearch(() => TextSource.OpenAsync(bytes, null), () => 0, action => ui.InvokeAsync(action));
+        using var tab = new DocumentTab(PdfEditSession.Open(bytes), new FakeRenderer(), null, "a.pdf", null);
+        var viewer = FakeViewer.Create(search);
+        var window = new Window { Content = viewer.View };
+        window.Show();
+        var panel = new SearchSidePanel();
+        panel.Attach(tab, viewer, new RecordingHost());
+
+        Assert.Equal(Visibility.Collapsed, ((UIElement)panel.FindName("StageNote")).Visibility);
+
+        window.Content = null;
+        Assert.Equal(Visibility.Visible, ((UIElement)panel.FindName("StageNote")).Visibility);
+        window.Close();
+        return Task.CompletedTask;
+    });
 }

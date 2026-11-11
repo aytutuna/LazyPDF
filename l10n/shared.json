@@ -1841,8 +1841,11 @@
   "Close the tool": {
     "tr": "Aracı kapat"
   },
-  "Close the tool to use the find bar.": {
+  "Close the tool to use the search bar.": {
     "tr": "Arama çubuğunu kullanmak için aracı kapatın."
+  },
+  "A tool is open, so the page is hidden. Close the tool to see each result on its page.": {
+    "tr": "Bir araç açık olduğu için sayfa gizli. Her sonucu sayfasında görmek için aracı kapatın."
   },
   "Cancel": {
     "tr": "İptal"

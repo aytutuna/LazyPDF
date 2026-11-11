@@ -30,6 +30,7 @@ public partial class SearchSidePanel : ToolPanel
     {
         var search = Viewer!.Search;
         search.Changed += Search_Changed;
+        Viewer.View.IsVisibleChanged += View_IsVisibleChanged;
         Results.ItemsSource = search.Hits;
         Search_Changed(search, EventArgs.Empty);
     }
@@ -38,12 +39,18 @@ public partial class SearchSidePanel : ToolPanel
     {
         _typing.Stop();
         Viewer!.Search.Changed -= Search_Changed;
+        Viewer.View.IsVisibleChanged -= View_IsVisibleChanged;
         Results.ItemsSource = null;
     }
+
+    private void View_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e) => ShowStageNote();
+
+    private void ShowStageNote() => StageNote.Visibility = Viewer!.View.IsVisible ? Visibility.Collapsed : Visibility.Visible;
 
     private void Search_Changed(object? sender, EventArgs e)
     {
         var search = Viewer!.Search;
+        ShowStageNote();
         if (!_typing.IsEnabled && !Query.IsKeyboardFocused && Query.Text != search.Query)
         {
             _following = true;
@@ -111,6 +118,6 @@ public partial class SearchSidePanel : ToolPanel
     private void Find_Click(object sender, RoutedEventArgs e)
     {
         if (Viewer is { View.IsVisible: true } viewer) viewer.ShowFind();
-        else Host?.SetStatus(Loc.T("Close the tool to use the find bar."));
+        else Host?.SetStatus(Loc.T("Close the tool to use the search bar."));
     }
 }

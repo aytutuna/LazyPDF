@@ -160,6 +160,9 @@
   <data name="A table is changed one line at a time." xml:space="preserve">
     <value>Tablo her seferinde bir satır değiştirilir.</value>
   </data>
+  <data name="A tool is open, so the page is hidden. Close the tool to see each result on its page." xml:space="preserve">
+    <value>Bir araç açık olduğu için sayfa gizli. Her sonucu sayfasında görmek için aracı kapatın.</value>
+  </data>
   <data name="A widget has an /A entry." xml:space="preserve">
     <value>Bir parçacıkta /A girdisi var.</value>
   </data>
@@ -1084,7 +1087,7 @@
   <data name="Close the tool" xml:space="preserve">
     <value>Aracı kapat</value>
   </data>
-  <data name="Close the tool to use the find bar." xml:space="preserve">
+  <data name="Close the tool to use the search bar." xml:space="preserve">
     <value>Arama çubuğunu kullanmak için aracı kapatın.</value>
   </data>
   <data name="Close {0}?" xml:space="preserve">

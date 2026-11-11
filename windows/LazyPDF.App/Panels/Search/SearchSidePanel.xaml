@@ -13,6 +13,10 @@
             <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE721;" Content="{loc:T Search}" AutomationProperties.Name="{loc:T Search}" Padding="10,3,10,4" HorizontalAlignment="Left"
                     ToolTip="{loc:T Search (Ctrl+F)}" Click="Find_Click" />
             <TextBlock x:Name="Summary" Style="{StaticResource ReasonText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />
+            <DockPanel x:Name="StageNote" Margin="0,8,0,0" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite">
+                <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE946;" />
+                <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T 'A tool is open, so the page is hidden. Close the tool to see each result on its page.'}" />
+            </DockPanel>
         </StackPanel>
         <ListBox x:Name="Results" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Search results}"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" HorizontalContentAlignment="Stretch" SelectionChanged="Results_SelectionChanged"
