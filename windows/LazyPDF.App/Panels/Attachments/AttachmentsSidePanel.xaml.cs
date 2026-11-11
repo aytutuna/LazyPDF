@@ -95,8 +95,8 @@ public partial class AttachmentsSidePanel : ToolPanel
         e.Handled = true;
     }
 
-    // Null when the file may be changed now; otherwise the change waits or is refused, with the reason shown.
-    private (DocumentTab Tab, IToolHost Host)? Editable(Action again)
+    // Null when the file may not be changed now; a refusal is shown with its reason.
+    private (DocumentTab Tab, IToolHost Host)? Editable()
     {
         if (Tab is not { } tab || Host is not { } host || MarkWork.Running) return null;
         if (Clearance.Refusal(tab.Document) is { } problem)
@@ -104,12 +104,18 @@ public partial class AttachmentsSidePanel : ToolPanel
             host.ShowProblem(problem);
             return null;
         }
-        return MarkWork.Cautioned(tab, host, again) ? null : (tab, host);
+        return (tab, host);
     }
 
-    private async void Add_Click(object sender, RoutedEventArgs e)
+    private void Add_Click(object sender, RoutedEventArgs e)
     {
-        if (Editable(() => Add_Click(sender, e)) is not var (tab, host)) return;
+        if (Editable() is not var (tab, host) || MarkWork.Cautioned(tab, host, () => Add(tab, host))) return;
+        Add(tab, host);
+    }
+
+    private async void Add(DocumentTab tab, IToolHost host)
+    {
+        if (!ReferenceEquals(Tab, tab) || MarkWork.Running) return;
         var dialog = new OpenFileDialog { Multiselect = true, Filter = Loc.T("All files") + "|*.*" };
         if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
         var files = new List<(string Name, byte[] Data, DateTime Modified)>();
@@ -144,7 +150,13 @@ public partial class AttachmentsSidePanel : ToolPanel
 
     private void Delete_Click(object sender, RoutedEventArgs e)
     {
-        if (Files.SelectedItem is not AttachmentRow row || Editable(() => Delete_Click(sender, e)) is not var (tab, host)) return;
+        if (Files.SelectedItem is not AttachmentRow row || Editable() is not var (tab, host) || MarkWork.Cautioned(tab, host, () => Delete(tab, host, row))) return;
+        Delete(tab, host, row);
+    }
+
+    private void Delete(DocumentTab tab, IToolHost host, AttachmentRow row)
+    {
+        if (!ReferenceEquals(Tab, tab) || MarkWork.Running || Files.ItemsSource is not List<AttachmentRow> rows || !rows.Contains(row)) return;
         if (!PdfAttachments.Remove(tab.Document, row.Item))
         {
             host.SetStatus(Loc.T("That attachment is no longer in the file."));

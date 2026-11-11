@@ -134,6 +134,41 @@ public sealed class AttachmentsPanelTests
     });
 
     [Fact]
+    public Task GoingOnAnywayDeletesTheFileOnASignedFile() => Sta.Run(() =>
+    {
+        var (tab, panel, host) = Panel(StampsPanelTests.Signed(certified: false));
+        using var _ = tab;
+        Click(panel, "DeleteButton");
+
+        host.Actions.Single()!.Run();
+
+        Assert.Empty(PdfAttachments.List(tab.Document));
+        Assert.Equal("Attachment deleted.", host.Status);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task GoingOnAnywayDeletesTheRowAskedFor() => Sta.Run(() =>
+    {
+        var (tab, panel, host) = Panel(StampsPanelTests.Signed(certified: false));
+        using var _ = tab;
+        PdfAttachments.Add(tab.Document, "other.txt", Encoding.UTF8.GetBytes("two"));
+        tab.Commit("Attach");
+        var files = (ListBox)panel.FindName("Files");
+        files.SelectedIndex = 0;
+        string asked = ((AttachmentRow)files.SelectedItem).Name;
+        Click(panel, "DeleteButton");
+        files.SelectedIndex = 1;
+
+        host.Actions.Single()!.Run();
+
+        var left = PdfAttachments.List(tab.Document);
+        Assert.Single(left);
+        Assert.NotEqual(asked, left[0].FileName);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task ARestrictedFileRefusesAndDisablesBothButtons() => Sta.Run(() =>
     {
         var (tab, panel, host) = Panel(Pdfs.Restricted(PdfPermissions.All & ~PdfPermissions.Modify));
