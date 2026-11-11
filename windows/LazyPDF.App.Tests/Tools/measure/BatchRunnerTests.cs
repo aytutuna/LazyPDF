@@ -51,6 +51,21 @@ public sealed class BatchRunnerTests
     }
 
     [Fact]
+    public async Task ALockedFileIsRefusedWithAPlainReason()
+    {
+        using var dir = new TempDir();
+        byte[] locked = LazyPDF.App.Tools.Protect.ProtectWork.WithPassword(PdfDocument.Open(Pdfs.Text()), "secret", "secret", PdfPermissions.All, PdfCryptStrength.Aes256);
+        string file = dir.File("locked.pdf", locked);
+
+        var result = await Run(Runner(), file, Set(dir, Step(BatchStepKind.Clean)));
+
+        Assert.False(result.Ok);
+        Assert.Equal("File is locked", result.Title);
+        Assert.Contains("locked.pdf", result.Detail);
+        Assert.Contains("cannot ask", result.Detail);
+    }
+
+    [Fact]
     public async Task ANameThatIsTakenGetsANumberAndNothingIsOverwritten()
     {
         using var dir = new TempDir();

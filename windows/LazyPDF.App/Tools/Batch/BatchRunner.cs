@@ -40,6 +40,10 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         {
             return new(path, null, false, failed.Problem.Title, failed.Problem.Text);
         }
+        catch (PdfReadException e) when (e.Problem is PdfReadProblem.PasswordRequired or PdfReadProblem.CertificateRequired)
+        {
+            return new(path, null, false, Loc.T("File is locked"), Loc.T("{0} needs a password or certificate, and Batch cannot ask for one. Take the lock off first, then add the file again.", name));
+        }
         catch (Exception e) when (e is not OperationCanceledException)
         {
             var problem = Problems.Open(e, name);

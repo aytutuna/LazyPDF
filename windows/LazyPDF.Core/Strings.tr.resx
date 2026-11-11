@@ -6619,6 +6619,9 @@
   <data name="{0} needs a password or certificate that was not given." xml:space="preserve">
     <value>{0} için verilmeyen bir parola ya da sertifika gerekiyor.</value>
   </data>
+  <data name="{0} needs a password or certificate, and Batch cannot ask for one. Take the lock off first, then add the file again." xml:space="preserve">
+    <value>{0} için parola ya da sertifika gerekiyor ve Toplu işlem bunu soramaz. Önce kilidi kaldırın, sonra dosyayı yeniden ekleyin.</value>
+  </data>
   <data name="{0} needs a password to open." xml:space="preserve">
     <value>{0} dosyasını açmak için parola gerekir.</value>
   </data>
