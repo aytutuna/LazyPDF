@@ -125,7 +125,7 @@ public partial class RedactPanel
     private void MarkedList_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (MarkedList.SelectedItem is not MarkItem item) return;
-        if (e.Key == Key.Enter && item.IsBox && _editor?.Focus() == true) e.Handled = true;
+        if (e.Key == Key.Enter && e.OriginalSource is ListBoxItem && item.IsBox && _editor?.Focus() == true) e.Handled = true;
         else if (e.Key == Key.Delete)
         {
             RemoveOne(item);

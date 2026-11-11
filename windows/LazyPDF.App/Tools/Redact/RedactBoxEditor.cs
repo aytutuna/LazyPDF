@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Automation;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
@@ -14,6 +15,28 @@ namespace LazyPDF.App.Tools.Redact;
 /// <summary>Shows a frame with handles over the selected box mark; dragging it moves the box, dragging a handle resizes it.</summary>
 public sealed class RedactBoxEditor
 {
+    // A shape has no automation peer, so the outline sits in a border that carries the name screen readers read on focus.
+    private sealed class Frame : Border
+    {
+        public Frame()
+        {
+            Line = SignatureBoxTool.Outline();
+            Child = Line;
+            IsHitTestVisible = false;
+        }
+
+        public Rectangle Line { get; }
+
+        protected override AutomationPeer OnCreateAutomationPeer() => new Peer(this);
+
+        private sealed class Peer(Frame owner) : FrameworkElementAutomationPeer(owner)
+        {
+            protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.Group;
+
+            protected override string GetClassNameCore() => nameof(Frame);
+        }
+    }
+
     public enum Handle { Body, TopLeft, Top, TopRight, Right, BottomRight, Bottom, BottomLeft, Left }
 
     private const double Smallest = 4;
@@ -27,7 +50,7 @@ public sealed class RedactBoxEditor
     private readonly List<(Handle Handle, Thumb Thumb)> _thumbs = [];
     private MarkItem? _item;
     private PageOverlay? _layer;
-    private Rectangle? _frame;
+    private Frame? _frame;
     private Rect _rect;
     private Rect _start;
     private Point _grab;
@@ -62,16 +85,16 @@ public sealed class RedactBoxEditor
         _item = item;
         _layer = _viewer.Overlay(item.Page);
         _rect = MarkShapes.Where(_viewer.Geometry(item.Page), item.Mark);
-        _frame = SignatureBoxTool.Outline();
+        _frame = new Frame();
         _frame.Focusable = true;
         _frame.FocusVisualStyle = null;
         AutomationProperties.SetName(_frame, Loc.T("Box on page {0}. Arrow keys move it. Control and arrow keys resize it. Escape returns to the list.", item.Page + 1));
         _frame.KeyDown += Frame_KeyDown;
-        _frame.GotKeyboardFocus += (_, _) => _frame.StrokeThickness = 3;
+        _frame.GotKeyboardFocus += (_, _) => _frame.Line.StrokeThickness = 3;
         _frame.LostKeyboardFocus += (_, _) =>
         {
             Commit();
-            if (_frame is not null) _frame.StrokeThickness = 1.5;
+            if (_frame is not null) _frame.Line.StrokeThickness = 1.5;
         };
         _layer.Children.Add(_frame);
         foreach (var handle in Enum.GetValues<Handle>()) Add(handle);
@@ -135,7 +158,7 @@ public sealed class RedactBoxEditor
             Cursor = Cursor(handle),
             Template = new ControlTemplate(typeof(Thumb)) { VisualTree = Visual(handle) },
         };
-        thumb.DragStarted += (_, _) => { _start = _rect; _grab = Mouse.GetPosition(_layer); };
+        thumb.DragStarted += (_, _) => { Commit(); _start = _rect; _grab = Mouse.GetPosition(_layer); };
         thumb.DragDelta += (_, _) => Dragged(handle);
         thumb.DragCompleted += (_, e) => Done(e.Canceled);
         _layer!.Children.Add(thumb);
@@ -168,6 +191,7 @@ public sealed class RedactBoxEditor
         }
         else if (e.Key is Key.Left or Key.Right or Key.Up or Key.Down)
         {
+            if (_thumbs.Any(t => t.Thumb.IsDragging)) return;
             var modifiers = Keyboard.Modifiers;
             if (!_nudging)
             {
