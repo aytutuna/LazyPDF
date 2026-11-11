@@ -120,6 +120,29 @@ public sealed class ViewerSearchTests
     }
 
     [Fact]
+    public async Task HitsNameTheirPageByLabelWhenThereIsOne()
+    {
+        var bytes = Pages(5);
+        var search = new ViewerSearch(() => TextSource.OpenAsync(bytes, null), () => 0, action => action(),
+            page => page == 3 ? "iv" : (page + 1).ToString());
+        await search.Start("fox", new TextSearchOptions());
+
+        var hit = search.Hits.First(h => h.Page == 3);
+        Assert.Equal("Page iv", hit.PageText);
+        Assert.StartsWith("Page iv.", hit.Spoken);
+    }
+
+    [Fact]
+    public async Task HitsNameTheirPageByNumberWithoutALabelFunction()
+    {
+        var bytes = Pages(5);
+        var search = new ViewerSearch(() => TextSource.OpenAsync(bytes, null), () => 0, action => action());
+        await search.Start("fox", new TextSearchOptions());
+
+        Assert.Equal("Page 4", search.Hits.First(h => h.Page == 3).PageText);
+    }
+
+    [Fact]
     public async Task NextAfterScrollingAwayGoesToTheFirstHitAfterTheView()
     {
         int page = 0;

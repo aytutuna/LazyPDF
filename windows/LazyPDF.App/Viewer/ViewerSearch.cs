@@ -10,7 +10,10 @@ public sealed record SearchHit(SearchMatch Match, string Before, string After)
 
     public string Text => Match.Text;
 
-    public string PageText => Loc.T("Page {0}", Page + 1);
+    /// <summary>The page's own label, when the file has one.</summary>
+    public string? Label { get; init; }
+
+    public string PageText => Loc.T("Page {0}", Label ?? (Page + 1).ToString());
 
     /// <summary>What a screen reader says for the row: the page, then the words around the match.</summary>
     public string Spoken => $"{PageText}. {Before}{Text}{After}";
@@ -31,6 +34,7 @@ public sealed class ViewerSearch
     private readonly Func<Task<TextSource?>> _source;
     private readonly Func<int> _startPage;
     private readonly Action<Action> _post;
+    private readonly Func<int, string>? _pageLabel;
     private CancellationTokenSource? _cancel;
     private bool _quiet;
     private int _landed = -1;
@@ -38,11 +42,13 @@ public sealed class ViewerSearch
     /// <param name="source">The text of the file; null when it cannot be read.</param>
     /// <param name="startPage">The page the first current hit is taken from.</param>
     /// <param name="post">Runs an action on the thread the hits and events belong to.</param>
-    public ViewerSearch(Func<Task<TextSource?>> source, Func<int> startPage, Action<Action> post)
+    /// <param name="pageLabel">The label of a page, read on the post thread; null numbers hits by page.</param>
+    public ViewerSearch(Func<Task<TextSource?>> source, Func<int> startPage, Action<Action> post, Func<int, string>? pageLabel = null)
     {
         _source = source;
         _startPage = startPage;
         _post = post;
+        _pageLabel = pageLabel;
     }
 
     public ObservableCollection<SearchHit> Hits { get; } = [];
@@ -219,7 +225,7 @@ public sealed class ViewerSearch
             bool first = Current < 0;
             foreach (var hit in hits)
             {
-                Hits.Add(hit);
+                Hits.Add(hit with { Label = _pageLabel?.Invoke(hit.Page) });
                 if (Current < 0 && hit.Page >= start) Current = Hits.Count - 1;
             }
             Changed?.Invoke(this, EventArgs.Empty);

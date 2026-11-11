@@ -29,7 +29,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
     public PageViewer()
     {
         InitializeComponent();
-        Search = new ViewerSearch(TextAsync, () => Surface.CurrentPage, action => Dispatcher.InvokeAsync(action));
+        Search = new ViewerSearch(TextAsync, () => Surface.CurrentPage, action => Dispatcher.InvokeAsync(action), PageLabel);
         Find.Attach(Search);
         Find.CloseRequested += (_, _) => HideFind();
         Search.Changed += Search_Changed;
