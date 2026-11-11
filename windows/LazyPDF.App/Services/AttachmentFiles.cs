@@ -18,12 +18,21 @@ internal static class AttachmentFiles
         ".iqy", ".slk", ".rdp", ".xbap", ".vsto", ".xla", ".mde", ".accde", ".ade", ".adp", ".mht", ".mhtml",
     ];
 
+    private static readonly string[] Reserved =
+    [
+        "CON", "PRN", "AUX", "NUL",
+        "COM0", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "COM¹", "COM²", "COM³",
+        "LPT0", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "LPT¹", "LPT²", "LPT³",
+    ];
+
     /// <summary>The file name only, with characters Windows refuses replaced. Windows drops trailing dots and spaces when it writes a file, so they are dropped here and the name checked is the name written.</summary>
     public static string SafeName(string name)
     {
         char[] invalid = Path.GetInvalidFileNameChars();
         string clean = string.Concat(Path.GetFileName(name).Select(c => Array.IndexOf(invalid, c) >= 0 ? '_' : c));
-        return clean.TrimEnd('.', ' ');
+        clean = clean.TrimEnd('.', ' ');
+        string stem = clean.Split('.')[0].TrimEnd(' ');
+        return Reserved.Contains(stem, StringComparer.OrdinalIgnoreCase) ? "_" + clean : clean;
     }
 
     public static bool CouldRun(string safeName) =>

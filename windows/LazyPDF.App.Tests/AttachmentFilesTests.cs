@@ -34,6 +34,17 @@ public sealed class AttachmentFilesTests
     public void DocumentsAreNot(string name) =>
         Assert.False(AttachmentFiles.CouldRun(AttachmentFiles.SafeName(name)));
 
+    [Theory]
+    [InlineData("NUL", "_NUL")]
+    [InlineData("con.txt", "_con.txt")]
+    [InlineData("COM1.pdf", "_COM1.pdf")]
+    [InlineData("LPT9", "_LPT9")]
+    [InlineData("console.txt", "console.txt")]
+    [InlineData("NULL.txt", "NULL.txt")]
+    [InlineData("com10.txt", "com10.txt")]
+    public void ReservedDeviceNamesGetAPrefix(string name, string expected) =>
+        Assert.Equal(expected, AttachmentFiles.SafeName(name));
+
     [Fact]
     public void TheNameIsTheOneWindowsWillWrite()
     {
