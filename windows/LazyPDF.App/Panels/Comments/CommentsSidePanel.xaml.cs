@@ -21,6 +21,7 @@ public partial class CommentsSidePanel : ToolPanel
     private IReadOnlyList<PdfComment> _all = [];
     private bool _loading = true;
     private bool _allowed = true;
+    private bool _stale;
 
     public CommentsSidePanel()
     {
@@ -42,8 +43,14 @@ public partial class CommentsSidePanel : ToolPanel
     protected override void OnAttach()
     {
         Tab!.Changed += Tab_Changed;
-        _allowed = Exchange.CanComment(Tab.Document);
-        MoreButton.IsEnabled = true;
+        MoreButton.IsEnabled = !MarkWork.Running;
+        if (MarkWork.Running) _stale = true;
+        else Reload();
+    }
+
+    private void Reload()
+    {
+        _allowed = Exchange.CanComment(Tab!.Document);
         ImportItem.IsEnabled = _allowed;
         Load();
     }
@@ -81,6 +88,13 @@ public partial class CommentsSidePanel : ToolPanel
     // The file is read once per change; filtering and typing in the filter work on what was read.
     private void Load()
     {
+        // The document is being changed on another thread; the list is read again when that ends.
+        if (MarkWork.Running)
+        {
+            _stale = true;
+            return;
+        }
+        _stale = false;
         var order = (GroupBy.SelectedItem as Grouping)?.Order ?? CommentOrder.Page;
         _all = PdfComments.List(Tab!.Document, null, order, descending: order == CommentOrder.Date);
         Build();

@@ -310,9 +310,16 @@ public partial class CommentsSidePanel
 
     internal async Task ImportAsync(DocumentTab tab, IToolHost host, byte[] data, string name, bool xfdf)
     {
+        await Import(tab, host, data, name, xfdf);
+        if (_stale && Tab is not null && !MarkWork.Running) Reload();
+    }
+
+    private async Task Import(DocumentTab tab, IToolHost host, byte[] data, string name, bool xfdf)
+    {
         if (!ReferenceEquals(Tab, tab) || MarkWork.Running) return;
         FdfImportResult? result = null;
         MarkWork.Running = true;
+        GroupBy.IsEnabled = StatusFilter.IsEnabled = Search.IsEnabled = MoreButton.IsEnabled = false;
         try
         {
             await host.RunBusyAsync(Loc.T("Importing comments"), async ct =>
@@ -338,6 +345,8 @@ public partial class CommentsSidePanel
         finally
         {
             MarkWork.Running = false;
+            GroupBy.IsEnabled = StatusFilter.IsEnabled = Search.IsEnabled = true;
+            MoreButton.IsEnabled = Tab is not null;
         }
         if (result is null) return;
         if (!ReferenceEquals(Tab, tab))
