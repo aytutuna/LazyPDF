@@ -210,7 +210,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     /// <summary>The window raises this once everything that had unsaved changes has been dealt with.</summary>
     public event EventHandler? ExitRequested;
 
-    /// <summary>Raised when Save anyway has saved a tab that was being closed: the window closes it through its own checks.</summary>
+    /// <summary>Raised when Save anyway has saved a tab that was being closed (not during an exit): the window closes it through its own checks.</summary>
     public event EventHandler<DocumentTab>? CloseRequested;
 
     private void NotifyAll() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));

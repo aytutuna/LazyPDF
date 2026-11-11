@@ -249,9 +249,10 @@ public sealed partial class AppViewModel
                 new NoticeAction(Loc.T("Save anyway"), () =>
                 {
                     if (!Write(tab, tab.Save) || !closeAfter) return;
-                    // The window's CancelClose cleared this; closing the tab goes on with the exit.
-                    _exiting = wasExiting;
-                    CloseRequested?.Invoke(this, tab);
+                    // The close question already named the marks, as it does on the plain Save path.
+                    tab.PendingMarks = 0;
+                    if (wasExiting) RaiseExit();
+                    else CloseRequested?.Invoke(this, tab);
                 }));
             return false;
         }

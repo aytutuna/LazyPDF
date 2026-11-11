@@ -266,4 +266,46 @@ public sealed class CloseFlowTests
 
         Assert.True(exited);
     }
+
+    [Fact]
+    public async Task SaveAnywayClosesATabWithMarksWithoutAskingAgain()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await OpenDirty(f);
+        tab.PendingMarks = 2;
+        File.WriteAllBytes(tab.Path!, Pdfs.Text(2));
+        File.SetLastWriteTimeUtc(tab.Path!, DateTime.UtcNow.AddMinutes(10));
+        await f.Vm.CheckDiskAsync();
+        f.Vm.CloseRequested += (_, t) => f.Vm.RequestClose(t);
+        f.Vm.RequestClose(tab);
+
+        Assert.False(f.Vm.Save(tab, closeAfter: true));
+        f.Vm.CancelClose();
+        f.Vm.Message!.Action!.Run();
+
+        Assert.Empty(f.Vm.Documents);
+        Assert.Null(f.Vm.CloseQuestion);
+    }
+
+    [Fact]
+    public async Task SaveAnywayDuringAnExitLeavesNoExitUnderWayWhenTheWindowRefuses()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await OpenDirty(f);
+        var other = await OpenDirty(f, "b.pdf");
+        other.PendingMarks = 0;
+        File.WriteAllBytes(tab.Path!, Pdfs.Text(2));
+        File.SetLastWriteTimeUtc(tab.Path!, DateTime.UtcNow.AddMinutes(10));
+        await f.Vm.CheckDiskAsync();
+        int exits = 0;
+        f.Vm.ExitRequested += (_, _) => exits++;
+        f.Vm.RequestExit();
+
+        Assert.False(f.Vm.Save(tab, closeAfter: true));
+        f.Vm.CancelClose();
+        f.Vm.Message!.Action!.Run();
+        f.Vm.Close(other);
+
+        Assert.Equal(1, exits);
+    }
 }
