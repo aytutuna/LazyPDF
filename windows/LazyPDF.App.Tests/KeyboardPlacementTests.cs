@@ -294,4 +294,57 @@ public sealed class KeyboardPlacementTests
         Assert.Equal(2, tab.PageIndex);
         return Task.CompletedTask;
     });
+
+    private static void PressEnterInZoomBox(PageViewer viewer)
+    {
+        using var source = new HwndSource(new HwndSourceParameters("zoom-test"));
+        viewer.ZoomBox.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, Key.Enter) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
+    }
+
+    [Fact]
+    public Task EnterInTheZoomBoxWithUntouchedTextKeepsFitWidth() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        viewer.Fit = FitMode.Width;
+        viewer.UpdateLayout();
+
+        PressEnterInZoomBox(viewer);
+
+        Assert.Equal(FitMode.Width, viewer.Fit);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AnUnreadableZoomEntryGoesBackToTheShownValue() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        string shown = viewer.ZoomBox.Text;
+        viewer.ZoomBox.Text = "abc";
+
+        PressEnterInZoomBox(viewer);
+
+        Assert.Equal(shown, viewer.ZoomBox.Text);
+        return Task.CompletedTask;
+    });
+
+    [Theory]
+    [InlineData(360)]
+    [InlineData(440)]
+    [InlineData(520)]
+    public Task TheZoomGroupFitsAtNarrowWidths(int width) => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var viewer = new PageViewer();
+        viewer.Show(tab);
+        viewer.Measure(new Size(width, 600));
+        viewer.Arrange(new Rect(0, 0, width, 600));
+        viewer.UpdateLayout();
+        double actual = viewer.ZoomGroup.ActualWidth;
+        viewer.ZoomGroup.Measure(new Size(double.PositiveInfinity, 600));
+
+        Assert.Equal(viewer.ZoomGroup.DesiredSize.Width - 16, actual, 1.5);
+        return Task.CompletedTask;
+    });
 }

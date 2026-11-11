@@ -171,8 +171,11 @@ public partial class PageViewer
     {
         if (e.Key == Key.Enter)
         {
-            if (ZoomMath.Parse(ZoomBox.Text, out double zoom)) Surface.SetZoom(zoom);
-            else RefreshBar();
+            if (ZoomBox.Text != _shownZoom)
+            {
+                if (ZoomMath.Parse(ZoomBox.Text, out double zoom)) Surface.SetZoom(zoom);
+                else ZoomBox.Text = _shownZoom;
+            }
             Surface.Focus();
             e.Handled = true;
         }

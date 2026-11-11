@@ -24,6 +24,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
     private DocumentTab? _tab;
     private string[] _labels = [];
     private bool _reading;
+    private string _shownZoom = "";
     private (int Columns, bool Cover, bool Continuous, FitMode Fit, double Zoom) _beforeReading;
 
     public PageViewer()
@@ -226,11 +227,12 @@ public partial class PageViewer : UserControl, IDocumentViewer
         if (!PageBox.IsKeyboardFocused) PageBox.Text = open ? PageLabel(page) : "";
         PageCountText.Text = open ? Loc.T("of {0}", Surface.PageCount) : "";
         string zoom = open ? Loc.T("{0} %", Math.Round(Surface.Zoom * 100)) : "";
+        _shownZoom = zoom;
         if (!ZoomBox.IsKeyboardFocused) ZoomBox.Text = zoom;
         AutomationProperties.SetName(ZoomBox, open ? $"{Loc.T("Zoom")} {zoom}" : Loc.T("Zoom"));
         PreviousButton.IsEnabled = open && page > 0;
         NextButton.IsEnabled = open && page < Surface.PageCount - 1;
-        bool room = Bar.ActualWidth >= 330;
+        bool room = Bar.ActualWidth >= 366;
         BackButton.Visibility = ForwardButton.Visibility = room ? Visibility.Visible : Visibility.Collapsed;
         BackButton.IsEnabled = CanGoBack;
         ForwardButton.IsEnabled = CanGoForward;
@@ -258,8 +260,8 @@ public partial class PageViewer : UserControl, IDocumentViewer
 
     private void Bar_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        ModeGroup.Visibility = e.NewSize.Width < 470 ? Visibility.Collapsed : Visibility.Visible;
-        ZoomInButton.Visibility = ZoomOutButton.Visibility = e.NewSize.Width < 400 ? Visibility.Collapsed : Visibility.Visible;
+        ModeGroup.Visibility = e.NewSize.Width < 506 ? Visibility.Collapsed : Visibility.Visible;
+        ZoomInButton.Visibility = ZoomOutButton.Visibility = e.NewSize.Width < 436 ? Visibility.Collapsed : Visibility.Visible;
         RefreshBar();
     }
 
