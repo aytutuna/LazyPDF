@@ -274,8 +274,14 @@ public sealed partial class FormsPanel : ToolPanel
         Viewer.Reveal(widget.PageIndex, new Rect(d.X, d.Y, d.Width, d.Height));
         if (Designing)
         {
-            var others = FieldList.SelectedItems.OfType<FieldRow>().Where(r => r != row && r.Page == row.Page).Select(r => (r.Name, r.Index, r.Ordinal));
-            Pick([.. others, (row.Name, row.Index, row.Ordinal)]);
+            var rows = FieldList.SelectedItems.OfType<FieldRow>().ToList();
+            var form = Form;
+            // A row stands for a whole field, so widgets already picked keep their own index.
+            var kept = _picked.Where(k => rows.Any(r => r.Name == k.Name && r.Ordinal == k.Ordinal)
+                && form.FindAll(k.Name).ElementAtOrDefault(k.Ordinal)?.Widgets.ElementAtOrDefault(k.Index)?.PageIndex == widget.PageIndex).ToList();
+            var added = rows.Where(r => r.Page == row.Page && !kept.Any(k => k.Name == r.Name && k.Ordinal == r.Ordinal))
+                .Select(r => (r.Name, r.Index, r.Ordinal));
+            Pick([.. kept, .. added]);
         }
         else Dispatcher.InvokeAsync(() => _fill?.Focus(row.Name, row.Index), DispatcherPriority.Loaded);
     }
