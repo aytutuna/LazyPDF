@@ -64,9 +64,16 @@ public sealed partial class OcrPanel : ToolPanel
         LanguageBox.ItemsSource = state.Installed;
         LanguageBox.SelectedItem = state.Preferred();
         _filling = false;
+        FillMoreLanguages();
+        MoreLanguagesSection.Visibility = state.Installed.Count >= 2 ? Visibility.Visible : Visibility.Collapsed;
         LanguageNote.Text = state.Advice;
         LanguageGlyph.Text = state.Installed.Count == 0 ? "" : "";
         RaiseActionChanged();
+    }
+
+    private void FillMoreLanguages()
+    {
+        MoreLanguages.ItemsSource = LanguageBox.Items.Cast<OcrLanguage>().Where(l => !ReferenceEquals(l, LanguageBox.SelectedItem)).ToList();
     }
 
     private async Task LoadPagesAsync(DocumentTab tab)
@@ -134,22 +141,23 @@ public sealed partial class OcrPanel : ToolPanel
     {
         if (Tab is not { } tab || Host is not { } host || LanguageBox.SelectedItem is not OcrLanguage language) return;
         var options = new OcrOptions(language.Tag, OcrWork.Dpi, Replacing ? OcrExisting.Replace : OcrExisting.Skip, SelectedPages(), Force: true);
+        IReadOnlyList<string> languages = [language.Tag, .. MoreLanguages.SelectedItems.Cast<OcrLanguage>().Select(l => l.Tag)];
         int texted = PageList.SelectedItems.Cast<PageRow>().Count(r => r.Kind is OcrPageKind.ForeignLayer or OcrPageKind.Text);
         string? doubled = texted == 0 ? null : Loc.Plural(texted,
             "{0} chosen page already has text. Reading it adds a second layer, so search finds words twice.",
             "{0} chosen pages already have text. Reading them adds a second layer, so search finds words twice.");
-        if (OcrWork.Cleared(tab, host, () => ReadAnyway(tab, host, options), doubled)) await Read(tab, host, options);
+        if (OcrWork.Cleared(tab, host, () => ReadAnyway(tab, host, options, languages), doubled)) await Read(tab, host, options, languages);
     }
 
     // The panel is off while the pages are read: a change to the document then would waste the run.
-    private async Task Read(DocumentTab tab, IToolHost host, OcrOptions options)
+    private async Task Read(DocumentTab tab, IToolHost host, OcrOptions options, IReadOnlyList<string> languages)
     {
         _running = true;
         IsEnabled = false;
         RaiseActionChanged();
         try
         {
-            await OcrWork.MakeSearchableAsync(tab, host, _recognizer, options);
+            await OcrWork.MakeSearchableAsync(tab, host, _recognizer, options, languages);
         }
         finally
         {
@@ -160,12 +168,12 @@ public sealed partial class OcrPanel : ToolPanel
     }
 
     // Runs from the info bar, which the shell's handling of a failed action does not reach.
-    private async void ReadAnyway(DocumentTab tab, IToolHost host, OcrOptions options)
+    private async void ReadAnyway(DocumentTab tab, IToolHost host, OcrOptions options, IReadOnlyList<string> languages)
     {
         if (!ReferenceEquals(Tab, tab)) return;
         try
         {
-            await Read(tab, host, options);
+            await Read(tab, host, options, languages);
         }
         catch (Exception error) when (error is not OutOfMemoryException)
         {
@@ -182,7 +190,9 @@ public sealed partial class OcrPanel : ToolPanel
 
     private void LanguageBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!_filling) RaiseActionChanged();
+        if (_filling) return;
+        FillMoreLanguages();
+        RaiseActionChanged();
     }
 
     private void PageList_SelectionChanged(object sender, SelectionChangedEventArgs e)

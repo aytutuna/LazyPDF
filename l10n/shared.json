@@ -4986,6 +4986,12 @@
   "Language not available": {
     "tr": "Dil kullanılamıyor"
   },
+  "More languages": {
+    "tr": "Diğer diller"
+  },
+  "Each page is read in the language that finds the most words. This takes longer.": {
+    "tr": "Her sayfa, en çok sözcük bulan dilde okunur. Bu daha uzun sürer."
+  },
   "Made {0} page searchable": {
     "other": "Made {0} pages searchable",
     "tr": "{0} sayfa aranabilir yapıldı"

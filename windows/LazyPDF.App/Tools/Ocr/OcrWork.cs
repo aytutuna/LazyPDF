@@ -14,13 +14,14 @@ public static class OcrWork
     /// Reads a copy of the file off the UI thread, so the document can be used meanwhile, and writes the layers into the
     /// document if it is still the one that was read. Null when cancelled, when the language is missing or when the document changed.
     /// </summary>
-    public static async Task<OcrResult?> MakeSearchableAsync(DocumentTab tab, IToolHost host, ITextRecognizer recognizer, OcrOptions options)
+    public static async Task<OcrResult?> MakeSearchableAsync(DocumentTab tab, IToolHost host, ITextRecognizer recognizer, OcrOptions options,
+                                                                 IReadOnlyList<string>? languages = null)
     {
         var bytes = tab.Session.Current.ToArray();
         int revision = tab.Revision;
         bool dropsLayers = options.Existing == OcrExisting.Replace && HasLayer(tab.Document, options.Pages);
         OcrRead? read = null;
-        var reading = new Reading(tab.Renderer, recognizer);
+        var reading = new Reading(tab.Renderer, recognizer, languages ?? [options.Language]);
         try
         {
             await host.RunBusyAsync(Loc.T("Reading pages"), async cancel =>
@@ -67,9 +68,10 @@ public static class OcrWork
 
     /// <summary>Reads like <see cref="PdfSearchable.ReadAsync"/>, and tries a page that gives no words turned by 90, 180 and 270 degrees. The turns are in quarter turns by 0-based page.</summary>
     internal static async Task<(OcrRead Read, IReadOnlyDictionary<int, int> Turns)> ReadAsync(PdfDocument document, IPageRenderer renderer, ITextRecognizer recognizer,
-                                                                                               OcrOptions options, IProgress<OcrProgress>? progress, CancellationToken cancellation)
+                                                                                               OcrOptions options, IProgress<OcrProgress>? progress, CancellationToken cancellation,
+                                                                                               IReadOnlyList<string>? languages = null)
     {
-        var reading = new Reading(renderer, recognizer);
+        var reading = new Reading(renderer, recognizer, languages ?? [options.Language]);
         var read = await PdfSearchable.ReadAsync(document, reading, reading, options, progress, cancellation);
         return (read, reading.Turns);
     }
@@ -128,7 +130,7 @@ public static class OcrWork
     // ReadAsync renders and reads one page after the other, so the page drawn last is the one being read.
     private const int MinTurnedWords = 3;
 
-    private sealed class Reading(IPageRenderer inner, ITextRecognizer recognizer) : IPageRenderer, ITextRecognizer
+    private sealed class Reading(IPageRenderer inner, ITextRecognizer recognizer, IReadOnlyList<string> languages) : IPageRenderer, ITextRecognizer
     {
         private int _last;
         public List<OcrPageWords> Pages { get; } = [];
@@ -142,7 +144,7 @@ public static class OcrWork
 
         public async Task<IReadOnlyList<OcrWord>> RecognizeAsync(PdfRgbaImage image, string language, CancellationToken cancellation = default)
         {
-            var words = await recognizer.RecognizeAsync(image, language, cancellation).ConfigureAwait(false);
+            var words = await Best(image, cancellation).ConfigureAwait(false);
             int turn = 0;
             var read = image;
             if (words.Count == 0 && !PageInk.IsBlank(image))
@@ -150,7 +152,7 @@ public static class OcrWork
                 for (int t = 1; t < 4; t++)
                 {
                     var turned = WindowsOcr.Turn(image, t);
-                    var found = await recognizer.RecognizeAsync(turned, language, cancellation).ConfigureAwait(false);
+                    var found = await Best(turned, cancellation).ConfigureAwait(false);
                     if (found.Count > words.Count) (words, turn, read) = (found, t, turned);
                 }
                 if (words.Count < MinTurnedWords) (words, turn, read) = (Array.Empty<OcrWord>(), 0, image);
@@ -158,6 +160,18 @@ public static class OcrWork
             if (turn != 0) Turns[_last] = turn;
             Pages.Add(new OcrPageWords(_last, words, read.Width, read.Height));
             return words;
+        }
+
+        // Windows reads one language at a time, so each is tried and the reading with the most words stays.
+        private async Task<IReadOnlyList<OcrWord>> Best(PdfRgbaImage image, CancellationToken cancellation)
+        {
+            IReadOnlyList<OcrWord>? best = null;
+            foreach (var tag in languages)
+            {
+                var words = await recognizer.RecognizeAsync(image, tag, cancellation).ConfigureAwait(false);
+                if (best is null || words.Count > best.Count) best = words;
+            }
+            return best ?? [];
         }
     }
 

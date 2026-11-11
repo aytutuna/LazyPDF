@@ -22,6 +22,8 @@ public sealed class OcrWorkTests
         // Words only for an image taller than wide, as a page that was scanned sideways reads once it is turned.
         public bool PortraitOnly { get; set; }
         public List<string> Languages { get; } = [];
+        // Words per language tag; a tag not in it reads Words.
+        public Dictionary<string, string[]> ByLanguage { get; } = [];
 
         public Task<IReadOnlyList<OcrWord>> RecognizeAsync(PdfRgbaImage image, string language, CancellationToken cancellation = default)
         {
@@ -29,7 +31,8 @@ public sealed class OcrWorkTests
             cancellation.ThrowIfCancellationRequested();
             if (Fails is not null) throw Fails;
             Languages.Add(language);
-            IReadOnlyList<OcrWord> words = PortraitOnly && image.Width >= image.Height ? [] : [.. Words.Select((w, i) => new OcrWord(w, new OcrBox(0, i, image.Width, 1)))];
+            var read = ByLanguage.GetValueOrDefault(language) ?? Words;
+            IReadOnlyList<OcrWord> words = PortraitOnly && image.Width >= image.Height ? [] : [.. read.Select((w, i) => new OcrWord(w, new OcrBox(0, i, image.Width, 1)))];
             return Task.FromResult(words);
         }
     }
@@ -174,6 +177,34 @@ public sealed class OcrWorkTests
         Assert.Equal("Language not available", f.Vm.Message.Title);
         Assert.Contains("xx", f.Vm.Message.Text);
         Assert.False(tab.Session.CanUndo);
+    }
+
+    [Fact]
+    public async Task TheLanguageWithMostWordsWritesTheLayer()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f);
+        var recognizer = new FakeRecognizer();
+        recognizer.ByLanguage["en-US"] = ["a", "b"];
+        recognizer.ByLanguage["tr"] = ["a", "b", "c", "d", "e"];
+
+        await OcrWork.MakeSearchableAsync(tab, f.Vm, recognizer, All(), ["en-US", "tr"]);
+
+        Assert.Equal(5, Words(tab).Count());
+        Assert.Equal(["en-US", "tr", "en-US", "tr"], recognizer.Languages);
+        Assert.Equal("en-US", PdfOcrLayer.Language(tab.Document, tab.Document.Pages[0]));
+    }
+
+    [Fact]
+    public async Task OneLanguageReadsEachPageOnce()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f);
+        var recognizer = new FakeRecognizer();
+
+        await Make(tab, f, recognizer, All());
+
+        Assert.Equal(["en-US", "en-US"], recognizer.Languages);
     }
 
     [Fact]

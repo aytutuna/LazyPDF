@@ -1798,6 +1798,9 @@
   <data name="Each page" xml:space="preserve">
     <value>Her sayfa</value>
   </data>
+  <data name="Each page is read in the language that finds the most words. This takes longer." xml:space="preserve">
+    <value>Her sayfa, en çok sözcük bulan dilde okunur. Bu daha uzun sürer.</value>
+  </data>
   <data name="Earlier version" xml:space="preserve">
     <value>Önceki sürüm</value>
   </data>
@@ -3162,6 +3165,9 @@
   </data>
   <data name="More information" xml:space="preserve">
     <value>Daha fazla bilgi</value>
+  </data>
+  <data name="More languages" xml:space="preserve">
+    <value>Diğer diller</value>
   </data>
   <data name="More ways to save" xml:space="preserve">
     <value>Diğer kaydetme yolları</value>
