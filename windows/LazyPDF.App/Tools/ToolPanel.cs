@@ -64,6 +64,9 @@ public abstract class ToolPanel : UserControl, IToolPanel
     /// </summary>
     public virtual bool HandIn() => true;
 
+    /// <summary>True when unhanded text stays with the tab after Detach, so a refused HandIn loses nothing.</summary>
+    public virtual bool KeepsDrafts => false;
+
     protected virtual void OnAttach()
     {
     }

@@ -284,7 +284,7 @@ public partial class MainWindow
         {
             // A signed file asked before taking the words; its button would act on a panel that is about to let go.
             _vm.DropAction();
-            _vm.SetStatus(Loc.T("Typed text was not kept."));
+            if (!current.KeepsDrafts) _vm.SetStatus(Loc.T("Typed text was not kept."));
         }
         current?.Detach();
         current = panel;

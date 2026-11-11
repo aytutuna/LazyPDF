@@ -122,6 +122,8 @@ public partial class AccessibilityPanel
         });
     }
 
+    public override bool KeepsDrafts => true;
+
     // Typed descriptions go into the file with Save's rules, as one undo step; a signed file asks first, so the caller is told to wait.
     public override bool HandIn()
     {
