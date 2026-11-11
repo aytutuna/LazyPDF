@@ -34,11 +34,11 @@ public sealed class HomeKeyboardTests
         var home = Show(f);
 
         var buttons = TileButtons(home);
-        var combine = buttons[f.Vm.Tiles.ToList().FindIndex(t => t.Id == "combine")];
+        var compress = buttons[f.Vm.Tiles.ToList().FindIndex(t => t.Id == "compress")];
 
-        Assert.True(combine.IsEnabled);
-        Assert.True(combine.Focusable);
-        Assert.Contains("Not available: Open a file first", System.Windows.Automation.AutomationProperties.GetHelpText(combine));
+        Assert.True(compress.IsEnabled);
+        Assert.True(compress.Focusable);
+        Assert.Contains("Not available: Open a file first", System.Windows.Automation.AutomationProperties.GetHelpText(compress));
         return Task.CompletedTask;
     });
 
