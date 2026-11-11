@@ -318,7 +318,6 @@ public partial class PageViewer : UserControl, IDocumentViewer
         {
             case "single":
                 columns = 1;
-                continuous = false;
                 break;
             case "continuous":
                 continuous = !continuous;
@@ -337,7 +336,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
     {
         SelectItem.IsChecked = Mode == PointerMode.Select;
         HandItem.IsChecked = Mode == PointerMode.Hand;
-        OnePageItem.IsChecked = Surface.Columns == 1 && !Surface.Continuous;
+        OnePageItem.IsChecked = Surface.Columns == 1;
         ContinuousItem.IsChecked = Surface.Continuous;
         TwoPageItem.IsChecked = Surface.Columns == 2;
         CoverItem.IsChecked = Surface.Cover;
