@@ -2145,6 +2145,12 @@
   "{0} of {1}": {
     "tr": "{0} / {1}"
   },
+  "{0} of {1}, from the start": {
+    "tr": "{0} / {1}, baştan"
+  },
+  "{0} of {1}, from the end": {
+    "tr": "{0} / {1}, sondan"
+  },
   "This page cannot be shown.": {
     "tr": "Bu sayfa gösterilemiyor."
   },

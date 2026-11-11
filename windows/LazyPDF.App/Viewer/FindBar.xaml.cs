@@ -56,6 +56,8 @@ public partial class FindBar : UserControl
         else if (search.BadPattern) text = Loc.T("Not a valid pattern");
         else if (search.Hits.Count == 0) text = search.Running ? Loc.T("Searching") : Loc.T("No results");
         else if (search.Running) text = Loc.T("{0} found", search.Hits.Count);
+        else if (search.Wrapped == SearchWrap.Start) text = Loc.T("{0} of {1}, from the start", search.Current + 1, search.Hits.Count);
+        else if (search.Wrapped == SearchWrap.End) text = Loc.T("{0} of {1}, from the end", search.Current + 1, search.Hits.Count);
         else text = Loc.T("{0} of {1}", search.Current + 1, search.Hits.Count);
         if (Count.Text != text)
         {

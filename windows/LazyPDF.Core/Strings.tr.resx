@@ -6727,6 +6727,12 @@
   <data name="{0} of {1} selected" xml:space="preserve">
     <value>{0} / {1} seçili</value>
   </data>
+  <data name="{0} of {1}, from the end" xml:space="preserve">
+    <value>{0} / {1}, sondan</value>
+  </data>
+  <data name="{0} of {1}, from the start" xml:space="preserve">
+    <value>{0} / {1}, baştan</value>
+  </data>
   <data name="{0} opens for editing, but Windows cannot draw its pages." xml:space="preserve">
     <value>{0} düzenlemeye açılıyor ama Windows sayfalarını çizemiyor.</value>
   </data>

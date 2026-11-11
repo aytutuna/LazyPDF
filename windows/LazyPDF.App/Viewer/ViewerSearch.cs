@@ -16,6 +16,8 @@ public sealed record SearchHit(SearchMatch Match, string Before, string After)
     public string Spoken => $"{PageText}. {Before}{Text}{After}";
 }
 
+public enum SearchWrap { None, Start, End }
+
 /// <summary>
 /// One search of the open file, shared by the find bar, the highlights on the pages and the Search panel.
 /// It runs off the UI thread and delivers hits in batches through <c>post</c>; starting another search
@@ -53,6 +55,9 @@ public sealed class ViewerSearch
 
     public bool Running { get; private set; }
 
+    /// <summary>Whether the last step went round the end of the hits, and which way.</summary>
+    public SearchWrap Wrapped { get; private set; }
+
     /// <summary>The query is a regular expression that does not parse.</summary>
     public bool BadPattern { get; private set; }
 
@@ -69,6 +74,7 @@ public sealed class ViewerSearch
         _cancel?.Cancel();
         Hits.Clear();
         Current = -1;
+        Wrapped = SearchWrap.None;
         Query = query;
         Options = options;
         BadPattern = false;
@@ -102,9 +108,29 @@ public sealed class ViewerSearch
 
     private void Move(int step)
     {
-        if (Hits.Count == 0) return;
+        int count = Hits.Count;
+        if (count == 0) return;
         _quiet = false;
-        Select(((Current < 0 ? (step > 0 ? -1 : 0) : Current) + step + Hits.Count) % Hits.Count);
+        int start = _startPage();
+        int index;
+        Wrapped = SearchWrap.None;
+        if (Current >= 0 && Math.Abs(Hits[Current].Page - start) > 1)
+        {
+            // The reader scrolled away after finding, so step from the page in view.
+            index = step > 0 ? Hits.ToList().FindIndex(h => h.Page >= start) : Hits.ToList().FindLastIndex(h => h.Page <= start);
+            if (index < 0)
+            {
+                index = step > 0 ? 0 : count - 1;
+                Wrapped = step > 0 ? SearchWrap.Start : SearchWrap.End;
+            }
+        }
+        else
+        {
+            index = (Current < 0 ? (step > 0 ? -1 : 0) : Current) + step;
+            if (Current >= 0 && (index < 0 || index >= count)) Wrapped = step > 0 ? SearchWrap.Start : SearchWrap.End;
+            index = (index + count) % count;
+        }
+        Select(index);
     }
 
     public void Select(int index)

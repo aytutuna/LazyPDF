@@ -78,6 +78,33 @@ public sealed class ViewerSearchTests
     }
 
     [Fact]
+    public async Task NextAfterScrollingAwayGoesToTheFirstHitAfterTheView()
+    {
+        int page = 0;
+        var bytes = Pages(5);
+        var search = new ViewerSearch(() => TextSource.OpenAsync(bytes, null), () => page, action => action());
+        await search.Start("fox", new TextSearchOptions());
+        page = 3;
+
+        search.Next();
+
+        Assert.Equal(3, search.Hits[search.Current].Page);
+        Assert.Equal(SearchWrap.None, search.Wrapped);
+    }
+
+    [Fact]
+    public async Task NextFromTheLastHitSaysItWrapped()
+    {
+        var search = Searching(Pages(3), startPage: 2);
+        await search.Start("fox", new TextSearchOptions());
+
+        search.Next();
+
+        Assert.Equal(0, search.Current);
+        Assert.Equal(SearchWrap.Start, search.Wrapped);
+    }
+
+    [Fact]
     public async Task NextAndPreviousGoRoundTheHits()
     {
         var search = Searching(Pages(3));
