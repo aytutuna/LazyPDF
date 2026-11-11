@@ -418,8 +418,17 @@ public partial class CertificatesPanel : ToolPanel
         if (tab.Certificate is not null) where = Loc.T("the servers named in its certificates");
         else
         {
-            var hosts = await ServerPreview.HostsAsync(tab.Session.Current.ToArray(), tab.Password);
-            where = hosts.Count == 0 ? "" : ServerPreview.Describe(hosts);
+            SetWorking(true);
+            try
+            {
+                var hosts = await ServerPreview.HostsAsync(tab.Session.Current.ToArray(), tab.Password);
+                where = hosts.Count == 0 ? "" : ServerPreview.Describe(hosts);
+            }
+            finally
+            {
+                SetWorking(false);
+            }
+            if (!ReferenceEquals(Tab, tab)) return;
         }
         if (where.Length == 0) await Start();
         else host.ShowNotice(Loc.T("These servers will be asked"),
@@ -428,6 +437,7 @@ public partial class CertificatesPanel : ToolPanel
 
         async Task Start()
         {
+            if (_working || !ReferenceEquals(Tab, tab)) return;
             var verify = SigningSettingsStore.Load().Verify(tab.Password, tab.Certificate, DateTimeOffset.Now);
             int before = tab.Session.Current.Length;
             bool finished = false, covered = true;
