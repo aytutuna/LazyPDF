@@ -25,6 +25,23 @@ final class LayersModelTests: XCTestCase {
         XCTAssertFalse(model.roots[1].canToggle)
     }
 
+    func test_aLockedLayerSaysWhyAndAnUnlockedOneDoesNot() throws {
+        let (model, _) = try attached()
+
+        XCTAssertEqual(model.roots[1].lockedNote, "The file does not allow this layer to be shown or hidden.")
+        XCTAssertNil(model.roots[0].lockedNote)
+    }
+
+    func test_aGroupWithoutALabelIsCalledGroup() async throws {
+        let (model, viewer) = try attached()
+        let first = viewer.layers.layers[0]
+
+        viewer.layers = LayerSet(layers: [first], order: [LayerNode(label: "  ", layer: nil, children: [LayerNode(label: nil, layer: first, children: [])])])
+
+        await settle { model.roots.first?.layer == nil }
+        XCTAssertEqual(model.roots.map { $0.name }, ["Group"])
+    }
+
     func test_aFileWithoutLayersIsEmpty() throws {
         let tab = try PanelPdfs.tab(Pdfs.text())
         let model = LayersModel()

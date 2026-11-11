@@ -56,6 +56,8 @@ private struct LayerRowView: View {
         } else {
             Toggle(row.name, isOn: Binding(get: { row.isOn }, set: { model.toggle(row, $0) }))
                 .disabled(!row.canToggle)
+                .help(row.lockedNote ?? "")
+                .accessibilityHint(row.lockedNote ?? "")
         }
     }
 }

@@ -26,6 +26,8 @@ public final class LayerRow: Identifiable {
 
     public var canToggle: Bool { layer.map { !$0.locked } ?? false }
 
+    public var lockedNote: String? { layer?.locked == true ? L10n.t("The file does not allow this layer to be shown or hidden.") : nil }
+
     fileprivate func set(_ on: Bool) {
         isOn = on
     }
@@ -83,7 +85,9 @@ public final class LayersModel: ToolPanelModel {
     }
 
     private func row(_ node: LayerNode) -> LayerRow {
-        makeRow(name: node.layer?.name ?? node.label ?? "", layer: node.layer, nodes: node.children)
+        let label = node.label ?? ""
+        let name = node.layer?.name ?? (label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? L10n.t("Group") : label)
+        return makeRow(name: name, layer: node.layer, nodes: node.children)
     }
 
     private func makeRow(name: String, layer: PdfLayer?, nodes: [LayerNode]) -> LayerRow {
