@@ -9,7 +9,7 @@ using LazyPDF.App.Viewer;
 namespace LazyPDF.App.Tools.Comment;
 
 /// <summary>Takes the pointer to draw one kind of mark on a page; what was drawn goes to <paramref name="done"/> as page points.</summary>
-public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkStyle> style, Action<MarkTool, int, IReadOnlyList<Point>> done) : IPagePointerTool
+public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkStyle> style, Action<MarkTool, int, IReadOnlyList<Point>> done, Func<PagePointer, IPagePointerTool?>? grab = null) : IPagePointerTool
 {
     private const double MinDrag = 3;
 
@@ -21,6 +21,7 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
     private Shape? _preview;
     private Shape? _box;
     private bool _keyed;
+    private IPagePointerTool? _grabbed;
 
     public Cursor? Cursor => tool == MarkTool.Pencil ? Cursors.Pen : Cursors.Cross;
 
@@ -33,6 +34,12 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
 
     public void Press(PagePointer pointer)
     {
+        if (_page < 0 && !pointer.FromKeys && grab?.Invoke(pointer) is { } other)
+        {
+            _grabbed = other;
+            other.Press(pointer);
+            return;
+        }
         if (_keyed && pointer.FromKeys && pointer.Page == _page)
         {
             _now = pointer.Point;
@@ -54,6 +61,11 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
 
     public void Move(PagePointer pointer)
     {
+        if (_grabbed is not null)
+        {
+            _grabbed.Move(pointer);
+            return;
+        }
         if (_page < 0 || pointer.Page != _page) return;
         _now = Constrain(pointer);
         if (pointer.Pressed && (tool == MarkTool.Pencil || tool == MarkTool.Eraser) && (_now - _points[^1]).Length >= 1) _points.Add(_now);
@@ -62,6 +74,12 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
 
     public void Release(PagePointer pointer)
     {
+        if (_grabbed is { } held)
+        {
+            _grabbed = null;
+            held.Release(pointer);
+            return;
+        }
         if (_page < 0) return;
         if (pointer.Page == _page) _now = Constrain(pointer);
         if (Many)
@@ -97,7 +115,12 @@ public sealed class DrawTool(IDocumentViewer viewer, MarkTool tool, Func<MarkSty
         Complete();
     }
 
-    public void Cancel() => Clear();
+    public void Cancel()
+    {
+        _grabbed?.Cancel();
+        _grabbed = null;
+        Clear();
+    }
 
     public void Finish()
     {

@@ -232,7 +232,7 @@ public partial class CommentPanel : ToolPanel
                 _edit.Redraw();
                 break;
             default:
-                viewer.PointerTool = _active = new DrawTool(viewer, _tool, CurrentStyle, Drew);
+                viewer.PointerTool = _active = new DrawTool(viewer, _tool, CurrentStyle, Drew, p => _edit is { } e && e.Holds(p) ? e : null);
                 break;
         }
         _choosing = false;

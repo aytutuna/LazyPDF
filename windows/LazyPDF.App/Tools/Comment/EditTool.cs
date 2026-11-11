@@ -69,6 +69,15 @@ public sealed class EditTool(IDocumentViewer viewer, Func<Marker> marker) : IPag
         Draw(mark.PageIndex, _frame);
     }
 
+    /// <summary>Whether a press lands on a handle of the selected mark or on the mark itself.</summary>
+    public bool Holds(PagePointer pointer)
+    {
+        if (Current is not { } mark || mark.PageIndex != pointer.Page) return false;
+        if (HandleAt(_points ?? Spots(_frame), pointer.Point) >= 0) return true;
+        var hit = marker().At(pointer.Page, pointer.Point, Reach);
+        return hit is not null && hit.Reference?.Number == mark.Reference?.Number;
+    }
+
     public void Press(PagePointer pointer)
     {
         _handle = -1;

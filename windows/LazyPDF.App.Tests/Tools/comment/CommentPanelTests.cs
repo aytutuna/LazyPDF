@@ -1,7 +1,9 @@
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using LazyPDF.App.Tools.Comment;
+using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using Xunit;
 
@@ -100,6 +102,64 @@ public sealed class CommentPanelTests
         var made = f.Marker.Add(MarkTool.TextBox, 0, [new Point(60, 80), new Point(260, 140)], StyleOf(panel), "Hello");
 
         Assert.Equal("Arial", Marker.TextOf(made).Family);
+        return Task.CompletedTask;
+    });
+
+    private static PagePointer At(Point at, bool pressed = true, int clicks = 1) => new(0, at, at, pressed, clicks, ModifierKeys.None);
+
+    private static void Drag(IPagePointerTool tool, Point from, Point to)
+    {
+        tool.Press(At(from));
+        tool.Move(At(to));
+        tool.Release(At(to));
+    }
+
+    private static IPagePointerTool Rectangles(CommentPanel panel)
+    {
+        Get<Dictionary<MarkTool, RadioButton>>(panel, "_buttons")[MarkTool.Rectangle].IsChecked = true;
+        return Get<IPagePointerTool>(panel, "_active");
+    }
+
+    [Fact]
+    public Task AMarkJustDrawnStaysSelectedAndMovesWithTheSameTool() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var panel = Attached(f);
+        var tool = Rectangles(panel);
+        var edit = Get<EditTool>(panel, "_edit");
+
+        Drag(tool, new Point(40, 50), new Point(120, 100));
+        var drawn = f.Marks().Single();
+        Assert.Equal(drawn.Reference?.Number, edit.Current?.Reference?.Number);
+
+        Drag(tool, new Point(80, 75), new Point(100, 95));
+
+        Assert.Same(tool, Get<IPagePointerTool>(panel, "_active"));
+        var moved = Assert.Single(f.Marks());
+        Assert.Equal(drawn.Reference?.Number, edit.Current?.Reference?.Number);
+        var before = f.Geometry.ToDisplay(drawn.Rect);
+        var after = f.Geometry.ToDisplay(moved.Rect);
+        Assert.Equal(20, after.X - before.X, 0.5);
+        Assert.Equal(20, after.Y - before.Y, 0.5);
+        Assert.True(f.Tab.Undo());
+        Assert.Equal(before.X, f.Geometry.ToDisplay(f.Marks().Single().Rect).X, 0.5);
+        Assert.Single(f.Marks());
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task APressOnEmptyPageDrawsANewMarkAndDropsTheSelection() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        var panel = Attached(f);
+        var tool = Rectangles(panel);
+        var edit = Get<EditTool>(panel, "_edit");
+
+        Drag(tool, new Point(40, 50), new Point(120, 100));
+        Drag(tool, new Point(10, 200), new Point(60, 260));
+
+        Assert.Equal(2, f.Marks().Count);
+        Assert.Equal(f.Marks()[1].Reference?.Number, edit.Current?.Reference?.Number);
         return Task.CompletedTask;
     });
 }

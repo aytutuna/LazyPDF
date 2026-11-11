@@ -52,6 +52,7 @@ public partial class CommentPanel
     {
         if (!_allowed || MarkWork.Running) return;
         var look = CurrentStyle();
+        PdfAnnotation? made = null;
         string label = tool == MarkTool.Eraser ? Loc.T("Erase") : Tools.First(t => t.Tool == tool).Text;
         switch (tool)
         {
@@ -65,15 +66,22 @@ public partial class CommentPanel
                 Type(tool, page, points, look);
                 break;
             case MarkTool.Stamp:
-                Change(label, m => m.AddStamp(page, points[0], StampValue(), look));
+                Added(Change(label, m => made = m.AddStamp(page, points[0], StampValue(), look)), made);
                 break;
             case MarkTool.Attach:
                 _ = AttachAsync(page, points[0]);
                 break;
             default:
-                Change(label, m => m.Add(tool, page, points, look));
+                Added(Change(label, m => made = m.Add(tool, page, points, look)), made);
                 break;
         }
+    }
+
+    // A mark just drawn stays selected, so a press on it moves it without changing the tool.
+    private void Added(bool done, PdfAnnotation? made)
+    {
+        if (!done || made?.Reference is not { } reference || Tab is not { } tab) return;
+        _edit?.Select(NewMarker(tab).Find(made.PageIndex, reference.Number));
     }
 
     private string StampValue()
@@ -88,7 +96,13 @@ public partial class CommentPanel
         var area = tool == MarkTool.Note ? new Rect(points[0].X, points[0].Y + Marker.NoteSize, 170, 60) : Marker.BoxOf(tool, points);
         string label = Tools.First(t => t.Tool == tool).Text;
         Compose(tab, viewer.Overlay(page), area, tool == MarkTool.Note ? 12 : look.Size, "", text =>
-            string.IsNullOrWhiteSpace(text) || Change(label, m => m.Add(tool, page, points, look, text)));
+        {
+            PdfAnnotation? made = null;
+            if (string.IsNullOrWhiteSpace(text)) return true;
+            bool done = Change(label, m => made = m.Add(tool, page, points, look, text));
+            Added(done, made);
+            return done;
+        });
     }
 
     // The box opens again with the text when the file would not take it, so that nothing typed is lost.
