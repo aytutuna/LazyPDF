@@ -4,7 +4,7 @@
                  xmlns:loc="clr-namespace:LazyPDF.App"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
                  xmlns:combine="clr-namespace:LazyPDF.App.Tools.Combine"
-                 AllowDrop="True" PreviewDragOver="Panel_DragOver" PreviewDrop="Panel_Drop">
+                 AllowDrop="True" PreviewDragOver="Panel_DragOver" PreviewDrop="Panel_Drop" PreviewMouseLeftButtonDown="Panel_PreviewMouseLeftButtonDown">
     <StackPanel Margin="{StaticResource PanePadding}">
         <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,0,0,12" HorizontalAlignment="Left">
             <StackPanel Orientation="Horizontal">
@@ -27,7 +27,7 @@
                     <DataTemplate DataType="{x:Type combine:CombineEntry}">
                         <Border Style="{StaticResource CardStyle}" Margin="0,0,0,6" Padding="10,8" AllowDrop="True"
                                 PreviewMouseLeftButtonDown="Card_PreviewMouseLeftButtonDown" PreviewMouseMove="Card_PreviewMouseMove"
-                                DragLeave="Card_DragLeave" Drop="Card_Drop">
+                                DragLeave="Card_DragLeave" PreviewDrop="Card_Drop">
                             <Grid>
                             <StackPanel>
                                 <DockPanel>

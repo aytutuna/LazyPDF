@@ -165,6 +165,8 @@ public partial class CombinePanel : ToolPanel
         if (dialog.ShowDialog() == true) await AddAsync(Host, _entries, dialog.FileNames);
     }
 
+    private void Panel_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) => _dragEntry = null;
+
     private void Card_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         _dragStart = e.GetPosition(null);
