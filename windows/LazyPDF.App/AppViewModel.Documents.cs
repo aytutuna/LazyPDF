@@ -233,13 +233,20 @@ public sealed partial class AppViewModel
     public static bool NeedsName(DocumentTab tab) => tab.Path is null || tab.ReadOnly;
 
     /// <summary>Saves over the file the tab was read from. Call <see cref="NeedsName"/> first; false also when the save failed and the info bar says why.</summary>
-    public bool Save(DocumentTab tab)
+    public bool Save(DocumentTab tab, bool closeAfter = false)
     {
         if (tab.Path is null) return false;
+        bool wasExiting = _exiting;
         if (tab.ChangedOnDisk && File.Exists(tab.Path))
         {
             ShowNotice(Loc.T("File changed"), Loc.T("{0} was changed by another program. Saving now replaces that version with yours.", tab.Title),
-                new NoticeAction(Loc.T("Save anyway"), () => Write(tab, tab.Save)));
+                new NoticeAction(Loc.T("Save anyway"), () =>
+                {
+                    if (!Write(tab, tab.Save) || !closeAfter) return;
+                    // The window's CancelClose cleared this; closing the tab goes on with the exit.
+                    _exiting = wasExiting;
+                    Close(tab);
+                }));
             return false;
         }
         return Write(tab, tab.Save);

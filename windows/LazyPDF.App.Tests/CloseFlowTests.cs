@@ -226,4 +226,40 @@ public sealed class CloseFlowTests
 
         Assert.False(f.Vm.CanUndo);
     }
+
+    [Fact]
+    public async Task SaveAnywayFromTheCloseQuestionClosesTheTab()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await OpenDirty(f);
+        File.WriteAllBytes(tab.Path!, Pdfs.Text(2));
+        File.SetLastWriteTimeUtc(tab.Path!, DateTime.UtcNow.AddMinutes(10));
+        f.Vm.CheckDisk();
+        f.Vm.RequestClose(tab);
+
+        Assert.False(f.Vm.Save(tab, closeAfter: true));
+        f.Vm.CancelClose();
+        f.Vm.Message!.Action!.Run();
+
+        Assert.Empty(f.Vm.Documents);
+    }
+
+    [Fact]
+    public async Task SaveAnywayDuringAnExitGoesOnWithTheExit()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await OpenDirty(f);
+        File.WriteAllBytes(tab.Path!, Pdfs.Text(2));
+        File.SetLastWriteTimeUtc(tab.Path!, DateTime.UtcNow.AddMinutes(10));
+        f.Vm.CheckDisk();
+        bool exited = false;
+        f.Vm.ExitRequested += (_, _) => exited = true;
+        f.Vm.RequestExit();
+
+        Assert.False(f.Vm.Save(tab, closeAfter: true));
+        f.Vm.CancelClose();
+        f.Vm.Message!.Action!.Run();
+
+        Assert.True(exited);
+    }
 }
