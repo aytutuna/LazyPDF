@@ -287,6 +287,7 @@ public sealed partial class StampsPanel : ToolPanel
         var tab = Tab;
         var host = Host!;
         byte[]? bytes = null;
+        ImageSource? image = null;
         _reading = true;
         PictureButton.IsEnabled = false;
         try
@@ -295,10 +296,12 @@ public sealed partial class StampsPanel : ToolPanel
             {
                 token.ThrowIfCancellationRequested();
                 var upright = SignatureArt.UprightFile(File.ReadAllBytes(path));
-                if (!token.IsCancellationRequested) bytes = upright;
+                if (token.IsCancellationRequested) return;
+                image = Decode(upright);
+                bytes = upright;
             }, token));
             if (bytes is null || !ReferenceEquals(Tab, tab)) return;
-            _pictureImage = Decode(bytes);
+            _pictureImage = image;
             _picture = bytes;
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or NotSupportedException or FileFormatException)
