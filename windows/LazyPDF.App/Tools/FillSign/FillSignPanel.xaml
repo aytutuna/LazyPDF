@@ -28,8 +28,8 @@
                 </Grid.ColumnDefinitions>
                 <RadioButton x:Name="DateKind" Grid.Column="0" GroupName="FillKind" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Date}"
                              AutomationProperties.Name="{loc:T Date}" Checked="Kind_Checked" />
-                <RadioButton x:Name="MarkKind" Grid.Column="1" GroupName="FillKind" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Mark}"
-                             AutomationProperties.Name="{loc:T Mark}" Checked="Kind_Checked" />
+                <RadioButton x:Name="MarkKind" Grid.Column="1" GroupName="FillKind" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Mark on page}"
+                             AutomationProperties.Name="{loc:T Mark on page}" Checked="Kind_Checked" />
             </Grid>
         </Border>
 

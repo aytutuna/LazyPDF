@@ -3136,6 +3136,9 @@
   <data name="Mark every match" xml:space="preserve">
     <value>Tüm eşleşmeleri işaretle</value>
   </data>
+  <data name="Mark on page" xml:space="preserve">
+    <value>İşaret</value>
+  </data>
   <data name="Mark removed" xml:space="preserve">
     <value>İşaret kaldırıldı</value>
   </data>
