@@ -326,7 +326,7 @@ Changes to behaviour and limits in the layers above after review. No public sign
 - An update to a file with an xref stream throws `InvalidOperationException` when no object number is left for the stream itself.
 - `SaveIncremental` and `PdfEditSession.Save` work from the bytes read, so anything before `%PDF` is gone from the result.
 
-**Safe save.** `PdfEditSession` saves through `PdfFileSaver.Save(path, bytes, password, source, samePages)` (internal): the read-back is refused when it needed a rebuild the source did not, and, except for `SaveVersion`, when the page count differs. `Commit` refuses an update that reads back rebuilt. Once the swap is done a failure to restore attributes or creation time is ignored. `Redo` drops uncommitted changes as `Undo` does.
+**Safe save.** `PdfEditSession` saves through `PdfFileSaver.Save(path, bytes, password, source, samePages)` (internal): the read-back is refused when it needed a rebuild the source did not, and, except for `SaveVersion`, when the page count differs. `Commit` refuses an update that reads back rebuilt, and an update that would make the file longer than 2 GB. Once the swap is done a failure to restore attributes or creation time is ignored. `Redo` drops uncommitted changes as `Undo` does.
 
 ### Content: parsing, writing, interpreting, fonts
 
