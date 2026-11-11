@@ -5323,8 +5323,14 @@
   <data name="Show in folder" xml:space="preserve">
     <value>Klasörde göster</value>
   </data>
+  <data name="Show next tab" xml:space="preserve">
+    <value>Sonraki sekmeyi göster</value>
+  </data>
   <data name="Show or hide the side panel" xml:space="preserve">
     <value>Yan paneli göster ya da gizle</value>
+  </data>
+  <data name="Show previous tab" xml:space="preserve">
+    <value>Önceki sekmeyi göster</value>
   </data>
   <data name="Show status" xml:space="preserve">
     <value>Durumu göster</value>

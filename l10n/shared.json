@@ -8115,6 +8115,12 @@
   "Select none": {
     "tr": "Seçimi kaldır"
   },
+  "Show previous tab": {
+    "tr": "Önceki sekmeyi göster"
+  },
+  "Show next tab": {
+    "tr": "Sonraki sekmeyi göster"
+  },
   "Back": {
     "tr": "Geri"
   },

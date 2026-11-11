@@ -159,6 +159,11 @@ public final class AppViewModel {
         checkDisk()
     }
 
+    public func cycleTab(_ step: Int) {
+        guard let at = strip.firstIndex(where: { $0 === activeTab }) else { return }
+        select(strip[(at + step + strip.count) % strip.count])
+    }
+
     func index(of tab: any StripTab) -> Int? {
         strip.firstIndex { $0 === tab }
     }

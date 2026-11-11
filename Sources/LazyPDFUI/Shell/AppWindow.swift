@@ -51,6 +51,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     @State private var stageBottom: CGFloat = 0
     @State private var dropTargeted = false
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.shortcutsInMenu) private var inMenu
     @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     /// - Parameter toolAction: the pinned button of the tool's panel, if it has one.
@@ -468,10 +469,16 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     // Close the document, and go to the next or previous tab. The file commands are in the platform menu.
     private var shortcuts: some View {
         Group {
-            Button("") { cycleTab(1) }
+            Button("") { vm.cycleTab(1) }
                 .keyboardShortcut(.tab, modifiers: .control)
-            Button("") { cycleTab(-1) }
+            Button("") { vm.cycleTab(-1) }
                 .keyboardShortcut(.tab, modifiers: [.control, .shift])
+            if !inMenu {
+                Button("") { vm.cycleTab(-1) }
+                    .keyboardShortcut("[", modifiers: [.command, .shift])
+                Button("") { vm.cycleTab(1) }
+                    .keyboardShortcut("]", modifiers: [.command, .shift])
+            }
             Button("") {
                 if let tab = vm.activeDocument { requestClose(tab) }
             }
@@ -481,12 +488,6 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         .opacity(0)
         .frame(width: 0, height: 0)
         .accessibilityHidden(true)
-    }
-
-    private func cycleTab(_ step: Int) {
-        let strip = vm.strip
-        guard let at = strip.firstIndex(where: { $0 === vm.activeTab }) else { return }
-        vm.select(strip[(at + step + strip.count) % strip.count])
     }
 }
 #endif

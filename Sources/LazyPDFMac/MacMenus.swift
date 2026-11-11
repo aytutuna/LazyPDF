@@ -190,6 +190,13 @@ struct MacMenus: Commands {
         Button(L10n.t("Forward")) { viewer.goForward() }
             .keyboardShortcut("]")
             .disabled(!viewer.canGoForward || !free)
+        Divider()
+        Button(L10n.t("Show previous tab")) { vm.cycleTab(-1) }
+            .keyboardShortcut("[", modifiers: [.command, .shift])
+            .disabled(!free)
+        Button(L10n.t("Show next tab")) { vm.cycleTab(1) }
+            .keyboardShortcut("]", modifiers: [.command, .shift])
+            .disabled(!free)
     }
 }
 #endif
