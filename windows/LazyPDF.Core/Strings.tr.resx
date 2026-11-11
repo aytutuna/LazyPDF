@@ -4030,6 +4030,12 @@
   <data name="Pictures.pdf" xml:space="preserve">
     <value>Resimler.pdf</value>
   </data>
+  <data name="Pin to top" xml:space="preserve">
+    <value>En üste sabitle</value>
+  </data>
+  <data name="Pinned. {0}" xml:space="preserve">
+    <value>Sabitlendi. {0}</value>
+  </data>
   <data name="Pixels" xml:space="preserve">
     <value>Pikseller</value>
   </data>
@@ -6633,6 +6639,9 @@
   </data>
   <data name="Unmarked" xml:space="preserve">
     <value>İşaretsiz</value>
+  </data>
+  <data name="Unpin" xml:space="preserve">
+    <value>Sabitlemeyi kaldır</value>
   </data>
   <data name="Unreadable certificate" xml:space="preserve">
     <value>Okunamayan sertifika</value>

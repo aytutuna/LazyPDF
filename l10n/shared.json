@@ -1679,6 +1679,15 @@
   "Remove from list": {
     "tr": "Listeden kaldır"
   },
+  "Pin to top": {
+    "tr": "En üste sabitle"
+  },
+  "Unpin": {
+    "tr": "Sabitlemeyi kaldır"
+  },
+  "Pinned. {0}": {
+    "tr": "Sabitlendi. {0}"
+  },
   "What would you like to do?": {
     "tr": "Ne yapmak istersiniz?"
   },

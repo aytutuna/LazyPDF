@@ -297,6 +297,23 @@ public sealed class OpenFlowTests
     }
 
     [Fact]
+    public async Task PinningMovesAFileToTheTopOfTheRecentList()
+    {
+        using var f = new ViewModelFixture();
+        string a = f.Pdf("a.pdf");
+        string b = f.Pdf("b.pdf");
+        await f.Vm.OpenFilesAsync([a, b]);
+        string last = f.Vm.Recent[^1].Path;
+
+        f.Vm.SetPinned(last, true);
+        Assert.Equal(last, f.Vm.Recent[0].Path);
+        Assert.True(f.Vm.Recent[0].Pinned);
+
+        f.Vm.SetPinned(last, false);
+        Assert.False(f.Vm.Recent[0].Pinned);
+    }
+
+    [Fact]
     public async Task EveryChangeIsAnnouncedWithAnEmptyName()
     {
         using var f = new ViewModelFixture();

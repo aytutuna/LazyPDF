@@ -95,4 +95,60 @@ public sealed class RecentFilesTests
 
         Assert.Equal(when, loaded[0].Opened);
     }
+
+    [Fact]
+    public void PinnedFilesComeFirstMostRecentlyPinnedFirst()
+    {
+        using var dir = new TempDir();
+        var recent = new RecentFiles(dir.Path);
+        recent.Add(@"C:\docs.pdf");
+        recent.Add(@"C:\docs.pdf");
+        recent.Add(@"C:\docs\c.pdf");
+        recent.SetPinned(@"C:\docs.pdf", true);
+        recent.SetPinned(@"C:\docs.pdf", true);
+
+        Assert.Equal([@"C:\docs.pdf", @"C:\docs.pdf", @"C:\docs\c.pdf"], recent.Load().Select(f => f.Path));
+    }
+
+    [Fact]
+    public void TheLimitCountsOnlyUnpinnedFiles()
+    {
+        using var dir = new TempDir();
+        var recent = new RecentFiles(dir.Path);
+        recent.Add(@"C:\docs\old.pdf");
+        recent.SetPinned(@"C:\docs\old.pdf", true);
+        for (int i = 0; i < RecentFiles.Limit + 3; i++) recent.Add($@"C:\docs\{i}.pdf");
+
+        var files = recent.Load();
+        Assert.Equal(RecentFiles.Limit + 1, files.Count);
+        Assert.Equal(@"C:\docs\old.pdf", files[0].Path);
+    }
+
+    [Fact]
+    public void OpeningAPinnedFileKeepsItPinned()
+    {
+        using var dir = new TempDir();
+        var recent = new RecentFiles(dir.Path);
+        recent.Add(@"C:\docs.pdf");
+        recent.SetPinned(@"C:\docs.pdf", true);
+        recent.Add(@"C:\docs.pdf");
+
+        Assert.True(recent.Load().Single().Pinned);
+    }
+
+    [Fact]
+    public void ClearKeepsPinnedFilesAndRemoveDropsThem()
+    {
+        using var dir = new TempDir();
+        var recent = new RecentFiles(dir.Path);
+        recent.Add(@"C:\docs.pdf");
+        recent.Add(@"C:\docs.pdf");
+        recent.SetPinned(@"C:\docs.pdf", true);
+
+        recent.Clear();
+        Assert.Equal([@"C:\docs.pdf"], recent.Load().Select(f => f.Path));
+
+        recent.Remove(@"C:\docs.pdf");
+        Assert.Empty(recent.Load());
+    }
 }

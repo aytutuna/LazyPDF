@@ -36,6 +36,7 @@ public partial class MainWindow : Window
         Home.TileChosen += Home_TileChosen;
         Home.FileChosen += Home_FileChosen;
         Home.FileForgotten += Home_FileForgotten;
+        Home.FilePinChanged += Home_FilePinChanged;
         Home.RecentCleared += Home_RecentCleared;
         ViewerHost.Content = _viewer.View;
         _viewer.StateChanged += Viewer_StateChanged;
@@ -277,6 +278,8 @@ public partial class MainWindow : Window
         _vm.ForgetRecent(path);
         Home.Thumbnails?.Forget(path);
     }
+
+    private void Home_FilePinChanged(object? sender, (string Path, bool Pinned) e) => _vm.SetPinned(e.Path, e.Pinned);
 
     private void Home_RecentCleared(object? sender, EventArgs e)
     {

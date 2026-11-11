@@ -19,6 +19,8 @@ public sealed class RecentCard(RecentItem item) : INotifyPropertyChanged
     /// <summary>When it was opened and where it is, or that it is gone.</summary>
     public string Caption => _exists ? $"{Item.Opened} · {Item.Folder}" : Loc.T("Not found");
 
+    public string HelpText => Item.Pinned ? Loc.T("Pinned. {0}", Caption) : Caption;
+
     public bool Exists
     {
         get => _exists;
@@ -26,6 +28,7 @@ public sealed class RecentCard(RecentItem item) : INotifyPropertyChanged
         {
             _exists = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Caption)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HelpText)));
         }
     }
 
@@ -65,6 +68,8 @@ public partial class HomeView : UserControl
     public event EventHandler<string>? FileChosen;
 
     public event EventHandler<string>? FileForgotten;
+
+    public event EventHandler<(string Path, bool Pinned)>? FilePinChanged;
 
     public event EventHandler? RecentCleared;
 
@@ -136,6 +141,16 @@ public partial class HomeView : UserControl
     private void RemoveRecent_Click(object sender, RoutedEventArgs e)
     {
         if (((FrameworkElement)sender).DataContext is RecentCard card) FileForgotten?.Invoke(this, card.Item.Path);
+    }
+
+    private void PinRecent_Click(object sender, RoutedEventArgs e)
+    {
+        if (((FrameworkElement)sender).DataContext is RecentCard card) FilePinChanged?.Invoke(this, (card.Item.Path, true));
+    }
+
+    private void UnpinRecent_Click(object sender, RoutedEventArgs e)
+    {
+        if (((FrameworkElement)sender).DataContext is RecentCard card) FilePinChanged?.Invoke(this, (card.Item.Path, false));
     }
 
     private void ClearRecent_Click(object sender, RoutedEventArgs e) => RecentCleared?.Invoke(this, EventArgs.Empty);
