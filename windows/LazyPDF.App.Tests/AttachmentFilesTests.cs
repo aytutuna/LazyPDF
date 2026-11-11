@@ -14,6 +14,12 @@ public sealed class AttachmentFilesTests
     [InlineData("help.chm")]
     [InlineData("link.url")]
     [InlineData("setup.appref-ms")]
+    [InlineData("budget.xlsm")]
+    [InlineData("disk.ISO")]
+    [InlineData("run.py")]
+    [InlineData("search.search-ms")]
+    [InlineData("update.msix")]
+    [InlineData("notes.one")]
     [InlineData(@"..\..\tools\run.bat")]
     public void ProgramsAreRecognisedWhateverTheyEndWith(string name) =>
         Assert.True(AttachmentFiles.CouldRun(AttachmentFiles.SafeName(name)));
