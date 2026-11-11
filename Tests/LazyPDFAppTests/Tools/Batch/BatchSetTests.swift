@@ -79,6 +79,15 @@ final class BatchSetTests: XCTestCase {
         XCTAssertEqual(set.steps.first?.opacity, 30)
     }
 
+    func test_aNewCleanStepKeepsWhatAReaderSeesButADecodedOneKeepsWhatItStored() throws {
+        let step = BatchStep.of(.clean)
+        XCTAssertTrue(step.keepComments && step.keepForms && step.keepLinks)
+        XCTAssertFalse(step.keepAttachments)
+
+        let old = try JSONDecoder().decode(BatchStep.self, from: Data(#"{"kind":2}"#.utf8))
+        XCTAssertFalse(old.keepComments || old.keepForms || old.keepLinks)
+    }
+
     func test_anUnreadableSetsFileGivesNoSets() {
         let dir = TempDir(self)
         dir.file("batch-sets.json", Array("not json".utf8))

@@ -820,6 +820,7 @@
 "Links have text" = "Bağlantılarda metin var";
 "Links on this page" = "Bu sayfadaki bağlantılar";
 "Links to the outside" = "Dışarıya bağlantılar";
+"Links to web pages stop working. Off unless you tick it." = "Web sayfalarına giden bağlantılar çalışmaz olur. İşaretlemezseniz kapalıdır.";
 "Links without tags or text: {0}{1}. Tag each link and give it text." = "Etiketi ya da metni olmayan bağlantılar: {0}{1}. Her bağlantıyı etiketleyin ve metin verin.";
 "List box" = "Liste kutusu";
 "Lists are well formed" = "Listeler düzgün biçimlenmiş";
@@ -972,10 +973,11 @@
 "Not supported yet" = "Henüz desteklenmiyor";
 "Not visible" = "Görünmez";
 "Note" = "Not";
+"Notes, highlights, drawings, stamps and text boxes on the pages. Off unless you tick it." = "Sayfalardaki notlar, vurgular, çizimler, damgalar ve metin kutuları. İşaretlemezseniz kapalıdır.";
 "Nothing exported" = "Dışa aktarılan bir şey yok";
 "Nothing found to replace." = "Değiştirilecek bir şey bulunamadı.";
 "Nothing found." = "Hiçbir şey bulunamadı.";
-"Nothing found. This file has no hidden data." = "Bir şey bulunamadı. Dosyada gizli veri yok.";
+"Nothing found. Text inside pictures is not looked at." = "Bir şey bulunamadı. Resimlerin içindeki yazıya bakılmaz.";
 "Nothing has run yet." = "Henüz bir şey çalışmadı.";
 "Nothing imported" = "Hiçbir şey eklenmedi";
 "Nothing is marked yet." = "Henüz bir şey işaretlenmedi.";
@@ -2010,6 +2012,7 @@
 "Web page (.html)" = "Web sayfası (.html)";
 "Website" = "Web sitesi";
 "What was found" = "Bulunanlar";
+"What was typed into the form. Off unless you tick it." = "Forma yazılanlar. İşaretlemezseniz kapalıdır.";
 "What would you like to do?" = "Ne yapmak istersiniz?";
 "When it opens" = "Açıldığında";
 "When it prints" = "Yazdırıldığında";

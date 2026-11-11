@@ -40,6 +40,7 @@ final class SanitizeModelTests: XCTestCase {
         XCTAssertEqual(model.found, "Tick what to remove.")
         let metadata = try XCTUnwrap(model.rows.first { $0.item == .metadata })
         XCTAssertTrue(metadata.isChecked)
+        XCTAssertFalse(model.rows.contains { [.comments, .formData, .externalLinks].contains($0.item) && $0.isChecked })
         XCTAssertTrue(model.action!.canRun())
     }
 

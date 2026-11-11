@@ -78,7 +78,7 @@ public final class SanitizeModel: ToolPanelModel {
             }
             guard ticket == mine, self.tab === tab, tab.revision == revision else { return }
             rows = scanned.map(SanitizeRow.init)
-            found = rows.isEmpty ? L10n.t("Nothing found. This file has no hidden data.") : L10n.t("Tick what to remove.")
+            found = rows.isEmpty ? L10n.t("Nothing found. Text inside pictures is not looked at.") : L10n.t("Tick what to remove.")
         }
     }
 

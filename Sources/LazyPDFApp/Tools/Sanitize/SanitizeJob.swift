@@ -39,13 +39,14 @@ public struct SanitizeRow: Identifiable, Equatable {
     public let item: SanitizeItem
     public let count: Int
 
-    /// Hidden text is only reported, and invisible text may be the text layer of a scan, so it starts off.
+    /// Hidden text is only reported. Invisible text may be the text layer of a scan, and comments, form data and web links
+    /// are things a reader can see, so those start off.
     public var isChecked: Bool
 
     public init(_ finding: SanitizeFinding) {
         item = finding.item
         count = finding.count
-        isChecked = finding.item != .hiddenText && finding.item != .invisibleText
+        isChecked = ![.hiddenText, .invisibleText, .comments, .formData, .externalLinks].contains(finding.item)
     }
 
     public var id: Int { item.rawValue }
@@ -58,6 +59,9 @@ public struct SanitizeRow: Identifiable, Equatable {
         switch item {
         case .hiddenText: return L10n.t("Only reported. Redact removes it.")
         case .invisibleText: return L10n.t("May be the text layer of a scan. Off unless you tick it.")
+        case .comments: return L10n.t("Notes, highlights, drawings, stamps and text boxes on the pages. Off unless you tick it.")
+        case .formData: return L10n.t("What was typed into the form. Off unless you tick it.")
+        case .externalLinks: return L10n.t("Links to web pages stop working. Off unless you tick it.")
         case .previousVersions, .signatures: return L10n.t("Always removed.")
         default: return ""
         }

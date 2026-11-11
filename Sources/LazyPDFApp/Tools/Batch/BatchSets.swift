@@ -88,6 +88,7 @@ public struct BatchStep: Codable, Equatable {
     public static func of(_ kind: BatchStepKind) -> BatchStep {
         var step = BatchStep(kind)
         if kind == .ocr { step.text = OcrLanguageState.read().preferred()?.tag ?? "en-US" }
+        if kind == .clean { step.keepComments = true; step.keepForms = true; step.keepLinks = true }
         return step
     }
 

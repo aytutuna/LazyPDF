@@ -3631,9 +3631,6 @@
   <data name="Nothing found. Text inside pictures is not looked at." xml:space="preserve">
     <value>Bir şey bulunamadı. Resimlerin içindeki yazıya bakılmaz.</value>
   </data>
-  <data name="Nothing found. This file has no hidden data." xml:space="preserve">
-    <value>Bir şey bulunamadı. Dosyada gizli veri yok.</value>
-  </data>
   <data name="Nothing has run yet." xml:space="preserve">
     <value>Henüz bir şey çalışmadı.</value>
   </data>
