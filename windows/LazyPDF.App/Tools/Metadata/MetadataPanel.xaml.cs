@@ -34,7 +34,7 @@ public sealed partial class MetadataPanel : ToolPanel
     public MetadataPanel()
     {
         InitializeComponent();
-        _action = new ToolAction(Loc.T("Save properties"), "", () => _changed && _customProblem is null, () => RunAsync(true));
+        _action = new ToolAction(Loc.T("Save properties"), "", () => _customProblem is null && (_changed || _dropped == Tab?.Id), Save);
         CustomList.ItemsSource = _custom;
         ModeBox.ItemsSource = MetadataEdit.Modes.Select(MetadataEdit.ModeName).ToList();
         LayoutBox.ItemsSource = MetadataEdit.Layouts.Select(MetadataEdit.LayoutName).ToList();
@@ -198,6 +198,14 @@ public sealed partial class MetadataPanel : ToolPanel
         Field_Changed(sender, e);
     }
 
+    // Leaving the panel may have saved the typed text already; the button then only shows the notice.
+    private Task Save()
+    {
+        if (_changed) return RunAsync(true);
+        ShowDropNotice();
+        return Task.CompletedTask;
+    }
+
     private Task RunAsync(bool notify)
     {
         var tab = Tab!;
@@ -212,7 +220,11 @@ public sealed partial class MetadataPanel : ToolPanel
             {
                 host.SetStatus(Loc.T("Properties changed."));
                 // Leaving the panel commits it, so a drop is remembered until the properties are saved.
-                if (drops) _dropped = tab.Id;
+                if (drops)
+                {
+                    _dropped = tab.Id;
+                    RaiseActionChanged();
+                }
                 if (MetadataEdit.ShowDropNotice(notify, _dropped == tab.Id)) ShowDropNotice();
             }
             return Task.CompletedTask;
@@ -222,6 +234,7 @@ public sealed partial class MetadataPanel : ToolPanel
     private void ShowDropNotice()
     {
         _dropped = Guid.Empty;
+        RaiseActionChanged();
         Host!.ShowNotice(Loc.T("Old values are still in the file"), Loc.T("The earlier title, author, subject, keywords or custom values can still be found in the file's history. Clean for sharing removes them."));
     }
 }
