@@ -293,9 +293,23 @@ final class CommentModelTests: XCTestCase {
         let rig = try attached(touch: true)
 
         rig.model.pick(.polygon)
-        XCTAssertEqual(rig.model.hint, "Tap each corner, then tap Finish shape.")
+        XCTAssertEqual(rig.model.hint, "Tap each corner, then tap Finish shape. Two fingers scroll the page.")
         rig.model.pick(.note)
-        XCTAssertEqual(rig.model.hint, "Click where the note goes.")
+        XCTAssertEqual(rig.model.hint, "Click where the note goes. Two fingers scroll the page.")
+    }
+
+    func test_aPhoneTellsTwoFingersScrollUnderADrawingToolOnly() throws {
+        let rig = try attached(touch: true)
+
+        rig.model.pick(.pencil)
+        XCTAssertTrue(rig.model.hint.hasSuffix("Two fingers scroll the page."))
+        rig.model.pick(.selectText)
+        XCTAssertFalse(rig.model.hint.contains("Two fingers"))
+        rig.model.pick(.edit)
+        XCTAssertFalse(rig.model.hint.contains("Two fingers"))
+        let desktop = try attached()
+        desktop.model.pick(.pencil)
+        XCTAssertFalse(desktop.model.hint.contains("Two fingers"))
     }
 
     func test_theMovedMarksToolListsTheMarksOfThePageInView() throws {

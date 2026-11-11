@@ -298,6 +298,7 @@ public final class MeasureModel: ToolPanelModel {
         default: hint = touch ? L10n.t("Tap each corner, then tap Finish. Turn on Straight lines to keep them straight.")
             : L10n.t("Click each corner, then double-click to finish. Hold Shift for straight lines.")
         }
+        if touch && kind != nil { hint += " " + L10n.t("Two fingers scroll the page.") }
         guard let tool, !tool.points.isEmpty else {
             readout = "—"
             return

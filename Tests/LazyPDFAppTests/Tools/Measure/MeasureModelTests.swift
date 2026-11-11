@@ -218,8 +218,20 @@ final class MeasureModelTests: XCTestCase {
         let model = MeasureModel(fonts: FakeFonts(), touch: true)
         rig.attach(model)
 
-        XCTAssertEqual(model.hint, "Tap the two ends. Turn on Straight lines to keep them straight.")
+        XCTAssertEqual(model.hint, "Tap the two ends. Turn on Straight lines to keep them straight. Two fingers scroll the page.")
         model.pick(.area)
-        XCTAssertEqual(model.hint, "Tap each corner, then tap Finish. Turn on Straight lines to keep them straight.")
+        XCTAssertEqual(model.hint, "Tap each corner, then tap Finish. Turn on Straight lines to keep them straight. Two fingers scroll the page.")
+    }
+
+    func test_twoFingersScrollIsToldOnAPhoneOnly() throws {
+        let rig = try ToolRig(nil)
+        let model = MeasureModel(fonts: FakeFonts(), touch: true)
+        rig.attach(model)
+        XCTAssertTrue(model.hint.hasSuffix("Two fingers scroll the page."))
+
+        let desktop = try ToolRig(nil)
+        let other = MeasureModel(fonts: FakeFonts())
+        desktop.attach(other)
+        XCTAssertFalse(other.hint.contains("Two fingers"))
     }
 }

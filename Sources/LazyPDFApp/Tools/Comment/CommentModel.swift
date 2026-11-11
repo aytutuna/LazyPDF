@@ -280,6 +280,7 @@ public final class CommentModel: ToolPanelModel {
         let sentence = touch && [.polygon, .cloud].contains(tool) ? L10n.t("Tap each corner, then tap Finish shape.") : item?.hint ?? ""
         hint = !allowed ? L10n.t("This file does not allow comments.")
             : !touch && [.note, .textBox, .stamp, .attach].contains(tool) ? "\(sentence) \(L10n.t("Or press Enter on the page."))" : sentence
+        if touch && allowed && tool != .selectText && tool != .edit { hint += " " + L10n.t("Two fingers scroll the page.") }
         showSelected()
     }
 
