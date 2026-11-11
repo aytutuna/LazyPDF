@@ -48,6 +48,7 @@ public sealed partial class StampsPanel : ToolPanel
 
     private readonly Dictionary<(Guid Tab, int Run), StampDraft> _written = [];
     private bool _ready;
+    private bool _reading;
     private bool _canRun;
     private bool _touched;
     private ToolAction? _action;
@@ -267,28 +268,52 @@ public sealed partial class StampsPanel : ToolPanel
         Refresh();
     }
 
-    private void Picture_Click(object sender, RoutedEventArgs e)
+    private async void Picture_Click(object sender, RoutedEventArgs e)
     {
+        if (_reading) return;
         var dialog = new OpenFileDialog
         {
             Title = Loc.T("Pick a picture"),
             Filter = Loc.T("Pictures") + "|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff|" + Loc.T("All files") + "|*.*",
         };
         if (dialog.ShowDialog() != true) return;
+        await PickAsync(dialog.FileName);
+    }
+
+    internal byte[]? Picture => _picture;
+
+    internal async Task PickAsync(string path)
+    {
+        var tab = Tab;
+        var host = Host!;
+        byte[]? bytes = null;
+        _reading = true;
+        PictureButton.IsEnabled = false;
         try
         {
-            var bytes = SignatureArt.UprightFile(File.ReadAllBytes(dialog.FileName));
+            await host.RunBusyAsync(Loc.T("Reading the picture"), token => Task.Run(() =>
+            {
+                token.ThrowIfCancellationRequested();
+                var upright = SignatureArt.UprightFile(File.ReadAllBytes(path));
+                if (!token.IsCancellationRequested) bytes = upright;
+            }, token));
+            if (bytes is null || !ReferenceEquals(Tab, tab)) return;
             _pictureImage = Decode(bytes);
             _picture = bytes;
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or NotSupportedException or FileFormatException)
         {
-            Host?.ShowProblem(new Problem(Loc.T("Picture cannot be read"), Loc.T("Pick a PNG, JPEG or another common picture.")));
+            host.ShowProblem(new Problem(Loc.T("Picture cannot be read"), Loc.T("Pick a PNG, JPEG or another common picture.")));
             return;
         }
-        PictureName.Text = Path.GetFileName(dialog.FileName);
+        finally
+        {
+            _reading = false;
+            PictureButton.IsEnabled = true;
+        }
+        PictureName.Text = Path.GetFileName(path);
         ShowPicture();
-        Form_Changed(sender, e);
+        Form_Changed(this, new RoutedEventArgs());
     }
 
     private static ImageSource Decode(byte[] bytes)

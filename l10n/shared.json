@@ -3339,6 +3339,9 @@
   "Picture cannot be read": {
     "tr": "Resim okunamıyor"
   },
+  "Reading the picture": {
+    "tr": "Resim okunuyor"
+  },
   "One of the pictures could not be read. Close any program that has it open and try again.": {
     "tr": "Resimlerden biri okunamadı. Dosyayı açık tutan programları kapatıp yeniden deneyin."
   },

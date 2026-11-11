@@ -4237,6 +4237,9 @@
   <data name="Reading picture" xml:space="preserve">
     <value>Resim okunuyor</value>
   </data>
+  <data name="Reading the picture" xml:space="preserve">
+    <value>Resim okunuyor</value>
+  </data>
   <data name="Reading the tags" xml:space="preserve">
     <value>Etiketler okunuyor</value>
   </data>

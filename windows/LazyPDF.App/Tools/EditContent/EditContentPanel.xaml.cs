@@ -25,6 +25,7 @@ public sealed partial class EditContentPanel : ToolPanel
     // Set while this panel changes the document, so that the change is not mistaken for someone else's (an undo).
     private bool _editing;
     private bool _loading;
+    private bool _reading;
 
     // The person said to go on with a signed file; asked once for as long as the panel is attached.
     private bool _signedOk;

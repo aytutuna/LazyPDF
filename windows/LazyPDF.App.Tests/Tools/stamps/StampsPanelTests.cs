@@ -1,7 +1,10 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools.Stamps;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
@@ -53,6 +56,33 @@ public sealed class StampsPanelTests
         tab.Commit("Add watermark");
         return tab;
     }
+
+    [Fact]
+    public Task APortraitCameraPictureIsKeptUpright() => Sta.Run(async () =>
+    {
+        var metadata = new BitmapMetadata("jpg");
+        metadata.SetQuery("System.Photo.Orientation", (ushort)6);
+        var source = BitmapSource.Create(4, 2, 96, 96, PixelFormats.Bgra32, null, new byte[32], 16);
+        var encoder = new JpegBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(source, null, metadata, null));
+        string path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".jpg");
+        using (var stream = File.Create(path)) encoder.Save(stream);
+        try
+        {
+            using var tab = Open();
+            var panel = Attach(tab, new RecordingHost(), out _);
+
+            await panel.PickAsync(path);
+
+            var frames = new WicImageCodec().DecodeFile(panel.Picture!)!;
+            Assert.Equal((2, 4), (frames[0].Width, frames[0].Height));
+            Assert.True(Find<Button>(panel, "PictureButton").IsEnabled);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    });
 
     [Fact]
     public Task ClosingThePanelWithARunSelectedLeavesNothingOnThePages() => Sta.Run(() =>

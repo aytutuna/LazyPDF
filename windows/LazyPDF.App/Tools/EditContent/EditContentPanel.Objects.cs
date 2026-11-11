@@ -57,14 +57,15 @@ public sealed partial class EditContentPanel
         if (same.Count > 0) surface.Select(page, [move is OrderMove.Front or OrderMove.Forward ? same.Max() : same.Min()]);
     }
 
-    private void ReplaceImage_Click(object sender, RoutedEventArgs e)
+    private async void ReplaceImage_Click(object sender, RoutedEventArgs e)
     {
-        if (_surface is not { Selected: [int id] } surface) return;
+        if (_reading || _surface is not { Selected: [int id] } surface) return;
         var dialog = new OpenFileDialog { Filter = PictureFilter, Title = Loc.T("Replace the picture") };
         if (dialog.ShowDialog() != true) return;
         int page = surface.Page;
-        byte[]? file = ReadPicture(dialog.FileName);
-        if (file is not null) Apply(() => _edits!.ReplaceImage(page, id, file), Loc.T("Picture replaced."));
+        var edits = _edits;
+        byte[]? file = await ReadPicture(dialog.FileName);
+        if (file is not null && ReferenceEquals(_edits, edits)) Apply(() => _edits!.ReplaceImage(page, id, file), Loc.T("Picture replaced."));
     }
 
     private void ExtractImage_Click(object sender, RoutedEventArgs e)
@@ -110,10 +111,13 @@ public sealed partial class EditContentPanel
         RefreshPanel();
     }
 
-    private void AddPicture_Click(object sender, RoutedEventArgs e)
+    private async void AddPicture_Click(object sender, RoutedEventArgs e)
     {
+        if (_reading) return;
         var dialog = new OpenFileDialog { Filter = PictureFilter, Title = Loc.T("Add a picture") };
-        if (dialog.ShowDialog() != true || ReadPicture(dialog.FileName) is not { } file) return;
+        if (dialog.ShowDialog() != true) return;
+        var edits = _edits;
+        if (await ReadPicture(dialog.FileName) is not { } file || !ReferenceEquals(_edits, edits)) return;
         FinishPending();
         int page = Viewer!.PageIndex;
         var size = Viewer.PageSize(page);
@@ -123,17 +127,31 @@ public sealed partial class EditContentPanel
         if (_edits!.Editor(page).Objects is [.., ImageObject last]) _surface!.Select(page, [last.Id]);
     }
 
-    private byte[]? ReadPicture(string path)
+    private async Task<byte[]?> ReadPicture(string path)
     {
+        byte[]? file = null;
+        var host = Host!;
+        _reading = true;
+        AddPicture.IsEnabled = ReplaceImage.IsEnabled = false;
         try
         {
-            return SignatureArt.UprightFile(System.IO.File.ReadAllBytes(path));
+            await host.RunBusyAsync(Loc.T("Reading the picture"), token => Task.Run(() =>
+            {
+                token.ThrowIfCancellationRequested();
+                var upright = SignatureArt.UprightFile(System.IO.File.ReadAllBytes(path));
+                if (!token.IsCancellationRequested) file = upright;
+            }, token));
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {
-            ShowMessage("", Loc.T("{0} could not be read. Check that the file is still there.", System.IO.Path.GetFileName(path)), caution: true);
-            return null;
+            ShowMessage("", Loc.T("{0} could not be read. Check that the file is still there.", System.IO.Path.GetFileName(path)), caution: true);
         }
+        finally
+        {
+            _reading = false;
+            AddPicture.IsEnabled = ReplaceImage.IsEnabled = true;
+        }
+        return file;
     }
 
     // ----- Shapes and opacity
