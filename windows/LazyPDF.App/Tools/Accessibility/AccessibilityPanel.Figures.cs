@@ -15,6 +15,7 @@ public partial class AccessibilityPanel
 
     // Text typed for a figure and not saved yet, by the figure's key, so moving to another figure does not lose it.
     private readonly Dictionary<int, string> _drafts = [];
+    private int _rewrites;
 
     // The figure to show when the list is built: the one that was shown, or the next one after a save.
     private int _figureNumber;

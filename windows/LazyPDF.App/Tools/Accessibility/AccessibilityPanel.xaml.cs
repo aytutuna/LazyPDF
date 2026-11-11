@@ -42,6 +42,7 @@ public partial class AccessibilityPanel : ToolPanel
     protected override void OnAttach()
     {
         Tab!.Changed += Tab_Changed;
+        _rewrites = Tab.Rewrites;
         _checkStale = _treeStale = _readStale = true;
         ShowCheck.IsChecked = true;
         Refresh();

@@ -33,8 +33,17 @@ public partial class AccessibilityPanel
             });
             if (ticket != _treeTicket) return;
             (_treeCopy, _tree, _figures, _treeCount) = (copy, tree, figures, count);
+            if (Tab!.Rewrites != _rewrites)
+            {
+                // Save compact numbers the objects again, so a draft follows its figure by place.
+                _rewrites = Tab.Rewrites;
+                var kept = _drafts.ToList();
+                _drafts.Clear();
+                foreach (var (key, text) in kept)
+                    if (before.FirstOrDefault(f => f.Key == key) is { } old && figures.FirstOrDefault(f => f.Number == old.Number && f.Page == old.Page && f.Alt == old.Alt) is { } now) _drafts[now.Key] = text;
+            }
             // A draft stays while its figure is still there with the description it was typed against.
-            foreach (int key in _drafts.Keys.ToList())
+            else foreach (int key in _drafts.Keys.ToList())
                 if (figures.FirstOrDefault(f => f.Key == key) is not { } now || before.FirstOrDefault(f => f.Key == key)?.Alt != now.Alt) _drafts.Remove(key);
         }
         catch (Exception error) when (error is PdfReadException or InvalidOperationException)

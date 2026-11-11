@@ -69,6 +69,9 @@ public sealed class DocumentTab : ITab, IDisposable
     /// <summary>Counts every change to the file's bytes (commit, undo, redo, save compact), so a viewer knows when to draw again.</summary>
     public int Revision { get; private set; }
 
+    /// <summary>Counts the saves that numbered the file's objects again, after which an object number no longer names the same thing.</summary>
+    public int Rewrites { get; private set; }
+
     /// <summary>The page the viewer shows, 0-based, kept here so each tab comes back as it was left.</summary>
     public int PageIndex { get; set; }
 
@@ -195,7 +198,11 @@ public sealed class DocumentTab : ITab, IDisposable
         _diskHash = null;
         AcceptDiskState();
         _recovery?.Delete(Id);
-        if (rewritten) Refresh();
+        if (rewritten)
+        {
+            Rewrites++;
+            Refresh();
+        }
         else PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     }
 
