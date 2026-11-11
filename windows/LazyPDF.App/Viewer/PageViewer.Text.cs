@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using LazyPDF.App.Tools.Export;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Viewer;
@@ -297,8 +298,15 @@ public partial class PageViewer
         return text.GetText(range);
     }
 
+    public bool CanCopy => _tab is null || Exporter.Allowed(_tab.Document);
+
     private async Task CopySelectionAsync()
     {
+        if (!CanCopy)
+        {
+            Tell(Loc.T("The owner of this file does not allow copying."), null);
+            return;
+        }
         var runs = await GetSelectionAsync();
         if (runs.Count == 0) return;
         string text = string.Join("\n", runs.Select(r => r.Text));

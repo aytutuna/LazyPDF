@@ -1,5 +1,6 @@
 using LazyPDF.App.Documents;
 using LazyPDF.App.Tools.Stamps;
+using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using Xunit;
 
@@ -46,6 +47,21 @@ public sealed class RestrictedFileTests
         await ChangeGate.RunAsync(tab, host, "Save", () => throw new PdfPermissionException("The file restricts its permissions."));
 
         Assert.Equal(Problems.Restricted().Title, Assert.Single(host.Problems).Title);
+    });
+
+    [Fact]
+    public Task CopyingIsRefusedOnlyWhenTheFileForbidsIt() => Sta.Run(() =>
+    {
+        var viewer = new PageViewer();
+        using var forbidden = new DocumentTab(PdfEditSession.Open(Pdfs.Restricted(PdfPermissions.All & ~PdfPermissions.Copy)), new FakeRenderer(), null, "a.pdf");
+        using var allowed = new DocumentTab(PdfEditSession.Open(Pdfs.Restricted(PdfPermissions.Copy)), new FakeRenderer(), null, "b.pdf");
+
+        Assert.True(viewer.CanCopy);
+        viewer.Show(forbidden);
+        Assert.False(viewer.CanCopy);
+        viewer.Show(allowed);
+        Assert.True(viewer.CanCopy);
+        return Task.CompletedTask;
     });
 
     [Fact]

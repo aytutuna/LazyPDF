@@ -5419,6 +5419,9 @@
   <data name="The output intents use different profiles." xml:space="preserve">
     <value>Çıktı amaçları farklı profiller kullanıyor.</value>
   </data>
+  <data name="The owner of this file does not allow copying." xml:space="preserve">
+    <value>Bu dosyanın sahibi kopyalamaya izin vermiyor.</value>
+  </data>
   <data name="The owner of {0} did not allow it to be printed." xml:space="preserve">
     <value>{0} dosyasının sahibi yazdırılmasına izin vermedi.</value>
   </data>

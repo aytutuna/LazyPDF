@@ -2141,6 +2141,9 @@
   "This link goes to a page that is not in the file.": {
     "tr": "Bu bağlantı dosyada olmayan bir sayfaya gidiyor."
   },
+  "The owner of this file does not allow copying.": {
+    "tr": "Bu dosyanın sahibi kopyalamaya izin vermiyor."
+  },
   "Previous page": {
     "tr": "Önceki sayfa"
   },
