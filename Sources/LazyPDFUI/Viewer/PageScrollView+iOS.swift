@@ -45,6 +45,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
     private let handlePan = UIPanGestureRecognizer()
     private var handleDragging = false
     private var scrollingByFinger = false
+    private var caughtGlide = false
     private var lastTouch = ViewPoint.zero
     private var touchStart = ViewPoint.zero
     private var samples: [(time: Double, point: ViewPoint)] = []
@@ -271,8 +272,10 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         case .began:
             // A field open on the page keeps what was typed when the finger lands somewhere else.
             endEditing(true)
+            // A finger that lands on a gliding page only stops it, as on a system scroll view.
+            caughtGlide = glide != nil
             stopGlide()
-            scrollingByFinger = !viewer.toolTakes(at)
+            scrollingByFinger = caughtGlide || !viewer.toolTakes(at)
             lastTouch = at
             touchStart = at
             samples = [(ProcessInfo.processInfo.systemUptime, at)]
@@ -289,7 +292,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
             if !scrollingByFinger {
                 viewer.pointerUp(at)
             } else if hypot(at.x - touchStart.x, at.y - touchStart.y) <= 4 {
-                viewer.followLink(at: at)
+                if !caughtGlide { viewer.followLink(at: at) }
             } else {
                 startGlide()
             }
@@ -327,7 +330,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         guard var momentum = glideMomentum, let delta = momentum.step(dt) else { return stopGlide() }
         glideMomentum = momentum
         let before = viewer.offset
-        viewer.scroll(by: -delta.x, -delta.y)
+        viewer.scroll(by: -delta.x, -delta.y, turns: false)
         if viewer.offset == before { stopGlide() }
     }
 
