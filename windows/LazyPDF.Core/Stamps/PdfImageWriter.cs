@@ -16,6 +16,20 @@ public static class PdfImageWriter
         return ContentImages.AddJpeg(document, jpeg) is { } reference ? new PdfImage(reference, width, height) : null;
     }
 
+    /// <summary>
+    /// A picture file as an upright image: a JPEG without an Exif turn as it is, a turned JPEG decoded and stored turned back,
+    /// any other file as the codec reads it. Null when nothing reads it or its pixels do not fit.
+    /// </summary>
+    public static PdfImage? AddPicture(PdfDocument document, byte[] file, IImageCodec? codec)
+    {
+        bool jpeg = file.Length > 2 && file[0] == 0xFF && file[1] == 0xD8;
+        int orientation = jpeg ? JpegMeta.Orientation(file) : 1;
+        if (jpeg && (orientation == 1 || codec is null) && AddJpeg(document, file) is { } direct) return direct;
+        if (codec?.DecodeFile(file) is not { Count: > 0 } frames || !ObjectEditor.Fits(frames[0])) return null;
+        var frame = JpegMeta.Upright(frames[0], orientation);
+        return AddRgba(document, frame.Width, frame.Height, frame.Rgba);
+    }
+
     /// <summary><paramref name="rgba"/> is straight RGBA8, top row first.</summary>
     /// <exception cref="ArgumentException">The size is not positive or does not fit the data.</exception>
     /// <exception cref="InvalidOperationException">The picture has more pixels than an image may (<see cref="StampsText.PictureTooLarge"/>).</exception>

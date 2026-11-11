@@ -73,17 +73,13 @@ public sealed partial class PageEditor
 
     /// <summary>
     /// Adds a picture inside <paramref name="box"/> (user space), upright on the page as it is shown, centred and
-    /// keeping its proportions. JPEG data is embedded as it is; other files go through the editor's <see cref="IImageCodec"/>.
+    /// keeping its proportions. A JPEG with an Exif turn is stored upright; other JPEGs are embedded as they are and other files go through the editor's <see cref="IImageCodec"/>.
     /// </summary>
     public ObjectEditResult AddImage(PdfRect box, byte[] file)
     {
         if (box.IsEmpty) return new ObjectEditResult(0, [new SkippedObject(-1, EditingText.TooBig)]);
         var model = Model;
-        PdfImage? added = file.Length > 2 && file[0] == 0xFF && file[1] == 0xD8 ? PdfImageWriter.AddJpeg(model.Document, file) : null;
-        if (added is null && _codec?.DecodeFile(file) is { Count: > 0 } frames && ObjectEditor.Fits(frames[0]))
-        {
-            added = PdfImageWriter.AddRgba(model.Document, frames[0].Width, frames[0].Height, frames[0].Rgba);
-        }
+        var added = PdfImageWriter.AddPicture(model.Document, file, _codec);
         if (added is null) return new ObjectEditResult(0, [new SkippedObject(-1, EditingText.NoImage)]);
 
         var geometry = new PageGeometry(model.Page);

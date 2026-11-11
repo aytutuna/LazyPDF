@@ -69,4 +69,32 @@ internal static class JpegMeta
         };
         return new PdfMatrix(w * xa, -h * ya, -w * xb, h * yb, x + w * (xb + xc), y + h * (1 - yb - yc));
     }
+
+    /// <summary>The pixels turned and mirrored so that <paramref name="orientation"/> is undone; 5 to 8 swap width and height.</summary>
+    public static PdfRgbaImage Upright(PdfRgbaImage image, int orientation)
+    {
+        if (orientation is < 2 or > 8) return image;
+        int w = image.Width, h = image.Height;
+        bool swap = orientation >= 5;
+        int dw = swap ? h : w;
+        var rgba = new byte[image.Rgba.Length];
+        for (int r = 0; r < h; r++)
+        {
+            for (int c = 0; c < w; c++)
+            {
+                var (x, y) = orientation switch
+                {
+                    2 => (w - 1 - c, r),
+                    3 => (w - 1 - c, h - 1 - r),
+                    4 => (c, h - 1 - r),
+                    5 => (r, c),
+                    6 => (h - 1 - r, c),
+                    7 => (h - 1 - r, w - 1 - c),
+                    _ => (r, w - 1 - c),
+                };
+                Array.Copy(image.Rgba, 4 * (r * w + c), rgba, 4 * (y * dw + x), 4);
+            }
+        }
+        return new PdfRgbaImage(dw, swap ? w : h, rgba);
+    }
 }

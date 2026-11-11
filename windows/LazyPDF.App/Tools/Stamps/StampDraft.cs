@@ -50,12 +50,6 @@ public sealed record StampDraft(WatermarkSpec? Watermark = null, BackgroundSpec?
         return replace is { } found ? stamper.Update(found, bands) : stamper.AddHeaderFooter(bands);
     }
 
-    private PdfImage AddPicture(PdfDocument document, IImageCodec codec)
-    {
-        var file = Picture!;
-        bool jpeg = file.Length > 2 && file[0] == 0xFF && file[1] == 0xD8;
-        if (jpeg && PdfImageWriter.AddJpeg(document, file) is { } direct) return direct;
-        var frame = codec.DecodeFile(file)?.FirstOrDefault() ?? throw new InvalidDataException("The picture cannot be read.");
-        return PdfImageWriter.AddRgba(document, frame.Width, frame.Height, frame.Rgba);
-    }
+    private PdfImage AddPicture(PdfDocument document, IImageCodec codec) =>
+        PdfImageWriter.AddPicture(document, Picture!, codec) ?? throw new InvalidDataException("The picture cannot be read.");
 }

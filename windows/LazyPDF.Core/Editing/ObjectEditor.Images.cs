@@ -16,13 +16,7 @@ internal sealed partial class ObjectEditor
     /// <summary>Paints another picture where the object is, fitted inside its place with the proportions of the new one.</summary>
     public void ReplaceImage(ImageObject image, byte[] file, bool fit)
     {
-        PdfImage? added = file.Length > 2 && file[0] == 0xFF && file[1] == 0xD8 ? PdfImageWriter.AddJpeg(Document, file) : null;
-        if (added is null && Codec?.DecodeFile(file) is { Count: > 0 } frames && Fits(frames[0]))
-        {
-            var frame = frames[0];
-            added = PdfImageWriter.AddRgba(Document, frame.Width, frame.Height, frame.Rgba);
-        }
-        if (added is null) throw new EditConflictException(EditingText.NoImage);
+        var added = PdfImageWriter.AddPicture(Document, file, Codec) ?? throw new EditConflictException(EditingText.NoImage);
         var place = PlaceOf(image);
         string name = batch.AddResource(place, "XObject", added.Reference) ?? throw new EditConflictException(EditingText.SharedForm);
         var w = new ContentWriter();
