@@ -5101,6 +5101,9 @@
   <data name="The catalog has no /Metadata stream." xml:space="preserve">
     <value>Katalogda /Metadata akışı yok.</value>
   </data>
+  <data name="The certificate could not be shown." xml:space="preserve">
+    <value>Sertifika gösterilemedi.</value>
+  </data>
   <data name="The change could not be written. Save a copy of the file and try again." xml:space="preserve">
     <value>Değişiklik yazılamadı. Dosyanın bir kopyasını kaydedip yeniden deneyin.</value>
   </data>
@@ -6130,11 +6133,17 @@
   <data name="Vertical text cannot be changed." xml:space="preserve">
     <value>Dikey metin değiştirilemez.</value>
   </data>
+  <data name="View certificate" xml:space="preserve">
+    <value>Sertifikayı göster</value>
+  </data>
   <data name="View options" xml:space="preserve">
     <value>Görünüm seçenekleri</value>
   </data>
   <data name="View signed version" xml:space="preserve">
     <value>İmzalı sürümü göster</value>
+  </data>
+  <data name="View the signer's certificate" xml:space="preserve">
+    <value>İmzalayanın sertifikasını göster</value>
   </data>
   <data name="Wait for the job to end, or cancel it, then close." xml:space="preserve">
     <value>İşin bitmesini bekleyin ya da iptal edin, sonra kapatın.</value>

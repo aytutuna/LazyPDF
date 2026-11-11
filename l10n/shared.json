@@ -5345,6 +5345,9 @@
   "Add a certificate": {
     "tr": "Sertifika ekle"
   },
+  "The certificate could not be shown.": {
+    "tr": "Sertifika gösterilemedi."
+  },
   "Add validation data": {
     "tr": "Doğrulama verisi ekle"
   },
@@ -5686,6 +5689,12 @@
   },
   "View signed version": {
     "tr": "İmzalı sürümü göster"
+  },
+  "View certificate": {
+    "tr": "Sertifikayı göster"
+  },
+  "View the signer's certificate": {
+    "tr": "İmzalayanın sertifikasını göster"
   },
   "When it was signed. The time is the signer's word.": {
     "tr": "İmzalanma zamanı. Zaman, imzalayanın beyanıdır."

@@ -1,4 +1,8 @@
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
 using LazyPDF.App.Documents;
@@ -20,6 +24,7 @@ public partial class SignaturesSidePanel : ToolPanel
     public SignaturesSidePanel()
     {
         InitializeComponent();
+        AutomationProperties.SetName(CertificateButton, Loc.T("View the signer's certificate"));
         ShowTrust();
     }
 
@@ -99,6 +104,7 @@ public partial class SignaturesSidePanel : ToolPanel
         bool locked = Tab!.Document.IsEncrypted;
         ViewButton.IsEnabled = copy && !locked;
         RestoreButton.IsEnabled = copy;
+        CertificateButton.IsEnabled = row.Report.Certificate is not null;
         VersionNote.Text = !copy ? Loc.T("This is the signed version.") : locked ? Loc.T("A protected file cannot open as a copy. Save the signed version, then open it.") : "";
         VersionNote.Visibility = VersionNote.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
     }
@@ -161,6 +167,21 @@ public partial class SignaturesSidePanel : ToolPanel
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or PdfReadException)
         {
             Tell(Loc.T("The file could not be saved. Check the folder and try again."));
+        }
+    }
+
+    private void Certificate_Click(object sender, RoutedEventArgs e)
+    {
+        if (List.SelectedItem is not SignatureRow { Report.Certificate: { } certificate }) return;
+        try
+        {
+            string path = Path.Combine(Path.GetTempPath(), "Lazy PDF signer " + certificate.Thumbprint + ".cer");
+            File.WriteAllBytes(path, certificate.RawData);
+            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception)
+        {
+            Tell(Loc.T("The certificate could not be shown."));
         }
     }
 
