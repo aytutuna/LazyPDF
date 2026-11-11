@@ -180,7 +180,9 @@ public sealed partial class AppViewModel
             await OpenAsync(new PendingOpen(source, entry.Id), password: null, certificate: null);
         }
         if (chosen is null) return;
-        foreach (var entry in offer ?? []) if (!chosen.Contains(entry.Id)) _recovery.Delete(entry.Id);
+        // Deleting waits for the copies the restored tabs are writing, so it stays off the UI thread.
+        var unticked = (offer ?? []).Where(entry => !chosen.Contains(entry.Id)).ToList();
+        await Task.Run(() => unticked.ForEach(entry => _recovery.Delete(entry.Id)));
     }
 
     public void DiscardRecovery()
