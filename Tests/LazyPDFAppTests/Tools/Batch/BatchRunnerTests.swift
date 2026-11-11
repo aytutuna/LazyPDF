@@ -175,8 +175,19 @@ final class BatchRunnerTests: XCTestCase {
 
         XCTAssertFalse(failed.ok)
         XCTAssertEqual(failed.title, "File is locked")
+        XCTAssertTrue(failed.detail.contains("Batch cannot ask for one"), failed.detail)
         XCTAssertNil(failed.output)
         XCTAssertTrue(fine.ok)
+    }
+
+    func test_aFileThatCannotBeMadeSmallerIsSaidInTheLog() async throws {
+        let dir = TempDir(self)
+        var set = BatchSet(steps: [step(.compress)])
+
+        let result = try await run(runner(), dir.file("a.pdf", Pdfs.text()), &set, into: dir.sub("out"))
+
+        XCTAssertTrue(result.ok, result.detail)
+        XCTAssertTrue(result.detail.contains("Could not be made smaller, so it was left as it was."), result.detail)
     }
 
     func test_aWatermarkWithNoTextFailsWithWhatToDo() async throws {

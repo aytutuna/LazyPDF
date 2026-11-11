@@ -58,7 +58,7 @@ extension BatchModel {
             let result = try await runner.run(file, &set, into: folder, number: number, now: now, token: token)
             return (set, result)
         }
-        continueNumbers(done)
+        if result.ok { continueNumbers(done) }
         return result
     }
 

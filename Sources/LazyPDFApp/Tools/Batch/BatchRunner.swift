@@ -72,6 +72,9 @@ public final class BatchRunner: @unchecked Sendable {
             return BatchResult(input: file, output: nil, ok: false, title: failed.problem.title, detail: failed.problem.text)
         } catch is CancellationError {
             throw CancellationError()
+        } catch let error as PdfReadException where error.problem == .passwordRequired || error.problem == .certificateRequired {
+            return BatchResult(input: file, output: nil, ok: false, title: L10n.t("File is locked"),
+                               detail: L10n.t("{0} needs a password or certificate, and Batch cannot ask for one. Take the lock off first, then add the file again.", name))
         } catch {
             let problem = Problems.open(error, name)
             return BatchResult(input: file, output: nil, ok: false, title: problem.title, detail: problem.text)
@@ -104,7 +107,10 @@ public final class BatchRunner: @unchecked Sendable {
             options.documentId = document.security == nil ? nil : document.firstId
             let result = try PdfOptimizer(document, codec).run(options)
             try token.throwIfCancelled()
-            if result.bytes.count >= bytes.count { return bytes }
+            if result.bytes.count >= bytes.count {
+                notes.append(L10n.t("Could not be made smaller, so it was left as it was."))
+                return bytes
+            }
             notes += result.notes
             return result.bytes
         case .clean:
@@ -163,6 +169,7 @@ public final class BatchRunner: @unchecked Sendable {
         }
         if result.noWords > 0 {
             notes.append(L10n.plural(result.noWords, one: "No text found on {0} page. Check the language.", other: "No text found on {0} pages. Check the language."))
+            notes.append(L10n.t("Pages that are turned sideways cannot be read."))
         }
         return session.current
     }

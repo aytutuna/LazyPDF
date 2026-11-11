@@ -225,6 +225,23 @@ final class BatchModelTests: XCTestCase {
         XCTAssertEqual(BatchSetStore(directory: f.dir.sub("settings")).load().first?.steps[0].start, 15)
     }
 
+    func test_aFileThatFailsDoesNotUseUpBatesNumbers() async throws {
+        let f = ViewModelFixture(self)
+        let (model, picker) = make(f)
+        picker.files = [ToolFile(url: f.dir.file("one.pdf", Pdfs.text(3)))]
+        picker.folder = try folder(f, "out")
+        await model.addFiles()
+        await model.chooseOutput()
+        model.addStep(.bates)
+        model.update { $0.start = 10 }
+        model.addStep(.watermark)
+
+        await model.run()
+
+        XCTAssertEqual(model.log.first?.result.ok, false)
+        XCTAssertEqual(model.plan.steps[0].start, 10)
+    }
+
     func test_aSetLoadedDuringARunIsLeftAloneWhenTheFileThatRanEnds() throws {
         let f = ViewModelFixture(self)
         let (model, _) = make(f)
