@@ -338,8 +338,8 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             Image(systemName: "ellipsis.circle")
         }
         .menuIndicator(.hidden)
-        .help(L10n.t("More ways to save"))
-        .accessibilityLabel(L10n.t("Settings"))
+        .help(L10n.t("More"))
+        .accessibilityLabel(L10n.t("More"))
     }
 
     private var compactBar: some View {

@@ -3229,6 +3229,9 @@
   <data name="Mode" xml:space="preserve">
     <value>Kip</value>
   </data>
+  <data name="More" xml:space="preserve">
+    <value>Daha fazla</value>
+  </data>
   <data name="More about {0}" xml:space="preserve">
     <value>{0} hakkında daha fazla</value>
   </data>
