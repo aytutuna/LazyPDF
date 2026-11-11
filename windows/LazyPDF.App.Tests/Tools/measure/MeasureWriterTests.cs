@@ -35,6 +35,18 @@ public sealed class MeasureWriterTests
     }
 
     [Fact]
+    public void ScalesThePanelCannotShowAreSkipped()
+    {
+        var session = PdfEditSession.Open(Pdfs.Text());
+        var usable = new MeasureScale(1, LengthUnit.Millimetre, 10, LengthUnit.Metre);
+        MeasureWriter.Write(session.Document, [Line], new MeasureScale(1, LengthUnit.Metre, 1, LengthUnit.Metre), "Sam", Date);
+        MeasureWriter.Write(session.Document, [Line], usable, "Sam", Date);
+        Assert.True(session.Commit("Measure"));
+
+        Assert.Equal(usable, MeasureScale.Find(PdfDocument.Open(session.Current.ToArray())));
+    }
+
+    [Fact]
     public void ADistanceIsALineWithItsScale()
     {
         var all = WriteAndReopen(out var document, Line);

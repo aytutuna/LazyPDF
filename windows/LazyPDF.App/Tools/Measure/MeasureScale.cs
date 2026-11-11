@@ -69,7 +69,7 @@ public sealed record MeasureScale(double Page, LengthUnit PageUnit, double Real,
         return scale.IsValid ? scale : null;
     }
 
-    /// <summary>The scale of the first measurement already in the file, looking at no more than 200 marks; null when there is none or its page unit is not one the panel offers.</summary>
+    /// <summary>The scale of the first measurement already in the file that the panel can show, looking at no more than 200 marks; null when there is none.</summary>
     public static MeasureScale? Find(PdfDocument document)
     {
         int seen = 0;
@@ -79,9 +79,9 @@ public sealed record MeasureScale(double Page, LengthUnit PageUnit, double Real,
             foreach (var item in annots.Items)
             {
                 if (++seen > 200) return null;
-                if (document.Resolve(item) is PdfDictionary mark && document.Dict(mark, "Measure") is { } measure && PdfText.Read(document, measure, "R") is { } ratio && TryParse(ratio) is { } scale)
+                if (document.Resolve(item) is PdfDictionary mark && document.Dict(mark, "Measure") is { } measure && PdfText.Read(document, measure, "R") is { } ratio && TryParse(ratio) is { } scale && scale.PageUnit is LengthUnit.Millimetre or LengthUnit.Centimetre or LengthUnit.Inch)
                 {
-                    return scale.PageUnit is LengthUnit.Millimetre or LengthUnit.Centimetre or LengthUnit.Inch ? scale : null;
+                    return scale;
                 }
             }
         }
