@@ -1306,6 +1306,9 @@
   <data name="Data not read" xml:space="preserve">
     <value>Veriler okunamadı</value>
   </data>
+  <data name="Data the program that made the file keeps for its own editing. Reading the file does not need it. Keep this off if you open the file in that program." xml:space="preserve">
+    <value>Dosyayı oluşturan programın kendi düzenlemesi için sakladığı veriler. Dosyayı okumak için gerekmez. Dosyayı o programda açıyorsanız bunu kapalı tutun.</value>
+  </data>
   <data name="Date" xml:space="preserve">
     <value>Tarih</value>
   </data>
@@ -1681,8 +1684,8 @@
   <data name="Exporting comments" xml:space="preserve">
     <value>Yorumlar dışa aktarılıyor</value>
   </data>
-  <data name="Extra private entries other programs added. Reading the file does not need them. Keep this off if you open the file in the program that made it." xml:space="preserve">
-    <value>Başka programların eklediği özel girdiler. Dosyayı okumak için gerekmezler. Dosyayı oluşturan programda açıyorsanız bunu kapalı tutun.</value>
+  <data name="Extra private entries other programs added. Reading the file does not need them." xml:space="preserve">
+    <value>Başka programların eklediği özel girdiler. Dosyayı okumak için gerekmezler.</value>
   </data>
   <data name="Extract to a new file" xml:space="preserve">
     <value>Yeni dosyaya ayıkla</value>
@@ -3073,9 +3076,6 @@
   <data name="Note" xml:space="preserve">
     <value>Not</value>
   </data>
-  <data name="Notes that the program which made the file stored on each page. Reading the file does not need them." xml:space="preserve">
-    <value>Dosyayı oluşturan programın her sayfada sakladığı notlar. Dosyayı okumak için gerekmezler.</value>
-  </data>
   <data name="Notes, highlights, drawings, stamps and text boxes on the pages. Off unless you tick it." xml:space="preserve">
     <value>Sayfalardaki notlar, vurgular, çizimler, damgalar ve metin kutuları. İşaretlemezseniz kapalıdır.</value>
   </data>
@@ -3535,8 +3535,8 @@
   <data name="Pages that are turned sideways cannot be read." xml:space="preserve">
     <value>Yan çevrilmiş sayfalar okunamaz.</value>
   </data>
-  <data name="Pages that are turned sideways cannot be read. Rotate them in Pages first." xml:space="preserve">
-    <value>Yan çevrilmiş sayfalar okunamaz. Önce Sayfalar'da döndürün.</value>
+  <data name="Pages that are turned sideways cannot be read. Rotate them in Organize pages first." xml:space="preserve">
+    <value>Yan çevrilmiş sayfalar okunamaz. Önce Sayfaları yönet aracında döndürün.</value>
   </data>
   <data name="Pages to export" xml:space="preserve">
     <value>Dışa aktarılacak sayfalar</value>
@@ -4003,8 +4003,8 @@
   <data name="Remove crop" xml:space="preserve">
     <value>Kırpmayı kaldır</value>
   </data>
-  <data name="Remove data other programs left on pages" xml:space="preserve">
-    <value>Sayfalarda başka programların bıraktığı verileri kaldır</value>
+  <data name="Remove editing data of the program that made the file" xml:space="preserve">
+    <value>Dosyayı oluşturan programın düzenleme verilerini kaldır</value>
   </data>
   <data name="Remove from list" xml:space="preserve">
     <value>Listeden kaldır</value>
@@ -6605,7 +6605,7 @@
     <value>{0} yazdırmaya hazırlanamadı. Kaydedin ve başka bir programdan yazdırın.</value>
   </data>
   <data name="{0} could not be put into the file. Leave it out, or try fewer of its pages." xml:space="preserve">
-    <value>{0} dosyaya eklenemedi. Onu çıkarın ya da daha az sayfasını deneyin.</value>
+    <value>{0} dosyaya eklenemedi. Listeden kaldırın ya da daha az sayfasını deneyin.</value>
   </data>
   <data name="{0} could not be read as form data. Pick a file that a form export wrote." xml:space="preserve">
     <value>{0} form verisi olarak okunamadı. Bir form dışa aktarımının yazdığı dosyayı seçin.</value>
@@ -6644,7 +6644,7 @@
     <value>{0} dpi</value>
   </data>
   <data name="{0} dropped file is not a PDF and was left out.|plural" xml:space="preserve">
-    <value>Bırakılan {0} dosya PDF değil ve dışarıda bırakıldı.</value>
+    <value>Bırakılan {0} dosya PDF olmadığı için eklenmedi.</value>
   </data>
   <data name="{0} embedded files were given a relationship and a type." xml:space="preserve">
     <value>{0} gömülü dosyaya ilişki ve tür verildi.</value>

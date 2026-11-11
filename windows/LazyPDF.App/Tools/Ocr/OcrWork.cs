@@ -100,8 +100,8 @@ public static class OcrWork
         var parts = new List<string>();
         if (result.NotRendered > 0) parts.Add(Loc.Plural(result.NotRendered, "{0} page could not be drawn.", "{0} pages could not be drawn."));
         if (result.NoWords > 0) parts.Add(Loc.Plural(result.NoWords, "No text found on {0} page. Check the language.", "No text found on {0} pages. Check the language."));
-        if (result.NoWords > 0) parts.Add(Loc.T("Pages that are turned sideways cannot be read. Rotate them in Pages first."));
         if (result.NoWords > 0 && dropsLayers) parts.Add(Loc.T("Text read earlier on those pages was removed. Undo brings it back."));
+        if (result.NoWords > 0) parts.Add(Loc.T("Pages that are turned sideways cannot be read. Rotate them in Organize pages first."));
         return parts.Count == 0 ? null : string.Join(" ", parts);
     }
 }

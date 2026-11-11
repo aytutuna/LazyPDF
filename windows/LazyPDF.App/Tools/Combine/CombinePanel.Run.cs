@@ -52,7 +52,8 @@ public partial class CombinePanel
             bool checkedAll = false;
             await host.RunBusyAsync(Loc.T("Checking the files"), token => Task.Run(() =>
             {
-                bad = FirstUnmergeable(PageEdits.Reopen(tab), sources, token);
+                using var open = PageEdits.Reopen(tab);
+                bad = FirstUnmergeable(open, sources, token);
                 checkedAll = true;
             }, token));
             if (!checkedAll) return;
@@ -80,7 +81,8 @@ public partial class CombinePanel
         {
             try
             {
-                PageAssembly.Merge([new MergeSource(entry.Document ?? open, pages)], token).SaveRewrite();
+                using var merged = PageAssembly.Merge([new MergeSource(entry.Document ?? open, pages)], token);
+                merged.SaveRewrite();
             }
             catch (Exception error) when (error is PdfReadException or ArgumentException)
             {

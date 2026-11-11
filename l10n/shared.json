@@ -549,17 +549,17 @@
   "Remove private keys": {
     "tr": "Özel anahtarları kaldır"
   },
-  "Remove data other programs left on pages": {
-    "tr": "Sayfalarda başka programların bıraktığı verileri kaldır"
+  "Remove editing data of the program that made the file": {
+    "tr": "Dosyayı oluşturan programın düzenleme verilerini kaldır"
   },
-  "Notes that the program which made the file stored on each page. Reading the file does not need them.": {
-    "tr": "Dosyayı oluşturan programın her sayfada sakladığı notlar. Dosyayı okumak için gerekmezler."
+  "Data the program that made the file keeps for its own editing. Reading the file does not need it. Keep this off if you open the file in that program.": {
+    "tr": "Dosyayı oluşturan programın kendi düzenlemesi için sakladığı veriler. Dosyayı okumak için gerekmez. Dosyayı o programda açıyorsanız bunu kapalı tutun."
   },
   "Remove other hidden program data": {
     "tr": "Başka programların gizli verilerini kaldır"
   },
-  "Extra private entries other programs added. Reading the file does not need them. Keep this off if you open the file in the program that made it.": {
-    "tr": "Başka programların eklediği özel girdiler. Dosyayı okumak için gerekmezler. Dosyayı oluşturan programda açıyorsanız bunu kapalı tutun."
+  "Extra private entries other programs added. Reading the file does not need them.": {
+    "tr": "Başka programların eklediği özel girdiler. Dosyayı okumak için gerekmezler."
   },
   "Drop unused resources": {
     "tr": "Kullanılmayan kaynakları at"
@@ -1535,7 +1535,7 @@
   },
   "{0} dropped file is not a PDF and was left out.": {
     "other": "{0} dropped files are not PDFs and were left out.",
-    "tr": "Bırakılan {0} dosya PDF değil ve dışarıda bırakıldı."
+    "tr": "Bırakılan {0} dosya PDF olmadığı için eklenmedi."
   },
   "{0} is not a PDF file. Pick a PDF, a picture or a text file.": {
     "tr": "{0} bir PDF dosyası değil. Bir PDF, resim ya da metin dosyası seçin."
@@ -4442,8 +4442,8 @@
     "other": "No text found on {0} pages. Check the language.",
     "tr": "{0} sayfada metin bulunamadı. Dili denetleyin."
   },
-  "Pages that are turned sideways cannot be read. Rotate them in Pages first.": {
-    "tr": "Yan çevrilmiş sayfalar okunamaz. Önce Sayfalar'da döndürün."
+  "Pages that are turned sideways cannot be read. Rotate them in Organize pages first.": {
+    "tr": "Yan çevrilmiş sayfalar okunamaz. Önce Sayfaları yönet aracında döndürün."
   },
   "Pages that are turned sideways cannot be read.": {
     "tr": "Yan çevrilmiş sayfalar okunamaz."
@@ -5034,7 +5034,7 @@
     "tr": "Dosyalar tek bir dosyada birleştirilemedi. Daha az sayfa ya da dosya deneyin."
   },
   "{0} could not be put into the file. Leave it out, or try fewer of its pages.": {
-    "tr": "{0} dosyaya eklenemedi. Onu çıkarın ya da daha az sayfasını deneyin."
+    "tr": "{0} dosyaya eklenemedi. Listeden kaldırın ya da daha az sayfasını deneyin."
   },
   "File not split": {
     "tr": "Dosya bölünemedi"

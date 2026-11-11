@@ -54,8 +54,8 @@
             </Grid>
             <CheckBox x:Name="TrimFonts" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Trim fonts}" IsChecked="True" AutomationProperties.Name="{loc:T Trim fonts}" />
             <CheckBox x:Name="BlackWhite" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Make black and white pictures 1-bit}" IsChecked="True" AutomationProperties.Name="{loc:T Make black and white pictures 1-bit}" />
-            <CheckBox x:Name="DropAppData" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Remove data other programs left on pages}" IsChecked="True" AutomationProperties.Name="{loc:T Remove data other programs left on pages}" ToolTip="{loc:T Notes that the program which made the file stored on each page. Reading the file does not need them.}" />
-            <CheckBox x:Name="DropPrivateKeys" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Remove other hidden program data}" AutomationProperties.Name="{loc:T Remove other hidden program data}" ToolTip="{loc:T Extra private entries other programs added. Reading the file does not need them. Keep this off if you open the file in the program that made it.}" />
+            <CheckBox x:Name="DropAppData" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Remove editing data of the program that made the file}" IsChecked="True" AutomationProperties.Name="{loc:T Remove editing data of the program that made the file}" ToolTip="{loc:T Data the program that made the file keeps for its own editing. Reading the file does not need it. Keep this off if you open the file in that program.}" />
+            <CheckBox x:Name="DropPrivateKeys" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Remove other hidden program data}" AutomationProperties.Name="{loc:T Remove other hidden program data}" ToolTip="{loc:T Extra private entries other programs added. Reading the file does not need them.}" />
         </StackPanel>
 
         <CheckBox x:Name="Gray" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Convert to grayscale}" AutomationProperties.Name="{loc:T Convert to grayscale}" />

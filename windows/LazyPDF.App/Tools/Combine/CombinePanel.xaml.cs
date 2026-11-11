@@ -118,19 +118,23 @@ public partial class CombinePanel : ToolPanel
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
         e.Handled = true;
         var pdfs = paths.Where(p => string.Equals(System.IO.Path.GetExtension(p), ".pdf", StringComparison.OrdinalIgnoreCase)).ToList();
-        await AddAsync(pdfs);
-        int skipped = paths.Length - pdfs.Count;
-        if (skipped > 0)
+        bool opened = await AddAsync(pdfs);
+        int skipped = paths.Count(p => !pdfs.Contains(p) && !System.IO.Directory.Exists(p));
+        if (opened && skipped > 0)
             Host?.ShowNotice(Loc.T("Not a PDF"), Loc.Plural(skipped, "{0} dropped file is not a PDF and was left out.", "{0} dropped files are not PDFs and were left out.", skipped));
     }
 
-    private async Task AddAsync(IEnumerable<string> paths)
+    // False when a file could not be opened; its problem is already on screen.
+    private async Task<bool> AddAsync(IEnumerable<string> paths)
     {
-        if (Host is not { } host) return;
+        if (Host is not { } host) return false;
         var list = _entries;
+        bool all = true;
         foreach (string path in paths)
         {
             if (await SourceFile.OpenAsync(host, path) is { } document) list.Add(new CombineEntry(System.IO.Path.GetFileName(path), document.Pages.Count, document));
+            else all = false;
         }
+        return all;
     }
 }
