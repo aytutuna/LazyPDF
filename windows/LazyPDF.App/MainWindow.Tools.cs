@@ -278,6 +278,8 @@ public partial class MainWindow
             panel.ActionChanged += (_, _) => RefreshAction();
         }
         if (ReferenceEquals(current, panel) && ReferenceEquals(attached, tab)) return;
+        // The tab can change under the panel (open, close, Save all), so words still being typed go in before it lets go.
+        current?.HandIn();
         current?.Detach();
         current = panel;
         attached = tab;
