@@ -74,6 +74,7 @@ public partial class MeasurePanel : ToolPanel
         Summary.Text = ToolCatalog.Find("measure")?.Summary;
         Fill(PageUnit, PageUnits, LengthUnit.Millimetre);
         Fill(RealUnit, Enum.GetValues<LengthUnit>(), LengthUnit.Millimetre);
+        Fill(CalibrateUnit, Enum.GetValues<LengthUnit>(), LengthUnit.Millimetre);
         _ready = true;
         ShowReadout();
     }
@@ -214,6 +215,7 @@ public partial class MeasurePanel : ToolPanel
         _calibrated = points;
         _calibratedPage = page;
         CalibrateProblem.Visibility = Visibility.Collapsed;
+        SelectUnit(CalibrateUnit, UnitOf(RealUnit));
         CalibrateRow.Visibility = Visibility.Visible;
         CalibrateValue.Focus();
         CalibrateValue.SelectAll();
@@ -250,7 +252,7 @@ public partial class MeasurePanel : ToolPanel
             CalibrateProblem.Visibility = Visibility.Visible;
             return;
         }
-        var scale = ScaleFrom(_calibrated, length, UnitOf(PageUnit), UnitOf(RealUnit));
+        var scale = ScaleFrom(_calibrated, length, UnitOf(PageUnit), UnitOf(CalibrateUnit));
         if (!scale.IsValid)
         {
             CalibrateProblem.Visibility = Visibility.Visible;
