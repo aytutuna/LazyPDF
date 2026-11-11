@@ -84,6 +84,9 @@ internal sealed partial class PageSurface
             : renderer.RenderTileAsync(key.Page, key.Scale, spec.X, spec.Y, spec.Width, spec.Height);
     }
 
+    public Task<PdfRgbaImage?> RenderAreaAsync(int page, Rect area, double dpi) =>
+        Active?.RenderRegionAsync(page, new DisplayRect(area.X, area.Y, area.Width, area.Height), dpi) ?? Task.FromResult<PdfRgbaImage?>(null);
+
     // On a worker thread: the pixels become a bitmap here so the UI thread only has to file it.
     private void Deliver(int generation, TileSpec spec, PdfRgbaImage? image)
     {

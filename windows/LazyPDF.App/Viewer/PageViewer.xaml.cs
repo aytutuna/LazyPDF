@@ -476,6 +476,8 @@ public partial class PageViewer : UserControl, IDocumentViewer
         HandItem.IsChecked = Mode == PointerMode.Hand;
         ZoomAreaItem.IsChecked = Mode == PointerMode.Zoom;
         ZoomAreaItem.IsEnabled = _tab is not null;
+        SnapshotItem.IsChecked = Mode == PointerMode.Snapshot;
+        SnapshotItem.IsEnabled = _tab is not null;
         OnePageItem.IsChecked = Surface.Columns == 1;
         ContinuousItem.IsChecked = Surface.Continuous;
         TwoPageItem.IsChecked = Surface.Columns == 2;
@@ -500,5 +502,11 @@ public partial class PageViewer : UserControl, IDocumentViewer
     {
         if (_mode != PointerMode.Zoom) _modeBeforeArea = _mode;
         SetMode(PointerMode.Zoom);
+    }
+
+    private void Snapshot_Click(object sender, RoutedEventArgs e)
+    {
+        if (_mode != PointerMode.Snapshot) _modeBeforeArea = _mode;
+        SetMode(PointerMode.Snapshot);
     }
 }

@@ -52,6 +52,7 @@
                                 <MenuItem x:Name="SelectItem" Header="{loc:T Select text}" IsCheckable="True" Click="Select_Click" />
                                 <MenuItem x:Name="HandItem" Header="{loc:T Hand tool}" IsCheckable="True" Click="Hand_Click" />
                                 <MenuItem x:Name="ZoomAreaItem" Header="{loc:T Zoom to area}" IsCheckable="True" Click="ZoomArea_Click" />
+                                <MenuItem x:Name="SnapshotItem" Header="{loc:T Copy area as picture}" IsCheckable="True" Click="Snapshot_Click" />
                                 <Separator />
                                 <MenuItem x:Name="OnePageItem" Header="{loc:T One page}" IsCheckable="True" Click="Arrangement_Click" Tag="single" />
                                 <MenuItem x:Name="ContinuousItem" Header="{loc:T Scroll continuously}" IsCheckable="True" Click="Arrangement_Click" Tag="continuous" />

@@ -97,6 +97,34 @@ public sealed class RestrictedFileTests
         Assert.Equal("", ((FindBar)viewer.FindName("Find")).Query.Text);
     });
 
+    [Fact]
+    public Task CopyingAnAreaIsRefusedAndTheClipboardStaysAsItWas() => Sta.Run(async () =>
+    {
+        var viewer = new PageViewer(null);
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Restricted(PdfPermissions.All & ~PdfPermissions.Copy)), new WindowsPageRenderer(), null, "a.pdf");
+        viewer.Show(tab);
+        Clipboard.SetText("before");
+
+        await viewer.CopyAreaAsync(0, new Rect(10, 10, 100, 100));
+
+        Assert.Equal("before", Clipboard.GetText());
+        AssertCard(viewer, "The owner of this file does not allow copying.");
+    });
+
+    [Fact]
+    public Task AnAreaIsDrawnAtTheSizeAskedFor() => Sta.Run(async () =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new WindowsPageRenderer(), null, "a.pdf");
+        var surface = new PageSurface();
+        surface.Show(tab);
+
+        var image = await surface.RenderAreaAsync(0, new Rect(10, 20, 72, 36), 192);
+
+        Assert.NotNull(image);
+        Assert.InRange(image.Width, 191, 193);
+        Assert.InRange(image.Height, 95, 97);
+    });
+
     [Theory]
     [InlineData("SetOCGState", "This link shows or hides a layer. Use the Layers panel for that.")]
     [InlineData("GoToE", "This link goes to a file inside this file, which Lazy PDF does not open from here.")]

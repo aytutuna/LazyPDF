@@ -60,7 +60,7 @@ public partial class PageViewer
             if (ReferenceEquals(value, _tool)) return;
             EndPointerTool();
             _tool = value;
-            if (value is not null && _mode == PointerMode.Zoom) _mode = _modeBeforeArea;
+            if (value is not null && _mode is PointerMode.Zoom or PointerMode.Snapshot) _mode = _modeBeforeArea;
             Surface.Cursor = value?.Cursor;
             RefreshBar();
             StateChanged?.Invoke(this, EventArgs.Empty);
@@ -199,7 +199,7 @@ public partial class PageViewer
             Surface.CaptureMouse();
             tool.Press(Pointer(new PagePoint(over.Page, over.Point), at, clicks, true));
         }
-        else if (_mode == PointerMode.Zoom)
+        else if (_mode is PointerMode.Zoom or PointerMode.Snapshot)
         {
             if (Surface.Hit(at, true) is not { } over) return;
             _drag = Drag.Area;
@@ -318,6 +318,7 @@ public partial class PageViewer
             return;
         }
         var drag = _drag;
+        var snapshot = _mode == PointerMode.Snapshot;
         var at = e.GetPosition(Surface);
         if (drag == Drag.Tool)
         {
@@ -334,7 +335,11 @@ public partial class PageViewer
         }
         EndDrag();
         Surface.ReleaseMouseCapture();
-        if (drag == Drag.Area) ZoomToDrag(new Rect(_down, at), at);
+        if (drag == Drag.Area)
+        {
+            if (snapshot) SnapshotDrag(new Rect(_down, at));
+            else ZoomToDrag(new Rect(_down, at), at);
+        }
         if (drag is Drag.Pan or Drag.Select && !_moved && _downLink is { } link)
         {
             _linkClick = true;
@@ -360,10 +365,22 @@ public partial class PageViewer
             Surface.SetZoom(ZoomMath.Step(Surface.Zoom, Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1), at);
             return;
         }
-        if (Surface.PageMatrix(_dragPage) is not { } matrix) return;
+        if (DraggedArea(box) is { } area) Surface.ZoomToArea(_dragPage, area);
+    }
+
+    // One shot like the zoom; a box under 8 points is a slip of the hand.
+    private void SnapshotDrag(Rect box)
+    {
+        SetMode(_modeBeforeArea);
+        if (DraggedArea(box) is { Width: >= 8, Height: >= 8 } area) _ = CopyAreaAsync(_dragPage, area);
+    }
+
+    private Rect? DraggedArea(Rect box)
+    {
+        if (Surface.PageMatrix(_dragPage) is not { } matrix) return null;
         matrix.Invert();
         var area = Rect.Intersect(PageSpace.Transform(matrix, box), new Rect(Surface.PageSize(_dragPage)));
-        if (!area.IsEmpty) Surface.ZoomToArea(_dragPage, area);
+        return area.IsEmpty ? null : area;
     }
 
     private void EndDrag()
@@ -402,7 +419,7 @@ public partial class PageViewer
                 _linkTip.IsOpen = true;
             }
         }
-        if (_mode == PointerMode.Zoom) Surface.Cursor = Cursors.Cross;
+        if (_mode is PointerMode.Zoom or PointerMode.Snapshot) Surface.Cursor = Cursors.Cross;
         else if (link is not null) Surface.Cursor = Cursors.Hand;
         else if (_mode == PointerMode.Hand) Surface.Cursor = Cursors.Hand;
         else Surface.Cursor = hit is { } t && IsOverText(t.Page, t.Point) ? Cursors.IBeam : null;
@@ -671,7 +688,7 @@ public partial class PageViewer
                 Surface.ReleaseMouseCapture();
                 _tool?.Cancel();
                 break;
-            case Key.Escape when _mode == PointerMode.Zoom:
+            case Key.Escape when _mode is PointerMode.Zoom or PointerMode.Snapshot:
                 EndDrag();
                 Surface.ReleaseMouseCapture();
                 SetMode(_modeBeforeArea);

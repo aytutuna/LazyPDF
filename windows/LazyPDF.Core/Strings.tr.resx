@@ -1348,6 +1348,9 @@
   <data name="Converting to {0}" xml:space="preserve">
     <value>{0} biçimine dönüştürülüyor</value>
   </data>
+  <data name="Copied the area as a picture." xml:space="preserve">
+    <value>Alan resim olarak kopyalandı.</value>
+  </data>
   <data name="Copied." xml:space="preserve">
     <value>Kopyalandı.</value>
   </data>
@@ -1359,6 +1362,9 @@
   </data>
   <data name="Copy (Ctrl+C)" xml:space="preserve">
     <value>Kopyala (Ctrl+C)</value>
+  </data>
+  <data name="Copy area as picture" xml:space="preserve">
+    <value>Alanı resim olarak kopyala</value>
   </data>
   <data name="Copy fingerprint" xml:space="preserve">
     <value>Parmak izini kopyala</value>
@@ -1404,6 +1410,9 @@
   </data>
   <data name="Could not be made smaller, so it was left as it was." xml:space="preserve">
     <value>Küçültülemedi, bu yüzden olduğu gibi bırakıldı.</value>
+  </data>
+  <data name="Could not copy. Another program is using the clipboard." xml:space="preserve">
+    <value>Kopyalanamadı. Başka bir program panoyu kullanıyor.</value>
   </data>
   <data name="Could not protect the file" xml:space="preserve">
     <value>Dosya korunamadı</value>
@@ -6441,6 +6450,9 @@
   </data>
   <data name="Third-party notices" xml:space="preserve">
     <value>Üçüncü taraf bildirimleri</value>
+  </data>
+  <data name="This area could not be drawn." xml:space="preserve">
+    <value>Bu alan çizilemedi.</value>
   </data>
   <data name="This attachment could not be opened." xml:space="preserve">
     <value>Bu ek açılamadı.</value>

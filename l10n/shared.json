@@ -2538,6 +2538,18 @@
   "Zoom to area": {
     "tr": "Alana yakınlaştır"
   },
+  "Copy area as picture": {
+    "tr": "Alanı resim olarak kopyala"
+  },
+  "Copied the area as a picture.": {
+    "tr": "Alan resim olarak kopyalandı."
+  },
+  "This area could not be drawn.": {
+    "tr": "Bu alan çizilemedi."
+  },
+  "Could not copy. Another program is using the clipboard.": {
+    "tr": "Kopyalanamadı. Başka bir program panoyu kullanıyor."
+  },
   "One page": {
     "tr": "Tek sayfa"
   },

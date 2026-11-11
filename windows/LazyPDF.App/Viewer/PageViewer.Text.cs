@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using LazyPDF.App.Tools.Export;
 using LazyPDF.Core;
@@ -402,19 +403,51 @@ public partial class PageViewer
         var runs = await GetSelectionAsync();
         if (runs.Count == 0) return;
         string text = string.Join("\n", runs.Select(r => r.Text));
-        // Another program may hold the clipboard for a moment.
+        if (!await TrySetClipboardAsync(() => Clipboard.SetText(text))) ShowToast(Loc.T("Could not copy. Another program is using the clipboard."));
+    }
+
+    internal async Task CopyAreaAsync(int page, Rect area)
+    {
+        if (RefuseCopy()) return;
+        double dpi = Math.Min(192, 6000 * 72 / Math.Max(area.Width, area.Height));
+        var image = await Surface.RenderAreaAsync(page, area, dpi);
+        BitmapSource? bitmap = null;
+        if (image is not null)
+        {
+            try
+            {
+                bitmap = await Task.Run(() => PageTints.ToBitmap(image, PageTint.None));
+            }
+            catch (OutOfMemoryException)
+            {
+                // Told as a picture that could not be drawn.
+            }
+        }
+        if (bitmap is null)
+        {
+            ShowToast(Loc.T("This area could not be drawn."));
+            return;
+        }
+        if (await TrySetClipboardAsync(() => Clipboard.SetImage(bitmap))) ShowToast(Loc.T("Copied the area as a picture."));
+        else ShowToast(Loc.T("Could not copy. Another program is using the clipboard."));
+    }
+
+    // Another program may hold the clipboard for a moment.
+    private static async Task<bool> TrySetClipboardAsync(Action set)
+    {
         for (int attempt = 0; attempt < 3; attempt++)
         {
             try
             {
-                Clipboard.SetText(text);
-                return;
+                set();
+                return true;
             }
             catch (ExternalException)
             {
                 await Task.Delay(50);
             }
         }
+        return false;
     }
 
     // ----- Drawing on the pages
