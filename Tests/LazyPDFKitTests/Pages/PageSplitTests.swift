@@ -39,6 +39,10 @@ final class PageSplitTests: XCTestCase {
 
     // Pages of about a kilobyte of data nothing can compress, so that a page weighs what its data does.
     private func heavy(_ count: Int, _ perPage: Int) throws -> PdfDocument {
+        try weighted(count) { $0 == 4 ? perPage * 6 : perPage }
+    }
+
+    private func weighted(_ count: Int, _ bytes: (Int) -> Int) throws -> PdfDocument {
         var random = SeededRandom(11)
         let pdf = TestPdf().obj(1, "<</Type /Catalog /Pages 2 0 R>>")
         let kids = (0..<count).map { "\(3 + $0) 0 R" }.joined(separator: " ")
@@ -49,7 +53,7 @@ final class PageSplitTests: XCTestCase {
         for i in 0..<count { pdf.stream(3 + count + i, "", "BT (\(i + 1)) Tj ET /X Do") }
         for i in 0..<count {
             pdf.stream(3 + 2 * count + i, "/Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /DCTDecode",
-                       random.bytes(i == 4 ? perPage * 6 : perPage))
+                       random.bytes(bytes(i)))
         }
         return try PdfDocument.open(pdf.finish())
     }
@@ -71,6 +75,55 @@ final class PageSplitTests: XCTestCase {
         XCTAssertEqual(parts.map { $0.pages.count }, [3, 1, 1, 3, 3, 1])
         for part in parts { XCTAssertTrue(try part.saveRewrite().count <= limit || part.pages.count == 1) }
         XCTAssertGreaterThan(try parts[2].saveRewrite().count, limit)
+    }
+
+    // The old search: the longest run from each start that fits, found one page at a time.
+    private func greedy(_ document: PdfDocument, _ limit: Int) throws -> String {
+        var parts: [String] = []
+        var at = 0
+        while at < document.pages.count {
+            var length = 1
+            while at + length < document.pages.count,
+                  try PageAssembly.extract(document, Array(at..<at + length + 1)).saveRewrite().count <= limit { length += 1 }
+            parts.append((at + 1...at + length).map { String($0) }.joined(separator: ","))
+            at += length
+        }
+        return parts.joined(separator: " | ")
+    }
+
+    func test_bySizeMakesTheSamePartsAsAScanOnePageAtATime() throws {
+        var random = SeededRandom(5)
+        let document = try weighted(40) { _ in Int(random.next() % 2900) + 100 }
+        let whole = try document.saveRewrite().count
+        for limit in [whole / 40, whole / 12, whole / 5, whole / 2, whole] {
+            let parts = try PageAssembly.splitBySize(document, limit)
+            XCTAssertEqual(parts.map { numbers($0).map { String($0) }.joined(separator: ",") }.joined(separator: " | "),
+                           try greedy(document, limit))
+        }
+    }
+
+    private final class CountingRandom: RandomNumberGenerator {
+        var calls = 0
+        var inner = SeededRandom(1)
+        func next() -> UInt64 {
+            calls += 1
+            return inner.next()
+        }
+    }
+
+    func test_bySizeSavesAPartOnlyAFewTimes() throws {
+        // With AES each stream written draws 16 random bytes and a page has two, so the calls tell how many pages were saved.
+        let document = try weighted(100) { _ in 1000 }
+        let random = CountingRandom()
+        let security = PdfSecurity.create(userPassword: "", ownerPassword: "owner", permissions: .all, strength: .aes128,
+                                          firstId: [UInt8](repeating: 0, count: 16), random: random)
+        let options = PdfSaveOptions(security: security, documentId: [UInt8](repeating: 0, count: 16))
+        let one = try PageAssembly.extract(document, [0]).saveRewrite(options).count
+        let ten = try PageAssembly.extract(document, Array(0..<10)).saveRewrite(options).count
+        random.calls = 0
+        let parts = try PageAssembly.splitBySize(document, ten + (ten - one) / 2, options)
+        XCTAssertEqual(parts.reduce(0) { $0 + $1.pages.count }, 100)
+        XCTAssertLessThanOrEqual(random.calls, 32 * 5 * 100, "\(random.calls / 32) pages saved")
     }
 
     func test_aLimitOfOneByteGivesOnePagePerPart() throws {

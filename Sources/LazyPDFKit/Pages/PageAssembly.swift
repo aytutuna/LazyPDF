@@ -87,37 +87,61 @@ public enum PageAssembly {
     }
 
     /// Parts that each save (`saveRewrite` with `options`) to no more than `maxBytes`, as many pages as fit. A page that is
-    /// bigger alone is a part of its own. The size of a part is measured by saving it, so the work is a few saves of each
-    /// part; cancellation is checked before each.
+    /// bigger alone is a part of its own. The size of a part is measured by saving it, starting from an estimate out of the
+    /// size of the source, so the work is a few saves of each part; the document that fit is the part. Cancellation is
+    /// checked before each save.
     public static func splitBySize(_ source: PdfDocument, _ maxBytes: Int, _ options: PdfSaveOptions = PdfSaveOptions()) throws -> [PdfDocument] {
         precondition(maxBytes >= 1, "maxBytes")
         let total = source.pages.count
+        var fitted: [Int: PdfDocument] = [:]
         func fits(_ start: Int, _ length: Int) throws -> Bool {
-            try extract(source, Array(start..<start + length)).saveRewrite(options).count <= maxBytes
+            let candidate = try extract(source, Array(start..<start + length))
+            if try candidate.saveRewrite(options).count > maxBytes { return false }
+            fitted[length] = candidate
+            return true
         }
 
-        var parts: [[Int]] = []
+        var parts: [PdfDocument] = []
         var at = 0
         while at < total {
-            var low = 1, high = total - at
-            var probe = 2
-            while probe <= total - at {
-                if try fits(at, probe) {
-                    low = probe
-                    probe *= 2
-                    continue
+            fitted.removeAll()
+            let remaining = total - at
+            var low = 1, high = remaining + 1
+            if remaining > 1 {
+                let guess = Int(min(max(Double(maxBytes) * Double(total) / Double(max(source.length, 1)), 2), Double(remaining)))
+                if try fits(at, guess) {
+                    low = guess
+                    var step = 1
+                    while low + step < high {
+                        if try fits(at, low + step) {
+                            low += step
+                        } else {
+                            high = low + step
+                            break
+                        }
+                        step *= 2
+                    }
+                } else {
+                    high = guess
+                    var step = 1
+                    while high - step > low {
+                        if try fits(at, high - step) {
+                            low = high - step
+                            break
+                        }
+                        high -= step
+                        step *= 2
+                    }
                 }
-                high = probe - 1
-                break
+                while low + 1 < high {
+                    let mid = (low + high) / 2
+                    if try fits(at, mid) { low = mid } else { high = mid }
+                }
             }
-            while low < high {
-                let mid = (low + high + 1) / 2
-                if try fits(at, mid) { low = mid } else { high = mid - 1 }
-            }
-            parts.append(Array(at..<at + low))
+            parts.append(try fitted[low] ?? extract(source, Array(at..<at + low)))
             at += low
         }
-        return try splitByRanges(source, parts)
+        return parts
     }
 
     // A file of a catalog and an empty tree, with a proper table so that opening it needs no repair.
