@@ -14,6 +14,7 @@ internal static class FillSignPlacement
     public const double SignatureWidth = 150;
     public const double InitialsWidth = 60;
     public const double LineLength = 100;
+    private const double MinMark = 6;
 
     /// <summary>A box of the given width centred on the click, kept on the page.</summary>
     public static DisplayRect Around(Point click, double width, double aspect, Size page)
@@ -92,14 +93,14 @@ internal static class FillSignPlacement
             writer.AddLine(pdfPage, User(a.X, a.Y), User(b.X, b.Y), new AnnotationStyle(colour, 1.5), info);
             return tab.Commit(Loc.T("Place mark"));
         }
-        var box = to is { } corner ? FromDrag(from, corner, 1, area) : Around(from, size, 1, area);
+        var box = to is { } corner && FromDrag(from, corner, 1, area) is { Width: >= MinMark } dragged ? dragged : Around(from, size, 1, area);
         if (shape == MarkShape.Dot)
         {
             writer.AddCircle(pdfPage, geometry.ToUser(box), new AnnotationStyle(colour, 1, Fill: colour), info);
             return tab.Commit(Loc.T("Place mark"));
         }
         (double, double)[][] unit = shape == MarkShape.Check
-            ? [[(0.1, 0.55), (0.38, 0.85), (0.9, 0.15)]]
+            ? [[(0.1, 0.55), (0.38, 0.85), (0.38, 0.85), (0.9, 0.15)]]
             : [[(0.1, 0.1), (0.9, 0.9)], [(0.9, 0.1), (0.1, 0.9)]];
         var strokes = unit.Select(s => (IReadOnlyList<(double X, double Y)>)s.Select(p => User(box.X + p.Item1 * box.Width, box.Y + p.Item2 * box.Height)).ToList()).ToList();
         writer.AddInk(pdfPage, strokes, new AnnotationStyle(colour, Math.Max(1, box.Width / 8)), info);

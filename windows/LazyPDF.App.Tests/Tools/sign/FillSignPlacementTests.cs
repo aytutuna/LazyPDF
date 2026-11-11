@@ -238,6 +238,20 @@ public sealed class FillSignPlacementTests
         Assert.Empty(PdfAnnotations.ReadAll(tab.Document));
     }
 
+    [Theory]
+    [InlineData(MarkShape.Check)]
+    [InlineData(MarkShape.Cross)]
+    [InlineData(MarkShape.Dot)]
+    public void ASlippedClickStillMakesAMarkOfTheChosenSize(MarkShape shape)
+    {
+        using var tab = NewTab();
+
+        FillSignPlacement.PlaceMark(tab, 0, shape, new Point(200, 200), new Point(206, 201), 24, [0, 0, 0], DateTimeOffset.Now);
+
+        var mark = Assert.Single(PdfAnnotations.ReadAll(tab.Document));
+        Assert.True(mark.Rect.Width > 20);
+    }
+
     [Fact]
     public void ALineTakesTheDragAsItsEnds()
     {
