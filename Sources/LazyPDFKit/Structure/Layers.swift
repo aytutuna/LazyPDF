@@ -23,10 +23,12 @@ public struct LayerNode {
 public struct LayerSet {
     public let layers: [PdfLayer]
     public let order: [LayerNode]
+    public let radioGroups: [[PdfReference]]
 
-    public init(layers: [PdfLayer], order: [LayerNode]) {
+    public init(layers: [PdfLayer], order: [LayerNode], radioGroups: [[PdfReference]] = []) {
         self.layers = layers
         self.order = order
+        self.radioGroups = radioGroups
     }
 }
 
@@ -63,7 +65,7 @@ public enum PdfLayers {
         for layer in layers where !placed.contains(layer.reference.number) {
             order.append(LayerNode(label: nil, layer: layer, children: []))
         }
-        return LayerSet(layers: layers, order: order)
+        return LayerSet(layers: layers, order: order, radioGroups: radioGroups(document, config, byNumber))
     }
 
     /// Shows or hides a layer in the default configuration and writes /ON, /OFF and /BaseState anew: base state ON and
@@ -124,6 +126,16 @@ public enum PdfLayers {
             } else {
                 afterRow = false
             }
+        }
+        return result
+    }
+
+    private static func radioGroups(_ document: PdfDocument, _ config: PdfDictionary?, _ layers: [Int: PdfLayer]) -> [[PdfReference]] {
+        var result: [[PdfReference]] = []
+        for group in (document.array(config, "RBGroups")?.items ?? []).prefix(maxLayers) {
+            guard let members = document.resolve(group) as? PdfArray else { continue }
+            let known = members.items.compactMap { $0 as? PdfReference }.filter { layers[$0.number] != nil }
+            if known.count >= 2 { result.append(known) }
         }
         return result
     }

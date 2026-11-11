@@ -105,6 +105,15 @@ final class LayerTests: XCTestCase {
         XCTAssertEqual(PdfLayers.read(document).layers.map { $0.isOn }, [true, false, true, false])
     }
 
+    func test_radioGroupsListTheKnownLayers() throws {
+        let document = try sample("/RBGroups [[30 0 R 31 0 R] [32 0 R 33 0 R 99 0 R] [30 0 R] [31 0 R 98 0 R]]")
+        let groups = PdfLayers.read(document).radioGroups
+        XCTAssertEqual(groups.count, 2)
+        XCTAssertEqual(groups[0].map { $0.number }, [30, 31])
+        XCTAssertEqual(groups[1].map { $0.number }, [32, 33])
+        XCTAssertTrue(PdfLayers.read(try sample()).radioGroups.isEmpty)
+    }
+
     func test_unknownLayerIsRefused() throws {
         let document = try sample()
         XCTAssertFalse(PdfLayers.setVisible(document, PdfReference(99, 0), false))
