@@ -80,6 +80,8 @@ public partial class PagesPanel : ToolPanel
         var select = _reselect;
         _reselect = null;
         Build(select);
+        // The box holds a page index, which an edit moves.
+        _crop?.Clear();
     }
 
     private void Build(IEnumerable<int>? select = null)
