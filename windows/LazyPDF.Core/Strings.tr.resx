@@ -2059,6 +2059,9 @@
   <data name="File header" xml:space="preserve">
     <value>Dosya üst bilgisi</value>
   </data>
+  <data name="File information" xml:space="preserve">
+    <value>Dosya bilgileri</value>
+  </data>
   <data name="File is damaged" xml:space="preserve">
     <value>Dosya hasarlı</value>
   </data>
@@ -2541,6 +2544,9 @@
   </data>
   <data name="Hide certificate" xml:space="preserve">
     <value>Sertifikayı gizle</value>
+  </data>
+  <data name="Hide file information" xml:space="preserve">
+    <value>Dosya bilgilerini gizle</value>
   </data>
   <data name="Hide the menu bar" xml:space="preserve">
     <value>Menü çubuğunu gizle</value>

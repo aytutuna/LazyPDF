@@ -36,6 +36,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     private string _lastSidePanelId;
     private double _sidePanelWidth;
     private double _inspectorWidth;
+    private bool _showFileInfo;
     private InfoMessage? _message;
     private DocumentTab? _messageTab;
     private UIElement? _stage;
@@ -58,6 +59,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
         _sidePanelId = preferences.SidePanel;
         _sidePanelWidth = preferences.SidePanelWidth;
         _inspectorWidth = preferences.InspectorWidth;
+        _showFileInfo = preferences.ShowFileInfo;
         _lastSidePanelId = _sidePanelId.Length > 0 ? _sidePanelId : "pages";
         Recent = BuildRecent();
         _sisters.Changed += (_, _) =>
@@ -107,6 +109,8 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     public double SidePanelWidth => _sidePanelWidth;
 
     public double InspectorWidth => _inspectorWidth;
+
+    public bool ShowFileInfo => _showFileInfo;
 
     public InfoMessage? Message => _message;
 
@@ -184,6 +188,12 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     {
         _inspectorWidth = width;
         AppPreferencesStore.Update(preferences => preferences.InspectorWidth = width, _settingsDirectory ?? StoreFiles.DefaultDirectory);
+    }
+
+    public void SetShowFileInfo(bool show)
+    {
+        _showFileInfo = show;
+        AppPreferencesStore.Update(preferences => preferences.ShowFileInfo = show, _settingsDirectory ?? StoreFiles.DefaultDirectory);
     }
 
     public void SetAppearance(AppAppearance appearance)

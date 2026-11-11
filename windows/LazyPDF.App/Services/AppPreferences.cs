@@ -29,6 +29,9 @@ public sealed class AppPreferences
     /// <summary>The width of the inspector, in device-independent pixels.</summary>
     public double InspectorWidth { get; set; } = DefaultInspectorWidth;
 
+    /// <summary>Whether the inspector shows the file's facts while no tool is open.</summary>
+    public bool ShowFileInfo { get; set; } = true;
+
     /// <summary>Which inspector sections the user left open or closed: a tool's own key, open. No entry is the default.</summary>
     public Dictionary<string, bool> InspectorSections { get; set; } = [];
 

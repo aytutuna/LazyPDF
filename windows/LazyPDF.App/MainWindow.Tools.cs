@@ -226,7 +226,7 @@ public partial class MainWindow
             InspectorHost.Content = null;
             return;
         }
-        SetPane(Inspector, InspectorSplitter, InspectorColumn, !(_narrow && _vm.ActiveTool is null), _vm.InspectorWidth);
+        SetPane(Inspector, InspectorSplitter, InspectorColumn, _vm.ActiveTool is not null || (!_narrow && _vm.ShowFileInfo), _vm.InspectorWidth);
         if (_vm.ActiveTool is not { } tool)
         {
             _inspectorPanel?.Detach();
@@ -234,7 +234,9 @@ public partial class MainWindow
             _inspectorTab = null;
             InspectorGlyph.Text = "\uE946";
             InspectorTitle.Text = Loc.T("File");
-            InspectorClose.Visibility = Visibility.Collapsed;
+            InspectorClose.Visibility = Visibility.Visible;
+            InspectorClose.ToolTip = Loc.T("Hide file information");
+            AutomationProperties.SetName(InspectorClose, Loc.T("Hide file information"));
             InspectorHost.Content = DocumentSummary(tab);
             InspectorFooter.Visibility = Visibility.Collapsed;
             return;
@@ -242,6 +244,8 @@ public partial class MainWindow
         InspectorGlyph.Text = tool.Glyph;
         InspectorTitle.Text = tool.Title;
         InspectorClose.Visibility = Visibility.Visible;
+        InspectorClose.ToolTip = Loc.T("Close the tool");
+        AutomationProperties.SetName(InspectorClose, Loc.T("Close the tool"));
         Place("tool:" + tool.Id, tool.Create, InspectorHost, ref _inspectorPanel, ref _inspectorTab, tab);
         RefreshAction();
     }
@@ -306,7 +310,18 @@ public partial class MainWindow
         ReleaseHeld();
     }
 
-    private void InspectorClose_Click(object sender, RoutedEventArgs e) => _vm.SelectTool(_vm.ActiveToolId);
+    private void InspectorClose_Click(object sender, RoutedEventArgs e)
+    {
+        if (_vm.ActiveTool is null) _vm.SetShowFileInfo(false);
+        else _vm.SelectTool(_vm.ActiveToolId);
+        RefreshInspector();
+    }
+
+    private void FileInfo_Click(object sender, RoutedEventArgs e)
+    {
+        _vm.SetShowFileInfo(!_vm.ShowFileInfo);
+        RefreshInspector();
+    }
 
     // What the inspector shows while no tool is open: the facts of the file.
     private static UIElement DocumentSummary(DocumentTab tab)

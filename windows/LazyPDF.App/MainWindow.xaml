@@ -196,7 +196,11 @@
              show while the window is narrow. -->
         <Border Grid.Row="2" x:Name="ToolStrip" BorderThickness="0,1,0,0" Padding="8,2,8,2" SizeChanged="ToolStrip_SizeChanged"
                 BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
-            <StackPanel x:Name="GroupPanel" Orientation="Horizontal" AutomationProperties.Name="{loc:T Tools}" />
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Style="{StaticResource SubtleButtonStyle}" Content="&#xE946;" Click="FileInfo_Click"
+                        ToolTip="{loc:T File information}" AutomationProperties.Name="{loc:T File information}" />
+                <StackPanel x:Name="GroupPanel" Orientation="Horizontal" AutomationProperties.Name="{loc:T Tools}" />
+            </DockPanel>
         </Border>
 
         <Grid Grid.Row="3" x:Name="ContentArea" SizeChanged="ContentArea_SizeChanged">

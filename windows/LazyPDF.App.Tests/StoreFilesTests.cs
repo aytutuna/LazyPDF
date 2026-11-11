@@ -33,6 +33,17 @@ public sealed class StoreFilesTests
     }
 
     [Fact]
+    public void FileInformationIsShownUntilHidden()
+    {
+        using var dir = new TempDir();
+        Assert.True(AppPreferencesStore.Load(dir.Path).ShowFileInfo);
+
+        AppPreferencesStore.Update(p => p.ShowFileInfo = false, dir.Path);
+
+        Assert.False(AppPreferencesStore.Load(dir.Path).ShowFileInfo);
+    }
+
+    [Fact]
     public void PanelWidthsAreReadBackAndAnOldFileGetsTheDefaults()
     {
         using var dir = new TempDir();

@@ -1941,6 +1941,12 @@
   "Close the tool": {
     "tr": "Aracı kapat"
   },
+  "Hide file information": {
+    "tr": "Dosya bilgilerini gizle"
+  },
+  "File information": {
+    "tr": "Dosya bilgileri"
+  },
   "Close the tool to use the search bar.": {
     "tr": "Arama çubuğunu kullanmak için aracı kapatın."
   },
