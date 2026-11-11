@@ -68,6 +68,8 @@ private struct TileButton: View {
     let tile: HomeTile
     let start: () -> Void
 
+    @ScaledMetric(relativeTo: .body) private var tileHeight = 84
+
     var body: some View {
         Button(action: start) {
             VStack(alignment: .leading, spacing: 6) {
@@ -83,7 +85,7 @@ private struct TileButton: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: tileHeight, alignment: .topLeading)
             .padding(12)
             .background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
             .contentShape(RoundedRectangle(cornerRadius: 10))
@@ -101,6 +103,7 @@ private struct RecentCard: View {
     let open: () -> Void
 
     @State private var picture: CGImage?
+    @ScaledMetric(relativeTo: .body) private var pictureHeight = 110
 
     var body: some View {
         let caption = item.exists ? "\(item.opened) \u{00B7} \(item.folder)" : L10n.t("Not found")
@@ -119,7 +122,7 @@ private struct RecentCard: View {
                             .opacity(0.6)
                     }
                 }
-                .frame(height: 110)
+                .frame(height: pictureHeight)
                 .task(id: item) {
                     if let png = await thumbnail() { picture = Self.decode(png) }
                 }

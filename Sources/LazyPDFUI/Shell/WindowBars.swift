@@ -63,8 +63,8 @@ struct StatusBar: View {
             if let tab = vm.activeDocument {
                 let page = pageText(tab)
                 let zoom = zoomText(tab)
-                Text(page).font(.callout)
-                Text(zoom).font(.callout).accessibilityLabel("\(L10n.t("Zoom")) \(zoom)")
+                Text(page).font(.callout).fixedSize()
+                Text(zoom).font(.callout).fixedSize().accessibilityLabel("\(L10n.t("Zoom")) \(zoom)")
             }
             if vm.isBusy {
                 ProgressView()
@@ -80,7 +80,7 @@ struct StatusBar: View {
             }
         }
         .padding(.horizontal, 8)
-        .frame(height: 36)
+        .frame(minHeight: 36)
         .overlay(alignment: .top) { Divider() }
         .onChange(of: spoken) { _, text in
             if announces && !text.isEmpty { AccessibilityNotification.Announcement(text).post() }
