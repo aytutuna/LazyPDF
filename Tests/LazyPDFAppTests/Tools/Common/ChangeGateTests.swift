@@ -58,6 +58,31 @@ final class ChangeGateTests: XCTestCase {
         XCTAssertEqual(rig.host.problems.first?.text, "Stamp could not be finished. If part of it was done, Undo takes it back.")
     }
 
+    func test_eachKindOfFailureGivesItsOwnText() throws {
+        let rig = try ToolRig()
+        let failures: [(Error, String)] = [
+            (PdfReadException(.unsupported, "no"),
+             "Stamp could not be finished because the file could not be read back. If part of it was done, Undo takes it back."),
+            (CocoaError(.fileWriteOutOfSpace),
+             "Stamp could not be finished. Check that the disk has room and that no other program has the file open."),
+            (InvalidOperationException("no"), "Stamp could not be finished. If part of it was done, Undo takes it back.")
+        ]
+        for (error, text) in failures {
+            rig.host.problems.removeAll()
+            ChangeGate.run(rig.tab, rig.host, "Stamp") { throw error }
+            XCTAssertEqual(rig.host.problems.first?.title, "Something went wrong")
+            XCTAssertEqual(rig.host.problems.first?.text, text)
+        }
+    }
+
+    func test_aJobRefusedByPermissionsSaysTheFileIsRestricted() throws {
+        let rig = try ToolRig()
+
+        ChangeGate.run(rig.tab, rig.host, "Stamp") { throw PdfPermissionException("no") }
+
+        XCTAssertEqual(rig.host.problems.first?.title, "This file cannot be changed")
+    }
+
     func test_aJobThatWaitsIsGatedTheSameWay() async throws {
         let rig = try ToolRig(try Pdfs.signed(certified: false))
         var ran = 0

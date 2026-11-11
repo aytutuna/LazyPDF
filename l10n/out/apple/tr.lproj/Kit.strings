@@ -2123,6 +2123,8 @@
 "{0} chosen page already has text. Reading it adds a second layer, so search finds words twice.|other" = "Seçilen {0} sayfada zaten metin var. Okumak ikinci bir katman ekler, bu yüzden arama sözcükleri iki kez bulur.";
 "{0} comment|one" = "{0} yorum";
 "{0} comment|other" = "{0} yorum";
+"{0} could not be finished because the file could not be read back. If part of it was done, Undo takes it back." = "{0} tamamlanamadı çünkü dosya yeniden okunamadı. Bir kısmı yapıldıysa Geri al onu geri alır.";
+"{0} could not be finished. Check that the disk has room and that no other program has the file open." = "{0} tamamlanamadı. Diskte yer olduğundan ve dosyanın başka bir programda açık olmadığından emin olun.";
 "{0} could not be finished. If part of it was done, Undo takes it back." = "{0} tamamlanamadı. Bir kısmı yapıldıysa Geri al onu geri alır.";
 "{0} could not be imported. Check the password." = "{0} içe aktarılamadı. Parolayı denetleyin.";
 "{0} could not be opened, so it was not checked." = "{0} açılamadı, bu yüzden denetlenmedi.";

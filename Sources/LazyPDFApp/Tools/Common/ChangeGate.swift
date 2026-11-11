@@ -61,6 +61,12 @@ public enum ChangeGate {
     private static func report(_ error: Error, _ host: ToolHost, _ name: String) {
         if error is PdfPermissionException {
             host.showProblem(Problems.restricted())
+        } else if error is PdfReadException {
+            host.showProblem(Problem(L10n.t("Something went wrong"),
+                                     L10n.t("{0} could not be finished because the file could not be read back. If part of it was done, Undo takes it back.", name)))
+        } else if Problems.isFileSystem(error) {
+            host.showProblem(Problem(L10n.t("Something went wrong"),
+                                     L10n.t("{0} could not be finished. Check that the disk has room and that no other program has the file open.", name)))
         } else {
             host.showProblem(Problem(L10n.t("Something went wrong"),
                                      L10n.t("{0} could not be finished. If part of it was done, Undo takes it back.", name)))
