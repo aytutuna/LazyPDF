@@ -4,8 +4,16 @@
                  xmlns:loc="clr-namespace:LazyPDF.App"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
                  xmlns:panel="clr-namespace:LazyPDF.App.Panels.Bookmarks">
-    <Grid>
+    <DockPanel>
+        <WrapPanel x:Name="Toolbar" DockPanel.Dock="Top" Margin="8,0,8,4">
+            <Button x:Name="ExpandAllButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE70D;" Click="ExpandAll_Click"
+                    ToolTip="{loc:T Expand all}" AutomationProperties.Name="{loc:T Expand all}" />
+            <Button x:Name="CollapseAllButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE70E;" Click="CollapseAll_Click"
+                    ToolTip="{loc:T Collapse all}" AutomationProperties.Name="{loc:T Collapse all}" />
+        </WrapPanel>
+        <Grid>
         <TreeView x:Name="Tree" BorderThickness="0" Background="Transparent" Padding="4,4,4,8" AutomationProperties.Name="{loc:T Bookmarks}"
+                  VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling"
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" PreviewMouseLeftButtonUp="Tree_PreviewMouseLeftButtonUp" PreviewKeyDown="Tree_PreviewKeyDown">
             <TreeView.ItemContainerStyle>
                 <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
@@ -20,5 +28,6 @@
             </TreeView.ItemTemplate>
         </TreeView>
         <TextBlock x:Name="Empty" Style="{StaticResource ReasonText}" Margin="12,8" Visibility="Collapsed" Text="{loc:T This file has no bookmarks.}" />
-    </Grid>
+        </Grid>
+    </DockPanel>
 </tools:ToolPanel>

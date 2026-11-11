@@ -66,4 +66,30 @@ public sealed class BookmarksPanelTests
         Assert.Equal(said, EnterOnEntry(new OutlineItem { Title = "Entry", Action = new ResetFormAction(0, []) }));
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public Task ExpandAllAndCollapseAllOnlyChangeTheView() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(2)), new FakeRenderer(), null, "a.pdf", null);
+        var outline = Outline.Read(tab.Document);
+        var parent = outline.Add(new OutlineItem { Title = "Parent", Destination = new PdfDestination(1) });
+        outline.Add(new OutlineItem { Title = "Child", Destination = new PdfDestination(1) }, parent);
+        outline.Write(tab.Document);
+        tab.Commit("Bookmark");
+        bool dirty = tab.IsDirty;
+        var before = tab.Session.Current.ToArray();
+        var panel = new BookmarksSidePanel();
+        panel.Attach(tab, FakeViewer.Create().Viewer, new RecordingHost());
+        var tree = (TreeView)panel.FindName("Tree");
+        Assert.False(((BookmarkNode)tree.Items[0]!).IsExpanded);
+
+        ((Button)panel.FindName("ExpandAllButton")).RaiseEvent(new System.Windows.RoutedEventArgs(Button.ClickEvent));
+        Assert.True(((BookmarkNode)tree.Items[0]!).IsExpanded);
+        ((Button)panel.FindName("CollapseAllButton")).RaiseEvent(new System.Windows.RoutedEventArgs(Button.ClickEvent));
+        Assert.False(((BookmarkNode)tree.Items[0]!).IsExpanded);
+
+        Assert.Equal(before, tab.Session.Current.ToArray());
+        Assert.Equal(dirty, tab.IsDirty);
+        return Task.CompletedTask;
+    });
 }

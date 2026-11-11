@@ -62,6 +62,28 @@ public partial class BookmarksSidePanel : ToolPanel
         Tree.ItemsSource = items.Select((item, i) => new BookmarkNode(item, i.ToString(), _opened)).ToList();
         Empty.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         Tree.Visibility = items.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        Toolbar.Visibility = Tree.Visibility;
+    }
+
+    private void SetAll(IReadOnlyList<OutlineItem> items, string prefix, bool open)
+    {
+        for (int i = 0; i < items.Count; i++)
+        {
+            string path = prefix + i;
+            if (items[i].Children.Count == 0) continue;
+            _opened[path] = open;
+            SetAll(items[i].Children, path + ".", open);
+        }
+    }
+
+    private void ExpandAll_Click(object sender, RoutedEventArgs e) => Open(true);
+
+    private void CollapseAll_Click(object sender, RoutedEventArgs e) => Open(false);
+
+    private void Open(bool open)
+    {
+        SetAll(Outline.Read(Tab!.Document).Items, "", open);
+        Build();
     }
 
     private void Go(BookmarkNode node)

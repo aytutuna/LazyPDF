@@ -1135,6 +1135,9 @@
   <data name="Cloud" xml:space="preserve">
     <value>Bulut</value>
   </data>
+  <data name="Collapse all" xml:space="preserve">
+    <value>Tümünü daralt</value>
+  </data>
   <data name="Colour" xml:space="preserve">
     <value>Renk</value>
   </data>
@@ -1767,6 +1770,9 @@
   </data>
   <data name="Exit reading mode" xml:space="preserve">
     <value>Okuma modundan çık</value>
+  </data>
+  <data name="Expand all" xml:space="preserve">
+    <value>Tümünü genişlet</value>
   </data>
   <data name="Expires {0}" xml:space="preserve">
     <value>Bitiş: {0}</value>
