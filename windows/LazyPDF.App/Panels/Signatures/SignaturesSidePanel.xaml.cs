@@ -209,11 +209,15 @@ public partial class SignaturesSidePanel : ToolPanel
 
     private void Certificate_Click(object sender, RoutedEventArgs e)
     {
-        if (List.SelectedItem is not SignatureRow { Report.Certificate: { } certificate }) return;
+        if (List.SelectedItem is not SignatureRow { Report.Certificate: { } certificate } row) return;
         bool show = CertificateInfo.Visibility != Visibility.Visible;
         if (show) CertificateText.ItemsSource = CertificateLines.Of(certificate);
         CertificateInfo.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         CertificateButton.Content = show ? Loc.T("Hide certificate") : Loc.T("View certificate");
+        bool stamp = row.Report.Kind == SignatureKind.DocumentTimestamp;
+        AutomationProperties.SetName(CertificateButton, show
+            ? stamp ? Loc.T("Hide the time stamp authority's certificate") : Loc.T("Hide the signer's certificate")
+            : stamp ? Loc.T("View the time stamp authority's certificate") : Loc.T("View the signer's certificate"));
     }
 
     private void CopyFingerprint_Click(object sender, RoutedEventArgs e)

@@ -2533,8 +2533,14 @@
   <data name="Hide the menu bar" xml:space="preserve">
     <value>Menü çubuğunu gizle</value>
   </data>
+  <data name="Hide the signer's certificate" xml:space="preserve">
+    <value>İmzalayanın sertifikasını gizle</value>
+  </data>
   <data name="Hide the text" xml:space="preserve">
     <value>Metni gizle</value>
+  </data>
+  <data name="Hide the time stamp authority's certificate" xml:space="preserve">
+    <value>Zaman damgası otoritesinin sertifikasını gizle</value>
   </data>
   <data name="Hide the toolbar" xml:space="preserve">
     <value>Araç çubuğunu gizle</value>

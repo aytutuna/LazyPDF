@@ -55,4 +55,17 @@ public sealed class CertificateLinesTests
         Assert.StartsWith("Key: ", lines[5]);
         Assert.Contains("256", lines[5]);
     }
+
+    [Fact]
+    public void AMalformedPurposesExtensionSaysNotStated()
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var request = new CertificateRequest("CN=Odd", key, HashAlgorithmName.SHA256);
+        request.CertificateExtensions.Add(new X509Extension("2.5.29.37", [0x01, 0x02, 0x03], false));
+        using var odd = request.CreateSelfSigned(Now, Now.AddYears(1));
+
+        var lines = CertificateLines.Of(odd);
+
+        Assert.Equal("Meant for: Not stated", lines[6]);
+    }
 }

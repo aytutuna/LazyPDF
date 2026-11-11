@@ -6643,6 +6643,12 @@
   "View the signer's certificate": {
     "tr": "İmzalayanın sertifikasını göster"
   },
+  "Hide the time stamp authority's certificate": {
+    "tr": "Zaman damgası otoritesinin sertifikasını gizle"
+  },
+  "Hide the signer's certificate": {
+    "tr": "İmzalayanın sertifikasını gizle"
+  },
   "When it was signed. The time is the signer's word.": {
     "tr": "İmzalanma zamanı. Zaman, imzalayanın beyanıdır."
   },

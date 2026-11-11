@@ -25,17 +25,30 @@ internal static class CertificateLines
 
     private static string Key(X509Certificate2 certificate)
     {
-        using var rsa = certificate.GetRSAPublicKey();
-        if (rsa is not null) return "RSA " + rsa.KeySize;
-        using var ec = certificate.GetECDsaPublicKey();
-        if (ec is not null) return ec.ExportParameters(false).Curve.Oid.FriendlyName ?? certificate.PublicKey.Oid.FriendlyName ?? "";
-        return certificate.PublicKey.Oid.FriendlyName ?? "";
+        string fallback = certificate.PublicKey.Oid.FriendlyName ?? "";
+        try
+        {
+            using var rsa = certificate.GetRSAPublicKey();
+            if (rsa is not null) return "RSA " + rsa.KeySize;
+            using var ec = certificate.GetECDsaPublicKey();
+            if (ec is not null) return ec.ExportParameters(false).Curve.Oid?.FriendlyName ?? fallback;
+        }
+        catch (CryptographicException)
+        {
+        }
+        return fallback;
     }
 
     private static string Purposes(X509Certificate2 certificate)
     {
-        var usages = certificate.Extensions.OfType<X509EnhancedKeyUsageExtension>().FirstOrDefault()?.EnhancedKeyUsages;
-        if (usages is not { Count: > 0 }) return Loc.T("Not stated");
-        return string.Join(", ", usages.Cast<Oid>().Select(o => o.FriendlyName is { Length: > 0 } f ? f : o.Value));
+        try
+        {
+            var usages = certificate.Extensions.OfType<X509EnhancedKeyUsageExtension>().FirstOrDefault()?.EnhancedKeyUsages;
+            if (usages is { Count: > 0 }) return string.Join(", ", usages.Cast<Oid>().Select(o => o.FriendlyName is { Length: > 0 } f ? f : o.Value));
+        }
+        catch (CryptographicException)
+        {
+        }
+        return Loc.T("Not stated");
     }
 }
