@@ -72,7 +72,7 @@ public sealed class WicImageCodec : IImageCodec
         var pixels = new byte[width * height * 4];
         converted.CopyPixels(pixels, width * 4, 0);
         for (int i = 0; i < pixels.Length; i += 4) (pixels[i], pixels[i + 2]) = (pixels[i + 2], pixels[i]);
-        return new PdfRgbaImage(width, height, pixels);
+        return new PdfRgbaImage(width, height, pixels, source.DpiX, source.DpiY);
     }
 
     private static BitmapSource ToSource(PdfRgbaImage image, PictureColour colour, int dpi)

@@ -179,6 +179,21 @@ public class PdfFromPicturesTests
     }
 
     [Theory]
+    [InlineData(300, 300, 24, 24)]
+    [InlineData(72, 72, 100, 100)]
+    [InlineData(300, 150, 24, 48)]
+    [InlineData(0, 0, 75, 75)]
+    [InlineData(5000, 5000, 75, 75)]
+    [InlineData(300, 5000, 75, 75)]
+    public void ADecodedFrameIsPlacedAtTheDensityItCarries(int dpiX, int dpiY, double width, double height)
+    {
+        var made = PdfFromPictures.Create([ExportFakeCodec.Picture(100, 100, 128, dpiX, dpiY)], Codec, new PdfPageSetup(PdfPaper.Picture, Margin: 0));
+        var box = Reopen(made).Images[0].Bounds;
+        Assert.Equal(width, box.Width, 4);
+        Assert.Equal(height, box.Height, 4);
+    }
+
+    [Theory]
     [InlineData(300)]
     [InlineData(297.638)]
     public void AMarginThatLeavesNoRoomIsRefused(double margin)

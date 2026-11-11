@@ -32,7 +32,7 @@ public static class PdfFromPictures
     /// <summary>
     /// <paramref name="files"/> are picture files in page order. A JPEG goes into the PDF as its
     /// own bytes, anything else is decoded by the <paramref name="codec"/> (every frame is a page).
-    /// A picture is placed at its natural size, which JFIF density gives (each axis its own) and 96 dpi
+    /// A picture is placed at its natural size, which JFIF density or a decoded frame's own gives (each axis its own) and 96 dpi
     /// otherwise, shrunk to fit the page inside its margin, never enlarged, centred. A JPEG's Exif
     /// orientation is applied by the way it is placed, so its bytes stay as they are.
     /// </summary>
@@ -55,7 +55,7 @@ public static class PdfFromPictures
             else if (codec.DecodeFile(files[i]) is { } frames)
             {
                 foreach (var frame in frames.Where(f => f.Width > 0 && f.Height > 0 && (long)f.Width * f.Height <= PdfImageSamples.MaxPixels && f.Rgba.Length == (long)f.Width * f.Height * 4))
-                    pictures.Add((PdfImageWriter.AddRgba(document, frame.Width, frame.Height, frame.Rgba), DefaultDpi, DefaultDpi, 1));
+                    pictures.Add((PdfImageWriter.AddRgba(document, frame.Width, frame.Height, frame.Rgba), StoredDpi(frame).X, StoredDpi(frame).Y, 1));
             }
             if (pictures.Count == before) unreadable.Add(i);
         }
@@ -84,6 +84,9 @@ public static class PdfFromPictures
     }
 
     // The size on the page, after the picture is turned.
+    private static (double X, double Y) StoredDpi(PdfRgbaImage frame) =>
+        frame.DpiX is >= 50 and <= 1200 && frame.DpiY is >= 50 and <= 1200 ? (frame.DpiX, frame.DpiY) : (DefaultDpi, DefaultDpi);
+
     private static (double Width, double Height) Natural((PdfImage Image, double DpiX, double DpiY, int Orientation) p)
     {
         double w = p.Image.Width * 72 / p.DpiX, h = p.Image.Height * 72 / p.DpiY;

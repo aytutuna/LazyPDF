@@ -25,7 +25,7 @@ internal sealed class ExportFakeCodec : IImageCodec
         return new PdfRgbaImage(2, 2, [255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 255, 255]);
     }
 
-    // A "picture file" of the tests is the bytes P, width, height, then width * height gray levels.
+    // A "picture file" of the tests is the bytes P, width, height, then width * height gray levels and optionally the two densities as 16 bits.
     public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file)
     {
         if (file.Length < 3 || file[0] != (byte)'P') return null;
@@ -37,12 +37,15 @@ internal sealed class ExportFakeCodec : IImageCodec
             rgba[4 * i] = rgba[4 * i + 1] = rgba[4 * i + 2] = g;
             rgba[4 * i + 3] = 255;
         }
-        return [new PdfRgbaImage(w, h, rgba)];
+        int at = 3 + w * h;
+        double dpiX = file.Length >= at + 4 ? file[at] << 8 | file[at + 1] : 0, dpiY = file.Length >= at + 4 ? file[at + 2] << 8 | file[at + 3] : 0;
+        return [new PdfRgbaImage(w, h, rgba, dpiX, dpiY)];
     }
 
     public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [0xFF, 0xD8, (byte)quality, (byte)(image.Rgba[3] == 255 ? 1 : 0), 0xFF, 0xD9];
 
-    public static byte[] Picture(int w, int h, byte gray = 128) => [(byte)'P', (byte)w, (byte)h, .. Enumerable.Repeat(gray, w * h)];
+    public static byte[] Picture(int w, int h, byte gray = 128, int dpiX = 0, int dpiY = 0) =>
+        [(byte)'P', (byte)w, (byte)h, .. Enumerable.Repeat(gray, w * h), .. dpiX == 0 && dpiY == 0 ? [] : new[] { (byte)(dpiX >> 8), (byte)dpiX, (byte)(dpiY >> 8), (byte)dpiY }];
 }
 
 internal sealed class ExportFakeRenderer(int width, int height, byte alpha = 255) : IPageRenderer

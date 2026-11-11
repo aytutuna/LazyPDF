@@ -9,7 +9,7 @@ public interface IImageCodec
     /// </summary>
     PdfRgbaImage? Decode(byte[] data, string codec);
 
-    /// <summary>Every frame of a picture file (JPEG, PNG, TIFF, BMP, GIF, HEIC), or null for anything else.</summary>
+    /// <summary>Every frame of a picture file (JPEG, PNG, TIFF, BMP, GIF, HEIC), or null for anything else. A frame carries the resolution the file stores, in dots per inch.</summary>
     IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file);
 
     /// <summary>A JPEG of <paramref name="image"/>; <paramref name="quality"/> runs from 1 to 100.</summary>
