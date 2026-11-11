@@ -258,6 +258,7 @@ public partial class MainWindow
         // In the Store package the manifest registers the Open with entry and the address.
         OpenWithSection.Visibility = Packaging.IsPackaged ? Visibility.Collapsed : Visibility.Visible;
         OpenWithToggle.IsChecked = !Packaging.IsPackaged && FileAssociation.IsRegisteredForCurrentUser();
+        ReopenLastToggle.IsChecked = AppPreferencesStore.Load().ReopenLast;
         _loadingSettings = false;
         _settingsOpen = true;
         RefreshOverlays();
@@ -341,6 +342,13 @@ public partial class MainWindow
     {
         if (_loadingSettings) return;
         _vm.SetLanguage(sender == LanguageEnglish ? "en" : sender == LanguageTurkish ? "tr" : "");
+    }
+
+    private void ReopenLast_Click(object sender, RoutedEventArgs e)
+    {
+        if (_loadingSettings) return;
+        bool want = ReopenLastToggle.IsChecked == true;
+        AppPreferencesStore.Update(p => p.ReopenLast = want);
     }
 
     private void OpenWith_Click(object sender, RoutedEventArgs e)

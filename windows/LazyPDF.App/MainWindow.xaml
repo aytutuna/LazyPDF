@@ -392,6 +392,10 @@
                                     <TextBlock Text="{loc:T 'Adds Lazy PDF to the Open with list of PDF files and registers lazypdf: addresses, for your account only. It never becomes the default program.'}"
                                                Style="{StaticResource ReasonText}" Margin="0,6,0,0" />
                                 </StackPanel>
+                                <CheckBox x:Name="ReopenLastToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Reopen the files from last time}"
+                                          AutomationProperties.Name="{loc:T Reopen the files from last time}" Margin="0,12,0,0" Click="ReopenLast_Click" />
+                                <TextBlock Text="{loc:T 'When Lazy PDF starts without a file, it opens the files that were open when you closed it.'}"
+                                           Style="{StaticResource ReasonText}" Margin="0,6,0,0" />
                                 <Button Style="{StaticResource SubtleButtonStyle}" Content="{loc:T Choose default apps}"
                                         AutomationProperties.Name="{loc:T Choose default apps}" HorizontalAlignment="Left" Margin="0,12,0,0" Click="DefaultApps_Click" />
                                 <TextBlock Text="{loc:T 'Opens Windows settings, where you can pick the program that opens PDF files.'}"

@@ -2001,6 +2001,12 @@
   "Adds Lazy PDF to the Open with list of PDF files and registers lazypdf: addresses, for your account only. It never becomes the default program.": {
     "tr": "Lazy PDF'yi PDF dosyalarının Birlikte aç listesine ekler ve lazypdf: adreslerini kaydeder; yalnızca hesabınız için. Hiçbir zaman varsayılan program olmaz."
   },
+  "Reopen the files from last time": {
+    "tr": "Geçen seferki dosyaları yeniden aç"
+  },
+  "When Lazy PDF starts without a file, it opens the files that were open when you closed it.": {
+    "tr": "Lazy PDF dosyasız başladığında, kapattığınızda açık olan dosyaları açar."
+  },
   "Choose default apps": {
     "tr": "Varsayılan uygulamaları seçin"
   },

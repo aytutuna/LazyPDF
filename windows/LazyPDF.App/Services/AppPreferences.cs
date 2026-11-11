@@ -41,6 +41,15 @@ public sealed class AppPreferences
     /// <summary>The width of a page picture in the Pages panel, 72 to 192.</summary>
     public double ThumbnailWidth { get; set; } = 132;
 
+    /// <summary>Whether the files open at close come back at the next start without a file.</summary>
+    public bool ReopenLast { get; set; }
+
+    /// <summary>The paths open when the window closed, in strip order; kept only while <see cref="ReopenLast"/> is on.</summary>
+    public List<string> LastFiles { get; set; } = [];
+
+    /// <summary>The path of the tab that was active at close.</summary>
+    public string? LastActive { get; set; }
+
     /// <summary>Where the main window was left; null until it has been closed once.</summary>
     public WindowPlacement? Window { get; set; }
 }

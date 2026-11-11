@@ -33,6 +33,20 @@ public sealed class StoreFilesTests
     }
 
     [Fact]
+    public void TheSessionIsReadBackAsWritten()
+    {
+        using var dir = new TempDir();
+        Assert.False(AppPreferencesStore.Load(dir.Path).ReopenLast);
+
+        AppPreferencesStore.Update(p => { p.ReopenLast = true; p.LastFiles = ["a.pdf", "b.pdf"]; p.LastActive = "b.pdf"; }, dir.Path);
+
+        var loaded = AppPreferencesStore.Load(dir.Path);
+        Assert.True(loaded.ReopenLast);
+        Assert.Equal(["a.pdf", "b.pdf"], loaded.LastFiles);
+        Assert.Equal("b.pdf", loaded.LastActive);
+    }
+
+    [Fact]
     public void LanguageIsReadBackAsWrittenAndAnOldFileHasNone()
     {
         using var dir = new TempDir();

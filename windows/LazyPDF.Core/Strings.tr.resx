@@ -4531,6 +4531,9 @@
   <data name="Rename field" xml:space="preserve">
     <value>Alanı yeniden adlandır</value>
   </data>
+  <data name="Reopen the files from last time" xml:space="preserve">
+    <value>Geçen seferki dosyaları yeniden aç</value>
+  </data>
   <data name="Repeat password" xml:space="preserve">
     <value>Parolayı yineleyin</value>
   </data>
@@ -6951,6 +6954,9 @@
   </data>
   <data name="What would you like to do?" xml:space="preserve">
     <value>Ne yapmak istersiniz?</value>
+  </data>
+  <data name="When Lazy PDF starts without a file, it opens the files that were open when you closed it." xml:space="preserve">
+    <value>Lazy PDF dosyasız başladığında, kapattığınızda açık olan dosyaları açar.</value>
   </data>
   <data name="When it opens" xml:space="preserve">
     <value>Açıldığında</value>

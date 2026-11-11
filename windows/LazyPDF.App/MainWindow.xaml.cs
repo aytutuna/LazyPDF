@@ -112,11 +112,16 @@ public partial class MainWindow : Window
         return new AppViewModel(renderers, new WicImageCodec(), new SystemFontSource(), new SisterApps());
     }
 
-    private void Window_Loaded(object sender, RoutedEventArgs e)
+    private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         _vm.CheckRecovery();
         RefreshFromViewModel();
         OpenFiles(App.StartupFiles);
+        var preferences = AppPreferencesStore.Load();
+        // A crash offer comes first and wins.
+        if (!preferences.ReopenLast || App.StartupFiles.Count > 0 || _vm.RecoveryOffer is not null) return;
+        await _vm.OpenFilesAsync(preferences.LastFiles.Where(File.Exists));
+        if (preferences.LastActive is { } active && File.Exists(active)) await _vm.OpenAsync(active);
     }
 
     /// <summary>Opens the files (from the command line or a second start) and brings the window forward; no files just brings it forward.</summary>
@@ -324,7 +329,15 @@ public partial class MainWindow : Window
         }
         // RestoreBounds is empty once the window has closed, so the place is taken here.
         var placement = PlacementOf(WindowState == WindowState.Maximized, new Rect(Left, Top, Width, Height), RestoreBounds);
-        AppPreferencesStore.Update(p => p.Window = placement);
+        var session = _vm.SessionPaths().ToList();
+        string? active = _vm.ActiveDocument?.Path;
+        AppPreferencesStore.Update(p =>
+        {
+            p.Window = placement;
+            // Nothing is kept without consent.
+            p.LastFiles = p.ReopenLast ? session : [];
+            p.LastActive = p.ReopenLast ? active : null;
+        });
     }
 
     internal static WindowPlacement PlacementOf(bool maximized, Rect current, Rect restore)

@@ -18,6 +18,19 @@ public sealed class OpenFlowTests
     }
 
     [Fact]
+    public async Task SessionPathsSkipsATabWithoutAPathAndKeepsStripOrder()
+    {
+        using var f = new ViewModelFixture();
+        string first = f.Pdf("first.pdf");
+        string second = f.Pdf("second.pdf");
+        await f.Vm.OpenAsync(second);
+        await f.Vm.OpenNewAsync(File.ReadAllBytes(first), "made");
+        await f.Vm.OpenAsync(first);
+
+        Assert.Equal([second, first], f.Vm.SessionPaths());
+    }
+
+    [Fact]
     public async Task APdfOpensInATabAndBecomesTheActiveOne()
     {
         using var f = new ViewModelFixture();
