@@ -253,16 +253,16 @@ public sealed class DocumentTab : ITab, IDisposable
         try { CanDraw = await Renderer.LoadAsync(Session, _password); }
         catch (Exception) { CanDraw = false; }
         if (_disposed || revision != Revision) return;
-        // A handler that throws goes to the app's crash handler from the dispatcher, so it cannot fault the chain or skip the handlers after it.
+        // Handlers that throw go to the app's crash handler from the dispatcher, once per load: a second one inside its repeat window would end the process.
+        List<Exception>? failures = null;
         foreach (var handler in Drawn?.GetInvocationList() ?? [])
         {
             try { ((EventHandler)handler)(this, EventArgs.Empty); }
-            catch (Exception e)
-            {
-                var failure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(e);
-                _ = System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(new Action(failure.Throw));
-            }
+            catch (Exception e) { (failures ??= []).Add(e); }
         }
+        if (failures is null) return;
+        var failure = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failures.Count == 1 ? failures[0] : new AggregateException(failures));
+        _ = System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(new Action(failure.Throw));
     }
 
     // The bytes of a save are the ones already shown, so only the state of the tab changes, unless the save rewrote the file.
