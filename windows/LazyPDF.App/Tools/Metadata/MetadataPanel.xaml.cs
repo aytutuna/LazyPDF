@@ -19,6 +19,7 @@ public sealed partial class MetadataPanel : ToolPanel
     private bool _loading = true;
     private bool _changed;
     private Guid _editing;
+    private Guid _dropped;
 
     public MetadataPanel()
     {
@@ -48,7 +49,12 @@ public sealed partial class MetadataPanel : ToolPanel
 
     private bool Store(bool notify)
     {
-        if (!_changed || Tab is null) return true;
+        if (Tab is null) return true;
+        if (!_changed)
+        {
+            if (notify && _dropped == Tab.Id) ShowDropNotice();
+            return true;
+        }
         bool asks = AsksFirst;
         _ = RunAsync(notify);
         return !asks;
@@ -58,7 +64,7 @@ public sealed partial class MetadataPanel : ToolPanel
 
     private void Fields_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
     {
-        if (e.OriginalSource is TextBox && !AsksFirst) Store(false);
+        if (e.OriginalSource is TextBox && !AsksFirst) Store(e.NewFocus is not TextBox);
     }
 
     private void Tab_Changed(object? sender, EventArgs e) => Load(_changed);
@@ -155,16 +161,24 @@ public sealed partial class MetadataPanel : ToolPanel
         var host = Host!;
         var (metadata, view) = ReadForm();
         bool touch = TouchModifiedBox.IsChecked == true;
-        bool drops = notify && MetadataEdit.DropsText(_metadata, metadata);
+        bool drops = MetadataEdit.DropsText(_metadata, metadata);
         return ChangeGate.RunAsync(tab, host, _action.Text, () =>
         {
             MetadataEdit.Write(tab.Document, metadata, view, touch, DateTimeOffset.Now);
             if (tab.Commit(Loc.T("Properties")))
             {
                 host.SetStatus(Loc.T("Properties changed."));
-                if (drops) host.ShowNotice(Loc.T("Old values are still in the file"), Loc.T("The earlier title, author, subject or keywords can still be found in the file's history. Clean for sharing removes them."));
+                // Leaving one field for another commits it, so a drop is remembered until the properties are saved or closed.
+                if (drops) _dropped = tab.Id;
+                if (notify && _dropped == tab.Id) ShowDropNotice();
             }
             return Task.CompletedTask;
         });
+    }
+
+    private void ShowDropNotice()
+    {
+        _dropped = Guid.Empty;
+        Host!.ShowNotice(Loc.T("Old values are still in the file"), Loc.T("The earlier title, author, subject or keywords can still be found in the file's history. Clean for sharing removes them."));
     }
 }
