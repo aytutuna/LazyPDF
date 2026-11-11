@@ -396,11 +396,29 @@ public partial class PageViewer
             return false;
         }
         var target = all[next];
-        _focusLink = (target.Page, target.Link);
-        Surface.Reveal(target.Page, new Rect(target.Area.X, target.Area.Y, target.Area.Width, target.Area.Height));
-        Surface.InvalidateVisual();
+        FocusLink(target.Page, target.Link, new Rect(target.Area.X, target.Area.Y, target.Area.Width, target.Area.Height));
         Speak(LinkTip(target.Link) ?? Loc.T("Link"));
         return true;
+    }
+
+    private void FocusLink(int page, PdfLink link, Rect area)
+    {
+        _focusLink = (page, link);
+        Surface.Reveal(page, area);
+        Surface.InvalidateVisual();
+    }
+
+    // The links of a page as screen readers see them.
+    private IReadOnlyList<LinkTarget> LinkTargets(int page)
+    {
+        if (_tab is null) return [];
+        var geometry = Surface.Geometry(page);
+        return [.. LinksOf(page).Select(link =>
+        {
+            var area = geometry.ToDisplay(link.Rect);
+            var rect = new Rect(area.X, area.Y, area.Width, area.Height);
+            return new LinkTarget(rect, LinkTip(link) ?? Loc.T("Link"), () => FollowLink(link), () => FocusLink(page, link, rect));
+        })];
     }
 
     private void FollowLink(PdfLink link)

@@ -18,6 +18,9 @@ public enum FitMode
     Page,
 }
 
+/// <summary>A link of a page for screen readers: where it is on the page, its name, and what following and focusing it do.</summary>
+internal readonly record struct LinkTarget(Rect Area, string Name, Action Follow, Action Focus);
+
 /// <summary>
 /// The pages of a document in a scrolled area: it lays them out, scrolls, zooms and draws them, and keeps only
 /// what is near the window alive (the tiles in <see cref="TileCache"/>, the overlays in the tree). This file is the
@@ -63,6 +66,12 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
 
     /// <summary>The text of a page for screen readers, if the viewer has it.</summary>
     public Func<int, string?>? PageText { get; set; }
+
+    /// <summary>The label of a page (i, ii, 1) for screen readers.</summary>
+    public Func<int, string>? PageLabel { get; set; }
+
+    /// <summary>The links of a page for screen readers, in page space.</summary>
+    public Func<int, IReadOnlyList<LinkTarget>>? PageLinks { get; set; }
 
     public int PageCount => _sizes.Length;
 
@@ -136,6 +145,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         GoToPage(_page);
         PageChanged?.Invoke(this, EventArgs.Empty);
         OptionsChanged?.Invoke(this, EventArgs.Empty);
+        TellLinks();
     }
 
     internal static byte[] Bytes(DocumentTab tab) =>
@@ -196,6 +206,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         Rebuild(null, new Point(0, 0), anchor);
         PageChanged?.Invoke(this, EventArgs.Empty);
         OptionsChanged?.Invoke(this, EventArgs.Empty);
+        TellLinks();
     }
 
     // ----- Options
@@ -450,6 +461,12 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
     private void TellScreenReader()
     {
         if (AutomationPeer.ListenerExists(AutomationEvents.PropertyChanged) && UIElementAutomationPeer.FromElement(this) is PageSurfacePeer peer) peer.PageChanged();
+        TellLinks();
+    }
+
+    private void TellLinks()
+    {
+        if (UIElementAutomationPeer.FromElement(this) is PageSurfacePeer peer) peer.LinksChanged();
     }
 
     // ----- Layout pass

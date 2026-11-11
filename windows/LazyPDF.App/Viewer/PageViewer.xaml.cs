@@ -51,6 +51,8 @@ public partial class PageViewer : UserControl, IDocumentViewer
         Surface.ViewChanged += Surface_ViewChanged;
         Surface.Decorate = Decorate;
         Surface.PageText = page => LoadedText(page)?.Text;
+        Surface.PageLabel = PageLabel;
+        Surface.PageLinks = LinkTargets;
         InitInput();
         InitText();
         _toast.Tick += (_, _) => HideToast();

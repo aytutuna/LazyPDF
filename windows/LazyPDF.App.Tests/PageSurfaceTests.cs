@@ -1,6 +1,9 @@
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Windows;
+using System.Windows.Automation;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -593,6 +596,43 @@ public sealed class PageSurfaceTests
 
             Assert.Empty(failed);
             Assert.True(pending > 0);
+        });
+    }
+
+    [Fact]
+    public void ThePeerListsLinksAndFollowsThem()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(2);
+            int followed = 0;
+            surface.PageLinks = page => page == 0 ? [new LinkTarget(new Rect(50, 100, 100, 40), "Go to page 2", () => followed++, () => { })] : [];
+
+            var peer = UIElementAutomationPeer.CreatePeerForElement(surface);
+            var link = Assert.Single(peer.GetChildren());
+            Assert.Equal(AutomationControlType.Hyperlink, link.GetAutomationControlType());
+            Assert.Equal("Go to page 2", link.GetName());
+            Assert.True(link.IsKeyboardFocusable());
+
+            ((IInvokeProvider)link.GetPattern(PatternInterface.Invoke)).Invoke();
+            Dispatcher.CurrentDispatcher.Invoke(DispatcherPriority.Background, () => { });
+            Assert.Equal(1, followed);
+        });
+    }
+
+    [Fact]
+    public void ThePeerNamesThePageByItsLabelWhenItDiffers()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(3);
+            var peer = UIElementAutomationPeer.CreatePeerForElement(surface);
+            Assert.Equal(Loc.T("Page {0} of {1}", 1, 3), peer.GetName());
+
+            surface.PageLabel = page => new[] { "i", "ii", "1" }[page];
+            Assert.Equal(Loc.T("Page {0} ({1} of {2})", "i", 1, 3), peer.GetName());
+            surface.GoToPage(2);
+            Assert.Equal(Loc.T("Page {0} ({1} of {2})", "1", 3, 3), peer.GetName());
         });
     }
 }
