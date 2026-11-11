@@ -151,12 +151,20 @@ internal sealed partial class FillLayer
     private Slot? Push(FormField field, int index, Rect box, FormWidget widget)
     {
         var action = PdfActions.Read(_form.Document, widget.Dictionary["A"]);
-        if (action is not (GoToAction or UriAction or NamedAction or ResetFormAction)) return null;
+        string? unsupported = action switch
+        {
+            SubmitFormAction => Loc.T("It sends the form to a web address, which Lazy PDF does not do. Save the file and send it yourself."),
+            JavaScriptAction => Loc.T("It runs a script, which Lazy PDF does not do."),
+            LaunchAction or GoToRemoteAction => Loc.T("It opens another file or program, which Lazy PDF does not do."),
+            _ => null,
+        };
+        if (unsupported is null && action is not (GoToAction or UriAction or NamedAction or ResetFormAction)) return null;
         var button = new ToggleButton { Style = FieldStyles.Hit };
         button.Click += (_, _) =>
         {
             button.IsChecked = false;
-            if (action is ResetFormAction reset)
+            if (unsupported is not null) _unsupported(unsupported);
+            else if (action is ResetFormAction reset)
             {
                 IReadOnlyList<string>? names = reset.Fields.Count == 0 ? null
                     : (reset.Flags & 1) == 0 ? reset.Fields

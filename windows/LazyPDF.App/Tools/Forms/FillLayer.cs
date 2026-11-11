@@ -20,6 +20,7 @@ internal sealed partial class FillLayer
     private readonly Func<string, IReadOnlyList<string>, bool> _choose;
     private readonly Action<IReadOnlyList<string>?> _reset;
     private readonly Action<string> _sign;
+    private readonly Action<string> _unsupported;
     private readonly Dictionary<int, (Canvas Host, List<Slot> Slots)> _pages = [];
     private PdfForm _form = null!;
     private bool _canFill;
@@ -30,13 +31,14 @@ internal sealed partial class FillLayer
     /// <param name="choose">The same for the choices of a list box.</param>
     /// <param name="reset">Clears the named fields, or every field for null; what a Reset button on the page asks for.</param>
     /// <param name="sign">Opens signing with the named empty signature field chosen.</param>
-    public FillLayer(IDocumentViewer viewer, Func<string, string?, bool> enter, Func<string, IReadOnlyList<string>, bool> choose, Action<IReadOnlyList<string>?> reset, Action<string> sign)
+    public FillLayer(IDocumentViewer viewer, Func<string, string?, bool> enter, Func<string, IReadOnlyList<string>, bool> choose, Action<IReadOnlyList<string>?> reset, Action<string> sign, Action<string> unsupported)
     {
         _viewer = viewer;
         _enter = enter;
         _choose = choose;
         _reset = reset;
         _sign = sign;
+        _unsupported = unsupported;
     }
 
     public bool Highlight

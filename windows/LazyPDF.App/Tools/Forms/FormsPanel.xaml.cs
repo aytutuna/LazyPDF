@@ -57,7 +57,7 @@ public sealed partial class FormsPanel : ToolPanel
 
     protected override void OnAttach()
     {
-        _fill = new FillLayer(Viewer!, Enter, Choose, ResetFields, name => Host!.OpenSigning(name)) { Highlight = HighlightToggle.IsChecked == true };
+        _fill = new FillLayer(Viewer!, Enter, Choose, ResetFields, name => Host!.OpenSigning(name), text => Host!.ShowNotice(Loc.T("This button does nothing here"), text)) { Highlight = HighlightToggle.IsChecked == true };
         _frames = new FieldFrames(Viewer!);
         _tool = new FieldTool(this);
         Tab!.Changed += Tab_Changed;

@@ -3753,6 +3753,18 @@
   "Resetting the form": {
     "tr": "Form sıfırlanıyor"
   },
+  "This button does nothing here": {
+    "tr": "Bu düğme burada bir şey yapmaz"
+  },
+  "It sends the form to a web address, which Lazy PDF does not do. Save the file and send it yourself.": {
+    "tr": "Formu bir web adresine gönderir; Lazy PDF bunu yapmaz. Dosyayı kaydedip kendiniz gönderin."
+  },
+  "It runs a script, which Lazy PDF does not do.": {
+    "tr": "Bir komut dosyası çalıştırır; Lazy PDF bunu yapmaz."
+  },
+  "It opens another file or program, which Lazy PDF does not do.": {
+    "tr": "Başka bir dosyayı veya programı açar; Lazy PDF bunu yapmaz."
+  },
   "Script not run": {
     "tr": "Komut dosyası çalışmadı"
   },

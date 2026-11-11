@@ -2317,6 +2317,15 @@
   <data name="It is open in a new tab. Save it to keep it." xml:space="preserve">
     <value>Yeni bir sekmede açık. Saklamak için kaydedin.</value>
   </data>
+  <data name="It opens another file or program, which Lazy PDF does not do." xml:space="preserve">
+    <value>Başka bir dosyayı veya programı açar; Lazy PDF bunu yapmaz.</value>
+  </data>
+  <data name="It runs a script, which Lazy PDF does not do." xml:space="preserve">
+    <value>Bir komut dosyası çalıştırır; Lazy PDF bunu yapmaz.</value>
+  </data>
+  <data name="It sends the form to a web address, which Lazy PDF does not do. Save the file and send it yourself." xml:space="preserve">
+    <value>Formu bir web adresine gönderir; Lazy PDF bunu yapmaz. Dosyayı kaydedip kendiniz gönderin.</value>
+  </data>
   <data name="It shares its group with other content." xml:space="preserve">
     <value>Grubunu başka içerikle paylaşıyor.</value>
   </data>
@@ -5700,6 +5709,9 @@
   </data>
   <data name="This bookmark points to a page that is not in the file." xml:space="preserve">
     <value>Bu yer imi dosyada olmayan bir sayfayı gösteriyor.</value>
+  </data>
+  <data name="This button does nothing here" xml:space="preserve">
+    <value>Bu düğme burada bir şey yapmaz</value>
   </data>
   <data name="This certificate has no private key. Choose another one or sign with a token." xml:space="preserve">
     <value>Bu sertifikanın özel anahtarı yok. Başka bir sertifika seçin ya da bir belirteçle imzalayın.</value>
