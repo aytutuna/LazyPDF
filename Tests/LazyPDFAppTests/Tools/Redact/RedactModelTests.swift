@@ -186,7 +186,8 @@ final class RedactModelTests: XCTestCase {
         back.run()
 
         XCTAssertEqual(rig.host.notices.last?.title, "Marks removed")
-        XCTAssertTrue(model.marks.isEmpty)
+        XCTAssertEqual(model.marks.count, 1)
+        await waitUntil { model.marks.isEmpty }
     }
 
     func test_marksAreDroppedWhenThePagesMoveUnderThem() async throws {
