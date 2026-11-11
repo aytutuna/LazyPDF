@@ -2482,7 +2482,7 @@
     "tr": "Bu bağlantı başka bir dosyaya gidiyor; Lazy PDF onu buradan açmaz."
   },
   "This link runs a script or sends a form, which Lazy PDF does not do.": {
-    "tr": "Bu bağlantı bir komut dosyası çalıştırıyor veya form gönderiyor; Lazy PDF bunları yapmaz."
+    "tr": "Bu bağlantı bir betik çalıştırıyor veya form gönderiyor; Lazy PDF bunları yapmaz."
   },
   "This link cannot be followed.": {
     "tr": "Bu bağlantı izlenemiyor."
@@ -6293,7 +6293,7 @@
     "tr": "Bu türdekilerin hepsini işaretle"
   },
   "Whole pages": {
-    "tr": "Tüm sayfalar"
+    "tr": "Sayfanın tamamı"
   },
   "Pages to mark": {
     "tr": "İşaretlenecek sayfalar"
@@ -6305,7 +6305,7 @@
     "tr": "Bu sayfaları işaretle"
   },
   "Whole page": {
-    "tr": "Tüm sayfa"
+    "tr": "Sayfanın tamamı"
   },
   "{0} marks added. The page outlines are drawn for the first 300.": {
     "tr": "{0} işaret eklendi. Sayfa çerçeveleri ilk 300 sayfa için çizilir."
