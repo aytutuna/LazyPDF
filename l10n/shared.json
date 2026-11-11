@@ -5148,7 +5148,7 @@
   },
   "Stopped after {0} page. The page was kept. Undo takes it back.": {
     "other": "Stopped after {0} pages. The pages were kept. Undo takes them back.",
-    "tr": "{0} sayfadan sonra durduruldu. Sayfa korundu. Geri alma onu kaldırır."
+    "tr": "{0} sayfa okunduktan sonra durduruldu. Okunan sayfalar korundu; Geri al ile kaldırabilirsiniz."
   },
   "Language not available": {
     "tr": "Dil kullanılamıyor"
