@@ -216,6 +216,16 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.zoom, 1.25, accuracy: 1e-9)
     }
 
+    func test_goingBackToOnePageKeepsContinuousScrolling() throws {
+        let (viewer, _) = try open(pages: 3)
+        viewer.continuous = true
+        viewer.columns = 2
+
+        viewer.columns = 1
+
+        XCTAssertTrue(viewer.continuous)
+    }
+
     func test_aPinchZoomsAboutThePointAndTheZoomStepsKeepToTheUsualOnes() throws {
         let (viewer, _) = try open()
         viewer.zoom = 1

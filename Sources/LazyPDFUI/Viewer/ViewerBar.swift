@@ -96,8 +96,8 @@ struct ViewerBar: View {
                 }
             }
             Section {
-                Toggle(L10n.t("One page"), isOn: Binding(get: { viewer.columns == 1 && !viewer.continuous },
-                                                       set: { if $0 { viewer.columns = 1; viewer.continuous = false } }))
+                Toggle(L10n.t("One page"), isOn: Binding(get: { viewer.columns == 1 },
+                                                       set: { if $0 { viewer.columns = 1 } }))
                 Toggle(L10n.t("Scroll continuously"), isOn: $viewer.continuous)
                 Toggle(L10n.t("Two pages"), isOn: Binding(get: { viewer.columns == 2 }, set: { viewer.columns = $0 ? 2 : 1 }))
                 Toggle(L10n.t("Show cover page"), isOn: $viewer.coverPage).disabled(viewer.columns != 2)
