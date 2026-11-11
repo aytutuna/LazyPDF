@@ -169,6 +169,9 @@ public sealed class DocumentTab : ITab, IDisposable
     /// <summary>Takes the file as it is now for the one that was read.</summary>
     public void AcceptDiskState() => _disk = OnDisk;
 
+    /// <summary>Takes <paramref name="found"/>, a stamp already checked, so a write that came after it still shows.</summary>
+    public void AcceptDiskState(DiskStamp? found) => _disk = found;
+
     private bool Refreshed()
     {
         Refresh();

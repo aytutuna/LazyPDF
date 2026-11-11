@@ -429,7 +429,7 @@ public sealed partial class AppViewModel
         if (!ReferenceEquals(ActiveDocument, tab) || !Strip.Contains(tab) || !tab.IsChangedFrom(found)) return;
         if (touched)
         {
-            tab.AcceptDiskState();
+            tab.AcceptDiskState(found);
             return;
         }
         if (_warnedAboutDisk.TryGetValue(tab, out var seen) && seen == found) return;
