@@ -54,6 +54,18 @@ public sealed class RecipientSourceTests
     }
 
     [Fact]
+    public void ASigningOnlyCertificateIsRefused()
+    {
+        using var dir = new TempDir();
+        using var rsa = RSA.Create(2048);
+        var request = new CertificateRequest("CN=Signer", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.NonRepudiation, true));
+        string file = dir.File("sign.cer", request.CreateSelfSigned(DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddYears(1)).RawData);
+
+        Assert.Null(RecipientSource.FromFile(file));
+    }
+
+    [Fact]
     public void ADetailLineSaysWhoIssuedItAndUntilWhen()
     {
         using var dir = new TempDir();

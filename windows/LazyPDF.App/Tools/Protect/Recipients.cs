@@ -27,7 +27,7 @@ public static class RecipientSource
         try
         {
             var certificate = X509CertificateLoader.LoadCertificateFromFile(path);
-            return certificate.GetRSAPublicKey() is null ? null : new Recipient(WithStoredKey(certificate));
+            return !PdfRecipient.CanProtect(certificate) ? null : new Recipient(WithStoredKey(certificate));
         }
         catch (System.Security.Cryptography.CryptographicException)
         {
@@ -51,7 +51,7 @@ public static class RecipientSource
         }
     }
 
-    /// <summary>Your own certificates and the ones kept for other people, RSA only, valid ones first.</summary>
+    /// <summary>Your own certificates and the ones kept for other people, RSA keys that can encrypt only, valid ones first.</summary>
     public static IReadOnlyList<Recipient> FromStore()
     {
         var found = new Dictionary<string, Recipient>();
@@ -68,7 +68,7 @@ public static class RecipientSource
             }
             foreach (var certificate in store.Certificates)
             {
-                if (certificate.GetRSAPublicKey() is not null) found.TryAdd(certificate.Thumbprint, new Recipient(certificate));
+                if (PdfRecipient.CanProtect(certificate)) found.TryAdd(certificate.Thumbprint, new Recipient(certificate));
             }
         }
         return [.. found.Values.OrderBy(r => r.Expired).ThenBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase)];

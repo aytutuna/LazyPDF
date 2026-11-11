@@ -32,7 +32,7 @@ public struct Recipient: Identifiable {
 extension Recipient {
     init?(_ certificate: PdfCertificate) {
         let der = [UInt8](SecCertificateCopyData(certificate.certificate) as Data)
-        guard let x509 = X509Certificate(der), RecipientSource.hasRsaKey(certificate.certificate) else { return nil }
+        guard let x509 = X509Certificate(der), PdfRecipient.canProtect(certificate) else { return nil }
         thumbprint = x509.thumbprint
         name = x509.simpleName.isEmpty ? x509.subject : x509.simpleName
         issuer = x509.issuerSimpleName
@@ -50,11 +50,11 @@ extension Recipient {
 public enum RecipientSource {
     /// Reads a certificate file (DER or PEM). Nil when it is not one, or its key cannot lock a PDF.
     public static func fromFile(_ bytes: [UInt8]) -> Recipient? {
-        guard let der = derOf(bytes), let sec = SecCertificateCreateWithData(nil, Data(der) as CFData), hasRsaKey(sec) else { return nil }
+        guard let der = derOf(bytes), let sec = SecCertificateCreateWithData(nil, Data(der) as CFData) else { return nil }
         return Recipient(withStoredKey(sec))
     }
 
-    /// Your own certificates and the ones kept for other people, RSA only, valid ones first.
+    /// Your own certificates and the ones kept for other people, RSA keys that can encrypt only, valid ones first.
     public static func fromStore() -> [Recipient] {
         var found: [String: Recipient] = [:]
         for sec in identities().map(\.certificate) + stored() {
@@ -65,11 +65,6 @@ public enum RecipientSource {
             $0.expired(now: now) != $1.expired(now: now)
                 ? !$0.expired(now: now) : $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
         }
-    }
-
-    static func hasRsaKey(_ certificate: SecCertificate) -> Bool {
-        guard let key = SecCertificateCopyKey(certificate), let attributes = SecKeyCopyAttributes(key) as? [String: Any] else { return false }
-        return (attributes[kSecAttrKeyType as String] as? String) == (kSecAttrKeyTypeRSA as String)
     }
 
     // A certificate file carries no key; when the same certificate is in the person's keychain with its identity the key is there.
