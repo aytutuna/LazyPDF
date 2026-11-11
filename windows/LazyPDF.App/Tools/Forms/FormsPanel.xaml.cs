@@ -89,7 +89,7 @@ public sealed partial class FormsPanel : ToolPanel
         Viewer!.ViewChanged -= Viewer_ViewChanged;
         Viewer.PageChanged -= Viewer_PageChanged;
         Viewer.ModeChanged -= Viewer_ModeChanged;
-        _fill.Clear();
+        _fill!.Clear();
         _frames!.Clear();
         if (ReferenceEquals(Viewer.PointerTool, _tool)) Viewer.PointerTool = null;
         _loading = true;
