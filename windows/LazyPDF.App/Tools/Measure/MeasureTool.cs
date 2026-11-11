@@ -136,8 +136,12 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
     private async Task LoadSnapsAsync(int page)
     {
         if (!Snap || _snaps.ContainsKey(page) || !_loading.Add(page)) return;
+        var tab = viewer.Tab;
+        var document = tab?.Document;
         var text = await viewer.GetTextAsync(page);
+        var drawn = text is not null && tab is not null ? await Task.Run(() => Drawn(tab, page)) : [];
         _loading.Remove(page);
+        if (!ReferenceEquals(viewer.Tab, tab) || !ReferenceEquals(tab?.Document, document)) return;
         if (text is null)
         {
             _snaps[page] = [];
@@ -145,11 +149,11 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
         }
         var geometry = viewer.Geometry(page);
         var corners = text.Words.SelectMany(w => new[] { (w.Bounds.Left, w.Bounds.Bottom), (w.Bounds.Right, w.Bounds.Bottom), (w.Bounds.Left, w.Bounds.Top), (w.Bounds.Right, w.Bounds.Top) }).ToList();
-        if (viewer.Tab is { } tab) AddDrawn(corners, tab, page);
+        corners.AddRange(drawn);
         _snaps[page] = [.. corners.Select(c => geometry.ToDisplay(c.Item1, c.Item2)).Select(c => new Point(c.X, c.Y))];
     }
 
-    private static void AddDrawn(List<(double, double)> corners, DocumentTab tab, int page)
+    private static List<(double, double)> Drawn(DocumentTab tab, int page)
     {
         var drawn = new List<(double, double)>();
         try
@@ -175,8 +179,8 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
         }
         catch (Exception e) when (e is ArgumentException or InvalidOperationException or PdfReadException)
         {
-            return;
+            return [];
         }
-        corners.AddRange(drawn.Take(MaxDrawn));
+        return drawn.Take(MaxDrawn).ToList();
     }
 }
