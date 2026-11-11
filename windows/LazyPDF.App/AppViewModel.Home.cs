@@ -146,14 +146,15 @@ public sealed partial class AppViewModel
         NotifyAll();
     }
 
-    /// <summary>Opens what <see cref="RecoveryOffer"/> lists, as documents with unsaved changes.</summary>
-    public async Task RestoreAsync()
+    /// <summary>Opens what <see cref="RecoveryOffer"/> lists, as documents with unsaved changes. Entries not in <paramref name="chosen"/> are deleted.</summary>
+    public async Task RestoreAsync(IReadOnlySet<Guid>? chosen = null)
     {
         var offer = RecoveryOffer;
         RecoveryOffer = null;
         NotifyAll();
         foreach (var entry in offer ?? [])
         {
+            if (chosen is not null && !chosen.Contains(entry.Id)) continue;
             byte[] bytes;
             try
             {
@@ -178,6 +179,8 @@ public sealed partial class AppViewModel
             var source = new OpenSource(bytes, path, entry.Meta.Title, Made: false, Stamp: path is null ? null : stamp, ReadOnly: readOnly);
             await OpenAsync(new PendingOpen(source, entry.Id), password: null, certificate: null);
         }
+        if (chosen is null) return;
+        foreach (var entry in offer ?? []) if (!chosen.Contains(entry.Id)) _recovery.Delete(entry.Id);
     }
 
     public void DiscardRecovery()

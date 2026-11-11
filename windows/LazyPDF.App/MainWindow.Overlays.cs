@@ -200,13 +200,43 @@ public partial class MainWindow
             return;
         }
         RecoveryOverlay.Visibility = Visibility.Visible;
-        if (!_recoveryShown) RestoreButton.Focus();
-        _recoveryShown = true;
         RecoveryTitle.Text = Loc.Plural(offer.Count, "Restore {0} file?", "Restore {0} files?");
-        RecoveryList.Text = string.Join(Environment.NewLine, offer.Select(entry => entry.Meta.Title));
+        // The boxes are made once per offer, so a refresh does not undo what was unticked.
+        if (_recoveryShown) return;
+        _recoveryShown = true;
+        RecoveryList.Items.Clear();
+        foreach (var entry in offer)
+        {
+            string title = entry.Meta.Title;
+            var box = new CheckBox
+            {
+                IsChecked = true,
+                Tag = entry.Id,
+                Margin = new Thickness(0, 2, 0, 2),
+                ToolTip = title,
+                Content = new TextBlock { Text = $"{title} · {entry.Meta.Saved.LocalDateTime:g}", TextTrimming = TextTrimming.CharacterEllipsis },
+            };
+            AutomationProperties.SetName(box, title);
+            box.Checked += RecoveryBox_Changed;
+            box.Unchecked += RecoveryBox_Changed;
+            RecoveryList.Items.Add(box);
+        }
+        RecoveryBox_Changed(null, null!);
+        RestoreButton.Focus();
     }
 
-    private void Restore_Click(object sender, RoutedEventArgs e) => _ = _vm.RestoreAsync();
+    private void RecoveryBox_Changed(object? sender, RoutedEventArgs e)
+    {
+        int ticked = RecoveryList.Items.OfType<CheckBox>().Count(box => box.IsChecked == true);
+        RestoreButton.IsEnabled = ticked > 0;
+        RecoveryUntickedNote.Visibility = ticked < RecoveryList.Items.Count ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void Restore_Click(object sender, RoutedEventArgs e)
+    {
+        var chosen = RecoveryList.Items.OfType<CheckBox>().Where(box => box.IsChecked == true).Select(box => (Guid)box.Tag).ToHashSet();
+        _ = _vm.RestoreAsync(chosen);
+    }
 
     private void DiscardRecovery_Click(object sender, RoutedEventArgs e) => _vm.DiscardRecovery();
 

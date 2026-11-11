@@ -337,7 +337,10 @@
                                        AutomationProperties.HeadingLevel="Level1" />
                             <TextBlock Text="{loc:T Lazy PDF closed before these were saved. Restore them to carry on where you were.}"
                                        Style="{StaticResource BodyText}" TextWrapping="Wrap" Margin="0,0,0,8" />
-                            <TextBlock x:Name="RecoveryList" Style="{StaticResource SecondaryBodyText}" TextWrapping="Wrap" />
+                            <ScrollViewer MaxHeight="200" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsControl x:Name="RecoveryList" />
+                            </ScrollViewer>
+                            <TextBlock x:Name="RecoveryUntickedNote" Text="{loc:T Files you untick are removed.}" Style="{StaticResource ReasonText}" Margin="0,8,0,0" Visibility="Collapsed" />
                         </StackPanel>
                     </DockPanel>
                 </Border>

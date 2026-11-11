@@ -2107,6 +2107,9 @@
   <data name="Files you open show up here." xml:space="preserve">
     <value>Açtığınız dosyalar burada görünür.</value>
   </data>
+  <data name="Files you untick are removed." xml:space="preserve">
+    <value>İşaretini kaldırdığınız dosyalar kaldırılır.</value>
+  </data>
   <data name="Fill" xml:space="preserve">
     <value>Dolgu</value>
   </data>

@@ -1971,6 +1971,9 @@
   "Lazy PDF closed before these were saved. Restore them to carry on where you were.": {
     "tr": "Lazy PDF bunlar kaydedilmeden kapandı. Kaldığınız yerden devam etmek için geri yükleyin."
   },
+  "Files you untick are removed.": {
+    "tr": "İşaretini kaldırdığınız dosyalar kaldırılır."
+  },
   "Done": {
     "tr": "Bitti"
   },

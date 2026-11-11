@@ -123,6 +123,48 @@ public sealed class RecoveryFlowTests
     }
 
     [Fact]
+    public async Task OnlyTheChosenEntriesAreRestoredAndTheRestAreDeleted()
+    {
+        using var f = new ViewModelFixture();
+        Crash(f, "a.pdf", null);
+        Crash(f, "b.pdf", null);
+        f.Vm.CheckRecovery();
+        var keep = f.Vm.RecoveryOffer![0];
+
+        await f.Vm.RestoreAsync(new HashSet<Guid> { keep.Id });
+
+        Assert.Equal(keep.Meta.Title, Assert.Single(f.Vm.Documents).Title);
+        Assert.Equal(keep.Meta.Title, Assert.Single(new RecoveryStore(f.Dir.Sub("recovery")).List()).Meta.Title);
+    }
+
+    [Fact]
+    public async Task RestoringWithNoChoiceOpensEveryEntry()
+    {
+        using var f = new ViewModelFixture();
+        Crash(f, "a.pdf", null);
+        Crash(f, "b.pdf", null);
+        f.Vm.CheckRecovery();
+
+        await f.Vm.RestoreAsync(null);
+
+        Assert.Equal(2, f.Vm.Documents.Count());
+    }
+
+    [Fact]
+    public async Task RestoringAnEmptyChoiceDeletesEveryEntry()
+    {
+        using var f = new ViewModelFixture();
+        Crash(f, "a.pdf", null);
+        Crash(f, "b.pdf", null);
+        f.Vm.CheckRecovery();
+
+        await f.Vm.RestoreAsync(new HashSet<Guid>());
+
+        Assert.Empty(f.Vm.Documents);
+        Assert.Empty(new RecoveryStore(f.Dir.Sub("recovery")).List());
+    }
+
+    [Fact]
     public void DiscardingRemovesWhatWasLeft()
     {
         using var f = new ViewModelFixture();
