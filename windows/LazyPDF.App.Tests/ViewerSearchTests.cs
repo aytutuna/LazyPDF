@@ -367,6 +367,31 @@ public sealed class ViewerSearchTests
     }
 
     [Fact]
+    public async Task HitsBeforeTheStartPageDoNotCountTowardTheCap()
+    {
+        var search = Searching(Pdfs.Text(1200, "fox"), startPage: 200);
+
+        await search.Start("fox", new TextSearchOptions());
+
+        Assert.True(search.Capped);
+        Assert.Equal(200, search.Hits[search.Current].Page);
+    }
+
+    [Fact]
+    public void StoppingBeforeAnyHitAfterTheViewLeavesTheViewAlone()
+    {
+        var search = new ViewerSearch(() => new TaskCompletionSource<TextSource?>().Task, () => 5, action => action());
+        _ = search.Start("fox", new TextSearchOptions());
+        search.Hits.Add(HitOn(2));
+        int moves = 0;
+        search.CurrentChanged += (_, _) => moves++;
+
+        search.Stop();
+
+        Assert.Equal(0, moves);
+    }
+
+    [Fact]
     public async Task StoppingKeepsTheHitsAndDropsWhatComesAfter()
     {
         byte[] bytes = Pages(2);

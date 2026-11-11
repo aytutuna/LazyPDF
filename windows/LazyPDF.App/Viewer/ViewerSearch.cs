@@ -31,7 +31,7 @@ public sealed class ViewerSearch
     private const int Context = 32;
     private const int Batch = 25;
 
-    /// <summary>The most hits kept; a search that finds more stops there.</summary>
+    /// <summary>The most hits kept from the start page on; a search that finds more stops there.</summary>
     public const int MaxHits = 1000;
 
     private readonly Func<Task<TextSource?>> _source;
@@ -125,11 +125,6 @@ public sealed class ViewerSearch
         _cancel?.Cancel();
         Running = false;
         Stopped = true;
-        if (Current < 0 && Hits.Count > 0)
-        {
-            Current = 0;
-            if (!_quiet) MoveView();
-        }
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
@@ -219,12 +214,13 @@ public sealed class ViewerSearch
             {
                 var batch = new List<SearchHit>();
                 int count = 0;
+                int after = 0;
                 foreach (var match in source.Find(query, options, cancel))
                 {
                     count++;
                     batch.Add(new SearchHit(match, Around(source, match, -1), Around(source, match, 1)));
                     if (batch.Count >= Batch) Flush(batch, start, cancel);
-                    if (count >= MaxHits)
+                    if (match.Page >= start && ++after >= MaxHits)
                     {
                         capped = true;
                         break;
