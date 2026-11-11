@@ -237,6 +237,56 @@ final class SignatureVerificationTests: XCTestCase {
         XCTAssertEqual(report.verdict, .validButUntrusted)
     }
 
+    private func selfSigned(_ info: [UInt8], key: SecKey) throws -> X509Certificate {
+        let subject = X509Certificate.name("CN=Weak Signer")
+        let der = try CertificateBuilder.build(subject: subject, issuer: subject, publicKeyInfo: info, notBefore: Pki.notBefore,
+                                               notAfter: Pki.notAfter, serial: CertificateBuilder.serialNumber(),
+                                               extensions: [CertificateBuilder.keyUsage([.digitalSignature])], issuerKey: key)
+        return try XCTUnwrap(X509Certificate(der))
+    }
+
+    func test_anRsaKeyUnder2048BitsIsCalledWeak() throws {
+        let key = try SignatureCrypto.newRsaKey(1024)
+        let small = try selfSigned(try CertificateBuilder.publicKeyInfo(key), key: key)
+        small.privateKey = key
+        let file = try PdfSigner.sign(SignatureKit.plain(), PdfSignRequest(small, Pki.signing))
+
+        var options = VerifyOptions()
+        options.trustAnchors = [small]
+        let report = try single(PdfSignatureVerifier.verify(file, options))
+        XCTAssertTrue(report.problems.contains(.weakKey))
+        XCTAssertEqual(report.verdict, .validButUntrusted)
+    }
+
+    func test_rsa2048AndP256SignersAreNotCalledWeak() throws {
+        let rsa = try single(SignatureKit.verify(try signed()))
+        let ec = try single(SignatureKit.verify(try PdfSigner.sign(SignatureKit.plain(), {
+            var request = SignatureKit.request(pki)
+            request.certificate = pki.leafEc
+            return request
+        }())))
+
+        XCTAssertFalse(rsa.problems.contains(.weakKey))
+        XCTAssertFalse(ec.problems.contains(.weakKey))
+        XCTAssertEqual(ec.verdict, .valid)
+    }
+
+    func test_anEcdsaKeyOnASmallCurveIsCalledWeak() throws {
+        let key = try SignatureCrypto.newRsaKey(2048)
+        func certificate(_ curve: String) throws -> X509Certificate {
+            let algorithm = DerWriter.sequence([DerWriter.oid(Oids.ecPublicKey), DerWriter.oid(curve)])
+            return try selfSigned(DerWriter.sequence([algorithm, DerWriter.bitString([4] + [UInt8](repeating: 1, count: 40))]), key: key)
+        }
+
+        XCTAssertTrue(SignatureChecker.hasWeakKey(try certificate("1.3.132.0.1")))
+        XCTAssertTrue(SignatureChecker.hasWeakKey(try certificate("1.2.840.10045.3.1.1")))
+        XCTAssertFalse(SignatureChecker.hasWeakKey(try certificate("1.2.840.10045.3.1.7")))
+    }
+
+    func test_aWeakKeyHasItsOwnWords() {
+        XCTAssertNotEqual(SignatureText.title(.weakDigest), SignatureText.title(.weakKey))
+        XCTAssertNotEqual(SignatureText.advice(.weakDigest), SignatureText.advice(.weakKey))
+    }
     func test_aSignatureOverOtherBytesDoesNotVerifyWhoeverMadeIt() throws {
         let file = try signed { $0.format = .pkcs7Detached }
 

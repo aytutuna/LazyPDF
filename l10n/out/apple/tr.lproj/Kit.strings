@@ -156,6 +156,7 @@
 "Arrow" = "Ok";
 "Arrow keys move it. Enter places it. Escape cancels." = "Ok tuşları taşır. Enter yerleştirir. Esc iptal eder.";
 "Ask the signer to sign again with SHA-256." = "İmzalayandan SHA-256 ile yeniden imzalamasını isteyin.";
+"Ask the signer to sign again with an RSA key of 2048 bits or more, or an ECDSA key on P-256 or a stronger curve." = "İmzalayandan en az 2048 bitlik bir RSA anahtarıyla ya da P-256 veya daha güçlü bir eğri üzerinde bir ECDSA anahtarıyla yeniden imzalamasını isteyin.";
 "Ask the signer to sign again with the certificate included." = "İmzalayandan sertifikayı da ekleyerek yeniden imzalamasını isteyin.";
 "Asks the certificate servers for proof and stores it in the file." = "Sertifika sunucularından kanıt ister ve dosyaya kaydeder.";
 "At the end" = "Sona";
@@ -1440,6 +1441,7 @@
 "Signature not kept" = "İmza saklanamadı";
 "Signature on the page" = "Sayfadaki imza";
 "Signature uses a weak digest" = "İmza zayıf bir özet kullanıyor";
+"Signature uses a weak key" = "İmza zayıf bir anahtar kullanıyor";
 "Signature {0}" = "{0}. imza";
 "Signatures" = "İmzalar";
 "Signatures already in the file" = "Dosyadaki mevcut imzalar";

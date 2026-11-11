@@ -109,6 +109,7 @@ final class SignatureChecker {
         case .ok: break
         }
         if cms.digestOid == "1.3.14.3.2.26" { problems.append(.weakDigest) }
+        if Self.hasWeakKey(signer) { problems.append(.weakKey) }
 
         let extra = cms.certificates + dss.certificates
         var stamped: DateTimeOffset?
@@ -266,6 +267,28 @@ final class SignatureChecker {
         return (level, reference.number == signatureNumber)
     }
 
+    private static let smallCurves: Set<String> = [
+        "1.2.840.10045.3.1.1",
+        "1.3.132.0.1", "1.3.132.0.2", "1.3.132.0.3", "1.3.132.0.4", "1.3.132.0.5", "1.3.132.0.6", "1.3.132.0.7",
+        "1.3.132.0.8", "1.3.132.0.9", "1.3.132.0.15", "1.3.132.0.16", "1.3.132.0.24", "1.3.132.0.25", "1.3.132.0.28",
+        "1.3.132.0.29", "1.3.36.3.3.2.8.1.1.1", "1.3.36.3.3.2.8.1.1.3", "1.3.36.3.3.2.8.1.1.5",
+    ]
+
+    static func hasWeakKey(_ certificate: X509Certificate) -> Bool {
+        switch certificate.publicKeyAlgorithm {
+        case Oids.rsaEncryption, Oids.rsaPss:
+            var key = AsnReader(certificate.encodedKeyValue)
+            guard var numbers = try? key.readSequence(), let modulus = try? numbers.readInteger(),
+                  let top = modulus.magnitude.first else { return false }
+            return (modulus.magnitude.count - 1) * 8 + top.bitWidth - top.leadingZeroBitCount < 2048
+        case Oids.ecPublicKey:
+            var parameters = AsnReader(certificate.publicKeyParameters)
+            guard let curve = try? parameters.readObjectIdentifier() else { return false }
+            return smallCurves.contains(curve)
+        default:
+            return false
+        }
+    }
     private func fail(_ report: SignatureReport, _ verdict: SignatureVerdict, _ problem: SignatureProblem) -> SignatureReport {
         var result = report
         result.verdict = verdict

@@ -78,6 +78,7 @@ public enum SignatureText {
         case .damagedStructure: return L10n.t("File structure is damaged")
         case .timestampInvalid: return L10n.t("Time stamp is not valid")
         case .weakDigest: return L10n.t("Signature uses a weak digest")
+        case .weakKey: return L10n.t("Signature uses a weak key")
         }
     }
 
@@ -96,6 +97,7 @@ public enum SignatureText {
         case .damagedStructure: return L10n.t("Open the signed version from the file's history.")
         case .timestampInvalid: return L10n.t("Treat the signing time as the signer's claim.")
         case .weakDigest: return L10n.t("Ask the signer to sign again with SHA-256.")
+        case .weakKey: return L10n.t("Ask the signer to sign again with an RSA key of 2048 bits or more, or an ECDSA key on P-256 or a stronger curve.")
         }
     }
 

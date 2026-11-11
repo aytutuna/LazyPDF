@@ -66,6 +66,7 @@ public enum SignatureProblem {
     case damagedStructure
     case timestampInvalid
     case weakDigest
+    case weakKey
 }
 
 /// The digests that sign and the one a time stamp or a signature algorithm names (the C# HashAlgorithmName).
