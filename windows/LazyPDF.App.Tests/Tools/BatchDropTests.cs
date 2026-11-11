@@ -232,6 +232,47 @@ public sealed class BatchDropTests
         Assert.Equal(status, host.Statuses[^1]);
     });
 
+    [Fact]
+    public Task AFolderAddedDuringARunDoesNotTakeOverTheBusyState() => Sta.Run(async () =>
+    {
+        using var dir = new TempDir();
+        string file = dir.File("in\\a.pdf", Pdfs.Text());
+        var host = new RecordingHost();
+        var panel = new BatchPanel();
+        panel.AttachHost(host);
+        typeof(BatchPanel).GetField("_running", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(panel, true);
+
+        Assert.Equal([file], await panel.PdfsInAsync(dir.Sub("in"), false));
+        Assert.Equal(0, host.Busy);
+    });
+
+    [Fact]
+    public Task TheOpenPasswordSurvivesUnloadWhileAFolderIsWatched() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        var panel = new BatchPanel();
+        var set = Field<BatchSet>(panel, "_set");
+        set.Steps = [new() { Kind = BatchStepKind.Watermark, Text = "X" }];
+        set.WatchFolder = dir.Sub("in");
+        set.OutputFolder = dir.Sub("out");
+        panel.OpenPassword.Password = "secret";
+        Directory.CreateDirectory(set.WatchFolder);
+        panel.WatchToggle.IsChecked = true;
+        panel.WatchToggle.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+        panel.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
+        try
+        {
+            Assert.Equal("secret", panel.OpenPassword.Password);
+        }
+        finally
+        {
+            panel.StopWatching();
+        }
+        panel.RaiseEvent(new RoutedEventArgs(FrameworkElement.UnloadedEvent));
+        Assert.Equal("", panel.OpenPassword.Password);
+        return Task.CompletedTask;
+    });
+
     private static T Field<T>(BatchPanel panel, string name, T? value = null) where T : class
     {
         var field = typeof(BatchPanel).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!;
@@ -244,7 +285,13 @@ public sealed class BatchDropTests
         public List<Problem> Problems { get; } = [];
         public List<string> Statuses { get; } = [];
 
-        public Task RunBusyAsync(string text, Func<CancellationToken, Task> work) => work(CancellationToken.None);
+        public int Busy { get; private set; }
+
+        public Task RunBusyAsync(string text, Func<CancellationToken, Task> work)
+        {
+            Busy++;
+            return work(CancellationToken.None);
+        }
         public void ShowProblem(Problem problem) => Problems.Add(problem);
         public void ShowNotice(string title, string text, NoticeAction? action = null) { }
         public void SetStatus(string sentence) => Statuses.Add(sentence);

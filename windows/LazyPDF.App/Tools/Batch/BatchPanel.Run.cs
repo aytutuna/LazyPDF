@@ -108,6 +108,7 @@ public partial class BatchPanel
             List<string>? found = null;
             bool leftOut = false;
             if (Host is null) found = Walk(folder, recurse, results, out leftOut, CancellationToken.None);
+            else if (_running) (found, leftOut) = await Task.Run(() => (Walk(folder, recurse, results, out bool skipped, CancellationToken.None), skipped)); // the run owns the host's busy state
             else await Host.RunBusyAsync(Loc.T("Looking for PDFs"), async token =>
             {
                 var walked = await Task.Run(() => (Files: Walk(folder, recurse, results, out bool skipped, token), Skipped: skipped));
@@ -267,7 +268,11 @@ public partial class BatchPanel
         Host?.SetStatus(cancelled ? Loc.T("Cancelled.") : failed == 0 ? Loc.T("All files done") : Loc.Plural(failed, "{0} file failed", "{0} files failed"));
     }
 
-    private void Panel_Unloaded(object sender, RoutedEventArgs e) => ClearPassword();
+    // A watched folder and a run go on while another tool is open, and they need the password.
+    private void Panel_Unloaded(object sender, RoutedEventArgs e)
+    {
+        if (_watcher is null && !_running) ClearPassword();
+    }
 
     internal void ClearPassword() => OpenPassword.Clear();
 
