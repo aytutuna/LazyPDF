@@ -200,7 +200,7 @@
         <Border Grid.Row="2" x:Name="ToolStrip" BorderThickness="0,1,0,0" Padding="8,2,8,2" SizeChanged="ToolStrip_SizeChanged"
                 BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
             <DockPanel>
-                <Button DockPanel.Dock="Right" Style="{StaticResource SubtleButtonStyle}" Content="&#xE946;" Click="FileInfo_Click"
+                <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE946;" Click="FileInfo_Click"
                         ToolTip="{loc:T File information}" AutomationProperties.Name="{loc:T File information}" />
                 <StackPanel x:Name="GroupPanel" Orientation="Horizontal" AutomationProperties.Name="{loc:T Tools}" />
             </DockPanel>
