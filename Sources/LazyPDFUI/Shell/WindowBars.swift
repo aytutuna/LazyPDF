@@ -69,13 +69,13 @@ struct StatusBar: View {
                 if sizeClass != .compact, let size = sizeText(tab) {
                     Text(size).font(.callout).fixedSize().accessibilityLabel("\(L10n.t("Page size")) \(size)")
                 }
-                Text(page).font(.callout).fixedSize()
-                Text(zoom).font(.callout).fixedSize().accessibilityLabel("\(L10n.t("Zoom")) \(zoom)")
+                Text(page).font(.callout).lineLimit(1).layoutPriority(1)
+                Text(zoom).font(.callout).lineLimit(1).layoutPriority(1).accessibilityLabel("\(L10n.t("Zoom")) \(zoom)")
             }
             if vm.isBusy {
                 ProgressView()
                     .progressViewStyle(.linear)
-                    .frame(width: 160)
+                    .frame(minWidth: 40, maxWidth: 160)
                     .accessibilityLabel(L10n.t("Progress"))
                 Button {
                     vm.cancelBusy()
@@ -83,6 +83,8 @@ struct StatusBar: View {
                     Label(L10n.t("Cancel"), systemImage: "xmark")
                 }
                 .controlSize(.small)
+                .fixedSize()
+                .layoutPriority(2)
             }
         }
         .padding(.horizontal, 8)
