@@ -54,7 +54,8 @@ struct IOSRoot: View {
         let tab = vm.activeDocument
         let viewer = tab.map(shell.viewer(for:))
         return ViewerCommandState(actions: FileActions(vm: vm, commands: shell.commands), open: shell.commands.open,
-                                  hasDocument: tab != nil, canUndo: vm.canUndo, canRedo: vm.canRedo, viewer: viewer,
+                                  close: { if let tab { vm.requestClose(tab) } }, hasDocument: tab != nil,
+                                  canUndo: vm.canUndo, canRedo: vm.canRedo, viewer: viewer,
                                   canGoBack: viewer?.canGoBack ?? false, canGoForward: viewer?.canGoForward ?? false)
     }
 }
