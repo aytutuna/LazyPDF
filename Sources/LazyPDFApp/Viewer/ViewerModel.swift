@@ -70,6 +70,9 @@ public final class ViewerModel: DocumentViewer {
     /// Something drawn changed: a tile came, a highlight moved.
     @ObservationIgnored public var onRedraw: (() -> Void)?
 
+    /// False where the view moves its own pixels on a scroll and draws only the strip that comes into view.
+    @ObservationIgnored public var redrawsOnScroll = true
+
     /// A pointer tool was taken or given back, for a view that handles touches differently while one is set.
     @ObservationIgnored public var onToolChange: (() -> Void)?
 
@@ -217,7 +220,7 @@ public final class ViewerModel: DocumentViewer {
         }
     }
 
-    func apply(_ change: SurfaceChange) {
+    func apply(_ change: SurfaceChange, redraw: Bool = true) {
         if change.isEmpty { return }
         if change.contains(.view) {
             viewRevision += 1
@@ -230,7 +233,7 @@ public final class ViewerModel: DocumentViewer {
         if change.contains(.zoom) { noteZoomChange() }
         onScroll?()
         scheduleTiles()
-        onRedraw?()
+        if redraw { onRedraw?() }
     }
 
     /// The size of the area the pages show in and the device pixels in one point of it; a change refits a fitted zoom.
@@ -241,11 +244,17 @@ public final class ViewerModel: DocumentViewer {
 
     /// The scroll position the view has been moved to.
     public func scrollTo(x: Double, y: Double) {
-        apply(state.scrollTo(x: x, y: y))
+        let change = state.scrollTo(x: x, y: y)
+        apply(change, redraw: drawsAfterScroll(change))
     }
 
     public func scroll(by dx: Double, _ dy: Double) {
-        apply(state.scrollBy(dx, dy))
+        let change = state.scrollBy(dx, dy)
+        apply(change, redraw: drawsAfterScroll(change))
+    }
+
+    private func drawsAfterScroll(_ change: SurfaceChange) -> Bool {
+        redrawsOnScroll || !state.continuous || !change.isSubset(of: [.view, .page])
     }
 
     /// The pinch of a hand: the zoom grows by `factor` about `point` of the view.

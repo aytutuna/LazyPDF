@@ -897,4 +897,36 @@ final class ViewerModelTests: XCTestCase {
         _ = viewer.geometry(9)
         XCTAssertNil(viewer.link(at: 9, ViewPoint(10, 10)))
     }
+
+    func test_scrollingInTheContinuousLayoutRedrawsOnlyWhenAsked() throws {
+        let (viewer, _) = try open(pages: 5)
+        viewer.zoom = 2
+        var redraws = 0
+        viewer.onRedraw = { redraws += 1 }
+
+        viewer.redrawsOnScroll = false
+        viewer.scrollTo(x: 0, y: 200)
+        XCTAssertEqual(redraws, 0)
+        XCTAssertEqual(viewer.offset.y, 200, accuracy: 1e-9)
+
+        viewer.redrawsOnScroll = true
+        viewer.scrollTo(x: 0, y: 400)
+        XCTAssertEqual(redraws, 1)
+    }
+
+    func test_aPagedLayoutAndAZoomRedrawEvenWhenScrollingDoesNot() throws {
+        let (viewer, _) = try open(pages: 5)
+        viewer.redrawsOnScroll = false
+        viewer.zoom = 2
+        var redraws = 0
+        viewer.onRedraw = { redraws += 1 }
+
+        viewer.zoom = 3
+        XCTAssertGreaterThan(redraws, 0)
+
+        viewer.continuous = false
+        redraws = 0
+        viewer.scrollTo(x: 0, y: 200)
+        XCTAssertEqual(redraws, 1)
+    }
 }

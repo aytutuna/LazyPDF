@@ -180,6 +180,7 @@ final class PageScrollView: NSScrollView {
         documentView = pages
         contentView.postsBoundsChangedNotifications = true
         NotificationCenter.default.addObserver(self, selector: #selector(clipMoved), name: NSView.boundsDidChangeNotification, object: contentView)
+        viewer.redrawsOnScroll = false
         viewer.onScroll = { [weak self] in self?.follow() }
         viewer.onRedraw = { [weak self] in
             self?.pages.needsDisplay = true
