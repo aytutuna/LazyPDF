@@ -48,7 +48,7 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
             for (int i = 0; i < set.Steps.Count; i++)
             {
                 cancellation.ThrowIfCancellationRequested();
-                bytes = await ApplyAsync(set.Steps[i], i == set.Steps.Count - 1, bytes, now, notes, cancellation);
+                bytes = await ApplyAsync(set.Steps[i], i == set.Steps.Count - 1, bytes, now, name, notes, cancellation);
             }
             cancellation.ThrowIfCancellationRequested();
             CheckPdfA(set, bytes, notes);
@@ -134,7 +134,7 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
     internal static Problem ProtectNotLast() =>
         new(Loc.T("Protect must be the last step"), Loc.T("The steps after it could not read the locked file. Move Protect to the end."));
 
-    private async Task<byte[]> ApplyAsync(BatchStep step, bool last, byte[] bytes, DateTimeOffset now, List<string> notes, CancellationToken cancellation)
+    private async Task<byte[]> ApplyAsync(BatchStep step, bool last, byte[] bytes, DateTimeOffset now, string name, List<string> notes, CancellationToken cancellation)
     {
         switch (step.Kind)
         {
@@ -174,7 +174,7 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
             case BatchStepKind.Bates:
                 return Bates(step, bytes, notes);
             case BatchStepKind.PageNumbers:
-                return PageNumbers(step, bytes, notes);
+                return PageNumbers(step, bytes, now, name, notes);
             case BatchStepKind.Rotate:
                 return Rotate(step, bytes, notes);
             case BatchStepKind.Protect:
@@ -291,7 +291,7 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         return session.Current.ToArray();
     }
 
-    private byte[] PageNumbers(BatchStep step, byte[] bytes, List<string> notes)
+    private byte[] PageNumbers(BatchStep step, byte[] bytes, DateTimeOffset now, string name, List<string> notes)
     {
         if (step.Text.Trim().Length == 0)
             throw new StepFailed(new(Loc.T("Page number text is empty"), Loc.T("Type the text, for example {0}.", BatchStep.PageNumberText)));
@@ -308,6 +308,8 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
             Header = header ? band : new(),
             Footer = header ? new() : band,
             FontSize = Math.Clamp(step.FontSize, 6, 48),
+            Date = now,
+            FileName = name,
         };
         Stamp(session, notes, "Page numbers", stamper => stamper.AddHeaderFooter(spec));
         return session.Current.ToArray();

@@ -199,6 +199,19 @@ public sealed class BatchRunnerTests
     }
 
     [Fact]
+    public async Task PageNumbersFillInTheDateAndTheFileName()
+    {
+        using var dir = new TempDir();
+        var step = BatchStep.Of(BatchStepKind.PageNumbers);
+        step.Text = "{file} {date}";
+
+        var result = await Run(Runner(), dir.File("a.pdf", Pdfs.Text()), Set(dir, step));
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Contains("a.pdf 2026-03-09", TextOf(result.Output!, 0));
+    }
+
+    [Fact]
     public async Task PageNumbersWithNoTextFailWithWhatToDo()
     {
         using var dir = new TempDir();
