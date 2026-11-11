@@ -24,6 +24,12 @@ final class AppInfoTests: XCTestCase {
         XCTAssertEqual(AppInfo.licence, "PolyForm Noncommercial 1.0.0")
     }
 
+    func test_theAddressesAreUnderTheSharedSite() {
+        XCTAssertEqual(AppInfo.site, "https://alazy.app/pdf/")
+        XCTAssertEqual(AppInfo.privacyPage, "https://alazy.app/pdf/privacy.html")
+        XCTAssertTrue(AppInfo.privacyPage.hasPrefix(AppInfo.site))
+    }
+
     func test_theNoticesFileIsTheOneOfTheRepository() throws {
         let notices = try XCTUnwrap(AppInfo.notices(in: repository))
 

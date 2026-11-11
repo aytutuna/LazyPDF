@@ -3,8 +3,8 @@ import Foundation
 // Follows windows/LazyPDF.App/Services/AppInfo.cs: what the About screen shows.
 
 public enum AppInfo {
-    public static let site = "https://pdf.alazy.app"
-    public static let privacyPage = "https://pdf.alazy.app/privacy.html"
+    public static let site = "https://alazy.app/pdf/"
+    public static let privacyPage = "https://alazy.app/pdf/privacy.html"
     public static let supportAddress = "support@alazy.app"
     public static let noticesFile = "THIRD-PARTY-NOTICES.txt"
     public static let copyright = "Copyright (c) 2026 Aytu Tuna"

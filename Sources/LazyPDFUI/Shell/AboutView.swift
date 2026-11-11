@@ -53,7 +53,7 @@ struct AboutView: View {
                 .padding(.top, 8)
             HStack(spacing: 16) {
                 if let site = URL(string: AppInfo.site) {
-                    Link(site.host ?? AppInfo.site, destination: site)
+                    Link(((site.host ?? "") + site.path).trimmingCharacters(in: CharacterSet(charactersIn: "/")), destination: site)
                         .accessibilityLabel(L10n.t("Website"))
                 }
                 if let privacy = URL(string: AppInfo.privacyPage) {
