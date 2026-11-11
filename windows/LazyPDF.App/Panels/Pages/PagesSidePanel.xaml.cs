@@ -187,7 +187,7 @@ public partial class PagesSidePanel : ToolPanel
             _marked = (PageThumb)row.DataContext;
             _after = e.GetPosition(row).Y >= row.ActualHeight / 2;
         }
-        else if (Thumbs.Items.Count > 0)
+        else if (Thumbs.Items.Count > 0 && BelowLastRow(at.Y))
         {
             _marked = (PageThumb)Thumbs.Items[^1];
             _after = true;
@@ -202,24 +202,31 @@ public partial class PagesSidePanel : ToolPanel
         else if (at.Y > Thumbs.ActualHeight - 28) scroll.ScrollToVerticalOffset(scroll.VerticalOffset + 24);
     }
 
-    // The gap between two rows belongs to the row above it.
+    // The gap between two rows belongs to the row above it; the margins and the scrollbar belong to the row at the same height.
     private ListBoxItem? RowAt(Point at)
     {
-        foreach (double nudge in new[] { 0, -4, 4 })
+        foreach (double x in new[] { at.X, Thumbs.ActualWidth / 2 })
         {
-            if (Thumbs.InputHitTest(new Point(at.X, at.Y + nudge)) is DependencyObject hit
-                && ItemsControl.ContainerFromElement(Thumbs, hit) is ListBoxItem row) return row;
+            foreach (double nudge in new[] { 0, -4, 4 })
+            {
+                if (Thumbs.InputHitTest(new Point(x, at.Y + nudge)) is DependencyObject hit
+                    && ItemsControl.ContainerFromElement(Thumbs, hit) is ListBoxItem row) return row;
+            }
         }
         return null;
     }
+
+    private bool BelowLastRow(double y) =>
+        Thumbs.ItemContainerGenerator.ContainerFromIndex(Thumbs.Items.Count - 1) is ListBoxItem last
+        && y > last.TranslatePoint(new Point(0, last.ActualHeight), Thumbs).Y;
 
     private void Thumbs_DragLeave(object sender, DragEventArgs e) => Unmark();
 
     private void Thumbs_Drop(object sender, DragEventArgs e)
     {
-        int before = _marked is null ? Thumbs.Items.Count : _after ? _marked.Index + 1 : _marked.Index;
+        int before = _marked is null ? -1 : _after ? _marked.Index + 1 : _marked.Index;
         Unmark();
-        if (e.Data.GetData(PageDrag.Format) is List<int> pages && pages.Count > 0) MovePages(pages, before);
+        if (before >= 0 && e.Data.GetData(PageDrag.Format) is List<int> pages && pages.Count > 0) MovePages(pages, before);
         e.Handled = true;
     }
 
