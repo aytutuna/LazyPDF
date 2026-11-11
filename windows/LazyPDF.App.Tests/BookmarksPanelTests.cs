@@ -112,7 +112,11 @@ public sealed class BookmarksPanelTests
         return (tab, panel, tree, window);
     }
 
-    private static void Click(BookmarksSidePanel panel, string name) => ((Button)panel.FindName(name)).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+    private static void Click(BookmarksSidePanel panel, string name)
+    {
+        var target = (UIElement)panel.FindName(name);
+        target.RaiseEvent(new RoutedEventArgs(target is MenuItem ? MenuItem.ClickEvent : Button.ClickEvent));
+    }
 
     private static IEnumerable<TextBox> Boxes(DependencyObject at)
     {
@@ -232,7 +236,7 @@ public sealed class BookmarksPanelTests
         return Task.CompletedTask;
     });
 
-    private static bool Enabled(BookmarksSidePanel panel, string name) => ((Button)panel.FindName(name)).IsEnabled;
+    private static bool Enabled(BookmarksSidePanel panel, string name) => ((UIElement)panel.FindName(name)).IsEnabled;
 
     [Fact]
     public Task MovingUpSwapsWithThePreviousAndIsOneUndoStep() => Sta.Run(() =>
@@ -241,7 +245,7 @@ public sealed class BookmarksPanelTests
         using var _ = tab;
         ((BookmarkNode)tree.Items[2]!).IsSelected = true;
 
-        Click(panel, "MoveUpButton");
+        Click(panel, "MoveUpItem");
 
         Assert.Equal(["One", "Three", "Two"], Titles(tab));
         Assert.True(((BookmarkNode)tree.Items[1]!).IsSelected);
@@ -258,7 +262,7 @@ public sealed class BookmarksPanelTests
         using var _ = tab;
         ((BookmarkNode)tree.Items[0]!).IsSelected = true;
 
-        Click(panel, "MoveDownButton");
+        Click(panel, "MoveDownItem");
 
         Assert.Equal(["Two", "One", "Three"], Titles(tab));
         Assert.True(((BookmarkNode)tree.Items[1]!).IsSelected);
@@ -273,7 +277,7 @@ public sealed class BookmarksPanelTests
         using var _ = tab;
         ((BookmarkNode)tree.Items[1]!).IsSelected = true;
 
-        Click(panel, "IndentButton");
+        Click(panel, "IndentItem");
 
         Assert.Equal(["One", "Three"], Titles(tab));
         var parent = Outline.Read(tab.Document).Items[0];
@@ -282,10 +286,10 @@ public sealed class BookmarksPanelTests
         tree.UpdateLayout();
         var moved = (BookmarkNode)((BookmarkNode)tree.Items[0]!).Children[0];
         Assert.True(moved.IsSelected);
-        Assert.False(Enabled(panel, "IndentButton"));
-        Assert.True(Enabled(panel, "OutdentButton"));
+        Assert.False(Enabled(panel, "IndentItem"));
+        Assert.True(Enabled(panel, "OutdentItem"));
 
-        Click(panel, "OutdentButton");
+        Click(panel, "OutdentItem");
 
         Assert.Equal(["One", "Two", "Three"], Titles(tab));
         Assert.True(((BookmarkNode)tree.Items[1]!).IsSelected);
@@ -298,22 +302,22 @@ public sealed class BookmarksPanelTests
     });
 
     [Fact]
-    public Task ButtonsAreOffWhereTheMoveCannotGo() => Sta.Run(() =>
+    public Task MovesAreOffWhereTheyCannotGo() => Sta.Run(() =>
     {
         var (tab, panel, tree, window) = Edited("One", "Two", "Three");
         using var _ = tab;
-        Assert.False(Enabled(panel, "MoveUpButton"));
+        Assert.False(Enabled(panel, "MoveUpItem"));
 
         ((BookmarkNode)tree.Items[0]!).IsSelected = true;
-        Assert.False(Enabled(panel, "MoveUpButton"));
-        Assert.False(Enabled(panel, "IndentButton"));
-        Assert.False(Enabled(panel, "OutdentButton"));
-        Assert.True(Enabled(panel, "MoveDownButton"));
+        Assert.False(Enabled(panel, "MoveUpItem"));
+        Assert.False(Enabled(panel, "IndentItem"));
+        Assert.False(Enabled(panel, "OutdentItem"));
+        Assert.True(Enabled(panel, "MoveDownItem"));
 
         ((BookmarkNode)tree.Items[2]!).IsSelected = true;
-        Assert.False(Enabled(panel, "MoveDownButton"));
-        Assert.True(Enabled(panel, "MoveUpButton"));
-        Assert.True(Enabled(panel, "IndentButton"));
+        Assert.False(Enabled(panel, "MoveDownItem"));
+        Assert.True(Enabled(panel, "MoveUpItem"));
+        Assert.True(Enabled(panel, "IndentItem"));
         window.Close();
         return Task.CompletedTask;
     });

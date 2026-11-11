@@ -12,14 +12,6 @@
                     ToolTip="{loc:T Rename}" AutomationProperties.Name="{loc:T Rename}" />
             <Button x:Name="DeleteButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE74D;" Click="Delete_Click" IsEnabled="False"
                     ToolTip="{loc:T Delete (Del)}" AutomationProperties.Name="{loc:T Delete}" />
-            <Button x:Name="MoveUpButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE74A;" Click="MoveUp_Click" IsEnabled="False"
-                    ToolTip="{loc:T Move up}" AutomationProperties.Name="{loc:T Move up}" />
-            <Button x:Name="MoveDownButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE74B;" Click="MoveDown_Click" IsEnabled="False"
-                    ToolTip="{loc:T Move down}" AutomationProperties.Name="{loc:T Move down}" />
-            <Button x:Name="OutdentButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE290;" Click="Outdent_Click" IsEnabled="False"
-                    ToolTip="{loc:T Move out}" AutomationProperties.Name="{loc:T Move out}" />
-            <Button x:Name="IndentButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE291;" Click="Indent_Click" IsEnabled="False"
-                    ToolTip="{loc:T Move in}" AutomationProperties.Name="{loc:T Move in}" />
             <Button x:Name="ExpandAllButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE70D;" Click="ExpandAll_Click"
                     ToolTip="{loc:T Expand all}" AutomationProperties.Name="{loc:T Expand all}" />
             <Button x:Name="CollapseAllButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE70E;" Click="CollapseAll_Click"

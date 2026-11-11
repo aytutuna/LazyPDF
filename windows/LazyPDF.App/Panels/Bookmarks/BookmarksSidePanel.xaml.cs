@@ -108,10 +108,10 @@ public partial class BookmarksSidePanel : ToolPanel
         RenameButton.IsEnabled = RenameItem.IsEnabled = selected;
         DeleteButton.IsEnabled = DeleteItem.IsEnabled = selected;
         var (canUp, canDown, canOut, canIn) = Shifts(selected ? (BookmarkNode)Tree.SelectedItem : null);
-        MoveUpButton.IsEnabled = MoveUpItem.IsEnabled = canUp;
-        MoveDownButton.IsEnabled = MoveDownItem.IsEnabled = canDown;
-        OutdentButton.IsEnabled = OutdentItem.IsEnabled = canOut;
-        IndentButton.IsEnabled = IndentItem.IsEnabled = canIn;
+        MoveUpItem.IsEnabled = canUp;
+        MoveDownItem.IsEnabled = canDown;
+        OutdentItem.IsEnabled = canOut;
+        IndentItem.IsEnabled = canIn;
     }
 
     private (bool Up, bool Down, bool Out, bool In) Shifts(BookmarkNode? node)
