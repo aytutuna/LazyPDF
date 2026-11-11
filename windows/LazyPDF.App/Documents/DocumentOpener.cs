@@ -67,6 +67,8 @@ public sealed class DocumentOpener(IImageCodec codec, IFontSource fonts)
         try
         {
             using var handle = File.OpenHandle(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            if (GetFileInformationByHandleEx(handle, FileIdInfoClass, out var id, (uint)Marshal.SizeOf<FileIdInfo>()))
+                return id.FileId.Any(b => b != 0) ? $"{id.VolumeSerialNumber:x}:{Convert.ToHexString(id.FileId)}" : null;
             // Some file systems report an index of 0 for every file, which says nothing.
             return GetFileInformationByHandle(handle, out var info) && (info.FileIndexHigh | info.FileIndexLow) != 0
                 ? $"{info.VolumeSerialNumber}:{info.FileIndexHigh}:{info.FileIndexLow}"
@@ -92,6 +94,20 @@ public sealed class DocumentOpener(IImageCodec codec, IFontSource fonts)
         public uint FileIndexHigh;
         public uint FileIndexLow;
     }
+
+    private const int FileIdInfoClass = 18;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct FileIdInfo
+    {
+        public ulong VolumeSerialNumber;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+        public byte[] FileId;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetFileInformationByHandleEx(Microsoft.Win32.SafeHandles.SafeFileHandle file, int infoClass, out FileIdInfo info, uint size);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

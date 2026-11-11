@@ -134,6 +134,14 @@ public sealed class DocumentTab : ITab, IDisposable
         Saved();
     }
 
+    /// <summary>The file this tab holds was renamed or moved: follow it without touching the content.</summary>
+    public void MoveTo(string path)
+    {
+        _path = path;
+        _disk = DiskStamp.Of(path);
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
+    }
+
     /// <summary>Writes the file without its history to <paramref name="path"/> and goes on from that file.</summary>
     public void SaveCompact(string path)
     {

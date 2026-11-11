@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.Core;
 using Xunit;
@@ -44,6 +45,51 @@ public sealed class OneTabPerFileTests
         f.Vm.CancelPending();
 
         Assert.Null(f.Vm.PasswordRequest);
+    }
+
+    [Fact]
+    public async Task ALockedFileAskedForUnderAnotherSpellingAddsNoSecondQuestion()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Dir.File("locked.pdf", File.ReadAllBytes(Pdfs.Fixture("locked.pdf")));
+        string dir = Path.GetDirectoryName(path)!;
+        Directory.CreateDirectory(Path.Combine(dir, "sub"));
+        await f.Vm.OpenAsync(path);
+
+        await f.Vm.OpenAsync(Path.Combine(dir, "sub", "..", "locked.pdf"));
+        f.Vm.CancelPending();
+
+        Assert.Null(f.Vm.PasswordRequest);
+    }
+
+    [Fact]
+    public async Task AMovedFileOpenedAtItsNewPathMakesTheTabFollowIt()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        string moved = Path.Combine(Path.GetDirectoryName(path)!, "moved.pdf");
+        File.Move(path, moved);
+
+        await f.Vm.OpenAsync(moved);
+
+        Assert.Single(f.Vm.Documents);
+        Assert.Equal(moved, f.Vm.ActiveDocument!.Path);
+        Assert.Equal("File moved", f.Vm.Message?.Title);
+    }
+
+    [Fact]
+    public void TwoFilesHaveTwoIdsAndOneFileByTwoSpellingsHasOne()
+    {
+        using var f = new ViewModelFixture();
+        string a = f.Pdf();
+        string b = f.Pdf("b.pdf");
+        string dir = Path.GetDirectoryName(a)!;
+        Directory.CreateDirectory(Path.Combine(dir, "sub"));
+
+        Assert.NotNull(DocumentOpener.Identity(a));
+        Assert.NotEqual(DocumentOpener.Identity(a), DocumentOpener.Identity(b));
+        Assert.Equal(DocumentOpener.Identity(a), DocumentOpener.Identity(Path.Combine(dir, "sub", "..", Path.GetFileName(a))));
     }
 
     [Fact]

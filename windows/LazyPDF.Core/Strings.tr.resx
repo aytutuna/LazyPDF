@@ -1903,6 +1903,9 @@
   <data name="File made smaller" xml:space="preserve">
     <value>Dosya küçültüldü</value>
   </data>
+  <data name="File moved" xml:space="preserve">
+    <value>Dosya taşındı</value>
+  </data>
   <data name="File name" xml:space="preserve">
     <value>Dosya adı</value>
   </data>
@@ -7257,6 +7260,9 @@
   </data>
   <data name="{0} was moved or deleted. Save it again to keep your work." xml:space="preserve">
     <value>{0} taşınmış ya da silinmiş. Çalışmanızı korumak için yeniden kaydedin.</value>
+  </data>
+  <data name="{0} was moved. This tab now follows it." xml:space="preserve">
+    <value>{0} taşındı. Bu sekme artık onu izliyor.</value>
   </data>
   <data name="{0} was not handed over by the program that sent it, so Lazy PDF cannot read it. Open it from the File menu, or drop it on the window." xml:space="preserve">
     <value>{0} dosyası, onu gönderen program tarafından teslim edilmediği için Lazy PDF okuyamıyor. Dosya menüsünden açın ya da pencereye bırakın.</value>

@@ -87,9 +87,20 @@ public sealed partial class AppViewModel
             }
             if (source.FileId is not null && Documents.FirstOrDefault(d => d.FileId == source.FileId) is { } same)
             {
+                if (same.Path is { } old && !File.Exists(old))
+                {
+                    same.MoveTo(path);
+                    _recentFiles.Remove(old);
+                    _recentFiles.Add(path);
+                    Recent = BuildRecent();
+                    ActiveTab = same;
+                    ShowNotice(Loc.T("File moved"), Loc.T("{0} was moved. This tab now follows it.", same.Title));
+                    return;
+                }
                 ActiveTab = same;
                 return;
             }
+            if (source.FileId is not null && _pending.Any(p => p.Source.FileId == source.FileId)) return;
             await OpenAsync(new PendingOpen(source), password: null, certificate: null);
         }
         finally
