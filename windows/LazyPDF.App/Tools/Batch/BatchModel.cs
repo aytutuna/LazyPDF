@@ -11,6 +11,7 @@ public enum BatchStepKind
     Clean,
     Watermark,
     Bates,
+    PageNumbers,
     PdfA,
     Rotate,
 }
@@ -37,7 +38,7 @@ public sealed class BatchStep
 {
     public BatchStepKind Kind { get; set; }
 
-    /// <summary>The language tag of Ocr, the text of Watermark, the prefix of Bates.</summary>
+    /// <summary>The language tag of Ocr, the text of Watermark, the prefix of Bates, the format of PageNumbers.</summary>
     public string Text { get; set; } = "";
 
     public OptimizePreset Preset { get; set; } = OptimizePreset.Balanced;
@@ -61,6 +62,9 @@ public sealed class BatchStep
     /// <summary>The width of the watermark as a percentage of the page.</summary>
     public int Size { get; set; } = 60;
 
+    /// <summary>The size of the page numbers in points.</summary>
+    public int FontSize { get; set; } = 10;
+
     public StampAnchor Anchor { get; set; } = StampAnchor.Center;
 
     /// <summary>Clockwise degrees of Rotate: 90, 180 or 270.</summary>
@@ -76,12 +80,19 @@ public sealed class BatchStep
 
     public bool KeepAttachments { get; set; }
 
+    public const string PageNumberText = "Page {page} of {pages}";
+
     public BatchStep Copy() => (BatchStep)MemberwiseClone();
 
     public static BatchStep Of(BatchStepKind kind) => new()
     {
         Kind = kind,
-        Text = kind == BatchStepKind.Ocr ? OcrLanguageState.Read().Preferred()?.Tag ?? "en-US" : "",
+        Text = kind switch
+        {
+            BatchStepKind.Ocr => OcrLanguageState.Read().Preferred()?.Tag ?? "en-US",
+            BatchStepKind.PageNumbers => PageNumberText,
+            _ => "",
+        },
         KeepComments = kind == BatchStepKind.Clean,
         KeepForms = kind == BatchStepKind.Clean,
         KeepLinks = kind == BatchStepKind.Clean,

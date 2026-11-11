@@ -122,6 +122,8 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
                 return Watermark(step, bytes, notes);
             case BatchStepKind.Bates:
                 return Bates(step, bytes, notes);
+            case BatchStepKind.PageNumbers:
+                return PageNumbers(step, bytes, notes);
             case BatchStepKind.Rotate:
                 return Rotate(step, bytes, notes);
             default:
@@ -228,6 +230,28 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         };
         var run = Stamp(session, notes, "Bates numbers", stamper => stamper.AddHeaderFooter(spec));
         step.Start = run.NextBates;
+        return session.Current.ToArray();
+    }
+
+    private byte[] PageNumbers(BatchStep step, byte[] bytes, List<string> notes)
+    {
+        if (step.Text.Trim().Length == 0)
+            throw new StepFailed(new(Loc.T("Page number text is empty"), Loc.T("Type the text, for example {0}.", BatchStep.PageNumberText)));
+        var session = PdfEditSession.Open(bytes);
+        var band = step.Place switch
+        {
+            BatesPlace.FooterCenter or BatesPlace.HeaderCenter => new HeaderFooterBand(Center: step.Text),
+            BatesPlace.FooterLeft or BatesPlace.HeaderLeft => new HeaderFooterBand(Left: step.Text),
+            _ => new HeaderFooterBand(Right: step.Text),
+        };
+        bool header = step.Place >= BatesPlace.HeaderRight;
+        var spec = new HeaderFooterSpec
+        {
+            Header = header ? band : new(),
+            Footer = header ? new() : band,
+            FontSize = Math.Clamp(step.FontSize, 6, 48),
+        };
+        Stamp(session, notes, "Page numbers", stamper => stamper.AddHeaderFooter(spec));
         return session.Current.ToArray();
     }
 

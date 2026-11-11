@@ -3946,6 +3946,15 @@
   <data name="Page moved" xml:space="preserve">
     <value>Sayfa taşındı</value>
   </data>
+  <data name="Page number text" xml:space="preserve">
+    <value>Sayfa numarası metni</value>
+  </data>
+  <data name="Page number text is empty" xml:space="preserve">
+    <value>Sayfa numarası metni boş</value>
+  </data>
+  <data name="Page numbers" xml:space="preserve">
+    <value>Sayfa numaraları</value>
+  </data>
   <data name="Page one shows before the whole file has loaded." xml:space="preserve">
     <value>Dosyanın tamamı yüklenmeden ilk sayfa görünür.</value>
   </data>
@@ -7021,6 +7030,9 @@
   <data name="Type the text for at least one place." xml:space="preserve">
     <value>En az bir yer için metin yazın.</value>
   </data>
+  <data name="Type the text, for example {0}." xml:space="preserve">
+    <value>Metni yazın, örneğin {0}.</value>
+  </data>
   <data name="Type the watermark text in the step, then run again." xml:space="preserve">
     <value>Adıma filigran metnini yazın, sonra yeniden çalıştırın.</value>
   </data>
@@ -7122,6 +7134,9 @@
   </data>
   <data name="Use typed text instead" xml:space="preserve">
     <value>Bunun yerine yazılan metni kullan</value>
+  </data>
+  <data name="Use {0} and {1}." xml:space="preserve">
+    <value>{0} ve {1} kullanın.</value>
   </data>
   <data name="Use {0} and {1}. A name that is taken gets a number." xml:space="preserve">
     <value>{0} ve {1} kullanın. Alınmış bir ada numara eklenir.</value>
@@ -8085,6 +8100,9 @@
   </data>
   <data name="{0}, page {1}" xml:space="preserve">
     <value>{0}, sayfa {1}</value>
+  </data>
+  <data name="{0}, printed on the pages" xml:space="preserve">
+    <value>{0}, sayfalara basılır</value>
   </data>
   <data name="{0}, unsaved changes" xml:space="preserve">
     <value>{0}, kaydedilmemiş değişiklikler</value>

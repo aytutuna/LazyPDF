@@ -54,6 +54,7 @@ public partial class BatchPanel : ToolPanel
         InitializeComponent();
         Summary.Text = ToolCatalog.Find("batch")?.Summary;
         TemplateHint.Text = Loc.T("Use {0}, {1} and {2}. A name that is taken gets a number.", "{name}", "{n}", "{date}");
+        PageTextHint.Text = Loc.T("Use {0} and {1}.", "{page}", "{pages}");
         TemplateBox.Text = _set.NameTemplate;
         LogList.ItemsSource = _log;
         FillChoices();

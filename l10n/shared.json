@@ -4593,6 +4593,12 @@
   "Bates numbers": {
     "tr": "Bates numaraları"
   },
+  "Page numbers": {
+    "tr": "Sayfa numaraları"
+  },
+  "{0}, printed on the pages": {
+    "tr": "{0}, sayfalara basılır"
+  },
   "Small": {
     "tr": "Küçük"
   },
@@ -4661,6 +4667,12 @@
   },
   "Text before the number": {
     "tr": "Numaradan önceki metin"
+  },
+  "Page number text": {
+    "tr": "Sayfa numarası metni"
+  },
+  "Use {0} and {1}.": {
+    "tr": "{0} ve {1} kullanın."
   },
   "Digits": {
     "tr": "Basamak"
@@ -4790,6 +4802,12 @@
   },
   "Type the watermark text in the step, then run again.": {
     "tr": "Adıma filigran metnini yazın, sonra yeniden çalıştırın."
+  },
+  "Page number text is empty": {
+    "tr": "Sayfa numarası metni boş"
+  },
+  "Type the text, for example {0}.": {
+    "tr": "Metni yazın, örneğin {0}."
   },
   "No font for the text": {
     "tr": "Metin için yazı tipi yok"

@@ -117,6 +117,15 @@
                             <TextBox x:Name="StartBox" AutomationProperties.Name="{loc:T First number}" TextChanged="Setting_Changed" />
                         </StackPanel>
                     </Grid>
+                </StackPanel>
+                <StackPanel x:Name="PageNumbersEditor">
+                    <TextBlock Text="{loc:T Text}" Style="{StaticResource FieldLabelText}" />
+                    <TextBox x:Name="PageTextBox" AutomationProperties.Name="{loc:T Page number text}" TextChanged="Setting_Changed" />
+                    <TextBlock x:Name="PageTextHint" Style="{StaticResource ReasonText}" Margin="0,4,0,8" />
+                    <TextBlock Text="{loc:T Size}" Style="{StaticResource FieldLabelText}" />
+                    <TextBox x:Name="PageSizeBox" AutomationProperties.Name="{loc:T Size in points}" TextChanged="Setting_Changed" />
+                </StackPanel>
+                <StackPanel x:Name="PlaceEditor">
                     <TextBlock Text="{loc:T Place}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,0" />
                     <ComboBox x:Name="PlaceBox" AutomationProperties.Name="{loc:T Where the number goes}" SelectionChanged="Setting_Changed" />
                 </StackPanel>

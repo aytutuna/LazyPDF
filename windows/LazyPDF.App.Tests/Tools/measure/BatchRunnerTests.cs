@@ -185,6 +185,48 @@ public sealed class BatchRunnerTests
     }
 
     [Fact]
+    public async Task PageNumbersArePrintedOnThePages()
+    {
+        using var dir = new TempDir();
+        var step = BatchStep.Of(BatchStepKind.PageNumbers);
+        var set = Set(dir, step);
+
+        var result = await Run(Runner(), dir.File("a.pdf", Pdfs.Text(3)), set);
+
+        Assert.True(result.Ok, result.Detail);
+        Assert.Contains("Page 2 of 3", TextOf(result.Output!, 1));
+    }
+
+    [Fact]
+    public async Task PageNumbersWithNoTextFailWithWhatToDo()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.PageNumbers, Text = " " });
+
+        var result = await Run(Runner(), dir.File("a.pdf", Pdfs.Text()), set);
+
+        Assert.False(result.Ok);
+        Assert.Equal("Page number text is empty", result.Title);
+    }
+
+    [Fact]
+    public void APageNumbersStepSurvivesASavedSet()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.PageNumbers, Text = "{page}/{pages}", Place = BatesPlace.HeaderCenter, FontSize = 14 });
+        set.Name = "Numbers";
+        var store = new BatchSetStore(dir.Path);
+
+        store.Save(set);
+
+        var step = store.Load().Single().Steps.Single();
+        Assert.Equal(BatchStepKind.PageNumbers, step.Kind);
+        Assert.Equal("{page}/{pages}", step.Text);
+        Assert.Equal(BatesPlace.HeaderCenter, step.Place);
+        Assert.Equal(14, step.FontSize);
+    }
+
+    [Fact]
     public async Task PagesThatArePicturesGetATextLayer()
     {
         using var dir = new TempDir();

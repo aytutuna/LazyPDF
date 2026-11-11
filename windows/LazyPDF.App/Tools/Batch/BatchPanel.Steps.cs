@@ -20,6 +20,7 @@ public partial class BatchPanel
         BatchStepKind.Clean => Loc.T("Clean for sharing"),
         BatchStepKind.Watermark => Loc.T("Watermark"),
         BatchStepKind.Bates => Loc.T("Bates numbers"),
+        BatchStepKind.PageNumbers => Loc.T("Page numbers"),
         BatchStepKind.Rotate => Loc.T("Rotate pages"),
         _ => Loc.T("PDF/A"),
     };
@@ -39,6 +40,7 @@ public partial class BatchPanel
             ? Loc.T("Keeps some private data") : Loc.T("Removes hidden and private data"),
         BatchStepKind.Watermark => step.Text.Length == 0 ? Loc.T("No text yet") : step.Text,
         BatchStepKind.Bates => Loc.T("Starts at {0}", new BatesSpec(step.Text, step.Suffix, step.Digits, step.Start).Format(step.Start)),
+        BatchStepKind.PageNumbers => Loc.T("{0}, printed on the pages", step.Text),
         BatchStepKind.Rotate => TurnDetail(step),
         _ => step.Level.Name(),
     };
@@ -119,6 +121,8 @@ public partial class BatchPanel
         PresetEditor.Visibility = Show(step.Kind == BatchStepKind.Compress);
         WatermarkEditor.Visibility = Show(step.Kind == BatchStepKind.Watermark);
         BatesEditor.Visibility = Show(step.Kind == BatchStepKind.Bates);
+        PageNumbersEditor.Visibility = Show(step.Kind == BatchStepKind.PageNumbers);
+        PlaceEditor.Visibility = Show(step.Kind is BatchStepKind.Bates or BatchStepKind.PageNumbers);
         LevelEditor.Visibility = Show(step.Kind == BatchStepKind.PdfA);
         RotateEditor.Visibility = Show(step.Kind == BatchStepKind.Rotate);
 
@@ -134,6 +138,8 @@ public partial class BatchPanel
         AngleBox.Text = step.Angle.ToString(CultureInfo.CurrentCulture);
         SizeBox.Text = step.Size.ToString(CultureInfo.CurrentCulture);
         AnchorBox.SelectedIndex = (int)step.Anchor;
+        PageTextBox.Text = step.Text;
+        PageSizeBox.Text = step.FontSize.ToString(CultureInfo.CurrentCulture);
         PrefixBox.Text = step.Text;
         SuffixBox.Text = step.Suffix;
         PlaceBox.SelectedIndex = (int)step.Place;
@@ -246,6 +252,11 @@ public partial class BatchPanel
                 if (PlaceBox.SelectedItem is ComboBoxItem { Tag: BatesPlace place }) step.Place = place;
                 if (int.TryParse(DigitsBox.Text, CultureInfo.CurrentCulture, out int digits)) step.Digits = Math.Clamp(digits, 1, 18);
                 if (long.TryParse(StartBox.Text, CultureInfo.CurrentCulture, out long start) && start >= 0) step.Start = start;
+                break;
+            case BatchStepKind.PageNumbers:
+                step.Text = PageTextBox.Text;
+                if (Number(PageSizeBox, 6, 48, out int fontSize)) step.FontSize = fontSize;
+                if (PlaceBox.SelectedItem is ComboBoxItem { Tag: BatesPlace pagePlace }) step.Place = pagePlace;
                 break;
             case BatchStepKind.Rotate:
                 if (TurnBox.SelectedItem is ComboBoxItem { Tag: int turn }) step.Turn = turn;
