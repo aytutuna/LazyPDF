@@ -59,4 +59,11 @@ final class FilterBuffer {
     func toArray() -> [UInt8] {
         bytes
     }
+
+    // Doubles like the array would, but never past the cap plus one.
+    private func grow(_ needed: Int) {
+        if needed > bytes.capacity {
+            bytes.reserveCapacity(Swift.min(Swift.max(needed, bytes.capacity * 2), max + 1))
+        }
+    }
 }

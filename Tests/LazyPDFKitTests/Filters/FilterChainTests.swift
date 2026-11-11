@@ -108,8 +108,8 @@ final class FilterChainTests: XCTestCase {
         assertProblem(.unsupported, try PdfFilters.decode(stored, filter, nil, 1_000_000))
     }
 
-    func test_defaultCapIsOneGibibyte() {
-        XCTAssertEqual(PdfFilters.defaultMaxSize, 1 << 30)
+    func test_defaultCapIs256Mebibytes() {
+        XCTAssertEqual(PdfFilters.defaultMaxSize, 256 << 20)
     }
 
     func test_bombThroughTwoFiltersStillStops() throws {

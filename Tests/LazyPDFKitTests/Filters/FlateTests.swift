@@ -121,4 +121,23 @@ final class FlateTests: XCTestCase {
         XCTAssertFalse(try Flate.inflate(bytes, 0, output))
         XCTAssertEqual(output.count, 65536)
     }
+
+    func test_zeroBombPastTheDefaultCapIsRefused() {
+        let packed = PdfFilterEncoders.flate([UInt8](repeating: 0, count: 300 << 20))
+        XCTAssertThrowsError(try PdfFilters.decode(packed, name("FlateDecode"), nil)) { error in
+            let e = error as? PdfReadException
+            XCTAssertEqual(e?.problem, .unsupported)
+            XCTAssertEqual(e?.message, "A stream expands past the size limit.")
+        }
+    }
+
+    func test_largeZeroStreamUnderTheCapDecodesWhole() throws {
+        let packed = PdfFilterEncoders.flate([UInt8](repeating: 0, count: 64 << 20))
+        XCTAssertEqual(try PdfFilters.decode(packed, name("FlateDecode"), nil).count, 64 << 20)
+    }
+
+    func test_kibibyteCapStillStops() {
+        let packed = PdfFilterEncoders.flate([UInt8](repeating: 0, count: 4096))
+        assertProblem(.unsupported, try PdfFilters.decode(packed, name("FlateDecode"), nil, 1024))
+    }
 }

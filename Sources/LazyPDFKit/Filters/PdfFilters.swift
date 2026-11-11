@@ -23,7 +23,7 @@ public struct PdfDecodedStream {
 /// The stream filters (ISO 32000-1 7.4) and the predictors that go with Flate and LZW.
 public enum PdfFilters {
     /// The most a filter chain may expand to unless the caller says otherwise.
-    public static let defaultMaxSize = 1 << 30
+    public static let defaultMaxSize = 256 << 20
 
     private static let maxColors = 1 << 16
 
