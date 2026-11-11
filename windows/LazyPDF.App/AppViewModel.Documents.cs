@@ -209,6 +209,7 @@ public sealed partial class AppViewModel
             tab.PageIndex = Math.Min(was.PageIndex, tab.PageCount - 1);
             tab.Zoom = was.Zoom;
             tab.Fit = was.Fit;
+            tab.Rotation = was.Rotation;
         }
         tab.ReadOnly = source.ReadOnly;
         ActiveTab = tab;

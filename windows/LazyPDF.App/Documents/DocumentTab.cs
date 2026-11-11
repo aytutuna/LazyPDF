@@ -81,6 +81,9 @@ public sealed class DocumentTab : ITab, IDisposable
     /// <summary>How the viewer's zoom follows the window; none while a zoom of its own is set.</summary>
     public LazyPDF.App.Viewer.FitMode Fit { get; set; }
 
+    /// <summary>The viewer's rotation in degrees, 0, 90, 180 or 270.</summary>
+    public int Rotation { get; set; }
+
     /// <summary>The file was read with the read-only attribute, so saving needs a new name; cleared once the tab has a file of its own.</summary>
     public bool ReadOnly { get; set; }
 

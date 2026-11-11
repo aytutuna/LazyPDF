@@ -224,6 +224,23 @@ public sealed class DiskChangeTests
     }
 
     [Fact]
+    public async Task TheNewVersionKeepsThePageAndRotationOfTheOldOne()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        var old = f.Vm.ActiveDocument!;
+        old.PageIndex = 1;
+        old.Rotation = 90;
+        Touch(path, Pdfs.Text(pages: 3));
+
+        await f.Vm.ReloadAsync(old);
+
+        Assert.Equal(1, f.Vm.ActiveDocument!.PageIndex);
+        Assert.Equal(90, f.Vm.ActiveDocument.Rotation);
+    }
+
+    [Fact]
     public async Task ReloadingTheActiveTabTellsTheWindowAboutTheNewOne()
     {
         using var f = new ViewModelFixture();

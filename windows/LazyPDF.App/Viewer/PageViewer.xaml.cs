@@ -65,6 +65,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         {
             _tab.Changed -= Tab_Changed;
             _states.AddOrUpdate(_tab, new ViewState(Surface.Rotation, Surface.TopPlace()));
+            _tab.Rotation = Surface.Rotation;
         }
         EndPointerTool();
         _tab = tab;
@@ -76,7 +77,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         Search.Clear();
         ViewState? state = null;
         if (tab is not null) _states.TryGetValue(tab, out state);
-        Surface.Show(tab, state?.Rotation ?? 0);
+        Surface.Show(tab, state?.Rotation ?? tab?.Rotation ?? 0);
         if (state?.Place is { } place) Surface.GoToPage(place.Page, place.Point, keepX: true);
         if (tab is not null)
         {
@@ -107,6 +108,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
     private void StoreZoom(DocumentTab tab)
     {
         tab.Fit = Surface.Fit;
+        tab.Rotation = Surface.Rotation;
         tab.Zoom = Surface.Fit == FitMode.None ? Surface.Zoom : 0;
     }
 
