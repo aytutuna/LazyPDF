@@ -50,6 +50,16 @@ public sealed partial class FormsPanel
     internal void PickIn(int page, Rect area) =>
         Pick([.. FormEdits.Widgets(Form, page, BoxOf).Where(w => w.Box.IntersectsWith(area)).Select(w => (w.Name, w.Index, w.Ordinal))]);
 
+    // A reload can remove what was picked, as an undo does.
+    private void DropGone(PdfForm form)
+    {
+        var kept = FormEdits.Existing(form, _picked);
+        if (kept.Count == _picked.Count) return;
+        var primary = (_selected ?? "", _selectedIndex, _selectedOrdinal);
+        _picked = kept;
+        (_selected, _selectedIndex, _selectedOrdinal) = kept.Contains(primary) ? primary : kept.Count == 0 ? (null, 0, 0) : kept.Last();
+    }
+
     private FormField? SelectedField(PdfForm form) => _selected is null ? null : form.FindAll(_selected).ElementAtOrDefault(_selectedOrdinal);
 
     internal (int Page, Rect Box)? SelectedBox()

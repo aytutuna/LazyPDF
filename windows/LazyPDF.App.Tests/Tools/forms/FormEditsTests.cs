@@ -152,6 +152,16 @@ public sealed class FormEditsTests
     }
 
     [Fact]
+    public void PickedWidgetsThatAreGoneAreLeftOut()
+    {
+        var form = FormPdfs.Read(FormPdfs.Tab());
+
+        var kept = FormEdits.Existing(form, [("name", 0, 0), ("plan", 1, 0), ("plan", 5, 0), ("gone", 0, 0), ("name", 0, 1)]);
+
+        Assert.Equal([("name", 0, 0), ("plan", 1, 0)], kept.OrderBy(k => k.Name));
+    }
+
+    [Fact]
     public void TextIsCutAtTheLongestTheFieldTakes()
     {
         using var tab = FormPdfs.Tab();

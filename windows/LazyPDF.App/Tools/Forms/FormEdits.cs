@@ -140,6 +140,10 @@ internal static class FormEdits
             form.Remove(WidgetOf(form, name, index, ordinal));
     }
 
+    /// <summary>The picked widgets the form still has.</summary>
+    public static HashSet<(string Name, int Index, int Ordinal)> Existing(PdfForm form, IEnumerable<(string Name, int Index, int Ordinal)> picked) =>
+        [.. picked.Where(p => form.FindAll(p.Name).ElementAtOrDefault(p.Ordinal)?.Widgets.ElementAtOrDefault(p.Index) is not null)];
+
     private static FormWidget WidgetOf(PdfForm form, string name, int index, int ordinal) =>
         form.FindAll(name).ElementAtOrDefault(ordinal)?.Widgets.ElementAtOrDefault(index) ?? throw new InvalidOperationException(FormText.NotAField);
 

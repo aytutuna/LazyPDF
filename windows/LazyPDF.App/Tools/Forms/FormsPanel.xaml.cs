@@ -93,7 +93,9 @@ public sealed partial class FormsPanel : ToolPanel
         _fill.Clear();
         _frames!.Clear();
         if (ReferenceEquals(Viewer.PointerTool, _tool)) Viewer.PointerTool = null;
+        _loading = true;
         FieldList.ItemsSource = null;
+        _loading = false;
         FoundList.ItemsSource = null;
         _rows = [];
         _fill = null;
@@ -153,6 +155,7 @@ public sealed partial class FormsPanel : ToolPanel
         if (Designing)
         {
             _fill!.Clear();
+            DropGone(form);
             ShowDesign(form);
         }
         else
