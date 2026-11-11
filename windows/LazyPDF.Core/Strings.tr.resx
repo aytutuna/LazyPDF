@@ -3052,6 +3052,9 @@
   <data name="Nothing to open" xml:space="preserve">
     <value>Açılacak bir şey yok</value>
   </data>
+  <data name="Nothing to place" xml:space="preserve">
+    <value>Yerleştirilecek bir şey yok</value>
+  </data>
   <data name="Nothing to report" xml:space="preserve">
     <value>Raporlanacak bir şey yok</value>
   </data>

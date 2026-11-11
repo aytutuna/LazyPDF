@@ -102,8 +102,10 @@ public sealed class FillSignPlacementTests
             using var tab = NewTab();
 
             Assert.Throws<InvalidOperationException>(() => FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "Çağrı", 12, DateTimeOffset.Now));
+            tab.Session.Discard();
 
             Assert.False(tab.IsDirty);
+            Assert.Empty(PdfAnnotations.ReadAll(tab.Document));
         });
     }
 

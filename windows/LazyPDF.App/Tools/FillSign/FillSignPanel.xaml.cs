@@ -147,7 +147,14 @@ public partial class FillSignPanel : ToolPanel
         }
         catch (InvalidOperationException error)
         {
+            tab.Session.Discard();
             Host!.ShowProblem(new Problem(Loc.T("Text cannot be drawn"), error.Message));
+            return;
+        }
+        catch (ArgumentException error)
+        {
+            tab.Session.Discard();
+            Host!.ShowProblem(new Problem(Loc.T("Nothing to place"), error.Message));
             return;
         }
         Host!.SetStatus(Loc.T("Placed on page {0}.", page + 1));
