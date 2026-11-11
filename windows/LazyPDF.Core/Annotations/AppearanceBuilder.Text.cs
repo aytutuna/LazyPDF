@@ -114,8 +114,9 @@ internal sealed partial class AppearanceBuilder
     private PdfDrawFont FontFor(TextFormat format, List<string> texts, Dictionary<(string, FontStyles), PdfDrawFont> cache)
     {
         if (cache.TryGetValue((format.Family, format.Style), out var known)) return known;
-        var font = Embedder.Add(format.Family, format.Style, texts) ?? Embedder.Add("Helvetica", format.Style, texts)
+        var font = Embedder.AddCovering(format.Family, format.Style, texts) ?? Embedder.Add("Helvetica", format.Style, texts)
             ?? throw new InvalidOperationException(AnnotationText.NoFont);
+        _undrawn.UnionWith(font.Missing);
         cache[(format.Family, format.Style)] = font;
         return font;
     }

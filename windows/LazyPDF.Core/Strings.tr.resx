@@ -3442,6 +3442,9 @@
   <data name="No font on this computer can draw the text. Remove the letters it cannot show." xml:space="preserve">
     <value>Bu bilgisayardaki hiçbir yazı tipi metni çizemiyor. Gösteremediği harfleri kaldırın.</value>
   </data>
+  <data name="No installed font has these characters, so they are left blank: {0}" xml:space="preserve">
+    <value>Yüklü hiçbir yazı tipinde bu karakterler yok, bu yüzden boş bırakıldı: {0}</value>
+  </data>
   <data name="No page could be tagged. Scans need text recognition first. Pages that share content cannot be tagged." xml:space="preserve">
     <value>Hiçbir sayfa etiketlenemedi. Taramalar için önce metin tanıma gerekir. İçerik paylaşan sayfalar etiketlenemez.</value>
   </data>

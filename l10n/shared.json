@@ -197,6 +197,9 @@
   "No font can draw this text. Choose another font.": {
     "tr": "Hiçbir yazı tipi bu metni çizemiyor. Başka bir yazı tipi seçin."
   },
+  "No installed font has these characters, so they are left blank: {0}": {
+    "tr": "Yüklü hiçbir yazı tipinde bu karakterler yok, bu yüzden boş bırakıldı: {0}"
+  },
   "Note": {
     "tr": "Not"
   },

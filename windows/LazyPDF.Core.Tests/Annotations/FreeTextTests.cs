@@ -49,6 +49,37 @@ public class FreeTextTests
         Reopen(document);
     }
 
+    private sealed class CjkSource(bool covering) : IFontSource
+    {
+        public FontFile? Find(string family, FontStyles style)
+        {
+            string fonts = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+            string file = covering && family == "Microsoft YaHei" ? "msyh.ttc" : "arial.ttf";
+            return new FontFile(File.ReadAllBytes(Path.Combine(fonts, file)));
+        }
+    }
+
+    [Fact]
+    public void TextTheFontLacksIsDrawnInAFallbackFont()
+    {
+        var (document, writer, page) = Start(new CjkSource(covering: true));
+        var box = writer.AddFreeText(page, new PdfRect(100, 600, 400, 640), "中文 text", new FreeTextStyle("Arial", 14));
+        Assert.Equal("中文 text", Draw(document, box).Text);
+        var font = Assert.Single(Fonts(document, box));
+        Assert.Contains("YaHei", document.Name(font, "BaseFont"));
+        Assert.Equal("", writer.TakeUndrawn());
+    }
+
+    [Fact]
+    public void CharactersNoFontHasAreReportedOnce()
+    {
+        var (document, writer, page) = Start(new CjkSource(covering: false));
+        var box = writer.AddFreeText(page, new PdfRect(100, 600, 400, 640), "文中文", new FreeTextStyle("Arial", 14));
+        Assert.Equal("中文", writer.TakeUndrawn());
+        Assert.Equal("", writer.TakeUndrawn());
+        Assert.Equal("Type0", document.Name(Assert.Single(Fonts(document, box)), "Subtype"));
+    }
+
     [Fact]
     public void TurkishTextWithoutAFontSourceSaysSo()
     {

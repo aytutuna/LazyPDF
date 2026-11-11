@@ -11,6 +11,12 @@ public sealed partial class PdfAnnotationWriter(PdfDocument document, IFontSourc
 {
     private readonly AppearanceBuilder _appearance = new(document, fonts);
 
+    /// <summary>
+    /// The characters that no installed font could draw in the free text, stamps and redraws since the last
+    /// call, once each in code point order; they are left blank. Clears them.
+    /// </summary>
+    public string TakeUndrawn() => _appearance.TakeUndrawn();
+
     private PdfDictionary NewAnnotation(string subtype, PdfRect rect, AnnotationInfo? info, double[]? color, double opacity = 1)
     {
         var d = new PdfDictionary

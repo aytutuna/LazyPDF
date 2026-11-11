@@ -155,6 +155,49 @@ public class PdfFontEmbedderTests
         Assert.Equal([0x4E2D], font.Missing);
     }
 
+    private sealed class CjkViaArial(bool covering) : IFontSource
+    {
+        public FontFile? Find(string family, FontStyles style)
+        {
+            string fonts = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+            if (family == "Arial" && covering) return new FontFile(File.ReadAllBytes(Path.Combine(fonts, "msyh.ttc")));
+            return family is "Foo" or "Arial" ? new FontFile(File.ReadAllBytes(Path.Combine(fonts, "arial.ttf"))) : null;
+        }
+    }
+
+    private static int Type0Count(PdfDocument document) =>
+        document.ObjectNumbers.Count(n => document.Get(n) is PdfDictionary d && document.Name(d, "Subtype") == "Type0");
+
+    [Fact]
+    public void AddCoveringFallsBackToAFontThatHasTheCharacters()
+    {
+        var document = Blank();
+        int before = Type0Count(document), objects = document.ObjectNumbers.Count;
+        var font = new PdfFontEmbedder(document, new CjkViaArial(covering: true)).AddCovering("Foo", FontStyles.Regular, ["a中"])!;
+        Assert.Empty(font.Missing);
+        Assert.Equal(before + 1, Type0Count(document));
+        Assert.Contains("YaHei", ((PdfName)((PdfDictionary)document.Resolve(font.Reference)!)["BaseFont"]!).Value);
+        Assert.True(document.ObjectNumbers.Count - objects < 12, "only the chosen font is added");
+    }
+
+    [Fact]
+    public void AddCoveringWithNothingCoveringKeepsTheLeastMissing()
+    {
+        var document = Blank();
+        int before = Type0Count(document);
+        var font = new PdfFontEmbedder(document, new CjkViaArial(covering: false)).AddCovering("Foo", FontStyles.Regular, ["a中"])!;
+        Assert.Equal([0x4E2D], font.Missing);
+        Assert.Equal(before + 1, Type0Count(document));
+    }
+
+    [Fact]
+    public void AddCoveringKeepsTheStandardFontForTextThatFits()
+    {
+        var document = Blank();
+        var font = new PdfFontEmbedder(document, new CjkViaArial(covering: true)).AddCovering("Arial", FontStyles.Regular, ["Hello"])!;
+        Assert.False(font.IsEmbedded);
+    }
+
     [Fact]
     public void EachCallAddsItsOwnFont()
     {

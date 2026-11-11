@@ -2,6 +2,8 @@ namespace LazyPDF.Core;
 
 public static class AnnotationText
 {
+    public static string Undrawn(string characters) => Loc.T("No installed font has these characters, so they are left blank: {0}", characters);
+
     public static string NoFont => Loc.T("No font can draw this text. Choose another font.");
 
     public static string KindName(AnnotationType type) => type switch

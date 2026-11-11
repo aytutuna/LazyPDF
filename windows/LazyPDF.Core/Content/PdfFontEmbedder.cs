@@ -31,6 +31,9 @@ public sealed class PdfFontEmbedder(PdfDocument document, IFontSource? source = 
 {
     private static readonly Dictionary<int, int> WinAnsiCodes = BuildWinAnsi();
 
+    private static readonly string[] FallbackFamilies =
+        ["Arial", "Segoe UI", "Microsoft YaHei", "Yu Gothic", "Malgun Gothic", "Arial Unicode MS", "PingFang SC", "Hiragino Sans", "Apple SD Gothic Neo"];
+
     /// <summary>
     /// A font that can draw <paramref name="texts"/>, or null when none can: no file from the source,
     /// a file that cannot be embedded, or a font file wanted and no source given.
@@ -52,6 +55,27 @@ public sealed class PdfFontEmbedder(PdfDocument document, IFontSource? source = 
         var built = EmbeddedFontBuilder.Build(file.Data, all, out _, file.CollectionIndex);
         if (built is null || TrueTypeFont.TryParse(file.Data, file.CollectionIndex) is not { } measure) return null;
         return new PdfDrawFont(AddType0(built), built, measure);
+    }
+
+    /// <summary>
+    /// Like <see cref="Add"/>, but for text the family has no glyphs for it tries <see cref="FallbackFamilies"/> and
+    /// takes the first font that covers all of it, else the one that misses least. One font draws the whole text.
+    /// Only the font chosen is added to the document; check <see cref="PdfDrawFont.Missing"/> on it.
+    /// </summary>
+    public PdfDrawFont? AddCovering(string family, FontStyles style, IEnumerable<string> texts)
+    {
+        var all = texts.ToList();
+        if (FindStandard(family, style) is { IsSymbolic: false } && all.All(Fits)) return Add(family, style, all);
+        (EmbeddedFont Built, TrueTypeFont Measure)? best = null;
+        foreach (string name in FallbackFamilies.Prepend(family).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            if (source?.Find(name, style) is not { } file) continue;
+            var built = EmbeddedFontBuilder.Build(file.Data, all, out _, file.CollectionIndex);
+            if (built is null || TrueTypeFont.TryParse(file.Data, file.CollectionIndex) is not { } measure) continue;
+            if (best is null || built.Missing.Count < best.Value.Built.Missing.Count) best = (built, measure);
+            if (built.Missing.Count == 0) break;
+        }
+        return best is { } chosen ? new PdfDrawFont(AddType0(chosen.Built), chosen.Built, chosen.Measure) : null;
     }
 
     private static Standard14? FindStandard(string family, FontStyles style)
