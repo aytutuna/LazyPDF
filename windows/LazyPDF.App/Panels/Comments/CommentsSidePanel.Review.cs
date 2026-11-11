@@ -95,6 +95,7 @@ public partial class CommentsSidePanel
         }
         var dialog = new SaveFileDialog
         {
+            Title = Loc.T("Save summary of the comments"),
             Filter = Loc.T("Text files") + "|*.txt",
             DefaultExt = ".txt",
             AddExtension = true,
@@ -105,7 +106,9 @@ public partial class CommentsSidePanel
         try
         {
             File.WriteAllText(dialog.FileName, CommentSummary.Text(tab.Title, comments, viewer.PageLabel));
-            host.SetStatus(Loc.T("Summary saved."));
+            host.SetStatus(comments.Count < _all.Count
+                ? Loc.T("Summary of {0} of {1} comments saved.", comments.Count, _all.Count)
+                : Loc.T("Summary saved."));
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {

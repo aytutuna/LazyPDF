@@ -4276,6 +4276,9 @@
   <data name="Save set" xml:space="preserve">
     <value>Kümeyi kaydet</value>
   </data>
+  <data name="Save summary of the comments" xml:space="preserve">
+    <value>Yorumların özetini kaydedin</value>
+  </data>
   <data name="Save the comments as an FDF or XFDF file." xml:space="preserve">
     <value>Yorumları FDF veya XFDF dosyası olarak kaydedin.</value>
   </data>
@@ -4827,6 +4830,9 @@
   </data>
   <data name="Subject" xml:space="preserve">
     <value>Konu</value>
+  </data>
+  <data name="Summary of {0} of {1} comments saved." xml:space="preserve">
+    <value>{1} yorumdan {0} tanesinin özeti kaydedildi.</value>
   </data>
   <data name="Summary saved." xml:space="preserve">
     <value>Özet kaydedildi.</value>

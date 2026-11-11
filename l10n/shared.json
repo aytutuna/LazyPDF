@@ -2604,6 +2604,12 @@
   "Summary saved.": {
     "tr": "Özet kaydedildi."
   },
+  "Summary of {0} of {1} comments saved.": {
+    "tr": "{1} yorumdan {0} tanesinin özeti kaydedildi."
+  },
+  "Save summary of the comments": {
+    "tr": "Yorumların özetini kaydedin"
+  },
   "Text not drawn": {
     "tr": "Metin çizilemedi"
   },
