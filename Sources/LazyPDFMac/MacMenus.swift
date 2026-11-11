@@ -24,6 +24,7 @@ struct MacMenus: Commands {
             Menu(L10n.t("Open Recent")) {
                 ForEach(vm.recent, id: \.url) { item in
                     Button(item.name) {
+                        shell.showWindow()
                         Task {
                             await vm.openRecent(item)
                             if vm.tab(of: item.url) != nil { NSDocumentController.shared.noteNewRecentDocumentURL(item.url) }
@@ -44,7 +45,7 @@ struct MacMenus: Commands {
                 if let tab = vm.activeDocument { vm.requestClose(tab) } else { NSApp.keyWindow?.performClose(nil) }
             }
             .keyboardShortcut("w")
-            .disabled(!free)
+            .disabled(!free || (vm.activeDocument == nil && !vm.documents.isEmpty))
             Divider()
             Button(L10n.t("Save"), action: actions.save)
                 .keyboardShortcut("s")
@@ -104,13 +105,13 @@ struct MacMenus: Commands {
         }
         CommandGroup(replacing: .appInfo) {
             Button(L10n.t("About Lazy PDF")) {
-                NSApp.activate(ignoringOtherApps: true)
+                shell.showWindow()
                 NotificationCenter.default.post(name: .showAbout, object: nil)
             }
         }
         CommandGroup(replacing: .appSettings) {
             Button(L10n.t("Settings…")) {
-                NSApp.activate(ignoringOtherApps: true)
+                shell.showWindow()
                 NotificationCenter.default.post(name: .showSettings, object: nil)
             }
             .keyboardShortcut(",")

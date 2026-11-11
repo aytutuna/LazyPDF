@@ -489,10 +489,12 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
                 Button("") { vm.cycleTab(1) }
                     .keyboardShortcut("]", modifiers: [.command, .shift])
             }
-            Button("") {
-                if let tab = vm.activeDocument { requestClose(tab) }
+            if !inMenu {
+                Button("") {
+                    if let tab = vm.activeDocument { requestClose(tab) }
+                }
+                .keyboardShortcut("w")
             }
-            .keyboardShortcut("w")
         }
         .disabled(frozen)
         .opacity(0)

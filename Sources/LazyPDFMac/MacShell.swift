@@ -92,6 +92,7 @@ final class MacShell {
 
     /// Opens each file with the access its url carries; a url from a panel, a drop or Open With needs none of its own.
     func open(_ urls: [URL]) {
+        if !urls.isEmpty { showWindow() }
         Task {
             for url in urls {
                 await vm.openOrHold(url, access: SecurityScopedAccess.start(url))
