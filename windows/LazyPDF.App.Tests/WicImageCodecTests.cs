@@ -60,6 +60,17 @@ public sealed class WicImageCodecTests
     }
 
     [Fact]
+    public void TiffAndBmpCarryTheExportResolution()
+    {
+        foreach (var bytes in new[] { Codec.EncodeTiff(Gradient(64, 48), 300), Codec.EncodeBmp(Gradient(64, 48), 300) })
+        {
+            using var stream = new MemoryStream(bytes);
+            var frame = BitmapDecoder.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad).Frames[0];
+            Assert.InRange(frame.DpiX, 299.9, 300.1);
+        }
+    }
+
+    [Fact]
     public void ABmpIsMadeAndReadBack()
     {
         byte[] bmp = Codec.EncodeBmp(Gradient(64, 48));

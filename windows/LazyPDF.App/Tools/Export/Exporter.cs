@@ -93,7 +93,7 @@ public static class Exporter
     {
         if (source.Renderer.Render(page, options.Dpi) is not { } image) return null;
         var codec = source.Codec as WicImageCodec ?? new WicImageCodec();
-        return codec.Encode(image, options.Picture, options.Colour, options.Quality);
+        return codec.Encode(image, options.Picture, options.Colour, options.Quality, options.Dpi);
     }
 
     // A JPEG has no 1-bit form.

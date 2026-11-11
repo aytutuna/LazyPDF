@@ -37,11 +37,11 @@ public sealed class WicImageCodec : IImageCodec
         return Encode(new JpegBitmapEncoder { QualityLevel = Math.Clamp(quality, 1, 100) }, image);
     }
 
-    public byte[] EncodeTiff(PdfRgbaImage image) => Encode(image, PictureFormat.Tiff, PictureColour.Colour, 0);
+    public byte[] EncodeTiff(PdfRgbaImage image, int dpi = 96) => Encode(image, PictureFormat.Tiff, PictureColour.Colour, 0, dpi);
 
-    public byte[] EncodeBmp(PdfRgbaImage image) => Encode(image, PictureFormat.Bmp, PictureColour.Colour, 0);
+    public byte[] EncodeBmp(PdfRgbaImage image, int dpi = 96) => Encode(image, PictureFormat.Bmp, PictureColour.Colour, 0, dpi);
 
-    public byte[] Encode(PdfRgbaImage image, PictureFormat format, PictureColour colour, int quality)
+    public byte[] Encode(PdfRgbaImage image, PictureFormat format, PictureColour colour, int quality, int dpi = 96)
     {
         BitmapEncoder encoder = format switch
         {
@@ -50,10 +50,10 @@ public sealed class WicImageCodec : IImageCodec
             PictureFormat.Bmp => new BmpBitmapEncoder(),
             _ => new PngBitmapEncoder(),
         };
-        return Encode(encoder, ToSource(image, colour));
+        return Encode(encoder, ToSource(image, colour, dpi));
     }
 
-    private static byte[] Encode(BitmapEncoder encoder, PdfRgbaImage image) => Encode(encoder, OverWhite(image));
+    private static byte[] Encode(BitmapEncoder encoder, PdfRgbaImage image) => Encode(encoder, OverWhite(image, 96));
 
     private static byte[] Encode(BitmapEncoder encoder, BitmapSource source)
     {
@@ -75,9 +75,9 @@ public sealed class WicImageCodec : IImageCodec
         return new PdfRgbaImage(width, height, pixels);
     }
 
-    private static BitmapSource ToSource(PdfRgbaImage image, PictureColour colour)
+    private static BitmapSource ToSource(PdfRgbaImage image, PictureColour colour, int dpi)
     {
-        var bgr = OverWhite(image);
+        var bgr = OverWhite(image, dpi);
         if (colour == PictureColour.Colour) return bgr;
         int width = image.Width, height = image.Height, stride = width * 3;
         var pixels = new byte[stride * height];
@@ -87,7 +87,7 @@ public sealed class WicImageCodec : IImageCodec
         BitmapSource result;
         if (colour == PictureColour.Grayscale)
         {
-            result = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, gray, width);
+            result = BitmapSource.Create(width, height, dpi, dpi, PixelFormats.Gray8, null, gray, width);
         }
         else
         {
@@ -96,14 +96,14 @@ public sealed class WicImageCodec : IImageCodec
             for (int y = 0; y < height; y++)
                 for (int x = 0; x < width; x++)
                     if (gray[y * width + x] >= 128) bits[y * row + x / 8] |= (byte)(0x80 >> (x % 8));
-            result = BitmapSource.Create(width, height, 96, 96, PixelFormats.BlackWhite, null, bits, row);
+            result = BitmapSource.Create(width, height, dpi, dpi, PixelFormats.BlackWhite, null, bits, row);
         }
         result.Freeze();
         return result;
     }
 
     // These formats have no alpha: what is see-through goes onto white, as it would on paper.
-    private static BitmapSource OverWhite(PdfRgbaImage image)
+    private static BitmapSource OverWhite(PdfRgbaImage image, int dpi)
     {
         var bgr = new byte[image.Width * image.Height * 3];
         for (int i = 0, o = 0; i < image.Rgba.Length; i += 4, o += 3)
@@ -111,7 +111,7 @@ public sealed class WicImageCodec : IImageCodec
             int alpha = image.Rgba[i + 3];
             for (int c = 0; c < 3; c++) bgr[o + c] = (byte)((image.Rgba[i + 2 - c] * alpha + 255 * (255 - alpha) + 127) / 255);
         }
-        var bitmap = BitmapSource.Create(image.Width, image.Height, 96, 96, PixelFormats.Bgr24, null, bgr, image.Width * 3);
+        var bitmap = BitmapSource.Create(image.Width, image.Height, dpi, dpi, PixelFormats.Bgr24, null, bgr, image.Width * 3);
         bitmap.Freeze();
         return bitmap;
     }
