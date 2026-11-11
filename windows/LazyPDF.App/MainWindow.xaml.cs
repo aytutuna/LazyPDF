@@ -68,15 +68,6 @@ public partial class MainWindow : Window
         Width = bounds.Width;
         Height = bounds.Height;
         if (saved?.Maximized == true) WindowState = WindowState.Maximized;
-        Closed += (_, _) =>
-        {
-            var normal = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
-            bool maximized = WindowState == WindowState.Maximized;
-            AppPreferencesStore.Update(p => p.Window = new WindowPlacement
-            {
-                Left = normal.X, Top = normal.Y, Width = normal.Width, Height = normal.Height, Maximized = maximized,
-            });
-        };
     }
 
     // Sizes below match MinWidth and MinHeight in MainWindow.xaml.
@@ -304,7 +295,18 @@ public partial class MainWindow : Window
 
     private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-        if (!HandInTyping(_vm.ActiveDocument) || !_vm.RequestExit()) e.Cancel = true;
+        if (!HandInTyping(_vm.ActiveDocument) || !_vm.RequestExit())
+        {
+            e.Cancel = true;
+            return;
+        }
+        // RestoreBounds is empty once the window has closed, so the place is taken here.
+        var normal = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
+        bool maximized = WindowState == WindowState.Maximized;
+        AppPreferencesStore.Update(p => p.Window = new WindowPlacement
+        {
+            Left = normal.X, Top = normal.Y, Width = normal.Width, Height = normal.Height, Maximized = maximized,
+        });
     }
 
     // Text still being typed in a tool has to be in the document before the question about unsaved changes.
