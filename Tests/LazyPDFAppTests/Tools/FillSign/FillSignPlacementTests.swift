@@ -177,4 +177,10 @@ final class FillSignPlacementTests: XCTestCase {
         XCTAssertEqual(one.width, two.width)
         XCTAssertGreaterThan(two.height, one.height)
     }
+
+    func test_turkishLettersAreMeasuredByTheirBaseLetter() {
+        XCTAssertEqual(FillSignPlacement.measure("şŞğĞİ", 12).width, FillSignPlacement.measure("sSgGI", 12).width)
+        XCTAssertEqual(FillSignPlacement.measure("ı", 12).width, FillSignPlacement.measure("i", 12).width)
+        XCTAssertEqual(FillSignPlacement.measure("abc", 12).width, 28)
+    }
 }

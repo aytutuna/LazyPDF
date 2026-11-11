@@ -94,6 +94,12 @@ public enum FillSignPlacement {
     }
 
     nonisolated private static func advance(_ scalar: Unicode.Scalar, _ font: Standard14?) -> Double {
+        var scalar = scalar
+        if scalar.value == 0x131 { return Double(font?.widthOf("dotlessi") ?? font?.widthOf("i") ?? 556) }
+        // Letters outside WinAnsi are sized as their base letter, so ş measures as s.
+        if scalar.value >= 256, let base = String(scalar).decomposedStringWithCanonicalMapping.unicodeScalars.first, base.value < 256 {
+            scalar = base
+        }
         guard scalar.value >= 32, scalar.value < 256, let name = PdfEncodings.winAnsi[Int(scalar.value)],
               let width = font?.widthOf(name) else { return 556 }
         return Double(width)
