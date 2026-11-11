@@ -34,7 +34,12 @@ public static class PdfMaker
                 var blank = PdfFromText.Create(new string('\f', request.Pages), fonts, request.Setup);
                 if (request.Width is not { } width || request.Height is not { } height) return new MadePdf(blank.Bytes, blank.Pages, 0);
                 var sized = PdfDocument.Open(blank.Bytes);
-                if (request.Setup.Orientation == PdfOrientation.Landscape) (width, height) = (height, width);
+                (width, height) = request.Setup.Orientation switch
+                {
+                    PdfOrientation.Landscape => (Math.Max(width, height), Math.Min(width, height)),
+                    PdfOrientation.Portrait => (Math.Min(width, height), Math.Max(width, height)),
+                    _ => (width, height),
+                };
                 PageOperations.Resize(sized, Enumerable.Range(0, sized.Pages.Count), width, height, ResizeMode.ChangeBox);
                 return new MadePdf(sized.SaveRewrite(), blank.Pages, 0);
             case CreateSource.Pictures:

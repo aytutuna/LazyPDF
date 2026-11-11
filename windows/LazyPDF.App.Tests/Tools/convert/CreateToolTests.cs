@@ -55,6 +55,21 @@ public sealed class CreateToolTests
         Assert.Equal((283.46, 425.2), (Math.Round(page.MediaBox.Width, 2), Math.Round(page.MediaBox.Height, 2)));
     }
 
+    [Theory]
+    [InlineData(PdfOrientation.Landscape, 254, 143, 254, 143)]
+    [InlineData(PdfOrientation.Landscape, 143, 254, 254, 143)]
+    [InlineData(PdfOrientation.Portrait, 297, 210, 210, 297)]
+    [InlineData(PdfOrientation.Portrait, 210, 297, 210, 297)]
+    [InlineData(PdfOrientation.Auto, 297, 210, 297, 210)]
+    public void ACustomSizeFollowsTheOrientationPicked(PdfOrientation orientation, double w, double h, double wide, double tall)
+    {
+        const double Mm = 72 / 25.4;
+        var made = PdfMaker.Make(new(CreateSource.Blank, new PdfPageSetup(PdfPaper.A4, orientation), "Blank.pdf", Width: w * Mm, Height: h * Mm), new FakeCodec(), new FakeFonts());
+
+        var page = Open(made).Pages[0];
+        Assert.Equal((Math.Round(wide * Mm, 2), Math.Round(tall * Mm, 2)), (Math.Round(page.MediaBox.Width, 2), Math.Round(page.MediaBox.Height, 2)));
+    }
+
     [Fact]
     public Task TheBlankPaperListHoldsMoreSizesAndACustomOne() => Sta.Run(() =>
     {
