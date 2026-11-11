@@ -5692,6 +5692,9 @@
   "Keeps the proof that the certificate was good. The signature can then be checked after it expires.": {
     "tr": "Sertifikanın geçerli olduğunun kanıtını saklar. İmza, sertifikanın süresi dolduktan sonra da denetlenebilir."
   },
+  "Keeps the proof that the certificate was good. The signature can then be checked after it expires. It asks the servers named in the certificates.": {
+    "tr": "Sertifikanın geçerli olduğunun kanıtını saklar. İmza, sertifikanın süresi dolduktan sonra da denetlenebilir. Sertifikalarda adı geçen sunuculara sorar."
+  },
   "Key cannot be used": {
     "tr": "Anahtar kullanılamıyor"
   },
@@ -5868,6 +5871,9 @@
   },
   "Time stamp": {
     "tr": "Zaman damgası"
+  },
+  "The server receives a fingerprint of the signature, not the file.": {
+    "tr": "Sunucu, dosyayı değil imzanın parmak izini alır."
   },
   "Time stamp server address": {
     "tr": "Zaman damgası sunucusu adresi"

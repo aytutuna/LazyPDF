@@ -73,11 +73,15 @@
                 <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE7BA;" />
                 <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T Use a web address that starts with http:// or https://.}" AutomationProperties.LiveSetting="Polite" />
             </DockPanel>
+            <DockPanel Margin="0,0,0,8">
+                <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE946;" />
+                <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T 'The server receives a fingerprint of the signature, not the file.'}" />
+            </DockPanel>
             <CheckBox x:Name="LongSwitch" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Long term validation}"
                       AutomationProperties.Name="{loc:T Long term validation}" />
             <DockPanel>
                 <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE946;" />
-                <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T Keeps the proof that the certificate was good. The signature can then be checked after it expires.}" />
+                <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T Keeps the proof that the certificate was good. The signature can then be checked after it expires. It asks the servers named in the certificates.}" />
             </DockPanel>
         </StackPanel>
 
