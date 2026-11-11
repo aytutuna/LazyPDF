@@ -113,9 +113,22 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
         };
     }
 
-    private void Box_PreviewKeyDown(object sender, KeyEventArgs e)
+    private void Box_PreviewKeyDown(object sender, KeyEventArgs e) => PressKey(e, Keyboard.Modifiers);
+
+    internal void PressKey(KeyEventArgs e, ModifierKeys modifiers)
     {
-        if (e.Key == Key.Enter && !(_lineBreaks && (Keyboard.Modifiers & ModifierKeys.Shift) != 0))
+        if (e.Key == Key.Enter && _lineBreaks && (modifiers & ModifierKeys.Shift) != 0)
+        {
+            // Plain Shift+Enter is the TextBox's own line break; Ctrl+Shift+Enter would reach the viewer, so insert it here
+            if ((modifiers & ModifierKeys.Control) != 0 && _box is { } box)
+            {
+                e.Handled = true;
+                box.SelectedText = Environment.NewLine;
+                box.CaretIndex += Environment.NewLine.Length;
+                box.SelectionLength = 0;
+            }
+        }
+        else if (e.Key == Key.Enter)
         {
             e.Handled = true;
             Committed?.Invoke(this, EventArgs.Empty);
