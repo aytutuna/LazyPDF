@@ -430,7 +430,8 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
     public static bool TakesFill(MarkTool tool) => tool != MarkTool.Pencil && TakesLine(tool);
 
     public static bool TakesLine(PdfAnnotation a) =>
-        a.Type is AnnotationType.Line or AnnotationType.PolyLine or AnnotationType.Polygon or AnnotationType.Square or AnnotationType.Circle or AnnotationType.Ink;
+        a.Type is AnnotationType.Line or AnnotationType.PolyLine or AnnotationType.Polygon or AnnotationType.Square or AnnotationType.Circle or AnnotationType.Ink
+        || a is { Type: AnnotationType.FreeText, Callout.Count: >= 4 };
 
     public static bool TakesFill(PdfAnnotation a) => a.Type != AnnotationType.Ink && TakesLine(a);
 
@@ -439,7 +440,9 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
     public PdfAnnotation SetWidth(PdfAnnotation a, double width)
     {
         var border = (document.Dict(a.Dictionary, "BS") ?? new PdfDictionary()).Copy();
+        var dashes = LineOf(a) == LineStyle.Solid ? null : MarkStyle.DashesOf(LineOf(a), width);
         border["W"] = new PdfNumber(width);
+        if (dashes is not null) border["D"] = new PdfArray([.. dashes.Select(v => (PdfObject)new PdfNumber(v))]);
         a.Dictionary["BS"] = border;
         _writer.Regenerate(a);
         return Find(a.PageIndex, a.Reference!.Number) ?? a;

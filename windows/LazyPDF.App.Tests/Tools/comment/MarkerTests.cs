@@ -326,6 +326,30 @@ public sealed class MarkerTests
     }
 
     [Fact]
+    public void WideningADashedOrDottedMarkKeepsItsLineStyle()
+    {
+        using var f = new CommentFixture();
+        var dashed = f.Marker.Add(MarkTool.Rectangle, 0, Drag, Red with { Dash = LineStyle.Dashed });
+        var dotted = f.Marker.Add(MarkTool.Oval, 0, Drag, Red with { Width = 12, Dash = LineStyle.Dotted });
+
+        Assert.Equal(LineStyle.Dashed, Marker.LineOf(f.Marker.SetWidth(dashed, 6)));
+        Assert.Equal(LineStyle.Dotted, Marker.LineOf(f.Marker.SetWidth(dotted, 2)));
+        Assert.Equal(LineStyle.Solid, Marker.LineOf(f.Marker.SetWidth(f.Marker.Add(MarkTool.Line, 0, Drag, Red), 6)));
+    }
+
+    [Fact]
+    public void ACalloutTakesAFillAndALineStyleLikeAShape()
+    {
+        using var f = new CommentFixture();
+        var callout = f.Marker.Add(MarkTool.Callout, 0, Drag, Red, "See the chart");
+        var box = f.Marker.Add(MarkTool.TextBox, 0, Drag, Red, "Plain");
+
+        Assert.True(Marker.TakesFill(callout));
+        Assert.True(Marker.TakesLine(callout));
+        Assert.False(Marker.TakesFill(box));
+    }
+
+    [Fact]
     public void TheFillAndTheDashCanBeChangedAndTakenAway()
     {
         using var f = new CommentFixture();
