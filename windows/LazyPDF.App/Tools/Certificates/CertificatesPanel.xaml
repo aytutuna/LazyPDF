@@ -71,7 +71,7 @@
             <TextBox x:Name="UrlBox" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Time stamp server address}" TextChanged="UrlBox_TextChanged" />
             <DockPanel x:Name="UrlNote" Margin="0,0,0,8" Visibility="Collapsed">
                 <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE7BA;" />
-                <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T Use a web address that starts with https://.}" AutomationProperties.LiveSetting="Polite" />
+                <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T Use a web address that starts with http:// or https://.}" AutomationProperties.LiveSetting="Polite" />
             </DockPanel>
             <CheckBox x:Name="LongSwitch" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Long term validation}"
                       AutomationProperties.Name="{loc:T Long term validation}" />
