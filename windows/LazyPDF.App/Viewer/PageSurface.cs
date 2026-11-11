@@ -41,6 +41,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
     private int _rotation;
     private int _columns = 1;
     private bool _cover;
+    private bool _rtl;
     private bool _continuous = true;
     private PageTint _tint;
     private int _page;
@@ -110,9 +111,10 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
 
     // ----- Showing a document
 
-    public void Show(DocumentTab? tab, int rotation = 0)
+    public void Show(DocumentTab? tab, int rotation = 0, bool rightToLeft = false)
     {
         ResetTiles();
+        _rtl = rightToLeft;
         _rotation = PageSpace.NormalizeRotation(rotation);
         _tab = tab;
         _renderer = tab?.Renderer as WindowsPageRenderer;
@@ -241,6 +243,14 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         OptionsChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    public void SetRightToLeft(bool rightToLeft)
+    {
+        if (rightToLeft == _rtl) return;
+        _rtl = rightToLeft;
+        Rebuild(null, new Point(0, 0), null);
+        GoToPage(_page);
+    }
+
     public void SetArrangement(int columns, bool cover, bool continuous)
     {
         columns = columns < 2 ? 1 : 2;
@@ -318,7 +328,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
     // Lays the pages out again and puts the anchor back where it was on the screen.
     private void Rebuild(int? spread, Point viewPoint, Anchor? anchor)
     {
-        _layout = ViewLayout.Build(_sizes, new LayoutOptions(_columns, _cover, _continuous, _rotation, Scale, _viewport, Dpi),
+        _layout = ViewLayout.Build(_sizes, new LayoutOptions(_columns, _cover, _continuous, _rotation, Scale, _viewport, Dpi, _rtl),
             spread ?? ViewLayout.SpreadOf(_columns, _cover, _page));
         if (anchor is { } a && _layout.Contains(a.Page))
         {

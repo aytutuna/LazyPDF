@@ -96,7 +96,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         Search.Clear();
         ViewState? state = null;
         if (tab is not null) _states.TryGetValue(tab, out state);
-        Surface.Show(tab, state?.Rotation ?? tab?.Rotation ?? 0);
+        Surface.Show(tab, state?.Rotation ?? tab?.Rotation ?? 0, tab is not null && ViewerSettings.Read(tab.Document).RightToLeft);
         if (state?.Place is { } place) Surface.GoToPage(place.Page, place.Point, keepX: true);
         if (tab is not null)
         {
@@ -145,6 +145,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         ResetText();
         ReadLabels();
         Surface.Reload();
+        Surface.SetRightToLeft(ViewerSettings.Read(tab.Document).RightToLeft);
         ReapplyLayers();
         Note.Visibility = tab.CanDraw ? Visibility.Collapsed : Visibility.Visible;
         if (Search.Query.Length > 0) _ = Search.Restart();

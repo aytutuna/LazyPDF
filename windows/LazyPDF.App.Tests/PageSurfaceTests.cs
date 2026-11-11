@@ -168,6 +168,22 @@ public sealed class PageSurfaceTests
     }
 
     [Fact]
+    public void ChangingTheDirectionKeepsThePage()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(5);
+            surface.SetArrangement(2, false, continuous: true);
+            surface.GoToPage(3);
+
+            surface.SetRightToLeft(true);
+
+            Assert.Equal(3, surface.CurrentPage);
+            Assert.True(surface.Layout.PageRect(2).Left > surface.Layout.PageRect(3).Left);
+        });
+    }
+
+    [Fact]
     public void GoingBackKeepsTheColumnWhenZoomedIn()
     {
         OnSta(() =>
