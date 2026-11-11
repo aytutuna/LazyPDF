@@ -304,7 +304,7 @@ public final class MeasureModel: ToolPanelModel {
         }
         // Whatever was written is one step, so Undo takes all of it back.
         do {
-            try tab.commit(L10n.t("Measure"))
+            if !(try MarkWork.commit(tab, host, L10n.t("Measure"))) { return }
         } catch {
             try? tab.session.discard()
             ChangeGate.guarded(host, L10n.t("Measure")) { throw error }
