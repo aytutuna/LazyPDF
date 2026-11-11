@@ -89,8 +89,9 @@ struct OrganizeView: View {
 
     private func press(_ key: KeyPress) -> KeyPress.Result {
         let selection = model.grid.selection
-        if any, key.modifiers == .command || key.modifiers == [.command, .shift] {
-            let turning = key.modifiers != .command
+        let held = key.modifiers.intersection([.command, .shift, .option, .control])
+        if any, held == .command || held == [.command, .shift] {
+            let turning = held != .command
             switch key.key {
             case .leftArrow:
                 if turning { model.grid.turn(selection, -90) } else { model.grid.earlier(selection) }
