@@ -192,10 +192,16 @@ public partial class MainWindow : Window
             return;
         }
         int index = Math.Clamp(tab.PageIndex, 0, Math.Max(0, tab.PageCount - 1));
-        PageText.Text = Loc.T("Page {0} of {1}", index + 1, tab.PageCount);
+        string label = _viewer.PageLabel(index);
+        PageText.Text = label == (index + 1).ToString()
+            ? Loc.T("Page {0} of {1}", index + 1, tab.PageCount)
+            : Loc.T("Page {0} ({1} of {2})", label, index + 1, tab.PageCount);
         var size = new LazyPDF.Core.PageGeometry(tab.Document.Pages[index]);
-        PageBoxText.Text = Loc.T("{0} × {1} pt", Math.Round(size.Width), Math.Round(size.Height));
-        ZoomText.Text = tab.Zoom > 0 ? Loc.T("{0} %", Math.Round(tab.Zoom * 100)) : Loc.T("Fit");
+        PageBoxText.Text = System.Globalization.RegionInfo.CurrentRegion.IsMetric
+            ? Loc.T("{0} × {1} mm", Math.Round(size.Width * 25.4 / 72), Math.Round(size.Height * 25.4 / 72))
+            : Loc.T("{0} × {1} in", Math.Round(size.Width / 72, 1), Math.Round(size.Height / 72, 1));
+        double zoom = ReferenceEquals(_shownTab, tab) ? _viewer.Zoom : tab.Zoom;
+        ZoomText.Text = Loc.T("{0} %", Math.Round(zoom * 100));
         NameReadouts();
     }
 

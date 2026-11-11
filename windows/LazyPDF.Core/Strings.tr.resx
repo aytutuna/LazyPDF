@@ -3430,6 +3430,9 @@
   <data name="Page {0}" xml:space="preserve">
     <value>Sayfa {0}</value>
   </data>
+  <data name="Page {0} ({1} of {2})" xml:space="preserve">
+    <value>Sayfa {0} ({1}/{2})</value>
+  </data>
   <data name="Page {0} cannot be redacted as text. It needs a page renderer to be turned into a picture." xml:space="preserve">
     <value>Sayfa {0} metin olarak karartılamaz. Resme çevrilmesi için sayfa çizicisi gerekir.</value>
   </data>
@@ -6982,8 +6985,11 @@
   <data name="{0} was saved without its history, so the earlier steps can no longer be undone." xml:space="preserve">
     <value>{0} geçmişi olmadan kaydedildi, bu yüzden önceki adımlar artık geri alınamaz.</value>
   </data>
-  <data name="{0} × {1} pt" xml:space="preserve">
-    <value>{0} × {1} pt</value>
+  <data name="{0} × {1} in" xml:space="preserve">
+    <value>{0} × {1} inç</value>
+  </data>
+  <data name="{0} × {1} mm" xml:space="preserve">
+    <value>{0} × {1} mm</value>
   </data>
   <data name="{0}%" xml:space="preserve">
     <value>%{0}</value>
