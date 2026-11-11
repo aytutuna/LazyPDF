@@ -16,6 +16,7 @@ public partial class PageViewer
 
     private readonly ViewerSelection _selection = new();
     private PagePoint? _anchorWaiting;
+    private int _press;
     private (Caret Start, Caret End, int Clicks)? _multi;
     private Brush? _selectionBrush;
     private Color _selectionColor;
@@ -119,6 +120,7 @@ public partial class PageViewer
 
     private void BeginSelection(Point at, int clicks)
     {
+        int press = ++_press;
         _anchorWaiting = null;
         _multi = null;
         if (Surface.Hit(at, nearest: true) is not { } hit) return;
@@ -126,6 +128,11 @@ public partial class PageViewer
         bool extend = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && !_selection.IsEmpty;
         if (LoadedText(hit.Page) is not { } text)
         {
+            if (clicks >= 2)
+            {
+                _ = SelectUnitWhenLoadedAsync(hit, clicks, press);
+                return;
+            }
             _ = LoadPageAsync(hit.Page);
             if (!extend)
             {
@@ -134,23 +141,37 @@ public partial class PageViewer
             }
             return;
         }
-        var (x, y) = Surface.Geometry(hit.Page).ToUser(hit.Point.X, hit.Point.Y);
         if (clicks >= 2)
         {
-            var chosen = clicks == 2 ? TextSelection.WordAt(text, x, y) : TextSelection.LineAt(text, x, y);
-            if (chosen.IsEmpty)
-            {
-                _selection.Clear();
-                return;
-            }
-            var (first, last) = (new Caret(hit.Page, chosen.Ranges[0].Start), new Caret(hit.Page, chosen.Ranges[^1].End));
-            _selection.Set(first, last);
-            _multi = (first, last, clicks);
+            SelectUnit(hit, text, clicks);
             return;
         }
+        var (x, y) = Surface.Geometry(hit.Page).ToUser(hit.Point.X, hit.Point.Y);
         var caret = new Caret(hit.Page, text.CaretAt(x, y));
         if (extend) _selection.Extend(caret);
         else _selection.Set(caret, caret);
+    }
+
+    private async Task SelectUnitWhenLoadedAsync((int Page, Point Point) hit, int clicks, int press)
+    {
+        var tab = _tab;
+        await LoadPageAsync(hit.Page);
+        if (press != _press || !ReferenceEquals(tab, _tab) || LoadedText(hit.Page) is not { } text) return;
+        SelectUnit(hit, text, clicks);
+    }
+
+    private void SelectUnit((int Page, Point Point) hit, TextPage text, int clicks)
+    {
+        var (x, y) = Surface.Geometry(hit.Page).ToUser(hit.Point.X, hit.Point.Y);
+        var chosen = clicks == 2 ? TextSelection.WordAt(text, x, y) : TextSelection.LineAt(text, x, y);
+        if (chosen.IsEmpty)
+        {
+            _selection.Clear();
+            return;
+        }
+        var (first, last) = (new Caret(hit.Page, chosen.Ranges[0].Start), new Caret(hit.Page, chosen.Ranges[^1].End));
+        _selection.Set(first, last);
+        _multi = (first, last, clicks);
     }
 
     private void DragSelection(Point at)
