@@ -70,6 +70,12 @@
                     <TextBlock Text="{loc:T Pages}" Style="{StaticResource FieldLabelText}" />
                     <ComboBox x:Name="RotatePagesBox" AutomationProperties.Name="{loc:T Pages}" SelectionChanged="Setting_Changed" />
                 </StackPanel>
+                <StackPanel x:Name="ProtectEditor">
+                    <TextBlock Text="{loc:T Password to open the file}" Style="{StaticResource FieldLabelText}" />
+                    <PasswordBox x:Name="ProtectBox" AutomationProperties.Name="{loc:T Password to open the file}" PasswordChanged="Setting_Changed" />
+                    <TextBlock Style="{StaticResource ReasonText}" Margin="0,4,0,0"
+                               Text="{loc:T The password is not saved with the set. You are asked again next time.}" />
+                </StackPanel>
                 <StackPanel x:Name="WatermarkEditor">
                     <TextBlock Text="{loc:T Text}" Style="{StaticResource FieldLabelText}" />
                     <TextBox x:Name="WatermarkBox" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Watermark text}" TextChanged="Setting_Changed" />

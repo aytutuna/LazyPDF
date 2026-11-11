@@ -496,4 +496,61 @@ public sealed class BatchRunnerTests
         var step = Assert.Single(Assert.Single(store.Load()).Steps);
         Assert.Equal((BatchStepKind.Rotate, 270, BatchPages.Odd), (step.Kind, step.Turn, step.Pages));
     }
+
+    [Fact]
+    public async Task ProtectLocksTheResultWithThePassword()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text(2));
+
+        var result = await Run(Runner(), file, Set(dir, new BatchStep { Kind = BatchStepKind.Protect, Password = "pw" }));
+
+        Assert.True(result.Ok, result.Detail);
+        byte[] made = File.ReadAllBytes(result.Output!);
+        Assert.Equal(PdfReadProblem.PasswordRequired, Assert.Throws<PdfReadException>(() => PdfDocument.Open(made)).Problem);
+        Assert.Throws<PdfReadException>(() => PdfDocument.Open(made, "other"));
+        using var opened = PdfDocument.Open(made, "pw");
+        Assert.Equal(2, opened.Pages.Count);
+    }
+
+    [Fact]
+    public void ThePasswordOfAProtectStepIsNotSaved()
+    {
+        using var dir = new TempDir();
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.Protect, Password = "pw-secret" });
+        set.Name = "Lock";
+        var store = new BatchSetStore(dir.Path);
+
+        store.Save(set);
+
+        Assert.DoesNotContain("pw-secret", File.ReadAllText(dir.Sub("batch-sets.json")), StringComparison.Ordinal);
+        Assert.Equal("", Assert.Single(Assert.Single(store.Load()).Steps).Password);
+        Assert.Equal("pw-secret", set.Copy().Steps[0].Password);
+    }
+
+    [Fact]
+    public async Task ProtectThatIsNotLastRefusesTheRun()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text());
+
+        var result = await Run(Runner(), file, Set(dir, new BatchStep { Kind = BatchStepKind.Protect, Password = "pw" }, Step(BatchStepKind.Clean)));
+
+        Assert.False(result.Ok);
+        Assert.Equal("Protect must be the last step", result.Title);
+        Assert.False(Directory.Exists(dir.Sub("out")));
+    }
+
+    [Fact]
+    public async Task ProtectWithNoPasswordRefusesTheRun()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", Pdfs.Text());
+
+        var result = await Run(Runner(), file, Set(dir, Step(BatchStepKind.Protect)));
+
+        Assert.False(result.Ok);
+        Assert.Equal("No password", result.Title);
+        Assert.False(Directory.Exists(dir.Sub("out")));
+    }
 }

@@ -3436,6 +3436,9 @@
   <data name="No pages need text recognition." xml:space="preserve">
     <value>Hiçbir sayfa metin tanıma gerektirmiyor.</value>
   </data>
+  <data name="No password" xml:space="preserve">
+    <value>Parola yok</value>
+  </data>
   <data name="No password to open. Anyone can open the file; only the limits apply." xml:space="preserve">
     <value>Açmak için parola yok. Dosyayı herkes açabilir; yalnızca sınırlar geçerli.</value>
   </data>
@@ -4153,6 +4156,9 @@
   <data name="Password needed" xml:space="preserve">
     <value>Parola gerekli</value>
   </data>
+  <data name="Password not set" xml:space="preserve">
+    <value>Parola belirlenmedi</value>
+  </data>
   <data name="Password of the .p12 file" xml:space="preserve">
     <value>.p12 dosyasının parolası</value>
   </data>
@@ -4173,6 +4179,9 @@
   </data>
   <data name="Password to open" xml:space="preserve">
     <value>Açma parolası</value>
+  </data>
+  <data name="Password to open the file" xml:space="preserve">
+    <value>Dosyayı açma parolası</value>
   </data>
   <data name="Paste" xml:space="preserve">
     <value>Yapıştır</value>
@@ -4443,6 +4452,9 @@
   </data>
   <data name="Protect it before you share it." xml:space="preserve">
     <value>Paylaşmadan önce koruyun.</value>
+  </data>
+  <data name="Protect must be the last step" xml:space="preserve">
+    <value>Koru son adım olmalıdır</value>
   </data>
   <data name="Protect the file" xml:space="preserve">
     <value>Dosyayı koru</value>
@@ -6379,6 +6391,9 @@
   <data name="The password does not open {0}." xml:space="preserve">
     <value>Parola {0} dosyasını açmıyor.</value>
   </data>
+  <data name="The password is not saved with the set. You are asked again next time." xml:space="preserve">
+    <value>Parola küme ile birlikte kaydedilmez. Bir dahaki sefere yeniden sorulur.</value>
+  </data>
   <data name="The passwords do not match." xml:space="preserve">
     <value>Parolalar eşleşmiyor.</value>
   </data>
@@ -6465,6 +6480,9 @@
   </data>
   <data name="The signer is not trusted." xml:space="preserve">
     <value>İmzalayan güvenilir değil.</value>
+  </data>
+  <data name="The steps after it could not read the locked file. Move Protect to the end." xml:space="preserve">
+    <value>Ondan sonraki adımlar kilitli dosyayı okuyamaz. Koru adımını sona taşıyın.</value>
   </data>
   <data name="The stream keyword must be followed by CRLF or LF." xml:space="preserve">
     <value>stream anahtar sözcüğünden sonra CRLF ya da LF gelmeli.</value>
@@ -7026,6 +7044,9 @@
   </data>
   <data name="Type the first number of the run." xml:space="preserve">
     <value>Dizinin ilk numarasını yazın.</value>
+  </data>
+  <data name="Type the password in the Protect step, then run again." xml:space="preserve">
+    <value>Parolayı Koru adımına yazın, sonra yeniden çalıştırın.</value>
   </data>
   <data name="Type the text for at least one place." xml:space="preserve">
     <value>En az bir yer için metin yazın.</value>

@@ -4617,6 +4617,9 @@
   "No text yet": {
     "tr": "Henüz metin yok"
   },
+  "Password not set": {
+    "tr": "Parola belirlenmedi"
+  },
   "Starts at {0}": {
     "tr": "{0} ile başlar"
   },
@@ -4727,6 +4730,24 @@
   },
   "Used for files that ask for one. The results are saved without a password; add a Protect step to lock them again. The password is not saved.": {
     "tr": "Parola isteyen dosyalar için kullanılır. Sonuçlar parolasız kaydedilir; yeniden kilitlemek için bir Koru adımı ekleyin. Parola kaydedilmez."
+  },
+  "Password to open the file": {
+    "tr": "Dosyayı açma parolası"
+  },
+  "The password is not saved with the set. You are asked again next time.": {
+    "tr": "Parola küme ile birlikte kaydedilmez. Bir dahaki sefere yeniden sorulur."
+  },
+  "No password": {
+    "tr": "Parola yok"
+  },
+  "Type the password in the Protect step, then run again.": {
+    "tr": "Parolayı Koru adımına yazın, sonra yeniden çalıştırın."
+  },
+  "Protect must be the last step": {
+    "tr": "Koru son adım olmalıdır"
+  },
+  "The steps after it could not read the locked file. Move Protect to the end.": {
+    "tr": "Ondan sonraki adımlar kilitli dosyayı okuyamaz. Koru adımını sona taşıyın."
   },
   "The password does not open {0}.": {
     "tr": "Parola {0} dosyasını açmıyor."

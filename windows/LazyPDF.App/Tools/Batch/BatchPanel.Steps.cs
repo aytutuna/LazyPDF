@@ -22,6 +22,7 @@ public partial class BatchPanel
         BatchStepKind.Bates => Loc.T("Bates numbers"),
         BatchStepKind.PageNumbers => Loc.T("Page numbers"),
         BatchStepKind.Rotate => Loc.T("Rotate pages"),
+        BatchStepKind.Protect => Loc.T("Protect"),
         _ => Loc.T("PDF/A"),
     };
 
@@ -42,6 +43,7 @@ public partial class BatchPanel
         BatchStepKind.Bates => Loc.T("Starts at {0}", new BatesSpec(step.Text, step.Suffix, step.Digits, step.Start).Format(step.Start)),
         BatchStepKind.PageNumbers => Loc.T("{0}, printed on the pages", step.Text),
         BatchStepKind.Rotate => TurnDetail(step),
+        BatchStepKind.Protect => step.Password.Length == 0 ? Loc.T("Password not set") : Loc.T("Password to open the file"),
         _ => step.Level.Name(),
     };
 
@@ -125,6 +127,7 @@ public partial class BatchPanel
         PlaceEditor.Visibility = Show(step.Kind is BatchStepKind.Bates or BatchStepKind.PageNumbers);
         LevelEditor.Visibility = Show(step.Kind == BatchStepKind.PdfA);
         RotateEditor.Visibility = Show(step.Kind == BatchStepKind.Rotate);
+        ProtectEditor.Visibility = Show(step.Kind == BatchStepKind.Protect);
 
         _loading = true;
         if (step.Kind == BatchStepKind.Ocr) ShowLanguages(step);
@@ -148,6 +151,7 @@ public partial class BatchPanel
         LevelBox.SelectedIndex = Array.IndexOf(Levels, step.Level);
         TurnBox.SelectedIndex = step.Turn / 90 - 1;
         RotatePagesBox.SelectedIndex = (int)step.Pages;
+        ProtectBox.Password = step.Password;
         _loading = false;
     }
 
@@ -190,6 +194,11 @@ public partial class BatchPanel
             System.Windows.Automation.AutomationProperties.SetName(item, TitleOf(kind));
             item.Click += (_, _) =>
             {
+                if (_set.Steps.Any(s => s.Kind == BatchStepKind.Protect))
+                {
+                    Host?.ShowProblem(BatchRunner.ProtectNotLast());
+                    return;
+                }
                 var step = BatchStep.Of(kind);
                 _set.Steps.Add(step);
                 ShowSteps(step);
@@ -208,8 +217,15 @@ public partial class BatchPanel
         if (Selected is not { } step) return;
         int to = _set.Steps.IndexOf(step) + by;
         if (to < 0 || to >= _set.Steps.Count) return;
-        _set.Steps.Remove(step);
-        _set.Steps.Insert(to, step);
+        var moved = _set.Steps.ToList();
+        moved.Remove(step);
+        moved.Insert(to, step);
+        if (moved.FindIndex(s => s.Kind == BatchStepKind.Protect) is >= 0 and var protect && protect < moved.Count - 1)
+        {
+            Host?.ShowProblem(BatchRunner.ProtectNotLast());
+            return;
+        }
+        _set.Steps = moved;
         ShowSteps(step);
     }
 
@@ -261,6 +277,9 @@ public partial class BatchPanel
             case BatchStepKind.Rotate:
                 if (TurnBox.SelectedItem is ComboBoxItem { Tag: int turn }) step.Turn = turn;
                 if (RotatePagesBox.SelectedItem is ComboBoxItem { Tag: BatchPages pages }) step.Pages = pages;
+                break;
+            case BatchStepKind.Protect:
+                step.Password = ProtectBox.Password;
                 break;
             case BatchStepKind.PdfA when LevelBox.SelectedItem is ComboBoxItem { Tag: PdfALevel level }:
                 step.Level = level;

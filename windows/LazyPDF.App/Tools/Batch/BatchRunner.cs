@@ -1,6 +1,7 @@
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.App.Tools.Ocr;
+using LazyPDF.App.Tools.Protect;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Batch;
@@ -17,6 +18,7 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
 {
     public async Task<BatchResult> RunAsync(string path, BatchSet set, int number, DateTimeOffset now, CancellationToken cancellation, string relativeDir = "", string? password = null)
     {
+        if (Check(set) is { } refused) return new(path, null, false, refused.Title, refused.Text);
         string name = Path.GetFileName(path);
         byte[] bytes;
         var notes = new List<string>();
@@ -73,7 +75,7 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            PdfFileSaver.Save(target, bytes);
+            PdfFileSaver.Save(target, bytes, set.Steps.FirstOrDefault(s => s.Kind == BatchStepKind.Protect)?.Password);
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {
@@ -82,6 +84,19 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         }
         return new(path, target, true, notes.Count == 0 ? Loc.T("Done") : Loc.T("Done, with notes"), string.Join(" ", [Path.GetRelativePath(set.OutputFolder, target), .. notes]));
     }
+
+    /// <summary>What stops a set from running as it is; null when it can run.</summary>
+    internal static Problem? Check(BatchSet set)
+    {
+        int at = set.Steps.FindIndex(s => s.Kind == BatchStepKind.Protect);
+        if (at >= 0 && at < set.Steps.Count - 1) return ProtectNotLast();
+        if (set.Steps.Any(s => s.Kind == BatchStepKind.Protect && s.Password.Length == 0))
+            return new(Loc.T("No password"), Loc.T("Type the password in the Protect step, then run again."));
+        return null;
+    }
+
+    internal static Problem ProtectNotLast() =>
+        new(Loc.T("Protect must be the last step"), Loc.T("The steps after it could not read the locked file. Move Protect to the end."));
 
     private async Task<byte[]> ApplyAsync(BatchStep step, bool last, byte[] bytes, DateTimeOffset now, List<string> notes, CancellationToken cancellation)
     {
@@ -126,6 +141,11 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
                 return PageNumbers(step, bytes, notes);
             case BatchStepKind.Rotate:
                 return Rotate(step, bytes, notes);
+            case BatchStepKind.Protect:
+                {
+                    using var document = PdfDocument.Open(bytes);
+                    return ProtectWork.WithPassword(document, step.Password, step.Password, PermissionChoices.Everything.ToPermissions(), PdfCryptStrength.Aes256);
+                }
             default:
                 {
                     var converted = new PdfAConverter(fonts).Convert(bytes, step.Level, now);

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using LazyPDF.App.Services;
 using LazyPDF.App.Tools.Ocr;
 using LazyPDF.Core;
@@ -14,6 +15,7 @@ public enum BatchStepKind
     PageNumbers,
     PdfA,
     Rotate,
+    Protect,
 }
 
 public enum BatchPages
@@ -79,6 +81,10 @@ public sealed class BatchStep
     public bool KeepLinks { get; set; }
 
     public bool KeepAttachments { get; set; }
+
+    /// <summary>The password of Protect. Kept in memory only: it is left out of the saved set and asked for again.</summary>
+    [JsonIgnore]
+    public string Password { get; set; } = "";
 
     public const string PageNumberText = "Page {page} of {pages}";
 
