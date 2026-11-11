@@ -56,7 +56,7 @@ internal static class FillSignPlacement
     }
 
     /// <summary>One or more lines of text with its left edge at the click, centred on it vertically.</summary>
-    public static bool PlaceText(DocumentTab tab, IFontSource fonts, int page, Point click, string text, double size, DateTimeOffset now)
+    public static bool PlaceText(DocumentTab tab, IFontSource fonts, int page, Point click, string text, double size, double[] colour, DateTimeOffset now)
     {
         var document = tab.Document;
         var pdfPage = document.Pages[page];
@@ -67,7 +67,7 @@ internal static class FillSignPlacement
             Math.Clamp(click.Y - height / 2, 0, Math.Max(0, geometry.Height - height)),
             Math.Min(width, geometry.Width), Math.Min(height, geometry.Height));
         var rect = geometry.ToUser(box);
-        var note = new PdfAnnotationWriter(document, fonts).AddFreeText(pdfPage, AsShown(rect, box), text, new FreeTextStyle("Helvetica", size), info: new AnnotationInfo(Date: now));
+        var note = new PdfAnnotationWriter(document, fonts).AddFreeText(pdfPage, AsShown(rect, box), text, new FreeTextStyle("Helvetica", size, TextColor: colour), info: new AnnotationInfo(Date: now));
         TurnToPage(document, note, rect, pdfPage.Rotate);
         return tab.Commit(Loc.T("Place text"));
     }

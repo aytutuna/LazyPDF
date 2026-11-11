@@ -84,7 +84,7 @@ public sealed class FillSignPlacementTests
         {
             using var tab = NewTab();
 
-            Assert.True(FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "Approved", 12, DateTimeOffset.Now));
+            Assert.True(FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "Approved", 12, [0, 0, 0], DateTimeOffset.Now));
 
             var note = Assert.Single(PdfAnnotations.ReadAll(tab.Document));
             Assert.Equal(AnnotationType.FreeText, note.Type);
@@ -95,13 +95,27 @@ public sealed class FillSignPlacementTests
     }
 
     [Fact]
+    public void PlacedTextKeepsItsColour()
+    {
+        OnSta.Run(() =>
+        {
+            using var tab = NewTab();
+
+            FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "Approved", 12, [0.1, 0.3, 0.8], DateTimeOffset.Now);
+
+            var note = Assert.Single(PdfAnnotations.ReadAll(tab.Document));
+            Assert.Contains("0.1 0.3 0.8 rg", note.DefaultAppearance);
+        });
+    }
+
+    [Fact]
     public void TextTheFontsCannotDrawChangesNothing()
     {
         OnSta.Run(() =>
         {
             using var tab = NewTab();
 
-            Assert.Throws<InvalidOperationException>(() => FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "Çağrı", 12, DateTimeOffset.Now));
+            Assert.Throws<InvalidOperationException>(() => FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "Çağrı", 12, [0, 0, 0], DateTimeOffset.Now));
             tab.Session.Discard();
 
             Assert.False(tab.IsDirty);
@@ -160,7 +174,7 @@ public sealed class FillSignPlacementTests
         {
             using var tab = Turned(90);
 
-            FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "4 November 2026", 12, DateTimeOffset.Now);
+            FillSignPlacement.PlaceText(tab, new FakeFonts(), 0, new Point(72, 200), "4 November 2026", 12, [0, 0, 0], DateTimeOffset.Now);
 
             var note = Assert.Single(PdfAnnotations.ReadAll(tab.Document));
             var form = Appearance(tab, note);

@@ -20,6 +20,7 @@ internal sealed record SavedRow(SavedItem Item, BitmapSource Picture)
 }
 
 internal sealed record DateChoice(string Pattern, string Sample);
+internal sealed record ColourChoice(string Name, double[] Rgb);
 
 /// <summary>Signature, initials, a line of text or today's date, put on the page where the pointer says.</summary>
 public partial class FillSignPanel : ToolPanel
@@ -45,6 +46,14 @@ public partial class FillSignPanel : ToolPanel
         InitializeComponent();
         SizeBox.ItemsSource = Sizes;
         SizeBox.SelectedItem = 12;
+        ColourBox.ItemsSource = new ColourChoice[]
+        {
+            new(Loc.T("Black"), [0, 0, 0]),
+            new(Loc.T("Blue"), [0.1, 0.3, 0.8]),
+            new(Loc.T("Red"), [0.8, 0.1, 0.1]),
+            new(Loc.T("Green"), [0.1, 0.55, 0.25]),
+        };
+        ColourBox.SelectedIndex = 0;
         var today = DateTime.Today;
         FormatBox.ItemsSource = DatePatterns.Select(p => new DateChoice(p, today.ToString(p, CultureInfo.CurrentCulture))).ToList();
         FormatBox.SelectedIndex = 0;
@@ -165,7 +174,7 @@ public partial class FillSignPanel : ToolPanel
         {
             var now = DateTimeOffset.Now;
             if (Images) PlaceImage(tab, page, from, to, now);
-            else FillSignPlacement.PlaceText(tab, _fonts, page, from, TextToPlace(now), (int)SizeBox.SelectedItem, now);
+            else FillSignPlacement.PlaceText(tab, _fonts, page, from, TextToPlace(now), (int)SizeBox.SelectedItem, ((ColourChoice)ColourBox.SelectedItem).Rgb, now);
         }
         catch (InvalidOperationException error)
         {
