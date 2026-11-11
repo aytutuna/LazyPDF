@@ -5095,6 +5095,33 @@
   "Crop every page": {
     "tr": "Tüm sayfaları kırp"
   },
+  "Or cut a margin from each side": {
+    "tr": "Ya da her kenardan bir pay kesin"
+  },
+  "Left ({0})": {
+    "tr": "Sol ({0})"
+  },
+  "Right ({0})": {
+    "tr": "Sağ ({0})"
+  },
+  "Top ({0})": {
+    "tr": "Üst ({0})"
+  },
+  "Bottom ({0})": {
+    "tr": "Alt ({0})"
+  },
+  "Crop by margins": {
+    "tr": "Paylara göre kırp"
+  },
+  "Type margins as numbers, 0 or more.": {
+    "tr": "Payları 0 ya da daha büyük sayılar olarak yazın."
+  },
+  "Margins too large": {
+    "tr": "Paylar çok büyük"
+  },
+  "The margins leave nothing of the page. Type smaller numbers.": {
+    "tr": "Paylar sayfadan hiçbir şey bırakmıyor. Daha küçük sayılar yazın."
+  },
   "Remove the crop": {
     "tr": "Kırpmayı kaldır"
   },

@@ -101,6 +101,36 @@
                           AutomationProperties.Name="{loc:T Draw a box on the page}" Checked="CropDraw_Changed" Unchecked="CropDraw_Changed" />
                 <TextBlock x:Name="CropHint" Style="{StaticResource ReasonText}" Margin="0,0,0,8" />
                 <CheckBox x:Name="CropAll" Content="{loc:T Every page}" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Crop every page}" Click="CropAll_Click" />
+                <TextBlock Text="{loc:T Or cut a margin from each side}" Style="{StaticResource FieldLabelText}" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,0,8">
+                        <TextBlock x:Name="CropLeftLabel" Style="{StaticResource FieldLabelText}" />
+                        <TextBox x:Name="CropLeft" TextChanged="Fields_Changed" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Grid.Row="0" Margin="0,0,0,8">
+                        <TextBlock x:Name="CropRightLabel" Style="{StaticResource FieldLabelText}" />
+                        <TextBox x:Name="CropRight" TextChanged="Fields_Changed" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,0,8">
+                        <TextBlock x:Name="CropTopLabel" Style="{StaticResource FieldLabelText}" />
+                        <TextBox x:Name="CropTop" TextChanged="Fields_Changed" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Grid.Row="1" Margin="0,0,0,8">
+                        <TextBlock x:Name="CropBottomLabel" Style="{StaticResource FieldLabelText}" />
+                        <TextBox x:Name="CropBottom" TextChanged="Fields_Changed" />
+                    </StackPanel>
+                </Grid>
+                <Button x:Name="CropMargins" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Crop by margins}"
+                        loc:Icon.Glyph="&#xE7A8;" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Crop by margins}" Click="CropMargins_Click" />
                 <Button x:Name="CropReset" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Remove the crop}"
                         loc:Icon.Glyph="&#xE7A7;" AutomationProperties.Name="{loc:T Remove the crop}" Click="CropReset_Click" />
             </StackPanel>

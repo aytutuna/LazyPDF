@@ -225,6 +225,52 @@ public sealed class PageEditsTests
     }
 
     [Fact]
+    public void MarginsCutEachSideOfAnUprightPage()
+    {
+        var document = Open(1);
+        var media = document.Pages[0].MediaBox;
+
+        PageEdits.CropMargins(document, [0], 10, 20, 30, 40);
+
+        var crop = document.Pages[0].CropBox;
+        Assert.Equal(media.Left + 10, crop.Left, 1);
+        Assert.Equal(media.Right - 30, crop.Right, 1);
+        Assert.Equal(media.Top - 20, crop.Top, 1);
+        Assert.Equal(media.Bottom + 40, crop.Bottom, 1);
+    }
+
+    [Fact]
+    public void MarginsOnATurnedPageAreCutAsTheyAreSeen()
+    {
+        var document = Open(1);
+        PageOperations.Rotate(document, [0], 90);
+        var media = document.Pages[0].MediaBox;
+
+        PageEdits.CropMargins(document, [0], 50, 0, 0, 0);
+
+        var crop = document.Pages[0].CropBox;
+        Assert.Equal(media.Bottom + 50, crop.Bottom, 1);
+        Assert.Equal(media.Top, crop.Top, 1);
+        Assert.Equal(media.Left, crop.Left, 1);
+        Assert.Equal(media.Right, crop.Right, 1);
+    }
+
+    [Fact]
+    public void MarginsThatConsumeAPageLeaveItAndAreCounted()
+    {
+        var document = Open(2);
+        var before = document.Pages[0].CropBox;
+        PageOperations.SetBox(document, [1], PageBox.Media, new PdfRect(0, 0, 300, 400));
+
+        var targets = PageEdits.CropMarginTargets(document, [0, 1], 150, 0, 145, 0);
+        PageEdits.CropMargins(document, [0, 1], 150, 0, 145, 0);
+
+        Assert.Equal([0], targets);
+        Assert.Equal(before.Width - 295, document.Pages[0].CropBox.Width, 1);
+        Assert.Equal(300, document.Pages[1].CropBox.Width, 1);
+    }
+
+    [Fact]
     public void LabelsCoverTheSelectionAndLeaveTheRestAsTheyWere()
     {
         var document = Open(8);

@@ -35,6 +35,7 @@ public partial class PagesPanel : ToolPanel
         foreach (var size in PaperSize.All) Paper.Items.Add(size.Name);
         Paper.Items.Add(Loc.T("Custom size"));
         Paper.SelectedIndex = 0;
+        NameMarginFields();
     }
 
     private List<PageCell> Cells => Thumbs.ItemsSource as List<PageCell> ?? [];

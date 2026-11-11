@@ -139,6 +139,27 @@ internal static class PageEdits
     public static List<int> CropTargets(PdfDocument document, IReadOnlyCollection<int> pages, DisplayRect area) =>
         [.. pages.Where(p => !new PageGeometry(document.Pages[p]).ToUser(area).Intersect(document.Pages[p].MediaBox).IsEmpty)];
 
+    private static DisplayRect? MarginBox(PdfDocument document, int page, double left, double top, double right, double bottom)
+    {
+        var shown = new PageGeometry(document.Pages[page]);
+        double width = shown.Width - left - right, height = shown.Height - top - bottom;
+        return width >= 10 && height >= 10 ? new DisplayRect(left, top, width, height) : null;
+    }
+
+    /// <summary>The pages that keep at least 10 points each way after the margins; the others would be left alone.</summary>
+    public static List<int> CropMarginTargets(PdfDocument document, IReadOnlyCollection<int> pages, double left, double top, double right, double bottom) =>
+        [.. pages.Where(p => MarginBox(document, p, left, top, right, bottom) is not null)];
+
+    /// <summary>Cuts the margins, as the page is shown, from every page that keeps enough of itself.</summary>
+    public static void CropMargins(PdfDocument document, IReadOnlyCollection<int> pages, double left, double top, double right, double bottom)
+    {
+        foreach (int page in pages)
+        {
+            if (MarginBox(document, page, left, top, right, bottom) is not { } area) continue;
+            PageOperations.SetBox(document, [page], PageBox.Crop, new PageGeometry(document.Pages[page]).ToUser(area));
+        }
+    }
+
     /// <summary>Sets the display rectangle (page space of the page it was drawn on) as the crop box of every page, each through its own geometry.</summary>
     public static void Crop(PdfDocument document, IReadOnlyCollection<int> pages, DisplayRect area)
     {

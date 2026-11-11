@@ -128,6 +128,8 @@ public partial class PagesPanel
                 + " " + (CropAll.IsChecked == true ? Loc.T("Every page is changed.") : pages.Count > 0 ? covered : Loc.T("Page {0} is changed.", box.Page + 1))
             : CropDraw.IsChecked == true ? Loc.T("Drag a box on a page.") : Loc.T("Turn on drawing to drag a box.");
         CropHint.Text += " " + Loc.T("The rest of the page stays in the file, only hidden. Redact removes it for good.");
+        CropMargins.IsEnabled = Margins() is not null;
+        if (!CropMargins.IsEnabled) CropHint.Text += " " + Loc.T("Type margins as numbers, 0 or more.");
         ResizeHint.Text = Loc.T("Pages keep their orientation.") + " " + covered;
         LabelHint.Text = pages.Count == 0 ? Loc.T("Every page is numbered.") : Loc.T("Pages {0} to {1} are numbered.", pages[0] + 1, pages[^1] + 1);
         LabelHint.Text += " " + Loc.T("This sets the page numbers viewers show. Nothing is printed on the pages.");
@@ -158,6 +160,50 @@ public partial class PagesPanel
         string status = Loc.Plural(targets.Count, "{0} page cropped", "{0} pages cropped", targets.Count);
         if (left > 0) status += " " + Loc.Plural(left, "{0} page was left alone because the box is outside it.", "{0} pages were left alone because the box is outside them.", left);
         if (Apply(Loc.T("Crop pages"), d => PageEdits.Crop(d, targets, box.Area), Selected(), status)) _crop.Clear();
+    }
+
+    private static string MarginUnit => RegionInfo.CurrentRegion.IsMetric ? "mm" : "in";
+
+    private void NameMarginFields()
+    {
+        CropLeftLabel.Text = Loc.T("Left ({0})", MarginUnit);
+        CropRightLabel.Text = Loc.T("Right ({0})", MarginUnit);
+        CropTopLabel.Text = Loc.T("Top ({0})", MarginUnit);
+        CropBottomLabel.Text = Loc.T("Bottom ({0})", MarginUnit);
+        foreach (var (box, label) in new[] { (CropLeft, CropLeftLabel), (CropRight, CropRightLabel), (CropTop, CropTopLabel), (CropBottom, CropBottomLabel) })
+            System.Windows.Automation.AutomationProperties.SetName(box, label.Text);
+    }
+
+    // The typed margins in points, in the units of the system; null while one is not a number of 0 or more. Empty counts as 0.
+    private (double Left, double Top, double Right, double Bottom)? Margins()
+    {
+        double perUnit = RegionInfo.CurrentRegion.IsMetric ? PageEdits.PointsPerMillimetre : 72;
+        double[] values = new double[4];
+        var boxes = new[] { CropLeft, CropTop, CropRight, CropBottom };
+        for (int i = 0; i < boxes.Length; i++)
+        {
+            string text = boxes[i].Text.Trim();
+            if (text.Length == 0) continue;
+            if (!double.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out double value) || !(value >= 0) || double.IsInfinity(value)) return null;
+            values[i] = value * perUnit;
+        }
+        return (values[0], values[1], values[2], values[3]);
+    }
+
+    private void CropMargins_Click(object sender, RoutedEventArgs e)
+    {
+        if (Margins() is not { } m) return;
+        var pages = SelectedOrAll();
+        var targets = PageEdits.CropMarginTargets(Tab!.Document, pages, m.Left, m.Top, m.Right, m.Bottom);
+        if (targets.Count == 0)
+        {
+            Host!.ShowProblem(new Problem(Loc.T("Margins too large"), Loc.T("The margins leave nothing of the page. Type smaller numbers.")));
+            return;
+        }
+        int left = pages.Count - targets.Count;
+        string status = Loc.Plural(targets.Count, "{0} page cropped", "{0} pages cropped", targets.Count);
+        if (left > 0) status += " " + Loc.Plural(left, "{0} page was left alone because the box is outside it.", "{0} pages were left alone because the box is outside them.", left);
+        Apply(Loc.T("Crop pages"), d => PageEdits.CropMargins(d, targets, m.Left, m.Top, m.Right, m.Bottom), Selected(), status);
     }
 
     private void CropReset_Click(object sender, RoutedEventArgs e)

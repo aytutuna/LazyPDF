@@ -144,4 +144,32 @@ public sealed class PagesPanelCropTests
         panel.Detach();
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public Task MarginsAcceptADecimalCommaAndRefuseNegativeNumbers() => Sta.Run(() =>
+    {
+        var before = System.Globalization.CultureInfo.CurrentCulture;
+        System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("tr-TR");
+        try
+        {
+            using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf");
+            var panel = Crop(tab);
+            var apply = (Button)panel.FindName("CropMargins");
+
+            ((TextBox)panel.FindName("CropLeft")).Text = "1,5";
+            Assert.True(apply.IsEnabled);
+
+            ((TextBox)panel.FindName("CropTop")).Text = "-1";
+            Assert.False(apply.IsEnabled);
+
+            ((TextBox)panel.FindName("CropTop")).Text = "abc";
+            Assert.False(apply.IsEnabled);
+            panel.Detach();
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = before;
+        }
+        return Task.CompletedTask;
+    });
 }

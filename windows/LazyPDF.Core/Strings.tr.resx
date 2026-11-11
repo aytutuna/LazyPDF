@@ -649,6 +649,9 @@
   <data name="Bottom" xml:space="preserve">
     <value>Alt</value>
   </data>
+  <data name="Bottom ({0})" xml:space="preserve">
+    <value>Alt ({0})</value>
+  </data>
   <data name="Bottom left" xml:space="preserve">
     <value>Sol alt</value>
   </data>
@@ -1287,6 +1290,9 @@
   </data>
   <data name="Crop" xml:space="preserve">
     <value>Kırp</value>
+  </data>
+  <data name="Crop by margins" xml:space="preserve">
+    <value>Paylara göre kırp</value>
   </data>
   <data name="Crop every page" xml:space="preserve">
     <value>Tüm sayfaları kırp</value>
@@ -2575,6 +2581,9 @@
   <data name="Left" xml:space="preserve">
     <value>Sol</value>
   </data>
+  <data name="Left ({0})" xml:space="preserve">
+    <value>Sol ({0})</value>
+  </data>
   <data name="Left in: {0}." xml:space="preserve">
     <value>Dosyada kalanlar: {0}.</value>
   </data>
@@ -2757,6 +2766,9 @@
   </data>
   <data name="Margin is too wide" xml:space="preserve">
     <value>Kenar boşluğu çok geniş</value>
+  </data>
+  <data name="Margins too large" xml:space="preserve">
+    <value>Paylar çok büyük</value>
   </data>
   <data name="Mark" xml:space="preserve">
     <value>İşaretle</value>
@@ -3417,6 +3429,9 @@
   </data>
   <data name="Options" xml:space="preserve">
     <value>Seçenekler</value>
+  </data>
+  <data name="Or cut a margin from each side" xml:space="preserve">
+    <value>Ya da her kenardan bir pay kesin</value>
   </data>
   <data name="Or press Enter on the page." xml:space="preserve">
     <value>Ya da sayfada Enter'a basın.</value>
@@ -4305,6 +4320,9 @@
   </data>
   <data name="Right" xml:space="preserve">
     <value>Sağ</value>
+  </data>
+  <data name="Right ({0})" xml:space="preserve">
+    <value>Sağ ({0})</value>
   </data>
   <data name="Rotate clockwise" xml:space="preserve">
     <value>Saat yönünde döndür</value>
@@ -5620,6 +5638,9 @@
   <data name="The margin leaves no room on the page. Pick a smaller margin." xml:space="preserve">
     <value>Kenar boşluğu sayfada yer bırakmıyor. Daha küçük bir boşluk seçin.</value>
   </data>
+  <data name="The margins leave nothing of the page. Type smaller numbers." xml:space="preserve">
+    <value>Paylar sayfadan hiçbir şey bırakmıyor. Daha küçük sayılar yazın.</value>
+  </data>
   <data name="The match runs over two lines." xml:space="preserve">
     <value>Eşleşme iki satıra taşıyor.</value>
   </data>
@@ -6181,6 +6202,9 @@
   <data name="Top" xml:space="preserve">
     <value>Üst</value>
   </data>
+  <data name="Top ({0})" xml:space="preserve">
+    <value>Üst ({0})</value>
+  </data>
   <data name="Top left" xml:space="preserve">
     <value>Sol üst</value>
   </data>
@@ -6273,6 +6297,9 @@
   </data>
   <data name="Type a whole number, or leave it empty for no limit." xml:space="preserve">
     <value>Tam sayı yazın veya sınır istemiyorsanız boş bırakın.</value>
+  </data>
+  <data name="Type margins as numbers, 0 or more." xml:space="preserve">
+    <value>Payları 0 ya da daha büyük sayılar olarak yazın.</value>
   </data>
   <data name="Type pages like 1-3, 5" xml:space="preserve">
     <value>Sayfaları şöyle yazın: 1-3, 5</value>
