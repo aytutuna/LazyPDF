@@ -180,7 +180,7 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
                     using var document = PdfDocument.Open(bytes);
                     // Keeps the file's own encryption, as Make smaller does.
                     var options = OptimizeOptions.For(step.Preset) with { Security = document.Security, DocumentId = document.Security is null ? null : document.FirstId };
-                    var result = new PdfOptimizer(document, codec).Run(options);
+                    var result = new PdfOptimizer(document, codec).Run(options, cancellation);
                     cancellation.ThrowIfCancellationRequested();
                     if (result.Bytes.Length >= bytes.Length)
                     {
