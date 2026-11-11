@@ -69,7 +69,7 @@ final class EditTool: PagePointerTool {
     func takes(_ pointer: PagePointer) -> Bool {
         if !pointer.touch { return true }
         if let selected = current, selected.pageIndex == pointer.page, handleAt(frame, pointer.point, pointer.page) != nil { return true }
-        return markAt(pointer.page, pointer.point) != nil
+        return markAt(pointer.page, pointer.point, touch: true) != nil
     }
 
     func key(_ key: ViewerKey, modifiers: PointerModifiers) -> Bool {
@@ -94,7 +94,7 @@ final class EditTool: PagePointerTool {
             begin(pointer.point)
             return
         }
-        guard let hit = markAt(pointer.page, pointer.point) else {
+        guard let hit = markAt(pointer.page, pointer.point, touch: pointer.touch) else {
             if current != nil { select(nil) }
             return
         }
@@ -151,7 +151,8 @@ final class EditTool: PagePointerTool {
     }
 
     // What lies under the point itself wins, as on a mouse; a finger's slop only finds the nearest mark when none does.
-    private func markAt(_ page: Int, _ point: ViewPoint) -> PdfAnnotation? {
+    private func markAt(_ page: Int, _ point: ViewPoint, touch: Bool) -> PdfAnnotation? {
+        if !touch { return marker().at(page, point, Self.exact) }
         let wide = reach(page)
         var by = min(Self.exact, wide)
         while by < wide {

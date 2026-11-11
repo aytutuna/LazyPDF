@@ -328,6 +328,20 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(raised, 1)
     }
 
+    func test_aMouseReachesFourPointsAndAFingerMore() throws {
+        let (tool, _, _, made) = try editing()
+
+        tool.press(press(markPt(202, 130)))
+        XCTAssertEqual(tool.current?.reference?.number, made.reference?.number)
+        tool.press(press(markPt(400, 400)))
+
+        tool.press(press(markPt(210, 130)))
+        XCTAssertNil(tool.current)
+
+        tool.press(finger(markPt(210, 130)))
+        XCTAssertEqual(tool.current?.reference?.number, made.reference?.number)
+    }
+
     func test_redrawingAfterTheMarksPageWentAwayDrawsNothing() throws {
         let f = try CommentFixture(pages: 2)
         let viewer = PanelViewer(f.tab)
