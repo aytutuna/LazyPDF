@@ -88,6 +88,7 @@ struct TrustResult {
     var trusted: Bool
     var timeValid: Bool
     var chain: [X509Certificate]
+    var partial = false
 }
 
 enum CertificateTrust {
@@ -117,6 +118,7 @@ enum CertificateTrust {
     private static let restricting: Set<String> = ["2.5.29.30", "2.5.29.33", "2.5.29.36", "2.5.29.54"]
 
     private static let maxChain = 16
+    private static let maxFetches = 4
     private static let timeStamping = "1.3.6.1.5.5.7.3.8"
     private static let signingPurposes = [
         "1.3.6.1.5.5.7.3.4", // email protection, which PDF signers have long carried
@@ -127,16 +129,30 @@ enum CertificateTrust {
 
     /// The chain of `certificate`, trusted only when it is also meant for the job: signing documents, or for a time stamp authority `timestamp`.
     static func evaluate(_ certificate: X509Certificate, _ extra: [X509Certificate], _ time: DateTimeOffset?, _ options: VerifyOptions, timestamp: Bool = false) -> TrustResult {
+        var certificates = extra
+        var result = settle(certificate, certificates, time, options)
+        var round = 0
+        while round < maxFetches, !result.trusted, result.partial, let transport = options.transport {
+            guard let last = result.chain.last, let issuer = CertificateLinks.fetchIssuer(last, transport),
+                  !certificates.contains(where: { $0.thumbprint == issuer.thumbprint }) else { break }
+            certificates.append(issuer)
+            result = settle(certificate, certificates, time, options)
+            round += 1
+        }
+        if !suits(certificate, timestamp) { result.trusted = false }
+        return result
+    }
+
+    private static func settle(_ certificate: X509Certificate, _ certificates: [X509Certificate], _ time: DateTimeOffset?, _ options: VerifyOptions) -> TrustResult {
         // The walk keeps going past an anchor that is not self-issued, so a signer the caller trusts by itself is settled here.
         let at = time ?? currentTime()
         var result = options.trustAnchors.contains(where: { $0.sameBytes(certificate) })
             ? TrustResult(trusted: true, timeValid: certificate.notBefore <= at && at <= certificate.notAfter, chain: [certificate])
-            : build(certificate, extra, time, options.trustAnchors, system: false)
+            : build(certificate, certificates, time, options.trustAnchors, system: false)
         if !result.trusted && options.useSystemStore {
-            let viaSystem = build(certificate, extra + options.trustAnchors, time, [], system: true)
-            if viaSystem.trusted { result = viaSystem }
+            let viaSystem = build(certificate, certificates + options.trustAnchors, time, [], system: true)
+            if viaSystem.trusted { result = viaSystem } else { result.partial = result.partial || viaSystem.partial }
         }
-        if !suits(certificate, timestamp) { result.trusted = false }
         return result
     }
 
@@ -163,7 +179,7 @@ enum CertificateTrust {
         }
         let (elements, flags) = chain(certificate, extra, anchors, at)
         let harmless: Flags = [.notTimeValid]
-        return TrustResult(trusted: flags.subtracting(harmless).isEmpty, timeValid: !flags.contains(.notTimeValid), chain: elements)
+        return TrustResult(trusted: flags.subtracting(harmless).isEmpty, timeValid: !flags.contains(.notTimeValid), chain: elements, partial: flags.contains(.partialChain))
     }
 
     /// The chain from `leaf` up to an anchor or as far as the certificates lead, and what is wrong with it.

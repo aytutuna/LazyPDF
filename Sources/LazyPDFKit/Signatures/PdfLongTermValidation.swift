@@ -79,14 +79,7 @@ public enum PdfLongTermValidation {
                 chainCertificates.append(issuer)
             }
             guard let last = chainCertificates.last, !last.isSelfIssued else { break }
-            var issuer: X509Certificate?
-            for url in CertificateLinks.issuerUrls(last) {
-                if let bytes = transport.get(url), let loaded = X509Certificate(bytes) {
-                    issuer = loaded
-                    break
-                }
-            }
-            guard let found = issuer, !pool.contains(where: { $0.thumbprint == found.thumbprint }) else { break }
+            guard let found = CertificateLinks.fetchIssuer(last, transport), !pool.contains(where: { $0.thumbprint == found.thumbprint }) else { break }
             pool.append(found)
         }
         return chainCertificates

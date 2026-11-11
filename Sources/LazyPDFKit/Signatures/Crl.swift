@@ -165,6 +165,14 @@ enum CertificateLinks {
 
     static func issuerUrls(_ certificate: X509Certificate) -> [String] { accessUrls(certificate, caIssuers) }
 
+    /// The first certificate the issuer links of `certificate` give, or nil.
+    static func fetchIssuer(_ certificate: X509Certificate, _ transport: SignatureTransport) -> X509Certificate? {
+        for url in issuerUrls(certificate) {
+            if let bytes = transport.get(url), let loaded = X509Certificate(bytes) { return loaded }
+        }
+        return nil
+    }
+
     private static func accessUrls(_ certificate: X509Certificate, _ method: String) -> [String] {
         var urls: [String] = []
         guard let found = certificate.extensionNamed(authorityInfoAccess) else { return urls }

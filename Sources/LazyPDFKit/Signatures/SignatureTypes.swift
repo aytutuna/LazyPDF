@@ -233,6 +233,9 @@ public struct VerifyOptions {
     /// The time used for certificates when a signature carries no time of its own; the caller's clock.
     public var now: DateTimeOffset?
 
+    /// When given, asked for the certificate of an issuer a chain lacks; without it verifying never downloads.
+    public var transport: SignatureTransport?
+
     public var password: String?
 
     /// For a file encrypted to recipients: the certificate of one of them, with its private key.
