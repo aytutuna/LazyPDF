@@ -86,7 +86,7 @@ public partial class PagesPanel : ToolPanel
         var select = _reselect;
         _reselect = null;
         int[] pages = PageNumbers();
-        if (!pages.SequenceEqual(_pages)) ClearBlank();
+        if (!pages.SequenceEqual(_pages) || Tab!.Revision != _blankRevision) ClearBlank();
         Build(select);
         // The box holds a page index and display points, which an edit to the page list or to its page's shape moves.
         if (!pages.SequenceEqual(_pages) || _crop?.Box is { } box && BoxSpace(box.Page) != _boxSpace) _crop?.Clear();

@@ -319,6 +319,8 @@ public partial class PagesPanel
     private void LabelClear_Click(object sender, RoutedEventArgs e) =>
         Apply(Loc.T("Remove page labels"), PageEdits.ClearLabels, Selected(), Loc.T("Labels removed."));
 
+    private int _blankRevision;
+
     private void ClearBlank()
     {
         BlankList.Items.Clear();
@@ -333,6 +335,7 @@ public partial class PagesPanel
         byte[] bytes = tab.Session.Current.ToArray();
         int revision = tab.Revision;
         var source = Exporter.Source(tab, new WicImageCodec());
+        var annotated = tab.Document.Pages.Select(page => PdfAnnotations.Read(tab.Document, page).Any(a => a.Type is not (AnnotationType.Link or AnnotationType.Popup))).ToList();
         List<int>? blank = null;
         await host.RunBusyAsync(Loc.T("Looking for blank pages"), token => Task.Run(() =>
         {
@@ -347,10 +350,11 @@ public partial class PagesPanel
                 if (i % 10 == 0) Dispatcher.BeginInvoke(() => host.SetBusyText(Loc.T("Looking at page {0} of {1}", done, kinds.Count)));
                 if (drawn.Render(i, 72) is { } image) ink[i] = PageInk.IsBlank(image);
             }
-            blank = PageEdits.BlankPages(kinds, ink);
+            blank = PageEdits.BlankPages(kinds, ink, annotated);
         }, token));
         if (blank is null || !ReferenceEquals(Tab, tab) || tab.Revision != revision) return;
         ClearBlank();
+        _blankRevision = revision;
         foreach (int page in blank) BlankList.Items.Add(new CheckBox { Content = Cells[page].Name, Tag = page, IsChecked = true, Margin = new Thickness(0, 2, 0, 2) });
         BlankHint.Text = blank.Count == 0 ? Loc.T("No blank pages found.") : Loc.Plural(blank.Count, "{0} blank page found.", "{0} blank pages found.", blank.Count);
         if (blank.Count == Cells.Count)

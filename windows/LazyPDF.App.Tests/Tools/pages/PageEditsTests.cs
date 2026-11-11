@@ -520,12 +520,18 @@ public sealed class PageEditsTests
     }
 
     [Fact]
-    public void BlankPagesAreThoseWithNoContentOrNoInkAndAFailedDrawIsLeftOut()
+    public void BlankPagesAreThoseThatLookWhiteWithoutTextAndAFailedDrawIsLeftOut()
     {
-        OcrPageKind[] kinds = [OcrPageKind.Text, OcrPageKind.Blank, OcrPageKind.Drawing, OcrPageKind.Text, OcrPageKind.Blank];
-        bool?[] white = [false, true, true, false, null];
+        OcrPageKind[] kinds = [OcrPageKind.Text, OcrPageKind.Blank, OcrPageKind.Drawing, OcrPageKind.Text, OcrPageKind.Blank, OcrPageKind.Blank];
+        bool?[] white = [true, true, true, false, null, false];
 
-        Assert.Equal([1, 2], PageEdits.BlankPages(kinds, white));
+        Assert.Equal([1, 2], PageEdits.BlankPages(kinds, white, new bool[6]));
+    }
+
+    [Fact]
+    public void APageWithOnlyAnAnnotationIsNotBlank()
+    {
+        Assert.Empty(PageEdits.BlankPages([OcrPageKind.Blank], [true], [true]));
     }
 
     private sealed class RecordingHost : IToolHost

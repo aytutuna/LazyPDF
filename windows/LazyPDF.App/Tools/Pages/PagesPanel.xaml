@@ -205,7 +205,13 @@
                 <Button x:Name="FindBlank" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Find blank pages}"
                         loc:Icon.Glyph="&#xE721;" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Find blank pages}" Click="FindBlank_Click" />
                 <ListBox x:Name="BlankList" MaxHeight="160" Margin="0,0,0,8" AutomationProperties.Name="{loc:T Blank pages found}"
-                         ButtonBase.Click="BlankCheck_Click" />
+                         Focusable="False" KeyboardNavigation.TabNavigation="Continue" ButtonBase.Click="BlankCheck_Click">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                            <Setter Property="Focusable" Value="False" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                </ListBox>
                 <TextBlock x:Name="BlankHint" Style="{StaticResource ReasonText}" />
             </StackPanel>
         </Expander>
