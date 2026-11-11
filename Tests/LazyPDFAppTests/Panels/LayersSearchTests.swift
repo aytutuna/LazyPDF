@@ -133,6 +133,16 @@ final class SearchModelTests: XCTestCase {
         XCTAssertEqual(model.current, 2)
     }
 
+    func test_choosingTheCurrentHitAgainStillTellsTheViewer() async throws {
+        let (model, viewer) = try await attached("lazy dog")
+        var moves = 0
+        viewer.search.onCurrentChanged = { moves += 1 }
+
+        model.select(model.current)
+
+        XCTAssertEqual(moves, 1)
+    }
+
     func test_theFindBarOpensFromThePanel() async throws {
         let (model, viewer) = try await attached("")
 

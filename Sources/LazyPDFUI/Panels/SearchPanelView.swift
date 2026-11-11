@@ -24,11 +24,17 @@ public struct SearchPanelView: View {
                     .accessibilityAddTraits(.updatesFrequently)
             }
             .padding(12)
-            List(selection: Binding(get: { model.current >= 0 ? model.current : nil }, set: { model.select($0 ?? -1) })) {
+            List {
                 ForEach(Array(model.hits.enumerated()), id: \.offset) { index, hit in
-                    HitRow(hit: hit)
-                        .tag(index)
-                        .accessibilityLabel(hit.spoken)
+                    Button { model.select(index) } label: {
+                        HitRow(hit: hit)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .listRowBackground(index == model.current ? Color.accentColor.opacity(0.2) : nil)
+                    .accessibilityLabel(hit.spoken)
+                    .accessibilityAddTraits(index == model.current ? .isSelected : [])
                 }
             }
             .listStyle(.sidebar)
