@@ -145,9 +145,9 @@ public class FilterChainTests
     }
 
     [Fact]
-    public void DefaultCapIsOneGibibyte()
+    public void DefaultCapIs256Mebibytes()
     {
-        Assert.Equal(1L << 30, PdfFilters.DefaultMaxSize);
+        Assert.Equal(256L << 20, PdfFilters.DefaultMaxSize);
     }
 
     [Fact]

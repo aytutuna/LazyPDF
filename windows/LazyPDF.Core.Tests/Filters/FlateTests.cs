@@ -118,4 +118,28 @@ public class FlateTests
         Assert.Equal(PdfReadProblem.Unsupported, e.Problem);
         Assert.Equal(20_000_000, PdfFilters.Decode(packed, Name("FlateDecode"), null, 20_000_000).Length);
     }
+
+    [Fact]
+    public void ZeroBombPastTheDefaultCapIsRefused()
+    {
+        var packed = PdfFilterEncoders.Flate(new byte[300 << 20]);
+        var e = Assert.Throws<PdfReadException>(() => PdfFilters.Decode(packed, Name("FlateDecode"), null));
+        Assert.Equal(PdfReadProblem.Unsupported, e.Problem);
+        Assert.Equal("A stream expands past the size limit.", e.Message);
+    }
+
+    [Fact]
+    public void LargeZeroStreamUnderTheCapDecodesWhole()
+    {
+        var packed = PdfFilterEncoders.Flate(new byte[64 << 20]);
+        Assert.Equal(64 << 20, PdfFilters.Decode(packed, Name("FlateDecode"), null).Length);
+    }
+
+    [Fact]
+    public void KibibyteCapStillStops()
+    {
+        var packed = PdfFilterEncoders.Flate(new byte[4096]);
+        var e = Assert.Throws<PdfReadException>(() => PdfFilters.Decode(packed, Name("FlateDecode"), null, 1024));
+        Assert.Equal(PdfReadProblem.Unsupported, e.Problem);
+    }
 }

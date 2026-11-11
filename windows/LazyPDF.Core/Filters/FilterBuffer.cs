@@ -47,11 +47,12 @@ internal sealed class FilterBuffer(long max, int capacity = 0)
         if (_count > max) throw TooBig();
     }
 
-    public byte[] ToArray() => _bytes.AsSpan(0, _count).ToArray();
+    // Callers discard the buffer, so a full one is handed over without a copy.
+    public byte[] ToArray() => _count == _bytes.Length ? _bytes : _bytes.AsSpan(0, _count).ToArray();
 
     private void Grow(long needed)
     {
-        long size = Math.Min(Math.Max(needed, _bytes.Length * 2L), Array.MaxLength);
+        long size = Math.Min(Math.Max(needed, _bytes.Length * 2L), Math.Min(max + 1, Array.MaxLength));
         if (size < needed) throw TooBig();
         Array.Resize(ref _bytes, (int)size);
     }

@@ -11,7 +11,7 @@ public sealed record PdfDecodedStream(byte[] Data, string? Codec, PdfDictionary?
 public static class PdfFilters
 {
     /// <summary>The most a filter chain may expand to unless the caller says otherwise.</summary>
-    public const long DefaultMaxSize = 1L << 30;
+    public const long DefaultMaxSize = 256L << 20;
 
     private const int MaxColors = 1 << 16;
 
