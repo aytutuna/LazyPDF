@@ -30,6 +30,11 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     // The height of the lowest detent of a tool sheet: the button and a line of the panel.
     private static var smallSheet: CGFloat { 150 }
 
+    // A phone held sideways is wide but short, so the height class makes it compact too.
+    static func isCompact(width: CGFloat, verticalCompact: Bool) -> Bool {
+        width < compactWidth || verticalCompact
+    }
+
     private let vm: AppViewModel
     private let commands: ShellCommands
     private let toolAction: (String) -> ToolAction?
@@ -45,6 +50,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     @State private var stageBottom: CGFloat = 0
     @State private var dropTargeted = false
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
     /// - Parameter toolAction: the pinned button of the tool's panel, if it has one.
     /// - Parameter heldStage: what stands in the stage's place while a tool holds it (`AppViewModel.holdStage`).
@@ -63,16 +69,20 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         self.inspector = inspector
     }
 
+    private func isCompact(_ width: CGFloat) -> Bool {
+        Self.isCompact(width: width, verticalCompact: verticalSizeClass == .compact)
+    }
+
     public var body: some View {
         GeometryReader { proxy in
             Group {
-                if proxy.size.width < Self.compactWidth {
+                if isCompact(proxy.size.width) {
                     compactLayout(height: proxy.size.height, bottom: proxy.frame(in: .global).maxY)
                 } else {
                     regularLayout(width: proxy.size.width)
                 }
             }
-            .onChange(of: proxy.size.width < Self.compactWidth, initial: true) { _, now in compact = now }
+            .onChange(of: isCompact(proxy.size.width), initial: true) { _, now in compact = now }
         }
         .overlay { cards }
         .sheet(item: modal) { which in

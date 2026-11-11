@@ -30,6 +30,14 @@ final class AppWindowTests: XCTestCase {
         }
     }
 
+    func test_aShortWindowIsCompactWhateverItsWidth() {
+        typealias Window = AppWindow<EmptyView, EmptyView, EmptyView>
+
+        XCTAssertTrue(Window.isCompact(width: 800, verticalCompact: true))
+        XCTAssertFalse(Window.isCompact(width: 800, verticalCompact: false))
+        XCTAssertTrue(Window.isCompact(width: 600, verticalCompact: false))
+    }
+
     func test_homeDraws() {
         let f = ShellFixture(self)
 
