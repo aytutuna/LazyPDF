@@ -139,6 +139,8 @@ public sealed class DocumentTab : ITab, IDisposable
     /// <summary>The file on disk is not the one that was read or saved: another program changed or removed it.</summary>
     public bool ChangedOnDisk => _path is not null && OnDisk != _disk;
 
+    public bool IsChangedFrom(DiskStamp? found) => _path is not null && found != _disk;
+
     /// <summary>The file as it is now; null when it is gone or the tab has no file.</summary>
     public DiskStamp? OnDisk => DiskStamp.Of(_path);
 

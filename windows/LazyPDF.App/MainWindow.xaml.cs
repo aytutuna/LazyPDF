@@ -250,7 +250,7 @@ public partial class MainWindow : Window
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => _vm.CancelBusy();
 
-    private void Window_Activated(object? sender, EventArgs e) => _vm.CheckDisk();
+    private void Window_Activated(object? sender, EventArgs e) => _ = _vm.CheckDiskAsync();
 
     private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {

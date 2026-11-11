@@ -71,7 +71,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
             DropAction();
             if (value is DocumentTab document) _lastDocument = document;
             NotifyAll();
-            CheckDisk();
+            _ = CheckDiskAsync();
         }
     }
 

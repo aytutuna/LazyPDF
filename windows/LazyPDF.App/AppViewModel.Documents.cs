@@ -390,13 +390,22 @@ public sealed partial class AppViewModel
     /// Looks at the active document's file: when another program changed or removed it, the info bar says so
     /// (once for each state the file is found in). Called when the window comes forward and when a tab is picked.
     /// </summary>
-    public void CheckDisk()
+    public async Task CheckDiskAsync()
     {
-        if (ActiveDocument is not { Path: not null } tab || !tab.ChangedOnDisk) return;
-        var found = tab.OnDisk;
+        if (ActiveDocument is not { Path: not null } tab) return;
+        DiskStamp? found;
+        try
+        {
+            found = await Task.Run(() => tab.OnDisk);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return;
+        }
+        if (!ReferenceEquals(ActiveDocument, tab) || !Strip.Contains(tab) || !tab.IsChangedFrom(found)) return;
         if (_warnedAboutDisk.TryGetValue(tab, out var seen) && seen == found) return;
         _warnedAboutDisk[tab] = found;
-        if (!File.Exists(tab.Path))
+        if (found is null)
         {
             ShowNotice(Loc.T("File is gone"), Loc.T("{0} was moved or deleted. Save it again to keep your work.", tab.Title));
             return;

@@ -18,7 +18,7 @@ public sealed class DiskChangeTests
         using var f = new ViewModelFixture();
         await f.Vm.OpenAsync(f.Pdf());
 
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
 
         Assert.Null(f.Vm.Message);
     }
@@ -31,13 +31,13 @@ public sealed class DiskChangeTests
         await f.Vm.OpenAsync(path);
         Touch(path, Pdfs.Text(pages: 3));
 
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
 
         Assert.Equal("File changed", f.Vm.Message?.Title);
         Assert.Contains("a.pdf", f.Vm.Message?.Text);
         Assert.NotNull(f.Vm.Message?.Action);
         f.Vm.DismissMessage();
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
         Assert.Null(f.Vm.Message);
     }
 
@@ -52,7 +52,7 @@ public sealed class DiskChangeTests
         tab.Commit("x");
         Touch(path, Pdfs.Text(pages: 3));
 
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
 
         Assert.Contains("drops your unsaved changes", f.Vm.Message?.Text);
     }
@@ -65,7 +65,7 @@ public sealed class DiskChangeTests
         await f.Vm.OpenAsync(path);
         File.Delete(path);
 
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
 
         Assert.Equal("File is gone", f.Vm.Message?.Title);
         Assert.Null(f.Vm.Message?.Action);
@@ -112,7 +112,7 @@ public sealed class DiskChangeTests
         await f.Vm.OpenAsync(path);
         var tab = f.Vm.ActiveDocument!;
         Touch(path, Pdfs.Text(pages: 3));
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
         Assert.NotNull(f.Vm.Message?.Action);
 
         f.Vm.Close(tab);
@@ -131,17 +131,33 @@ public sealed class DiskChangeTests
         f.Vm.Save(tab);
         f.Vm.DismissMessage();
 
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
 
         Assert.Null(f.Vm.Message);
     }
 
     [Fact]
-    public void OnTheHomeTabThereIsNothingToCheck()
+    public async Task OnTheHomeTabThereIsNothingToCheck()
     {
         using var f = new ViewModelFixture();
 
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
+
+        Assert.Null(f.Vm.Message);
+    }
+
+    [Fact]
+    public async Task ALeftTabIsNotToldAboutAfterTheCheckFinishes()
+    {
+        using var f = new ViewModelFixture();
+        string a = f.Pdf("a.pdf");
+        await f.Vm.OpenFilesAsync([f.Pdf("b.pdf"), a]);
+        Assert.Equal(a, f.Vm.ActiveDocument!.Path);
+        Touch(a, Pdfs.Text(pages: 3));
+
+        var check = f.Vm.CheckDiskAsync();
+        f.Vm.ActiveTab = f.Vm.Documents.First();
+        await check;
 
         Assert.Null(f.Vm.Message);
     }

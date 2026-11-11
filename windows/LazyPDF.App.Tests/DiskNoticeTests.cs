@@ -18,11 +18,11 @@ public sealed class DiskNoticeTests
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
         Touch(path, 2, 10);
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
         f.Vm.DismissMessage();
 
         Touch(path, 3, 20);
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
 
         Assert.Equal("File changed", f.Vm.Message?.Title);
         Assert.NotNull(f.Vm.Message?.Action);
@@ -35,11 +35,11 @@ public sealed class DiskNoticeTests
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
         Touch(path, 2, 10);
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
         f.Vm.DismissMessage();
 
         File.Delete(path);
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
 
         Assert.Equal("File is gone", f.Vm.Message?.Title);
     }
@@ -54,6 +54,7 @@ public sealed class DiskNoticeTests
         f.Vm.DismissMessage();
 
         f.Vm.ActiveTab = f.Vm.Documents.First();
+        for (int i = 0; i < 100 && f.Vm.Message is null; i++) await Task.Delay(50);
 
         Assert.Equal("File changed", f.Vm.Message?.Title);
     }
@@ -65,15 +66,15 @@ public sealed class DiskNoticeTests
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
         Touch(path, 2, 10);
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
         await f.Vm.ReloadAsync(f.Vm.ActiveDocument!);
         f.Vm.DismissMessage();
 
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
         Assert.Null(f.Vm.Message);
 
         Touch(path, 3, 20);
-        f.Vm.CheckDisk();
+        await f.Vm.CheckDiskAsync();
         Assert.Equal("File changed", f.Vm.Message?.Title);
     }
 }
