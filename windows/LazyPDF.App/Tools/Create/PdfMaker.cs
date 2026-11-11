@@ -21,6 +21,8 @@ public static class PdfMaker
 {
     public const int MostBlankPages = 500;
 
+    internal static readonly string[] PictureExtensions = [".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".gif", ".heic", ".heif"];
+
     /// <summary>The engine calls take no token, so a cancel is only seen between the files read.</summary>
     public static MadePdf Make(CreateRequest request, IImageCodec codec, IFontSource fonts, CancellationToken cancel = default)
     {

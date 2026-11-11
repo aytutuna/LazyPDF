@@ -1585,9 +1585,12 @@
   "Not a PDF": {
     "tr": "PDF değil"
   },
-  "{0} dropped file is not a PDF and was left out.": {
-    "other": "{0} dropped files are not PDFs and were left out.",
-    "tr": "Bırakılan {0} dosya PDF olmadığı için eklenmedi."
+  "{0} dropped file is not a PDF or a picture and was left out.": {
+    "other": "{0} dropped files are not PDFs or pictures and were left out.",
+    "tr": "Bırakılan {0} dosya PDF ya da resim olmadığı için eklenmedi."
+  },
+  "The folder {0} could not be read.": {
+    "tr": "{0} klasörü okunamadı."
   },
   "{0} is not a PDF file. Pick a PDF, a picture or a text file.": {
     "tr": "{0} bir PDF dosyası değil. Bir PDF, resim ya da metin dosyası seçin."
@@ -1702,6 +1705,9 @@
   },
   "More about {0}": {
     "tr": "{0} hakkında daha fazla"
+  },
+  "PDF files and pictures": {
+    "tr": "PDF dosyaları ve resimler"
   },
   "PDF files": {
     "tr": "PDF dosyaları"
@@ -5359,6 +5365,15 @@
   },
   "Reading file": {
     "tr": "Dosya okunuyor"
+  },
+  "Reading picture": {
+    "tr": "Resim okunuyor"
+  },
+  "Picture not read": {
+    "tr": "Resim okunamadı"
+  },
+  "{0} could not be read as a picture.": {
+    "tr": "{0} resim olarak okunamadı."
   },
   "Files not combined": {
     "tr": "Dosyalar birleştirilemedi"

@@ -260,6 +260,53 @@ public sealed class CombineJobTests
     }
 
     [Fact]
+    public async Task APictureBecomesAnEntryOfOnePage()
+    {
+        using var dir = new TempDir();
+        var host = new RecordingHost();
+        string png = dir.File("photo.png", PngWriter.Encode(new PdfRgbaImage(8, 8, Enumerable.Repeat((byte)200, 8 * 8 * 4).ToArray())));
+        var list = new List<CombineEntry>();
+
+        Assert.True(await CombinePanel.AddAsync(host, list, [png]));
+
+        var entry = Assert.Single(list);
+        Assert.Equal("photo.png", entry.Name);
+        Assert.Equal(1, entry.Pages);
+    }
+
+    [Fact]
+    public async Task APictureThatCannotBeReadIsReportedAndNotListed()
+    {
+        using var dir = new TempDir();
+        var host = new RecordingHost();
+        string bad = dir.File("broken.png", [1, 2, 3]);
+        var list = new List<CombineEntry>();
+
+        Assert.False(await CombinePanel.AddAsync(host, list, [bad]));
+
+        Assert.Empty(list);
+        Assert.Equal([("Picture not read", "broken.png could not be read as a picture.")], host.Notices);
+    }
+
+    [Fact]
+    public void ADroppedFolderGivesItsPdfsInNameOrder()
+    {
+        using var dir = new TempDir();
+        string folder = System.IO.Path.Combine(dir.Path, "set");
+        Directory.CreateDirectory(folder);
+        string b = System.IO.Path.Combine(folder, "b.pdf"), a = System.IO.Path.Combine(folder, "a.pdf");
+        File.WriteAllBytes(b, Pdfs.Text(1));
+        File.WriteAllBytes(a, Pdfs.Text(1));
+        File.WriteAllText(System.IO.Path.Combine(folder, "notes.txt"), "x");
+        string loose = dir.File("loose.docx", [1]);
+
+        var files = CombinePanel.Gather(new RecordingHost(), [folder, loose], out int skipped);
+
+        Assert.Equal([a, b], files);
+        Assert.Equal(1, skipped);
+    }
+
+    [Fact]
     public async Task AFileWithNoPagesIsRefusedAndNotListed()
     {
         using var dir = new TempDir();

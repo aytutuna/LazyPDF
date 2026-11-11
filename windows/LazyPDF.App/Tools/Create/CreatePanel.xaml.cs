@@ -189,7 +189,7 @@ public partial class CreatePanel : ToolPanel
         var dialog = new OpenFileDialog
         {
             Multiselect = true,
-            Filter = Loc.T("Pictures") + "|*.jpg;*.jpeg;*.png;*.tif;*.tiff;*.bmp;*.gif;*.heic;*.heif",
+            Filter = Loc.T("Pictures") + "|" + string.Join(';', PdfMaker.PictureExtensions.Select(x => "*" + x)),
         };
         if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
         foreach (string file in dialog.FileNames) _pictures.Add(new PictureItem(file));
@@ -207,8 +207,7 @@ public partial class CreatePanel : ToolPanel
     {
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
         e.Handled = true;
-        string[] kinds = [".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".gif", ".heic", ".heif"];
-        var pictures = paths.Where(p => kinds.Contains(System.IO.Path.GetExtension(p), StringComparer.OrdinalIgnoreCase)).ToList();
+        var pictures = paths.Where(p => PdfMaker.PictureExtensions.Contains(System.IO.Path.GetExtension(p), StringComparer.OrdinalIgnoreCase)).ToList();
         if (pictures.Count == 0)
         {
             Host?.SetStatus(Loc.T("Only picture files can be added."));

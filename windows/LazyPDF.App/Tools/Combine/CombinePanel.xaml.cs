@@ -5,6 +5,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Create;
 using LazyPDF.App.Tools.Pages;
 using LazyPDF.Core;
 using Microsoft.Win32;
@@ -110,7 +112,13 @@ public partial class CombinePanel : ToolPanel
 
     private async void AddFiles_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog { Filter = Loc.T("PDF files") + "|*.pdf", Multiselect = true, CheckFileExists = true };
+        string pictures = string.Join(';', PdfMaker.PictureExtensions.Select(x => "*" + x));
+        var dialog = new OpenFileDialog
+        {
+            Filter = Loc.T("PDF files and pictures") + "|*.pdf;" + pictures + "|" + Loc.T("PDF files") + "|*.pdf|" + Loc.T("Pictures") + "|" + pictures,
+            Multiselect = true,
+            CheckFileExists = true,
+        };
         if (dialog.ShowDialog() == true) await AddAsync(Host, _entries, dialog.FileNames);
     }
 
@@ -200,11 +208,39 @@ public partial class CombinePanel : ToolPanel
     {
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
         e.Handled = true;
-        var pdfs = paths.Where(p => string.Equals(System.IO.Path.GetExtension(p), ".pdf", StringComparison.OrdinalIgnoreCase)).ToList();
-        bool opened = await AddAsync(Host, _entries, pdfs);
-        int skipped = paths.Count(p => !pdfs.Contains(p) && !System.IO.Directory.Exists(p));
+        var files = Gather(Host, paths, out int skipped);
+        bool opened = await AddAsync(Host, _entries, files);
         if (opened && skipped > 0)
-            Host?.ShowNotice(Loc.T("Not a PDF"), Loc.Plural(skipped, "{0} dropped file is not a PDF and was left out.", "{0} dropped files are not PDFs and were left out.", skipped));
+            Host?.ShowNotice(Loc.T("Not a PDF"), Loc.Plural(skipped, "{0} dropped file is not a PDF or a picture and was left out.", "{0} dropped files are not PDFs or pictures and were left out.", skipped));
+    }
+
+    private static bool IsPicture(string path) => PdfMaker.PictureExtensions.Contains(System.IO.Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
+
+    private static bool IsAddable(string path) =>
+        string.Equals(System.IO.Path.GetExtension(path), ".pdf", StringComparison.OrdinalIgnoreCase) || IsPicture(path);
+
+    // A dropped folder gives the PDFs and pictures at its top level, by name; skipped counts the dropped files that are neither.
+    internal static List<string> Gather(IToolHost? host, IEnumerable<string> paths, out int skipped)
+    {
+        var files = new List<string>();
+        skipped = 0;
+        foreach (string path in paths)
+        {
+            if (System.IO.Directory.Exists(path))
+            {
+                try
+                {
+                    files.AddRange(System.IO.Directory.EnumerateFiles(path).Where(IsAddable).Order(StringComparer.OrdinalIgnoreCase));
+                }
+                catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
+                {
+                    host?.ShowNotice(Loc.T("Nothing to add"), Loc.T("The folder {0} could not be read.", System.IO.Path.GetFileName(path)));
+                }
+            }
+            else if (IsAddable(path)) files.Add(path);
+            else skipped++;
+        }
+        return files;
     }
 
     // False when a file could not be opened or has no pages; what happened is already on screen.
@@ -215,7 +251,8 @@ public partial class CombinePanel : ToolPanel
         foreach (string path in paths)
         {
             string name = System.IO.Path.GetFileName(path);
-            if (await SourceFile.OpenAsync(host, path) is not { } document) all = false;
+            var document = IsPicture(path) ? await ReadPictureAsync(host, path, name) : await SourceFile.OpenAsync(host, path);
+            if (document is null) all = false;
             else if (document.Pages.Count == 0)
             {
                 host.ShowNotice(Loc.T("Nothing to add"), Loc.T("{0} has no pages, so it was left out.", name));
@@ -224,5 +261,25 @@ public partial class CombinePanel : ToolPanel
             else list.Add(new CombineEntry(name, document.Pages.Count, document));
         }
         return all;
+    }
+
+    private static async Task<PdfDocument?> ReadPictureAsync(IToolHost host, string path, string name)
+    {
+        PdfDocument? document = null;
+        await host.RunBusyAsync(Loc.T("Reading picture"), async _ =>
+        {
+            var setup = new PdfPageSetup(PdfPaper.Picture, PdfOrientation.Auto, 0);
+            var request = new CreateRequest(CreateSource.Pictures, setup, name, Files: [path]);
+            try
+            {
+                var made = await Task.Run(() => PdfMaker.Make(request, new WicImageCodec(), new SystemFontSource()));
+                if (made.Unreadable == 0) document = PdfDocument.Open(made.Bytes);
+            }
+            catch (ArgumentException)
+            {
+            }
+        });
+        if (document is null) host.ShowNotice(Loc.T("Picture not read"), Loc.T("{0} could not be read as a picture.", name));
+        return document;
     }
 }

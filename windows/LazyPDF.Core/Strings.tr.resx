@@ -3625,6 +3625,9 @@
   <data name="PDF files" xml:space="preserve">
     <value>PDF dosyaları</value>
   </data>
+  <data name="PDF files and pictures" xml:space="preserve">
+    <value>PDF dosyaları ve resimler</value>
+  </data>
   <data name="PDF version" xml:space="preserve">
     <value>PDF sürümü</value>
   </data>
@@ -3940,6 +3943,9 @@
   <data name="Picture moved or resized" xml:space="preserve">
     <value>Resim taşındı ya da yeniden boyutlandırıldı</value>
   </data>
+  <data name="Picture not read" xml:space="preserve">
+    <value>Resim okunamadı</value>
+  </data>
   <data name="Picture not saved" xml:space="preserve">
     <value>Resim kaydedilmedi</value>
   </data>
@@ -4188,6 +4194,9 @@
   </data>
   <data name="Reading pages" xml:space="preserve">
     <value>Sayfalar okunuyor</value>
+  </data>
+  <data name="Reading picture" xml:space="preserve">
+    <value>Resim okunuyor</value>
   </data>
   <data name="Reading the tags" xml:space="preserve">
     <value>Etiketler okunuyor</value>
@@ -5758,6 +5767,9 @@
   <data name="The folder cannot be watched any more. Check that it is there, then switch watching on again." xml:space="preserve">
     <value>Klasör artık izlenemiyor. Klasörün yerinde olduğunu kontrol edin, sonra izlemeyi yeniden açın.</value>
   </data>
+  <data name="The folder {0} could not be read." xml:space="preserve">
+    <value>{0} klasörü okunamadı.</value>
+  </data>
   <data name="The font cannot draw all of the text. Pick another font and update the stamp." xml:space="preserve">
     <value>Yazı tipi metnin tamamını çizemiyor. Başka bir yazı tipi seçip damgayı güncelleyin.</value>
   </data>
@@ -7060,6 +7072,9 @@
   <data name="{0} could not be put into the file. Leave it out, or try fewer of its pages." xml:space="preserve">
     <value>{0} dosyaya eklenemedi. Listeden kaldırın ya da daha az sayfasını deneyin.</value>
   </data>
+  <data name="{0} could not be read as a picture." xml:space="preserve">
+    <value>{0} resim olarak okunamadı.</value>
+  </data>
   <data name="{0} could not be read as form data. Pick a file that a form export wrote." xml:space="preserve">
     <value>{0} form verisi olarak okunamadı. Bir form dışa aktarımının yazdığı dosyayı seçin.</value>
   </data>
@@ -7099,8 +7114,8 @@
   <data name="{0} dpi" xml:space="preserve">
     <value>{0} dpi</value>
   </data>
-  <data name="{0} dropped file is not a PDF and was left out.|plural" xml:space="preserve">
-    <value>Bırakılan {0} dosya PDF olmadığı için eklenmedi.</value>
+  <data name="{0} dropped file is not a PDF or a picture and was left out.|plural" xml:space="preserve">
+    <value>Bırakılan {0} dosya PDF ya da resim olmadığı için eklenmedi.</value>
   </data>
   <data name="{0} embedded files were given a relationship and a type." xml:space="preserve">
     <value>{0} gömülü dosyaya ilişki ve tür verildi.</value>
