@@ -36,6 +36,15 @@ public partial class PageViewer
             Title = _tab?.Title ?? "Lazy PDF",
             Content = this,
         };
+        if (PresentationSource.FromVisual(host) is { CompositionTarget: { } target })
+        {
+            // Maximising puts the window on the monitor that holds its position.
+            var centre = target.TransformFromDevice.Transform(
+                host.PointToScreen(new Point(host.ActualWidth / 2, host.ActualHeight / 2)));
+            _screen.WindowStartupLocation = WindowStartupLocation.Manual;
+            _screen.Left = centre.X;
+            _screen.Top = centre.Y;
+        }
         _screen.SetResourceReference(Window.BackgroundProperty, "SolidBackgroundFillColorBaseBrush");
         _screen.SetResourceReference(Window.FontFamilyProperty, "TextFontFamily");
         AutomationProperties.SetName(_screen, Loc.T("Page viewer"));
