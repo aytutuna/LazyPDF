@@ -3,6 +3,11 @@ import SwiftUI
 import UniformTypeIdentifiers
 import LazyPDFApp
 import LazyPDFKit
+#if os(macOS)
+import AppKit
+#else
+import QuickLook
+#endif
 
 // The view of SignaturesModel; follows windows/LazyPDF.App/Panels/Signatures/SignaturesSidePanel.xaml.
 
@@ -12,6 +17,7 @@ public struct SignaturesPanelView: View {
     @State private var file = BytesDocument()
     @State private var fileName = ""
     @State private var choosing = false
+    @State private var preview: URL?
 
     public init(model: SignaturesModel) {
         self.model = model
@@ -42,6 +48,10 @@ public struct SignaturesPanelView: View {
             }
         }
         .accessibilityLabel(L10n.t("Signatures"))
+        .onAppear { model.launch = launch }
+        #if os(iOS)
+        .quickLookPreview($preview)
+        #endif
         .fileExporter(isPresented: $saving, document: file, contentType: .pdf, defaultFilename: fileName) { model.signedVersionSaved($0, access: { SecurityScopedAccess.start($0) }) }
         .fileImporter(isPresented: $choosing, allowedContentTypes: [.x509Certificate, .data]) { result in
             if case .success(let url) = result { model.addTrusted(read(url)) }
@@ -63,6 +73,11 @@ public struct SignaturesPanelView: View {
                     Label(L10n.t("View signed version"), systemImage: "doc.text.magnifyingglass")
                 }
                 .disabled(!model.canViewSigned)
+                Button { model.viewCertificate() } label: {
+                    Label(L10n.t("View certificate"), systemImage: "person.text.rectangle")
+                }
+                .accessibilityLabel(L10n.t("View the signer's certificate"))
+                .disabled(row.report.certificate == nil)
                 Button { saveSigned() } label: {
                     Label(L10n.t("Save it"), systemImage: "square.and.arrow.down")
                 }
@@ -120,6 +135,15 @@ public struct SignaturesPanelView: View {
         saving = true
     }
 
+    private func launch(_ url: URL) -> Bool {
+        #if os(macOS)
+        return NSWorkspace.shared.open(url)
+        #else
+        preview = url
+        return true
+        #endif
+    }
+
     private func read(_ url: URL) -> [UInt8] {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
@@ -140,6 +164,9 @@ private struct SignatureRowView: View {
                 Text(row.title).fontWeight(.semibold)
                 Text(row.status).font(.callout)
                 Text(row.sentence).font(.caption).foregroundStyle(.secondary)
+                if !row.caveat.isEmpty {
+                    Text(row.caveat).font(.caption).foregroundStyle(.secondary)
+                }
             }
             Spacer(minLength: 0)
         }

@@ -85,6 +85,31 @@ final class SignatureRowTests: XCTestCase {
         XCTAssertEqual(SignatureRow(unnamed, page: 0, area: nil).title, "Approval")
     }
 
+    func test_aGoodSignatureWithSomethingUnCheckedSaysSo() {
+        let row = SignatureRow(report(.valid), page: 0, area: nil)
+
+        XCTAssertEqual(row.level, .good)
+        XCTAssertEqual(row.caveat, "Not everything could be checked. See the details.")
+        XCTAssertTrue(row.summary.hasSuffix(" " + row.caveat))
+    }
+
+    func test_aGoodSignatureThatWasCheckedThroughHasNoCaveat() {
+        var checked = report(.valid)
+        checked.kind = .documentTimestamp
+        let row = SignatureRow(checked, page: 0, area: nil)
+
+        XCTAssertEqual(row.level, .good)
+        XCTAssertEqual(row.caveat, "")
+        XCTAssertFalse(row.summary.hasSuffix(" "))
+    }
+
+    func test_aBadSignatureHasNoCaveat() {
+        let row = SignatureRow(report(.broken), page: 0, area: nil)
+
+        XCTAssertEqual(row.level, .bad)
+        XCTAssertEqual(row.caveat, "")
+    }
+
     #if canImport(Security)
     private func signed(comment: Bool, trusted: Bool = false) throws -> (file: [UInt8], report: SignatureReport) {
         let ada = try PdfDigitalId.create("Ada Lovelace", nil, DateTimeOffset(2026, 3, 9, 9, 0, 0), years: 1, keyBits: 2048)

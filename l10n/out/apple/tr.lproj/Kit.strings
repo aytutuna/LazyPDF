@@ -967,6 +967,7 @@
 "Not converted to PDF/A" = "PDF/A'ya dönüştürülemedi";
 "Not every page was read" = "Her sayfa okunamadı";
 "Not every removed string could be checked." = "Kaldırılan her dize denetlenemedi.";
+"Not everything could be checked. See the details." = "Bazı şeyler denetlenemedi. Ayrıntılara bakın.";
 "Not exported" = "Dışa aktarılmadı";
 "Not found" = "Bulunamadı";
 "Not imported" = "İçe aktarılamadı";
@@ -1053,6 +1054,7 @@
 "Open that version" = "O sürümü aç";
 "Open the first" = "İlkini aç";
 "Open the signed version from the file's history." = "İmzalı sürümü dosyanın geçmişinden açın.";
+"Open this attachment?" = "Bu ek açılsın mı?";
 "Open this link?" = "Bu bağlantı açılsın mı?";
 "Opened with changes" = "Değişikliklerle açıldı";
 "Opened with limited rights. Enter its permissions password to change the protection." = "Sınırlı haklarla açıldı. Korumayı değiştirmek için izin parolasını girin.";
@@ -1560,6 +1562,7 @@
 "Structure" = "Yapı";
 "Style" = "Stil";
 "Subject" = "Konu";
+"Summary of {0} of {1} comments saved." = "{1} yorumdan {0} tanesinin özeti kaydedildi.";
 "Summary saved." = "Özet kaydedildi.";
 "System" = "Sistem";
 "Tab order follows structure" = "Sekme sırası yapıyı izliyor";
@@ -1666,6 +1669,7 @@
 "The catalog has /OCProperties." = "Katalogda /OCProperties var.";
 "The catalog has an /AA entry." = "Katalogda /AA girdisi var.";
 "The catalog has no /Metadata stream." = "Katalogda /Metadata akışı yok.";
+"The certificate could not be shown." = "Sertifika gösterilemedi.";
 "The certificate has expired since." = "Sertifikanın süresi sonradan doldu.";
 "The certificate is added to your keychain so you can use it again." = "Sertifika, yeniden kullanabilmeniz için anahtar zincirinize eklenir.";
 "The change could not be written. Save a copy of the file and try again." = "Değişiklik yazılamadı. Dosyanın bir kopyasını kaydedip yeniden deneyin.";
@@ -2013,8 +2017,10 @@
 "Value not accepted" = "Değer kabul edilmedi";
 "Version {0}" = "Sürüm {0}";
 "Vertical text cannot be changed." = "Dikey metin değiştirilemez.";
+"View certificate" = "Sertifikayı göster";
 "View options" = "Görünüm seçenekleri";
 "View signed version" = "İmzalı sürümü göster";
+"View the signer's certificate" = "İmzalayanın sertifikasını göster";
 "Wait for the job to end, or cancel it, then close." = "İşin bitmesini bekleyin ya da iptal edin, sonra kapatın.";
 "Waiting to be added" = "Eklenmeyi bekleyen";
 "Was: " = "Önceki: ";
@@ -2104,6 +2110,7 @@
 "{0} attachment or picture stamp is not in an XFDF file. Export as FDF to keep it.|one" = "{0} ek veya resimli damga XFDF dosyasında yer almıyor. Korumak için FDF olarak dışa aktarın.";
 "{0} attachment or picture stamp is not in an XFDF file. Export as FDF to keep it.|other" = "{0} ek veya resimli damga XFDF dosyasında yer almıyor. Korumak için FDF olarak dışa aktarın.";
 "{0} bytes" = "{0} bayt";
+"{0} came inside this PDF. Open it only if you trust where the PDF came from." = "{0} bu PDF'nin içinde geldi. Yalnızca PDF'nin nereden geldiğine güveniyorsanız açın.";
 "{0} cannot be repaired. Try an earlier copy of it." = "{0} onarılamıyor. Daha eski bir kopyasını deneyin.";
 "{0} changed while this ran. Run it again." = "{0} bu işlem sürerken değişti. İşlemi yeniden çalıştırın.";
 "{0} character|one" = "{0} karakter";

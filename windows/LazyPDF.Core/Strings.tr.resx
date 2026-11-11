@@ -6052,6 +6052,9 @@
   <data name="The catalog has no /Metadata stream." xml:space="preserve">
     <value>Katalogda /Metadata akışı yok.</value>
   </data>
+  <data name="The certificate could not be shown." xml:space="preserve">
+    <value>Sertifika gösterilemedi.</value>
+  </data>
   <data name="The certificate has expired since." xml:space="preserve">
     <value>Sertifikanın süresi sonradan doldu.</value>
   </data>

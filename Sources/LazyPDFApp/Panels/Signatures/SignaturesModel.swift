@@ -23,6 +23,9 @@ public final class SignaturesModel: ToolPanelModel {
     public private(set) var trusted: [TrustRow]
     public private(set) var trustNote: String?
 
+    /// Hands the signer's certificate file to the system's viewer; false when nothing could show it. The view sets it.
+    @ObservationIgnored public var launch: ((URL) -> Bool)?
+
     var tab: DocumentTab?
     var viewer: DocumentViewer?
     var host: ToolHost?
@@ -129,6 +132,19 @@ public final class SignaturesModel: ToolPanelModel {
             return
         }
         await host.openNew(bytes, title: L10n.t("{0} (signed by {1})", stem, row.title), password: nil, certificate: nil)
+    }
+
+    /// Shows the picked signature's certificate in the system's viewer.
+    public func viewCertificate() {
+        guard let certificate = selectedRow?.report.certificate else { return }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Lazy PDF signer " + certificate.thumbprint + ".cer")
+        do {
+            try Data(certificate.rawData).write(to: url)
+        } catch {
+            versionProblem = L10n.t("The certificate could not be shown.")
+            return
+        }
+        if launch?(url) != true { versionProblem = L10n.t("The certificate could not be shown.") }
     }
 
     /// The signed version of the picked signature and the name to offer for it; nil when it is not in the history, which the

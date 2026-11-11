@@ -195,6 +195,31 @@ final class SignaturesModelTests: XCTestCase {
         await settle { rig.model.rows.first?.level == .caution }
     }
 
+    func test_theSignersCertificateIsWrittenAndHandedToTheSystem() async throws {
+        let (file, certificate) = try signedFile(comment: false)
+        let rig = try await attached(file)
+        var launched: [URL] = []
+        rig.model.launch = { launched.append($0); return true }
+
+        rig.model.viewCertificate()
+
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("Lazy PDF signer " + certificate.thumbprint + ".cer")
+        XCTAssertEqual(launched, [url])
+        XCTAssertEqual(try Data(contentsOf: url), Data(certificate.rawData))
+        XCTAssertNil(rig.model.versionProblem)
+        try? FileManager.default.removeItem(at: url)
+    }
+
+    func test_aCertificateThatCannotBeShownIsToldInTheNote() async throws {
+        let (file, _) = try signedFile(comment: false)
+        let rig = try await attached(file)
+        rig.model.launch = { _ in false }
+
+        rig.model.viewCertificate()
+
+        XCTAssertEqual(rig.model.versionProblem, "The certificate could not be shown.")
+    }
+
     func test_aCertificateInAPemFileIsTaken() async throws {
         let (file, certificate) = try signedFile(comment: false)
         let rig = try await attached(file)

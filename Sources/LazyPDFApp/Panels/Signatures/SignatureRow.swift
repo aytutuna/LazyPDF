@@ -40,7 +40,10 @@ public struct SignatureRow: Identifiable {
 
     public var sentence: String { flaw.map { SignatureText.title($0) + ". " + SignatureText.advice($0) } ?? report.sentence }
 
-    public var summary: String { title + ", " + status + ". " + sentence }
+    public var summary: String { title + ", " + status + ". " + sentence + (caveat.isEmpty ? "" : " " + caveat) }
+
+    /// Said under a good verdict that left something unchecked.
+    public var caveat: String { level == .good && !notChecked().isEmpty ? L10n.t("Not everything could be checked. See the details.") : "" }
 
     public var level: SignatureLevel {
         switch report.verdict {

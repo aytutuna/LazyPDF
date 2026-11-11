@@ -8337,5 +8337,8 @@
   },
   "This bookmark does something Lazy PDF cannot do.": {
     "tr": "Bu yer imi, Lazy PDF'nin yapamadığı bir işlem yapıyor."
+  },
+  "The certificate could not be shown.": {
+    "tr": "Sertifika gösterilemedi."
   }
 }
