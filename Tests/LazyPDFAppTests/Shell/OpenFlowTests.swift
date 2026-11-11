@@ -202,4 +202,53 @@ final class OpenFlowTests: XCTestCase {
 
         XCTAssertEqual(announced.count, 1)
     }
+
+    func test_aFileOpenedByTheSystemWaitsForTheJobAndThenOpens() async throws {
+        let f = ViewModelFixture(self)
+        let vm = f.vm!
+        let started = Latch()
+        let finish = Latch()
+        let run = Task {
+            try await vm.runBusy("Working") { _ in
+                started.release()
+                await finish.wait()
+            }
+        }
+        await started.wait()
+        let grant = Grant()
+
+        await vm.openOrHold(f.pdf("late.pdf"), access: grant)
+
+        XCTAssertTrue(vm.documents.isEmpty)
+        XCTAssertEqual(vm.statusFull, "Will open when you are done here.")
+        finish.release()
+        try await run.value
+        await vm.releaseHeld()
+        XCTAssertEqual(vm.documents.map(\.title), ["late.pdf"])
+        XCTAssertEqual(grant.stops, 0)
+        vm.close(vm.documents[0])
+        XCTAssertEqual(grant.stops, 1)
+    }
+
+    func test_aMessageShownAfterTheFileWasHeldKeepsItWaitingUntilDismissed() async {
+        let f = ViewModelFixture(self)
+        f.vm.showNotice("Before", "Already up.")
+        f.vm.actionRunning = true
+        await f.vm.openOrHold(f.pdf("a.pdf"), access: nil)
+        f.vm.actionRunning = false
+
+        await f.vm.releaseHeld()
+        XCTAssertEqual(f.vm.documents.map(\.title), ["a.pdf"])
+
+        f.vm.actionRunning = true
+        await f.vm.openOrHold(f.pdf("b.pdf"), access: nil)
+        f.vm.actionRunning = false
+        f.vm.showNotice("After", "Came later.")
+
+        await f.vm.releaseHeld()
+        XCTAssertEqual(f.vm.documents.count, 1)
+        f.vm.dismissMessage()
+        await f.vm.releaseHeld()
+        XCTAssertEqual(f.vm.documents.map(\.title), ["a.pdf", "b.pdf"])
+    }
 }

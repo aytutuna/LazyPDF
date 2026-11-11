@@ -112,7 +112,7 @@ final class IOSShell {
         if sheet != nil {
             waiting.append(url)
         } else if url.isFileURL {
-            Task { await vm.open(url, access: SecurityScopedAccess.start(url)) }
+            Task { await vm.openOrHold(url, access: SecurityScopedAccess.start(url)) }
         } else if !LazyPdfAddress.parse(url.absoluteString).isEmpty {
             vm.showNotice(L10n.t("File not opened"), L10n.t("An address cannot open a file here. Share the file to Lazy PDF or open it from Files."))
         }

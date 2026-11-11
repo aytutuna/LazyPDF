@@ -1,4 +1,4 @@
-import Foundation
+﻿import Foundation
 import Observation
 import LazyPDFKit
 
@@ -97,6 +97,9 @@ public final class AppViewModel {
     @ObservationIgnored private var lastSidePanelId: String
     public private(set) var appearance: AppAppearance
     public internal(set) var message: InfoMessage?
+    @ObservationIgnored var messageSerial = 0
+    @ObservationIgnored var heldMessage: Int?
+    @ObservationIgnored var held: [(url: URL, access: FileAccess?)] = []
     private var status = ""
     private var busy: CancelToken?
     private var busyLabel = ""
@@ -173,6 +176,14 @@ public final class AppViewModel {
         isBusy || actionRunning || MarkWork.shared.running || closeQuestion != nil || recoveryOffer != nil || passwordRequest != nil
     }
 
+    /// Set by the window while one of its own sheets is up.
+    public var sheetOpen = false
+
+    /// Files from the system wait while a job, a question or a message that came after them is up.
+    public var holdsFiles: Bool {
+        isBlocked || sheetOpen || (message != nil && messageSerial != heldMessage)
+    }
+
     public var busyText: String { busyLabel }
 
     /// Opens the tool whose panel the inspector shows, or closes it when it is the open one.
@@ -219,11 +230,13 @@ public final class AppViewModel {
     }
 
     public func showNotice(_ title: String, _ text: String, _ action: NoticeAction? = nil) {
+        messageSerial += 1
         message = InfoMessage(title: title, text: text, isError: false, action: action)
         notifyAll()
     }
 
     public func showProblem(_ problem: Problem) {
+        messageSerial += 1
         message = InfoMessage(title: problem.title, text: problem.text, isError: true, action: nil)
         notifyAll()
     }

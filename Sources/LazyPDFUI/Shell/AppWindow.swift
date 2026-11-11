@@ -91,6 +91,8 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         .sheet(item: modal) { which in
             modalBody(which)
         }
+        .onChange(of: sheet != nil, initial: true) { _, shown in vm.sheetOpen = shown }
+        .onChange(of: vm.holdsFiles) { _, _ in Task { await vm.releaseHeld() } }
         .onChange(of: vm.passwordRequest != nil) { _, asked in
             if asked { sheet = nil }
         }
@@ -101,7 +103,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             if let open = commands.openFiles {
                 open(files)
             } else {
-                Task { await vm.open(files) }
+                Task { for url in files { await vm.openOrHold(url, access: SecurityScopedAccess.start(url)) } }
             }
             return true
         } isTargeted: { dropTargeted = $0 }

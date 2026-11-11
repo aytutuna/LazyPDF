@@ -88,6 +88,24 @@ extension AppViewModel {
         await open(item.url, access: bookmarks.access(item.url))
     }
 
+    /// A file the system or a drop hands over opens at once, or waits until the job, question or message in the way is gone.
+    public func openOrHold(_ url: URL, access: FileAccess?) async {
+        if !holdsFiles {
+            await open(url, access: access)
+            return
+        }
+        if held.isEmpty { heldMessage = messageSerial }
+        held.append((url, access))
+        setStatus(L10n.t("Will open when you are done here."))
+    }
+
+    public func releaseHeld() async {
+        if holdsFiles || held.isEmpty { return }
+        let files = held
+        held = []
+        for file in files { await open(file.url, access: file.access) }
+    }
+
     public func open(_ url: URL, access: FileAccess? = nil) async {
         var kept = false
         defer { if !kept { access?.stop() } }
