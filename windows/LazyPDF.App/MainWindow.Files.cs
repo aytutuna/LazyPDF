@@ -174,13 +174,29 @@ public partial class MainWindow
             _vm.SetStatus(Loc.T("Will open when you are done here."));
             return;
         }
-        _ = _vm.OpenFilesAsync(paths);
+        var all = _held.Concat(paths).ToList();
+        _held.Clear();
+        _ = _vm.OpenFilesAsync(all);
     }
 
-    // Opening a held file would replace a message that appeared after they were held, so they open once it is dismissed.
+    // Opening held files replaces the message on the info bar, so they wait for a message that came after the hold
+    // until it is dismissed or replaced by another.
+    internal static bool MayRelease(InfoMessage? showing, InfoMessage? atHold, InfoMessage? atEnd) =>
+        showing is null || ReferenceEquals(showing, atHold) || atEnd is not null && !ReferenceEquals(showing, atEnd);
+
     private void ReleaseHeld()
     {
-        if (Modal || _vm.IsBusy || _actionRunning || _vm.Message is not null && !ReferenceEquals(_vm.Message, _heldMessage) || _held.Count == 0) return;
+        if (Modal || _vm.IsBusy || _actionRunning)
+        {
+            _settledMessage = null;
+            return;
+        }
+        if (_held.Count == 0) return;
+        if (!MayRelease(_vm.Message, _heldMessage, _settledMessage))
+        {
+            _settledMessage ??= _vm.Message;
+            return;
+        }
         var paths = _held.ToList();
         _held.Clear();
         _ = _vm.OpenFilesAsync(paths);

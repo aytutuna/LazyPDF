@@ -25,6 +25,7 @@ public partial class MainWindow
     private bool _actionRunning;
     private readonly List<string> _held = new();
     private InfoMessage? _heldMessage;
+    private InfoMessage? _settledMessage;
 
     private readonly Dictionary<ToolGroup, Button> _groupButtons = [];
     private readonly Dictionary<string, ToggleButton> _railButtons = [];
