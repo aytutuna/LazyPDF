@@ -35,6 +35,21 @@ public class AddImageTests
         public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [];
     }
 
+    // Like RowsCodec, and encodes any picture as the sample JPEG, noting the size it was asked to encode.
+    private sealed class EncodingCodec : IImageCodec
+    {
+        public (int, int, int)? Asked;
+
+        public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+        public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) => new RowsCodec().DecodeFile(file);
+
+        public byte[] EncodeJpeg(PdfRgbaImage image, int quality)
+        {
+            Asked = (image.Width, image.Height, quality);
+            return ExportKit.Jpeg;
+        }
+    }
+
     // The sample JPEG with an Exif block after its JFIF header that carries the given orientation.
     private static byte[] Oriented(int orientation)
     {
@@ -61,6 +76,20 @@ public class AddImageTests
 
         Assert.Equal((2, 4), (image.Width, image.Height));
         Assert.Equal(new byte[] { 14, 10, 15, 11, 16, 12, 17, 13 }, gray);
+    }
+
+    [Fact]
+    public void ATurnedJpegIsStoredAsAJpegWhenTheCodecEncodes()
+    {
+        var document = ExportKit.Open("");
+        var codec = new EncodingCodec();
+
+        var image = PdfImageWriter.AddPicture(document, Oriented(6), codec);
+
+        Assert.Equal((2, 4, 92), codec.Asked);
+        var stream = (PdfStream)document.Resolve(image!.Reference)!;
+        Assert.Equal("DCTDecode", ((PdfName)stream.Dictionary["Filter"]!).Value);
+        Assert.Equal(ExportKit.Jpeg, document.RawData(stream));
     }
 
     [Fact]

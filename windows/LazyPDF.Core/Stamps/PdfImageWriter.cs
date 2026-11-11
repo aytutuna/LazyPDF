@@ -17,8 +17,8 @@ public static class PdfImageWriter
     }
 
     /// <summary>
-    /// A picture file as an upright image: a JPEG without an Exif turn as it is, a turned JPEG decoded and stored turned back,
-    /// any other file as the codec reads it. Null when nothing reads it or its pixels do not fit.
+    /// A picture file as an upright image: a JPEG without an Exif turn as it is, a turned JPEG decoded and stored turned back
+    /// (as a quality 92 JPEG when the codec encodes one, else as pixels), any other file as the codec reads it. Null when nothing reads it or its pixels do not fit.
     /// </summary>
     public static PdfImage? AddPicture(PdfDocument document, byte[] file, IImageCodec? codec)
     {
@@ -27,6 +27,8 @@ public static class PdfImageWriter
         if (jpeg && (orientation == 1 || codec is null) && AddJpeg(document, file) is { } direct) return direct;
         if (codec?.DecodeFile(file) is not { Count: > 0 } frames || !ObjectEditor.Fits(frames[0])) return null;
         var frame = JpegMeta.Upright(frames[0], orientation);
+        // A turned photo goes back in as a JPEG, not as raw pixels many times its size; a codec that cannot encode gives none.
+        if (orientation > 1 && codec.EncodeJpeg(frame, 92) is { Length: > 0 } turned && AddJpeg(document, turned) is { } encoded) return encoded;
         return AddRgba(document, frame.Width, frame.Height, frame.Rgba);
     }
 
