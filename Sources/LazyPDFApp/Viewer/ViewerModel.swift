@@ -118,7 +118,26 @@ public final class ViewerModel: DocumentViewer {
     @ObservationIgnored
     public private(set) lazy var search = ViewerSearch(source: { [unowned self] in self.textSource() }, startPage: { [unowned self] in self.state.currentPage })
 
+    // NSMapTable is not in Foundation on Linux, so the key is the tab's identity and the box checks the tab is still the same one.
+    private final class ViewBox {
+        weak var tab: DocumentTab?
+        let rotation: Int
+        let place: PagePoint?
+
+        init(_ tab: DocumentTab, rotation: Int, place: PagePoint?) {
+            self.tab = tab
+            self.rotation = rotation
+            self.place = place
+        }
+    }
+
+    @ObservationIgnored private var views: [ObjectIdentifier: ViewBox] = [:]
+
     public func show(_ tab: DocumentTab?) {
+        if let left = self.tab, !left.isDisposed {
+            views = views.filter { $0.value.tab != nil }
+            views[ObjectIdentifier(left)] = ViewBox(left, rotation: state.rotation, place: state.topPlace())
+        }
         endPointerTool()
         clearOverlays(keepText: self.tab.map { !$0.isDisposed } ?? false)
         watching += 1
@@ -139,6 +158,9 @@ public final class ViewerModel: DocumentViewer {
             seenRevision = tab.revision
             labels = PdfPageLabels.labels(tab.document)
             apply(state.show(sizes: pageSizes(tab), pageObjects: PageSurfaceState.pageObjects(tab.document), page: tab.pageIndex, zoom: tab.zoom, fit: tab.fit))
+            let saved = views[ObjectIdentifier(tab)].flatMap { $0.tab === tab ? $0 : nil }
+            apply(state.setRotation(saved?.rotation ?? 0))
+            if let place = saved?.place { apply(state.goToPage(place.page, at: place.point)) }
             storeZoom(tab)
             tab.pageIndex = state.currentPage
             watchRevision(tab, watching)

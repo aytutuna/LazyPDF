@@ -143,6 +143,46 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.zoom, 1.5, accuracy: 1e-9)
     }
 
+    func test_aTabKeepsItsRotationAndPlaceInThePage() throws {
+        let (viewer, first) = try open(pages: 3)
+        viewer.rotation = 90
+        viewer.scroll(by: 0, 40)
+        let place = viewer.state.topPlace()
+        let second = DocumentTab(session: try PdfEditSession.open(Pdfs.text(2)), renderer: FakeRenderer(), url: nil, title: "b.pdf")
+
+        viewer.show(second)
+        XCTAssertEqual(viewer.rotation, 0)
+        XCTAssertEqual(viewer.pageIndex, 0)
+        viewer.show(first)
+
+        XCTAssertEqual(viewer.rotation, 90)
+        let back = try XCTUnwrap(viewer.state.topPlace())
+        XCTAssertEqual(back.page, try XCTUnwrap(place).page)
+        XCTAssertEqual(back.point.y, try XCTUnwrap(place).point.y, accuracy: 1e-6)
+    }
+
+    func test_aTabNeverShownBeforeIsNotTurnedLikeTheLastOne() throws {
+        let (viewer, _) = try open()
+        viewer.rotation = 90
+        let second = DocumentTab(session: try PdfEditSession.open(Pdfs.text(2)), renderer: FakeRenderer(), url: nil, title: "b.pdf")
+
+        viewer.show(second)
+
+        XCTAssertEqual(viewer.rotation, 0)
+    }
+
+    func test_aClosedTabIsNotRemembered() throws {
+        let (viewer, first) = try open()
+        viewer.rotation = 90
+        let second = DocumentTab(session: try PdfEditSession.open(Pdfs.text(2)), renderer: FakeRenderer(), url: nil, title: "b.pdf")
+        first.dispose()
+
+        viewer.show(second)
+        viewer.show(first)
+
+        XCTAssertEqual(viewer.rotation, 0)
+    }
+
     func test_showingNothingEmptiesTheViewer() throws {
         let (viewer, _) = try open()
 
