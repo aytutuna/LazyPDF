@@ -141,6 +141,9 @@ public sealed class DiskChangeTests
 
             await Task.WhenAll(f.Vm.CheckDiskAsync(), f.Vm.CheckDiskAsync());
 
+            // The check the open itself started may hold the reload.
+            for (int i = 0; i < 200 && f.Vm.ActiveDocument!.PageCount != 3; i++) await Task.Delay(10);
+
             Assert.Single(f.Vm.Documents);
             Assert.Equal(3, f.Vm.ActiveDocument!.PageCount);
         });
