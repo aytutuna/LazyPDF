@@ -126,7 +126,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         _sizes = tab is null ? [] : ReadSizes(tab);
         _versions = new int[_sizes.Length];
         _pageObjects = tab is null ? [] : PageObjects(tab);
-        _bytes = tab is null ? null : Bytes(tab);
+        _bytes = tab is null || !tab.Drawing.IsCompleted ? null : Bytes(tab);
         _page = tab is null ? 0 : Math.Clamp(tab.PageIndex, 0, Math.Max(0, _sizes.Length - 1));
         _pinned = true;
         if (tab is not null)
