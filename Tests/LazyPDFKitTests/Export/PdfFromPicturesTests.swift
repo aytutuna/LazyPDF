@@ -184,4 +184,47 @@ final class PdfFromPicturesTests: XCTestCase {
             XCTAssertThrowsError(try PdfFromPictures.create([jpeg()], codec, PdfPageSetup(margin: margin)), "margin \(margin)") { XCTAssertTrue($0 is ArgumentException) }
         }
     }
-}
+
+    func test_aCancelledTokenStopsTheMakingOfThePdf() async throws {
+        let codec = codec
+        let file = jpeg()
+        let task = Task { () -> PicturesPdf in
+            while !Task.isCancelled { await Task.yield() }
+            return try PdfFromPictures.create([file], codec)
+        }
+        task.cancel()
+        do {
+            _ = try await task.value
+            XCTFail("expected a cancellation")
+        } catch is CancellationError {
+        }
+    }
+
+    func test_aCancelDuringTheFirstDecodeStopsBeforeTheThirdFile() async throws {
+        let codec = CancellingCodec(codec)
+        let file = ExportFakeCodec.picture(4, 4)
+        let task = Task { try PdfFromPictures.create([file, file, file], codec) }
+        do {
+            _ = try await task.value
+            XCTFail("expected a cancellation")
+        } catch is CancellationError {
+        }
+        XCTAssertEqual(codec.files, 1)
+    }
+
+    private final class CancellingCodec: ImageCodec {
+        private let inner: ImageCodec
+        private(set) var files = 0
+
+        init(_ inner: ImageCodec) { self.inner = inner }
+
+        func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+
+        func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? {
+            files += 1
+            withUnsafeCurrentTask { $0?.cancel() }
+            return inner.decodeFile(file)
+        }
+
+        func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [] }
+    }}

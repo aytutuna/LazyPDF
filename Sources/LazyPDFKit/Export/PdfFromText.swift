@@ -23,7 +23,7 @@ public enum PdfFromText {
     /// Text outside Latin-1 (Turkish ğ ş ı included) is drawn with an embedded subset of the family's font from `fonts`;
     /// text a Standard 14 font can draw needs no source. Throws `InvalidOperationException` (the message is
     /// `ExportText.noFont`) when no font can draw the text, and `ArgumentException` when the margin or size leaves no room
-    /// on the page.
+    /// on the page, and `CancellationError` when the calling task is cancelled.
     public static func create(_ text: String, fonts: FontSource? = nil, setup: PdfPageSetup? = nil, family: String = "Arial", size: Double = 11) throws -> TextPdf {
         let setup = setup ?? PdfPageSetup()
         let (width, height) = ExportPdf.paper(setup, landscape: setup.orientation == .landscape)
@@ -54,6 +54,7 @@ public enum PdfFromText {
 
         try PageOperations.insertBlank(document, 0, width, height, pages.count)
         for i in 0..<pages.count {
+            try Task.checkCancellation()
             let page = document.pages[i]
             let name = ContentResources.add(document, ContentResources.forEdit(document, page), "Font", font.reference, "F")
             let content = ContentWriter().beginText().font(name, size).moveText(setup.margin, height - setup.margin - font.ascent * size)

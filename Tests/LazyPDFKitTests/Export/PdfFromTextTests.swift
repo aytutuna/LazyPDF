@@ -99,4 +99,40 @@ final class PdfFromTextTests: XCTestCase {
         XCTAssertThrowsError(try PdfFromText.create("x", setup: PdfPageSetup(margin: -5))) { XCTAssertTrue($0 is ArgumentException) }
         XCTAssertThrowsError(try PdfFromText.create("x", size: 0)) { XCTAssertTrue($0 is ArgumentException) }
     }
-}
+
+    func test_aCancelledTokenStopsTheMakingOfThePdf() async throws {
+        let task = Task { () -> TextPdf in
+            while !Task.isCancelled { await Task.yield() }
+            return try PdfFromText.create("Hello\u{0C}World")
+        }
+        task.cancel()
+        do {
+            _ = try await task.value
+            XCTFail("expected a cancellation")
+        } catch is CancellationError {
+        }
+    }
+
+    func test_aCancelDuringTheFontLookupStopsBeforeThePages() async throws {
+        let fonts = CancellingFonts(try ExportArialSource())
+        let task = Task { try PdfFromText.create("AB ğİ\u{0C}İ ğ", fonts: fonts) }
+        do {
+            _ = try await task.value
+            XCTFail("expected a cancellation")
+        } catch is CancellationError {
+        }
+        XCTAssertEqual(fonts.asked, 1)
+    }
+
+    private final class CancellingFonts: FontSource {
+        private let inner: FontSource
+        private(set) var asked = 0
+
+        init(_ inner: FontSource) { self.inner = inner }
+
+        func find(_ family: String, _ style: FontStyles) -> FontFile? {
+            asked += 1
+            withUnsafeCurrentTask { $0?.cancel() }
+            return inner.find(family, style)
+        }
+    }}

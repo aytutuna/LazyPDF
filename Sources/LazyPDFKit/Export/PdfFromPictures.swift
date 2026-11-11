@@ -61,7 +61,7 @@ public enum PdfFromPictures {
     /// `codec` (every frame is a page). A picture is placed at its natural size, which JFIF density or a decoded frame's own gives (each axis its
     /// own) and 96 dpi otherwise, shrunk to fit the page inside its margin, never enlarged, centred. A JPEG's Exif
     /// orientation is applied by the way it is placed, so its bytes stay as they are. Throws `ArgumentException` when no
-    /// file could be read, or the margin is negative or leaves no room on the page.
+    /// file could be read, or the margin is negative or leaves no room on the page. Throws `CancellationError` when the calling task is cancelled.
     public static func create(_ files: [[UInt8]], _ codec: ImageCodec, _ setup: PdfPageSetup? = nil) throws -> PicturesPdf {
         let setup = setup ?? PdfPageSetup()
         if !(setup.margin >= 0) { throw ArgumentException("The margin cannot be negative.") }
@@ -70,6 +70,7 @@ public enum PdfFromPictures {
         var unreadable: [Int] = []
         var skipped = 0
         for i in 0..<files.count {
+            try Task.checkCancellation()
             let before = pictures.count
             if isJpeg(files[i]), let jpeg = try PdfImageWriter.addJpeg(document, files[i]) {
                 let (dpiX, dpiY) = JpegMeta.density(files[i])
@@ -84,6 +85,7 @@ public enum PdfFromPictures {
         }
         if pictures.isEmpty { throw ArgumentException(ExportText.noUsablePicture) }
 
+        try Task.checkCancellation()
         let naturals = pictures.map(natural)
         let sizes = naturals.map { pageSize(setup, $0.width, $0.height) }
         // Picture paper is the picture plus margins, so a tiny picture is room enough; only the clamp can take it away.
@@ -102,6 +104,7 @@ public enum PdfFromPictures {
             let content = ContentWriter().paint(name, JpegMeta.placement(pictures[i].orientation, w, h, (width - w) / 2, (height - h) / 2))
             page.dictionary["Contents"] = try document.add(PdfStream(PdfDictionary(), data: content.toArray()))
         }
+        try Task.checkCancellation()
         return PicturesPdf(try document.saveRewrite(), pictures.count, unreadable, skippedFrames: skipped)
     }
 
