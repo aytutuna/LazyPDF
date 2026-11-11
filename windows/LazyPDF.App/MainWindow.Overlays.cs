@@ -138,7 +138,7 @@ public partial class MainWindow
         if (tab.PendingMarks > 0) parts.Add(Loc.Plural(tab.PendingMarks, "{0} redaction mark is not applied yet.", "{0} redaction marks are not applied yet."));
         if (tab.PendingMeasurements > 0) parts.Add(Loc.Plural(tab.PendingMeasurements, "{0} measurement is not added to the page yet.", "{0} measurements are not added to the page yet."));
         CloseBody.Text = string.Join(" ", parts);
-        CloseAllGroup.Visibility = _vm.IsExiting && _vm.Unsettled >= 2 ? Visibility.Visible : Visibility.Collapsed;
+        CloseAllGroup.Visibility = _vm.IsExiting && _vm.Unsettled >= 2 && _vm.Documents.Any(d => d.IsDirty) ? Visibility.Visible : Visibility.Collapsed;
         CloseSaveButton.Visibility = marksOnly ? Visibility.Collapsed : Visibility.Visible;
         CloseDiscardButton.Content = marksOnly ? Loc.T("C_lose") : Loc.T("Do_n't save");
         AutomationProperties.SetName(CloseDiscardButton, marksOnly ? Loc.T("Close") : Loc.T("Don't save"));
@@ -170,7 +170,7 @@ public partial class MainWindow
     private void CloseSaveAll_Click(object sender, RoutedEventArgs e)
     {
         if (_vm.CloseQuestion is not { } tab) return;
-        if (SaveAllWithDialogs()) _vm.Close(tab);
+        if (SaveAllWithDialogs()) _vm.RequestClose(tab);
         else if (_vm.Message is { Action: not null }) _vm.CancelClose();
         else if (_vm.ActiveDocument is { } stopped) _vm.RequestClose(stopped);
     }
