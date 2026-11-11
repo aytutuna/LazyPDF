@@ -131,6 +131,22 @@ public sealed class FigureDescriptionTests
     }
 
     [Fact]
+    public void ASaveIsRefusedWhenTheFigureHasAnotherDescriptionThanTheListShowed()
+    {
+        var tree = StructureTree.Read(PdfDocument.Open(FormFigure()))!;
+        tree.Add(tree.Roots[0], new StructElement("Figure"));
+        var rows = FigureFinder.List(tree);
+        string listed = rows[0].Alt;
+        Assert.False(AccessibilityEdits.FigureChanged(rows[0].Element, listed));
+
+        rows[0].Element.Alt = "Changed elsewhere.";
+
+        Assert.True(AccessibilityEdits.FigureChanged(rows[0].Element, listed));
+        Assert.True(AccessibilityEdits.FigureChanged(null, listed));
+        Assert.False(AccessibilityEdits.FigureChanged(rows[1].Element, rows[1].Alt));
+    }
+
+    [Fact]
     public async Task AnEmptyDescriptionTakesTheOldOneAway()
     {
         using var f = new ViewModelFixture();

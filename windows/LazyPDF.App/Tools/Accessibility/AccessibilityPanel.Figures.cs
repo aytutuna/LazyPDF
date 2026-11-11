@@ -19,6 +19,9 @@ public partial class AccessibilityPanel
     // The figure to show when the list is built: the one that was shown, or the next one after a save.
     private int _figureNumber;
 
+    // Set while this panel's own save commits, so its change does not clear the drafts.
+    private bool _ownSave;
+
     private FigureRow? Selected => FigureList.SelectedItem as FigureRow;
 
     private void RenderFigures()
@@ -107,13 +110,18 @@ public partial class AccessibilityPanel
                 // The tree on the screen was read from a copy; the edit goes to the open document's own.
                 var tree = StructureTree.Read(tab.Document);
                 var figure = tree is null ? null : FigureFinder.List(tree).ElementAtOrDefault(row.Number - 1);
-                if (tree is null || figure is null)
+                if (tree is null || AccessibilityEdits.FigureChanged(figure?.Element, row.Alt))
                 {
                     Host!.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The figure is no longer in the file.")));
                     return Task.CompletedTask;
                 }
-                AccessibilityEdits.SetAlt(tab.Document, tree, figure.Element, text);
-                if (tab.Commit(Loc.T("Figure description"))) Host!.SetStatus(Loc.T("Description saved."));
+                AccessibilityEdits.SetAlt(tab.Document, tree, figure!.Element, text);
+                _ownSave = true;
+                try
+                {
+                    if (tab.Commit(Loc.T("Figure description"))) Host!.SetStatus(Loc.T("Description saved."));
+                }
+                finally { _ownSave = false; }
             }
             catch (Exception error) when (error is InvalidOperationException or PdfReadException)
             {

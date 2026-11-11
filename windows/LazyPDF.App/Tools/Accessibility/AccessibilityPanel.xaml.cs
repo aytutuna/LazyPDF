@@ -69,6 +69,7 @@ public partial class AccessibilityPanel : ToolPanel
 
     private void Tab_Changed(object? sender, EventArgs e)
     {
+        if (!_ownSave) _drafts.Clear();
         _checkStale = _treeStale = _readStale = true;
         StopReading();
         Refresh();

@@ -35,6 +35,9 @@ internal static class AccessibilityEdits
     /// <summary>Whether tags can be added: the file has neither the tagged mark nor a tree, which is what the tagger needs.</summary>
     public static bool CanAddTags(PdfDocument document) => !document.IsTagged && document.Dict(document.Catalog, "StructTreeRoot") is null;
 
+    /// <summary>True when the figure found by number is gone or no longer has the description the list was built from.</summary>
+    internal static bool FigureChanged(StructElement? figure, string listedAlt) => figure is null || (figure.Alt?.Trim() ?? "") != listedAlt;
+
     /// <summary>Writes the description of a figure; an empty one removes it.</summary>
     public static void SetAlt(PdfDocument document, StructureTree tree, StructElement figure, string text)
     {
