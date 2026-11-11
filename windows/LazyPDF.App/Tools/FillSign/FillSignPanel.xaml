@@ -25,7 +25,7 @@
         </Border>
 
         <CheckBox x:Name="KeepPlacing" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Keep placing}" Margin="0,0,0,12"
-                  AutomationProperties.Name="{loc:T Keep placing}" ToolTip="{loc:T 'Stay in placing mode after each one, until Stop placing or Escape.'}" />
+                  AutomationProperties.Name="{loc:T Keep placing}" ToolTip="{loc:T 'Stay in placing mode after each one, until Stop placing.'}" />
 
         <StackPanel x:Name="ImagePage">
             <StackPanel x:Name="ChoosePage">

@@ -5726,8 +5726,8 @@
   "Stop placing": {
     "tr": "Yerleştirmeyi bırak"
   },
-  "Stay in placing mode after each one, until Stop placing or Escape.": {
-    "tr": "Her birinden sonra, Yerleştirmeyi bırak düğmesine ya da Esc tuşuna basana kadar yerleştirme kipinde kalır."
+  "Stay in placing mode after each one, until Stop placing.": {
+    "tr": "Her birinden sonra, Yerleştirmeyi bırak düğmesine basana kadar yerleştirme kipinde kalır."
   },
   "Style": {
     "tr": "Stil"

@@ -4807,8 +4807,8 @@
   <data name="Status: {0}" xml:space="preserve">
     <value>Durum: {0}</value>
   </data>
-  <data name="Stay in placing mode after each one, until Stop placing or Escape." xml:space="preserve">
-    <value>Her birinden sonra, Yerleştirmeyi bırak düğmesine ya da Esc tuşuna basana kadar yerleştirme kipinde kalır.</value>
+  <data name="Stay in placing mode after each one, until Stop placing." xml:space="preserve">
+    <value>Her birinden sonra, Yerleştirmeyi bırak düğmesine basana kadar yerleştirme kipinde kalır.</value>
   </data>
   <data name="Steps" xml:space="preserve">
     <value>Adımlar</value>
