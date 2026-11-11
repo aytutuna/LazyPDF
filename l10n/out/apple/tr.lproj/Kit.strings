@@ -238,6 +238,7 @@
 "Certificate has expired" = "Sertifikanın süresi doldu";
 "Certificate has expired since" = "Sertifikanın süresi sonradan doldu";
 "Certificate not imported" = "Sertifika içe aktarılmadı";
+"Certificate not kept" = "Sertifika saklanmadı";
 "Certificate not opened" = "Sertifika açılamadı";
 "Certificate of the other file" = "Diğer dosyanın sertifikası";
 "Certificate was not valid when signing" = "Sertifika imza sırasında geçerli değildi";
@@ -1658,6 +1659,7 @@
 "The catalog has an /AA entry." = "Katalogda /AA girdisi var.";
 "The catalog has no /Metadata stream." = "Katalogda /Metadata akışı yok.";
 "The certificate has expired since." = "Sertifikanın süresi sonradan doldu.";
+"The certificate is added to your keychain so you can use it again." = "Sertifika, yeniden kullanabilmeniz için anahtar zincirinize eklenir.";
 "The change could not be written. Save a copy of the file and try again." = "Değişiklik yazılamadı. Dosyanın bir kopyasını kaydedip yeniden deneyin.";
 "The clipboard holds a picture." = "Panoda resim var.";
 "The clipboard holds text." = "Panoda metin var.";
@@ -1750,6 +1752,7 @@
 "The integer {0} is outside the 32-bit range." = "{0} tamsayısı 32 bit aralığının dışında.";
 "The item is already in the tree." = "Öğe zaten ağaçta.";
 "The keychain has no certificate with a private key for you. Use a .p12 file." = "Anahtar zincirinde sizin için özel anahtarlı bir sertifika yok. Bir .p12 dosyası kullanın.";
+"The keychain would not keep {0}. You can use it until you quit Lazy PDF." = "Anahtar zinciri {0} dosyasını saklamadı. Lazy PDF'den çıkana kadar kullanabilirsiniz.";
 "The layers were removed; hidden layers now show." = "Katmanlar kaldırıldı; gizli katmanlar artık görünüyor.";
 "The list is empty now." = "Liste şimdi boş.";
 "The list stops at 1000 findings." = "Liste 1000 bulguda sona eriyor.";

@@ -144,14 +144,18 @@ final class MacShell {
         let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
         let alert = NSAlert()
         alert.messageText = L10n.t("Password of the PFX file")
-        alert.informativeText = url.lastPathComponent
+        alert.informativeText = url.lastPathComponent + "\n" + L10n.t("The certificate is added to your keychain so you can use it again.")
         alert.accessoryView = field
         alert.addButton(withTitle: L10n.t("Import"))
         alert.addButton(withTitle: L10n.t("Cancel"))
         alert.window.initialFirstResponder = field
         guard alert.runModal() == .alertFirstButtonReturn else { return nil }
         do {
-            return try certificates.importIdentity([UInt8](bytes), password: field.stringValue).choice
+            let imported = try certificates.importIdentity([UInt8](bytes), password: field.stringValue)
+            if !imported.kept {
+                vm.showNotice(L10n.t("Certificate not kept"), L10n.t("The keychain would not keep {0}. You can use it until you quit Lazy PDF.", url.lastPathComponent))
+            }
+            return imported.choice
         } catch {
             vm.showProblem(Problem(L10n.t("Not imported"), L10n.t("{0} could not be imported. Check the password.", url.lastPathComponent)))
             return nil

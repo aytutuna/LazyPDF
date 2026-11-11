@@ -901,6 +901,9 @@
   <data name="Certificate not imported" xml:space="preserve">
     <value>Sertifika içe aktarılmadı</value>
   </data>
+  <data name="Certificate not kept" xml:space="preserve">
+    <value>Sertifika saklanmadı</value>
+  </data>
   <data name="Certificate not opened" xml:space="preserve">
     <value>Sertifika açılamadı</value>
   </data>
@@ -6049,6 +6052,9 @@
   <data name="The certificate has expired since." xml:space="preserve">
     <value>Sertifikanın süresi sonradan doldu.</value>
   </data>
+  <data name="The certificate is added to your keychain so you can use it again." xml:space="preserve">
+    <value>Sertifika, yeniden kullanabilmeniz için anahtar zincirinize eklenir.</value>
+  </data>
   <data name="The certificates name no servers to ask." xml:space="preserve">
     <value>Sertifikalar sorulacak bir sunucu belirtmiyor.</value>
   </data>
@@ -6345,6 +6351,9 @@
   </data>
   <data name="The keychain has no certificate with a private key for you. Use a .p12 file." xml:space="preserve">
     <value>Anahtar zincirinde sizin için özel anahtarlı bir sertifika yok. Bir .p12 dosyası kullanın.</value>
+  </data>
+  <data name="The keychain would not keep {0}. You can use it until you quit Lazy PDF." xml:space="preserve">
+    <value>Anahtar zinciri {0} dosyasını saklamadı. Lazy PDF'den çıkana kadar kullanabilirsiniz.</value>
   </data>
   <data name="The layers were removed; hidden layers now show." xml:space="preserve">
     <value>Katmanlar kaldırıldı; gizli katmanlar artık görünüyor.</value>

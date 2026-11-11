@@ -8169,6 +8169,15 @@
   "{0} could not be imported. Check the password.": {
     "tr": "{0} içe aktarılamadı. Parolayı denetleyin."
   },
+  "The certificate is added to your keychain so you can use it again.": {
+    "tr": "Sertifika, yeniden kullanabilmeniz için anahtar zincirinize eklenir."
+  },
+  "Certificate not kept": {
+    "tr": "Sertifika saklanmadı"
+  },
+  "The keychain would not keep {0}. You can use it until you quit Lazy PDF.": {
+    "tr": "Anahtar zinciri {0} dosyasını saklamadı. Lazy PDF'den çıkana kadar kullanabilirsiniz."
+  },
   "This device has no text recognition language.": {
     "tr": "Bu aygıtta metin tanıma dili yok."
   },
