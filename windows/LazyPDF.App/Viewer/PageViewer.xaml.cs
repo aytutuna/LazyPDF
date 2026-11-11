@@ -197,7 +197,6 @@ public partial class PageViewer : UserControl, IDocumentViewer
     private void Tab_Changed(object? sender, EventArgs e)
     {
         if (_tab is not { } tab) return;
-        ResetText();
         ReadLabels();
         if (Search.Query.Length > 0) _ = Search.Restart();
         RefreshBar();
@@ -207,6 +206,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
     private void Tab_Drawn(object? sender, EventArgs e)
     {
         if (_tab is not { } tab) return;
+        ResetText();
         Surface.Reload();
         Surface.SetRightToLeft(ViewerSettings.Read(tab.Document).RightToLeft);
         ReapplyLayers();

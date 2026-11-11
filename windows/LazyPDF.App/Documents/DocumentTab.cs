@@ -220,9 +220,15 @@ public sealed class DocumentTab : ITab, IDisposable
     {
         Revision++;
         WriteRecovery();
-        Changed?.Invoke(this, EventArgs.Empty);
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
-        StartLoad();
+        try
+        {
+            Changed?.Invoke(this, EventArgs.Empty);
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
+        }
+        finally
+        {
+            StartLoad();
+        }
     }
 
     // An encrypted document is read on this thread, as the renderer needs its live document.

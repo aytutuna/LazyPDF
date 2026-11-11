@@ -70,7 +70,7 @@ public partial class PagesSidePanel : ToolPanel
     protected override void OnAttach()
     {
         Viewer!.PageChanged += Viewer_PageChanged;
-        Tab!.Changed += Tab_Changed;
+        Tab!.Drawn += Tab_Drawn;
         Build();
     }
 
@@ -78,7 +78,7 @@ public partial class PagesSidePanel : ToolPanel
     {
         _resize.Stop();
         Viewer!.PageChanged -= Viewer_PageChanged;
-        Tab!.Changed -= Tab_Changed;
+        Tab!.Drawn -= Tab_Drawn;
         Thumbs.ItemsSource = null;
     }
 
@@ -88,8 +88,9 @@ public partial class PagesSidePanel : ToolPanel
         var viewer = Viewer!;
         var renderer = tab.Renderer as WindowsPageRenderer;
         double dpr = VisualTreeHelper.GetDpi(this).DpiScaleX;
-        var items = new List<PageThumb>(viewer.PageCount);
-        for (int i = 0; i < viewer.PageCount; i++)
+        int count = tab.Document.Pages.Count;
+        var items = new List<PageThumb>(count);
+        for (int i = 0; i < count; i++)
         {
             var size = viewer.PageSize(i);
             double scale = Math.Min(BoxWidth / Math.Max(size.Width, 1), BoxHeight / Math.Max(size.Height, 1));
@@ -125,7 +126,8 @@ public partial class PagesSidePanel : ToolPanel
 
     private void Viewer_PageChanged(object? sender, EventArgs e) => Mark();
 
-    private void Tab_Changed(object? sender, EventArgs e) => Build();
+    // The thumbnails are drawn by the renderer, which has the new pages only once the tab says it is drawn.
+    private void Tab_Drawn(object? sender, EventArgs e) => Build();
 
     private void Thumbs_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {

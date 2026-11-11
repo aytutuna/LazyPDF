@@ -9,6 +9,7 @@ public static class ExportJob
 {
     public static async Task RunAsync(DocumentTab tab, IToolHost host, IImageCodec codec, ExportOptions options, string target)
     {
+        await tab.Drawing;
         var source = Exporter.Source(tab, codec);
         ExportResult? result = null;
         bool scan = false;

@@ -17,7 +17,7 @@ public static class OcrWork
     public static async Task<OcrResult?> MakeSearchableAsync(DocumentTab tab, IToolHost host, ITextRecognizer recognizer, OcrOptions options,
                                                                  IReadOnlyList<string>? languages = null)
     {
-        var bytes = tab.Session.Current.ToArray();
+        byte[] bytes = [];
         int revision = tab.Revision;
         bool dropsLayers = options.Existing == OcrExisting.Replace && HasLayer(tab.Document, options.Pages);
         OcrRead? read = null;
@@ -27,6 +27,9 @@ public static class OcrWork
             await host.RunBusyAsync(Loc.T("Reading pages"), async cancel =>
             {
                 var progress = new Progress<OcrProgress>(p => host.SetBusyText(OcrStatusText.Status(p.Done, p.Total)));
+                await tab.Drawing.WaitAsync(cancel);
+                bytes = tab.Session.Current.ToArray();
+                revision = tab.Revision;
                 read = await Task.Run(() => PdfSearchable.ReadAsync(OcrPages.Open(bytes, tab.Password, tab.Certificate), reading, reading, options, progress, cancel), cancel);
             });
         }

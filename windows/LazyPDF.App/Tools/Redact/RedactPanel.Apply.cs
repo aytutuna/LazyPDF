@@ -16,7 +16,7 @@ public partial class RedactPanel
         var applied = state.Marks.Items.ToList();
         var marks = applied.Select(m => m.Mark).ToList();
         var settings = new RedactSettings((Cover)CoverBox.SelectedItem, OverlayBox.Text, FlattenBox.IsChecked == true);
-        byte[] bytes = tab.Session.Current.ToArray();
+        byte[] bytes = [];
         int revision = tab.Revision;
         bool encrypted = tab.Document.IsEncrypted;
         var stale = new Problem(Loc.T("Not redacted"), Loc.T("The file changed meanwhile. Try again."));
@@ -26,6 +26,10 @@ public partial class RedactPanel
         {
             await host.RunBusyAsync(Loc.T("Redacting"), async token =>
             {
+                // The renderer must draw the bytes that are redacted, so a load still running is waited for.
+                await tab.Drawing.WaitAsync(token);
+                bytes = tab.Session.Current.ToArray();
+                revision = tab.Revision;
                 result = await Task.Run(() => RedactJob.Apply(bytes, tab.Password, tab.Certificate, marks, settings, tab.Renderer, _fonts, _images)).WaitAsync(token);
             });
         }

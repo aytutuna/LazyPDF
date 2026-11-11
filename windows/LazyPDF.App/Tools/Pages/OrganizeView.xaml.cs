@@ -46,7 +46,9 @@ public sealed partial class OrganizeView : ToolPanel
     protected override void OnAttach()
     {
         Tab!.Changed += Tab_Changed;
+        Tab!.Drawn += Tab_Drawn;
         Build();
+        Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
         Refresh();
         Dispatcher.BeginInvoke(() => Thumbs.Focus(), DispatcherPriority.Loaded);
     }
@@ -55,6 +57,7 @@ public sealed partial class OrganizeView : ToolPanel
     {
         _sharpen.Stop();
         Tab!.Changed -= Tab_Changed;
+        Tab!.Drawn -= Tab_Drawn;
         foreach (var cell in Cells) cell.Release();
         Thumbs.ItemsSource = null;
     }
@@ -79,6 +82,9 @@ public sealed partial class OrganizeView : ToolPanel
         }
         Thumbs.Focus();
     }
+
+    // The renderer draws the new pages only once the tab says so; a picture made before would be of the old ones.
+    private void Tab_Drawn(object? sender, EventArgs e) => Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
 
     // The window disables its workspace while a job runs, which takes the keyboard focus with it and does not give it back.
     private void View_IsEnabledChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -106,7 +112,7 @@ public sealed partial class OrganizeView : ToolPanel
             cells.Add(new PageCell(i, labels[i], width, height, scale));
         }
         Thumbs.ItemsSource = cells;
-        Dispatcher.BeginInvoke(Lay, DispatcherPriority.Loaded);
+        Dispatcher.BeginInvoke(SizeTiles, DispatcherPriority.Loaded);
     }
 
     private (double Width, double Height, double Scale) Fit(int page)
@@ -117,13 +123,18 @@ public sealed partial class OrganizeView : ToolPanel
     }
 
     // The grid's cells are as large as the picture box plus room around it; the panel exists once the list has been laid out.
-    private void Lay()
+    private void SizeTiles()
     {
         if (PageDrag.Descendant<TilePanel>(Thumbs) is { } tiles)
         {
             tiles.CellWidth = BoxWidth + TilePadding;
             tiles.CellHeight = BoxHeight + LabelHeight;
         }
+    }
+
+    private void Lay()
+    {
+        SizeTiles();
         LoadVisible();
     }
 

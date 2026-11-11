@@ -138,6 +138,7 @@ public partial class MainWindow
 
     private async void ViewModel_SystemPrintRequested(object? sender, DocumentTab tab)
     {
+        await tab.Drawing;
         if (!tab.CanDraw)
         {
             _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("Windows cannot draw the pages of {0}, so it would come out blank. Install Lazy Print or print it from another program.", tab.Title)));

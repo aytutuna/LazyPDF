@@ -375,6 +375,7 @@ public sealed partial class FormsPanel
         IReadOnlyList<FieldProposal>? found = null;
         await Host!.RunBusyAsync(Loc.T("Looking for fields"), async token =>
         {
+            await tab.Drawing.WaitAsync(token);
             found = await Task.Run(() => FormEdits.Detect(tab, token), token).WaitAsync(token);
         });
         if (found is null || !ReferenceEquals(Tab, tab)) return;

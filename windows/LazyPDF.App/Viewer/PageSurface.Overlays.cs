@@ -13,7 +13,7 @@ internal sealed partial class PageSurface
     /// <summary>The engine's geometry of a page (user space to page space and back), valid for this revision of the file.</summary>
     public PageGeometry Geometry(int page)
     {
-        if (!_geometry.TryGetValue(page, out var geometry)) _geometry[page] = geometry = new PageGeometry(_tab!.Document.Pages[page]);
+        if (!_geometry.TryGetValue(page, out var geometry)) _geometry[page] = geometry = new PageGeometry(_tab!.Document.Pages[Math.Min(page, _tab.Document.Pages.Count - 1)]);
         return geometry;
     }
 

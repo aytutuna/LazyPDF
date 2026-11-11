@@ -440,6 +440,8 @@ public partial class PageViewer
 
     private IReadOnlyList<PdfLink> LinksOf(int page)
     {
+        // The surface keeps the old page count until Drawn.
+        if (page >= _tab!.Document.Pages.Count) return [];
         if (!_links.TryGetValue(page, out var links)) _links[page] = links = PdfLinks.Read(_tab!.Document, _tab.Document.Pages[page]);
         return links;
     }

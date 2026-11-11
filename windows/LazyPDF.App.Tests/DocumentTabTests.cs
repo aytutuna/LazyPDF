@@ -83,6 +83,22 @@ public sealed class DocumentTabTests
     }
 
     [Fact]
+    public async Task AHandlerThatThrowsStillLetsTheLoadStart()
+    {
+        using var tab = OpenSlow(out var renderer);
+        int drawn = 0;
+        tab.Changed += (_, _) => throw new InvalidOperationException();
+        tab.Drawn += (_, _) => drawn++;
+        Pdfs.Retitle(tab.Session, "New title");
+
+        Assert.Throws<InvalidOperationException>(() => tab.Commit("Properties"));
+
+        renderer.Pending[0].SetResult(true);
+        await tab.Drawing;
+        Assert.Equal(1, drawn);
+    }
+
+    [Fact]
     public async Task DisposingBeforeTheLoadEndsRaisesNothing()
     {
         var tab = OpenSlow(out var renderer);

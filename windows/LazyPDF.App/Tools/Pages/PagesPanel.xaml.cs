@@ -43,9 +43,11 @@ public partial class PagesPanel : ToolPanel
     protected override void OnAttach()
     {
         Tab!.Changed += Tab_Changed;
+        Tab!.Drawn += Tab_Drawn;
         _pages = PageNumbers();
         _dpr = VisualTreeHelper.GetDpi(this).DpiScaleX;
         Build();
+        Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
         Arm();
     }
 
@@ -54,6 +56,7 @@ public partial class PagesPanel : ToolPanel
         CloseOrganize();
         Disarm();
         Tab!.Changed -= Tab_Changed;
+        Tab!.Drawn -= Tab_Drawn;
         foreach (var cell in Cells) cell.Release();
         Thumbs.ItemsSource = null;
     }
@@ -90,6 +93,9 @@ public partial class PagesPanel : ToolPanel
         _pages = pages;
     }
 
+    // The renderer draws the new pages only once the tab says so; a picture made before would be of the old ones.
+    private void Tab_Drawn(object? sender, EventArgs e) => Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
+
     private (PdfRect, PdfRect, int, double) _boxSpace;
 
     private (PdfRect, PdfRect, int, double) BoxSpace(int index)
@@ -121,7 +127,6 @@ public partial class PagesPanel : ToolPanel
         }
         _syncing = false;
         if (select is not null && Thumbs.SelectedItems.Count > 0) Thumbs.ScrollIntoView(Thumbs.SelectedItems[0]);
-        Dispatcher.BeginInvoke(LoadVisible, DispatcherPriority.Loaded);
         Refresh();
     }
 
