@@ -3561,6 +3561,12 @@
   "No text found": {
     "tr": "Metin bulunamadı"
   },
+  "This looks like a scan": {
+    "tr": "Bu bir tarama gibi görünüyor"
+  },
+  "It has pictures of pages and no text. Make searchable (under Scan and OCR) can read the pages, then export again. You can also save the pages as pictures.": {
+    "tr": "Sayfa resimleri var, metin yok. Aranabilir yap (Tara ve OCR altında) sayfaları okuyabilir; sonra yeniden dışa aktarın. Sayfaları resim olarak da kaydedebilirsiniz."
+  },
   "This file has no text to export. Run Make searchable first, or save the pages as pictures.": {
     "tr": "Bu dosyada dışa aktarılacak metin yok. Önce Aranabilir yap'ı çalıştırın veya sayfaları resim olarak kaydedin."
   },

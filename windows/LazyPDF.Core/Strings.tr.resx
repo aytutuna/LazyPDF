@@ -2581,6 +2581,9 @@
   <data name="It could not be saved. It can still be placed this time." xml:space="preserve">
     <value>Kaydedilemedi. Bu seferlik yine de yerleştirilebilir.</value>
   </data>
+  <data name="It has pictures of pages and no text. Make searchable (under Scan and OCR) can read the pages, then export again. You can also save the pages as pictures." xml:space="preserve">
+    <value>Sayfa resimleri var, metin yok. Aranabilir yap (Tara ve OCR altında) sayfaları okuyabilir; sonra yeniden dışa aktarın. Sayfaları resim olarak da kaydedebilirsiniz.</value>
+  </data>
   <data name="It is already there." xml:space="preserve">
     <value>Zaten orada.</value>
   </data>
@@ -6483,6 +6486,9 @@
   </data>
   <data name="This link shows or hides part of the page, which Lazy PDF does not do." xml:space="preserve">
     <value>Bu bağlantı sayfanın bir bölümünü gösteriyor veya gizliyor; Lazy PDF bunu yapmaz.</value>
+  </data>
+  <data name="This looks like a scan" xml:space="preserve">
+    <value>Bu bir tarama gibi görünüyor</value>
   </data>
   <data name="This makes about {0} files, so they are saved to a folder." xml:space="preserve">
     <value>Bu yaklaşık {0} dosya yapıyor, bu yüzden bir klasöre kaydedilir.</value>

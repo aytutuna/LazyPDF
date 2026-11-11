@@ -297,6 +297,19 @@ public sealed class ExportToolTests
     }
 
     [Fact]
+    public async Task AnExportOfAScanPointsToMakeSearchableAsAScan()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Dir.File("scan.pdf", PdfFromPictures.Create([new byte[] { 1 }], new FakeCodec(), new PdfPageSetup(PdfPaper.Picture, Margin: 0)).Bytes));
+        string target = f.Dir.Sub("out.txt");
+
+        await ExportJob.RunAsync(f.Vm.ActiveDocument!, f.Vm, new FakeCodec(), new ExportOptions(ExportFormat.Text), target);
+
+        Assert.Equal("This looks like a scan", f.Vm.Message!.Title);
+        Assert.Contains("Make searchable", f.Vm.Message.Text);
+    }
+
+    [Fact]
     public void AWorkbookWithTablesLeavesOutTheTextAroundThem()
     {
         var tablesOnly = new ExportDocument(null, [PageOf(0, Table()), PageOf(1, Table())], 11);

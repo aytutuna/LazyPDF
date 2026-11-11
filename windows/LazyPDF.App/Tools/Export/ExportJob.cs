@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Tools.Ocr;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Export;
@@ -10,12 +11,14 @@ public static class ExportJob
     {
         var source = Exporter.Source(tab, codec);
         ExportResult? result = null;
+        bool scan = false;
         try
         {
             await host.RunBusyAsync(Loc.T("Exporting"), token => Task.Run(() =>
             {
                 using var drawn = options.Format == ExportFormat.Pictures ? Exporter.Snapshot(source) : null;
                 result = Exporter.Write(drawn is null ? source : source with { Renderer = drawn }, options, target, token);
+                if (result.Gap == ExportGap.NoText) scan = LooksLikeScan(source, options);
             }, token));
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or PdfReadException)
@@ -27,7 +30,8 @@ public static class ExportJob
 
         if (result.Files == 0)
         {
-            if (result.Gap == ExportGap.NoText) host.ShowNotice(Loc.T("No text found"), Loc.T("This file has no text to export. Run Make searchable first, or save the pages as pictures."));
+            if (result.Gap == ExportGap.NoText && scan) host.ShowNotice(Loc.T("This looks like a scan"), Loc.T("It has pictures of pages and no text. Make searchable (under Scan and OCR) can read the pages, then export again. You can also save the pages as pictures."));
+            else if (result.Gap == ExportGap.NoText) host.ShowNotice(Loc.T("No text found"), Loc.T("This file has no text to export. Run Make searchable first, or save the pages as pictures."));
             else if (options.Format == ExportFormat.Images) host.ShowNotice(Loc.T("No pictures found"), Loc.T("This file has no pictures to save."));
             else host.ShowProblem(new Problem(Loc.T("Nothing exported"), Loc.T("Windows cannot draw these pages. Try another format.")));
             return;
@@ -42,6 +46,12 @@ public static class ExportJob
         else if (result.Gap == ExportGap.PastSheetLimit) text += " " + Loc.T("Pages past the first 1000 sheets were left out.");
         host.ShowNotice(Loc.T("Exported"), text, new NoticeAction(Loc.T("Show in folder"), () => Reveal(result.Where, options.ToFolder)));
         host.SetStatus(Loc.T("Export saved."));
+    }
+
+    private static bool LooksLikeScan(ExportSource source, ExportOptions options)
+    {
+        var kinds = OcrPages.Classify(source.Pdf, source.Password, source.Certificate);
+        return kinds.Where((_, page) => options.Pages is null || options.Pages.Contains(page)).Contains(OcrPageKind.Picture);
     }
 
     // A drive root has no file name; the root is what the folder is called then.
