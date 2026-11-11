@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 
 namespace LazyPDF.App.Viewer;
@@ -28,6 +29,18 @@ public static class ZoomMath
     /// <summary>The zoom at which a whole spread shows in <paramref name="viewport"/>.</summary>
     public static double FitPage(Size spread, Size viewport) =>
         Math.Min(FitWidth(spread.Width, viewport), Math.Max(0, viewport.Height - 2 * ViewLayout.Margin) / Math.Max(spread.Height, 1) / PageSpace.DipPerPoint);
+
+    /// <summary>Reads a zoom typed as a percentage, such as "125", "125 %" or "%112,5".</summary>
+    public static bool Parse(string text, out double zoom)
+    {
+        string number = text.Replace("%", "").Replace(" ", "").Trim();
+        zoom = 0;
+        if (!double.TryParse(number, NumberStyles.Float, CultureInfo.CurrentCulture, out double percent)
+            && !double.TryParse(number, NumberStyles.Float, CultureInfo.InvariantCulture, out percent)) return false;
+        if (!(percent >= 1 && percent <= 10000)) return false;
+        zoom = percent / 100;
+        return true;
+    }
 
     /// <summary>The next zoom of the usual steps above or below <paramref name="zoom"/>.</summary>
     public static double Step(double zoom, int direction)

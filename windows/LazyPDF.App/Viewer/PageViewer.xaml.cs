@@ -208,14 +208,15 @@ public partial class PageViewer : UserControl, IDocumentViewer
         int page = Surface.CurrentPage;
         if (!PageBox.IsKeyboardFocused) PageBox.Text = open ? PageLabel(page) : "";
         PageCountText.Text = open ? Loc.T("of {0}", Surface.PageCount) : "";
-        ZoomButton.Content = open ? Loc.T("{0} %", Math.Round(Surface.Zoom * 100)) : "";
-        AutomationProperties.SetName(ZoomButton, open ? $"{Loc.T("Zoom")} {ZoomButton.Content}" : Loc.T("Zoom"));
+        string zoom = open ? Loc.T("{0} %", Math.Round(Surface.Zoom * 100)) : "";
+        if (!ZoomBox.IsKeyboardFocused) ZoomBox.Text = zoom;
+        AutomationProperties.SetName(ZoomBox, open ? $"{Loc.T("Zoom")} {zoom}" : Loc.T("Zoom"));
         PreviousButton.IsEnabled = open && page > 0;
         NextButton.IsEnabled = open && page < Surface.PageCount - 1;
         bool room = Bar.ActualWidth >= 330;
         BackButton.Visibility = room && CanGoBack ? Visibility.Visible : Visibility.Collapsed;
         ForwardButton.Visibility = room && CanGoForward ? Visibility.Visible : Visibility.Collapsed;
-        foreach (var control in new Control[] { PageBox, ZoomButton, ZoomInButton, ZoomOutButton, FindButton, MoreButton, SelectButton, HandButton }) control.IsEnabled = open;
+        foreach (var control in new Control[] { PageBox, ZoomBox, ZoomMenuButton, ZoomInButton, ZoomOutButton, FindButton, MoreButton, SelectButton, HandButton }) control.IsEnabled = open;
         SelectButton.IsChecked = open && Mode == PointerMode.Select && PointerTool is null;
         HandButton.IsChecked = open && Mode == PointerMode.Hand && PointerTool is null;
         MarkChecked(SelectButton);
@@ -277,7 +278,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
 
     private void ZoomIn_Click(object sender, RoutedEventArgs e) => Surface.SetZoom(ZoomMath.Step(Surface.Zoom, 1));
 
-    private void Zoom_Click(object sender, RoutedEventArgs e) => OpenMenu(ZoomButton);
+    private void Zoom_Click(object sender, RoutedEventArgs e) => OpenMenu(ZoomMenuButton);
 
     private void More_Click(object sender, RoutedEventArgs e) => OpenMenu(MoreButton);
 

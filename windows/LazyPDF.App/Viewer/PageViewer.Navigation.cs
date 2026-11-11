@@ -129,6 +129,26 @@ public partial class PageViewer
         }
     }
 
+    private void ZoomBox_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) => ZoomBox.SelectAll();
+
+    private void ZoomBox_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) => RefreshBar();
+
+    private void ZoomBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            if (ZoomMath.Parse(ZoomBox.Text, out double zoom)) Surface.SetZoom(zoom);
+            else RefreshBar();
+            Surface.Focus();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            Surface.Focus();
+            e.Handled = true;
+        }
+    }
+
     // ----- Find
 
     public ViewerSearch Search { get; }

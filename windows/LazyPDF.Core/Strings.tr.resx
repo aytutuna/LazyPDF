@@ -6403,6 +6403,9 @@
   <data name="Zoom out (Ctrl+Minus)" xml:space="preserve">
     <value>Uzaklaştır (Ctrl+Eksi)</value>
   </data>
+  <data name="Zoom presets" xml:space="preserve">
+    <value>Yakınlaştırma ön ayarları</value>
+  </data>
   <data name="an attached file (object {0})" xml:space="preserve">
     <value>ekli bir dosya (nesne {0})</value>
   </data>

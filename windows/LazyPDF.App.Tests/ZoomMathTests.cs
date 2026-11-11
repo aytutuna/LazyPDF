@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using LazyPDF.App.Viewer;
 using Xunit;
@@ -65,4 +66,29 @@ public sealed class ZoomMathTests
         Assert.Equal(limits.Max, ZoomMath.Clamp(1000, limits));
         Assert.Equal(1, ZoomMath.Clamp(1, limits));
     }
+
+    [Theory]
+    [InlineData("tr-TR", "125", 1.25)]
+    [InlineData("tr-TR", "125 %", 1.25)]
+    [InlineData("tr-TR", "%125", 1.25)]
+    [InlineData("tr-TR", "112,5", 1.125)]
+    [InlineData("en-US", "112.5", 1.125)]
+    public void ATypedPercentageIsRead(string culture, string text, double expected)
+    {
+        var saved = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = new CultureInfo(culture);
+        try
+        {
+            Assert.True(ZoomMath.Parse(text, out double zoom));
+            Assert.Equal(expected, zoom, 9);
+        }
+        finally { CultureInfo.CurrentCulture = saved; }
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("abc")]
+    [InlineData("0")]
+    [InlineData("-5")]
+    public void ATextThatIsNoZoomIsRefused(string text) => Assert.False(ZoomMath.Parse(text, out _));
 }
