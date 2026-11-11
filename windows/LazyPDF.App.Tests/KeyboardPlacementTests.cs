@@ -260,6 +260,37 @@ public sealed class KeyboardPlacementTests
         return e;
     }
 
+    private static async Task<bool> DoubleClickThenAsync(Action<PageViewer>? between)
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        viewer.PointerTool = null;
+        var down = typeof(PageViewer).GetMethod("Surface_MouseDown", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        down.Invoke(viewer, [viewer, Click(Mouse.MouseDownEvent, 2)]);
+        between?.Invoke(viewer);
+        await viewer.GetTextAsync(0);
+        await Task.Delay(200);
+        return viewer.HasSelection;
+    }
+
+    [Fact]
+    public Task ADoubleClickSelectsTheWordOnceThePageTextIsThere() => Sta.Run(async () =>
+    {
+        Assert.True(await DoubleClickThenAsync(null));
+    });
+
+    [Fact]
+    public Task AClearedSelectionIsNotRestoredByADoubleClickStillWaitingForText() => Sta.Run(async () =>
+    {
+        Assert.False(await DoubleClickThenAsync(viewer => viewer.ClearSelection()));
+    });
+
+    [Fact]
+    public Task SwitchingToTheHandIsNotUndoneByADoubleClickStillWaitingForText() => Sta.Run(async () =>
+    {
+        Assert.False(await DoubleClickThenAsync(viewer => viewer.Mode = PointerMode.Hand));
+    });
+
     [Fact]
     public Task AQuickThirdPressOnALinkFollowsItAgain() => Sta.Run(() =>
     {

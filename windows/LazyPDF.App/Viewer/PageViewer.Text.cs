@@ -17,6 +17,7 @@ public partial class PageViewer
     private readonly ViewerSelection _selection = new();
     private PagePoint? _anchorWaiting;
     private int _press;
+    private bool _unitWaiting;
     private (Caret Start, Caret End, int Clicks)? _multi;
     private Brush? _selectionBrush;
     private Color _selectionColor;
@@ -72,6 +73,7 @@ public partial class PageViewer
         _links.Clear();
         _selectionGeometry.Clear();
         _hitGeometry.Clear();
+        CancelPendingSelection();
         _selection.Clear();
     }
 
@@ -122,6 +124,7 @@ public partial class PageViewer
     {
         int press = ++_press;
         _anchorWaiting = null;
+        _unitWaiting = false;
         _multi = null;
         if (Surface.Hit(at, nearest: true) is not { } hit) return;
         _dragPage = hit.Page;
@@ -130,6 +133,7 @@ public partial class PageViewer
         {
             if (clicks >= 2)
             {
+                _unitWaiting = true;
                 _ = SelectUnitWhenLoadedAsync(hit, clicks, press);
                 return;
             }
@@ -155,10 +159,20 @@ public partial class PageViewer
     private async Task SelectUnitWhenLoadedAsync((int Page, Point Point) hit, int clicks, int press)
     {
         var tab = _tab;
-        await LoadPageAsync(hit.Page);
-        if (press != _press || !ReferenceEquals(tab, _tab) || LoadedText(hit.Page) is not { } text) return;
-        SelectUnit(hit, text, clicks);
+        try
+        {
+            await LoadPageAsync(hit.Page);
+            if (press != _press || !ReferenceEquals(tab, _tab) || LoadedText(hit.Page) is not { } text) return;
+            SelectUnit(hit, text, clicks);
+        }
+        finally
+        {
+            _unitWaiting = false;
+        }
     }
+
+    // A double or triple click still waiting for its page text must not select after a later action.
+    private void CancelPendingSelection() => _press++;
 
     private void SelectUnit((int Page, Point Point) hit, TextPage text, int clicks)
     {
@@ -176,7 +190,7 @@ public partial class PageViewer
 
     private void DragSelection(Point at)
     {
-        if (!_moved || Surface.Hit(at, nearest: true) is not { } hit) return;
+        if (_unitWaiting || !_moved || Surface.Hit(at, nearest: true) is not { } hit) return;
         if (LoadedText(hit.Page) is not { } text)
         {
             _ = LoadPageAsync(hit.Page);
@@ -212,11 +226,16 @@ public partial class PageViewer
     public void SelectAll()
     {
         if (_tab is null) return;
+        CancelPendingSelection();
         _selection.SelectAll(Surface.PageCount);
         foreach (int page in VisiblePages) _ = LoadPageAsync(page);
     }
 
-    public void ClearSelection() => _selection.Clear();
+    public void ClearSelection()
+    {
+        CancelPendingSelection();
+        _selection.Clear();
+    }
 
     // Moves the focus end of the selection as a text caret would. False for a key that is not one of its.
     private bool ExtendSelection(Key key, bool ctrl)
@@ -242,6 +261,7 @@ public partial class PageViewer
         if (key is not (Key.Left or Key.Right or Key.Up or Key.Down or Key.Home or Key.End)) return false;
         if (next is { } caret)
         {
+            CancelPendingSelection();
             _selection.Extend(caret);
             RevealCaret(caret);
         }

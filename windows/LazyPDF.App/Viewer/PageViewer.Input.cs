@@ -43,6 +43,7 @@ public partial class PageViewer
         {
             if (value == _mode && _tool is null) return;
             _mode = value;
+            CancelPendingSelection();
             PointerTool = null;
             ModeChanged?.Invoke(this, EventArgs.Empty);
         }
@@ -76,6 +77,7 @@ public partial class PageViewer
 
     private void EndPointerTool()
     {
+        CancelPendingSelection();
         EndKeyPlacement();
         if (_drag == Drag.Tool)
         {
