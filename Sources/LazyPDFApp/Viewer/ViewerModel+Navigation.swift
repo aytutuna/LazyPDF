@@ -21,7 +21,7 @@ extension ViewerModel {
     public func goToPage(_ page: Int) {
         guard tab != nil, state.pageCount > 0 else { return }
         let target = Swift.min(Swift.max(page, 0), state.pageCount - 1)
-        history.jump(state.currentPage, target)
+        if let from = state.topPlace() { history.jump(from, PagePoint(target, .zero)) }
         apply(state.goToPage(target))
         shownRevision += 1
     }
@@ -31,13 +31,15 @@ extension ViewerModel {
         guard state.pageCount > 0 else { return }
         let spread = ViewLayout.spreadOf(state.columns, state.cover, state.currentPage) + direction
         if spread < 0 || spread >= ViewLayout.spreadsOf(state.columns, state.cover, state.pageCount) { return }
-        goToPage(ViewLayout.pagesOf(state.columns, state.cover, spread, state.pageCount).first)
+        apply(state.goToPage(ViewLayout.pagesOf(state.columns, state.cover, spread, state.pageCount).first))
+        shownRevision += 1
     }
 
     public func goTo(_ destination: PdfDestination) {
         guard let tab, let place = PdfDestinations.locate(tab.document, destination) else { return }
-        history.jump(state.currentPage, place.pageIndex)
-        apply(state.goToPage(place.pageIndex, at: ViewPoint(place.x, Swift.max(0, place.y - 12))))
+        let to = ViewPoint(place.x, Swift.max(0, place.y - 12))
+        if let from = state.topPlace() { history.jump(from, PagePoint(place.pageIndex, to)) }
+        apply(state.goToPage(place.pageIndex, at: to))
         shownRevision += 1
     }
 
@@ -68,14 +70,14 @@ extension ViewerModel {
     }
 
     public func goBack() {
-        guard let page = history.goBack(state.currentPage) else { return }
-        apply(state.goToPage(page))
+        guard let from = state.topPlace(), let place = history.goBack(from) else { return }
+        apply(state.goToPage(place.page, at: place.point))
         shownRevision += 1
     }
 
     public func goForward() {
-        guard let page = history.goForward(state.currentPage) else { return }
-        apply(state.goToPage(page))
+        guard let from = state.topPlace(), let place = history.goForward(from) else { return }
+        apply(state.goToPage(place.page, at: place.point))
         shownRevision += 1
     }
 
@@ -111,6 +113,7 @@ extension ViewerModel {
     public func hideFind() {
         guard findVisible else { return }
         findVisible = false
+        searchJumped = false
         search.clear()
     }
 
@@ -138,8 +141,11 @@ extension ViewerModel {
         guard search.current >= 0, search.current < search.hits.count else { return }
         let hit = search.hits[search.current].match
         guard tab != nil, !hit.quads.isEmpty else { return }
-        history.jump(state.currentPage, hit.page)
-        apply(state.reveal(hit.page, pageBounds(hit.page, hit.quads)))
+        let area = pageBounds(hit.page, hit.quads)
+        if !searchJumped, let from = state.topPlace() {
+            searchJumped = history.jump(from, PagePoint(hit.page, ViewPoint(0, area.y)))
+        }
+        apply(state.reveal(hit.page, area))
         shownRevision += 1
         hitShapes.removeAll()
         onRedraw?()

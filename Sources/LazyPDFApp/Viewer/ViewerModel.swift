@@ -14,6 +14,7 @@ public final class ViewerModel: DocumentViewer {
 
     @ObservationIgnored var state = PageSurfaceState()
     @ObservationIgnored var history = PageHistory()
+    @ObservationIgnored var searchJumped = false
     @ObservationIgnored var labels: [String] = []
     @ObservationIgnored var bytes: [UInt8] = []
     @ObservationIgnored var seenRevision = 0
@@ -115,6 +116,7 @@ public final class ViewerModel: DocumentViewer {
         watching += 1
         self.tab = tab
         history.clear()
+        searchJumped = false
         resetText()
         resetLayers()
         hideFind()

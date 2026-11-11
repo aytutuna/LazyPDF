@@ -228,6 +228,43 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.pageIndex, 2)
     }
 
+    func test_backReturnsToTheSpotLeftNotTheTopOfThePage() throws {
+        let (viewer, _) = try open(pages: 3)
+        viewer.apply(viewer.state.scrollBy(0, 300))
+        let spot = viewer.offset.y
+
+        viewer.goToPage(2)
+        viewer.goBack()
+
+        XCTAssertEqual(viewer.offset.y, spot, accuracy: 1.5)
+        XCTAssertEqual(viewer.pageIndex, 0)
+    }
+
+    func test_steppingPagesIsNotAJump() throws {
+        let (viewer, _) = try open(pages: 5)
+
+        viewer.stepPage(1)
+        viewer.stepPage(1)
+        viewer.stepPage(-1)
+
+        XCTAssertFalse(viewer.canGoBack)
+    }
+
+    func test_aSearchSteppedThroughManyHitsIsOneEntryInTheHistory() async throws {
+        let (viewer, _) = try open(pages: 3)
+        let start = try XCTUnwrap(viewer.state.topPlace())
+
+        await viewer.search.start("tests", TextSearchOptions()).value
+        viewer.search.next()
+        viewer.search.next()
+        viewer.goBack()
+
+        XCTAssertFalse(viewer.canGoBack)
+        let back = try XCTUnwrap(viewer.state.topPlace())
+        XCTAssertEqual(back.page, start.page)
+        XCTAssertEqual(back.point.y, start.point.y, accuracy: 1.5)
+    }
+
     func test_aDestinationAndTheNamedActionsMoveThePage() throws {
         let (viewer, _) = try open(pages: 3)
 

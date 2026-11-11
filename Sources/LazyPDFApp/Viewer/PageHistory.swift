@@ -2,12 +2,12 @@ import Foundation
 
 // Port of windows/LazyPDF.App/Viewer/PageHistory.cs.
 
-/// The pages the reader jumped from, for Back and Forward. Scrolling is not a jump; a link, a bookmark or Go to page is.
+/// The places the reader jumped from, for Back and Forward. Scrolling is not a jump; a link, a bookmark or Go to page is.
 public struct PageHistory {
     private static let limit = 100
 
-    private var back: [Int] = []
-    private var forward: [Int] = []
+    private var back: [PagePoint] = []
+    private var forward: [PagePoint] = []
 
     public init() {}
 
@@ -15,25 +15,27 @@ public struct PageHistory {
 
     public var canGoForward: Bool { !forward.isEmpty }
 
-    /// Notes a jump from `from` to `to`; a jump to the same page, or the forward list, is forgotten.
-    public mutating func jump(_ from: Int, _ to: Int) {
-        if from == to { return }
-        if back.last != from { back.append(from) }
+    /// Notes a jump from `from` to `to` and forgets the forward list. False, and nothing noted, when `to` is on the same page within 50 points.
+    @discardableResult
+    public mutating func jump(_ from: PagePoint, _ to: PagePoint) -> Bool {
+        if from.page == to.page && abs(from.point.y - to.point.y) < 50 { return false }
+        back.append(from)
         if back.count > Self.limit { back.removeFirst() }
         forward.removeAll()
+        return true
     }
 
-    /// The page to go back to from `current`, or nil.
-    public mutating func goBack(_ current: Int) -> Int? {
-        guard let page = back.popLast() else { return nil }
+    /// The place to go back to from `current`, or nil.
+    public mutating func goBack(_ current: PagePoint) -> PagePoint? {
+        guard let place = back.popLast() else { return nil }
         forward.append(current)
-        return page
+        return place
     }
 
-    public mutating func goForward(_ current: Int) -> Int? {
-        guard let page = forward.popLast() else { return nil }
+    public mutating func goForward(_ current: PagePoint) -> PagePoint? {
+        guard let place = forward.popLast() else { return nil }
         back.append(current)
-        return page
+        return place
     }
 
     public mutating func clear() {

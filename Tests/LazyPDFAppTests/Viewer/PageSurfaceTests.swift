@@ -82,6 +82,38 @@ final class PageSurfaceTests: XCTestCase {
         XCTAssertEqual(surface.state.offsetY, surface.state.layout.pageRect(3).top - ViewLayout.margin, accuracy: 0.5)
     }
 
+    func test_theTopPlaceIsWhereTheTopOfTheSurfaceIsOnThePage() throws {
+        let surface = try OpenSurface(pages: 5)
+        _ = surface.state.goToPage(2)
+        _ = surface.state.scrollBy(0, 200)
+
+        let place = try XCTUnwrap(surface.state.topPlace())
+
+        XCTAssertEqual(place.page, 2)
+        XCTAssertEqual(place.point.y, 200 + ViewLayout.margin, accuracy: 1.5)
+    }
+
+    func test_theTopPlaceMayLieAboveItsPage() throws {
+        let surface = try OpenSurface(pages: 5)
+        _ = surface.state.goToPage(2)
+        _ = surface.state.scrollBy(0, -ViewLayout.margin + 0.5)
+
+        let place = try XCTUnwrap(surface.state.topPlace())
+
+        XCTAssertEqual(place.page, 2)
+        XCTAssertLessThan(place.point.y, 0)
+    }
+
+    func test_theTopPlaceOfOnePageAtATimeIsOnThatPage() throws {
+        let surface = try OpenSurface(pages: 5)
+        _ = surface.state.setArrangement(columns: 1, cover: false, continuous: false)
+        _ = surface.state.goToPage(3)
+
+        let place = try XCTUnwrap(surface.state.topPlace())
+
+        XCTAssertEqual(place.page, 3)
+    }
+
     func test_scrollingByHandChangesThePageInView() throws {
         let surface = try OpenSurface(pages: 5)
         var raised = 0

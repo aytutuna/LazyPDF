@@ -301,6 +301,15 @@ public struct PageSurfaceState {
         afterScroll(user: false)
     }
 
+    /// The place at the top left of the surface; the y may lie above the page, so Back keeps the page in view.
+    public func topPlace() -> PagePoint? {
+        if layout.contains(currentPage) {
+            return PagePoint(currentPage, PageSpace.toPage(contentMatrix(currentPage)).transform(ViewPoint(offsetX, offsetY)))
+        }
+        guard let anchor = anchorAt(.zero) else { return nil }
+        return PagePoint(anchor.page, anchor.point)
+    }
+
     /// Takes a point of a page to the scrolled area (before the scroll offset).
     func contentMatrix(_ page: Int) -> ViewMatrix {
         PageSpace.toView(sizes[page], rotation, scale, layout.pageRect(page).topLeft)
