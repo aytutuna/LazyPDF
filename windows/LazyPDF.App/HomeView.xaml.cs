@@ -152,7 +152,7 @@ public partial class HomeView : UserControl
         int perRow = GridInsets.Balanced(_tiles.Count, GridInsets.Columns(_width, SlotWidth));
         TileGrid.Width = perRow * SlotWidth;
         TileGrid.HorizontalAlignment = HorizontalAlignment.Left;
-        TileGrid.Margin = GridInsets.For(_width, perRow, SlotWidth).Cards;
+        TileGrid.Margin = cards;
         RecentGrid.Margin = cards;
         TitleLabel.Margin = header with { Top = 20, Bottom = 8 };
         RecentHeader.Margin = header with { Top = 24, Bottom = 4 };
