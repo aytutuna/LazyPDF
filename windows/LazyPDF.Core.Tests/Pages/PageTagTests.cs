@@ -111,4 +111,36 @@ public class PageTagTests
         Assert.False(Marked(merged));
         Assert.False(merged.Pages[1].Dictionary.ContainsKey("StructParents"));
     }
+
+    [Fact]
+    public void DeletingAPageCutsItsTagsAndKeepsTheRest()
+    {
+        var document = Tagged();
+        PageOperations.Delete(document, [1]);
+        var again = Saved(document, out string text);
+        Assert.Equal("Document H1 Table TR H1 H1", Roles(again, Root(again)));
+        Assert.Equal([0L, 2L, 3L], Keys(again));
+        Assert.True(Marked(again));
+        Assert.Equal([0L, 2L, 3L], again.Pages.Select(p => again.Integer(p.Dictionary, "StructParents")!.Value));
+        Assert.DoesNotContain("TABLEALT", text);
+        Assert.DoesNotContain("Heading 2", text);
+        Assert.Equal(AccessibilityStatus.Passed, AccessibilityChecker.Check(again)[AccessibilityRule.TaggedContent].Status);
+    }
+
+    [Fact]
+    public void DeletingAPageDropsAllTagsWhenTheTreeIsTooDeepToCut()
+    {
+        var pdf = new TestPdf();
+        pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R /StructTreeRoot 12 0 R /MarkInfo <</Marked true>>>>");
+        pdf.Obj(2, "<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300]>>");
+        for (int i = 0; i < 2; i++) pdf.Obj(4 + i, $"<</Type /Page /Parent 2 0 R /StructParents {i}>>");
+        pdf.Obj(12, "<</Type /StructTreeRoot /K 100 0 R /ParentTree 30 0 R>>");
+        for (int i = 0; i < 80; i++) pdf.Obj(100 + i, $"<</Type /StructElem /S /Div /K {(i < 79 ? $"{101 + i} 0 R" : "<</Type /MCR /Pg 5 0 R /MCID 0>>")}>>");
+        pdf.Obj(30, "<</Nums [0 [] 1 []]>>");
+        var document = PdfDocument.Open(pdf.Finish());
+        PageOperations.Delete(document, [1]);
+        Assert.False(document.Catalog.ContainsKey("StructTreeRoot"));
+        Assert.False(document.Catalog.ContainsKey("MarkInfo"));
+        Assert.False(document.Pages[0].Dictionary.ContainsKey("StructParents"));
+    }
 }

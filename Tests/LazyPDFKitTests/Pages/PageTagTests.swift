@@ -97,4 +97,32 @@ final class PageTagTests: XCTestCase {
         XCTAssertFalse(marked(merged))
         XCTAssertFalse(merged.pages[1].dictionary.containsKey("StructParents"))
     }
+
+    func test_deletingAPageCutsItsTagsAndKeepsTheRest() throws {
+        let document = try Self.tagged()
+        try PageOperations.delete(document, [1])
+        let (again, text) = try saved(document)
+        XCTAssertEqual(roles(again, root(again)), "Document H1 Table TR H1 H1")
+        XCTAssertEqual(keys(again), [0, 2, 3])
+        XCTAssertTrue(marked(again))
+        XCTAssertEqual(again.pages.map { again.integer($0.dictionary, "StructParents")! }, [0, 2, 3])
+        XCTAssertFalse(text.contains("TABLEALT"))
+        XCTAssertFalse(text.contains("Heading 2"))
+        XCTAssertTrue(try AccessibilityChecker.check(again)[.taggedContent].status == .passed)
+    }
+
+    func test_deletingAPageDropsAllTagsWhenTheTreeIsTooDeepToCut() throws {
+        let pdf = TestPdf()
+        pdf.obj(1, "<</Type /Catalog /Pages 2 0 R /StructTreeRoot 12 0 R /MarkInfo <</Marked true>>>>")
+        pdf.obj(2, "<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300]>>")
+        for i in 0..<2 { pdf.obj(4 + i, "<</Type /Page /Parent 2 0 R /StructParents \(i)>>") }
+        pdf.obj(12, "<</Type /StructTreeRoot /K 100 0 R /ParentTree 30 0 R>>")
+        for i in 0..<80 { pdf.obj(100 + i, "<</Type /StructElem /S /Div /K \(i < 79 ? "\(101 + i) 0 R" : "<</Type /MCR /Pg 5 0 R /MCID 0>>")>>") }
+        pdf.obj(30, "<</Nums [0 [] 1 []]>>")
+        let document = try PdfDocument.open(pdf.finish())
+        try PageOperations.delete(document, [1])
+        XCTAssertFalse(document.catalog.containsKey("StructTreeRoot"))
+        XCTAssertFalse(document.catalog.containsKey("MarkInfo"))
+        XCTAssertFalse(document.pages[0].dictionary.containsKey("StructParents"))
+    }
 }

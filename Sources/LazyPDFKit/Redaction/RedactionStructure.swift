@@ -16,12 +16,15 @@ enum RedactionStructure {
     /// `pictures`: the object numbers of pages that became a picture: everything they showed is gone.
     /// `replaced`: pictures and forms that were copied or dropped, and what else was dropped; a content item or object that
     /// still names the original would keep it in the file.
-    static func prune(_ document: PdfDocument, _ tagged: Tagged, _ replaced: RedactionObjects.Identities, _ pictures: Set<Int>) throws {
-        guard let root = document.dict(document.catalog, "StructTreeRoot") else { return }
+    /// Returns false when the depth or element limit stopped the walk, so some of the tree was not checked.
+    @discardableResult
+    static func prune(_ document: PdfDocument, _ tagged: Tagged, _ replaced: RedactionObjects.Identities, _ pictures: Set<Int>) throws -> Bool {
+        guard let root = document.dict(document.catalog, "StructTreeRoot") else { return true }
         var gone = RedactionObjects.Identities()
         var budget = maxElements
-        _ = visit(document, root, nil, tagged, replaced, pictures, &gone, 0, &budget)
-        if gone.isEmpty { return }
+        var limited = false
+        _ = visit(document, root, nil, tagged, replaced, pictures, &gone, 0, &budget, &limited)
+        if gone.isEmpty { return !limited }
 
         func left(_ value: PdfObject?) -> Bool {
             guard let d = document.resolve(value) as? PdfDictionary else { return false }
@@ -43,11 +46,12 @@ enum RedactionStructure {
             let kept = PdfNameTree.read(document, ids).filter { !left($0.value) }
             _ = try PdfNameTree.write(document, ids, kept)
         }
+        return !limited
     }
 
     /// Whether the element still has content; elements that have none are added to `gone` by their parent.
     private static func visit(_ document: PdfDocument, _ element: PdfDictionary, _ inherited: Int?, _ tagged: Tagged, _ replaced: RedactionObjects.Identities,
-                              _ pictures: Set<Int>, _ gone: inout RedactionObjects.Identities, _ depth: Int, _ budget: inout Int) -> (alive: Bool, touched: Bool) {
+                              _ pictures: Set<Int>, _ gone: inout RedactionObjects.Identities, _ depth: Int, _ budget: inout Int, _ limited: inout Bool) -> (alive: Bool, touched: Bool) {
         var over = depth > maxDepth
         if !over {
             budget -= 1
@@ -55,6 +59,7 @@ enum RedactionStructure {
         }
         if over {
             strip(document, element)
+            limited = true
             return (true, true)
         }
         var page = inherited
@@ -93,7 +98,7 @@ enum RedactionStructure {
                     kept.append(kid)
                 }
             case let child as PdfDictionary:
-                let (alive, inner) = visit(document, child, page, tagged, replaced, pictures, &gone, depth + 1, &budget)
+                let (alive, inner) = visit(document, child, page, tagged, replaced, pictures, &gone, depth + 1, &budget, &limited)
                 touched = touched || inner
                 if alive {
                     kept.append(kid)

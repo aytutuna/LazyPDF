@@ -162,11 +162,11 @@
 < 75: <</S /GoTo /D [6 0 R /Fit]>>
 > case delete-tagged
 < trailer <</Size 41 /Root 1 0 R>>
-< 1: <</Type /Catalog /Pages 2 0 R>>
+< 1: <</Type /Catalog /Pages 2 0 R /StructTreeRoot 40 0 R /MarkInfo <</Marked true>>>>
 < 2: <</Type /Pages /Kids [4 0 R 6 0 R] /Count 2 /MediaBox [0 0 200 300]>>
 < 3: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
-< 4: <</Type /Page /Parent 2 0 R /Contents 7 0 R /Resources <</Font <</F1 3 0 R>>>>>>
-< 6: <</Type /Page /Parent 2 0 R /Contents 9 0 R /Resources <</Font <</F1 3 0 R>>>>>>
+< 4: <</Type /Page /Parent 2 0 R /Contents 7 0 R /Resources <</Font <</F1 3 0 R>>>> /StructParents 0>>
+< 6: <</Type /Page /Parent 2 0 R /Contents 9 0 R /Resources <</Font <</F1 3 0 R>>>> /StructParents 2>>
 < 7: stream <</Length 37>> | BT /F1 12 Tf 20 100 Td (Page 1) Tj ET
 < 8: stream <</Length 37>> | BT /F1 12 Tf 20 100 Td (Page 2) Tj ET
 < 9: stream <</Length 37>> | BT /F1 12 Tf 20 100 Td (Page 3) Tj ET

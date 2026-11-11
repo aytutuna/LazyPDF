@@ -209,6 +209,11 @@ internal static class PageCleanup
         bool Tagged(PdfPage page) => page.Dictionary.ContainsKey("StructParents")
             || document.Array(page.Dictionary, "Annots")?.Items.Any(a => document.Resolve(a) is PdfDictionary d && d.ContainsKey("StructParent")) == true;
         if (!doomed.Any(Tagged)) return;
+        if (PageCarry.HasTags(document) && RedactionStructure.Prune(document, [], [], [.. doomed.Select(p => p.Reference.Number)]))
+        {
+            KeepKeys(document, doomed);
+            return;
+        }
         document.Catalog.Remove("StructTreeRoot");
         document.Catalog.Remove("MarkInfo");
         foreach (var page in document.Pages)
@@ -221,6 +226,24 @@ internal static class PageCleanup
                 if (document.Resolve(item) is PdfDictionary annotation) annotation.Remove("StructParent");
             }
         }
+    }
+
+    // The parent tree keeps the keys of the pages and annotations that stay.
+    private static void KeepKeys(PdfDocument document, IReadOnlyList<PdfPage> doomed)
+    {
+        if (document.Dict(document.Dict(document.Catalog, "StructTreeRoot"), "ParentTree") is not { } parents) return;
+        var used = new HashSet<long>();
+        var gone = doomed.Select(p => p.Reference.Number).ToHashSet();
+        foreach (var page in document.Pages.Where(p => !gone.Contains(p.Reference.Number)))
+        {
+            if (document.Integer(page.Dictionary, "StructParents") is { } key) used.Add(key);
+            if (document.Array(page.Dictionary, "Annots") is not { } annots) continue;
+            foreach (var item in annots.Items)
+            {
+                if (document.Resolve(item) is PdfDictionary annotation && document.Integer(annotation, "StructParent") is { } own) used.Add(own);
+            }
+        }
+        PdfNumberTree.Write(document, parents, PdfNumberTree.Read(document, parents).Where(e => used.Contains(e.Key)).ToList());
     }
 
     // A bead on a page that goes leaves its article; an article with no bead left goes too.
