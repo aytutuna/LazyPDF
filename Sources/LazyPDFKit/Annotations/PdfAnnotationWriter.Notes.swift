@@ -96,7 +96,7 @@ extension PdfAnnotationWriter {
     @discardableResult
     public func addStamp(_ page: PdfPage, _ rect: PdfRect, _ name: String, info: AnnotationInfo? = nil, color: [Double]? = nil) throws -> PdfAnnotation {
         let d = newAnnotation("Stamp", rect, info, color)
-        d["Name"] = PdfName(name)
+        d["Name"] = PdfName.fromText(name)
         return try place(page, d)
     }
 

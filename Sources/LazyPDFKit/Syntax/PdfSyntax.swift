@@ -98,17 +98,33 @@ public final class PdfName: PdfObject, Hashable {
         super.init()
     }
 
+    /// A name for free text: its UTF-8 bytes, one scalar each (7.3.5).
+    public static func fromText(_ text: String) -> PdfName {
+        PdfName(Latin1.string(Array(text.utf8)))
+    }
+
+    /// The text the bytes of `value` spell as UTF-8, or `value` itself when they are not UTF-8.
+    public var text: String {
+        if value.unicodeScalars.contains(where: { $0.value > 0xFF }) { return value }
+        return String(bytes: Latin1.bytes(value), encoding: .utf8) ?? value
+    }
+
     public override func writeTo(_ output: inout String) {
         output.append("/")
         for scalar in value.unicodeScalars {
             let c = scalar.value
             // Regular characters as they are; '#', delimiters, white space and anything outside
-            // printable ASCII as #xx.
+            // printable ASCII as #xx. A scalar above 0xFF has no byte of its own, so its UTF-8 bytes go.
             if c > 0x20 && c < 0x7F && c != 0x23 && !PdfLexer.isDelimiter(Int(c)) {
                 output.unicodeScalars.append(scalar)
-            } else {
+            } else if c <= 0xFF {
                 output.append("#")
-                appendHex(UInt8(truncatingIfNeeded: c), to: &output)
+                appendHex(UInt8(c), to: &output)
+            } else {
+                for byte in String(scalar).utf8 {
+                    output.append("#")
+                    appendHex(byte, to: &output)
+                }
             }
         }
     }
