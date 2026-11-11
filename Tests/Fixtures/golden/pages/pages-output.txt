@@ -476,10 +476,10 @@
 < 72: <</Type /Annot /Subtype /Popup /Rect [50 50 100 100] /Parent 69 0 R /Open true>>
 > case extract
 < trailer <</Size 3 /Root 1 0 R>>
-< 1: <</Type /Catalog /Pages 2 0 R /AcroForm <</Fields [11 0 R 17 0 R] /NeedAppearances true /DR <</Font <</Helv 8 0 R>>>> /CO [17 0 R]>> /Names <</Dests 19 0 R>>>>
+< 1: <</Type /Catalog /Pages 2 0 R /AcroForm <</Fields [11 0 R 17 0 R] /NeedAppearances true /DR <</Font <</Helv 8 0 R>>>> /CO [17 0 R]>> /Names <</Dests 19 0 R>> /StructTreeRoot 21 0 R>>
 < 2: <</Type /Pages /Kids [3 0 R 4 0 R] /Count 2>>
 < 3: <</Type /Page /MediaBox [0 0 300 400] /CropBox [0 0 300 400] /Rotate 90 /Resources <</Font <</F1 5 0 R>> /XObject <</Im1 6 0 R>>>> /Contents 7 0 R /Annots [9 0 R 10 0 R] /Parent 2 0 R>>
-< 4: <</Type /Page /MediaBox [0 0 300 400] /CropBox [0 0 300 400] /Rotate 90 /Resources <</Font <</F1 5 0 R>> /XObject <</Im1 6 0 R>>>> /Contents 12 0 R /Annots [13 0 R 14 0 R 15 0 R 18 0 R 16 0 R 17 0 R] /Parent 2 0 R>>
+< 4: <</Type /Page /MediaBox [0 0 300 400] /CropBox [0 0 300 400] /Rotate 90 /Resources <</Font <</F1 5 0 R>> /XObject <</Im1 6 0 R>>>> /Contents 12 0 R /StructParents 0 /Annots [13 0 R 14 0 R 15 0 R 18 0 R 16 0 R 17 0 R] /Parent 2 0 R>>
 < 5: <</Type /Font /Subtype /Type1 /BaseFont /Courier>>
 < 6: stream <</Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0080
 < 7: stream <<>> | BT /F1 12 Tf (Page 12) Tj ET q /Im1 Do Q
@@ -490,11 +490,13 @@
 < 12: stream <<>> | BT /F1 12 Tf (Page 11) Tj ET q /Im1 Do Q
 < 13: <</Type /Annot /Subtype /Link /Rect [0 0 10 10] /Dest [3 0 R /Fit]>>
 < 14: <</Type /Annot /Subtype /Link /Rect [0 0 10 10] /Dest [3 0 R /Fit]>>
-< 15: <</Type /Annot /Subtype /Text /Rect [20 20 40 40] /Contents (note) /Popup 18 0 R /P 4 0 R>>
+< 15: <</Type /Annot /Subtype /Text /Rect [20 20 40 40] /Contents (note) /Popup 18 0 R /P 4 0 R /StructParent 3>>
 < 16: <</Type /Annot /Subtype /Link /Rect [0 0 10 10] /A <</S /URI /URI (http://example.com)>>>>
 < 17: <</Type /Annot /Subtype /Widget /FT /Tx /T (name) /V (Alice) /DA (/Helv 12 Tf 0 g) /Rect [0 0 50 20]>>
 < 18: <</Type /Annot /Subtype /Popup /Rect [50 50 100 100] /Parent 15 0 R /Open true>>
 < 19: <</Names [(five) [3 0 R /Fit]]>>
+< 21: <</Type /StructTreeRoot /K 22 0 R>>
+< 22: <</S /P /Pg 4 0 R /K 0>>
 > case extract-linked
 < trailer <</Size 3 /Root 1 0 R>>
 < 1: <</Type /Catalog /Pages 2 0 R /AcroForm <</Fields [8 0 R] /CO [8 0 R]>> /Outlines 9 0 R /PageLabels <</Nums [0 <</S /D /St 6>> 1 <</S /r>>]>> /Names <</Dests 12 0 R>>>>
@@ -511,14 +513,14 @@
 < 12: <</Names [(e) [4 0 R /Fit]]>>
 > case merge
 < trailer <</Size 3 /Root 1 0 R>>
-< 1: <</Type /Catalog /Pages 2 0 R /AcroForm <</Fields [18 0 R 23 0 R] /NeedAppearances true /DR <</Font <</Helv 13 0 R>>>> /CO [18 0 R]>> /Names <</Dests 27 0 R>>>>
+< 1: <</Type /Catalog /Pages 2 0 R /AcroForm <</Fields [18 0 R 23 0 R] /NeedAppearances true /DR <</Font <</Helv 13 0 R>>>> /CO [18 0 R]>> /Names <</Dests 27 0 R>> /StructTreeRoot 28 0 R>>
 < 2: <</Type /Pages /Kids [3 0 R 4 0 R 8 0 R 9 0 R 24 0 R] /Count 5>>
 < 3: <</Type /Page /MediaBox [0 0 200 300] /CropBox [0 0 200 300] /Rotate 0 /Resources <</Font <</F1 5 0 R>>>> /Contents 6 0 R /Parent 2 0 R>>
 < 4: <</Type /Page /MediaBox [0 0 200 300] /CropBox [0 0 200 300] /Rotate 0 /Resources <</Font <</F1 5 0 R>>>> /Contents 7 0 R /Parent 2 0 R>>
 < 5: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
 < 6: stream <<>> | BT /F1 12 Tf 20 100 Td (Page 1) Tj ET
 < 7: stream <<>> | BT /F1 12 Tf 20 100 Td (Page 2) Tj ET
-< 8: <</Type /Page /MediaBox [0 0 300 400] /CropBox [0 0 300 400] /Rotate 90 /Resources <</Font <</F1 10 0 R>> /XObject <</Im1 11 0 R>>>> /Contents 12 0 R /Annots [14 0 R 15 0 R 16 0 R 19 0 R 17 0 R 18 0 R] /Parent 2 0 R>>
+< 8: <</Type /Page /MediaBox [0 0 300 400] /CropBox [0 0 300 400] /Rotate 90 /Resources <</Font <</F1 10 0 R>> /XObject <</Im1 11 0 R>>>> /Contents 12 0 R /StructParents 0 /Annots [14 0 R 15 0 R 16 0 R 19 0 R 17 0 R 18 0 R] /Parent 2 0 R>>
 < 9: <</Type /Page /MediaBox [0 0 300 400] /CropBox [0 0 300 400] /Rotate 90 /Resources <</Font <</F1 10 0 R>> /XObject <</Im1 11 0 R>>>> /Contents 20 0 R /Annots [21 0 R 22 0 R] /Parent 2 0 R>>
 < 10: <</Type /Font /Subtype /Type1 /BaseFont /Courier>>
 < 11: stream <</Type /XObject /Subtype /Image /Width 1 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8>> | \u0080
@@ -526,7 +528,7 @@
 < 13: <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>
 < 14: <</Type /Annot /Subtype /Link /Rect [0 0 10 10] /Dest [9 0 R /Fit]>>
 < 15: <</Type /Annot /Subtype /Link /Rect [0 0 10 10] /Dest [9 0 R /Fit]>>
-< 16: <</Type /Annot /Subtype /Text /Rect [20 20 40 40] /Contents (note) /Popup 19 0 R /P 8 0 R>>
+< 16: <</Type /Annot /Subtype /Text /Rect [20 20 40 40] /Contents (note) /Popup 19 0 R /P 8 0 R /StructParent 3>>
 < 17: <</Type /Annot /Subtype /Link /Rect [0 0 10 10] /A <</S /URI /URI (http://example.com)>>>>
 < 18: <</Type /Annot /Subtype /Widget /FT /Tx /T (name) /V (Alice) /DA (/Helv 12 Tf 0 g) /Rect [0 0 50 20]>>
 < 19: <</Type /Annot /Subtype /Popup /Rect [50 50 100 100] /Parent 16 0 R /Open true>>
@@ -538,6 +540,12 @@
 < 25: <</Type /Font /Subtype /Type1 /BaseFont /Courier>>
 < 26: stream <<>> | BT /F1 12 Tf (Page 13) Tj ET
 < 27: <</Names [(five) [9 0 R /Fit]]>>
+< 28: <</Type /StructTreeRoot /K [31 0 R] /ParentTree 35 0 R /ParentTreeNextKey 4>>
+< 30: <</Type /StructTreeRoot /K 31 0 R>>
+< 31: <</S /P /Pg 8 0 R /K 0>>
+< 33: <</Type /StructTreeRoot>>
+< 34: <</S /P /Pg 32 0 R>>
+< 35: <</Nums []>>
 > case split-every
 < part 0 trailer <</Size 3 /Root 1 0 R>>
 < part 0 1: <</Type /Catalog /Pages 2 0 R>>

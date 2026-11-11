@@ -17,6 +17,9 @@ internal sealed partial class PageImporter
     private readonly Dictionary<int, PdfReference> _newPages = [];
     private readonly Queue<(int Source, int Target)> _pending = [];
 
+    /// <summary>Whether the pages and annotations keep their keys into the tag tree, which <see cref="CopyTree"/> then copies.</summary>
+    public bool KeepTags { get; set; }
+
     public PageImporter(PdfDocument source, PdfDocument target)
     {
         _source = source;
@@ -64,6 +67,16 @@ internal sealed partial class PageImporter
         return copy;
     }
 
+    /// <summary>A copy of the source's structure tree in which a page that did not come across is <paramref name="ghost"/>.</summary>
+    public PdfObject CopyTree(PdfObject root, PdfReference ghost)
+    {
+        var mapped = _sourcePages.Where(n => _newPages.TryAdd(n, ghost)).ToList();
+        foreach (var (number, annotation) in _taggedCopies) _map.TryAdd(number, annotation);
+        var copy = CopyValue(root);
+        foreach (int number in mapped) _newPages.Remove(number);
+        return copy;
+    }
+
     private void FillPage(PdfPage page, PdfReference reference, PdfDictionary dict)
     {
         dict["Type"] = new PdfName("Page");
@@ -74,7 +87,7 @@ internal sealed partial class PageImporter
         dict["Resources"] = Copy(Pruned(page, Inherited(page, "Resources") ?? page.Resources ?? new PdfDictionary()));
         foreach (var (key, value) in page.Dictionary.Entries)
         {
-            if (PageOnly.Contains(key) || !ReferenceEquals(page.Dictionary[key], value)) continue;
+            if ((PageOnly.Contains(key) && !(KeepTags && key == "StructParents")) || !ReferenceEquals(page.Dictionary[key], value)) continue;
             var copy = Copy(value);
             if (copy is not PdfNull) dict.Add(key, copy);
         }

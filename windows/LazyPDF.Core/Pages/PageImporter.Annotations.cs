@@ -20,6 +20,7 @@ internal sealed partial class PageImporter
     private readonly List<(PdfDictionary Source, PdfDictionary Copy)> _fieldActions = [];
     private readonly Dictionary<string, string> _fontRenames = [];
     private readonly Dictionary<int, List<PdfReference>> _copies = [];
+    private readonly Dictionary<int, PdfReference> _taggedCopies = [];
     private readonly Dictionary<PdfArray, FieldCopy> _groups = new(ReferenceEqualityComparer.Instance);
 
     // A field above widgets as copied: which of the source's kids came across, by position.
@@ -62,7 +63,9 @@ internal sealed partial class PageImporter
         ResolveFieldActions();
         foreach (var (number, reference) in _local)
         {
-            if (number > 0) Record(number, reference);
+            if (number <= 0) continue;
+            Record(number, reference);
+            if (KeepTags) _taggedCopies.TryAdd(number, reference);
         }
 
         var kept = items.Where(i => _local.ContainsKey(i.Source.Number)).Select(i => (PdfObject)_local[i.Source.Number]).Distinct().ToList();
@@ -78,7 +81,7 @@ internal sealed partial class PageImporter
             PdfObject? item = key switch
             {
                 "P" => pageRef,
-                "StructParent" => null,
+                "StructParent" => KeepTags ? value : null,
                 "Parent" when widget => null,
                 "Popup" or "Parent" or "IRT" => value is PdfReference r && _local.TryGetValue(r.Number, out var mapped) ? mapped : null,
                 "Dest" => FixDestination(value),

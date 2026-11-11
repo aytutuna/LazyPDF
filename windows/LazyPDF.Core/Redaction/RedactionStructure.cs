@@ -75,7 +75,8 @@ internal static class RedactionStructure
                     else touched |= Content(at, (int)(document.Integer(d, "MCID") ?? -1), tagged, pictures, kept, kid);
                     break;
                 case PdfDictionary d when IsContentItem(document, d, "OBJR", "Obj"):
-                    if (document.Resolve(d["Obj"]) is null || (document.Resolve(d["Obj"]) is PdfStream target && replaced.Contains(target))) touched = true;
+                    int? holder = d["Pg"] is PdfReference op ? op.Number : page;
+                    if (document.Resolve(d["Obj"]) is null || (holder is { } shown && pictures.Contains(shown)) || (document.Resolve(d["Obj"]) is PdfStream target && replaced.Contains(target))) touched = true;
                     else kept.Add(kid);
                     break;
                 case PdfDictionary child:

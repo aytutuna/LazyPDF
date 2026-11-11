@@ -18,12 +18,13 @@ public static class PageAssembly
     {
         if (pages.Count == 0) throw new ArgumentException("There are no pages to take.", nameof(pages));
         var target = Blank(source.Version);
-        var importer = new PageImporter(source, target);
+        var importer = new PageImporter(source, target) { KeepTags = PageCarry.HasTags(source) };
         var copies = importer.Import(pages, cancel);
         if (source.Trailer["Info"] is { } info && source.Info is not null) target.Trailer["Info"] = importer.CopyValue(info);
         PageCarry.Catalog(source, target, importer);
         PageTree.Set(target, copies);
         PageCarry.Carry(source, target, pages, 0);
+        if (importer.KeepTags) PageCarry.Tags(source, target, importer, copies);
         return target;
     }
 
@@ -36,12 +37,20 @@ public static class PageAssembly
         var order = new List<PdfReference>();
         var origins = new List<object>();
         var taken = new List<(IReadOnlyList<int> Pages, int Start)>();
+        var tagged = new List<(PdfDocument, PageImporter, IReadOnlyList<PdfReference>)>();
+        bool all = true;
         foreach (var (document, pages) in sources)
         {
             cancel.ThrowIfCancellationRequested();
-            if (!importers.TryGetValue(document, out var importer)) importers[document] = importer = new PageImporter(document, target);
+            // A document listed again shares the tree of its first listing, so its later pages stay untagged.
+            bool fresh = !importers.ContainsKey(document);
+            if (fresh) importers[document] = new PageImporter(document, target);
+            var importer = importers[document];
             var indexes = pages ?? [.. Enumerable.Range(0, document.Pages.Count)];
+            importer.KeepTags = fresh && indexes.Count > 0 && PageCarry.HasTags(document);
             var copies = importer.Import(indexes, cancel);
+            if (importer.KeepTags) tagged.Add((document, importer, copies));
+            else if (indexes.Count > 0) all = false;
             taken.Add((indexes, order.Count));
             order.AddRange(copies);
             origins.AddRange(copies.Select(_ => (object)document));
@@ -57,6 +66,7 @@ public static class PageAssembly
             string? title = document.Info is { } own ? PdfText.Read(document, own, "Title") : null;
             PageCarry.Carry(document, target, taken[i].Pages, taken[i].Start, string.IsNullOrEmpty(title) ? titles?.ElementAtOrDefault(i) ?? "" : title);
         }
+        PageCarry.MergeTags(target, tagged, all);
         StampRuns.Separate(target, [.. target.Pages.Select((p, i) => (p, origins[i]))]);
         return target;
     }
