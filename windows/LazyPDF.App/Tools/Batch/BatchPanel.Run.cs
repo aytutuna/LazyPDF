@@ -149,7 +149,7 @@ public partial class BatchPanel
                 if (live[i].Kind == BatchStepKind.Bates) set.Steps[i].Start = live[i].Start;
             }
             var result = await Task.Run(() => Runner.RunAsync(path, set, number, DateTimeOffset.Now, token), token);
-            ContinueNumbers(set, live);
+            if (result.Ok) ContinueNumbers(set, live);
             return result;
         }
         finally
