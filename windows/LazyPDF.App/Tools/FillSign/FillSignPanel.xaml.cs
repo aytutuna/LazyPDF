@@ -151,10 +151,10 @@ public partial class FillSignPanel : ToolPanel
             Host!.ShowProblem(new Problem(Loc.T("Text cannot be drawn"), error.Message));
             return;
         }
-        catch (ArgumentException error)
+        catch (ArgumentException)
         {
             tab.Session.Discard();
-            Host!.ShowProblem(new Problem(Loc.T("Nothing to place"), error.Message));
+            Host!.ShowProblem(new Problem(Loc.T("Nothing to place"), Loc.T("There is no text or picture to place.")));
             return;
         }
         if (KeepPlacing.IsChecked == true)

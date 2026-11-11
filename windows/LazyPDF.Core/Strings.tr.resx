@@ -5722,6 +5722,9 @@
   <data name="There are no tags to check. Tag the document first." xml:space="preserve">
     <value>Denetlenecek etiket yok. Önce belgeyi etiketleyin.</value>
   </data>
+  <data name="There is no text or picture to place." xml:space="preserve">
+    <value>Yerleştirilecek metin veya resim yok.</value>
+  </data>
   <data name="There is no text there." xml:space="preserve">
     <value>Orada metin yok.</value>
   </data>

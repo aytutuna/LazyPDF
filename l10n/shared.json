@@ -2547,6 +2547,9 @@
   "Nothing to place": {
     "tr": "Yerleştirilecek bir şey yok"
   },
+  "There is no text or picture to place.": {
+    "tr": "Yerleştirilecek metin veya resim yok."
+  },
   "Nothing to draw": {
     "tr": "Çizilecek bir şey yok"
   },
