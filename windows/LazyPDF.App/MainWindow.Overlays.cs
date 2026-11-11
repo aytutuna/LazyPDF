@@ -217,6 +217,7 @@ public partial class MainWindow
     {
         _settingsOpen = false;
         RefreshOverlays();
+        ReleaseHeld();
     }
 
     private void SettingsOverlay_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -249,6 +250,7 @@ public partial class MainWindow
     {
         _aboutOpen = false;
         RefreshOverlays();
+        ReleaseHeld();
     }
 
     private void AboutOverlay_PreviewKeyDown(object sender, KeyEventArgs e)
