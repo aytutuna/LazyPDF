@@ -272,10 +272,13 @@ public partial class PageViewer
     private void Viewer_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (_tab is null) return;
-        bool ctrl = Keyboard.Modifiers.HasFlag(ModifierKeys.Control), shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift), alt = Keyboard.Modifiers.HasFlag(ModifierKeys.Alt);
+        var mods = Keyboard.Modifiers;
+        // AltGr reports Control and Alt together and types characters, so it is not Ctrl.
+        bool ctrl = (mods & (ModifierKeys.Control | ModifierKeys.Alt)) == ModifierKeys.Control, shift = mods.HasFlag(ModifierKeys.Shift), alt = mods.HasFlag(ModifierKeys.Alt);
         bool typing = Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase;
-        // With Alt held the key arrives as Key.System and the real one in SystemKey.
-        switch (e.Key == Key.System ? e.SystemKey : e.Key)
+        // With Alt held the arrows arrive as Key.System and the real key in SystemKey.
+        var key = e.Key == Key.System && e.SystemKey is Key.Left or Key.Right ? e.SystemKey : e.Key;
+        switch (key)
         {
             case Key.F when ctrl:
                 ShowFind();
