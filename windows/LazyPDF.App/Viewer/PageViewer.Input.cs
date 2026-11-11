@@ -663,12 +663,14 @@ public partial class PageViewer
             e.Handled = true;
             return;
         }
-        if (_tool is null && e.Key == Key.Tab && !ctrl && TabToLink(shift))
+        // Keys from a form field in an overlay bubble up here too.
+        bool own = e.OriginalSource == Surface;
+        if (own && _tool is null && e.Key == Key.Tab && !ctrl && TabToLink(shift))
         {
             e.Handled = true;
             return;
         }
-        if (e.Key == Key.Enter && _focusLink is { } focus)
+        if (own && e.Key == Key.Enter && _focusLink is { } focus)
         {
             FollowLink(focus.Link);
             e.Handled = true;

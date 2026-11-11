@@ -463,10 +463,10 @@ public sealed class KeyboardPlacementTests
         return Task.CompletedTask;
     });
 
-    private static bool PressKey(PageViewer viewer, Key key)
+    private static bool PressKey(PageViewer viewer, Key key, object? from = null)
     {
         using var source = new HwndSource(new HwndSourceParameters("key-test"));
-        var args = new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, key) { RoutedEvent = Keyboard.KeyDownEvent };
+        var args = new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, key) { RoutedEvent = Keyboard.KeyDownEvent, Source = from ?? viewer.Surface };
         typeof(PageViewer).GetMethod("Surface_KeyDown", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(viewer, [viewer, args]);
         return args.Handled;
     }
@@ -493,6 +493,21 @@ public sealed class KeyboardPlacementTests
         viewer.GoToPage(0);
         Assert.False(PressKey(viewer, Key.Tab));
         Assert.Null(focus.GetValue(viewer));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TabInAFormFieldDoesNotWalkTheLinks() => Sta.Run(() =>
+    {
+        var document = PdfDocument.Open(Pdfs.Text(3));
+        PdfLinks.Add(document, document.Pages[0], new PdfRect(50, 300, 150, 350), new PdfDestination(1));
+        using var tab = new DocumentTab(PdfEditSession.Open(document.SaveRewrite()), new FakeRenderer(), null, "a.pdf");
+        var (viewer, _) = Open(tab);
+        viewer.PointerTool = null;
+        var field = new System.Windows.Controls.TextBox();
+
+        Assert.False(PressKey(viewer, Key.Tab, field));
+        Assert.Null(typeof(PageViewer).GetField("_focusLink", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(viewer));
         return Task.CompletedTask;
     });
 
