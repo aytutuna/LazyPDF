@@ -28,7 +28,8 @@ enum PagePainter {
         let paper = PageTints.paper(viewer.tint)
         let paperColor = CGColor(srgbRed: CGFloat(paper.red) / 255, green: CGFloat(paper.green) / 255, blue: CGFloat(paper.blue) / 255, alpha: 1)
         context.interpolationQuality = .high
-        for page in viewer.visiblePages {
+        let area = ViewRect(dirty.minX, dirty.minY, dirty.width, dirty.height)
+        for page in viewer.pages(in: area) {
             guard let matrix = viewer.pageToView(page) else { continue }
             let size = viewer.pageSize(page)
             let rect = CGRect(PageSpace.transform(matrix, ViewRect(0, 0, size.width, size.height)))
@@ -42,7 +43,7 @@ enum PagePainter {
             context.setLineWidth(1)
             context.stroke(rect)
             context.clip(to: rect.intersection(dirty))
-            let drawing = viewer.drawing(of: page)
+            let drawing = viewer.drawing(of: page, in: area)
             for picture in drawing.pictures {
                 if let image = image(of: picture.picture) {
                     draw(image, in: CGRect(picture.rect), turned: viewer.rotation, sharp: !picture.isPreview, context)

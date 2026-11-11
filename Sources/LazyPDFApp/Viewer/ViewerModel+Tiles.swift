@@ -62,8 +62,8 @@ extension ViewerModel {
     }
 
     /// The pictures of a page to draw over its paper, and whether none could be made. A tile that has not come is stood in for
-    /// by a smaller picture; once the sharp ones are all there, the others are let go.
-    public func drawing(of page: Int) -> PageDrawing {
+    /// by a smaller picture; once the sharp ones are all there, the others are let go. `area` is the part of the view to draw, the whole viewport by default.
+    public func drawing(of page: Int, in area: ViewRect? = nil) -> PageDrawing {
         let none = PageDrawing(pictures: [], failed: false, partFailed: false)
         guard let matrix = state.pageMatrix(page) else { return none }
         let size = state.sizes[page]
@@ -74,7 +74,7 @@ extension ViewerModel {
         let previewOnly = ppp <= preview.key.scale
         let rect = state.layout.pageRect(page)
         let visible = ViewRect.intersect(ViewRect(rect.x - state.offsetX, rect.y - state.offsetY, rect.width, rect.height),
-                                         ViewRect(0, 0, state.viewport.width, state.viewport.height))
+                                         area ?? ViewRect(0, 0, state.viewport.width, state.viewport.height))
         if visible.isEmpty { return none }
         let content = ViewRect(visible.x + state.offsetX, visible.y + state.offsetY, visible.width, visible.height)
 

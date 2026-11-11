@@ -385,6 +385,12 @@ public final class ViewerModel: DocumentViewer {
         return state.layout.pageCount == 0 ? [] : state.layout.pagesIn(state.viewRect)
     }
 
+    /// The pages meeting `area`, given in the view's own space.
+    public func pages(in area: ViewRect) -> [Int] {
+        _ = viewRevision
+        return state.layout.pageCount == 0 ? [] : state.layout.pagesIn(ViewRect(area.x + state.offsetX, area.y + state.offsetY, area.width, area.height))
+    }
+
     public func pageSize(_ page: Int) -> ViewSize {
         state.pageSize(page)
     }
