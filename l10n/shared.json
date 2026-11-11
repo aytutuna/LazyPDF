@@ -4148,6 +4148,9 @@
   "Typed text was not kept": {
     "tr": "Yazılan metin korunmadı"
   },
+  "Typed text was not kept.": {
+    "tr": "Yazılan metin korunmadı."
+  },
   "Its permissions do not allow it. Open it with the owner password.": {
     "tr": "İzinleri buna izin vermiyor. Sahip parolasıyla açın."
   },

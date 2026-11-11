@@ -7099,6 +7099,9 @@
   <data name="Typed text was not kept" xml:space="preserve">
     <value>Yazılan metin korunmadı</value>
   </data>
+  <data name="Typed text was not kept." xml:space="preserve">
+    <value>Yazılan metin korunmadı.</value>
+  </data>
   <data name="Typing allowed" xml:space="preserve">
     <value>Yazmaya izin ver</value>
   </data>

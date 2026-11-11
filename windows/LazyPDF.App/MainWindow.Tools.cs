@@ -280,7 +280,12 @@ public partial class MainWindow
         if (ReferenceEquals(current, panel) && ReferenceEquals(attached, tab)) return;
         // The tab can change under the panel (open, close, Save all), so words still being typed go in before it lets go.
         // A running job edits the session on another thread, so nothing is written to it from here.
-        if (attached is not null && _vm.Strip.Contains(attached) && !_vm.IsBusy && !_actionRunning) current?.HandIn();
+        if (attached is not null && _vm.Strip.Contains(attached) && !_vm.IsBusy && !_actionRunning && current?.HandIn() == false)
+        {
+            // A signed file asked before taking the words; its button would act on a panel that is about to let go.
+            _vm.DropAction();
+            _vm.SetStatus(Loc.T("Typed text was not kept."));
+        }
         current?.Detach();
         current = panel;
         attached = tab;

@@ -214,7 +214,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     }
 
     // A button on the info bar acts on the tab and tool it was made for, so it goes when they do.
-    private void DropAction()
+    internal void DropAction()
     {
         if (_message?.Action is not null) _message = null;
     }
