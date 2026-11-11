@@ -3,7 +3,7 @@ using LazyPDF.Core;
 namespace LazyPDF.App.Tools.Redact;
 
 /// <summary>One entry of the review list: the mark and a few words to know it by.</summary>
-public sealed record MarkItem(RedactionMark Mark, string Label, bool IsBox = false)
+public sealed record MarkItem(RedactionMark Mark, string Label, bool IsBox = false, bool IsWholePage = false)
 {
     public int Page => Mark.Page;
 

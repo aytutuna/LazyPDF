@@ -50,6 +50,7 @@ public sealed class RedactJobTests
         var marks = RedactJob.WholePages(document, [0, 1, 1, 2]);
 
         Assert.Equal([0, 1, 2], marks.Select(m => m.Page));
+        Assert.All(marks, m => Assert.True(m.IsWholePage));
         for (int page = 0; page < 3; page++)
         {
             Assert.Equal(RedactionMark.FromRect(page, document.Pages[page].MediaBox).Quads, marks[page].Mark.Quads);
