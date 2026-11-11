@@ -63,6 +63,12 @@ final class PdfBytesTests: XCTestCase {
         XCTAssertEqual(fromArray.dataOffset, fromStream.dataOffset)
     }
 
+    func test_nonFiniteNumbersWriteZero() {
+        for value in [Double.nan, Double.infinity, -Double.infinity] {
+            XCTAssertEqual(PdfNumber(value).text, "0")
+        }
+    }
+
     func test_lexerFarOutsideTheBytesReadsTheEnd() {
         for position in [Int.max, Int.max - 1, Int.min, -5, 3, 1000] {
             let lexer = PdfLexer(PdfArrayBytes(Latin1.bytes("abc")), position: position)
