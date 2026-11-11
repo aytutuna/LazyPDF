@@ -1,8 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
 using LazyPDF.App.Documents;
-using LazyPDF.App.Tools.Certificates;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Certificates;
 using LazyPDF.App.Tools.FillSign;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
@@ -169,7 +169,7 @@ public sealed class FillSignPanelTests
     });
 
     [Fact]
-    public Task ACommitThatWillNotReadBackIsAProblemAndLeavesNothingBehind() => Sta.Run(() =>
+    public Task ARendererThatCannotLoadACommitLeavesItKeptAndUndrawn() => Sta.Run(async () =>
     {
         using var dir = new TempDir();
         var renderer = new FailingRenderer();
@@ -187,10 +187,15 @@ public sealed class FillSignPanelTests
 
         typeof(FillSignPanel).GetMethod("Placed", flags)!.Invoke(panel, [0, new Point(50, 50), null]);
 
-        Assert.Equal("Change not kept", host.Problems.Single().Title);
-        Assert.False(tab.Document.HasChanges);
-        Assert.Equal("Place on page", panel.Action!.Text);
-        return Task.CompletedTask;
+        await tab.Drawing;
+        Assert.Empty(host.Problems);
+        Assert.True(tab.Session.CanUndo);
+        Assert.False(tab.CanDraw);
+
+        renderer.Fails = false;
+        tab.Reload();
+        await tab.Drawing;
+        Assert.True(tab.CanDraw);
     });
 
     private sealed class FailingRenderer : IDocumentRenderer
