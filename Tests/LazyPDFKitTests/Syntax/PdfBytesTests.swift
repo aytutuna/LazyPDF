@@ -87,4 +87,11 @@ final class PdfBytesTests: XCTestCase {
         let latin = try XCTUnwrap(try PdfLexer(PdfArrayBytes(Latin1.bytes("/#FC"))).readObject() as? PdfName)
         XCTAssertEqual(latin.text, latin.value)
     }
+
+    func test_nameMixingLatin1AndAboveIsWrittenAsUtf8Throughout() throws {
+        let name = PdfName("GÖZDEN GEÇİRİLDİ")
+        XCTAssertFalse(name.description.contains("#D6"))
+        let read = try XCTUnwrap(try PdfLexer(PdfArrayBytes(Latin1.bytes(name.description))).readObject() as? PdfName)
+        XCTAssertEqual(read.text, "GÖZDEN GEÇİRİLDİ")
+    }
 }

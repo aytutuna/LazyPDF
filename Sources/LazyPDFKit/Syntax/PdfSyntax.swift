@@ -111,13 +111,16 @@ public final class PdfName: PdfObject, Hashable {
 
     public override func writeTo(_ output: inout String) {
         output.append("/")
+        // A scalar above 0xFF has no byte of its own, so its UTF-8 bytes go; then every non-ASCII scalar
+        // goes that way, or the mix would not read back as UTF-8.
+        let wide = value.unicodeScalars.contains(where: { $0.value > 0xFF })
         for scalar in value.unicodeScalars {
             let c = scalar.value
             // Regular characters as they are; '#', delimiters, white space and anything outside
-            // printable ASCII as #xx. A scalar above 0xFF has no byte of its own, so its UTF-8 bytes go.
+            // printable ASCII as #xx.
             if c > 0x20 && c < 0x7F && c != 0x23 && !PdfLexer.isDelimiter(Int(c)) {
                 output.unicodeScalars.append(scalar)
-            } else if c <= 0xFF {
+            } else if c <= 0xFF && !(wide && c > 0x7F) {
                 output.append("#")
                 appendHex(UInt8(c), to: &output)
             } else {

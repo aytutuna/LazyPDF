@@ -90,7 +90,7 @@ public enum PdfXfdf {
         d["Subtype"] = PdfName(subtype)
         func a(_ local: String) -> String? { attribute(e, local) }
         func text(_ local: String, _ key: String) { if let v = a(local) { d[key] = PdfText.toObject(v) } }
-        func nameOf(_ local: String, _ key: String) { if let v = a(local), !v.isEmpty { d[key] = PdfName(v) } }
+        func nameOf(_ local: String, _ key: String) { if let v = a(local), !v.isEmpty { d[key] = PdfName.fromText(v) } }
         func number(_ local: String, _ key: String) { if let n = InvariantNumbers.parseDouble(a(local)) { d[key] = PdfNumber(n) } }
 
         text("name", "NM"); text("title", "T"); text("subject", "Subj"); text("date", "M"); text("creationdate", "CreationDate")
@@ -250,7 +250,7 @@ public enum PdfXfdf {
             if let value { e.setAttributeValue(XmlName("", attribute), clean(value)) }
         }
         func textOf(_ key: String) -> String? { (v(key) as? PdfString).map { PdfText.decode($0.bytes) } }
-        func nameOf(_ key: String) -> String? { (v(key) as? PdfName)?.value }
+        func nameOf(_ key: String) -> String? { (v(key) as? PdfName)?.text }
         func numberOf(_ key: String) -> String? { (v(key) as? PdfNumber)?.text }
         func list(_ key: String) -> String? {
             guard let a = v(key) as? PdfArray else { return nil }
