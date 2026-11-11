@@ -387,27 +387,31 @@ public sealed class CloseFlowTests
     }
 
     [Fact]
-    public async Task SaveAnywayAfterBackingOutOfAnExitLeavesNoExitUnderWay()
+    public void SaveAnywayAfterBackingOutOfAnExitLeavesNoExitUnderWay()
     {
-        using var f = new ViewModelFixture();
-        var tab = await OpenDirty(f);
-        var other = await OpenDirty(f, "b.pdf");
-        f.Vm.Save(other);
-        File.WriteAllBytes(tab.Path!, Pdfs.Text(2));
-        File.SetLastWriteTimeUtc(tab.Path!, DateTime.UtcNow.AddMinutes(10));
-        await f.Vm.CheckDiskAsync();
-        int exits = 0, asks = 0;
-        f.Vm.ExitRequested += (_, _) => exits++;
-        f.Vm.CloseRequested += (_, _) => asks++;
-        f.Vm.RequestExit();
+        // The check a tab switch starts must come back on the window's thread, as in the app.
+        OneTabPerFileTests.OneThread.Run(async () =>
+        {
+            using var f = new ViewModelFixture();
+            var tab = await OpenDirty(f);
+            var other = await OpenDirty(f, "b.pdf");
+            f.Vm.Save(other);
+            File.WriteAllBytes(tab.Path!, Pdfs.Text(2));
+            File.SetLastWriteTimeUtc(tab.Path!, DateTime.UtcNow.AddMinutes(10));
+            await f.Vm.CheckDiskAsync();
+            int exits = 0, asks = 0;
+            f.Vm.ExitRequested += (_, _) => exits++;
+            f.Vm.CloseRequested += (_, _) => asks++;
+            f.Vm.RequestExit();
 
-        Assert.False(f.Vm.Save(tab, closeAfter: true));
-        f.Vm.CancelClose();
-        f.Vm.Message!.Action!.Run();
-        f.Vm.Close(other);
+            Assert.False(f.Vm.Save(tab, closeAfter: true));
+            f.Vm.CancelClose();
+            f.Vm.Message!.Action!.Run();
+            f.Vm.Close(other);
 
-        Assert.Equal(1, asks);
-        Assert.Equal(0, exits);
+            Assert.Equal(1, asks);
+            Assert.Equal(0, exits);
+        });
     }
 
     [Fact]
