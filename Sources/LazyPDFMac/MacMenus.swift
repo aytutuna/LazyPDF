@@ -63,7 +63,7 @@ struct MacMenus: Commands {
                 .keyboardShortcut("p")
                 .disabled(!usable)
             if vm.lazyPrintInstalled {
-                Button(L10n.t("Print here…"), action: vm.printHere)
+                Button(L10n.t("Print here…"), action: actions.printHere)
                     .disabled(!usable)
             }
         }

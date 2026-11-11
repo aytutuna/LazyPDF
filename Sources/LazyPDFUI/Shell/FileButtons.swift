@@ -43,8 +43,12 @@ public struct FileActions {
         vm.print()
     }
 
+    public func printHere() {
+        if vm.handIn() { vm.printHere() }
+    }
+
     public func share() {
-        guard let tab = vm.activeDocument else { return }
+        guard let tab = vm.activeDocument, vm.handIn() else { return }
         commands.share?(tab)
     }
 
