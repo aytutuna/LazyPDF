@@ -74,6 +74,13 @@ public partial class MainWindow
         e.Handled = true;
     }
 
+    private void TabList_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Delete || TabAt(e.OriginalSource) is not DocumentTab tab) return;
+        RequestClose(tab);
+        e.Handled = true;
+    }
+
     private void TabList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         _dragStart = e.GetPosition(null);

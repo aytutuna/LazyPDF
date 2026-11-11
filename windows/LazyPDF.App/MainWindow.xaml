@@ -17,7 +17,7 @@
         <Style x:Key="DocumentTabItemStyle" TargetType="ListBoxItem">
             <Setter Property="AutomationProperties.Name" Value="{Binding AutomationName}" />
             <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
-            <Setter Property="Padding" Value="10,5,4,7" />
+            <Setter Property="Padding" Value="10,3,4,5" />
             <Setter Property="Margin" Value="0,0,2,0" />
             <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}" />
             <Setter Property="Template">
@@ -53,7 +53,7 @@
         <DataTemplate x:Key="DocumentTabTemplate">
             <DockPanel x:Name="Row" MinWidth="64" MaxWidth="220" Background="Transparent" ToolTip="{Binding Title}">
                 <Button x:Name="CloseButton" DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE711;"
-                        Width="22" Height="22" FontSize="10" Margin="6,0,0,0" Focusable="False"
+                        Width="28" Height="28" FontSize="10" Margin="6,0,0,0" IsTabStop="False"
                         ToolTip="{loc:T Close}" AutomationProperties.Name="{loc:T Close}" Click="CloseTab_Click" />
                 <Ellipse x:Name="DirtyDot" DockPanel.Dock="Right" Width="7" Height="7" Margin="6,0,0,0"
                          Fill="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Collapsed"
@@ -181,7 +181,7 @@
                      ItemContainerStyle="{StaticResource DocumentTabItemStyle}" ItemTemplate="{StaticResource DocumentTabTemplate}"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled"
                      AutomationProperties.Name="{loc:T Open files}" AllowDrop="True"
-                     SelectionChanged="TabList_SelectionChanged" PreviewMouseDown="TabList_PreviewMouseDown"
+                     SelectionChanged="TabList_SelectionChanged" PreviewMouseDown="TabList_PreviewMouseDown" PreviewKeyDown="TabList_PreviewKeyDown"
                      PreviewMouseLeftButtonDown="TabList_PreviewMouseLeftButtonDown" PreviewMouseMove="TabList_PreviewMouseMove"
                      Drop="TabList_Drop" DragOver="TabList_DragOver">
                 <ListBox.ItemsPanel>
