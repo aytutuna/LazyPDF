@@ -1495,6 +1495,9 @@
   "{0} was changed by another program. Opening that version drops your unsaved changes.": {
     "tr": "{0} başka bir program tarafından değiştirildi. O sürümü açarsanız kaydedilmemiş değişiklikleriniz atılır."
   },
+  "{0} was changed by another program. Opening that version drops the marks and measurements not applied yet.": {
+    "tr": "{0} başka bir program tarafından değiştirildi. O sürümü açarsanız henüz uygulanmamış işaretler ve ölçümler atılır."
+  },
   "{0} was changed by another program.": {
     "tr": "{0} başka bir program tarafından değiştirildi."
   },

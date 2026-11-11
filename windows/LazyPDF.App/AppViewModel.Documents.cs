@@ -19,11 +19,14 @@ public sealed partial class AppViewModel
 {
     /// <param name="recovery">The recovery entry the bytes came from; it stays until a tab holds them.</param>
     /// <param name="replacing">The tab this open takes the place of: a reload.</param>
-    private sealed class PendingOpen(OpenSource source, Guid? recovery = null, DocumentTab? replacing = null)
+    /// <param name="quiet">A reload nobody asked for: it shows no problem and no password question, and is dropped if the tab has something to lose by then.</param>
+    private sealed class PendingOpen(OpenSource source, Guid? recovery = null, DocumentTab? replacing = null, bool quiet = false)
     {
         public OpenSource Source { get; } = source;
         public Guid? Recovery { get; } = recovery;
         public DocumentTab? Replacing { get; } = replacing;
+        public bool Quiet { get; } = quiet;
+        public int Revision { get; init; }
         public bool NeedsCertificate { get; set; }
         public IReadOnlyList<CertificateChoice> Certificates { get; set; } = [];
         public int Attempts { get; set; }
@@ -37,6 +40,7 @@ public sealed partial class AppViewModel
     private readonly List<PendingOpen> _parsing = [];
     private readonly HashSet<string> _opening = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<DocumentTab, DiskStamp?> _warnedAboutDisk = [];
+    private readonly HashSet<DocumentTab> _reloading = [];
     private readonly List<string> _closedFiles = [];
     private readonly List<DocumentTab> _closeQueue = [];
     private bool _exiting;
@@ -226,7 +230,7 @@ public sealed partial class AppViewModel
             // OpenCoreAsync has already said what it knows; this is what it did not expect.
             _pending.Remove(pending);
             System.Diagnostics.Trace.TraceError(e.ToString());
-            ShowProblem(Problems.Open(e, pending.Source.Title));
+            if (!pending.Quiet) ShowProblem(Problems.Open(e, pending.Source.Title));
             NotifyAll();
             return false;
         }
@@ -246,7 +250,7 @@ public sealed partial class AppViewModel
         }
         catch (PdfReadException e) when (e.Problem is PdfReadProblem.PasswordRequired or PdfReadProblem.CertificateRequired)
         {
-            if (pending.Cancelled) return false;
+            if (pending.Cancelled || pending.Quiet) return false;
             bool asked = _pending.Contains(pending);
             if (!asked) _pending.Add(pending);
             pending.NeedsCertificate = e.Problem == PdfReadProblem.CertificateRequired;
@@ -259,7 +263,7 @@ public sealed partial class AppViewModel
         catch (PdfReadException e)
         {
             _pending.Remove(pending);
-            ShowProblem(Problems.Open(e, source.Title));
+            if (!pending.Quiet) ShowProblem(Problems.Open(e, source.Title));
             return false;
         }
 
@@ -267,15 +271,27 @@ public sealed partial class AppViewModel
         _pending.Remove(pending);
         if (session.Document.Pages.Count == 0)
         {
-            ShowProblem(new Problem(Loc.T("Nothing to show"), Loc.T("{0} has no pages.", source.Title)));
+            if (!pending.Quiet) ShowProblem(new Problem(Loc.T("Nothing to show"), Loc.T("{0} has no pages.", source.Title)));
             return false;
         }
         string? path = source.Path;
         var tab = await Task.Run(() => new DocumentTab(session, _renderers(), path, source.Title, password, _recovery,
                                                         unsaved: source.Made || pending.Recovery is not null, source.Stamp, certificate, source.Hash));
         if (pending.Recovery is null) tab.FileId = source.FileId;
+        int at = -1;
+        bool wasActive = false;
+        if (pending.Replacing is { } old)
+        {
+            at = Strip.IndexOf(old);
+            // The tab was closed, or took on work, while the file was read and parsed.
+            if (at < 0 || pending.Quiet && !NothingToLose(old, pending.Revision))
+            {
+                tab.Dispose();
+                return false;
+            }
+            wasActive = ReferenceEquals(_activeTab, old);
+        }
         tab.Changed += Tab_Changed;
-        int at = pending.Replacing is { } old ? Strip.IndexOf(old) : -1;
         if (at >= 0) Replace(at, tab);
         else Strip.Add(tab);
         if (pending.Recovery is { } entry) await Task.Run(() => _recovery.Delete(entry));
@@ -300,7 +316,7 @@ public sealed partial class AppViewModel
             tab.Fit = Enum.IsDefined((FitMode)seen.Fit) ? (FitMode)seen.Fit : FitMode.Width;
         }
         tab.ReadOnly = source.ReadOnly;
-        ActiveTab = tab;
+        if (pending.Replacing is null || wasActive) ActiveTab = tab;
         if (source.Note is not null) ShowNotice(Loc.T("Opened with changes"), source.Note);
         else if (tab.ReadOnly) ShowNotice(Loc.T("File is read-only"), Loc.T("{0} is read-only. You can work on it, but save your changes with Save as.", tab.Title));
         else if (!tab.CanDraw) ShowNotice(Loc.T("Pages cannot be shown"), Loc.T("{0} opens for editing, but Windows cannot draw its pages.", tab.Title));
@@ -627,7 +643,8 @@ public sealed partial class AppViewModel
             return;
         }
         // Nothing to lose: take the new version without asking. A tool open may write the file itself and reload.
-        if (found is not null && !tab.IsDirty && tab.PendingMarks == 0 && _activeToolId is null && !IsBusy
+        if (found is not null && _reloading.Contains(tab)) return;
+        if (found is not null && found != seen && NothingToLose(tab, tab.Revision)
             && await TryReloadAsync(tab, quiet: true))
         {
             SetStatus(Loc.T("Reloaded {0}.", tab.Title));
@@ -642,29 +659,43 @@ public sealed partial class AppViewModel
         }
         string text = tab.IsDirty
             ? Loc.T("{0} was changed by another program. Opening that version drops your unsaved changes.", tab.Title)
+            : tab.HasUnappliedWork
+            ? Loc.T("{0} was changed by another program. Opening that version drops the marks and measurements not applied yet.", tab.Title)
             : Loc.T("{0} was changed by another program.", tab.Title);
         ShowNotice(Loc.T("File changed"), text, new NoticeAction(Loc.T("Open that version"), () => _ = ReloadAsync(tab)));
     }
 
     public Task ReloadAsync(DocumentTab tab) => TryReloadAsync(tab);
 
+    private bool NothingToLose(DocumentTab tab, int revision) =>
+        !tab.IsDirty && !tab.HasUnappliedWork && tab.Revision == revision && _activeToolId is null && !IsBusy;
+
     /// <summary>Reads the file again from disk and, once that worked, puts it in the place of the tab, keeping its page and zoom; unsaved changes are dropped then, not before. False when the tab was not replaced. Quiet shows nothing when the read fails, as the other program may still be writing.</summary>
     public Task<bool> TryReloadAsync(DocumentTab tab) => TryReloadAsync(tab, quiet: false);
 
     private async Task<bool> TryReloadAsync(DocumentTab tab, bool quiet)
     {
-        if (tab.Path is not { } path || !Strip.Contains(tab)) return false;
-        OpenSource source;
+        if (tab.Path is not { } path || !Strip.Contains(tab) || !_reloading.Add(tab)) return false;
         try
         {
-            source = await Task.Run(() => _opener.Read(path));
+            int revision = tab.Revision;
+            OpenSource source;
+            try
+            {
+                source = await Task.Run(() => _opener.Read(path));
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or PdfReadException)
+            {
+                if (!quiet) ShowProblem(Problems.Open(e, tab.Title));
+                return false;
+            }
+            if (!Strip.Contains(tab)) return false;
+            bool opened = await OpenAsync(new PendingOpen(source, replacing: tab, quiet: quiet) { Revision = revision }, tab.Password, tab.Certificate);
+            return opened && !Strip.Contains(tab);
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or PdfReadException)
+        finally
         {
-            if (!quiet) ShowProblem(Problems.Open(e, tab.Title));
-            return false;
+            _reloading.Remove(tab);
         }
-        if (Strip.Contains(tab)) await OpenAsync(new PendingOpen(source, replacing: tab), tab.Password, tab.Certificate);
-        return !Strip.Contains(tab);
     }
 }

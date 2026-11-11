@@ -112,6 +112,41 @@ public sealed class DiskChangeTests
     }
 
     [Fact]
+    public async Task ATabWithMeasurementsNotAddedIsNotReloadedQuietly()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf();
+        await f.Vm.OpenAsync(path);
+        var tab = f.Vm.ActiveDocument!;
+        tab.PendingMeasurements = 2;
+        Touch(path, Pdfs.Text(pages: 3));
+
+        await f.Vm.CheckDiskAsync();
+
+        Assert.Same(tab, f.Vm.ActiveDocument);
+        Assert.Equal("File changed", f.Vm.Message?.Title);
+        Assert.Contains("not applied yet", f.Vm.Message?.Text);
+    }
+
+    [Fact]
+    public void TwoChecksAtOnceReloadTheTabOnce()
+    {
+        // The window's thread runs both checks one after the other, as OneThread does.
+        OneTabPerFileTests.OneThread.Run(async () =>
+        {
+            using var f = new ViewModelFixture();
+            string path = f.Pdf();
+            await f.Vm.OpenAsync(path);
+            Touch(path, Pdfs.Text(pages: 3));
+
+            await Task.WhenAll(f.Vm.CheckDiskAsync(), f.Vm.CheckDiskAsync());
+
+            Assert.Single(f.Vm.Documents);
+            Assert.Equal(3, f.Vm.ActiveDocument!.PageCount);
+        });
+    }
+
+    [Fact]
     public async Task AFileOnlyTouchedIsNotAChange()
     {
         using var f = new ViewModelFixture();
