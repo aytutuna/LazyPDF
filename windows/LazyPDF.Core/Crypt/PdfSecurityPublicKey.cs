@@ -68,6 +68,8 @@ public sealed partial class PdfSecurity
     {
         if (recipients.Count is 0 or > MaxRecipients)
             throw new ArgumentException($"A file has between 1 and {MaxRecipients} recipients.", nameof(recipients));
+        if (!recipients.All(r => PdfRecipient.CanProtect(r.Certificate)))
+            throw new ArgumentException("This certificate cannot be used to protect a file. Choose a certificate with an RSA key.", nameof(recipients));
         bool modern = strength == PdfCryptStrength.Aes256;
         int v = modern ? 5 : 4;
         byte[] seed = RandomNumberGenerator.GetBytes(20);

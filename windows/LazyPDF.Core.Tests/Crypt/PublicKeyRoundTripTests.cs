@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Xunit;
 
@@ -111,6 +113,34 @@ public class PublicKeyRoundTripTests
     public void RecipientCountIsBounded()
     {
         Assert.Throws<ArgumentException>(() => PdfSecurity.CreatePublicKey([], PdfCryptStrength.Aes256));
+    }
+
+    [Fact]
+    public void OnlyRsaCertificatesThatMayEncipherCanProtect()
+    {
+        using var ec = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var ecCertificate = new CertificateRequest("CN=Curve", ec, HashAlgorithmName.SHA256)
+            .CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
+        using var rsa = RSA.Create(2048);
+        var request = new CertificateRequest("CN=Signer", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature, true));
+        using var signOnly = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
+
+        Assert.True(PdfRecipient.CanProtect(PublicKeyFiles.Alice));
+        Assert.False(PdfRecipient.CanProtect(ecCertificate));
+        Assert.False(PdfRecipient.CanProtect(signOnly));
+    }
+
+    [Fact]
+    public void ACertificateThatCannotProtectIsRefused()
+    {
+        using var ec = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var ecCertificate = new CertificateRequest("CN=Curve", ec, HashAlgorithmName.SHA256)
+            .CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
+
+        var error = Assert.Throws<ArgumentException>(() =>
+            PdfSecurity.CreatePublicKey([new PdfRecipient(PublicKeyFiles.Alice), new PdfRecipient(ecCertificate)], PdfCryptStrength.Aes256));
+        Assert.StartsWith("This certificate cannot be used to protect a file. Choose a certificate with an RSA key.", error.Message);
     }
 
     [Fact]

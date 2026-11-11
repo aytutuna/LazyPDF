@@ -630,7 +630,8 @@ Files: `PdfSecurityPublicKey.cs`, `PdfRecipient.cs` in `Crypt/`; small additions
 
 ```csharp
 public sealed record PdfRecipient(X509Certificate2 Certificate, PdfPermissions Permissions = PdfPermissions.All,
-                                  bool CanChangeEncryption = false);
+                                  bool CanChangeEncryption = false)
+{ static bool CanProtect(X509Certificate2 certificate); }
 // PdfSecurity (additions)
 static PdfSecurity? OpenPublicKey(PdfDictionary encrypt, X509Certificate2 certificate);
 static PdfSecurity CreatePublicKey(IReadOnlyList<PdfRecipient> recipients, PdfCryptStrength strength);
@@ -647,7 +648,7 @@ CertificateRequired
 
 **Reading.** `PdfDocument.Open(bytes, certificate)` needs a certificate with its private key. `OpenPublicKey` returns null when no recipient opens with it (not a recipient, no private key, damaged entries are skipped); the document turns that into `PdfReadException` `CertificateRequired`. Opening a public-key file with no certificate or only a password is `CertificateRequired` too. A file with the standard handler opened with a certificate behaves as `Open(bytes, null)` (empty user password, else `PasswordRequired`); an unencrypted file ignores it. `Unsupported` for another SubFilter, V, or a cipher that does not fit the V; `Damaged` for a missing crypt filter or `/Recipients`. `Permissions` and `OpenedAsOwner` are those of the matching recipient (`OpenedAsOwner` is bit 2). `Revision` is 4 for V 4 and 6 for V 5.
 
-**Writing.** `CreatePublicKey` makes one EnvelopedData per recipient (RSA key transport, AES-256-CBC content), all with the same seed, so recipients differ only in permissions. `Aes256` gives s5, `Aes128` s4. Seed and content keys come from the system generator, so output is never repeatable. Pass the handler as `PdfSaveOptions.Security`; the header is raised to 1.6 or 1.7 as for the standard handler. The handler is an owner with all permissions. One to 1000 recipients, else `ArgumentException`. Only RSA certificates can be recipients. Output was decrypted outside the engine (openssl cms on a recipient entry, then the file key and a stream by hand); PdfPig and pypdf cannot read this handler.
+**Writing.** `CreatePublicKey` makes one EnvelopedData per recipient (RSA key transport, AES-256-CBC content), all with the same seed, so recipients differ only in permissions. `Aes256` gives s5, `Aes128` s4. Seed and content keys come from the system generator, so output is never repeatable. Pass the handler as `PdfSaveOptions.Security`; the header is raised to 1.6 or 1.7 as for the standard handler. The handler is an owner with all permissions. One to 1000 recipients, else `ArgumentException`. Recipients must have an RSA key that may encipher (`PdfRecipient.CanProtect`); others are refused with `ArgumentException`. Output was decrypted outside the engine (openssl cms on a recipient entry, then the file key and a stream by hand); PdfPig and pypdf cannot read this handler.
 
 **`/Perms`.** On R 6 the 16 bytes are decrypted with the file key and checked against `/P`, `/EncryptMetadata` and the marker `adb` (ISO 32000-2 7.6.4.4.9). `PermsMismatch` is true when `/Perms` is missing, short or disagrees; the file still opens and `Permissions` is still `/P`. It is false for R 2 to 5, public-key files and new handlers. The caller decides what to say.
 
