@@ -889,6 +889,12 @@
   <data name="Certificate from {0}." xml:space="preserve">
     <value>Sertifikayı veren: {0}.</value>
   </data>
+  <data name="Certificate has expired" xml:space="preserve">
+    <value>Sertifikanın süresi doldu</value>
+  </data>
+  <data name="Certificate has expired since" xml:space="preserve">
+    <value>Sertifikanın süresi sonradan doldu</value>
+  </data>
   <data name="Certificate not imported" xml:space="preserve">
     <value>Sertifika içe aktarılmadı</value>
   </data>
@@ -6016,6 +6022,9 @@
   <data name="The catalog has no /Metadata stream." xml:space="preserve">
     <value>Katalogda /Metadata akışı yok.</value>
   </data>
+  <data name="The certificate has expired since." xml:space="preserve">
+    <value>Sertifikanın süresi sonradan doldu.</value>
+  </data>
   <data name="The certificates name no servers to ask." xml:space="preserve">
     <value>Sertifikalar sorulacak bir sunucu belirtmiyor.</value>
   </data>
@@ -6519,6 +6528,9 @@
   </data>
   <data name="The signer is not trusted." xml:space="preserve">
     <value>İmzalayan güvenilir değil.</value>
+  </data>
+  <data name="The signing time is the signer's own claim. Check that the file was signed before the certificate expired." xml:space="preserve">
+    <value>İmza zamanı imzalayanın kendi beyanıdır. Dosyanın sertifikanın süresi dolmadan önce imzalandığını denetleyin.</value>
   </data>
   <data name="The steps after it could not read the locked file. Move Protect to the end." xml:space="preserve">
     <value>Ondan sonraki adımlar kilitli dosyayı okuyamaz. Koru adımını sona taşıyın.</value>

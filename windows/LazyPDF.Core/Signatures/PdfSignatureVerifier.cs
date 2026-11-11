@@ -112,23 +112,24 @@ internal sealed class SignatureChecker
             stamped = CheckToken(tokens[0], cms.Signature, extra, problems);
         }
         var signingTime = cms.SigningTime() ?? report.SigningTime;
-        // The signer's own clock proves nothing; without a trusted time stamp the chain is judged now.
-        var time = stamped ?? _options.Now;
+        // Without a trusted time stamp the signer's claim sets the time the chain is judged at; revocation is still judged now.
+        var time = stamped ?? signingTime ?? _options.Now;
 
         var trust = CertificateTrust.Evaluate(signer, extra, time, _options);
         if (!trust.Trusted) problems.Add(SignatureProblem.UntrustedSigner);
         if (!trust.TimeValid || stamped is null && signingTime is { } claimed && (claimed < signer.NotBefore || claimed > signer.NotAfter)) problems.Add(SignatureProblem.CertificateNotValid);
-
+        else if (stamped is null && signingTime is not null && time != _options.Now && !CertificateTrust.Evaluate(signer, extra, _options.Now, _options).TimeValid) problems.Add(SignatureProblem.CertificateExpired);
         var evidence = new ValidationData();
         evidence.ReadArchival(cms);
         evidence.Certificates.AddRange(_dss.Certificates);
         evidence.Ocsps.AddRange(_dss.Ocsps);
         evidence.Crls.AddRange(_dss.Crls);
+        var revocationTime = stamped ?? _options.Now;
         bool checkedAll = trust.Chain.Count > 1;
         for (int i = 0; i + 1 < trust.Chain.Count; i++)
         {
-            var (state, at) = evidence.Check(trust.Chain[i], trust.Chain[i + 1], time);
-            if (state == RevocationState.Revoked && (time is null || at is null || at <= time)) problems.Add(SignatureProblem.CertificateRevoked);
+            var (state, at) = evidence.Check(trust.Chain[i], trust.Chain[i + 1], revocationTime);
+            if (state == RevocationState.Revoked && (revocationTime is null || at is null || at <= revocationTime)) problems.Add(SignatureProblem.CertificateRevoked);
             checkedAll &= state == RevocationState.Good;
         }
 

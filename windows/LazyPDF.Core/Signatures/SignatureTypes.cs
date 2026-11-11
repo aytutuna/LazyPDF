@@ -69,6 +69,7 @@ public enum SignatureProblem
     NoCertificate,
     UntrustedSigner,
     CertificateNotValid,
+    CertificateExpired,
     CertificateRevoked,
     ChangedAfterSigning,
     DamagedStructure,

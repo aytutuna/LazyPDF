@@ -820,6 +820,9 @@
   "Signer is not trusted": {
     "tr": "İmzalayan güvenilir değil"
   },
+  "Certificate has expired": {
+    "tr": "Sertifikanın süresi doldu"
+  },
   "Changed after signing": {
     "tr": "İmzadan sonra değişti"
   },
@@ -856,6 +859,9 @@
   "The signer is not trusted.": {
     "tr": "İmzalayan güvenilir değil."
   },
+  "The certificate has expired since.": {
+    "tr": "Sertifikanın süresi sonradan doldu."
+  },
   "Changed since.": {
     "tr": "O zamandan beri değişti."
   },
@@ -885,6 +891,9 @@
   },
   "Certificate was not valid when signing": {
     "tr": "Sertifika imza sırasında geçerli değildi"
+  },
+  "Certificate has expired since": {
+    "tr": "Sertifikanın süresi sonradan doldu"
   },
   "Certificate was revoked": {
     "tr": "Sertifika iptal edildi"
@@ -921,6 +930,9 @@
   },
   "Check the date on the signature and the certificate.": {
     "tr": "İmzanın ve sertifikanın tarihini denetleyin."
+  },
+  "The signing time is the signer's own claim. Check that the file was signed before the certificate expired.": {
+    "tr": "İmza zamanı imzalayanın kendi beyanıdır. Dosyanın sertifikanın süresi dolmadan önce imzalandığını denetleyin."
   },
   "Do not rely on this signature.": {
     "tr": "Bu imzaya güvenmeyin."
