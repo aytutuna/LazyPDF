@@ -69,6 +69,9 @@ public sealed class BatchStep
     {
         Kind = kind,
         Text = kind == BatchStepKind.Ocr ? OcrLanguageState.Read().Preferred()?.Tag ?? "en-US" : "",
+        KeepComments = kind == BatchStepKind.Clean,
+        KeepForms = kind == BatchStepKind.Clean,
+        KeepLinks = kind == BatchStepKind.Clean,
     };
 }
 

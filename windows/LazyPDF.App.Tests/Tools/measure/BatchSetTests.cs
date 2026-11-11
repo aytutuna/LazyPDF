@@ -55,6 +55,23 @@ public sealed class BatchSetTests
     }
 
     [Fact]
+    public void ANewCleanStepKeepsWhatPeopleCanSee()
+    {
+        var step = BatchStep.Of(BatchStepKind.Clean);
+        Assert.Equal((true, true, true, false), (step.KeepComments, step.KeepForms, step.KeepLinks, step.KeepAttachments));
+    }
+
+    [Fact]
+    public void ASavedCleanStepKeepsItsOwnFlags()
+    {
+        using var dir = new TempDir();
+        var store = new BatchSetStore(dir.Path);
+        store.Save(new BatchSet { Name = "Strip", Steps = [new() { Kind = BatchStepKind.Clean }] });
+        var step = new BatchSetStore(dir.Path).Load().Single().Steps.Single();
+        Assert.Equal((false, false, false, false), (step.KeepComments, step.KeepForms, step.KeepLinks, step.KeepAttachments));
+    }
+
+    [Fact]
     public void AnUnreadableSetsFileGivesNoSets()
     {
         using var dir = new TempDir();
