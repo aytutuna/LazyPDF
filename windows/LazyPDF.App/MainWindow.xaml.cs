@@ -44,6 +44,7 @@ public partial class MainWindow : Window
         BuildRail();
         _vm.PropertyChanged += ViewModel_PropertyChanged;
         _vm.ExitRequested += ViewModel_ExitRequested;
+        _vm.ToolOpened += (_, _) => FocusInspector();
         _vm.CloseRequested += (_, tab) => RequestClose(tab);
         _vm.SystemPrintRequested += ViewModel_SystemPrintRequested;
         Loaded += Window_Loaded;
@@ -262,10 +263,12 @@ public partial class MainWindow : Window
         else
         {
             _vm.StartTile(id);
-            if (_vm.ActiveTool is not null)
-                Dispatcher.BeginInvoke(() => InspectorHost.MoveFocus(new TraversalRequest(FocusNavigationDirection.First)), System.Windows.Threading.DispatcherPriority.Loaded);
+            if (_vm.ActiveTool is not null) FocusInspector();
         }
     }
+
+    private void FocusInspector() =>
+        Dispatcher.BeginInvoke(() => InspectorHost.MoveFocus(new TraversalRequest(FocusNavigationDirection.First)), System.Windows.Threading.DispatcherPriority.Loaded);
 
     private void Home_FileChosen(object? sender, string path) => _ = _vm.OpenAsync(path);
 

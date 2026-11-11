@@ -29,6 +29,69 @@ public sealed class ToolHostTests
     }
 
     [Fact]
+    public async Task OpeningAToolKeepsItOpenAndSaysSo()
+    {
+        using var f = new ViewModelFixture();
+        IToolHost host = f.Vm;
+        await f.Vm.OpenAsync(f.Pdf());
+        var raised = 0;
+        f.Vm.ToolOpened += (_, _) => raised++;
+
+        host.OpenTool("ocr");
+        host.OpenTool("ocr");
+
+        Assert.Equal("ocr", f.Vm.ActiveToolId);
+        Assert.Equal(2, raised);
+    }
+
+    [Fact]
+    public async Task OpeningAToolThatDoesNotExistChangesNothing()
+    {
+        using var f = new ViewModelFixture();
+        IToolHost host = f.Vm;
+        await f.Vm.OpenAsync(f.Pdf());
+        var raised = false;
+        f.Vm.ToolOpened += (_, _) => raised = true;
+
+        host.OpenTool("nothing");
+
+        Assert.Null(f.Vm.ActiveToolId);
+        Assert.False(raised);
+    }
+
+    [Fact]
+    public void OpeningAToolWithNoDocumentChangesNothing()
+    {
+        using var f = new ViewModelFixture();
+        IToolHost host = f.Vm;
+
+        host.OpenTool("ocr");
+
+        Assert.Null(f.Vm.ActiveToolId);
+    }
+
+    [Fact]
+    public async Task OpeningAToolWhileBusyChangesNothing()
+    {
+        using var f = new ViewModelFixture();
+        IToolHost host = f.Vm;
+        await f.Vm.OpenAsync(f.Pdf());
+        var started = new TaskCompletionSource();
+        var run = host.RunBusyAsync("Working", async token =>
+        {
+            started.SetResult();
+            await Task.Delay(Timeout.Infinite, token);
+        });
+        await started.Task;
+
+        host.OpenTool("ocr");
+        f.Vm.CancelBusy();
+        await run;
+
+        Assert.Null(f.Vm.ActiveToolId);
+    }
+
+    [Fact]
     public void AToolCanSayWhatWentWrong()
     {
         using var f = new ViewModelFixture();

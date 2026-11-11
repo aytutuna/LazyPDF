@@ -127,9 +127,14 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
 
     public void OpenTool(string id)
     {
-        if (ToolCatalog.Find(id) is null) return;
-        if (_activeToolId == id) SelectTool(null);
-        SelectTool(id);
+        if (ToolCatalog.Find(id) is null || ActiveDocument is null || IsBusy) return;
+        if (_activeToolId != id)
+        {
+            _activeToolId = id;
+            DropAction();
+            NotifyAll();
+        }
+        ToolOpened?.Invoke(this, EventArgs.Empty);
     }
 
     public void OpenSigning(string field)
@@ -239,6 +244,9 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
 
     /// <summary>The window raises this once everything that had unsaved changes has been dealt with.</summary>
     public event EventHandler? ExitRequested;
+
+    /// <summary>Raised when a tool asked for another one: the window moves the keyboard into it.</summary>
+    public event EventHandler? ToolOpened;
 
     /// <summary>Raised when Save anyway has saved a tab that was being closed (not during an exit): the window closes it through its own checks.</summary>
     public event EventHandler<DocumentTab>? CloseRequested;
