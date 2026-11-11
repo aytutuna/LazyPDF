@@ -28,7 +28,7 @@ struct WindowState: Equatable {
     let url: URL?
     let dirty: Bool
 
-    init(_ tab: DocumentTab?) {
+    @MainActor init(_ tab: DocumentTab?) {
         title = tab?.title ?? "Lazy PDF"
         url = tab?.url
         dirty = tab?.isDirty ?? false
