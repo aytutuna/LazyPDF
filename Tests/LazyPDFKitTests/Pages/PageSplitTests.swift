@@ -183,4 +183,16 @@ final class PageSplitTests: XCTestCase {
         XCTAssertEqual(order(try PageAssembly.splitEvery(try PageTestFiles.open(2), Int(Int32.max))), "1,2")
         XCTAssertEqual(order(try PageAssembly.splitEvery(try PageTestFiles.open(2), Int(Int32.max) - 1)), "1,2")
     }
+
+    private func withUnreadableObject() throws -> PdfDocument {
+        try PageTestFiles.open(2, pageExtra: { _ in "/Thumb 8 0 R" }, add: { $0.obj(8, "<</Broken (never closed") })
+    }
+
+    func test_objectsThatCannotBeReadAreCountedWhereTheyAreLeftOut() throws {
+        XCTAssertEqual(try PageAssembly.extract(try PageTestFiles.open(2), [0, 1]).droppedObjects, 0)
+        XCTAssertEqual(try PageAssembly.extract(try withUnreadableObject(), [0, 1]).droppedObjects, 1)
+        XCTAssertEqual(try PageAssembly.merge([MergeSource(try withUnreadableObject()), MergeSource(try PageTestFiles.open(1))]).droppedObjects, 1)
+        XCTAssertEqual(try PageAssembly.merge([MergeSource(try withUnreadableObject()), MergeSource(try withUnreadableObject())]).droppedObjects, 2)
+        for part in try PageAssembly.splitEvery(try withUnreadableObject(), 1) { XCTAssertEqual(part.droppedObjects, 1) }
+    }
 }

@@ -188,4 +188,16 @@ public class PageSplitTests
         Assert.Equal("1,2", Order(PageAssembly.SplitEvery(PageTestFiles.Open(2), int.MaxValue)));
         Assert.Equal("1,2", Order(PageAssembly.SplitEvery(PageTestFiles.Open(2), int.MaxValue - 1)));
     }
+
+    private static PdfDocument WithUnreadableObject() => PageTestFiles.Open(2, pageExtra: _ => "/Thumb 8 0 R", add: pdf => pdf.Obj(8, "<</Broken (never closed"));
+
+    [Fact]
+    public void ObjectsThatCannotBeReadAreCountedWhereTheyAreLeftOut()
+    {
+        Assert.Equal(0, PageAssembly.Extract(PageTestFiles.Open(2), [0, 1]).DroppedObjects);
+        Assert.Equal(1, PageAssembly.Extract(WithUnreadableObject(), [0, 1]).DroppedObjects);
+        Assert.Equal(1, PageAssembly.Merge([new MergeSource(WithUnreadableObject()), new MergeSource(PageTestFiles.Open(1))]).DroppedObjects);
+        Assert.Equal(2, PageAssembly.Merge([new MergeSource(WithUnreadableObject()), new MergeSource(WithUnreadableObject())]).DroppedObjects);
+        Assert.All(PageAssembly.SplitEvery(WithUnreadableObject(), 1), p => Assert.Equal(1, p.DroppedObjects));
+    }
 }

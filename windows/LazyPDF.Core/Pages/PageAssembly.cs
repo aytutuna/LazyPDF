@@ -25,6 +25,7 @@ public static class PageAssembly
         PageTree.Set(target, copies);
         PageCarry.Carry(source, target, pages, 0);
         if (importer.KeepTags) PageCarry.Tags(source, target, importer, copies);
+        target.DroppedObjects = importer.Dropped;
         return target;
     }
 
@@ -67,6 +68,7 @@ public static class PageAssembly
             PageCarry.Carry(document, target, taken[i].Pages, taken[i].Start, string.IsNullOrEmpty(title) ? titles?.ElementAtOrDefault(i) ?? "" : title);
         }
         PageCarry.MergeTags(target, tagged, all);
+        target.DroppedObjects = importers.Values.Sum(i => i.Dropped);
         StampRuns.Separate(target, [.. target.Pages.Select((p, i) => (p, origins[i]))]);
         return target;
     }

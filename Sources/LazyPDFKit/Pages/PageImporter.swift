@@ -42,9 +42,13 @@ final class PageImporter {
     var map = OrderedMap<PdfReference>()
     var newPages: [Int: PdfReference] = [:]
     var pending: [(source: Int, target: Int)] = []
+    var droppedNumbers = Set<Int>()
 
     /// Whether the pages and annotations keep their keys into the tag tree, which `copyTree` then copies.
     var keepTags = false
+
+    /// How many objects the source lists that were referenced by what came across but could not be read, so they are left out.
+    var dropped: Int { droppedNumbers.count }
     var taggedCopies = OrderedMap<PdfReference>()
 
     var layersAdded = Set<Int>()
@@ -182,8 +186,11 @@ final class PageImporter {
     private func copyReference(_ reference: PdfReference) throws -> PdfObject {
         if let done = map[reference.number] ?? newPages[reference.number] { return done }
         // A page that did not come across, the tree above it and the catalog would drag the whole file in.
-        guard let value = source.get(reference.number), !(value is PdfNull), !sourcePages.contains(reference.number),
-              !isStructure(value) else { return PdfNull.instance }
+        guard let value = source.get(reference.number), !(value is PdfNull) else {
+            if let listed = source.entries[reference.number], listed.kind == .inUse || listed.kind == .compressed { droppedNumbers.insert(reference.number) }
+            return PdfNull.instance
+        }
+        guard !sourcePages.contains(reference.number), !isStructure(value) else { return PdfNull.instance }
         let made = try target.add(PdfNull.instance)
         map[reference.number] = made
         pending.append((reference.number, made.number))

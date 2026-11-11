@@ -16,9 +16,13 @@ internal sealed partial class PageImporter
     private readonly Dictionary<int, PdfReference> _map = [];
     private readonly Dictionary<int, PdfReference> _newPages = [];
     private readonly Queue<(int Source, int Target)> _pending = [];
+    private readonly HashSet<int> _dropped = [];
 
     /// <summary>Whether the pages and annotations keep their keys into the tag tree, which <see cref="CopyTree"/> then copies.</summary>
     public bool KeepTags { get; set; }
+
+    /// <summary>How many objects the source lists that were referenced by what came across but could not be read, so they are left out.</summary>
+    public int Dropped => _dropped.Count;
 
     public PageImporter(PdfDocument source, PdfDocument target)
     {
@@ -134,7 +138,12 @@ internal sealed partial class PageImporter
         if (_map.TryGetValue(reference.Number, out var done) || _newPages.TryGetValue(reference.Number, out done)) return done;
         // A page that did not come across, the tree above it and the catalog would drag the whole file in.
         var value = _source.Get(reference.Number);
-        if (value is null or PdfNull || _sourcePages.Contains(reference.Number) || IsStructure(value)) return PdfNull.Instance;
+        if (value is null or PdfNull)
+        {
+            if (_source.Entries.TryGetValue(reference.Number, out var listed) && listed.Kind is PdfDocument.EntryKind.InUse or PdfDocument.EntryKind.Compressed) _dropped.Add(reference.Number);
+            return PdfNull.Instance;
+        }
+        if (_sourcePages.Contains(reference.Number) || IsStructure(value)) return PdfNull.Instance;
         var made = _target.Add(PdfNull.Instance);
         _map[reference.Number] = made;
         _pending.Enqueue((reference.Number, made.Number));

@@ -33,6 +33,7 @@ public enum PageAssembly {
         try PageTree.set(target, copies)
         try PageCarry.carry(source, target, pages, 0)
         if importer.keepTags { try PageCarry.tags(source, target, importer, copies) }
+        target.droppedObjects = importer.dropped
         return target
     }
 
@@ -85,6 +86,7 @@ public enum PageAssembly {
             try PageCarry.carry(document, target, taken[i].pages, taken[i].start, title)
         }
         try PageCarry.mergeTags(target, tagged, all)
+        target.droppedObjects = importers.values.reduce(0) { $0 + $1.dropped }
         try StampRuns.separate(target, zip(target.pages, origins).map { (page: $0, origin: $1) })
         return target
     }

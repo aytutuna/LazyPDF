@@ -76,6 +76,9 @@ public sealed partial class PdfDocument : IDisposable
     /// <summary>How many attachments a page assembly left out of this document because they would not decode or were over the size limit.</summary>
     public int SkippedAttachments { get; internal set; }
 
+    /// <summary>How many objects a page assembly could not read in the source and so left out of this document.</summary>
+    public int DroppedObjects { get; internal set; }
+
     /// <summary>What was wrong with the file and how it was got round, one line each (at most 100).</summary>
     public IReadOnlyList<string> Repairs => _repairs;
 
