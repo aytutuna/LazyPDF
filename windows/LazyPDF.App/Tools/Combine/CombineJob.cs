@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using LazyPDF.App.Tools.Pages;
 using LazyPDF.Core;
 
@@ -10,6 +11,8 @@ public enum SplitBy { Count, Size, Bookmarks, EachPage, Ranges }
 internal static class CombineJob
 {
     public const long MegabyteBytes = 1024 * 1024;
+
+    private static readonly Regex Reserved = new(@"^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$", RegexOptions.IgnoreCase);
 
     /// <summary>Pages per part, or megabytes per part, as typed; false when it is not a number that makes sense for <paramref name="by"/>. Ranges are checked against <paramref name="pageCount"/>.</summary>
     public static bool TryAmount(SplitBy by, string text, out double amount, int pageCount = 0)
@@ -45,9 +48,17 @@ internal static class CombineJob
 
     /// <summary>The pages the top-level bookmarks point at, in the order of the outline.</summary>
     public static IReadOnlyList<int> BookmarkStarts(PdfDocument document) =>
-        [.. Outline.Read(document).Items
-            .Select(item => item.Destination?.PageIndex ?? (item.Action as GoToAction)?.Destination.PageIndex ?? -1)
-            .Where(page => page >= 0 && page < document.Pages.Count)];
+        [.. Outline.Read(document).Items.Select(PageOf).Where(page => page >= 0 && page < document.Pages.Count)];
+
+    private static int PageOf(OutlineItem item) => item.Destination?.PageIndex ?? (item.Action as GoToAction)?.Destination.PageIndex ?? -1;
+
+    /// <summary>The title of the first top-level bookmark on the first page of each part of a split at the bookmarks, in the order of the parts; null where a part has none.</summary>
+    public static IReadOnlyList<string?> BookmarkTitles(PdfDocument document)
+    {
+        var items = Outline.Read(document).Items;
+        string? TitleAt(int page) => items.FirstOrDefault(item => PageOf(item) == page)?.Title;
+        return [TitleAt(0), .. BookmarkStarts(document).Where(page => page != 0).Distinct().Order().Select(TitleAt)];
+    }
 
     /// <summary>How many of the parts are bigger than <paramref name="limit"/> bytes.</summary>
     public static int PartsOver(IEnumerable<byte[]> parts, long limit) => parts.Count(part => part.Length > limit);
@@ -90,8 +101,21 @@ internal static class CombineJob
         outline.Write(merged);
     }
 
-    public static string PartName(string stem, int part, int parts) =>
-        $"{stem} {(part + 1).ToString("D" + Math.Max(parts.ToString(CultureInfo.InvariantCulture).Length, 1), CultureInfo.InvariantCulture)}.pdf";
+    public static string PartName(string stem, int part, int parts) => PartName(stem, part, parts, null);
+
+    /// <summary>Named after <paramref name="title"/> when it makes a usable file name, else numbered.</summary>
+    public static string PartName(string stem, int part, int parts, string? title)
+    {
+        if (title is not null)
+        {
+            string clean = string.Join("_", title.Split(Path.GetInvalidFileNameChars()));
+            while (clean.Contains("  ")) clean = clean.Replace("  ", " ");
+            clean = clean.Length > 80 ? clean[..80] : clean;
+            clean = clean.Trim('.', ' ');
+            if (clean.Length > 0 && !Reserved.IsMatch(clean)) return $"{stem} - {clean}.pdf";
+        }
+        return $"{stem} {(part + 1).ToString("D" + Math.Max(parts.ToString(CultureInfo.InvariantCulture).Length, 1), CultureInfo.InvariantCulture)}.pdf";
+    }
 
     /// <summary><paramref name="name"/> in <paramref name="folder"/>, or with " (2)", " (3)" and so on when the folder has it already.</summary>
     public static string UniquePath(string folder, string name)

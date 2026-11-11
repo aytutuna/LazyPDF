@@ -176,6 +176,55 @@ public sealed class CombineJobTests
     }
 
     [Fact]
+    public void PartsAreNamedAfterTheirBookmarks()
+    {
+        var source = WithBookmarks(8, 0, 3, 6);
+
+        var titles = CombineJob.BookmarkTitles(source);
+
+        Assert.Equal(["Part 0", "Part 3", "Part 6"], titles);
+        Assert.Equal("doc - Part 3.pdf", CombineJob.PartName("doc", 1, 3, titles[1]));
+    }
+
+    [Fact]
+    public void AFirstPartWithoutABookmarkKeepsItsNumber()
+    {
+        var titles = CombineJob.BookmarkTitles(WithBookmarks(8, 3, 6));
+
+        Assert.Equal([null, "Part 3", "Part 6"], titles);
+        Assert.Equal("doc 1.pdf", CombineJob.PartName("doc", 0, 3, titles[0]));
+    }
+
+    [Fact]
+    public void TwoBookmarksOnOnePageUseTheFirst()
+    {
+        var source = WithBookmarks(5, 2);
+        var outline = Outline.Read(source);
+        outline.Add(new OutlineItem { Title = "Second", Destination = new PdfDestination(2) });
+        outline.Write(source);
+
+        Assert.Equal([null, "Part 2"], CombineJob.BookmarkTitles(source));
+    }
+
+    [Theory]
+    [InlineData("A/B: C", "doc - A_B_ C.pdf")]
+    [InlineData("a   b", "doc - a b.pdf")]
+    [InlineData(" .Intro. ", "doc - Intro.pdf")]
+    [InlineData("con", "doc 2.pdf")]
+    [InlineData("LPT3", "doc 2.pdf")]
+    [InlineData("...", "doc 2.pdf")]
+    public void ATitleIsMadeIntoAFileName(string title, string expected)
+    {
+        Assert.Equal(expected, CombineJob.PartName("doc", 1, 3, title));
+    }
+
+    [Fact]
+    public void ALongTitleIsCut()
+    {
+        Assert.Equal($"doc - {new string('x', 80)}.pdf", CombineJob.PartName("doc", 1, 3, new string('x', 200)));
+    }
+
+    [Fact]
     public void ANameTakenInTheFolderGetsANumber()
     {
         using var dir = new TempDir();

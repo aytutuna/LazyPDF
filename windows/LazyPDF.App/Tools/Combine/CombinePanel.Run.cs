@@ -117,6 +117,7 @@ public partial class CombinePanel
             host.ShowProblem(new Problem(Loc.T("Nothing to cut at"), Loc.T("No bookmark starts after the first page. Split by pages or size instead.")));
             return;
         }
+        var titles = kind == SplitBy.Bookmarks ? CombineJob.BookmarkTitles(tab.Document) : [];
         string? folder = ToFolder ? PickFolder() : null;
         if (ToFolder && folder is null) return;
         List<byte[]>? parts = null;
@@ -148,7 +149,7 @@ public partial class CombinePanel
         string big = kind == SplitBy.Size ? CombineJob.Oversize(parts, amount) : "";
 
         string stem = System.IO.Path.GetFileNameWithoutExtension(tab.Title);
-        var named = parts.Select((bytes, i) => (CombineJob.PartName(stem, i, parts.Count), bytes)).ToList();
+        var named = parts.Select((bytes, i) => (CombineJob.PartName(stem, i, parts.Count, i < titles.Count ? titles[i] : null), bytes)).ToList();
         if (folder is null && parts.Count > MostTabs)
         {
             host.ShowNotice(Loc.T("Too many parts for tabs"), Loc.T("Pick a folder for the parts."));
