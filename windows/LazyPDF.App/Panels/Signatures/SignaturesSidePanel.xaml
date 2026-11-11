@@ -61,12 +61,12 @@
                 </ItemsControl>
                 <WrapPanel>
                     <Button x:Name="ViewButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8A7;" Content="{loc:T View signed version}" AutomationProperties.Name="{loc:T View signed version}"
-                            Padding="10,3,10,4" Click="View_Click" />
+                            Padding="10,3,10,4" Margin="0,0,8,4" Click="View_Click" />
                     <Button x:Name="RestoreButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE74E;" Content="{loc:T Save it}"
                             ToolTip="{loc:T Save the signed version as a file}" AutomationProperties.Name="{loc:T Save the signed version as a file}"
-                            Padding="10,3,10,4" Margin="8,0,0,0" Click="Restore_Click" />
+                            Padding="10,3,10,4" Margin="0,0,8,4" Click="Restore_Click" />
                     <Button x:Name="CertificateButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8D7;" Content="{loc:T View certificate}"
-                            Padding="10,3,10,4" Margin="8,0,0,0" Click="Certificate_Click" />
+                            Padding="10,3,10,4" Margin="0,0,8,4" Click="Certificate_Click" />
                 </WrapPanel>
                 <TextBlock x:Name="VersionNote" Style="{StaticResource ReasonText}" Margin="0,6,0,0" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
             </StackPanel>

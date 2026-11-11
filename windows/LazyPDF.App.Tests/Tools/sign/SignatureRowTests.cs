@@ -61,8 +61,25 @@ public sealed class SignatureRowTests
     {
         var (_, report) = Signed(comment: false, trusted: true);
 
-        Assert.NotEmpty(new SignatureRow(report with { RevocationChecked = false }, 0, Rect.Empty).Caveat);
-        Assert.Empty(new SignatureRow(report with { RevocationChecked = true, TimestampTime = Now }, 0, Rect.Empty).Caveat);
+        var partial = new SignatureRow(report with { RevocationChecked = false }, 0, Rect.Empty);
+        Assert.NotEmpty(partial.Caveat);
+        Assert.Equal(Visibility.Visible, partial.CaveatVisibility);
+        var checkedAll = new SignatureRow(report with { RevocationChecked = true, TimestampTime = Now }, 0, Rect.Empty);
+        Assert.Empty(checkedAll.Caveat);
+        Assert.Equal(Visibility.Collapsed, checkedAll.CaveatVisibility);
+    }
+
+    [Theory]
+    [InlineData(SignatureVerdict.ValidButUntrusted, SignatureLevel.Caution)]
+    [InlineData(SignatureVerdict.ChangedAfterSigning, SignatureLevel.Bad)]
+    [InlineData(SignatureVerdict.Unknown, SignatureLevel.Unknown)]
+    public void OnlyAGoodSignatureCarriesTheCaveat(SignatureVerdict verdict, SignatureLevel level)
+    {
+        var row = new SignatureRow(new SignatureReport { Verdict = verdict, SignerName = "Ada Lovelace", Revision = 2, RevocationChecked = false, TimestampTime = null }, 0, Rect.Empty);
+
+        Assert.Equal(level, row.Level);
+        Assert.Empty(row.Caveat);
+        Assert.Equal(Visibility.Collapsed, row.CaveatVisibility);
     }
 
     [Fact]

@@ -3128,7 +3128,7 @@
     <value>Kaldırılan her dize denetlenemedi.</value>
   </data>
   <data name="Not everything could be checked. See the details." xml:space="preserve">
-    <value>Her şey denetlenemedi. Ayrıntılara bakın.</value>
+    <value>Bazı şeyler denetlenemedi. Ayrıntılara bakın.</value>
   </data>
   <data name="Not exported" xml:space="preserve">
     <value>Dışa aktarılmadı</value>
