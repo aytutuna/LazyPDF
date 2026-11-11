@@ -138,12 +138,22 @@ public partial class MainWindow
         RefreshFromViewModel();
     }
 
-    // The stage keeps 320 pixels; a window too narrow for the saved widths only clamps them.
+    // The stage keeps 320 pixels; a window too narrow for the saved widths only clamps them. The inspector is
+    // clamped first and the side panel takes what is left, so the result does not depend on the last layout.
     private void LimitPaneWidths()
     {
-        double room = ContentArea.ActualWidth - 48 - 320;
-        SideColumn.MaxWidth = Math.Max(180, room - InspectorColumn.ActualWidth);
-        InspectorColumn.MaxWidth = Math.Max(180, room - SideColumn.ActualWidth);
+        var (side, inspector) = PaneLimits(ContentArea.ActualWidth - 48 - 320, _vm.SidePanelWidth, _vm.InspectorWidth,
+            SidePane.Visibility == Visibility.Visible, Inspector.Visibility == Visibility.Visible);
+        SideColumn.MaxWidth = side;
+        InspectorColumn.MaxWidth = inspector;
+    }
+
+    internal static (double Side, double Inspector) PaneLimits(double room, double side, double inspector, bool sideShown, bool inspectorShown)
+    {
+        double inspectorMax = Math.Max(180, room - (sideShown ? 180 : 0));
+        double inspectorWidth = inspectorShown ? Math.Min(inspector, inspectorMax) : 0;
+        double sideMax = Math.Max(180, room - inspectorWidth);
+        return (sideMax, inspectorMax);
     }
 
     private void SetPane(Border pane, GridSplitter splitter, ColumnDefinition column, bool shown, double width)
@@ -151,6 +161,7 @@ public partial class MainWindow
         pane.Visibility = splitter.Visibility = shown ? Visibility.Visible : Visibility.Collapsed;
         column.MinWidth = shown ? 180 : 0;
         column.Width = new GridLength(shown ? width : 0);
+        LimitPaneWidths();
     }
 
     private void SideSplitter_Changed(object sender, RoutedEventArgs e)

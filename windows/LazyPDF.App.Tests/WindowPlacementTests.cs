@@ -65,4 +65,36 @@ public sealed class WindowPlacementTests
 
         Assert.Equal(saved, MainWindow.Fit(saved, new Rect(0, 0, 3000, 1080), Primary));
     }
+
+    [Fact]
+    public void WideSavedPanesAreClampedInsideTheRoomWithTheInspectorFirst()
+    {
+        var (side, inspector) = MainWindow.PaneLimits(832, 700, 600, true, true);
+
+        Assert.Equal(232, side);
+        Assert.Equal(652, inspector);
+    }
+
+    [Fact]
+    public void ThePaneLimitsDoNotDependOnTheLastLayout()
+    {
+        Assert.Equal(MainWindow.PaneLimits(832, 700, 600, true, true), MainWindow.PaneLimits(832, 700, 600, true, true));
+        Assert.Equal((552d, 652d), MainWindow.PaneLimits(832, 300, 280, true, true));
+    }
+
+    [Fact]
+    public void AHiddenPaneLeavesItsRoomToTheOther()
+    {
+        var (side, inspector) = MainWindow.PaneLimits(832, 700, 600, true, false);
+
+        Assert.Equal(832, side);
+        Assert.Equal(652, inspector);
+        Assert.Equal(832, MainWindow.PaneLimits(832, 700, 600, false, true).Inspector);
+    }
+
+    [Fact]
+    public void ATinyRoomStillKeepsEachPaneItsMinimum()
+    {
+        Assert.Equal((180d, 180d), MainWindow.PaneLimits(100, 400, 400, true, true));
+    }
 }
