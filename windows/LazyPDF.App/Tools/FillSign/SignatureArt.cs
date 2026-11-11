@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Media;
@@ -120,7 +121,7 @@ internal static class SignatureArt
             var frame = BitmapDecoder.Create(stream, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None).Frames[0];
             return (frame.Metadata as BitmapMetadata)?.GetQuery("System.Photo.Orientation") is ushort value ? value : 1;
         }
-        catch (Exception e) when (e is NotSupportedException or FileFormatException or InvalidOperationException or ArgumentException or IOException)
+        catch (Exception e) when (e is NotSupportedException or FileFormatException or InvalidOperationException or ArgumentException or IOException or COMException)
         {
             return 1;
         }

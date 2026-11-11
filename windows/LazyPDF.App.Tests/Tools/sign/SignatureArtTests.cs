@@ -206,4 +206,17 @@ public sealed class SignatureArtTests
             Assert.Same(png, SignatureArt.UprightFile(png));
         });
     }
+
+    [Fact]
+    public void AJpegWithACutOffExifBlockIsReturnedUnchanged()
+    {
+        OnSta.Run(() =>
+        {
+            var jpeg = Jpeg(6);
+            int app1 = Array.IndexOf(jpeg, (byte)0xE1);
+            var cut = jpeg[..(app1 + 12)];
+
+            Assert.Same(cut, SignatureArt.UprightFile(cut));
+        });
+    }
 }
