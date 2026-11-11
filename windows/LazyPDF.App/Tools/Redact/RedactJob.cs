@@ -54,7 +54,19 @@ public static class RedactJob
     public static Found Find(PdfDocument document, IReadOnlyList<string> terms, bool matchCase, bool wholeWord, CancellationToken cancel)
     {
         var cache = new TextCache(document);
-        return Gather(document, cache, RedactionFinder.FindWords(cache, terms, wholeWord, matchCase, cancel));
+        var options = new TextSearchOptions(MatchCase: matchCase, WholeWord: wholeWord);
+        var words = terms.Where(t => t.Length > 0).Distinct().ToList();
+        var hits = new List<SearchMatch>();
+        // Pages first, so that each page is read once however many terms there are.
+        for (int p = 0; p < cache.PageCount; p++)
+        {
+            cancel.ThrowIfCancellationRequested();
+            var page = cache.Get(p);
+            foreach (var word in words) hits.AddRange(TextSearch.Find(page, word, options, cancel));
+        }
+        var matches = hits.OrderBy(h => h.Page).ThenBy(h => h.Range.Start)
+            .Select(h => new RedactionMatch(RedactionMark.FromMatch(h), h.Text, RedactionKind.Word)).ToList();
+        return Gather(document, cache, matches);
     }
 
     /// <summary>One mark over the whole /MediaBox of each page, so content outside a CropBox is covered too.</summary>
