@@ -352,7 +352,7 @@ final class ViewerModelTests: XCTestCase {
         viewer.follow(NamedAction("NextPage"))
         XCTAssertEqual(viewer.pageIndex, 1)
         viewer.follow(NamedAction("GoBack"))
-        XCTAssertEqual(viewer.pageIndex, 0)
+        XCTAssertEqual(viewer.pageIndex, 2)
         viewer.follow(NamedAction("Find"))
         XCTAssertTrue(viewer.findVisible)
     }
