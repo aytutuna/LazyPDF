@@ -22,6 +22,7 @@ public partial class PageViewer
 
     private readonly Dictionary<int, IReadOnlyList<PdfLink>> _links = [];
     private readonly DispatcherTimer _autoScroll = new() { Interval = TimeSpan.FromMilliseconds(30) };
+    private readonly System.Windows.Controls.ToolTip _linkTip = new() { Placement = System.Windows.Controls.Primitives.PlacementMode.Mouse };
     private PointerMode _mode = PointerMode.Select;
     private IPagePointerTool? _tool;
     private Drag _drag;
@@ -88,6 +89,7 @@ public partial class PageViewer
         _autoScroll.Tick += (_, _) => AutoScrollStep();
         Surface.MouseLeftButtonDown += Surface_MouseDown;
         Surface.MouseMove += Surface_MouseMove;
+        Surface.MouseLeave += (_, _) => _linkTip.IsOpen = false;
         Surface.MouseLeftButtonUp += Surface_MouseUp;
         Surface.MouseDown += Surface_ExtraButtonDown;
         Surface.MouseUp += Surface_MiddleButtonUp;
@@ -288,7 +290,7 @@ public partial class PageViewer
         if (_tool is not null)
         {
             Surface.Cursor = _tool.Cursor;
-            Surface.ToolTip = null;
+            _linkTip.IsOpen = false;
             if (Surface.Hit(at) is { } over && Surface.PageMatrix(over.Page) is not null)
                 _tool.Move(Pointer(new PagePoint(over.Page, over.Point), at, 0, false));
             return;
@@ -296,7 +298,13 @@ public partial class PageViewer
         var hit = Surface.Hit(at);
         var link = hit is { } h ? LinkAt(h.Page, h.Point) : null;
         var tip = link is null ? null : LinkTip(link);
-        if (!Equals(Surface.ToolTip, tip)) Surface.ToolTip = tip;
+        if (tip is null) _linkTip.IsOpen = false;
+        else if (!Equals(_linkTip.Content, tip) || !_linkTip.IsOpen)
+        {
+            _linkTip.Content = tip;
+            _linkTip.PlacementTarget = Surface;
+            _linkTip.IsOpen = true;
+        }
         if (link is not null) Surface.Cursor = Cursors.Hand;
         else if (_mode == PointerMode.Hand) Surface.Cursor = Cursors.Hand;
         else Surface.Cursor = hit is { } t && IsOverText(t.Page, t.Point) ? Cursors.IBeam : null;
