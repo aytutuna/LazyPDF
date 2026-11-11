@@ -115,7 +115,7 @@ public partial class AccessibilityPanel
         await ChangeGate.RunAsync(tab, Host!, Loc.T("Figure description"), () =>
         {
             shown = Selected?.Key == row.Key;
-            if (!ReferenceEquals(tab, Tab) || !WriteAlts(tab, [(row, text)])) return Task.CompletedTask;
+            if (!ReferenceEquals(tab, Tab) || !WriteAlts(tab, Host!, [(row, text)])) return Task.CompletedTask;
             if (_state.Drafts.TryGetValue(row.Key, out var draft) && draft.Trim() == text.Trim()) _state.Drafts.Remove(row.Key);
             if (shown) _figureNumber = text.Trim().Length > 0 ? NextBareAfter(row.Number, row.Number) : row.Number;
             return Task.CompletedTask;
@@ -131,15 +131,18 @@ public partial class AccessibilityPanel
         var edits = _state.Checked.Where(r => _state.Drafts.ContainsKey(r.Key)).Select(r => (r, _state.Drafts[r.Key])).ToList();
         if (edits.Count == 0) return true;
         bool asks = tab.Document.IsSigned && ChangeGate.Refusal(tab.Document) is null;
-        _ = ChangeGate.RunAsync(tab, Host!, Loc.T("Figure description"), () =>
+        // The notice can outlive the panel's attachment, so the callback holds its own host and state.
+        var host = Host!;
+        var state = _state;
+        _ = ChangeGate.RunAsync(tab, host, Loc.T("Figure description"), () =>
         {
-            if (ReferenceEquals(tab, Tab) && WriteAlts(tab, edits)) foreach (var (row, _) in edits) _state.Drafts.Remove(row.Key);
+            if (ReferenceEquals(state, _state) && WriteAlts(tab, host, edits)) foreach (var (row, _) in edits) _state.Drafts.Remove(row.Key);
             return Task.CompletedTask;
         });
         return !asks;
     }
 
-    private bool WriteAlts(DocumentTab tab, IReadOnlyList<(FigureRow Row, string Text)> edits)
+    private bool WriteAlts(DocumentTab tab, IToolHost host, IReadOnlyList<(FigureRow Row, string Text)> edits)
     {
         try
         {
@@ -149,7 +152,7 @@ public partial class AccessibilityPanel
             var found = edits.Select(e => figures.FirstOrDefault(f => f.Key == e.Row.Key)).ToList();
             if (tree is null || edits.Where((e, i) => AccessibilityEdits.FigureChanged(found[i]?.Element, e.Row.Alt)).Any())
             {
-                Host!.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The figure is no longer in the file.")));
+                host.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The figure is no longer in the file.")));
                 return false;
             }
             for (int i = 0; i < edits.Count; i++)
@@ -157,13 +160,13 @@ public partial class AccessibilityPanel
                 AccessibilityEdits.SetAlt(tab.Document, tree, found[i]!.Element, edits[i].Text);
                 _state.Written[edits[i].Row.Key] = edits[i].Text.Trim();
             }
-            if (tab.Commit(Loc.T("Figure description"))) Host!.SetStatus(Loc.T("Description saved."));
+            if (tab.Commit(Loc.T("Figure description"))) host.SetStatus(Loc.T("Description saved."));
             return true;
         }
         catch (Exception error) when (error is InvalidOperationException or PdfReadException)
         {
             tab.Session.Discard();
-            Host!.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The tags of this file are too large to change here.")));
+            host.ShowProblem(new Problem(Loc.T("Description not saved"), Loc.T("The tags of this file are too large to change here.")));
             return false;
         }
     }
