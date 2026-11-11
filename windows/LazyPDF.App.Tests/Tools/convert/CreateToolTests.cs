@@ -10,6 +10,7 @@ using Xunit;
 namespace LazyPDF.App.Tests;
 
 // The create tool: what each source makes, and the new tab it opens.
+[Collection("Application")]
 public sealed class CreateToolTests
 {
     private static readonly PdfPageSetup A4 = new();
@@ -17,6 +18,18 @@ public sealed class CreateToolTests
     private static byte[] Png() => PngWriter.Encode(new PdfRgbaImage(8, 8, Enumerable.Repeat((byte)200, 8 * 8 * 4).ToArray()));
 
     private static PdfDocument Open(MadePdf made) => PdfDocument.Open(made.Bytes);
+
+    [Fact]
+    public Task APictureDroppedOnTheTextBoxIsListed() => Sta.Run(() =>
+    {
+        var panel = new CreatePanel();
+        var e = BatchDropTests.Drop(panel.TypedText, @"C:\x\a.png");
+        panel.TypedText.RaiseEvent(e);
+
+        Assert.True(e.Handled);
+        Assert.Single(panel.PictureList.Items);
+        return Task.CompletedTask;
+    });
 
     [Fact]
     public void BlankPagesAreEmptyAndAsBigAsAsked()

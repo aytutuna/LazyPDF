@@ -4,7 +4,7 @@
                  xmlns:loc="clr-namespace:LazyPDF.App"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
                  xmlns:combine="clr-namespace:LazyPDF.App.Tools.Combine"
-                 AllowDrop="True" DragOver="Panel_DragOver" Drop="Panel_Drop">
+                 AllowDrop="True" PreviewDragOver="Panel_DragOver" PreviewDrop="Panel_Drop">
     <StackPanel Margin="{StaticResource PanePadding}">
         <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,0,0,12" HorizontalAlignment="Left">
             <StackPanel Orientation="Horizontal">
