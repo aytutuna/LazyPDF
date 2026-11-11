@@ -253,15 +253,9 @@ public partial class PagesSidePanel : ToolPanel
         // Pages that already stand together at that spot would only get a step that changes nothing.
         if (pages[^1] - pages[0] == pages.Count - 1 && before >= pages[0] && before <= pages[^1] + 1) return;
         _reselect = Tools.Pages.PageEdits.MovedTo(pages, before).ToList();
-        try
-        {
-            PageJobs.Apply(tab, host, Loc.T("Move pages"), d => PageOperations.Move(d, pages, before),
-                           Loc.Plural(pages.Count, "{0} page moved", "{0} pages moved", pages.Count));
-        }
-        finally
-        {
+        if (!PageJobs.Apply(tab, host, Loc.T("Move pages"), d => PageOperations.Move(d, pages, before),
+                           Loc.Plural(pages.Count, "{0} page moved", "{0} pages moved", pages.Count)))
             _reselect = null;
-        }
     }
 
     private void Thumb_Unloaded(object sender, RoutedEventArgs e)
@@ -295,7 +289,7 @@ public partial class PagesSidePanel : ToolPanel
     // Null when the file may not be changed now; a refusal is shown with its reason.
     private (DocumentTab Tab, IToolHost Host)? Editable()
     {
-        if (Tab is not { } tab || Host is not { } host || MarkWork.Running) return null;
+        if (Tab is not { } tab || Host is not { } host || MarkWork.Running || !tab.Drawing.IsCompleted) return null;
         if (Clearance.Refusal(tab.Document) is { } problem)
         {
             host.ShowProblem(problem);
@@ -306,7 +300,7 @@ public partial class PagesSidePanel : ToolPanel
 
     // For a change held back by the notice: the same tab is open and still has the pages that were picked.
     private bool Still(DocumentTab tab, List<int> pages) =>
-        ReferenceEquals(Tab, tab) && !MarkWork.Running && Clearance.Refusal(tab.Document) is null && pages.All(p => p < Thumbs.Items.Count);
+        ReferenceEquals(Tab, tab) && !MarkWork.Running && tab.Drawing.IsCompleted && Clearance.Refusal(tab.Document) is null && pages.All(p => p < Thumbs.Items.Count);
 
     internal void Turn(int degrees)
     {
@@ -319,15 +313,9 @@ public partial class PagesSidePanel : ToolPanel
     {
         if (!Still(tab, pages)) return;
         _reselect = pages;
-        try
-        {
-            PageJobs.Apply(tab, host, Loc.T("Rotate pages"), d => PageOperations.Rotate(d, pages, degrees),
-                           Loc.Plural(pages.Count, "{0} page rotated", "{0} pages rotated", pages.Count));
-        }
-        finally
-        {
+        if (!PageJobs.Apply(tab, host, Loc.T("Rotate pages"), d => PageOperations.Rotate(d, pages, degrees),
+                           Loc.Plural(pages.Count, "{0} page rotated", "{0} pages rotated", pages.Count)))
             _reselect = null;
-        }
     }
 
     private void Delete()
@@ -373,18 +361,12 @@ public partial class PagesSidePanel : ToolPanel
         if (!Still(tab, pages)) return;
         int at = Tools.Pages.PageEdits.InsertAt(InsertPlace.AfterSelection, pages, Thumbs.Items.Count);
         _reselect = [at];
-        try
-        {
-            PageJobs.Apply(tab, host, Loc.T("Insert blank page"), d =>
+        if (!PageJobs.Apply(tab, host, Loc.T("Insert blank page"), d =>
             {
                 var (width, height) = Tools.Pages.PageEdits.NeighbourSize(d, at);
                 PageOperations.InsertBlank(d, at, width, height);
-            }, Loc.T("Blank page added."));
-        }
-        finally
-        {
+            }, Loc.T("Blank page added.")))
             _reselect = null;
-        }
     }
 
     private void FromFile_Click(object sender, RoutedEventArgs e)
@@ -406,7 +388,10 @@ public partial class PagesSidePanel : ToolPanel
         if (!Still(tab, pages)) return;
         int at = Tools.Pages.PageEdits.InsertAt(InsertPlace.AfterSelection, pages, Thumbs.Items.Count);
         int added = await PageJobs.InsertFilesAsync(tab, host, paths, at);
-        if (added > 0) Select(Enumerable.Range(at, added));
+        if (added == 0) return;
+        // The list shows the new pages only once they are drawn.
+        if (tab.Drawing.IsCompleted) Select(Enumerable.Range(at, added));
+        else _reselect = Enumerable.Range(at, added).ToList();
     }
 
     private void Select(IEnumerable<int> pages)
