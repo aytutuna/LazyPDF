@@ -1,9 +1,11 @@
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using LazyPDF.App.Tools.Certificates;
 using LazyPDF.App.Viewer;
 
@@ -19,6 +21,9 @@ public sealed class RedactBoxEditor
 
     private readonly IDocumentViewer _viewer;
     private readonly Action<MarkItem, MarkItem> _changed;
+    private readonly Action<string> _status;
+    private readonly Action _leave;
+    private readonly DispatcherTimer _settle = new() { Interval = TimeSpan.FromMilliseconds(400) };
     private readonly List<(Handle Handle, Thumb Thumb)> _thumbs = [];
     private MarkItem? _item;
     private PageOverlay? _layer;
@@ -26,11 +31,20 @@ public sealed class RedactBoxEditor
     private Rect _rect;
     private Rect _start;
     private Point _grab;
+    private bool _nudging;
+    private bool _resized;
 
-    public RedactBoxEditor(IDocumentViewer viewer, Action<MarkItem, MarkItem> changed)
+    public RedactBoxEditor(IDocumentViewer viewer, Action<MarkItem, MarkItem> changed, Action<string> status, Action leave)
     {
         _viewer = viewer;
         _changed = changed;
+        _status = status;
+        _leave = leave;
+        _settle.Tick += (_, _) =>
+        {
+            Commit();
+            _frame?.Focus();
+        };
         viewer.ViewChanged += Viewer_ViewChanged;
     }
 
@@ -49,13 +63,28 @@ public sealed class RedactBoxEditor
         _layer = _viewer.Overlay(item.Page);
         _rect = MarkShapes.Where(_viewer.Geometry(item.Page), item.Mark);
         _frame = SignatureBoxTool.Outline();
+        _frame.Focusable = true;
+        _frame.FocusVisualStyle = null;
+        AutomationProperties.SetName(_frame, Loc.T("Box on page {0}. Arrow keys move it. Control and arrow keys resize it. Escape returns to the list.", item.Page + 1));
+        _frame.KeyDown += Frame_KeyDown;
+        _frame.GotKeyboardFocus += (_, _) => _frame.StrokeThickness = 3;
+        _frame.LostKeyboardFocus += (_, _) =>
+        {
+            Commit();
+            if (_frame is not null) _frame.StrokeThickness = 1.5;
+        };
         _layer.Children.Add(_frame);
         foreach (var handle in Enum.GetValues<Handle>()) Add(handle);
         Place();
     }
 
+    /// <summary>Gives the frame keyboard focus; false when no box is framed.</summary>
+    public bool Focus() => _frame?.Focus() ?? false;
+
     public void Clear()
     {
+        _settle.Stop();
+        _nudging = false;
         if (_layer is not null)
         {
             if (_frame is not null) _layer.Children.Remove(_frame);
@@ -82,6 +111,21 @@ public sealed class RedactBoxEditor
         if (handle is Handle.TopLeft or Handle.Top or Handle.TopRight) top = Math.Clamp(top + delta.Y, 0, bottom - smallest);
         if (handle is Handle.BottomLeft or Handle.Bottom or Handle.BottomRight) bottom = Math.Clamp(bottom + delta.Y, top + smallest, page.Height);
         return new Rect(left, top, right - left, bottom - top);
+    }
+
+    /// <summary>The box after an arrow key: it moves, with Control the right and bottom edges move instead; Shift makes the step 10 instead of 1.</summary>
+    public static Rect Nudge(Rect rect, Key key, ModifierKeys modifiers, Size page)
+    {
+        double step = modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1;
+        var delta = key switch
+        {
+            Key.Left => new Vector(-step, 0),
+            Key.Right => new Vector(step, 0),
+            Key.Up => new Vector(0, -step),
+            _ => new Vector(0, step),
+        };
+        if (!modifiers.HasFlag(ModifierKeys.Control)) return Drag(rect, Handle.Body, delta, page);
+        return Drag(rect, key is Key.Left or Key.Right ? Handle.Right : Handle.Bottom, delta, page);
     }
 
     private void Add(Handle handle)
@@ -113,6 +157,43 @@ public sealed class RedactBoxEditor
         var delta = Mouse.GetPosition(_layer) - _grab;
         _rect = Drag(_start, handle, delta, _viewer.PageSize(_item!.Page));
         Place();
+    }
+
+    private void Frame_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            Commit();
+            _leave();
+        }
+        else if (e.Key is Key.Left or Key.Right or Key.Up or Key.Down)
+        {
+            var modifiers = Keyboard.Modifiers;
+            if (!_nudging)
+            {
+                _nudging = true;
+                _resized = false;
+                _start = _rect;
+            }
+            _resized |= modifiers.HasFlag(ModifierKeys.Control);
+            _rect = Nudge(_rect, e.Key, modifiers, _viewer.PageSize(_item!.Page));
+            Place();
+            _settle.Stop();
+            _settle.Start();
+        }
+        else return;
+        e.Handled = true;
+    }
+
+    // One replace for a whole run of key presses, so Undo takes the run back in one step.
+    private void Commit()
+    {
+        _settle.Stop();
+        if (!_nudging) return;
+        _nudging = false;
+        if (_rect == _start) return;
+        Done(false);
+        _status(_resized ? Loc.T("Box resized.") : Loc.T("Box moved."));
     }
 
     private void Done(bool canceled)

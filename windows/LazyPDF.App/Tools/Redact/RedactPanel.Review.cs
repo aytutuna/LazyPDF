@@ -122,9 +122,19 @@ public partial class RedactPanel
 
     private void MarkedList_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Delete || MarkedList.SelectedItem is not MarkItem item) return;
-        RemoveOne(item);
-        e.Handled = true;
+        if (MarkedList.SelectedItem is not MarkItem item) return;
+        if (e.Key == Key.Enter && item.IsBox && _editor?.Focus() == true) e.Handled = true;
+        else if (e.Key == Key.Delete)
+        {
+            RemoveOne(item);
+            e.Handled = true;
+        }
+    }
+
+    private void FocusSelectedRow()
+    {
+        MarkedList.UpdateLayout();
+        (MarkedList.ItemContainerGenerator.ContainerFromItem(MarkedList.SelectedItem) as FrameworkElement)?.Focus();
     }
 
     private void RemoveMark_Click(object sender, RoutedEventArgs e)

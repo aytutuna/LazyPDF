@@ -700,8 +700,17 @@
   <data name="Box is off the pages" xml:space="preserve">
     <value>Kutu sayfaların dışında</value>
   </data>
+  <data name="Box moved." xml:space="preserve">
+    <value>Kutu taşındı.</value>
+  </data>
   <data name="Box of {0} by {1} mm." xml:space="preserve">
     <value>{0} x {1} mm kutu.</value>
+  </data>
+  <data name="Box on page {0}. Arrow keys move it. Control and arrow keys resize it. Escape returns to the list." xml:space="preserve">
+    <value>{0}. sayfadaki kutu. Ok tuşları kutuyu taşır. Ctrl ve ok tuşları kutuyu yeniden boyutlandırır. Esc listeye döndürür.</value>
+  </data>
+  <data name="Box resized." xml:space="preserve">
+    <value>Kutu yeniden boyutlandırıldı.</value>
   </data>
   <data name="Bring forward" xml:space="preserve">
     <value>Bir öne getir</value>

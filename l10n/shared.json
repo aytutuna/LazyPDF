@@ -5846,6 +5846,15 @@
   "Select a box to move or resize it.": {
     "tr": "Taşımak veya yeniden boyutlandırmak için bir kutu seçin."
   },
+  "Box on page {0}. Arrow keys move it. Control and arrow keys resize it. Escape returns to the list.": {
+    "tr": "{0}. sayfadaki kutu. Ok tuşları kutuyu taşır. Ctrl ve ok tuşları kutuyu yeniden boyutlandırır. Esc listeye döndürür."
+  },
+  "Box moved.": {
+    "tr": "Kutu taşındı."
+  },
+  "Box resized.": {
+    "tr": "Kutu yeniden boyutlandırıldı."
+  },
   "Remove this mark": {
     "tr": "Bu işareti kaldır"
   },

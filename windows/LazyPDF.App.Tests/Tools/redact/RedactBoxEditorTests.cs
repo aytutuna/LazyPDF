@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 using LazyPDF.App.Tools.Redact;
 using Xunit;
 
@@ -45,5 +46,39 @@ public sealed class RedactBoxEditorTests
     {
         Assert.Equal(new Rect(106, 40, 4, 30), RedactBoxEditor.Drag(Box, RedactBoxEditor.Handle.Left, new Vector(500, 0), Page));
         Assert.Equal(new Rect(50, 40, 60, 4), RedactBoxEditor.Drag(Box, RedactBoxEditor.Handle.Bottom, new Vector(0, -500), Page));
+    }
+
+    [Theory]
+    [InlineData(Key.Left, ModifierKeys.None, 49, 40, 60, 30)]
+    [InlineData(Key.Right, ModifierKeys.None, 51, 40, 60, 30)]
+    [InlineData(Key.Up, ModifierKeys.Shift, 50, 30, 60, 30)]
+    [InlineData(Key.Down, ModifierKeys.Shift, 50, 50, 60, 30)]
+    [InlineData(Key.Right, ModifierKeys.Control, 50, 40, 61, 30)]
+    [InlineData(Key.Left, ModifierKeys.Control, 50, 40, 59, 30)]
+    [InlineData(Key.Down, ModifierKeys.Control | ModifierKeys.Shift, 50, 40, 60, 40)]
+    [InlineData(Key.Up, ModifierKeys.Control | ModifierKeys.Shift, 50, 40, 60, 20)]
+    public void ArrowKeysStepByOneOrTen(Key key, ModifierKeys modifiers, double x, double y, double width, double height)
+    {
+        Assert.Equal(new Rect(x, y, width, height), RedactBoxEditor.Nudge(Box, key, modifiers, Page));
+    }
+
+    [Fact]
+    public void KeyStepsStopAtAllFourEdges()
+    {
+        var none = ModifierKeys.Shift;
+        Assert.Equal(new Rect(0, 40, 60, 30), RedactBoxEditor.Nudge(new Rect(4, 40, 60, 30), Key.Left, none, Page));
+        Assert.Equal(new Rect(140, 40, 60, 30), RedactBoxEditor.Nudge(new Rect(135, 40, 60, 30), Key.Right, none, Page));
+        Assert.Equal(new Rect(50, 0, 60, 30), RedactBoxEditor.Nudge(new Rect(50, 4, 60, 30), Key.Up, none, Page));
+        Assert.Equal(new Rect(50, 70, 60, 30), RedactBoxEditor.Nudge(new Rect(50, 65, 60, 30), Key.Down, none, Page));
+    }
+
+    [Fact]
+    public void KeyResizingStopsAtThePageAndTheMinimum()
+    {
+        var grow = ModifierKeys.Control | ModifierKeys.Shift;
+        Assert.Equal(new Rect(50, 40, 150, 30), RedactBoxEditor.Nudge(new Rect(50, 40, 145, 30), Key.Right, grow, Page));
+        Assert.Equal(new Rect(50, 40, 60, 60), RedactBoxEditor.Nudge(new Rect(50, 40, 60, 55), Key.Down, grow, Page));
+        Assert.Equal(new Rect(50, 40, 4, 30), RedactBoxEditor.Nudge(new Rect(50, 40, 8, 30), Key.Left, grow, Page));
+        Assert.Equal(new Rect(50, 40, 60, 4), RedactBoxEditor.Nudge(new Rect(50, 40, 60, 8), Key.Up, grow, Page));
     }
 }
