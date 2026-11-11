@@ -27,6 +27,14 @@ public sealed class MetadataEditTests
         Assert.False(MetadataEdit.DropsText(start, start with { Creator = "B" }));
     }
 
+    [Theory]
+    [InlineData(true, true, true)]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(false, false, false)]
+    public void NoticeShowsOnlyForSaveWithADrop(bool notify, bool dropped, bool expected) =>
+        Assert.Equal(expected, MetadataEdit.ShowDropNotice(notify, dropped));
+
     private static DocumentMetadata WithCustom(params (string, string)[] pairs) =>
         Blank() with { Custom = pairs.ToDictionary(p => p.Item1, p => p.Item2) };
 
