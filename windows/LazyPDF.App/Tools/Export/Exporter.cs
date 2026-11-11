@@ -144,7 +144,7 @@ public static class Exporter
 
 internal static class ExportNames
 {
-    private const string Default = "{name} page {n}";
+    private static string Default => Loc.T("{name} page {n}");
 
     public static string Apply(string pattern, string stem, int page, int digits)
     {

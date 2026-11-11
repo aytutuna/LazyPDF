@@ -4039,6 +4039,9 @@
   <data name="Page {1} is past the end ({0} page)|plural" xml:space="preserve">
     <value>{1}. sayfa sondan sonra ({0} sayfa var)</value>
   </data>
+  <data name="Page {page} of {pages}" xml:space="preserve">
+    <value>Sayfa {page} / {pages}</value>
+  </data>
   <data name="Pages" xml:space="preserve">
     <value>Sayfalar</value>
   </data>
@@ -6827,7 +6830,7 @@
     <value>Bu bağlantı ses, video veya 3B içerik oynatıyor; Lazy PDF bunu yapmaz.</value>
   </data>
   <data name="This link runs a script or sends a form, which Lazy PDF does not do." xml:space="preserve">
-    <value>Bu bağlantı bir komut dosyası çalıştırıyor veya form gönderiyor; Lazy PDF bunları yapmaz.</value>
+    <value>Bu bağlantı bir betik çalıştırıyor veya form gönderiyor; Lazy PDF bunları yapmaz.</value>
   </data>
   <data name="This link shows or hides a layer. Use the Layers panel for that." xml:space="preserve">
     <value>Bu bağlantı bir katmanı gösteriyor veya gizliyor. Bunun için Katmanlar bölmesini kullanın.</value>
@@ -7340,10 +7343,10 @@
     <value>Dosyayı kimin imzaladığı ve o zamandan beri değişip değişmediği.</value>
   </data>
   <data name="Whole page" xml:space="preserve">
-    <value>Tüm sayfa</value>
+    <value>Sayfanın tamamı</value>
   </data>
   <data name="Whole pages" xml:space="preserve">
-    <value>Tüm sayfalar</value>
+    <value>Sayfanın tamamı</value>
   </data>
   <data name="Whole word" xml:space="preserve">
     <value>Tam sözcük</value>
@@ -8184,6 +8187,9 @@
   </data>
   <data name="{0}°" xml:space="preserve">
     <value>{0}°</value>
+  </data>
+  <data name="{name} page {n}" xml:space="preserve">
+    <value>{name} sayfa {n}</value>
   </data>
   <data name="{page}, {pages}, {date} and {file} fill in by themselves." xml:space="preserve">
     <value>{page}, {pages}, {date} ve {file} kendiliğinden dolar.</value>

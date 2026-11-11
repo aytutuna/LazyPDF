@@ -94,7 +94,7 @@ public sealed class BatchStep
     [JsonIgnore]
     public string Password { get; set; } = "";
 
-    public const string PageNumberText = "Page {page} of {pages}";
+    public static string PageNumberText => Loc.T("Page {page} of {pages}");
 
     public BatchStep Copy() => (BatchStep)MemberwiseClone();
 

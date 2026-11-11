@@ -16,6 +16,7 @@ public partial class ExportPanel : ToolPanel
     public ExportPanel()
     {
         InitializeComponent();
+        NameBox.Text = Loc.T("{name} page {n}");
         NameHint.Text = Loc.T("Use {0} and {1}. A name that is taken gets a number.", "{name}", "{n}");
         _action = new ToolAction(Loc.T("Export"), "", CanRun, RunAsync);
         _ready = true;

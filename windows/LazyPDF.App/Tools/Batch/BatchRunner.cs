@@ -103,7 +103,7 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
             if (!renderer.Load(session, null))
                 return new(path, null, false, Loc.T("Pages cannot be drawn"), Loc.T("Windows cannot draw {0}, so it cannot be saved as pictures.", Path.GetFileName(path)));
             var source = new ExportSource(bytes, null, null, renderer, codec, Path.GetFileNameWithoutExtension(path));
-            var options = new ExportOptions(ExportFormat.Pictures, null, Picture: step.Picture, Dpi: step.Dpi, Quality: step.Quality, NamePattern: "{name} page {n}");
+            var options = new ExportOptions(ExportFormat.Pictures, null, Picture: step.Picture, Dpi: step.Dpi, Quality: step.Quality, NamePattern: Loc.T("{name} page {n}"));
             Directory.CreateDirectory(unique);
             ExportResult result;
             try

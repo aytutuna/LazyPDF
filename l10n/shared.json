@@ -4855,6 +4855,12 @@
   "Type the watermark text in the step, then run again.": {
     "tr": "Adıma filigran metnini yazın, sonra yeniden çalıştırın."
   },
+  "Page {page} of {pages}": {
+    "tr": "Sayfa {page} / {pages}"
+  },
+  "{name} page {n}": {
+    "tr": "{name} sayfa {n}"
+  },
   "Page number text is empty": {
     "tr": "Sayfa numarası metni boş"
   },
