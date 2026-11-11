@@ -222,6 +222,7 @@ internal sealed partial class FillLayer
             foreach (var option in field.Options) hash.Add(option);
             foreach (var widget in field.Widgets)
             {
+                if (field.Kind == FieldKind.PushButton) hash.Add(ActionKey(form.Document, widget));
                 hash.Add(widget.Rect);
                 hash.Add(widget.PageIndex);
                 if (widget.PageIndex >= 0) pages.Add(widget.PageIndex);
@@ -234,4 +235,17 @@ internal sealed partial class FillLayer
         }
         return hash.ToHashCode();
     }
+
+    // Push() closes over its action, so a changed action needs new controls.
+    private static string ActionKey(PdfDocument document, FormWidget widget) => PdfActions.Read(document, widget.Dictionary["A"]) switch
+    {
+        null => "",
+        UriAction a => $"Uri {a.Uri}",
+        GoToAction a => $"GoTo {a.Destination.PageIndex}",
+        NamedAction a => $"Named {a.Name}",
+        SubmitFormAction a => $"Submit {a.Url}",
+        LaunchAction a => $"Launch {a.File}",
+        ResetFormAction a => $"Reset {a.Flags} {string.Join('', a.Fields)}",
+        var a => a.GetType().Name,
+    };
 }
