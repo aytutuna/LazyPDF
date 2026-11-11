@@ -34,7 +34,12 @@ public partial class PageViewer
 
     public void GoToDestination(PdfDestination destination)
     {
-        if (_tab is null || PdfDestinations.Locate(_tab.Document, destination) is not { } place) return;
+        if (_tab is null) return;
+        if (PdfDestinations.Locate(_tab.Document, destination) is not { } place)
+        {
+            Tell(Loc.T("This link goes to a page that is not in the file."), null);
+            return;
+        }
         _history.Jump(Surface.CurrentPage, place.PageIndex);
         Surface.GoToPage(place.PageIndex, new Point(place.X, Math.Max(0, place.Y - 12)));
     }
@@ -51,6 +56,18 @@ public partial class PageViewer
                 break;
             case NamedAction named:
                 Named(named.Name);
+                break;
+            case GoToRemoteAction remote:
+                Tell(Loc.T("This link goes to another file, which Lazy PDF does not open from here."), remote.File);
+                break;
+            case LaunchAction launch:
+                Tell(Loc.T("This link goes to another file, which Lazy PDF does not open from here."), launch.File);
+                break;
+            case SubmitFormAction submit:
+                Tell(Loc.T("This link runs a script or sends a form, which Lazy PDF does not do."), submit.Url);
+                break;
+            case JavaScriptAction or ResetFormAction or OtherAction:
+                Tell(Loc.T("This link runs a script or sends a form, which Lazy PDF does not do."), null);
                 break;
         }
     }
@@ -164,10 +181,23 @@ public partial class PageViewer
         _pendingAddress = openable ? address : null;
         LinkTitle.Text = openable ? Loc.T("Open this link?") : Loc.T("This link cannot be opened.");
         LinkAddress.Text = address;
+        LinkAddress.Visibility = Visibility.Visible;
         LinkOpen.Visibility = openable ? Visibility.Visible : Visibility.Collapsed;
         LinkCancel.Content = openable ? Loc.T("Cancel") : Loc.T("Close");
         LinkCard.Visibility = Visibility.Visible;
         (openable ? LinkOpen : LinkCancel).Focus();
+    }
+
+    private void Tell(string title, string? detail)
+    {
+        _pendingAddress = null;
+        LinkTitle.Text = title;
+        LinkAddress.Text = detail;
+        LinkAddress.Visibility = string.IsNullOrEmpty(detail) ? Visibility.Collapsed : Visibility.Visible;
+        LinkOpen.Visibility = Visibility.Collapsed;
+        LinkCancel.Content = Loc.T("Close");
+        LinkCard.Visibility = Visibility.Visible;
+        LinkCancel.Focus();
     }
 
     private void HideLink()

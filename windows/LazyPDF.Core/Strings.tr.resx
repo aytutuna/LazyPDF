@@ -5761,6 +5761,15 @@
   <data name="This link does something else. Saving replaces it." xml:space="preserve">
     <value>Bu bağlantı başka bir iş yapıyor. Kaydetmek onu değiştirir.</value>
   </data>
+  <data name="This link goes to a page that is not in the file." xml:space="preserve">
+    <value>Bu bağlantı dosyada olmayan bir sayfaya gidiyor.</value>
+  </data>
+  <data name="This link goes to another file, which Lazy PDF does not open from here." xml:space="preserve">
+    <value>Bu bağlantı başka bir dosyaya gidiyor; Lazy PDF onu buradan açmaz.</value>
+  </data>
+  <data name="This link runs a script or sends a form, which Lazy PDF does not do." xml:space="preserve">
+    <value>Bu bağlantı bir betik çalıştırıyor veya form gönderiyor; Lazy PDF bunları yapmaz.</value>
+  </data>
   <data name="This page" xml:space="preserve">
     <value>Bu sayfa</value>
   </data>
