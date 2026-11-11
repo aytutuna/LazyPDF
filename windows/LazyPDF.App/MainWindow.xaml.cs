@@ -410,7 +410,7 @@ public partial class MainWindow : Window
                 case Key.G when _vm.ActiveDocument is not null && _vm.HeldStage is null: _viewer.ShowGoToPage(); break;
                 case Key.Z when shift: Redo(); break;
                 case Key.Z: Undo(); break;
-                case Key.Y: Redo(); break;
+                case Key.Y when !shift: Redo(); break;
                 case Key.Tab: CycleTab(shift ? -1 : 1); break;
                 case Key.PageDown: CycleTab(1); break;
                 case Key.PageUp: CycleTab(-1); break;
