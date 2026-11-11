@@ -13,7 +13,9 @@ public sealed class BookmarksPanelTests
     private static string EnterOnEntry(PdfDestination destination)
     {
         using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(2)), new FakeRenderer(), null, "a.pdf", null);
-        Outline.Read(tab.Document).Add(new OutlineItem { Title = "Entry", Destination = destination });
+        var outline = Outline.Read(tab.Document);
+        outline.Add(new OutlineItem { Title = "Entry", Destination = destination });
+        outline.Write(tab.Document);
         tab.Commit("Bookmark");
         var host = new RecordingHost();
         var panel = new BookmarksSidePanel();
@@ -33,7 +35,7 @@ public sealed class BookmarksPanelTests
     [Fact]
     public Task AMissingPageIsSaid() => Sta.Run(() =>
     {
-        Assert.Equal("This bookmark points to a page that is not in the file.", EnterOnEntry(new PdfDestination(7)));
+        Assert.Equal("This bookmark points to a page that is not in the file.", EnterOnEntry(new PdfDestination(-1, Name: "nowhere")));
         return Task.CompletedTask;
     });
 
