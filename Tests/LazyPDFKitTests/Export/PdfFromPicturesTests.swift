@@ -155,6 +155,16 @@ final class PdfFromPicturesTests: XCTestCase {
         XCTAssertEqual(box.height, 6 * 72 / 100.0, accuracy: 1e-4)
     }
 
+    func test_aDecodedFrameIsPlacedAtTheDensityItCarries() throws {
+        let cases: [(Int, Int, Double, Double)] = [(300, 300, 24, 24), (72, 72, 100, 100), (300, 150, 24, 48), (0, 0, 75, 75), (5000, 5000, 75, 75), (300, 5000, 75, 75)]
+        for (dpiX, dpiY, width, height) in cases {
+            let made = try PdfFromPictures.create([ExportFakeCodec.picture(100, 100, 128, dpiX: dpiX, dpiY: dpiY)], codec, PdfPageSetup(paper: .picture, margin: 0))
+            let box = try reopen(made).images[0].bounds
+            XCTAssertEqual(box.width, width, accuracy: 1e-4)
+            XCTAssertEqual(box.height, height, accuracy: 1e-4)
+        }
+    }
+
     func test_aMarginThatLeavesNoRoomIsRefused() {
         for margin in [300.0, 297.638] {
             XCTAssertThrowsError(try PdfFromPictures.create([jpeg()], codec, PdfPageSetup(margin: margin)), "margin \(margin)") { XCTAssertTrue($0 is ArgumentException) }

@@ -39,7 +39,8 @@ public final class ImageIOCodec: ImageCodec {
             let (size, overflow) = width.multipliedReportingOverflow(by: height)
             if overflow || size < 0 || size > PdfImageSamples.maxPixels { continue }
             guard let image = CGImageSourceCreateImageAtIndex(source, index, nil), let frame = Self.rgba(image) else { return nil }
-            frames.append(frame)
+            let dpiX = properties[kCGImagePropertyDPIWidth] as? Double ?? 0, dpiY = properties[kCGImagePropertyDPIHeight] as? Double ?? 0
+            frames.append(PdfRgbaImage(frame.width, frame.height, frame.rgba, dpiX: dpiX, dpiY: dpiY))
         }
         return frames
     }

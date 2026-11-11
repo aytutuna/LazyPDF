@@ -56,7 +56,7 @@ public enum PdfFromPictures {
     }
 
     /// `files` are picture files in page order. A JPEG goes into the PDF as its own bytes, anything else is decoded by the
-    /// `codec` (every frame is a page). A picture is placed at its natural size, which JFIF density gives (each axis its
+    /// `codec` (every frame is a page). A picture is placed at its natural size, which JFIF density or a decoded frame's own gives (each axis its
     /// own) and 96 dpi otherwise, shrunk to fit the page inside its margin, never enlarged, centred. A JPEG's Exif
     /// orientation is applied by the way it is placed, so its bytes stay as they are. Throws `ArgumentException` when no
     /// file could be read, or the margin is negative or leaves no room on the page.
@@ -73,7 +73,7 @@ public enum PdfFromPictures {
                 pictures.append(Picture(image: jpeg, dpiX: dpiX, dpiY: dpiY, orientation: JpegMeta.orientation(files[i])))
             } else if let frames = codec.decodeFile(files[i]) {
                 for frame in frames where fits(frame) {
-                    pictures.append(Picture(image: try PdfImageWriter.addRgba(document, frame.width, frame.height, frame.rgba), dpiX: defaultDpi, dpiY: defaultDpi, orientation: 1))
+                    pictures.append(Picture(image: try PdfImageWriter.addRgba(document, frame.width, frame.height, frame.rgba), dpiX: storedDpi(frame).x, dpiY: storedDpi(frame).y, orientation: 1))
                 }
             }
             if pictures.count == before { unreadable.append(i) }
@@ -104,6 +104,10 @@ public enum PdfFromPictures {
     private static func fits(_ frame: PdfRgbaImage) -> Bool {
         guard let size = ExportImageMerge.area(frame) else { return false }
         return frame.width > 0 && frame.height > 0 && size <= PdfImageSamples.maxPixels && frame.rgba.count == size * 4
+    }
+
+    private static func storedDpi(_ frame: PdfRgbaImage) -> (x: Double, y: Double) {
+        (50.0...1200.0).contains(frame.dpiX) && (50.0...1200.0).contains(frame.dpiY) ? (frame.dpiX, frame.dpiY) : (defaultDpi, defaultDpi)
     }
 
     // The size on the page, after the picture is turned.
