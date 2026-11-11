@@ -131,7 +131,7 @@ public sealed class OrganizeViewTests
     }
 
     [Fact]
-    public void DeletingATaggedPageSaysTheTagsWentAndAPageWithoutTagsDoesNot()
+    public void DeletingATaggedPagePrunesItsTagsWithoutANoticeAndTheTreeStays()
     {
         using var tab = Open(3);
         AutoTagger.Tag(tab.Document);
@@ -145,8 +145,8 @@ public sealed class OrganizeViewTests
         Assert.Empty(host.Notices);
 
         PageJobs.Delete(tab, host, "Delete pages", [0], "done");
-        Assert.Null(tab.Document.Dict(tab.Document.Catalog, "StructTreeRoot"));
-        Assert.Equal(["Tags removed"], host.Notices);
+        Assert.NotNull(tab.Document.Dict(tab.Document.Catalog, "StructTreeRoot"));
+        Assert.Empty(host.Notices);
     }
 
     [Fact]
