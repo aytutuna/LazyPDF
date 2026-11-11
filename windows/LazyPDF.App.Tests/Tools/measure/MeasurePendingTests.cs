@@ -54,7 +54,7 @@ public sealed class MeasurePendingTests
         var typed = new MeasureScale(1, LengthUnit.Millimetre, 5, LengthUnit.Metre);
         var scales = new PageScales(start);
 
-        scales.Set(document, 1, typed);
+        scales.Set(PageScales.Key(document, 1), typed);
         Assert.Equal([start, typed, start], new[] { 0, 1, 2 }.Select(p => scales.For(document, p)));
 
         PageOperations.Delete(document, [0]);
@@ -63,6 +63,7 @@ public sealed class MeasurePendingTests
         var all = new MeasureScale(1, LengthUnit.Centimetre, 1, LengthUnit.Metre);
         scales.SetAll(all);
         Assert.Equal([all, all], new[] { 0, 1 }.Select(p => scales.For(document, p)));
+        Assert.Equal(all, scales.For(document, 5));
     }
 
     [Fact]

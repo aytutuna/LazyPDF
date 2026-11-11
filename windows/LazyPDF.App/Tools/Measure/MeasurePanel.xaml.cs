@@ -24,15 +24,19 @@ internal sealed class PageScales(MeasureScale start)
 
     public MeasureScale Default { get; private set; } = start;
 
+    public static int Key(PdfDocument document, int page) => document.Pages[page].Reference.Number;
+
+    // A page that is gone (the viewer can be a step ahead of the panel) takes the file's scale.
     public MeasureScale For(PdfDocument document, int page)
     {
-        int key = document.Pages[page].Reference.Number;
+        if (page < 0 || page >= document.Pages.Count) return Default;
+        int key = Key(document, page);
         if (_typed.TryGetValue(key, out var typed)) return typed;
         if (!_found.TryGetValue(key, out var found)) _found[key] = found = MeasureScale.FindOnPage(document, document.Pages[page]);
         return found ?? Default;
     }
 
-    public void Set(PdfDocument document, int page, MeasureScale scale) => _typed[document.Pages[page].Reference.Number] = scale;
+    public void Set(int key, MeasureScale scale) => _typed[key] = scale;
 
     public void SetAll(MeasureScale scale)
     {
@@ -65,7 +69,7 @@ public partial class MeasurePanel : ToolPanel
     private bool _ready;
     private bool _paused;
     private double _calibrated;
-    private int _calibratedPage;
+    private int _calibratedKey;
 
     public MeasurePanel()
     {
@@ -165,7 +169,7 @@ public partial class MeasurePanel : ToolPanel
         good &= scale.IsValid;
         ScaleProblem.Visibility = good ? Visibility.Collapsed : Visibility.Visible;
         if (!good) return;
-        _scales.Set(Tab!.Document, Viewer!.PageIndex, scale);
+        _scales.Set(PageScales.Key(Tab!.Document, Viewer!.PageIndex), scale);
         Rebuild();
     }
 
@@ -176,10 +180,15 @@ public partial class MeasurePanel : ToolPanel
         var scale = new MeasureScale(page, UnitOf(PageUnit), real, UnitOf(RealUnit));
         if (!scale.IsValid) return;
         _scales.SetAll(scale);
+        ShowScale(ScaleOf(Viewer!.PageIndex));
         Rebuild();
     }
 
-    private void Viewer_PageChanged(object? sender, EventArgs e) => ShowScale(ScaleOf(Viewer!.PageIndex));
+    // While tabs switch the viewer already shows the next file; the attach that follows shows its scale.
+    private void Viewer_PageChanged(object? sender, EventArgs e)
+    {
+        if (ReferenceEquals(Viewer!.Tab, Tab)) ShowScale(ScaleOf(Viewer.PageIndex));
+    }
 
     private void ShowScale(MeasureScale scale)
     {
@@ -213,7 +222,7 @@ public partial class MeasurePanel : ToolPanel
     private void Tool_Calibrated(int page, double points)
     {
         _calibrated = points;
-        _calibratedPage = page;
+        _calibratedKey = PageScales.Key(Tab!.Document, page);
         CalibrateProblem.Visibility = Visibility.Collapsed;
         SelectUnit(CalibrateUnit, UnitOf(RealUnit));
         CalibrateRow.Visibility = Visibility.Visible;
@@ -258,7 +267,7 @@ public partial class MeasurePanel : ToolPanel
             CalibrateProblem.Visibility = Visibility.Visible;
             return;
         }
-        _scales.Set(Tab!.Document, _calibratedPage, scale);
+        _scales.Set(_calibratedKey, scale);
         ShowScale(ScaleOf(Viewer!.PageIndex));
         EndCalibrate();
         Rebuild();
