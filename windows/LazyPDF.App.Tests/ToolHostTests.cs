@@ -92,6 +92,20 @@ public sealed class ToolHostTests
     }
 
     [Fact]
+    public async Task ASignatureFieldIsHandedOverOnce()
+    {
+        using var f = new ViewModelFixture();
+        IToolHost host = f.Vm;
+        await f.Vm.OpenAsync(f.Pdf());
+
+        host.OpenSigning("Signature1");
+
+        Assert.Equal("certificates", f.Vm.ActiveToolId);
+        Assert.Equal("Signature1", host.TakeSigningField());
+        Assert.Null(host.TakeSigningField());
+    }
+
+    [Fact]
     public void AToolCanSayWhatWentWrong()
     {
         using var f = new ViewModelFixture();
@@ -150,5 +164,49 @@ public sealed class ToolHostTests
         tab.Commit("Properties");
 
         Assert.Equal(0, notified);
+    }
+
+    [Fact]
+    public async Task ANoticeGoesWithItsTabButAProblemStays()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf("a.pdf"));
+        var first = f.Vm.ActiveDocument!;
+        await f.Vm.OpenAsync(f.Pdf("b.pdf"));
+        f.Vm.ActiveTab = first;
+
+        f.Vm.ShowNotice("Done", "Something happened.");
+        f.Vm.ActiveTab = f.Vm.Documents.Last();
+        Assert.Null(f.Vm.Message);
+
+        f.Vm.ShowProblem(new("Not saved", "The disk is full."));
+        f.Vm.ActiveTab = first;
+        Assert.True(f.Vm.Message!.IsError);
+    }
+
+    [Fact]
+    public async Task UndoClearsANotice()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf());
+        var tab = f.Vm.ActiveDocument!;
+        Pdfs.Retitle(tab.Session, "Changed");
+        tab.Commit("Properties");
+
+        f.Vm.ShowNotice("Done", "Something happened.");
+        f.Vm.Undo();
+
+        Assert.Null(f.Vm.Message);
+    }
+
+    [Fact]
+    public async Task ANoticeMadeRightAfterOpeningStaysOnTheNewTab()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf());
+
+        f.Vm.ShowNotice("Done", "Something happened.");
+
+        Assert.NotNull(f.Vm.Message);
     }
 }
