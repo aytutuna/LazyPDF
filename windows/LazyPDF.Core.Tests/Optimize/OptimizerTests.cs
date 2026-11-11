@@ -71,6 +71,51 @@ public class OptimizerTests
         Assert.Equal(before, Describe(document));
     }
 
+
+    [Fact]
+    public void ACancelledTokenThrowsBeforeAnyStep()
+    {
+        using var document = PdfDocument.Open(Sample());
+        var codec = new OptimizeFakeCodec();
+        using var source = new CancellationTokenSource();
+        source.Cancel();
+        Assert.Throws<OperationCanceledException>(() =>
+            new PdfOptimizer(document, codec).Run(OptimizeOptions.For(OptimizePreset.Small), source.Token));
+        Assert.Equal(0, codec.Decodes);
+    }
+
+    [Fact]
+    public void CancellingInsideTheImagesStopsTheRest()
+    {
+        const string dictionary = "/Type /XObject /Subtype /Image /Width 16 /Height 16 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode";
+        byte[] file = OptimizeKit.Build("q 72 0 0 72 10 10 cm /Im0 Do Q q 72 0 0 72 10 10 cm /Im1 Do Q q 72 0 0 72 10 10 cm /Im2 Do Q q 72 0 0 72 10 10 cm /Im3 Do Q",
+            "/XObject <</Im0 5 0 R /Im1 6 0 R /Im2 7 0 R /Im3 8 0 R>>", pdf =>
+            {
+                for (int i = 5; i <= 8; i++) pdf.Stream(i, dictionary, OptimizeKit.TinyJpeg);
+            });
+        using var document = PdfDocument.Open(file);
+        using var source = new CancellationTokenSource();
+        var codec = new OptimizeFakeCodec { OnDecode = source.Cancel };
+        var options = OptimizeKit.Off with { ImageDpi = 8, ImageDpiAbove = 10 };
+        Assert.Throws<OperationCanceledException>(() => new PdfOptimizer(document, codec).Run(options, source.Token));
+        Assert.Equal(1, codec.Decodes);
+    }
+
+    [Fact]
+    public void ALiveTokenChangesNothingInTheResult()
+    {
+        using var document = PdfDocument.Open(Sample());
+        // The second half of the trailer id is random, so the bytes differ there and nowhere else.
+        var options = OptimizeOptions.For(OptimizePreset.Balanced) with { ObjectStreams = false, DocumentId = new byte[16] };
+        var codec = new OptimizeFakeCodec();
+        byte[] plain = new PdfOptimizer(document, codec).Run(options).Bytes;
+        using var source = new CancellationTokenSource();
+        byte[] watched = new PdfOptimizer(document, codec).Run(options, source.Token).Bytes;
+        int differ = plain.Zip(watched).Count(p => p.First != p.Second);
+        Assert.Equal(plain.Length, watched.Length);
+        Assert.InRange(differ, 0, 32);
+    }
+
     private static string Describe(PdfDocument document) =>
         string.Join("|", document.ObjectNumbers.Select(n => $"{n}:{(document.Get(n) is PdfStream s ? s.Dictionary.ToString() + document.RawData(s).Length : document.Get(n)?.ToString())}"));
 

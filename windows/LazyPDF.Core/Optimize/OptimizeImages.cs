@@ -22,7 +22,7 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
     /// <summary>Some image was left at its size because a use of it could not be measured.</summary>
     public bool Partial { get; private set; }
 
-    public void Run()
+    public void Run(CancellationToken cancel)
     {
         var images = PdfGraph.Objects(document)
             .Select(o => o.Value as PdfStream)
@@ -32,6 +32,7 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
         {
             foreach (var image in images)
             {
+                cancel.ThrowIfCancellationRequested();
                 if (TryBilevel(image)) Bilevel++;
             }
         }
@@ -45,6 +46,7 @@ internal sealed class OptimizeImages(PdfDocument document, OptimizeOptions optio
         var unseen = Unseen(placed);
         foreach (var image in images)
         {
+            cancel.ThrowIfCancellationRequested();
             if (!placed.Found.TryGetValue(image, out var placement)) continue;
             if (unseen.Contains(image)) Partial |= Exceeds(placement);
             else if (TryShrink(image, placement)) Downsampled++;

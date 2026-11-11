@@ -28,7 +28,7 @@ internal sealed class OptimizeFonts(PdfDocument document)
         }
     }
 
-    public int Run(out bool partial)
+    public int Run(out bool partial, CancellationToken cancel)
     {
         partial = false;
         var listed = ListedFonts(out var outside);
@@ -62,6 +62,7 @@ internal sealed class OptimizeFonts(PdfDocument document)
         int trimmed = 0;
         foreach (var (stream, program) in programs)
         {
+            cancel.ThrowIfCancellationRequested();
             if (program.Tagged) continue;
             if (program.Blocked) partial = true;
             else if (Trim(stream, program, uses)) trimmed++;

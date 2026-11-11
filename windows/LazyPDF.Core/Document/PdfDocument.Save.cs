@@ -24,11 +24,11 @@ public sealed partial class PdfDocument
     /// Another handler than the file's own, or none, needs the owner's rights when the file restricts
     /// its permissions, and throws <see cref="PdfPermissionException"/> without them.
     /// </summary>
-    public byte[] SaveRewrite(PdfSaveOptions? options = null)
+    public byte[] SaveRewrite(PdfSaveOptions? options = null, CancellationToken cancel = default)
     {
         options ??= new PdfSaveOptions();
         RequireEncryptionRights(options.Security);
-        return new PdfRewriter(this, options).Run();
+        return new PdfRewriter(this, options, cancel).Run();
     }
 
     internal IReadOnlyDictionary<int, Entry> Entries => _entries;

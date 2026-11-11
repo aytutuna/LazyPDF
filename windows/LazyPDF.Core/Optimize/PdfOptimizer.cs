@@ -33,51 +33,58 @@ public sealed class PdfOptimizer(PdfDocument document, IImageCodec? codec = null
 
     public SpaceAudit Audit() => new PdfSpaceAudit(document).Run();
 
-    public OptimizeResult Run(OptimizeOptions options)
+    public OptimizeResult Run(OptimizeOptions options, CancellationToken cancel = default)
     {
+        cancel.ThrowIfCancellationRequested();
         var audit = Audit();
-        byte[] plain = document.SaveRewrite();
+        byte[] plain = document.SaveRewrite(cancel: cancel);
         using var working = PdfDocument.Open(plain);
         var results = new List<OptimizeStepResult> { new(OptimizeStepKind.RemoveUnreferenced, UnreferencedCount()) };
         var notes = new List<string>();
         void Did(OptimizeStepKind kind, int count) => results.Add(new OptimizeStepResult(kind, count));
 
+        cancel.ThrowIfCancellationRequested();
         if (options.StripThumbnails) Did(OptimizeStepKind.StripThumbnails, OptimizeStrip.Thumbnails(working));
         if (options.StripPieceInfo) Did(OptimizeStepKind.StripPieceInfo, OptimizeStrip.PieceInfo(working));
         if (options.StripPrivateData) Did(OptimizeStepKind.StripPrivateData, OptimizeStrip.PrivateData(working));
         if (options.PruneResources) Did(OptimizeStepKind.PruneResources, new OptimizeResources(working).Run());
-        int merged = options.RemoveDuplicates ? OptimizeDuplicates.Run(working) : 0;
+        cancel.ThrowIfCancellationRequested();
+        int merged = options.RemoveDuplicates ? OptimizeDuplicates.Run(working, cancel) : 0;
         if (options.SubsetFonts)
         {
-            Did(OptimizeStepKind.SubsetFonts, new OptimizeFonts(working).Run(out bool partial));
+            cancel.ThrowIfCancellationRequested();
+            Did(OptimizeStepKind.SubsetFonts, new OptimizeFonts(working).Run(out bool partial, cancel));
             if (partial) notes.Add(OptimizeText.LeftPartialFonts);
         }
         if (options.Grayscale)
         {
+            cancel.ThrowIfCancellationRequested();
             var gray = new OptimizeGray(working, codec, options.JpegQuality);
-            gray.Run();
+            gray.Run(cancel);
             Did(OptimizeStepKind.Grayscale, gray.Streams + gray.Images);
             if (gray.Left > 0) notes.Add(OptimizeText.LeftColor);
             if (gray.NeedsCodec) notes.Add(OptimizeText.NeedsCodec);
         }
         if (options.BilevelTolerance >= 0 || options.ImageDpi > 0)
         {
+            cancel.ThrowIfCancellationRequested();
             var images = new OptimizeImages(working, options, codec);
-            images.Run();
+            images.Run(cancel);
             if (options.BilevelTolerance >= 0) Did(OptimizeStepKind.BilevelImages, images.Bilevel);
             if (options.ImageDpi > 0) Did(OptimizeStepKind.DownsampleImages, images.Downsampled);
             if (images.Partial) notes.Add(OptimizeText.LeftPartialImages);
             if (images.NeedsCodec &&!notes.Contains(OptimizeText.NeedsCodec)) notes.Add(OptimizeText.NeedsCodec);
         }
-        var (recompressed, converted) = OptimizeStreams.Run(working, options.RecompressStreams, options.ConvertOldFilters);
+        cancel.ThrowIfCancellationRequested();
+        var (recompressed, converted) = OptimizeStreams.Run(working, options.RecompressStreams, options.ConvertOldFilters, cancel);
         if (options.RecompressStreams) Did(OptimizeStepKind.RecompressStreams, recompressed);
         if (options.ConvertOldFilters) Did(OptimizeStepKind.ConvertOldFilters, converted);
-        if (options.RemoveDuplicates) Did(OptimizeStepKind.RemoveDuplicates, merged + OptimizeDuplicates.Run(working));
+        if (options.RemoveDuplicates) Did(OptimizeStepKind.RemoveDuplicates, merged + OptimizeDuplicates.Run(working, cancel));
 
-        var best = Save(working, options, false);
+        var best = Save(working, options, false, cancel);
         if (options.ObjectStreams && document.PdfAPart != 1)
         {
-            var packed = Save(working, options, true);
+            var packed = Save(working, options, true, cancel);
             if (packed.Length < best.Length) best = packed;
             Did(OptimizeStepKind.ObjectStreams, ReferenceEquals(best, packed) ? 1 : 0);
         }
@@ -86,8 +93,8 @@ public sealed class PdfOptimizer(PdfDocument document, IImageCodec? codec = null
         return new OptimizeResult(best, document.Length, best.Length, audit, results, notes);
     }
 
-    private static byte[] Save(PdfDocument working, OptimizeOptions options, bool objectStreams) =>
-        working.SaveRewrite(new PdfSaveOptions(objectStreams, options.Security, options.DocumentId));
+    private static byte[] Save(PdfDocument working, OptimizeOptions options, bool objectStreams, CancellationToken cancel) =>
+        working.SaveRewrite(new PdfSaveOptions(objectStreams, options.Security, options.DocumentId), cancel);
 
     private int UnreferencedCount()
     {

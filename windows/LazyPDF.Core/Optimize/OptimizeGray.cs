@@ -52,7 +52,7 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
     public int Left { get; private set; }
     public bool NeedsCodec { get; private set; }
 
-    public void Run()
+    public void Run(CancellationToken cancel)
     {
         foreach (var dictionary in PdfGraph.AllDictionaries(document))
         {
@@ -81,11 +81,11 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
         }
 
         _analysing = true;
-        Pass(pages, forms);
+        Pass(pages, forms, cancel);
         Settle();
         _analysing = false;
         Left = 0;
-        Pass(pages, forms);
+        Pass(pages, forms, cancel);
         foreach (var (stream, data) in _output)
         {
             PdfGraph.SetData(stream, data);
@@ -93,16 +93,18 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
         }
         foreach (var stream in all)
         {
+            cancel.ThrowIfCancellationRequested();
             var dictionary = stream.Dictionary;
             if (document.Integer(dictionary, "PatternType") == 2) Left++;
             else if (document.Name(dictionary, "Subtype") == "Image" && document.Bool(dictionary, "ImageMask") != true) GrayImage(stream);
         }
     }
 
-    private void Pass(List<(PdfDictionary? Resources, List<PdfStream> Streams, bool Straddles)> pages, List<PdfStream> forms)
+    private void Pass(List<(PdfDictionary? Resources, List<PdfStream> Streams, bool Straddles)> pages, List<PdfStream> forms, CancellationToken cancel)
     {
         foreach (var (resources, streams, straddles) in pages)
         {
+            cancel.ThrowIfCancellationRequested();
             if (straddles)
             {
                 Left++;
@@ -121,6 +123,7 @@ internal sealed class OptimizeGray(PdfDocument document, IImageCodec? codec, int
         }
         foreach (var form in forms)
         {
+            cancel.ThrowIfCancellationRequested();
             var inherited = new Slot(Space.Inherited, null);
             Convert(form, document.Dict(form.Dictionary, "Resources"), new State { Fill = inherited, Stroke = inherited });
         }
