@@ -6750,6 +6750,9 @@
   "Sign on white paper and take a photo. The paper is made see-through.": {
     "tr": "Beyaz kâğıda imzalayıp fotoğrafını çekin. Kâğıt saydam yapılır."
   },
+  "Sign on white paper and choose a photo of it. The paper is made see-through.": {
+    "tr": "Beyaz kâğıda imzalayıp fotoğrafını seçin. Kâğıt saydam yapılır."
+  },
   "Sign with": {
     "tr": "Şununla imzala"
   },

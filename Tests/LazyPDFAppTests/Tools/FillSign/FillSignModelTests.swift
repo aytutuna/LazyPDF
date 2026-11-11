@@ -127,7 +127,7 @@ final class FillSignMakerTests: XCTestCase {
         await maker.choosePicture(using: FormsPicker())
 
         XCTAssertNil(maker.image)
-        XCTAssertEqual(maker.pictureNote, "Sign on white paper and take a photo. The paper is made see-through.")
+        XCTAssertEqual(maker.pictureNote, "Sign on white paper and choose a photo of it. The paper is made see-through.")
     }
 
     func test_startingOverEmptiesEveryMode() {

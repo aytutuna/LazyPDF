@@ -5341,6 +5341,9 @@
   <data name="Sign" xml:space="preserve">
     <value>İmzala</value>
   </data>
+  <data name="Sign on white paper and choose a photo of it. The paper is made see-through." xml:space="preserve">
+    <value>Beyaz kâğıda imzalayıp fotoğrafını seçin. Kâğıt saydam yapılır.</value>
+  </data>
   <data name="Sign on white paper and take a photo. The paper is made see-through." xml:space="preserve">
     <value>Beyaz kâğıda imzalayıp fotoğrafını çekin. Kâğıt saydam yapılır.</value>
   </data>

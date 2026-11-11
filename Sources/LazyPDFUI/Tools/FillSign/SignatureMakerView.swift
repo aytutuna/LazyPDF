@@ -73,7 +73,7 @@ struct SignatureMakerView: View {
     private var drawPane: some View {
         VStack(alignment: .leading, spacing: 8) {
             SignaturePad(maker: maker)
-                .frame(height: 140)
+                .frame(height: 200)
             HStack {
                 Button {
                     maker.undoStroke()

@@ -56,7 +56,7 @@ public final class SignatureMakerModel {
         strokes.clear()
         picture = nil
         canTurn = false
-        pictureNote = L10n.t("Sign on white paper and take a photo. The paper is made see-through.")
+        pictureNote = L10n.t("Sign on white paper and choose a photo of it. The paper is made see-through.")
         mode = .type
         rebuild()
     }
