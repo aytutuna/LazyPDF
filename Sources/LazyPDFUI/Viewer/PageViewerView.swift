@@ -39,6 +39,7 @@ public struct PageViewerView: View {
                     }
                     Spacer()
                     if let pending = viewer.pendingAddress { linkCard(pending) }
+                    else if let notice = viewer.notice { noticeCard(notice) }
                     if viewer.placement != nil { cue }
                 }
                 .padding(.bottom, 16)
@@ -46,6 +47,24 @@ public struct PageViewerView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(L10n.t("Page viewer"))
+    }
+
+    private func noticeCard(_ notice: ViewerNotice) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(notice.title).font(.headline)
+            if let detail = notice.detail { Text(detail).foregroundStyle(.secondary).textSelection(.enabled) }
+            HStack {
+                Spacer()
+                Button(L10n.t("Close")) { viewer.dismissNotice() }
+                    .keyboardShortcut(.cancelAction)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: 480)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+        .shadow(radius: 8, y: 2)
+        .padding(.horizontal, 12)
+        .accessibilityElement(children: .contain)
     }
 
     private func linkCard(_ pending: PendingAddress) -> some View {

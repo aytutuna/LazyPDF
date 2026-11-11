@@ -93,6 +93,9 @@ public final class ViewerModel: DocumentViewer {
     /// The address a link wants opened, until the person says yes or no.
     public internal(set) var pendingAddress: PendingAddress?
 
+    /// Why a link or a copy did nothing, until the person closes it.
+    public internal(set) var notice: ViewerNotice?
+
     /// The mark a keyboard placement stands on; the view draws a cross there.
     public internal(set) var placement: KeyPlacement?
 
@@ -124,6 +127,7 @@ public final class ViewerModel: DocumentViewer {
         resetLayers()
         hideFind()
         pendingAddress = nil
+        notice = nil
         search.clear()
         resetTiles()
         geometries.removeAll()
@@ -404,6 +408,12 @@ public final class ViewerModel: DocumentViewer {
 public struct PendingAddress: Equatable {
     public let address: String
     public let openable: Bool
+}
+
+/// A line of the viewer saying why something did nothing.
+public struct ViewerNotice: Equatable {
+    public let title: String
+    public let detail: String?
 }
 
 enum Drag {

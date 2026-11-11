@@ -309,6 +309,64 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertTrue(opened.isEmpty)
     }
 
+    func test_anActionTheAppDoesNotRunSaysSo() throws {
+        let (viewer, _) = try open()
+        let otherFile = "This link goes to another file, which Lazy PDF does not open from here."
+        let script = "This link runs a script or sends a form, which Lazy PDF does not do."
+
+        viewer.follow(GoToRemoteAction("b.pdf", nil, nil))
+        XCTAssertEqual(viewer.notice, ViewerNotice(title: otherFile, detail: "b.pdf"))
+        viewer.follow(LaunchAction("run.exe", nil))
+        XCTAssertEqual(viewer.notice, ViewerNotice(title: otherFile, detail: "run.exe"))
+        viewer.follow(SubmitFormAction("https://example.com/post", 0, []))
+        XCTAssertEqual(viewer.notice, ViewerNotice(title: script, detail: "https://example.com/post"))
+        for action in [JavaScriptAction("app.alert(1)"), ResetFormAction(0, []), OtherAction("Sound")] as [PdfAction] {
+            viewer.dismissNotice()
+            viewer.follow(action)
+            XCTAssertEqual(viewer.notice, ViewerNotice(title: script, detail: nil))
+        }
+        viewer.dismissNotice()
+        XCTAssertNil(viewer.notice)
+    }
+
+    func test_aLinkToAMissingPageSaysSoAndLeavesNoHistory() throws {
+        let (viewer, _) = try open()
+
+        viewer.goTo(PdfDestination(9))
+
+        XCTAssertEqual(viewer.notice, ViewerNotice(title: "This link goes to a page that is not in the file.", detail: nil))
+        XCTAssertFalse(viewer.canGoBack)
+    }
+
+    func test_anAddressStartingWithWwwIsOpenedAsHttps() throws {
+        let (viewer, _) = try open()
+
+        viewer.follow(UriAction(" WWW.example.com/a "))
+
+        XCTAssertEqual(viewer.pendingAddress, PendingAddress(address: "https://WWW.example.com/a", openable: true))
+    }
+
+    func test_copyTellsWhyWhenTheFileForbidsIt() async throws {
+        let (viewer, _) = try open(bytes: try Pdfs.restricted(.print))
+        viewer.selectAll()
+
+        let text = await viewer.selectedText()
+
+        XCTAssertNil(text)
+        XCTAssertFalse(viewer.canCopy)
+        XCTAssertEqual(viewer.notice?.title, "The owner of this file does not allow copying.")
+    }
+
+    func test_copyGivesTheTextOfAFileThatAllowsIt() async throws {
+        let (viewer, _) = try open()
+        viewer.selectAll()
+
+        let text = await viewer.selectedText()
+
+        XCTAssertEqual(text?.hasPrefix("Hello from"), true)
+        XCTAssertNil(viewer.notice)
+    }
+
     func test_thePageBoxTakesANumberAndRefusesWhatIsNotAPage() throws {
         let (viewer, _) = try open(pages: 3)
 

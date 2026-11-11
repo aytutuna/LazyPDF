@@ -36,7 +36,11 @@ extension ViewerModel {
     }
 
     public func goTo(_ destination: PdfDestination) {
-        guard let tab, let place = PdfDestinations.locate(tab.document, destination) else { return }
+        guard let tab else { return }
+        guard let place = PdfDestinations.locate(tab.document, destination) else {
+            tell(L10n.t("This link goes to a page that is not in the file."))
+            return
+        }
         let to = ViewPoint(place.x, Swift.max(0, place.y - 12))
         if let from = state.topPlace() { history.jump(from, PagePoint(place.pageIndex, to)) }
         apply(state.goToPage(place.pageIndex, at: to))
@@ -51,6 +55,14 @@ extension ViewerModel {
             askToOpen(uri.uri)
         case let named as NamedAction:
             perform(named.name)
+        case let remote as GoToRemoteAction:
+            tell(L10n.t("This link goes to another file, which Lazy PDF does not open from here."), remote.file)
+        case let launch as LaunchAction:
+            tell(L10n.t("This link goes to another file, which Lazy PDF does not open from here."), launch.file)
+        case let submit as SubmitFormAction:
+            tell(L10n.t("This link runs a script or sends a form, which Lazy PDF does not do."), submit.url)
+        case is JavaScriptAction, is ResetFormAction, is OtherAction:
+            tell(L10n.t("This link runs a script or sends a form, which Lazy PDF does not do."))
         default:
             break
         }
@@ -164,6 +176,9 @@ extension ViewerModel {
 
     // An address in a file is the file's, not the reader's: it is shown and asked about, and only the usual schemes are opened.
     func askToOpen(_ address: String) {
+        notice = nil
+        var address = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        if URL(string: address)?.scheme == nil, address.lowercased().hasPrefix("www.") { address = "https://" + address }
         let scheme = URL(string: address)?.scheme?.lowercased()
         pendingAddress = PendingAddress(address: address, openable: scheme.map(Self.openableSchemes.contains) ?? false)
     }
@@ -176,6 +191,15 @@ extension ViewerModel {
 
     public func dismissPendingAddress() {
         pendingAddress = nil
+    }
+
+    func tell(_ title: String, _ detail: String? = nil) {
+        pendingAddress = nil
+        notice = ViewerNotice(title: title, detail: detail)
+    }
+
+    public func dismissNotice() {
+        notice = nil
     }
 
     func followLink(_ link: PdfLink) {

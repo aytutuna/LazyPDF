@@ -568,6 +568,7 @@
 "File is locked." = "Dosya kilitli.";
 "File is open" = "Dosya açık";
 "File is protected" = "Dosya korumalı";
+"File is read-only" = "Dosya salt okunur";
 "File is signed" = "Dosya imzalı";
 "File made smaller" = "Dosya küçültüldü";
 "File name" = "Dosya adı";
@@ -855,6 +856,7 @@
 "Measure distances, perimeters and areas on a page." = "Bir sayfada uzaklıkları, çevreleri ve alanları ölçün.";
 "Measurements" = "Ölçümler";
 "Measurements dropped" = "Ölçümler bırakıldı";
+"Measurements not added" = "Ölçümler eklenmedi";
 "Megabytes per part" = "Parça başına megabayt";
 "Merge duplicates" = "Kopyaları birleştir";
 "Metadata" = "Üst veri";
@@ -1743,6 +1745,7 @@
 "The original is unchanged. Save the copy to keep it." = "Özgün dosya değişmedi. Kopyayı kaydederek saklayın.";
 "The output does not open." = "Çıktı açılmıyor.";
 "The output intents use different profiles." = "Çıktı amaçları farklı profiller kullanıyor.";
+"The owner of this file does not allow copying." = "Bu dosyanın sahibi kopyalamaya izin vermiyor.";
 "The owner of {0} did not allow it to be printed." = "{0} dosyasının sahibi yazdırılmasına izin vermedi.";
 "The page changed. Select the object again." = "Sayfa değişti. Nesneyi yeniden seçin.";
 "The page content is too large to check in full." = "Sayfa içeriği tam denetlenemeyecek kadar büyük.";
@@ -1818,6 +1821,7 @@
 "These limits are a request, not a lock. Some programs ignore them. Only the certificates keep the file private." = "Bu sınırlar bir istektir, kilit değildir. Bazı programlar yok sayar. Dosyayı yalnızca sertifikalar gizli tutar.";
 "These pages" = "Şu sayfalar";
 "These settings cannot make this file smaller. Try the Small preset." = "Bu ayarlarla dosya küçülmüyor. Küçük ayarını deneyin.";
+"They could not be written to the file. Nothing was changed." = "Dosyaya yazılamadılar. Hiçbir şey değiştirilmedi.";
 "Third-party notices" = "Üçüncü taraf bildirimleri";
 "This attachment could not be opened." = "Bu ek açılamadı.";
 "This attachment could not be read." = "Bu ek okunamadı.";
@@ -1869,6 +1873,9 @@
 "This kind of action cannot be set here." = "Bu tür bir işlem burada ayarlanamaz.";
 "This link cannot be opened." = "Bu bağlantı açılamıyor.";
 "This link does something else. Saving replaces it." = "Bu bağlantı başka bir iş yapıyor. Kaydetmek onu değiştirir.";
+"This link goes to a page that is not in the file." = "Bu bağlantı dosyada olmayan bir sayfaya gidiyor.";
+"This link goes to another file, which Lazy PDF does not open from here." = "Bu bağlantı başka bir dosyaya gidiyor; Lazy PDF onu buradan açmaz.";
+"This link runs a script or sends a form, which Lazy PDF does not do." = "Bu bağlantı bir betik çalıştırıyor veya form gönderiyor; Lazy PDF bunları yapmaz.";
 "This page" = "Bu sayfa";
 "This page cannot be shown." = "Bu sayfa gösterilemiyor.";
 "This picture cannot be read." = "Bu resim okunamıyor.";
@@ -2126,6 +2133,7 @@
 "{0} is open in another tab. Close that tab first, or pick another name." = "{0} başka bir sekmede açık. Önce o sekmeyi kapatın ya da başka bir ad seçin.";
 "{0} is over 50 MB. Attach a smaller file." = "{0} 50 MB'ı aşıyor. Daha küçük bir dosya ekleyin.";
 "{0} is protected. Type its password to open it." = "{0} korumalı. Açmak için parolasını yazın.";
+"{0} is read-only. You can work on it, but save your changes with Save as." = "{0} salt okunur. Üzerinde çalışabilirsiniz, ancak değişikliklerinizi Farklı kaydet ile kaydedin.";
 "{0} is signed. Saving it compact writes it again and the signatures no longer hold. Save and Save as keep them." = "{0} imzalı. Sıkıştırılmış kaydetmek dosyayı yeniden yazar ve imzalar geçerliliğini yitirir. Kaydet ve Farklı kaydet imzaları korur.";
 "{0} is too big for this format. Export fewer pages or pick another format." = "{0} bu biçim için çok büyük. Daha az sayfa aktarın veya başka bir biçim seçin.";
 "{0} is used and the file has no output intent or default space for it." = "{0} kullanılıyor ve dosyada bunun için çıktı amacı ya da varsayılan uzay yok.";

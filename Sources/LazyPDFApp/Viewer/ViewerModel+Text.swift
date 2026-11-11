@@ -261,8 +261,15 @@ extension ViewerModel {
         return runs
     }
 
-    /// What Copy puts on the pasteboard; nil when nothing is selected.
+    /// False when the file was opened without the right to copy content out.
+    public var canCopy: Bool { tab.map { Exporter.allowed($0.document) } ?? true }
+
+    /// What Copy puts on the pasteboard; nil when nothing is selected or the file forbids copying.
     public func selectedText() async -> String? {
+        if !selected.isEmpty && !canCopy {
+            tell(L10n.t("The owner of this file does not allow copying."))
+            return nil
+        }
         let runs = await selection()
         return runs.isEmpty ? nil : runs.map(\.text).joined(separator: "\n")
     }
