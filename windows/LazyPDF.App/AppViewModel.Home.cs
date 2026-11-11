@@ -160,7 +160,15 @@ public sealed partial class AppViewModel
             // A file that is open already comes back as a copy that needs a name, not as a second tab on the file.
             string? path = entry.Meta.OriginalPath is { } original && TabOf(original) is null ? original : null;
             DiskStamp? stamp = entry.Meta.OriginalWrite == default ? null : new DiskStamp(entry.Meta.OriginalWrite, entry.Meta.OriginalLength);
-            var source = new OpenSource(bytes, path, entry.Meta.Title, Made: false, Stamp: path is null ? null : stamp);
+            bool readOnly = false;
+            try
+            {
+                readOnly = path is not null && File.Exists(path) && new FileInfo(path).IsReadOnly;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+            }
+            var source = new OpenSource(bytes, path, entry.Meta.Title, Made: false, Stamp: path is null ? null : stamp, ReadOnly: readOnly);
             await OpenAsync(new PendingOpen(source, entry.Id), password: null, certificate: null);
         }
     }

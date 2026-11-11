@@ -59,6 +59,28 @@ public sealed class RecoveryFlowTests
     }
 
     [Fact]
+    public async Task ARestoredCopyOfAReadOnlyFileNeedsAName()
+    {
+        using var f = new ViewModelFixture();
+        string original = f.Pdf("report.pdf");
+        Crash(f, "report.pdf", original);
+        f.Vm.CheckRecovery();
+        File.SetAttributes(original, FileAttributes.ReadOnly);
+        try
+        {
+            await f.Vm.RestoreAsync();
+
+            var tab = Assert.Single(f.Vm.Documents);
+            Assert.True(tab.ReadOnly);
+            Assert.True(AppViewModel.NeedsName(tab));
+        }
+        finally
+        {
+            File.SetAttributes(original, FileAttributes.Normal);
+        }
+    }
+
+    [Fact]
     public async Task ARestoredDocumentSavesOverTheOriginal()
     {
         using var f = new ViewModelFixture();
