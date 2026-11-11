@@ -45,16 +45,34 @@ public partial class PageViewer
             return;
         }
         var size = Surface.PageSize(place.PageIndex);
-        var to = Surface.Rotation switch
+        bool aimed = AimsAtTop(destination, _tab.Document.Pages[place.PageIndex].Rotate, Surface.Rotation);
+        var to = (aimed, Surface.Rotation) switch
         {
-            90 => new Point(Math.Max(0, place.X - 12), place.Y),
-            180 => new Point(place.X, Math.Min(size.Height, place.Y + 12)),
-            270 => new Point(Math.Min(size.Width, place.X + 12), place.Y),
+            (false, 180) => new Point(0, size.Height),
+            (false, 270) => new Point(size.Width, 0),
+            (false, _) => new Point(0, 0),
+            (_, 90) => new Point(Math.Max(0, place.X - 12), place.Y),
+            (_, 180) => new Point(place.X, Math.Min(size.Height, place.Y + 12)),
+            (_, 270) => new Point(Math.Min(size.Width, place.X + 12), place.Y),
             _ => new Point(place.X, Math.Max(0, place.Y - 12)),
         };
         if (Surface.TopPlace() is { } from) _history.Jump(from, new PagePoint(place.PageIndex, to), Surface.Rotation);
-        Surface.GoToPage(place.PageIndex, to);
+        Surface.GoToPage(place.PageIndex, aimed ? to : null);
         RefreshBar();
+    }
+
+    // Whether the destination gives the coordinate that runs down the screen; Locate fills a missing one with the page's corner, which is not a target.
+    internal static bool AimsAtTop(PdfDestination destination, int pageRotate, int viewRotate)
+    {
+        bool top = (pageRotate + viewRotate) % 180 == 0;
+        var (hasTop, hasLeft) = destination.Fit switch
+        {
+            DestinationFit.Xyz or DestinationFit.FitR => (destination.Top is not null, destination.Left is not null),
+            DestinationFit.FitH or DestinationFit.FitBH => (destination.Top is not null, false),
+            DestinationFit.FitV or DestinationFit.FitBV => (false, destination.Left is not null),
+            _ => (false, false),
+        };
+        return top ? hasTop : hasLeft;
     }
 
     public void FollowAction(PdfAction? action)
