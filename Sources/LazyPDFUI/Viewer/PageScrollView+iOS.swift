@@ -47,6 +47,10 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
     private var scrollingByFinger = false
     private var lastTouch = ViewPoint.zero
     private var touchStart = ViewPoint.zero
+    private var samples: [(time: Double, point: ViewPoint)] = []
+    private var glide: CADisplayLink?
+    private var glideMomentum: Momentum?
+    private var glideTime = 0.0
     private var keyboardInset: CGFloat = 0
 
     init(viewer: ViewerModel) {
@@ -160,10 +164,12 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
 
     // One finger belongs to a pointer tool, so the scroll view's own pan needs two while one is set.
     private func toolChanged() {
+        stopGlide()
         scroll.panGestureRecognizer.minimumNumberOfTouches = viewer.pointerTool == nil ? 1 : 2
     }
 
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        stopGlide()
         cancelToolTouch()
     }
 
@@ -178,6 +184,7 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
     @objc private func pinched(_ recognizer: UIPinchGestureRecognizer) {
         switch recognizer.state {
         case .began:
+            stopGlide()
             cancelToolTouch()
             lastScale = 1
         case .changed:
@@ -254,14 +261,17 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
         case .began:
             // A field open on the page keeps what was typed when the finger lands somewhere else.
             endEditing(true)
+            stopGlide()
             scrollingByFinger = !viewer.toolTakes(at)
             lastTouch = at
             touchStart = at
+            samples = [(ProcessInfo.processInfo.systemUptime, at)]
             if !scrollingByFinger { viewer.pointerDown(at, touch: true) }
         case .changed:
             if scrollingByFinger {
                 viewer.scroll(by: lastTouch.x - at.x, lastTouch.y - at.y)
                 lastTouch = at
+                samples.append((ProcessInfo.processInfo.systemUptime, at))
             } else {
                 viewer.pointerMove(at)
             }
@@ -270,12 +280,50 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
                 viewer.pointerUp(at)
             } else if hypot(at.x - touchStart.x, at.y - touchStart.y) <= 4 {
                 viewer.followLink(at: at)
+            } else {
+                startGlide()
             }
             scrollingByFinger = false
         default:
             if !scrollingByFinger { viewer.pointerCancel() }
             scrollingByFinger = false
         }
+    }
+
+    // The speed of the last two samples within 80 ms of each other, so a finger that rested before lifting does not throw the page.
+    private func startGlide() {
+        guard samples.count >= 2 else { return }
+        let last = samples[samples.count - 1]
+        let before = samples[samples.count - 2]
+        let span = last.time - before.time
+        guard span > 0, span <= 0.08, ProcessInfo.processInfo.systemUptime - last.time <= 0.08 else { return }
+        glideMomentum = Momentum(velocity: ViewPoint((last.point.x - before.point.x) / span, (last.point.y - before.point.y) / span))
+        guard glideMomentum != nil else { return }
+        let link = CADisplayLink(target: self, selector: #selector(glided(_:)))
+        glideTime = link.timestamp
+        link.add(to: .main, forMode: .common)
+        glide = link
+    }
+
+    private func stopGlide() {
+        glide?.invalidate()
+        glide = nil
+        glideMomentum = nil
+    }
+
+    @objc private func glided(_ link: CADisplayLink) {
+        let dt = glideTime == 0 ? link.targetTimestamp - link.timestamp : link.timestamp - glideTime
+        glideTime = link.timestamp
+        guard var momentum = glideMomentum, let delta = momentum.step(dt) else { return stopGlide() }
+        glideMomentum = momentum
+        let before = viewer.offset
+        viewer.scroll(by: -delta.x, -delta.y)
+        if viewer.offset == before { stopGlide() }
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window == nil { stopGlide() }
     }
 
     @objc private func keyboardMoved(_ note: Notification) {
