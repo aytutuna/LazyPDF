@@ -254,7 +254,7 @@ public sealed class KeyboardPlacementTests
         return Task.CompletedTask;
     });
 
-    private static object Call(PageViewer viewer, string name, params object[] args) =>
+    private static object Call(PageViewer viewer, string name, params object?[] args) =>
         typeof(PageViewer).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(viewer, args)!;
 
     [Fact]
