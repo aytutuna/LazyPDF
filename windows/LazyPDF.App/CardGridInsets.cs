@@ -24,6 +24,14 @@ internal static class GridInsets
     public static int Columns(double width, double slotWidth = CardSlotWidth) =>
         Math.Max(1, (int)((width - 2 * EdgeMargin - SystemParameters.VerticalScrollBarWidth) / slotWidth));
 
+    /// <summary>Columns to use for <paramref name="count"/> items so the last row is not left with a single one.</summary>
+    public static int Balanced(int count, int columns)
+    {
+        columns = Math.Max(1, columns);
+        int rows = (count + columns - 1) / columns;
+        return rows == 0 ? 1 : (count + rows - 1) / rows;
+    }
+
     /// <summary>
     /// Left/right insets for the card grid and for the header above it, for a grid laid out in
     /// <paramref name="width"/> with <paramref name="columns"/> columns (by default as many as

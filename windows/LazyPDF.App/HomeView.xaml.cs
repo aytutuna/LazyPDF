@@ -49,6 +49,7 @@ public partial class HomeView : UserControl
 
     private readonly ObservableCollection<RecentCard> _cards = [];
     private IReadOnlyList<HomeTile> _tiles = [];
+    private double _width;
 
     public HomeView()
     {
@@ -73,6 +74,7 @@ public partial class HomeView : UserControl
         {
             _tiles = tiles;
             TileGrid.ItemsSource = tiles;
+            ArrangeGrids();
         }
         if (!_cards.Select(c => c.Item).SequenceEqual(recent))
         {
@@ -140,8 +142,17 @@ public partial class HomeView : UserControl
 
     private void Scroller_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        var (cards, header) = GridInsets.For(e.NewSize.Width, slotWidth: SlotWidth);
-        TileGrid.Margin = cards;
+        _width = e.NewSize.Width;
+        ArrangeGrids();
+    }
+
+    private void ArrangeGrids()
+    {
+        var (cards, header) = GridInsets.For(_width, slotWidth: SlotWidth);
+        int perRow = GridInsets.Balanced(_tiles.Count, GridInsets.Columns(_width, SlotWidth));
+        TileGrid.Width = perRow * SlotWidth;
+        TileGrid.HorizontalAlignment = HorizontalAlignment.Left;
+        TileGrid.Margin = GridInsets.For(_width, perRow, SlotWidth).Cards;
         RecentGrid.Margin = cards;
         TitleLabel.Margin = header with { Top = 20, Bottom = 8 };
         RecentHeader.Margin = header with { Top = 24, Bottom = 4 };
