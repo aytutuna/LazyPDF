@@ -205,6 +205,9 @@
   <data name="Add Bates numbers" xml:space="preserve">
     <value>Bates numarası ekle</value>
   </data>
+  <data name="Add a bookmark for each file" xml:space="preserve">
+    <value>Her dosya için bir yer imi ekle</value>
+  </data>
   <data name="Add a bookmark for this page" xml:space="preserve">
     <value>Bu sayfa için yer imi ekleyin</value>
   </data>
@@ -2010,6 +2013,9 @@
   </data>
   <data name="File written, not shown" xml:space="preserve">
     <value>Dosya yazıldı, gösterilemedi</value>
+  </data>
+  <data name="File {0}" xml:space="preserve">
+    <value>Dosya {0}</value>
   </data>
   <data name="File {0} of {1}" xml:space="preserve">
     <value>Dosya {0} / {1}</value>

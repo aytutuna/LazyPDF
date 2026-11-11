@@ -45,7 +45,7 @@ public partial class CombinePanel : ToolPanel
         if (!_lists.TryGetValue(Tab, out var list))
         {
             list = [new CombineEntry(Tab.Title, Tab.PageCount, null)];
-            list.CollectionChanged += (_, _) => RaiseActionChanged();
+            list.CollectionChanged += (_, _) => Refresh();
             _lists.Add(Tab, list);
         }
         _entries = list;
@@ -74,6 +74,7 @@ public partial class CombinePanel : ToolPanel
         SplitHint.Text = Kind == SplitBy.Bookmarks ? BookmarkHint(Tab.Document)
             : Tab.PageCount < 2 ? Loc.T("A file of one page cannot be split.") : "";
         SplitHint.Visibility = SplitHint.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+        BookmarkEach.Visibility = _entries.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
         RaiseActionChanged();
     }
 

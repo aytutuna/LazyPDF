@@ -4986,6 +4986,12 @@
   "Files to combine": {
     "tr": "Birleştirilecek dosyalar"
   },
+  "Add a bookmark for each file": {
+    "tr": "Her dosya için bir yer imi ekle"
+  },
+  "File {0}": {
+    "tr": "Dosya {0}"
+  },
   "Remove from the list": {
     "tr": "Listeden kaldır"
   },

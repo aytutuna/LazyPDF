@@ -157,6 +157,32 @@ public sealed class CombineJobTests
     }
 
     [Fact]
+    public void EachFileGetsABookmarkAtItsFirstPage()
+    {
+        var a = PdfDocument.Open(Pdfs.Text(3));
+        var b = PdfDocument.Open(Pdfs.Text(4));
+        var merged = PageAssembly.Merge([new MergeSource(a, [0, 1]), new MergeSource(a, null), new MergeSource(b, PageRange.Parse("2-3", 4).Pages)]);
+
+        CombineJob.AddFileBookmarks(merged, [("One.pdf", 2), (" Two.PDF ", 3), ("Three", 2)]);
+
+        var items = Outline.Read(PdfDocument.Open(merged.SaveRewrite())).Items;
+        Assert.Equal(["One", "Two", "Three"], items.Select(item => item.Title));
+        Assert.Equal([0, 2, 5], items.Select(item => item.Destination!.PageIndex));
+    }
+
+    [Theory]
+    [InlineData("Report.pdf", "Report")]
+    [InlineData("  Notes.PDF", "Notes")]
+    [InlineData("scan.v2", "scan.v2")]
+    [InlineData(".pdf", "File 3")]
+    public void BookmarkTitleDropsThePdfExtension(string name, string expected)
+    {
+        using var culture = new CultureScope("en-US");
+
+        Assert.Equal(expected, CombineJob.BookmarkTitle(name, 3));
+    }
+
+    [Fact]
     public async Task AFileThatCannotBeReadIsReportedAndLeftOut()
     {
         using var dir = new TempDir();

@@ -67,6 +67,8 @@
             </ItemsControl>
             <Button x:Name="AddFiles" Style="{StaticResource IconTextButtonStyle}" HorizontalContentAlignment="Left" Content="{loc:T Add files}"
                     loc:Icon.Glyph="&#xE710;" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Add files}" Click="AddFiles_Click" />
+            <CheckBox x:Name="BookmarkEach" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Add a bookmark for each file}" IsChecked="True"
+                      Margin="0,0,0,12" Visibility="Collapsed" AutomationProperties.Name="{loc:T Add a bookmark for each file}" />
         </StackPanel>
 
         <StackPanel x:Name="SplitView" Visibility="Collapsed">

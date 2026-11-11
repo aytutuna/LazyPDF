@@ -53,6 +53,27 @@ internal static class CombineJob
         return sentences.Count == 0 ? folder : folder + ". " + string.Join(" ", sentences);
     }
 
+    /// <summary>The name without ".pdf", or "File n" when nothing is left of it.</summary>
+    public static string BookmarkTitle(string name, int n)
+    {
+        string title = name.Trim();
+        if (title.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)) title = title[..^4].Trim();
+        return title.Length == 0 ? Loc.T("File {0}", n) : title;
+    }
+
+    /// <summary>One bookmark per source at its first page in <paramref name="merged"/>; <paramref name="sources"/> holds each one's name and the pages it gave.</summary>
+    public static void AddFileBookmarks(PdfDocument merged, IReadOnlyList<(string Name, int Pages)> sources)
+    {
+        var outline = Outline.Read(merged);
+        int start = 0;
+        for (int i = 0; i < sources.Count; i++)
+        {
+            outline.Add(new OutlineItem { Title = BookmarkTitle(sources[i].Name, i + 1), Destination = new PdfDestination(start) });
+            start += sources[i].Pages;
+        }
+        outline.Write(merged);
+    }
+
     public static string PartName(string stem, int part, int parts) =>
         $"{stem} {(part + 1).ToString("D" + Math.Max(parts.ToString(CultureInfo.InvariantCulture).Length, 1), CultureInfo.InvariantCulture)}.pdf";
 

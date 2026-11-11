@@ -33,6 +33,7 @@ public partial class CombinePanel
         }
         string? folder = ToFolder ? PickFolder() : null;
         if (ToFolder && folder is null) return;
+        bool bookmarks = BookmarkEach.IsChecked == true;
 
         byte[]? bytes = null;
         try
@@ -41,7 +42,9 @@ public partial class CombinePanel
             {
                 // The open document is read again here: its pages may be taken twice and the session belongs to the UI thread.
                 var again = PageEdits.Reopen(tab);
-                byte[] made = PageAssembly.Merge([.. sources.Select(s => new MergeSource(s.Entry.Document ?? again, s.Pages))], token).SaveRewrite();
+                var merged = PageAssembly.Merge([.. sources.Select(s => new MergeSource(s.Entry.Document ?? again, s.Pages))], token);
+                if (bookmarks) CombineJob.AddFileBookmarks(merged, [.. sources.Select(s => (s.Entry.Name, s.Pages?.Count ?? (s.Entry.Document ?? again).Pages.Count))]);
+                byte[] made = merged.SaveRewrite();
                 token.ThrowIfCancellationRequested();
                 bytes = made;
             }, token));
