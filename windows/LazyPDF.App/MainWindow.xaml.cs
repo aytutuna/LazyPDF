@@ -44,6 +44,7 @@ public partial class MainWindow : Window
         BuildRail();
         _vm.PropertyChanged += ViewModel_PropertyChanged;
         _vm.ExitRequested += ViewModel_ExitRequested;
+        _vm.CloseRequested += (_, tab) => RequestClose(tab);
         _vm.SystemPrintRequested += ViewModel_SystemPrintRequested;
         Loaded += Window_Loaded;
     }

@@ -251,7 +251,7 @@ public sealed partial class AppViewModel
                     if (!Write(tab, tab.Save) || !closeAfter) return;
                     // The window's CancelClose cleared this; closing the tab goes on with the exit.
                     _exiting = wasExiting;
-                    Close(tab);
+                    CloseRequested?.Invoke(this, tab);
                 }));
             return false;
         }

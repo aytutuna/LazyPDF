@@ -237,6 +237,7 @@ public sealed class CloseFlowTests
         File.WriteAllBytes(tab.Path!, Pdfs.Text(2));
         File.SetLastWriteTimeUtc(tab.Path!, DateTime.UtcNow.AddMinutes(10));
         await f.Vm.CheckDiskAsync();
+        f.Vm.CloseRequested += (_, t) => f.Vm.RequestClose(t);
         f.Vm.RequestClose(tab);
 
         Assert.False(f.Vm.Save(tab, closeAfter: true));
@@ -256,6 +257,7 @@ public sealed class CloseFlowTests
         await f.Vm.CheckDiskAsync();
         bool exited = false;
         f.Vm.ExitRequested += (_, _) => exited = true;
+        f.Vm.CloseRequested += (_, t) => f.Vm.RequestClose(t);
         f.Vm.RequestExit();
 
         Assert.False(f.Vm.Save(tab, closeAfter: true));
