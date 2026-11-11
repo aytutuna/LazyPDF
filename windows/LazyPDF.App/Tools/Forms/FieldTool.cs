@@ -8,7 +8,8 @@ namespace LazyPDF.App.Tools.Forms;
 
 /// <summary>
 /// The pointer while fields are edited: a press on a field selects it and a drag moves it, a drag from a
-/// handle of the selected field resizes it, and a drag on an empty place draws a new field of the chosen kind.
+/// handle of the selected field resizes it, and a drag on an empty place draws a new field of the chosen kind, or with none chosen a marquee that picks the fields it touches.
+/// Shift or Ctrl on a field adds it to the pick or takes it out, and a drag of one of several picked fields moves them all.
 /// </summary>
 internal sealed class FieldTool(FormsPanel panel) : IPagePointerTool
 {
@@ -19,6 +20,7 @@ internal sealed class FieldTool(FormsPanel panel) : IPagePointerTool
     {
         None,
         Draw,
+        Marquee,
         Move,
         Size,
     }
@@ -40,7 +42,7 @@ internal sealed class FieldTool(FormsPanel panel) : IPagePointerTool
         _page = pointer.Page;
         _start = pointer.Point;
         double reach = Reach / FieldFrames.Scale(panel.View);
-        if (panel.SelectedBox() is { } selected && selected.Page == _page
+        if (panel.PickedCount == 1 && panel.SelectedBox() is { } selected && selected.Page == _page
             && Array.FindIndex(FieldFrames.Handles(selected.Box), h => Math.Abs(h.X - _start.X) <= reach && Math.Abs(h.Y - _start.Y) <= reach) is var handle and >= 0)
         {
             Begin(Drag.Size, selected.Box);
@@ -48,14 +50,18 @@ internal sealed class FieldTool(FormsPanel panel) : IPagePointerTool
         }
         else if (panel.WidgetAt(_page, _start) is { } hit)
         {
-            panel.Select(hit.Name, hit.Index, hit.Ordinal);
-            Begin(Drag.Move, hit.Box);
+            if (pointer.Modifiers.HasFlag(ModifierKeys.Shift) || pointer.Modifiers.HasFlag(ModifierKeys.Control)) panel.Toggle(hit.Name, hit.Index, hit.Ordinal);
+            else
+            {
+                if (!panel.IsPicked(hit.Name, hit.Index, hit.Ordinal) || panel.PickedCount == 1) panel.Select(hit.Name, hit.Index, hit.Ordinal);
+                Begin(Drag.Move, hit.Box);
+            }
         }
         else
         {
             // Drawing keeps the selection, so a radio button drawn next to a selected group joins it.
             if (panel.NewKind is not null) Begin(Drag.Draw, new Rect(_start, _start));
-            else panel.Select(null, 0);
+            else Begin(Drag.Marquee, new Rect(_start, _start));
         }
     }
 
@@ -66,7 +72,7 @@ internal sealed class FieldTool(FormsPanel panel) : IPagePointerTool
         var p = new Point(Math.Clamp(pointer.Point.X, 0, page.Width), Math.Clamp(pointer.Point.Y, 0, page.Height));
         _box = _drag switch
         {
-            Drag.Draw => new Rect(_start, p),
+            Drag.Draw or Drag.Marquee => new Rect(_start, p),
             Drag.Move => new Rect(_origin.X + p.X - _start.X, _origin.Y + p.Y - _start.Y, _origin.Width, _origin.Height),
             _ => Resized(p),
         };
@@ -88,6 +94,13 @@ internal sealed class FieldTool(FormsPanel panel) : IPagePointerTool
                     box = new Rect(_start.X, _start.Y, w, h);
                 }
                 panel.Draw(_page, box);
+                break;
+            case Drag.Marquee:
+                if (box.Width < MinSize && box.Height < MinSize) panel.Select(null, 0);
+                else panel.PickIn(_page, box);
+                break;
+            case Drag.Move when panel.PickedCount > 1 && box != _origin:
+                panel.ReshapeMany(_page, box.TopLeft - _origin.TopLeft);
                 break;
             case Drag.Move or Drag.Size when box != _origin && box.Width >= MinSize && box.Height >= MinSize:
                 panel.Reshape(_page, box);

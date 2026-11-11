@@ -67,6 +67,7 @@ public sealed partial class FormsPanel : ToolPanel
         InputManager.Current.PreProcessInput += Input_PreProcess;
         Viewer.View.PreviewKeyDown += View_PreviewKeyDown;
         _selected = null;
+        _picked = [];
         _found = [];
         _signedOk = false;
         _working = false;
@@ -251,16 +252,28 @@ public sealed partial class FormsPanel : ToolPanel
     {
         if (Tab is null) return;
         _selected = null;
+        _picked = [];
         Reload();
     }
 
     private void FieldList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_loading || FieldList.SelectedItem is not FieldRow row || Form.FindAll(row.Name).ElementAtOrDefault(row.Ordinal)?.Widgets.ElementAtOrDefault(row.Index) is not { PageIndex: >= 0 } widget) return;
+        if (_loading) return;
+        if (Designing && FieldList.SelectedItems.Count == 0)
+        {
+            Select(null, 0);
+            return;
+        }
+        if ((e.AddedItems.OfType<FieldRow>().LastOrDefault() ?? FieldList.SelectedItem as FieldRow) is not { } row
+            || Form.FindAll(row.Name).ElementAtOrDefault(row.Ordinal)?.Widgets.ElementAtOrDefault(row.Index) is not { PageIndex: >= 0 } widget) return;
         var d = Viewer!.Geometry(widget.PageIndex).ToDisplay(widget.Rect);
         Viewer.GoToPage(widget.PageIndex);
         Viewer.Reveal(widget.PageIndex, new Rect(d.X, d.Y, d.Width, d.Height));
-        if (Designing) Select(row.Name, row.Index, row.Ordinal);
+        if (Designing)
+        {
+            var others = FieldList.SelectedItems.OfType<FieldRow>().Where(r => r != row && r.Page == row.Page).Select(r => (r.Name, r.Index, r.Ordinal));
+            Pick([.. others, (row.Name, row.Index, row.Ordinal)]);
+        }
         else Dispatcher.InvokeAsync(() => _fill?.Focus(row.Name, row.Index), DispatcherPriority.Loaded);
     }
 

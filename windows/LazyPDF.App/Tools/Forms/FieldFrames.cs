@@ -7,16 +7,14 @@ using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Forms;
 
-/// <summary>The outlines of the fields on the pages in view while they are being edited, the selected one with handles, and the fields the detector found.</summary>
+/// <summary>The outlines of the fields on the pages in view while they are being edited, the selected ones, with handles when there is one, and the fields the detector found.</summary>
 internal sealed class FieldFrames(IDocumentViewer viewer)
 {
     private const double HandleSize = 8;
 
     private readonly Dictionary<int, Canvas> _hosts = [];
     private PdfForm? _form;
-    private string? _name;
-    private int _index;
-    private int _ordinal;
+    private HashSet<(string Name, int Index, int Ordinal)> _picked = [];
     private IReadOnlyList<FieldProposal> _proposals = [];
     private string _seen = "";
 
@@ -30,12 +28,10 @@ internal sealed class FieldFrames(IDocumentViewer viewer)
         return [box.TopLeft, new(cx, box.Top), box.TopRight, new(box.Right, cy), box.BottomRight, new(cx, box.Bottom), box.BottomLeft, new(box.Left, cy)];
     }
 
-    public void Show(PdfForm form, string? selectedName, int selectedIndex, int selectedOrdinal, IReadOnlyList<FieldProposal> proposals)
+    public void Show(PdfForm form, IEnumerable<(string Name, int Index, int Ordinal)> picked, IReadOnlyList<FieldProposal> proposals)
     {
         _form = form;
-        _name = selectedName;
-        _index = selectedIndex;
-        _ordinal = selectedOrdinal;
+        _picked = [.. picked];
         _proposals = proposals;
         Redraw();
     }
@@ -75,10 +71,10 @@ internal sealed class FieldFrames(IDocumentViewer viewer)
             foreach (var (widget, field, index, ordinal) in widgets[page])
             {
                 var d = geometry.ToDisplay(widget.Rect);
-                bool selected = field.Name == _name && index == _index && ordinal == _ordinal;
+                bool selected = _picked.Contains((field.Name, index, ordinal));
                 var box = new Rect(d.X, d.Y, d.Width, d.Height);
                 host.Children.Add(Outline(box, selected ? 2.5 : 1.25, scale, filled: selected, dashed: false));
-                if (!selected) continue;
+                if (!selected || _picked.Count > 1) continue;
                 foreach (var centre in Handles(box)) host.Children.Add(Handle(centre, scale));
             }
             foreach (var proposal in _proposals.Where(p => p.PageIndex == page))

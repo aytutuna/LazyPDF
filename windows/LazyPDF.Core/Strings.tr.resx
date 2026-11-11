@@ -1501,6 +1501,9 @@
   <data name="Delete form field" xml:space="preserve">
     <value>Form alanını sil</value>
   </data>
+  <data name="Delete form fields" xml:space="preserve">
+    <value>Form alanlarını sil</value>
+  </data>
   <data name="Delete pages" xml:space="preserve">
     <value>Sayfaları sil</value>
   </data>
@@ -3087,6 +3090,9 @@
   </data>
   <data name="Move form field" xml:space="preserve">
     <value>Form alanını taşı</value>
+  </data>
+  <data name="Move form fields" xml:space="preserve">
+    <value>Form alanlarını taşı</value>
   </data>
   <data name="Move in" xml:space="preserve">
     <value>İçeri taşı</value>
@@ -7392,6 +7398,9 @@
   </data>
   <data name="{0} field reset.|plural" xml:space="preserve">
     <value>Sıfırlanan alan: {0}.</value>
+  </data>
+  <data name="{0} field selected|plural" xml:space="preserve">
+    <value>{0} alan seçildi</value>
   </data>
   <data name="{0} field, {1} required|plural" xml:space="preserve">
     <value>{0} alan, {1} zorunlu</value>

@@ -4086,6 +4086,9 @@
   "Delete form field": {
     "tr": "Form alanını sil"
   },
+  "Delete form fields": {
+    "tr": "Form alanlarını sil"
+  },
   "Drag on the page to draw it. With a radio group selected the button joins it.": {
     "tr": "Çizmek için sayfada sürükleyin. Bir seçenek grubu seçiliyse düğme gruba katılır."
   },
@@ -4184,6 +4187,9 @@
   },
   "Move form field": {
     "tr": "Form alanını taşı"
+  },
+  "Move form fields": {
+    "tr": "Form alanlarını taşı"
   },
   "Name": {
     "tr": "Ad"
@@ -4313,6 +4319,10 @@
   "{0} field reset.": {
     "other": "{0} fields reset.",
     "tr": "Sıfırlanan alan: {0}."
+  },
+  "{0} field selected": {
+    "other": "{0} fields selected",
+    "tr": "{0} alan seçildi"
   },
   "{0} field, {1} required": {
     "other": "{0} fields, {1} required",

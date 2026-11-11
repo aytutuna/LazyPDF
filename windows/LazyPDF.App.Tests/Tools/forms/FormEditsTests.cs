@@ -1,3 +1,4 @@
+using System.Windows;
 using LazyPDF.App.Tools.Forms;
 using LazyPDF.Core;
 using Xunit;
@@ -24,6 +25,68 @@ public sealed class FormEditsTests
         Assert.Equal("Ada", FormPdfs.Read(tab).Find("name")!.Value);
         tab.Undo();
         Assert.Null(FormPdfs.Read(tab).Find("name")!.Value);
+    }
+
+    private static Rect Box(FormWidget widget) => new(widget.Rect.Left, widget.Rect.Bottom, widget.Rect.Right - widget.Rect.Left, widget.Rect.Top - widget.Rect.Bottom);
+
+    [Fact]
+    public void ManyFieldsMoveTogetherInOneUndoableStep()
+    {
+        using var tab = FormPdfs.Tab();
+        var before = FormPdfs.Read(tab);
+        var name = before.Find("name")!.Widgets[0].Rect;
+        var code = before.Find("code")!.Widgets[0].Rect;
+
+        FormEdits.Apply(tab, Fonts, "Move form fields", form =>
+        {
+            FormEdits.ResizeAll(form,
+            [
+                ("name", 0, 0, new PdfRect(name.Left + 10, name.Bottom - 5, name.Right + 10, name.Top - 5)),
+                ("code", 0, 0, new PdfRect(code.Left + 10, code.Bottom - 5, code.Right + 10, code.Top - 5)),
+            ]);
+            return true;
+        });
+
+        var moved = FormPdfs.Read(tab);
+        Assert.Equal(name.Left + 10, moved.Find("name")!.Widgets[0].Rect.Left, 3);
+        Assert.Equal(code.Bottom - 5, moved.Find("code")!.Widgets[0].Rect.Bottom, 3);
+        Assert.Equal("Move form fields", tab.Session.UndoLabel);
+        tab.Undo();
+        var back = FormPdfs.Read(tab);
+        Assert.Equal(name, back.Find("name")!.Widgets[0].Rect);
+        Assert.Equal(code, back.Find("code")!.Widgets[0].Rect);
+    }
+
+    [Fact]
+    public void AMarqueeTouchesEveryWidgetItCrosses()
+    {
+        var form = FormPdfs.Read(FormPdfs.Tab());
+
+        var touched = FormEdits.Widgets(form, 0, Box).Where(w => w.Box.IntersectsWith(new Rect(50, 570, 120, 100))).Select(w => w.Name).ToList();
+
+        Assert.Equal(["name", "code", "agree"], touched);
+    }
+
+    [Fact]
+    public void DeletingManyFieldsIsOneUndoableStep()
+    {
+        using var tab = FormPdfs.Tab();
+
+        FormEdits.Apply(tab, Fonts, "Delete form fields", form =>
+        {
+            FormEdits.RemoveAll(form, [("name", 0, 0), ("plan", 1, 0), ("agree", 0, 0)]);
+            return true;
+        });
+
+        var form = FormPdfs.Read(tab);
+        Assert.Null(form.Find("name"));
+        Assert.Null(form.Find("agree"));
+        Assert.Single(form.Find("plan")!.Widgets);
+        Assert.Equal("Delete form fields", tab.Session.UndoLabel);
+        tab.Undo();
+        form = FormPdfs.Read(tab);
+        Assert.NotNull(form.Find("name"));
+        Assert.Equal(2, form.Find("plan")!.Widgets.Count);
     }
 
     [Fact]

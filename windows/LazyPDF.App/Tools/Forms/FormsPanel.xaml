@@ -26,7 +26,7 @@
 
         <StackPanel x:Name="FieldsPane" Margin="0,12,0,0">
             <TextBlock Text="{loc:T Fields}" Style="{StaticResource FieldLabelText}" />
-            <ListBox x:Name="FieldList" MaxHeight="160" SelectionChanged="FieldList_SelectionChanged" AutomationProperties.Name="{loc:T Fields}">
+            <ListBox x:Name="FieldList" MaxHeight="160" SelectionMode="Extended" SelectionChanged="FieldList_SelectionChanged" AutomationProperties.Name="{loc:T Fields}">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
                         <Setter Property="AutomationProperties.Name" Value="{Binding Summary}" />
@@ -63,6 +63,7 @@
             </StackPanel>
             <TextBlock x:Name="DrawHint" Style="{StaticResource ReasonText}" Margin="0,6,0,12" Text="{loc:T Drag on the page to draw a field. Click a field to change it.}" />
 
+            <TextBlock x:Name="PickedText" Style="{StaticResource BodyText}" Margin="0,0,0,12" Visibility="Collapsed" />
             <Border x:Name="Card" Style="{StaticResource CardStyle}" Margin="0,0,0,12" Visibility="Collapsed">
                 <StackPanel>
                     <TextBlock Text="{loc:T Name}" Style="{StaticResource FieldLabelText}" />

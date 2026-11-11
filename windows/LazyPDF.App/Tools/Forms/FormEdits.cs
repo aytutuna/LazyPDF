@@ -1,3 +1,4 @@
+using System.Windows;
 using LazyPDF.App.Documents;
 using LazyPDF.Core;
 
@@ -70,6 +71,39 @@ internal static class FormEdits
             if (form.Find(stem + n) is null) return stem + n;
         }
     }
+
+    /// <summary>Every widget on a page with its box, in the order of the fields; the ordinal tells apart fields that share a name.</summary>
+    public static List<(string Name, int Index, int Ordinal, Rect Box)> Widgets(PdfForm form, int page, Func<FormWidget, Rect> boxOf)
+    {
+        var found = new List<(string, int, int, Rect)>();
+        var seen = new Dictionary<string, int>();
+        foreach (var field in form.Fields)
+        {
+            int ordinal = seen.GetValueOrDefault(field.Name);
+            seen[field.Name] = ordinal + 1;
+            for (int i = 0; i < field.Widgets.Count; i++)
+            {
+                if (field.Widgets[i].PageIndex == page) found.Add((field.Name, i, ordinal, boxOf(field.Widgets[i])));
+            }
+        }
+        return found;
+    }
+
+    /// <summary>Gives each widget its rectangle.</summary>
+    public static void ResizeAll(PdfForm form, IEnumerable<(string Name, int Index, int Ordinal, PdfRect Rect)> moves)
+    {
+        foreach (var (name, index, ordinal, rect) in moves) form.Resize(WidgetOf(form, name, index, ordinal), rect);
+    }
+
+    /// <summary>Takes the widgets out. Each removal reads the form again, so the last widgets go first and a radio group loses its buttons from the end.</summary>
+    public static void RemoveAll(PdfForm form, IEnumerable<(string Name, int Index, int Ordinal)> picked)
+    {
+        foreach (var (name, index, ordinal) in picked.OrderByDescending(p => p.Ordinal).ThenByDescending(p => p.Index))
+            form.Remove(WidgetOf(form, name, index, ordinal));
+    }
+
+    private static FormWidget WidgetOf(PdfForm form, string name, int index, int ordinal) =>
+        form.FindAll(name).ElementAtOrDefault(ordinal)?.Widgets.ElementAtOrDefault(index) ?? throw new InvalidOperationException(FormText.NotAField);
 
     /// <summary>Points, for a field drawn with a click instead of a drag.</summary>
     public static (double Width, double Height) DefaultSize(FieldKind kind) => kind switch
