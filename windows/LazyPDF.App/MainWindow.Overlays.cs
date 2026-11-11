@@ -133,9 +133,11 @@ public partial class MainWindow
         CloseOverlay.Visibility = Visibility.Visible;
         bool marksOnly = !tab.IsDirty;
         CloseTitle.Text = marksOnly ? Loc.T("Close {0}?", tab.Title) : Loc.T("Save changes to {0}?", tab.Title);
-        string lost = Loc.T("Your changes are lost if you do not save them.");
-        string marks = Loc.Plural(tab.PendingMarks, "{0} redaction mark is not applied yet.", "{0} redaction marks are not applied yet.");
-        CloseBody.Text = marksOnly ? marks : tab.PendingMarks > 0 ? $"{lost} {marks}" : lost;
+        var parts = new List<string>();
+        if (!marksOnly) parts.Add(Loc.T("Your changes are lost if you do not save them."));
+        if (tab.PendingMarks > 0) parts.Add(Loc.Plural(tab.PendingMarks, "{0} redaction mark is not applied yet.", "{0} redaction marks are not applied yet."));
+        if (tab.PendingMeasurements > 0) parts.Add(Loc.Plural(tab.PendingMeasurements, "{0} measurement is not added to the page yet.", "{0} measurements are not added to the page yet."));
+        CloseBody.Text = string.Join(" ", parts);
         CloseSaveButton.Visibility = marksOnly ? Visibility.Collapsed : Visibility.Visible;
         string discard = marksOnly ? Loc.T("Close") : Loc.T("Don't save");
         CloseDiscardButton.Content = discard;

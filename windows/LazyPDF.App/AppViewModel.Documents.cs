@@ -335,7 +335,7 @@ public sealed partial class AppViewModel
     {
         if (WaitForJob()) return false;
         DropAction();
-        if (!tab.IsDirty && tab.PendingMarks == 0)
+        if (!tab.IsDirty && !tab.HasUnappliedWork)
         {
             Close(tab);
             return true;
@@ -401,7 +401,7 @@ public sealed partial class AppViewModel
 
     private bool ContinueExit(bool raise)
     {
-        if (Documents.FirstOrDefault(d => d.IsDirty || d.PendingMarks > 0) is { } dirty)
+        if (Documents.FirstOrDefault(d => d.IsDirty || d.HasUnappliedWork) is { } dirty)
         {
             ActiveTab = dirty;
             CloseQuestion = dirty;

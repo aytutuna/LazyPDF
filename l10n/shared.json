@@ -7260,6 +7260,10 @@
     "other": "{0} redaction marks are not applied yet.",
     "tr": "{0} karartma işareti henüz uygulanmadı."
   },
+  "{0} measurement is not added to the page yet.": {
+    "other": "{0} measurements are not added to the page yet.",
+    "tr": "{0} ölçüm henüz sayfaya eklenmedi."
+  },
   "Arrow keys move it. Enter places it. Escape cancels.": {
     "tr": "Ok tuşları taşır. Enter yerleştirir. Esc iptal eder."
   },

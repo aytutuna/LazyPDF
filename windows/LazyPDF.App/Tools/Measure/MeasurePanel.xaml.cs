@@ -213,6 +213,7 @@ public partial class MeasurePanel : ToolPanel
         Results.ItemsSource = Items.Select(i => new MeasureRow(i, i.Value(_scale), Loc.T("Page {0}", Viewer?.PageLabel(i.Page) ?? (i.Page + 1).ToString()),
                                                                 Loc.T("Remove {0}", i.Title))).ToList();
         Empty.Visibility = _waiting.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        Tab!.PendingMeasurements = _waiting.Count;
         _overlay?.Draw(Items, _scale);
         RaiseActionChanged();
         ShowReadout();

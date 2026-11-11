@@ -70,6 +70,47 @@ public sealed class CloseFlowTests
     }
 
     [Fact]
+    public async Task ATabWithMeasurementsWaitingIsAskedAboutAndStaysOpen()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf());
+        var tab = f.Vm.ActiveDocument!;
+        tab.PendingMeasurements = 2;
+
+        Assert.False(f.Vm.RequestClose(tab));
+
+        Assert.Same(tab, f.Vm.CloseQuestion);
+        Assert.False(tab.IsDirty);
+        Assert.Single(f.Vm.Documents);
+    }
+
+    [Fact]
+    public async Task ExitAsksAboutWaitingMeasurementsToo()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf());
+        var tab = f.Vm.ActiveDocument!;
+        tab.PendingMeasurements = 1;
+
+        Assert.False(f.Vm.RequestExit());
+
+        Assert.Same(tab, f.Vm.CloseQuestion);
+    }
+
+    [Fact]
+    public async Task ATabWithNoMeasurementsWaitingClosesAtOnce()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf());
+        var tab = f.Vm.ActiveDocument!;
+        tab.PendingMeasurements = 0;
+
+        Assert.True(f.Vm.RequestClose(tab));
+
+        Assert.Empty(f.Vm.Documents);
+    }
+
+    [Fact]
     public async Task CancellingTheQuestionKeepsTheDocument()
     {
         using var f = new ViewModelFixture();

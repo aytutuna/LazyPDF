@@ -100,6 +100,11 @@ public sealed class DocumentTab : ITab, IDisposable
     /// <summary>Redaction marks drawn but not yet applied; they live in the Redact panel and are lost with the tab.</summary>
     public int PendingMarks { get; set; }
 
+    /// <summary>Measurements waiting in the Measure panel to be added to the page; lost with the tab.</summary>
+    public int PendingMeasurements { get; set; }
+
+    public bool HasUnappliedWork => PendingMarks > 0 || PendingMeasurements > 0;
+
     public bool CanClose => true;
 
     /// <summary>Raised when the file's bytes changed.</summary>

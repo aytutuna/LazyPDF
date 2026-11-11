@@ -7234,6 +7234,9 @@
   <data name="{0} match was left as it was: {1}|plural" xml:space="preserve">
     <value>{0} eşleşme olduğu gibi bırakıldı: {1}</value>
   </data>
+  <data name="{0} measurement is not added to the page yet.|plural" xml:space="preserve">
+    <value>{0} ölçüm henüz sayfaya eklenmedi.</value>
+  </data>
   <data name="{0} more" xml:space="preserve">
     <value>{0} tane daha</value>
   </data>
