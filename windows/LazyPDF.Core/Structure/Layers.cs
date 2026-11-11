@@ -121,9 +121,14 @@ public static class PdfLayers
     private static List<IReadOnlyList<PdfReference>> RadioGroups(PdfDocument document, PdfDictionary? config, Dictionary<int, PdfLayer> layers)
     {
         var result = new List<IReadOnlyList<PdfReference>>();
+        var seen = new HashSet<int>();
+        var budget = MaxLayers;
         foreach (var group in document.Array(config, "RBGroups")?.Items.Take(MaxLayers) ?? [])
         {
+            if (group is PdfReference g && !seen.Add(g.Number)) continue;
             if (document.Resolve(group) is not PdfArray members) continue;
+            budget -= members.Items.Count;
+            if (budget < 0) break;
             var known = members.Items.OfType<PdfReference>().Where(r => layers.ContainsKey(r.Number)).ToList();
             if (known.Count >= 2) result.Add(known);
         }

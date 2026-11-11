@@ -132,8 +132,13 @@ public enum PdfLayers {
 
     private static func radioGroups(_ document: PdfDocument, _ config: PdfDictionary?, _ layers: [Int: PdfLayer]) -> [[PdfReference]] {
         var result: [[PdfReference]] = []
+        var seen = Set<Int>()
+        var budget = maxLayers
         for group in (document.array(config, "RBGroups")?.items ?? []).prefix(maxLayers) {
+            if let g = group as? PdfReference, !seen.insert(g.number).inserted { continue }
             guard let members = document.resolve(group) as? PdfArray else { continue }
+            budget -= members.items.count
+            if budget < 0 { break }
             let known = members.items.compactMap { $0 as? PdfReference }.filter { layers[$0.number] != nil }
             if known.count >= 2 { result.append(known) }
         }
