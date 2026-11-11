@@ -107,6 +107,13 @@ enum CertificateSigning {
         PdfForm.read(document).fields.filter { $0.kind == .signature && !$0.isSigned }.map(\.name)
     }
 
+    /// The place choice to keep after the file changed: 0 not visible, 1 a drawn box, 2 and up the fields in order.
+    static func keptPlace(oldIndex: Int, oldField: String?, fields: [String]) -> Int {
+        if oldIndex == 0 || oldIndex == 1 { return oldIndex }
+        guard let oldField, let at = fields.firstIndex(of: oldField) else { return 0 }
+        return at + 2
+    }
+
     // The transport answers nobody once the token is cancelled, which the engine takes for servers that are down: it goes on and
     // commits what it can. A cancelled run adds nothing, so what was committed is taken back, and the error is the cancel.
     private static func guarded(_ session: PdfEditSession, _ token: CancelToken, _ work: () throws -> Void) throws {

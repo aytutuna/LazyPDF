@@ -78,6 +78,7 @@ public final class CertificatesModel: ToolPanelModel {
     @ObservationIgnored private var watch: ObservationWatch?
     @ObservationIgnored private var tool: SignatureBoxTool?
     private var box: (page: Int, area: ViewRect)?
+    @ObservationIgnored private var boxKey: PageKey?
     @ObservationIgnored private var pfx: [UInt8]?
     @ObservationIgnored private let trust: SignatureTrust
     @ObservationIgnored private let fonts: FontSource?
@@ -145,7 +146,6 @@ public final class CertificatesModel: ToolPanelModel {
         identities = host.certificateChoices()
         selectedIdentity = identities.contains { $0.id == chosen } ? chosen : identities.first?.id
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in
-            self?.clearBox()
             self?.refill()
         })
         refill()
@@ -172,9 +172,21 @@ public final class CertificatesModel: ToolPanelModel {
         stop()
         var choices = [SignaturePlaceChoice(text: L10n.t("Not visible"), place: .invisible), SignaturePlaceChoice(text: L10n.t("A box I draw on the page"), place: .box)]
         choices += CertificateSigning.emptyFields(tab.document).map { SignaturePlaceChoice(text: L10n.t("Field {0}", $0), place: .field($0)) }
+        var field: String?
+        if case .field(let name)? = place?.place { field = name }
         places = choices
-        placeIndex = 0
-        boxText = ""
+        let kept = CertificateSigning.keptPlace(oldIndex: placeIndex, oldField: field, fields: choices.dropFirst(2).compactMap { choice -> String? in
+            if case .field(let name) = choice.place { return name }
+            return nil
+        })
+        let keepBox = kept == 1 && box.map { $0.page < tab.pageCount && PageKey.of(tab.document.pages[$0.page]) == boxKey } ?? false
+        if !keepBox { clearBox() }
+        placeIndex = kept
+        if keepBox, let box {
+            viewer?.overlay(box.page).set(SignatureBoxTool.outline(SignatureBoxTool.outlineId, box.area))
+        } else {
+            boxText = kept == 1 ? L10n.t("No box yet.") : ""
+        }
         if tab.document.isSigned { certifyIndex = 0 }
     }
 
@@ -218,6 +230,7 @@ public final class CertificatesModel: ToolPanelModel {
     private func boxDrawn(_ page: Int, _ area: ViewRect) {
         stop()
         box = (page, area)
+        if let tab { boxKey = PageKey.of(tab.document.pages[page]) }
         viewer?.overlay(page).set(SignatureBoxTool.outline(SignatureBoxTool.outlineId, area))
         boxText = L10n.t("Box drawn on page {0}.", page + 1)
     }
@@ -351,6 +364,7 @@ public final class CertificatesModel: ToolPanelModel {
         }
         working = false
         let changed = session.current.count != before
+        if changed { clearBox() }
         if !finished || changed { tab.reload() }
         afterwards(finished, covered, changed, transport)
     }

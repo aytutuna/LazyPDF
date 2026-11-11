@@ -307,8 +307,68 @@ final class CertificatesModelTests: XCTestCase {
 
         await waitUntil { s.rig.viewer.pointerTool == nil }
         XCTAssertNil(s.rig.viewer.pointerTool)
-        XCTAssertFalse(s.model.drawsBox)
-        XCTAssertEqual(s.model.boxText, "")
+        XCTAssertTrue(s.model.drawsBox)
+        XCTAssertEqual(s.model.boxText, "No box yet.")
+    }
+
+    private func drawnBox(_ s: Setup) throws {
+        s.model.setPlace(1)
+        s.model.drawBox()
+        let tool = try XCTUnwrap(s.rig.viewer.pointerTool)
+        func pointer(_ x: Double, _ y: Double, _ pressed: Bool) -> PagePointer {
+            PagePointer(page: 1, point: ViewPoint(x, y), view: ViewPoint(x, y), pressed: pressed, clicks: pressed ? 0 : 1)
+        }
+        tool.press(pointer(20, 30, true))
+        tool.move(pointer(120, 90, true))
+        tool.release(pointer(120, 90, false))
+    }
+
+    func test_theKeptPlaceFollowsTheFieldWhenTheListChanges() {
+        XCTAssertEqual(CertificateSigning.keptPlace(oldIndex: 0, oldField: nil, fields: ["A", "B"]), 0)
+        XCTAssertEqual(CertificateSigning.keptPlace(oldIndex: 1, oldField: nil, fields: ["A", "B"]), 1)
+        XCTAssertEqual(CertificateSigning.keptPlace(oldIndex: 2, oldField: "B", fields: ["A", "B"]), 3)
+        XCTAssertEqual(CertificateSigning.keptPlace(oldIndex: 2, oldField: "Gone", fields: ["A", "B"]), 0)
+    }
+
+    func test_aBoxSurvivesAChangeThatLeavesItsPageAlone() throws {
+        let s = try attached()
+        try drawnBox(s)
+
+        _ = try PdfForm.read(s.rig.tab.session.document).addField(FieldSpec(.signature, "Approval", 0, PdfRect(72, 100, 200, 150)))
+        _ = try s.rig.tab.commit("Field")
+
+        XCTAssertEqual(s.model.placeIndex, 1)
+        XCTAssertEqual(s.model.boxText, "Box drawn on page 2.")
+        XCTAssertNotNil(s.rig.viewer.overlay(1).item("certificates.box"))
+        XCTAssertTrue(s.model.action!.canRun())
+    }
+
+    func test_aBoxIsDroppedWhenItsPageIsRotatedOrGone() throws {
+        let s = try attached()
+        try drawnBox(s)
+        PageOperations.rotate(s.rig.tab.document, [1], 90)
+        _ = try s.rig.tab.commit("Rotate")
+
+        XCTAssertEqual(s.model.placeIndex, 1)
+        XCTAssertEqual(s.model.boxText, "No box yet.")
+        XCTAssertNil(s.rig.viewer.overlay(1).item("certificates.box"))
+
+        try drawnBox(s)
+        try PageOperations.delete(s.rig.tab.document, [1])
+        _ = try s.rig.tab.commit("Delete")
+
+        XCTAssertEqual(s.model.boxText, "No box yet.")
+        XCTAssertFalse(s.model.action!.canRun())
+    }
+
+    func test_aBoxIsDroppedAfterASigningRunThatChangedTheFile() async throws {
+        let s = try attached()
+        try drawnBox(s)
+
+        await s.model.action!.run()
+
+        XCTAssertNil(s.rig.viewer.overlay(1).item("certificates.box"))
+        XCTAssertEqual(s.model.boxText, "No box yet.")
     }
 
     func test_aPressTakenAwayByASecondFingerKeepsTheBoxTool() throws {
