@@ -136,6 +136,13 @@ public partial class PagesPanel
         CropHint.Text += " " + Loc.T("The rest of the page stays in the file, only hidden. Redact removes it for good.");
         CropMargins.IsEnabled = Margins() is not null;
         if (!CropMargins.IsEnabled) CropHint.Text += " " + Loc.T("Type margins as numbers, 0 or more.");
+        else
+        {
+            int marked = MarginPages().Count;
+            CropHint.Text += " " + (marked < Cells.Count
+                ? Loc.Plural(marked, "The margins change {0} selected page.", "The margins change {0} selected pages.", marked)
+                : Loc.T("The margins change every page."));
+        }
         TrimWhite.IsEnabled = Tab!.CanDraw;
         TrimHint.Text = Tab.CanDraw
             ? Loc.T("Crops each page to what is printed on it, plus a small border. The rest stays in the file, only hidden.")
@@ -202,10 +209,13 @@ public partial class PagesPanel
         return (values[0], values[1], values[2], values[3]);
     }
 
+    // A page picked only to hold the drawn box is not a choice of the person, so the margins leave it out.
+    private List<int> MarginPages() => CropAll.IsChecked != true && !_boxSelected ? SelectedOrAll() : [.. Enumerable.Range(0, Cells.Count)];
+
     private void CropMargins_Click(object sender, RoutedEventArgs e)
     {
         if (Margins() is not { } m) return;
-        var pages = SelectedOrAll();
+        var pages = MarginPages();
         var targets = PageEdits.CropMarginTargets(Tab!.Document, pages, m.Left, m.Top, m.Right, m.Bottom);
         if (targets.Count == 0)
         {

@@ -5744,6 +5744,13 @@
   "Type margins as numbers, 0 or more.": {
     "tr": "Payları 0 ya da daha büyük sayılar olarak yazın."
   },
+  "The margins change every page.": {
+    "tr": "Paylar tüm sayfaları değiştirir."
+  },
+  "The margins change {0} selected page.": {
+    "other": "The margins change {0} selected pages.",
+    "tr": "Paylar {0} seçili sayfayı değiştirir."
+  },
   "Margins too large": {
     "tr": "Paylar çok büyük"
   },

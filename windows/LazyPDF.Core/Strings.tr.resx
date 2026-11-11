@@ -6286,6 +6286,12 @@
   <data name="The margin leaves no room on the page. Pick a smaller margin." xml:space="preserve">
     <value>Kenar boşluğu sayfada yer bırakmıyor. Daha küçük bir boşluk seçin.</value>
   </data>
+  <data name="The margins change every page." xml:space="preserve">
+    <value>Paylar tüm sayfaları değiştirir.</value>
+  </data>
+  <data name="The margins change {0} selected page.|plural" xml:space="preserve">
+    <value>Paylar {0} seçili sayfayı değiştirir.</value>
+  </data>
   <data name="The margins leave nothing of the page. Type smaller numbers." xml:space="preserve">
     <value>Paylar sayfadan hiçbir şey bırakmıyor. Daha küçük sayılar yazın.</value>
   </data>
