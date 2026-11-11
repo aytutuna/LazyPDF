@@ -41,6 +41,7 @@ extension PdfForm {
 
     func fill(_ entries: [(name: String, text: String?, choices: [String]?)]) throws -> FormFillResult {
         try requireFillable()
+        undrawn = []
         var unknown: [String] = []
         var rejected: [String] = []
         var plan: [Change] = []
@@ -62,7 +63,8 @@ extension PdfForm {
         let calculation = try recalculate()
         var seen = Set<[UInt16]>()
         let distinct = rejected.filter { seen.insert(Array($0.utf16)).inserted }
-        return FormFillResult(plan.count, unknown, distinct, calculation.changed, calculation.notRun)
+        return FormFillResult(plan.count, unknown, distinct, calculation.changed, calculation.notRun,
+                               String(String.UnicodeScalarView(undrawn.sorted().compactMap { Unicode.Scalar(UInt32($0)) })))
     }
 
     /// Puts the named field (all fields when nil) back to its /DV, or to empty without one, and runs the calculation order.
@@ -361,13 +363,14 @@ extension PdfForm {
             let (family, style) = current == nil ? known(name) : FormFont.familyOf(document, resources, name)
             let embedder = PdfFontEmbedder(document, fonts)
             let added: PdfDrawFont
-            if let first = try embedder.add(family, style, texts) {
+            if let first = try embedder.addCovering(family, style, texts) {
                 added = first
             } else if let second = try embedder.add("Helvetica", style, texts) {
                 added = second
             } else {
                 throw InvalidOperationException(FormText.noFont)
             }
+            undrawn.formUnion(added.missing)
             // A name already taken (a Type0 subset that fromResource cannot read) keeps its font.
             if current == nil, !added.isEmbedded, let table = document.dict(resources, "Font"), !table.containsKey(name) {
                 table[name] = added.reference

@@ -151,13 +151,15 @@ public struct FormFillResult {
     public let rejected: [String]
     public let calculated: Int
     public let notRun: [FormScript]
+    public let undrawn: String
 
-    public init(_ filled: Int, _ unknownFields: [String], _ rejected: [String], _ calculated: Int, _ notRun: [FormScript]) {
+    public init(_ filled: Int, _ unknownFields: [String], _ rejected: [String], _ calculated: Int, _ notRun: [FormScript], _ undrawn: String = "") {
         self.filled = filled
         self.unknownFields = unknownFields
         self.rejected = rejected
         self.calculated = calculated
         self.notRun = notRun
+        self.undrawn = undrawn
     }
 }
 

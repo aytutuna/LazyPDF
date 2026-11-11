@@ -74,6 +74,49 @@ final class FormFillTests: XCTestCase {
         try AnnotationFixtures.reopen(form.document)
     }
 
+    private final class CjkSource: FontSource {
+        private let lacking: [UInt8]
+        private let covering: [UInt8]?
+
+        init(covering: Bool) throws {
+            lacking = try SyntheticFonts.onlyA()
+            self.covering = covering ? try SyntheticFonts.ttf() : nil
+        }
+
+        func find(_ family: String, _ style: FontStyles) -> FontFile? {
+            if family == "Microsoft YaHei", let covering { return FontFile(covering) }
+            return FontFile(lacking)
+        }
+    }
+
+    func test_textTheFormFontLacksIsDrawnInAFallbackFont() throws {
+        let form = try open(fonts: try CjkSource(covering: true))
+
+        let result = try form.setValue("name", "AğB A")
+
+        XCTAssertEqual(result.undrawn, "")
+        XCTAssertEqual(try FormFixtures.drawn(form.document, try widget(form, "name")), "AğB A")
+        let stream = try normal(form, try widget(form, "name"))
+        let fonts = try XCTUnwrap(form.document.dict(form.document.dict(stream.dictionary, "Resources"), "Font"))
+        let used = try XCTUnwrap(form.document.resolve(try XCTUnwrap(fonts.entries.first).value) as? PdfDictionary)
+        XCTAssertEqual(form.document.name(used, "Subtype"), "Type0")
+    }
+
+    func test_charactersNoFontHasAreReportedAndTheFillSucceeds() throws {
+        let form = try open(fonts: try CjkSource(covering: false))
+
+        let result = try form.setValue("name", "BğBğA")
+
+        XCTAssertEqual(result.filled, 1)
+        XCTAssertEqual(result.undrawn, "Bğ")
+        XCTAssertEqual(try XCTUnwrap(form.find("name")).value, "BğBğA")
+    }
+
+    func test_ordinaryTurkishFillLeavesNothingUndrawn() throws {
+        let form = try open(fonts: try AnnotationFixtures.ArialSource())
+
+        XCTAssertEqual(try form.setValue("name", "AğB İA").undrawn, "")
+    }
     func test_fontNameWithReplacementSyntaxGoesIntoTheDefaultAppearanceLiterally() throws {
         let form = try open()
         let holder = PdfDictionary()
