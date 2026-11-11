@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Tools.FillSign;
 using Microsoft.Win32;
 using LazyPDF.Core;
 
@@ -126,7 +127,7 @@ public sealed partial class EditContentPanel
     {
         try
         {
-            return System.IO.File.ReadAllBytes(path);
+            return SignatureArt.UprightFile(System.IO.File.ReadAllBytes(path));
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
         {

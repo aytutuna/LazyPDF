@@ -56,6 +56,17 @@ internal static class SignatureArt
         return Trim(PaperToClear(Shrink(Upright(frames[0], Orientation(file)))));
     }
 
+    /// <summary>A camera JPEG turned upright and saved without its orientation tag; any other file as it is.</summary>
+    public static byte[] UprightFile(byte[] file)
+    {
+        if (file.Length < 2 || file[0] != 0xFF || file[1] != 0xD8) return file;
+        int orientation = Orientation(file);
+        if (orientation is < 2 or > 8) return file;
+        var codec = new WicImageCodec();
+        if (codec.DecodeFile(file) is not { Count: > 0 } frames) return file;
+        return codec.EncodeJpeg(Upright(frames[0], orientation), 92);
+    }
+
     /// <summary>The picture turned a quarter clockwise.</summary>
     public static PdfRgbaImage Turn(PdfRgbaImage image) => Read(new TransformedBitmap(ToBitmap(image), new RotateTransform(90)));
 

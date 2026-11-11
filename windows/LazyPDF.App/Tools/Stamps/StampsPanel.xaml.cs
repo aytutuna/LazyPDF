@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Tools.FillSign;
 using LazyPDF.App.Services;
 using LazyPDF.Core;
 using Microsoft.Win32;
@@ -276,7 +277,7 @@ public sealed partial class StampsPanel : ToolPanel
         if (dialog.ShowDialog() != true) return;
         try
         {
-            var bytes = File.ReadAllBytes(dialog.FileName);
+            var bytes = SignatureArt.UprightFile(File.ReadAllBytes(dialog.FileName));
             _pictureImage = Decode(bytes);
             _picture = bytes;
         }

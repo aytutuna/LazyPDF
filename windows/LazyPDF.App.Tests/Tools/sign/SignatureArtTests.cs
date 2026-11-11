@@ -1,8 +1,10 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Ink;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools.FillSign;
 using LazyPDF.Core;
 using Xunit;
@@ -165,6 +167,43 @@ public sealed class SignatureArtTests
             Assert.Equal(wide.Rgba[0..4], turned.Rgba[4..8]);
             var back = SignatureArt.Turn(SignatureArt.Turn(SignatureArt.Turn(turned)));
             Assert.Equal(wide.Rgba, back.Rgba);
+        });
+    }
+
+    private static byte[] Jpeg(ushort orientation)
+    {
+        var metadata = new BitmapMetadata("jpg");
+        metadata.SetQuery("System.Photo.Orientation", orientation);
+        var source = BitmapSource.Create(4, 2, 96, 96, PixelFormats.Bgra32, null, new byte[32], 16);
+        var encoder = new JpegBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(source, null, metadata, null));
+        using var stream = new MemoryStream();
+        encoder.Save(stream);
+        return stream.ToArray();
+    }
+
+    [Fact]
+    public void ASidewaysCameraJpegIsTurnedUpright()
+    {
+        OnSta.Run(() =>
+        {
+            var upright = SignatureArt.UprightFile(Jpeg(6));
+
+            var frames = new WicImageCodec().DecodeFile(upright)!;
+            Assert.Equal((2, 4), (frames[0].Width, frames[0].Height));
+        });
+    }
+
+    [Fact]
+    public void AnUprightJpegAndAPngAreLeftAlone()
+    {
+        OnSta.Run(() =>
+        {
+            var jpeg = Jpeg(1);
+            var png = SignatureArt.ToPng(Blank(4, 2));
+
+            Assert.Same(jpeg, SignatureArt.UprightFile(jpeg));
+            Assert.Same(png, SignatureArt.UprightFile(png));
         });
     }
 }
