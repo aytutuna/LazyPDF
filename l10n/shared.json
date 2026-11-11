@@ -1666,6 +1666,12 @@
   "Save compact": {
     "tr": "Küçülterek kaydet"
   },
+  "Saved compact": {
+    "tr": "Küçülterek kaydedildi"
+  },
+  "{0} was saved without its history, so the earlier steps can no longer be undone.": {
+    "tr": "{0} geçmişi olmadan kaydedildi, bu yüzden önceki adımlar artık geri alınamaz."
+  },
   "Sent {0} to the printer.": {
     "tr": "{0} yazıcıya gönderildi."
   },

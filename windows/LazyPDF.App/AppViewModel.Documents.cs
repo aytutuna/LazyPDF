@@ -254,7 +254,12 @@ public sealed partial class AppViewModel
 
     public bool SaveAs(DocumentTab tab, string path) => !OpenElsewhere(tab, path) && Write(tab, () => tab.SaveAs(path));
 
-    public bool SaveCompact(DocumentTab tab, string path) => !OpenElsewhere(tab, path) && Write(tab, () => tab.SaveCompact(path));
+    public bool SaveCompact(DocumentTab tab, string path)
+    {
+        if (OpenElsewhere(tab, path) || !Write(tab, () => tab.SaveCompact(path))) return false;
+        ShowNotice(Loc.T("Saved compact"), Loc.T("{0} was saved without its history, so the earlier steps can no longer be undone.", tab.Title));
+        return true;
+    }
 
     // Two tabs on one file would each save over the other.
     private bool OpenElsewhere(DocumentTab tab, string path)

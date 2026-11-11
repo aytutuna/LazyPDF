@@ -4321,6 +4321,9 @@
   <data name="Saved as {0}." xml:space="preserve">
     <value>{0} olarak kaydedildi.</value>
   </data>
+  <data name="Saved compact" xml:space="preserve">
+    <value>Küçülterek kaydedildi</value>
+  </data>
   <data name="Saved initials" xml:space="preserve">
     <value>Kayıtlı baş harfler</value>
   </data>
@@ -6966,6 +6969,9 @@
   </data>
   <data name="{0} was saved but could not be read again. Open it from disk." xml:space="preserve">
     <value>{0} kaydedildi ama yeniden okunamadı. Diskten açın.</value>
+  </data>
+  <data name="{0} was saved without its history, so the earlier steps can no longer be undone." xml:space="preserve">
+    <value>{0} geçmişi olmadan kaydedildi, bu yüzden önceki adımlar artık geri alınamaz.</value>
   </data>
   <data name="{0} × {1} pt" xml:space="preserve">
     <value>{0} × {1} pt</value>

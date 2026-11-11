@@ -170,6 +170,8 @@ public sealed class CloseFlowTests
 
         Assert.False(f.Vm.CanUndo);
         Assert.Equal("small.pdf", tab.Title);
+        Assert.Equal("Saved compact", f.Vm.Message?.Title);
+        Assert.False(f.Vm.Message!.IsError);
     }
 
     [Fact]
