@@ -183,7 +183,7 @@
                      AutomationProperties.Name="{loc:T Open files}" AllowDrop="True"
                      SelectionChanged="TabList_SelectionChanged" PreviewMouseDown="TabList_PreviewMouseDown" PreviewKeyDown="TabList_PreviewKeyDown"
                      PreviewMouseLeftButtonDown="TabList_PreviewMouseLeftButtonDown" PreviewMouseMove="TabList_PreviewMouseMove"
-                     Drop="TabList_Drop" DragOver="TabList_DragOver">
+                     Drop="TabList_Drop" DragOver="TabList_DragOver" ContextMenuOpening="TabList_ContextMenuOpening">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
                         <local:TabStripPanel />

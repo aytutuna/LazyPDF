@@ -366,6 +366,11 @@ public partial class MainWindow : Window
         if (HandInTyping(tab)) _vm.RequestClose(tab);
     }
 
+    private void RequestCloseMany(IEnumerable<DocumentTab> tabs)
+    {
+        if (HandInTyping(_vm.ActiveDocument)) _vm.RequestCloseMany(tabs);
+    }
+
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         // AltGr arrives as Ctrl+Alt, so a key typed with it is not a shortcut.
@@ -379,6 +384,7 @@ public partial class MainWindow : Window
                 case Key.S when shift: SaveAsWithDialog(); break;
                 case Key.S: SaveWithDialog(); break;
                 case Key.W when _vm.ActiveDocument is { } open: RequestClose(open); break;
+                case Key.T when shift: _ = _vm.ReopenClosedAsync(); break;
                 case Key.P: _vm.Print(); break;
                 case Key.F when _vm.ActiveDocument is not null && _vm.HeldStage is null: _viewer.ShowFind(); break;
                 case Key.G when _vm.ActiveDocument is not null && _vm.HeldStage is null: _viewer.ShowGoToPage(); break;

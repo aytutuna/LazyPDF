@@ -1195,8 +1195,14 @@
   <data name="Close" xml:space="preserve">
     <value>Kapat</value>
   </data>
+  <data name="Close other tabs" xml:space="preserve">
+    <value>Diğer sekmeleri kapat</value>
+  </data>
   <data name="Close tab" xml:space="preserve">
     <value>Sekmeyi kapat</value>
+  </data>
+  <data name="Close tabs to the right" xml:space="preserve">
+    <value>Sağdaki sekmeleri kapat</value>
   </data>
   <data name="Close the search bar" xml:space="preserve">
     <value>Arama çubuğunu kapat</value>
@@ -1359,6 +1365,9 @@
   </data>
   <data name="Copy is not protected" xml:space="preserve">
     <value>Kopya korumasız</value>
+  </data>
+  <data name="Copy path" xml:space="preserve">
+    <value>Yolu kopyala</value>
   </data>
   <data name="Copy text and pictures" xml:space="preserve">
     <value>Metni ve resimleri kopyala</value>
@@ -4575,6 +4584,9 @@
   </data>
   <data name="Rename field" xml:space="preserve">
     <value>Alanı yeniden adlandır</value>
+  </data>
+  <data name="Reopen closed tab" xml:space="preserve">
+    <value>Kapatılan sekmeyi yeniden aç</value>
   </data>
   <data name="Reopen the files from last time" xml:space="preserve">
     <value>Geçen seferki dosyaları yeniden aç</value>

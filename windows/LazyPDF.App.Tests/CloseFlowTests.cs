@@ -429,4 +429,104 @@ public sealed class CloseFlowTests
         Assert.Equal(2, tab.PendingMarks);
         Assert.False(f.Vm.RequestClose(tab));
     }
+
+    [Fact]
+    public async Task ClosingManyAsksAboutTheFirstTabWithChangesAndCarriesOnAfterTheAnswer()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf("a.pdf"));
+        var keep = f.Vm.ActiveDocument!;
+        var dirty = await OpenDirty(f, "b.pdf");
+        await f.Vm.OpenAsync(f.Pdf("c.pdf"));
+        var clean = f.Vm.ActiveDocument!;
+
+        f.Vm.RequestCloseMany([clean, dirty]);
+
+        Assert.Same(dirty, f.Vm.CloseQuestion);
+        Assert.Equal(2, f.Vm.Documents.Count());
+        f.Vm.Close(dirty);
+        Assert.Null(f.Vm.CloseQuestion);
+        Assert.Same(keep, Assert.Single(f.Vm.Documents));
+    }
+
+    [Fact]
+    public async Task CancellingTheQuestionDropsTheRestOfTheTabsToClose()
+    {
+        using var f = new ViewModelFixture();
+        var dirty = await OpenDirty(f, "a.pdf");
+        await f.Vm.OpenAsync(f.Pdf("b.pdf"));
+        var clean = f.Vm.ActiveDocument!;
+
+        f.Vm.RequestCloseMany([dirty, clean]);
+        f.Vm.CancelClose();
+        f.Vm.Close(dirty);
+
+        Assert.Same(clean, Assert.Single(f.Vm.Documents));
+    }
+
+    [Fact]
+    public async Task ReopenClosedOpensTheFileClosedLast()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Pdf("a.pdf"));
+        await f.Vm.OpenAsync(f.Pdf("b.pdf"));
+        f.Vm.Close(f.Vm.ActiveDocument!);
+        f.Vm.Close(f.Vm.ActiveDocument!);
+
+        await f.Vm.ReopenClosedAsync();
+
+        Assert.Equal("a.pdf", f.Vm.ActiveDocument!.Title);
+        Assert.Single(f.Vm.ClosedFiles);
+    }
+
+    [Fact]
+    public async Task ReopenClosedSkipsAFileThatIsGone()
+    {
+        using var f = new ViewModelFixture();
+        string a = f.Pdf("a.pdf");
+        await f.Vm.OpenAsync(a);
+        string b = f.Pdf("b.pdf");
+        await f.Vm.OpenAsync(b);
+        f.Vm.Close(f.Vm.ActiveDocument!);
+        f.Vm.Close(f.Vm.ActiveDocument!);
+        File.Delete(a);
+
+        await f.Vm.ReopenClosedAsync();
+
+        Assert.Equal("b.pdf", f.Vm.ActiveDocument!.Title);
+        Assert.Empty(f.Vm.ClosedFiles);
+    }
+
+    [Fact]
+    public async Task ReopenClosedWithNothingLeftThereSaysItIsNotFound()
+    {
+        using var f = new ViewModelFixture();
+        string a = f.Pdf("a.pdf");
+        await f.Vm.OpenAsync(a);
+        f.Vm.Close(f.Vm.ActiveDocument!);
+        File.Delete(a);
+
+        await f.Vm.ReopenClosedAsync();
+
+        Assert.Empty(f.Vm.Documents);
+        Assert.NotNull(f.Vm.Message);
+        Assert.True(f.Vm.Message!.IsError);
+    }
+
+    [Fact]
+    public async Task ClosedFilesKeepTheLastTenWithoutRepeats()
+    {
+        using var f = new ViewModelFixture();
+        for (int i = 0; i < 12; i++)
+        {
+            await f.Vm.OpenAsync(f.Pdf($"{i}.pdf"));
+            f.Vm.Close(f.Vm.ActiveDocument!);
+        }
+        await f.Vm.OpenAsync(f.Vm.ClosedFiles[^1]);
+        f.Vm.Close(f.Vm.ActiveDocument!);
+
+        Assert.Equal(10, f.Vm.ClosedFiles.Count);
+        Assert.Equal(10, f.Vm.ClosedFiles.Distinct().Count());
+        Assert.EndsWith("11.pdf", f.Vm.ClosedFiles[^1]);
+    }
 }

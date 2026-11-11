@@ -1848,6 +1848,15 @@
   "C_lose": {
     "tr": "Kap_at"
   },
+  "Close other tabs": {
+    "tr": "Diğer sekmeleri kapat"
+  },
+  "Close tabs to the right": {
+    "tr": "Sağdaki sekmeleri kapat"
+  },
+  "Reopen closed tab": {
+    "tr": "Kapatılan sekmeyi yeniden aç"
+  },
   "Unsaved changes": {
     "tr": "Kaydedilmemiş değişiklikler"
   },
@@ -3459,6 +3468,9 @@
   },
   "Show in folder": {
     "tr": "Klasörde göster"
+  },
+  "Copy path": {
+    "tr": "Yolu kopyala"
   },
   "Export saved.": {
     "tr": "Dışa aktarma kaydedildi."

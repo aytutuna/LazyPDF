@@ -1,6 +1,8 @@
 // The tab strip: picking, closing (the button, or a click of the middle button) and dragging a tab to
 // another place in the strip. Home stays first.
 
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
@@ -59,6 +61,59 @@ public partial class MainWindow
             menu.Items.Add(item);
         }
         menu.IsOpen = true;
+    }
+
+    private void TabList_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        if (TabAt(e.OriginalSource) is not DocumentTab tab)
+        {
+            e.Handled = true;
+            return;
+        }
+        int index = _vm.Strip.IndexOf(tab);
+        var others = _vm.Documents.Where(d => !ReferenceEquals(d, tab)).ToList();
+        var right = _vm.Strip.Skip(index + 1).OfType<DocumentTab>().ToList();
+        var menu = new ContextMenu();
+        AddItem(menu, Loc.T("Close"), !_vm.IsBusy, () => RequestClose(tab));
+        AddItem(menu, Loc.T("Close other tabs"), !_vm.IsBusy && others.Count > 0, () => RequestCloseMany(others));
+        AddItem(menu, Loc.T("Close tabs to the right"), !_vm.IsBusy && right.Count > 0, () => RequestCloseMany(right));
+        menu.Items.Add(new Separator());
+        AddItem(menu, Loc.T("Copy path"), tab.Path is not null, () => CopyPath(tab.Path!));
+        AddItem(menu, Loc.T("Show in folder"), tab.Path is not null, () => ShowInFolder(tab.Path!));
+        menu.Items.Add(new Separator());
+        AddItem(menu, Loc.T("Reopen closed tab"), _vm.ClosedFiles.Count > 0, () => _ = _vm.ReopenClosedAsync());
+        TabList.ContextMenu = menu;
+    }
+
+    private static void AddItem(ContextMenu menu, string header, bool enabled, Action run)
+    {
+        var item = new MenuItem { Header = header, IsEnabled = enabled };
+        AutomationProperties.SetName(item, header);
+        item.Click += (_, _) => run();
+        menu.Items.Add(item);
+    }
+
+    private static void CopyPath(string path)
+    {
+        try
+        {
+            Clipboard.SetText(path);
+        }
+        catch (COMException)
+        {
+        }
+    }
+
+    private void ShowInFolder(string path)
+    {
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\""));
+        }
+        catch (Exception error) when (error is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            _vm.ShowProblem(new Problem(Loc.T("Not opened"), Loc.T("Windows could not open {0}.", path)));
+        }
     }
 
     private void CloseTab_Click(object sender, RoutedEventArgs e)

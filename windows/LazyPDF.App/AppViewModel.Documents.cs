@@ -32,6 +32,8 @@ public sealed partial class AppViewModel
     private readonly List<PendingOpen> _pending = [];
     private readonly HashSet<string> _opening = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<DocumentTab, DiskStamp?> _warnedAboutDisk = [];
+    private readonly List<string> _closedFiles = [];
+    private readonly List<DocumentTab> _closeQueue = [];
     private bool _exiting;
 
     /// <summary>The file that is waiting for a password or a certificate, if any.</summary>
@@ -39,6 +41,9 @@ public sealed partial class AppViewModel
 
     /// <summary>The document that has unsaved changes and is being closed; the window asks what to do with them.</summary>
     public DocumentTab? CloseQuestion { get; private set; }
+
+    /// <summary>The files of the tabs closed lately, the last one closed at the end.</summary>
+    public IReadOnlyList<string> ClosedFiles => _closedFiles;
 
     public bool CanUndo => ActiveDocument?.Session.CanUndo == true;
 
@@ -51,6 +56,21 @@ public sealed partial class AppViewModel
     public async Task OpenFilesAsync(IEnumerable<string> paths)
     {
         foreach (string path in paths) await OpenAsync(path);
+    }
+
+    /// <summary>Opens the file closed last that is still there; when none is, tries the first one anyway so the problem says why.</summary>
+    public async Task ReopenClosedAsync()
+    {
+        while (_closedFiles.Count > 0)
+        {
+            string path = _closedFiles[^1];
+            _closedFiles.RemoveAt(_closedFiles.Count - 1);
+            if (File.Exists(path) || _closedFiles.Count == 0)
+            {
+                await OpenAsync(path);
+                return;
+            }
+        }
     }
 
     public Task<bool> OpenNewAsync(byte[] pdf, string title) => OpenNewAsync(pdf, title, null, null);
@@ -398,9 +418,44 @@ public sealed partial class AppViewModel
         _warnedAboutDisk.Remove(tab);
         tab.Changed -= Tab_Changed;
         RememberView(tab);
+        if (tab.Path is { } path)
+        {
+            _closedFiles.Remove(path);
+            _closedFiles.Add(path);
+            if (_closedFiles.Count > 10) _closedFiles.RemoveAt(0);
+        }
         tab.Dispose();
         NotifyAll();
         if (_exiting) ContinueExit(raise: true);
+        else if (CloseQuestion is null) ContinueClosing();
+    }
+
+    /// <summary>Closes the tabs that have nothing unsaved at once and asks about the first one that has; each answer carries on with the rest.</summary>
+    public void RequestCloseMany(IEnumerable<DocumentTab> tabs)
+    {
+        if (WaitForJob()) return;
+        DropAction();
+        _closeQueue.Clear();
+        _closeQueue.AddRange(tabs);
+        ContinueClosing();
+    }
+
+    private void ContinueClosing()
+    {
+        while (_closeQueue.Count > 0)
+        {
+            var tab = _closeQueue[0];
+            _closeQueue.RemoveAt(0);
+            if (!Strip.Contains(tab)) continue;
+            if (tab.IsDirty || tab.HasUnappliedWork)
+            {
+                ActiveTab = tab;
+                CloseQuestion = tab;
+                NotifyAll();
+                return;
+            }
+            Close(tab);
+        }
     }
 
     public bool IsExiting => _exiting;
@@ -417,6 +472,7 @@ public sealed partial class AppViewModel
     public void CancelClose()
     {
         CloseQuestion = null;
+        _closeQueue.Clear();
         _exiting = false;
         NotifyAll();
     }
