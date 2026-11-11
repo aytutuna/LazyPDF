@@ -58,7 +58,7 @@ public sealed partial class MetadataPanel : ToolPanel
     // A signed file asks first, so there the caller is told to wait and leaving the panel does not ask again.
     public override bool HandIn()
     {
-        if (Tab is null || !_changed || _customProblem is null) return Store(false);
+        if (Tab is null || !_changed || _customProblem is null) return Store(true);
         Host!.ShowNotice(Loc.T("Properties not saved"), _customProblem);
         return false;
     }
