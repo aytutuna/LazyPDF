@@ -2527,6 +2527,9 @@
   <data name="Links to the outside" xml:space="preserve">
     <value>Dışarıya bağlantılar</value>
   </data>
+  <data name="Links to web pages stop working. Off unless you tick it." xml:space="preserve">
+    <value>Web sayfalarına giden bağlantılar çalışmaz olur. İşaretlemezseniz kapalıdır.</value>
+  </data>
   <data name="Links without tags or text: {0}{1}. Tag each link and give it text." xml:space="preserve">
     <value>Etiketi ya da metni olmayan bağlantılar: {0}{1}. Her bağlantıyı etiketleyin ve metin verin.</value>
   </data>
@@ -2994,6 +2997,9 @@
   </data>
   <data name="Note" xml:space="preserve">
     <value>Not</value>
+  </data>
+  <data name="Notes, highlights, drawings, stamps and text boxes on the pages. Off unless you tick it." xml:space="preserve">
+    <value>Sayfalardaki notlar, vurgular, çizimler, damgalar ve metin kutuları. İşaretlemezseniz kapalıdır.</value>
   </data>
   <data name="Nothing exported" xml:space="preserve">
     <value>Dışa aktarılan bir şey yok</value>
@@ -6081,6 +6087,9 @@
   </data>
   <data name="What was found" xml:space="preserve">
     <value>Bulunanlar</value>
+  </data>
+  <data name="What was typed into the form. Off unless you tick it." xml:space="preserve">
+    <value>Forma yazılanlar. İşaretlemezseniz kapalıdır.</value>
   </data>
   <data name="What would you like to do?" xml:space="preserve">
     <value>Ne yapmak istersiniz?</value>

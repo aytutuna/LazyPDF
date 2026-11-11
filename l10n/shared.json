@@ -4380,6 +4380,15 @@
   "May be the text layer of a scan. Off unless you tick it.": {
     "tr": "Bir taramanın metin katmanı olabilir. İşaretlemezseniz kapalıdır."
   },
+  "Notes, highlights, drawings, stamps and text boxes on the pages. Off unless you tick it.": {
+    "tr": "Sayfalardaki notlar, vurgular, çizimler, damgalar ve metin kutuları. İşaretlemezseniz kapalıdır."
+  },
+  "What was typed into the form. Off unless you tick it.": {
+    "tr": "Forma yazılanlar. İşaretlemezseniz kapalıdır."
+  },
+  "Links to web pages stop working. Off unless you tick it.": {
+    "tr": "Web sayfalarına giden bağlantılar çalışmaz olur. İşaretlemezseniz kapalıdır."
+  },
   "New file": {
     "tr": "Yeni dosya"
   },
