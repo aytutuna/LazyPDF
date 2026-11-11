@@ -545,7 +545,7 @@ final class PointerToolTests: XCTestCase {
     func test_aFingerNearAMarkStillPicksItWhenNothingLiesUnderIt() throws {
         let (tool, _, _, made) = try editing()
 
-        tool.press(press(markPt(150, 175)))
+        tool.press(finger(markPt(150, 175)))
 
         XCTAssertEqual(tool.current?.reference?.number, made.reference?.number)
     }
