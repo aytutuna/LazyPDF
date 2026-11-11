@@ -394,6 +394,14 @@ public partial class PageViewer
         return runs;
     }
 
+    public async Task<SelectedRun?> GetSelectionEndAsync()
+    {
+        if (_selection.IsEmpty) return null;
+        int page = _selection.End.Page;
+        if (await GetTextAsync(page) is not { } text || _selection.On(page, text.Chars.Count) is not { } range) return null;
+        return new SelectedRun(page, range, text.GetText(range), text.Quads(range));
+    }
+
     private string? SelectedOnOnePage()
     {
         int page = _selection.Start.Page;

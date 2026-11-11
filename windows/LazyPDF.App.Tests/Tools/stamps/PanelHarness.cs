@@ -95,7 +95,15 @@ public class FakeViewer : DispatchProxy
 {
     public PageOverlay Overlay { get; } = new(0, new Size(200, 300));
 
-    public FrameworkElement View { get; } = new();
+    public FrameworkElement View { get; } = Laid();
+
+    private static FrameworkElement Laid()
+    {
+        var view = new FrameworkElement { Width = 800, Height = 600 };
+        view.Measure(new Size(800, 600));
+        view.Arrange(new Rect(0, 0, 800, 600));
+        return view;
+    }
 
     public ViewerSearch? Search { get; private set; }
 
@@ -131,6 +139,7 @@ public class FakeViewer : DispatchProxy
         "get_View" => View,
         "get_HasSelection" => Selected.Count > 0,
         "GetSelectionAsync" => Task.FromResult<IReadOnlyList<SelectedRun>>([.. Selected]),
+        "GetSelectionEndAsync" => Task.FromResult(Selected.Count > 0 ? Selected[^1] : null),
         "ClearSelection" => Clear(),
         "add_SelectionChanged" => Subscribe((EventHandler)args![0]!),
         "remove_SelectionChanged" => Unsubscribe((EventHandler)args![0]!),

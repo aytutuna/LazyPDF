@@ -202,6 +202,9 @@ public interface IDocumentViewer
     /// <summary>The selected text, page by page.</summary>
     Task<IReadOnlyList<SelectedRun>> GetSelectionAsync();
 
+    /// <summary>The part of the selection on its last page only, so a selection over many pages is not read; null when that page has none.</summary>
+    Task<SelectedRun?> GetSelectionEndAsync();
+
     void SelectAll();
 
     void ClearSelection();

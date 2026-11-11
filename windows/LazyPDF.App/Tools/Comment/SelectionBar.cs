@@ -20,7 +20,9 @@ internal sealed class SelectionBar
     private readonly Func<bool> _wanted;
     private readonly DispatcherTimer _delay = new() { Interval = TimeSpan.FromMilliseconds(250) };
     private readonly Popup _popup;
+    private readonly Window? _window;
     private (int Page, TextQuad Quad)? _last;
+    private int _version;
 
     public SelectionBar(IDocumentViewer viewer, Func<bool> wanted, Func<AnnotationType, Task> mark)
     {
@@ -54,6 +56,13 @@ internal sealed class SelectionBar
         };
         _delay.Tick += Delay_Tick;
         viewer.SelectionChanged += Viewer_SelectionChanged;
+        _window = Window.GetWindow(viewer.View);
+        if (_window is not null)
+        {
+            _window.Deactivated += Window_Deactivated;
+            _window.Activated += Window_Activated;
+            _window.LocationChanged += Window_Activated;
+        }
     }
 
     public bool IsOpen => _popup.IsOpen;
@@ -66,7 +75,9 @@ internal sealed class SelectionBar
 
     public void Hide()
     {
+        _version++;
         _delay.Stop();
+        _last = null;
         _popup.IsOpen = false;
     }
 
@@ -74,12 +85,22 @@ internal sealed class SelectionBar
     {
         Hide();
         _viewer.SelectionChanged -= Viewer_SelectionChanged;
+        if (_window is null) return;
+        _window.Deactivated -= Window_Deactivated;
+        _window.Activated -= Window_Activated;
+        _window.LocationChanged -= Window_Activated;
     }
 
     // Puts the bar above the last line of the selection, or below it when the line is at the top of the view.
+    // It is not shown while that line is out of view or another window is in front.
     public void Move()
     {
-        if (!_popup.IsOpen || _last is not { } last || _viewer.PageToView(last.Page) is not { } toView) return;
+        if (_last is not { } last) return;
+        if (_window is { IsActive: false } || _viewer.PageToView(last.Page) is not { } toView)
+        {
+            _popup.IsOpen = false;
+            return;
+        }
         var geometry = _viewer.Geometry(last.Page);
         var q = last.Quad;
         var area = Rect.Empty;
@@ -87,6 +108,11 @@ internal sealed class SelectionBar
         {
             var (px, py) = geometry.ToDisplay(x, y);
             area.Union(toView.Transform(new Point(px, py)));
+        }
+        if (!new Rect(0, 0, _viewer.View.ActualWidth, _viewer.View.ActualHeight).IntersectsWith(area))
+        {
+            _popup.IsOpen = false;
+            return;
         }
         var child = (FrameworkElement)_popup.Child;
         child.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
@@ -96,7 +122,12 @@ internal sealed class SelectionBar
         if (top < 0) top = area.Bottom + Gap;
         _popup.HorizontalOffset = Math.Max(left, 0);
         _popup.VerticalOffset = top;
+        _popup.IsOpen = true;
     }
+
+    private void Window_Deactivated(object? sender, EventArgs e) => _popup.IsOpen = false;
+
+    private void Window_Activated(object? sender, EventArgs e) => Move();
 
     private void Viewer_SelectionChanged(object? sender, EventArgs e) => Refresh();
 
@@ -109,11 +140,11 @@ internal sealed class SelectionBar
             return;
         }
         if (!_wanted() || !_viewer.HasSelection) return;
-        var runs = await _viewer.GetSelectionAsync();
-        if (_delay.IsEnabled || !_wanted() || !_viewer.HasSelection || Mouse.LeftButton == MouseButtonState.Pressed) return;
-        if (runs.Count == 0 || runs[^1].Quads.Count == 0) return;
-        _last = (runs[^1].Page, runs[^1].Quads[^1]);
-        _popup.IsOpen = true;
+        int version = _version;
+        var end = await _viewer.GetSelectionEndAsync();
+        if (version != _version || _delay.IsEnabled || !_wanted() || !_viewer.HasSelection || Mouse.LeftButton == MouseButtonState.Pressed) return;
+        if (end is not { Quads.Count: > 0 }) return;
+        _last = (end.Page, end.Quads[^1]);
         Move();
     }
 }

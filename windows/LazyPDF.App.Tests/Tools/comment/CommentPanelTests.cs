@@ -285,7 +285,7 @@ public sealed class CommentPanelTests
         panel.Attach(f.Tab, viewer, new RecordingHost());
         var bar = Get<SelectionBar>(panel, "_bar");
 
-        stand.Select(new SelectedRun(0, default, "Hello", [new TextQuad(100, 700, 180, 700, 180, 712, 100, 712)]));
+        stand.Select(new SelectedRun(0, default, "Hello", [new TextQuad(100, 200, 180, 200, 180, 212, 100, 212)]));
         Assert.False(bar.IsOpen);
         await Sta.Until(() => bar.IsOpen);
 
@@ -307,7 +307,7 @@ public sealed class CommentPanelTests
         var panel = new CommentPanel();
         panel.Attach(f.Tab, viewer, new RecordingHost());
         var bar = Get<SelectionBar>(panel, "_bar");
-        stand.Select(new SelectedRun(0, default, "Hello", [new TextQuad(100, 700, 180, 700, 180, 712, 100, 712)]));
+        stand.Select(new SelectedRun(0, default, "Hello", [new TextQuad(100, 200, 180, 200, 180, 212, 100, 212)]));
         await Sta.Until(() => bar.IsOpen);
 
         stand.Select();
