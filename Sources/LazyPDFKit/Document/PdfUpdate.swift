@@ -35,8 +35,8 @@ enum PdfUpdate {
         }
         if let head = freed.first { entries.append(XrefEntry(0, 0, head, 65535)) }
 
-        // After a rebuild the file's own sections cannot be built on, so this one lists everything.
-        let full = document.xrefRebuilt
+        // After a rebuild the file's own sections cannot be built on, and past the reader's chain limit it would not read back, so this one lists everything.
+        let full = document.xrefRebuilt || document.sectionOffsets.count >= PdfDocument.maxSections
         if full {
             let written = Set(entries.map { $0.number })
             for (number, entry) in document.entries where !written.contains(number) {

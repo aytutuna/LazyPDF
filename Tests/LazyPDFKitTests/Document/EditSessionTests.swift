@@ -328,4 +328,21 @@ final class EditSessionTests: XCTestCase {
         let session = try PdfEditSession.open(pdf.finish())
         XCTAssertEqual(session.versions.count, 1)
     }
-}
+
+    func test_pastTheSectionLimitTheNextUpdateIsAFullSection() throws {
+        for kind in ["table", "stream"] {
+            let session = try PdfEditSession.open(try SaveFixtures.make(kind))
+            for i in 1...(PdfDocument.maxSections + 4) {
+                retitle(session, "Title \(i)")
+                XCTAssertTrue(try session.commit("Title"), kind)
+                if i % 500 == 0 { XCTAssertFalse(session.document.xrefRebuilt, kind) }
+            }
+            XCTAssertFalse(session.document.xrefRebuilt, kind)
+            XCTAssertLessThan(session.document.sectionOffsets.count, PdfDocument.maxSections, kind)
+
+            let reopened = try PdfDocument.open(session.current)
+            XCTAssertFalse(reopened.xrefRebuilt, kind)
+            XCTAssertEqual(SaveFixtures.title(reopened), "Title \(PdfDocument.maxSections + 4)", kind)
+            XCTAssertEqual(reopened.pages.count, 2, kind)
+        }
+    }}
