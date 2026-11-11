@@ -1,7 +1,6 @@
-using System.Globalization;
 using System.Runtime.InteropServices;
-using System.Text;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Create;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Documents;
@@ -56,7 +55,7 @@ public sealed class DocumentOpener(IImageCodec codec, IFontSource fonts)
         }
         if (FileKinds.IsText(path))
         {
-            var made = PdfFromText.Create(Decode(bytes), fonts);
+            var made = PdfFromText.Create(TextFiles.Decode(bytes), fonts);
             return new OpenSource(made.Bytes, null, stem + ".pdf", true, made.Missing.Count > 0 ? Loc.T("Some characters have no letter in the font and were left out.") : null);
         }
         return new OpenSource(bytes, path, System.IO.Path.GetFileName(path), false, Stamp: stamp, ReadOnly: new FileInfo(path).IsReadOnly, FileId: Identity(path),
@@ -97,27 +96,4 @@ public sealed class DocumentOpener(IImageCodec codec, IFontSource fonts)
     [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetFileInformationByHandle(Microsoft.Win32.SafeHandles.SafeFileHandle file, out ByHandleFileInformation info);
-
-    static DocumentOpener() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-    internal static string Decode(byte[] bytes)
-    {
-        if (bytes is [0xFF, 0xFE, ..]) return Encoding.Unicode.GetString(bytes, 2, bytes.Length - 2);
-        if (bytes is [0xFE, 0xFF, ..]) return Encoding.BigEndianUnicode.GetString(bytes, 2, bytes.Length - 2);
-        try
-        {
-            return new UTF8Encoding(false, true).GetString(bytes).TrimStart('﻿');
-        }
-        catch (DecoderFallbackException)
-        {
-            try
-            {
-                return Encoding.GetEncoding(CultureInfo.CurrentCulture.TextInfo.ANSICodePage).GetString(bytes);
-            }
-            catch (Exception e) when (e is ArgumentException or NotSupportedException)
-            {
-                return Encoding.Latin1.GetString(bytes);
-            }
-        }
-    }
 }

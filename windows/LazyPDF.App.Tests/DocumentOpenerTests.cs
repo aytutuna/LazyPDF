@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Create;
 using LazyPDF.Core;
 using Xunit;
 
@@ -86,7 +87,32 @@ public sealed class DocumentOpenerTests
     {
         byte[] bytes = [.. Encoding.Unicode.GetPreamble(), .. Encoding.Unicode.GetBytes("héllo")];
 
-        Assert.Equal("héllo", DocumentOpener.Decode(bytes));
+        Assert.Equal("héllo", TextFiles.Decode(bytes));
+    }
+
+    [Fact]
+    public void Utf16BigEndianTextWithABomIsDecoded()
+    {
+        byte[] bytes = [.. Encoding.BigEndianUnicode.GetPreamble(), .. Encoding.BigEndianUnicode.GetBytes("héllo")];
+
+        Assert.Equal("héllo", TextFiles.Decode(bytes));
+    }
+
+    [Fact]
+    public void Utf32TextWithABomIsDecoded()
+    {
+        byte[] bytes = [.. Encoding.UTF32.GetPreamble(), .. Encoding.UTF32.GetBytes("héllo")];
+
+        Assert.Equal("héllo", TextFiles.Decode(bytes));
+    }
+
+    [Fact]
+    public void InvalidUtf8IsReadInTheCodePage()
+    {
+        var saved = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("tr-TR");
+        try { Assert.Equal("Çalışma", TextFiles.Decode([0xC7, 0x61, 0x6C, 0xFD, 0xFE, 0x6D, 0x61])); }
+        finally { CultureInfo.CurrentCulture = saved; }
     }
 
     [Fact]
@@ -94,13 +120,13 @@ public sealed class DocumentOpenerTests
     {
         byte[] bytes = [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes("héllo")];
 
-        Assert.Equal("héllo", DocumentOpener.Decode(bytes));
+        Assert.Equal("héllo", TextFiles.Decode(bytes));
     }
 
     [Fact]
     public void AsciiIsUnchanged()
     {
-        Assert.Equal("plain text", DocumentOpener.Decode(Encoding.ASCII.GetBytes("plain text")));
+        Assert.Equal("plain text", TextFiles.Decode(Encoding.ASCII.GetBytes("plain text")));
     }
 
     [Fact]
@@ -109,7 +135,7 @@ public sealed class DocumentOpenerTests
         byte[] bytes = [0xFE, 0xF0, 0xDD];
         var saved = CultureInfo.CurrentCulture;
         CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("tr-TR");
-        try { Assert.Equal("şğİ", DocumentOpener.Decode(bytes)); }
+        try { Assert.Equal("şğİ", TextFiles.Decode(bytes)); }
         finally { CultureInfo.CurrentCulture = saved; }
     }
 
