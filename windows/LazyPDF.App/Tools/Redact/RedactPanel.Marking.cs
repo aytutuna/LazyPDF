@@ -28,7 +28,7 @@ public partial class RedactPanel
     private void BoxDrawn(int page, Point from, Point to)
     {
         var mark = MarkShapes.Box(page, Viewer!.Geometry(page), from, to);
-        _state!.Marks.Add([new MarkItem(mark, Loc.T("Box"))]);
+        _state!.Marks.Add([new MarkItem(mark, Loc.T("Box"), IsBox: true)]);
     }
 
     private void Viewer_SelectionChanged(object? sender, EventArgs e) => ShowSelectionNote();

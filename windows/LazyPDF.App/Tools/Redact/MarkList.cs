@@ -3,7 +3,7 @@ using LazyPDF.Core;
 namespace LazyPDF.App.Tools.Redact;
 
 /// <summary>One entry of the review list: the mark and a few words to know it by.</summary>
-public sealed record MarkItem(RedactionMark Mark, string Label)
+public sealed record MarkItem(RedactionMark Mark, string Label, bool IsBox = false)
 {
     public int Page => Mark.Page;
 
@@ -44,7 +44,7 @@ public sealed class MarkList
         }
         if (fresh.Count == 0) return 0;
         Push();
-        _items = [.. _items.Concat(fresh).OrderBy(m => m.Page).ThenByDescending(m => Top(m.Mark)).ThenBy(m => Left(m.Mark))];
+        _items = Sorted(_items.Concat(fresh));
         Changed?.Invoke(this, EventArgs.Empty);
         return fresh.Count;
     }
@@ -56,6 +56,16 @@ public sealed class MarkList
         Push();
         _items = [.. _items.Take(index).Concat(_items.Skip(index + 1))];
         _cells[Cell(item)].Remove(item);
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Puts <paramref name="now"/> where <paramref name="old"/> was, for a box that was moved or resized. One step of Undo.</summary>
+    public void Replace(MarkItem old, MarkItem now)
+    {
+        if (!_items.Contains(old)) return;
+        Push();
+        _items = Sorted(_items.Where(m => m != old).Append(now));
+        RebuildCells();
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
@@ -73,13 +83,7 @@ public sealed class MarkList
         if (_history.Count == 0) return;
         _items = [.. _history[^1]];
         _history.RemoveAt(_history.Count - 1);
-        _cells.Clear();
-        foreach (var item in _items)
-        {
-            var cell = Cell(item);
-            if (!_cells.TryGetValue(cell, out var inCell)) _cells[cell] = inCell = [];
-            inCell.Add(item);
-        }
+        RebuildCells();
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
@@ -90,6 +94,20 @@ public sealed class MarkList
         _history.Clear();
         Changed?.Invoke(this, EventArgs.Empty);
     }
+
+    private void RebuildCells()
+    {
+        _cells.Clear();
+        foreach (var item in _items)
+        {
+            var cell = Cell(item);
+            if (!_cells.TryGetValue(cell, out var inCell)) _cells[cell] = inCell = [];
+            inCell.Add(item);
+        }
+    }
+
+    private static List<MarkItem> Sorted(IEnumerable<MarkItem> items) =>
+        [.. items.OrderBy(m => m.Page).ThenByDescending(m => Top(m.Mark)).ThenBy(m => Left(m.Mark))];
 
     private void Push()
     {

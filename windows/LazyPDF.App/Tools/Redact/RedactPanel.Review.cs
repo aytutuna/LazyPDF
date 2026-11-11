@@ -36,6 +36,7 @@ public partial class RedactPanel
         ClearButton.Visibility = any ? Visibility.Visible : Visibility.Collapsed;
         UndoButton.Visibility = _state.Marks.CanUndo ? Visibility.Visible : Visibility.Collapsed;
         EmptyNote.Visibility = any ? Visibility.Collapsed : Visibility.Visible;
+        BoxHint.Visibility = MarkedList.Visibility;
         DrawOverlays(redrawAll: false);
     }
 
@@ -77,7 +78,25 @@ public partial class RedactPanel
         foreach (int page in _drawn.Keys.ToList()) Erase(page);
     }
 
-    private void MarkedList_SelectionChanged(object sender, SelectionChangedEventArgs e) => Jump();
+    private void MarkedList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        _editor?.Show(MarkedList.SelectedItem as MarkItem);
+        if (!_editing) Jump();
+    }
+
+    private void BoxEdited(MarkItem old, MarkItem now)
+    {
+        _editing = true;
+        try
+        {
+            _state!.Marks.Replace(old, now);
+            MarkedList.SelectedItem = now;
+        }
+        finally
+        {
+            _editing = false;
+        }
+    }
 
     // A click on the row that is already selected raises no selection change.
     private void MarkedItem_Click(object sender, MouseButtonEventArgs e)

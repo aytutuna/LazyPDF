@@ -244,4 +244,27 @@ public sealed class MarkListTests
         Assert.Equal(seen.Count, seen.Distinct(ReferenceEqualityComparer.Instance).Count());
         Assert.Single(((IReadOnlyList<MarkItem>)seen[3]));
     }
+
+    [Fact]
+    public void ReplacingAMarkKeepsTheCountSortsAndUndoesInOneStep()
+    {
+        var list = new MarkList();
+        var low = Item(0, 10, 100, "low");
+        var high = Item(0, 10, 500, "high");
+        list.Add([low, high]);
+        int changes = 0;
+        list.Changed += (_, _) => changes++;
+
+        list.Replace(high, Item(0, 10, 20, "moved"));
+
+        Assert.Equal(["low", "moved"], list.Items.Select(m => m.Label));
+        Assert.Equal(1, changes);
+        Assert.Equal(0, list.Add([Item(0, 10, 20.1)]));
+
+        list.Undo();
+
+        Assert.Equal(["high", "low"], list.Items.Select(m => m.Label));
+        Assert.Equal(0, list.Add([Item(0, 10, 500)]));
+        Assert.Equal(1, list.Add([Item(0, 10, 20)]));
+    }
 }

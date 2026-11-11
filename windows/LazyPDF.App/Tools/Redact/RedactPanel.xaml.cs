@@ -32,6 +32,8 @@ public partial class RedactPanel : ToolPanel
     private RedactState? _state;
     private bool _restricted;
     private bool _working;
+    private bool _editing;
+    private RedactBoxEditor? _editor;
 
     // The copy opens as a tab of its own; the panel finds that tab by its title when it is attached there.
     private RedactSummary? _incoming;
@@ -67,6 +69,7 @@ public partial class RedactPanel : ToolPanel
         tab.Changed += Tab_Changed;
         Viewer!.SelectionChanged += Viewer_SelectionChanged;
         Viewer.ModeChanged += Viewer_ModeChanged;
+        _editor = new RedactBoxEditor(Viewer, BoxEdited);
         ShowMarks();
         ShowResult();
         ShowSelectionNote();
@@ -76,6 +79,8 @@ public partial class RedactPanel : ToolPanel
     protected override void OnDetach()
     {
         DrawToggle.IsChecked = false;
+        _editor!.Detach();
+        _editor = null;
         ClearOverlays();
         _state!.Marks.Changed -= Marks_Changed;
         Tab!.Changed -= Tab_Changed;
@@ -88,6 +93,7 @@ public partial class RedactPanel : ToolPanel
     private void Tab_Changed(object? sender, EventArgs e)
     {
         DropMarksOfOtherPages();
+        _editor!.Clear();
         DrawOverlays(redrawAll: true);
     }
 

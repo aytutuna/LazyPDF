@@ -93,6 +93,7 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+            <TextBlock x:Name="BoxHint" Text="{loc:T Select a box to move or resize it.}" Style="{StaticResource ReasonText}" Margin="0,4,0,0" />
 
             <TextBlock Text="{loc:T Cover}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,8" />
             <TextBlock Text="{loc:T Colour}" Style="{StaticResource FieldLabelText}" />

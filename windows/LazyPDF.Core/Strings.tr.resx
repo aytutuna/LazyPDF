@@ -4792,6 +4792,9 @@
   <data name="Select" xml:space="preserve">
     <value>Seç</value>
   </data>
+  <data name="Select a box to move or resize it." xml:space="preserve">
+    <value>Taşımak veya yeniden boyutlandırmak için bir kutu seçin.</value>
+  </data>
   <data name="Select all" xml:space="preserve">
     <value>Tümünü seç</value>
   </data>
