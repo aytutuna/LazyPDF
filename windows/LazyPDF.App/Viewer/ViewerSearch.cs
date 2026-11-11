@@ -31,6 +31,9 @@ public sealed class ViewerSearch
     private const int Context = 32;
     private const int Batch = 25;
 
+    /// <summary>The most hits kept; a search that finds more stops there.</summary>
+    public const int MaxHits = 1000;
+
     private readonly Func<Task<TextSource?>> _source;
     private readonly Func<int> _startPage;
     private readonly Action<Action> _post;
@@ -62,6 +65,12 @@ public sealed class ViewerSearch
 
     public bool Running { get; private set; }
 
+    /// <summary>The search ended at <see cref="MaxHits"/> with more of the file left.</summary>
+    public bool Capped { get; private set; }
+
+    /// <summary>The user stopped the search before it finished.</summary>
+    public bool Stopped { get; private set; }
+
     /// <summary>Whether the last step went round the end of the hits, and which way.</summary>
     public SearchWrap Wrapped { get; private set; }
 
@@ -90,6 +99,8 @@ public sealed class ViewerSearch
         Options = options;
         BadPattern = false;
         NoText = false;
+        Capped = false;
+        Stopped = false;
         if (query.Length == 0)
         {
             Running = false;
@@ -102,6 +113,21 @@ public sealed class ViewerSearch
         int start = _startPage();
         var source = _source();
         return Task.Run(() => RunAsync(source, query, options, start, cancel.Token));
+    }
+
+    /// <summary>Ends a running search and keeps the hits found so far.</summary>
+    public void Stop()
+    {
+        if (!Running) return;
+        _cancel?.Cancel();
+        Running = false;
+        Stopped = true;
+        if (Current < 0 && Hits.Count > 0)
+        {
+            Current = 0;
+            if (!_quiet) MoveView();
+        }
+        Changed?.Invoke(this, EventArgs.Empty);
     }
 
     public void Clear() => Start("", Options);
@@ -181,20 +207,26 @@ public sealed class ViewerSearch
     {
         bool bad = false;
         bool noText = false;
+        bool capped = false;
         try
         {
             if (await sourceTask is { } source)
             {
                 var batch = new List<SearchHit>();
-                bool found = false;
+                int count = 0;
                 foreach (var match in source.Find(query, options, cancel))
                 {
-                    found = true;
+                    count++;
                     batch.Add(new SearchHit(match, Around(source, match, -1), Around(source, match, 1)));
                     if (batch.Count >= Batch) Flush(batch, start, cancel);
+                    if (count >= MaxHits)
+                    {
+                        capped = true;
+                        break;
+                    }
                 }
                 Flush(batch, start, cancel);
-                if (!found && !cancel.IsCancellationRequested)
+                if (count == 0 && !cancel.IsCancellationRequested)
                 {
                     noText = true;
                     for (int i = 0; i < source.PageCount && noText; i++) noText = source.Page(i).Chars.Count == 0;
@@ -215,6 +247,7 @@ public sealed class ViewerSearch
             Running = false;
             BadPattern = bad;
             NoText = noText;
+            Capped = capped;
             if (Current < 0 && Hits.Count > 0)
             {
                 Current = 0;

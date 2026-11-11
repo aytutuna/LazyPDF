@@ -1975,6 +1975,9 @@
   <data name="First page number" xml:space="preserve">
     <value>İlk sayfa numarası</value>
   </data>
+  <data name="First {0} shown. Narrow the search to see the rest." xml:space="preserve">
+    <value>İlk {0} sonuç gösteriliyor. Gerisini görmek için aramayı daraltın.</value>
+  </data>
   <data name="Fit" xml:space="preserve">
     <value>Sığdır</value>
   </data>
@@ -4867,6 +4870,12 @@
   <data name="Stop reading" xml:space="preserve">
     <value>Okumayı durdur</value>
   </data>
+  <data name="Stop searching" xml:space="preserve">
+    <value>Aramayı durdur</value>
+  </data>
+  <data name="Stopped" xml:space="preserve">
+    <value>Durduruldu</value>
+  </data>
   <data name="Straight lines" xml:space="preserve">
     <value>Düz çizgiler</value>
   </data>
@@ -6762,6 +6771,9 @@
   </data>
   <data name="{0} found" xml:space="preserve">
     <value>{0} bulundu</value>
+  </data>
+  <data name="{0} found, stopped" xml:space="preserve">
+    <value>{0} bulundu, durduruldu</value>
   </data>
   <data name="{0} has a signature that these steps would break. Open it and sign it again afterwards." xml:space="preserve">
     <value>{0} imzalı; bu adımlar imzayı bozar. Dosyayı açıp adımlardan sonra yeniden imzalayın.</value>

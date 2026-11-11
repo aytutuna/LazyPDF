@@ -18,6 +18,8 @@
             <DockPanel Margin="0,6,0,0">
                 <TextBlock x:Name="Count" DockPanel.Dock="Right" Style="{StaticResource CaptionText}" VerticalAlignment="Center" Margin="8,0,0,0"
                            AutomationProperties.LiveSetting="Polite" />
+                <Button x:Name="StopButton" DockPanel.Dock="Right" KeyboardNavigation.TabIndex="4" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE71A;" Visibility="Collapsed"
+                        ToolTip="{loc:T Stop searching}" AutomationProperties.Name="{loc:T Stop searching}" Click="Stop_Click" />
                 <StackPanel Orientation="Horizontal">
                     <ToggleButton x:Name="CaseToggle" Content="Aa" MinWidth="34" Height="28" Padding="6,0" Click="Option_Click"
                                   ToolTip="{loc:T Match case}" AutomationProperties.Name="{loc:T Match case}" />
@@ -27,6 +29,7 @@
                                   ToolTip="{loc:T Regular expression}" AutomationProperties.Name="{loc:T Regular expression}" />
                 </StackPanel>
             </DockPanel>
+            <TextBlock x:Name="CapNote" Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="0,6,0,0" Visibility="Collapsed" />
         </StackPanel>
     </Border>
 </UserControl>

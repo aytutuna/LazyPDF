@@ -325,6 +325,37 @@ public sealed class ViewerSearchTests
     }
 
     [Fact]
+    public async Task AWordOnEveryPageOfALongFileStopsAtTheCap()
+    {
+        var search = Searching(Pdfs.Text(1200, "fox"));
+
+        await search.Start("fox", new TextSearchOptions());
+
+        Assert.Equal(ViewerSearch.MaxHits, search.Hits.Count);
+        Assert.True(search.Capped);
+        Assert.False(search.Running);
+    }
+
+    [Fact]
+    public async Task StoppingKeepsTheHitsAndDropsWhatComesAfter()
+    {
+        byte[] bytes = Pages(2);
+        var slow = new TaskCompletionSource<TextSource?>();
+        var search = new ViewerSearch(() => slow.Task, () => 0, action => action());
+
+        var run = search.Start("fox", new TextSearchOptions());
+        search.Stop();
+        slow.SetResult(await TextSource.OpenAsync(bytes, null));
+        await run;
+
+        Assert.False(search.Running);
+        Assert.True(search.Stopped);
+        Assert.Empty(search.Hits);
+        await search.Start("fox", new TextSearchOptions());
+        Assert.False(search.Stopped);
+    }
+
+    [Fact]
     public async Task AFileTheEngineCannotOpenGivesNoHits()
     {
         var search = new ViewerSearch(() => Task.FromResult<TextSource?>(null), () => 0, action => action());
