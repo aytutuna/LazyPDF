@@ -31,9 +31,10 @@ internal sealed class PagePaginator(IDocumentRenderer renderer, int pageCount, I
     /// <summary>The zero-based pages the print dialog asks for, or null for all of them.</summary>
     public static List<int>? PagesFor(PageRangeSelection selection, int from, int to, int current, int count)
     {
-        if (selection == PageRangeSelection.CurrentPage) return [current];
-        if (selection != PageRangeSelection.UserPages) return null;
+        if (selection == PageRangeSelection.AllPages) return null;
         if (count < 1) return [];
+        if (selection == PageRangeSelection.CurrentPage) return [Math.Clamp(current, 0, count - 1)];
+        if (selection != PageRangeSelection.UserPages) return null;
         from = Math.Clamp(from, 1, count);
         to = Math.Clamp(to, 1, count);
         if (from > to) (from, to) = (to, from);

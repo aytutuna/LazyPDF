@@ -52,6 +52,8 @@ public sealed class PagePaginatorTests
     [InlineData(PageRangeSelection.UserPages, 6, 20, 0, 8, new[] { 5, 6, 7 })]
     [InlineData(PageRangeSelection.UserPages, 9, 12, 0, 8, new[] { 7 })]
     [InlineData(PageRangeSelection.UserPages, 1, 3, 0, 0, new int[0])]
+    [InlineData(PageRangeSelection.CurrentPage, 1, 1, 9, 9, new[] { 8 })]
+    [InlineData(PageRangeSelection.CurrentPage, 1, 1, 0, 0, new int[0])]
     public void The_dialog_choice_becomes_pages(PageRangeSelection selection, int from, int to, int current, int count, int[]? expected)
     {
         Assert.Equal(expected, PagePaginator.PagesFor(selection, from, to, current, count)?.ToArray());

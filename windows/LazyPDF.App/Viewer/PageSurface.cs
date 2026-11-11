@@ -202,6 +202,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         _sizes = sizes;
         SyncOverlays();
         _page = Math.Clamp(_page, 0, Math.Max(0, sizes.Length - 1));
+        tab.PageIndex = _page;
         if (_fit != FitMode.None) _zoom = FitZoom();
         _zoom = ZoomMath.Clamp(_zoom, ZoomLimits);
         _failed.Clear();
