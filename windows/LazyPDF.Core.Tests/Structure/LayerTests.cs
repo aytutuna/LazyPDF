@@ -127,6 +127,17 @@ public class LayerTests
     }
 
     [Fact]
+    public void RadioGroupsListTheKnownLayers()
+    {
+        var document = Sample("/RBGroups [[30 0 R 31 0 R] [32 0 R 33 0 R 99 0 R] [30 0 R] [31 0 R 98 0 R]]");
+        var groups = PdfLayers.Read(document).RadioGroups;
+        Assert.Equal(2, groups.Count);
+        Assert.Equal([30, 31], groups[0].Select(r => r.Number));
+        Assert.Equal([32, 33], groups[1].Select(r => r.Number));
+        Assert.Empty(PdfLayers.Read(Sample()).RadioGroups);
+    }
+
+    [Fact]
     public void UnknownLayerIsRefused()
     {
         var document = Sample();

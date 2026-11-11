@@ -7,7 +7,10 @@ public sealed record PdfLayer(PdfReference Reference, string Name, bool IsOn, bo
 public sealed record LayerNode(string? Label, PdfLayer? Layer, IReadOnlyList<LayerNode> Children);
 
 /// <summary>The layers of a document under its default configuration (/OCProperties /D).</summary>
-public sealed record LayerSet(IReadOnlyList<PdfLayer> Layers, IReadOnlyList<LayerNode> Order);
+public sealed record LayerSet(IReadOnlyList<PdfLayer> Layers, IReadOnlyList<LayerNode> Order, IReadOnlyList<IReadOnlyList<PdfReference>>? RadioGroups = null)
+{
+    public IReadOnlyList<IReadOnlyList<PdfReference>> RadioGroups { get; init; } = RadioGroups ?? [];
+}
 
 public static class PdfLayers
 {
@@ -48,7 +51,7 @@ public static class PdfLayers
         {
             if (!placed.Contains(layer.Reference.Number)) order.Add(new LayerNode(null, layer, []));
         }
-        return new LayerSet(layers, order);
+        return new LayerSet(layers, order, RadioGroups(document, config, byNumber));
     }
 
     /// <summary>
@@ -113,6 +116,18 @@ public static class PdfLayers
             else afterRow = false;
         }
         return nodes;
+    }
+
+    private static List<IReadOnlyList<PdfReference>> RadioGroups(PdfDocument document, PdfDictionary? config, Dictionary<int, PdfLayer> layers)
+    {
+        var result = new List<IReadOnlyList<PdfReference>>();
+        foreach (var group in document.Array(config, "RBGroups")?.Items.Take(MaxLayers) ?? [])
+        {
+            if (document.Resolve(group) is not PdfArray members) continue;
+            var known = members.Items.OfType<PdfReference>().Where(r => layers.ContainsKey(r.Number)).ToList();
+            if (known.Count >= 2) result.Add(known);
+        }
+        return result;
     }
 
     private static HashSet<int> Numbers(PdfDocument document, PdfDictionary? config, string key) =>
