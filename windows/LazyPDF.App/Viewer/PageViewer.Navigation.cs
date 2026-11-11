@@ -139,7 +139,7 @@ public partial class PageViewer
 
     public void ShowGoToPage()
     {
-        if (_tab is null) return;
+        if (_tab is null || _presenting) return;
         if (Bar.Visibility != Visibility.Visible) ReadingMode = false;
         PageBox.Focus();
     }
@@ -194,7 +194,7 @@ public partial class PageViewer
 
     public void ShowFind()
     {
-        if (_tab is null) return;
+        if (_tab is null || _presenting) return;
         if (_reading) ReadingMode = false;
         Find.Visibility = Visibility.Visible;
         string? selected = _selection.IsEmpty || _selection.Start.Page != _selection.End.Page || !CanCopy ? null : SelectedOnOnePage();

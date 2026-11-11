@@ -81,6 +81,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
 
     public void Show(DocumentTab? tab)
     {
+        Presenting = false;
         if (_tab is not null)
         {
             _tab.Changed -= Tab_Changed;
@@ -431,6 +432,8 @@ public partial class PageViewer : UserControl, IDocumentViewer
 
     private void FullScreen_Click(object sender, RoutedEventArgs e) => FullScreen = !FullScreen;
 
+    private void Present_Click(object sender, RoutedEventArgs e) => Presenting = !Presenting;
+
     private void Arrangement_Click(object sender, RoutedEventArgs e)
     {
         int columns = Surface.Columns;
@@ -481,6 +484,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
         TintSepiaItem.IsChecked = Surface.Tint == PageTint.Sepia;
         ReadingItem.IsChecked = _reading;
         FullScreenItem.IsChecked = FullScreen;
+        PresentItem.IsChecked = _presenting;
         ForgetLinksItem.IsEnabled = _preferencesDirectory is not null && AppPreferencesStore.Load(_preferencesDirectory).AllowedLinkHosts.Count > 0;
     }
 

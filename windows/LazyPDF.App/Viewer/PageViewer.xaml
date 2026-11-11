@@ -66,6 +66,7 @@
                                 <Separator />
                                 <MenuItem x:Name="ReadingItem" Header="{loc:T Reading mode}" IsCheckable="True" Click="Reading_Click" />
                                 <MenuItem x:Name="FullScreenItem" Header="{loc:T Full screen (F11)}" IsCheckable="True" Click="FullScreen_Click" />
+                                <MenuItem x:Name="PresentItem" Header="{loc:T Present (Ctrl+L)}" IsCheckable="True" Click="Present_Click" />
                                 <Separator />
                                 <MenuItem x:Name="ForgetLinksItem" Header="{loc:T Ask about links again}" Click="ForgetLinks_Click" />
                             </ContextMenu>

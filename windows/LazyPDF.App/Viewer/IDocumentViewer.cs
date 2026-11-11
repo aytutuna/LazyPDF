@@ -111,6 +111,9 @@ public interface IDocumentViewer
     /// <summary>The viewer fills the screen in a window of its own.</summary>
     bool FullScreen { get; set; }
 
+    /// <summary>One page at a time on a black screen, turned by click or key; the display stays on.</summary>
+    bool Presenting { get; set; }
+
     // ----- Going places
 
     void GoToPage(int page);

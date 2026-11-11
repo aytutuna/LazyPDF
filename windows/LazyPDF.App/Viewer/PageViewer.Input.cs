@@ -91,6 +91,8 @@ public partial class PageViewer
     private void InitInput()
     {
         _autoScroll.Tick += (_, _) => AutoScrollStep();
+        _hidePointer.Tick += (_, _) => HidePointer();
+        PreviewMouseMove += (_, _) => ShowPointer();
         Surface.MouseLeftButtonDown += Surface_MouseDown;
         Surface.PreviewMouseRightButtonDown += (_, _) => Surface.Focus();
         Surface.MouseMove += Surface_MouseMove;
@@ -124,7 +126,7 @@ public partial class PageViewer
 
     private void Surface_ContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
     {
-        if (_tab is null || _tool is not null || _drag != Drag.None)
+        if (_tab is null || _presenting || _tool is not null || _drag != Drag.None)
         {
             e.Handled = true;
             return;
@@ -153,6 +155,15 @@ public partial class PageViewer
         Surface.Focus();
         ClearLinkFocus();
         if (_tab is null) return;
+        if (_presenting)
+        {
+            _down = e.GetPosition(Surface);
+            _moved = false;
+            _presentDown = true;
+            Surface.CaptureMouse();
+            e.Handled = true;
+            return;
+        }
         if (_middlePan)
         {
             e.Handled = true;
@@ -214,7 +225,11 @@ public partial class PageViewer
                 GoForward();
                 e.Handled = true;
                 break;
-            case MouseButton.Middle when _tab is not null:
+            case MouseButton.Right when _presenting:
+                StepPage(-1);
+                e.Handled = true;
+                break;
+            case MouseButton.Middle when _tab is not null && !_presenting:
                 Surface.Focus();
                 _drag = Drag.Pan;
                 _middlePan = true;
@@ -240,6 +255,11 @@ public partial class PageViewer
     private void Surface_MouseMove(object sender, MouseEventArgs e)
     {
         var at = e.GetPosition(Surface);
+        if (_presenting)
+        {
+            if (_presentDown && (at - _down).Length > ClickSlop) _moved = true;
+            return;
+        }
         if (_drag != Drag.None && (at - _down).Length > ClickSlop) _moved = true;
         switch (_drag)
         {
@@ -265,6 +285,19 @@ public partial class PageViewer
 
     private void Surface_MouseUp(object sender, MouseButtonEventArgs e)
     {
+        if (_presentDown)
+        {
+            _presentDown = false;
+            Surface.ReleaseMouseCapture();
+            var press = e.GetPosition(Surface);
+            if (!_moved)
+            {
+                if (Surface.Hit(press) is { } over && LinkAt(over.Page, over.Point) is { } target) FollowLink(target);
+                else StepPage(1);
+            }
+            e.Handled = true;
+            return;
+        }
         if (_middlePan)
         {
             e.Handled = true;
@@ -307,6 +340,7 @@ public partial class PageViewer
     {
         _drag = Drag.None;
         _middlePan = false;
+        _presentDown = false;
         _anchorWaiting = null;
         _autoScroll.Stop();
     }
@@ -441,7 +475,7 @@ public partial class PageViewer
     // The window procedure must return TRUE for a driver to repeat a held tilt.
     private IntPtr TiltHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
-        if (msg != 0x020E || !Surface.IsMouseOver || Surface.Layout.PageCount == 0) return IntPtr.Zero;
+        if (msg != 0x020E || _presenting || !Surface.IsMouseOver || Surface.Layout.PageCount == 0) return IntPtr.Zero;
         double notches = (short)((wParam.ToInt64() >> 16) & 0xFFFF) / 120.0;
         int lines = SystemParameters.WheelScrollLines;
         Surface.ScrollBy(notches * (lines < 0 ? Surface.Viewport.Width * 0.9 : lines * 24), 0, smooth: false);
@@ -451,7 +485,12 @@ public partial class PageViewer
 
     private void Surface_MouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        if (_presenting)
+        {
+            _wheel += e.Delta;
+            for (; Math.Abs(_wheel) >= 120; _wheel -= Math.Sign(_wheel) * 120) StepPage(_wheel < 0 ? 1 : -1);
+        }
+        else if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
         {
             Surface.SetZoom(Surface.Zoom * Math.Pow(1.1, e.Delta / 120.0), e.GetPosition(Surface));
         }
@@ -487,8 +526,16 @@ public partial class PageViewer
         bool typing = Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase;
         // With Alt held the arrows arrive as Key.System and the real key in SystemKey.
         var key = e.Key == Key.System && e.SystemKey is Key.Left or Key.Right ? e.SystemKey : e.Key;
+        if (!ctrl && !alt && PresentWithKeys(key, shift))
+        {
+            e.Handled = true;
+            return;
+        }
         switch (key)
         {
+            case Key.L when ctrl && !typing && _tool is null:
+                Presenting = !Presenting;
+                break;
             case Key.F when ctrl:
                 ShowFind();
                 break;

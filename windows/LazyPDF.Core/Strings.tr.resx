@@ -1129,6 +1129,9 @@
   <data name="Click each corner, then double-click to finish. Hold Shift for straight lines." xml:space="preserve">
     <value>Her köşeye tıklayın, bitirmek için çift tıklayın. Düz çizgiler için Shift tuşunu basılı tutun.</value>
   </data>
+  <data name="Click or press Right to go on. Esc to leave." xml:space="preserve">
+    <value>İlerlemek için tıklayın veya Sağ tuşuna basın. Çıkmak için Esc tuşuna basın.</value>
+  </data>
   <data name="Click text or a picture to change it. Drag to select several." xml:space="preserve">
     <value>Değiştirmek için bir metne veya resme tıklayın. Birkaçını seçmek için sürükleyin.</value>
   </data>
@@ -4182,6 +4185,9 @@
   </data>
   <data name="Prefix only" xml:space="preserve">
     <value>Yalnızca önek</value>
+  </data>
+  <data name="Present (Ctrl+L)" xml:space="preserve">
+    <value>Sun (Ctrl+L)</value>
   </data>
   <data name="Preview" xml:space="preserve">
     <value>Önizleme</value>

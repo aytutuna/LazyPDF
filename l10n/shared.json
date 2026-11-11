@@ -2553,6 +2553,12 @@
   "Full screen (F11)": {
     "tr": "Tam ekran (F11)"
   },
+  "Present (Ctrl+L)": {
+    "tr": "Sun (Ctrl+L)"
+  },
+  "Click or press Right to go on. Esc to leave.": {
+    "tr": "İlerlemek için tıklayın veya Sağ tuşuna basın. Çıkmak için Esc tuşuna basın."
+  },
   "Zoom out (Ctrl+Minus)": {
     "tr": "Uzaklaştır (Ctrl+Eksi)"
   },

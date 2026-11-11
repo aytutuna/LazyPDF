@@ -615,4 +615,82 @@ public sealed class KeyboardPlacementTests
         Assert.Equal(0, viewer.Surface.CurrentPage);
         return Task.CompletedTask;
     });
+
+    private static PageViewer PresentationViewer(DocumentTab tab)
+    {
+        var viewer = new PageViewer(null);
+        viewer.Show(tab);
+        viewer.Measure(new Size(800, 600));
+        viewer.Arrange(new Rect(0, 0, 800, 600));
+        viewer.UpdateLayout();
+        return viewer;
+    }
+
+    [Fact]
+    public Task PresentingShowsOnePageAtATimeWithoutTheBar() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(3)), new FakeRenderer(), null, "a.pdf");
+        var viewer = PresentationViewer(tab);
+        viewer.Surface.SetArrangement(2, true, true);
+
+        viewer.Presenting = true;
+
+        Assert.True(viewer.Presenting);
+        Assert.Equal(Visibility.Collapsed, viewer.Bar.Visibility);
+        Assert.Equal((1, false, false, FitMode.Page), (viewer.Surface.Columns, viewer.Surface.Cover, viewer.Surface.Continuous, viewer.Surface.Fit));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheAdvanceAndBackKeysStepPagesAndStopAtTheEnds() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(3)), new FakeRenderer(), null, "a.pdf");
+        var viewer = PresentationViewer(tab);
+        Assert.False(viewer.PresentWithKeys(Key.Right, false));
+        viewer.Presenting = true;
+
+        Assert.False(viewer.PresentWithKeys(Key.F, false));
+        Assert.True(viewer.PresentWithKeys(Key.Left, false));
+        Assert.Equal(0, viewer.Surface.CurrentPage);
+        foreach (var key in new[] { Key.Right, Key.Down, Key.PageDown, Key.N, Key.Space })
+            Assert.True(viewer.PresentWithKeys(key, false));
+        Assert.Equal(2, viewer.Surface.CurrentPage);
+
+        viewer.PresentWithKeys(Key.Space, true);
+        Assert.Equal(1, viewer.Surface.CurrentPage);
+        viewer.PresentWithKeys(Key.Home, false);
+        Assert.Equal(0, viewer.Surface.CurrentPage);
+        viewer.PresentWithKeys(Key.End, false);
+        Assert.Equal(2, viewer.Surface.CurrentPage);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task EscapeLeavesPresentingAndTheViewIsBack() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(3)), new FakeRenderer(), null, "a.pdf");
+        var viewer = PresentationViewer(tab);
+        viewer.Surface.SetArrangement(2, true, false);
+        viewer.Surface.SetZoom(1.5);
+        viewer.Surface.SetRotation(90);
+
+        viewer.Presenting = true;
+        Assert.True(viewer.PresentWithKeys(Key.Escape, false));
+
+        Assert.False(viewer.Presenting);
+        Assert.Equal(Visibility.Visible, viewer.Bar.Visibility);
+        Assert.Equal((2, true, false, FitMode.None, 1.5, 90), (viewer.Surface.Columns, viewer.Surface.Cover, viewer.Surface.Continuous, viewer.Surface.Fit, viewer.Surface.Zoom, viewer.Surface.Rotation));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task PresentingWithoutAFileDoesNothing() => Sta.Run(() =>
+    {
+        var viewer = new PageViewer(null);
+
+        viewer.Presenting = true;
+
+        Assert.False(viewer.Presenting);
+        return Task.CompletedTask;
+    });
 }
