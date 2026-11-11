@@ -26,7 +26,7 @@ public static class MetadataEdit
     public static bool DropsText(DocumentMetadata before, DocumentMetadata after) =>
         Drops(before.Title, after.Title) || Drops(before.Author, after.Author) ||
         Drops(before.Subject, after.Subject) || Drops(before.Keywords, after.Keywords) ||
-        before.Custom.Any(pair => !after.Custom.TryGetValue(pair.Key, out var value) || value != pair.Value);
+        before.Custom.Any(pair => pair.Value.Length > 0 && (!after.Custom.TryGetValue(pair.Key, out var value) || value != pair.Value));
 
     /// <summary>Equal in every field, with the custom properties compared by content.</summary>
     public static bool Same(DocumentMetadata a, DocumentMetadata b) =>
@@ -44,22 +44,22 @@ public static class MetadataEdit
         return custom;
     }
 
-    /// <summary>What stops the properties from being saved, or null.</summary>
-    public static string? CustomProblem(IEnumerable<(string Name, string Value)> rows)
+    /// <summary>What stops the properties from being saved, or null. A name already in <paramref name="inFile"/> is written back as it is, so its characters pass.</summary>
+    public static string? CustomProblem(IEnumerable<(string Name, string Value)> rows, IReadOnlyDictionary<string, string>? inFile = null)
     {
         var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var key in rows.Select(row => row.Name.Trim()).Where(name => name.Length > 0))
         {
             if (Reserved.Contains(key)) return Loc.T("{0} is a name the file keeps for itself. Choose another.", key);
-            if (key.Any(c => c < ' ' || c > '~')) return Loc.T("{0} has characters a property name cannot hold. Use plain letters, digits and punctuation.", key);
+            if (inFile?.ContainsKey(key) != true && key.Any(c => c < ' ' || c > '~')) return Loc.T("{0} has characters a property name cannot hold. Use plain letters, digits and punctuation.", key);
             if (!seen.Add(key)) return Loc.T("Two properties are named {0}.", key);
         }
         return null;
     }
 
     /// <summary>The note under the custom properties: a problem, or a hint about a property that is left out.</summary>
-    public static string? CustomNote(IEnumerable<(string Name, string Value)> rows) =>
-        CustomProblem(rows) ?? (rows.Any(row => row.Name.Trim().Length > 0 && row.Value.Length == 0) ? Loc.T("A property with no value is not kept.") : null);
+    public static string? CustomNote(IEnumerable<(string Name, string Value)> rows, IReadOnlyDictionary<string, string>? inFile = null) =>
+        CustomProblem(rows, inFile) ?? (rows.Any(row => row.Name.Trim().Length > 0 && row.Value.Length == 0) ? Loc.T("A property with no value is not kept.") : null);
 
     public static bool ShowDropNotice(bool notify, bool dropped) => notify && dropped;
 

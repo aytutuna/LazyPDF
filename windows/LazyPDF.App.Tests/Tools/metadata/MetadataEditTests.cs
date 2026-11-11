@@ -57,6 +57,20 @@ public sealed class MetadataEditTests
     }
 
     [Fact]
+    public void AnEmptyValueFromTheFileDropsNothing()
+    {
+        Assert.False(MetadataEdit.DropsText(WithCustom(("A", "")), WithCustom()));
+    }
+
+    [Fact]
+    public void ANameFromTheFileKeepsItsCharacters()
+    {
+        var inFile = WithCustom(("Ünvan", "x")).Custom;
+        Assert.Null(MetadataEdit.CustomProblem([("Ünvan", "x")], inFile));
+        Assert.NotNull(MetadataEdit.CustomProblem([("Ünvan2", "x")], inFile));
+    }
+
+    [Fact]
     public void ACustomKeyRoundTripsThroughTheFile()
     {
         var document = PdfDocument.Open(Pdfs.Text(1));

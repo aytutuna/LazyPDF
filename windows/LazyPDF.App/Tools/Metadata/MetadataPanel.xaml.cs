@@ -169,9 +169,11 @@ public sealed partial class MetadataPanel : ToolPanel
     {
         if (_loading || Tab is null) return;
         var (metadata, view) = ReadForm();
-        _changed = !MetadataEdit.Same(metadata, _metadata) || view != _view;
-        _customProblem = MetadataEdit.CustomProblem(CustomPairs());
-        CustomNote.Text = MetadataEdit.CustomNote(CustomPairs()) ?? "";
+        // The form drops empty values, so the file's own are left out of the comparison.
+        var kept = _metadata with { Custom = MetadataEdit.Custom(_metadata.Custom.Select(pair => (pair.Key, pair.Value))) };
+        _changed = !MetadataEdit.Same(metadata, kept) || view != _view;
+        _customProblem = MetadataEdit.CustomProblem(CustomPairs(), _metadata.Custom);
+        CustomNote.Text = MetadataEdit.CustomNote(CustomPairs(), _metadata.Custom) ?? "";
         AddCustomButton.IsEnabled = _custom.Count < MaxCustom;
         if (_changed) _editing = Tab.Id;
         RaiseActionChanged();
