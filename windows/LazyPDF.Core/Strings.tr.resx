@@ -970,6 +970,9 @@
   <data name="Check found problems" xml:space="preserve">
     <value>Kontrol sorun buldu</value>
   </data>
+  <data name="Check mark" xml:space="preserve">
+    <value>Onay işareti</value>
+  </data>
   <data name="Check online" xml:space="preserve">
     <value>Çevrimiçi denetle</value>
   </data>
@@ -1116,6 +1119,9 @@
   </data>
   <data name="Click text or a picture to change it. Drag to select several." xml:space="preserve">
     <value>Değiştirmek için bir metne veya resme tıklayın. Birkaçını seçmek için sürükleyin.</value>
+  </data>
+  <data name="Click the page where it goes." xml:space="preserve">
+    <value>Yerleşeceği yere sayfada tıklayın.</value>
   </data>
   <data name="Click the page where the text starts." xml:space="preserve">
     <value>Metnin başlayacağı yere sayfada tıklayın.</value>
@@ -1393,6 +1399,9 @@
   <data name="Crops each page to what is printed on it, plus a small border. The rest stays in the file, only hidden." xml:space="preserve">
     <value>Her sayfayı üzerinde basılı olan kısma, küçük bir kenar payıyla kırpar. Geri kalanı dosyada durur, yalnızca gizlenir.</value>
   </data>
+  <data name="Cross" xml:space="preserve">
+    <value>Çarpı</value>
+  </data>
   <data name="Cross-reference" xml:space="preserve">
     <value>Çapraz başvuru</value>
   </data>
@@ -1608,6 +1617,9 @@
   </data>
   <data name="Done." xml:space="preserve">
     <value>Bitti.</value>
+  </data>
+  <data name="Dot" xml:space="preserve">
+    <value>Nokta</value>
   </data>
   <data name="Dotted" xml:space="preserve">
     <value>Noktalı</value>
@@ -2565,6 +2577,9 @@
   </data>
   <data name="It is open in a new tab. Save it to keep it." xml:space="preserve">
     <value>Yeni bir sekmede açık. Saklamak için kaydedin.</value>
+  </data>
+  <data name="It is placed as a mark you can move with Comment." xml:space="preserve">
+    <value>Yorum ile taşıyabileceğiniz bir işaret olarak yerleştirilir.</value>
   </data>
   <data name="It opens another file or program, which Lazy PDF does not do." xml:space="preserve">
     <value>Başka bir dosyayı veya programı açar; Lazy PDF bunu yapmaz.</value>
@@ -4080,6 +4095,9 @@
   </data>
   <data name="Place" xml:space="preserve">
     <value>Yer</value>
+  </data>
+  <data name="Place mark" xml:space="preserve">
+    <value>İşareti yerleştir</value>
   </data>
   <data name="Place on page" xml:space="preserve">
     <value>Sayfaya yerleştir</value>

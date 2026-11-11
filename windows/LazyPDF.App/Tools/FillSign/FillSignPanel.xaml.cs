@@ -21,8 +21,9 @@ internal sealed record SavedRow(SavedItem Item, BitmapSource Picture)
 
 internal sealed record DateChoice(string Pattern, string Sample);
 internal sealed record ColourChoice(string Name, double[] Rgb);
+internal sealed record ShapeChoice(string Name, MarkShape Shape);
 
-/// <summary>Signature, initials, a line of text or today's date, put on the page where the pointer says.</summary>
+/// <summary>Signature, initials, a line of text, today's date or a mark, put on the page where the pointer says.</summary>
 public partial class FillSignPanel : ToolPanel
 {
     private static readonly int[] Sizes = [10, 12, 14, 18, 24, 36];
@@ -54,6 +55,14 @@ public partial class FillSignPanel : ToolPanel
             new(Loc.T("Green"), [0.1, 0.55, 0.25]),
         };
         ColourBox.SelectedIndex = 0;
+        ShapeBox.ItemsSource = new ShapeChoice[]
+        {
+            new(Loc.T("Check mark"), MarkShape.Check),
+            new(Loc.T("Cross"), MarkShape.Cross),
+            new(Loc.T("Dot"), MarkShape.Dot),
+            new(Loc.T("Line"), MarkShape.Line),
+        };
+        ShapeBox.SelectedIndex = 0;
         var today = DateTime.Today;
         FormatBox.ItemsSource = DatePatterns.Select(p => new DateChoice(p, today.ToString(p, CultureInfo.CurrentCulture))).ToList();
         FormatBox.SelectedIndex = 0;
@@ -64,9 +73,11 @@ public partial class FillSignPanel : ToolPanel
 
     private bool Images => SignatureKind.IsChecked == true || InitialsKind.IsChecked == true;
 
+    private bool Line => MarkKind.IsChecked == true && ((ShapeChoice)ShapeBox.SelectedItem).Shape == MarkShape.Line;
+
     private SavedKind Kind => InitialsKind.IsChecked == true ? SavedKind.Initials : SavedKind.Signature;
 
-    private bool Ready => Images ? _image is not null : DateKind.IsChecked == true || WordsBox.Text.Trim().Length > 0;
+    private bool Ready => Images ? _image is not null : TextKind.IsChecked != true || WordsBox.Text.Trim().Length > 0;
 
     protected override void OnAttach() => _cautioned = false;
 
@@ -80,6 +91,7 @@ public partial class FillSignPanel : ToolPanel
         TextPage.Visibility = Images ? Visibility.Collapsed : Visibility.Visible;
         WordsPage.Visibility = TextKind.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         FormatPage.Visibility = DateKind.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        ShapePage.Visibility = MarkKind.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         _image = null;
         if (Images) FillSaved();
         RaiseActionChanged();
@@ -147,10 +159,13 @@ public partial class FillSignPanel : ToolPanel
     private void Begin()
     {
         double aspect = Images ? _image!.Width / (double)_image.Height : 0;
-        _tool = new PlacementTool(Viewer!, aspect, Placed, Stop);
+        bool mark = MarkKind.IsChecked == true;
+        _tool = new PlacementTool(Viewer!, mark && !Line ? 1 : aspect, Placed, Stop, Line);
         Viewer!.PointerTool = _tool;
         Hint.Visibility = Visibility.Visible;
-        HintText.Text = $"{(aspect > 0 ? Loc.T("Click the page, or drag a box, to place it.") : Loc.T("Click the page where the text starts."))} {Loc.T("Or press Enter on the page.")}";
+        string click = mark ? $"{Loc.T("Click the page where it goes.")} {Loc.T("It is placed as a mark you can move with Comment.")}"
+            : aspect > 0 ? Loc.T("Click the page, or drag a box, to place it.") : Loc.T("Click the page where the text starts.");
+        HintText.Text = $"{click} {Loc.T("Or press Enter on the page.")}";
         Host!.SetStatus(Loc.T("Click where it should go."));
         RaiseActionChanged();
     }
@@ -174,6 +189,7 @@ public partial class FillSignPanel : ToolPanel
         {
             var now = DateTimeOffset.Now;
             if (Images) PlaceImage(tab, page, from, to, now);
+            else if (MarkKind.IsChecked == true) FillSignPlacement.PlaceMark(tab, page, ((ShapeChoice)ShapeBox.SelectedItem).Shape, from, to, (int)SizeBox.SelectedItem, ((ColourChoice)ColourBox.SelectedItem).Rgb, now);
             else FillSignPlacement.PlaceText(tab, _fonts, page, from, TextToPlace(now), (int)SizeBox.SelectedItem, ((ColourChoice)ColourBox.SelectedItem).Rgb, now);
         }
         catch (InvalidOperationException error)
@@ -218,6 +234,8 @@ public partial class FillSignPanel : ToolPanel
         DateKind.IsChecked == true ? now.ToString(((DateChoice)FormatBox.SelectedItem).Pattern, CultureInfo.CurrentCulture) : WordsBox.Text.Trim();
 
     private void Kind_Checked(object sender, RoutedEventArgs e) => ShowKind();
+
+    private void Shape_Changed(object sender, SelectionChangedEventArgs e) => Stop();
 
     private void WordsBox_TextChanged(object sender, TextChangedEventArgs e) => RaiseActionChanged();
 

@@ -6,11 +6,14 @@ using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.FillSign;
 
+public enum MarkShape { Check, Cross, Dot, Line }
+
 /// <summary>Where a signature or a line of text goes on a page, and putting it there. Boxes are in page space, y down.</summary>
 internal static class FillSignPlacement
 {
     public const double SignatureWidth = 150;
     public const double InitialsWidth = 60;
+    public const double LineLength = 100;
 
     /// <summary>A box of the given width centred on the click, kept on the page.</summary>
     public static DisplayRect Around(Point click, double width, double aspect, Size page)
@@ -71,6 +74,39 @@ internal static class FillSignPlacement
         TurnToPage(document, note, rect, pdfPage.Rotate);
         return tab.Commit(Loc.T("Place text"));
     }
+
+    /// <summary>A check mark, cross, dot or line as a vector annotation. A line takes the drag as its ends, the rest fill a square.</summary>
+    public static bool PlaceMark(DocumentTab tab, int page, MarkShape shape, Point from, Point? to, double size, double[] colour, DateTimeOffset now)
+    {
+        var pdfPage = tab.Document.Pages[page];
+        var geometry = new PageGeometry(pdfPage);
+        var area = new Size(geometry.Width, geometry.Height);
+        var writer = new PdfAnnotationWriter(tab.Document);
+        var info = new AnnotationInfo(Date: now);
+        (double X, double Y) User(double x, double y) => geometry.ToUser(x, y);
+        if (shape == MarkShape.Line)
+        {
+            var (a, b) = to is { } end
+                ? (Inside(from, area), Inside(end, area))
+                : (new Point(Math.Clamp(from.X - LineLength / 2, 0, Math.Max(0, area.Width - LineLength)), from.Y), new Point(Math.Clamp(from.X + LineLength / 2, Math.Min(LineLength, area.Width), area.Width), from.Y));
+            writer.AddLine(pdfPage, User(a.X, a.Y), User(b.X, b.Y), new AnnotationStyle(colour, 1.5), info);
+            return tab.Commit(Loc.T("Place mark"));
+        }
+        var box = to is { } corner ? FromDrag(from, corner, 1, area) : Around(from, size, 1, area);
+        if (shape == MarkShape.Dot)
+        {
+            writer.AddCircle(pdfPage, geometry.ToUser(box), new AnnotationStyle(colour, 1, Fill: colour), info);
+            return tab.Commit(Loc.T("Place mark"));
+        }
+        (double, double)[][] unit = shape == MarkShape.Check
+            ? [[(0.1, 0.55), (0.38, 0.85), (0.9, 0.15)]]
+            : [[(0.1, 0.1), (0.9, 0.9)], [(0.9, 0.1), (0.1, 0.9)]];
+        var strokes = unit.Select(s => (IReadOnlyList<(double X, double Y)>)s.Select(p => User(box.X + p.Item1 * box.Width, box.Y + p.Item2 * box.Height)).ToList()).ToList();
+        writer.AddInk(pdfPage, strokes, new AnnotationStyle(colour, Math.Max(1, box.Width / 8)), info);
+        return tab.Commit(Loc.T("Place mark"));
+    }
+
+    private static Point Inside(Point p, Size page) => new(Math.Clamp(p.X, 0, page.Width), Math.Clamp(p.Y, 0, page.Height));
 
     // On a page turned a quarter the user rectangle is the display box on its side. The appearance is drawn as the page
     // shows it, at the size of the display box, and its matrix turns it into the page's own space (ISO 32000-1 12.5.5).

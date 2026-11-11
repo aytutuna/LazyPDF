@@ -3723,6 +3723,15 @@
   "Shape": {
     "tr": "Şekil"
   },
+  "Check mark": {
+    "tr": "Onay işareti"
+  },
+  "Cross": {
+    "tr": "Çarpı"
+  },
+  "Dot": {
+    "tr": "Nokta"
+  },
   "Fill": {
     "tr": "Dolgu"
   },
@@ -6093,6 +6102,12 @@
   "Click the page, or drag a box, to place it.": {
     "tr": "Yerleştirmek için sayfaya tıklayın ya da bir kutu sürükleyin."
   },
+  "Click the page where it goes.": {
+    "tr": "Yerleşeceği yere sayfada tıklayın."
+  },
+  "It is placed as a mark you can move with Comment.": {
+    "tr": "Yorum ile taşıyabileceğiniz bir işaret olarak yerleştirilir."
+  },
   "Click where it should go.": {
     "tr": "Yerleşeceği yere tıklayın."
   },
@@ -6206,6 +6221,9 @@
   },
   "Place text": {
     "tr": "Metni yerleştir"
+  },
+  "Place mark": {
+    "tr": "İşareti yerleştir"
   },
   "Place: {0}": {
     "tr": "Yer: {0}"

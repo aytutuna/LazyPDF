@@ -11,7 +11,6 @@
                     <ColumnDefinition Width="1.5*" />
                     <ColumnDefinition />
                     <ColumnDefinition />
-                    <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <RadioButton x:Name="SignatureKind" Grid.Column="0" GroupName="FillKind" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Signature}" IsChecked="True"
                              AutomationProperties.Name="{loc:T Signature}" Checked="Kind_Checked" />
@@ -19,8 +18,18 @@
                              AutomationProperties.Name="{loc:T Initials}" Checked="Kind_Checked" />
                 <RadioButton x:Name="TextKind" Grid.Column="2" GroupName="FillKind" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Text}"
                              AutomationProperties.Name="{loc:T Text}" Checked="Kind_Checked" />
-                <RadioButton x:Name="DateKind" Grid.Column="3" GroupName="FillKind" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Date}"
+            </Grid>
+        </Border>
+        <Border Style="{StaticResource SegmentedTrackStyle}" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <RadioButton x:Name="DateKind" Grid.Column="0" GroupName="FillKind" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Date}"
                              AutomationProperties.Name="{loc:T Date}" Checked="Kind_Checked" />
+                <RadioButton x:Name="MarkKind" Grid.Column="1" GroupName="FillKind" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Mark}"
+                             AutomationProperties.Name="{loc:T Mark}" Checked="Kind_Checked" />
             </Grid>
         </Border>
 
@@ -66,6 +75,10 @@
             <StackPanel x:Name="FormatPage">
                 <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Format}" />
                 <ComboBox x:Name="FormatBox" DisplayMemberPath="Sample" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Date format}" />
+            </StackPanel>
+            <StackPanel x:Name="ShapePage">
+                <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Shape}" />
+                <ComboBox x:Name="ShapeBox" DisplayMemberPath="Name" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Shape}" SelectionChanged="Shape_Changed" />
             </StackPanel>
             <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Size}" />
             <ComboBox x:Name="SizeBox" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Size}" />

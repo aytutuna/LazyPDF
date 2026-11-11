@@ -186,6 +186,42 @@ public sealed class FillSignPlacementTests
         });
     }
 
+    [Theory]
+    [InlineData(MarkShape.Check, AnnotationType.Ink, 0)]
+    [InlineData(MarkShape.Cross, AnnotationType.Ink, 0)]
+    [InlineData(MarkShape.Dot, AnnotationType.Circle, 0)]
+    [InlineData(MarkShape.Line, AnnotationType.Line, 0)]
+    [InlineData(MarkShape.Check, AnnotationType.Ink, 90)]
+    [InlineData(MarkShape.Cross, AnnotationType.Ink, 90)]
+    [InlineData(MarkShape.Dot, AnnotationType.Circle, 90)]
+    [InlineData(MarkShape.Line, AnnotationType.Line, 90)]
+    public void EachMarkIsOneAnnotationKeptOnThePage(MarkShape shape, AnnotationType type, int degrees)
+    {
+        using var tab = degrees == 0 ? NewTab() : Turned(degrees);
+        var geometry = new PageGeometry(tab.Document.Pages[0]);
+
+        Assert.True(FillSignPlacement.PlaceMark(tab, 0, shape, new Point(3, geometry.Height - 2), null, 24, [0.8, 0.1, 0.1], DateTimeOffset.Now));
+
+        var mark = Assert.Single(PdfAnnotations.ReadAll(tab.Document));
+        Assert.Equal(type, mark.Type);
+        var page = tab.Document.Pages[0].MediaBox;
+        Assert.True(mark.Rect.Left >= page.Left - 2 && mark.Rect.Bottom >= page.Bottom - 2 && mark.Rect.Right <= page.Right + 2 && mark.Rect.Top <= page.Top + 2);
+        if (shape == MarkShape.Dot) Assert.NotNull(mark.InteriorColor);
+        Assert.True(tab.Undo());
+        Assert.Empty(PdfAnnotations.ReadAll(tab.Document));
+    }
+
+    [Fact]
+    public void ALineTakesTheDragAsItsEnds()
+    {
+        using var tab = NewTab();
+
+        FillSignPlacement.PlaceMark(tab, 0, MarkShape.Line, new Point(100, 100), new Point(300, 100), 12, [0, 0, 0], DateTimeOffset.Now);
+
+        var line = Assert.Single(PdfAnnotations.ReadAll(tab.Document));
+        Assert.True(line.Rect.Width > 200 && line.Rect.Width < 205);
+    }
+
     [Fact]
     public void ASignedFileIsCautionedAndAPlainOneIsNot()
     {
