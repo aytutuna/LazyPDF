@@ -73,6 +73,9 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
                     <TextBlock x:Name="NoneSaved" Style="{StaticResource ReasonText}" Margin="0,4,0,0" Text="{loc:T No saved signatures yet. Add one in Fill and sign.}" />
+                    <Button x:Name="NewButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE710;" Content="{loc:T Make a new one}" AutomationProperties.Name="{loc:T Make a new one}" Padding="10,3,10,4"
+                            HorizontalAlignment="Left" Margin="0,8,0,0" Click="New_Click" />
+                    <fill:SignatureMaker x:Name="Maker" Visibility="Collapsed" Margin="0,8,0,0" Made="Maker_Made" Cancelled="Maker_Cancelled" />
                 </StackPanel>
             </StackPanel>
         </StackPanel>

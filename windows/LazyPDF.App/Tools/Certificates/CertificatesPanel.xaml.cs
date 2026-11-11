@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
@@ -27,8 +28,10 @@ public partial class CertificatesPanel : ToolPanel
 
     private sealed record LookChoice(string Text, bool Picture, bool Words);
 
+    private sealed record OneOffRow(string Name, BitmapSource Picture);
+
     private readonly SystemFontSource _fonts = new();
-    private readonly SavedSignatures _saved = new(SavedSignatures.DefaultDirectory);
+    private readonly SavedSignatures _saved;
     private string? _pfx;
     private SignatureBoxTool? _tool;
     private int _boxPage;
@@ -37,9 +40,16 @@ public partial class CertificatesPanel : ToolPanel
     private bool _working;
     private bool _refilling;
     private object? _boxPageKey;
+    private PdfRgbaImage? _oneOff;
 
     public CertificatesPanel()
+        : this(SavedSignatures.DefaultDirectory)
     {
+    }
+
+    internal CertificatesPanel(string savedDirectory)
+    {
+        _saved = new SavedSignatures(savedDirectory);
         InitializeComponent();
         CertifyBox.ItemsSource = new CertifyChoice[]
         {
@@ -96,13 +106,15 @@ public partial class CertificatesPanel : ToolPanel
         Tab!.Changed -= Tab_Changed;
         Stop();
         ClearBox();
+        _oneOff = null;
         WhereBox.ItemsSource = null;
         FilePassword.Clear();
     }
 
     private void FillSaved()
     {
-        var rows = new List<SavedRow>();
+        var rows = new List<object>();
+        if (_oneOff is not null) rows.Add(new OneOffRow(Loc.T("This signature only"), SignatureArt.ToBitmap(_oneOff)));
         foreach (var item in _saved.List(SavedKind.Signature))
         {
             if (_saved.Load(item) is { } image) rows.Add(new SavedRow(item, SignatureArt.ToBitmap(image)));
@@ -116,7 +128,41 @@ public partial class CertificatesPanel : ToolPanel
     {
         LookRow.Visibility = Where?.Kind == WhereKind.Invisible ? Visibility.Collapsed : Visibility.Visible;
         LookPage.Visibility = Look is { Picture: true } ? Visibility.Visible : Visibility.Collapsed;
+        if (Look is not { Picture: true }) CloseMaker();
     }
+
+    private void CloseMaker()
+    {
+        Maker.Visibility = Visibility.Collapsed;
+        NewButton.Visibility = Visibility.Visible;
+    }
+
+    private void New_Click(object sender, RoutedEventArgs e)
+    {
+        Maker.Reset();
+        Maker.Visibility = Visibility.Visible;
+        NewButton.Visibility = Visibility.Collapsed;
+    }
+
+    private void Maker_Made(object? sender, EventArgs e)
+    {
+        var image = Maker.Image!;
+        CloseMaker();
+        if (Maker.Keep)
+        {
+            _oneOff = null;
+            var item = _saved.Add(SavedKind.Signature, image);
+            FillSaved();
+            SavedList.SelectedIndex = ((List<object>)SavedList.ItemsSource).FindIndex(r => r is SavedRow row && row.Item == item);
+        }
+        else
+        {
+            _oneOff = image;
+            FillSaved();
+        }
+    }
+
+    private void Maker_Cancelled(object? sender, EventArgs e) => CloseMaker();
 
     private void LookBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -292,8 +338,7 @@ public partial class CertificatesPanel : ToolPanel
         SignatureLook? look = null;
         if (Where!.Kind != WhereKind.Invisible && Look is { Picture: true } choice)
         {
-            var row = (SavedRow)SavedList.SelectedItem;
-            if (_saved.Load(row.Item) is not { } image)
+            if ((SavedList.SelectedItem is SavedRow row ? _saved.Load(row.Item) : _oneOff) is not { } image)
             {
                 host.ShowProblem(new Problem(Loc.T("Signature not read"), Loc.T("That saved signature could not be read. Choose another.")));
                 return;
@@ -338,7 +383,15 @@ public partial class CertificatesPanel : ToolPanel
         {
             if (!fromStore) certificate.Dispose();
             SetWorking(false);
-            if (tab.Session.Current.Length != before) ClearBox();
+            if (tab.Session.Current.Length != before)
+            {
+                ClearBox();
+                if (_oneOff is not null)
+                {
+                    _oneOff = null;
+                    FillSaved();
+                }
+            }
             if (!finished || tab.Session.Current.Length != before) tab.Reload();
         }
         if (tab.Session.Current.Length == before) return;

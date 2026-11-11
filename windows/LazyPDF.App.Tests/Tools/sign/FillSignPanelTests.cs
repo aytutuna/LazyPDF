@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Tools.Certificates;
 using LazyPDF.App.Tools.FillSign;
 using LazyPDF.Core;
 using Xunit;
@@ -63,6 +64,36 @@ public sealed class FillSignPanelTests
         placed.Invoke(panel, [0, new Point(50, 100), null]);
 
         Assert.Equal("Place on page", panel.Action!.Text);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AKeptSignatureIsSavedAndAOneOffIsNot() => Sta.Run(() =>
+    {
+        using var dir = new TempDir();
+        using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), null, "a.pdf", null);
+        var panel = new CertificatesPanel(dir.Sub("sigs"));
+        var (viewer, _) = FakeViewer.Create();
+        panel.Attach(tab, viewer, new RecordingHost());
+        var maker = (SignatureMaker)panel.FindName("Maker");
+        var list = (ListBox)panel.FindName("SavedList");
+        var saved = new SavedSignatures(dir.Sub("sigs"));
+        var made = typeof(CertificatesPanel).GetMethod("Maker_Made", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        ((TextBox)maker.FindName("NameBox")).Text = "Ann";
+        var keep = (CheckBox)maker.FindName("KeepBox");
+
+        keep.IsChecked = false;
+        made.Invoke(panel, [maker, EventArgs.Empty]);
+
+        Assert.Empty(saved.List(SavedKind.Signature));
+        Assert.Single(list.Items);
+
+        keep.IsChecked = true;
+        made.Invoke(panel, [maker, EventArgs.Empty]);
+
+        Assert.Single(saved.List(SavedKind.Signature));
+        Assert.Single(list.Items);
+        Assert.IsType<SavedRow>(list.SelectedItem);
         return Task.CompletedTask;
     });
 }
