@@ -103,9 +103,9 @@ Panels with several jobs split into partial files (`PagesPanel.Edit.cs`, `PagesP
 
 `preferences.json` (appearance, the side panel left open, inspector sections), `recent.json`, `signing.json`, `batch-sets.json` and the saved signatures live in `%APPDATA%\Lazy PDF`. A file that does not decode is moved aside and the defaults are used; one that cannot be read is left alone. A part of a file that is damaged resets only that property.
 
-About is reached from the settings and shows the name, version, copyright, "Free. Source available under PolyForm Noncommercial 1.0.0.", the links to pdf.alazy.app, the privacy page and support@alazy.app, and the notices file.
+About is reached from the settings and shows the name, version, copyright, "Free. Source available under PolyForm Noncommercial 1.0.0.", the links to alazy.app/pdf, the privacy page and support@alazy.app, and the notices file.
 
-The Home tab's tiles that cannot start (Scan without Lazy Scan, a tool without an open file) stay in place with their reason under the title, and choosing one puts the reason in the status line instead of doing nothing.
+The Home tab leaves the Lazy Scan tile out when Lazy Scan is not installed; the tool tiles that cannot start without an open file stay in place with their reason under the title, and choosing one puts the reason in the status line instead of doing nothing.
 
 `RecoveryStore` keeps each open document as `id.pdf` and `id.json` in `%LOCALAPPDATA%\Lazy PDF\Recovery`, written after every edit on a background worker. Closing or saving on purpose removes the entry. At start, entries whose process is gone are offered back as documents with unsaved changes, and a file that is already open comes back as a copy that needs a name.
 

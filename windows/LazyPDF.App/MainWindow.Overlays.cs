@@ -229,7 +229,7 @@ public partial class MainWindow
     {
         AboutVersion.Text = Loc.T("Version {0}", AppInfo.Version);
         AboutCopyright.Text = AppInfo.Copyright;
-        SetLink(SiteLink, new Uri(AppInfo.Site).Host, Loc.T("Website"));
+        SetLink(SiteLink, new Uri(AppInfo.Site).Host + new Uri(AppInfo.Site).AbsolutePath.TrimEnd('/'), Loc.T("Website"));
         SetLink(SupportLink, AppInfo.SupportAddress, Loc.T("Email support"));
         AboutNotices.Text = AppInfo.Notices() ?? Loc.T("The notices file is missing from this copy of Lazy PDF. Reinstall the app to get it back.");
         _settingsOpen = false;
