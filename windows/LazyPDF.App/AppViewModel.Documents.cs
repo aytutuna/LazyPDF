@@ -319,6 +319,9 @@ public sealed partial class AppViewModel
         return true;
     }
 
+    /// <summary>Why the last write failed, null after one that worked.</summary>
+    public Exception? LastSaveError { get; private set; }
+
     private bool Write(DocumentTab tab, Action save)
     {
         try
@@ -327,9 +330,11 @@ public sealed partial class AppViewModel
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or PdfReadException)
         {
+            LastSaveError = e;
             ShowProblem(Problems.Save(e, tab.Title));
             return false;
         }
+        LastSaveError = null;
         _warnedAboutDisk.Remove(tab);
         if (tab.Path is { } path)
         {

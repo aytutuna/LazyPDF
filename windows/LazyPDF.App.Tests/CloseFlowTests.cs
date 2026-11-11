@@ -183,6 +183,33 @@ public sealed class CloseFlowTests
 
         Assert.Equal("Not saved", f.Vm.Message?.Title);
         Assert.True(tab.IsDirty);
+        Assert.IsType<IOException>(f.Vm.LastSaveError);
+    }
+
+    [Fact]
+    public async Task AGoodSaveClearsTheLastSaveError()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await OpenDirty(f);
+        using (new FileStream(f.Dir.Sub("a.pdf"), FileMode.Open, FileAccess.Read, FileShare.None))
+            f.Vm.Save(tab);
+
+        Assert.True(f.Vm.Save(tab));
+
+        Assert.Null(f.Vm.LastSaveError);
+    }
+
+    [Fact]
+    public async Task ACloseQuestionForAMadeDocumentStaysUntilSaveAsWorks()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Dir.File("pic.png", [1, 2, 3]));
+        var tab = f.Vm.ActiveDocument!;
+        tab.Commit("Properties");
+
+        Assert.False(f.Vm.RequestClose(tab));
+        Assert.True(AppViewModel.NeedsName(tab));
+        Assert.Same(tab, f.Vm.CloseQuestion);
     }
 
     [Fact]

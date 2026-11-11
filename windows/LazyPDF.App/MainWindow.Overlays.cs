@@ -157,7 +157,7 @@ public partial class MainWindow
         else
         {
             saved = _vm.Save(tab, closeAfter: true);
-            if (!saved && _vm.Message is { IsError: true }) saved = SaveAsWithDialog();
+            if (!saved && _vm.Message is { IsError: true } && _vm.LastSaveError is IOException or UnauthorizedAccessException) saved = SaveAsWithDialog();
         }
         if (saved) _vm.Close(tab);
         else if (_vm.Message is { Action: not null }) _vm.CancelClose();
