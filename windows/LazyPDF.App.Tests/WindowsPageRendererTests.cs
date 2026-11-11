@@ -30,6 +30,29 @@ public sealed class WindowsPageRendererTests
     }
 
     [Fact]
+    public async Task ALoadThatFinishesAfterDisposeLeavesNothing()
+    {
+        var renderer = new WindowsPageRenderer();
+
+        var loading = renderer.LoadAsync(PdfEditSession.Open(Pdfs.Text(pages: 3)), null);
+        renderer.Dispose();
+        await loading;
+
+        Assert.Equal(0, renderer.PageCount);
+    }
+
+    [Fact]
+    public async Task TwoLoadsInSequenceLeaveTheSecond()
+    {
+        using var renderer = new WindowsPageRenderer();
+
+        await renderer.LoadAsync(PdfEditSession.Open(Pdfs.Text(pages: 3)), null);
+        await renderer.LoadAsync(PdfEditSession.Open(Pdfs.Text(pages: 2)), null);
+
+        Assert.Equal(2, renderer.PageCount);
+    }
+
+    [Fact]
     public void APageIsDrawnWithTextOnWhite()
     {
         using var renderer = Load(PdfEditSession.Open(Pdfs.Text()));

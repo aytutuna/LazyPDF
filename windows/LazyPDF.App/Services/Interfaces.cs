@@ -11,6 +11,9 @@ public interface IDocumentRenderer : IPageRenderer, IDisposable
     /// </summary>
     bool Load(PdfEditSession session, string? password);
 
+    /// <summary>As <see cref="Load"/>, without holding the calling thread where the renderer can avoid it.</summary>
+    Task<bool> LoadAsync(PdfEditSession session, string? password) => Task.FromResult(Load(session, password));
+
     /// <summary>Width and height in points of page <paramref name="pageIndex"/> as displayed (crop box, /Rotate applied).</summary>
     (double Width, double Height) PageSize(int pageIndex);
 }
