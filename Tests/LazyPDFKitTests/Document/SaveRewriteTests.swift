@@ -237,4 +237,44 @@ final class SaveRewriteTests: XCTestCase {
         XCTAssertEqual(SaveFixtures.title(reopened), "Direct")
         XCTAssertTrue(reopened.trailer["Info"] is PdfReference)
     }
+
+    private func assertDropped(_ file: [UInt8], _ expected: Int, line: UInt = #line) throws {
+        let document = try PdfDocument.open(file)
+        let options = PdfSaveOptions(useObjectStreams: false, security: nil, documentId: [UInt8](repeating: 0, count: 16))
+        var dropped = 0
+        let bytes = try document.saveRewrite(options, dropped: &dropped)
+        XCTAssertEqual(dropped, expected, line: line)
+        // The second half of the /ID is random.
+        let plain = text(bytes), again = text(try document.saveRewrite(options))
+        XCTAssertEqual(plain.components(separatedBy: "/ID")[0], again.components(separatedBy: "/ID")[0], line: line)
+        XCTAssertEqual(plain.count, again.count, line: line)
+    }
+
+    func test_aSoundFileDropsNothing() throws { try assertDropped(TestPdf.simple(), 0) }
+
+    func test_anUnreadableContentStreamIsCounted() throws {
+        let pdf = TestPdf()
+        pdf.obj(1, "<</Type /Catalog /Pages 2 0 R>>")
+        pdf.obj(2, "<</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 100 100]>>")
+        pdf.obj(3, "<</Type /Page /Parent 2 0 R /Contents 4 0 R>>")
+        pdf.obj(4, "<</Broken (never closed")
+        try assertDropped(pdf.finish(), 1)
+    }
+
+    func test_anUnreadableObjectStreamMemberIsCounted() throws {
+        let bodies = ["<</Type /Catalog /Pages 2 0 R /Extra 9 0 R>>", "<</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 100 100]>>", "<</Broken (never closed"]
+        let header = "1 0 2 \(bodies[0].count + 1) 9 \(bodies[0].count + bodies[1].count + 2) "
+        let pdf = TestPdf("%PDF-1.5\n")
+        pdf.stream(5, "/Type /ObjStm /N 3 /First \(header.count)", header + bodies.joined(separator: " "))
+        pdf.obj(3, "<</Type /Page /Parent 2 0 R>>")
+        try assertDropped(pdf.finishWithoutXref(), 1)
+    }
+
+    func test_aReferenceToAFreeObjectIsNotCounted() throws {
+        let pdf = TestPdf()
+        pdf.obj(1, "<</Type /Catalog /Pages 2 0 R /Extra 9 0 R>>")
+        pdf.obj(2, "<</Type /Pages /Kids [] /Count 0>>")
+        pdf.obj(10, "<</Orphan true>>")
+        try assertDropped(pdf.finish(), 0)
+    }
 }

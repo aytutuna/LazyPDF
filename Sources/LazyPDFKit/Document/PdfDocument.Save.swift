@@ -21,6 +21,18 @@ extension PdfDocument {
         return try PdfRewriter(self, options).run()
     }
 
+    /// As `saveRewrite(_:)`, and says in `dropped` how many objects the rewrite reached that the file's table
+    /// lists but that could not be read, and so are left out. A free or unlisted object is not counted. The
+    /// bytes are the same.
+    public func saveRewrite(_ options: PdfSaveOptions? = nil, dropped: inout Int) throws -> [UInt8] {
+        let options = options ?? PdfSaveOptions()
+        try requireEncryptionRights(options.security)
+        let rewriter = PdfRewriter(self, options)
+        let bytes = try rewriter.run()
+        dropped = rewriter.dropped.count
+        return bytes
+    }
+
     /// The file had an /Info and the trailer has none now. Readers fill a missing key in from an older trailer,
     /// so an update has to say it is gone.
     var infoRemoved: Bool { hadInfo && !trailer.containsKey("Info") }

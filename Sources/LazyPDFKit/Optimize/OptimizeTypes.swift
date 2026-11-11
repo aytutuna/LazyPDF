@@ -128,6 +128,7 @@ public struct OptimizeResult {
     public let audit: SpaceAudit
     public let steps: [OptimizeStepResult]
     public let notes: [String]
+    public var dropped = 0
 }
 
 public enum SanitizeItem: Int, CaseIterable, Hashable {

@@ -19,6 +19,9 @@ public final class PdfRewriter {
     private var items: [PdfObject] = []
     private var followed = 0
 
+    /// The numbers reached that the table lists and that could not be read.
+    private(set) var dropped = Set<Int>()
+
     public init(_ document: PdfDocument, _ options: PdfSaveOptions) {
         self.document = document
         self.options = options
@@ -136,7 +139,10 @@ public final class PdfRewriter {
     private func intern(_ entry: PdfObject?) -> Int {
         if let reference = entry as? PdfReference {
             if let known = numbers[reference.number] { return known }
-            guard let value = document.get(reference.number), !(value is PdfNull) else { return 0 }
+            guard let value = document.get(reference.number), !(value is PdfNull) else {
+                if let listed = document.entries[reference.number], listed.kind == .inUse || listed.kind == .compressed { dropped.insert(reference.number) }
+                return 0
+            }
             items.append(value)
             numbers[reference.number] = items.count
             return items.count

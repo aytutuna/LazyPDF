@@ -43,7 +43,8 @@ public final class PdfOptimizer {
     public func run(_ options: OptimizeOptions) throws -> OptimizeResult {
         try Task.checkCancellation()
         let before = self.audit()
-        let plain = try document.saveRewrite()
+        var dropped = 0
+        let plain = try document.saveRewrite(nil, dropped: &dropped)
         let working = try PdfDocument.open(plain)
         var results = [OptimizeStepResult(.removeUnreferenced, unreferencedCount())]
         var notes: [String] = []
@@ -94,7 +95,7 @@ public final class PdfOptimizer {
         }
         // A plain rewrite is the floor, unless the file was asked to change its look or to be encrypted or given an id.
         if best.count > plain.count && !options.grayscale && options.security == nil && options.documentId == nil { best = plain }
-        return OptimizeResult(bytes: best, sizeBefore: document.length, sizeAfter: best.count, audit: before, steps: results, notes: notes)
+        return OptimizeResult(bytes: best, sizeBefore: document.length, sizeAfter: best.count, audit: before, steps: results, notes: notes, dropped: dropped)
     }
 
     private func save(_ working: PdfDocument, _ options: OptimizeOptions, _ objectStreams: Bool) throws -> [UInt8] {
