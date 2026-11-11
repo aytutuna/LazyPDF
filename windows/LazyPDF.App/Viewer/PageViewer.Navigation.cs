@@ -281,6 +281,7 @@ public partial class PageViewer
         LinkOpen.Visibility = openable ? Visibility.Visible : Visibility.Collapsed;
         LinkCancel.Content = openable ? Loc.T("Cancel") : Loc.T("Close");
         AutomationProperties.SetName(LinkCancel, (string)LinkCancel.Content);
+        HideToast();
         LinkCard.Visibility = Visibility.Visible;
         (openable ? LinkOpen : LinkCancel).Focus();
     }
@@ -300,6 +301,7 @@ public partial class PageViewer
         LinkOpen.Visibility = Visibility.Collapsed;
         LinkCancel.Content = Loc.T("Close");
         AutomationProperties.SetName(LinkCancel, (string)LinkCancel.Content);
+        HideToast();
         LinkCard.Visibility = Visibility.Visible;
         LinkCancel.Focus();
     }

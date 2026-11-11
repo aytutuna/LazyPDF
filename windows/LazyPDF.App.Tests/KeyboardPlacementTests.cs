@@ -362,6 +362,21 @@ public sealed class KeyboardPlacementTests
     });
 
     [Fact]
+    public Task AToastWaitsOutAnOpenLinkQuestion() => Sta.Run(() =>
+    {
+        using var tab = NewTab();
+        var (viewer, _) = Open(tab);
+        var toast = (UIElement)viewer.FindName("Toast");
+        Call(viewer, "ShowToast", "Copied", 3000);
+
+        Call(viewer, "Tell", "Nothing here", null);
+        Call(viewer, "ShowToast", "Copied again", 3000);
+
+        Assert.Equal(Visibility.Collapsed, toast.Visibility);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task ToastAndSpeechDoNothingWithoutAFile() => Sta.Run(() =>
     {
         var viewer = new PageViewer(null);

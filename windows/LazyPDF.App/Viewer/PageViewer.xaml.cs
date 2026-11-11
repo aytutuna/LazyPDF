@@ -164,7 +164,7 @@ public partial class PageViewer : UserControl, IDocumentViewer
 
     private void ShowToast(string text, int milliseconds = 3000)
     {
-        if (_tab is null) return;
+        if (_tab is null || LinkCard.Visibility == Visibility.Visible) return;
         ToastText.Text = text;
         Toast.Visibility = Visibility.Visible;
         RaiseLiveRegionChanged(ToastText);
