@@ -19,7 +19,7 @@ public partial class PageViewer
     {
         if (_tab is null || Surface.PageCount == 0) return;
         page = Math.Clamp(page, 0, Surface.PageCount - 1);
-        _history.Jump(Surface.CurrentPage, page);
+        if (Surface.TopPlace() is { } from) _history.Jump(from, new PagePoint(page, new Point(0, 0)));
         Surface.GoToPage(page);
     }
 
@@ -29,7 +29,7 @@ public partial class PageViewer
         if (Surface.PageCount == 0) return;
         int spread = ViewLayout.SpreadOf(Surface.Columns, Surface.Cover, Surface.CurrentPage) + direction;
         if (spread < 0 || spread >= ViewLayout.SpreadsOf(Surface.Columns, Surface.Cover, Surface.PageCount)) return;
-        GoToPage(ViewLayout.PagesOf(Surface.Columns, Surface.Cover, spread, Surface.PageCount).First);
+        Surface.GoToPage(ViewLayout.PagesOf(Surface.Columns, Surface.Cover, spread, Surface.PageCount).First);
     }
 
     public void GoToDestination(PdfDestination destination)
@@ -40,8 +40,9 @@ public partial class PageViewer
             Tell(Loc.T("This link goes to a page that is not in the file."), null);
             return;
         }
-        _history.Jump(Surface.CurrentPage, place.PageIndex);
-        Surface.GoToPage(place.PageIndex, new Point(place.X, Math.Max(0, place.Y - 12)));
+        var to = new Point(place.X, Math.Max(0, place.Y - 12));
+        if (Surface.TopPlace() is { } from) _history.Jump(from, new PagePoint(place.PageIndex, to));
+        Surface.GoToPage(place.PageIndex, to);
     }
 
     public void FollowAction(PdfAction? action)
@@ -88,12 +89,12 @@ public partial class PageViewer
 
     public void GoBack()
     {
-        if (_history.Back(Surface.CurrentPage) is { } page) Surface.GoToPage(page);
+        if (Surface.TopPlace() is { } from && _history.Back(from) is { } place) Surface.GoToPage(place.Page, place.Point);
     }
 
     public void GoForward()
     {
-        if (_history.Forward(Surface.CurrentPage) is { } page) Surface.GoToPage(page);
+        if (Surface.TopPlace() is { } from && _history.Forward(from) is { } place) Surface.GoToPage(place.Page, place.Point);
     }
 
     public void Reveal(int page, Rect area) => Surface.Reveal(page, area);
@@ -161,7 +162,6 @@ public partial class PageViewer
         var hit = Search.Hits[Search.Current].Match;
         if (_tab is null || hit.Quads.Count == 0) return;
         var area = PageBounds(hit.Page, hit.Quads);
-        _history.Jump(Surface.CurrentPage, hit.Page);
         Surface.Reveal(hit.Page, area);
         _hitGeometry.Clear();
         Surface.InvalidateVisual();

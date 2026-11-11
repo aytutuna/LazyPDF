@@ -288,6 +288,8 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
     // A point on a page that stays where it is on screen while the layout around it changes.
     private readonly record struct Anchor(int Page, Point Point);
 
+    public PagePoint? TopPlace() => AnchorAt(new Point(0, 0)) is { } a ? new PagePoint(a.Page, a.Point) : null;
+
     private Anchor? AnchorAt(Point viewPoint)
     {
         if (_layout.PageCount == 0) return null;

@@ -1,4 +1,5 @@
 using LazyPDF.App.Viewer;
+using System.Windows;
 using Xunit;
 
 namespace LazyPDF.App.Tests;
@@ -6,6 +7,8 @@ namespace LazyPDF.App.Tests;
 // Back and Forward over the jumps a reader made.
 public sealed class PageHistoryTests
 {
+    private static PagePoint At(int page, double y = 0) => new(page, new Point(0, y));
+
     [Fact]
     public void ANewHistoryGoesNowhere()
     {
@@ -13,19 +16,19 @@ public sealed class PageHistoryTests
 
         Assert.False(history.CanGoBack);
         Assert.False(history.CanGoForward);
-        Assert.Null(history.Back(3));
-        Assert.Null(history.Forward(3));
+        Assert.Null(history.Back(At(3)));
+        Assert.Null(history.Forward(At(3)));
     }
 
     [Fact]
-    public void BackReturnsToThePageJumpedFromAndForwardComesAgain()
+    public void BackReturnsToThePlaceJumpedFromAndForwardComesAgain()
     {
         var history = new PageHistory();
-        history.Jump(0, 10);
+        history.Jump(At(0, 300), At(10));
 
-        Assert.Equal(0, history.Back(10));
+        Assert.Equal(At(0, 300), history.Back(At(10)));
         Assert.True(history.CanGoForward);
-        Assert.Equal(10, history.Forward(0));
+        Assert.Equal(At(10), history.Forward(At(0, 300)));
         Assert.False(history.CanGoForward);
     }
 
@@ -33,48 +36,58 @@ public sealed class PageHistoryTests
     public void BackWalksThroughSeveralJumpsInReverse()
     {
         var history = new PageHistory();
-        history.Jump(0, 5);
-        history.Jump(5, 9);
+        history.Jump(At(0), At(5));
+        history.Jump(At(5), At(9));
 
-        Assert.Equal(5, history.Back(9));
-        Assert.Equal(0, history.Back(5));
-        Assert.Null(history.Back(0));
+        Assert.Equal(At(5), history.Back(At(9)));
+        Assert.Equal(At(0), history.Back(At(5)));
+        Assert.Null(history.Back(At(0)));
     }
 
     [Fact]
-    public void ANewJumpAfterGoingBackForgetsTheForwardPages()
+    public void ANewJumpAfterGoingBackForgetsTheForwardPlaces()
     {
         var history = new PageHistory();
-        history.Jump(0, 5);
-        history.Back(5);
+        history.Jump(At(0), At(5));
+        history.Back(At(5));
 
-        history.Jump(0, 7);
+        history.Jump(At(0), At(7));
 
         Assert.False(history.CanGoForward);
-        Assert.Equal(0, history.Back(7));
+        Assert.Equal(At(0), history.Back(At(7)));
     }
 
     [Fact]
-    public void AJumpToTheSamePageIsNotAJump()
+    public void AJumpWithinFiftyPointsOfTheSamePageIsNotAJump()
     {
         var history = new PageHistory();
 
-        history.Jump(4, 4);
+        history.Jump(At(4, 100), At(4, 149));
 
         Assert.False(history.CanGoBack);
+    }
+
+    [Fact]
+    public void AFarJumpOnTheSamePageIsAJump()
+    {
+        var history = new PageHistory();
+
+        history.Jump(At(4, 100), At(4, 400));
+
+        Assert.Equal(At(4, 100), history.Back(At(4, 400)));
     }
 
     [Fact]
     public void OnlyTheLastHundredAreKept()
     {
         var history = new PageHistory();
-        for (int i = 0; i < 150; i++) history.Jump(i, i + 1);
+        for (int i = 0; i < 150; i++) history.Jump(At(i), At(i + 1));
 
         int count = 0;
-        int page = 150;
-        while (history.Back(page) is { } previous)
+        var place = At(150);
+        while (history.Back(place) is { } previous)
         {
-            page = previous;
+            place = previous;
             count++;
         }
 
@@ -85,7 +98,7 @@ public sealed class PageHistoryTests
     public void ClearingForgetsEverything()
     {
         var history = new PageHistory();
-        history.Jump(0, 5);
+        history.Jump(At(0), At(5));
 
         history.Clear();
 
