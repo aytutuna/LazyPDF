@@ -43,16 +43,16 @@ public sealed partial class MetadataPanel : ToolPanel
 
     protected override void OnDetach() => Tab!.Changed -= Tab_Changed;
 
-    // Typed properties go into the file on Save, on leaving a field and on close, as one undo step each time.
-    // A signed file asks first, so there the caller is told to wait and leaving a field does not ask again.
-    public override bool HandIn() => Store(true);
+    // Typed properties go into the file on Save, on leaving the panel and on close, as one undo step each time.
+    // A signed file asks first, so there the caller is told to wait and leaving the panel does not ask again.
+    public override bool HandIn() => Store(false);
 
     private bool Store(bool notify)
     {
         if (Tab is null) return true;
         if (!_changed)
         {
-            if (notify && _dropped == Tab.Id) ShowDropNotice();
+            if (MetadataEdit.ShowDropNotice(notify, _dropped == Tab.Id)) ShowDropNotice();
             return true;
         }
         bool asks = AsksFirst;
@@ -62,9 +62,9 @@ public sealed partial class MetadataPanel : ToolPanel
 
     private bool AsksFirst => Tab is { } tab && tab.Document.IsSigned && ChangeGate.Refusal(tab.Document) is null;
 
-    private void Fields_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    private void Fields_FocusWithinChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        if (e.OriginalSource is TextBox && !AsksFirst) Store(e.NewFocus is not TextBox);
+        if (e.NewValue is false && !AsksFirst) Store(false);
     }
 
     private void Tab_Changed(object? sender, EventArgs e) => Load(_changed);
@@ -168,9 +168,9 @@ public sealed partial class MetadataPanel : ToolPanel
             if (tab.Commit(Loc.T("Properties")))
             {
                 host.SetStatus(Loc.T("Properties changed."));
-                // Leaving one field for another commits it, so a drop is remembered until the properties are saved or closed.
+                // Leaving the panel commits it, so a drop is remembered until the properties are saved.
                 if (drops) _dropped = tab.Id;
-                if (notify && _dropped == tab.Id) ShowDropNotice();
+                if (MetadataEdit.ShowDropNotice(notify, _dropped == tab.Id)) ShowDropNotice();
             }
             return Task.CompletedTask;
         });

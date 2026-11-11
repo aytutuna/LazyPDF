@@ -24,6 +24,8 @@ public static class MetadataEdit
         Drops(before.Title, after.Title) || Drops(before.Author, after.Author) ||
         Drops(before.Subject, after.Subject) || Drops(before.Keywords, after.Keywords);
 
+    public static bool ShowDropNotice(bool notify, bool dropped) => notify && dropped;
+
     private static bool Drops(string? before, string? after) => !string.IsNullOrEmpty(before) && before != after;
 
     public static string ModeName(PageMode mode) => mode switch

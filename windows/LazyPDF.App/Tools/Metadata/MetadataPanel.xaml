@@ -3,7 +3,7 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:loc="clr-namespace:LazyPDF.App"
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools">
-    <StackPanel Margin="12,4,12,12" LostKeyboardFocus="Fields_LostKeyboardFocus">
+    <StackPanel Margin="12,4,12,12" IsKeyboardFocusWithinChanged="Fields_FocusWithinChanged">
         <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Title}" />
         <TextBox x:Name="TitleBox" AutomationProperties.Name="{loc:T Title}" TextChanged="Field_Changed" />
 
