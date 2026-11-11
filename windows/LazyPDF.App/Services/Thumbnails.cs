@@ -18,6 +18,7 @@ public sealed class Thumbnails
 
     private readonly Func<IDocumentRenderer> _renderers;
     private readonly string _directory;
+    private int _generation;
 
     public Thumbnails(Func<IDocumentRenderer> renderers, string? directory = null)
     {
@@ -42,6 +43,7 @@ public sealed class Thumbnails
             }
             if (info.Length > MaxFileBytes) return null;
             byte[]? png;
+            int generation = _generation;
             await Drawing.WaitAsync();
             try
             {
@@ -51,7 +53,8 @@ public sealed class Thumbnails
             {
                 Drawing.Release();
             }
-            if (png is not null)
+            // Cleared or forgotten while it waited: the card is gone, so no picture is kept.
+            if (png is not null && generation == _generation)
             {
                 Directory.CreateDirectory(_directory);
                 await File.WriteAllBytesAsync(cached, png);
@@ -64,9 +67,17 @@ public sealed class Thumbnails
         }
     }
 
-    public void Forget(string path) => Delete($"{PathHash(new FileInfo(path).FullName)}-*.png");
+    public void Forget(string path)
+    {
+        Interlocked.Increment(ref _generation);
+        Delete($"{PathHash(new FileInfo(path).FullName)}-*.png");
+    }
 
-    public void Clear() => Delete("*.png");
+    public void Clear()
+    {
+        Interlocked.Increment(ref _generation);
+        Delete("*.png");
+    }
 
     private static string PathHash(string fullName) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(fullName.ToUpperInvariant())))[..16];
