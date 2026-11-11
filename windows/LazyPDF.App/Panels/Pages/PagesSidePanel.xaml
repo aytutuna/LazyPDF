@@ -7,9 +7,18 @@
     <ListBox x:Name="Thumbs" BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Center"
              ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True"
              VirtualizingPanel.ScrollUnit="Pixel" AutomationProperties.Name="{loc:T Page thumbnails}"
-             SelectionChanged="Thumbs_SelectionChanged"
+             SelectionMode="Extended" SelectionChanged="Thumbs_SelectionChanged" PreviewKeyDown="Thumbs_PreviewKeyDown"
+             PreviewMouseRightButtonDown="Thumbs_PreviewMouseRightButtonDown"
              PreviewMouseLeftButtonDown="Thumbs_PreviewMouseLeftButtonDown"
              PreviewMouseLeftButtonUp="Thumbs_PreviewMouseLeftButtonUp">
+        <ListBox.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="{loc:T Rotate left}" Click="TurnLeft_Click" />
+                <MenuItem Header="{loc:T Rotate right}" Click="TurnRight_Click" />
+                <MenuItem Header="{loc:T Delete}" InputGestureText="Del" Click="Delete_Click" />
+                <MenuItem Header="{loc:T Extract to a new file}" Click="Extract_Click" />
+            </ContextMenu>
+        </ListBox.ContextMenu>
         <ListBox.ItemContainerStyle>
             <Style TargetType="ListBoxItem" BasedOn="{StaticResource ThumbnailListItemStyle}">
                 <Setter Property="AutomationProperties.Name" Value="{Binding Name}" />

@@ -2,12 +2,17 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.App.Tools;
+using LazyPDF.App.Tools.Comment;
+using LazyPDF.App.Tools.EditContent;
+using LazyPDF.App.Tools.Pages;
+using LazyPDF.Core;
 
 namespace LazyPDF.App.Panels.Pages;
 
-/// <summary>Every page as a small picture, the page in view marked; a click goes to the page. The list shows only the rows in view.</summary>
+/// <summary>Every page as a small picture, the page in view marked; a click goes to the page; Ctrl or Shift picks more, to turn, delete or extract. The list shows only the rows in view.</summary>
 public partial class PagesSidePanel : ToolPanel
 {
     private const double BoxWidth = 132;
@@ -15,6 +20,7 @@ public partial class PagesSidePanel : ToolPanel
 
     private bool _syncing;
     private PageThumb? _downThumb;
+    private IEnumerable<int>? _reselect;
 
     public PagesSidePanel() => InitializeComponent();
 
@@ -48,8 +54,13 @@ public partial class PagesSidePanel : ToolPanel
         // A slot keeps its old picture until the new one is drawn, but only when the same page is still in it.
         if (Thumbs.ItemsSource is List<PageThumb> old && old.Count == items.Count)
             for (int i = 0; i < items.Count; i++) items[i].Inherit(old[i]);
+        var select = _reselect;
+        _reselect = null;
         _syncing = true;
         Thumbs.ItemsSource = items;
+        if (select is not null)
+            foreach (int page in select)
+                if (page >= 0 && page < items.Count) Thumbs.SelectedItems.Add(items[page]);
         _syncing = false;
         Mark();
     }
@@ -57,7 +68,7 @@ public partial class PagesSidePanel : ToolPanel
     // The page in view gets the ring and is scrolled into the list.
     private void Mark()
     {
-        if (Viewer is not { } viewer || Thumbs.Items.Count == 0) return;
+        if (Viewer is not { } viewer || Thumbs.Items.Count == 0 || Thumbs.SelectedItems.Count > 1) return;
         int page = Math.Clamp(viewer.PageIndex, 0, Thumbs.Items.Count - 1);
         if (Thumbs.SelectedIndex == page) return;
         _syncing = true;
@@ -72,7 +83,7 @@ public partial class PagesSidePanel : ToolPanel
 
     private void Thumbs_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_syncing || Thumbs.SelectedIndex < 0 || Viewer is not { } viewer) return;
+        if (_syncing || Thumbs.SelectedItems.Count != 1 || Viewer is not { } viewer) return;
         if (viewer.PageIndex != Thumbs.SelectedIndex) viewer.GoToPage(Thumbs.SelectedIndex);
     }
 
@@ -80,7 +91,7 @@ public partial class PagesSidePanel : ToolPanel
     private void Thumbs_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         var item = ItemsControl.ContainerFromElement(Thumbs, (DependencyObject)e.OriginalSource) as ListBoxItem;
-        _downThumb = item is { IsSelected: true } ? item.DataContext as PageThumb : null;
+        _downThumb = item is { IsSelected: true } && Keyboard.Modifiers == ModifierKeys.None && Thumbs.SelectedItems.Count == 1 ? item.DataContext as PageThumb : null;
     }
 
     private void Thumbs_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -93,5 +104,79 @@ public partial class PagesSidePanel : ToolPanel
     private void Thumb_Unloaded(object sender, RoutedEventArgs e)
     {
         if (((FrameworkElement)sender).DataContext is PageThumb thumb) thumb.Release();
+    }
+
+    private List<int> Selected() => [.. Thumbs.SelectedItems.Cast<PageThumb>().Select(t => t.Index).Order()];
+
+    private void Thumbs_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (ItemsControl.ContainerFromElement(Thumbs, (DependencyObject)e.OriginalSource) is ListBoxItem { IsSelected: false } item)
+            Thumbs.SelectedItem = item.DataContext;
+    }
+
+    private void Thumbs_PreviewKeyDown(object sender, KeyEventArgs e) => e.Handled = Press(e.Key, Keyboard.Modifiers);
+
+    internal bool Press(Key key, ModifierKeys modifiers)
+    {
+        if (key != Key.Delete || modifiers != ModifierKeys.None || Thumbs.SelectedItems.Count == 0) return false;
+        Delete();
+        return true;
+    }
+
+    private void TurnLeft_Click(object sender, RoutedEventArgs e) => Turn(-90);
+
+    private void TurnRight_Click(object sender, RoutedEventArgs e) => Turn(90);
+
+    private void Delete_Click(object sender, RoutedEventArgs e) => Delete();
+
+    // Null when the file may be changed now; otherwise the change waits or is refused, with the reason shown.
+    private (DocumentTab Tab, IToolHost Host)? Editable(Action again)
+    {
+        if (Tab is not { } tab || Host is not { } host || MarkWork.Running) return null;
+        if (Clearance.Refusal(tab.Document) is { } problem)
+        {
+            host.ShowProblem(problem);
+            return null;
+        }
+        return MarkWork.Cautioned(tab, host, again) ? null : (tab, host);
+    }
+
+    internal void Turn(int degrees)
+    {
+        var pages = Selected();
+        if (pages.Count == 0 || Editable(() => Turn(degrees)) is not var (tab, host)) return;
+        _reselect = pages;
+        try
+        {
+            PageJobs.Apply(tab, host, Loc.T("Rotate pages"), d => PageOperations.Rotate(d, pages, degrees),
+                           Loc.Plural(pages.Count, "{0} page rotated", "{0} pages rotated", pages.Count));
+        }
+        finally
+        {
+            _reselect = null;
+        }
+    }
+
+    private void Delete()
+    {
+        var pages = Selected();
+        if (pages.Count == 0 || Editable(Delete) is not var (tab, host)) return;
+        if (pages.Count == Thumbs.Items.Count)
+        {
+            host.ShowProblem(new Problem(Loc.T("Cannot delete every page"), Loc.T("A file needs at least one page. Leave one page out of the selection.")));
+            return;
+        }
+        PageJobs.Delete(tab, host, Loc.T("Delete pages"), pages, Loc.Plural(pages.Count, "{0} page deleted", "{0} pages deleted", pages.Count));
+    }
+
+    private async void Extract_Click(object sender, RoutedEventArgs e)
+    {
+        var pages = Selected();
+        if (Tab is not { } tab || Host is not { } host || pages.Count == 0) return;
+        var failed = new Problem(Loc.T("Pages not extracted"), Loc.T("The pages could not be copied into a new file. Try fewer pages."));
+        if (await PageJobs.CopyOutAsync(tab, host, pages, Loc.T("Extracting pages"), failed) is not { } bytes) return;
+        if (!await host.OpenNewAsync(bytes, Loc.T("{0} extract.pdf", System.IO.Path.GetFileNameWithoutExtension(tab.Title)))) return;
+        host.SetStatus(Loc.Plural(pages.Count, "{0} page extracted", "{0} pages extracted", pages.Count));
+        CopyRules.NoteUnprotected(tab.Document, host);
     }
 }
