@@ -18,12 +18,13 @@ public static class OcrWork
         int revision = tab.Revision;
         bool dropsLayers = options.Existing == OcrExisting.Replace && HasLayer(tab.Document, options.Pages);
         OcrRead? read = null;
+        var reading = new Reading(tab.Renderer, recognizer);
         try
         {
             await host.RunBusyAsync(Loc.T("Reading pages"), async cancel =>
             {
                 var progress = new Progress<OcrProgress>(p => host.SetBusyText(OcrStatusText.Status(p.Done, p.Total)));
-                read = await Task.Run(() => PdfSearchable.ReadAsync(OcrPages.Open(bytes, tab.Password, tab.Certificate), recognizer, tab.Renderer, options, progress, cancel), cancel);
+                read = await Task.Run(() => PdfSearchable.ReadAsync(OcrPages.Open(bytes, tab.Password, tab.Certificate), reading, reading, options, progress, cancel), cancel);
             });
         }
         catch (InvalidOperationException error)
@@ -31,7 +32,17 @@ public static class OcrWork
             host.ShowProblem(new Problem(Loc.T("Language not available"), error.Message));
             return null;
         }
-        if (read is null) return null;
+        if (read is null)
+        {
+            // A cancel is swallowed by the host, so the pages read so far are all that is left of the run.
+            if (reading.Pages.Count == 0 || tab.Revision != revision) return null;
+            PdfOcrLayer.Add(tab.Document, reading.Pages, options.Language);
+            tab.Commit(OcrStatusText.Label);
+            int stopped = reading.Pages.Count;
+            host.SetStatus(Loc.Plural(stopped, "Made {0} page searchable", "Made {0} pages searchable"));
+            host.ShowNotice(Loc.T("Reading stopped"), Loc.Plural(stopped, "Stopped after {0} page. The page was kept. Undo takes it back.", "Stopped after {0} pages. The pages were kept. Undo takes them back."));
+            return null;
+        }
         if (tab.Revision != revision)
         {
             host.ShowNotice(Loc.T("The file changed"), Loc.T("Nothing was added. Run it again."));
@@ -90,6 +101,26 @@ public static class OcrWork
         PdfOcrLayer.Correct(document, document.Pages[page], index, text);
         tab.Commit(Loc.T("Correct word"));
         return true;
+    }
+
+    // ReadAsync renders and reads one page after the other, so the page drawn last is the one being read.
+    private sealed class Reading(IPageRenderer inner, ITextRecognizer recognizer) : IPageRenderer, ITextRecognizer
+    {
+        private int _last;
+        public List<OcrPageWords> Pages { get; } = [];
+
+        public PdfRgbaImage? Render(int pageIndex, double dpi)
+        {
+            _last = pageIndex;
+            return inner.Render(pageIndex, dpi);
+        }
+
+        public async Task<IReadOnlyList<OcrWord>> RecognizeAsync(PdfRgbaImage image, string language, CancellationToken cancellation = default)
+        {
+            var words = await recognizer.RecognizeAsync(image, language, cancellation).ConfigureAwait(false);
+            Pages.Add(new OcrPageWords(_last, words, image.Width, image.Height));
+            return words;
+        }
     }
 
     private static bool HasLayer(PdfDocument document, IReadOnlyList<int>? pages) =>

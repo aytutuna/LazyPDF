@@ -119,16 +119,41 @@ public sealed class OcrWorkTests
     }
 
     [Fact]
-    public async Task ACancelLeavesTheDocumentAsItWas()
+    public async Task ACancelKeepsThePagesAlreadyReadAsOneUndoableStep()
     {
         using var f = new ViewModelFixture();
-        var tab = await Open(f);
+        var tab = await Open(f, 3);
+        var recognizer = new FakeRecognizer();
+        int reads = 0;
+        recognizer.OnRead = () =>
+        {
+            if (++reads == 2) f.Vm.CancelBusy();
+        };
+
+        var result = await Make(tab, f, recognizer, new("en-US", OcrWork.Dpi, OcrExisting.Skip, [0, 1, 2], Force: true));
+
+        Assert.Null(result);
+        Assert.Equal([true, false, false], tab.Document.Pages.Select(p => PdfOcrLayer.Has(tab.Document, p)));
+        Assert.Equal("Reading stopped", f.Vm.Message!.Title);
+        Assert.Equal("Stopped after 1 page. The page was kept. Undo takes it back.", f.Vm.Message.Text);
+        Assert.Equal("Make searchable", tab.Session.UndoLabel);
+        Assert.True(tab.Undo());
+        Assert.False(tab.Session.CanUndo);
+        Assert.False(PdfOcrLayer.Has(tab.Document, tab.Document.Pages[0]));
+    }
+
+    [Fact]
+    public async Task ACancelOnTheFirstPageLeavesTheDocumentAsItWas()
+    {
+        using var f = new ViewModelFixture();
+        var tab = await Open(f, 3);
         var recognizer = new FakeRecognizer { OnRead = () => f.Vm.CancelBusy() };
 
-        var result = await Make(tab, f, recognizer, All());
+        var result = await Make(tab, f, recognizer, new("en-US", OcrWork.Dpi, OcrExisting.Skip, [0, 1, 2], Force: true));
 
         Assert.Null(result);
         Assert.Equal("Cancelled.", f.Vm.StatusFull);
+        Assert.Null(f.Vm.Message);
         Assert.False(tab.Session.CanUndo);
         Assert.False(PdfOcrLayer.Has(tab.Document, tab.Document.Pages[0]));
     }

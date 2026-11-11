@@ -4426,6 +4426,9 @@
   <data name="Reading picture" xml:space="preserve">
     <value>Resim okunuyor</value>
   </data>
+  <data name="Reading stopped" xml:space="preserve">
+    <value>Okuma durduruldu</value>
+  </data>
   <data name="Reading the picture" xml:space="preserve">
     <value>Resim okunuyor</value>
   </data>
@@ -5445,6 +5448,9 @@
   </data>
   <data name="Stopped" xml:space="preserve">
     <value>Durduruldu</value>
+  </data>
+  <data name="Stopped after {0} page. The page was kept. Undo takes it back.|plural" xml:space="preserve">
+    <value>{0} sayfadan sonra durduruldu. Sayfa korundu. Geri alma onu kaldırır.</value>
   </data>
   <data name="Straight lines" xml:space="preserve">
     <value>Düz çizgiler</value>
