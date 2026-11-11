@@ -116,20 +116,21 @@ public static class PdfFilters
         // The deflate stream is read bare, past a valid zlib header: the Adler-32 check would throw away
         // the last block of a file whose checksum is wrong (ISO 32000-1 7.4.4).
         int header = data.Length >= 2 && (data[0] & 0x0F) == 8 && (data[0] * 256 + data[1]) % 31 == 0 ? 2 : 0;
-        InflateFrom(data, header, output, strict);
-        if (output.Count == 0 && header > 0) InflateFrom(data, 0, output, strict);
-        if (output.Count == 0) throw PdfReadException.Damaged("A compressed stream does not inflate.");
+        bool clean = InflateFrom(data, header, output, strict);
+        if (output.Count == 0 && !clean && header > 0) clean = InflateFrom(data, 0, output, strict);
+        if (output.Count == 0 && !clean) throw PdfReadException.Damaged("A compressed stream does not inflate.");
         return output.ToArray();
     }
 
-    private static void InflateFrom(byte[] data, int start, FilterBuffer output, bool strict)
+    private static bool InflateFrom(byte[] data, int start, FilterBuffer output, bool strict)
     {
         using var input = new EndWatch(data, start);
         using var d = new DeflateStream(input, CompressionMode.Decompress);
-        Pump(d, output, strict);
+        bool pumped = Pump(d, output, strict);
         // DeflateStream reports a stream that breaks off as the end of its data. It asks its source for more
         // input only when the final block has not ended, so a source that ran dry shows the break.
         if (strict && output.Count > 0 && input.RanDry) throw PdfReadException.Damaged("A compressed stream breaks off.");
+        return pumped && !input.RanDry;
     }
 
     private sealed class EndWatch(byte[] data, int start) : MemoryStream(data, start, data.Length - start)
@@ -147,7 +148,7 @@ public static class PdfFilters
         }
     }
 
-    private static void Pump(Stream source, FilterBuffer output, bool strict)
+    private static bool Pump(Stream source, FilterBuffer output, bool strict)
     {
         try
         {
@@ -158,6 +159,7 @@ public static class PdfFilters
                 if (read == 0) break;
                 output.Commit(read);
             }
+            return true;
         }
         catch (InvalidDataException) when (strict && output.Count > 0)
         {
@@ -165,6 +167,7 @@ public static class PdfFilters
         }
         catch (InvalidDataException)
         {
+            return false;
         }
     }
 

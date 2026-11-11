@@ -66,6 +66,15 @@ public class StreamDataTests
     }
 
     [Fact]
+    public void EmptyFlateStreamDecodesToNothing()
+    {
+        byte[] empty = [0x78, 0x9C, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01];
+        var document = Open(TestPdf.WithPages(1).Stream(9, "/Filter /FlateDecode", empty));
+        Assert.Empty(document.Data((PdfStream)document.Get(9)!));
+        Assert.Empty(document.Repairs);
+    }
+
+    [Fact]
     public void StreamMadeInMemoryGivesItsOwnData()
     {
         var document = PdfDocument.Open(TestPdf.Simple(1));

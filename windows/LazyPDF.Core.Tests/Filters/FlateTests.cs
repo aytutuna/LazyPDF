@@ -34,6 +34,24 @@ public class FlateTests
     }
 
     [Fact]
+    public void CleanEmptyStreamIsEmpty()
+    {
+        Assert.Empty(PdfFilters.Decode([0x78, 0x9C, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01], Name("FlateDecode"), null));
+        Assert.Empty(PdfFilters.Decode([0x03, 0x00], Name("FlateDecode"), null));
+    }
+
+    [Theory]
+    [InlineData(new byte[] { 0x78, 0x9C })]
+    [InlineData(new byte[] { 0xFF, 0xFF, 0xFF })]
+    [InlineData(new byte[] { 0x78, 0x9C, 0x01, 0x05, 0x00 })]
+    public void EmptyResultWithoutACleanEndIsDamaged(byte[] data)
+    {
+        var e = Assert.Throws<PdfReadException>(() => PdfFilters.Decode(data, Name("FlateDecode"), null));
+        Assert.Equal(PdfReadProblem.Damaged, e.Problem);
+        Assert.Equal("A compressed stream does not inflate.", e.Message);
+    }
+
+    [Fact]
     public void TruncatedDataGivesWhatDecoded()
     {
         var data = FilterFixtures.RandomBytes(40_000);
