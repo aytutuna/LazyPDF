@@ -221,7 +221,7 @@ public sealed class PageEditsTests
         PageOperations.Rotate(document, [0], 90);
         var shown = new PageGeometry(document.Pages[0]);
 
-        Assert.Equal([0], PageEdits.CropTargets(document, [0], new DisplayRect(shown.Width / 2, shown.Height / 2, 50, 50)));
+        Assert.Equal([0], PageEdits.CropTargets(document, [0], new DisplayRect(shown.Width - 100, 10, 50, 50)));
     }
 
     [Fact]

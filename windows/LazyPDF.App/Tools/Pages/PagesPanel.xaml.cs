@@ -24,6 +24,7 @@ public partial class PagesPanel : ToolPanel
 
     private OrganizeView? _organize;
     private bool _syncing;
+    private bool _boxSelected;
     private IEnumerable<int>? _reselect;
     private double _dpr = 1;
 
@@ -134,6 +135,7 @@ public partial class PagesPanel : ToolPanel
     private void Thumbs_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_syncing) return;
+        _boxSelected = false;
         if (Thumbs.SelectedItems.Count == 1 && Viewer is { } viewer && Thumbs.SelectedItem is PageCell cell && viewer.PageIndex != cell.Index) viewer.GoToPage(cell.Index);
         Refresh();
     }

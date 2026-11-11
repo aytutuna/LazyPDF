@@ -72,6 +72,7 @@ public partial class PagesPanel
         }
         _crop.Clear();
         _crop = null;
+        if (_boxSelected) DeselectBoxPage();
         CropDraw.IsChecked = false;
     }
 
@@ -95,18 +96,28 @@ public partial class PagesPanel
     private void Crop_BoxChanged(object? sender, EventArgs e)
     {
         if (_crop?.Box is { } box) _boxSpace = BoxSpace(box.Page);
+        else if (_boxSelected) DeselectBoxPage();
         SelectBoxPage();
         Refresh();
     }
 
+    // Drawing never changes a choice the person made; only an empty selection gets the box's page, and that goes with the box.
     private void SelectBoxPage()
     {
-        if (_crop?.Box is not { } box || CropAll.IsChecked == true || Cells.Count <= box.Page || Selected().Contains(box.Page)) return;
+        if (_crop?.Box is not { } box || CropAll.IsChecked == true || Cells.Count <= box.Page || Selected().Count > 0) return;
         _syncing = true;
-        Thumbs.SelectedItems.Clear();
         Thumbs.SelectedItems.Add(Cells[box.Page]);
         _syncing = false;
+        _boxSelected = true;
         Thumbs.ScrollIntoView(Cells[box.Page]);
+    }
+
+    private void DeselectBoxPage()
+    {
+        _boxSelected = false;
+        _syncing = true;
+        Thumbs.SelectedItems.Clear();
+        _syncing = false;
     }
 
     private void RefreshHints(IReadOnlyList<int> pages)
