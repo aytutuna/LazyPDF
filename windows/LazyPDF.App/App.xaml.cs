@@ -72,10 +72,10 @@ public partial class App : Application
         base.OnStartup(e);
     }
 
-    // WPF fires an access key on a plain letter while a button has focus; a stray key must not discard work.
+    // WPF fires an access key on a plain letter unless a text box has focus; a stray key must not discard work.
     private static void RequireAlt(object sender, AccessKeyPressedEventArgs e)
     {
-        if (Keyboard.FocusedElement is not Button || Keyboard.Modifiers.HasFlag(ModifierKeys.Alt)) return;
+        if (Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase or PasswordBox ||Keyboard.Modifiers.HasFlag(ModifierKeys.Alt)) return;
         e.Target = null;
         e.Handled = true;
     }
