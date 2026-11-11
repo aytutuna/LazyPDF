@@ -33,7 +33,7 @@ public partial class MainWindow
 
     private void SaveWithDialog()
     {
-        if (_vm.ActiveDocument is not { } tab || _inspectorPanel?.HandIn() == false) return;
+        if (_vm.ActiveDocument is not { } tab || !HandedIn()) return;
         if (AppViewModel.NeedsName(tab)) SaveAsWithDialog();
         else _vm.Save(tab);
     }
@@ -42,7 +42,7 @@ public partial class MainWindow
 
     private bool SaveAsWithDialog()
     {
-        if (_inspectorPanel?.HandIn() == false || _vm.ActiveDocument is not { } tab || AskForPath(tab, Loc.T("Save as")) is not { } path) return false;
+        if (!HandedIn() || _vm.ActiveDocument is not { } tab || AskForPath(tab, Loc.T("Save as")) is not { } path) return false;
         return _vm.SaveAs(tab, path);
     }
 
@@ -75,7 +75,7 @@ public partial class MainWindow
 
     private void SaveCompact_Click(object sender, RoutedEventArgs e)
     {
-        if (_vm.ActiveDocument is not { } tab || _inspectorPanel?.HandIn() == false) return;
+        if (_vm.ActiveDocument is not { } tab || !HandedIn()) return;
         if (tab.Document.IsSigned)
         {
             _vm.ShowNotice(Loc.T("Signatures would be lost"), Loc.T("{0} is signed. Saving it compact writes it again and the signatures no longer hold. Save and Save as keep them.", tab.Title),
@@ -121,13 +121,13 @@ public partial class MainWindow
 
     private void Undo()
     {
-        _inspectorPanel?.HandIn();
+        HandedIn();
         _vm.Undo();
     }
 
     private void Redo()
     {
-        _inspectorPanel?.HandIn();
+        HandedIn();
         _vm.Redo();
     }
 

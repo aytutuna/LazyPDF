@@ -28,7 +28,7 @@
         <Grid>
         <TreeView x:Name="Tree" BorderThickness="0" Background="Transparent" Padding="4,4,4,8" AutomationProperties.Name="{loc:T Bookmarks}"
                   VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling"
-                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" PreviewMouseLeftButtonUp="Tree_PreviewMouseLeftButtonUp" PreviewKeyDown="Tree_PreviewKeyDown"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" PreviewMouseLeftButtonUp="Tree_PreviewMouseLeftButtonUp" PreviewMouseRightButtonDown="Tree_PreviewMouseRightButtonDown" PreviewKeyDown="Tree_PreviewKeyDown"
                   SelectedItemChanged="Tree_SelectedItemChanged">
             <TreeView.ContextMenu>
                 <ContextMenu>

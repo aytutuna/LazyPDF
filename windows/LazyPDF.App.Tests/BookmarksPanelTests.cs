@@ -94,16 +94,18 @@ public sealed class BookmarksPanelTests
         return Task.CompletedTask;
     });
 
-    private static (DocumentTab Tab, BookmarksSidePanel Panel, TreeView Tree, Window Window) Edited(params string[] titles)
+    private static (DocumentTab Tab, BookmarksSidePanel Panel, TreeView Tree, Window Window) Edited(params string[] titles) => Edited(Pdfs.Text(2), null, titles);
+
+    private static (DocumentTab Tab, BookmarksSidePanel Panel, TreeView Tree, Window Window) Edited(byte[] pdf, RecordingHost? host, params string[] titles)
     {
-        var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(2)), new FakeRenderer(), null, "a.pdf", null);
+        var tab = new DocumentTab(PdfEditSession.Open(pdf), new FakeRenderer(), null, "a.pdf", null);
         var outline = Outline.Read(tab.Document);
         foreach (string title in titles) outline.Add(new OutlineItem { Title = title, Destination = new PdfDestination(1) });
         outline.Write(tab.Document);
         tab.Commit("Bookmark");
         var panel = new BookmarksSidePanel();
         var window = new Window { Content = panel, Width = 300, Height = 300 };
-        panel.Attach(tab, FakeViewer.Create().Viewer, new RecordingHost());
+        panel.Attach(tab, FakeViewer.Create().Viewer, host ?? new RecordingHost());
         window.Show();
         var tree = (TreeView)panel.FindName("Tree");
         tree.UpdateLayout();
@@ -312,6 +314,99 @@ public sealed class BookmarksPanelTests
         Assert.False(Enabled(panel, "MoveDownButton"));
         Assert.True(Enabled(panel, "MoveUpButton"));
         Assert.True(Enabled(panel, "IndentButton"));
+        window.Close();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task GoingOnAnywayAddsABookmarkToASignedFile() => Sta.Run(() =>
+    {
+        var host = new RecordingHost();
+        var (tab, panel, _, window) = Edited(StampsPanelTests.Signed(certified: false), host);
+        using var _ = tab;
+
+        Click(panel, "AddButton");
+        Assert.Equal(["Check before going on"], host.Notices);
+        Assert.Empty(Titles(tab));
+        host.Actions.Single()!.Run();
+
+        Assert.Equal(["Page "], Titles(tab));
+        window.Close();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task GoingOnAnywayRenamesAndDeletesOnASignedFile() => Sta.Run(() =>
+    {
+        var host = new RecordingHost();
+        var (tab, panel, tree, window) = Edited(StampsPanelTests.Signed(certified: true), host, "One", "Two");
+        using var _ = tab;
+        var node = (BookmarkNode)tree.Items[0]!;
+        node.IsSelected = true;
+        Click(panel, "RenameButton");
+        node.EditText = "First";
+        panel.HandIn();
+        host.Actions.Single()!.Run();
+        Assert.Equal(["First", "Two"], Titles(tab));
+
+        tree.UpdateLayout();
+        ((BookmarkNode)tree.Items[1]!).IsSelected = true;
+        host.Actions.Clear();
+        Click(panel, "DeleteButton");
+        host.Actions.Single()!.Run();
+
+        Assert.Equal(["First"], Titles(tab));
+        window.Close();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task RightClickSelectsTheEntryUnderThePointer() => Sta.Run(() =>
+    {
+        var (tab, panel, tree, window) = Edited("One", "Two");
+        using var _ = tab;
+        ((BookmarkNode)tree.Items[0]!).IsSelected = true;
+        var second = (TreeViewItem)tree.ItemContainerGenerator.ContainerFromIndex(1);
+
+        tree.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Right) { RoutedEvent = UIElement.PreviewMouseRightButtonDownEvent, Source = second });
+        Assert.Same(tree.Items[1], tree.SelectedItem);
+        Click(panel, "DeleteButton");
+
+        Assert.Equal(["One"], Titles(tab));
+        window.Close();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AddingBringsTheNewEntryIntoView() => Sta.Run(() =>
+    {
+        var (tab, panel, tree, window) = Edited([.. Enumerable.Range(0, 200).Select(i => "Entry " + i)]);
+        using var _ = tab;
+
+        Click(panel, "AddButton");
+        tree.UpdateLayout();
+
+        var added = Assert.IsType<BookmarkNode>(tree.SelectedItem);
+        Assert.Equal("Page ", added.Title);
+        Assert.Contains(Boxes(tree), b => b.IsVisible && b.DataContext == added);
+        window.Close();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task AnUnfinishedRenameIsHandedIn() => Sta.Run(() =>
+    {
+        var (tab, panel, tree, window) = Edited("One", "Two");
+        using var _ = tab;
+        var node = (BookmarkNode)tree.Items[1]!;
+        node.IsSelected = true;
+        Click(panel, "RenameButton");
+        node.EditText = "Second";
+
+        Assert.True(panel.HandIn());
+
+        Assert.Equal(["One", "Second"], Titles(tab));
+        Assert.False(node.IsEditing);
         window.Close();
         return Task.CompletedTask;
     });

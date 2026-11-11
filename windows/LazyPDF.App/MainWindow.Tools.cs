@@ -37,6 +37,9 @@ public partial class MainWindow
     private ToolPanel? _sidePanel;
     private DocumentTab? _sideTab;
 
+    // False while typed text waits for an answer; the side panel may hold some as well as the inspector.
+    private bool HandedIn() => _inspectorPanel?.HandIn() != false && _sidePanel?.HandIn() != false;
+
     private void BuildToolStrip()
     {
         foreach (var group in Enum.GetValues<ToolGroup>())

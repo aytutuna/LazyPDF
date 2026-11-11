@@ -370,7 +370,7 @@ public partial class MainWindow : Window
             _vm.ShowNotice(Loc.T("Still working"), Loc.T("Wait for the job to end, or cancel it, then close."));
             return false;
         }
-        return tab is null || !ReferenceEquals(tab, _vm.ActiveDocument) || _inspectorPanel?.HandIn() != false;
+        return tab is null || !ReferenceEquals(tab, _vm.ActiveDocument) || HandedIn();
     }
 
     private void RequestClose(DocumentTab tab)
@@ -414,7 +414,7 @@ public partial class MainWindow : Window
 
     private void CycleTab(int step)
     {
-        if (_inspectorPanel?.HandIn() == false) return;
+        if (!HandedIn()) return;
         int index = _vm.Strip.IndexOf(_vm.ActiveTab);
         _vm.ActiveTab = _vm.Strip[(index + step + _vm.Strip.Count) % _vm.Strip.Count];
     }

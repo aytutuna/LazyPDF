@@ -128,8 +128,8 @@ public partial class BookmarksSidePanel : ToolPanel
         if (Tab is not null) UpdateEnabled();
     }
 
-    // Null when the file may be changed now; otherwise the change waits or is refused, with the reason shown.
-    private (DocumentTab Tab, IToolHost Host)? Editable(Action again)
+    // Null when the file may not be changed now; a refusal is shown with its reason.
+    private (DocumentTab Tab, IToolHost Host)? Editable()
     {
         if (Tab is not { } tab || Host is not { } host || MarkWork.Running) return null;
         if (Clearance.Refusal(tab.Document) is { } problem)
@@ -137,7 +137,49 @@ public partial class BookmarksSidePanel : ToolPanel
             host.ShowProblem(problem);
             return null;
         }
-        return MarkWork.Cautioned(tab, host, again) ? null : (tab, host);
+        return (tab, host);
+    }
+
+    // For a change held back by the notice: the same tab and entry are still there when the answer comes.
+    private bool Still(DocumentTab tab, BookmarkNode? node = null) =>
+        ReferenceEquals(Tab, tab) && !MarkWork.Running && Clearance.Refusal(tab.Document) is null && (node is null || ReferenceEquals(NodeAt(node.Path), node));
+
+    private static VirtualizingPanel? PanelOf(DependencyObject at)
+    {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(at); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(at, i);
+            if (child is VirtualizingPanel panel) return panel;
+            if (PanelOf(child) is { } inner) return inner;
+        }
+        return null;
+    }
+
+    // The tree is virtualized, so an entry off screen has no container until it is scrolled to.
+    private void Select(BookmarkNode node)
+    {
+        ItemsControl level = Tree;
+        string[] parts = node.Path.Split('.');
+        for (int depth = 0; depth < parts.Length; depth++)
+        {
+            level.UpdateLayout();
+            int index = int.Parse(parts[depth]);
+            if (level.ItemContainerGenerator.ContainerFromIndex(index) is null && PanelOf(level) is { } panel)
+            {
+                panel.BringIndexIntoViewPublic(index);
+                level.UpdateLayout();
+            }
+            if (level.ItemContainerGenerator.ContainerFromIndex(index) is not TreeViewItem item)
+            {
+                node.IsSelected = true;
+                return;
+            }
+            if (depth < parts.Length - 1) item.IsExpanded = true;
+            level = item;
+        }
+        var target = (TreeViewItem)level;
+        target.BringIntoView();
+        target.IsSelected = true;
     }
 
     // Reads the outline again for an edit, keeping the entries the person opened or closed.
@@ -187,12 +229,19 @@ public partial class BookmarksSidePanel : ToolPanel
 
     private void Add_Click(object sender, RoutedEventArgs e)
     {
-        if (Viewer is not { } viewer || Editable(() => Add_Click(sender, e)) is not var (tab, host)) return;
+        var selected = Tree.SelectedItem as BookmarkNode;
+        if (Editable() is not var (tab, host) || MarkWork.Cautioned(tab, host, () => Add(tab, host, selected))) return;
+        Add(tab, host, selected);
+    }
+
+    private void Add(DocumentTab tab, IToolHost host, BookmarkNode? selected)
+    {
+        if (Viewer is not { } viewer || !Still(tab, selected)) return;
         var outline = ReadForEdit(tab);
         var parent = outline.Root;
         string parentPath = "";
         int index = outline.Items.Count;
-        if (Tree.SelectedItem is BookmarkNode selected && Find(outline, selected.Path) is { Parent: { } up } sibling)
+        if (selected is not null && Find(outline, selected.Path) is { Parent: { } up } sibling)
         {
             parent = up;
             int dot = selected.Path.LastIndexOf('.');
@@ -206,7 +255,7 @@ public partial class BookmarksSidePanel : ToolPanel
         }, ReferenceEquals(parent, outline.Root) ? null : parent, index);
         outline.Write(tab.Document);
         if (!MarkWork.Commit(tab, host, Loc.T("Add bookmark")) || NodeAt(Join(parentPath, index)) is not { } added) return;
-        added.IsSelected = true;
+        Select(added);
         added.IsEditing = true;
     }
 
@@ -219,7 +268,13 @@ public partial class BookmarksSidePanel : ToolPanel
     {
         node.IsEditing = false;
         string title = node.EditText.Trim();
-        if (title.Length == 0 || title == node.Title || Editable(() => Rename(node)) is not var (tab, host)) return;
+        if (title.Length == 0 || title == node.Title || Editable() is not var (tab, host) || MarkWork.Cautioned(tab, host, () => RenameTo(tab, host, node, title))) return;
+        RenameTo(tab, host, node, title);
+    }
+
+    private void RenameTo(DocumentTab tab, IToolHost host, BookmarkNode node, string title)
+    {
+        if (!Still(tab, node)) return;
         var outline = ReadForEdit(tab);
         if (Find(outline, node.Path) is not { } item) return;
         item.Title = title;
@@ -229,7 +284,13 @@ public partial class BookmarksSidePanel : ToolPanel
 
     private void Delete_Click(object sender, RoutedEventArgs e)
     {
-        if (Tree.SelectedItem is not BookmarkNode node || Editable(() => Delete_Click(sender, e)) is not var (tab, host)) return;
+        if (Tree.SelectedItem is not BookmarkNode node || Editable() is not var (tab, host) || MarkWork.Cautioned(tab, host, () => Delete(tab, host, node))) return;
+        Delete(tab, host, node);
+    }
+
+    private void Delete(DocumentTab tab, IToolHost host, BookmarkNode node)
+    {
+        if (!Still(tab, node)) return;
         var outline = ReadForEdit(tab);
         if (Find(outline, node.Path) is not { } item) return;
         outline.Remove(item);
@@ -240,7 +301,7 @@ public partial class BookmarksSidePanel : ToolPanel
         string parentPath = dot < 0 ? "" : node.Path[..dot];
         int index = int.Parse(node.Path[(dot + 1)..]);
         var next = NodeAt(Join(parentPath, index)) ?? (index > 0 ? NodeAt(Join(parentPath, index - 1)) : null);
-        if (next is not null) next.IsSelected = true;
+        if (next is not null) Select(next);
     }
 
     private void MoveUp_Click(object sender, RoutedEventArgs e) => Shift(0, -1);
@@ -256,7 +317,13 @@ public partial class BookmarksSidePanel : ToolPanel
     {
         var (up, down, outdent, indent) = Shifts(Tree.SelectedItem as BookmarkNode);
         if (Tree.SelectedItem is not BookmarkNode node || !(dy < 0 ? up : dy > 0 ? down : dx < 0 ? outdent : indent)) return;
-        if (Editable(() => Shift(dx, dy)) is not var (tab, host)) return;
+        if (Editable() is not var (tab, host) || MarkWork.Cautioned(tab, host, () => Shift(tab, host, node, dx, dy))) return;
+        Shift(tab, host, node, dx, dy);
+    }
+
+    private void Shift(DocumentTab tab, IToolHost host, BookmarkNode node, int dx, int dy)
+    {
+        if (!Still(tab, node)) return;
         var outline = ReadForEdit(tab);
         if (Find(outline, node.Path) is not { Parent: { } parent } item) return;
         int dot = node.Path.LastIndexOf('.');
@@ -284,7 +351,7 @@ public partial class BookmarksSidePanel : ToolPanel
             moved = Join(grandPath, parentIndex + 1);
         }
         outline.Write(tab.Document);
-        if (MarkWork.Commit(tab, host, Loc.T("Move bookmark")) && NodeAt(moved) is { } now) now.IsSelected = true;
+        if (MarkWork.Commit(tab, host, Loc.T("Move bookmark")) && NodeAt(moved) is { } now) Select(now);
     }
 
     private void EditBox_KeyDown(object sender, KeyEventArgs e)
@@ -370,6 +437,31 @@ public partial class BookmarksSidePanel : ToolPanel
             }
         }
     }
+
+    // A right-click does not select in a TreeView, and the menu acts on the selection.
+    private void Tree_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        for (var at = e.OriginalSource as DependencyObject; at is not null; at = System.Windows.Media.VisualTreeHelper.GetParent(at))
+        {
+            if (at is not TreeViewItem item) continue;
+            item.IsSelected = true;
+            item.Focus();
+            UpdateEnabled();
+            return;
+        }
+    }
+
+    // A title still being typed goes into the file before it is saved, closed or undone.
+    public override bool HandIn()
+    {
+        if (Tab is not null && Tree.ItemsSource is List<BookmarkNode> nodes)
+        {
+            foreach (var node in Flatten(nodes).Where(n => n.IsEditing).ToList()) Rename(node);
+        }
+        return true;
+    }
+
+    private static IEnumerable<BookmarkNode> Flatten(IEnumerable<BookmarkNode> nodes) => nodes.SelectMany(n => Flatten(n.Children).Prepend(n));
 
     private void Tree_PreviewKeyDown(object sender, KeyEventArgs e)
     {
