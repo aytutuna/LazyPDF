@@ -266,6 +266,10 @@ public partial class MainWindow : Window
             BusyBar.Maximum = 100;
             BusyBar.Value = (opening.Fraction ?? 0) * 100;
         }
+        else
+        {
+            BusyBar.IsIndeterminate = true;
+        }
         if (tab is null)
         {
             PageText.Text = PageBoxText.Text = ZoomText.Text = "";

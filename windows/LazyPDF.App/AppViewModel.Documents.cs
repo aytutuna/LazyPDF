@@ -152,6 +152,11 @@ public sealed partial class AppViewModel
                 }
                 return;
             }
+            if (reading.IsCancellationRequested)
+            {
+                SetStatus(Loc.T("Cancelled."));
+                return;
+            }
             if (source.FileId is not null && Documents.FirstOrDefault(d => d.FileId == source.FileId) is { } same)
             {
                 if (same.Path is { } old && !File.Exists(old))
@@ -277,6 +282,11 @@ public sealed partial class AppViewModel
         string? path = source.Path;
         var tab = await Task.Run(() => new DocumentTab(session, _renderers(), path, source.Title, password, _recovery,
                                                         unsaved: source.Made || pending.Recovery is not null, source.Stamp, certificate, source.Hash));
+        if (pending.Cancelled)
+        {
+            tab.Dispose();
+            return false;
+        }
         if (pending.Recovery is null) tab.FileId = source.FileId;
         int at = -1;
         bool wasActive = false;
