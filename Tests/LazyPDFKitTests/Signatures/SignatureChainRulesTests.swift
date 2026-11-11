@@ -94,6 +94,27 @@ final class SignatureChainRulesTests: XCTestCase {
         XCTAssertFalse(CertificateTrust.evaluate(pki.leafEc, [], Pki.signing, options).trusted)
     }
 
+    func test_aSignerInTheAnchorsKeepsItsFullChainWhenARootIsTrustedToo() throws {
+        var options = VerifyOptions()
+        options.trustAnchors = [pki.root, pki.leaf]
+
+        let result = CertificateTrust.evaluate(pki.leaf, pki.chain, Pki.signing, options)
+
+        XCTAssertTrue(result.trusted)
+        XCTAssertTrue(result.chain.count > 1)
+    }
+
+    func test_aSignerInTheAnchorsTheSystemStoreDoesNotKnowIsTrustedByItself() throws {
+        var options = VerifyOptions()
+        options.trustAnchors = [pki.leaf]
+        options.useSystemStore = true
+
+        let result = CertificateTrust.evaluate(pki.leaf, [], Pki.signing, options)
+
+        XCTAssertTrue(result.trusted)
+        XCTAssertEqual(result.chain.count, 1)
+    }
+
     func test_aSignerInTheAnchorsStillNeedsAKeyUsageForSigning() throws {
         let encipher = try pki.issued("Encipher", [.keyEncipherment])
         var options = VerifyOptions()

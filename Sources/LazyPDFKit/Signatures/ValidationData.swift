@@ -144,14 +144,15 @@ enum CertificateTrust {
     }
 
     private static func settle(_ certificate: X509Certificate, _ certificates: [X509Certificate], _ time: DateTimeOffset?, _ options: VerifyOptions) -> TrustResult {
-        // The walk keeps going past an anchor that is not self-issued, so a signer the caller trusts by itself is settled here.
-        let at = time ?? currentTime()
-        var result = options.trustAnchors.contains(where: { $0.sameBytes(certificate) })
-            ? TrustResult(trusted: true, timeValid: certificate.notBefore <= at && at <= certificate.notAfter, chain: [certificate])
-            : build(certificate, certificates, time, options.trustAnchors, system: false)
+        var result = build(certificate, certificates, time, options.trustAnchors, system: false)
         if !result.trusted && options.useSystemStore {
             let viaSystem = build(certificate, certificates + options.trustAnchors, time, [], system: true)
             if viaSystem.trusted { result = viaSystem } else { result.partial = result.partial || viaSystem.partial }
+        }
+        // The walk keeps going past an anchor that is not self-issued, so a signer the caller trusts by itself is settled here, last.
+        if !result.trusted && options.trustAnchors.contains(where: { $0.sameBytes(certificate) }) {
+            let at = time ?? currentTime()
+            return TrustResult(trusted: true, timeValid: certificate.notBefore <= at && at <= certificate.notAfter, chain: [certificate])
         }
         return result
     }
@@ -223,7 +224,8 @@ enum CertificateTrust {
             // The chain ends at the first anchor, as X509Chain ends it: a root, whose own signature has to hold (a root whose
             // signature cannot be checked here, such as one signed with MD5, is not trusted), and not an intermediate or a
             // link certificate, which leave it partial.
-            if anchors.contains(where: { $0.sameBytes(current) }) {
+            // A leaf that is not self-issued is not an end of the chain, as for X509Chain: its issuers are looked for.
+            if (elements.count > 1 || current.isSelfIssued) && anchors.contains(where: { $0.sameBytes(current) }) {
                 if !current.isSelfIssued { flags.insert(.partialChain) } else if !signs(current, current) { flags.insert(.notSignatureValid) }
                 return (elements, flags)
             }
