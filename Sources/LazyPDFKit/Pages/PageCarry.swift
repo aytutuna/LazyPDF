@@ -142,15 +142,32 @@ enum PageCarry {
         return root
     }
 
-    // Where a key into the parent tree is written: the pages and their annotations.
+    // Where a key into the parent tree is written: the pages, their annotations and the forms and images they use.
     private static func holders(_ target: PdfDocument, _ copies: [PdfReference]) -> [(holder: PdfDictionary, key: String)] {
         var found: [(holder: PdfDictionary, key: String)] = []
+        var seen = Set<ObjectIdentifier>()
         for copy in copies {
             guard let page = target.resolve(copy) as? PdfDictionary else { continue }
             found.append((page, "StructParents"))
             for item in target.array(page, "Annots")?.items ?? [] {
                 if let annotation = target.resolve(item) as? PdfDictionary { found.append((annotation, "StructParent")) }
             }
+            for holder in xobjects(target, page, &seen) {
+                found.append((holder, "StructParents"))
+                found.append((holder, "StructParent"))
+            }
+        }
+        return found
+    }
+
+    // Shared objects are met once, so that a merge moves their key once.
+    private static func xobjects(_ target: PdfDocument, _ owner: PdfDictionary, _ seen: inout Set<ObjectIdentifier>) -> [PdfDictionary] {
+        guard let table = target.dict(target.dict(owner, "Resources"), "XObject") else { return [] }
+        var found: [PdfDictionary] = []
+        for (_, value) in table.entries {
+            guard let stream = target.resolve(value) as? PdfStream, seen.insert(ObjectIdentifier(stream.dictionary)).inserted else { continue }
+            found.append(stream.dictionary)
+            found += xobjects(target, stream.dictionary, &seen)
         }
         return found
     }

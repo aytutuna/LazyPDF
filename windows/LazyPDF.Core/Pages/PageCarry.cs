@@ -150,9 +150,10 @@ internal static class PageCarry
         return root;
     }
 
-    // Where a key into the parent tree is written: the pages and their annotations.
+    // Where a key into the parent tree is written: the pages, their annotations and the forms and images they use.
     private static IEnumerable<(PdfDictionary Holder, string Key)> Holders(PdfDocument target, IReadOnlyList<PdfReference> copies)
     {
+        var seen = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance);
         foreach (var copy in copies)
         {
             if (target.Resolve(copy) is not PdfDictionary page) continue;
@@ -161,6 +162,23 @@ internal static class PageCarry
             {
                 if (target.Resolve(item) is PdfDictionary annotation) yield return (annotation, "StructParent");
             }
+            foreach (var holder in XObjects(target, page, seen))
+            {
+                yield return (holder, "StructParents");
+                yield return (holder, "StructParent");
+            }
+        }
+    }
+
+    // Shared objects are met once, so that a merge moves their key once.
+    private static IEnumerable<PdfDictionary> XObjects(PdfDocument target, PdfDictionary owner, HashSet<PdfDictionary> seen)
+    {
+        if (target.Dict(target.Dict(owner, "Resources"), "XObject") is not { } xobjects) yield break;
+        foreach (var (_, value) in xobjects.Entries)
+        {
+            if (target.Resolve(value) is not PdfStream stream || !seen.Add(stream.Dictionary)) continue;
+            yield return stream.Dictionary;
+            foreach (var inner in XObjects(target, stream.Dictionary, seen)) yield return inner;
         }
     }
 
