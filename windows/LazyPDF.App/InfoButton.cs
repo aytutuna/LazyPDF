@@ -38,8 +38,8 @@ public sealed class InfoButton : Button
     {
         SetResourceReference(StyleProperty, "SmallIconButtonStyle");
         Content = "\uE946";
-        Width = 24;
-        Height = 24;
+        Width = 28;
+        Height = 28;
         FontSize = 13;
         VerticalAlignment = VerticalAlignment.Center;
         ToolTipService.SetShowsToolTipOnKeyboardFocus(this, true);
