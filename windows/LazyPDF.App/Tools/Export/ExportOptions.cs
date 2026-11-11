@@ -21,11 +21,19 @@ public enum PictureFormat
     Bmp,
 }
 
+public enum PictureColour
+{
+    Colour,
+    Grayscale,
+    BlackWhite,
+}
+
 /// <param name="Pages">0-based pages in the order wanted; null for all of them.</param>
 /// <param name="FixedHtml">HTML with every line at its place on the page, instead of text that reflows.</param>
 public sealed record ExportOptions(ExportFormat Format, IReadOnlyList<int>? Pages = null, bool FixedHtml = false, bool MarkdownPictures = false,
                                    PictureFormat Picture = PictureFormat.Png, int Dpi = 150, int Quality = 85,
-                                   string NamePattern = "{name} page {n}", bool Replace = false)
+                                   string NamePattern = "{name} page {n}", bool Replace = false,
+                                   PictureColour Colour = PictureColour.Colour)
 {
     /// <summary>Pictures go into a folder; every other format is one file.</summary>
     public bool ToFolder => Format is ExportFormat.Pictures or ExportFormat.Images;

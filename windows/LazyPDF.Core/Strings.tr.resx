@@ -640,6 +640,9 @@
   <data name="Black" xml:space="preserve">
     <value>Siyah</value>
   </data>
+  <data name="Black and white (1 bit)" xml:space="preserve">
+    <value>Siyah beyaz (1 bit)</value>
+  </data>
   <data name="Blank" xml:space="preserve">
     <value>Boş</value>
   </data>
@@ -1209,6 +1212,9 @@
   </data>
   <data name="Colour {0} to {1}" xml:space="preserve">
     <value>Renk {0} iken {1} oldu</value>
+  </data>
+  <data name="Colours" xml:space="preserve">
+    <value>Renkler</value>
   </data>
   <data name="Combine" xml:space="preserve">
     <value>Birleştir</value>
@@ -2400,6 +2406,9 @@
   </data>
   <data name="Graphics states are nested more than 28 deep." xml:space="preserve">
     <value>Grafik durumları 28'den fazla iç içe.</value>
+  </data>
+  <data name="Grayscale" xml:space="preserve">
+    <value>Gri tonlamalı</value>
   </data>
   <data name="Green" xml:space="preserve">
     <value>Yeşil</value>

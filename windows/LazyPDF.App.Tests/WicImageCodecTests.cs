@@ -1,6 +1,7 @@
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Export;
 using LazyPDF.Core;
 using Xunit;
 
@@ -76,6 +77,40 @@ public sealed class WicImageCodecTests
 
         foreach (var bytes in new[] { Codec.EncodeTiff(clear), Codec.EncodeBmp(clear) })
             Assert.Equal([255, 255, 255, 255], Assert.Single(Codec.DecodeFile(bytes)!).Rgba[..4]);
+    }
+
+    [Fact]
+    public void GrayscaleOfRedIsNearItsLuma()
+    {
+        var red = new PdfRgbaImage(4, 4, Enumerable.Range(0, 16).SelectMany(_ => new byte[] { 255, 0, 0, 255 }).ToArray());
+
+        var back = Assert.Single(Codec.DecodeFile(Codec.Encode(red, PictureFormat.Png, PictureColour.Grayscale, 0))!);
+
+        Assert.InRange(back.Rgba[0], 74, 78);
+        Assert.Equal(back.Rgba[0], back.Rgba[1]);
+    }
+
+    [Fact]
+    public void BlackAndWhiteSplitsAtMiddleGray()
+    {
+        static PdfRgbaImage Flat(byte v) => new(8, 8, Enumerable.Range(0, 64).SelectMany(_ => new byte[] { v, v, v, 255 }).ToArray());
+
+        foreach (var format in new[] { PictureFormat.Png, PictureFormat.Tiff })
+        {
+            var light = Assert.Single(Codec.DecodeFile(Codec.Encode(Flat(200), format, PictureColour.BlackWhite, 0))!);
+            var dark = Assert.Single(Codec.DecodeFile(Codec.Encode(Flat(60), format, PictureColour.BlackWhite, 0))!);
+
+            Assert.Equal([255, 255, 255], light.Rgba[..3]);
+            Assert.Equal([0, 0, 0], dark.Rgba[..3]);
+        }
+    }
+
+    [Fact]
+    public void AGrayscaleTiffIsSmallerThanColour()
+    {
+        var flat = new PdfRgbaImage(400, 400, Enumerable.Range(0, 400 * 400).SelectMany(_ => new byte[] { 90, 140, 200, 255 }).ToArray());
+
+        Assert.True(Codec.Encode(flat, PictureFormat.Tiff, PictureColour.Grayscale, 0).Length < Codec.Encode(flat, PictureFormat.Tiff, PictureColour.Colour, 0).Length);
     }
 
     [Fact]

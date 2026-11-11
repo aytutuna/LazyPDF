@@ -177,6 +177,26 @@ public sealed class ExportToolTests
     }
 
     [Fact]
+    public void ColourPngKeepsThePageImageBytes()
+    {
+        using var dir = new TempDir();
+        Directory.CreateDirectory(dir.Path);
+        var source = SourceOf("a", Report(1));
+
+        Exporter.Write(source, new ExportOptions(ExportFormat.Pictures, Dpi: 72), dir.Path, CancellationToken.None);
+
+        Assert.Equal(PageImages.Png(source.Renderer, 0, 72), File.ReadAllBytes(Path.Combine(dir.Path, "a page 1.png")));
+    }
+
+    [Fact]
+    public void AJpegHasNoBlackAndWhite()
+    {
+        Assert.False(Exporter.Allows(PictureFormat.Jpeg, PictureColour.BlackWhite));
+        Assert.True(Exporter.Allows(PictureFormat.Jpeg, PictureColour.Grayscale));
+        Assert.True(Exporter.Allows(PictureFormat.Tiff, PictureColour.BlackWhite));
+    }
+
+    [Fact]
     public void TiffPicturesAreOneFilePerPage()
     {
         using var dir = new TempDir();

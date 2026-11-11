@@ -1,5 +1,6 @@
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using LazyPDF.App.Tools.Export;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Services;
@@ -36,13 +37,27 @@ public sealed class WicImageCodec : IImageCodec
         return Encode(new JpegBitmapEncoder { QualityLevel = Math.Clamp(quality, 1, 100) }, image);
     }
 
-    public byte[] EncodeTiff(PdfRgbaImage image) => Encode(new TiffBitmapEncoder { Compression = TiffCompressOption.Lzw }, image);
+    public byte[] EncodeTiff(PdfRgbaImage image) => Encode(image, PictureFormat.Tiff, PictureColour.Colour, 0);
 
-    public byte[] EncodeBmp(PdfRgbaImage image) => Encode(new BmpBitmapEncoder(), image);
+    public byte[] EncodeBmp(PdfRgbaImage image) => Encode(image, PictureFormat.Bmp, PictureColour.Colour, 0);
 
-    private static byte[] Encode(BitmapEncoder encoder, PdfRgbaImage image)
+    public byte[] Encode(PdfRgbaImage image, PictureFormat format, PictureColour colour, int quality)
     {
-        encoder.Frames.Add(BitmapFrame.Create(OverWhite(image)));
+        BitmapEncoder encoder = format switch
+        {
+            PictureFormat.Jpeg => new JpegBitmapEncoder { QualityLevel = Math.Clamp(quality, 1, 100) },
+            PictureFormat.Tiff => new TiffBitmapEncoder { Compression = colour == PictureColour.BlackWhite ? TiffCompressOption.Ccitt4 : TiffCompressOption.Lzw },
+            PictureFormat.Bmp => new BmpBitmapEncoder(),
+            _ => new PngBitmapEncoder(),
+        };
+        return Encode(encoder, ToSource(image, colour));
+    }
+
+    private static byte[] Encode(BitmapEncoder encoder, PdfRgbaImage image) => Encode(encoder, OverWhite(image));
+
+    private static byte[] Encode(BitmapEncoder encoder, BitmapSource source)
+    {
+        encoder.Frames.Add(BitmapFrame.Create(source));
         using var stream = new MemoryStream();
         encoder.Save(stream);
         return stream.ToArray();
@@ -58,6 +73,33 @@ public sealed class WicImageCodec : IImageCodec
         converted.CopyPixels(pixels, width * 4, 0);
         for (int i = 0; i < pixels.Length; i += 4) (pixels[i], pixels[i + 2]) = (pixels[i + 2], pixels[i]);
         return new PdfRgbaImage(width, height, pixels);
+    }
+
+    private static BitmapSource ToSource(PdfRgbaImage image, PictureColour colour)
+    {
+        var bgr = OverWhite(image);
+        if (colour == PictureColour.Colour) return bgr;
+        int width = image.Width, height = image.Height, stride = width * 3;
+        var pixels = new byte[stride * height];
+        bgr.CopyPixels(pixels, stride, 0);
+        var gray = new byte[width * height];
+        for (int i = 0, o = 0; o < gray.Length; i += 3, o++) gray[o] = (byte)(0.299 * pixels[i + 2] + 0.587 * pixels[i + 1] + 0.114 * pixels[i] + 0.5);
+        BitmapSource result;
+        if (colour == PictureColour.Grayscale)
+        {
+            result = BitmapSource.Create(width, height, 96, 96, PixelFormats.Gray8, null, gray, width);
+        }
+        else
+        {
+            int row = (width + 7) / 8;
+            var bits = new byte[row * height];
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                    if (gray[y * width + x] >= 128) bits[y * row + x / 8] |= (byte)(0x80 >> (x % 8));
+            result = BitmapSource.Create(width, height, 96, 96, PixelFormats.BlackWhite, null, bits, row);
+        }
+        result.Freeze();
+        return result;
     }
 
     // These formats have no alpha: what is see-through goes onto white, as it would on paper.

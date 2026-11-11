@@ -3506,6 +3506,15 @@
   "Resolution": {
     "tr": "Çözünürlük"
   },
+  "Colours": {
+    "tr": "Renkler"
+  },
+  "Grayscale": {
+    "tr": "Gri tonlamalı"
+  },
+  "Black and white (1 bit)": {
+    "tr": "Siyah beyaz (1 bit)"
+  },
   "File names": {
     "tr": "Dosya adları"
   },

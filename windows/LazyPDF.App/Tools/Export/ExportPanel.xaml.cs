@@ -33,6 +33,8 @@ public partial class ExportPanel : ToolPanel
         _ => PictureFormat.Png,
     };
 
+    private PictureColour Colour => (PictureColour)ColourBox.SelectedIndex;
+
     private PageScope Scope => TypedPages.IsChecked == true ? PageScope.Typed : CurrentPage.IsChecked == true ? PageScope.Current : PageScope.All;
 
     protected override void OnAttach()
@@ -66,6 +68,8 @@ public partial class ExportPanel : ToolPanel
         MarkdownPicturesBox.Visibility = format == ExportFormat.Markdown ? Visibility.Visible : Visibility.Collapsed;
         PictureOptions.Visibility = format == ExportFormat.Pictures ? Visibility.Visible : Visibility.Collapsed;
         var picture = Picture;
+        BlackWhiteItem.IsEnabled = Exporter.Allows(picture, PictureColour.BlackWhite);
+        if (!BlackWhiteItem.IsEnabled && Colour == PictureColour.BlackWhite) ColourBox.SelectedIndex = (int)PictureColour.Grayscale;
         QualityRow.Visibility = picture == PictureFormat.Jpeg ? Visibility.Visible : Visibility.Collapsed;
         SizeHint.Visibility = picture is PictureFormat.Tiff or PictureFormat.Bmp ? Visibility.Visible : Visibility.Collapsed;
 
@@ -84,7 +88,8 @@ public partial class ExportPanel : ToolPanel
         Dpi: int.Parse((string)((ComboBoxItem)DpiBox.SelectedItem).Tag),
         Quality: (int)QualityBox.Value,
         NamePattern: NameBox.Text,
-        Replace: ReplaceBox.IsChecked == true);
+        Replace: ReplaceBox.IsChecked == true,
+        Colour: Colour);
 
     private async Task RunAsync()
     {
@@ -119,6 +124,11 @@ public partial class ExportPanel : ToolPanel
     }
 
     private void PictureTypeBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_ready) Refresh();
+    }
+
+    private void ColourBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_ready) Refresh();
     }

@@ -74,12 +74,9 @@ public static class Exporter
         foreach (int page in pages)
         {
             cancel.ThrowIfCancellationRequested();
-            byte[]? bytes = options.Picture switch
-            {
-                PictureFormat.Png => PageImages.Png(source.Renderer, page, options.Dpi),
-                PictureFormat.Jpeg => PageImages.Jpeg(source.Renderer, source.Codec, page, options.Dpi, options.Quality),
-                _ => Uncompressed(source, page, options),
-            };
+            byte[]? bytes = options.Colour == PictureColour.Colour && options.Picture == PictureFormat.Png ? PageImages.Png(source.Renderer, page, options.Dpi)
+                : options.Colour == PictureColour.Colour && options.Picture == PictureFormat.Jpeg ? PageImages.Jpeg(source.Renderer, source.Codec, page, options.Dpi, options.Quality)
+                : Encoded(source, page, options);
             if (bytes is null)
             {
                 skipped++;
@@ -92,12 +89,15 @@ public static class Exporter
         return new ExportResult(written, folder, skipped);
     }
 
-    private static byte[]? Uncompressed(ExportSource source, int page, ExportOptions options)
+    private static byte[]? Encoded(ExportSource source, int page, ExportOptions options)
     {
         if (source.Renderer.Render(page, options.Dpi) is not { } image) return null;
         var codec = source.Codec as WicImageCodec ?? new WicImageCodec();
-        return options.Picture == PictureFormat.Tiff ? codec.EncodeTiff(image) : codec.EncodeBmp(image);
+        return codec.Encode(image, options.Picture, options.Colour, options.Quality);
     }
+
+    // A JPEG has no 1-bit form.
+    internal static bool Allows(PictureFormat picture, PictureColour colour) => !(picture == PictureFormat.Jpeg && colour == PictureColour.BlackWhite);
 
     // One page at a time: the extractor holds every picture of a call in memory under one budget, which a long scan would use up.
     private static ExportResult Images(PdfDocument document, ExportSource source, ExportOptions options, string folder, CancellationToken cancel)
