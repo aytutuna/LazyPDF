@@ -1550,7 +1550,7 @@
     "tr": "Kâğıdı Lazy Scan ile PDF olarak tarayın."
   },
   "Lazy Scan did not start": {
-    "tr": "Lazy Scan başlamadı"
+    "tr": "Lazy Scan açılmadı"
   },
   "Windows could not open Lazy Scan. Open it from the Start menu, or reinstall it.": {
     "tr": "Windows Lazy Scan'i açamadı. Başlat menüsünden açın veya yeniden yükleyin."

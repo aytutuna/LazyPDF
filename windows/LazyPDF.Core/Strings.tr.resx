@@ -2672,7 +2672,7 @@
     <value>Lazy Scan</value>
   </data>
   <data name="Lazy Scan did not start" xml:space="preserve">
-    <value>Lazy Scan başlamadı</value>
+    <value>Lazy Scan açılmadı</value>
   </data>
   <data name="Leave it empty to fit the text to the field." xml:space="preserve">
     <value>Metni alana sığdırmak için boş bırakın.</value>
