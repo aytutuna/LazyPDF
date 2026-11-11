@@ -4714,6 +4714,12 @@
   <data name="Resize pages" xml:space="preserve">
     <value>Sayfaları yeniden boyutlandır</value>
   </data>
+  <data name="Resize the inspector" xml:space="preserve">
+    <value>Araç panelini yeniden boyutlandır</value>
+  </data>
+  <data name="Resize the side panel" xml:space="preserve">
+    <value>Yan paneli yeniden boyutlandır</value>
+  </data>
   <data name="Resized." xml:space="preserve">
     <value>Yeniden boyutlandı.</value>
   </data>

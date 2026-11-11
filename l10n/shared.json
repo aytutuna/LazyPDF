@@ -1929,6 +1929,12 @@
   "Show or hide the side panel": {
     "tr": "Yan paneli göster ya da gizle"
   },
+  "Resize the side panel": {
+    "tr": "Yan paneli yeniden boyutlandır"
+  },
+  "Resize the inspector": {
+    "tr": "Araç panelini yeniden boyutlandır"
+  },
   "Close the side panel": {
     "tr": "Yan paneli kapat"
   },

@@ -6,8 +6,10 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.App.Tools;
 
 namespace LazyPDF.App;
@@ -127,9 +129,53 @@ public partial class MainWindow
     private void ContentArea_SizeChanged(object sender, SizeChangedEventArgs e)
     {
         SettingsScroll.MaxHeight = Math.Max(0, e.NewSize.Height - 48);
+        LimitPaneWidths();
         if (_narrow == e.NewSize.Width < NarrowWidth) return;
         _narrow = !_narrow;
         RefreshFromViewModel();
+    }
+
+    // The stage keeps 320 pixels; a window too narrow for the saved widths only clamps them.
+    private void LimitPaneWidths()
+    {
+        double room = ContentArea.ActualWidth - 48 - 320;
+        SideColumn.MaxWidth = Math.Max(180, room - InspectorColumn.ActualWidth);
+        InspectorColumn.MaxWidth = Math.Max(180, room - SideColumn.ActualWidth);
+    }
+
+    private void SetPane(Border pane, GridSplitter splitter, ColumnDefinition column, bool shown, double width)
+    {
+        pane.Visibility = splitter.Visibility = shown ? Visibility.Visible : Visibility.Collapsed;
+        column.MinWidth = shown ? 180 : 0;
+        column.Width = new GridLength(shown ? width : 0);
+    }
+
+    private void SideSplitter_Changed(object sender, RoutedEventArgs e)
+    {
+        if (e is KeyEventArgs { Key: not (Key.Left or Key.Right) }) return;
+        _vm.SetSidePanelWidth(SideColumn.ActualWidth);
+        LimitPaneWidths();
+    }
+
+    private void InspectorSplitter_Changed(object sender, RoutedEventArgs e)
+    {
+        if (e is KeyEventArgs { Key: not (Key.Left or Key.Right) }) return;
+        _vm.SetInspectorWidth(InspectorColumn.ActualWidth);
+        LimitPaneWidths();
+    }
+
+    private void SideSplitter_Reset(object sender, MouseButtonEventArgs e)
+    {
+        _vm.SetSidePanelWidth(AppPreferences.DefaultSidePanelWidth);
+        SideColumn.Width = new GridLength(AppPreferences.DefaultSidePanelWidth);
+        LimitPaneWidths();
+    }
+
+    private void InspectorSplitter_Reset(object sender, MouseButtonEventArgs e)
+    {
+        _vm.SetInspectorWidth(AppPreferences.DefaultInspectorWidth);
+        InspectorColumn.Width = new GridLength(AppPreferences.DefaultInspectorWidth);
+        LimitPaneWidths();
     }
 
     private void RailToggle_Click(object sender, RoutedEventArgs e) => ShowSidePanel(null);
@@ -151,7 +197,7 @@ public partial class MainWindow
         var info = ToolCatalog.FindSide(_vm.SidePanelId);
         if (tab is null || info is null)
         {
-            SidePane.Visibility = Visibility.Collapsed;
+            SetPane(SidePane, SideSplitter, SideColumn, false, 0);
             _sidePanel?.Detach();
             _sidePanel = null;
             _sideTab = null;
@@ -160,10 +206,10 @@ public partial class MainWindow
         }
         if (_narrow && _vm.ActiveTool is not null)
         {
-            SidePane.Visibility = Visibility.Collapsed;
+            SetPane(SidePane, SideSplitter, SideColumn, false, 0);
             return;
         }
-        SidePane.Visibility = Visibility.Visible;
+        SetPane(SidePane, SideSplitter, SideColumn, true, _vm.SidePanelWidth);
         SideTitle.Text = info.Title;
         Place(info.Id, info.Create, SideHost, ref _sidePanel, ref _sideTab, tab);
     }
@@ -173,13 +219,14 @@ public partial class MainWindow
         var tab = _vm.ActiveDocument;
         if (tab is null)
         {
+            SetPane(Inspector, InspectorSplitter, InspectorColumn, false, 0);
             _inspectorPanel?.Detach();
             _inspectorPanel = null;
             _inspectorTab = null;
             InspectorHost.Content = null;
             return;
         }
-        Inspector.Visibility = _narrow && _vm.ActiveTool is null ? Visibility.Collapsed : Visibility.Visible;
+        SetPane(Inspector, InspectorSplitter, InspectorColumn, !(_narrow && _vm.ActiveTool is null), _vm.InspectorWidth);
         if (_vm.ActiveTool is not { } tool)
         {
             _inspectorPanel?.Detach();

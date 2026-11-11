@@ -12,6 +12,9 @@ public enum AppAppearance
 /// <summary>What the Windows app remembers about its own window.</summary>
 public sealed class AppPreferences
 {
+    public const double DefaultSidePanelWidth = 260;
+    public const double DefaultInspectorWidth = 280;
+
     public AppAppearance Appearance { get; set; } = AppAppearance.System;
 
     /// <summary>"" follows Windows; "en" or "tr" forces that language from the next start.</summary>
@@ -19,6 +22,12 @@ public sealed class AppPreferences
 
     /// <summary>The side panel left open (an id of <see cref="Tools.ToolCatalog.SidePanels"/>); empty when the rail is collapsed.</summary>
     public string SidePanel { get; set; } = "pages";
+
+    /// <summary>The width of the side panel, in device-independent pixels.</summary>
+    public double SidePanelWidth { get; set; } = DefaultSidePanelWidth;
+
+    /// <summary>The width of the inspector, in device-independent pixels.</summary>
+    public double InspectorWidth { get; set; } = DefaultInspectorWidth;
 
     /// <summary>Which inspector sections the user left open or closed: a tool's own key, open. No entry is the default.</summary>
     public Dictionary<string, bool> InspectorSections { get; set; } = [];

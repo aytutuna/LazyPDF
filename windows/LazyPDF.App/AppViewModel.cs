@@ -34,6 +34,8 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     private string? _signingField;
     private string _sidePanelId;
     private string _lastSidePanelId;
+    private double _sidePanelWidth;
+    private double _inspectorWidth;
     private InfoMessage? _message;
     private DocumentTab? _messageTab;
     private UIElement? _stage;
@@ -52,7 +54,10 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
         _printDirectory = printDirectory ?? AppFolders.PrintCopies;
         _recovery = new RecoveryStore(recoveryDirectory);
         _recentFiles = new RecentFiles(settingsDirectory);
-        _sidePanelId = AppPreferencesStore.Load(settingsDirectory ?? StoreFiles.DefaultDirectory).SidePanel;
+        var preferences = AppPreferencesStore.Load(settingsDirectory ?? StoreFiles.DefaultDirectory);
+        _sidePanelId = preferences.SidePanel;
+        _sidePanelWidth = preferences.SidePanelWidth;
+        _inspectorWidth = preferences.InspectorWidth;
         _lastSidePanelId = _sidePanelId.Length > 0 ? _sidePanelId : "pages";
         Recent = BuildRecent();
         _sisters.Changed += (_, _) =>
@@ -98,6 +103,10 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
 
     /// <summary>The id of the side panel open beside the stage; empty when the rail is collapsed.</summary>
     public string SidePanelId => _sidePanelId;
+
+    public double SidePanelWidth => _sidePanelWidth;
+
+    public double InspectorWidth => _inspectorWidth;
 
     public InfoMessage? Message => _message;
 
@@ -164,6 +173,18 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
 
     /// <summary>Collapses the rail's panel, or opens the one that was open last.</summary>
     public void ToggleSidePanel() => SetSidePanel(_sidePanelId.Length > 0 ? _sidePanelId : _lastSidePanelId);
+
+    public void SetSidePanelWidth(double width)
+    {
+        _sidePanelWidth = width;
+        AppPreferencesStore.Update(preferences => preferences.SidePanelWidth = width, _settingsDirectory ?? StoreFiles.DefaultDirectory);
+    }
+
+    public void SetInspectorWidth(double width)
+    {
+        _inspectorWidth = width;
+        AppPreferencesStore.Update(preferences => preferences.InspectorWidth = width, _settingsDirectory ?? StoreFiles.DefaultDirectory);
+    }
 
     public void SetAppearance(AppAppearance appearance)
     {

@@ -33,6 +33,22 @@ public sealed class StoreFilesTests
     }
 
     [Fact]
+    public void PanelWidthsAreReadBackAndAnOldFileGetsTheDefaults()
+    {
+        using var dir = new TempDir();
+        dir.File("preferences.json", Bytes("{\"appearance\":\"dark\"}"));
+        var old = AppPreferencesStore.Load(dir.Path);
+        Assert.Equal(260, old.SidePanelWidth);
+        Assert.Equal(280, old.InspectorWidth);
+
+        AppPreferencesStore.Update(p => { p.SidePanelWidth = 310; p.InspectorWidth = 340.5; }, dir.Path);
+
+        var loaded = AppPreferencesStore.Load(dir.Path);
+        Assert.Equal(310, loaded.SidePanelWidth);
+        Assert.Equal(340.5, loaded.InspectorWidth);
+    }
+
+    [Fact]
     public void TheSessionIsReadBackAsWritten()
     {
         using var dir = new TempDir();

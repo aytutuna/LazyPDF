@@ -205,9 +205,9 @@
             <Grid x:Name="Workspace">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition x:Name="SideColumn" Width="Auto" />
+                    <ColumnDefinition x:Name="SideColumn" Width="260" MinWidth="180" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition x:Name="InspectorColumn" Width="280" MinWidth="180" />
                 </Grid.ColumnDefinitions>
 
                 <!-- The icon rail; each button opens a side panel, and the one that is open closes it again. -->
@@ -217,7 +217,7 @@
                             Click="RailToggle_Click" />
                 </StackPanel>
 
-                <Border Grid.Column="1" x:Name="SidePane" Width="260" Visibility="Collapsed" BorderThickness="0,0,1,0"
+                <Border Grid.Column="1" x:Name="SidePane" Visibility="Collapsed" BorderThickness="0,0,1,0"
                         BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
                     <DockPanel>
                         <DockPanel DockPanel.Dock="Top" Margin="12,8,4,4">
@@ -236,8 +236,17 @@
                     <ContentControl x:Name="ViewerHost" IsTabStop="False" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
                 </Border>
 
+                <GridSplitter Grid.Column="2" x:Name="SideSplitter" Width="6" HorizontalAlignment="Left" ResizeDirection="Columns"
+                              ResizeBehavior="PreviousAndCurrent" Background="Transparent" ShowsPreview="False" Cursor="SizeWE"
+                              KeyboardIncrement="12" Visibility="Collapsed" AutomationProperties.Name="{loc:T Resize the side panel}"
+                              DragCompleted="SideSplitter_Changed" KeyUp="SideSplitter_Changed" MouseDoubleClick="SideSplitter_Reset" />
+                <GridSplitter Grid.Column="2" x:Name="InspectorSplitter" Width="6" HorizontalAlignment="Right" ResizeDirection="Columns"
+                              ResizeBehavior="CurrentAndNext" Background="Transparent" ShowsPreview="False" Cursor="SizeWE"
+                              KeyboardIncrement="12" Visibility="Collapsed" AutomationProperties.Name="{loc:T Resize the inspector}"
+                              DragCompleted="InspectorSplitter_Changed" KeyUp="InspectorSplitter_Changed" MouseDoubleClick="InspectorSplitter_Reset" />
+
                 <!-- The inspector: the panel of the active tool, with its action pinned below. -->
-                <Border Grid.Column="3" x:Name="Inspector" Width="280" BorderThickness="1,0,0,0"
+                <Border Grid.Column="3" x:Name="Inspector" BorderThickness="1,0,0,0"
                         BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}">
                     <Grid>
                         <Grid.RowDefinitions>
