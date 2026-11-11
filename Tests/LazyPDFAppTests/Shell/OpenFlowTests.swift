@@ -88,6 +88,25 @@ final class OpenFlowTests: XCTestCase {
         XCTAssertFalse(AppViewModel.needsName(tab))
     }
 
+    func test_aCopyTheSystemMadeOpensWithNoFileAndSavesAsANewOne() async throws {
+        let f = ViewModelFixture(self)
+        let url = f.pdf("inbox.pdf")
+        let before = try Data(contentsOf: url)
+
+        await f.vm.openCopy(url, access: nil)
+
+        let tab = try XCTUnwrap(f.vm.activeDocument)
+        XCTAssertNil(tab.url)
+        XCTAssertEqual(tab.title, "inbox.pdf")
+        XCTAssertFalse(tab.isDirty)
+        XCTAssertTrue(AppViewModel.needsName(tab))
+        XCTAssertTrue(f.vm.recent.isEmpty)
+        let other = f.dir.sub("other.pdf")
+        XCTAssertTrue(f.vm.saveAs(tab, other))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: other.path))
+        XCTAssertEqual(try Data(contentsOf: url), before)
+    }
+
     func test_aTextFileOpensAsAnUnsavedDocument() async {
         let f = ViewModelFixture(self)
         let url = f.dir.file("notes.txt", Array("Some notes.".utf8))

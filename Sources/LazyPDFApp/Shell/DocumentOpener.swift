@@ -75,7 +75,8 @@ public final class DocumentOpener {
 
     static let isFolder = "The path is a folder."
 
-    public func read(_ url: URL) throws -> OpenSource {
+    /// With `asCopy` a PDF has no file to save back to, for a url that is only a copy the system made for the app.
+    public func read(_ url: URL, asCopy: Bool = false) throws -> OpenSource {
         if (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {
             throw InvalidDataException(Self.isFolder)
         }
@@ -97,6 +98,7 @@ public final class DocumentOpener {
             return OpenSource(bytes: made.bytes, url: nil, title: stem + ".pdf", made: true,
                               note: made.missing.isEmpty ? nil : L10n.t("Some characters have no letter in the font and were left out."))
         }
+        if asCopy { return OpenSource(bytes: bytes, url: nil, title: url.lastPathComponent, made: false) }
         return OpenSource(bytes: bytes, url: url, title: url.lastPathComponent, made: false, stamp: stamp,
                           readOnly: !FileManager.default.isWritableFile(atPath: url.path), hash: Self.digest(bytes))
     }

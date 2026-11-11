@@ -128,10 +128,22 @@ final class IOSShell {
         if sheet != nil {
             waiting.append(url)
         } else if url.isFileURL {
-            Task { await vm.openOrHold(url, access: SecurityScopedAccess.start(url)) }
+            let access = SecurityScopedAccess.start(url)
+            if Self.isTemporary(url) {
+                Task { await vm.openCopy(url, access: access) }
+            } else {
+                Task { await vm.openOrHold(url, access: access) }
+            }
         } else if !LazyPdfAddress.parse(url.absoluteString).isEmpty {
             vm.showNotice(L10n.t("File not opened"), L10n.t("An address cannot open a file here. Share the file to Lazy PDF or open it from Files."))
         }
+    }
+
+    // Mail's Open In and drags from other apps can arrive as a copy in the app's own folders, which saving would change instead
+    // of the original.
+    static func isTemporary(_ url: URL) -> Bool {
+        let path = url.standardizedFileURL.path
+        return path.hasPrefix(FileManager.default.temporaryDirectory.standardizedFileURL.path) || path.contains("/Inbox/")
     }
 
     // A hidden launch argument for the UI tests, `-uitestOpen <path>`, honoured in the simulator only.

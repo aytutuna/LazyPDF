@@ -134,6 +134,20 @@ extension AppViewModel {
         await open(PendingOpen(source, access: access), password: nil, certificate: nil)
     }
 
+    /// Opens a copy the system left in the app's own folders as a document with no file, so saving asks for a name.
+    public func openCopy(_ url: URL, access: FileAccess?) async {
+        defer { access?.stop() }
+        let source: OpenSource
+        do {
+            let opener = opener
+            source = try await Task.detached { try opener.read(url, asCopy: true) }.value
+        } catch {
+            showProblem(Problems.open(error, url.lastPathComponent))
+            return
+        }
+        await open(PendingOpen(source), password: nil, certificate: nil)
+    }
+
     public func tab(of url: URL) -> DocumentTab? {
         documents.first { Self.same($0.url, url) }
     }
