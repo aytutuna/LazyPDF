@@ -604,8 +604,8 @@ public sealed class BatchRunnerTests
         var result = await Run(Runner(), file, set);
 
         Assert.True(result.Ok, result.Detail);
-        Assert.Equal(dir.Sub("out\name"), result.Output);
-        Assert.Equal([dir.Sub("out\name\name page 1.png"), dir.Sub("out\name\name page 2.png")], Directory.GetFiles(result.Output!).Order());
+        Assert.Equal(dir.Sub("out\\name"), result.Output);
+        Assert.Equal([dir.Sub("out\\name\\name page 1.png"), dir.Sub("out\\name\\name page 2.png")], Directory.GetFiles(result.Output!).Order());
         Assert.Empty(Directory.GetFiles(dir.Sub("out"), "*.pdf"));
         Assert.Contains("Saved 2 pictures in name.", result.Detail);
     }
@@ -620,8 +620,8 @@ public sealed class BatchRunnerTests
         await Run(Runner(), file, set);
         var second = await Run(Runner(), file, set);
 
-        Assert.Equal(dir.Sub("out\name (2)"), second.Output);
-        Assert.True(File.Exists(dir.Sub("out\name (2)\name page 1.png")));
+        Assert.Equal(dir.Sub("out\\name (2)"), second.Output);
+        Assert.True(File.Exists(dir.Sub("out\\name (2)\\name page 1.png")));
         Assert.Contains("Saved 1 picture in", second.Detail);
     }
 
@@ -635,6 +635,19 @@ public sealed class BatchRunnerTests
 
         Assert.False(result.Ok);
         Assert.Equal("Pages cannot be drawn", result.Title);
+    }
+
+    [Fact]
+    public async Task ACancelledExportPicturesLeavesNoFolder()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("name.pdf", Pdfs.Text(2));
+        using var cancel = new CancellationTokenSource();
+        cancel.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Runner().RunAsync(file, Set(dir, Step(BatchStepKind.ExportPictures)), 1, Now, cancel.Token, ""));
+
+        Assert.False(Directory.Exists(dir.Sub("out\\name")));
     }
 
     [Fact]

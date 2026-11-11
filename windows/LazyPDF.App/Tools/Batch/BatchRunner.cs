@@ -105,7 +105,21 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
             var source = new ExportSource(bytes, null, null, renderer, codec, Path.GetFileNameWithoutExtension(path));
             var options = new ExportOptions(ExportFormat.Pictures, null, Picture: step.Picture, Dpi: step.Dpi, Quality: step.Quality, NamePattern: "{name} page {n}");
             Directory.CreateDirectory(unique);
-            var result = Exporter.Write(source, options, unique, cancellation);
+            ExportResult result;
+            try
+            {
+                result = Exporter.Write(source, options, unique, cancellation);
+            }
+            catch
+            {
+                Directory.Delete(unique, true);
+                throw;
+            }
+            if (result.Files == 0)
+            {
+                Directory.Delete(unique);
+                return new(path, null, false, Loc.T("Pages cannot be drawn"), Loc.T("Windows cannot draw {0}, so it cannot be saved as pictures.", Path.GetFileName(path)));
+            }
             if (result.Skipped > 0) notes.Add(Loc.Plural(result.Skipped, "{0} page could not be drawn.", "{0} pages could not be drawn."));
             string saved = Loc.Plural(result.Files, "Saved {0} picture in {1}.", "Saved {0} pictures in {1}.", Path.GetRelativePath(root, unique));
             return new(path, unique, true, notes.Count == 0 ? Loc.T("Done") : Loc.T("Done, with notes"), string.Join(" ", [saved, .. notes]));
