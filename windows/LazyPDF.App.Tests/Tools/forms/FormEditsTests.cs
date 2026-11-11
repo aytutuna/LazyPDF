@@ -57,6 +57,68 @@ public sealed class FormEditsTests
         Assert.Equal(code, back.Find("code")!.Widgets[0].Rect);
     }
 
+    [Theory]
+    [InlineData(AlignKind.Left, new double[] { 50, 50, 50 }, new double[] { 0, 20, 60 })]
+    [InlineData(AlignKind.Centre, new double[] { 50, 70, 90 }, new double[] { 0, 20, 60 })]
+    [InlineData(AlignKind.Right, new double[] { 50, 90, 130 }, new double[] { 0, 20, 60 })]
+    [InlineData(AlignKind.Top, new double[] { 50, 10, 200 }, new double[] { 0, 0, 0 })]
+    [InlineData(AlignKind.Middle, new double[] { 50, 10, 200 }, new double[] { 0, -10, 0 })]
+    [InlineData(AlignKind.Bottom, new double[] { 50, 10, 200 }, new double[] { 0, -20, 0 })]
+    [InlineData(AlignKind.SpaceAcross, new double[] { 85, 10, 200 }, new double[] { 0, 20, 60 })]
+    [InlineData(AlignKind.SpaceDown, new double[] { 50, 10, 200 }, new double[] { 0, 20, 60 })]
+    public void AligningFollowsTheFirstBoxAndKeepsTheSizes(AlignKind kind, double[] xs, double[] ys)
+    {
+        Rect[] boxes = [new(50, 0, 100, 10), new(10, 20, 60, 30), new(200, 60, 20, 10)];
+
+        var result = FormEdits.Align(boxes, kind);
+
+        Assert.Equal(xs, result.Select(r => r.X));
+        Assert.Equal(ys, result.Select(r => r.Y));
+        Assert.Equal(boxes.Select(b => b.Size), result.Select(r => r.Size));
+    }
+
+    [Fact]
+    public void SpacingDownLeavesEqualGaps()
+    {
+        Rect[] boxes = [new(0, 0, 10, 10), new(0, 12, 10, 30), new(0, 60, 10, 10)];
+
+        var result = FormEdits.Align(boxes, AlignKind.SpaceDown);
+
+        Assert.Equal(result[1].Y - result[0].Bottom, result[2].Y - result[1].Bottom, 6);
+        Assert.Equal(0, result[0].Y);
+        Assert.Equal(70, result[2].Bottom);
+    }
+
+    [Fact]
+    public void AligningLeftIsOneUndoableStep()
+    {
+        using var tab = FormPdfs.Tab();
+        var before = FormPdfs.Read(tab);
+        var names = new[] { "name", "code", "agree" };
+        var boxes = names.Select(n => Box(before.Find(n)!.Widgets[0])).ToList();
+        var aligned = FormEdits.Align(boxes, AlignKind.Left);
+        // The test file's page is not turned, so display space differs from user space only by the flip of y.
+        var moves = names.Select((n, i) =>
+        {
+            var rect = before.Find(n)!.Widgets[0].Rect;
+            double left = aligned[i].X;
+            return (n, 0, 0, new PdfRect(left, rect.Bottom, left + (rect.Right - rect.Left), rect.Top));
+        }).ToList();
+
+        FormEdits.Apply(tab, Fonts, "Align form fields", form =>
+        {
+            FormEdits.ResizeAll(form, moves);
+            return true;
+        });
+
+        var after = FormPdfs.Read(tab);
+        Assert.All(names, n => Assert.Equal(boxes[0].X, after.Find(n)!.Widgets[0].Rect.Left, 3));
+        Assert.Equal("Align form fields", tab.Session.UndoLabel);
+        tab.Undo();
+        var back = FormPdfs.Read(tab);
+        Assert.Equal(boxes.Select(b => b.X), names.Select(n => back.Find(n)!.Widgets[0].Rect.Left));
+    }
+
     [Fact]
     public void AMarqueeTouchesEveryWidgetItCrosses()
     {

@@ -123,6 +123,28 @@
                 </StackPanel>
             </Border>
 
+            <StackPanel x:Name="ArrangeRow" Margin="0,0,0,12" Visibility="Collapsed">
+                <TextBlock Text="{loc:T Arrange}" Style="{StaticResource FieldLabelText}" />
+                <UniformGrid Columns="3">
+                <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Left}"
+                        ToolTip="{loc:T Align left edges}" Content="{loc:T Left}" AutomationProperties.Name="{loc:T Align left edges}" Click="Arrange_Click" />
+                <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Centre}"
+                        ToolTip="{loc:T Align centres}" Content="{loc:T Centre}" AutomationProperties.Name="{loc:T Align centres}" Click="Arrange_Click" />
+                <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Right}"
+                        ToolTip="{loc:T Align right edges}" Content="{loc:T Right}" AutomationProperties.Name="{loc:T Align right edges}" Click="Arrange_Click" />
+                <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Top}"
+                        ToolTip="{loc:T Align top edges}" Content="{loc:T Top}" AutomationProperties.Name="{loc:T Align top edges}" Click="Arrange_Click" />
+                <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Middle}"
+                        ToolTip="{loc:T Align middles}" Content="{loc:T Middle}" AutomationProperties.Name="{loc:T Align middles}" Click="Arrange_Click" />
+                <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Bottom}"
+                        ToolTip="{loc:T Align bottom edges}" Content="{loc:T Bottom}" AutomationProperties.Name="{loc:T Align bottom edges}" Click="Arrange_Click" />
+                <Button x:Name="SpaceAcrossButton" Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.SpaceAcross}"
+                        ToolTip="{loc:T Space evenly across}" Content="{loc:T Space across}" AutomationProperties.Name="{loc:T Space evenly across}" Click="Arrange_Click" />
+                <Button x:Name="SpaceDownButton" Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.SpaceDown}"
+                        ToolTip="{loc:T Space evenly down}" Content="{loc:T Space down}" AutomationProperties.Name="{loc:T Space evenly down}" Click="Arrange_Click" />
+                </UniformGrid>
+            </StackPanel>
+
             <TextBlock Text="{loc:T Tab order on this page}" Style="{StaticResource FieldLabelText}" />
             <ComboBox x:Name="TabBox" HorizontalAlignment="Stretch" SelectionChanged="TabBox_SelectionChanged" AutomationProperties.Name="{loc:T Tab order on this page}" />
 

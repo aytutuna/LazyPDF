@@ -358,14 +358,35 @@
   <data name="After the selection" xml:space="preserve">
     <value>Seçimden sonra</value>
   </data>
+  <data name="Align bottom edges" xml:space="preserve">
+    <value>Alt kenarları hizala</value>
+  </data>
   <data name="Align centre" xml:space="preserve">
     <value>Ortala</value>
+  </data>
+  <data name="Align centres" xml:space="preserve">
+    <value>Yatay ortaları hizala</value>
+  </data>
+  <data name="Align form fields" xml:space="preserve">
+    <value>Form alanlarını hizala</value>
   </data>
   <data name="Align left" xml:space="preserve">
     <value>Sola hizala</value>
   </data>
+  <data name="Align left edges" xml:space="preserve">
+    <value>Sol kenarları hizala</value>
+  </data>
+  <data name="Align middles" xml:space="preserve">
+    <value>Dikey ortaları hizala</value>
+  </data>
   <data name="Align right" xml:space="preserve">
     <value>Sağa hizala</value>
+  </data>
+  <data name="Align right edges" xml:space="preserve">
+    <value>Sağ kenarları hizala</value>
+  </data>
+  <data name="Align top edges" xml:space="preserve">
+    <value>Üst kenarları hizala</value>
   </data>
   <data name="Aligned." xml:space="preserve">
     <value>Hizalandı.</value>
@@ -3076,6 +3097,9 @@
   <data name="Metadata" xml:space="preserve">
     <value>Üst veri</value>
   </data>
+  <data name="Middle" xml:space="preserve">
+    <value>Dikey orta</value>
+  </data>
   <data name="Mode" xml:space="preserve">
     <value>Kip</value>
   </data>
@@ -5253,6 +5277,21 @@
   </data>
   <data name="Something went wrong" xml:space="preserve">
     <value>Bir şeyler ters gitti</value>
+  </data>
+  <data name="Space across" xml:space="preserve">
+    <value>Yatay dağıt</value>
+  </data>
+  <data name="Space down" xml:space="preserve">
+    <value>Dikey dağıt</value>
+  </data>
+  <data name="Space evenly across" xml:space="preserve">
+    <value>Yatay eşit aralıkla dağıt</value>
+  </data>
+  <data name="Space evenly down" xml:space="preserve">
+    <value>Dikey eşit aralıkla dağıt</value>
+  </data>
+  <data name="Space form fields" xml:space="preserve">
+    <value>Form alanlarının aralığını eşitle</value>
   </data>
   <data name="Spacing changed." xml:space="preserve">
     <value>Aralık değişti.</value>

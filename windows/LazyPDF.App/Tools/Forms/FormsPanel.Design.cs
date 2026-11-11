@@ -102,6 +102,22 @@ public sealed partial class FormsPanel
         });
     }
 
+    // The first picked field is the reference, as the primary is in Acrobat.
+    private void Arrange_Click(object sender, RoutedEventArgs e)
+    {
+        if (_picked.Count < 2 || sender is not Button { Tag: AlignKind kind }) return;
+        var picked = _picked.ToList();
+        var widgets = picked.Select(k => Form.FindAll(k.Name).ElementAtOrDefault(k.Ordinal)?.Widgets.ElementAtOrDefault(k.Index)).ToList();
+        if (widgets.Any(w => w is null)) return;
+        var boxes = FormEdits.Align([.. widgets.Select(w => BoxOf(w!))], kind);
+        var moves = picked.Select((k, i) => (k.Name, k.Index, k.Ordinal, UserRect(widgets[i]!.PageIndex, boxes[i]))).ToList();
+        Edit(kind is AlignKind.SpaceAcross or AlignKind.SpaceDown ? Loc.T("Space form fields") : Loc.T("Align form fields"), form =>
+        {
+            FormEdits.ResizeAll(form, moves);
+            return true;
+        });
+    }
+
     private Rect BoxOf(FormWidget widget)
     {
         var d = Viewer!.Geometry(widget.PageIndex).ToDisplay(widget.Rect);
@@ -140,7 +156,8 @@ public sealed partial class FormsPanel
         var field = SelectedField(form);
         bool many = _picked.Count > 1;
         Card.Visibility = field is null || many ? Visibility.Collapsed : Visibility.Visible;
-        PickedText.Visibility = many ? Visibility.Visible : Visibility.Collapsed;
+        PickedText.Visibility = ArrangeRow.Visibility = many ? Visibility.Visible : Visibility.Collapsed;
+        SpaceAcrossButton.IsEnabled = SpaceDownButton.IsEnabled = _picked.Count > 2;
         if (many) PickedText.Text = Loc.Plural(_picked.Count, "{0} field selected", "{0} fields selected");
         if (field is null || many) return;
         bool text = field.Kind == FieldKind.Text;

@@ -4,6 +4,8 @@ using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Forms;
 
+public enum AlignKind { Left, Centre, Right, Top, Middle, Bottom, SpaceAcross, SpaceDown }
+
 /// <summary>Changes to the form of a tab, each one undoable step. Core's exceptions pass through to the caller.</summary>
 internal static class FormEdits
 {
@@ -93,6 +95,42 @@ internal static class FormEdits
     public static void ResizeAll(PdfForm form, IEnumerable<(string Name, int Index, int Ordinal, PdfRect Rect)> moves)
     {
         foreach (var (name, index, ordinal, rect) in moves) form.Resize(WidgetOf(form, name, index, ordinal), rect);
+    }
+
+    /// <summary>The boxes after aligning to the first one, or after spacing the gaps evenly between the two outermost; sizes stay.</summary>
+    public static Rect[] Align(IReadOnlyList<Rect> boxes, AlignKind kind)
+    {
+        var result = boxes.ToArray();
+        if (boxes.Count == 0) return result;
+        var first = boxes[0];
+        if (kind is AlignKind.SpaceAcross or AlignKind.SpaceDown)
+        {
+            bool across = kind == AlignKind.SpaceAcross;
+            var order = Enumerable.Range(0, boxes.Count).OrderBy(i => across ? boxes[i].X : boxes[i].Y).ToList();
+            double start = across ? boxes[order[0]].X : boxes[order[0]].Y;
+            double end = across ? boxes[order[^1]].Right : boxes[order[^1]].Bottom;
+            double gap = (end - start - order.Sum(i => across ? boxes[i].Width : boxes[i].Height)) / Math.Max(1, boxes.Count - 1);
+            double at = start;
+            foreach (int i in order)
+            {
+                if (across) result[i].X = at; else result[i].Y = at;
+                at += (across ? boxes[i].Width : boxes[i].Height) + gap;
+            }
+            return result;
+        }
+        for (int i = 0; i < result.Length; i++)
+        {
+            switch (kind)
+            {
+                case AlignKind.Left: result[i].X = first.X; break;
+                case AlignKind.Centre: result[i].X = first.X + (first.Width - result[i].Width) / 2; break;
+                case AlignKind.Right: result[i].X = first.Right - result[i].Width; break;
+                case AlignKind.Top: result[i].Y = first.Y; break;
+                case AlignKind.Middle: result[i].Y = first.Y + (first.Height - result[i].Height) / 2; break;
+                default: result[i].Y = first.Bottom - result[i].Height; break;
+            }
+        }
+        return result;
     }
 
     /// <summary>Takes the widgets out. Each removal reads the form again, so the last widgets go first and a radio group loses its buttons from the end.</summary>

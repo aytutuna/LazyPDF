@@ -3819,6 +3819,45 @@
   "Arrange": {
     "tr": "Sırala"
   },
+  "Middle": {
+    "tr": "Dikey orta"
+  },
+  "Space across": {
+    "tr": "Yatay dağıt"
+  },
+  "Space down": {
+    "tr": "Dikey dağıt"
+  },
+  "Align left edges": {
+    "tr": "Sol kenarları hizala"
+  },
+  "Align centres": {
+    "tr": "Yatay ortaları hizala"
+  },
+  "Align right edges": {
+    "tr": "Sağ kenarları hizala"
+  },
+  "Align top edges": {
+    "tr": "Üst kenarları hizala"
+  },
+  "Align middles": {
+    "tr": "Dikey ortaları hizala"
+  },
+  "Align bottom edges": {
+    "tr": "Alt kenarları hizala"
+  },
+  "Space evenly across": {
+    "tr": "Yatay eşit aralıkla dağıt"
+  },
+  "Space evenly down": {
+    "tr": "Dikey eşit aralıkla dağıt"
+  },
+  "Align form fields": {
+    "tr": "Form alanlarını hizala"
+  },
+  "Space form fields": {
+    "tr": "Form alanlarının aralığını eşitle"
+  },
   "To front": {
     "tr": "En öne"
   },
