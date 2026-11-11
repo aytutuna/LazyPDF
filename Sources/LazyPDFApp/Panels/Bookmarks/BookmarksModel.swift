@@ -32,6 +32,7 @@ public final class BookmarksModel: ToolPanelModel {
     @ObservationIgnored private weak var openedFor: DocumentTab?
     @ObservationIgnored private var tab: DocumentTab?
     @ObservationIgnored private var viewer: DocumentViewer?
+    @ObservationIgnored private var host: ToolHost?
     @ObservationIgnored private var watch: ObservationWatch?
 
     public init() {}
@@ -45,6 +46,7 @@ public final class BookmarksModel: ToolPanelModel {
         }
         self.tab = tab
         self.viewer = viewer
+        self.host = host
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.build() })
         build()
     }
@@ -55,6 +57,7 @@ public final class BookmarksModel: ToolPanelModel {
         nodes = []
         tab = nil
         viewer = nil
+        host = nil
     }
 
     public func isExpanded(_ node: BookmarkNode) -> Bool {
@@ -66,11 +69,25 @@ public final class BookmarksModel: ToolPanelModel {
     }
 
     public func go(_ node: BookmarkNode) {
-        guard let viewer else { return }
-        if let destination = node.item.destination {
+        guard let tab, let viewer else { return }
+        let item = node.item
+        if let destination = item.destination ?? (item.action as? GoToAction)?.destination {
+            if PdfDestinations.locate(tab.document, destination) == nil {
+                host?.setStatus(L10n.t("This bookmark points to a page that is not in the file."))
+                return
+            }
+        } else if let action = item.action {
+            if !(action is UriAction || action is NamedAction) {
+                host?.setStatus(L10n.t("This bookmark does something Lazy PDF cannot do."))
+                return
+            }
+        } else {
+            return
+        }
+        if let destination = item.destination {
             viewer.goTo(destination)
         } else {
-            viewer.follow(node.item.action)
+            viewer.follow(item.action)
         }
     }
 

@@ -41,6 +41,31 @@ final class BookmarksModelTests: XCTestCase {
         XCTAssertEqual(viewer.sent, [1])
     }
 
+    func test_anEntryThatGoesNowhereSaysSo() throws {
+        let tab = try PanelPdfs.tab(PanelPdfs.full())
+        let viewer = PanelViewer(tab)
+        let host = RecordingHost()
+        let model = BookmarksModel()
+        model.attach(tab, viewer, host)
+        let item = model.nodes[1].item
+
+        item.destination = PdfDestination(99)
+        model.go(model.nodes[1])
+        XCTAssertEqual(host.statuses, ["This bookmark points to a page that is not in the file."])
+        XCTAssertTrue(viewer.sent.isEmpty)
+
+        item.destination = nil
+        item.action = JavaScriptAction("app.alert(1)")
+        model.go(model.nodes[1])
+        XCTAssertEqual(host.statuses.last, "This bookmark does something Lazy PDF cannot do.")
+        XCTAssertEqual(host.statuses.count, 2)
+
+        item.action = nil
+        model.go(model.nodes[1])
+        XCTAssertEqual(host.statuses.count, 2)
+        XCTAssertTrue(viewer.followed.isEmpty)
+    }
+
     func test_whichEntriesAreOpenFollowsTheFileUntilThePersonChangesIt() throws {
         let (model, _, _) = try attached(PanelPdfs.full())
         let chapter = model.nodes[0]
