@@ -591,6 +591,31 @@
   "Attachments": {
     "tr": "Ekler"
   },
+  "Add a file": {
+    "tr": "Dosya ekle"
+  },
+  "Adding files": {
+    "tr": "Dosyalar ekleniyor"
+  },
+  "Add attachment": {
+    "tr": "Ek ekle"
+  },
+  "{0} file attached.": {
+    "other": "{0} files attached.",
+    "tr": "{0} dosya ek olarak eklendi."
+  },
+  "{0} is over 100 MB, so it was not added.": {
+    "tr": "{0} 100 MB'ı aşıyor, bu yüzden eklenmedi."
+  },
+  "Delete attachment": {
+    "tr": "Eki sil"
+  },
+  "Attachment deleted.": {
+    "tr": "Ek silindi."
+  },
+  "That attachment is no longer in the file.": {
+    "tr": "Bu ek artık dosyada değil."
+  },
   "File overhead": {
     "tr": "Dosya yükü"
   },

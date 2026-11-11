@@ -199,6 +199,9 @@
   <data name="Add a certificate" xml:space="preserve">
     <value>Sertifika ekle</value>
   </data>
+  <data name="Add a file" xml:space="preserve">
+    <value>Dosya ekle</value>
+  </data>
   <data name="Add a new one instead" xml:space="preserve">
     <value>Bunun yerine yenisini ekle</value>
   </data>
@@ -219,6 +222,9 @@
   </data>
   <data name="Add at least one step, then watch the folder." xml:space="preserve">
     <value>En az bir adım ekleyin, sonra klasörü izleyin.</value>
+  </data>
+  <data name="Add attachment" xml:space="preserve">
+    <value>Ek ekle</value>
   </data>
   <data name="Add background" xml:space="preserve">
     <value>Arka plan ekle</value>
@@ -288,6 +294,9 @@
   </data>
   <data name="Added {0} measurement|plural" xml:space="preserve">
     <value>{0} ölçüm eklendi</value>
+  </data>
+  <data name="Adding files" xml:space="preserve">
+    <value>Dosyalar ekleniyor</value>
   </data>
   <data name="Adding pages" xml:space="preserve">
     <value>Sayfalar ekleniyor</value>
@@ -525,6 +534,9 @@
   </data>
   <data name="Attachment" xml:space="preserve">
     <value>Ek</value>
+  </data>
+  <data name="Attachment deleted." xml:space="preserve">
+    <value>Ek silindi.</value>
   </data>
   <data name="Attachments" xml:space="preserve">
     <value>Ekler</value>
@@ -1329,6 +1341,9 @@
   </data>
   <data name="Delete (Del)" xml:space="preserve">
     <value>Sil (Del)</value>
+  </data>
+  <data name="Delete attachment" xml:space="preserve">
+    <value>Eki sil</value>
   </data>
   <data name="Delete field" xml:space="preserve">
     <value>Alanı sil</value>
@@ -5035,6 +5050,9 @@
   <data name="Text: {0}" xml:space="preserve">
     <value>Metin: {0}</value>
   </data>
+  <data name="That attachment is no longer in the file." xml:space="preserve">
+    <value>Bu ek artık dosyada değil.</value>
+  </data>
   <data name="That certificate does not open this file." xml:space="preserve">
     <value>Bu sertifika bu dosyayı açmıyor.</value>
   </data>
@@ -6694,6 +6712,9 @@
   <data name="{0} field|plural" xml:space="preserve">
     <value>{0} alan</value>
   </data>
+  <data name="{0} file attached.|plural" xml:space="preserve">
+    <value>{0} dosya ek olarak eklendi.</value>
+  </data>
   <data name="{0} file could not be saved.|plural" xml:space="preserve">
     <value>{0} dosya kaydedilemedi.</value>
   </data>
@@ -6762,6 +6783,9 @@
   </data>
   <data name="{0} is open in another tab. Close that tab first, or pick another name." xml:space="preserve">
     <value>{0} başka bir sekmede açık. Önce o sekmeyi kapatın ya da başka bir ad seçin.</value>
+  </data>
+  <data name="{0} is over 100 MB, so it was not added." xml:space="preserve">
+    <value>{0} 100 MB'ı aşıyor, bu yüzden eklenmedi.</value>
   </data>
   <data name="{0} is over 50 MB. Attach a smaller file." xml:space="preserve">
     <value>{0} 50 MB'ı aşıyor. Daha küçük bir dosya ekleyin.</value>

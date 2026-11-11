@@ -5,6 +5,12 @@
                  xmlns:tools="clr-namespace:LazyPDF.App.Tools"
                  xmlns:panel="clr-namespace:LazyPDF.App.Panels.Attachments">
     <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="12,0,12,6">
+            <Button x:Name="AddButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE710;"
+                    ToolTip="{loc:T Add a file}" AutomationProperties.Name="{loc:T Add a file}" Click="Add_Click" />
+            <Button x:Name="DeleteButton" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE74D;" Margin="6,0,0,0" IsEnabled="False"
+                    ToolTip="{loc:T Delete (Del)}" AutomationProperties.Name="{loc:T Delete}" Click="Delete_Click" />
+        </StackPanel>
         <StackPanel DockPanel.Dock="Bottom" Margin="12,8,12,12">
             <StackPanel Orientation="Horizontal">
                 <Button x:Name="OpenButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8A7;" Content="{loc:T Open}" AutomationProperties.Name="{loc:T Open}"
@@ -16,7 +22,7 @@
         </StackPanel>
         <Grid>
             <ListBox x:Name="Files" BorderThickness="0" Background="Transparent" AutomationProperties.Name="{loc:T Attachments}"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionChanged="Files_SelectionChanged" MouseDoubleClick="Files_MouseDoubleClick">
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" PreviewKeyDown="Files_PreviewKeyDown" SelectionChanged="Files_SelectionChanged" MouseDoubleClick="Files_MouseDoubleClick">
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
                         <Setter Property="AutomationProperties.Name" Value="{Binding Summary}" />
