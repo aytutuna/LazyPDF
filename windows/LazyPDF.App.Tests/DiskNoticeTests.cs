@@ -17,6 +17,7 @@ public sealed class DiskNoticeTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        f.Vm.SelectTool("stamps");
         Touch(path, 2, 10);
         await f.Vm.CheckDiskAsync();
         f.Vm.DismissMessage();
@@ -50,6 +51,7 @@ public sealed class DiskNoticeTests
         using var f = new ViewModelFixture();
         string a = f.Pdf("a.pdf");
         await f.Vm.OpenFilesAsync([a, f.Pdf("b.pdf")]);
+        f.Vm.SelectTool("stamps");
         Touch(a, 2, 10);
         f.Vm.DismissMessage();
 
@@ -65,6 +67,7 @@ public sealed class DiskNoticeTests
         using var f = new ViewModelFixture();
         string path = f.Pdf();
         await f.Vm.OpenAsync(path);
+        f.Vm.SelectTool("stamps");
         Touch(path, 2, 10);
         await f.Vm.CheckDiskAsync();
         await f.Vm.ReloadAsync(f.Vm.ActiveDocument!);
