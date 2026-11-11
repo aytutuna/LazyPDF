@@ -267,7 +267,15 @@ public sealed partial class FormsPanel : ToolPanel
             Select(null, 0);
             return;
         }
-        if ((e.AddedItems.OfType<FieldRow>().LastOrDefault() ?? FieldList.SelectedItem as FieldRow) is not { } row
+        var newRows = e.AddedItems.OfType<FieldRow>().ToList();
+        if (Designing && newRows.Count == 0)
+        {
+            // A row let go keeps the widgets picked for the rows still selected, and the view stays.
+            var left = FieldList.SelectedItems.OfType<FieldRow>().ToList();
+            Pick([.. _picked.Where(k => left.Any(r => r.Name == k.Name && r.Ordinal == k.Ordinal))]);
+            return;
+        }
+        if ((newRows.LastOrDefault() ?? FieldList.SelectedItem as FieldRow) is not { } row
             || Form.FindAll(row.Name).ElementAtOrDefault(row.Ordinal)?.Widgets.ElementAtOrDefault(row.Index) is not { PageIndex: >= 0 } widget) return;
         var d = Viewer!.Geometry(widget.PageIndex).ToDisplay(widget.Rect);
         Viewer.GoToPage(widget.PageIndex);
@@ -279,7 +287,7 @@ public sealed partial class FormsPanel : ToolPanel
             // A row stands for a whole field, so widgets already picked keep their own index.
             var kept = _picked.Where(k => rows.Any(r => r.Name == k.Name && r.Ordinal == k.Ordinal)
                 && form.FindAll(k.Name).ElementAtOrDefault(k.Ordinal)?.Widgets.ElementAtOrDefault(k.Index)?.PageIndex == widget.PageIndex).ToList();
-            var added = rows.Where(r => r.Page == row.Page && !kept.Any(k => k.Name == r.Name && k.Ordinal == r.Ordinal))
+            var added = newRows.Where(r => r.Page == row.Page &&!kept.Any(k => k.Name == r.Name && k.Ordinal == r.Ordinal))
                 .Select(r => (r.Name, r.Index, r.Ordinal));
             Pick([.. kept, .. added]);
         }
