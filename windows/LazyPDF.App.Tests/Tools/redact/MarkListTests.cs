@@ -139,4 +139,109 @@ public sealed class MarkListTests
     [InlineData("1, 3, 5", new[] { 0, 2, 4 })]
     public void PagesAreWrittenAsRanges(string expected, int[] pages) =>
         Assert.Equal(expected, RedactSummary.PageRanges(pages));
+
+    [Fact]
+    public void UndoPutsBackARemovedMark()
+    {
+        var list = new MarkList();
+        var a = Item(0, 10, 100, "a");
+        var b = Item(0, 10, 200, "b");
+        list.Add([a, b]);
+
+        list.Remove(a);
+        Assert.True(list.CanUndo);
+        list.Undo();
+
+        Assert.Equal(["b", "a"], list.Items.Select(m => m.Label));
+        Assert.Equal(0, list.Add([Item(0, 10, 100)]));
+    }
+
+    [Fact]
+    public void UndoBringsBackAClearedList()
+    {
+        var list = new MarkList();
+        list.Add([Item(0, 10, 100), Item(0, 10, 200)]);
+        list.Clear();
+
+        list.Undo();
+
+        Assert.Equal(2, list.Items.Count);
+    }
+
+    [Fact]
+    public void UndoTakesBackAnAddOfThree()
+    {
+        var list = new MarkList();
+        list.Add([Item(0, 10, 100)]);
+        list.Add([Item(1, 10, 100), Item(1, 10, 200), Item(1, 10, 300)]);
+
+        list.Undo();
+
+        Assert.Single(list.Items);
+        Assert.Equal(1, list.Add([Item(1, 10, 100)]));
+    }
+
+    [Fact]
+    public void OnlyTwentyStepsAreKept()
+    {
+        var list = new MarkList();
+        for (int i = 0; i < 21; i++) list.Add([Item(0, 10, 100 + i * 20)]);
+
+        int undone = 0;
+        while (list.CanUndo)
+        {
+            list.Undo();
+            undone++;
+        }
+
+        Assert.Equal(20, undone);
+        Assert.Single(list.Items);
+    }
+
+    [Fact]
+    public void ForgetEmptiesTheHistory()
+    {
+        var list = new MarkList();
+        list.Add([Item(0, 10, 100)]);
+
+        list.Forget();
+
+        Assert.False(list.CanUndo);
+        Assert.Single(list.Items);
+    }
+
+    [Fact]
+    public void UndoRaisesChangedOnce()
+    {
+        var list = new MarkList();
+        list.Add([Item(0, 10, 100)]);
+        int changes = 0;
+        list.Changed += (_, _) => changes++;
+
+        list.Undo();
+
+        Assert.Equal(1, changes);
+    }
+
+    [Fact]
+    public void EveryChangeGivesANewItemsReference()
+    {
+        var list = new MarkList();
+        var seen = new List<object> { list.Items };
+        var a = Item(0, 10, 100);
+
+        list.Add([a]);
+        seen.Add(list.Items);
+        list.Add([Item(0, 10, 200)]);
+        seen.Add(list.Items);
+        list.Remove(a);
+        seen.Add(list.Items);
+        list.Clear();
+        seen.Add(list.Items);
+        list.Undo();
+        seen.Add(list.Items);
+
+        Assert.Equal(seen.Count, seen.Distinct(ReferenceEqualityComparer.Instance).Count());
+        Assert.Single(((IReadOnlyList<MarkItem>)seen[3]));
+    }
 }

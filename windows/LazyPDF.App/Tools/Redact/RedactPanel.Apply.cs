@@ -60,6 +60,7 @@ public partial class RedactPanel
         // One drawn while the copy was opening is not in it and stays.
         if (state.Marks.Items.SequenceEqual(applied)) state.Marks.Clear();
         else foreach (var item in applied) state.Marks.Remove(item);
+        state.Marks.Forget();
         tab.PendingMarks = state.Marks.Items.Count;
         host.SetStatus(summary.Clean ? Loc.T("Redacted copy opened.") : Loc.T("Redacted copy has problems."));
         if (encrypted) host.ShowNotice(Loc.T("The copy has no password"), Loc.T("Protect it before you share it."));

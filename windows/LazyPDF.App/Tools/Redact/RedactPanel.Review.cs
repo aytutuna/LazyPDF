@@ -31,6 +31,7 @@ public partial class RedactPanel
         bool any = items.Count > 0;
         MarkedList.Visibility = any ? Visibility.Visible : Visibility.Collapsed;
         ClearButton.Visibility = any ? Visibility.Visible : Visibility.Collapsed;
+        UndoButton.Visibility = _state.Marks.CanUndo ? Visibility.Visible : Visibility.Collapsed;
         EmptyNote.Visibility = any ? Visibility.Collapsed : Visibility.Visible;
         DrawOverlays(redrawAll: false);
     }
@@ -115,7 +116,7 @@ public partial class RedactPanel
         var index = MarkedList.Items.IndexOf(item);
         marks.Remove(item);
         Host!.ShowNotice(Loc.T("Mark removed"), Loc.T("It is off the list."),
-                         new NoticeAction(Loc.T("Put it back"), PutBack([item])));
+                         new NoticeAction(Loc.T("Put it back"), UndoIfUnchanged(marks.Items)));
         FocusNeighbour(index);
     }
 
@@ -135,21 +136,22 @@ public partial class RedactPanel
     private void Clear_Click(object sender, RoutedEventArgs e)
     {
         var marks = _state!.Marks;
-        var removed = marks.Items.ToList();
+        int count = marks.Items.Count;
         marks.Clear();
-        Host!.ShowNotice(Loc.Plural(removed.Count, "{0} mark removed", "{0} marks removed"), Loc.T("The list is empty now."),
-                         new NoticeAction(Loc.T("Put them back"), PutBack(removed)));
+        Host!.ShowNotice(Loc.Plural(count, "{0} mark removed", "{0} marks removed"), Loc.T("The list is empty now."),
+                         new NoticeAction(Loc.T("Put them back"), UndoIfUnchanged(marks.Items)));
     }
 
-    // The marks keep page numbers, so they go back only while the pages are as they were.
-    private Action PutBack(IReadOnlyList<MarkItem> items)
+    private void Undo_Click(object sender, RoutedEventArgs e) => _state!.Marks.Undo();
+
+    // The notice outlives the tool and later changes; it undoes only while the list is as it left it.
+    private Action UndoIfUnchanged(IReadOnlyList<MarkItem> after)
     {
         var state = _state!;
-        var pages = state.Pages;
         return () =>
         {
-            if (pages is not null && pages.SequenceEqual(state.Pages ?? [])) state.Marks.Add(items);
-            else Host!.ShowNotice(Loc.T("Marks removed"), Loc.T("The pages changed, so the marks no longer fit. Mark them again."));
+            if (_state == state && ReferenceEquals(state.Marks.Items, after)) state.Marks.Undo();
+            else Host?.SetStatus(Loc.T("The marks changed since. Use Undo in the list."));
         };
     }
 }

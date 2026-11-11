@@ -16,37 +16,45 @@ public sealed record MarkItem(RedactionMark Mark, string Label)
 public sealed class MarkList
 {
     private const double SamePlace = 0.5;
+    private const int MaxSteps = 20;
 
     // Marks by page and the unit square of their first corner, so that a new one is compared only with its neighbours.
     private readonly Dictionary<(int Page, int X, int Y), List<MarkItem>> _cells = [];
+    private readonly List<IReadOnlyList<MarkItem>> _history = [];
     private List<MarkItem> _items = [];
 
+    // Every change replaces the list, so a reference taken from Items never changes under its holder.
     public IReadOnlyList<MarkItem> Items => _items;
+
+    public bool CanUndo => _history.Count > 0;
 
     public event EventHandler? Changed;
 
     /// <summary>Adds what is not marked already and returns how many were new.</summary>
     public int Add(IEnumerable<MarkItem> items)
     {
-        int added = 0;
+        var fresh = new List<MarkItem>();
         foreach (var item in items)
         {
             if (Neighbours(item).Any(m => Same(m.Mark, item.Mark))) continue;
             var cell = Cell(item);
             if (!_cells.TryGetValue(cell, out var inCell)) _cells[cell] = inCell = [];
             inCell.Add(item);
-            _items.Add(item);
-            added++;
+            fresh.Add(item);
         }
-        if (added == 0) return 0;
-        _items = [.. _items.OrderBy(m => m.Page).ThenByDescending(m => Top(m.Mark)).ThenBy(m => Left(m.Mark))];
+        if (fresh.Count == 0) return 0;
+        Push();
+        _items = [.. _items.Concat(fresh).OrderBy(m => m.Page).ThenByDescending(m => Top(m.Mark)).ThenBy(m => Left(m.Mark))];
         Changed?.Invoke(this, EventArgs.Empty);
-        return added;
+        return fresh.Count;
     }
 
     public void Remove(MarkItem item)
     {
-        if (!_items.Remove(item)) return;
+        int index = _items.IndexOf(item);
+        if (index < 0) return;
+        Push();
+        _items = [.. _items.Take(index).Concat(_items.Skip(index + 1))];
         _cells[Cell(item)].Remove(item);
         Changed?.Invoke(this, EventArgs.Empty);
     }
@@ -54,9 +62,39 @@ public sealed class MarkList
     public void Clear()
     {
         if (_items.Count == 0) return;
-        _items.Clear();
+        Push();
+        _items = [];
         _cells.Clear();
         Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void Undo()
+    {
+        if (_history.Count == 0) return;
+        _items = [.. _history[^1]];
+        _history.RemoveAt(_history.Count - 1);
+        _cells.Clear();
+        foreach (var item in _items)
+        {
+            var cell = Cell(item);
+            if (!_cells.TryGetValue(cell, out var inCell)) _cells[cell] = inCell = [];
+            inCell.Add(item);
+        }
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    // Changed is raised so a shown Undo button goes away.
+    public void Forget()
+    {
+        if (_history.Count == 0) return;
+        _history.Clear();
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void Push()
+    {
+        _history.Add(_items);
+        if (_history.Count > MaxSteps) _history.RemoveAt(0);
     }
 
     private static (int Page, int X, int Y) Cell(MarkItem item)

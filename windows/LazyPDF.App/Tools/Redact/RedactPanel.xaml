@@ -48,6 +48,8 @@
                     Click="FindKind_Click" />
 
             <DockPanel Margin="0,16,0,8">
+                <Button x:Name="UndoButton" DockPanel.Dock="Right" Style="{StaticResource SubtleButtonStyle}" Padding="8,2" Content="{loc:T Undo}"
+                        AutomationProperties.Name="{loc:T Undo the last change to the marks}" Click="Undo_Click" Visibility="Collapsed" />
                 <Button x:Name="ClearButton" DockPanel.Dock="Right" Style="{StaticResource SubtleButtonStyle}" Padding="8,2" Content="{loc:T Remove all}"
                         AutomationProperties.Name="{loc:T Remove all}" Click="Clear_Click" />
                 <TextBlock x:Name="MarkedHeader" Style="{StaticResource SectionHeaderText}" VerticalAlignment="Center" AutomationProperties.LiveSetting="Polite" />

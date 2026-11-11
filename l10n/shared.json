@@ -5768,6 +5768,12 @@
   "Put it back": {
     "tr": "Geri koy"
   },
+  "Undo the last change to the marks": {
+    "tr": "İşaretlerdeki son değişikliği geri alın"
+  },
+  "The marks changed since. Use Undo in the list.": {
+    "tr": "İşaretler o zamandan beri değişti. Listedeki Geri al düğmesini kullanın."
+  },
   "Marks removed": {
     "tr": "İşaretler kaldırıldı"
   },

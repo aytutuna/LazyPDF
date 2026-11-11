@@ -5785,6 +5785,9 @@
   <data name="The margins leave nothing of the page. Type smaller numbers." xml:space="preserve">
     <value>Paylar sayfadan hiçbir şey bırakmıyor. Daha küçük sayılar yazın.</value>
   </data>
+  <data name="The marks changed since. Use Undo in the list." xml:space="preserve">
+    <value>İşaretler o zamandan beri değişti. Listedeki Geri al düğmesini kullanın.</value>
+  </data>
   <data name="The match runs over two lines." xml:space="preserve">
     <value>Eşleşme iki satıra taşıyor.</value>
   </data>
@@ -6519,6 +6522,9 @@
   </data>
   <data name="Undo stroke" xml:space="preserve">
     <value>Çizgiyi geri al</value>
+  </data>
+  <data name="Undo the last change to the marks" xml:space="preserve">
+    <value>İşaretlerdeki son değişikliği geri alın</value>
   </data>
   <data name="Undo {0}" xml:space="preserve">
     <value>Geri al: {0}</value>

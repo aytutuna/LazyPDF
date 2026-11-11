@@ -99,6 +99,7 @@ public partial class RedactPanel : ToolPanel
         state.Pages = pages;
         if (!moved || state.Marks.Items.Count == 0) return;
         state.Marks.Clear();
+        state.Marks.Forget();
         Host!.ShowNotice(Loc.T("Marks removed"), Loc.T("The pages changed, so the marks no longer fit. Mark them again."));
     }
 
