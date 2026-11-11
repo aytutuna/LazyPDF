@@ -27,6 +27,7 @@ internal sealed class CompareSession : IDisposable
 
     private const int RowsPerPage = 50;
     private const int ReportMarks = 5001;
+    private const double MaxPagePixels = 40_000_000;
 
     private readonly Side _before;
     private readonly Side _after;
@@ -93,7 +94,7 @@ internal sealed class CompareSession : IDisposable
     public PdfRgbaImage? Overlay(int newPage)
     {
         var pair = Result?.Pages.FirstOrDefault(p => p.NewIndex == newPage && !p.IsAdded);
-        return pair is null ? null : PixelComparer.Compare(Old.Renderer, pair.OldIndex, New.Renderer, newPage, _pixelDpi)?.Overlay;
+        return pair is null || !SmallEnough(pair) ? null : PixelComparer.Compare(Old.Renderer, pair.OldIndex, New.Renderer, newPage, _pixelDpi)?.Overlay;
     }
 
     /// <summary>
@@ -150,7 +151,7 @@ internal sealed class CompareSession : IDisposable
                 else removed++;
                 continue;
             }
-            if (PixelComparer.Compare(Old.Renderer, pair.OldIndex, New.Renderer, pair.NewIndex, _pixelDpi) is not { } found)
+            if (!SmallEnough(pair) || PixelComparer.Compare(Old.Renderer, pair.OldIndex, New.Renderer, pair.NewIndex, _pixelDpi) is not { } found)
             {
                 Undrawn++;
                 continue;
@@ -169,6 +170,14 @@ internal sealed class CompareSession : IDisposable
         _pixelRows = [.. rows.Take(MaxPixelRows)];
         var summary = new ComparisonSummary(added, removed, areas, 0, 0, 0, areas, 0, added + removed, 0, 0, 0);
         _pixelResult = new ComparisonResult(result.Pages, changes, summary, result.OldPageCount, result.NewPageCount);
+    }
+
+    // The comparison keeps about 30 bytes per pixel, so a drawing sheet at a fine detail is left undrawn.
+    private bool SmallEnough(PagePair pair)
+    {
+        double scale = _pixelDpi / 72;
+        return new[] { new PageGeometry(Old.Document.Pages[pair.OldIndex]), new PageGeometry(New.Document.Pages[pair.NewIndex]) }
+            .All(g => g.Width * scale * g.Height * scale <= MaxPagePixels);
     }
 
     private static CompareChange PixelChange(PagePair pair, PixelDifference difference, PageGeometry page)

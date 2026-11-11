@@ -164,6 +164,18 @@ public sealed class CompareReportTests
     }
 
     [Fact]
+    public void APageTooLargeAtTheChosenDetailIsLeftUndrawn()
+    {
+        using var session = new CompareSession(new Side(CompareKit.Before(), "old.pdf", null, null), new Side(CompareKit.Before(), "new.pdf", null, null), CompareKit.Painted());
+
+        session.Compare(new CompareOptions(), byPixels: true, dpi: 1000, CancellationToken.None);
+
+        Assert.Equal(0, session.Looked);
+        Assert.Equal(2, session.Undrawn);
+        Assert.Null(session.Overlay(0));
+    }
+
+    [Fact]
     public void TheTextReportNamesBothFiles()
     {
         using var session = Session(CompareKit.Before(), CompareKit.After());
