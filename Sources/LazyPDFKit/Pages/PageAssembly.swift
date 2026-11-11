@@ -1,9 +1,9 @@
 import Foundation
 
 // Twin of windows/LazyPDF.Core/Pages/PageAssembly.cs: new documents made of pages of others. A new document holds the
-// pages asked for and what they use and nothing else: no tree, names or tags of the source, no resource a page only
-// lists. Of the rest of the source it carries what belongs to those pages (see PageCarry); article threads are not
-// carried over.
+// pages asked for and what they use and nothing else: no tree, names or threads of the source, no resource a page only
+// lists. Of the rest of the source it carries what belongs to those pages (see PageCarry), the tag tree included;
+// article threads are not carried over.
 //
 // The C# CancellationToken is the task's: the checks are `Task.checkCancellation()`. A call with no page to take throws
 // where the C# throws ArgumentException, since a source with no pages can come from a file.
@@ -26,11 +26,13 @@ public enum PageAssembly {
         if pages.isEmpty { throw PdfReadException.damaged("There are no pages to take.") }
         let target = try blank(source.version)
         let importer = PageImporter(source, target)
+        importer.keepTags = PageCarry.hasTags(source)
         let copies = try importer.importPages(pages)
         if let info = source.trailer["Info"], source.info != nil { target.trailer["Info"] = try importer.copyValue(info) }
         try PageCarry.catalog(source, target, importer)
         try PageTree.set(target, copies)
         try PageCarry.carry(source, target, pages, 0)
+        if importer.keepTags { try PageCarry.tags(source, target, importer, copies) }
         return target
     }
 
@@ -48,13 +50,23 @@ public enum PageAssembly {
         var order: [PdfReference] = []
         var origins: [AnyObject] = []
         var taken: [(pages: [Int], start: Int)] = []
+        var tagged: [(source: PdfDocument, importer: PageImporter, copies: [PdfReference])] = []
+        var all = true
         for source in sources {
             try Task.checkCancellation()
             let id = ObjectIdentifier(source.document)
+            // A document listed again shares the tree of its first listing, so its later pages stay untagged.
+            let fresh = importers[id] == nil
             let importer = importers[id] ?? PageImporter(source.document, target)
             importers[id] = importer
             let indexes = source.pages ?? Array(0..<source.document.pages.count)
+            importer.keepTags = fresh && !indexes.isEmpty && PageCarry.hasTags(source.document)
             let copies = try importer.importPages(indexes)
+            if importer.keepTags {
+                tagged.append((source.document, importer, copies))
+            } else if !indexes.isEmpty {
+                all = false
+            }
             taken.append((pages: indexes, start: order.count))
             order.append(contentsOf: copies)
             origins.append(contentsOf: copies.map { _ in source.document })
@@ -72,6 +84,7 @@ public enum PageAssembly {
             let title = own.flatMap { $0.isEmpty ? nil : $0 } ?? titles.flatMap { i < $0.count ? $0[i] : nil } ?? ""
             try PageCarry.carry(document, target, taken[i].pages, taken[i].start, title)
         }
+        try PageCarry.mergeTags(target, tagged, all)
         try StampRuns.separate(target, zip(target.pages, origins).map { (page: $0, origin: $1) })
         return target
     }

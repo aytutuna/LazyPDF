@@ -266,6 +266,24 @@ final class RedactStrictReachTests: XCTestCase {
         XCTAssertFalse(leaf.containsKey("Alt"))
     }
 
+    func test_objectReferenceOnAPageThatBecamePictureIsRemoved() throws {
+        let document = try PdfDocument.open(makeFile(word))
+        let link = PdfDictionary()
+        link["S"] = PdfName("Link")
+        link["Alt"] = PdfString(bytes: Array("ZQXLINK".utf8), isHex: false)
+        let reference = PdfDictionary()
+        reference["Type"] = PdfName("OBJR")
+        reference["Pg"] = document.pages[0].reference
+        reference["Obj"] = PdfReference(5, 0)
+        link["K"] = reference
+        let root = PdfDictionary()
+        root["Type"] = PdfName("StructTreeRoot")
+        root["K"] = link
+        document.catalog["StructTreeRoot"] = try document.add(root)
+        try RedactionStructure.prune(document, [:], RedactionObjects.Identities(), [document.pages[0].reference.number])
+        XCTAssertFalse(root.containsKey("K"))
+    }
+
     func test_wordInAZipAttachedWithoutATypeIsFound() throws {
         let file = makeFile("BT /F1 12 Tf 100 100 Td (hello) Tj ET", "", { pdf in
             pdf.stream(6, "", RedactionKit.gzip(Latin1.bytes("the ZQXCYCLE word")))

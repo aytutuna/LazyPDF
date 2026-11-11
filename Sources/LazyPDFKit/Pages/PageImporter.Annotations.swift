@@ -52,7 +52,10 @@ extension PageImporter {
             try fillAnnotation(annotation, fresh, reference, pageRef, sourceRef)
         }
         try resolveFieldActions()
-        for (number, reference) in local.entries where number > 0 { record(number, reference) }
+        for (number, reference) in local.entries where number > 0 {
+            record(number, reference)
+            if keepTags && taggedCopies[number] == nil { taggedCopies[number] = reference }
+        }
 
         var kept: [PdfObject] = []
         var seen = Set<PdfReference>()
@@ -70,7 +73,7 @@ extension PageImporter {
             let item: PdfObject?
             switch key {
             case "P": item = pageRef
-            case "StructParent": item = nil
+            case "StructParent": item = keepTags ? value : nil
             case "Parent" where widget: item = nil
             case "Popup", "Parent", "IRT": item = (value as? PdfReference).flatMap { local[$0.number] }
             case "Dest": item = try fixDestination(value)

@@ -43,6 +43,10 @@ final class PageImporter {
     var newPages: [Int: PdfReference] = [:]
     var pending: [(source: Int, target: Int)] = []
 
+    /// Whether the pages and annotations keep their keys into the tag tree, which `copyTree` then copies.
+    var keepTags = false
+    var taggedCopies = OrderedMap<PdfReference>()
+
     var layersAdded = Set<Int>()
 
     var actionNodes = 0
@@ -111,6 +115,16 @@ final class PageImporter {
         return made
     }
 
+    /// A copy of the source's structure tree in which a page that did not come across is `ghost`.
+    func copyTree(_ root: PdfObject, _ ghost: PdfReference) throws -> PdfObject {
+        let added = sourcePages.sorted().filter { newPages[$0] == nil }
+        for number in added { newPages[number] = ghost }
+        for entry in taggedCopies.entries where map[entry.key] == nil { map[entry.key] = entry.value }
+        let made = try copyValue(root)
+        for number in added { newPages[number] = nil }
+        return made
+    }
+
     private func fillPage(_ page: PdfPage, _ reference: PdfReference, _ dict: PdfDictionary) throws {
         dict["Type"] = PdfName("Page")
         // Written out even when equal to the default, so that nothing is inherited from the new tree (7.7.3.4).
@@ -125,7 +139,7 @@ final class PageImporter {
         }
         dict["Resources"] = try copy(try pruned(page, resources))
         for (key, value) in page.dictionary.entries {
-            if Self.pageOnly.contains(key) || page.dictionary[key] !== value { continue }
+            if (Self.pageOnly.contains(key) && !(keepTags && key == "StructParents")) || page.dictionary[key] !== value { continue }
             let made = try copy(value)
             if !(made is PdfNull) { dict.add(key, made) }
         }
