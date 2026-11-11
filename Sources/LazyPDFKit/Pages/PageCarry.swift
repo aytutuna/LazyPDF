@@ -117,14 +117,28 @@ enum PageCarry {
         let page = PdfDictionary()
         page["Type"] = PdfName("Page")
         let ghost = try target.add(page)
+        let original = source.dict(source.catalog, "StructTreeRoot")!
         target.catalog["StructTreeRoot"] = try importer.copyTree(source.catalog["StructTreeRoot"]!, ghost)
-        try RedactionStructure.prune(target, [:], RedactionObjects.Identities(), [ghost.number])
-        target.delete(ghost.number)
         let root = target.dict(target.catalog, "StructTreeRoot")!
         let used = Set(holders(target, copies).compactMap { target.integer($0.holder, $0.key) })
-        if let parents = target.dict(root, "ParentTree") {
-            _ = try PdfNumberTree.write(target, parents, PdfNumberTree.read(target, parents).filter { used.contains($0.key) })
+        if source.dict(original, "ParentTree") != nil {
+            var kept: [(key: Int, value: PdfObject)] = []
+            for entry in PdfNumberTree.read(source, original["ParentTree"]) where used.contains(entry.key) {
+                let value = try importer.copyValue(entry.value)
+                if !(value is PdfNull) { kept.append((entry.key, value)) }
+            }
+            root["ParentTree"] = try target.add(try PdfNumberTree.write(target, nil, kept))
         }
+        if source.dict(original, "IDTree") != nil {
+            var kept: [(key: String, value: PdfObject)] = []
+            for entry in PdfNameTree.read(source, original["IDTree"]) {
+                let value = try importer.copyValue(entry.value)
+                if !(value is PdfNull) { kept.append((entry.key, value)) }
+            }
+            root["IDTree"] = try target.add(try PdfNameTree.write(target, nil, kept))
+        }
+        try RedactionStructure.prune(target, [:], RedactionObjects.Identities(), [ghost.number])
+        target.delete(ghost.number)
         return root
     }
 

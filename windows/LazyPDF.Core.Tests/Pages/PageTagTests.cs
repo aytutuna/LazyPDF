@@ -90,6 +90,16 @@ public class PageTagTests
     }
 
     [Fact]
+    public void ExtractDoesNotCopyTheTagsOfThePagesLeftOut()
+    {
+        var part = PageAssembly.Extract(Tagged(), [0]);
+        var objects = part.ObjectNumbers.Select(n => part.Get(n)).OfType<PdfDictionary>().ToList();
+        Assert.DoesNotContain(objects, d => part.Name(d, "Subtype") == "Link");
+        Assert.DoesNotContain(objects, d => part.Name(d, "S") is "Table" or "TR" or "Link");
+        Assert.Equal(1, objects.Count(d => part.Name(d, "S") == "H1"));
+    }
+
+    [Fact]
     public void MergeGivesEachSourceKeysOfItsOwn()
     {
         var merged = Saved(PageAssembly.Merge([new MergeSource(Tagged()), new MergeSource(Tagged())]), out _);

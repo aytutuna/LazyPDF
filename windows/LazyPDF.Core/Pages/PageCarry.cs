@@ -130,15 +130,23 @@ internal static class PageCarry
     private static PdfDictionary Pruned(PdfDocument source, PdfDocument target, PageImporter importer, IReadOnlyList<PdfReference> copies)
     {
         var ghost = target.Add(new PdfDictionary { ["Type"] = new PdfName("Page") });
+        var original = source.Dict(source.Catalog, "StructTreeRoot")!;
         target.Catalog["StructTreeRoot"] = importer.CopyTree(source.Catalog["StructTreeRoot"]!, ghost);
-        RedactionStructure.Prune(target, [], [], [ghost.Number]);
-        target.Delete(ghost.Number);
         var root = target.Dict(target.Catalog, "StructTreeRoot")!;
         var used = Holders(target, copies).Select(h => target.Integer(h.Holder, h.Key)).OfType<long>().ToHashSet();
-        if (target.Dict(root, "ParentTree") is { } parents)
+        if (source.Dict(original, "ParentTree") is not null)
         {
-            PdfNumberTree.Write(target, parents, PdfNumberTree.Read(target, parents).Where(e => used.Contains(e.Key)).ToList());
+            var kept = PdfNumberTree.Read(source, original["ParentTree"]).Where(e => used.Contains(e.Key))
+                .Select(e => new KeyValuePair<long, PdfObject>(e.Key, importer.CopyValue(e.Value))).Where(e => e.Value is not PdfNull);
+            root["ParentTree"] = target.Add(PdfNumberTree.Write(target, null, kept));
         }
+        if (source.Dict(original, "IDTree") is not null)
+        {
+            var kept = PdfNameTree.Read(source, original["IDTree"]).Select(e => new KeyValuePair<string, PdfObject>(e.Key, importer.CopyValue(e.Value))).Where(e => e.Value is not PdfNull);
+            root["IDTree"] = target.Add(PdfNameTree.Write(target, null, kept));
+        }
+        RedactionStructure.Prune(target, [], [], [ghost.Number]);
+        target.Delete(ghost.Number);
         return root;
     }
 

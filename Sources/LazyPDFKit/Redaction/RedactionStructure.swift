@@ -74,6 +74,9 @@ enum RedactionStructure {
         var touched = false
         for kid in kids {
             switch document.resolve(kid) {
+            // A kid that is not there, such as one a split left out, took its content with it.
+            case nil:
+                touched = true
             case let n as PdfNumber:
                 let lost = content(page, Int(saturating32: n.value), tagged, pictures, &kept, kid)
                 touched = touched || lost
@@ -138,7 +141,7 @@ enum RedactionStructure {
     }
 
     // The type is required, but a writer that leaves it out still has a content item when there is no structure type.
-    private static func isContentItem(_ document: PdfDocument, _ item: PdfDictionary, _ type: String, _ key: String) -> Bool {
+    static func isContentItem(_ document: PdfDocument, _ item: PdfDictionary, _ type: String, _ key: String) -> Bool {
         document.name(item, "Type") == type || (!item.containsKey("S") && !item.containsKey("Type") && item.containsKey(key))
     }
 

@@ -540,12 +540,11 @@
 < 25: <</Type /Font /Subtype /Type1 /BaseFont /Courier>>
 < 26: stream <<>> | BT /F1 12 Tf (Page 13) Tj ET
 < 27: <</Names [(five) [9 0 R /Fit]]>>
-< 28: <</Type /StructTreeRoot /K [31 0 R] /ParentTree 35 0 R /ParentTreeNextKey 4>>
+< 28: <</Type /StructTreeRoot /K [31 0 R] /ParentTree 34 0 R /ParentTreeNextKey 4>>
 < 30: <</Type /StructTreeRoot /K 31 0 R>>
 < 31: <</S /P /Pg 8 0 R /K 0>>
 < 33: <</Type /StructTreeRoot>>
-< 34: <</S /P /Pg 32 0 R>>
-< 35: <</Nums []>>
+< 34: <</Nums []>>
 > case split-every
 < part 0 trailer <</Size 3 /Root 1 0 R>>
 < part 0 1: <</Type /Catalog /Pages 2 0 R>>

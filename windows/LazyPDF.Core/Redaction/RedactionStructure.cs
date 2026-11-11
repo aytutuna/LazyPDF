@@ -66,6 +66,10 @@ internal static class RedactionStructure
         {
             switch (document.Resolve(kid))
             {
+                // A kid that is not there, such as one a split left out, took its content with it.
+                case null:
+                    touched = true;
+                    break;
                 case PdfNumber n:
                     touched |= Content(page, (int)n.Value, tagged, pictures, kept, kid);
                     break;
@@ -124,7 +128,7 @@ internal static class RedactionStructure
     }
 
     // The type is required, but a writer that leaves it out still has a content item when there is no structure type.
-    private static bool IsContentItem(PdfDocument document, PdfDictionary item, string type, string key) =>
+    internal static bool IsContentItem(PdfDocument document, PdfDictionary item, string type, string key) =>
         document.Name(item, "Type") == type || (!item.ContainsKey("S") && !item.ContainsKey("Type") && item.ContainsKey(key));
 
     // True when the content lost something; it stays in the tree unless every item it painted is gone.

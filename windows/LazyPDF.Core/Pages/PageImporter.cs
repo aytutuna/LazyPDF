@@ -17,6 +17,8 @@ internal sealed partial class PageImporter
     private readonly Dictionary<int, PdfReference> _newPages = [];
     private readonly Queue<(int Source, int Target)> _pending = [];
     private readonly HashSet<int> _dropped = [];
+    private readonly HashSet<int> _skip = [];
+    private readonly HashSet<PdfObject> _cut = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>Whether the pages and annotations keep their keys into the tag tree, which <see cref="CopyTree"/> then copies.</summary>
     public bool KeepTags { get; set; }
@@ -71,13 +73,25 @@ internal sealed partial class PageImporter
         return copy;
     }
 
-    /// <summary>A copy of the source's structure tree in which a page that did not come across is <paramref name="ghost"/>.</summary>
+    /// <summary>
+    /// A copy of the source's structure tree in which a page that did not come across is <paramref name="ghost"/>, and an
+    /// element with nothing left on the pages taken is not copied. The parent and ID trees are left to the caller.
+    /// </summary>
     public PdfObject CopyTree(PdfObject root, PdfReference ghost)
     {
+        _skip.UnionWith(TagCut.Dead(_source, root, [.. _newPages.Keys], _sourcePages));
+        if (_source.Resolve(root) is PdfDictionary top)
+        {
+            foreach (string key in (string[])["ParentTree", "IDTree"])
+            {
+                if (top[key] is { } tree) _cut.Add(tree);
+            }
+        }
         var mapped = _sourcePages.Where(n => _newPages.TryAdd(n, ghost)).ToList();
         foreach (var (number, annotation) in _taggedCopies) _map.TryAdd(number, annotation);
         var copy = CopyValue(root);
         foreach (int number in mapped) _newPages.Remove(number);
+        _cut.Clear();
         return copy;
     }
 
@@ -126,7 +140,7 @@ internal sealed partial class PageImporter
         var copy = new PdfDictionary();
         foreach (var (key, value) in source.Entries)
         {
-            if (!ReferenceEquals(source[key], value)) continue;
+            if (!ReferenceEquals(source[key], value) || _cut.Contains(value)) continue;
             var item = Copy(value);
             if (item is not PdfNull) copy.Add(key, item);
         }
@@ -135,6 +149,7 @@ internal sealed partial class PageImporter
 
     private PdfObject CopyReference(PdfReference reference)
     {
+        if (_skip.Contains(reference.Number)) return PdfNull.Instance;
         if (_map.TryGetValue(reference.Number, out var done) || _newPages.TryGetValue(reference.Number, out done)) return done;
         // A page that did not come across, the tree above it and the catalog would drag the whole file in.
         var value = _source.Get(reference.Number);

@@ -43,6 +43,8 @@ final class PageImporter {
     var newPages: [Int: PdfReference] = [:]
     var pending: [(source: Int, target: Int)] = []
     var droppedNumbers = Set<Int>()
+    var skip = Set<Int>()
+    var cut = Set<ObjectIdentifier>()
 
     /// Whether the pages and annotations keep their keys into the tag tree, which `copyTree` then copies.
     var keepTags = false
@@ -119,13 +121,22 @@ final class PageImporter {
         return made
     }
 
-    /// A copy of the source's structure tree in which a page that did not come across is `ghost`.
+    /// A copy of the source's structure tree in which a page that did not come across is `ghost`, and an element with
+    /// nothing left on the pages taken is not copied. The parent and ID trees are left to the caller.
     func copyTree(_ root: PdfObject, _ ghost: PdfReference) throws -> PdfObject {
+        let taken = Set(sourcePages.filter { newPages[$0] != nil })
+        skip.formUnion(TagCut.dead(source, root, taken, sourcePages))
+        if let top = source.resolve(root) as? PdfDictionary {
+            for key in ["ParentTree", "IDTree"] {
+                if let tree = top[key] { cut.insert(ObjectIdentifier(tree)) }
+            }
+        }
         let added = sourcePages.sorted().filter { newPages[$0] == nil }
         for number in added { newPages[number] = ghost }
         for entry in taggedCopies.entries where map[entry.key] == nil { map[entry.key] = entry.value }
         let made = try copyValue(root)
         for number in added { newPages[number] = nil }
+        cut.removeAll()
         return made
     }
 
@@ -176,7 +187,7 @@ final class PageImporter {
     func copyDictionary(_ original: PdfDictionary) throws -> PdfDictionary {
         let made = PdfDictionary()
         for (key, value) in original.entries {
-            if original[key] !== value { continue }
+            if original[key] !== value || cut.contains(ObjectIdentifier(value)) { continue }
             let item = try copy(value)
             if !(item is PdfNull) { made.add(key, item) }
         }
@@ -184,6 +195,7 @@ final class PageImporter {
     }
 
     private func copyReference(_ reference: PdfReference) throws -> PdfObject {
+        if skip.contains(reference.number) { return PdfNull.instance }
         if let done = map[reference.number] ?? newPages[reference.number] { return done }
         // A page that did not come across, the tree above it and the catalog would drag the whole file in.
         guard let value = source.get(reference.number), !(value is PdfNull) else {

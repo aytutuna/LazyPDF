@@ -23,15 +23,15 @@ public enum PageAssembly {
     /// A document of the pages at these indexes, in this order. Keeps the source's /Info. Throws `CancellationError`
     /// when the task is cancelled.
     public static func extract(_ source: PdfDocument, _ pages: [Int]) throws -> PdfDocument {
-        try extract(source, pages, files: true)
+        try extract(source, pages, files: true, tags: PageCarry.hasTags(source))
     }
 
     // A split keeps the document's attached files in its first part only.
-    private static func extract(_ source: PdfDocument, _ pages: [Int], files: Bool) throws -> PdfDocument {
+    private static func extract(_ source: PdfDocument, _ pages: [Int], files: Bool, tags: Bool) throws -> PdfDocument {
         if pages.isEmpty { throw PdfReadException.damaged("There are no pages to take.") }
         let target = try blank(source.version)
         let importer = PageImporter(source, target)
-        importer.keepTags = PageCarry.hasTags(source)
+        importer.keepTags = tags
         let copies = try importer.importPages(pages)
         if let info = source.trailer["Info"], source.info != nil { target.trailer["Info"] = try importer.copyValue(info) }
         try PageCarry.catalog(source, target, importer)
@@ -107,7 +107,8 @@ public enum PageAssembly {
 
     /// One part for each list of pages.
     public static func splitByRanges(_ source: PdfDocument, _ parts: [[Int]]) throws -> [PdfDocument] {
-        try parts.enumerated().map { try extract(source, $1, files: $0 == 0) }
+        let tags = PageCarry.hasTags(source)
+        return try parts.enumerated().map { try extract(source, $1, files: $0 == 0, tags: tags) }
     }
 
     /// A new part starts at each of these pages (0-based); the first part starts at page 0. Where bookmarks of the top
@@ -128,9 +129,10 @@ public enum PageAssembly {
     public static func splitBySize(_ source: PdfDocument, _ maxBytes: Int, _ options: PdfSaveOptions = PdfSaveOptions()) throws -> [PdfDocument] {
         precondition(maxBytes >= 1, "maxBytes")
         let total = source.pages.count
+        let tags = PageCarry.hasTags(source)
         var fitted: [Int: PdfDocument] = [:]
         func fits(_ start: Int, _ length: Int) throws -> Bool {
-            let candidate = try extract(source, Array(start..<start + length), files: start == 0)
+            let candidate = try extract(source, Array(start..<start + length), files: start == 0, tags: tags)
             if try candidate.saveRewrite(options).count > maxBytes { return false }
             fitted[length] = candidate
             return true
@@ -173,7 +175,7 @@ public enum PageAssembly {
                     if try fits(at, mid) { low = mid } else { high = mid }
                 }
             }
-            parts.append(try fitted[low] ?? extract(source, Array(at..<at + low), files: at == 0))
+            parts.append(try fitted[low] ?? extract(source, Array(at..<at + low), files: at == 0, tags: tags))
             at += low
         }
         return parts
