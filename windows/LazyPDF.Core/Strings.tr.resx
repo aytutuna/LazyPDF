@@ -7264,6 +7264,9 @@
   <data name="Zoom presets" xml:space="preserve">
     <value>Yakınlaştırma ön ayarları</value>
   </data>
+  <data name="Zoom to area" xml:space="preserve">
+    <value>Alana yakınlaştır</value>
+  </data>
   <data name="_Cancel" xml:space="preserve">
     <value>İ_ptal</value>
   </data>

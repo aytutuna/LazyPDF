@@ -556,6 +556,49 @@ public sealed class PageSurfaceTests
         });
     }
 
+    [Fact]
+    public void ZoomingToAQuarterOfAPageGivesAboutFourTimesFitPage()
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(3);
+            surface.SetFit(FitMode.Page);
+            double fit = surface.Zoom;
+            var size = surface.PageSize(0);
+
+            surface.ZoomToArea(0, new Rect(0, 0, size.Width / 4, size.Height / 4));
+
+            Assert.Equal(FitMode.None, surface.Fit);
+            Assert.InRange(surface.Zoom / fit, 3.6, 4.4);
+        });
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(90)]
+    public void TheAreaZoomedToLiesInsideTheView(int rotation)
+    {
+        OnSta(() =>
+        {
+            var (surface, _) = Open(3);
+            surface.SetRotation(rotation);
+            var size = surface.PageSize(1);
+            var area = new Rect(size.Width / 2, size.Height / 2, size.Width / 3, size.Height / 4);
+
+            surface.ZoomToArea(1, area);
+
+            var shown = PageSpace.Transform(surface.PageMatrix(1)!.Value, area);
+            Assert.True(new Rect(Window).Contains(shown));
+        });
+    }
+
+    [Fact]
+    public void ADragOfTwoPixelsIsAClickAndOneOfTwentyIsNot()
+    {
+        Assert.True(ZoomMath.IsClick(new Rect(10, 10, 2, 2)));
+        Assert.False(ZoomMath.IsClick(new Rect(10, 10, 20, 2)));
+    }
+
     private static T Private<T>(PageSurface surface, string name)
     {
         var flags = BindingFlags.Instance | BindingFlags.NonPublic;

@@ -14,6 +14,12 @@ public enum PointerMode
 
     /// <summary>Dragging selects text; double and triple clicks select a word and a line.</summary>
     Select,
+
+    /// <summary>Dragging a box zooms to it, once; the mode before comes back.</summary>
+    Zoom,
+
+    /// <summary>Dragging a box picks an area of the page for a picture, once.</summary>
+    Snapshot,
 }
 
 /// <summary>A point of page space on one page.</summary>

@@ -42,6 +42,9 @@ public static class ZoomMath
         return true;
     }
 
+    /// <summary>A dragged box this small in both directions is a click.</summary>
+    public static bool IsClick(Rect box) => box.Width < 8 && box.Height < 8;
+
     /// <summary>The next zoom of the usual steps above or below <paramref name="zoom"/>.</summary>
     public static double Step(double zoom, int direction)
     {

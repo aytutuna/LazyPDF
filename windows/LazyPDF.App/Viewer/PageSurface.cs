@@ -391,8 +391,18 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         PageChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Scrolls so that <paramref name="area"/> (page space) is in view, centred when it is not already.</summary>
-    public void Reveal(int page, Rect area)
+    /// <summary>Zooms so that <paramref name="area"/> (page space) fills the view, and centres it.</summary>
+    public void ZoomToArea(int page, Rect area)
+    {
+        if ((uint)page >= (uint)_sizes.Length || area.Width <= 0 || area.Height <= 0) return;
+        if (!_layout.Contains(page)) GoToPage(page);
+        _fit = FitMode.None;
+        ChangeZoom(ZoomMath.FitPage(PageSpace.Shown(area.Size, _rotation, 1), _viewport), null);
+        Reveal(page, area, centre: true);
+    }
+
+    /// <summary>Scrolls so that <paramref name="area"/> (page space) is in view, centred when it is not already or when <paramref name="centre"/> asks.</summary>
+    public void Reveal(int page, Rect area, bool centre = false)
     {
         if ((uint)page >= (uint)_sizes.Length) return;
         if (!_layout.Contains(page)) GoToPage(page);
@@ -400,7 +410,7 @@ internal sealed partial class PageSurface : Panel, IScrollInfo
         var view = ViewRect;
         var margin = new Size(Math.Min(48, view.Width / 4), Math.Min(48, view.Height / 4));
         var inner = new Rect(view.Left + margin.Width, view.Top + margin.Height, view.Width - 2 * margin.Width, view.Height - 2 * margin.Height);
-        if (inner.Contains(shown)) return;
+        if (!centre && inner.Contains(shown)) return;
         _pinned = true;
         _page = page;
         _offsetY = shown.Top + shown.Height / 2 - view.Height / 2;

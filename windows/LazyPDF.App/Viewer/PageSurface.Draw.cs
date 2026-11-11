@@ -15,6 +15,20 @@ internal sealed partial class PageSurface
     /// <summary>Draws on top of a page's pictures; gets the page and the matrix from page space to the surface.</summary>
     public Action<DrawingContext, int, Matrix>? Decorate { get; set; }
 
+    /// <summary>A box dragged on the surface, in surface coordinates.</summary>
+    public Rect? Marquee
+    {
+        get => _marquee;
+        set
+        {
+            if (value == _marquee) return;
+            _marquee = value;
+            InvalidateVisual();
+        }
+    }
+
+    private Rect? _marquee;
+
     protected override void OnRender(DrawingContext dc)
     {
         dc.DrawRectangle(Brushes.Transparent, null, new Rect(RenderSize));
@@ -41,6 +55,12 @@ internal sealed partial class PageSurface
             DrawPictures(dc, page, matrix, rect);
             Decorate?.Invoke(dc, page, matrix);
             dc.Pop();
+        }
+        if (_marquee is { } box)
+        {
+            var accent = SystemColors.AccentColor;
+            var border = new Pen(new SolidColorBrush(accent), 1 / Dpi);
+            dc.DrawRectangle(new SolidColorBrush(Color.FromArgb(40, accent.R, accent.G, accent.B)), border, box);
         }
     }
 

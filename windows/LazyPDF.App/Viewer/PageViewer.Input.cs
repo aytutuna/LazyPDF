@@ -15,6 +15,7 @@ public partial class PageViewer
         None,
         Pan,
         Select,
+        Area,
         Tool,
     }
 
@@ -25,6 +26,7 @@ public partial class PageViewer
     private readonly System.Windows.Controls.ToolTip _linkTip = new() { Placement = System.Windows.Controls.Primitives.PlacementMode.Relative };
     private (int Page, PdfLink Link)? _focusLink;
     private PointerMode _mode = PointerMode.Select;
+    private PointerMode _modeBeforeArea = PointerMode.Select;
     private IPagePointerTool? _tool;
     private Drag _drag;
     private HwndSource? _hooked;
@@ -58,6 +60,7 @@ public partial class PageViewer
             if (ReferenceEquals(value, _tool)) return;
             EndPointerTool();
             _tool = value;
+            if (value is not null && _mode == PointerMode.Zoom) _mode = _modeBeforeArea;
             Surface.Cursor = value?.Cursor;
             RefreshBar();
             StateChanged?.Invoke(this, EventArgs.Empty);
@@ -196,6 +199,14 @@ public partial class PageViewer
             Surface.CaptureMouse();
             tool.Press(Pointer(new PagePoint(over.Page, over.Point), at, clicks, true));
         }
+        else if (_mode == PointerMode.Zoom)
+        {
+            if (Surface.Hit(at, true) is not { } over) return;
+            _drag = Drag.Area;
+            _dragPage = over.Page;
+            Surface.CaptureMouse();
+            Surface.Cursor = Cursors.Cross;
+        }
         else if (_mode == PointerMode.Hand)
         {
             _drag = Drag.Pan;
@@ -269,6 +280,9 @@ public partial class PageViewer
             case Drag.Select:
                 DragSelection(at);
                 break;
+            case Drag.Area:
+                Surface.Marquee = new Rect(_down, at);
+                break;
             case Drag.Tool:
                 if (Surface.PageMatrix(_dragPage) is { } matrix)
                 {
@@ -320,6 +334,7 @@ public partial class PageViewer
         }
         EndDrag();
         Surface.ReleaseMouseCapture();
+        if (drag == Drag.Area) ZoomToDrag(new Rect(_down, at), at);
         if (drag is Drag.Pan or Drag.Select && !_moved && _downLink is { } link)
         {
             _linkClick = true;
@@ -336,8 +351,24 @@ public partial class PageViewer
         EndDrag();
     }
 
+    // One shot: the mode before comes back whether the drag zoomed or not.
+    private void ZoomToDrag(Rect box, Point at)
+    {
+        SetMode(_modeBeforeArea);
+        if (ZoomMath.IsClick(box))
+        {
+            Surface.SetZoom(ZoomMath.Step(Surface.Zoom, Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1), at);
+            return;
+        }
+        if (Surface.PageMatrix(_dragPage) is not { } matrix) return;
+        matrix.Invert();
+        var area = Rect.Intersect(PageSpace.Transform(matrix, box), new Rect(Surface.PageSize(_dragPage)));
+        if (!area.IsEmpty) Surface.ZoomToArea(_dragPage, area);
+    }
+
     private void EndDrag()
     {
+        Surface.Marquee = null;
         _drag = Drag.None;
         _middlePan = false;
         _presentDown = false;
@@ -371,7 +402,8 @@ public partial class PageViewer
                 _linkTip.IsOpen = true;
             }
         }
-        if (link is not null) Surface.Cursor = Cursors.Hand;
+        if (_mode == PointerMode.Zoom) Surface.Cursor = Cursors.Cross;
+        else if (link is not null) Surface.Cursor = Cursors.Hand;
         else if (_mode == PointerMode.Hand) Surface.Cursor = Cursors.Hand;
         else Surface.Cursor = hit is { } t && IsOverText(t.Page, t.Point) ? Cursors.IBeam : null;
     }
@@ -638,6 +670,11 @@ public partial class PageViewer
                 _drag = Drag.None;
                 Surface.ReleaseMouseCapture();
                 _tool?.Cancel();
+                break;
+            case Key.Escape when _mode == PointerMode.Zoom:
+                EndDrag();
+                Surface.ReleaseMouseCapture();
+                SetMode(_modeBeforeArea);
                 break;
             case Key.Escape: ClearLinkFocus(); ClearSelection(); break;
             default: return;
