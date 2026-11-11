@@ -10,6 +10,8 @@ final class XmpPacket {
     static let xmp = "http://ns.adobe.com/xap/1.0/"
     static let pdf = "http://ns.adobe.com/pdf/1.3/"
     static let pdfx = "http://ns.adobe.com/pdfx/1.3/"
+    static let pdfaId = "http://www.aiim.org/pdfa/ns/id/"
+    static let pdfuaId = "http://www.aiim.org/pdfua/ns/id/"
 
     private static let maxSize = 1 << 24
 
@@ -70,6 +72,19 @@ final class XmpPacket {
     /// An unordered list, or nothing when there are no values.
     func setBag(_ ns: String, _ prefix: String, _ name: String, _ values: [String]) {
         put(ns, prefix, name, values.isEmpty ? nil : list(ns, name, "Bag", values.map { XmlElement(XmlName(Self.rdf, "li"), text: Self.clean($0)) }))
+    }
+
+    /// Takes out every property of a namespace, as attribute or element; whether there was one.
+    func removeProperties(_ ns: String) -> Bool {
+        var found = false
+        for description in descriptions() {
+            let attributes = description.attributes.filter { $0.name.namespace == ns }
+            let elements = description.children.compactMap { $0 as? XmlElement }.filter { $0.name.namespace == ns }
+            for attribute in attributes { description.removeAttribute(attribute.name) }
+            for element in elements { element.remove() }
+            found = found || !attributes.isEmpty || !elements.isEmpty
+        }
+        return found
     }
 
     func toBytes() -> [UInt8] {

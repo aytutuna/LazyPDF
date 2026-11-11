@@ -110,6 +110,39 @@ final class PageCarryTests: XCTestCase {
         XCTAssertNotNil(again.catalog["Lang"])
     }
 
+    private static let claimingPacket =
+        "<x:xmpmeta xmlns:x=\"adobe:ns:meta/\"><rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">" +
+        "<rdf:Description rdf:about=\"\" xmlns:pdfaid=\"http://www.aiim.org/pdfa/ns/id/\" xmlns:pdfuaid=\"http://www.aiim.org/pdfua/ns/id/\" " +
+        "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" pdfaid:part=\"2\"><pdfaid:conformance>B</pdfaid:conformance><pdfuaid:part>1</pdfuaid:part>" +
+        "<dc:format>application/pdf</dc:format></rdf:Description></rdf:RDF></x:xmpmeta>"
+
+    private static func claiming() throws -> PdfDocument {
+        try PdfDocument.open(PageTestFiles.make(2, "/Metadata 25 0 R",
+            add: { pdf in
+                pdf.stream(25, "/Type /Metadata /Subtype /XML", claimingPacket)
+                pdf.obj(28, "<</Title (T)>>")
+            },
+            trailerExtra: "/Info 28 0 R"))
+    }
+
+    private func xmp(_ document: PdfDocument) throws -> String {
+        let again = try PdfDocument.open(try document.saveRewrite())
+        return String(decoding: try again.data(again.stream(again.catalog, "Metadata")!), as: UTF8.self)
+    }
+
+    func test_extractedXmpKeepsItsPropertiesButNotThePdfAndPdfUaClaims() throws {
+        let text = try xmp(try PageAssembly.extract(try Self.claiming(), [0]))
+        XCTAssertFalse(text.replacingOccurrences(of: "xmlns:pdfaid", with: "").contains("pdfaid:"))
+        XCTAssertFalse(text.replacingOccurrences(of: "xmlns:pdfuaid", with: "").contains("pdfuaid:"))
+        XCTAssertTrue(text.contains("application/pdf"))
+    }
+
+    func test_mergedXmpHasNoPdfAClaim() throws {
+        let text = try xmp(try PageAssembly.merge([MergeSource(try Self.claiming()), MergeSource(try Self.claiming(), [1])]))
+        XCTAssertFalse(text.replacingOccurrences(of: "xmlns:pdfaid", with: "").contains("pdfaid:"))
+        XCTAssertTrue(text.contains("application/pdf"))
+    }
+
     func test_mergeMakesOneItemForEachSourceWithBookmarks() throws {
         let merged = try PageAssembly.merge([MergeSource(try Self.fixture("First")), MergeSource(try Self.fixture("Second"), [2, 3]),
                                              MergeSource(try PageTestFiles.open(1))])

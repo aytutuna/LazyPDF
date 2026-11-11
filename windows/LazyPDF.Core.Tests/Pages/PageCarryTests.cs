@@ -108,6 +108,39 @@ public class PageCarryTests
         Assert.NotNull(again.Catalog["Lang"]);
     }
 
+    private const string ClaimingPacket =
+        "<x:xmpmeta xmlns:x=\"adobe:ns:meta/\"><rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">" +
+        "<rdf:Description rdf:about=\"\" xmlns:pdfaid=\"http://www.aiim.org/pdfa/ns/id/\" xmlns:pdfuaid=\"http://www.aiim.org/pdfua/ns/id/\" " +
+        "xmlns:dc=\"http://purl.org/dc/elements/1.1/\" pdfaid:part=\"2\"><pdfaid:conformance>B</pdfaid:conformance><pdfuaid:part>1</pdfuaid:part>" +
+        "<dc:format>application/pdf</dc:format></rdf:Description></rdf:RDF></x:xmpmeta>";
+
+    private static PdfDocument Claiming() => PdfDocument.Open(PageTestFiles.Make(2, "/Metadata 25 0 R",
+        add: pdf => pdf.Stream(25, "/Type /Metadata /Subtype /XML", ClaimingPacket).Obj(28, "<</Title (T)>>"),
+        trailerExtra: "/Info 28 0 R"));
+
+    private static string XmpOf(PdfDocument document)
+    {
+        var again = PdfDocument.Open(document.SaveRewrite());
+        return Encoding.UTF8.GetString(again.Data(again.Stream(again.Catalog, "Metadata")!));
+    }
+
+    [Fact]
+    public void ExtractedXmpKeepsItsPropertiesButNotThePdfAndPdfUaClaims()
+    {
+        string xmp = XmpOf(PageAssembly.Extract(Claiming(), [0]));
+        Assert.DoesNotContain("pdfaid:", xmp.Replace("xmlns:pdfaid", ""));
+        Assert.DoesNotContain("pdfuaid:", xmp.Replace("xmlns:pdfuaid", ""));
+        Assert.Contains("application/pdf", xmp);
+    }
+
+    [Fact]
+    public void MergedXmpHasNoPdfAClaim()
+    {
+        string xmp = XmpOf(PageAssembly.Merge([new MergeSource(Claiming()), new MergeSource(Claiming(), [1])]));
+        Assert.DoesNotContain("pdfaid:", xmp.Replace("xmlns:pdfaid", ""));
+        Assert.Contains("application/pdf", xmp);
+    }
+
     [Fact]
     public void MergeMakesOneItemForEachSourceWithBookmarks()
     {

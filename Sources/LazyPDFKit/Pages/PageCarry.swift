@@ -24,10 +24,23 @@ enum PageCarry {
         }
     }
 
-    /// The source's /Lang, and its XMP when the target has the /Info as well.
+    /// The source's /Lang, and its XMP when the target has the /Info as well, without its PDF/A and PDF/UA claims.
     static func catalog(_ source: PdfDocument, _ target: PdfDocument, _ importer: PageImporter) throws {
         if let lang = source.catalog["Lang"] { target.catalog["Lang"] = try importer.copyValue(lang) }
-        if target.trailer["Info"] != nil, let xmp = source.catalog["Metadata"] { target.catalog["Metadata"] = try importer.copyValue(xmp) }
+        guard target.trailer["Info"] != nil, let xmp = source.catalog["Metadata"] else { return }
+        target.catalog["Metadata"] = try importer.copyValue(xmp)
+        dropConformance(target)
+    }
+
+    // Part of a PDF/A file is not PDF/A: the copy was not checked and the pages lost what the claim covers.
+    private static func dropConformance(_ target: PdfDocument) {
+        guard let stream = target.stream(target.catalog, "Metadata"), let packet = XmpPacket.load(target) else { return }
+        let a = packet.removeProperties(XmpPacket.pdfaId)
+        let ua = packet.removeProperties(XmpPacket.pdfuaId)
+        if !a && !ua { return }
+        stream.data = packet.toBytes()
+        stream.dictionary.remove("Filter")
+        stream.dictionary.remove("DecodeParms")
     }
 
     /// Whether the source has a tag tree small enough to carry.

@@ -13,6 +13,8 @@ internal sealed class XmpPacket
     public static readonly XNamespace Xmp = "http://ns.adobe.com/xap/1.0/";
     public static readonly XNamespace Pdf = "http://ns.adobe.com/pdf/1.3/";
     public static readonly XNamespace Pdfx = "http://ns.adobe.com/pdfx/1.3/";
+    public static readonly XNamespace PdfAId = "http://www.aiim.org/pdfa/ns/id/";
+    public static readonly XNamespace PdfUAId = "http://www.aiim.org/pdfua/ns/id/";
 
     private const int MaxSize = 1 << 24;
 
@@ -79,6 +81,21 @@ internal sealed class XmpPacket
     /// <summary>An unordered list, or nothing when there are no values.</summary>
     public void SetBag(XNamespace ns, string prefix, string name, IReadOnlyList<string> values) =>
         Put(ns, prefix, name, values.Count == 0 ? null : new XElement(ns + name, new XElement(Rdf + "Bag", values.Select(v => new XElement(Rdf + "li", Clean(v))))));
+
+    /// <summary>Takes out every property of a namespace, as attribute or element; whether there was one.</summary>
+    public bool RemoveProperties(XNamespace ns)
+    {
+        bool found = false;
+        foreach (var description in Descriptions())
+        {
+            var attributes = description.Attributes().Where(a => a.Name.Namespace == ns).ToList();
+            var elements = description.Elements().Where(e => e.Name.Namespace == ns).ToList();
+            attributes.ForEach(a => a.Remove());
+            elements.ForEach(e => e.Remove());
+            found |= attributes.Count + elements.Count > 0;
+        }
+        return found;
+    }
 
     public byte[] ToBytes()
     {

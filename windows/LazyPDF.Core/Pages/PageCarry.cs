@@ -27,11 +27,25 @@ internal static class PageCarry
         }
     }
 
-    /// <summary>The source's /Lang, and its XMP when the target has the /Info as well.</summary>
+    /// <summary>The source's /Lang, and its XMP when the target has the /Info as well, without its PDF/A and PDF/UA claims.</summary>
     public static void Catalog(PdfDocument source, PdfDocument target, PageImporter importer)
     {
         if (source.Catalog["Lang"] is { } lang) target.Catalog["Lang"] = importer.CopyValue(lang);
-        if (target.Trailer["Info"] is not null && source.Catalog["Metadata"] is { } xmp) target.Catalog["Metadata"] = importer.CopyValue(xmp);
+        if (target.Trailer["Info"] is null || source.Catalog["Metadata"] is not { } xmp) return;
+        target.Catalog["Metadata"] = importer.CopyValue(xmp);
+        DropConformance(target);
+    }
+
+    // Part of a PDF/A file is not PDF/A: the copy was not checked and the pages lost what the claim covers.
+    private static void DropConformance(PdfDocument target)
+    {
+        if (target.Stream(target.Catalog, "Metadata") is not { } stream || XmpPacket.Load(target) is not { } packet) return;
+        bool a = packet.RemoveProperties(XmpPacket.PdfAId);
+        bool ua = packet.RemoveProperties(XmpPacket.PdfUAId);
+        if (!a && !ua) return;
+        stream.Data = packet.ToBytes();
+        stream.Dictionary.Remove("Filter");
+        stream.Dictionary.Remove("DecodeParms");
     }
 
     /// <summary>Whether the source has a tag tree small enough to carry.</summary>
