@@ -83,7 +83,7 @@ enum RedactionStructure {
             case let d as PdfDictionary where isContentItem(document, d, "MCR", "MCID"):
                 let at = (d["Pg"] as? PdfReference)?.number ?? page
                 if d.containsKey("Stm") {
-                    if let form = document.resolve(d["Stm"]) as? PdfStream, replaced.contains(form) {
+                    if ((document.resolve(d["Stm"]) as? PdfStream).map({ replaced.contains($0) }) ?? false) || (at.map { pictures.contains($0) } ?? false) {
                         touched = true
                     } else {
                         kept.append(kid)
@@ -94,7 +94,7 @@ enum RedactionStructure {
                 }
             case let d as PdfDictionary where isContentItem(document, d, "OBJR", "Obj"):
                 let target = document.resolve(d["Obj"])
-                let holder = (d["Pg"] as? PdfReference)?.number ?? page
+                let holder = (d["Pg"] as? PdfReference)?.number ?? page ?? ((target as? PdfDictionary)?["P"] as? PdfReference)?.number
                 if target == nil || (holder.map { pictures.contains($0) } ?? false) || ((target as? PdfStream).map { replaced.contains($0) } ?? false) {
                     touched = true
                 } else {

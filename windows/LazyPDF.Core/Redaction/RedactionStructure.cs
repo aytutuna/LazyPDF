@@ -77,13 +77,13 @@ internal static class RedactionStructure
                     int? at = d["Pg"] is PdfReference mp ? mp.Number : page;
                     if (d.ContainsKey("Stm"))
                     {
-                        if (document.Resolve(d["Stm"]) is PdfStream form && replaced.Contains(form)) touched = true;
+                        if ((document.Resolve(d["Stm"]) is PdfStream form && replaced.Contains(form)) || (at is { } stmPage && pictures.Contains(stmPage))) touched = true;
                         else kept.Add(kid);
                     }
                     else touched |= Content(at, (int)(document.Integer(d, "MCID") ?? -1), tagged, pictures, kept, kid);
                     break;
                 case PdfDictionary d when IsContentItem(document, d, "OBJR", "Obj"):
-                    int? holder = d["Pg"] is PdfReference op ? op.Number : page;
+                    int? holder = d["Pg"] is PdfReference op ? op.Number : page ?? (document.Resolve(d["Obj"]) is PdfDictionary owner && owner["P"] is PdfReference parent ? parent.Number : null);
                     if (document.Resolve(d["Obj"]) is null || (holder is { } shown && pictures.Contains(shown)) || (document.Resolve(d["Obj"]) is PdfStream target && replaced.Contains(target))) touched = true;
                     else kept.Add(kid);
                     break;

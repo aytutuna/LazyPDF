@@ -110,6 +110,26 @@ public class PageTagTests
         Assert.DoesNotContain(objects, d => part.Name(d, "Subtype") == "Link" || part.Name(d, "S") == "Link");
     }
 
+    [Theory]
+    [InlineData("<</Type /MCR /Pg 5 0 R /Stm 8 0 R /MCID 0>>", "SECRETFORM")]
+    [InlineData("<</Type /OBJR /Obj 9 0 R>>", "SECRETNOTE")]
+    public void ExtractDropsContentItemsOfAPageLeftOutThatNameAnObject(string item, string secret)
+    {
+        var pdf = new TestPdf();
+        pdf.Obj(1, "<</Type /Catalog /Pages 2 0 R /StructTreeRoot 12 0 R /MarkInfo <</Marked true>>>>");
+        pdf.Obj(2, "<</Type /Pages /Kids [4 0 R 5 0 R] /Count 2 /MediaBox [0 0 200 300]>>");
+        pdf.Obj(4, "<</Type /Page /Parent 2 0 R /StructParents 0>>");
+        pdf.Obj(5, "<</Type /Page /Parent 2 0 R /StructParents 1 /Annots [9 0 R]>>");
+        pdf.Stream(8, "/Type /XObject /Subtype /Form /BBox [0 0 200 300]", "BT (SECRETFORM) Tj ET");
+        pdf.Obj(9, "<</Type /Annot /Subtype /Text /Rect [10 10 20 20] /P 5 0 R /Contents (SECRETNOTE)>>");
+        pdf.Obj(12, "<</Type /StructTreeRoot /K 13 0 R /ParentTree 30 0 R>>");
+        pdf.Obj(13, "<</Type /StructElem /S /Div /P 12 0 R /K 14 0 R>>");
+        pdf.Obj(14, $"<</Type /StructElem /S /P /P 13 0 R /K {item}>>");
+        pdf.Obj(30, "<</Nums [0 [] 1 []]>>");
+        var part = Saved(PageAssembly.Extract(PdfDocument.Open(pdf.Finish()), [0]), out string text);
+        Assert.DoesNotContain(secret, text);
+    }
+
     [Fact]
     public void MergeGivesEachSourceKeysOfItsOwn()
     {
