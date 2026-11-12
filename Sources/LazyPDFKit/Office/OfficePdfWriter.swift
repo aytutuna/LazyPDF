@@ -109,6 +109,8 @@ enum OfficePdfWriter {
                 guard let found = pictures[id], let image = found else { continue }
                 if imageNames[id] == nil { imageNames[id] = ContentResources.add(pdf, resources, "XObject", image.reference, "Im") }
                 draw(writer, imageNames[id]!, picture, layout.height)
+            case .path(let path):
+                outline(writer, path, layout.height)
             case .text(let text):
                 let key = FontKey(family: text.family, style: text.style.rawValue)
                 let font = fonts[key]!
@@ -122,8 +124,48 @@ enum OfficePdfWriter {
         return writer.toArray()
     }
 
-    // A cropped picture is drawn at the size the whole picture would have and clipped to the visible part.
+    private static func outline(_ writer: ContentWriter, _ path: PlacedPath, _ pageHeight: Double) {
+        writer.save()
+        if let fill = path.fill { writer.fillRgb(channel(fill >> 16 & 0xFF), channel(fill >> 8 & 0xFF), channel(fill & 0xFF)) }
+        if let stroke = path.stroke {
+            writer.strokeRgb(channel(stroke.color >> 16 & 0xFF), channel(stroke.color >> 8 & 0xFF), channel(stroke.color & 0xFF)).lineWidth(round2(stroke.width))
+            if !stroke.dash.isEmpty { writer.op("d", [PdfArray(stroke.dash.map { PdfNumber(round2($0)) }), PdfNumber(0)]) }
+        }
+        for c in path.commands {
+            switch c {
+            case .move(let x, let y): writer.moveTo(round2(x), round2(pageHeight - y))
+            case .line(let x, let y): writer.lineTo(round2(x), round2(pageHeight - y))
+            case .curve(let x1, let y1, let x2, let y2, let x, let y):
+                writer.curveTo(round2(x1), round2(pageHeight - y1), round2(x2), round2(pageHeight - y2), round2(x), round2(pageHeight - y))
+            case .close: writer.close()
+            }
+        }
+        if path.fill != nil && path.stroke != nil { writer.fillAndStroke() }
+        else if path.fill != nil { writer.fill() }
+        else if path.stroke != nil { writer.stroke() }
+        else { writer.endPath() }
+        writer.restore()
+    }
+
     private static func draw(_ writer: ContentWriter, _ name: String, _ box: PlacedImage, _ pageHeight: Double) {
+        if box.rotation == 0 && !box.flipH {
+            drawUpright(writer, name, box, pageHeight)
+            return
+        }
+        // Mirror about the center, then turn; the page runs up, so a clockwise turn is a negative angle.
+        let cx = box.x + box.width / 2, cy = pageHeight - box.y - box.height / 2
+        let angle = -box.rotation * Double.pi / 180, cos = Foundation.cos(angle), sin = Foundation.sin(angle)
+        let fx = box.flipH ? -1.0 : 1.0
+        let turn = PdfMatrix(round4(cos * fx), round4(sin * fx), round4(-sin), round4(cos), round2(cx - cos * fx * cx + sin * cy), round2(cy - sin * fx * cx - cos * cy))
+        writer.save().concat(turn)
+        drawUpright(writer, name, box, pageHeight)
+        writer.restore()
+    }
+
+    private static func round4(_ value: Double) -> Double { (value * 10000).rounded(.toNearestOrAwayFromZero) / 10000 + 0.0 }
+
+    // A cropped picture is drawn at the size the whole picture would have and clipped to the visible part.
+    private static func drawUpright(_ writer: ContentWriter, _ name: String, _ box: PlacedImage, _ pageHeight: Double) {
         let s = box.source
         let visibleX = 1 - s.cropLeft - s.cropRight, visibleY = 1 - s.cropTop - s.cropBottom
         let bottom = pageHeight - box.y - box.height

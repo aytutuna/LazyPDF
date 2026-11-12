@@ -235,13 +235,16 @@ struct PlacedText {
     let spaceExtra: Double
 }
 
-/// A picture with its top left corner at x, y.
+/// A picture with its top left corner at x, y. It is turned clockwise by `rotation` degrees about its center after it has
+/// been mirrored left to right, if it is.
 struct PlacedImage {
     let x: Double
     let y: Double
     let width: Double
     let height: Double
     let source: LayoutPicture
+    var rotation = 0.0
+    var flipH = false
 }
 
 struct PlacedRect: Hashable {
@@ -252,11 +255,34 @@ struct PlacedRect: Hashable {
     let color: Int
 }
 
+/// One step of an outline. A move or a line ends at x, y; a curve is a cubic Bezier through x1, y1 and x2, y2 to x, y.
+enum PathCommand: Equatable {
+    case move(Double, Double)
+    case line(Double, Double)
+    case curve(Double, Double, Double, Double, Double, Double)
+    case close
+}
+
+/// An outline: its width, 0xRRGGBB and the dash pattern in points (on, off, on, off ...; empty is solid).
+struct PathStroke {
+    let width: Double
+    let color: Int
+    let dash: [Double]
+}
+
+/// An outline in page points that is filled, stroked or both.
+struct PlacedPath {
+    let commands: [PathCommand]
+    let fill: Int?
+    let stroke: PathStroke?
+}
+
 /// Positions are in points from the top left of the page.
 enum LayoutBox {
     case text(PlacedText)
     case rect(PlacedRect)
     case image(PlacedImage)
+    case path(PlacedPath)
 }
 
 struct LayoutPage {

@@ -478,7 +478,7 @@ final class XlsxLayout {
                                               size: t.size * k, color: t.color, spaceExtra: t.spaceExtra * k)))
             case .rect(let r):
                 moved.append(.rect(PlacedRect(x: x + r.x * k, y: y + r.y * k, width: r.width * k, height: r.height * k, color: r.color)))
-            case .image:
+            case .image, .path:
                 break
             }
         }

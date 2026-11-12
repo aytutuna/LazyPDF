@@ -36,7 +36,7 @@ final class XlsxLayoutTests: XCTestCase {
                     output += "text \(num(t.x)) \(num(t.baseline)) \(t.family)/\(styleName(t.style)) \(num(t.size)) \(String(format: "%06x", t.color)) +\(num(t.spaceExtra)) \"\(OfficeLayoutSpec.escape(t.text))\"\n"
                 case .rect(let r):
                     output += "rect \(num(r.x)) \(num(r.y)) \(num(r.width)) \(num(r.height)) \(String(format: "%06x", r.color))\n"
-                case .image:
+                case .image, .path:
                     break
                 }
             }

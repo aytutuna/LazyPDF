@@ -38,6 +38,8 @@ final class OfficeLayoutTests: XCTestCase {
                     output += "image \(num(img.x)) \(num(img.y)) \(num(img.width)) \(num(img.height))\n"
                 case .rect(let r):
                     output += "rect \(num(r.x)) \(num(r.y)) \(num(r.width)) \(num(r.height)) \(String(format: "%06x", r.color))\n"
+                case .path:
+                    break
                 }
             }
             var text = Latin1.string(contents[i])
