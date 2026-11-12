@@ -7,7 +7,7 @@ using LazyPDF.Core;
 namespace LazyPDF.App.Panels.Layers;
 
 /// <summary>A layer, or a heading that groups layers, in the tree.</summary>
-public sealed class LayerRow(string name, PdfLayer? layer, List<LayerRow> children) : INotifyPropertyChanged
+public sealed class LayerRow(string name, PdfLayer? layer, List<LayerRow> children, bool radio = false) : INotifyPropertyChanged
 {
     private bool _on = layer?.IsOn ?? false;
 
@@ -21,7 +21,12 @@ public sealed class LayerRow(string name, PdfLayer? layer, List<LayerRow> childr
 
     public string? LockedTip => Layer is { Locked: true } ? Loc.T("The file does not allow this layer to be shown or hidden.") : null;
 
-    public Visibility CheckVisibility => Layer is null ? Visibility.Collapsed : Visibility.Visible;
+    /// <summary>The layer belongs to a radio button group of the file: it shows a round button, and choosing it turns the others of the group off.</summary>
+    public bool IsRadio { get; } = radio && layer is not null;
+
+    public Visibility CheckVisibility => Layer is null || IsRadio ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility RadioVisibility => IsRadio ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility LabelVisibility => Layer is null ? Visibility.Visible : Visibility.Collapsed;
 
@@ -54,6 +59,7 @@ public sealed class LayerRow(string name, PdfLayer? layer, List<LayerRow> childr
 public partial class LayersSidePanel : ToolPanel
 {
     private readonly List<LayerRow> _rows = [];
+    private HashSet<PdfReference> _radios = [];
 
     public LayersSidePanel() => InitializeComponent();
 
@@ -78,6 +84,7 @@ public partial class LayersSidePanel : ToolPanel
     {
         var set = Viewer!.Layers;
         _rows.Clear();
+        _radios = [.. set.RadioGroups.SelectMany(g => g)];
         List<LayerRow> roots = set.Order.Count > 0 ? [.. set.Order.Select(Row)] : [.. set.Layers.Select(l => Row(new LayerNode(null, l, [])))];
         Tree.ItemsSource = roots;
         Empty.Visibility = set.Layers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -110,7 +117,7 @@ public partial class LayersSidePanel : ToolPanel
 
     private LayerRow Row(LayerNode node)
     {
-        var row = new LayerRow(node.Layer?.Name ?? (string.IsNullOrWhiteSpace(node.Label) ? Loc.T("Group") : node.Label), node.Layer, [.. node.Children.Select(Row)]);
+        var row = new LayerRow(node.Layer?.Name ?? (string.IsNullOrWhiteSpace(node.Label) ? Loc.T("Group") : node.Label), node.Layer, [.. node.Children.Select(Row)], node.Layer is { } l && _radios.Contains(l.Reference));
         row.Toggled += Row_Toggled;
         _rows.Add(row);
         return row;
@@ -130,7 +137,7 @@ public partial class LayersSidePanel : ToolPanel
             e.Handled = true;
             return;
         }
-        row.IsChecked = !row.IsChecked;
+        row.IsChecked = row.IsRadio || !row.IsChecked;
         e.Handled = true;
     }
 

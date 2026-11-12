@@ -28,6 +28,10 @@
                                       Visibility="{Binding CheckVisibility}" AutomationProperties.Name="{Binding Name}"
                                       ToolTip="{Binding LockedTip}" ToolTipService.ShowOnDisabled="True"
                                       AutomationProperties.HelpText="{Binding LockedTip}" />
+                            <RadioButton IsChecked="{Binding IsChecked}" IsEnabled="{Binding CanToggle}" Content="{Binding Name}" Margin="0,3"
+                                         Visibility="{Binding RadioVisibility}" AutomationProperties.Name="{Binding Name}"
+                                         ToolTip="{Binding LockedTip}" ToolTipService.ShowOnDisabled="True"
+                                         AutomationProperties.HelpText="{Binding LockedTip}" />
                             <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongText}" Margin="0,3" Visibility="{Binding LabelVisibility}" />
                         </Grid>
                     </HierarchicalDataTemplate>

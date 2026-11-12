@@ -149,4 +149,29 @@ public sealed class LayersPanelTests
         Assert.Empty(recorder.Switched);
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public Task RadioGroupLayersGetRoundButtonsAndChoosingOneSwitchesItOn() => Sta.Run(() =>
+    {
+        using var tab = new DocumentTab(PdfEditSession.Open(LayeredPdf.Make()), new FakeRenderer(), null, "a.pdf", null);
+        var a = new PdfLayer(new PdfReference(990, 0), "a", true, false, null);
+        var b = new PdfLayer(new PdfReference(991, 0), "b", false, false, null);
+        var c = new PdfLayer(new PdfReference(992, 0), "c", true, false, null);
+        var viewer = DispatchProxy.Create<IDocumentViewer, LayerViewer>();
+        var recorder = (LayerViewer)(object)viewer;
+        recorder.Set = new LayerSet([a, b, c], [new LayerNode(null, a, []), new LayerNode(null, b, []), new LayerNode(null, c, [])], [[a.Reference, b.Reference]]);
+        var panel = new LayersSidePanel();
+        panel.Attach(tab, viewer, new RecordingHost());
+
+        var rows = (List<LayerRow>)((TreeView)panel.FindName("Tree")).ItemsSource;
+        Assert.Equal([true, true, false], rows.Select(r => r.IsRadio));
+        Assert.Equal(System.Windows.Visibility.Visible, rows[0].RadioVisibility);
+        Assert.Equal(System.Windows.Visibility.Collapsed, rows[0].CheckVisibility);
+        Assert.Equal(System.Windows.Visibility.Visible, rows[2].CheckVisibility);
+
+        rows[1].IsChecked = true;
+
+        Assert.Equal([(b.Reference, true)], recorder.Switched);
+        return Task.CompletedTask;
+    });
 }
