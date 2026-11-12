@@ -9,10 +9,11 @@ import LazyPDFKit
 
 // The viewer belongs to the main actor; a poll that ran on another thread would read its cache while tiles are filed in it.
 @MainActor
-private func waitFor(_ condition: () -> Bool, file: StaticString = #filePath, line: UInt = #line) async {
+private func waitFor(_ condition: () -> Bool, _ message: @autoclosure () -> String = "", file: StaticString = #filePath,
+                     line: UInt = #line) async {
     let deadline = Date().addingTimeInterval(30)
     while !condition(), Date() < deadline { try? await Task.sleep(nanoseconds: 10_000_000) }
-    XCTAssertTrue(condition(), file: file, line: line)
+    XCTAssertTrue(condition(), message(), file: file, line: line)
 }
 
 private final class HalfRenderer: TileRenderer {
@@ -936,7 +937,9 @@ final class ViewerModelTests: XCTestCase {
     func test_aPreviewThatFailsIsAPageThatCannotBeShownNotAPartOfOne() async throws {
         let viewer = try openHalf(previews: false, tiles: true)
 
-        await waitFor { viewer.tilesPending == 0 && viewer.drawing(of: 0).failed }
+        await waitFor({ viewer.tilesPending == 0 && viewer.drawing(of: 0).failed },
+                      "zoom \(viewer.zoom), pending \(viewer.tilesPending), failed \(viewer.failed), "
+                          + "pictures \(viewer.drawing(of: 0).pictures.map(\.isPreview))")
 
         XCTAssertFalse(viewer.drawing(of: 0).partFailed)
     }
