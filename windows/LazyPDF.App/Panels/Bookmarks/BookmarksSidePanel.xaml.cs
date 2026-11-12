@@ -68,6 +68,8 @@ public partial class BookmarksSidePanel : ToolPanel
     // Which entries the person opened or closed, kept while the file is edited and the tree is read again.
     private readonly Dictionary<string, bool> _opened = [];
     private DocumentTab? _for;
+    // A title typed while the file could not take it, put back when the tree is read again.
+    private (string Path, string Text)? _held;
 
     public BookmarksSidePanel() => InitializeComponent();
 
@@ -94,6 +96,12 @@ public partial class BookmarksSidePanel : ToolPanel
     {
         var items = Outline.Read(Tab!.Document).Items;
         Tree.ItemsSource = items.Select((item, i) => new BookmarkNode(item, i.ToString(), _opened)).ToList();
+        if (_held is var (path, text) && NodeAt(path) is { } held)
+        {
+            held.IsEditing = true;
+            held.EditText = text;
+            _held = null;
+        }
         Empty.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         Tree.Visibility = items.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         ExpandAllButton.Visibility = CollapseAllButton.Visibility = Tree.Visibility;
@@ -264,7 +272,7 @@ public partial class BookmarksSidePanel : ToolPanel
         if (RenameButton.IsEnabled && Tree.SelectedItem is BookmarkNode node) node.IsEditing = true;
     }
 
-    // False when the file cannot take the title now: the edit stays open so the typed words are not lost.
+    // False when the title is not in the file yet: the file cannot take it now and the edit stays open, or a notice asks first.
     private bool Rename(BookmarkNode node)
     {
         string title = node.EditText.Trim();
@@ -275,11 +283,15 @@ public partial class BookmarksSidePanel : ToolPanel
         }
         if (Editable() is not var (tab, host))
         {
-            if (MarkWork.Running) Host?.SetStatus(Loc.T("The title is kept until the file is free."));
+            if (MarkWork.Running)
+            {
+                _held = (node.Path, node.EditText);
+                Host?.SetStatus(Loc.T("The title is kept until the file is free."));
+            }
             return false;
         }
         node.IsEditing = false;
-        if (MarkWork.Cautioned(tab, host, () => RenameTo(tab, host, node, title))) return true;
+        if (MarkWork.Cautioned(tab, host, () => RenameTo(tab, host, node, title))) return false;
         RenameTo(tab, host, node, title);
         return true;
     }
@@ -370,7 +382,11 @@ public partial class BookmarksSidePanel : ToolPanel
     {
         if (((FrameworkElement)sender).DataContext is not BookmarkNode node || e.Key is not (Key.Enter or Key.Escape)) return;
         if (e.Key == Key.Escape) node.IsEditing = false;
-        else if (node.IsEditing && !Rename(node)) return;
+        else if (node.IsEditing && !Rename(node))
+        {
+            e.Handled = true;
+            return;
+        }
         Tree.Focus();
         e.Handled = true;
     }
