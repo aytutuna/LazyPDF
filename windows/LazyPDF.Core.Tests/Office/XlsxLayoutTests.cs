@@ -95,6 +95,20 @@ public class XlsxLayoutTests
     }
 
     [Fact]
+    public void ThousandsOfTinyRowsOnOnePageStopAtTheBoxLimit()
+    {
+        var sheet = new StringBuilder("<sheetData>");
+        for (int r = 1; r <= 600_000; r++) sheet.Append($"<row r=\"{r}\" ht=\"0.0005\" customHeight=\"1\"><c r=\"A{r}\" s=\"1\"><v>1</v></c></row>");
+        sheet.Append("</sheetData>");
+        string styles = "<fonts count=\"1\"><font><sz val=\"11\"/><name val=\"Calibri\"/></font></fonts>"
+            + "<fills count=\"3\"><fill><patternFill patternType=\"none\"/></fill><fill><patternFill patternType=\"gray125\"/></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFFF00\"/></patternFill></fill></fills>"
+            + "<borders count=\"2\"><border><left/><right/><top/><bottom/></border><border><left style=\"double\"><color rgb=\"FF000000\"/></left><right style=\"double\"><color rgb=\"FF000000\"/></right><top/><bottom style=\"double\"><color rgb=\"FF000000\"/></bottom></border></borders>"
+            + "<cellXfs count=\"2\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\"/><xf numFmtId=\"0\" fontId=\"0\" fillId=\"2\" borderId=\"1\"/></cellXfs>";
+        var package = XlsxSpec.Package(new Dictionary<string, StringBuilder> { ["workbook"] = new(OneSheet), ["sheet1"] = sheet, ["styles"] = new(styles) });
+        Assert.Equal(PdfReadProblem.Unsupported, Problem(() => Layout(package)));
+    }
+
+    [Fact]
     public void ACellFarDownTheSheetPrintsOnItsOwnPageWithoutTheBlankOnes()
     {
         var layout = Layout(Book("<sheetData><row r=\"900000\"><c r=\"A900000\"><v>7</v></c></row></sheetData>"));

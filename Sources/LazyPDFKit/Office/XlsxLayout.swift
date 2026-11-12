@@ -525,6 +525,7 @@ final class XlsxLayout {
         if setup.gridlines {
             for i in 0..<top.count { boxes.append(.rect(PlacedRect(x: g.headingWidth, y: top[i] - 0.25, width: width - g.headingWidth, height: 0.5, color: 0x808080))) }
             for i in 0..<left.count { boxes.append(.rect(PlacedRect(x: left[i] - 0.25, y: g.headingHeight, width: 0.5, height: height - g.headingHeight, color: 0x808080))) }
+            try checkProgress(boxes)
         }
 
         var items: [Item] = []
@@ -542,6 +543,7 @@ final class XlsxLayout {
                     lastRow = max(i, Self.lastAtMost(rows, m.lastRow))
                     lastColumn = max(j, Self.lastAtMost(columns, m.lastColumn))
                 }
+                try checkProgress(boxes)
                 let item = Item(cell: cell, rowId: row.index, row: i, column: j, x: left[j], y: top[i], w: left[lastColumn + 1] - left[j], h: top[lastRow + 1] - top[i], merge: merge)
                 items.append(item)
                 if i >= bodyRow && j >= bodyColumn { content = true }
@@ -553,10 +555,22 @@ final class XlsxLayout {
         }
         if !content && !stated { return nil }
 
-        for item in items { try text(plan, item, rows, columns, left, spill, &boxes) }
-        for item in items { border(plan, item, rows, columns, &boxes) }
+        for item in items {
+            try checkProgress(boxes)
+            try text(plan, item, rows, columns, left, spill, &boxes)
+        }
+        for item in items {
+            try checkProgress(boxes)
+            border(plan, item, rows, columns, &boxes)
+        }
         if setup.headings { try headings(g, rows, columns, top, left, &boxes) }
         return (width, height)
+    }
+
+    // A page can hold a whole sheet's cells, so the box limit and cancellation are checked while it is built, not after.
+    private func checkProgress(_ boxes: [LayoutBox]) throws {
+        try Task.checkCancellation()
+        if boxCount + boxes.count > Self.maxBoxes { throw PdfReadException(.unsupported, "The workbook is too large to convert.") }
     }
 
     private static func lastAtMost(_ ids: [Int], _ limit: Int) -> Int {
@@ -619,6 +633,8 @@ final class XlsxLayout {
         if cell.kind == .blank || cell.text.isEmpty { return }
         let xf = book.styles.xf(cell.style)
         let font = fontOf(cell)
+        // No line of this font fits a row this short, so skip measuring and the spill scan.
+        if item.h < font.size * 0.5 { return }
         let color = cell.color ?? font.color ?? 0
         let horizontal = Self.horizontal(cell, xf)
         var limitLeft = item.x + Self.pad, limitRight = item.x + item.w - Self.pad

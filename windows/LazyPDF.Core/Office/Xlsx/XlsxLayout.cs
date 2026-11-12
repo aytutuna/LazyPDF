@@ -496,6 +496,7 @@ internal sealed class XlsxLayout
         {
             for (int i = 0; i < top.Length; i++) boxes.Add(new PlacedRect(g.HeadingWidth, top[i] - 0.25, width - g.HeadingWidth, 0.5, 0x808080));
             for (int i = 0; i < left.Length; i++) boxes.Add(new PlacedRect(left[i] - 0.25, g.HeadingHeight, 0.5, height - g.HeadingHeight, 0x808080));
+            CheckProgress(boxes);
         }
 
         var items = new List<Item>();
@@ -516,6 +517,7 @@ internal sealed class XlsxLayout
                     lastRow = Math.Max(i, LastAtMost(rows, m.LastRow));
                     lastColumn = Math.Max(j, LastAtMost(columns, m.LastColumn));
                 }
+                CheckProgress(boxes);
                 var item = new Item(cell, row.Index, i, j, left[j], top[i], left[lastColumn + 1] - left[j], top[lastRow + 1] - top[i], merge);
                 items.Add(item);
                 if (i >= bodyRow && j >= bodyColumn) content = true;
@@ -528,10 +530,25 @@ internal sealed class XlsxLayout
         }
         if (!content && !stated) return null;
 
-        foreach (var item in items) Text(plan, item, rows, columns, left, spill, boxes);
-        foreach (var item in items) Borders(plan, item, rows, columns, boxes);
+        foreach (var item in items)
+        {
+            CheckProgress(boxes);
+            Text(plan, item, rows, columns, left, spill, boxes);
+        }
+        foreach (var item in items)
+        {
+            CheckProgress(boxes);
+            Borders(plan, item, rows, columns, boxes);
+        }
         if (setup.Headings) Headings(g, rows, columns, top, left, boxes);
         return (width, height);
+    }
+
+    // A page can hold a whole sheet's cells, so the box limit and cancellation are checked while it is built, not after.
+    private void CheckProgress(List<LayoutBox> boxes)
+    {
+        _cancellation.ThrowIfCancellationRequested();
+        if (_boxes + boxes.Count > MaxBoxes) throw new PdfReadException(PdfReadProblem.Unsupported, "The workbook is too large to convert.");
     }
 
     private static int LastAtMost(List<int> ids, int limit)
@@ -594,6 +611,8 @@ internal sealed class XlsxLayout
         if (cell.Kind == XlsxCellKind.Blank || cell.Text.Length == 0) return;
         var xf = _book.Styles.Xf(cell.Style);
         var font = FontOf(cell);
+        // No line of this font fits a row this short, so skip measuring and the spill scan.
+        if (item.H < font.Size * 0.5) return;
         int color = cell.Color ?? font.Color ?? 0;
         var horizontal = Horizontal(cell, xf);
         double limitLeft = item.X + Pad, limitRight = item.X + item.W - Pad, span = item.W;

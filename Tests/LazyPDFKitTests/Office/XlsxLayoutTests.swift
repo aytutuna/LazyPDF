@@ -86,6 +86,18 @@ final class XlsxLayoutTests: XCTestCase {
         XCTAssertEqual(problem { _ = try layout(package) }, .unsupported)
     }
 
+    func test_thousandsOfTinyRowsOnOnePageStopAtTheBoxLimit() throws {
+        var sheet = "<sheetData>"
+        for r in 1...600_000 { sheet += "<row r=\"\(r)\" ht=\"0.0005\" customHeight=\"1\"><c r=\"A\(r)\" s=\"1\"><v>1</v></c></row>" }
+        sheet += "</sheetData>"
+        let styles = "<fonts count=\"1\"><font><sz val=\"11\"/><name val=\"Calibri\"/></font></fonts>"
+            + "<fills count=\"3\"><fill><patternFill patternType=\"none\"/></fill><fill><patternFill patternType=\"gray125\"/></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFFF00\"/></patternFill></fill></fills>"
+            + "<borders count=\"2\"><border><left/><right/><top/><bottom/></border><border><left style=\"double\"><color rgb=\"FF000000\"/></left><right style=\"double\"><color rgb=\"FF000000\"/></right><top/><bottom style=\"double\"><color rgb=\"FF000000\"/></bottom></border></borders>"
+            + "<cellXfs count=\"2\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\"/><xf numFmtId=\"0\" fontId=\"0\" fillId=\"2\" borderId=\"1\"/></cellXfs>"
+        let package = try XlsxSpec.package([(key: "workbook", text: Self.oneSheet), (key: "sheet1", text: sheet), (key: "styles", text: styles)])
+        XCTAssertEqual(problem { _ = try layout(package) }, .unsupported)
+    }
+
     func test_aCellFarDownTheSheetPrintsOnItsOwnPageWithoutTheBlankOnes() throws {
         let result = try layout(try book("<sheetData><row r=\"900000\"><c r=\"A900000\"><v>7</v></c></row></sheetData>"))
         XCTAssertEqual(result.pages.count, 1)
