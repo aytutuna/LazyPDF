@@ -1,0 +1,28 @@
+# One line is "<installed>|<bundled>|<family>|<style>": the families each source has (comma separated, - for none), the family a document names and its style (r, b, i or bi). Bytes are escaped as in the other golden inputs.
+# The sources answer "family/style" for a family they have; the result is that answer, or none.
+Calibri,Arial|Carlito,Caladea|Calibri|r
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Calibri|r
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|CALIBRI|bi
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Cambria|i
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Arial|b
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|ARIAL|r
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Helvetica|r
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Times New Roman|bi
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|times|r
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Courier New|r
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Courier|b
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Liberation Mono|i
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Caladea|r
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|Comic Sans MS|r
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono|\Çalibri|r
+-|Carlito,Caladea,Liberation Sans,Liberation Serif,Liberation Mono||r
+Arial|Carlito,Liberation Sans|Arial|b
+Arial|Carlito,Liberation Sans|Verdana|r
+Verdana|Carlito|Verdana|r
+Cambria|Carlito|Cambria|r
+-|Carlito|Cambria|r
+-|Liberation Sans|Calibri|r
+-|Liberation Sans|Arial|r
+-|-|Calibri|r
+Arial|-|Calibri|r
+Arial|-|Arial|r
