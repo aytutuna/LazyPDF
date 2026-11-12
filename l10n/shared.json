@@ -3465,6 +3465,9 @@
     "tr": "{0} hasarlı nesne okunamadığı için dışarıda bırakıldı.",
     "other": "{0} damaged objects could not be read and were left out."
   },
+  "The XMP data in this file could not be read, so it is left as it is. Other programs may still show the old values.": {
+    "tr": "Bu dosyadaki XMP verisi okunamadı, bu yüzden olduğu gibi bırakıldı. Başka programlar eski değerleri göstermeye devam edebilir."
+  },
   "Make a PDF from": {
     "tr": "PDF yapılacak kaynak"
   },

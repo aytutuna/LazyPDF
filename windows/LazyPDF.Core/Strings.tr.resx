@@ -6031,6 +6031,9 @@
   <data name="The XFA data was removed; the form keeps its normal fields." xml:space="preserve">
     <value>XFA verisi kaldırıldı; form normal alanlarını koruyor.</value>
   </data>
+  <data name="The XMP data in this file could not be read, so it is left as it is. Other programs may still show the old values." xml:space="preserve">
+    <value>Bu dosyadaki XMP verisi okunamadı, bu yüzden olduğu gibi bırakıldı. Başka programlar eski değerleri göstermeye devam edebilir.</value>
+  </data>
   <data name="The XMP has no PDF/A identification (pdfaid:part)." xml:space="preserve">
     <value>XMP'de PDF/A tanımlaması (pdfaid:part) yok.</value>
   </data>

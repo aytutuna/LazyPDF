@@ -47,6 +47,7 @@ struct MetadataPanelView: View {
                 ReasonText(model.modifiedText)
                 Toggle(L10n.t("Update the changed date"), isOn: $model.touchModified)
                 if !model.makerText.isEmpty { ReasonText(model.makerText) }
+                if !model.xmpNote.isEmpty { ReasonText(model.xmpNote) }
             }
 
             SectionHeading(L10n.t("When it opens"))

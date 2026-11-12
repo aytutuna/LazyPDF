@@ -39,6 +39,9 @@ public final class MetadataModel: ToolPanelModel {
     public private(set) var modifiedText = ""
     public private(set) var makerText = ""
 
+    /// Said when the file has an XMP packet that could not be read: it stays as it is, so other programs may show old values.
+    public private(set) var xmpNote = ""
+
     private var metadata = DocumentMetadata(nil, nil, nil, nil, nil, nil, nil, nil, OrderedStrings())
     private var view = ViewerSettings(nil, false, .useNone, .singlePage, false, false, false, false, false, false, false, nil, nil)
     var tab: DocumentTab?
@@ -114,6 +117,8 @@ public final class MetadataModel: ToolPanelModel {
             modifiedText = L10n.t("No changed date.")
         }
         makerText = [metadata.creator, metadata.producer].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+        xmpNote = metadata.xmpUnreadable
+            ? L10n.t("The XMP data in this file could not be read, so it is left as it is. Other programs may still show the old values.") : ""
         if !keepEdits { showForm() }
     }
 

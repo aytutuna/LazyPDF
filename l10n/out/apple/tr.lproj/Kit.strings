@@ -1658,6 +1658,7 @@
 "The Print flag of the annotation is not set." = "Ek açıklamanın Print bayrağı ayarlı değil.";
 "The XFA data was removed. The form now uses its normal fields." = "XFA verisi kaldırıldı. Form artık normal alanlarını kullanıyor.";
 "The XFA data was removed; the form keeps its normal fields." = "XFA verisi kaldırıldı; form normal alanlarını koruyor.";
+"The XMP data in this file could not be read, so it is left as it is. Other programs may still show the old values." = "Bu dosyadaki XMP verisi okunamadı, bu yüzden olduğu gibi bırakıldı. Başka programlar eski değerleri göstermeye devam edebilir.";
 "The XMP has no PDF/A identification (pdfaid:part)." = "XMP'de PDF/A tanımlaması (pdfaid:part) yok.";
 "The XMP has no pdfaid:rev of 2020." = "XMP'de 2020 değerinde pdfaid:rev yok.";
 "The XMP metadata does not name {0}, because rules are still broken." = "XMP üst verisi {0} adını vermiyor, çünkü kurallar hâlâ ihlal ediliyor.";

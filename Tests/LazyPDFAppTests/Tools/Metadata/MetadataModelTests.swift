@@ -15,6 +15,17 @@ final class MetadataModelTests: XCTestCase {
         return (model, rig)
     }
 
+    func test_anXmpPacketThatCannotBeReadIsSaid() async throws {
+        let document = try PdfDocument.open(Pdfs.text())
+        let packet = Array(String(repeating: "<a:image </", count: 30_000).utf8)
+        document.catalog["Metadata"] = try document.add(PdfStream(PdfDictionary(), data: packet))
+        let (model, _) = try attached(try document.saveRewrite())
+
+        XCTAssertTrue(model.xmpNote.hasPrefix("The XMP data in this file could not be read"))
+        let (plain, _) = try attached()
+        XCTAssertEqual(plain.xmpNote, "")
+    }
+
     func test_typedPropertiesSurviveACommitFromElsewhere() async throws {
         let (model, rig) = try attached()
         model.title = "Report"
