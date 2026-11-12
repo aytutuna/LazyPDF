@@ -63,7 +63,7 @@ public static class PdfSigner
 
         var target = SignatureField.Resolve(document, job);
         if (SignatureField.Refusal(document, target) is { } refusal) throw new InvalidOperationException(refusal);
-        if (job.Certify != CertificationLevel.None && SignatureScan.Find(SourceBytes(document)).Count > 0) throw new InvalidOperationException(SignatureText.NotCertifiable);
+        if (job.Certify != CertificationLevel.None && SignatureField.Attached(document).Count > 0) throw new InvalidOperationException(SignatureText.NotCertifiable);
         if (job.Level >= PadesLevel.T && request.Timestamp is null) throw new InvalidOperationException(SignatureText.NoTimestampServer);
         string? url = job.TimestampUrl;
         if (request.Timestamp is not null && url is null) throw new InvalidOperationException(SignatureText.NoTimestampServer);

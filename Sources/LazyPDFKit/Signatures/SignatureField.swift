@@ -47,7 +47,7 @@ enum SignatureField {
     static func refusal(_ document: PdfDocument, _ target: Target) -> String? {
         if SignatureChecker.level(document, 0).level == 1 { return SignatureText.certifiedClosed }
         if target.isNew { return nil }
-        for found in SignatureScan.find(document.source) {
+        for found in attached(document) {
             for item in document.array(found.dictionary, "Reference")?.items ?? [] {
                 guard let reference = document.resolve(item) as? PdfDictionary, document.name(reference, "TransformMethod") == "FieldMDP",
                       let parameters = document.dict(reference, "TransformParams"), let fieldLock = readLock(document, parameters) else { continue }
@@ -56,6 +56,13 @@ enum SignatureField {
             }
         }
         return nil
+    }
+
+    /// The signatures a field's /V or the catalog's /Perms /DocMDP still points to; a cleared one stays in the bytes but its locks and certification no longer apply.
+    static func attached(_ document: PdfDocument) -> [FoundSignature] {
+        var numbers = Set(PdfForm.read(document).fields.compactMap { ($0.dictionary["V"] as? PdfReference)?.number })
+        if let perms = document.dict(document.catalog, "Perms"), let certification = perms["DocMDP"] as? PdfReference { numbers.insert(certification.number) }
+        return SignatureScan.find(document.source).filter { numbers.contains($0.number) }
     }
 
     private static func page(_ document: PdfDocument, _ index: Int) throws -> PdfPage {

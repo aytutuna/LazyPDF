@@ -263,6 +263,34 @@ public class PdfSigningTests
         Assert.Equal(SignatureVerdict.Valid, Assert.Single(SignatureKit.Verify(signed)).Verdict);
     }
 
+    [Fact]
+    public void A_cleared_field_can_be_signed_again_whatever_the_cleared_signature_locked()
+    {
+        var request = SignatureKit.Request(Pki) with { FieldName = "Signature1", Lock = new FieldLock(FieldLockAction.All, []) };
+        byte[] signed = PdfSigner.Sign(SignatureKit.Plain(), request);
+        var document = PdfDocument.Open(signed);
+        var form = PdfForm.Read(document);
+        form.ClearSignature(form.Find("Signature1")!);
+
+        byte[] again = PdfSigner.Sign(document.SaveIncremental(), request with { Lock = null });
+
+        Assert.True(PdfForm.Read(PdfDocument.Open(again)).Find("Signature1")!.IsSigned);
+    }
+
+    [Fact]
+    public void A_cleared_certification_lets_the_file_be_certified_again()
+    {
+        var request = SignatureKit.Request(Pki) with { FieldName = "Signature1", Certify = CertificationLevel.FormFill };
+        byte[] certified = PdfSigner.Sign(SignatureKit.Plain(), request);
+        var document = PdfDocument.Open(certified);
+        var form = PdfForm.Read(document);
+        form.ClearSignature(form.Find("Signature1")!);
+
+        byte[] again = PdfSigner.Sign(document.SaveIncremental(), request);
+
+        Assert.True(PdfDocument.Open(again).IsCertified);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

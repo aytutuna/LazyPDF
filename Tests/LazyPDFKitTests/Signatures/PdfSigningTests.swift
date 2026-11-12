@@ -284,6 +284,35 @@ final class PdfSigningTests: XCTestCase {
         XCTAssertEqual(try single(SignatureKit.verify(signed)).verdict, .valid)
     }
 
+    func test_aClearedFieldCanBeSignedAgainWhateverTheClearedSignatureLocked() throws {
+        var request = SignatureKit.request(pki)
+        request.fieldName = "Signature1"
+        request.lock = FieldLock(.all, [])
+        let signed = try PdfSigner.sign(SignatureKit.plain(), request)
+        let document = try PdfDocument.open(signed)
+        let form = PdfForm.read(document)
+        try form.clearSignature(try XCTUnwrap(form.find("Signature1")))
+
+        request.lock = nil
+        let again = try PdfSigner.sign(document.saveIncremental(), request)
+
+        XCTAssertTrue(try XCTUnwrap(PdfForm.read(PdfDocument.open(again)).find("Signature1")).isSigned)
+    }
+
+    func test_aClearedCertificationLetsTheFileBeCertifiedAgain() throws {
+        var request = SignatureKit.request(pki)
+        request.fieldName = "Signature1"
+        request.certify = .formFill
+        let certified = try PdfSigner.sign(SignatureKit.plain(), request)
+        let document = try PdfDocument.open(certified)
+        let form = PdfForm.read(document)
+        try form.clearSignature(try XCTUnwrap(form.find("Signature1")))
+
+        let again = try PdfSigner.sign(document.saveIncremental(), request)
+
+        XCTAssertTrue(try PdfDocument.open(again).isCertified)
+    }
+
     func test_aHashSignerStandsInForAKeyThatIsNotHere() throws {
         for ec in [false, true] {
             let source = ec ? pki.leafEc : pki.leaf

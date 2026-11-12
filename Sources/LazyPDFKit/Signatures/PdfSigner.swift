@@ -63,7 +63,7 @@ public enum PdfSigner {
 
         let target = try SignatureField.resolve(document, job)
         if let refusal = SignatureField.refusal(document, target) { throw InvalidOperationException(refusal) }
-        if job.certify != .none && !SignatureScan.find(document.source).isEmpty { throw InvalidOperationException(SignatureText.notCertifiable) }
+        if job.certify != .none && !SignatureField.attached(document).isEmpty { throw InvalidOperationException(SignatureText.notCertifiable) }
         if job.level >= .t && request.timestamp == nil { throw InvalidOperationException(SignatureText.noTimestampServer) }
         let url = job.timestampUrl
         if request.timestamp != nil && url == nil { throw InvalidOperationException(SignatureText.noTimestampServer) }
