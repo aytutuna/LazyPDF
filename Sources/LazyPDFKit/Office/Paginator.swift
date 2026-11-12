@@ -7,10 +7,10 @@ import Foundation
 
 final class Paginator {
     static let maxPages = 10_000
-    private static let tolerance = 0.01
+    static let tolerance = 0.01
     private static let minArea = 36.0
 
-    private final class Page {
+    final class Page {
         let section: LayoutSection
         let top: Double
         let bottom: Double
@@ -28,9 +28,15 @@ final class Paginator {
         }
     }
 
+    private enum Measured {
+        case paragraph(ParagraphLines)
+        case table(TableLines)
+        case pageBreak
+    }
+
     private let document: LayoutDocument
     private let fonts: LayoutFonts
-    private var pages: [Page] = []
+    var pages: [Page] = []
     private var rightToLeft = 0, complex = 0
 
     init(_ document: LayoutDocument, _ fonts: LayoutFonts) {
@@ -104,31 +110,37 @@ final class Paginator {
         // A band that would leave no body gives way to the margins.
         if bottom - top < Self.minArea { (top, bottom) = (g.top, g.height - g.bottom) }
 
-        var blocks: [ParagraphLines?] = []
+        var blocks: [Measured] = []
         for block in section.blocks {
             try Task.checkCancellation()
             if let paragraph = block as? LayoutParagraph {
                 let lines = try ParagraphLayout.run(paragraph, fonts, width)
                 tally(lines)
-                blocks.append(lines)
+                blocks.append(.paragraph(lines))
+            } else if let table = block as? LayoutTable {
+                blocks.append(.table(try TableLayout.measure(table, fonts, width, bottom - top, { tally($0) })))
             } else {
-                blocks.append(nil)
+                blocks.append(.pageBreak)
             }
         }
 
         try newPage(section, top, bottom, hard: true)
         for i in 0..<blocks.count {
             try Task.checkCancellation()
-            if let lines = blocks[i] { try place(blocks, i, lines, section, top, bottom) } else { try newPage(section, top, bottom, hard: true) }
+            switch blocks[i] {
+            case .paragraph(let lines): try place(blocks, i, lines, section, top, bottom)
+            case .table(let table): try placeTable(table, section, top, bottom)
+            case .pageBreak: try newPage(section, top, bottom, hard: true)
+            }
         }
     }
 
-    private func newPage(_ section: LayoutSection, _ top: Double, _ bottom: Double, hard: Bool) throws {
+    func newPage(_ section: LayoutSection, _ top: Double, _ bottom: Double, hard: Bool) throws {
         if pages.count >= Self.maxPages { throw PdfReadException(.unsupported, "The document has too many pages.") }
         pages.append(Page(section, top, bottom, hard))
     }
 
-    private func place(_ blocks: [ParagraphLines?], _ index: Int, _ lines: ParagraphLines, _ section: LayoutSection, _ top: Double, _ bottom: Double) throws {
+    private func place(_ blocks: [Measured], _ index: Int, _ lines: ParagraphLines, _ section: LayoutSection, _ top: Double, _ bottom: Double) throws {
         let paragraph = lines.source
         if paragraph.pageBreakBefore && pages[pages.count - 1].hasContent { try newPage(section, top, bottom, hard: true) }
         if paragraph.keepWithNext { try keepTogether(blocks, index, section, top, bottom) }
@@ -163,7 +175,7 @@ final class Paginator {
 
             page.y += before
             for k in placed..<(placed + take) {
-                Self.emitLine(&page.boxes, lines.lines[k], section.page, page.y)
+                Self.emitLine(&page.boxes, lines.lines[k], section.page.left, page.y)
                 page.y += lines.lines[k].height
             }
             page.hasContent = true
@@ -175,20 +187,22 @@ final class Paginator {
 
     // A chain of keep-with-next paragraphs and the first lines of the one after it move to a fresh page when
     // they would not fit in what is left of this one, if they fit on a page of their own.
-    private func keepTogether(_ blocks: [ParagraphLines?], _ index: Int, _ section: LayoutSection, _ top: Double, _ bottom: Double) throws {
+    private func keepTogether(_ blocks: [Measured], _ index: Int, _ section: LayoutSection, _ top: Double, _ bottom: Double) throws {
         let page = pages[pages.count - 1]
         if !page.hasContent { return }
         var need = 0.0
         var k = index
-        while k < blocks.count, let member = blocks[k], member.source.keepWithNext {
+        while k < blocks.count, case .paragraph(let member) = blocks[k], member.source.keepWithNext {
             need += member.source.before + member.height + member.source.after
             k += 1
         }
-        if k < blocks.count, let next = blocks[k] {
+        if k < blocks.count, case .paragraph(let next) = blocks[k] {
             let lead = min(next.lines.count, next.source.widowControl ? 2 : 1)
             var leadHeight = 0.0
             for line in next.lines.prefix(lead) { leadHeight += line.height }
             need += next.source.before + leadHeight
+        } else if k < blocks.count, case .table(let table) = blocks[k], !table.rows.isEmpty {
+            need += table.rows[0].height
         }
         if need > page.bottom - page.y + Self.tolerance && need <= page.bottom - page.top { try newPage(section, top, bottom, hard: false) }
     }
@@ -198,7 +212,7 @@ final class Paginator {
         for paragraph in paragraphs {
             y += paragraph.source.before
             for line in paragraph.lines {
-                emitLine(&boxes, line, geometry, y)
+                emitLine(&boxes, line, geometry.left, y)
                 y += line.height
             }
             y += paragraph.source.after
@@ -207,7 +221,7 @@ final class Paginator {
 
     // Highlights go under the text and underlines and strikes over it. A piece is a stretch of one style;
     // tabs, line breaks and the spaces that end the line draw nothing and split the pieces.
-    private static func emitLine(_ boxes: inout [LayoutBox], _ line: LayoutLine, _ geometry: LayoutGeometry, _ top: Double) {
+    static func emitLine(_ boxes: inout [LayoutBox], _ line: LayoutLine, _ originX: Double, _ top: Double) {
         guard let ink = line.atoms.lastIndex(where: { !$0.isBlank || $0.isTab }) else { return }
         var highlights: [LayoutBox] = []
         var texts: [LayoutBox] = []
@@ -230,7 +244,7 @@ final class Paginator {
                 if line.atoms[k].extra > 0 { extra = line.atoms[k].extra }
             }
             let run = first.run
-            let x = geometry.left + first.x, width = last.x + last.width + last.extra - first.x
+            let x = originX + first.x, width = last.x + last.width + last.extra - first.x
             let shift = run.shift, size = first.size, bar = size * 0.05
             if let highlight = run.highlight {
                 highlights.append(.rect(PlacedRect(x: x, y: baseline - shift - first.runFace.ascent * size, width: width,

@@ -84,6 +84,58 @@ final class LayoutParagraph: LayoutBlock {
     override init() {}
 }
 
+/// A line of a cell edge: its thickness in points and 0xRRGGBB.
+struct LayoutBorder: Equatable {
+    let width: Double
+    let color: Int
+}
+
+enum LayoutVAlign { case top, center, bottom }
+
+/// A cell, placed on the table's grid. `rowSpan` counts the rows a vertical merge covers; the cells that continue it are
+/// not kept. The borders are the ones left after the two cells at an edge have been compared.
+final class LayoutCell {
+    var column = 0
+    var span = 1
+    var rowSpan = 1
+    var paragraphs: [LayoutParagraph] = []
+    var fill: Int?
+    var top: LayoutBorder?
+    var right: LayoutBorder?
+    var bottom: LayoutBorder?
+    var left: LayoutBorder?
+    var marginTop = 0.0
+    var marginRight = 5.4
+    var marginBottom = 0.0
+    var marginLeft = 5.4
+    var vAlign = LayoutVAlign.top
+
+    init() {}
+}
+
+final class LayoutRow {
+    var cells: [LayoutCell] = []
+    /// Repeated at the top of every page the table continues on.
+    var header = false
+    var cantSplit = false
+    var height = 0.0
+    /// The height is fixed and what does not fit in it is not drawn; else it is a minimum.
+    var heightExact = false
+
+    init() {}
+}
+
+/// A table. A column of 0 has no width of its own and shares what the others leave.
+final class LayoutTable: LayoutBlock {
+    var columns: [Double] = []
+    /// From the left of the text area, for a left aligned table.
+    var indent = 0.0
+    var align = LayoutAlign.left
+    var rows: [LayoutRow] = []
+
+    override init() {}
+}
+
 /// Sizes in points. Header and footer distances are measured from the page edge to the band.
 struct LayoutGeometry {
     var width = 595.28
@@ -126,7 +178,7 @@ struct PlacedText {
     let spaceExtra: Double
 }
 
-struct PlacedRect {
+struct PlacedRect: Hashable {
     let x: Double
     let y: Double
     let width: Double

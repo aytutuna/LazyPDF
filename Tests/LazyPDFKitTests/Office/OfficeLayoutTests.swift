@@ -55,6 +55,14 @@ final class OfficeLayoutTests: XCTestCase {
         try Golden.check("office-layout", "layout-output.txt", output)
     }
 
+    func test_tablesGoldenFile() throws {
+        var output = ""
+        for (name, document) in try OfficeLayoutSpec.read(try Golden.input("office-layout", "tables-input.txt")) {
+            output += "> \(name)\n" + (try dump(document))
+        }
+        try Golden.check("office-layout", "tables-output.txt", output)
+    }
+
     func test_lineBreakGoldenFile() throws {
         var output = ""
         for line in try Golden.input("office-layout", "linebreak-input.txt").components(separatedBy: "\n") {

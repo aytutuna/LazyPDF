@@ -37,6 +37,8 @@ enum OfficeLayoutSpec {
         var section: LayoutSection?
         var band = "body"
         var paragraph: (keys: [String: String], runs: [LayoutRun])?
+        var cell: LayoutCell?
+        var nextColumn = 0
 
         func flush() {
             guard let p = paragraph, let section else { return }
@@ -62,7 +64,7 @@ enum OfficeLayoutSpec {
             made.keepWithNext = p.keys["keep"] != nil
             made.pageBreakBefore = p.keys["break"] != nil
             made.widowControl = p.keys["nowidow"] == nil
-            if band == "header" { section.header.append(made) } else if band == "footer" { section.footer.append(made) } else { section.blocks.append(made) }
+            if let cell { cell.paragraphs.append(made) } else if band == "header" { section.header.append(made) } else if band == "footer" { section.footer.append(made) } else { section.blocks.append(made) }
             paragraph = nil
         }
 
@@ -78,6 +80,7 @@ enum OfficeLayoutSpec {
                 section = nil
             case "section":
                 flush()
+                cell = nil
                 section = LayoutSection()
                 document!.sections.append(section!)
                 band = "body"
@@ -113,6 +116,60 @@ enum OfficeLayoutSpec {
                 default: run.field = .none
                 }
                 paragraph!.runs.append(run)
+            case "table":
+                flush()
+                let t = keys(rest)
+                let table = LayoutTable()
+                table.columns = t["cols"]!.components(separatedBy: ",").map { Double($0)! }
+                table.indent = number(t, "indent")
+                switch t["align"] {
+                case "center": table.align = .center
+                case "right": table.align = .right
+                default: table.align = .left
+                }
+                section!.blocks.append(table)
+                cell = nil
+                nextColumn = 0
+            case "row":
+                flush()
+                let rk = keys(rest)
+                let row = LayoutRow()
+                row.header = rk["header"] != nil
+                row.cantSplit = rk["cantsplit"] != nil
+                row.height = number(rk, "height")
+                row.heightExact = rk["exact"] != nil
+                (section!.blocks[section!.blocks.count - 1] as! LayoutTable).rows.append(row)
+                cell = nil
+                nextColumn = 0
+            case "cell":
+                flush()
+                let ck = keys(rest)
+                let made = LayoutCell()
+                made.column = ck["col"] != nil ? Int(number(ck, "col")) : nextColumn
+                made.span = ck["span"] != nil ? Int(number(ck, "span")) : 1
+                nextColumn = made.column + made.span
+                made.rowSpan = ck["rowspan"] != nil ? Int(number(ck, "rowspan")) : 1
+                made.fill = ck["fill"].map { Int($0, radix: 16)! }
+                let margin = ck["margin"].map { $0.components(separatedBy: ",").map { Double($0)! } } ?? [0, 5.4, 0, 5.4]
+                made.marginTop = margin[0]
+                made.marginRight = margin[1]
+                made.marginBottom = margin[2]
+                made.marginLeft = margin[3]
+                switch ck["valign"] {
+                case "center": made.vAlign = .center
+                case "bottom": made.vAlign = .bottom
+                default: made.vAlign = .top
+                }
+                made.top = border(ck, "top")
+                made.right = border(ck, "right")
+                made.bottom = border(ck, "bottom")
+                made.left = border(ck, "left")
+                cell = made
+                let table = section!.blocks[section!.blocks.count - 1] as! LayoutTable
+                table.rows[table.rows.count - 1].cells.append(made)
+            case "endtable":
+                flush()
+                cell = nil
             case "pagebreak":
                 flush()
                 section!.blocks.append(LayoutPageBreak())
@@ -125,6 +182,12 @@ enum OfficeLayoutSpec {
         }
         flush()
         return cases
+    }
+
+    private static func border(_ keys: [String: String], _ side: String) -> LayoutBorder? {
+        guard let value = keys[side] else { return nil }
+        let w = value.components(separatedBy: ":")
+        return LayoutBorder(width: Double(w[0])!, color: Int(w[1], radix: 16)!)
     }
 
     private static func keys(_ text: String) -> [String: String] {
