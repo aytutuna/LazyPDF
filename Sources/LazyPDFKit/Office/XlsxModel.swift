@@ -16,6 +16,7 @@ struct XlsxLimits {
 
     static let maxRow = 1_048_576
     static let maxColumn = 16_384
+    static let maxBreaks = 10_000
     static let maxFormatLength = 255
     static let standard = XlsxLimits()
 }
@@ -30,6 +31,13 @@ enum XlsxSkipped {
     static let formulaWithoutValue = "formula-no-value"
     static let cellOutsideGrid = "cell-outside-grid"
     static let longText = "long-text"
+    static let picture = "sheet-picture"
+    static let chart = "sheet-chart"
+    static let shape = "sheet-shape"
+    static let conditionalFormat = "conditional-format"
+    static let sparkline = "sparkline"
+    static let dataValidation = "data-validation"
+    static let comment = "sheet-comment"
 }
 
 enum XlsxHorizontal: String { case general, left, center, right, fill, justify, centerContinuous, distributed }
@@ -118,8 +126,47 @@ struct XlsxRange: Equatable {
     let lastColumn: Int
 }
 
+/// How a sheet prints. Margins and distances are in points, the scale in percent.
+final class XlsxPageSetup {
+    var landscape = false
+    /// The paper size code of pageSetup.
+    var paper = 1
+    var scale = 100
+    var fitToPage = false
+    var fitToWidth = 1
+    /// 0 leaves the height to the content.
+    var fitToHeight = 1
+    var left = 50.4
+    var right = 50.4
+    var top = 54.0
+    var bottom = 54.0
+    var header = 21.6
+    var footer = 21.6
+    var centerHorizontally = false
+    var centerVertically = false
+    var gridlines = false
+    var headings = false
+    var overThenDown = false
+    /// The number of the sheet's first page when it restarts the count, else nil.
+    var firstPageNumber: Int?
+    var differentOddEven = false
+    var differentFirst = false
+    var scaleWithDocument = true
+    var alignWithMargins = true
+    var oddHeader = ""
+    var oddFooter = ""
+    var evenHeader = ""
+    var evenFooter = ""
+    var firstHeader = ""
+    var firstFooter = ""
+    /// Manual breaks: the break comes after this row, or this column.
+    var rowBreaks: [Int] = []
+    var columnBreaks: [Int] = []
+}
+
 final class XlsxSheet {
     let name: String
+    let setup = XlsxPageSetup()
     var rows: [XlsxRow] = []
     var columns: [XlsxColumns] = []
     var defaultColumnWidth = 0.0

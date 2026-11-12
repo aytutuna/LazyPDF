@@ -107,7 +107,9 @@ final class XlsxReader {
         return try package.xml(target)
     }
 
-    private func skip(_ kind: String, _ count: Int = 1) { skipped[kind, default: 0] += count }
+    private func skip(_ kind: String, _ count: Int = 1) {
+        if count > 0 { skipped[kind, default: 0] += count }
+    }
 
     // Text
 
@@ -217,7 +219,110 @@ final class XlsxReader {
         }
 
         try readMerges(root.child(m, "mergeCells"), sheet)
+        readSetup(root, sheet.setup)
+        try countFeatures(root, partName)
         return sheet
+    }
+
+    // Page setup
+
+    private static func inches(_ text: String?, _ whenMissing: Double) -> Double {
+        if let v = XlsxParse.double(text), v >= 0, v <= 100 { return v * 72 }
+        return whenMissing
+    }
+
+    private static func plain(_ e: OfficeXmlElement?) -> String {
+        let units = Array((e?.text ?? "").utf16)
+        if units.count <= 1000 { return String(decoding: units, as: UTF16.self) }
+        let cut = units[999] >= 0xD800 && units[999] <= 0xDBFF ? 999 : 1000
+        return String(decoding: units[..<cut], as: UTF16.self)
+    }
+
+    private func readSetup(_ root: OfficeXmlElement, _ setup: XlsxPageSetup) {
+        let m = Self.m
+        if let fit = root.child(m, "sheetPr")?.child(m, "pageSetUpPr") { setup.fitToPage = XlsxParse.flag(fit.attribute("fitToPage"), false) }
+        if let margins = root.child(m, "pageMargins") {
+            setup.left = Self.inches(margins.attribute("left"), setup.left)
+            setup.right = Self.inches(margins.attribute("right"), setup.right)
+            setup.top = Self.inches(margins.attribute("top"), setup.top)
+            setup.bottom = Self.inches(margins.attribute("bottom"), setup.bottom)
+            setup.header = Self.inches(margins.attribute("header"), setup.header)
+            setup.footer = Self.inches(margins.attribute("footer"), setup.footer)
+        }
+        if let page = root.child(m, "pageSetup") {
+            setup.landscape = page.attribute("orientation") == "landscape"
+            if let paper = XlsxParse.int(page.attribute("paperSize")) { setup.paper = paper }
+            if let scale = XlsxParse.int(page.attribute("scale")), scale >= 10, scale <= 400 { setup.scale = scale }
+            if let w = XlsxParse.int(page.attribute("fitToWidth")), w <= 32767 { setup.fitToWidth = w }
+            if let h = XlsxParse.int(page.attribute("fitToHeight")), h <= 32767 { setup.fitToHeight = h }
+            if XlsxParse.flag(page.attribute("useFirstPageNumber"), false), let first = XlsxParse.int(page.attribute("firstPageNumber")) { setup.firstPageNumber = first }
+        }
+        if let options = root.child(m, "printOptions") {
+            setup.centerHorizontally = XlsxParse.flag(options.attribute("horizontalCentered"), false)
+            setup.centerVertically = XlsxParse.flag(options.attribute("verticalCentered"), false)
+            setup.headings = XlsxParse.flag(options.attribute("headings"), false)
+            setup.gridlines = XlsxParse.flag(options.attribute("gridLines"), false)
+        }
+        if let hf = root.child(m, "headerFooter") {
+            setup.differentOddEven = XlsxParse.flag(hf.attribute("differentOddEven"), false)
+            setup.differentFirst = XlsxParse.flag(hf.attribute("differentFirst"), false)
+            setup.scaleWithDocument = XlsxParse.flag(hf.attribute("scaleWithDoc"), true)
+            setup.alignWithMargins = XlsxParse.flag(hf.attribute("alignWithMargins"), true)
+            setup.oddHeader = Self.plain(hf.child(m, "oddHeader"))
+            setup.oddFooter = Self.plain(hf.child(m, "oddFooter"))
+            setup.evenHeader = Self.plain(hf.child(m, "evenHeader"))
+            setup.evenFooter = Self.plain(hf.child(m, "evenFooter"))
+            setup.firstHeader = Self.plain(hf.child(m, "firstHeader"))
+            setup.firstFooter = Self.plain(hf.child(m, "firstFooter"))
+        }
+        setup.rowBreaks = Self.breaks(root.child(m, "rowBreaks"), XlsxLimits.maxRow)
+        setup.columnBreaks = Self.breaks(root.child(m, "colBreaks"), XlsxLimits.maxColumn)
+    }
+
+    private static func breaks(_ list: OfficeXmlElement?, _ last: Int) -> [Int] {
+        var into: [Int] = []
+        for b in list?.elements(m, "brk") ?? [] {
+            if into.count >= XlsxLimits.maxBreaks { break }
+            if XlsxParse.flag(b.attribute("man"), false), let id = XlsxParse.int(b.attribute("id")), id >= 1, id < last { into.append(id) }
+        }
+        return into.sorted()
+    }
+
+    // What a sheet holds that is not printed: counted, nothing more.
+
+    private static func count(_ e: OfficeXmlElement, _ name: String) -> Int {
+        var count = 0
+        var pending = [e]
+        while let next = pending.popLast() {
+            for child in next.elements {
+                if child.name == name { count += 1 }
+                pending.append(child)
+            }
+        }
+        return count
+    }
+
+    private func countFeatures(_ root: OfficeXmlElement, _ partName: String) throws {
+        let m = Self.m
+        skip(XlsxSkipped.conditionalFormat, root.elements(m, "conditionalFormatting").count)
+        skip(XlsxSkipped.dataValidation, root.child(m, "dataValidations")?.elements(m, "dataValidation").count ?? 0)
+        if let ext = root.child(m, "extLst") { skip(XlsxSkipped.sparkline, Self.count(ext, "sparkline")) }
+        for r in try package.relationships(partName) where package.contains(r.target) {
+            if Self.endsWith(r.type, "/comments") {
+                skip(XlsxSkipped.comment, Self.count(try package.xml(r.target), "comment"))
+            } else if Self.endsWith(r.type, "/drawing") {
+                for anchor in try package.xml(r.target).elements {
+                    for shape in anchor.elements {
+                        switch shape.name {
+                        case "pic": skip(XlsxSkipped.picture)
+                        case "graphicFrame": skip(Self.count(shape, "chart") > 0 ? XlsxSkipped.chart : XlsxSkipped.shape)
+                        case "sp", "cxnSp", "grpSp": skip(XlsxSkipped.shape)
+                        default: break
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private func readCells(_ rowElement: OfficeXmlElement, _ row: XlsxRow) throws {

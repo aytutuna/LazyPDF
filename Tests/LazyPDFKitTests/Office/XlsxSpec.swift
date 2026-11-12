@@ -101,6 +101,26 @@ enum XlsxSpec {
             + (f.bold ? separator + "b" : "") + (f.italic ? separator + "i" : "") + (f.underline ? separator + "u" : "") + (f.strike ? separator + "s" : "")
     }
 
+    private static func setupLine(_ s: XlsxPageSetup) -> String {
+        var o = "paper=\(s.paper)\(s.landscape ? " landscape" : "") scale=\(s.scale) fit=\(s.fitToWidth)x\(s.fitToHeight)\(s.fitToPage ? " fitpage" : "")"
+        o += " margins=\(num(s.left)),\(num(s.right)),\(num(s.top)),\(num(s.bottom)),\(num(s.header)),\(num(s.footer))"
+        o += "\(s.centerHorizontally ? " centerh" : "")\(s.centerVertically ? " centerv" : "")\(s.gridlines ? " gridlines" : "")\(s.headings ? " headings" : "")\(s.overThenDown ? " overthendown" : "")"
+        o += "\(s.firstPageNumber.map { " firstpage=\($0)" } ?? "")\(s.differentOddEven ? " oddeven" : "")\(s.differentFirst ? " differentfirst" : "")\(s.scaleWithDocument ? "" : " noscale")\(s.alignWithMargins ? "" : " noalign")"
+        return o
+    }
+
+    private static func dumpSetup(_ s: XlsxPageSetup) -> String {
+        var o = ""
+        if setupLine(s) != setupLine(XlsxPageSetup()) { o += "  setup \(setupLine(s))\n" }
+        for (name, text) in [("oddheader", s.oddHeader), ("oddfooter", s.oddFooter), ("evenheader", s.evenHeader), ("evenfooter", s.evenFooter), ("firstheader", s.firstHeader), ("firstfooter", s.firstFooter)]
+        where !text.isEmpty {
+            o += "  \(name) \"\(OfficeLayoutSpec.escape(text))\"\n"
+        }
+        if !s.rowBreaks.isEmpty { o += "  rowbreaks \(s.rowBreaks.map(String.init).joined(separator: ","))\n" }
+        if !s.columnBreaks.isEmpty { o += "  colbreaks \(s.columnBreaks.map(String.init).joined(separator: ","))\n" }
+        return o
+    }
+
     static func dump(_ workbook: XlsxWorkbook) -> String {
         var o = ""
         let styles = workbook.styles
@@ -137,6 +157,7 @@ enum XlsxSpec {
             if !sheet.printArea.isEmpty { o += "  printarea \(sheet.printArea.map(cells).joined(separator: ","))\n" }
             if let t = sheet.titleRows { o += "  titlerows \(t.first):\(t.last)\n" }
             if let t = sheet.titleColumns { o += "  titlecols \(name(t.first)):\(name(t.last))\n" }
+            o += dumpSetup(sheet.setup)
         }
         for s in workbook.skipped { o += "skipped \(s.kind) \(s.count)\n" }
         return o
