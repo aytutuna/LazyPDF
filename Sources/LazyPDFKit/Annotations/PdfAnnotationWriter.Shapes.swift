@@ -122,9 +122,25 @@ extension PdfAnnotationWriter {
         return try place(page, d)
     }
 
-    /// The /Rect of a line from `from` to `to`: its end points with the room for the border and, with a head, for the head.
-    public static func lineBox(_ from: PdfPoint, _ to: PdfPoint, width: Double, head: Bool) -> PdfRect {
-        inflate(boundsOf([from, to]), margin(AnnotationStyle(width: width), head))
+    /// The /Rect a drawn mark needs at `width`, from its points with the same room it was given when made; nil for any other kind.
+    public static func markBox(_ a: PdfAnnotation, width: Double, head: Bool) -> PdfRect? {
+        func points(_ values: [Double]) -> [PdfPoint] {
+            stride(from: 0, to: values.count - 1, by: 2).map { (values[$0], values[$0 + 1]) }
+        }
+        let style = AnnotationStyle(width: width)
+        switch a.type {
+        case .line, .polyLine:
+            let p = points(a.type == .line ? a.line : a.vertices)
+            return p.isEmpty ? nil : inflate(boundsOf(p), margin(style, head))
+        case .polygon:
+            let p = points(a.vertices)
+            return p.isEmpty ? nil : inflate(boundsOf(p), width + (a.cloud > 0 ? CloudBorder.bulge(a.cloud) : 0))
+        case .ink:
+            let p = a.inkList.flatMap(points)
+            return p.isEmpty ? nil : inflate(boundsOf(p), width / 2 + 1)
+        default:
+            return nil
+        }
     }
 
     private static func margin(_ style: AnnotationStyle, _ endings: Bool) -> Double {

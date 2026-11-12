@@ -372,6 +372,22 @@ public sealed class MarkerTests
     }
 
     [Fact]
+    public void AMarkMadeOfPointsGrowsItsBoxWithItsWidth()
+    {
+        using var f = new CommentFixture();
+        Point[] square = [new(100, 100), new(300, 100), new(300, 300), new(100, 300)];
+        var pencil = f.Marker.Add(MarkTool.Pencil, 0, square, Red);
+        var polygon = f.Marker.Add(MarkTool.Polygon, 0, square, Red);
+
+        var wideInk = f.Marker.SetWidth(pencil, 12);
+        var widePolygon = f.Marker.SetWidth(polygon, 12);
+
+        Assert.Equal(pencil.Rect.Width + 2 * (6 - pencil.Border.Width / 2), wideInk.Rect.Width, 6);
+        Assert.Equal(polygon.Rect.Width + 2 * (12 - polygon.Border.Width), widePolygon.Rect.Width, 6);
+        Assert.Equal(polygon.Rect.Height + 2 * (12 - polygon.Border.Width), widePolygon.Rect.Height, 6);
+    }
+
+    [Fact]
     public void TheDashKeepsTheWidthOfAMarkThatOnlyHadABorder()
     {
         using var f = new CommentFixture();

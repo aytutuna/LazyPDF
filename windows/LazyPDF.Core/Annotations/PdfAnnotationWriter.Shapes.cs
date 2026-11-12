@@ -118,9 +118,29 @@ public sealed partial class PdfAnnotationWriter
         return Place(page, d);
     }
 
-    /// <summary>The /Rect of a line from (x1, y1) to (x2, y2): its end points with the room for the border and, with a head, for the head.</summary>
-    internal static PdfRect LineBox(double x1, double y1, double x2, double y2, double width, bool head) =>
-        Inflate(BoundsOf([(x1, y1), (x2, y2)]), Margin(new AnnotationStyle(Width: width), head));
+    /// <summary>The /Rect a drawn mark needs at <paramref name="width"/>, from its points with the same room it was given when made; null for any other kind.</summary>
+    internal static PdfRect? MarkBox(PdfAnnotation a, double width, bool head)
+    {
+        static List<(double X, double Y)> Points(IEnumerable<double> values)
+        {
+            var v = values.ToList();
+            return [.. Enumerable.Range(0, v.Count / 2).Select(i => (v[2 * i], v[2 * i + 1]))];
+        }
+        switch (a.Type)
+        {
+            case AnnotationType.Line or AnnotationType.PolyLine:
+                var line = Points(a.Type == AnnotationType.Line ? a.Line : a.Vertices);
+                return line.Count == 0 ? null : Inflate(BoundsOf(line), Margin(new AnnotationStyle(Width: width), head));
+            case AnnotationType.Polygon:
+                var ring = Points(a.Vertices);
+                return ring.Count == 0 ? null : Inflate(BoundsOf(ring), width + (a.Cloud > 0 ? CloudBorder.Bulge(a.Cloud) : 0));
+            case AnnotationType.Ink:
+                var ink = Points(a.InkList.SelectMany(s => s));
+                return ink.Count == 0 ? null : Inflate(BoundsOf(ink), width / 2 + 1);
+            default:
+                return null;
+        }
+    }
 
     private static double Margin(AnnotationStyle style, bool endings) =>
         endings ? AppearanceBuilder.EndingSize(style.Width) + style.Width : style.Width / 2 + 1;

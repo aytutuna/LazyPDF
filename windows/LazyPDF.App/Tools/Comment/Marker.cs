@@ -411,16 +411,15 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         var headed = _writer.Edit(a, redraw: true, () =>
         {
             a.Dictionary["LE"] = new PdfArray([new PdfName(LineEnding.None.ToString()), new PdfName(head.ToString())]);
-            FitLine(a, a.Border.Width, head != LineEnding.None);
+            FitBox(a, a.Border.Width, head != LineEnding.None);
         });
         return Find(a.PageIndex, a.Reference!.Number) ?? headed;
     }
 
-    // The box of a line comes from its end points and the room for the border and the heads, as when it was made; it is never nudged from the old box.
-    private static void FitLine(PdfAnnotation a, double width, bool head)
+    // The box of a drawn mark comes from its points and the room for the border and the heads, as when it was made; it is never nudged from the old box.
+    private static void FitBox(PdfAnnotation a, double width, bool head)
     {
-        if (a.Type != AnnotationType.Line || a.Line.Count < 4) return;
-        a.Dictionary["Rect"] = PdfAnnotationWriter.LineBox(a.Line[0], a.Line[1], a.Line[2], a.Line[3], width, head).ToArray();
+        if (PdfAnnotationWriter.MarkBox(a, width, head) is { } box) a.Dictionary["Rect"] = box.ToArray();
     }
 
     public PdfAnnotation SetIcon(PdfAnnotation a, string name)
@@ -457,7 +456,7 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         var widened = _writer.Edit(a, redraw: true, () =>
         {
             a.Dictionary["BS"] = border;
-            FitLine(a, width, a.StartEnding != LineEnding.None || a.EndEnding != LineEnding.None);
+            FitBox(a, width, a.StartEnding != LineEnding.None || a.EndEnding != LineEnding.None);
         });
         return Find(a.PageIndex, a.Reference!.Number) ?? widened;
     }

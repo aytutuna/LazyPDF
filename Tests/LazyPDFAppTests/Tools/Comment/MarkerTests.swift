@@ -280,4 +280,18 @@ final class MarkerTests: XCTestCase {
         XCTAssertEqual(wide.rect.left, min(wide.line[0], wide.line[2]) - room, accuracy: 1e-6)
         XCTAssertEqual(wide.rect.bottom, min(wide.line[1], wide.line[3]) - room, accuracy: 1e-6)
     }
+
+    func test_wideningAPencilStrokeOrAPolygonRefitsItsBox() async throws {
+        let f = try CommentFixture()
+        let square = [markPt(100, 100), markPt(300, 100), markPt(300, 300), markPt(100, 300)]
+        let pencil = try f.marker.add(.pencil, 0, square, markRed)
+        let polygon = try f.marker.add(.polygon, 0, square, markRed)
+
+        let wideInk = try f.marker.setWidth(pencil, 12)
+        let widePolygon = try f.marker.setWidth(polygon, 12)
+
+        XCTAssertEqual(wideInk.rect.width, pencil.rect.width + 2 * (6 - pencil.border.width / 2), accuracy: 1e-6)
+        XCTAssertEqual(widePolygon.rect.width, polygon.rect.width + 2 * (12 - polygon.border.width), accuracy: 1e-6)
+        XCTAssertEqual(widePolygon.rect.height, polygon.rect.height + 2 * (12 - polygon.border.width), accuracy: 1e-6)
+    }
 }
