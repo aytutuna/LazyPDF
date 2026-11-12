@@ -66,9 +66,9 @@ extension PdfRedactor {
         }
         // Rich text and the subject can repeat the words; neither is drawn.
         annotation.dictionary.remove("RC")
-        if let subject = PdfText.read(work, annotation.dictionary, "Subject") {
+        if let subject = PdfText.read(work, annotation.dictionary, "Subj") {
             let changed = Self.replacing(subject, hits, replacement)
-            if changed != subject { annotation.dictionary["Subject"] = PdfText.toObject(changed) }
+            if changed != subject { annotation.dictionary["Subj"] = PdfText.toObject(changed) }
         }
         return true
     }

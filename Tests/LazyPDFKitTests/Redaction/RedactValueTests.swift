@@ -49,7 +49,7 @@ final class RedactValueTests: XCTestCase {
         let document = try blank()
         let n = try note(document, "the secret plan")
         n.dictionary["RC"] = PdfText.toObject("<body><p>the secret plan</p></body>")
-        n.dictionary["Subject"] = PdfText.toObject("secret")
+        n.dictionary["Subj"] = PdfText.toObject("secret")
         let found = try RedactionFinder.findWordsInValues(document, ["secret"])
         let result = try PdfRedactor(document).apply([], nil, found)
         XCTAssertFalse(RedactionKit.holds(result.bytes, "secret"))

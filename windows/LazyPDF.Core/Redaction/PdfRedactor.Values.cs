@@ -56,10 +56,10 @@ public sealed partial class PdfRedactor
         }
         // Rich text and the subject can repeat the words; neither is drawn.
         annotation.Dictionary.Remove("RC");
-        if (PdfText.Read(work, annotation.Dictionary, "Subject") is { } subject)
+        if (PdfText.Read(work, annotation.Dictionary, "Subj") is { } subject)
         {
             string changed = hits.Aggregate(subject, (s, hit) => s.Replace(hit.Text, replacement, StringComparison.Ordinal));
-            if (changed != subject) annotation.Dictionary["Subject"] = PdfText.ToObject(changed);
+            if (changed != subject) annotation.Dictionary["Subj"] = PdfText.ToObject(changed);
         }
         return true;
     }

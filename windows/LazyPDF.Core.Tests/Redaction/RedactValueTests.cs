@@ -46,7 +46,7 @@ public class RedactValueTests
         using var document = Blank();
         var note = Note(document, "the secret plan");
         note.Dictionary["RC"] = PdfText.ToObject("<body><p>the secret plan</p></body>");
-        note.Dictionary["Subject"] = PdfText.ToObject("secret");
+        note.Dictionary["Subj"] = PdfText.ToObject("secret");
         var found = RedactionFinder.FindWordsInValues(document, ["secret"]);
         var result = new PdfRedactor(document).Apply([], null, found);
         Assert.False(RedactionKit.Holds(result.Bytes, "secret"));
