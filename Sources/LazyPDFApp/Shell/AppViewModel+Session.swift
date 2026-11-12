@@ -41,7 +41,12 @@ extension AppViewModel {
         let preferences = AppPreferencesStore.load(settings)
         if !preferences.reopenLast || recoveryOffer != nil || !documents.isEmpty { return }
         var opened: [Int: DocumentTab] = [:]
+        // A file that arrives while this runs (a lazypdf: address, a drop) is not part of the session and stays in front.
+        func arrival() -> DocumentTab? {
+            documents.last { tab in !opened.values.contains { $0 === tab } }
+        }
         for (index, file) in preferences.lastFiles.enumerated() {
+            if arrival() != nil { break }
             let url = file.bookmark.flatMap { bookmarks.resolve($0)?.url } ?? URL(fileURLWithPath: file.path)
             let access = bookmarks.access(url)
             // A file that is gone is skipped quietly; the person did not ask to open it just now.
@@ -54,6 +59,10 @@ extension AppViewModel {
             tab.pageIndex = min(max(file.page, 0), max(tab.pageCount - 1, 0))
             opened[index] = tab
         }
-        if let active = opened[preferences.lastActive] { select(active) }
+        if let newer = arrival() {
+            select(newer)
+        } else if let active = opened[preferences.lastActive] {
+            select(active)
+        }
     }
 }

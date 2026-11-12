@@ -36,6 +36,25 @@ final class ReopenLastTests: XCTestCase {
         XCTAssertTrue(next.activeDocument === next.documents[0])
     }
 
+    func test_aFileOpenedDuringTheRestoreStaysInFront() async {
+        let f = ViewModelFixture(self)
+        f.vm.setReopenLast(true)
+        await f.vm.open(f.pdf("a.pdf"))
+        await f.vm.open(f.pdf("b.pdf"))
+        f.vm.select(f.vm.documents[0])
+        quit(f)
+
+        let next = f.makeViewModel()
+        let restore = Task { await next.reopenLastSession() }
+        await Task.yield()
+        let scan = f.pdf("scan.pdf")
+        await next.open(scan)
+        await restore.value
+
+        XCTAssertTrue(next.documents.contains { $0.title == "scan.pdf" })
+        XCTAssertEqual(next.activeDocument?.title, "scan.pdf")
+    }
+
     func test_aFileThatIsGoneIsSkipped() async throws {
         let f = ViewModelFixture(self)
         f.vm.setReopenLast(true)
