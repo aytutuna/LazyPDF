@@ -39,6 +39,8 @@ internal static class OfficeLayoutSpec
         LayoutSection? section = null;
         string band = "body";
         (Dictionary<string, string> Keys, List<LayoutRun> Runs)? paragraph = null;
+        List<LayoutParagraph>? cell = null;
+        int nextColumn = 0;
 
         void Flush()
         {
@@ -58,7 +60,8 @@ internal static class OfficeLayoutSpec
                 PageBreakBefore = p.Keys.ContainsKey("break"),
                 WidowControl = !p.Keys.ContainsKey("nowidow"),
             };
-            if (band == "header") section.Header.Add(made);
+            if (cell is not null) cell.Add(made);
+            else if (band == "header") section.Header.Add(made);
             else if (band == "footer") section.Footer.Add(made);
             else section.Blocks.Add(made);
             paragraph = null;
@@ -79,6 +82,7 @@ internal static class OfficeLayoutSpec
                     break;
                 case "section":
                     Flush();
+                    cell = null;
                     section = new LayoutSection();
                     document!.Sections.Add(section);
                     band = "body";
@@ -119,6 +123,55 @@ internal static class OfficeLayoutSpec
                         Field = keys.GetValueOrDefault("field") switch { "page" => LayoutField.PageNumber, "pages" => LayoutField.PageCount, _ => LayoutField.None },
                     });
                     break;
+                case "table":
+                    Flush();
+                    var t = Keys(rest);
+                    section!.Blocks.Add(new LayoutTable
+                    {
+                        Columns = [.. t["cols"].Split(',').Select(w => double.Parse(w, CultureInfo.InvariantCulture))],
+                        Indent = Number(t, "indent"),
+                        Align = t.GetValueOrDefault("align") switch { "center" => LayoutAlign.Center, "right" => LayoutAlign.Right, _ => LayoutAlign.Left },
+                    });
+                    cell = null;
+                    nextColumn = 0;
+                    break;
+                case "row":
+                    Flush();
+                    var rk = Keys(rest);
+                    ((LayoutTable)section!.Blocks[^1]).Rows.Add(new LayoutRow
+                    {
+                        Header = rk.ContainsKey("header"),
+                        CantSplit = rk.ContainsKey("cantsplit"),
+                        Height = Number(rk, "height"),
+                        HeightExact = rk.ContainsKey("exact"),
+                    });
+                    cell = null;
+                    nextColumn = 0;
+                    break;
+                case "cell":
+                    Flush();
+                    var ck = Keys(rest);
+                    int column = ck.ContainsKey("col") ? (int)Number(ck, "col") : nextColumn;
+                    int span = ck.ContainsKey("span") ? (int)Number(ck, "span") : 1;
+                    nextColumn = column + span;
+                    double[] margin = ck.TryGetValue("margin", out string? m) ? [.. m.Split(',').Select(w => double.Parse(w, CultureInfo.InvariantCulture))] : [0, 5.4, 0, 5.4];
+                    cell = [];
+                    ((LayoutTable)section!.Blocks[^1]).Rows[^1].Cells.Add(new LayoutCell
+                    {
+                        Column = column,
+                        Span = span,
+                        RowSpan = ck.ContainsKey("rowspan") ? (int)Number(ck, "rowspan") : 1,
+                        Paragraphs = cell,
+                        Fill = ck.ContainsKey("fill") ? Convert.ToInt32(ck["fill"], 16) : null,
+                        MarginTop = margin[0], MarginRight = margin[1], MarginBottom = margin[2], MarginLeft = margin[3],
+                        VAlign = ck.GetValueOrDefault("valign") switch { "center" => LayoutVAlign.Center, "bottom" => LayoutVAlign.Bottom, _ => LayoutVAlign.Top },
+                        Top = Border(ck, "top"), Right = Border(ck, "right"), Bottom = Border(ck, "bottom"), Left = Border(ck, "left"),
+                    });
+                    break;
+                case "endtable":
+                    Flush();
+                    cell = null;
+                    break;
                 case "pagebreak":
                     Flush();
                     section!.Blocks.Add(new LayoutPageBreak());
@@ -133,6 +186,13 @@ internal static class OfficeLayoutSpec
         }
         Flush();
         return cases;
+    }
+
+    private static LayoutBorder? Border(Dictionary<string, string> keys, string side)
+    {
+        if (!keys.TryGetValue(side, out string? value)) return null;
+        string[] w = value.Split(':');
+        return new LayoutBorder(double.Parse(w[0], CultureInfo.InvariantCulture), Convert.ToInt32(w[1], 16));
     }
 
     private static Dictionary<string, string> Keys(string text)

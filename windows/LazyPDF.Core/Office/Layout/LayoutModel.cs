@@ -61,6 +61,54 @@ internal sealed class LayoutParagraph : LayoutBlock
     public double? LabelTab { get; init; }
 }
 
+/// <summary>A line of a cell edge: its thickness in points and 0xRRGGBB.</summary>
+internal sealed record LayoutBorder(double Width, int Color);
+
+internal enum LayoutVAlign { Top, Center, Bottom }
+
+/// <summary>
+/// A cell, placed on the table's grid. <see cref="RowSpan"/> counts the rows a vertical merge covers; the cells that continue
+/// it are not kept. The borders are the ones left after the two cells at an edge have been compared.
+/// </summary>
+internal sealed class LayoutCell
+{
+    public int Column { get; init; }
+    public int Span { get; init; } = 1;
+    public int RowSpan { get; set; } = 1;
+    public List<LayoutParagraph> Paragraphs { get; init; } = [];
+    public int? Fill { get; init; }
+    public LayoutBorder? Top { get; set; }
+    public LayoutBorder? Right { get; set; }
+    public LayoutBorder? Bottom { get; set; }
+    public LayoutBorder? Left { get; set; }
+    public double MarginTop { get; init; }
+    public double MarginRight { get; init; } = 5.4;
+    public double MarginBottom { get; init; }
+    public double MarginLeft { get; init; } = 5.4;
+    public LayoutVAlign VAlign { get; init; }
+}
+
+internal sealed class LayoutRow
+{
+    public List<LayoutCell> Cells { get; init; } = [];
+    /// <summary>Repeated at the top of every page the table continues on.</summary>
+    public bool Header { get; init; }
+    public bool CantSplit { get; init; }
+    public double Height { get; init; }
+    /// <summary>The height is fixed and what does not fit in it is not drawn; else it is a minimum.</summary>
+    public bool HeightExact { get; init; }
+}
+
+/// <summary>A table. A column of 0 has no width of its own and shares what the others leave.</summary>
+internal sealed class LayoutTable : LayoutBlock
+{
+    public List<double> Columns { get; init; } = [];
+    /// <summary>From the left of the text area, for a left aligned table.</summary>
+    public double Indent { get; init; }
+    public LayoutAlign Align { get; init; }
+    public List<LayoutRow> Rows { get; init; } = [];
+}
+
 /// <summary>Sizes in points. Header and footer distances are measured from the page edge to the band.</summary>
 internal sealed class LayoutGeometry
 {

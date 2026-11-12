@@ -1,0 +1,210 @@
+# Cases of tables in the paginator. Same format as layout-input.txt, plus:
+# table cols=<w,w,...> [indent=<pt>] [align=center|right]: a table; row [header] [cantsplit] [height=<pt>] [exact]: a row;
+# cell [col=<n>] [span=<n>] [rowspan=<n>] [fill=RRGGBB] [margin=top,right,bottom,left] [valign=center|bottom] [top|right|bottom|left=<pt>:RRGGBB]:
+# a cell, whose paragraphs are the p lines that follow; endtable goes back to the section's body.
+case table cells, fills and borders
+section
+page 200 200 20 20 20 20
+table cols=80,60,20
+row
+cell fill=ffff00 top=1:000000 right=1:000000 bottom=1:000000 left=1:000000
+p
+r | First
+cell top=1:ff0000 right=1:ff0000 bottom=1:ff0000 left=1:ff0000 margin=4,4,4,4
+p
+r | Second cell with enough words to wrap
+row
+cell valign=center top=0.5:000000 bottom=0.5:000000 left=0.5:000000 right=0.5:000000
+p
+r | Centered in a tall row, with several words that wrap over a few lines of the cell
+cell valign=bottom
+p
+r | Bottom
+cell valign=center
+p
+r | Mid
+endtable
+p
+r | After the table
+case table spans and merged cells
+section
+page 200 200 20 20 20 20
+table cols=50,50,50
+row
+cell span=2 fill=dddddd
+p
+r | Wide
+cell rowspan=2 fill=ffcccc top=1:000000 left=1:000000 bottom=1:000000 right=1:000000
+p
+r | A merged cell with more text than two short rows hold
+row
+cell
+p
+r | x
+cell
+p
+r | y
+endtable
+case table columns without widths, centered and too wide
+section
+page 200 200 20 20 20 20
+table cols=0,40,0 align=center
+row
+cell
+p
+r | auto
+cell
+p
+r | fixed
+cell
+p
+r | auto
+endtable
+table cols=120,120 indent=10
+row
+cell
+p
+r | wider than the text area
+cell
+p
+r | scaled down
+endtable
+case table row splits across pages
+section
+page 200 200 20 20 20 20
+table cols=80,80
+row
+cell top=1:000000 left=1:000000 right=1:000000 bottom=1:000000
+p
+r | one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty twenty-one twenty-two twenty-three twenty-four twenty-five twenty-six twenty-seven twenty-eight
+cell top=1:000000 left=1:000000 right=1:000000 bottom=1:000000
+p after=6
+r | short
+p
+r | also short
+endtable
+p
+r | after
+case table header rows repeat and cantsplit rows move
+section
+page 200 200 20 20 20 20
+table cols=160
+row header
+cell fill=cccccc bottom=1:000000
+p
+r b | Head
+row cantsplit
+cell
+p
+r | row 1
+p
+r | row 1 b
+row cantsplit
+cell
+p
+r | row 2
+p
+r | row 2 b
+row cantsplit
+cell
+p
+r | row 3
+p
+r | row 3 b
+row cantsplit
+cell
+p
+r | row 4
+p
+r | row 4 b
+row cantsplit
+cell
+p
+r | row 5
+p
+r | row 5 b
+row cantsplit
+cell
+p
+r | row 6
+p
+r | row 6 b
+row cantsplit
+cell
+p
+r | row 7
+p
+r | row 7 b
+endtable
+case table minimum and exact heights
+section
+page 200 200 20 20 20 20
+table cols=80,80
+row height=40
+cell bottom=1:000000
+p
+r | At least 40
+cell bottom=1:000000
+p
+r | Tall tall tall tall tall tall tall tall tall tall tall tall tall tall tall tall
+row height=20 exact
+cell bottom=1:000000
+p
+r | Exact 20 and this text does not fit in it
+cell bottom=1:000000
+p
+r | y
+endtable
+case table merged rows too tall for a page are split
+section
+page 200 200 20 20 20 20
+table cols=80,80
+row
+cell rowspan=2
+p
+r | one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty twenty-one twenty-two twenty-three twenty-four twenty-five twenty-six twenty-seven twenty-eight twenty-nine thirty thirty-one thirty-two thirty-three thirty-four thirty-five thirty-six thirty-seven thirty-eight thirty-nine forty
+cell
+p
+r | a
+row
+cell
+p
+r | b
+endtable
+case table keeps a merged group together
+section
+page 200 200 20 20 20 20
+p
+r | Filler one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty twenty-one twenty-two twenty-three twenty-four twenty-five twenty-six twenty-seven twenty-eight twenty-nine thirty thirty-one thirty-two thirty-three thirty-four thirty-five thirty-six thirty-seven thirty-eight
+table cols=80,80
+row
+cell rowspan=2
+p
+r | Tall one two three four five six seven eight nine
+cell
+p
+r | a
+row
+cell
+p
+r | b
+endtable
+case table after a keep-with-next heading
+section
+page 200 200 20 20 20 20
+p
+r | Filler one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty twenty-one twenty-two twenty-three twenty-four twenty-five twenty-six twenty-seven twenty-eight twenty-nine thirty thirty-one
+p keep
+r | Heading
+table cols=160
+row
+cell
+p
+r | first row
+p
+r | second line
+row
+cell
+p
+r | next
+endtable

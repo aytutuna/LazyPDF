@@ -8,7 +8,7 @@ namespace LazyPDF.Core.Office;
 /// dropped at the top of a page that a full page ended. Header and footer bands are laid out last, when the
 /// page count is known.
 /// </summary>
-internal sealed class Paginator
+internal sealed partial class Paginator
 {
     public const int MaxPages = 10_000;
     private const double Tolerance = 0.01;
@@ -113,7 +113,7 @@ internal sealed class Paginator
         // A band that would leave no body gives way to the margins.
         if (bottom - top < MinArea) (top, bottom) = (g.Top, g.Height - g.Bottom);
 
-        var blocks = new List<ParagraphLines?>();
+        var blocks = new List<object?>();
         foreach (var block in section.Blocks)
         {
             _cancellation.ThrowIfCancellationRequested();
@@ -123,6 +123,7 @@ internal sealed class Paginator
                 Count(lines);
                 blocks.Add(lines);
             }
+            else if (block is LayoutTable table) blocks.Add(TableLayout.Measure(table, _fonts, width, bottom - top, Count));
             else blocks.Add(null);
         }
 
@@ -130,7 +131,8 @@ internal sealed class Paginator
         for (int i = 0; i < blocks.Count; i++)
         {
             _cancellation.ThrowIfCancellationRequested();
-            if (blocks[i] is { } lines) Place(blocks, i, lines, section, top, bottom);
+            if (blocks[i] is ParagraphLines lines) Place(blocks, i, lines, section, top, bottom);
+            else if (blocks[i] is TableLines table) PlaceTable(table, section, top, bottom);
             else NewPage(section, top, bottom, hard: true);
         }
     }
@@ -141,7 +143,7 @@ internal sealed class Paginator
         _pages.Add(new Page(section, top, bottom, hard));
     }
 
-    private void Place(List<ParagraphLines?> blocks, int index, ParagraphLines lines, LayoutSection section, double top, double bottom)
+    private void Place(List<object?> blocks, int index, ParagraphLines lines, LayoutSection section, double top, double bottom)
     {
         var paragraph = lines.Source;
         if (paragraph.PageBreakBefore && _pages[^1].HasContent) NewPage(section, top, bottom, hard: true);
@@ -176,7 +178,7 @@ internal sealed class Paginator
             page.Y += before;
             for (int k = placed; k < placed + take; k++)
             {
-                EmitLine(page.Boxes, lines.Lines[k], section.Page, page.Y);
+                EmitLine(page.Boxes, lines.Lines[k], section.Page.Left, page.Y);
                 page.Y += lines.Lines[k].Height;
             }
             page.HasContent = true;
@@ -188,21 +190,22 @@ internal sealed class Paginator
 
     // A chain of keep-with-next paragraphs and the first lines of the one after it move to a fresh page when
     // they would not fit in what is left of this one, if they fit on a page of their own.
-    private void KeepTogether(List<ParagraphLines?> blocks, int index, LayoutSection section, double top, double bottom)
+    private void KeepTogether(List<object?> blocks, int index, LayoutSection section, double top, double bottom)
     {
         var page = _pages[^1];
         if (!page.HasContent) return;
         double need = 0;
         int k = index;
-        for (; k < blocks.Count && blocks[k] is { Source.KeepWithNext: true } member; k++)
+        for (; k < blocks.Count && blocks[k] is ParagraphLines { Source.KeepWithNext: true } member; k++)
         {
             need += member.Source.Before + member.Height + member.Source.After;
         }
-        if (k < blocks.Count && blocks[k] is { } next)
+        if (k < blocks.Count && blocks[k] is ParagraphLines next)
         {
             int lead = Math.Min(next.Lines.Count, next.Source.WidowControl ? 2 : 1);
             need += next.Source.Before + next.Lines.Take(lead).Sum(l => l.Height);
         }
+        else if (k < blocks.Count && blocks[k] is TableLines { Rows.Count: > 0 } table) need += table.Rows[0].Height;
         if (need > page.Bottom - page.Y + Tolerance && need <= page.Bottom - page.Top) NewPage(section, top, bottom, hard: false);
     }
 
@@ -214,7 +217,7 @@ internal sealed class Paginator
             y += paragraph.Source.Before;
             foreach (var line in paragraph.Lines)
             {
-                EmitLine(boxes, line, geometry, y);
+                EmitLine(boxes, line, geometry.Left, y);
                 y += line.Height;
             }
             y += paragraph.Source.After;
@@ -223,7 +226,7 @@ internal sealed class Paginator
 
     // Highlights go under the text and underlines and strikes over it. A piece is a stretch of one style;
     // tabs, line breaks and the spaces that end the line draw nothing and split the pieces.
-    private static void EmitLine(List<LayoutBox> boxes, LayoutLine line, LayoutGeometry geometry, double top)
+    private static void EmitLine(List<LayoutBox> boxes, LayoutLine line, double originX, double top)
     {
         int ink = line.Atoms.FindLastIndex(a => !a.IsBlank || a.IsTab);
         var under = new List<LayoutBox>();
@@ -249,7 +252,7 @@ internal sealed class Paginator
                 if (line.Atoms[k].Extra > 0) extra = line.Atoms[k].Extra;
             }
             var run = first.Run;
-            double x = geometry.Left + first.X, width = last.X + last.Width + last.Extra - first.X;
+            double x = originX + first.X, width = last.X + last.Width + last.Extra - first.X;
             double shift = run.Shift, size = first.Size, bar = size * 0.05;
             if (run.Highlight is { } highlight)
             {

@@ -54,6 +54,17 @@ public class OfficeLayoutTests
     }
 
     [Fact]
+    public void TablesGoldenFile()
+    {
+        var output = new StringBuilder();
+        foreach (var (name, document) in OfficeLayoutSpec.Read(Golden.Input("office-layout", "tables-input.txt")))
+        {
+            output.Append("> ").Append(name).Append('\n').Append(Dump(document));
+        }
+        Golden.Check("office-layout", "tables-output.txt", output.ToString());
+    }
+
+    [Fact]
     public void LineBreakGoldenFile()
     {
         var output = new StringBuilder();
