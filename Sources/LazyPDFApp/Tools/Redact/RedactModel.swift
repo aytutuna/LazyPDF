@@ -157,7 +157,7 @@ public final class RedactModel: ToolPanelModel {
     }
 
     public func markSelection() async {
-        guard let viewer, let state, let host else { return }
+        guard let viewer, let state, let host, !restricted else { return }
         let runs = await viewer.selection()
         let items = runs.filter { !$0.quads.isEmpty }.map { MarkItem(RedactionMark($0.page, $0.quads), RedactJob.clip($0.text)) }
         let added = state.marks.add(items)

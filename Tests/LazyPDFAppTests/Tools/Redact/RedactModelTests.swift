@@ -211,6 +211,22 @@ final class RedactModelTests: XCTestCase {
         XCTAssertFalse(model.action!.canRun())
     }
 
+    func test_aMenuMarkOnAFileThatForbidsChangesAddsNothing() async throws {
+        let rig = try SecurityRig(try Pdfs.restricted(.print), password: "")
+        rig.viewer.runs = [SelectedRun(page: 0, range: TextRange(0, 4), text: "Hello", quads: [TextQuad(100, 700, 180, 700, 180, 712, 100, 712)])]
+        let model = RedactModel(fonts: FakeFonts(), images: FakeCodec())
+        rig.host.pendingMark = .redact
+
+        rig.attach(model)
+        await Task.yield()
+        await Task.yield()
+        await model.markSelection()
+
+        XCTAssertTrue(model.restricted)
+        XCTAssertEqual(model.marks.count, 0)
+        XCTAssertEqual(rig.tab.pendingMarks, 0)
+    }
+
     func test_aRunOpensTheCopyWithoutThePasswordAndTheMarksAreDoneWith() async throws {
         let (model, rig) = try attached()
         await model.markKind()
