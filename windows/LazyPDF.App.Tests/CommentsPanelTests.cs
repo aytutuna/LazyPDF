@@ -216,6 +216,24 @@ public sealed class CommentsPanelTests
     });
 
     [Fact]
+    public Task ACommentWrittenInlineCanBeEdited() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        f.Marker.Add(MarkTool.Note, 0, [new Point(60, 80)], Red, "check");
+        var page = f.Document.Pages[0];
+        page.Dictionary["Annots"] = new PdfArray([.. f.Document.Array(page.Dictionary, "Annots")!.Items.Select(i => (PdfObject)f.Document.Resolve(i)!)]);
+        f.Tab.Commit("Mark");
+        var panel = Open(f, new RecordingHost());
+
+        Click(panel, "EditButton");
+        ((TextBox)panel.FindName("FullText")).Text = "checked";
+        Click(panel, "SaveEditButton");
+
+        Assert.Equal("checked", PdfComments.List(f.Document)[0].Text);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task EditingTheTextIsOneUndoStep() => Sta.Run(() =>
     {
         using var f = new CommentFixture();

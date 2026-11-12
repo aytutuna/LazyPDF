@@ -110,12 +110,21 @@ public partial class CommentsSidePanel
         return true;
     }
 
+    // By object number; an annotation written inline in /Annots has none, so it is matched by its dictionary or, once the page was read again, by what it shows.
+    private static PdfAnnotation? LiveAnnotation(DocumentTab tab, PdfAnnotation old, int pageIndex)
+    {
+        if (pageIndex < 0 || pageIndex >= tab.Document.Pages.Count) return null;
+        var live = PdfAnnotations.Read(tab.Document, tab.Document.Pages[pageIndex]);
+        if (old.Reference is { } reference) return live.FirstOrDefault(a => a.Reference?.Number == reference.Number);
+        return live.FirstOrDefault(a => ReferenceEquals(a.Dictionary, old.Dictionary))
+            ?? live.FirstOrDefault(a => a.Reference is null && a.Type == old.Type && a.Rect == old.Rect && a.Contents == old.Contents);
+    }
+
     private void SaveText(DocumentTab tab, IToolHost host, CommentRow row, string text)
     {
         if (!ReferenceEquals(Tab, tab) || MarkWork.Running) return;
         // An undo while the notice was up may have taken the comment out; the row's own copy would still look fine.
-        if (row.Comment.Annotation.Reference is not { } reference || row.Comment.PageIndex >= tab.Document.Pages.Count
-            || PdfAnnotations.Read(tab.Document, tab.Document.Pages[row.Comment.PageIndex]).FirstOrDefault(a => a.Reference?.Number == reference.Number) is not { } live)
+        if (LiveAnnotation(tab, row.Comment.Annotation, row.Comment.PageIndex) is not { } live)
         {
             host.SetStatus(Loc.T("That comment is no longer in the file."));
             return;
