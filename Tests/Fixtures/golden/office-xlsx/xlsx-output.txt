@@ -1,0 +1,257 @@
+> cell types
+workbook mdw=7
+sheet "Types" col=48.00 row=15.00
+  row 1
+    A1 n s=0 "12.5"
+    B1 t s=0 "shared"
+    C1 t s=0 "12.5x"
+    D1 t s=0 "inline"
+    E1 b s=0 "TRUE"
+    F1 e s=0 "#DIV/0!"
+    G1 n s=0 "45366.75"
+  row 2
+    A2 t s=0 "Rich text" rich=Arial,14.00,ff0000,b
+    B2 t s=0 "  padded  "
+    C2 t s=0 "with phonetic"
+    D2 b s=0 "FALSE"
+    E2 n s=0 "1000"
+    F2 n s=0 "-0.000123"
+    G2 n s=0 "45366"
+  row 3
+    A3 t s=0 "inline rich" rich=Calibri,11.00,-,i,u
+    B3 n s=0 "0.52083333333"
+    C3 t s=0 "not a date"
+skipped rich-text 2
+> number formats through styles
+workbook mdw=7
+font 0 Calibri 11.00 -
+fill 0 -
+fill 1 - unsupported
+border 0 - - - -
+xf 0 font=0 fill=0 border=0 fmt=0 general bottom indent=0
+xf 1 font=0 fill=0 border=0 fmt=14 general bottom indent=0
+xf 2 font=0 fill=0 border=0 fmt=9 general bottom indent=0
+xf 3 font=0 fill=0 border=0 fmt=164 general bottom indent=0
+xf 4 font=0 fill=0 border=0 fmt=165 general bottom indent=0
+xf 5 font=0 fill=0 border=0 fmt=49 general bottom indent=0
+xf 6 font=0 fill=0 border=0 fmt=22 general bottom indent=0
+xf 7 font=0 fill=0 border=0 fmt=4 general bottom indent=0
+xf 8 font=0 fill=0 border=0 fmt=999 general bottom indent=0
+sheet "Numbers" col=48.00 row=15.00
+  row 1
+    A1 n s=1 "3/15/2023"
+    B1 n s=2 "26%"
+    C1 n s=3 "3.1x"
+    D1 n s=4 "-1,234.50" color=0000ff
+    E1 n s=4 "1,234.50" color=ff0000
+  row 2
+    A2 n s=5 "7"
+    B2 n s=6 "3/15/2023 18:00"
+    C2 n s=7 "1,234,567.89"
+    D2 n s=8 "1234.5"
+    E2 t s=5 "00123"
+    F2 n s=0 "1"
+> columns and rows
+workbook mdw=7
+sheet "Layout" col=48.00 row=18.00
+  cols 1-2 48.00
+  cols 3-3 108.75
+  cols 4-4 48.00 hidden
+  cols 6-16384 26.25
+  row 1 h=30.00
+    A1 n s=0 "1"
+  row 3 hidden
+    A3 n s=0 "3"
+  row 7 h=0.50
+  row 8 h=12.00
+    A8 n s=0 "8"
+> default column width from the base
+workbook mdw=7
+sheet "Base" col=60.00 row=200.00
+  row 1
+    A1 n s=0 "1"
+> default column width stated
+workbook mdw=7
+sheet "Stated" col=66.75 row=15.00
+  row 1
+    A1 n s=0 "1"
+> column width follows the default font
+workbook mdw=7
+sheet "Fonts" col=48.00 row=15.00
+  cols 1-1 56.25
+  row 1
+    A1 n s=0 "1"
+> hidden and other sheets
+workbook mdw=7
+sheet "One" col=48.00 row=15.00
+  row 1
+    A1 n s=0 "1"
+sheet "Last" col=48.00 row=15.00
+  row 1
+    A1 n s=0 "4"
+skipped chart-sheet 1
+skipped hidden-sheet 2
+skipped other-sheet 2
+> print area and titles
+workbook mdw=7
+sheet "Data" col=48.00 row=15.00
+  row 1
+    A1 n s=0 "1"
+  printarea A1:D20,F1:G5
+  titlerows 1:2
+  titlecols A:B
+sheet "My, 'Sheet'!" col=48.00 row=15.00
+  row 1
+    A1 n s=0 "2"
+  printarea B2:B2
+  titlerows 3:3
+skipped hidden-sheet 1
+> odd print names
+workbook mdw=7
+sheet "Data" col=48.00 row=15.00
+  printarea B3:D9
+  titlecols A:C
+> merged cells
+workbook mdw=7
+sheet "Merge" col=48.00 row=15.00
+  row 1
+    A1 n s=0 "1"
+  merge A1:C3
+  merge D4:E5
+> fills borders and alignment
+workbook mdw=7
+font 0 Calibri 11.00 -
+font 1 Times_New_Roman 14.00 0000ff b i u s
+font 2 Arial 9.00 ff0000
+fill 0 -
+fill 1 - unsupported
+fill 2 ffff00
+fill 3 - unsupported
+fill 4 - unsupported
+border 0 - - - -
+border 1 thin:000000 medium:- dashed:- -
+border 2 double:0000ff hair:- - -
+xf 0 font=0 fill=0 border=0 fmt=0 general bottom indent=0
+xf 1 font=1 fill=2 border=1 fmt=0 center top indent=0 wrap
+xf 2 font=2 fill=3 border=2 fmt=0 centercontinuous distributed indent=2
+xf 3 font=0 fill=4 border=0 fmt=0 fill bottom indent=0 rotated
+xf 4 font=9 fill=9 border=9 fmt=0 general justify indent=250 wrap rotated
+xf 5 font=0 fill=2 border=0 fmt=0 general bottom indent=0
+xf 6 font=0 fill=0 border=1 fmt=0 general bottom indent=0
+xf 7 font=0 fill=0 border=2 fmt=0 general bottom indent=0
+xf 8 font=0 fill=3 border=0 fmt=0 general bottom indent=0
+sheet "Styled" col=48.00 row=15.00
+  row 1
+    A1 n s=1 "1"
+    B1 t s=2 "two"
+    C1 n s=3 "3"
+    D1 n s=4 "4"
+  row 2
+    A2 - s=5 ""
+    B2 - s=6 ""
+    C2 - s=7 ""
+    E2 - s=1 ""
+skipped fill-pattern 2
+skipped text-rotation 2
+> theme and tint
+workbook mdw=7
+font 0 Calibri 11.00 000000
+font 1 Calibri 11.00 4472c4
+font 2 Calibri 11.00 8faadc
+font 3 Calibri 11.00 c55a11
+font 4 Calibri 11.00 f2f2f2
+fill 0 -
+border 0 - - - -
+xf 0 font=0 fill=0 border=0 fmt=0 general bottom indent=0
+sheet "Colors" col=48.00 row=15.00
+> theme missing
+workbook mdw=7
+font 0 Calibri 11.00 000000
+font 1 Calibri 11.00 ffffff
+font 2 Calibri 11.00 -
+fill 0 -
+border 0 - - - -
+xf 0 font=0 fill=0 border=0 fmt=0 general bottom indent=0
+sheet "Colors" col=48.00 row=15.00
+> date system 1904
+workbook date1904 mdw=7
+font 0 Calibri 11.00 -
+fill 0 -
+border 0 - - - -
+xf 0 font=0 fill=0 border=0 fmt=0 general bottom indent=0
+xf 1 font=0 fill=0 border=0 fmt=14 general bottom indent=0
+sheet "Mac" col=48.00 row=15.00
+  row 1
+    A1 n s=1 "1/1/1904"
+    B1 n s=1 "1/2/1908"
+    C1 n s=1 "1/2/1904"
+> date system 1900 with ISO dates
+workbook mdw=7
+font 0 Calibri 11.00 -
+fill 0 -
+border 0 - - - -
+xf 0 font=0 fill=0 border=0 fmt=0 general bottom indent=0
+xf 1 font=0 fill=0 border=0 fmt=14 general bottom indent=0
+sheet "Win" col=48.00 row=15.00
+  row 1
+    A1 n s=1 "1/1/1900"
+    B1 n s=1 "3/1/1900"
+    C1 n s=1 "3/15/2024"
+    D1 t s=1 "1850-01-01"
+    E1 t s=1 "2024-13-01"
+    F1 t s=1 "2024-03-15T25:00:00"
+> formulas use their cached values
+workbook mdw=7
+font 0 Calibri 11.00 -
+fill 0 -
+fill 1 cccccc
+border 0 - - - -
+xf 0 font=0 fill=0 border=0 fmt=0 general bottom indent=0
+xf 1 font=0 fill=1 border=0 fmt=0 general bottom indent=0
+sheet "Calc" col=48.00 row=15.00
+  row 1
+    A1 n s=0 "2"
+    E1 - s=1 ""
+    F1 t s=0 "kept"
+    G1 n s=0 "7"
+skipped formula-no-value 4
+> cell positions
+workbook mdw=7
+sheet "Places" col=48.00 row=15.00
+  row 1
+    A1 n s=0 "1"
+    B1 n s=0 "2"
+    D1 n s=0 "4"
+  row 2
+    A2 n s=0 "1"
+    C2 n s=0 "33"
+    XFD2 n s=0 "16384"
+skipped cell-outside-grid 2
+> escaped characters in strings
+workbook mdw=7
+sheet "Escapes" col=48.00 row=15.00
+  row 1
+    A1 t s=0 "a\u000db\tc"
+    B1 t s=0 "_x0041_ and A"
+    C1 t s=0 "_x00zz_ _x123_ _xD83D__xDE00_ _X0041_ _x0041"
+    D1 t s=0 "tailA"
+    E1 t s=0 "x\ny"
+> rich text in a styled cell
+workbook mdw=7
+font 0 Calibri 11.00 -
+font 1 Cambria 12.00 123456 b
+fill 0 -
+border 0 - - - -
+xf 0 font=0 fill=0 border=0 fmt=0 general bottom indent=0
+xf 1 font=1 fill=0 border=0 fmt=0 general bottom indent=0
+sheet "Rich" col=48.00 row=15.00
+  row 1
+    A1 t s=1 "first second" rich=Cambria,12.00,123456,i
+    B1 t s=0 "no props bold" rich=Calibri,11.00,-
+    C1 t s=1 "big" rich=Courier_New,20.00,000000,s
+skipped rich-text 3
+> worksheet part written out
+workbook mdw=7
+sheet "Odd" col=48.00 row=15.00
+  row 1
+    A1 t s=0 "no relationship needed"

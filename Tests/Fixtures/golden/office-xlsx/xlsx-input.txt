@@ -1,0 +1,173 @@
+# Cases for the XLSX reader. Format in LazyPDF.Core.Tests/Office/XlsxSpec.cs. Output: xlsx-output.txt.
+> cell types
+@workbook
+<sheets><sheet name="Types" sheetId="1" r:id="rId1"/></sheets>
+@strings
+<si><t>shared</t></si><si><r><rPr><b/><sz val="14"/><color rgb="FFFF0000"/><rFont val="Arial"/></rPr><t xml:space="preserve">Rich </t></r><r><t>text</t></r></si><si><t xml:space="preserve">  padded  </t></si><si><phoneticPr fontId="1"/><t>with phonetic</t><rPh sb="0" eb="1"><t>ignored</t></rPh></si>
+@sheet1
+<sheetData><row r="1"><c r="A1"><v>12.5</v></c><c r="B1" t="s"><v>0</v></c><c r="C1" t="str"><f>A1&amp;"x"</f><v>12.5x</v></c><c r="D1" t="inlineStr"><is><t>inline</t></is></c><c r="E1" t="b"><v>1</v></c><c r="F1" t="e"><v>#DIV/0!</v></c><c r="G1" t="d"><v>2024-03-15T18:00:00</v></c></row>
+<row r="2"><c r="A2" t="s"><v>1</v></c><c r="B2" t="s"><v>2</v></c><c r="C2" t="s"><v>3</v></c><c r="D2" t="b"><v>0</v></c><c r="E2" t="n"><v>1E3</v></c><c r="F2"><v>-0.000123</v></c><c r="G2" t="d"><v>2024-03-15</v></c></row>
+<row r="3"><c r="A3" t="inlineStr"><is><r><rPr><i/><u/></rPr><t>in</t></r><r><t>line rich</t></r></is></c><c r="B3" t="d"><v>12:30</v></c><c r="C3" t="d"><v>not a date</v></c><c r="D3" t="s"><v>99</v></c><c r="E3"><v>abc</v></c><c r="F3"><v>1e999</v></c></row></sheetData>
+> number formats through styles
+@workbook
+<sheets><sheet name="Numbers" sheetId="1" r:id="rId1"/></sheets>
+@styles
+<numFmts count="2"><numFmt numFmtId="164" formatCode="0.0&quot;x&quot;"/><numFmt numFmtId="165" formatCode="[Red]#,##0.00;[Blue]-#,##0.00"/></numFmts>
+<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>
+<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
+<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+<cellXfs count="9"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/><xf numFmtId="14"/><xf numFmtId="9"/><xf numFmtId="164"/><xf numFmtId="165"/><xf numFmtId="49"/><xf numFmtId="22"/><xf numFmtId="4"/><xf numFmtId="999"/></cellXfs>
+@strings
+<si><t>00123</t></si>
+@sheet1
+<sheetData><row r="1"><c r="A1" s="1"><v>45000</v></c><c r="B1" s="2"><v>0.256</v></c><c r="C1" s="3"><v>3.14159</v></c><c r="D1" s="4"><v>-1234.5</v></c><c r="E1" s="4"><v>1234.5</v></c></row>
+<row r="2"><c r="A2" s="5"><v>007</v></c><c r="B2" s="6"><v>45000.75</v></c><c r="C2" s="7"><v>1234567.891</v></c><c r="D2" s="8"><v>1234.5</v></c><c r="E2" s="5" t="s"><v>0</v></c><c r="F2" s="50"><v>1</v></c></row></sheetData>
+> columns and rows
+@workbook
+<sheets><sheet name="Layout" sheetId="1" r:id="rId1"/></sheets>
+@sheet1
+<sheetFormatPr defaultRowHeight="18"/>
+<cols><col min="1" max="2" width="9.140625" customWidth="1"/><col min="3" max="3" width="20.7109375" customWidth="1"/><col min="4" max="4" width="9.140625" hidden="1"/><col min="6" max="20000" width="5"/><col min="9" max="2"/><col min="0" max="1" width="3"/></cols>
+<sheetData><row r="1" ht="30" customHeight="1"><c r="A1"><v>1</v></c></row><row r="3" hidden="1"><c r="A3"><v>3</v></c></row><row r="5"/><row r="7" ht="0.5"/><row ht="12"><c><v>8</v></c></row></sheetData>
+> default column width from the base
+@workbook
+<sheets><sheet name="Base" sheetId="1" r:id="rId1"/></sheets>
+@sheet1
+<sheetFormatPr baseColWidth="10" defaultRowHeight="200"/>
+<sheetData><row r="1"><c r="A1"><v>1</v></c></row></sheetData>
+> default column width stated
+@workbook
+<sheets><sheet name="Stated" sheetId="1" r:id="rId1"/></sheets>
+@sheet1
+<sheetFormatPr defaultColWidth="12.7109375" defaultRowHeight="500"/>
+<sheetData><row r="1"><c r="A1"><v>1</v></c></row></sheetData>
+> column width follows the default font
+@workbook
+<sheets><sheet name="Fonts" sheetId="1" r:id="rId1"/></sheets>
+@styles
+<fonts count="1"><font><sz val="10"/><name val="Arial"/></font></fonts>
+<cellXfs count="1"><xf numFmtId="0" fontId="0"/></cellXfs>
+@sheet1
+<cols><col min="1" max="1" width="10.7109375"/></cols>
+<sheetData><row r="1"><c r="A1"><v>1</v></c></row></sheetData>
+> hidden and other sheets
+@workbook
+<sheets><sheet name="One" sheetId="1" r:id="rId1"/><sheet name="Two" sheetId="2" state="hidden" r:id="rId2"/><sheet name="Three" sheetId="3" state="veryHidden" r:id="rId3"/><sheet name="Chart" sheetId="4" r:id="rId9"/><sheet name="Dialog" sheetId="5" r:id="rId8"/><sheet name="Lost" sheetId="6" r:id="rId7"/><sheet name="Last" sheetId="7" r:id="rId4"/></sheets>
+@relationships
+<Relationship Id="rId9" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/chartsheet" Target="chartsheets/sheet1.xml"/><Relationship Id="rId8" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/dialogsheet" Target="dialogsheets/sheet1.xml"/>
+@part xl/chartsheets/sheet1.xml
+<chartsheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"/>
+@part xl/dialogsheets/sheet1.xml
+<dialogsheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"/>
+@sheet1
+<sheetData><row r="1"><c r="A1"><v>1</v></c></row></sheetData>
+@sheet2
+<sheetData><row r="1"><c r="A1"><v>2</v></c></row></sheetData>
+@sheet3
+<sheetData><row r="1"><c r="A1"><v>3</v></c></row></sheetData>
+@sheet4
+<sheetData><row r="1"><c r="A1"><v>4</v></c></row></sheetData>
+> print area and titles
+@workbook
+<sheets><sheet name="Data" sheetId="1" r:id="rId1"/><sheet name="My, 'Sheet'!" sheetId="2" r:id="rId2"/><sheet name="Gone" sheetId="3" state="hidden" r:id="rId3"/></sheets>
+<definedNames><definedName name="_xlnm.Print_Area" localSheetId="0">Data!$A$1:$D$20,Data!$F$1:$G$5</definedName><definedName name="_xlnm.Print_Titles" localSheetId="0">Data!$A:$B,Data!$1:$2</definedName><definedName name="_xlnm.Print_Area" localSheetId="1">'My, ''Sheet''!'!B2</definedName><definedName name="_xlnm.Print_Titles" localSheetId="1">'My, ''Sheet''!'!$3:$3</definedName><definedName name="_xlnm.Print_Area">Data!$A$1:$B$2</definedName><definedName name="_xlnm.Print_Area" localSheetId="2">Gone!$A$1:$B$2</definedName><definedName name="_xlnm.Print_Area" localSheetId="9">Data!$A$1:$B$2</definedName><definedName name="Other" localSheetId="0">Data!$A$1</definedName></definedNames>
+@sheet1
+<sheetData><row r="1"><c r="A1"><v>1</v></c></row></sheetData>
+@sheet2
+<sheetData><row r="1"><c r="A1"><v>2</v></c></row></sheetData>
+@sheet3
+<sheetData/>
+> odd print names
+@workbook
+<sheets><sheet name="Data" sheetId="1" r:id="rId1"/></sheets>
+<definedNames><definedName name="_xlnm.Print_Area" localSheetId="0">Data!$A$1:$XFE$5,Data!$D$9:$B$3,Data!A:C,Data!Names,Data!$A$0:$B$2,Data!$1048576:$1048577</definedName><definedName name="_xlnm.Print_Titles" localSheetId="0">Data!$C:$A,Data!$A$1:$B$2</definedName></definedNames>
+@sheet1
+<sheetData/>
+> merged cells
+@workbook
+<sheets><sheet name="Merge" sheetId="1" r:id="rId1"/></sheets>
+@sheet1
+<sheetData><row r="1"><c r="A1"><v>1</v></c></row></sheetData>
+<mergeCells count="6"><mergeCell ref="A1:C3"/><mergeCell ref="E5:D4"/><mergeCell ref="F1"/><mergeCell ref="G1:G1"/><mergeCell ref="H1:XFE2"/><mergeCell ref="nonsense"/></mergeCells>
+> fills borders and alignment
+@workbook
+<sheets><sheet name="Styled" sheetId="1" r:id="rId1"/></sheets>
+@styles
+<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><i/><u val="double"/><strike/><sz val="14"/><color rgb="FF0000FF"/><name val="Times New Roman"/></font><font><b val="0"/><u val="none"/><sz val="9"/><color indexed="10"/><name val="Arial"/></font></fonts>
+<fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFFF00"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="lightGray"><fgColor rgb="FF00FF00"/></patternFill></fill><fill><gradientFill degree="90"><stop position="0"><color rgb="FFFF0000"/></stop></gradientFill></fill></fills>
+<borders count="3"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FF000000"/></left><right style="medium"><color auto="1"/></right><top style="dashed"/><bottom style="none"><color rgb="FFFF0000"/></bottom></border><border><start style="double"><color indexed="12"/></start><end style="hair"/></border></borders>
+<cellXfs count="9"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="1"><alignment horizontal="center" vertical="top" wrapText="1"/></xf><xf numFmtId="0" fontId="2" fillId="3" borderId="2"><alignment horizontal="centerContinuous" vertical="distributed" indent="2"/></xf><xf numFmtId="0" fontId="0" fillId="4" borderId="0"><alignment horizontal="fill" textRotation="90"/></xf><xf numFmtId="0" fontId="9" fillId="9" borderId="9"><alignment horizontal="bogus" vertical="justify" wrapText="true" indent="9999" textRotation="255"/></xf><xf numFmtId="0" fontId="0" fillId="2" borderId="0"/><xf numFmtId="0" fontId="0" fillId="0" borderId="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="2"/><xf numFmtId="0" fontId="0" fillId="3" borderId="0"/></cellXfs>
+@sheet1
+<sheetData><row r="1"><c r="A1" s="1"><v>1</v></c><c r="B1" s="2" t="inlineStr"><is><t>two</t></is></c><c r="C1" s="3"><v>3</v></c><c r="D1" s="4"><v>4</v></c></row>
+<row r="2"><c r="A2" s="5"/><c r="B2" s="6"/><c r="C2" s="7"/><c r="D2" s="8"/><c r="E2" s="1"/><c r="F2"/><c r="G2" s="0"><v></v></c></row></sheetData>
+> theme and tint
+@workbook
+<sheets><sheet name="Colors" sheetId="1" r:id="rId1"/></sheets>
+@theme
+<a:themeElements><a:clrScheme name="t"><a:dk1><a:sysClr val="windowText" lastClr="000000"/></a:dk1><a:lt1><a:sysClr val="window" lastClr="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="44546A"/></a:dk2><a:lt2><a:srgbClr val="E7E6E6"/></a:lt2><a:accent1><a:srgbClr val="4472C4"/></a:accent1><a:accent2><a:srgbClr val="ED7D31"/></a:accent2></a:clrScheme></a:themeElements>
+@styles
+<fonts count="5"><font><sz val="11"/><color theme="1"/><name val="Calibri"/></font><font><sz val="11"/><color theme="4"/><name val="Calibri"/></font><font><sz val="11"/><color theme="4" tint="0.3999755851924192"/><name val="Calibri"/></font><font><sz val="11"/><color theme="5" tint="-0.249977111117893"/><name val="Calibri"/></font><font><sz val="11"/><color theme="0" tint="-0.0499893185216834"/><name val="Calibri"/></font></fonts>
+<cellXfs count="1"><xf numFmtId="0" fontId="0"/></cellXfs>
+@sheet1
+<sheetData/>
+> theme missing
+@workbook
+<sheets><sheet name="Colors" sheetId="1" r:id="rId1"/></sheets>
+@styles
+<fonts count="3"><font><sz val="11"/><color theme="1"/><name val="Calibri"/></font><font><sz val="11"/><color theme="0"/><name val="Calibri"/></font><font><sz val="11"/><color theme="4"/><name val="Calibri"/></font></fonts>
+<cellXfs count="1"><xf numFmtId="0" fontId="0"/></cellXfs>
+@sheet1
+<sheetData/>
+> date system 1904
+@workbook
+<workbookPr date1904="1"/>
+<sheets><sheet name="Mac" sheetId="1" r:id="rId1"/></sheets>
+@styles
+<cellXfs count="2"><xf numFmtId="0"/><xf numFmtId="14"/></cellXfs>
+@sheet1
+<sheetData><row r="1"><c r="A1" s="1"><v>0</v></c><c r="B1" s="1"><v>1462</v></c><c r="C1" s="1" t="d"><v>1904-01-02</v></c></row></sheetData>
+> date system 1900 with ISO dates
+@workbook
+<sheets><sheet name="Win" sheetId="1" r:id="rId1"/></sheets>
+@styles
+<cellXfs count="2"><xf numFmtId="0"/><xf numFmtId="14"/></cellXfs>
+@sheet1
+<sheetData><row r="1"><c r="A1" s="1" t="d"><v>1900-01-01</v></c><c r="B1" s="1" t="d"><v>1900-03-01</v></c><c r="C1" s="1" t="d"><v>2024-03-15T12:00:00Z</v></c><c r="D1" s="1" t="d"><v>1850-01-01</v></c><c r="E1" s="1" t="d"><v>2024-13-01</v></c><c r="F1" s="1" t="d"><v>2024-03-15T25:00:00</v></c></row></sheetData>
+> formulas use their cached values
+@workbook
+<sheets><sheet name="Calc" sheetId="1" r:id="rId1"/></sheets>
+@styles
+<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFCCCCCC"/></patternFill></fill></fills>
+<cellXfs count="2"><xf numFmtId="0"/><xf numFmtId="0" fillId="1"/></cellXfs>
+@sheet1
+<sheetData><row r="1"><c r="A1"><f>1+1</f><v>2</v></c><c r="B1"><f>NOW()</f></c><c r="C1" t="str"><f>"x"</f></c><c r="D1" t="e"><f>1/0</f></c><c r="E1" s="1"><f>SUM(A1:A9)</f></c><c r="F1" t="inlineStr"><f>x</f><is><t>kept</t></is></c><c r="G1"><f t="shared" ref="G1:G2" si="0">A1</f><v>7</v></c></row></sheetData>
+> cell positions
+@workbook
+<sheets><sheet name="Places" sheetId="1" r:id="rId1"/></sheets>
+@sheet1
+<sheetData><row r="2"><c r="C2"><v>3</v></c><c r="A2"><v>1</v></c><c r="C2"><v>33</v></c><c><v>after C</v></c><c r="XFD2"><v>16384</v></c><c r="XFE2"><v>16385</v></c><c r="B0"><v>0</v></c></row>
+<row r="1"><c><v>1</v></c><c><v>2</v></c></row><row><c><v>nr</v></c></row><row r="1"><c r="D1"><v>4</v></c></row></sheetData>
+> escaped characters in strings
+@workbook
+<sheets><sheet name="Escapes" sheetId="1" r:id="rId1"/></sheets>
+@strings
+<si><t>a_x000D_b_x0009_c</t></si><si><t>_x005F_x0041_ and _x0041_</t></si><si><t>_x00zz_ _x123_ _xD83D__xDE00_ _X0041_ _x0041</t></si><si><t>tail_x0041_</t></si>
+@sheet1
+<sheetData><row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c><c r="C1" t="s"><v>2</v></c><c r="D1" t="s"><v>3</v></c><c r="E1" t="str"><v>x_x000A_y</v></c></row></sheetData>
+> rich text in a styled cell
+@workbook
+<sheets><sheet name="Rich" sheetId="1" r:id="rId1"/></sheets>
+@styles
+<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="12"/><color rgb="FF123456"/><name val="Cambria"/></font></fonts>
+<cellXfs count="2"><xf numFmtId="0" fontId="0"/><xf numFmtId="0" fontId="1"/></cellXfs>
+@strings
+<si><r><rPr><i/></rPr><t>first</t></r><r><rPr><b/></rPr><t> second</t></r></si><si><r><t>no props</t></r><r><rPr><b/></rPr><t> bold</t></r></si><si><r><rPr><sz val="20"/><rFont val="Courier New"/><color theme="1"/><strike/></rPr><t>big</t></r></si>
+@sheet1
+<sheetData><row r="1"><c r="A1" s="1" t="s"><v>0</v></c><c r="B1" s="0" t="s"><v>1</v></c><c r="C1" s="1" t="s"><v>2</v></c></row></sheetData>
+> worksheet part written out
+@workbook
+<sheets><sheet name="Odd" sheetId="1" r:id="rId1"/></sheets>
+@part xl/worksheets/sheet1.xml
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>no relationship needed</t></is></c></row></sheetData></worksheet>
+@relationships
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
