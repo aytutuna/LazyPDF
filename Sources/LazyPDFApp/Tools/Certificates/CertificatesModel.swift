@@ -304,12 +304,34 @@ public final class CertificatesModel: ToolPanelModel {
     }
 
     /// Asks the certificate servers for proof about the signatures the file has and stores it in the file.
+    /// Names the servers first and starts once the person agrees.
     public func addValidation() async {
         guard let tab, let host else { return }
         if let refusal = CertificateSigning.refusal(tab.document, newField: false) {
             host.showProblem(refusal)
             return
         }
+        var servers = L10n.t("the servers named in its certificates")
+        if tab.certificate == nil {
+            working = true
+            let hosts = await ServerPreview.hosts(tab.session.current, tab.password)
+            working = false
+            if self.tab !== tab { return }
+            servers = hosts.isEmpty ? "" : ServerPreview.describe(hosts)
+        }
+        if servers.isEmpty {
+            await start(tab, host)
+            return
+        }
+        host.showNotice(L10n.t("These servers will be asked"),
+                        L10n.t("Lazy PDF will contact {0}. Servers named by certificates found on the way may be asked too. The file itself is not sent.", servers),
+                        NoticeAction(L10n.t("Ask them")) { [weak self] in
+            guard let self, self.tab === tab else { return }
+            Task { await self.start(tab, host) }
+        })
+    }
+
+    private func start(_ tab: DocumentTab, _ host: ToolHost) async {
         await run(tab, host, L10n.t("Adding validation data"), failedTitle: L10n.t("Validation data not added"), checksRevocation: true) { session, transport, now, token in
             try CertificateSigning.addValidation(session, transport, now, token: token)
         } afterwards: { finished, covered, changed, transport in
