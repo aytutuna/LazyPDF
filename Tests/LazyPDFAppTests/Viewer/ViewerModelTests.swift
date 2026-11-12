@@ -935,7 +935,7 @@ final class ViewerModelTests: XCTestCase {
     }
 
     func test_aPreviewThatFailsIsAPageThatCannotBeShownNotAPartOfOne() async throws {
-        let viewer = try openHalf(previews: false, tiles: true)
+        let viewer = try openHalf(previews: false, tiles: false)
 
         await waitFor({ viewer.tilesPending == 0 && viewer.drawing(of: 0).failed },
                       "zoom \(viewer.zoom), pending \(viewer.tilesPending), failed \(viewer.failed), "
