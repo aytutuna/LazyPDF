@@ -16,7 +16,8 @@ public sealed record CreateRequest(CreateSource Source, PdfPageSetup Setup, stri
                                    double? Width = null, double? Height = null);
 
 /// <param name="Unreadable">Pictures that could not be read, or letters the font lacks.</param>
-public sealed record MadePdf(byte[] Bytes, int Pages, int Unreadable);
+/// <param name="Skipped">Pictures or picture frames too large to decode.</param>
+public sealed record MadePdf(byte[] Bytes, int Pages, int Unreadable, int Skipped = 0);
 
 public static class PdfMaker
 {
@@ -48,7 +49,7 @@ public static class PdfMaker
                     return File.ReadAllBytes(file);
                 }).ToList();
                 var pictures = PdfFromPictures.Create(files, codec, request.Setup, cancel);
-                return new MadePdf(pictures.Bytes, pictures.Pages, pictures.Unreadable.Count);
+                return new MadePdf(pictures.Bytes, pictures.Pages, pictures.Unreadable.Count, pictures.SkippedFrames);
             default:
                 var text = PdfFromText.Create(request.Text, fonts, request.Setup, family: request.Family, size: request.FontSize, cancellation: cancel);
                 return new MadePdf(text.Bytes, text.Pages, text.Missing.Count);

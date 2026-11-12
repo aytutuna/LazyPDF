@@ -3451,6 +3451,10 @@
     "tr": "{0} resim okunamadı.",
     "other": "{0} pictures could not be read."
   },
+  "{0} picture was too large and was left out.": {
+    "tr": "{0} resim çok büyük olduğu için dışarıda bırakıldı.",
+    "other": "{0} pictures were too large and were left out."
+  },
   "Make a PDF from": {
     "tr": "PDF yapılacak kaynak"
   },

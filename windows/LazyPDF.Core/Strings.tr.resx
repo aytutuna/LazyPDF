@@ -8146,6 +8146,9 @@
   <data name="{0} picture was left out because the file is too large.|plural" xml:space="preserve">
     <value>{0} resim, dosya çok büyük olduğu için dışarıda bırakıldı.</value>
   </data>
+  <data name="{0} picture was too large and was left out.|plural" xml:space="preserve">
+    <value>{0} resim çok büyük olduğu için dışarıda bırakıldı.</value>
+  </data>
   <data name="{0} picture|plural" xml:space="preserve">
     <value>{0} resim</value>
   </data>

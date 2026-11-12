@@ -212,6 +212,29 @@ public sealed class CreateToolTests
     }
 
     [Fact]
+    public async Task PicturesTooLargeToDecodeAreSaidToBeLeftOut()
+    {
+        using var f = new ViewModelFixture();
+        using var dir = new TempDir();
+        string file = dir.File("a.tif", [1]);
+
+        await CreateJob.RunAsync(f.Vm, new BigFrameCodec(), new FakeFonts(), new(CreateSource.Pictures, A4, "Pictures.pdf", Files: [file]));
+
+        Assert.Equal("Some left out", f.Vm.Message!.Title);
+        Assert.Equal("2 pictures were too large and were left out.", f.Vm.Message.Text);
+    }
+
+    private sealed class BigFrameCodec : IImageCodec
+    {
+        public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+
+        public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) =>
+            [new PdfRgbaImage(4, 4, new byte[64]), new PdfRgbaImage(40000, 40000, []), new PdfRgbaImage(50000, 50000, [])];
+
+        public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [];
+    }
+
+    [Fact]
     public async Task PicturesNoneOfWhichCanBeReadAreAProblem()
     {
         using var f = new ViewModelFixture();
