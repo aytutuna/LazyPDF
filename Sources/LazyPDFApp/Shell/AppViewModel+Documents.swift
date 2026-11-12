@@ -265,7 +265,21 @@ extension AppViewModel {
             showNotice(L10n.t("File is read-only"), L10n.t("{0} is read-only. You can work on it, but save your changes with Save as.", tab.title))
         } else if !tab.canDraw {
             showNotice(L10n.t("Pages cannot be shown"), L10n.t("{0} opens for editing, but its pages cannot be shown here.", tab.title))
+        } else if let (title, text) = Self.formNotice(tab.document) {
+            showNotice(title, text)
         }
+    }
+
+    /// What to tell once when a file opens: a dynamic XFA form cannot be filled, and scripts other than the built-in
+    /// format and calculate functions do not run. Files without an AcroForm are not read.
+    static func formNotice(_ document: PdfDocument) -> (String, String)? {
+        guard document.dict(document.catalog, "AcroForm") != nil else { return nil }
+        let form = PdfForm.read(document)
+        if form.xfa == .dynamic { return (L10n.t("Form not supported"), FormText.dynamicXfa) }
+        if FormScripts.list(form).contains(where: { !$0.ran }) {
+            return (L10n.t("Form scripts not run"), L10n.t("This file has scripts that Lazy PDF does not run. Only built-in format and calculate functions run."))
+        }
+        return nil
     }
 
     // The tab takes the old one's place in the strip and, if the old one was in view, in the window.

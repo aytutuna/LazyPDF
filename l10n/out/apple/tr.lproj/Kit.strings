@@ -671,6 +671,7 @@
 "Form filling allowed" = "Form doldurmaya izin var";
 "Form filling and comments allowed" = "Form doldurmaya ve yorum eklemeye izin var";
 "Form not supported" = "Form desteklenmiyor";
+"Form scripts not run" = "Form komut dosyaları çalışmadı";
 "Format" = "Biçim";
 "Forms" = "Formlar";
 "Forward" = "Öne";
@@ -1919,6 +1920,7 @@
 "This file has no signatures." = "Bu dosyada imza yok.";
 "This file has no text to export. Run Make searchable first, or save the pages as pictures." = "Bu dosyada dışa aktarılacak metin yok. Önce Aranabilir yap'ı çalıştırın veya sayfaları resim olarak kaydedin.";
 "This file has no text to search. Try Make searchable." = "Bu dosyada aranacak metin yok. Aranabilir yap'ı deneyin.";
+"This file has scripts that Lazy PDF does not run. Only built-in format and calculate functions run." = "Bu dosyada Lazy PDF'nin çalıştırmadığı komut dosyaları var. Yalnızca yerleşik biçim ve hesaplama işlevleri çalışır.";
 "This file is as small as it gets." = "Bu dosya zaten olabildiğince küçük.";
 "This file is certified so that nothing may change. Another signature would break that." = "Bu dosya hiçbir şey değişmeyecek şekilde onaylı. Bir imza daha bunu bozar.";
 "This file is certified, so changing it makes viewers report it as altered." = "Bu dosya onaylı, bu yüzden değiştirmek görüntüleyicilerde değiştirilmiş olarak görünür.";

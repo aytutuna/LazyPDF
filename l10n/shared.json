@@ -4462,6 +4462,12 @@
   "It opens another file or program, which Lazy PDF does not do.": {
     "tr": "Başka bir dosyayı veya programı açar; Lazy PDF bunu yapmaz."
   },
+  "Form scripts not run": {
+    "tr": "Form komut dosyaları çalışmadı"
+  },
+  "This file has scripts that Lazy PDF does not run. Only built-in format and calculate functions run.": {
+    "tr": "Bu dosyada Lazy PDF'nin çalıştırmadığı komut dosyaları var. Yalnızca yerleşik biçim ve hesaplama işlevleri çalışır."
+  },
   "Script not run": {
     "tr": "Komut dosyası çalışmadı"
   },
