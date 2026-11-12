@@ -138,8 +138,8 @@ public sealed partial class EditContentPanel
             await host.RunBusyAsync(Loc.T("Reading the picture"), token => Task.Run(() =>
             {
                 token.ThrowIfCancellationRequested();
-                var upright = SignatureArt.UprightFile(System.IO.File.ReadAllBytes(path));
-                if (!token.IsCancellationRequested) file = upright;
+                var read = System.IO.File.ReadAllBytes(path);
+                if (!token.IsCancellationRequested) file = read;
             }, token));
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)

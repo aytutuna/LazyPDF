@@ -295,10 +295,10 @@ public sealed partial class StampsPanel : ToolPanel
             await host.RunBusyAsync(Loc.T("Reading the picture"), token => Task.Run(() =>
             {
                 token.ThrowIfCancellationRequested();
-                var upright = SignatureArt.UprightFile(File.ReadAllBytes(path));
+                var file = File.ReadAllBytes(path);
                 if (token.IsCancellationRequested) return;
-                image = Decode(upright);
-                bytes = upright;
+                image = Decode(file);
+                bytes = file;
             }, token));
             if (bytes is null || !ReferenceEquals(Tab, tab)) return;
             _pictureImage = image;
@@ -319,9 +319,10 @@ public sealed partial class StampsPanel : ToolPanel
         Form_Changed(this, new RoutedEventArgs());
     }
 
+    // Only the preview is turned here; the engine turns the picture it stamps.
     private static ImageSource Decode(byte[] bytes)
     {
-        using var stream = new MemoryStream(bytes);
+        using var stream = new MemoryStream(SignatureArt.UprightFile(bytes));
         var frame = BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
         frame.Freeze();
         return frame;
