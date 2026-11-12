@@ -15,7 +15,7 @@ final class BookmarksModelTests: XCTestCase {
         return (model, viewer, tab)
     }
 
-    func test_theOutlineIsATreeInTheFilesOrder() throws {
+    func test_theOutlineIsATreeInTheFilesOrder() async throws {
         let (model, _, _) = try attached(PanelPdfs.full())
 
         XCTAssertEqual(model.nodes.map { $0.title }, ["Chapter 1", "Chapter 2"])
@@ -27,13 +27,13 @@ final class BookmarksModelTests: XCTestCase {
         XCTAssertFalse(model.nodes[1].bold)
     }
 
-    func test_aFileWithoutBookmarksHasNoNodes() throws {
+    func test_aFileWithoutBookmarksHasNoNodes() async throws {
         let (model, _, _) = try attached(Pdfs.text())
 
         XCTAssertTrue(model.nodes.isEmpty)
     }
 
-    func test_choosingAnEntryGoesToItsDestination() throws {
+    func test_choosingAnEntryGoesToItsDestination() async throws {
         let (model, viewer, _) = try attached(PanelPdfs.full())
 
         model.go(model.nodes[1])
@@ -41,7 +41,7 @@ final class BookmarksModelTests: XCTestCase {
         XCTAssertEqual(viewer.sent, [1])
     }
 
-    func test_anEntryThatGoesNowhereSaysSo() throws {
+    func test_anEntryThatGoesNowhereSaysSo() async throws {
         let tab = try PanelPdfs.tab(PanelPdfs.full())
         let viewer = PanelViewer(tab)
         let host = RecordingHost()
@@ -66,7 +66,7 @@ final class BookmarksModelTests: XCTestCase {
         XCTAssertTrue(viewer.followed.isEmpty)
     }
 
-    func test_whichEntriesAreOpenFollowsTheFileUntilThePersonChangesIt() throws {
+    func test_whichEntriesAreOpenFollowsTheFileUntilThePersonChangesIt() async throws {
         let (model, _, _) = try attached(PanelPdfs.full())
         let chapter = model.nodes[0]
 
@@ -107,7 +107,7 @@ final class AttachmentsModelTests: XCTestCase {
         return (model, host, tab)
     }
 
-    func test_theListHasEachFileWithItsSizeAndNote() throws {
+    func test_theListHasEachFileWithItsSizeAndNote() async throws {
         let model = try attached(TempDir(self))
 
         XCTAssertEqual(model.rows.map { $0.name }, ["note.txt", "run.exe"])
@@ -116,13 +116,13 @@ final class AttachmentsModelTests: XCTestCase {
         XCTAssertEqual(model.rows[1].summary, "run.exe, 2 bytes")
     }
 
-    func test_aFileWithoutAttachmentsHasNoRows() throws {
+    func test_aFileWithoutAttachmentsHasNoRows() async throws {
         let model = try attached(TempDir(self), Pdfs.text())
 
         XCTAssertTrue(model.rows.isEmpty)
     }
 
-    func test_openingAsksFirstThenWritesACopyUnderASafeNameAndHandsItOver() throws {
+    func test_openingAsksFirstThenWritesACopyUnderASafeNameAndHandsItOver() async throws {
         let (model, host, _) = try rig(TempDir(self))
         var handed: URL?
         model.launch = { handed = $0; return true }
@@ -140,7 +140,7 @@ final class AttachmentsModelTests: XCTestCase {
         XCTAssertNil(model.note)
     }
 
-    func test_anAnswerAfterTheFileChangedOpensNothing() throws {
+    func test_anAnswerAfterTheFileChangedOpensNothing() async throws {
         let (model, host, tab) = try rig(TempDir(self))
         var handed = false
         model.launch = { _ in handed = true; return true }
@@ -154,7 +154,7 @@ final class AttachmentsModelTests: XCTestCase {
         XCTAssertEqual(model.note, "The file changed meanwhile. Try again.")
     }
 
-    func test_aFileThatCouldRunIsNotOpenedButCanBeSaved() throws {
+    func test_aFileThatCouldRunIsNotOpenedButCanBeSaved() async throws {
         let dir = TempDir(self)
         let model = try attached(dir)
         var handed = false
@@ -170,7 +170,7 @@ final class AttachmentsModelTests: XCTestCase {
         XCTAssertEqual(saved.bytes, Array("MZ".utf8))
     }
 
-    func test_whenNothingCanOpenTheCopyTheNoteSaysSo() throws {
+    func test_whenNothingCanOpenTheCopyTheNoteSaysSo() async throws {
         let (model, host, _) = try rig(TempDir(self))
         model.launch = { _ in false }
         model.selected = 0
@@ -181,7 +181,7 @@ final class AttachmentsModelTests: XCTestCase {
         XCTAssertEqual(model.note, "This attachment could not be opened.")
     }
 
-    func test_aFailedSaveIsReportedAndASuccessfulOneClearsTheNote() throws {
+    func test_aFailedSaveIsReportedAndASuccessfulOneClearsTheNote() async throws {
         let model = try attached(TempDir(self))
         model.selected = 0
 
@@ -191,7 +191,7 @@ final class AttachmentsModelTests: XCTestCase {
         XCTAssertNil(model.note)
     }
 
-    func test_theCopiesMadeToOpenFilesCanBeRemoved() throws {
+    func test_theCopiesMadeToOpenFilesCanBeRemoved() async throws {
         let dir = TempDir(self)
         let (model, host, _) = try rig(dir)
         model.launch = { _ in true }

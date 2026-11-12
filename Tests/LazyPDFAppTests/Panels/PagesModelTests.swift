@@ -16,7 +16,7 @@ final class PagesModelTests: XCTestCase {
         return (model, viewer, tab)
     }
 
-    func test_everyPageGetsAThumbnailWithItsLabelAndASizeInTheBox() throws {
+    func test_everyPageGetsAThumbnailWithItsLabelAndASizeInTheBox() async throws {
         let (model, _, _) = try attached(renderer: SizedRenderer(), labelled: true)
 
         XCTAssertEqual(model.thumbs.map { $0.label }, ["i", "ii", "iii"])
@@ -37,7 +37,7 @@ final class PagesModelTests: XCTestCase {
         XCTAssertEqual(model.thumbs.map { $0.label }, ["i", "ii", "iii", "iv"])
     }
 
-    func test_choosingAThumbnailGoesToThePageEvenWhenItIsTheCurrentOne() throws {
+    func test_choosingAThumbnailGoesToThePageEvenWhenItIsTheCurrentOne() async throws {
         let (model, viewer, _) = try attached()
 
         model.select(2)
@@ -46,7 +46,7 @@ final class PagesModelTests: XCTestCase {
         XCTAssertEqual(viewer.sent, [2, 2])
     }
 
-    func test_theCurrentPageFollowsTheViewer() throws {
+    func test_theCurrentPageFollowsTheViewer() async throws {
         let (model, viewer, _) = try attached()
 
         viewer.pageIndex = 1
@@ -134,7 +134,7 @@ final class PagesModelTests: XCTestCase {
         XCTAssertNil(thumb.image)
     }
 
-    func test_detachingEmptiesTheList() throws {
+    func test_detachingEmptiesTheList() async throws {
         let (model, _, _) = try attached()
 
         model.detach()

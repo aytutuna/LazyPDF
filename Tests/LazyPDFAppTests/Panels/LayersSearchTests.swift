@@ -15,7 +15,7 @@ final class LayersModelTests: XCTestCase {
         return (model, viewer)
     }
 
-    func test_eachLayerIsARowWithItsBoxTicked() throws {
+    func test_eachLayerIsARowWithItsBoxTicked() async throws {
         let (model, _) = try attached()
 
         XCTAssertFalse(model.isEmpty)
@@ -25,7 +25,7 @@ final class LayersModelTests: XCTestCase {
         XCTAssertFalse(model.roots[1].canToggle)
     }
 
-    func test_aLockedLayerSaysWhyAndAnUnlockedOneDoesNot() throws {
+    func test_aLockedLayerSaysWhyAndAnUnlockedOneDoesNot() async throws {
         let (model, _) = try attached()
 
         XCTAssertEqual(model.roots[1].lockedNote, "The file does not allow this layer to be shown or hidden.")
@@ -42,7 +42,7 @@ final class LayersModelTests: XCTestCase {
         XCTAssertEqual(model.roots.map { $0.name }, ["Group"])
     }
 
-    func test_aFileWithoutLayersIsEmpty() throws {
+    func test_aFileWithoutLayersIsEmpty() async throws {
         let tab = try PanelPdfs.tab(Pdfs.text())
         let model = LayersModel()
         model.attach(tab, PanelViewer(tab), RecordingHost())
@@ -51,7 +51,7 @@ final class LayersModelTests: XCTestCase {
         XCTAssertTrue(model.roots.isEmpty)
     }
 
-    func test_tickingABoxChangesTheViewNotTheFile() throws {
+    func test_tickingABoxChangesTheViewNotTheFile() async throws {
         let (model, viewer) = try attached()
         let before = viewer.tab?.session.current
 
@@ -64,7 +64,7 @@ final class LayersModelTests: XCTestCase {
         XCTAssertEqual(viewer.tab?.session.current, before)
     }
 
-    func test_aLockedLayerCannotBeToggled() throws {
+    func test_aLockedLayerCannotBeToggled() async throws {
         let (model, viewer) = try attached()
 
         model.toggle(model.roots[1], false)
@@ -171,17 +171,17 @@ final class SearchModelTests: XCTestCase {
 
 @MainActor
 final class SidePanelCatalogTests: XCTestCase {
-    func test_theRailHasTheSevenSidePanelsInTheOrderOfWindows() {
+    func test_theRailHasTheSevenSidePanelsInTheOrderOfWindows() async {
         XCTAssertEqual(ToolCatalog.sidePanels.map { $0.id }, ["pages", "bookmarks", "attachments", "layers", "comments", "signatures", "search"])
     }
 
-    func test_aPanelIsFoundByItsId() {
+    func test_aPanelIsFoundByItsId() async {
         XCTAssertEqual(ToolCatalog.findSide("bookmarks")?.title, "Bookmarks")
         XCTAssertNil(ToolCatalog.findSide("nothing"))
         XCTAssertNil(SidePanelCatalog.create("nothing", TestFolders(root: TempDir(self).url)))
     }
 
-    func test_everyPanelHasWordsASymbolAndAModel() throws {
+    func test_everyPanelHasWordsASymbolAndAModel() async throws {
         let folders = TestFolders(root: TempDir(self).url)
         for info in ToolCatalog.sidePanels {
             XCTAssertFalse(info.title.isEmpty)
@@ -191,7 +191,7 @@ final class SidePanelCatalogTests: XCTestCase {
         }
     }
 
-    func test_thePanelTheRailAlreadyRemembersIsInTheList() {
+    func test_thePanelTheRailAlreadyRemembersIsInTheList() async {
         let remembered = AppPreferences().sidePanel
         XCTAssertNotNil(ToolCatalog.findSide(remembered))
     }
@@ -199,7 +199,7 @@ final class SidePanelCatalogTests: XCTestCase {
 
 @MainActor
 final class SigningHostTests: XCTestCase {
-    func test_openingTheSigningToolNamesTheFieldOnceForIt() {
+    func test_openingTheSigningToolNamesTheFieldOnceForIt() async {
         let fixture = ViewModelFixture(self)
 
         fixture.vm.openSigning("Approval")
@@ -209,7 +209,7 @@ final class SigningHostTests: XCTestCase {
         XCTAssertNil(fixture.vm.takeSigningField())
     }
 
-    func test_theToolStaysOpenWhenAskedAgain() {
+    func test_theToolStaysOpenWhenAskedAgain() async {
         let fixture = ViewModelFixture(self)
 
         fixture.vm.openSigning("A")

@@ -28,7 +28,7 @@ final class CommentsModelTests: XCTestCase {
         return Rig(model: model, viewer: viewer, tab: tab, host: host)
     }
 
-    func test_commentsAreGroupedByPageWithTheirTitleAndPlace() throws {
+    func test_commentsAreGroupedByPageWithTheirTitleAndPlace() async throws {
         let rig = try attached()
 
         XCTAssertEqual(rig.model.groups.map { $0.name }, ["Page 1", "Page 2"])
@@ -39,7 +39,7 @@ final class CommentsModelTests: XCTestCase {
         XCTAssertEqual(row.summary, "Note · Ada, Page 1, Look")
     }
 
-    func test_theHeadingsFollowTheGrouping() throws {
+    func test_theHeadingsFollowTheGrouping() async throws {
         let rig = try attached()
 
         rig.model.setGrouping(.author)
@@ -49,7 +49,7 @@ final class CommentsModelTests: XCTestCase {
         XCTAssertEqual(rig.model.rows.count, 2)
     }
 
-    func test_pageLabelsOfTheFileNameThePages() throws {
+    func test_pageLabelsOfTheFileNameThePages() async throws {
         let rig = try attached()
         let labelled = PanelViewer(rig.tab, labels: ["iv", "v"])
         rig.model.detach()
@@ -72,14 +72,14 @@ final class CommentsModelTests: XCTestCase {
         XCTAssertEqual(rig.model.emptyText, "No comment matches.")
     }
 
-    func test_aFileWithoutCommentsSaysSo() throws {
+    func test_aFileWithoutCommentsSaysSo() async throws {
         let rig = try attached(comments: false)
 
         XCTAssertTrue(rig.model.isEmpty)
         XCTAssertEqual(rig.model.emptyText, "This file has no comments.")
     }
 
-    func test_choosingACommentShowsItOnItsPage() throws {
+    func test_choosingACommentShowsItOnItsPage() async throws {
         let rig = try attached()
 
         rig.model.go(rig.model.groups[1].rows[0])
@@ -102,7 +102,7 @@ final class CommentsModelTests: XCTestCase {
         XCTAssertTrue(rig.host.problems.isEmpty)
     }
 
-    func test_aBlankReplyIsNotSent() throws {
+    func test_aBlankReplyIsNotSent() async throws {
         let rig = try attached()
         rig.model.select(rig.model.rows[0].id)
         let before = rig.tab.revision
@@ -158,7 +158,7 @@ final class CommentsModelTests: XCTestCase {
         await settle { rig.tab.revision == before + 1 }
     }
 
-    func test_nothingIsWrittenWhileAToolHoldsTheDocument() throws {
+    func test_nothingIsWrittenWhileAToolHoldsTheDocument() async throws {
         let rig = try attached()
         rig.model.select(rig.model.rows[0].id)
         rig.host.isDocumentBusy = true
@@ -170,7 +170,7 @@ final class CommentsModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.revision, before)
     }
 
-    func test_theSummaryListsTheCommentsOnShow() throws {
+    func test_theSummaryListsTheCommentsOnShow() async throws {
         let rig = try attached()
 
         let text = try XCTUnwrap(rig.model.summaryText())
@@ -180,7 +180,7 @@ final class CommentsModelTests: XCTestCase {
         XCTAssertEqual(rig.model.summaryName, "a Comments")
     }
 
-    func test_withoutCommentsThereIsNothingToExport() throws {
+    func test_withoutCommentsThereIsNothingToExport() async throws {
         let rig = try attached(comments: false)
 
         XCTAssertNil(rig.model.summaryText())
@@ -202,7 +202,7 @@ final class CommentsModelTests: XCTestCase {
         XCTAssertEqual(rig.host.statuses, ["Summary of 1 of 2 comments saved.", "Summary saved."])
     }
 
-    func test_theOutcomeOfSavingTheSummaryIsToldToTheWindow() throws {
+    func test_theOutcomeOfSavingTheSummaryIsToldToTheWindow() async throws {
         let rig = try attached()
 
         rig.model.summarySaved(.success(URL(fileURLWithPath: "/tmp/a.txt")))

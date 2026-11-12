@@ -35,7 +35,7 @@ final class SignaturesModelTests: XCTestCase {
         XCTAssertNil(rig.model.selectedRow)
     }
 
-    func test_whileTheCheckRunsThePanelSaysSo() throws {
+    func test_whileTheCheckRunsThePanelSaysSo() async throws {
         let tab = try PanelPdfs.tab(Pdfs.text())
         let model = SignaturesModel(trust: SignatureTrust(directory: TempDir(self).url))
 
@@ -127,7 +127,7 @@ final class SignaturesModelTests: XCTestCase {
         XCTAssertTrue(rig.host.openedAccess[0] === grant)
     }
 
-    func test_aFileOpenedWithACertificateAsksTheWindowForTheKey() throws {
+    func test_aFileOpenedWithACertificateAsksTheWindowForTheKey() async throws {
         let dir = TempDir(self)
         let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text()), renderer: FakeRenderer(), url: nil, title: "a.pdf",
                               certificate: FakeKeys.alice)
@@ -207,7 +207,7 @@ final class SignaturesModelTests: XCTestCase {
         XCTAssertNil(rig.model.versionProblem)
     }
 
-    func test_aCertificateIsDescribedByItsOwnFields() throws {
+    func test_aCertificateIsDescribedByItsOwnFields() async throws {
         let (_, certificate) = try signedFile(comment: false)
 
         let facts = SignaturesModel.facts(of: certificate)
