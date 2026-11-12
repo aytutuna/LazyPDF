@@ -96,6 +96,7 @@ public sealed partial class AppViewModel
     public void ForgetRecent(string path)
     {
         _recentFiles.Remove(path);
+        JumpLists.Forget(path);
         Recent = BuildRecent();
         NotifyAll();
     }
@@ -110,6 +111,7 @@ public sealed partial class AppViewModel
     public void ClearRecent()
     {
         _recentFiles.Clear();
+        JumpLists.ForgetAll();
         Recent = BuildRecent();
         NotifyAll();
     }
