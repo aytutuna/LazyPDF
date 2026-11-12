@@ -313,7 +313,8 @@ final class NumberFormat {
     // Applying a format
 
     func format(_ v: Double, date1904: Bool) -> FormatResult {
-        let numeric = min(sections.count, 3)
+        var numeric = min(sections.count, 3)
+        if sections.count < 4 && sections[sections.count - 1].hasAt { numeric = max(sections.count - 1, 1) }
         var at = numeric - 1
         for i in 0..<numeric where matches(i, numeric, v) {
             at = i

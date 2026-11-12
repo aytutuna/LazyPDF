@@ -307,6 +307,7 @@ internal sealed class NumberFormat
     public FormatResult Format(double v, bool date1904)
     {
         int numeric = Math.Min(_sections.Count, 3);
+        if (_sections.Count < 4 && _sections[^1].HasAt) numeric = Math.Max(_sections.Count - 1, 1);
         int at = numeric - 1;
         for (int i = 0; i < numeric; i++)
         {
