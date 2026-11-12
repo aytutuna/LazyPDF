@@ -130,11 +130,13 @@ p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
   run Times_New_Roman 10.00 000000 "second inherits both"
 > header variants are counted
 section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+titlepage
 header left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "head"
+header-first left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
   run Times_New_Roman 10.00 000000 "head"
 p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
   run Times_New_Roman 10.00 000000 "body"
-skipped header-variant 1
 > fields in the body
 section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
 p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple

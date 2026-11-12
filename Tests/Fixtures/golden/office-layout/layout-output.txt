@@ -1094,3 +1094,340 @@ text 20.00 30.47 Carlito/Regular 11.00 000000 +0.00 "こんにちは、世界。
 | <000000000000000000000000000000000000000000000000000000000000000000000000000000000000> Tj
 | ET
 missing 3001 3002 300c 300d 3053 3059 3061 3067 306b 306f 308c 3093 30b9 30c6 30c8 30fc 4e16 754c
+> picture in a line of text
+page 1 200.00 200.00
+image 52.41 20.00 40.00 30.00
+text 20.00 50.00 Carlito/Regular 11.00 000000 +0.00 "Before "
+text 92.41 50.00 Carlito/Regular 11.00 000000 +0.00 "after the picture."
+| q
+| 40 0 0 30 52.41 150 cm
+| /Im1 Do
+| Q
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 150 Td
+| <000200050006000A000C00050001> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 92.41 150 Td
+| <00030006000D0005000C0001000D000700050001000B00080004000D000E000C00050010> Tj
+| ET
+> picture on the baseline raises the line
+page 1 200.00 200.00
+image 20.00 52.69 20.00 60.00
+text 40.00 112.69 Carlito/Regular 20.00 000000 +0.00 "big"
+| q
+| 20 0 0 60 20 87.31 cm
+| /Im1 Do
+| Q
+| 0 0 0 rg
+| BT
+| /F1 20 Tf
+| 40 87.31 Td
+| <000100030002> Tj
+| ET
+> picture wider than the line shrinks to it
+page 1 200.00 200.00
+image 30.00 20.00 140.00 35.00
+text 20.00 68.43 Carlito/Regular 11.00 000000 +0.00 "next"
+| q
+| 140 0 0 35 30 145 cm
+| /Im1 Do
+| Q
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 131.57 Td
+| <0002000100040003> Tj
+| ET
+> picture taller than the page shrinks to the body
+page 1 200.00 200.00
+image 20.00 20.00 16.00 160.00
+| q
+| 16 0 0 160 20 20 cm
+| /Im1 Do
+| Q
+page 2 200.00 200.00
+text 20.00 30.47 Carlito/Regular 11.00 000000 +0.00 "next"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 169.53 Td
+| <0002000100040003> Tj
+| ET
+> a line breaks around a picture
+page 1 200.00 200.00
+text 20.00 30.47 Carlito/Regular 11.00 000000 +0.00 "Words that fill most of the line"
+image 20.00 33.43 60.00 20.00
+text 80.00 53.43 Carlito/Regular 11.00 000000 +0.00 "and more words after"
+text 20.00 66.86 Carlito/Regular 11.00 000000 +0.00 "it so the text goes on."
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 169.53 Td
+| <0002000D000E0004000F00010010000800030010000100060009001500150001000B000D000F00100001000D00060001001000080005000100150009000C0005> Tj
+| ET
+| q
+| 60 0 0 20 20 146.57 cm
+| /Im1 Do
+| Q
+| BT
+| /F1 11 Tf
+| 80 146.57 Td
+| <0003000C00040001000B000D000E000500010011000D000E0004000F00010003000600100005000E> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 133.14 Td
+| <000900100001000F000D00010010000800050001001000050012001000010007000D0005000F0001000D000C0014> Tj
+| ET
+> cropped picture is clipped
+page 1 200.00 200.00
+image 20.00 20.00 80.00 40.00
+| q
+| 20 140 80 40 re
+| W
+| n
+| q
+| 106.67 0 0 100 -6.67 90 cm
+| /Im1 Do
+| Q
+| Q
+> pictures centered and right aligned
+page 1 200.00 200.00
+image 75.00 20.00 50.00 50.00
+image 150.00 72.95 30.00 30.00
+| q
+| 50 0 0 50 75 130 cm
+| /Im1 Do
+| Q
+| q
+| 30 0 0 30 150 97.05 cm
+| /Im2 Do
+| Q
+> picture in a table cell
+page 1 200.00 200.00
+image 25.40 20.00 50.00 20.00
+text 25.40 53.43 Carlito/Regular 11.00 000000 +0.00 "caption"
+text 105.40 30.47 Carlito/Regular 11.00 000000 +0.00 "beside"
+| q
+| 50 0 0 20 25.4 160 cm
+| /Im1 Do
+| Q
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 25.4 146.57 Td
+| <00030001000A000C000600090008> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 105.4 169.53 Td
+| <00020005000B000600040005> Tj
+| ET
+> picture in the header repeats on every page
+page 1 200.00 200.00
+image 20.00 10.00 60.00 20.00
+text 80.00 30.00 Carlito/Regular 11.00 000000 +0.00 "Title"
+text 97.21 187.05 Carlito/Regular 11.00 000000 +0.00 "1"
+text 20.00 50.47 Carlito/Regular 11.00 000000 +0.00 "one"
+| q
+| 60 0 0 20 20 170 cm
+| /Im1 Do
+| Q
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 80 170 Td
+| <000100030007000D0002> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 97.21 12.95 Td
+| <000B> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 149.53 Td
+| <000600050002> Tj
+| ET
+page 2 200.00 200.00
+image 20.00 10.00 60.00 20.00
+text 80.00 30.00 Carlito/Regular 11.00 000000 +0.00 "Title"
+text 97.21 187.05 Carlito/Regular 11.00 000000 +0.00 "2"
+text 20.00 50.47 Carlito/Regular 11.00 000000 +0.00 "two"
+| q
+| 60 0 0 20 20 170 cm
+| /Im1 Do
+| Q
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 80 170 Td
+| <000100030007000D0002> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 97.21 12.95 Td
+| <000C> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 149.53 Td
+| <000700080006> Tj
+| ET
+> first and even pages have their own bands
+page 1 200.00 200.00
+image 20.00 10.00 30.00 30.00
+text 50.00 40.00 Carlito/Regular 11.00 000000 +0.00 "First header"
+text 20.00 187.05 Carlito/Regular 11.00 000000 +0.00 "First footer"
+text 20.00 53.43 Carlito/Regular 11.00 000000 +0.00 "one"
+| q
+| 30 0 0 30 20 160 cm
+| /Im1 Do
+| Q
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 50 160 Td
+| <0003000A000E000F0010000100090007000500060007000E> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 12.95 Td
+| <0003000A000E000F001000010008000D000D00100007000E> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 146.57 Td
+| <000D000C0007> Tj
+| ET
+page 2 200.00 200.00
+text 20.00 20.47 Carlito/Regular 11.00 000000 +0.00 "Even header"
+text 20.00 50.47 Carlito/Regular 11.00 000000 +0.00 "two"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 179.53 Td
+| <000200120007000C000100090007000500060007000E> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 149.53 Td
+| <00100013000D> Tj
+| ET
+page 3 200.00 200.00
+text 20.00 20.47 Carlito/Regular 11.00 000000 +0.00 "Odd header"
+text 20.00 50.47 Carlito/Regular 11.00 000000 +0.00 "three"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 179.53 Td
+| <000400060006000100090007000500060007000E> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 149.53 Td
+| <00100009000E00070007> Tj
+| ET
+page 4 200.00 200.00
+text 20.00 20.47 Carlito/Regular 11.00 000000 +0.00 "Even header"
+text 20.00 50.47 Carlito/Regular 11.00 000000 +0.00 "four"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 179.53 Td
+| <000200120007000C000100090007000500060007000E> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 149.53 Td
+| <0008000D0011000E> Tj
+| ET
+> a taller first header moves the body down on the first page only
+page 1 200.00 200.00
+image 20.00 10.00 100.00 70.00
+text 20.00 93.43 Carlito/Regular 11.00 000000 +0.00 "first page text"
+| q
+| 100 0 0 70 20 120 cm
+| /Im1 Do
+| Q
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 106.57 Td
+| <00070009000E000F00100001000D00030008000600010010000600110010> Tj
+| ET
+page 2 200.00 200.00
+text 20.00 20.47 Carlito/Regular 11.00 000000 +0.00 "Plain"
+text 20.00 50.47 Carlito/Regular 11.00 000000 +0.00 "second page text"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 179.53 Td
+| <0002001300030009000B> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 149.53 Td
+| <000F00060004000C000B00050001000D00030008000600010010000600110010> Tj
+| ET
+> the next section starts its own first page
+page 1 200.00 200.00
+text 20.00 20.47 Carlito/Regular 11.00 000000 +0.00 "A first"
+text 20.00 50.47 Carlito/Regular 11.00 000000 +0.00 "one"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 179.53 Td
+| <0002000100050007000B000C000D> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 149.53 Td
+| <000A00090004> Tj
+| ET
+page 2 200.00 200.00
+text 20.00 20.47 Carlito/Regular 11.00 000000 +0.00 "A"
+text 20.00 50.47 Carlito/Regular 11.00 000000 +0.00 "two"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 179.53 Td
+| <0002> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 149.53 Td
+| <000D000F000A> Tj
+| ET
+page 3 200.00 200.00
+text 20.00 20.47 Carlito/Regular 11.00 000000 +0.00 "B first"
+text 20.00 50.47 Carlito/Regular 11.00 000000 +0.00 "three"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 179.53 Td
+| <0003000100050007000B000C000D> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 149.53 Td
+| <000D0006000B00040004> Tj
+| ET
+page 4 200.00 200.00
+text 20.00 20.47 Carlito/Regular 11.00 000000 +0.00 "B"
+text 20.00 50.47 Carlito/Regular 11.00 000000 +0.00 "four"
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 20 179.53 Td
+| <0003> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 20 149.53 Td
+| <0005000A000E000B> Tj
+| ET
