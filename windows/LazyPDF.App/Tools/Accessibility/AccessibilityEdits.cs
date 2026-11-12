@@ -1,10 +1,17 @@
+using System.Text.RegularExpressions;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Accessibility;
 
 /// <summary>The changes the accessibility panel makes to a document, kept apart from the controls.</summary>
-internal static class AccessibilityEdits
+internal static partial class AccessibilityEdits
 {
+    [GeneratedRegex(@"^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*\z", RegexOptions.CultureInvariant)]
+    private static partial Regex LanguageTag();
+
+    /// <summary>The tagger's options for the text in the language box; a box that is empty or not a language tag gives none.</summary>
+    public static AutoTagOptions? TagOptions(string? language) => language?.Trim() is { } tag && LanguageTag().IsMatch(tag) ? new AutoTagOptions(tag) : null;
+
     /// <summary>Makes the fix a failed row offers; for the title and language rows, with the text of their box as it was when the button was pressed. False when nothing changed.</summary>
     public static bool Apply(PdfDocument document, RowEditor editor, RowAction action, string value) => editor switch
     {

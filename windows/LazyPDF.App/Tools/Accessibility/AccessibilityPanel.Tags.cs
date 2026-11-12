@@ -75,6 +75,7 @@ public partial class AccessibilityPanel
             var document = tab.Document;
             bool signed = document.IsSigned;
             AutoTagResult? result = null;
+            var options = AccessibilityEdits.TagOptions((CheckList.ItemsSource as IEnumerable<CheckRow>)?.FirstOrDefault(r => r.Editor == RowEditor.Language)?.Value);
             IsEnabled = false;
             try
             {
@@ -82,7 +83,7 @@ public partial class AccessibilityPanel
                 {
                     try
                     {
-                        result = await Task.Run(() => AutoTagger.Tag(document, null, token));
+                        result = await Task.Run(() => AutoTagger.Tag(document, options, token));
                     }
                     catch (Exception error) when (error is OperationCanceledException or PdfReadException or InvalidOperationException)
                     {

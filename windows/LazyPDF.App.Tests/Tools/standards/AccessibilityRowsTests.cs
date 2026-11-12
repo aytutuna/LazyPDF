@@ -157,6 +157,18 @@ public sealed class AccessibilityRowsTests
     }
 
     [Fact]
+    public void TheLanguageBoxIsWhatTheTaggerWritesWhenItIsATag()
+    {
+        Assert.Null(AccessibilityEdits.TagOptions(""));
+        Assert.Null(AccessibilityEdits.TagOptions("english"));
+        Assert.Equal("tr-TR", AccessibilityEdits.TagOptions(" tr-TR ")?.Language);
+
+        var document = PdfDocument.Open(Pdfs.Text());
+        AutoTagger.Tag(document, AccessibilityEdits.TagOptions("tr-TR"));
+        Assert.Equal("tr-TR", AccessibilityEdits.LanguageOf(document));
+    }
+
+    [Fact]
     public void AnEditedBoxIsToldFromOneThatOnlyHoldsWhatItStartedWith()
     {
         var document = PdfDocument.Open(Pdfs.Text());
