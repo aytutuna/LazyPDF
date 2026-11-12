@@ -25,6 +25,8 @@ public final class ViewerModel: DocumentViewer {
     @ObservationIgnored var labels: [String] = []
     @ObservationIgnored var bytes: [UInt8] = []
     @ObservationIgnored var seenRevision = 0
+    /// Set when the tab was shown before its renderer caught up, so the layout and tiles come from the old document.
+    @ObservationIgnored private var staleLoad = false
     @ObservationIgnored var watching = 0
     @ObservationIgnored var beforeReading: (columns: Int, cover: Bool, continuous: Bool, fit: FitMode, zoom: Double)?
 
@@ -177,6 +179,7 @@ public final class ViewerModel: DocumentViewer {
             drawer.use(tab.canDraw ? tab.renderer : nil)
             bytes = tab.session.current
             seenRevision = tab.revision
+            staleLoad = tab.drawnRevision != tab.revision
             labels = PdfPageLabels.labels(tab.document)
             let saved = views[ObjectIdentifier(tab)].flatMap { $0.tab === tab ? $0 : nil }
             apply(state.show(sizes: pageSizes(tab), pageObjects: PageSurfaceState.pageObjects(tab.document), page: tab.pageIndex, zoom: tab.zoom, fit: tab.fit, rotation: saved?.rotation ?? 0))
@@ -196,14 +199,17 @@ public final class ViewerModel: DocumentViewer {
     /// Draws the new state of the file after a commit, an undo or a redo. The model follows `tab.revision` by itself; this is
     /// for a caller that wants it now.
     public func reload() {
-        guard let tab, tab.revision != seenRevision else { return }
+        guard let tab else { return }
+        let loaded = staleLoad && tab.drawnRevision == tab.revision
+        guard tab.revision != seenRevision || loaded else { return }
         seenRevision = tab.revision
+        if loaded { staleLoad = false }
         resetText()
         labels = PdfPageLabels.labels(tab.document)
         geometries.removeAll()
         let before = bytes
         bytes = tab.session.current
-        let changed = RevisionDiff.changed(before, bytes)
+        let changed = loaded ? nil : RevisionDiff.changed(before, bytes)
         let document = tab.document
         failed.removeAll()
         drawer.use(displayRenderer ?? (tab.canDraw ? tab.renderer : nil))

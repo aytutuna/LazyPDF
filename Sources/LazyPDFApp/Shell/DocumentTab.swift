@@ -47,6 +47,9 @@ public final class DocumentTab: StripTab {
     /// since the load of a big file finishes after the revision changed.
     public private(set) var drawn = 0
 
+    /// The `revision` the renderer holds; it trails `revision` while a big file loads.
+    @ObservationIgnored public private(set) var drawnRevision = 0
+
     @ObservationIgnored private var loading: Task<Void, Never>?
 
     /// The page the viewer shows, 0-based, kept here so each tab comes back as it was left.
@@ -204,7 +207,7 @@ public final class DocumentTab: StripTab {
         version += 1
         writeRecovery()
         changed?()
-        if background { startLoad() } else { drawn += 1 }
+        if background { startLoad() } else { drawnRevision = revision; drawn += 1 }
     }
 
     /// Returns once the renderer draws the current bytes. A job that pairs the renderer with `session.current` waits here first.
@@ -226,6 +229,7 @@ public final class DocumentTab: StripTab {
                 return
             }
             self.canDraw = drew
+            self.drawnRevision = revision
             self.drawn += 1
         }
     }

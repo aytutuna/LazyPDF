@@ -8,11 +8,12 @@ import LazyPDFKit
 private final class GatedRenderer: DocumentRenderer {
     var loadsInBackground: Bool { true }
     var started = 0
+    var height = 300.0
     var closed = false
     private var gates: [CheckedContinuation<Bool, Never>] = []
 
     func load(_ session: PdfEditSession, _ password: String?) -> Bool { true }
-    func pageSize(_ pageIndex: Int) -> (width: Double, height: Double) { (200, 300) }
+    func pageSize(_ pageIndex: Int) -> (width: Double, height: Double) { (200, height) }
     func render(_ pageIndex: Int, _ dpi: Double) -> PdfRgbaImage? { nil }
     func close() { closed = true }
 
@@ -68,6 +69,22 @@ final class BackgroundLoadTests: XCTestCase {
         await Task.yield()
 
         XCTAssertEqual(tab.drawn, 1)
+    }
+
+    func test_aViewerShownBeforeTheLoadFinishesLaysTheNewDocumentOutAfterwards() async throws {
+        let (tab, renderer) = try open()
+        let viewer = ViewerModel(makeRenderer: { renderer }, openAddress: { _ in })
+        try Pdfs.retitle(tab.session, "One")
+        try tab.commit("One")
+        await settle { renderer.waiting == 1 }
+
+        viewer.show(tab)
+        XCTAssertEqual(viewer.pageSize(0).height, 300)
+        renderer.height = 500
+        renderer.finish()
+        await settle { viewer.pageSize(0).height == 500 }
+
+        XCTAssertEqual(viewer.pageSize(0).height, 500)
     }
 
     func test_aLoadForAClosedTabIsDropped() async throws {
