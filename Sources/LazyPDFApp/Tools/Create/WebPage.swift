@@ -54,9 +54,9 @@ public enum WebPageRules {
     /// True when the page asks for a picture, style, font or other part from the internet, which the rule leaves out of
     /// the PDF. Links to other pages do not count.
     public static func namesRemoteParts(_ html: String) -> Bool {
+        if namesRemoteTagPart(Array(html.utf8)) { return true }
         let remote = #"(?:https?:)?//"#
         let patterns = [
-            #"<(?:img|script|link|source|video|audio|iframe|embed|object|input|image|use)\b[^>]{0,2000}?\b(?:src|href|poster|data|srcset)\s*=\s*["']?\s*"# + remote,
             #"url\(\s*["']?\s*"# + remote,
             #"@import\s+(?:url\(\s*)?["']?\s*"# + remote,
         ]
@@ -65,5 +65,58 @@ public enum WebPageRules {
             guard let expression = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else { return false }
             return expression.firstMatch(in: html, options: [], range: range) != nil
         }
+    }
+
+    private static let loadingTags: Set<String> = ["img", "script", "link", "source", "video", "audio", "iframe", "embed", "object", "input", "image", "use"]
+    private static let loadingAttributes: Set<String> = ["src", "href", "poster", "data", "srcset"]
+    private static let mostTagBytes = 2000
+
+    /// Reads the bytes once from left to right: a tag that loads something is looked at up to its '>' or 2000 bytes, and
+    /// the scan goes on after that, so a file of tag starts costs no more than its length.
+    private static func namesRemoteTagPart(_ b: [UInt8]) -> Bool {
+        func isWord(_ c: UInt8) -> Bool { (c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c == 95 }
+        func lower(_ c: UInt8) -> UInt8 { c >= 65 && c <= 90 ? c + 32 : c }
+        func word(_ from: Int) -> (text: String, end: Int) {
+            var end = from
+            while end < b.count && isWord(b[end]) { end += 1 }
+            return (String(decoding: b[from..<end].map(lower), as: UTF8.self), end)
+        }
+        func isSpace(_ c: UInt8) -> Bool { c == 32 || (c >= 9 && c <= 13) }
+        func remoteAt(_ from: Int) -> Bool {
+            var i = from
+            if i + 1 < b.count && b[i] == 0x2F && b[i + 1] == 0x2F { return true }
+            for letter in Array("http".utf8) {
+                guard i < b.count, lower(b[i]) == letter else { return false }
+                i += 1
+            }
+            if i < b.count && lower(b[i]) == 0x73 { i += 1 }
+            return i + 2 < b.count && b[i] == 0x3A && b[i + 1] == 0x2F && b[i + 2] == 0x2F
+        }
+
+        var i = 0
+        while i < b.count {
+            guard b[i] == 0x3C else { i += 1; continue }
+            let name = word(i + 1)
+            guard name.end > i + 1, loadingTags.contains(name.text) else { i += 1; continue }
+            var end = name.end
+            while end < b.count && b[end] != 0x3E && end - name.end < mostTagBytes { end += 1 }
+            var j = name.end
+            while j < end {
+                guard isWord(b[j]), !isWord(b[j - 1]) else { j += 1; continue }
+                let attribute = word(j)
+                j = attribute.end
+                guard loadingAttributes.contains(attribute.text) else { continue }
+                var k = j
+                while k < end && isSpace(b[k]) { k += 1 }
+                guard k < b.count, b[k] == 0x3D else { continue }
+                k += 1
+                while k < end && isSpace(b[k]) { k += 1 }
+                if k < b.count && (b[k] == 0x22 || b[k] == 0x27) { k += 1 }
+                while k < end && isSpace(b[k]) { k += 1 }
+                if remoteAt(k) { return true }
+            }
+            i = end
+        }
+        return false
     }
 }

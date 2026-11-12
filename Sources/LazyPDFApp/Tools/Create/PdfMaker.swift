@@ -120,10 +120,12 @@ extension CreateJob {
         guard let web, let file = request.files.first else { throw WebPageError.couldNotLoad }
         let size = (try FileManager.default.attributesOfItem(atPath: file.path)[.size] as? NSNumber)?.intValue ?? 0
         if size > WebPageRules.mostBytes { throw WebPageError.tooBig }
-        let html = TextFiles.decode([UInt8](try Data(contentsOf: file)))
+        let remote = try await ToolDocuments.run(token) {
+            WebPageRules.namesRemoteParts(TextFiles.decode([UInt8](try Data(contentsOf: file))))
+        }
         try token.throwIfCancelled()
         let rendered = try await web.render(file, WebPageLayout(request.setup))
-        return MadePdf(bytes: rendered.bytes, pages: rendered.pages, unreadable: 0, leftOutRemote: WebPageRules.namesRemoteParts(html))
+        return MadePdf(bytes: rendered.bytes, pages: rendered.pages, unreadable: 0, leftOutRemote: remote)
     }
 }
 

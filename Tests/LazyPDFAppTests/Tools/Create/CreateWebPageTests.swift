@@ -95,6 +95,20 @@ final class CreateWebPageTests: XCTestCase {
         XCTAssertLessThan(Date().timeIntervalSince(start), 5)
     }
 
+    func test_aTagStartRepeatedToTheSizeLimitIsReadInShortOrder() {
+        let html = String(repeating: "<img ", count: WebPageRules.mostBytes / 5)
+        let start = Date()
+        XCTAssertFalse(WebPageRules.namesRemoteParts(html))
+        XCTAssertLessThan(Date().timeIntervalSince(start), 5)
+    }
+
+    func test_remotePartsAreSpottedAfterOtherAttributesAndOnlyInsideTheTag() {
+        XCTAssertTrue(WebPageRules.namesRemoteParts(#"<img alt="a" class=b SRC = " HTTPS://a.example/p.png">"#))
+        XCTAssertTrue(WebPageRules.namesRemoteParts(#"<img <img src=//a.example/p.png>"#))
+        XCTAssertFalse(WebPageRules.namesRemoteParts(#"<img alt="x"><p data-src="//a.example/">"#))
+        XCTAssertFalse(WebPageRules.namesRemoteParts(#"<img xsrc="//a.example/p.png">"#))
+    }
+
     func test_htmlAndHtmAreWebPages() {
         XCTAssertTrue(FileKinds.isWebPage(URL(fileURLWithPath: "/a/b.HTML")))
         XCTAssertTrue(FileKinds.isWebPage(URL(fileURLWithPath: "/a/b.htm")))
