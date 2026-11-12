@@ -80,7 +80,7 @@ public struct ViewLayout {
         var o = options
         o.columns = columns
         let spreads = spreadsOf(columns, o.cover, pages.count)
-        if spreads == 0 {
+        if pages.isEmpty || spreads == 0 {
             return ViewLayout(options: o, pageCount: 0, firstSpread: 0, firstPage: 0, rects: [], tops: [], extent: o.viewport)
         }
         let first = o.continuous ? 0 : Swift.min(Swift.max(spread, 0), spreads - 1)

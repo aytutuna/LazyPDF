@@ -27,6 +27,12 @@ final class PageLayoutTests: XCTestCase {
         XCTAssertEqual(layout.extent.height, ViewLayout.margin + 3 * 200 + 2 * ViewLayout.gap + ViewLayout.margin)
     }
 
+    func test_noPagesLayOutNothingWhateverTheArrangement() {
+        let layout = ViewLayout.build([], options(columns: 2, cover: true))
+
+        XCTAssertEqual(layout.pageCount, 0)
+    }
+
     func test_thePagesAreScaledByTheScale() {
         let layout = ViewLayout.build(pages(1), options(scale: 2.5))
 
