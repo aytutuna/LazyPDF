@@ -1022,3 +1022,11 @@ A page with marks is either understood in full or turned into a picture. Removin
 - `PdfPermissionException` (Core, derives from `UnauthorizedAccessException`) is what a save or change throws when the file's rights do not allow it. Callers outside `ChangeGate` catch it and show `Problems.Restricted()`.
 - The forms panel hint reads "Drag on the page to draw a field. Click a field to change it." and "No blanks found." is the text for a scan with no fields found.
 - The Turkish catalog in `l10n/shared.json` has the new wording for pictures (not images) in the shell, optimize and edit texts, and the page cut and paste texts.
+
+### Office: reading packages for the converter
+
+Folder `Office/`, no third-party code and no `System.IO.Compression.ZipArchive`; the twin Swift reader is to behave the same.
+
+**`ZipReader.Open(bytes, ZipLimits? = null)`** (internal) reads the central directory (zip64 end record and extra fields, stored and deflate; data descriptors need no care since sizes come from the directory) and gives `Names` (files only, `/` separators, directory order), `Contains(name)` and `Read(name)`. Names compare case-insensitively like OPC part names. Open refuses with `PdfReadException`: no directory, a directory or header cut short, several disks, encryption, a method other than 0 and 8, a name that is rooted or has a `..` segment (`\` counts as `/`), two names equal ignoring case (all `Damaged`, the rest `Unsupported`). `Read` inflates through `PdfFilters.InflateRaw` no further than the declared size and checks the size and CRC-32, so a lying size cannot allocate or pass.
+
+**`ZipLimits`** defaults: 20 000 entries, 256 MiB of declared size in all, 128 MiB per entry, ratio 200 to 1 for entries from 1 MiB up. All are checked at Open from the declared sizes, so a package is refused before any entry is inflated.

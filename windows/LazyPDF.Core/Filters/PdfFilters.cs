@@ -109,6 +109,14 @@ public static class PdfFilters
 
     public static byte[] Inflate(byte[] data, long maxSize) => Inflate(data, maxSize, strict: false);
 
+    /// <summary>A raw deflate stream (a zip entry) inflated; a stream that breaks off or does not inflate is damage.</summary>
+    public static byte[] InflateRaw(byte[] data, long maxSize)
+    {
+        var output = new FilterBuffer(maxSize, (int)Math.Min(data.Length * 4L, 1 << 22));
+        if (!InflateFrom(data, 0, output, strict: true)) throw PdfReadException.Damaged("A compressed stream does not inflate.");
+        return output.ToArray();
+    }
+
     private static byte[] Inflate(byte[] data, long maxSize, bool strict)
     {
         if (data.Length == 0) return [];
