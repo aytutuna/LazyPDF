@@ -5,7 +5,7 @@
 ", page {0}" = ", sayfa {0}";
 ".p12 file" = ".p12 dosyası";
 "/{0} does not match {1} in the XMP." = "/{0}, XMP'deki {1} ile uyuşmuyor.";
-"A DeviceN space has more than {0} colorants." = "Bir DeviceN uzayında {0} taneden fazla boya maddesi var.";
+"A DeviceN space has more than {0} color channels." = "Bir DeviceN uzayında {0} taneden fazla renk kanalı var.";
 "A PDF/A output intent has no /DestOutputProfile." = "Bir PDF/A çıktı amacında /DestOutputProfile yok.";
 "A PostScript XObject is used." = "Bir PostScript XObject kullanılıyor.";
 "A TrueType CIDFont has no /CIDToGIDMap." = "Bir TrueType CIDFont'unda /CIDToGIDMap yok.";
@@ -454,7 +454,6 @@
 "Do not share this copy yet. Read the problems below. Flattening every marked page may clear them." = "Bu kopyayı henüz paylaşmayın. Aşağıdaki sorunları okuyun. İşaretli her sayfayı düzleştirmek sorunları giderebilir.";
 "Do the same to every file in a folder." = "Bir klasördeki her dosyaya aynısını yapın.";
 "Document" = "Belge";
-"Document changed" = "Belge değişti";
 "Document information" = "Belge bilgileri";
 "Document information and metadata" = "Belge bilgileri ve üst veri";
 "Document information changed" = "Belge bilgileri değişti";
@@ -1810,7 +1809,7 @@
 "The owner of {0} did not allow it to be printed." = "{0} dosyasının sahibi yazdırılmasına izin vermedi.";
 "The page changed. Select the object again." = "Sayfa değişti. Nesneyi yeniden seçin.";
 "The page content is too large to check in full." = "Sayfa içeriği tam denetlenemeyecek kadar büyük.";
-"The page is not in the document." = "Sayfa belgede yok.";
+"The page is not in the file." = "Sayfa dosyada yok.";
 "The pages changed, so the marks no longer fit. Mark them again." = "Sayfalar değişti, bu yüzden işaretler artık uymuyor. Yeniden işaretleyin.";
 "The pages could not be changed. Save a copy of the file and try again." = "Sayfalar değiştirilemedi. Dosyanın bir kopyasını kaydedip yeniden deneyin.";
 "The pages could not be checked." = "Sayfalar denetlenemedi.";
@@ -2112,6 +2111,8 @@
 "page {0}|in a sentence" = "sayfa {0}";
 "protected" = "korumalı";
 "pt" = "pt";
+"text in {0} note or field|one" = "{0} not veya alandaki metin";
+"text in {0} note or field|other" = "{0} not veya alandaki metin";
 "unprotected" = "korumasız";
 "{0} %" = "%{0}";
 "{0} (clean)" = "{0} (temiz)";

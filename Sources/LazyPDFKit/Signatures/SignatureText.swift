@@ -9,7 +9,7 @@ public enum SignatureText {
     public static var fieldLocked: String { L10n.t("An earlier signature locked this field. Choose another one.") }
     public static var fieldTaken: String { L10n.t("This field is already signed. Choose another one.") }
     public static var noFont: String { L10n.t("No font can draw the signature text. Choose another font.") }
-    public static var noPage: String { L10n.t("The page is not in the document.") }
+    public static var noPage: String { L10n.t("The page is not in the file.") }
     public static var noTimestamp: String { L10n.t("The time stamp server gave no answer. Try again later.") }
     public static var noTimestampServer: String { L10n.t("This signature needs a time stamp server.") }
     public static var noRoom: String { L10n.t("The signature does not fit in the space kept for it.") }
@@ -127,7 +127,7 @@ public enum SignatureText {
         case .pageStructure: return L10n.t("Pages changed") + place
         case .form: return L10n.t("Form changed") + place
         case .unreadable: return L10n.t("Added data cannot be checked")
-        case .other: return L10n.t("Document changed") + place
+        case .other: return L10n.t("File changed") + place
         }
     }
 

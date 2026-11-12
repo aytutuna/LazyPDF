@@ -16,7 +16,7 @@ public static class FormText
 
     public static string BadRect => Loc.T("The field needs a rectangle with an area.");
 
-    public static string NoPage => Loc.T("The page is not in the document.");
+    public static string NoPage => Loc.T("The page is not in the file.");
 
     public static string NotAField => Loc.T("This field is not part of the form.");
 

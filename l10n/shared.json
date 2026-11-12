@@ -474,8 +474,8 @@
   "The field needs a rectangle with an area.": {
     "tr": "Alanın içi dolu bir dikdörtgene ihtiyacı var."
   },
-  "The page is not in the document.": {
-    "tr": "Sayfa belgede yok."
+  "The page is not in the file.": {
+    "tr": "Sayfa dosyada yok."
   },
   "This field is not part of the form.": {
     "tr": "Bu alan formun parçası değil."
@@ -989,9 +989,6 @@
   "Added data cannot be checked": {
     "tr": "Eklenen veri denetlenemiyor"
   },
-  "Document changed": {
-    "tr": "Belge değişti"
-  },
   "File header": {
     "tr": "Dosya üst bilgisi"
   },
@@ -1106,8 +1103,8 @@
   "Graphics states are nested more than 28 deep.": {
     "tr": "Grafik durumları 28'den fazla iç içe."
   },
-  "A DeviceN space has more than {0} colorants.": {
-    "tr": "Bir DeviceN uzayında {0} taneden fazla boya maddesi var."
+  "A DeviceN space has more than {0} color channels.": {
+    "tr": "Bir DeviceN uzayında {0} taneden fazla renk kanalı var."
   },
   "The file embeds another file, which this level does not allow.": {
     "tr": "Dosya başka bir dosya gömüyor; bu düzey buna izin vermiyor."

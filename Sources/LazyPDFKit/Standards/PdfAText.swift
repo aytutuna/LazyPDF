@@ -46,7 +46,7 @@ public enum PdfAText {
     public static func realTooBig(_ text: String) -> String { L10n.t("The real number {0} is beyond 32767.", text) }
     public static var tooMuchContent: String { L10n.t("The page content is too large to check in full.") }
     public static var graphicsNesting: String { L10n.t("Graphics states are nested more than 28 deep.") }
-    public static func tooManyColorants(_ limit: Int) -> String { L10n.t("A DeviceN space has more than {0} colorants.", limit) }
+    public static func tooManyColorants(_ limit: Int) -> String { L10n.t("A DeviceN space has more than {0} color channels.", limit) }
 
     public static var embeddedFile: String { L10n.t("The file embeds another file, which this level does not allow.") }
     public static var embeddedNotPdfA: String { L10n.t("An embedded file is not a PDF/A file.") }

@@ -37,8 +37,8 @@
   <data name="/{0} does not match {1} in the XMP." xml:space="preserve">
     <value>/{0}, XMP'deki {1} ile uyuşmuyor.</value>
   </data>
-  <data name="A DeviceN space has more than {0} colorants." xml:space="preserve">
-    <value>Bir DeviceN uzayında {0} taneden fazla boya maddesi var.</value>
+  <data name="A DeviceN space has more than {0} color channels." xml:space="preserve">
+    <value>Bir DeviceN uzayında {0} taneden fazla renk kanalı var.</value>
   </data>
   <data name="A PDF/A output intent has no /DestOutputProfile." xml:space="preserve">
     <value>Bir PDF/A çıktı amacında /DestOutputProfile yok.</value>
@@ -1710,9 +1710,6 @@
   </data>
   <data name="Document" xml:space="preserve">
     <value>Belge</value>
-  </data>
-  <data name="Document changed" xml:space="preserve">
-    <value>Belge değişti</value>
   </data>
   <data name="Document information" xml:space="preserve">
     <value>Belge bilgileri</value>
@@ -6526,8 +6523,8 @@
   <data name="The page content is too large to check in full." xml:space="preserve">
     <value>Sayfa içeriği tam denetlenemeyecek kadar büyük.</value>
   </data>
-  <data name="The page is not in the document." xml:space="preserve">
-    <value>Sayfa belgede yok.</value>
+  <data name="The page is not in the file." xml:space="preserve">
+    <value>Sayfa dosyada yok.</value>
   </data>
   <data name="The pages changed, so the marks no longer fit. Mark them again." xml:space="preserve">
     <value>Sayfalar değişti, bu yüzden işaretler artık uymuyor. Yeniden işaretleyin.</value>

@@ -10,7 +10,7 @@ public static class SignatureText
     public static string FieldLocked => Loc.T("An earlier signature locked this field. Choose another one.");
     public static string FieldTaken => Loc.T("This field is already signed. Choose another one.");
     public static string NoFont => Loc.T("No font can draw the signature text. Choose another font.");
-    public static string NoPage => Loc.T("The page is not in the document.");
+    public static string NoPage => Loc.T("The page is not in the file.");
     public static string NoTimestamp => Loc.T("The time stamp server gave no answer. Try again later.");
     public static string NoTimestampServer => Loc.T("This signature needs a time stamp server.");
     public static string NoRoom => Loc.T("The signature does not fit in the space kept for it.");
@@ -114,7 +114,7 @@ public static class SignatureText
             SignatureChangeKind.PageStructure => Loc.T("Pages changed") + where,
             SignatureChangeKind.Form => Loc.T("Form changed") + where,
             SignatureChangeKind.Unreadable => Loc.T("Added data cannot be checked"),
-            _ => Loc.T("Document changed") + where,
+            _ => Loc.T("File changed") + where,
         };
     }
 

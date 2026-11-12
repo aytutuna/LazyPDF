@@ -17,7 +17,7 @@ public enum FormText {
 
     public static var badRect: String { L10n.t("The field needs a rectangle with an area.") }
 
-    public static var noPage: String { L10n.t("The page is not in the document.") }
+    public static var noPage: String { L10n.t("The page is not in the file.") }
 
     public static var notAField: String { L10n.t("This field is not part of the form.") }
 
