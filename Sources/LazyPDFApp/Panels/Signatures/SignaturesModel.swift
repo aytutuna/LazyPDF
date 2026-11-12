@@ -205,10 +205,15 @@ public final class SignaturesModel: ToolPanelModel {
         }
     }
 
-    /// Adds the picked signature's certificate to those the user trusts.
+    /// Asks, then adds the picked signature's certificate to those the user trusts.
     public func trustSigner() {
-        guard let certificate = selectedRow?.report.certificate else { return }
-        addTrusted(certificate.rawData)
+        guard let tab, let host, let row = selectedRow, let certificate = row.report.certificate else { return }
+        let der = certificate.rawData
+        host.showNotice(L10n.t("Trust {0}?", row.title),
+                        L10n.t("Signatures made with this certificate will count as trusted. Check its fingerprint with the signer first. You can remove it under Trust settings."),
+                        NoticeAction(L10n.t("Trust")) { [weak self] in
+            if let self, self.tab === tab { self.addTrusted(der) }
+        })
     }
 
     public func select(_ id: Int?) {
