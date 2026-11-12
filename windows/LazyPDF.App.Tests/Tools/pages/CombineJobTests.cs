@@ -594,6 +594,21 @@ public sealed class CombineJobTests
     }
 
     [Fact]
+    public void LeftOutObjectsAreReportedWithTheirCount()
+    {
+        Assert.Equal("", PageJobs.DroppedText(0));
+        Assert.Equal("1 object could not be read and was left out.", PageJobs.DroppedText(1));
+        Assert.Equal("4 objects could not be read and were left out.", PageJobs.DroppedText(4));
+
+        var host = new RecordingHost();
+        PageJobs.NoteSkippedAttachments(host, 0, 3);
+        Assert.Contains("3 objects", Assert.Single(host.Notices).Text);
+
+        Assert.Contains("2 attachments", PageJobs.SkippedText(2, 3));
+        Assert.Contains("3 objects", PageJobs.SkippedText(2, 3));
+    }
+
+    [Fact]
     public void SkippedTextIsEmptyWhenNothingWasLeftOut()
     {
         Assert.Equal("", PageJobs.SkippedText(0));

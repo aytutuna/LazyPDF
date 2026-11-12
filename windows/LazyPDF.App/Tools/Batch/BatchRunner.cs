@@ -2,6 +2,7 @@ using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.App.Tools.Export;
 using LazyPDF.App.Tools.Ocr;
+using LazyPDF.App.Tools.Pages;
 using LazyPDF.App.Tools.Protect;
 using LazyPDF.Core;
 
@@ -188,6 +189,7 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
                         return bytes;
                     }
                     notes.AddRange(result.Notes);
+                    if (result.Dropped > 0) notes.Add(PageJobs.DroppedText(result.Dropped));
                     return result.Bytes;
                 }
             case BatchStepKind.Clean:

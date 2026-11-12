@@ -36,7 +36,7 @@ public partial class CombinePanel
         bool bookmarks = BookmarkEach.IsChecked == true;
 
         byte[]? bytes = null;
-        int skipped = 0;
+        int skipped = 0, dropped = 0;
         try
         {
             await host.RunBusyAsync(Loc.T("Combining files"), token => Task.Run(() =>
@@ -49,6 +49,7 @@ public partial class CombinePanel
                 token.ThrowIfCancellationRequested();
                 bytes = made;
                 skipped = merged.SkippedAttachments;
+                dropped = merged.DroppedObjects;
             }, token));
         }
         catch (Exception error) when (error is PdfReadException or ArgumentException)
@@ -82,12 +83,12 @@ public partial class CombinePanel
         bool protectedSource = documents.Any(document => document.IsEncrypted);
         if (folder is not null)
         {
-            Saved(host, folder, [(name, bytes)], protectedSource, PageJobs.SkippedText(skipped));
+            Saved(host, folder, [(name, bytes)], protectedSource, PageJobs.SkippedText(skipped, dropped));
             return;
         }
         if (!await host.OpenNewAsync(bytes, name)) return;
-        if (protectedSource) host.ShowNotice(Loc.T("Copy is not protected"), (CopyRules.Unprotected + " " + PageJobs.SkippedText(skipped)).Trim());
-        else PageJobs.NoteSkippedAttachments(host, skipped);
+        if (protectedSource) host.ShowNotice(Loc.T("Copy is not protected"), (CopyRules.Unprotected + " " + PageJobs.SkippedText(skipped, dropped)).Trim());
+        else PageJobs.NoteSkippedAttachments(host, skipped, dropped);
     }
 
     internal static string? FirstUnmergeable(PdfDocument open, IEnumerable<(CombineEntry Entry, List<int>? Pages)> sources, CancellationToken token = default)
@@ -124,7 +125,7 @@ public partial class CombinePanel
         string? folder = ToFolder ? PickFolder() : null;
         if (ToFolder && folder is null) return;
         List<byte[]>? parts = null;
-        int skipped = 0;
+        int skipped = 0, dropped = 0;
         try
         {
             await host.RunBusyAsync(Loc.T("Splitting file"), token => Task.Run(() =>
@@ -135,6 +136,7 @@ public partial class CombinePanel
                     token.ThrowIfCancellationRequested();
                     saved.Add(part.SaveRewrite());
                     skipped += part.SkippedAttachments;
+                    dropped += part.DroppedObjects;
                 }
                 parts = saved;
             }, token));
@@ -152,7 +154,7 @@ public partial class CombinePanel
         }
 
         string big = kind == SplitBy.Size ? CombineJob.Oversize(parts, amount) : "";
-        string left = PageJobs.SkippedText(skipped);
+        string left = PageJobs.SkippedText(skipped, dropped);
         if (left.Length > 0) big = (big + " " + left).Trim();
 
         string stem = System.IO.Path.GetFileNameWithoutExtension(tab.Title);

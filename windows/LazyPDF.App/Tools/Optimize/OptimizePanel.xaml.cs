@@ -1,6 +1,7 @@
 using System.Windows;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Pages;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Optimize;
@@ -135,7 +136,7 @@ public sealed partial class OptimizePanel : ToolPanel
         string sizes = saved > 0
             ? Loc.T("{0} to {1}, {2}% smaller.", SizeText.Of(result.SizeBefore), SizeText.Of(result.SizeAfter), SizeText.Percent(result.SizeBefore, result.SizeAfter))
             : Loc.T("{0} to {1}.", SizeText.Of(result.SizeBefore), SizeText.Of(result.SizeAfter));
-        host.ShowNotice(saved > 0 ? Loc.T("File made smaller") : Loc.T("File rewritten"), string.Join(" ", [sizes, .. result.Notes]));
+        host.ShowNotice(saved > 0 ? Loc.T("File made smaller") : Loc.T("File rewritten"), string.Join(" ", [sizes, .. result.Notes, PageJobs.DroppedText(result.Dropped)]).Trim());
         host.SetStatus(saved > 0 ? Loc.T("{0} smaller.", SizeText.Of(saved)) : Loc.T("Done."));
     }
 

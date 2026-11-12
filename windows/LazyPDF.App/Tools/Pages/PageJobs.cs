@@ -108,12 +108,12 @@ internal static class PageJobs
         return done ? added : 0;
     }
 
-    /// <summary>The pages as a PDF of their own, made off the UI thread, with the count of attachments left out. Null when the file does not allow copying, when it was cancelled or when it failed, with <paramref name="failed"/> shown.</summary>
-    public static async Task<(byte[] Bytes, int Skipped)?> CopyOutAsync(DocumentTab tab, IToolHost host, IReadOnlyList<int> pages, string busy, Problem failed, bool files = true)
+    /// <summary>The pages as a PDF of their own, made off the UI thread, with the counts of attachments and objects left out. Null when the file does not allow copying, when it was cancelled or when it failed, with <paramref name="failed"/> shown.</summary>
+    public static async Task<(byte[] Bytes, int Skipped, int Dropped)?> CopyOutAsync(DocumentTab tab, IToolHost host, IReadOnlyList<int> pages, string busy, Problem failed, bool files = true)
     {
         if (CopyRules.Refused(tab.Document, host)) return null;
         byte[]? bytes = null;
-        int skipped = 0;
+        int skipped = 0, dropped = 0;
         try
         {
             await host.RunBusyAsync(busy, token => Task.Run(() =>
@@ -123,6 +123,7 @@ internal static class PageJobs
                 token.ThrowIfCancellationRequested();
                 bytes = made;
                 skipped = copy.SkippedAttachments;
+                dropped = copy.DroppedObjects;
             }, token));
         }
         catch (Exception error) when (error is PdfReadException or ArgumentException)
@@ -130,16 +131,22 @@ internal static class PageJobs
             host.ShowProblem(failed);
             return null;
         }
-        return bytes is null ? null : (bytes, skipped);
+        return bytes is null ? null : (bytes, skipped, dropped);
     }
 
     // Shown by the caller once the result is open or saved, since opening a tab clears a notice from the tab it came from.
-    internal static void NoteSkippedAttachments(IToolHost host, int skipped)
+    internal static void NoteSkippedAttachments(IToolHost host, int skipped, int dropped = 0)
     {
-        if (skipped == 0) return;
-        host.ShowNotice(Loc.T("Attachments left out"), SkippedText(skipped));
+        if (skipped + dropped == 0) return;
+        host.ShowNotice(dropped == 0 ? Loc.T("Attachments left out") : skipped == 0 ? Loc.T("Objects left out") : Loc.T("Content left out"), SkippedText(skipped, dropped));
     }
 
-    internal static string SkippedText(int skipped) =>
+    internal static string SkippedText(int skipped, int dropped = 0) =>
+        string.Join(" ", new[] { AttachmentsText(skipped), DroppedText(dropped) }.Where(text => text.Length > 0));
+
+    private static string AttachmentsText(int skipped) =>
         skipped == 0 ? "" : Loc.Plural(skipped, "{0} attachment could not be read and was left out.", "{0} attachments could not be read and were left out.");
+
+    internal static string DroppedText(int dropped) =>
+        dropped == 0 ? "" : Loc.Plural(dropped, "{0} object could not be read and was left out.", "{0} objects could not be read and were left out.");
 }

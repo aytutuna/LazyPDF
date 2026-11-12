@@ -1369,6 +1369,9 @@
   <data name="Content" xml:space="preserve">
     <value>İçerik</value>
   </data>
+  <data name="Content left out" xml:space="preserve">
+    <value>İçerik dışarıda bırakıldı</value>
+  </data>
   <data name="Convert" xml:space="preserve">
     <value>Dönüştür</value>
   </data>
@@ -3735,6 +3738,9 @@
   </data>
   <data name="Object {0}" xml:space="preserve">
     <value>Nesne {0}</value>
+  </data>
+  <data name="Objects left out" xml:space="preserve">
+    <value>Nesneler dışarıda bırakıldı</value>
   </data>
   <data name="Odd pages" xml:space="preserve">
     <value>Tek sayfalar</value>
@@ -8037,6 +8043,9 @@
   </data>
   <data name="{0} note|plural" xml:space="preserve">
     <value>{0} not</value>
+  </data>
+  <data name="{0} object could not be read and was left out.|plural" xml:space="preserve">
+    <value>{0} nesne okunamadı ve dışarıda bırakıldı.</value>
   </data>
   <data name="{0} of {1}" xml:space="preserve">
     <value>{0} / {1}</value>

@@ -5961,6 +5961,16 @@
     "other": "{0} attachments could not be read and were left out.",
     "tr": "{0} ek okunamadı ve dışarıda bırakıldı."
   },
+  "Objects left out": {
+    "tr": "Nesneler dışarıda bırakıldı"
+  },
+  "Content left out": {
+    "tr": "İçerik dışarıda bırakıldı"
+  },
+  "{0} object could not be read and was left out.": {
+    "other": "{0} objects could not be read and were left out.",
+    "tr": "{0} nesne okunamadı ve dışarıda bırakıldı."
+  },
   "Copy is not protected": {
     "tr": "Kopya korumasız"
   },
