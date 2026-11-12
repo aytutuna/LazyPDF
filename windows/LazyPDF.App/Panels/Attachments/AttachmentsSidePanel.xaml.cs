@@ -342,9 +342,26 @@ public partial class AttachmentsSidePanel : ToolPanel
                 continue;
             }
             string name = AttachmentFiles.SafeName(row.Name);
-            File.WriteAllBytes(CombineJob.UniquePath(folder, name.Length > 0 ? name : "attachment"), bytes);
+            using (var stream = CreateNew(folder, name.Length > 0 ? name : "attachment")) stream.Write(bytes);
             saved++;
         }
         return (saved, unreadable);
+    }
+
+    // A name taken since the last look moves on to the next free one instead of being overwritten.
+    private static FileStream CreateNew(string folder, string name)
+    {
+        string stem = Path.GetFileNameWithoutExtension(name), extension = Path.GetExtension(name);
+        for (int n = 1; ; n++)
+        {
+            string path = Path.Combine(folder, n == 1 ? name : $"{stem} ({n}){extension}");
+            try
+            {
+                return new FileStream(path, FileMode.CreateNew);
+            }
+            catch (IOException) when (File.Exists(path))
+            {
+            }
+        }
     }
 }
