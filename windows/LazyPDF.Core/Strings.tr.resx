@@ -2986,6 +2986,9 @@
   <data name="Layout can differ from Excel." xml:space="preserve">
     <value>Sayfa düzeni Excel'dekinden farklı olabilir.</value>
   </data>
+  <data name="Layout can differ from PowerPoint." xml:space="preserve">
+    <value>Sayfa düzeni PowerPoint'tekinden farklı olabilir.</value>
+  </data>
   <data name="Layout can differ from Word." xml:space="preserve">
     <value>Sayfa düzeni Word'dekinden farklı olabilir.</value>
   </data>
@@ -3874,6 +3877,9 @@
   <data name="Old: {0}" xml:space="preserve">
     <value>Eski: {0}</value>
   </data>
+  <data name="Older Office file is not supported" xml:space="preserve">
+    <value>Eski Office dosyası desteklenmiyor</value>
+  </data>
   <data name="Older readers may not accept these letters. Use AES 256-bit." xml:space="preserve">
     <value>Eski okuyucular bu harfleri kabul etmeyebilir. AES 256 bit kullanın.</value>
   </data>
@@ -4567,6 +4573,12 @@
   <data name="Position of the watermark" xml:space="preserve">
     <value>Filigranın konumu</value>
   </data>
+  <data name="PowerPoint file cannot be read" xml:space="preserve">
+    <value>PowerPoint dosyası okunamıyor</value>
+  </data>
+  <data name="PowerPoint file is not supported" xml:space="preserve">
+    <value>PowerPoint dosyası desteklenmiyor</value>
+  </data>
   <data name="Prefix" xml:space="preserve">
     <value>Önek</value>
   </data>
@@ -5208,6 +5220,9 @@
   </data>
   <data name="Save it" xml:space="preserve">
     <value>Kaydet</value>
+  </data>
+  <data name="Save it as .docx, .xlsx or .pptx first." xml:space="preserve">
+    <value>Önce .docx, .xlsx veya .pptx olarak kaydedin.</value>
   </data>
   <data name="Save language" xml:space="preserve">
     <value>Dili kaydet</value>
@@ -6469,6 +6484,9 @@
   <data name="The file is a dynamic XFA form, which has no pages of its own to keep." xml:space="preserve">
     <value>Dosya dinamik bir XFA formu; saklanacak kendi sayfaları yok.</value>
   </data>
+  <data name="The file is damaged or is not a PowerPoint presentation. Pick a .pptx file." xml:space="preserve">
+    <value>Dosya bozuk ya da bir PowerPoint sunusu değil. Bir .pptx dosyası seçin.</value>
+  </data>
   <data name="The file is damaged or is not a Word document. Pick a .docx file." xml:space="preserve">
     <value>Dosya bozuk ya da bir Word belgesi değil. Bir .docx dosyası seçin.</value>
   </data>
@@ -6729,6 +6747,9 @@
   </data>
   <data name="The permissions of this file do not allow filling in forms." xml:space="preserve">
     <value>Bu dosyanın izinleri form doldurmaya izin vermiyor.</value>
+  </data>
+  <data name="The presentation cannot be made into a PDF. Only .pptx files up to 100 MB with a slide to show can be; older .ppt files must be saved as .pptx first." xml:space="preserve">
+    <value>Sunu PDF'ye çevrilemiyor. Yalnızca gösterilecek slaytı olan, 100 MB'a kadar .pptx dosyaları çevrilebilir; eski .ppt dosyalarını önce .pptx olarak kaydedin.</value>
   </data>
   <data name="The print and visibility flags of {0} annotations were corrected." xml:space="preserve">
     <value>{0} ek açıklamanın yazdırma ve görünürlük bayrakları düzeltildi.</value>

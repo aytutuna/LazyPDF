@@ -9,7 +9,12 @@ internal static class OfficeNotice
     {
         var left = (made.Features ?? []).OrderBy(s => s.Kind, StringComparer.Ordinal).Select(s => Name(s.Kind)).ToList();
         if (made.Unreadable > 0) left.Add(Loc.T("letters no font has"));
-        string text = app == OfficeApp.Excel ? Loc.T("Layout can differ from Excel.") : Loc.T("Layout can differ from Word.");
+        string text = app switch
+        {
+            OfficeApp.Excel => Loc.T("Layout can differ from Excel."),
+            OfficeApp.PowerPoint => Loc.T("Layout can differ from PowerPoint."),
+            _ => Loc.T("Layout can differ from Word."),
+        };
         return left.Count == 0 ? text : text + " " + Loc.T("Left out: {0}.", string.Join(", ", left));
     }
 

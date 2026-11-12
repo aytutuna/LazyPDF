@@ -8777,6 +8777,27 @@
   "Layout can differ from Excel.": {
     "tr": "Sayfa düzeni Excel'dekinden farklı olabilir."
   },
+  "Layout can differ from PowerPoint.": {
+    "tr": "Sayfa düzeni PowerPoint'tekinden farklı olabilir."
+  },
+  "PowerPoint file cannot be read": {
+    "tr": "PowerPoint dosyası okunamıyor"
+  },
+  "The file is damaged or is not a PowerPoint presentation. Pick a .pptx file.": {
+    "tr": "Dosya bozuk ya da bir PowerPoint sunusu değil. Bir .pptx dosyası seçin."
+  },
+  "PowerPoint file is not supported": {
+    "tr": "PowerPoint dosyası desteklenmiyor"
+  },
+  "The presentation cannot be made into a PDF. Only .pptx files up to 100 MB with a slide to show can be; older .ppt files must be saved as .pptx first.": {
+    "tr": "Sunu PDF'ye çevrilemiyor. Yalnızca gösterilecek slaytı olan, 100 MB'a kadar .pptx dosyaları çevrilebilir; eski .ppt dosyalarını önce .pptx olarak kaydedin."
+  },
+  "Older Office file is not supported": {
+    "tr": "Eski Office dosyası desteklenmiyor"
+  },
+  "Save it as .docx, .xlsx or .pptx first.": {
+    "tr": "Önce .docx, .xlsx veya .pptx olarak kaydedin."
+  },
   "hidden sheets": {
     "tr": "gizli sayfalar"
   },

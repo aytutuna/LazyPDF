@@ -57,11 +57,16 @@ public static class PdfMaker
             case CreateSource.Office:
                 string path = request.Files![0];
                 cancel.ThrowIfCancellationRequested();
+                if (FileKinds.IsOldOffice(path)) throw new PdfReadException(PdfReadProblem.Unsupported, "The file is in an older Office format.");
                 if (new FileInfo(path).Length > MostOfficeBytes) throw new PdfReadException(PdfReadProblem.Unsupported, "The file is over the size limit.");
                 var office = new OfficeFontSource(fonts, new BundledFontSource());
-                var made = FileKinds.OfficeAppOf(path) == OfficeApp.Excel
-                    ? OfficeConverter.FromExcel(File.ReadAllBytes(path), office, Path.GetFileName(path), cancel)
-                    : OfficeConverter.FromWord(File.ReadAllBytes(path), office, codec, cancel);
+                var bytes = File.ReadAllBytes(path);
+                var made = FileKinds.OfficeAppOf(path) switch
+                {
+                    OfficeApp.Excel => OfficeConverter.FromExcel(bytes, office, Path.GetFileName(path), cancel),
+                    OfficeApp.PowerPoint => OfficeConverter.FromPowerPoint(bytes, office, cancel),
+                    _ => OfficeConverter.FromWord(bytes, office, codec, cancel),
+                };
                 return new MadePdf(made.Bytes, made.Pages, made.Missing.Count, Features: made.Skipped);
             default:
                 var text = PdfFromText.Create(request.Text, fonts, request.Setup, family: request.Family, size: request.FontSize, cancellation: cancel);
