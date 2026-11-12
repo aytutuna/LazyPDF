@@ -7,6 +7,11 @@ import Foundation
 public enum PdfPaper {
     case a4
     case letter
+    case a3
+    case a5
+    case legal
+    /// `PdfPageSetup.customWidth` by `customHeight` points, each clamped to 3...14400.
+    case custom
     case picture
 }
 
@@ -22,8 +27,12 @@ public struct PdfPageSetup {
     public let paper: PdfPaper
     public let orientation: PdfOrientation
     public let margin: Double
+    public let customWidth: Double
+    public let customHeight: Double
 
-    public init(paper: PdfPaper = .a4, orientation: PdfOrientation = .auto, margin: Double = 36) {
+    public init(paper: PdfPaper = .a4, orientation: PdfOrientation = .auto, margin: Double = 36, customWidth: Double = 595.276, customHeight: Double = 841.89) {
+        self.customWidth = customWidth
+        self.customHeight = customHeight
         self.paper = paper
         self.orientation = orientation
         self.margin = margin
