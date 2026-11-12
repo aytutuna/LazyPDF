@@ -8,6 +8,12 @@ public enum AttachmentFiles {
         "exe", "com", "bat", "cmd", "msi", "msp", "ps1", "vbs", "vbe", "js", "jse", "wsf", "wsh", "scr",
         "lnk", "url", "hta", "jar", "reg", "dll", "cpl", "msc", "pif", "chm", "application", "appref-ms",
         "jnlp", "diagcab", "settingcontent-ms",
+        "docm", "dotm", "xlsm", "xltm", "xlam", "xll", "pptm", "potm", "ppam", "ppsm", "sldm", "one",
+        "iso", "img", "vhd", "vhdx",
+        "py", "pyw", "ws", "sct", "wsc", "psm1", "psd1", "ps1xml", "vb",
+        "library-ms", "search-ms", "scf", "inf", "theme", "themepack", "msix", "msixbundle", "appx", "appxbundle",
+        "appinstaller", "msu", "cab",
+        "iqy", "slk", "rdp", "xbap", "vsto", "xla", "mde", "accde", "ade", "adp", "mht", "mhtml",
         "app", "command", "sh", "pkg", "dmg", "workflow", "action", "terminal", "scpt", "scptd", "webloc", "inetloc", "ipa",
         "tool", "mpkg", "mobileconfig", "fileloc", "shortcut", "prefpane", "osax", "kext", "dylib", "bundle",
     ]

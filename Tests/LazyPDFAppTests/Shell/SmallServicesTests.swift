@@ -59,6 +59,12 @@ final class AttachmentFilesTests: XCTestCase {
         }
     }
 
+    func test_macroDocumentsDiskImagesAndScriptsAreRecognised() {
+        for name in ["a.docm", "a.xlsm", "a.one", "a.iso", "a.vhdx", "a.py", "a.psm1", "a.msix", "a.cab", "a.rdp", "a.mhtml"] {
+            XCTAssertTrue(AttachmentFiles.couldRun(AttachmentFiles.safeName(name)), name)
+        }
+    }
+
     func test_documentsAreNot() {
         for name in ["report.pdf", "photo.jpg", "notes"] {
             XCTAssertFalse(AttachmentFiles.couldRun(AttachmentFiles.safeName(name)), name)
