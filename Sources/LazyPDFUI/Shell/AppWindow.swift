@@ -428,6 +428,8 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
                         Text(tool.summary).font(.caption).foregroundStyle(.secondary)
                     }
                 }
+                .accessibilityLabel(tool.title)
+                .accessibilityHint(tool.summary)
             }
             .overlay {
                 if ToolCatalog.search(toolQuery).isEmpty {

@@ -76,7 +76,9 @@ final class DocumentTests: XCTestCase {
         let app = try launch()
         XCTAssertTrue(firstPage(app).waitForExistence(timeout: 60))
         tap(app.buttons["Tools"].firstMatch)
-        app.buttons["Properties"].firstMatch.tap()
+        let row = app.buttons["Properties"].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        row.tap()
         let grabber = app.buttons["Sheet Grabber"].firstMatch
         XCTAssertTrue(grabber.waitForExistence(timeout: 10))
 
