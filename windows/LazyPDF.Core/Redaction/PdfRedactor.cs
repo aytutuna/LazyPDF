@@ -43,7 +43,7 @@ public sealed partial class PdfRedactor(PdfDocument document, IFontSource? fonts
     }
 
     /// <summary>Applies the document's own /Redact annotations.</summary>
-    public RedactionResult ApplyMarked(RedactionOptions? options = null) => Apply(ReadMarks(), options);
+    public RedactionResult ApplyMarked(RedactionOptions? options = null, IEnumerable<RedactionValueMatch>? values = null) => Apply(ReadMarks(), options, values);
 
     /// <summary>
     /// Removes what is under the marks and returns the new file. A page with marks that is not understood in full, by
@@ -51,9 +51,11 @@ public sealed partial class PdfRedactor(PdfDocument document, IFontSource? fonts
     /// without one, or when it cannot draw the page, this throws <see cref="InvalidOperationException"/> with
     /// <see cref="RedactionText.NeedsPicture"/> or <see cref="RedactionText.NotDrawn"/>. It throws the same with
     /// <see cref="RedactionText.NoFont"/> when overlay text needs a font that cannot be found. The document is not
-    /// changed in any case.
+    /// changed in any case. <paramref name="values"/> are hits in annotation contents and field values (see
+    /// <see cref="RedactionFinder.FindInValues"/>): the text found is replaced by <see cref="RedactionOptions.OverlayText"/>, or
+    /// removed without one, and the appearance is drawn again.
     /// </summary>
-    public RedactionResult Apply(IEnumerable<RedactionMark> marks, RedactionOptions? options = null)
+    public RedactionResult Apply(IEnumerable<RedactionMark> marks, RedactionOptions? options = null, IEnumerable<RedactionValueMatch>? values = null)
     {
         options ??= new RedactionOptions();
         var chosen = marks.Where(m => m.Page >= 0 && m.Page < document.Pages.Count)
@@ -61,6 +63,11 @@ public sealed partial class PdfRedactor(PdfDocument document, IFontSource? fonts
             .Where(m => m.Quads.Count > 0).ToList();
         using var work = PdfDocument.Open(document.SaveRewrite());
         PushDownResources(work);
+
+        var pages = new List<PageRedaction>();
+        var needles = new HashSet<string>(StringComparer.Ordinal);
+        // First, since removing annotations under a mark shifts the indexes the hits were found at.
+        var rewritten = values is null ? [] : RewriteValues(work, values, options, needles);
 
         PdfDrawFont? font = null;
         var texts = chosen.Select(m => m.OverlayText ?? options.OverlayText).Where(t => !string.IsNullOrEmpty(t)).Select(t => t!).ToList();
@@ -70,8 +77,6 @@ public sealed partial class PdfRedactor(PdfDocument document, IFontSource? fonts
                    ?? throw new InvalidOperationException(RedactionText.NoFont);
         }
 
-        var pages = new List<PageRedaction>();
-        var needles = new HashSet<string>(StringComparer.Ordinal);
         var tagged = new Dictionary<int, Dictionary<int, (int Total, int Removed)>>();
         var rewriter = new ContentRewriter(work, new ImageRedactor(work, images));
         var interpreter = new ContentInterpreter(work) { WalkPatterns = false };
@@ -90,6 +95,13 @@ public sealed partial class PdfRedactor(PdfDocument document, IFontSource? fonts
             pages.Add(RedactPage(work, plan, options, font, rewriter, needles, painted, flattened, out var counts));
             tagged[plan.Page.Reference.Number] = counts;
         }
+        foreach (var (page, count) in rewritten)
+        {
+            int at = pages.FindIndex(p => p.Page == page);
+            if (at >= 0) pages[at] = pages[at] with { Values = count };
+            else pages.Add(new PageRedaction(page, 0, 0, 0, 0, 0, count));
+        }
+        pages.Sort((a, b) => a.Page.CompareTo(b.Page));
         var marked = plans.Select(p => p.Page.Index).ToHashSet();
         var unfollowed = new List<int>();
         if (reached.Count > 0)

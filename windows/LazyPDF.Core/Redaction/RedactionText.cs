@@ -17,6 +17,7 @@ public static class RedactionText
         if (p.Paths > 0) parts.Add(Loc.Plural(p.Paths, "{0} shape", "{0} shapes"));
         if (p.Annotations > 0) parts.Add(Loc.Plural(p.Annotations, "{0} note", "{0} notes"));
         if (p.Fields > 0) parts.Add(Loc.Plural(p.Fields, "{0} form field", "{0} form fields"));
+        if (p.Values > 0) parts.Add(Loc.Plural(p.Values, "text in {0} note or field", "text in {0} notes or fields"));
         return Loc.T("Page {0}: removed {1}.", p.Page + 1, string.Join(", ", parts));
     }
 

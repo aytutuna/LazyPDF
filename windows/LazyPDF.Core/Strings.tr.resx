@@ -7735,6 +7735,9 @@
   <data name="pt" xml:space="preserve">
     <value>pt</value>
   </data>
+  <data name="text in {0} note or field|plural" xml:space="preserve">
+    <value>{0} not veya alandaki metin</value>
+  </data>
   <data name="the servers named in its certificates" xml:space="preserve">
     <value>sertifikalarında adı geçen sunucular</value>
   </data>

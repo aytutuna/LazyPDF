@@ -62,10 +62,10 @@ public sealed record RedactionVerification(IReadOnlyList<string> Problems)
 /// <summary>A place outside the page content that held removed text.</summary>
 public sealed record RedactionFinding(string Where, bool Changed);
 
-/// <summary>What was taken out of one page.</summary>
-public sealed record PageRedaction(int Page, int Glyphs, int Images, int Paths, int Annotations, int Fields)
+/// <summary>What was taken out of one page. <paramref name="Values"/> counts the annotations and fields whose text was rewritten.</summary>
+public sealed record PageRedaction(int Page, int Glyphs, int Images, int Paths, int Annotations, int Fields, int Values = 0)
 {
-    public bool IsEmpty => Glyphs + Images + Paths + Annotations + Fields == 0;
+    public bool IsEmpty => Glyphs + Images + Paths + Annotations + Fields + Values == 0;
 }
 
 public sealed record RedactionReport(IReadOnlyList<PageRedaction> Pages, IReadOnlyList<RedactionFinding> Findings,

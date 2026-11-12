@@ -765,6 +765,10 @@
     "other": "{0} form fields",
     "tr": "{0} form alanı"
   },
+  "text in {0} note or field": {
+    "other": "text in {0} notes or fields",
+    "tr": "{0} not veya alandaki metin"
+  },
   "The signature is gone.": {
     "other": "{0} signatures are gone.",
     "tr": "{0} imza kaldırıldı."

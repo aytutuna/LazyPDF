@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace LazyPDF.Core;
 
 public enum RedactionKind
@@ -12,6 +14,22 @@ public enum RedactionKind
     Pattern,
     Word,
 }
+
+public enum RedactionValueSource
+{
+    /// <summary>The /Contents of an annotation (a comment, a free text box, a popup).</summary>
+    Comment,
+
+    /// <summary>The value of a text field or an editable combo box.</summary>
+    Field,
+}
+
+/// <summary>
+/// A hit in a value that is not page text. <paramref name="Annotation"/> is the index among the annotations of the page, as
+/// <see cref="PdfAnnotations.Read(PdfDocument, PdfPage)"/> lists them; for a field it is the field's first widget.
+/// <paramref name="Start"/> and <paramref name="Length"/> are in the value's text.
+/// </summary>
+public sealed record RedactionValueMatch(int Page, int Annotation, RedactionValueSource Source, int Start, int Length, string Text, RedactionKind Kind);
 
 /// <summary>A hit of a finder: the mark it proposes and the text it found, for a list the user goes through before applying.</summary>
 public sealed record RedactionMatch(RedactionMark Mark, string Text, RedactionKind Kind);
@@ -61,6 +79,67 @@ public static class RedactionFinder
         return [.. words.Where(w => w.Length > 0).Distinct().SelectMany(w => TextSearch.Find(cache, w, options, cancel: cancel))
             .OrderBy(h => h.Page).ThenBy(h => h.Range.Start)
             .Select(h => new RedactionMatch(RedactionMark.FromMatch(h), h.Text, RedactionKind.Word))];
+    }
+
+    /// <summary>Everything of one built-in kind in the annotation contents and field values.</summary>
+    public static IReadOnlyList<RedactionValueMatch> FindInValues(PdfDocument document, RedactionKind kind, CancellationToken cancel = default)
+    {
+        if (!Shapes.TryGetValue(kind, out var shape)) throw new ArgumentOutOfRangeException(nameof(kind));
+        var regex = new Regex(shape.Pattern, RegexOptions.CultureInvariant | (shape.MatchCase ? RegexOptions.None : RegexOptions.IgnoreCase), RegexTimeout);
+        return InValues(document, kind, regex, shape, cancel);
+    }
+
+    /// <summary>A regular expression over the annotation contents and field values. A bad pattern is an <see cref="ArgumentException"/>.</summary>
+    public static IReadOnlyList<RedactionValueMatch> FindRegexInValues(PdfDocument document, string pattern, bool matchCase = false, CancellationToken cancel = default) =>
+        InValues(document, RedactionKind.Pattern, new Regex(pattern, RegexOptions.CultureInvariant | (matchCase ? RegexOptions.None : RegexOptions.IgnoreCase), RegexTimeout), null, cancel);
+
+    public static IReadOnlyList<RedactionValueMatch> FindWordsInValues(PdfDocument document, IEnumerable<string> words, bool wholeWord = true, bool matchCase = false, CancellationToken cancel = default)
+    {
+        var escaped = words.Where(w => w.Length > 0).Distinct().Select(Regex.Escape).ToList();
+        if (escaped.Count == 0) return [];
+        string pattern = $"(?:{string.Join('|', escaped.OrderByDescending(w => w.Length))})";
+        if (wholeWord) pattern = $@"(?<![\p{{L}}\p{{N}}]){pattern}(?![\p{{L}}\p{{N}}])";
+        var regex = new Regex(pattern, RegexOptions.CultureInvariant | (matchCase ? RegexOptions.None : RegexOptions.IgnoreCase), RegexTimeout);
+        return InValues(document, RedactionKind.Word, regex, null, cancel);
+    }
+
+    private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(2);
+
+    private static List<RedactionValueMatch> InValues(PdfDocument document, RedactionKind kind, Regex regex, Shape? shape, CancellationToken cancel)
+    {
+        var found = new List<RedactionValueMatch>();
+        foreach (var (page, annotation, source, text) in RedactionValues.Read(document))
+        {
+            cancel.ThrowIfCancellationRequested();
+            try
+            {
+                foreach (Match hit in regex.Matches(text))
+                {
+                    if (hit.Length == 0) continue;
+                    var (start, length) = (hit.Index, hit.Length);
+                    if (shape?.Check is { } check && !check(hit.Value))
+                    {
+                        if (CutBack(hit.Value, shape) is not { } cut) continue;
+                        length = cut;
+                    }
+                    found.Add(new RedactionValueMatch(page, annotation, source, start, length, text.Substring(start, length), kind));
+                }
+            }
+            catch (RegexMatchTimeoutException)
+            {
+            }
+        }
+        return found;
+    }
+
+    // The same cut as Narrow, over a plain string.
+    private static int? CutBack(string text, Shape shape)
+    {
+        for (int end = text.Length - 1; end >= shape.Shortest && shape.Shortest > 0; end--)
+        {
+            if (text[end] == ' ' && shape.Check!(text[..end])) return end;
+        }
+        return null;
     }
 
     // An IBAN followed by an upper case word reads as a longer one; it is cut back to the longest
