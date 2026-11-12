@@ -1,0 +1,137 @@
+import Foundation
+import XCTest
+@testable import LazyPDFKit
+
+// Twin of windows/LazyPDF.Core.Tests/Office/DocxSpec.cs: reads docx-input.txt, the cases of
+// Tests/Fixtures/golden/office-docx, into packages and dumps what the reader made of them.
+
+enum DocxSpec {
+    private static let namespaces =
+        "xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" " +
+        "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" " +
+        "xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" " +
+        "xmlns:m=\"http://schemas.openxmlformats.org/officeDocument/2006/math\" " +
+        "xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" " +
+        "xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\" " +
+        "xmlns:wps=\"http://schemas.microsoft.com/office/word/2010/wordprocessingShape\" " +
+        "xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\" " +
+        "xmlns:c=\"http://schemas.openxmlformats.org/drawingml/2006/chart\" " +
+        "xmlns:v=\"urn:schemas-microsoft-com:vml\""
+
+    private static let rel = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/"
+    private static let main = "application/vnd.openxmlformats-officedocument.wordprocessingml."
+
+    static func read(_ input: String) throws -> [(name: String, package: [UInt8])] {
+        var cases: [(name: String, package: [UInt8])] = []
+        var name: String?
+        var parts: [(key: String, text: String)] = []
+
+        func flush() throws {
+            if let name { cases.append((name, try package(parts))) }
+            parts = []
+        }
+
+        for line in input.components(separatedBy: "\n") {
+            if line.hasPrefix("> ") {
+                try flush()
+                name = String(line.dropFirst(2))
+            } else if line.hasPrefix("@") {
+                parts.removeAll { $0.key == String(line.dropFirst()) }
+                parts.append((String(line.dropFirst()), ""))
+            } else if !parts.isEmpty && !line.hasPrefix("# ") {
+                parts[parts.count - 1].text += line + "\n"
+            }
+        }
+        try flush()
+        return cases
+    }
+
+    /// The package of a case, with the boilerplate around the parts the case wrote.
+    static func package(_ parts: [(key: String, text: String)]) throws -> [UInt8] {
+        func get(_ key: String) -> String { parts.first { $0.key == key }?.text ?? "" }
+        var entries: [ExportZipEntry] = []
+        var relationships = ""
+        var types = ""
+
+        func add(_ path: String, _ xml: String) { entries.append(ExportZipEntry(path, Array(xml.utf8))) }
+
+        func wrapped(_ key: String, _ path: String, _ relationType: String, _ id: String, _ root: String, _ contentType: String) {
+            if !parts.contains(where: { $0.key == key }) { return }
+            add(path, "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><\(root) \(namespaces)>\(get(key))</\(root)>")
+            relationships += "<Relationship Id=\"\(id)\" Type=\"\(rel)\(relationType)\" Target=\"\(path.dropFirst(5))\"/>"
+            types += "<Override PartName=\"/\(path)\" ContentType=\"\(contentType)\"/>"
+        }
+
+        add("word/document.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><w:document \(namespaces)><w:body>\(get("document"))</w:body></w:document>")
+        wrapped("styles", "word/styles.xml", "styles", "rIdS", "w:styles", main + "styles+xml")
+        wrapped("theme", "word/theme/theme1.xml", "theme", "rIdT", "a:theme", "application/vnd.openxmlformats-officedocument.theme+xml")
+        wrapped("header", "word/header1.xml", "header", "rIdH", "w:hdr", main + "header+xml")
+        wrapped("footer", "word/footer1.xml", "footer", "rIdF", "w:ftr", main + "footer+xml")
+        for part in parts where part.key.hasPrefix("part ") { add(String(part.key.dropFirst(5)), part.text) }
+        add("[Content_Types].xml",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">" +
+            "<Default Extension=\"xml\" ContentType=\"application/xml\"/>" +
+            "<Override PartName=\"/word/document.xml\" ContentType=\"\(main)document.main+xml\"/>\(types)</Types>")
+        add("_rels/.rels",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">" +
+            "<Relationship Id=\"rId1\" Type=\"\(rel)officeDocument\" Target=\"word/document.xml\"/></Relationships>")
+        add("word/_rels/document.xml.rels",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">\(relationships)</Relationships>")
+        return try ExportZip.make(entries)
+    }
+
+    private static func num(_ value: Double) -> String {
+        String(format: "%.2f", (value * 100).rounded(.toNearestOrAwayFromZero) / 100 + 0.0)
+    }
+
+    static func dump(_ document: LayoutDocument) -> String {
+        var o = ""
+        for section in document.sections {
+            let g = section.page
+            o += "section \(num(g.width)) \(num(g.height)) \(num(g.top)) \(num(g.right)) \(num(g.bottom)) \(num(g.left)) \(num(g.headerDistance)) \(num(g.footerDistance))\n"
+            for p in section.header { paragraph(&o, "header", p) }
+            for p in section.footer { paragraph(&o, "footer", p) }
+            for block in section.blocks {
+                if let p = block as? LayoutParagraph { paragraph(&o, "p", p) } else { o += "pagebreak\n" }
+            }
+        }
+        for s in document.skipped { o += "skipped \(s.kind) \(s.count)\n" }
+        return o
+    }
+
+    private static func paragraph(_ o: inout String, _ band: String, _ p: LayoutParagraph) {
+        let align: String
+        switch p.align {
+        case .left: align = "left"
+        case .center: align = "center"
+        case .right: align = "right"
+        case .justify: align = "justify"
+        }
+        let rule: String
+        switch p.rule {
+        case .multiple: rule = "multiple"
+        case .exact: rule = "exact"
+        case .atLeast: rule = "atleast"
+        }
+        o += "\(band) \(align) \(num(p.left)) \(num(p.right)) \(num(p.firstLine)) \(num(p.before)) \(num(p.after)) \(num(p.lineSpacing)) \(rule)"
+        if p.keepWithNext { o += " keep" }
+        if p.pageBreakBefore { o += " break" }
+        if !p.widowControl { o += " nowidow" }
+        o += "\n"
+        for r in p.runs {
+            o += "  run \(r.family.replacingOccurrences(of: " ", with: "_")) \(num(r.size)) \(String(format: "%06x", r.color))"
+            if r.bold { o += " b" }
+            if r.italic { o += " i" }
+            if r.underline { o += " u" }
+            if r.strike { o += " s" }
+            if let hl = r.highlight { o += " hl=" + String(format: "%06x", hl) }
+            if r.shift != 0 { o += " shift=\(num(r.shift))" }
+            switch r.field {
+            case .none: break
+            case .pageNumber: o += " field=pagenumber"
+            case .pageCount: o += " field=pagecount"
+            }
+            o += " \"\(OfficeLayoutSpec.escape(r.text))\"\n"
+        }
+    }
+}

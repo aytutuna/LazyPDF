@@ -30,7 +30,7 @@ final class OfficeXmlElement {
     let attributes: [OfficeXmlAttribute]
     fileprivate(set) var children: [OfficeXmlNode] = []
 
-    fileprivate init(uri: String, name: String, attributes: [OfficeXmlAttribute]) {
+    init(uri: String, name: String, attributes: [OfficeXmlAttribute]) {
         self.uri = uri
         self.name = name
         self.attributes = attributes
