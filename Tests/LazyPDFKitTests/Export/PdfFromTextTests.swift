@@ -71,6 +71,19 @@ final class PdfFromTextTests: XCTestCase {
         XCTAssertEqual([document.pages[0].mediaBox.width, document.pages[0].mediaBox.height], [792, 612])
     }
 
+    func test_namedPapersSetThePage() throws {
+        for (paper, size) in [(PdfPaper.a3, [841.89, 1190.551]), (.a5, [419.528, 595.276]), (.legal, [612, 1008])] {
+            let document = try PdfDocument.open(PdfFromText.create("x", setup: PdfPageSetup(paper: paper)).bytes)
+            XCTAssertEqual([document.pages[0].mediaBox.width, document.pages[0].mediaBox.height], size)
+        }
+    }
+
+    func test_customPaperTurnsWhenLandscape() throws {
+        let setup = PdfPageSetup(paper: .custom, orientation: .landscape, margin: 1, customWidth: 200, customHeight: 300)
+        let document = try PdfDocument.open(PdfFromText.create("x", setup: setup).bytes)
+        XCTAssertEqual([document.pages[0].mediaBox.width, document.pages[0].mediaBox.height], [300, 200])
+    }
+
     func test_turkishTextIsEmbeddedAndReadsBack() throws {
         let turkish = "AB ğİ BA À\nAB ğ İ"
         let made = try PdfFromText.create(turkish, fonts: ExportArialSource())

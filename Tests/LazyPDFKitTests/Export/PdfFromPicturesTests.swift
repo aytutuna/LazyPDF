@@ -48,6 +48,15 @@ final class PdfFromPicturesTests: XCTestCase {
         XCTAssertEqual(box.bottom, (841.89 - h) / 2, accuracy: 1e-4)
     }
 
+    func test_customPaperIsClamped() throws {
+        for (w, h, ew, eh) in [(200.0, 300.0, 200.0, 300.0), (1, 99999, 3, 14400), (.nan, 50, 3, 50)] {
+            let setup = PdfPageSetup(paper: .custom, orientation: .portrait, margin: 0, customWidth: w, customHeight: h)
+            let (document, _) = try reopen(PdfFromPictures.create([ExportFakeCodec.picture(2, 2)], codec, setup))
+            let page = document.pages[0].mediaBox
+            XCTAssertEqual([page.width, page.height], [ew, eh])
+        }
+    }
+
     func test_aBigPictureShrinksIntoTheMargin() throws {
         let file = ExportFakeCodec.picture(255, 20)
         let made = try PdfFromPictures.create([file], codec, PdfPageSetup(paper: .letter, orientation: .portrait, margin: 250))
