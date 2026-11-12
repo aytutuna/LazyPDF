@@ -5227,6 +5227,9 @@
   <data name="Search the file to list every match here." xml:space="preserve">
     <value>Dosyada arayın, eşleşmeler burada listelensin.</value>
   </data>
+  <data name="Search tools" xml:space="preserve">
+    <value>Araçlarda ara</value>
+  </data>
   <data name="Searchable" xml:space="preserve">
     <value>Aranabilir</value>
   </data>

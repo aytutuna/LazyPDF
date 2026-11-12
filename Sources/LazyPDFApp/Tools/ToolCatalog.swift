@@ -94,6 +94,15 @@ public enum ToolCatalog {
         tools.first { $0.id == id }
     }
 
+    /// The tools whose title or summary holds every word of `text`, ignoring case and accents; all of them for no words.
+    public static func search(_ text: String) -> [ToolInfo] {
+        let words = text.split(whereSeparator: \.isWhitespace).map { $0.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current) }
+        return tools.filter { tool in
+            let hay = (tool.title + " " + tool.summary).folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+            return words.allSatisfy { hay.contains($0) }
+        }
+    }
+
     public static func findSide(_ id: String) -> SidePanelInfo? {
         sidePanels.first { $0.id == id }
     }
