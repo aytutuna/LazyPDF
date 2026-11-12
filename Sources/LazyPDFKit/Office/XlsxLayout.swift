@@ -622,6 +622,7 @@ final class XlsxLayout {
         let color = cell.color ?? font.color ?? 0
         let horizontal = Self.horizontal(cell, xf)
         var limitLeft = item.x + Self.pad, limitRight = item.x + item.w - Self.pad
+        var span = item.w
         let wrap = xf.wrap && cell.kind == .text
         if !wrap && cell.kind == .text && item.merge == nil, let row = plan.rows[rows[item.row]] {
             // Text spills out of its cell on the side or sides its alignment leaves free.
@@ -629,6 +630,10 @@ final class XlsxLayout {
                 limitRight = max(limitRight, reach(plan, row, columns, left, item.column, 1, spill) - Self.pad)
             } else if horizontal == .right {
                 limitLeft = min(limitLeft, reach(plan, row, columns, left, item.column, -1, spill) + Self.pad)
+            } else if horizontal == .centerContinuous {
+                // Center Across Selection centers over the empty cells to its right, as one wide cell.
+                span = reach(plan, row, columns, left, item.column, 1, spill) - item.x
+                limitRight = item.x + span - Self.pad
             } else {
                 let extra = min(reach(plan, row, columns, left, item.column, 1, spill) - (item.x + item.w), item.x - reach(plan, row, columns, left, item.column, -1, spill))
                 limitLeft -= extra
@@ -640,7 +645,7 @@ final class XlsxLayout {
         if wrap {
             try wrapped(cell.text, font, color, align, xf.vertical, indent, item, &boxes)
         } else {
-            try single(cell.text, font, color, horizontal, xf.vertical, indent, cell.kind == .number, item.x, item.y, item.w, item.h, limitLeft, limitRight, &boxes)
+            try single(cell.text, font, color, horizontal, xf.vertical, indent, cell.kind == .number, item.x, item.y, span, item.h, limitLeft, limitRight, &boxes)
         }
     }
 

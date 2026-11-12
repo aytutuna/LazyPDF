@@ -596,13 +596,19 @@ internal sealed class XlsxLayout
         var font = FontOf(cell);
         int color = cell.Color ?? font.Color ?? 0;
         var horizontal = Horizontal(cell, xf);
-        double limitLeft = item.X + Pad, limitRight = item.X + item.W - Pad;
+        double limitLeft = item.X + Pad, limitRight = item.X + item.W - Pad, span = item.W;
         bool wrap = xf.Wrap && cell.Kind == XlsxCellKind.Text;
         if (!wrap && cell.Kind == XlsxCellKind.Text && item.Merge is null && plan.Rows.TryGetValue(rows[item.Row], out var row))
         {
             // Text spills out of its cell on the side or sides its alignment leaves free.
             if (horizontal is XlsxHorizontal.Left or XlsxHorizontal.Fill or XlsxHorizontal.Justify) limitRight = Math.Max(limitRight, Reach(plan, row, columns, left, item.Column, 1, spill) - Pad);
             else if (horizontal == XlsxHorizontal.Right) limitLeft = Math.Min(limitLeft, Reach(plan, row, columns, left, item.Column, -1, spill) + Pad);
+            else if (horizontal == XlsxHorizontal.CenterContinuous)
+            {
+                // Center Across Selection centers over the empty cells to its right, as one wide cell.
+                span = Reach(plan, row, columns, left, item.Column, 1, spill) - item.X;
+                limitRight = item.X + span - Pad;
+            }
             else
             {
                 double extra = Math.Min(Reach(plan, row, columns, left, item.Column, 1, spill) - (item.X + item.W), item.X - Reach(plan, row, columns, left, item.Column, -1, spill));
@@ -613,7 +619,7 @@ internal sealed class XlsxLayout
         double indent = xf.Indent * IndentStep;
         var align = Align(cell, xf);
         if (wrap) Wrapped(cell.Text, font, color, align, xf.Vertical, indent, item, boxes);
-        else Single(cell.Text, font, color, horizontal, xf.Vertical, indent, cell.Kind == XlsxCellKind.Number, item.X, item.Y, item.W, item.H, limitLeft, limitRight, boxes);
+        else Single(cell.Text, font, color, horizontal, xf.Vertical, indent, cell.Kind == XlsxCellKind.Number, item.X, item.Y, span, item.H, limitLeft, limitRight, boxes);
     }
 
     private static double TopOf(XlsxVertical vertical, double y, double h, double text) => vertical switch
