@@ -65,6 +65,53 @@ public class EditSessionTests : IDisposable
     }
 
     [Fact]
+    public void MergedCommitUndoesWithThePreviousOne()
+    {
+        byte[] original = SaveFixtures.Table();
+        var session = PdfEditSession.Open(original);
+        Retitle(session, "One");
+        session.Commit("Fill");
+        Retitle(session, "Two");
+        Assert.True(session.Commit("Fill", mergeWithPrevious: true));
+        Assert.Equal("Two", Title(session));
+
+        Assert.True(session.Undo());
+        Assert.Equal(original, session.Current.ToArray());
+        Assert.False(session.CanUndo);
+        Assert.True(session.Redo());
+        Assert.Equal("Two", Title(session));
+        Assert.False(session.CanRedo);
+    }
+
+    [Fact]
+    public void MergeIsRefusedWithoutAStepAfterASaveAndForAnotherLabel()
+    {
+        var session = PdfEditSession.Open(SaveFixtures.Table());
+        Retitle(session, "One");
+        session.Commit("Fill", mergeWithPrevious: true);
+        Assert.False(session.Undo() && session.CanUndo);
+        session.Redo();
+
+        Retitle(session, "Two");
+        session.Commit("Other", mergeWithPrevious: true);
+        Retitle(session, "Three");
+        session.Commit("Other");
+        session.Save(Path.Combine(_folder, "a.pdf"));
+        Retitle(session, "Four");
+        session.Commit("Other", mergeWithPrevious: true);
+
+        Assert.True(session.Undo());
+        Assert.Equal("Three", Title(session));
+        Assert.True(session.Undo());
+        Assert.Equal("Two", Title(session));
+        Assert.True(session.Undo());
+        Assert.Equal("One", Title(session));
+        Assert.True(session.Undo());
+        Assert.Equal("Original title", Title(session));
+        Assert.False(session.CanUndo);
+    }
+
+    [Fact]
     public void CommitWithNothingChangedAddsNothing()
     {
         var session = PdfEditSession.Open(SaveFixtures.Table());

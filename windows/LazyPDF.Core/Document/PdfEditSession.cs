@@ -77,9 +77,10 @@ public sealed class PdfEditSession
     /// <summary>
     /// Appends what changed in <see cref="Document"/> as one undoable step called
     /// <paramref name="label"/>, dropping what could be redone. False, and nothing added, when
-    /// nothing changed.
+    /// nothing changed. With <paramref name="mergeWithPrevious"/> the step joins the one before it, so
+    /// the two undo together, unless that step was saved or has another label; then it is a step of its own.
     /// </summary>
-    public bool Commit(string label)
+    public bool Commit(string label, bool mergeWithPrevious = false)
     {
         byte[] update = PdfUpdate.Build(Document);
         if (update.Length == 0) return false;
@@ -87,7 +88,7 @@ public sealed class PdfEditSession
         byte[] next = new byte[_current.Length + update.Length];
         _current.CopyTo(next, 0);
         update.CopyTo(next, _current.Length);
-        return Take(label, next);
+        return Take(label, next, mergeWithPrevious);
     }
 
     /// <summary>
@@ -103,15 +104,17 @@ public sealed class PdfEditSession
 
     private static PdfReadException TooLarge() => new(PdfReadProblem.Unsupported, "The file is too large to change further.");
 
-    private bool Take(string label, byte[] next)
+    private bool Take(string label, byte[] next, bool merge = false)
     {
         // Reading it back is the check that the update is one a strict parser takes: one that needs a rebuild is not.
         var document = Read(next);
         if (document.XrefRebuilt && !Document.XrefRebuilt) throw PdfReadException.Damaged("The update does not read back.");
 
+        merge = merge && _position > 0 && _position != _savedPosition && _steps[_position - 1].Label == label;
         if (_savedPosition > _position) _savedPosition = -1;
         _steps.RemoveRange(_position, _steps.Count - _position);
-        _steps.Add((next.Length, label));
+        if (merge) _steps[^1] = (next.Length, label);
+        else _steps.Add((next.Length, label));
         _position = _steps.Count;
         _current = _longest = next;
         Document = document;
