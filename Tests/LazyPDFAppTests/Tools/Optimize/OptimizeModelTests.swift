@@ -61,9 +61,11 @@ final class OptimizeModelTests: XCTestCase {
         let (model, _) = try await attached()
 
         model.preset = .small
-        XCTAssertEqual(model.presetNote, "Smallest file. Pictures drop to 96 dpi and lose some detail.")
+        XCTAssertEqual(model.presetNote, "Smallest file. Pictures drop to 96 dpi, black and white pictures become 1-bit, and some detail is lost.")
+        model.preset = .balanced
+        XCTAssertEqual(model.presetNote, "Good for email and screens. Pictures drop to 150 dpi and are saved as JPEG at 80%. Some detail is lost.")
         model.preset = .high
-        XCTAssertEqual(model.presetNote, "Keeps detail for printing. Pictures stay up to 300 dpi.")
+        XCTAssertEqual(model.presetNote, "Keeps detail for printing. Pictures stay up to 300 dpi. Very little is lost.")
         model.preset = .custom
         XCTAssertEqual(model.presetNote, "")
     }

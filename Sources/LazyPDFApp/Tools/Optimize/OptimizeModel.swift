@@ -48,9 +48,9 @@ public final class OptimizeModel: ToolPanelModel {
 
     public var presetNote: String {
         switch preset {
-        case .small: return L10n.t("Smallest file. Pictures drop to 96 dpi and lose some detail.")
-        case .balanced: return L10n.t("Good for email and screens. Pictures drop to 150 dpi.")
-        case .high: return L10n.t("Keeps detail for printing. Pictures stay up to 300 dpi.")
+        case .small: return L10n.t("Smallest file. Pictures drop to 96 dpi, black and white pictures become 1-bit, and some detail is lost.")
+        case .balanced: return L10n.t("Good for email and screens. Pictures drop to 150 dpi and are saved as JPEG at 80%. Some detail is lost.")
+        case .high: return L10n.t("Keeps detail for printing. Pictures stay up to 300 dpi. Very little is lost.")
         case .custom: return ""
         }
     }

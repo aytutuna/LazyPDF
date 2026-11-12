@@ -2581,9 +2581,6 @@
   <data name="Good for email and screens. Pictures drop to 150 dpi and are saved as JPEG at 80%. Some detail is lost." xml:space="preserve">
     <value>E-posta ve ekran için uygun. Resimler 150 dpi'ye düşer ve %80 JPEG olarak kaydedilir. Bir miktar ayrıntı kaybolur.</value>
   </data>
-  <data name="Good for email and screens. Pictures drop to 150 dpi." xml:space="preserve">
-    <value>E-posta ve ekran için uygun. Resimler 150 dpi'ye düşer.</value>
-  </data>
   <data name="Good." xml:space="preserve">
     <value>İyi.</value>
   </data>
@@ -2895,9 +2892,6 @@
   </data>
   <data name="Keep their text" xml:space="preserve">
     <value>Metinlerini koru</value>
-  </data>
-  <data name="Keeps detail for printing. Pictures stay up to 300 dpi." xml:space="preserve">
-    <value>Baskı için ayrıntıyı korur. Resimler 300 dpi'ye kadar kalır.</value>
   </data>
   <data name="Keeps detail for printing. Pictures stay up to 300 dpi. Very little is lost." xml:space="preserve">
     <value>Baskı için ayrıntıyı korur. Resimler 300 dpi'ye kadar kalır. Çok az şey kaybolur.</value>
@@ -5620,8 +5614,8 @@
   <data name="Smaller" xml:space="preserve">
     <value>Küçült</value>
   </data>
-  <data name="Smallest file. Pictures drop to 96 dpi and lose some detail." xml:space="preserve">
-    <value>En küçük dosya. Resimler 96 dpi'ye düşer ve biraz ayrıntı kaybeder.</value>
+  <data name="Smallest file. Pictures drop to 96 dpi, black and white pictures become 1-bit, and some detail is lost." xml:space="preserve">
+    <value>En küçük dosya. Resimler 96 dpi'ye düşer, siyah beyaz resimler 1 bit olur ve bir miktar ayrıntı kaybolur.</value>
   </data>
   <data name="Snap to text and lines" xml:space="preserve">
     <value>Metne ve çizgilere yapış</value>
