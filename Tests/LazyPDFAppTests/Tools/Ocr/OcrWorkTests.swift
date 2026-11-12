@@ -128,6 +128,28 @@ final class OcrWorkTests: XCTestCase {
         XCTAssertFalse(PdfOcrLayer.has(tab.document, tab.document.pages[0]))
     }
 
+    func test_aCancelKeepsThePagesReadBeforeIt() async throws {
+        let f = ViewModelFixture(self)
+        let tab = await open(f)
+        let vm = f.vm!
+        let recognizer = FakeRecognizer()
+        let calls = Log()
+        recognizer.onRead = {
+            calls.add("read")
+            if calls.all.count < 2 { return }
+            await MainActor.run { vm.cancelBusy() }
+            while !Task.isCancelled { try? await Task.sleep(nanoseconds: 5_000_000) }
+        }
+
+        let result = try await OcrWork.makeSearchable(tab, f.vm, recognizer, all())
+
+        XCTAssertNil(result)
+        XCTAssertEqual(tab.document.pages.map { PdfOcrLayer.has(tab.document, $0) }, [true, false])
+        XCTAssertTrue(tab.session.canUndo)
+        XCTAssertEqual(f.vm.message?.title, "Reading stopped")
+        XCTAssertEqual(f.vm.message?.text, "Stopped after 1 page. The page was kept. Undo takes it back.")
+    }
+
     func test_aLanguageTheSystemLacksIsShownAsAProblem() async throws {
         let f = ViewModelFixture(self)
         let tab = await open(f)

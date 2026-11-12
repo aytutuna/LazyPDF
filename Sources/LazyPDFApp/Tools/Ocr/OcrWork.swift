@@ -38,6 +38,19 @@ public enum OcrWork {
             result.words = try PdfOcrLayer.add(tab.document, read.pages, options.language)
             result.committed = try tab.commit(OcrStatusText.label)
         }
+        if read.stopped {
+            // The pages finished before the cancel are kept, as on Windows.
+            let kept = read.pages.filter { PdfOcrLayer.has(tab.document, tab.document.pages[$0.pageIndex]) }.count
+            var parts: [String] = []
+            if kept > 0 {
+                host.setStatus(L10n.plural(kept, one: "Made {0} page searchable", other: "Made {0} pages searchable"))
+                parts.append(L10n.plural(kept, one: "Stopped after {0} page. The page was kept. Undo takes it back.",
+                                         other: "Stopped after {0} pages. The pages were kept. Undo takes them back."))
+            }
+            if dropsLayers, kept < read.pages.count { parts.append(L10n.t("Text read earlier on those pages was removed. Undo brings it back.")) }
+            if parts.isEmpty { host.setStatus(L10n.t("Cancelled.")) } else { host.showNotice(L10n.t("Reading stopped"), parts.joined(separator: " "), nil) }
+            return nil
+        }
         if result.committed {
             host.setStatus(L10n.plural(result.added, one: "Made {0} page searchable", other: "Made {0} pages searchable"))
         } else if result.noWords == 0 && result.notRendered == 0 {
@@ -53,9 +66,9 @@ public enum OcrWork {
                                  _ progress: @escaping @MainActor (Int, Int) -> Void) async throws -> OcrRead {
         let job = Task.detached {
             let document = try open()
-            return try await PdfSearchable.readAsync(document, recognizer, renderer, options) { step in
+            return try await PdfSearchable.readAsync(document, recognizer, renderer, options, { step in
                 Task { @MainActor in progress(step.done, step.total) }
-            }
+            }, keepPartial: true)
         }
         let watcher = Task {
             while !Task.isCancelled {
