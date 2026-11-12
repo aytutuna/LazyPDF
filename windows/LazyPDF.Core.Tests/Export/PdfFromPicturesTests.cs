@@ -94,6 +94,19 @@ public class PdfFromPicturesTests
         Assert.True(landscape.Width > landscape.Height);
     }
 
+    [Theory]
+    [InlineData(PdfOrientation.Landscape, true, 1000, 500)]
+    [InlineData(PdfOrientation.Auto, true, 1000, 500)]
+    [InlineData(PdfOrientation.Auto, false, 500, 1000)]
+    [InlineData(PdfOrientation.Portrait, true, 500, 1000)]
+    public void AWideCustomPaperIsTurnedLikeTheNamedOnes(PdfOrientation orientation, bool widePicture, double expectedW, double expectedH)
+    {
+        var picture = widePicture ? ExportFakeCodec.Picture(40, 10) : ExportFakeCodec.Picture(10, 40);
+        var setup = new PdfPageSetup(PdfPaper.Custom, orientation, 0, 1000, 500);
+        var page = PdfDocument.Open(PdfFromPictures.Create([picture], Codec, setup).Bytes).Pages[0].MediaBox;
+        Assert.Equal((expectedW, expectedH), (page.Width, page.Height));
+    }
+
     [Fact]
     public void OnePageForEachFileInOrderAndUnreadableFilesAreReported()
     {

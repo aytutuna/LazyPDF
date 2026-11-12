@@ -29,7 +29,7 @@ enum ExportPdf {
         case .a3: (w, h) = (a3Width, a3Height)
         case .a5: (w, h) = (a5Width, a5Height)
         case .legal: (w, h) = (letterWidth, legalHeight)
-        case .custom: (w, h) = (side(setup.customWidth), side(setup.customHeight))
+        case .custom: (w, h) = (min(side(setup.customWidth), side(setup.customHeight)), max(side(setup.customWidth), side(setup.customHeight)))
         case .a4, .picture: (w, h) = (a4Width, a4Height)
         }
         var turned = landscape

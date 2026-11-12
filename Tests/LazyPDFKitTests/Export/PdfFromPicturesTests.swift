@@ -84,6 +84,19 @@ final class PdfFromPicturesTests: XCTestCase {
         XCTAssertGreaterThan(landscape.width, landscape.height)
     }
 
+    func test_aWideCustomPaperIsTurnedLikeTheNamedOnes() throws {
+        let wide = ExportFakeCodec.picture(40, 10), tall = ExportFakeCodec.picture(10, 40)
+        func box(_ picture: [UInt8], _ orientation: PdfOrientation) throws -> [Double] {
+            let setup = PdfPageSetup(paper: .custom, orientation: orientation, margin: 0, customWidth: 1000, customHeight: 500)
+            let page = try mediaBox(PdfFromPictures.create([picture], codec, setup))
+            return [page.width, page.height]
+        }
+        XCTAssertEqual(try box(wide, .landscape), [1000, 500])
+        XCTAssertEqual(try box(wide, .auto), [1000, 500])
+        XCTAssertEqual(try box(tall, .auto), [500, 1000])
+        XCTAssertEqual(try box(wide, .portrait), [500, 1000])
+    }
+
     func test_onePageForEachFileInOrderAndUnreadableFilesAreReported() throws {
         let made = try PdfFromPictures.create([ExportFakeCodec.picture(4, 4, 10), [1, 2, 3], jpeg(), ExportFakeCodec.picture(4, 4, 200)], codec)
         XCTAssertEqual(made.pages, 3)

@@ -31,7 +31,7 @@ internal static class ExportPdf
             PdfPaper.A3 => (A3Width, A3Height),
             PdfPaper.A5 => (A5Width, A5Height),
             PdfPaper.Legal => (LetterWidth, LegalHeight),
-            PdfPaper.Custom => (Side(setup.CustomWidth), Side(setup.CustomHeight)),
+            PdfPaper.Custom => (Math.Min(Side(setup.CustomWidth), Side(setup.CustomHeight)), Math.Max(Side(setup.CustomWidth), Side(setup.CustomHeight))),
             _ => (A4Width, A4Height),
         };
         landscape = setup.Orientation switch { PdfOrientation.Portrait => false, PdfOrientation.Landscape => true, _ => landscape };
