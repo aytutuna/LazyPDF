@@ -308,6 +308,20 @@ public sealed class CreateToolTests
     }
 
     [Fact]
+    public void ACancelStopsTheEngineOnPicturesTextAndBlankPages()
+    {
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+
+        Assert.Throws<OperationCanceledException>(() =>
+            PdfMaker.Make(new(CreateSource.Pictures, A4, "Pictures.pdf", Picture: Png()), new FakeCodec(), new FakeFonts(), cancelled.Token));
+        Assert.Throws<OperationCanceledException>(() =>
+            PdfMaker.Make(new(CreateSource.Text, A4, "Text.pdf", Text: "HelloWorld"), new FakeCodec(), new FakeFonts(), cancelled.Token));
+        Assert.Throws<OperationCanceledException>(() =>
+            PdfMaker.Make(new(CreateSource.Blank, A4, "Blank.pdf", Pages: 3), new FakeCodec(), new FakeFonts(), cancelled.Token));
+    }
+
+    [Fact]
     public Task ATextFileOverWhatTheBoxTakesIsKeptAsideAndUsed() => Sta.Run(async () =>
     {
         using var dir = new TempDir();

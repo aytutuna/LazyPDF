@@ -24,14 +24,13 @@ public static class PdfMaker
 
     internal static readonly string[] PictureExtensions = [".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".gif", ".heic", ".heif"];
 
-    /// <summary>The engine calls take no token, so a cancel is only seen between the files read.</summary>
     public static MadePdf Make(CreateRequest request, IImageCodec codec, IFontSource fonts, CancellationToken cancel = default)
     {
         switch (request.Source)
         {
             case CreateSource.Blank:
                 // A form feed ends a page, so n of them make n empty pages.
-                var blank = PdfFromText.Create(new string('\f', request.Pages), fonts, request.Setup);
+                var blank = PdfFromText.Create(new string('\f', request.Pages), fonts, request.Setup, cancellation: cancel);
                 if (request.Width is not { } width || request.Height is not { } height) return new MadePdf(blank.Bytes, blank.Pages, 0);
                 var sized = PdfDocument.Open(blank.Bytes);
                 (width, height) = request.Setup.Orientation switch
@@ -48,10 +47,10 @@ public static class PdfMaker
                     cancel.ThrowIfCancellationRequested();
                     return File.ReadAllBytes(file);
                 }).ToList();
-                var pictures = PdfFromPictures.Create(files, codec, request.Setup);
+                var pictures = PdfFromPictures.Create(files, codec, request.Setup, cancel);
                 return new MadePdf(pictures.Bytes, pictures.Pages, pictures.Unreadable.Count);
             default:
-                var text = PdfFromText.Create(request.Text, fonts, request.Setup, family: request.Family, size: request.FontSize);
+                var text = PdfFromText.Create(request.Text, fonts, request.Setup, family: request.Family, size: request.FontSize, cancellation: cancel);
                 return new MadePdf(text.Bytes, text.Pages, text.Missing.Count);
         }
     }

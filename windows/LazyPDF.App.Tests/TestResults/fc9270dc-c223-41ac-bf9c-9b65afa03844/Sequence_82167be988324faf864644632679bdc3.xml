@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<TestSequence>
+  <Test Name="LazyPDF.App.Tests.LayersPanelTests.LockedLayerHasATipAndAnUnlockedOneHasNone" DisplayName="LazyPDF.App.Tests.LayersPanelTests.LockedLayerHasATipAndAnUnlockedOneHasNone" Source="C:\Users\aytu_\Desktop\gitlib\LazyPDF\.wt\d-win\windows\LazyPDF.App.Tests\bin\Debug\net10.0-windows10.0.19041.0\LazyPDF.App.Tests.dll" Completed="False" />
+</TestSequence>
