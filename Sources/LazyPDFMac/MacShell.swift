@@ -187,14 +187,21 @@ final class MacShell {
         guard let layout = askPrintLayout() else { return }
         var dropped = 0
         var made: NSPrintOperation?
+        var panelShown = false
         if layout.isPlain {
             made = tab.canDraw ? MacSystemPrint.operation(tab.session, password: tab.password, title: tab.title) : nil
         } else if layout.pages(count: tab.document.pages.count).isEmpty {
             vm.showProblem(Problem(L10n.t("Not printed"), L10n.t("None of the pages you chose are left to print.")))
             return
-        } else if tab.canDraw, let laid = MacSystemPrint.operation(tab.session, password: tab.password, title: tab.title, layout: layout) {
-            made = laid.operation
-            dropped = laid.dropped
+        } else if tab.canDraw {
+            // The sheets are made for the paper picked in the panel, so the panel comes first and the operation runs without one.
+            let info = NSPrintInfo.shared.copy() as? NSPrintInfo ?? NSPrintInfo.shared
+            guard NSPrintPanel().runModal(with: info) == NSApplication.ModalResponse.OK.rawValue else { return }
+            panelShown = true
+            if let laid = MacSystemPrint.operation(tab.session, password: tab.password, title: tab.title, layout: layout, info: info) {
+                made = laid.operation
+                dropped = laid.dropped
+            }
         }
         guard let operation = made else {
             vm.showProblem(Problem(L10n.t("Not printed"),
@@ -202,6 +209,7 @@ final class MacShell {
             return
         }
         if let note = PrintLayout.droppedNote(dropped) { vm.showNotice(L10n.t("Left off the sheets"), note) }
+        if panelShown { operation.showsPrintPanel = false }
         if let window {
             operation.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
         } else {

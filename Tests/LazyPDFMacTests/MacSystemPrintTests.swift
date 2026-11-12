@@ -30,6 +30,17 @@ final class MacSystemPrintTests: XCTestCase {
         XCTAssertEqual(laid.dropped, 0)
     }
 
+    func test_theSheetsAreMadeForThePaperInTheInfoGiven() throws {
+        let session = try PdfEditSession.open(try MacPdfs.text(pages: 4))
+        let info = NSPrintInfo()
+        info.paperSize = NSSize(width: 842, height: 1191)
+
+        let laid = try XCTUnwrap(MacSystemPrint.operation(session, password: nil, title: "a.pdf", layout: PrintLayout(booklet: true), info: info))
+        let paper = laid.operation.printInfo.paperSize
+
+        XCTAssertEqual(max(paper.width, paper.height), 1191, accuracy: 1)
+    }
+
     func test_oddPagesAreAFileOfTheirOwn() throws {
         let session = try PdfEditSession.open(try MacPdfs.text(pages: 4))
 

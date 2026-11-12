@@ -20,9 +20,12 @@ public enum IOSSystemPrint {
         return info
     }
 
+    // Regions where Letter is the usual office paper.
+    static let letterRegions: Set<String> = ["US", "CA", "MX", "PH", "CL", "CO", "VE", "CR", "GT", "DO", "PA", "SV", "NI", "HN", "PR", "BO", "PE"]
+
     /// The sheet size a layout is made for: the sheet UIKit prints on is chosen later and takes the pages scaled to fit.
     static var paper: (width: Double, height: Double) {
-        ["US", "CA"].contains(Locale.current.region?.identifier) ? (612, 792) : (595, 842)
+        letterRegions.contains(Locale.current.region?.identifier ?? "") ? (612, 792) : (595, 842)
     }
 
     /// Shows the sheet; `done` runs when it closes, with whether anything was printed. `problem` gets what keeps it from
