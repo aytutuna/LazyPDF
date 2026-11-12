@@ -13,11 +13,15 @@ public final class LayerRow: Identifiable {
     public let layer: PdfLayer?
     public let children: [LayerRow]?
 
+    /// The layer is in a radio button group, where turning one on turns the others off; it gets a round button.
+    public let isRadio: Bool
+
     /// Whether the box is ticked; the panel follows the view through `follow`.
     public private(set) var isOn: Bool
 
-    init(id: Int, name: String, layer: PdfLayer?, children: [LayerRow]) {
+    init(id: Int, name: String, layer: PdfLayer?, isRadio: Bool, children: [LayerRow]) {
         self.id = id
+        self.isRadio = isRadio
         self.name = name
         self.layer = layer
         self.children = children.isEmpty ? nil : children
@@ -41,6 +45,7 @@ public final class LayersModel: ToolPanelModel {
     public private(set) var isEmpty = true
 
     @ObservationIgnored private var rows: [LayerRow] = []
+    @ObservationIgnored private var radios: Set<Int> = []
     @ObservationIgnored private var tab: DocumentTab?
     @ObservationIgnored private var viewer: DocumentViewer?
     @ObservationIgnored private var rebuild: ObservationWatch?
@@ -80,6 +85,7 @@ public final class LayersModel: ToolPanelModel {
         guard let viewer else { return }
         let set = viewer.layers
         rows = []
+        radios = Set(set.radioGroups.filter { $0.count > 1 }.flatMap { $0.map(\.number) })
         roots = set.order.isEmpty ? set.layers.map { makeRow(name: $0.name, layer: $0, nodes: []) } : set.order.map(row)
         isEmpty = set.layers.isEmpty
     }
@@ -92,7 +98,7 @@ public final class LayersModel: ToolPanelModel {
 
     private func makeRow(name: String, layer: PdfLayer?, nodes: [LayerNode]) -> LayerRow {
         let inside = nodes.map(row)
-        let made = LayerRow(id: rows.count, name: name, layer: layer, children: inside)
+        let made = LayerRow(id: rows.count, name: name, layer: layer, isRadio: layer.map { radios.contains($0.reference.number) } ?? false, children: inside)
         rows.append(made)
         return made
     }

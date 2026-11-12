@@ -83,6 +83,22 @@ final class LayersModelTests: XCTestCase {
         XCTAssertTrue(model.roots[1].isOn)
     }
 
+    func test_layersOfARadioGroupAreMarkedAndOthersAreNot() async throws {
+        let tab = try PanelPdfs.tab(PanelPdfs.full())
+        let viewer = PanelViewer(tab)
+        let all = viewer.layers.layers
+        let nodes = all.map { LayerNode(label: nil, layer: $0, children: []) }
+        let plain = LayersModel()
+        plain.attach(tab, viewer, RecordingHost())
+        XCTAssertTrue(plain.roots.allSatisfy { !$0.isRadio })
+
+        viewer.layers = LayerSet(layers: all, order: nodes, radioGroups: [[all[0].reference, all[1].reference], [all[0].reference]])
+        let model = LayersModel()
+        model.attach(tab, viewer, RecordingHost())
+
+        XCTAssertTrue(model.roots.allSatisfy { $0.isRadio })
+    }
+
     func test_theListFollowsTheViewerToTheLayersOfANewerFile() async throws {
         let (model, viewer) = try attached()
         let first = viewer.layers.layers[0]

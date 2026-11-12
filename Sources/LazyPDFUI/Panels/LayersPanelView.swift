@@ -32,6 +32,22 @@ public struct LayersPanelView: View {
     }
 }
 
+// A layer in a radio group: the round button of a form, which only turns on.
+private struct RoundButtonStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Button {
+            if !configuration.isOn { configuration.isOn = true }
+        } label: {
+            HStack {
+                Image(systemName: configuration.isOn ? "circle.inset.filled" : "circle")
+                configuration.label
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(configuration.isOn ? [.isSelected] : [])
+    }
+}
+
 private struct LayerRowView: View {
     let row: LayerRow
     let model: LayersModel
@@ -54,10 +70,17 @@ private struct LayerRowView: View {
         if row.layer == nil {
             Text(row.name).fontWeight(.semibold)
         } else {
-            Toggle(row.name, isOn: Binding(get: { row.isOn }, set: { model.toggle(row, $0) }))
-                .disabled(!row.canToggle)
-                .help(row.lockedNote ?? "")
-                .accessibilityHint(row.lockedNote ?? "")
+            let on = Binding(get: { row.isOn }, set: { model.toggle(row, $0) })
+            Group {
+                if row.isRadio {
+                    Toggle(row.name, isOn: on).toggleStyle(RoundButtonStyle())
+                } else {
+                    Toggle(row.name, isOn: on)
+                }
+            }
+            .disabled(!row.canToggle)
+            .help(row.lockedNote ?? "")
+            .accessibilityHint(row.lockedNote ?? "")
         }
     }
 }
