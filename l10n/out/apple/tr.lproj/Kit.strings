@@ -199,6 +199,7 @@
 "Blue marks places that look different." = "Mavi, farklı görünen yerleri işaretler.";
 "Bold" = "Kalın";
 "Bold changed." = "Kalınlık değişti.";
+"Booklet" = "Kitapçık";
 "Bookmark" = "Yer imi";
 "Bookmark goes to another page" = "Yer imi başka bir sayfaya gidiyor";
 "Bookmarks" = "Yer imleri";
@@ -516,6 +517,7 @@
 "Erase" = "Sil";
 "Eraser" = "Silgi";
 "Even pages" = "Çift sayfalar";
+"Even pages only" = "Yalnızca çift sayfalar";
 "Every custom tag maps to a standard one." = "Her özel etiket standart bir etikete eşleniyor.";
 "Every figure has a description." = "Her şeklin bir açıklaması var.";
 "Every figure has alt text, or there are no figures." = "Her şeklin alternatif metni var ya da hiç şekil yok.";
@@ -810,6 +812,7 @@
 "Leave it empty to remove the word." = "Sözcüğü kaldırmak için boş bırakın.";
 "Left" = "Sol";
 "Left in: {0}." = "Dosyada kalanlar: {0}.";
+"Left off the sheets" = "Sayfalara konmadı";
 "Legal" = "Legal";
 "Length on the page" = "Sayfadaki uzunluk";
 "Letter" = "Letter";
@@ -968,6 +971,7 @@
 "No text yet" = "Henüz metin yok";
 "None" = "Yok";
 "None added." = "Hiçbiri eklenmedi.";
+"None of the pages you chose are left to print." = "Seçtiğiniz sayfalardan yazdırılacak sayfa kalmadı.";
 "None of the pictures could be read." = "Resimlerin hiçbiri okunamadı.";
 "None of the pictures could be read. Pick JPEG, PNG, TIFF, BMP, GIF or HEIC files." = "Resimlerin hiçbiri okunamadı. JPEG, PNG, TIFF, BMP, GIF veya HEIC dosyaları seçin.";
 "None of these has its key on this computer. You could not open the copy. Add your own certificate too." = "Bunların hiçbirinin anahtarı bu bilgisayarda değil. Kopyayı siz açamazsınız. Kendi sertifikanızı da ekleyin.";
@@ -1031,6 +1035,7 @@
 "Numbering" = "Numaralandırma";
 "Object {0}" = "Nesne {0}";
 "Odd pages" = "Tek sayfalar";
+"Odd pages only" = "Yalnızca tek sayfalar";
 "Old values are still in the file" = "Eski değerler hâlâ dosyada";
 "Old: {0}" = "Eski: {0}";
 "Older readers may not accept these letters. Use AES 256-bit." = "Eski okuyucular bu harfleri kabul etmeyebilir. AES 256 bit kullanın.";
@@ -1144,6 +1149,7 @@
 "Pages of {0}" = "Sayfalar: {0}";
 "Pages past the first 1000 sheets were left out." = "İlk 1000 sayfadan sonrası dışarıda kaldı.";
 "Pages per part" = "Parça başına sayfa";
+"Pages per sheet" = "Yaprak başına sayfa";
 "Pages replaced." = "Sayfalar değiştirildi.";
 "Pages that are already searchable" = "Zaten aranabilir olan sayfalar";
 "Pages that are turned sideways cannot be read." = "Yan çevrilmiş sayfalar okunamaz.";
@@ -1229,6 +1235,7 @@
 "Print at actual size" = "Gerçek boyutta yazdır";
 "Print here…" = "Burada yazdır…";
 "Print in high quality" = "Yüksek kalitede yazdır";
+"Print layout" = "Yazdırma düzeni";
 "Printer default" = "Yazıcı varsayılanı";
 "Printing is not allowed" = "Yazdırmaya izin verilmiyor";
 "Privacy" = "Gizlilik";
@@ -2012,6 +2019,7 @@
 "Two pages" = "İki sayfa";
 "Two pages at a time" = "Aynı anda iki sayfa";
 "Two pages at a time, cover alone" = "Aynı anda iki sayfa, kapak tek başına";
+"Two pages on each side of a landscape sheet, in the order that folds into a booklet." = "Yatay yaprağın her yüzünde iki sayfa, kitapçık olarak katlanacak sırada.";
 "Type" = "Yaz";
 "Type a Permissions password to apply the limits." = "Sınırları uygulamak için bir İzin parolası yazın.";
 "Type a name for the set, then save it." = "Küme için bir ad yazın, sonra kaydedin.";
@@ -2245,6 +2253,8 @@
 "{0} limits what may be done to it. Ask its owner for a copy without limits." = "{0} üzerinde yapılabilecekleri sınırlıyor. Sahibinden sınırsız bir kopya isteyin.";
 "{0} limits what readers may do. Open it with its owner password to write a report." = "{0} okuyucuların yapabileceklerini sınırlıyor. Rapor yazmak için dosyayı sahip parolasıyla açın.";
 "{0} lines, in the order a screen reader reads them." = "{0} satır, ekran okuyucunun okuduğu sırayla.";
+"{0} link or note without a picture was left off the sheets.|one" = "{0} bağlantı veya resimsiz not yapraklara konmadı.";
+"{0} link or note without a picture was left off the sheets.|other" = "{0} bağlantı veya resimsiz not yapraklara konmadı.";
 "{0} mark added.|one" = "{0} işaret eklendi.";
 "{0} mark added.|other" = "{0} işaret eklendi.";
 "{0} mark removed|one" = "{0} işaret kaldırıldı";

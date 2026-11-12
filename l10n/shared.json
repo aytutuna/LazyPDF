@@ -8480,5 +8480,39 @@
   },
   "Asks the servers the certificates name for the certificate of an issuer. The file is not sent.": {
     "tr": "Sertifikaların bildirdiği sunuculardan bir vericinin sertifikasını ister. Dosya gönderilmez."
+  },
+  "None of the pages you chose are left to print.": {
+    "tr": "Seçtiğiniz sayfalardan yazdırılacak sayfa kalmadı."
+  },
+  "Left off the sheets": {
+    "tr": "Sayfalara konmadı"
+  },
+  "Windows cannot draw the sheets of {0}. Print it without the layout or from another program.": {
+    "tr": "Windows {0} dosyasının yapraklarını çizemiyor. Düzensiz yazdırın veya başka bir programdan yazdırın."
+  },
+  "The pages of {0} could not be laid out on sheets.": {
+    "tr": "{0} dosyasının sayfaları yapraklara yerleştirilemedi."
+  },
+  "{0} link or note without a picture was left off the sheets.": {
+    "other": "{0} links and notes without a picture were left off the sheets.",
+    "tr": "{0} bağlantı veya resimsiz not yapraklara konmadı."
+  },
+  "Print layout": {
+    "tr": "Yazdırma düzeni"
+  },
+  "Pages per sheet": {
+    "tr": "Yaprak başına sayfa"
+  },
+  "Booklet": {
+    "tr": "Kitapçık"
+  },
+  "Two pages on each side of a landscape sheet, in the order that folds into a booklet.": {
+    "tr": "Yatay yaprağın her yüzünde iki sayfa, kitapçık olarak katlanacak sırada."
+  },
+  "Odd pages only": {
+    "tr": "Yalnızca tek sayfalar"
+  },
+  "Even pages only": {
+    "tr": "Yalnızca çift sayfalar"
   }
 }

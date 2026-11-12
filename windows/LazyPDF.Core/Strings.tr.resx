@@ -730,6 +730,9 @@
   <data name="Bold changed." xml:space="preserve">
     <value>Kalınlık değişti.</value>
   </data>
+  <data name="Booklet" xml:space="preserve">
+    <value>Kitapçık</value>
+  </data>
   <data name="Bookmark" xml:space="preserve">
     <value>Yer imi</value>
   </data>
@@ -1933,6 +1936,9 @@
   <data name="Even pages" xml:space="preserve">
     <value>Çift sayfalar</value>
   </data>
+  <data name="Even pages only" xml:space="preserve">
+    <value>Yalnızca çift sayfalar</value>
+  </data>
   <data name="Every custom tag maps to a standard one." xml:space="preserve">
     <value>Her özel etiket standart bir etikete eşleniyor.</value>
   </data>
@@ -3001,6 +3007,9 @@
   <data name="Left in: {0}." xml:space="preserve">
     <value>Dosyada kalanlar: {0}.</value>
   </data>
+  <data name="Left off the sheets" xml:space="preserve">
+    <value>Sayfalara konmadı</value>
+  </data>
   <data name="Legal" xml:space="preserve">
     <value>Legal</value>
   </data>
@@ -3577,6 +3586,9 @@
   <data name="None added." xml:space="preserve">
     <value>Hiçbiri eklenmedi.</value>
   </data>
+  <data name="None of the pages you chose are left to print." xml:space="preserve">
+    <value>Seçtiğiniz sayfalardan yazdırılacak sayfa kalmadı.</value>
+  </data>
   <data name="None of the pictures could be read." xml:space="preserve">
     <value>Resimlerin hiçbiri okunamadı.</value>
   </data>
@@ -3792,6 +3804,9 @@
   </data>
   <data name="Odd pages" xml:space="preserve">
     <value>Tek sayfalar</value>
+  </data>
+  <data name="Odd pages only" xml:space="preserve">
+    <value>Yalnızca tek sayfalar</value>
   </data>
   <data name="Old page" xml:space="preserve">
     <value>Eski sayfa</value>
@@ -4183,6 +4198,9 @@
   <data name="Pages per part" xml:space="preserve">
     <value>Parça başına sayfa</value>
   </data>
+  <data name="Pages per sheet" xml:space="preserve">
+    <value>Yaprak başına sayfa</value>
+  </data>
   <data name="Pages replaced." xml:space="preserve">
     <value>Sayfalar değiştirildi.</value>
   </data>
@@ -4503,6 +4521,9 @@
   </data>
   <data name="Print in high quality" xml:space="preserve">
     <value>Yüksek kalitede yazdır</value>
+  </data>
+  <data name="Print layout" xml:space="preserve">
+    <value>Yazdırma düzeni</value>
   </data>
   <data name="Printer default" xml:space="preserve">
     <value>Yazıcı varsayılanı</value>
@@ -6556,6 +6577,9 @@
   <data name="The pages could not be tagged. Save a copy of the file and try again." xml:space="preserve">
     <value>Sayfalar etiketlenemedi. Dosyanın bir kopyasını kaydedip yeniden deneyin.</value>
   </data>
+  <data name="The pages of {0} could not be laid out on sheets." xml:space="preserve">
+    <value>{0} dosyasının sayfaları yapraklara yerleştirilemedi.</value>
+  </data>
   <data name="The pages they were on changed. Measure them again." xml:space="preserve">
     <value>Bulundukları sayfalar değişti. Yeniden ölçün.</value>
   </data>
@@ -7210,6 +7234,9 @@
   <data name="Two pages at a time, cover alone" xml:space="preserve">
     <value>Aynı anda iki sayfa, kapak tek başına</value>
   </data>
+  <data name="Two pages on each side of a landscape sheet, in the order that folds into a booklet." xml:space="preserve">
+    <value>Yatay yaprağın her yüzünde iki sayfa, kitapçık olarak katlanacak sırada.</value>
+  </data>
   <data name="Two properties are named {0}." xml:space="preserve">
     <value>İki özelliğin adı {0}.</value>
   </data>
@@ -7566,6 +7593,9 @@
   </data>
   <data name="Windows cannot draw the pages of {0}, so it would come out blank. Install Lazy Print or print it from another program." xml:space="preserve">
     <value>Windows {0} dosyasının sayfalarını çizemiyor, bu yüzden boş çıkardı. Lazy Print'i kurun ya da başka bir programdan yazdırın.</value>
+  </data>
+  <data name="Windows cannot draw the sheets of {0}. Print it without the layout or from another program." xml:space="preserve">
+    <value>Windows {0} dosyasının yapraklarını çizemiyor. Düzensiz yazdırın veya başka bir programdan yazdırın.</value>
   </data>
   <data name="Windows cannot draw these pages. Try another format." xml:space="preserve">
     <value>Windows bu sayfaları çizemiyor. Başka bir biçim deneyin.</value>
@@ -8118,6 +8148,9 @@
   </data>
   <data name="{0} lines, in the order a screen reader reads them." xml:space="preserve">
     <value>{0} satır, ekran okuyucunun okuduğu sırayla.</value>
+  </data>
+  <data name="{0} link or note without a picture was left off the sheets.|plural" xml:space="preserve">
+    <value>{0} bağlantı veya resimsiz not yapraklara konmadı.</value>
   </data>
   <data name="{0} mark added.|plural" xml:space="preserve">
     <value>{0} işaret eklendi.</value>

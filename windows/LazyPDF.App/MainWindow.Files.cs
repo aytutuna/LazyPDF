@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using Microsoft.Win32;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.Core;
 
 namespace LazyPDF.App;
 
@@ -146,22 +147,46 @@ public partial class MainWindow
             _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("Windows cannot draw the pages of {0}, so it would come out blank. Install Lazy Print or print it from another program.", tab.Title)));
             return;
         }
+        if (PrintLayoutWindow.Ask(this) is not { } layout) return;
         var dialog = new PrintDialog { UserPageRangeEnabled = true, CurrentPageEnabled = true, MinPage = 1, MaxPage = (uint)tab.PageCount };
         if (dialog.ShowDialog() != true) return;
         var pages = PagePaginator.PagesFor(dialog.PageRangeSelection, dialog.PageRange.PageFrom, dialog.PageRange.PageTo, tab.PageIndex, tab.PageCount);
         if (pages is { Count: 0 }) return;
+        if (!layout.IsPlain) pages = layout.Pages(pages, tab.PageCount);
+        if (pages is { Count: 0 })
+        {
+            _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("None of the pages you chose are left to print.")));
+            return;
+        }
         // A print queue belongs to the thread that made it, so the worker opens its own from the names.
         string server = dialog.PrintQueue.HostingPrintServer.Name, printer = dialog.PrintQueue.Name;
         var ticket = dialog.PrintTicket;
         var size = new Size(dialog.PrintableAreaWidth, dialog.PrintableAreaHeight);
         PagePaginator? paginator = null;
+        IDocumentRenderer? sheetRenderer = null;
+        int dropped = 0;
         var written = false;
         try
         {
-            await _vm.RunBusyAsync(Loc.T("Printing {0}…", tab.Title), token =>
+            await _vm.RunBusyAsync(Loc.T("Printing {0}…", tab.Title), async token =>
             {
+                IDocumentRenderer renderer = tab.Renderer;
+                int pageCount = tab.PageCount;
+                var sheetPages = pages;
+                if (layout.Imposes)
+                {
+                    // The sheets are made from the file as it stands and drawn by a renderer of their own; the open file is not touched.
+                    var source = tab.Session.Document;
+                    var sheets = await Task.Run(() => layout.Sheets(source, pages!, size.Width * 0.75, size.Height * 0.75, token), token);
+                    dropped = sheets.Dropped;
+                    sheetRenderer = _vm.NewRenderer();
+                    if (!sheetRenderer.Load(PdfEditSession.Open(sheets.Bytes), null)) throw new InvalidOperationException("The sheets cannot be drawn.");
+                    renderer = sheetRenderer;
+                    pageCount = sheets.Count;
+                    sheetPages = null;
+                }
                 var shown = Environment.TickCount64;
-                paginator = new PagePaginator(tab.Renderer, tab.PageCount, pages, token, (n, count) =>
+                paginator = new PagePaginator(renderer, pageCount, sheetPages, token, (n, count) =>
                 {
                     var now = Environment.TickCount64;
                     if (now - shown < 100 && n < count) return;
@@ -191,15 +216,31 @@ public partial class MainWindow
                 thread.SetApartmentState(ApartmentState.STA);
                 thread.IsBackground = true;
                 thread.Start();
-                return done.Task;
+                await done.Task;
             });
             if (!written) return;
             if (paginator!.Blank > 0) _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("Some pages of {0} could not be drawn and came out blank.", tab.Title)));
-            else _vm.SetStatus(Loc.T("Sent {0} to the printer.", tab.Title));
+            else
+            {
+                _vm.SetStatus(Loc.T("Sent {0} to the printer.", tab.Title));
+                if (PrintLayout.DroppedNote(dropped) is { } note) _vm.ShowNotice(Loc.T("Left off the sheets"), note);
+            }
+        }
+        catch (InvalidOperationException) when (sheetRenderer is not null)
+        {
+            _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("Windows cannot draw the sheets of {0}. Print it without the layout or from another program.", tab.Title)));
+        }
+        catch (ArgumentException) when (layout.Imposes)
+        {
+            _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("The pages of {0} could not be laid out on sheets.", tab.Title)));
         }
         catch (System.Printing.PrintQueueException)
         {
             _vm.ShowProblem(new Problem(Loc.T("Not printed"), Loc.T("The printer did not take {0}. Check that it is on and has no error, then try again.", tab.Title)));
+        }
+        finally
+        {
+            sheetRenderer?.Dispose();
         }
     }
 

@@ -1,0 +1,33 @@
+<Window x:Class="LazyPDF.App.Services.PrintLayoutWindow" x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:LazyPDF.App"
+        Title="{loc:T Print layout}" Width="380" SizeToContent="Height" ResizeMode="NoResize" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Icon="{x:Static loc:AppIcon.Image}"
+        FontFamily="{StaticResource TextFontFamily}"
+        Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+        Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Style="{StaticResource DialogFooterStyle}">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Style="{StaticResource AccentButtonStyle}" Content="{loc:T Print}" MinWidth="88" Margin="0,0,8,0" IsDefault="True"
+                        AutomationProperties.Name="{loc:T Print}" Click="Print_Click" />
+                <Button Content="{loc:T _Cancel}" MinWidth="88" IsCancel="True" AutomationProperties.Name="{loc:T Cancel}" />
+            </StackPanel>
+        </Border>
+        <StackPanel Margin="24,20,24,20">
+            <TextBlock Text="{loc:T Pages per sheet}" Style="{StaticResource BodyText}" Margin="0,0,0,4" />
+            <ComboBox x:Name="PerSheetBox" AutomationProperties.Name="{loc:T Pages per sheet}" />
+            <CheckBox x:Name="BookletBox" Content="{loc:T Booklet}" Margin="0,12,0,0" Checked="Booklet_Changed" Unchecked="Booklet_Changed"
+                      AutomationProperties.Name="{loc:T Booklet}" />
+            <TextBlock x:Name="BookletHint" Style="{StaticResource ReasonText}" TextWrapping="Wrap" Margin="0,4,0,0" />
+            <TextBlock Text="{loc:T Pages}" Style="{StaticResource BodyText}" Margin="0,12,0,4" />
+            <ComboBox x:Name="ParityBox" AutomationProperties.Name="{loc:T Pages}">
+                <ComboBoxItem Content="{loc:T All pages}" />
+                <ComboBoxItem Content="{loc:T Odd pages only}" />
+                <ComboBoxItem Content="{loc:T Even pages only}" />
+            </ComboBox>
+        </StackPanel>
+    </DockPanel>
+</Window>

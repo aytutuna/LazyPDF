@@ -1,6 +1,7 @@
 // Printing: Lazy Print gets the file when it is there, otherwise the window opens the Windows print dialog.
 
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.Core;
 
 namespace LazyPDF.App;
@@ -12,6 +13,9 @@ public sealed partial class AppViewModel
 
     /// <summary>Print hands the document to Lazy Print, so the control says so.</summary>
     public bool PrintsInLazyPrint => _sisters.LazyPrintInstalled;
+
+    /// <summary>A renderer for a document that is not a tab, such as the sheets made for printing.</summary>
+    public IDocumentRenderer NewRenderer() => _renderers();
 
     public void Print()
     {
