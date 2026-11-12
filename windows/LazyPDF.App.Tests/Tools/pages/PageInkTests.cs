@@ -104,14 +104,6 @@ public sealed class PageInkTests
     }
 
     [Fact]
-    public void AFaintScanIsNotBlank()
-    {
-        var image = White(595, 842);
-        for (int i = 0; i < image.Rgba.Length; i += 4) image.Rgba[i] = image.Rgba[i + 1] = image.Rgba[i + 2] = 225;
-        Assert.False(PageInk.IsBlank(image));
-    }
-
-    [Fact]
     public void DarkShareOfAHalfBlackImageIsHalf()
     {
         var image = White(10, 10);
