@@ -15,14 +15,20 @@ public static class CreateJob
                 made = request.Source == CreateSource.WebPage ? await PdfMaker.MakeWebPageAsync(request, token)
                     : await Task.Run(() => PdfMaker.Make(request, codec, fonts, token), token).WaitAsync(token));
         }
-        catch (Exception e) when (e is WebViewMissingException or ArgumentException or InvalidOperationException or IOException or UnauthorizedAccessException)
+        catch (Exception e) when (e is WebViewMissingException or PdfReadException or ArgumentException or InvalidOperationException or IOException or UnauthorizedAccessException)
         {
             host.ShowProblem(CreateProblems.Failed(e, request.Source));
             return;
         }
         if (made is null) return;
 
-        if (!await host.OpenNewAsync(made.Bytes, request.Title) || made.Unreadable + made.Skipped == 0) return;
+        if (!await host.OpenNewAsync(made.Bytes, request.Title)) return;
+        if (request.Source == CreateSource.Word)
+        {
+            host.ShowNotice(Loc.T("Made without Office"), WordNotice.Text(made));
+            return;
+        }
+        if (made.Unreadable + made.Skipped == 0) return;
         var lines = new List<string>();
         if (made.Unreadable > 0)
             lines.Add(request.Source == CreateSource.Pictures

@@ -19,7 +19,7 @@ public partial class CreatePanel : ToolPanel
         public string Name => System.IO.Path.GetFileName(Path);
     }
 
-    private const int ClipboardIndex = 4;
+    private const int ClipboardIndex = 5;
 
     private readonly IImageCodec _codec = new WicImageCodec();
     private readonly IFontSource _fonts = new SystemFontSource();
@@ -34,6 +34,7 @@ public partial class CreatePanel : ToolPanel
     private string? _fileProblem;
     private string? _longText;
     private string? _webPage;
+    private string? _wordPath;
     private Window? _owner;
 
     public CreatePanel() : this(null)
@@ -139,6 +140,7 @@ public partial class CreatePanel : ToolPanel
         (int)CreateSource.Pictures => _pictures.Count > 0 && CustomFits(),
         (int)CreateSource.Text => (_longText is not null || TypedText.Text.Trim().Length > 0) && CustomFits(),
         (int)CreateSource.WebPage => _webPage is not null && CustomFits(),
+        (int)CreateSource.Word => _wordPath is not null,
         _ => _clipboard != ClipboardKind.Nothing && CustomFits(),
     };
 
@@ -146,6 +148,7 @@ public partial class CreatePanel : ToolPanel
 
     private string? Blocker() =>
         _fileProblem ?? (Source == (int)CreateSource.Blank && !TryBlankPages(out _) ? Loc.T("Type a number from 1 to {0}.", PdfMaker.MostBlankPages)
+            : Source == (int)CreateSource.Word ? null
             : Source != ClipboardIndex || _clipboard != ClipboardKind.Nothing ? (CustomFits() ? null : SizeLimits())
             : null);
 
@@ -172,8 +175,10 @@ public partial class CreatePanel : ToolPanel
         WebPageName.Text = _webPage is null ? "" : System.IO.Path.GetFileName(_webPage);
         TypedText.Visibility = When(_longText is null);
         LongTextRow.Visibility = When(_longText is not null);
+        WordOptions.Visibility = When(Source == (int)CreateSource.Word);
+        WordState.Text = _wordPath is null ? Loc.T("Layout can differ from Word.") : System.IO.Path.GetFileName(_wordPath);
         ClipboardOptions.Visibility = When(Source == ClipboardIndex);
-        SetupOptions.Visibility = When(Source != ClipboardIndex || _clipboard != ClipboardKind.Nothing);
+        SetupOptions.Visibility = When(Source == ClipboardIndex ? _clipboard != ClipboardKind.Nothing : Source != (int)CreateSource.Word);
         var names = PaperNames();
         if (PaperBox.ItemsSource is not List<string> shown || !shown.SequenceEqual(names))
         {
@@ -231,6 +236,8 @@ public partial class CreatePanel : ToolPanel
                 return new(CreateSource.Text, setup, Loc.T("Text.pdf"), Text: _longText ?? TypedText.Text, FontSize: Tagged(FontSizeBox), Family: Family);
             case (int)CreateSource.WebPage:
                 return new(CreateSource.WebPage, setup, System.IO.Path.GetFileNameWithoutExtension(_webPage!) + ".pdf", Files: [_webPage!]);
+            case (int)CreateSource.Word:
+                return new(CreateSource.Word, setup, System.IO.Path.GetFileNameWithoutExtension(_wordPath!) + ".pdf", Files: [_wordPath!]);
         }
         var content = ClipboardContent.Read();
         if (content.Text is { } text) return new(CreateSource.Text, setup, Loc.T("Clipboard.pdf"), Text: text, FontSize: Tagged(FontSizeBox), Family: Family);
@@ -375,6 +382,19 @@ public partial class CreatePanel : ToolPanel
         int at = PictureList.SelectedIndex;
         _pictures.RemoveAt(at);
         PictureList.SelectedIndex = Math.Min(at, _pictures.Count - 1);
+        Refresh();
+    }
+
+    private void ChooseWord_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog { Filter = Loc.T("Word files") + "|*.docx" };
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+        UseWordFile(dialog.FileName);
+    }
+
+    internal void UseWordFile(string path)
+    {
+        _wordPath = path;
         Refresh();
     }
 

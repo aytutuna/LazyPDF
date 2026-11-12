@@ -8641,5 +8641,92 @@
   },
   "The web page could not be read. Check that it is an HTML file and that no other program has it open.": {
     "tr": "Web sayfası okunamadı. Bir HTML dosyası olduğundan ve başka bir programın onu açık tutmadığından emin olun."
+  },
+  "Made without Office": {
+    "tr": "Office olmadan oluşturuldu"
+  },
+  "A Word file (.docx)": {
+    "tr": "Bir Word dosyası (.docx)"
+  },
+  "Choose a Word file": {
+    "tr": "Word dosyası seç"
+  },
+  "Layout can differ from Word.": {
+    "tr": "Sayfa düzeni Word'dekinden farklı olabilir."
+  },
+  "Word files": {
+    "tr": "Word dosyaları"
+  },
+  "Word file cannot be read": {
+    "tr": "Word dosyası okunamıyor"
+  },
+  "The file is damaged or is not a Word document. Pick a .docx file.": {
+    "tr": "Dosya bozuk ya da bir Word belgesi değil. Bir .docx dosyası seçin."
+  },
+  "Word file is not supported": {
+    "tr": "Word dosyası desteklenmiyor"
+  },
+  "Only .docx files up to 100 MB can be made into a PDF. Older .doc files must be saved as .docx first.": {
+    "tr": "Yalnızca 100 MB'a kadar .docx dosyaları PDF'ye çevrilebilir. Eski .doc dosyalarını önce .docx olarak kaydedin."
+  },
+  "The file could not be read. Close any program that has it open and try again.": {
+    "tr": "Dosya okunamadı. Dosyayı açık tutan programları kapatıp yeniden deneyin."
+  },
+  "Windows does not let Lazy PDF read the file. Check who may open it.": {
+    "tr": "Windows, Lazy PDF'nin dosyayı okumasına izin vermiyor. Dosyayı kimlerin açabileceğini denetleyin."
+  },
+  "letters no font has": {
+    "tr": "hiçbir yazı tipinde bulunmayan harfler"
+  },
+  "Left out: {0}.": {
+    "tr": "Dışarıda kalanlar: {0}."
+  },
+  "tables too large or nested (shown as paragraphs)": {
+    "tr": "çok büyük ya da iç içe tablolar (paragraf olarak gösterildi)"
+  },
+  "text boxes": {
+    "tr": "metin kutuları"
+  },
+  "pictures that could not be read": {
+    "tr": "okunamayan resimler"
+  },
+  "charts": {
+    "tr": "grafikler"
+  },
+  "shapes": {
+    "tr": "şekiller"
+  },
+  "drawings": {
+    "tr": "çizimler"
+  },
+  "footnotes": {
+    "tr": "dipnotlar"
+  },
+  "endnotes": {
+    "tr": "sonnotlar"
+  },
+  "comment marks": {
+    "tr": "açıklama işaretleri"
+  },
+  "equations": {
+    "tr": "denklemler"
+  },
+  "tracked changes": {
+    "tr": "değişiklik izlemeleri"
+  },
+  "fields (shown as last saved)": {
+    "tr": "alanlar (son kaydedilen değerle gösterildi)"
+  },
+  "picture positions (placed in line)": {
+    "tr": "resim konumları (satır içine yerleştirildi)"
+  },
+  "right-to-left text direction": {
+    "tr": "sağdan sola metin yönü"
+  },
+  "complex-script shaping": {
+    "tr": "karmaşık yazı sistemi şekillendirmesi"
+  },
+  "The system does not let Lazy PDF read the file. Check who may open it.": {
+    "tr": "Sistem, Lazy PDF'nin dosyayı okumasına izin vermiyor. Dosyayı kimlerin açabileceğini denetleyin."
   }
 }

@@ -313,6 +313,7 @@
 "Choose a picture" = "Resim seç";
 "Choose a results folder other than the watched one, or the results would run again." = "İzlenen klasörden başka bir sonuç klasörü seçin, yoksa sonuçlar yeniden işlenir.";
 "Choose a value for {0} in the panel." = "Panelde {0} için bir değer seçin.";
+"Choose a web page file" = "Web sayfası dosyası seç";
 "Choose an existing folder to watch." = "İzlenecek, var olan bir klasör seçin.";
 "Choose file" = "Dosya seç";
 "Choose pages marked Searchable above." = "Yukarıda Aranabilir olarak işaretli sayfaları seçin.";
@@ -1446,6 +1447,7 @@
 "Scan the paper" = "Kağıdı tara";
 "Scan|noun" = "Tarama";
 "Script not run" = "Komut dosyası çalışmadı";
+"Scripts do not run and nothing is loaded from the internet." = "Betikler çalışmaz ve internetten hiçbir şey yüklenmez.";
 "Scroll continuously" = "Sürekli kaydır";
 "Scroll together" = "Birlikte kaydır";
 "Scrolling, one page across" = "Kaydırmalı, yan yana tek sayfa";
@@ -2114,6 +2116,7 @@
 "Watermark text" = "Filigran metni";
 "Weak. Try 12 or more characters." = "Zayıf. En az 12 karakter deneyin.";
 "Web address" = "Web adresi";
+"Web page" = "Web sayfası";
 "Web page (.html)" = "Web sayfası (.html)";
 "Website" = "Web sitesi";
 "What was found" = "Bulunanlar";

@@ -52,6 +52,9 @@
   <data name="A TrueType font must use WinAnsiEncoding or MacRomanEncoding." xml:space="preserve">
     <value>Bir TrueType yazı tipi WinAnsiEncoding ya da MacRomanEncoding kullanmalı.</value>
   </data>
+  <data name="A Word file (.docx)" xml:space="preserve">
+    <value>Bir Word dosyası (.docx)</value>
+  </data>
   <data name="A box I draw on the page" xml:space="preserve">
     <value>Sayfaya çizeceğim bir kutu</value>
   </data>
@@ -1110,6 +1113,9 @@
   </data>
   <data name="Choose a PFX file" xml:space="preserve">
     <value>PFX dosyası seç</value>
+  </data>
+  <data name="Choose a Word file" xml:space="preserve">
+    <value>Word dosyası seç</value>
   </data>
   <data name="Choose a certificate" xml:space="preserve">
     <value>Sertifika seçin</value>
@@ -2974,6 +2980,9 @@
   <data name="Layout" xml:space="preserve">
     <value>Düzen</value>
   </data>
+  <data name="Layout can differ from Word." xml:space="preserve">
+    <value>Sayfa düzeni Word'dekinden farklı olabilir.</value>
+  </data>
   <data name="Lazy PDF Help" xml:space="preserve">
     <value>Lazy PDF Yardımı</value>
   </data>
@@ -3033,6 +3042,9 @@
   </data>
   <data name="Left off the sheets" xml:space="preserve">
     <value>Sayfalara konmadı</value>
+  </data>
+  <data name="Left out: {0}." xml:space="preserve">
+    <value>Dışarıda kalanlar: {0}.</value>
   </data>
   <data name="Legal" xml:space="preserve">
     <value>Legal</value>
@@ -3198,6 +3210,9 @@
   </data>
   <data name="Lower numbers lose detail." xml:space="preserve">
     <value>Düşük değerler ayrıntıyı azaltır.</value>
+  </data>
+  <data name="Made without Office" xml:space="preserve">
+    <value>Office olmadan oluşturuldu</value>
   </data>
   <data name="Made {0} page searchable|plural" xml:space="preserve">
     <value>{0} sayfa aranabilir yapıldı</value>
@@ -3873,6 +3888,9 @@
   </data>
   <data name="One side" xml:space="preserve">
     <value>Tek yüz</value>
+  </data>
+  <data name="Only .docx files up to 100 MB can be made into a PDF. Older .doc files must be saved as .docx first." xml:space="preserve">
+    <value>Yalnızca 100 MB'a kadar .docx dosyaları PDF'ye çevrilebilir. Eski .doc dosyalarını önce .docx olarak kaydedin.</value>
   </data>
   <data name="Only PDF files can be added between pages." xml:space="preserve">
     <value>Sayfaların arasına yalnızca PDF dosyaları eklenebilir.</value>
@@ -6379,6 +6397,9 @@
   <data name="The file could not be read." xml:space="preserve">
     <value>Dosya okunamadı.</value>
   </data>
+  <data name="The file could not be read. Close any program that has it open and try again." xml:space="preserve">
+    <value>Dosya okunamadı. Dosyayı açık tutan programları kapatıp yeniden deneyin.</value>
+  </data>
   <data name="The file could not be read. Close it and open it again." xml:space="preserve">
     <value>Dosya okunamadı. Kapatıp yeniden açın.</value>
   </data>
@@ -6432,6 +6453,9 @@
   </data>
   <data name="The file is a dynamic XFA form, which has no pages of its own to keep." xml:space="preserve">
     <value>Dosya dinamik bir XFA formu; saklanacak kendi sayfaları yok.</value>
+  </data>
+  <data name="The file is damaged or is not a Word document. Pick a .docx file." xml:space="preserve">
+    <value>Dosya bozuk ya da bir Word belgesi değil. Bir .docx dosyası seçin.</value>
   </data>
   <data name="The file is encrypted." xml:space="preserve">
     <value>Dosya şifreli.</value>
@@ -6798,6 +6822,9 @@
   </data>
   <data name="The system does not let Lazy PDF read one of the pictures. Check who may open it." xml:space="preserve">
     <value>Sistem, Lazy PDF'nin resimlerden birini okumasına izin vermiyor. Dosyayı kimlerin açabildiğini denetleyin.</value>
+  </data>
+  <data name="The system does not let Lazy PDF read the file. Check who may open it." xml:space="preserve">
+    <value>Sistem, Lazy PDF'nin dosyayı okumasına izin vermiyor. Dosyayı kimlerin açabileceğini denetleyin.</value>
   </data>
   <data name="The system does not let Lazy PDF read {0}. Check who may open it." xml:space="preserve">
     <value>Sistem, Lazy PDF'nin {0} dosyasını okumasına izin vermiyor. Kimlerin açabildiğine bakın.</value>
@@ -7744,6 +7771,9 @@
   <data name="Windows does not let Lazy PDF read one of the pictures. Check who may open it." xml:space="preserve">
     <value>Windows, Lazy PDF'nin resimlerden birini okumasına izin vermiyor. Dosyayı kimlerin açabildiğini denetleyin.</value>
   </data>
+  <data name="Windows does not let Lazy PDF read the file. Check who may open it." xml:space="preserve">
+    <value>Windows, Lazy PDF'nin dosyayı okumasına izin vermiyor. Dosyayı kimlerin açabileceğini denetleyin.</value>
+  </data>
   <data name="Windows does not let Lazy PDF read the web page. Check who may open it." xml:space="preserve">
     <value>Windows, Lazy PDF'nin web sayfasını okumasına izin vermiyor. Dosyayı kimlerin açabildiğini kontrol edin.</value>
   </data>
@@ -7782,6 +7812,15 @@
   </data>
   <data name="With the keyboard, press Enter at each end." xml:space="preserve">
     <value>Klavyeyle her uçta Enter'a basın.</value>
+  </data>
+  <data name="Word file cannot be read" xml:space="preserve">
+    <value>Word dosyası okunamıyor</value>
+  </data>
+  <data name="Word file is not supported" xml:space="preserve">
+    <value>Word dosyası desteklenmiyor</value>
+  </data>
+  <data name="Word files" xml:space="preserve">
+    <value>Word dosyaları</value>
   </data>
   <data name="Word or phrase" xml:space="preserve">
     <value>Sözcük veya ifade</value>
@@ -7885,8 +7924,35 @@
   <data name="an unknown signer" xml:space="preserve">
     <value>bilinmeyen bir imzalayan</value>
   </data>
+  <data name="charts" xml:space="preserve">
+    <value>grafikler</value>
+  </data>
+  <data name="comment marks" xml:space="preserve">
+    <value>açıklama işaretleri</value>
+  </data>
+  <data name="complex-script shaping" xml:space="preserve">
+    <value>karmaşık yazı sistemi şekillendirmesi</value>
+  </data>
   <data name="converted" xml:space="preserve">
     <value>dönüştürüldü</value>
+  </data>
+  <data name="drawings" xml:space="preserve">
+    <value>çizimler</value>
+  </data>
+  <data name="endnotes" xml:space="preserve">
+    <value>sonnotlar</value>
+  </data>
+  <data name="equations" xml:space="preserve">
+    <value>denklemler</value>
+  </data>
+  <data name="fields (shown as last saved)" xml:space="preserve">
+    <value>alanlar (son kaydedilen değerle gösterildi)</value>
+  </data>
+  <data name="footnotes" xml:space="preserve">
+    <value>dipnotlar</value>
+  </data>
+  <data name="letters no font has" xml:space="preserve">
+    <value>hiçbir yazı tipinde bulunmayan harfler</value>
   </data>
   <data name="none|no conformance" xml:space="preserve">
     <value>yok</value>
@@ -7900,17 +7966,38 @@
   <data name="page {0}|in a sentence" xml:space="preserve">
     <value>sayfa {0}</value>
   </data>
+  <data name="picture positions (placed in line)" xml:space="preserve">
+    <value>resim konumları (satır içine yerleştirildi)</value>
+  </data>
+  <data name="pictures that could not be read" xml:space="preserve">
+    <value>okunamayan resimler</value>
+  </data>
   <data name="protected" xml:space="preserve">
     <value>korumalı</value>
   </data>
   <data name="pt" xml:space="preserve">
     <value>pt</value>
   </data>
+  <data name="right-to-left text direction" xml:space="preserve">
+    <value>sağdan sola metin yönü</value>
+  </data>
+  <data name="shapes" xml:space="preserve">
+    <value>şekiller</value>
+  </data>
+  <data name="tables too large or nested (shown as paragraphs)" xml:space="preserve">
+    <value>çok büyük ya da iç içe tablolar (paragraf olarak gösterildi)</value>
+  </data>
+  <data name="text boxes" xml:space="preserve">
+    <value>metin kutuları</value>
+  </data>
   <data name="text in {0} note or field|plural" xml:space="preserve">
     <value>{0} not veya alandaki metin</value>
   </data>
   <data name="the servers named in its certificates" xml:space="preserve">
     <value>sertifikalarında adı geçen sunucular</value>
+  </data>
+  <data name="tracked changes" xml:space="preserve">
+    <value>değişiklik izlemeleri</value>
   </data>
   <data name="unprotected" xml:space="preserve">
     <value>korumasız</value>

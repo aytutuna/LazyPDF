@@ -12,6 +12,7 @@
             <ComboBoxItem Content="{loc:T Pictures}" />
             <ComboBoxItem Content="{loc:T Text}" />
             <ComboBoxItem Content="{loc:T Web page file (.html or .htm)}" />
+            <ComboBoxItem Content="{loc:T A Word file (.docx)}" />
             <ComboBoxItem Content="{loc:T Clipboard}" />
         </ComboBox>
 
@@ -67,6 +68,12 @@
             <TextBlock x:Name="WebPageName" Margin="0,8,0,0" TextTrimming="CharacterEllipsis" AutomationProperties.LiveSetting="Polite" />
             <TextBlock Style="{StaticResource ReasonText}" Margin="0,8,0,0" TextWrapping="Wrap"
                        Text="{loc:T Scripts and anything from the internet are left out. Pictures and styles beside the file are kept.}" />
+        </StackPanel>
+
+        <StackPanel x:Name="WordOptions" Margin="0,16,0,0" Visibility="Collapsed">
+            <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8E5;" Content="{loc:T Choose a Word file}" Padding="10,3,10,4" HorizontalAlignment="Left"
+                    AutomationProperties.Name="{loc:T Choose a Word file}" Click="ChooseWord_Click" />
+            <TextBlock x:Name="WordState" Style="{StaticResource ReasonText}" AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
 
         <DockPanel x:Name="ClipboardOptions" Margin="0,16,0,0" Visibility="Collapsed">
