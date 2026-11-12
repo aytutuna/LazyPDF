@@ -104,6 +104,13 @@ public enum PdfFilters {
         try inflate(data, maxSize, false)
     }
 
+    /// A raw deflate stream (a zip entry) inflated; a stream that breaks off or does not inflate is damage.
+    static func inflateRaw(_ data: [UInt8], _ maxSize: Int) throws -> [UInt8] {
+        let output = FilterBuffer(maxSize, capacity: min(data.count * 4, 1 << 22))
+        if !(try inflateFrom(data, 0, output, true)) { throw PdfReadException.damaged("A compressed stream does not inflate.") }
+        return output.toArray()
+    }
+
     private static func inflate(_ data: [UInt8], _ maxSize: Int, _ strict: Bool) throws -> [UInt8] {
         if data.isEmpty { return [] }
         let output = FilterBuffer(maxSize, capacity: min(data.count * 4, 1 << 22))

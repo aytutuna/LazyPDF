@@ -1025,7 +1025,7 @@ A page with marks is either understood in full or turned into a picture. Removin
 
 ### Office: reading packages for the converter
 
-Folder `Office/`, no third-party code and no `System.IO.Compression.ZipArchive`; the twin Swift reader is to behave the same.
+Folder `Office/`, no third-party code and no `System.IO.Compression.ZipArchive`. The Swift twin (`Sources/LazyPDFKit/Office/ZipReader.swift`, `ZipLimits` with the same defaults, `PdfFilters.inflateRaw`) behaves the same and its tests run the same cases.
 
 **`ZipReader.Open(bytes, ZipLimits? = null)`** (internal) reads the central directory (zip64 end record and extra fields, stored and deflate; data descriptors need no care since sizes come from the directory) and gives `Names` (files only, `/` separators, directory order), `Contains(name)` and `Read(name)`. Names compare case-insensitively like OPC part names. Open refuses with `PdfReadException`: no directory, a directory or header cut short, several disks, encryption, a method other than 0 and 8, a name that is rooted or has a `..` segment (`\` counts as `/`), two names equal ignoring case (all `Damaged`, the rest `Unsupported`). `Read` inflates through `PdfFilters.InflateRaw` no further than the declared size and checks the size and CRC-32, so a lying size cannot allocate or pass.
 
