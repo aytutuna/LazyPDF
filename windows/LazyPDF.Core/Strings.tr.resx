@@ -1510,6 +1510,9 @@
   <data name="Create a PDF" xml:space="preserve">
     <value>PDF oluştur</value>
   </data>
+  <data name="Create and export" xml:space="preserve">
+    <value>Oluştur ve dışa aktar</value>
+  </data>
   <data name="Created" xml:space="preserve">
     <value>Oluşturulma</value>
   </data>
@@ -2530,6 +2533,9 @@
   <data name="Forms" xml:space="preserve">
     <value>Formlar</value>
   </data>
+  <data name="Forms and signatures" xml:space="preserve">
+    <value>Formlar ve imzalar</value>
+  </data>
   <data name="Forward" xml:space="preserve">
     <value>Öne</value>
   </data>
@@ -2806,8 +2812,8 @@
   <data name="It could not be saved. It can still be placed this time." xml:space="preserve">
     <value>Kaydedilemedi. Bu seferlik yine de yerleştirilebilir.</value>
   </data>
-  <data name="It has pictures of pages and no text. Make searchable (under Scan and OCR) can read the pages, then export again. You can also save the pages as pictures." xml:space="preserve">
-    <value>Sayfa resimleri var, metin yok. Aranabilir yap (Tara ve OCR altında) sayfaları okuyabilir; sonra yeniden dışa aktarın. Sayfaları resim olarak da kaydedebilirsiniz.</value>
+  <data name="It has pictures of pages and no text. Make searchable (under Optimize) can read the pages, then export again. You can also save the pages as pictures." xml:space="preserve">
+    <value>Sayfa resimleri var, metin yok. Aranabilir yap (İyileştir altında) sayfaları okuyabilir; sonra yeniden dışa aktarın. Sayfaları resim olarak da kaydedebilirsiniz.</value>
   </data>
   <data name="It is already there." xml:space="preserve">
     <value>Zaten orada.</value>
@@ -3979,6 +3985,9 @@
   <data name="Opens in a new tab. You name it when you save." xml:space="preserve">
     <value>Yeni sekmede açılır. Adını kaydederken verirsiniz.</value>
   </data>
+  <data name="Optimize" xml:space="preserve">
+    <value>İyileştir</value>
+  </data>
   <data name="Options" xml:space="preserve">
     <value>Seçenekler</value>
   </data>
@@ -3996,6 +4005,9 @@
   </data>
   <data name="Order in the file" xml:space="preserve">
     <value>Dosyadaki sıra</value>
+  </data>
+  <data name="Organize" xml:space="preserve">
+    <value>Yönet</value>
   </data>
   <data name="Organize on the stage" xml:space="preserve">
     <value>Sayfaları büyük görünümde düzenle</value>
@@ -5029,6 +5041,9 @@
   <data name="Results go to" xml:space="preserve">
     <value>Sonuçların gideceği yer</value>
   </data>
+  <data name="Review" xml:space="preserve">
+    <value>Gözden geçir</value>
+  </data>
   <data name="Rich text (.rtf)" xml:space="preserve">
     <value>Zengin metin (.rtf)</value>
   </data>
@@ -5227,9 +5242,6 @@
   <data name="Scale the content" xml:space="preserve">
     <value>İçeriği ölçekle</value>
   </data>
-  <data name="Scan and OCR" xml:space="preserve">
-    <value>Tara ve OCR</value>
-  </data>
   <data name="Scan paper into a PDF with Lazy Scan." xml:space="preserve">
     <value>Kâğıdı Lazy Scan ile PDF olarak tarayın.</value>
   </data>
@@ -5295,6 +5307,9 @@
   </data>
   <data name="Searching for {0}" xml:space="preserve">
     <value>{0} aranıyor</value>
+  </data>
+  <data name="Security" xml:space="preserve">
+    <value>Güvenlik</value>
   </data>
   <data name="Security allows screen readers" xml:space="preserve">
     <value>Güvenlik ekran okuyuculara izin veriyor</value>

@@ -56,6 +56,10 @@ English first, because the Turkish follows the English. When two words name one 
 | erase | delete | Sil | The Eraser and Erase in Comment. |
 | organize pages | edit pages | Sayfaları yönet | The Pages tool. Düzenle is Edit and nothing else. |
 | edit | organize | Düzenle | Changing text, pictures, fields. |
+| Review | inspect | Gözden geçir | The group of Comment, Measure and Compare files. Not İncele, which is too close to Denetle. |
+| Optimize | compress | İyileştir | The group of Make smaller and Make searchable only; the tool stays Make smaller. |
+| Check | inspect | Denetle | The group of Properties, Accessibility and PDF/A, and the Check button in their panels. |
+| Security | protection | Güvenlik | The group of Protect, Redact and Clean for sharing. |
 | properties | metadata | Özellikler | What the Properties tool shows. "Metadata" (Üst veri) is for the PDF/A and XMP messages. |
 | bookmark | outline | Yer imi | Navigation inside the file. "Outline" stays in the PDF/A checks (Anahat). |
 | mark | annotation | İşaret | A mark on a page from the Comment tool. "Annotation" (Ek açıklama) is the PDF term in the checks. A redaction mark is İşaret too. |

@@ -408,6 +408,7 @@
 "Cream" = "Krem";
 "Create" = "Oluştur";
 "Create a PDF" = "PDF oluştur";
+"Create and export" = "Oluştur ve dışa aktar";
 "Created" = "Oluşturulma";
 "Creating" = "Oluşturuluyor";
 "Crop" = "Kırp";
@@ -686,6 +687,7 @@
 "Form scripts not run" = "Form komut dosyaları çalışmadı";
 "Format" = "Biçim";
 "Forms" = "Formlar";
+"Forms and signatures" = "Formlar ve imzalar";
 "Forward" = "Öne";
 "Free. Source available under PolyForm Noncommercial 1.0.0." = "Ücretsiz. Kaynak kodu PolyForm Noncommercial 1.0.0 lisansıyla erişilebilir.";
 "From Photos" = "Fotoğraflardan";
@@ -1090,11 +1092,13 @@
 "Opened with limited rights. Enter its permissions password to change the protection." = "Sınırlı haklarla açıldı. Korumayı değiştirmek için izin parolasını girin.";
 "Opened with limited rights. Your certificate may not change the protection." = "Sınırlı haklarla açıldı. Sertifikanız korumayı değiştiremeyebilir.";
 "Opens in a new tab. You name it when you save." = "Yeni sekmede açılır. Adını kaydederken verirsiniz.";
+"Optimize" = "İyileştir";
 "Options" = "Seçenekler";
 "Or press Enter on the page." = "Ya da sayfada Enter'a basın.";
 "Orange" = "Turuncu";
 "Order changed." = "Sıra değişti.";
 "Order in the file" = "Dosyadaki sıra";
+"Organize" = "Yönet";
 "Organize on the stage" = "Sayfaları büyük görünümde düzenle";
 "Organize pages" = "Sayfaları yönet";
 "Orientation" = "Yön";
@@ -1383,6 +1387,7 @@
 "Results" = "Sonuçlar";
 "Results folder" = "Sonuç klasörü";
 "Results go to" = "Sonuçların gideceği yer";
+"Review" = "Gözden geçir";
 "Rich text (.rtf)" = "Zengin metin (.rtf)";
 "Right" = "Sağ";
 "Rotate clockwise" = "Saat yönünde döndür";
@@ -1430,7 +1435,6 @@
 "Saved {0}." = "{0} kaydedildi.";
 "Saved." = "Kaydedildi.";
 "Scale the content" = "İçeriği ölçekle";
-"Scan and OCR" = "Tara ve OCR";
 "Scan paper into a PDF with Lazy Scan." = "Kâğıdı Lazy Scan ile PDF olarak tarayın.";
 "Scan the paper" = "Kağıdı tara";
 "Scan|noun" = "Tarama";
@@ -1452,6 +1456,7 @@
 "Searchable" = "Aranabilir";
 "Searching" = "Aranıyor";
 "Searching for {0}" = "{0} aranıyor";
+"Security" = "Güvenlik";
 "Security allows screen readers" = "Güvenlik ekran okuyuculara izin veriyor";
 "Select" = "Seç";
 "Select all" = "Tümünü seç";

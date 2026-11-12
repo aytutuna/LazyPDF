@@ -42,7 +42,22 @@ final class ToolCatalogTests: XCTestCase {
 
     func test_theGroupsAreTheOnesOfTheStrip() {
         XCTAssertEqual(ToolGroup.allCases.map(ToolCatalog.groupTitle),
-                       ["Comment", "Edit", "Pages", "Forms", "Sign", "Protect", "Convert", "Scan and OCR", "Compare", "Accessibility"])
+                       ["Review", "Edit", "Organize", "Forms and signatures", "Security", "Create and export", "Optimize", "Check"])
+    }
+
+    func test_toolsFollowTheGroupsInOrder() {
+        XCTAssertEqual(ToolCatalog.tools.map(\.id), [
+            "comment", "measure", "compare", "editcontent", "stamps", "pages", "combine", "batch", "forms", "fillsign", "certificates",
+            "protect", "redact", "sanitize", "create", "export", "optimize", "ocr", "metadata", "accessibility", "standards",
+        ])
+        var seen: [ToolGroup] = []
+        for tool in ToolCatalog.tools where seen.last != tool.group { seen.append(tool.group) }
+        XCTAssertEqual(seen, ToolGroup.allCases)
+    }
+
+    func test_aGroupNeverSharesATitleWithAToolOrAPanel() {
+        let titles = Set(ToolCatalog.tools.map(\.title) + ToolCatalog.sidePanels.map(\.title))
+        for group in ToolGroup.allCases { XCTAssertFalse(titles.contains(ToolCatalog.groupTitle(group)), "\(group)") }
     }
 
     func test_theRailHasTheSevenSidePanels() {
