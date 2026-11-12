@@ -64,7 +64,7 @@ internal sealed class PptxColors(DocxTheme theme, IReadOnlyDictionary<string, st
             "sysClr" => Unpack(DocxReader.Hex(e.Attribute("lastClr")) ?? (e.Attribute("val") == "window" ? 0xFFFFFF : e.Attribute("val") == "windowText" ? 0 : null)),
             "prstClr" => Unpack(e.Attribute("val") is { } name && Named.TryGetValue(name, out int named) ? named : null),
             "scrgbClr" => [Linear(e, "r"), Linear(e, "g"), Linear(e, "b")],
-            "hslClr" => FromHsl((DocxReader.Number(e.Attribute("hue")) ?? 0) / 60000 % 360, Percent(e.Attribute("sat")), Percent(e.Attribute("lum"))),
+            "hslClr" => FromHsl((DocxReader.Number(e.Attribute("hue")) ?? 0) / 60000 % 360, Math.Clamp(Percent(e.Attribute("sat")), 0, 1), Math.Clamp(Percent(e.Attribute("lum")), 0, 1)),
             _ => null,
         };
         if (rgb is null) return null;

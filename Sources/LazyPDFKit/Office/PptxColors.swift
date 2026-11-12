@@ -65,7 +65,7 @@ struct PptxColors {
         case "scrgbClr": rgb = [Self.linear(e, "r"), Self.linear(e, "g"), Self.linear(e, "b")]
         case "hslClr":
             let hue = ((DocxReader.number(e.attribute("hue")) ?? 0) / 60000).truncatingRemainder(dividingBy: 360)
-            rgb = Self.fromHsl(hue, Self.percent(e.attribute("sat")), Self.percent(e.attribute("lum")))
+            rgb = Self.fromHsl(hue, Self.clamp(Self.percent(e.attribute("sat")), 0, 1), Self.clamp(Self.percent(e.attribute("lum")), 0, 1))
         default: rgb = nil
         }
         guard var c = rgb else { return nil }
