@@ -116,9 +116,9 @@ public class PublicKeyRoundTripTests
     }
 
     [Fact]
-    public void OnlyRsaCertificatesThatMayEncipherCanProtect()
+    public void OnlyKeysThatMayEncipherOrAgreeCanProtect()
     {
-        using var ec = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var ec = ECDsa.Create(ECCurve.NamedCurves.nistP521);
         using var ecCertificate = new CertificateRequest("CN=Curve", ec, HashAlgorithmName.SHA256)
             .CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
         using var rsa = RSA.Create(2048);
@@ -144,13 +144,13 @@ public class PublicKeyRoundTripTests
     [Fact]
     public void ACertificateThatCannotProtectIsRefused()
     {
-        using var ec = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var ec = ECDsa.Create(ECCurve.NamedCurves.nistP521);
         using var ecCertificate = new CertificateRequest("CN=Curve", ec, HashAlgorithmName.SHA256)
             .CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
 
         var error = Assert.Throws<ArgumentException>(() =>
             PdfSecurity.CreatePublicKey([new PdfRecipient(PublicKeyFiles.Alice), new PdfRecipient(ecCertificate)], PdfCryptStrength.Aes256));
-        Assert.StartsWith("This certificate cannot be used to protect a file. Choose a certificate with an RSA key.", error.Message);
+        Assert.StartsWith("This certificate cannot be used to protect a file. Choose a certificate with an RSA or a P-256 or P-384 key.", error.Message);
     }
 
     [Fact]

@@ -69,7 +69,7 @@ public sealed partial class PdfSecurity
         if (recipients.Count is 0 or > MaxRecipients)
             throw new ArgumentException($"A file has between 1 and {MaxRecipients} recipients.", nameof(recipients));
         if (!recipients.All(r => PdfRecipient.CanProtect(r.Certificate)))
-            throw new ArgumentException("This certificate cannot be used to protect a file. Choose a certificate with an RSA key.", nameof(recipients));
+            throw new ArgumentException("This certificate cannot be used to protect a file. Choose a certificate with an RSA or a P-256 or P-384 key.", nameof(recipients));
         bool modern = strength == PdfCryptStrength.Aes256;
         int v = modern ? 5 : 4;
         byte[] seed = RandomNumberGenerator.GetBytes(20);
@@ -82,6 +82,11 @@ public sealed partial class PdfSecurity
             byte[] content = new byte[24];
             seed.CopyTo(content, 0);
             BinaryPrimitives.WriteUInt32BigEndian(content.AsSpan(20), bits);
+            if (PdfCmsAgreement.CurveOf(recipient.Certificate) is not null)
+            {
+                stored.Add(PdfCmsAgreement.Seal(content, recipient.Certificate));
+                continue;
+            }
             var cms = new EnvelopedCms(new ContentInfo(content), new AlgorithmIdentifier(new Oid(Aes256Cbc)));
             cms.Encrypt(new CmsRecipient(recipient.Certificate));
             stored.Add(cms.Encode());
@@ -126,6 +131,7 @@ public sealed partial class PdfSecurity
 
     private static byte[]? Unseal(byte[] stored, X509Certificate2 certificate)
     {
+        if (PdfCmsAgreement.CurveOf(certificate) is not null) return PdfCmsAgreement.Unseal(stored, certificate);
         try
         {
             var cms = new EnvelopedCms();
