@@ -44,6 +44,25 @@ final class ViewSettingsTests: XCTestCase {
         XCTAssertEqual(viewer(dir).columns, 2)
     }
 
+    func test_anArrangementChangedInReadingModeIsKeptAndRestored() async {
+        let dir = TempDir(self)
+        let first = viewer(dir)
+        first.columns = 2
+        first.coverPage = true
+        first.readingMode = true
+        first.continuous = false
+
+        let second = viewer(dir)
+        XCTAssertEqual(second.columns, 2)
+        XCTAssertTrue(second.coverPage)
+        XCTAssertFalse(second.continuous)
+
+        first.readingMode = false
+        XCTAssertEqual(first.columns, 2)
+        XCTAssertTrue(first.coverPage)
+        XCTAssertFalse(first.continuous)
+    }
+
     func test_aViewerWithoutAFolderKeepsNothing() async {
         let dir = TempDir(self)
         let made = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })

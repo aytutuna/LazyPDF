@@ -345,8 +345,7 @@ public final class ViewerModel: DocumentViewer {
             return state.columns
         }
         set {
-            apply(state.setArrangement(columns: newValue, cover: state.cover, continuous: state.continuous))
-            saveView()
+            arrange(columns: newValue)
         }
     }
 
@@ -356,8 +355,7 @@ public final class ViewerModel: DocumentViewer {
             return state.cover
         }
         set {
-            apply(state.setArrangement(columns: state.columns, cover: newValue, continuous: state.continuous))
-            saveView()
+            arrange(cover: newValue)
         }
     }
 
@@ -367,8 +365,7 @@ public final class ViewerModel: DocumentViewer {
             return state.continuous
         }
         set {
-            apply(state.setArrangement(columns: state.columns, cover: state.cover, continuous: newValue))
-            saveView()
+            arrange(continuous: newValue)
         }
     }
 
@@ -395,9 +392,27 @@ public final class ViewerModel: DocumentViewer {
         }
     }
 
+    // Reading mode forces its own layout; a change made meanwhile goes to the layout restored on exit.
+    private func arrange(columns: Int? = nil, cover: Bool? = nil, continuous: Bool? = nil) {
+        if reading, var before = beforeReading {
+            before.columns = columns ?? before.columns
+            before.cover = cover ?? before.cover
+            before.continuous = continuous ?? before.continuous
+            beforeReading = before
+        } else {
+            apply(state.setArrangement(columns: columns ?? state.columns, cover: cover ?? state.cover,
+                                       continuous: continuous ?? state.continuous))
+        }
+        saveView()
+    }
+
     private func saveView() {
         guard let settings else { return }
-        let (tint, columns, cover, continuous) = (state.tint, state.columns, state.cover, state.continuous)
+        var (columns, cover, continuous) = (state.columns, state.cover, state.continuous)
+        if reading, let before = beforeReading {
+            (columns, cover, continuous) = (before.columns, before.cover, before.continuous)
+        }
+        let tint = state.tint
         AppPreferencesStore.update(settings) {
             $0.tint = tint
             $0.columns = columns
