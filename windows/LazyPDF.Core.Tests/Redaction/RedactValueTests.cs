@@ -94,6 +94,10 @@ public class RedactValueTests
         var result = new PdfRedactor(document).Apply([], new RedactionOptions { OverlayText = "😀" }, found);
         Assert.False(RedactionKit.Holds(result.Bytes, "jane.doe@example.com"));
         Assert.True(result.Verification.IsClean);
+        var page = Assert.Single(result.Report.Pages);
+        Assert.Equal(2, page.Values);
+        Assert.Equal(1, page.ValuesWhole);
+        Assert.Contains("removed whole", result.Report.ToString());
     }
 
     [Fact]

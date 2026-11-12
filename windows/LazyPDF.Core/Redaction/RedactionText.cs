@@ -23,6 +23,8 @@ public static class RedactionText
 
     public static string WholePicture(int page, int count) => Loc.Plural(count, "A picture on page {1} that could not be read was removed whole.", "{0} pictures on page {1} that could not be read were removed whole.", page + 1);
 
+    public static string ValuesWhole(int page, int count) => Loc.Plural(count, "A note or field on page {1} could not keep its other text and was removed whole.", "{0} notes or fields on page {1} could not keep their other text and were removed whole.", page + 1);
+
     public static string NeedsPicture(int page) => Loc.T("Page {0} cannot be redacted as text. It needs a page renderer to be turned into a picture.", page + 1);
     public static string NotDrawn(int page) => Loc.T("Page {0} could not be drawn, so it cannot be turned into a picture.", page + 1);
     public static string Flattened(int page) => Loc.T("Page {0} was turned into a picture. Its text can no longer be selected.", page + 1);

@@ -90,6 +90,9 @@ final class RedactValueTests: XCTestCase {
         let result = try PdfRedactor(document).apply([], options, found)
         XCTAssertFalse(RedactionKit.holds(result.bytes, "jane.doe@example.com"))
         XCTAssertTrue(result.verification.isClean)
+        XCTAssertEqual(result.report.pages.first?.values, 2)
+        XCTAssertEqual(result.report.pages.first?.valuesWhole, 1)
+        XCTAssertTrue(result.report.description.contains("removed whole"))
     }
 
     func test_fieldValueIsRewrittenAndItsAppearanceDrawnAgain() throws {

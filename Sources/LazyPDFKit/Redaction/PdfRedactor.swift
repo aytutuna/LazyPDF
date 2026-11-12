@@ -134,8 +134,13 @@ public final class PdfRedactor {
             pages.append(redaction)
             tagged[plan.page.reference.number] = counts
         }
-        for (page, count) in rewritten {
-            if let at = pages.firstIndex(where: { $0.page == page }) { pages[at].values = count } else { pages.append(PageRedaction(page, 0, 0, 0, 0, 0, count)) }
+        for (page, hit) in rewritten {
+            if let at = pages.firstIndex(where: { $0.page == page }) {
+                pages[at].values = hit.count
+                pages[at].valuesWhole = hit.whole
+            } else {
+                pages.append(PageRedaction(page, 0, 0, 0, 0, 0, hit.count, valuesWhole: hit.whole))
+            }
         }
         pages.sort { $0.page < $1.page }
         let marked = Set(plans.map { $0.page.index })

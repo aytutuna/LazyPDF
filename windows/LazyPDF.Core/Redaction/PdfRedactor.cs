@@ -95,11 +95,11 @@ public sealed partial class PdfRedactor(PdfDocument document, IFontSource? fonts
             pages.Add(RedactPage(work, plan, options, font, rewriter, needles, painted, flattened, out var counts));
             tagged[plan.Page.Reference.Number] = counts;
         }
-        foreach (var (page, count) in rewritten)
+        foreach (var (page, (count, whole)) in rewritten)
         {
             int at = pages.FindIndex(p => p.Page == page);
-            if (at >= 0) pages[at] = pages[at] with { Values = count };
-            else pages.Add(new PageRedaction(page, 0, 0, 0, 0, 0, count));
+            if (at >= 0) pages[at] = pages[at] with { Values = count, ValuesWhole = whole };
+            else pages.Add(new PageRedaction(page, 0, 0, 0, 0, 0, count, ValuesWhole: whole));
         }
         pages.Sort((a, b) => a.Page.CompareTo(b.Page));
         var marked = plans.Select(p => p.Page.Index).ToHashSet();

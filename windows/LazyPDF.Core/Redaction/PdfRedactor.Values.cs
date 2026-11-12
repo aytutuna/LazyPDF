@@ -4,9 +4,9 @@ public sealed partial class PdfRedactor
 {
     // Rewrites the matched text in annotation contents and field values; a value that no longer reads as it did when found is left alone.
     // The text found is looked for in the output like any other removed text.
-    private Dictionary<int, int> RewriteValues(PdfDocument work, IEnumerable<RedactionValueMatch> values, RedactionOptions options, HashSet<string> needles)
+    private Dictionary<int, (int Count, int Whole)> RewriteValues(PdfDocument work, IEnumerable<RedactionValueMatch> values, RedactionOptions options, HashSet<string> needles)
     {
-        var counts = new Dictionary<int, int>();
+        var counts = new Dictionary<int, (int Count, int Whole)>();
         string replacement = options.OverlayText ?? "";
         var writer = new PdfAnnotationWriter(work, fonts);
         // Annotations are looked up before anything is removed, because a removal shifts the indexes after it.
@@ -21,8 +21,12 @@ public sealed partial class PdfRedactor
         foreach (var (group, annotation) in targets)
         {
             var hits = group.OrderByDescending(v => v.Start).ToList();
-            bool done = annotation.Type == AnnotationType.Widget ? RewriteField(work, annotation, hits, replacement, needles) : RewriteComment(work, writer, annotation, hits, replacement, needles);
-            if (done) counts[group.Key.Page] = counts.GetValueOrDefault(group.Key.Page) + 1;
+            var done = annotation.Type == AnnotationType.Widget ? RewriteField(work, annotation, hits, replacement, needles) : RewriteComment(work, writer, annotation, hits, replacement, needles);
+            if (done is { } whole)
+            {
+                var (count, wholes) = counts.GetValueOrDefault(group.Key.Page);
+                counts[group.Key.Page] = (count + 1, wholes + (whole ? 1 : 0));
+            }
         }
         return counts;
     }
@@ -43,9 +47,10 @@ public sealed partial class PdfRedactor
         return text == current ? null : text;
     }
 
-    private static bool RewriteComment(PdfDocument work, PdfAnnotationWriter writer, PdfAnnotation annotation, List<RedactionValueMatch> hits, string replacement, HashSet<string> needles)
+    // null when nothing was changed, otherwise whether the annotation had to go whole.
+    private static bool? RewriteComment(PdfDocument work, PdfAnnotationWriter writer, PdfAnnotation annotation, List<RedactionValueMatch> hits, string replacement, HashSet<string> needles)
     {
-        if (Rewritten(annotation.Contents, hits, replacement) is not { } text) return false;
+        if (Rewritten(annotation.Contents, hits, replacement) is not { } text) return null;
         foreach (var hit in hits) AddNeedle(needles, hit.Text);
         try
         {
@@ -54,7 +59,7 @@ public sealed partial class PdfRedactor
         catch (InvalidOperationException)
         {
             // A free text box that cannot be drawn again with the new text goes whole.
-            return writer.Delete(annotation);
+            return writer.Delete(annotation) ? true : null;
         }
         // Rich text and the subject can repeat the words; neither is drawn.
         annotation.Dictionary.Remove("RC");
@@ -63,14 +68,14 @@ public sealed partial class PdfRedactor
             string changed = hits.Aggregate(subject, (s, hit) => s.Replace(hit.Text, replacement, StringComparison.Ordinal));
             if (changed != subject) annotation.Dictionary["Subj"] = PdfText.ToObject(changed);
         }
-        return true;
+        return false;
     }
 
-    private bool RewriteField(PdfDocument work, PdfAnnotation widget, List<RedactionValueMatch> hits, string replacement, HashSet<string> needles)
+    private bool? RewriteField(PdfDocument work, PdfAnnotation widget, List<RedactionValueMatch> hits, string replacement, HashSet<string> needles)
     {
         var form = PdfForm.Read(work, fonts);
-        if (RedactionValues.FieldOf(form, widget.Dictionary) is not { } field || !RedactionValues.IsText(field)) return false;
-        if (Rewritten(field.Value, hits, replacement) is not { } text) return false;
+        if (RedactionValues.FieldOf(form, widget.Dictionary) is not { } field || !RedactionValues.IsText(field)) return null;
+        if (Rewritten(field.Value, hits, replacement) is not { } text) return null;
         foreach (var hit in hits) AddNeedle(needles, hit.Text);
         try
         {
@@ -88,6 +93,6 @@ public sealed partial class PdfRedactor
             string changed = hits.Aggregate(dv, (s, hit) => s.Replace(hit.Text, replacement, StringComparison.Ordinal));
             if (changed != dv) field.Dictionary["DV"] = PdfText.ToObject(changed);
         }
-        return true;
+        return false;
     }
 }

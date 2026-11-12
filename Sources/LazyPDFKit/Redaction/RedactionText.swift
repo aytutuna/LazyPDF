@@ -24,6 +24,10 @@ public enum RedactionText {
         L10n.plural(count, one: "A picture on page {1} that could not be read was removed whole.", other: "{0} pictures on page {1} that could not be read were removed whole.", page + 1)
     }
 
+    public static func valuesWhole(_ page: Int, _ count: Int) -> String {
+        L10n.plural(count, one: "A note or field on page {1} could not keep its other text and was removed whole.", other: "{0} notes or fields on page {1} could not keep their other text and were removed whole.", page + 1)
+    }
+
     public static func needsPicture(_ page: Int) -> String {
         L10n.t("Page {0} cannot be redacted as text. It needs a page renderer to be turned into a picture.", page + 1)
     }

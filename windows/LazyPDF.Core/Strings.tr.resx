@@ -112,6 +112,9 @@
   <data name="A name is longer than 127 bytes." xml:space="preserve">
     <value>Bir ad 127 bayttan uzun.</value>
   </data>
+  <data name="A note or field on page {1} could not keep its other text and was removed whole.|plural" xml:space="preserve">
+    <value>{1}. sayfada {0} not veya alan diğer metnini koruyamadı ve bütünüyle kaldırıldı.</value>
+  </data>
   <data name="A page has an /AA entry." xml:space="preserve">
     <value>Bir sayfada /AA girdisi var.</value>
   </data>
@@ -1348,6 +1351,9 @@
   <data name="Comment not changed" xml:space="preserve">
     <value>Yorum değiştirilmedi</value>
   </data>
+  <data name="Comment on page {0}" xml:space="preserve">
+    <value>Not, sayfa {0}</value>
+  </data>
   <data name="Comment text" xml:space="preserve">
     <value>Yorum metni</value>
   </data>
@@ -2085,6 +2091,9 @@
   </data>
   <data name="Field {0}" xml:space="preserve">
     <value>Alan {0}</value>
+  </data>
+  <data name="Field {0}, page {1}" xml:space="preserve">
+    <value>Alan {0}, sayfa {1}</value>
   </data>
   <data name="Fields" xml:space="preserve">
     <value>Alanlar</value>

@@ -10,8 +10,8 @@ extension PdfRedactor {
         let annotation: Int
     }
 
-    func rewriteValues(_ work: PdfDocument, _ values: [RedactionValueMatch], _ options: RedactionOptions, _ needles: inout NeedleSet) -> [Int: Int] {
-        var counts: [Int: Int] = [:]
+    func rewriteValues(_ work: PdfDocument, _ values: [RedactionValueMatch], _ options: RedactionOptions, _ needles: inout NeedleSet) -> [Int: (count: Int, whole: Int)] {
+        var counts: [Int: (count: Int, whole: Int)] = [:]
         let replacement = options.overlayText ?? ""
         let writer = PdfAnnotationWriter(work, fonts)
         var groups: [ValueKey: [RedactionValueMatch]] = [:]
@@ -31,7 +31,10 @@ extension PdfRedactor {
             let done = annotation.type == .widget
                 ? rewriteField(work, annotation, hits, replacement, &needles)
                 : rewriteComment(work, writer, annotation, hits, replacement, &needles)
-            if done { counts[key.page, default: 0] += 1 }
+            if let whole = done {
+                let before = counts[key.page] ?? (0, 0)
+                counts[key.page] = (before.count + 1, before.whole + (whole ? 1 : 0))
+            }
         }
         return counts
     }
@@ -60,14 +63,14 @@ extension PdfRedactor {
     }
 
     private func rewriteComment(_ work: PdfDocument, _ writer: PdfAnnotationWriter, _ annotation: PdfAnnotation, _ hits: [RedactionValueMatch],
-                                _ replacement: String, _ needles: inout NeedleSet) -> Bool {
-        guard let text = Self.rewritten(annotation.contents, hits, replacement) else { return false }
+                                _ replacement: String, _ needles: inout NeedleSet) -> Bool? {
+        guard let text = Self.rewritten(annotation.contents, hits, replacement) else { return nil }
         for hit in hits { Self.addNeedle(&needles, hit.text) }
         do {
             _ = try writer.setContents(annotation, text)
         } catch {
             // A free text box that cannot be drawn again with the new text goes whole.
-            return writer.delete(annotation)
+            return writer.delete(annotation) ? true : nil
         }
         // Rich text and the subject can repeat the words; neither is drawn.
         annotation.dictionary.remove("RC")
@@ -75,19 +78,19 @@ extension PdfRedactor {
             let changed = Self.replacing(subject, hits, replacement)
             if changed != subject { annotation.dictionary["Subj"] = PdfText.toObject(changed) }
         }
-        return true
+        return false
     }
 
     private func rewriteField(_ work: PdfDocument, _ widget: PdfAnnotation, _ hits: [RedactionValueMatch], _ replacement: String,
-                              _ needles: inout NeedleSet) -> Bool {
+                              _ needles: inout NeedleSet) -> Bool? {
         let form = PdfForm.read(work, fonts)
         guard let field = RedactionValues.fieldOf(form, widget.dictionary), RedactionValues.isText(field),
-              let text = Self.rewritten(field.value, hits, replacement) else { return false }
+              let text = Self.rewritten(field.value, hits, replacement) else { return nil }
         for hit in hits { Self.addNeedle(&needles, hit.text) }
         do {
             if try !form.setValue(field.name, text).rejected.isEmpty { _ = try form.setValue(field.name, "") }
         } catch {
-            do { try form.remove(field) } catch { return false }
+            do { try form.remove(field) } catch { return nil }
             return true
         }
         // The default value and the rich value can repeat the words; neither is drawn from the value.
@@ -96,6 +99,6 @@ extension PdfRedactor {
             let changed = Self.replacing(dv, hits, replacement)
             if changed != dv { field.dictionary["DV"] = PdfText.toObject(changed) }
         }
-        return true
+        return false
     }
 }

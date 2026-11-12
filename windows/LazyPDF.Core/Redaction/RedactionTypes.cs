@@ -62,8 +62,8 @@ public sealed record RedactionVerification(IReadOnlyList<string> Problems)
 /// <summary>A place outside the page content that held removed text.</summary>
 public sealed record RedactionFinding(string Where, bool Changed);
 
-/// <summary>What was taken out of one page. <paramref name="Values"/> counts the annotations and fields whose text was rewritten; <paramref name="WholeImages"/> the pictures (already in <paramref name="Images"/>) that could not be cut and were removed whole.</summary>
-public sealed record PageRedaction(int Page, int Glyphs, int Images, int Paths, int Annotations, int Fields, int Values = 0, int WholeImages = 0)
+/// <summary>What was taken out of one page. <paramref name="Values"/> counts the annotations and fields whose text was rewritten; <paramref name="ValuesWhole"/> those of them removed whole; <paramref name="WholeImages"/> the pictures (already in <paramref name="Images"/>) that could not be cut and were removed whole.</summary>
+public sealed record PageRedaction(int Page, int Glyphs, int Images, int Paths, int Annotations, int Fields, int Values = 0, int WholeImages = 0, int ValuesWhole = 0)
 {
     public bool IsEmpty => Glyphs + Images + Paths + Annotations + Fields + Values == 0;
 }
@@ -76,6 +76,8 @@ public sealed record RedactionReport(IReadOnlyList<PageRedaction> Pages, IReadOn
     public int Paths => Pages.Sum(p => p.Paths);
     public int Annotations => Pages.Sum(p => p.Annotations);
     public int Fields => Pages.Sum(p => p.Fields);
+    public int Values => Pages.Sum(p => p.Values);
+    public int ValuesWhole => Pages.Sum(p => p.ValuesWhole);
 
     /// <summary>The pages (from 0) that were turned into pictures; their text is no longer selectable.</summary>
     public IReadOnlyList<int> Flattened { get; init; } = [];
@@ -86,6 +88,7 @@ public sealed record RedactionReport(IReadOnlyList<PageRedaction> Pages, IReadOn
         var lines = Pages.Where(p => !p.IsEmpty).Select(RedactionText.Line).ToList();
         if (lines.Count == 0 && Flattened.Count == 0) lines.Add(RedactionText.NothingFound);
         lines.AddRange(Pages.Where(p => p.WholeImages > 0).Select(p => RedactionText.WholePicture(p.Page, p.WholeImages)));
+        lines.AddRange(Pages.Where(p => p.ValuesWhole > 0).Select(p => RedactionText.ValuesWhole(p.Page, p.ValuesWhole)));
         lines.AddRange(Flattened.Select(RedactionText.Flattened));
         lines.AddRange(Findings.Select(f => f.Changed ? RedactionText.MetadataChanged(f.Where) : RedactionText.MetadataHolds(f.Where)));
         if (SignaturesRemoved > 0) lines.Add(RedactionText.SignaturesGone(SignaturesRemoved));

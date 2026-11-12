@@ -114,11 +114,15 @@ public struct PageRedaction {
     /// The annotations and fields whose text was rewritten.
     public internal(set) var values: Int
 
+    /// The ones of `values` removed whole.
+    public internal(set) var valuesWhole: Int
+
     /// The pictures (already in `images`) that could not be cut and were removed whole.
     public let wholeImages: Int
 
-    public init(_ page: Int, _ glyphs: Int, _ images: Int, _ paths: Int, _ annotations: Int, _ fields: Int, _ values: Int = 0, wholeImages: Int = 0) {
+    public init(_ page: Int, _ glyphs: Int, _ images: Int, _ paths: Int, _ annotations: Int, _ fields: Int, _ values: Int = 0, wholeImages: Int = 0, valuesWhole: Int = 0) {
         self.values = values
+        self.valuesWhole = valuesWhole
         self.wholeImages = wholeImages
         self.page = page
         self.glyphs = glyphs
@@ -152,12 +156,15 @@ public struct RedactionReport: CustomStringConvertible {
     public var paths: Int { pages.reduce(0) { $0 + $1.paths } }
     public var annotations: Int { pages.reduce(0) { $0 + $1.annotations } }
     public var fields: Int { pages.reduce(0) { $0 + $1.fields } }
+    public var values: Int { pages.reduce(0) { $0 + $1.values } }
+    public var valuesWhole: Int { pages.reduce(0) { $0 + $1.valuesWhole } }
 
     /// The report in plain words, one line a page.
     public var description: String {
         var lines = pages.filter { !$0.isEmpty }.map { RedactionText.line($0) }
         if lines.isEmpty && flattened.isEmpty { lines.append(RedactionText.nothingFound) }
         lines.append(contentsOf: pages.filter { $0.wholeImages > 0 }.map { RedactionText.wholePicture($0.page, $0.wholeImages) })
+        lines.append(contentsOf: pages.filter { $0.valuesWhole > 0 }.map { RedactionText.valuesWhole($0.page, $0.valuesWhole) })
         lines.append(contentsOf: flattened.map { RedactionText.flattened($0) })
         lines.append(contentsOf: findings.map { $0.changed ? RedactionText.metadataChanged($0.where) : RedactionText.metadataHolds($0.where) })
         if signaturesRemoved > 0 { lines.append(RedactionText.signaturesGone(signaturesRemoved)) }
