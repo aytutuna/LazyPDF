@@ -1,5 +1,6 @@
 #if canImport(SwiftUI) && os(iOS)
 import SwiftUI
+import LazyPDFKit
 import PhotosUI
 import UniformTypeIdentifiers
 import UIKit
