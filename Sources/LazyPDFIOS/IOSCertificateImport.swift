@@ -12,7 +12,7 @@ import LazyPDFApp
 enum IOSCertificateImport {
     private static let types = [UTType.pkcs12] + ["p12", "pfx"].compactMap { UTType(filenameExtension: $0) }
 
-    static func run(_ keys: IOSCertificates, problem: (Problem) -> Void) async -> CertificateChoice? {
+    static func run(_ keys: IOSCertificates, problem: @MainActor (Problem) -> Void) async -> CertificateChoice? {
         guard let top = top(), let file = await pick(from: top) else { return nil }
         defer { file.access?.stop() }
         guard let bytes = try? Data(contentsOf: file.url), let password = await ask(from: top) else { return nil }

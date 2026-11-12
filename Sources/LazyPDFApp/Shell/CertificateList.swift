@@ -13,11 +13,12 @@ public final class CertificateListModel {
 
     @ObservationIgnored private let list: @MainActor () -> [CertificateChoice]
     @ObservationIgnored private let delete: @MainActor (CertificateChoice) -> Bool
-    @ObservationIgnored private let add: @MainActor () async -> CertificateChoice?
+    @ObservationIgnored private let add: @MainActor (@MainActor (Problem) -> Void) async -> CertificateChoice?
 
-    /// `delete` says whether the identity is gone; `add` imports one and returns nil when the person gave up.
+    /// `delete` says whether the identity is gone; `add` imports one and returns nil when the person gave up. It reports a
+    /// failed import through the sink it is given, so the reason shows in the sheet that covers the window's own bars.
     public init(list: @escaping @MainActor () -> [CertificateChoice], delete: @escaping @MainActor (CertificateChoice) -> Bool,
-                add: @escaping @MainActor () async -> CertificateChoice?) {
+                add: @escaping @MainActor (@MainActor (Problem) -> Void) async -> CertificateChoice?) {
         self.list = list
         self.delete = delete
         self.add = add
@@ -30,7 +31,7 @@ public final class CertificateListModel {
 
     public func importOne() async {
         note = ""
-        _ = await add()
+        _ = await add { [self] in note = $0.text }
         reload()
     }
 

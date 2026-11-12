@@ -48,8 +48,8 @@ final class IOSShell {
         let panels = ToolPanels(host: model, folders: folders)
         vm = model
         self.panels = panels
-        certificateList = CertificateListModel(list: { keys.choices() }, delete: { keys.remove($0) }, add: {
-            await IOSCertificateImport.run(keys, problem: model.showProblem)
+        certificateList = CertificateListModel(list: { keys.choices() }, delete: { keys.remove($0) }, add: { problem in
+            await IOSCertificateImport.run(keys, problem: problem)
         })
         model.handInTyping = { panels.handIn() }
         model.fileWriter = CoordinatedFileWriter()

@@ -11,6 +11,7 @@ final class CertificateListTests: XCTestCase {
         var held: [CertificateChoice]
         var stuck: Set<String> = []
         var next: CertificateChoice?
+        var failure: Problem?
 
         init(_ held: [CertificateChoice]) { self.held = held }
     }
@@ -20,7 +21,8 @@ final class CertificateListTests: XCTestCase {
             if store.stuck.contains(choice.id) { return false }
             store.held.removeAll { $0.id == choice.id }
             return true
-        }, add: {
+        }, add: { problem in
+            if let failure = store.failure { problem(failure) }
             if let made = store.next { store.held.append(made) }
             return store.next
         })
@@ -70,6 +72,17 @@ final class CertificateListTests: XCTestCase {
 
         await list.importOne()
 
+        XCTAssertEqual(list.items.map(\.id), ["a"])
+    }
+
+    func test_aFailedImportSaysWhyInTheList() async {
+        let store = Store([choice("a")])
+        store.failure = Problem("Certificate not imported", "Check the password.")
+        let list = model(store)
+
+        await list.importOne()
+
+        XCTAssertEqual(list.note, "Check the password.")
         XCTAssertEqual(list.items.map(\.id), ["a"])
     }
 
