@@ -27,15 +27,37 @@ public sealed class WindowsOcr : ITextRecognizer
 
         var words = new List<OcrWord>();
         double toImage = image.Width / (double)width;
+        // TextAngle is how far Windows found the page turned clockwise; the layer wants counter-clockwise radians.
+        double angle = result.TextAngle is { } degrees ? -degrees * Math.PI / 180 : 0;
+        if (Math.Abs(angle) < MinAngle) angle = 0;
         foreach (var line in result.Lines)
         {
             foreach (var word in line.Words)
             {
                 var box = word.BoundingRect;
-                words.Add(new OcrWord(word.Text, new OcrBox(box.X * toImage, box.Y * toImage, box.Width * toImage, box.Height * toImage)));
+                var upright = angle == 0 ? new OcrBox(box.X, box.Y, box.Width, box.Height) : Deskewed(box.X, box.Y, box.Width, box.Height, angle);
+                words.Add(new OcrWord(word.Text, new OcrBox(upright.X * toImage, upright.Y * toImage, upright.Width * toImage, upright.Height * toImage), 1, angle));
             }
         }
         return words;
+    }
+
+    // Below this (about 0.3 degrees) a page counts as straight, so a clean scan keeps its exact boxes.
+    private const double MinAngle = 0.005;
+
+    /// <summary>
+    /// The upright box of a word whose axis-aligned bounds are given and whose line is turned by <paramref name="angle"/>
+    /// (counter-clockwise radians, under 45 degrees): its size, with the corner at the baseline start.
+    /// </summary>
+    internal static OcrBox Deskewed(double x, double y, double width, double height, double angle)
+    {
+        double cos = Math.Cos(angle), sin = Math.Sin(angle), abs = Math.Abs(sin);
+        double d = cos * cos - sin * sin;
+        double w = Math.Max(0, (width * cos - height * abs) / d);
+        double h = Math.Max(0, (height * cos - width * abs) / d);
+        double left = x + h * Math.Max(0, sin);
+        double baseline = y + height - w * Math.Max(0, -sin);
+        return new OcrBox(left, baseline - h, w, h);
     }
 
     // A page can be read four times, so the engine is made once per language. A missing language is asked for again, since it can be added meanwhile.

@@ -84,4 +84,24 @@ public sealed class WindowsOcrTests
         Assert.Equal((width, height), (turned.Width, turned.Height));
         Assert.Equal((x, y), MarkAt(turned));
     }
+
+    [Theory]
+    [InlineData(0.1)]
+    [InlineData(-0.1)]
+    public void ATurnedWordIsBackToItsUprightSizeAtTheBaselineStart(double angle)
+    {
+        // A 100 by 20 word turned about its bottom-left corner at (200, 300), as seen with y down.
+        double cos = Math.Cos(angle), sin = Math.Sin(angle);
+        var corners = new[] { (0.0, 0.0), (100.0, 0.0), (0.0, 20.0), (100.0, 20.0) }
+            .Select(p => (X: 200 + p.Item1 * cos - p.Item2 * sin, Y: 300 - p.Item1 * sin - p.Item2 * cos)).ToArray();
+        double left = corners.Min(c => c.X), top = corners.Min(c => c.Y);
+        double right = corners.Max(c => c.X), bottom = corners.Max(c => c.Y);
+
+        var box = WindowsOcr.Deskewed(left, top, right - left, bottom - top, angle);
+
+        Assert.Equal(100, box.Width, 6);
+        Assert.Equal(20, box.Height, 6);
+        Assert.Equal(200, box.X, 6);
+        Assert.Equal(300, box.Bottom, 6);
+    }
 }
