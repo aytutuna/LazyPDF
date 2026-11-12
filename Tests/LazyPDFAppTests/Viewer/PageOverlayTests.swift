@@ -38,7 +38,7 @@ final class PageOverlayTests: XCTestCase {
         OverlayItem(id, .rect(ViewRect(10, 10, 50, 20)), layer: layer)
     }
 
-    func test_theViewerKeepsOneLayerForEachPageAsLongAsTheDocumentIsShown() throws {
+    func test_theViewerKeepsOneLayerForEachPageAsLongAsTheDocumentIsShown() async throws {
         let (viewer, tab) = try open()
         let first = viewer.overlay(1)
 
@@ -51,7 +51,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertFalse(first === viewer.overlay(1))
     }
 
-    func test_aLayerIsTheSizeOfItsPageAndFollowsAChangeOfPages() throws {
+    func test_aLayerIsTheSizeOfItsPageAndFollowsAChangeOfPages() async throws {
         let (viewer, tab) = try open(pages: 2)
         let layer = viewer.overlay(1)
         let before = layer.size
@@ -65,7 +65,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertTrue(layer === viewer.overlay(1))
     }
 
-    func test_aLayerOfAPageThatWentIsDropped() throws {
+    func test_aLayerOfAPageThatWentIsDropped() async throws {
         let (viewer, tab) = try open(pages: 2)
         let layer = viewer.overlay(1)
         layer.set(box("a"))
@@ -78,7 +78,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertFalse(layer === viewer.overlay(1))
     }
 
-    func test_aMarkWithTheIdOfAnotherReplacesItWhereItStood() throws {
+    func test_aMarkWithTheIdOfAnotherReplacesItWhereItStood() async throws {
         let layer = PageOverlay(page: 0, size: ViewSize(200, 300))
         layer.set(box("a"))
         layer.set(box("b"))
@@ -90,7 +90,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertEqual(area, ViewRect(0, 0, 5, 5))
     }
 
-    func test_marksArePaintedByLayerThenByWhenTheyCame() {
+    func test_marksArePaintedByLayerThenByWhenTheyCame() async {
         let layer = PageOverlay(page: 0, size: ViewSize(200, 300))
         layer.set(box("front", layer: 1))
         layer.set(box("first"))
@@ -100,7 +100,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertEqual(layer.painted.map(\.id), ["behind", "first", "second", "front"])
     }
 
-    func test_marksLeaveOneByOneByPrefixAndAllAtOnce() {
+    func test_marksLeaveOneByOneByPrefixAndAllAtOnce() async {
         let layer = PageOverlay(page: 0, size: ViewSize(200, 300))
         for id in ["measure.a", "measure.b", "crop.frame"] { layer.set(box(id)) }
 
@@ -113,7 +113,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertTrue(layer.items.isEmpty)
     }
 
-    func test_theViewerIsToldToDrawAgainWhenAMarkChanges() throws {
+    func test_theViewerIsToldToDrawAgainWhenAMarkChanges() async throws {
         let (viewer, _) = try open()
         var redraws = 0
         viewer.onRedraw = { redraws += 1 }
@@ -126,7 +126,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertEqual(redraws, 2)
     }
 
-    func test_aFieldKeepsWhatWasTypedWhenItCommits() {
+    func test_aFieldKeepsWhatWasTypedWhenItCommits() async {
         let layer = PageOverlay(page: 0, size: ViewSize(200, 300))
         var heard: [String?] = []
         let field = layer.open(OverlayField("note", area: ViewRect(0, 0, 100, 40), text: "old") { heard.append($0) })
@@ -141,7 +141,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertTrue(layer.fields.isEmpty)
     }
 
-    func test_aDroppedFieldKeepsNothing() {
+    func test_aDroppedFieldKeepsNothing() async {
         let layer = PageOverlay(page: 0, size: ViewSize(200, 300))
         var heard: [String?] = []
         let field = layer.open(OverlayField("note", area: ViewRect(0, 0, 100, 40)) { heard.append($0) })
@@ -153,7 +153,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertNil(heard[0])
     }
 
-    func test_finishingAFieldHandsInTheTextTypedSoFar() {
+    func test_finishingAFieldHandsInTheTextTypedSoFar() async {
         let layer = PageOverlay(page: 0, size: ViewSize(200, 300))
         var heard: [String?] = []
         let field = layer.open(OverlayField("note", area: ViewRect(0, 0, 100, 40)) { heard.append($0) })
@@ -169,7 +169,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertEqual(heard, ["ab"])
     }
 
-    func test_openingAFieldWithTheIdOfAnOpenOneDropsTheOldOne() {
+    func test_openingAFieldWithTheIdOfAnOpenOneDropsTheOldOne() async {
         let layer = PageOverlay(page: 0, size: ViewSize(200, 300))
         var first: [String?] = []
         layer.open(OverlayField("note", area: ViewRect(0, 0, 100, 40)) { first.append($0) })
@@ -181,7 +181,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertTrue(layer.fields.first === second)
     }
 
-    func test_aFieldIsDroppedWithItsDocument() throws {
+    func test_aFieldIsDroppedWithItsDocument() async throws {
         let (viewer, tab) = try open()
         var heard: [String?] = []
         viewer.overlay(0).open(OverlayField("note", area: ViewRect(0, 0, 100, 40), text: "x") { heard.append($0) })
@@ -193,7 +193,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertNil(heard[0])
     }
 
-    func test_aFieldKeepsItsTextWhenTheViewerLeavesADocumentThatStaysOpen() throws {
+    func test_aFieldKeepsItsTextWhenTheViewerLeavesADocumentThatStaysOpen() async throws {
         let (viewer, tab) = try open()
         var heard: [String?] = []
         let field = viewer.overlay(0).open(OverlayField("note", area: ViewRect(0, 0, 100, 40)) { heard.append($0) })
@@ -205,7 +205,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertFalse(tab.isDisposed)
     }
 
-    func test_endingAToolsMarksFinishesItsFieldsAndRemovesItsItemsOnTheLayersThatExist() throws {
+    func test_endingAToolsMarksFinishesItsFieldsAndRemovesItsItemsOnTheLayersThatExist() async throws {
         let (viewer, _) = try open()
         var heard: [String?] = []
         let layer = viewer.overlay(1)
@@ -222,7 +222,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertEqual(viewer.openFields.count, 1)
     }
 
-    func test_endingAToolsMarksMakesNoLayerForAPageItNeverDrewOn() throws {
+    func test_endingAToolsMarksMakesNoLayerForAPageItNeverDrewOn() async throws {
         let (viewer, _) = try open()
 
         viewer.endToolMarks(prefix: "comment.")
@@ -231,7 +231,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertEqual(viewer.overlay(2).items.count, 0)
     }
 
-    func test_settingTheTextOfAFieldRedrawsAndTypingInItDoesNot() {
+    func test_settingTheTextOfAFieldRedrawsAndTypingInItDoesNot() async {
         let layer = PageOverlay(page: 0, size: ViewSize(200, 300))
         let field = layer.open(OverlayField("note", area: ViewRect(0, 0, 100, 40)) { _ in })
         let before = layer.revision
@@ -245,7 +245,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertEqual(field.text, "typed")
     }
 
-    func test_aFieldWithALimitRefusesWhatWouldPassIt() {
+    func test_aFieldWithALimitRefusesWhatWouldPassIt() async {
         let field = OverlayField("pin", area: ViewRect(0, 0, 100, 40), maxLength: 4) { _ in }
 
         XCTAssertTrue(field.accepts("123", replacing: NSRange(location: 3, length: 0), with: "4"))
@@ -256,7 +256,7 @@ final class PageOverlayTests: XCTestCase {
         XCTAssertTrue(free.accepts("1234", replacing: NSRange(location: 4, length: 0), with: "5"))
     }
 
-    func test_aFieldTakesTheCaretSecrecyAndTabItIsGiven() {
+    func test_aFieldTakesTheCaretSecrecyAndTabItIsGiven() async {
         let point = ViewPoint(12, 3)
         let field = OverlayField("pw", area: ViewRect(0, 0, 100, 40), caret: .at(point), secure: true) { _ in }
         var tabs: [Bool] = []
@@ -272,7 +272,7 @@ final class PageOverlayTests: XCTestCase {
         guard case .all = plain.caret else { return XCTFail("a field selects all by default") }
     }
 
-    func test_fieldsLeaveByPrefix() {
+    func test_fieldsLeaveByPrefix() async {
         let layer = PageOverlay(page: 0, size: ViewSize(200, 300))
         var dropped = 0
         layer.open(OverlayField("forms.a", area: ViewRect(0, 0, 10, 10)) { if $0 == nil { dropped += 1 } })

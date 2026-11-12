@@ -27,7 +27,7 @@ final class ViewerDeclinedPressTests: XCTestCase {
         return (viewer, tab)
     }
 
-    func test_aPressTheToolDeclinesPansWhereTheHandIs() throws {
+    func test_aPressTheToolDeclinesPansWhereTheHandIs() async throws {
         let (viewer, _) = try open()
         viewer.mode = .hand
         viewer.zoom = 1
@@ -43,7 +43,7 @@ final class ViewerDeclinedPressTests: XCTestCase {
         XCTAssertFalse(tool.calls.contains("release"))
     }
 
-    func test_aPressTheToolDeclinesSelectsWhereSelectIs() throws {
+    func test_aPressTheToolDeclinesSelectsWhereSelectIs() async throws {
         let (viewer, _) = try open()
         viewer.mode = .select
         let tool = DecliningTool()

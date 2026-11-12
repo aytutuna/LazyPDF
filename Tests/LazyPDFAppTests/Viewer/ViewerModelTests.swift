@@ -66,7 +66,7 @@ final class ViewerModelTests: XCTestCase {
         return (viewer, tab)
     }
 
-    func test_enterThenEnterClicksInTheMiddleOfThePageInView() throws {
+    func test_enterThenEnterClicksInTheMiddleOfThePageInView() async throws {
         let (viewer, _) = try open()
         let tool = RecordingTool()
         viewer.pointerTool = tool
@@ -87,7 +87,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertNil(viewer.placement)
     }
 
-    func test_theArrowKeysMoveTheClick() throws {
+    func test_theArrowKeysMoveTheClick() async throws {
         let (viewer, _) = try open()
         let tool = RecordingTool()
         viewer.pointerTool = tool
@@ -107,7 +107,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertGreaterThan(moved.y, middle.y)
     }
 
-    func test_escapeLetsGoWithoutAClick() throws {
+    func test_escapeLetsGoWithoutAClick() async throws {
         let (viewer, _) = try open()
         let tool = RecordingTool()
         viewer.pointerTool = tool
@@ -119,7 +119,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertFalse(viewer.placeWithKeys(.right))
     }
 
-    func test_withoutAToolTheKeysAreTheViewers() throws {
+    func test_withoutAToolTheKeysAreTheViewers() async throws {
         let (viewer, _) = try open()
         viewer.pointerTool = RecordingTool()
         viewer.pointerTool = nil
@@ -127,7 +127,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertFalse(viewer.placeWithKeys(.enter))
     }
 
-    func test_theTabKeepsThePageTheZoomAndTheFit() throws {
+    func test_theTabKeepsThePageTheZoomAndTheFit() async throws {
         let (viewer, tab) = try open(pages: 3)
 
         XCTAssertEqual(tab.fit, .width)
@@ -143,7 +143,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.pageIndex, 2)
     }
 
-    func test_aTabComesBackAsItWasLeft() throws {
+    func test_aTabComesBackAsItWasLeft() async throws {
         let (viewer, first) = try open(pages: 3)
         viewer.zoom = 1.5
         viewer.goToPage(2)
@@ -156,7 +156,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.zoom, 1.5, accuracy: 1e-9)
     }
 
-    func test_aTabKeepsItsRotationAndPlaceInThePage() throws {
+    func test_aTabKeepsItsRotationAndPlaceInThePage() async throws {
         let (viewer, first) = try open(pages: 3)
         viewer.rotation = 90
         viewer.scroll(by: 0, 40)
@@ -174,7 +174,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(back.point.y, try XCTUnwrap(place).point.y, accuracy: 1e-6)
     }
 
-    func test_aTabNeverShownBeforeIsNotTurnedLikeTheLastOne() throws {
+    func test_aTabNeverShownBeforeIsNotTurnedLikeTheLastOne() async throws {
         let (viewer, _) = try open()
         viewer.rotation = 90
         let second = DocumentTab(session: try PdfEditSession.open(Pdfs.text(2)), renderer: FakeRenderer(), url: nil, title: "b.pdf")
@@ -184,7 +184,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.rotation, 0)
     }
 
-    func test_aClosedTabIsNotRemembered() throws {
+    func test_aClosedTabIsNotRemembered() async throws {
         let (viewer, first) = try open()
         viewer.rotation = 90
         let second = DocumentTab(session: try PdfEditSession.open(Pdfs.text(2)), renderer: FakeRenderer(), url: nil, title: "b.pdf")
@@ -196,7 +196,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.rotation, 0)
     }
 
-    func test_showingNothingEmptiesTheViewer() throws {
+    func test_showingNothingEmptiesTheViewer() async throws {
         let (viewer, _) = try open()
 
         viewer.show(nil)
@@ -206,13 +206,13 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertTrue(viewer.visiblePages.isEmpty)
     }
 
-    func test_aPageIsLabelledByTheFileElseByItsNumber() throws {
+    func test_aPageIsLabelledByTheFileElseByItsNumber() async throws {
         let (viewer, _) = try open(pages: 2)
 
         XCTAssertEqual(viewer.pageLabel(1), "2")
     }
 
-    func test_readingModeFitsTheWidthAndGivesTheArrangementBack() throws {
+    func test_readingModeFitsTheWidthAndGivesTheArrangementBack() async throws {
         let (viewer, _) = try open(pages: 3)
         viewer.columns = 2
         viewer.continuous = false
@@ -229,7 +229,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.zoom, 1.25, accuracy: 1e-9)
     }
 
-    func test_goingBackToOnePageKeepsContinuousScrolling() throws {
+    func test_goingBackToOnePageKeepsContinuousScrolling() async throws {
         let (viewer, _) = try open(pages: 3)
         viewer.continuous = true
         viewer.columns = 2
@@ -239,7 +239,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertTrue(viewer.continuous)
     }
 
-    func test_aPinchZoomsAboutThePointAndTheZoomStepsKeepToTheUsualOnes() throws {
+    func test_aPinchZoomsAboutThePointAndTheZoomStepsKeepToTheUsualOnes() async throws {
         let (viewer, _) = try open()
         viewer.zoom = 1
 
@@ -254,7 +254,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.zoom, 1, accuracy: 1e-9)
     }
 
-    func test_aDoubleTapFitsTheWidthAndThenComesIn() throws {
+    func test_aDoubleTapFitsTheWidthAndThenComesIn() async throws {
         let (viewer, _) = try open()
         viewer.zoom = 0.5
 
@@ -266,7 +266,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.zoom, fitted * 2, accuracy: 1e-9)
     }
 
-    func test_theViewRevisionMovesWithTheScroll() throws {
+    func test_theViewRevisionMovesWithTheScroll() async throws {
         let (viewer, _) = try open(pages: 3)
         viewer.zoom = 2
         let before = viewer.viewRevision
@@ -277,7 +277,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.offset.y, 120)
     }
 
-    func test_twoWheelScrollsPastTheEdgeTurnOnePage() throws {
+    func test_twoWheelScrollsPastTheEdgeTurnOnePage() async throws {
         let (viewer, _) = try open(pages: 5)
         viewer.continuous = false
         viewer.zoom = 2
@@ -289,7 +289,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.pageIndex, 1)
     }
 
-    func test_aWheelEventWithNoMovementDoesNotHoldBackTheTurn() throws {
+    func test_aWheelEventWithNoMovementDoesNotHoldBackTheTurn() async throws {
         let (viewer, _) = try open(pages: 5)
         viewer.continuous = false
         viewer.zoom = 2
@@ -301,7 +301,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.pageIndex, 1)
     }
 
-    func test_aScrollThatMayNotTurnStopsAtTheEdge() throws {
+    func test_aScrollThatMayNotTurnStopsAtTheEdge() async throws {
         let (viewer, _) = try open(pages: 5)
         viewer.continuous = false
         viewer.zoom = 2
@@ -312,7 +312,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.pageIndex, 0)
     }
 
-    func test_aJumpIsInTheHistoryAndScrollingIsNot() throws {
+    func test_aJumpIsInTheHistoryAndScrollingIsNot() async throws {
         let (viewer, _) = try open(pages: 3)
         XCTAssertFalse(viewer.canGoBack)
 
@@ -326,7 +326,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.pageIndex, 2)
     }
 
-    func test_backReturnsToTheSpotLeftNotTheTopOfThePage() throws {
+    func test_backReturnsToTheSpotLeftNotTheTopOfThePage() async throws {
         let (viewer, _) = try open(pages: 3)
         viewer.apply(viewer.state.scrollBy(0, 300))
         let spot = viewer.offset.y
@@ -338,7 +338,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.pageIndex, 0)
     }
 
-    func test_steppingPagesIsNotAJump() throws {
+    func test_steppingPagesIsNotAJump() async throws {
         let (viewer, _) = try open(pages: 5)
 
         viewer.stepPage(1)
@@ -363,7 +363,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(back.point.y, start.point.y, accuracy: 1.5)
     }
 
-    func test_aDestinationAndTheNamedActionsMoveThePage() throws {
+    func test_aDestinationAndTheNamedActionsMoveThePage() async throws {
         let (viewer, _) = try open(pages: 3)
 
         viewer.follow(GoToAction(PdfDestination(1)))
@@ -380,7 +380,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertTrue(viewer.findVisible)
     }
 
-    func test_anAddressIsOpenedOnlyAfterTheQuestionIsAnswered() throws {
+    func test_anAddressIsOpenedOnlyAfterTheQuestionIsAnswered() async throws {
         let (viewer, _) = try open()
 
         viewer.follow(UriAction("https://example.com/a"))
@@ -392,7 +392,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertNil(viewer.pendingAddress)
     }
 
-    func test_anAddressOfAnotherKindIsShownButNeverOpened() throws {
+    func test_anAddressOfAnotherKindIsShownButNeverOpened() async throws {
         let (viewer, _) = try open()
 
         viewer.follow(UriAction("file:///etc/passwd"))
@@ -407,7 +407,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertTrue(opened.isEmpty)
     }
 
-    func test_anActionTheAppDoesNotRunSaysSo() throws {
+    func test_anActionTheAppDoesNotRunSaysSo() async throws {
         let (viewer, _) = try open()
         let otherFile = "This link goes to another file, which Lazy PDF does not open from here."
         let script = "This link runs a script or sends a form, which Lazy PDF does not do."
@@ -427,7 +427,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertNil(viewer.notice)
     }
 
-    func test_aLinkToAMissingPageSaysSoAndLeavesNoHistory() throws {
+    func test_aLinkToAMissingPageSaysSoAndLeavesNoHistory() async throws {
         let (viewer, _) = try open()
 
         viewer.goTo(PdfDestination(9))
@@ -436,7 +436,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertFalse(viewer.canGoBack)
     }
 
-    func test_anAddressStartingWithWwwIsOpenedAsHttps() throws {
+    func test_anAddressStartingWithWwwIsOpenedAsHttps() async throws {
         let (viewer, _) = try open()
 
         viewer.follow(UriAction(" WWW.example.com/a "))
@@ -465,7 +465,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertNil(viewer.notice)
     }
 
-    func test_thePageBoxTakesANumberAndRefusesWhatIsNotAPage() throws {
+    func test_thePageBoxTakesANumberAndRefusesWhatIsNotAPage() async throws {
         let (viewer, _) = try open(pages: 3)
 
         XCTAssertTrue(viewer.goToPage(typed: " 3 "))
@@ -476,7 +476,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.pageIndex, 2)
     }
 
-    func test_pagesStepBySpreadWhenFacingPagesShow() throws {
+    func test_pagesStepBySpreadWhenFacingPagesShow() async throws {
         let (viewer, _) = try open(pages: 5)
         viewer.columns = 2
         viewer.coverPage = true
@@ -489,7 +489,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.pageIndex, 1)
     }
 
-    func test_handModeDragsThePageAlong() throws {
+    func test_handModeDragsThePageAlong() async throws {
         let (viewer, _) = try open(pages: 3)
         viewer.mode = .hand
         viewer.zoom = 1
@@ -501,7 +501,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.offset.y, 50, accuracy: 1)
     }
 
-    func test_aPointerToolGetsThePressTheMovesAndTheRelease() throws {
+    func test_aPointerToolGetsThePressTheMovesAndTheRelease() async throws {
         let (viewer, _) = try open()
         let tool = RecordingTool()
         viewer.pointerTool = tool
@@ -520,7 +520,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertFalse(tool.calls[2].pointer.pressed)
     }
 
-    func test_aFingerGetsNoMovesBetweenPresses() throws {
+    func test_aFingerGetsNoMovesBetweenPresses() async throws {
         let (viewer, _) = try open()
         let tool = RecordingTool()
         viewer.pointerTool = tool
@@ -534,7 +534,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertTrue(tool.calls[1].pointer.pressed)
     }
 
-    func test_aFingerThatLandsBetweenPagesGivesTheToolNothing() throws {
+    func test_aFingerThatLandsBetweenPagesGivesTheToolNothing() async throws {
         let (viewer, _) = try open()
         let tool = RecordingTool()
         viewer.pointerTool = tool
@@ -546,7 +546,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertTrue(tool.calls.isEmpty)
     }
 
-    func test_aMouseHoversAgainAfterAFingerHasGone() throws {
+    func test_aMouseHoversAgainAfterAFingerHasGone() async throws {
         let (viewer, _) = try open()
         let tool = RecordingTool()
         viewer.pointerTool = tool
@@ -561,7 +561,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertFalse(tool.calls[0].pointer.pressed)
     }
 
-    func test_theToolSaysWhetherItTakesAFingerAtAPlace() throws {
+    func test_theToolSaysWhetherItTakesAFingerAtAPlace() async throws {
         let (viewer, _) = try open()
         let tool = RecordingTool()
         let at = try XCTUnwrap(viewer.pageToView(0)).transform(ViewPoint(50, 50))
@@ -576,7 +576,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertTrue(tool.calls.isEmpty)
     }
 
-    func test_theToolIsOfferedAKeyFirstAndTheViewerGetsWhatItLeaves() throws {
+    func test_theToolIsOfferedAKeyFirstAndTheViewerGetsWhatItLeaves() async throws {
         let (viewer, _) = try open(pages: 3)
         let tool = RecordingTool()
         tool.keysTaken = [.delete, .escape]
@@ -592,7 +592,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(tool.usedKeys, [.delete, .escape, .pageDown, .backspace])
     }
 
-    func test_escapeDuringAToolPressCancelsIt() throws {
+    func test_escapeDuringAToolPressCancelsIt() async throws {
         let (viewer, _) = try open()
         let tool = RecordingTool()
         viewer.pointerTool = tool
@@ -604,7 +604,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertTrue(tool.cancelled)
     }
 
-    func test_escapeClosesTheFindBar() throws {
+    func test_escapeClosesTheFindBar() async throws {
         let (viewer, _) = try open()
         viewer.showFind()
 
@@ -613,7 +613,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertFalse(viewer.findVisible)
     }
 
-    func test_escapeLeavesReadingMode() throws {
+    func test_escapeLeavesReadingMode() async throws {
         let (viewer, _) = try open()
         viewer.readingMode = true
 
@@ -622,7 +622,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertFalse(viewer.readingMode)
     }
 
-    func test_settingAnotherToolCancelsTheOneBefore() throws {
+    func test_settingAnotherToolCancelsTheOneBefore() async throws {
         let (viewer, _) = try open()
         let first = RecordingTool()
         viewer.pointerTool = first
@@ -634,7 +634,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertNil(viewer.pointerTool)
     }
 
-    func test_theKeysScrollAndTurnPages() throws {
+    func test_theKeysScrollAndTurnPages() async throws {
         let (viewer, _) = try open(pages: 3)
         viewer.zoom = 1
 
@@ -872,7 +872,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(viewer.search.query, "")
     }
 
-    func test_findNextWithTheBarClosedOpensItWithoutStepping() throws {
+    func test_findNextWithTheBarClosedOpensItWithoutStepping() async throws {
         let (viewer, _) = try open()
         let before = viewer.findRequest
 
@@ -965,7 +965,7 @@ final class ViewerModelTests: XCTestCase {
         await waitFor { viewer.layers.layers.first?.isOn == true }
     }
 
-    func test_aTabThatWasShownAndLeftIsNotKeptAlive() throws {
+    func test_aTabThatWasShownAndLeftIsNotKeptAlive() async throws {
         let (viewer, _) = try open()
         func showAndLeave() throws -> WeakTab {
             let other = DocumentTab(session: try PdfEditSession.open(Pdfs.text(1)), renderer: FakeRenderer(), url: nil, title: "b.pdf")
@@ -977,7 +977,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertNil(gone.tab)
     }
 
-    func test_pagesDeletedBeforeTheReloadDoNotBreakTheLookups() throws {
+    func test_pagesDeletedBeforeTheReloadDoNotBreakTheLookups() async throws {
         let (viewer, tab) = try open(pages: 10)
         try PageOperations.delete(tab.document, [4, 5, 6, 7, 8, 9])
         XCTAssertTrue(try tab.commit("Delete pages"))
@@ -986,7 +986,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertNil(viewer.link(at: 9, ViewPoint(10, 10)))
     }
 
-    func test_scrollingInTheContinuousLayoutRedrawsOnlyWhenAsked() throws {
+    func test_scrollingInTheContinuousLayoutRedrawsOnlyWhenAsked() async throws {
         let (viewer, _) = try open(pages: 5)
         viewer.zoom = 2
         var redraws = 0
@@ -1002,7 +1002,7 @@ final class ViewerModelTests: XCTestCase {
         XCTAssertEqual(redraws, 1)
     }
 
-    func test_aPagedLayoutAndAZoomRedrawEvenWhenScrollingDoesNot() throws {
+    func test_aPagedLayoutAndAZoomRedrawEvenWhenScrollingDoesNot() async throws {
         let (viewer, _) = try open(pages: 5)
         viewer.redrawsOnScroll = false
         viewer.zoom = 2
