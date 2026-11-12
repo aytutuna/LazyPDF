@@ -53,8 +53,8 @@
         <DataTemplate x:Key="DocumentTabTemplate">
             <DockPanel x:Name="Row" MinWidth="64" MaxWidth="220" Background="Transparent" ToolTip="{Binding Title}">
                 <Button x:Name="CloseButton" DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE711;"
-                        Width="28" Height="28" FontSize="10" Margin="6,0,0,0" IsTabStop="False"
-                        ToolTip="{loc:T Close}" AutomationProperties.Name="{loc:T Close}" Click="CloseTab_Click" />
+                        Width="28" Height="28" FontSize="10" Margin="6,0,0,0"
+                        ToolTip="{loc:T Close}" AutomationProperties.Name="{Binding CloseAutomationName}" Click="CloseTab_Click" />
                 <Ellipse x:Name="DirtyDot" DockPanel.Dock="Right" Width="7" Height="7" Margin="6,0,0,0"
                          Fill="{DynamicResource AccentFillColorDefaultBrush}" Visibility="Collapsed"
                          ToolTip="{loc:T Unsaved changes}" />

@@ -95,6 +95,8 @@ public sealed class DocumentTab : ITab, IDisposable
 
     public string AutomationName => IsDirty ? Loc.T("{0}, unsaved changes", Title) : Title;
 
+    public string CloseAutomationName => Loc.T("Close {0}", Title);
+
     public string Glyph => "\uE8A5";
 
     public bool IsDirty => _unsaved || Session.IsDirty;

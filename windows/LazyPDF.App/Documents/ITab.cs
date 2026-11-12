@@ -11,6 +11,9 @@ public interface ITab : INotifyPropertyChanged
     /// <summary>What a screen reader says for the tab: the title, and that it has unsaved changes.</summary>
     string AutomationName { get; }
 
+    /// <summary>What a screen reader says for the tab's close button.</summary>
+    string CloseAutomationName { get; }
+
     /// <summary>A Segoe Fluent Icons glyph.</summary>
     string Glyph { get; }
 
@@ -31,6 +34,8 @@ public sealed class HomeTab : ITab
     public string Title => Loc.T("Home");
 
     public string AutomationName => Title;
+
+    public string CloseAutomationName => Loc.T("Close {0}", Title);
 
     public string Glyph => "\uE80F";
 

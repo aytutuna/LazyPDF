@@ -1877,6 +1877,9 @@
   "Close": {
     "tr": "Kapat"
   },
+  "Close {0}": {
+    "tr": "{0} dosyasını kapat"
+  },
   "C_lose": {
     "tr": "Kap_at"
   },
