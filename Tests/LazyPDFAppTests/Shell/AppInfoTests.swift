@@ -44,4 +44,14 @@ final class AppInfoTests: XCTestCase {
 
         XCTAssertNil(AppInfo.notices(in: nowhere))
     }
+
+    func test_bothAppleProjectsBundleTheNoticesFileWithTheFonts() throws {
+        let notices = try XCTUnwrap(AppInfo.notices(in: repository))
+        XCTAssertTrue(notices.contains("SIL OPEN FONT LICENSE Version 1.1"))
+
+        for project in ["mac/project.yml", "ios/project.yml"] {
+            let text = try String(contentsOf: repository.appendingPathComponent(project), encoding: .utf8)
+            XCTAssertTrue(text.contains("path: ../THIRD-PARTY-NOTICES.txt"), project)
+        }
+    }
 }
