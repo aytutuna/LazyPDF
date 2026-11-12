@@ -14,7 +14,12 @@ internal static class OfficePdfWriter
     /// <exception cref="PdfReadException">The page size or margins leave no room, or the document runs past <see cref="Paginator.MaxPages"/>.</exception>
     public static OfficePdf Create(LayoutDocument document, IFontSource? fonts, CancellationToken cancellation = default, List<byte[]>? contents = null, IImageCodec? images = null)
     {
-        var layout = new Paginator(document, new LayoutFonts(fonts), cancellation).Run();
+        return Create(new Paginator(document, new LayoutFonts(fonts), cancellation).Run(), fonts, cancellation, contents, images);
+    }
+
+    /// <summary>Writes pages that are already laid out.</summary>
+    public static OfficePdf Create(LayoutResult layout, IFontSource? fonts, CancellationToken cancellation = default, List<byte[]>? contents = null, IImageCodec? images = null)
+    {
         var pdf = ExportPdf.NewDocument();
         var embedder = new PdfFontEmbedder(pdf, fonts);
 

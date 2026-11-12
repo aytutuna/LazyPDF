@@ -247,7 +247,7 @@ internal sealed partial class Paginator
 
     // Highlights go under the text and underlines and strikes over it. A piece is a stretch of one style;
     // tabs, line breaks and the spaces that end the line draw nothing and split the pieces.
-    private static void EmitLine(List<LayoutBox> boxes, LayoutLine line, double originX, double top)
+    internal static void EmitLine(List<LayoutBox> boxes, LayoutLine line, double originX, double top)
     {
         int ink = line.Atoms.FindLastIndex(a => !a.IsBlank || a.IsTab);
         var under = new List<LayoutBox>();
