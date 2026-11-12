@@ -30,6 +30,7 @@ final class IOSShell {
     var sheet: SheetRequest?
 
     private let certificates: IOSCertificates
+    @ObservationIgnored private let certificateList: CertificateListModel
     @ObservationIgnored private var viewers: [UUID: ViewerModel] = [:]
     @ObservationIgnored private var picking: CheckedContinuation<[PickedFile], Never>?
     @ObservationIgnored private var chosen: [PickedFile] = []
@@ -47,6 +48,9 @@ final class IOSShell {
         let panels = ToolPanels(host: model, folders: folders)
         vm = model
         self.panels = panels
+        certificateList = CertificateListModel(list: { keys.choices() }, delete: { keys.remove($0) }, add: {
+            await IOSCertificateImport.run(keys, problem: model.showProblem)
+        })
         model.handInTyping = { panels.handIn() }
         model.fileWriter = CoordinatedFileWriter()
         model.fileReader = CoordinatedFileReader.read
@@ -93,7 +97,7 @@ final class IOSShell {
             share(tab)
         }, importCertificate: { [self] in
             await IOSCertificateImport.run(certificates, problem: vm.showProblem)
-        }, openFiles: { [self] urls in
+        }, certificateList: certificateList, openFiles: { [self] urls in
             for url in urls { receive(url) }
         })
     }

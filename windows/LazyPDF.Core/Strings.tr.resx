@@ -2704,6 +2704,9 @@
   <data name="Import" xml:space="preserve">
     <value>İçe aktar</value>
   </data>
+  <data name="Import a .p12 file" xml:space="preserve">
+    <value>.p12 dosyası içe aktar</value>
+  </data>
   <data name="Import a certificate…" xml:space="preserve">
     <value>Sertifika içe aktar…</value>
   </data>
@@ -3489,6 +3492,9 @@
   </data>
   <data name="No font on this computer can draw the text. Remove the letters it cannot show." xml:space="preserve">
     <value>Bu bilgisayardaki hiçbir yazı tipi metni çizemiyor. Gösteremediği harfleri kaldırın.</value>
+  </data>
+  <data name="No imported certificates." xml:space="preserve">
+    <value>İçe aktarılmış sertifika yok.</value>
   </data>
   <data name="No installed font has these characters, so they are left blank: {0}" xml:space="preserve">
     <value>Yüklü hiçbir yazı tipinde bu karakterler yok, bu yüzden boş bırakıldı: {0}</value>
@@ -6099,6 +6105,9 @@
   </data>
   <data name="The catalog has no /Metadata stream." xml:space="preserve">
     <value>Katalogda /Metadata akışı yok.</value>
+  </data>
+  <data name="The certificate could not be removed." xml:space="preserve">
+    <value>Sertifika kaldırılamadı.</value>
   </data>
   <data name="The certificate could not be shown." xml:space="preserve">
     <value>Sertifika gösterilemedi.</value>

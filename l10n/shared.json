@@ -8426,5 +8426,14 @@
   },
   "{0} has scripts in its form. Lazy PDF does not run them, so some fields may not calculate or check what is typed.": {
     "tr": "{0} dosyasının formunda betikler var. Lazy PDF bunları çalıştırmaz, bu yüzden bazı alanlar hesaplama yapmayabilir veya yazılanı denetlemeyebilir."
+  },
+  "The certificate could not be removed.": {
+    "tr": "Sertifika kaldırılamadı."
+  },
+  "No imported certificates.": {
+    "tr": "İçe aktarılmış sertifika yok."
+  },
+  "Import a .p12 file": {
+    "tr": ".p12 dosyası içe aktar"
   }
 }

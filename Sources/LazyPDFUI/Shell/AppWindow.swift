@@ -149,7 +149,10 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
                 PasswordSheet(vm: vm, request: request, importCertificate: commands.importCertificate)
             }
         case .settings:
-            SettingsView(vm: vm, about: { sheet = .about }, done: { sheet = nil })
+            let manage: (() -> Void)? = commands.certificateList == nil ? nil : { sheet = .certificates }
+            SettingsView(vm: vm, about: { sheet = .about }, certificates: manage, done: { sheet = nil })
+        case .certificates:
+            if let list = commands.certificateList { CertificateListView(model: list, done: { sheet = .settings }) }
         case .about:
             AboutView(done: { sheet = nil })
         case .tool:

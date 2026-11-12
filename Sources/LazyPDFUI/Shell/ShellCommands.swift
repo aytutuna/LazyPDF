@@ -29,6 +29,9 @@ public struct ShellCommands {
     /// person gave up. The password question offers it for a file encrypted for recipients.
     public var importCertificate: (@MainActor () async -> CertificateChoice?)?
 
+    /// The imported identities with a way to delete them; nil where the system keychain is the person's to manage.
+    public var certificateList: CertificateListModel?
+
     /// Opens files dropped on the window; nil lets the window open them without a grant of their own.
     public var openFiles: (@MainActor ([URL]) -> Void)?
 
@@ -38,6 +41,7 @@ public struct ShellCommands {
                 print: @escaping @MainActor (DocumentTab) -> Void = { _ in },
                 share: (@MainActor (DocumentTab) -> Void)? = nil,
                 importCertificate: (@MainActor () async -> CertificateChoice?)? = nil,
+                certificateList: CertificateListModel? = nil,
                 openFiles: (@MainActor ([URL]) -> Void)? = nil) {
         self.open = open
         self.create = create
@@ -47,6 +51,7 @@ public struct ShellCommands {
         self.print = print
         self.share = share
         self.importCertificate = importCertificate
+        self.certificateList = certificateList
         self.openFiles = openFiles
     }
 }

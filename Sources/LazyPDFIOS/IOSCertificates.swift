@@ -45,7 +45,16 @@ public final class IOSCertificates: CertificateKeys {
         return CertificateChoice(parsed)
     }
 
+    /// Takes an imported identity, its certificate and its key, out of the keychain. True when it is gone.
+    public func remove(_ choice: CertificateChoice) -> Bool {
+        guard let found = identities().first(where: { $0.x509.thumbprint == choice.id }) else { return true }
+        let query: [String: Any] = [kSecClass as String: kSecClassIdentity, kSecValueRef as String: found.identity]
+        let status = SecItemDelete(query as CFDictionary)
+        return status == errSecSuccess || status == errSecItemNotFound
+    }
+
     private struct Identity {
+        let identity: SecIdentity
         let x509: X509Certificate
         let certificate: SecCertificate
         let key: SecKey
@@ -66,7 +75,7 @@ public final class IOSCertificates: CertificateKeys {
                   SecIdentityCopyPrivateKey(identity, &key) == errSecSuccess, let key,
                   let parsed = X509Certificate([UInt8](SecCertificateCopyData(certificate) as Data)) else { continue }
             parsed.privateKey = key
-            result.append(Identity(x509: parsed, certificate: certificate, key: key))
+            result.append(Identity(identity: identity, x509: parsed, certificate: certificate, key: key))
         }
         return result
     }

@@ -8,6 +8,7 @@ import LazyPDFKit
 struct SettingsView: View {
     let vm: AppViewModel
     let about: () -> Void
+    let certificates: (() -> Void)?
     let done: () -> Void
 
     var body: some View {
@@ -23,6 +24,9 @@ struct SettingsView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            if let certificates {
+                Button(L10n.t("Certificates"), action: certificates)
+            }
             Button(L10n.t("About Lazy PDF"), action: about)
                 .padding(.top, 8)
             HStack {

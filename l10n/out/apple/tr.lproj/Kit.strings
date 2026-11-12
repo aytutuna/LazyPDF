@@ -726,6 +726,7 @@
 "Ignore headers and footers" = "Üst ve alt bilgileri yok say";
 "Ignore spacing" = "Boşlukları yok say";
 "Import" = "İçe aktar";
+"Import a .p12 file" = ".p12 dosyası içe aktar";
 "Import a certificate…" = "Sertifika içe aktar…";
 "Import comments" = "Yorumları içe aktar";
 "Import form data" = "Form verilerini içe aktar";
@@ -938,6 +939,7 @@
 "No font has {0}." = "Hiçbir yazı tipinde {0} yok.";
 "No font on this computer can draw the text of {0}." = "Bu bilgisayardaki hiçbir yazı tipi {0} metnini çizemiyor.";
 "No font on this computer can draw the text. Remove the letters it cannot show." = "Bu bilgisayardaki hiçbir yazı tipi metni çizemiyor. Gösteremediği harfleri kaldırın.";
+"No imported certificates." = "İçe aktarılmış sertifika yok.";
 "No installed font has these characters, so they are left blank: {0}" = "Yüklü hiçbir yazı tipinde bu karakterler yok, bu yüzden boş bırakıldı: {0}";
 "No page could be tagged. Scans need text recognition first. Pages that share content cannot be tagged." = "Hiçbir sayfa etiketlenemedi. Taramalar için önce metin tanıma gerekir. İçerik paylaşan sayfalar etiketlenemez.";
 "No page has a text layer from here." = "Hiçbir sayfada buradan eklenmiş metin katmanı yok.";
@@ -1677,6 +1679,7 @@
 "The catalog has /OCProperties." = "Katalogda /OCProperties var.";
 "The catalog has an /AA entry." = "Katalogda /AA girdisi var.";
 "The catalog has no /Metadata stream." = "Katalogda /Metadata akışı yok.";
+"The certificate could not be removed." = "Sertifika kaldırılamadı.";
 "The certificate could not be shown." = "Sertifika gösterilemedi.";
 "The certificate has expired since." = "Sertifikanın süresi sonradan doldu.";
 "The certificate is added to your keychain so you can use it again." = "Sertifika, yeniden kullanabilmeniz için anahtar zincirinize eklenir.";

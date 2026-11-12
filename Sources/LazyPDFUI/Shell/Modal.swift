@@ -4,7 +4,7 @@ import Foundation
 /// What the window shows in its one sheet. SwiftUI presents a single sheet at a time, so the password question, which stops
 /// the window, comes before settings, and those before the tool and panel sheets of the phone layout.
 enum Modal: String, Identifiable {
-    case password, settings, about, tool, panel
+    case password, settings, certificates, about, tool, panel
 
     var id: String { rawValue }
 

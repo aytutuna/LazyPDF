@@ -186,7 +186,7 @@ final class AppWindowTests: XCTestCase {
     func test_settingsAndAboutDraw() throws {
         let f = ShellFixture(self)
 
-        let settings = try XCTUnwrap(picture(SettingsView(vm: f.vm, about: {}, done: {}), 480, 300))
+        let settings = try XCTUnwrap(picture(SettingsView(vm: f.vm, about: {}, certificates: nil, done: {}), 480, 300))
         let about = try XCTUnwrap(picture(AboutView(done: {}), 560, 520))
 
         XCTAssertGreaterThan(variety(settings), 8)
