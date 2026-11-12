@@ -79,7 +79,7 @@ public enum ReviewStatus: String {
     case none = "None"
     case accepted = "Accepted"
     case rejected = "Rejected"
-    case cancelled = "Canceled"
+    case cancelled = "Cancelled"
     case completed = "Completed"
     case marked = "Marked"
     case unmarked = "Unmarked"

@@ -95,6 +95,14 @@ final class CommentListTests: XCTestCase {
         XCTAssertEqual(PdfComments.list(reopened).first { $0.text == "low on page one" }?.status, .rejected)
     }
 
+    func test_cancelledIsStoredWithTheSpecSpelling() throws {
+        let (document, low, _, _) = try sample()
+        let reply = try PdfComments.setStatus(document, low, .cancelled, "Can", day)
+        XCTAssertEqual(PdfText.read(document, reply.dictionary, "State"), "Cancelled")
+        let reopened = try AnnotationFixtures.reopen(document)
+        XCTAssertEqual(PdfComments.list(reopened).first { $0.text == "low on page one" }?.status, .cancelled)
+    }
+
     func test_markedModelUsesItsOwnName() throws {
         let (document, low, _, _) = try sample()
         let marked = try PdfComments.setStatus(document, low, .unmarked, "Can", day)
