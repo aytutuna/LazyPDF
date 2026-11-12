@@ -12,6 +12,12 @@ public sealed record TextSearchOptions(bool MatchCase = false, bool WholeWord = 
 /// <summary>A hit: the page, its characters and the boxes to paint, one for each line it crosses.</summary>
 public sealed record SearchMatch(int Page, TextRange Range, string Text, IReadOnlyList<TextQuad> Quads);
 
+/// <summary>Collects the pages where a regular expression ran out of time; hits found before the limit are still given.</summary>
+public sealed class SearchTimeouts
+{
+    public List<int> Pages { get; } = [];
+}
+
 public static class TextSearch
 {
     private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(2);
@@ -20,12 +26,12 @@ public static class TextSearch
     /// Finds a query on a page. White space in the query matches any run of white space and line
     /// breaks; a hyphen at a line end can be part of the match or not (<c>in-</c> and <c>formation</c>
     /// match "information", <c>well-</c> and <c>known</c> match "well-known"). A regular expression
-    /// that takes more than two seconds on a page gives no hits for it. Throws <see cref="ArgumentException"/> for a bad pattern.
+    /// that takes more than two seconds on a page stops there and the page is added to <paramref name="timeouts"/>. Throws <see cref="ArgumentException"/> for a bad pattern.
     /// </summary>
-    public static IReadOnlyList<SearchMatch> Find(TextPage page, string query, TextSearchOptions? options = null, CancellationToken cancel = default)
+    public static IReadOnlyList<SearchMatch> Find(TextPage page, string query, TextSearchOptions? options = null, CancellationToken cancel = default, SearchTimeouts? timeouts = null)
     {
         options ??= new TextSearchOptions();
-        return Matcher.Create(query, options) is { } matcher ? matcher.Find(page, cancel) : [];
+        return Matcher.Create(query, options) is { } matcher ? matcher.Find(page, cancel, timeouts) : [];
     }
 
     /// <summary>
@@ -34,20 +40,20 @@ public static class TextSearch
     /// while the rest is searched. Stops with <see cref="OperationCanceledException"/>.
     /// </summary>
     public static IEnumerable<SearchMatch> Find(TextCache cache, string query, TextSearchOptions? options = null,
-        int first = 0, int last = int.MaxValue, CancellationToken cancel = default)
+        int first = 0, int last = int.MaxValue, CancellationToken cancel = default, SearchTimeouts? timeouts = null)
     {
         options ??= new TextSearchOptions();
         var matcher = Matcher.Create(query, options);
-        return matcher is null ? [] : Pages(cache, matcher, first, last, cancel);
+        return matcher is null ? [] : Pages(cache, matcher, first, last, cancel, timeouts);
     }
 
-    private static IEnumerable<SearchMatch> Pages(TextCache cache, Matcher matcher, int first, int last, CancellationToken cancel)
+    private static IEnumerable<SearchMatch> Pages(TextCache cache, Matcher matcher, int first, int last, CancellationToken cancel, SearchTimeouts? timeouts)
     {
         int end = Math.Min(last, cache.PageCount - 1);
         for (int p = Math.Max(first, 0); p <= end; p++)
         {
             cancel.ThrowIfCancellationRequested();
-            foreach (var match in matcher.Find(cache.Get(p), cancel)) yield return match;
+            foreach (var match in matcher.Find(cache.Get(p), cancel, timeouts)) yield return match;
         }
     }
 
@@ -78,12 +84,13 @@ public static class TextSearch
             return plain.Length == 0 ? null : new Matcher(options, plain, null);
         }
 
-        public IReadOnlyList<SearchMatch> Find(TextPage page, CancellationToken cancel)
+        public IReadOnlyList<SearchMatch> Find(TextPage page, CancellationToken cancel, SearchTimeouts? timeouts)
         {
             var found = new List<TextRange>();
             var text = SearchText.Build(page, _options, false);
-            Collect(text, found, cancel);
-            if (text.HasHyphenBreak) Collect(SearchText.Build(page, _options, true), found, cancel);
+            bool timedOut = !Collect(text, found, cancel);
+            if (text.HasHyphenBreak) timedOut |= !Collect(SearchText.Build(page, _options, true), found, cancel);
+            if (timedOut) timeouts?.Pages.Add(page.PageIndex);
             found.Sort((a, b) => a.Start != b.Start ? a.Start.CompareTo(b.Start) : b.End.CompareTo(a.End));
             var result = new List<SearchMatch>();
             int end = -1;
@@ -96,9 +103,9 @@ public static class TextSearch
             return result;
         }
 
-        private void Collect(SearchText text, List<TextRange> found, CancellationToken cancel)
+        private bool Collect(SearchText text, List<TextRange> found, CancellationToken cancel)
         {
-            if (text.Text.Length == 0) return;
+            if (text.Text.Length == 0) return true;
             if (_regex is null)
             {
                 for (int from = 0; from <= text.Text.Length - _query.Length;)
@@ -113,7 +120,7 @@ public static class TextSearch
                     }
                     found.Add(new TextRange(text.Map[i], text.Map[from - 1] + 1));
                 }
-                return;
+                return true;
             }
             try
             {
@@ -126,7 +133,9 @@ public static class TextSearch
             }
             catch (RegexMatchTimeoutException)
             {
+                return false;
             }
+            return true;
         }
 
         // The edge of the query decides: a query that starts with a punctuation mark has no word edge there.
