@@ -15,6 +15,7 @@ struct SheetRequest: Identifiable {
         case share(URL)
         case create
         case batch
+        case printLayout(DocumentTab)
     }
 
     let id = UUID()
@@ -35,6 +36,7 @@ final class IOSShell {
     @ObservationIgnored private var picking: CheckedContinuation<[PickedFile], Never>?
     @ObservationIgnored private var chosen: [PickedFile] = []
     @ObservationIgnored private var waiting: [URL] = []
+    @ObservationIgnored private var printing: (tab: DocumentTab, layout: PrintLayout)?
     @ObservationIgnored private var shownTab: DocumentTab?
     @ObservationIgnored private var shownViewer: ViewerModel?
 
@@ -91,8 +93,8 @@ final class IOSShell {
             await saveAs(tab, compact: false)
         }, saveCompact: { [self] tab in
             Task { _ = await saveAs(tab, compact: true) }
-        }, print: { [vm] tab in
-            IOSSystemPrint.present(tab.session, name: tab.title, problem: vm.showProblem)
+        }, print: { [self] tab in
+            sheet = SheetRequest(kind: .printLayout(tab))
         }, share: { [self] tab in
             share(tab)
         }, importCertificate: { [self] in
@@ -178,6 +180,16 @@ final class IOSShell {
         let urls = waiting
         waiting = []
         for url in urls { receive(url) }
+        // The print sheet cannot open while this one is still leaving.
+        if let (tab, layout) = printing {
+            printing = nil
+            IOSSystemPrint.present(tab.session, name: tab.title, layout: layout, problem: vm.showProblem, notice: { vm.showNotice($0, $1) })
+        }
+    }
+
+    func print(_ tab: DocumentTab, _ layout: PrintLayout) {
+        printing = (tab, layout)
+        sheet = nil
     }
 
     private func pick(_ kind: SheetRequest.Kind) async -> [PickedFile] {

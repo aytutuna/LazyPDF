@@ -184,16 +184,42 @@ final class MacShell {
     }
 
     private func systemPrint(_ tab: DocumentTab) {
-        guard tab.canDraw, let operation = MacSystemPrint.operation(tab.session, password: tab.password, title: tab.title) else {
+        guard let layout = askPrintLayout() else { return }
+        var dropped = 0
+        var made: NSPrintOperation?
+        if layout.isPlain {
+            made = tab.canDraw ? MacSystemPrint.operation(tab.session, password: tab.password, title: tab.title) : nil
+        } else if layout.pages(count: tab.document.pages.count).isEmpty {
+            vm.showProblem(Problem(L10n.t("Not printed"), L10n.t("None of the pages you chose are left to print.")))
+            return
+        } else if tab.canDraw, let laid = MacSystemPrint.operation(tab.session, password: tab.password, title: tab.title, layout: layout) {
+            made = laid.operation
+            dropped = laid.dropped
+        }
+        guard let operation = made else {
             vm.showProblem(Problem(L10n.t("Not printed"),
                                    L10n.t("{0} could not be prepared for printing. Save it and print it from another program.", tab.title)))
             return
         }
+        if let note = PrintLayout.droppedNote(dropped) { vm.showNotice(L10n.t("Left off the sheets"), note) }
         if let window {
             operation.runModal(for: window, delegate: nil, didRun: nil, contextInfo: nil)
         } else {
             operation.run()
         }
+    }
+
+    // The panel has pages per sheet of its own, so only the booklet and the odd or even pages are asked for.
+    private func askPrintLayout() -> PrintLayout? {
+        let choice = PrintLayoutChoice()
+        let view = NSHostingView(rootView: PrintLayoutView(choice: choice, askPerSheet: false).frame(width: 300))
+        view.frame = NSRect(origin: .zero, size: view.fittingSize)
+        let alert = NSAlert()
+        alert.messageText = L10n.t("Print layout")
+        alert.accessoryView = view
+        alert.addButton(withTitle: L10n.t("Print"))
+        alert.addButton(withTitle: L10n.t("Cancel"))
+        return alert.runModal() == .alertFirstButtonReturn ? choice.layout : nil
     }
 
     private func share(_ tab: DocumentTab) {

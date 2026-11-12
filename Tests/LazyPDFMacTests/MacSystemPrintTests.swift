@@ -21,6 +21,27 @@ final class MacSystemPrintTests: XCTestCase {
         XCTAssertNotNil(operation.view)
     }
 
+    func test_aBookletIsPrintedAsLandscapeSheets() throws {
+        let session = try PdfEditSession.open(try MacPdfs.text(pages: 5))
+
+        let laid = try XCTUnwrap(MacSystemPrint.operation(session, password: nil, title: "a.pdf", layout: PrintLayout(booklet: true), info: NSPrintInfo()))
+
+        XCTAssertEqual(laid.operation.printInfo.orientation, .landscape)
+        XCTAssertEqual(laid.dropped, 0)
+    }
+
+    func test_oddPagesAreAFileOfTheirOwn() throws {
+        let session = try PdfEditSession.open(try MacPdfs.text(pages: 4))
+
+        XCTAssertNotNil(MacSystemPrint.operation(session, password: nil, title: "a.pdf", layout: PrintLayout(parity: .odd), info: NSPrintInfo()))
+    }
+
+    func test_noPagesLeftIsNotPrinted() throws {
+        let session = try PdfEditSession.open(try MacPdfs.text(pages: 1))
+
+        XCTAssertNil(MacSystemPrint.operation(session, password: nil, title: "a.pdf", layout: PrintLayout(parity: .even), info: NSPrintInfo()))
+    }
+
     func test_theJobCarriesTheDocumentsTitle() throws {
         let operation = try XCTUnwrap(try operation(try MacPdfs.text(), title: "Report.pdf"))
 

@@ -20,12 +20,28 @@ public enum IOSSystemPrint {
         return info
     }
 
+    /// The sheet size a layout is made for: the sheet UIKit prints on is chosen later and takes the pages scaled to fit.
+    static var paper: (width: Double, height: Double) {
+        ["US", "CA"].contains(Locale.current.region?.identifier) ? (612, 792) : (595, 842)
+    }
+
     /// Shows the sheet; `done` runs when it closes, with whether anything was printed. `problem` gets what keeps it from
-    /// opening.
-    public static func present(_ session: PdfEditSession, name: String, problem: (Problem) -> Void, done: ((Bool) -> Void)? = nil) {
+    /// opening and `notice` what the layout had to leave out.
+    public static func present(_ session: PdfEditSession, name: String, layout: PrintLayout = PrintLayout(), problem: (Problem) -> Void,
+                               notice: (String, String) -> Void = { _, _ in }, done: ((Bool) -> Void)? = nil) {
         let data: Data
         do {
-            data = try item(session)
+            if layout.isPlain {
+                data = try item(session)
+            } else {
+                guard !layout.pages(count: session.document.pages.count).isEmpty else {
+                    problem(Problem(L10n.t("Not printed"), L10n.t("None of the pages you chose are left to print.")))
+                    return
+                }
+                let sheets = try layout.file(session.document, sheetWidth: paper.width, sheetHeight: paper.height)
+                data = Data(sheets.bytes)
+                if let note = PrintLayout.droppedNote(sheets.dropped) { notice(L10n.t("Left off the sheets"), note) }
+            }
         } catch {
             problem(Problem(L10n.t("Not printed"), L10n.t("A copy of {0} could not be made for printing. Check that the disk has room.", name)))
             return

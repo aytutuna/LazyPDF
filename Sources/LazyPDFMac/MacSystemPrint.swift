@@ -18,6 +18,22 @@ enum MacSystemPrint {
         return operation
     }
 
+    /// As above for the pages a layout leaves, laid out on sheets of the paper in `info` when it asks for a booklet. The
+    /// count is of the annotations the sheets could not take. Nil also when the layout leaves no page or the sheets cannot
+    /// be made.
+    static func operation(_ session: PdfEditSession, password: String?, title: String, layout: PrintLayout,
+                          info: NSPrintInfo = NSPrintInfo.shared) -> (operation: NSPrintOperation, dropped: Int)? {
+        let info = info.copy() as? NSPrintInfo ?? info
+        if layout.booklet { info.orientation = .landscape }
+        guard !layout.pages(count: session.document.pages.count).isEmpty,
+              let sheets = try? layout.file(session.document, sheetWidth: info.paperSize.width, sheetHeight: info.paperSize.height),
+              let made = try? PdfEditSession.open(sheets.bytes),
+              let document = layout.imposes ? PDFDocument(data: Data(sheets.bytes)) : MacSystemPrint.document(made, nil) else { return nil }
+        let operation = document.printOperation(for: info, scalingMode: .pageScaleDownToFit, autoRotate: false)
+        operation?.jobTitle = title
+        return operation.map { ($0, sheets.dropped) }
+    }
+
     // PDFKit prints a /UserUnit 2 page at the size of /UserUnit 1, so such pages are drawn into a new document at their
     // real size, which keeps them vector.
     static func document(_ session: PdfEditSession, _ password: String?) -> PDFDocument? {

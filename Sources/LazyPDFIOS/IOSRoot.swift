@@ -35,6 +35,8 @@ struct IOSRoot: View {
                 CreateSheet(host: vm) { shell.sheet = nil }
             case .batch:
                 BatchSheet(host: vm, folders: shell.folders) { shell.sheet = nil }
+            case .printLayout(let tab):
+                PrintLayoutSheet(print: { shell.print(tab, $0) }, close: { shell.sheet = nil })
             }
         }
         .environment(\.shortcutsInMenu, true)
