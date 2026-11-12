@@ -75,7 +75,9 @@ extension ViewerModel {
         guard let tab, page >= 0, page < tab.document.pages.count else { return [] }
         if let found = drawn[page] { return found }
         let reader = EdgeReader()
-        ContentInterpreter(tab.document).run(tab.document.pages[page], reader)
+        let interpreter = ContentInterpreter(tab.document)
+        interpreter.walkPatterns = false
+        interpreter.run(tab.document.pages[page], reader)
         drawn[page] = reader.edges
         return reader.edges
     }
