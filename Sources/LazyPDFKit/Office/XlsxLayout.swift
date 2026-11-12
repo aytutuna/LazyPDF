@@ -554,7 +554,7 @@ final class XlsxLayout {
         if !content && !stated { return nil }
 
         for item in items { try text(plan, item, rows, columns, left, spill, &boxes) }
-        for item in items { border(plan, item, &boxes) }
+        for item in items { border(plan, item, rows, columns, &boxes) }
         if setup.headings { try headings(g, rows, columns, top, left, &boxes) }
         return (width, height)
     }
@@ -764,7 +764,7 @@ final class XlsxLayout {
         }
     }
 
-    private func border(_ plan: Plan, _ item: Item, _ boxes: inout [LayoutBox]) {
+    private func border(_ plan: Plan, _ item: Item, _ rows: [Int], _ columns: [Int], _ boxes: inout [LayoutBox]) {
         guard let own = borderOf(item.cell) else { return }
         let right = item.x + item.w, bottom = item.y + item.h
         let row = item.rowId, column = item.cell.column
@@ -776,8 +776,9 @@ final class XlsxLayout {
             rightEdge = Self.cellAt(plan, m.firstRow, m.lastColumn).flatMap { borderOf($0)?.right }
             bottomEdge = Self.cellAt(plan, m.lastRow, m.firstColumn).flatMap { borderOf($0)?.bottom }
         }
-        if leftEdge != nil, let l = Self.cellAt(plan, row, column - 1), borderOf(l)?.right != nil { leftEdge = nil }
-        if topEdge != nil, let t = Self.cellAt(plan, row - 1, column), borderOf(t)?.bottom != nil { topEdge = nil }
+        // A neighbour only hides the shared edge when it is printed right beside this cell on the same page.
+        if leftEdge != nil, item.column > 0, columns[item.column - 1] == column - 1, let l = Self.cellAt(plan, row, column - 1), borderOf(l)?.right != nil { leftEdge = nil }
+        if topEdge != nil, item.row > 0, rows[item.row - 1] == row - 1, let t = Self.cellAt(plan, row - 1, column), borderOf(t)?.bottom != nil { topEdge = nil }
         if let e = topEdge { edge(&boxes, true, item.y, item.x, right, e) }
         if let e = leftEdge { edge(&boxes, false, item.x, item.y, bottom, e) }
         if let e = rightEdge { edge(&boxes, false, right, item.y, bottom, e) }

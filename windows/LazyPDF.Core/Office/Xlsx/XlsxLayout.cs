@@ -529,7 +529,7 @@ internal sealed class XlsxLayout
         if (!content && !stated) return null;
 
         foreach (var item in items) Text(plan, item, rows, columns, left, spill, boxes);
-        foreach (var item in items) Borders(plan, item, boxes);
+        foreach (var item in items) Borders(plan, item, rows, columns, boxes);
         if (setup.Headings) Headings(g, rows, columns, top, left, boxes);
         return (width, height);
     }
@@ -716,7 +716,7 @@ internal sealed class XlsxLayout
         }
     }
 
-    private void Borders(Plan plan, Item item, List<LayoutBox> boxes)
+    private void Borders(Plan plan, Item item, List<int> rows, List<int> columns, List<LayoutBox> boxes)
     {
         var border = Border(item.Cell);
         if (border is null) return;
@@ -731,8 +731,9 @@ internal sealed class XlsxLayout
             rightEdge = CellAt(plan, m.FirstRow, m.LastColumn) is { } r ? Border(r)?.Right : null;
             bottomEdge = CellAt(plan, m.LastRow, m.FirstColumn) is { } b ? Border(b)?.Bottom : null;
         }
-        if (leftEdge is not null && CellAt(plan, row, column - 1) is { } l && Border(l)?.Right is not null) leftEdge = null;
-        if (topEdge is not null && CellAt(plan, row - 1, column) is { } t && Border(t)?.Bottom is not null) topEdge = null;
+        // A neighbour only hides the shared edge when it is printed right beside this cell on the same page.
+        if (leftEdge is not null && item.Column > 0 && columns[item.Column - 1] == column - 1 && CellAt(plan, row, column - 1) is { } l && Border(l)?.Right is not null) leftEdge = null;
+        if (topEdge is not null && item.Row > 0 && rows[item.Row - 1] == row - 1 && CellAt(plan, row - 1, column) is { } t && Border(t)?.Bottom is not null) topEdge = null;
         if (topEdge is not null) Edge(boxes, true, item.Y, item.X, right, topEdge);
         if (leftEdge is not null) Edge(boxes, false, item.X, item.Y, bottom, leftEdge);
         if (rightEdge is not null) Edge(boxes, false, right, item.Y, bottom, rightEdge);
