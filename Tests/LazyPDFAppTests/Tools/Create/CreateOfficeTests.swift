@@ -298,7 +298,7 @@ final class CreateOfficeTests: XCTestCase {
         XCTAssertNil(FileKinds.officeApp(URL(fileURLWithPath: "/a/old.xls")))
         XCTAssertTrue(FileKinds.isOldOffice(URL(fileURLWithPath: "/a/old.xls")))
         XCTAssertFalse(FileKinds.isOldOffice(URL(fileURLWithPath: "/a/new.xlsx")))
-        XCTAssertEqual(FileKinds.officeExtensions, ["docx", "pptx", "xlsx"])
+        XCTAssertEqual(FileKinds.officeExtensions, ["doc", "docx", "ppt", "pptx", "xls", "xlsx"])
     }
 
     func test_aFileThatIsNotAWordDocumentIsAProblem() async throws {

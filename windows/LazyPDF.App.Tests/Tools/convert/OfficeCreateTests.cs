@@ -268,7 +268,7 @@ public sealed class OfficeCreateTests
         Assert.Null(FileKinds.OfficeAppOf(@"C:\old.xls"));
         Assert.True(FileKinds.IsOldOffice(@"C:\old.xls"));
         Assert.False(FileKinds.IsOldOffice(@"C:\new.xlsx"));
-        Assert.Equal("Office files|*.docx;*.xlsx;*.pptx", FileKinds.OfficeFilter("Office files"));
+        Assert.Equal("Office files|*.docx;*.xlsx;*.pptx;*.doc;*.xls;*.ppt", FileKinds.OfficeFilter("Office files"));
     }
 
     [Fact]

@@ -28,8 +28,8 @@ internal static class FileKinds
     /// <summary>The binary formats before Office 2007, which cannot be read and must be saved in the new ones first.</summary>
     public static bool IsOldOffice(string path) => OldOfficeExtensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>The filter of the dialog that picks a file for the Create tool.</summary>
-    public static string OfficeFilter(string label) => $"{label}|{Patterns(OfficeExtensions.Keys.ToArray())}";
+    /// <summary>The filter of the dialog that picks a file for the Create tool; it lists the old formats too, so choosing one shows the "save it as" message.</summary>
+    public static string OfficeFilter(string label) => $"{label}|{Patterns(OfficeExtensions.Keys.Concat(OldOfficeExtensions).ToArray())}";
 
     /// <summary>The filter of the open dialog.</summary>
     public static string OpenFilter(string pdf, string pictures, string text, string all) =>
