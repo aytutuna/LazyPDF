@@ -6,6 +6,10 @@ internal static class ExportPdf
 {
     private const double A4Width = 595.276, A4Height = 841.89;
     private const double LetterWidth = 612, LetterHeight = 792;
+    private const double A3Width = 841.89, A3Height = 1190.551;
+    private const double A5Width = 419.528, A5Height = 595.276;
+    private const double LegalHeight = 1008;
+    private const double MinSide = 3, MaxSide = 14400;
 
     // A file of a catalog and an empty tree, with a proper table so that opening it needs no repair.
     public static PdfDocument NewDocument()
@@ -18,11 +22,21 @@ internal static class ExportPdf
         return PdfDocument.Open(Encoding.Latin1.GetBytes(head + catalog + tree + end));
     }
 
-    /// <summary>A4 or Letter in portrait, turned when landscape. <see cref="PdfPaper.Picture"/> reads as A4.</summary>
+    /// <summary>The paper in portrait, turned when landscape. <see cref="PdfPaper.Picture"/> reads as A4.</summary>
     public static (double Width, double Height) Paper(PdfPageSetup setup, bool landscape)
     {
-        var (w, h) = setup.Paper == PdfPaper.Letter ? (LetterWidth, LetterHeight) : (A4Width, A4Height);
+        var (w, h) = setup.Paper switch
+        {
+            PdfPaper.Letter => (LetterWidth, LetterHeight),
+            PdfPaper.A3 => (A3Width, A3Height),
+            PdfPaper.A5 => (A5Width, A5Height),
+            PdfPaper.Legal => (LetterWidth, LegalHeight),
+            PdfPaper.Custom => (Side(setup.CustomWidth), Side(setup.CustomHeight)),
+            _ => (A4Width, A4Height),
+        };
         landscape = setup.Orientation switch { PdfOrientation.Portrait => false, PdfOrientation.Landscape => true, _ => landscape };
         return landscape ? (h, w) : (w, h);
     }
+
+    private static double Side(double value) => double.IsNaN(value) ? MinSide : Math.Clamp(value, MinSide, MaxSide);
 }

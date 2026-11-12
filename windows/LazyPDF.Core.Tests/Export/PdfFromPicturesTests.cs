@@ -62,6 +62,18 @@ public class PdfFromPicturesTests
         Assert.Equal(306, (images[0].Bounds.Left + images[0].Bounds.Right) / 2, 6);
     }
 
+    [Theory]
+    [InlineData(200, 300, 200, 300)]
+    [InlineData(1, 99999, 3, 14400)]
+    [InlineData(double.NaN, 50, 3, 50)]
+    public void CustomPaperIsClamped(double width, double height, double expectedW, double expectedH)
+    {
+        var setup = new PdfPageSetup(PdfPaper.Custom, PdfOrientation.Portrait, 0, width, height);
+        var (document, _) = Reopen(PdfFromPictures.Create([ExportFakeCodec.Picture(2, 2)], Codec, setup));
+        var page = document.Pages[0].MediaBox;
+        Assert.Equal((expectedW, expectedH), (page.Width, page.Height));
+    }
+
     [Fact]
     public void FitToPictureSizesThePageToThePictureAndMargin()
     {

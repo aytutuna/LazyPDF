@@ -5,6 +5,11 @@ public enum PdfPaper
 {
     A4,
     Letter,
+    A3,
+    A5,
+    Legal,
+    /// <summary>The <see cref="PdfPageSetup.CustomWidth"/> by <see cref="PdfPageSetup.CustomHeight"/> points, each clamped to 3..14400.</summary>
+    Custom,
     Picture,
 }
 
@@ -17,7 +22,7 @@ public enum PdfOrientation
 }
 
 /// <summary>Page size, orientation and margin (points) of a PDF made from pictures or text.</summary>
-public sealed record PdfPageSetup(PdfPaper Paper = PdfPaper.A4, PdfOrientation Orientation = PdfOrientation.Auto, double Margin = 36);
+public sealed record PdfPageSetup(PdfPaper Paper = PdfPaper.A4, PdfOrientation Orientation = PdfOrientation.Auto, double Margin = 36, double CustomWidth = 595.276, double CustomHeight = 841.89);
 
 /// <summary>A made PDF: its bytes, page count and the files in the list that could not be read (by index) and how many frames were too big to decode and left out.</summary>
 public sealed record PicturesPdf(byte[] Bytes, int Pages, IReadOnlyList<int> Unreadable, int SkippedFrames = 0);

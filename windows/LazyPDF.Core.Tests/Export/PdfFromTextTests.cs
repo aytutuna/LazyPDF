@@ -89,6 +89,24 @@ public class PdfFromTextTests
         Assert.Equal((792, 612), (document.Pages[0].MediaBox.Width, document.Pages[0].MediaBox.Height));
     }
 
+    [Theory]
+    [InlineData(PdfPaper.A3, 841.89, 1190.551)]
+    [InlineData(PdfPaper.A5, 419.528, 595.276)]
+    [InlineData(PdfPaper.Legal, 612, 1008)]
+    public void NamedPapersSetThePage(PdfPaper paper, double width, double height)
+    {
+        using var document = PdfDocument.Open(PdfFromText.Create("x", setup: new PdfPageSetup(paper)).Bytes);
+        Assert.Equal((width, height), (document.Pages[0].MediaBox.Width, document.Pages[0].MediaBox.Height));
+    }
+
+    [Fact]
+    public void CustomPaperTurnsWhenLandscape()
+    {
+        var setup = new PdfPageSetup(PdfPaper.Custom, PdfOrientation.Landscape, 1, 200, 300);
+        using var document = PdfDocument.Open(PdfFromText.Create("x", setup: setup).Bytes);
+        Assert.Equal((300, 200), (document.Pages[0].MediaBox.Width, document.Pages[0].MediaBox.Height));
+    }
+
     [Fact]
     public void TurkishTextIsEmbeddedAndReadsBack()
     {
