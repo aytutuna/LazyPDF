@@ -165,6 +165,16 @@ final class TextSearchTests: TextTestCase {
         XCTAssertTrue(hits.isEmpty)
     }
 
+    func test_aTimedOutPageIsReported() throws {
+        let page = try text(line(100, 700, String(repeating: "a", count: 40) + "!"))
+        let timeouts = SearchTimeouts()
+        XCTAssertTrue(try TextSearch.find(page, "^(a+)+$", TextSearchOptions(regex: true), timeouts: timeouts).isEmpty)
+        XCTAssertEqual(timeouts.pages, [0])
+        let quiet = SearchTimeouts()
+        XCTAssertEqual(try TextSearch.find(page, "a+!", TextSearchOptions(regex: true), timeouts: quiet).count, 1)
+        XCTAssertTrue(quiet.pages.isEmpty)
+    }
+
     private func threePages() throws -> PdfDocument {
         let pdf = TestPdf()
         pdf.obj(1, "<</Type /Catalog /Pages 2 0 R>>")
