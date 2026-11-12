@@ -25,7 +25,9 @@ public final class UrlSessionTransport: SignatureTransport {
         func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                         newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
             redirect = request.url?.absoluteString
+            status = response.statusCode
             completionHandler(nil)
+            task.cancel()
         }
 
         func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
