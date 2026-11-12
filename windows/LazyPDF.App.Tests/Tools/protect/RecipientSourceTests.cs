@@ -43,10 +43,10 @@ public sealed class RecipientSourceTests
     }
 
     [Fact]
-    public void ACertificateWithoutAnRsaKeyIsRefused()
+    public void ACertificateWithAnUnsupportedCurveIsRefused()
     {
         using var dir = new TempDir();
-        using var ec = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        using var ec = ECDsa.Create(ECCurve.NamedCurves.nistP521);
         var request = new CertificateRequest("CN=Curve", ec, HashAlgorithmName.SHA256);
         string file = dir.File("ec.cer", request.CreateSelfSigned(DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddYears(1)).RawData);
 
