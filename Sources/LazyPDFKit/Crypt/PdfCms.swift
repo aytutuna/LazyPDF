@@ -4,8 +4,8 @@ import Foundation
 // public-key handler needs (RFC 5652 6): an EnvelopedData of key transport recipients (RSA PKCS#1 v1.5 or
 // RSAES-OAEP) and an AES-CBC, 3DES-CBC or RC2-CBC content, read over Der.swift (BER included), and written for
 // AES-256 and PKCS#1 v1.5. The RSA step, which needs the system, is left to PdfSecurityPublicKey.swift.
-// Not read: key agreement, key encryption key and password recipients, which are skipped like an entry for
-// someone else.
+// Key agreement recipients are in PdfCmsAgreement.swift. Not read: key encryption key and password recipients,
+// which are skipped like an entry for someone else.
 
 /// One RecipientInfo of key transport type.
 struct PdfCmsRecipient {
@@ -29,6 +29,7 @@ struct PdfEnvelopedData {
     var encryptedContent: [UInt8]
     /// For RC2, the effective key length in bits that its parameters give.
     var rc2Bits = 0
+    var agreements: [PdfCmsAgreement] = []
 }
 
 /// What names a certificate in a RecipientInfo.
@@ -76,7 +77,8 @@ enum PdfCms {
               let parameters = cipherParameters(contentAlgorithm, algorithm[1], der),
               let encrypted = der.octets(of: content[2]) else { return nil }
         return PdfEnvelopedData(recipients: infos.compactMap { recipient($0, der) }, contentAlgorithm: contentAlgorithm,
-                                iv: parameters.iv, encryptedContent: encrypted, rc2Bits: parameters.rc2Bits)
+                                iv: parameters.iv, encryptedContent: encrypted, rc2Bits: parameters.rc2Bits,
+                                agreements: infos.compactMap { agreement($0, der) })
     }
 
     // An IV as an OCTET STRING; for RC2 (RFC 3370 5.2) a SEQUENCE of the version of its effective key length and the IV.
