@@ -103,6 +103,39 @@ public class OfficePictureTests
         Assert.Contains(document.Skipped, s => s is { Kind: "picture", Count: 5 });
     }
 
+    // Every file reads as the same 3000 by 3000 frame, one shared buffer.
+    private sealed class BigCodec : IImageCodec
+    {
+        private readonly PdfRgbaImage frame = new(3000, 3000, new byte[3000 * 3000 * 4]);
+        public int Reads { get; private set; }
+        public PdfRgbaImage? Decode(byte[] data, string codec) => null;
+        public IReadOnlyList<PdfRgbaImage>? DecodeFile(byte[] file) { Reads++; return [frame]; }
+        public byte[] EncodeJpeg(PdfRgbaImage image, int quality) => [];
+    }
+
+    [Fact]
+    public void PicturesPastThePixelBudgetAreSkippedUnread()
+    {
+        const int count = 20;
+        var parts = new Dictionary<string, StringBuilder>();
+        var body = new StringBuilder();
+        var relationships = new StringBuilder();
+        for (int i = 1; i <= count; i++)
+        {
+            body.Append($"<w:p>{Drawing().Replace("rIdI1", "rIdI" + i)}</w:p>");
+            relationships.Append(ImageRelationship.Replace("rIdI1", "rIdI" + i).Replace("a.bin", $"a{i}.bin"));
+            parts[$"bytes word/media/a{i}.bin"] = new($"50{i:x2}");
+        }
+        parts["document"] = body;
+        parts["relationships"] = relationships;
+        var codec = new BigCodec();
+        var pdf = OfficeConverter.FromWord(DocxSpec.Package(parts), OfficeLayoutSpec.Fonts(), codec);
+        long each = 3000L * 3000;
+        int read = (int)(OfficePdfWriter.MaxPicturePixels / each) + 1;
+        Assert.Equal(read, codec.Reads);
+        Assert.Equal([new SkippedFeature("picture", count - read)], pdf.Skipped);
+    }
+
     private static string Band(string root, string text) =>
         $"<w:{root} xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:p><w:r><w:t>{text}</w:t></w:r></w:p></w:{root}>";
 

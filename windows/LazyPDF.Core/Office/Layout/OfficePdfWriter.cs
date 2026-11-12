@@ -5,6 +5,9 @@ namespace LazyPDF.Core.Office;
 /// <summary>Lays a document out and writes it as a PDF with embedded subset fonts, so the text stays selectable.</summary>
 internal static class OfficePdfWriter
 {
+    /// <summary>Pixels of all pictures in one document that are read; later pictures are skipped.</summary>
+    internal const long MaxPicturePixels = 1L << 27;
+
     /// <param name="contents">When given, receives the content stream of every page as written.</param>
     /// <param name="images">Reads pictures that are not JPEG; without it only JPEG pictures are drawn.</param>
     /// <exception cref="InvalidOperationException">No font can draw the text; the message is <see cref="ExportText.NoFont"/>.</exception>
@@ -26,12 +29,19 @@ internal static class OfficePdfWriter
         }
         var pictures = new Dictionary<byte[], PdfImage?>(ReferenceEqualityComparer.Instance);
         int unreadable = 0;
+        long pixels = 0;
         foreach (var page in layout.Pages)
         {
             foreach (var box in page.Boxes.OfType<PlacedImage>())
             {
                 cancellation.ThrowIfCancellationRequested();
-                if (!pictures.TryGetValue(box.Source.Data, out var image)) pictures[box.Source.Data] = image = PdfImageWriter.AddPicture(pdf, box.Source.Data, images);
+                if (!pictures.TryGetValue(box.Source.Data, out var image))
+                {
+                    // Pictures come from an untrusted document: past the budget the rest are counted as unreadable, undecoded.
+                    image = pixels > MaxPicturePixels ? null : PdfImageWriter.AddPicture(pdf, box.Source.Data, images);
+                    if (image is not null) pixels += (long)image.Width * image.Height;
+                    pictures[box.Source.Data] = image;
+                }
                 if (image is null) unreadable++;
             }
         }

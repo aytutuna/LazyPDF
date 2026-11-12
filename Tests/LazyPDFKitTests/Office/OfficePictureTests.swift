@@ -91,6 +91,32 @@ final class OfficePictureTests: XCTestCase {
         XCTAssertTrue(document.skipped.contains { $0.kind == "picture" && $0.count == 5 })
     }
 
+    // Every file reads as the same 3000 by 3000 frame, one shared buffer.
+    private final class BigCodec: ImageCodec {
+        let frame = PdfRgbaImage(3000, 3000, [UInt8](repeating: 0, count: 3000 * 3000 * 4))
+        var reads = 0
+        func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+        func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? { reads += 1; return [frame] }
+        func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [] }
+    }
+
+    func test_picturesPastThePixelBudgetAreSkippedUnread() throws {
+        let count = 20
+        var body = "", relationships = ""
+        var parts: [(key: String, text: String)] = []
+        for i in 1...count {
+            body += "<w:p>\(Self.drawing().replacingOccurrences(of: "rIdI1", with: "rIdI\(i)"))</w:p>"
+            relationships += Self.imageRelationship.replacingOccurrences(of: "rIdI1", with: "rIdI\(i)").replacingOccurrences(of: "a.bin", with: "a\(i).bin")
+            parts.append((key: "bytes word/media/a\(i).bin", text: "50" + (i < 16 ? "0" : "") + String(i, radix: 16)))
+        }
+        parts += [(key: "document", text: body), (key: "relationships", text: relationships)]
+        let codec = BigCodec()
+        let made = try OfficeConverter.fromWord(DocxSpec.package(parts), OfficeLayoutSpec.fonts(), codec)
+        let read = OfficePdfWriter.maxPicturePixels / (3000 * 3000) + 1
+        XCTAssertEqual(codec.reads, read)
+        XCTAssertEqual(made.skipped, [SkippedFeature("picture", count - read)])
+    }
+
     private static func band(_ root: String, _ text: String) -> String {
         "<w:\(root) xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"><w:p><w:r><w:t>\(text)</w:t></w:r></w:p></w:\(root)>"
     }

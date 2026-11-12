@@ -4,6 +4,9 @@ import Foundation
 // embedded subset fonts, so the text stays selectable.
 
 enum OfficePdfWriter {
+    /// Pixels of all pictures in one document that are read; later pictures are skipped.
+    static let maxPicturePixels = 1 << 27
+
     private struct FontKey: Hashable {
         let family: String
         let style: Int
@@ -32,11 +35,18 @@ enum OfficePdfWriter {
         }
         var pictures: [ObjectIdentifier: PdfImage?] = [:]
         var unreadable = 0
+        var pixels = 0
         for page in layout.pages {
             for case .image(let box) in page.boxes {
                 try Task.checkCancellation()
                 let id = ObjectIdentifier(box.source.file)
-                if pictures[id] == nil { pictures[id] = .some(try PdfImageWriter.addPicture(pdf, box.source.file.bytes, images)) }
+                if pictures[id] == nil {
+                    // Pictures come from an untrusted document: past the budget the rest are counted as unreadable, undecoded.
+                    var image: PdfImage?
+                    if pixels <= maxPicturePixels { image = try PdfImageWriter.addPicture(pdf, box.source.file.bytes, images) }
+                    if let image { pixels += image.width * image.height }
+                    pictures[id] = .some(image)
+                }
                 if pictures[id]! == nil { unreadable += 1 }
             }
         }
