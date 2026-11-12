@@ -387,6 +387,46 @@ public sealed class BookmarksPanelTests
     });
 
     [Fact]
+    public Task ACancelledTitleIsNotWrittenWhenTheNoticeIsAnswered() => Sta.Run(() =>
+    {
+        var host = new RecordingHost();
+        var (tab, panel, tree, window) = Edited(StampsPanelTests.Signed(certified: true), host, "One", "Two");
+        using var _ = tab;
+        var node = (BookmarkNode)tree.Items[0]!;
+        node.IsSelected = true;
+        Click(panel, "RenameButton");
+        node.EditText = "First";
+        Assert.False(panel.HandIn());
+
+        node.IsEditing = false;
+        host.Actions.Last()!.Run();
+
+        Assert.Equal(["One", "Two"], Titles(tab));
+        window.Close();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheTitleAsItStandsWhenTheNoticeIsAnsweredIsWritten() => Sta.Run(() =>
+    {
+        var host = new RecordingHost();
+        var (tab, panel, tree, window) = Edited(StampsPanelTests.Signed(certified: true), host, "One", "Two");
+        using var _ = tab;
+        var node = (BookmarkNode)tree.Items[0]!;
+        node.IsSelected = true;
+        Click(panel, "RenameButton");
+        node.EditText = "First";
+        Assert.False(panel.HandIn());
+
+        node.EditText = "Firstly";
+        host.Actions.Last()!.Run();
+
+        Assert.Equal(["Firstly", "Two"], Titles(tab));
+        window.Close();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task RightClickSelectsTheEntryUnderThePointer() => Sta.Run(() =>
     {
         var (tab, panel, tree, window) = Edited("One", "Two");

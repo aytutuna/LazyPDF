@@ -80,8 +80,6 @@ public partial class BookmarksSidePanel : ToolPanel
         if (!ReferenceEquals(_for, Tab))
         {
             _opened.Clear();
-            _held = null;
-            _asking = false;
             _for = Tab;
         }
         Tab!.Changed += Tab_Changed;
@@ -91,6 +89,7 @@ public partial class BookmarksSidePanel : ToolPanel
     protected override void OnDetach()
     {
         Tab!.Changed -= Tab_Changed;
+        _asking = false;
         Tree.ItemsSource = null;
     }
 
@@ -98,6 +97,7 @@ public partial class BookmarksSidePanel : ToolPanel
 
     private void Build()
     {
+        _asking = false;
         var items = Outline.Read(Tab!.Document).Items;
         Tree.ItemsSource = items.Select((item, i) => new BookmarkNode(item, i.ToString(), _opened)).ToList();
         if (_held is var (heldTab, path, text) && ReferenceEquals(heldTab, Tab) && NodeAt(path) is { } held)
@@ -295,21 +295,23 @@ public partial class BookmarksSidePanel : ToolPanel
             return false;
         }
         _held = null;
-        if (MarkWork.Cautioned(tab, host, () => RenameTo(tab, host, node, title)))
+        if (MarkWork.Cautioned(tab, host, () => RenameTo(tab, host, node)))
         {
             _asking = true;
             return false;
         }
-        node.IsEditing = false;
-        RenameTo(tab, host, node, title);
+        RenameTo(tab, host, node);
         return true;
     }
 
-    private void RenameTo(DocumentTab tab, IToolHost host, BookmarkNode node, string title)
+    // Takes the title as it stands now: a cancelled edit writes nothing, and one changed while a notice was up writes the new words.
+    private void RenameTo(DocumentTab tab, IToolHost host, BookmarkNode node)
     {
         _asking = false;
+        if (!node.IsEditing) return;
+        string title = node.EditText.Trim();
         node.IsEditing = false;
-        if (!Still(tab, node)) return;
+        if (title.Length == 0 || title == node.Title || !Still(tab, node)) return;
         var outline = ReadForEdit(tab);
         if (Find(outline, node.Path) is not { } item) return;
         item.Title = title;
