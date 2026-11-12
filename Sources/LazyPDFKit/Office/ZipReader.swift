@@ -63,7 +63,7 @@ final class ZipReader {
     }
 
     // OrdinalIgnoreCase upper-cases each UTF-16 unit on its own; a scalar whose upper case is several scalars stays as it is.
-    private static func key(_ name: String) -> String {
+    static func key(_ name: String) -> String {
         var key = String.UnicodeScalarView()
         for s in name.unicodeScalars {
             let upper = s.properties.uppercaseMapping.unicodeScalars
