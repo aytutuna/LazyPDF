@@ -155,7 +155,7 @@ public enum SignatureArt {
     public static func uprightFile(_ file: [UInt8], _ codec: ImageCodec) -> [UInt8] {
         guard file.count > 2, file[0] == 0xFF, file[1] == 0xD8 else { return file }
         let orientation = exifOrientation(file)
-        guard (2...8).contains(orientation), let frame = codec.decodeFile(file)?.first else { return file }
+        guard (2...8).contains(orientation), let frame = codec.decodeFile(file)?.first(where: { !$0.tooBig }) else { return file }
         let made = codec.encodeJpeg(upright(frame, orientation), 92)
         return made.isEmpty ? file : made
     }
