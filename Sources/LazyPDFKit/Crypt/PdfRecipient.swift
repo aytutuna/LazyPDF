@@ -60,16 +60,16 @@ public struct PdfRecipient {
               let parsed = X509Certificate([UInt8](SecCertificateCopyData(certificate.certificate) as Data))
         else { return false }
         let usage = (try? parsed.keyUsage()) ?? nil
-        switch (attributes[kSecAttrKeyType] as? String) ?? "" {
-        case kSecAttrKeyTypeRSA as String:
+        let type = (attributes[kSecAttrKeyType] as? String) ?? ""
+        if type == kSecAttrKeyTypeRSA as String {
             guard let usage else { return true }
             return !usage.isDisjoint(with: [.keyEncipherment, .dataEncipherment])
-        case kSecAttrKeyTypeECSECPrimeRandom as String:
+        }
+        if type == kSecAttrKeyTypeECSECPrimeRandom as String {
             guard [256, 384].contains(attributes[kSecAttrKeySizeInBits] as? Int) else { return false }
             return usage?.contains(.keyAgreement) ?? true
-        default:
-            return false
         }
+        return false
     }
 }
 #endif
