@@ -75,7 +75,7 @@ final class MacShell {
 
     func showWindow() {
         window?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        NSApplication.shared.activate(ignoringOtherApps: true)
     }
 
     // The sheets of the Create and Batch tiles hang from the window, as a dialog does on Windows.
@@ -197,7 +197,7 @@ final class MacShell {
         // A job that is still running answers with a notice and no question; quitting waits for the person to try again.
         if vm.closeQuestion == nil { return .terminateCancel }
         terminateAnswer = true
-        NSApp.activate(ignoringOtherApps: true)
+        NSApplication.shared.activate(ignoringOtherApps: true)
         return .terminateLater
     }
 
