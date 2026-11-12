@@ -73,6 +73,7 @@ public final class ExportModel: ToolPanelModel {
         guard let tab, let host else { return }
         let name = L10n.t("Export")
         await ChangeGate.guardedAsync(host, name) { [self] in
+            await tab.whenDrawn()
             let options = options
             let source = Exporter.source(tab, host, codec: codec)
             let makeRenderer = renderers

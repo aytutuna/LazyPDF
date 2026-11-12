@@ -53,9 +53,11 @@ extension AccessibilityModel {
             figureNoPicture = true
             return
         }
-        let renderer = tab.renderer
         let lock = treeLock
         Task { [self] in
+            await tab.whenDrawn()
+            if ticket != pictureTicket { return }
+            let renderer = tab.renderer
             // The copy is read by one picture at a time.
             let picture = await Task.detached { FigurePictures.picture(copy, row.element, row.page, renderer, lock) }.value
             if ticket != pictureTicket { return }

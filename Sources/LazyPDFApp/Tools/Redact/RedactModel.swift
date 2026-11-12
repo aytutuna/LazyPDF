@@ -288,6 +288,7 @@ public final class RedactModel: ToolPanelModel {
     private func apply() async {
         if working { return }
         guard let tab, let host, let state else { return }
+        await tab.whenDrawn()
         let items = state.marks.items.map(\.mark)
         let covers = RedactCover.all
         let settings = RedactSettings(cover: covers[min(max(coverIndex, 0), covers.count - 1)], overlayText: overlayText, flattenAll: flattenAll)

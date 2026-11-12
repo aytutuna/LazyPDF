@@ -228,6 +228,7 @@ extension FormsModel {
 
     public func findFields() async {
         guard handIn(), let tab, let host else { return }
+        await tab.whenDrawn()
         let bytes = tab.session.current
         let password = tab.password
         let certificate = tab.certificate.flatMap { host.verifyCertificate($0) }

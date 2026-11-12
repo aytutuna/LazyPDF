@@ -84,6 +84,25 @@ final class BackgroundLoadTests: XCTestCase {
         XCTAssertEqual(tab.drawn, 0)
     }
 
+    func test_whenDrawnWaitsForTheLoadOfTheLatestEdit() async throws {
+        let (tab, renderer) = try open()
+        try Pdfs.retitle(tab.session, "One")
+        try tab.commit("One")
+        await settle { renderer.waiting == 1 }
+
+        var waited = false
+        let waiter = Task { @MainActor in
+            await tab.whenDrawn()
+            waited = true
+        }
+        await Task.yield()
+        XCTAssertFalse(waited)
+        renderer.finish()
+        await waiter.value
+
+        XCTAssertEqual(tab.drawn, 1)
+    }
+
     func test_aRendererThatLoadsInPlaceReportsAtOnce() async throws {
         let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text()), renderer: FakeRenderer(), url: nil, title: "a.pdf")
         try Pdfs.retitle(tab.session, "One")

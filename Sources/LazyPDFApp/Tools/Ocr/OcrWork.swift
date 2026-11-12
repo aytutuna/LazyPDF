@@ -12,6 +12,7 @@ public enum OcrWork {
     /// document changed.
     public static func makeSearchable(_ tab: DocumentTab, _ host: ToolHost, _ recognizer: TextRecognizer,
                                       _ options: OcrOptions) async throws -> OcrResult? {
+        await tab.whenDrawn()
         let open = OpenCopy.of(tab, host)
         let revision = tab.revision
         let dropsLayers = options.existing == .replace && hasLayer(tab.document, options.pages)

@@ -207,6 +207,11 @@ public final class DocumentTab: StripTab {
         if background { startLoad() } else { drawn += 1 }
     }
 
+    /// Returns once the renderer draws the current bytes. A job that pairs the renderer with `session.current` waits here first.
+    public func whenDrawn() async {
+        await loading?.value
+    }
+
     // Loads follow one another, and one that a newer edit or the closing of the tab has outdated says nothing.
     private func startLoad() {
         let revision = revision
