@@ -19,7 +19,7 @@ public partial class CreatePanel : ToolPanel
         public string Name => System.IO.Path.GetFileName(Path);
     }
 
-    private const int ClipboardIndex = 3;
+    private const int ClipboardIndex = 4;
 
     private readonly IImageCodec _codec = new WicImageCodec();
     private readonly IFontSource _fonts = new SystemFontSource();
@@ -33,6 +33,7 @@ public partial class CreatePanel : ToolPanel
     private ClipboardKind _clipboard;
     private string? _fileProblem;
     private string? _longText;
+    private string? _webPage;
     private Window? _owner;
 
     public CreatePanel() : this(null)
@@ -137,6 +138,7 @@ public partial class CreatePanel : ToolPanel
         (int)CreateSource.Blank => TryBlankPages(out _) && CustomFits(),
         (int)CreateSource.Pictures => _pictures.Count > 0 && CustomFits(),
         (int)CreateSource.Text => (_longText is not null || TypedText.Text.Trim().Length > 0) && CustomFits(),
+        (int)CreateSource.WebPage => _webPage is not null && CustomFits(),
         _ => _clipboard != ClipboardKind.Nothing && CustomFits(),
     };
 
@@ -166,6 +168,8 @@ public partial class CreatePanel : ToolPanel
         BlankOptions.Visibility = When(Source == (int)CreateSource.Blank);
         PictureOptions.Visibility = When(Source == (int)CreateSource.Pictures);
         TextOptions.Visibility = When(Source == (int)CreateSource.Text);
+        WebPageOptions.Visibility = When(Source == (int)CreateSource.WebPage);
+        WebPageName.Text = _webPage is null ? "" : System.IO.Path.GetFileName(_webPage);
         TypedText.Visibility = When(_longText is null);
         LongTextRow.Visibility = When(_longText is not null);
         ClipboardOptions.Visibility = When(Source == ClipboardIndex);
@@ -225,6 +229,8 @@ public partial class CreatePanel : ToolPanel
                 return new(CreateSource.Pictures, Setup(pictures: true), PicturesTitle(), Files: [.. _pictures.Select(p => p.Path)]);
             case (int)CreateSource.Text:
                 return new(CreateSource.Text, setup, Loc.T("Text.pdf"), Text: _longText ?? TypedText.Text, FontSize: Tagged(FontSizeBox), Family: Family);
+            case (int)CreateSource.WebPage:
+                return new(CreateSource.WebPage, setup, System.IO.Path.GetFileNameWithoutExtension(_webPage!) + ".pdf", Files: [_webPage!]);
         }
         var content = ClipboardContent.Read();
         if (content.Text is { } text) return new(CreateSource.Text, setup, Loc.T("Clipboard.pdf"), Text: text, FontSize: Tagged(FontSizeBox), Family: Family);
@@ -304,6 +310,14 @@ public partial class CreatePanel : ToolPanel
         Refresh();
     }
 
+    private void ChooseWebPage_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog { Filter = Loc.T("Web pages") + "|" + string.Join(';', WebPageRules.Extensions.Select(x => "*" + x)) };
+        if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
+        _webPage = dialog.FileName;
+        Refresh();
+    }
+
     private void Panel_DragOver(object sender, DragEventArgs e)
     {
         if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
@@ -315,6 +329,13 @@ public partial class CreatePanel : ToolPanel
     {
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
         e.Handled = true;
+        if (paths.FirstOrDefault(WebPageRules.IsWebPage) is { } page)
+        {
+            _webPage = page;
+            if (Source != (int)CreateSource.WebPage) SourceBox.SelectedIndex = (int)CreateSource.WebPage;
+            Refresh();
+            return;
+        }
         var pictures = paths.Where(p => PdfMaker.PictureExtensions.Contains(System.IO.Path.GetExtension(p), StringComparer.OrdinalIgnoreCase)).ToList();
         if (pictures.Count == 0)
         {

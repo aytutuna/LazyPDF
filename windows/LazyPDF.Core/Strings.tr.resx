@@ -1132,6 +1132,9 @@
   <data name="Choose a value for {0} in the panel." xml:space="preserve">
     <value>Panelde {0} için bir değer seçin.</value>
   </data>
+  <data name="Choose a web page file" xml:space="preserve">
+    <value>Web sayfası dosyası seç</value>
+  </data>
   <data name="Choose an existing folder to watch." xml:space="preserve">
     <value>İzlenecek, var olan bir klasör seçin.</value>
   </data>
@@ -2982,6 +2985,9 @@
   </data>
   <data name="Lazy PDF could not finish what it was doing. Your changes are still open. Use Save as to keep a copy, then close and reopen the app." xml:space="preserve">
     <value>Lazy PDF yaptığı işi tamamlayamadı. Değişiklikleriniz hâlâ açık. Farklı kaydet ile bir kopya saklayın, ardından uygulamayı kapatıp yeniden açın.</value>
+  </data>
+  <data name="Lazy PDF draws web pages with the Microsoft Edge WebView2 Runtime, and this computer does not have it. Install it from Microsoft, then try again." xml:space="preserve">
+    <value>Lazy PDF web sayfalarını Microsoft Edge WebView2 Çalışma Zamanı ile çizer ve bu bilgisayarda yüklü değil. Microsoft'tan yükleyip yeniden deneyin.</value>
   </data>
   <data name="Lazy PDF will ask before opening links again." xml:space="preserve">
     <value>Lazy PDF bağlantıları açmadan önce yeniden soracak.</value>
@@ -5260,6 +5266,9 @@
   <data name="Script not run" xml:space="preserve">
     <value>Komut dosyası çalışmadı</value>
   </data>
+  <data name="Scripts and anything from the internet are left out. Pictures and styles beside the file are kept." xml:space="preserve">
+    <value>Betikler ve internetten gelen her şey dışarıda bırakılır. Dosyanın yanındaki resimler ve stiller korunur.</value>
+  </data>
   <data name="Scroll continuously" xml:space="preserve">
     <value>Sürekli kaydır</value>
   </data>
@@ -6829,6 +6838,9 @@
   <data name="The value saved when this button is chosen." xml:space="preserve">
     <value>Bu düğme seçildiğinde kaydedilen değer.</value>
   </data>
+  <data name="The web page could not be loaded or drawn. Close any program that has it open and try again." xml:space="preserve">
+    <value>Web sayfası yüklenemedi veya çizilemedi. Dosyayı açık tutan programları kapatıp yeniden deneyin.</value>
+  </data>
   <data name="The whole file fits in one part. Use a smaller amount." xml:space="preserve">
     <value>Dosyanın tamamı tek parçaya sığıyor. Daha küçük bir değer girin.</value>
   </data>
@@ -7564,6 +7576,18 @@
   <data name="Web page (.html)" xml:space="preserve">
     <value>Web sayfası (.html)</value>
   </data>
+  <data name="Web page cannot be drawn" xml:space="preserve">
+    <value>Web sayfası çizilemedi</value>
+  </data>
+  <data name="Web page file (.html or .htm)" xml:space="preserve">
+    <value>Web sayfası dosyası (.html veya .htm)</value>
+  </data>
+  <data name="Web pages" xml:space="preserve">
+    <value>Web sayfaları</value>
+  </data>
+  <data name="Web pages need WebView2" xml:space="preserve">
+    <value>Web sayfaları için WebView2 gerekir</value>
+  </data>
   <data name="Website" xml:space="preserve">
     <value>Web sitesi</value>
   </data>
@@ -7686,6 +7710,9 @@
   </data>
   <data name="Windows does not let Lazy PDF read one of the pictures. Check who may open it." xml:space="preserve">
     <value>Windows, Lazy PDF'nin resimlerden birini okumasına izin vermiyor. Dosyayı kimlerin açabildiğini denetleyin.</value>
+  </data>
+  <data name="Windows does not let Lazy PDF read the web page. Check who may open it." xml:space="preserve">
+    <value>Windows, Lazy PDF'nin web sayfasını okumasına izin vermiyor. Dosyayı kimlerin açabildiğini kontrol edin.</value>
   </data>
   <data name="Windows does not let Lazy PDF read {0}. Check who may open it." xml:space="preserve">
     <value>Windows, Lazy PDF'nin {0} dosyasını okumasına izin vermiyor. Kimlerin açabildiğine bakın.</value>

@@ -7,6 +7,7 @@ public enum CreateSource
     Blank,
     Pictures,
     Text,
+    WebPage,
 }
 
 /// <param name="Files">Picture files to read, in page order.</param>
@@ -23,6 +24,13 @@ public static class PdfMaker
     public const int MostBlankPages = 500;
 
     internal static readonly string[] PictureExtensions = [".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".gif", ".heic", ".heif"];
+
+    /// <summary>A web page file, drawn by the web view on the window thread; the one source that cannot go through <see cref="Make"/>.</summary>
+    public static async Task<MadePdf> MakeWebPageAsync(CreateRequest request, CancellationToken cancel)
+    {
+        var bytes = await WebPagePdf.RenderAsync(request.Files![0], request.Setup, cancel);
+        return new MadePdf(bytes, PdfDocument.Open(bytes).Pages.Count, 0);
+    }
 
     public static MadePdf Make(CreateRequest request, IImageCodec codec, IFontSource fonts, CancellationToken cancel = default)
     {

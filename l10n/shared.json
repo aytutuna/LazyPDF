@@ -8581,5 +8581,32 @@
   },
   "Some pages were not searched": {
     "tr": "Bazı sayfalar aranmadı"
+  },
+  "Web page file (.html or .htm)": {
+    "tr": "Web sayfası dosyası (.html veya .htm)"
+  },
+  "Choose a web page file": {
+    "tr": "Web sayfası dosyası seç"
+  },
+  "Scripts and anything from the internet are left out. Pictures and styles beside the file are kept.": {
+    "tr": "Betikler ve internetten gelen her şey dışarıda bırakılır. Dosyanın yanındaki resimler ve stiller korunur."
+  },
+  "Web pages": {
+    "tr": "Web sayfaları"
+  },
+  "Web pages need WebView2": {
+    "tr": "Web sayfaları için WebView2 gerekir"
+  },
+  "Lazy PDF draws web pages with the Microsoft Edge WebView2 Runtime, and this computer does not have it. Install it from Microsoft, then try again.": {
+    "tr": "Lazy PDF web sayfalarını Microsoft Edge WebView2 Çalışma Zamanı ile çizer ve bu bilgisayarda yüklü değil. Microsoft'tan yükleyip yeniden deneyin."
+  },
+  "Web page cannot be drawn": {
+    "tr": "Web sayfası çizilemedi"
+  },
+  "The web page could not be loaded or drawn. Close any program that has it open and try again.": {
+    "tr": "Web sayfası yüklenemedi veya çizilemedi. Dosyayı açık tutan programları kapatıp yeniden deneyin."
+  },
+  "Windows does not let Lazy PDF read the web page. Check who may open it.": {
+    "tr": "Windows, Lazy PDF'nin web sayfasını okumasına izin vermiyor. Dosyayı kimlerin açabildiğini kontrol edin."
   }
 }

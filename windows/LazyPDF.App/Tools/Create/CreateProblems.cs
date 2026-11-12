@@ -6,6 +6,9 @@ internal static class CreateProblems
 {
     public static Problem Failed(Exception error, CreateSource source) => error switch
     {
+        WebViewMissingException => new(Loc.T("Web pages need WebView2"), Loc.T("Lazy PDF draws web pages with the Microsoft Edge WebView2 Runtime, and this computer does not have it. Install it from Microsoft, then try again.")),
+        IOException when source == CreateSource.WebPage => new(Loc.T("Web page cannot be drawn"), Loc.T("The web page could not be loaded or drawn. Close any program that has it open and try again.")),
+        UnauthorizedAccessException when source == CreateSource.WebPage => new(Loc.T("No access"), Loc.T("Windows does not let Lazy PDF read the web page. Check who may open it.")),
         InvalidOperationException => new(Loc.T("No font for this text"), Loc.T("No font on this computer can draw the text. Remove the letters it cannot show.")),
         ArgumentException when source == CreateSource.Pictures => new(Loc.T("No picture to use"), Loc.T("None of the pictures could be read. Pick JPEG, PNG, TIFF, BMP, GIF or HEIC files.")),
         ArgumentException => new(Loc.T("Margin is too wide"), Loc.T("The margin leaves no room on the page. Pick a smaller margin.")),

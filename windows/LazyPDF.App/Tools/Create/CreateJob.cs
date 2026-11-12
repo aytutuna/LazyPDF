@@ -12,9 +12,10 @@ public static class CreateJob
         {
             // The engine cannot be stopped part way, so a cancel stops the wait and the result is dropped.
             await host.RunBusyAsync(Loc.T("Creating"), async token =>
-                made = await Task.Run(() => PdfMaker.Make(request, codec, fonts, token), token).WaitAsync(token));
+                made = request.Source == CreateSource.WebPage ? await PdfMaker.MakeWebPageAsync(request, token)
+                    : await Task.Run(() => PdfMaker.Make(request, codec, fonts, token), token).WaitAsync(token));
         }
-        catch (Exception e) when (e is ArgumentException or InvalidOperationException or IOException or UnauthorizedAccessException)
+        catch (Exception e) when (e is WebViewMissingException or ArgumentException or InvalidOperationException or IOException or UnauthorizedAccessException)
         {
             host.ShowProblem(CreateProblems.Failed(e, request.Source));
             return;

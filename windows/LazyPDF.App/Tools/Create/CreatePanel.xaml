@@ -11,6 +11,7 @@
             <ComboBoxItem Content="{loc:T Blank pages}" />
             <ComboBoxItem Content="{loc:T Pictures}" />
             <ComboBoxItem Content="{loc:T Text}" />
+            <ComboBoxItem Content="{loc:T Web page file (.html or .htm)}" />
             <ComboBoxItem Content="{loc:T Clipboard}" />
         </ComboBox>
 
@@ -58,6 +59,14 @@
             </StackPanel>
             <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8E5;" Content="{loc:T Open a text file}" Padding="10,3,10,4" HorizontalAlignment="Left"
                     Margin="0,8,0,0" AutomationProperties.Name="{loc:T Open a text file}" Click="OpenTextFile_Click" />
+        </StackPanel>
+
+        <StackPanel x:Name="WebPageOptions" Margin="0,16,0,0" Visibility="Collapsed">
+            <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8E5;" Content="{loc:T Choose a web page file}" Padding="10,3,10,4" HorizontalAlignment="Left"
+                    AutomationProperties.Name="{loc:T Choose a web page file}" Click="ChooseWebPage_Click" />
+            <TextBlock x:Name="WebPageName" Margin="0,8,0,0" TextTrimming="CharacterEllipsis" AutomationProperties.LiveSetting="Polite" />
+            <TextBlock Style="{StaticResource ReasonText}" Margin="0,8,0,0" TextWrapping="Wrap"
+                       Text="{loc:T Scripts and anything from the internet are left out. Pictures and styles beside the file are kept.}" />
         </StackPanel>
 
         <DockPanel x:Name="ClipboardOptions" Margin="0,16,0,0" Visibility="Collapsed">

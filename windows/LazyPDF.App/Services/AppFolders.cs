@@ -15,6 +15,8 @@ internal static class AppFolders
 
     public static string Thumbnails => Path.Combine(LocalData, "Thumbnails");
 
+    public static string WebView => Path.Combine(LocalData, "WebView");
+
     /// <summary>The copies of open documents handed to Lazy Print.</summary>
     public static string PrintCopies => Path.Combine(Path.GetTempPath(), "Lazy PDF", "Print");
 
