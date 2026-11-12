@@ -51,7 +51,7 @@ public partial class MainWindow
 
     private void SaveCopy_Click(object sender, RoutedEventArgs e)
     {
-        if (_inspectorPanel?.HandIn() == false || _vm.ActiveDocument is not { } tab) return;
+        if (!HandedIn() || _vm.ActiveDocument is not { } tab) return;
         string name = Loc.T("{0} - copy", System.IO.Path.GetFileNameWithoutExtension(tab.Title));
         if (AskForPath(tab, Loc.T("Save a copy"), name) is { } path) _vm.SaveCopy(tab, path);
     }

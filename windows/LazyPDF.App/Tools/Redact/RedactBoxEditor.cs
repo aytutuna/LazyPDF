@@ -106,7 +106,7 @@ public sealed class RedactBoxEditor
 
     public void Clear()
     {
-        _settle.Stop();
+        Commit();
         _nudging = false;
         if (_layer is not null)
         {
