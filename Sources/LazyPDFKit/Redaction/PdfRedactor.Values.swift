@@ -40,13 +40,18 @@ extension PdfRedactor {
         guard let current else { return nil }
         let before = Array(current.utf16)
         var text = before
-        var limit = text.count
-        for hit in hits {
+        // Hits from different finders can overlap; each run of overlapping or touching hits is replaced once, as its union.
+        var ranges: [(start: Int, end: Int)] = []
+        for hit in hits.sorted(by: { $0.start < $1.start }) {
             let found = Array(hit.text.utf16)
-            if found.count != hit.length || hit.start < 0 || hit.start + hit.length > limit || Array(text[hit.start..<hit.start + hit.length]) != found { continue }
-            text.replaceSubrange(hit.start..<hit.start + hit.length, with: Array(replacement.utf16))
-            limit = hit.start
+            if found.count != hit.length || hit.start < 0 || hit.start + hit.length > before.count || Array(before[hit.start..<hit.start + hit.length]) != found { continue }
+            if let last = ranges.last, hit.start <= last.end {
+                ranges[ranges.count - 1].end = max(last.end, hit.start + hit.length)
+            } else {
+                ranges.append((hit.start, hit.start + hit.length))
+            }
         }
+        for range in ranges.reversed() { text.replaceSubrange(range.start..<range.end, with: Array(replacement.utf16)) }
         return text == before ? nil : String(units: text)
     }
 

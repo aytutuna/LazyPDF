@@ -30,14 +30,16 @@ public sealed partial class PdfRedactor
     private static string? Rewritten(string? current, List<RedactionValueMatch> hits, string replacement)
     {
         if (current is null) return null;
-        string text = current;
-        int limit = text.Length;
-        foreach (var hit in hits)
+        // Hits from different finders can overlap; each run of overlapping or touching hits is replaced once, as its union.
+        var ranges = new List<(int Start, int End)>();
+        foreach (var hit in hits.OrderBy(h => h.Start))
         {
-            if (hit.Text.Length != hit.Length || hit.Start < 0 || hit.Start + hit.Length > limit || string.CompareOrdinal(text, hit.Start, hit.Text, 0, hit.Length) != 0) continue;
-            text = string.Concat(text.AsSpan(0, hit.Start), replacement, text.AsSpan(hit.Start + hit.Length));
-            limit = hit.Start;
+            if (hit.Text.Length != hit.Length || hit.Start < 0 || hit.Start + hit.Length > current.Length || string.CompareOrdinal(current, hit.Start, hit.Text, 0, hit.Length) != 0) continue;
+            if (ranges.Count > 0 && hit.Start <= ranges[^1].End) ranges[^1] = (ranges[^1].Start, Math.Max(ranges[^1].End, hit.Start + hit.Length));
+            else ranges.Add((hit.Start, hit.Start + hit.Length));
         }
+        string text = current;
+        for (int i = ranges.Count - 1; i >= 0; i--) text = string.Concat(text.AsSpan(0, ranges[i].Start), replacement, text.AsSpan(ranges[i].End));
         return text == current ? null : text;
     }
 

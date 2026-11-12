@@ -35,6 +35,16 @@ final class RedactValueTests: XCTestCase {
         XCTAssertFalse(result.report.pages[0].isEmpty)
     }
 
+    func test_overlappingHitsFromTwoFindersAreRewrittenAsTheirUnion() throws {
+        let document = try blank()
+        try note(document, "Mail jane.doe@example.com before friday")
+        let found = try RedactionFinder.findInValues(document, .email) + RedactionFinder.findWordsInValues(document, ["doe"])
+        XCTAssertEqual(found.count, 2)
+        let result = try PdfRedactor(document).apply([], nil, found)
+        XCTAssertEqual(try contents(try RedactionKit.open(result)), "Mail  before friday")
+        XCTAssertFalse(RedactionKit.holds(result.bytes, "example.com"))
+    }
+
     func test_overlayTextReplacesTheMatch() throws {
         let document = try blank()
         try note(document, "call 555-0147-9988 now")

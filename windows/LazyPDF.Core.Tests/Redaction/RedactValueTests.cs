@@ -30,6 +30,19 @@ public class RedactValueTests
     }
 
     [Fact]
+    public void OverlappingHitsFromTwoFindersAreRewrittenAsTheirUnion()
+    {
+        using var document = Blank();
+        Note(document, "Mail jane.doe@example.com before friday");
+        var found = RedactionFinder.FindInValues(document, RedactionKind.Email).Concat(RedactionFinder.FindWordsInValues(document, ["doe"])).ToList();
+        Assert.Equal(2, found.Count);
+        var result = new PdfRedactor(document).Apply([], null, found);
+        using var output = RedactionKit.Open(result);
+        Assert.Equal("Mail  before friday", Assert.Single(PdfAnnotations.Read(output, output.Pages[0])).Contents);
+        Assert.False(RedactionKit.Holds(result.Bytes, "example.com"));
+    }
+
+    [Fact]
     public void OverlayTextReplacesTheMatch()
     {
         using var document = Blank();
