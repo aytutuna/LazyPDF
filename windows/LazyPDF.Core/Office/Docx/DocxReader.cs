@@ -19,6 +19,13 @@ internal sealed partial class DocxReader
     private const string NumberingType = R + "/numbering";
     private const string HeaderType = R + "/header";
     private const string FooterType = R + "/footer";
+    private const string SettingsType = R + "/settings";
+    private const string ImageType = R + "/image";
+    private const string Wp = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing";
+
+    private const double EmuPerPoint = 12700;
+    private const double MaxPictureSide = 20_000;
+    private const int MaxPictures = 2000;
 
     private static readonly Dictionary<string, int> Highlights = new()
     {
@@ -49,6 +56,7 @@ internal sealed partial class DocxReader
     private DocxStyles _styles = new();
     private DocxTheme _theme = new();
     private DocxNumbering _numbering = new();
+    private bool _evenAndOdd;
 
     // State of the part being read.
     private List<LayoutBlock> _blocks = [];
@@ -56,6 +64,11 @@ internal sealed partial class DocxReader
     private readonly Stack<Field> _fields = new();
     private readonly List<Piece> _pieces = [];
     private bool _inBand;
+    // The relationships of the part being read, which is where its pictures are found.
+    private IReadOnlyList<OpcRelationship> _partRelationships = [];
+    private readonly Dictionary<string, string> _lastBand = [];
+    private readonly Dictionary<string, byte[]> _pictureData = new(StringComparer.OrdinalIgnoreCase);
+    private int _pictures;
 
     private DocxReader(OpcPackage package, CancellationToken cancellation)
     {
@@ -89,6 +102,8 @@ internal sealed partial class DocxReader
         _styles = DocxStyles.Read(Part(relationships, StylesType));
         _theme = DocxTheme.Read(Part(relationships, ThemeType));
         _numbering = DocxNumbering.Read(Part(relationships, NumberingType));
+        _evenAndOdd = Part(relationships, SettingsType)?.Child(W, "evenAndOddHeaders") is { } evenOdd && On(evenOdd);
+        _partRelationships = relationships;
 
         Blocks(body);
         var all = _blocks;
@@ -111,17 +126,20 @@ internal sealed partial class DocxReader
             }
             // A section made only of the tail after the last section break has nothing to show.
             if (slice.Count == 0 && previous is not null && properties == ends[^1].Properties) continue;
+            bool titlePage = properties.Child(W, "titlePg") is { } title && On(title);
             var section = new LayoutSection
             {
                 Page = geometry,
-                Header = Band(properties, relationships, HeaderType, "headerReference", previous?.Header),
-                Footer = Band(properties, relationships, FooterType, "footerReference", previous?.Footer),
+                TitlePage = titlePage,
+                EvenAndOdd = _evenAndOdd,
+                Header = Band(properties, relationships, HeaderType, "headerReference", "default", true),
+                Footer = Band(properties, relationships, FooterType, "footerReference", "default", true),
+                FirstHeader = Band(properties, relationships, HeaderType, "headerReference", "first", titlePage),
+                FirstFooter = Band(properties, relationships, FooterType, "footerReference", "first", titlePage),
+                EvenHeader = Band(properties, relationships, HeaderType, "headerReference", "even", _evenAndOdd),
+                EvenFooter = Band(properties, relationships, FooterType, "footerReference", "even", _evenAndOdd),
                 Blocks = slice,
             };
-            if (properties.Child(W, "titlePg") is { } title && On(title) && properties.Elements(W, "headerReference").Concat(properties.Elements(W, "footerReference")).Any(e => e.Attribute(W, "type") == "first"))
-            {
-                Skip("header-variant");
-            }
             document.Sections.Add(section);
             previous = section;
         }
@@ -163,18 +181,23 @@ internal sealed partial class DocxReader
 
     private static double? Points(XmlElement? e, string name) => Number(e?.Attribute(W, name)) is { } twips ? twips / 20 : null;
 
-    // A section without its own header or footer shows the previous section's, as in Word.
-    private List<LayoutParagraph> Band(XmlElement sectPr, IReadOnlyList<OpcRelationship> relationships, string type, string reference, List<LayoutParagraph>? inherited)
+    // A section without its own header or footer of a kind shows the previous section's, as in Word. A kind the section does
+    // not use is not read, but its reference still counts for the sections after it.
+    private List<LayoutParagraph> Band(XmlElement sectPr, IReadOnlyList<OpcRelationship> relationships, string type, string reference, string kind, bool used)
     {
-        string? id = sectPr.Elements(W, reference).FirstOrDefault(e => (e.Attribute(W, "type") ?? "default") == "default")?.Attribute(R, "id");
-        string? target = id is null ? null : relationships.FirstOrDefault(r => r.Id == id && r.Type == type)?.Target;
-        if (target is null || !_package.Contains(target)) return inherited ?? [];
+        string? id = sectPr.Elements(W, reference).FirstOrDefault(e => (e.Attribute(W, "type") ?? "default") == kind)?.Attribute(R, "id");
+        string? found = id is null ? null : relationships.FirstOrDefault(r => r.Id == id && r.Type == type)?.Target;
+        string key = reference + kind;
+        if (found is not null && _package.Contains(found)) _lastBand[key] = found;
+        if (!used || !_lastBand.TryGetValue(key, out string? target)) return [];
         if (_bands.TryGetValue(target, out var known)) return known;
 
         _blocks = [];
         _fields.Clear();
         _inBand = true;
+        _partRelationships = _package.Relationships(target);
         Blocks(_package.Xml(target));
+        _partRelationships = relationships;
         _inBand = false;
         return _bands[target] = [.. _blocks.OfType<LayoutParagraph>()];
     }
@@ -270,7 +293,7 @@ internal sealed partial class DocxReader
         var runs = new List<LayoutRun>();
         foreach (var piece in _pieces)
         {
-            if (piece.Text.Length == 0 && piece.Format.Field == LayoutField.None) continue;
+            if (piece.Text.Length == 0 && piece.Format.Field == LayoutField.None && piece.Format.Picture is null) continue;
             runs.Add(Rebuild(piece.Format, piece.Text.ToString()));
         }
         _pieces.Clear();
@@ -282,7 +305,7 @@ internal sealed partial class DocxReader
     private static LayoutRun Rebuild(LayoutRun f, string text) => new()
     {
         Text = text, Family = f.Family, Size = f.Size, Bold = f.Bold, Italic = f.Italic, Underline = f.Underline, Strike = f.Strike,
-        Color = f.Color, Highlight = f.Highlight, Shift = f.Shift, Field = f.Field,
+        Color = f.Color, Highlight = f.Highlight, Shift = f.Shift, Field = f.Field, Picture = f.Picture,
     };
 
     private void Label(NumberLabel label, RunProps mark)
@@ -410,7 +433,7 @@ internal sealed partial class DocxReader
                     if (_fields.TryPeek(out var open) && !open.InResult) open.Code.Append(e.Text);
                     break;
                 case "fldChar": FieldChar(e.Attribute(W, "fldCharType"), props); break;
-                case "drawing": if (Visible(props)) Skip(Drawing(e, "drawing")); break;
+                case "drawing": if (Visible(props) && !Picture(e, props)) Skip(Drawing(e, "drawing")); break;
                 case "pict": if (Visible(props)) Skip(Drawing(e, "shape")); break;
                 case "object": if (Visible(props)) Skip("drawing"); break;
                 case "footnoteReference": Skip("footnote"); break;
@@ -418,6 +441,40 @@ internal sealed partial class DocxReader
                 case "commentReference": Skip("comment"); break;
             }
         }
+    }
+
+    // A picture in line, or a floating one put in line at its anchor. Anything else in the drawing is left to the caller to report.
+    private bool Picture(XmlElement drawing, RunProps props)
+    {
+        var frame = drawing.Child(Wp, "inline") ?? drawing.Child(Wp, "anchor");
+        if (frame is null || frame.Child(Wp, "extent") is not { } extent) return false;
+        var data = Descendant(frame, "graphicData");
+        if (data is null || !(data.Attribute("uri") ?? "").EndsWith("/picture", StringComparison.Ordinal)) return false;
+        var fill = Descendant(data, "blipFill");
+        var blip = fill is null ? null : Descendant(fill, "blip");
+        string? id = blip?.Attribute(R, "embed");
+        string? target = id is null ? null : _partRelationships.FirstOrDefault(r => r.Id == id && r.Type == ImageType)?.Target;
+        double width = Number(extent.Attribute("cx")) / EmuPerPoint ?? 0, height = Number(extent.Attribute("cy")) / EmuPerPoint ?? 0;
+        if (target is null || !_package.Contains(target) || !(width > 0) || !(height > 0) || _pictures >= MaxPictures) return false;
+
+        if (!_pictureData.TryGetValue(target, out var bytes)) _pictureData[target] = bytes = _package.Bytes(target);
+        var crop = fill!.Child(A, "srcRect");
+        double Edge(string name) => Math.Clamp((Number(crop?.Attribute(name)) ?? 0) / 100_000, 0, 0.95);
+        _pictures++;
+        if (frame.Name == "anchor") Skip("floating-picture");
+        var picture = new LayoutPicture(bytes, Math.Min(width, MaxPictureSide), Math.Min(height, MaxPictureSide), Edge("l"), Edge("t"), Edge("r"), Edge("b"));
+        _pieces.Add(new Piece(Format(props, "", LayoutField.None, picture)));
+        return true;
+    }
+
+    private static XmlElement? Descendant(XmlElement parent, string name)
+    {
+        foreach (var child in parent.Elements())
+        {
+            if (child.Name == name) return child;
+            if (Descendant(child, name) is { } found) return found;
+        }
+        return null;
     }
 
     private bool Visible(RunProps props) => props.Hidden != true && !Suppressed;
@@ -524,10 +581,10 @@ internal sealed partial class DocxReader
     }
 
     private static bool Same(LayoutRun a, LayoutRun b) =>
-        a.Field == LayoutField.None && b.Field == LayoutField.None && a.Family == b.Family && a.Size == b.Size && a.Bold == b.Bold
+        a.Field == LayoutField.None && b.Field == LayoutField.None && a.Picture is null && b.Picture is null && a.Family == b.Family && a.Size == b.Size && a.Bold == b.Bold
         && a.Italic == b.Italic && a.Underline == b.Underline && a.Strike == b.Strike && a.Color == b.Color && a.Highlight == b.Highlight && a.Shift == b.Shift;
 
-    private static LayoutRun Format(RunProps p, string text, LayoutField field)
+    private static LayoutRun Format(RunProps p, string text, LayoutField field, LayoutPicture? picture = null)
     {
         double size = p.Size ?? 10;
         double shift = 0;
@@ -546,6 +603,7 @@ internal sealed partial class DocxReader
             Highlight = p.Highlight is >= 0 ? p.Highlight : null,
             Shift = shift,
             Field = field,
+            Picture = picture,
         };
     }
 
