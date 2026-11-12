@@ -89,6 +89,20 @@ public class DocxReaderTests
     }
 
     [Fact]
+    public void NumbersAndColorsAreReadStrictly()
+    {
+        Assert.Equal(12, DocxReader.Number(" 12 "));
+        Assert.Equal(-15, DocxReader.Number("-1.5e1"));
+        Assert.Equal(0.5, DocxReader.Number(".5"));
+        Assert.Equal(5, DocxReader.Number("5."));
+        Assert.Equal(7, DocxReader.Number("+7"));
+        foreach (string bad in new[] { "", "x", "-", ".", "1e", "1e+", "1 2", "0x10", "nan", "inf", "1e999", "1,5" }) Assert.Null(DocxReader.Number(bad));
+        Assert.Null(DocxReader.Number(null));
+        Assert.Equal(0x2F5496, DocxReader.Hex("2F5496"));
+        foreach (string bad in new[] { "2F549", "2F54960", "+F5496", "GG0000", " 2F549" }) Assert.Null(DocxReader.Hex(bad));
+    }
+
+    [Fact]
     public void ConvertsToAPdfWithTheTextAndThePageBreaks()
     {
         string body =

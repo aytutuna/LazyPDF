@@ -459,7 +459,7 @@ internal sealed class DocxReader
         field.Classified = true;
         string code = field.Code.ToString().Trim();
         int space = code.IndexOfAny([' ', '\t', '\r', '\n']);
-        string name = (space < 0 ? code : code[..space]).ToUpperInvariant();
+        string name = Upper(space < 0 ? code : code[..space]);
         if (name is "PAGE" or "NUMPAGES")
         {
             if (!_inBand) return;
