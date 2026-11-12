@@ -145,8 +145,18 @@ extension ViewerModel {
 
     public func setLayerVisible(_ layer: PdfReference, _ visible: Bool) {
         guard let tab else { return }
-        let inFile = PdfLayers.read(tab.document).layers.first { $0.reference == layer }?.isOn ?? visible
-        if visible == inFile { layerChanges[layer] = nil } else { layerChanges[layer] = visible }
+        let file = PdfLayers.read(tab.document)
+        func record(_ reference: PdfReference, _ value: Bool) {
+            let inFile = file.layers.first { $0.reference == reference }?.isOn ?? value
+            layerChanges[reference] = value == inFile ? nil : value
+        }
+        record(layer, visible)
+        // Turning one on turns off the rest of its group; saying so here keeps the file's own choice reachable again.
+        if visible {
+            for group in file.radioGroups where group.contains(layer) {
+                for other in group where other != layer { record(other, false) }
+            }
+        }
         Task { await rebuildDisplay() }
     }
 

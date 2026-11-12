@@ -969,6 +969,17 @@ final class ViewerModelTests: XCTestCase {
         await waitFor { viewer.layers.layers.first?.isOn == true }
     }
 
+    func test_theLayerTheFileHadOnComesBackAfterAnotherOneOfItsGroupIsPicked() async throws {
+        let (viewer, _) = try open(bytes: TestPdfs.layered(radio: true))
+        XCTAssertEqual(viewer.layers.layers.map(\.isOn), [true, false])
+
+        viewer.setLayerVisible(TestPdfs.notes, true)
+        await waitFor { viewer.layers.layers.map(\.isOn) == [false, true] }
+        viewer.setLayerVisible(TestPdfs.blackBox, true)
+        await waitFor { viewer.layers.layers.map(\.isOn) == [true, false] }
+        XCTAssertEqual(viewer.layers.layers.map(\.isOn), [true, false])
+    }
+
     func test_aTabThatWasShownAndLeftIsNotKeptAlive() async throws {
         let (viewer, _) = try open()
         func showAndLeave() throws -> WeakTab {

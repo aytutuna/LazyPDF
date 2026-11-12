@@ -35,11 +35,13 @@ enum TestPdfs {
 
     /// A one page file whose black square is on a layer ("Black box", object 5), written by hand.
     static let blackBox = PdfReference(5, 0)
+    static let notes = PdfReference(6, 0)
 
-    static func layered() -> [UInt8] {
+    static func layered(radio: Bool = false) -> [UInt8] {
+        let config = radio ? "/ON [5 0 R] /OFF [6 0 R] /RBGroups [[5 0 R 6 0 R]]" : "/ON [5 0 R 6 0 R]"
         let content = "/OC /L1 BDC 0 0 0 rg 20 20 160 160 re f EMC"
         let objects = [
-            "<< /Type /Catalog /Pages 2 0 R /OCProperties << /OCGs [5 0 R 6 0 R] /D << /Order [5 0 R 6 0 R] /ON [5 0 R 6 0 R] >> >> >>",
+            "<< /Type /Catalog /Pages 2 0 R /OCProperties << /OCGs [5 0 R 6 0 R] /D << /Order [5 0 R 6 0 R] \(config) >> >> >>",
             "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
             "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R /Resources << /Properties << /L1 5 0 R /L2 6 0 R >> >> >>",
             "<< /Length \(content.count) >>\nstream\n\(content)\nendstream",
