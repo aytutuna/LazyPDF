@@ -557,7 +557,7 @@ internal sealed partial class DocxReader
     }
 
     // Plain ASCII only: full case mapping differs between the platforms.
-    private static string Upper(string text)
+    internal static string Upper(string text)
     {
         var chars = text.ToCharArray();
         for (int i = 0; i < chars.Length; i++)

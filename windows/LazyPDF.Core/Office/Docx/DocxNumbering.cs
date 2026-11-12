@@ -198,17 +198,20 @@ internal sealed class DocxNumbering
                 o.Append(c);
                 continue;
             }
-            o.Append((c & 0xFF) switch
-            {
-                0xA7 => '▪',
-                0xD8 => '➢',
-                0xFC => '✓',
-                0x76 => '❖',
-                _ => '•',
-            });
+            o.Append(SymbolBullet(c & 0xFF));
         }
         return o.ToString();
     }
+
+    /// <summary>The character a Wingdings or Symbol bullet at this code stands for; the ones Office uses, else a plain bullet.</summary>
+    internal static char SymbolBullet(int code) => code switch
+    {
+        0xA7 => '▪',
+        0xD8 => '➢',
+        0xFC => '✓',
+        0x76 => '❖',
+        _ => '•',
+    };
 
     internal static string Format(int value, string format)
     {
