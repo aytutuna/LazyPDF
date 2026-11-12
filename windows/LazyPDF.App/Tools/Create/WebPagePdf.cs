@@ -37,19 +37,24 @@ internal static class WebPagePdf
             core.Settings.IsPasswordAutosaveEnabled = false;
             core.Settings.IsGeneralAutofillEnabled = false;
 
-            core.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
+            core.SetVirtualHostNameToFolderMapping(WebPageRules.Host, folder, CoreWebView2HostResourceAccessKind.Deny);
+            core.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All, CoreWebView2WebResourceRequestSourceKinds.All);
             core.WebResourceRequested += (_, e) =>
             {
-                if (!WebPageRules.IsAllowed(e.Request.Uri, folder)) e.Response = environment.CreateWebResourceResponse(null, 403, "Blocked", "");
+                if (!WebPageRules.IsAllowed(e.Request.Uri)) e.Response = environment.CreateWebResourceResponse(null, 403, "Blocked", "");
             };
             core.NavigationStarting += (_, e) =>
             {
-                if (!WebPageRules.IsAllowed(e.Uri, folder)) e.Cancel = true;
+                if (!WebPageRules.IsAllowed(e.Uri)) e.Cancel = true;
+            };
+            core.FrameNavigationStarting += (_, e) =>
+            {
+                if (!WebPageRules.IsAllowed(e.Uri)) e.Cancel = true;
             };
 
             var loaded = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             core.NavigationCompleted += (_, e) => loaded.TrySetResult(e.IsSuccess);
-            core.Navigate(new Uri(file).AbsoluteUri);
+            core.Navigate(WebPageRules.PageAddress(file));
             using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancel);
             limit.CancelAfter(LoadLimit);
             if (!await loaded.Task.WaitAsync(limit.Token)) throw new IOException("The page did not load.");

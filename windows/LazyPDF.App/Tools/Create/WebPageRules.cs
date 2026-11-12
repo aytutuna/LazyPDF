@@ -12,21 +12,19 @@ internal static class WebPageRules
 
     public static bool IsWebPage(string path) => Extensions.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>A file under the page's own folder, or data held in the address itself. Anything that would leave the machine, or leave the folder, is refused.</summary>
-    public static bool IsAllowed(string address, string folder)
+    /// <summary>The page's folder is served from this https name, so the page cannot reach file: or network shares itself.</summary>
+    public const string Host = "page.lazypdf.invalid";
+
+    /// <summary>Address of a page file under <see cref="Host"/>.</summary>
+    public static string PageAddress(string file) => $"https://{Host}/{Uri.EscapeDataString(Path.GetFileName(file))}";
+
+    /// <summary>The page's own folder, reached through <see cref="Host"/>, or data held in the address itself. Anything that would leave the machine, or leave the folder, is refused.</summary>
+    public static bool IsAllowed(string address)
     {
         if (!Uri.TryCreate(address, UriKind.Absolute, out var uri)) return false;
         if (uri.Scheme is "data" or "about") return true;
-        if (!uri.IsFile) return false;
-        try
-        {
-            string root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(folder)) + Path.DirectorySeparatorChar;
-            return Path.GetFullPath(uri.LocalPath).StartsWith(root, StringComparison.OrdinalIgnoreCase);
-        }
-        catch (Exception e) when (e is ArgumentException or NotSupportedException or PathTooLongException)
-        {
-            return false;
-        }
+        return uri.Scheme == Uri.UriSchemeHttps && uri.Port == 443 && string.IsNullOrEmpty(uri.UserInfo)
+            && string.Equals(uri.Host, Host, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>The page is laid out as a printer would; Auto is upright, since a web page is written for width.</summary>

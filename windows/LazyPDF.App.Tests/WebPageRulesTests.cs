@@ -9,15 +9,13 @@ namespace LazyPDF.App.Tests;
 [Collection("Application")]
 public sealed class WebPageRulesTests
 {
-    private const string Folder = @"C:\Docs\Site";
-
     [Theory]
-    [InlineData("file:///C:/Docs/Site/style.css")]
-    [InlineData("file:///C:/Docs/Site/img/a%20b.png")]
-    [InlineData("file:///c:/docs/site/Index.HTML")]
+    [InlineData("https://page.lazypdf.invalid/style.css")]
+    [InlineData("https://page.lazypdf.invalid/img/a%20b.png")]
+    [InlineData("https://PAGE.lazypdf.invalid/Index.HTML")]
     [InlineData("data:image/png;base64,AAAA")]
     [InlineData("about:blank")]
-    public void LocalResourcesBesideThePageLoad(string address) => Assert.True(WebPageRules.IsAllowed(address, Folder));
+    public void LocalResourcesBesideThePageLoad(string address) => Assert.True(WebPageRules.IsAllowed(address));
 
     [Theory]
     [InlineData("http://example.com/a.css")]
@@ -25,18 +23,26 @@ public sealed class WebPageRulesTests
     [InlineData("ftp://example.com/a.png")]
     [InlineData("ws://example.com/")]
     [InlineData("blob:https://example.com/1")]
-    [InlineData("file:///C:/Docs/Other/secret.txt")]
-    [InlineData("file:///C:/Docs/SiteTwo/a.css")]
-    [InlineData("file:///C:/Docs/Site/../Other/a.css")]
-    [InlineData("file:///C:/Docs/Site/%2e%2e/Other/a.css")]
+    [InlineData("file:///C:/Docs/Site/style.css")]
+    [InlineData("file:///C:/Users/x/Pictures/id.jpg")]
     [InlineData("file://server/share/a.css")]
+    [InlineData("https://page.lazypdf.invalid.example.com/a.css")]
+    [InlineData("https://page.lazypdf.invalid:8443/a.css")]
+    [InlineData("https://user@page.lazypdf.invalid/a.css")]
+    [InlineData("http://page.lazypdf.invalid/a.css")]
     [InlineData("//example.com/a.css")]
     [InlineData("not an address")]
     [InlineData("")]
-    public void EverythingElseIsBlocked(string address) => Assert.False(WebPageRules.IsAllowed(address, Folder));
+    public void EverythingElseIsBlocked(string address) => Assert.False(WebPageRules.IsAllowed(address));
 
-    [Fact]
-    public void AFolderWithATrailingSlashIsTheSameFolder() => Assert.True(WebPageRules.IsAllowed("file:///C:/Docs/Site/a.css", Folder + @"\"));
+    [Theory]
+    [InlineData(@"C:\x\Report.html", "https://page.lazypdf.invalid/Report.html")]
+    [InlineData(@"C:\x\My Report #1.HTM", "https://page.lazypdf.invalid/My%20Report%20%231.HTM")]
+    public void ThePageIsOpenedThroughTheVirtualHost(string file, string expected)
+    {
+        Assert.Equal(expected, WebPageRules.PageAddress(file));
+        Assert.True(WebPageRules.IsAllowed(expected));
+    }
 
     [Theory]
     [InlineData("a.html", true)]
