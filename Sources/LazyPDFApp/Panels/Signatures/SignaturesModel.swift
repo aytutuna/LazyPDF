@@ -28,6 +28,8 @@ private final class CountingTransport: SigningTransport, @unchecked Sendable {
     }
 }
 
+private typealias Found = (reports: [SignatureReport], fields: [String: (page: Int, rect: PdfRect)])
+
 /// The signatures of the file and what the engine found when it checked them. Choosing one shows the field; the details say
 /// what changed since, what is wrong and what could not be checked, and offer the signed version of the file.
 @MainActor
@@ -57,6 +59,7 @@ public final class SignaturesModel: ToolPanelModel {
     @ObservationIgnored private let makeTransport: (() -> SigningTransport)?
     @ObservationIgnored private var watch: ObservationWatch?
     @ObservationIgnored private var ticket = 0
+    @ObservationIgnored private var asking: SigningTransport?
 
     /// `transport`, when given, lets the person ask the servers the certificates name for a certificate the chain lacks.
     public init(trust: SignatureTrust, transport: (() -> SigningTransport)? = nil) {
@@ -106,6 +109,7 @@ public final class SignaturesModel: ToolPanelModel {
         watch?.stop()
         watch = nil
         ticket += 1
+        stopAsking()
         rows = []
         selected = nil
         tab = nil
@@ -117,6 +121,7 @@ public final class SignaturesModel: ToolPanelModel {
     @discardableResult
     public func check(online: Bool = false) -> Task<Void, Never> {
         ticket += 1
+        stopAsking()
         let mine = ticket
         guard let tab else { return Task {} }
         show([], L10n.t("Checking the signatures"))
@@ -133,15 +138,35 @@ public final class SignaturesModel: ToolPanelModel {
         }
         let transport = online ? makeTransport.map { CountingTransport($0()) } : nil
         options.transport = transport
+        asking = transport
         let certificate = options.certificate
+        let host = host
         return Task {
-            let found = await Task.detached { () -> (reports: [SignatureReport], fields: [String: (page: Int, rect: PdfRect)])? in
-                do {
-                    return (try PdfSignatureVerifier.verify(bytes, options), try SignatureFields.locate(bytes, password, certificate))
-                } catch {
-                    return nil
+            let verify = { () async -> Found? in
+                await Task.detached { () -> Found? in
+                    do {
+                        return (try PdfSignatureVerifier.verify(bytes, options), try SignatureFields.locate(bytes, password, certificate))
+                    } catch {
+                        return nil
+                    }
+                }.value
+            }
+            var found: Found?
+            var stopped = false
+            if let transport, let host {
+                // Cancel ends the request in flight; the engine then fails the fetch and the rest of the check goes on without it.
+                try? await host.runBusy(L10n.t("Asking the certificate servers")) { token in
+                    let ender = Task.detached {
+                        while !token.isCancelled && !Task.isCancelled { try? await Task.sleep(nanoseconds: 50_000_000) }
+                        if token.isCancelled { transport.cancel() }
+                    }
+                    defer { ender.cancel() }
+                    found = await verify()
+                    stopped = token.isCancelled
                 }
-            }.value
+            } else {
+                found = await verify()
+            }
             guard mine == self.ticket, self.tab === tab else { return }
             guard let found else {
                 self.show([], L10n.t("The signatures could not be checked."))
@@ -149,7 +174,7 @@ public final class SignaturesModel: ToolPanelModel {
             }
             self.show(found.reports.map { self.row($0, found.fields) }, found.reports.isEmpty ? L10n.t("This file has no signatures.") : nil)
             self.selected = self.rows.first?.id
-            if let transport, !found.reports.isEmpty {
+            if let transport, !stopped, !found.reports.isEmpty {
                 if transport.requests == 0 {
                     self.note = L10n.t("The certificates name no servers to ask.")
                 } else {
@@ -159,10 +184,25 @@ public final class SignaturesModel: ToolPanelModel {
         }
     }
 
-    /// Checks again, this time fetching the certificate of an issuer the chain lacks from the address the certificate names.
+    /// Names the servers the check would ask and checks again, fetching the certificate of an issuer the chain lacks from the
+    /// address the certificate names, once the person agrees.
     public func askServers() {
-        guard canAskServers else { return }
-        check(online: true)
+        guard canAskServers, let tab, let host else { return }
+        let bytes = tab.session.current
+        let password = tab.password
+        Task {
+            let hosts = await ServerPreview.hosts(bytes, password)
+            guard self.tab === tab else { return }
+            if hosts.isEmpty {
+                self.note = L10n.t("The certificates name no servers to ask.")
+                return
+            }
+            host.showNotice(L10n.t("These servers will be asked"),
+                            L10n.t("Lazy PDF will contact {0}. Servers named by certificates found on the way may be asked too. The file itself is not sent.", ServerPreview.describe(hosts)),
+                            NoticeAction(L10n.t("Ask them")) { [weak self] in
+                if let self, self.tab === tab { self.check(online: true) }
+            })
+        }
     }
 
     /// Adds the picked signature's certificate to those the user trusts.
@@ -272,6 +312,11 @@ public final class SignaturesModel: ToolPanelModel {
 
     private var stem: String {
         URL(fileURLWithPath: tab?.title ?? "").deletingPathExtension().lastPathComponent
+    }
+
+    private func stopAsking() {
+        asking?.cancel()
+        asking = nil
     }
 
     private func showTrust() {

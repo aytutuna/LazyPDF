@@ -152,6 +152,11 @@ final class SignaturesModelTests: XCTestCase {
         XCTAssertTrue(rig.viewer.geometryAsked.isEmpty)
     }
 
+    func test_longListsOfServersAreShortened() {
+        XCTAssertEqual(ServerPreview.describe(["a", "b"]), "a, b")
+        XCTAssertEqual(ServerPreview.describe((1...8).map { "s\($0)" }), "s1, s2, s3, s4, s5, s6, and 2 more")
+    }
+
     #if canImport(Security)
     private static let now = DateTimeOffset(2026, 3, 10, 9, 0, 0)
 
@@ -228,6 +233,34 @@ final class SignaturesModelTests: XCTestCase {
         XCTAssertEqual(transport.requests, 0)
     }
 
+    func test_closingThePanelEndsTheRequestsInFlight() async throws {
+        let (file, _) = try signedFile(comment: false)
+        let tab = try PanelPdfs.tab(file)
+        let transport = SilentTransport()
+        let model = SignaturesModel(trust: SignatureTrust(directory: TempDir(self).url), transport: { transport })
+        model.attach(tab, PanelViewer(tab), RecordingHost())
+
+        let running = model.check(online: true)
+        XCTAssertFalse(transport.cancelled)
+        model.detach()
+        await running.value
+
+        XCTAssertTrue(transport.cancelled)
+    }
+
+    func test_aNewCheckEndsTheRequestsOfTheLastOne() async throws {
+        let (file, _) = try signedFile(comment: false)
+        let tab = try PanelPdfs.tab(file)
+        let transport = SilentTransport()
+        let model = SignaturesModel(trust: SignatureTrust(directory: TempDir(self).url), transport: { transport })
+        model.attach(tab, PanelViewer(tab), RecordingHost())
+
+        model.check(online: true)
+        await model.check().value
+
+        XCTAssertTrue(transport.cancelled)
+    }
+
     func test_theSignersCertificateIsHandedToTheView() async throws {
         let (file, certificate) = try signedFile(comment: false)
         let rig = try await attached(file)
@@ -296,6 +329,7 @@ private final class SilentTransport: SigningTransport {
     var lastFailure: String? { "No connection." }
     func post(_ url: String, _ contentType: String, _ body: [UInt8]) -> [UInt8]? { nil }
     func get(_ url: String) -> [UInt8]? { requests += 1; return nil }
-    func cancel() {}
+    func cancel() { cancelled = true }
     var requests = 0
+    var cancelled = false
 }
