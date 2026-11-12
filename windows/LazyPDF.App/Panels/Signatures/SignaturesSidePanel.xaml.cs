@@ -235,12 +235,21 @@ public partial class SignaturesSidePanel : ToolPanel
     {
         var tab = Tab!;
         if (List.SelectedItem is not SignatureRow { Report.FieldName: { } name } row || !CanClear(tab, _signedFields, row)) return;
-        Host!.ShowNotice(Loc.T("Clear the signature of {0}?", name),
-            Loc.T("The signature is removed from the field, and the field can be signed again. The file keeps the earlier signed version in its history. Undo brings the signature back."),
+        var rows = List.ItemsSource as IEnumerable<SignatureRow> ?? [];
+        Host!.ShowNotice(Loc.T("Clear the signature of {0}?", name), ClearText(rows, row),
             new NoticeAction(Loc.T("Clear signature"), () =>
             {
                 if (ReferenceEquals(Tab, tab)) Clear(tab, name, Host!.ShowProblem);
             }));
+    }
+
+    // Taking a value out of a signature field counts as a change to every signature made after it.
+    internal static string ClearText(IEnumerable<SignatureRow> rows, SignatureRow row)
+    {
+        string text = Loc.T("The signature is removed from the field, and the field can be signed again. The file keeps the earlier signed version in its history. Undo brings the signature back.");
+        return rows.Any(r => r.Report.Revision > row.Report.Revision)
+            ? text + " " + Loc.T("Signatures made after it will show the file as changed.")
+            : text;
     }
 
     internal static bool Clear(DocumentTab tab, string name, Action<Problem>? problem = null)

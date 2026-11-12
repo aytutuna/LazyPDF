@@ -5554,6 +5554,9 @@
   <data name="Signatures are removed from the result." xml:space="preserve">
     <value>İmzalar sonuçtan kaldırılır.</value>
   </data>
+  <data name="Signatures made after it will show the file as changed." xml:space="preserve">
+    <value>Ondan sonra atılan imzalar dosyanın değiştiğini gösterir.</value>
+  </data>
   <data name="Signatures made with this certificate will count as trusted. Check its fingerprint with the signer first. You can remove it under Trust settings." xml:space="preserve">
     <value>Bu sertifikayla atılan imzalar güvenilir sayılır. Önce parmak izini imzacıyla doğrulayın. Güven ayarlarından kaldırabilirsiniz.</value>
   </data>

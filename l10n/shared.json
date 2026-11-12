@@ -8549,6 +8549,9 @@
   "Remove the signature so the field can be signed again": {
     "tr": "Alan yeniden imzalanabilsin diye imzayı kaldır"
   },
+  "Signatures made after it will show the file as changed.": {
+    "tr": "Ondan sonra atılan imzalar dosyanın değiştiğini gösterir."
+  },
   "Clear the signature of {0}?": {
     "tr": "{0} alanının imzası temizlensin mi?"
   },

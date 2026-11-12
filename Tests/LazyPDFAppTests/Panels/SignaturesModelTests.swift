@@ -193,6 +193,20 @@ final class SignaturesModelTests: XCTestCase {
         XCTAssertFalse(rig.tab.session.canUndo)
     }
 
+    func test_clearingASignatureWarnsWhenLaterSignaturesFollow() {
+        func row(_ index: Int, _ revision: Int) -> SignatureRow {
+            var report = SignatureReport()
+            report.index = index
+            report.revision = revision
+            return SignatureRow(report, page: 0, area: nil)
+        }
+        let rows = [row(0, 1), row(1, 2)]
+        let warning = "Signatures made after it will show the file as changed."
+
+        XCTAssertTrue(SignaturesModel.clearText(rows, rows[0]).hasSuffix(warning))
+        XCTAssertFalse(SignaturesModel.clearText(rows, rows[1]).contains(warning))
+    }
+
     func test_longListsOfServersAreShortened() {
         XCTAssertEqual(ServerPreview.describe(["a", "b"]), "a, b")
         XCTAssertEqual(ServerPreview.describe((1...8).map { "s\($0)" }), "s1, s2, s3, s4, s5, s6, and 2 more")

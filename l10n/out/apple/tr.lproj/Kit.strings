@@ -1529,6 +1529,7 @@
 "Signatures" = "İmzalar";
 "Signatures already in the file" = "Dosyadaki mevcut imzalar";
 "Signatures are removed from the result." = "İmzalar sonuçtan kaldırılır.";
+"Signatures made after it will show the file as changed." = "Ondan sonra atılan imzalar dosyanın değiştiğini gösterir.";
 "Signatures made with this certificate will count as trusted. Check its fingerprint with the signer first. You can remove it under Trust settings." = "Bu sertifikayla atılan imzalar güvenilir sayılır. Önce parmak izini imzacıyla doğrulayın. Güven ayarlarından kaldırabilirsiniz.";
 "Signatures stay in the result but are no longer valid." = "İmzalar sonuçta kalır ama artık geçerli değildir.";
 "Signatures would be lost" = "İmzalar kaybolur";

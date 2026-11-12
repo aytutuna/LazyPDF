@@ -36,6 +36,18 @@ public sealed class ClearSignatureTests
     });
 
     [Fact]
+    public Task ClearingWarnsWhenLaterSignaturesFollow() => Sta.Run(() =>
+    {
+        SignatureRow Row(int index, int revision) => new(new SignatureReport { Index = index, Revision = revision }, 0, Rect.Empty);
+        var rows = new[] { Row(0, 1), Row(1, 2) };
+        const string warning = "Signatures made after it will show the file as changed.";
+
+        Assert.EndsWith(warning, SignaturesSidePanel.ClearText(rows, rows[0]));
+        Assert.DoesNotContain(warning, SignaturesSidePanel.ClearText(rows, rows[1]));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task AFieldThatIsNotSignedIsNotOffered() => Sta.Run(() =>
     {
         var file = ServerPreviewTests.Signed("http://ocsp.test/ocsp", "https://crl.test/ca.crl");

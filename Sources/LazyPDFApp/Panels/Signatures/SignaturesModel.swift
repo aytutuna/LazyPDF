@@ -226,12 +226,18 @@ public final class SignaturesModel: ToolPanelModel {
 
     /// Asks, then takes the signature out of the picked field so that it can be signed again.
     public func clearSignature() {
-        guard canClearSignature, let tab, let host, let name = selectedRow?.report.fieldName else { return }
-        host.showNotice(L10n.t("Clear the signature of {0}?", name),
-                        L10n.t("The signature is removed from the field, and the field can be signed again. The file keeps the earlier signed version in its history. Undo brings the signature back."),
+        guard canClearSignature, let tab, let host, let row = selectedRow, let name = row.report.fieldName else { return }
+        host.showNotice(L10n.t("Clear the signature of {0}?", name), Self.clearText(rows, row),
                         NoticeAction(L10n.t("Clear signature")) { [weak self] in
             if let self, self.tab === tab { self.clear(name) }
         })
+    }
+
+    // Taking a value out of a signature field counts as a change to every signature made after it.
+    static func clearText(_ rows: [SignatureRow], _ row: SignatureRow) -> String {
+        let text = L10n.t("The signature is removed from the field, and the field can be signed again. The file keeps the earlier signed version in its history. Undo brings the signature back.")
+        guard rows.contains(where: { $0.report.revision > row.report.revision }) else { return text }
+        return text + " " + L10n.t("Signatures made after it will show the file as changed.")
     }
 
     /// Clears the field as one undoable step; false when nothing changed, which the info bar then explains.
