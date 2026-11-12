@@ -10,9 +10,10 @@ import Security
 //
 // The C# has System.Security.Cryptography.Pkcs for the CMS. Here PdfCms.swift reads and writes the structure and
 // Security.framework does the one step that needs a key: RSA key transport, PKCS#1 v1.5 or OAEP
-// (SecKeyCreateEncryptedData and SecKeyCreateDecryptedData). Left out against the C#: key agreement recipients,
-// which are skipped. An entry that is the certificate's own but uses an algorithm that is not read is
-// `unsupported`, not a wrong certificate. The file is Apple-only; Linux builds the rest of the engine without it.
+// (SecKeyCreateEncryptedData and SecKeyCreateDecryptedData) and ECDH for the elliptic curve recipients of
+// PdfCmsAgreement.swift (SecKeyCopyKeyExchangeResult). An RSA entry that is the certificate's own but uses an
+// algorithm that is not read is `unsupported`, not a wrong certificate. The file is Apple-only; Linux builds the
+// rest of the engine without it.
 
 extension PdfSecurity {
     private static let maxRecipients = 1000
@@ -82,12 +83,12 @@ extension PdfSecurity {
     /// `PdfCryptStrength.aes256` makes V 5 (s5), `aes128` V 4 (also s5). The seed and the CMS content keys come
     /// from the system generator, so two calls never give the same file. The new handler is an owner:
     /// `openedAsOwner` is true and its permissions are all. Throws `PdfReadException` for a certificate that is
-    /// not an RSA one that may encipher.
+    /// not an RSA one that may encipher or a P-256 or P-384 one that may agree on a key.
     public static func createPublicKey(_ recipients: [PdfRecipient], _ strength: PdfCryptStrength) throws -> PdfSecurity {
         precondition(recipients.count >= 1 && recipients.count <= maxRecipients,
                      "A file has between 1 and \(maxRecipients) recipients.")
         for recipient in recipients where !PdfRecipient.canProtect(recipient.certificate) {
-            throw PdfReadException(.unsupported, "This certificate cannot be used to protect a file. Choose a certificate with an RSA key.")
+            throw PdfReadException(.unsupported, "This certificate cannot be used to protect a file. Choose a certificate with an RSA or a P-256 or P-384 key.")
         }
         let modern = strength == .aes256
         let v = modern ? 5 : 4
@@ -152,7 +153,16 @@ extension PdfSecurity {
                   let content = PdfCms.decryptContent(envelope, key: [UInt8](wrapped)) else { continue }
             return content
         }
-        return nil
+        return PdfCms.openAgreement(envelope) { agreed(privateKey, $0.point) }
+    }
+
+    // ECDH of the private key with the originator's ephemeral key; nil for a key that is not on the curve or not an EC one.
+    private static func agreed(_ privateKey: SecKey, _ point: [UInt8]) -> [UInt8]? {
+        let attributes: [CFString: Any] = [kSecAttrKeyType: kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeyClass: kSecAttrKeyClassPublic]
+        guard let peer = SecKeyCreateWithData(Data(point) as CFData, attributes as CFDictionary, nil),
+              let secret = SecKeyCopyKeyExchangeResult(privateKey, .ecdhKeyExchangeStandard, peer, [:] as CFDictionary, nil) as Data?
+        else { return nil }
+        return [UInt8](secret)
     }
 
     private static func transport(_ recipient: PdfCmsRecipient) -> SecKeyAlgorithm? {
@@ -173,12 +183,20 @@ extension PdfSecurity {
         }
     }
 
-    /// An EnvelopedData of `content` for one certificate: a fresh AES-256 key under the certificate's RSA key.
+    /// An EnvelopedData of `content` for one certificate: a fresh AES-256 key under the certificate's RSA key, or wrapped
+    /// under a key agreed with a fresh ephemeral EC key.
     private static func seal(_ content: [UInt8], _ recipient: PdfCertificate) throws -> [UInt8] {
         guard let publicKey = SecCertificateCopyKey(recipient.certificate),
-              SecKeyIsAlgorithmSupported(publicKey, .encrypt, .rsaEncryptionPKCS1),
               let identity = PdfCms.identity(ofCertificate: [UInt8](SecCertificateCopyData(recipient.certificate) as Data))
-        else { throw PdfReadException(.unsupported, "Only RSA certificates can be recipients.") }
+        else { throw PdfReadException(.unsupported, "Only RSA and elliptic curve certificates can be recipients.") }
+        let attributes = SecKeyCopyAttributes(publicKey) as? [CFString: Any]
+        if attributes?[kSecAttrKeyType] as? String == kSecAttrKeyTypeECSECPrimeRandom as String,
+           let bits = attributes?[kSecAttrKeySizeInBits] as? Int {
+            return try sealToCurve(content, publicKey, bits, identity)
+        }
+        guard SecKeyIsAlgorithmSupported(publicKey, .encrypt, .rsaEncryptionPKCS1) else {
+            throw PdfReadException(.unsupported, "Only RSA and elliptic curve certificates can be recipients.")
+        }
         let contentKey = systemRandom(32), iv = systemRandom(16)
         let encrypted = Aes(key: contentKey).encryptCbc(Aes.padded(content), iv: iv)
         guard let wrapped = SecKeyCreateEncryptedData(publicKey, .rsaEncryptionPKCS1, Data(contentKey) as CFData, nil) as Data? else {
@@ -188,6 +206,19 @@ extension PdfSecurity {
         entry.issuer = identity.issuer
         entry.serial = identity.serial
         return PdfCms.encode(recipients: [entry], iv: iv, encryptedContent: encrypted)
+    }
+
+    private static func sealToCurve(_ content: [UInt8], _ publicKey: SecKey, _ bits: Int, _ identity: PdfCertificateIdentity) throws -> [UInt8] {
+        let attributes: [CFString: Any] = [kSecAttrKeyType: kSecAttrKeyTypeECSECPrimeRandom, kSecAttrKeySizeInBits: bits]
+        guard bits == 256 || bits == 384,
+              let ephemeral = SecKeyCreateRandomKey(attributes as CFDictionary, nil),
+              let point = SecKeyCopyPublicKey(ephemeral).flatMap({ SecKeyCopyExternalRepresentation($0, nil) as Data? }),
+              let secret = SecKeyCopyKeyExchangeResult(ephemeral, .ecdhKeyExchangeStandard, publicKey, [:] as CFDictionary, nil) as Data?,
+              let sealed = PdfCms.sealAgreement(content, identity: identity, curve: bits == 256 ? PdfCms.curveP256 : PdfCms.curveP384,
+                                                ephemeralPoint: [UInt8](point), secret: [UInt8](secret),
+                                                contentKey: systemRandom(32), iv: systemRandom(16))
+        else { throw PdfReadException(.unsupported, "The certificate's key cannot agree on a key for a recipient.") }
+        return sealed
     }
 }
 #endif

@@ -65,7 +65,7 @@ final class PublicKeyRoundTripTests: XCTestCase {
         XCTAssertFalse(created.permsMismatch)
     }
 
-    func test_onlyRsaCertificatesThatMayEncipherCanProtect() throws {
+    func test_onlyKeysThatMayEncipherOrAgreeCanProtect() throws {
         let ec = try XCTUnwrap(PdfCertificate(Pki.instance.leafEc))
         let signOnly = try XCTUnwrap(PdfCertificate(PdfDigitalId.create("Signer", nil, DateTimeOffset(2025, 1, 1, 0, 0, 0), keyBits: 2048)))
 
@@ -90,7 +90,7 @@ final class PublicKeyRoundTripTests: XCTestCase {
         let ec = try XCTUnwrap(PdfCertificate(Pki.instance.leafEc))
 
         XCTAssertThrowsError(try PdfSecurity.createPublicKey([PdfRecipient(PublicKeyFiles.alice), PdfRecipient(ec)], .aes256)) { error in
-            XCTAssertEqual((error as? PdfReadException)?.message, "This certificate cannot be used to protect a file. Choose a certificate with an RSA key.")
+            XCTAssertEqual((error as? PdfReadException)?.message, "This certificate cannot be used to protect a file. Choose a certificate with an RSA or a P-256 or P-384 key.")
         }
     }
 
