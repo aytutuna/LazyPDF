@@ -38,6 +38,7 @@ public sealed class WebPageRulesTests
     [Theory]
     [InlineData(@"C:\x\Report.html", "https://page.lazypdf.invalid/Report.html")]
     [InlineData(@"C:\x\My Report #1.HTM", "https://page.lazypdf.invalid/My%20Report%20%231.HTM")]
+    [InlineData(@"E:\index.html", "https://page.lazypdf.invalid/index.html")]
     public void ThePageIsOpenedThroughTheVirtualHost(string file, string expected)
     {
         Assert.Equal(expected, WebPageRules.PageAddress(file));
