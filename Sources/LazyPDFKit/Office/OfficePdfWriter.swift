@@ -9,10 +9,11 @@ enum OfficePdfWriter {
         let style: Int
     }
 
-    /// When `contents` is given, it receives the content stream of every page as written. Throws
+    /// When `contents` is given, it receives the content stream of every page as written. `images` reads pictures that are not
+    /// JPEG; without it only JPEG pictures are drawn. Throws
     /// `InvalidOperationException` (the message is `ExportText.noFont`) when no font can draw the text, and
     /// `PdfReadException` when the page size or margins leave no room or the document runs past `Paginator.maxPages`.
-    static func create(_ document: LayoutDocument, _ fonts: FontSource?, contents: ((Int, [UInt8]) -> Void)? = nil) throws -> OfficePdf {
+    static func create(_ document: LayoutDocument, _ fonts: FontSource?, contents: ((Int, [UInt8]) -> Void)? = nil, images: ImageCodec? = nil) throws -> OfficePdf {
         let layout = try Paginator(document, LayoutFonts(fonts)).run()
         let pdf = try ExportPdf.newDocument()
         let embedder = PdfFontEmbedder(pdf, fonts)
@@ -27,6 +28,16 @@ enum OfficePdfWriter {
                     order.append(key)
                 }
                 texts[key]!.append(box.text)
+            }
+        }
+        var pictures: [ObjectIdentifier: PdfImage?] = [:]
+        var unreadable = 0
+        for page in layout.pages {
+            for case .image(let box) in page.boxes {
+                try Task.checkCancellation()
+                let id = ObjectIdentifier(box.source.file)
+                if pictures[id] == nil { pictures[id] = .some(try PdfImageWriter.addPicture(pdf, box.source.file.bytes, images)) }
+                if pictures[id]! == nil { unreadable += 1 }
             }
         }
         var drawn: [FontKey: PdfDrawFont] = [:]
@@ -46,13 +57,15 @@ enum OfficePdfWriter {
         }
         for i in 0..<layout.pages.count {
             try Task.checkCancellation()
-            let content = try Self.content(pdf, pdf.pages[i], layout.pages[i], drawn)
+            let content = try Self.content(pdf, pdf.pages[i], layout.pages[i], drawn, pictures)
             contents?(i, content)
             let dictionary = PdfDictionary()
             dictionary["Filter"] = PdfName("FlateDecode")
             pdf.pages[i].dictionary["Contents"] = try pdf.add(PdfStream(dictionary, data: PdfFilterEncoders.flate(content)))
         }
-        return OfficePdf(try pdf.saveRewrite(), layout.pages.count, layout.skipped, layout.missing)
+        var skipped = layout.skipped
+        if unreadable > 0 { skipped.append(SkippedFeature(SkippedKinds.unreadablePicture, unreadable)) }
+        return OfficePdf(try pdf.saveRewrite(), layout.pages.count, skipped, layout.missing)
     }
 
     // Everything is rounded to 1/100 point, so that both engines write the same numbers.
@@ -60,9 +73,10 @@ enum OfficePdfWriter {
 
     private static func channel(_ value: Int) -> Double { (Double(value) / 255.0 * 1000).rounded(.toNearestOrAwayFromZero) / 1000 }
 
-    private static func content(_ pdf: PdfDocument, _ page: PdfPage, _ layout: LayoutPage, _ fonts: [FontKey: PdfDrawFont]) throws -> [UInt8] {
+    private static func content(_ pdf: PdfDocument, _ page: PdfPage, _ layout: LayoutPage, _ fonts: [FontKey: PdfDrawFont], _ pictures: [ObjectIdentifier: PdfImage?]) throws -> [UInt8] {
         let writer = ContentWriter()
         var names: [FontKey: String] = [:]
+        var imageNames: [ObjectIdentifier: String] = [:]
         let resources = ContentResources.forEdit(pdf, page)
         var color = -1
         func setColor(_ rgb: Int) {
@@ -76,6 +90,11 @@ enum OfficePdfWriter {
             case .rect(let rect):
                 setColor(rect.color)
                 writer.rect(round2(rect.x), round2(layout.height - rect.y - rect.height), round2(rect.width), round2(rect.height)).fill()
+            case .image(let picture):
+                let id = ObjectIdentifier(picture.source.file)
+                guard let found = pictures[id], let image = found else { continue }
+                if imageNames[id] == nil { imageNames[id] = ContentResources.add(pdf, resources, "XObject", image.reference, "Im") }
+                draw(writer, imageNames[id]!, picture, layout.height)
             case .text(let text):
                 let key = FontKey(family: text.family, style: text.style.rawValue)
                 let font = fonts[key]!
@@ -87,6 +106,21 @@ enum OfficePdfWriter {
             }
         }
         return writer.toArray()
+    }
+
+    // A cropped picture is drawn at the size the whole picture would have and clipped to the visible part.
+    private static func draw(_ writer: ContentWriter, _ name: String, _ box: PlacedImage, _ pageHeight: Double) {
+        let s = box.source
+        let visibleX = 1 - s.cropLeft - s.cropRight, visibleY = 1 - s.cropTop - s.cropBottom
+        let bottom = pageHeight - box.y - box.height
+        if s.cropLeft + s.cropTop + s.cropRight + s.cropBottom == 0 || visibleX < 0.05 || visibleY < 0.05 {
+            writer.paint(name, PdfMatrix(round2(box.width), 0, 0, round2(box.height), round2(box.x), round2(bottom)))
+            return
+        }
+        let width = box.width / visibleX, height = box.height / visibleY
+        writer.save().rect(round2(box.x), round2(bottom), round2(box.width), round2(box.height)).clip()
+        writer.paint(name, PdfMatrix(round2(width), 0, 0, round2(height), round2(box.x - s.cropLeft * width), round2(bottom - s.cropBottom * height)))
+        writer.restore()
     }
 
     // Tw only works on one-byte codes, so the gap after each space is a TJ adjustment.

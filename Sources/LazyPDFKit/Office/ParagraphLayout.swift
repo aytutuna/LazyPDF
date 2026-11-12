@@ -10,6 +10,9 @@ final class Atom {
     var face: FontFace
     var size = 0.0
     var width = 0.0
+    /// For a picture in line: the picture and its height after it was fitted to the line.
+    var picture: LayoutPicture?
+    var pictureHeight = 0.0
     /// From the left edge of the text area.
     var x = 0.0
     /// Space added after the atom by justification.
@@ -69,13 +72,18 @@ enum ParagraphLayout {
     private static let tolerance = 0.01
     private static let tabWidth = 36.0
 
-    static func run(_ paragraph: LayoutParagraph, _ fonts: LayoutFonts, _ areaWidth: Double, _ field: ((LayoutField) -> String)? = nil) throws -> ParagraphLines {
+    /// The code point a picture takes in the text; it breaks like an ideograph.
+    static let objectCode = 0xFFFC
+
+    /// `maxHeight` is the tallest a picture may be, so that one always fits a page.
+    static func run(_ paragraph: LayoutParagraph, _ fonts: LayoutFonts, _ areaWidth: Double, _ maxHeight: Double, _ field: ((LayoutField) -> String)? = nil) throws -> ParagraphLines {
         let result = ParagraphLines(paragraph)
         let atoms = try makeAtoms(paragraph, fonts, field, result)
         if let labelTab = paragraph.labelTab, let labelAtom = atoms.first(where: { $0.isTab }) { labelAtom.stop = labelTab }
         let left = max(0, paragraph.left)
         let first = max(0, paragraph.left + paragraph.firstLine)
         let right = max(areaWidth - max(0, paragraph.right), max(left, first) + 1)
+        fit(atoms, right - min(left, first), maxHeight)
         let justify = paragraph.align == .justify
 
         let breaks = LineBreaker.opportunities(atoms.map { $0.code })
@@ -120,6 +128,15 @@ enum ParagraphLayout {
         return result
     }
 
+    // A picture wider or taller than the room shrinks, keeping its shape.
+    private static func fit(_ atoms: [Atom], _ width: Double, _ height: Double) {
+        for atom in atoms where atom.picture != nil {
+            let scale = min(1, min(max(1, width) / atom.width, max(1, height) / atom.pictureHeight))
+            atom.width *= scale
+            atom.pictureHeight *= scale
+        }
+    }
+
     // The width an atom takes at x. A tab runs to the hanging indent or the next default stop, never past the right edge.
     private static func step(_ atom: Atom, _ x: Double, _ left: Double, _ right: Double, place: Bool) -> Double {
         if !atom.isTab { return atom.width }
@@ -135,11 +152,19 @@ enum ParagraphLayout {
         for run in paragraph.runs {
             let face = try faceOf(run, fonts)
             let runSize = size(run)
+            if let picture = run.picture {
+                let atom = Atom(code: objectCode, run: run, face: face, size: runSize)
+                atom.width = picture.width
+                atom.picture = picture
+                atom.pictureHeight = picture.height
+                atoms.append(atom)
+                continue
+            }
             var text = run.text
             if let field, run.field != .none { text = field(run.field) }
             for scalar in text.unicodeScalars {
                 let code = Int(scalar.value)
-                if code == 0xAD || code == 0x200C || code == 0x200D || code == 0x2060 || code == 0xFEFF || (code < 0x20 && code != 0x09 && code != 0x0A)
+                if code == 0xAD || code == 0x200C || code == 0x200D || code == 0x2060 || code == 0xFEFF || code == objectCode || (code < 0x20 && code != 0x09 && code != 0x0A)
                     || (code >= 0x7F && code < 0xA0) { continue }
                 if (code >= 0x0590 && code <= 0x08FF) || (code >= 0xFB1D && code <= 0xFDFF) || (code >= 0xFE70 && code <= 0xFEFF)
                     || (code >= 0x10800 && code <= 0x10FFF) || (code >= 0x1E800 && code <= 0x1EFFF) {
@@ -204,7 +229,7 @@ enum ParagraphLayout {
         var ascent = 0.0, descent = 0.0
         if !line.atoms.isEmpty {
             for a in line.atoms {
-                ascent = max(ascent, a.runFace.ascent * a.size + max(0, a.run.shift))
+                ascent = max(ascent, (a.picture == nil ? a.runFace.ascent * a.size : a.pictureHeight) + max(0, a.run.shift))
                 descent = max(descent, a.runFace.descent * a.size + max(0, -a.run.shift))
             }
         } else {

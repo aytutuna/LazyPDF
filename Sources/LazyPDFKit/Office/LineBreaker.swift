@@ -7,7 +7,7 @@ import Foundation
 enum LineBreaker {
     private enum Kind {
         case letter, digit, space, tab, newline, zeroWidth, glue, hyphen, after, dash, slash
-        case open, close, quote, currency, ideo, ideoOpen, ideoClose
+        case open, close, quote, currency, ideo, ideoOpen, ideoClose, object
     }
 
     /// Entry i is true when a line may end before code point i. Entry 0 is never true.
@@ -45,6 +45,7 @@ enum LineBreaker {
         case .open, .ideoOpen, .currency, .quote: return false
         default: break
         }
+        if before == .object || after == .object { return true }
         if before == .hyphen {
             guard i >= 2 else { return false }
             let two = kinds[i - 2]
@@ -64,6 +65,7 @@ enum LineBreaker {
         case 0x09: return .tab
         case 0x0A: return .newline
         case 0x200B: return .zeroWidth
+        case ParagraphLayout.objectCode: return .object
         case 0xA0, 0x2007, 0x202F, 0x2011, 0x2060, 0xFEFF: return .glue
         case 0x2D: return .hyphen
         case 0x2010, 0x2012, 0x2013: return .after

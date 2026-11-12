@@ -31,6 +31,7 @@ public struct SkippedFeature: Equatable {
 enum SkippedKinds {
     static let rightToLeftText = "rtl-text"
     static let complexScript = "complex-script"
+    static let unreadablePicture = "picture"
 }
 
 enum LayoutAlign { case left, center, right, justify }
@@ -54,8 +55,38 @@ final class LayoutRun {
     /// Points above the baseline; negative sinks the text. The size is already the reduced one.
     var shift = 0.0
     var field = LayoutField.none
+    /// A picture in line with the text; then the text is empty and the font only sets the descent of the line.
+    var picture: LayoutPicture?
 
     init() {}
+}
+
+/// The bytes of a picture file. A picture used more than once shares one object, which is how the writer finds that it is one image.
+final class PictureFile {
+    let bytes: [UInt8]
+
+    init(_ bytes: [UInt8]) { self.bytes = bytes }
+}
+
+/// A picture file as the document holds it and the size it takes on the page, in points. The crop edges are the fractions of the picture cut off on each side.
+final class LayoutPicture {
+    let file: PictureFile
+    let width: Double
+    let height: Double
+    let cropLeft: Double
+    let cropTop: Double
+    let cropRight: Double
+    let cropBottom: Double
+
+    init(_ file: PictureFile, _ width: Double, _ height: Double, cropLeft: Double = 0, cropTop: Double = 0, cropRight: Double = 0, cropBottom: Double = 0) {
+        self.file = file
+        self.width = width
+        self.height = height
+        self.cropLeft = cropLeft
+        self.cropTop = cropTop
+        self.cropRight = cropRight
+        self.cropBottom = cropBottom
+    }
 }
 
 class LayoutBlock {}
@@ -148,14 +179,40 @@ struct LayoutGeometry {
     var footerDistance = 36.0
 }
 
+enum PageVariant: Int { case standard = 0, first, even }
+
 /// A run of pages with one geometry and one header and footer; it always starts on a new page.
 final class LayoutSection {
     var page = LayoutGeometry()
     var header: [LayoutParagraph] = []
     var footer: [LayoutParagraph] = []
+    /// The first page of the section has its own bands.
+    var titlePage = false
+    /// Even pages, counted from the start of the document, have their own bands.
+    var evenAndOdd = false
+    var firstHeader: [LayoutParagraph] = []
+    var firstFooter: [LayoutParagraph] = []
+    var evenHeader: [LayoutParagraph] = []
+    var evenFooter: [LayoutParagraph] = []
     var blocks: [LayoutBlock] = []
 
     init() {}
+
+    func headerOf(_ variant: PageVariant) -> [LayoutParagraph] {
+        switch variant {
+        case .first: return firstHeader
+        case .even: return evenHeader
+        case .standard: return header
+        }
+    }
+
+    func footerOf(_ variant: PageVariant) -> [LayoutParagraph] {
+        switch variant {
+        case .first: return firstFooter
+        case .even: return evenFooter
+        case .standard: return footer
+        }
+    }
 }
 
 final class LayoutDocument {
@@ -178,6 +235,15 @@ struct PlacedText {
     let spaceExtra: Double
 }
 
+/// A picture with its top left corner at x, y.
+struct PlacedImage {
+    let x: Double
+    let y: Double
+    let width: Double
+    let height: Double
+    let source: LayoutPicture
+}
+
 struct PlacedRect: Hashable {
     let x: Double
     let y: Double
@@ -190,6 +256,7 @@ struct PlacedRect: Hashable {
 enum LayoutBox {
     case text(PlacedText)
     case rect(PlacedRect)
+    case image(PlacedImage)
 }
 
 struct LayoutPage {

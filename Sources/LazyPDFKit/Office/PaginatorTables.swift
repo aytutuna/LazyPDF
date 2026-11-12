@@ -14,10 +14,10 @@ extension Paginator {
         init(_ cells: Int) { taken = [Int](repeating: 0, count: cells) }
     }
 
-    func placeTable(_ table: TableLines, _ section: LayoutSection, _ top: Double, _ bottom: Double) throws {
+    func placeTable(_ table: TableLines, _ section: LayoutSection) throws {
         // Only a page with something on it gains by starting a fresh one.
         var movable = pages[pages.count - 1].hasContent
-        let body = bottom - top
+        let body = pages[pages.count - 1].bottom - pages[pages.count - 1].top
         var progress: RowProgress?
         var i = 0
         while i < table.rows.count {
@@ -34,7 +34,7 @@ extension Paginator {
                     if cut {
                         progress = RowProgress(row.cells.count)
                     } else if movable {
-                        try advanceTable(table, section, top, bottom, i)
+                        try advanceTable(table, section, i)
                         movable = false
                         continue
                     } else {
@@ -69,7 +69,7 @@ extension Paginator {
             }
             if !any {
                 if movable {
-                    try advanceTable(table, section, top, bottom, i)
+                    try advanceTable(table, section, i)
                     movable = false
                     continue
                 }
@@ -99,14 +99,14 @@ extension Paginator {
                 movable = true
                 i = next
             } else {
-                try advanceTable(table, section, top, bottom, i)
+                try advanceTable(table, section, i)
                 movable = false
             }
         }
     }
 
-    private func advanceTable(_ table: TableLines, _ section: LayoutSection, _ top: Double, _ bottom: Double, _ row: Int) throws {
-        try newPage(section, top, bottom, hard: false)
+    private func advanceTable(_ table: TableLines, _ section: LayoutSection, _ row: Int) throws {
+        try newPage(section, hard: false)
         if table.header == 0 || row < table.header { return }
         let page = pages[pages.count - 1]
         Self.placeRows(page, table, 0, table.header, section.page.left)

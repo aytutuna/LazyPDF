@@ -81,7 +81,7 @@ enum TableLayout {
                 let made = CellLines(cell, x: x[from], width: width)
                 let inner = max(1, width - cell.marginLeft - cell.marginRight)
                 for paragraph in cell.paragraphs {
-                    let paragraphLines = try ParagraphLayout.run(paragraph, fonts, inner)
+                    let paragraphLines = try ParagraphLayout.run(paragraph, fonts, inner, bodyHeight)
                     count(paragraphLines)
                     let n = paragraphLines.lines.count
                     for k in 0..<n {
