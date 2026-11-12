@@ -12,7 +12,7 @@ final class RecipientSourceTests: XCTestCase {
     private static let curve = "MIIBdjCCAR2gAwIBAgIUaAHI6EWNDA8p9tPk/orDCauxgmwwCgYIKoZIzj0EAwIwEDEOMAwGA1UEAwwFQ3VydmUwIBcNMjYxMTA5MDAwODM4WhgPMjEyNjEwMTYwMDA4MzhaMBAxDjAMBgNVBAMMBUN1cnZlMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAERIXFnGEtvOPzrS4J1i4qd3m5DwvBGIHWJmrlf+V411mEWMrhDUc5CsPfkCR9ZPWIkM0f5zE/JLr67jmKjH8GYaNTMFEwHQYDVR0OBBYEFJt0tM9egX8t+xHBVJLC3TTz2MjaMB8GA1UdIwQYMBaAFJt0tM9egX8t+xHBVJLC3TTz2MjaMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDRwAwRAIgGaF51i3WYsM+QcQ5u9BMwLYhuWIznGa2FNswuSY8wXcCIGTr6UoGVrFK7hAwmUQP6NJ0xEL+KWTeF4n2/CyGRCDI"
 
     private func rsaCertificate() throws -> [UInt8] {
-        try PdfDigitalId.create("Ada Lovelace", nil, DateTimeOffset(2026, 3, 9, 9, 0, 0), years: 20, keyBits: 2048).rawData
+        try PdfDigitalId.create("Ada Lovelace", nil, DateTimeOffset(2026, 3, 9, 9, 0, 0), years: 20, keyBits: 2048, encipher: true).rawData
     }
 
     private func pem(_ der: [UInt8]) -> [UInt8] {

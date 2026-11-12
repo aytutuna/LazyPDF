@@ -11,15 +11,15 @@ public enum PdfDigitalId {
     private static let pdfSigning = "1.2.840.113583.1.1.5"
 
     /// A certificate for `name` (and `email` when given) valid for `years` from `notBefore`, which is the caller's
-    /// clock. The key is an RSA key of `keyBits`, held by the certificate and not kept in a keychain.
-    public static func create(_ name: String, _ email: String?, _ notBefore: DateTimeOffset, years: Int = 10, keyBits: Int = 3072) throws -> X509Certificate {
+    /// clock. `encipher` adds the key usage that lets others encrypt files for this certificate. The key is an RSA key of `keyBits`, held by the certificate and not kept in a keychain.
+    public static func create(_ name: String, _ email: String?, _ notBefore: DateTimeOffset, years: Int = 10, keyBits: Int = 3072, encipher: Bool = false) throws -> X509Certificate {
         guard let notAfter = notBefore.adding(years: years) else { throw ArgumentException("years") }
         let subject = X509Certificate.name(email.map { $0.isEmpty ? "CN=\(escape(name))" : "CN=\(escape(name)), E=\(escape($0))" } ?? "CN=\(escape(name))")
         let key = try SignatureCrypto.newRsaKey(keyBits)
         let info = try CertificateBuilder.publicKeyInfo(key)
         var extensions = [
             CertificateBuilder.basicConstraints(authority: false),
-            CertificateBuilder.keyUsage([.digitalSignature, .nonRepudiation]),
+            CertificateBuilder.keyUsage(encipher ? [.digitalSignature, .nonRepudiation, .keyEncipherment] : [.digitalSignature, .nonRepudiation]),
             CertificateBuilder.enhancedKeyUsage([emailProtection, pdfSigning]),
             CertificateBuilder.subjectKeyIdentifier(info),
         ]

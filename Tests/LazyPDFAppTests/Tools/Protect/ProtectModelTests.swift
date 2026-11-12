@@ -167,7 +167,7 @@ final class ProtectModelTests: XCTestCase {
 
     #if canImport(Security)
     private func recipient(_ name: String, key: Bool) throws -> Recipient {
-        let made = try PdfDigitalId.create(name, nil, DateTimeOffset(2026, 3, 9, 9, 0, 0), years: 20, keyBits: 2048)
+        let made = try PdfDigitalId.create(name, nil, DateTimeOffset(2026, 3, 9, 9, 0, 0), years: 20, keyBits: 2048, encipher: true)
         if key { return try XCTUnwrap(Recipient(try XCTUnwrap(PdfCertificate(made)))) }
         let sec = try XCTUnwrap(SecCertificateCreateWithData(nil, Data(made.rawData) as CFData))
         return try XCTUnwrap(Recipient(PdfCertificate(certificate: sec)))
@@ -230,7 +230,7 @@ final class ProtectModelTests: XCTestCase {
         let notes = folder.appendingPathComponent("notes.cer")
         try Data("nothing".utf8).write(to: notes)
         let good = folder.appendingPathComponent("ada.cer")
-        try Data(PdfDigitalId.create("Ada", nil, DateTimeOffset(2026, 3, 9, 9, 0, 0), years: 20, keyBits: 2048).rawData).write(to: good)
+        try Data(PdfDigitalId.create("Ada", nil, DateTimeOffset(2026, 3, 9, 9, 0, 0), years: 20, keyBits: 2048, encipher: true).rawData).write(to: good)
         rig.host.picked = [ToolFile(url: notes), ToolFile(url: good)]
 
         await model.addFromFiles()

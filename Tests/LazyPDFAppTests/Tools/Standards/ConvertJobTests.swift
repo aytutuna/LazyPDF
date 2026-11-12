@@ -54,7 +54,7 @@ final class ConvertJobTests: XCTestCase {
 
     #if canImport(Security)
     func test_aFileOpenedWithACertificateIsConvertedNotRefusedAsUnreadable() throws {
-        let alice = try PdfDigitalId.create("Alice", nil, DateTimeOffset(2026, 3, 9, 9, 0, 0), years: 20, keyBits: 2048)
+        let alice = try PdfDigitalId.create("Alice", nil, DateTimeOffset(2026, 3, 9, 9, 0, 0), years: 20, keyBits: 2048, encipher: true)
         let held = try XCTUnwrap(PdfCertificate(alice))
         let security = try PdfSecurity.createPublicKey([PdfRecipient(held)], .aes256)
         let bytes = try PdfDocument.open(Pdfs.text()).saveRewrite(PdfSaveOptions(security: security))

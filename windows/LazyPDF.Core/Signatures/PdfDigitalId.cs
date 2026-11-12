@@ -11,15 +11,15 @@ public static class PdfDigitalId
 
     /// <summary>
     /// A certificate for <paramref name="name"/> (and <paramref name="email"/> when given) valid for <paramref name="years"/>
-    /// from <paramref name="notBefore"/>, which is the caller's clock. The key is an exportable RSA key of <paramref name="keyBits"/>.
+    /// from <paramref name="notBefore"/>, which is the caller's clock. The key is an exportable RSA key of <paramref name="keyBits"/>. <paramref name="encipher"/> adds the key usage that lets others encrypt files for this certificate.
     /// </summary>
-    public static X509Certificate2 Create(string name, string? email, DateTimeOffset notBefore, int years = 10, int keyBits = 3072)
+    public static X509Certificate2 Create(string name, string? email, DateTimeOffset notBefore, int years = 10, int keyBits = 3072, bool encipher = false)
     {
         var subject = new X500DistinguishedName(email is { Length: > 0 } ? $"CN={Escape(name)}, E={Escape(email)}" : $"CN={Escape(name)}");
         using var key = RSA.Create(keyBits);
         var request = new CertificateRequest(subject, key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         request.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
-        request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.NonRepudiation, true));
+        request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.NonRepudiation | (encipher ? X509KeyUsageFlags.KeyEncipherment : 0), true));
         request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension([new Oid(EmailProtection), new Oid(PdfSigning)], false));
         request.CertificateExtensions.Add(new X509SubjectKeyIdentifierExtension(request.PublicKey, false));
         if (email is { Length: > 0 })

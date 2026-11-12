@@ -140,7 +140,7 @@ final class ProtectWorkTests: XCTestCase {
 
     #if canImport(Security)
     private func made(_ name: String) throws -> X509Certificate {
-        try PdfDigitalId.create(name, nil, DateTimeOffset(2026, 3, 9, 9, 0, 0), years: 20, keyBits: 2048)
+        try PdfDigitalId.create(name, nil, DateTimeOffset(2026, 3, 9, 9, 0, 0), years: 20, keyBits: 2048, encipher: true)
     }
 
     private func withKey(_ certificate: X509Certificate) throws -> Recipient {

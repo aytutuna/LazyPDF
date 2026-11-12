@@ -19,7 +19,7 @@ final class MacCertificatesTests: XCTestCase {
     }
 
     static func identity(_ name: String, from: Date = Date().addingTimeInterval(-86400), years: Int = 1) throws -> X509Certificate {
-        try PdfDigitalId.create(name, nil, at(from), years: years, keyBits: 2048)
+        try PdfDigitalId.create(name, nil, at(from), years: years, keyBits: 2048, encipher: true)
     }
 
     private func pfx(_ name: String, from: Date = Date().addingTimeInterval(-86400), years: Int = 1, password: String = "pw") throws -> [UInt8] {
