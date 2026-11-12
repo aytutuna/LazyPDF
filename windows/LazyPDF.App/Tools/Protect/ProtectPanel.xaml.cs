@@ -250,6 +250,11 @@ public partial class ProtectPanel : ToolPanel
             host.ShowProblem(new Problem(Loc.T("Protection is locked"), Loc.T("Enter the permissions password, then try again.")));
             return;
         }
+        catch (ArgumentException e) when (mode == ProtectMode.Certificates)
+        {
+            host.ShowProblem(new Problem(Loc.T("Could not protect the file"), e.Message.Split(" (Parameter")[0]));
+            return;
+        }
         catch (Exception e) when (e is PdfReadException or InvalidDataException or System.Security.Cryptography.CryptographicException)
         {
             host.ShowProblem(new Problem(Loc.T("Could not protect the file"), Loc.T("The file could not be rewritten. Save a copy, then protect that.")));
