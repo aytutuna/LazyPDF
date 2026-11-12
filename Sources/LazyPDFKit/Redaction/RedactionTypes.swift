@@ -114,8 +114,12 @@ public struct PageRedaction {
     /// The annotations and fields whose text was rewritten.
     public internal(set) var values: Int
 
-    public init(_ page: Int, _ glyphs: Int, _ images: Int, _ paths: Int, _ annotations: Int, _ fields: Int, _ values: Int = 0) {
+    /// The pictures (already in `images`) that could not be cut and were removed whole.
+    public let wholeImages: Int
+
+    public init(_ page: Int, _ glyphs: Int, _ images: Int, _ paths: Int, _ annotations: Int, _ fields: Int, _ values: Int = 0, wholeImages: Int = 0) {
         self.values = values
+        self.wholeImages = wholeImages
         self.page = page
         self.glyphs = glyphs
         self.images = images
@@ -153,6 +157,7 @@ public struct RedactionReport: CustomStringConvertible {
     public var description: String {
         var lines = pages.filter { !$0.isEmpty }.map { RedactionText.line($0) }
         if lines.isEmpty && flattened.isEmpty { lines.append(RedactionText.nothingFound) }
+        lines.append(contentsOf: pages.filter { $0.wholeImages > 0 }.map { RedactionText.wholePicture($0.page, $0.wholeImages) })
         lines.append(contentsOf: flattened.map { RedactionText.flattened($0) })
         lines.append(contentsOf: findings.map { $0.changed ? RedactionText.metadataChanged($0.where) : RedactionText.metadataHolds($0.where) })
         if signaturesRemoved > 0 { lines.append(RedactionText.signaturesGone(signaturesRemoved)) }

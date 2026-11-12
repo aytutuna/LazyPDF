@@ -37,6 +37,7 @@ final class RedactImageTests: XCTestCase {
         for i in [0, 1, 8, 9] { expected[i] = 0 }
         XCTAssertEqual(try samples(output), expected)
         XCTAssertEqual(result.report.images, 1)
+        XCTAssertEqual(result.report.pages[0].wholeImages, 0)
     }
 
     func test_theCoveredPixelsAreNotInTheFileAnywhere() throws {
@@ -140,6 +141,7 @@ final class RedactImageTests: XCTestCase {
         XCTAssertTrue(RedactionKit.images(output).isEmpty)
         XCTAssertTrue(imageStreams(output).isEmpty)
         XCTAssertEqual(result.report.images, 1)
+        XCTAssertEqual(result.report.pages[0].wholeImages, 1)
     }
 
     func test_failedDecodeRemovesTheImage() throws {
@@ -148,6 +150,8 @@ final class RedactImageTests: XCTestCase {
         let output = try RedactionKit.open(result)
         XCTAssertTrue(RedactionKit.images(output).isEmpty)
         XCTAssertTrue(imageStreams(output).isEmpty)
+        XCTAssertEqual(result.report.pages[0].wholeImages, 1)
+        XCTAssertTrue(result.report.description.contains(RedactionText.wholePicture(0, 1)))
     }
 
     func test_pictureThatCannotBeDecodedIsRemoved() throws {
@@ -161,6 +165,7 @@ final class RedactImageTests: XCTestCase {
                 XCTAssertTrue(RedactionKit.images(output).isEmpty, filter)
                 XCTAssertTrue(imageStreams(output).isEmpty, filter)
                 XCTAssertEqual(result.report.images, 1, filter)
+                XCTAssertEqual(result.report.pages[0].wholeImages, 1, filter)
             }
         }
     }

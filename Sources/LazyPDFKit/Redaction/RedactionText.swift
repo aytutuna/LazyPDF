@@ -20,6 +20,10 @@ public enum RedactionText {
         return L10n.t("Page {0}: removed {1}.", p.page + 1, parts.joined(separator: ", "))
     }
 
+    public static func wholePicture(_ page: Int, _ count: Int) -> String {
+        L10n.plural(count, one: "A picture on page {1} that could not be read was removed whole.", other: "{0} pictures on page {1} that could not be read were removed whole.", page + 1)
+    }
+
     public static func needsPicture(_ page: Int) -> String {
         L10n.t("Page {0} cannot be redacted as text. It needs a page renderer to be turned into a picture.", page + 1)
     }

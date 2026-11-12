@@ -127,6 +127,9 @@
   <data name="A path that clips cannot be changed." xml:space="preserve">
     <value>Kırpan bir yol değiştirilemez.</value>
   </data>
+  <data name="A picture on page {1} that could not be read was removed whole.|plural" xml:space="preserve">
+    <value>{1}. sayfada okunamayan {0} resim bütünüyle kaldırıldı.</value>
+  </data>
   <data name="A property with no value is not kept." xml:space="preserve">
     <value>Değeri olmayan özellik saklanmaz.</value>
   </data>

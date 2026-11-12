@@ -707,6 +707,10 @@
   "Page {0}: removed {1}.": {
     "tr": "Sayfa {0}: {1} kaldırıldı."
   },
+  "A picture on page {1} that could not be read was removed whole.": {
+    "other": "{0} pictures on page {1} that could not be read were removed whole.",
+    "tr": "{1}. sayfada okunamayan {0} resim bütünüyle kaldırıldı."
+  },
   "Page {0} cannot be redacted as text. It needs a page renderer to be turned into a picture.": {
     "tr": "Sayfa {0} metin olarak karartılamaz. Resme çevrilmesi için sayfa çizicisi gerekir."
   },

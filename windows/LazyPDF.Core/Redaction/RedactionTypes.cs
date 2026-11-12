@@ -62,8 +62,8 @@ public sealed record RedactionVerification(IReadOnlyList<string> Problems)
 /// <summary>A place outside the page content that held removed text.</summary>
 public sealed record RedactionFinding(string Where, bool Changed);
 
-/// <summary>What was taken out of one page. <paramref name="Values"/> counts the annotations and fields whose text was rewritten.</summary>
-public sealed record PageRedaction(int Page, int Glyphs, int Images, int Paths, int Annotations, int Fields, int Values = 0)
+/// <summary>What was taken out of one page. <paramref name="Values"/> counts the annotations and fields whose text was rewritten; <paramref name="WholeImages"/> the pictures (already in <paramref name="Images"/>) that could not be cut and were removed whole.</summary>
+public sealed record PageRedaction(int Page, int Glyphs, int Images, int Paths, int Annotations, int Fields, int Values = 0, int WholeImages = 0)
 {
     public bool IsEmpty => Glyphs + Images + Paths + Annotations + Fields + Values == 0;
 }
@@ -85,6 +85,7 @@ public sealed record RedactionReport(IReadOnlyList<PageRedaction> Pages, IReadOn
     {
         var lines = Pages.Where(p => !p.IsEmpty).Select(RedactionText.Line).ToList();
         if (lines.Count == 0 && Flattened.Count == 0) lines.Add(RedactionText.NothingFound);
+        lines.AddRange(Pages.Where(p => p.WholeImages > 0).Select(p => RedactionText.WholePicture(p.Page, p.WholeImages)));
         lines.AddRange(Flattened.Select(RedactionText.Flattened));
         lines.AddRange(Findings.Select(f => f.Changed ? RedactionText.MetadataChanged(f.Where) : RedactionText.MetadataHolds(f.Where)));
         if (SignaturesRemoved > 0) lines.Add(RedactionText.SignaturesGone(SignaturesRemoved));

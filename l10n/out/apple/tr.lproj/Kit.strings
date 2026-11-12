@@ -32,6 +32,8 @@
 "A page has an /AA entry." = "Bir sayfada /AA girdisi var.";
 "A page or form has a transparency group." = "Bir sayfada ya da formda saydamlık grubu var.";
 "A path that clips cannot be changed." = "Kırpan bir yol değiştirilemez.";
+"A picture on page {1} that could not be read was removed whole.|one" = "{1}. sayfada okunamayan {0} resim bütünüyle kaldırıldı.";
+"A picture on page {1} that could not be read was removed whole.|other" = "{1}. sayfada okunamayan {0} resim bütünüyle kaldırıldı.";
 "A protected file cannot open as a copy. Save the signed version, then open it." = "Korumalı bir dosya kopya olarak açılamaz. İmzalı sürümü kaydedip sonra açın.";
 "A red outline marks a required field that is empty." = "Kırmızı çerçeve, boş bırakılmış zorunlu alanı gösterir.";
 "A saved copy cannot be brought back." = "Kayıtlı kopya geri getirilemez.";
@@ -160,6 +162,8 @@
 "Ask the signer to sign again with SHA-256." = "İmzalayandan SHA-256 ile yeniden imzalamasını isteyin.";
 "Ask the signer to sign again with an RSA key of 2048 bits or more, or an ECDSA key on P-256 or a stronger curve." = "İmzalayandan en az 2048 bitlik bir RSA anahtarıyla ya da P-256 veya daha güçlü bir eğri üzerinde bir ECDSA anahtarıyla yeniden imzalamasını isteyin.";
 "Ask the signer to sign again with the certificate included." = "İmzalayandan sertifikayı da ekleyerek yeniden imzalamasını isteyin.";
+"Ask them" = "Sor";
+"Asking the certificate servers" = "Sertifika sunucularına soruluyor";
 "Asks the certificate servers for proof and stores it in the file." = "Sertifika sunucularından kanıt ister ve dosyaya kaydeder.";
 "Asks the servers the certificates name for the certificate of an issuer. The file is not sent." = "Sertifikaların bildirdiği sunuculardan bir vericinin sertifikasını ister. Dosya gönderilmez.";
 "At the end" = "Sona";
@@ -797,6 +801,7 @@
 "Lazy PDF Help" = "Lazy PDF Yardımı";
 "Lazy PDF cannot change this form. Try an earlier copy of the file." = "Lazy PDF bu formu değiştiremiyor. Dosyanın önceki bir kopyasını deneyin.";
 "Lazy PDF closed before these were saved. Restore them to carry on where you were." = "Lazy PDF bunlar kaydedilmeden kapandı. Kaldığınız yerden devam etmek için geri yükleyin.";
+"Lazy PDF will contact {0}. Servers named by certificates found on the way may be asked too. The file itself is not sent." = "Lazy PDF şu sunuculara bağlanacak: {0}. Yol üzerinde bulunan sertifikalarda adı geçen sunuculara da sorulabilir. Dosyanın kendisi gönderilmez.";
 "Lazy Print" = "Lazy Print";
 "Lazy Scan" = "Lazy Scan";
 "Lazy Scan could not be opened. Open it yourself, or reinstall it." = "Lazy Scan açılamadı. Kendiniz açın ya da yeniden yükleyin.";
@@ -1693,6 +1698,7 @@
 "The certificate could not be shown." = "Sertifika gösterilemedi.";
 "The certificate has expired since." = "Sertifikanın süresi sonradan doldu.";
 "The certificate is added to your keychain so you can use it again." = "Sertifika, yeniden kullanabilmeniz için anahtar zincirinize eklenir.";
+"The certificates name no servers to ask." = "Sertifikalar sorulacak bir sunucu belirtmiyor.";
 "The change could not be written. Save a copy of the file and try again." = "Değişiklik yazılamadı. Dosyanın bir kopyasını kaydedip yeniden deneyin.";
 "The clipboard holds a picture." = "Panoda resim var.";
 "The clipboard holds text." = "Panoda metin var.";
@@ -1883,6 +1889,7 @@
 "These limits are a request, not a lock. Some programs ignore them. Only a password to open keeps the file private." = "Bu sınırlar bir istektir, kilit değildir. Bazı programlar bunları yok sayar. Dosyayı yalnızca açma parolası gizli tutar.";
 "These limits are a request, not a lock. Some programs ignore them. Only the certificates keep the file private." = "Bu sınırlar bir istektir, kilit değildir. Bazı programlar yok sayar. Dosyayı yalnızca sertifikalar gizli tutar.";
 "These pages" = "Şu sayfalar";
+"These servers will be asked" = "Bu sunuculara sorulacak";
 "These settings cannot make this file smaller. Try the Small preset." = "Bu ayarlarla dosya küçülmüyor. Küçük ayarını deneyin.";
 "They could not be written to the file. Nothing was changed." = "Dosyaya yazılamadılar. Hiçbir şey değiştirilmedi.";
 "Third-party notices" = "Üçüncü taraf bildirimleri";
@@ -2122,6 +2129,7 @@
 "{0} %" = "%{0}";
 "{0} (clean)" = "{0} (temiz)";
 "{0} (filtered)" = "{0} (süzülmüş)";
+"{0} (not encrypted)" = "{0} (şifrelenmemiş)";
 "{0} (redacted).pdf" = "{0} (karartılmış).pdf";
 "{0} (signed by {1})" = "{0} ({1} imzaladı)";
 "{0} (signed)" = "{0} (imzalı)";

@@ -53,6 +53,7 @@ extension PdfRedactor {
                     _ needles: inout NeedleSet, _ painted: inout Set<Int>, _ flattened: inout [Int]) throws -> (PageRedaction, RedactionStructure.Tagged.Value) {
         let (page, marks, areas) = (plan.page, plan.marks, plan.areas)
         if plan.understood, let scan = plan.scan {
+            let wholeBefore = rewriter.wholeImages
             var content = RedactionResources.dropIdleFonts(try rewriter.rewrite(scan.root, page.contents(), page.dictionary, page.resources, false))
             var fontName = ""
             if let font, marks.contains(where: { !($0.overlayText ?? options.overlayText ?? "").isEmpty }) {
@@ -69,7 +70,7 @@ extension PdfRedactor {
                 for (key, _) in page.dictionary.entries where !Self.pageKeys.contains(key) { page.dictionary.remove(key) }
                 let (annotations, fields) = try Self.removeAnnotations(work, page, { a in areas.contains { Geometry.touches(a.rect, $0) } }, &needles, false)
                 _ = Self.keepPainted(work, page, walk, &painted)
-                return (PageRedaction(page.index, scan.glyphs, scan.images, scan.paths, annotations, fields), scan.marked)
+                return (PageRedaction(page.index, scan.glyphs, scan.images, scan.paths, annotations, fields, wholeImages: rewriter.wholeImages - wholeBefore), scan.marked)
             }
         }
         if options.renderer == nil { throw InvalidOperationException(RedactionText.needsPicture(page.index)) }

@@ -36,6 +36,9 @@ final class ContentRewriter {
     /// The images and forms that were copied, for the tag tree: an item that still names the original would keep it.
     var replaced = RedactionObjects.Identities()
 
+    /// How many placements were removed whole because the picture could not be cut.
+    private(set) var wholeImages = 0
+
     /// A resource dictionary of one's own to add names to: the categories are copied, what they point at is shared.
     func privateResources(_ resources: PdfDictionary?) -> PdfDictionary {
         let copy = resources?.copy() ?? PdfDictionary()
@@ -79,6 +82,7 @@ final class ContentRewriter {
                 if let reference = images.redact(image.image, image.areas, image.matrix) {
                     replace(index, Self.use(ContentResources.add(document, resources, "XObject", reference, "Rd")))
                 } else {
+                    wholeImages += 1
                     replace(index, "")
                 }
             default:

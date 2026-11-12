@@ -37,6 +37,7 @@ public class RedactImageTests
         foreach (int i in new[] { 0, 1, 8, 9 }) expected[i] = 0;
         Assert.Equal(expected, Samples(output));
         Assert.Equal(1, result.Report.Images);
+        Assert.Equal(0, result.Report.Pages.Single().WholeImages);
     }
 
     [Fact]
@@ -145,6 +146,7 @@ public class RedactImageTests
         Assert.Empty(RedactionKit.Images(output));
         Assert.Empty(ImageStreams(output));
         Assert.Equal(1, result.Report.Images);
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
     }
 
     [Fact]
@@ -157,6 +159,8 @@ public class RedactImageTests
         using var output = RedactionKit.Open(result);
         Assert.Empty(RedactionKit.Images(output));
         Assert.Empty(ImageStreams(output));
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
+        Assert.Contains(RedactionText.WholePicture(0, 1), result.Report.ToString());
     }
 
     [Theory]
@@ -173,6 +177,7 @@ public class RedactImageTests
         Assert.Empty(RedactionKit.Images(output));
         Assert.Empty(ImageStreams(output));
         Assert.Equal(1, result.Report.Images);
+        Assert.Equal(1, result.Report.Pages.Single().WholeImages);
     }
 
     [Fact]
