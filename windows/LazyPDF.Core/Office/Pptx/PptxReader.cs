@@ -210,6 +210,16 @@ internal sealed partial class PptxReader
         {
             if (layout.ShowMasterShapes) shapes.AddRange(Inherited(master, master, colors, overridden, ref layout.MasterShapes));
             shapes.AddRange(Inherited(layout, master, colors, overridden, ref layout.Shapes));
+            // Shared shapes are read once but laid out on every slide, so their text counts again here.
+            foreach (var shape in shapes)
+            {
+                if (shape.Body is null) continue;
+                foreach (var paragraph in shape.Body.Paragraphs)
+                {
+                    foreach (var run in paragraph.Runs) _totalText += run.Text.Length;
+                }
+            }
+            if (_totalText > _limits.MaxTotalText) throw new PdfReadException(PdfReadProblem.Unsupported, "The presentation has too much text.");
         }
         shapes.AddRange(Shapes(root, new Scope(layout, master, colors, true, relationships), place: true));
         _drawn += shapes.Count;

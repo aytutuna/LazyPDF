@@ -188,6 +188,15 @@ public class PptxTests
     }
 
     [Fact]
+    public void SharedMasterTextCountsTowardTheTotalOnEverySlide()
+    {
+        var master = "@master1\n<p:cSld><p:spTree>" + Box("M", "mark") + Box("N", "mark") + "</p:spTree></p:cSld>\n";
+        var package = PptxSpec.One(master + "@slide1\n<p:cSld><p:spTree/></p:cSld>\n@slide2\n<p:cSld><p:spTree/></p:cSld>\n");
+        Layout(package, new PptxLimits(MaxTotalText: 24));
+        Assert.Equal(PdfReadProblem.Unsupported, Problem(() => Layout(package, new PptxLimits(MaxTotalText: 23))));
+    }
+
+    [Fact]
     public void ASlideWhoseLayoutRelationshipPointsAtAMasterIsStillDrawn()
     {
         var package = PptxSpec.One("@slide1\n<p:cSld><p:spTree/></p:cSld>\n@slide2 layout=/../../slideMasters/slideMaster1\n<p:cSld><p:spTree>" + Box("A", "kept") + "</p:spTree></p:cSld>\n");

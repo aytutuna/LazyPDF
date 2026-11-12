@@ -157,6 +157,13 @@ final class PptxTests: XCTestCase {
         XCTAssertEqual(problem { _ = try layout(package, PptxLimits(maxDrawnShapes: 3)) }, .unsupported)
     }
 
+    func test_sharedMasterTextCountsTowardTheTotalOnEverySlide() throws {
+        let master = "@master1\n<p:cSld><p:spTree>" + box("M", "mark") + box("N", "mark") + "</p:spTree></p:cSld>\n"
+        let package = try PptxSpec.one(master + "@slide1\n<p:cSld><p:spTree/></p:cSld>\n@slide2\n<p:cSld><p:spTree/></p:cSld>\n")
+        _ = try layout(package, PptxLimits(maxTotalText: 24))
+        XCTAssertEqual(problem { _ = try layout(package, PptxLimits(maxTotalText: 23)) }, .unsupported)
+    }
+
     func test_aSlideWhoseLayoutRelationshipPointsAtAMasterIsStillDrawn() throws {
         let package = try PptxSpec.one("@slide1\n<p:cSld><p:spTree/></p:cSld>\n@slide2 layout=/../../slideMasters/slideMaster1\n<p:cSld><p:spTree>" + box("A", "kept") + "</p:spTree></p:cSld>\n");
         let pages = try layout(package).pages

@@ -239,6 +239,14 @@ final class PptxReader {
                 shapes.append(contentsOf: try inherited(master, master, colors, overridden, &layout.masterShapes))
             }
             shapes.append(contentsOf: try inherited(layout, master, colors, overridden, &layout.shapes))
+            // Shared shapes are read once but laid out on every slide, so their text counts again here.
+            for shape in shapes {
+                guard let body = shape.body else { continue }
+                for paragraph in body.paragraphs {
+                    for run in paragraph.runs { totalText += run.text.utf16.count }
+                }
+            }
+            if totalText > limits.maxTotalText { throw PdfReadException(.unsupported, "The presentation has too much text.") }
         }
         shapes.append(contentsOf: try slideShapes(root, Scope(layout: layout, master: master, colors: colors, isSlide: true, relationships: relationships)))
         drawn += shapes.count
