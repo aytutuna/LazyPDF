@@ -21,7 +21,7 @@ struct CreatePanelView: View {
                     Text(L10n.t("Blank pages")).tag(CreateFrom.blank)
                     Text(L10n.t("Pictures")).tag(CreateFrom.pictures)
                     Text(L10n.t("Text")).tag(CreateFrom.text)
-                    Text(L10n.t("A Word file (.docx)")).tag(CreateFrom.word)
+                    Text(L10n.t("A Word, Excel or PowerPoint file")).tag(CreateFrom.office)
                     Text(L10n.t("Clipboard")).tag(CreateFrom.clipboard)
                     if model.offersWebPage { Text(L10n.t("Web page")).tag(CreateFrom.webPage) }
                 }
@@ -31,7 +31,7 @@ struct CreatePanelView: View {
             case .blank: blank(model)
             case .pictures: pictures(model)
             case .text: text(model)
-            case .word: word(model)
+            case .office: office(model)
             case .webPage: webPage(model)
             case .clipboard: Label(model.clipboardState, systemImage: "doc.on.clipboard").font(.caption).foregroundStyle(.secondary)
                 .accessibilityAddTraits(.updatesFrequently)
@@ -133,9 +133,9 @@ struct CreatePanelView: View {
     }
 
     @ViewBuilder
-    private func word(_ model: CreateModel) -> some View {
-        Button { Task { await model.chooseWord() } } label: { Label(L10n.t("Choose a Word file"), systemImage: "doc.richtext") }
-        Text(model.wordFile?.url.lastPathComponent ?? L10n.t("Layout can differ from Word."))
+    private func office(_ model: CreateModel) -> some View {
+        Button { Task { await model.chooseOffice() } } label: { Label(L10n.t("Choose a file"), systemImage: "doc.richtext") }
+        Text(model.officeFile?.url.lastPathComponent ?? L10n.t("Layout can differ from the original."))
             .font(.caption)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)

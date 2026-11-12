@@ -6,7 +6,7 @@ import LazyPDFKit
 // pasteboard and opens it in a tab of its own. It is not tied to a document, so the Home tile presents it in a sheet and the
 // tool strip shows it beside the document in view; the pictures chosen are kept with their grants while they are listed.
 
-public enum CreateFrom: Int, CaseIterable { case blank, pictures, text, word, clipboard, webPage }
+public enum CreateFrom: Int, CaseIterable { case blank, pictures, text, office, clipboard, webPage }
 
 public enum CreatePaper: String, Codable, Equatable { case a4, a3, a5, letter, legal, custom, picture }
 
@@ -32,7 +32,7 @@ public final class CreateModel {
     public var selection: UUID?
     public private(set) var webPage: ToolFile?
     public var typedText = ""
-    public private(set) var wordFile: ToolFile?
+    public private(set) var officeFile: ToolFile?
     public private(set) var clipboard = ClipboardKind.nothing
     public private(set) var fileProblem: String?
     public var paper = CreatePaper.a4 {
@@ -129,7 +129,7 @@ public final class CreateModel {
         case .blank: return blankCount != nil && customFits
         case .pictures: return !pictures.isEmpty && customFits
         case .text: return !typedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && customFits
-        case .word: return wordFile != nil
+        case .office: return officeFile != nil
         case .clipboard: return clipboard != .nothing && customFits
         case .webPage: return webPage != nil && customFits
         }
@@ -149,7 +149,7 @@ public final class CreateModel {
         }
     }
 
-    public var showsSetup: Bool { from == .clipboard ? clipboard != .nothing : from != .word }
+    public var showsSetup: Bool { from == .clipboard ? clipboard != .nothing : from != .office }
     public var showsMargin: Bool { from != .blank }
     public var offersWebPage: Bool { web != nil }
     public var orientationEnabled: Bool { paper != .picture }
@@ -204,10 +204,10 @@ public final class CreateModel {
 
     public var canMoveDown: Bool { pictures.firstIndex(where: { $0.id == selection }).map { $0 < pictures.count - 1 } ?? false }
 
-    public func chooseWord() async {
-        guard let host, let file = await host.filePicker.pickFiles([.word], multiple: false).first else { return }
-        wordFile?.access?.stop()
-        wordFile = file
+    public func chooseOffice() async {
+        guard let host, let file = await host.filePicker.pickFiles([.office], multiple: false).first else { return }
+        officeFile?.access?.stop()
+        officeFile = file
         fileProblem = nil
     }
 
@@ -266,9 +266,9 @@ public final class CreateModel {
             return CreateRequest(.pictures, setup, title, files: pictures.map { $0.file.url })
         case .text:
             return CreateRequest(.text, setup, L10n.t("Text.pdf"), text: typedText, fontSize: fontSize)
-        case .word:
-            guard let url = wordFile?.url else { return nil }
-            return CreateRequest(.word, setup, (url.lastPathComponent as NSString).deletingPathExtension + ".pdf", files: [url])
+        case .office:
+            guard let url = officeFile?.url else { return nil }
+            return CreateRequest(.office, setup, (url.lastPathComponent as NSString).deletingPathExtension + ".pdf", files: [url])
         case .clipboard:
             let content = host.map { ClipboardContent.read($0.clipboard) }
             if let text = content?.text { return CreateRequest(.text, setup, L10n.t("Clipboard.pdf"), text: text, fontSize: fontSize) }

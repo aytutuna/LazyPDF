@@ -3,9 +3,9 @@ import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Tools/Create/PdfMaker.cs, CreateJob.cs and CreateProblems.cs.
 
-public enum CreateSource { case blank, pictures, text, web, word }
+public enum CreateSource { case blank, pictures, text, web, office }
 
-/// `files` are picture files to read, in page order, or the one Word file; `picture` is one already in memory that stands for them: the pasteboard's.
+/// `files` are picture files to read, in page order, or the one Office file; `picture` is one already in memory that stands for them: the pasteboard's.
 public struct CreateRequest {
     public var source: CreateSource
     public var setup: PdfPageSetup
@@ -39,7 +39,7 @@ public struct MadePdf {
     /// True when a web page named parts from the internet that were left out.
     public let leftOutRemote: Bool
 
-    /// What a Word file had that the converter left out.
+    /// What an Office file had that the converter left out.
     public let skipped: [SkippedFeature]
 
     init(bytes: [UInt8], pages: Int, unreadable: Int, tooLarge: Int = 0, leftOutRemote: Bool = false, skipped: [SkippedFeature] = []) {
@@ -54,7 +54,7 @@ public struct MadePdf {
 
 public enum PdfMaker {
     public static let mostBlankPages = 500
-    public static let mostWordBytes = 100 << 20
+    public static let mostOfficeBytes = 100 << 20
 
     /// The engine calls stop through the task `ToolDocuments.run` cancels; the token is also looked at between the files read.
     public static func make(_ request: CreateRequest, _ codec: ImageCodec, _ fonts: FontSource?, _ token: CancelToken = CancelToken()) throws -> MadePdf {
@@ -75,13 +75,17 @@ public enum PdfMaker {
             }
             let pictures = try PdfFromPictures.create(files, codec, request.setup)
             return MadePdf(bytes: pictures.bytes, pages: pictures.pages, unreadable: pictures.unreadable.count, tooLarge: pictures.skippedFrames)
-        case .word:
+        case .office:
             let url = request.files[0]
             try token.throwIfCancelled()
             let size = (try FileManager.default.attributesOfItem(atPath: url.path)[.size] as? NSNumber)?.intValue ?? 0
-            if size > mostWordBytes { throw PdfReadException(.unsupported, "The Word file is over the size limit.") }
-            let word = try OfficeConverter.fromWord([UInt8](try Data(contentsOf: url)), OfficeFontSource(installed: fonts, bundled: BundledFontSource()), codec)
-            return MadePdf(bytes: word.bytes, pages: word.pages, unreadable: word.missing.count, skipped: word.skipped)
+            if size > mostOfficeBytes { throw PdfReadException(.unsupported, "The file is over the size limit.") }
+            let source = OfficeFontSource(installed: fonts, bundled: BundledFontSource())
+            let bytes = [UInt8](try Data(contentsOf: url))
+            let made = FileKinds.officeApp(url) == .excel
+                ? try OfficeConverter.fromExcel(bytes, source, fileName: url.lastPathComponent)
+                : try OfficeConverter.fromWord(bytes, source, codec)
+            return MadePdf(bytes: made.bytes, pages: made.pages, unreadable: made.missing.count, skipped: made.skipped)
         case .text:
             let text = try PdfFromText.create(request.text, fonts: fonts, setup: request.setup, size: request.fontSize)
             return MadePdf(bytes: text.bytes, pages: text.pages, unreadable: text.missing.count)
@@ -105,14 +109,14 @@ public enum CreateJob {
                 }
             }
         } catch let error where error is ArgumentException || error is InvalidOperationException || error is WebPageError || error is PdfReadException || Problems.isFileSystem(error) {
-            host.showProblem(CreateProblems.failed(error, request.source))
+            host.showProblem(CreateProblems.failed(error, request))
             return
         }
         guard let made else { return }
 
         await host.openNew(made.bytes, title: request.title, password: nil, certificate: nil)
-        if request.source == .word {
-            host.showNotice(L10n.t("Made without Office"), WordNotice.text(made), nil)
+        if request.source == .office {
+            host.showNotice(L10n.t("Made without Office"), OfficeNotice.text(made, FileKinds.officeApp(request.files[0])), nil)
             return
         }
         var parts: [String] = []
@@ -147,7 +151,9 @@ extension CreateJob {
 }
 
 enum CreateProblems {
-    static func failed(_ error: Error, _ source: CreateSource) -> Problem {
+    static func failed(_ error: Error, _ request: CreateRequest) -> Problem {
+        let source = request.source
+        let excel = source == .office && FileKinds.officeApp(request.files[0]) == .excel
         if source == .web {
             switch error as? WebPageError ?? .couldNotLoad {
             case .tooBig: return Problem(L10n.t("Page is too big"), L10n.t("The web page file is over 20 MB. Pick a smaller one."))
@@ -157,14 +163,19 @@ enum CreateProblems {
             }
         }
         if let error = error as? PdfReadException {
+            if excel {
+                return error.problem == .damaged
+                    ? Problem(L10n.t("Excel file cannot be read"), L10n.t("The file is damaged or is not an Excel workbook. Pick an .xlsx file."))
+                    : Problem(L10n.t("Excel file is not supported"), L10n.t("The workbook cannot be made into a PDF. Only .xlsx files up to 100 MB with something to print can be; older .xls and .xlsb files must be saved as .xlsx first."))
+            }
             return error.problem == .damaged
                 ? Problem(L10n.t("Word file cannot be read"), L10n.t("The file is damaged or is not a Word document. Pick a .docx file."))
                 : Problem(L10n.t("Word file is not supported"), L10n.t("Only .docx files up to 100 MB can be made into a PDF. Older .doc files must be saved as .docx first."))
         }
-        if source == .word && !(error is InvalidOperationException || error is ArgumentException) {
+        if source == .office && !(error is InvalidOperationException || error is ArgumentException) {
             return Problems.isNoAccess(error)
                 ? Problem(L10n.t("No access"), L10n.t("The system does not let Lazy PDF read the file. Check who may open it."))
-                : Problem(L10n.t("Word file cannot be read"), L10n.t("The file could not be read. Close any program that has it open and try again."))
+                : Problem(excel ? L10n.t("Excel file cannot be read") : L10n.t("Word file cannot be read"), L10n.t("The file could not be read. Close any program that has it open and try again."))
         }
         if error is InvalidOperationException {
             return Problem(L10n.t("No font for this text"), L10n.t("No font on this computer can draw the text. Remove the letters it cannot show."))
