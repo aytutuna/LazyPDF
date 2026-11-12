@@ -214,15 +214,18 @@ final class SignaturesModelTests: XCTestCase {
 
         let dir = TempDir(self)
         let tab = try PanelPdfs.tab(file)
-        let model = SignaturesModel(trust: SignatureTrust(directory: dir.url), transport: { SilentTransport() })
+        let transport = SilentTransport()
+        let model = SignaturesModel(trust: SignatureTrust(directory: dir.url), transport: { transport })
         model.attach(tab, PanelViewer(tab), RecordingHost())
         await model.check().value
         XCTAssertNotEqual(model.note, "Checked with the certificate servers just now. The file is not changed.")
         XCTAssertTrue(model.canAskServers)
+        XCTAssertEqual(transport.requests, 0)
 
+        // A self-signed signer names no server, so nothing is asked and the note does not claim it was.
         model.askServers()
-        await settle { model.note?.hasPrefix("Checked with the certificate servers just now.") == true }
-        XCTAssertTrue(model.note?.hasSuffix("No connection.") == true)
+        await settle { model.note == "The certificates name no servers to ask." }
+        XCTAssertEqual(transport.requests, 0)
     }
 
     func test_theSignersCertificateIsHandedToTheView() async throws {
@@ -292,6 +295,7 @@ final class SignaturesModelTests: XCTestCase {
 private final class SilentTransport: SigningTransport {
     var lastFailure: String? { "No connection." }
     func post(_ url: String, _ contentType: String, _ body: [UInt8]) -> [UInt8]? { nil }
-    func get(_ url: String) -> [UInt8]? { nil }
+    func get(_ url: String) -> [UInt8]? { requests += 1; return nil }
     func cancel() {}
+    var requests = 0
 }

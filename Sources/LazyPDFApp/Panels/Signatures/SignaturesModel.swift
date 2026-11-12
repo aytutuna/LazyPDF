@@ -4,6 +4,30 @@ import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Panels/Signatures/SignaturesSidePanel.xaml.cs and SignaturesSidePanel.Trust.cs.
 
+/// Counts the requests the check makes, since the engine asks only when a chain is missing a certificate that a server could
+/// give; a signer with nothing to fetch must not be reported as checked with the servers.
+private final class CountingTransport: SigningTransport, @unchecked Sendable {
+    private let inner: SigningTransport
+    private let lock = NSLock()
+    private var count = 0
+
+    init(_ inner: SigningTransport) { self.inner = inner }
+
+    var requests: Int { lock.withLock { count } }
+    var lastFailure: String? { inner.lastFailure }
+    func cancel() { inner.cancel() }
+
+    func post(_ url: String, _ contentType: String, _ body: [UInt8]) -> [UInt8]? {
+        lock.withLock { count += 1 }
+        return inner.post(url, contentType, body)
+    }
+
+    func get(_ url: String) -> [UInt8]? {
+        lock.withLock { count += 1 }
+        return inner.get(url)
+    }
+}
+
 /// The signatures of the file and what the engine found when it checked them. Choosing one shows the field; the details say
 /// what changed since, what is wrong and what could not be checked, and offer the signed version of the file.
 @MainActor
@@ -107,7 +131,7 @@ public final class SignaturesModel: ToolPanelModel {
             }
             options.certificate = certificate
         }
-        let transport = online ? makeTransport?() : nil
+        let transport = online ? makeTransport.map { CountingTransport($0()) } : nil
         options.transport = transport
         let certificate = options.certificate
         return Task {
@@ -126,7 +150,11 @@ public final class SignaturesModel: ToolPanelModel {
             self.show(found.reports.map { self.row($0, found.fields) }, found.reports.isEmpty ? L10n.t("This file has no signatures.") : nil)
             self.selected = self.rows.first?.id
             if let transport, !found.reports.isEmpty {
-                self.note = L10n.t("Checked with the certificate servers just now. The file is not changed.") + (transport.lastFailure.map { " " + $0 } ?? "")
+                if transport.requests == 0 {
+                    self.note = L10n.t("The certificates name no servers to ask.")
+                } else {
+                    self.note = L10n.t("Checked with the certificate servers just now. The file is not changed.") + (transport.lastFailure.map { " " + $0 } ?? "")
+                }
             }
         }
     }
