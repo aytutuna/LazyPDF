@@ -64,7 +64,7 @@ public static class PdfMaker
                 var made = FileKinds.OfficeAppOf(path) switch
                 {
                     OfficeApp.Excel => OfficeConverter.FromExcel(bytes, office, Path.GetFileName(path), cancel),
-                    OfficeApp.PowerPoint => OfficeConverter.FromPowerPoint(bytes, office, cancel),
+                    OfficeApp.PowerPoint => OfficeConverter.FromPowerPoint(bytes, office, codec, cancel),
                     _ => OfficeConverter.FromWord(bytes, office, codec, cancel),
                 };
                 return new MadePdf(made.Bytes, made.Pages, made.Missing.Count, Features: made.Skipped);

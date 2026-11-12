@@ -16,11 +16,11 @@ public static class OfficeConverter
         return OfficePdfWriter.Create(XlsxLayout.Run(book, new LayoutFonts(fonts), DateTime.Now, fileName, cancellation), fonts, cancellation);
     }
 
-    /// <summary>Converts a .pptx file, one page per slide that is not hidden.</summary>
+    /// <summary>Converts a .pptx file, one page per slide that is not hidden. <paramref name="images"/> reads pictures that are not JPEG.</summary>
     /// <exception cref="PdfReadException">The file is not a readable PowerPoint presentation, is over a limit, or has no slide to show.</exception>
-    public static OfficePdf FromPowerPoint(byte[] pptx, IFontSource? fonts, CancellationToken cancellation = default)
+    public static OfficePdf FromPowerPoint(byte[] pptx, IFontSource? fonts, IImageCodec? images = null, CancellationToken cancellation = default)
     {
         var presentation = PptxReader.Read(pptx, cancellation: cancellation);
-        return OfficePdfWriter.Create(PptxLayout.Run(presentation, new LayoutFonts(fonts), cancellation), fonts, cancellation);
+        return OfficePdfWriter.Create(PptxLayout.Run(presentation, new LayoutFonts(fonts), cancellation), fonts, cancellation, images: images);
     }
 }

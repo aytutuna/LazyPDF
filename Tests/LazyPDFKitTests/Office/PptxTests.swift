@@ -233,6 +233,14 @@ final class PptxTests: XCTestCase {
         XCTAssertTrue(Latin1.string(contents[0]).contains("0 -1 1 0 "))
     }
 
+    func test_otherPicturesNeedTheCodec() throws {
+        let package = try PptxSpec.one("@slide1\n<p:cSld><p:spTree>\(pic(0))</p:spTree></p:cSld>\n@rels slide1\n\(image)\n@bytes ppt/media/pic.jpg\n50020280808080\n")
+        let with = try OfficeConverter.fromPowerPoint(package, OfficeLayoutSpec.fonts(), ExportFakeCodec())
+        XCTAssertTrue(with.skipped.isEmpty)
+        let without = try OfficeConverter.fromPowerPoint(package, OfficeLayoutSpec.fonts())
+        XCTAssertEqual(without.skipped, [SkippedFeature("picture", 1)])
+    }
+
     func test_picturesPastTheLimitAreCounted() throws {
         let made = try layout(try withPictures(pic(0) + pic(127000) + pic(254000)), PptxLimits(maxPictures: 2))
         XCTAssertEqual(images(made.pages[0]).count, 2)

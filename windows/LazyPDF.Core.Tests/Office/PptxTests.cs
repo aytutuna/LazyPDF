@@ -249,6 +249,17 @@ public class PptxTests
     }
 
     [Fact]
+    public void OtherPicturesNeedTheCodec()
+    {
+        var package = PptxSpec.One($"@slide1\n<p:cSld><p:spTree>{Pic(0)}</p:spTree></p:cSld>\n@rels slide1\n{Image}\n@bytes ppt/media/pic.jpg\n50020280808080\n");
+        var with = OfficeConverter.FromPowerPoint(package, OfficeLayoutSpec.Fonts(), new ExportFakeCodec());
+        Assert.Empty(with.Skipped);
+        using (var read = PigDocument.Open(with.Bytes)) Assert.Single(read.GetPage(1).GetImages());
+        var without = OfficeConverter.FromPowerPoint(package, OfficeLayoutSpec.Fonts());
+        Assert.Equal([new SkippedFeature("picture", 1)], without.Skipped);
+    }
+
+    [Fact]
     public void PicturesPastTheLimitAreCounted()
     {
         var package = WithPictures(Pic(0) + Pic(127000) + Pic(254000));

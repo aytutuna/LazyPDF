@@ -86,7 +86,7 @@ public enum PdfMaker {
             let made: OfficePdf
             switch FileKinds.officeApp(url) {
             case .excel: made = try OfficeConverter.fromExcel(bytes, source, fileName: url.lastPathComponent)
-            case .powerPoint: made = try OfficeConverter.fromPowerPoint(bytes, source)
+            case .powerPoint: made = try OfficeConverter.fromPowerPoint(bytes, source, codec)
             default: made = try OfficeConverter.fromWord(bytes, source, codec)
             }
             return MadePdf(bytes: made.bytes, pages: made.pages, unreadable: made.missing.count, skipped: made.skipped)
