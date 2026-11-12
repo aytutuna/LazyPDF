@@ -170,3 +170,152 @@ section
 page 200 200 20 20 20 20
 p
 r | \u3053\u3093\u306b\u3061\u306f\u3001\u4e16\u754c\u3002\u300c\u3053\u308c\u306f\u300d\u30c6\u30b9\u30c8\u30fc\u3067\u3059\u3002
+# Pictures: r pic=<w>x<h> [crop=<l,t,r,b fractions>] | is a picture in line, w and h in points.
+# section titlepg evenodd: the first page of the section and the even pages have their own bands (band header-first, footer-first, header-even, footer-even).
+case picture in a line of text
+section
+page 200 200 20 20 20 20
+p
+r | Before 
+r pic=40x30 | 
+r | after the picture.
+case picture on the baseline raises the line
+section
+page 200 200 20 20 20 20
+p line=1.5
+r pic=20x60 | 
+r size=20 | big
+case picture wider than the line shrinks to it
+section
+page 200 200 20 20 20 20
+p left=10 right=10
+r pic=400x100 | 
+p
+r | next
+case picture taller than the page shrinks to the body
+section
+page 200 200 20 20 20 20
+p
+r pic=100x1000 | 
+p
+r | next
+case a line breaks around a picture
+section
+page 200 200 20 20 20 20
+p
+r | Words that fill most of the line 
+r pic=60x20 | 
+r | and more words after it so the text goes on.
+case cropped picture is clipped
+section
+page 200 200 20 20 20 20
+p
+r pic=80x40 crop=0.25,0.1,0,0.5 | 
+case pictures centered and right aligned
+section
+page 200 200 20 20 20 20
+p align=center
+r pic=50x50 | 
+p align=right
+r pic=30x30 | 
+case picture in a table cell
+section
+page 200 200 20 20 20 20
+table cols=100,100
+row
+cell
+p
+r pic=50x20 | 
+r | caption
+cell
+p
+r | beside
+endtable
+case picture in the header repeats on every page
+section
+page 200 200 40 20 40 20 10 10
+band header
+p
+r pic=60x20 | 
+r | Title
+band footer
+p align=center
+r field=page | 
+band body
+p
+r | one
+pagebreak
+p
+r | two
+case first and even pages have their own bands
+section titlepg evenodd
+page 200 200 40 20 40 20 10 10
+band header
+p
+r | Odd header
+band header-first
+p
+r pic=30x30 | 
+r | First header
+band header-even
+p
+r | Even header
+band footer-first
+p
+r | First footer
+band body
+p
+r | one
+pagebreak
+p
+r | two
+pagebreak
+p
+r | three
+pagebreak
+p
+r | four
+case a taller first header moves the body down on the first page only
+section titlepg
+page 200 200 40 20 40 20 10 10
+band header
+p
+r | Plain
+band header-first
+p
+r pic=100x70 | 
+band body
+p
+r | first page text
+pagebreak
+p
+r | second page text
+case the next section starts its own first page
+section titlepg
+page 200 200 40 20 40 20 10 10
+band header-first
+p
+r | A first
+band header
+p
+r | A
+band body
+p
+r | one
+pagebreak
+p
+r | two
+section titlepg
+page 200 200 40 20 40 20 10 10
+band header-first
+p
+r | B first
+band header
+p
+r | B
+band body
+p
+r | three
+pagebreak
+p
+r | four

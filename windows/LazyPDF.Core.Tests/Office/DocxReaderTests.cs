@@ -31,6 +31,17 @@ public class DocxReaderTests
         Golden.Check("office-docx", "tables-output.txt", output.ToString());
     }
 
+    [Fact]
+    public void DocxImagesGoldenFile()
+    {
+        var output = new StringBuilder();
+        foreach (var (name, package) in DocxSpec.Read(Golden.Input("office-docx", "images-input.txt")))
+        {
+            output.Append("> ").Append(name).Append('\n').Append(DocxSpec.Dump(DocxReader.Read(package)));
+        }
+        Golden.Check("office-docx", "images-output.txt", output.ToString());
+    }
+
     private static byte[] Docx(string body, string? styles = null)
     {
         var parts = new Dictionary<string, StringBuilder> { ["document"] = new(body) };

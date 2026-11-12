@@ -12,6 +12,9 @@ namespace LazyPDF.Core.Tests;
 //   @document               the lines that follow are the inside of w:body
 //   @styles, @numbering, @header, @footer, @theme   the inside of w:styles, w:numbering, w:hdr, w:ftr, a:theme
 //   @part path              a whole part, written out
+//   @bytes path             a binary part, written as hex digits on one line
+//   @relationships          extra relationships of the main document
+//   @settings               the inside of w:settings
 internal static class DocxSpec
 {
     private const string Namespaces =
@@ -88,13 +91,17 @@ internal static class DocxSpec
         Wrapped("theme", "word/theme/theme1.xml", "theme", "rIdT", "a:theme", "application/vnd.openxmlformats-officedocument.theme+xml");
         Wrapped("header", "word/header1.xml", "header", "rIdH", "w:hdr", Main + "header+xml");
         Wrapped("footer", "word/footer1.xml", "footer", "rIdF", "w:ftr", Main + "footer+xml");
+        Wrapped("settings", "word/settings.xml", "settings", "rIdG", "w:settings", Main + "settings+xml");
+        relationships.Append(Get("relationships"));
         foreach (var (key, text) in parts)
         {
             if (key.StartsWith("part ", StringComparison.Ordinal)) Add(key[5..], text.ToString());
+            else if (key.StartsWith("bytes ", StringComparison.Ordinal)) entries.Add(new ExportZipEntry(key[6..], Convert.FromHexString(text.ToString().Trim())));
         }
         Add("[Content_Types].xml",
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">" +
             "<Default Extension=\"xml\" ContentType=\"application/xml\"/>" +
+            "<Default Extension=\"jpg\" ContentType=\"image/jpeg\"/><Default Extension=\"png\" ContentType=\"image/png\"/>" +
             $"<Override PartName=\"/word/document.xml\" ContentType=\"{Main}document.main+xml\"/>{types}</Types>");
         Add("_rels/.rels",
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">" +
@@ -113,8 +120,14 @@ internal static class DocxSpec
         {
             var g = section.Page;
             o.Append($"section {Num(g.Width)} {Num(g.Height)} {Num(g.Top)} {Num(g.Right)} {Num(g.Bottom)} {Num(g.Left)} {Num(g.HeaderDistance)} {Num(g.FooterDistance)}\n");
+            if (section.TitlePage) o.Append("titlepage\n");
+            if (section.EvenAndOdd) o.Append("evenandodd\n");
             foreach (var p in section.Header) Paragraph(o, "header", p);
             foreach (var p in section.Footer) Paragraph(o, "footer", p);
+            foreach (var p in section.FirstHeader) Paragraph(o, "header-first", p);
+            foreach (var p in section.FirstFooter) Paragraph(o, "footer-first", p);
+            foreach (var p in section.EvenHeader) Paragraph(o, "header-even", p);
+            foreach (var p in section.EvenFooter) Paragraph(o, "footer-even", p);
             foreach (var block in section.Blocks)
             {
                 if (block is LayoutParagraph p) Paragraph(o, "p", p);
@@ -165,6 +178,7 @@ internal static class DocxSpec
             if (r.Highlight is { } hl) o.Append($" hl={hl:x6}");
             if (r.Shift != 0) o.Append($" shift={Num(r.Shift)}");
             if (r.Field != LayoutField.None) o.Append($" field={r.Field.ToString().ToLowerInvariant()}");
+            if (r.Picture is { } pic) o.Append($" picture={Num(pic.Width)}x{Num(pic.Height)} bytes={pic.Data.Length} crop={Num(pic.CropLeft)},{Num(pic.CropTop)},{Num(pic.CropRight)},{Num(pic.CropBottom)}");
             o.Append(" \"").Append(OfficeLayoutSpec.Escape(r.Text)).Append("\"\n");
         }
     }

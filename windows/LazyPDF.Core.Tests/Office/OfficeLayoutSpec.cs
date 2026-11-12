@@ -63,6 +63,10 @@ internal static class OfficeLayoutSpec
             if (cell is not null) cell.Add(made);
             else if (band == "header") section.Header.Add(made);
             else if (band == "footer") section.Footer.Add(made);
+            else if (band == "header-first") section.FirstHeader.Add(made);
+            else if (band == "footer-first") section.FirstFooter.Add(made);
+            else if (band == "header-even") section.EvenHeader.Add(made);
+            else if (band == "footer-even") section.EvenFooter.Add(made);
             else section.Blocks.Add(made);
             paragraph = null;
         }
@@ -83,7 +87,8 @@ internal static class OfficeLayoutSpec
                 case "section":
                     Flush();
                     cell = null;
-                    section = new LayoutSection();
+                    var flags = rest.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    section = new LayoutSection { TitlePage = flags.Contains("titlepg"), EvenAndOdd = flags.Contains("evenodd") };
                     document!.Sections.Add(section);
                     band = "body";
                     break;
@@ -121,6 +126,7 @@ internal static class OfficeLayoutSpec
                         Highlight = keys.ContainsKey("hl") ? Convert.ToInt32(keys["hl"], 16) : null,
                         Shift = Number(keys, "shift"),
                         Field = keys.GetValueOrDefault("field") switch { "page" => LayoutField.PageNumber, "pages" => LayoutField.PageCount, _ => LayoutField.None },
+                        Picture = keys.TryGetValue("pic", out string? size) ? Picture(size, keys.GetValueOrDefault("crop")) : null,
                     });
                     break;
                 case "table":
@@ -186,6 +192,15 @@ internal static class OfficeLayoutSpec
         }
         Flush();
         return cases;
+    }
+
+    // A picture file the writer reads without a codec: a JPEG header of 4 by 3 pixels, a new file for every picture.
+    private static LayoutPicture Picture(string size, string? crop)
+    {
+        string[] wh = size.Split('x');
+        double[] c = crop is null ? [0, 0, 0, 0] : [.. crop.Split(',').Select(v => double.Parse(v, CultureInfo.InvariantCulture))];
+        byte[] jpeg = [0xFF, 0xD8, 0xFF, 0xC0, 0x00, 0x0B, 0x08, 0x00, 0x03, 0x00, 0x04, 0x01, 0x01, 0x11, 0x00, 0xFF, 0xD9];
+        return new LayoutPicture(jpeg, double.Parse(wh[0], CultureInfo.InvariantCulture), double.Parse(wh[1], CultureInfo.InvariantCulture), c[0], c[1], c[2], c[3]);
     }
 
     private static LayoutBorder? Border(Dictionary<string, string> keys, string side)
