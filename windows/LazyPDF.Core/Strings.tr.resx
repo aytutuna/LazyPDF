@@ -2554,8 +2554,8 @@
   <data name="Go to page {0}" xml:space="preserve">
     <value>{0}. sayfaya git</value>
   </data>
-  <data name="Good for email and screens. Pictures drop to 150 dpi and are saved as JPEG at 75%, and black and white pictures become 1-bit. Some detail is lost." xml:space="preserve">
-    <value>E-posta ve ekran için uygun. Resimler 150 dpi'ye düşer ve %75 JPEG olarak kaydedilir, siyah beyaz resimler 1 bite çevrilir. Bir miktar ayrıntı kaybolur.</value>
+  <data name="Good for email and screens. Pictures drop to 150 dpi and are saved as JPEG at 80%. Some detail is lost." xml:space="preserve">
+    <value>E-posta ve ekran için uygun. Resimler 150 dpi'ye düşer ve %80 JPEG olarak kaydedilir. Bir miktar ayrıntı kaybolur.</value>
   </data>
   <data name="Good for email and screens. Pictures drop to 150 dpi." xml:space="preserve">
     <value>E-posta ve ekran için uygun. Resimler 150 dpi'ye düşer.</value>
