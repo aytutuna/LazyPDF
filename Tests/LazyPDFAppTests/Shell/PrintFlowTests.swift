@@ -143,6 +143,7 @@ final class PrintFlowTests: XCTestCase {
     // Not in the Windows tests: the copy goes to the print folder, and what is a day old goes at the next print.
     func test_aCopyADayOldIsRemovedAtTheNextPrint() async throws {
         let f = ViewModelFixture(self)
+        f.sisters.printTaken = true
         await f.vm.open(f.pdf())
         f.vm.print()
         let first = f.sisters.printed[0].deletingLastPathComponent()
