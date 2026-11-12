@@ -37,8 +37,50 @@ final class RedactJobTests: XCTestCase {
     }
 
     private func apply(_ pdf: [UInt8], _ marks: [MarkItem], _ settings: RedactSettings) throws -> RedactionResult {
-        try RedactJob.apply(pdf, password: nil, certificate: nil, marks: marks.map(\.mark), settings: settings, renderer: BlankPages(pdf),
+        try RedactJob.apply(pdf, password: nil, certificate: nil, marks: marks.filter { $0.value == nil }.map(\.mark), values: marks.compactMap(\.value), settings: settings, renderer: BlankPages(pdf),
                             fonts: FakeFonts(), images: FakeCodec())
+    }
+
+    private func withNoteAndField(_ text: String) throws -> [UInt8] {
+        let document = try PdfDocument.open(Pdfs.text(1, Self.line))
+        try PdfAnnotationWriter(document).addNote(document.pages[0], PdfRect(400, 100, 420, 120), AnnotationInfo(author: "Reviewer", contents: text))
+        try PdfForm.read(document).addField(FieldSpec(.text, "contact", 0, PdfRect(100, 490, 400, 510), value: text))
+        return try document.saveRewrite()
+    }
+
+    func test_commentsAndFieldValuesAreFoundAndSayWhere() throws {
+        let found = try findAddresses(withNoteAndField("mail bob@example.com"))
+
+        XCTAssertEqual(found.count, 3)
+        let comment = try XCTUnwrap(found.first { $0.value?.source == .comment })
+        XCTAssertEqual(comment.pageText, "Comment on page 1")
+        XCTAssertEqual(comment.label, "bob@example.com")
+        let field = try XCTUnwrap(found.first { $0.value?.source == .field })
+        XCTAssertEqual(field.pageText, "Field contact, page 1")
+        XCTAssertEqual(field.spoken, "bob@example.com, Field contact, page 1")
+        XCTAssertTrue(field.mark.quads.contains { $0.bounds == PdfRect(100, 490, 400, 510) })
+    }
+
+    func test_wordsSearchTheValuesToo() throws {
+        let document = try RedactJob.open(withNoteAndField("mail bob@example.com"), password: nil, certificate: nil)
+
+        let words = try RedactJob.find(document, words: "bob", matchCase: false, wholeWord: false)
+
+        XCTAssertEqual(words.items.filter { $0.value != nil }.count, 2)
+    }
+
+    func test_valueHitsAreRewrittenWithThePageMarksAndTheReportCountsThem() throws {
+        let pdf = try withNoteAndField("mail bob@example.com")
+
+        let result = try apply(pdf, findAddresses(pdf), plain)
+
+        XCTAssertTrue(result.verification.isClean)
+        XCTAssertFalse(try textOf(result.bytes).contains("example.com"))
+        let output = try PdfDocument.open(result.bytes)
+        XCTAssertEqual(PdfAnnotations.read(output, output.pages[0]).first { $0.type != .widget }?.contents, "mail ")
+        XCTAssertEqual(PdfForm.read(output).fields.first?.value, "mail ")
+        XCTAssertEqual(result.report.pages.first?.values, 2)
+        XCTAssertTrue(RedactSummary.of(result).report.contains("text in 2 notes or fields"))
     }
 
     func test_aKindOfDataIsFoundOnEveryPage() throws {

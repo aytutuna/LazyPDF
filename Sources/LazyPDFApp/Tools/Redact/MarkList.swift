@@ -3,22 +3,27 @@ import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Tools/Redact/MarkList.cs.
 
-/// One entry of the review list: the mark and a few words to know it by.
+/// One entry of the review list: the mark and a few words to know it by. A `value` is a hit in a comment or a field; its mark
+/// is only where the comment or field sits, and it is not applied as a mark.
 public struct MarkItem: Identifiable, Equatable {
     public let id = UUID()
     public let mark: RedactionMark
     public let label: String
+    public let value: RedactionValueMatch?
+    public let place: String?
 
-    public init(_ mark: RedactionMark, _ label: String) {
+    public init(_ mark: RedactionMark, _ label: String, value: RedactionValueMatch? = nil, place: String? = nil) {
         self.mark = mark
         self.label = label
+        self.value = value
+        self.place = place
     }
 
     public var page: Int { mark.page }
 
-    public var pageText: String { L10n.t("Page {0}", page + 1) }
+    public var pageText: String { place ?? L10n.t("Page {0}", page + 1) }
 
-    public var spoken: String { L10n.t("{0}, page {1}", label, page + 1) }
+    public var spoken: String { place.map { L10n.t("{0}, {1}", label, $0) } ?? L10n.t("{0}, page {1}", label, page + 1) }
 
     public static func == (a: MarkItem, b: MarkItem) -> Bool { a.id == b.id }
 }
@@ -48,7 +53,7 @@ public final class MarkList {
     public func add(_ new: [MarkItem]) -> Int {
         var added = 0
         for item in new {
-            if neighbours(item).contains(where: { Self.same($0.mark, item.mark) }) { continue }
+            if neighbours(item).contains(where: { Self.same($0, item) }) { continue }
             cells[cell(item), default: []].append(item)
             items.append(item)
             added += 1
@@ -103,6 +108,14 @@ public final class MarkList {
     private static func top(_ mark: RedactionMark) -> Double { mark.quads.map { $0.bounds.top }.max() ?? 0 }
 
     private static func left(_ mark: RedactionMark) -> Double { mark.quads.map { $0.bounds.left }.min() ?? 0 }
+
+    private static func same(_ a: MarkItem, _ b: MarkItem) -> Bool {
+        if a.value != nil || b.value != nil {
+            guard let x = a.value, let y = b.value else { return false }
+            return (x.page, x.annotation, x.source, x.start, x.length) == (y.page, y.annotation, y.source, y.start, y.length)
+        }
+        return same(a.mark, b.mark)
+    }
 
     private static func same(_ a: RedactionMark, _ b: RedactionMark) -> Bool {
         guard a.page == b.page, a.quads.count == b.quads.count else { return false }

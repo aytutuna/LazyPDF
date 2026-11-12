@@ -12,6 +12,18 @@ public sealed class MarkListTests
         new(RedactionMark.FromRect(page, new PdfRect(left, bottom, left + 40, bottom + 10)), label);
 
     [Fact]
+    public void TwoHitsInOneCommentAreTwoMarks()
+    {
+        var list = new MarkList();
+        var rect = RedactionMark.FromRect(0, new PdfRect(400, 100, 420, 120));
+        MarkItem Hit(int start) => new(rect, "x", Value: new RedactionValueMatch(0, 2, RedactionValueSource.Comment, start, 3, "abc", RedactionKind.Word));
+
+        Assert.Equal(2, list.Add([Hit(0), Hit(10)]));
+        Assert.Equal(0, list.Add([Hit(10)]));
+        Assert.Equal(1, list.Add([new MarkItem(rect, "Box", IsBox: true)]));
+    }
+
+    [Fact]
     public void MarksComeInReadingOrder()
     {
         var list = new MarkList();

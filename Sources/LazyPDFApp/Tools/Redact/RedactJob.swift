@@ -61,14 +61,15 @@ public enum RedactJob {
     public static func find(_ document: PdfDocument, _ kind: RedactDataKind, token: CancelToken = CancelToken()) throws -> RedactFound {
         let cache = TextCache(document)
         try token.throwIfCancelled()
-        return try gather(document, cache, RedactionFinder.find(cache, kind.kind), token)
+        return try gather(document, cache, RedactionFinder.find(cache, kind.kind), RedactionFinder.findInValues(document, kind.kind), token)
     }
 
     public static func find(_ document: PdfDocument, words: String, matchCase: Bool, wholeWord: Bool,
                             token: CancelToken = CancelToken()) throws -> RedactFound {
         let cache = TextCache(document)
         try token.throwIfCancelled()
-        return try gather(document, cache, RedactionFinder.findWords(cache, [words], wholeWord, matchCase), token)
+        return try gather(document, cache, RedactionFinder.findWords(cache, [words], wholeWord, matchCase),
+                          RedactionFinder.findWordsInValues(document, [words], wholeWord, matchCase), token)
     }
 
     /// True when the file lets this opener read it but not change it, so that the engine would refuse to write a copy.
@@ -80,7 +81,7 @@ public enum RedactJob {
     /// Redacts a copy of `file`. `renderer` must draw those same bytes: a page the engine cannot follow to its end is drawn by
     /// it and put back as a picture. The copy has no password, because it opens as a new tab and the window has no password to
     /// give it.
-    public static func apply(_ file: [UInt8], password: String?, certificate: X509Certificate?, marks: [RedactionMark],
+    public static func apply(_ file: [UInt8], password: String?, certificate: X509Certificate?, marks: [RedactionMark], values: [RedactionValueMatch] = [],
                              settings: RedactSettings, renderer: PageRenderer, fonts: FontSource?, images: ImageCodec?,
                              token: CancelToken = CancelToken()) throws -> RedactionResult {
         let document = try open(file, password: password, certificate: certificate)
@@ -92,7 +93,7 @@ public enum RedactJob {
         options.renderer = renderer
         options.flattenMarkedPages = settings.flattenAll
         options.keepEncryption = false
-        let result = try PdfRedactor(document, fonts, images).apply(marks, options)
+        let result = try PdfRedactor(document, fonts, images).apply(marks, options, values)
         try token.throwIfCancelled()
         return result
     }
@@ -116,13 +117,35 @@ public enum RedactJob {
         return one.count <= 40 ? one : String(one.prefix(39)) + "…"
     }
 
-    private static func gather(_ document: PdfDocument, _ cache: TextCache, _ matches: [RedactionMatch], _ token: CancelToken) throws -> RedactFound {
+    private static func gather(_ document: PdfDocument, _ cache: TextCache, _ matches: [RedactionMatch], _ values: [RedactionValueMatch],
+                               _ token: CancelToken) throws -> RedactFound {
         var pictures = 0
         for page in 0..<document.pages.count {
             try token.throwIfCancelled()
             if cache.get(page).text.allSatisfy(\.isWhitespace) { pictures += 1 }
         }
-        return RedactFound(items: matches.map { MarkItem($0.mark, clip($0.text)) }, pictures: pictures)
+        return RedactFound(items: matches.map { MarkItem($0.mark, clip($0.text)) } + valueItems(document, values), pictures: pictures)
+    }
+
+    // The mark of a value hit is the comment's or field's own rectangle, so that it can be outlined and jumped to.
+    private static func valueItems(_ document: PdfDocument, _ values: [RedactionValueMatch]) -> [MarkItem] {
+        var items: [MarkItem] = []
+        var form: PdfForm?
+        let byPage = Dictionary(grouping: values, by: \.page)
+        for page in byPage.keys.sorted() {
+            let annotations = PdfAnnotations.read(document, document.pages[page])
+            for hit in byPage[page]!.sorted(by: { ($0.annotation, $0.start) < ($1.annotation, $1.start) }) {
+                let annotation = annotations[hit.annotation]
+                var place = L10n.t("Comment on page {0}", hit.page + 1)
+                if hit.source == .field {
+                    if form == nil { form = PdfForm.read(document) }
+                    let name = form?.fields.first { f in f.widgets.contains { $0.dictionary === annotation.dictionary } }?.name ?? ""
+                    place = L10n.t("Field {0}, page {1}", name, hit.page + 1)
+                }
+                items.append(MarkItem(RedactionMark.fromRect(hit.page, annotation.rect), clip(hit.text), value: hit, place: place))
+            }
+        }
+        return items
     }
 }
 

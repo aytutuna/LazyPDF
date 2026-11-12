@@ -11,6 +11,18 @@ final class MarkListTests: XCTestCase {
         MarkItem(RedactionMark.fromRect(page, PdfRect(left, bottom, left + 40, bottom + 10)), label)
     }
 
+    func test_twoHitsInOneCommentAreTwoMarks() {
+        let list = MarkList()
+        let rect = RedactionMark.fromRect(0, PdfRect(400, 100, 420, 120))
+        func hit(_ start: Int) -> MarkItem {
+            MarkItem(rect, "x", value: RedactionValueMatch(0, 2, .comment, start, 3, "abc", .word))
+        }
+
+        XCTAssertEqual(list.add([hit(0), hit(10)]), 2)
+        XCTAssertEqual(list.add([hit(10)]), 0)
+        XCTAssertEqual(list.add([MarkItem(rect, "Box")]), 1)
+    }
+
     func test_marksComeInReadingOrder() {
         let list = MarkList()
 

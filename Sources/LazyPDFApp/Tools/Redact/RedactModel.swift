@@ -289,7 +289,8 @@ public final class RedactModel: ToolPanelModel {
         if working { return }
         guard let tab, let host, let state else { return }
         await tab.whenDrawn()
-        let items = state.marks.items.map(\.mark)
+        let items = state.marks.items.filter { $0.value == nil }.map(\.mark)
+        let values = state.marks.items.compactMap(\.value)
         let covers = RedactCover.all
         let settings = RedactSettings(cover: covers[min(max(coverIndex, 0), covers.count - 1)], overlayText: overlayText, flattenAll: flattenAll)
         let file = tab.session.current
@@ -305,7 +306,7 @@ public final class RedactModel: ToolPanelModel {
         do {
             try await host.runBusy(L10n.t("Redacting")) { token in
                 made = try await ToolDocuments.run(token) {
-                    try RedactJob.apply(file, password: password, certificate: certificate, marks: items, settings: settings,
+                    try RedactJob.apply(file, password: password, certificate: certificate, marks: items, values: values, settings: settings,
                                         renderer: renderer, fonts: fonts, images: images, token: token)
                 }
             }
