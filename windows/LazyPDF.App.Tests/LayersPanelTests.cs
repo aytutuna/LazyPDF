@@ -174,4 +174,31 @@ public sealed class LayersPanelTests
         Assert.Equal([(b.Reference, true)], recorder.Switched);
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public Task ChoosingTheFilesOwnRadioChoiceAgainTurnsTheOtherOffAgain() => Sta.Run(async () =>
+    {
+        var bytes = LayeredPdf.Make("/OFF [6 0 R] /RBGroups [[5 0 R 6 0 R]]");
+        using var tab = new DocumentTab(PdfEditSession.Open(bytes), new FakeRenderer(), null, "a.pdf", null);
+        var viewer = new PageViewer(null);
+        viewer.Show(tab);
+        var other = new PdfReference(6, 0);
+
+        async Task Choose(PdfReference layer)
+        {
+            var done = new TaskCompletionSource();
+            void Seen(object? s, EventArgs e) => done.TrySetResult();
+            viewer.LayersChanged += Seen;
+            viewer.SetLayerVisible(layer, true);
+            await done.Task.WaitAsync(TimeSpan.FromSeconds(30));
+            viewer.LayersChanged -= Seen;
+        }
+
+        await Choose(other);
+        await Choose(LayeredPdf.BlackBox);
+
+        var on = viewer.Layers.Layers.ToDictionary(l => l.Reference, l => l.IsOn);
+        Assert.True(on[LayeredPdf.BlackBox]);
+        Assert.False(on[other]);
+    });
 }

@@ -21,10 +21,22 @@ public partial class PageViewer
     public void SetLayersVisible(IEnumerable<KeyValuePair<PdfReference, bool>> changes)
     {
         if (_tab is null) return;
-        var inFile = PdfLayers.Read(_tab.Document).Layers;
-        foreach (var (layer, visible) in changes)
+        var set = PdfLayers.Read(_tab.Document);
+        var batch = changes.ToList();
+        // Turning a layer on turns off its radio group. Recording that as well keeps a stored change for another
+        // member from outliving the choice when the chosen layer is already on in the file.
+        var named = batch.Select(c => c.Key).ToHashSet();
+        foreach (var (layer, visible) in batch.ToArray())
         {
-            if (visible == (inFile.FirstOrDefault(l => l.Reference.Equals(layer))?.IsOn ?? visible)) _layerChanges.Remove(layer);
+            if (!visible) continue;
+            foreach (var group in set.RadioGroups.Where(g => g.Any(r => r.Equals(layer))))
+            {
+                foreach (var other in group.Where(r => !r.Equals(layer) && named.Add(r))) batch.Add(new(other, false));
+            }
+        }
+        foreach (var (layer, visible) in batch)
+        {
+            if (visible == (set.Layers.FirstOrDefault(l => l.Reference.Equals(layer))?.IsOn ?? visible)) _layerChanges.Remove(layer);
             else _layerChanges[layer] = visible;
         }
         _ = RebuildDisplayAsync();
