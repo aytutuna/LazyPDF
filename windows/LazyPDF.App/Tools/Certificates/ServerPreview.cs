@@ -2,7 +2,7 @@ using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Certificates;
 
-/// <summary>Which servers Add validation data would ask, found by running it against a transport that answers nothing.</summary>
+/// <summary>Which servers Add validation data and the online checks would ask, before any is contacted.</summary>
 internal static class ServerPreview
 {
     private const int Shown = 6;
@@ -26,10 +26,10 @@ internal static class ServerPreview
 
     public static Task<IReadOnlyList<string>> HostsAsync(byte[] file, string? password) => Task.Run<IReadOnlyList<string>>(() =>
     {
-        var recorder = new Recorder();
-        try { PdfLongTermValidation.Add(file, recorder, DateTimeOffset.Now, password); }
+        IReadOnlyList<ValidationServer> servers;
+        try { servers = PdfLongTermValidation.Servers(file, password); }
         catch (Exception error) when (error is InvalidOperationException or PdfReadException) { return []; }
-        return recorder.Urls.Select(Host).OfType<string>().Distinct().ToList();
+        return servers.Select(s => Host(s.Url)).OfType<string>().Distinct().ToList();
     });
 
     /// <summary>The servers a check would ask for missing issuer certificates, found by verifying against a transport that answers nothing.</summary>
