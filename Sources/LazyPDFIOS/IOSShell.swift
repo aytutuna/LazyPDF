@@ -138,10 +138,11 @@ final class IOSShell {
     // Mail's Open In and drags from other apps can arrive as a copy in the app's own folders, which saving would change instead
     // of the original.
     static func isTemporary(_ url: URL) -> Bool {
-        let path = url.standardizedFileURL.path
+        // The same folder can be named /var/... or /private/var/..., so every side is resolved first.
+        let path = url.resolvingSymlinksInPath().path
         let inbox = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("Inbox")
-        return path.hasPrefix(FileManager.default.temporaryDirectory.standardizedFileURL.path)
-            || path.hasPrefix(inbox.standardizedFileURL.path + "/")
+        return path.hasPrefix(FileManager.default.temporaryDirectory.resolvingSymlinksInPath().path)
+            || path.hasPrefix(inbox.resolvingSymlinksInPath().path + "/")
     }
 
     // A hidden launch argument for the UI tests, `-uitestOpen <path>`, honoured in the simulator only.
