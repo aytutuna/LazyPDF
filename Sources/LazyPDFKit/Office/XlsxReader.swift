@@ -255,6 +255,7 @@ final class XlsxReader {
         }
         if let page = root.child(m, "pageSetup") {
             setup.landscape = page.attribute("orientation") == "landscape"
+            setup.overThenDown = page.attribute("pageOrder") == "overThenDown"
             if let paper = XlsxParse.int(page.attribute("paperSize")) { setup.paper = paper }
             if let scale = XlsxParse.int(page.attribute("scale")), scale >= 10, scale <= 400 { setup.scale = scale }
             if let w = XlsxParse.int(page.attribute("fitToWidth")), w <= 32767 { setup.fitToWidth = w }

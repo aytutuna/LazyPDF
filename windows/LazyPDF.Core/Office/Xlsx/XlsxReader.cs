@@ -254,6 +254,7 @@ internal sealed class XlsxReader
         if (root.Child(M, "pageSetup") is { } page)
         {
             setup.Landscape = page.Attribute("orientation") == "landscape";
+            setup.OverThenDown = page.Attribute("pageOrder") == "overThenDown";
             if (XlsxParse.Int(page.Attribute("paperSize")) is { } paper) setup.Paper = paper;
             if (XlsxParse.Int(page.Attribute("scale")) is { } scale && scale is >= 10 and <= 400) setup.Scale = scale;
             if (XlsxParse.Int(page.Attribute("fitToWidth")) is { } w && w <= 32767) setup.FitToWidth = w;
