@@ -1,0 +1,41 @@
+import Foundation
+
+// Twin of windows/LazyPDF.Core/Office/OfficeFontSource.cs: the converter's font lookup. The font a document names if
+// it is installed, else the bundled font with the same metrics, else the bundled default.
+
+public final class OfficeFontSource: FontSource {
+    public static let defaultFamily = "Carlito"
+
+    // Office name (lower case) to the bundled family that has the same advance widths.
+    private static let compatible: [String: String] = [
+        "calibri": "Carlito",
+        "cambria": "Caladea",
+        "arial": "Liberation Sans",
+        "helvetica": "Liberation Sans",
+        "times new roman": "Liberation Serif",
+        "times": "Liberation Serif",
+        "courier new": "Liberation Mono",
+        "courier": "Liberation Mono",
+    ]
+
+    private let installed: FontSource?
+    private let bundled: FontSource?
+
+    public init(installed: FontSource?, bundled: FontSource?) {
+        self.installed = installed
+        self.bundled = bundled
+    }
+
+    public func find(_ family: String, _ style: FontStyles) -> FontFile? {
+        if let file = installed?.find(family, style) { return file }
+        guard let bundled else { return nil }
+        // A document that names a bundled family itself (Carlito) gets it as it is.
+        let name = Self.compatible[Self.fold(family)] ?? family
+        return bundled.find(name, style) ?? bundled.find(Self.defaultFamily, style)
+    }
+
+    // Only A-Z fold, so the C# twin matches without depending on Foundation's case tables.
+    private static func fold(_ name: String) -> String {
+        String(String.UnicodeScalarView(name.unicodeScalars.map { ("A"..."Z").contains($0) ? Unicode.Scalar($0.value + 32)! : $0 }))
+    }
+}

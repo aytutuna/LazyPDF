@@ -39,6 +39,11 @@ targets:
         includes:
           - tr.lproj/Kit.strings
         buildPhase: resources
+      # The Office fonts the converter falls back to, copied flat into the bundle (BundledFontSource).
+      - path: ../fonts
+        includes:
+          - "**/*.ttf"
+        buildPhase: resources
     dependencies:
       - package: LazyPDF
         product: LazyPDFMac
