@@ -76,6 +76,25 @@ public sealed partial class PdfForm
         return plan.Count;
     }
 
+    /// <summary>
+    /// Takes the signature out of a signed signature field, with the field's appearance, and leaves the field empty to sign
+    /// again. A certification (/Perms /DocMDP) that rests on that signature goes too. Throws InvalidOperationException when
+    /// the field is not signed. The signed revision stays in the file's history.
+    /// </summary>
+    public void ClearSignature(FormField field)
+    {
+        RequireFillable();
+        if (!field.IsSigned) throw new InvalidOperationException(FormText.NotSigned);
+        if (_document.Dict(_document.Catalog, "Perms") is { } perms && ReferenceEquals(_document.Resolve(perms["DocMDP"]), _document.Resolve(field.Dictionary["V"])))
+        {
+            perms.Remove("DocMDP");
+            if (perms.Count == 0) _document.Catalog.Remove("Perms");
+        }
+        field.Dictionary.Remove("V");
+        field.Dictionary.Remove("AP");
+        foreach (var widget in field.Widgets) widget.Dictionary.Remove("AP");
+    }
+
     /// <summary>Draws the appearances of the fields again from their values: after the form's maker set /NeedAppearances, or after changing a field's look by hand.</summary>
     public void Regenerate(IEnumerable<FormField>? fields = null)
     {

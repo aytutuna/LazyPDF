@@ -7870,6 +7870,9 @@
   "Only a check box or radio button has an export value.": {
     "tr": "Dışa aktarma değeri yalnızca onay kutusunda veya seçenek düğmesinde bulunur."
   },
+  "This signature field is not signed.": {
+    "tr": "Bu imza alanı imzalı değil."
+  },
   "The export value cannot be empty or Off.": {
     "tr": "Dışa aktarma değeri boş veya Off olamaz."
   },

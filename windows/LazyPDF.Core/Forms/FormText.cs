@@ -20,6 +20,8 @@ public static class FormText
 
     public static string NotAField => Loc.T("This field is not part of the form.");
 
+    public static string NotSigned => Loc.T("This signature field is not signed.");
+
     public static string NotAButton => Loc.T("Only a check box or radio button has an export value.");
 
     public static string BadExport => Loc.T("The export value cannot be empty or Off.");

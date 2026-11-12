@@ -7024,6 +7024,9 @@
   <data name="This signature could not be checked." xml:space="preserve">
     <value>Bu imza denetlenemedi.</value>
   </data>
+  <data name="This signature field is not signed." xml:space="preserve">
+    <value>Bu imza alanı imzalı değil.</value>
+  </data>
   <data name="This signature needs a time stamp server." xml:space="preserve">
     <value>Bu imza bir zaman damgası sunucusu gerektiriyor.</value>
   </data>
