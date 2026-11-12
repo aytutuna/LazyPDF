@@ -2,7 +2,6 @@
 
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Microsoft.Win32;
@@ -114,15 +113,16 @@ public partial class CommentsSidePanel
     private void SaveText(DocumentTab tab, IToolHost host, CommentRow row, string text)
     {
         if (!ReferenceEquals(Tab, tab) || MarkWork.Running) return;
-        // An undo while the notice was up rebuilds the list; the row held back may be gone from the file.
-        if (Comments.ItemsSource is not ListCollectionView { SourceCollection: IEnumerable<CommentRow> rows } || !rows.Contains(row))
+        // An undo while the notice was up may have taken the comment out; the row's own copy would still look fine.
+        if (row.Comment.Annotation.Reference is not { } reference || row.Comment.PageIndex >= tab.Document.Pages.Count
+            || PdfAnnotations.Read(tab.Document, tab.Document.Pages[row.Comment.PageIndex]).FirstOrDefault(a => a.Reference?.Number == reference.Number) is not { } live)
         {
             host.SetStatus(Loc.T("That comment is no longer in the file."));
             return;
         }
         try
         {
-            var annotation = new PdfAnnotationWriter(tab.Document, Fonts).SetContents(row.Comment.Annotation, text, DateTimeOffset.Now);
+            var annotation = new PdfAnnotationWriter(tab.Document, Fonts).SetContents(live, text, DateTimeOffset.Now);
             // Viewers show the rich text before /Contents, so an old /RC would keep the old words on screen.
             annotation.Dictionary.Remove("RC");
         }
