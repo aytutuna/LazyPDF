@@ -14,6 +14,13 @@ final class DocxReader {
     private static let numberingType = r + "/numbering"
     private static let headerType = r + "/header"
     private static let footerType = r + "/footer"
+    private static let settingsType = r + "/settings"
+    private static let imageType = r + "/image"
+    private static let wp = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+
+    private static let emuPerPoint = 12700.0
+    private static let maxPictureSide = 20_000.0
+    private static let maxPictures = 2000
 
     private static let highlights: [String: Int] = [
         "black": 0x000000, "blue": 0x0000FF, "cyan": 0x00FFFF, "green": 0x00FF00, "magenta": 0xFF00FF, "red": 0xFF0000,
@@ -49,12 +56,18 @@ final class DocxReader {
     var styles = DocxStyles()
     var theme = DocxTheme()
     private var numbering = DocxNumbering()
+    private var evenAndOdd = false
 
     // State of the part being read.
     var blocks: [LayoutBlock] = []
     private var sectionEnds: [(at: Int, properties: OfficeXmlElement)] = []
     private var fields: [Field] = []
     private var pieces: [Piece] = []
+    // The relationships of the part being read, which is where its pictures are found.
+    private var partRelationships: [OpcRelationship] = []
+    private var lastBand: [String: String] = [:]
+    private var pictureData: [String: PictureFile] = [:]
+    private var pictures = 0
     var inBand = false
     // State of the table cell being read; tableKey tells the cached paragraph styles of one table style and condition from another.
     var inCell = false
@@ -89,6 +102,8 @@ final class DocxReader {
         styles = DocxStyles.read(try part(relationships, Self.stylesType))
         theme = DocxTheme.read(try part(relationships, Self.themeType))
         numbering = DocxNumbering.read(try part(relationships, Self.numberingType))
+        if let evenOdd = try part(relationships, Self.settingsType)?.child(w, "evenAndOddHeaders") { evenAndOdd = Self.on(evenOdd) }
+        partRelationships = relationships
 
         try readBlocks(body)
         let all = blocks
@@ -112,13 +127,16 @@ final class DocxReader {
             if slice.isEmpty && previous != nil && index == ends.count - 1 { continue }
             let section = LayoutSection()
             section.page = geometry
-            section.header = try band(properties, relationships, Self.headerType, "headerReference", previous?.header)
-            section.footer = try band(properties, relationships, Self.footerType, "footerReference", previous?.footer)
+            let titlePage = properties.child(w, "titlePg").map { Self.on($0) } ?? false
+            section.titlePage = titlePage
+            section.evenAndOdd = evenAndOdd
+            section.header = try band(properties, relationships, Self.headerType, "headerReference", "default", true)
+            section.footer = try band(properties, relationships, Self.footerType, "footerReference", "default", true)
+            section.firstHeader = try band(properties, relationships, Self.headerType, "headerReference", "first", titlePage)
+            section.firstFooter = try band(properties, relationships, Self.footerType, "footerReference", "first", titlePage)
+            section.evenHeader = try band(properties, relationships, Self.headerType, "headerReference", "even", evenAndOdd)
+            section.evenFooter = try band(properties, relationships, Self.footerType, "footerReference", "even", evenAndOdd)
             section.blocks = slice
-            if let title = properties.child(w, "titlePg"), Self.on(title),
-               (properties.elements(w, "headerReference") + properties.elements(w, "footerReference")).contains(where: { $0.attribute(w, "type") == "first" }) {
-                skip("header-variant")
-            }
             document.sections.append(section)
             previous = section
         }
@@ -173,20 +191,25 @@ final class DocxReader {
         number(e?.attribute(w, name)).map { $0 / 20 }
     }
 
-    // A section without its own header or footer shows the previous section's, as in Word.
+    // A section without its own header or footer of a kind shows the previous section's, as in Word. A kind the section does
+    // not use is not read, but its reference still counts for the sections after it.
     private func band(_ sectPr: OfficeXmlElement, _ relationships: [OpcRelationship], _ type: String, _ reference: String,
-                      _ inherited: [LayoutParagraph]?) throws -> [LayoutParagraph] {
+                      _ kind: String, _ used: Bool) throws -> [LayoutParagraph] {
         let w = Self.w
-        let id = sectPr.elements(w, reference).first(where: { ($0.attribute(w, "type") ?? "default") == "default" })?.attribute(Self.r, "id")
-        let target = id.flatMap { id in relationships.first(where: { $0.id == id && $0.type == type })?.target }
-        guard let target, package.contains(target) else { return inherited ?? [] }
+        let id = sectPr.elements(w, reference).first(where: { ($0.attribute(w, "type") ?? "default") == kind })?.attribute(Self.r, "id")
+        let found = id.flatMap { id in relationships.first(where: { $0.id == id && $0.type == type })?.target }
+        let slot = reference + kind
+        if let found, package.contains(found) { lastBand[slot] = found }
+        guard used, let target = lastBand[slot] else { return [] }
         let key = ZipReader.key(target)
         if let known = bands[key] { return known }
 
         blocks = []
         fields.removeAll()
         inBand = true
+        partRelationships = try package.relationships(target)
         try readBlocks(try package.xml(target))
+        partRelationships = relationships
         inBand = false
         let made = blocks.compactMap { $0 as? LayoutParagraph }
         bands[key] = made
@@ -274,7 +297,7 @@ final class DocxReader {
     private func runs(_ mark: RunProps, _ last: Bool) -> [LayoutRun]? {
         var runs: [LayoutRun] = []
         for piece in pieces {
-            if piece.text.isEmpty && piece.format.field == .none { continue }
+            if piece.text.isEmpty && piece.format.field == .none && piece.format.picture == nil { continue }
             runs.append(Self.rebuild(piece.format, piece.text))
         }
         pieces.removeAll()
@@ -296,6 +319,7 @@ final class DocxReader {
         run.highlight = f.highlight
         run.shift = f.shift
         run.field = f.field
+        run.picture = f.picture
         return run
     }
 
@@ -391,14 +415,14 @@ final class DocxReader {
         var props = paragraphRun
         styles.character(r.child(w, "rPr")?.child(w, "rStyle")?.attribute(w, "val"), &props, theme)
         props.apply(r.child(w, "rPr"), theme)
-        content(r, props)
+        try content(r, props)
     }
 
-    private func content(_ run: OfficeXmlElement, _ props: RunProps) {
+    private func content(_ run: OfficeXmlElement, _ props: RunProps) throws {
         let w = Self.w
         for e in run.elements {
             if e.uri == Self.mc && e.name == "AlternateContent" {
-                if let picked = Self.pick(e) { content(picked, props) }
+                if let picked = Self.pick(e) { try content(picked, props) }
                 continue
             }
             if e.uri != w { continue }
@@ -417,7 +441,7 @@ final class DocxReader {
             case "instrText":
                 if let open = fields.last, !open.inResult { open.code += e.text }
             case "fldChar": fieldChar(e.attribute(w, "fldCharType"), props)
-            case "drawing": if visible(props) { skip(Self.drawing(e, "drawing")) }
+            case "drawing": if visible(props), !(try picture(e, props)) { skip(Self.drawing(e, "drawing")) }
             case "pict": if visible(props) { skip(Self.drawing(e, "shape")) }
             case "object": if visible(props) { skip("drawing") }
             case "footnoteReference": skip("footnote")
@@ -426,6 +450,44 @@ final class DocxReader {
             default: break
             }
         }
+    }
+
+    // A picture in line, or a floating one put in line at its anchor. Anything else in the drawing is left to the caller to report.
+    private func picture(_ drawing: OfficeXmlElement, _ props: RunProps) throws -> Bool {
+        guard let frame = drawing.child(Self.wp, "inline") ?? drawing.child(Self.wp, "anchor"), let extent = frame.child(Self.wp, "extent") else { return false }
+        guard let data = Self.descendant(frame, "graphicData"), (data.attribute("uri") ?? "").utf8.reversed().starts(with: "/picture".utf8.reversed()) else { return false }
+        let fill = Self.descendant(data, "blipFill")
+        let blip = fill.flatMap { Self.descendant($0, "blip") }
+        let id = blip?.attribute(Self.r, "embed")
+        let target = id.flatMap { id in partRelationships.first(where: { $0.id == id && $0.type == Self.imageType })?.target }
+        let width = Self.number(extent.attribute("cx")).map { $0 / Self.emuPerPoint } ?? 0
+        let height = Self.number(extent.attribute("cy")).map { $0 / Self.emuPerPoint } ?? 0
+        guard let target, package.contains(target), width > 0, height > 0, pictures < Self.maxPictures else { return false }
+
+        let key = ZipReader.key(target)
+        let file: PictureFile
+        if let known = pictureData[key] {
+            file = known
+        } else {
+            file = PictureFile(try package.bytes(target))
+            pictureData[key] = file
+        }
+        let crop = fill!.child(Self.a, "srcRect")
+        func edge(_ name: String) -> Double { min(max((Self.number(crop?.attribute(name)) ?? 0) / 100_000, 0), 0.95) }
+        pictures += 1
+        if frame.name == "anchor" { skip("floating-picture") }
+        let placed = LayoutPicture(file, min(width, Self.maxPictureSide), min(height, Self.maxPictureSide),
+                                   cropLeft: edge("l"), cropTop: edge("t"), cropRight: edge("r"), cropBottom: edge("b"))
+        pieces.append(Piece(Self.format(props, .none, placed)))
+        return true
+    }
+
+    private static func descendant(_ parent: OfficeXmlElement, _ name: String) -> OfficeXmlElement? {
+        for child in parent.elements {
+            if child.name == name { return child }
+            if let found = descendant(child, name) { return found }
+        }
+        return nil
     }
 
     private func visible(_ props: RunProps) -> Bool { props.hidden != true && !suppressed }
@@ -519,12 +581,12 @@ final class DocxReader {
     }
 
     private static func same(_ a: LayoutRun, _ b: LayoutRun) -> Bool {
-        a.field == .none && b.field == .none && a.family == b.family && a.size == b.size && a.bold == b.bold
+        a.field == .none && b.field == .none && a.picture == nil && b.picture == nil && a.family == b.family && a.size == b.size && a.bold == b.bold
             && a.italic == b.italic && a.underline == b.underline && a.strike == b.strike && a.color == b.color
             && a.highlight == b.highlight && a.shift == b.shift
     }
 
-    private static func format(_ p: RunProps, _ field: LayoutField) -> LayoutRun {
+    private static func format(_ p: RunProps, _ field: LayoutField, _ picture: LayoutPicture? = nil) -> LayoutRun {
         var size = p.size ?? 10
         var shift = 0.0
         if p.vertical == 1 {
@@ -545,6 +607,7 @@ final class DocxReader {
         if let h = p.highlight, h >= 0 { run.highlight = h }
         run.shift = shift
         run.field = field
+        run.picture = picture
         return run
     }
 
