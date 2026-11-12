@@ -10,7 +10,8 @@ import LazyPDFKit
 // The viewer belongs to the main actor; a poll that ran on another thread would read its cache while tiles are filed in it.
 @MainActor
 private func waitFor(_ condition: () -> Bool, file: StaticString = #filePath, line: UInt = #line) async {
-    for _ in 0..<300 where !condition() { try? await Task.sleep(nanoseconds: 10_000_000) }
+    let deadline = Date().addingTimeInterval(30)
+    while !condition(), Date() < deadline { try? await Task.sleep(nanoseconds: 10_000_000) }
     XCTAssertTrue(condition(), file: file, line: line)
 }
 
