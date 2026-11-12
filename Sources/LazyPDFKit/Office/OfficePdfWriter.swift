@@ -17,7 +17,11 @@ enum OfficePdfWriter {
     /// `InvalidOperationException` (the message is `ExportText.noFont`) when no font can draw the text, and
     /// `PdfReadException` when the page size or margins leave no room or the document runs past `Paginator.maxPages`.
     static func create(_ document: LayoutDocument, _ fonts: FontSource?, contents: ((Int, [UInt8]) -> Void)? = nil, images: ImageCodec? = nil) throws -> OfficePdf {
-        let layout = try Paginator(document, LayoutFonts(fonts)).run()
+        try create(try Paginator(document, LayoutFonts(fonts)).run(), fonts, contents: contents, images: images)
+    }
+
+    /// Writes pages that are already laid out.
+    static func create(_ layout: LayoutResult, _ fonts: FontSource?, contents: ((Int, [UInt8]) -> Void)? = nil, images: ImageCodec? = nil) throws -> OfficePdf {
         let pdf = try ExportPdf.newDocument()
         let embedder = PdfFontEmbedder(pdf, fonts)
 

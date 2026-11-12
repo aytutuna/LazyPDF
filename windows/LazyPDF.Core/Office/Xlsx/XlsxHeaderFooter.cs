@@ -14,6 +14,12 @@ internal static class XlsxHeaderFooter
 {
     public const int MaxLines = 100;
 
+    // Only A-Z fold, so the Swift twin matches without depending on its own case tables.
+    private static string Fold(string text) => string.Create(text.Length, text, (span, s) =>
+    {
+        for (int i = 0; i < s.Length; i++) span[i] = s[i] is >= 'A' and <= 'Z' ? (char)(s[i] + 32) : s[i];
+    });
+
     public static List<List<HfRun>>[] Parse(string source, HfContext context)
     {
         var sections = new List<List<HfRun>>[] { [[]], [[]], [[]] };
@@ -66,7 +72,7 @@ internal static class XlsxHeaderFooter
                     int comma = font.IndexOf(',');
                     if (comma < 0) break;
                     Flush();
-                    string style = font[(comma + 1)..].ToLowerInvariant();
+                    string style = Fold(font[(comma + 1)..]);
                     if (style.Contains("regular", StringComparison.Ordinal) || style.Contains("normal", StringComparison.Ordinal)) bold = italic = false;
                     if (style.Contains("bold", StringComparison.Ordinal)) bold = true;
                     if (style.Contains("italic", StringComparison.Ordinal)) italic = true;

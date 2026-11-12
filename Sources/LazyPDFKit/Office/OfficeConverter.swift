@@ -8,4 +8,12 @@ public enum OfficeConverter {
     public static func fromWord(_ docx: [UInt8], _ fonts: FontSource?, _ images: ImageCodec? = nil) throws -> OfficePdf {
         try OfficePdfWriter.create(try DocxReader.read(docx), fonts, images: images)
     }
+
+    /// Converts an .xlsx file, one or more pages per visible sheet as Excel would print it. `fileName` fills the file name field
+    /// of headers and footers. Throws `PdfReadException` when the file is not a readable Excel workbook, is over a limit, or has
+    /// nothing to print.
+    public static func fromExcel(_ xlsx: [UInt8], _ fonts: FontSource?, fileName: String = "") throws -> OfficePdf {
+        let book = try XlsxReader.read(xlsx)
+        return try OfficePdfWriter.create(try XlsxLayout.run(book, LayoutFonts(fonts), Date(), fileName), fonts)
+    }
 }
