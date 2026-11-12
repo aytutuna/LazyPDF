@@ -178,7 +178,18 @@ internal static class PdfCmsAgreement
                     recipients.ReadEncodedValue();
                     continue;
                 }
-                var (kek, wrappedKeys) = AgreedKeys(recipients.ReadSequence(Context1), key);
+                var entry = recipients.ReadSequence(Context1);
+                byte[]? kek;
+                List<byte[]> wrappedKeys;
+                try
+                {
+                    (kek, wrappedKeys) = AgreedKeys(entry, key);
+                }
+                catch (Exception e) when (e is AsnContentException or CryptographicException or ArgumentException or InvalidOperationException)
+                {
+                    // An entry on another curve or with a damaged point belongs to someone else; the next one may be ours.
+                    continue;
+                }
                 foreach (byte[] wrapped in wrappedKeys)
                 {
                     if (Unwrap(kek!, wrapped) is not { } contentKey || contentKey.Length != keySize) continue;

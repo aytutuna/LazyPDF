@@ -1,3 +1,4 @@
+using System.Formats.Asn1;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
@@ -92,6 +93,46 @@ public class PublicKeyEcTests
         Assert.Equal(wrapped, PdfCmsAgreement.Wrap(kek256, key256));
         wrapped[3] ^= 1;
         Assert.Null(PdfCmsAgreement.Unwrap(kek256, wrapped));
+    }
+
+    [Fact]
+    public void EntryOnAnotherCurveDoesNotStopTheSearch()
+    {
+        byte[] key = Enumerable.Range(1, 32).Select(i => (byte)i).ToArray();
+        byte[] iv = Enumerable.Range(50, 16).Select(i => (byte)i).ToArray();
+        byte[] for256 = PdfCmsAgreement.Seal(GoldenContent, P256.Value, null, key, iv);
+        byte[] for384 = PdfCmsAgreement.Seal(GoldenContent, P384.Value, null, key, iv);
+
+        static (byte[] Entry, byte[] Content) Split(byte[] envelope)
+        {
+            var data = new AsnReader(envelope, AsnEncodingRules.BER).ReadSequence();
+            data.ReadObjectIdentifier();
+            var body = data.ReadSequence(new Asn1Tag(TagClass.ContextSpecific, 0)).ReadSequence();
+            body.ReadInteger();
+            byte[] entry = body.ReadSetOf(true).ReadEncodedValue().ToArray();
+            return (entry, body.ReadEncodedValue().ToArray());
+        }
+
+        var (first, content) = Split(for256);
+        var (second, _) = Split(for384);
+        var w = new AsnWriter(AsnEncodingRules.DER);
+        using (w.PushSequence())
+        {
+            w.WriteObjectIdentifier("1.2.840.113549.1.7.3");
+            using (w.PushSequence(new Asn1Tag(TagClass.ContextSpecific, 0)))
+            using (w.PushSequence())
+            {
+                w.WriteInteger(2);
+                using (w.PushSetOf())
+                {
+                    w.WriteEncodedValue(first);
+                    w.WriteEncodedValue(second);
+                }
+                w.WriteEncodedValue(content);
+            }
+        }
+
+        Assert.Equal(GoldenContent, PdfCmsAgreement.Unseal(w.Encode(), P384.Value));
     }
 
     private static readonly byte[] GoldenContent = Enumerable.Range(1, 24).Select(i => (byte)i).ToArray();
