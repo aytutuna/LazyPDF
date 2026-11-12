@@ -76,6 +76,11 @@ final class DocumentTests: XCTestCase {
         let app = try launch()
         XCTAssertTrue(firstPage(app).waitForExistence(timeout: 60))
         tap(app.buttons["Tools"].firstMatch)
+        // The list builds its rows lazily, so a row far down the catalog is not there until searched for.
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 10))
+        search.tap()
+        search.typeText("Properties")
         let row = app.buttons["Properties"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         row.tap()
