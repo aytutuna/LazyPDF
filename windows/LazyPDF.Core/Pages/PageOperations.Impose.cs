@@ -130,6 +130,8 @@ public static partial class PageOperations
         }
         PageTree.Set(target, sheets);
         foreach (var copy in copies) target.Delete(copy.Number);
+        // The importer carried the form fields over, but every widget is now flattened or dropped.
+        target.Catalog.Remove("AcroForm");
         return new ImposeResult(target, sheets.Count, flattened, dropped);
     }
 }

@@ -150,6 +150,8 @@ extension PageOperations {
         }
         try PageTree.set(target, sheets)
         for copy in copies { target.delete(copy.number) }
+        // The importer carried the form fields over, but every widget is now flattened or dropped.
+        target.catalog.remove("AcroForm")
         return ImposeResult(document: target, sheets: sheets.count, annotationsFlattened: flattened, annotationsDropped: dropped)
     }
 }

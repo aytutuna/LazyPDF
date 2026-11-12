@@ -141,6 +141,21 @@ final class PageImposeTests: XCTestCase {
         XCTAssertTrue(Latin1.string(try document.data(form)).contains(" Do"))
     }
 
+    func test_formFieldsAreNotCarriedOver() throws {
+        let free = PageTestFiles.free(1)
+        let bytes = PageTestFiles.make(1, "/AcroForm <</Fields [\(free) 0 R \(free + 1) 0 R] /NeedAppearances true>>", pageExtra: { _ in "/Annots [\(free) 0 R \(free + 1) 0 R]" }, add: { pdf in
+            pdf.obj(free, "<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /V (x) /Rect [10 10 60 60] /F 4 /AP <</N \(free + 2) 0 R>>>>")
+            pdf.obj(free + 1, "<</Type /Annot /Subtype /Widget /FT /Tx /T (b) /Rect [70 70 90 90]>>")
+            pdf.stream(free + 2, "/Type /XObject /Subtype /Form /BBox [0 0 50 50]", "0 0 1 rg 0 0 50 50 re f")
+        })
+        let result = try PageOperations.impose(try PdfDocument.open(bytes), [0], ImposeOptions(mode: .nUp, sheetWidth: 400, sheetHeight: 300, perSheet: 2))
+        XCTAssertEqual(result.annotationsFlattened, 1)
+        XCTAssertEqual(result.annotationsDropped, 1)
+        XCTAssertNil(result.document.catalog["AcroForm"])
+        let document = try PdfDocument.open(try result.document.saveRewrite())
+        XCTAssertNil(document.catalog["AcroForm"])
+    }
+
     func test_badArgumentsAreRefused() throws {
         let document = try PageTestFiles.open(2)
         assertReadFails(try PageOperations.impose(document, [], ImposeOptions(mode: .nUp, sheetWidth: 400, sheetHeight: 300)), .damaged)

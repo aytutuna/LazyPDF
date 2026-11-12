@@ -176,6 +176,26 @@ public class PageImposeTests
     }
 
     [Fact]
+    public void FormFieldsAreNotCarriedOver()
+    {
+        int free = PageTestFiles.Free(1);
+        var bytes = PageTestFiles.Make(1, $"/AcroForm <</Fields [{free} 0 R {free + 1} 0 R] /NeedAppearances true>>",
+            pageExtra: _ => $"/Annots [{free} 0 R {free + 1} 0 R]",
+            add: pdf =>
+            {
+                pdf.Obj(free, $"<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /V (x) /Rect [10 10 60 60] /F 4 /AP <</N {free + 2} 0 R>>>>");
+                pdf.Obj(free + 1, "<</Type /Annot /Subtype /Widget /FT /Tx /T (b) /Rect [70 70 90 90]>>");
+                pdf.Stream(free + 2, "/Type /XObject /Subtype /Form /BBox [0 0 50 50]", "0 0 1 rg 0 0 50 50 re f");
+            });
+        var result = PageOperations.Impose(PdfDocument.Open(bytes), [0], new ImposeOptions(ImposeMode.NUp, 400, 300, 2));
+        Assert.Equal(1, result.AnnotationsFlattened);
+        Assert.Equal(1, result.AnnotationsDropped);
+        Assert.Null(result.Document.Catalog["AcroForm"]);
+        var document = PdfDocument.Open(result.Document.SaveRewrite());
+        Assert.Null(document.Catalog["AcroForm"]);
+    }
+
+    [Fact]
     public void BadArgumentsAreRefused()
     {
         var document = PageTestFiles.Open(2);
