@@ -106,60 +106,6 @@ public enum SignatureArt {
         return trim(paperToClear(shrink(upright(first, orientation))))
     }
 
-    /// The orientation (EXIF 1 to 8) a JPEG carries in its APP1 segment; 1 when it has none or is not a JPEG.
-    public static func exifOrientation(_ file: [UInt8]) -> Int {
-        guard file.count > 4, file[0] == 0xFF, file[1] == 0xD8 else { return 1 }
-        var at = 2
-        while at + 4 <= file.count, file[at] == 0xFF {
-            let marker = file[at + 1]
-            if marker == 0xD8 || marker == 0x01 || (0xD0...0xD7).contains(marker) || marker == 0xFF {
-                at += marker == 0xFF ? 1 : 2
-                continue
-            }
-            if marker == 0xDA || marker == 0xD9 { break }
-            let length = Int(file[at + 2]) << 8 | Int(file[at + 3])
-            let start = at + 4
-            let end = at + 2 + length
-            if length < 2 || end > file.count { break }
-            if marker == 0xE1, end - start >= 14, Array(file[start..<start + 6]) == [0x45, 0x78, 0x69, 0x66, 0, 0] {
-                return tiffOrientation(file, start + 6, end)
-            }
-            at = end
-        }
-        return 1
-    }
-
-    private static func tiffOrientation(_ file: [UInt8], _ tiff: Int, _ end: Int) -> Int {
-        let little = file[tiff] == 0x49 && file[tiff + 1] == 0x49
-        guard little || (file[tiff] == 0x4D && file[tiff + 1] == 0x4D) else { return 1 }
-        func short(_ at: Int) -> Int {
-            little ? Int(file[at]) | Int(file[at + 1]) << 8 : Int(file[at]) << 8 | Int(file[at + 1])
-        }
-        func long(_ at: Int) -> Int {
-            little ? short(at) | short(at + 2) << 16 : short(at) << 16 | short(at + 2)
-        }
-        guard tiff + 8 <= end else { return 1 }
-        let ifd = tiff + long(tiff + 4)
-        guard ifd >= tiff, ifd + 2 <= end else { return 1 }
-        for i in 0..<short(ifd) {
-            let entry = ifd + 2 + i * 12
-            if entry + 12 > end { break }
-            if short(entry) == 0x0112 && short(entry + 2) == 3 {
-                return min(max(short(entry + 8), 1), 8)
-            }
-        }
-        return 1
-    }
-
-    /// A JPEG turned the way its camera said it was held, so that its pixels and the PDF agree; other files come back as they are.
-    public static func uprightFile(_ file: [UInt8], _ codec: ImageCodec) -> [UInt8] {
-        guard file.count > 2, file[0] == 0xFF, file[1] == 0xD8 else { return file }
-        let orientation = exifOrientation(file)
-        guard (2...8).contains(orientation), let frame = codec.decodeFile(file)?.first(where: { !$0.tooBig }) else { return file }
-        let made = codec.encodeJpeg(upright(frame, orientation), 92)
-        return made.isEmpty ? file : made
-    }
-
     /// The picture turned a quarter clockwise.
     public static func turn(_ image: PdfRgbaImage) -> PdfRgbaImage {
         let w = image.width, h = image.height
