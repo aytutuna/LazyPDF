@@ -31,26 +31,34 @@ public struct SearchMatch {
     public let quads: [TextQuad]
 }
 
+/// Collects the pages where a regular expression ran out of time; hits found before the limit are still given.
+public final class SearchTimeouts {
+    public internal(set) var pages: [Int] = []
+
+    public init() {}
+}
+
 public enum TextSearch {
     private static let regexTimeout: TimeInterval = 2
 
     /// Finds a query on a page. White space in the query matches any run of white space and line breaks; a hyphen at a
     /// line end can be part of the match or not (`in-` and `formation` match "information", `well-` and `known` match
-    /// "well-known"). A regular expression that takes more than two seconds on a page gives no hits for it. Throws for
-    /// a bad pattern, and `CancellationError` when the task is cancelled during a regular expression.
-    public static func find(_ page: TextPage, _ query: String, _ options: TextSearchOptions? = nil) throws -> [SearchMatch] {
+    /// "well-known"). A regular expression that takes more than two seconds on a page stops there and the page is added to
+    /// `timeouts`. Throws for a bad pattern, and `CancellationError` when the task is cancelled during a regular expression.
+    public static func find(_ page: TextPage, _ query: String, _ options: TextSearchOptions? = nil,
+                            timeouts: SearchTimeouts? = nil) throws -> [SearchMatch] {
         let options = options ?? TextSearchOptions()
         guard let matcher = try Matcher.create(query, options) else { return [] }
-        return try matcher.find(page)
+        return try matcher.find(page, timeouts)
     }
 
     /// Finds a query on the pages `first` to `last` (0-based, inclusive), one page at a time as the sequence is read, so
     /// that a viewer can show the first hits while the rest is searched. Reading it stops with `CancellationError` when
     /// the task is cancelled.
     public static func find(_ cache: TextCache, _ query: String, _ options: TextSearchOptions? = nil,
-                            first: Int = 0, last: Int = Int.max) throws -> Hits {
+                            first: Int = 0, last: Int = Int.max, timeouts: SearchTimeouts? = nil) throws -> Hits {
         let options = options ?? TextSearchOptions()
-        return Hits(cache, try Matcher.create(query, options), first, last)
+        return Hits(cache, try Matcher.create(query, options), first, last, timeouts)
     }
 
     public struct Hits: AsyncSequence {
@@ -60,8 +68,10 @@ public enum TextSearch {
         private let matcher: Matcher?
         private let first: Int
         private let last: Int
+        private let timeouts: SearchTimeouts?
 
-        fileprivate init(_ cache: TextCache, _ matcher: Matcher?, _ first: Int, _ last: Int) {
+        fileprivate init(_ cache: TextCache, _ matcher: Matcher?, _ first: Int, _ last: Int, _ timeouts: SearchTimeouts?) {
+            self.timeouts = timeouts
             self.cache = cache
             self.matcher = matcher
             self.first = first
@@ -69,7 +79,7 @@ public enum TextSearch {
         }
 
         public func makeAsyncIterator() -> Iterator {
-            Iterator(Pages(cache, matcher, first, last))
+            Iterator(Pages(cache, matcher, first, last, timeouts))
         }
 
         public struct Iterator: AsyncIteratorProtocol {
@@ -90,9 +100,11 @@ public enum TextSearch {
         private let matcher: Matcher?
         private let end: Int
         private var page: Int
+        private let timeouts: SearchTimeouts?
         private var pending: [SearchMatch] = []
 
-        init(_ cache: TextCache, _ matcher: Matcher?, _ first: Int, _ last: Int) {
+        init(_ cache: TextCache, _ matcher: Matcher?, _ first: Int, _ last: Int, _ timeouts: SearchTimeouts?) {
+            self.timeouts = timeouts
             self.cache = cache
             self.matcher = matcher
             end = min(last, cache.pageCount - 1)
@@ -104,7 +116,7 @@ public enum TextSearch {
             while pending.isEmpty {
                 if page > end { return nil }
                 try Task.checkCancellation()
-                pending = try matcher.find(cache.get(page))
+                pending = try matcher.find(cache.get(page), timeouts)
                 pending.reverse()
                 page += 1
             }
@@ -135,11 +147,12 @@ public enum TextSearch {
             return plain.isEmpty ? nil : Matcher(options, plain, nil)
         }
 
-        func find(_ page: TextPage) throws -> [SearchMatch] {
+        func find(_ page: TextPage, _ timeouts: SearchTimeouts?) throws -> [SearchMatch] {
             var found: [TextRange] = []
             let text = SearchText.build(page, options, false)
-            try collect(text, &found)
-            if text.hasHyphenBreak { try collect(SearchText.build(page, options, true), &found) }
+            var timedOut = try !collect(text, &found)
+            if text.hasHyphenBreak { timedOut = try !collect(SearchText.build(page, options, true), &found) || timedOut }
+            if timedOut { timeouts?.pages.append(page.pageIndex) }
             found.sort { a, b in a.start != b.start ? a.start < b.start : b.end < a.end }
             var result: [SearchMatch] = []
             var end = -1
@@ -151,8 +164,8 @@ public enum TextSearch {
             return result
         }
 
-        private func collect(_ text: SearchText, _ found: inout [TextRange]) throws {
-            if text.text.isEmpty { return }
+        private func collect(_ text: SearchText, _ found: inout [TextRange]) throws -> Bool {
+            if text.text.isEmpty { return true }
             guard let regex else {
                 var from = 0
                 while from <= text.text.count - query.count {
@@ -165,11 +178,12 @@ public enum TextSearch {
                     }
                     found.append(TextRange(text.map[i], text.map[from - 1] + 1))
                 }
-                return
+                return true
             }
             let string = String(units: text.text)
             var deadline = Date().addingTimeInterval(TextSearch.regexTimeout)
             var cancelled = false
+            var timedOut = false
             var matched: [TextRange] = []
             regex.enumerateMatches(in: string, options: [.reportProgress], range: NSRange(location: 0, length: text.text.count)) { match, flags, stop in
                 if Task.isCancelled {
@@ -178,7 +192,10 @@ public enum TextSearch {
                     return
                 }
                 if flags.contains(.progress) || match == nil {
-                    if Date() > deadline { stop.pointee = true }
+                    if Date() > deadline {
+                        timedOut = true
+                        stop.pointee = true
+                    }
                     return
                 }
                 deadline = Date().addingTimeInterval(TextSearch.regexTimeout)
@@ -187,6 +204,7 @@ public enum TextSearch {
             }
             found.append(contentsOf: matched)
             if cancelled { throw CancellationError() }
+            return !timedOut
         }
 
         private func indexOf(_ text: [UInt16], _ from: Int) -> Int {
