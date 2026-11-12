@@ -65,7 +65,8 @@ internal static class PageInk
         return (double)n / count;
     }
 
-    public static bool IsBlank(PdfRgbaImage image) => DarkShare(image) <= BlankShare;
+    // Counts anything off white, not only dark pixels, so a faint scan or a pale picture is not taken for an empty page.
+    public static bool IsBlank(PdfRgbaImage image) => DarkShare(image, 245) <= BlankShare;
 
     private static bool Ink(byte[] px, int i, int white) =>
         px[i + 3] > 8 && Math.Min(px[i], Math.Min(px[i + 1], px[i + 2])) < white;

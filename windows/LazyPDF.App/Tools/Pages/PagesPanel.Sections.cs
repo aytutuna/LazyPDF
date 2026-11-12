@@ -337,9 +337,11 @@ public partial class PagesPanel
         var source = Exporter.Source(tab, new WicImageCodec());
         var annotated = tab.Document.Pages.Select(page => PdfAnnotations.Read(tab.Document, page).Any(a => a.Type is not (AnnotationType.Link or AnnotationType.Popup))).ToList();
         List<int>? blank = null;
+        IReadOnlyList<OcrPageKind>? pageKinds = null;
         await host.RunBusyAsync(Loc.T("Looking for blank pages"), token => Task.Run(() =>
         {
             var kinds = OcrPages.Classify(bytes, tab.Password, tab.Certificate);
+            pageKinds = kinds;
             using var drawn = Exporter.Snapshot(source);
             if (drawn is null) return;
             var ink = new bool?[kinds.Count];
@@ -355,7 +357,7 @@ public partial class PagesPanel
         if (blank is null || !ReferenceEquals(Tab, tab) || tab.Revision != revision) return;
         ClearBlank();
         _blankRevision = revision;
-        foreach (int page in blank) BlankList.Items.Add(new CheckBox { Content = Cells[page].Name, Tag = page, IsChecked = true, Margin = new Thickness(0, 2, 0, 2) });
+        foreach (int page in blank) BlankList.Items.Add(new CheckBox { Content = Cells[page].Name, Tag = page, IsChecked = pageKinds![page] == OcrPageKind.Blank, Margin = new Thickness(0, 2, 0, 2) });
         BlankHint.Text = blank.Count == 0 ? Loc.T("No blank pages found.") : Loc.Plural(blank.Count, "{0} blank page found.", "{0} blank pages found.", blank.Count);
         if (blank.Count == Cells.Count)
         {
