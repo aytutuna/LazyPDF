@@ -32,7 +32,7 @@ public static class FormText
 
     public static string BadSize => Loc.T("The text size must be from 0 to 200 points.");
 
-    public static string BadColor => Loc.T("A colour is one, three or four numbers from 0 to 1.");
+    public static string BadColor => Loc.T("A color is one, three or four numbers from 0 to 1.");
 
     public static string NotAPushButton => Loc.T("Only a button can have an action.");
 

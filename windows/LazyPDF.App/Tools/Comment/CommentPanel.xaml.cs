@@ -97,7 +97,7 @@ public partial class CommentPanel : ToolPanel
             var swatch = new RadioButton
             {
                 Style = (Style)FindResource("SwatchStyle"),
-                GroupName = "Colour",
+                GroupName = "Color",
                 Tag = rgb is null ? "auto" : rgb,
                 Background = rgb is null ? Brushes.Transparent : new SolidColorBrush(Color.FromRgb(Channel(rgb[0]), Channel(rgb[1]), Channel(rgb[2]))),
                 IsChecked = rgb is null,

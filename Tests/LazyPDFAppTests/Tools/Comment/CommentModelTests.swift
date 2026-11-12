@@ -43,7 +43,7 @@ final class MarkHost: ToolHost {
         do {
             try await work(token)
         } catch is CancellationError {
-            statuses.append("Cancelled.")
+            statuses.append("Canceled.")
         }
     }
 
@@ -505,7 +505,7 @@ final class CommentModelTests: XCTestCase {
 
         XCTAssertEqual(marks(rig).count, 1)
         XCTAssertEqual(rig.tab.revision, before)
-        XCTAssertEqual(rig.host.statuses, ["Cancelled."])
+        XCTAssertEqual(rig.host.statuses, ["Canceled."])
         XCTAssertFalse(MarkWork.shared.running)
         XCTAssertEqual(rig.tab.session.undoLabel, "Marks")
     }

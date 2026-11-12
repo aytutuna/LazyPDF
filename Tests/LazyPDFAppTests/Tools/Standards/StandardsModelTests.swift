@@ -129,7 +129,7 @@ final class StandardsModelTests: XCTestCase {
         await model.action!.run()
 
         XCTAssertFalse(model.showsResult)
-        XCTAssertEqual(rig.host.statuses.last, "Cancelled.")
+        XCTAssertEqual(rig.host.statuses.last, "Canceled.")
         await waitUntil { !model.working }
     }
 

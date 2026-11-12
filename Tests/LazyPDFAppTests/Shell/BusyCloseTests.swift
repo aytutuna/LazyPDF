@@ -137,7 +137,7 @@ final class BusyCloseTests: XCTestCase {
         f.vm.cancelBusy()
         try await run.value
 
-        XCTAssertEqual(f.vm.statusFull, "Cancelled.")
+        XCTAssertEqual(f.vm.statusFull, "Canceled.")
         XCTAssertFalse(f.vm.isBusy)
     }
 
@@ -184,7 +184,7 @@ final class BusyCloseTests: XCTestCase {
         expire.expired?()
         try await run.value
 
-        XCTAssertEqual(f.vm.statusFull, "Cancelled.")
+        XCTAssertEqual(f.vm.statusFull, "Canceled.")
     }
 }
 

@@ -77,7 +77,7 @@ public static class PdfAText
     public static string ProfileComponents => Loc.T("An ICC profile stream has no usable /N.");
     public static string ProfileUnreadable => Loc.T("An ICC profile could not be read.");
     public static string ProfileClass(string kind) => Loc.T("An ICC profile of class {0} is not allowed.", kind);
-    public static string ProfileSpace => Loc.T("An ICC profile does not match the colour count in /N.");
+    public static string ProfileSpace => Loc.T("An ICC profile does not match the color count in /N.");
     public static string ProfileVersion(int version) => Loc.T("An ICC profile is version {0}, newer than this level allows.", version);
 
     public static string WidthDiffers(int code, double declared, double actual) =>

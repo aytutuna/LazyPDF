@@ -177,7 +177,7 @@ struct CommentPanelView: View {
     }
 
     private var colours: some View {
-        LabelledField(L10n.t("Colour")) {
+        LabelledField(L10n.t("Color")) {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 44), spacing: 0)], alignment: .leading, spacing: 0) {
                 ForEach(Array(CommentModel.colours.enumerated()), id: \.offset) { item in
                     swatch(item.element.name, item.element.rgb)

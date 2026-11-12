@@ -76,7 +76,7 @@ public enum PdfAText {
     public static var profileComponents: String { L10n.t("An ICC profile stream has no usable /N.") }
     public static var profileUnreadable: String { L10n.t("An ICC profile could not be read.") }
     public static func profileClass(_ kind: String) -> String { L10n.t("An ICC profile of class {0} is not allowed.", kind) }
-    public static var profileSpace: String { L10n.t("An ICC profile does not match the colour count in /N.") }
+    public static var profileSpace: String { L10n.t("An ICC profile does not match the color count in /N.") }
     public static func profileVersion(_ version: Int) -> String { L10n.t("An ICC profile is version {0}, newer than this level allows.", version) }
 
     public static func widthDiffers(_ code: Int, _ declared: Double, _ actual: Double) -> String {

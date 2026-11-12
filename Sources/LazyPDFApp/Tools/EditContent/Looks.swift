@@ -62,7 +62,7 @@ public enum Palette {
     public static var colors: [(name: String, color: RgbColor)] {
         [
             (L10n.t("Black"), RgbColor(0, 0, 0)),
-            (L10n.t("Grey"), RgbColor(110, 110, 110)),
+            (L10n.t("Gray"), RgbColor(110, 110, 110)),
             (L10n.t("White"), RgbColor(255, 255, 255)),
             (L10n.t("Red"), RgbColor(200, 30, 30)),
             (L10n.t("Orange"), RgbColor(235, 125, 20)),

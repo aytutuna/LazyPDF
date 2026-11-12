@@ -39,7 +39,7 @@
                 <ComboBoxItem Content="{loc:T Top}" />
                 <ComboBoxItem Content="{loc:T Top right}" />
                 <ComboBoxItem Content="{loc:T Left}" />
-                <ComboBoxItem Content="{loc:T Centre}" />
+                <ComboBoxItem Content="{loc:T Center}" />
                 <ComboBoxItem Content="{loc:T Right}" />
                 <ComboBoxItem Content="{loc:T Bottom left}" />
                 <ComboBoxItem Content="{loc:T Bottom}" />
@@ -50,8 +50,8 @@
         </StackPanel>
 
         <StackPanel x:Name="BackgroundBox" Margin="0,12,0,0">
-            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Colour}" />
-            <ComboBox x:Name="BackColorBox" AutomationProperties.Name="{loc:T Background colour}" SelectionChanged="Form_Changed" />
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Color}" />
+            <ComboBox x:Name="BackColorBox" AutomationProperties.Name="{loc:T Background color}" SelectionChanged="Form_Changed" />
             <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Picture fit}" />
             <ComboBox x:Name="FitBox" SelectedIndex="0" AutomationProperties.Name="{loc:T Picture fit}" SelectionChanged="Form_Changed">
                 <ComboBoxItem Content="{loc:T Cover the page}" />
@@ -90,8 +90,8 @@
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Style="{StaticResource ReasonText}" VerticalAlignment="Center" Text="{loc:T Left}" />
                 <TextBox x:Name="HeaderLeft" Grid.Row="0" Grid.Column="1" Margin="0,0,0,4" AutomationProperties.Name="{loc:T Header left}" TextChanged="Form_Changed" />
-                <TextBlock Grid.Row="1" Style="{StaticResource ReasonText}" VerticalAlignment="Center" Text="{loc:T Centre}" />
-                <TextBox x:Name="HeaderCentre" Grid.Row="1" Grid.Column="1" Margin="0,0,0,4" AutomationProperties.Name="{loc:T Header centre}" TextChanged="Form_Changed" />
+                <TextBlock Grid.Row="1" Style="{StaticResource ReasonText}" VerticalAlignment="Center" Text="{loc:T Center}" />
+                <TextBox x:Name="HeaderCentre" Grid.Row="1" Grid.Column="1" Margin="0,0,0,4" AutomationProperties.Name="{loc:T Header center}" TextChanged="Form_Changed" />
                 <TextBlock Grid.Row="2" Style="{StaticResource ReasonText}" VerticalAlignment="Center" Text="{loc:T Right}" />
                 <TextBox x:Name="HeaderRight" Grid.Row="2" Grid.Column="1" Margin="0,0,0,4" AutomationProperties.Name="{loc:T Header right}" TextChanged="Form_Changed" />
             </Grid>
@@ -105,8 +105,8 @@
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Style="{StaticResource ReasonText}" VerticalAlignment="Center" Text="{loc:T Left}" />
                 <TextBox x:Name="FooterLeft" Grid.Row="0" Grid.Column="1" Margin="0,0,0,4" AutomationProperties.Name="{loc:T Footer left}" TextChanged="Form_Changed" />
-                <TextBlock Grid.Row="1" Style="{StaticResource ReasonText}" VerticalAlignment="Center" Text="{loc:T Centre}" />
-                <TextBox x:Name="FooterCentre" Grid.Row="1" Grid.Column="1" Margin="0,0,0,4" Text="{}{page}" AutomationProperties.Name="{loc:T Footer centre}" TextChanged="Form_Changed" />
+                <TextBlock Grid.Row="1" Style="{StaticResource ReasonText}" VerticalAlignment="Center" Text="{loc:T Center}" />
+                <TextBox x:Name="FooterCentre" Grid.Row="1" Grid.Column="1" Margin="0,0,0,4" Text="{}{page}" AutomationProperties.Name="{loc:T Footer center}" TextChanged="Form_Changed" />
                 <TextBlock Grid.Row="2" Style="{StaticResource ReasonText}" VerticalAlignment="Center" Text="{loc:T Right}" />
                 <TextBox x:Name="FooterRight" Grid.Row="2" Grid.Column="1" Margin="0,0,0,4" AutomationProperties.Name="{loc:T Footer right}" TextChanged="Form_Changed" />
             </Grid>
@@ -171,8 +171,8 @@
                 <CheckBox x:Name="BoldBox" Content="{loc:T Bold}" Margin="0,0,16,0" AutomationProperties.Name="{loc:T Bold}" Click="Form_Changed" />
                 <CheckBox x:Name="ItalicBox" Content="{loc:T Italic}" AutomationProperties.Name="{loc:T Italic}" Click="Form_Changed" />
             </WrapPanel>
-            <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Colour}" />
-            <ComboBox x:Name="ColorBox" AutomationProperties.Name="{loc:T Text colour}" SelectionChanged="Form_Changed" />
+            <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Color}" />
+            <ComboBox x:Name="ColorBox" AutomationProperties.Name="{loc:T Text color}" SelectionChanged="Form_Changed" />
             <StackPanel x:Name="TextSizeBox">
                 <TextBlock Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" Text="{loc:T Text size}" />
                 <DockPanel>

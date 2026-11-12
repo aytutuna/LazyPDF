@@ -161,7 +161,7 @@ public sealed class OcrWorkTests
 
         await Make(tab, f, recognizer, new("en-US", OcrWork.Dpi, OcrExisting.Skip, [0, 1, 2], Force: true));
 
-        Assert.Equal("Cancelled.", f.Vm.StatusFull);
+        Assert.Equal("Canceled.", f.Vm.StatusFull);
         Assert.Null(f.Vm.Message);
         Assert.False(tab.Session.CanUndo);
     }
@@ -176,7 +176,7 @@ public sealed class OcrWorkTests
         var result = await Make(tab, f, recognizer, new("en-US", OcrWork.Dpi, OcrExisting.Skip, [0, 1, 2], Force: true));
 
         Assert.Null(result);
-        Assert.Equal("Cancelled.", f.Vm.StatusFull);
+        Assert.Equal("Canceled.", f.Vm.StatusFull);
         Assert.Null(f.Vm.Message);
         Assert.False(tab.Session.CanUndo);
         Assert.False(PdfOcrLayer.Has(tab.Document, tab.Document.Pages[0]));

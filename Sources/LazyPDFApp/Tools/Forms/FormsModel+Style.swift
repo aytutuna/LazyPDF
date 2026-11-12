@@ -38,7 +38,7 @@ extension FormsModel {
         guard let field = selectedField(form), colours.indices.contains(index) else { return }
         colourIndex = index
         let rgb = colours[index].rgb
-        if !FormEdits.sameColour(rgb, form.getTextLook(field).color) && !changeField(L10n.t("Change text colour"), { form, f in try form.setTextColor(f, rgb) }) {
+        if !FormEdits.sameColour(rgb, form.getTextLook(field).color) && !changeField(L10n.t("Change text color"), { form, f in try form.setTextColor(f, rgb) }) {
             showCard(form)
         }
     }

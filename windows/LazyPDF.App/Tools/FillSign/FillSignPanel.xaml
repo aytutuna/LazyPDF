@@ -83,8 +83,8 @@
             <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Size}" />
             <ComboBox x:Name="SizeBox" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Size}" />
             <StackPanel x:Name="ColourPage">
-                <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Colour}" />
-                <ComboBox x:Name="ColourBox" DisplayMemberPath="Name" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Colour}" />
+                <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Color}" />
+                <ComboBox x:Name="ColourBox" DisplayMemberPath="Name" Margin="0,0,0,12" AutomationProperties.Name="{loc:T Color}" />
             </StackPanel>
         </StackPanel>
 

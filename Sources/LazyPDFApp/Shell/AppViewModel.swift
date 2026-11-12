@@ -283,7 +283,7 @@ public final class AppViewModel {
         do {
             try await work(token)
         } catch is CancellationError {
-            setStatus(L10n.t("Cancelled."))
+            setStatus(L10n.t("Canceled."))
         } catch is PdfPermissionException {
             showProblem(Problems.restricted())
         }

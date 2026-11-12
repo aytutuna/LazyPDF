@@ -49,7 +49,7 @@ public enum OcrWork {
                                          other: "Stopped after {0} pages. The pages were kept. Undo takes them back."))
             }
             if dropsLayers, kept < read.pages.count { parts.append(L10n.t("Text read earlier on those pages was removed. Undo brings it back.")) }
-            if parts.isEmpty { host.setStatus(L10n.t("Cancelled.")) } else { host.showNotice(L10n.t("Reading stopped"), parts.joined(separator: " "), nil) }
+            if parts.isEmpty { host.setStatus(L10n.t("Canceled.")) } else { host.showNotice(L10n.t("Reading stopped"), parts.joined(separator: " "), nil) }
             return nil
         }
         if result.committed {

@@ -30,7 +30,7 @@ public sealed partial class StampsPanel : ToolPanel
     private readonly string[] _families;
     private readonly (string Name, StampColor Color)[] _colors =
     [
-        (Loc.T("Grey"), StampColor.Gray(0.5)),
+        (Loc.T("Gray"), StampColor.Gray(0.5)),
         (Loc.T("Black"), StampColor.Black),
         (Loc.T("Red"), new StampColor(0.8, 0.1, 0.1)),
         (Loc.T("Orange"), new StampColor(0.95, 0.5, 0.1)),
@@ -41,7 +41,7 @@ public sealed partial class StampsPanel : ToolPanel
     [
         (Loc.T("None"), null),
         (Loc.T("White"), new StampColor(1, 1, 1)),
-        (Loc.T("Light grey"), StampColor.Gray(0.9)),
+        (Loc.T("Light gray"), StampColor.Gray(0.9)),
         (Loc.T("Cream"), new StampColor(1, 0.97, 0.85)),
         (Loc.T("Light blue"), new StampColor(0.85, 0.92, 1)),
     ];
@@ -213,7 +213,7 @@ public sealed partial class StampsPanel : ToolPanel
         if (!done)
         {
             tab.Session.Discard();
-            host.SetStatus(Loc.T("Cancelled."));
+            host.SetStatus(Loc.T("Canceled."));
         }
         return done && ReferenceEquals(tab.Document, document);
     }

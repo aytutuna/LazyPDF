@@ -58,7 +58,7 @@ public enum OptimizeText {
     }
 
     public static var needsCodec: String { L10n.t("Pictures in JPEG and JPEG 2000 need the system codec and were left.") }
-    public static var leftColor: String { L10n.t("Shadings, spot colours and patterns were left in colour.") }
+    public static var leftColor: String { L10n.t("Shadings, spot colors and patterns were left in color.") }
     public static var leftPartialFonts: String { L10n.t("Fonts with uses that could not be traced were left whole.") }
     public static var leftPartialImages: String { L10n.t("Pictures with uses that could not be traced were left at their size.") }
     public static var leftMixedText: String { L10n.t("Invisible text in a text object that also shows visible text was left.") }

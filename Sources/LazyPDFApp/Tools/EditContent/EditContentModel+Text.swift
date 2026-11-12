@@ -242,7 +242,7 @@ extension EditContentModel {
     }
 
     public func chooseTextColor(_ color: RgbColor) {
-        restyle(TextStyleChange(color: color), L10n.t("Colour changed."))
+        restyle(TextStyleChange(color: color), L10n.t("Color changed."))
     }
 
     public func setAlignment(_ new: LazyPDFKit.TextAlignment) {

@@ -52,7 +52,7 @@ public static class CompareText
     public static string SizeChange(double from, double to) =>
         Loc.T("Size {0} to {1}", from.ToString("0.##", CultureInfo.InvariantCulture), to.ToString("0.##", CultureInfo.InvariantCulture));
 
-    public static string ColorChange(RgbColor from, RgbColor to) => Loc.T("Colour {0} to {1}", Hex(from), Hex(to));
+    public static string ColorChange(RgbColor from, RgbColor to) => Loc.T("Color {0} to {1}", Hex(from), Hex(to));
 
     private static string Hex(RgbColor c) => $"#{c.R:X2}{c.G:X2}{c.B:X2}";
 
@@ -64,7 +64,7 @@ public static class CompareText
 
     public static string AnnotationPosition => Loc.T("Position");
 
-    public static string AnnotationColor => Loc.T("Colour");
+    public static string AnnotationColor => Loc.T("Color");
 
     public static string Bookmark => Loc.T("Bookmark");
 

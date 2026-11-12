@@ -54,7 +54,7 @@ public final class StampsModel: ToolPanelModel {
     /// The colours of text, and of backgrounds, by name.
     var colors: [(name: String, color: StampColor)] {
         [
-            (L10n.t("Grey"), .gray(0.5)),
+            (L10n.t("Gray"), .gray(0.5)),
             (L10n.t("Black"), .black),
             (L10n.t("Red"), StampColor(0.8, 0.1, 0.1)),
             (L10n.t("Orange"), StampColor(0.95, 0.5, 0.1)),
@@ -67,7 +67,7 @@ public final class StampsModel: ToolPanelModel {
         [
             (L10n.t("None"), nil),
             (L10n.t("White"), StampColor(1, 1, 1)),
-            (L10n.t("Light grey"), .gray(0.9)),
+            (L10n.t("Light gray"), .gray(0.9)),
             (L10n.t("Cream"), StampColor(1, 0.97, 0.85)),
             (L10n.t("Light blue"), StampColor(0.85, 0.92, 1)),
         ]
@@ -217,7 +217,7 @@ public final class StampsModel: ToolPanelModel {
             if !token.isCancelled { made = value }
         }
         guard let made else {
-            host.setStatus(L10n.t("Cancelled."))
+            host.setStatus(L10n.t("Canceled."))
             return nil
         }
         return tab.session.current == start ? made : nil

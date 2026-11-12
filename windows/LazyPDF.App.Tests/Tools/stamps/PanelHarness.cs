@@ -69,7 +69,7 @@ internal sealed class RecordingHost : IToolHost
         }
         catch (OperationCanceledException)
         {
-            Status = "Cancelled.";
+            Status = "Canceled.";
         }
     }
 

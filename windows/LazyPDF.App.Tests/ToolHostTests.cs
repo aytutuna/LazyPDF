@@ -25,7 +25,7 @@ public sealed class ToolHostTests
         await run;
 
         Assert.False(f.Vm.IsBusy);
-        Assert.Equal("Cancelled.", f.Vm.StatusFull);
+        Assert.Equal("Canceled.", f.Vm.StatusFull);
     }
 
     [Fact]

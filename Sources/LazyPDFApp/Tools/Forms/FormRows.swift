@@ -90,7 +90,7 @@ public enum FormChoices {
     public static var colours: [ColourChoice] {
         [ColourChoice(text: L10n.t("Black"), rgb: [0]), ColourChoice(text: L10n.t("Blue"), rgb: [0, 0, 1]),
          ColourChoice(text: L10n.t("Red"), rgb: [1, 0, 0]), ColourChoice(text: L10n.t("Green"), rgb: [0, 0.5, 0]),
-         ColourChoice(text: L10n.t("Grey"), rgb: [0.5])]
+         ColourChoice(text: L10n.t("Gray"), rgb: [0.5])]
     }
 
     public static var actions: [ActionChoice] {

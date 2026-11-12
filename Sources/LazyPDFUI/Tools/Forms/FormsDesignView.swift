@@ -113,8 +113,8 @@ struct FormsDesignView: View {
                 ReasonText(L10n.t("Leave it empty to fit the text to the field."))
             }
             if kind != .signature {
-                LabelledField(L10n.t("Text colour")) {
-                    Picker(L10n.t("Text colour"), selection: Binding(get: { model.colourIndex ?? -1 }, set: { model.setColour($0) })) {
+                LabelledField(L10n.t("Text color")) {
+                    Picker(L10n.t("Text color"), selection: Binding(get: { model.colourIndex ?? -1 }, set: { model.setColour($0) })) {
                         ForEach(Array(FormChoices.colours.enumerated()), id: \.offset) { Text($0.element.text).tag($0.offset) }
                     }
                     .labelsHidden()

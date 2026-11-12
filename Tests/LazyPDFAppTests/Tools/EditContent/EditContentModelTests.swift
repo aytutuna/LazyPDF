@@ -449,7 +449,7 @@ final class EditContentModelTests: XCTestCase {
 
         await model.replaceAll()
 
-        XCTAssertEqual(rig.host.status, "Cancelled.")
+        XCTAssertEqual(rig.host.status, "Canceled.")
         XCTAssertEqual(rig.tab.revision, 0)
         XCTAssertFalse(model.isReplacing)
     }

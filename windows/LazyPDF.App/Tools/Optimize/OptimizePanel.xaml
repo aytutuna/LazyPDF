@@ -56,16 +56,16 @@
             <TextBlock Style="{StaticResource ReasonText}" Margin="0,2,0,8" Text="{loc:T Lower numbers lose detail.}" />
             <CheckBox x:Name="TrimFonts" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Trim fonts}" IsChecked="True" AutomationProperties.Name="{loc:T Trim fonts}" AutomationProperties.HelpText="{loc:T Nothing you can see is lost. Text cannot be edited in other programs with the missing letters.}" />
             <TextBlock Style="{StaticResource ReasonText}" Margin="0,2,0,8" Text="{loc:T Nothing you can see is lost. Text cannot be edited in other programs with the missing letters.}" />
-            <CheckBox x:Name="BlackWhite" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Make black and white pictures 1-bit}" IsChecked="True" AutomationProperties.Name="{loc:T Make black and white pictures 1-bit}" AutomationProperties.HelpText="{loc:T Grey shades in those pictures are lost.}" />
-            <TextBlock Style="{StaticResource ReasonText}" Margin="0,2,0,8" Text="{loc:T Grey shades in those pictures are lost.}" />
+            <CheckBox x:Name="BlackWhite" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Make black and white pictures 1-bit}" IsChecked="True" AutomationProperties.Name="{loc:T Make black and white pictures 1-bit}" AutomationProperties.HelpText="{loc:T Gray shades in those pictures are lost.}" />
+            <TextBlock Style="{StaticResource ReasonText}" Margin="0,2,0,8" Text="{loc:T Gray shades in those pictures are lost.}" />
             <CheckBox x:Name="DropAppData" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Remove editing data of the program that made the file}" IsChecked="True" AutomationProperties.Name="{loc:T Remove editing data of the program that made the file}" ToolTip="{loc:T Data the program that made the file keeps for its own editing. Reading the file does not need it. Keep this off if you open the file in that program.}" AutomationProperties.HelpText="{loc:T Nothing you can see is lost.}" />
             <TextBlock Style="{StaticResource ReasonText}" Margin="0,2,0,8" Text="{loc:T Nothing you can see is lost.}" />
             <CheckBox x:Name="DropPrivateKeys" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Remove other hidden program data}" AutomationProperties.Name="{loc:T Remove other hidden program data}" ToolTip="{loc:T Extra private entries other programs added. Reading the file does not need them.}" AutomationProperties.HelpText="{loc:T Nothing you can see is lost.}" />
             <TextBlock Style="{StaticResource ReasonText}" Margin="0,2,0,8" Text="{loc:T Nothing you can see is lost.}" />
         </StackPanel>
 
-        <CheckBox x:Name="Gray" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Convert to grayscale}" AutomationProperties.Name="{loc:T Convert to grayscale}" AutomationProperties.HelpText="{loc:T Colour is lost.}" />
-        <TextBlock Style="{StaticResource ReasonText}" Margin="0,2,0,8" Text="{loc:T Colour is lost.}" />
+        <CheckBox x:Name="Gray" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Convert to grayscale}" AutomationProperties.Name="{loc:T Convert to grayscale}" AutomationProperties.HelpText="{loc:T Color is lost.}" />
+        <TextBlock Style="{StaticResource ReasonText}" Margin="0,2,0,8" Text="{loc:T Color is lost.}" />
         <CheckBox x:Name="FastWeb" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Fast web view}" AutomationProperties.Name="{loc:T Fast web view}" />
         <TextBlock Style="{StaticResource ReasonText}" Margin="0,2,0,16" Text="{loc:T Page one shows before the whole file has loaded.}" />
 

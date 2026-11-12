@@ -60,7 +60,7 @@ public enum AnnotationText {
         switch status {
         case .accepted: return L10n.t("Accepted")
         case .rejected: return L10n.t("Rejected")
-        case .cancelled: return L10n.t("Cancelled")
+        case .cancelled: return L10n.t("Canceled")
         case .completed: return L10n.t("Completed")
         case .marked: return L10n.t("Marked")
         case .unmarked: return L10n.t("Unmarked")

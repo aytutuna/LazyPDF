@@ -69,7 +69,7 @@ struct MetadataPanelView: View {
             Toggle(L10n.t("Hide the menu bar"), isOn: $model.hideMenubar)
             Toggle(L10n.t("Hide window controls"), isOn: $model.hideWindowUI)
             Toggle(L10n.t("Size window to page"), isOn: $model.fitWindow)
-            Toggle(L10n.t("Centre the window"), isOn: $model.centerWindow)
+            Toggle(L10n.t("Center the window"), isOn: $model.centerWindow)
             Toggle(L10n.t("Read right to left"), isOn: $model.rightToLeft)
 
             SectionHeading(L10n.t("When it prints"))

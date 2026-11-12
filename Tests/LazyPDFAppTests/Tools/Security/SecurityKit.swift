@@ -37,7 +37,7 @@ final class SecurityHost: ToolHost, ToolFilePicker, ToolFileExporter {
         do {
             try await work(token)
         } catch is CancellationError {
-            setStatus("Cancelled.")
+            setStatus("Canceled.")
         }
     }
 

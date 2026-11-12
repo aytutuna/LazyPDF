@@ -134,6 +134,6 @@ final class MarkWorkTests: XCTestCase {
         XCTAssertNil(made)
         XCTAssertFalse(MarkWork.shared.running)
         XCTAssertTrue(f.marks().isEmpty)
-        XCTAssertEqual(host.statuses, ["Cancelled."])
+        XCTAssertEqual(host.statuses, ["Canceled."])
     }
 }

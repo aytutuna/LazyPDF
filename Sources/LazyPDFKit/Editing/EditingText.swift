@@ -7,7 +7,7 @@ public enum EditingText {
     /// The C# property holds the format and callers fill in the letters with string.Format.
     public static func noGlyphs(_ letters: String) -> String { L10n.t("No font has {0}.", letters) }
     public static var fontSetOutside: String { L10n.t("The font is set outside this form.") }
-    public static var colorOutside: String { L10n.t("The colour is set outside this form.") }
+    public static var colorOutside: String { L10n.t("The color is set outside this form.") }
     public static var sharedForm: String { L10n.t("The same form is painted twice.") }
     public static var vertical: String { L10n.t("Vertical text cannot be changed.") }
     public static var actualText: String { L10n.t("This text has replacement text.") }

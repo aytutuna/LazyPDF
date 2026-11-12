@@ -132,8 +132,8 @@ struct RedactPanelView: View {
     private var coverSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             SectionHeading(L10n.t("Cover"))
-            LabelledField(L10n.t("Colour")) {
-                Picker(L10n.t("Colour"), selection: $model.coverIndex) {
+            LabelledField(L10n.t("Color")) {
+                Picker(L10n.t("Color"), selection: $model.coverIndex) {
                     ForEach(Array(RedactCover.all.enumerated()), id: \.offset) { Text($0.element.name).tag($0.offset) }
                 }
                 .labelsHidden()

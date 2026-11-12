@@ -265,7 +265,7 @@ public partial class BatchPanel
             Host?.SetStatus(Loc.T("Stopped at {0}. {1}", stoppedAt, Loc.Plural(rest, "{0} file was not run.", "{0} files were not run.")));
             return;
         }
-        Host?.SetStatus(cancelled ? Loc.T("Cancelled.") : failed == 0 ? Loc.T("All files done") : Loc.Plural(failed, "{0} file failed", "{0} files failed"));
+        Host?.SetStatus(cancelled ? Loc.T("Canceled.") : failed == 0 ? Loc.T("All files done") : Loc.Plural(failed, "{0} file failed", "{0} files failed"));
     }
 
     // A watched folder and a run go on while another tool is open, and they need the password.

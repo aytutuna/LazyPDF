@@ -58,7 +58,7 @@ public static class OptimizeText
     };
 
     public static string NeedsCodec => Loc.T("Pictures in JPEG and JPEG 2000 need the system codec and were left.");
-    public static string LeftColor => Loc.T("Shadings, spot colours and patterns were left in colour.");
+    public static string LeftColor => Loc.T("Shadings, spot colors and patterns were left in color.");
     public static string LeftPartialFonts => Loc.T("Fonts with uses that could not be traced were left whole.");
     public static string LeftPartialImages => Loc.T("Pictures with uses that could not be traced were left at their size.");
     public static string LeftMixedText => Loc.T("Invisible text in a text object that also shows visible text was left.");

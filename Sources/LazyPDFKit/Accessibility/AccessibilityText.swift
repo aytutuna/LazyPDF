@@ -19,7 +19,7 @@ public enum AccessibilityText {
         case .encoding: return L10n.t("Fonts map to text")
         case .taggedContent: return L10n.t("All content is tagged")
         case .tabOrder: return L10n.t("Tab order follows structure")
-        case .contrast: return L10n.t("Colour contrast")
+        case .contrast: return L10n.t("Color contrast")
         case .figureAlt: return L10n.t("Figures have alt text")
         case .tableStructure: return L10n.t("Tables are well formed")
         case .tableHeaders: return L10n.t("Tables have headers")
@@ -85,7 +85,7 @@ public enum AccessibilityText {
         pageIndex >= 0 ? L10n.t(", first on page {0}", pageIndex + 1) : ""
     }
 
-    public static var contrastNeedsPerson: String { L10n.t("Colour contrast is not checked here. Look at the pages and make sure text stands out from its background.") }
+    public static var contrastNeedsPerson: String { L10n.t("Color contrast is not checked here. Look at the pages and make sure text stands out from its background.") }
     public static var noTags: String { L10n.t("There are no tags to check. Tag the document first.") }
     public static var suspectTags: String { L10n.t("The tags are marked as unreliable. Check them and clear the mark.") }
     public static var titleNotShown: String { L10n.t("The window shows the file name, not the title. Turn on showing the title.") }

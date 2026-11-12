@@ -31,7 +31,7 @@ final class ContentHost: ToolHost {
         do {
             try await work(token)
         } catch is CancellationError {
-            statuses.append("Cancelled.")
+            statuses.append("Canceled.")
         }
     }
 

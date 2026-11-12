@@ -96,7 +96,7 @@ public sealed partial class AppViewModel
         foreach (var read in _reads.ToList()) read.Cancel();
         if (_parsing.Count == 0) return;
         foreach (var pending in _parsing) pending.Cancelled = true;
-        SetStatus(Loc.T("Cancelled."));
+        SetStatus(Loc.T("Canceled."));
     }
 
     public async Task OpenAsync(string path)
@@ -138,7 +138,7 @@ public sealed partial class AppViewModel
             }
             catch (OperationCanceledException)
             {
-                SetStatus(Loc.T("Cancelled."));
+                SetStatus(Loc.T("Canceled."));
                 return;
             }
             catch (Exception e)
@@ -155,7 +155,7 @@ public sealed partial class AppViewModel
             }
             if (reading.IsCancellationRequested)
             {
-                SetStatus(Loc.T("Cancelled."));
+                SetStatus(Loc.T("Canceled."));
                 return;
             }
             if (source.FileId is not null && Documents.FirstOrDefault(d => d.FileId == source.FileId) is { } same)

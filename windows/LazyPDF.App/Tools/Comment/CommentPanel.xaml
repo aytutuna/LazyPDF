@@ -93,7 +93,7 @@
         </StackPanel>
 
         <TextBlock Text="{loc:T Look}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,6" AutomationProperties.HeadingLevel="Level2" />
-        <TextBlock Text="{loc:T Colour}" Style="{StaticResource FieldLabelText}" />
+        <TextBlock Text="{loc:T Color}" Style="{StaticResource FieldLabelText}" />
         <WrapPanel x:Name="Swatches" />
         <TextBlock Text="{loc:T Fill}" Style="{StaticResource FieldLabelText}" Margin="0,6,0,0" />
         <ComboBox x:Name="FillBox" AutomationProperties.Name="{loc:T Fill}" SelectionChanged="Look_Changed" />

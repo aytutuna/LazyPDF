@@ -162,7 +162,7 @@ final class StampsModelTests: XCTestCase {
 
         XCTAssertTrue(stamps(rig.tab).isEmpty)
         XCTAssertFalse(rig.tab.session.canUndo)
-        XCTAssertEqual(rig.host.status, "Cancelled.")
+        XCTAssertEqual(rig.host.status, "Canceled.")
         XCTAssertFalse(rig.tab.session.isDirty)
         XCTAssertFalse(model.isBusy)
     }

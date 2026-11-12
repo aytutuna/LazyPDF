@@ -343,7 +343,7 @@ final class BatchModelTests: XCTestCase {
         await running.value
 
         XCTAssertLessThan(Date().timeIntervalSince(started), 1.5)
-        XCTAssertEqual(host.status, "Cancelled.")
+        XCTAssertEqual(host.status, "Canceled.")
         XCTAssertFalse(model.isRunning)
     }
 
@@ -592,7 +592,7 @@ final class BatchModelTests: XCTestCase {
 
         XCTAssertTrue(during)
         XCTAssertFalse(host.isBusy)
-        XCTAssertEqual(host.status, "Cancelled.")
+        XCTAssertEqual(host.status, "Canceled.")
         XCTAssertEqual(host.message, BatchSheetHost.Message(title: "Title", text: "Text"))
         XCTAssertNil(f.vm.message)
     }

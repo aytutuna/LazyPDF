@@ -76,7 +76,7 @@ struct StampsPanelView: View {
     }
 
     private var places: [String] {
-        [L10n.t("Top left"), L10n.t("Top"), L10n.t("Top right"), L10n.t("Left"), L10n.t("Centre"), L10n.t("Right"),
+        [L10n.t("Top left"), L10n.t("Top"), L10n.t("Top right"), L10n.t("Left"), L10n.t("Center"), L10n.t("Right"),
          L10n.t("Bottom left"), L10n.t("Bottom"), L10n.t("Bottom right")]
     }
 
@@ -98,7 +98,7 @@ struct StampsPanelView: View {
 
     private var background: some View {
         VStack(alignment: .leading, spacing: 10) {
-            LabelledField(L10n.t("Colour")) { names(model.backColorNames, L10n.t("Background colour"), \.backColor) }
+            LabelledField(L10n.t("Color")) { names(model.backColorNames, L10n.t("Background color"), \.backColor) }
             LabelledField(L10n.t("Picture fit")) {
                 names([L10n.t("Cover the page"), L10n.t("Fit inside the page"), L10n.t("Stretch to the page")], L10n.t("Picture fit"), \.fit)
             }
@@ -134,11 +134,11 @@ struct StampsPanelView: View {
         VStack(alignment: .leading, spacing: 10) {
             FieldLabel(L10n.t("Header"))
             field(L10n.t("Left"), L10n.t("Header left"), \.headerLeft)
-            field(L10n.t("Centre"), L10n.t("Header centre"), \.headerCentre)
+            field(L10n.t("Center"), L10n.t("Header center"), \.headerCentre)
             field(L10n.t("Right"), L10n.t("Header right"), \.headerRight)
             FieldLabel(L10n.t("Footer"))
             field(L10n.t("Left"), L10n.t("Footer left"), \.footerLeft)
-            field(L10n.t("Centre"), L10n.t("Footer centre"), \.footerCentre)
+            field(L10n.t("Center"), L10n.t("Footer center"), \.footerCentre)
             field(L10n.t("Right"), L10n.t("Footer right"), \.footerRight)
             ReasonText(model.tokensHint)
             field(L10n.t("First page number"), L10n.t("First page number"), \.firstNumber)
@@ -165,7 +165,7 @@ struct StampsPanelView: View {
                 Toggle(L10n.t("Bold"), isOn: bind(\.bold))
                 Toggle(L10n.t("Italic"), isOn: bind(\.italic))
             }
-            LabelledField(L10n.t("Colour")) { names(model.colorNames, L10n.t("Text colour"), \.color) }
+            LabelledField(L10n.t("Color")) { names(model.colorNames, L10n.t("Text color"), \.color) }
             if model.form.mode == .headerFooter || model.form.mode == .bates {
                 slider(L10n.t("Text size"), L10n.t("Text size"), \.textSize, 6...36, L10n.t("{0} pt", Int(model.form.textSize)))
                 slider(L10n.t("Margin"), L10n.t("Margin"), \.margin, 12...144, L10n.t("{0} pt", Int(model.form.margin)))

@@ -162,7 +162,7 @@ final class ProtectModelTests: XCTestCase {
         await model.action!.run()
 
         XCTAssertTrue(rig.host.openedNew.isEmpty)
-        XCTAssertEqual(rig.host.statuses.last, "Cancelled.")
+        XCTAssertEqual(rig.host.statuses.last, "Canceled.")
     }
 
     #if canImport(Security)

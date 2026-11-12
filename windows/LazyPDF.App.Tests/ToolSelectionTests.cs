@@ -106,7 +106,7 @@ public sealed class ToolSelectionTests
         await run;
 
         Assert.False(f.Vm.IsBusy);
-        Assert.Equal("Cancelled.", f.Vm.StatusFull);
+        Assert.Equal("Canceled.", f.Vm.StatusFull);
         Assert.Contains(true, seen);
     }
 

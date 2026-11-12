@@ -128,13 +128,13 @@ struct EditContentPanelView: View {
                 .toggleStyle(.button)
                 .accessibilityLabel(L10n.t("Italic"))
             }
-            LabelledField(L10n.t("Colour")) {
+            LabelledField(L10n.t("Color")) {
                 Swatches { model.chooseTextColor($0) }
             }
             LabelledField(L10n.t("Alignment")) {
                 Picker(L10n.t("Alignment"), selection: Binding(get: { model.alignment }, set: { model.setAlignment($0) })) {
                     Text(L10n.t("Left")).tag(LazyPDFKit.TextAlignment.left)
-                    Text(L10n.t("Centre")).tag(LazyPDFKit.TextAlignment.center)
+                    Text(L10n.t("Center")).tag(LazyPDFKit.TextAlignment.center)
                     Text(L10n.t("Right")).tag(LazyPDFKit.TextAlignment.right)
                     Text(L10n.t("Justify")).tag(LazyPDFKit.TextAlignment.justify)
                 }

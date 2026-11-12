@@ -61,7 +61,7 @@
   <data name="A code such as en-US or tr-TR." xml:space="preserve">
     <value>en-US veya tr-TR gibi bir kod.</value>
   </data>
-  <data name="A colour is one, three or four numbers from 0 to 1." xml:space="preserve">
+  <data name="A color is one, three or four numbers from 0 to 1." xml:space="preserve">
     <value>Bir renk, 0 ile 1 arasında bir, üç veya dört sayıdır.</value>
   </data>
   <data name="A constant opacity below 1 needs transparency." xml:space="preserve">
@@ -382,10 +382,10 @@
   <data name="Align bottom edges" xml:space="preserve">
     <value>Alt kenarları hizala</value>
   </data>
-  <data name="Align centre" xml:space="preserve">
+  <data name="Align center" xml:space="preserve">
     <value>Ortala</value>
   </data>
-  <data name="Align centres" xml:space="preserve">
+  <data name="Align centers" xml:space="preserve">
     <value>Yatay ortaları hizala</value>
   </data>
   <data name="Align form fields" xml:space="preserve">
@@ -457,7 +457,7 @@
   <data name="An ICC profile could not be read." xml:space="preserve">
     <value>Bir ICC profili okunamadı.</value>
   </data>
-  <data name="An ICC profile does not match the colour count in /N." xml:space="preserve">
+  <data name="An ICC profile does not match the color count in /N." xml:space="preserve">
     <value>Bir ICC profili /N içindeki renk sayısıyla uyuşmuyor.</value>
   </data>
   <data name="An ICC profile is version {0}, newer than this level allows." xml:space="preserve">
@@ -667,7 +667,7 @@
   <data name="Background" xml:space="preserve">
     <value>Arka plan</value>
   </data>
-  <data name="Background colour" xml:space="preserve">
+  <data name="Background color" xml:space="preserve">
     <value>Arka plan rengi</value>
   </data>
   <data name="Backward" xml:space="preserve">
@@ -853,10 +853,10 @@
   <data name="Cancel shape" xml:space="preserve">
     <value>Şekli iptal et</value>
   </data>
-  <data name="Cancelled" xml:space="preserve">
+  <data name="Canceled" xml:space="preserve">
     <value>İptal edildi</value>
   </data>
-  <data name="Cancelled." xml:space="preserve">
+  <data name="Canceled." xml:space="preserve">
     <value>İptal edildi.</value>
   </data>
   <data name="Cannot delete every page" xml:space="preserve">
@@ -883,10 +883,7 @@
   <data name="Center" xml:space="preserve">
     <value>Orta</value>
   </data>
-  <data name="Centre" xml:space="preserve">
-    <value>Orta</value>
-  </data>
-  <data name="Centre the window" xml:space="preserve">
+  <data name="Center the window" xml:space="preserve">
     <value>Pencereyi ortala</value>
   </data>
   <data name="Certificate" xml:space="preserve">
@@ -1006,7 +1003,7 @@
   <data name="Change tab order" xml:space="preserve">
     <value>Sekme sırasını değiştir</value>
   </data>
-  <data name="Change text colour" xml:space="preserve">
+  <data name="Change text color" xml:space="preserve">
     <value>Metin rengini değiştir</value>
   </data>
   <data name="Change text size" xml:space="preserve">
@@ -1300,25 +1297,25 @@
   <data name="Collapse all" xml:space="preserve">
     <value>Tümünü daralt</value>
   </data>
-  <data name="Colour" xml:space="preserve">
+  <data name="Color" xml:space="preserve">
     <value>Renk</value>
   </data>
-  <data name="Colour changed." xml:space="preserve">
+  <data name="Color changed." xml:space="preserve">
     <value>Renk değişti.</value>
   </data>
-  <data name="Colour contrast" xml:space="preserve">
+  <data name="Color contrast" xml:space="preserve">
     <value>Renk karşıtlığı</value>
   </data>
-  <data name="Colour contrast is not checked here. Look at the pages and make sure text stands out from its background." xml:space="preserve">
+  <data name="Color contrast is not checked here. Look at the pages and make sure text stands out from its background." xml:space="preserve">
     <value>Renk karşıtlığı burada denetlenmez. Sayfalara bakın ve metnin arka plandan ayrıldığından emin olun.</value>
   </data>
-  <data name="Colour is lost." xml:space="preserve">
+  <data name="Color is lost." xml:space="preserve">
     <value>Renk kaybolur.</value>
   </data>
-  <data name="Colour {0} to {1}" xml:space="preserve">
+  <data name="Color {0} to {1}" xml:space="preserve">
     <value>Renk {0} iken {1} oldu</value>
   </data>
-  <data name="Colours" xml:space="preserve">
+  <data name="Colors" xml:space="preserve">
     <value>Renkler</value>
   </data>
   <data name="Combine" xml:space="preserve">
@@ -2452,7 +2449,7 @@
   <data name="Footer" xml:space="preserve">
     <value>Alt bilgi</value>
   </data>
-  <data name="Footer centre" xml:space="preserve">
+  <data name="Footer center" xml:space="preserve">
     <value>Alt bilgi orta</value>
   </data>
   <data name="Footer left" xml:space="preserve">
@@ -2593,6 +2590,12 @@
   <data name="Graphics states are nested more than 28 deep." xml:space="preserve">
     <value>Grafik durumları 28'den fazla iç içe.</value>
   </data>
+  <data name="Gray" xml:space="preserve">
+    <value>Gri</value>
+  </data>
+  <data name="Gray shades in those pictures are lost." xml:space="preserve">
+    <value>Bu resimlerdeki gri tonlar kaybolur.</value>
+  </data>
   <data name="Grayscale" xml:space="preserve">
     <value>Gri tonlamalı</value>
   </data>
@@ -2601,12 +2604,6 @@
   </data>
   <data name="Green is added, red is removed, amber is changed or moved." xml:space="preserve">
     <value>Yeşil eklenen, kırmızı kaldırılan, sarı değişen ya da taşınandır.</value>
-  </data>
-  <data name="Grey" xml:space="preserve">
-    <value>Gri</value>
-  </data>
-  <data name="Grey shades in those pictures are lost." xml:space="preserve">
-    <value>Bu resimlerdeki gri tonlar kaybolur.</value>
   </data>
   <data name="Group" xml:space="preserve">
     <value>Grup</value>
@@ -2629,7 +2626,7 @@
   <data name="Header and footer" xml:space="preserve">
     <value>Üst ve alt bilgi</value>
   </data>
-  <data name="Header centre" xml:space="preserve">
+  <data name="Header center" xml:space="preserve">
     <value>Üst bilgi orta</value>
   </data>
   <data name="Header left" xml:space="preserve">
@@ -3046,7 +3043,7 @@
   <data name="Light blue" xml:space="preserve">
     <value>Açık mavi</value>
   </data>
-  <data name="Light grey" xml:space="preserve">
+  <data name="Light gray" xml:space="preserve">
     <value>Açık gri</value>
   </data>
   <data name="Light pages" xml:space="preserve">
@@ -5407,7 +5404,7 @@
   <data name="Several lines" xml:space="preserve">
     <value>Birden çok satır</value>
   </data>
-  <data name="Shadings, spot colours and patterns were left in colour." xml:space="preserve">
+  <data name="Shadings, spot colors and patterns were left in color." xml:space="preserve">
     <value>Gölgelendirmeler, özel renkler ve desenler renkli bırakıldı.</value>
   </data>
   <data name="Shape" xml:space="preserve">
@@ -5941,7 +5938,7 @@
   <data name="Text changed." xml:space="preserve">
     <value>Metin değişti.</value>
   </data>
-  <data name="Text colour" xml:space="preserve">
+  <data name="Text color" xml:space="preserve">
     <value>Metin rengi</value>
   </data>
   <data name="Text field" xml:space="preserve">
@@ -6217,7 +6214,7 @@
   <data name="The clipboard holds text." xml:space="preserve">
     <value>Panoda metin var.</value>
   </data>
-  <data name="The colour is set outside this form." xml:space="preserve">
+  <data name="The color is set outside this form." xml:space="preserve">
     <value>Renk bu formun dışında ayarlanmış.</value>
   </data>
   <data name="The comments in {0} are already in this file or belong to other pages." xml:space="preserve">
@@ -7102,10 +7099,10 @@
   <data name="This sets the page numbers viewers show. Nothing is printed on the pages." xml:space="preserve">
     <value>Bu, görüntüleyicilerin gösterdiği sayfa numaralarını ayarlar. Sayfalara hiçbir şey basılmaz.</value>
   </data>
-  <data name="This shape has no fill. Use the line colour instead." xml:space="preserve">
+  <data name="This shape has no fill. Use the line color instead." xml:space="preserve">
     <value>Bu şeklin dolgusu yok. Çizgi rengini kullanın.</value>
   </data>
-  <data name="This shape has no line. Use the fill colour instead." xml:space="preserve">
+  <data name="This shape has no line. Use the fill color instead." xml:space="preserve">
     <value>Bu şeklin çizgisi yok. Dolgu rengini kullanın.</value>
   </data>
   <data name="This signature could not be checked." xml:space="preserve">

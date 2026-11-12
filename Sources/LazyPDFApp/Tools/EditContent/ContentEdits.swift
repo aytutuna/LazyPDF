@@ -144,8 +144,8 @@ final class ContentEdits {
         let paths = objects(page, ids).compactMap { $0 as? PathObject }
             .filter { (fill == nil || $0.fill) && ((stroke == nil && width == nil) || $0.stroke) }
         if paths.isEmpty {
-            if fill != nil { return EditOutcome(done: false, problem: L10n.t("This shape has no fill. Use the line colour instead.")) }
-            return EditOutcome(done: false, problem: L10n.t("This shape has no line. Use the fill colour instead."))
+            if fill != nil { return EditOutcome(done: false, problem: L10n.t("This shape has no fill. Use the line color instead.")) }
+            return EditOutcome(done: false, problem: L10n.t("This shape has no line. Use the fill color instead."))
         }
         return result(try editor(page).setPathStyle(paths, fill: fill, stroke: stroke, lineWidth: width))
     }

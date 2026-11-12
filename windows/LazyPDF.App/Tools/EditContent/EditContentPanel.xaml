@@ -71,15 +71,15 @@
                                   Click="Italic_Click" />
                 </StackPanel>
             </Grid>
-            <TextBlock Text="{loc:T Colour}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" />
+            <TextBlock Text="{loc:T Color}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" />
             <WrapPanel x:Name="TextColors" />
             <TextBlock Text="{loc:T Alignment}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" />
             <Border Style="{StaticResource SegmentedTrackStyle}">
                 <UniformGrid Rows="1">
                     <RadioButton x:Name="AlignLeft" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Left}" GroupName="Align"
                                  AutomationProperties.Name="{loc:T Align left}" Click="Align_Click" />
-                    <RadioButton x:Name="AlignCenter" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Centre}" GroupName="Align"
-                                 AutomationProperties.Name="{loc:T Align centre}" Click="Align_Click" />
+                    <RadioButton x:Name="AlignCenter" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Center}" GroupName="Align"
+                                 AutomationProperties.Name="{loc:T Align center}" Click="Align_Click" />
                     <RadioButton x:Name="AlignRight" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Right}" GroupName="Align"
                                  AutomationProperties.Name="{loc:T Align right}" Click="Align_Click" />
                     <RadioButton x:Name="AlignJustify" Style="{StaticResource SegmentedTextItemStyle}" Content="{loc:T Justify}" GroupName="Align"

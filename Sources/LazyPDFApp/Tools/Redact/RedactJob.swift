@@ -10,7 +10,7 @@ public struct RedactCover: Equatable, Sendable {
     public let fill: [Double]
 
     public static var all: [RedactCover] {
-        [RedactCover(name: L10n.t("Black"), fill: [0]), RedactCover(name: L10n.t("White"), fill: [1]), RedactCover(name: L10n.t("Grey"), fill: [0.5])]
+        [RedactCover(name: L10n.t("Black"), fill: [0]), RedactCover(name: L10n.t("White"), fill: [1]), RedactCover(name: L10n.t("Gray"), fill: [0.5])]
     }
 }
 

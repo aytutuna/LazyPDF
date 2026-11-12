@@ -12,7 +12,7 @@ public sealed record Cover(string Name, double[] Fill)
     [
         new(Loc.T("Black"), [0]),
         new(Loc.T("White"), [1]),
-        new(Loc.T("Grey"), [0.5]),
+        new(Loc.T("Gray"), [0.5]),
     ];
 }
 

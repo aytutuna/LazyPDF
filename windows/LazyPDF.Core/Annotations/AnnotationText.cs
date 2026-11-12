@@ -32,7 +32,7 @@ public static class AnnotationText
     {
         ReviewStatus.Accepted => Loc.T("Accepted"),
         ReviewStatus.Rejected => Loc.T("Rejected"),
-        ReviewStatus.Cancelled => Loc.T("Cancelled"),
+        ReviewStatus.Cancelled => Loc.T("Canceled"),
         ReviewStatus.Completed => Loc.T("Completed"),
         ReviewStatus.Marked => Loc.T("Marked"),
         ReviewStatus.Unmarked => Loc.T("Unmarked"),

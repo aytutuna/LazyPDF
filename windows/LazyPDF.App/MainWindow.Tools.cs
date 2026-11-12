@@ -323,7 +323,7 @@ public partial class MainWindow
         }
         catch (OperationCanceledException)
         {
-            _vm.SetStatus(Loc.T("Cancelled."));
+            _vm.SetStatus(Loc.T("Canceled."));
         }
         catch (Exception error) when (error is not OutOfMemoryException)
         {

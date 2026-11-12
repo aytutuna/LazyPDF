@@ -60,9 +60,9 @@
                 <ComboBoxItem Tag="300" Content="300 dpi" />
                 <ComboBoxItem Tag="600" Content="600 dpi" />
             </ComboBox>
-            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Colours}" Margin="0,12,0,4" />
-            <ComboBox x:Name="ColourBox" SelectedIndex="0" AutomationProperties.Name="{loc:T Colours}" SelectionChanged="ColourBox_SelectionChanged">
-                <ComboBoxItem Content="{loc:T Colour}" />
+            <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Colors}" Margin="0,12,0,4" />
+            <ComboBox x:Name="ColourBox" SelectedIndex="0" AutomationProperties.Name="{loc:T Colors}" SelectionChanged="ColourBox_SelectionChanged">
+                <ComboBoxItem Content="{loc:T Color}" />
                 <ComboBoxItem Content="{loc:T Grayscale}" />
                 <ComboBoxItem x:Name="BlackWhiteItem" Content="{loc:T Black and white (1 bit)}" />
             </ComboBox>

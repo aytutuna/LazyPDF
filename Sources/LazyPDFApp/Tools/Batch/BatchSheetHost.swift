@@ -42,7 +42,7 @@ public final class BatchSheetHost: ToolHost {
         do {
             try await work(mine)
         } catch is CancellationError {
-            status = L10n.t("Cancelled.")
+            status = L10n.t("Canceled.")
         }
     }
 

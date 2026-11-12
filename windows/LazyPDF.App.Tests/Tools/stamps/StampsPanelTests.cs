@@ -244,7 +244,7 @@ public sealed class StampsPanelTests
 
         Assert.Empty(Stamps(tab));
         Assert.False(tab.Session.CanUndo);
-        Assert.Equal("Cancelled.", host.Status);
+        Assert.Equal("Canceled.", host.Status);
         Assert.True(panel.IsEnabled);
     });
 

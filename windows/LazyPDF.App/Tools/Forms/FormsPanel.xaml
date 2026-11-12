@@ -107,8 +107,8 @@
                         <TextBlock Style="{StaticResource ReasonText}" Margin="0,4,0,0" Text="{loc:T Leave it empty to fit the text to the field.}" />
                     </StackPanel>
                     <StackPanel x:Name="ColourRow">
-                        <TextBlock Text="{loc:T Text colour}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" />
-                        <ComboBox x:Name="ColourBox" SelectionChanged="Look_SelectionChanged" AutomationProperties.Name="{loc:T Text colour}" />
+                        <TextBlock Text="{loc:T Text color}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" />
+                        <ComboBox x:Name="ColourBox" SelectionChanged="Look_SelectionChanged" AutomationProperties.Name="{loc:T Text color}" />
                     </StackPanel>
                     <StackPanel x:Name="ActionRow">
                         <TextBlock Text="{loc:T Button action}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,4" />
@@ -129,7 +129,7 @@
                 <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Left}"
                         ToolTip="{loc:T Align left edges}" Content="{loc:T Left}" AutomationProperties.Name="{loc:T Align left edges}" Click="Arrange_Click" />
                 <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Centre}"
-                        ToolTip="{loc:T Align centres}" Content="{loc:T Centre}" AutomationProperties.Name="{loc:T Align centres}" Click="Arrange_Click" />
+                        ToolTip="{loc:T Align centers}" Content="{loc:T Center}" AutomationProperties.Name="{loc:T Align centers}" Click="Arrange_Click" />
                 <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Right}"
                         ToolTip="{loc:T Align right edges}" Content="{loc:T Right}" AutomationProperties.Name="{loc:T Align right edges}" Click="Arrange_Click" />
                 <Button Style="{StaticResource IconTextButtonStyle}" Margin="0,0,4,4" Tag="{x:Static forms:AlignKind.Top}"

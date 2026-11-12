@@ -67,8 +67,8 @@
                   AutomationProperties.Name="{loc:T Hide window controls}" Click="Field_Changed" />
         <CheckBox x:Name="FitBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Size window to page}"
                   AutomationProperties.Name="{loc:T Size window to page}" Click="Field_Changed" />
-        <CheckBox x:Name="CentreBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Centre the window}"
-                  AutomationProperties.Name="{loc:T Centre the window}" Click="Field_Changed" />
+        <CheckBox x:Name="CentreBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Center the window}"
+                  AutomationProperties.Name="{loc:T Center the window}" Click="Field_Changed" />
         <CheckBox x:Name="RightToLeftBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Read right to left}"
                   AutomationProperties.Name="{loc:T Read right to left}" Click="Field_Changed" />
 

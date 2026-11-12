@@ -123,7 +123,7 @@ final class OcrWorkTests: XCTestCase {
         let result = try await OcrWork.makeSearchable(tab, f.vm, recognizer, all())
 
         XCTAssertNil(result)
-        XCTAssertEqual(f.vm.statusFull, "Cancelled.")
+        XCTAssertEqual(f.vm.statusFull, "Canceled.")
         XCTAssertFalse(tab.session.canUndo)
         XCTAssertFalse(PdfOcrLayer.has(tab.document, tab.document.pages[0]))
     }

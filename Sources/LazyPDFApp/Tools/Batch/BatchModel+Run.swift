@@ -37,7 +37,7 @@ extension BatchModel {
         } catch {
             host.showProblem(Problem(L10n.t("Something went wrong"), L10n.t("{0} could not be finished. If part of it was done, Undo takes it back.", L10n.t("Run on every file"))))
         }
-        host.setStatus(cancelled ? L10n.t("Cancelled.") : failed == 0 ? L10n.t("All files done")
+        host.setStatus(cancelled ? L10n.t("Canceled.") : failed == 0 ? L10n.t("All files done")
                        : L10n.plural(failed, one: "{0} file failed", other: "{0} files failed"))
     }
 

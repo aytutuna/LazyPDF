@@ -33,7 +33,7 @@ public enum FormText {
 
     public static var badSize: String { L10n.t("The text size must be from 0 to 200 points.") }
 
-    public static var badColor: String { L10n.t("A colour is one, three or four numbers from 0 to 1.") }
+    public static var badColor: String { L10n.t("A color is one, three or four numbers from 0 to 1.") }
 
     public static var notAPushButton: String { L10n.t("Only a button can have an action.") }
 

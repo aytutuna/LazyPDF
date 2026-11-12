@@ -41,7 +41,7 @@ internal static class Palette
     public static IReadOnlyList<(string Name, RgbColor Color)> Colors { get; } =
     [
         (Loc.T("Black"), new RgbColor(0, 0, 0)),
-        (Loc.T("Grey"), new RgbColor(110, 110, 110)),
+        (Loc.T("Gray"), new RgbColor(110, 110, 110)),
         (Loc.T("White"), new RgbColor(255, 255, 255)),
         (Loc.T("Red"), new RgbColor(200, 30, 30)),
         (Loc.T("Orange"), new RgbColor(235, 125, 20)),

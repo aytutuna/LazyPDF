@@ -33,7 +33,7 @@ public sealed partial class EditContentPanel : ToolPanel
     public EditContentPanel()
     {
         InitializeComponent();
-        Swatches(TextColors, color => Restyle(new TextStyleChange(Color: color), Loc.T("Colour changed.")));
+        Swatches(TextColors, color => Restyle(new TextStyleChange(Color: color), Loc.T("Color changed.")));
         Swatches(FillColors, color => ShapeStyle(fill: color, stroke: null, width: null));
         Swatches(LineColors, color => ShapeStyle(fill: null, stroke: color, width: null));
         FontBox.ItemsSource = Fonts.SystemFontFamilies.Select(f => f.Source).Order().ToList();

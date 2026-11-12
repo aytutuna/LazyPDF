@@ -87,7 +87,7 @@ final class PagesHost: ToolHost {
         do {
             try await work(token)
         } catch is CancellationError {
-            setStatus("Cancelled.")
+            setStatus("Canceled.")
         }
     }
 

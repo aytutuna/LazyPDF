@@ -38,7 +38,7 @@
   "Tab order follows structure": {
     "tr": "Sekme sırası yapıyı izliyor"
   },
-  "Colour contrast": {
+  "Color contrast": {
     "tr": "Renk karşıtlığı"
   },
   "Figures have alt text": {
@@ -179,7 +179,7 @@
   ", first on page {0}": {
     "tr": ", ilki {0}. sayfada"
   },
-  "Colour contrast is not checked here. Look at the pages and make sure text stands out from its background.": {
+  "Color contrast is not checked here. Look at the pages and make sure text stands out from its background.": {
     "tr": "Renk karşıtlığı burada denetlenmez. Sayfalara bakın ve metnin arka plandan ayrıldığından emin olun."
   },
   "There are no tags to check. Tag the document first.": {
@@ -263,7 +263,7 @@
   "Rejected": {
     "tr": "Reddedildi"
   },
-  "Cancelled": {
+  "Canceled": {
     "tr": "İptal edildi"
   },
   "Completed": {
@@ -344,7 +344,7 @@
   "Size {0} to {1}": {
     "tr": "Boyut {0} iken {1} oldu"
   },
-  "Colour {0} to {1}": {
+  "Color {0} to {1}": {
     "tr": "Renk {0} iken {1} oldu"
   },
   "Picture moved or resized": {
@@ -359,7 +359,7 @@
   "Position": {
     "tr": "Konum"
   },
-  "Colour": {
+  "Color": {
     "tr": "Renk"
   },
   "Bookmark": {
@@ -390,7 +390,7 @@
   "The font is set outside this form.": {
     "tr": "Yazı tipi bu formun dışında ayarlanmış."
   },
-  "The colour is set outside this form.": {
+  "The color is set outside this form.": {
     "tr": "Renk bu formun dışında ayarlanmış."
   },
   "The same form is painted twice.": {
@@ -676,7 +676,7 @@
   "Digital signatures": {
     "tr": "Dijital imzalar"
   },
-  "Shadings, spot colours and patterns were left in colour.": {
+  "Shadings, spot colors and patterns were left in color.": {
     "tr": "Gölgelendirmeler, özel renkler ve desenler renkli bırakıldı."
   },
   "Fonts with uses that could not be traced were left whole.": {
@@ -1192,7 +1192,7 @@
   "An ICC profile of class {0} is not allowed.": {
     "tr": "{0} sınıfında bir ICC profiline izin verilmiyor."
   },
-  "An ICC profile does not match the colour count in /N.": {
+  "An ICC profile does not match the color count in /N.": {
     "tr": "Bir ICC profili /N içindeki renk sayısıyla uyuşmuyor."
   },
   "An ICC profile is version {0}, newer than this level allows.": {
@@ -1465,7 +1465,7 @@
   "Will open when you are done here.": {
     "tr": "Burada işiniz bitince açılacak."
   },
-  "Cancelled.": {
+  "Canceled.": {
     "tr": "İptal edildi."
   },
   "Opening {0}…": {
@@ -3706,7 +3706,7 @@
   "Resolution": {
     "tr": "Çözünürlük"
   },
-  "Colours": {
+  "Colors": {
     "tr": "Renkler"
   },
   "Grayscale": {
@@ -3953,10 +3953,7 @@
   "Align left": {
     "tr": "Sola hizala"
   },
-  "Centre": {
-    "tr": "Orta"
-  },
-  "Align centre": {
+  "Align center": {
     "tr": "Ortala"
   },
   "Right": {
@@ -4031,7 +4028,7 @@
   "Align left edges": {
     "tr": "Sol kenarları hizala"
   },
-  "Align centres": {
+  "Align centers": {
     "tr": "Yatay ortaları hizala"
   },
   "Align right edges": {
@@ -4142,7 +4139,7 @@
   "Replace all": {
     "tr": "Tümünü değiştir"
   },
-  "Colour changed.": {
+  "Color changed.": {
     "tr": "Renk değişti."
   },
   "Apply text": {
@@ -4184,7 +4181,7 @@
   "Pick a mode above to edit the page again.": {
     "tr": "Sayfayı yeniden düzenlemek için yukarıdan bir mod seçin."
   },
-  "Grey": {
+  "Gray": {
     "tr": "Gri"
   },
   "White": {
@@ -4231,10 +4228,10 @@
   "The file could not be changed. Try again or open it again.": {
     "tr": "Dosya değiştirilemedi. Yeniden deneyin ya da dosyayı yeniden açın."
   },
-  "This shape has no fill. Use the line colour instead.": {
+  "This shape has no fill. Use the line color instead.": {
     "tr": "Bu şeklin dolgusu yok. Çizgi rengini kullanın."
   },
-  "This shape has no line. Use the fill colour instead.": {
+  "This shape has no line. Use the fill color instead.": {
     "tr": "Bu şeklin çizgisi yok. Dolgu rengini kullanın."
   },
   "Typed text was not kept": {
@@ -7206,7 +7203,7 @@
   "Size window to page": {
     "tr": "Pencereyi sayfaya uydur"
   },
-  "Centre the window": {
+  "Center the window": {
     "tr": "Pencereyi ortala"
   },
   "Read right to left": {
@@ -7368,7 +7365,7 @@
   "Behind the page text": {
     "tr": "Sayfa metninin arkasında"
   },
-  "Background colour": {
+  "Background color": {
     "tr": "Arka plan rengi"
   },
   "Picture fit": {
@@ -7398,7 +7395,7 @@
   "Header left": {
     "tr": "Üst bilgi sol"
   },
-  "Header centre": {
+  "Header center": {
     "tr": "Üst bilgi orta"
   },
   "Header right": {
@@ -7410,7 +7407,7 @@
   "Footer left": {
     "tr": "Alt bilgi sol"
   },
-  "Footer centre": {
+  "Footer center": {
     "tr": "Alt bilgi orta"
   },
   "Footer right": {
@@ -7431,7 +7428,7 @@
   "Bates number place": {
     "tr": "Bates numarası konumu"
   },
-  "Text colour": {
+  "Text color": {
     "tr": "Metin rengi"
   },
   "On pages": {
@@ -7467,7 +7464,7 @@
   "Add a new one instead": {
     "tr": "Bunun yerine yenisini ekle"
   },
-  "Light grey": {
+  "Light gray": {
     "tr": "Açık gri"
   },
   "Cream": {
@@ -7873,7 +7870,7 @@
   "Change font": {
     "tr": "Yazı tipini değiştir"
   },
-  "Change text colour": {
+  "Change text color": {
     "tr": "Metin rengini değiştir"
   },
   "Change export value": {
@@ -7939,7 +7936,7 @@
   "The text size must be from 0 to 200 points.": {
     "tr": "Metin boyutu 0 ile 200 punto arasında olmalı."
   },
-  "A colour is one, three or four numbers from 0 to 1.": {
+  "A color is one, three or four numbers from 0 to 1.": {
     "tr": "Bir renk, 0 ile 1 arasında bir, üç veya dört sayıdır."
   },
   "Only a button can have an action.": {
@@ -8044,13 +8041,13 @@
   "Nothing you can see is lost. Text cannot be edited in other programs with the missing letters.": {
     "tr": "Görebildiğiniz hiçbir şey kaybolmaz. Eksik harfler yüzünden metin başka programlarda düzenlenemez."
   },
-  "Grey shades in those pictures are lost.": {
+  "Gray shades in those pictures are lost.": {
     "tr": "Bu resimlerdeki gri tonlar kaybolur."
   },
   "Nothing you can see is lost.": {
     "tr": "Görebildiğiniz hiçbir şey kaybolmaz."
   },
-  "Colour is lost.": {
+  "Color is lost.": {
     "tr": "Renk kaybolur."
   },
   "Smallest file. Pictures drop to 96 dpi, black and white pictures become 1-bit, and some detail is lost.": {

@@ -65,7 +65,7 @@ public partial class BatchWindow : Window, IToolHost
         }
         catch (OperationCanceledException)
         {
-            SetStatus(Loc.T("Cancelled."));
+            SetStatus(Loc.T("Canceled."));
         }
         finally
         {

@@ -257,7 +257,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
         }
         catch (OperationCanceledException)
         {
-            SetStatus(Loc.T("Cancelled."));
+            SetStatus(Loc.T("Canceled."));
         }
         catch (PdfPermissionException)
         {

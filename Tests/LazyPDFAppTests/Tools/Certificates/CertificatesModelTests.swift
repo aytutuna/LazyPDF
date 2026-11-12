@@ -276,7 +276,7 @@ final class CertificatesModelTests: XCTestCase {
 
         await s.model.action!.run()
 
-        XCTAssertEqual(s.rig.host.statuses.last, "Cancelled.")
+        XCTAssertEqual(s.rig.host.statuses.last, "Canceled.")
         await waitUntil { !s.model.working }
         XCTAssertFalse(s.rig.tab.document.isSigned)
         XCTAssertFalse(s.rig.tab.session.canUndo)

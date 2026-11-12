@@ -18,7 +18,7 @@ public static class AccessibilityText
         AccessibilityRule.Encoding => Loc.T("Fonts map to text"),
         AccessibilityRule.TaggedContent => Loc.T("All content is tagged"),
         AccessibilityRule.TabOrder => Loc.T("Tab order follows structure"),
-        AccessibilityRule.Contrast => Loc.T("Colour contrast"),
+        AccessibilityRule.Contrast => Loc.T("Color contrast"),
         AccessibilityRule.FigureAlt => Loc.T("Figures have alt text"),
         AccessibilityRule.TableStructure => Loc.T("Tables are well formed"),
         AccessibilityRule.TableHeaders => Loc.T("Tables have headers"),
@@ -80,7 +80,7 @@ public static class AccessibilityText
 
     public static string Where(int pageIndex) => pageIndex >= 0 ? Loc.T(", first on page {0}", pageIndex + 1) : "";
 
-    public static string ContrastNeedsPerson => Loc.T("Colour contrast is not checked here. Look at the pages and make sure text stands out from its background.");
+    public static string ContrastNeedsPerson => Loc.T("Color contrast is not checked here. Look at the pages and make sure text stands out from its background.");
     public static string NoTags => Loc.T("There are no tags to check. Tag the document first.");
     public static string SuspectTags => Loc.T("The tags are marked as unreliable. Check them and clear the mark.");
     public static string TitleNotShown => Loc.T("The window shows the file name, not the title. Turn on showing the title.");

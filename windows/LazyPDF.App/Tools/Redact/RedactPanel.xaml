@@ -96,8 +96,8 @@
             <TextBlock x:Name="BoxHint" Text="{loc:T Select a box to move or resize it.}" Style="{StaticResource ReasonText}" Margin="0,4,0,0" />
 
             <TextBlock Text="{loc:T Cover}" Style="{StaticResource SectionHeaderText}" Margin="0,16,0,8" />
-            <TextBlock Text="{loc:T Colour}" Style="{StaticResource FieldLabelText}" />
-            <ComboBox x:Name="CoverBox" DisplayMemberPath="Name" AutomationProperties.Name="{loc:T Colour}" />
+            <TextBlock Text="{loc:T Color}" Style="{StaticResource FieldLabelText}" />
+            <ComboBox x:Name="CoverBox" DisplayMemberPath="Name" AutomationProperties.Name="{loc:T Color}" />
             <TextBlock Text="{loc:T Text on the boxes (optional)}" Style="{StaticResource FieldLabelText}" Margin="0,12,0,4" />
             <TextBox x:Name="OverlayBox" MinHeight="30" VerticalContentAlignment="Center" AutomationProperties.Name="{loc:T Text on the boxes (optional)}" />
 
