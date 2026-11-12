@@ -8399,5 +8399,14 @@
   },
   "The certificate was judged as of {0}, the time the signer gave. Nothing proves that time.": {
     "tr": "Sertifika, imzacının bildirdiği {0} tarihine göre değerlendirildi. Bu tarihi hiçbir şey kanıtlamıyor."
+  },
+  "Form cannot be filled": {
+    "tr": "Form doldurulamıyor"
+  },
+  "Form scripts will not run": {
+    "tr": "Form betikleri çalışmayacak"
+  },
+  "{0} has scripts in its form. Lazy PDF does not run them, so some fields may not calculate or check what is typed.": {
+    "tr": "{0} dosyasının formunda betikler var. Lazy PDF bunları çalıştırmaz, bu yüzden bazı alanlar hesaplama yapmayabilir veya yazılanı denetlemeyebilir."
   }
 }

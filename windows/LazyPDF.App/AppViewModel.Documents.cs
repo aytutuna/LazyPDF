@@ -4,6 +4,7 @@
 using System.Security.Cryptography.X509Certificates;
 using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
+using LazyPDF.App.Tools.Forms;
 using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 
@@ -330,6 +331,7 @@ public sealed partial class AppViewModel
         if (source.Note is not null) ShowNotice(Loc.T("Opened with changes"), source.Note);
         else if (tab.ReadOnly) ShowNotice(Loc.T("File is read-only"), Loc.T("{0} is read-only. You can work on it, but save your changes with Save as.", tab.Title));
         else if (!tab.CanDraw) ShowNotice(Loc.T("Pages cannot be shown"), Loc.T("{0} opens for editing, but Windows cannot draw its pages.", tab.Title));
+        else if (pending.Replacing is null && FormEdits.OpenNotice(tab.Document, tab.Title) is var (formTitle, formText)) ShowNotice(formTitle, formText);
         return true;
     }
 

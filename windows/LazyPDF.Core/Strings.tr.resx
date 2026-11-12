@@ -2437,6 +2437,9 @@
   <data name="Form" xml:space="preserve">
     <value>Form</value>
   </data>
+  <data name="Form cannot be filled" xml:space="preserve">
+    <value>Form doldurulamıyor</value>
+  </data>
   <data name="Form cannot be read" xml:space="preserve">
     <value>Form okunamıyor</value>
   </data>
@@ -2478,6 +2481,9 @@
   </data>
   <data name="Form not supported" xml:space="preserve">
     <value>Form desteklenmiyor</value>
+  </data>
+  <data name="Form scripts will not run" xml:space="preserve">
+    <value>Form betikleri çalışmayacak</value>
   </data>
   <data name="Format" xml:space="preserve">
     <value>Biçim</value>
@@ -7956,6 +7962,9 @@
   </data>
   <data name="{0} has no picture Lazy PDF can read." xml:space="preserve">
     <value>{0} içinde Lazy PDF'nin okuyabildiği bir resim yok.</value>
+  </data>
+  <data name="{0} has scripts in its form. Lazy PDF does not run them, so some fields may not calculate or check what is typed." xml:space="preserve">
+    <value>{0} dosyasının formunda betikler var. Lazy PDF bunları çalıştırmaz, bu yüzden bazı alanlar hesaplama yapmayabilir veya yazılanı denetlemeyebilir.</value>
   </data>
   <data name="{0} held removed text. It was replaced." xml:space="preserve">
     <value>{0} kaldırılan metni içeriyordu. Değiştirildi.</value>

@@ -11,6 +11,24 @@ internal static class FormEdits
 {
     public static PdfForm Read(DocumentTab tab, IFontSource fonts) => PdfForm.Read(tab.Document, fonts);
 
+    // What a person should hear when the file opens; the Forms panel says the same about XFA once it is shown.
+    public static (string Title, string Text)? OpenNotice(PdfDocument document, string title)
+    {
+        PdfForm form;
+        try
+        {
+            form = PdfForm.Read(document);
+        }
+        catch (PdfReadException)
+        {
+            return null;
+        }
+        if (form.Xfa == XfaKind.Dynamic) return (Loc.T("Form cannot be filled"), FormText.DynamicXfa);
+        if (form.Scripts.Any(s => !s.Ran))
+            return (Loc.T("Form scripts will not run"), Loc.T("{0} has scripts in its form. Lazy PDF does not run them, so some fields may not calculate or check what is typed.", title));
+        return null;
+    }
+
     // A refused edit may have changed the document before it threw; those changes go, so they do not ride into the next step.
     public static T Apply<T>(DocumentTab tab, IFontSource fonts, string label, Func<PdfForm, T> edit)
     {
