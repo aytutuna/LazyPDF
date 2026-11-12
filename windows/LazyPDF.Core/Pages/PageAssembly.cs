@@ -171,7 +171,7 @@ public static class PageAssembly
     }
 
     // A file of a catalog and an empty tree, with a proper table so that opening it needs no repair.
-    private static PdfDocument Blank(string version)
+    internal static PdfDocument Blank(string version)
     {
         string head = $"%PDF-{version}\n%âãÏÓ\n";
         const string catalog = "1 0 obj\n<</Type /Catalog /Pages 2 0 R>>\nendobj\n";
