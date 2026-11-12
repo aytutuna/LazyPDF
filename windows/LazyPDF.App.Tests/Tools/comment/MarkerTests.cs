@@ -363,7 +363,7 @@ public sealed class MarkerTests
 
         var wide = f.Marker.SetWidth(second, 6);
         var bare = f.Marker.SetEnding(wide, LineEnding.None);
-        Assert.True(bare.Rect.Left < Math.Min(bare.Line[0], bare.Line[2]));
+        Assert.Equal(Math.Min(bare.Line[0], bare.Line[2]) - 4, bare.Rect.Left, 6);
         bare = f.Marker.SetEnding(f.Marker.SetWidth(bare, line.Border.Width), LineEnding.None);
         var again = f.Marker.SetEnding(bare, LineEnding.Diamond);
 
