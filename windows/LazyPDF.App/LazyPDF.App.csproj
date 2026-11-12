@@ -21,6 +21,8 @@
     <Resource Include="app.ico" />
     <!-- Shown in About; shipped beside the exe. -->
     <Content Include="..\..\THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The Office fonts the converter falls back to; their licence is in THIRD-PARTY-NOTICES.txt. -->
+    <Content Include="..\..\fonts\**\*.ttf" Link="Fonts\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
