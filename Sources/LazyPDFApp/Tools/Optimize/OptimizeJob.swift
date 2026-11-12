@@ -10,6 +10,8 @@ public struct OptimizeOutcome {
     public let sizeBefore: Int
     public let sizeAfter: Int
     public let notes: [String]
+    /// Objects the file lists but could not be read, which the new file does without.
+    public let dropped: Int
 }
 
 public enum OptimizeJob {
@@ -27,12 +29,12 @@ public enum OptimizeJob {
         let result = try PdfOptimizer(document, codec).run(options)
         try token.throwIfCancelled()
         if !choice.fastWebView {
-            return OptimizeOutcome(bytes: result.bytes, sizeBefore: result.sizeBefore, sizeAfter: result.sizeAfter, notes: result.notes)
+            return OptimizeOutcome(bytes: result.bytes, sizeBefore: result.sizeBefore, sizeAfter: result.sizeAfter, notes: result.notes, dropped: result.dropped)
         }
 
         let optimized = try ToolDocuments.open(result.bytes, password: password, certificate: certificate)
         let web = try optimized.saveLinearized(PdfSaveOptions(security: optimized.security))
         try token.throwIfCancelled()
-        return OptimizeOutcome(bytes: web, sizeBefore: result.sizeBefore, sizeAfter: web.count, notes: result.notes)
+        return OptimizeOutcome(bytes: web, sizeBefore: result.sizeBefore, sizeAfter: web.count, notes: result.notes, dropped: result.dropped)
     }
 }

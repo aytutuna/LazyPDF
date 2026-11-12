@@ -211,10 +211,10 @@ public final class CombineModel: ToolPanelModel {
         let gate = reading
         let names = entries.map(\.name)
         var made: [UInt8]?
-        var skipped = 0
+        var skipped = 0, dropped = 0
         do {
             try await host.runBusy(L10n.t("Combining files")) { token in
-                (made, skipped) = try await ToolDocuments.run(token) { () throws -> ([UInt8], Int) in
+                (made, skipped, dropped) = try await ToolDocuments.run(token) { () throws -> ([UInt8], Int, Int) in
                     // A job that was cancelled may still be reading the same documents; this one waits for it.
                     gate.lock()
                     defer { gate.unlock() }
@@ -224,7 +224,7 @@ public final class CombineModel: ToolPanelModel {
                     let merged = try PageAssembly.merge(ordered.map { MergeSource($0.document ?? again, $0.pages) }, titles: ordered.map(\.title))
                     let bytes = try merged.saveRewrite()
                     try token.throwIfCancelled()
-                    return (bytes, merged.skippedAttachments)
+                    return (bytes, merged.skippedAttachments, merged.droppedObjects)
                 }
             }
         } catch {
@@ -263,14 +263,14 @@ public final class CombineModel: ToolPanelModel {
 
         let name = L10n.t("Combined.pdf")
         let protectedSource = documents.contains { $0.isEncrypted }
-        let left = PageJobs.skippedText(skipped)
+        let left = PageJobs.leftOutText(skipped, dropped)
         if toFolder {
             await save(host, [(name, bytes)], protectedSource, left)
             return
         }
         await host.openNew(bytes, title: name, password: nil, certificate: nil)
         if protectedSource { host.showNotice(L10n.t("Copy is not protected"), (CopyRules.unprotected + " " + left).trimmingCharacters(in: .whitespaces), nil) }
-        else { PageJobs.noteSkippedAttachments(host, skipped) }
+        else { PageJobs.noteLeftOut(host, skipped, dropped) }
     }
 
     func split() async {
@@ -283,18 +283,19 @@ public final class CombineModel: ToolPanelModel {
         }
         let copy = TabCopy(tab, host)
         var made: [[UInt8]]?
-        var skipped = 0
+        var skipped = 0, dropped = 0
         do {
             try await host.runBusy(L10n.t("Splitting file")) { token in
-                (made, skipped) = try await ToolDocuments.run(token) { () throws -> ([[UInt8]], Int) in
+                (made, skipped, dropped) = try await ToolDocuments.run(token) { () throws -> ([[UInt8]], Int, Int) in
                     var saved: [[UInt8]] = []
-                    var left = 0
+                    var left = 0, damaged = 0
                     for part in try CombineJob.split(copy.open(), kind, perPart, token) {
                         try token.throwIfCancelled()
                         saved.append(try part.saveRewrite())
                         left += part.skippedAttachments
+                        damaged += part.droppedObjects
                     }
-                    return (saved, left)
+                    return (saved, left, damaged)
                 }
             }
         } catch {
@@ -316,7 +317,7 @@ public final class CombineModel: ToolPanelModel {
             }
         }
 
-        big = (big + " " + PageJobs.skippedText(skipped)).trimmingCharacters(in: .whitespaces)
+        big = (big + " " + PageJobs.leftOutText(skipped, dropped)).trimmingCharacters(in: .whitespaces)
 
         let stem = (tab.title as NSString).deletingPathExtension
         let named = parts.enumerated().map { (name: CombineJob.partName(stem, $0.offset, parts.count), bytes: $0.element) }

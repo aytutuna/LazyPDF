@@ -3461,6 +3461,10 @@
     "tr": "{0} resim çok büyük olduğu için dışarıda bırakıldı.",
     "other": "{0} pictures were too large and were left out."
   },
+  "{0} damaged object could not be read and was left out.": {
+    "tr": "{0} hasarlı nesne okunamadığı için dışarıda bırakıldı.",
+    "other": "{0} damaged objects could not be read and were left out."
+  },
   "Make a PDF from": {
     "tr": "PDF yapılacak kaynak"
   },

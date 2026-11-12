@@ -147,7 +147,7 @@ public final class OptimizeModel: ToolPanelModel {
                 ? L10n.t("{0} to {1}, {2}% smaller.", SizeText.of(outcome.sizeBefore), SizeText.of(outcome.sizeAfter),
                          SizeText.percent(outcome.sizeBefore, outcome.sizeAfter))
                 : L10n.t("{0} to {1}.", SizeText.of(outcome.sizeBefore), SizeText.of(outcome.sizeAfter))
-            host.showNotice(saved > 0 ? L10n.t("File made smaller") : L10n.t("File rewritten"), ([sizes] + outcome.notes).joined(separator: " "), nil)
+            host.showNotice(saved > 0 ? L10n.t("File made smaller") : L10n.t("File rewritten"), ([sizes] + outcome.notes + (outcome.dropped > 0 ? [PageJobs.droppedText(outcome.dropped)] : [])).joined(separator: " "), nil)
             host.setStatus(saved > 0 ? L10n.t("{0} smaller.", SizeText.of(saved)) : L10n.t("Done."))
         }
     }

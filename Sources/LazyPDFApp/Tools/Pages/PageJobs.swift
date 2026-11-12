@@ -88,33 +88,43 @@ public enum PageJobs {
     public static func copyOut(_ tab: DocumentTab, _ host: ToolHost, _ pages: [Int], busy: String, failed: Problem, files: Bool = true) async -> [UInt8]? {
         if CopyRules.refused(tab.document, host) { return nil }
         var bytes: [UInt8]?
-        var skipped = 0
+        var skipped = 0, dropped = 0
         let copy = TabCopy(tab, host)
         do {
             try await host.runBusy(busy) { token in
-                (bytes, skipped) = try await ToolDocuments.run(token) {
+                (bytes, skipped, dropped) = try await ToolDocuments.run(token) {
                     try token.throwIfCancelled()
                     let extract = try PageAssembly.extract(copy.open(), pages, files: files)
                     let made = try extract.saveRewrite()
                     try token.throwIfCancelled()
-                    return (made, extract.skippedAttachments)
+                    return (made, extract.skippedAttachments, extract.droppedObjects)
                 }
             }
         } catch {
             host.showProblem(failed)
             return nil
         }
-        noteSkippedAttachments(host, skipped)
+        noteLeftOut(host, skipped, dropped)
         return bytes
     }
 
-    public static func noteSkippedAttachments(_ host: ToolHost, _ skipped: Int) {
-        if skipped == 0 { return }
-        host.showNotice(L10n.t("Attachments left out"), skippedText(skipped), nil)
+    public static func noteLeftOut(_ host: ToolHost, _ skipped: Int, _ dropped: Int) {
+        if skipped == 0 && dropped == 0 { return }
+        host.showNotice(dropped == 0 ? L10n.t("Attachments left out") : L10n.t("Some left out"), leftOutText(skipped, dropped), nil)
     }
 
     public static func skippedText(_ skipped: Int) -> String {
         if skipped == 0 { return "" }
         return L10n.plural(skipped, one: "{0} attachment could not be read and was left out.", other: "{0} attachments could not be read and were left out.")
+    }
+
+    /// Objects the file lists but could not be read, which the copy does without.
+    public static func droppedText(_ dropped: Int) -> String {
+        if dropped == 0 { return "" }
+        return L10n.plural(dropped, one: "{0} damaged object could not be read and was left out.", other: "{0} damaged objects could not be read and were left out.")
+    }
+
+    public static func leftOutText(_ skipped: Int, _ dropped: Int) -> String {
+        (skippedText(skipped) + " " + droppedText(dropped)).trimmingCharacters(in: .whitespaces)
     }
 }

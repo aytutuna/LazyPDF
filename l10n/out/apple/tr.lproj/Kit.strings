@@ -2159,6 +2159,8 @@
 "{0} could not be written. Check that the disk has room and try again." = "{0} yazılamadı. Diskte yer olduğundan emin olup yeniden deneyin.";
 "{0} could not be written. Check the folder and try again." = "{0} yazılamadı. Klasörü kontrol edip yeniden deneyin.";
 "{0} could not be written. Choose another folder." = "{0} yazılamadı. Başka bir klasör seçin.";
+"{0} damaged object could not be read and was left out.|one" = "{0} hasarlı nesne okunamadığı için dışarıda bırakıldı.";
+"{0} damaged object could not be read and was left out.|other" = "{0} hasarlı nesne okunamadığı için dışarıda bırakıldı.";
 "{0} did not open. Check it and compare again." = "{0} açılmadı. Denetleyip yeniden karşılaştırın.";
 "{0} difference|one" = "{0} fark";
 "{0} difference|other" = "{0} fark";

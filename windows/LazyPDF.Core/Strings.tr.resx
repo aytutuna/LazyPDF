@@ -7891,6 +7891,9 @@
   <data name="{0} could not be written. Choose another folder." xml:space="preserve">
     <value>{0} yazılamadı. Başka bir klasör seçin.</value>
   </data>
+  <data name="{0} damaged object could not be read and was left out.|plural" xml:space="preserve">
+    <value>{0} hasarlı nesne okunamadığı için dışarıda bırakıldı.</value>
+  </data>
   <data name="{0} degrees" xml:space="preserve">
     <value>{0} derece</value>
   </data>
