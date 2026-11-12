@@ -70,6 +70,10 @@ public final class WebKitPageRenderer: WebPageRenderer {
         info.isVerticallyCentered = false
         info.jobDisposition = .save
         info.dictionary()[NSPrintInfo.AttributeKey.jobSavingURL] = file
+        // One page past the limit is enough to know the page is too long, without printing the rest.
+        info.dictionary()[NSPrintInfo.AttributeKey.allPages] = false
+        info.dictionary()[NSPrintInfo.AttributeKey.firstPage] = 1
+        info.dictionary()[NSPrintInfo.AttributeKey.lastPage] = WebPageRules.mostPages + 1
 
         // The web view prints only from inside a window; this one is never shown.
         let window = NSWindow(contentRect: view.frame, styleMask: [.borderless], backing: .buffered, defer: true)
@@ -151,17 +155,28 @@ private final class PagedRenderer: UIPrintPageRenderer {
 @MainActor
 private final class PrintRun: NSObject {
     private var finished: CheckedContinuation<Bool, Never>?
+    private var timeout: Task<Void, Never>?
 
     func run(_ operation: NSPrintOperation, in window: NSWindow) async -> Bool {
         await withCheckedContinuation { continuation in
             finished = continuation
+            timeout = Task { [weak self] in
+                try? await Task.sleep(for: .seconds(WebPageRules.printSeconds))
+                self?.finish(false)
+            }
             operation.runModal(for: window, delegate: self, didRun: #selector(printed(_:success:contextInfo:)), contextInfo: nil)
         }
     }
 
-    @objc private func printed(_ operation: NSPrintOperation, success: Bool, contextInfo: UnsafeMutableRawPointer?) {
+    private func finish(_ success: Bool) {
+        timeout?.cancel()
+        timeout = nil
         finished?.resume(returning: success)
         finished = nil
+    }
+
+    @objc private func printed(_ operation: NSPrintOperation, success: Bool, contextInfo: UnsafeMutableRawPointer?) {
+        finish(success)
     }
 }
 #endif

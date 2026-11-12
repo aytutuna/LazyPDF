@@ -48,6 +48,9 @@ public enum WebPageRules {
     /// Seconds a page may take to load.
     public static let loadSeconds = 30.0
 
+    /// Seconds the Mac print run may take to write the pages.
+    public static let printSeconds = 120.0
+
     /// A WKContentRuleList that refuses every request that is not a local file.
     public static let blockNetwork = #"[{"trigger":{"url-filter":"^(https?|wss?|ftp):"},"action":{"type":"block"}}]"#
 
