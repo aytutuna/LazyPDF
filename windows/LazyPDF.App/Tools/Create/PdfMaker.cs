@@ -10,24 +10,24 @@ public enum CreateSource
     Pictures,
     Text,
     WebPage,
-    Word,
+    Office,
 }
 
-/// <param name="Files">Picture files to read, in page order; for a Word file, the one file.</param>
+/// <param name="Files">Picture files to read, in page order; for an Office file, the one file.</param>
 /// <param name="Picture">A picture already in memory that stands for <paramref name="Files"/>: the clipboard's.</param>
 public sealed record CreateRequest(CreateSource Source, PdfPageSetup Setup, string Title, int Pages = 1, IReadOnlyList<string>? Files = null,
                                    byte[]? Picture = null, string Text = "", double FontSize = 11, string Family = "Arial");
 
 /// <param name="Unreadable">Pictures that could not be read, or letters the font lacks.</param>
 /// <param name="Skipped">Pictures or picture frames too large to decode.</param>
-/// <param name="Features">What a Word file had that the converter left out.</param>
+/// <param name="Features">What an Office file had that the converter left out.</param>
 public sealed record MadePdf(byte[] Bytes, int Pages, int Unreadable, int Skipped = 0, IReadOnlyList<SkippedFeature>? Features = null);
 
 public static class PdfMaker
 {
     public const int MostBlankPages = 500;
 
-    public const long MostWordBytes = 100 << 20;
+    public const long MostOfficeBytes = 100 << 20;
 
     internal static readonly string[] PictureExtensions = [".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".gif", ".heic", ".heif"];
 
@@ -54,12 +54,15 @@ public static class PdfMaker
                 }).ToList();
                 var pictures = PdfFromPictures.Create(files, codec, request.Setup, cancel);
                 return new MadePdf(pictures.Bytes, pictures.Pages, pictures.Unreadable.Count, pictures.SkippedFrames);
-            case CreateSource.Word:
+            case CreateSource.Office:
                 string path = request.Files![0];
                 cancel.ThrowIfCancellationRequested();
-                if (new FileInfo(path).Length > MostWordBytes) throw new PdfReadException(PdfReadProblem.Unsupported, "The Word file is over the size limit.");
-                var word = OfficeConverter.FromWord(File.ReadAllBytes(path), new OfficeFontSource(fonts, new BundledFontSource()), codec, cancel);
-                return new MadePdf(word.Bytes, word.Pages, word.Missing.Count, Features: word.Skipped);
+                if (new FileInfo(path).Length > MostOfficeBytes) throw new PdfReadException(PdfReadProblem.Unsupported, "The file is over the size limit.");
+                var office = new OfficeFontSource(fonts, new BundledFontSource());
+                var made = FileKinds.OfficeAppOf(path) == OfficeApp.Excel
+                    ? OfficeConverter.FromExcel(File.ReadAllBytes(path), office, Path.GetFileName(path), cancel)
+                    : OfficeConverter.FromWord(File.ReadAllBytes(path), office, codec, cancel);
+                return new MadePdf(made.Bytes, made.Pages, made.Missing.Count, Features: made.Skipped);
             default:
                 var text = PdfFromText.Create(request.Text, fonts, request.Setup, family: request.Family, size: request.FontSize, cancellation: cancel);
                 return new MadePdf(text.Bytes, text.Pages, text.Missing.Count);

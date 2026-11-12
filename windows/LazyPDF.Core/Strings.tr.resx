@@ -52,8 +52,8 @@
   <data name="A TrueType font must use WinAnsiEncoding or MacRomanEncoding." xml:space="preserve">
     <value>Bir TrueType yazı tipi WinAnsiEncoding ya da MacRomanEncoding kullanmalı.</value>
   </data>
-  <data name="A Word file (.docx)" xml:space="preserve">
-    <value>Bir Word dosyası (.docx)</value>
+  <data name="A Word, Excel or PowerPoint file" xml:space="preserve">
+    <value>Bir Word, Excel veya PowerPoint dosyası</value>
   </data>
   <data name="A box I draw on the page" xml:space="preserve">
     <value>Sayfaya çizeceğim bir kutu</value>
@@ -1114,9 +1114,6 @@
   <data name="Choose a PFX file" xml:space="preserve">
     <value>PFX dosyası seç</value>
   </data>
-  <data name="Choose a Word file" xml:space="preserve">
-    <value>Word dosyası seç</value>
-  </data>
   <data name="Choose a certificate" xml:space="preserve">
     <value>Sertifika seçin</value>
   </data>
@@ -2007,6 +2004,12 @@
   </data>
   <data name="Every table has rows and cells in the right places, or there are no tables." xml:space="preserve">
     <value>Her tablonun satırları ve hücreleri doğru yerde ya da hiç tablo yok.</value>
+  </data>
+  <data name="Excel file cannot be read" xml:space="preserve">
+    <value>Excel dosyası okunamıyor</value>
+  </data>
+  <data name="Excel file is not supported" xml:space="preserve">
+    <value>Excel dosyası desteklenmiyor</value>
   </data>
   <data name="Exit reading mode" xml:space="preserve">
     <value>Okuma modundan çık</value>
@@ -2980,8 +2983,14 @@
   <data name="Layout" xml:space="preserve">
     <value>Düzen</value>
   </data>
+  <data name="Layout can differ from Excel." xml:space="preserve">
+    <value>Sayfa düzeni Excel'dekinden farklı olabilir.</value>
+  </data>
   <data name="Layout can differ from Word." xml:space="preserve">
     <value>Sayfa düzeni Word'dekinden farklı olabilir.</value>
+  </data>
+  <data name="Layout can differ from the original." xml:space="preserve">
+    <value>Sayfa düzeni özgün dosyadakinden farklı olabilir.</value>
   </data>
   <data name="Lazy PDF Help" xml:space="preserve">
     <value>Lazy PDF Yardımı</value>
@@ -3852,6 +3861,9 @@
   </data>
   <data name="Odd pages only" xml:space="preserve">
     <value>Yalnızca tek sayfalar</value>
+  </data>
+  <data name="Office files" xml:space="preserve">
+    <value>Office dosyaları</value>
   </data>
   <data name="Old page" xml:space="preserve">
     <value>Eski sayfa</value>
@@ -6457,6 +6469,9 @@
   <data name="The file is damaged or is not a Word document. Pick a .docx file." xml:space="preserve">
     <value>Dosya bozuk ya da bir Word belgesi değil. Bir .docx dosyası seçin.</value>
   </data>
+  <data name="The file is damaged or is not an Excel workbook. Pick an .xlsx file." xml:space="preserve">
+    <value>Dosya bozuk ya da bir Excel çalışma kitabı değil. Bir .xlsx dosyası seçin.</value>
+  </data>
   <data name="The file is encrypted." xml:space="preserve">
     <value>Dosya şifreli.</value>
   </data>
@@ -6906,6 +6921,9 @@
   </data>
   <data name="The window shows the file name, not the title. Turn on showing the title." xml:space="preserve">
     <value>Pencere başlığı değil dosya adını gösteriyor. Başlığın gösterilmesini açın.</value>
+  </data>
+  <data name="The workbook cannot be made into a PDF. Only .xlsx files up to 100 MB with something to print can be; older .xls and .xlsb files must be saved as .xlsx first." xml:space="preserve">
+    <value>Çalışma kitabı PDF'ye çevrilemiyor. Yalnızca yazdırılacak içeriği olan, 100 MB'a kadar .xlsx dosyaları çevrilebilir; eski .xls ve .xlsb dosyalarını önce .xlsx olarak kaydedin.</value>
   </data>
   <data name="There are no tags to check. Tag the document first." xml:space="preserve">
     <value>Denetlenecek etiket yok. Önce belgeyi etiketleyin.</value>
@@ -7819,9 +7837,6 @@
   <data name="Word file is not supported" xml:space="preserve">
     <value>Word dosyası desteklenmiyor</value>
   </data>
-  <data name="Word files" xml:space="preserve">
-    <value>Word dosyaları</value>
-  </data>
   <data name="Word or phrase" xml:space="preserve">
     <value>Sözcük veya ifade</value>
   </data>
@@ -7924,8 +7939,20 @@
   <data name="an unknown signer" xml:space="preserve">
     <value>bilinmeyen bir imzalayan</value>
   </data>
+  <data name="cell comments" xml:space="preserve">
+    <value>hücre açıklamaları</value>
+  </data>
+  <data name="cells beyond the sheet limits" xml:space="preserve">
+    <value>sayfa sınırlarının dışındaki hücreler</value>
+  </data>
+  <data name="chart sheets" xml:space="preserve">
+    <value>grafik sayfaları</value>
+  </data>
   <data name="charts" xml:space="preserve">
     <value>grafikler</value>
+  </data>
+  <data name="charts on sheets" xml:space="preserve">
+    <value>sayfalardaki grafikler</value>
   </data>
   <data name="comment marks" xml:space="preserve">
     <value>açıklama işaretleri</value>
@@ -7933,8 +7960,14 @@
   <data name="complex-script shaping" xml:space="preserve">
     <value>karmaşık yazı sistemi şekillendirmesi</value>
   </data>
+  <data name="conditional formatting" xml:space="preserve">
+    <value>koşullu biçimlendirme</value>
+  </data>
   <data name="converted" xml:space="preserve">
     <value>dönüştürüldü</value>
+  </data>
+  <data name="data validation" xml:space="preserve">
+    <value>veri doğrulama</value>
   </data>
   <data name="drawings" xml:space="preserve">
     <value>çizimler</value>
@@ -7951,6 +7984,15 @@
   <data name="footnotes" xml:space="preserve">
     <value>dipnotlar</value>
   </data>
+  <data name="formatting inside cells (first style used)" xml:space="preserve">
+    <value>hücre içindeki biçimlendirme (ilk stil kullanıldı)</value>
+  </data>
+  <data name="formulas without a saved result (shown empty)" xml:space="preserve">
+    <value>kayıtlı sonucu olmayan formüller (boş gösterildi)</value>
+  </data>
+  <data name="hidden sheets" xml:space="preserve">
+    <value>gizli sayfalar</value>
+  </data>
   <data name="letters no font has" xml:space="preserve">
     <value>hiçbir yazı tipinde bulunmayan harfler</value>
   </data>
@@ -7966,8 +8008,14 @@
   <data name="page {0}|in a sentence" xml:space="preserve">
     <value>sayfa {0}</value>
   </data>
+  <data name="pattern and gradient fills" xml:space="preserve">
+    <value>desen ve degrade dolgular</value>
+  </data>
   <data name="picture positions (placed in line)" xml:space="preserve">
     <value>resim konumları (satır içine yerleştirildi)</value>
+  </data>
+  <data name="pictures on sheets" xml:space="preserve">
+    <value>sayfalardaki resimler</value>
   </data>
   <data name="pictures that could not be read" xml:space="preserve">
     <value>okunamayan resimler</value>
@@ -7981,14 +8029,29 @@
   <data name="right-to-left text direction" xml:space="preserve">
     <value>sağdan sola metin yönü</value>
   </data>
+  <data name="rotated text (shown straight)" xml:space="preserve">
+    <value>döndürülmüş metin (düz gösterildi)</value>
+  </data>
   <data name="shapes" xml:space="preserve">
     <value>şekiller</value>
+  </data>
+  <data name="shapes on sheets" xml:space="preserve">
+    <value>sayfalardaki şekiller</value>
+  </data>
+  <data name="sheets that are not worksheets" xml:space="preserve">
+    <value>çalışma sayfası olmayan sayfalar</value>
+  </data>
+  <data name="sparklines" xml:space="preserve">
+    <value>mini grafikler</value>
   </data>
   <data name="tables too large or nested (shown as paragraphs)" xml:space="preserve">
     <value>çok büyük ya da iç içe tablolar (paragraf olarak gösterildi)</value>
   </data>
   <data name="text boxes" xml:space="preserve">
     <value>metin kutuları</value>
+  </data>
+  <data name="text cut at the cell limit" xml:space="preserve">
+    <value>hücre sınırında kesilen metin</value>
   </data>
   <data name="text in {0} note or field|plural" xml:space="preserve">
     <value>{0} not veya alandaki metin</value>

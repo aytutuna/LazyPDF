@@ -1,4 +1,5 @@
 using LazyPDF.App.Documents;
+using LazyPDF.App.Services;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Create;
@@ -17,15 +18,15 @@ public static class CreateJob
         }
         catch (Exception e) when (e is WebViewMissingException or PdfReadException or ArgumentException or InvalidOperationException or IOException or UnauthorizedAccessException)
         {
-            host.ShowProblem(CreateProblems.Failed(e, request.Source));
+            host.ShowProblem(CreateProblems.Failed(e, request));
             return;
         }
         if (made is null) return;
 
         if (!await host.OpenNewAsync(made.Bytes, request.Title)) return;
-        if (request.Source == CreateSource.Word)
+        if (request.Source == CreateSource.Office)
         {
-            host.ShowNotice(Loc.T("Made without Office"), WordNotice.Text(made));
+            host.ShowNotice(Loc.T("Made without Office"), OfficeNotice.Text(made, FileKinds.OfficeAppOf(request.Files![0])));
             return;
         }
         if (made.Unreadable + made.Skipped == 0) return;

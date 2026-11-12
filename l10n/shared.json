@@ -8645,17 +8645,8 @@
   "Made without Office": {
     "tr": "Office olmadan oluşturuldu"
   },
-  "A Word file (.docx)": {
-    "tr": "Bir Word dosyası (.docx)"
-  },
-  "Choose a Word file": {
-    "tr": "Word dosyası seç"
-  },
   "Layout can differ from Word.": {
     "tr": "Sayfa düzeni Word'dekinden farklı olabilir."
-  },
-  "Word files": {
-    "tr": "Word dosyaları"
   },
   "Word file cannot be read": {
     "tr": "Word dosyası okunamıyor"
@@ -8728,5 +8719,77 @@
   },
   "The system does not let Lazy PDF read the file. Check who may open it.": {
     "tr": "Sistem, Lazy PDF'nin dosyayı okumasına izin vermiyor. Dosyayı kimlerin açabileceğini denetleyin."
+  },
+  "A Word, Excel or PowerPoint file": {
+    "tr": "Bir Word, Excel veya PowerPoint dosyası"
+  },
+  "Layout can differ from the original.": {
+    "tr": "Sayfa düzeni özgün dosyadakinden farklı olabilir."
+  },
+  "Office files": {
+    "tr": "Office dosyaları"
+  },
+  "Excel file cannot be read": {
+    "tr": "Excel dosyası okunamıyor"
+  },
+  "The file is damaged or is not an Excel workbook. Pick an .xlsx file.": {
+    "tr": "Dosya bozuk ya da bir Excel çalışma kitabı değil. Bir .xlsx dosyası seçin."
+  },
+  "Excel file is not supported": {
+    "tr": "Excel dosyası desteklenmiyor"
+  },
+  "The workbook cannot be made into a PDF. Only .xlsx files up to 100 MB with something to print can be; older .xls and .xlsb files must be saved as .xlsx first.": {
+    "tr": "Çalışma kitabı PDF'ye çevrilemiyor. Yalnızca yazdırılacak içeriği olan, 100 MB'a kadar .xlsx dosyaları çevrilebilir; eski .xls ve .xlsb dosyalarını önce .xlsx olarak kaydedin."
+  },
+  "Layout can differ from Excel.": {
+    "tr": "Sayfa düzeni Excel'dekinden farklı olabilir."
+  },
+  "hidden sheets": {
+    "tr": "gizli sayfalar"
+  },
+  "chart sheets": {
+    "tr": "grafik sayfaları"
+  },
+  "sheets that are not worksheets": {
+    "tr": "çalışma sayfası olmayan sayfalar"
+  },
+  "formatting inside cells (first style used)": {
+    "tr": "hücre içindeki biçimlendirme (ilk stil kullanıldı)"
+  },
+  "pattern and gradient fills": {
+    "tr": "desen ve degrade dolgular"
+  },
+  "rotated text (shown straight)": {
+    "tr": "döndürülmüş metin (düz gösterildi)"
+  },
+  "formulas without a saved result (shown empty)": {
+    "tr": "kayıtlı sonucu olmayan formüller (boş gösterildi)"
+  },
+  "cells beyond the sheet limits": {
+    "tr": "sayfa sınırlarının dışındaki hücreler"
+  },
+  "text cut at the cell limit": {
+    "tr": "hücre sınırında kesilen metin"
+  },
+  "pictures on sheets": {
+    "tr": "sayfalardaki resimler"
+  },
+  "charts on sheets": {
+    "tr": "sayfalardaki grafikler"
+  },
+  "shapes on sheets": {
+    "tr": "sayfalardaki şekiller"
+  },
+  "conditional formatting": {
+    "tr": "koşullu biçimlendirme"
+  },
+  "sparklines": {
+    "tr": "mini grafikler"
+  },
+  "data validation": {
+    "tr": "veri doğrulama"
+  },
+  "cell comments": {
+    "tr": "hücre açıklamaları"
   }
 }
