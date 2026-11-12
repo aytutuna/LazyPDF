@@ -3,9 +3,9 @@ import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Tools/Create/PdfMaker.cs, CreateJob.cs and CreateProblems.cs.
 
-public enum CreateSource { case blank, pictures, text, web }
+public enum CreateSource { case blank, pictures, text, web, word }
 
-/// `files` are picture files to read, in page order; `picture` is one already in memory that stands for them: the pasteboard's.
+/// `files` are picture files to read, in page order, or the one Word file; `picture` is one already in memory that stands for them: the pasteboard's.
 public struct CreateRequest {
     public var source: CreateSource
     public var setup: PdfPageSetup
@@ -39,17 +39,22 @@ public struct MadePdf {
     /// True when a web page named parts from the internet that were left out.
     public let leftOutRemote: Bool
 
-    init(bytes: [UInt8], pages: Int, unreadable: Int, tooLarge: Int = 0, leftOutRemote: Bool = false) {
+    /// What a Word file had that the converter left out.
+    public let skipped: [SkippedFeature]
+
+    init(bytes: [UInt8], pages: Int, unreadable: Int, tooLarge: Int = 0, leftOutRemote: Bool = false, skipped: [SkippedFeature] = []) {
         self.bytes = bytes
         self.pages = pages
         self.unreadable = unreadable
         self.tooLarge = tooLarge
         self.leftOutRemote = leftOutRemote
+        self.skipped = skipped
     }
 }
 
 public enum PdfMaker {
     public static let mostBlankPages = 500
+    public static let mostWordBytes = 100 << 20
 
     /// The engine calls stop through the task `ToolDocuments.run` cancels; the token is also looked at between the files read.
     public static func make(_ request: CreateRequest, _ codec: ImageCodec, _ fonts: FontSource?, _ token: CancelToken = CancelToken()) throws -> MadePdf {
@@ -70,6 +75,13 @@ public enum PdfMaker {
             }
             let pictures = try PdfFromPictures.create(files, codec, request.setup)
             return MadePdf(bytes: pictures.bytes, pages: pictures.pages, unreadable: pictures.unreadable.count, tooLarge: pictures.skippedFrames)
+        case .word:
+            let url = request.files[0]
+            try token.throwIfCancelled()
+            let size = (try FileManager.default.attributesOfItem(atPath: url.path)[.size] as? NSNumber)?.intValue ?? 0
+            if size > mostWordBytes { throw PdfReadException(.unsupported, "The Word file is over the size limit.") }
+            let word = try OfficeConverter.fromWord([UInt8](try Data(contentsOf: url)), OfficeFontSource(installed: fonts, bundled: BundledFontSource()), codec)
+            return MadePdf(bytes: word.bytes, pages: word.pages, unreadable: word.missing.count, skipped: word.skipped)
         case .text:
             let text = try PdfFromText.create(request.text, fonts: fonts, setup: request.setup, size: request.fontSize)
             return MadePdf(bytes: text.bytes, pages: text.pages, unreadable: text.missing.count)
@@ -92,13 +104,17 @@ public enum CreateJob {
                     made = try await ToolDocuments.run(token) { try PdfMaker.make(request, codec, fonts, token) }
                 }
             }
-        } catch let error where error is ArgumentException || error is InvalidOperationException || error is WebPageError || Problems.isFileSystem(error) {
+        } catch let error where error is ArgumentException || error is InvalidOperationException || error is WebPageError || error is PdfReadException || Problems.isFileSystem(error) {
             host.showProblem(CreateProblems.failed(error, request.source))
             return
         }
         guard let made else { return }
 
         await host.openNew(made.bytes, title: request.title, password: nil, certificate: nil)
+        if request.source == .word {
+            host.showNotice(L10n.t("Made without Office"), WordNotice.text(made), nil)
+            return
+        }
         var parts: [String] = []
         if made.unreadable > 0 {
             parts.append(request.source == .pictures
@@ -139,6 +155,16 @@ enum CreateProblems {
             case .tooLong: return Problem(L10n.t("Page is too long"), L10n.t("The web page would make more than 2000 pages. Pick a shorter one."))
             case .couldNotLoad: return Problem(L10n.t("Page cannot be read"), L10n.t("The web page could not be read. Check that it is an HTML file and that no other program has it open."))
             }
+        }
+        if let error = error as? PdfReadException {
+            return error.problem == .damaged
+                ? Problem(L10n.t("Word file cannot be read"), L10n.t("The file is damaged or is not a Word document. Pick a .docx file."))
+                : Problem(L10n.t("Word file is not supported"), L10n.t("Only .docx files up to 100 MB can be made into a PDF. Older .doc files must be saved as .docx first."))
+        }
+        if source == .word && !(error is InvalidOperationException || error is ArgumentException) {
+            return Problems.isNoAccess(error)
+                ? Problem(L10n.t("No access"), L10n.t("The system does not let Lazy PDF read the file. Check who may open it."))
+                : Problem(L10n.t("Word file cannot be read"), L10n.t("The file could not be read. Close any program that has it open and try again."))
         }
         if error is InvalidOperationException {
             return Problem(L10n.t("No font for this text"), L10n.t("No font on this computer can draw the text. Remove the letters it cannot show."))

@@ -21,6 +21,7 @@ struct CreatePanelView: View {
                     Text(L10n.t("Blank pages")).tag(CreateFrom.blank)
                     Text(L10n.t("Pictures")).tag(CreateFrom.pictures)
                     Text(L10n.t("Text")).tag(CreateFrom.text)
+                    Text(L10n.t("A Word file (.docx)")).tag(CreateFrom.word)
                     Text(L10n.t("Clipboard")).tag(CreateFrom.clipboard)
                     if model.offersWebPage { Text(L10n.t("Web page")).tag(CreateFrom.webPage) }
                 }
@@ -30,6 +31,7 @@ struct CreatePanelView: View {
             case .blank: blank(model)
             case .pictures: pictures(model)
             case .text: text(model)
+            case .word: word(model)
             case .webPage: webPage(model)
             case .clipboard: Label(model.clipboardState, systemImage: "doc.on.clipboard").font(.caption).foregroundStyle(.secondary)
                 .accessibilityAddTraits(.updatesFrequently)
@@ -128,6 +130,16 @@ struct CreatePanelView: View {
             .font(.caption)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
+    }
+
+    @ViewBuilder
+    private func word(_ model: CreateModel) -> some View {
+        Button { Task { await model.chooseWord() } } label: { Label(L10n.t("Choose a Word file"), systemImage: "doc.richtext") }
+        Text(model.wordFile?.url.lastPathComponent ?? L10n.t("Layout can differ from Word."))
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityAddTraits(.updatesFrequently)
     }
 
     @ViewBuilder

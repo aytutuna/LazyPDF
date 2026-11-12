@@ -7,6 +7,7 @@ public enum FileKinds {
     public static let pictureExtensions = ["jpg", "jpeg", "png", "tif", "tiff", "bmp", "gif", "heic", "heif"]
     public static let textExtensions = ["txt"]
     public static let webPageExtensions = ["html", "htm"]
+    public static let wordExtensions = ["docx"]
 
     public static func isPicture(_ url: URL) -> Bool {
         pictureExtensions.contains(url.pathExtension.lowercased())
