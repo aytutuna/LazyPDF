@@ -91,8 +91,12 @@ final class MacUITests: XCTestCase {
         choose(app, menu: "File", item: "Close")
         XCTAssertTrue(element(app, "What would you like to do?").waitForExistence(timeout: 10))
         app.menuBars.menuBarItems["File"].click()
-        app.menuBars.menuItems["Open Recent"].click()
-        app.menuBars.menuItems["plain-3.pdf"].click()
+        let recent = app.menuBars.menuItems["Open Recent"]
+        recent.click()
+        // Only this submenu: the file's name can also be a window title in the Window menu.
+        let entries = recent.menuItems.matching(NSPredicate(format: "title == %@", "plain-3.pdf"))
+        XCTAssertEqual(entries.count, 1, recent.menuItems.allElementsBoundByIndex.map(\.title).joined(separator: ", "))
+        entries.firstMatch.click()
 
         XCTAssertTrue(element(app, "Page 1 of 3").waitForExistence(timeout: 30))
     }
