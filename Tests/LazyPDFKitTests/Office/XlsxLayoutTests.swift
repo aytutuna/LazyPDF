@@ -81,7 +81,7 @@ final class XlsxLayoutTests: XCTestCase {
     }
 
     func test_aBigPrintAreaStopsAtThePageLimit() throws {
-        let names = "<sheets><sheet name=\"S\" sheetId=\"1\" r:id=\"rId1\"/></sheets><definedNames><definedName name=\"_xlnm.Print_Area\" localSheetId=\"0\">S!$A$1:$XFD$1048576</definedName></definedNames>"
+        let names = "<sheets><sheet name=\"S\" sheetId=\"1\" r:id=\"rId1\"/></sheets><definedNames><definedName name=\"_xlnm.Print_Area\" localSheetId=\"0\">S!$A$1:$XFC$1048575</definedName></definedNames>"
         let package = try book("<sheetData><row r=\"1\"><c r=\"A1\"><v>1</v></c></row></sheetData>", workbook: names)
         XCTAssertEqual(problem { _ = try layout(package) }, .unsupported)
     }

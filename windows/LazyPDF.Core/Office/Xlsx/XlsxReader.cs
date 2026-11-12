@@ -506,7 +506,10 @@ internal sealed class XlsxReader
                 string reference = XlsxRef.AfterSheet(part);
                 if (name == "_xlnm.Print_Area")
                 {
+                    // Whole columns or rows run to the edge of the sheet; the layout cuts them back to the used range.
                     if (XlsxRef.Range(reference) is { } range) sheet.PrintArea.Add(range);
+                    else if (XlsxRef.Columns(reference) is { } span) sheet.PrintArea.Add(new XlsxRange(1, span.First, XlsxLimits.MaxRow, span.Last));
+                    else if (XlsxRef.Rows(reference) is { } band) sheet.PrintArea.Add(new XlsxRange(band.First, 1, band.Last, XlsxLimits.MaxColumn));
                 }
                 else if (XlsxRef.Columns(reference) is { } columns) sheet.TitleColumns = columns;
                 else if (XlsxRef.Rows(reference) is { } rows) sheet.TitleRows = rows;

@@ -908,6 +908,21 @@ text 133.25 80.30 Calibri/Regular 11.00 000000 +0.00 "32"
 page 2 612.00 792.00
 text 85.25 65.30 Calibri/Regular 11.00 000000 +0.00 "50"
 text 85.25 80.30 Calibri/Regular 11.00 000000 +0.00 "60"
+> whole columns and rows as print areas
+page 1 612.00 792.00
+text 85.25 65.30 Calibri/Regular 11.00 000000 +0.00 "10"
+text 133.25 65.30 Calibri/Regular 11.00 000000 +0.00 "11"
+text 85.25 80.30 Calibri/Regular 11.00 000000 +0.00 "20"
+text 133.25 80.30 Calibri/Regular 11.00 000000 +0.00 "21"
+text 85.25 95.30 Calibri/Regular 11.00 000000 +0.00 "30"
+text 133.25 95.30 Calibri/Regular 11.00 000000 +0.00 "31"
+text 85.25 110.30 Calibri/Regular 11.00 000000 +0.00 "40"
+text 133.25 110.30 Calibri/Regular 11.00 000000 +0.00 "41"
+page 2 612.00 792.00
+text 85.25 65.30 Calibri/Regular 11.00 000000 +0.00 "40"
+text 133.25 65.30 Calibri/Regular 11.00 000000 +0.00 "41"
+text 181.25 65.30 Calibri/Regular 11.00 000000 +0.00 "42"
+text 229.25 65.30 Calibri/Regular 11.00 000000 +0.00 "43"
 > page numbers run through the workbook
 page 1 612.00 792.00
 text 90.82 65.30 Calibri/Regular 11.00 000000 +0.00 "1"

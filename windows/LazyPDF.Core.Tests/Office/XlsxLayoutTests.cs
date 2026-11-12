@@ -90,7 +90,7 @@ public class XlsxLayoutTests
     public void ABigPrintAreaStopsAtThePageLimit()
     {
         string sheet = "<sheetData><row r=\"1\"><c r=\"A1\"><v>1</v></c></row></sheetData>";
-        string book = "<sheets><sheet name=\"S\" sheetId=\"1\" r:id=\"rId1\"/></sheets><definedNames><definedName name=\"_xlnm.Print_Area\" localSheetId=\"0\">S!$A$1:$XFD$1048576</definedName></definedNames>";
+        string book = "<sheets><sheet name=\"S\" sheetId=\"1\" r:id=\"rId1\"/></sheets><definedNames><definedName name=\"_xlnm.Print_Area\" localSheetId=\"0\">S!$A$1:$XFC$1048575</definedName></definedNames>";
         Assert.Equal(PdfReadProblem.Unsupported, Problem(() => Layout(Book(sheet, book))));
     }
 

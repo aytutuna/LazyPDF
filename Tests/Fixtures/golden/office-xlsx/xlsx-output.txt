@@ -109,7 +109,7 @@ skipped hidden-sheet 1
 > odd print names
 workbook mdw=7
 sheet "Data" col=48.00 row=15.00
-  printarea B3:D9
+  printarea B3:D9,A1:C1048576
   titlecols A:C
 > merged cells
 workbook mdw=7

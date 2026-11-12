@@ -483,7 +483,14 @@ final class XlsxReader {
             for part in XlsxRef.splitList(Array(n.text.utf16)) {
                 let reference = XlsxRef.afterSheet(part)
                 if name == "_xlnm.Print_Area" {
-                    if let range = XlsxRef.range(reference) { sheet.printArea.append(range) }
+                    // Whole columns or rows run to the edge of the sheet; the layout cuts them back to the used range.
+                    if let range = XlsxRef.range(reference) {
+                        sheet.printArea.append(range)
+                    } else if let span = XlsxRef.columns(reference) {
+                        sheet.printArea.append(XlsxRange(firstRow: 1, firstColumn: span.first, lastRow: XlsxLimits.maxRow, lastColumn: span.last))
+                    } else if let band = XlsxRef.rows(reference) {
+                        sheet.printArea.append(XlsxRange(firstRow: band.first, firstColumn: 1, lastRow: band.last, lastColumn: XlsxLimits.maxColumn))
+                    }
                 } else if let columns = XlsxRef.columns(reference) {
                     sheet.titleColumns = columns
                 } else if let rows = XlsxRef.rows(reference) {

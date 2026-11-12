@@ -273,7 +273,17 @@ internal sealed class XlsxLayout
         var plan = MakePlan(sheet);
         bool stated = sheet.PrintArea.Count > 0;
         var areas = new List<XlsxRange>();
-        if (stated) areas.AddRange(sheet.PrintArea);
+        if (stated)
+        {
+            var extent = Used(plan);
+            foreach (var a in sheet.PrintArea)
+            {
+                var clipped = a;
+                if (a.LastRow == XlsxLimits.MaxRow) clipped = clipped with { LastRow = extent?.LastRow ?? 0 };
+                if (a.LastColumn == XlsxLimits.MaxColumn) clipped = clipped with { LastColumn = extent?.LastColumn ?? 0 };
+                if (clipped.FirstRow <= clipped.LastRow && clipped.FirstColumn <= clipped.LastColumn) areas.Add(clipped);
+            }
+        }
         else if (Used(plan) is { } used) areas.Add(used);
         if (areas.Count == 0) return;
 

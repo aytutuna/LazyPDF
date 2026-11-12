@@ -303,7 +303,13 @@ final class XlsxLayout {
         let stated = !sheet.printArea.isEmpty
         var areas: [XlsxRange] = []
         if stated {
-            areas = sheet.printArea
+            let used = Self.used(plan)
+            for a in sheet.printArea {
+                let area = XlsxRange(firstRow: a.firstRow, firstColumn: a.firstColumn,
+                    lastRow: a.lastRow == XlsxLimits.maxRow ? (used?.lastRow ?? 0) : a.lastRow,
+                    lastColumn: a.lastColumn == XlsxLimits.maxColumn ? (used?.lastColumn ?? 0) : a.lastColumn)
+                if area.firstRow <= area.lastRow && area.firstColumn <= area.lastColumn { areas.append(area) }
+            }
         } else if let used = Self.used(plan) {
             areas.append(used)
         }
