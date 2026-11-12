@@ -39,6 +39,10 @@ public enum IOSSystemPrint {
             if layout.isPlain {
                 data = try item(session)
             } else {
+                if let wrong = layout.rangeError(count: session.document.pages.count) {
+                    problem(Problem(L10n.t("Not printed"), wrong))
+                    return
+                }
                 guard !layout.pages(count: session.document.pages.count).isEmpty else {
                     problem(Problem(L10n.t("Not printed"), L10n.t("None of the pages you chose are left to print.")))
                     return

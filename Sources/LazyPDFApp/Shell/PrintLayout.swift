@@ -15,23 +15,32 @@ public struct PrintLayout: Equatable, Sendable {
     /// Two pages on each side of a landscape sheet, folded in order; `perSheet` is then ignored.
     public var booklet = false
     public var parity = PrintParity.all
+    /// Pages typed like "1-3, 5"; empty for all. It is taken before odd or even, as on Windows.
+    public var range = ""
 
     public static let perSheetChoices = [1, 2, 4, 6, 9, 16]
 
-    public init(perSheet: Int = 1, booklet: Bool = false, parity: PrintParity = .all) {
+    public init(perSheet: Int = 1, booklet: Bool = false, parity: PrintParity = .all, range: String = "") {
         self.perSheet = perSheet
         self.booklet = booklet
         self.parity = parity
+        self.range = range
     }
 
-    public var isPlain: Bool { perSheet == 1 && !booklet && parity == .all }
+    public var isPlain: Bool { perSheet == 1 && !booklet && parity == .all && range.isEmpty }
 
     /// Whether the pages go through `PageOperations.impose`.
     public var imposes: Bool { booklet || perSheet > 1 }
 
-    /// The pages to print: all of them, or the odd or even ones by page number.
+    /// What is wrong with the typed range, or nil when it is empty or fine.
+    public func rangeError(count: Int) -> String? {
+        range.isEmpty ? nil : PageRange.parse(range, count).error?.message
+    }
+
+    /// The pages to print: the typed range or all of them, cut down to the odd or even ones by page number.
     public func pages(count: Int) -> [Int] {
-        (0..<count).filter { i in
+        let chosen = range.isEmpty ? Array(0..<count) : PageRange.parse(range, count).pages
+        return chosen.filter { i in
             switch parity {
             case .all: return true
             case .odd: return i % 2 == 0

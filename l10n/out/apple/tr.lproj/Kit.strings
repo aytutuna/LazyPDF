@@ -1167,6 +1167,7 @@
 "Pages that are turned sideways cannot be read." = "Yan çevrilmiş sayfalar okunamaz.";
 "Pages that are turned sideways cannot be read. Rotate them in Organize pages first." = "Yan çevrilmiş sayfalar okunamaz. Önce Sayfaları yönet aracında döndürün.";
 "Pages to export" = "Dışa aktarılacak sayfalar";
+"Pages to print, like 1-3, 5" = "Yazdırılacak sayfalar, örneğin 1-3, 5";
 "Pages to read" = "Okunacak sayfalar";
 "Pages to stamp" = "Damgalanacak sayfalar";
 "Pages to take (empty is all)" = "Alınacak sayfalar (boşsa tümü)";

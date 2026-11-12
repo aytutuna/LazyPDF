@@ -231,10 +231,10 @@ final class MacShell {
         }
     }
 
-    // The panel has pages per sheet of its own, so only the booklet and the odd or even pages are asked for.
+    // The panel has pages per sheet of its own, so only the booklet is asked for.
     private func askPrintLayout() -> PrintLayout? {
         let choice = PrintLayoutChoice()
-        let view = NSHostingView(rootView: PrintLayoutView(choice: choice, askPerSheet: false).frame(width: 300))
+        let view = NSHostingView(rootView: PrintLayoutView(choice: choice, onPhone: false).frame(width: 300))
         view.frame = NSRect(origin: .zero, size: view.fittingSize)
         let alert = NSAlert()
         alert.messageText = L10n.t("Print layout")

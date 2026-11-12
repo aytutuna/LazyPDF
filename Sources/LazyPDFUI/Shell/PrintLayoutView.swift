@@ -3,8 +3,9 @@ import SwiftUI
 import LazyPDFApp
 import LazyPDFKit
 
-// Follows windows/LazyPDF.App/Services/PrintLayoutWindow.xaml. The Mac print panel has pages per sheet of its own, so
-// the Mac asks only for the rest.
+// Follows windows/LazyPDF.App/Services/PrintLayoutWindow.xaml. The Mac print panel has pages per sheet, a page range
+// and odd or even pages of its own, so the Mac asks only for the booklet. The iPhone's print sheet has no odd or even
+// and counts pages of the file made here, so the range is asked for with the rest.
 
 @MainActor
 @Observable
@@ -16,17 +17,17 @@ public final class PrintLayoutChoice {
 
 public struct PrintLayoutView: View {
     let choice: PrintLayoutChoice
-    let askPerSheet: Bool
+    let onPhone: Bool
 
-    public init(choice: PrintLayoutChoice, askPerSheet: Bool) {
+    public init(choice: PrintLayoutChoice, onPhone: Bool) {
         self.choice = choice
-        self.askPerSheet = askPerSheet
+        self.onPhone = onPhone
     }
 
     public var body: some View {
         @Bindable var choice = choice
         VStack(alignment: .leading, spacing: 12) {
-            if askPerSheet {
+            if onPhone {
                 Picker(L10n.t("Pages per sheet"), selection: $choice.layout.perSheet) {
                     ForEach(PrintLayout.perSheetChoices, id: \.self) { Text("\($0)").tag($0) }
                 }
@@ -37,10 +38,15 @@ public struct PrintLayoutView: View {
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-            Picker(L10n.t("Pages"), selection: $choice.layout.parity) {
-                Text(L10n.t("All pages")).tag(PrintParity.all)
-                Text(L10n.t("Odd pages only")).tag(PrintParity.odd)
-                Text(L10n.t("Even pages only")).tag(PrintParity.even)
+            if onPhone {
+                TextField(L10n.t("Pages to print, like 1-3, 5"), text: $choice.layout.range)
+                    .textFieldStyle(.roundedBorder)
+                    .autocorrectionDisabled()
+                Picker(L10n.t("Pages"), selection: $choice.layout.parity) {
+                    Text(L10n.t("All pages")).tag(PrintParity.all)
+                    Text(L10n.t("Odd pages only")).tag(PrintParity.odd)
+                    Text(L10n.t("Even pages only")).tag(PrintParity.even)
+                }
             }
         }
     }
@@ -63,7 +69,7 @@ public struct PrintLayoutSheet: View {
                 .font(.headline)
                 .padding(.top, 12)
                 .accessibilityAddTraits(.isHeader)
-            PrintLayoutView(choice: choice, askPerSheet: true)
+            PrintLayoutView(choice: choice, onPhone: true)
                 .padding()
             Divider()
             HStack {

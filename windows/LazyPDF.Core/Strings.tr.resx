@@ -4246,6 +4246,9 @@
   <data name="Pages to mark" xml:space="preserve">
     <value>İşaretlenecek sayfalar</value>
   </data>
+  <data name="Pages to print, like 1-3, 5" xml:space="preserve">
+    <value>Yazdırılacak sayfalar, örneğin 1-3, 5</value>
+  </data>
   <data name="Pages to read" xml:space="preserve">
     <value>Okunacak sayfalar</value>
   </data>
