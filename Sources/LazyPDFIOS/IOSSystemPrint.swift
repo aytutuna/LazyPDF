@@ -28,10 +28,12 @@ public enum IOSSystemPrint {
         letterRegions.contains(Locale.current.region?.identifier ?? "") ? (612, 792) : (595, 842)
     }
 
-    /// Shows the sheet; `done` runs when it closes, with whether anything was printed. `problem` gets what keeps it from
-    /// opening and `notice` what the layout had to leave out.
-    public static func present(_ session: PdfEditSession, name: String, layout: PrintLayout = PrintLayout(), problem: (Problem) -> Void,
-                               notice: (String, String) -> Void = { _, _ in }, done: ((Bool) -> Void)? = nil) {
+    /// Shows the sheet; `done` runs when it closes, with whether anything was printed. The window's problem and notice
+    /// bars get what keeps it from opening and what the layout had to leave out. The sheets of a layout are made under
+    /// the busy bar, where they can be canceled.
+    public static func present(_ session: PdfEditSession, name: String, layout: PrintLayout = PrintLayout(), vm: AppViewModel,
+                               done: ((Bool) -> Void)? = nil) async {
+        let problem = vm.showProblem
         let data: Data
         do {
             if layout.isPlain {
@@ -41,9 +43,22 @@ public enum IOSSystemPrint {
                     problem(Problem(L10n.t("Not printed"), L10n.t("None of the pages you chose are left to print.")))
                     return
                 }
-                let sheets = try layout.file(session.document, sheetWidth: paper.width, sheetHeight: paper.height)
+                let source = session.document
+                var made: PrintSheets?
+                var failure: Error?
+                try await vm.runBusy(L10n.t("Making the pages to print")) { token in
+                    do {
+                        made = try await layout.fileInBackground(source, sheetWidth: paper.width, sheetHeight: paper.height, token: token)
+                    } catch {
+                        failure = error
+                        throw error
+                    }
+                }
+                // A cancel is not a failure to report.
+                if failure is CancellationError { return }
+                guard let sheets = made else { throw failure ?? CancellationError() }
                 data = Data(sheets.bytes)
-                if let note = PrintLayout.droppedNote(sheets.dropped) { notice(L10n.t("Left off the sheets"), note) }
+                if let note = PrintLayout.droppedNote(sheets.dropped) { vm.showNotice(L10n.t("Left off the sheets"), note) }
             }
         } catch {
             problem(Problem(L10n.t("Not printed"), L10n.t("A copy of {0} could not be made for printing. Check that the disk has room.", name)))

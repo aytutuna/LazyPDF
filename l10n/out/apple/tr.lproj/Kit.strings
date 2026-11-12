@@ -881,6 +881,7 @@
 "Makes a new file and tries to meet the level. This file stays as it is." = "Düzeye uymaya çalışan yeni bir dosya oluşturur. Bu dosya olduğu gibi kalır.";
 "Makes the fields part of the page. They can no longer be filled in or changed." = "Alanları sayfanın bir parçası yapar. Artık doldurulamaz veya değiştirilemez.";
 "Making the file smaller" = "Dosya küçültülüyor";
+"Making the pages to print" = "Yazdırılacak sayfalar hazırlanıyor";
 "Margin" = "Kenar boşluğu";
 "Margin is too wide" = "Kenar boşluğu çok geniş";
 "Mark" = "İşaretle";

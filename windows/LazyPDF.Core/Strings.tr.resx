@@ -3229,6 +3229,9 @@
   <data name="Making the file smaller" xml:space="preserve">
     <value>Dosya küçültülüyor</value>
   </data>
+  <data name="Making the pages to print" xml:space="preserve">
+    <value>Yazdırılacak sayfalar hazırlanıyor</value>
+  </data>
   <data name="Margin" xml:space="preserve">
     <value>Kenar boşluğu</value>
   </data>

@@ -71,6 +71,28 @@ final class PrintLayoutTests: XCTestCase {
         XCTAssertEqual(try PdfDocument.open(sheets.bytes).pages.count, 3)
     }
 
+    func test_theSheetsMadeInTheBackgroundAreTheSameFile() async throws {
+        let source = try PdfDocument.open(Pdfs.text(5))
+        let layout = PrintLayout(booklet: true)
+
+        let sheets = try await layout.fileInBackground(source, sheetWidth: 612, sheetHeight: 792, token: CancelToken())
+
+        XCTAssertEqual(sheets.count, 4)
+        XCTAssertEqual(try PdfDocument.open(sheets.bytes).pages.count, 4)
+    }
+
+    func test_aCanceledTokenEndsTheWaitWithCancellation() async throws {
+        let source = try PdfDocument.open(Pdfs.text(5))
+        let token = CancelToken()
+        token.cancel()
+
+        do {
+            _ = try await PrintLayout(booklet: true).fileInBackground(source, sheetWidth: 612, sheetHeight: 792, token: token)
+            XCTFail("expected a cancellation")
+        } catch is CancellationError {
+        }
+    }
+
     func test_aNoteIsGivenOnlyForWhatWasLeftOff() {
         XCTAssertNil(PrintLayout.droppedNote(0))
         XCTAssertEqual(PrintLayout.droppedNote(1), "1 link or note without a picture was left off the sheets.")

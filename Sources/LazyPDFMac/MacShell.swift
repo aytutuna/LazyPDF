@@ -185,24 +185,38 @@ final class MacShell {
 
     private func systemPrint(_ tab: DocumentTab) {
         guard let layout = askPrintLayout() else { return }
-        var dropped = 0
-        var made: NSPrintOperation?
-        var panelShown = false
         if layout.isPlain {
-            made = tab.canDraw ? MacSystemPrint.operation(tab.session, password: tab.password, title: tab.title) : nil
+            run(tab.canDraw ? MacSystemPrint.operation(tab.session, password: tab.password, title: tab.title) : nil, tab, dropped: 0, panelShown: false)
         } else if layout.pages(count: tab.document.pages.count).isEmpty {
             vm.showProblem(Problem(L10n.t("Not printed"), L10n.t("None of the pages you chose are left to print.")))
-            return
         } else if tab.canDraw {
             // The sheets are made for the paper picked in the panel, so the panel comes first and the operation runs without one.
-            let info = NSPrintInfo.shared.copy() as? NSPrintInfo ?? NSPrintInfo.shared
+            let info = MacSystemPrint.sheetInfo(NSPrintInfo.shared, layout: layout)
             guard NSPrintPanel().runModal(with: info) == NSApplication.ModalResponse.OK.rawValue else { return }
-            panelShown = true
-            if let laid = MacSystemPrint.operation(tab.session, password: tab.password, title: tab.title, layout: layout, info: info) {
-                made = laid.operation
-                dropped = laid.dropped
+            let source = tab.document
+            let paper = info.paperSize
+            Task {
+                var sheets: PrintSheets?
+                var failure: Error?
+                try? await vm.runBusy(L10n.t("Making the pages to print")) { token in
+                    do {
+                        sheets = try await layout.fileInBackground(source, sheetWidth: paper.width, sheetHeight: paper.height, token: token)
+                    } catch {
+                        failure = error
+                        throw error
+                    }
+                }
+                // A cancel is not a failure to report.
+                if failure is CancellationError { return }
+                let made = sheets.flatMap { MacSystemPrint.operation($0, layout: layout, title: tab.title, info: info) }
+                run(made, tab, dropped: sheets?.dropped ?? 0, panelShown: true)
             }
+        } else {
+            run(nil, tab, dropped: 0, panelShown: false)
         }
+    }
+
+    private func run(_ made: NSPrintOperation?, _ tab: DocumentTab, dropped: Int, panelShown: Bool) {
         guard let operation = made else {
             vm.showProblem(Problem(L10n.t("Not printed"),
                                    L10n.t("{0} could not be prepared for printing. Save it and print it from another program.", tab.title)))

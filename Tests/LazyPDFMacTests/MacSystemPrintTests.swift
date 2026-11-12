@@ -21,12 +21,19 @@ final class MacSystemPrintTests: XCTestCase {
         XCTAssertNotNil(operation.view)
     }
 
+    // What the shell does, with the sheets made in place of the background job.
+    private func laid(_ session: PdfEditSession, _ layout: PrintLayout, info: NSPrintInfo = NSPrintInfo()) throws -> (operation: NSPrintOperation?, dropped: Int) {
+        let info = MacSystemPrint.sheetInfo(info, layout: layout)
+        let sheets = try layout.file(session.document, sheetWidth: info.paperSize.width, sheetHeight: info.paperSize.height)
+        return (MacSystemPrint.operation(sheets, layout: layout, title: "a.pdf", info: info), sheets.dropped)
+    }
+
     func test_aBookletIsPrintedAsLandscapeSheets() throws {
         let session = try PdfEditSession.open(try MacPdfs.text(pages: 5))
 
-        let laid = try XCTUnwrap(MacSystemPrint.operation(session, password: nil, title: "a.pdf", layout: PrintLayout(booklet: true), info: NSPrintInfo()))
+        let laid = try laid(session, PrintLayout(booklet: true))
 
-        XCTAssertEqual(laid.operation.printInfo.orientation, .landscape)
+        XCTAssertEqual(try XCTUnwrap(laid.operation).printInfo.orientation, .landscape)
         XCTAssertEqual(laid.dropped, 0)
     }
 
@@ -35,8 +42,7 @@ final class MacSystemPrintTests: XCTestCase {
         let info = NSPrintInfo()
         info.paperSize = NSSize(width: 842, height: 1191)
 
-        let laid = try XCTUnwrap(MacSystemPrint.operation(session, password: nil, title: "a.pdf", layout: PrintLayout(booklet: true), info: info))
-        let paper = laid.operation.printInfo.paperSize
+        let paper = try XCTUnwrap(try laid(session, PrintLayout(booklet: true), info: info).operation).printInfo.paperSize
 
         XCTAssertEqual(max(paper.width, paper.height), 1191, accuracy: 1)
     }
@@ -44,13 +50,7 @@ final class MacSystemPrintTests: XCTestCase {
     func test_oddPagesAreAFileOfTheirOwn() throws {
         let session = try PdfEditSession.open(try MacPdfs.text(pages: 4))
 
-        XCTAssertNotNil(MacSystemPrint.operation(session, password: nil, title: "a.pdf", layout: PrintLayout(parity: .odd), info: NSPrintInfo()))
-    }
-
-    func test_noPagesLeftIsNotPrinted() throws {
-        let session = try PdfEditSession.open(try MacPdfs.text(pages: 1))
-
-        XCTAssertNil(MacSystemPrint.operation(session, password: nil, title: "a.pdf", layout: PrintLayout(parity: .even), info: NSPrintInfo()))
+        XCTAssertNotNil(try laid(session, PrintLayout(parity: .odd)).operation)
     }
 
     func test_theJobCarriesTheDocumentsTitle() throws {

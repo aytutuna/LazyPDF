@@ -55,10 +55,47 @@ public struct PrintLayout: Equatable, Sendable {
         return PrintSheets(bytes: try part.saveRewrite(), count: pages.count, dropped: 0)
     }
 
+    /// `file` off the calling thread. A cancel of `token` ends the wait with `CancellationError` at once; the engine
+    /// cannot be stopped half way, so the job runs on and its result is dropped.
+    public func fileInBackground(_ source: PdfDocument, sheetWidth: Double, sheetHeight: Double, token: CancelToken) async throws -> PrintSheets {
+        try token.throwIfCancelled()
+        let layout = self
+        let first = FirstResult()
+        return try await withCheckedThrowingContinuation { continuation in
+            Task.detached {
+                let result = Result { try layout.file(source, sheetWidth: sheetWidth, sheetHeight: sheetHeight) }
+                if first.claim() { continuation.resume(with: result) }
+            }
+            Task.detached {
+                while !token.isCancelled && !first.isClaimed { try? await Task.sleep(nanoseconds: 50_000_000) }
+                if token.isCancelled && first.claim() { continuation.resume(throwing: CancellationError()) }
+            }
+        }
+    }
+
     /// The note for the annotations a layout could not place, or nil when none was left out.
     public static func droppedNote(_ dropped: Int) -> String? {
         dropped == 0 ? nil : L10n.plural(dropped, one: "{0} link or note without a picture was left off the sheets.",
                                          other: "{0} links and notes without a picture were left off the sheets.")
+    }
+}
+
+private final class FirstResult: @unchecked Sendable {
+    private let lock = NSLock()
+    private var claimed = false
+
+    var isClaimed: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return claimed
+    }
+
+    func claim() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if claimed { return false }
+        claimed = true
+        return true
     }
 }
 

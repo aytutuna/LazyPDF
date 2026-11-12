@@ -183,7 +183,7 @@ final class IOSShell {
         // The print sheet cannot open while this one is still leaving.
         if let (tab, layout) = printing {
             printing = nil
-            IOSSystemPrint.present(tab.session, name: tab.title, layout: layout, problem: vm.showProblem, notice: { vm.showNotice($0, $1) })
+            Task { await IOSSystemPrint.present(tab.session, name: tab.title, layout: layout, vm: vm) }
         }
     }
 
