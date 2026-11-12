@@ -44,7 +44,7 @@ public static class OcrWork
             if (reading.Pages.Count == 0 || tab.Revision != revision) return null;
             var document = tab.Document;
             var had = reading.Pages.Where(p => PdfOcrLayer.Has(document, document.Pages[p.PageIndex])).ToList();
-            Write(document, reading.Pages, reading.Turns, options.Language);
+            Write(tab, reading, options.Language);
             if (!tab.Commit(OcrStatusText.Label)) return null;
             int stopped = reading.Pages.Count(p => PdfOcrLayer.Has(document, document.Pages[p.PageIndex]));
             var parts = new List<string>();
@@ -67,7 +67,7 @@ public static class OcrWork
         var result = read.Result;
         if (read.Pages.Count > 0)
         {
-            int words = Write(tab.Document, reading.Pages, reading.Turns, options.Language);
+            int words = Write(tab, reading, options.Language);
             result = result with { Words = words, Committed = tab.Commit(OcrStatusText.Label) };
         }
         if (result.Committed) host.SetStatus(Loc.Plural(result.Added, "Made {0} page searchable", "Made {0} pages searchable"));
@@ -85,6 +85,20 @@ public static class OcrWork
         var reading = new Reading(renderer, recognizer, languages ?? [options.Language]);
         var read = await PdfSearchable.ReadAsync(document, reading, reading, options, progress, cancellation);
         return (read with { Pages = reading.Pages }, reading.Turns);
+    }
+
+    // A throw from the layer would leave the turns in the live document for the next commit to pick up.
+    private static int Write(DocumentTab tab, Reading reading, string language)
+    {
+        try
+        {
+            return Write(tab.Document, reading.Pages, reading.Turns, language);
+        }
+        catch
+        {
+            tab.Session.Discard();
+            throw;
+        }
     }
 
     /// <summary>Turns the pages that were read sideways upright, then adds the layers in that frame. Returns the words added; the caller commits.</summary>
