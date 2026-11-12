@@ -13,7 +13,7 @@ final class CertificateTests: XCTestCase {
     private let run = String(UUID().uuidString.prefix(8))
 
     private func pfx(_ name: String, from: DateTimeOffset = DateTimeOffset(2020, 1, 1, 0, 0, 0), years: Int = 40) throws -> (pfx: [UInt8], certificate: X509Certificate) {
-        let certificate = try PdfDigitalId.create("\(name)-\(run)", nil, from, years: years, keyBits: 2048)
+        let certificate = try PdfDigitalId.create("\(name)-\(run)", nil, from, years: years, keyBits: 2048, encipher: true)
         return (try PdfDigitalId.exportPfx(certificate, "secret"), certificate)
     }
 
