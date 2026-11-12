@@ -108,8 +108,8 @@ internal static class PageJobs
         return done ? added : 0;
     }
 
-    /// <summary>The pages as a PDF of their own, made off the UI thread. Null when the file does not allow copying, when it was cancelled or when it failed, with <paramref name="failed"/> shown.</summary>
-    public static async Task<byte[]?> CopyOutAsync(DocumentTab tab, IToolHost host, IReadOnlyList<int> pages, string busy, Problem failed, bool files = true)
+    /// <summary>The pages as a PDF of their own, made off the UI thread, with the count of attachments left out. Null when the file does not allow copying, when it was cancelled or when it failed, with <paramref name="failed"/> shown.</summary>
+    public static async Task<(byte[] Bytes, int Skipped)?> CopyOutAsync(DocumentTab tab, IToolHost host, IReadOnlyList<int> pages, string busy, Problem failed, bool files = true)
     {
         if (CopyRules.Refused(tab.Document, host)) return null;
         byte[]? bytes = null;
@@ -130,13 +130,16 @@ internal static class PageJobs
             host.ShowProblem(failed);
             return null;
         }
-        NoteSkippedAttachments(host, skipped);
-        return bytes;
+        return bytes is null ? null : (bytes, skipped);
     }
 
+    // Shown by the caller once the result is open or saved, since opening a tab clears a notice from the tab it came from.
     internal static void NoteSkippedAttachments(IToolHost host, int skipped)
     {
         if (skipped == 0) return;
-        host.ShowNotice(Loc.T("Attachments left out"), Loc.Plural(skipped, "{0} attachment could not be read and was left out.", "{0} attachments could not be read and were left out."));
+        host.ShowNotice(Loc.T("Attachments left out"), SkippedText(skipped));
     }
+
+    internal static string SkippedText(int skipped) =>
+        skipped == 0 ? "" : Loc.Plural(skipped, "{0} attachment could not be read and was left out.", "{0} attachments could not be read and were left out.");
 }

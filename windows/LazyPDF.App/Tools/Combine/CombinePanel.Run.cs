@@ -77,17 +77,17 @@ public partial class CombinePanel
             return;
         }
         if (bytes is null) return;
-        PageJobs.NoteSkippedAttachments(host, skipped);
 
         string name = Loc.T("Combined.pdf");
         bool protectedSource = documents.Any(document => document.IsEncrypted);
         if (folder is not null)
         {
-            Saved(host, folder, [(name, bytes)], protectedSource, "");
+            Saved(host, folder, [(name, bytes)], protectedSource, PageJobs.SkippedText(skipped));
             return;
         }
         if (!await host.OpenNewAsync(bytes, name)) return;
-        if (protectedSource) host.ShowNotice(Loc.T("Copy is not protected"), CopyRules.Unprotected);
+        if (protectedSource) host.ShowNotice(Loc.T("Copy is not protected"), (CopyRules.Unprotected + " " + PageJobs.SkippedText(skipped)).Trim());
+        else PageJobs.NoteSkippedAttachments(host, skipped);
     }
 
     internal static string? FirstUnmergeable(PdfDocument open, IEnumerable<(CombineEntry Entry, List<int>? Pages)> sources, CancellationToken token = default)
@@ -145,7 +145,6 @@ public partial class CombinePanel
             return;
         }
         if (parts is null) return;
-        PageJobs.NoteSkippedAttachments(host, skipped);
         if (parts.Count < 2 && kind != SplitBy.Ranges)
         {
             host.ShowNotice(Loc.T("Nothing to split"), Loc.T("The whole file fits in one part. Use a smaller amount."));
@@ -153,6 +152,8 @@ public partial class CombinePanel
         }
 
         string big = kind == SplitBy.Size ? CombineJob.Oversize(parts, amount) : "";
+        string left = PageJobs.SkippedText(skipped);
+        if (left.Length > 0) big = (big + " " + left).Trim();
 
         string stem = System.IO.Path.GetFileNameWithoutExtension(tab.Title);
         var named = parts.Select((bytes, i) => (CombineJob.PartName(stem, i, parts.Count, i < titles.Count ? titles[i] : null), bytes)).ToList();

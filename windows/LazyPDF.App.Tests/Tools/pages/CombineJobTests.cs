@@ -592,4 +592,11 @@ public sealed class CombineJobTests
         PageJobs.NoteSkippedAttachments(host, 2);
         Assert.Contains("2", Assert.Single(host.Notices).Text);
     }
+
+    [Fact]
+    public void SkippedTextIsEmptyWhenNothingWasLeftOut()
+    {
+        Assert.Equal("", PageJobs.SkippedText(0));
+        Assert.Contains("3", PageJobs.SkippedText(3));
+    }
 }
