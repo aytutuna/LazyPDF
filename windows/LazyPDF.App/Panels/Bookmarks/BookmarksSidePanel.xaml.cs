@@ -69,7 +69,9 @@ public partial class BookmarksSidePanel : ToolPanel
     private readonly Dictionary<string, bool> _opened = [];
     private DocumentTab? _for;
     // A title typed while the file could not take it, put back when the tree is read again.
-    private (string Path, string Text)? _held;
+    private (DocumentTab Tab, string Path, string Text)? _held;
+    // The signed-file notice is up for the title being edited; leaving the box must not ask again and replace it.
+    private bool _asking;
 
     public BookmarksSidePanel() => InitializeComponent();
 
@@ -78,6 +80,8 @@ public partial class BookmarksSidePanel : ToolPanel
         if (!ReferenceEquals(_for, Tab))
         {
             _opened.Clear();
+            _held = null;
+            _asking = false;
             _for = Tab;
         }
         Tab!.Changed += Tab_Changed;
@@ -96,7 +100,7 @@ public partial class BookmarksSidePanel : ToolPanel
     {
         var items = Outline.Read(Tab!.Document).Items;
         Tree.ItemsSource = items.Select((item, i) => new BookmarkNode(item, i.ToString(), _opened)).ToList();
-        if (_held is var (path, text) && NodeAt(path) is { } held)
+        if (_held is var (heldTab, path, text) && ReferenceEquals(heldTab, Tab) && NodeAt(path) is { } held)
         {
             held.IsEditing = true;
             held.EditText = text;
@@ -285,19 +289,26 @@ public partial class BookmarksSidePanel : ToolPanel
         {
             if (MarkWork.Running)
             {
-                _held = (node.Path, node.EditText);
+                _held = (Tab!, node.Path, node.EditText);
                 Host?.SetStatus(Loc.T("The title is kept until the file is free."));
             }
             return false;
         }
+        _held = null;
+        if (MarkWork.Cautioned(tab, host, () => RenameTo(tab, host, node, title)))
+        {
+            _asking = true;
+            return false;
+        }
         node.IsEditing = false;
-        if (MarkWork.Cautioned(tab, host, () => RenameTo(tab, host, node, title))) return false;
         RenameTo(tab, host, node, title);
         return true;
     }
 
     private void RenameTo(DocumentTab tab, IToolHost host, BookmarkNode node, string title)
     {
+        _asking = false;
+        node.IsEditing = false;
         if (!Still(tab, node)) return;
         var outline = ReadForEdit(tab);
         if (Find(outline, node.Path) is not { } item) return;
@@ -381,7 +392,12 @@ public partial class BookmarksSidePanel : ToolPanel
     private void EditBox_KeyDown(object sender, KeyEventArgs e)
     {
         if (((FrameworkElement)sender).DataContext is not BookmarkNode node || e.Key is not (Key.Enter or Key.Escape)) return;
-        if (e.Key == Key.Escape) node.IsEditing = false;
+        if (e.Key == Key.Escape)
+        {
+            _held = null;
+            _asking = false;
+            node.IsEditing = false;
+        }
         else if (node.IsEditing && !Rename(node))
         {
             e.Handled = true;
@@ -393,7 +409,7 @@ public partial class BookmarksSidePanel : ToolPanel
 
     private void EditBox_LostFocus(object sender, RoutedEventArgs e)
     {
-        if (((FrameworkElement)sender).DataContext is BookmarkNode { IsEditing: true } node) Rename(node);
+        if (!_asking && ((FrameworkElement)sender).DataContext is BookmarkNode { IsEditing: true } node) Rename(node);
     }
 
     private void EditBox_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)

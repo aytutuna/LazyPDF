@@ -365,6 +365,28 @@ public sealed class BookmarksPanelTests
     });
 
     [Fact]
+    public Task ASignedFileKeepsTheTitleOpenWhileTheNoticeAsks() => Sta.Run(() =>
+    {
+        var host = new RecordingHost();
+        var (tab, panel, tree, window) = Edited(StampsPanelTests.Signed(certified: true), host, "One", "Two");
+        using var _ = tab;
+        var node = (BookmarkNode)tree.Items[0]!;
+        node.IsSelected = true;
+        Click(panel, "RenameButton");
+        node.EditText = "First";
+
+        Assert.False(panel.HandIn());
+        Assert.False(panel.HandIn());
+
+        Assert.True(node.IsEditing);
+        Assert.Equal(["One", "Two"], Titles(tab));
+        host.Actions.Last()!.Run();
+        Assert.Equal(["First", "Two"], Titles(tab));
+        window.Close();
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task RightClickSelectsTheEntryUnderThePointer() => Sta.Run(() =>
     {
         var (tab, panel, tree, window) = Edited("One", "Two");
