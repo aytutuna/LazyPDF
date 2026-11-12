@@ -1507,6 +1507,7 @@
 "Signatures" = "İmzalar";
 "Signatures already in the file" = "Dosyadaki mevcut imzalar";
 "Signatures are removed from the result." = "İmzalar sonuçtan kaldırılır.";
+"Signatures made with this certificate will count as trusted. Check its fingerprint with the signer first. You can remove it under Trust settings." = "Bu sertifikayla atılan imzalar güvenilir sayılır. Önce parmak izini imzacıyla doğrulayın. Güven ayarlarından kaldırabilirsiniz.";
 "Signatures stay in the result but are no longer valid." = "İmzalar sonuçta kalır ama artık geçerli değildir.";
 "Signatures would be lost" = "İmzalar kaybolur";
 "Signed" = "İmzalı";
@@ -1991,10 +1992,12 @@
 "Trailer" = "Dosya sonu bilgisi";
 "Treat the signing time as the signer's claim." = "İmza zamanını imzalayanın beyanı olarak kabul edin.";
 "Trim fonts" = "Yazı tiplerini kırp";
+"Trust" = "Güven";
 "Trust settings" = "Güven ayarları";
 "Trust the signer's certificate only after checking it with them." = "İmzalayanın sertifikasına ancak onunla doğruladıktan sonra güvenin.";
 "Trust this signer" = "Bu imzacıya güven";
 "Trust what the system trusts" = "Sistemin güvendiklerine güven";
+"Trust {0}?" = "{0} kişisine güvenilsin mi?";
 "Turkish ID numbers" = "T.C. kimlik numaraları";
 "Turn" = "Döndür";
 "Turn left" = "Sola çevir";
@@ -2125,6 +2128,7 @@
 "pt" = "pt";
 "text in {0} note or field|one" = "{0} not veya alandaki metin";
 "text in {0} note or field|other" = "{0} not veya alandaki metin";
+"the servers named in its certificates" = "sertifikalarında adı geçen sunucular";
 "unprotected" = "korumasız";
 "{0} %" = "%{0}";
 "{0} (clean)" = "{0} (temiz)";

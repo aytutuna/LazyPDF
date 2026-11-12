@@ -71,8 +71,8 @@
                 </DockPanel>
             </StackPanel>
 
-            <CheckBox x:Name="SnapToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Snap to text}" IsChecked="True"
-                      AutomationProperties.Name="{loc:T Snap to text}" Click="Snap_Click" />
+            <CheckBox x:Name="SnapToggle" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Snap to text and lines}" IsChecked="True"
+                      AutomationProperties.Name="{loc:T Snap to text and lines}" Click="Snap_Click" />
             <DockPanel Margin="0,4,0,12">
                 <TextBlock Text="&#xE946;" Style="{StaticResource ReasonGlyph}" DockPanel.Dock="Left" />
                 <TextBlock x:Name="Hint" Style="{StaticResource ReasonText}" />

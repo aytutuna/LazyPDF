@@ -2,7 +2,7 @@ import Foundation
 import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Tools/Measure/MeasureTool.cs: takes the pointer on the pages. Each click adds a point, snapping
-// to the corners of the words and the lines and corners the page draws (Option turns that off), until the shape is done. A finger gives no hover, so the live segment and the snap
+// to the corners of the words and the lines, pictures and corners the page draws (Option turns that off), until the shape is done. A finger gives no hover, so the live segment and the snap
 // mark are what a mouse adds; a click snaps whatever made it.
 
 @MainActor

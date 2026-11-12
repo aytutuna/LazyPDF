@@ -5578,9 +5578,6 @@
   <data name="Smallest file. Pictures drop to 96 dpi and lose some detail." xml:space="preserve">
     <value>En küçük dosya. Resimler 96 dpi'ye düşer ve biraz ayrıntı kaybeder.</value>
   </data>
-  <data name="Snap to text" xml:space="preserve">
-    <value>Metne yapış</value>
-  </data>
   <data name="Snap to text and lines" xml:space="preserve">
     <value>Metne ve çizgilere yapış</value>
   </data>

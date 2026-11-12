@@ -6,13 +6,14 @@ using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Measure;
 
-/// <summary>Takes the pointer on the pages: each click adds a point, snapping to the corners of the words and the ends of the lines and pictures on the page, until the shape is done.</summary>
+/// <summary>Takes the pointer on the pages: each click adds a point, snapping to the corners of the words and the lines and pictures on the page, until the shape is done.</summary>
 internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
 {
     private const double SnapPixels = 10;
     private const int MaxDrawn = 20000;
 
     private readonly Dictionary<int, Point[]> _snaps = [];
+    private readonly Dictionary<int, (Point From, Point To)[]> _lines = [];
     private readonly HashSet<int> _loading = [];
     private readonly List<Point> _points = [];
 
@@ -118,6 +119,7 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
     public void Forget()
     {
         _snaps.Clear();
+        _lines.Clear();
         _reading = _reading.ContinueWith(_ => (_copyOf, _copy) = (null, null), TaskScheduler.Default);
     }
 
@@ -131,9 +133,12 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
         if (pointer.Modifiers.HasFlag(ModifierKeys.Shift) && sameShape && _points.Count > 0) return MeasureShape.Straighten(_points[^1], at);
         if (!Snap || pointer.Modifiers.HasFlag(ModifierKeys.Alt) || !_snaps.TryGetValue(pointer.Page, out var corners)) return at;
         double scale = Scale(pointer.Page);
-        if (scale <= 0 || MeasureShape.Nearest(corners, at, SnapPixels / scale) is not { } snapped) return at;
+        if (scale <= 0) return at;
+        double radius = SnapPixels / scale;
+        var snapped = MeasureShape.Nearest(corners, at, radius) ?? MeasureShape.NearestOnLines(_lines.GetValueOrDefault(pointer.Page) ?? [], at, radius);
+        if (snapped is not { } found) return at;
         Snapped = true;
-        return snapped;
+        return found;
     }
 
     private bool Near(Point a, Point b, int page)
@@ -147,13 +152,13 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
         if (!Snap || _snaps.ContainsKey(page) || !_loading.Add(page)) return;
         var tab = viewer.Tab;
         var document = tab?.Document;
-        List<(double, double)> drawn = [];
+        List<(double X1, double Y1, double X2, double Y2)> drawn = [];
         TextPage? text;
         try
         {
             text = await viewer.GetTextAsync(page);
             // The live document is not for other threads, so the worker reads its own copy of the bytes.
-            if (text is not null && tab is not null)
+            if (tab is not null)
             {
                 var (bytes, password, certificate) = (PageSurface.Bytes(tab), tab.Password, tab.Certificate);
                 var previous = _reading;
@@ -169,20 +174,21 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
         }
         finally { _loading.Remove(page); }
         if (!ReferenceEquals(viewer.Tab, tab) || !ReferenceEquals(tab?.Document, document)) return;
-        if (text is null)
-        {
-            _snaps[page] = [];
-            return;
-        }
         var geometry = viewer.Geometry(page);
-        var corners = text.Words.SelectMany(w => new[] { (w.Bounds.Left, w.Bounds.Bottom), (w.Bounds.Right, w.Bounds.Bottom), (w.Bounds.Left, w.Bounds.Top), (w.Bounds.Right, w.Bounds.Top) }).ToList();
-        corners.AddRange(drawn);
-        _snaps[page] = [.. corners.Select(c => geometry.ToDisplay(c.Item1, c.Item2)).Select(c => new Point(c.X, c.Y))];
+        Point Shown(double x, double y)
+        {
+            var p = geometry.ToDisplay(x, y);
+            return new Point(p.X, p.Y);
+        }
+        var edges = drawn.Select(e => (From: Shown(e.X1, e.Y1), To: Shown(e.X2, e.Y2))).ToList();
+        var words = (text?.Words ?? []).SelectMany(w => new[] { Shown(w.Bounds.Left, w.Bounds.Bottom), Shown(w.Bounds.Right, w.Bounds.Bottom), Shown(w.Bounds.Left, w.Bounds.Top), Shown(w.Bounds.Right, w.Bounds.Top) });
+        _lines[page] = [.. edges.Where(e => e.From != e.To)];
+        _snaps[page] = [.. words, .. edges.Select(e => e.From), .. edges.Select(e => e.To)];
     }
 
-    private List<(double, double)> Drawn(byte[] bytes, string? password, System.Security.Cryptography.X509Certificates.X509Certificate2? certificate, int page)
+    private List<(double X1, double Y1, double X2, double Y2)> Drawn(byte[] bytes, string? password, System.Security.Cryptography.X509Certificates.X509Certificate2? certificate, int page)
     {
-        var drawn = new List<(double, double)>();
+        var drawn = new List<(double X1, double Y1, double X2, double Y2)>();
         try
         {
             if (!ReferenceEquals(_copyOf, bytes))
@@ -199,14 +205,32 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
                 if (o is ImageObject image)
                 {
                     var b = image.Bounds;
-                    drawn.AddRange([(b.Left, b.Bottom), (b.Right, b.Bottom), (b.Left, b.Top), (b.Right, b.Top)]);
+                    drawn.AddRange([(b.Left, b.Bottom, b.Right, b.Bottom), (b.Right, b.Bottom, b.Right, b.Top), (b.Right, b.Top, b.Left, b.Top), (b.Left, b.Top, b.Left, b.Bottom)]);
                 }
                 else if (o is PathObject { Clips: false } path)
                 {
+                    (double, double)? start = null, last = null;
                     foreach (var s in path.Segments)
                     {
-                        if (s.Kind is PathSegmentKind.Move or PathSegmentKind.Line) drawn.Add((s.X1, s.Y1));
-                        else if (s.Kind == PathSegmentKind.Curve) drawn.Add((s.X3, s.Y3));
+                        switch (s.Kind)
+                        {
+                            case PathSegmentKind.Move:
+                                start = last = (s.X1, s.Y1);
+                                drawn.Add((s.X1, s.Y1, s.X1, s.Y1));
+                                break;
+                            case PathSegmentKind.Line:
+                                if (last is { } from) drawn.Add((from.Item1, from.Item2, s.X1, s.Y1));
+                                last = (s.X1, s.Y1);
+                                break;
+                            case PathSegmentKind.Curve:
+                                last = (s.X3, s.Y3);
+                                drawn.Add((s.X3, s.Y3, s.X3, s.Y3));
+                                break;
+                            case PathSegmentKind.Close:
+                                if (last is { } end && start is { } begin) drawn.Add((end.Item1, end.Item2, begin.Item1, begin.Item2));
+                                last = start;
+                                break;
+                        }
                     }
                 }
             }

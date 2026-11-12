@@ -82,6 +82,24 @@ public static class MeasureShape
         return best;
     }
 
+    /// <summary>The closest point of any of the segments within <paramref name="radius"/> of <paramref name="at"/>.</summary>
+    public static Point? NearestOnLines(IEnumerable<(Point From, Point To)> lines, Point at, double radius)
+    {
+        Point? best = null;
+        double near = radius;
+        foreach (var (a, b) in lines)
+        {
+            var d = b - a;
+            double t = Math.Clamp((at - a) * d / (d * d), 0, 1);
+            var c = a + t * d;
+            double distance = (c - at).Length;
+            if (distance > near) continue;
+            near = distance;
+            best = c;
+        }
+        return best;
+    }
+
     /// <summary>The place at the same distance from <paramref name="from"/> along the nearest multiple of 45 degrees.</summary>
     public static Point Straighten(Point from, Point to)
     {

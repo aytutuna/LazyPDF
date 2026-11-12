@@ -35,11 +35,20 @@ final class EdgeSource: @unchecked Sendable {
     }
 }
 
-/// Collects the edges of the paths a page paints, leaving out those that only clip.
+/// Collects the edges of the paths a page paints, leaving out those that only clip, and the outlines of its pictures.
 final class EdgeReader: ContentVisitor {
     private static let limit = 20000
 
     private(set) var edges: [DrawnEdge] = []
+
+    override func paintImage(_ context: ContentContext, _ image: ImageInfo) {
+        if edges.count >= Self.limit { return }
+        let b = image.bounds
+        edges.append(DrawnEdge(b.left, b.bottom, b.right, b.bottom))
+        edges.append(DrawnEdge(b.right, b.bottom, b.right, b.top))
+        edges.append(DrawnEdge(b.right, b.top, b.left, b.top))
+        edges.append(DrawnEdge(b.left, b.top, b.left, b.bottom))
+    }
 
     override func paintPath(_ context: ContentContext, _ path: PathInfo) {
         if path.clips || edges.count >= Self.limit { return }

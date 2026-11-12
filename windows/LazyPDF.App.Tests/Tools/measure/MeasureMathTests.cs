@@ -93,6 +93,16 @@ public sealed class MeasureMathTests
     }
 
     [Fact]
+    public void SnappingToALineTakesThePointAlongIt()
+    {
+        (Point, Point)[] lines = [(new Point(0, 0), new Point(10, 0))];
+
+        Assert.Equal(new Point(4, 0), MeasureShape.NearestOnLines(lines, new Point(4, 2), 3));
+        Assert.Equal(new Point(10, 0), MeasureShape.NearestOnLines(lines, new Point(12, 1), 3));
+        Assert.Null(MeasureShape.NearestOnLines(lines, new Point(4, 5), 3));
+    }
+
+    [Fact]
     public void AMeasurementReadsInTheScaleAndSitsAtItsMiddle()
     {
         var scale = new MeasureScale(1, LengthUnit.Inch, 1, LengthUnit.Metre);
