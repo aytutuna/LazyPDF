@@ -29,8 +29,8 @@ enum PptxLayout {
                 if let fill = shape.fill, shape.width > 0, shape.height > 0 {
                     boxes.append(.rect(PlacedRect(x: shape.x, y: shape.y, width: shape.width, height: shape.height, color: fill)))
                 }
-                for path in shape.paths { boxes.append(.path(path)) }
                 if let picture = shape.picture { boxes.append(.image(picture)) }
+                for path in shape.paths { boxes.append(.path(path)) }
                 if let table = shape.table {
                     let lines = try TableLayout.measure(table.table, fonts, max(1, table.table.columns.reduce(0, +)), wide) { p in
                         if p.rightToLeft { rightToLeft += 1 }

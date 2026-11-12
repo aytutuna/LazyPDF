@@ -31,8 +31,8 @@ internal static class PptxLayout
             foreach (var shape in slide.Shapes)
             {
                 if (shape.Fill is { } fill && shape.Width > 0 && shape.Height > 0) boxes.Add(new PlacedRect(shape.X, shape.Y, shape.Width, shape.Height, fill));
-                boxes.AddRange(shape.Paths);
                 if (shape.Picture is { } picture) boxes.Add(picture);
+                boxes.AddRange(shape.Paths);
                 if (shape.Table is { } table)
                 {
                     var lines = TableLayout.Measure(table.Table, fonts, Math.Max(1, table.Table.Columns.Sum()), Wide, p =>
