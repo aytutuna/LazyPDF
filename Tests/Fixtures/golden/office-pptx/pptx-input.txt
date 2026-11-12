@@ -69,3 +69,16 @@ not really a jpeg
 <p:cSld><p:spTree/></p:cSld>
 @slide3 showMasterSp=0
 <p:cSld><p:spTree/></p:cSld>
+> inherited shapes and backgrounds follow the color map of the layout
+@master1
+<p:cSld><p:bg><p:bgRef idx="1001"><a:schemeClr val="bg1"/></p:bgRef></p:bg><p:spTree><p:sp><p:nvSpPr><p:cNvPr id="2" name="Logo"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="2743200" cy="228600"/></a:xfrm><a:prstGeom prst="rect"/></p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr sz="1000"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill></a:rPr><a:t>Mark</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld>
+@layout1
+<p:cSld><p:spTree/></p:cSld><p:clrMapOvr><a:overrideClrMapping bg1="dk1" tx1="lt1" bg2="dk2" tx2="lt2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/></p:clrMapOvr>
+@layout2
+<p:cSld><p:spTree/></p:cSld>
+@slide1
+<p:cSld><p:spTree/></p:cSld>
+@slide2 layout=2
+<p:cSld><p:spTree/></p:cSld>
+@slide3
+<p:cSld><p:spTree/></p:cSld>

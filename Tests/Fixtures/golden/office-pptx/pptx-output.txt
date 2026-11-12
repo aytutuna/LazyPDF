@@ -115,3 +115,13 @@ text 7.20 519.03 Calibri/Regular 12.00 000000 +0.00 "1"
 page 2 720.00 540.00
 text 7.20 13.12 Calibri/Regular 10.00 000000 +0.00 "Plain layout tag"
 page 3 720.00 540.00
+> inherited shapes and backgrounds follow the color map of the layout
+page 1 720.00 540.00
+rect 0.00 0.00 720.00 540.00 000000
+text 7.20 13.12 Calibri/Regular 10.00 ffffff +0.00 "Mark"
+page 2 720.00 540.00
+rect 0.00 0.00 720.00 540.00 ffffff
+text 7.20 13.12 Calibri/Regular 10.00 000000 +0.00 "Mark"
+page 3 720.00 540.00
+rect 0.00 0.00 720.00 540.00 000000
+text 7.20 13.12 Calibri/Regular 10.00 ffffff +0.00 "Mark"

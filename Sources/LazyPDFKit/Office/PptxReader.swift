@@ -35,7 +35,9 @@ final class PptxReader {
         let master: Template?
         let theme: OfficeXmlElement?
         let showMasterShapes: Bool
+        // The layout's own shapes and the master's as they come out under this layout's color map.
         var shapes: [PptxShape]?
+        var masterShapes: [PptxShape]?
 
         init(root: OfficeXmlElement, relationships: [OpcRelationship], colors: PptxColors, placeholders: [Placeholder],
              master: Template? = nil, theme: OfficeXmlElement?, showMasterShapes: Bool = true) {
@@ -227,16 +229,15 @@ final class PptxReader {
         let layout = try layout(relationships.first { XlsxReader.endsWith($0.type, "/slideLayout") }?.target)
         let master = layout.master!
         let colors = Self.remapped(root, layout.colors)
+        let overridden = root.child(Self.p, "clrMapOvr")?.child(DocxReader.a, "overrideClrMapping") != nil
 
         var shapes: [PptxShape] = []
         let show = root.attribute("showMasterSp")
         if !(show == "0" || show == "false") {
             if layout.showMasterShapes {
-                if master.shapes == nil { master.shapes = try staticShapes(master, Scope(layout: nil, master: master, colors: master.colors, isSlide: false, relationships: master.relationships)) }
-                shapes.append(contentsOf: master.shapes!)
+                shapes.append(contentsOf: try inherited(master, master, colors, overridden, &layout.masterShapes))
             }
-            if layout.shapes == nil { layout.shapes = try staticShapes(layout, Scope(layout: nil, master: master, colors: layout.colors, isSlide: false, relationships: layout.relationships)) }
-            shapes.append(contentsOf: layout.shapes!)
+            shapes.append(contentsOf: try inherited(layout, master, colors, overridden, &layout.shapes))
         }
         shapes.append(contentsOf: try slideShapes(root, Scope(layout: layout, master: master, colors: colors, isSlide: true, relationships: relationships)))
         drawn += shapes.count
@@ -245,12 +246,20 @@ final class PptxReader {
         return PptxSlide(number: number, background: try background(root, relationships, colors, layout, master), shapes: shapes)
     }
 
+    // A slide that overrides the color map gets its own copy; the others share what the layout cached.
+    private func inherited(_ source: Template, _ master: Template, _ colors: PptxColors, _ overridden: Bool, _ cache: inout [PptxShape]?) throws -> [PptxShape] {
+        let scope = Scope(layout: nil, master: master, colors: colors, isSlide: false, relationships: source.relationships)
+        if overridden { return try staticShapes(source, scope) }
+        if cache == nil { cache = try staticShapes(source, scope) }
+        return cache!
+    }
+
     // ---- backgrounds ----
 
     private func background(_ slide: OfficeXmlElement, _ relationships: [OpcRelationship], _ colors: PptxColors, _ layout: Template, _ master: Template) throws -> PptxBackground? {
         if let own = try background(slide, relationships, colors, master.theme) { return own.value }
-        if let inherited = try background(layout.root, layout.relationships, layout.colors, master.theme) { return inherited.value }
-        return try background(master.root, master.relationships, master.colors, master.theme)?.value
+        if let inherited = try background(layout.root, layout.relationships, colors, master.theme) { return inherited.value }
+        return try background(master.root, master.relationships, colors, master.theme)?.value
     }
 
     // Nil when the part says nothing about its background; else what it says, which may be nothing.

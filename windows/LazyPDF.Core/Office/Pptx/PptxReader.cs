@@ -32,7 +32,8 @@ internal sealed partial class PptxReader
         public Template? Master { get; init; }
         public XmlElement? Theme { get; init; }
         public bool ShowMasterShapes { get; init; } = true;
-        public List<PptxShape>? Shapes { get; set; }
+        // The layout's own shapes and the master's as they come out under this layout's color map.
+        public List<PptxShape>? Shapes, MasterShapes;
     }
 
     private sealed record Scope(Template? Layout, Template Master, PptxColors Colors, bool IsSlide, IReadOnlyList<OpcRelationship> Relationships);
@@ -201,18 +202,26 @@ internal sealed partial class PptxReader
         var layout = Layout(relationships.FirstOrDefault(r => r.Type.EndsWith("/slideLayout", StringComparison.Ordinal))?.Target);
         var master = layout.Master!;
         var colors = Remapped(root, layout.Colors);
+        bool overridden = !ReferenceEquals(colors, layout.Colors);
 
         var shapes = new List<PptxShape>();
         if (root.Attribute("showMasterSp") is not ("0" or "false"))
         {
-            if (layout.ShowMasterShapes) shapes.AddRange(master.Shapes ??= Static(master, new Scope(null, master, master.Colors, false, master.Relationships)));
-            shapes.AddRange(layout.Shapes ??= Static(layout, new Scope(null, master, layout.Colors, false, layout.Relationships)));
+            if (layout.ShowMasterShapes) shapes.AddRange(Inherited(master, master, colors, overridden, ref layout.MasterShapes));
+            shapes.AddRange(Inherited(layout, master, colors, overridden, ref layout.Shapes));
         }
         shapes.AddRange(Shapes(root, new Scope(layout, master, colors, true, relationships), place: true));
         _drawn += shapes.Count;
         if (_drawn > _limits.MaxDrawnShapes) throw new PdfReadException(PdfReadProblem.Unsupported, "The presentation has too many shapes.");
 
         return new PptxSlide { Number = number, Background = Background(root, relationships, colors, layout, master), Shapes = shapes };
+    }
+
+    // A slide that overrides the color map gets its own copy; the others share what the layout cached.
+    private List<PptxShape> Inherited(Template source, Template master, PptxColors colors, bool overridden, ref List<PptxShape>? cache)
+    {
+        if (overridden) return Static(source, new Scope(null, master, colors, false, source.Relationships));
+        return cache ??= Static(source, new Scope(null, master, colors, false, source.Relationships));
     }
 
     private sealed record BackgroundSays(PptxBackground? Value);
@@ -222,8 +231,8 @@ internal sealed partial class PptxReader
     private PptxBackground? Background(XmlElement slide, IReadOnlyList<OpcRelationship> relationships, PptxColors colors, Template layout, Template master)
     {
         if (Background(slide, relationships, colors, master.Theme) is { } own) return own.Value;
-        if (Background(layout.Root, layout.Relationships, layout.Colors, master.Theme) is { } inherited) return inherited.Value;
-        return Background(master.Root, master.Relationships, master.Colors, master.Theme)?.Value;
+        if (Background(layout.Root, layout.Relationships, colors, master.Theme) is { } inherited) return inherited.Value;
+        return Background(master.Root, master.Relationships, colors, master.Theme)?.Value;
     }
 
     // Null when the part says nothing about its background; else what it says, which may be nothing.
