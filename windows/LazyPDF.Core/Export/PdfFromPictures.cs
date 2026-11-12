@@ -54,7 +54,7 @@ public static class PdfFromPictures
         for (int i = 0; i < files.Count; i++)
         {
             cancellation.ThrowIfCancellationRequested();
-            int before = pictures.Count;
+            int before = pictures.Count, skippedBefore = skipped;
             if (IsJpeg(files[i]) && PdfImageWriter.AddJpeg(document, files[i]) is { } jpeg)
             {
                 var (dpiX, dpiY) = JpegMeta.Density(files[i]);
@@ -66,7 +66,7 @@ public static class PdfFromPictures
                 foreach (var frame in frames.Where(f => f.Width > 0 && f.Height > 0 && (long)f.Width * f.Height <= PdfImageSamples.MaxPixels && f.Rgba.Length == (long)f.Width * f.Height * 4))
                     pictures.Add((PdfImageWriter.AddRgba(document, frame.Width, frame.Height, frame.Rgba), StoredDpi(frame).X, StoredDpi(frame).Y, 1));
             }
-            if (pictures.Count == before) unreadable.Add(i);
+            if (pictures.Count == before && skipped == skippedBefore) unreadable.Add(i);
         }
         if (pictures.Count == 0) throw new ArgumentException(ExportText.NoUsablePicture, nameof(files));
 

@@ -80,7 +80,7 @@ public enum PdfFromPictures {
         var skipped = 0
         for i in 0..<files.count {
             try Task.checkCancellation()
-            let before = pictures.count
+            let before = pictures.count, skippedBefore = skipped
             if isJpeg(files[i]), let jpeg = try PdfImageWriter.addJpeg(document, files[i]) {
                 let (dpiX, dpiY) = JpegMeta.density(files[i])
                 pictures.append(Picture(image: jpeg, dpiX: dpiX, dpiY: dpiY, orientation: JpegMeta.orientation(files[i])))
@@ -90,7 +90,7 @@ public enum PdfFromPictures {
                     pictures.append(Picture(image: try PdfImageWriter.addRgba(document, frame.width, frame.height, frame.rgba), dpiX: storedDpi(frame).x, dpiY: storedDpi(frame).y, orientation: 1))
                 }
             }
-            if pictures.count == before { unreadable.append(i) }
+            if pictures.count == before && skipped == skippedBefore { unreadable.append(i) }
         }
         if pictures.isEmpty { throw ArgumentException(ExportText.noUsablePicture) }
 

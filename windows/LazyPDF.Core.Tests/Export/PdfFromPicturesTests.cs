@@ -128,12 +128,12 @@ public class PdfFromPicturesTests
     }
 
     [Fact]
-    public void AFileOfOnlyTooBigFramesIsUnreadableAndCounted()
+    public void AFileOfOnlyTooBigFramesIsCountedOnlyAsSkipped()
     {
         var made = PdfFromPictures.Create([ExportFakeCodec.Picture(4, 4), [(byte)'B', 0]], Codec);
         Assert.Equal(1, made.Pages);
         Assert.Equal(1, made.SkippedFrames);
-        Assert.Equal([1], made.Unreadable);
+        Assert.Empty(made.Unreadable);
     }
 
     [Fact]
