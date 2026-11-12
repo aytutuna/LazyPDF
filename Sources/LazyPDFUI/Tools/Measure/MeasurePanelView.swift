@@ -57,7 +57,7 @@ struct MeasurePanelView: View {
 
     private var optionsSection: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Toggle(L10n.t("Snap to text"), isOn: Binding(get: { model.snapOn }, set: { model.setSnap($0) }))
+            Toggle(L10n.t("Snap to text and lines"), isOn: Binding(get: { model.snapOn }, set: { model.setSnap($0) }))
             Toggle(L10n.t("Straight lines"), isOn: Binding(get: { model.straight }, set: { model.setStraight($0) }))
         }
     }

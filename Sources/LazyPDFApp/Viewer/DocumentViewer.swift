@@ -224,6 +224,10 @@ public protocol DocumentViewer: AnyObject {
     /// cannot be read.
     func text(_ page: Int) async -> TextPage?
 
+    /// The straight edges the page draws, in PDF user space, for this revision of the file. Curves contribute their end
+    /// points only.
+    func drawing(_ page: Int) -> [DrawnEdge]
+
     var hasSelection: Bool { get }
 
     /// The selected text, page by page.

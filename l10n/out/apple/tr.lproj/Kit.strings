@@ -1527,7 +1527,7 @@
 "Small" = "Küçük";
 "Smaller" = "Küçült";
 "Smallest file. Pictures drop to 96 dpi and lose some detail." = "En küçük dosya. Resimler 96 dpi'ye düşer ve biraz ayrıntı kaybeder.";
-"Snap to text" = "Metne yapış";
+"Snap to text and lines" = "Metne ve çizgilere yapış";
 "Some characters are missing" = "Bazı karakterler eksik";
 "Some characters have no letter in the font and were left out." = "Bazı karakterlerin yazı tipinde karşılığı yok ve atlandı.";
 "Some comments left out" = "Bazı yorumlar alınmadı";

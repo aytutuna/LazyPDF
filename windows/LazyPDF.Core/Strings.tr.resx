@@ -5575,6 +5575,9 @@
   <data name="Snap to text" xml:space="preserve">
     <value>Metne yapış</value>
   </data>
+  <data name="Snap to text and lines" xml:space="preserve">
+    <value>Metne ve çizgilere yapış</value>
+  </data>
   <data name="Solid" xml:space="preserve">
     <value>Düz</value>
   </data>

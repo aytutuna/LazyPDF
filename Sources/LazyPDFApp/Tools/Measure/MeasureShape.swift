@@ -70,6 +70,22 @@ public enum MeasureShape {
         return best
     }
 
+    /// The closest point of any of the segments within `radius` of `at`.
+    public static func nearestOnLines(_ lines: [(ViewPoint, ViewPoint)], _ at: ViewPoint, _ radius: Double) -> ViewPoint? {
+        var best: ViewPoint?
+        var near = radius
+        for (a, b) in lines {
+            let dx = b.x - a.x, dy = b.y - a.y
+            let t = min(max(((at.x - a.x) * dx + (at.y - a.y) * dy) / (dx * dx + dy * dy), 0), 1)
+            let c = ViewPoint(a.x + t * dx, a.y + t * dy)
+            let d = distance(c, at)
+            if d > near { continue }
+            near = d
+            best = c
+        }
+        return best
+    }
+
     /// The place at the same distance from `from` along the nearest multiple of 45 degrees.
     public static func straighten(_ from: ViewPoint, _ to: ViewPoint) -> ViewPoint {
         let dx = to.x - from.x, dy = to.y - from.y

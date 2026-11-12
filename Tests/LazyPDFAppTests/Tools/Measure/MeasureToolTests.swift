@@ -15,8 +15,19 @@ final class MeasureToolTests: XCTestCase {
         var items: [MeasureItem] = []
     }
 
-    private func start(_ kind: MeasureKind, withText: Bool = false) async throws -> (tool: MeasureTool, done: Done, viewer: ViewerModel) {
-        let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text(2)), renderer: FakeRenderer(), url: nil, title: "a.pdf")
+    /// One page with a stroked line from (50, 100) to (150, 100) and an unpainted clip box.
+    private func drawn() -> [UInt8] {
+        let content = "50 100 m 150 100 l S 10 10 20 20 re W n"
+        let lines = ["%PDF-1.7", "1 0 obj", "<< /Type /Catalog /Pages 2 0 R >>", "endobj",
+                     "2 0 obj", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>", "endobj",
+                     "3 0 obj", "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R >>", "endobj",
+                     "4 0 obj", "<< /Length \(content.utf8.count) >>", "stream", content, "endstream", "endobj",
+                     "trailer", "<< /Root 1 0 R /Size 5 >>", "%%EOF", ""]
+        return Array(lines.joined(separator: "\n").utf8)
+    }
+
+    private func start(_ kind: MeasureKind, withText: Bool = false, file: [UInt8]? = nil) async throws -> (tool: MeasureTool, done: Done, viewer: ViewerModel) {
+        let tab = DocumentTab(session: try PdfEditSession.open(file ?? Pdfs.text(2)), renderer: FakeRenderer(), url: nil, title: "a.pdf")
         let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
         viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
         viewer.show(tab)
@@ -225,6 +236,32 @@ final class MeasureToolTests: XCTestCase {
         tool.press(at(300, 300))
 
         XCTAssertEqual(try XCTUnwrap(done.items.first).points[0].x, corner.x + 1, accuracy: 1e-6)
+    }
+
+    func test_clicksSnapToPointsOnDrawnLinesAndTheirEnds() async throws {
+        let (tool, done, viewer) = try await start(.distance, withText: true, file: drawn())
+        let geometry = viewer.geometry(0)
+        let end = geometry.toDisplay(150, 100)
+        let middle = geometry.toDisplay(100, 100)
+
+        tool.press(at(middle.x + 4, middle.y + 1))
+        tool.press(at(end.x - 1, end.y + 1))
+
+        let points = try XCTUnwrap(done.items.first).points
+        XCTAssertEqual(points[0].x, middle.x + 4, accuracy: 1e-6)
+        XCTAssertEqual(points[0].y, middle.y, accuracy: 1e-6)
+        XCTAssertEqual(points[1].x, end.x, accuracy: 1e-6)
+        XCTAssertEqual(points[1].y, end.y, accuracy: 1e-6)
+    }
+
+    func test_optionHeldLeavesTheClickWhereItWas() async throws {
+        let (tool, done, viewer) = try await start(.distance, withText: true, file: drawn())
+        let middle = viewer.geometry(0).toDisplay(100, 100)
+
+        tool.press(at(middle.x, middle.y + 1, modifiers: .option))
+        tool.press(at(300, 300))
+
+        XCTAssertEqual(try XCTUnwrap(done.items.first).points[0].y, middle.y + 1, accuracy: 1e-6)
     }
 
     func test_aMouseHoversWithALiveSegmentAndASnapMarkButAFingerLeavesNone() async throws {

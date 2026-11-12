@@ -2,7 +2,7 @@ import Foundation
 import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Tools/Measure/MeasureTool.cs: takes the pointer on the pages. Each click adds a point, snapping
-// to the corners of the words on the page, until the shape is done. A finger gives no hover, so the live segment and the snap
+// to the corners of the words and the lines and corners the page draws (Option turns that off), until the shape is done. A finger gives no hover, so the live segment and the snap
 // mark are what a mouse adds; a click snaps whatever made it.
 
 @MainActor
@@ -11,6 +11,7 @@ final class MeasureTool: PagePointerTool {
 
     private let viewer: DocumentViewer
     private(set) var snaps: [Int: [ViewPoint]] = [:]
+    private(set) var lines: [Int: [(ViewPoint, ViewPoint)]] = [:]
     private var loading = Set<Int>()
     private var added = false
     private var waiting: PagePointer?
@@ -147,6 +148,7 @@ final class MeasureTool: PagePointerTool {
     /// Drops the snap points, which belong to the file as it was.
     func forget() {
         snaps.removeAll()
+        lines.removeAll()
     }
 
     /// View points per point of the page; 0 while the page is not laid out.
@@ -158,9 +160,12 @@ final class MeasureTool: PagePointerTool {
         snapped = false
         let at = pointer.point
         if (pointer.modifiers.contains(.shift) || straight) && sameShape, let last = points.last { return MeasureShape.straighten(last, at) }
-        guard snap, let corners = snaps[pointer.page] else { return at }
+        guard snap, !pointer.modifiers.contains(.option), let corners = snaps[pointer.page] else { return at }
         let scale = scale(pointer.page)
-        guard scale > 0, let found = MeasureShape.nearest(corners, at, Self.snapPixels / scale) else { return at }
+        if scale <= 0 { return at }
+        let radius = Self.snapPixels / scale
+        let found = MeasureShape.nearest(corners, at, radius) ?? MeasureShape.nearestOnLines(lines[pointer.page] ?? [], at, radius)
+        guard let found else { return at }
         snapped = true
         return found
     }
@@ -176,18 +181,18 @@ final class MeasureTool: PagePointerTool {
             guard let self else { return }
             let text = await self.viewer.text(page)
             self.loading.remove(page)
-            guard let text else {
-                self.snaps[page] = []
-                return
-            }
             let geometry = self.viewer.geometry(page)
-            self.snaps[page] = text.words.flatMap { word -> [ViewPoint] in
-                let b = word.bounds
-                return [(b.left, b.bottom), (b.right, b.bottom), (b.left, b.top), (b.right, b.top)].map {
-                    let shown = geometry.toDisplay($0.0, $0.1)
-                    return ViewPoint(shown.x, shown.y)
-                }
+            func shown(_ x: Double, _ y: Double) -> ViewPoint {
+                let p = geometry.toDisplay(x, y)
+                return ViewPoint(p.x, p.y)
             }
+            let edges = self.viewer.drawing(page).map { (shown($0.x1, $0.y1), shown($0.x2, $0.y2)) }
+            let words = (text?.words ?? []).flatMap { word -> [ViewPoint] in
+                let b = word.bounds
+                return [(b.left, b.bottom), (b.right, b.bottom), (b.left, b.top), (b.right, b.top)].map { shown($0.0, $0.1) }
+            }
+            self.lines[page] = edges.filter { $0.0 != $0.1 }
+            self.snaps[page] = words + edges.map { $0.0 } + edges.map { $0.1 }
         }
     }
 }

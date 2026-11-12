@@ -30,6 +30,7 @@ extension ViewerModel {
         textTask = nil
         source = nil
         links.removeAll()
+        drawn.removeAll()
         selectionShapes.removeAll()
         hitShapes.removeAll()
         selected.clear()
@@ -68,6 +69,15 @@ extension ViewerModel {
 
     public func text(_ page: Int) async -> TextPage? {
         await textSource().value?.get(page)
+    }
+
+    public func drawing(_ page: Int) -> [DrawnEdge] {
+        guard let tab, page >= 0, page < tab.document.pages.count else { return [] }
+        if let found = drawn[page] { return found }
+        let reader = EdgeReader()
+        ContentInterpreter(tab.document).run(tab.document.pages[page], reader)
+        drawn[page] = reader.edges
+        return reader.edges
     }
 
     /// The text of a page for a screen reader, if it has been read.
