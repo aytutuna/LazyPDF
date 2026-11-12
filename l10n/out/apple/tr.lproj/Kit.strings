@@ -29,6 +29,8 @@
 "A graphics state sets a transfer function." = "Bir grafik durumu aktarım işlevi ayarlıyor.";
 "A hexadecimal string has an odd number of digits or a character that is not a hex digit." = "Onaltılık bir dizenin basamak sayısı tek ya da içinde onaltılık basamak olmayan bir karakter var.";
 "A name is longer than 127 bytes." = "Bir ad 127 bayttan uzun.";
+"A note or field on page {1} could not keep its other text and was removed whole.|one" = "{1}. sayfada {0} not veya alan diğer metnini koruyamadı ve bütünüyle kaldırıldı.";
+"A note or field on page {1} could not keep its other text and was removed whole.|other" = "{1}. sayfada {0} not veya alan diğer metnini koruyamadı ve bütünüyle kaldırıldı.";
 "A page has an /AA entry." = "Bir sayfada /AA girdisi var.";
 "A page or form has a transparency group." = "Bir sayfada ya da formda saydamlık grubu var.";
 "A path that clips cannot be changed." = "Kırpan bir yol değiştirilemez.";

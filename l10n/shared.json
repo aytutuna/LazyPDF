@@ -711,6 +711,10 @@
     "other": "{0} pictures on page {1} that could not be read were removed whole.",
     "tr": "{1}. sayfada okunamayan {0} resim bütünüyle kaldırıldı."
   },
+  "A note or field on page {1} could not keep its other text and was removed whole.": {
+    "other": "{0} notes or fields on page {1} could not keep their other text and were removed whole.",
+    "tr": "{1}. sayfada {0} not veya alan diğer metnini koruyamadı ve bütünüyle kaldırıldı."
+  },
   "Page {0} cannot be redacted as text. It needs a page renderer to be turned into a picture.": {
     "tr": "Sayfa {0} metin olarak karartılamaz. Resme çevrilmesi için sayfa çizicisi gerekir."
   },
@@ -4588,6 +4592,12 @@
   "{0} name matches no field: {1}.": {
     "other": "{0} names match no field: {1}.",
     "tr": "Hiçbir alanla eşleşmeyen ad: {0} ({1})."
+  },
+  "Comment on page {0}": {
+    "tr": "Not, sayfa {0}"
+  },
+  "Field {0}, page {1}": {
+    "tr": "Alan {0}, sayfa {1}"
   },
   "{0}, page {1}": {
     "tr": "{0}, sayfa {1}"

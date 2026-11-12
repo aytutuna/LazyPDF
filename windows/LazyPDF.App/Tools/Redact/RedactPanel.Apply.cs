@@ -14,7 +14,8 @@ public partial class RedactPanel
         var host = Host!;
         var state = _state!;
         var applied = state.Marks.Items.ToList();
-        var marks = applied.Select(m => m.Mark).ToList();
+        var marks = applied.Where(m => m.Value is null).Select(m => m.Mark).ToList();
+        var values = applied.Where(m => m.Value is not null).Select(m => m.Value!).ToList();
         var settings = new RedactSettings((Cover)CoverBox.SelectedItem, OverlayBox.Text, FlattenBox.IsChecked == true);
         byte[] bytes = [];
         int revision = tab.Revision;
@@ -30,7 +31,7 @@ public partial class RedactPanel
                 await tab.Drawing.WaitAsync(token);
                 bytes = tab.Session.Current.ToArray();
                 revision = tab.Revision;
-                result = await Task.Run(() => RedactJob.Apply(bytes, tab.Password, tab.Certificate, marks, settings, tab.Renderer, _fonts, _images)).WaitAsync(token);
+                result = await Task.Run(() => RedactJob.Apply(bytes, tab.Password, tab.Certificate, marks, settings, tab.Renderer, _fonts, _images, values)).WaitAsync(token);
             });
         }
         catch (Exception error) when (error is InvalidOperationException or UnauthorizedAccessException or PdfReadException)

@@ -38,7 +38,60 @@ public sealed class RedactJobTests
     }
 
     private static RedactionResult Apply(byte[] pdf, IReadOnlyList<MarkItem> marks, RedactSettings settings, IFontSource? fonts = null) =>
-        RedactJob.Apply(pdf, null, null, [.. marks.Select(m => m.Mark)], settings, new BlankPages(pdf), fonts ?? new FakeFonts(), new FakeCodec());
+        RedactJob.Apply(pdf, null, null, [.. marks.Where(m => m.Value is null).Select(m => m.Mark)], settings, new BlankPages(pdf), fonts ?? new FakeFonts(), new FakeCodec(),
+                        [.. marks.Where(m => m.Value is not null).Select(m => m.Value!)]);
+
+    private static byte[] WithNoteAndField(string text)
+    {
+        using var document = PdfDocument.Open(Pdfs.Text(1, Line));
+        new PdfAnnotationWriter(document).AddNote(document.Pages[0], new PdfRect(400, 100, 420, 120), new AnnotationInfo("Reviewer", text));
+        PdfForm.Read(document).AddField(new FieldSpec(FieldKind.Text, "contact", 0, new PdfRect(100, 490, 400, 510)) { Value = text });
+        return document.SaveRewrite();
+    }
+
+    [Fact]
+    public void CommentsAndFieldValuesAreFoundAndSayWhere()
+    {
+        var found = FindAddresses(WithNoteAndField("mail bob@example.com"));
+
+        Assert.Equal(3, found.Count);
+        var comment = Assert.Single(found, m => m.Value?.Source == RedactionValueSource.Comment);
+        Assert.Equal("Comment on page 1", comment.PageText);
+        Assert.Equal("bob@example.com", comment.Label);
+        var field = Assert.Single(found, m => m.Value?.Source == RedactionValueSource.Field);
+        Assert.Equal("Field contact, page 1", field.PageText);
+        Assert.Equal("bob@example.com, Field contact, page 1", field.Spoken);
+        Assert.Contains(new PdfRect(100, 490, 400, 510), field.Mark.Quads.Select(q => q.Bounds));
+    }
+
+    [Fact]
+    public void WordsAndPatternsSearchTheValuesToo()
+    {
+        using var document = RedactJob.Open(WithNoteAndField("mail bob@example.com"), null, null);
+
+        var words = RedactJob.Find(document, ["bob"], false, false, CancellationToken.None);
+        var patterns = RedactJob.FindPatterns(document, ["b.b@"], false, CancellationToken.None);
+
+        Assert.Equal(2, words.Items.Count(m => m.Value is not null));
+        Assert.Equal(2, patterns.Items.Count(m => m.Value is not null));
+    }
+
+    [Fact]
+    public void ValueHitsAreRewrittenWithThePageMarksAndTheReportCountsThem()
+    {
+        var pdf = WithNoteAndField("mail bob@example.com");
+        var found = FindAddresses(pdf);
+
+        var result = Apply(pdf, found, Plain);
+
+        Assert.True(result.Verification.IsClean);
+        Assert.DoesNotContain("example.com", TextOf(result.Bytes));
+        using var output = PdfDocument.Open(result.Bytes);
+        Assert.Equal("mail ", Assert.Single(PdfAnnotations.Read(output, output.Pages[0]), a => a.Type != AnnotationType.Widget).Contents);
+        Assert.Equal("mail ", Assert.Single(PdfForm.Read(output).Fields).Value);
+        Assert.Equal(2, Assert.Single(result.Report.Pages).Values);
+        Assert.Contains("text in 2 notes or fields", RedactSummary.Of(result).Report);
+    }
 
     [Fact]
     public void AWholePageIsMarkedByItsMediaBoxWhateverTheCropBoxAndTurn()

@@ -48,7 +48,7 @@ public static class RedactJob
     public static Found Find(PdfDocument document, DataKind kind, CancellationToken cancel)
     {
         var cache = new TextCache(document);
-        return Gather(document, cache, RedactionFinder.Find(cache, kind.Kind, cancel));
+        return Gather(document, cache, RedactionFinder.Find(cache, kind.Kind, cancel), RedactionFinder.FindInValues(document, kind.Kind, cancel));
     }
 
     public static Found Find(PdfDocument document, IReadOnlyList<string> terms, bool matchCase, bool wholeWord, CancellationToken cancel)
@@ -66,7 +66,7 @@ public static class RedactJob
         }
         var matches = hits.OrderBy(h => h.Page).ThenBy(h => h.Range.Start)
             .Select(h => new RedactionMatch(RedactionMark.FromMatch(h), h.Text, RedactionKind.Word)).ToList();
-        return Gather(document, cache, matches);
+        return Gather(document, cache, matches, RedactionFinder.FindWordsInValues(document, words, wholeWord, matchCase, cancel));
     }
 
     /// <summary>One mark over the whole /MediaBox of each page, so content outside a CropBox is covered too.</summary>
@@ -77,7 +77,8 @@ public static class RedactJob
     {
         var cache = new TextCache(document);
         var matches = patterns.SelectMany(p => RedactionFinder.FindRegex(cache, p, matchCase, cancel)).ToList();
-        return Gather(document, cache, matches);
+        var values = patterns.SelectMany(p => RedactionFinder.FindRegexInValues(document, p, matchCase, cancel)).ToList();
+        return Gather(document, cache, matches, values);
     }
 
     /// <summary>The lines of the search box to run. Patterns keep their spaces, but a line of only spaces is no pattern.</summary>
@@ -117,7 +118,8 @@ public static class RedactJob
     /// it opens as a new tab and the window has no password to give it.
     /// </summary>
     public static RedactionResult Apply(byte[] bytes, string? password, X509Certificate2? certificate, IReadOnlyList<RedactionMark> marks,
-                                        RedactSettings settings, IPageRenderer renderer, IFontSource fonts, IImageCodec images)
+                                        RedactSettings settings, IPageRenderer renderer, IFontSource fonts, IImageCodec images,
+                                        IReadOnlyList<RedactionValueMatch>? values = null)
     {
         using var document = Open(bytes, password, certificate);
         var options = new RedactionOptions
@@ -129,7 +131,7 @@ public static class RedactJob
             FlattenMarkedPages = settings.FlattenAll,
             KeepEncryption = false,
         };
-        return new PdfRedactor(document, fonts, images).Apply(marks, options);
+        return new PdfRedactor(document, fonts, images).Apply(marks, options, values);
     }
 
     public static Problem Failed(Exception error) => error switch
@@ -146,10 +148,33 @@ public static class RedactJob
         return one.Length <= 40 ? one : one[..39] + "…";
     }
 
-    private static Found Gather(PdfDocument document, TextCache cache, IReadOnlyList<RedactionMatch> matches)
+    private static Found Gather(PdfDocument document, TextCache cache, IReadOnlyList<RedactionMatch> matches, IReadOnlyList<RedactionValueMatch> values)
     {
         int pictures = Enumerable.Range(0, document.Pages.Count).Count(i => string.IsNullOrWhiteSpace(cache.Get(i).Text));
         int recognized = document.Pages.Count(page => PdfOcrLayer.Has(document, page));
-        return new([.. matches.Select(m => new MarkItem(m.Mark, Clip(m.Text)))], pictures, recognized);
+        return new([.. matches.Select(m => new MarkItem(m.Mark, Clip(m.Text))), .. ValueItems(document, values)], pictures, recognized);
+    }
+
+    // The mark of a value hit is the comment's or field's own rectangle, so that it can be outlined and jumped to.
+    private static IEnumerable<MarkItem> ValueItems(PdfDocument document, IReadOnlyList<RedactionValueMatch> values)
+    {
+        if (values.Count == 0) yield break;
+        PdfForm? form = null;
+        foreach (var page in values.GroupBy(v => v.Page).OrderBy(g => g.Key))
+        {
+            var annotations = PdfAnnotations.Read(document, document.Pages[page.Key]);
+            foreach (var hit in page.OrderBy(v => v.Annotation).ThenBy(v => v.Start))
+            {
+                var annotation = annotations[hit.Annotation];
+                string where = Loc.T("Comment on page {0}", hit.Page + 1);
+                if (hit.Source == RedactionValueSource.Field)
+                {
+                    form ??= PdfForm.Read(document);
+                    var field = form.Fields.FirstOrDefault(f => f.Widgets.Any(w => ReferenceEquals(w.Dictionary, annotation.Dictionary)));
+                    where = Loc.T("Field {0}, page {1}", field?.Name ?? "", hit.Page + 1);
+                }
+                yield return new MarkItem(RedactionMark.FromRect(hit.Page, annotation.Rect), Clip(hit.Text), Value: hit, Where: where);
+            }
+        }
     }
 }
