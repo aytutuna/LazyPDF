@@ -105,6 +105,31 @@ final class FillSignMakerTests: XCTestCase {
         XCTAssertEqual([maker.image?.width, maker.image?.height], [made.height, made.width])
     }
 
+    func test_aPictureFromThePhotoLibraryOrCameraComesAsBytes() throws {
+        var pixels = [UInt8](repeating: 250, count: 30 * 20 * 4)
+        for x in 5..<25 {
+            for c in 0..<3 { pixels[(10 * 30 + x) * 4 + c] = 10 }
+        }
+        let (maker, _) = maker(SignaturePictureCodec(PdfRgbaImage(30, 20, pixels)))
+        maker.setMode(.picture)
+
+        maker.usePicture([1, 2, 3], name: "IMG_1.jpg")
+
+        XCTAssertNotNil(maker.image)
+        XCTAssertTrue(maker.canTurn)
+        XCTAssertEqual(maker.pictureNote, "IMG_1.jpg")
+    }
+
+    func test_noBytesFromACameraLeavesNoImage() {
+        let (maker, _) = maker()
+        maker.setMode(.picture)
+
+        maker.usePicture([], name: "")
+
+        XCTAssertNil(maker.image)
+        XCTAssertFalse(maker.canTurn)
+    }
+
     func test_aFileThatIsNotAPictureSaysSoAndLeavesNoImage() async throws {
         let (maker, _) = maker(SignaturePictureCodec(nil))
         let picker = FormsPicker()

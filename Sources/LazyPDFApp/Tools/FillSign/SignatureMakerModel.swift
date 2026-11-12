@@ -104,13 +104,17 @@ public final class SignatureMakerModel {
         guard let file = await picker.pickFiles([.picture], multiple: false).first else { return }
         defer { file.access?.stop() }
         if let data = try? Data(contentsOf: file.url) {
-            let bytes = [UInt8](data)
-            picture = SignatureArt.fromFile(bytes, codec, orientation: system.orientation(of: bytes))
+            usePicture([UInt8](data), name: file.url.lastPathComponent)
         } else {
-            picture = nil
+            usePicture([], name: "")
         }
+    }
+
+    /// Makes the signature from a picture's bytes, whether they came from a file, the photo library or a camera.
+    public func usePicture(_ bytes: [UInt8], name: String) {
+        picture = bytes.isEmpty ? nil : SignatureArt.fromFile(bytes, codec, orientation: system.orientation(of: bytes))
         canTurn = picture != nil
-        pictureNote = picture == nil ? L10n.t("That file is not a picture Lazy PDF can read. Choose a PNG or JPEG.") : file.url.lastPathComponent
+        pictureNote = picture == nil ? L10n.t("That file is not a picture Lazy PDF can read. Choose a PNG or JPEG.") : name
         rebuild()
     }
 
