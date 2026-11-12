@@ -8542,5 +8542,23 @@
   },
   "The signature is removed from the field, and the field can be signed again. The file keeps the earlier signed version in its history. Undo brings the signature back.": {
     "tr": "İmza alandan kaldırılır ve alan yeniden imzalanabilir. Dosya, önceki imzalı sürümü geçmişinde tutar. Geri al imzayı geri getirir."
+  },
+  "The pattern took too long on page {0}; it was not searched.": {
+    "tr": "Desen {0}. sayfada çok uzun sürdü; sayfa aranmadı."
+  },
+  "The pattern took too long on pages {0}; they were not searched.": {
+    "tr": "Desen {0} sayfalarında çok uzun sürdü; bu sayfalar aranmadı."
+  },
+  "The pattern took too long on {0} pages, the first being page {1}; they were not searched.": {
+    "tr": "Desen {0} sayfada çok uzun sürdü, ilki {1}. sayfa; bu sayfalar aranmadı."
+  },
+  "{0} and {1}": {
+    "tr": "{0} ve {1}"
+  },
+  "Not fully searched": {
+    "tr": "Tam aranmadı"
+  },
+  "Some pages were not searched": {
+    "tr": "Bazı sayfalar aranmadı"
   }
 }

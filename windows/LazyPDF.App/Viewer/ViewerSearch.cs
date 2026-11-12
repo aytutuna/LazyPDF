@@ -74,6 +74,9 @@ public sealed class ViewerSearch
     /// <summary>The user stopped the search before it finished.</summary>
     public bool Stopped { get; private set; }
 
+    /// <summary>Pages, 0-based and ascending, where a regular expression ran out of time and the page was not searched to its end.</summary>
+    public IReadOnlyList<int> TimedOut { get; private set; } = [];
+
     /// <summary>Whether the last step went round the end of the hits, and which way.</summary>
     public SearchWrap Wrapped { get; private set; }
 
@@ -104,6 +107,7 @@ public sealed class ViewerSearch
         NoText = false;
         Capped = false;
         Stopped = false;
+        TimedOut = [];
         if (query.Length == 0)
         {
             Running = false;
@@ -208,6 +212,7 @@ public sealed class ViewerSearch
         bool bad = false;
         bool noText = false;
         bool capped = false;
+        var timeouts = new SearchTimeouts();
         try
         {
             if (await sourceTask is { } source)
@@ -223,7 +228,7 @@ public sealed class ViewerSearch
                     batch.Add(new SearchHit(match, Around(source, match, -1), Around(source, match, 1)));
                     if (batch.Count >= Batch) Flush(batch, start, cancel);
                 }
-                foreach (var match in source.Find(query, options, cancel))
+                foreach (var match in source.Find(query, options, cancel, timeouts))
                 {
                     count++;
                     if (match.Page < start)
@@ -275,6 +280,7 @@ public sealed class ViewerSearch
             BadPattern = bad;
             NoText = noText;
             Capped = capped;
+            TimedOut = [.. timeouts.Pages.Order()];
             if (Current < 0 && Hits.Count > 0)
             {
                 // Nothing at or after the view: wrap to the first hit, as Find Next does.

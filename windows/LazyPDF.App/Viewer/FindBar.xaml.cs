@@ -62,14 +62,19 @@ public partial class FindBar : UserControl
         if (search.Query.Length == 0) text = "";
         else if (search.BadPattern) text = Loc.T("Not a valid pattern");
         else if (search.Stopped) text = search.Hits.Count == 0 ? Loc.T("Stopped") : Loc.T("{0} found, stopped", search.Hits.Count);
-        else if (search.Hits.Count == 0) text = search.Running ? Loc.T("Searching") : search.NoText ? Loc.T("This file has no text to search. Try Make searchable.") : Loc.T("No results");
+        else if (search.Hits.Count == 0) text = search.Running ? Loc.T("Searching") : search.TimedOut.Count > 0 ? Loc.T("Not fully searched") : search.NoText ? Loc.T("This file has no text to search. Try Make searchable.") : Loc.T("No results");
         else if (search.Running) text = Loc.T("{0} found", search.Hits.Count);
         else if (search.Wrapped == SearchWrap.Start) text = Loc.T("{0} of {1}, from the start", search.Current + 1, search.Hits.Count);
         else if (search.Wrapped == SearchWrap.End) text = Loc.T("{0} of {1}, from the end", search.Current + 1, search.Hits.Count);
         else text = Loc.T("{0} of {1}", search.Current + 1, search.Hits.Count);
         StopButton.Visibility = search.Running ? Visibility.Visible : Visibility.Collapsed;
-        CapNote.Text = search.Capped ? Loc.T("First {0} shown. Narrow the search to see the rest.", ViewerSearch.MaxHits) : "";
-        CapNote.Visibility = search.Capped ? Visibility.Visible : Visibility.Collapsed;
+        string note = string.Join(' ', new[]
+        {
+            search.Capped ? Loc.T("First {0} shown. Narrow the search to see the rest.", ViewerSearch.MaxHits) : null,
+            TimedOutText.For(search.TimedOut),
+        }.Where(n => n is not null));
+        CapNote.Text = note;
+        CapNote.Visibility = note.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         if (Count.Text != text)
         {
             Count.Text = text;

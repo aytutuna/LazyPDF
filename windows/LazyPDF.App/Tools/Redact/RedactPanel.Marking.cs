@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Input;
+using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Redact;
@@ -145,8 +146,13 @@ public partial class RedactPanel
             _working = false;
         }
         if (found is null) return;
-        host.SetStatus(found.Items.Count == 0 ? Loc.T("Nothing found.") : Added(state.Marks.Add(found.Items)));
-        if (found.Pictures > 0)
+        string? slow = TimedOutText.For(found.TimedOut ?? []);
+        host.SetStatus(found.Items.Count == 0 ? slow ?? Loc.T("Nothing found.") : Added(state.Marks.Add(found.Items)));
+        if (slow is not null && found.Items.Count > 0)
+        {
+            host.ShowNotice(Loc.T("Some pages were not searched"), slow);
+        }
+        else if (found.Pictures > 0)
         {
             host.ShowNotice(Loc.Plural(found.Pictures, "{0} page has no text", "{0} pages have no text"),
                             Loc.T("Words and numbers on those pages were not searched. Run Make searchable, then search again. Or draw boxes over them."),

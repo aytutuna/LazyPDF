@@ -37,7 +37,8 @@ public sealed record RedactSettings(Cover Cover, string? OverlayText, bool Flatt
 
 /// <param name="Items">What was found, to be marked.</param>
 /// <param name="Pictures">Pages with no text to search: scans and drawings, where the finders see nothing.</param>
-public sealed record Found(IReadOnlyList<MarkItem> Items, int Pictures, int Recognized);
+/// <param name="TimedOut">Pages, 0-based and ascending, where a pattern ran out of time and the page was not searched to its end.</param>
+public sealed record Found(IReadOnlyList<MarkItem> Items, int Pictures, int Recognized, IReadOnlyList<int>? TimedOut = null);
 
 /// <summary>The work behind the panel's buttons, on bytes so that it can run off the UI thread.</summary>
 public static class RedactJob
@@ -48,7 +49,8 @@ public static class RedactJob
     public static Found Find(PdfDocument document, DataKind kind, CancellationToken cancel)
     {
         var cache = new TextCache(document);
-        return Gather(document, cache, RedactionFinder.Find(cache, kind.Kind, cancel), RedactionFinder.FindInValues(document, kind.Kind, cancel));
+        var timeouts = new SearchTimeouts();
+        return Gather(document, cache, RedactionFinder.Find(cache, kind.Kind, cancel, timeouts), RedactionFinder.FindInValues(document, kind.Kind, cancel), timeouts);
     }
 
     public static Found Find(PdfDocument document, IReadOnlyList<string> terms, bool matchCase, bool wholeWord, CancellationToken cancel)
@@ -57,16 +59,17 @@ public static class RedactJob
         var options = new TextSearchOptions(MatchCase: matchCase, WholeWord: wholeWord);
         var words = terms.Where(t => t.Length > 0).Distinct().ToList();
         var hits = new List<SearchMatch>();
+        var timeouts = new SearchTimeouts();
         // Pages first, so that each page is read once however many terms there are.
         for (int p = 0; p < cache.PageCount; p++)
         {
             cancel.ThrowIfCancellationRequested();
             var page = cache.Get(p);
-            foreach (var word in words) hits.AddRange(TextSearch.Find(page, word, options, cancel));
+            foreach (var word in words) hits.AddRange(TextSearch.Find(page, word, options, cancel, timeouts));
         }
         var matches = hits.OrderBy(h => h.Page).ThenBy(h => h.Range.Start)
             .Select(h => new RedactionMatch(RedactionMark.FromMatch(h), h.Text, RedactionKind.Word)).ToList();
-        return Gather(document, cache, matches, RedactionFinder.FindWordsInValues(document, words, wholeWord, matchCase, cancel));
+        return Gather(document, cache, matches, RedactionFinder.FindWordsInValues(document, words, wholeWord, matchCase, cancel), timeouts);
     }
 
     /// <summary>One mark over the whole /MediaBox of each page, so content outside a CropBox is covered too.</summary>
@@ -76,9 +79,10 @@ public static class RedactJob
     public static Found FindPatterns(PdfDocument document, IReadOnlyList<string> patterns, bool matchCase, CancellationToken cancel)
     {
         var cache = new TextCache(document);
-        var matches = patterns.SelectMany(p => RedactionFinder.FindRegex(cache, p, matchCase, cancel)).ToList();
+        var timeouts = new SearchTimeouts();
+        var matches = patterns.SelectMany(p => RedactionFinder.FindRegex(cache, p, matchCase, cancel, timeouts)).ToList();
         var values = patterns.SelectMany(p => RedactionFinder.FindRegexInValues(document, p, matchCase, cancel)).ToList();
-        return Gather(document, cache, matches, values);
+        return Gather(document, cache, matches, values, timeouts);
     }
 
     /// <summary>The lines of the search box to run. Patterns keep their spaces, but a line of only spaces is no pattern.</summary>
@@ -148,11 +152,11 @@ public static class RedactJob
         return one.Length <= 40 ? one : one[..39] + "…";
     }
 
-    private static Found Gather(PdfDocument document, TextCache cache, IReadOnlyList<RedactionMatch> matches, IReadOnlyList<RedactionValueMatch> values)
+    private static Found Gather(PdfDocument document, TextCache cache, IReadOnlyList<RedactionMatch> matches, IReadOnlyList<RedactionValueMatch> values, SearchTimeouts timeouts)
     {
         int pictures = Enumerable.Range(0, document.Pages.Count).Count(i => string.IsNullOrWhiteSpace(cache.Get(i).Text));
         int recognized = document.Pages.Count(page => PdfOcrLayer.Has(document, page));
-        return new([.. matches.Select(m => new MarkItem(m.Mark, Clip(m.Text))), .. ValueItems(document, values)], pictures, recognized);
+        return new([.. matches.Select(m => new MarkItem(m.Mark, Clip(m.Text))), .. ValueItems(document, values)], pictures, recognized, [.. timeouts.Pages.Distinct().Order()]);
     }
 
     // The mark of a value hit is the comment's or field's own rectangle, so that it can be outlined and jumped to.

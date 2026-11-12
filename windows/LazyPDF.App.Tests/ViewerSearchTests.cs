@@ -323,6 +323,30 @@ public sealed class ViewerSearchTests
     }
 
     [Fact]
+    public async Task APatternThatRunsOutOfTimeNamesThePagesAndClearsOnTheNextSearch()
+    {
+        var search = Searching(Pdfs.Text(2, new string('a', 40) + "!"));
+
+        await search.Start(@"^(a+)+$", new TextSearchOptions(Regex: true));
+
+        Assert.Empty(search.Hits);
+        Assert.Equal([0, 1], search.TimedOut);
+        await search.Start("a+!", new TextSearchOptions(Regex: true));
+        Assert.Empty(search.TimedOut);
+        Assert.Equal(2, search.Hits.Count);
+    }
+
+    [Fact]
+    public void TheTimedOutPagesAreListedUpToFiveThenCounted()
+    {
+        Assert.Null(TimedOutText.For([]));
+        Assert.Equal("The pattern took too long on page 4; it was not searched.", TimedOutText.For([3]));
+        Assert.Equal("The pattern took too long on pages 3 and 7; they were not searched.", TimedOutText.For([2, 6]));
+        Assert.Equal("The pattern took too long on pages 3, 7 and 12; they were not searched.", TimedOutText.For([2, 6, 11]));
+        Assert.Equal("The pattern took too long on 6 pages, the first being page 3; they were not searched.", TimedOutText.For([2, 4, 6, 8, 10, 12]));
+    }
+
+    [Fact]
     public async Task AnEmptyQueryClears()
     {
         var search = Searching(Pages(2));

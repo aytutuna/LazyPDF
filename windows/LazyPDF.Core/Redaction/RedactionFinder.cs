@@ -56,11 +56,11 @@ public static class RedactionFinder
     public static IReadOnlyList<RedactionMatch> Find(PdfDocument document, RedactionKind kind) => Find(new TextCache(document), kind);
 
     /// <summary>Everything of one built-in kind in the document. <see cref="RedactionKind.Pattern"/> and <see cref="RedactionKind.Word"/> have their own methods.</summary>
-    public static IReadOnlyList<RedactionMatch> Find(TextCache cache, RedactionKind kind, CancellationToken cancel = default)
+    public static IReadOnlyList<RedactionMatch> Find(TextCache cache, RedactionKind kind, CancellationToken cancel = default, SearchTimeouts? timeouts = null)
     {
         if (!Shapes.TryGetValue(kind, out var shape)) throw new ArgumentOutOfRangeException(nameof(kind));
         var found = new List<RedactionMatch>();
-        foreach (var hit in TextSearch.Find(cache, shape.Pattern, new TextSearchOptions(MatchCase: shape.MatchCase, Regex: true), cancel: cancel))
+        foreach (var hit in TextSearch.Find(cache, shape.Pattern, new TextSearchOptions(MatchCase: shape.MatchCase, Regex: true), cancel: cancel, timeouts: timeouts))
         {
             if (shape.Check is null || shape.Check(hit.Text)) found.Add(new RedactionMatch(RedactionMark.FromMatch(hit), hit.Text, kind));
             else if (Narrow(cache.Get(hit.Page), hit, shape) is { } inner) found.Add(new RedactionMatch(RedactionMark.FromMatch(inner), inner.Text, kind));
@@ -69,14 +69,14 @@ public static class RedactionFinder
     }
 
     /// <summary>Every hit of a regular expression (see <see cref="TextSearch"/> for how it reads the page). A bad pattern is an <see cref="ArgumentException"/>.</summary>
-    public static IReadOnlyList<RedactionMatch> FindRegex(TextCache cache, string pattern, bool matchCase = false, CancellationToken cancel = default) =>
-        [.. TextSearch.Find(cache, pattern, new TextSearchOptions(MatchCase: matchCase, Regex: true), cancel: cancel)
+    public static IReadOnlyList<RedactionMatch> FindRegex(TextCache cache, string pattern, bool matchCase = false, CancellationToken cancel = default, SearchTimeouts? timeouts = null) =>
+        [.. TextSearch.Find(cache, pattern, new TextSearchOptions(MatchCase: matchCase, Regex: true), cancel: cancel, timeouts: timeouts)
             .Select(h => new RedactionMatch(RedactionMark.FromMatch(h), h.Text, RedactionKind.Pattern))];
 
-    public static IReadOnlyList<RedactionMatch> FindWords(TextCache cache, IEnumerable<string> words, bool wholeWord = true, bool matchCase = false, CancellationToken cancel = default)
+    public static IReadOnlyList<RedactionMatch> FindWords(TextCache cache, IEnumerable<string> words, bool wholeWord = true, bool matchCase = false, CancellationToken cancel = default, SearchTimeouts? timeouts = null)
     {
         var options = new TextSearchOptions(MatchCase: matchCase, WholeWord: wholeWord);
-        return [.. words.Where(w => w.Length > 0).Distinct().SelectMany(w => TextSearch.Find(cache, w, options, cancel: cancel))
+        return [.. words.Where(w => w.Length > 0).Distinct().SelectMany(w => TextSearch.Find(cache, w, options, cancel: cancel, timeouts: timeouts))
             .OrderBy(h => h.Page).ThenBy(h => h.Range.Start)
             .Select(h => new RedactionMatch(RedactionMark.FromMatch(h), h.Text, RedactionKind.Word))];
     }

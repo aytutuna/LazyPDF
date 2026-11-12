@@ -62,8 +62,8 @@ public sealed class TextSource
     }
 
     /// <summary>Every match, page by page, as they are found; run it off the UI thread. Throws <see cref="OperationCanceledException"/>.</summary>
-    public IEnumerable<SearchMatch> Find(string query, TextSearchOptions options, CancellationToken cancel) =>
-        TextSearch.Find(_cache, query, options, 0, int.MaxValue, cancel);
+    public IEnumerable<SearchMatch> Find(string query, TextSearchOptions options, CancellationToken cancel, SearchTimeouts? timeouts = null) =>
+        TextSearch.Find(_cache, query, options, 0, int.MaxValue, cancel, timeouts);
 
     /// <summary>The text of a page for the search thread, which does not go through <see cref="GetAsync"/>.</summary>
     public TextPage Page(int page) => _cache.Get(page);

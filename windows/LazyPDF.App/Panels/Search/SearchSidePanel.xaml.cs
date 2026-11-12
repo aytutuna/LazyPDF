@@ -61,9 +61,11 @@ public partial class SearchSidePanel : ToolPanel
             : search.BadPattern ? Loc.T("Not a valid pattern")
             : search.Running && search.Hits.Count > 0 ? Loc.T("{0} found", search.Hits.Count)
             : search.Running ? Loc.T("Searching for {0}", search.Query)
+            : search.Hits.Count == 0 && TimedOutText.For(search.TimedOut) is { } slow ? slow
             : search.NoText ? Loc.T("This file has no text to search. Try Make searchable.")
             : search.Hits.Count == 0 ? Loc.T("No results for {0}", search.Query)
             : Loc.Plural(search.Hits.Count, "{0} result for {1}", "{0} results for {1}", search.Hits.Count, search.Query);
+        if (search.Hits.Count > 0 && TimedOutText.For(search.TimedOut) is { } more) Summary.Text += " " + more;
         if (Results.SelectedIndex == search.Current) return;
         _syncing = true;
         Results.SelectedIndex = search.Current;

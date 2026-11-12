@@ -65,6 +65,20 @@ public sealed class RedactJobTests
     }
 
     [Fact]
+    public void APatternThatRunsOutOfTimeIsReportedByPage()
+    {
+        using var document = RedactJob.Open(Pdfs.Text(2, new string('a', 40) + "!"), null, null);
+
+        var slow = RedactJob.FindPatterns(document, [@"^(a+)+$"], false, CancellationToken.None);
+        var quick = RedactJob.FindPatterns(document, ["a+!"], false, CancellationToken.None);
+
+        Assert.Empty(slow.Items);
+        Assert.Equal([0, 1], slow.TimedOut);
+        Assert.Equal(2, quick.Items.Count);
+        Assert.Empty(quick.TimedOut ?? []);
+    }
+
+    [Fact]
     public void WordsAndPatternsSearchTheValuesToo()
     {
         using var document = RedactJob.Open(WithNoteAndField("mail bob@example.com"), null, null);

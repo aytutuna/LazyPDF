@@ -3670,6 +3670,9 @@
   <data name="Not found" xml:space="preserve">
     <value>Bulunamadı</value>
   </data>
+  <data name="Not fully searched" xml:space="preserve">
+    <value>Tam aranmadı</value>
+  </data>
   <data name="Not imported" xml:space="preserve">
     <value>İçe aktarılamadı</value>
   </data>
@@ -5656,6 +5659,9 @@
   <data name="Some pages of {0} could not be drawn and came out blank." xml:space="preserve">
     <value>{0} dosyasının bazı sayfaları çizilemedi ve boş çıktı.</value>
   </data>
+  <data name="Some pages were not searched" xml:space="preserve">
+    <value>Bazı sayfalar aranmadı</value>
+  </data>
   <data name="Something went wrong" xml:space="preserve">
     <value>Bir şeyler ters gitti</value>
   </data>
@@ -6618,6 +6624,15 @@
   </data>
   <data name="The passwords do not match." xml:space="preserve">
     <value>Parolalar eşleşmiyor.</value>
+  </data>
+  <data name="The pattern took too long on page {0}; it was not searched." xml:space="preserve">
+    <value>Desen {0}. sayfada çok uzun sürdü; sayfa aranmadı.</value>
+  </data>
+  <data name="The pattern took too long on pages {0}; they were not searched." xml:space="preserve">
+    <value>Desen {0} sayfalarında çok uzun sürdü; bu sayfalar aranmadı.</value>
+  </data>
+  <data name="The pattern took too long on {0} pages, the first being page {1}; they were not searched." xml:space="preserve">
+    <value>Desen {0} sayfada çok uzun sürdü, ilki {1}. sayfa; bu sayfalar aranmadı.</value>
   </data>
   <data name="The permissions of this file do not allow changing its fields." xml:space="preserve">
     <value>Bu dosyanın izinleri alanlarının değiştirilmesine izin vermiyor.</value>
@@ -7863,6 +7878,9 @@
   </data>
   <data name="{0} actions or scripts were removed." xml:space="preserve">
     <value>{0} eylem ya da betik kaldırıldı.</value>
+  </data>
+  <data name="{0} and {1}" xml:space="preserve">
+    <value>{0} ve {1}</value>
   </data>
   <data name="{0} annotations of a kind this level does not allow were removed." xml:space="preserve">
     <value>Bu düzeyin izin vermediği türden {0} ek açıklama kaldırıldı.</value>
