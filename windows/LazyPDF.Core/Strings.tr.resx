@@ -7915,6 +7915,9 @@
   <data name="{0} cannot be repaired. Try an earlier copy of it." xml:space="preserve">
     <value>{0} onarılamıyor. Daha eski bir kopyasını deneyin.</value>
   </data>
+  <data name="{0} cannot be used to protect a file. Choose a certificate with an RSA or a P-256 or P-384 key." xml:space="preserve">
+    <value>{0} bir dosyayı korumak için kullanılamaz. RSA, P-256 veya P-384 anahtarlı bir sertifika seçin.</value>
+  </data>
   <data name="{0} changed while this ran. Run it again." xml:space="preserve">
     <value>{0} bu işlem sürerken değişti. İşlemi yeniden çalıştırın.</value>
   </data>
@@ -8142,9 +8145,6 @@
   </data>
   <data name="{0} is not an FDF, XFDF, CSV or JSON file. Pick another file." xml:space="preserve">
     <value>{0} bir FDF, XFDF, CSV veya JSON dosyası değil. Başka bir dosya seçin.</value>
-  </data>
-  <data name="{0} is not an RSA certificate. Ask for the person's certificate file." xml:space="preserve">
-    <value>{0} bir RSA sertifikası değil. Kişiden sertifika dosyasını isteyin.</value>
   </data>
   <data name="{0} is not there any more. It may have been moved or deleted." xml:space="preserve">
     <value>{0} artık yok. Taşınmış ya da silinmiş olabilir.</value>

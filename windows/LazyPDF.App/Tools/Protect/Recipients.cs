@@ -51,7 +51,7 @@ public static class RecipientSource
         }
     }
 
-    /// <summary>Your own certificates and the ones kept for other people, RSA keys that can encrypt only, valid ones first.</summary>
+    /// <summary>Your own certificates and the ones kept for other people, those whose key can receive a file (RSA, P-256 or P-384), valid ones first.</summary>
     public static IReadOnlyList<Recipient> FromStore()
     {
         var found = new Dictionary<string, Recipient>();

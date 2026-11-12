@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using LazyPDF.App.Tools.Protect;
+using LazyPDF.Core;
 using Xunit;
 
 namespace LazyPDF.App.Tests.Tools.Protect;
@@ -40,6 +41,22 @@ public sealed class RecipientSourceTests
         using var dir = new TempDir();
 
         Assert.Null(RecipientSource.FromFile(dir.File("notes.cer", "not a certificate"u8.ToArray())));
+    }
+
+    [Theory]
+    [InlineData("nistP256")]
+    [InlineData("nistP384")]
+    public void ACertificateWithAKeyAgreementCurveIsRead(string curve)
+    {
+        using var dir = new TempDir();
+        using var ec = ECDsa.Create(ECCurve.CreateFromFriendlyName(curve));
+        var request = new CertificateRequest("CN=Grace Hopper", ec, HashAlgorithmName.SHA256);
+        string file = dir.File("ec.cer", request.CreateSelfSigned(DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddYears(1)).RawData);
+
+        var recipient = RecipientSource.FromFile(file)!;
+
+        Assert.Equal("Grace Hopper", recipient.Name);
+        Assert.NotNull(recipient.ToPdfRecipient(PdfPermissions.All));
     }
 
     [Fact]

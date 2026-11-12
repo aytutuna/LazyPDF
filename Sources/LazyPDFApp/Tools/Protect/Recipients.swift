@@ -54,7 +54,7 @@ public enum RecipientSource {
         return Recipient(withStoredKey(sec))
     }
 
-    /// Your own certificates and the ones kept for other people, RSA keys that can encrypt only, valid ones first.
+    /// Your own certificates and the ones kept for other people, those whose key can receive a file (RSA, P-256 or P-384), valid ones first.
     public static func fromStore() -> [Recipient] {
         var found: [String: Recipient] = [:]
         for sec in identities().map(\.certificate) + stored() {

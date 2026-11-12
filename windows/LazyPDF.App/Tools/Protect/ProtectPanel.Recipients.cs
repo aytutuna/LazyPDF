@@ -38,7 +38,7 @@ public partial class ProtectPanel
         foreach (string path in dialog.FileNames)
         {
             if (RecipientSource.FromFile(path) is { } recipient) Add(recipient);
-            else Host?.ShowProblem(new Problem(Loc.T("Not a usable certificate"), Loc.T("{0} is not an RSA certificate. Ask for the person's certificate file.", System.IO.Path.GetFileName(path))));
+            else Host?.ShowProblem(new Problem(Loc.T("Not a usable certificate"), Loc.T("{0} cannot be used to protect a file. Choose a certificate with an RSA or a P-256 or P-384 key.", System.IO.Path.GetFileName(path))));
         }
     }
 

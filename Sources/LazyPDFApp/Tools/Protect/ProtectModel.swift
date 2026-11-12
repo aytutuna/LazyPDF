@@ -192,7 +192,7 @@ public final class ProtectModel: ToolPanelModel {
             }
             #endif
             host.showProblem(Problem(L10n.t("Not a usable certificate"),
-                                     L10n.t("{0} is not an RSA certificate. Ask for the person's certificate file.", file.url.lastPathComponent)))
+                                     L10n.t("{0} cannot be used to protect a file. Choose a certificate with an RSA or a P-256 or P-384 key.", file.url.lastPathComponent)))
         }
     }
 

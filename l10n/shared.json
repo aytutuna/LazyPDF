@@ -6288,8 +6288,8 @@
   "unprotected": {
     "tr": "korumasız"
   },
-  "{0} is not an RSA certificate. Ask for the person's certificate file.": {
-    "tr": "{0} bir RSA sertifikası değil. Kişiden sertifika dosyasını isteyin."
+  "{0} cannot be used to protect a file. Choose a certificate with an RSA or a P-256 or P-384 key.": {
+    "tr": "{0} bir dosyayı korumak için kullanılamaz. RSA, P-256 veya P-384 anahtarlı bir sertifika seçin."
   },
   "{0}, expired {1}": {
     "tr": "{0}, {1} tarihinde doldu"

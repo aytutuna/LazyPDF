@@ -998,6 +998,7 @@
 "Not everything could be checked. See the details." = "Bazı şeyler denetlenemedi. Ayrıntılara bakın.";
 "Not exported" = "Dışa aktarılmadı";
 "Not found" = "Bulunamadı";
+"Not fully searched" = "Tam aranmadı";
 "Not imported" = "İçe aktarılamadı";
 "Not opened" = "Açılamadı";
 "Not printed" = "Yazdırılmadı";
@@ -1558,6 +1559,7 @@
 "Some letters have no shape in the font and were left out." = "Bazı harflerin yazı tipinde şekli yok, bu yüzden atlandı.";
 "Some letters use {0}." = "Bazı harfler {0} yazı tipini kullanıyor.";
 "Some objects were left as they were: {0}" = "Bazı nesneler olduğu gibi bırakıldı: {0}";
+"Some pages were not searched" = "Bazı sayfalar aranmadı";
 "Something went wrong" = "Bir şeyler ters gitti";
 "Spacing changed." = "Aralık değişti.";
 "Split" = "Böl";
@@ -1844,6 +1846,9 @@
 "The paragraph grew. Text below stayed put." = "Paragraf uzadı. Altındaki metin yerinde kaldı.";
 "The parts could not be made. Try a different amount." = "Parçalar oluşturulamadı. Başka bir değer deneyin.";
 "The passwords do not match." = "Parolalar eşleşmiyor.";
+"The pattern took too long on page {0}; it was not searched." = "Desen {0}. sayfada çok uzun sürdü; sayfa aranmadı.";
+"The pattern took too long on pages {0}; they were not searched." = "Desen {0} sayfalarında çok uzun sürdü; bu sayfalar aranmadı.";
+"The pattern took too long on {0} pages, the first being page {1}; they were not searched." = "Desen {0} sayfada çok uzun sürdü, ilki {1}. sayfa; bu sayfalar aranmadı.";
 "The permissions of this file do not allow changing its fields." = "Bu dosyanın izinleri alanlarının değiştirilmesine izin vermiyor.";
 "The permissions of this file do not allow filling in forms." = "Bu dosyanın izinleri form doldurmaya izin vermiyor.";
 "The print and visibility flags of {0} annotations were corrected." = "{0} ek açıklamanın yazdırma ve görünürlük bayrakları düzeltildi.";
@@ -2164,6 +2169,7 @@
 "{0} PDF/A rule is left.|one" = "{0} PDF/A kuralı kaldı.";
 "{0} PDF/A rule is left.|other" = "{0} PDF/A kuralı kaldı.";
 "{0} actions or scripts were removed." = "{0} eylem ya da betik kaldırıldı.";
+"{0} and {1}" = "{0} ve {1}";
 "{0} annotations of a kind this level does not allow were removed." = "Bu düzeyin izin vermediği türden {0} ek açıklama kaldırıldı.";
 "{0} area differs|one" = "{0} alan farklı";
 "{0} area differs|other" = "{0} alan farklı";
@@ -2174,6 +2180,7 @@
 "{0} bytes" = "{0} bayt";
 "{0} came inside this PDF. Open it only if you trust where the PDF came from." = "{0} bu PDF'nin içinde geldi. Yalnızca PDF'nin nereden geldiğine güveniyorsanız açın.";
 "{0} cannot be repaired. Try an earlier copy of it." = "{0} onarılamıyor. Daha eski bir kopyasını deneyin.";
+"{0} cannot be used to protect a file. Choose a certificate with an RSA or a P-256 or P-384 key." = "{0} bir dosyayı korumak için kullanılamaz. RSA, P-256 veya P-384 anahtarlı bir sertifika seçin.";
 "{0} changed while this ran. Run it again." = "{0} bu işlem sürerken değişti. İşlemi yeniden çalıştırın.";
 "{0} character|one" = "{0} karakter";
 "{0} character|other" = "{0} karakter";
@@ -2249,7 +2256,6 @@
 "{0} is locked. Type its password." = "{0} kilitli. Parolasını yazın.";
 "{0} is not a PDF file. Pick a PDF, a picture or a text file." = "{0} bir PDF dosyası değil. Bir PDF, resim ya da metin dosyası seçin.";
 "{0} is not an FDF, XFDF, CSV or JSON file. Pick another file." = "{0} bir FDF, XFDF, CSV veya JSON dosyası değil. Başka bir dosya seçin.";
-"{0} is not an RSA certificate. Ask for the person's certificate file." = "{0} bir RSA sertifikası değil. Kişiden sertifika dosyasını isteyin.";
 "{0} is not there any more. It may have been moved or deleted." = "{0} artık yok. Taşınmış ya da silinmiş olabilir.";
 "{0} is open in another tab and the name you picked replaced it. Go to that tab and save it to put it back." = "{0} başka bir sekmede açık ve seçtiğiniz ad onun yerine geçti. O sekmeye gidip kaydederek dosyayı geri getirin.";
 "{0} is open in another tab. Close that tab first, or pick another name." = "{0} başka bir sekmede açık. Önce o sekmeyi kapatın ya da başka bir ad seçin.";
