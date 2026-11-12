@@ -260,7 +260,17 @@ internal sealed partial class Paginator
             var first = line.Atoms[from];
             if (first.Picture is { } picture)
             {
-                pictures.Add(new PlacedImage(originX + first.X, baseline - first.PictureHeight - first.Run.Shift, first.Width, first.PictureHeight, picture));
+                double y = baseline - first.PictureHeight - first.Run.Shift, height = first.PictureHeight;
+                // Under exact spacing the picture can reach above the line; Word cuts it off at the line top.
+                if (y < top)
+                {
+                    double cut = top - y;
+                    height -= cut;
+                    double visible = 1 - picture.CropTop - picture.CropBottom;
+                    picture = picture with { CropTop = picture.CropTop + visible * cut / first.PictureHeight };
+                    y = top;
+                }
+                if (height > 0.01) pictures.Add(new PlacedImage(originX + first.X, y, first.Width, height, picture));
                 from++;
                 continue;
             }

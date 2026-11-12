@@ -259,8 +259,22 @@ final class Paginator {
         while from <= ink {
             let first = line.atoms[from]
             if let picture = first.picture {
-                pictures.append(.image(PlacedImage(x: originX + first.x, y: baseline - first.pictureHeight - first.run.shift, width: first.width,
-                                                   height: first.pictureHeight, source: picture)))
+                var y = baseline - first.pictureHeight - first.run.shift
+                var height = first.pictureHeight
+                var source = picture
+                // Under exact spacing the picture can reach above the line; Word cuts it off at the line top.
+                if y < top {
+                    let cut = top - y
+                    height -= cut
+                    let visible = 1 - picture.cropTop - picture.cropBottom
+                    source = LayoutPicture(picture.file, picture.width, picture.height, cropLeft: picture.cropLeft,
+                                           cropTop: picture.cropTop + visible * cut / first.pictureHeight,
+                                           cropRight: picture.cropRight, cropBottom: picture.cropBottom)
+                    y = top
+                }
+                if height > 0.01 {
+                    pictures.append(.image(PlacedImage(x: originX + first.x, y: y, width: first.width, height: height, source: source)))
+                }
                 from += 1
                 continue
             }

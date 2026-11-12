@@ -225,6 +225,24 @@ final class OfficeLayoutTests: XCTestCase {
         XCTAssertEqual(texts(result.pages[0]).filter { $0.size == 11 }.map(\.text), ["Body"])
     }
 
+    func test_aTallPictureOnAnExactLineIsCutAtTheLineTop() throws {
+        let run = LayoutRun()
+        run.picture = LayoutPicture(PictureFile([0xFF, 0xD8, 0xFF, 0xD9]), 50, 50)
+        let made = LayoutParagraph()
+        made.runs = [run]
+        made.rule = .exact
+        made.lineSpacing = 12
+        let result = try layout(single(Self.small, [made]))
+        let images: [PlacedImage] = result.pages[0].boxes.compactMap { if case .image(let i) = $0 { return i } else { return nil } }
+        XCTAssertEqual(images.count, 1)
+        let image = try XCTUnwrap(images.first)
+        XCTAssertEqual(image.y, Self.small.top, accuracy: 1e-6)
+        XCTAssertGreaterThan(image.height, 1)
+        XCTAssertLessThanOrEqual(image.height, 12)
+        XCTAssertEqual(50 - image.height, image.source.cropTop * 50, accuracy: 1e-6)
+        XCTAssertEqual(image.width, 50)
+    }
+
     func test_exactSpacingSetsTheLineHeight() throws {
         let made = paragraph(Array(repeating: "word", count: 12).joined(separator: " "))
         made.rule = .exact

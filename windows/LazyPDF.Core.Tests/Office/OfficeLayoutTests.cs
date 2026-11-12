@@ -251,6 +251,18 @@ public class OfficeLayoutTests
     }
 
     [Fact]
+    public void ATallPictureOnAnExactLineIsCutAtTheLineTop()
+    {
+        var picture = new LayoutPicture([0xFF, 0xD8, 0xFF, 0xD9], 50, 50);
+        var paragraph = new LayoutParagraph { Runs = [new LayoutRun { Picture = picture }], Rule = LineRule.Exact, LineSpacing = 12 };
+        var image = Assert.Single(Layout(Single(Small, paragraph)).Pages[0].Boxes.OfType<PlacedImage>());
+        Assert.Equal(Small.Top, image.Y, 6);
+        Assert.InRange(image.Height, 1, 12);
+        Assert.Equal(50 - image.Height, image.Source.CropTop * 50, 6);
+        Assert.Equal(50, image.Width);
+    }
+
+    [Fact]
     public void BadGeometryAndRunawayLengthAreRefused()
     {
         var narrow = Single(new LayoutGeometry { Width = 100, Height = 100, Left = 50, Right = 40 }, Paragraph("x"));
