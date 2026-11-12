@@ -159,6 +159,22 @@ public class RedactImageTests
         Assert.Empty(ImageStreams(output));
     }
 
+    [Theory]
+    [InlineData("JBIG2Decode", false)]
+    [InlineData("JBIG2Decode", true)]
+    [InlineData("JPXDecode", false)]
+    [InlineData("JPXDecode", true)]
+    public void PictureThatCannotBeDecodedIsRemoved(string filter, bool codec)
+    {
+        using var document = RedactionKit.Page(Place, "/XObject <</Im1 6 0 R>>", pdf =>
+            pdf.Stream(6, $"/Type /XObject /Subtype /Image /Width 8 /Height 6 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /{filter}", [1, 2, 3, 4, 5, 6]));
+        var result = new PdfRedactor(document, images: codec ? new FakeCodec(null) : null).Apply([TopLeft()]);
+        using var output = RedactionKit.Open(result);
+        Assert.Empty(RedactionKit.Images(output));
+        Assert.Empty(ImageStreams(output));
+        Assert.Equal(1, result.Report.Images);
+    }
+
     [Fact]
     public void ImageOutsideTheMarkIsLeftAlone()
     {

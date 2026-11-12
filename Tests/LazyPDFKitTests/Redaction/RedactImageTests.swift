@@ -150,6 +150,21 @@ final class RedactImageTests: XCTestCase {
         XCTAssertTrue(imageStreams(output).isEmpty)
     }
 
+    func test_pictureThatCannotBeDecodedIsRemoved() throws {
+        for filter in ["JBIG2Decode", "JPXDecode"] {
+            for codec in [false, true] {
+                let document = try RedactionKit.page(place, "/XObject <</Im1 6 0 R>>") { pdf in
+                    pdf.stream(6, "/Type /XObject /Subtype /Image /Width 8 /Height 6 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /\(filter)", [1, 2, 3, 4, 5, 6])
+                }
+                let result = try PdfRedactor(document, nil, codec ? FakeCodec(nil) : nil).apply([topLeft()])
+                let output = try RedactionKit.open(result)
+                XCTAssertTrue(RedactionKit.images(output).isEmpty, filter)
+                XCTAssertTrue(imageStreams(output).isEmpty, filter)
+                XCTAssertEqual(result.report.images, 1, filter)
+            }
+        }
+    }
+
     func test_imageOutsideTheMarkIsLeftAlone() throws {
         let data = gradient()
         let document = try withImage("/ColorSpace /DeviceGray /BitsPerComponent 8", data)
