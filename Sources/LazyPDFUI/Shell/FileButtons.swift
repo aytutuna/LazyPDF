@@ -40,7 +40,7 @@ public struct FileActions {
     }
 
     public func print() {
-        vm.print()
+        if vm.handIn() { vm.print() }
     }
 
     public func printHere() {
