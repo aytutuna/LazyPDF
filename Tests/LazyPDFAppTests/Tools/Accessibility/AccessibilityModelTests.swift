@@ -188,6 +188,16 @@ final class AccessibilityModelTests: XCTestCase {
         XCTAssertFalse(rig.tab.document.isTagged)
     }
 
+    func test_addingTagsGivesAFileWithoutALanguageTheOnePreferred() async throws {
+        let (model, rig) = try await attached(try prose())
+        let wanted = AccessibilityEdits.languageOf(rig.tab.document)
+        XCTAssertNil(PdfText.read(rig.tab.document, rig.tab.document.catalog, "Lang"))
+
+        await tag(model, rig)
+
+        XCTAssertEqual(PdfText.read(rig.tab.document, rig.tab.document.catalog, "Lang"), wanted)
+    }
+
     func test_aFileThatHasTagsAlreadyIsToldSoAndNothingChanges() async throws {
         let (model, rig) = try await attached(try prose())
         await tag(model, rig)

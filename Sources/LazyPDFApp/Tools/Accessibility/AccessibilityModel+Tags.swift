@@ -94,7 +94,7 @@ extension AccessibilityModel {
                 do {
                     // The tagger edits the document as it goes, so Cancel stops it, waits for it to be done and then takes
                     // back what it did.
-                    let job = Task.detached { try AutoTagger.tag(document) }
+                    let job = Task.detached { try AutoTagger.tag(document, AutoTagOptions(AccessibilityEdits.languageOf(document))) }
                     let watcher = Task {
                         while !Task.isCancelled {
                             if token.isCancelled { return job.cancel() }
