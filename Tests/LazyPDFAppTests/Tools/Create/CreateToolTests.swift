@@ -79,6 +79,42 @@ final class CreateToolTests: XCTestCase {
         XCTAssertEqual(made.unreadable, 1)
     }
 
+    func test_aPictureTooBigToDecodeIsCountedAndTheRestStay() throws {
+        final class BigCodec: ImageCodec {
+            func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+            func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? {
+                [PdfRgbaImage(4, 4, [UInt8](repeating: 128, count: 64)), PdfRgbaImage(60000, 60000, [])]
+            }
+            func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [] }
+        }
+        let dir = TempDir(self)
+        let file = dir.file("a.png", try png())
+
+        let made = try make(CreateRequest(.pictures, a4, "Pictures.pdf", files: [file]), codec: BigCodec())
+
+        XCTAssertEqual(made.pages, 1)
+        XCTAssertEqual(made.tooLarge, 1)
+        XCTAssertEqual(made.unreadable, 0)
+    }
+
+    @MainActor
+    func test_picturesLeftOutForSizeAreSaid() async throws {
+        final class BigCodec: ImageCodec {
+            func decode(_ data: [UInt8], _ codec: String) -> PdfRgbaImage? { nil }
+            func decodeFile(_ file: [UInt8]) -> [PdfRgbaImage]? {
+                [PdfRgbaImage(4, 4, [UInt8](repeating: 128, count: 64)), PdfRgbaImage(60000, 60000, [])]
+            }
+            func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [] }
+        }
+        let f = ViewModelFixture(self)
+        let file = TempDir(self).file("a.png", try png())
+
+        try await CreateJob.run(f.vm, BigCodec(), FakeFonts(), CreateRequest(.pictures, a4, "Pictures.pdf", files: [file]))
+
+        XCTAssertEqual(f.vm.message?.title, "Some left out")
+        XCTAssertEqual(f.vm.message?.text, "1 picture was too large and was left out.")
+    }
+
     #if canImport(ImageIO)
     func test_thePictureOnTheClipboardIsOnePage() throws {
         let setup = PdfPageSetup(paper: .picture, margin: 10)

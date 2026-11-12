@@ -1265,6 +1265,7 @@
 "Reading order" = "Okuma sırası";
 "Reading page {0} of {1}" = "Sayfa {0}/{1} okunuyor";
 "Reading pages" = "Sayfalar okunuyor";
+"Reading stopped" = "Okuma durduruldu";
 "Reading the tags" = "Etiketler okunuyor";
 "Real length" = "Gerçek uzunluk";
 "Real unit" = "Gerçek birim";
@@ -1567,6 +1568,8 @@
 "Still working" = "Hâlâ çalışıyor";
 "Stop placing" = "Yerleştirmeyi bırak";
 "Stop reading" = "Okumayı durdur";
+"Stopped after {0} page. The page was kept. Undo takes it back.|one" = "{0} sayfa okunduktan sonra durduruldu. Okunan sayfalar korundu; Geri al ile kaldırabilirsiniz.";
+"Stopped after {0} page. The page was kept. Undo takes it back.|other" = "{0} sayfa okunduktan sonra durduruldu. Okunan sayfalar korundu; Geri al ile kaldırabilirsiniz.";
 "Straight lines" = "Düz çizgiler";
 "Stretch to the page" = "Sayfaya ger";
 "Strike" = "Üstü çizili";
@@ -2285,6 +2288,8 @@
 "{0} picture could not be read.|other" = "{0} resim okunamadı.";
 "{0} picture was left out because the file is too large.|one" = "{0} resim, dosya çok büyük olduğu için dışarıda bırakıldı.";
 "{0} picture was left out because the file is too large.|other" = "{0} resim, dosya çok büyük olduğu için dışarıda bırakıldı.";
+"{0} picture was too large and was left out.|one" = "{0} resim çok büyük olduğu için dışarıda bırakıldı.";
+"{0} picture was too large and was left out.|other" = "{0} resim çok büyük olduğu için dışarıda bırakıldı.";
 "{0} picture|one" = "{0} resim";
 "{0} picture|other" = "{0} resim";
 "{0} pt" = "{0} pt";

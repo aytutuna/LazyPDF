@@ -29,17 +29,26 @@ public struct CreateRequest {
     }
 }
 
-/// `unreadable` counts the pictures that could not be read, or the letters the font lacks.
+/// `unreadable` counts the pictures that could not be read, or the letters the font lacks; `tooLarge` the picture frames
+/// too big to decode that were left out.
 public struct MadePdf {
     public let bytes: [UInt8]
     public let pages: Int
     public let unreadable: Int
+    public let tooLarge: Int
+
+    init(bytes: [UInt8], pages: Int, unreadable: Int, tooLarge: Int = 0) {
+        self.bytes = bytes
+        self.pages = pages
+        self.unreadable = unreadable
+        self.tooLarge = tooLarge
+    }
 }
 
 public enum PdfMaker {
     public static let mostBlankPages = 500
 
-    /// The engine calls take no token, so a cancel is only seen between the files read.
+    /// The engine calls stop through the task `ToolDocuments.run` cancels; the token is also looked at between the files read.
     public static func make(_ request: CreateRequest, _ codec: ImageCodec, _ fonts: FontSource?, _ token: CancelToken = CancelToken()) throws -> MadePdf {
         switch request.source {
         case .blank:
@@ -57,7 +66,7 @@ public enum PdfMaker {
                 }
             }
             let pictures = try PdfFromPictures.create(files, codec, request.setup)
-            return MadePdf(bytes: pictures.bytes, pages: pictures.pages, unreadable: pictures.unreadable.count)
+            return MadePdf(bytes: pictures.bytes, pages: pictures.pages, unreadable: pictures.unreadable.count, tooLarge: pictures.skippedFrames)
         case .text:
             let text = try PdfFromText.create(request.text, fonts: fonts, setup: request.setup, size: request.fontSize)
             return MadePdf(bytes: text.bytes, pages: text.pages, unreadable: text.missing.count)
@@ -80,11 +89,16 @@ public enum CreateJob {
         guard let made else { return }
 
         await host.openNew(made.bytes, title: request.title, password: nil, certificate: nil)
-        if made.unreadable == 0 { return }
-        let text = request.source == .pictures
-            ? L10n.plural(made.unreadable, one: "{0} picture could not be read.", other: "{0} pictures could not be read.")
-            : L10n.t("Some letters have no shape in the font and were left out.")
-        host.showNotice(L10n.t("Some left out"), text, nil)
+        var parts: [String] = []
+        if made.unreadable > 0 {
+            parts.append(request.source == .pictures
+                ? L10n.plural(made.unreadable, one: "{0} picture could not be read.", other: "{0} pictures could not be read.")
+                : L10n.t("Some letters have no shape in the font and were left out."))
+        }
+        if made.tooLarge > 0 {
+            parts.append(L10n.plural(made.tooLarge, one: "{0} picture was too large and was left out.", other: "{0} pictures were too large and were left out."))
+        }
+        if !parts.isEmpty { host.showNotice(L10n.t("Some left out"), parts.joined(separator: " "), nil) }
     }
 }
 
