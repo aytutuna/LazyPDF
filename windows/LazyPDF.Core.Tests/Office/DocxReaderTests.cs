@@ -35,6 +35,31 @@ public class DocxReaderTests
     private const string W = "xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"";
 
     [Fact]
+    public void ListLabelsStayShortForCraftedNumbering()
+    {
+        var parts = new Dictionary<string, StringBuilder>
+        {
+            ["numbering"] = new("<w:abstractNum w:abstractNumId=\"0\"><w:lvl w:ilvl=\"0\"><w:start w:val=\"99999999\"/><w:numFmt w:val=\"lowerLetter\"/><w:lvlText w:val=\"" + string.Concat(Enumerable.Repeat("%1", 500)) + "\"/></w:lvl></w:abstractNum><w:num w:numId=\"1\"><w:abstractNumId w:val=\"0\"/></w:num>"),
+            ["document"] = new("<w:p><w:pPr><w:numPr><w:numId w:val=\"1\"/></w:numPr></w:pPr><w:r><w:t>x</w:t></w:r></w:p>"),
+        };
+        var document = DocxReader.Read(DocxSpec.Package(parts));
+        var text = ((LayoutParagraph)document.Sections[0].Blocks[0]).Runs[0].Text;
+        Assert.True(text.Length <= 64 + 2 + 1, text.Length.ToString());
+        Assert.EndsWith("	x", text);
+    }
+
+    [Theory]
+    [InlineData(1, "lowerLetter", "a")]
+    [InlineData(27, "lowerLetter", "aa")]
+    [InlineData(4, "upperRoman", "IV")]
+    [InlineData(1994, "lowerRoman", "mcmxciv")]
+    [InlineData(4000, "upperRoman", "4000")]
+    [InlineData(7, "decimalZero", "07")]
+    [InlineData(12, "decimalZero", "12")]
+    [InlineData(5, "unknownFormat", "5")]
+    public void NumberFormats(int value, string format, string expected) => Assert.Equal(expected, DocxNumbering.Format(value, format));
+
+    [Fact]
     public void ReadsAMinimalPackageWithAnAbsoluteTarget()
     {
         var package = Zip(("[Content_Types].xml", Types), ("_rels/.rels", Rels), ("word/document.xml", $"<w:document {W}><w:body><w:p><w:r><w:t>hi</w:t></w:r></w:p></w:body></w:document>"));

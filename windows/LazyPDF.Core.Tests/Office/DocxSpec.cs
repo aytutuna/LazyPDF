@@ -10,7 +10,7 @@ namespace LazyPDF.Core.Tests;
 //
 //   > name                  starts a case
 //   @document               the lines that follow are the inside of w:body
-//   @styles, @header, @footer, @theme   the inside of w:styles, w:hdr, w:ftr, a:theme
+//   @styles, @numbering, @header, @footer, @theme   the inside of w:styles, w:numbering, w:hdr, w:ftr, a:theme
 //   @part path              a whole part, written out
 internal static class DocxSpec
 {
@@ -84,6 +84,7 @@ internal static class DocxSpec
 
         Add("word/document.xml", $"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><w:document {Namespaces}><w:body>{Get("document")}</w:body></w:document>");
         Wrapped("styles", "word/styles.xml", "styles", "rIdS", "w:styles", Main + "styles+xml");
+        Wrapped("numbering", "word/numbering.xml", "numbering", "rIdN", "w:numbering", Main + "numbering+xml");
         Wrapped("theme", "word/theme/theme1.xml", "theme", "rIdT", "a:theme", "application/vnd.openxmlformats-officedocument.theme+xml");
         Wrapped("header", "word/header1.xml", "header", "rIdH", "w:hdr", Main + "header+xml");
         Wrapped("footer", "word/footer1.xml", "footer", "rIdF", "w:ftr", Main + "footer+xml");
@@ -129,6 +130,7 @@ internal static class DocxSpec
         o.Append($"{band} {p.Align.ToString().ToLowerInvariant()} {Num(p.Left)} {Num(p.Right)} {Num(p.FirstLine)} {Num(p.Before)} {Num(p.After)} {Num(p.LineSpacing)} {p.Rule.ToString().ToLowerInvariant()}");
         if (p.KeepWithNext) o.Append(" keep");
         if (p.PageBreakBefore) o.Append(" break");
+        if (p.LabelTab is { } tab) o.Append($" labeltab={Num(tab)}");
         if (!p.WidowControl) o.Append(" nowidow");
         o.Append('\n');
         foreach (var r in p.Runs)

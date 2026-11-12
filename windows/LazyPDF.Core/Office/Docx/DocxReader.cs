@@ -16,6 +16,7 @@ internal sealed class DocxReader
     private const string MathNs = "http://schemas.openxmlformats.org/officeDocument/2006/math";
     private const string StylesType = R + "/styles";
     private const string ThemeType = R + "/theme";
+    private const string NumberingType = R + "/numbering";
     private const string HeaderType = R + "/header";
     private const string FooterType = R + "/footer";
 
@@ -47,6 +48,7 @@ internal sealed class DocxReader
     private readonly Dictionary<string, List<LayoutParagraph>> _bands = new(StringComparer.OrdinalIgnoreCase);
     private DocxStyles _styles = new();
     private DocxTheme _theme = new();
+    private DocxNumbering _numbering = new();
 
     // State of the part being read.
     private List<LayoutBlock> _blocks = [];
@@ -86,6 +88,7 @@ internal sealed class DocxReader
         var relationships = _package.Relationships(main);
         _styles = DocxStyles.Read(Part(relationships, StylesType));
         _theme = DocxTheme.Read(Part(relationships, ThemeType));
+        _numbering = DocxNumbering.Read(Part(relationships, NumberingType));
 
         Blocks(body);
         var all = _blocks;
@@ -231,15 +234,24 @@ internal sealed class DocxReader
         props.Apply(pPr);
         var mark = known.Item2.Copy();
         mark.Apply(pPr?.Child(W, "rPr"), _theme);
-        if (props.NumId is not (null or 0)) Skip("numbering");
+
+        // The level's indents sit between the style and the paragraph's own.
+        NumberLabel? label = props.NumId is > 0 and var numId ? _numbering.Next(numId, props.Ilvl, styleId) : null;
+        if (label is not null)
+        {
+            props = known.Item1.Copy();
+            props.Apply(label.PPr);
+            props.Apply(pPr);
+        }
 
         _pieces.Clear();
+        if (label is not null) Label(label, mark);
         bool first = true;
         void Emit(bool last)
         {
             var runs = Runs(mark, last);
             if (runs is null) return;
-            _blocks.Add(Make(props, runs, first && props.PageBreakBefore == true));
+            _blocks.Add(Make(props, runs, first && props.PageBreakBefore == true, label?.Suffix == "tab" ? label.TabStop : null));
             first = false;
         }
         _breaker = () =>
@@ -277,7 +289,19 @@ internal sealed class DocxReader
         Color = f.Color, Highlight = f.Highlight, Shift = f.Shift, Field = f.Field,
     };
 
-    private static LayoutParagraph Make(ParaProps p, List<LayoutRun> runs, bool pageBreakBefore)
+    private void Label(NumberLabel label, RunProps mark)
+    {
+        if (label.Text.Length == 0 && label.Suffix == "nothing") return;
+        var props = mark.Copy();
+        props.Apply(label.RPr, _theme);
+        if (label.SymbolFont is not null) props.Family = mark.Family;
+        string text = label.Text + label.Suffix switch { "nothing" => "", "space" => " ", _ => "	" };
+        var piece = new Piece(Format(props, text, LayoutField.None));
+        piece.Text.Append(text);
+        _pieces.Add(piece);
+    }
+
+    private static LayoutParagraph Make(ParaProps p, List<LayoutRun> runs, bool pageBreakBefore, double? labelTab)
     {
         var rule = p.LineRule switch { "exact" => LineRule.Exact, "atLeast" => LineRule.AtLeast, _ => LineRule.Multiple };
         double spacing = 1;
@@ -300,6 +324,7 @@ internal sealed class DocxReader
             KeepWithNext = p.KeepNext == true,
             PageBreakBefore = pageBreakBefore,
             WidowControl = p.Widow != false,
+            LabelTab = labelTab,
         };
     }
 

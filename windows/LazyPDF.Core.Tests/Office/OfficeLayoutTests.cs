@@ -76,6 +76,21 @@ public class OfficeLayoutTests
         Golden.Check("office-layout", "linebreak-output.txt", output.ToString());
     }
 
+    [Fact]
+    public void TheTabAfterAListNumberRunsToItsStopOrTheHangingIndent()
+    {
+        var page = new LayoutGeometry { Width = 300, Height = 200, Top = 10, Right = 10, Bottom = 10, Left = 10 };
+        double TextX(double left, double first, double? stop)
+        {
+            var paragraph = new LayoutParagraph { Runs = [new LayoutRun { Text = "1." + (char)9 + "word" }], Left = left, FirstLine = first, LabelTab = stop };
+            return Texts(Layout(Single(page, paragraph)).Pages[0]).Single(t => t.Text.Contains("word")).X;
+        }
+        Assert.Equal(10 + 50, TextX(0, 0, 50), 2);
+        Assert.Equal(10 + 40, TextX(40, -40, null), 2);
+        Assert.Equal(10 + 30, TextX(40, -40, 30), 2);
+        Assert.Equal(10 + 36, TextX(0, 0, null), 2);
+    }
+
     private static LayoutDocument Single(LayoutGeometry page, params LayoutBlock[] blocks) =>
         new() { Sections = [new LayoutSection { Page = page, Blocks = [.. blocks] }] };
 

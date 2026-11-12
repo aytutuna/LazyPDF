@@ -57,6 +57,8 @@ internal sealed class LayoutParagraph : LayoutBlock
     public bool KeepWithNext { get; init; }
     public bool PageBreakBefore { get; init; }
     public bool WidowControl { get; init; } = true;
+    /// <summary>A tab stop, from the text area, for the tab after a list number; that tab is the first one of the paragraph.</summary>
+    public double? LabelTab { get; init; }
 }
 
 /// <summary>Sizes in points. Header and footer distances are measured from the page edge to the band.</summary>

@@ -62,7 +62,7 @@ internal sealed class ParaProps
     public double? Left, Right, First, Before, After, Line;
     public string? LineRule;
     public bool? KeepNext, PageBreakBefore, Widow;
-    public int? NumId;
+    public int? NumId, Ilvl;
 
     public ParaProps Copy() => (ParaProps)MemberwiseClone();
 
@@ -101,6 +101,7 @@ internal sealed class ParaProps
                 case "widowControl": Widow = DocxReader.On(e); break;
                 case "numPr":
                     if (DocxReader.Number(e.Child(DocxReader.W, "numId")?.Attribute(DocxReader.W, "val")) is { } id) NumId = (int)Math.Clamp(id, int.MinValue, int.MaxValue);
+                    if (DocxReader.Number(e.Child(DocxReader.W, "ilvl")?.Attribute(DocxReader.W, "val")) is { } level) Ilvl = (int)Math.Clamp(level, int.MinValue, int.MaxValue);
                     break;
             }
         }

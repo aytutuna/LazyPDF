@@ -12,6 +12,8 @@ internal sealed class Atom
     public double X;
     /// <summary>Space added after the atom by justification.</summary>
     public double Extra;
+    /// <summary>An explicit stop this tab runs to when the text is before it.</summary>
+    public double? Stop;
 
     public bool IsSpace => Code is ' ' or (>= 0x2000 and <= 0x200A and not 0x2007) or 0x1680 or 0x205F;
     public bool IsTab => Code == '\t';
@@ -50,6 +52,7 @@ internal static class ParagraphLayout
     {
         var result = new ParagraphLines { Source = paragraph };
         var atoms = Atoms(paragraph, fonts, field, result);
+        if (paragraph.LabelTab is { } labelTab && atoms.Find(a => a.IsTab) is { } labelAtom) labelAtom.Stop = labelTab;
         double left = Math.Max(0, paragraph.Left);
         double first = Math.Max(0, paragraph.Left + paragraph.FirstLine);
         double right = Math.Max(areaWidth - Math.Max(0, paragraph.Right), Math.Max(left, first) + 1);
@@ -106,6 +109,7 @@ internal static class ParagraphLayout
     {
         if (!atom.IsTab) return atom.Width;
         double stop = x < left - Tolerance ? left : (Math.Floor(x / TabWidth) + 1) * TabWidth;
+        if (atom.Stop is { } explicitStop && x < explicitStop - Tolerance) stop = x < left - Tolerance ? Math.Min(left, explicitStop) : explicitStop;
         double width = Math.Max(0, Math.Min(stop, Math.Max(right, x)) - x);
         if (place) atom.Width = width;
         return width;

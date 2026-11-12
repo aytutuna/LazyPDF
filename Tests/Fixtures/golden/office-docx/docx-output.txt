@@ -171,7 +171,6 @@ skipped comment 1
 skipped endnote 1
 skipped equation 1
 skipped footnote 1
-skipped numbering 1
 skipped picture 2
 skipped shape 1
 skipped table 1
@@ -197,3 +196,74 @@ p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
   run Times_New_Roman 10.00 000000 "no styles part"
 p left 0.00 0.00 0.00 0.00 1584.00 1.00 multiple
   run Times_New_Roman 10.00 000000 "bad numbers"
+> bullets and numbers with levels
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 36.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "1.\tfirst"
+p left 72.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "a)\tsub a"
+p left 72.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "b)\tsub b"
+p left 108.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "i.\tdeeper"
+p left 36.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "2.\tsecond"
+p left 72.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "a)\tstarts over"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "plain"
+p left 36.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "•\tbullet"
+p left 72.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Courier_New 10.00 000000 "o\t"
+  run Times_New_Roman 10.00 000000 "nested bullet"
+p left 36.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "3.\t"
+> number formats and multi level text
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "Part III a"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "III.Ab"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "3.1.01\tc"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "3.1.02\td"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "z\tz"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "aa\taa"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "mmmcmxcix\tmax roman"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "4000\tpast roman"
+> restarts, overrides and lists that continue
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "1.\tone"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "1.1\tone one"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "2.\tcontinues the list"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "2.2\tlevel two never restarts"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "5.\trestarted at five"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "6.\tsix"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "(C)\treplaced level"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "unknown list"
+> list styles, label formatting and tab stops
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 75.00 0.00 -75.00 0.00 0.00 1.00 multiple labeltab=50.00
+  run Times_New_Roman 11.00 ff0000 b "1)\t"
+  run Times_New_Roman 11.00 000000 "from the style"
+p left 150.00 0.00 -20.00 0.00 0.00 1.00 multiple labeltab=50.00
+  run Times_New_Roman 11.00 ff0000 b "2)\t"
+  run Times_New_Roman 11.00 000000 "own indent"
+p left 5.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 11.00 000000 "1.\tlevel linked to the style"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 11.00 000000 "switched off"
