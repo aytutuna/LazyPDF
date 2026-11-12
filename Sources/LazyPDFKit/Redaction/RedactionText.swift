@@ -16,6 +16,7 @@ public enum RedactionText {
         if p.paths > 0 { parts.append(L10n.plural(p.paths, one: "{0} shape", other: "{0} shapes")) }
         if p.annotations > 0 { parts.append(L10n.plural(p.annotations, one: "{0} note", other: "{0} notes")) }
         if p.fields > 0 { parts.append(L10n.plural(p.fields, one: "{0} form field", other: "{0} form fields")) }
+        if p.values > 0 { parts.append(L10n.plural(p.values, one: "text in {0} note or field", other: "text in {0} notes or fields")) }
         return L10n.t("Page {0}: removed {1}.", p.page + 1, parts.joined(separator: ", "))
     }
 

@@ -19,6 +19,37 @@ public enum RedactionKind {
     case word
 }
 
+public enum RedactionValueSource {
+    /// The /Contents of an annotation (a comment, a free text box, a popup).
+    case comment
+
+    /// The value of a text field or an editable combo box.
+    case field
+}
+
+/// A hit in a value that is not page text. `annotation` is the index among the annotations of the page, as
+/// `PdfAnnotations.read` lists them; for a field it is the field's first widget. `start` and `length` are in UTF-16 units of
+/// the value's text, as in the C#.
+public struct RedactionValueMatch {
+    public let page: Int
+    public let annotation: Int
+    public let source: RedactionValueSource
+    public var start: Int
+    public let length: Int
+    public let text: String
+    public let kind: RedactionKind
+
+    public init(_ page: Int, _ annotation: Int, _ source: RedactionValueSource, _ start: Int, _ length: Int, _ text: String, _ kind: RedactionKind) {
+        self.page = page
+        self.annotation = annotation
+        self.source = source
+        self.start = start
+        self.length = length
+        self.text = text
+        self.kind = kind
+    }
+}
+
 /// A hit of a finder: the mark it proposes and the text it found, for a list the user goes through before applying.
 public struct RedactionMatch {
     public let mark: RedactionMark
@@ -108,6 +139,67 @@ public enum RedactionFinder {
             (a.element.page, a.element.range.start, a.offset) < (b.element.page, b.element.range.start, b.offset)
         }
         return ordered.map { RedactionMatch(RedactionMark.fromMatch($0.element), $0.element.text, .word) }
+    }
+
+    /// Everything of one built-in kind in the annotation contents and field values.
+    public static func findInValues(_ document: PdfDocument, _ kind: RedactionKind) throws -> [RedactionValueMatch] {
+        guard let shape = shape(kind) else { throw ArgumentException("Specified argument was out of the range of valid values. (Parameter 'kind')") }
+        return try inValues(document, kind, shape.pattern, shape.matchCase, shape)
+    }
+
+    /// A regular expression over the annotation contents and field values. A bad pattern is an `ArgumentException`.
+    public static func findRegexInValues(_ document: PdfDocument, _ pattern: String, _ matchCase: Bool = false) throws -> [RedactionValueMatch] {
+        try inValues(document, .pattern, pattern, matchCase, nil)
+    }
+
+    public static func findWordsInValues(_ document: PdfDocument, _ words: [String], _ wholeWord: Bool = true, _ matchCase: Bool = false) throws -> [RedactionValueMatch] {
+        var seen = Set<OrdinalString>()
+        var escaped: [String] = []
+        for word in words where !word.isEmpty && seen.insert(OrdinalString(word)).inserted {
+            escaped.append(NSRegularExpression.escapedPattern(for: word))
+        }
+        if escaped.isEmpty { return [] }
+        escaped.sort { $0.utf16.count > $1.utf16.count }
+        var pattern = "(?:\(escaped.joined(separator: "|")))"
+        if wholeWord { pattern = "(?<![\\p{L}\\p{N}])\(pattern)(?![\\p{L}\\p{N}])" }
+        return try inValues(document, .word, pattern, matchCase, nil)
+    }
+
+    private static func inValues(_ document: PdfDocument, _ kind: RedactionKind, _ pattern: String, _ matchCase: Bool, _ shape: Shape?) throws -> [RedactionValueMatch] {
+        let regex: NSRegularExpression
+        do {
+            regex = try NSRegularExpression(pattern: pattern, options: matchCase ? [] : [.caseInsensitive])
+        } catch {
+            throw ArgumentException("\(error)")
+        }
+        var found: [RedactionValueMatch] = []
+        for value in RedactionValues.read(document) {
+            try Task.checkCancellation()
+            let ns = value.text as NSString
+            for hit in regex.matches(in: value.text, range: NSRange(location: 0, length: ns.length)) where hit.range.length > 0 {
+                var length = hit.range.length
+                let matched = ns.substring(with: hit.range)
+                if let shape, let check = shape.check, !check(matched) {
+                    guard let cut = cutBack(matched, shape) else { continue }
+                    length = cut
+                }
+                let range = NSRange(location: hit.range.location, length: length)
+                found.append(RedactionValueMatch(value.page, value.annotation, value.source, range.location, length, ns.substring(with: range), kind))
+            }
+        }
+        return found
+    }
+
+    // The same cut as `narrow`, over a plain string.
+    private static func cutBack(_ text: String, _ shape: Shape) -> Int? {
+        guard let check = shape.check else { return nil }
+        let units = Array(text.utf16)
+        var end = units.count - 1
+        while end >= shape.shortest && shape.shortest > 0 {
+            defer { end -= 1 }
+            if units[end] == 0x20 && check(String(units: Array(units[..<end]))) { return end }
+        }
+        return nil
     }
 
     private static func search(_ cache: TextCache, _ query: String, _ options: TextSearchOptions) throws -> [SearchMatch] {

@@ -111,7 +111,11 @@ public struct PageRedaction {
     public let annotations: Int
     public let fields: Int
 
-    public init(_ page: Int, _ glyphs: Int, _ images: Int, _ paths: Int, _ annotations: Int, _ fields: Int) {
+    /// The annotations and fields whose text was rewritten.
+    public internal(set) var values: Int
+
+    public init(_ page: Int, _ glyphs: Int, _ images: Int, _ paths: Int, _ annotations: Int, _ fields: Int, _ values: Int = 0) {
+        self.values = values
         self.page = page
         self.glyphs = glyphs
         self.images = images
@@ -120,7 +124,7 @@ public struct PageRedaction {
         self.fields = fields
     }
 
-    public var isEmpty: Bool { glyphs + images + paths + annotations + fields == 0 }
+    public var isEmpty: Bool { glyphs + images + paths + annotations + fields + values == 0 }
 }
 
 public struct RedactionReport: CustomStringConvertible {

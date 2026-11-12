@@ -64,14 +64,18 @@ public final class PdfRedactor {
     }
 
     /// Applies the document's own /Redact annotations.
-    public func applyMarked(_ options: RedactionOptions? = nil) throws -> RedactionResult { try apply(readMarks(), options) }
+    public func applyMarked(_ options: RedactionOptions? = nil, _ values: [RedactionValueMatch]? = nil) throws -> RedactionResult {
+        try apply(readMarks(), options, values)
+    }
 
     /// Removes what is under the marks and returns the new file. A page with marks that is not understood in full, by the
     /// rule in `RedactionWalk`, becomes a picture of itself drawn by `RedactionOptions.renderer`; without one, or when it
     /// cannot draw the page, this throws `InvalidOperationException` with `RedactionText.needsPicture` or
     /// `RedactionText.notDrawn`. It throws the same with `RedactionText.noFont` when overlay text needs a font that cannot
-    /// be found. The document is not changed in any case.
-    public func apply(_ marks: [RedactionMark], _ options: RedactionOptions? = nil) throws -> RedactionResult {
+    /// be found. The document is not changed in any case. `values` are hits in annotation contents and field values (see
+    /// `RedactionFinder.findInValues`): the text found is replaced by `RedactionOptions.overlayText`, or removed without one,
+    /// and the appearance is drawn again.
+    public func apply(_ marks: [RedactionMark], _ options: RedactionOptions? = nil, _ values: [RedactionValueMatch]? = nil) throws -> RedactionResult {
         let options = options ?? RedactionOptions()
         var chosen: [RedactionMark] = []
         for var mark in marks where mark.page >= 0 && mark.page < document.pages.count {
@@ -80,6 +84,11 @@ public final class PdfRedactor {
         }
         let work = try PdfDocument.open(try document.saveRewrite())
         Self.pushDownResources(work)
+
+        var pages: [PageRedaction] = []
+        var needles = NeedleSet()
+        // First, since removing annotations under a mark shifts the indexes the hits were found at.
+        let rewritten = values.map { rewriteValues(work, $0, options, &needles) } ?? [:]
 
         var font: PdfDrawFont?
         var texts: [String] = []
@@ -93,8 +102,6 @@ public final class PdfRedactor {
             font = drawn
         }
 
-        var pages: [PageRedaction] = []
-        var needles = NeedleSet()
         var tagged: RedactionStructure.Tagged = [:]
         let rewriter = ContentRewriter(work, ImageRedactor(work, images))
         let interpreter = ContentInterpreter(work)
@@ -127,6 +134,10 @@ public final class PdfRedactor {
             pages.append(redaction)
             tagged[plan.page.reference.number] = counts
         }
+        for (page, count) in rewritten {
+            if let at = pages.firstIndex(where: { $0.page == page }) { pages[at].values = count } else { pages.append(PageRedaction(page, 0, 0, 0, 0, 0, count)) }
+        }
+        pages.sort { $0.page < $1.page }
         let marked = Set(plans.map { $0.page.index })
         var unfollowed: [Int] = []
         if !reached.isEmpty {

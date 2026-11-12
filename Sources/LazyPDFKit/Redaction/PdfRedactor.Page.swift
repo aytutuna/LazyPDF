@@ -146,7 +146,7 @@ extension PdfRedactor {
         return hits
     }
 
-    private static func addNeedle(_ needles: inout NeedleSet, _ text: String?) {
+    static func addNeedle(_ needles: inout NeedleSet, _ text: String?) {
         if let text, text.utf16.filter({ !DotNetText.isWhiteSpace($0) }).count >= minNeedle { needles.insert(DotNetText.trim(text)) }
     }
 
