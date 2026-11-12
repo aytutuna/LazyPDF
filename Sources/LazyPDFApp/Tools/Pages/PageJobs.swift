@@ -110,7 +110,11 @@ public enum PageJobs {
 
     public static func noteSkippedAttachments(_ host: ToolHost, _ skipped: Int) {
         if skipped == 0 { return }
-        host.showNotice(L10n.t("Attachments left out"),
-                        L10n.plural(skipped, one: "{0} attachment could not be read and was left out.", other: "{0} attachments could not be read and were left out."), nil)
+        host.showNotice(L10n.t("Attachments left out"), skippedText(skipped), nil)
+    }
+
+    public static func skippedText(_ skipped: Int) -> String {
+        if skipped == 0 { return "" }
+        return L10n.plural(skipped, one: "{0} attachment could not be read and was left out.", other: "{0} attachments could not be read and were left out.")
     }
 }

@@ -260,16 +260,17 @@ public final class CombineModel: ToolPanelModel {
             return
         }
         guard let bytes = made else { return }
-        PageJobs.noteSkippedAttachments(host, skipped)
 
         let name = L10n.t("Combined.pdf")
         let protectedSource = documents.contains { $0.isEncrypted }
+        let left = PageJobs.skippedText(skipped)
         if toFolder {
-            await save(host, [(name, bytes)], protectedSource, "")
+            await save(host, [(name, bytes)], protectedSource, left)
             return
         }
         await host.openNew(bytes, title: name, password: nil, certificate: nil)
-        if protectedSource { host.showNotice(L10n.t("Copy is not protected"), CopyRules.unprotected, nil) }
+        if protectedSource { host.showNotice(L10n.t("Copy is not protected"), (CopyRules.unprotected + " " + left).trimmingCharacters(in: .whitespaces), nil) }
+        else { PageJobs.noteSkippedAttachments(host, skipped) }
     }
 
     func split() async {
@@ -301,7 +302,6 @@ public final class CombineModel: ToolPanelModel {
             return
         }
         guard let parts = made else { return }
-        PageJobs.noteSkippedAttachments(host, skipped)
         if parts.count < 2 {
             host.showNotice(L10n.t("Nothing to split"), L10n.t("The whole file fits in one part. Use a smaller amount."), nil)
             return
@@ -315,6 +315,8 @@ public final class CombineModel: ToolPanelModel {
                                   other: "{0} parts are bigger than {1} MB. A single page is too large to fit.", amount.trimmingCharacters(in: .whitespaces))
             }
         }
+
+        big = (big + " " + PageJobs.skippedText(skipped)).trimmingCharacters(in: .whitespaces)
 
         let stem = (tab.title as NSString).deletingPathExtension
         let named = parts.enumerated().map { (name: CombineJob.partName(stem, $0.offset, parts.count), bytes: $0.element) }
