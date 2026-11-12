@@ -6932,8 +6932,8 @@
   "Time stamp": {
     "tr": "Zaman damgası"
   },
-  "The server receives a fingerprint of the signature, not the file.": {
-    "tr": "Sunucu, dosyayı değil imzanın parmak izini alır."
+  "The server receives a fingerprint of the signature, not the file. This server is contacted when you sign with a time stamp.": {
+    "tr": "Sunucu, dosyayı değil imzanın parmak izini alır. Zaman damgasıyla imzalarken bu sunucuya bağlanılır."
   },
   "Time stamp server address": {
     "tr": "Zaman damgası sunucusu adresi"

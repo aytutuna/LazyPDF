@@ -105,7 +105,7 @@
             </DockPanel>
             <DockPanel Margin="0,0,0,8">
                 <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE946;" />
-                <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T 'The server receives a fingerprint of the signature, not the file.'}" />
+                <TextBlock Style="{StaticResource ReasonText}" Text="{loc:T 'The server receives a fingerprint of the signature, not the file. This server is contacted when you sign with a time stamp.'}" />
             </DockPanel>
             <CheckBox x:Name="LongSwitch" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Long term validation}"
                       AutomationProperties.Name="{loc:T Long term validation}" />

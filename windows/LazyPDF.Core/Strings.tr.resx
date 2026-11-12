@@ -6628,8 +6628,8 @@
   <data name="The server did not answer in time. Try again later." xml:space="preserve">
     <value>Sunucu zamanında yanıt vermedi. Daha sonra yeniden deneyin.</value>
   </data>
-  <data name="The server receives a fingerprint of the signature, not the file." xml:space="preserve">
-    <value>Sunucu, dosyayı değil imzanın parmak izini alır.</value>
+  <data name="The server receives a fingerprint of the signature, not the file. This server is contacted when you sign with a time stamp." xml:space="preserve">
+    <value>Sunucu, dosyayı değil imzanın parmak izini alır. Zaman damgasıyla imzalarken bu sunucuya bağlanılır.</value>
   </data>
   <data name="The server tried to move the request to an address that is not encrypted, so it was not used." xml:space="preserve">
     <value>Sunucu isteği şifrelenmemiş bir adrese taşımaya çalıştı, bu yüzden kullanılmadı.</value>
