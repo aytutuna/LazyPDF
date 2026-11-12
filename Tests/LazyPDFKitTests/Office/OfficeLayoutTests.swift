@@ -34,6 +34,8 @@ final class OfficeLayoutTests: XCTestCase {
                 switch box {
                 case .text(let t):
                     output += "text \(num(t.x)) \(num(t.baseline)) \(t.family)/\(styleName(t.style)) \(num(t.size)) \(String(format: "%06x", t.color)) +\(num(t.spaceExtra)) \"\(OfficeLayoutSpec.escape(t.text))\"\n"
+                case .image(let img):
+                    output += "image \(num(img.x)) \(num(img.y)) \(num(img.width)) \(num(img.height))\n"
                 case .rect(let r):
                     output += "rect \(num(r.x)) \(num(r.y)) \(num(r.width)) \(num(r.height)) \(String(format: "%06x", r.color))\n"
                 }

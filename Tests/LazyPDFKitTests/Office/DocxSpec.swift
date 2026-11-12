@@ -68,10 +68,19 @@ enum DocxSpec {
         wrapped("theme", "word/theme/theme1.xml", "theme", "rIdT", "a:theme", "application/vnd.openxmlformats-officedocument.theme+xml")
         wrapped("header", "word/header1.xml", "header", "rIdH", "w:hdr", main + "header+xml")
         wrapped("footer", "word/footer1.xml", "footer", "rIdF", "w:ftr", main + "footer+xml")
-        for part in parts where part.key.hasPrefix("part ") { add(String(part.key.dropFirst(5)), part.text) }
+        wrapped("settings", "word/settings.xml", "settings", "rIdG", "w:settings", main + "settings+xml")
+        relationships += get("relationships")
+        for part in parts {
+            if part.key.hasPrefix("part ") {
+                add(String(part.key.dropFirst(5)), part.text)
+            } else if part.key.hasPrefix("bytes ") {
+                entries.append(ExportZipEntry(String(part.key.dropFirst(6)), hex(part.text)))
+            }
+        }
         add("[Content_Types].xml",
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">" +
             "<Default Extension=\"xml\" ContentType=\"application/xml\"/>" +
+            "<Default Extension=\"jpg\" ContentType=\"image/jpeg\"/><Default Extension=\"png\" ContentType=\"image/png\"/>" +
             "<Override PartName=\"/word/document.xml\" ContentType=\"\(main)document.main+xml\"/>\(types)</Types>")
         add("_rels/.rels",
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">" +
@@ -79,6 +88,11 @@ enum DocxSpec {
         add("word/_rels/document.xml.rels",
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">\(relationships)</Relationships>")
         return try ExportZip.make(entries)
+    }
+
+    private static func hex(_ text: String) -> [UInt8] {
+        let digits = Array(text.trimmingCharacters(in: .whitespacesAndNewlines).utf8)
+        return stride(from: 0, to: digits.count - 1, by: 2).map { UInt8(String(decoding: digits[$0...($0 + 1)], as: UTF8.self), radix: 16)! }
     }
 
     private static func num(_ value: Double) -> String {
@@ -90,8 +104,14 @@ enum DocxSpec {
         for section in document.sections {
             let g = section.page
             o += "section \(num(g.width)) \(num(g.height)) \(num(g.top)) \(num(g.right)) \(num(g.bottom)) \(num(g.left)) \(num(g.headerDistance)) \(num(g.footerDistance))\n"
+            if section.titlePage { o += "titlepage\n" }
+            if section.evenAndOdd { o += "evenandodd\n" }
             for p in section.header { paragraph(&o, "header", p) }
             for p in section.footer { paragraph(&o, "footer", p) }
+            for p in section.firstHeader { paragraph(&o, "header-first", p) }
+            for p in section.firstFooter { paragraph(&o, "footer-first", p) }
+            for p in section.evenHeader { paragraph(&o, "header-even", p) }
+            for p in section.evenFooter { paragraph(&o, "footer-even", p) }
             for block in section.blocks {
                 if let p = block as? LayoutParagraph {
                     paragraph(&o, "p", p)
@@ -173,6 +193,9 @@ enum DocxSpec {
             case .none: break
             case .pageNumber: o += " field=pagenumber"
             case .pageCount: o += " field=pagecount"
+            }
+            if let pic = r.picture {
+                o += " picture=\(num(pic.width))x\(num(pic.height)) bytes=\(pic.file.bytes.count) crop=\(num(pic.cropLeft)),\(num(pic.cropTop)),\(num(pic.cropRight)),\(num(pic.cropBottom))"
             }
             o += " \"\(OfficeLayoutSpec.escape(r.text))\"\n"
         }

@@ -64,7 +64,19 @@ enum OfficeLayoutSpec {
             made.keepWithNext = p.keys["keep"] != nil
             made.pageBreakBefore = p.keys["break"] != nil
             made.widowControl = p.keys["nowidow"] == nil
-            if let cell { cell.paragraphs.append(made) } else if band == "header" { section.header.append(made) } else if band == "footer" { section.footer.append(made) } else { section.blocks.append(made) }
+            if let cell {
+                cell.paragraphs.append(made)
+            } else {
+                switch band {
+                case "header": section.header.append(made)
+                case "footer": section.footer.append(made)
+                case "header-first": section.firstHeader.append(made)
+                case "footer-first": section.firstFooter.append(made)
+                case "header-even": section.evenHeader.append(made)
+                case "footer-even": section.evenFooter.append(made)
+                default: section.blocks.append(made)
+                }
+            }
             paragraph = nil
         }
 
@@ -81,7 +93,10 @@ enum OfficeLayoutSpec {
             case "section":
                 flush()
                 cell = nil
+                let flags = rest.components(separatedBy: " ")
                 section = LayoutSection()
+                section!.titlePage = flags.contains("titlepg")
+                section!.evenAndOdd = flags.contains("evenodd")
                 document!.sections.append(section!)
                 band = "body"
             case "page":
@@ -115,6 +130,7 @@ enum OfficeLayoutSpec {
                 case "pages": run.field = .pageCount
                 default: run.field = .none
                 }
+                if let size = k["pic"] { run.picture = picture(size, k["crop"]) }
                 paragraph!.runs.append(run)
             case "table":
                 flush()
@@ -182,6 +198,14 @@ enum OfficeLayoutSpec {
         }
         flush()
         return cases
+    }
+
+    // A picture file the writer reads without a codec: a JPEG header of 4 by 3 pixels, a new file for every picture.
+    private static func picture(_ size: String, _ crop: String?) -> LayoutPicture {
+        let wh = size.components(separatedBy: "x").map { Double($0)! }
+        let c = crop.map { $0.components(separatedBy: ",").map { Double($0)! } } ?? [0, 0, 0, 0]
+        let jpeg: [UInt8] = [0xFF, 0xD8, 0xFF, 0xC0, 0x00, 0x0B, 0x08, 0x00, 0x03, 0x00, 0x04, 0x01, 0x01, 0x11, 0x00, 0xFF, 0xD9]
+        return LayoutPicture(PictureFile(jpeg), wh[0], wh[1], cropLeft: c[0], cropTop: c[1], cropRight: c[2], cropBottom: c[3])
     }
 
     private static func border(_ keys: [String: String], _ side: String) -> LayoutBorder? {

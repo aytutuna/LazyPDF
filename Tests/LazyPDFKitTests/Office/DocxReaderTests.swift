@@ -21,6 +21,14 @@ final class DocxReaderTests: XCTestCase {
         try Golden.check("office-docx", "tables-output.txt", output)
     }
 
+    func test_docxImagesGoldenFile() throws {
+        var output = ""
+        for (name, package) in try DocxSpec.read(try Golden.input("office-docx", "images-input.txt")) {
+            output += "> \(name)\n" + DocxSpec.dump(try DocxReader.read(package))
+        }
+        try Golden.check("office-docx", "images-output.txt", output)
+    }
+
     private func docx(_ body: String, styles: String? = nil) throws -> [UInt8] {
         var parts = [(key: "document", text: body)]
         if let styles { parts.append(("styles", styles)) }
