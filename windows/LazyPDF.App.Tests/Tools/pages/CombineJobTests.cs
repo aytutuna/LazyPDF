@@ -284,6 +284,24 @@ public sealed class CombineJobTests
         Assert.Equal([0, 2, 5], items.Select(item => item.Destination!.PageIndex));
     }
 
+    [Fact]
+    public void ASourceWithItsOwnBookmarksGetsOneFileBookmark()
+    {
+        var a = PdfDocument.Open(Pdfs.Text(3));
+        var own = Outline.Read(a);
+        own.Add(new OutlineItem { Title = "Chapter", Destination = new PdfDestination(1) });
+        own.Write(a);
+        var b = PdfDocument.Open(Pdfs.Text(2));
+        var merged = PageAssembly.Merge([new MergeSource(b, null), new MergeSource(a, null)], default, ["B", "A"]);
+
+        CombineJob.AddFileBookmarks(merged, [("B.pdf", 2), ("A.pdf", 3)]);
+
+        var items = Outline.Read(PdfDocument.Open(merged.SaveRewrite())).Items;
+        Assert.Equal(["B", "A"], items.Select(item => item.Title));
+        Assert.Equal([0, 2], items.Select(item => item.Destination!.PageIndex));
+        Assert.Equal(["Chapter"], items[1].Children.Select(item => item.Title));
+    }
+
     [Theory]
     [InlineData("Report.pdf", "Report")]
     [InlineData("  Notes.PDF", "Notes")]

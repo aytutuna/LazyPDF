@@ -96,17 +96,39 @@ internal static class CombineJob
         return title.Length == 0 ? Loc.T("File {0}", n) : title;
     }
 
-    /// <summary>One bookmark per source at its first page in <paramref name="merged"/>; <paramref name="sources"/> holds each one's name and the pages it gave.</summary>
+    /// <summary>One top-level bookmark per source at its first page in <paramref name="merged"/>, in order; <paramref name="sources"/> holds each one's name and the pages it gave. The item the merge made for a source's own bookmarks is renamed and pointed at that page instead of getting a twin.</summary>
     public static void AddFileBookmarks(PdfDocument merged, IReadOnlyList<(string Name, int Pages)> sources)
     {
         var outline = Outline.Read(merged);
+        var wrappers = outline.Items.ToList();
         int start = 0;
         for (int i = 0; i < sources.Count; i++)
         {
-            outline.Add(new OutlineItem { Title = BookmarkTitle(sources[i].Name, i + 1), Destination = new PdfDestination(start) });
-            start += sources[i].Pages;
+            int end = start + sources[i].Pages;
+            var wrapper = wrappers.FirstOrDefault(w => Pages(w).Any(p => p >= start && p < end));
+            if (wrapper is null)
+            {
+                outline.Add(new OutlineItem { Title = BookmarkTitle(sources[i].Name, i + 1), Destination = new PdfDestination(start) }, null, i);
+            }
+            else
+            {
+                wrappers.Remove(wrapper);
+                wrapper.Title = BookmarkTitle(sources[i].Name, i + 1);
+                wrapper.Destination = new PdfDestination(start);
+                outline.Move(wrapper, null, i);
+            }
+            start = end;
         }
         outline.Write(merged);
+    }
+
+    private static IEnumerable<int> Pages(OutlineItem item)
+    {
+        if (item.Destination is { } d) yield return d.PageIndex;
+        foreach (var child in item.Children)
+        {
+            foreach (int page in Pages(child)) yield return page;
+        }
     }
 
     public static string PartName(string stem, int part, int parts) => PartName(stem, part, parts, null);
