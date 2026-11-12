@@ -8,10 +8,12 @@ import LazyPDFKit
 @MainActor
 private final class FakeWebRenderer: WebPageRenderer {
     var failure: WebPageError?
+    var hangs = false
     private(set) var asked: [(URL, WebPageLayout)] = []
 
     func render(_ page: URL, _ layout: WebPageLayout) async throws -> (bytes: [UInt8], pages: Int) {
         asked.append((page, layout))
+        while hangs { try await Task.sleep(nanoseconds: 5_000_000) }
         if let failure { throw failure }
         let made = try PdfFromText.create("Hello", fonts: FakeFonts(), setup: PdfPageSetup())
         return (made.bytes, made.pages)
@@ -210,6 +212,22 @@ final class CreateWebPageTests: XCTestCase {
             XCTAssertEqual(f.vm.message?.title, title)
             XCTAssertTrue(f.vm.documents.isEmpty)
         }
+    }
+
+    func test_aCancelWhileThePageLoadsStopsTheJob() async throws {
+        let f = ViewModelFixture(self)
+        let renderer = FakeWebRenderer()
+        renderer.hangs = true
+        let file = page(f)
+        let vm = f.vm!
+
+        let run = Task { try await self.make(f, file, renderer) }
+        while renderer.asked.isEmpty { await Task.yield() }
+        vm.cancelBusy()
+        try await run.value
+
+        XCTAssertEqual(vm.statusFull, "Cancelled.")
+        XCTAssertTrue(vm.documents.isEmpty)
     }
 
     func test_aMissingFileIsAProblemNotACrash() async throws {

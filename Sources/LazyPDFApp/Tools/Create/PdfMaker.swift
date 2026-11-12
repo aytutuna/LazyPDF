@@ -124,7 +124,8 @@ extension CreateJob {
             WebPageRules.namesRemoteParts(TextFiles.decode([UInt8](try Data(contentsOf: file))))
         }
         try token.throwIfCancelled()
-        let rendered = try await web.render(file, WebPageLayout(request.setup))
+        let layout = WebPageLayout(request.setup)
+        let rendered = try await ToolDocuments.runAsync(token) { try await web.render(file, layout) }
         return MadePdf(bytes: rendered.bytes, pages: rendered.pages, unreadable: 0, leftOutRemote: remote)
     }
 }
