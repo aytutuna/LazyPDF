@@ -7,7 +7,11 @@ internal sealed record PptxLimits(
     int MaxParagraphs = 5000,
     int MaxTextLength = 100_000,
     long MaxTotalText = 4_000_000,
-    long MaxDrawnShapes = 200_000)
+    long MaxDrawnShapes = 200_000,
+    int MaxGroupDepth = 5,
+    int MaxPictures = 2000,
+    int MaxTableRows = 500,
+    int MaxTableColumns = 64)
 {
     public const double MinSide = 36;
     public const double MaxSide = 14_400;
@@ -21,6 +25,13 @@ internal static class PptxSkipped
     public const string Gradient = "slide-gradient";
     public const string TextCut = "slide-text-cut";
     public const string TextRotation = "text-rotation";
+    public const string CustomGeometry = "slide-custom-geometry";
+    public const string Effect = "slide-effect";
+    public const string Chart = "slide-chart";
+    public const string SmartArt = "slide-smartart";
+    public const string Media = "slide-media";
+    public const string EmbeddedObject = "slide-object";
+    public const string TableStyle = "slide-table-style";
 }
 
 /// <summary>What fills the page behind a slide: a color, a picture stretched over it, or nothing.</summary>
@@ -38,7 +49,14 @@ internal sealed class PptxBody
     public List<LayoutParagraph> Paragraphs { get; init; } = [];
 }
 
-/// <summary>A shape in points from the top left of the slide. A slide number field in the text is a <see cref="LayoutField.PageNumber"/> run.</summary>
+/// <summary>A table with its top left corner at X, Y in points; the column widths and the minimum row heights are those of the file.</summary>
+internal sealed record PptxTable(double X, double Y, LayoutTable Table);
+
+/// <summary>
+/// A shape in points from the top left of the slide. A slide number field in the text is a <see cref="LayoutField.PageNumber"/> run.
+/// The frame is where the text goes, turned back upright. <see cref="Fill"/> is a plain rectangle of the frame; any other
+/// outline, with its arrowheads, is in <see cref="Paths"/>, already placed on the slide.
+/// </summary>
 internal sealed class PptxShape
 {
     public double X { get; init; }
@@ -46,6 +64,9 @@ internal sealed class PptxShape
     public double Width { get; init; }
     public double Height { get; init; }
     public int? Fill { get; init; }
+    public List<PlacedPath> Paths { get; init; } = [];
+    public PlacedImage? Picture { get; init; }
+    public PptxTable? Table { get; init; }
     public PptxBody? Body { get; init; }
 }
 

@@ -35,7 +35,7 @@ internal sealed partial class PptxReader
         public List<PptxShape>? Shapes { get; set; }
     }
 
-    private sealed record Scope(Template? Layout, Template Master, PptxColors Colors, bool IsSlide);
+    private sealed record Scope(Template? Layout, Template Master, PptxColors Colors, bool IsSlide, IReadOnlyList<OpcRelationship> Relationships);
 
     private readonly OpcPackage _package;
     private readonly PptxLimits _limits;
@@ -46,6 +46,7 @@ internal sealed partial class PptxReader
     private XmlElement? _defaultStyle;
     private double _width = DefaultWidth, _height = DefaultHeight;
     private long _totalText, _drawn;
+    private int _pictureCount;
 
     private PptxReader(OpcPackage package, PptxLimits limits, CancellationToken cancellation)
     {
@@ -204,116 +205,17 @@ internal sealed partial class PptxReader
         var shapes = new List<PptxShape>();
         if (root.Attribute("showMasterSp") is not ("0" or "false"))
         {
-            if (layout.ShowMasterShapes) shapes.AddRange(master.Shapes ??= Static(master, new Scope(null, master, master.Colors, false)));
-            shapes.AddRange(layout.Shapes ??= Static(layout, new Scope(null, master, layout.Colors, false)));
+            if (layout.ShowMasterShapes) shapes.AddRange(master.Shapes ??= Static(master, new Scope(null, master, master.Colors, false, master.Relationships)));
+            shapes.AddRange(layout.Shapes ??= Static(layout, new Scope(null, master, layout.Colors, false, layout.Relationships)));
         }
-        shapes.AddRange(Shapes(root, new Scope(layout, master, colors, true), place: true));
+        shapes.AddRange(Shapes(root, new Scope(layout, master, colors, true, relationships), place: true));
         _drawn += shapes.Count;
         if (_drawn > _limits.MaxDrawnShapes) throw new PdfReadException(PdfReadProblem.Unsupported, "The presentation has too many shapes.");
 
         return new PptxSlide { Number = number, Background = Background(root, relationships, colors, layout, master), Shapes = shapes };
     }
 
-    private List<PptxShape> Static(Template template, Scope scope) => Shapes(template.Root, scope, place: false);
-
-    // The shapes of a slide, layout or master that can be drawn. On a layout or master the placeholders are only templates.
-    private List<PptxShape> Shapes(XmlElement root, Scope scope, bool place)
-    {
-        var list = new List<PptxShape>();
-        int seen = 0;
-        foreach (var e in Children(Tree(root)))
-        {
-            if (e.Uri != P || e.Name is "nvGrpSpPr" or "grpSpPr" or "extLst") continue;
-            if (e.Name == "sp" && !place && PlaceholderOf(e) is not null) continue;
-            if (++seen > _limits.MaxShapes)
-            {
-                Skip(PptxSkipped.Shape);
-                continue;
-            }
-            _cancellation.ThrowIfCancellationRequested();
-            if (e.Name == "sp")
-            {
-                if (Shape(e, scope) is { } shape) list.Add(shape);
-            }
-            else Skip(PptxSkipped.Shape);
-        }
-        return list;
-    }
-
-    private sealed record FillInfo(int? Color, bool Gradient);
-
     private sealed record BackgroundSays(PptxBackground? Value);
-
-    private FillInfo? FillOf(XmlElement? spPr, PptxColors colors)
-    {
-        foreach (var e in spPr?.Elements() ?? [])
-        {
-            if (e.Uri != DocxReader.A) continue;
-            switch (e.Name)
-            {
-                case "noFill": return new FillInfo(null, false);
-                case "solidFill": return new FillInfo(colors.First(e), false);
-                case "gradFill": return new FillInfo(colors.First(e.Child(DocxReader.A, "gsLst")?.Child(DocxReader.A, "gs")), true);
-                case "blipFill": case "pattFill": case "grpFill": return new FillInfo(null, false);
-            }
-        }
-        return null;
-    }
-
-    private PptxShape? Shape(XmlElement sp, Scope scope)
-    {
-        var spPr = sp.Child(P, "spPr");
-        var ph = PlaceholderOf(sp);
-        Placeholder? layoutPh = null, masterPh = null;
-        if (ph is not null)
-        {
-            string? type = ph.Attribute("type");
-            int index = (int)Math.Clamp(DocxReader.Number(ph.Attribute("idx")) ?? 0, 0, int.MaxValue);
-            layoutPh = scope.Layout is null ? null : Match(scope.Layout.Placeholders, type, index, true);
-            masterPh = Match(scope.Master.Placeholders, layoutPh?.Type ?? type, layoutPh?.Index ?? index, false);
-        }
-        else
-        {
-            string? preset = spPr?.Child(DocxReader.A, "prstGeom")?.Attribute("prst");
-            bool textBox = sp.Child(P, "nvSpPr")?.Child(P, "cNvSpPr")?.Attribute("txBox") is "1" or "true";
-            if (preset != "rect" && !(preset is null && textBox && spPr?.Child(DocxReader.A, "custGeom") is null))
-            {
-                Skip(PptxSkipped.Shape);
-                return null;
-            }
-        }
-
-        var style = sp.Child(P, "style");
-        var fill = FillOf(spPr, scope.Colors) ?? FillOf(layoutPh?.Shape.Child(P, "spPr"), scope.Colors) ?? FillOf(masterPh?.Shape.Child(P, "spPr"), scope.Colors);
-        int? fillColor = fill?.Color;
-        if (fill is null && style?.Child(DocxReader.A, "fillRef") is { } fillRef && DocxReader.Number(fillRef.Attribute("idx")) is > 0) fillColor = scope.Colors.First(fillRef);
-        if (fill is { Gradient: true } && fillColor is not null) Skip(PptxSkipped.Gradient);
-
-        var body = sp.Child(P, "txBody") is { } txBody ? Body(txBody, ph, layoutPh, masterPh, scope, style) : null;
-        if (fillColor is null && body is null) return null;
-
-        var frame = spPr?.Child(DocxReader.A, "xfrm") ?? layoutPh?.Shape.Child(P, "spPr")?.Child(DocxReader.A, "xfrm") ?? masterPh?.Shape.Child(P, "spPr")?.Child(DocxReader.A, "xfrm");
-        var offset = frame?.Child(DocxReader.A, "off");
-        var extent = frame?.Child(DocxReader.A, "ext");
-        if (DocxReader.Number(offset?.Attribute("x")) is not { } x || DocxReader.Number(offset!.Attribute("y")) is not { } y
-            || DocxReader.Number(extent?.Attribute("cx")) is not { } cx || DocxReader.Number(extent!.Attribute("cy")) is not { } cy)
-        {
-            Skip(PptxSkipped.Shape);
-            return null;
-        }
-        if (body is not null && DocxReader.Number(frame!.Attribute("rot")) is { } rot && rot != 0) Skip(PptxSkipped.TextRotation);
-
-        const double Far = 1e9;
-        return new PptxShape
-        {
-            X = Math.Clamp(x, -Far, Far) / EmuPerPoint,
-            Y = Math.Clamp(y, -Far, Far) / EmuPerPoint,
-            Width = Math.Clamp(cx, 0, Far) / EmuPerPoint,
-            Height = Math.Clamp(cy, 0, Far) / EmuPerPoint,
-            Fill = fillColor,
-            Body = body,
-        };
-    }
 
     // ---- backgrounds ----
 
@@ -340,7 +242,7 @@ internal sealed partial class PptxReader
                     case "gradFill":
                         Skip(PptxSkipped.Gradient);
                         return new BackgroundSays(new PptxBackground(colors.First(e.Child(DocxReader.A, "gsLst")?.Child(DocxReader.A, "gs")), null));
-                    case "blipFill": return new BackgroundSays(new PptxBackground(null, Picture(e, relationships)));
+                    case "blipFill": return new BackgroundSays(new PptxBackground(null, Picture(e, relationships, _width, _height)));
                     case "noFill": case "pattFill": case "grpFill": return new BackgroundSays(null);
                 }
             }
@@ -365,8 +267,8 @@ internal sealed partial class PptxReader
         return null;
     }
 
-    // A picture fill stretched over the page; a missing or linked picture is counted as an unreadable one.
-    private LayoutPicture? Picture(XmlElement blipFill, IReadOnlyList<OpcRelationship> relationships)
+    // A picture of the given size in points; a missing or linked picture is counted as an unreadable one.
+    private LayoutPicture? Picture(XmlElement blipFill, IReadOnlyList<OpcRelationship> relationships, double width, double height)
     {
         string? id = blipFill.Child(DocxReader.A, "blip")?.Attribute(R, "embed");
         string? target = id is null ? null : relationships.FirstOrDefault(r => r.Id == id && r.Type.EndsWith("/image", StringComparison.Ordinal))?.Target;
@@ -375,9 +277,14 @@ internal sealed partial class PptxReader
             Skip(SkippedKinds.UnreadablePicture);
             return null;
         }
+        if (++_pictureCount > _limits.MaxPictures)
+        {
+            Skip(SkippedKinds.UnreadablePicture);
+            return null;
+        }
         if (!_pictures.TryGetValue(target, out var bytes)) _pictures[target] = bytes = _package.Bytes(target);
         var crop = blipFill.Child(DocxReader.A, "srcRect");
         double Edge(string name) => Math.Clamp((DocxReader.Number(crop?.Attribute(name)) ?? 0) / 100_000, 0, 0.95);
-        return new LayoutPicture(bytes, _width, _height, Edge("l"), Edge("t"), Edge("r"), Edge("b"));
+        return new LayoutPicture(bytes, width, height, Edge("l"), Edge("t"), Edge("r"), Edge("b"));
     }
 }

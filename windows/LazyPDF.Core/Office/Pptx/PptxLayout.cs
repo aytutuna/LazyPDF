@@ -5,7 +5,8 @@ namespace LazyPDF.Core.Office;
 /// <summary>
 /// Sets the slides of a presentation on pages the size of the slide: the background, the fill of every shape and its text, which
 /// goes through <see cref="ParagraphLayout"/> and <see cref="Paginator.EmitLine"/> like Word text. There is no paginator; a
-/// shape's text that does not fit runs over the edge of the shape, as it does in PowerPoint.
+/// shape's text that does not fit runs over the edge of the shape, as it does in PowerPoint. A table is measured like one in a
+/// document and put on the slide whole.
 /// </summary>
 internal static class PptxLayout
 {
@@ -24,12 +25,23 @@ internal static class PptxLayout
             if (slide.Background is { } background)
             {
                 if (background.Color is { } color) boxes.Add(new PlacedRect(0, 0, presentation.Width, presentation.Height, color));
-                if (background.Picture is { } picture) boxes.Add(new PlacedImage(0, 0, presentation.Width, presentation.Height, picture));
+                if (background.Picture is { } backdrop) boxes.Add(new PlacedImage(0, 0, presentation.Width, presentation.Height, backdrop));
             }
             string number = slide.Number.ToString(CultureInfo.InvariantCulture);
             foreach (var shape in slide.Shapes)
             {
                 if (shape.Fill is { } fill && shape.Width > 0 && shape.Height > 0) boxes.Add(new PlacedRect(shape.X, shape.Y, shape.Width, shape.Height, fill));
+                boxes.AddRange(shape.Paths);
+                if (shape.Picture is { } picture) boxes.Add(picture);
+                if (shape.Table is { } table)
+                {
+                    var lines = TableLayout.Measure(table.Table, fonts, Math.Max(1, table.Table.Columns.Sum()), Wide, p =>
+                    {
+                        if (p.RightToLeft) rightToLeft++;
+                        if (p.ComplexScript) complex++;
+                    });
+                    Paginator.EmitTable(boxes, lines, table.X, table.Y);
+                }
                 if (shape.Body is { } body) Text(shape, body, fonts, number, boxes, ref rightToLeft, ref complex);
                 if (total + boxes.Count > MaxBoxes) throw new PdfReadException(PdfReadProblem.Unsupported, "The presentation is too large.");
             }

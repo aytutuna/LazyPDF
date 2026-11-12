@@ -18,6 +18,7 @@ namespace LazyPDF.Core.Tests;
 //   @theme                       the inside of an a:theme element; nothing after it stands for a standard Office theme
 //   @rels part                   extra relationship elements for the part (slide1, layout1, master1), for pictures
 //   @part path                   a whole part, written out
+//   @bytes path                  a binary part, given as hex digits
 internal static class PptxSpec
 {
     private const string P = "http://schemas.openxmlformats.org/presentationml/2006/main";
@@ -139,6 +140,7 @@ internal static class PptxSpec
         Add("ppt/theme/theme1.xml", Wrapped("a:theme", "", theme is null || theme.Text.ToString().Trim().Length == 0 ? StandardTheme : theme.Text.ToString()));
         types.Append("<Override PartName=\"/ppt/theme/theme1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.theme+xml\"/>");
         foreach (var part in parts.Where(p => p.Kind == "part")) Add(part.Arguments.Keys.First(), part.Text.ToString().TrimEnd('\n'));
+        foreach (var part in parts.Where(p => p.Kind == "bytes")) entries.Add(new ExportZipEntry(part.Arguments.Keys.First(), Convert.FromHexString(part.Text.ToString().Trim())));
 
         Add("ppt/presentation.xml", Wrapped("p:presentation", presentation is null ? "" : Attributes(presentation),
             $"<p:sldIdLst>{ids}</p:sldIdLst>" + (presentation is null || presentation.Text.ToString().Trim().Length == 0 ? StandardPresentation : presentation.Text.ToString())));
@@ -173,7 +175,21 @@ internal static class PptxSpec
                         output.Append($"rect {Num(r.X)} {Num(r.Y)} {Num(r.Width)} {Num(r.Height)} {r.Color:x6}\n");
                         break;
                     case PlacedImage m:
-                        output.Append($"image {Num(m.X)} {Num(m.Y)} {Num(m.Width)} {Num(m.Height)} {m.Source.Data.Length} crop {Num(m.Source.CropLeft)} {Num(m.Source.CropTop)} {Num(m.Source.CropRight)} {Num(m.Source.CropBottom)}\n");
+                        output.Append($"image {Num(m.X)} {Num(m.Y)} {Num(m.Width)} {Num(m.Height)} {m.Source.Data.Length} crop {Num(m.Source.CropLeft)} {Num(m.Source.CropTop)} {Num(m.Source.CropRight)} {Num(m.Source.CropBottom)}{(m.Rotation != 0 ? $" rot {Num(m.Rotation)}" : "")}{(m.FlipH ? " flip" : "")}\n");
+                        break;
+                    case PlacedPath p:
+                        output.Append($"path {(p.Fill is { } fill ? fill.ToString("x6", CultureInfo.InvariantCulture) : "-")} {(p.Stroke is { } st ? $"{Num(st.Width)} {st.Color:x6} {(st.Dash.Count == 0 ? "-" : string.Join(',', st.Dash.Select(Num)))}" : "-")}");
+                        foreach (var c in p.Commands)
+                        {
+                            output.Append(c.Op switch
+                            {
+                                PathOp.Move => $" M {Num(c.X)} {Num(c.Y)}",
+                                PathOp.Line => $" L {Num(c.X)} {Num(c.Y)}",
+                                PathOp.Curve => $" C {Num(c.X1)} {Num(c.Y1)} {Num(c.X2)} {Num(c.Y2)} {Num(c.X)} {Num(c.Y)}",
+                                _ => " Z",
+                            });
+                        }
+                        output.Append('\n');
                         break;
                 }
             }

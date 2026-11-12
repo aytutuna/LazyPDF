@@ -78,13 +78,16 @@ text 43.20 271.46 Calibri/Regular 22.40 000000 +0.00 "Shrunk by the stored autof
 text 43.20 293.33 Calibri/Regular 22.40 000000 +0.00 "it fits in the box"
 > other shapes are counted
 page 1 720.00 540.00
+text 7.20 20.74 Calibri/Regular 18.00 000000 +0.00 "In an"
+text 7.20 42.71 Calibri/Regular 18.00 000000 +0.00 "oval"
 text 79.20 92.74 Calibri/Regular 18.00 000000 +0.00 "Rotated text shown"
 text 79.20 114.71 Calibri/Regular 18.00 000000 +0.00 "straight"
 rect 72.00 144.00 72.00 36.00 00ff00
-rect 72.00 216.00 216.00 36.00 4f81bd
+path 4f81bd 0.75 4f81bd - M 72.00 216.00 L 288.00 216.00 L 288.00 252.00 L 72.00 252.00 Z
 text 120.02 240.15 Calibri/Regular 18.00 ffffff +0.00 "White on accent"
+skipped slide-custom-geometry 1
 skipped slide-gradient 1
-skipped slide-shape 6
+skipped slide-shape 4
 skipped text-rotation 1
 > run formatting
 page 1 720.00 540.00
@@ -112,4 +115,3 @@ text 7.20 519.03 Calibri/Regular 12.00 000000 +0.00 "1"
 page 2 720.00 540.00
 text 7.20 13.12 Calibri/Regular 10.00 000000 +0.00 "Plain layout tag"
 page 3 720.00 540.00
-skipped slide-shape 1

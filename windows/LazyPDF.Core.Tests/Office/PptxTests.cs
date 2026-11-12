@@ -47,6 +47,17 @@ public class PptxTests
     }
 
     [Fact]
+    public void ShapeLayoutGoldenFile()
+    {
+        var output = new StringBuilder();
+        foreach (var (name, package) in PptxSpec.Read(Golden.Input("office-pptx", "shapes-input.txt")))
+        {
+            output.Append("> ").Append(name).Append('\n').Append(PptxSpec.Dump(Layout(package)));
+        }
+        Golden.Check("office-pptx", "shapes-output.txt", output.ToString());
+    }
+
+    [Fact]
     public void OnePagePerSlideAtTheSlideSizeWithoutTheHiddenOnes()
     {
         var package = PptxSpec.One("@presentation\n<p:sldSz cx=\"12192000\" cy=\"6858000\"/>\n@slide1\n<p:cSld><p:spTree/></p:cSld>\n@slide2 show=0\n<p:cSld><p:spTree/></p:cSld>\n@slide3\n<p:cSld><p:spTree/></p:cSld>\n");
@@ -189,5 +200,122 @@ public class PptxTests
         var package = Slides(1, Box("A", "far", x: int.MaxValue, y: int.MinValue));
         var layout = Layout(package);
         Assert.All(layout.Pages[0].Boxes.OfType<PlacedText>(), t => Assert.True(double.IsFinite(t.X) && double.IsFinite(t.Baseline)));
+    }
+
+    private const string Jpeg = "ffd8ffc0000b080003000401011100ffd9";
+    private const string Image = "<Relationship Id=\"rIdP\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"../media/pic.jpg\"/>";
+
+    private static string Pic(int x) =>
+        $"<p:pic><p:nvPicPr><p:cNvPr id=\"2\" name=\"P\"/><p:cNvPicPr/><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed=\"rIdP\"/></p:blipFill><p:spPr><a:xfrm><a:off x=\"{x}\" y=\"0\"/><a:ext cx=\"1270000\" cy=\"635000\"/></a:xfrm></p:spPr></p:pic>";
+
+    private static byte[] WithPictures(string shapes) =>
+        PptxSpec.One($"@slide1\n<p:cSld><p:spTree>{shapes}</p:spTree></p:cSld>\n@rels slide1\n{Image}\n@bytes ppt/media/pic.jpg\n{Jpeg}\n");
+
+    private static string Group(int depth, string inside) =>
+        depth == 0 ? inside : Group(depth - 1, $"<p:grpSp><p:nvGrpSpPr><p:cNvPr id=\"{depth}\" name=\"G\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"635000\" cy=\"635000\"/><a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"635000\" cy=\"635000\"/></a:xfrm></p:grpSpPr>{inside}</p:grpSp>");
+
+    [Fact]
+    public void ShapeContentGoldenFile()
+    {
+        var output = new StringBuilder();
+        foreach (var (name, package) in PptxSpec.Read(Golden.Input("office-pptx", "shapes-input.txt")))
+        {
+            var contents = new List<byte[]>();
+            OfficePdfWriter.Create(Layout(package), OfficeLayoutSpec.Fonts(), contents: contents);
+            output.Append("> ").Append(name).Append('\n');
+            foreach (var page in contents)
+            {
+                output.Append("page\n");
+                foreach (string line in Encoding.Latin1.GetString(page).TrimEnd('\n').Split('\n')) output.Append("| ").Append(line).Append('\n');
+            }
+        }
+        Golden.Check("office-pptx", "shapes-content.txt", output.ToString());
+    }
+
+    [Fact]
+    public void AJpegOnASlideIsPlacedAtItsFrameAndRotated()
+    {
+        var pdf = OfficeConverter.FromPowerPoint(WithPictures(Pic(127000)), OfficeLayoutSpec.Fonts());
+        Assert.Empty(pdf.Skipped);
+        using var read = PigDocument.Open(pdf.Bytes);
+        var image = Assert.Single(read.GetPage(1).GetImages());
+        Assert.Equal(10, image.BoundingBox.Left, 0.01);
+        Assert.Equal(100, image.BoundingBox.Width, 0.01);
+        Assert.Equal(50, image.BoundingBox.Height, 0.01);
+
+        var contents = new List<byte[]>();
+        OfficePdfWriter.Create(Layout(WithPictures(Pic(0).Replace("<a:xfrm>", "<a:xfrm rot=\"5400000\">"))), OfficeLayoutSpec.Fonts(), contents: contents);
+        Assert.Contains("0 -1 1 0 ", Encoding.Latin1.GetString(contents[0]));
+    }
+
+    [Fact]
+    public void PicturesPastTheLimitAreCounted()
+    {
+        var package = WithPictures(Pic(0) + Pic(127000) + Pic(254000));
+        var layout = Layout(package, new PptxLimits(MaxPictures: 2));
+        Assert.Equal(2, layout.Pages[0].Boxes.OfType<PlacedImage>().Count());
+        Assert.Equal([new SkippedFeature("picture", 1)], layout.Skipped);
+    }
+
+    [Fact]
+    public void GroupsDeeperThanTheLimitAreCountedWithTheirContent()
+    {
+        string leaf = Box("Leaf", "deep");
+        var within = Layout(Slides(1, Group(2, leaf)), new PptxLimits(MaxGroupDepth: 2));
+        Assert.Single(within.Pages[0].Boxes.OfType<PlacedText>());
+        var beyond = Layout(Slides(1, Group(3, leaf) + Box("Kept", "kept")), new PptxLimits(MaxGroupDepth: 2));
+        Assert.Equal(["kept"], beyond.Pages[0].Boxes.OfType<PlacedText>().Select(t => t.Text));
+        Assert.Equal([new SkippedFeature("slide-shape", 1)], beyond.Skipped);
+    }
+
+    [Fact]
+    public void ShapesInsideGroupsCountTowardTheShapeLimit()
+    {
+        var layout = Layout(Slides(1, Group(1, Box("A", "one") + Box("B", "two") + Box("C", "three"))), new PptxLimits(MaxShapes: 3));
+        Assert.Equal(["one", "two"], layout.Pages[0].Boxes.OfType<PlacedText>().Select(t => t.Text));
+        Assert.Equal([new SkippedFeature("slide-shape", 1)], layout.Skipped);
+    }
+
+    private static string Table(int rows, int columns)
+    {
+        string cell = "<a:tc><a:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>x</a:t></a:r></a:p></a:txBody><a:tcPr/></a:tc>";
+        string grid = string.Concat(Enumerable.Repeat("<a:gridCol w=\"635000\"/>", columns));
+        string row = "<a:tr h=\"254000\">" + string.Concat(Enumerable.Repeat(cell, columns)) + "</a:tr>";
+        return "<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id=\"2\" name=\"T\"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"1\" cy=\"1\"/></p:xfrm>" +
+            $"<a:graphic><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/table\"><a:tbl><a:tblGrid>{grid}</a:tblGrid>{string.Concat(Enumerable.Repeat(row, rows))}</a:tbl></a:graphicData></a:graphic></p:graphicFrame>";
+    }
+
+    [Fact]
+    public void ATableWithinTheLimitsIsDrawnAndOneBeyondThemIsCounted()
+    {
+        var limits = new PptxLimits(MaxTableRows: 3, MaxTableColumns: 2);
+        var fits = Layout(Slides(1, Table(3, 2)), limits);
+        Assert.Equal(6, fits.Pages[0].Boxes.OfType<PlacedText>().Count());
+        Assert.Empty(fits.Skipped);
+
+        var tooManyRows = Layout(Slides(1, Table(4, 2) + Box("A", "kept")), limits);
+        Assert.Equal(["kept"], tooManyRows.Pages[0].Boxes.OfType<PlacedText>().Select(t => t.Text));
+        Assert.Equal([new SkippedFeature("slide-shape", 1)], tooManyRows.Skipped);
+        Assert.Equal([new SkippedFeature("slide-shape", 1)], Layout(Slides(1, Table(2, 3) + Box("A", "kept")), limits).Skipped);
+    }
+
+    [Fact]
+    public void ATableCountsItsTextTowardTheTotal()
+    {
+        Layout(Slides(1, Table(2, 2)), new PptxLimits(MaxTotalText: 4));
+        Assert.Equal(PdfReadProblem.Unsupported, Problem(() => Layout(Slides(1, Table(2, 2)), new PptxLimits(MaxTotalText: 3))));
+    }
+
+    [Fact]
+    public void ShapesAndTablesAreWrittenToThePdf()
+    {
+        string shapes = Table(2, 2) +
+            "<p:sp><p:nvSpPr><p:cNvPr id=\"5\" name=\"S\"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm rot=\"2700000\"><a:off x=\"2540000\" y=\"2540000\"/><a:ext cx=\"1270000\" cy=\"635000\"/></a:xfrm><a:prstGeom prst=\"homePlate\"/>" +
+            "<a:solidFill><a:srgbClr val=\"FF0000\"/></a:solidFill><a:ln w=\"12700\"><a:solidFill><a:srgbClr val=\"000000\"/></a:solidFill><a:prstDash val=\"dash\"/></a:ln></p:spPr></p:sp>";
+        var pdf = OfficeConverter.FromPowerPoint(Slides(1, shapes), OfficeLayoutSpec.Fonts());
+        Assert.Empty(pdf.Skipped);
+        using var read = PigDocument.Open(pdf.Bytes);
+        Assert.Equal(4, read.GetPage(1).Letters.Count(l => l.Value == "x"));
+        Assert.Single(read.GetPage(1).Paths, p => p.IsFilled && p.IsStroked);
     }
 }

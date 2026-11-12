@@ -124,7 +124,20 @@ internal sealed partial class Paginator
     private static void PlaceRows(Page page, TableLines table, int from, int to, double originX)
     {
         var parts = new CellBoxes();
-        double y = page.Y;
+        PlaceRows(parts, table, from, to, originX, page.Y);
+        parts.AddTo(page.Boxes);
+    }
+
+    /// <summary>Puts a whole table on one page with its top left corner at x, y; it is not split.</summary>
+    internal static void EmitTable(List<LayoutBox> boxes, TableLines table, double x, double y)
+    {
+        var parts = new CellBoxes();
+        PlaceRows(parts, table, 0, table.Rows.Count, x, y);
+        parts.AddTo(boxes);
+    }
+
+    private static void PlaceRows(CellBoxes parts, TableLines table, int from, int to, double originX, double y)
+    {
         for (int r = from; r < to; r++)
         {
             foreach (var cell in table.Rows[r].Cells)
@@ -134,7 +147,6 @@ internal sealed partial class Paginator
             }
             y += table.Rows[r].Height;
         }
-        parts.AddTo(page.Boxes);
     }
 
     private static void EmitRowPiece(Page page, RowLines row, double originX, double y, double height, int[] from, int[] count, bool first, bool last)
