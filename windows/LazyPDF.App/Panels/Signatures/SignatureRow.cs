@@ -54,6 +54,9 @@ public sealed class SignatureRow(SignatureReport report, int page, Rect where)
         _ => "\uE946",
     };
 
+    /// <summary>Whether the signer's certificate can be added to the trusted list from here: it is the only thing standing between the signature and a good verdict.</summary>
+    public bool CanTrust => Report.Certificate is not null && Report.Kind != SignatureKind.DocumentTimestamp && Report.Problems.Contains(SignatureProblem.UntrustedSigner);
+
     /// <summary>Whether the open file goes on past this signature, so that its signed version differs from it.</summary>
     public bool HasLaterRevisions => Report.Revision > 0 && !Report.CoversWholeFile;
 
@@ -104,6 +107,9 @@ public sealed class SignatureRow(SignatureReport report, int page, Rect where)
                 _ => Array.Empty<string>(),
             });
         }
+        if (Report.Problems.Contains(SignatureProblem.WeakKey) && Report.Certificate is not null) lines.Add(Loc.T("The signer's key is {0}, which is too weak to rely on.", CertificateLines.Key(Report.Certificate)));
+        if (Report.Kind != SignatureKind.DocumentTimestamp && Report.TimestampTime is null && Report.TimeUsed is { } time)
+            lines.Add(Loc.T("The certificate was judged as of {0}, the time the signer gave. Nothing proves that time.", time.ToString("d")));
         if (Report.Level >= PadesLevel.LT) lines.Add(Loc.T("Proof of the certificate is stored in the file."));
         return lines;
     }

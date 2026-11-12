@@ -32,6 +32,15 @@ internal static class ServerPreview
         return recorder.Urls.Select(Host).OfType<string>().Distinct().ToList();
     });
 
+    /// <summary>The servers a check would ask for missing issuer certificates, found by verifying against a transport that answers nothing.</summary>
+    public static Task<IReadOnlyList<string>> IssuerHostsAsync(byte[] file, VerifyOptions options) => Task.Run<IReadOnlyList<string>>(() =>
+    {
+        var recorder = new Recorder();
+        try { PdfSignatureVerifier.Verify(file, options with { Transport = recorder }); }
+        catch (PdfReadException) { return []; }
+        return recorder.Urls.Select(Host).OfType<string>().Distinct().ToList();
+    });
+
     public static string Describe(IReadOnlyList<string> hosts) =>
         hosts.Count <= Shown ? string.Join(", ", hosts) : Loc.T("{0}, and {1} more", string.Join(", ", hosts.Take(Shown)), hosts.Count - Shown);
 

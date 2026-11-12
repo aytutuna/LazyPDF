@@ -11,9 +11,9 @@ public sealed class SignatureRowTests
 {
     private static readonly DateTimeOffset Now = new(2026, 3, 10, 9, 0, 0, TimeSpan.Zero);
 
-    private static (byte[] File, SignatureReport Report) Signed(bool comment, bool trusted = false)
+    private static (byte[] File, SignatureReport Report) Signed(bool comment, bool trusted = false, int keyBits = 2048)
     {
-        using var ada = PdfDigitalId.Create("Ada Lovelace", null, Now.AddDays(-1), years: 1, keyBits: 2048);
+        using var ada = PdfDigitalId.Create("Ada Lovelace", null, Now.AddDays(-1), years: 1, keyBits: keyBits);
         var session = PdfEditSession.Open(Pdfs.Text());
         PdfSigner.Sign(session, new PdfSignRequest(ada, Now) { Reason = "Approved", Fonts = new FakeFonts() });
         if (comment)
@@ -43,6 +43,29 @@ public sealed class SignatureRowTests
         Assert.Contains("Not checked", row.Sections.Select(s => s.Heading));
         Assert.DoesNotContain("Changed since signing", row.Sections.Select(s => s.Heading));
         Assert.False(row.HasLaterRevisions);
+    }
+
+    [Fact]
+    public void AnUntrustedSignerCanBeTrustedFromTheRow()
+    {
+        Assert.True(new SignatureRow(Signed(comment: false).Report, 0, Rect.Empty).CanTrust);
+        Assert.False(new SignatureRow(Signed(comment: false, trusted: true).Report, 0, Rect.Empty).CanTrust);
+    }
+
+    [Fact]
+    public void AWeakKeyIsNamedWithItsSize()
+    {
+        var row = new SignatureRow(Signed(comment: false, keyBits: 1024).Report, 0, Rect.Empty);
+
+        Assert.Contains("The signer's key is RSA 1024, which is too weak to rely on.", AllLines(row));
+    }
+
+    [Fact]
+    public void ATimeTheSignerGaveIsSaidToBeUnproven()
+    {
+        var row = new SignatureRow(Signed(comment: false).Report, 0, Rect.Empty);
+
+        Assert.Contains("the time the signer gave", AllLines(row));
     }
 
     [Fact]

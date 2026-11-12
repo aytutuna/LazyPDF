@@ -598,6 +598,9 @@
   <data name="Asks the certificate servers whether each certificate was withdrawn. The file is not changed." xml:space="preserve">
     <value>Sertifika sunucularına her sertifikanın geri çekilip çekilmediğini sorar. Dosya değiştirilmez.</value>
   </data>
+  <data name="Asks the servers named in the signer certificate for the certificates between it and a trusted one." xml:space="preserve">
+    <value>İmzacının sertifikasında adı geçen sunuculardan, sertifika ile güvenilen bir sertifika arasındaki sertifikaları ister.</value>
+  </data>
   <data name="At the end" xml:space="preserve">
     <value>Sona</value>
   </data>
@@ -2041,6 +2044,9 @@
   <data name="Fast web view" xml:space="preserve">
     <value>Hızlı web görünümü</value>
   </data>
+  <data name="Fetch missing certificates" xml:space="preserve">
+    <value>Eksik sertifikaları getir</value>
+  </data>
   <data name="Field hint" xml:space="preserve">
     <value>Alan ipucu</value>
   </data>
@@ -2926,6 +2932,9 @@
   <data name="Lazy PDF will ask before opening links again." xml:space="preserve">
     <value>Lazy PDF bağlantıları açmadan önce yeniden soracak.</value>
   </data>
+  <data name="Lazy PDF will contact {0} for the certificates between the signer and a trusted one. Nothing from the file is sent." xml:space="preserve">
+    <value>Lazy PDF, imzacı ile güvenilen bir sertifika arasındaki sertifikalar için {0} sunucularına bağlanacak. Dosyadan hiçbir şey gönderilmez.</value>
+  </data>
   <data name="Lazy PDF will contact {0}. Servers named by certificates found on the way may be asked too. The file itself is not sent." xml:space="preserve">
     <value>Lazy PDF şu sunuculara bağlanacak: {0}. Yol üzerinde bulunan sertifikalarda adı geçen sunuculara da sorulabilir. Dosyanın kendisi gönderilmez.</value>
   </data>
@@ -3096,6 +3105,9 @@
   </data>
   <data name="Look of the signature" xml:space="preserve">
     <value>İmzanın görünümü</value>
+  </data>
+  <data name="Looked for missing certificates just now. The file is not changed." xml:space="preserve">
+    <value>Eksik sertifikalar az önce arandı. Dosya değişmedi.</value>
   </data>
   <data name="Looking at page {0} of {1}" xml:space="preserve">
     <value>Sayfalara bakılıyor: {0} / {1}</value>
@@ -5440,6 +5452,9 @@
   <data name="Signatures are removed from the result." xml:space="preserve">
     <value>İmzalar sonuçtan kaldırılır.</value>
   </data>
+  <data name="Signatures made with this certificate will count as trusted. Check its fingerprint with the signer first. You can remove it under Trust settings." xml:space="preserve">
+    <value>Bu sertifikayla atılan imzalar güvenilir sayılır. Önce parmak izini imzacıyla doğrulayın. Güven ayarlarından kaldırabilirsiniz.</value>
+  </data>
   <data name="Signatures stay in the result but are no longer valid." xml:space="preserve">
     <value>İmzalar sonuçta kalır ama artık geçerli değildir.</value>
   </data>
@@ -6073,8 +6088,14 @@
   <data name="The certificate is added to your keychain so you can use it again." xml:space="preserve">
     <value>Sertifika, yeniden kullanabilmeniz için anahtar zincirinize eklenir.</value>
   </data>
+  <data name="The certificate was judged as of {0}, the time the signer gave. Nothing proves that time." xml:space="preserve">
+    <value>Sertifika, imzacının bildirdiği {0} tarihine göre değerlendirildi. Bu tarihi hiçbir şey kanıtlamıyor.</value>
+  </data>
   <data name="The certificates name no servers to ask." xml:space="preserve">
     <value>Sertifikalar sorulacak bir sunucu belirtmiyor.</value>
+  </data>
+  <data name="The certificates name no servers to fetch from." xml:space="preserve">
+    <value>Sertifikalar getirilecek bir sunucu belirtmiyor.</value>
   </data>
   <data name="The change could not be written. Save a copy of the file and try again." xml:space="preserve">
     <value>Değişiklik yazılamadı. Dosyanın bir kopyasını kaydedip yeniden deneyin.</value>
@@ -6586,6 +6607,9 @@
   <data name="The signer is not trusted." xml:space="preserve">
     <value>İmzalayan güvenilir değil.</value>
   </data>
+  <data name="The signer's key is {0}, which is too weak to rely on." xml:space="preserve">
+    <value>İmzacının anahtarı {0}, güvenmek için fazla zayıf.</value>
+  </data>
   <data name="The signing time is the signer's own claim. Check that the file was signed before the certificate expired." xml:space="preserve">
     <value>İmza zamanı imzalayanın kendi beyanıdır. Dosyanın sertifikanın süresi dolmadan önce imzalandığını denetleyin.</value>
   </data>
@@ -7057,17 +7081,26 @@
   <data name="Trim white margins" xml:space="preserve">
     <value>Beyaz payları kırp</value>
   </data>
+  <data name="Trust" xml:space="preserve">
+    <value>Güven</value>
+  </data>
   <data name="Trust settings" xml:space="preserve">
     <value>Güven ayarları</value>
   </data>
   <data name="Trust the signer's certificate only after checking it with them." xml:space="preserve">
     <value>İmzalayanın sertifikasına ancak onunla doğruladıktan sonra güvenin.</value>
   </data>
+  <data name="Trust this signer" xml:space="preserve">
+    <value>Bu imzacıya güven</value>
+  </data>
   <data name="Trust what Windows trusts" xml:space="preserve">
     <value>Windows'un güvendiklerine güven</value>
   </data>
   <data name="Trust what the system trusts" xml:space="preserve">
     <value>Sistemin güvendiklerine güven</value>
+  </data>
+  <data name="Trust {0}?" xml:space="preserve">
+    <value>{0} kişisine güvenilsin mi?</value>
   </data>
   <data name="Turkish ID numbers" xml:space="preserve">
     <value>T.C. kimlik numaraları</value>

@@ -23,7 +23,7 @@ internal static class CertificateLines
 
     public static string Fingerprint(X509Certificate2 certificate) => BitConverter.ToString(SHA256.HashData(certificate.RawData)).Replace('-', ' ');
 
-    private static string Key(X509Certificate2 certificate)
+    public static string Key(X509Certificate2 certificate)
     {
         string fallback = certificate.PublicKey.Oid.FriendlyName ?? "";
         try

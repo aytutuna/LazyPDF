@@ -67,6 +67,11 @@
                             Padding="10,3,10,4" Margin="0,0,8,4" Click="Restore_Click" />
                     <Button x:Name="CertificateButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8D7;" Content="{loc:T View certificate}"
                             Padding="10,3,10,4" Margin="0,0,8,4" Click="Certificate_Click" />
+                    <Button x:Name="TrustSignerButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE73E;" Content="{loc:T Trust this signer}"
+                            Padding="10,3,10,4" Margin="0,0,8,4" Click="TrustSigner_Click" />
+                    <Button x:Name="FetchButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE896;" Content="{loc:T Fetch missing certificates}"
+                            ToolTip="{loc:T Asks the servers named in the signer certificate for the certificates between it and a trusted one.}"
+                            Padding="10,3,10,4" Margin="0,0,8,4" Click="FetchIssuers_Click" />
                 </WrapPanel>
                 <StackPanel x:Name="CertificateInfo" Visibility="Collapsed" Margin="0,4,0,4">
                     <TextBlock Text="{loc:T Certificate}" Style="{StaticResource FieldLabelText}" FontWeight="SemiBold" AutomationProperties.HeadingLevel="Level3" />

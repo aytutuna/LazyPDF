@@ -8366,5 +8366,38 @@
   },
   "This bookmark does something Lazy PDF cannot do.": {
     "tr": "Bu yer imi, Lazy PDF'nin yapamadığı bir işlem yapıyor."
+  },
+  "Trust this signer": {
+    "tr": "Bu imzacıya güven"
+  },
+  "Fetch missing certificates": {
+    "tr": "Eksik sertifikaları getir"
+  },
+  "Asks the servers named in the signer certificate for the certificates between it and a trusted one.": {
+    "tr": "İmzacının sertifikasında adı geçen sunuculardan, sertifika ile güvenilen bir sertifika arasındaki sertifikaları ister."
+  },
+  "Looked for missing certificates just now. The file is not changed.": {
+    "tr": "Eksik sertifikalar az önce arandı. Dosya değişmedi."
+  },
+  "Trust {0}?": {
+    "tr": "{0} kişisine güvenilsin mi?"
+  },
+  "Signatures made with this certificate will count as trusted. Check its fingerprint with the signer first. You can remove it under Trust settings.": {
+    "tr": "Bu sertifikayla atılan imzalar güvenilir sayılır. Önce parmak izini imzacıyla doğrulayın. Güven ayarlarından kaldırabilirsiniz."
+  },
+  "Trust": {
+    "tr": "Güven"
+  },
+  "The certificates name no servers to fetch from.": {
+    "tr": "Sertifikalar getirilecek bir sunucu belirtmiyor."
+  },
+  "Lazy PDF will contact {0} for the certificates between the signer and a trusted one. Nothing from the file is sent.": {
+    "tr": "Lazy PDF, imzacı ile güvenilen bir sertifika arasındaki sertifikalar için {0} sunucularına bağlanacak. Dosyadan hiçbir şey gönderilmez."
+  },
+  "The signer's key is {0}, which is too weak to rely on.": {
+    "tr": "İmzacının anahtarı {0}, güvenmek için fazla zayıf."
+  },
+  "The certificate was judged as of {0}, the time the signer gave. Nothing proves that time.": {
+    "tr": "Sertifika, imzacının bildirdiği {0} tarihine göre değerlendirildi. Bu tarihi hiçbir şey kanıtlamıyor."
   }
 }

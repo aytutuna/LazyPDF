@@ -44,7 +44,7 @@ public partial class SignaturesSidePanel : ToolPanel
 
     private void Tab_Changed(object? sender, EventArgs e) => _ = BuildAsync();
 
-    private async Task BuildAsync(bool online = false)
+    private async Task BuildAsync(bool online = false, bool issuers = false)
     {
         int ticket = ++_ticket;
         var tab = Tab!;
@@ -55,7 +55,8 @@ public partial class SignaturesSidePanel : ToolPanel
         var options = SigningSettingsStore.Load().Verify(password, certificate, DateTimeOffset.Now);
         IReadOnlyList<SignatureReport>? reports = null;
         Dictionary<string, (int Page, PdfRect Rect)> fields = [];
-        using var transport = online ? new HttpSignatureTransport() : null;
+        using var transport = online || issuers ? new HttpSignatureTransport() : null;
+        if (issuers) options = options with { Transport = transport };
         Task Work(CancellationToken token)
         {
             if (transport is not null) transport.Cancel = token;
@@ -63,12 +64,12 @@ public partial class SignaturesSidePanel : ToolPanel
             {
                 reports = PdfSignatureVerifier.Verify(bytes, options);
                 fields = SignatureFields.Locate(bytes, password, certificate);
-                if (transport is not null) reports = Ask(bytes, password, transport, options, reports);
+                if (online) reports = Ask(bytes, password, transport, options, reports);
             });
         }
         try
         {
-            if (online) await Host!.RunBusyAsync(Loc.T("Asking the certificate servers"), Work);
+            if (online || issuers) await Host!.RunBusyAsync(Loc.T("Asking the certificate servers"), Work);
             else await Work(CancellationToken.None);
         }
         catch (PdfReadException)
@@ -77,6 +78,7 @@ public partial class SignaturesSidePanel : ToolPanel
         }
         if (ticket != _ticket) return;
         string? note = reports is { Count: 0 } ? Loc.T("This file has no signatures.") : null;
+        if (issuers && reports is { Count: > 0 }) note = Loc.T("Looked for missing certificates just now. The file is not changed.") + (transport!.LastFailure is { } miss ? " " + miss : "");
         if (online && reports is { Count: > 0 }) note = Loc.T("Checked with the certificate servers just now. The file is not changed.") + (transport!.LastFailure is { } failure ? " " + failure : "");
         if (reports is null) Show(null, Loc.T("The signatures could not be checked."));
         else Show(reports.Select(r => Row(r, fields)).ToList(), note);
@@ -139,6 +141,7 @@ public partial class SignaturesSidePanel : ToolPanel
         ViewButton.IsEnabled = copy && !locked;
         RestoreButton.IsEnabled = copy;
         CertificateButton.IsEnabled = row.Report.Certificate is not null;
+        TrustSignerButton.Visibility = FetchButton.Visibility = row.CanTrust ? Visibility.Visible : Visibility.Collapsed;
         CertificateButton.Content = Loc.T("View certificate");
         CertificateInfo.Visibility = Visibility.Collapsed;
         AutomationProperties.SetName(CertificateButton, row.Report.Kind == SignatureKind.DocumentTimestamp ? Loc.T("View the time stamp authority's certificate") : Loc.T("View the signer's certificate"));
@@ -218,6 +221,48 @@ public partial class SignaturesSidePanel : ToolPanel
         AutomationProperties.SetName(CertificateButton, show
             ? stamp ? Loc.T("Hide the time stamp authority's certificate") : Loc.T("Hide the signer's certificate")
             : stamp ? Loc.T("View the time stamp authority's certificate") : Loc.T("View the signer's certificate"));
+    }
+
+    private void TrustSigner_Click(object sender, RoutedEventArgs e)
+    {
+        if (List.SelectedItem is not SignatureRow { CanTrust: true } row) return;
+        var tab = Tab!;
+        string der = Convert.ToBase64String(row.Report.Certificate!.RawData);
+        Host!.ShowNotice(Loc.T("Trust {0}?", row.Title),
+            Loc.T("Signatures made with this certificate will count as trusted. Check its fingerprint with the signer first. You can remove it under Trust settings."),
+            new NoticeAction(Loc.T("Trust"), () =>
+            {
+                SigningSettingsStore.Update(s =>
+                {
+                    if (!s.TrustedCertificates.Contains(der)) s.TrustedCertificates.Add(der);
+                });
+                ShowTrust();
+                if (ReferenceEquals(Tab, tab)) _ = BuildAsync();
+            }));
+    }
+
+    private async void FetchIssuers_Click(object sender, RoutedEventArgs e)
+    {
+        var tab = Tab!;
+        if (tab.Certificate is not null)
+        {
+            Tell(Loc.T("A file protected for certificates cannot be checked online here."));
+            return;
+        }
+        var options = SigningSettingsStore.Load().Verify(tab.Password, tab.Certificate, DateTimeOffset.Now);
+        var hosts = await ServerPreview.IssuerHostsAsync(tab.Session.Current.ToArray(), options);
+        if (!ReferenceEquals(Tab, tab)) return;
+        if (hosts.Count == 0)
+        {
+            Tell(Loc.T("The certificates name no servers to fetch from."));
+            return;
+        }
+        Host!.ShowNotice(Loc.T("These servers will be asked"),
+            Loc.T("Lazy PDF will contact {0} for the certificates between the signer and a trusted one. Nothing from the file is sent.", ServerPreview.Describe(hosts)),
+            new NoticeAction(Loc.T("Ask them"), () =>
+            {
+                if (ReferenceEquals(Tab, tab)) _ = BuildAsync(issuers: true);
+            }));
     }
 
     private void CopyFingerprint_Click(object sender, RoutedEventArgs e)
