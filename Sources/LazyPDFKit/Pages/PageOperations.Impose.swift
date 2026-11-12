@@ -74,6 +74,7 @@ extension PageOperations {
         let copies = try importer.importPages(pages)
         if let info = source.trailer["Info"], source.info != nil { target.trailer["Info"] = try importer.copyValue(info) }
         try PageTree.set(target, copies)
+        try PdfForm.regenerateStale(target)
 
         var flattened = 0, dropped = 0
         var forms: [PdfReference] = []

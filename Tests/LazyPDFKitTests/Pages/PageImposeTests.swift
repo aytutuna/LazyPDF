@@ -149,11 +149,22 @@ final class PageImposeTests: XCTestCase {
             pdf.stream(free + 2, "/Type /XObject /Subtype /Form /BBox [0 0 50 50]", "0 0 1 rg 0 0 50 50 re f")
         })
         let result = try PageOperations.impose(try PdfDocument.open(bytes), [0], ImposeOptions(mode: .nUp, sheetWidth: 400, sheetHeight: 300, perSheet: 2))
-        XCTAssertEqual(result.annotationsFlattened, 1)
-        XCTAssertEqual(result.annotationsDropped, 1)
+        XCTAssertEqual(result.annotationsFlattened, 2)
+        XCTAssertEqual(result.annotationsDropped, 0)
         XCTAssertNil(result.document.catalog["AcroForm"])
         let document = try PdfDocument.open(try result.document.saveRewrite())
         XCTAssertNil(document.catalog["AcroForm"])
+    }
+
+    func test_aFilledWidgetWithNoAppearanceIsDrawnFromItsValue() throws {
+        let free = PageTestFiles.free(1)
+        let bytes = PageTestFiles.make(1, "/AcroForm <</Fields [\(free) 0 R] /DA (/Helv 12 Tf 0 g) /DR <</Font <</Helv \(free + 1) 0 R>>>> /NeedAppearances true>>", pageExtra: { _ in "/Annots [\(free) 0 R]" }, add: { pdf in
+            pdf.obj(free, "<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /V (Hello) /Rect [10 10 110 30] /F 4>>")
+            pdf.obj(free + 1, "<</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>")
+        })
+        let result = try PageOperations.impose(try PdfDocument.open(bytes), [0], ImposeOptions(mode: .nUp, sheetWidth: 400, sheetHeight: 300, perSheet: 2))
+        XCTAssertEqual(result.annotationsFlattened, 1)
+        XCTAssertEqual(result.annotationsDropped, 0)
     }
 
     func test_badArgumentsAreRefused() throws {

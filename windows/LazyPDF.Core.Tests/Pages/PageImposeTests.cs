@@ -188,11 +188,27 @@ public class PageImposeTests
                 pdf.Stream(free + 2, "/Type /XObject /Subtype /Form /BBox [0 0 50 50]", "0 0 1 rg 0 0 50 50 re f");
             });
         var result = PageOperations.Impose(PdfDocument.Open(bytes), [0], new ImposeOptions(ImposeMode.NUp, 400, 300, 2));
-        Assert.Equal(1, result.AnnotationsFlattened);
-        Assert.Equal(1, result.AnnotationsDropped);
+        Assert.Equal(2, result.AnnotationsFlattened);
+        Assert.Equal(0, result.AnnotationsDropped);
         Assert.Null(result.Document.Catalog["AcroForm"]);
         var document = PdfDocument.Open(result.Document.SaveRewrite());
         Assert.Null(document.Catalog["AcroForm"]);
+    }
+
+    [Fact]
+    public void AFilledWidgetWithNoAppearanceIsDrawnFromItsValue()
+    {
+        int free = PageTestFiles.Free(1);
+        var bytes = PageTestFiles.Make(1, $"/AcroForm <</Fields [{free} 0 R] /DA (/Helv 12 Tf 0 g) /DR <</Font <</Helv {free + 1} 0 R>>>> /NeedAppearances true>>",
+            pageExtra: _ => $"/Annots [{free} 0 R]",
+            add: pdf =>
+            {
+                pdf.Obj(free, "<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /V (Hello) /Rect [10 10 110 30] /F 4>>");
+                pdf.Obj(free + 1, "<</Type /Font /Subtype /Type1 /BaseFont /Helvetica>>");
+            });
+        var result = PageOperations.Impose(PdfDocument.Open(bytes), [0], new ImposeOptions(ImposeMode.NUp, 400, 300, 2));
+        Assert.Equal(1, result.AnnotationsFlattened);
+        Assert.Equal(0, result.AnnotationsDropped);
     }
 
     [Fact]

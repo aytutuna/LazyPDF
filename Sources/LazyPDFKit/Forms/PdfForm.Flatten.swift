@@ -12,15 +12,7 @@ extension PdfForm {
     public func flatten(_ fields: [FormField]? = nil) throws -> Int {
         try requireFillable()
         let chosen = fields ?? self.fields
-        let stale = needAppearances
-        for field in chosen {
-            if field.kind == .signature { continue }
-            if !stale && field.widgets.allSatisfy({ document.dict($0.dictionary, "AP")?["N"] != nil }) { continue }
-            do {
-                try regenerate([field])
-            } catch is InvalidOperationException {
-            }
-        }
+        try regenerateStale(chosen)
 
         var widgets = Set<ObjectIdentifier>()
         for field in chosen {
@@ -44,5 +36,25 @@ extension PdfForm {
         }
         refresh()
         return burned
+    }
+
+    // Draws the fields whose appearance is missing, or all of them under /NeedAppearances; one that cannot be drawn keeps what it has.
+    func regenerateStale(_ fields: [FormField]) throws {
+        try requireFillable()
+        let stale = needAppearances
+        for field in fields {
+            if field.kind == .signature { continue }
+            if !stale && field.widgets.allSatisfy({ document.dict($0.dictionary, "AP")?["N"] != nil }) { continue }
+            do {
+                try regenerate([field])
+            } catch is InvalidOperationException {
+            }
+        }
+    }
+
+    /// The fields of the document drawn afresh where their appearance is missing or /NeedAppearances is set.
+    static func regenerateStale(_ document: PdfDocument) throws {
+        let form = read(document)
+        try form.regenerateStale(form.fields)
     }
 }

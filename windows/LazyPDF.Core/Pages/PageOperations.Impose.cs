@@ -52,6 +52,7 @@ public static partial class PageOperations
         var copies = importer.Import(pages, cancel);
         if (source.Trailer["Info"] is { } info && source.Info is not null) target.Trailer["Info"] = importer.CopyValue(info);
         PageTree.Set(target, copies);
+        PdfForm.RegenerateStale(target);
 
         int flattened = 0, dropped = 0;
         var forms = new List<PdfReference>();
