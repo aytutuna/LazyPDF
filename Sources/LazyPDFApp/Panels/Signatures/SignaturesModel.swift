@@ -60,6 +60,7 @@ public final class SignaturesModel: ToolPanelModel {
     @ObservationIgnored private var watch: ObservationWatch?
     @ObservationIgnored private var ticket = 0
     @ObservationIgnored private var asking: SigningTransport?
+    private var signedFields: Set<String> = []
 
     /// `transport`, when given, lets the person ask the servers the certificates name for a certificate the chain lacks.
     public init(trust: SignatureTrust, transport: (() -> SigningTransport)? = nil) {
@@ -89,6 +90,12 @@ public final class SignaturesModel: ToolPanelModel {
     public var canTrustSigner: Bool {
         guard let row = selectedRow, let certificate = row.report.certificate, row.report.problems.contains(.untrustedSigner) else { return false }
         return !trusted.contains { $0.der == Data(certificate.rawData).base64EncodedString() }
+    }
+
+    /// Whether the picked signature sits in a signed field of the open file, and the file may be changed.
+    public var canClearSignature: Bool {
+        guard let tab, let name = selectedRow?.report.fieldName else { return false }
+        return signedFields.contains(name) && ChangeGate.refusal(tab.document) == nil
     }
 
     /// Whether the servers can be asked for the certificates the signer's chain lacks.
@@ -172,6 +179,7 @@ public final class SignaturesModel: ToolPanelModel {
                 self.show([], L10n.t("The signatures could not be checked."))
                 return
             }
+            self.signedFields = Self.signedFields(tab)
             self.show(found.reports.map { self.row($0, found.fields) }, found.reports.isEmpty ? L10n.t("This file has no signatures.") : nil)
             self.selected = self.rows.first?.id
             if let transport, !stopped, !found.reports.isEmpty {
@@ -214,6 +222,32 @@ public final class SignaturesModel: ToolPanelModel {
                         NoticeAction(L10n.t("Trust")) { [weak self] in
             if let self, self.tab === tab { self.addTrusted(der) }
         })
+    }
+
+    /// Asks, then takes the signature out of the picked field so that it can be signed again.
+    public func clearSignature() {
+        guard canClearSignature, let tab, let host, let name = selectedRow?.report.fieldName else { return }
+        host.showNotice(L10n.t("Clear the signature of {0}?", name),
+                        L10n.t("The signature is removed from the field, and the field can be signed again. The file keeps the earlier signed version in its history. Undo brings the signature back."),
+                        NoticeAction(L10n.t("Clear signature")) { [weak self] in
+            if let self, self.tab === tab { self.clear(name) }
+        })
+    }
+
+    /// Clears the field as one undoable step; false when nothing changed, which the info bar then explains.
+    @discardableResult
+    func clear(_ name: String) -> Bool {
+        guard let tab, let host else { return false }
+        do {
+            let form = PdfForm.read(tab.document)
+            guard let field = form.find(name) else { throw InvalidOperationException(FormText.notSigned) }
+            try form.clearSignature(field)
+            return try tab.commit(L10n.t("Clear signature"))
+        } catch {
+            try? tab.session.discard()
+            host.showProblem(FormEdits.problem(of: error))
+            return false
+        }
     }
 
     public func select(_ id: Int?) {
@@ -313,6 +347,10 @@ public final class SignaturesModel: ToolPanelModel {
         trust.remove(row)
         showTrust()
         check()
+    }
+
+    private static func signedFields(_ tab: DocumentTab) -> Set<String> {
+        Set(PdfForm.read(tab.document).fields.filter { $0.kind == .signature && $0.isSigned }.map(\.name))
     }
 
     private var stem: String {

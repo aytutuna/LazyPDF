@@ -84,6 +84,13 @@ public struct SignaturesPanelView: View {
                 .accessibilityLabel(L10n.t("Save the signed version as a file"))
                 .disabled(!model.canSaveSigned)
             }
+            if model.canClearSignature {
+                Button { model.clearSignature() } label: {
+                    Label(L10n.t("Clear signature"), systemImage: "trash")
+                }
+                .help(L10n.t("Remove the signature so the field can be signed again"))
+                .accessibilityLabel(L10n.t("Remove the signature so the field can be signed again"))
+            }
             if model.canTrustSigner {
                 Button { model.trustSigner() } label: {
                     Label(L10n.t("Trust this signer"), systemImage: "checkmark.shield")

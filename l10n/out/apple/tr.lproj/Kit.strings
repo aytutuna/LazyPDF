@@ -325,7 +325,9 @@
 "Clear" = "Temizle";
 "Clear list" = "Listeyi temizle";
 "Clear menu" = "Menüyü temizle";
+"Clear signature" = "İmzayı temizle";
 "Clear the recent files" = "Son dosyaları temizle";
+"Clear the signature of {0}?" = "{0} alanının imzası temizlensin mi?";
 "Click a mark to move, resize or delete it." = "Taşımak, boyutlandırmak veya silmek için bir işarete tıklayın.";
 "Click a word on the page or choose one below." = "Sayfada bir sözcüğe tıklayın ya da aşağıdan seçin.";
 "Click each corner, double-click to finish." = "Her köşeye tıklayın, bitirmek için çift tıklayın.";
@@ -1323,6 +1325,7 @@
 "Remove the crop" = "Kırpmayı kaldır";
 "Remove the link" = "Bağlantıyı kaldır";
 "Remove the selected stamp" = "Seçili damgayı kaldır";
+"Remove the signature so the field can be signed again" = "Alan yeniden imzalanabilsin diye imzayı kaldır";
 "Remove this mark" = "Bu işareti kaldır";
 "Remove thumbnails" = "Küçük resimleri kaldır";
 "Remove unused objects" = "Kullanılmayan nesneleri kaldır";
@@ -1859,6 +1862,7 @@
 "The signature does not fit in the space kept for it." = "İmza, ona ayrılan yere sığmıyor.";
 "The signature is gone.|one" = "{0} imza kaldırıldı.";
 "The signature is gone.|other" = "{0} imza kaldırıldı.";
+"The signature is removed from the field, and the field can be signed again. The file keeps the earlier signed version in its history. Undo brings the signature back." = "İmza alandan kaldırılır ve alan yeniden imzalanabilir. Dosya, önceki imzalı sürümü geçmişinde tutar. Geri al imzayı geri getirir.";
 "The signature may not be checkable after its certificate expires. Add validation data again when the servers answer." = "Sertifika süresi dolunca imza denetlenemeyebilir. Sunucular yanıt verdiğinde doğrulama verisini yeniden ekleyin.";
 "The signatures could not be checked." = "İmzalar denetlenemedi.";
 "The signatures no longer hold." = "İmzalar artık geçerli değil.";

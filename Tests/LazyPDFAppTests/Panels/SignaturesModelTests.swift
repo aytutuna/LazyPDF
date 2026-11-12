@@ -152,6 +152,47 @@ final class SignaturesModelTests: XCTestCase {
         XCTAssertTrue(rig.viewer.geometryAsked.isEmpty)
     }
 
+    private func signedField() -> [UInt8] {
+        let objects = [
+            "<< /Type /Catalog /Pages 2 0 R /AcroForm << /Fields [4 0 R] /SigFlags 3 >> >>",
+            "<< /Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 600 800] >>",
+            "<< /Type /Page /Parent 2 0 R /Annots [4 0 R] >>",
+            "<< /Type /Annot /Subtype /Widget /FT /Sig /T (s) /V 5 0 R /Rect [0 0 100 20] /P 3 0 R >>",
+            "<< /Type /Sig /Filter /Adobe.PPKLite >>",
+        ]
+        var file = "%PDF-1.7\n"
+        var offsets: [Int] = []
+        for (i, object) in objects.enumerated() {
+            offsets.append(file.utf8.count)
+            file += "\(i + 1) 0 obj\n\(object)\nendobj\n"
+        }
+        let xref = file.utf8.count
+        file += "xref\n0 \(objects.count + 1)\n0000000000 65535 f \n"
+        for offset in offsets { file += String(repeating: "0", count: 10 - String(offset).count) + "\(offset) 00000 n \n" }
+        file += "trailer\n<< /Size \(objects.count + 1) /Root 1 0 R >>\nstartxref\n\(xref)\n%%EOF\n"
+        return Array(file.utf8)
+    }
+
+    func test_clearingASignatureEmptiesItsFieldInOneUndoStep() async throws {
+        let rig = try await attached(signedField())
+
+        XCTAssertTrue(rig.model.clear("s"))
+
+        XCTAssertEqual(PdfForm.read(rig.tab.document).find("s")?.isSigned, false)
+        XCTAssertTrue(try rig.tab.undo())
+        XCTAssertEqual(PdfForm.read(rig.tab.document).find("s")?.isSigned, true)
+        XCTAssertTrue(rig.host.problems.isEmpty)
+    }
+
+    func test_clearingAFieldThatIsNotSignedIsToldAndChangesNothing() async throws {
+        let rig = try await attached(Pdfs.text())
+
+        XCTAssertFalse(rig.model.clear("Nothing"))
+
+        XCTAssertEqual(rig.host.problems.count, 1)
+        XCTAssertFalse(rig.tab.session.canUndo)
+    }
+
     func test_longListsOfServersAreShortened() {
         XCTAssertEqual(ServerPreview.describe(["a", "b"]), "a, b")
         XCTAssertEqual(ServerPreview.describe((1...8).map { "s\($0)" }), "s1, s2, s3, s4, s5, s6, and 2 more")
@@ -182,6 +223,23 @@ final class SignaturesModelTests: XCTestCase {
         XCTAssertEqual(rig.model.selectedRow?.id, 0)
         XCTAssertEqual(rig.model.versionText, "This is the signed version.")
         XCTAssertFalse(rig.model.canSaveSigned)
+    }
+
+    func test_aSignedFieldIsClearedOnlyAfterTheNoticeIsAnswered() async throws {
+        let (file, _) = try signedFile(comment: false)
+        let rig = try await attached(file)
+        XCTAssertTrue(rig.model.canClearSignature)
+
+        rig.model.clearSignature()
+
+        let notice = try XCTUnwrap(rig.host.notices.first)
+        let name = try XCTUnwrap(rig.model.selectedRow?.report.fieldName)
+        XCTAssertEqual(notice.title, "Clear the signature of \(name)?")
+        XCTAssertEqual(notice.action?.text, "Clear signature")
+        XCTAssertTrue(PdfForm.read(rig.tab.document).fields.contains { $0.isSigned })
+        notice.action?.run()
+        XCTAssertFalse(PdfForm.read(rig.tab.document).fields.contains { $0.isSigned })
+        await settle { !rig.model.canClearSignature }
     }
 
     func test_trustingTheSignersCertificateMakesTheSignatureGood() async throws {
