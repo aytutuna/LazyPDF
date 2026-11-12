@@ -10,3 +10,4 @@ windows/**/obj/
 windows/.vs/
 
 __pycache__/
+TestResults/
