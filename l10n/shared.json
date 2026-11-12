@@ -3045,6 +3045,9 @@
   "That comment is no longer in the file.": {
     "tr": "Bu yorum artık dosyada değil."
   },
+  "The title is kept until the file is free.": {
+    "tr": "Başlık, dosya boşalana kadar saklanıyor."
+  },
   "Set status": {
     "tr": "Durumu ayarla"
   },

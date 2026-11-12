@@ -6694,6 +6694,9 @@
   <data name="The time stamp server gave no answer. Try again later." xml:space="preserve">
     <value>Zaman damgası sunucusu yanıt vermedi. Daha sonra yeniden deneyin.</value>
   </data>
+  <data name="The title is kept until the file is free." xml:space="preserve">
+    <value>Başlık, dosya boşalana kadar saklanıyor.</value>
+  </data>
   <data name="The title is set and the window shows it." xml:space="preserve">
     <value>Başlık ayarlı ve pencere onu gösteriyor.</value>
   </data>

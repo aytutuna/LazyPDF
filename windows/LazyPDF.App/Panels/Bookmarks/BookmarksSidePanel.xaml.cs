@@ -264,12 +264,24 @@ public partial class BookmarksSidePanel : ToolPanel
         if (RenameButton.IsEnabled && Tree.SelectedItem is BookmarkNode node) node.IsEditing = true;
     }
 
-    private void Rename(BookmarkNode node)
+    // False when the file cannot take the title now: the edit stays open so the typed words are not lost.
+    private bool Rename(BookmarkNode node)
     {
-        node.IsEditing = false;
         string title = node.EditText.Trim();
-        if (title.Length == 0 || title == node.Title || Editable() is not var (tab, host) || MarkWork.Cautioned(tab, host, () => RenameTo(tab, host, node, title))) return;
+        if (title.Length == 0 || title == node.Title)
+        {
+            node.IsEditing = false;
+            return true;
+        }
+        if (Editable() is not var (tab, host))
+        {
+            if (MarkWork.Running) Host?.SetStatus(Loc.T("The title is kept until the file is free."));
+            return false;
+        }
+        node.IsEditing = false;
+        if (MarkWork.Cautioned(tab, host, () => RenameTo(tab, host, node, title))) return true;
         RenameTo(tab, host, node, title);
+        return true;
     }
 
     private void RenameTo(DocumentTab tab, IToolHost host, BookmarkNode node, string title)
@@ -358,7 +370,7 @@ public partial class BookmarksSidePanel : ToolPanel
     {
         if (((FrameworkElement)sender).DataContext is not BookmarkNode node || e.Key is not (Key.Enter or Key.Escape)) return;
         if (e.Key == Key.Escape) node.IsEditing = false;
-        else if (node.IsEditing) Rename(node);
+        else if (node.IsEditing && !Rename(node)) return;
         Tree.Focus();
         e.Handled = true;
     }
@@ -456,7 +468,8 @@ public partial class BookmarksSidePanel : ToolPanel
     {
         if (Tab is not null && Tree.ItemsSource is List<BookmarkNode> nodes)
         {
-            foreach (var node in Flatten(nodes).Where(n => n.IsEditing).ToList()) Rename(node);
+            foreach (var node in Flatten(nodes).Where(n => n.IsEditing).ToList())
+                if (!Rename(node)) return false;
         }
         return true;
     }
