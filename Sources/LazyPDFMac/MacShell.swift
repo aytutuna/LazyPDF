@@ -37,7 +37,9 @@ final class MacShell {
         let panels = ToolPanels(host: vm, folders: folders)
         self.panels = panels
         vm.handInTyping = { panels.handIn() }
-        viewer = ViewerModel(makeRenderer: { PdfKitRenderer() }, openAddress: { NSWorkspace.shared.open($0) })
+        let made = ViewerModel(makeRenderer: { PdfKitRenderer() }, openAddress: { NSWorkspace.shared.open($0) })
+        made.markRequested = { [weak vm] in vm?.markSelection($0) }
+        viewer = made
         vm.fileWriter = CoordinatedFileWriter()
         vm.fileReader = CoordinatedFileReader.read
         let services = MacToolServices()

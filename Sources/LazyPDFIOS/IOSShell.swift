@@ -101,6 +101,7 @@ final class IOSShell {
     func viewer(for tab: DocumentTab) -> ViewerModel {
         if let found = viewers[tab.id] { return found }
         let made = ViewerModel(makeRenderer: { PdfKitRenderer() }, openAddress: { UIApplication.shared.open($0) })
+        made.markRequested = { [weak self] in self?.vm.markSelection($0) }
         viewers[tab.id] = made
         return made
     }

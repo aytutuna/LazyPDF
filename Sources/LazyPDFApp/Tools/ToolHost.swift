@@ -53,6 +53,15 @@ public protocol ToolHost: AnyObject {
     /// The field `openSigning` named, once: the tool asks for it when it is shown.
     func takeSigningField() -> String?
 
+    /// Opens the tool that makes `mark` of the selected text, or hands the mark to it when it is open already.
+    func markSelection(_ mark: SelectionMark)
+
+    /// The mark `markSelection` asked for before the tool was shown, once: the tool asks for it as it attaches.
+    func takeSelectionMark() -> SelectionMark?
+
+    /// Where `markSelection` sends a mark while the tool that makes it is attached; nil when it detaches.
+    func takesSelectionMarks(_ handler: (@MainActor (SelectionMark) async -> Void)?)
+
     /// True while a tool changes the document off the main actor and nothing else may touch it.
     var isDocumentBusy: Bool { get }
 
@@ -92,6 +101,12 @@ extension ToolHost {
     public func openSigning(_ field: String) {}
 
     public func takeSigningField() -> String? { nil }
+
+    public func markSelection(_ mark: SelectionMark) {}
+
+    public func takeSelectionMark() -> SelectionMark? { nil }
+
+    public func takesSelectionMarks(_ handler: (@MainActor (SelectionMark) async -> Void)?) {}
 
     public var isDocumentBusy: Bool { false }
 

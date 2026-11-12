@@ -109,6 +109,8 @@ public final class AppViewModel {
     @ObservationIgnored var warnedAboutDisk: [ObjectIdentifier: DiskStamp?] = [:]
     @ObservationIgnored var exiting = false
     @ObservationIgnored var signingField: String?
+    @ObservationIgnored var pendingMark: SelectionMark?
+    @ObservationIgnored var markHandler: (@MainActor (SelectionMark) async -> Void)?
     public internal(set) var closeQuestion: DocumentTab?
     public internal(set) var recent: [RecentItem] = []
     public internal(set) var recoveryOffer: [RecoveryEntry]?

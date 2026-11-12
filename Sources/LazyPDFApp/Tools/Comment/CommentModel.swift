@@ -174,9 +174,12 @@ public final class CommentModel: ToolPanelModel {
         pageWatch = ObservationWatch(track: { _ = viewer.pageIndex }, changed: { [weak self] in self?.listMarks() })
         countFlattenable(tab)
         choose()
+        host.takesSelectionMarks { [weak self] in await self?.mark($0) }
+        if let asked = host.takeSelectionMark() { Task { await mark(asked) } }
     }
 
     public func detach() {
+        host?.takesSelectionMarks(nil)
         settling?.cancel()
         settling = nil
         unsettled = []

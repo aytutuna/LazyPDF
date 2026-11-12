@@ -385,7 +385,12 @@ final class PageScrollView: UIView, UIScrollViewDelegate, UIGestureRecognizerDel
                 self?.editMenu?.presentEditMenu(with: UIEditMenuConfiguration(identifier: nil, sourcePoint: point))
             }
         }
-        return UIMenu(children: viewer.hasSelection ? [copy, lookUp, share, selectAll] : [copy, selectAll])
+        guard viewer.hasSelection else { return UIMenu(children: [copy, selectAll]) }
+        let marks = [(L10n.t("Highlight"), SelectionMark.highlight), (L10n.t("Underline"), .underline), (L10n.t("Note"), .note),
+                     (L10n.t("Redact"), .redact)].map { title, mark in
+            UIAction(title: title) { [viewer] _ in viewer.markRequested?(mark) }
+        }
+        return UIMenu(children: [copy, lookUp, share, UIMenu(options: .displayInline, children: marks), selectAll])
     }
 
     private func present(_ controller: UIViewController) {

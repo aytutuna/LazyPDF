@@ -93,9 +93,12 @@ public final class RedactModel: ToolPanelModel {
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.fileChanged() })
         marksChanged()
         result = state.result
+        host.takesSelectionMarks { [weak self] in if $0 == .redact { await self?.markSelection() } }
+        if host.takeSelectionMark() == .redact { Task { await markSelection() } }
     }
 
     public func detach() {
+        host?.takesSelectionMarks(nil)
         watch?.stop()
         watch = nil
         state?.marks.changed = nil

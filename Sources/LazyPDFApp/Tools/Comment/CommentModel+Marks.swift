@@ -110,6 +110,29 @@ extension CommentModel {
         viewer.clearSelection()
     }
 
+    func mark(_ mark: SelectionMark) async {
+        switch mark {
+        case .highlight: await markup(.highlight)
+        case .underline: await markup(.underline)
+        case .note: await noteOnSelection()
+        case .redact: break
+        }
+    }
+
+    /// Puts a note at the start of the selected text and opens its field.
+    public func noteOnSelection() async {
+        guard let tab, let viewer, canChange else { return }
+        let runs = await viewer.selection()
+        guard self.tab === tab else { return }
+        guard let run = runs.first(where: { !$0.quads.isEmpty }), run.page < tab.document.pages.count else {
+            host?.setStatus(L10n.t("Select some text first."))
+            return
+        }
+        let corner = viewer.geometry(run.page).toDisplay(run.quads[0].bounds)
+        viewer.clearSelection()
+        type(.note, run.page, [ViewPoint(corner.x, corner.y)], currentStyle(), L10n.t("Note"))
+    }
+
     /// Types new text for the selected mark.
     public func editSelectedText() {
         if let mark = editTool?.current { editText(of: mark) }

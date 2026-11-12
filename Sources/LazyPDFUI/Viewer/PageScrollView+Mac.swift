@@ -118,6 +118,13 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
         menu.addItem(NSMenuItem(title: L10n.t("Copy"), action: #selector(copy(_:)), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: L10n.t("Look Up"), action: #selector(lookUpSelection(_:)), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: L10n.t("Share"), action: #selector(shareSelection(_:)), keyEquivalent: ""))
+        menu.addItem(.separator())
+        for (title, mark) in Self.marks {
+            let item = NSMenuItem(title: title, action: #selector(markSelection(_:)), keyEquivalent: "")
+            item.representedObject = mark
+            menu.addItem(item)
+        }
+        menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: L10n.t("Select all"), action: #selector(selectAll(_:)), keyEquivalent: ""))
         for item in menu.items { item.target = self }
         menuPoint = convert(event.locationInWindow, from: nil)
@@ -144,6 +151,14 @@ final class PageDocumentView: NSView, NSMenuItemValidation {
             guard let text = await viewer.selectedText() else { return }
             NSSharingServicePicker(items: [text]).show(relativeTo: NSRect(origin: menuPoint, size: .zero), of: self, preferredEdge: .minY)
         }
+    }
+
+    private static var marks: [(String, SelectionMark)] { [
+        (L10n.t("Highlight"), .highlight), (L10n.t("Underline"), .underline), (L10n.t("Note"), .note), (L10n.t("Redact"), .redact)]
+    }
+
+    @objc private func markSelection(_ sender: NSMenuItem) {
+        if let mark = sender.representedObject as? SelectionMark { viewer.markRequested?(mark) }
     }
 
     override func selectAll(_ sender: Any?) {

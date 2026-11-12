@@ -102,6 +102,11 @@ extension PagePointerTool {
     public func key(_ key: ViewerKey, modifiers: PointerModifiers) -> Bool { false }
 }
 
+/// What the selection menu of the viewer can do to the selected text.
+public enum SelectionMark {
+    case highlight, underline, note, redact
+}
+
 /// A selected stretch of one page: its characters, their text and their boxes in PDF user space (what annotations take
 /// as quad points).
 public struct SelectedRun {
