@@ -22,6 +22,9 @@ final class MacShell {
     private weak var window: NSWindow?
     private var closeGuard: CloseGuard?
     private var terminateAnswer = false
+    private var exitSession: LastSession?
+    private var filesFromOutside = false
+    private var restored = false
     var noteRecent: (URL) -> Void = { NSDocumentController.shared.noteNewRecentDocumentURL($0) }
 
     private init() {
@@ -67,6 +70,7 @@ final class MacShell {
     func attach(_ window: NSWindow) {
         self.window = window
         update(WindowState(vm.activeDocument))
+        restoreSession()
         closeGuard = CloseGuard.ensure(on: window, existing: closeGuard, hasTabs: { !self.vm.documents.isEmpty }) { NSApp.terminate(nil) }
     }
 
@@ -74,6 +78,17 @@ final class MacShell {
         window?.title = state.title
         window?.representedURL = state.url
         window?.isDocumentEdited = state.dirty
+    }
+
+    // Files Finder hands over at launch arrive about when the window does, so they get a turn first and win.
+    private func restoreSession() {
+        if restored { return }
+        restored = true
+        Task {
+            await Task.yield()
+            if filesFromOutside { return }
+            await vm.reopenLastSession()
+        }
     }
 
     func showWindow() {
@@ -111,6 +126,7 @@ final class MacShell {
 
     /// Finder, the Dock and other programs: files, and lazypdf: addresses.
     func handle(_ urls: [URL]) {
+        filesFromOutside = true
         showWindow()
         open(urls.filter(\.isFileURL))
         for url in urls where !url.isFileURL && LazyPdfAddress.isAddress(url.absoluteString) {
@@ -196,9 +212,19 @@ final class MacShell {
     }
 
     func terminateReply() -> NSApplication.TerminateReply {
-        if vm.requestExit() { return .terminateNow }
+        // Answering the close question closes the tabs one by one, so the session is taken before it starts.
+        let session = exitSession ?? vm.lastSession()
+        if vm.requestExit() {
+            vm.keep(session)
+            exitSession = nil
+            return .terminateNow
+        }
         // A job that is still running answers with a notice and no question; quitting waits for the person to try again.
-        if vm.closeQuestion == nil { return .terminateCancel }
+        if vm.closeQuestion == nil {
+            exitSession = nil
+            return .terminateCancel
+        }
+        exitSession = session
         terminateAnswer = true
         NSApplication.shared.activate(ignoringOtherApps: true)
         return .terminateLater
@@ -207,6 +233,8 @@ final class MacShell {
     private func finishExit() {
         if terminateAnswer {
             terminateAnswer = false
+            if let exitSession { vm.keep(exitSession) }
+            exitSession = nil
             NSApp.reply(toApplicationShouldTerminate: true)
         } else {
             NSApp.terminate(nil)
@@ -217,6 +245,7 @@ final class MacShell {
     func closeQuestionChanged() {
         guard terminateAnswer, vm.closeQuestion == nil else { return }
         terminateAnswer = false
+        exitSession = nil
         NSApp.reply(toApplicationShouldTerminate: false)
     }
 

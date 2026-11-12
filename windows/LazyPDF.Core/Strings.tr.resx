@@ -4858,6 +4858,9 @@
   <data name="Reopen closed tab" xml:space="preserve">
     <value>Kapatılan sekmeyi yeniden aç</value>
   </data>
+  <data name="Reopen files from last time" xml:space="preserve">
+    <value>Geçen seferki dosyaları yeniden aç</value>
+  </data>
   <data name="Reopen the files from last time" xml:space="preserve">
     <value>Geçen seferki dosyaları yeniden aç</value>
   </data>
@@ -7482,6 +7485,9 @@
   </data>
   <data name="What would you like to do?" xml:space="preserve">
     <value>Ne yapmak istersiniz?</value>
+  </data>
+  <data name="When Lazy PDF starts without a file, it opens the files and pages that were open when you quit." xml:space="preserve">
+    <value>Lazy PDF dosyasız başladığında, çıktığınızda açık olan dosyaları ve sayfaları açar.</value>
   </data>
   <data name="When Lazy PDF starts without a file, it opens the files that were open when you closed it." xml:space="preserve">
     <value>Lazy PDF dosyasız başladığında, kapattığınızda açık olan dosyaları açar.</value>

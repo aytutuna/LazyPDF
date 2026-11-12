@@ -24,6 +24,13 @@ struct SettingsView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            #if os(macOS)
+            Toggle(L10n.t("Reopen files from last time"), isOn: Binding(get: { vm.reopenLast }, set: { vm.setReopenLast($0) }))
+                .padding(.top, 4)
+            Text(L10n.t("When Lazy PDF starts without a file, it opens the files and pages that were open when you quit."))
+                .font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            #endif
             if let certificates {
                 Button(L10n.t("Certificates"), action: certificates)
             }

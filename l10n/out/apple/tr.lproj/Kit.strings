@@ -1325,6 +1325,7 @@
 "Removing the stamp" = "Damga kaldırılıyor";
 "Removing the stamps" = "Damgalar kaldırılıyor";
 "Rename field" = "Alanı yeniden adlandır";
+"Reopen files from last time" = "Geçen seferki dosyaları yeniden aç";
 "Repeat password" = "Parolayı yineleyin";
 "Replace" = "Değiştir";
 "Replace all" = "Tümünü değiştir";
@@ -2067,6 +2068,7 @@
 "What was found" = "Bulunanlar";
 "What was typed into the form. Off unless you tick it." = "Forma yazılanlar. İşaretlemezseniz kapalıdır.";
 "What would you like to do?" = "Ne yapmak istersiniz?";
+"When Lazy PDF starts without a file, it opens the files and pages that were open when you quit." = "Lazy PDF dosyasız başladığında, çıktığınızda açık olan dosyaları ve sayfaları açar.";
 "When it opens" = "Açıldığında";
 "When it prints" = "Yazdırıldığında";
 "When it was signed. The time is the signer's word." = "İmzalanma zamanı. Zaman, imzalayanın beyanıdır.";
