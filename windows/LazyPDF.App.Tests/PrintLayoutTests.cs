@@ -72,7 +72,9 @@ public sealed class PrintLayoutTests
 
         Assert.Equal(3, sheets.Count);
         Assert.Equal(3, PdfDocument.Open(sheets.Bytes).Pages.Count);
-        Assert.Equal(before, source.SaveRewrite());
+        // The second half of the /ID is random.
+        string WithoutId(byte[] file) => System.Text.RegularExpressions.Regex.Replace(System.Text.Encoding.Latin1.GetString(file), @"/ID\s*\[[^\]]*\]", "");
+        Assert.Equal(WithoutId(before), WithoutId(source.SaveRewrite()));
     }
 
     [Fact]
