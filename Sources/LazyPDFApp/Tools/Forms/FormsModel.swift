@@ -71,6 +71,7 @@ public final class FormsModel: ToolPanelModel {
     @ObservationIgnored var revision = 0
     @ObservationIgnored var loading = false
     @ObservationIgnored var signedOk = false
+    @ObservationIgnored let fills = FillMerge()
     @ObservationIgnored var signedPending = false
     @ObservationIgnored var loaded: PdfDocument?
     @ObservationIgnored private var fileWatch: ObservationWatch?
@@ -111,6 +112,7 @@ public final class FormsModel: ToolPanelModel {
         foundShown = false
         signedOk = false
         signedPending = false
+        fills.forget()
         cardFocus = nil
         isWorking = false
         activeRow = nil
@@ -361,11 +363,11 @@ public final class FormsModel: ToolPanelModel {
             host.showProblem(Problem(L10n.t("Value not accepted"), message))
             return false
         }
-        return fillIn { try $0.setValue(name, text) }
+        return fillIn(name) { try $0.setValue(name, text) }
     }
 
     func choose(_ name: String, _ picked: [String]) -> Bool {
-        tab != nil && fillIn { try $0.setChoices(name, picked) }
+        tab != nil && fillIn(name) { try $0.setChoices(name, picked) }
     }
 
     func resetFields(_ names: [String]?) {
@@ -377,10 +379,10 @@ public final class FormsModel: ToolPanelModel {
         }
     }
 
-    private func fillIn(_ change: @escaping (PdfForm) throws -> FormFillResult) -> Bool {
+    private func fillIn(_ field: String, _ change: @escaping (PdfForm) throws -> FormFillResult) -> Bool {
         guard let host else { return false }
         let xfa = form.xfa == .static
-        guard let result = edit(L10n.t("Fill form field"), again: { [weak self] in _ = self?.fillIn(change) }, change) else { return false }
+        guard let result = edit(L10n.t("Fill form field"), again: { [weak self] in _ = self?.fillIn(field, change) }, field: field, change) else { return false }
         if !result.rejected.isEmpty {
             host.showProblem(Problem(L10n.t("Value not accepted"), L10n.t("This field does not take that value. Check it and try again.")))
             return false
@@ -394,9 +396,12 @@ public final class FormsModel: ToolPanelModel {
     }
 
     // One undoable step. Nothing happens while an edit runs, or before the person has agreed to change a signed file.
-    func edit<T>(_ label: String, again: (@MainActor () -> Void)? = nil, _ change: (PdfForm) throws -> T) -> T? {
+    func edit<T>(_ label: String, again: (@MainActor () -> Void)? = nil, field: String? = nil, _ change: (PdfForm) throws -> T) -> T? {
         guard let tab, !isWorking, !signed(again) else { return nil }
-        return guarded { try FormEdits.apply(tab, fonts, label, change) }
+        return guarded {
+            if let field { return try fills.apply(tab, fonts, label, field, change) }
+            return try FormEdits.apply(tab, fonts, label, change)
+        }
     }
 
     // A change to a signed file leaves the signatures not covering what is now in it, and a certified file may forbid the change.

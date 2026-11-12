@@ -123,9 +123,9 @@ public sealed class DocumentTab : ITab, IDisposable
     public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>Commits what a tool changed in <see cref="Document"/> as one undoable step. False when nothing changed.</summary>
-    public bool Commit(string label)
+    public bool Commit(string label, bool mergeWithPrevious = false)
     {
-        if (!Session.Commit(label)) return false;
+        if (!Session.Commit(label, mergeWithPrevious)) return false;
         Refresh();
         return true;
     }

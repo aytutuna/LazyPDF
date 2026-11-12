@@ -660,4 +660,53 @@ public sealed class FormEditsTests
         Assert.Empty(FormPdfs.Read(tab).Fields);
         Assert.Equal(XfaKind.None, FormPdfs.Read(tab).Xfa);
     }
+
+    [Fact]
+    public void ChangingOneFieldAgainJoinsTheStep()
+    {
+        using var tab = FormPdfs.Tab();
+        var fills = new FillMerge();
+
+        fills.Apply(tab, Fonts, "Fill form field", "name", form => form.SetValue("name", "A"));
+        fills.Apply(tab, Fonts, "Fill form field", "name", form => form.SetValue("name", "Ada"));
+
+        Assert.Equal("Ada", FormPdfs.Read(tab).Find("name")!.Value);
+        tab.Undo();
+        Assert.Null(FormPdfs.Read(tab).Find("name")!.Value);
+        Assert.False(tab.Session.CanUndo);
+    }
+
+    [Fact]
+    public void TwoFieldsAreTwoSteps()
+    {
+        using var tab = FormPdfs.Tab();
+        var fills = new FillMerge();
+
+        fills.Apply(tab, Fonts, "Fill form field", "name", form => form.SetValue("name", "Ada"));
+        fills.Apply(tab, Fonts, "Fill form field", "code", form => form.SetValue("code", "12"));
+        tab.Undo();
+
+        Assert.Equal("Ada", FormPdfs.Read(tab).Find("name")!.Value);
+        Assert.Null(FormPdfs.Read(tab).Find("code")!.Value);
+        tab.Undo();
+        Assert.Null(FormPdfs.Read(tab).Find("name")!.Value);
+    }
+
+    [Fact]
+    public void AnUndoOrAnotherToolStartsANewStep()
+    {
+        using var tab = FormPdfs.Tab();
+        var fills = new FillMerge();
+        fills.Apply(tab, Fonts, "Fill form field", "name", form => form.SetValue("name", "A"));
+        fills.Apply(tab, Fonts, "Fill form field", "name", form => form.SetValue("name", "Ad"));
+        FormEdits.Apply(tab, Fonts, "Change tab order", form => { form.SetTabOrder(0, TabOrder.Row); return true; });
+
+        fills.Apply(tab, Fonts, "Fill form field", "name", form => form.SetValue("name", "Ada"));
+        tab.Undo();
+        Assert.Equal("Ad", FormPdfs.Read(tab).Find("name")!.Value);
+
+        fills.Apply(tab, Fonts, "Fill form field", "name", form => form.SetValue("name", "Adam"));
+        tab.Undo();
+        Assert.Equal("Ad", FormPdfs.Read(tab).Find("name")!.Value);
+    }
 }

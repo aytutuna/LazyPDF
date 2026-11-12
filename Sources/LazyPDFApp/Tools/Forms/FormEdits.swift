@@ -4,6 +4,29 @@ import LazyPDFKit
 // Follows windows/LazyPDF.App/Tools/Forms/FormEdits.cs: changes to the form of a tab, each one undoable step. The engine's
 // errors pass through to the caller.
 
+/// Typing into one field, or changing it again and again, is one undo step. Another field, another tool, an undo or a
+/// redo starts a new one: the tab's revision moves with each of those, and the engine refuses a merge after a save.
+@MainActor
+public final class FillMerge {
+    private weak var tab: DocumentTab?
+    private var field: String?
+    private var revision = 0
+
+    public init() {}
+
+    public func apply<T>(_ tab: DocumentTab, _ fonts: FontSource, _ label: String, _ field: String, _ edit: (PdfForm) throws -> T) throws -> T {
+        let merge = tab === self.tab && field == self.field && tab.revision == revision
+        let before = tab.revision
+        let result = try FormEdits.apply(tab, fonts, label, merge: merge, edit)
+        if tab.revision != before { (self.tab, self.field, revision) = (tab, field, tab.revision) }
+        return result
+    }
+
+    public func forget() {
+        tab = nil
+    }
+}
+
 @MainActor
 public enum FormEdits {
     public static func read(_ tab: DocumentTab, _ fonts: FontSource) -> PdfForm {
@@ -11,10 +34,10 @@ public enum FormEdits {
     }
 
     // A refused edit may have changed the document before it threw; those changes go, so they do not ride into the next step.
-    public static func apply<T>(_ tab: DocumentTab, _ fonts: FontSource, _ label: String, _ edit: (PdfForm) throws -> T) throws -> T {
+    public static func apply<T>(_ tab: DocumentTab, _ fonts: FontSource, _ label: String, merge: Bool = false, _ edit: (PdfForm) throws -> T) throws -> T {
         do {
             let result = try edit(read(tab, fonts))
-            try tab.commit(label)
+            try tab.commit(label, mergeWithPrevious: merge)
             return result
         } catch {
             try? tab.session.discard()

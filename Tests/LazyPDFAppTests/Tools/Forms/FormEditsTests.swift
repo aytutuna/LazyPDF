@@ -392,4 +392,47 @@ final class FormEditsTests: XCTestCase {
         XCTAssertTrue(FormPdfs.read(tab).fields.isEmpty)
         XCTAssertEqual(FormPdfs.read(tab).xfa, .none)
     }
+
+    func test_changingOneFieldAgainJoinsTheStep() throws {
+        let tab = try FormPdfs.tab()
+        let fills = FillMerge()
+
+        _ = try fills.apply(tab, fonts, "Fill form field", "name") { try $0.setValue("name", "A") }
+        _ = try fills.apply(tab, fonts, "Fill form field", "name") { try $0.setValue("name", "Ada") }
+
+        XCTAssertEqual(FormPdfs.read(tab).find("name")?.value, "Ada")
+        try tab.undo()
+        XCTAssertNil(FormPdfs.read(tab).find("name")?.value)
+        XCTAssertFalse(tab.session.canUndo)
+    }
+
+    func test_twoFieldsAreTwoSteps() throws {
+        let tab = try FormPdfs.tab()
+        let fills = FillMerge()
+
+        _ = try fills.apply(tab, fonts, "Fill form field", "name") { try $0.setValue("name", "Ada") }
+        _ = try fills.apply(tab, fonts, "Fill form field", "code") { try $0.setValue("code", "12") }
+        try tab.undo()
+
+        XCTAssertEqual(FormPdfs.read(tab).find("name")?.value, "Ada")
+        XCTAssertNil(FormPdfs.read(tab).find("code")?.value)
+        try tab.undo()
+        XCTAssertNil(FormPdfs.read(tab).find("name")?.value)
+    }
+
+    func test_anUndoOrAnotherToolStartsANewStep() throws {
+        let tab = try FormPdfs.tab()
+        let fills = FillMerge()
+        _ = try fills.apply(tab, fonts, "Fill form field", "name") { try $0.setValue("name", "A") }
+        _ = try fills.apply(tab, fonts, "Fill form field", "name") { try $0.setValue("name", "Ad") }
+        _ = try FormEdits.apply(tab, fonts, "Change tab order") { $0.setTabOrder(0, .row) }
+
+        _ = try fills.apply(tab, fonts, "Fill form field", "name") { try $0.setValue("name", "Ada") }
+        try tab.undo()
+        XCTAssertEqual(FormPdfs.read(tab).find("name")?.value, "Ad")
+
+        _ = try fills.apply(tab, fonts, "Fill form field", "name") { try $0.setValue("name", "Adam") }
+        try tab.undo()
+        XCTAssertEqual(FormPdfs.read(tab).find("name")?.value, "Ad")
+    }
 }

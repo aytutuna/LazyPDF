@@ -7,6 +7,28 @@ namespace LazyPDF.App.Tools.Forms;
 public enum AlignKind { Left, Centre, Right, Top, Middle, Bottom, SpaceAcross, SpaceDown }
 
 /// <summary>Changes to the form of a tab, each one undoable step. Core's exceptions pass through to the caller.</summary>
+/// <summary>
+/// Typing into one field, or changing it again and again, is one undo step. Another field, another tool, an undo or a
+/// redo starts a new one: the tab's revision moves with each of those, and Core refuses a merge after a save.
+/// </summary>
+internal sealed class FillMerge
+{
+    private DocumentTab? _tab;
+    private string? _field;
+    private int _revision;
+
+    public T Apply<T>(DocumentTab tab, IFontSource fonts, string label, string field, Func<PdfForm, T> edit)
+    {
+        bool merge = ReferenceEquals(tab, _tab) && field == _field && tab.Revision == _revision;
+        int before = tab.Revision;
+        var result = FormEdits.Apply(tab, fonts, label, edit, merge);
+        if (tab.Revision != before) (_tab, _field, _revision) = (tab, field, tab.Revision);
+        return result;
+    }
+
+    public void Forget() => _tab = null;
+}
+
 internal static class FormEdits
 {
     public static PdfForm Read(DocumentTab tab, IFontSource fonts) => PdfForm.Read(tab.Document, fonts);
@@ -30,12 +52,12 @@ internal static class FormEdits
     }
 
     // A refused edit may have changed the document before it threw; those changes go, so they do not ride into the next step.
-    public static T Apply<T>(DocumentTab tab, IFontSource fonts, string label, Func<PdfForm, T> edit)
+    public static T Apply<T>(DocumentTab tab, IFontSource fonts, string label, Func<PdfForm, T> edit, bool merge = false)
     {
         try
         {
             var result = edit(Read(tab, fonts));
-            tab.Commit(label);
+            tab.Commit(label, merge);
             return result;
         }
         catch

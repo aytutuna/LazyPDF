@@ -131,8 +131,8 @@ public final class DocumentTab: StripTab {
 
     /// Commits what a tool changed in `document` as one undoable step. False when nothing changed.
     @discardableResult
-    public func commit(_ label: String) throws -> Bool {
-        if try !session.commit(label) { return false }
+    public func commit(_ label: String, mergeWithPrevious: Bool = false) throws -> Bool {
+        if try !session.commit(label, mergeWithPrevious: mergeWithPrevious) { return false }
         refresh()
         return true
     }
