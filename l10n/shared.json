@@ -6579,6 +6579,12 @@
   "Marks removed": {
     "tr": "İşaretler kaldırıldı"
   },
+  "Hits removed": {
+    "tr": "Bulunanlar kaldırıldı"
+  },
+  "The file changed, so the hits in comments and fields no longer fit. Search again.": {
+    "tr": "Dosya değişti, bu yüzden açıklamalardaki ve alanlardaki bulunanlar artık uymuyor. Yeniden arayın."
+  },
   "The pages changed, so the marks no longer fit. Mark them again.": {
     "tr": "Sayfalar değişti, bu yüzden işaretler artık uymuyor. Yeniden işaretleyin."
   },

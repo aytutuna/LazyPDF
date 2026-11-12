@@ -2716,6 +2716,9 @@
   <data name="Hint" xml:space="preserve">
     <value>İpucu</value>
   </data>
+  <data name="Hits removed" xml:space="preserve">
+    <value>Bulunanlar kaldırıldı</value>
+  </data>
   <data name="Hold to show the password" xml:space="preserve">
     <value>Parolayı göstermek için basılı tutun</value>
   </data>
@@ -6324,6 +6327,9 @@
   </data>
   <data name="The file changed while you typed. Type it again." xml:space="preserve">
     <value>Siz yazarken dosya değişti. Yeniden yazın.</value>
+  </data>
+  <data name="The file changed, so the hits in comments and fields no longer fit. Search again." xml:space="preserve">
+    <value>Dosya değişti, bu yüzden açıklamalardaki ve alanlardaki bulunanlar artık uymuyor. Yeniden arayın.</value>
   </data>
   <data name="The file changed. Nothing was trimmed." xml:space="preserve">
     <value>Dosya değişti. Hiçbir şey kırpılmadı.</value>

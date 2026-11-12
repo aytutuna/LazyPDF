@@ -23,6 +23,20 @@ final class MarkListTests: XCTestCase {
         XCTAssertEqual(list.add([MarkItem(rect, "Box")]), 1)
     }
 
+    func test_removingValuesKeepsTheOtherMarks() {
+        let list = MarkList()
+        let rect = RedactionMark.fromRect(0, PdfRect(400, 100, 420, 120))
+        let hit = MarkItem(rect, "x", value: RedactionValueMatch(0, 2, .field, 5, 3, "abc", .word))
+        list.add([hit, MarkItem(rect, "Box")])
+        var changes = 0
+        list.changed = { changes += 1 }
+
+        XCTAssertTrue(list.removeValues())
+        XCTAssertEqual(list.items.map(\.label), ["Box"])
+        XCTAssertFalse(list.removeValues())
+        XCTAssertEqual(changes, 1)
+    }
+
     func test_marksComeInReadingOrder() {
         let list = MarkList()
 

@@ -22,6 +22,9 @@ public partial class RedactPanel : ToolPanel
 
         // The page objects in order, to know when marks, which are kept by page number, no longer fit the pages.
         public int[]? Pages { get; set; }
+
+        // Hits in comments and fields hold offsets into text, so they only fit the revision they were found in.
+        public int Revision { get; set; }
     }
 
     private static readonly ConditionalWeakTable<DocumentTab, RedactState> States = [];
@@ -103,7 +106,15 @@ public partial class RedactPanel : ToolPanel
         int[] pages = [.. Tab!.Document.Pages.Select(p => p.Reference.Number)];
         bool moved = state.Pages is { } before && !before.SequenceEqual(pages);
         state.Pages = pages;
-        if (!moved) return;
+        int revision = Tab.Revision;
+        bool edited = state.Revision != revision;
+        state.Revision = revision;
+        if (!moved)
+        {
+            if (edited && state.Marks.RemoveValues())
+                Host!.ShowNotice(Loc.T("Hits removed"), Loc.T("The file changed, so the hits in comments and fields no longer fit. Search again."));
+            return;
+        }
         bool any = state.Marks.Items.Count > 0;
         state.Marks.Clear();
         state.Marks.Forget();

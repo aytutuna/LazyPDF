@@ -81,6 +81,17 @@ public sealed class MarkList
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>Takes out the hits in comments and fields, which are tied to places in text that may since have changed. One step of Undo.</summary>
+    public bool RemoveValues()
+    {
+        if (!_items.Any(m => m.Value is not null)) return false;
+        Push();
+        _items = [.. _items.Where(m => m.Value is null)];
+        RebuildCells();
+        Changed?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
     public void Undo()
     {
         if (_history.Count == 0) return;

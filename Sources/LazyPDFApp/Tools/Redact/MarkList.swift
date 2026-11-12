@@ -77,6 +77,17 @@ public final class MarkList {
         changed?()
     }
 
+    /// Takes out the hits in comments and fields, which are tied to places in text that may since have changed.
+    @discardableResult
+    public func removeValues() -> Bool {
+        guard items.contains(where: { $0.value != nil }) else { return false }
+        items.removeAll { $0.value != nil }
+        cells = [:]
+        for item in items { cells[cell(item), default: []].append(item) }
+        changed?()
+        return true
+    }
+
     public func clear() {
         if items.isEmpty { return }
         items = []

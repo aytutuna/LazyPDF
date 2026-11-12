@@ -24,6 +24,22 @@ public sealed class MarkListTests
     }
 
     [Fact]
+    public void RemovingValuesKeepsTheOtherMarks()
+    {
+        var list = new MarkList();
+        var rect = RedactionMark.FromRect(0, new PdfRect(400, 100, 420, 120));
+        var hit = new MarkItem(rect, "x", Value: new RedactionValueMatch(0, 2, RedactionValueSource.Field, 5, 3, "abc", RedactionKind.Word));
+        list.Add([hit, new MarkItem(rect, "Box", IsBox: true)]);
+        int changes = 0;
+        list.Changed += (_, _) => changes++;
+
+        Assert.True(list.RemoveValues());
+        Assert.Equal(["Box"], list.Items.Select(m => m.Label));
+        Assert.False(list.RemoveValues());
+        Assert.Equal(1, changes);
+    }
+
+    [Fact]
     public void MarksComeInReadingOrder()
     {
         var list = new MarkList();

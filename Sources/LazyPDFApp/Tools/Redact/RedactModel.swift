@@ -16,6 +16,9 @@ public final class RedactModel: ToolPanelModel {
 
         // The page objects in order, to know when marks, which are kept by page number, no longer fit the pages.
         var pages: [Int]?
+
+        // Hits in comments and fields hold offsets into text, so they only fit the revision they were found in.
+        var revision = 0
         weak var tab: DocumentTab?
 
         init(_ tab: DocumentTab) {
@@ -124,7 +127,15 @@ public final class RedactModel: ToolPanelModel {
         let pages = tab.document.pages.map { $0.reference.number }
         let moved = state.pages.map { $0 != pages } ?? false
         state.pages = pages
-        if !moved || state.marks.items.isEmpty { return }
+        let edited = state.revision != tab.revision
+        state.revision = tab.revision
+        if !moved {
+            if edited, state.marks.removeValues() {
+                host?.showNotice(L10n.t("Hits removed"), L10n.t("The file changed, so the hits in comments and fields no longer fit. Search again."), nil)
+            }
+            return
+        }
+        if state.marks.items.isEmpty { return }
         state.marks.clear()
         host?.showNotice(L10n.t("Marks removed"), L10n.t("The pages changed, so the marks no longer fit. Mark them again."), nil)
     }
