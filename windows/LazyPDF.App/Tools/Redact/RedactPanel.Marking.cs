@@ -148,21 +148,26 @@ public partial class RedactPanel
         if (found is null) return;
         string? slow = TimedOutText.For(found.TimedOut ?? []);
         host.SetStatus(found.Items.Count == 0 ? slow ?? Loc.T("Nothing found.") : Added(state.Marks.Add(found.Items)));
-        if (slow is not null && found.Items.Count > 0)
+        if (Notice(found) is not { } notice) return;
+        host.ShowNotice(notice.Title, notice.Text, notice.MakeSearchable ? new NoticeAction(Loc.T("Make searchable"), () => host.OpenTool("ocr")) : null);
+    }
+
+    // The timed-out pages are added to the picture and recognized-text notices, so none of the three is dropped.
+    internal static (string Title, string Text, bool MakeSearchable)? Notice(Found found)
+    {
+        string? slow = TimedOutText.For(found.TimedOut ?? []);
+        string more = slow is not null && found.Items.Count > 0 ? " " + slow : "";
+        if (found.Pictures > 0)
         {
-            host.ShowNotice(Loc.T("Some pages were not searched"), slow);
+            return (Loc.Plural(found.Pictures, "{0} page has no text", "{0} pages have no text"),
+                    Loc.T("Words and numbers on those pages were not searched. Run Make searchable, then search again. Or draw boxes over them.") + more, true);
         }
-        else if (found.Pictures > 0)
+        if (found.Recognized > 0)
         {
-            host.ShowNotice(Loc.Plural(found.Pictures, "{0} page has no text", "{0} pages have no text"),
-                            Loc.T("Words and numbers on those pages were not searched. Run Make searchable, then search again. Or draw boxes over them."),
-                            new NoticeAction(Loc.T("Make searchable"), () => host.OpenTool("ocr")));
+            return (Loc.Plural(found.Recognized, "{0} page was searched in recognized text", "{0} pages were searched in recognized text"),
+                    Loc.T("Recognized text can miss words. Check those pages and draw boxes over anything left.") + more, false);
         }
-        else if (found.Recognized > 0)
-        {
-            host.ShowNotice(Loc.Plural(found.Recognized, "{0} page was searched in recognized text", "{0} pages were searched in recognized text"),
-                            Loc.T("Recognized text can miss words. Check those pages and draw boxes over anything left."));
-        }
+        return more.Length > 0 ? (Loc.T("Some pages were not searched"), slow!, false) : null;
     }
 
     private void PagesBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)

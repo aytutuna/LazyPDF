@@ -1,6 +1,7 @@
 using System.Windows;
 using LazyPDF.App.Tools.Redact;
 using LazyPDF.App.Services;
+using LazyPDF.App.Viewer;
 using LazyPDF.Core;
 using Xunit;
 
@@ -76,6 +77,21 @@ public sealed class RedactJobTests
         Assert.Equal([0, 1], slow.TimedOut);
         Assert.Equal(2, quick.Items.Count);
         Assert.Empty(quick.TimedOut ?? []);
+    }
+
+    [Fact]
+    public void TimedOutPagesDoNotHideThePagesWithNoText()
+    {
+        var hit = new MarkItem(RedactionMark.FromRect(0, new PdfRect(10, 10, 50, 20)), "x");
+
+        var both = RedactPanel.Notice(new Found([hit], 2, 0, [3]))!.Value;
+        var onlySlow = RedactPanel.Notice(new Found([hit], 0, 0, [3]))!.Value;
+
+        Assert.Equal("2 pages have no text", both.Title);
+        Assert.True(both.MakeSearchable);
+        Assert.EndsWith(TimedOutText.For([3])!, both.Text);
+        Assert.Equal("Some pages were not searched", onlySlow.Title);
+        Assert.Null(RedactPanel.Notice(new Found([], 0, 0, [3])));
     }
 
     [Fact]

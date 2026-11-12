@@ -92,7 +92,19 @@ final class RedactModelTests: XCTestCase {
         XCTAssertEqual(rig.host.notices.first?.title, "1 page has no text")
     }
 
-    func test_aBoxDrawnOnThePageIsMarkedAndShownThere() async throws {
+    func test_timedOutPagesDoNotHideThePagesWithNoText() {
+        let hit = MarkItem(RedactionMark.fromRect(0, PdfRect(10, 10, 50, 20)), "x")
+
+        let both = RedactModel.notice(RedactFound(items: [hit], pictures: 2, timedOut: [3]))
+        let onlySlow = RedactModel.notice(RedactFound(items: [hit], pictures: 0, timedOut: [3]))
+
+        XCTAssertEqual(both?.title, "2 pages have no text")
+        XCTAssertTrue(both?.text.hasSuffix(TimedOutText.forPages([3])!) == true)
+        XCTAssertEqual(onlySlow?.title, "Some pages were not searched")
+        XCTAssertNil(RedactModel.notice(RedactFound(items: [], pictures: 0, timedOut: [3])))
+    }
+
+    func test_aBoxDrawnOnThePageIsMarkedAndShownThere()async throws {
         let (model, rig) = try attached()
 
         model.setDrawing(true)

@@ -212,12 +212,18 @@ public final class RedactModel: ToolPanelModel {
         guard let found else { return }
         let slow = TimedOutText.forPages(found.timedOut)
         host.setStatus(found.items.isEmpty ? slow ?? L10n.t("Nothing found.") : Self.added(state.marks.add(found.items)))
-        if let slow, !found.items.isEmpty {
-            host.showNotice(L10n.t("Some pages were not searched"), slow, nil)
-        } else if found.pictures > 0 {
-            host.showNotice(L10n.plural(found.pictures, one: "{0} page has no text", other: "{0} pages have no text"),
-                            L10n.t("Words and numbers on those pages were not searched. Draw boxes over them instead."), nil)
+        if let notice = Self.notice(found) { host.showNotice(notice.title, notice.text, nil) }
+    }
+
+    // The timed-out pages are added to the picture notice, so neither is dropped.
+    static func notice(_ found: RedactFound) -> (title: String, text: String)? {
+        let slow = TimedOutText.forPages(found.timedOut)
+        let more = slow != nil && !found.items.isEmpty ? " " + slow! : ""
+        if found.pictures > 0 {
+            return (L10n.plural(found.pictures, one: "{0} page has no text", other: "{0} pages have no text"),
+                    L10n.t("Words and numbers on those pages were not searched. Draw boxes over them instead.") + more)
         }
+        return more.isEmpty ? nil : (L10n.t("Some pages were not searched"), slow!)
     }
 
     private static func added(_ count: Int) -> String {
