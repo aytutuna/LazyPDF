@@ -21,6 +21,53 @@ public enum PdfLongTermValidation {
         try session.commit(L10n.t("Validation data"))
     }
 
+    /// The servers `add` would contact for the file's signatures, without contacting any: OCSP responders and CRL
+    /// points of each certificate the file's own certificates chain through, and the issuer links of a chain that
+    /// stops short of a root. Issuers fetched from those links may name more servers; data already in /DSS is not
+    /// subtracted. Each URL once, in order of discovery. Throws `InvalidOperationException` when the file has no signature.
+    public static func servers(_ pdf: [UInt8], password: String? = nil) throws -> [ValidationServer] {
+        try servers(try PdfDocument.open(pdf, password: password))
+    }
+
+    public static func servers(_ session: PdfEditSession) throws -> [ValidationServer] {
+        try servers(session.document)
+    }
+
+    private static func servers(_ document: PdfDocument) throws -> [ValidationServer] {
+        let signatures = SignatureScan.find(document.source)
+        if signatures.isEmpty { throw InvalidOperationException(SignatureText.notSigned) }
+        var servers: [ValidationServer] = []
+        func note(_ kind: ValidationServerKind, _ url: String) {
+            guard let parsed = URL(string: url), let scheme = parsed.scheme?.lowercased(), scheme == "http" || scheme == "https",
+                  let host = parsed.host, !host.isEmpty, !servers.contains(where: { $0.url == url }) else { return }
+            servers.append(ValidationServer(kind: kind, url: url, host: host.lowercased()))
+        }
+        let offline = Offline()
+        for found in signatures {
+            guard let contents = (found.dictionary["Contents"] as? PdfString)?.bytes else { continue }
+            let vouching = Self.subjects(contents)
+            var pool = vouching.pool
+            for subject in vouching.subjects {
+                let chain = buildChain(subject, &pool, offline)
+                var i = 0
+                while i + 1 < chain.count {
+                    for url in CertificateLinks.ocspUrls(chain[i]) { note(.ocsp, url) }
+                    for url in CertificateLinks.crlUrls(chain[i]) { note(.crl, url) }
+                    i += 1
+                }
+                if let last = chain.last, !last.isSelfIssued {
+                    for url in CertificateLinks.issuerUrls(last) { note(.caIssuers, url) }
+                }
+            }
+        }
+        return servers
+    }
+
+    private final class Offline: SignatureTransport {
+        func post(_ url: String, _ contentType: String, _ body: [UInt8]) -> [UInt8]? { nil }
+        func get(_ url: String) -> [UInt8]? { nil }
+    }
+
     static func add(_ document: PdfDocument, _ transport: SignatureTransport, _ time: DateTimeOffset) throws {
         let signatures = SignatureScan.find(document.source)
         if signatures.isEmpty { throw InvalidOperationException(SignatureText.notSigned) }
@@ -100,4 +147,13 @@ public enum PdfLongTermValidation {
             }
         }
     }
+}
+
+public enum ValidationServerKind: Sendable { case ocsp, crl, caIssuers }
+
+/// A server that adding validation data would contact; `host` is lower case.
+public struct ValidationServer: Equatable, Sendable {
+    public var kind: ValidationServerKind
+    public var url: String
+    public var host: String
 }

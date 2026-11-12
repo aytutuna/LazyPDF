@@ -187,6 +187,34 @@ final class LongTermValidationTests: XCTestCase {
         XCTAssertTrue(report.changes.changes.allSatisfy { $0.allowed })
     }
 
+    func test_theServersValidationDataWouldAskAreListedWithoutAsking() throws {
+        let signed = try PdfSigner.sign(SignatureKit.plain(), SignatureKit.request(pki))
+
+        let servers = try PdfLongTermValidation.servers(signed)
+
+        XCTAssertEqual(servers, [
+            ValidationServer(kind: .ocsp, url: Pki.ocspUrl, host: "ocsp.test"),
+            ValidationServer(kind: .crl, url: Pki.crlUrl, host: "crl.test"),
+            ValidationServer(kind: .crl, url: Pki.rootCrlUrl, host: "crl.test"),
+        ])
+        XCTAssertEqual(try PdfLongTermValidation.servers(try PdfEditSession.open(signed)), servers)
+    }
+
+    func test_aChainThatStopsShortOfARootListsOnlyTheIssuerLink() throws {
+        var request = SignatureKit.request(pki)
+        request.chain = []
+        let signed = try PdfSigner.sign(SignatureKit.plain(), request)
+
+        let servers = try PdfLongTermValidation.servers(signed)
+
+        XCTAssertEqual(servers, [ValidationServer(kind: .caIssuers, url: Pki.issuerUrl, host: "ca.test")])
+    }
+
+    func test_aFileWithoutSignaturesHasNoServersToList() {
+        let message = SignatureExtraKit.invalidOperation(try PdfLongTermValidation.servers(SignatureKit.plain()))
+        XCTAssertEqual(message, SignatureText.notSigned)
+    }
+
     func test_aFileWithoutSignaturesHasNothingToAddDataTo() {
         let message = SignatureExtraKit.invalidOperation(try PdfLongTermValidation.add(SignatureKit.plain(), FakeNetwork(), Pki.signing))
         XCTAssertEqual(message, SignatureText.notSigned)
