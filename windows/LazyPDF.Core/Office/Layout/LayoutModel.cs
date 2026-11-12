@@ -1,0 +1,101 @@
+namespace LazyPDF.Core.Office;
+
+/// <summary>A PDF made from an Office file: its bytes, page count, what was left out and the code points no font could draw.</summary>
+public sealed record OfficePdf(byte[] Bytes, int Pages, IReadOnlyList<SkippedFeature> Skipped, IReadOnlyList<int> Missing);
+
+/// <summary>Something in the source the converter did not carry over: a stable <paramref name="Kind"/> code and how many times it occurred.</summary>
+public sealed record SkippedFeature(string Kind, int Count);
+
+internal static class SkippedKinds
+{
+    public const string RightToLeftText = "rtl-text";
+    public const string ComplexScript = "complex-script";
+}
+
+internal enum LayoutAlign { Left, Center, Right, Justify }
+
+internal enum LineRule { Multiple, Exact, AtLeast }
+
+internal enum LayoutField { None, PageNumber, PageCount }
+
+/// <summary>Text in one style. In a header or footer a field run is replaced by the page number or the page count.</summary>
+internal sealed class LayoutRun
+{
+    public string Text { get; init; } = "";
+    public string Family { get; init; } = OfficeFontSource.DefaultFamily;
+    public double Size { get; init; } = 11;
+    public bool Bold { get; init; }
+    public bool Italic { get; init; }
+    public bool Underline { get; init; }
+    public bool Strike { get; init; }
+    /// <summary>0xRRGGBB.</summary>
+    public int Color { get; init; }
+    public int? Highlight { get; init; }
+    /// <summary>Points above the baseline; negative sinks the text. The size is already the reduced one.</summary>
+    public double Shift { get; init; }
+    public LayoutField Field { get; init; }
+}
+
+internal abstract class LayoutBlock;
+
+internal sealed class LayoutPageBreak : LayoutBlock;
+
+/// <summary>A paragraph. Text may hold \n for a line break and \t for a tab.</summary>
+internal sealed class LayoutParagraph : LayoutBlock
+{
+    public List<LayoutRun> Runs { get; init; } = [];
+    public LayoutAlign Align { get; init; }
+    public double Left { get; init; }
+    public double Right { get; init; }
+    /// <summary>Added to Left for the first line; negative hangs it.</summary>
+    public double FirstLine { get; init; }
+    public double Before { get; init; }
+    public double After { get; init; }
+    /// <summary>A factor for <see cref="LineRule.Multiple"/>, else points.</summary>
+    public double LineSpacing { get; init; } = 1;
+    public LineRule Rule { get; init; }
+    public bool KeepWithNext { get; init; }
+    public bool PageBreakBefore { get; init; }
+    public bool WidowControl { get; init; } = true;
+}
+
+/// <summary>Sizes in points. Header and footer distances are measured from the page edge to the band.</summary>
+internal sealed class LayoutGeometry
+{
+    public double Width { get; init; } = 595.28;
+    public double Height { get; init; } = 841.89;
+    public double Top { get; init; } = 72;
+    public double Right { get; init; } = 72;
+    public double Bottom { get; init; } = 72;
+    public double Left { get; init; } = 72;
+    public double HeaderDistance { get; init; } = 36;
+    public double FooterDistance { get; init; } = 36;
+}
+
+/// <summary>A run of pages with one geometry and one header and footer; it always starts on a new page.</summary>
+internal sealed class LayoutSection
+{
+    public LayoutGeometry Page { get; set; } = new();
+    public List<LayoutParagraph> Header { get; init; } = [];
+    public List<LayoutParagraph> Footer { get; init; } = [];
+    public List<LayoutBlock> Blocks { get; init; } = [];
+}
+
+internal sealed class LayoutDocument
+{
+    public List<LayoutSection> Sections { get; init; } = [];
+    /// <summary>What the format reader left out; the layout adds its own to these.</summary>
+    public List<SkippedFeature> Skipped { get; init; } = [];
+}
+
+/// <summary>Positions are in points from the top left of the page.</summary>
+internal abstract record LayoutBox;
+
+/// <summary>A piece of one line in one style. <see cref="SpaceExtra"/> is added after every space (justified lines).</summary>
+internal sealed record PlacedText(double X, double Baseline, string Text, string Family, FontStyles Style, double Size, int Color, double SpaceExtra) : LayoutBox;
+
+internal sealed record PlacedRect(double X, double Y, double Width, double Height, int Color) : LayoutBox;
+
+internal sealed record LayoutPage(double Width, double Height, IReadOnlyList<LayoutBox> Boxes);
+
+internal sealed record LayoutResult(IReadOnlyList<LayoutPage> Pages, IReadOnlyList<SkippedFeature> Skipped, IReadOnlyList<int> Missing);

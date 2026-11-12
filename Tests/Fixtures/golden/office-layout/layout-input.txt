@@ -1,0 +1,172 @@
+# Cases of the layout and paginator, one after another. The file is UTF-8; \n \t \f \\ and \uXXXX stand in text.
+# case <name>: a new document.
+# section: a new section; page <w> <h> <top> <right> <bottom> <left> [headerDistance footerDistance] sets its geometry.
+# band header|footer|body: where the paragraphs that follow go (body is the default).
+# p <key=value ...>: a paragraph. Keys: align (left center right justify), left, right, first, before, after, line, rule (multiple exact atleast), keep, break, nowidow.
+# r <key=value ...> | <text>: a run of the last paragraph. Keys: font (_ for a space), size, b, i, u, s, color (RRGGBB), hl (RRGGBB), shift, field (page pages).
+# pagebreak: a hard page break. skip <kind> <count>: a feature the reader left out.
+case wrap
+section
+page 200 200 20 20 20 20
+p
+r | The quick brown fox jumps over the lazy dog and keeps running through the wide field until the evening.
+case align
+section
+page 200 200 20 20 20 20
+p align=left
+r | Left aligned text that wraps onto a second line here.
+p align=center
+r | Centered text that wraps onto a second line here.
+p align=right
+r | Right aligned text that wraps onto a second line here.
+p align=justify
+r | Justified text that wraps onto a second line and a third line so the gaps grow.
+case indent
+section
+page 200 200 20 20 20 20
+p left=30 right=20 first=15
+r | Indented on both sides with the first line pushed in a little further than the rest.
+p left=24 first=-24
+r | \u2022\tA bullet with a hanging indent whose text wraps under the text, not under the bullet.
+p left=24 first=-24
+r | 10.\tNumbered in the same way, with a second line of text to show the hang.
+case spacing
+section
+page 200 200 20 20 20 20
+p before=10 after=4
+r | Space before ten and after four, over two lines of text in the box.
+p line=1.5
+r | One and a half times the single line height on two lines of text.
+p rule=exact line=20
+r | Exactly twenty points a line, over two lines of text in the box.
+p rule=atleast line=8
+r | At least eight points, so the natural height wins on these lines.
+p rule=atleast line=24 after=6
+r | At least twenty-four points on two lines of text in the box.
+p
+r | Last one.
+case runs
+section
+page 200 200 20 20 20 20
+p
+r font=Liberation_Serif size=14 b | Bold serif heading
+r | , then plain
+r i color=FF0000 | red italic
+r u | underlined
+r s hl=FFFF00 | struck and highlighted
+r size=7 shift=4 | up
+r size=7 shift=-2 | down
+r font=Courier_New | mono
+case breaks
+section
+page 200 200 20 20 20 20
+p
+r | A well-known co-operative state-of-the-art path/to/the/file.txt and an em\u2014dash plus a no\u00a0break pair that stays together.
+p
+r | Supercalifragilisticexpialidocious_and_a_very_long_unbroken_string_that_needs_cutting_somewhere.
+p
+r | See (this one) and "that one", 3.5% of $1,000 -5 done.
+case tabs-newlines
+section
+page 200 200 20 20 20 20
+p
+r | Name\tQty\tPrice\nTea\t3\t4.50\n\nAfter a blank line.
+case empty
+section
+page 200 200 20 20 20 20
+p
+r size=20 |
+p
+r | Text.
+p
+case flow
+section
+page 100 100 10 10 10 10
+p after=4
+r | One short paragraph.
+p
+r | Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega.
+p before=6
+r | Second paragraph of a few more words, long enough to cross the page.
+p break
+r | Starts a page.
+pagebreak
+p before=8
+r | After a hard break the space before stays.
+case keep
+section
+page 100 100 10 10 10 10
+p
+r | Filler one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen.
+p keep
+r b | Heading kept with next
+p
+r | The paragraph after the heading, which has a few lines of its own text in the box here.
+case widow
+section
+page 100 100 10 10 10 10
+p nowidow
+r | Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega alpha beta gamma delta epsilon.
+p nowidow
+r | Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega alpha beta gamma delta epsilon.
+case widow-control
+section
+page 100 100 10 10 10 10
+p
+r | Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega alpha beta gamma delta epsilon.
+p
+r | Alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega alpha beta gamma delta epsilon.
+case header-footer
+section
+page 200 200 40 20 40 20 15 15
+band header
+p align=right
+r size=9 | Quarterly report
+band footer
+p align=center
+r size=9 | Page 
+r size=9 field=page |
+r size=9 |  of 
+r size=9 field=pages |
+band body
+p
+r | First page text.
+pagebreak
+p
+r | Second page text.
+pagebreak
+p
+r | Third page text.
+case sections
+section
+page 200 200 20 20 20 20
+p
+r | Portrait section.
+section
+page 300 150 20 30 20 30
+band footer
+p
+r size=9 field=page |
+band body
+p
+r | Landscape section with a wider text area than the first one has.
+case scripts
+section
+page 200 200 20 20 20 20
+p
+r | Hello \u05e9\u05dc\u05d5\u05dd world
+p
+r | \u0627\u0644\u0633\u0644\u0627\u0645
+p
+r | \u0928\u092e\u0938\u094d\u0924\u0947
+skip text-boxes 2
+case missing
+section
+page 200 200 20 20 20 20
+p
+r | Chinese \u4e2d\u6587 and ok.
+case cjk
+section
+page 200 200 20 20 20 20
+p
+r | \u3053\u3093\u306b\u3061\u306f\u3001\u4e16\u754c\u3002\u300c\u3053\u308c\u306f\u300d\u30c6\u30b9\u30c8\u30fc\u3067\u3059\u3002

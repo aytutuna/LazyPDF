@@ -1,0 +1,18 @@
+# Line break opportunities, one text a line, in UTF-8 with \n \t \f \\ and \uXXXX. The output marks each place a line may end with |.
+a b c
+well-known co-op 5-3 -5 x-y
+path/to/file 1/2 a//b
+no break here
+em—dash em——dash
+(open parens) and "quotes" and 'x'
+end. next, thing; ok! why? 50% $5
+“quoted” ‘single’
+( x ) (word
+こんにちは、世界。
+「これは」テストーです。
+Latin中文Latin end
+【x】【y】
+a​b c\nd
+ leading and  double  spaces
+tab\there and there
+한글 text
