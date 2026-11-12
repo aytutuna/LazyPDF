@@ -204,6 +204,29 @@ final class ZipReaderTests: XCTestCase {
         XCTAssertEqual(try ZipReader.open(many, ZipLimits(maxTotal: 400 << 20, maxRatio: 5000)).names.count, 400)
     }
 
+    func test_zip64ValuesNearTheTopOfTheRangeAreRefusedNotThrown() throws {
+        let good = build([stored("a.xml", Array("<a/>".utf8))], zip64: true)
+        let record = good.count - 22 - 20 - 56
+        var directoryBytes: [UInt8] = []
+        directoryBytes += good[(record + 48)..<(record + 52)]
+        let directory = Int(directoryBytes[0]) | Int(directoryBytes[1]) << 8 | Int(directoryBytes[2]) << 16 | Int(directoryBytes[3]) << 24
+        let extra = directory + 46 + "a.xml".utf8.count + 4
+        func patched(_ at: Int, _ value: Int) -> [UInt8] {
+            var copy = good
+            var bytes: [UInt8] = []
+            w64(&bytes, value)
+            copy.replaceSubrange(at..<(at + 8), with: bytes)
+            return copy
+        }
+
+        XCTAssertEqual(text(try ZipReader.open(good).read("a.xml")), "<a/>")
+        _ = refused(try ZipReader.open(patched(good.count - 22 - 12, 0x7FFFFFFFFFFFFFFE)))
+        _ = refused(try ZipReader.open(patched(record + 48, Int.max)))
+        _ = refused(try ZipReader.open(patched(record + 40, Int.max - 1)))
+        _ = refused(try ZipReader.open(patched(extra + 16, Int.max - 1)).read("a.xml"))
+        _ = refused(try ZipReader.open(patched(extra + 8, Int.max - 10)).read("a.xml"))
+    }
+
     func test_declaringAHugeSizeDoesNotAllocate() throws {
         var huge = deflated("a.bin", "tiny")
         huge.size = Int(Int32.max)

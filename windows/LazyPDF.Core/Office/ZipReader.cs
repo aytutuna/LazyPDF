@@ -45,7 +45,7 @@ internal sealed class ZipReader
         var d = _data;
         if (U32(d, e.Local) != 0x04034B50) throw PdfReadException.Damaged($"The entry {name} has no header.");
         long start = e.Local + 30 + U16(d, e.Local + 26) + U16(d, e.Local + 28);
-        if (start + e.Packed > d.Length) throw PdfReadException.Damaged($"The entry {name} is cut short.");
+        if (e.Packed > d.Length - start) throw PdfReadException.Damaged($"The entry {name} is cut short.");
         var packed = d.AsSpan((int)start, (int)e.Packed);
         byte[] bytes;
         if (e.Method == 0)
@@ -61,10 +61,10 @@ internal sealed class ZipReader
         return bytes;
     }
 
-    private static long U16(byte[] d, long at) => at >= 0 && at + 2 <= d.Length ? d[at] | d[at + 1] << 8 : throw Cut();
+    private static long U16(byte[] d, long at) => at >= 0 && at <= d.Length - 2 ? d[at] | d[at + 1] << 8 : throw Cut();
 
     private static long U32(byte[] d, long at) =>
-        at >= 0 && at + 4 <= d.Length ? d[at] | (long)d[at + 1] << 8 | (long)d[at + 2] << 16 | (long)d[at + 3] << 24 : throw Cut();
+        at >= 0 && at <= d.Length - 4 ?d[at] | (long)d[at + 1] << 8 | (long)d[at + 2] << 16 | (long)d[at + 3] << 24 : throw Cut();
 
     private static long U64(byte[] d, long at)
     {
@@ -99,7 +99,7 @@ internal sealed class ZipReader
             (count, size, offset) = (U64(d, record + 32), U64(d, record + 40), U64(d, record + 48));
         }
         if (count > limits.MaxEntries) throw Over("too many entries");
-        if (offset + size > d.Length) throw Cut();
+        if (offset > d.Length || size > d.Length - offset) throw Cut();
 
         long at = offset, total = 0;
         for (long n = 0; n < count; n++)

@@ -205,6 +205,28 @@ public class ZipReaderTests
     }
 
     [Fact]
+    public void Zip64ValuesNearTheTopOfTheRangeAreRefusedNotThrown()
+    {
+        byte[] good = Build([Stored("a.xml", "<a/>"u8.ToArray())], zip64: true);
+        int record = good.Length - 22 - 20 - 56;
+        int directory = (int)BitConverter.ToInt64(good, record + 48);
+        int extra = directory + 46 + "a.xml".Length + 4;
+        byte[] Patched(int at, long value)
+        {
+            byte[] copy = (byte[])good.Clone();
+            BitConverter.GetBytes(value).CopyTo(copy, at);
+            return copy;
+        }
+
+        Assert.Equal("<a/>", Encoding.UTF8.GetString(ZipReader.Open(good).Read("a.xml")));
+        Refused(() => ZipReader.Open(Patched(good.Length - 22 - 12, 0x7FFFFFFFFFFFFFFE)));
+        Refused(() => ZipReader.Open(Patched(record + 48, long.MaxValue)));
+        Refused(() => ZipReader.Open(Patched(record + 40, long.MaxValue - 1)));
+        Refused(() => ZipReader.Open(Patched(extra + 16, long.MaxValue - 1)).Read("a.xml"));
+        Refused(() => ZipReader.Open(Patched(extra + 8, long.MaxValue - 10)).Read("a.xml"));
+    }
+
+    [Fact]
     public void DeclaringAHugeSizeDoesNotAllocate()
     {
         var huge = Deflated("a.bin", "tiny") with { Size = int.MaxValue };
