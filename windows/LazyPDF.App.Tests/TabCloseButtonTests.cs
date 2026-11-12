@@ -24,4 +24,14 @@ public sealed class TabCloseButtonTests
         Assert.DoesNotContain("IsTabStop=\"False\"", button);
         Assert.Contains("CloseAutomationName", button);
     }
+
+    [Fact]
+    public void TheTabStripLetsTabReachEachCloseButton()
+    {
+        var xaml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "LazyPDF.App", "MainWindow.xaml"));
+        var list = xaml[xaml.IndexOf("x:Name=\"TabList\"", StringComparison.Ordinal)..];
+        list = list[..list.IndexOf("ItemContainerStyle", StringComparison.Ordinal)];
+
+        Assert.Contains("KeyboardNavigation.TabNavigation=\"Continue\"", list);
+    }
 }

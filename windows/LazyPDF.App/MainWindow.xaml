@@ -177,7 +177,7 @@
             <Button x:Name="TabOverflow" DockPanel.Dock="Right" Style="{StaticResource SmallIconButtonStyle}" Content="&#xE70D;" Visibility="Collapsed"
                     VerticalAlignment="Center" KeyboardNavigation.TabIndex="1" ToolTip="{loc:T All open files}"
                     AutomationProperties.Name="{loc:T All open files}" Click="TabOverflow_Click" />
-            <ListBox x:Name="TabList" Background="Transparent" BorderThickness="0" Padding="0" Margin="0" KeyboardNavigation.TabIndex="0"
+            <ListBox x:Name="TabList" Background="Transparent" BorderThickness="0" Padding="0" Margin="0" KeyboardNavigation.TabIndex="0" KeyboardNavigation.TabNavigation="Continue"
                      ItemContainerStyle="{StaticResource DocumentTabItemStyle}" ItemTemplate="{StaticResource DocumentTabTemplate}"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled"
                      AutomationProperties.Name="{loc:T Open files}" AllowDrop="True"
