@@ -60,7 +60,7 @@ public final class ImageIOCodec: ImageCodec {
 
     // Only a density the file stores: the DPIWidth property says 72 for a file with none, where WIC says 96.
     private static func density(_ properties: [CFString: Any]) -> (Double, Double) {
-        func number(_ dictionary: CFString, _ key: CFString) -> Double? { (properties[dictionary] as? [CFString: Any])?[key] as? Double }
+        func number(_ dictionary: CFString, _ key: CFString) -> Double? { ((properties[dictionary] as? [CFString: Any])?[key] as? NSNumber)?.doubleValue }
         if let x = number(kCGImagePropertyPNGDictionary, kCGImagePropertyPNGXPixelsPerMeter),
            let y = number(kCGImagePropertyPNGDictionary, kCGImagePropertyPNGYPixelsPerMeter) { return (x * 0.0254, y * 0.0254) }
         // JFIF unit 0 only gives the aspect ratio.

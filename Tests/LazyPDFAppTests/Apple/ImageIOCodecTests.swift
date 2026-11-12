@@ -132,8 +132,9 @@ final class ImageIOCodecTests: XCTestCase {
     func test_aPngKeepsTheDensityItStores() throws {
         let data = NSMutableData()
         let destination = try XCTUnwrap(CGImageDestinationCreateWithData(data, "public.png" as CFString, 1, nil))
-        let density = [kCGImagePropertyPNGXPixelsPerMeter: 11811, kCGImagePropertyPNGYPixelsPerMeter: 11811]
-        CGImageDestinationAddImage(destination, cgImage(gradient(9, 9)), [kCGImagePropertyPNGDictionary: density] as CFDictionary)
+        // The PNG encoder writes its pHYs chunk from the DPI properties, not from the PNG dictionary.
+        let density: [CFString: Any] = [kCGImagePropertyDPIWidth: 300, kCGImagePropertyDPIHeight: 300]
+        CGImageDestinationAddImage(destination, cgImage(gradient(9, 9)), density as CFDictionary)
         XCTAssertTrue(CGImageDestinationFinalize(destination))
         let frame = try XCTUnwrap(codec.decodeFile([UInt8](data as Data))?.first)
         XCTAssertEqual(frame.dpiX, 300, accuracy: 0.1)
