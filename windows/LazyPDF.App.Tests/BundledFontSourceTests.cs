@@ -23,6 +23,16 @@ public class BundledFontSourceTests
         }
     }
 
+    [Theory]
+    [InlineData(@"\\host\share\x")]
+    [InlineData(@"C:\Windows\Fonts\arial")]
+    [InlineData(@"..\Fonts\Carlito")]
+    [InlineData("../Carlito")]
+    public void PathLikeFamilyGivesNothing(string family)
+    {
+        Assert.Null(new BundledFontSource().Find(family, FontStyles.Regular));
+    }
+
     [Fact]
     public void UnknownFamilyOrFolderGivesNothing()
     {

@@ -5,6 +5,12 @@ namespace LazyPDF.App.Services;
 /// <summary>The fonts shipped beside the app (Carlito, Caladea, Liberation), found by family name and style.</summary>
 public sealed class BundledFontSource : IFontSource
 {
+    // The family comes from the document, so only these names may reach a file path.
+    private static readonly HashSet<string> Families = new(StringComparer.Ordinal)
+    {
+        "Carlito", "Caladea", "Liberation Sans", "Liberation Serif", "Liberation Mono",
+    };
+
     private readonly string _folder;
 
     public BundledFontSource(string? folder = null)
@@ -14,6 +20,7 @@ public sealed class BundledFontSource : IFontSource
 
     public FontFile? Find(string family, FontStyles style)
     {
+        if (!Families.Contains(family)) return null;
         string face = style switch
         {
             FontStyles.Bold => "Bold",

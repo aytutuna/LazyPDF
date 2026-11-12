@@ -32,6 +32,13 @@ final class BundledFontSourceTests: XCTestCase {
         }
     }
 
+    func test_pathLikeFamilyGivesNothing() throws {
+        let source = BundledFontSource(folder: try flatCopy())
+        for family in ["//host/share/x", "/etc/passwd", "../Carlito", "..\\Carlito"] {
+            XCTAssertNil(source.find(family, .regular), family)
+        }
+    }
+
     func test_unknownFamilyOrFolderGivesNothing() throws {
         XCTAssertNil(BundledFontSource(folder: try flatCopy()).find("Comic Sans MS", .regular))
         XCTAssertNil(BundledFontSource(folder: URL(fileURLWithPath: "/no-such-fonts")).find("Carlito", .regular))
