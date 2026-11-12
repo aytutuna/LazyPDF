@@ -140,9 +140,10 @@ final class PageDocumentViewTests: XCTestCase {
 
         let menu = try XCTUnwrap(shown.view.menu(for: event))
 
-        XCTAssertEqual(menu.items.map(\.title), ["Copy", "Look Up", "Share", "Select all"])
+        XCTAssertEqual(menu.items.map(\.title), ["Copy", "Look Up", "Share", "", "Highlight", "Underline", "Note", "Redact", "", "Select all"])
         XCTAssertFalse(shown.view.validateMenuItem(menu.items[1]))
-        XCTAssertTrue(shown.view.validateMenuItem(menu.items[3]))
+        XCTAssertFalse(shown.view.validateMenuItem(menu.items[4]))
+        XCTAssertTrue(shown.view.validateMenuItem(try XCTUnwrap(menu.items.last)))
     }
 
     func test_theScrollViewAndTheModelFollowEachOther() async throws {
