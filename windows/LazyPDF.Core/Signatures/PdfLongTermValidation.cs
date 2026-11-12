@@ -28,6 +28,55 @@ public static class PdfLongTermValidation
         session.Commit(Loc.T("Validation data"));
     }
 
+    /// <summary>
+    /// The servers <see cref="Add(byte[], ISignatureTransport, DateTimeOffset, string?)"/> would contact for the file's
+    /// signatures, without contacting any: OCSP responders and CRL points of each certificate the file's own
+    /// certificates chain through, and the issuer links of a chain that stops short of a root. Issuers fetched from
+    /// those links may name more servers; data already in /DSS is not subtracted. Each URL once, in order of discovery.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">The file has no signature.</exception>
+    public static IReadOnlyList<ValidationServer> Servers(byte[] pdf, string? password = null) =>
+        Servers(PdfDocument.Open(pdf, password));
+
+    public static IReadOnlyList<ValidationServer> Servers(PdfEditSession session) => Servers(session.Document);
+
+    private static List<ValidationServer> Servers(PdfDocument document)
+    {
+        var signatures = SignatureScan.Find(PdfSigner.SourceBytes(document));
+        if (signatures.Count == 0) throw new InvalidOperationException(SignatureText.NotSigned);
+        var servers = new List<ValidationServer>();
+        void Note(ValidationServerKind kind, string url)
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")) return;
+            if (servers.Any(s => s.Url == url)) return;
+            servers.Add(new ValidationServer(kind, url, uri.Host));
+        }
+        foreach (var found in signatures)
+        {
+            if (found.Dictionary["Contents"] is not PdfString { Bytes: var contents }) continue;
+            foreach (var subject in Subjects(contents, out var pool, out _))
+            {
+                var chain = BuildChain(subject, pool, Offline.Instance);
+                for (int i = 0; i + 1 < chain.Count; i++)
+                {
+                    foreach (string url in CertificateLinks.OcspUrls(chain[i])) Note(ValidationServerKind.Ocsp, url);
+                    foreach (string url in CertificateLinks.CrlUrls(chain[i])) Note(ValidationServerKind.Crl, url);
+                }
+                var last = chain[^1];
+                if (!last.SubjectName.RawData.AsSpan().SequenceEqual(last.IssuerName.RawData))
+                    foreach (string url in CertificateLinks.IssuerUrls(last)) Note(ValidationServerKind.CaIssuers, url);
+            }
+        }
+        return servers;
+    }
+
+    private sealed class Offline : ISignatureTransport
+    {
+        public static readonly Offline Instance = new();
+        public byte[]? Post(string url, string contentType, byte[] body) => null;
+        public byte[]? Get(string url) => null;
+    }
+
     internal static void Add(PdfDocument document, ISignatureTransport transport, DateTimeOffset time)
     {
         var signatures = SignatureScan.Find(PdfSigner.SourceBytes(document));
@@ -123,3 +172,8 @@ public static class PdfLongTermValidation
         }
     }
 }
+
+public enum ValidationServerKind { Ocsp, Crl, CaIssuers }
+
+/// <summary>A server that adding validation data would contact; <paramref name="Host"/> is lower case.</summary>
+public sealed record ValidationServer(ValidationServerKind Kind, string Url, string Host);

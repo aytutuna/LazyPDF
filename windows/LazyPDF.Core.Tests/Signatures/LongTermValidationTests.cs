@@ -191,6 +191,35 @@ public class LongTermValidationTests
     }
 
     [Fact]
+    public void The_servers_validation_data_would_ask_are_listed_without_asking()
+    {
+        byte[] signed = PdfSigner.Sign(SignatureKit.Plain(), SignatureKit.Request(Pki));
+
+        var servers = PdfLongTermValidation.Servers(signed);
+
+        Assert.Equal(
+            [(ValidationServerKind.Ocsp, Pki.OcspUrl, "ocsp.test"), (ValidationServerKind.Crl, Pki.CrlUrl, "crl.test"), (ValidationServerKind.Crl, Pki.RootCrlUrl, "crl.test")],
+            servers.Select(s => (s.Kind, s.Url, s.Host)));
+        Assert.Equal(servers, PdfLongTermValidation.Servers(PdfEditSession.Open(signed)));
+    }
+
+    [Fact]
+    public void A_chain_that_stops_short_of_a_root_lists_only_the_issuer_link()
+    {
+        byte[] signed = PdfSigner.Sign(SignatureKit.Plain(), SignatureKit.Request(Pki) with { Chain = [] });
+
+        var servers = PdfLongTermValidation.Servers(signed);
+
+        Assert.Equal(new ValidationServer(ValidationServerKind.CaIssuers, Pki.IssuerUrl, "ca.test"), Assert.Single(servers));
+    }
+
+    [Fact]
+    public void A_file_without_signatures_has_no_servers_to_list()
+    {
+        Assert.Equal(SignatureText.NotSigned, Assert.Throws<InvalidOperationException>(() => PdfLongTermValidation.Servers(SignatureKit.Plain())).Message);
+    }
+
+    [Fact]
     public void A_file_without_signatures_has_nothing_to_add_data_to()
     {
         var e = Assert.Throws<InvalidOperationException>(() => PdfLongTermValidation.Add(SignatureKit.Plain(), new FakeNetwork(), Pki.Signing));
