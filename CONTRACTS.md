@@ -1066,7 +1066,7 @@ The shared layout model and the page writer of the converter, in `Office/Layout/
 
 ### Office: tables
 
-Model and pagination in `Office/Layout/` (`LayoutTable` in `LayoutModel.cs`, `TableLayout.cs`, `PaginatorTables.cs`), reading in `Office/Docx/DocxTable.cs`. C# only so far; the Swift twin follows and will read the same goldens (`office-layout/tables-input.txt`, `office-docx/tables-input.txt`, with the outputs beside them).
+Model and pagination in `Office/Layout/` (`LayoutTable` in `LayoutModel.cs`, `TableLayout.cs`, `PaginatorTables.cs`), reading in `Office/Docx/DocxTable.cs`. The Swift twin (`TableLayout.swift`, `PaginatorTables.swift`, `DocxTable.swift`) matches it step for step and reads the same goldens (`office-layout/tables-input.txt`, `office-docx/tables-input.txt`, with the outputs beside them); the Swift reader keeps its own type names (`TblEdges`, `TblCell` and so on) because Swift types are module wide.
 
 **Model**: a `LayoutTable` is a block with `Columns` (widths in points; 0 means no width of its own), `Indent`, `Align` and `Rows`. A `LayoutRow` has `Cells`, `Header`, `CantSplit`, `Height` and `HeightExact`. A `LayoutCell` has its first `Column`, `Span`, `RowSpan`, paragraphs, `Fill`, four `LayoutBorder?` edges (width in points, 0xRRGGBB), four margins and a vertical alignment. The cells that continue a vertical merge are not in the model; the cell above them has the `RowSpan`.
 
