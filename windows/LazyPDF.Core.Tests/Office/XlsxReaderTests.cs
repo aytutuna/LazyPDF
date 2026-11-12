@@ -124,6 +124,20 @@ public class XlsxReaderTests
     }
 
     [Fact]
+    public void TextRewrittenByAFormatCountsTowardTheTotal()
+    {
+        string cells = string.Concat(Enumerable.Repeat("<c t=\"s\" s=\"1\"><v>0</v></c>", 3));
+        string Styles(string code) => $"<numFmts><numFmt numFmtId=\"164\" formatCode=\"{code}\"/></numFmts><cellXfs><xf/><xf numFmtId=\"164\"/></cellXfs>";
+        var limits = new XlsxLimits(MaxTotalText: 20);
+        string sheet = $"<sheetData><row r=\"1\">{cells}</row></sheetData>";
+        // 8 characters shared, then 8 per rewritten cell
+        var plain = Book(sheet, "<si><t>abcdefgh</t></si>", Styles("@"));
+        Assert.Equal("abcdefgh", XlsxReader.Read(plain, limits).Sheets[0].Rows[0].Cells[2].Text);
+        var padded = Book(sheet, "<si><t>abcdefgh</t></si>", Styles("@ @"));
+        Assert.Equal(PdfReadProblem.Unsupported, Problem(() => XlsxReader.Read(padded, limits)));
+    }
+
+    [Fact]
     public void ARowOutsideTheSheetIsDamage()
     {
         Assert.Equal(PdfReadProblem.Damaged, Problem(() => XlsxReader.Read(Book("<sheetData><row r=\"1048577\"/></sheetData>"))));

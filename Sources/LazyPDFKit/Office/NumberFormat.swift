@@ -342,6 +342,8 @@ final class NumberFormat {
         guard let section = sections.last(where: { $0.hasAt }) ?? (sections.count == 4 ? sections[3] : nil) else {
             return FormatResult(text: text, color: nil)
         }
+        let shown = section.tokens.filter { $0.kind == .at || $0.kind == .literal }
+        if shown.count == 1 && shown[0].kind == .at { return FormatResult(text: text, color: section.color) }
         var o = ""
         for t in section.tokens {
             if t.kind == .at { o += text } else if t.kind == .literal { o += t.text }

@@ -143,9 +143,14 @@ internal sealed class XlsxReader
             text = text[..cut];
             Skip(XlsxSkipped.LongText);
         }
-        _totalText += text.Length;
-        if (_totalText > _limits.MaxTotalText) throw new PdfReadException(PdfReadProblem.Unsupported, "The workbook holds too much text.");
+        Charge(text.Length);
         return text;
+    }
+
+    private void Charge(int length)
+    {
+        _totalText += length;
+        if (_totalText > _limits.MaxTotalText) throw new PdfReadException(PdfReadProblem.Unsupported, "The workbook holds too much text.");
     }
 
     private SharedString ReadString(XmlElement si)
@@ -386,6 +391,8 @@ internal sealed class XlsxReader
         void Text(string raw)
         {
             var result = numberFormat.FormatText(raw);
+            // A format that rewrites the text makes a copy per cell, which the shared string count never saw.
+            if (result.Text != raw) Charge(result.Text.Length);
             (kind, text, color) = (XlsxCellKind.Text, result.Text, result.Color);
         }
 

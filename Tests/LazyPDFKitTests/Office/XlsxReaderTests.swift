@@ -119,6 +119,20 @@ final class XlsxReaderTests: XCTestCase {
         _ = try XlsxReader.read(package, limits)
     }
 
+    func test_textRewrittenByAFormatCountsTowardTheTotal() throws {
+        let cells = String(repeating: "<c t=\"s\" s=\"1\"><v>0</v></c>", count: 3)
+        func styles(_ code: String) -> String {
+            "<numFmts><numFmt numFmtId=\"164\" formatCode=\"\(code)\"/></numFmts><cellXfs><xf/><xf numFmtId=\"164\"/></cellXfs>"
+        }
+        var limits = XlsxLimits()
+        limits.maxTotalText = 20
+        let sheet = "<sheetData><row r=\"1\">\(cells)</row></sheetData>"
+        let plain = try book(sheet, strings: "<si><t>abcdefgh</t></si>", styles: styles("@"))
+        XCTAssertEqual(try XlsxReader.read(plain, limits).sheets[0].rows[0].cells[2].text, "abcdefgh")
+        let padded = try book(sheet, strings: "<si><t>abcdefgh</t></si>", styles: styles("@ @"))
+        XCTAssertEqual(problem { _ = try XlsxReader.read(padded, limits) }, .unsupported)
+    }
+
     func test_aRowOutsideTheSheetIsDamage() throws {
         let past = try book("<sheetData><row r=\"1048577\"/></sheetData>")
         let zero = try book("<sheetData><row r=\"0\"/></sheetData>")

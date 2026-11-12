@@ -142,9 +142,13 @@ final class XlsxReader {
             units = Array(units[..<cut])
             skip(XlsxSkipped.longText)
         }
-        totalText += units.count
-        if totalText > limits.maxTotalText { throw PdfReadException(.unsupported, "The workbook holds too much text.") }
+        try charge(units.count)
         return String(decoding: units, as: UTF16.self)
+    }
+
+    private func charge(_ length: Int) throws {
+        totalText += length
+        if totalText > limits.maxTotalText { throw PdfReadException(.unsupported, "The workbook holds too much text.") }
     }
 
     private func readString(_ si: OfficeXmlElement) throws -> SharedString {
@@ -374,13 +378,14 @@ final class XlsxReader {
             (kind, text, color) = (.number, result.text, result.color)
         }
 
-        func plain(_ raw: String) {
+        func plain(_ raw: String) throws {
             let result = numberFormat.formatText(raw)
+            if result.text != raw { try charge(result.text.utf16.count) }
             (kind, text, color) = (.text, result.text, result.color)
         }
 
-        func shared(_ s: SharedString) {
-            plain(s.text)
+        func shared(_ s: SharedString) throws {
+            try plain(s.text)
             if !s.rich { return }
             skip(XlsxSkipped.richText)
             rich = XlsxStylesReader.runFont(s.firstRun, styles.fonts[min(xf.font, styles.fonts.count - 1)], theme)
@@ -388,17 +393,17 @@ final class XlsxReader {
 
         switch type {
         case "s" where value != nil:
-            if let at = XlsxParse.int(XlsxParse.trim(value!)), at < strings.count { shared(strings[at]) }
+            if let at = XlsxParse.int(XlsxParse.trim(value!)), at < strings.count { try shared(strings[at]) }
         case "inlineStr" where c.child(m, "is") != nil:
-            shared(try readString(c.child(m, "is")!))
+            try shared(try readString(c.child(m, "is")!))
         case "str" where value != nil:
-            plain(try limited(value!))
+            try plain(try limited(value!))
         case "b" where value != nil:
             (kind, text) = (.bool, XlsxParse.trim(value!) == "1" ? "TRUE" : "FALSE")
         case "e" where value != nil:
             (kind, text) = (.error, try limited(value!))
         case "d" where value != nil:
-            if let serial = isoDate(Array(XlsxParse.trim(value!).utf16)) { number(serial) } else { plain(try limited(value!)) }
+            if let serial = isoDate(Array(XlsxParse.trim(value!).utf16)) { number(serial) } else { try plain(try limited(value!)) }
         case "n" where value != nil:
             if let n = XlsxParse.double(XlsxParse.trim(value!)) { number(n) }
         default:

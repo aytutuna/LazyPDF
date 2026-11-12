@@ -336,6 +336,8 @@ internal sealed class NumberFormat
     {
         Section? section = _sections.LastOrDefault(s => s.HasAt) ?? (_sections.Count == 4 ? _sections[3] : null);
         if (section is null) return new FormatResult(text, null);
+        var shown = section.Tokens.Where(t => t.Kind is Kind.At or Kind.Literal).ToList();
+        if (shown.Count == 1 && shown[0].Kind == Kind.At) return new FormatResult(text, section.Color);
         var o = new StringBuilder();
         foreach (var t in section.Tokens)
         {
