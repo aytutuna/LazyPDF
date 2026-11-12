@@ -9,6 +9,13 @@ import LazyPDFKit
 struct SignatureMakerView: View {
     let model: FillSignModel
     var maker: SignatureMakerModel { model.maker }
+    #if os(iOS)
+    private enum Source: String, Identifiable {
+        case photos, camera, scanner
+        var id: String { rawValue }
+    }
+    @State private var source: Source?
+    #endif
 
     var body: some View {
         ToolForm {
@@ -107,8 +114,38 @@ struct SignatureMakerView: View {
                 .disabled(!maker.canTurn)
                 .accessibilityLabel(L10n.t("Turn the picture a quarter"))
             }
+            #if os(iOS)
+            HStack {
+                Button { source = .photos } label: {
+                    Label(L10n.t("From Photos"), systemImage: "photo.on.rectangle").frame(minHeight: 44)
+                }
+                if CameraChooser.available {
+                    Button { source = .camera } label: {
+                        Label(L10n.t("Take a photo"), systemImage: "camera").frame(minHeight: 44)
+                    }
+                }
+                if PaperScanner.available {
+                    Button { source = .scanner } label: {
+                        Label(L10n.t("Scan the paper"), systemImage: "doc.viewfinder").frame(minHeight: 44)
+                    }
+                }
+            }
+            #endif
             ReasonText(maker.pictureNote)
         }
+        #if os(iOS)
+        .fullScreenCover(item: $source) { source in
+            let finish: (PictureBytes?) -> Void = { picture in
+                if let picture { maker.usePicture(picture.bytes, name: picture.name) }
+                self.source = nil
+            }
+            switch source {
+            case .photos: PhotosChooser(done: finish)
+            case .camera: CameraChooser(done: finish).ignoresSafeArea()
+            case .scanner: PaperScanner(done: finish).ignoresSafeArea()
+            }
+        }
+        #endif
     }
 }
 

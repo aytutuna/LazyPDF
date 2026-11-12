@@ -2506,6 +2506,9 @@
   <data name="Free. Source available under PolyForm Noncommercial 1.0.0." xml:space="preserve">
     <value>Ücretsiz. Kaynak kodu PolyForm Noncommercial 1.0.0 lisansıyla erişilebilir.</value>
   </data>
+  <data name="From Photos" xml:space="preserve">
+    <value>Fotoğraflardan</value>
+  </data>
   <data name="From Windows" xml:space="preserve">
     <value>Windows'tan</value>
   </data>
@@ -5167,6 +5170,9 @@
   <data name="Scan paper into a PDF with Lazy Scan." xml:space="preserve">
     <value>Kâğıdı Lazy Scan ile PDF olarak tarayın.</value>
   </data>
+  <data name="Scan the paper" xml:space="preserve">
+    <value>Kağıdı tara</value>
+  </data>
   <data name="Scan|noun" xml:space="preserve">
     <value>Tarama</value>
   </data>
@@ -5787,6 +5793,9 @@
   </data>
   <data name="Tags removed" xml:space="preserve">
     <value>Etiketler kaldırıldı</value>
+  </data>
+  <data name="Take a photo" xml:space="preserve">
+    <value>Fotoğraf çek</value>
   </data>
   <data name="Take back corner" xml:space="preserve">
     <value>Köşeyi geri al</value>
