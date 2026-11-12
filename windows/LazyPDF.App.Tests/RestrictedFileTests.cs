@@ -12,6 +12,12 @@ namespace LazyPDF.App.Tests;
 // Core refuses a rewrite of a file that restricts itself with a PdfPermissionException; the tools say it in a sentence.
 public sealed class RestrictedFileTests
 {
+    private static void Restore(string? text)
+    {
+        if (text is null) Clipboard.Clear();
+        else Clipboard.SetText(text);
+    }
+
     [Fact]
     public async Task AJobThatCoreRefusesShowsThePermissionsMessage()
     {
@@ -87,12 +93,20 @@ public sealed class RestrictedFileTests
         viewer.Show(tab);
         viewer.SelectAll();
         await viewer.GetSelectionAsync();
+        string? kept = Clipboard.ContainsText() ? Clipboard.GetText() : null;
         Clipboard.SetText("before");
 
-        await viewer.CopySelectionAsync();
-        viewer.ShowFind();
+        try
+        {
+            await viewer.CopySelectionAsync();
+            viewer.ShowFind();
 
-        Assert.Equal("before", Clipboard.GetText());
+            Assert.Equal("before", Clipboard.GetText());
+        }
+        finally
+        {
+            Restore(kept);
+        }
         AssertCard(viewer, "The owner of this file does not allow copying.");
         Assert.Equal("", ((FindBar)viewer.FindName("Find")).Query.Text);
     });
@@ -103,11 +117,19 @@ public sealed class RestrictedFileTests
         var viewer = new PageViewer(null);
         using var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Restricted(PdfPermissions.All & ~PdfPermissions.Copy)), new WindowsPageRenderer(), null, "a.pdf");
         viewer.Show(tab);
+        string? kept = Clipboard.ContainsText() ? Clipboard.GetText() : null;
         Clipboard.SetText("before");
 
-        await viewer.CopyAreaAsync(0, new Rect(10, 10, 100, 100));
+        try
+        {
+            await viewer.CopyAreaAsync(0, new Rect(10, 10, 100, 100));
 
-        Assert.Equal("before", Clipboard.GetText());
+            Assert.Equal("before", Clipboard.GetText());
+        }
+        finally
+        {
+            Restore(kept);
+        }
         AssertCard(viewer, "The owner of this file does not allow copying.");
     });
 
