@@ -79,6 +79,9 @@ public enum PdfFileSaver {
         _ = try FileManager.default.replaceItemAt(path, withItemAt: temp)
         #else
         // swift-corelibs-foundation's replaceItemAt removes the original and then fails.
+        if let permissions = try FileManager.default.attributesOfItem(atPath: path.path)[.posixPermissions] {
+            try FileManager.default.setAttributes([.posixPermissions: permissions], ofItemAtPath: temp.path)
+        }
         if rename(temp.path, path.path) != 0 {
             throw CocoaError(.fileWriteUnknown, userInfo: [NSFilePathErrorKey: path.path])
         }
