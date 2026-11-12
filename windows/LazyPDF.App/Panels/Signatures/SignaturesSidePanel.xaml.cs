@@ -64,7 +64,7 @@ public partial class SignaturesSidePanel : ToolPanel
             {
                 reports = PdfSignatureVerifier.Verify(bytes, options);
                 fields = SignatureFields.Locate(bytes, password, certificate);
-                if (online) reports = Ask(bytes, password, transport, options, reports);
+                if (online) reports = Ask(bytes, password, transport!, options, reports);
             });
         }
         try
