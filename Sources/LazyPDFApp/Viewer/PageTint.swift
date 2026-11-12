@@ -5,7 +5,7 @@ import LazyPDFKit
 // surface turns into whatever its platform draws.
 
 /// How the pages are coloured on screen. The file is never touched: the tint is applied to the pixels of a tile as it is made.
-public enum PageTint: Hashable {
+public enum PageTint: String, Codable, Hashable, Sendable {
     case none
     case dark
     case sepia

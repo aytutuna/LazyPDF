@@ -11,6 +11,7 @@ import LazyPDFKit
 public final class ViewerModel: DocumentViewer {
     @ObservationIgnored let makeRenderer: () -> DocumentRenderer
     @ObservationIgnored let openAddress: (URL) -> Void
+    @ObservationIgnored let settings: URL?
 
     /// Called when the selection menu asks for a mark; the window opens the tool that makes it.
     @ObservationIgnored public var markRequested: ((SelectionMark) -> Void)?
@@ -117,9 +118,16 @@ public final class ViewerModel: DocumentViewer {
     var tool: PagePointerTool?
     var reading = false
 
-    public init(makeRenderer: @escaping () -> DocumentRenderer, openAddress: @escaping (URL) -> Void) {
+    /// With a settings folder the page tint and arrangement are read from it now and saved when they change.
+    public init(makeRenderer: @escaping () -> DocumentRenderer, openAddress: @escaping (URL) -> Void, settings: URL? = nil) {
         self.makeRenderer = makeRenderer
         self.openAddress = openAddress
+        self.settings = settings
+        if let settings {
+            let saved = AppPreferencesStore.load(settings)
+            _ = state.setTint(saved.tint)
+            _ = state.setArrangement(columns: saved.columns, cover: saved.cover, continuous: saved.continuous)
+        }
         selected.onChanged = { [weak self] in self?.selectionChanged() }
         watchSearch()
     }
@@ -326,7 +334,10 @@ public final class ViewerModel: DocumentViewer {
             _ = shownRevision
             return state.columns
         }
-        set { apply(state.setArrangement(columns: newValue, cover: state.cover, continuous: state.continuous)) }
+        set {
+            apply(state.setArrangement(columns: newValue, cover: state.cover, continuous: state.continuous))
+            saveView()
+        }
     }
 
     public var coverPage: Bool {
@@ -334,7 +345,10 @@ public final class ViewerModel: DocumentViewer {
             _ = shownRevision
             return state.cover
         }
-        set { apply(state.setArrangement(columns: state.columns, cover: newValue, continuous: state.continuous)) }
+        set {
+            apply(state.setArrangement(columns: state.columns, cover: newValue, continuous: state.continuous))
+            saveView()
+        }
     }
 
     public var continuous: Bool {
@@ -342,7 +356,10 @@ public final class ViewerModel: DocumentViewer {
             _ = shownRevision
             return state.continuous
         }
-        set { apply(state.setArrangement(columns: state.columns, cover: state.cover, continuous: newValue)) }
+        set {
+            apply(state.setArrangement(columns: state.columns, cover: state.cover, continuous: newValue))
+            saveView()
+        }
     }
 
     public var rotation: Int {
@@ -364,6 +381,18 @@ public final class ViewerModel: DocumentViewer {
             cache.clear()
             failed.removeAll()
             apply(change)
+            saveView()
+        }
+    }
+
+    private func saveView() {
+        guard let settings else { return }
+        let (tint, columns, cover, continuous) = (state.tint, state.columns, state.cover, state.continuous)
+        AppPreferencesStore.update(settings) {
+            $0.tint = tint
+            $0.columns = columns
+            $0.cover = cover
+            $0.continuous = continuous
         }
     }
 

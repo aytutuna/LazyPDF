@@ -19,10 +19,16 @@ public struct AppPreferences: Codable, Equatable {
     /// Which inspector sections the user left open or closed: a tool's own key, open. No entry is the default.
     public var inspectorSections: [String: Bool] = [:]
 
+    /// The viewer's page tint and arrangement, kept for the next launch.
+    public var tint = PageTint.none
+    public var columns = 1
+    public var cover = false
+    public var continuous = true
+
     public init() {}
 
     private enum CodingKeys: String, CodingKey {
-        case appearance, sidePanel, inspectorSections
+        case appearance, sidePanel, inspectorSections, tint, columns, cover, continuous
     }
 
     public init(from decoder: Decoder) throws {
@@ -30,6 +36,10 @@ public struct AppPreferences: Codable, Equatable {
         appearance = c.decodeLenient(forKey: .appearance, default: appearance)
         sidePanel = c.decodeLenient(forKey: .sidePanel, default: sidePanel)
         inspectorSections = c.decodeLenient(forKey: .inspectorSections, default: inspectorSections)
+        tint = c.decodeLenient(forKey: .tint, default: tint)
+        columns = c.decodeLenient(forKey: .columns, default: columns)
+        cover = c.decodeLenient(forKey: .cover, default: cover)
+        continuous = c.decodeLenient(forKey: .continuous, default: continuous)
     }
 }
 
