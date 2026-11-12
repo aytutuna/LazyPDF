@@ -73,12 +73,13 @@ public struct VisionTextRecognizer: TextRecognizer {
         for line in lines {
             guard let candidate = line.topCandidates(1).first else { continue }
             let text = candidate.string
+            let angle = Self.lineAngle(line.bottomLeft, line.bottomRight, width, height)
             var start: String.Index?
             func flush(_ end: String.Index) {
                 guard let first = start else { return }
                 start = nil
                 guard let corners = try? candidate.boundingBox(for: first..<end) else { return }
-                let (box, angle) = Self.placement(corners.bottomLeft, corners.bottomRight, corners.topLeft, corners.boundingBox, width, height)
+                let box = Self.placement(angle, corners.bottomLeft, corners.bottomRight, corners.topLeft, corners.boundingBox, width, height)
                 words.append(OcrWord(String(text[first..<end]), box, candidate.confidence, angle))
             }
             for index in text.indices {
@@ -89,22 +90,27 @@ public struct VisionTextRecognizer: TextRecognizer {
         return words
     }
 
-    // A word turned by more than this (about 0.3 degrees) gets an angle and its upright box at the baseline start; Vision's
-    // corners are never exactly square, and a straight page keeps its axis-aligned boxes.
+    // A line turned by more than this (about 0.3 degrees) gets an angle; Vision's corners are never exactly square, and a
+    // straight page keeps its axis-aligned boxes. The angle comes from the line, since a short word's own corners are too
+    // few pixels apart to tell a turn from noise, and every word of the line shares it.
     private static let minAngle = 0.005
 
     // The corners are fractions of the picture with y up. The angle is counter-clockwise as seen, which is atan2 with y up.
-    static func placement(_ bottomLeft: CGPoint, _ bottomRight: CGPoint, _ topLeft: CGPoint, _ bounds: CGRect,
-                          _ width: Double, _ height: Double) -> (OcrBox, Double) {
-        let along = (x: (bottomRight.x - bottomLeft.x) * width, y: (bottomRight.y - bottomLeft.y) * height)
-        let angle = atan2(along.y, along.x)
-        guard angle.isFinite, abs(angle) >= minAngle else {
-            return (OcrBox(bounds.minX * width, (1 - bounds.maxY) * height, bounds.width * width, bounds.height * height), 0)
+    static func lineAngle(_ bottomLeft: CGPoint, _ bottomRight: CGPoint, _ width: Double, _ height: Double) -> Double {
+        let angle = atan2((bottomRight.y - bottomLeft.y) * height, (bottomRight.x - bottomLeft.x) * width)
+        return angle.isFinite && abs(angle) >= minAngle ? angle : 0
+    }
+
+    // A turned word gets its upright box at the baseline start.
+    static func placement(_ angle: Double, _ bottomLeft: CGPoint, _ bottomRight: CGPoint, _ topLeft: CGPoint, _ bounds: CGRect,
+                          _ width: Double, _ height: Double) -> OcrBox {
+        guard angle != 0 else {
+            return OcrBox(bounds.minX * width, (1 - bounds.maxY) * height, bounds.width * width, bounds.height * height)
         }
-        let wide = hypot(along.x, along.y)
+        let wide = hypot((bottomRight.x - bottomLeft.x) * width, (bottomRight.y - bottomLeft.y) * height)
         let high = hypot((topLeft.x - bottomLeft.x) * width, (topLeft.y - bottomLeft.y) * height)
         let bottom = (1 - bottomLeft.y) * height
-        return (OcrBox(bottomLeft.x * width, bottom - high, wide, high), angle)
+        return OcrBox(bottomLeft.x * width, bottom - high, wide, high)
     }
 
     // The alpha is ignored, as on Windows.

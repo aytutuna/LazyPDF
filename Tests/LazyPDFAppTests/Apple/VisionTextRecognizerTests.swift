@@ -87,7 +87,8 @@ final class VisionTextRecognizerTests: XCTestCase {
         let xs = [bl, br, tl, tr].map(\.x), ys = [bl, br, tl, tr].map(\.y)
         let bounds = CGRect(x: xs.min()!, y: ys.min()!, width: xs.max()! - xs.min()!, height: ys.max()! - ys.min()!)
 
-        let (box, found) = VisionTextRecognizer.placement(bl, br, tl, bounds, w, h)
+        let found = VisionTextRecognizer.lineAngle(bl, br, w, h)
+        let box = VisionTextRecognizer.placement(found, bl, br, tl, bounds, w, h)
 
         XCTAssertEqual(found, angle, accuracy: 1e-9)
         XCTAssertEqual(box.x, 200, accuracy: 1e-6)
@@ -96,14 +97,17 @@ final class VisionTextRecognizerTests: XCTestCase {
         XCTAssertEqual(box.height, 20, accuracy: 1e-6)
     }
 
-    func test_aStraightWordKeepsItsBoundsAndNoAngle() {
-        let bounds = CGRect(x: 0.1, y: 0.2, width: 0.3, height: 0.05)
-        let (box, angle) = VisionTextRecognizer.placement(CGPoint(x: 0.1, y: 0.2), CGPoint(x: 0.4, y: 0.2001), CGPoint(x: 0.1, y: 0.25), bounds, 1000, 500)
+    func test_aStraightLineKeepsItsBoundsAndNoAngle() {
+        // A 40 px word whose corners differ by 0.2 px is noise, not a turn.
+        let bounds = CGRect(x: 0.1, y: 0.2, width: 0.04, height: 0.05)
+        let (bl, br, tl) = (CGPoint(x: 0.1, y: 0.2), CGPoint(x: 0.14, y: 0.2004), CGPoint(x: 0.1, y: 0.25))
+        let angle = VisionTextRecognizer.lineAngle(bl, br, 1000, 500)
+        let box = VisionTextRecognizer.placement(angle, bl, br, tl, bounds, 1000, 500)
 
         XCTAssertEqual(angle, 0)
         XCTAssertEqual(box.x, 100, accuracy: 1e-9)
         XCTAssertEqual(box.y, 500 * 0.75, accuracy: 1e-9)
-        XCTAssertEqual(box.width, 300, accuracy: 1e-9)
+        XCTAssertEqual(box.width, 40, accuracy: 1e-9)
         XCTAssertEqual(box.height, 25, accuracy: 1e-9)
     }
 
