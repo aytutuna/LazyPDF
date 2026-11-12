@@ -101,7 +101,7 @@ final class RestrictedFileTests: XCTestCase {
         XCTAssertFalse(f.vm.isBusy)
     }
 
-    func test_theMessageSaysWhatToDo() {
+    func test_theMessageSaysWhatToDo() async {
         let problem = Problems.restricted()
 
         XCTAssertEqual(problem.title, "This file cannot be changed")

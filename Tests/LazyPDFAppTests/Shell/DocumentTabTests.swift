@@ -22,7 +22,7 @@ final class DocumentTabTests: XCTestCase {
         DocumentMetadata.read(try PdfDocument.open(path: url.path)).title
     }
 
-    func test_aNewTabIsCleanAndDrawsItsFirstLoad() throws {
+    func test_aNewTabIsCleanAndDrawsItsFirstLoad() async throws {
         let (tab, renderer) = try open()
 
         XCTAssertFalse(tab.isDirty)
@@ -32,7 +32,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertEqual(tab.pageCount, 1)
     }
 
-    func test_aCommitMakesItDirtyAndLoadsTheRendererAgain() throws {
+    func test_aCommitMakesItDirtyAndLoadsTheRendererAgain() async throws {
         let (tab, renderer) = try open()
         var raised = 0
         tab.changed = { raised += 1 }
@@ -46,7 +46,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertEqual(raised, 1)
     }
 
-    func test_aCommitWithNothingChangedDoesNothing() throws {
+    func test_aCommitWithNothingChangedDoesNothing() async throws {
         let (tab, renderer) = try open()
 
         XCTAssertFalse(try tab.commit("Nothing"))
@@ -55,7 +55,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertFalse(tab.isDirty)
     }
 
-    func test_undoAndRedoMoveThroughTheSession() throws {
+    func test_undoAndRedoMoveThroughTheSession() async throws {
         let (tab, renderer) = try open()
         try Pdfs.retitle(tab.session, "One")
         try tab.commit("One")
@@ -69,20 +69,20 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertEqual(tab.revision, 3)
     }
 
-    func test_anUnsavedTabIsDirtyEvenWithNoHistory() throws {
+    func test_anUnsavedTabIsDirtyEvenWithNoHistory() async throws {
         let (tab, _) = try open(unsaved: true)
 
         XCTAssertTrue(tab.isDirty)
     }
 
-    func test_aTabWithNoFileTakesItsTitleFromTheGivenName() throws {
+    func test_aTabWithNoFileTakesItsTitleFromTheGivenName() async throws {
         let (tab, _) = try open()
 
         XCTAssertNil(tab.url)
         XCTAssertEqual(tab.title, "Untitled.pdf")
     }
 
-    func test_saveWritesToTheFileItCameFromAndIsCleanAfterwards() throws {
+    func test_saveWritesToTheFileItCameFromAndIsCleanAfterwards() async throws {
         let dir = TempDir(self)
         let url = written(dir)
         let (tab, _) = try open(path: url)
@@ -96,13 +96,13 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertEqual(tab.title, "a.pdf")
     }
 
-    func test_saveWithNoFileIsAMistake() throws {
+    func test_saveWithNoFileIsAMistake() async throws {
         let (tab, _) = try open()
 
         XCTAssertThrowsError(try tab.save()) { XCTAssertTrue($0 is InvalidOperationException) }
     }
 
-    func test_saveAsEndsTheReadOnlyState() throws {
+    func test_saveAsEndsTheReadOnlyState() async throws {
         let dir = TempDir(self)
         let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text()), renderer: FakeRenderer(), url: written(dir),
                               title: "a.pdf", readOnly: true)
@@ -113,7 +113,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertFalse(tab.readOnly)
     }
 
-    func test_saveAsGivesTheTabItsFileAndName() throws {
+    func test_saveAsGivesTheTabItsFileAndName() async throws {
         let dir = TempDir(self)
         let (tab, _) = try open(unsaved: true)
         let url = dir.sub("made.pdf")
@@ -127,7 +127,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertEqual(try PdfDocument.open(path: url.path).pages.count, 1)
     }
 
-    func test_saveCompactDropsTheHistory() throws {
+    func test_saveCompactDropsTheHistory() async throws {
         let dir = TempDir(self)
         let url = written(dir)
         let (tab, _) = try open(path: url)
@@ -142,7 +142,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertEqual(try title(of: url), "Compact")
     }
 
-    func test_saveGoesThroughTheSafeWriterAndLeavesNoTemporaryFile() throws {
+    func test_saveGoesThroughTheSafeWriterAndLeavesNoTemporaryFile() async throws {
         let dir = TempDir(self)
         let url = written(dir)
         let (tab, _) = try open(path: url)
@@ -155,7 +155,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertEqual(files, ["a.pdf"])
     }
 
-    func test_aCommitIsWrittenToTheRecoveryFolder() throws {
+    func test_aCommitIsWrittenToTheRecoveryFolder() async throws {
         let dir = TempDir(self)
         let recovery = RecoveryStore(directory: dir.sub("recovery"))
         let (tab, _) = try open(recovery: recovery)
@@ -170,7 +170,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertEqual([UInt8](try Data(contentsOf: entries[0].pdf)), tab.session.current)
     }
 
-    func test_anUnsavedTabIsInTheRecoveryFolderFromTheStart() throws {
+    func test_anUnsavedTabIsInTheRecoveryFolderFromTheStart() async throws {
         let dir = TempDir(self)
         let recovery = RecoveryStore(directory: dir.sub("recovery"))
         _ = try open(unsaved: true, recovery: recovery)
@@ -180,7 +180,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertEqual(recovery.list().count, 1)
     }
 
-    func test_savingRemovesTheRecoveryCopy() throws {
+    func test_savingRemovesTheRecoveryCopy() async throws {
         let dir = TempDir(self)
         let url = written(dir)
         let recovery = RecoveryStore(directory: dir.sub("recovery"))
@@ -194,7 +194,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertTrue(recovery.list().isEmpty)
     }
 
-    func test_closingOnPurposeRemovesTheRecoveryCopyAndLetsGoOfTheRenderer() throws {
+    func test_closingOnPurposeRemovesTheRecoveryCopyAndLetsGoOfTheRenderer() async throws {
         let dir = TempDir(self)
         let recovery = RecoveryStore(directory: dir.sub("recovery"))
         let (tab, renderer) = try open(recovery: recovery)
@@ -207,7 +207,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertTrue(recovery.list().isEmpty)
     }
 
-    func test_aFileChangedByAnotherProgramIsNoticed() throws {
+    func test_aFileChangedByAnotherProgramIsNoticed() async throws {
         let dir = TempDir(self)
         let url = written(dir)
         let (tab, _) = try open(path: url)
@@ -220,7 +220,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertFalse(tab.changedOnDisk)
     }
 
-    func test_aFileThatWasDeletedCountsAsChanged() throws {
+    func test_aFileThatWasDeletedCountsAsChanged() async throws {
         let dir = TempDir(self)
         let url = written(dir)
         let (tab, _) = try open(path: url)
@@ -230,7 +230,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertTrue(tab.changedOnDisk)
     }
 
-    func test_ourOwnSaveIsNotAChangeByAnotherProgram() throws {
+    func test_ourOwnSaveIsNotAChangeByAnotherProgram() async throws {
         let dir = TempDir(self)
         let url = written(dir)
         let (tab, _) = try open(path: url)
@@ -242,13 +242,13 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertFalse(tab.changedOnDisk)
     }
 
-    func test_aTabWithNoFileNeverChangesOnDisk() throws {
+    func test_aTabWithNoFileNeverChangesOnDisk() async throws {
         let (tab, _) = try open()
 
         XCTAssertFalse(tab.changedOnDisk)
     }
 
-    func test_aDocumentTheSystemCannotDrawStillOpens() throws {
+    func test_aDocumentTheSystemCannotDrawStillOpens() async throws {
         let renderer = FakeRenderer()
         renderer.draws = false
 
@@ -258,7 +258,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertEqual(tab.pageCount, 1)
     }
 
-    func test_thePageAndZoomAreKeptForTheViewer() throws {
+    func test_thePageAndZoomAreKeptForTheViewer() async throws {
         let (tab, _) = try open(pages: 3)
 
         tab.pageIndex = 2
@@ -268,7 +268,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertEqual(tab.zoom, 1.5)
     }
 
-    func test_theDerivedStateIsAnnouncedWhenItChanges() throws {
+    func test_theDerivedStateIsAnnouncedWhenItChanges() async throws {
         let (tab, _) = try open()
         let announced = Counter()
         withObservationTracking({ _ = tab.isDirty }, onChange: { announced.count += 1 })
@@ -279,7 +279,7 @@ final class DocumentTabTests: XCTestCase {
         XCTAssertEqual(announced.count, 1)
     }
 
-    func test_theAutomationNameSaysThereAreUnsavedChanges() throws {
+    func test_theAutomationNameSaysThereAreUnsavedChanges() async throws {
         let (tab, _) = try open(unsaved: true)
 
         XCTAssertEqual(tab.automationName, "Untitled.pdf, unsaved changes")

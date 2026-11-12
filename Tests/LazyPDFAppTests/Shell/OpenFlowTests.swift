@@ -9,7 +9,7 @@ import LazyPDFKit
 
 @MainActor
 final class OpenFlowTests: XCTestCase {
-    func test_theStripStartsWithHomeAndNothingElse() {
+    func test_theStripStartsWithHomeAndNothingElse() async {
         let f = ViewModelFixture(self)
 
         XCTAssertEqual(f.vm.strip.count, 1)

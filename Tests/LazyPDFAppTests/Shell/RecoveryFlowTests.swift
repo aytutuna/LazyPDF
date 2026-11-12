@@ -17,7 +17,7 @@ final class RecoveryFlowTests: XCTestCase {
         store.flush()
     }
 
-    func test_withNothingLeftThereIsNothingToOffer() {
+    func test_withNothingLeftThereIsNothingToOffer() async {
         let f = ViewModelFixture(self)
 
         f.vm.checkRecovery()
@@ -25,7 +25,7 @@ final class RecoveryFlowTests: XCTestCase {
         XCTAssertNil(f.vm.recoveryOffer)
     }
 
-    func test_whatACrashLeftIsOffered() throws {
+    func test_whatACrashLeftIsOffered() async throws {
         let f = ViewModelFixture(self)
         try crash(f, "report.pdf", f.dir.sub("report.pdf").path)
 
@@ -87,7 +87,7 @@ final class RecoveryFlowTests: XCTestCase {
         XCTAssertEqual(f.vm.activeDocument?.title, "scan.pdf")
     }
 
-    func test_discardingRemovesWhatWasLeft() throws {
+    func test_discardingRemovesWhatWasLeft() async throws {
         let f = ViewModelFixture(self)
         try crash(f, "a.pdf", nil)
         try crash(f, "b.pdf", nil)

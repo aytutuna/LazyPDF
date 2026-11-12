@@ -7,7 +7,7 @@ import XCTest
 final class HomeTilesTests: XCTestCase {
     private let ids = ["open", "create", "combine", "compress", "protect", "sign", "form", "edit", "export", "batch"]
 
-    func test_theTilesAreTheTenJobsInOrder() {
+    func test_theTilesAreTheTenJobsInOrder() async {
         let f = ViewModelFixture(self)
 
         XCTAssertEqual(f.vm.tiles.map(\.id), ids)
@@ -15,7 +15,7 @@ final class HomeTilesTests: XCTestCase {
                        ["Open", "Create", "Combine", "Make smaller", "Protect", "Sign", "Fill a form", "Edit", "Export", "Batch"])
     }
 
-    func test_aShellCanHideTilesItCannotAnswer() {
+    func test_aShellCanHideTilesItCannotAnswer() async {
         let f = ViewModelFixture(self)
 
         f.vm.hiddenTiles = ["create", "batch"]
@@ -23,7 +23,7 @@ final class HomeTilesTests: XCTestCase {
         XCTAssertEqual(f.vm.tiles.map(\.id), ["open", "combine", "compress", "protect", "sign", "form", "edit", "export"])
     }
 
-    func test_withNoFileOnlyOpenIsAvailableAndTheOthersSayWhy() {
+    func test_withNoFileOnlyOpenIsAvailableAndTheOthersSayWhy() async {
         let f = ViewModelFixture(self)
 
         for tile in f.vm.tiles where !["open", "create", "batch"].contains(tile.id) {
@@ -34,7 +34,7 @@ final class HomeTilesTests: XCTestCase {
         XCTAssertNil(f.vm.tiles[0].reason)
     }
 
-    func test_batchNeedsNoFile() {
+    func test_batchNeedsNoFile() async {
         let f = ViewModelFixture(self)
         let batch = f.vm.tiles.first { $0.id == AppViewModel.batchTile }
 
@@ -42,7 +42,7 @@ final class HomeTilesTests: XCTestCase {
         XCTAssertNil(batch?.reason)
     }
 
-    func test_aTileThatCannotStartTellsScreenReadersWhy() {
+    func test_aTileThatCannotStartTellsScreenReadersWhy() async {
         let f = ViewModelFixture(self)
 
         XCTAssertEqual(f.vm.tiles.first { $0.id == "combine" }?.helpText,
@@ -50,7 +50,7 @@ final class HomeTilesTests: XCTestCase {
         XCTAssertEqual(f.vm.tiles[0].helpText, "Open a PDF, a picture or a text file.")
     }
 
-    func test_scanIsOnlyThereWhenLazyScanIs() {
+    func test_scanIsOnlyThereWhenLazyScanIs() async {
         let f = ViewModelFixture(self)
         XCTAssertFalse(f.vm.tiles.contains { $0.id == "scan" })
 
@@ -87,7 +87,7 @@ final class HomeTilesTests: XCTestCase {
         }
     }
 
-    func test_aTileThatCannotStartDoesNothing() {
+    func test_aTileThatCannotStartDoesNothing() async {
         let f = ViewModelFixture(self)
 
         f.vm.startTile("combine")
@@ -96,7 +96,7 @@ final class HomeTilesTests: XCTestCase {
         XCTAssertTrue(f.vm.isHome)
     }
 
-    func test_scanStartsLazyScanOnlyWhenItIsThere() {
+    func test_scanStartsLazyScanOnlyWhenItIsThere() async {
         let f = ViewModelFixture(self)
 
         f.vm.startTile("scan")
@@ -107,7 +107,7 @@ final class HomeTilesTests: XCTestCase {
         XCTAssertEqual(f.sisters.scanOpened, 1)
     }
 
-    func test_scanSaysSoWhenLazyScanDoesNotStart() {
+    func test_scanSaysSoWhenLazyScanDoesNotStart() async {
         let f = ViewModelFixture(self)
         f.sisters.lazyScanInstalled = true
 
@@ -121,7 +121,7 @@ final class HomeTilesTests: XCTestCase {
         XCTAssertEqual(f.vm.message?.isError, true)
     }
 
-    func test_aToolTileWithoutAFileSaysToOpenOne() {
+    func test_aToolTileWithoutAFileSaysToOpenOne() async {
         let f = ViewModelFixture(self)
 
         f.vm.startTile("combine")
@@ -137,7 +137,7 @@ final class HomeTilesTests: XCTestCase {
         XCTAssertEqual(f.vm.tiles.first { $0.id == "combine" }?.available, false)
     }
 
-    func test_thePanelAndTheAppearanceAreRememberedForTheNextStart() {
+    func test_thePanelAndTheAppearanceAreRememberedForTheNextStart() async {
         let f = ViewModelFixture(self)
 
         f.vm.setSidePanel("layers")

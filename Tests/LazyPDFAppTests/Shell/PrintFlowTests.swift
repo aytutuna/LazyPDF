@@ -132,7 +132,7 @@ final class PrintFlowTests: XCTestCase {
         XCTAssertEqual(f.sisters.printed.map(\.lastPathComponent), ["photo.pdf"])
     }
 
-    func test_onTheHomeTabThereIsNothingToPrint() {
+    func test_onTheHomeTabThereIsNothingToPrint() async {
         let f = ViewModelFixture(self)
 
         f.vm.print()

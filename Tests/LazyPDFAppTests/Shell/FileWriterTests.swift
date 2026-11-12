@@ -32,7 +32,7 @@ final class FileWriterTests: XCTestCase {
         DocumentTab(session: try PdfEditSession.open(Pdfs.text()), renderer: FakeRenderer(), url: url, title: "a.pdf", writer: writer)
     }
 
-    func test_thePlainWriterWritesAtTheUrlItself() throws {
+    func test_thePlainWriterWritesAtTheUrlItself() async throws {
         let dir = TempDir(self)
         let target = dir.sub("a.pdf")
         var seen: URL?
@@ -42,7 +42,7 @@ final class FileWriterTests: XCTestCase {
         XCTAssertEqual(seen, target)
     }
 
-    func test_saveGoesThroughTheWriterAndTheFileStaysWhereItWas() throws {
+    func test_saveGoesThroughTheWriterAndTheFileStaysWhereItWas() async throws {
         let dir = TempDir(self)
         let file = dir.file("a.pdf", Pdfs.text())
         let writer = StagingWriter(dir.sub("stage"))
@@ -58,7 +58,7 @@ final class FileWriterTests: XCTestCase {
         XCTAssertFalse(tab.isDirty)
     }
 
-    func test_saveAsAndSaveCompactGoThroughTheWriterToo() throws {
+    func test_saveAsAndSaveCompactGoThroughTheWriterToo() async throws {
         let dir = TempDir(self)
         let file = dir.file("a.pdf", Pdfs.text())
         let writer = StagingWriter(dir.sub("stage"))
@@ -75,7 +75,7 @@ final class FileWriterTests: XCTestCase {
         XCTAssertEqual(tab.url?.lastPathComponent, "c.pdf")
     }
 
-    func test_aTabWithNoWriterGivenSavesInPlace() throws {
+    func test_aTabWithNoWriterGivenSavesInPlace() async throws {
         let dir = TempDir(self)
         let file = dir.file("a.pdf", Pdfs.text())
         let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text()), renderer: FakeRenderer(), url: file, title: "a.pdf")

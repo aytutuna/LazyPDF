@@ -7,7 +7,7 @@ import LazyPDFKit
 
 @MainActor
 final class RecoveryWritesTests: XCTestCase {
-    func test_aWriteJustAfterTheWorkerFinishedIsStillWritten() {
+    func test_aWriteJustAfterTheWorkerFinishedIsStillWritten() async {
         let dir = TempDir(self)
         let store = RecoveryStore(directory: dir.url)
         let id = UUID()
@@ -21,7 +21,7 @@ final class RecoveryWritesTests: XCTestCase {
         }
     }
 
-    func test_undoingBackToTheSavedStateRemovesTheCopy() throws {
+    func test_undoingBackToTheSavedStateRemovesTheCopy() async throws {
         let dir = TempDir(self)
         let store = RecoveryStore(directory: dir.sub("recovery"))
         let tab = DocumentTab(session: try PdfEditSession.open(Pdfs.text()), renderer: FakeRenderer(), url: nil, title: "a.pdf", recovery: store)
@@ -37,7 +37,7 @@ final class RecoveryWritesTests: XCTestCase {
         XCTAssertTrue(store.list().isEmpty)
     }
 
-    func test_entriesOfAProcessThatIsStillRunningAreNotCrashLeftovers() {
+    func test_entriesOfAProcessThatIsStillRunningAreNotCrashLeftovers() async {
         let dir = TempDir(self)
         let store = RecoveryStore(directory: dir.url)
         store.write(UUID(), [1], RecoveryMeta(title: "live", processId: Int(ProcessInfo.processInfo.processIdentifier)))
@@ -49,12 +49,12 @@ final class RecoveryWritesTests: XCTestCase {
         XCTAssertEqual(store.abandoned().map(\.meta.title).sorted(), ["gone", "old"])
     }
 
-    func test_aProcessIdThatCannotBeOneIsNeverRunning() {
+    func test_aProcessIdThatCannotBeOneIsNeverRunning() async {
         XCTAssertFalse(ProcessCheck.isRunning(-1))
         XCTAssertFalse(ProcessCheck.isRunning(Int.min))
     }
 
-    func test_aLiveProcessThatStartedAfterTheEntryWasWrittenIsAnotherProcess() throws {
+    func test_aLiveProcessThatStartedAfterTheEntryWasWrittenIsAnotherProcess() async throws {
         let own = Int(ProcessInfo.processInfo.processIdentifier)
         try XCTSkipIf(ProcessCheck.launched == nil, "the system does not give a start time")
         XCTAssertTrue(ProcessCheck.isRunning(own, started: ProcessCheck.launched))

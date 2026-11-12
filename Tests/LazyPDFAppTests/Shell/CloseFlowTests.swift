@@ -230,7 +230,7 @@ final class CloseFlowTests: XCTestCase {
         XCTAssertTrue(f.vm.canUndo)
     }
 
-    func test_undoWithNoDocumentDoesNothing() {
+    func test_undoWithNoDocumentDoesNothing() async {
         let f = ViewModelFixture(self)
 
         f.vm.undo()

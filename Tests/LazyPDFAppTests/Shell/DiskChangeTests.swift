@@ -161,7 +161,7 @@ final class DiskChangeTests: XCTestCase {
         XCTAssertNil(f.vm.message)
     }
 
-    func test_onTheHomeTabThereIsNothingToCheck() {
+    func test_onTheHomeTabThereIsNothingToCheck() async {
         let f = ViewModelFixture(self)
 
         f.vm.checkDisk()
