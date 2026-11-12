@@ -165,6 +165,27 @@ final class ViewerSearchTests: XCTestCase {
         XCTAssertFalse(search.isRunning)
     }
 
+    func test_aPatternThatRunsOutOfTimeNamesThePagesAndClearsOnTheNextSearch() async throws {
+        let search = searching(try TestPdfs.text(pages: 2, line: String(repeating: "a", count: 40) + "!"))
+
+        await search.start("^(a+)+$", TextSearchOptions(regex: true)).value
+
+        XCTAssertTrue(search.hits.isEmpty)
+        XCTAssertEqual(search.timedOut, [0, 1])
+        await search.start("a+!", TextSearchOptions(regex: true)).value
+        XCTAssertTrue(search.timedOut.isEmpty)
+        XCTAssertEqual(search.hits.count, 2)
+    }
+
+    func test_theTimedOutPagesAreListedUpToFiveThenCounted() {
+        XCTAssertNil(TimedOutText.forPages([]))
+        XCTAssertEqual(TimedOutText.forPages([3]), "The pattern took too long on page 4; it was not searched.")
+        XCTAssertEqual(TimedOutText.forPages([2, 6]), "The pattern took too long on pages 3 and 7; they were not searched.")
+        XCTAssertEqual(TimedOutText.forPages([2, 6, 11]), "The pattern took too long on pages 3, 7 and 12; they were not searched.")
+        XCTAssertEqual(TimedOutText.forPages([2, 4, 6, 8, 10, 12]),
+                       "The pattern took too long on 6 pages, the first being page 3; they were not searched.")
+    }
+
     func test_anEmptyQueryClears() async throws {
         let search = searching(try pages(2))
         await search.start("fox", TextSearchOptions()).value

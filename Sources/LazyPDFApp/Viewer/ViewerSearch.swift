@@ -58,6 +58,9 @@ public final class ViewerSearch {
     /// The query is a regular expression that does not parse.
     public private(set) var badPattern = false
 
+    /// Pages, 0-based and ascending, where a regular expression ran out of time and the page was not searched to its end.
+    public private(set) var timedOut: [Int] = []
+
     /// Called when `current` moved, so the view goes to it.
     @ObservationIgnored public var onCurrentChanged: (() -> Void)?
 
@@ -81,6 +84,7 @@ public final class ViewerSearch {
         badPattern = false
         wrapped = .none
         noText = false
+        timedOut = []
         landed = -1
         if query.isEmpty {
             isRunning = false
@@ -155,10 +159,11 @@ public final class ViewerSearch {
         var bad = false
         var found = false
         var noText = false
+        let timeouts = SearchTimeouts()
         do {
             if let source = await text.value {
                 var batch: [SearchHit] = []
-                for try await match in try source.find(query, options) {
+                for try await match in try source.find(query, options, timeouts: timeouts) {
                     found = true
                     batch.append(SearchHit(match: match, before: Self.around(source, match, -1), after: Self.around(source, match, 1)))
                     if batch.count >= Self.batch {
@@ -174,7 +179,7 @@ public final class ViewerSearch {
         } catch {
             bad = true
         }
-        await finish(bad, noText, id)
+        await finish(bad, noText, timeouts.pages.sorted(), id)
     }
 
     private func deliver(_ batch: [SearchHit], _ start: Int, _ id: Int) {
@@ -190,11 +195,12 @@ public final class ViewerSearch {
         }
     }
 
-    private func finish(_ bad: Bool, _ noText: Bool, _ id: Int) {
+    private func finish(_ bad: Bool, _ noText: Bool, _ timedOut: [Int], _ id: Int) {
         guard id == generation else { return }
         isRunning = false
         badPattern = bad
         self.noText = noText
+        self.timedOut = timedOut
         if current < 0 && !hits.isEmpty {
             current = 0
             if !quiet {

@@ -51,6 +51,8 @@ public struct RedactSettings {
 public struct RedactFound {
     public let items: [MarkItem]
     public let pictures: Int
+    /// Pages, 0-based and ascending, where a pattern ran out of time and the page was not searched to its end.
+    public var timedOut: [Int] = []
 }
 
 public enum RedactJob {
@@ -60,16 +62,19 @@ public enum RedactJob {
 
     public static func find(_ document: PdfDocument, _ kind: RedactDataKind, token: CancelToken = CancelToken()) throws -> RedactFound {
         let cache = TextCache(document)
+        let timeouts = SearchTimeouts()
         try token.throwIfCancelled()
-        return try gather(document, cache, RedactionFinder.find(cache, kind.kind), RedactionFinder.findInValues(document, kind.kind), token)
+        return try gather(document, cache, RedactionFinder.find(cache, kind.kind, timeouts: timeouts),
+                          RedactionFinder.findInValues(document, kind.kind), timeouts, token)
     }
 
     public static func find(_ document: PdfDocument, words: String, matchCase: Bool, wholeWord: Bool,
                             token: CancelToken = CancelToken()) throws -> RedactFound {
         let cache = TextCache(document)
+        let timeouts = SearchTimeouts()
         try token.throwIfCancelled()
-        return try gather(document, cache, RedactionFinder.findWords(cache, [words], wholeWord, matchCase),
-                          RedactionFinder.findWordsInValues(document, [words], wholeWord, matchCase), token)
+        return try gather(document, cache, RedactionFinder.findWords(cache, [words], wholeWord, matchCase, timeouts: timeouts),
+                          RedactionFinder.findWordsInValues(document, [words], wholeWord, matchCase), timeouts, token)
     }
 
     /// True when the file lets this opener read it but not change it, so that the engine would refuse to write a copy.
@@ -118,13 +123,14 @@ public enum RedactJob {
     }
 
     private static func gather(_ document: PdfDocument, _ cache: TextCache, _ matches: [RedactionMatch], _ values: [RedactionValueMatch],
-                               _ token: CancelToken) throws -> RedactFound {
+                               _ timeouts: SearchTimeouts, _ token: CancelToken) throws -> RedactFound {
         var pictures = 0
         for page in 0..<document.pages.count {
             try token.throwIfCancelled()
             if cache.get(page).text.allSatisfy(\.isWhitespace) { pictures += 1 }
         }
-        return RedactFound(items: matches.map { MarkItem($0.mark, clip($0.text)) } + valueItems(document, values), pictures: pictures)
+        return RedactFound(items: matches.map { MarkItem($0.mark, clip($0.text)) } + valueItems(document, values), pictures: pictures,
+                           timedOut: Array(Set(timeouts.pages)).sorted())
     }
 
     // The mark of a value hit is the comment's or field's own rectangle, so that it can be outlined and jumped to.

@@ -66,6 +66,17 @@ final class RedactFinderTests: XCTestCase {
         XCTAssertThrowsError(try RedactionFinder.findRegex(cache, "(unclosed")) { XCTAssertTrue($0 is ArgumentException) }
     }
 
+    func test_aPatternThatRunsOutOfTimeIsReportedByPage() throws {
+        let document = try lines(String(repeating: "a", count: 40) + "!")
+        let cache = TextCache(document)
+        let timeouts = SearchTimeouts()
+        XCTAssertTrue(try RedactionFinder.findRegex(cache, "^(a+)+$", timeouts: timeouts).isEmpty)
+        XCTAssertEqual(timeouts.pages, [0])
+        let quiet = SearchTimeouts()
+        XCTAssertEqual(try RedactionFinder.findRegex(cache, "a+!", timeouts: quiet).count, 1)
+        XCTAssertTrue(quiet.pages.isEmpty)
+    }
+
     func test_matchesBecomeMarksThatRemoveTheText() throws {
         let document = try lines("Mail jane@example.com please", "and bob@example.org too")
         let hits = try RedactionFinder.find(document, .email)

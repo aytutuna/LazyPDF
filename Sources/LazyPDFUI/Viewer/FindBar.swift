@@ -23,6 +23,21 @@ struct FindBar: View {
     }
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            bar
+            if let note = TimedOutText.forPages(viewer.search.timedOut) {
+                Text(note)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, 4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.bar)
+            }
+        }
+    }
+
+    private var bar: some View {
         HStack(spacing: 6) {
             TextField(L10n.t("Search text"), text: $request.text)
                 .textFieldStyle(.roundedBorder)
@@ -109,6 +124,7 @@ struct FindBar: View {
         if search.badPattern { return L10n.t("Not a valid pattern") }
         if search.hits.isEmpty {
             return search.isRunning ? L10n.t("Searching")
+                : !search.timedOut.isEmpty ? L10n.t("Not fully searched")
                 : search.noText ? L10n.t("This file has no text to search. Try Make searchable.") : L10n.t("No results")
         }
         if search.isRunning { return L10n.t("{0} found", search.hits.count) }

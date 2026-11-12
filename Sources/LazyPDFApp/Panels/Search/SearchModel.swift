@@ -33,8 +33,10 @@ public final class SearchModel: ToolPanelModel {
         if search.query.isEmpty { return L10n.t("Search the file to list every match here.") }
         if search.badPattern { return L10n.t("Not a valid pattern") }
         if search.isRunning { return L10n.t("Searching for {0}", search.query) }
-        if search.hits.isEmpty { return L10n.t("No results for {0}", search.query) }
-        return L10n.plural(search.hits.count, one: "{0} result for {1}", other: "{0} results for {1}", search.query)
+        let slow = TimedOutText.forPages(search.timedOut)
+        if search.hits.isEmpty { return slow ?? L10n.t("No results for {0}", search.query) }
+        let found = L10n.plural(search.hits.count, one: "{0} result for {1}", other: "{0} results for {1}", search.query)
+        return slow.map { "\(found) \($0)" } ?? found
     }
 
     public func select(_ index: Int) {

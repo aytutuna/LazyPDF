@@ -363,6 +363,7 @@
 "Combining files" = "Dosyalar birleştiriliyor";
 "Comment" = "Yorum";
 "Comment changed" = "Yorum değişti";
+"Comment on page {0}" = "Not, sayfa {0}";
 "Comment text" = "Yorum metni";
 "Comments" = "Yorumlar";
 "Comments and markup" = "Yorumlar ve işaretlemeler";
@@ -561,6 +562,7 @@
 "Field name" = "Alan adı";
 "Field not changed" = "Alan değiştirilmedi";
 "Field {0}" = "Alan {0}";
+"Field {0}, page {1}" = "Alan {0}, sayfa {1}";
 "Fields" = "Alanlar";
 "Fields on scanned pages are guesses. Check each one." = "Taranmış sayfalardaki alanlar tahmindir. Her birini kontrol edin.";
 "Figure" = "Şekil";

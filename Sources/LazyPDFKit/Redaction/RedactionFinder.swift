@@ -107,11 +107,11 @@ public enum RedactionFinder {
     }
 
     /// Everything of one built-in kind in the document. `RedactionKind.pattern` and `RedactionKind.word` have their own methods.
-    public static func find(_ cache: TextCache, _ kind: RedactionKind) throws -> [RedactionMatch] {
+    public static func find(_ cache: TextCache, _ kind: RedactionKind, timeouts: SearchTimeouts? = nil) throws -> [RedactionMatch] {
         guard let shape = shape(kind) else { throw ArgumentException("Specified argument was out of the range of valid values. (Parameter 'kind')") }
         var found: [RedactionMatch] = []
         let options = TextSearchOptions(matchCase: shape.matchCase, regex: true)
-        for hit in try search(cache, shape.pattern, options) {
+        for hit in try search(cache, shape.pattern, options, timeouts) {
             if shape.check == nil || shape.check?(hit.text) == true {
                 found.append(RedactionMatch(RedactionMark.fromMatch(hit), hit.text, kind))
             } else if let inner = narrow(cache.get(hit.page), hit, shape) {
@@ -122,17 +122,19 @@ public enum RedactionFinder {
     }
 
     /// Every hit of a regular expression (see `TextSearch` for how it reads the page). A bad pattern is an `ArgumentException`.
-    public static func findRegex(_ cache: TextCache, _ pattern: String, _ matchCase: Bool = false) throws -> [RedactionMatch] {
-        try search(cache, pattern, TextSearchOptions(matchCase: matchCase, regex: true))
+    public static func findRegex(_ cache: TextCache, _ pattern: String, _ matchCase: Bool = false,
+                                  timeouts: SearchTimeouts? = nil) throws -> [RedactionMatch] {
+        try search(cache, pattern, TextSearchOptions(matchCase: matchCase, regex: true), timeouts)
             .map { RedactionMatch(RedactionMark.fromMatch($0), $0.text, .pattern) }
     }
 
-    public static func findWords(_ cache: TextCache, _ words: [String], _ wholeWord: Bool = true, _ matchCase: Bool = false) throws -> [RedactionMatch] {
+    public static func findWords(_ cache: TextCache, _ words: [String], _ wholeWord: Bool = true, _ matchCase: Bool = false,
+                                  timeouts: SearchTimeouts? = nil) throws -> [RedactionMatch] {
         let options = TextSearchOptions(matchCase: matchCase, wholeWord: wholeWord)
         var seen = Set<OrdinalString>()
         var hits: [SearchMatch] = []
         for word in words where !word.isEmpty && seen.insert(OrdinalString(word)).inserted {
-            hits.append(contentsOf: try search(cache, word, options))
+            hits.append(contentsOf: try search(cache, word, options, timeouts))
         }
         // OrderBy and ThenBy are stable.
         let ordered = hits.enumerated().sorted { a, b in
@@ -202,10 +204,11 @@ public enum RedactionFinder {
         return nil
     }
 
-    private static func search(_ cache: TextCache, _ query: String, _ options: TextSearchOptions) throws -> [SearchMatch] {
+    private static func search(_ cache: TextCache, _ query: String, _ options: TextSearchOptions,
+                               _ timeouts: SearchTimeouts?) throws -> [SearchMatch] {
         var found: [SearchMatch] = []
         do {
-            for index in 0..<cache.pageCount { found.append(contentsOf: try TextSearch.find(cache.get(index), query, options)) }
+            for index in 0..<cache.pageCount { found.append(contentsOf: try TextSearch.find(cache.get(index), query, options, timeouts: timeouts)) }
         } catch let cancelled as CancellationError {
             throw cancelled
         } catch {

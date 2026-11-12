@@ -96,8 +96,8 @@ public final class TextSource: @unchecked Sendable {
 
     /// Every match, page by page, as they are found. Throws for a regular expression that does not parse; reading the
     /// sequence stops with `CancellationError` when the task is cancelled.
-    public func find(_ query: String, _ options: TextSearchOptions) throws -> TextSearch.Hits {
-        try TextSearch.find(cache, query, options)
+    public func find(_ query: String, _ options: TextSearchOptions, timeouts: SearchTimeouts? = nil) throws -> TextSearch.Hits {
+        try TextSearch.find(cache, query, options, timeouts: timeouts)
     }
 
     /// The text of a page for the search task, which does not go through `get`.
