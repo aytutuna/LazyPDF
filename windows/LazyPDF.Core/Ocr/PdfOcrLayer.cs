@@ -103,10 +103,25 @@ public static class PdfOcrLayer
         {
             foreach (var word in OcrLayerContent.Read(document, page, stream, geometry).SelectMany(l => l))
             {
-                words.Add(new OcrLayerWord(words.Count, word.Text, new DisplayRect(word.X, word.Y, word.Width, word.Height)));
+                words.Add(new OcrLayerWord(words.Count, word.Text, Bounds(word)));
             }
         }
         return words;
+    }
+
+    // A turned word is an upright box at its baseline start, turned by Angle; the box shown covers the turned word.
+    private static DisplayRect Bounds(PlacedWord word)
+    {
+        if (word.Angle == 0) return new DisplayRect(word.X, word.Y, word.Width, word.Height);
+        double cos = Math.Cos(word.Angle), sin = Math.Sin(word.Angle);
+        double px = word.X, py = word.Y + word.Height;
+        double ex = word.Width * cos, ey = -word.Width * sin;
+        double ux = -word.Height * sin, uy = -word.Height * cos;
+        double left = px + Math.Min(0, Math.Min(ex, Math.Min(ux, ex + ux)));
+        double right = px + Math.Max(0, Math.Max(ex, Math.Max(ux, ex + ux)));
+        double top = py + Math.Min(0, Math.Min(ey, Math.Min(uy, ey + uy)));
+        double bottom = py + Math.Max(0, Math.Max(ey, Math.Max(uy, ey + uy)));
+        return new DisplayRect(left, top, right - left, bottom - top);
     }
 
     /// <summary>

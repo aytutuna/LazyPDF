@@ -45,10 +45,10 @@ public class PdfOcrLayerTests
 
         var layer = PdfOcrLayer.Words(document, page);
         Assert.Equal(["Skewed", "line"], layer.Select(w => w.Text));
-        Assert.Equal(50, layer[0].Box.X, 3);
-        Assert.Equal(100, layer[0].Box.Y, 3);
-        Assert.Equal(100, layer[0].Box.Width, 3);
-        Assert.Equal(20, layer[0].Box.Height, 3);
+        Assert.Equal(48.003, layer[0].Box.X, 3);
+        Assert.Equal(90.117, layer[0].Box.Y, 3);
+        Assert.Equal(101.497, layer[0].Box.Width, 3);
+        Assert.Equal(29.883, layer[0].Box.Height, 3);
 
         PdfOcrLayer.Correct(document, page, 1, "lane");
         Assert.Contains("0.995", OcrKit.Latin(page.Contents()));

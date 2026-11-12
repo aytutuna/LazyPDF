@@ -30,6 +30,31 @@ final class OcrReviewFixTests: XCTestCase {
         }
     }
 
+    func test_wordBoxesOfARotatedPageCoverTheTurnedWords() throws {
+        for degrees in [90, 180, 270] {
+            let document = try OcrKit.scan()
+            let geometry = PageGeometry(document.pages[0])
+            _ = try PdfOcrLayer.add(document, [OcrPageWords(0, OcrKit.words(), Int(geometry.width), Int(geometry.height))], "en-US")
+            let before = try PdfOcrLayer.words(document, document.pages[0])
+            PageOperations.rotate(document, [0], degrees)
+            let after = try PdfOcrLayer.words(document, document.pages[0])
+
+            let (w, h) = (geometry.width, geometry.height)
+            for i in 0..<min(before.count, after.count) {
+                let a = before[i].box
+                let expected: (Double, Double, Double, Double)
+                switch degrees {
+                case 90: expected = (h - a.y - a.height, a.x, a.height, a.width)
+                case 180: expected = (w - a.x - a.width, h - a.y - a.height, a.width, a.height)
+                default: expected = (a.y, w - a.x - a.width, a.height, a.width)
+                }
+                let b = after[i].box
+                XCTAssertTrue(abs(b.x - expected.0) < 1 && abs(b.y - expected.1) < 1 && abs(b.width - expected.2) < 1 && abs(b.height - expected.3) < 1,
+                              "\(degrees) word \(i): expected \(expected) got \(b)")
+            }
+        }
+    }
+
     func test_anOwnLayerIsReplacedOnAPageWithAVisibleStampWhenAskedAndKeptWhenNot() async throws {
         let session = try PdfEditSession.open(OcrKit.scanBytes(1, "", stampedScan))
         let first = try await run(session, OcrKit.words(), OcrOptions(dpi: 72, force: true))

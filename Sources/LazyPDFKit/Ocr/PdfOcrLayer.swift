@@ -121,11 +121,24 @@ public enum PdfOcrLayer {
         for stream in layerStreams(document, page) {
             for line in try OcrLayerContent.read(document, page, stream, geometry) {
                 for word in line {
-                    words.append(OcrLayerWord(words.count, word.text, DisplayRect(word.x, word.y, word.width, word.height)))
+                    words.append(OcrLayerWord(words.count, word.text, bounds(word)))
                 }
             }
         }
         return words
+    }
+
+    // A turned word is an upright box at its baseline start, turned by angle; the box shown covers the turned word.
+    private static func bounds(_ word: PlacedWord) -> DisplayRect {
+        if word.angle == 0 { return DisplayRect(word.x, word.y, word.width, word.height) }
+        let c = cos(word.angle), s = sin(word.angle)
+        let px = word.x, py = word.y + word.height
+        let ex = word.width * c, ey = -word.width * s
+        let ux = -word.height * s, uy = -word.height * c
+        let xs = [0, ex, ux, ex + ux], ys = [0, ey, uy, ey + uy]
+        let left = px + xs.min()!, right = px + xs.max()!
+        let top = py + ys.min()!, bottom = py + ys.max()!
+        return DisplayRect(left, top, right - left, bottom - top)
     }
 
     /// Changes the text of word `index` (as `words` numbers them); the box stays. Empty text removes the word. The font

@@ -47,10 +47,10 @@ final class PdfOcrLayerTests: XCTestCase {
 
         let layer = try PdfOcrLayer.words(document, page)
         XCTAssertEqual(layer.map { $0.text }, ["Skewed", "line"])
-        XCTAssertEqual(layer[0].box.x, 50, accuracy: 1e-3)
-        XCTAssertEqual(layer[0].box.y, 100, accuracy: 1e-3)
-        XCTAssertEqual(layer[0].box.width, 100, accuracy: 1e-3)
-        XCTAssertEqual(layer[0].box.height, 20, accuracy: 1e-3)
+        XCTAssertEqual(layer[0].box.x, 48.003, accuracy: 1e-3)
+        XCTAssertEqual(layer[0].box.y, 90.117, accuracy: 1e-3)
+        XCTAssertEqual(layer[0].box.width, 101.497, accuracy: 1e-3)
+        XCTAssertEqual(layer[0].box.height, 29.883, accuracy: 1e-3)
 
         try PdfOcrLayer.correct(document, page, 1, "lane")
         XCTAssertTrue(OcrKit.latin(page.contents()).contains("0.995"))
