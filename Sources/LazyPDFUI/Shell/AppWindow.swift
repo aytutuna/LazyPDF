@@ -434,9 +434,13 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
                     ContentUnavailableView(L10n.t("No results for {0}", toolQuery), systemImage: "magnifyingglass")
                 }
             }
+            #if os(iOS)
             .searchable(text: $toolQuery, placement: .navigationBarDrawer(displayMode: .always), prompt: L10n.t("Search tools"))
-            .navigationTitle(L10n.t("Tools"))
             .navigationBarTitleDisplayMode(.inline)
+            #else
+            .searchable(text: $toolQuery, prompt: L10n.t("Search tools"))
+            #endif
+            .navigationTitle(L10n.t("Tools"))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(L10n.t("Done")) { toolSearchShown = false }
