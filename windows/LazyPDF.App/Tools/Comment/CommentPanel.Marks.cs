@@ -194,7 +194,7 @@ public partial class CommentPanel
             image = await Task.Run(() =>
             {
                 byte[] file = SignatureArt.UprightFile(File.ReadAllBytes(path));
-                return new WicImageCodec().DecodeFile(file) is { Count: > 0 } frames ? SignatureArt.Shrink(frames[0], 600) : null;
+                return new WicImageCodec().DecodeFile(file)?.FirstOrDefault(f => !f.TooBig) is { } frame ? SignatureArt.Shrink(frame, 600) : null;
             });
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException)
