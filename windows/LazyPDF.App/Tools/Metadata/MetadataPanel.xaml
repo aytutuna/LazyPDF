@@ -24,6 +24,7 @@
         <CheckBox x:Name="TouchModifiedBox" Style="{StaticResource ToggleSwitchStyle}" Margin="0,8,0,0" IsChecked="True"
                   Content="{loc:T Update the changed date}" AutomationProperties.Name="{loc:T Update the changed date}" />
         <TextBlock x:Name="MakerText" Style="{StaticResource ReasonText}" Margin="0,4,0,0" Visibility="Collapsed" />
+        <TextBlock x:Name="XmpText" Style="{StaticResource ReasonText}" Margin="0,4,0,0" Visibility="Collapsed" />
 
         <TextBlock Style="{StaticResource SectionHeaderText}" Margin="0,20,0,8" Text="{loc:T Custom properties}" AutomationProperties.HeadingLevel="Level3" />
         <ItemsControl x:Name="CustomList" KeyboardNavigation.TabNavigation="Continue">

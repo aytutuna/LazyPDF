@@ -104,6 +104,9 @@ public sealed partial class MetadataPanel : ToolPanel
         string maker = string.Join(" · ", new[] { _metadata.Creator, _metadata.Producer }.Where(s => !string.IsNullOrEmpty(s)));
         MakerText.Text = maker;
         MakerText.Visibility = maker.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+        string? xmp = MetadataEdit.XmpNote(_metadata);
+        XmpText.Text = xmp ?? "";
+        XmpText.Visibility = xmp is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void ShowForm()

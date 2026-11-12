@@ -6292,6 +6292,9 @@
   <data name="The file would not take that text. Try other words." xml:space="preserve">
     <value>Dosya bu metni kabul etmedi. Başka sözcükler deneyin.</value>
   </data>
+  <data name="The file's XMP metadata could not be read. Its properties may be incomplete, and saving leaves it as it is." xml:space="preserve">
+    <value>Dosyanın XMP üst verisi okunamadı. Özellikler eksik olabilir; kaydetmek onu olduğu gibi bırakır.</value>
+  </data>
   <data name="The file's permissions do not allow changing it, so it cannot be converted." xml:space="preserve">
     <value>Dosyanın izinleri değiştirilmesine izin vermiyor, bu yüzden dönüştürülemez.</value>
   </data>

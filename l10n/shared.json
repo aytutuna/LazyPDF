@@ -7145,6 +7145,9 @@
   "Save properties": {
     "tr": "Özellikleri kaydet"
   },
+  "The file's XMP metadata could not be read. Its properties may be incomplete, and saving leaves it as it is.": {
+    "tr": "Dosyanın XMP üst verisi okunamadı. Özellikler eksik olabilir; kaydetmek onu olduğu gibi bırakır."
+  },
   "Changed {0}": {
     "tr": "Değiştirilme: {0}"
   },

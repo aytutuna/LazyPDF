@@ -28,6 +28,10 @@ public static class MetadataEdit
         Drops(before.Subject, after.Subject) || Drops(before.Keywords, after.Keywords) ||
         before.Custom.Any(pair => pair.Value.Length > 0 && (!after.Custom.TryGetValue(pair.Key, out var value) || value != pair.Value));
 
+    /// <summary>The line shown when the file has an XMP packet that could not be read, or null.</summary>
+    public static string? XmpNote(DocumentMetadata metadata) =>
+        metadata.XmpUnreadable ? Loc.T("The file's XMP metadata could not be read. Its properties may be incomplete, and saving leaves it as it is.") : null;
+
     /// <summary>Equal in every field, with the custom properties compared by content.</summary>
     public static bool Same(DocumentMetadata a, DocumentMetadata b) =>
         a with { Custom = b.Custom } == b && Sorted(a.Custom).SequenceEqual(Sorted(b.Custom));

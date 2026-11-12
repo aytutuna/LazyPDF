@@ -35,6 +35,13 @@ public sealed class MetadataEditTests
     public void NoticeShowsOnlyForSaveWithADrop(bool notify, bool dropped, bool expected) =>
         Assert.Equal(expected, MetadataEdit.ShowDropNotice(notify, dropped));
 
+    [Fact]
+    public void UnreadableXmpGetsANote()
+    {
+        Assert.Null(MetadataEdit.XmpNote(Blank()));
+        Assert.NotNull(MetadataEdit.XmpNote(Blank() with { XmpUnreadable = true }));
+    }
+
     private static DocumentMetadata WithCustom(params (string, string)[] pairs) =>
         Blank() with { Custom = pairs.ToDictionary(p => p.Item1, p => p.Item2) };
 
