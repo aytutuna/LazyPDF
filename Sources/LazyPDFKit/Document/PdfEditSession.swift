@@ -76,13 +76,14 @@ public final class PdfEditSession {
     public var isDirty: Bool { position != savedPosition || document.hasChanges }
 
     /// Appends what changed in `document` as one undoable step called `label`, dropping what could be redone.
-    /// False, and nothing added, when nothing changed.
+    /// False, and nothing added, when nothing changed. With `mergeWithPrevious` the step joins the one before it, so the
+    /// two undo together, unless that step was saved or has another label; then it is a step of its own.
     @discardableResult
-    public func commit(_ label: String) throws -> Bool {
+    public func commit(_ label: String, mergeWithPrevious: Bool = false) throws -> Bool {
         let update = try PdfUpdate.build(document)
         if update.isEmpty { return false }
         if current.count + update.count > maxBytes { throw tooLarge() }
-        return try take(label, current + update)
+        return try take(label, current + update, merge: mergeWithPrevious)
     }
 
     /// The update that makes `copy`, a document opened from `current` and then changed, into the next step; empty when nothing
@@ -114,14 +115,15 @@ public final class PdfEditSession {
         PdfReadException(.unsupported, "The file is too large to change further.")
     }
 
-    private func take(_ label: String, _ next: [UInt8]) throws -> Bool {
+    private func take(_ label: String, _ next: [UInt8], merge: Bool = false) throws -> Bool {
         // Reading it back is the check that the update is one a strict parser takes: one that needs a rebuild is not.
         let reopened = try reader(next)
         if reopened.xrefRebuilt && !document.xrefRebuilt { throw PdfReadException.damaged("The update does not read back.") }
 
+        let merges = merge && position > 0 && position != savedPosition && steps[position - 1].label == label
         if savedPosition > position { savedPosition = -1 }
         steps.removeSubrange(position..<steps.count)
-        steps.append((next.count, label))
+        if merges { steps[steps.count - 1] = (next.count, label) } else { steps.append((next.count, label)) }
         position = steps.count
         current = next
         longest = next

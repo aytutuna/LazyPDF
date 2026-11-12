@@ -82,6 +82,50 @@ final class EditSessionTests: XCTestCase {
         XCTAssertNil(session.redoLabel)
     }
 
+    func test_mergedCommitUndoesWithThePreviousOne() throws {
+        let original = SaveFixtures.table()
+        let session = try PdfEditSession.open(original)
+        retitle(session, "One")
+        try session.commit("Fill")
+        retitle(session, "Two")
+        XCTAssertTrue(try session.commit("Fill", mergeWithPrevious: true))
+        XCTAssertEqual(title(session), "Two")
+
+        XCTAssertTrue(try session.undo())
+        XCTAssertEqual(session.current, original)
+        XCTAssertFalse(session.canUndo)
+        XCTAssertTrue(try session.redo())
+        XCTAssertEqual(title(session), "Two")
+        XCTAssertFalse(session.canRedo)
+    }
+
+    func test_mergeIsRefusedWithoutAStepAfterASaveAndForAnotherLabel() throws {
+        let session = try PdfEditSession.open(SaveFixtures.table())
+        retitle(session, "One")
+        try session.commit("Fill", mergeWithPrevious: true)
+        try session.undo()
+        XCTAssertFalse(session.canUndo)
+        try session.redo()
+
+        retitle(session, "Two")
+        try session.commit("Other", mergeWithPrevious: true)
+        retitle(session, "Three")
+        try session.commit("Other")
+        try session.save(path("a.pdf"))
+        retitle(session, "Four")
+        try session.commit("Other", mergeWithPrevious: true)
+
+        try session.undo()
+        XCTAssertEqual(title(session), "Three")
+        try session.undo()
+        XCTAssertEqual(title(session), "Two")
+        try session.undo()
+        XCTAssertEqual(title(session), "One")
+        try session.undo()
+        XCTAssertEqual(title(session), "Original title")
+        XCTAssertFalse(session.canUndo)
+    }
+
     func test_commitWithNothingChangedAddsNothing() throws {
         let session = try PdfEditSession.open(SaveFixtures.table())
         let before = session.current
