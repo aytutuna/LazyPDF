@@ -582,6 +582,11 @@ internal sealed class NumberFormat
 
     private static bool IsDigitLiteral(Token t) => t.Kind == Kind.Literal && t.Text.Length > 0 && t.Text.All(c => c is >= '0' and <= '9');
 
+    // Excel's tenths and hundredths codes ("# ?/10") put a 0 in the fixed denominator, which tokenizes as a Digit.
+    private static bool IsFixedDenominator(Token t) => IsDigitLiteral(t) || (t.Kind == Kind.Digit && t.Ch == '0');
+
+    private static string DenominatorText(Token t) => t.Kind == Kind.Digit ? t.Ch.ToString() : t.Text;
+
     private static string Fraction(Section section, double v, int slash)
     {
         var tokens = section.Tokens;
@@ -589,7 +594,7 @@ internal sealed class NumberFormat
         while (numStart > 0 && tokens[numStart - 1].Kind == Kind.Digit) numStart--;
         int denEnd = slash + 1;
         bool fixedDenominator = IsDigitLiteral(tokens[slash + 1]);
-        if (fixedDenominator) while (denEnd < tokens.Count && IsDigitLiteral(tokens[denEnd])) denEnd++;
+        if (fixedDenominator) while (denEnd < tokens.Count && IsFixedDenominator(tokens[denEnd])) denEnd++;
         else while (denEnd < tokens.Count && tokens[denEnd].Kind == Kind.Digit) denEnd++;
 
         var wholeHolders = new List<char>();
@@ -606,7 +611,7 @@ internal sealed class NumberFormat
         double n, d;
         if (fixedDenominator)
         {
-            d = double.Parse(string.Concat(tokens.Skip(slash + 1).Take(denCount).Select(t => t.Text)), CultureInfo.InvariantCulture);
+            d = double.Parse(string.Concat(tokens.Skip(slash + 1).Take(denCount).Select(DenominatorText)), CultureInfo.InvariantCulture);
             if (d < 1) d = 1;
             n = Math.Floor(rest * d + 0.5);
         }
@@ -658,7 +663,7 @@ internal sealed class NumberFormat
             else if (i > slash && i < denEnd)
             {
                 if (blank) o.Append(' ', t.Kind == Kind.Digit ? 1 : t.Text.Length);
-                else if (fixedDenominator) o.Append(t.Text);
+                else if (fixedDenominator) o.Append(DenominatorText(t));
                 else
                 {
                     o.Append(dp < denominator.Length ? denominator[dp].ToString() : tokens[i].Ch == '?' ? " " : "");

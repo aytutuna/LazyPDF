@@ -485,6 +485,15 @@ final class NumberFormat {
         t.kind == .literal && !t.text.isEmpty && t.text.utf8.allSatisfy { $0 >= 0x30 && $0 <= 0x39 }
     }
 
+    // Excel's tenths and hundredths codes ("# ?/10") put a 0 in the fixed denominator, which tokenizes as a digit.
+    private static func isFixedDenominator(_ t: Token) -> Bool {
+        isDigitLiteral(t) || (t.kind == .digit && t.ch == u("0"))
+    }
+
+    private static func denominatorText(_ t: Token) -> String {
+        t.kind == .digit ? String(utf16CodeUnits: [t.ch], count: 1) : t.text
+    }
+
     private static func digits(_ section: Section, _ v: Double) -> String {
         let tokens = section.tokens
         if let slash = tokens.firstIndex(where: { $0.kind == .slash }), slash > 0, tokens[slash - 1].kind == .digit,
@@ -596,7 +605,7 @@ final class NumberFormat {
         var denEnd = slash + 1
         let fixedDenominator = isDigitLiteral(tokens[slash + 1])
         if fixedDenominator {
-            while denEnd < tokens.count && isDigitLiteral(tokens[denEnd]) { denEnd += 1 }
+            while denEnd < tokens.count && isFixedDenominator(tokens[denEnd]) { denEnd += 1 }
         } else {
             while denEnd < tokens.count && tokens[denEnd].kind == .digit { denEnd += 1 }
         }
@@ -611,7 +620,7 @@ final class NumberFormat {
         let rest = v - whole
         var n: Double, d: Double
         if fixedDenominator {
-            d = Double(tokens[(slash + 1)..<(slash + 1 + denCount)].map { $0.text }.joined()) ?? 1
+            d = Double(tokens[(slash + 1)..<(slash + 1 + denCount)].map(denominatorText).joined()) ?? 1
             if d < 1 { d = 1 }
             n = (rest * d + 0.5).rounded(.down)
         } else {
@@ -657,7 +666,7 @@ final class NumberFormat {
                 if blank {
                     o += String(repeating: " ", count: t.kind == .digit ? 1 : t.text.utf16.count)
                 } else if fixedDenominator {
-                    o += t.text
+                    o += denominatorText(t)
                 } else {
                     o += dp < denominator.count ? String(denominator[dp]) : t.ch == u("?") ? " " : ""
                     dp += 1
