@@ -275,4 +275,17 @@ final class RedactModelTests: XCTestCase {
         XCTAssertEqual(model.marks.count, 2)
         XCTAssertEqual(rig.tab.pendingMarks, 2)
     }
+
+    func test_theMenuMarkIsTakenAsTheToolAttaches() async throws {
+        let rig = try SecurityRig(Pdfs.text(1, Self.line))
+        rig.viewer.runs = [SelectedRun(page: 0, range: TextRange(0, 4), text: "Hello", quads: [TextQuad(100, 700, 180, 700, 180, 712, 100, 712)])]
+        let model = RedactModel(fonts: FakeFonts(), images: FakeCodec())
+        rig.host.pendingMark = .redact
+
+        rig.attach(model)
+        await Task.yield()
+        await Task.yield()
+
+        XCTAssertEqual(model.marks.count, 1)
+    }
 }

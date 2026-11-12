@@ -662,4 +662,41 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(rig.host.problems.first?.text, "big.bin is over 50 MB. Attach a smaller file.")
         XCTAssertTrue(marks(rig).isEmpty)
     }
+
+    // Marks from the selection menu
+
+    private let quad = TextQuad(100, 700, 180, 700, 180, 712, 100, 712)
+
+    func test_theMenuHighlightsAndUnderlinesTheSelection() async throws {
+        let rig = try attached()
+        rig.viewer.runs = [SelectedRun(page: 0, range: TextRange(0, 4), text: "Hello", quads: [quad])]
+
+        await rig.model.mark(.highlight)
+        await rig.model.mark(.underline)
+
+        XCTAssertEqual(marks(rig).map(\.type), [.highlight, .underline])
+    }
+
+    func test_theMenuNoteOpensAFieldAtTheStartOfTheSelection() async throws {
+        let rig = try attached()
+        rig.viewer.runs = [SelectedRun(page: 0, range: TextRange(0, 4), text: "Hello", quads: [quad])]
+
+        await rig.model.mark(.note)
+        let field = try XCTUnwrap(rig.viewer.overlay(0).fields.first)
+        XCTAssertTrue(marks(rig).isEmpty)
+        field.commit("Check this")
+
+        let made = try XCTUnwrap(marks(rig).first)
+        XCTAssertEqual(made.type, .text)
+        XCTAssertEqual(made.contents, "Check this")
+    }
+
+    func test_theMenuNoteWithNothingSelectedSaysSo() async throws {
+        let rig = try attached()
+
+        await rig.model.mark(.note)
+
+        XCTAssertEqual(rig.host.statuses, ["Select some text first."])
+        XCTAssertTrue(rig.viewer.overlay(0).fields.isEmpty)
+    }
 }

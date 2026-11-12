@@ -19,9 +19,15 @@ final class SecurityHost: ToolHost, ToolFilePicker, ToolFileExporter {
     var keys: [String: X509Certificate] = [:]
     var picked: [ToolFile] = []
     var exportAnswers = true
+    var pendingMark: SelectionMark?
     var exported: [(name: String, bytes: [UInt8])] = []
     var exportedUrls: [URL] = []
     var signingField: String?
+
+    func takeSelectionMark() -> SelectionMark? {
+        defer { pendingMark = nil }
+        return pendingMark
+    }
 
     var filePicker: ToolFilePicker { self }
     var fileExporter: ToolFileExporter { self }
