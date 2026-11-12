@@ -129,4 +129,35 @@ public class PublicKeyEcTests
         using var withKey = publicPart.CopyWithPrivateKey(recipient);
         Assert.Equal(GoldenContent, PdfCmsAgreement.Unseal(Convert.FromHexString(envelope), withKey));
     }
+
+    [Theory]
+    [InlineData("P256")]
+    [InlineData("P384")]
+    public void EnvelopeWithoutCurveInOriginatorKeyIsRead(string curveName)
+    {
+        var (cert, recipientKey, ephemeralKey, x, y, _) = curveName == "P256" ? EcGolden.P256 : EcGolden.P384;
+        var curve = curveName == "P256" ? ECCurve.NamedCurves.nistP256 : ECCurve.NamedCurves.nistP384;
+        using var publicPart = X509CertificateLoader.LoadCertificate(Convert.FromHexString(cert));
+        using var ephemeral = ECDiffieHellman.Create(new ECParameters
+        {
+            Curve = curve,
+            D = Convert.FromHexString(ephemeralKey),
+            Q = new ECPoint { X = Convert.FromHexString(x), Y = Convert.FromHexString(y) },
+        });
+        byte[] written = PdfCmsAgreement.Seal(GoldenContent, publicPart, ephemeral, writeCurve: false);
+        int size = curveName == "P256" ? 32 : 48;
+        using var recipient = ECDsa.Create(new ECParameters
+        {
+            Curve = curve,
+            D = Convert.FromHexString(recipientKey),
+            Q = new ECPoint
+            {
+                X = publicPart.PublicKey.EncodedKeyValue.RawData[1..(1 + size)],
+                Y = publicPart.PublicKey.EncodedKeyValue.RawData[(1 + size)..],
+            },
+        });
+        using var withKey = publicPart.CopyWithPrivateKey(recipient);
+
+        Assert.Equal(GoldenContent, PdfCmsAgreement.Unseal(written, withKey));
+    }
 }

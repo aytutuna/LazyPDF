@@ -9,8 +9,9 @@ import Foundation
 
 /// One RecipientInfo of key agreement type.
 struct PdfCmsAgreement {
-    /// The object identifier of the originator's curve.
-    var curve: String
+    /// The object identifier of the originator's curve; nil when the entry leaves it out (OpenSSL) or writes NULL
+    /// (BouncyCastle), which RFC 5753 3.1.1 allows, and the curve is then the recipient's own.
+    var curve: String?
     /// The originator's ephemeral public key, an uncompressed point.
     var point: [UInt8]
     var userKeyingMaterial: [UInt8]?
@@ -92,8 +93,10 @@ extension PdfCms {
         guard info.tag == 0xA1, let parts = der.children(of: info), parts.count >= 4, parts[0].tag == 0x02,
               parts[1].tag == 0xA0, let origin = der.children(of: parts[1]).flatMap({ $0.first }), origin.tag == 0xA1,
               let key = der.children(of: origin), key.count == 2, key[1].tag == 0x03,
-              let algorithm = der.children(of: key[0]), algorithm.count == 2,
-              der.oid(algorithm[0]) == ecPublicKey, let curve = der.oid(algorithm[1]) else { return nil }
+              let algorithm = der.children(of: key[0]), algorithm.count <= 2, let first = algorithm.first,
+              der.oid(first) == ecPublicKey else { return nil }
+        let curve = algorithm.count == 2 ? der.oid(algorithm[1]) : nil
+        guard algorithm.count == 1 || curve != nil || algorithm[1].tag == 0x05 else { return nil }
         let bits = der.content(of: key[1])
         guard bits.first == 0 else { return nil }
         var index = 2
@@ -140,7 +143,7 @@ extension PdfCms {
     static func openAgreement(_ envelope: PdfEnvelopedData, secret: (PdfCmsAgreement) -> [UInt8]?) -> [UInt8]? {
         guard let keySize = ciphers[envelope.contentAlgorithm] else { return nil }
         for entry in envelope.agreements {
-            guard agreementCurve(entry.curve) != nil, let hash = kdfs[entry.kdf], let length = wraps[entry.wrap],
+            guard entry.curve.map({ agreementCurve($0) != nil }) ?? true, let hash = kdfs[entry.kdf], let length = wraps[entry.wrap],
                   let shared = secret(entry) else { continue }
             let kek = derivedKey(shared, hash, wrap: entry.wrap, material: entry.userKeyingMaterial, length: length)
             for wrapped in entry.encryptedKeys {
@@ -155,14 +158,14 @@ extension PdfCms {
     /// wrapped under the key derived from `secret`, the ECDH result of `ephemeralPoint`'s key with the certificate's.
     /// Nil for a curve that is not written.
     static func sealAgreement(_ content: [UInt8], identity: PdfCertificateIdentity, curve: String, ephemeralPoint: [UInt8],
-                              secret: [UInt8], contentKey: [UInt8], iv: [UInt8]) -> [UInt8]? {
+                              secret: [UInt8], contentKey: [UInt8], iv: [UInt8], writeCurve: Bool = true) -> [UInt8]? {
         guard let known = agreementCurve(curve), curve != curveP521, let hash = kdfs[known.kdf] else { return nil }
         let kek = derivedKey(secret, hash, wrap: aes256Wrap, material: nil, length: 32)
         let wrapped = AesKeyWrap.wrap(kek, contentKey)
         let encrypted = Aes(key: contentKey).encryptCbc(Aes.padded(content), iv: iv)
 
         let originator = DerWriter.node(0xA0, DerWriter.node(0xA1,
-            DerWriter.sequence([DerWriter.oid(ecPublicKey), DerWriter.oid(curve)]) + DerWriter.node(0x03, [0] + ephemeralPoint)))
+            DerWriter.sequence(writeCurve ? [DerWriter.oid(ecPublicKey), DerWriter.oid(curve)] : [DerWriter.oid(ecPublicKey)]) + DerWriter.node(0x03, [0] + ephemeralPoint)))
         let entry = DerWriter.node(0xA1,
             DerWriter.integer(3) + originator
             + DerWriter.sequence([DerWriter.oid(known.kdf), DerWriter.sequence([DerWriter.oid(aes256Wrap)])])

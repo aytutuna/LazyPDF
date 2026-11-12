@@ -78,7 +78,7 @@ internal static class PdfCmsAgreement
     /// agreed with a fresh ephemeral key. The last three arguments exist for the tests.
     /// </summary>
     public static byte[] Seal(byte[] content, X509Certificate2 recipient, ECDiffieHellman? ephemeral = null,
-                              byte[]? contentKey = null, byte[]? iv = null)
+                              byte[]? contentKey = null, byte[]? iv = null, bool writeCurve = true)
     {
         string curve = CurveOf(recipient)!;
         using var own = ephemeral is null ? ECDiffieHellman.Create(ECCurve.CreateFromValue(curve)) : null;
@@ -116,7 +116,7 @@ internal static class PdfCmsAgreement
                         using (w.PushSequence())
                         {
                             w.WriteObjectIdentifier(EcPublicKey);
-                            w.WriteObjectIdentifier(curve);
+                            if (writeCurve) w.WriteObjectIdentifier(curve);
                         }
                         w.WriteBitString(point);
                     }
@@ -210,14 +210,16 @@ internal static class PdfCmsAgreement
         var originator = entry.ReadSequence(Context0);
         if (!originator.PeekTag().HasSameClassAndValue(Context1)) return (null, keys);
         var originatorKey = originator.ReadSequence(Context1);
-        string curve = ReadCurve(originatorKey.ReadSequence());
+        // RFC 5753 3.1.1 leaves the parameters out (OpenSSL) or writes NULL (BouncyCastle); the curve is then the recipient's own.
+        string? stated = ReadCurve(originatorKey.ReadSequence());
+        string? curve = stated ?? OwnCurve(own);
         byte[] point = originatorKey.ReadBitString(out _);
         byte[]? ukm = null;
         if (entry.PeekTag().HasSameClassAndValue(Context1)) ukm = entry.ReadSequence(Context1).ReadOctetString();
         var algorithm = entry.ReadSequence();
         string kdf = algorithm.ReadObjectIdentifier();
         string wrap = algorithm.ReadSequence().ReadObjectIdentifier();
-        if (!Curves.TryGetValue(curve, out var parameters) || !Kdfs.TryGetValue(kdf, out var hash) || !Wraps.TryGetValue(wrap, out int length))
+        if (curve is null || !Curves.TryGetValue(curve, out var parameters) || !Kdfs.TryGetValue(kdf, out var hash) || !Wraps.TryGetValue(wrap, out int length))
             return (null, keys);
 
         using var peer = PeerKey(curve, parameters.Size, point);
@@ -232,11 +234,14 @@ internal static class PdfCmsAgreement
         return (kek, keys);
     }
 
-    private static string ReadCurve(AsnReader algorithm)
+    private static string? ReadCurve(AsnReader algorithm)
     {
         if (algorithm.ReadObjectIdentifier() != EcPublicKey) throw new CryptographicException();
-        return algorithm.ReadObjectIdentifier();
+        return algorithm.HasData && algorithm.PeekTag().HasSameClassAndValue(Asn1Tag.ObjectIdentifier) ? algorithm.ReadObjectIdentifier() : null;
     }
+
+    private static string? OwnCurve(ECDiffieHellman key) =>
+        key.KeySize switch { 256 => "1.2.840.10045.3.1.7", 384 => "1.3.132.0.34", 521 => "1.3.132.0.35", _ => null };
 
     private static ECDiffieHellman PeerKey(string curve, int size, byte[] point)
     {

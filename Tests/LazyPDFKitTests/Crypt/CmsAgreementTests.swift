@@ -60,4 +60,19 @@ final class CmsAgreementTests: XCTestCase {
         XCTAssertNil(PdfCms.openAgreement(envelope) { _ in secret })
         XCTAssertNil(PdfCms.openAgreement(envelope) { _ in nil })
     }
+
+    func test_envelopeWithoutCurveInOriginatorKeyIsRead() throws {
+        for golden in [EcGolden.p256, EcGolden.p384] {
+            let identity = try XCTUnwrap(PdfCms.identity(ofCertificate: Hex.bytes(golden.certificate)))
+            let written = try XCTUnwrap(PdfCms.sealAgreement(content, identity: identity, curve: golden.curve,
+                                                             ephemeralPoint: Hex.bytes(golden.ephemeralPoint), secret: Hex.bytes(golden.secret),
+                                                             contentKey: contentKey, iv: iv, writeCurve: false))
+
+            let envelope = try XCTUnwrap(PdfCms.decode(written))
+            XCTAssertNil(envelope.agreements.first?.curve, golden.curve)
+            let opened = PdfCms.openAgreement(envelope) { _ in Hex.bytes(golden.secret) }
+
+            XCTAssertEqual(opened, content, golden.curve)
+        }
+    }
 }
