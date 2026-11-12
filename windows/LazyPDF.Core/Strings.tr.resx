@@ -2638,6 +2638,9 @@
   <data name="Headings out of order: {0}{1}. Start at level 1 and go down one level at a time." xml:space="preserve">
     <value>Sırası bozuk başlıklar: {0}{1}. 1. seviyeden başlayın ve birer seviye inin.</value>
   </data>
+  <data name="Height ({0})" xml:space="preserve">
+    <value>Yükseklik ({0})</value>
+  </data>
   <data name="Height in mm" xml:space="preserve">
     <value>Yükseklik (mm)</value>
   </data>
@@ -7261,8 +7264,8 @@
   <data name="Type a password to open the file." xml:space="preserve">
     <value>Dosyayı açmak için bir parola yazın.</value>
   </data>
-  <data name="Type a size from 10 to 5080 mm." xml:space="preserve">
-    <value>10 ile 5080 mm arasında bir boyut yazın.</value>
+  <data name="Type a size from {0} to {1} {2}." xml:space="preserve">
+    <value>{0} ile {1} {2} arasında bir boyut yazın.</value>
   </data>
   <data name="Type a title for the file, then save it." xml:space="preserve">
     <value>Dosya için bir başlık yazın, sonra kaydedin.</value>
@@ -7578,6 +7581,9 @@
   </data>
   <data name="Width %" xml:space="preserve">
     <value>Genişlik %</value>
+  </data>
+  <data name="Width ({0})" xml:space="preserve">
+    <value>Genişlik ({0})</value>
   </data>
   <data name="Width in mm" xml:space="preserve">
     <value>Genişlik (mm)</value>

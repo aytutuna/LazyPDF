@@ -22,7 +22,7 @@ public sealed class CreateToolTests
     [Fact]
     public Task APictureDroppedOnTheTextBoxIsListed() => Sta.Run(() =>
     {
-        var panel = new CreatePanel();
+        var panel = new CreatePanel(Sandbox());
         var e = BatchDropTests.Drop(panel.TypedText, @"C:\x\a.png");
         panel.TypedText.RaiseEvent(e);
 
@@ -70,24 +70,134 @@ public sealed class CreateToolTests
         Assert.Equal((Math.Round(wide * Mm, 2), Math.Round(tall * Mm, 2)), (Math.Round(page.MediaBox.Width, 2), Math.Round(page.MediaBox.Height, 2)));
     }
 
+    private static string Sandbox() => Path.Combine(Path.GetTempPath(), "lazypdf-tests-" + Guid.NewGuid().ToString("N"));
+
     [Fact]
     public Task TheBlankPaperListHoldsMoreSizesAndACustomOne() => Sta.Run(() =>
     {
-        var panel = new CreatePanel();
+        var panel = new CreatePanel(Sandbox());
         panel.SourceBox.SelectedIndex = (int)CreateSource.Blank;
         panel.PaperBox.SelectedIndex = panel.PaperBox.Items.Count - 1;
-        panel.CustomWidth.Text = "100";
-        panel.CustomHeight.Text = "150";
+        panel.CustomWidth.Text = (100 * 72 / 25.4 / panel.PointsPerUnit).ToString(CultureInfo.CurrentCulture);
+        panel.CustomHeight.Text = (150 * 72 / 25.4 / panel.PointsPerUnit).ToString(CultureInfo.CurrentCulture);
 
         var request = panel.Request()!;
         Assert.Contains("A3", panel.PaperBox.Items.Cast<string>());
         Assert.Equal((283.46, 425.2), (Math.Round(request.Width!.Value, 2), Math.Round(request.Height!.Value, 2)));
 
-        panel.CustomWidth.Text = "2";
+        panel.CustomWidth.Text = "0.01";
         Assert.False(panel.Action!.CanRun());
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TextAndPicturesOfferTheSameSizesAndACustomOne() => Sta.Run(() =>
+    {
+        var panel = new CreatePanel(Sandbox());
+        string[] sizes = ["A4", "A3", "A5", Loc.T("Letter"), Loc.T("Legal"), Loc.T("Custom size")];
 
         panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
-        Assert.DoesNotContain("A3", panel.PaperBox.Items.Cast<string>());
+        Assert.Equal(sizes, panel.PaperBox.Items.Cast<string>());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Pictures;
+        Assert.Equal([.. sizes, Loc.T("Size of the picture")], panel.PaperBox.Items.Cast<string>());
+        return Task.CompletedTask;
+    });
+
+    [Theory]
+    [InlineData("A3", PdfPaper.A3)]
+    [InlineData("A5", PdfPaper.A5)]
+    [InlineData("Legal", PdfPaper.Legal)]
+    public Task APaperPickedForTextIsPassedToTheEngine(string name, PdfPaper expected) => Sta.Run(() =>
+    {
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+        panel.TypedText.Text = "Hello";
+        panel.PaperBox.SelectedItem = name == "Legal" ? Loc.T("Legal") : name;
+
+        Assert.Equal(expected, panel.Request()!.Setup.Paper);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ACustomSizeForTextIsTypedInTheRegionsUnit() => Sta.Run(() =>
+    {
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+        panel.TypedText.Text = "Hello";
+        panel.PaperBox.SelectedItem = Loc.T("Custom size");
+        Assert.Equal(System.Windows.Visibility.Visible, panel.CustomSize.Visibility);
+        Assert.Contains(panel.Unit, panel.CustomWidthLabel.Text);
+
+        panel.CustomWidth.Text = "100";
+        panel.CustomHeight.Text = "200";
+        var request = panel.Request()!;
+
+        Assert.Equal(PdfPaper.Custom, request.Setup.Paper);
+        Assert.Equal((Math.Round(100 * panel.PointsPerUnit, 3), Math.Round(200 * panel.PointsPerUnit, 3)), (request.Setup.CustomWidth, request.Setup.CustomHeight));
+        var page = Open(PdfMaker.Make(request, new FakeCodec(), new FakeFonts())).Pages[0];
+        Assert.Equal((Math.Round(100 * panel.PointsPerUnit, 1), Math.Round(200 * panel.PointsPerUnit, 1)), (Math.Round(page.MediaBox.Width, 1), Math.Round(page.MediaBox.Height, 1)));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task TheCustomSizeIsHeldToWhatTheEngineAccepts() => Sta.Run(() =>
+    {
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+        panel.TypedText.Text = "Hello";
+        panel.PaperBox.SelectedItem = Loc.T("Custom size");
+        string In(double points) => (points / panel.PointsPerUnit).ToString("0.####", CultureInfo.CurrentCulture);
+
+        panel.CustomWidth.Text = In(14400);
+        panel.CustomHeight.Text = In(3.01);
+        Assert.True(panel.Action!.CanRun());
+
+        panel.CustomHeight.Text = In(2.9);
+        Assert.False(panel.Action!.CanRun());
+        Assert.Contains(panel.Unit, panel.Reason.Text);
+
+        panel.CustomHeight.Text = In(14401);
+        Assert.False(panel.Action!.CanRun());
+        panel.CustomHeight.Text = "abc";
+        Assert.False(panel.Action!.CanRun());
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task ThePaperAndCustomSizeComeBackInANewPanel() => Sta.Run(() =>
+    {
+        string settings = Sandbox();
+        var first = new CreatePanel(settings);
+        first.SourceBox.SelectedIndex = (int)CreateSource.Text;
+        first.TypedText.Text = "Hello";
+        first.PaperBox.SelectedItem = Loc.T("Custom size");
+        first.CustomWidth.Text = "123.5";
+        first.CustomHeight.Text = "200";
+        first.Request();
+
+        var second = new CreatePanel(settings);
+        second.SourceBox.SelectedIndex = (int)CreateSource.Text;
+
+        Assert.Equal(Loc.T("Custom size"), second.PaperBox.SelectedItem);
+        Assert.Equal(first.CustomWidth.Text, second.CustomWidth.Text);
+        Assert.Equal(first.CustomHeight.Text, second.CustomHeight.Text);
+        var again = new CreatePanel(Sandbox());
+        Assert.Equal("A4", again.PaperBox.SelectedItem);
+        return Task.CompletedTask;
+    });
+
+    [Fact]
+    public Task APaperPickedOnPicturesIsKeptWhenBackOnPictures() => Sta.Run(() =>
+    {
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Pictures;
+        panel.PaperBox.SelectedItem = Loc.T("Size of the picture");
+
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
+        Assert.Equal("A4", panel.PaperBox.SelectedItem);
+        panel.SourceBox.SelectedIndex = (int)CreateSource.Pictures;
+
+        Assert.Equal(Loc.T("Size of the picture"), panel.PaperBox.SelectedItem);
         return Task.CompletedTask;
     });
 
@@ -149,7 +259,7 @@ public sealed class CreateToolTests
     public Task TheFontListHoldsOnlyInstalledFamiliesAndTheRequestCarriesTheChoice() => Sta.Run(() =>
     {
         var installed = System.Windows.Media.Fonts.SystemFontFamilies.SelectMany(f => f.FamilyNames.Values).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var panel = new CreatePanel();
+        var panel = new CreatePanel(Sandbox());
         panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
 
         var families = panel.FontBox.Items.Cast<string>().ToList();
@@ -350,7 +460,7 @@ public sealed class CreateToolTests
         using var dir = new TempDir();
         Directory.CreateDirectory(dir.Path);
         string file = dir.File("long.txt", Encoding.ASCII.GetBytes(new string('a', 2 << 20)));
-        var panel = new CreatePanel();
+        var panel = new CreatePanel(Sandbox());
         panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
 
         await panel.LoadTextFileAsync(file);
@@ -369,7 +479,7 @@ public sealed class CreateToolTests
         Directory.CreateDirectory(dir.Path);
         string big = dir.File("long.txt", Encoding.ASCII.GetBytes(new string('a', 2 << 20)));
         string small = dir.File("short.txt", "hello"u8.ToArray());
-        var panel = new CreatePanel();
+        var panel = new CreatePanel(Sandbox());
         panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
 
         await panel.LoadTextFileAsync(big);
@@ -395,7 +505,7 @@ public sealed class CreateToolTests
         using var dir = new TempDir();
         Directory.CreateDirectory(dir.Path);
         string file = dir.File("huge.txt", new byte[21 << 20]);
-        var panel = new CreatePanel();
+        var panel = new CreatePanel(Sandbox());
         panel.SourceBox.SelectedIndex = (int)CreateSource.Text;
 
         await panel.LoadTextFileAsync(file);

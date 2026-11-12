@@ -26,14 +26,31 @@ public partial class CreatePanel : ToolPanel
     private readonly ObservableCollection<PictureItem> _pictures = [];
     private readonly ToolAction _action;
     private readonly bool _ready;
+    private readonly string? _settingsDirectory;
+    private readonly bool _metric = RegionInfo.CurrentRegion.IsMetric;
+    private string _paperKey;
+    private bool _building;
     private ClipboardKind _clipboard;
     private string? _fileProblem;
     private string? _longText;
     private Window? _owner;
 
-    public CreatePanel()
+    public CreatePanel() : this(null)
     {
+    }
+
+    internal CreatePanel(string? settingsDirectory)
+    {
+        _settingsDirectory = settingsDirectory;
         InitializeComponent();
+        var saved = AppPreferencesStore.Load(settingsDirectory ?? StoreFiles.DefaultDirectory);
+        _paperKey = saved.CreatePaper;
+        CustomWidthLabel.Text = Loc.T("Width ({0})", Unit);
+        CustomHeightLabel.Text = Loc.T("Height ({0})", Unit);
+        System.Windows.Automation.AutomationProperties.SetName(CustomWidth, CustomWidthLabel.Text);
+        System.Windows.Automation.AutomationProperties.SetName(CustomHeight, CustomHeightLabel.Text);
+        CustomWidth.Text = Shown(saved.CreateWidth > 0 ? saved.CreateWidth : _metric ? 210 * PageEdits.PointsPerMillimetre : 612);
+        CustomHeight.Text = Shown(saved.CreateHeight > 0 ? saved.CreateHeight : _metric ? 297 * PageEdits.PointsPerMillimetre : 792);
         PictureList.ItemsSource = _pictures;
         var installed = Fonts.SystemFontFamilies.SelectMany(f => f.FamilyNames.Values).ToHashSet(StringComparer.OrdinalIgnoreCase);
         FontBox.ItemsSource = new[] { "Arial", "Times New Roman", "Courier New", "Calibri", "Cambria", "Consolas", "Georgia", "Verdana", "Tahoma", "Segoe UI" }.Where(installed.Contains).ToList();
@@ -44,6 +61,12 @@ public partial class CreatePanel : ToolPanel
     }
 
     public override ToolAction? Action => _action;
+
+    internal string Unit => _metric ? "mm" : "in";
+
+    internal double PointsPerUnit => _metric ? PageEdits.PointsPerMillimetre : 72;
+
+    private string Shown(double points) => (points / PointsPerUnit).ToString("0.##", CultureInfo.CurrentCulture);
 
     private int Source => SourceBox.SelectedIndex;
 
@@ -60,43 +83,74 @@ public partial class CreatePanel : ToolPanel
     private bool TryBlankPages(out int pages) =>
         int.TryParse(BlankPagesBox.Text, out pages) && pages is >= 1 and <= PdfMaker.MostBlankPages;
 
-    private bool CustomPicked => Source == (int)CreateSource.Blank && PaperBox.SelectedIndex == PaperSize.All.Count;
+    // The page sides the engine accepts, in points.
+    private const double LeastSide = 3, MostSide = 14400;
+
+    private static readonly (string Key, PdfPaper Paper)[] Papers =
+    [
+        ("A4", PdfPaper.A4), ("A3", PdfPaper.A3), ("A5", PdfPaper.A5), ("Letter", PdfPaper.Letter),
+        ("Legal", PdfPaper.Legal), ("Custom", PdfPaper.Custom), ("Picture", PdfPaper.Picture),
+    ];
+
+    private static string NameOf(string key) => key switch
+    {
+        "Letter" => Loc.T("Letter"),
+        "Legal" => Loc.T("Legal"),
+        "Custom" => Loc.T("Custom size"),
+        "Picture" => Loc.T("Size of the picture"),
+        _ => key,
+    };
+
+    private string PickedKey => Papers.FirstOrDefault(p => NameOf(p.Key) == PaperBox.SelectedItem as string).Key ?? "A4";
+
+    private bool CustomPicked => PickedKey == "Custom";
 
     // The custom size in points; null while it is not a number within what a page can be.
     private (double Width, double Height)? CustomPoints()
     {
         if (!double.TryParse(CustomWidth.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double width)
             || !double.TryParse(CustomHeight.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double height)) return null;
-        width *= PageEdits.PointsPerMillimetre;
-        height *= PageEdits.PointsPerMillimetre;
-        return width is >= 10 and <= 14400 && height is >= 10 and <= 14400 ? (width, height) : null;
+        width = Math.Round(width * PointsPerUnit, 3);
+        height = Math.Round(height * PointsPerUnit, 3);
+        return width is >= LeastSide and <= MostSide && height is >= LeastSide and <= MostSide ? (width, height) : null;
     }
 
-    // A blank size other than A4 and Letter, which the page setup draws itself.
-    private (double Width, double Height)? BlankSize()
+    // A custom blank page is resized after the fact, so that it keeps the shape typed unless an orientation is picked.
+    private (double Width, double Height)? BlankSize() => Source == (int)CreateSource.Blank && CustomPicked ? CustomPoints() : null;
+
+    private void RememberPaper()
     {
-        int at = PaperBox.SelectedIndex;
-        if (CustomPicked) return CustomPoints();
-        return at is < 0 or 0 or 3 ? null : (PaperSize.All[at].Width, PaperSize.All[at].Height);
+        var size = CustomPoints();
+        AppPreferencesStore.Update(p =>
+        {
+            p.CreatePaper = _paperKey;
+            if (size is { } s) (p.CreateWidth, p.CreateHeight) = s;
+        }, _settingsDirectory ?? StoreFiles.DefaultDirectory);
+    }
+
+    private string SizeLimits()
+    {
+        string least = (Math.Ceiling(LeastSide / PointsPerUnit * 100) / 100).ToString("0.##", CultureInfo.CurrentCulture);
+        string most = Math.Round(MostSide / PointsPerUnit, 2).ToString("0.##", CultureInfo.CurrentCulture);
+        return Loc.T("Type a size from {0} to {1} {2}.", least, most, Unit);
     }
 
     private bool CanRun() => Source switch
     {
-        (int)CreateSource.Blank => TryBlankPages(out _) && (!CustomPicked || CustomPoints() is not null),
-        (int)CreateSource.Pictures => _pictures.Count > 0,
-        (int)CreateSource.Text => _longText is not null || TypedText.Text.Trim().Length > 0,
-        _ => _clipboard != ClipboardKind.Nothing,
+        (int)CreateSource.Blank => TryBlankPages(out _) && CustomFits(),
+        (int)CreateSource.Pictures => _pictures.Count > 0 && CustomFits(),
+        (int)CreateSource.Text => (_longText is not null || TypedText.Text.Trim().Length > 0) && CustomFits(),
+        _ => _clipboard != ClipboardKind.Nothing && CustomFits(),
     };
 
+    private bool CustomFits() => !CustomPicked || CustomPoints() is not null;
+
     private string? Blocker() =>
-        _fileProblem ?? (Source != (int)CreateSource.Blank ? null
-            : !TryBlankPages(out _) ? Loc.T("Type a number from 1 to {0}.", PdfMaker.MostBlankPages)
-            : CustomPicked && CustomPoints() is null ? Loc.T("Type a size from 10 to 5080 mm.")
+        _fileProblem ?? (Source == (int)CreateSource.Blank && !TryBlankPages(out _) ? Loc.T("Type a number from 1 to {0}.", PdfMaker.MostBlankPages)
+            : Source != ClipboardIndex || _clipboard != ClipboardKind.Nothing ? (CustomFits() ? null : SizeLimits())
             : null);
 
-    private List<string> PaperNames() => Source == (int)CreateSource.Blank ? [.. PaperSize.All.Select(p => p.Name), Loc.T("Custom size")]
-        : MakesPictures ? ["A4", Loc.T("Letter"), Loc.T("Size of the picture")]
-        : ["A4", Loc.T("Letter")];
+    private List<string> PaperNames() => [.. Papers.Where(p => p.Paper != PdfPaper.Picture || MakesPictures).Select(p => NameOf(p.Key))];
 
     private void PeekClipboard()
     {
@@ -122,12 +176,13 @@ public partial class CreatePanel : ToolPanel
         var names = PaperNames();
         if (PaperBox.ItemsSource is not List<string> shown || !shown.SequenceEqual(names))
         {
-            int kept = names.IndexOf(PaperBox.SelectedItem as string ?? "");
+            _building = true;
             PaperBox.ItemsSource = names;
-            PaperBox.SelectedIndex = Math.Max(kept, 0);
+            PaperBox.SelectedIndex = Math.Max(names.IndexOf(NameOf(_paperKey)), 0);
+            _building = false;
         }
         CustomSize.Visibility = When(CustomPicked);
-        OrientationBox.IsEnabled = !(MakesPictures && PaperBox.SelectedIndex == 2);
+        OrientationBox.IsEnabled = PickedKey != "Picture";
         MarginRow.Visibility = When(Source != (int)CreateSource.Blank);
         FontRow.Visibility = When(MakesText);
         string? blocker = Blocker();
@@ -142,15 +197,16 @@ public partial class CreatePanel : ToolPanel
         RaiseActionChanged();
     }
 
-    private PdfPageSetup Setup() => new(
-        (PaperBox.SelectedItem as string) switch
-        {
-            var name when name == Loc.T("Letter") => PdfPaper.Letter,
-            var name when name == Loc.T("Size of the picture") => PdfPaper.Picture,
-            _ => PdfPaper.A4,
-        },
-        OrientationBox.SelectedIndex switch { 1 => PdfOrientation.Portrait, 2 => PdfOrientation.Landscape, _ => PdfOrientation.Auto },
-        Source == (int)CreateSource.Blank ? 36 : Tagged(MarginBox));
+    private PdfPageSetup Setup()
+    {
+        var (width, height) = CustomPoints() ?? (595.276, 841.89);
+        bool resized = Source == (int)CreateSource.Blank && CustomPicked;
+        return new(
+            resized ? PdfPaper.A4 : Papers.First(p => p.Key == PickedKey).Paper,
+            OrientationBox.SelectedIndex switch { 1 => PdfOrientation.Portrait, 2 => PdfOrientation.Landscape, _ => PdfOrientation.Auto },
+            Source == (int)CreateSource.Blank ? 36 : Tagged(MarginBox),
+            width, height);
+    }
 
     private string Family => FontBox.SelectedItem as string ?? "Arial";
 
@@ -160,6 +216,7 @@ public partial class CreatePanel : ToolPanel
     public CreateRequest? Request()
     {
         var setup = Setup();
+        RememberPaper();
         switch (Source)
         {
             case (int)CreateSource.Blank:
@@ -223,8 +280,12 @@ public partial class CreatePanel : ToolPanel
 
     private void PaperBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (_ready) Refresh();
+        if (!_ready || _building) return;
+        _paperKey = PickedKey;
+        Refresh();
     }
+
+    private void CustomSize_LostFocus(object sender, RoutedEventArgs e) => RememberPaper();
 
     private void Input_Changed(object sender, TextChangedEventArgs e)
     {

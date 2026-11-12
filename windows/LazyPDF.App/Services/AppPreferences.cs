@@ -62,6 +62,14 @@ public sealed class AppPreferences
     /// <summary>The path of the tab that was active at close.</summary>
     public string? LastActive { get; set; }
 
+    /// <summary>The paper last picked in Create: a <see cref="Core.PdfPaper"/> name.</summary>
+    public string CreatePaper { get; set; } = "A4";
+
+    /// <summary>The custom page size last typed in Create, in points; 0 until one was typed.</summary>
+    public double CreateWidth { get; set; }
+
+    public double CreateHeight { get; set; }
+
     /// <summary>Where the main window was left; null until it has been closed once.</summary>
     public WindowPlacement? Window { get; set; }
 }

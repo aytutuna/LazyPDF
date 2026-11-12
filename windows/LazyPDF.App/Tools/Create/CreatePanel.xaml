@@ -80,12 +80,12 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="{loc:T Width in mm}" Style="{StaticResource FieldLabelText}" />
-                    <TextBox x:Name="CustomWidth" Text="210" TextChanged="Input_Changed" AutomationProperties.Name="{loc:T Width in mm}" />
+                    <TextBlock x:Name="CustomWidthLabel" Style="{StaticResource FieldLabelText}" />
+                    <TextBox x:Name="CustomWidth" TextChanged="Input_Changed" LostFocus="CustomSize_LostFocus" />
                 </StackPanel>
                 <StackPanel Grid.Column="2">
-                    <TextBlock Text="{loc:T Height in mm}" Style="{StaticResource FieldLabelText}" />
-                    <TextBox x:Name="CustomHeight" Text="297" TextChanged="Input_Changed" AutomationProperties.Name="{loc:T Height in mm}" />
+                    <TextBlock x:Name="CustomHeightLabel" Style="{StaticResource FieldLabelText}" />
+                    <TextBox x:Name="CustomHeight" TextChanged="Input_Changed" LostFocus="CustomSize_LostFocus" />
                 </StackPanel>
             </Grid>
             <TextBlock Style="{StaticResource FieldLabelText}" Text="{loc:T Orientation}" Margin="0,12,0,4" />
