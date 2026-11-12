@@ -47,7 +47,6 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
     @State private var sheet: Modal?
     @State private var compact = false
     @State private var compactPanel: String?
-    @State private var toolSearchShown = false
     @State private var toolQuery = ""
     @State private var toolDetent = PresentationDetent.medium
     @State private var stageBottom: CGFloat = 0
@@ -157,6 +156,8 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             if let list = commands.certificateList { CertificateListView(model: list, done: { sheet = .settings }) }
         case .about:
             AboutView(done: { sheet = nil })
+        case .toolSearch:
+            toolSearchSheet
         case .tool:
             if let tool = vm.activeTool, let tab = vm.activeDocument {
                 toolSheet(tool, tab)
@@ -391,7 +392,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             .accessibilityLabel(L10n.t("Side panels"))
             Button {
                 toolQuery = ""
-                toolSearchShown = true
+                sheet = .toolSearch
             } label: {
                 Image(systemName: "wrench.and.screwdriver")
             }
@@ -408,7 +409,6 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .overlay(alignment: .top) { Divider() }
-        .sheet(isPresented: $toolSearchShown) { toolSearchSheet }
     }
 
     private func barButton(_ symbol: String, _ label: String, _ action: @escaping () -> Void) -> some View {
@@ -420,7 +420,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
         NavigationStack {
             List(ToolCatalog.search(toolQuery), id: \.id) { tool in
                 Button {
-                    toolSearchShown = false
+                    sheet = nil
                     vm.selectTool(tool.id)
                 } label: {
                     VStack(alignment: .leading) {
@@ -445,7 +445,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
             .navigationTitle(L10n.t("Tools"))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(L10n.t("Done")) { toolSearchShown = false }
+                    Button(L10n.t("Done")) { sheet = nil }
                 }
             }
         }
