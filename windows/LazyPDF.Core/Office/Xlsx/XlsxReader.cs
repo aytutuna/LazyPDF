@@ -104,7 +104,10 @@ internal sealed class XlsxReader
     private XmlElement? Part(IReadOnlyList<OpcRelationship> relationships, string type) =>
         relationships.FirstOrDefault(r => r.Type == type) is { } r && _package.Contains(r.Target) ? _package.Xml(r.Target) : null;
 
-    private void Skip(string kind, int count = 1) => _skipped[kind] = _skipped.GetValueOrDefault(kind) + count;
+    private void Skip(string kind, int count = 1)
+    {
+        if (count > 0) _skipped[kind] = _skipped.GetValueOrDefault(kind) + count;
+    }
 
     // Text
 
@@ -214,7 +217,121 @@ internal sealed class XlsxReader
         }
 
         ReadMerges(root.Child(M, "mergeCells"), sheet);
+        ReadSetup(root, sheet.Setup);
+        CountFeatures(root, part);
         return sheet;
+    }
+
+    // Page setup
+
+    private static double Inches(string? text, double whenMissing) =>
+        XlsxParse.Double(text) is { } v && v >= 0 && v <= 100 ? v * 72 : whenMissing;
+
+    private static string Plain(XmlElement? e)
+    {
+        string text = e?.Text ?? "";
+        if (text.Length <= 1000) return text;
+        return text[..(char.IsHighSurrogate(text[999]) ? 999 : 1000)];
+    }
+
+    private static void ReadSetup(XmlElement root, XlsxPageSetup setup)
+    {
+        if (root.Child(M, "sheetPr")?.Child(M, "pageSetUpPr") is { } fit) setup.FitToPage = XlsxParse.Flag(fit.Attribute("fitToPage"), false);
+        if (root.Child(M, "pageMargins") is { } margins)
+        {
+            setup.Left = Inches(margins.Attribute("left"), setup.Left);
+            setup.Right = Inches(margins.Attribute("right"), setup.Right);
+            setup.Top = Inches(margins.Attribute("top"), setup.Top);
+            setup.Bottom = Inches(margins.Attribute("bottom"), setup.Bottom);
+            setup.Header = Inches(margins.Attribute("header"), setup.Header);
+            setup.Footer = Inches(margins.Attribute("footer"), setup.Footer);
+        }
+        if (root.Child(M, "pageSetup") is { } page)
+        {
+            setup.Landscape = page.Attribute("orientation") == "landscape";
+            if (XlsxParse.Int(page.Attribute("paperSize")) is { } paper) setup.Paper = paper;
+            if (XlsxParse.Int(page.Attribute("scale")) is { } scale && scale is >= 10 and <= 400) setup.Scale = scale;
+            if (XlsxParse.Int(page.Attribute("fitToWidth")) is { } w && w <= 32767) setup.FitToWidth = w;
+            if (XlsxParse.Int(page.Attribute("fitToHeight")) is { } h && h <= 32767) setup.FitToHeight = h;
+            if (XlsxParse.Flag(page.Attribute("useFirstPageNumber"), false) && XlsxParse.Int(page.Attribute("firstPageNumber")) is { } first) setup.FirstPageNumber = first;
+        }
+        if (root.Child(M, "printOptions") is { } options)
+        {
+            setup.CenterHorizontally = XlsxParse.Flag(options.Attribute("horizontalCentered"), false);
+            setup.CenterVertically = XlsxParse.Flag(options.Attribute("verticalCentered"), false);
+            setup.Headings = XlsxParse.Flag(options.Attribute("headings"), false);
+            setup.Gridlines = XlsxParse.Flag(options.Attribute("gridLines"), false);
+        }
+        if (root.Child(M, "headerFooter") is { } hf)
+        {
+            setup.DifferentOddEven = XlsxParse.Flag(hf.Attribute("differentOddEven"), false);
+            setup.DifferentFirst = XlsxParse.Flag(hf.Attribute("differentFirst"), false);
+            setup.ScaleWithDocument = XlsxParse.Flag(hf.Attribute("scaleWithDoc"), true);
+            setup.AlignWithMargins = XlsxParse.Flag(hf.Attribute("alignWithMargins"), true);
+            setup.OddHeader = Plain(hf.Child(M, "oddHeader"));
+            setup.OddFooter = Plain(hf.Child(M, "oddFooter"));
+            setup.EvenHeader = Plain(hf.Child(M, "evenHeader"));
+            setup.EvenFooter = Plain(hf.Child(M, "evenFooter"));
+            setup.FirstHeader = Plain(hf.Child(M, "firstHeader"));
+            setup.FirstFooter = Plain(hf.Child(M, "firstFooter"));
+        }
+        Breaks(root.Child(M, "rowBreaks"), setup.RowBreaks, XlsxLimits.MaxRow);
+        Breaks(root.Child(M, "colBreaks"), setup.ColumnBreaks, XlsxLimits.MaxColumn);
+    }
+
+    private static void Breaks(XmlElement? list, List<int> into, int last)
+    {
+        foreach (var b in list?.Elements(M, "brk") ?? [])
+        {
+            if (into.Count >= XlsxLimits.MaxBreaks) break;
+            if (XlsxParse.Flag(b.Attribute("man"), false) && XlsxParse.Int(b.Attribute("id")) is { } id && id >= 1 && id < last) into.Add(id);
+        }
+        into.Sort();
+    }
+
+    // What a sheet holds that is not printed: counted, nothing more.
+
+    private static int Count(XmlElement e, string name)
+    {
+        int count = 0;
+        var pending = new Stack<XmlElement>();
+        pending.Push(e);
+        while (pending.Count > 0)
+        {
+            foreach (var child in pending.Pop().Elements())
+            {
+                if (child.Name == name) count++;
+                pending.Push(child);
+            }
+        }
+        return count;
+    }
+
+    private void CountFeatures(XmlElement root, string part)
+    {
+        Skip(XlsxSkipped.ConditionalFormat, root.Elements(M, "conditionalFormatting").Count());
+        Skip(XlsxSkipped.DataValidation, root.Child(M, "dataValidations")?.Elements(M, "dataValidation").Count() ?? 0);
+        if (root.Child(M, "extLst") is { } ext) Skip(XlsxSkipped.Sparkline, Count(ext, "sparkline"));
+        foreach (var r in _package.Relationships(part))
+        {
+            if (!_package.Contains(r.Target)) continue;
+            if (r.Type.EndsWith("/comments", StringComparison.Ordinal))
+            {
+                Skip(XlsxSkipped.Comment, Count(_package.Xml(r.Target), "comment"));
+            }
+            else if (r.Type.EndsWith("/drawing", StringComparison.Ordinal))
+            {
+                foreach (var anchor in _package.Xml(r.Target).Elements())
+                {
+                    foreach (var shape in anchor.Elements())
+                    {
+                        if (shape.Name == "pic") Skip(XlsxSkipped.Picture);
+                        else if (shape.Name == "graphicFrame") Skip(Count(shape, "chart") > 0 ? XlsxSkipped.Chart : XlsxSkipped.Shape);
+                        else if (shape.Name is "sp" or "cxnSp" or "grpSp") Skip(XlsxSkipped.Shape);
+                    }
+                }
+            }
+        }
     }
 
     private void ReadCells(XmlElement rowElement, XlsxRow row)

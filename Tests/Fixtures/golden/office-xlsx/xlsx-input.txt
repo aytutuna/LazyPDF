@@ -171,3 +171,35 @@
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>no relationship needed</t></is></c></row></sheetData></worksheet>
 @relationships
 <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+> page setup
+@workbook
+<sheets><sheet name="Setup" sheetId="1" r:id="rId1"/></sheets>
+@sheet1
+<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>
+<sheetData><row r="1"><c r="A1"><v>1</v></c></row></sheetData>
+<printOptions horizontalCentered="1" gridLines="true" headings="0"/>
+<pageMargins left="1" right="0.5" top="0" bottom="0.25" header="0.1" footer="900"/>
+<pageSetup paperSize="9" scale="5" orientation="landscape" fitToWidth="2" fitToHeight="0" firstPageNumber="3" useFirstPageNumber="1"/>
+<headerFooter differentOddEven="1" scaleWithDoc="0" alignWithMargins="0"><oddHeader>&amp;L&amp;P&amp;R&amp;D</oddHeader><evenFooter>&amp;C&amp;N</evenFooter><firstHeader/></headerFooter>
+<rowBreaks count="3"><brk id="5" max="16383" man="1"/><brk id="3" man="1"/><brk id="4"/><brk id="0" man="1"/><brk id="1048576" man="1"/></rowBreaks>
+<colBreaks count="1"><brk id="2" max="1048575" man="true"/></colBreaks>
+> page setup defaults and bad values
+@workbook
+<sheets><sheet name="Defaults" sheetId="1" r:id="rId1"/></sheets>
+@sheet1
+<sheetData><row r="1"><c r="A1"><v>1</v></c></row></sheetData>
+<pageMargins left="x" right="-1" top="101"/>
+<pageSetup paperSize="x" scale="401" fitToWidth="99999" orientation="sideways"/>
+> features that are not printed
+@workbook
+<sheets><sheet name="Extras" sheetId="1" r:id="rId1"/></sheets>
+@sheet1
+<sheetData><row r="1"><c r="A1"><v>1</v></c></row></sheetData>
+<conditionalFormatting sqref="A1"><cfRule type="cellIs" priority="1"/></conditionalFormatting>
+<dataValidations count="2"><dataValidation sqref="A1"/><dataValidation sqref="A2"/></dataValidations>
+<drawing r:id="rIdD"/>
+<extLst><ext uri="x"><x14:sparklineGroups xmlns:x14="urn:x14"><x14:sparklineGroup><x14:sparklines><x14:sparkline/><x14:sparkline/><x14:sparkline/></x14:sparklines></x14:sparklineGroup></x14:sparklineGroups></ext></extLst>
+@part xl/worksheets/_rels/sheet1.xml.rels
+<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdD" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/><Relationship Id="rIdM" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments" Target="../missing.xml"/></Relationships>
+@part xl/drawings/drawing1.xml
+<?xml version="1.0"?><xdr:wsDr xmlns:xdr="urn:xdr" xmlns:a="urn:a"><xdr:twoCellAnchor><xdr:grpSp/></xdr:twoCellAnchor><xdr:twoCellAnchor><xdr:cxnSp/><xdr:graphicFrame/></xdr:twoCellAnchor><xdr:twoCellAnchor><xdr:contentPart/></xdr:twoCellAnchor></xdr:wsDr>

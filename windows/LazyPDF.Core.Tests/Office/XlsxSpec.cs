@@ -116,6 +116,22 @@ internal static class XlsxSpec
     private static string Font(XlsxFont f, string separator) =>
         $"{f.Name.Replace(' ', '_')}{separator}{Num(f.Size)}{separator}{Rgb(f.Color)}{(f.Bold ? separator + "b" : "")}{(f.Italic ? separator + "i" : "")}{(f.Underline ? separator + "u" : "")}{(f.Strike ? separator + "s" : "")}";
 
+    private static string Setup(XlsxPageSetup s) =>
+        $"paper={s.Paper}{(s.Landscape ? " landscape" : "")} scale={s.Scale} fit={s.FitToWidth}x{s.FitToHeight}{(s.FitToPage ? " fitpage" : "")} margins={Num(s.Left)},{Num(s.Right)},{Num(s.Top)},{Num(s.Bottom)},{Num(s.Header)},{Num(s.Footer)}" +
+        $"{(s.CenterHorizontally ? " centerh" : "")}{(s.CenterVertically ? " centerv" : "")}{(s.Gridlines ? " gridlines" : "")}{(s.Headings ? " headings" : "")}{(s.OverThenDown ? " overthendown" : "")}" +
+        $"{(s.FirstPageNumber is { } n ? " firstpage=" + n : "")}{(s.DifferentOddEven ? " oddeven" : "")}{(s.DifferentFirst ? " differentfirst" : "")}{(s.ScaleWithDocument ? "" : " noscale")}{(s.AlignWithMargins ? "" : " noalign")}";
+
+    private static void DumpSetup(StringBuilder o, XlsxPageSetup s)
+    {
+        if (Setup(s) != Setup(new XlsxPageSetup())) o.Append($"  setup {Setup(s)}\n");
+        foreach (var (name, text) in new[] { ("oddheader", s.OddHeader), ("oddfooter", s.OddFooter), ("evenheader", s.EvenHeader), ("evenfooter", s.EvenFooter), ("firstheader", s.FirstHeader), ("firstfooter", s.FirstFooter) })
+        {
+            if (text.Length > 0) o.Append($"  {name} \"{OfficeLayoutSpec.Escape(text)}\"\n");
+        }
+        if (s.RowBreaks.Count > 0) o.Append($"  rowbreaks {string.Join(',', s.RowBreaks)}\n");
+        if (s.ColumnBreaks.Count > 0) o.Append($"  colbreaks {string.Join(',', s.ColumnBreaks)}\n");
+    }
+
     public static string Dump(XlsxWorkbook workbook)
     {
         var o = new StringBuilder();
@@ -156,6 +172,7 @@ internal static class XlsxSpec
             if (sheet.PrintArea.Count > 0) o.Append($"  printarea {string.Join(',', sheet.PrintArea.Select(Cells))}\n");
             if (sheet.TitleRows is { } tr) o.Append($"  titlerows {tr.First}:{tr.Last}\n");
             if (sheet.TitleColumns is { } tc) o.Append($"  titlecols {Name(tc.First)}:{Name(tc.Last)}\n");
+            DumpSetup(o, sheet.Setup);
         }
         foreach (var s in workbook.Skipped) o.Append($"skipped {s.Kind} {s.Count}\n");
         return o.ToString();

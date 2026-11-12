@@ -255,3 +255,27 @@ workbook mdw=7
 sheet "Odd" col=48.00 row=15.00
   row 1
     A1 t s=0 "no relationship needed"
+> page setup
+workbook mdw=7
+sheet "Setup" col=48.00 row=15.00
+  row 1
+    A1 n s=0 "1"
+  setup paper=9 landscape scale=100 fit=2x0 fitpage margins=72.00,36.00,0.00,18.00,7.20,21.60 centerh gridlines firstpage=3 oddeven noscale noalign
+  oddheader "&L&P&R&D"
+  evenfooter "&C&N"
+  rowbreaks 3,5
+  colbreaks 2
+> page setup defaults and bad values
+workbook mdw=7
+sheet "Defaults" col=48.00 row=15.00
+  row 1
+    A1 n s=0 "1"
+> features that are not printed
+workbook mdw=7
+sheet "Extras" col=48.00 row=15.00
+  row 1
+    A1 n s=0 "1"
+skipped conditional-format 1
+skipped data-validation 2
+skipped sheet-shape 3
+skipped sparkline 3

@@ -14,6 +14,7 @@ internal sealed record XlsxLimits(
 {
     public const int MaxRow = 1_048_576;
     public const int MaxColumn = 16_384;
+    public const int MaxBreaks = 10_000;
     public const int MaxFormatLength = 255;
     public static readonly XlsxLimits Default = new();
 }
@@ -29,6 +30,13 @@ internal static class XlsxSkipped
     public const string FormulaWithoutValue = "formula-no-value";
     public const string CellOutsideGrid = "cell-outside-grid";
     public const string LongText = "long-text";
+    public const string Picture = "sheet-picture";
+    public const string Chart = "sheet-chart";
+    public const string Shape = "sheet-shape";
+    public const string ConditionalFormat = "conditional-format";
+    public const string Sparkline = "sparkline";
+    public const string DataValidation = "data-validation";
+    public const string Comment = "sheet-comment";
 }
 
 internal enum XlsxHorizontal { General, Left, Center, Right, Fill, Justify, CenterContinuous, Distributed }
@@ -81,8 +89,48 @@ internal sealed record XlsxColumns(int First, int Last, double Width, bool Hidde
 /// <summary>A block of cells, 1-based and inclusive.</summary>
 internal readonly record struct XlsxRange(int FirstRow, int FirstColumn, int LastRow, int LastColumn);
 
+/// <summary>How a sheet prints. Margins and distances are in points, the scale in percent.</summary>
+internal sealed class XlsxPageSetup
+{
+    public bool Landscape { get; set; }
+    /// <summary>The paper size code of pageSetup.</summary>
+    public int Paper { get; set; } = 1;
+    public int Scale { get; set; } = 100;
+    public bool FitToPage { get; set; }
+    public int FitToWidth { get; set; } = 1;
+    /// <summary>0 leaves the height to the content.</summary>
+    public int FitToHeight { get; set; } = 1;
+    public double Left { get; set; } = 50.4;
+    public double Right { get; set; } = 50.4;
+    public double Top { get; set; } = 54;
+    public double Bottom { get; set; } = 54;
+    public double Header { get; set; } = 21.6;
+    public double Footer { get; set; } = 21.6;
+    public bool CenterHorizontally { get; set; }
+    public bool CenterVertically { get; set; }
+    public bool Gridlines { get; set; }
+    public bool Headings { get; set; }
+    public bool OverThenDown { get; set; }
+    /// <summary>The number of the sheet's first page when it restarts the count, else null.</summary>
+    public int? FirstPageNumber { get; set; }
+    public bool DifferentOddEven { get; set; }
+    public bool DifferentFirst { get; set; }
+    public bool ScaleWithDocument { get; set; } = true;
+    public bool AlignWithMargins { get; set; } = true;
+    public string OddHeader { get; set; } = "";
+    public string OddFooter { get; set; } = "";
+    public string EvenHeader { get; set; } = "";
+    public string EvenFooter { get; set; } = "";
+    public string FirstHeader { get; set; } = "";
+    public string FirstFooter { get; set; } = "";
+    /// <summary>Manual breaks: the break comes after this row, or this column.</summary>
+    public List<int> RowBreaks { get; } = [];
+    public List<int> ColumnBreaks { get; } = [];
+}
+
 internal sealed class XlsxSheet
 {
+    public XlsxPageSetup Setup { get; } = new();
     public string Name { get; init; } = "";
     public List<XlsxRow> Rows { get; } = [];
     public List<XlsxColumns> Columns { get; } = [];
