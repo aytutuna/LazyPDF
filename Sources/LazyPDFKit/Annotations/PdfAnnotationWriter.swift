@@ -145,7 +145,7 @@ public final class PdfAnnotationWriter {
 
     // Runs a change and, when it asks for it, draws the appearance again. A drawing that fails (no font for the text)
     // leaves the annotation as it was.
-    func edit(_ annotation: PdfAnnotation, redraw: Bool, _ change: () throws -> Void) throws -> PdfAnnotation {
+    public func edit(_ annotation: PdfAnnotation, redraw: Bool, _ change: () throws -> Void) throws -> PdfAnnotation {
         let d = annotation.dictionary
         let before = d.copy()
         do {

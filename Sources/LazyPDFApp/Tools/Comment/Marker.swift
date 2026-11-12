@@ -232,9 +232,17 @@ public final class Marker {
     public func setWidth(_ a: PdfAnnotation, _ width: Double) throws -> PdfAnnotation {
         let border = (document.dict(a.dictionary, "BS") ?? PdfDictionary()).copy()
         border["W"] = PdfNumber(width)
-        a.dictionary["BS"] = border
-        try writer.regenerate(a)
-        return find(a.pageIndex, a.reference?.number ?? -1) ?? a
+        let widened = try writer.edit(a, redraw: true) {
+            a.dictionary["BS"] = border
+            fitLine(a, width, a.startEnding != .none || a.endEnding != .none)
+        }
+        return find(a.pageIndex, a.reference?.number ?? -1) ?? widened
+    }
+
+    // The box of a line comes from its end points and the room for the border and the heads, as when it was made.
+    private func fitLine(_ a: PdfAnnotation, _ width: Double, _ head: Bool) {
+        guard a.type == .line, a.line.count >= 4 else { return }
+        a.dictionary["Rect"] = PdfAnnotationWriter.lineBox((a.line[0], a.line[1]), (a.line[2], a.line[3]), width: width, head: head).toArray()
     }
 
     public func setText(_ a: PdfAnnotation, _ text: String) throws -> PdfAnnotation {

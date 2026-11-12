@@ -122,6 +122,11 @@ extension PdfAnnotationWriter {
         return try place(page, d)
     }
 
+    /// The /Rect of a line from `from` to `to`: its end points with the room for the border and, with a head, for the head.
+    public static func lineBox(_ from: PdfPoint, _ to: PdfPoint, width: Double, head: Bool) -> PdfRect {
+        inflate(boundsOf([from, to]), margin(AnnotationStyle(width: width), head))
+    }
+
     private static func margin(_ style: AnnotationStyle, _ endings: Bool) -> Double {
         endings ? AppearanceBuilder.endingSize(style.width) + style.width : style.width / 2 + 1
     }

@@ -257,4 +257,27 @@ final class MarkerTests: XCTestCase {
         XCTAssertTrue(try f.tab.undo())
         XCTAssertTrue(f.marks().isEmpty)
     }
+
+    func test_wideningALineRefitsItsBox() async throws {
+        let f = try CommentFixture()
+        let line = try f.marker.add(.line, 0, drag, markRed)
+        let wide = try f.marker.setWidth(line, 8)
+
+        XCTAssertEqual(wide.rect.left, min(wide.line[0], wide.line[2]) - (8 / 2 + 1), accuracy: 1e-6)
+        XCTAssertEqual(wide.rect.top, max(wide.line[1], wide.line[3]) + (8 / 2 + 1), accuracy: 1e-6)
+
+        let back = try f.marker.setWidth(wide, line.border.width)
+        XCTAssertEqual(back.rect.width, line.rect.width, accuracy: 1e-6)
+        XCTAssertEqual(back.rect.height, line.rect.height, accuracy: 1e-6)
+    }
+
+    func test_wideningAnArrowKeepsRoomForItsHead() async throws {
+        let f = try CommentFixture()
+        let arrow = try f.marker.add(.arrow, 0, drag, markRed)
+        let wide = try f.marker.setWidth(arrow, 6)
+
+        let room = AppearanceBuilder.endingSize(6) + 6
+        XCTAssertEqual(wide.rect.left, min(wide.line[0], wide.line[2]) - room, accuracy: 1e-6)
+        XCTAssertEqual(wide.rect.bottom, min(wide.line[1], wide.line[3]) - room, accuracy: 1e-6)
+    }
 }
