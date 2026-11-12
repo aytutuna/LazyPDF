@@ -213,7 +213,8 @@ public final class CreateModel {
         }
     }
 
-    private var setup: PdfPageSetup {
+    // The engine turns a custom size to portrait under Automatic, so a wide size typed for a blank or text page is sent as landscape.
+    private func pageSetup(pictures: Bool = false) -> PdfPageSetup {
         let sheet: PdfPaper = switch paper {
         case .a4: .a4
         case .a3: .a3
@@ -225,7 +226,7 @@ public final class CreateModel {
         }
         let size = customPoints ?? (595.276, 841.89)
         let turn: PdfOrientation = switch orientation {
-        case .automatic: .auto
+        case .automatic: paper == .custom && !pictures ? (size.0 > size.1 ? .landscape : .portrait) : .auto
         case .portrait: .portrait
         case .landscape: .landscape
         }
@@ -234,7 +235,7 @@ public final class CreateModel {
 
     /// What the model is set to make; nil when the pasteboard emptied since it was looked at.
     public func request() -> CreateRequest? {
-        let setup = setup
+        let setup = pageSetup(pictures: from == .pictures)
         remember()
         switch from {
         case .blank:
@@ -247,7 +248,7 @@ public final class CreateModel {
         case .clipboard:
             let content = host.map { ClipboardContent.read($0.clipboard) }
             if let text = content?.text { return CreateRequest(.text, setup, L10n.t("Clipboard.pdf"), text: text, fontSize: fontSize) }
-            if let picture = content?.picture { return CreateRequest(.pictures, setup, L10n.t("Clipboard.pdf"), picture: picture) }
+            if let picture = content?.picture { return CreateRequest(.pictures, pageSetup(pictures: true), L10n.t("Clipboard.pdf"), picture: picture) }
             peekClipboard()
             return nil
         }

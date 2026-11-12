@@ -281,6 +281,21 @@ final class CreateModelTests: XCTestCase {
         }
     }
 
+    func test_aWideCustomSizeStaysWideUnderAutomaticForBlankAndText() {
+        let model = sized()
+        model.paper = .custom
+        model.customWidth = "300"
+        model.customHeight = "100"
+        XCTAssertEqual(model.request()?.setup.orientation, .landscape)
+        model.choose(.text)
+        XCTAssertEqual(model.request()?.setup.orientation, .landscape)
+        model.customWidth = "100"
+        model.customHeight = "300"
+        XCTAssertEqual(model.request()?.setup.orientation, .portrait)
+        model.orientation = .landscape
+        XCTAssertEqual(model.request()?.setup.orientation, .landscape)
+    }
+
     func test_theCustomSizeIsTypedInMillimetersOrInchesAndReachesTheEngineInPoints() {
         let metric = sized()
         metric.choose(.text)

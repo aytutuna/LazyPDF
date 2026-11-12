@@ -43,33 +43,6 @@ public sealed class CreateToolTests
         Assert.Equal("", PlainTextWriter.Make(ExportLayout.Analyze(document)).Replace("\f", "").Trim());
     }
 
-    [Fact]
-    public void ABlankPageTakesTheSizeAskedAndTheOrientation()
-    {
-        var a3 = PdfMaker.Make(new(CreateSource.Blank, new PdfPageSetup(PdfPaper.A4, PdfOrientation.Landscape), "Blank.pdf", Pages: 2, Width: 841.89, Height: 1190.551), new FakeCodec(), new FakeFonts());
-        var custom = PdfMaker.Make(new(CreateSource.Blank, A4, "Blank.pdf", Width: 100 * 72 / 25.4, Height: 150 * 72 / 25.4), new FakeCodec(), new FakeFonts());
-
-        var page = Open(a3).Pages[1];
-        Assert.Equal((1190.55, 841.89), (Math.Round(page.MediaBox.Width, 2), Math.Round(page.MediaBox.Height, 2)));
-        page = Open(custom).Pages[0];
-        Assert.Equal((283.46, 425.2), (Math.Round(page.MediaBox.Width, 2), Math.Round(page.MediaBox.Height, 2)));
-    }
-
-    [Theory]
-    [InlineData(PdfOrientation.Landscape, 254, 143, 254, 143)]
-    [InlineData(PdfOrientation.Landscape, 143, 254, 254, 143)]
-    [InlineData(PdfOrientation.Portrait, 297, 210, 210, 297)]
-    [InlineData(PdfOrientation.Portrait, 210, 297, 210, 297)]
-    [InlineData(PdfOrientation.Auto, 297, 210, 297, 210)]
-    public void ACustomSizeFollowsTheOrientationPicked(PdfOrientation orientation, double w, double h, double wide, double tall)
-    {
-        const double Mm = 72 / 25.4;
-        var made = PdfMaker.Make(new(CreateSource.Blank, new PdfPageSetup(PdfPaper.A4, orientation), "Blank.pdf", Width: w * Mm, Height: h * Mm), new FakeCodec(), new FakeFonts());
-
-        var page = Open(made).Pages[0];
-        Assert.Equal((Math.Round(wide * Mm, 2), Math.Round(tall * Mm, 2)), (Math.Round(page.MediaBox.Width, 2), Math.Round(page.MediaBox.Height, 2)));
-    }
-
     private static string Sandbox() => Path.Combine(Path.GetTempPath(), "lazypdf-tests-" + Guid.NewGuid().ToString("N"));
 
     [Fact]
@@ -83,10 +56,30 @@ public sealed class CreateToolTests
 
         var request = panel.Request()!;
         Assert.Contains("A3", panel.PaperBox.Items.Cast<string>());
-        Assert.Equal((283.46, 425.2), (Math.Round(request.Width!.Value, 2), Math.Round(request.Height!.Value, 2)));
+        Assert.Equal((283.46, 425.2), (Math.Round(request.Setup.CustomWidth, 2), Math.Round(request.Setup.CustomHeight, 2)));
+        Assert.Equal(PdfPaper.Custom, request.Setup.Paper);
 
         panel.CustomWidth.Text = "0.01";
         Assert.False(panel.Action!.CanRun());
+        return Task.CompletedTask;
+    });
+
+    [Theory]
+    [InlineData(CreateSource.Blank)]
+    [InlineData(CreateSource.Text)]
+    public Task AWideCustomSizeStaysWideUnderAutomatic(CreateSource source) => Sta.Run(() =>
+    {
+        var panel = new CreatePanel(Sandbox());
+        panel.SourceBox.SelectedIndex = (int)source;
+        panel.PaperBox.SelectedIndex = panel.PaperBox.Items.Count - 1;
+        panel.CustomWidth.Text = (300 * 72 / 25.4 / panel.PointsPerUnit).ToString(CultureInfo.CurrentCulture);
+        panel.CustomHeight.Text = (100 * 72 / 25.4 / panel.PointsPerUnit).ToString(CultureInfo.CurrentCulture);
+        if (source == CreateSource.Text) panel.TypedText.Text = "hello";
+
+        var made = PdfMaker.Make(panel.Request()!, new FakeCodec(), new FakeFonts());
+
+        var page = Open(made).Pages[0];
+        Assert.Equal((850.39, 283.46), (Math.Round(page.MediaBox.Width, 2), Math.Round(page.MediaBox.Height, 2)));
         return Task.CompletedTask;
     });
 

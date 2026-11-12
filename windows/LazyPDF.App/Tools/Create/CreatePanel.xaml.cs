@@ -115,9 +115,6 @@ public partial class CreatePanel : ToolPanel
         return width is >= LeastSide and <= MostSide && height is >= LeastSide and <= MostSide ? (width, height) : null;
     }
 
-    // A custom blank page is resized after the fact, so that it keeps the shape typed unless an orientation is picked.
-    private (double Width, double Height)? BlankSize() => Source == (int)CreateSource.Blank && CustomPicked ? CustomPoints() : null;
-
     private void RememberPaper()
     {
         var size = CustomPoints();
@@ -197,13 +194,15 @@ public partial class CreatePanel : ToolPanel
         RaiseActionChanged();
     }
 
-    private PdfPageSetup Setup()
+    // The engine turns a custom size to portrait under Auto, so a wide size typed for a page of text is sent as landscape.
+    private PdfPageSetup Setup(bool pictures = false)
     {
         var (width, height) = CustomPoints() ?? (595.276, 841.89);
-        bool resized = Source == (int)CreateSource.Blank && CustomPicked;
+        var orientation = OrientationBox.SelectedIndex switch { 1 => PdfOrientation.Portrait, 2 => PdfOrientation.Landscape, _ => PdfOrientation.Auto };
+        if (orientation == PdfOrientation.Auto && CustomPicked && !pictures) orientation = width > height ? PdfOrientation.Landscape : PdfOrientation.Portrait;
         return new(
-            resized ? PdfPaper.A4 : Papers.First(p => p.Key == PickedKey).Paper,
-            OrientationBox.SelectedIndex switch { 1 => PdfOrientation.Portrait, 2 => PdfOrientation.Landscape, _ => PdfOrientation.Auto },
+            Papers.First(p => p.Key == PickedKey).Paper,
+            orientation,
             Source == (int)CreateSource.Blank ? 36 : Tagged(MarginBox),
             width, height);
     }
@@ -221,16 +220,15 @@ public partial class CreatePanel : ToolPanel
         {
             case (int)CreateSource.Blank:
                 TryBlankPages(out int pages);
-                var size = BlankSize();
-                return new(CreateSource.Blank, setup, Loc.T("Blank.pdf"), pages, Width: size?.Width, Height: size?.Height);
+                return new(CreateSource.Blank, setup, Loc.T("Blank.pdf"), pages);
             case (int)CreateSource.Pictures:
-                return new(CreateSource.Pictures, setup, PicturesTitle(), Files: [.. _pictures.Select(p => p.Path)]);
+                return new(CreateSource.Pictures, Setup(pictures: true), PicturesTitle(), Files: [.. _pictures.Select(p => p.Path)]);
             case (int)CreateSource.Text:
                 return new(CreateSource.Text, setup, Loc.T("Text.pdf"), Text: _longText ?? TypedText.Text, FontSize: Tagged(FontSizeBox), Family: Family);
         }
         var content = ClipboardContent.Read();
         if (content.Text is { } text) return new(CreateSource.Text, setup, Loc.T("Clipboard.pdf"), Text: text, FontSize: Tagged(FontSizeBox), Family: Family);
-        if (content.Picture is { } picture) return new(CreateSource.Pictures, setup, Loc.T("Clipboard.pdf"), Picture: picture);
+        if (content.Picture is { } picture) return new(CreateSource.Pictures, Setup(pictures: true), Loc.T("Clipboard.pdf"), Picture: picture);
         PeekClipboard();
         Refresh();
         return null;
