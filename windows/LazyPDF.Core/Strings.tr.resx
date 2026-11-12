@@ -5698,6 +5698,9 @@
   <data name="Smallest file. Pictures drop to 96 dpi, black and white pictures become 1-bit, and some detail is lost." xml:space="preserve">
     <value>En küçük dosya. Resimler 96 dpi'ye düşer, siyah beyaz resimler 1 bit olur ve bir miktar ayrıntı kaybolur.</value>
   </data>
+  <data name="SmartArt on slides" xml:space="preserve">
+    <value>slayttaki SmartArt grafikleri</value>
+  </data>
   <data name="Snap to text and lines" xml:space="preserve">
     <value>Metne ve çizgilere yapış</value>
   </data>
@@ -7939,6 +7942,9 @@
   <data name="an unknown signer" xml:space="preserve">
     <value>bilinmeyen bir imzalayan</value>
   </data>
+  <data name="audio and video on slides" xml:space="preserve">
+    <value>slayttaki ses ve videolar</value>
+  </data>
   <data name="cell comments" xml:space="preserve">
     <value>hücre açıklamaları</value>
   </data>
@@ -7953,6 +7959,9 @@
   </data>
   <data name="charts on sheets" xml:space="preserve">
     <value>sayfalardaki grafikler</value>
+  </data>
+  <data name="charts on slides" xml:space="preserve">
+    <value>slayttaki grafikler</value>
   </data>
   <data name="comment marks" xml:space="preserve">
     <value>açıklama işaretleri</value>
@@ -7972,6 +7981,9 @@
   <data name="drawings" xml:space="preserve">
     <value>çizimler</value>
   </data>
+  <data name="embedded objects on slides" xml:space="preserve">
+    <value>slayttaki gömülü nesneler</value>
+  </data>
   <data name="endnotes" xml:space="preserve">
     <value>sonnotlar</value>
   </data>
@@ -7989,6 +8001,9 @@
   </data>
   <data name="formulas without a saved result (shown empty)" xml:space="preserve">
     <value>kayıtlı sonucu olmayan formüller (boş gösterildi)</value>
+  </data>
+  <data name="freeform shapes" xml:space="preserve">
+    <value>serbest biçimli şekiller</value>
   </data>
   <data name="gradient fills (first color used)" xml:space="preserve">
     <value>degrade dolgular (ilk renk kullanıldı)</value>
@@ -8010,6 +8025,9 @@
   </data>
   <data name="of {0}" xml:space="preserve">
     <value>/ {0}</value>
+  </data>
+  <data name="other shapes on slides" xml:space="preserve">
+    <value>slayttaki diğer şekiller</value>
   </data>
   <data name="page {0}|in a sentence" xml:space="preserve">
     <value>sayfa {0}</value>
@@ -8038,20 +8056,23 @@
   <data name="rotated text (shown straight)" xml:space="preserve">
     <value>döndürülmüş metin (düz gösterildi)</value>
   </data>
+  <data name="shadows and other shape effects" xml:space="preserve">
+    <value>gölgeler ve diğer şekil efektleri</value>
+  </data>
   <data name="shapes" xml:space="preserve">
     <value>şekiller</value>
   </data>
   <data name="shapes on sheets" xml:space="preserve">
     <value>sayfalardaki şekiller</value>
   </data>
-  <data name="shapes, pictures and tables on slides" xml:space="preserve">
-    <value>slayttaki şekiller, resimler ve tablolar</value>
-  </data>
   <data name="sheets that are not worksheets" xml:space="preserve">
     <value>çalışma sayfası olmayan sayfalar</value>
   </data>
   <data name="sparklines" xml:space="preserve">
     <value>mini grafikler</value>
+  </data>
+  <data name="table styles" xml:space="preserve">
+    <value>tablo stilleri</value>
   </data>
   <data name="tables too large or nested (shown as paragraphs)" xml:space="preserve">
     <value>çok büyük ya da iç içe tablolar (paragraf olarak gösterildi)</value>

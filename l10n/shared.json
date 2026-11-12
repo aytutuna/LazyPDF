@@ -8720,8 +8720,29 @@
   "hidden slides": {
     "tr": "gizli slaytlar"
   },
-  "shapes, pictures and tables on slides": {
-    "tr": "slayttaki şekiller, resimler ve tablolar"
+  "other shapes on slides": {
+    "tr": "slayttaki diğer şekiller"
+  },
+  "freeform shapes": {
+    "tr": "serbest biçimli şekiller"
+  },
+  "shadows and other shape effects": {
+    "tr": "gölgeler ve diğer şekil efektleri"
+  },
+  "charts on slides": {
+    "tr": "slayttaki grafikler"
+  },
+  "SmartArt on slides": {
+    "tr": "slayttaki SmartArt grafikleri"
+  },
+  "audio and video on slides": {
+    "tr": "slayttaki ses ve videolar"
+  },
+  "embedded objects on slides": {
+    "tr": "slayttaki gömülü nesneler"
+  },
+  "table styles": {
+    "tr": "tablo stilleri"
   },
   "gradient fills (first color used)": {
     "tr": "degrade dolgular (ilk renk kullanıldı)"
