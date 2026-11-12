@@ -120,9 +120,8 @@ public sealed partial class PdfAnnotationWriter(PdfDocument document, IFontSourc
             if (annotation.Type == AnnotationType.FreeText) d.Remove("RC");
         });
 
-    // Runs a change and, when it asks for it, draws the appearance again. A drawing that fails (no font
-    // for the text) leaves the annotation as it was.
-    private PdfAnnotation Edit(PdfAnnotation annotation, bool redraw, Action change)
+    /// <summary>Runs a change to the annotation's keys and, when asked, draws the appearance again. A change or a drawing that fails leaves the annotation as it was.</summary>
+    public PdfAnnotation Edit(PdfAnnotation annotation, bool redraw, Action change)
     {
         var d = annotation.Dictionary;
         var before = d.Copy();

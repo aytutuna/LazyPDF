@@ -352,12 +352,14 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         xy[2 * index + 1] = y;
         double[] oldX = [.. old.Where((_, i) => i % 2 == 0)], oldY = [.. old.Where((_, i) => i % 2 == 1)];
         double[] newX = [.. xy.Where((_, i) => i % 2 == 0)], newY = [.. xy.Where((_, i) => i % 2 == 1)];
-        a.Dictionary[PointKey(a)] = new PdfArray([.. xy.Select(v => (PdfObject)new PdfNumber(v))]);
-        a.Dictionary["Rect"] = new PdfRect(
-            newX.Min() - (oldX.Min() - a.Rect.Left), newY.Min() - (oldY.Min() - a.Rect.Bottom),
-            newX.Max() + (a.Rect.Right - oldX.Max()), newY.Max() + (a.Rect.Top - oldY.Max())).ToArray();
-        _writer.Regenerate(a);
-        return Find(a.PageIndex, a.Reference!.Number) ?? a;
+        var moved = _writer.Edit(a, redraw: true, () =>
+        {
+            a.Dictionary[PointKey(a)] = new PdfArray([.. xy.Select(v => (PdfObject)new PdfNumber(v))]);
+            a.Dictionary["Rect"] = new PdfRect(
+                newX.Min() - (oldX.Min() - a.Rect.Left), newY.Min() - (oldY.Min() - a.Rect.Bottom),
+                newX.Max() + (a.Rect.Right - oldX.Max()), newY.Max() + (a.Rect.Top - oldY.Max())).ToArray();
+        });
+        return Find(a.PageIndex, a.Reference!.Number) ?? moved;
     }
 
     public PdfAnnotation Resize(PdfAnnotation a, Rect box)
@@ -394,22 +396,28 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
     {
         var border = (document.Dict(a.Dictionary, "BS") ?? new PdfDictionary()).Copy();
         var dashes = MarkStyle.DashesOf(style, a.Border.Width);
+        // A mark that only had /Border keeps its width in the new /BS.
+        border["W"] = new PdfNumber(a.Border.Width);
         border["S"] = new PdfName(dashes is null ? "S" : "D");
         if (dashes is null) border.Remove("D");
         else border["D"] = new PdfArray([.. dashes.Select(v => (PdfObject)new PdfNumber(v))]);
-        a.Dictionary["BS"] = border;
-        _writer.Regenerate(a);
-        return Find(a.PageIndex, a.Reference!.Number) ?? a;
+        var dashed = _writer.Edit(a, redraw: true, () => a.Dictionary["BS"] = border);
+        return Find(a.PageIndex, a.Reference!.Number) ?? dashed;
     }
 
     /// <summary>Gives a line the head at its end and room in its box to show it.</summary>
     public PdfAnnotation SetEnding(PdfAnnotation a, LineEnding head)
     {
-        a.Dictionary["LE"] = new PdfArray([new PdfName(LineEnding.None.ToString()), new PdfName(head.ToString())]);
-        double grow = 4 * a.Border.Width;
-        a.Dictionary["Rect"] = new PdfRect(a.Rect.Left - grow, a.Rect.Bottom - grow, a.Rect.Right + grow, a.Rect.Top + grow).ToArray();
-        _writer.Regenerate(a);
-        return Find(a.PageIndex, a.Reference!.Number) ?? a;
+        // The room is added once, when the line gets its first head, not on every change of head.
+        bool bare = a.StartEnding == LineEnding.None && a.EndEnding == LineEnding.None;
+        var headed = _writer.Edit(a, redraw: true, () =>
+        {
+            a.Dictionary["LE"] = new PdfArray([new PdfName(LineEnding.None.ToString()), new PdfName(head.ToString())]);
+            if (!bare || head == LineEnding.None) return;
+            double grow = 4 * a.Border.Width;
+            a.Dictionary["Rect"] = new PdfRect(a.Rect.Left - grow, a.Rect.Bottom - grow, a.Rect.Right + grow, a.Rect.Top + grow).ToArray();
+        });
+        return Find(a.PageIndex, a.Reference!.Number) ?? headed;
     }
 
     public PdfAnnotation SetIcon(PdfAnnotation a, string name)

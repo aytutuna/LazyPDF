@@ -350,6 +350,32 @@ public sealed class MarkerTests
     }
 
     [Fact]
+    public void ChangingTheHeadAgainDoesNotGrowTheBoxAgain()
+    {
+        using var f = new CommentFixture();
+        var line = f.Marker.Add(MarkTool.Line, 0, Drag, Red);
+
+        var first = f.Marker.SetEnding(line, LineEnding.Diamond);
+        var second = f.Marker.SetEnding(first, LineEnding.OpenArrow);
+
+        Assert.Equal(first.Rect.Width, second.Rect.Width);
+        Assert.Equal(first.Rect.Height, second.Rect.Height);
+    }
+
+    [Fact]
+    public void TheDashKeepsTheWidthOfAMarkThatOnlyHadABorder()
+    {
+        using var f = new CommentFixture();
+        var made = f.Marker.Add(MarkTool.Oval, 0, Drag, Red);
+        made.Dictionary.Remove("BS");
+        made.Dictionary["Border"] = new PdfArray([new PdfNumber(0), new PdfNumber(0), new PdfNumber(4)]);
+
+        var dotted = f.Marker.SetDash(made, LineStyle.Dotted);
+
+        Assert.Equal(4, dotted.Border.Width);
+    }
+
+    [Fact]
     public void TheFillAndTheDashCanBeChangedAndTakenAway()
     {
         using var f = new CommentFixture();
