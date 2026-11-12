@@ -45,6 +45,10 @@ enum OfficeNotice {
         case "sheet-comment": return L10n.t("cell comments")
         case "rtl-text": return L10n.t("right-to-left text direction")
         case "complex-script": return L10n.t("complex-script shaping")
+        case "hidden-slide": return L10n.t("hidden slides")
+        case "slide-shape": return L10n.t("shapes, pictures and tables on slides")
+        case "slide-gradient": return L10n.t("gradient fills (first color used)")
+        case "slide-text-cut": return L10n.t("text cut at the size limit")
         default: return kind
         }
     }

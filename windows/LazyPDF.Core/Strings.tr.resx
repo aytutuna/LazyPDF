@@ -7990,8 +7990,14 @@
   <data name="formulas without a saved result (shown empty)" xml:space="preserve">
     <value>kayıtlı sonucu olmayan formüller (boş gösterildi)</value>
   </data>
+  <data name="gradient fills (first color used)" xml:space="preserve">
+    <value>degrade dolgular (ilk renk kullanıldı)</value>
+  </data>
   <data name="hidden sheets" xml:space="preserve">
     <value>gizli sayfalar</value>
+  </data>
+  <data name="hidden slides" xml:space="preserve">
+    <value>gizli slaytlar</value>
   </data>
   <data name="letters no font has" xml:space="preserve">
     <value>hiçbir yazı tipinde bulunmayan harfler</value>
@@ -8038,6 +8044,9 @@
   <data name="shapes on sheets" xml:space="preserve">
     <value>sayfalardaki şekiller</value>
   </data>
+  <data name="shapes, pictures and tables on slides" xml:space="preserve">
+    <value>slayttaki şekiller, resimler ve tablolar</value>
+  </data>
   <data name="sheets that are not worksheets" xml:space="preserve">
     <value>çalışma sayfası olmayan sayfalar</value>
   </data>
@@ -8052,6 +8061,9 @@
   </data>
   <data name="text cut at the cell limit" xml:space="preserve">
     <value>hücre sınırında kesilen metin</value>
+  </data>
+  <data name="text cut at the size limit" xml:space="preserve">
+    <value>boyut sınırında kesilen metin</value>
   </data>
   <data name="text in {0} note or field|plural" xml:space="preserve">
     <value>{0} not veya alandaki metin</value>

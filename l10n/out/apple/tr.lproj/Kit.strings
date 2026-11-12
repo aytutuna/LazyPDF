@@ -2197,7 +2197,9 @@
 "footnotes" = "dipnotlar";
 "formatting inside cells (first style used)" = "hücre içindeki biçimlendirme (ilk stil kullanıldı)";
 "formulas without a saved result (shown empty)" = "kayıtlı sonucu olmayan formüller (boş gösterildi)";
+"gradient fills (first color used)" = "degrade dolgular (ilk renk kullanıldı)";
 "hidden sheets" = "gizli sayfalar";
+"hidden slides" = "gizli slaytlar";
 "letters no font has" = "hiçbir yazı tipinde bulunmayan harfler";
 "none|no conformance" = "yok";
 "object {0}|in a sentence" = "nesne {0}";
@@ -2213,11 +2215,13 @@
 "rotated text (shown straight)" = "döndürülmüş metin (düz gösterildi)";
 "shapes" = "şekiller";
 "shapes on sheets" = "sayfalardaki şekiller";
+"shapes, pictures and tables on slides" = "slayttaki şekiller, resimler ve tablolar";
 "sheets that are not worksheets" = "çalışma sayfası olmayan sayfalar";
 "sparklines" = "mini grafikler";
 "tables too large or nested (shown as paragraphs)" = "çok büyük ya da iç içe tablolar (paragraf olarak gösterildi)";
 "text boxes" = "metin kutuları";
 "text cut at the cell limit" = "hücre sınırında kesilen metin";
+"text cut at the size limit" = "boyut sınırında kesilen metin";
 "text in {0} note or field|one" = "{0} not veya alandaki metin";
 "text in {0} note or field|other" = "{0} not veya alandaki metin";
 "the servers named in its certificates" = "sertifikalarında adı geçen sunucular";

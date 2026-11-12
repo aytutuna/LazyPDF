@@ -8717,6 +8717,18 @@
   "complex-script shaping": {
     "tr": "karmaşık yazı sistemi şekillendirmesi"
   },
+  "hidden slides": {
+    "tr": "gizli slaytlar"
+  },
+  "shapes, pictures and tables on slides": {
+    "tr": "slayttaki şekiller, resimler ve tablolar"
+  },
+  "gradient fills (first color used)": {
+    "tr": "degrade dolgular (ilk renk kullanıldı)"
+  },
+  "text cut at the size limit": {
+    "tr": "boyut sınırında kesilen metin"
+  },
   "The system does not let Lazy PDF read the file. Check who may open it.": {
     "tr": "Sistem, Lazy PDF'nin dosyayı okumasına izin vermiyor. Dosyayı kimlerin açabileceğini denetleyin."
   },

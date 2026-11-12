@@ -46,6 +46,10 @@ internal static class OfficeNotice
         "sheet-comment" => Loc.T("cell comments"),
         "rtl-text" => Loc.T("right-to-left text direction"),
         "complex-script" => Loc.T("complex-script shaping"),
+        "hidden-slide" => Loc.T("hidden slides"),
+        "slide-shape" => Loc.T("shapes, pictures and tables on slides"),
+        "slide-gradient" => Loc.T("gradient fills (first color used)"),
+        "slide-text-cut" => Loc.T("text cut at the size limit"),
         _ => kind,
     };
 }
