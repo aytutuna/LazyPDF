@@ -361,7 +361,10 @@ public sealed class MarkerTests
         Assert.Equal(first.Rect.Width, second.Rect.Width);
         Assert.Equal(first.Rect.Height, second.Rect.Height);
 
-        var bare = f.Marker.SetEnding(second, LineEnding.None);
+        var wide = f.Marker.SetWidth(second, 6);
+        var bare = f.Marker.SetEnding(wide, LineEnding.None);
+        Assert.True(bare.Rect.Left < Math.Min(bare.Line[0], bare.Line[2]));
+        bare = f.Marker.SetEnding(f.Marker.SetWidth(bare, line.Border.Width), LineEnding.None);
         var again = f.Marker.SetEnding(bare, LineEnding.Diamond);
 
         Assert.Equal(line.Rect.Width, bare.Rect.Width, 6);

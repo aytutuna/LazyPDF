@@ -408,16 +408,19 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
     /// <summary>Gives a line the head at its end and room in its box to show it.</summary>
     public PdfAnnotation SetEnding(PdfAnnotation a, LineEnding head)
     {
-        // The room follows whether the line has a head: added with the first one, taken back with the last.
-        int room = (head != LineEnding.None ? 1 : 0) - (a.StartEnding != LineEnding.None || a.EndEnding != LineEnding.None ? 1 : 0);
         var headed = _writer.Edit(a, redraw: true, () =>
         {
             a.Dictionary["LE"] = new PdfArray([new PdfName(LineEnding.None.ToString()), new PdfName(head.ToString())]);
-            if (room == 0) return;
-            double grow = room * 4 * a.Border.Width;
-            a.Dictionary["Rect"] = new PdfRect(a.Rect.Left - grow, a.Rect.Bottom - grow, a.Rect.Right + grow, a.Rect.Top + grow).ToArray();
+            FitLine(a, a.Border.Width, head != LineEnding.None);
         });
         return Find(a.PageIndex, a.Reference!.Number) ?? headed;
+    }
+
+    // The box of a line comes from its end points and the room for the border and the heads, as when it was made; it is never nudged from the old box.
+    private static void FitLine(PdfAnnotation a, double width, bool head)
+    {
+        if (a.Type != AnnotationType.Line || a.Line.Count < 4) return;
+        a.Dictionary["Rect"] = PdfAnnotationWriter.LineBox(a.Line[0], a.Line[1], a.Line[2], a.Line[3], width, head).ToArray();
     }
 
     public PdfAnnotation SetIcon(PdfAnnotation a, string name)
@@ -451,9 +454,12 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
         var dashes = LineOf(a) == LineStyle.Solid ? null : MarkStyle.DashesOf(LineOf(a), width);
         border["W"] = new PdfNumber(width);
         if (dashes is not null) border["D"] = new PdfArray([.. dashes.Select(v => (PdfObject)new PdfNumber(v))]);
-        a.Dictionary["BS"] = border;
-        _writer.Regenerate(a);
-        return Find(a.PageIndex, a.Reference!.Number) ?? a;
+        var widened = _writer.Edit(a, redraw: true, () =>
+        {
+            a.Dictionary["BS"] = border;
+            FitLine(a, width, a.StartEnding != LineEnding.None || a.EndEnding != LineEnding.None);
+        });
+        return Find(a.PageIndex, a.Reference!.Number) ?? widened;
     }
 
     public PdfAnnotation SetText(PdfAnnotation a, string text) => _writer.SetContents(a, text, date);

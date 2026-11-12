@@ -118,6 +118,10 @@ public sealed partial class PdfAnnotationWriter
         return Place(page, d);
     }
 
+    /// <summary>The /Rect of a line from (x1, y1) to (x2, y2): its end points with the room for the border and, with a head, for the head.</summary>
+    public static PdfRect LineBox(double x1, double y1, double x2, double y2, double width, bool head) =>
+        Inflate(BoundsOf([(x1, y1), (x2, y2)]), Margin(new AnnotationStyle(Width: width), head));
+
     private static double Margin(AnnotationStyle style, bool endings) =>
         endings ? AppearanceBuilder.EndingSize(style.Width) + style.Width : style.Width / 2 + 1;
 
