@@ -85,23 +85,26 @@ public sealed class WindowsOcrTests
         Assert.Equal((x, y), MarkAt(turned));
     }
 
-    [Theory]
-    [InlineData(0.1)]
-    [InlineData(-0.1)]
-    public void ATurnedWordIsBackToItsUprightSizeAtTheBaselineStart(double angle)
+    [Fact]
+    public void AWordNearACornerOfATurnedPageMovesAboutTheCentre()
     {
-        // A 100 by 20 word turned about its bottom-left corner at (200, 300), as seen with y down.
-        double cos = Math.Cos(angle), sin = Math.Sin(angle);
-        var corners = new[] { (0.0, 0.0), (100.0, 0.0), (0.0, 20.0), (100.0, 20.0) }
-            .Select(p => (X: 200 + p.Item1 * cos - p.Item2 * sin, Y: 300 - p.Item1 * sin - p.Item2 * cos)).ToArray();
-        double left = corners.Min(c => c.X), top = corners.Min(c => c.Y);
-        double right = corners.Max(c => c.X), bottom = corners.Max(c => c.Y);
+        // 2550 by 3300 read at 2 degrees clockwise: the top-left word's baseline start moves about 68 px, and its size stays.
+        double t = 2 * Math.PI / 180;
+        var box = WindowsOcr.Turned(100, 100, 340, 30, t, 1275, 1650);
 
-        var box = WindowsOcr.Deskewed(left, top, right - left, bottom - top, angle);
+        double dx = 100 - 1275, dy = 130 - 1650;
+        Assert.Equal(1275 + dx * Math.Cos(t) - dy * Math.Sin(t), box.X, 6);
+        Assert.Equal(1650 + dx * Math.Sin(t) + dy * Math.Cos(t), box.Bottom, 6);
+        Assert.Equal((340, 30), (box.Width, box.Height));
+        Assert.InRange(box.X - 100, 50, 80);
+    }
 
-        Assert.Equal(100, box.Width, 6);
-        Assert.Equal(20, box.Height, 6);
-        Assert.Equal(200, box.X, 6);
-        Assert.Equal(300, box.Bottom, 6);
+    [Fact]
+    public void AWordAtTheCentreStaysPut()
+    {
+        var box = WindowsOcr.Turned(550, 400, 100, 20, 0.1, 550, 420);
+
+        Assert.Equal(550, box.X, 6);
+        Assert.Equal(420, box.Bottom, 6);
     }
 }

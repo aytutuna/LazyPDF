@@ -35,7 +35,7 @@ public sealed class WindowsOcr : ITextRecognizer
             foreach (var word in line.Words)
             {
                 var box = word.BoundingRect;
-                var upright = angle == 0 ? new OcrBox(box.X, box.Y, box.Width, box.Height) : Deskewed(box.X, box.Y, box.Width, box.Height, angle);
+                var upright = angle == 0 ? new OcrBox(box.X, box.Y, box.Width, box.Height) : Turned(box.X, box.Y, box.Width, box.Height, -angle, width / 2.0, height / 2.0);
                 words.Add(new OcrWord(word.Text, new OcrBox(upright.X * toImage, upright.Y * toImage, upright.Width * toImage, upright.Height * toImage), 1, angle));
             }
         }
@@ -46,18 +46,15 @@ public sealed class WindowsOcr : ITextRecognizer
     private const double MinAngle = 0.005;
 
     /// <summary>
-    /// The upright box of a word whose axis-aligned bounds are given and whose line is turned by <paramref name="angle"/>
-    /// (counter-clockwise radians, under 45 degrees): its size, with the corner at the baseline start.
+    /// Windows gives each word as an upright box in the page turned back by the text angle about the image centre.
+    /// This puts its baseline start where the word was printed, keeping the size; <paramref name="clockwise"/> is in radians.
     /// </summary>
-    internal static OcrBox Deskewed(double x, double y, double width, double height, double angle)
+    internal static OcrBox Turned(double x, double y, double width, double height, double clockwise, double centerX, double centerY)
     {
-        double cos = Math.Cos(angle), sin = Math.Sin(angle), abs = Math.Abs(sin);
-        double d = cos * cos - sin * sin;
-        double w = Math.Max(0, (width * cos - height * abs) / d);
-        double h = Math.Max(0, (height * cos - width * abs) / d);
-        double left = x + h * Math.Max(0, sin);
-        double baseline = y + height - w * Math.Max(0, -sin);
-        return new OcrBox(left, baseline - h, w, h);
+        double cos = Math.Cos(clockwise), sin = Math.Sin(clockwise);
+        double dx = x - centerX, dy = y + height - centerY;
+        double left = centerX + dx * cos - dy * sin, baseline = centerY + dx * sin + dy * cos;
+        return new OcrBox(left, baseline - height, width, height);
     }
 
     // A page can be read four times, so the engine is made once per language. A missing language is asked for again, since it can be added meanwhile.
