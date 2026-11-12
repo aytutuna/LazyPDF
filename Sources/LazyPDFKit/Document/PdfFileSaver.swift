@@ -75,6 +75,13 @@ public enum PdfFileSaver {
         if !FileManager.default.isWritableFile(atPath: path.path) {
             throw CocoaError(.fileWriteNoPermission, userInfo: [NSFilePathErrorKey: path.path])
         }
+        #if canImport(Darwin)
         _ = try FileManager.default.replaceItemAt(path, withItemAt: temp)
+        #else
+        // swift-corelibs-foundation's replaceItemAt removes the original and then fails.
+        if rename(temp.path, path.path) != 0 {
+            throw CocoaError(.fileWriteUnknown, userInfo: [NSFilePathErrorKey: path.path])
+        }
+        #endif
     }
 }
