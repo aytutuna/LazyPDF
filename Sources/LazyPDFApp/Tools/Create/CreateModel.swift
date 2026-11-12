@@ -8,7 +8,7 @@ import LazyPDFKit
 
 public enum CreateFrom: Int, CaseIterable { case blank, pictures, text, clipboard }
 
-public enum CreatePaper: Equatable { case a4, letter, picture }
+public enum CreatePaper: String, Codable, Equatable { case a4, a3, a5, letter, legal, custom, picture }
 
 public enum CreateOrientation: Equatable { case automatic, portrait, landscape }
 
@@ -33,19 +33,82 @@ public final class CreateModel {
     public var typedText = ""
     public private(set) var clipboard = ClipboardKind.nothing
     public private(set) var fileProblem: String?
-    public var paper = CreatePaper.a4
+    public var paper = CreatePaper.a4 {
+        didSet { if !fitting { chosen = paper } }
+    }
     public var orientation = CreateOrientation.automatic
     public var margin = 36.0
     public var fontSize = 11.0
+    public var customWidth = ""
+    public var customHeight = ""
 
     @ObservationIgnored var host: ToolHost?
     @ObservationIgnored private let codec: ImageCodec
     @ObservationIgnored private let fonts: FontSource?
+    @ObservationIgnored private let settings: URL?
+    @ObservationIgnored private let locale: Locale
+    @ObservationIgnored private var chosen = CreatePaper.a4
+    @ObservationIgnored private var fitting = false
 
-    public init(host: ToolHost?, codec: ImageCodec, fonts: FontSource?) {
+    /// Whether the custom size is typed in millimeters or inches.
+    @ObservationIgnored public let metric: Bool
+
+    /// With a settings folder the paper and custom size are read from it now and saved when a file is made.
+    public init(host: ToolHost?, codec: ImageCodec, fonts: FontSource?, settings: URL? = nil,
+                metric: Bool = Locale.current.measurementSystem == .metric, locale: Locale = .current) {
         self.host = host
         self.codec = codec
         self.fonts = fonts
+        self.settings = settings
+        self.metric = metric
+        self.locale = locale
+        let saved = settings.map { AppPreferencesStore.load($0) } ?? AppPreferences()
+        chosen = saved.createPaper
+        customWidth = shown(saved.createWidth > 0 ? saved.createWidth : metric ? 210 * PageEdits.pointsPerMillimetre : 612)
+        customHeight = shown(saved.createHeight > 0 ? saved.createHeight : metric ? 297 * PageEdits.pointsPerMillimetre : 792)
+        fitPaper()
+    }
+
+    public var unit: String { metric ? "mm" : "in" }
+
+    private var pointsPerUnit: Double { metric ? PageEdits.pointsPerMillimetre : 72 }
+
+    private func number(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.locale = locale
+        formatter.numberStyle = .decimal
+        formatter.usesGroupingSeparator = false
+        formatter.maximumFractionDigits = 2
+        return formatter.string(from: NSNumber(value: value)) ?? ""
+    }
+
+    private func shown(_ points: Double) -> String { number(points / pointsPerUnit) }
+
+    // The page sides the engine accepts, in points.
+    private static let leastSide = 3.0
+    private static let mostSide = 14400.0
+
+    /// The custom size in points; nil while it is not a number within what a page can be.
+    private var customPoints: (width: Double, height: Double)? {
+        guard let width = PageEdits.number(customWidth, locale: locale), let height = PageEdits.number(customHeight, locale: locale) else { return nil }
+        let w = (width * pointsPerUnit * 1000).rounded() / 1000, h = (height * pointsPerUnit * 1000).rounded() / 1000
+        let sides = Self.leastSide...Self.mostSide
+        return sides.contains(w) && sides.contains(h) ? (w, h) : nil
+    }
+
+    private var customFits: Bool { paper != .custom || customPoints != nil }
+
+    private var sizeLimits: String {
+        let least = (Self.leastSide / pointsPerUnit * 100).rounded(.up) / 100
+        let most = (Self.mostSide / pointsPerUnit * 100).rounded() / 100
+        return L10n.t("Type a size from {0} to {1} {2}.", number(least), number(most), unit)
+    }
+
+    // The paper of the picture only exists for pictures, but it is remembered for when pictures come back.
+    private func fitPaper() {
+        fitting = true
+        paper = chosen == .picture && !makesPictures ? .a4 : chosen
+        fitting = false
     }
 
     public var blankCount: Int? {
@@ -59,15 +122,17 @@ public final class CreateModel {
 
     public var canRun: Bool {
         switch from {
-        case .blank: return blankCount != nil
-        case .pictures: return !pictures.isEmpty
-        case .text: return !typedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        case .clipboard: return clipboard != .nothing
+        case .blank: return blankCount != nil && customFits
+        case .pictures: return !pictures.isEmpty && customFits
+        case .text: return !typedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && customFits
+        case .clipboard: return clipboard != .nothing && customFits
         }
     }
 
     public var blocker: String? {
-        fileProblem ?? (from == .blank && blankCount == nil ? L10n.t("Type a number from 1 to {0}.", PdfMaker.mostBlankPages) : nil)
+        if let fileProblem { return fileProblem }
+        if from == .blank && blankCount == nil { return L10n.t("Type a number from 1 to {0}.", PdfMaker.mostBlankPages) }
+        return showsSetup && !customFits ? sizeLimits : nil
     }
 
     public var clipboardState: String {
@@ -81,6 +146,7 @@ public final class CreateModel {
     public var showsSetup: Bool { from != .clipboard || clipboard != .nothing }
     public var showsMargin: Bool { from != .blank }
     public var orientationEnabled: Bool { paper != .picture }
+    public var showsCustomSize: Bool { showsSetup && paper == .custom }
 
     public func choose(_ from: CreateFrom) {
         self.from = from
@@ -90,7 +156,7 @@ public final class CreateModel {
 
     public func peekClipboard() {
         clipboard = from == .clipboard ? host.map { $0.clipboard.kind() } ?? .nothing : .nothing
-        if !makesPictures && paper == .picture { paper = .a4 }
+        fitPaper()
     }
 
     public func inputChanged() {
@@ -107,6 +173,7 @@ public final class CreateModel {
             return
         }
         from = .pictures
+        fitPaper()
         for file in pictures { self.pictures.append(CreatePicture(file: file)) }
     }
 
@@ -149,20 +216,26 @@ public final class CreateModel {
     private var setup: PdfPageSetup {
         let sheet: PdfPaper = switch paper {
         case .a4: .a4
+        case .a3: .a3
+        case .a5: .a5
         case .letter: .letter
+        case .legal: .legal
+        case .custom: .custom
         case .picture: .picture
         }
+        let size = customPoints ?? (595.276, 841.89)
         let turn: PdfOrientation = switch orientation {
         case .automatic: .auto
         case .portrait: .portrait
         case .landscape: .landscape
         }
-        return PdfPageSetup(paper: sheet, orientation: turn, margin: from == .blank ? 36 : margin)
+        return PdfPageSetup(paper: sheet, orientation: turn, margin: from == .blank ? 36 : margin, customWidth: size.0, customHeight: size.1)
     }
 
     /// What the model is set to make; nil when the pasteboard emptied since it was looked at.
     public func request() -> CreateRequest? {
         let setup = setup
+        remember()
         switch from {
         case .blank:
             return CreateRequest(.blank, setup, L10n.t("Blank.pdf"), pages: blankCount ?? 1)
@@ -177,6 +250,15 @@ public final class CreateModel {
             if let picture = content?.picture { return CreateRequest(.pictures, setup, L10n.t("Clipboard.pdf"), picture: picture) }
             peekClipboard()
             return nil
+        }
+    }
+
+    private func remember() {
+        guard let settings else { return }
+        let size = customPoints
+        AppPreferencesStore.update(settings) {
+            $0.createPaper = chosen
+            if let size { ($0.createWidth, $0.createHeight) = size }
         }
     }
 
@@ -205,8 +287,8 @@ public final class CreateModel {
 public final class CreatePanelModel: ToolPanelModel {
     public let create: CreateModel
 
-    public init(codec: ImageCodec, fonts: FontSource?) {
-        create = CreateModel(host: nil, codec: codec, fonts: fonts)
+    public init(codec: ImageCodec, fonts: FontSource?, settings: URL? = nil) {
+        create = CreateModel(host: nil, codec: codec, fonts: fonts, settings: settings)
     }
 
     public var action: ToolAction? {

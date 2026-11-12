@@ -122,10 +122,22 @@ struct CreatePanelView: View {
         LabelledField(L10n.t("Paper")) {
             Picker(L10n.t("Paper"), selection: $model.paper) {
                 Text("A4").tag(CreatePaper.a4)
+                Text("A3").tag(CreatePaper.a3)
+                Text("A5").tag(CreatePaper.a5)
                 Text(L10n.t("Letter")).tag(CreatePaper.letter)
+                Text(L10n.t("Legal")).tag(CreatePaper.legal)
+                Text(L10n.t("Custom size")).tag(CreatePaper.custom)
                 if model.makesPictures { Text(L10n.t("Size of the picture")).tag(CreatePaper.picture) }
             }
             .labelsHidden()
+        }
+        if model.showsCustomSize {
+            LabelledField(L10n.t("Width ({0})", model.unit)) {
+                TextField(L10n.t("Width ({0})", model.unit), text: $model.customWidth).textFieldStyle(.roundedBorder).numberField()
+            }
+            LabelledField(L10n.t("Height ({0})", model.unit)) {
+                TextField(L10n.t("Height ({0})", model.unit), text: $model.customHeight).textFieldStyle(.roundedBorder).numberField()
+            }
         }
         LabelledField(L10n.t("Orientation")) {
             Picker(L10n.t("Orientation"), selection: $model.orientation) {
@@ -164,7 +176,7 @@ public struct CreateSheet: View {
     let close: () -> Void
 
     public init(host: AppViewModel, close: @escaping () -> Void) {
-        _model = State(initialValue: CreateModel(host: host, codec: ImageIOCodec(), fonts: CoreTextFontSource()))
+        _model = State(initialValue: CreateModel(host: host, codec: ImageIOCodec(), fonts: CoreTextFontSource(), settings: host.settings))
         self.close = close
     }
 

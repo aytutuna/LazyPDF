@@ -713,6 +713,7 @@
 "Headings are in order" = "Başlıklar sırayla";
 "Headings go down one level at a time, or there are none." = "Başlıklar birer seviye inerek ilerliyor ya da hiç başlık yok.";
 "Headings out of order: {0}{1}. Start at level 1 and go down one level at a time." = "Sırası bozuk başlıklar: {0}{1}. 1. seviyeden başlayın ve birer seviye inin.";
+"Height ({0})" = "Yükseklik ({0})";
 "Height in mm" = "Yükseklik (mm)";
 "Hidden layers" = "Gizli katmanlar";
 "Hidden text" = "Gizli metin";
@@ -2025,6 +2026,7 @@
 "Type a name for the set, then save it." = "Küme için bir ad yazın, sonra kaydedin.";
 "Type a number from 0 to 200, or leave it empty to fit the text to the field." = "0 ile 200 arasında bir sayı yazın veya metni alana sığdırmak için boş bırakın.";
 "Type a number from 1 to {0}." = "1 ile {0} arasında bir sayı yazın.";
+"Type a size from {0} to {1} {2}." = "{0} ile {1} {2} arasında bir boyut yazın.";
 "Type a title for the file, then save it." = "Dosya için bir başlık yazın, sonra kaydedin.";
 "Type a web address such as https://example.com." = "https://example.com gibi bir web adresi yazın.";
 "Type a whole number, or leave it empty for no limit." = "Tam sayı yazın veya sınır istemiyorsanız boş bırakın.";
@@ -2103,6 +2105,7 @@
 "Wide" = "Geniş";
 "Width" = "Kalınlık";
 "Width %" = "Genişlik %";
+"Width ({0})" = "Genişlik ({0})";
 "Width in mm" = "Genişlik (mm)";
 "Width in percent of the page" = "Sayfanın yüzde kaçı genişlik";
 "Will open when you are done here." = "Burada işiniz bitince açılacak.";

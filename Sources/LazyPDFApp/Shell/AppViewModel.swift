@@ -64,7 +64,7 @@ public final class AppViewModel {
     @ObservationIgnored let recentFiles: RecentFiles
     @ObservationIgnored let bookmarks: Bookmarks
     @ObservationIgnored let thumbnails: Thumbnails
-    @ObservationIgnored let settings: URL
+    @ObservationIgnored public let settings: URL
     @ObservationIgnored let printDirectory: URL
 
     /// How the tabs write their files; the Apple shells set a coordinated writer.

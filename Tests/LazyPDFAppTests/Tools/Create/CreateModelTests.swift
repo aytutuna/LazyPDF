@@ -259,6 +259,103 @@ final class CreateModelTests: XCTestCase {
         XCTAssertTrue(model.makesText)
     }
 
+    private func sized(_ settings: URL? = nil, metric: Bool = true) -> CreateModel {
+        CreateModel(host: nil, codec: FakeCodec(), fonts: FakeFonts(), settings: settings, metric: metric, locale: Locale(identifier: "en_US"))
+    }
+
+    private func settingsFolder() -> URL {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("lazypdf-create-" + UUID().uuidString)
+        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
+
+    func test_textAndPicturesTakeTheMorePapersAndPassThemToTheEngine() {
+        let model = sized()
+        model.choose(.text)
+        model.typedText = "Hello"
+        let papers: [(CreatePaper, PdfPaper)] = [(.a3, .a3), (.a5, .a5), (.legal, .legal), (.letter, .letter), (.custom, .custom)]
+
+        for (paper, engine) in papers {
+            model.paper = paper
+            XCTAssertEqual(model.request()?.setup.paper, engine)
+        }
+    }
+
+    func test_theCustomSizeIsTypedInMillimetersOrInchesAndReachesTheEngineInPoints() {
+        let metric = sized()
+        metric.choose(.text)
+        metric.paper = .custom
+        XCTAssertEqual(metric.unit, "mm")
+        XCTAssertEqual([metric.customWidth, metric.customHeight], ["210", "297"])
+        metric.customWidth = "100"
+        metric.customHeight = "200"
+
+        let setup = metric.request()!.setup
+
+        XCTAssertEqual(setup.customWidth, 100 * 72 / 25.4, accuracy: 0.001)
+        XCTAssertEqual(setup.customHeight, 200 * 72 / 25.4, accuracy: 0.001)
+
+        let inches = sized(metric: false)
+        inches.choose(.text)
+        inches.paper = .custom
+        XCTAssertEqual(inches.unit, "in")
+        XCTAssertEqual([inches.customWidth, inches.customHeight], ["8.5", "11"])
+        inches.customWidth = "4"
+        inches.customHeight = "6"
+        XCTAssertEqual(inches.request()!.setup.customWidth, 288, accuracy: 0.001)
+        XCTAssertEqual(inches.request()!.setup.customHeight, 432, accuracy: 0.001)
+    }
+
+    func test_theCustomSizeIsHeldToWhatTheEngineAccepts() {
+        let model = sized(metric: false)
+        model.choose(.text)
+        model.typedText = "Hello"
+        model.paper = .custom
+        XCTAssertTrue(model.showsCustomSize)
+
+        model.customWidth = "200"
+        model.customHeight = "0.05"
+        XCTAssertTrue(model.canRun)
+        XCTAssertNil(model.blocker)
+        for bad in ["200.1", "0.04", "x", ""] {
+            model.customHeight = bad
+            XCTAssertFalse(model.canRun, bad)
+            XCTAssertEqual(model.blocker, "Type a size from 0.05 to 200 in.", bad)
+        }
+        model.paper = .a4
+        XCTAssertTrue(model.canRun)
+        XCTAssertFalse(model.showsCustomSize)
+    }
+
+    func test_thePaperAndCustomSizeAreRememberedInTheSettingsFolder() {
+        let folder = settingsFolder()
+        let first = sized(folder)
+        first.choose(.text)
+        first.typedText = "Hello"
+        first.paper = .custom
+        first.customWidth = "123.5"
+        first.customHeight = "200"
+        _ = first.request()
+
+        let second = sized(folder)
+
+        XCTAssertEqual(second.paper, .custom)
+        XCTAssertEqual([second.customWidth, second.customHeight], ["123.5", "200"])
+        XCTAssertEqual(sized(settingsFolder()).paper, .a4)
+    }
+
+    func test_thePaperOfThePictureIsKeptForWhenPicturesComeBack() {
+        let model = sized()
+        model.choose(.pictures)
+        model.paper = .picture
+
+        model.choose(.text)
+        XCTAssertEqual(model.paper, .a4)
+        model.choose(.pictures)
+
+        XCTAssertEqual(model.paper, .picture)
+    }
+
     func test_blankPagesKeepTheNormalMarginWhateverWasPicked() async throws {
         let model = CreateModel(host: nil, codec: FakeCodec(), fonts: FakeFonts())
         model.margin = 72

@@ -45,10 +45,15 @@ public struct AppPreferences: Codable, Equatable {
     /// Index in `lastFiles` of the tab that was active.
     public var lastActive = 0
 
+    /// The paper last picked in Create and the custom page size last typed there, in points.
+    public var createPaper = CreatePaper.a4
+    public var createWidth = 0.0
+    public var createHeight = 0.0
+
     public init() {}
 
     private enum CodingKeys: String, CodingKey {
-        case appearance, sidePanel, inspectorSections, tint, columns, cover, continuous, reopenLast, lastFiles, lastActive
+        case appearance, sidePanel, inspectorSections, tint, columns, cover, continuous, reopenLast, lastFiles, lastActive, createPaper, createWidth, createHeight
     }
 
     public init(from decoder: Decoder) throws {
@@ -63,6 +68,9 @@ public struct AppPreferences: Codable, Equatable {
         reopenLast = c.decodeLenient(forKey: .reopenLast, default: reopenLast)
         lastFiles = c.decodeLenient(forKey: .lastFiles, default: lastFiles)
         lastActive = c.decodeLenient(forKey: .lastActive, default: lastActive)
+        createPaper = c.decodeLenient(forKey: .createPaper, default: createPaper)
+        createWidth = c.decodeLenient(forKey: .createWidth, default: createWidth)
+        createHeight = c.decodeLenient(forKey: .createHeight, default: createHeight)
     }
 }
 
