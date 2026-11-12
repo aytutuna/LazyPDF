@@ -736,6 +736,7 @@
 "Highlight the selected text." = "Seçili metni vurgulayın.";
 "Highlight, draw and leave notes on the pages." = "Sayfaları vurgulayın, üzerine çizin ve not bırakın.";
 "Hint" = "İpucu";
+"Hits removed" = "Bulunanlar kaldırıldı";
 "Home" = "Ana sayfa";
 "IBANs" = "IBAN'lar";
 "ISO 19005 clause {0}" = "ISO 19005 madde {0}";
@@ -1760,6 +1761,7 @@
 "The file changed meanwhile. Run it again." = "Dosya bu sırada değişti. Yeniden çalıştırın.";
 "The file changed meanwhile. Try again." = "Dosya bu sırada değişti. Yeniden deneyin.";
 "The file changed while you typed. Type it again." = "Siz yazarken dosya değişti. Yeniden yazın.";
+"The file changed, so the hits in comments and fields no longer fit. Search again." = "Dosya değişti, bu yüzden açıklamalardaki ve alanlardaki bulunanlar artık uymuyor. Yeniden arayın.";
 "The file could not be changed. Try again or open it again." = "Dosya değiştirilemedi. Yeniden deneyin ya da dosyayı yeniden açın.";
 "The file could not be checked." = "Dosya denetlenemedi.";
 "The file could not be converted." = "Dosya dönüştürülemedi.";
