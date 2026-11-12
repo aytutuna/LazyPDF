@@ -165,6 +165,7 @@ public sealed class DocumentTab : ITab, IDisposable
         bool same = stamp is not null && stamp == _disk
             || hash is not null && _diskHash is not null && hash.AsSpan().SequenceEqual(_diskHash);
         if (same) _disk = stamp;
+        if (IsDirty) WriteRecovery();
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     }
 

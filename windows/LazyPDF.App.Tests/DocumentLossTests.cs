@@ -25,6 +25,19 @@ public sealed class DocumentLossTests
     }
 
     [Fact]
+    public void AMovedUnsavedTabWritesItsNewPathToTheRecoveryCopy()
+    {
+        using var f = new ViewModelFixture();
+        var store = new RecoveryStore(f.Dir.Sub("recovery"));
+        using var tab = new LazyPDF.App.Documents.DocumentTab(PdfEditSession.Open(Pdfs.Text(1)), new FakeRenderer(), @"C:\old\a.pdf", "a.pdf", null, store, unsaved: true);
+
+        tab.MoveTo(@"C:\new\a.pdf", null, null);
+        store.Flush();
+
+        Assert.Equal(@"C:\new\a.pdf", Assert.Single(store.List()).Meta.OriginalPath);
+    }
+
+    [Fact]
     public async Task ARestoredFileThatAsksForAPasswordKeepsItsRecoveryCopyUntilItIsOpen()
     {
         using var f = new ViewModelFixture();
