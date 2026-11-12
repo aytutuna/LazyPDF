@@ -199,6 +199,11 @@ p
 r pic=100x1000 | 
 p
 r | next
+case picture taller than the page with spacing and space before
+section
+page 200 200 20 20 20 20
+p line=1.15 before=10
+r pic=100x1000 | 
 case a line breaks around a picture
 section
 page 200 200 20 20 20 20

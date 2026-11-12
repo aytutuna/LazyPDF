@@ -63,7 +63,7 @@ internal static class ParagraphLayout
         double left = Math.Max(0, paragraph.Left);
         double first = Math.Max(0, paragraph.Left + paragraph.FirstLine);
         double right = Math.Max(areaWidth - Math.Max(0, paragraph.Right), Math.Max(left, first) + 1);
-        Fit(atoms, right - Math.Min(left, first), maxHeight);
+        Fit(atoms, right - Math.Min(left, first), maxHeight, paragraph);
 
         var breaks = LineBreaker.Opportunities(atoms.Select(a => a.Code).ToList());
         var line = new LayoutLine { Start = first };
@@ -113,12 +113,16 @@ internal static class ParagraphLayout
     }
 
     // A picture wider or taller than the room shrinks, keeping its shape.
-    private static void Fit(List<Atom> atoms, double width, double height)
+    // The height leaves room for the descent, the multiple spacing and the space around the paragraph, so the line still fits.
+    private static void Fit(List<Atom> atoms, double width, double height, LayoutParagraph paragraph)
     {
+        double room = height - paragraph.Before - paragraph.After;
+        if (paragraph.Rule == LineRule.Multiple && paragraph.LineSpacing > 1) room /= paragraph.LineSpacing;
         foreach (var atom in atoms)
         {
             if (atom.Picture is null) continue;
-            double scale = Math.Min(1, Math.Min(Math.Max(1, width) / atom.Width, Math.Max(1, height) / atom.PictureHeight));
+            double limit = room - atom.RunFace.Descent * atom.Size;
+            double scale = Math.Min(1, Math.Min(Math.Max(1, width) / atom.Width, Math.Max(1, limit) / atom.PictureHeight));
             atom.Width *= scale;
             atom.PictureHeight *= scale;
         }

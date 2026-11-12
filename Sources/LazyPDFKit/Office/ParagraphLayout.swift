@@ -83,7 +83,7 @@ enum ParagraphLayout {
         let left = max(0, paragraph.left)
         let first = max(0, paragraph.left + paragraph.firstLine)
         let right = max(areaWidth - max(0, paragraph.right), max(left, first) + 1)
-        fit(atoms, right - min(left, first), maxHeight)
+        fit(atoms, right - min(left, first), maxHeight, paragraph)
         let justify = paragraph.align == .justify
 
         let breaks = LineBreaker.opportunities(atoms.map { $0.code })
@@ -129,9 +129,13 @@ enum ParagraphLayout {
     }
 
     // A picture wider or taller than the room shrinks, keeping its shape.
-    private static func fit(_ atoms: [Atom], _ width: Double, _ height: Double) {
+    // The height leaves room for the descent, the multiple spacing and the space around the paragraph, so the line still fits.
+    private static func fit(_ atoms: [Atom], _ width: Double, _ height: Double, _ paragraph: LayoutParagraph) {
+        var room = height - paragraph.before - paragraph.after
+        if paragraph.rule == .multiple && paragraph.lineSpacing > 1 { room /= paragraph.lineSpacing }
         for atom in atoms where atom.picture != nil {
-            let scale = min(1, min(max(1, width) / atom.width, max(1, height) / atom.pictureHeight))
+            let limit = room - atom.runFace.descent * atom.size
+            let scale = min(1, min(max(1, width) / atom.width, max(1, limit) / atom.pictureHeight))
             atom.width *= scale
             atom.pictureHeight *= scale
         }

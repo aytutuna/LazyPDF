@@ -1144,9 +1144,9 @@ text 20.00 68.43 Carlito/Regular 11.00 000000 +0.00 "next"
 | ET
 > picture taller than the page shrinks to the body
 page 1 200.00 200.00
-image 20.00 20.00 16.00 160.00
+image 20.00 20.00 15.70 157.05
 | q
-| 16 0 0 160 20 20 cm
+| 15.7 0 0 157.05 20 22.95 cm
 | /Im1 Do
 | Q
 page 2 200.00 200.00
@@ -1157,6 +1157,13 @@ text 20.00 30.47 Carlito/Regular 11.00 000000 +0.00 "next"
 | 20 169.53 Td
 | <0002000100040003> Tj
 | ET
+> picture taller than the page with spacing and space before
+page 1 200.00 200.00
+image 20.00 49.57 12.75 127.48
+| q
+| 12.75 0 0 127.48 20 22.95 cm
+| /Im1 Do
+| Q
 > a line breaks around a picture
 page 1 200.00 200.00
 text 20.00 30.47 Carlito/Regular 11.00 000000 +0.00 "Words that fill most of the line"
