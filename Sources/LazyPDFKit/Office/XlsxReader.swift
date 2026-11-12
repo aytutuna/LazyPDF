@@ -37,7 +37,7 @@ final class XlsxReader {
         return try XlsxReader(try OpcPackage.open(data), limits).run()
     }
 
-    private static func contains(_ text: String, _ part: String) -> Bool {
+    static func contains(_ text: String, _ part: String) -> Bool {
         let t = Array(text.utf8), p = Array(part.utf8)
         if p.isEmpty { return true }
         if t.count < p.count { return false }
@@ -45,7 +45,7 @@ final class XlsxReader {
         return false
     }
 
-    private static func endsWith(_ text: String, _ suffix: String) -> Bool {
+    static func endsWith(_ text: String, _ suffix: String) -> Bool {
         let t = Array(text.utf8), s = Array(suffix.utf8)
         return t.count >= s.count && Array(t[(t.count - s.count)...]) == s
     }

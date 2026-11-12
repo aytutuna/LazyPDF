@@ -197,15 +197,20 @@ final class DocxNumbering {
                 o.append(c)
                 continue
             }
-            switch c & 0xFF {
-            case 0xA7: o.append(0x25AA)
-            case 0xD8: o.append(0x27A2)
-            case 0xFC: o.append(0x2713)
-            case 0x76: o.append(0x2756)
-            default: o.append(0x2022)
-            }
+            o.append(symbolBullet(Int(c & 0xFF)))
         }
         return String(decoding: o, as: UTF16.self)
+    }
+
+    /// The character a Wingdings or Symbol bullet at this code stands for; the ones Office uses, else a plain bullet.
+    static func symbolBullet(_ code: Int) -> UInt16 {
+        switch code {
+        case 0xA7: return 0x25AA
+        case 0xD8: return 0x27A2
+        case 0xFC: return 0x2713
+        case 0x76: return 0x2756
+        default: return 0x2022
+        }
     }
 
     static func format(_ value: Int, _ format: String) -> String {

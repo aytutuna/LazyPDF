@@ -565,7 +565,7 @@ final class DocxReader {
     }
 
     // Plain ASCII only: full case mapping differs between the platforms.
-    private static func upper(_ text: String) -> String {
+    static func upper(_ text: String) -> String {
         String(String.UnicodeScalarView(text.unicodeScalars.map { ("a"..."z").contains($0) ? Unicode.Scalar($0.value - 32)! : $0 }))
     }
 
