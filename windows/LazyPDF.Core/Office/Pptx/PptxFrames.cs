@@ -11,7 +11,17 @@ internal sealed partial class PptxReader
         var nvPr = pic.Child(P, "nvPicPr")?.Child(P, "nvPr");
         bool media = nvPr?.Elements().Any(e => e.Name is "audioFile" or "videoFile" or "wavAudioFile" or "quickTimeFile") == true;
         if (media) Skip(PptxSkipped.Media);
-        if (ReadXfrm(spPr?.Child(DocxReader.A, "xfrm")) is not { } x)
+        XmlElement? layoutPr = null, masterPr = null;
+        if (nvPr?.Child(P, "ph") is { } ph)
+        {
+            string? type = ph.Attribute("type");
+            int index = (int)Math.Clamp(DocxReader.Number(ph.Attribute("idx")) ?? 0, 0, int.MaxValue);
+            var layoutPh = scope.Layout is null ? null : Match(scope.Layout.Placeholders, type, index, true);
+            var masterPh = Match(scope.Master.Placeholders, layoutPh?.Type ?? type, layoutPh?.Index ?? index, false);
+            layoutPr = layoutPh?.Shape.Child(P, "spPr");
+            masterPr = masterPh?.Shape.Child(P, "spPr");
+        }
+        if (ReadXfrm(spPr?.Child(DocxReader.A, "xfrm") ?? layoutPr?.Child(DocxReader.A, "xfrm") ?? masterPr?.Child(DocxReader.A, "xfrm")) is not { } x)
         {
             if (!media) Skip(PptxSkipped.Shape);
             return null;
@@ -28,7 +38,7 @@ internal sealed partial class PptxReader
         }
 
         var paths = new List<PlacedPath>();
-        if (LineOf(spPr, null, null, pic.Child(P, "style"), scope) is { } line)
+        if (LineOf(spPr, layoutPr, masterPr, pic.Child(P, "style"), scope) is { } line)
         {
             paths.Add(new PlacedPath(PptxGeometry.Build("rect", x.Width, x.Height, new Dictionary<string, double>()).Select(c => Place(matrix, c)).ToList(), null, Stroke(line)));
         }

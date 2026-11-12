@@ -233,6 +233,18 @@ final class PptxTests: XCTestCase {
         try Golden.check("office-pptx", "shapes-content.txt", output)
     }
 
+    func test_aPictureInAPlaceholderTakesItsFrameFromTheLayout() throws {
+        let layoutShape = "<p:sp><p:nvSpPr><p:cNvPr id=\"3\" name=\"Pic\"/><p:cNvSpPr/><p:nvPr><p:ph type=\"pic\" idx=\"1\"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x=\"127000\" y=\"0\"/><a:ext cx=\"1270000\" cy=\"635000\"/></a:xfrm></p:spPr></p:sp>"
+        let pic = "<p:pic><p:nvPicPr><p:cNvPr id=\"2\" name=\"P\"/><p:cNvPicPr/><p:nvPr><p:ph type=\"pic\" idx=\"1\"/></p:nvPr></p:nvPicPr><p:blipFill><a:blip r:embed=\"rIdP\"/></p:blipFill><p:spPr/></p:pic>"
+        let package = try PptxSpec.one("@layout1\n<p:cSld><p:spTree>\(layoutShape)</p:spTree></p:cSld>\n@slide1\n<p:cSld><p:spTree>\(pic)</p:spTree></p:cSld>\n@rels slide1\n\(image)\n@bytes ppt/media/pic.jpg\n\(jpeg)\n")
+        let made = try layout(package)
+        XCTAssertTrue(made.skipped.isEmpty)
+        let placed = images(made.pages[0])
+        XCTAssertEqual(placed.count, 1)
+        XCTAssertEqual(placed[0].x, 10, accuracy: 0.01)
+        XCTAssertEqual(placed[0].width, 100, accuracy: 0.01)
+    }
+
     func test_aJpegOnASlideIsPlacedAtItsFrameAndRotated() throws {
         let made = try OfficeConverter.fromPowerPoint(try withPictures(pic(127000)), OfficeLayoutSpec.fonts())
         XCTAssertTrue(made.skipped.isEmpty)

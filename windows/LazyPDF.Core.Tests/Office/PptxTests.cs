@@ -267,6 +267,19 @@ public class PptxTests
     }
 
     [Fact]
+    public void APictureInAPlaceholderTakesItsFrameFromTheLayout()
+    {
+        const string layoutShape = "<p:sp><p:nvSpPr><p:cNvPr id=\"3\" name=\"Pic\"/><p:cNvSpPr/><p:nvPr><p:ph type=\"pic\" idx=\"1\"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x=\"127000\" y=\"0\"/><a:ext cx=\"1270000\" cy=\"635000\"/></a:xfrm></p:spPr></p:sp>";
+        const string pic = "<p:pic><p:nvPicPr><p:cNvPr id=\"2\" name=\"P\"/><p:cNvPicPr/><p:nvPr><p:ph type=\"pic\" idx=\"1\"/></p:nvPr></p:nvPicPr><p:blipFill><a:blip r:embed=\"rIdP\"/></p:blipFill><p:spPr/></p:pic>";
+        var package = PptxSpec.One($"@layout1\n<p:cSld><p:spTree>{layoutShape}</p:spTree></p:cSld>\n@slide1\n<p:cSld><p:spTree>{pic}</p:spTree></p:cSld>\n@rels slide1\n{Image}\n@bytes ppt/media/pic.jpg\n{Jpeg}\n");
+        var layout = Layout(package);
+        Assert.Empty(layout.Skipped);
+        var image = Assert.Single(layout.Pages[0].Boxes.OfType<PlacedImage>());
+        Assert.Equal(10, image.X, 0.01);
+        Assert.Equal(100, image.Width, 0.01);
+    }
+
+    [Fact]
     public void OtherPicturesNeedTheCodec()
     {
         var package = PptxSpec.One($"@slide1\n<p:cSld><p:spTree>{Pic(0)}</p:spTree></p:cSld>\n@rels slide1\n{Image}\n@bytes ppt/media/pic.jpg\n50020280808080\n");

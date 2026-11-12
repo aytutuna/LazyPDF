@@ -12,7 +12,17 @@ extension PptxReader {
         let nvPr = pic.child(p, "nvPicPr")?.child(p, "nvPr")
         let media = nvPr?.elements.contains { ["audioFile", "videoFile", "wavAudioFile", "quickTimeFile"].contains($0.name) } == true
         if media { skip(PptxSkipped.media) }
-        guard let x = Self.readXfrm(spPr?.child(a, "xfrm")) else {
+        var layoutPr: OfficeXmlElement?
+        var masterPr: OfficeXmlElement?
+        if let ph = nvPr?.child(p, "ph") {
+            let type = ph.attribute("type")
+            let index = Int(PptxColors.clamp(DocxReader.number(ph.attribute("idx")) ?? 0, 0, Double(Int32.max)))
+            let layoutPh = scope.layout.flatMap { Self.match($0.placeholders, type, index, true) }
+            let masterPh = Self.match(scope.master.placeholders, layoutPh?.type ?? type, layoutPh?.index ?? index, false)
+            layoutPr = layoutPh?.shape.child(p, "spPr")
+            masterPr = masterPh?.shape.child(p, "spPr")
+        }
+        guard let x = Self.readXfrm(spPr?.child(a, "xfrm") ?? layoutPr?.child(a, "xfrm") ?? masterPr?.child(a, "xfrm")) else {
             if !media { skip(PptxSkipped.shape) }
             return nil
         }
@@ -30,7 +40,7 @@ extension PptxReader {
         }
 
         var paths: [PlacedPath] = []
-        if let line = Self.lineOf(spPr, nil, nil, pic.child(p, "style"), scope) {
+        if let line = Self.lineOf(spPr, layoutPr, masterPr, pic.child(p, "style"), scope) {
             paths.append(PlacedPath(commands: PptxGeometry.build("rect", x.width, x.height, [:]).map { Self.place(matrix, $0) }, fill: nil, stroke: Self.stroke(line)))
         }
         if image == nil && paths.isEmpty { return nil }
