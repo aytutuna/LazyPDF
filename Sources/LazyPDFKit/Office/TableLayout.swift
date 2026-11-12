@@ -172,16 +172,7 @@ enum TableLayout {
             row.height = exact ? row.source.height : max(row.source.height, row.need)
             if !exact { continue }
             // What does not fit in a fixed height is cut off.
-            for cell in row.cells {
-                let allowed = row.height - cell.source.marginTop - cell.source.marginBottom
-                var used = 0.0
-                var keep = 0
-                while keep < cell.slots.count && used + cell.slots[keep].height <= allowed + tolerance {
-                    used += cell.slots[keep].height
-                    keep += 1
-                }
-                if keep < cell.slots.count { cell.slots = Array(cell.slots[0..<keep]) }
-            }
+            for cell in row.cells where cell.rowSpan == 1 { clip(cell, row.height) }
         }
 
         // A merged cell that needs more than its rows give makes the last of them taller.
@@ -196,8 +187,20 @@ enum TableLayout {
             let need = cell.source.marginTop + cell.content + cell.source.marginBottom
             var have = 0.0
             for r in row..<end { have += rows[r].height }
-            if need > have { rows[end - 1].height += need - have }
+            let fixedRows = rows[row..<end].allSatisfy { $0.source.heightExact && $0.source.height > 0 }
+            if fixedRows { clip(cell, have) } else if need > have { rows[end - 1].height += need - have }
         }
+    }
+
+    private static func clip(_ cell: CellLines, _ height: Double) {
+        let allowed = height - cell.source.marginTop - cell.source.marginBottom
+        var used = 0.0
+        var keep = 0
+        while keep < cell.slots.count && used + cell.slots[keep].height <= allowed + tolerance {
+            used += cell.slots[keep].height
+            keep += 1
+        }
+        if keep < cell.slots.count { cell.slots = Array(cell.slots[0..<keep]) }
     }
 
     private static func groups(_ table: TableLines) {

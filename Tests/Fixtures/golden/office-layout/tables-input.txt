@@ -208,3 +208,21 @@ cell
 p
 r | next
 endtable
+case table merged cell across exact rows keeps its lines
+section
+page 200 200 20 20 20 20
+table cols=80,80
+row height=20 exact
+cell rowspan=2 bottom=1:000000
+p
+r | first line of the merged cell
+p
+r | second line of the merged cell
+cell
+p
+r | a
+row height=20 exact
+cell
+p
+r | b
+endtable

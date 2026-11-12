@@ -168,10 +168,8 @@ internal static class TableLayout
             // What does not fit in a fixed height is cut off.
             foreach (var cell in row.Cells)
             {
-                double allowed = row.Height - cell.Source.MarginTop - cell.Source.MarginBottom, used = 0;
-                int keep = 0;
-                while (keep < cell.Slots.Count && used + cell.Slots[keep].Height <= allowed + Tolerance) used += cell.Slots[keep++].Height;
-                if (keep < cell.Slots.Count) cell.Slots = cell.Slots.GetRange(0, keep);
+                if (cell.RowSpan > 1) continue;
+                Clip(cell, row.Height);
             }
         }
 
@@ -188,8 +186,19 @@ internal static class TableLayout
         {
             double need = cell.Source.MarginTop + cell.Content + cell.Source.MarginBottom, have = 0;
             for (int r = row; r < end; r++) have += rows[r].Height;
-            if (need > have) rows[end - 1].Height += need - have;
+            bool fixedRows = true;
+            for (int r = row; r < end; r++) fixedRows &= rows[r].Source.HeightExact && rows[r].Source.Height > 0;
+            if (fixedRows) Clip(cell, have);
+            else if (need > have) rows[end - 1].Height += need - have;
         }
+    }
+
+    private static void Clip(CellLines cell, double height)
+    {
+        double allowed = height - cell.Source.MarginTop - cell.Source.MarginBottom, used = 0;
+        int keep = 0;
+        while (keep < cell.Slots.Count && used + cell.Slots[keep].Height <= allowed + Tolerance) used += cell.Slots[keep++].Height;
+        if (keep < cell.Slots.Count) cell.Slots = cell.Slots.GetRange(0, keep);
     }
 
     private static void Groups(TableLines table)

@@ -997,3 +997,33 @@ text 25.40 70.76 Carlito/Regular 11.00 000000 +0.00 "next"
 | 25.4 129.24 Td
 | <000D000700150011> Tj
 | ET
+> table merged cell across exact rows keeps its lines
+page 1 200.00 200.00
+text 25.40 30.47 Carlito/Regular 11.00 000000 +0.00 "first line of the"
+text 25.40 43.90 Carlito/Regular 11.00 000000 +0.00 "merged cell"
+text 105.40 30.47 Carlito/Regular 11.00 000000 +0.00 "a"
+text 25.40 50.47 Carlito/Regular 11.00 000000 +0.00 "b"
+rect 19.50 59.50 81.00 1.00 000000
+| 0 0 0 rg
+| BT
+| /F1 11 Tf
+| 25.4 169.53 Td
+| <0007000A000F0010001100010013000A000D00060001000E00070001001100090006> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 25.4 156.1 Td
+| <000C0006000F00080006000500010004000600130013> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 105.4 169.53 Td
+| <0002> Tj
+| ET
+| BT
+| /F1 11 Tf
+| 25.4 149.53 Td
+| <0003> Tj
+| ET
+| 19.5 139.5 81 1 re
+| f
