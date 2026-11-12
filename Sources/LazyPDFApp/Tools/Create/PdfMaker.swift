@@ -78,13 +78,17 @@ public enum PdfMaker {
         case .office:
             let url = request.files[0]
             try token.throwIfCancelled()
+            if FileKinds.isOldOffice(url) { throw PdfReadException(.unsupported, "The file is in an older Office format.") }
             let size = (try FileManager.default.attributesOfItem(atPath: url.path)[.size] as? NSNumber)?.intValue ?? 0
             if size > mostOfficeBytes { throw PdfReadException(.unsupported, "The file is over the size limit.") }
             let source = OfficeFontSource(installed: fonts, bundled: BundledFontSource())
             let bytes = [UInt8](try Data(contentsOf: url))
-            let made = FileKinds.officeApp(url) == .excel
-                ? try OfficeConverter.fromExcel(bytes, source, fileName: url.lastPathComponent)
-                : try OfficeConverter.fromWord(bytes, source, codec)
+            let made: OfficePdf
+            switch FileKinds.officeApp(url) {
+            case .excel: made = try OfficeConverter.fromExcel(bytes, source, fileName: url.lastPathComponent)
+            case .powerPoint: made = try OfficeConverter.fromPowerPoint(bytes, source)
+            default: made = try OfficeConverter.fromWord(bytes, source, codec)
+            }
             return MadePdf(bytes: made.bytes, pages: made.pages, unreadable: made.missing.count, skipped: made.skipped)
         case .text:
             let text = try PdfFromText.create(request.text, fonts: fonts, setup: request.setup, size: request.fontSize)
@@ -153,6 +157,9 @@ extension CreateJob {
 enum CreateProblems {
     static func failed(_ error: Error, _ request: CreateRequest) -> Problem {
         let source = request.source
+        let app = source == .office ? FileKinds.officeApp(request.files[0]) : nil
+        let excel = app == .excel
+        let slides = app == .powerPoint
         let excel = source == .office && FileKinds.officeApp(request.files[0]) == .excel
         if source == .web {
             switch error as? WebPageError ?? .couldNotLoad {
@@ -163,6 +170,14 @@ enum CreateProblems {
             }
         }
         if let error = error as? PdfReadException {
+            if source == .office && FileKinds.isOldOffice(request.files[0]) {
+                return Problem(L10n.t("Older Office file is not supported"), L10n.t("Save it as .docx, .xlsx or .pptx first."))
+            }
+            if slides {
+                return error.problem == .damaged
+                    ? Problem(L10n.t("PowerPoint file cannot be read"), L10n.t("The file is damaged or is not a PowerPoint presentation. Pick a .pptx file."))
+                    : Problem(L10n.t("PowerPoint file is not supported"), L10n.t("The presentation cannot be made into a PDF. Only .pptx files up to 100 MB with a slide to show can be; older .ppt files must be saved as .pptx first."))
+            }
             if excel {
                 return error.problem == .damaged
                     ? Problem(L10n.t("Excel file cannot be read"), L10n.t("The file is damaged or is not an Excel workbook. Pick an .xlsx file."))
@@ -175,7 +190,7 @@ enum CreateProblems {
         if source == .office && !(error is InvalidOperationException || error is ArgumentException) {
             return Problems.isNoAccess(error)
                 ? Problem(L10n.t("No access"), L10n.t("The system does not let Lazy PDF read the file. Check who may open it."))
-                : Problem(excel ? L10n.t("Excel file cannot be read") : L10n.t("Word file cannot be read"), L10n.t("The file could not be read. Close any program that has it open and try again."))
+                : Problem(excel ? L10n.t("Excel file cannot be read") : slides ? L10n.t("PowerPoint file cannot be read") : L10n.t("Word file cannot be read"), L10n.t("The file could not be read. Close any program that has it open and try again."))
         }
         if error is InvalidOperationException {
             return Problem(L10n.t("No font for this text"), L10n.t("No font on this computer can draw the text. Remove the letters it cannot show."))

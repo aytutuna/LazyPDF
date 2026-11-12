@@ -8,7 +8,12 @@ enum OfficeNotice {
     static func text(_ made: MadePdf, _ app: OfficeApp?) -> String {
         var left = made.skipped.sorted { $0.kind.utf8.lexicographicallyPrecedes($1.kind.utf8) }.map { name($0.kind) }
         if made.unreadable > 0 { left.append(L10n.t("letters no font has")) }
-        let text = app == .excel ? L10n.t("Layout can differ from Excel.") : L10n.t("Layout can differ from Word.")
+        let text: String
+        switch app {
+        case .excel: text = L10n.t("Layout can differ from Excel.")
+        case .powerPoint: text = L10n.t("Layout can differ from PowerPoint.")
+        default: text = L10n.t("Layout can differ from Word.")
+        }
         return left.isEmpty ? text : text + " " + L10n.t("Left out: {0}.", left.joined(separator: ", "))
     }
 

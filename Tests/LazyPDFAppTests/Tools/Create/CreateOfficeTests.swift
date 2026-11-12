@@ -2,7 +2,7 @@ import XCTest
 @testable import LazyPDFKit
 @testable import LazyPDFApp
 
-// The Create tool's Word and Excel source: the model, the job and its notice. Follows windows/LazyPDF.App.Tests/Tools/convert/OfficeCreateTests.cs.
+// The Create tool's Word, Excel and PowerPoint source: the model, the job and its notice. Follows windows/LazyPDF.App.Tests/Tools/convert/OfficeCreateTests.cs.
 
 private final class RepoFonts: FontSource {
     private static let folder = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
@@ -70,6 +70,52 @@ final class CreateOfficeTests: XCTestCase {
             ExportZipEntry("xl/worksheets/sheet1.xml", Array("<worksheet xmlns=\"\(main)\">\(sheet)</worksheet>".utf8)),
             ExportZipEntry("xl/worksheets/sheet2.xml", Array("<worksheet xmlns=\"\(main)\"><sheetData/></worksheet>".utf8)),
         ])
+    }
+
+    private func pptx(_ title: String, hiddenSlide: Bool = false) throws -> [UInt8] {
+        let p = "http://schemas.openxmlformats.org/presentationml/2006/main"
+        let a = "http://schemas.openxmlformats.org/drawingml/2006/main"
+        let r = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+        let pkg = "http://schemas.openxmlformats.org/package/2006/relationships"
+        let ml = "application/vnd.openxmlformats-officedocument.presentationml."
+        func part(_ root: String, _ attributes: String, _ inside: String) -> String {
+            "<\(root) xmlns:p=\"\(p)\" xmlns:a=\"\(a)\" xmlns:r=\"\(r)\"\(attributes)>\(inside)</\(root)>"
+        }
+        func rels(_ type: String, _ target: String) -> String {
+            "<Relationships xmlns=\"\(pkg)\"><Relationship Id=\"rId1\" Type=\"\(r)/\(type)\" Target=\"\(target)\"/></Relationships>"
+        }
+        let shape = "<p:cSld><p:spTree><p:sp><p:nvSpPr><p:cNvPr id=\"2\" name=\"Title\"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>"
+            + "<p:spPr><a:xfrm><a:off x=\"914400\" y=\"914400\"/><a:ext cx=\"4572000\" cy=\"914400\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></p:spPr>"
+            + "<p:txBody><a:bodyPr/><a:p><a:r><a:t>\(title)</a:t></a:r></a:p></p:txBody></p:sp></p:spTree></p:cSld>"
+        let theme = "<a:themeElements><a:clrScheme name=\"Office\"><a:dk1><a:srgbClr val=\"000000\"/></a:dk1><a:lt1><a:srgbClr val=\"FFFFFF\"/></a:lt1>"
+            + "<a:dk2><a:srgbClr val=\"1F497D\"/></a:dk2><a:lt2><a:srgbClr val=\"EEECE1\"/></a:lt2><a:accent1><a:srgbClr val=\"4F81BD\"/></a:accent1><a:accent2><a:srgbClr val=\"C0504D\"/></a:accent2>"
+            + "<a:accent3><a:srgbClr val=\"9BBB59\"/></a:accent3><a:accent4><a:srgbClr val=\"8064A2\"/></a:accent4><a:accent5><a:srgbClr val=\"4BACC6\"/></a:accent5><a:accent6><a:srgbClr val=\"F79646\"/></a:accent6>"
+            + "<a:hlink><a:srgbClr val=\"0000FF\"/></a:hlink><a:folHlink><a:srgbClr val=\"800080\"/></a:folHlink></a:clrScheme>"
+            + "<a:fontScheme name=\"Office\"><a:majorFont><a:latin typeface=\"Calibri\"/></a:majorFont><a:minorFont><a:latin typeface=\"Calibri\"/></a:minorFont></a:fontScheme></a:themeElements>"
+        let slides = hiddenSlide ? [(1, ""), (2, " show=\"0\"")] : [(1, "")]
+        var entries: [ExportZipEntry] = []
+        func add(_ path: String, _ xml: String) { entries.append(ExportZipEntry(path, Array(xml.utf8))) }
+        add("[Content_Types].xml", "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"xml\" ContentType=\"application/xml\"/>"
+            + "<Override PartName=\"/ppt/presentation.xml\" ContentType=\"\(ml)presentation.main+xml\"/>"
+            + slides.map { "<Override PartName=\"/ppt/slides/slide\($0.0).xml\" ContentType=\"\(ml)slide+xml\"/>" }.joined()
+            + "<Override PartName=\"/ppt/slideLayouts/slideLayout1.xml\" ContentType=\"\(ml)slideLayout+xml\"/>"
+            + "<Override PartName=\"/ppt/slideMasters/slideMaster1.xml\" ContentType=\"\(ml)slideMaster+xml\"/>"
+            + "<Override PartName=\"/ppt/theme/theme1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.theme+xml\"/></Types>")
+        add("_rels/.rels", rels("officeDocument", "ppt/presentation.xml"))
+        add("ppt/presentation.xml", part("p:presentation", "",
+            "<p:sldIdLst>" + slides.map { "<p:sldId id=\"\(255 + $0.0)\" r:id=\"rIdS\($0.0)\"/>" }.joined() + "</p:sldIdLst><p:sldSz cx=\"9144000\" cy=\"6858000\"/>"))
+        add("ppt/_rels/presentation.xml.rels", "<Relationships xmlns=\"\(pkg)\">"
+            + slides.map { "<Relationship Id=\"rIdS\($0.0)\" Type=\"\(r)/slide\" Target=\"slides/slide\($0.0).xml\"/>" }.joined() + "</Relationships>")
+        for (n, attributes) in slides {
+            add("ppt/slides/slide\(n).xml", part("p:sld", attributes, shape))
+            add("ppt/slides/_rels/slide\(n).xml.rels", rels("slideLayout", "../slideLayouts/slideLayout1.xml"))
+        }
+        add("ppt/slideLayouts/slideLayout1.xml", part("p:sldLayout", "", "<p:cSld><p:spTree/></p:cSld>"))
+        add("ppt/slideLayouts/_rels/slideLayout1.xml.rels", rels("slideMaster", "../slideMasters/slideMaster1.xml"))
+        add("ppt/slideMasters/slideMaster1.xml", part("p:sldMaster", "", "<p:cSld><p:spTree/></p:cSld>"))
+        add("ppt/slideMasters/_rels/slideMaster1.xml.rels", rels("theme", "../theme/theme1.xml"))
+        add("ppt/theme/theme1.xml", part("a:theme", "", theme))
+        return try ExportZip.make(entries)
     }
 
     private func cell(_ text: String) -> String {
@@ -193,11 +239,66 @@ final class CreateOfficeTests: XCTestCase {
         XCTAssertEqual(f.vm.message?.title, "Excel file is not supported")
     }
 
+    func test_aPowerPointFileBecomesATabWithANoteThatNamesPowerPoint() async throws {
+        let f = ViewModelFixture(self)
+        let url = f.dir.file("deck.pptx", try pptx("Quarterly review"))
+
+        try await CreateJob.run(f.vm, FakeCodec(), RepoFonts(), request(url))
+
+        XCTAssertEqual(f.vm.activeDocument?.title, "Letter.pdf")
+        XCTAssertEqual(f.vm.message?.isError, false)
+        XCTAssertEqual(f.vm.message?.title, "Made without Office")
+        XCTAssertEqual(f.vm.message?.text, "Layout can differ from PowerPoint.")
+    }
+
+    func test_whatAPresentationHadThatWasLeftOutIsListed() async throws {
+        let f = ViewModelFixture(self)
+
+        try await CreateJob.run(f.vm, FakeCodec(), RepoFonts(), request(f.dir.file("deck.pptx", try pptx("One", hiddenSlide: true))))
+
+        XCTAssertEqual(f.vm.message?.text, "Layout can differ from PowerPoint. Left out: hidden slides.")
+    }
+
+    func test_aFileThatIsNotAPowerPointPresentationIsAProblem() async throws {
+        let f = ViewModelFixture(self)
+
+        try await CreateJob.run(f.vm, FakeCodec(), RepoFonts(), request(f.dir.file("a.pptx", Array("not a zip at all".utf8))))
+
+        XCTAssertEqual(f.vm.message?.isError, true)
+        XCTAssertEqual(f.vm.message?.title, "PowerPoint file cannot be read")
+        XCTAssertTrue(f.vm.documents.isEmpty)
+    }
+
+    func test_aPackageThatIsNotAPresentationIsNotSupported() async throws {
+        let f = ViewModelFixture(self)
+
+        try await CreateJob.run(f.vm, FakeCodec(), RepoFonts(), request(f.dir.file("a.pptx", try docx(paragraph("x")))))
+
+        XCTAssertEqual(f.vm.message?.title, "PowerPoint file is not supported")
+    }
+
+    func test_anOlderOfficeFileIsToldToBeSavedInTheNewFormat() async throws {
+        let ole: [UInt8] = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1] + [UInt8](repeating: 0, count: 600)
+        for name in ["old.doc", "old.XLS", "old.ppt"] {
+            let f = ViewModelFixture(self)
+
+            try await CreateJob.run(f.vm, FakeCodec(), RepoFonts(), request(f.dir.file(name, ole)))
+
+            XCTAssertEqual(f.vm.message?.isError, true, name)
+            XCTAssertEqual(f.vm.message?.title, "Older Office file is not supported", name)
+            XCTAssertEqual(f.vm.message?.text, "Save it as .docx, .xlsx or .pptx first.", name)
+            XCTAssertTrue(f.vm.documents.isEmpty, name)
+        }
+    }
+
     func test_officeFilesAreToldApartByTheirExtension() {
         XCTAssertEqual(FileKinds.officeApp(URL(fileURLWithPath: "/a/Letter.DOCX")), .word)
         XCTAssertEqual(FileKinds.officeApp(URL(fileURLWithPath: "/a/sales.xlsx")), .excel)
+        XCTAssertEqual(FileKinds.officeApp(URL(fileURLWithPath: "/a/deck.PPTX")), .powerPoint)
         XCTAssertNil(FileKinds.officeApp(URL(fileURLWithPath: "/a/old.xls")))
-        XCTAssertEqual(FileKinds.officeExtensions, ["docx", "xlsx"])
+        XCTAssertTrue(FileKinds.isOldOffice(URL(fileURLWithPath: "/a/old.xls")))
+        XCTAssertFalse(FileKinds.isOldOffice(URL(fileURLWithPath: "/a/new.xlsx")))
+        XCTAssertEqual(FileKinds.officeExtensions, ["docx", "pptx", "xlsx"])
     }
 
     func test_aFileThatIsNotAWordDocumentIsAProblem() async throws {
