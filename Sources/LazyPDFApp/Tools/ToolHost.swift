@@ -133,7 +133,7 @@ extension ToolHost {
 
 /// A kind of file a panel offers.
 public enum ToolFileKind: Sendable {
-    case pdf, picture, text
+    case pdf, picture, text, webPage
     /// A .p12 or .pfx identity.
     case certificate
     case any

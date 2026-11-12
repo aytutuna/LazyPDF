@@ -6,7 +6,7 @@ import LazyPDFKit
 // pasteboard and opens it in a tab of its own. It is not tied to a document, so the Home tile presents it in a sheet and the
 // tool strip shows it beside the document in view; the pictures chosen are kept with their grants while they are listed.
 
-public enum CreateFrom: Int, CaseIterable { case blank, pictures, text, clipboard }
+public enum CreateFrom: Int, CaseIterable { case blank, pictures, text, clipboard, webPage }
 
 public enum CreatePaper: String, Codable, Equatable { case a4, a3, a5, letter, legal, custom, picture }
 
@@ -30,6 +30,7 @@ public final class CreateModel {
     public var blankPages = "1"
     public private(set) var pictures: [CreatePicture] = []
     public var selection: UUID?
+    public private(set) var webPage: ToolFile?
     public var typedText = ""
     public private(set) var clipboard = ClipboardKind.nothing
     public private(set) var fileProblem: String?
@@ -45,6 +46,7 @@ public final class CreateModel {
     @ObservationIgnored var host: ToolHost?
     @ObservationIgnored private let codec: ImageCodec
     @ObservationIgnored private let fonts: FontSource?
+    @ObservationIgnored private let web: WebPageRenderer?
     @ObservationIgnored private let settings: URL?
     @ObservationIgnored private let locale: Locale
     @ObservationIgnored private var chosen = CreatePaper.a4
@@ -54,12 +56,13 @@ public final class CreateModel {
     @ObservationIgnored public let metric: Bool
 
     /// With a settings folder the paper and custom size are read from it now and saved when a file is made.
-    public init(host: ToolHost?, codec: ImageCodec, fonts: FontSource?, settings: URL? = nil,
+    public init(host: ToolHost?, codec: ImageCodec, fonts: FontSource?, settings: URL? = nil, web: WebPageRenderer? = nil,
                 metric: Bool = Locale.current.measurementSystem == .metric, locale: Locale = .current) {
         self.host = host
         self.codec = codec
         self.fonts = fonts
         self.settings = settings
+        self.web = web
         self.metric = metric
         self.locale = locale
         let saved = settings.map { AppPreferencesStore.load($0) } ?? AppPreferences()
@@ -126,6 +129,7 @@ public final class CreateModel {
         case .pictures: return !pictures.isEmpty && customFits
         case .text: return !typedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && customFits
         case .clipboard: return clipboard != .nothing && customFits
+        case .webPage: return webPage != nil && customFits
         }
     }
 
@@ -145,6 +149,7 @@ public final class CreateModel {
 
     public var showsSetup: Bool { from != .clipboard || clipboard != .nothing }
     public var showsMargin: Bool { from != .blank }
+    public var offersWebPage: Bool { web != nil }
     public var orientationEnabled: Bool { paper != .picture }
     public var showsCustomSize: Bool { showsSetup && paper == .custom }
 
@@ -196,6 +201,13 @@ public final class CreateModel {
     public var canMoveUp: Bool { pictures.firstIndex(where: { $0.id == selection }).map { $0 > 0 } ?? false }
 
     public var canMoveDown: Bool { pictures.firstIndex(where: { $0.id == selection }).map { $0 < pictures.count - 1 } ?? false }
+
+    public func pickWebPage() async {
+        guard let host, let file = await host.filePicker.pickFiles([.webPage], multiple: false).first else { return }
+        webPage?.access?.stop()
+        webPage = file
+        fileProblem = nil
+    }
 
     public func openTextFile() async {
         guard let host, let file = await host.filePicker.pickFiles([.text], multiple: false).first else { return }
@@ -251,6 +263,9 @@ public final class CreateModel {
             if let picture = content?.picture { return CreateRequest(.pictures, pageSetup(pictures: true), L10n.t("Clipboard.pdf"), picture: picture) }
             peekClipboard()
             return nil
+        case .webPage:
+            guard let page = webPage else { return nil }
+            return CreateRequest(.web, setup, (page.url.lastPathComponent as NSString).deletingPathExtension + ".pdf", files: [page.url])
         }
     }
 
@@ -266,8 +281,8 @@ public final class CreateModel {
     /// Makes the document of `request` and opens it in a new tab.
     public func create(_ request: CreateRequest) async {
         guard let host else { return }
-        await ChangeGate.guardedAsync(host, L10n.t("Create")) { [codec, fonts] in
-            try await CreateJob.run(host, codec, fonts, request)
+        await ChangeGate.guardedAsync(host, L10n.t("Create")) { [codec, fonts, web] in
+            try await CreateJob.run(host, codec, fonts, request, web: web)
         }
     }
 
@@ -288,8 +303,8 @@ public final class CreateModel {
 public final class CreatePanelModel: ToolPanelModel {
     public let create: CreateModel
 
-    public init(codec: ImageCodec, fonts: FontSource?, settings: URL? = nil) {
-        create = CreateModel(host: nil, codec: codec, fonts: fonts, settings: settings)
+    public init(codec: ImageCodec, fonts: FontSource?, settings: URL? = nil, web: WebPageRenderer? = nil) {
+        create = CreateModel(host: nil, codec: codec, fonts: fonts, settings: settings, web: web)
     }
 
     public var action: ToolAction? {

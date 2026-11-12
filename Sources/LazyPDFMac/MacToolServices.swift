@@ -62,6 +62,7 @@ final class MacToolServices: ToolFilePicker, ToolFileExporter, ToolClipboard {
             case .pdf: found.append(.pdf)
             case .picture: found += FileKinds.pictureExtensions.compactMap { UTType(filenameExtension: $0) }
             case .text: found += FileKinds.textExtensions.compactMap { UTType(filenameExtension: $0) }
+            case .webPage: found += FileKinds.webPageExtensions.compactMap { UTType(filenameExtension: $0) }
             case .certificate: found += ["p12", "pfx"].compactMap { UTType(filenameExtension: $0) }
             case .any: return []
             }

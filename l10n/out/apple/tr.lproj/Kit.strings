@@ -1115,8 +1115,11 @@
 "Pack objects" = "Nesneleri paketle";
 "Page" = "Sayfa";
 "Page added" = "Sayfa eklendi";
+"Page cannot be read" = "Sayfa okunamıyor";
 "Page content" = "Sayfa içeriği";
 "Page content changed" = "Sayfa içeriği değişti";
+"Page is too big" = "Sayfa çok büyük";
+"Page is too long" = "Sayfa çok uzun";
 "Page labels" = "Sayfa etiketleri";
 "Page layout" = "Sayfa düzeni";
 "Page moved" = "Sayfa taşındı";
@@ -1126,6 +1129,7 @@
 "Page removed" = "Sayfa kaldırıldı";
 "Page size" = "Sayfa boyutu";
 "Page thumbnails" = "Sayfa küçük resimleri";
+"Page took too long" = "Sayfa çok uzun sürdü";
 "Page viewer" = "Sayfa görüntüleyici";
 "Page {0}" = "Sayfa {0}";
 "Page {0} ({1} of {2})" = "Sayfa {0} ({1}/{2})";
@@ -1222,6 +1226,7 @@
 "Picture watermark" = "Resimli filigran";
 "Picture {0}" = "Resim {0}";
 "Pictures" = "Resimler";
+"Pictures and styles from the internet are not loaded, so they are missing from the PDF." = "İnternetteki resimler ve stiller yüklenmez, bu yüzden PDF'de yer almaz.";
 "Pictures in JPEG and JPEG 2000 need the system codec and were left." = "JPEG ve JPEG 2000 resimler sistem kodekini gerektirir ve olduğu gibi bırakıldı.";
 "Pictures in the file" = "Dosyadaki resimler";
 "Pictures of the pages" = "Sayfaların resimleri";
@@ -1911,6 +1916,10 @@
 "The tree is too large to show whole. Pick a tag to go to its page." = "Ağaç tamamını göstermek için çok büyük. Sayfasına gitmek için bir etiket seçin.";
 "The value does not fit the format." = "Değer biçime uymuyor.";
 "The value saved when this button is chosen." = "Bu düğme seçildiğinde kaydedilen değer.";
+"The web page could not be read. Check that it is an HTML file and that no other program has it open." = "Web sayfası okunamadı. Bir HTML dosyası olduğundan ve başka bir programın onu açık tutmadığından emin olun.";
+"The web page did not finish loading. Pick a simpler page." = "Web sayfası yüklenmeyi bitirmedi. Daha basit bir sayfa seçin.";
+"The web page file is over 20 MB. Pick a smaller one." = "Web sayfası dosyası 20 MB'ı aşıyor. Daha küçük bir dosya seçin.";
+"The web page would make more than 2000 pages. Pick a shorter one." = "Web sayfası 2000'den fazla sayfa oluşturacak. Daha kısa bir sayfa seçin.";
 "The whole file fits in one part. Use a smaller amount." = "Dosyanın tamamı tek parçaya sığıyor. Daha küçük bir değer girin.";
 "The width of {0} is {1} but the font program says {2}." = "{0} karakterinin genişliği {1} ama yazı tipi programı {2} diyor.";
 "The window shows the file name, not the title. Turn on showing the title." = "Pencere başlığı değil dosya adını gösteriyor. Başlığın gösterilmesini açın.";

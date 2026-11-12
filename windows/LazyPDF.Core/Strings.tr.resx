@@ -4078,11 +4078,20 @@
   <data name="Page added" xml:space="preserve">
     <value>Sayfa eklendi</value>
   </data>
+  <data name="Page cannot be read" xml:space="preserve">
+    <value>Sayfa okunamıyor</value>
+  </data>
   <data name="Page content" xml:space="preserve">
     <value>Sayfa içeriği</value>
   </data>
   <data name="Page content changed" xml:space="preserve">
     <value>Sayfa içeriği değişti</value>
+  </data>
+  <data name="Page is too big" xml:space="preserve">
+    <value>Sayfa çok büyük</value>
+  </data>
+  <data name="Page is too long" xml:space="preserve">
+    <value>Sayfa çok uzun</value>
   </data>
   <data name="Page labels" xml:space="preserve">
     <value>Sayfa etiketleri</value>
@@ -4122,6 +4131,9 @@
   </data>
   <data name="Page thumbnails" xml:space="preserve">
     <value>Sayfa küçük resimleri</value>
+  </data>
+  <data name="Page took too long" xml:space="preserve">
+    <value>Sayfa çok uzun sürdü</value>
   </data>
   <data name="Page viewer" xml:space="preserve">
     <value>Sayfa görüntüleyici</value>
@@ -4452,6 +4464,9 @@
   </data>
   <data name="Pictures" xml:space="preserve">
     <value>Resimler</value>
+  </data>
+  <data name="Pictures and styles from the internet are not loaded, so they are missing from the PDF." xml:space="preserve">
+    <value>İnternetteki resimler ve stiller yüklenmez, bu yüzden PDF'de yer almaz.</value>
   </data>
   <data name="Pictures cannot be locked" xml:space="preserve">
     <value>Resimler kilitlenemez</value>
@@ -5268,6 +5283,9 @@
   </data>
   <data name="Scripts and anything from the internet are left out. Pictures and styles beside the file are kept." xml:space="preserve">
     <value>Betikler ve internetten gelen her şey dışarıda bırakılır. Dosyanın yanındaki resimler ve stiller korunur.</value>
+  </data>
+  <data name="Scripts do not run and nothing is loaded from the internet." xml:space="preserve">
+    <value>Betikler çalışmaz ve internetten hiçbir şey yüklenmez.</value>
   </data>
   <data name="Scroll continuously" xml:space="preserve">
     <value>Sürekli kaydır</value>
@@ -6841,6 +6859,18 @@
   <data name="The web page could not be loaded or drawn. Close any program that has it open and try again." xml:space="preserve">
     <value>Web sayfası yüklenemedi veya çizilemedi. Dosyayı açık tutan programları kapatıp yeniden deneyin.</value>
   </data>
+  <data name="The web page could not be read. Check that it is an HTML file and that no other program has it open." xml:space="preserve">
+    <value>Web sayfası okunamadı. Bir HTML dosyası olduğundan ve başka bir programın onu açık tutmadığından emin olun.</value>
+  </data>
+  <data name="The web page did not finish loading. Pick a simpler page." xml:space="preserve">
+    <value>Web sayfası yüklenmeyi bitirmedi. Daha basit bir sayfa seçin.</value>
+  </data>
+  <data name="The web page file is over 20 MB. Pick a smaller one." xml:space="preserve">
+    <value>Web sayfası dosyası 20 MB'ı aşıyor. Daha küçük bir dosya seçin.</value>
+  </data>
+  <data name="The web page would make more than 2000 pages. Pick a shorter one." xml:space="preserve">
+    <value>Web sayfası 2000'den fazla sayfa oluşturacak. Daha kısa bir sayfa seçin.</value>
+  </data>
   <data name="The whole file fits in one part. Use a smaller amount." xml:space="preserve">
     <value>Dosyanın tamamı tek parçaya sığıyor. Daha küçük bir değer girin.</value>
   </data>
@@ -7572,6 +7602,9 @@
   </data>
   <data name="Web address" xml:space="preserve">
     <value>Web adresi</value>
+  </data>
+  <data name="Web page" xml:space="preserve">
+    <value>Web sayfası</value>
   </data>
   <data name="Web page (.html)" xml:space="preserve">
     <value>Web sayfası (.html)</value>

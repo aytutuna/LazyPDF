@@ -8608,5 +8608,38 @@
   },
   "Windows does not let Lazy PDF read the web page. Check who may open it.": {
     "tr": "Windows, Lazy PDF'nin web sayfasını okumasına izin vermiyor. Dosyayı kimlerin açabildiğini kontrol edin."
+  },
+  "Web page": {
+    "tr": "Web sayfası"
+  },
+  "Scripts do not run and nothing is loaded from the internet.": {
+    "tr": "Betikler çalışmaz ve internetten hiçbir şey yüklenmez."
+  },
+  "Pictures and styles from the internet are not loaded, so they are missing from the PDF.": {
+    "tr": "İnternetteki resimler ve stiller yüklenmez, bu yüzden PDF'de yer almaz."
+  },
+  "Page is too big": {
+    "tr": "Sayfa çok büyük"
+  },
+  "The web page file is over 20 MB. Pick a smaller one.": {
+    "tr": "Web sayfası dosyası 20 MB'ı aşıyor. Daha küçük bir dosya seçin."
+  },
+  "Page took too long": {
+    "tr": "Sayfa çok uzun sürdü"
+  },
+  "The web page did not finish loading. Pick a simpler page.": {
+    "tr": "Web sayfası yüklenmeyi bitirmedi. Daha basit bir sayfa seçin."
+  },
+  "Page is too long": {
+    "tr": "Sayfa çok uzun"
+  },
+  "The web page would make more than 2000 pages. Pick a shorter one.": {
+    "tr": "Web sayfası 2000'den fazla sayfa oluşturacak. Daha kısa bir sayfa seçin."
+  },
+  "Page cannot be read": {
+    "tr": "Sayfa okunamıyor"
+  },
+  "The web page could not be read. Check that it is an HTML file and that no other program has it open.": {
+    "tr": "Web sayfası okunamadı. Bir HTML dosyası olduğundan ve başka bir programın onu açık tutmadığından emin olun."
   }
 }

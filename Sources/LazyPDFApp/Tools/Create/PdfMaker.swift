@@ -3,7 +3,7 @@ import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Tools/Create/PdfMaker.cs, CreateJob.cs and CreateProblems.cs.
 
-public enum CreateSource { case blank, pictures, text }
+public enum CreateSource { case blank, pictures, text, web }
 
 /// `files` are picture files to read, in page order; `picture` is one already in memory that stands for them: the pasteboard's.
 public struct CreateRequest {
@@ -36,12 +36,15 @@ public struct MadePdf {
     public let pages: Int
     public let unreadable: Int
     public let tooLarge: Int
+    /// True when a web page named parts from the internet that were left out.
+    public let leftOutRemote: Bool
 
-    init(bytes: [UInt8], pages: Int, unreadable: Int, tooLarge: Int = 0) {
+    init(bytes: [UInt8], pages: Int, unreadable: Int, tooLarge: Int = 0, leftOutRemote: Bool = false) {
         self.bytes = bytes
         self.pages = pages
         self.unreadable = unreadable
         self.tooLarge = tooLarge
+        self.leftOutRemote = leftOutRemote
     }
 }
 
@@ -70,19 +73,26 @@ public enum PdfMaker {
         case .text:
             let text = try PdfFromText.create(request.text, fonts: fonts, setup: request.setup, size: request.fontSize)
             return MadePdf(bytes: text.bytes, pages: text.pages, unreadable: text.missing.count)
+        case .web:
+            preconditionFailure("A web page is made by CreateJob, which waits on the web view.")
         }
     }
 }
 
 @MainActor
 public enum CreateJob {
-    public static func run(_ host: ToolHost, _ codec: ImageCodec, _ fonts: FontSource?, _ request: CreateRequest) async throws {
+    public static func run(_ host: ToolHost, _ codec: ImageCodec, _ fonts: FontSource?, _ request: CreateRequest,
+                           web: WebPageRenderer? = nil) async throws {
         var made: MadePdf?
         do {
             try await host.runBusy(L10n.t("Creating")) { token in
-                made = try await ToolDocuments.run(token) { try PdfMaker.make(request, codec, fonts, token) }
+                if request.source == .web {
+                    made = try await makeWebPage(request, web, token)
+                } else {
+                    made = try await ToolDocuments.run(token) { try PdfMaker.make(request, codec, fonts, token) }
+                }
             }
-        } catch let error where error is ArgumentException || error is InvalidOperationException || Problems.isFileSystem(error) {
+        } catch let error where error is ArgumentException || error is InvalidOperationException || error is WebPageError || Problems.isFileSystem(error) {
             host.showProblem(CreateProblems.failed(error, request.source))
             return
         }
@@ -98,12 +108,35 @@ public enum CreateJob {
         if made.tooLarge > 0 {
             parts.append(L10n.plural(made.tooLarge, one: "{0} picture was too large and was left out.", other: "{0} pictures were too large and were left out."))
         }
+        if made.leftOutRemote {
+            parts.append(L10n.t("Pictures and styles from the internet are not loaded, so they are missing from the PDF."))
+        }
         if !parts.isEmpty { host.showNotice(L10n.t("Some left out"), parts.joined(separator: " "), nil) }
+    }
+}
+
+extension CreateJob {
+    private static func makeWebPage(_ request: CreateRequest, _ web: WebPageRenderer?, _ token: CancelToken) async throws -> MadePdf {
+        guard let web, let file = request.files.first else { throw WebPageError.couldNotLoad }
+        let size = (try FileManager.default.attributesOfItem(atPath: file.path)[.size] as? NSNumber)?.intValue ?? 0
+        if size > WebPageRules.mostBytes { throw WebPageError.tooBig }
+        let html = TextFiles.decode([UInt8](try Data(contentsOf: file)))
+        try token.throwIfCancelled()
+        let rendered = try await web.render(file, WebPageLayout(request.setup))
+        return MadePdf(bytes: rendered.bytes, pages: rendered.pages, unreadable: 0, leftOutRemote: WebPageRules.namesRemoteParts(html))
     }
 }
 
 enum CreateProblems {
     static func failed(_ error: Error, _ source: CreateSource) -> Problem {
+        if source == .web {
+            switch error as? WebPageError ?? .couldNotLoad {
+            case .tooBig: return Problem(L10n.t("Page is too big"), L10n.t("The web page file is over 20 MB. Pick a smaller one."))
+            case .timedOut: return Problem(L10n.t("Page took too long"), L10n.t("The web page did not finish loading. Pick a simpler page."))
+            case .tooLong: return Problem(L10n.t("Page is too long"), L10n.t("The web page would make more than 2000 pages. Pick a shorter one."))
+            case .couldNotLoad: return Problem(L10n.t("Page cannot be read"), L10n.t("The web page could not be read. Check that it is an HTML file and that no other program has it open."))
+            }
+        }
         if error is InvalidOperationException {
             return Problem(L10n.t("No font for this text"), L10n.t("No font on this computer can draw the text. Remove the letters it cannot show."))
         }
