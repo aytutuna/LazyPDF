@@ -77,6 +77,36 @@ final class VisionTextRecognizerTests: XCTestCase {
         XCTAssertTrue(languages[1].hasPrefix("en"))
     }
 
+    func test_aTurnedWordKeepsItsUprightSizeAtTheBaselineStart() {
+        // A 100 by 20 word on a 1000 by 500 picture, turned 0.1 rad counter-clockwise about (200, 300) from the top.
+        let (w, h) = (1000.0, 500.0), angle = 0.1
+        func point(_ u: Double, _ v: Double) -> CGPoint {
+            CGPoint(x: (200 + u * cos(angle) - v * sin(angle)) / w, y: (500 - 300 + u * sin(angle) + v * cos(angle)) / h)
+        }
+        let (bl, br, tl, tr) = (point(0, 0), point(100, 0), point(0, 20), point(100, 20))
+        let xs = [bl, br, tl, tr].map(\.x), ys = [bl, br, tl, tr].map(\.y)
+        let bounds = CGRect(x: xs.min()!, y: ys.min()!, width: xs.max()! - xs.min()!, height: ys.max()! - ys.min()!)
+
+        let (box, found) = VisionTextRecognizer.placement(bl, br, tl, bounds, w, h)
+
+        XCTAssertEqual(found, angle, accuracy: 1e-9)
+        XCTAssertEqual(box.x, 200, accuracy: 1e-6)
+        XCTAssertEqual(box.bottom, 300, accuracy: 1e-6)
+        XCTAssertEqual(box.width, 100, accuracy: 1e-6)
+        XCTAssertEqual(box.height, 20, accuracy: 1e-6)
+    }
+
+    func test_aStraightWordKeepsItsBoundsAndNoAngle() {
+        let bounds = CGRect(x: 0.1, y: 0.2, width: 0.3, height: 0.05)
+        let (box, angle) = VisionTextRecognizer.placement(CGPoint(x: 0.1, y: 0.2), CGPoint(x: 0.4, y: 0.2001), CGPoint(x: 0.1, y: 0.25), bounds, 1000, 500)
+
+        XCTAssertEqual(angle, 0)
+        XCTAssertEqual(box.x, 100, accuracy: 1e-9)
+        XCTAssertEqual(box.y, 500 * 0.75, accuracy: 1e-9)
+        XCTAssertEqual(box.width, 300, accuracy: 1e-9)
+        XCTAssertEqual(box.height, 25, accuracy: 1e-9)
+    }
+
     func test_aNonsenseTagIsNotAvailable() {
         XCTAssertFalse(VisionTextRecognizer.isAvailable("not a language"))
     }

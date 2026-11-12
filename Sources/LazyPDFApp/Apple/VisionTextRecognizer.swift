@@ -77,10 +77,9 @@ public struct VisionTextRecognizer: TextRecognizer {
             func flush(_ end: String.Index) {
                 guard let first = start else { return }
                 start = nil
-                guard let box = try? candidate.boundingBox(for: first..<end)?.boundingBox else { return }
-                words.append(OcrWord(String(text[first..<end]),
-                                     OcrBox(box.minX * width, (1 - box.maxY) * height, box.width * width, box.height * height),
-                                     candidate.confidence))
+                guard let corners = try? candidate.boundingBox(for: first..<end) else { return }
+                let (box, angle) = Self.placement(corners.bottomLeft, corners.bottomRight, corners.topLeft, corners.boundingBox, width, height)
+                words.append(OcrWord(String(text[first..<end]), box, candidate.confidence, angle))
             }
             for index in text.indices {
                 if text[index].isWhitespace { flush(index) } else if start == nil { start = index }
@@ -88,6 +87,24 @@ public struct VisionTextRecognizer: TextRecognizer {
             flush(text.endIndex)
         }
         return words
+    }
+
+    // A word turned by more than this (about 0.3 degrees) gets an angle and its upright box at the baseline start; Vision's
+    // corners are never exactly square, and a straight page keeps its axis-aligned boxes.
+    private static let minAngle = 0.005
+
+    // The corners are fractions of the picture with y up. The angle is counter-clockwise as seen, which is atan2 with y up.
+    static func placement(_ bottomLeft: CGPoint, _ bottomRight: CGPoint, _ topLeft: CGPoint, _ bounds: CGRect,
+                          _ width: Double, _ height: Double) -> (OcrBox, Double) {
+        let along = (x: (bottomRight.x - bottomLeft.x) * width, y: (bottomRight.y - bottomLeft.y) * height)
+        let angle = atan2(along.y, along.x)
+        guard angle.isFinite, abs(angle) >= minAngle else {
+            return (OcrBox(bounds.minX * width, (1 - bounds.maxY) * height, bounds.width * width, bounds.height * height), 0)
+        }
+        let wide = hypot(along.x, along.y)
+        let high = hypot((topLeft.x - bottomLeft.x) * width, (topLeft.y - bottomLeft.y) * height)
+        let bottom = (1 - bottomLeft.y) * height
+        return (OcrBox(bottomLeft.x * width, bottom - high, wide, high), angle)
     }
 
     // The alpha is ignored, as on Windows.
