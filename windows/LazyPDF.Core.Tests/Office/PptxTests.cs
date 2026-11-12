@@ -188,6 +188,15 @@ public class PptxTests
     }
 
     [Fact]
+    public void ASlideWhoseLayoutRelationshipPointsAtAMasterIsStillDrawn()
+    {
+        var package = PptxSpec.One("@slide1\n<p:cSld><p:spTree/></p:cSld>\n@slide2 layout=/../../slideMasters/slideMaster1\n<p:cSld><p:spTree>" + Box("A", "kept") + "</p:spTree></p:cSld>\n");
+        var pages = Layout(package).Pages;
+        Assert.Equal(2, pages.Count);
+        Assert.Contains(pages[1].Boxes, b => b is PlacedText { Text: "kept" });
+    }
+
+    [Fact]
     public void ASlideWhoseLayoutIsMissingIsStillDrawn()
     {
         var package = PptxSpec.One("@slide1 layout=9\n<p:cSld><p:spTree>" + Box("A", "kept") + "</p:spTree></p:cSld>\n");

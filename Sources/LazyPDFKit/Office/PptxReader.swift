@@ -66,7 +66,8 @@ final class PptxReader {
     private let package: OpcPackage
     let limits: PptxLimits
     private var skipped: [String: Int] = [:]
-    private var templates: [String: Template] = [:]
+    private var masters: [String: Template] = [:]
+    private var layouts: [String: Template] = [:]
     private var pictures: [String: PictureFile] = [:]
     var defaultStyle: OfficeXmlElement?
     private var width = PptxReader.defaultWidth, height = PptxReader.defaultHeight
@@ -143,7 +144,7 @@ final class PptxReader {
 
     private func master(_ part: String?) throws -> Template {
         let part = part ?? ""
-        if let known = templates[part] { return known }
+        if let known = masters[part] { return known }
         let present = !part.isEmpty && package.contains(part)
         let root = try present ? package.xml(part) : OfficeXmlElement(uri: Self.p, name: "sldMaster", attributes: [])
         let relationships = try present ? package.relationships(part) : []
@@ -152,13 +153,13 @@ final class PptxReader {
         if let themePart, package.contains(themePart) { themeRoot = try package.xml(themePart) }
         let colors = PptxColors(DocxTheme.read(themeRoot), PptxColors.readMap(root.child(Self.p, "clrMap")))
         let template = Template(root: root, relationships: relationships, colors: colors, placeholders: Self.placeholders(root), theme: themeRoot)
-        templates[part] = template
+        masters[part] = template
         return template
     }
 
     private func layout(_ part: String?) throws -> Template {
         let part = part ?? ""
-        if let known = templates[part] { return known }
+        if let known = layouts[part] { return known }
         let present = !part.isEmpty && package.contains(part)
         let root = try present ? package.xml(part) : OfficeXmlElement(uri: Self.p, name: "sldLayout", attributes: [])
         let relationships = try present ? package.relationships(part) : []
@@ -166,7 +167,7 @@ final class PptxReader {
         let show = root.attribute("showMasterSp")
         let template = Template(root: root, relationships: relationships, colors: Self.remapped(root, master.colors), placeholders: Self.placeholders(root),
                                 master: master, theme: master.theme, showMasterShapes: !(show == "0" || show == "false"))
-        templates[part] = template
+        layouts[part] = template
         return template
     }
 

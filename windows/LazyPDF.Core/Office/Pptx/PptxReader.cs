@@ -42,7 +42,8 @@ internal sealed partial class PptxReader
     private readonly PptxLimits _limits;
     private readonly CancellationToken _cancellation;
     private readonly SortedDictionary<string, int> _skipped = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, Template> _templates = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Template> _masters = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Template> _layouts = new(StringComparer.Ordinal);
     private readonly Dictionary<string, byte[]> _pictures = new(StringComparer.OrdinalIgnoreCase);
     private XmlElement? _defaultStyle;
     private double _width = DefaultWidth, _height = DefaultHeight;
@@ -118,13 +119,13 @@ internal sealed partial class PptxReader
     private Template Master(string? part)
     {
         part ??= "";
-        if (_templates.TryGetValue(part, out var known)) return known;
+        if (_masters.TryGetValue(part, out var known)) return known;
         var root = part.Length > 0 && _package.Contains(part) ? _package.Xml(part) : new XmlElement(P, "sldMaster", []);
         var relationships = part.Length > 0 && _package.Contains(part) ? _package.Relationships(part) : [];
         string? themePart = relationships.FirstOrDefault(r => r.Type.EndsWith("/theme", StringComparison.Ordinal))?.Target;
         var themeRoot = themePart is not null && _package.Contains(themePart) ? _package.Xml(themePart) : null;
         var colors = new PptxColors(DocxTheme.Read(themeRoot), PptxColors.ReadMap(root.Child(P, "clrMap")));
-        return _templates[part] = new Template
+        return _masters[part] = new Template
         {
             Name = part, Root = root, Relationships = relationships, Colors = colors, Theme = themeRoot, Placeholders = Placeholders(root),
         };
@@ -133,11 +134,11 @@ internal sealed partial class PptxReader
     private Template Layout(string? part)
     {
         part ??= "";
-        if (_templates.TryGetValue(part, out var known)) return known;
+        if (_layouts.TryGetValue(part, out var known)) return known;
         var root = part.Length > 0 && _package.Contains(part) ? _package.Xml(part) : new XmlElement(P, "sldLayout", []);
         var relationships = part.Length > 0 && _package.Contains(part) ? _package.Relationships(part) : [];
         var master = Master(relationships.FirstOrDefault(r => r.Type.EndsWith("/slideMaster", StringComparison.Ordinal))?.Target);
-        return _templates[part] = new Template
+        return _layouts[part] = new Template
         {
             Name = part, Root = root, Relationships = relationships, Master = master, Theme = master.Theme,
             Colors = Remapped(root, master.Colors), Placeholders = Placeholders(root), ShowMasterShapes = root.Attribute("showMasterSp") is not ("0" or "false"),
