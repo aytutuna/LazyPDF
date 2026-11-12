@@ -121,7 +121,7 @@ final class PlainHttpTransport {
                     withUnsafeBytes(of: $0.pointee.sin6_addr) { Array($0) }
                 }
             }
-            if bytes.isEmpty || (!allowLoopback && Self.isLocal(bytes)) { continue }
+            if bytes.isEmpty || Self.isLocal(bytes, loopbackAllowed: allowLoopback) { continue }
             if bytes.count == 4, let address = IPv4Address(Data(bytes)) {
                 allowed.append(.ipv4(address))
             } else if bytes.count == 16, let address = IPv6Address(Data(bytes)) {
@@ -131,16 +131,17 @@ final class PlainHttpTransport {
         return allowed
     }
 
-    /// Loopback, link-local and unspecified addresses, also as IPv4-mapped IPv6.
-    private static func isLocal(_ bytes: [UInt8]) -> Bool {
+    /// Loopback, link-local and unspecified addresses, also as IPv4-mapped IPv6; loopback is let through for tests.
+    private static func isLocal(_ bytes: [UInt8], loopbackAllowed: Bool) -> Bool {
         if bytes.count == 16 {
             if bytes.prefix(10).allSatisfy({ $0 == 0 }), bytes[10] == 0xff, bytes[11] == 0xff {
-                return isLocal(Array(bytes[12...]))
+                return isLocal(Array(bytes[12...]), loopbackAllowed: loopbackAllowed)
             }
-            if bytes.prefix(15).allSatisfy({ $0 == 0 }), bytes[15] <= 1 { return true }
+            if bytes.prefix(15).allSatisfy({ $0 == 0 }), bytes[15] <= 1 { return !(loopbackAllowed && bytes[15] == 1) }
             return bytes[0] == 0xfe && bytes[1] & 0xc0 == 0x80
         }
-        return bytes[0] == 127 || (bytes[0] == 169 && bytes[1] == 254) || bytes.allSatisfy { $0 == 0 }
+        if bytes[0] == 127 { return !loopbackAllowed }
+        return (bytes[0] == 169 && bytes[1] == 254) || bytes.allSatisfy { $0 == 0 }
     }
 
     private static func request(_ url: URL, _ host: String, _ method: String, _ contentType: String?,
