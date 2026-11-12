@@ -111,13 +111,16 @@ public partial class CommentsSidePanel
     }
 
     // By object number; an annotation written inline in /Annots has none, so it is matched by its dictionary or, once the page was read again, by what it shows.
-    private static PdfAnnotation? LiveAnnotation(DocumentTab tab, PdfAnnotation old, int pageIndex)
+    internal static PdfAnnotation? LiveAnnotation(DocumentTab tab, PdfAnnotation old, int pageIndex)
     {
         if (pageIndex < 0 || pageIndex >= tab.Document.Pages.Count) return null;
         var live = PdfAnnotations.Read(tab.Document, tab.Document.Pages[pageIndex]);
         if (old.Reference is { } reference) return live.FirstOrDefault(a => a.Reference?.Number == reference.Number);
-        return live.FirstOrDefault(a => ReferenceEquals(a.Dictionary, old.Dictionary))
-            ?? live.FirstOrDefault(a => a.Reference is null && a.Type == old.Type && a.Rect == old.Rect && a.Contents == old.Contents);
+        if (live.FirstOrDefault(a => ReferenceEquals(a.Dictionary, old.Dictionary)) is { } same) return same;
+        // Identical notes cannot be told apart without a name, so a guess between them would edit the wrong one.
+        var like = live.Where(a => a.Reference is null && a.Type == old.Type && a.Rect == old.Rect && a.Contents == old.Contents
+            && a.Title == old.Title && a.Modified == old.Modified && (old.Name is null || a.Name == old.Name)).ToList();
+        return like.Count == 1 ? like[0] : null;
     }
 
     private void SaveText(DocumentTab tab, IToolHost host, CommentRow row, string text)

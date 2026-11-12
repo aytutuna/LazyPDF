@@ -234,6 +234,29 @@ public sealed class CommentsPanelTests
     });
 
     [Fact]
+    public Task TwoIdenticalInlineCommentsAreNotGuessedBetween() => Sta.Run(() =>
+    {
+        using var f = new CommentFixture();
+        f.Marker.Add(MarkTool.Note, 0, [new Point(60, 80)], Red, "same");
+        var page = f.Document.Pages[0];
+        var items = f.Document.Array(page.Dictionary, "Annots")!.Items.Select(i => f.Document.Resolve(i)!).ToList();
+        items.Add(((PdfDictionary)items[0]).Copy());
+        page.Dictionary["Annots"] = new PdfArray([.. items.Select(i => (PdfObject)i)]);
+        f.Tab.Commit("Mark");
+        var held = PdfAnnotations.Read(f.Tab.Document, f.Tab.Document.Pages[0])[0];
+        Assert.Null(held.Reference);
+
+        // Another change and its undo read the file again, so the held copy is no longer one the document has.
+        f.Marker.Add(MarkTool.Note, 0, [new Point(300, 300)], Red, "other");
+        f.Tab.Commit("Other");
+        Assert.True(f.Tab.Undo());
+
+        Assert.False(ReferenceEquals(held.Dictionary, PdfAnnotations.Read(f.Tab.Document, f.Tab.Document.Pages[0])[0].Dictionary));
+        Assert.Null(CommentsSidePanel.LiveAnnotation(f.Tab, held, 0));
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task EditingTheTextIsOneUndoStep() => Sta.Run(() =>
     {
         using var f = new CommentFixture();
