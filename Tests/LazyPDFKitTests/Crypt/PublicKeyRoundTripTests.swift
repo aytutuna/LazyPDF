@@ -74,6 +74,18 @@ final class PublicKeyRoundTripTests: XCTestCase {
         XCTAssertFalse(PdfRecipient.canProtect(signOnly))
     }
 
+    func test_aCertificateWithoutKeyUsageCanProtect() throws {
+        let attributes: [String: Any] = [kSecAttrKeyType as String: kSecAttrKeyTypeRSA, kSecAttrKeySizeInBits as String: 2048]
+        let privateKey = try XCTUnwrap(SecKeyCreateRandomKey(attributes as CFDictionary, nil))
+        let pkcs1 = try XCTUnwrap(SecKeyCopyExternalRepresentation(try XCTUnwrap(SecKeyCopyPublicKey(privateKey)), nil) as Data?)
+        let der = TestCertificate.der("Open", publicKey: [UInt8](pkcs1), withUsage: false) { tbs in
+            [UInt8](SecKeyCreateSignature(privateKey, .rsaSignatureMessagePKCS1v15SHA256, Data(tbs) as CFData, nil) as Data? ?? Data())
+        }
+        let open = try XCTUnwrap(SecCertificateCreateWithData(nil, Data(der) as CFData))
+
+        XCTAssertTrue(PdfRecipient.canProtect(PdfCertificate(certificate: open)))
+    }
+
     func test_aCertificateThatCannotProtectIsRefused() throws {
         let ec = try XCTUnwrap(PdfCertificate(Pki.instance.leafEc))
 

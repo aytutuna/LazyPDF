@@ -132,6 +132,16 @@ public class PublicKeyRoundTripTests
     }
 
     [Fact]
+    public void ACertificateWithoutKeyUsageCanProtect()
+    {
+        using var rsa = RSA.Create(2048);
+        using var open = new CertificateRequest("CN=Open", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)
+            .CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
+
+        Assert.True(PdfRecipient.CanProtect(open));
+    }
+
+    [Fact]
     public void ACertificateThatCannotProtectIsRefused()
     {
         using var ec = ECDsa.Create(ECCurve.NamedCurves.nistP256);

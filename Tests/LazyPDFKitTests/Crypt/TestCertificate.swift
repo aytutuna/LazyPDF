@@ -16,8 +16,8 @@ enum TestCertificate {
         return bytes
     }
 
-    /// `publicKey` is a PKCS#1 RSAPublicKey; `withKeyIdentifier: false` leaves the extension out; `sign` turns the encoded TBSCertificate into an RSA SHA-256 signature.
-    static func der(_ common: String, publicKey: [UInt8], withKeyIdentifier: Bool = true, sign: ([UInt8]) -> [UInt8]) -> [UInt8] {
+    /// `publicKey` is a PKCS#1 RSAPublicKey; `withKeyIdentifier: false` and `withUsage: false` leave those extensions out; `sign` turns the encoded TBSCertificate into an RSA SHA-256 signature.
+    static func der(_ common: String, publicKey: [UInt8], withKeyIdentifier: Bool = true, withUsage: Bool = true, sign: ([UInt8]) -> [UInt8]) -> [UInt8] {
         let algorithm = DerWriter.sequence([DerWriter.oid("1.2.840.113549.1.1.11"), DerWriter.null])
         let subjectKey = DerWriter.sequence([
             DerWriter.sequence([DerWriter.oid(PdfCms.rsaEncryption), DerWriter.null]),
@@ -29,7 +29,7 @@ enum TestCertificate {
         let identifier = DerWriter.sequence([DerWriter.oid("2.5.29.14"), DerWriter.octetString(keyId)])
         let usage = DerWriter.sequence([DerWriter.oid("2.5.29.15"), [0x01, 0x01, 0xFF],
                                         DerWriter.octetString([0x03, 0x02, 0x04, 0x30])])
-        let extensions = DerWriter.node(0xA3, DerWriter.sequence(withKeyIdentifier ? [identifier, usage] : [usage]))
+        let extensions = DerWriter.node(0xA3, DerWriter.sequence((withKeyIdentifier ? [identifier] : []) + (withUsage ? [usage] : [])))
         let tbs = DerWriter.sequence([
             [0xA0, 0x03, 0x02, 0x01, 0x02], DerWriter.node(0x02, serial(common)), algorithm, name(common), validity,
             name(common), subjectKey, extensions,
