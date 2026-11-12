@@ -4,7 +4,7 @@ namespace LazyPDF.Core.Office;
 /// The font lookup of the converter: the font a document names, if it is installed; else the bundled font with
 /// the same metrics, so lines and pages break where Word broke them; else the bundled default.
 /// </summary>
-internal sealed class OfficeFontSource : IFontSource
+public sealed class OfficeFontSource : IFontSource
 {
     public const string DefaultFamily = "Carlito";
 
