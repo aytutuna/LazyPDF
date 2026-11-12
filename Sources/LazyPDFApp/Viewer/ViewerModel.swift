@@ -54,7 +54,8 @@ public final class ViewerModel: DocumentViewer {
     @ObservationIgnored var textTask: Task<TextSource?, Never>?
     @ObservationIgnored var source: TextSource?
     @ObservationIgnored var links: [Int: [PdfLink]] = [:]
-    @ObservationIgnored var drawn: [Int: [DrawnEdge]] = [:]
+    @ObservationIgnored var edgeSource: Task<EdgeSource?, Never>?
+    @ObservationIgnored var drawn: [Int: Task<[DrawnEdge], Never>] = [:]
     @ObservationIgnored var geometries: [Int: PageGeometry] = [:]
     @ObservationIgnored var hitShapes: [Int: (others: [[ViewPoint]], current: [[ViewPoint]])] = [:]
     @ObservationIgnored var selectionShapes: [Int: [[ViewPoint]]] = [:]

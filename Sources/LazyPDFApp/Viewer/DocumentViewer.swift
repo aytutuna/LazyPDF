@@ -226,7 +226,7 @@ public protocol DocumentViewer: AnyObject {
 
     /// The straight edges the page draws, in PDF user space, for this revision of the file. Curves contribute their end
     /// points only.
-    func drawing(_ page: Int) -> [DrawnEdge]
+    func drawing(_ page: Int) async -> [DrawnEdge]
 
     var hasSelection: Bool { get }
 

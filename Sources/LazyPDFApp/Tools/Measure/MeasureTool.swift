@@ -180,13 +180,14 @@ final class MeasureTool: PagePointerTool {
         Task { [weak self] in
             guard let self else { return }
             let text = await self.viewer.text(page)
+            let drawn = await self.viewer.drawing(page)
             self.loading.remove(page)
             let geometry = self.viewer.geometry(page)
             func shown(_ x: Double, _ y: Double) -> ViewPoint {
                 let p = geometry.toDisplay(x, y)
                 return ViewPoint(p.x, p.y)
             }
-            let edges = self.viewer.drawing(page).map { (shown($0.x1, $0.y1), shown($0.x2, $0.y2)) }
+            let edges = drawn.map { (shown($0.x1, $0.y1), shown($0.x2, $0.y2)) }
             let words = (text?.words ?? []).flatMap { word -> [ViewPoint] in
                 let b = word.bounds
                 return [(b.left, b.bottom), (b.right, b.bottom), (b.left, b.top), (b.right, b.top)].map { shown($0.0, $0.1) }

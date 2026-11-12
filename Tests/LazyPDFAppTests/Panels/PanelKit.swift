@@ -114,7 +114,7 @@ final class PanelViewer: DocumentViewer {
     }
 
     func text(_ page: Int) async -> TextPage? { nil }
-    func drawing(_ page: Int) -> [DrawnEdge] { [] }
+    func drawing(_ page: Int) async -> [DrawnEdge] { [] }
     var runs: [SelectedRun] = []
     func selection() async -> [SelectedRun] { runs }
     func selectAll() {}

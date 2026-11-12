@@ -31,6 +31,7 @@ extension ViewerModel {
         source = nil
         links.removeAll()
         drawn.removeAll()
+        edgeSource = nil
         selectionShapes.removeAll()
         hitShapes.removeAll()
         selected.clear()
@@ -71,15 +72,23 @@ extension ViewerModel {
         await textSource().value?.get(page)
     }
 
-    public func drawing(_ page: Int) -> [DrawnEdge] {
+    public func drawing(_ page: Int) async -> [DrawnEdge] {
         guard let tab, page >= 0, page < tab.document.pages.count else { return [] }
-        if let found = drawn[page] { return found }
-        let reader = EdgeReader()
-        let interpreter = ContentInterpreter(tab.document)
-        interpreter.walkPatterns = false
-        interpreter.run(tab.document.pages[page], reader)
-        drawn[page] = reader.edges
-        return reader.edges
+        if let found = drawn[page] { return await found.value }
+        let opened: Task<EdgeSource?, Never>
+        if let edgeSource {
+            opened = edgeSource
+        } else {
+            let read = readable(tab)
+            opened = Task.detached {
+                let (data, password) = read()
+                return (try? PdfDocument.open(data, password: password)).map(EdgeSource.init)
+            }
+            edgeSource = opened
+        }
+        let task = Task.detached { await opened.value?.edges(page) ?? [] }
+        drawn[page] = task
+        return await task.value
     }
 
     /// The text of a page for a screen reader, if it has been read.

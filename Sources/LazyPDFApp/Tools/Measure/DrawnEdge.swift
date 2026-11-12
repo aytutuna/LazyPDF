@@ -13,6 +13,28 @@ public struct DrawnEdge: Equatable {
     }
 }
 
+/// The edges of the pages of one revision, read from a document of its own so that walking a heavy page stays off the main
+/// actor. The document is not safe to share, so pages are read one at a time.
+final class EdgeSource: @unchecked Sendable {
+    private let document: PdfDocument
+    private let lock = NSLock()
+
+    init(_ document: PdfDocument) {
+        self.document = document
+    }
+
+    func edges(_ page: Int) -> [DrawnEdge] {
+        lock.lock()
+        defer { lock.unlock() }
+        guard page >= 0, page < document.pages.count else { return [] }
+        let reader = EdgeReader()
+        let interpreter = ContentInterpreter(document)
+        interpreter.walkPatterns = false
+        interpreter.run(document.pages[page], reader)
+        return reader.edges
+    }
+}
+
 /// Collects the edges of the paths a page paints, leaving out those that only clip.
 final class EdgeReader: ContentVisitor {
     private static let limit = 20000
