@@ -21,6 +21,7 @@ public final class WebKitPageRenderer: WebPageRenderer {
         let configuration = WKWebViewConfiguration()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = false
         configuration.websiteDataStore = .nonPersistent()
+        configuration.preferences.shouldPrintBackgrounds = true
         let list = try? await WKContentRuleListStore.default().compileContentRuleList(forIdentifier: "lazypdf-no-network",
                                                                                       encodedContentRuleList: WebPageRules.blockNetwork)
         // Without the rule the network would be open, so a page is not drawn at all.
