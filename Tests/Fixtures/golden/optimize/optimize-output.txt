@@ -27,7 +27,7 @@
 < RemoveUnreferenced=0 StripThumbnails=1 StripPieceInfo=1 StripPrivateData=0 PruneResources=1 SubsetFonts=0 BilevelImages=0 DownsampleImages=0 RecompressStreams=0 ConvertOldFilters=0 RemoveDuplicates=0 ObjectStreams=1
 < notes 0
 > optimize balanced
-< RemoveUnreferenced=0 StripThumbnails=1 StripPieceInfo=1 PruneResources=1 SubsetFonts=0 BilevelImages=0 DownsampleImages=0 RecompressStreams=0 ConvertOldFilters=0 RemoveDuplicates=0 ObjectStreams=1
+< RemoveUnreferenced=0 StripThumbnails=1 StripPieceInfo=1 PruneResources=1 SubsetFonts=0 DownsampleImages=0 RecompressStreams=0 ConvertOldFilters=0 RemoveDuplicates=0 ObjectStreams=1
 < notes 0
 > optimize high
 < RemoveUnreferenced=0 StripThumbnails=1 PruneResources=1 BilevelImages=0 DownsampleImages=0 RecompressStreams=0 ConvertOldFilters=0 RemoveDuplicates=0 ObjectStreams=1

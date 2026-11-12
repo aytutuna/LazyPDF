@@ -48,6 +48,16 @@ public class OptimizerTests
     }
 
     [Fact]
+    public void OnlyTheSmallestPresetMakesPicturesOneBit()
+    {
+        Assert.True(OptimizeOptions.For(OptimizePreset.Small).BilevelTolerance >= 0);
+        var balanced = OptimizeOptions.For(OptimizePreset.Balanced);
+        Assert.True(balanced.BilevelTolerance < 0);
+        Assert.Equal(80, balanced.JpegQuality);
+        Assert.Equal(150, balanced.ImageDpi);
+    }
+
+    [Fact]
     public void ThePlanNamesTheStepsAndAuditsTheFile()
     {
         using var document = PdfDocument.Open(Sample());

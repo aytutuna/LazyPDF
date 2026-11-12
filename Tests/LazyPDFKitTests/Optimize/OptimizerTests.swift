@@ -43,6 +43,14 @@ final class OptimizerTests: XCTestCase {
         XCTAssertTrue((smallDocument.integer(try OptimizeKit.image(smallDocument).dictionary, "Width") ?? 0) < 300)
     }
 
+    func test_onlyTheSmallestPresetMakesPicturesOneBit() {
+        XCTAssertTrue(OptimizeOptions.for(.small).bilevelTolerance >= 0)
+        let balanced = OptimizeOptions.for(.balanced)
+        XCTAssertTrue(balanced.bilevelTolerance < 0)
+        XCTAssertEqual(80, balanced.jpegQuality)
+        XCTAssertEqual(150, balanced.imageDpi)
+    }
+
     func test_thePlanNamesTheStepsAndAuditsTheFile() throws {
         let document = try PdfDocument.open(sample())
         let plan = PdfOptimizer(document).plan(OptimizeOptions.for(.balanced))

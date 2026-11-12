@@ -80,7 +80,7 @@ public struct OptimizeOptions {
         case .small:
             return OptimizeOptions(stripPrivateData: true, imageDpi: 96, imageDpiAbove: 144, jpegQuality: 50, bilevelTolerance: 24, subsetFonts: true)
         case .balanced:
-            return OptimizeOptions(imageDpi: 150, imageDpiAbove: 225, jpegQuality: 75, bilevelTolerance: 8, subsetFonts: true)
+            return OptimizeOptions(imageDpi: 150, imageDpiAbove: 225, jpegQuality: 80, subsetFonts: true)
         case .highQuality:
             return OptimizeOptions(stripPieceInfo: false, imageDpi: 300, imageDpiAbove: 450, jpegQuality: 92, bilevelTolerance: 0)
         }

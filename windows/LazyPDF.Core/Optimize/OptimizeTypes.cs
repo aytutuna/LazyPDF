@@ -60,7 +60,7 @@ public sealed record OptimizeOptions
         },
         OptimizePreset.Balanced => new OptimizeOptions
         {
-            ImageDpi = 150, ImageDpiAbove = 225, JpegQuality = 75, BilevelTolerance = 8, SubsetFonts = true,
+            ImageDpi = 150, ImageDpiAbove = 225, JpegQuality = 80, SubsetFonts = true,
         },
         _ => new OptimizeOptions
         {
