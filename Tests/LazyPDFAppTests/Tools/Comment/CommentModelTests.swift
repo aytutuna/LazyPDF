@@ -101,7 +101,7 @@ final class CommentModelTests: XCTestCase {
         PdfAnnotations.read(rig.tab.document, rig.tab.document.pages[0])
     }
 
-    func test_pickingAToolGivesThePageThePointerTool() throws {
+    func test_pickingAToolGivesThePageThePointerTool() async throws {
         let rig = try attached()
         XCTAssertNil(rig.viewer.pointerTool)
         XCTAssertEqual(rig.viewer.mode, .select)
@@ -118,7 +118,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(rig.viewer.mode, .select)
     }
 
-    func test_aToolThatIsPlacedByClickSaysTheKeyboardWorksToo() throws {
+    func test_aToolThatIsPlacedByClickSaysTheKeyboardWorksToo() async throws {
         let rig = try attached()
 
         rig.model.pick(.note)
@@ -126,7 +126,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(rig.model.hint, "Click where the note goes. Or press Enter on the page.")
     }
 
-    func test_detachingGivesThePointerBackAndKeepsTheLook() throws {
+    func test_detachingGivesThePointerBackAndKeepsTheLook() async throws {
         let rig = try attached()
         rig.model.pick(.rectangle)
         rig.model.setWidth(5)
@@ -140,7 +140,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertTrue(rig.viewer.pointerTool is DrawTool)
     }
 
-    func test_aRectangleIsDrawnWithTheLookAndIsOneUndoStep() throws {
+    func test_aRectangleIsDrawnWithTheLookAndIsOneUndoStep() async throws {
         let rig = try attached()
         rig.model.pick(.rectangle)
         rig.model.setColor([0.2, 0.7, 0.3])
@@ -159,7 +159,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertTrue(marks(rig).isEmpty)
     }
 
-    func test_aNoteTakesTheTextTypedIntoAFieldOnThePage() throws {
+    func test_aNoteTakesTheTextTypedIntoAFieldOnThePage() async throws {
         let rig = try attached()
         rig.model.pick(.note)
 
@@ -174,7 +174,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertTrue(rig.viewer.overlay(0).fields.isEmpty)
     }
 
-    func test_aNoteWithNoTextOrDroppedIsNotMade() throws {
+    func test_aNoteWithNoTextOrDroppedIsNotMade() async throws {
         let rig = try attached()
         rig.model.pick(.note)
 
@@ -187,7 +187,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertTrue(rig.host.problems.isEmpty)
     }
 
-    func test_handingInKeepsTheTextBeingTyped() throws {
+    func test_handingInKeepsTheTextBeingTyped() async throws {
         let rig = try attached()
         rig.model.pick(.textBox)
         click(rig, markPt(60, 80), dragTo: markPt(260, 140))
@@ -213,7 +213,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(rig.viewer.overlay(0).fields[0].text, "Çalışma ğ")
     }
 
-    func test_aMarkWithNoAreaIsExplained() throws {
+    func test_aMarkWithNoAreaIsExplained() async throws {
         let rig = try attached()
         rig.model.pick(.rectangle)
 
@@ -223,7 +223,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(rig.host.problems.map(\.title), ["Nothing to draw"])
     }
 
-    func test_aPolygonIsEndedByTheFinishButtonForAFinger() throws {
+    func test_aPolygonIsEndedByTheFinishButtonForAFinger() async throws {
         let rig = try attached()
         rig.model.pick(.polygon)
         for corner in [markPt(10, 10), markPt(100, 10)] { click(rig, corner) }
@@ -252,7 +252,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertTrue(rig.host.problems.isEmpty)
     }
 
-    func test_aPolygonThatSlippedPastTheWatchIsStillNotWrittenOnAMissingPage() throws {
+    func test_aPolygonThatSlippedPastTheWatchIsStillNotWrittenOnAMissingPage() async throws {
         let rig = try attached(pages: 3)
 
         rig.model.drew(.polygon, 2, [markPt(10, 10), markPt(100, 10), markPt(100, 100)])
@@ -263,7 +263,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertTrue(rig.host.problems.isEmpty)
     }
 
-    func test_aShapeUnderWayCanBeCancelledFromThePanel() throws {
+    func test_aShapeUnderWayCanBeCancelledFromThePanel() async throws {
         let rig = try attached()
         rig.model.pick(.cloud)
         XCTAssertFalse(rig.model.shapeStarted)
@@ -277,7 +277,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertTrue(rig.viewer.overlay(0).items.isEmpty)
     }
 
-    func test_switchingToolDropsTheShapeUnderWay() throws {
+    func test_switchingToolDropsTheShapeUnderWay() async throws {
         let rig = try attached()
         rig.model.pick(.polygon)
         click(rig, markPt(10, 10))
@@ -289,7 +289,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertTrue(rig.viewer.overlay(0).items.isEmpty)
     }
 
-    func test_aPhoneTellsPolygonsAreEndedWithTheFinishButtonAndLeavesTheKeyboardOut() throws {
+    func test_aPhoneTellsPolygonsAreEndedWithTheFinishButtonAndLeavesTheKeyboardOut() async throws {
         let rig = try attached(touch: true)
 
         rig.model.pick(.polygon)
@@ -298,7 +298,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(rig.model.hint, "Click where the note goes. Two fingers scroll the page.")
     }
 
-    func test_aPhoneTellsTwoFingersScrollUnderADrawingToolOnly() throws {
+    func test_aPhoneTellsTwoFingersScrollUnderADrawingToolOnly() async throws {
         let rig = try attached(touch: true)
 
         rig.model.pick(.pencil)
@@ -312,7 +312,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertFalse(desktop.model.hint.contains("Two fingers"))
     }
 
-    func test_theMovedMarksToolListsTheMarksOfThePageInView() throws {
+    func test_theMovedMarksToolListsTheMarksOfThePageInView() async throws {
         let rig = try attached(marks: true)
         rig.model.pick(.rectangle)
         XCTAssertTrue(rig.model.marks.isEmpty)
@@ -330,7 +330,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertTrue(try XCTUnwrap(rig.model.marks.first).isSelected)
     }
 
-    func test_aStampTakesTheStandardNameOrWhatWasTyped() throws {
+    func test_aStampTakesTheStandardNameOrWhatWasTyped() async throws {
         let rig = try attached()
         rig.model.pick(.stamp)
 
@@ -343,7 +343,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(names, ["Draft", "Paid in full"])
     }
 
-    func test_aStampFieldEmptiedByTypingStaysEmptyAndStampsTheFirstLabel() throws {
+    func test_aStampFieldEmptiedByTypingStaysEmptyAndStampsTheFirstLabel() async throws {
         let rig = try attached()
         rig.model.pick(.stamp)
 
@@ -355,7 +355,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(names, [AnnotationText.standardStamps[0]])
     }
 
-    func test_theEraserTakesTheDrawingsItCrosses() throws {
+    func test_theEraserTakesTheDrawingsItCrosses() async throws {
         let rig = try attached(marks: true)
         rig.model.pick(.eraser)
 
@@ -365,7 +365,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.session.undoLabel, "Erase")
     }
 
-    func test_theEraserLeavesWhatIsNotADrawing() throws {
+    func test_theEraserLeavesWhatIsNotADrawing() async throws {
         let rig = try attached(marks: true)
         let marker = rig.f.marker
         _ = try marker.add(.textBox, 0, [markPt(100, 70), markPt(220, 130)], markRed, "Hi")
@@ -379,7 +379,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(marks(rig).map(\.type), [.freeText, .line])
     }
 
-    func test_onlyDrawingsAreErasable() throws {
+    func test_onlyDrawingsAreErasable() async throws {
         let f = try CommentFixture()
         let marker = f.marker
         let box = [markPt(60, 80), markPt(260, 140)]
@@ -394,7 +394,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertFalse(Marker.erasable(measured))
     }
 
-    func test_aFileThatDoesNotAllowCommentsTakesNone() throws {
+    func test_aFileThatDoesNotAllowCommentsTakesNone() async throws {
         let rig = try attached(try Pdfs.restricted(.print), password: "")
 
         rig.model.pick(.rectangle)
@@ -406,7 +406,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertTrue(rig.model.canExport)
     }
 
-    func test_aSignedFileIsSaidToBeSignedWhenThePanelIsShown() throws {
+    func test_aSignedFileIsSaidToBeSignedWhenThePanelIsShown() async throws {
         let rig = try attached(try Pdfs.signed(certified: false))
 
         XCTAssertEqual(rig.host.notices.map(\.title), ["File is signed"])
@@ -414,7 +414,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertTrue(rig.model.allowed)
     }
 
-    func test_aMarkPickedShowsItsLookAndTheSliderSettlesIntoTheFileAsOneStep() throws {
+    func test_aMarkPickedShowsItsLookAndTheSliderSettlesIntoTheFileAsOneStep() async throws {
         let rig = try attached(marks: true)
         rig.model.pick(.edit)
 
@@ -435,7 +435,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.session.undoLabel, "Change look")
     }
 
-    func test_lookingAtAMarkDoesNotChangeTheLookOfTheNextOne() throws {
+    func test_lookingAtAMarkDoesNotChangeTheLookOfTheNextOne() async throws {
         let rig = try attached(marks: true)
         rig.model.pick(.edit)
         rig.model.setWidth(5)
@@ -530,7 +530,7 @@ final class CommentModelTests: XCTestCase {
         XCTAssertTrue(marks(rig).isEmpty)
     }
 
-    func test_aFileWithNothingToFlattenHasNoWorkForTheButton() throws {
+    func test_aFileWithNothingToFlattenHasNoWorkForTheButton() async throws {
         let rig = try attached()
 
         XCTAssertFalse(try XCTUnwrap(rig.model.action).canRun())

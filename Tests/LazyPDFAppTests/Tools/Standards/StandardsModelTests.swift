@@ -46,7 +46,7 @@ final class StandardsModelTests: XCTestCase {
         XCTAssertEqual(model.action!.text, "Check")
     }
 
-    func test_theModesSayWhatTheyDoAndTheButtonNamesTheLevel() throws {
+    func test_theModesSayWhatTheyDoAndTheButtonNamesTheLevel() async throws {
         let (model, _) = try attached()
         XCTAssertEqual(model.modeNote, "Lists the rules the file breaks. Nothing is changed.")
 
@@ -58,7 +58,7 @@ final class StandardsModelTests: XCTestCase {
         XCTAssertEqual(model.action!.text, "Convert to PDF/A-4")
     }
 
-    func test_whatConvertingCostsIsShownOnlyInConvertMode() throws {
+    func test_whatConvertingCostsIsShownOnlyInConvertMode() async throws {
         let (model, _) = try attached(try Pdfs.signed(certified: false))
         XCTAssertEqual(model.losses, "")
 
@@ -107,7 +107,7 @@ final class StandardsModelTests: XCTestCase {
         XCTAssertFalse(rig.host.problems[0].text.isEmpty)
     }
 
-    func test_aRuleThatNamesPagesTakesTheViewerThereInTurn() throws {
+    func test_aRuleThatNamesPagesTakesTheViewerThereInTurn() async throws {
         let (model, rig) = try attached()
         let row = try XCTUnwrap(IssueRow.group([
             PdfAIssue("6.5.3", PdfAText.pageName(2), "An annotation has no appearance."),

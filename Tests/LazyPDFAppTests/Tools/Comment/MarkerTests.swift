@@ -9,7 +9,7 @@ import XCTest
 final class MarkerTests: XCTestCase {
     private let drag = [markPt(60, 80), markPt(260, 140)]
 
-    func test_eachToolMakesItsKindOfMark() throws {
+    func test_eachToolMakesItsKindOfMark() async throws {
         let cases: [(MarkTool, AnnotationType)] = [
             (.rectangle, .square), (.oval, .circle), (.line, .line), (.arrow, .line), (.textBox, .freeText), (.note, .text),
         ]
@@ -25,7 +25,7 @@ final class MarkerTests: XCTestCase {
         }
     }
 
-    func test_toolsThatTakeManyPointsUseAllOfThem() throws {
+    func test_toolsThatTakeManyPointsUseAllOfThem() async throws {
         let points = [markPt(50, 50), markPt(150, 60), markPt(140, 160), markPt(40, 150)]
         let cases: [(MarkTool, AnnotationType)] = [(.polygon, .polygon), (.cloud, .polygon), (.pencil, .ink)]
         for (tool, type) in cases {
@@ -40,7 +40,7 @@ final class MarkerTests: XCTestCase {
         }
     }
 
-    func test_aDraggedBoxComesBackWhereItWasDrawn() throws {
+    func test_aDraggedBoxComesBackWhereItWasDrawn() async throws {
         let f = try CommentFixture()
 
         let made = try f.marker.add(.rectangle, 0, drag, markRed)
@@ -53,7 +53,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertEqual(made.rect.bottom, f.geometry.height - 140, accuracy: 0.5)
     }
 
-    func test_aBoxDrawnOnATurnedPageComesBackWhereItWasDrawn() throws {
+    func test_aBoxDrawnOnATurnedPageComesBackWhereItWasDrawn() async throws {
         let f = try CommentFixture()
         f.document.pages[0].dictionary["Rotate"] = PdfNumber(90)
 
@@ -65,7 +65,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertEqual(box.width, 200, accuracy: 0.5)
     }
 
-    func test_aCalloutSitsAtTheEndOfTheDragAndPointsBack() throws {
+    func test_aCalloutSitsAtTheEndOfTheDragAndPointsBack() async throws {
         let f = try CommentFixture()
         let dragged = [markPt(100, 100), markPt(300, 200)]
 
@@ -81,7 +81,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertEqual(box.y + box.height / 2, 200, accuracy: 0.01)
     }
 
-    func test_textTheFontsCannotDrawIsRefusedAndLeavesNoMark() throws {
+    func test_textTheFontsCannotDrawIsRefusedAndLeavesNoMark() async throws {
         let f = try CommentFixture()
 
         XCTAssertThrowsError(try f.marker.add(.textBox, 0, drag, markRed, "Çalışma ğ")) { error in
@@ -91,13 +91,13 @@ final class MarkerTests: XCTestCase {
         XCTAssertTrue(f.marks().isEmpty)
     }
 
-    func test_aToolThatDoesNotDrawByItselfIsRefused() throws {
+    func test_aToolThatDoesNotDrawByItselfIsRefused() async throws {
         let f = try CommentFixture()
 
         XCTAssertThrowsError(try f.marker.add(.eraser, 0, drag, markRed)) { XCTAssertTrue($0 is ArgumentException) }
     }
 
-    func test_aSelectedRunBecomesOneMarkupWithItsQuadsInAcrobatOrder() throws {
+    func test_aSelectedRunBecomesOneMarkupWithItsQuadsInAcrobatOrder() async throws {
         let f = try CommentFixture()
         let quad = TextQuad(100, 700, 180, 700, 180, 712, 100, 712)
         let run = SelectedRun(page: 0, range: TextRange(0, 0), text: "Hello", quads: [quad])
@@ -111,7 +111,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertEqual(made.quadPoints, [100, 712, 180, 712, 100, 700, 180, 700])
     }
 
-    func test_aRunWithNoQuadsMarksNothing() throws {
+    func test_aRunWithNoQuadsMarksNothing() async throws {
         let f = try CommentFixture()
 
         let count = try f.marker.markup(.underline, [SelectedRun(page: 0, range: TextRange(0, 0), text: "", quads: [])], .default)
@@ -120,7 +120,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertTrue(f.marks().isEmpty)
     }
 
-    func test_aStampAndAnAttachmentLandWhereTheyWereClicked() throws {
+    func test_aStampAndAnAttachmentLandWhereTheyWereClicked() async throws {
         let f = try CommentFixture()
 
         let stamp = try f.marker.addStamp(0, markPt(200, 300), "Approved", .default)
@@ -132,7 +132,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertEqual(f.marker.box(of: file).x, 400, accuracy: 0.5)
     }
 
-    func test_thePointerFindsTheTopmostMarkUnderIt() throws {
+    func test_thePointerFindsTheTopmostMarkUnderIt() async throws {
         let f = try CommentFixture()
         try f.marker.add(.rectangle, 0, [markPt(50, 50), markPt(250, 250)], markRed)
         let top = try f.marker.add(.oval, 0, [markPt(100, 100), markPt(200, 200)], markRed)
@@ -142,7 +142,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertNil(f.marker.at(0, markPt(400, 400), 4))
     }
 
-    func test_aLineIsFoundNearItsStrokeAndNotInTheEmptyCornerOfItsBox() throws {
+    func test_aLineIsFoundNearItsStrokeAndNotInTheEmptyCornerOfItsBox() async throws {
         let f = try CommentFixture()
         try f.marker.add(.line, 0, [markPt(100, 100), markPt(300, 300)], markRed)
 
@@ -150,7 +150,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertNil(f.marker.at(0, markPt(300, 100), 4))
     }
 
-    func test_anInkStrokeIsFoundNearItsPoints() throws {
+    func test_anInkStrokeIsFoundNearItsPoints() async throws {
         let f = try CommentFixture()
         try f.marker.add(.pencil, 0, [markPt(100, 100), markPt(200, 100), markPt(200, 200)], markRed)
 
@@ -158,7 +158,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertNil(f.marker.at(0, markPt(100, 200), 4))
     }
 
-    func test_repliesAreNotPickedUpOnThePage() throws {
+    func test_repliesAreNotPickedUpOnThePage() async throws {
         let f = try CommentFixture()
         let note = try f.marker.add(.note, 0, [markPt(100, 100)], markRed, "Question")
         let reply = try PdfComments.reply(f.document, note, "Answer", "Can", DateTimeOffset(2026, 11, 5, 9, 0, 0))
@@ -167,7 +167,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertTrue(Marker.selectable(note))
     }
 
-    func test_movingShiftsTheMarkByTheDragInPageSpace() throws {
+    func test_movingShiftsTheMarkByTheDragInPageSpace() async throws {
         let f = try CommentFixture()
         let made = try f.marker.add(.rectangle, 0, drag, markRed)
 
@@ -179,7 +179,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertEqual(box.width, 200, accuracy: 0.5)
     }
 
-    func test_resizingFitsTheMarkIntoTheNewBox() throws {
+    func test_resizingFitsTheMarkIntoTheNewBox() async throws {
         let f = try CommentFixture()
         let made = try f.marker.add(.rectangle, 0, drag, markRed)
 
@@ -191,7 +191,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertEqual(box.height, 120, accuracy: 0.5)
     }
 
-    func test_colourWidthAndOpacityChangeTheMarkAndKeepItsLook() throws {
+    func test_colourWidthAndOpacityChangeTheMarkAndKeepItsLook() async throws {
         let f = try CommentFixture()
         let made = try f.marker.add(.rectangle, 0, drag, markRed)
 
@@ -205,7 +205,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertTrue(faint.hasAppearance)
     }
 
-    func test_editedTextIsKeptAndANoteDoesNotNeedAFont() throws {
+    func test_editedTextIsKeptAndANoteDoesNotNeedAFont() async throws {
         let f = try CommentFixture()
         let note = try f.marker.add(.note, 0, [markPt(100, 100)], markRed, "First")
 
@@ -214,7 +214,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertEqual(edited.contents, "Second, with ğ")
     }
 
-    func test_aTextBoxFromAnotherAppKeepsTheFamilyOfItsStyleString() throws {
+    func test_aTextBoxFromAnotherAppKeepsTheFamilyOfItsStyleString() async throws {
         let f = try CommentFixture()
         var box = try f.marker.add(.textBox, 0, drag, markRed, "Hello")
         box.defaultAppearance = "0 g /Helv 12 Tf"
@@ -223,7 +223,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertEqual(Marker.textOf(box).family, "Georgia")
     }
 
-    func test_deletingAMarkRemovesItsRepliesToo() throws {
+    func test_deletingAMarkRemovesItsRepliesToo() async throws {
         let f = try CommentFixture()
         let note = try f.marker.add(.note, 0, [markPt(100, 100)], markRed, "Question")
         _ = try PdfComments.reply(f.document, note, "Answer", "Can", DateTimeOffset(2026, 11, 5, 9, 0, 0))
@@ -234,7 +234,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertTrue(f.marks().isEmpty)
     }
 
-    func test_findingAMarkAgainAfterACommitUsesItsObjectNumber() throws {
+    func test_findingAMarkAgainAfterACommitUsesItsObjectNumber() async throws {
         let f = try CommentFixture()
         let made = try f.marker.add(.rectangle, 0, drag, markRed)
         let number = try XCTUnwrap(made.reference?.number)
@@ -246,7 +246,7 @@ final class MarkerTests: XCTestCase {
         XCTAssertNil(f.marker.find(5, number))
     }
 
-    func test_aMarkIsOneUndoStepAndSurvivesAReread() throws {
+    func test_aMarkIsOneUndoStepAndSurvivesAReread() async throws {
         let f = try CommentFixture()
         try f.marker.add(.rectangle, 0, drag, markRed)
 

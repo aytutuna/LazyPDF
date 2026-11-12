@@ -64,7 +64,7 @@ final class OcrModelTests: XCTestCase {
         XCTAssertFalse(model.action!.canRun())
     }
 
-    func test_whileThePagesAreCheckedThePanelHasNothingToRun() throws {
+    func test_whileThePagesAreCheckedThePanelHasNothingToRun() async throws {
         let rig = try ToolRig()
         let model = makeModel()
 

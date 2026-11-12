@@ -21,7 +21,7 @@ final class CompareModelTests: XCTestCase {
         await model.action!.run()
     }
 
-    func test_nothingCanRunUntilAFileIsChosen() throws {
+    func test_nothingCanRunUntilAFileIsChosen() async throws {
         let (model, _, dir) = try attached()
 
         XCTAssertEqual(model.chosenText, "No file chosen")
@@ -33,7 +33,7 @@ final class CompareModelTests: XCTestCase {
         XCTAssertTrue(model.action!.canRun())
     }
 
-    func test_aFileWithNoHistoryOffersNoVersionToCompareWith() throws {
+    func test_aFileWithNoHistoryOffersNoVersionToCompareWith() async throws {
         let (model, _, _) = try attached()
         model.source = .version
 
@@ -252,7 +252,7 @@ final class CompareModelTests: XCTestCase {
         XCTAssertEqual(model.howText, "Compares how the pages look. Use it for scans and drawings.")
     }
 
-    func test_aDroppedPdfIsTheFileToCompareWithAndOtherFilesAreSaidToBeLeftOut() throws {
+    func test_aDroppedPdfIsTheFileToCompareWithAndOtherFilesAreSaidToBeLeftOut() async throws {
         let (model, rig, dir) = try attached()
         model.source = .version
 

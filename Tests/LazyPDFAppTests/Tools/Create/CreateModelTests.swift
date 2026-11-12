@@ -47,7 +47,7 @@ final class CreateModelTests: XCTestCase {
         return CreateModel(host: f.vm, codec: FakeCodec(), fonts: FakeFonts())
     }
 
-    func test_blankPagesNeedANumberFromOneToFiveHundred() {
+    func test_blankPagesNeedANumberFromOneToFiveHundred() async {
         let model = CreateModel(host: nil, codec: FakeCodec(), fonts: FakeFonts())
 
         XCTAssertTrue(model.canRun)
@@ -122,7 +122,7 @@ final class CreateModelTests: XCTestCase {
         XCTAssertEqual(grant.stops, 1)
     }
 
-    func test_textNeedsSomethingBesidesSpaces() {
+    func test_textNeedsSomethingBesidesSpaces() async {
         let model = CreateModel(host: nil, codec: FakeCodec(), fonts: FakeFonts())
         model.choose(.text)
 
@@ -180,7 +180,7 @@ final class CreateModelTests: XCTestCase {
         XCTAssertEqual(model.blocker, "That file could not be read. Check that no other program has it open.")
     }
 
-    func test_thePasteboardMakesTextOrAPictureAndTheButtonFollowsIt() {
+    func test_thePasteboardMakesTextOrAPictureAndTheButtonFollowsIt() async {
         let f = ViewModelFixture(self)
         let stand = Stand()
         let model = made(f, stand)
@@ -207,7 +207,7 @@ final class CreateModelTests: XCTestCase {
         XCTAssertEqual(model.request()?.text, "words")
     }
 
-    func test_lookingAtThePasteboardDoesNotReadIt() {
+    func test_lookingAtThePasteboardDoesNotReadIt() async {
         let f = ViewModelFixture(self)
         let stand = Stand()
         stand.peeksOnly = true
@@ -243,7 +243,7 @@ final class CreateModelTests: XCTestCase {
         XCTAssertTrue(f.vm.documents.isEmpty)
     }
 
-    func test_thePaperOfThePictureIsOnlyOfferedForPicturesAndFallsBackToA4() {
+    func test_thePaperOfThePictureIsOnlyOfferedForPicturesAndFallsBackToA4() async {
         let f = ViewModelFixture(self)
         let stand = Stand()
         let model = made(f, stand)
@@ -259,7 +259,7 @@ final class CreateModelTests: XCTestCase {
         XCTAssertTrue(model.makesText)
     }
 
-    func test_blankPagesKeepTheNormalMarginWhateverWasPicked() throws {
+    func test_blankPagesKeepTheNormalMarginWhateverWasPicked() async throws {
         let model = CreateModel(host: nil, codec: FakeCodec(), fonts: FakeFonts())
         model.margin = 72
         model.paper = .letter
@@ -300,7 +300,7 @@ final class CreateModelTests: XCTestCase {
         XCTAssertNil(panel.create.host)
     }
 
-    func test_droppedPicturesSwitchToPicturesAndOtherFilesAreSaidToBeLeftOut() {
+    func test_droppedPicturesSwitchToPicturesAndOtherFilesAreSaidToBeLeftOut() async {
         let f = ViewModelFixture(self)
         let model = made(f)
 

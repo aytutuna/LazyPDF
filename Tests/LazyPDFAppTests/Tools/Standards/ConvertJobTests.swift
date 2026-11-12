@@ -35,7 +35,7 @@ final class ConvertJobTests: XCTestCase {
         XCTAssertNotEqual(DocumentMetadata.read(try PdfDocument.open(bytes)).title, "Changed after")
     }
 
-    func test_aFileOpenedWithTheOwnerPasswordIsConvertedWithIt() throws {
+    func test_aFileOpenedWithTheOwnerPasswordIsConvertedWithIt() async throws {
         let tab = try tabOf(protectedFile(), password: "owner")
 
         let made = try ConvertJob(tab, SecurityHost()).run(.a2b, FakeFonts())
@@ -43,7 +43,7 @@ final class ConvertJobTests: XCTestCase {
         XCTAssertFalse(try PdfDocument.open(XCTUnwrap(made.bytes)).isEncrypted)
     }
 
-    func test_aFileOpenedWithOnlyTheUserPasswordIsRefusedNotThrown() throws {
+    func test_aFileOpenedWithOnlyTheUserPasswordIsRefusedNotThrown() async throws {
         let tab = try tabOf(protectedFile(), password: "open")
 
         let made = try ConvertJob(tab, SecurityHost()).run(.a2b, FakeFonts())
@@ -53,7 +53,7 @@ final class ConvertJobTests: XCTestCase {
     }
 
     #if canImport(Security)
-    func test_aFileOpenedWithACertificateIsConvertedNotRefusedAsUnreadable() throws {
+    func test_aFileOpenedWithACertificateIsConvertedNotRefusedAsUnreadable() async throws {
         let alice = try PdfDigitalId.create("Alice", nil, DateTimeOffset(2026, 3, 9, 9, 0, 0), years: 20, keyBits: 2048, encipher: true)
         let held = try XCTUnwrap(PdfCertificate(alice))
         let security = try PdfSecurity.createPublicKey([PdfRecipient(held)], .aes256)
@@ -70,7 +70,7 @@ final class ConvertJobTests: XCTestCase {
     }
     #endif
 
-    func test_whatConvertingCostsIsSaidBeforeItIsDone() {
+    func test_whatConvertingCostsIsSaidBeforeItIsDone() async {
         XCTAssertEqual(StandardsText.losses(signed: false, encrypted: false), "")
         XCTAssertTrue(StandardsText.losses(signed: true, encrypted: false).contains("signatures"))
         XCTAssertTrue(StandardsText.losses(signed: false, encrypted: true).contains("password"))
@@ -78,7 +78,7 @@ final class ConvertJobTests: XCTestCase {
         XCTAssertTrue(StandardsText.losses(signed: true, encrypted: true).contains("password"))
     }
 
-    func test_theResultListsEveryChangeAndOnlyClaimsPassingChecksWhenItIsClean() {
+    func test_theResultListsEveryChangeAndOnlyClaimsPassingChecksWhenItIsClean() async {
         let clean = PdfAConversion([1], nil, [], [PdfAText.encryptionRemoved, PdfAText.signaturesBroken, PdfAText.layersRemoved])
         let broken = PdfAConversion([1], nil, [PdfAIssue("6.1.3", PdfAText.trailer, "The trailer has no /ID.")], [PdfAText.attachmentsRemoved(2)])
 
@@ -95,7 +95,7 @@ final class ConvertJobTests: XCTestCase {
         XCTAssertFalse(StandardsText.convertedTitle(broken).contains("PDF/A-2b"))
     }
 
-    func test_theNewTabNameKeepsTheFileNameWhenItIsCutAtASlash() {
+    func test_theNewTabNameKeepsTheFileNameWhenItIsCutAtASlash() async {
         let clean = StandardsText.convertedName("Quarterly report.pdf", .a2b, clean: true)
         let broken = StandardsText.convertedName(clean, .a3b, clean: false)
 

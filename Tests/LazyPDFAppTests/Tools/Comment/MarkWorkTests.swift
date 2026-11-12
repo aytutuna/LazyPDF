@@ -25,7 +25,7 @@ final class MarkWorkTests: XCTestCase {
         XCTAssertFalse(f.vm.isBlocked)
     }
 
-    func test_theCommentsPanelAnswersNothingWhileAChangeIsRunning() throws {
+    func test_theCommentsPanelAnswersNothingWhileAChangeIsRunning() async throws {
         let tab = try PanelPdfs.tab(PanelPdfs.full())
         try PanelPdfs.comment(tab)
         let model = CommentsModel()
@@ -42,7 +42,7 @@ final class MarkWorkTests: XCTestCase {
         XCTAssertTrue(model.reply("Fixed"))
     }
 
-    func test_aSignedFileGetsACautionAndACertifiedOneAStrongerOne() throws {
+    func test_aSignedFileGetsACautionAndACertifiedOneAStrongerOne() async throws {
         let plain = try PdfDocument.open(Pdfs.text())
         let signed = try PdfDocument.open(Pdfs.signed(certified: false))
         let certified = try PdfDocument.open(Pdfs.signed(certified: true))
@@ -52,7 +52,7 @@ final class MarkWorkTests: XCTestCase {
         XCTAssertEqual(MarkWork.caution(certified), "This file is certified, so changing it makes viewers report it as altered.")
     }
 
-    func test_aChangeToASignedFileIsHeldBackUntilThePersonGoesOn() throws {
+    func test_aChangeToASignedFileIsHeldBackUntilThePersonGoesOn() async throws {
         let rig = try ToolRig(try Pdfs.signed(certified: false))
         var ran = 0
 
@@ -66,7 +66,7 @@ final class MarkWorkTests: XCTestCase {
         XCTAssertFalse(MarkWork.cautioned(plain.tab, plain.host) { ran += 1 })
     }
 
-    func test_aCommitWithNothingChangedIsFalse() throws {
+    func test_aCommitWithNothingChangedIsFalse() async throws {
         let rig = try ToolRig()
 
         XCTAssertFalse(try MarkWork.commit(rig.tab, rig.host, "Nothing"))

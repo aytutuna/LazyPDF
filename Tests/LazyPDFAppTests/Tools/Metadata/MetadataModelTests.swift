@@ -29,7 +29,7 @@ final class MetadataModelTests: XCTestCase {
         XCTAssertTrue(model.action!.canRun())
     }
 
-    func test_typedPropertiesComeBackWhenThePanelIsShownAgain() throws {
+    func test_typedPropertiesComeBackWhenThePanelIsShownAgain() async throws {
         let (model, rig) = try attached()
         model.title = "Report"
 
@@ -39,7 +39,7 @@ final class MetadataModelTests: XCTestCase {
         XCTAssertEqual(model.title, "Report")
     }
 
-    func test_typedPropertiesAreLeftWhenThePanelIsShownForAnotherDocument() throws {
+    func test_typedPropertiesAreLeftWhenThePanelIsShownForAnotherDocument() async throws {
         let (model, _) = try attached()
         model.title = "Report"
 
@@ -50,7 +50,7 @@ final class MetadataModelTests: XCTestCase {
         XCTAssertEqual(model.title, "")
     }
 
-    func test_handingInPutsTypedPropertiesInTheFileAndMarksItUnsaved() throws {
+    func test_handingInPutsTypedPropertiesInTheFileAndMarksItUnsaved() async throws {
         let (model, rig) = try attached()
         model.title = "Report"
         XCTAssertFalse(rig.tab.isDirty)
@@ -62,7 +62,7 @@ final class MetadataModelTests: XCTestCase {
         XCTAssertFalse(model.action!.canRun())
     }
 
-    func test_handingInOnASignedFileWaitsForTheAnswer() throws {
+    func test_handingInOnASignedFileWaitsForTheAnswer() async throws {
         let (model, rig) = try attached(try Pdfs.signed(certified: false))
         model.title = "Report"
 
@@ -90,7 +90,7 @@ final class MetadataModelTests: XCTestCase {
         XCTAssertEqual(rig.host.notices.count, 1)
     }
 
-    func test_leavingOneFieldForAnotherWaitsForSaveToSayIt() throws {
+    func test_leavingOneFieldForAnotherWaitsForSaveToSayIt() async throws {
         let (model, rig) = try attached()
         model.title = "Report"
         _ = model.handIn()
@@ -103,7 +103,7 @@ final class MetadataModelTests: XCTestCase {
         XCTAssertEqual(rig.host.notices.count, 1)
     }
 
-    func test_addingTextSaysNothingAboutOldValues() throws {
+    func test_addingTextSaysNothingAboutOldValues() async throws {
         let (model, rig) = try attached()
         model.title = "Report"
         model.author = "Ann"
@@ -112,7 +112,7 @@ final class MetadataModelTests: XCTestCase {
         XCTAssertTrue(rig.host.notices.isEmpty)
     }
 
-    func test_handingInWithNothingTypedChangesNothing() throws {
+    func test_handingInWithNothingTypedChangesNothing() async throws {
         let (model, rig) = try attached()
 
         XCTAssertTrue(model.handIn())

@@ -43,7 +43,7 @@ final class CertificatesModelTests: XCTestCase {
         return session.current
     }
 
-    func test_theKeychainIdentitiesAreListedAndTheFirstIsChosen() throws {
+    func test_theKeychainIdentitiesAreListedAndTheFirstIsChosen() async throws {
         let s = try attached()
 
         XCTAssertEqual(s.model.identities, [s.choice])
@@ -53,7 +53,7 @@ final class CertificatesModelTests: XCTestCase {
         XCTAssertEqual(s.model.places.map(\.text), ["Not visible", "A box I draw on the page"])
     }
 
-    func test_withoutAnIdentityTheNoteSaysSoAndTheButtonWaits() throws {
+    func test_withoutAnIdentityTheNoteSaysSoAndTheButtonWaits() async throws {
         let rig = try SecurityRig()
         let model = CertificatesModel(trust: SignatureTrust(directory: TempDir(self).url), transport: { DownServer() },
                                       importIdentity: { _, _ in throw SignatureCryptoException(message: "") })
@@ -110,7 +110,7 @@ final class CertificatesModelTests: XCTestCase {
         XCTAssertEqual(widget.rect.right, 120, accuracy: 0.5)
     }
 
-    func test_aBoxThatIsTooSmallIsNotTaken() throws {
+    func test_aBoxThatIsTooSmallIsNotTaken() async throws {
         let s = try attached()
         s.model.setPlace(1)
         s.model.drawBox()
@@ -122,7 +122,7 @@ final class CertificatesModelTests: XCTestCase {
         XCTAssertFalse(s.model.action!.canRun())
     }
 
-    func test_aKeyboardClickGetsABoxOfTheUsualSizeInsideThePage() throws {
+    func test_aKeyboardClickGetsABoxOfTheUsualSizeInsideThePage() async throws {
         let s = try attached()
         s.model.setPlace(1)
         s.model.drawBox()
@@ -184,7 +184,7 @@ final class CertificatesModelTests: XCTestCase {
         XCTAssertFalse(s.model.working)
     }
 
-    func test_theLastTimeStampServerIsKeptWithTheTrustSettings() throws {
+    func test_theLastTimeStampServerIsKeptWithTheTrustSettings() async throws {
         let rig = try SecurityRig()
         let folder = TempDir(self)
         SignatureTrust(directory: folder.url).setTimestampUrl("https://tsa.example/stamp")
@@ -323,14 +323,14 @@ final class CertificatesModelTests: XCTestCase {
         tool.release(pointer(120, 90, false))
     }
 
-    func test_theKeptPlaceFollowsTheFieldWhenTheListChanges() {
+    func test_theKeptPlaceFollowsTheFieldWhenTheListChanges() async {
         XCTAssertEqual(CertificateSigning.keptPlace(oldIndex: 0, oldField: nil, fields: ["A", "B"]), 0)
         XCTAssertEqual(CertificateSigning.keptPlace(oldIndex: 1, oldField: nil, fields: ["A", "B"]), 1)
         XCTAssertEqual(CertificateSigning.keptPlace(oldIndex: 2, oldField: "B", fields: ["A", "B"]), 3)
         XCTAssertEqual(CertificateSigning.keptPlace(oldIndex: 2, oldField: "Gone", fields: ["A", "B"]), 0)
     }
 
-    func test_aBoxSurvivesAChangeThatLeavesItsPageAlone() throws {
+    func test_aBoxSurvivesAChangeThatLeavesItsPageAlone() async throws {
         let s = try attached()
         try drawnBox(s)
 
@@ -374,7 +374,7 @@ final class CertificatesModelTests: XCTestCase {
         XCTAssertEqual(s.model.boxText, "No box yet.")
     }
 
-    func test_aPressTakenAwayByASecondFingerKeepsTheBoxTool() throws {
+    func test_aPressTakenAwayByASecondFingerKeepsTheBoxTool() async throws {
         let s = try attached()
         s.model.setPlace(1)
         s.model.drawBox()
@@ -400,7 +400,7 @@ final class CertificatesModelTests: XCTestCase {
         XCTAssertFalse(s.rig.tab.document.isSigned)
     }
 
-    func test_theFailureWordsFollowTheKindOfError() {
+    func test_theFailureWordsFollowTheKindOfError() async {
         let down = DownServer()
 
         XCTAssertEqual(CertificatesModel.failure(SignatureCryptoException(message: "x"), down, "Not signed").title, "Key cannot be used")

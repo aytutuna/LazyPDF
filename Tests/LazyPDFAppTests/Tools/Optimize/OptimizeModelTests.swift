@@ -15,7 +15,7 @@ final class OptimizeModelTests: XCTestCase {
         return (model, rig)
     }
 
-    func test_whileTheFileIsSearchedThePanelSaysSo() throws {
+    func test_whileTheFileIsSearchedThePanelSaysSo() async throws {
         let rig = try ToolRig(Pdfs.text(3))
         let model = OptimizeModel()
 

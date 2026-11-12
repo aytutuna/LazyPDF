@@ -66,7 +66,7 @@ final class HandInTests: XCTestCase {
         XCTAssertEqual(f.vm.documents.count, 1)
     }
 
-    func test_withNoToolOpenThereIsNothingToHandIn() {
+    func test_withNoToolOpenThereIsNothingToHandIn() async {
         let f = ViewModelFixture(self)
 
         XCTAssertTrue(f.vm.handIn())
@@ -113,7 +113,7 @@ final class HandInTests: XCTestCase {
         XCTAssertEqual(asked, 0)
     }
 
-    func test_aToolHoldsTheStageUntilItIsGivenBack() {
+    func test_aToolHoldsTheStageUntilItIsGivenBack() async {
         let f = ViewModelFixture(self)
         XCTAssertFalse(f.vm.stageHeld)
 

@@ -25,7 +25,7 @@ final class MeasureOverlayTests: XCTestCase {
         viewer.overlay(page).items.map(\.id)
     }
 
-    func test_theShapeUnderWayIsDrawnWithADotForEachCornerAndItsValue() throws {
+    func test_theShapeUnderWayIsDrawnWithADotForEachCornerAndItsValue() async throws {
         let (tool, overlay, viewer) = try start(.perimeter)
         tool.press(press(0, 0))
         tool.press(press(72, 0))
@@ -41,7 +41,7 @@ final class MeasureOverlayTests: XCTestCase {
         XCTAssertEqual(text.text, "25.4 mm")
     }
 
-    func test_aFinishedMeasurementIsDrawnOnItsPageAndEverythingGoesOnClear() throws {
+    func test_aFinishedMeasurementIsDrawnOnItsPageAndEverythingGoesOnClear() async throws {
         let (_, overlay, viewer) = try start(.distance)
         let item = MeasureItem(.distance, 1, [ViewPoint(0, 0), ViewPoint(72, 0)])
 

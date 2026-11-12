@@ -21,7 +21,7 @@ final class MeasureModelTests: XCTestCase {
         tool.press(PagePointer(page: 0, point: to, view: to, pressed: true, clicks: 1))
     }
 
-    func test_theModelHandsTheViewerTheToolAndTakesItBackOnDetach() throws {
+    func test_theModelHandsTheViewerTheToolAndTakesItBackOnDetach() async throws {
         let (model, rig) = try attached()
 
         XCTAssertTrue(rig.viewer.pointerTool is MeasureTool)
@@ -32,7 +32,7 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertNil(rig.viewer.pointerTool)
     }
 
-    func test_pickingAKindChangesTheToolAndTheHint() throws {
+    func test_pickingAKindChangesTheToolAndTheHint() async throws {
         let (model, _) = try attached()
 
         model.pick(.area)
@@ -41,7 +41,7 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertEqual(model.hint, "Click each corner, then double-click to finish. Hold Shift for straight lines.")
     }
 
-    func test_aFinishedMeasurementWaitsInTheListWithItsValueAndPlace() throws {
+    func test_aFinishedMeasurementWaitsInTheListWithItsValueAndPlace() async throws {
         let (model, rig) = try attached()
         XCTAssertFalse(try XCTUnwrap(model.action).canRun())
 
@@ -56,7 +56,7 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertFalse(rig.tab.isDirty)
     }
 
-    func test_aNewScaleChangesWhatTheListReads() throws {
+    func test_aNewScaleChangesWhatTheListReads() async throws {
         let (model, _) = try attached()
         try measure(model, ViewPoint(0, 0), ViewPoint(72, 0))
 
@@ -68,7 +68,7 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertEqual(model.rows[0].value, "10 m")
     }
 
-    func test_aScaleThatIsNotAboveZeroIsFlaggedAndKeepsTheLastGoodOne() throws {
+    func test_aScaleThatIsNotAboveZeroIsFlaggedAndKeepsTheLastGoodOne() async throws {
         let (model, _) = try attached()
         try measure(model, ViewPoint(0, 0), ViewPoint(72, 0))
 
@@ -83,7 +83,7 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertEqual(model.rows[0].value, "12.7 mm")
     }
 
-    func test_removingARowTakesItOffTheList() throws {
+    func test_removingARowTakesItOffTheList() async throws {
         let (model, _) = try attached()
         try measure(model, ViewPoint(0, 0), ViewPoint(72, 0))
         try measure(model, ViewPoint(0, 10), ViewPoint(144, 10))
@@ -159,7 +159,7 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.session.undoLabel, "Measure")
     }
 
-    func test_theListIsKeptPerTab() throws {
+    func test_theListIsKeptPerTab() async throws {
         let (model, rig) = try attached()
         try measure(model, ViewPoint(0, 0), ViewPoint(72, 0))
         model.detach()
@@ -173,7 +173,7 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertEqual(model.rows.count, 1)
     }
 
-    func test_eachTabKeepsTheScaleTypedForIt() throws {
+    func test_eachTabKeepsTheScaleTypedForIt() async throws {
         let (model, rig) = try attached()
         model.setPageValue("2")
         model.setRealUnit(.metre)
@@ -203,7 +203,7 @@ final class MeasureModelTests: XCTestCase {
         return session.current
     }
 
-    func test_aFileWithMeasurementsStartsWithTheirScale() throws {
+    func test_aFileWithMeasurementsStartsWithTheirScale() async throws {
         let (model, _) = try attached(try marked(MeasureScale(1, .centimetre, 2, .metre)))
 
         XCTAssertEqual(model.pageValue, "1")
@@ -212,7 +212,7 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertEqual(model.realUnit, .metre)
     }
 
-    func test_aPageUnitThePanelDoesNotOfferStartsAtActualSize() throws {
+    func test_aPageUnitThePanelDoesNotOfferStartsAtActualSize() async throws {
         let (model, _) = try attached(try marked(MeasureScale(1, .metre, 2, .metre)))
 
         XCTAssertEqual(model.pageUnit, .millimetre)
@@ -249,7 +249,7 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertEqual(model.kind, .perimeter)
     }
 
-    func test_theReadoutFollowsTheShapeUnderWay() throws {
+    func test_theReadoutFollowsTheShapeUnderWay() async throws {
         let (model, _) = try attached()
         model.pick(.perimeter)
         XCTAssertEqual(model.readout, "—")
@@ -263,7 +263,7 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertFalse(model.canFinish)
     }
 
-    func test_takeBackCornerDropsTheLastCornerOfTheShapeUnderWay() throws {
+    func test_takeBackCornerDropsTheLastCornerOfTheShapeUnderWay() async throws {
         let (model, _) = try attached()
         model.pick(.area)
         let tool = try XCTUnwrap(model.tool)
@@ -281,7 +281,7 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertFalse(model.canStartOver)
     }
 
-    func test_aPhoneAsksForTapsAndTheStraightSwitch() throws {
+    func test_aPhoneAsksForTapsAndTheStraightSwitch() async throws {
         let rig = try ToolRig(nil)
         let model = MeasureModel(fonts: FakeFonts(), touch: true)
         rig.attach(model)
@@ -291,7 +291,7 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertEqual(model.hint, "Tap each corner, then tap Finish. Turn on Straight lines to keep them straight. Two fingers scroll the page.")
     }
 
-    func test_twoFingersScrollIsToldOnAPhoneOnly() throws {
+    func test_twoFingersScrollIsToldOnAPhoneOnly() async throws {
         let rig = try ToolRig(nil)
         let model = MeasureModel(fonts: FakeFonts(), touch: true)
         rig.attach(model)

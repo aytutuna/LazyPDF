@@ -35,7 +35,7 @@ final class ContentEditsTests: XCTestCase {
         try PdfFromText.create("First line of the text.\nSecond line of the text.\nThird line of the text.", fonts: FakeFonts()).bytes
     }
 
-    func test_typingOverALineChangesThePageAndShowsIt() throws {
+    func test_typingOverALineChangesThePageAndShowsIt() async throws {
         let tab = try open()
         var raised = 0
         tab.changed = { raised += 1 }
@@ -50,7 +50,7 @@ final class ContentEditsTests: XCTestCase {
         XCTAssertTrue(tab.isDirty)
     }
 
-    func test_undoTakesTheTypedLineBack() throws {
+    func test_undoTakesTheTypedLineBack() async throws {
         let tab = try open()
         let line = try XCTUnwrap((try objects(tab)[0] as? TextObject)?.lines.first)
         _ = try makeEdits(tab).replaceLine(0, line, "Something else entirely.")
@@ -60,7 +60,7 @@ final class ContentEditsTests: XCTestCase {
         XCTAssertTrue(try pageText(tab).contains("Hello from the tests."))
     }
 
-    func test_lettersNoFontHasAreRefusedWithTheEnginesReasonAndNothingIsCommitted() throws {
+    func test_lettersNoFontHasAreRefusedWithTheEnginesReasonAndNothingIsCommitted() async throws {
         let tab = try open()
         let line = try XCTUnwrap((try objects(tab)[0] as? TextObject)?.lines.first)
 
@@ -72,7 +72,7 @@ final class ContentEditsTests: XCTestCase {
         XCTAssertEqual(tab.revision, 0)
     }
 
-    func test_aParagraphTakesMoreLinesAndSaysItGrew() throws {
+    func test_aParagraphTakesMoreLinesAndSaysItGrew() async throws {
         let tab = try open(try threeLines())
         let block = try XCTUnwrap(try objects(tab)[0] as? TextObject)
 
@@ -83,7 +83,7 @@ final class ContentEditsTests: XCTestCase {
         XCTAssertTrue(try pageText(tab).contains("fifth"))
     }
 
-    func test_anObjectThatIsGoneIsReportedNotThrown() throws {
+    func test_anObjectThatIsGoneIsReportedNotThrown() async throws {
         let tab = try open()
 
         let outcome = try makeEdits(tab).style(0, 999, TextStyleChange(size: 20))
@@ -92,7 +92,7 @@ final class ContentEditsTests: XCTestCase {
         XCTAssertEqual(outcome.problem, EditingText.staleObject)
     }
 
-    func test_aSizeChangeIsReadBackFromThePage() throws {
+    func test_aSizeChangeIsReadBackFromThePage() async throws {
         let tab = try open()
         let block = try XCTUnwrap(try objects(tab)[0] as? TextObject)
 
@@ -102,7 +102,7 @@ final class ContentEditsTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(try objects(tab)[0] as? TextObject).size, 24, accuracy: 0.1)
     }
 
-    func test_aTextBoxIsAddedAndATooSmallOneSaysItOverflows() throws {
+    func test_aTextBoxIsAddedAndATooSmallOneSaysItOverflows() async throws {
         let tab = try open()
         let edits = makeEdits(tab)
 
@@ -116,7 +116,7 @@ final class ContentEditsTests: XCTestCase {
         XCTAssertNotNil(tight.note)
     }
 
-    func test_aPictureIsAddedThroughTheCodecAndUnreadableBytesAreRefused() throws {
+    func test_aPictureIsAddedThroughTheCodecAndUnreadableBytesAreRefused() async throws {
         let tab = try open()
         let edits = makeEdits(tab)
 
@@ -129,7 +129,7 @@ final class ContentEditsTests: XCTestCase {
         XCTAssertEqual(try objects(tab).filter { $0 is ImageObject }.count, 1)
     }
 
-    func test_aPictureKeepsItsProportionsInsideTheBox() throws {
+    func test_aPictureKeepsItsProportionsInsideTheBox() async throws {
         let tab = try open()
 
         _ = try makeEdits(tab).addImage(0, PdfRect(50, 400, 350, 500), [1])
@@ -140,7 +140,7 @@ final class ContentEditsTests: XCTestCase {
         XCTAssertEqual(image.bounds.left, 150, accuracy: 1)
     }
 
-    func test_objectsAreMovedResizedTurnedAndDeletedAsOneStepEach() throws {
+    func test_objectsAreMovedResizedTurnedAndDeletedAsOneStepEach() async throws {
         let tab = try open()
         let edits = makeEdits(tab)
         _ = try edits.addImage(0, PdfRect(100, 400, 200, 500), [1])
@@ -166,7 +166,7 @@ final class ContentEditsTests: XCTestCase {
         XCTAssertEqual(steps, 5)
     }
 
-    func test_opacityOrderAndShapeColoursReachThePage() throws {
+    func test_opacityOrderAndShapeColoursReachThePage() async throws {
         let tab = try open()
         let edits = makeEdits(tab)
         let page = try PageEditor(tab.session, 0, FakeFonts())
@@ -230,7 +230,7 @@ final class ContentEditsTests: XCTestCase {
         XCTAssertTrue(try pageText(tab, 1).contains("goodbye"))
     }
 
-    func test_aLinkIsAddedChangedAndRemoved() throws {
+    func test_aLinkIsAddedChangedAndRemoved() async throws {
         let tab = try open()
         let edits = makeEdits(tab)
         let area = PdfRect(50, 700, 200, 720)
@@ -250,7 +250,7 @@ final class ContentEditsTests: XCTestCase {
         XCTAssertTrue(edits.links(0).isEmpty)
     }
 
-    func test_aWebAddressGetsItsSchemeWhenItHasNone() {
+    func test_aWebAddressGetsItsSchemeWhenItHasNone() async {
         let cases = [
             ("example.com", "https://example.com"),
             ("mailto:me@example.com", "mailto:me@example.com"),
@@ -262,14 +262,14 @@ final class ContentEditsTests: XCTestCase {
         }
     }
 
-    func test_aTargetThatIsNeitherAnAddressNorAPageOfTheFileIsRefused() {
+    func test_aTargetThatIsNeitherAnAddressNorAPageOfTheFileIsRefused() async {
         let cases: [(Bool, String)] = [(false, ""), (false, "two words"), (true, "0"), (true, "4"), (true, "x")]
         for (toPage, typed) in cases {
             XCTAssertNil(ContentEdits.target(toPage: toPage, typed, 3), typed)
         }
     }
 
-    func test_aPageNumberIsCountedFromOne() throws {
+    func test_aPageNumberIsCountedFromOne() async throws {
         let target = try XCTUnwrap(ContentEdits.target(toPage: true, "3", 3) as? GoToAction)
 
         XCTAssertEqual(target.destination.pageIndex, 2)

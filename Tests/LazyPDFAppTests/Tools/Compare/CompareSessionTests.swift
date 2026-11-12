@@ -176,19 +176,19 @@ final class CompareSessionTests: XCTestCase {
         PageGeometry(PdfRect(0, 0, width, height), 0)
     }
 
-    func test_aBiggerOldPageScalesTheBox() {
+    func test_aBiggerOldPageScalesTheBox() async {
         let box = ChangeRow.oldBox(ViewRect(10, 20, 30, 40), PixelAlignment(0, 0, 0), 96, page(200, 300), page(100, 150))
 
         XCTAssertEqual(box, ViewRect(20, 40, 60, 80))
     }
 
-    func test_aShiftedRescanMovesTheBoxBack() {
+    func test_aShiftedRescanMovesTheBoxBack() async {
         let box = ChangeRow.oldBox(ViewRect(10, 20, 30, 40), PixelAlignment(8, -16, 0), 96, page(100, 150), page(100, 150))
 
         XCTAssertEqual(box, ViewRect(4, 32, 30, 40))
     }
 
-    func test_aTurnedPageKeepsTheCentreWhereItIs() {
+    func test_aTurnedPageKeepsTheCentreWhereItIs() async {
         let box = ChangeRow.oldBox(ViewRect(45, 45, 10, 10), PixelAlignment(0, 0, 90), 96, page(100, 100), page(100, 100))
 
         XCTAssertEqual(box.x + box.width / 2, 50, accuracy: 1e-6)
@@ -219,25 +219,25 @@ final class ViewSyncPartnerTests: XCTestCase {
         PagePair(-1, 4, 0, false),
     ]
 
-    func test_aPairedPageGoesToItsPartner() {
+    func test_aPairedPageGoesToItsPartner() async {
         for (old, partner) in [(0, 0), (2, 1), (3, 3)] {
             XCTAssertEqual(ViewSync.partner(pairs, old, fromOld: true), partner)
         }
     }
 
-    func test_aRemovedPageGoesToTheNextPageThatSurvived() {
+    func test_aRemovedPageGoesToTheNextPageThatSurvived() async {
         XCTAssertEqual(ViewSync.partner(pairs, 1, fromOld: true), 1)
     }
 
-    func test_anAddedPageGoesToTheNextPageOfTheOldFile() {
+    func test_anAddedPageGoesToTheNextPageOfTheOldFile() async {
         XCTAssertEqual(ViewSync.partner(pairs, 2, fromOld: false), 3)
     }
 
-    func test_anAddedPageAtTheEndFallsBackToThePageBefore() {
+    func test_anAddedPageAtTheEndFallsBackToThePageBefore() async {
         XCTAssertEqual(ViewSync.partner(pairs, 4, fromOld: false), 3)
     }
 
-    func test_aPageNoPairNamesHasNoPartner() {
+    func test_aPageNoPairNamesHasNoPartner() async {
         XCTAssertEqual(ViewSync.partner(pairs, 9, fromOld: true), -1)
     }
 }

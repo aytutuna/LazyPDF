@@ -7,7 +7,7 @@ import LazyPDFKit
 
 @MainActor
 final class ChangeGateTests: XCTestCase {
-    func test_anOrdinaryFileIsChangedAtOnce() throws {
+    func test_anOrdinaryFileIsChangedAtOnce() async throws {
         let rig = try ToolRig()
         var ran = 0
 
@@ -18,7 +18,7 @@ final class ChangeGateTests: XCTestCase {
         XCTAssertTrue(rig.host.notices.isEmpty)
     }
 
-    func test_aFileThatForbidsChangesIsLeftAloneAndSaysWhy() throws {
+    func test_aFileThatForbidsChangesIsLeftAloneAndSaysWhy() async throws {
         let rig = try ToolRig(try Pdfs.restricted(PdfPermissions.all.subtracting(.modify)), password: "")
         var ran = 0
 
@@ -28,7 +28,7 @@ final class ChangeGateTests: XCTestCase {
         XCTAssertEqual(rig.host.problems.first?.title, "This file cannot be changed")
     }
 
-    func test_aSignedFileAsksAndGoesOnOnlyWhenTold() throws {
+    func test_aSignedFileAsksAndGoesOnOnlyWhenTold() async throws {
         let rig = try ToolRig(try Pdfs.signed(certified: false))
         var ran = 0
 
@@ -41,7 +41,7 @@ final class ChangeGateTests: XCTestCase {
         XCTAssertEqual(ran, 1)
     }
 
-    func test_aCertifiedFileSaysViewersWillReportItAltered() throws {
+    func test_aCertifiedFileSaysViewersWillReportItAltered() async throws {
         let rig = try ToolRig(try Pdfs.signed(certified: true))
 
         ChangeGate.run(rig.tab, rig.host, "Job") {}
@@ -49,7 +49,7 @@ final class ChangeGateTests: XCTestCase {
         XCTAssertEqual(rig.host.notices.first?.text, "This file is certified, so changing it makes viewers report it as altered.")
     }
 
-    func test_aJobThatFailsIsExplainedAndTheAppGoesOn() throws {
+    func test_aJobThatFailsIsExplainedAndTheAppGoesOn() async throws {
         let rig = try ToolRig()
 
         ChangeGate.run(rig.tab, rig.host, "Stamp") { throw InvalidOperationException("no") }
@@ -58,7 +58,7 @@ final class ChangeGateTests: XCTestCase {
         XCTAssertEqual(rig.host.problems.first?.text, "Stamp could not be finished. If part of it was done, Undo takes it back.")
     }
 
-    func test_eachKindOfFailureGivesItsOwnText() throws {
+    func test_eachKindOfFailureGivesItsOwnText() async throws {
         let rig = try ToolRig()
         let failures: [(Error, String)] = [
             (PdfReadException(.unsupported, "no"),
@@ -75,7 +75,7 @@ final class ChangeGateTests: XCTestCase {
         }
     }
 
-    func test_aJobRefusedByPermissionsSaysTheFileIsRestricted() throws {
+    func test_aJobRefusedByPermissionsSaysTheFileIsRestricted() async throws {
         let rig = try ToolRig()
 
         ChangeGate.run(rig.tab, rig.host, "Stamp") { throw PdfPermissionException("no") }
@@ -94,7 +94,7 @@ final class ChangeGateTests: XCTestCase {
         await waitUntil { ran == 1 }
     }
 
-    func test_aFileThatWasNeverSavedCannotBeReplaced() throws {
+    func test_aFileThatWasNeverSavedCannotBeReplaced() async throws {
         let rig = try ToolRig()
         let choice = OutputChoice()
 
@@ -107,7 +107,7 @@ final class ChangeGateTests: XCTestCase {
         XCTAssertEqual(choice.note, "This file is not saved yet.")
     }
 
-    func test_aSignedFileIsNotReplacedAndTheNoteSaysWhatHappensToTheSignatures() throws {
+    func test_aSignedFileIsNotReplacedAndTheNoteSaysWhatHappensToTheSignatures() async throws {
         let rig = try ToolRig(try Pdfs.signed(certified: false))
         let choice = OutputChoice()
 

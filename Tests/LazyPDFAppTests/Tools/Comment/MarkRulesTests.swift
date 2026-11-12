@@ -13,7 +13,7 @@ final class MarkRulesTests: XCTestCase {
         return f
     }
 
-    func test_aStampOnATurnedPageStaysUprightAtItsNaturalSize() throws {
+    func test_aStampOnATurnedPageStaysUprightAtItsNaturalSize() async throws {
         for degrees in [90, 180, 270] {
             let f = try turned(degrees)
 
@@ -30,7 +30,7 @@ final class MarkRulesTests: XCTestCase {
         }
     }
 
-    func test_aStampOnAnUpPageIsNotMarkedToStayUpright() throws {
+    func test_aStampOnAnUpPageIsNotMarkedToStayUpright() async throws {
         let f = try CommentFixture()
 
         let stamp = try f.marker.addStamp(0, markPt(200, 300), "Approved", .default)
@@ -38,7 +38,7 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertFalse(stamp.flags.contains(.noRotate))
     }
 
-    func test_aTextBoxOnATurnedPageKeepsTheSizeItWasDrawnAt() throws {
+    func test_aTextBoxOnATurnedPageKeepsTheSizeItWasDrawnAt() async throws {
         for degrees in [90, 270] {
             let f = try turned(degrees)
 
@@ -53,7 +53,7 @@ final class MarkRulesTests: XCTestCase {
         }
     }
 
-    func test_resizingAnUprightMarkGivesTheNewBoxBack() throws {
+    func test_resizingAnUprightMarkGivesTheNewBoxBack() async throws {
         let f = try turned(90)
         let stamp = try f.marker.addStamp(0, markPt(200, 300), "Approved", .default)
 
@@ -66,7 +66,7 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertEqual(box.height, 70, accuracy: 0.5)
     }
 
-    func test_aCalloutOnATurnedPageIsABoxWithAnArrowToTheSpot() throws {
+    func test_aCalloutOnATurnedPageIsABoxWithAnArrowToTheSpot() async throws {
         let f = try turned(90)
 
         let made = try f.marker.add(.callout, 0, [markPt(100, 100), markPt(300, 200)], markRed, "See the chart")
@@ -76,7 +76,7 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertTrue(f.marks().contains { $0.type == .line })
     }
 
-    func test_resizingACalloutKeepsItsTextBoxInsideItsRectangle() throws {
+    func test_resizingACalloutKeepsItsTextBoxInsideItsRectangle() async throws {
         let f = try CommentFixture()
         let made = try f.marker.add(.callout, 0, [markPt(40, 100), markPt(380, 200)], markRed, "See the chart")
         let box = f.marker.box(of: made)
@@ -90,7 +90,7 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertEqual(inset[0], made.rectDifference[0] / 2, accuracy: 0.5)
     }
 
-    func test_opacityAppliesToStampsAndNotesWhenTheyArePlaced() throws {
+    func test_opacityAppliesToStampsAndNotesWhenTheyArePlaced() async throws {
         let f = try CommentFixture()
         let faint = MarkStyle(color: [0.9, 0.1, 0.1], opacity: 0.4)
 
@@ -101,7 +101,7 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertEqual(note.opacity, 0.4, accuracy: 0.001)
     }
 
-    func test_aMarkTheFileLocksCannotBePickedOrErased() throws {
+    func test_aMarkTheFileLocksCannotBePickedOrErased() async throws {
         for flag in [AnnotationFlags.locked, .readOnly] {
             let f = try CommentFixture()
             let stamp = try f.marker.addStamp(0, markPt(200, 300), "Approved", .default)
@@ -112,7 +112,7 @@ final class MarkRulesTests: XCTestCase {
         }
     }
 
-    func test_aHollowRectangleLeavesTheMarkInsideItReachable() throws {
+    func test_aHollowRectangleLeavesTheMarkInsideItReachable() async throws {
         let f = try CommentFixture()
         let quad = TextQuad(100, 700, 180, 700, 180, 712, 100, 712)
         _ = try f.marker.markup(.highlight, [SelectedRun(page: 0, range: TextRange(0, 0), text: "Hello", quads: [quad])], .default)
@@ -123,7 +123,7 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertEqual(f.marker.at(0, markPt(60, top), 4)?.type, .square)
     }
 
-    func test_aHollowOvalIsFoundOnItsOutlineOnly() throws {
+    func test_aHollowOvalIsFoundOnItsOutlineOnly() async throws {
         let f = try CommentFixture()
         try f.marker.add(.oval, 0, [markPt(100, 100), markPt(300, 200)], markRed)
 
@@ -132,7 +132,7 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertNil(f.marker.at(0, markPt(200, 150), 4))
     }
 
-    func test_aFastStrokeStillCrossesAThinLineBetweenItsSamples() throws {
+    func test_aFastStrokeStillCrossesAThinLineBetweenItsSamples() async throws {
         let f = try CommentFixture()
         try f.marker.add(.line, 0, [markPt(200, 50), markPt(200, 250)], markRed)
 
@@ -142,7 +142,7 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertTrue(f.marker.along(0, [markPt(100, 150), markPt(150, 150)], 4).isEmpty)
     }
 
-    func test_erasingInsideAHollowRectangleLeavesTheRectangle() throws {
+    func test_erasingInsideAHollowRectangleLeavesTheRectangle() async throws {
         let f = try CommentFixture()
         try f.marker.add(.rectangle, 0, [markPt(50, 50), markPt(350, 250)], markRed)
         try f.marker.add(.pencil, 0, [markPt(100, 100), markPt(200, 100), markPt(200, 200)], markRed)
@@ -152,7 +152,7 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertEqual(hit.map(\.type), [.ink])
     }
 
-    func test_aTextBoxIsReadBackAsTheFontItWasSetIn() throws {
+    func test_aTextBoxIsReadBackAsTheFontItWasSetIn() async throws {
         let f = try CommentFixture()
         let look = MarkStyle(color: [0.9, 0.1, 0.1], family: "Times New Roman", size: 18, font: [.bold, .italic])
 
@@ -165,7 +165,7 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertEqual(text.textColor, [0.9, 0.1, 0.1])
     }
 
-    func test_changingTheFontOfATextBoxKeepsItsColourAndAlignment() throws {
+    func test_changingTheFontOfATextBoxKeepsItsColourAndAlignment() async throws {
         let f = try CommentFixture()
         let made = try f.marker.add(.textBox, 0, [markPt(60, 80), markPt(260, 140)], markRed, "Hello")
 
@@ -182,7 +182,7 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertEqual(changed.alignment, made.alignment)
     }
 
-    func test_colouringATextBoxPaintsTheFrameAndTheText() throws {
+    func test_colouringATextBoxPaintsTheFrameAndTheText() async throws {
         let f = try CommentFixture()
         var look = markRed
         look.family = "Times New Roman"
@@ -198,13 +198,13 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertEqual(text.size, 16)
     }
 
-    func test_aColourOfAnyKindIsShownAsRgb() {
+    func test_aColourOfAnyKindIsShownAsRgb() async {
         XCTAssertEqual(Marker.rgb(of: [0.5]), [0.5, 0.5, 0.5])
         XCTAssertEqual(Marker.rgb(of: [1, 0, 0]), [1, 0, 0])
         XCTAssertEqual(Marker.rgb(of: [0, 0, 0, 1]), [0, 0, 0])
     }
 
-    func test_noColourAndTransparentHaveNoRgb() {
+    func test_noColourAndTransparentHaveNoRgb() async {
         XCTAssertNil(Marker.rgb(of: nil))
         XCTAssertNil(Marker.rgb(of: []))
     }
@@ -225,13 +225,13 @@ final class MarkRulesTests: XCTestCase {
         document.catalog["Perms"] = perms
     }
 
-    func test_aFileThatIsNotCertifiedTakesComments() throws {
+    func test_aFileThatIsNotCertifiedTakesComments() async throws {
         let f = try CommentFixture()
 
         XCTAssertTrue(CommentExchange.canComment(f.document))
     }
 
-    func test_aCertificationSetsWhetherCommentsMayBeAdded() throws {
+    func test_aCertificationSetsWhetherCommentsMayBeAdded() async throws {
         let cases: [(Int?, Bool)] = [(1, false), (2, false), (3, true), (nil, false)]
         for (level, allowed) in cases {
             let f = try CommentFixture()
@@ -242,20 +242,20 @@ final class MarkRulesTests: XCTestCase {
         }
     }
 
-    func test_aFileWithoutTheAnnotateRightRefusesComments() throws {
+    func test_aFileWithoutTheAnnotateRightRefusesComments() async throws {
         let session = try PdfEditSession.open(Pdfs.restricted(.print), password: "")
         let tab = DocumentTab(session: session, renderer: FakeRenderer(), url: nil, title: "locked.pdf")
 
         XCTAssertFalse(CommentExchange.canComment(tab.document))
     }
 
-    func test_exportingAFileWithNoCommentsCountsNone() throws {
+    func test_exportingAFileWithNoCommentsCountsNone() async throws {
         let f = try CommentFixture()
 
         XCTAssertEqual(try CommentExchange.export(f.document, "a.pdf", xfdf: false).count, 0)
     }
 
-    func test_xfdfCountsWhatItCannotHold() throws {
+    func test_xfdfCountsWhatItCannotHold() async throws {
         let f = try CommentFixture()
         try f.marker.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], markRed)
         _ = try f.marker.addAttachment(0, markPt(300, 100), "data.csv", [1, 2, 3])
@@ -269,7 +269,7 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertEqual(fdf.left, 0)
     }
 
-    func test_importingTwiceReportsTheCopiesAsSkipped() throws {
+    func test_importingTwiceReportsTheCopiesAsSkipped() async throws {
         let source = try CommentFixture()
         try source.marker.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], markRed)
         try source.tab.commit("Marks")
@@ -284,7 +284,7 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertGreaterThan(again.skipped, 0)
     }
 
-    func test_flatteningStopsBetweenPagesWhenCancelled() throws {
+    func test_flatteningStopsBetweenPagesWhenCancelled() async throws {
         let f = try CommentFixture(pages: 3)
         for page in 0..<3 { try f.marker.add(.rectangle, page, [markPt(60, 80), markPt(260, 140)], markRed) }
         let stop = CancelToken()
@@ -293,7 +293,7 @@ final class MarkRulesTests: XCTestCase {
         XCTAssertThrowsError(try CommentExchange.flatten(f.document, stop)) { XCTAssertTrue($0 is CancellationError) }
     }
 
-    func test_aDiscardedFlattenLeavesTheFileAsItWas() throws {
+    func test_aDiscardedFlattenLeavesTheFileAsItWas() async throws {
         let f = try CommentFixture()
         try f.marker.add(.rectangle, 0, [markPt(60, 80), markPt(260, 140)], markRed)
         try f.tab.commit("Marks")

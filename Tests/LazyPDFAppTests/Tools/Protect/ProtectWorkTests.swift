@@ -23,7 +23,7 @@ final class ProtectWorkTests: XCTestCase {
         (error as? PdfReadException)?.problem
     }
 
-    func test_aPasswordOpensTheCopyAndNothingElseDoes() throws {
+    func test_aPasswordOpensTheCopyAndNothingElseDoes() async throws {
         for (strength, revision) in [(PdfCryptStrength.aes256, 6), (.aes128, 4)] {
             let bytes = try protected("open sesame", "open sesame", .all, strength, pages: 3)
 
@@ -35,7 +35,7 @@ final class ProtectWorkTests: XCTestCase {
         }
     }
 
-    func test_limitsWithoutAPasswordToOpenLetAnyoneReadButNotDoMore() throws {
+    func test_limitsWithoutAPasswordToOpenLetAnyoneReadButNotDoMore() async throws {
         var choices = PermissionChoices.everything
         choices.copy = false
         choices.edit = false
@@ -51,7 +51,7 @@ final class ProtectWorkTests: XCTestCase {
         XCTAssertTrue(try PdfDocument.open(bytes, password: "boss").security!.openedAsOwner)
     }
 
-    func test_highQualityPrintingNeedsPrintingToBeAllowed() {
+    func test_highQualityPrintingNeedsPrintingToBeAllowed() async {
         var noPrint = PermissionChoices.everything
         noPrint.print = false
 
@@ -60,7 +60,7 @@ final class ProtectWorkTests: XCTestCase {
         XCTAssertEqual(PermissionChoices.everything.toPermissions(), .all)
     }
 
-    func test_protectionComesOffAgainWhenTheOwnerHoldsIt() throws {
+    func test_protectionComesOffAgainWhenTheOwnerHoldsIt() async throws {
         let locked = try protected("secret", "secret")
         let document = try PdfDocument.open(locked, password: "secret")
 
@@ -71,7 +71,7 @@ final class ProtectWorkTests: XCTestCase {
         XCTAssertEqual(back.pages.count, 2)
     }
 
-    func test_aRestrictedFileOpenedWithoutTheOwnerPasswordCannotBeRewritten() throws {
+    func test_aRestrictedFileOpenedWithoutTheOwnerPasswordCannotBeRewritten() async throws {
         let document = try PdfDocument.open(Pdfs.restricted(.print))
 
         XCTAssertTrue(ProtectWork.isLockedAgainstChange(document))
@@ -81,19 +81,19 @@ final class ProtectWorkTests: XCTestCase {
         }
     }
 
-    func test_theOwnerPasswordLiftsTheLock() throws {
+    func test_theOwnerPasswordLiftsTheLock() async throws {
         let document = try PdfDocument.open(Pdfs.restricted(.print), password: "owner")
 
         XCTAssertFalse(ProtectWork.isLockedAgainstChange(document))
         XCTAssertFalse(try PdfDocument.open(ProtectWork.remove(document)).isEncrypted)
     }
 
-    func test_aFileThatRestrictsNothingIsNotLocked() throws {
+    func test_aFileThatRestrictsNothingIsNotLocked() async throws {
         XCTAssertFalse(ProtectWork.isLockedAgainstChange(try PdfDocument.open(Pdfs.restricted(.all))))
         XCTAssertFalse(ProtectWork.isLockedAgainstChange(try plain()))
     }
 
-    func test_protectingAgainReplacesTheOldPassword() throws {
+    func test_protectingAgainReplacesTheOldPassword() async throws {
         let first = try protected("one", "one")
         let document = try PdfDocument.open(first, password: "one")
 
@@ -103,7 +103,7 @@ final class ProtectWorkTests: XCTestCase {
         XCTAssertEqual(try PdfDocument.open(second, password: "two").pages.count, 2)
     }
 
-    func test_addingCommentsAlwaysAllowsFillingFormsAndReadingAloudIsNeverSwitchedOff() {
+    func test_addingCommentsAlwaysAllowsFillingFormsAndReadingAloudIsNeverSwitchedOff() async {
         var withComment = PermissionChoices.everything
         withComment.fillForms = false
         var noComment = withComment
@@ -114,7 +114,7 @@ final class ProtectWorkTests: XCTestCase {
         XCTAssertTrue(noComment.toPermissions().contains(.extractForAccessibility))
     }
 
-    func test_thePasswordBoxesMustAgreeBeforeAnythingRuns() {
+    func test_thePasswordBoxesMustAgreeBeforeAnythingRuns() async {
         let cases: [(String, String, Bool, String, Bool)] = [
             ("", "", false, "", false), ("a", "a", false, "", true), ("a", "b", false, "", false), ("", "", true, "boss", true),
             ("", "", true, "", false), ("a", "a", true, "a", false), ("a", "a", true, "b", true),
@@ -152,7 +152,7 @@ final class ProtectWorkTests: XCTestCase {
         return try XCTUnwrap(Recipient(PdfCertificate(certificate: sec)))
     }
 
-    func test_aCertificateHolderOpensTheCopy() throws {
+    func test_aCertificateHolderOpensTheCopy() async throws {
         let mine = try withKey(made("Me"))
         let theirs = try withoutKey(made("Them"))
 
@@ -166,7 +166,7 @@ final class ProtectWorkTests: XCTestCase {
         XCTAssertThrowsError(try PdfDocument.open(bytes, password: "password")) { XCTAssertEqual(self.problem($0), .certificateRequired) }
     }
 
-    func test_aCopyForOthersOnlyHasNoOneToOpenItHere() throws {
+    func test_aCopyForOthersOnlyHasNoOneToOpenItHere() async throws {
         let theirs = try withoutKey(made("Them"))
 
         let (bytes, opener) = try ProtectWork.forRecipients(plain(2), [theirs.toPdfRecipient(.all)], .aes256)
@@ -175,7 +175,7 @@ final class ProtectWorkTests: XCTestCase {
         XCTAssertFalse(bytes.isEmpty)
     }
 
-    func test_onlyTheHolderOfAKeyOnThisComputerMayChangeTheProtectionLater() throws {
+    func test_onlyTheHolderOfAKeyOnThisComputerMayChangeTheProtectionLater() async throws {
         let mine = try withKey(made("Me"))
         let theirs = try withoutKey(made("Them"))
 

@@ -23,7 +23,7 @@ final class SanitizeModelTests: XCTestCase {
         return (model, rig)
     }
 
-    func test_whileTheFileIsSearchedThePanelSaysSoAndHasNothingToRun() throws {
+    func test_whileTheFileIsSearchedThePanelSaysSoAndHasNothingToRun() async throws {
         let rig = try ToolRig(titled())
         let model = SanitizeModel()
 

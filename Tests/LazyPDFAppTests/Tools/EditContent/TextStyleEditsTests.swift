@@ -19,7 +19,7 @@ final class TextStyleEditsTests: XCTestCase {
         try XCTUnwrap(try PageEditor(tab.session, 0).objects[0] as? TextObject)
     }
 
-    func test_aFontChangeKeepsTheLinesOfTheBlock() throws {
+    func test_aFontChangeKeepsTheLinesOfTheBlock() async throws {
         for (bold, italic) in [(true, false), (false, true)] {
             let tab = try open(EditPdf.make(EditPdf.paragraph))
             let before = try block(tab)
@@ -35,7 +35,7 @@ final class TextStyleEditsTests: XCTestCase {
         }
     }
 
-    func test_aSizeIsTakenInPageUnitsWhateverScalesTheText() throws {
+    func test_aSizeIsTakenInPageUnitsWhateverScalesTheText() async throws {
         let tab = try open(EditPdf.make("BT /F1 1 Tf 12 0 0 12 50 700 Tm (Scaled text) Tj ET"))
         let start = try block(tab)
         XCTAssertEqual(start.size, 12, accuracy: 1)
@@ -47,7 +47,7 @@ final class TextStyleEditsTests: XCTestCase {
         XCTAssertTrue(try PageEditor(tab.session, 0).text.text.contains("Scaled text"))
     }
 
-    func test_aSizeUnderAScalingCmIsTakenInPageUnits() throws {
+    func test_aSizeUnderAScalingCmIsTakenInPageUnits() async throws {
         let tab = try open(EditPdf.make("q 0.5 0 0 0.5 0 0 cm BT /F1 24 Tf 100 1400 Td (Halved text) Tj ET Q"))
         let start = try block(tab)
         XCTAssertEqual(start.size, 12, accuracy: 1)
@@ -57,7 +57,7 @@ final class TextStyleEditsTests: XCTestCase {
         XCTAssertEqual(try block(tab).size, 8, accuracy: 1)
     }
 
-    func test_aColourReachesEveryLine() throws {
+    func test_aColourReachesEveryLine() async throws {
         let tab = try open(EditPdf.make(EditPdf.paragraph))
 
         XCTAssertTrue(try makeEdits(tab).style(0, try block(tab).id, TextStyleChange(color: RgbColor(200, 30, 30))).done)

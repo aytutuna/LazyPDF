@@ -13,7 +13,7 @@ final class MetadataEditTests: XCTestCase {
         DocumentTab(session: try PdfEditSession.open(Pdfs.text()), renderer: FakeRenderer(), url: nil, title: "a.pdf")
     }
 
-    func test_theFieldsAndTheViewSurviveACommit() throws {
+    func test_theFieldsAndTheViewSurviveACommit() async throws {
         let tab = try open()
         var metadata = DocumentMetadata.read(tab.document)
         metadata.title = "Report"
@@ -37,7 +37,7 @@ final class MetadataEditTests: XCTestCase {
         XCTAssertEqual(ViewerSettings.read(tab.document), view)
     }
 
-    func test_theChangedDateMovesOnlyWhenAsked() throws {
+    func test_theChangedDateMovesOnlyWhenAsked() async throws {
         let tab = try open()
         var metadata = DocumentMetadata.read(tab.document)
         metadata.title = "A"
@@ -55,7 +55,7 @@ final class MetadataEditTests: XCTestCase {
         XCTAssertEqual(DocumentMetadata.read(tab.document).modified, now)
     }
 
-    func test_aCustomEntryIsLeftAloneByAnEditOfTheTitle() throws {
+    func test_aCustomEntryIsLeftAloneByAnEditOfTheTitle() async throws {
         let tab = try open()
         var metadata = DocumentMetadata.read(tab.document)
         metadata.custom = ["Project": "Nile"]
@@ -70,7 +70,7 @@ final class MetadataEditTests: XCTestCase {
         XCTAssertEqual(DocumentMetadata.read(tab.document).custom["Project"], "Nile")
     }
 
-    func test_undoBringsTheOldValuesBack() throws {
+    func test_undoBringsTheOldValuesBack() async throws {
         let tab = try open()
         let before = DocumentMetadata.read(tab.document).title
         var metadata = DocumentMetadata.read(tab.document)
@@ -83,7 +83,7 @@ final class MetadataEditTests: XCTestCase {
         XCTAssertEqual(DocumentMetadata.read(tab.document).title, before)
     }
 
-    func test_clearedOrChangedTextIsDroppedButAddedTextIsNot() {
+    func test_clearedOrChangedTextIsDroppedButAddedTextIsNot() async {
         let none = DocumentMetadata(nil, nil, nil, nil, nil, nil, nil, nil, OrderedStrings())
         var old = none
         old.title = "Report"
@@ -101,7 +101,7 @@ final class MetadataEditTests: XCTestCase {
         XCTAssertFalse(MetadataEdit.dropsText(none, old))
     }
 
-    func test_everyChoiceHasWordsAndNoTwoShareThem() {
+    func test_everyChoiceHasWordsAndNoTwoShareThem() async {
         XCTAssertEqual(Set(MetadataEdit.modes.map(MetadataEdit.modeName)).count, MetadataEdit.modes.count)
         XCTAssertEqual(Set(MetadataEdit.layouts.map(MetadataEdit.layoutName)).count, MetadataEdit.layouts.count)
         XCTAssertEqual(Set(MetadataEdit.sides.map(MetadataEdit.sidesName)).count, MetadataEdit.sides.count)

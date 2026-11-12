@@ -10,7 +10,7 @@ import XCTest
 final class MeasureMathTests: XCTestCase {
     private func p(_ x: Double, _ y: Double) -> ViewPoint { ViewPoint(x, y) }
 
-    func test_aScaleTurnsPointsIntoTheRealUnit() {
+    func test_aScaleTurnsPointsIntoTheRealUnit() async {
         let scale = MeasureScale(1, .inch, 10, .foot)
 
         XCTAssertEqual(scale.perPoint, 10.0 / 72, accuracy: 1e-9)
@@ -19,38 +19,38 @@ final class MeasureMathTests: XCTestCase {
         XCTAssertEqual(scale.ratio, "1 in = 10 ft")
     }
 
-    func test_millimetresOnThePageAreMillimetresInTheWorldByDefault() {
+    func test_millimetresOnThePageAreMillimetresInTheWorldByDefault() async {
         XCTAssertEqual(MeasureScale.actual.length(25 / 25.4 * 72), "25 mm")
     }
 
-    func test_aRatioReadsBackAsTheScaleThatWroteIt() {
+    func test_aRatioReadsBackAsTheScaleThatWroteIt() async {
         for scale in [MeasureScale(1, .inch, 10, .foot), MeasureScale(2.5, .centimetre, 1000, .kilometre), MeasureScale(1, .millimetre, 50, .metre),
                       MeasureScale(0.25, .inch, 1, .mile), MeasureScale(1, .centimetre, 3, .yard)] {
             XCTAssertEqual(MeasureScale.tryParse(scale.ratio), scale)
         }
     }
 
-    func test_textThatIsNoRatioReadsAsNothing() {
+    func test_textThatIsNoRatioReadsAsNothing() async {
         for text in ["x", "1 mm", "0 mm = 1 m", "1 mm = 2 parsec", "1mm = 2 m", "1 mm = 2 m = 3 m"] {
             XCTAssertNil(MeasureScale.tryParse(text), text)
         }
     }
 
-    func test_aScaleNeedsPositiveNumbers() {
+    func test_aScaleNeedsPositiveNumbers() async {
         for (page, real) in [(0.0, 1.0), (1, 0), (-2, 1), (Double.nan, 1)] {
             XCTAssertFalse(MeasureScale(page, .inch, real, .metre).isValid, "\(page) \(real)")
         }
         XCTAssertTrue(MeasureScale(1, .inch, 1, .metre).isValid)
     }
 
-    func test_aLengthIsTheSumOfItsSegmentsAndAPerimeterCloses() {
+    func test_aLengthIsTheSumOfItsSegmentsAndAPerimeterCloses() async {
         let corners = [p(0, 0), p(30, 0), p(30, 40)]
 
         XCTAssertEqual(MeasureShape.length(corners, closed: false), 70, accuracy: 1e-9)
         XCTAssertEqual(MeasureShape.length(corners, closed: true), 120, accuracy: 1e-9)
     }
 
-    func test_anAreaIsTheSameWhicheverWayRound() {
+    func test_anAreaIsTheSameWhicheverWayRound() async {
         let square = [p(0, 0), p(10, 0), p(10, 10), p(0, 10)]
 
         XCTAssertEqual(MeasureShape.area(square), 100, accuracy: 1e-9)
@@ -58,7 +58,7 @@ final class MeasureMathTests: XCTestCase {
         XCTAssertEqual(MeasureShape.area([p(0, 0), p(5, 5)]), 0, accuracy: 1e-9)
     }
 
-    func test_shiftKeepsToMultiplesOfFortyFiveDegrees() {
+    func test_shiftKeepsToMultiplesOfFortyFiveDegrees() async {
         let flat = MeasureShape.straighten(p(0, 0), p(10, 1))
         let slanted = MeasureShape.straighten(p(5, 5), p(15, 16))
 
@@ -67,14 +67,14 @@ final class MeasureMathTests: XCTestCase {
         XCTAssertEqual(slanted.x - 5, slanted.y - 5, accuracy: 1e-9)
     }
 
-    func test_snappingTakesTheNearestPointWithinReach() {
+    func test_snappingTakesTheNearestPointWithinReach() async {
         let corners = [p(10, 10), p(12, 10), p(50, 50)]
 
         XCTAssertEqual(MeasureShape.nearest(corners, p(13, 10), 3), p(12, 10))
         XCTAssertNil(MeasureShape.nearest(corners, p(30, 30), 3))
     }
 
-    func test_aMeasurementReadsInTheScaleAndSitsAtItsMiddle() {
+    func test_aMeasurementReadsInTheScaleAndSitsAtItsMiddle() async {
         let scale = MeasureScale(1, .inch, 1, .metre)
         let line = MeasureItem(.distance, 0, [p(0, 0), p(144, 0)])
         let area = MeasureItem(.area, 0, [p(0, 0), p(72, 0), p(72, 72), p(0, 72)])
@@ -94,7 +94,7 @@ final class MeasureMathTests: XCTestCase {
         Pending(item: MeasureItem(.distance, page, [p(0, 0), p(10, 0)]), key: PageKey.of(document.pages[page]))
     }
 
-    func test_aTurnedPageDropsItsMeasurementsAndTheOthersStay() throws {
+    func test_aTurnedPageDropsItsMeasurementsAndTheOthersStay() async throws {
         let document = try PdfDocument.open(Pdfs.text(3))
         let waiting = [on(document, 0), on(document, 2)]
 
@@ -104,7 +104,7 @@ final class MeasureMathTests: XCTestCase {
         XCTAssertEqual(kept.map(\.item.page), [0])
     }
 
-    func test_aDeletedPageMovesTheMeasurementsAfterItUp() throws {
+    func test_aDeletedPageMovesTheMeasurementsAfterItUp() async throws {
         let document = try PdfDocument.open(Pdfs.text(3))
         let waiting = [on(document, 0), on(document, 1), on(document, 2)]
 
@@ -114,7 +114,7 @@ final class MeasureMathTests: XCTestCase {
         XCTAssertEqual(kept.map(\.item.page), [0, 1])
     }
 
-    func test_aFileOpenedAgainFromTheSameBytesKeepsEverything() throws {
+    func test_aFileOpenedAgainFromTheSameBytesKeepsEverything() async throws {
         let bytes = Pdfs.text(2)
         let waiting = [on(try PdfDocument.open(bytes), 1)]
 

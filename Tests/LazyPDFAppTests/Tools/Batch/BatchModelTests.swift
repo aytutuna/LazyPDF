@@ -58,7 +58,7 @@ final class BatchModelTests: XCTestCase {
         return ToolFile(url: url)
     }
 
-    func test_stepsAreAddedMovedAndRemovedAndTheSelectionFollows() {
+    func test_stepsAreAddedMovedAndRemovedAndTheSelectionFollows() async {
         let f = ViewModelFixture(self)
         let (model, _) = make(f)
         XCTAssertNil(model.step)
@@ -85,7 +85,7 @@ final class BatchModelTests: XCTestCase {
         XCTAssertEqual(model.rows.map(\.title), ["Clean for sharing", "Watermark"])
     }
 
-    func test_theBoxesTakeNumbersWithinTheirLimitsAndKeepTheOldOneOtherwise() {
+    func test_theBoxesTakeNumbersWithinTheirLimitsAndKeepTheOldOneOtherwise() async {
         let f = ViewModelFixture(self)
         let (model, _) = make(f)
         model.addStep(.watermark)
@@ -110,7 +110,7 @@ final class BatchModelTests: XCTestCase {
         XCTAssertEqual(model.step?.start, 12)
     }
 
-    func test_theDetailOfAStepFollowsItsSettings() {
+    func test_theDetailOfAStepFollowsItsSettings() async {
         var clean = BatchStep(.clean)
         XCTAssertEqual(BatchText.detail(clean), "Removes hidden and private data")
         clean.keepLinks = true
@@ -242,7 +242,7 @@ final class BatchModelTests: XCTestCase {
         XCTAssertEqual(model.plan.steps[0].start, 10)
     }
 
-    func test_aSetLoadedDuringARunIsLeftAloneWhenTheFileThatRanEnds() throws {
+    func test_aSetLoadedDuringARunIsLeftAloneWhenTheFileThatRanEnds() async throws {
         let f = ViewModelFixture(self)
         let (model, _) = make(f)
         model.addStep(.bates)
@@ -265,7 +265,7 @@ final class BatchModelTests: XCTestCase {
         XCTAssertEqual(saved.first { $0.name == "B" }?.steps[0].start, 500)
     }
 
-    func test_aStepMovedDuringARunKeepsItsOwnCount() {
+    func test_aStepMovedDuringARunKeepsItsOwnCount() async {
         let f = ViewModelFixture(self)
         let (model, _) = make(f)
         model.addStep(.bates)
@@ -284,7 +284,7 @@ final class BatchModelTests: XCTestCase {
         XCTAssertEqual(model.plan.steps.map(\.start), [100, 11])
     }
 
-    func test_aStepRemovedDuringARunTakesNothingOn() {
+    func test_aStepRemovedDuringARunTakesNothingOn() async {
         let f = ViewModelFixture(self)
         let (model, _) = make(f)
         model.addStep(.bates)
@@ -392,7 +392,7 @@ final class BatchModelTests: XCTestCase {
         XCTAssertFalse(again.canRun)
     }
 
-    func test_aSetNeedsANameAndCanBeDeleted() {
+    func test_aSetNeedsANameAndCanBeDeleted() async {
         let f = ViewModelFixture(self)
         let (model, _) = make(f)
 
@@ -570,7 +570,7 @@ final class BatchModelTests: XCTestCase {
         XCTAssertEqual(log.watch.stops, 1)
     }
 
-    func test_aPlatformWithoutAWatcherDoesNotOfferTheWatch() {
+    func test_aPlatformWithoutAWatcherDoesNotOfferTheWatch() async {
         let f = ViewModelFixture(self)
         let (model, _) = make(f)
 
@@ -611,7 +611,7 @@ final class BatchModelTests: XCTestCase {
         XCTAssertNotNil(panel.batch.host)
     }
 
-    func test_droppedFoldersGiveTheirPdfsInNameOrderAndOtherFilesAreSaidToBeLeftOut() {
+    func test_droppedFoldersGiveTheirPdfsInNameOrderAndOtherFilesAreSaidToBeLeftOut() async {
         let f = ViewModelFixture(self)
         let (model, _) = make(f)
         f.dir.file("in/b10.pdf", Pdfs.text())

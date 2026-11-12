@@ -208,7 +208,7 @@ final class SignatureArtTests: XCTestCase {
 
     #if canImport(CoreText) && canImport(ImageIO)
     @MainActor
-    func test_aTypedNameBecomesInkOnClear() throws {
+    func test_aTypedNameBecomesInkOnClear() async throws {
         let image = try XCTUnwrap(SystemSignature().typed("Ada Lovelace", face: "Helvetica"))
 
         XCTAssertGreaterThan(image.width, image.height)
@@ -217,17 +217,17 @@ final class SignatureArtTests: XCTestCase {
     }
 
     @MainActor
-    func test_nothingTypedIsNoSignature() {
+    func test_nothingTypedIsNoSignature() async {
         XCTAssertNil(SystemSignature().typed("   ", face: "Helvetica"))
     }
 
     @MainActor
-    func test_theSystemHasAFaceToTypeIn() {
+    func test_theSystemHasAFaceToTypeIn() async {
         XCTAssertFalse(SystemSignature().faces.isEmpty)
     }
 
     @MainActor
-    func test_aPhotoSavedAsAPngComesBackWithItsPixels() throws {
+    func test_aPhotoSavedAsAPngComesBackWithItsPixels() async throws {
         let png = try PngWriter.encode(PdfRgbaImage(2, 1, [200, 0, 0, 255, 0, 200, 0, 128]))
 
         let back = try XCTUnwrap(ImageIOCodec().decodeFile(png)?.first)

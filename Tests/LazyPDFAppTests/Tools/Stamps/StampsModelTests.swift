@@ -36,7 +36,7 @@ final class StampsModelTests: XCTestCase {
         return session.current
     }
 
-    func test_closingThePanelWithARunSelectedLeavesNothingOnThePages() throws {
+    func test_closingThePanelWithARunSelectedLeavesNothingOnThePages() async throws {
         let (model, rig) = try attach(try withWatermark())
         model.select(model.runs[0])
         model.edit { $0.watermarkText = "OTHER" }
@@ -47,7 +47,7 @@ final class StampsModelTests: XCTestCase {
         XCTAssertTrue(previews(rig).isEmpty)
     }
 
-    func test_aPickedRunIsNotPreviewedUntilTheFormChanges() throws {
+    func test_aPickedRunIsNotPreviewedUntilTheFormChanges() async throws {
         let (model, rig) = try attach(try withWatermark())
 
         model.select(model.runs[0])
@@ -110,7 +110,7 @@ final class StampsModelTests: XCTestCase {
         XCTAssertEqual(model.form.turn, 30)
     }
 
-    func test_aRunReadFromAFileAsksForWhatTheFileDoesNotKeep() throws {
+    func test_aRunReadFromAFileAsksForWhatTheFileDoesNotKeep() async throws {
         let session = try PdfEditSession.open(Pdfs.text(3))
         try PdfStamper(session.document, FakeFonts()).addHeaderFooter(HeaderFooterSpec(header: HeaderFooterBand("ACME")))
         try session.commit("Add header and footer")
@@ -180,7 +180,7 @@ final class StampsModelTests: XCTestCase {
         XCTAssertFalse(rig.host.statuses.contains { $0.contains("Stamped") })
     }
 
-    func test_aPageRangeThatMatchesNothingStopsTheStamp() throws {
+    func test_aPageRangeThatMatchesNothingStopsTheStamp() async throws {
         let (model, _) = try attach()
 
         model.edit { $0.pages = .typed; $0.pagesText = "9" }
@@ -189,7 +189,7 @@ final class StampsModelTests: XCTestCase {
         XCTAssertEqual(model.action?.canRun(), false)
     }
 
-    func test_whatWasTypedComesBackWhenThePanelIsShownAgain() throws {
+    func test_whatWasTypedComesBackWhenThePanelIsShownAgain() async throws {
         let (model, rig) = try attach()
         model.edit { $0.watermarkText = "KEPT" }
 
@@ -224,7 +224,7 @@ final class StampsModelTests: XCTestCase {
         func encodeJpeg(_ image: PdfRgbaImage, _ quality: Int) -> [UInt8] { [] }
     }
 
-    func test_aTurnedPictureIsPreviewedUprightAsItIsStamped() throws {
+    func test_aTurnedPictureIsPreviewedUprightAsItIsStamped() async throws {
         let (model, rig) = try attach()
         rig.host.imageCodec = WideCodec()
         let turned: [UInt8] = [0xFF, 0xD8, 0xFF, 0xE1, 0, 34] + Array("Exif".utf8) + [0, 0] + Array("MM".utf8)
@@ -235,7 +235,7 @@ final class StampsModelTests: XCTestCase {
         XCTAssertEqual([model.pictureImage?.width, model.pictureImage?.height], [2, 4])
     }
 
-    func test_thePreviewFollowsThePageInView() throws {
+    func test_thePreviewFollowsThePageInView() async throws {
         let (model, rig) = try attach()
         XCTAssertEqual(previews(rig).count, 1)
 
@@ -244,7 +244,7 @@ final class StampsModelTests: XCTestCase {
         XCTAssertTrue(previews(rig).isEmpty)
     }
 
-    func test_aBatesPreviewStartsAtTheNumberTyped() throws {
+    func test_aBatesPreviewStartsAtTheNumberTyped() async throws {
         let (model, rig) = try attach()
 
         model.setMode(.bates)

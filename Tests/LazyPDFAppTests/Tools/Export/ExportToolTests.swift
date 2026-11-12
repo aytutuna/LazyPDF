@@ -260,7 +260,7 @@ final class ExportToolTests: XCTestCase {
     }
 
     @MainActor
-    func test_aFolderIsNamedByItsLastPartOrByTheDriveForARoot() {
+    func test_aFolderIsNamedByItsLastPartOrByTheDriveForARoot() async {
         XCTAssertEqual(ExportModel.leaf(URL(fileURLWithPath: "/Users/me/pictures")), "pictures")
         XCTAssertEqual(ExportModel.leaf(URL(fileURLWithPath: "/Users/me/pictures/", isDirectory: true)), "pictures")
         XCTAssertEqual(ExportModel.leaf(URL(fileURLWithPath: "/")), "/")
@@ -393,7 +393,7 @@ final class ExportModelTests: XCTestCase {
         XCTAssertTrue(f.vm.message?.text.contains("1 file could not be saved.") == true)
     }
 
-    func test_whatAKillLeftInTheWorkFolderGoesAtLaunch() throws {
+    func test_whatAKillLeftInTheWorkFolderGoesAtLaunch() async throws {
         let stray = Exporter.workFolder.appendingPathComponent("left-behind", isDirectory: true)
         try FileManager.default.createDirectory(at: stray, withIntermediateDirectories: true)
         try Data([1]).write(to: stray.appendingPathComponent("a.docx"))

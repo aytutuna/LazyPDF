@@ -17,7 +17,7 @@ final class ExchangeTests: XCTestCase {
         return f
     }
 
-    func test_exportedCommentsComeBackIntoAnotherCopy() throws {
+    func test_exportedCommentsComeBackIntoAnotherCopy() async throws {
         for xfdf in [false, true] {
             let source = try withMarks()
             let target = try CommentFixture()
@@ -34,7 +34,7 @@ final class ExchangeTests: XCTestCase {
         }
     }
 
-    func test_importingTheSameFileTwiceAddsNothingTheSecondTime() throws {
+    func test_importingTheSameFileTwiceAddsNothingTheSecondTime() async throws {
         let source = try withMarks()
         let target = try CommentFixture()
         let data = try CommentExchange.export(source.document, nil, xfdf: false).data
@@ -46,7 +46,7 @@ final class ExchangeTests: XCTestCase {
         XCTAssertEqual(again.imported, 0)
     }
 
-    func test_aFileThatIsNotACommentFileIsRefused() throws {
+    func test_aFileThatIsNotACommentFileIsRefused() async throws {
         for xfdf in [false, true] {
             let f = try CommentFixture()
 
@@ -56,14 +56,14 @@ final class ExchangeTests: XCTestCase {
         }
     }
 
-    func test_theExtensionSaysWhichFormat() {
+    func test_theExtensionSaysWhichFormat() async {
         XCTAssertTrue(CommentExchange.isXfdf("notes.xfdf"))
         XCTAssertTrue(CommentExchange.isXfdf("NOTES.XFDF"))
         XCTAssertFalse(CommentExchange.isXfdf("notes.fdf"))
         XCTAssertFalse(CommentExchange.isXfdf("notes"))
     }
 
-    func test_flatteningBurnsTheMarksIntoThePagesAndOneUndoBringsThemBack() throws {
+    func test_flatteningBurnsTheMarksIntoThePagesAndOneUndoBringsThemBack() async throws {
         let f = try withMarks()
         let before = CommentExchange.flattenable(f.document)
 
@@ -78,7 +78,7 @@ final class ExchangeTests: XCTestCase {
         XCTAssertEqual(CommentExchange.flattenable(f.document), before)
     }
 
-    func test_aFileWithNoMarksHasNothingToFlatten() throws {
+    func test_aFileWithNoMarksHasNothingToFlatten() async throws {
         let f = try CommentFixture()
 
         XCTAssertEqual(CommentExchange.flattenable(f.document), 0)

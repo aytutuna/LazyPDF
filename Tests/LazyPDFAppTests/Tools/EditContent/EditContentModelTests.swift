@@ -69,7 +69,7 @@ final class EditContentModelTests: XCTestCase {
         return try document.saveRewrite(PdfSaveOptions())
     }
 
-    func test_clickingALineOpensTheEditorOverItWithItsText() throws {
+    func test_clickingALineOpensTheEditorOverItWithItsText() async throws {
         let (model, rig) = try start()
 
         try click(rig, try lineCenter(rig))
@@ -81,7 +81,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertTrue(rig.host.problems.isEmpty)
     }
 
-    func test_returnKeepsTheTypedLine() throws {
+    func test_returnKeepsTheTypedLine() async throws {
         let (model, rig) = try start()
         try click(rig, try lineCenter(rig))
 
@@ -95,7 +95,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertTrue(try pageText(rig.tab).contains("Hello from the tests."))
     }
 
-    func test_escapeDropsWhatWasTyped() throws {
+    func test_escapeDropsWhatWasTyped() async throws {
         let (model, rig) = try start()
         try click(rig, try lineCenter(rig))
 
@@ -108,7 +108,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertNil(model.action)
     }
 
-    func test_aLineTheEngineRefusesComesBackWithTheReason() throws {
+    func test_aLineTheEngineRefusesComesBackWithTheReason() async throws {
         let (model, rig) = try start()
         try click(rig, try lineCenter(rig))
 
@@ -120,7 +120,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertEqual(model.action?.text, "Apply text")
     }
 
-    func test_aPressElsewhereOnThePageKeepsWhatWasTyped() throws {
+    func test_aPressElsewhereOnThePageKeepsWhatWasTyped() async throws {
         let (model, rig) = try start()
         try click(rig, try lineCenter(rig))
         try field(rig).typed("Typed in place.")
@@ -143,7 +143,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertNil(model.action)
     }
 
-    func test_handInKeepsWhatIsStillBeingTyped() throws {
+    func test_handInKeepsWhatIsStillBeingTyped() async throws {
         let (model, rig) = try start()
         try click(rig, try lineCenter(rig))
         try field(rig).typed("Handed in.")
@@ -153,7 +153,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertTrue(try pageText(rig.tab).contains("Handed in."))
     }
 
-    func test_aFileThatForbidsChangesIsLeftAlone() throws {
+    func test_aFileThatForbidsChangesIsLeftAlone() async throws {
         let (model, rig) = try start(try lockedBy(hello, permissions: .print), password: "")
 
         try click(rig, try lineCenter(rig))
@@ -163,7 +163,7 @@ final class EditContentModelTests: XCTestCase {
         model.detach()
     }
 
-    func test_aSignedFileAsksOnceBeforeTheFirstEdit() throws {
+    func test_aSignedFileAsksOnceBeforeTheFirstEdit() async throws {
         let (model, rig) = try start(try signed(hello))
         let center = try lineCenter(rig)
 
@@ -179,7 +179,7 @@ final class EditContentModelTests: XCTestCase {
         model.detach()
     }
 
-    func test_deleteRemovesTheSelectionAndEscapeLetsGoOfIt() throws {
+    func test_deleteRemovesTheSelectionAndEscapeLetsGoOfIt() async throws {
         let (model, rig) = try start()
         let id = try addPicture(rig, model)
         model.selectObject(try XCTUnwrap(model.objectRows.first { $0.id == id }))
@@ -197,7 +197,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertFalse(model.hasSelection)
     }
 
-    func test_escapeLeavesTheTextBoxMode() throws {
+    func test_escapeLeavesTheTextBoxMode() async throws {
         let (model, rig) = try start()
         model.selectMode(.textBox)
         XCTAssertEqual(model.mode, .textBox)
@@ -207,7 +207,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertEqual(model.mode, .select)
     }
 
-    func test_draggingASelectedPictureMovesIt() throws {
+    func test_draggingASelectedPictureMovesIt() async throws {
         let (model, rig) = try start()
         let id = try addPicture(rig, model)
         let before = try XCTUnwrap(try PageEditor(rig.tab.session, 0).objects[id] as? ImageObject).bounds
@@ -223,7 +223,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertTrue(model.hasSelection)
     }
 
-    func test_theSurfaceTakesAFingerOnlyOverWhatItCanDo() throws {
+    func test_theSurfaceTakesAFingerOnlyOverWhatItCanDo() async throws {
         let (model, rig) = try start()
         let tool = try XCTUnwrap(rig.viewer.pointerTool)
 
@@ -250,7 +250,7 @@ final class EditContentModelTests: XCTestCase {
         try XCTUnwrap(viewer.pageToView(0)).transform(point)
     }
 
-    func test_aMouseClickOnALineThroughTheViewerOpensTheEditor() throws {
+    func test_aMouseClickOnALineThroughTheViewerOpensTheEditor() async throws {
         let (model, tab, viewer) = try routed()
         let block = try XCTUnwrap(try PageEditor(tab.session, 0).objects.first as? TextObject)
         let d = viewer.geometry(0).toDisplay(try XCTUnwrap(block.lines.first).bounds)
@@ -263,7 +263,7 @@ final class EditContentModelTests: XCTestCase {
         model.detach()
     }
 
-    func test_aMouseBandThroughTheViewerSelectsSeveralObjects() throws {
+    func test_aMouseBandThroughTheViewerSelectsSeveralObjects() async throws {
         let (model, tab, viewer) = try routed()
         let outcome = try ContentEdits(tab, fonts: FakeFonts(), codec: FakeCodec()).addImage(0, PdfRect(100, 400, 200, 500), [1])
         XCTAssertTrue(outcome.done)
@@ -279,7 +279,7 @@ final class EditContentModelTests: XCTestCase {
         model.detach()
     }
 
-    func test_theListAddsAndTakesFromTheSelectionWhenSeveralAreWanted() throws {
+    func test_theListAddsAndTakesFromTheSelectionWhenSeveralAreWanted() async throws {
         let (model, rig) = try start()
         _ = try addPicture(rig, model)
         let rows = model.objectRows
@@ -298,7 +298,7 @@ final class EditContentModelTests: XCTestCase {
         model.detach()
     }
 
-    func test_aLineOfTheSelectedBlockIsOpenedFromTheList() throws {
+    func test_aLineOfTheSelectedBlockIsOpenedFromTheList() async throws {
         let (model, rig) = try start()
         model.selectObject(try XCTUnwrap(model.objectRows.first))
 
@@ -310,7 +310,7 @@ final class EditContentModelTests: XCTestCase {
         model.detach()
     }
 
-    func test_aFingersHintDoesNotPromiseADrag() throws {
+    func test_aFingersHintDoesNotPromiseADrag() async throws {
         let (model, _) = try start()
         let mouse = model.hint
 
@@ -345,7 +345,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertNil(model.linkArea)
     }
 
-    func test_clickingALinkLoadsItAndItCanBeRemoved() throws {
+    func test_clickingALinkLoadsItAndItCanBeRemoved() async throws {
         let (model, rig) = try start()
         _ = try ContentEdits(rig.tab, fonts: FakeFonts(), codec: FakeCodec()).setLink(0, PdfRect(100, 600, 200, 640), UriAction("https://old.example"), nil)
         model.selectMode(.link)
@@ -382,7 +382,7 @@ final class EditContentModelTests: XCTestCase {
         model.detach()
     }
 
-    func test_aLinkEditOnAPageThatWentIsRefused() throws {
+    func test_aLinkEditOnAPageThatWentIsRefused() async throws {
         let rig = try ContentRig(Pdfs.text(1))
         let edits = ContentEdits(rig.tab, fonts: FakeFonts(), codec: FakeCodec())
         let link = PdfLink(PdfRect(0, 0, 10, 10), nil, UriAction("https://a.example"), nil)
@@ -491,7 +491,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertNotNil(rig.viewer.pointerTool)
     }
 
-    func test_detachLeavesNothingOnThePages() throws {
+    func test_detachLeavesNothingOnThePages() async throws {
         let (model, rig) = try start()
         let id = try addPicture(rig, model)
         model.selectObject(try XCTUnwrap(model.objectRows.first { $0.id == id }))
@@ -507,7 +507,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertTrue(try pageText(rig.tab).contains("Kept on the way out."))
     }
 
-    func test_theListNamesWhatThePageHoldsAndPicksIt() throws {
+    func test_theListNamesWhatThePageHoldsAndPicksIt() async throws {
         let (model, rig) = try start()
         _ = try addPicture(rig, model)
 
@@ -519,7 +519,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertEqual(rig.viewer.revealed.count, 1)
     }
 
-    func test_aSizeThatIsNotANumberGoesBackToTheOneInTheFile() throws {
+    func test_aSizeThatIsNotANumberGoesBackToTheOneInTheFile() async throws {
         let (model, rig) = try start()
         model.selectObject(try XCTUnwrap(model.objectRows.first))
 
@@ -530,7 +530,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.revision, 0)
     }
 
-    func test_aNewSizeRestylesTheSelectedBlock() throws {
+    func test_aNewSizeRestylesTheSelectedBlock() async throws {
         let (model, rig) = try start()
         model.selectObject(try XCTUnwrap(model.objectRows.first))
 
@@ -541,7 +541,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertEqual(rig.host.status, "Size changed.")
     }
 
-    func test_aSizeTypedWithoutReturnIsKeptWhenTheTextIsHandedIn() throws {
+    func test_aSizeTypedWithoutReturnIsKeptWhenTheTextIsHandedIn() async throws {
         let (model, rig) = try start()
         model.selectObject(try XCTUnwrap(model.objectRows.first))
 
@@ -552,7 +552,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertEqual(rig.host.status, "Size changed.")
     }
 
-    func test_aNewTextBoxIsDraggedOutAndTyped() throws {
+    func test_aNewTextBoxIsDraggedOutAndTyped() async throws {
         let (model, rig) = try start()
         model.selectMode(.textBox)
 
@@ -564,7 +564,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertEqual(rig.host.status, "Text box added.")
     }
 
-    func test_aNewBoxThatLosesTheFocusToTheSizeFieldKeepsItsTextAndTakesTheNewSize() throws {
+    func test_aNewBoxThatLosesTheFocusToTheSizeFieldKeepsItsTextAndTakesTheNewSize() async throws {
         let (model, rig) = try start()
         model.selectMode(.textBox)
         try drag(rig, from: ViewPoint(100, 300), to: ViewPoint(300, 360))
@@ -586,7 +586,7 @@ final class EditContentModelTests: XCTestCase {
         XCTAssertTrue(try pageText(rig.tab).contains("A new box of text"))
     }
 
-    func test_aNewBoxThatLosesTheFocusWhileEmptyIsNotDropped() throws {
+    func test_aNewBoxThatLosesTheFocusWhileEmptyIsNotDropped() async throws {
         let (model, rig) = try start()
         model.selectMode(.textBox)
         try drag(rig, from: ViewPoint(100, 300), to: ViewPoint(300, 360))
@@ -599,7 +599,7 @@ final class EditContentModelTests: XCTestCase {
         model.detach()
     }
 
-    func test_aLineTheEngineRefusesAfterTheFocusWentStaysClosedUntilTheLookChanges() throws {
+    func test_aLineTheEngineRefusesAfterTheFocusWentStaysClosedUntilTheLookChanges() async throws {
         let (model, rig) = try start()
         try click(rig, try lineCenter(rig))
 

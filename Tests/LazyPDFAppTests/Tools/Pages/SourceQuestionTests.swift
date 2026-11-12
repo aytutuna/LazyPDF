@@ -59,7 +59,7 @@ final class SourceQuestionTests: XCTestCase {
         XCTAssertNil(nothing)
     }
 
-    func test_closingTheQuestionTwiceDoesNothing() {
+    func test_closingTheQuestionTwiceDoesNothing() async {
         let question = SourceQuestion()
 
         question.giveUp()
@@ -68,7 +68,7 @@ final class SourceQuestionTests: XCTestCase {
         XCTAssertNil(question.asking)
     }
 
-    func test_theWindowOffersTheIdentitiesOfTheKeychain() {
+    func test_theWindowOffersTheIdentitiesOfTheKeychain() async {
         let fixture = ViewModelFixture(self)
 
         XCTAssertEqual(fixture.vm.certificateChoices(), [FakeKeys.alice])

@@ -10,7 +10,7 @@ import LazyPDFKit
 final class FormEditsTests: XCTestCase {
     private let fonts = FormPdfs.fonts
 
-    func test_fillingAFieldIsOneUndoableStep() throws {
+    func test_fillingAFieldIsOneUndoableStep() async throws {
         let tab = try FormPdfs.tab()
         var raised = 0
         tab.changed = { raised += 1 }
@@ -25,7 +25,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertNil(FormPdfs.read(tab).find("name")?.value)
     }
 
-    func test_textIsCutAtTheLongestTheFieldTakes() throws {
+    func test_textIsCutAtTheLongestTheFieldTakes() async throws {
         let tab = try FormPdfs.tab()
 
         _ = try FormEdits.apply(tab, fonts, "Fill form field") { try $0.setValue("code", "123456") }
@@ -33,7 +33,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(FormPdfs.read(tab).find("code")?.value, "1234")
     }
 
-    func test_aRadioButtonTurnsTheWholeGroup() throws {
+    func test_aRadioButtonTurnsTheWholeGroup() async throws {
         let tab = try FormPdfs.tab()
         let second = try XCTUnwrap(FormPdfs.read(tab).find("plan")?.widgets[1])
 
@@ -44,7 +44,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertTrue(plan.widgets[1].isOn)
     }
 
-    func test_aListTakesSeveralChoices() throws {
+    func test_aListTakesSeveralChoices() async throws {
         let tab = try FormPdfs.tab()
 
         _ = try FormEdits.apply(tab, fonts, "Fill form field") { try $0.setChoices("langs", ["English", "German"]) }
@@ -52,7 +52,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(FormPdfs.read(tab).find("langs")?.selected, ["English", "German"])
     }
 
-    func test_aRequiredFieldReadsAsRequired() throws {
+    func test_aRequiredFieldReadsAsRequired() async throws {
         let tab = try FormPdfs.tab()
 
         XCTAssertTrue(try XCTUnwrap(FormPdfs.read(tab).find("name")).has(.required))
@@ -70,7 +70,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertNil(FormPdfs.read(tab).find("name")?.value)
     }
 
-    func test_flatteningTakesTheFieldsOut() throws {
+    func test_flatteningTakesTheFieldsOut() async throws {
         let tab = try FormPdfs.tab()
         _ = try FormEdits.apply(tab, fonts, "Fill form field") { try $0.setValue("name", "Ada") }
 
@@ -82,7 +82,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(FormPdfs.read(tab).fields.count, 6)
     }
 
-    func test_aNewFieldGetsAFreeName() throws {
+    func test_aNewFieldGetsAFreeName() async throws {
         let tab = try FormPdfs.tab()
         let form = FormPdfs.read(tab)
 
@@ -91,7 +91,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(FormEdits.newName(FormPdfs.read(tab), .text), "Text2")
     }
 
-    func test_aDrawnFieldIsAddedAsOneStep() throws {
+    func test_aDrawnFieldIsAddedAsOneStep() async throws {
         let tab = try FormPdfs.tab()
 
         let (name, widget) = try FormEdits.apply(tab, fonts, "Add form field") { try FormEdits.add($0, .checkBox, 1, PdfRect(20, 20, 34, 34), nil) }
@@ -104,7 +104,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertNil(FormPdfs.read(tab).find(name))
     }
 
-    func test_aRadioButtonDrawnWhileAGroupIsSelectedJoinsIt() throws {
+    func test_aRadioButtonDrawnWhileAGroupIsSelectedJoinsIt() async throws {
         let tab = try FormPdfs.tab()
 
         let (name, widget) = try FormEdits.apply(tab, fonts, "Add form field") {
@@ -116,7 +116,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(FormPdfs.read(tab).find("plan")?.widgets.count, 3)
     }
 
-    func test_aRadioButtonDrawnAloneStartsAGroup() throws {
+    func test_aRadioButtonDrawnAloneStartsAGroup() async throws {
         let tab = try FormPdfs.tab()
 
         let (name, _) = try FormEdits.apply(tab, fonts, "Add form field") { try FormEdits.add($0, .radio, 0, PdfRect(200, 500, 214, 514), nil) }
@@ -124,7 +124,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(name, "Radio1")
     }
 
-    func test_aRadioGroupCanBeNamedWhenItIsMadeAndLaterButtonsJoinIt() throws {
+    func test_aRadioGroupCanBeNamedWhenItIsMadeAndLaterButtonsJoinIt() async throws {
         let tab = try FormPdfs.tab()
 
         let (first, _) = try FormEdits.apply(tab, fonts, "Add form field") {
@@ -139,7 +139,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(FormPdfs.read(tab).find("size")?.widgets.map(\.onState), ["Choice1", "Choice2"])
     }
 
-    func test_aGroupNameWinsOverTheSelectedGroupAndCannotTakeAnotherKindsName() throws {
+    func test_aGroupNameWinsOverTheSelectedGroupAndCannotTakeAnotherKindsName() async throws {
         let tab = try FormPdfs.tab()
 
         let (name, _) = try FormEdits.apply(tab, fonts, "Add form field") {
@@ -153,7 +153,7 @@ final class FormEditsTests: XCTestCase {
         }) { XCTAssertTrue($0 is InvalidOperationException, "\($0)") }
     }
 
-    func test_addressesAreWebOrMailAddresses() {
+    func test_addressesAreWebOrMailAddresses() async {
         let cases: [(String, String?)] = [
             ("example.com/form", "https://example.com/form"),
             (" http://example.com ", "http://example.com"),
@@ -169,14 +169,14 @@ final class FormEditsTests: XCTestCase {
         }
     }
 
-    func test_coloursAreComparedAsTheyShowOnScreen() {
+    func test_coloursAreComparedAsTheyShowOnScreen() async {
         XCTAssertTrue(FormEdits.sameColour([0], [0, 0, 0]))
         XCTAssertTrue(FormEdits.sameColour([0.5], [0.5, 0.5, 0.5]))
         XCTAssertTrue(FormEdits.sameColour([0, 0, 0, 1], [0]))
         XCTAssertFalse(FormEdits.sameColour([0, 0, 1], [1, 0, 0]))
     }
 
-    func test_lookAndActionAreOneUndoableStepEach() throws {
+    func test_lookAndActionAreOneUndoableStepEach() async throws {
         let tab = try FormPdfs.tab()
 
         _ = try FormEdits.apply(tab, fonts, "Change font") { try $0.setFont(try XCTUnwrap($0.find("name")), "CoBo") }
@@ -197,7 +197,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(back.getTextLook(try XCTUnwrap(back.find("name"))).font, "Helv")
     }
 
-    func test_movingAndResizingAWidgetKeepsItsField() throws {
+    func test_movingAndResizingAWidgetKeepsItsField() async throws {
         let tab = try FormPdfs.tab()
         let rect = PdfRect(70, 650, 400, 700)
 
@@ -206,7 +206,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(FormPdfs.read(tab).find("code")?.widgets[0].rect, rect)
     }
 
-    func test_aTakenNameIsRefusedWithTheEnginesSentenceAndNothingIsCommitted() throws {
+    func test_aTakenNameIsRefusedWithTheEnginesSentenceAndNothingIsCommitted() async throws {
         let tab = try FormPdfs.tab()
 
         XCTAssertThrowsError(try FormEdits.apply(tab, fonts, "Rename field") { try $0.rename(try XCTUnwrap($0.find("code")), "name") }) { error in
@@ -216,7 +216,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertFalse(tab.session.canUndo)
     }
 
-    func test_aFlagAndTheOptionsAreChangedThroughTheEngine() throws {
+    func test_aFlagAndTheOptionsAreChangedThroughTheEngine() async throws {
         let tab = try FormPdfs.tab()
 
         _ = try FormEdits.apply(tab, fonts, "Change choices") { form in
@@ -229,13 +229,13 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(read.find("city")?.options, [FieldOption("Ankara"), FieldOption("IZ", "Izmir"), FieldOption("Bursa")])
     }
 
-    func test_optionsWriteBackAsTheyWereTyped() {
+    func test_optionsWriteBackAsTheyWereTyped() async {
         let options = FormEdits.parseOptions("Ankara\r\nIZ=Izmir")
 
         XCTAssertEqual(FormEdits.formatOptions(options), "Ankara\r\nIZ=Izmir")
     }
 
-    func test_removingOneRadioButtonLeavesTheGroup() throws {
+    func test_removingOneRadioButtonLeavesTheGroup() async throws {
         let tab = try FormPdfs.tab()
 
         _ = try FormEdits.apply(tab, fonts, "Delete form field") { try $0.remove(try XCTUnwrap($0.find("plan")).widgets[1]) }
@@ -243,7 +243,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(FormPdfs.read(tab).find("plan")?.widgets.count, 1)
     }
 
-    func test_theTabOrderOfAPageIsSetAndRead() throws {
+    func test_theTabOrderOfAPageIsSetAndRead() async throws {
         let tab = try FormPdfs.tab()
 
         _ = try FormEdits.apply(tab, fonts, "Change tab order") { $0.setTabOrder(0, .row) }
@@ -251,7 +251,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(FormPdfs.read(tab).getTabOrder(0), .row)
     }
 
-    func test_fillingAStaticXfaFormRemovesTheXfaData() throws {
+    func test_fillingAStaticXfaFormRemovesTheXfaData() async throws {
         let tab = try FormPdfs.tab(try FormPdfs.staticXfa())
         XCTAssertEqual(FormPdfs.read(tab).xfa, .static)
 
@@ -260,7 +260,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(FormPdfs.read(tab).xfa, .none)
     }
 
-    func test_aDynamicXfaFormCannotBeFilledAndSaysWhy() throws {
+    func test_aDynamicXfaFormCannotBeFilledAndSaysWhy() async throws {
         let tab = try FormPdfs.tab(FormPdfs.dynamicXfa())
         XCTAssertEqual(FormPdfs.read(tab).xfa, .dynamic)
 
@@ -270,7 +270,7 @@ final class FormEditsTests: XCTestCase {
         }
     }
 
-    func test_detectingReadsACopyAndLeavesTheTabAlone() throws {
+    func test_detectingReadsACopyAndLeavesTheTabAlone() async throws {
         let bytes = try PdfFromText.create("Name: ______________________\nCity: ______________________", fonts: fonts).bytes
         let tab = try FormPdfs.tab(bytes)
 
@@ -281,7 +281,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertTrue(found.allSatisfy { $0.pageIndex == 0 })
     }
 
-    func test_aRefusedEditLeavesNothingPendingInTheDocument() throws {
+    func test_aRefusedEditLeavesNothingPendingInTheDocument() async throws {
         let tab = try FormPdfs.tab()
 
         XCTAssertThrowsError(try FormEdits.apply(tab, fonts, "Rename field") { form in
@@ -332,7 +332,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertFalse(tab.isDirty)
     }
 
-    func test_aFieldDrawnOnATurnedPageIsTurnedWithIt() throws {
+    func test_aFieldDrawnOnATurnedPageIsTurnedWithIt() async throws {
         let tab = try FormPdfs.tab(try FormPdfs.turned())
 
         let (name, _) = try FormEdits.apply(tab, fonts, "Add form field") { try FormEdits.add($0, .text, 0, PdfRect(300, 100, 320, 250), nil) }
@@ -342,7 +342,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(tab.document.integer(mk, "R"), 90)
     }
 
-    func test_foundFieldsTakeFreeNamesInsteadOfFailingHalfWay() throws {
+    func test_foundFieldsTakeFreeNamesInsteadOfFailingHalfWay() async throws {
         let tab = try FormPdfs.tab()
         let found = [
             FieldProposal(0, PdfRect(60, 300, 200, 320), .text, "fresh", nil),
@@ -359,7 +359,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertNotNil(form.find("name_first"))
     }
 
-    func test_aButtonCaptionIsSetAndReadBack() throws {
+    func test_aButtonCaptionIsSetAndReadBack() async throws {
         let tab = try FormPdfs.tab()
         _ = try FormEdits.apply(tab, fonts, "Add form field") { try FormEdits.add($0, .pushButton, 0, PdfRect(60, 300, 160, 324), nil) }
 
@@ -369,7 +369,7 @@ final class FormEditsTests: XCTestCase {
         XCTAssertEqual(FormEdits.caption(of: form, try XCTUnwrap(form.find("Button1"))), "Submit")
     }
 
-    func test_changingFieldsNeedsPermissionToModifyTheFile() throws {
+    func test_changingFieldsNeedsPermissionToModifyTheFile() async throws {
         let tab = try FormPdfs.tab()
 
         XCTAssertTrue(FormEdits.canModify(tab.document))
@@ -386,7 +386,7 @@ final class FormEditsTests: XCTestCase {
         }
     }
 
-    func test_aFormWithoutFieldsReadsAsEmpty() throws {
+    func test_aFormWithoutFieldsReadsAsEmpty() async throws {
         let tab = try FormPdfs.tab(Pdfs.text())
 
         XCTAssertTrue(FormPdfs.read(tab).fields.isEmpty)

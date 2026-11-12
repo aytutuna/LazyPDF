@@ -32,7 +32,7 @@ final class ObjectEditsTests: XCTestCase {
         return tab
     }
 
-    func test_aCroppedPictureMovesWithItsCrop() throws {
+    func test_aCroppedPictureMovesWithItsCrop() async throws {
         let tab = try withPicture()
         let edits = makeEdits(tab)
         XCTAssertTrue(try edits.crop(0, try picture(tab).id, PdfRect(100, 500, 150, 550)).done)
@@ -46,7 +46,7 @@ final class ObjectEditsTests: XCTestCase {
         XCTAssertEqual(moved.left, cropped.left + 200, accuracy: 1)
     }
 
-    func test_aCroppedPictureResizesAndTurnsWithItsCrop() throws {
+    func test_aCroppedPictureResizesAndTurnsWithItsCrop() async throws {
         let tab = try withPicture()
         let edits = makeEdits(tab)
         _ = try edits.crop(0, try picture(tab).id, PdfRect(100, 500, 150, 550))
@@ -66,7 +66,7 @@ final class ObjectEditsTests: XCTestCase {
         return ((g.a * m.a + g.c * m.b, g.b * m.a + g.d * m.b), (g.a * m.c + g.c * m.d, g.b * m.c + g.d * m.d))
     }
 
-    func test_flippingAcrossMirrorsLeftToRightOnThePageAsShown() throws {
+    func test_flippingAcrossMirrorsLeftToRightOnThePageAsShown() async throws {
         for pageKeys in ["", "/Rotate 90", "/Rotate 180", "/Rotate 270"] {
             let tab = try withPicture(pageKeys)
             let (right, up) = try directions(tab)
@@ -81,7 +81,7 @@ final class ObjectEditsTests: XCTestCase {
         }
     }
 
-    func test_flippingDownMirrorsTopToBottomOnATurnedPage() throws {
+    func test_flippingDownMirrorsTopToBottomOnATurnedPage() async throws {
         let tab = try withPicture("/Rotate 90")
         let (right, up) = try directions(tab)
 
@@ -92,7 +92,7 @@ final class ObjectEditsTests: XCTestCase {
         XCTAssertEqual(upAfter.y, -up.y, accuracy: 1)
     }
 
-    func test_theViewTurnedAQuarterSwapsTheFlipToo() throws {
+    func test_theViewTurnedAQuarterSwapsTheFlipToo() async throws {
         let tab = try withPicture()
         let (right, up) = try directions(tab)
 
@@ -103,7 +103,7 @@ final class ObjectEditsTests: XCTestCase {
         XCTAssertEqual(upAfter.y, -up.y, accuracy: 1)
     }
 
-    func test_aFillOnAShapeWithoutOneIsRefusedInsteadOfChangingNothing() throws {
+    func test_aFillOnAShapeWithoutOneIsRefusedInsteadOfChangingNothing() async throws {
         let tab = try open()
         _ = try PageEditor(tab.session, 0, FakeFonts()).addEllipse(PdfRect(100, 400, 200, 500), ShapeStyle(stroke: RgbColor(255, 0, 0), fill: nil, width: 2))
         let id = try XCTUnwrap(try objects(tab).first { $0 is PathObject }).id
@@ -117,7 +117,7 @@ final class ObjectEditsTests: XCTestCase {
         XCTAssertEqual(try XCTUnwrap(try objects(tab)[id] as? PathObject).strokeColor, RgbColor(0, 0, 255))
     }
 
-    func test_aLinkGivenDirectlyOnThePageIsChangedWhereItIs() throws {
+    func test_aLinkGivenDirectlyOnThePageIsChangedWhereItIs() async throws {
         let tab = try open(EditPdf.make("", pageKeys: directLink))
         let edits = makeEdits(tab)
         let link = try XCTUnwrap(edits.links(0).first)
@@ -135,7 +135,7 @@ final class ObjectEditsTests: XCTestCase {
         XCTAssertTrue(annot.containsKey("C"))
     }
 
-    func test_aLinkGivenDirectlyOnThePageCanBeRemoved() throws {
+    func test_aLinkGivenDirectlyOnThePageCanBeRemoved() async throws {
         let tab = try open(EditPdf.make("", pageKeys: directLink))
         let edits = makeEdits(tab)
 
@@ -144,7 +144,7 @@ final class ObjectEditsTests: XCTestCase {
         XCTAssertTrue(edits.links(0).isEmpty)
     }
 
-    func test_changingALinkKeepsItsAnnotation() throws {
+    func test_changingALinkKeepsItsAnnotation() async throws {
         let tab = try open()
         let edits = makeEdits(tab)
         let area = PdfRect(50, 700, 200, 720)
@@ -215,7 +215,7 @@ final class ObjectEditsTests: XCTestCase {
         XCTAssertEqual(tab.session.current, bytes)
     }
 
-    func test_aFileThatForbidsChangesIsRefusedUntilItIsOpenedAsOwner() throws {
+    func test_aFileThatForbidsChangesIsRefusedUntilItIsOpenedAsOwner() async throws {
         let locked = try PdfDocument.open(try Pdfs.restricted(.print))
         let owner = try PdfDocument.open(try Pdfs.restricted(.print), password: "owner")
 
@@ -224,7 +224,7 @@ final class ObjectEditsTests: XCTestCase {
         XCTAssertNil(ChangeGate.refusal(try PdfDocument.open(Pdfs.text())))
     }
 
-    func test_aFileThatAllowsModifyingIsNotRefused() throws {
+    func test_aFileThatAllowsModifyingIsNotRefused() async throws {
         XCTAssertNil(ChangeGate.refusal(try PdfDocument.open(try Pdfs.restricted([.print, .modify]))))
     }
 }

@@ -32,7 +32,7 @@ final class FillSignMakerTests: XCTestCase {
         return url
     }
 
-    func test_typingANameMakesAnImageInTheFaceChosen() {
+    func test_typingANameMakesAnImageInTheFaceChosen() async {
         let (maker, system) = maker()
         XCTAssertNil(maker.image)
 
@@ -46,7 +46,7 @@ final class FillSignMakerTests: XCTestCase {
         XCTAssertNil(maker.image)
     }
 
-    func test_drawingMakesAnImageWhenAStrokeEndsAndTheLastStrokeCanBeTakenBack() {
+    func test_drawingMakesAnImageWhenAStrokeEndsAndTheLastStrokeCanBeTakenBack() async {
         let (maker, _) = maker()
         maker.setMode(.draw)
 
@@ -67,7 +67,7 @@ final class FillSignMakerTests: XCTestCase {
         XCTAssertNil(maker.image)
     }
 
-    func test_eachModeShowsItsOwnImage() {
+    func test_eachModeShowsItsOwnImage() async {
         let (maker, _) = maker()
         maker.setName("Ada")
         maker.setMode(.draw)
@@ -130,7 +130,7 @@ final class FillSignMakerTests: XCTestCase {
         XCTAssertEqual(maker.pictureNote, "Sign on white paper and choose a photo of it. The paper is made see-through.")
     }
 
-    func test_startingOverEmptiesEveryMode() {
+    func test_startingOverEmptiesEveryMode() async {
         let (maker, _) = maker()
         maker.setName("Ada")
         maker.setMode(.draw)
@@ -178,7 +178,7 @@ final class FillSignModelTests: XCTestCase {
         tool.release(PagePointer(page: page, point: point, view: point, pressed: false, clicks: 0))
     }
 
-    func test_theSavedSignaturesAreListedWithTheNewestSelected() throws {
+    func test_theSavedSignaturesAreListedWithTheNewestSelected() async throws {
         let (model, _, _) = try rig(saved: 2)
 
         XCTAssertEqual(model.saved.count, 2)
@@ -187,7 +187,7 @@ final class FillSignModelTests: XCTestCase {
         XCTAssertTrue(model.action!.canRun())
     }
 
-    func test_withNothingSavedThereIsNothingToPlace() throws {
+    func test_withNothingSavedThereIsNothingToPlace() async throws {
         let (model, _, _) = try rig(saved: 0)
 
         XCTAssertTrue(model.saved.isEmpty)
@@ -363,7 +363,7 @@ final class FillSignModelTests: XCTestCase {
         XCTAssertEqual(rig.host.problems.map(\.title), ["This file cannot be changed"])
     }
 
-    func test_aNewSignatureIsKeptAndSelectedWhenTheSwitchIsOn() throws {
+    func test_aNewSignatureIsKeptAndSelectedWhenTheSwitchIsOn() async throws {
         let (model, _, store) = try rig(saved: 0)
         model.makeNew()
         XCTAssertTrue(model.showMaker)
@@ -378,7 +378,7 @@ final class FillSignModelTests: XCTestCase {
         XCTAssertTrue(model.action!.canRun())
     }
 
-    func test_aNewSignatureNotKeptIsStillUsedOnce() throws {
+    func test_aNewSignatureNotKeptIsStillUsedOnce() async throws {
         let (model, _, store) = try rig(saved: 1)
         model.makeNew()
         model.maker.setName("Ada")
@@ -391,7 +391,7 @@ final class FillSignModelTests: XCTestCase {
         XCTAssertTrue(model.action!.canRun())
     }
 
-    func test_cancellingTheSheetKeepsTheListAsItWas() throws {
+    func test_cancellingTheSheetKeepsTheListAsItWas() async throws {
         let (model, _, _) = try rig()
         let before = model.selected
         model.makeNew()
@@ -402,7 +402,7 @@ final class FillSignModelTests: XCTestCase {
         XCTAssertEqual(model.selected, before)
     }
 
-    func test_aRemovedSignatureLeavesTheListOnceConfirmed() throws {
+    func test_aRemovedSignatureLeavesTheListOnceConfirmed() async throws {
         let (model, rig, _) = try rig(saved: 2)
 
         model.remove(model.saved[0])
@@ -416,7 +416,7 @@ final class FillSignModelTests: XCTestCase {
         XCTAssertEqual(model.selected, model.saved[0].id)
     }
 
-    func test_removingInitialsAsksAboutInitials() throws {
+    func test_removingInitialsAsksAboutInitials() async throws {
         let (model, rig, store) = try rig(saved: 0)
         try store.add(.initials, wide)
         model.selectKind(.initials)
@@ -426,7 +426,7 @@ final class FillSignModelTests: XCTestCase {
         XCTAssertEqual(rig.host.notices.last?.title, "Delete these initials?")
     }
 
-    func test_confirmingAfterTheToolIsDetachedDeletesNothing() throws {
+    func test_confirmingAfterTheToolIsDetachedDeletesNothing() async throws {
         let (model, rig, _) = try rig(saved: 2)
         model.remove(model.saved[0])
         let confirm = try XCTUnwrap(rig.host.notices.last?.action)
@@ -450,7 +450,7 @@ final class FillSignModelTests: XCTestCase {
         XCTAssertEqual(model.action?.text, "Place on page")
     }
 
-    func test_aSignatureThatCannotBeKeptIsStillUsedAndSaysSo() throws {
+    func test_aSignatureThatCannotBeKeptIsStillUsedAndSaysSo() async throws {
         cleanUp()
         let blocker = folder.appendingPathComponent("blocked")
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

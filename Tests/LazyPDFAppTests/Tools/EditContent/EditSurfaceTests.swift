@@ -11,7 +11,7 @@ import LazyPDFKit
 final class EditSurfaceTests: XCTestCase {
     private let box = ViewRect(100, 100, 200, 100)
 
-    func test_everyHandleIsFoundWhereItIsDrawn() {
+    func test_everyHandleIsFoundWhereItIsDrawn() async {
         let places: [(handle: Int, x: Double, y: Double)] = [
             (0, 100, 100), (1, 200, 100), (2, 300, 100), (3, 300, 150), (4, 300, 200), (5, 200, 200), (6, 100, 200), (7, 100, 150),
         ]
@@ -20,28 +20,28 @@ final class EditSurfaceTests: XCTestCase {
         }
     }
 
-    func test_thePointerAwayFromTheHandlesFindsNone() {
+    func test_thePointerAwayFromTheHandlesFindsNone() async {
         XCTAssertEqual(EditSurface.handleIndex(at: ViewPoint(200, 150), of: box, scale: 1), -1)
     }
 
-    func test_theReachOfAHandleShrinksWithTheZoom() {
+    func test_theReachOfAHandleShrinksWithTheZoom() async {
         XCTAssertEqual(EditSurface.handleIndex(at: ViewPoint(120, 100), of: box, scale: 2), -1)
         XCTAssertEqual(EditSurface.handleIndex(at: ViewPoint(120, 100), of: box, scale: 1), 0)
     }
 
-    func test_aSmallBoxCanStillBeGrabbedByItsMiddle() {
+    func test_aSmallBoxCanStillBeGrabbedByItsMiddle() async {
         let small = ViewRect(100, 100, 30, 30)
 
         XCTAssertEqual(EditSurface.handleIndex(at: ViewPoint(115, 115), of: small, scale: 1), -1)
     }
 
-    func test_draggingTheRightSideWidensTheBoxAndHoldsTheLeft() {
+    func test_draggingTheRightSideWidensTheBoxAndHoldsTheLeft() async {
         let resized = EditSurface.resize(box, 3, ViewPoint(350, 999), square: false)
 
         XCTAssertEqual(resized, ViewRect(100, 100, 250, 100))
     }
 
-    func test_aCornerKeepsTheProportionsUnlessShiftIsDown() {
+    func test_aCornerKeepsTheProportionsUnlessShiftIsDown() async {
         let square = EditSurface.resize(box, 4, ViewPoint(500, 150), square: true)
         let free = EditSurface.resize(box, 4, ViewPoint(500, 150), square: false)
 
@@ -49,7 +49,7 @@ final class EditSurfaceTests: XCTestCase {
         XCTAssertEqual(free, ViewRect(100, 100, 400, 50))
     }
 
-    func test_aDragPastTheOppositeSideLeavesASliverNotAFlippedBox() {
+    func test_aDragPastTheOppositeSideLeavesASliverNotAFlippedBox() async {
         let resized = EditSurface.resize(box, 0, ViewPoint(900, 900), square: false)
 
         XCTAssertTrue(resized.width > 0 && resized.height > 0)
@@ -57,12 +57,12 @@ final class EditSurfaceTests: XCTestCase {
         XCTAssertEqual(resized.bottom, box.bottom)
     }
 
-    func test_withNoFontTheTypedTextIsInHelvetica() {
+    func test_withNoFontTheTypedTextIsInHelvetica() async {
         XCTAssertEqual(EditorLook.familyOf(nil), "Helvetica")
         XCTAssertEqual(EditorLook.nameOf(nil), "")
     }
 
-    func test_aFontTakesTheInstalledFamilyItsNameStarts() throws {
+    func test_aFontTakesTheInstalledFamilyItsNameStarts() async throws {
         let tab = DocumentTab(session: try PdfEditSession.open(EditPdf.make(EditPdf.paragraph)), renderer: FakeRenderer(), url: nil, title: "t.pdf")
         let block = try XCTUnwrap(PageEditor(tab.session, 0).objects.first as? TextObject)
 
@@ -71,7 +71,7 @@ final class EditSurfaceTests: XCTestCase {
         XCTAssertEqual(EditorLook.familyOf(block.font), "Helvetica")
     }
 
-    func test_everyColourOfThePaletteHasANameAndTheyAreDistinct() {
+    func test_everyColourOfThePaletteHasANameAndTheyAreDistinct() async {
         let colors = Palette.colors
 
         XCTAssertTrue(colors.allSatisfy { !$0.name.trimmingCharacters(in: .whitespaces).isEmpty })

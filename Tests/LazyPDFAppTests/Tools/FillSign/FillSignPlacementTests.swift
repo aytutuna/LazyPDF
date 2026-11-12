@@ -20,26 +20,26 @@ final class FillSignPlacementTests: XCTestCase {
         PageGeometry(tab.document.pages[0]).height
     }
 
-    func test_aClickCentresTheBox() {
+    func test_aClickCentresTheBox() async {
         let box = FillSignPlacement.around(ViewPoint(300, 400), 150, 3, page)
 
         XCTAssertEqual(box, DisplayRect(225, 375, 150, 50))
     }
 
-    func test_aClickAtTheEdgeKeepsTheBoxOnThePage() {
+    func test_aClickAtTheEdgeKeepsTheBoxOnThePage() async {
         let box = FillSignPlacement.around(ViewPoint(5, 790), 150, 3, page)
 
         XCTAssertEqual(box.x, 0)
         XCTAssertEqual(box.y, 742)
     }
 
-    func test_aDragKeepsTheProportionsOfThePicture() {
+    func test_aDragKeepsTheProportionsOfThePicture() async {
         let box = FillSignPlacement.fromDrag(ViewPoint(100, 100), ViewPoint(400, 150), 3, page)
 
         XCTAssertEqual(box, DisplayRect(100, 100, 150, 50))
     }
 
-    func test_aDragUpAndToTheLeftFillsTheSameCorner() {
+    func test_aDragUpAndToTheLeftFillsTheSameCorner() async {
         let box = FillSignPlacement.fromDrag(ViewPoint(400, 300), ViewPoint(300, 100), 2, page)
 
         XCTAssertEqual(box.width, 100)
@@ -48,7 +48,7 @@ final class FillSignPlacementTests: XCTestCase {
         XCTAssertEqual(box.y, 250)
     }
 
-    func test_aSignatureIsAStampAtTheBoxInPageSpace() throws {
+    func test_aSignatureIsAStampAtTheBoxInPageSpace() async throws {
         let tab = try newTab()
 
         XCTAssertTrue(try FillSignPlacement.placeImage(tab, 0, DisplayRect(100, 100, 150, 50), ink, now))
@@ -61,7 +61,7 @@ final class FillSignPlacementTests: XCTestCase {
         XCTAssertEqual(stamp.rect.width, 150, accuracy: 0.001)
     }
 
-    func test_placingASignatureCanBeUndone() throws {
+    func test_placingASignatureCanBeUndone() async throws {
         let tab = try newTab()
         try FillSignPlacement.placeImage(tab, 0, DisplayRect(10, 10, 60, 20), ink, now)
 
@@ -71,7 +71,7 @@ final class FillSignPlacementTests: XCTestCase {
         XCTAssertEqual(tab.session.redoLabel, "Place signature")
     }
 
-    func test_textIsFreeTextWithItsWordsAtTheClick() throws {
+    func test_textIsFreeTextWithItsWordsAtTheClick() async throws {
         let tab = try newTab()
 
         XCTAssertTrue(try FillSignPlacement.placeText(tab, FakeFonts(), 0, ViewPoint(72, 200), "Approved", 12, now))
@@ -86,7 +86,7 @@ final class FillSignPlacementTests: XCTestCase {
         XCTAssertEqual(tab.session.undoLabel, "Place text")
     }
 
-    func test_textTheFontsCannotDrawChangesNothing() throws {
+    func test_textTheFontsCannotDrawChangesNothing() async throws {
         let tab = try newTab()
 
         XCTAssertThrowsError(try FillSignPlacement.placeText(tab, FakeFonts(), 0, ViewPoint(72, 200), "\u{00C7}a\u{011F}r\u{0131}", 12, now)) {
@@ -108,7 +108,7 @@ final class FillSignPlacementTests: XCTestCase {
         return try XCTUnwrap(tab.document.resolve(ap["N"]) as? PdfStream)
     }
 
-    func test_aSignatureOnATurnedPageIsDrawnUprightAndTurnedBack() throws {
+    func test_aSignatureOnATurnedPageIsDrawnUprightAndTurnedBack() async throws {
         let cases: [(Int, [Int])] = [(90, [0, 1, -1, 0]), (180, [-1, 0, 0, -1]), (270, [0, -1, 1, 0])]
         for (degrees, matrix) in cases {
             let tab = try turned(degrees)
@@ -126,7 +126,7 @@ final class FillSignPlacementTests: XCTestCase {
         }
     }
 
-    func test_aSignatureOnAnUprightPageIsNotTurned() throws {
+    func test_aSignatureOnAnUprightPageIsNotTurned() async throws {
         let tab = try newTab()
         try FillSignPlacement.placeImage(tab, 0, DisplayRect(100, 100, 150, 50), ink, now)
 
@@ -138,7 +138,7 @@ final class FillSignPlacementTests: XCTestCase {
         XCTAssertTrue(matrix == nil || matrix! == [1, 0, 0, 1, 0, 0])
     }
 
-    func test_textOnATurnedPageHasRoomForItsLines() throws {
+    func test_textOnATurnedPageHasRoomForItsLines() async throws {
         let tab = try turned(90)
 
         try FillSignPlacement.placeText(tab, FakeFonts(), 0, ViewPoint(72, 200), "4 November 2026", 12, now)
@@ -152,7 +152,7 @@ final class FillSignPlacementTests: XCTestCase {
         XCTAssertNotNil(form.dictionary["Matrix"])
     }
 
-    func test_aSignedFileIsCautionedAndAPlainOneIsNot() throws {
+    func test_aSignedFileIsCautionedAndAPlainOneIsNot() async throws {
         let signed = try PdfDocument.open(Pdfs.signed(certified: false))
         let plain = try PdfDocument.open(Pdfs.text())
 
@@ -160,7 +160,7 @@ final class FillSignPlacementTests: XCTestCase {
         XCTAssertNil(FillSignPlacement.caution(plain))
     }
 
-    func test_aFileThatForbidsCommentsRefusesStampsAndText() throws {
+    func test_aFileThatForbidsCommentsRefusesStampsAndText() async throws {
         let locked = try PdfDocument.open(Pdfs.restricted(.print), password: "")
         let owner = try PdfDocument.open(Pdfs.restricted(.print), password: "owner")
 
@@ -169,7 +169,7 @@ final class FillSignPlacementTests: XCTestCase {
         XCTAssertNil(FillSignPlacement.refusal(try PdfDocument.open(Pdfs.text())))
     }
 
-    func test_theTextIsMeasuredWithHelveticaAndGrowsWithItsLines() {
+    func test_theTextIsMeasuredWithHelveticaAndGrowsWithItsLines() async {
         let one = FillSignPlacement.measure("Approved", 12)
         let two = FillSignPlacement.measure("Approved\nApproved", 12)
 
@@ -178,7 +178,7 @@ final class FillSignPlacementTests: XCTestCase {
         XCTAssertGreaterThan(two.height, one.height)
     }
 
-    func test_turkishLettersAreMeasuredByTheirBaseLetter() {
+    func test_turkishLettersAreMeasuredByTheirBaseLetter() async {
         XCTAssertEqual(FillSignPlacement.measure("şŞğĞİ", 12).width, FillSignPlacement.measure("sSgGI", 12).width)
         XCTAssertEqual(FillSignPlacement.measure("ı", 12).width, FillSignPlacement.measure("i", 12).width)
         XCTAssertEqual(FillSignPlacement.measure("abc", 12).width, 28)

@@ -28,7 +28,7 @@ final class PagesToolModelTests: XCTestCase {
         release(tool, to.0, to.1)
     }
 
-    func test_theBarChangesTheChosenPagesAsOneStepAndKeepsThemChosen() throws {
+    func test_theBarChangesTheChosenPagesAsOneStepAndKeepsThemChosen() async throws {
         let (model, rig) = try attached()
         model.grid.select([1, 2])
 
@@ -41,7 +41,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertEqual(rig.host.statuses.last, "2 pages rotated")
     }
 
-    func test_earlierAndLaterMoveTheChosenPagesOneStep() throws {
+    func test_earlierAndLaterMoveTheChosenPagesOneStep() async throws {
         let (model, rig) = try attached()
         let was = rig.tab.order
         model.grid.select([2])
@@ -58,7 +58,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertEqual(model.grid.selection, [3])
     }
 
-    func test_pagesApartEachMoveOneStepAsOneUndo() throws {
+    func test_pagesApartEachMoveOneStepAsOneUndo() async throws {
         let (model, rig) = try attached(6)
         let was = rig.tab.order
         model.grid.select([2, 5])
@@ -72,7 +72,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.order, was)
     }
 
-    func test_thePagesAtTheEdgesCannotMovePastIt() throws {
+    func test_thePagesAtTheEdgesCannotMovePastIt() async throws {
         let (model, _) = try attached()
 
         model.grid.select([0])
@@ -83,7 +83,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertFalse(model.canEdit)
     }
 
-    func test_deletingEveryPageIsRefusedAndAPartIsNot() throws {
+    func test_deletingEveryPageIsRefusedAndAPartIsNot() async throws {
         let (model, rig) = try attached(3)
 
         model.grid.selectAll()
@@ -97,7 +97,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertTrue(model.grid.selected.isEmpty)
     }
 
-    func test_choosingOnePageShowsItAndChoosingTwoDoesNot() throws {
+    func test_choosingOnePageShowsItAndChoosingTwoDoesNot() async throws {
         let (model, rig) = try attached()
 
         model.grid.toggle(3)
@@ -106,7 +106,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertEqual(rig.viewer.sent, [3])
     }
 
-    func test_theSummaryCountsThePagesOrTheChoice() throws {
+    func test_theSummaryCountsThePagesOrTheChoice() async throws {
         let (model, _) = try attached()
         XCTAssertEqual(model.grid.summary, "5 pages")
 
@@ -115,7 +115,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertEqual(model.grid.summary, "1 of 5 selected")
     }
 
-    func test_aBlankPageGoesWhereTheChoiceSays() throws {
+    func test_aBlankPageGoesWhereTheChoiceSays() async throws {
         let (model, rig) = try attached(3)
         model.grid.select([1])
 
@@ -148,7 +148,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertEqual(rig.host.statuses.last, "2 pages extracted")
     }
 
-    func test_theCropSectionTakesThePointerAndDrawsABox() throws {
+    func test_theCropSectionTakesThePointerAndDrawsABox() async throws {
         let (model, rig) = try attached()
         XCTAssertNil(model.action)
 
@@ -168,7 +168,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertNotNil(rig.viewer.overlay(0).item("pages.crop"))
     }
 
-    func test_aBoxOfNoSizeIsDropped() throws {
+    func test_aBoxOfNoSizeIsDropped() async throws {
         let (model, rig) = try attached()
         model.setExpanded(.crop, true)
 
@@ -178,7 +178,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertNil(rig.viewer.overlay(0).item("pages.crop"))
     }
 
-    func test_aBoxIsKeptOnThePageAndAKeyboardClickGetsOneOfTheUsualSize() throws {
+    func test_aBoxIsKeptOnThePageAndAKeyboardClickGetsOneOfTheUsualSize() async throws {
         let (model, _) = try attached()
         model.setExpanded(.crop, true)
         let tool = try XCTUnwrap(model.crop)
@@ -217,7 +217,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertEqual(rig.host.statuses.last, "3 pages cropped")
     }
 
-    func test_theBoxFollowsItsPageThroughEditsToThePageList() throws {
+    func test_theBoxFollowsItsPageThroughEditsToThePageList() async throws {
         let (model, _) = try attached(3)
         model.setExpanded(.crop, true)
         let tool = try XCTUnwrap(model.crop)
@@ -231,7 +231,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertNil(model.cropBox)
     }
 
-    func test_turningAPageClearsOnlyTheBoxOnThatPage() throws {
+    func test_turningAPageClearsOnlyTheBoxOnThatPage() async throws {
         let (model, _) = try attached(3)
         model.setExpanded(.crop, true)
         let tool = try XCTUnwrap(model.crop)
@@ -274,7 +274,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertEqual(rig.host.problems.map(\.title), ["Box is off the pages"])
     }
 
-    func test_drawingOnAPageChoosesIt() throws {
+    func test_drawingOnAPageChoosesIt() async throws {
         let (model, _) = try attached(4)
         model.setExpanded(.crop, true)
         let tool = try XCTUnwrap(model.crop)
@@ -298,7 +298,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertEqual(rig.host.statuses.last, "Crop removed.")
     }
 
-    func test_leavingTheCropSectionGivesThePointerBackAndForgetsTheBox() throws {
+    func test_leavingTheCropSectionGivesThePointerBackAndForgetsTheBox() async throws {
         let (model, rig) = try attached()
         model.setExpanded(.crop, true)
         try draw(model)
@@ -313,7 +313,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertNil(rig.viewer.overlay(0).item("pages.crop"))
     }
 
-    func test_openingAnotherSectionClosesTheCropOne() throws {
+    func test_openingAnotherSectionClosesTheCropOne() async throws {
         let (model, rig) = try attached()
         model.setExpanded(.crop, true)
 
@@ -338,7 +338,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertTrue(rig.viewer.pointerTool === model.crop)
     }
 
-    func test_theCropSectionComesBackWhenThePanelIsShownAgain() throws {
+    func test_theCropSectionComesBackWhenThePanelIsShownAgain() async throws {
         let (model, rig) = try attached()
         model.setExpanded(.crop, true)
 
@@ -424,7 +424,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertEqual(rig.host.statuses.last, "Labels removed.")
     }
 
-    func test_withNothingChosenEveryPageIsNumbered() throws {
+    func test_withNothingChosenEveryPageIsNumbered() async throws {
         let (model, _) = try attached()
 
         XCTAssertEqual(model.labelHint, "Every page is numbered. This sets the page numbers viewers show. Nothing is printed on the pages.")
@@ -626,7 +626,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.pageCount, 3)
     }
 
-    func test_theSignedNoteFollowsTheFile() throws {
+    func test_theSignedNoteFollowsTheFile() async throws {
         let (model, _) = try attached()
         XCTAssertFalse(model.grid.isSigned)
 

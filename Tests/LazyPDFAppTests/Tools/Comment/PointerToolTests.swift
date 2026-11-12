@@ -36,7 +36,7 @@ final class PointerToolTests: XCTestCase {
         return (draw, viewer, drawn)
     }
 
-    func test_aDragDrawsAPreviewAndGivesBothEndsOnRelease() throws {
+    func test_aDragDrawsAPreviewAndGivesBothEndsOnRelease() async throws {
         let (tool, viewer, drawn) = try drawing(.rectangle)
 
         tool.press(press(markPt(50, 60)))
@@ -50,7 +50,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(drawn.marks[0].points, [markPt(50, 60), markPt(150, 120)])
     }
 
-    func test_shiftStraightensALine() throws {
+    func test_shiftStraightensALine() async throws {
         let (tool, _, drawn) = try drawing(.line)
 
         tool.press(press(markPt(10, 10)))
@@ -59,7 +59,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(drawn.marks[0].points[1].y, 10, accuracy: 0.001)
     }
 
-    func test_shiftSquaresABoxInsideThePage() throws {
+    func test_shiftSquaresABoxInsideThePage() async throws {
         let (tool, _, drawn) = try drawing(.rectangle)
 
         tool.press(press(markPt(500, 700)))
@@ -70,7 +70,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(end.y, 792, accuracy: 0.001)
     }
 
-    func test_withoutShiftTheEndIsUnchanged() throws {
+    func test_withoutShiftTheEndIsUnchanged() async throws {
         let (tool, _, drawn) = try drawing(.line)
 
         tool.press(press(markPt(10, 10)))
@@ -79,7 +79,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(drawn.marks[0].points[1], markPt(100, 40))
     }
 
-    func test_aClickWithoutADragDrawsNothingForAShape() throws {
+    func test_aClickWithoutADragDrawsNothingForAShape() async throws {
         let (tool, viewer, drawn) = try drawing(.oval)
 
         tool.press(press(markPt(50, 60)))
@@ -89,7 +89,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertTrue(viewer.overlay(0).items.isEmpty)
     }
 
-    func test_aClickToolFinishesOnRelease() throws {
+    func test_aClickToolFinishesOnRelease() async throws {
         for kind in [MarkTool.note, .stamp, .attach] {
             let (tool, _, drawn) = try drawing(kind)
 
@@ -102,7 +102,7 @@ final class PointerToolTests: XCTestCase {
         }
     }
 
-    func test_aClickWithTheTextBoxMakesABoxOfTheUsualSize() throws {
+    func test_aClickWithTheTextBoxMakesABoxOfTheUsualSize() async throws {
         let (tool, _, drawn) = try drawing(.textBox)
 
         tool.press(press(markPt(70, 80)))
@@ -112,7 +112,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(drawn.marks[0].points, [markPt(70, 80), markPt(230, 128)])
     }
 
-    func test_aPolygonTakesOneCornerPerClickAndEndsOnADoubleClick() throws {
+    func test_aPolygonTakesOneCornerPerClickAndEndsOnADoubleClick() async throws {
         let (tool, viewer, drawn) = try drawing(.polygon)
 
         tool.press(press(markPt(10, 10)))
@@ -131,7 +131,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertTrue(viewer.overlay(0).items.isEmpty)
     }
 
-    func test_aPolygonClosesWhenTheFirstCornerIsClickedAgain() throws {
+    func test_aPolygonClosesWhenTheFirstCornerIsClickedAgain() async throws {
         let (tool, _, drawn) = try drawing(.cloud)
         for corner in [markPt(10, 10), markPt(100, 10), markPt(100, 100)] {
             tool.press(press(corner))
@@ -144,7 +144,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(drawn.marks[0].points.count, 3)
     }
 
-    func test_aPolygonOfTwoCornersIsDropped() throws {
+    func test_aPolygonOfTwoCornersIsDropped() async throws {
         let (tool, viewer, drawn) = try drawing(.polygon)
         tool.press(press(markPt(10, 10)))
         tool.release(drag(markPt(10, 10)))
@@ -157,7 +157,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertTrue(viewer.overlay(0).items.isEmpty)
     }
 
-    func test_aPolygonWithCornersEnoughIsEndedByFinishShape() throws {
+    func test_aPolygonWithCornersEnoughIsEndedByFinishShape() async throws {
         let (tool, _, drawn) = try drawing(.polygon)
         for corner in [markPt(10, 10), markPt(100, 10)] {
             tool.press(press(corner))
@@ -177,7 +177,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertFalse(tool.started)
     }
 
-    func test_freehandKeepsEveryPointOfTheDrag() throws {
+    func test_freehandKeepsEveryPointOfTheDrag() async throws {
         let (tool, _, drawn) = try drawing(.pencil)
 
         tool.press(press(markPt(10, 10)))
@@ -189,7 +189,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(drawn.marks[0].points, [markPt(10, 10), markPt(20, 14), markPt(30, 22)])
     }
 
-    func test_aCalloutNeedsADragAndLeavesTwoPreviewShapes() throws {
+    func test_aCalloutNeedsADragAndLeavesTwoPreviewShapes() async throws {
         let (tool, viewer, drawn) = try drawing(.callout)
 
         tool.press(press(markPt(100, 100)))
@@ -202,7 +202,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertTrue(viewer.overlay(0).items.isEmpty)
     }
 
-    func test_cancellingDropsWhatWasStarted() throws {
+    func test_cancellingDropsWhatWasStarted() async throws {
         let (tool, viewer, drawn) = try drawing(.line)
         tool.press(press(markPt(10, 10)))
         tool.move(drag(markPt(90, 90)))
@@ -214,7 +214,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertTrue(viewer.overlay(0).items.isEmpty)
     }
 
-    func test_aDrawnPolygonKnowsItHasStartedUntilItIsCancelled() throws {
+    func test_aDrawnPolygonKnowsItHasStartedUntilItIsCancelled() async throws {
         let (tool, viewer, _) = try drawing(.polygon)
         XCTAssertFalse(tool.started)
 
@@ -227,7 +227,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertTrue(viewer.overlay(0).items.isEmpty)
     }
 
-    func test_aFingersCornerIsAddedOnReleaseAndACancelledPressAddsNone() throws {
+    func test_aFingersCornerIsAddedOnReleaseAndACancelledPressAddsNone() async throws {
         let (tool, _, drawn) = try drawing(.polygon)
         tool.press(press(markPt(10, 10)))
         tool.release(drag(markPt(10, 10)))
@@ -246,7 +246,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(drawn.marks[0].points.count, 3)
     }
 
-    func test_aMousePressThatIsCancelledTakesBackOnlyItsCorner() throws {
+    func test_aMousePressThatIsCancelledTakesBackOnlyItsCorner() async throws {
         let (tool, _, _) = try drawing(.polygon)
         tool.press(press(markPt(10, 10)))
         tool.release(drag(markPt(10, 10)))
@@ -263,7 +263,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertTrue(tool.canFinish)
     }
 
-    func test_aFirstCornerCancelledByASecondFingerLeavesNothingStarted() throws {
+    func test_aFirstCornerCancelledByASecondFingerLeavesNothingStarted() async throws {
         let (tool, viewer, _) = try drawing(.polygon)
         tool.press(finger(markPt(10, 10)))
 
@@ -273,7 +273,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertTrue(viewer.overlay(0).items.isEmpty)
     }
 
-    func test_aPolygonWhosePageWasUndoneAwayCannotBeFinished() throws {
+    func test_aPolygonWhosePageWasUndoneAwayCannotBeFinished() async throws {
         let (tool, viewer, drawn) = try drawing(.polygon, pages: 3)
         for corner in [markPt(10, 10), markPt(100, 10), markPt(100, 100)] {
             tool.press(press(corner, page: 2))
@@ -292,7 +292,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertFalse(tool.canFinish)
     }
 
-    func test_escapeDropsAShapeThatWasStartedAndIsLeftAloneOtherwise() throws {
+    func test_escapeDropsAShapeThatWasStartedAndIsLeftAloneOtherwise() async throws {
         let (tool, _, drawn) = try drawing(.polygon)
         XCTAssertFalse(tool.key(.escape, modifiers: []))
 
@@ -315,7 +315,7 @@ final class PointerToolTests: XCTestCase {
         return (EditTool(viewer: viewer, marker: { f.marker }), f, viewer, made)
     }
 
-    func test_aPressOnAMarkSelectsItAndShowsAFrameWithEightHandles() throws {
+    func test_aPressOnAMarkSelectsItAndShowsAFrameWithEightHandles() async throws {
         let (tool, _, viewer, made) = try editing()
         var raised = 0
         tool.selectionChanged = { raised += 1 }
@@ -328,7 +328,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(raised, 1)
     }
 
-    func test_aMouseReachesFourPointsAndAFingerMore() throws {
+    func test_aMouseReachesFourPointsAndAFingerMore() async throws {
         let (tool, _, _, made) = try editing()
 
         tool.press(press(markPt(202, 130)))
@@ -342,7 +342,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(tool.current?.reference?.number, made.reference?.number)
     }
 
-    func test_redrawingAfterTheMarksPageWentAwayDrawsNothing() throws {
+    func test_redrawingAfterTheMarksPageWentAwayDrawsNothing() async throws {
         let f = try CommentFixture(pages: 2)
         let viewer = PanelViewer(f.tab)
         try f.marker.add(.textBox, 1, [markPt(100, 100), markPt(200, 160)], markRed, "Look")
@@ -357,7 +357,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertTrue(viewer.overlay(0).items.isEmpty)
     }
 
-    func test_aPressOnNothingLetsGoOfTheSelection() throws {
+    func test_aPressOnNothingLetsGoOfTheSelection() async throws {
         let (tool, _, viewer, _) = try editing()
         tool.press(press(markPt(150, 130)))
         tool.release(drag(markPt(150, 130)))
@@ -368,7 +368,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertTrue(viewer.overlay(0).items.isEmpty)
     }
 
-    func test_draggingAMarkAsksForTheMoveOnlyOnRelease() throws {
+    func test_draggingAMarkAsksForTheMoveOnlyOnRelease() async throws {
         let (tool, _, _, _) = try editing()
         var moves: [(Double, Double)] = []
         tool.moved = { _, dx, dy in moves.append((dx, dy)) }
@@ -383,7 +383,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(moves[0].1, 20)
     }
 
-    func test_aClickWithoutMovingAsksForNothing() throws {
+    func test_aClickWithoutMovingAsksForNothing() async throws {
         let (tool, _, _, _) = try editing()
         var asked = 0
         tool.moved = { _, _, _ in asked += 1 }
@@ -395,7 +395,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(asked, 0)
     }
 
-    func test_draggingACornerHandleAsksForTheNewBox() throws {
+    func test_draggingACornerHandleAsksForTheNewBox() async throws {
         let (tool, _, _, _) = try editing()
         tool.press(press(markPt(150, 130)))
         tool.release(drag(markPt(150, 130)))
@@ -409,7 +409,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(boxes, [ViewRect(100, 100, 160, 100)])
     }
 
-    func test_aMarkCannotBeResizedBelowASmallestSize() throws {
+    func test_aMarkCannotBeResizedBelowASmallestSize() async throws {
         let (tool, _, _, _) = try editing()
         tool.press(press(markPt(150, 130)))
         tool.release(drag(markPt(150, 130)))
@@ -425,7 +425,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(boxes[0].height, 8)
     }
 
-    func test_aDoubleClickAsksToEditTheText() throws {
+    func test_aDoubleClickAsksToEditTheText() async throws {
         let (tool, _, _, made) = try editing()
         var asked: PdfAnnotation?
         tool.editRequested = { asked = $0 }
@@ -435,7 +435,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(asked?.reference?.number, made.reference?.number)
     }
 
-    func test_aMarkThatWasDeletedIsLetGoOfWhenTheFileChanges() throws {
+    func test_aMarkThatWasDeletedIsLetGoOfWhenTheFileChanges() async throws {
         let (tool, f, viewer, made) = try editing()
         tool.press(press(markPt(150, 130)))
         tool.release(drag(markPt(150, 130)))
@@ -451,7 +451,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertTrue(viewer.overlay(0).items.isEmpty)
     }
 
-    func test_zoomingKeepsTheHandlesTheSameSizeOnScreen() throws {
+    func test_zoomingKeepsTheHandlesTheSameSizeOnScreen() async throws {
         let (tool, _, viewer, _) = try editing()
         tool.press(press(markPt(150, 130)))
         tool.release(drag(markPt(150, 130)))
@@ -468,7 +468,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(try gripSize(), atFull)
     }
 
-    func test_aMarkCannotBeDraggedOffThePage() throws {
+    func test_aMarkCannotBeDraggedOffThePage() async throws {
         let (tool, _, viewer, _) = try editing()
         var moves: [(Double, Double)] = []
         tool.moved = { _, dx, dy in moves.append((dx, dy)) }
@@ -482,7 +482,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(moves[0].1, -100, accuracy: 0.01)
     }
 
-    func test_aMarkCannotBeResizedPastThePage() throws {
+    func test_aMarkCannotBeResizedPastThePage() async throws {
         let (tool, _, viewer, _) = try editing()
         tool.press(press(markPt(150, 130)))
         tool.release(drag(markPt(150, 130)))
@@ -497,7 +497,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(boxes, [ViewRect(100, 100, size.width - 100, size.height - 100)])
     }
 
-    func test_aMarkTheFileLocksIsNotSelected() throws {
+    func test_aMarkTheFileLocksIsNotSelected() async throws {
         let (tool, f, _, _) = try editing()
         f.marks()[0].dictionary["F"] = PdfNumber(AnnotationFlags([.print, .locked]).rawValue)
 
@@ -507,7 +507,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertNil(tool.current)
     }
 
-    func test_aSmallMarkKeepsMostOfItsAreaForMovingInsteadOfResizing() throws {
+    func test_aSmallMarkKeepsMostOfItsAreaForMovingInsteadOfResizing() async throws {
         let f = try CommentFixture()
         let viewer = PanelViewer(f.tab)
         try f.marker.add(.note, 0, [markPt(100, 100)], markRed, "Look")
@@ -526,7 +526,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(resizes, 0)
     }
 
-    func test_aClickBetweenTwoMarksPicksTheOneUnderIt() throws {
+    func test_aClickBetweenTwoMarksPicksTheOneUnderIt() async throws {
         let f = try CommentFixture()
         let viewer = PanelViewer(f.tab)
         let first = try f.marker.add(.textBox, 0, [markPt(100, 100), markPt(200, 140)], markRed, "First")
@@ -542,7 +542,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(tool.current?.reference?.number, second.reference?.number)
     }
 
-    func test_aFingerNearAMarkStillPicksItWhenNothingLiesUnderIt() throws {
+    func test_aFingerNearAMarkStillPicksItWhenNothingLiesUnderIt() async throws {
         let (tool, _, _, made) = try editing()
 
         tool.press(finger(markPt(150, 175)))
@@ -550,7 +550,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertEqual(tool.current?.reference?.number, made.reference?.number)
     }
 
-    func test_aFingerIsTheToolsOnlyOverAMarkOrAHandle() throws {
+    func test_aFingerIsTheToolsOnlyOverAMarkOrAHandle() async throws {
         let (tool, _, _, _) = try editing()
 
         XCTAssertTrue(tool.takes(finger(markPt(150, 130))))
@@ -561,7 +561,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertTrue(tool.takes(finger(markPt(200, 160))))
     }
 
-    func test_aMousePressOnEmptyPageThroughTheViewerLetsGoOfTheSelection() throws {
+    func test_aMousePressOnEmptyPageThroughTheViewerLetsGoOfTheSelection() async throws {
         let (tool, f, _, _) = try editing()
         let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
         viewer.setScreen(viewport: ViewSize(800, 600), pixelsPerDip: 1)
@@ -578,7 +578,7 @@ final class PointerToolTests: XCTestCase {
         XCTAssertNil(tool.current)
     }
 
-    func test_deleteAndEscapeAreTheToolsOnlyWhileAMarkIsSelected() throws {
+    func test_deleteAndEscapeAreTheToolsOnlyWhileAMarkIsSelected() async throws {
         let (tool, _, viewer, _) = try editing()
         var deleted = 0
         tool.deleteRequested = { deleted += 1 }

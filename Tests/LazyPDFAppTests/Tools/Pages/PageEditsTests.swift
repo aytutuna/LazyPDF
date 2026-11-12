@@ -16,19 +16,19 @@ final class PageEditsTests: XCTestCase {
         String(bytes: document.pages[page].contents(), encoding: .isoLatin1) ?? ""
     }
 
-    func test_aNewPageGoesWhereTheChoiceSays() {
+    func test_aNewPageGoesWhereTheChoiceSays() async {
         XCTAssertEqual(PageEdits.insertAt(.afterSelection, [1, 2], 5), 3)
         XCTAssertEqual(PageEdits.insertAt(.beforeSelection, [1, 2], 5), 1)
         XCTAssertEqual(PageEdits.insertAt(.atStart, [1, 2], 5), 0)
         XCTAssertEqual(PageEdits.insertAt(.atEnd, [1, 2], 5), 5)
     }
 
-    func test_withNothingSelectedANewPageGoesLast() {
+    func test_withNothingSelectedANewPageGoesLast() async {
         XCTAssertEqual(PageEdits.insertAt(.afterSelection, [], 5), 5)
         XCTAssertEqual(PageEdits.insertAt(.beforeSelection, [], 5), 5)
     }
 
-    func test_aBlankPageTakesTheSizeOfThePageBeforeIt() throws {
+    func test_aBlankPageTakesTheSizeOfThePageBeforeIt() async throws {
         let document = try open(2)
         try PageOperations.setBox(document, [0], .crop, PdfRect(0, 0, 300, 400))
         let size = PageEdits.neighbourSize(document, 1)
@@ -41,14 +41,14 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(shown.height, 400, accuracy: 0.1)
     }
 
-    func test_movedPagesAreFoundWhereTheyLand() {
+    func test_movedPagesAreFoundWhereTheyLand() async {
         XCTAssertEqual(PageEdits.movedTo([1, 2], 4), [2, 3])
         XCTAssertEqual(PageEdits.movedTo([3], 0), [0])
         XCTAssertEqual(PageEdits.movedTo([0, 4], 2), [1, 2])
         XCTAssertEqual(PageEdits.movedTo([1], 5), [4])
     }
 
-    func test_theLandingPlaceMatchesWhatMoveDoes() throws {
+    func test_theLandingPlaceMatchesWhatMoveDoes() async throws {
         let document = try open(6)
         let marked = (0..<6).map { text(document, $0) }
 
@@ -59,7 +59,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(text(document, landed[1]), marked[4])
     }
 
-    func test_eachChosenRunStepsOnAndPagesApartStayApart() throws {
+    func test_eachChosenRunStepsOnAndPagesApartStayApart() async throws {
         let document = try open(6)
         let marked = (0..<6).map { text(document, $0) }
 
@@ -70,7 +70,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(PageEdits.nudged([0, 3], 1, 6), [1, 4])
     }
 
-    func test_aRunAtTheEdgeStaysWhereItIs() throws {
+    func test_aRunAtTheEdgeStaysWhereItIs() async throws {
         let document = try open(6)
         let marked = (0..<6).map { text(document, $0) }
 
@@ -86,7 +86,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertTrue(PageEdits.canNudge([0, 3], 1, 6))
     }
 
-    func test_nudgingLaterMovesTheLastRunFirst() throws {
+    func test_nudgingLaterMovesTheLastRunFirst() async throws {
         let document = try open(6)
         let marked = (0..<6).map { text(document, $0) }
 
@@ -95,7 +95,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual((0..<6).map { text(document, $0) }, [marked[1], marked[0], marked[2], marked[4], marked[3], marked[5]])
     }
 
-    func test_duplicatedPagesAreFoundBesideTheirCopies() throws {
+    func test_duplicatedPagesAreFoundBesideTheirCopies() async throws {
         let document = try open(4)
         let marked = (0..<4).map { text(document, $0) }
 
@@ -108,7 +108,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(text(document, 5), marked[3])
     }
 
-    func test_replacingPagesPutsTheOthersInTheirPlace() throws {
+    func test_replacingPagesPutsTheOthersInTheirPlace() async throws {
         let target = try open(5)
         let source = try PdfDocument.open(Pdfs.text(3, "From the other file."))
         let keep = text(target, 4)
@@ -121,7 +121,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(text(target, 4), keep)
     }
 
-    func test_aDrawnBoxBecomesTheCropBoxOfEveryPageThroughItsOwnTurn() throws {
+    func test_aDrawnBoxBecomesTheCropBoxOfEveryPageThroughItsOwnTurn() async throws {
         let document = try open(2)
         PageOperations.rotate(document, [1], 90)
         let upright = PageGeometry(document.pages[0])
@@ -138,7 +138,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(document.pages[1].rotate, 90)
     }
 
-    func test_labelsCoverTheSelectionAndLeaveTheRestAsTheyWere() throws {
+    func test_labelsCoverTheSelectionAndLeaveTheRestAsTheyWere() async throws {
         let document = try open(8)
         try PdfPageLabels.write(document, [PageLabelRange(0, .lowerRoman), PageLabelRange(4, .decimal)])
 
@@ -147,7 +147,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(PdfPageLabels.labels(document), ["i", "App-C", "App-D", "iv", "1", "2", "3", "4"])
     }
 
-    func test_labelsOnTheLastPagesNeedNoRestoringRange() throws {
+    func test_labelsOnTheLastPagesNeedNoRestoringRange() async throws {
         let document = try open(4)
 
         try PageEdits.relabel(document, 2, 3, .decimal, "", 10)
@@ -155,7 +155,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(PdfPageLabels.labels(document), ["1", "2", "10", "11"])
     }
 
-    func test_clearingLabelsRestoresPlainNumbers() throws {
+    func test_clearingLabelsRestoresPlainNumbers() async throws {
         let document = try open(3)
         try PageEdits.relabel(document, 0, 2, .upperRoman, "", 1)
 
@@ -164,7 +164,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(PdfPageLabels.labels(document), ["1", "2", "3"])
     }
 
-    func test_resizingKeepsEachPagesOrientation() throws {
+    func test_resizingKeepsEachPagesOrientation() async throws {
         let document = try open(3)
         PageOperations.rotate(document, [1], 90)
 
@@ -178,7 +178,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(landscape.height, 595.276, accuracy: 0.1)
     }
 
-    func test_aCopyForAnotherThreadHasTheCommittedPagesOnly() throws {
+    func test_aCopyForAnotherThreadHasTheCommittedPagesOnly() async throws {
         let rig = try ToolRig(Pdfs.text(3))
         try PageOperations.delete(rig.tab.document, [0])
         try rig.tab.commit("Delete pages")
@@ -190,7 +190,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(copy.pages[0].rotate, 0)
     }
 
-    func test_aCopyOfAnEncryptedFileOpensWithTheTabsPassword() throws {
+    func test_aCopyOfAnEncryptedFileOpensWithTheTabsPassword() async throws {
         let rig = try ToolRig(PagesPdfs.locked(2), password: "secret")
 
         let copy = try PageEdits.reopen(rig.tab, rig.host)
@@ -198,7 +198,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(copy.pages.count, 2)
     }
 
-    func test_aDeleteThatKeepsNoPageIsRefusedBeforeAnythingChanges() throws {
+    func test_aDeleteThatKeepsNoPageIsRefusedBeforeAnythingChanges() async throws {
         let document = try open(2)
 
         XCTAssertThrowsError(try PageOperations.delete(document, [0, 1]))
@@ -206,7 +206,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(document.pages.count, 2)
     }
 
-    func test_numberingTheFirstPagesOfAFileWithoutLabelsKeepsTheNumbersOfTheRest() throws {
+    func test_numberingTheFirstPagesOfAFileWithoutLabelsKeepsTheNumbersOfTheRest() async throws {
         let document = try open(10)
 
         try PageEdits.relabel(document, 0, 2, .lowerRoman, "", 1)
@@ -214,7 +214,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(PdfPageLabels.labels(document), ["i", "ii", "iii", "4", "5", "6", "7", "8", "9", "10"])
     }
 
-    func test_numberingPagesInsideAFileWithoutLabelsKeepsTheNumbersAroundThem() throws {
+    func test_numberingPagesInsideAFileWithoutLabelsKeepsTheNumbersAroundThem() async throws {
         let document = try open(6)
 
         try PageEdits.relabel(document, 2, 3, .upperLetters, "", 1)
@@ -222,7 +222,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(PdfPageLabels.labels(document), ["1", "2", "A", "B", "5", "6"])
     }
 
-    func test_aBoxThatMissesALaterPageLeavesNoCropOnTheEarlierOnesOnceDiscarded() throws {
+    func test_aBoxThatMissesALaterPageLeavesNoCropOnTheEarlierOnesOnceDiscarded() async throws {
         let rig = try ToolRig(Pdfs.text(2))
         try PageOperations.setBox(rig.tab.document, [1], .crop, PdfRect(0, 0, 100, 100))
         try rig.tab.commit("Crop")
@@ -239,12 +239,12 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(rig.host.problems.map(\.title), ["Pages not changed"])
     }
 
-    func test_thePaperListNamesGoThroughTheCatalog() {
+    func test_thePaperListNamesGoThroughTheCatalog() async {
         XCTAssertTrue(PaperSize.all.contains { $0.name == L10n.t("Letter") })
         XCTAssertTrue(PaperSize.all.contains { $0.name == L10n.t("Legal") })
     }
 
-    func test_aFileOpenedWithoutTheOwnerRightsIsLockedOnlyWhenItRestrictsSomething() throws {
+    func test_aFileOpenedWithoutTheOwnerRightsIsLockedOnlyWhenItRestrictsSomething() async throws {
         let restricted = try PdfDocument.open(Pdfs.restricted(.print))
         let allowed = try PdfDocument.open(Pdfs.restricted(.all))
         let owner = try PdfDocument.open(Pdfs.restricted(.print), password: "owner")
@@ -255,7 +255,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertFalse(CopyRules.locked(try open()))
     }
 
-    func test_aRefusedCopyIsReportedAndAFreeOneIsNot() throws {
+    func test_aRefusedCopyIsReportedAndAFreeOneIsNot() async throws {
         let host = PagesHost()
 
         XCTAssertTrue(CopyRules.refused(try PdfDocument.open(Pdfs.restricted(.print)), host))
@@ -264,7 +264,7 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(host.problems.map(\.title), ["File is protected"])
     }
 
-    func test_aNoticeIsGivenOnlyWhenTheSourceWasEncrypted() throws {
+    func test_aNoticeIsGivenOnlyWhenTheSourceWasEncrypted() async throws {
         let host = PagesHost()
 
         CopyRules.noteUnprotected(try open(), host)
@@ -273,14 +273,14 @@ final class PageEditsTests: XCTestCase {
         XCTAssertEqual(host.notices.map(\.title), ["Copy is not protected"])
     }
 
-    func test_aTypedNumberFollowsTheDecimalMarkOfTheLanguage() {
+    func test_aTypedNumberFollowsTheDecimalMarkOfTheLanguage() async {
         XCTAssertEqual(PageEdits.number("2.5", locale: Locale(identifier: "en_US")), 2.5)
         XCTAssertEqual(PageEdits.number(" 10 ", locale: Locale(identifier: "en_US")), 10)
         XCTAssertNil(PageEdits.number("many", locale: Locale(identifier: "en_US")))
         XCTAssertNil(PageEdits.number("", locale: Locale(identifier: "en_US")))
     }
 
-    func test_aThousandsSeparatorIsRefusedAsWindowsRefusesIt() {
+    func test_aThousandsSeparatorIsRefusedAsWindowsRefusesIt() async {
         XCTAssertNil(PageEdits.number("2,5", locale: Locale(identifier: "en_US")))
         XCTAssertNil(PageEdits.number("1,000", locale: Locale(identifier: "en_US")))
         XCTAssertNil(PageEdits.number("1.5", locale: Locale(identifier: "tr_TR")))

@@ -172,7 +172,7 @@ final class CombineModelTests: XCTestCase {
         XCTAssertTrue(rig.host.notices.isEmpty)
     }
 
-    func test_splitNeedsMoreThanOnePageAndAnAmountThatMakesSense() throws {
+    func test_splitNeedsMoreThanOnePageAndAnAmountThatMakesSense() async throws {
         let (model, _) = try attached(1)
         model.setSplitting(true)
         XCTAssertEqual(model.action?.text, "Split file")
@@ -310,7 +310,7 @@ final class CombineModelTests: XCTestCase {
         XCTAssertEqual(rig.host.problems.map(\.title), ["File is protected"])
     }
 
-    func test_theSignedNoteFollowsTheFile() throws {
+    func test_theSignedNoteFollowsTheFile() async throws {
         let (model, _) = try attached()
         XCTAssertFalse(model.isSigned)
 

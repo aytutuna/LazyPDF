@@ -16,7 +16,7 @@ final class OrganizeModelTests: XCTestCase {
         return (model, rig)
     }
 
-    func test_theButtonHoldsTheStageAndDoneGivesItBack() throws {
+    func test_theButtonHoldsTheStageAndDoneGivesItBack() async throws {
         let rig = try PagesRig(Pdfs.text(6))
         let panel = PagesToolModel()
         panel.attach(rig.tab, rig.viewer, rig.host)
@@ -52,7 +52,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.pageCount, 6)
     }
 
-    func test_everyPageIsATileAndTheSliderResizesThemAll() throws {
+    func test_everyPageIsATileAndTheSliderResizesThemAll() async throws {
         let (model, _) = try attached(40)
         let before = model.grid.cells[0].width
 
@@ -64,7 +64,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(model.tileSize, 320)
     }
 
-    func test_controlAndShiftSelectAndCtrlASelectsAll() throws {
+    func test_controlAndShiftSelectAndCtrlASelectsAll() async throws {
         let (model, _) = try attached()
 
         model.grid.selectAll()
@@ -81,7 +81,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(model.grid.selection, [2, 3, 4])
     }
 
-    func test_aPlainClickChoosesOnePageAndShiftExtendsFromIt() throws {
+    func test_aPlainClickChoosesOnePageAndShiftExtendsFromIt() async throws {
         let (model, _) = try attached()
 
         model.grid.selectAll()
@@ -98,7 +98,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(model.grid.selection, [0, 1, 2])
     }
 
-    func test_selectNoneEmptiesTheChoiceSoAJobCoversEveryPage() throws {
+    func test_selectNoneEmptiesTheChoiceSoAJobCoversEveryPage() async throws {
         let (model, _) = try attached()
         model.grid.selectAll()
         XCTAssertEqual(model.grid.selectedOrAll.count, 6)
@@ -109,7 +109,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(model.grid.summary, "6 pages")
     }
 
-    func test_aDragThatLandsAfterThePagesWereRemovedMovesNothing() throws {
+    func test_aDragThatLandsAfterThePagesWereRemovedMovesNothing() async throws {
         let (model, rig) = try attached()
         model.grid.remove([2, 3, 4, 5])
         let was = rig.tab.order
@@ -122,7 +122,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertTrue(model.grid.dragging.isEmpty)
     }
 
-    func test_aDragLeftOverFromBeforeAnEditIsForgotten() throws {
+    func test_aDragLeftOverFromBeforeAnEditIsForgotten() async throws {
         let (model, _) = try attached()
         model.grid.dragging = [3]
 
@@ -145,7 +145,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.order, was)
     }
 
-    func test_deletingATaggedPageSaysTheTagsAreGoneAndUndoBringsThemBack() throws {
+    func test_deletingATaggedPageSaysTheTagsAreGoneAndUndoBringsThemBack() async throws {
         let (model, rig) = try attached(bytes: PagesPdfs.tagged())
         model.grid.select([0])
 
@@ -157,7 +157,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertTrue(PageJobs.isTagged(rig.tab))
     }
 
-    func test_deletingAPageThatIsNotTaggedLeavesTheTagsAndSaysNothing() throws {
+    func test_deletingAPageThatIsNotTaggedLeavesTheTagsAndSaysNothing() async throws {
         let (model, rig) = try attached(bytes: PagesPdfs.tagged())
         model.grid.select([1])
 
@@ -177,7 +177,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(rig.host.notices.map { $0.title }, ["Tags removed"])
     }
 
-    func test_deletingFromAFileThatWasNotTaggedSaysNothing() throws {
+    func test_deletingFromAFileThatWasNotTaggedSaysNothing() async throws {
         let (model, rig) = try attached()
         model.grid.select([1])
 
@@ -186,7 +186,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertTrue(rig.host.notices.isEmpty)
     }
 
-    func test_everyPageCannotBeDeleted() throws {
+    func test_everyPageCannotBeDeleted() async throws {
         let (model, rig) = try attached(3)
 
         model.grid.selectAll()
@@ -196,7 +196,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(rig.host.problems.map(\.title), ["Cannot delete every page"])
     }
 
-    func test_theBarTurnsTheSelectionAndTheHoverBarTurnsOnePage() throws {
+    func test_theBarTurnsTheSelectionAndTheHoverBarTurnsOnePage() async throws {
         let (model, rig) = try attached()
         model.grid.select([0, 2])
 
@@ -214,7 +214,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.document.pages[2].rotate, 0)
     }
 
-    func test_aMenuOnASelectedPageIsAboutTheWholeSelectionAndOnAnotherOneAboutItAlone() throws {
+    func test_aMenuOnASelectedPageIsAboutTheWholeSelectionAndOnAnotherOneAboutItAlone() async throws {
         let (model, _) = try attached()
         model.grid.select([1, 2])
 
@@ -243,7 +243,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.order, was)
     }
 
-    func test_leavingTheGridClearsTheMark() throws {
+    func test_leavingTheGridClearsTheMark() async throws {
         let (model, _) = try attached()
 
         model.grid.mark(2, after: true)
@@ -253,7 +253,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(model.grid.dropIndex, 6)
     }
 
-    func test_aMarkedGapIsWhereTheDropGoes() throws {
+    func test_aMarkedGapIsWhereTheDropGoes() async throws {
         let (model, _) = try attached()
 
         model.grid.mark(2, after: false)
@@ -386,7 +386,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(rig.host.problems.map(\.title), ["File is protected"])
     }
 
-    func test_theWhereBoxLetsABlankPageBecomeTheFirstPage() throws {
+    func test_theWhereBoxLetsABlankPageBecomeTheFirstPage() async throws {
         let (model, rig) = try attached(3)
         let was = rig.tab.order
         model.grid.select([2])
@@ -422,7 +422,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertEqual(rig.host.notices.map(\.title), ["Copy is not protected"])
     }
 
-    func test_aDoubleTapOnAPageShowsItAndLeaves() throws {
+    func test_aDoubleTapOnAPageShowsItAndLeaves() async throws {
         let (model, rig) = try attached(4)
         var closed = 0
         model.onClose = { closed += 1 }
@@ -445,7 +445,7 @@ final class OrganizeModelTests: XCTestCase {
         XCTAssertTrue(model.grid.selected.isEmpty)
     }
 
-    func test_aChoiceOfPagesThatAreGoneIsDropped() throws {
+    func test_aChoiceOfPagesThatAreGoneIsDropped() async throws {
         let (model, _) = try attached(3)
 
         model.grid.select([1, 7, -1])

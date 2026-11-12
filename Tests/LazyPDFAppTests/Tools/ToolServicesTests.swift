@@ -53,7 +53,7 @@ final class ToolServicesTests: XCTestCase {
         XCTAssertEqual(f.vm.clipboard.pictureFile() ?? [], [1, 2, 3])
     }
 
-    func test_aHostWritesOverAnOpenFileInPlaceUnlessTheShellSaysOtherwise() {
+    func test_aHostWritesOverAnOpenFileInPlaceUnlessTheShellSaysOtherwise() async {
         XCTAssertTrue(RecordingHost().fileWriter is PlainFileWriter)
     }
 }

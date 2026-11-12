@@ -11,7 +11,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         rig.viewer.overlay(page).items.filter { $0.id.hasPrefix("forms.fill.") }
     }
 
-    func test_aTapOnACheckBoxTurnsItOnAndAgainOff() throws {
+    func test_aTapOnACheckBoxTurnsItOnAndAgainOff() async throws {
         let rig = try FormsRig()
 
         rig.tap(rig.centre("agree"))
@@ -22,7 +22,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertEqual(rig.tab.session.undoLabel, "Fill form field")
     }
 
-    func test_aTapOnARadioButtonChoosesItAndTheGroupFollows() throws {
+    func test_aTapOnARadioButtonChoosesItAndTheGroupFollows() async throws {
         let rig = try FormsRig()
 
         rig.tap(rig.centre("plan", 1))
@@ -32,7 +32,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertFalse(plan.widgets[0].isOn)
     }
 
-    func test_aFingerIsTheToolsOnlyOverAFieldAndScrollsElsewhere() throws {
+    func test_aFingerIsTheToolsOnlyOverAFieldAndScrollsElsewhere() async throws {
         let rig = try FormsRig()
         let tool = try XCTUnwrap(rig.viewer.pointerTool)
 
@@ -42,7 +42,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertFalse(tool.takes(rig.pointer(ViewPoint(400, 300), pressed: true)))
     }
 
-    func test_aMousePressOffAFieldFallsThroughToTheViewer() throws {
+    func test_aMousePressOffAFieldFallsThroughToTheViewer() async throws {
         let tab = DocumentTab(session: try PdfEditSession.open(try FormPdfs.standard()), renderer: FakeRenderer(), url: nil,
                               title: "form.pdf")
         let viewer = ViewerModel(makeRenderer: { FakeRenderer() }, openAddress: { _ in })
@@ -62,7 +62,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         model.detach()
     }
 
-    func test_aFingerBetweenCloseFieldsScrollsInsteadOfTakingEither() throws {
+    func test_aFingerBetweenCloseFieldsScrollsInsteadOfTakingEither() async throws {
         let rig = try FormsRig()
         let tool = try XCTUnwrap(rig.viewer.pointerTool)
 
@@ -71,7 +71,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertTrue(tool.takes(rig.pointer(ViewPoint(100, 792 - 650), pressed: true)))
     }
 
-    func test_aSmallFieldIsHitByAFingerThatMissesItALittle() throws {
+    func test_aSmallFieldIsHitByAFingerThatMissesItALittle() async throws {
         let rig = try FormsRig()
         let box = rig.centre("agree")
 
@@ -79,7 +79,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertFalse(try XCTUnwrap(rig.viewer.pointerTool).takes(rig.pointer(ViewPoint(box.x + 200, box.y), pressed: true)))
     }
 
-    func test_aPressThatLeavesTheFieldBeforeItIsReleasedDoesNothing() throws {
+    func test_aPressThatLeavesTheFieldBeforeItIsReleasedDoesNothing() async throws {
         let rig = try FormsRig()
         let tool = try XCTUnwrap(rig.viewer.pointerTool)
 
@@ -90,7 +90,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertFalse(rig.tab.session.canUndo)
     }
 
-    func test_aRowOfThePanelHandsInTheFieldBeingTypedInBeforeItOpensAgain() throws {
+    func test_aRowOfThePanelHandsInTheFieldBeingTypedInBeforeItOpensAgain() async throws {
         let rig = try FormsRig()
         rig.tap(rig.centre("name"))
         try XCTUnwrap(rig.field("name")).typed("Ada")
@@ -102,7 +102,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertEqual(rig.tab.session.undoLabel, "Fill form field")
     }
 
-    func test_aFlagsValueBeyondTheRangeOfAnIntegerDoesNotStopTheFieldsShowing() throws {
+    func test_aFlagsValueBeyondTheRangeOfAnIntegerDoesNotStopTheFieldsShowing() async throws {
         let rig = try FormsRig()
 
         try rig.change("Change") { form in
@@ -113,7 +113,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertTrue(try XCTUnwrap(rig.viewer.pointerTool).takes(rig.pointer(rig.centre("name"), pressed: true)))
     }
 
-    func test_nothingOnThePageIsTheToolsWhileAnEditRuns() throws {
+    func test_nothingOnThePageIsTheToolsWhileAnEditRuns() async throws {
         let rig = try FormsRig()
         let tool = try XCTUnwrap(rig.viewer.pointerTool)
 
@@ -126,7 +126,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertTrue(tool.takes(rig.pointer(rig.centre("name"), pressed: true)))
     }
 
-    func test_aDocumentSwappedWithoutAChangeIsReadAgain() throws {
+    func test_aDocumentSwappedWithoutAChangeIsReadAgain() async throws {
         let rig = try FormsRig()
         let before = try XCTUnwrap(rig.model.fillHit(0, rig.centre("name")))
 
@@ -147,7 +147,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertTrue(try XCTUnwrap(rig.viewer.pointerTool).takes(rig.pointer(rig.centre("name"), pressed: true)))
     }
 
-    func test_aTapOnATextFieldOpensItWithItsLimitsAndTheTextIsKeptWhenItEnds() throws {
+    func test_aTapOnATextFieldOpensItWithItsLimitsAndTheTextIsKeptWhenItEnds() async throws {
         let rig = try FormsRig()
 
         rig.tap(rig.centre("code"))
@@ -162,7 +162,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertNil(rig.field("code"))
     }
 
-    func test_escapeLeavesTheTextAsItWas() throws {
+    func test_escapeLeavesTheTextAsItWas() async throws {
         let rig = try FormsRig()
         rig.tap(rig.centre("name"))
 
@@ -174,7 +174,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertFalse(rig.tab.session.canUndo)
     }
 
-    func test_aPasswordFieldShowsDotsAndAMultilineOneWraps() throws {
+    func test_aPasswordFieldShowsDotsAndAMultilineOneWraps() async throws {
         let rig = try FormsRig()
         try rig.change("Change") { form in
             try form.setFlag(try XCTUnwrap(form.find("name")), .password, true)
@@ -190,7 +190,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertEqual(rig.field("code")?.wraps, true)
     }
 
-    func test_tabFinishesTheFieldAndOpensTheNextOneAndShiftTabGoesBack() throws {
+    func test_tabFinishesTheFieldAndOpensTheNextOneAndShiftTabGoesBack() async throws {
         let rig = try FormsRig()
         rig.tap(rig.centre("name"))
         let name = try XCTUnwrap(rig.field("name"))
@@ -206,7 +206,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertNil(rig.field("code"))
     }
 
-    func test_tabAtTheLastFieldOfAPageGoesToTheFirstOneOfTheNextPage() throws {
+    func test_tabAtTheLastFieldOfAPageGoesToTheFirstOneOfTheNextPage() async throws {
         let rig = try FormsRig()
         try rig.change("Add form field") { try FormEdits.add($0, .text, 1, PdfRect(50, 400, 150, 420), nil) }
         rig.tap(rig.centre("code"))
@@ -218,7 +218,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertNil(rig.field("code"))
     }
 
-    func test_tabAtTheLastFieldOfTheFileJustFinishesIt() throws {
+    func test_tabAtTheLastFieldOfTheFileJustFinishesIt() async throws {
         let rig = try FormsRig()
         rig.tap(rig.centre("code"))
 
@@ -228,7 +228,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertTrue(rig.viewer.overlay(0).fields.isEmpty)
     }
 
-    func test_aReadOnlyFieldIsNotTheTools() throws {
+    func test_aReadOnlyFieldIsNotTheTools() async throws {
         let rig = try FormsRig()
         try rig.change("Change read only") { try $0.setFlag(try XCTUnwrap($0.find("name")), .readOnly, true) }
         rig.model.reload()
@@ -237,7 +237,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertFalse(rig.model.rows[0].canFill)
     }
 
-    func test_aRequiredEmptyFieldIsOutlinedInRedAndTheHighlightCanBeTurnedOff() throws {
+    func test_aRequiredEmptyFieldIsOutlinedInRedAndTheHighlightCanBeTurnedOff() async throws {
         let rig = try FormsRig()
 
         XCTAssertEqual(marks(rig).count, 7)
@@ -251,7 +251,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertTrue(marks(rig).isEmpty)
     }
 
-    func test_aTapOnAnEmptySignatureFieldOpensSigning() throws {
+    func test_aTapOnAnEmptySignatureFieldOpensSigning() async throws {
         let rig = try FormsRig()
         try rig.change("Add form field") { try FormEdits.add($0, .signature, 0, PdfRect(300, 300, 480, 340), nil) }
 
@@ -260,7 +260,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertEqual(rig.host.signing, ["Signature1"])
     }
 
-    func test_aResetButtonOnThePageClearsTheFields() throws {
+    func test_aResetButtonOnThePageClearsTheFields() async throws {
         let rig = try FormsRig()
         rig.model.typeRow(rig.model.rows[0], "Ada")
         try rig.change("Add form field") { form in
@@ -282,7 +282,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         }
     }
 
-    func test_aButtonThatSubmitsRunsAScriptOrLaunchesSaysItDoesNothing() throws {
+    func test_aButtonThatSubmitsRunsAScriptOrLaunchesSaysItDoesNothing() async throws {
         let cases: [(PdfAction, String)] = [
             (SubmitFormAction("https://example.com/in", 0, []), "It sends the form to a web address, which Lazy PDF does not do. Save the file and send it yourself."),
             (JavaScriptAction("app.alert(1)"), "It runs a script, which Lazy PDF does not do."),
@@ -305,7 +305,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         }
     }
 
-    func test_aTapOnADropDownOrAListShowsItsChoicesInThePanel() throws {
+    func test_aTapOnADropDownOrAListShowsItsChoicesInThePanel() async throws {
         let rig = try FormsRig()
 
         rig.tap(rig.centre("city"))
@@ -315,7 +315,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertEqual(rig.model.activeRow, rig.model.rows[5].id)
     }
 
-    func test_typingIsHandedInBeforeASaveOrAnUndo() throws {
+    func test_typingIsHandedInBeforeASaveOrAnUndo() async throws {
         let rig = try FormsRig()
         rig.tap(rig.centre("name"))
         try XCTUnwrap(rig.field("name")).typed("Grace")
@@ -326,7 +326,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         XCTAssertNil(rig.field("name"))
     }
 
-    func test_leavingThePanelKeepsWhatWasTypedAndTakesTheMarksOff() throws {
+    func test_leavingThePanelKeepsWhatWasTypedAndTakesTheMarksOff() async throws {
         let rig = try FormsRig()
         rig.tap(rig.centre("name"))
         try XCTUnwrap(rig.field("name")).typed("Grace")
@@ -364,7 +364,7 @@ final class FormsDesignOnThePageTests: XCTestCase {
         rig.viewer.overlay(page).items.filter { $0.id.hasPrefix("forms.frame.") }
     }
 
-    func test_everyFieldIsOutlinedAndTheSelectedOneHasEightHandles() throws {
+    func test_everyFieldIsOutlinedAndTheSelectedOneHasEightHandles() async throws {
         let rig = try designing()
         XCTAssertEqual(frames(rig).count, 7)
 
@@ -375,7 +375,7 @@ final class FormsDesignOnThePageTests: XCTestCase {
         XCTAssertEqual(handles.count, 8)
     }
 
-    func test_aDragOnAnEmptyPlaceDrawsTheChosenKind() throws {
+    func test_aDragOnAnEmptyPlaceDrawsTheChosenKind() async throws {
         let rig = try designing()
         rig.model.newKind = .text
 
@@ -391,7 +391,7 @@ final class FormsDesignOnThePageTests: XCTestCase {
         XCTAssertNil(rig.viewer.overlay(0).item("forms.ghost"))
     }
 
-    func test_aClickDrawsAFieldOfTheDefaultSize() throws {
+    func test_aClickDrawsAFieldOfTheDefaultSize() async throws {
         let rig = try designing()
         rig.model.newKind = .checkBox
 
@@ -403,7 +403,7 @@ final class FormsDesignOnThePageTests: XCTestCase {
         XCTAssertEqual(widget.rect.left, 100, accuracy: 0.01)
     }
 
-    func test_aRadioButtonDrawnWithAGroupSelectedJoinsIt() throws {
+    func test_aRadioButtonDrawnWithAGroupSelectedJoinsIt() async throws {
         let rig = try designing()
         rig.model.select("plan", 0)
         rig.model.newKind = .radio
@@ -414,7 +414,7 @@ final class FormsDesignOnThePageTests: XCTestCase {
         XCTAssertEqual(rig.model.groupName, "plan")
     }
 
-    func test_aDragOnAFieldMovesIt() throws {
+    func test_aDragOnAFieldMovesIt() async throws {
         let rig = try designing()
         let before = try XCTUnwrap(rig.form.find("code")?.widgets[0].rect)
         let start = rig.centre("code")
@@ -429,7 +429,7 @@ final class FormsDesignOnThePageTests: XCTestCase {
         XCTAssertEqual(rig.tab.session.undoLabel, "Move form field")
     }
 
-    func test_aDragFromAHandleResizesTheSelectedField() throws {
+    func test_aDragFromAHandleResizesTheSelectedField() async throws {
         let rig = try designing()
         rig.tap(rig.centre("name"))
         let before = try XCTUnwrap(rig.form.find("name")?.widgets[0].rect)
@@ -443,7 +443,7 @@ final class FormsDesignOnThePageTests: XCTestCase {
         XCTAssertEqual(after.bottom, before.bottom - 10, accuracy: 0.01)
     }
 
-    func test_aPressOnNothingClearsTheSelectionAndAClickOnAFieldSelectsIt() throws {
+    func test_aPressOnNothingClearsTheSelectionAndAClickOnAFieldSelectsIt() async throws {
         let rig = try designing()
 
         rig.tap(rig.centre("agree"))
@@ -456,7 +456,7 @@ final class FormsDesignOnThePageTests: XCTestCase {
         XCTAssertFalse(rig.tab.session.canUndo)
     }
 
-    func test_aFingerBetweenCloseFieldsScrollsWhileEditingToo() throws {
+    func test_aFingerBetweenCloseFieldsScrollsWhileEditingToo() async throws {
         let rig = try designing()
         let tool = try XCTUnwrap(rig.viewer.pointerTool)
         let agree = rig.centre("agree")
@@ -466,7 +466,7 @@ final class FormsDesignOnThePageTests: XCTestCase {
         XCTAssertTrue(tool.takes(rig.pointer(ViewPoint(agree.x + 20, agree.y), pressed: true)))
     }
 
-    func test_aFingerIsTheToolsOnlyOverAFieldUnlessAKindIsChosenToDraw() throws {
+    func test_aFingerIsTheToolsOnlyOverAFieldUnlessAKindIsChosenToDraw() async throws {
         let rig = try designing()
         let tool = try XCTUnwrap(rig.viewer.pointerTool)
 
@@ -476,7 +476,7 @@ final class FormsDesignOnThePageTests: XCTestCase {
         XCTAssertTrue(tool.takes(rig.pointer(ViewPoint(400, 40), pressed: true)))
     }
 
-    func test_theHandlesOfTheSelectedFieldAreTheToolsToo() throws {
+    func test_theHandlesOfTheSelectedFieldAreTheToolsToo() async throws {
         let rig = try designing()
         rig.tap(rig.centre("name"))
         let tool = try XCTUnwrap(rig.viewer.pointerTool)
@@ -485,7 +485,7 @@ final class FormsDesignOnThePageTests: XCTestCase {
         XCTAssertTrue(tool.takes(rig.pointer(ViewPoint(box.right + 6, 792 - box.bottom + 6), pressed: true)))
     }
 
-    func test_aMoveThatEndsOffThePageStaysOnIt() throws {
+    func test_aMoveThatEndsOffThePageStaysOnIt() async throws {
         let rig = try designing()
         let start = rig.centre("name")
 
@@ -495,7 +495,7 @@ final class FormsDesignOnThePageTests: XCTestCase {
         XCTAssertLessThanOrEqual(after.right, 612.01)
     }
 
-    func test_cancellingADragLeavesNothingBehind() throws {
+    func test_cancellingADragLeavesNothingBehind() async throws {
         let rig = try designing()
         rig.model.newKind = .text
         let tool = try XCTUnwrap(rig.viewer.pointerTool)
@@ -535,7 +535,7 @@ final class FormsDesignOnThePageTests: XCTestCase {
         XCTAssertTrue(frames(rig).isEmpty)
     }
 
-    func test_leavingThePanelTakesTheFramesOffTheGlass() throws {
+    func test_leavingThePanelTakesTheFramesOffTheGlass() async throws {
         let rig = try designing()
         rig.model.select("name", 0)
 

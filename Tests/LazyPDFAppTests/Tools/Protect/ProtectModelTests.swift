@@ -21,7 +21,7 @@ final class ProtectModelTests: XCTestCase {
         try ProtectWork.withPassword(PdfDocument.open(Pdfs.text(2)), openPassword: password, ownerPassword: password, allowed: .all, strength: .aes256)
     }
 
-    func test_theButtonWaitsForTwoPasswordsThatAgree() throws {
+    func test_theButtonWaitsForTwoPasswordsThatAgree() async throws {
         let (model, _) = try attached()
         XCTAssertFalse(model.action!.canRun())
 
@@ -55,7 +55,7 @@ final class ProtectModelTests: XCTestCase {
         XCTAssertFalse(rig.tab.isDirty)
     }
 
-    func test_limitsNeedAPermissionsPasswordThatDiffersFromTheOneToOpen() throws {
+    func test_limitsNeedAPermissionsPasswordThatDiffersFromTheOneToOpen() async throws {
         let (model, _) = try attached()
         model.limited = true
         model.openPassword = "same"
@@ -72,7 +72,7 @@ final class ProtectModelTests: XCTestCase {
         XCTAssertTrue(model.action!.canRun())
     }
 
-    func test_detachingClearsEveryPasswordTheBoxesHeld() throws {
+    func test_detachingClearsEveryPasswordTheBoxesHeld() async throws {
         let (model, _) = try attached()
         model.openPassword = "one"
         model.repeatPassword = "one"
@@ -135,13 +135,13 @@ final class ProtectModelTests: XCTestCase {
         XCTAssertEqual(model.unlockPassword, "")
     }
 
-    func test_aSignedFileAndAPdfACopyAreWarnedAbout() throws {
+    func test_aSignedFileAndAPdfACopyAreWarnedAbout() async throws {
         let (model, _) = try attached(try Pdfs.signed(certified: false))
 
         XCTAssertEqual(model.warnNote, "The copy will not keep the signatures.")
     }
 
-    func test_aStrongPasswordIsRatedAndAnOldCipherWarnsAboutWideLetters() throws {
+    func test_aStrongPasswordIsRatedAndAnOldCipherWarnsAboutWideLetters() async throws {
         let (model, _) = try attached()
 
         model.openPassword = "Tr0ub4dor&3x"

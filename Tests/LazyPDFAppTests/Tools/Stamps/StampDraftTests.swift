@@ -23,7 +23,7 @@ final class StampDraftTests: XCTestCase {
         try draft.apply(tab.document, fonts: FakeFonts(), codec: FakeCodec(), replace: replace)
     }
 
-    func test_aWatermarkIsWrittenOnEveryPageAndUndoTakesItBack() throws {
+    func test_aWatermarkIsWrittenOnEveryPageAndUndoTakesItBack() async throws {
         let tab = try open(3)
 
         let run = try apply(mark("DRAFT"), tab)
@@ -40,7 +40,7 @@ final class StampDraftTests: XCTestCase {
         XCTAssertTrue(stamps(tab).isEmpty)
     }
 
-    func test_updatingKeepsTheRunsIdAndChangesWhatItDraws() throws {
+    func test_updatingKeepsTheRunsIdAndChangesWhatItDraws() async throws {
         let tab = try open(3)
         let first = try apply(mark("DRAFT"), tab)
         try tab.commit("Add watermark")
@@ -55,7 +55,7 @@ final class StampDraftTests: XCTestCase {
         XCTAssertEqual(found.pages, [0])
     }
 
-    func test_removingARunLeavesTheOthers() throws {
+    func test_removingARunLeavesTheOthers() async throws {
         let tab = try open(2)
         let first = try apply(mark("ONE"), tab)
         _ = try apply(mark("TWO"), tab)
@@ -68,7 +68,7 @@ final class StampDraftTests: XCTestCase {
         XCTAssertEqual(stamps(tab).map(\.label), ["TWO"])
     }
 
-    func test_batesNumbersContinueIntoTheNextDocument() throws {
+    func test_batesNumbersContinueIntoTheNextDocument() async throws {
         let tab = try open(3)
         let spec = HeaderFooterSpec(footer: HeaderFooterBand("", "", "{bates}"), fileName: "a.pdf",
                                     bates: BatesSpec(prefix: "ACME-", suffix: "", digits: 4, start: 10))
@@ -80,7 +80,7 @@ final class StampDraftTests: XCTestCase {
         XCTAssertEqual(stamps(tab).map(\.kind), [.bates])
     }
 
-    func test_headersGoOnTheOddPagesOnly() throws {
+    func test_headersGoOnTheOddPagesOnly() async throws {
         let tab = try open(3)
         let (pages, error) = PageChoice.resolve(.odd, "", tab.pageCount)
         let spec = HeaderFooterSpec(header: HeaderFooterBand("", "{file}", ""), fileName: "a.pdf", pages: pages)
@@ -92,7 +92,7 @@ final class StampDraftTests: XCTestCase {
         XCTAssertEqual(stamps(tab).map(\.pages), [[0, 2]])
     }
 
-    func test_aPictureWatermarkTakesTheFileThroughTheCodec() throws {
+    func test_aPictureWatermarkTakesTheFileThroughTheCodec() async throws {
         let tab = try open(1)
 
         let run = try apply(StampDraft(watermark: WatermarkSpec(), picture: [1, 2, 3]), tab)
@@ -102,7 +102,7 @@ final class StampDraftTests: XCTestCase {
         XCTAssertEqual(stamps(tab).map(\.label), ["image"])
     }
 
-    func test_aPictureNoCodecCanReadIsRefusedAndNothingIsStamped() throws {
+    func test_aPictureNoCodecCanReadIsRefusedAndNothingIsStamped() async throws {
         let tab = try open(1)
         let draft = StampDraft(background: BackgroundSpec(), picture: [])
 
@@ -111,7 +111,7 @@ final class StampDraftTests: XCTestCase {
         XCTAssertTrue(stamps(tab).isEmpty)
     }
 
-    func test_textNoFontCanDrawLeavesTheDocumentAlone() throws {
+    func test_textNoFontCanDrawLeavesTheDocumentAlone() async throws {
         let tab = try open(1)
 
         XCTAssertThrowsError(try apply(mark("ğş"), tab)) { error in
@@ -121,7 +121,7 @@ final class StampDraftTests: XCTestCase {
         XCTAssertFalse(try tab.commit("Add watermark"))
     }
 
-    func test_aDraftWithNothingToDrawSaysSo() {
+    func test_aDraftWithNothingToDrawSaysSo() async {
         XCTAssertEqual(mark("  ").problem, StampsText.needsContent)
         XCTAssertEqual(StampDraft(background: BackgroundSpec()).problem, StampsText.needsContent)
         XCTAssertNotNil(StampDraft(headerFooter: HeaderFooterSpec()).problem)

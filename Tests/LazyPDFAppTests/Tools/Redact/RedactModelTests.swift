@@ -92,7 +92,7 @@ final class RedactModelTests: XCTestCase {
         XCTAssertEqual(rig.host.notices.first?.title, "1 page has no text")
     }
 
-    func test_aBoxDrawnOnThePageIsMarkedAndShownThere() throws {
+    func test_aBoxDrawnOnThePageIsMarkedAndShownThere() async throws {
         let (model, rig) = try attached()
 
         model.setDrawing(true)
@@ -108,7 +108,7 @@ final class RedactModelTests: XCTestCase {
         XCTAssertEqual([bounds.bottom, bounds.top], [702.0, 732.0])
     }
 
-    func test_aDragThatIsTooSmallMarksNothingAndAKeyboardClickGetsABoxOfTheUsualSize() throws {
+    func test_aDragThatIsTooSmallMarksNothingAndAKeyboardClickGetsABoxOfTheUsualSize() async throws {
         let (model, rig) = try attached()
         model.setDrawing(true)
 
@@ -121,7 +121,7 @@ final class RedactModelTests: XCTestCase {
         XCTAssertEqual(bounds.top - bounds.bottom, 24)
     }
 
-    func test_aDragPastThePageEdgeIsKeptOnThePage() throws {
+    func test_aDragPastThePageEdgeIsKeptOnThePage() async throws {
         let (model, rig) = try attached()
         model.setDrawing(true)
 
@@ -131,7 +131,7 @@ final class RedactModelTests: XCTestCase {
         XCTAssertEqual([bounds.right, bounds.bottom], [612, 0])
     }
 
-    func test_theToolLetsGoWhenTheViewerTakesThePointerBack() throws {
+    func test_theToolLetsGoWhenTheViewerTakesThePointerBack() async throws {
         let (model, rig) = try attached()
         model.setDrawing(true)
 
@@ -204,7 +204,7 @@ final class RedactModelTests: XCTestCase {
         XCTAssertNil(rig.viewer.overlay(0).item("redact.mark.0"))
     }
 
-    func test_aFileThatForbidsChangesCannotBeRedacted() throws {
+    func test_aFileThatForbidsChangesCannotBeRedacted() async throws {
         let (model, _) = try attached(try Pdfs.restricted(.print), password: "")
 
         XCTAssertTrue(model.restricted)

@@ -87,7 +87,7 @@ final class ToolDocumentsTests: XCTestCase {
         XCTAssertTrue(seen.value)
     }
 
-    func test_aCopyIsTheFileAsItWasWhenTheCopyWasMade() throws {
+    func test_aCopyIsTheFileAsItWasWhenTheCopyWasMade() async throws {
         let rig = try ToolRig()
         let copy = OpenCopy.of(rig.tab, rig.host)
         let before = rig.tab.session.current

@@ -11,7 +11,7 @@ import LazyPDFKit
 
 @MainActor
 final class ToolSelectionTests: XCTestCase {
-    func test_pickingAToolSelectsItAndPickingItAgainClosesIt() {
+    func test_pickingAToolSelectsItAndPickingItAgainClosesIt() async {
         let f = ViewModelFixture(self)
 
         f.vm.selectTool("stamps")
@@ -22,7 +22,7 @@ final class ToolSelectionTests: XCTestCase {
         XCTAssertNil(f.vm.activeToolId)
     }
 
-    func test_anotherToolReplacesTheFirst() {
+    func test_anotherToolReplacesTheFirst() async {
         let f = ViewModelFixture(self)
         f.vm.selectTool("stamps")
 
@@ -31,7 +31,7 @@ final class ToolSelectionTests: XCTestCase {
         XCTAssertEqual(f.vm.activeToolId, "redact")
     }
 
-    func test_anUnknownToolIsIgnored() {
+    func test_anUnknownToolIsIgnored() async {
         let f = ViewModelFixture(self)
         f.vm.selectTool("stamps")
 
@@ -40,7 +40,7 @@ final class ToolSelectionTests: XCTestCase {
         XCTAssertEqual(f.vm.activeToolId, "stamps")
     }
 
-    func test_pickingTheOpenPanelCollapsesTheRailAndTheToggleBringsItBack() {
+    func test_pickingTheOpenPanelCollapsesTheRailAndTheToggleBringsItBack() async {
         let f = ViewModelFixture(self)
         f.vm.setSidePanel("pages")
         XCTAssertEqual(f.vm.sidePanelId, "")
@@ -68,7 +68,7 @@ final class ToolSelectionTests: XCTestCase {
         XCTAssertFalse(f.vm.isBusy)
     }
 
-    func test_theStatusLineIsShortAndTheSentenceIsKept() {
+    func test_theStatusLineIsShortAndTheSentenceIsKept() async {
         let f = ViewModelFixture(self)
 
         f.vm.setStatus("Saved report.pdf. The old version is in the file's history.")
@@ -77,7 +77,7 @@ final class ToolSelectionTests: XCTestCase {
         XCTAssertEqual(f.vm.statusFull, "Saved report.pdf. The old version is in the file's history.")
     }
 
-    func test_theInfoBarShowsAProblemAndIsDismissed() {
+    func test_theInfoBarShowsAProblemAndIsDismissed() async {
         let f = ViewModelFixture(self)
 
         f.vm.showProblem(Problem("Not saved", "Check the disk."))
@@ -91,7 +91,7 @@ final class ToolSelectionTests: XCTestCase {
         XCTAssertNil(f.vm.message)
     }
 
-    func test_clickingATileThatCannotStartIsStillReported() {
+    func test_clickingATileThatCannotStartIsStillReported() async {
         let f = ViewModelFixture(self)
 
         f.vm.startTile("combine")
