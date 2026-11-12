@@ -805,7 +805,7 @@ final class ViewerModelTests: XCTestCase {
         let (known, _) = try open()
         let at = try await pointOnFirstLine(known, 1)
         let (viewer, _) = try open()
-        viewer.links[0] = [PdfLink(PdfRect(0, 0, 800, 800), PdfDestination(1), nil, nil)]
+        viewer.links[0] = [PdfLink(PdfRect(0, 0, 1000, 1000), PdfDestination(1), nil, nil)]
         _ = await viewer.text(0)
 
         viewer.pointerDown(at)
@@ -822,7 +822,7 @@ final class ViewerModelTests: XCTestCase {
         let (known, _) = try open()
         let at = try await pointOnFirstLine(known, 1)
         let (viewer, _) = try open()
-        viewer.links[0] = [PdfLink(PdfRect(0, 0, 800, 800), PdfDestination(1), nil, nil)]
+        viewer.links[0] = [PdfLink(PdfRect(0, 0, 1000, 1000), PdfDestination(1), nil, nil)]
         _ = await viewer.text(0)
 
         viewer.pointerDown(at, touch: true)
