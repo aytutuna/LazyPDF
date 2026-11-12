@@ -360,6 +360,12 @@ public sealed class MarkerTests
 
         Assert.Equal(first.Rect.Width, second.Rect.Width);
         Assert.Equal(first.Rect.Height, second.Rect.Height);
+
+        var bare = f.Marker.SetEnding(second, LineEnding.None);
+        var again = f.Marker.SetEnding(bare, LineEnding.Diamond);
+
+        Assert.Equal(line.Rect.Width, bare.Rect.Width, 6);
+        Assert.Equal(first.Rect.Width, again.Rect.Width, 6);
     }
 
     [Fact]

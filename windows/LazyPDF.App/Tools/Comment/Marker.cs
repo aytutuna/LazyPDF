@@ -408,13 +408,13 @@ public sealed partial class Marker(PdfDocument document, IFontSource fonts, stri
     /// <summary>Gives a line the head at its end and room in its box to show it.</summary>
     public PdfAnnotation SetEnding(PdfAnnotation a, LineEnding head)
     {
-        // The room is added once, when the line gets its first head, not on every change of head.
-        bool bare = a.StartEnding == LineEnding.None && a.EndEnding == LineEnding.None;
+        // The room follows whether the line has a head: added with the first one, taken back with the last.
+        int room = (head != LineEnding.None ? 1 : 0) - (a.StartEnding != LineEnding.None || a.EndEnding != LineEnding.None ? 1 : 0);
         var headed = _writer.Edit(a, redraw: true, () =>
         {
             a.Dictionary["LE"] = new PdfArray([new PdfName(LineEnding.None.ToString()), new PdfName(head.ToString())]);
-            if (!bare || head == LineEnding.None) return;
-            double grow = 4 * a.Border.Width;
+            if (room == 0) return;
+            double grow = room * 4 * a.Border.Width;
             a.Dictionary["Rect"] = new PdfRect(a.Rect.Left - grow, a.Rect.Bottom - grow, a.Rect.Right + grow, a.Rect.Top + grow).ToArray();
         });
         return Find(a.PageIndex, a.Reference!.Number) ?? headed;
