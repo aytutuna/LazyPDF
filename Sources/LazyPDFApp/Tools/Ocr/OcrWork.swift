@@ -15,7 +15,7 @@ public enum OcrWork {
         let open = OpenCopy.of(tab, host)
         let revision = tab.revision
         let dropsLayers = options.existing == .replace && hasLayer(tab.document, options.pages)
-        let renderer = tab.renderer
+        let renderer = OcrRenderer(tab.renderer)
         var read: OcrRead?
         do {
             try await host.runBusy(L10n.t("Reading pages")) { token in

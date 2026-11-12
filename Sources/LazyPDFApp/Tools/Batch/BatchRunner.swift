@@ -160,7 +160,7 @@ public final class BatchRunner: @unchecked Sendable {
         let options = OcrOptions(language: step.text.isEmpty ? "en-US" : step.text)
         let result: OcrResult
         do {
-            result = try await PdfSearchable.runAsync(session, recognizer, renderer, options)
+            result = try await PdfSearchable.runAsync(session, recognizer, OcrRenderer(renderer), options)
         } catch let error as InvalidOperationException {
             throw StepFailed(problem: Problem(L10n.t("Text cannot be read"), error.message))
         }
