@@ -13,6 +13,14 @@ extension ViewerModel {
         settleTask?.cancel()
     }
 
+    /// Frees the sharp tiles, keeping the small previews that stand in while the ones in view are drawn again.
+    public func trimMemory() {
+        cache.trim(keeping: { $0.isPreview })
+        failed = failed.filter { $0.isPreview }
+        scheduleTiles()
+        onRedraw?()
+    }
+
     // A new document or a tab switch: nothing drawn for the old one may land in the new one.
     private func newScheduler() {
         scheduler?.dispose()

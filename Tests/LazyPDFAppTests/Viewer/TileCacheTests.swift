@@ -95,4 +95,17 @@ final class TileCacheTests: XCTestCase {
         XCTAssertEqual(cache.bytes, 0)
         XCTAssertTrue(cache.keys(1).isEmpty)
     }
+
+    func test_trimLetsGoOfTheRefusedPicturesAndTheirBytes() {
+        let cache = TileCache<Picture>(budget: 1_000_000)
+        cache.add(key(1), Picture())
+        cache.add(key(2), Picture())
+
+        cache.trim(keeping: { $0.page == 2 })
+
+        XCTAssertFalse(cache.contains(key(1)))
+        XCTAssertTrue(cache.contains(key(2)))
+        XCTAssertEqual(cache.bytes, 10_000)
+        XCTAssertTrue(cache.keys(1).isEmpty)
+    }
 }

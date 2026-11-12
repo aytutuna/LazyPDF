@@ -118,6 +118,10 @@ final class IOSShell {
         shownTab = tab
     }
 
+    func trimViewers() {
+        for viewer in viewers.values { viewer.trimMemory() }
+    }
+
     func dropClosedViewers() {
         let open = Set(vm.documents.map(\.id))
         viewers = viewers.filter { open.contains($0.key) }

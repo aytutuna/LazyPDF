@@ -43,7 +43,13 @@ struct IOSRoot: View {
         .onChange(of: vm.documents.map(\.id)) { shell.dropClosedViewers() }
         .onChange(of: vm.activeDocument.map(ObjectIdentifier.init), initial: true) { shell.showActive() }
         .onChange(of: phase) { _, now in
-            if now == .background { vm.flushRecovery() }
+            if now == .background {
+                vm.flushRecovery()
+                shell.trimViewers()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in
+            shell.trimViewers()
         }
         .task { await shell.openLaunchFixture() }
     }

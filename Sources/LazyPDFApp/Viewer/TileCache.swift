@@ -70,6 +70,11 @@ public final class TileCache<Picture: PixelSized> {
         for key in keys(page) where match(key) { remove(key) }
     }
 
+    /// Lets go of every picture whose key `keep` refuses.
+    public func trim(keeping keep: (TileKey) -> Bool) {
+        for key in Array(entries.keys) where !keep(key) { remove(key) }
+    }
+
     public func clear() {
         entries.removeAll()
         byPage.removeAll()
