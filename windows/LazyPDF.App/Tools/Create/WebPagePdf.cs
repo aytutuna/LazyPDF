@@ -11,6 +11,7 @@ namespace LazyPDF.App.Tools.Create;
 internal static class WebPagePdf
 {
     private static readonly TimeSpan LoadLimit = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan PrintLimit = TimeSpan.FromMinutes(5);
 
     public static async Task<byte[]> RenderAsync(string file, PdfPageSetup setup, CancellationToken cancel)
     {
@@ -26,10 +27,13 @@ internal static class WebPagePdf
             Left = -32000, Top = -32000, Width = 1024, Height = 768,
         };
         host.Show();
+        // The web view calls cannot be cancelled, so each is waited on with the token; closing the window in finally stops what is left.
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancel);
+        limit.CancelAfter(LoadLimit);
         try
         {
-            var environment = await CoreWebView2Environment.CreateAsync(null, AppFolders.WebView);
-            await view.EnsureCoreWebView2Async(environment);
+            var environment = await CoreWebView2Environment.CreateAsync(null, AppFolders.WebView).WaitAsync(limit.Token);
+            await view.EnsureCoreWebView2Async(environment).WaitAsync(limit.Token);
             var core = view.CoreWebView2;
             core.Settings.IsScriptEnabled = false;
             core.Settings.AreDefaultContextMenusEnabled = false;
@@ -55,8 +59,6 @@ internal static class WebPagePdf
             var loaded = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             core.NavigationCompleted += (_, e) => loaded.TrySetResult(e.IsSuccess);
             core.Navigate(WebPageRules.PageAddress(file));
-            using var limit = CancellationTokenSource.CreateLinkedTokenSource(cancel);
-            limit.CancelAfter(LoadLimit);
             if (!await loaded.Task.WaitAsync(limit.Token)) throw new IOException("The page did not load.");
 
             var settings = environment.CreatePrintSettings();
@@ -66,7 +68,8 @@ internal static class WebPagePdf
             settings.MarginTop = settings.MarginBottom = settings.MarginLeft = settings.MarginRight = layout.Margin;
             settings.ShouldPrintBackgrounds = true;
             settings.ShouldPrintHeaderAndFooter = false;
-            using var stream = await core.PrintToPdfStreamAsync(settings);
+            limit.CancelAfter(PrintLimit);
+            using var stream = await core.PrintToPdfStreamAsync(settings).WaitAsync(limit.Token);
             using var bytes = new MemoryStream();
             await stream.CopyToAsync(bytes, cancel);
             return bytes.ToArray();
@@ -77,7 +80,7 @@ internal static class WebPagePdf
         }
         catch (OperationCanceledException) when (!cancel.IsCancellationRequested)
         {
-            throw new IOException("The page took too long to load.");
+            throw new IOException("The page took too long.");
         }
         catch (Exception e) when (e is COMException or InvalidOperationException or ArgumentException)
         {

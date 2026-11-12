@@ -105,4 +105,40 @@ public sealed class WebPageRulesTests
         Assert.Equal([@"C:\x\Report 1.HTML"], request.Files);
         return Task.CompletedTask;
     });
+
+    [Fact]
+    public async Task CancelStopsAPageThatIsStillBeingPrinted()
+    {
+        string folder = Path.Combine(Path.GetTempPath(), "lazypdf-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        string file = Path.Combine(folder, "big.html");
+        try
+        {
+            File.WriteAllText(file, "<table>" + string.Concat(Enumerable.Repeat("<tr><td>a</td><td>b</td></tr>", 400_000)) + "</table>");
+            using var cancel = new CancellationTokenSource();
+            var setup = new PdfPageSetup(PdfPaper.A4, PdfOrientation.Auto, 36);
+
+            await Sta.Run(async () =>
+            {
+                cancel.CancelAfter(TimeSpan.FromSeconds(3));
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                try
+                {
+                    await WebPagePdf.RenderAsync(file, setup, cancel.Token);
+                    Assert.Fail("The page was drawn before it could be cancelled.");
+                }
+                catch (WebViewMissingException)
+                {
+                }
+                catch (OperationCanceledException)
+                {
+                    Assert.True(watch.Elapsed < TimeSpan.FromSeconds(30));
+                }
+            });
+        }
+        finally
+        {
+            Directory.Delete(folder, true);
+        }
+    }
 }
