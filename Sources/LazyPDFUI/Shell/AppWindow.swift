@@ -134,7 +134,7 @@ public struct AppWindow<Stage: View, SidePane: View, Inspector: View>: View {
                 vm.cancelPending()
             } else if sheet != nil {
                 sheet = nil
-            } else if compact, let tool = vm.activeToolId, vm.activeTool != nil {
+            } else if compact, !toolBeside, let tool = vm.activeToolId, vm.activeTool != nil {
                 vm.selectTool(tool)
             } else {
                 compactPanel = nil
