@@ -155,7 +155,7 @@ internal sealed class DocxTheme
     public int? Color(string name) => _colors.TryGetValue(ColorNames.GetValueOrDefault(name, name), out int rgb) ? rgb : null;
 }
 
-internal sealed record DocxStyle(string Id, string Type, string? BasedOn, XmlElement? PPr, XmlElement? RPr);
+internal sealed record DocxStyle(string Id, string Type, string? BasedOn, XmlElement? PPr, XmlElement? RPr, XmlElement Source);
 
 internal sealed class DocxStyles
 {
@@ -166,6 +166,7 @@ internal sealed class DocxStyles
 
     public string? DefaultParagraph { get; private set; }
     public string? DefaultCharacter { get; private set; }
+    public string? DefaultTable { get; private set; }
 
     public static DocxStyles Read(XmlElement? root)
     {
@@ -180,11 +181,12 @@ internal sealed class DocxStyles
             string type = e.Attribute(DocxReader.W, "type") ?? "paragraph";
             if (id is null || styles._styles.ContainsKey(id)) continue;
             var basedOn = e.Child(DocxReader.W, "basedOn")?.Attribute(DocxReader.W, "val");
-            styles._styles[id] = new DocxStyle(id, type, basedOn, e.Child(DocxReader.W, "pPr"), e.Child(DocxReader.W, "rPr"));
+            styles._styles[id] = new DocxStyle(id, type, basedOn, e.Child(DocxReader.W, "pPr"), e.Child(DocxReader.W, "rPr"), e);
             if (e.Attribute(DocxReader.W, "default") is "1" or "true" or "on")
             {
                 if (type == "paragraph") styles.DefaultParagraph ??= id;
                 if (type == "character") styles.DefaultCharacter ??= id;
+                if (type == "table") styles.DefaultTable ??= id;
             }
         }
         return styles;
@@ -193,13 +195,21 @@ internal sealed class DocxStyles
     private DocxStyle? Find(string? id, string type) =>
         id is not null && _styles.TryGetValue(id, out var s) && s.Type == type ? s : null;
 
-    /// <summary>The document defaults, then the paragraph style and the styles it is based on, farthest first.</summary>
-    public (ParaProps Paragraph, RunProps Run) Paragraph(string? id, DocxTheme theme)
+    /// <summary>
+    /// The document defaults, then the table style layers when the paragraph is in a table, then the paragraph style and
+    /// the styles it is based on, farthest first.
+    /// </summary>
+    public (ParaProps Paragraph, RunProps Run) Paragraph(string? id, DocxTheme theme, IReadOnlyList<XmlElement>? tableLayers = null)
     {
         var paragraph = new ParaProps();
         var run = new RunProps();
         run.Apply(_defaultRPr, theme);
         paragraph.Apply(_defaultPPr);
+        foreach (var layer in tableLayers ?? [])
+        {
+            paragraph.Apply(layer.Child(DocxReader.W, "pPr"));
+            run.Apply(layer.Child(DocxReader.W, "rPr"), theme);
+        }
         foreach (var s in Chain(Find(id, "paragraph") is null ? DefaultParagraph : id, "paragraph"))
         {
             paragraph.Apply(s.PPr);
@@ -213,6 +223,9 @@ internal sealed class DocxStyles
     {
         foreach (var s in Chain(Find(id, "character") is null ? DefaultCharacter : id, "character")) run.Apply(s.RPr, theme);
     }
+
+    /// <summary>The table style (or the default one) and the styles it is based on, farthest first.</summary>
+    public IReadOnlyList<DocxStyle> Table(string? id) => [.. Chain(Find(id, "table") is null ? DefaultTable : id, "table")];
 
     private IEnumerable<DocxStyle> Chain(string? id, string type)
     {

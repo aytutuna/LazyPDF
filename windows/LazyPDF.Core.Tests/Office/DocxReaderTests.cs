@@ -20,6 +20,17 @@ public class DocxReaderTests
         Golden.Check("office-docx", "docx-output.txt", output.ToString());
     }
 
+    [Fact]
+    public void DocxTablesGoldenFile()
+    {
+        var output = new StringBuilder();
+        foreach (var (name, package) in DocxSpec.Read(Golden.Input("office-docx", "tables-input.txt")))
+        {
+            output.Append("> ").Append(name).Append('\n').Append(DocxSpec.Dump(DocxReader.Read(package)));
+        }
+        Golden.Check("office-docx", "tables-output.txt", output.ToString());
+    }
+
     private static byte[] Docx(string body, string? styles = null)
     {
         var parts = new Dictionary<string, StringBuilder> { ["document"] = new(body) };
@@ -138,7 +149,7 @@ public class DocxReaderTests
             "<w:tbl><w:tr><w:tc><w:p><w:r><w:t>cell</w:t></w:r></w:p></w:tc></w:tr></w:tbl>";
         var pdf = OfficeConverter.FromWord(Docx(body), OfficeLayoutSpec.Fonts());
         Assert.Equal(3, pdf.Pages);
-        Assert.Contains(pdf.Skipped, s => s is { Kind: "table", Count: 1 });
+        Assert.DoesNotContain(pdf.Skipped, s => s.Kind == "table");
         using var read = PigDocument.Open(pdf.Bytes);
         Assert.Equal(3, read.NumberOfPages);
         Assert.Equal("First page", read.GetPage(1).Text);

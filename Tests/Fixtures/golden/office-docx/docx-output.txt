@@ -160,11 +160,17 @@ p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
   run Times_New_Roman 10.00 000000 "list item"
 p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
   run Times_New_Roman 10.00 000000 "not a list item"
-p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+table 0.00,0.00 indent=0.00 left
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
   run Times_New_Roman 10.00 000000 "cell a"
-p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+cell 1 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
   run Times_New_Roman 10.00 000000 "cell b"
-p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
   run Times_New_Roman 10.00 000000 "cell c"
 skipped chart 1
 skipped comment 1
@@ -173,7 +179,6 @@ skipped equation 1
 skipped footnote 1
 skipped picture 2
 skipped shape 1
-skipped table 1
 skipped text-box 1
 skipped tracked-change 3
 > content controls, links and wrappers

@@ -1,0 +1,183 @@
+> table grid and widths
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+table 100.00,150.00 indent=12.00 left
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "a1"
+cell 1 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "b1"
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "b1 second"
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "a2"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "after"
+> table without a grid takes widths from the cells
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+table 50.00,50.00,50.00 indent=0.00 center
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "a"
+cell 1 2 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "b"
+row
+cell 1 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "c"
+cell 2 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "d"
+> table spans and vertical merge
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+table 50.00,50.00,50.00 indent=0.00 left
+row
+cell 0 2 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "wide"
+cell 2 1 3 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "tall"
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "x"
+cell 1 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "y"
+row
+cell 0 1 3 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "left"
+cell 1 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "m"
+row
+cell 1 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "n"
+cell 2 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "o"
+row
+> table borders from the table and the cells
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+table 100.00,100.00 indent=0.00 left
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=1.00:ff0000,-,2.00:0000ff,1.00:ff0000
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "a"
+cell 1 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=1.00:ff0000,1.00:ff0000,0.50:000000,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "b"
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=2.00:0000ff,1.50:000000,1.00:ff0000,1.00:ff0000
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "c"
+cell 1 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=0.50:000000,1.00:ff0000,-,1.50:000000
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "d"
+> table border conflicts
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+table 100.00,100.00 indent=0.00 left
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,1.00:000000,1.00:808080,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "a"
+cell 1 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,0.50:000000,1.00:000000
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "b"
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=1.00:808080,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "c"
+cell 1 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=0.50:000000,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "d"
+> table shading margins and vertical alignment
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+table 100.00,100.00,100.00 indent=0.00 left
+row height=40.00 exact
+cell 0 1 1 fill=ffff00 margin=2.00,5.40,0.00,10.00 valign=center edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "yellow"
+cell 1 1 1 fill=00ff00 margin=2.00,0.00,0.00,0.00 valign=bottom edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "green"
+cell 2 1 1 fill=- margin=2.00,5.40,0.00,10.00 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "none"
+row cantsplit height=25.00
+cell 0 1 1 fill=eeeeee margin=2.00,5.40,0.00,10.00 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+> table header rows
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+table 100.00 indent=0.00 left
+row header
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "head"
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "not a header"
+> table style supplies borders, banding and text format
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+table 100.00,100.00 indent=0.00 left
+row
+cell 0 1 1 fill=1f3864 margin=0.00,5.40,0.00,5.40 valign=top edges=0.50:000000,0.50:000000,0.50:000000,0.50:000000
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 11.00 ffffff b i "h1"
+cell 1 1 1 fill=1f3864 margin=0.00,5.40,0.00,5.40 valign=top edges=0.50:000000,0.50:000000,0.50:000000,0.50:000000
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 11.00 ffffff b "h2"
+row
+cell 0 1 1 fill=d9e2f3 margin=0.00,5.40,0.00,5.40 valign=top edges=0.50:000000,0.50:000000,0.50:000000,0.50:000000
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 11.00 000000 i "r1c1"
+cell 1 1 1 fill=d9e2f3 margin=0.00,5.40,0.00,5.40 valign=top edges=0.50:000000,0.50:000000,0.50:000000,0.50:000000
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 11.00 000000 "r1c2"
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=0.50:000000,0.50:000000,0.50:000000,0.50:000000
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 11.00 000000 i "r2c1"
+cell 1 1 1 fill=ffc000 margin=0.00,5.40,0.00,5.40 valign=top edges=0.50:000000,0.50:000000,0.50:000000,0.50:000000
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 11.00 000000 "r2c2"
+row
+cell 0 1 1 fill=d9e2f3 margin=0.00,5.40,0.00,5.40 valign=top edges=0.50:000000,0.50:000000,0.50:000000,0.50:000000
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 11.00 000000 i "r3c1"
+cell 1 1 1 fill=d9e2f3 margin=0.00,5.40,0.00,5.40 valign=top edges=0.50:000000,0.50:000000,0.50:000000,0.50:000000
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 11.00 000000 "r3c2"
+> table content: page breaks and sections stay in the cell
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+table 100.00 indent=0.00 left
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "one\ntwo"
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "three"
+> nested tables and tables in headers are read as their paragraphs
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+header left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "in header"
+table 100.00 indent=0.00 left
+row
+cell 0 1 1 fill=- margin=0.00,5.40,0.00,5.40 valign=top edges=-,-,-,-
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "outer"
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "inner"
+cp left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+skipped table 2

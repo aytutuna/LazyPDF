@@ -118,11 +118,33 @@ internal static class DocxSpec
             foreach (var block in section.Blocks)
             {
                 if (block is LayoutParagraph p) Paragraph(o, "p", p);
+                else if (block is LayoutTable t) Table(o, t);
                 else o.Append("pagebreak\n");
             }
         }
         foreach (var s in document.Skipped) o.Append($"skipped {s.Kind} {s.Count}\n");
         return o.ToString();
+    }
+
+    private static string Edge(LayoutBorder? b) => b is null ? "-" : $"{Num(b.Width)}:{b.Color:x6}";
+
+    private static void Table(StringBuilder o, LayoutTable t)
+    {
+        o.Append($"table {string.Join(',', t.Columns.Select(Num))} indent={Num(t.Indent)} {t.Align.ToString().ToLowerInvariant()}\n");
+        foreach (var row in t.Rows)
+        {
+            o.Append("row");
+            if (row.Header) o.Append(" header");
+            if (row.CantSplit) o.Append(" cantsplit");
+            if (row.Height > 0) o.Append($" height={Num(row.Height)}{(row.HeightExact ? " exact" : "")}");
+            o.Append('\n');
+            foreach (var c in row.Cells)
+            {
+                o.Append($"cell {c.Column} {c.Span} {c.RowSpan} fill={(c.Fill is { } f ? f.ToString("x6") : "-")} margin={Num(c.MarginTop)},{Num(c.MarginRight)},{Num(c.MarginBottom)},{Num(c.MarginLeft)} valign={c.VAlign.ToString().ToLowerInvariant()}");
+                o.Append($" edges={Edge(c.Top)},{Edge(c.Right)},{Edge(c.Bottom)},{Edge(c.Left)}\n");
+                foreach (var p in c.Paragraphs) Paragraph(o, "cp", p);
+            }
+        }
     }
 
     private static void Paragraph(StringBuilder o, string band, LayoutParagraph p)

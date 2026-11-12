@@ -7,7 +7,7 @@ namespace LazyPDF.Core.Office;
 /// Reads a .docx package into the layout model: body paragraphs and runs with their styles, page setup and sections, headers
 /// and footers. What it does not carry over is counted in <see cref="LayoutDocument.Skipped"/>.
 /// </summary>
-internal sealed class DocxReader
+internal sealed partial class DocxReader
 {
     public const string W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
     public const string A = "http://schemas.openxmlformats.org/drawingml/2006/main";
@@ -44,7 +44,7 @@ internal sealed class DocxReader
     private readonly OpcPackage _package;
     private readonly CancellationToken _cancellation;
     private readonly SortedDictionary<string, int> _skipped = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, (ParaProps, RunProps)> _paragraphStyles = [];
+    private readonly Dictionary<(string Style, string Table), (ParaProps, RunProps)> _paragraphStyles = [];
     private readonly Dictionary<string, List<LayoutParagraph>> _bands = new(StringComparer.OrdinalIgnoreCase);
     private DocxStyles _styles = new();
     private DocxTheme _theme = new();
@@ -195,11 +195,7 @@ internal sealed class DocxReader
             switch (e.Name)
             {
                 case "p": Paragraph(e); break;
-                case "tbl":
-                    // Tables are read as their paragraphs in order until table layout exists.
-                    Skip("table");
-                    foreach (var cell in e.Elements(W, "tr").SelectMany(row => row.Elements(W, "tc"))) Blocks(cell);
-                    break;
+                case "tbl": Table(e); break;
                 case "sdt":
                     if (e.Child(W, "sdtContent") is { } content) Blocks(content);
                     break;
@@ -226,9 +222,9 @@ internal sealed class DocxReader
     {
         var pPr = p.Child(W, "pPr");
         string? styleId = pPr?.Child(W, "pStyle")?.Attribute(W, "val");
-        if (!_paragraphStyles.TryGetValue(styleId ?? "", out var known))
+        if (!_paragraphStyles.TryGetValue((styleId ?? "", _tableKey), out var known))
         {
-            known = _paragraphStyles[styleId ?? ""] = _styles.Paragraph(styleId, _theme);
+            known = _paragraphStyles[(styleId ?? "", _tableKey)] = _styles.Paragraph(styleId, _theme, _tableLayers);
         }
         var props = known.Item1.Copy();
         props.Apply(pPr);
@@ -263,7 +259,7 @@ internal sealed class DocxReader
         Inline(p, known.Item2);
         Emit(true);
         _breaker = null;
-        if (pPr?.Child(W, "sectPr") is { } sectPr && !_inBand) _sectionEnds.Add((_blocks.Count, sectPr));
+        if (pPr?.Child(W, "sectPr") is { } sectPr && !_inBand && !_inCell) _sectionEnds.Add((_blocks.Count, sectPr));
     }
 
     private Action? _breaker;
@@ -407,7 +403,7 @@ internal sealed class DocxReader
                 case "noBreakHyphen": Text(props, "‑"); break;
                 case "br":
                     string? kind = e.Attribute(W, "type");
-                    if (kind is "page" or "column" && !_inBand && Visible(props)) _breaker?.Invoke();
+                    if (kind is "page" or "column" && !_inBand && !_inCell && Visible(props)) _breaker?.Invoke();
                     else Text(props, "\n");
                     break;
                 case "instrText":
