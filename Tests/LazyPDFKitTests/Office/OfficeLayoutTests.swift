@@ -225,6 +225,22 @@ final class OfficeLayoutTests: XCTestCase {
         for k in 1..<baselines.count { XCTAssertEqual(baselines[k] - baselines[k - 1], 20, accuracy: 1e-6) }
     }
 
+    func test_theTabAfterAListNumberRunsToItsStopOrTheHangingIndent() throws {
+        let page = LayoutGeometry(width: 300, height: 200, top: 10, right: 10, bottom: 10, left: 10)
+        func textX(_ left: Double, _ first: Double, _ stop: Double?) throws -> Double {
+            let made = paragraph("1.\tword")
+            made.left = left
+            made.firstLine = first
+            made.labelTab = stop
+            let result = try layout(single(page, [made]))
+            return try XCTUnwrap(texts(result.pages[0]).first { $0.text.contains("word") }).x
+        }
+        XCTAssertEqual(try textX(0, 0, 50), 10 + 50, accuracy: 0.01)
+        XCTAssertEqual(try textX(40, -40, nil), 10 + 40, accuracy: 0.01)
+        XCTAssertEqual(try textX(40, -40, 30), 10 + 30, accuracy: 0.01)
+        XCTAssertEqual(try textX(0, 0, nil), 10 + 36, accuracy: 0.01)
+    }
+
     func test_badGeometryAndRunawayLengthAreRefused() throws {
         let narrow = single(LayoutGeometry(width: 100, height: 100, top: 72, right: 40, bottom: 72, left: 50), [paragraph("x")])
         XCTAssertThrowsError(try OfficePdfWriter.create(narrow, OfficeLayoutSpec.fonts())) {

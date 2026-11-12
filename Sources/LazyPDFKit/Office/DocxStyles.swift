@@ -83,6 +83,7 @@ struct ParaProps {
     var pageBreakBefore: Bool?
     var widow: Bool?
     var numId: Int?
+    var ilvl: Int?
 
     mutating func apply(_ pPr: OfficeXmlElement?) {
         guard let pPr else { return }
@@ -117,6 +118,9 @@ struct ParaProps {
             case "numPr":
                 if let id = DocxReader.number(e.child(w, "numId")?.attribute(w, "val")) {
                     numId = Int(min(max(id, -2147483648), 2147483647))
+                }
+                if let level = DocxReader.number(e.child(w, "ilvl")?.attribute(w, "val")) {
+                    ilvl = Int(min(max(level, -2147483648), 2147483647))
                 }
             default: break
             }

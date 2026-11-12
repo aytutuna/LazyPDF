@@ -14,6 +14,8 @@ final class Atom {
     var x = 0.0
     /// Space added after the atom by justification.
     var extra = 0.0
+    /// An explicit stop this tab runs to when the text is before it.
+    var stop: Double?
 
     init(code: Int, run: LayoutRun, face: FontFace, size: Double) {
         self.code = code
@@ -70,6 +72,7 @@ enum ParagraphLayout {
     static func run(_ paragraph: LayoutParagraph, _ fonts: LayoutFonts, _ areaWidth: Double, _ field: ((LayoutField) -> String)? = nil) throws -> ParagraphLines {
         let result = ParagraphLines(paragraph)
         let atoms = try makeAtoms(paragraph, fonts, field, result)
+        if let labelTab = paragraph.labelTab, let labelAtom = atoms.first(where: { $0.isTab }) { labelAtom.stop = labelTab }
         let left = max(0, paragraph.left)
         let first = max(0, paragraph.left + paragraph.firstLine)
         let right = max(areaWidth - max(0, paragraph.right), max(left, first) + 1)
@@ -120,7 +123,8 @@ enum ParagraphLayout {
     // The width an atom takes at x. A tab runs to the hanging indent or the next default stop, never past the right edge.
     private static func step(_ atom: Atom, _ x: Double, _ left: Double, _ right: Double, place: Bool) -> Double {
         if !atom.isTab { return atom.width }
-        let stop = x < left - tolerance ? left : ((x / tabWidth).rounded(.down) + 1) * tabWidth
+        var stop = x < left - tolerance ? left : ((x / tabWidth).rounded(.down) + 1) * tabWidth
+        if let explicit = atom.stop, x < explicit - tolerance { stop = x < left - tolerance ? min(left, explicit) : explicit }
         let width = max(0, min(stop, max(right, x)) - x)
         if place { atom.width = width }
         return width

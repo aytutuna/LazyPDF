@@ -64,6 +64,7 @@ enum DocxSpec {
 
         add("word/document.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><w:document \(namespaces)><w:body>\(get("document"))</w:body></w:document>")
         wrapped("styles", "word/styles.xml", "styles", "rIdS", "w:styles", main + "styles+xml")
+        wrapped("numbering", "word/numbering.xml", "numbering", "rIdN", "w:numbering", main + "numbering+xml")
         wrapped("theme", "word/theme/theme1.xml", "theme", "rIdT", "a:theme", "application/vnd.openxmlformats-officedocument.theme+xml")
         wrapped("header", "word/header1.xml", "header", "rIdH", "w:hdr", main + "header+xml")
         wrapped("footer", "word/footer1.xml", "footer", "rIdF", "w:ftr", main + "footer+xml")
@@ -116,6 +117,7 @@ enum DocxSpec {
         o += "\(band) \(align) \(num(p.left)) \(num(p.right)) \(num(p.firstLine)) \(num(p.before)) \(num(p.after)) \(num(p.lineSpacing)) \(rule)"
         if p.keepWithNext { o += " keep" }
         if p.pageBreakBefore { o += " break" }
+        if let tab = p.labelTab { o += " labeltab=\(num(tab))" }
         if !p.widowControl { o += " nowidow" }
         o += "\n"
         for r in p.runs {

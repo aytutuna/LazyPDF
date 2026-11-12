@@ -11,6 +11,7 @@ final class DocxReader {
     private static let mathNs = "http://schemas.openxmlformats.org/officeDocument/2006/math"
     private static let stylesType = r + "/styles"
     private static let themeType = r + "/theme"
+    private static let numberingType = r + "/numbering"
     private static let headerType = r + "/header"
     private static let footerType = r + "/footer"
 
@@ -42,6 +43,7 @@ final class DocxReader {
     private var bands: [String: [LayoutParagraph]] = [:]
     private var styles = DocxStyles()
     private var theme = DocxTheme()
+    private var numbering = DocxNumbering()
 
     // State of the part being read.
     private var blocks: [LayoutBlock] = []
@@ -76,6 +78,7 @@ final class DocxReader {
         let relationships = try package.relationships(main)
         styles = DocxStyles.read(try part(relationships, Self.stylesType))
         theme = DocxTheme.read(try part(relationships, Self.themeType))
+        numbering = DocxNumbering.read(try part(relationships, Self.numberingType))
 
         try readBlocks(body)
         let all = blocks
@@ -232,13 +235,22 @@ final class DocxReader {
         props.apply(pPr)
         var mark = known.1
         mark.apply(pPr?.child(w, "rPr"), theme)
-        if let id = props.numId, id != 0 { skip("numbering") }
+
+        // The level's indents sit between the style and the paragraph's own.
+        var label: NumberLabel?
+        if let id = props.numId, id > 0 { label = numbering.next(id, props.ilvl, styleId) }
+        if let label {
+            props = known.0
+            props.apply(label.pPr)
+            props.apply(pPr)
+        }
 
         pieces.removeAll()
+        if let label { addLabel(label, mark) }
         var first = true
         func emit(_ last: Bool) {
             guard let runs = self.runs(mark, last) else { return }
-            blocks.append(Self.make(props, runs, first && props.pageBreakBefore == true))
+            blocks.append(Self.make(props, runs, first && props.pageBreakBefore == true, label?.suffix == "tab" ? label?.tabStop : nil))
             first = false
         }
         breaker = {
@@ -281,7 +293,23 @@ final class DocxReader {
         return run
     }
 
-    private static func make(_ p: ParaProps, _ runs: [LayoutRun], _ pageBreakBefore: Bool) -> LayoutParagraph {
+    private func addLabel(_ label: NumberLabel, _ mark: RunProps) {
+        if label.text.isEmpty && label.suffix == "nothing" { return }
+        var props = mark
+        props.apply(label.rPr, theme)
+        if label.symbolFont != nil { props.family = mark.family }
+        let separator: String
+        switch label.suffix {
+        case "nothing": separator = ""
+        case "space": separator = " "
+        default: separator = "\t"
+        }
+        let piece = Piece(Self.format(props, .none))
+        piece.text = label.text + separator
+        pieces.append(piece)
+    }
+
+    private static func make(_ p: ParaProps, _ runs: [LayoutRun], _ pageBreakBefore: Bool, _ labelTab: Double?) -> LayoutParagraph {
         var rule: LineRule
         switch p.lineRule {
         case "exact": rule = .exact
@@ -307,6 +335,7 @@ final class DocxReader {
         made.keepWithNext = p.keepNext == true
         made.pageBreakBefore = pageBreakBefore
         made.widowControl = p.widow != false
+        made.labelTab = labelTab
         return made
     }
 

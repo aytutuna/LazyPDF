@@ -38,6 +38,26 @@ final class DocxReaderTests: XCTestCase {
     private static let rels = "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"r1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"/word/document.xml\"/></Relationships>"
     private static let w = "xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\""
 
+    func test_listLabelsStayShortForCraftedNumbering() throws {
+        let numbering = "<w:abstractNum w:abstractNumId=\"0\"><w:lvl w:ilvl=\"0\"><w:start w:val=\"99999999\"/><w:numFmt w:val=\"lowerLetter\"/><w:lvlText w:val=\"" +
+            String(repeating: "%1", count: 500) + "\"/></w:lvl></w:abstractNum><w:num w:numId=\"1\"><w:abstractNumId w:val=\"0\"/></w:num>"
+        let body = "<w:p><w:pPr><w:numPr><w:numId w:val=\"1\"/></w:numPr></w:pPr><w:r><w:t>x</w:t></w:r></w:p>"
+        let package = try DocxSpec.package([("numbering", numbering), ("document", body)])
+        let document = try DocxReader.read(package)
+        let paragraph = try XCTUnwrap(document.sections[0].blocks[0] as? LayoutParagraph)
+        let text = paragraph.runs[0].text
+        XCTAssertLessThanOrEqual(text.utf16.count, 64 + 2 + 1)
+        XCTAssertTrue(text.hasSuffix("\tx"))
+    }
+
+    func test_numberFormats() {
+        let cases: [(Int, String, String)] = [
+            (1, "lowerLetter", "a"), (27, "lowerLetter", "aa"), (4, "upperRoman", "IV"), (1994, "lowerRoman", "mcmxciv"),
+            (4000, "upperRoman", "4000"), (7, "decimalZero", "07"), (12, "decimalZero", "12"), (5, "unknownFormat", "5"),
+        ]
+        for (value, format, expected) in cases { XCTAssertEqual(DocxNumbering.format(value, format), expected, format) }
+    }
+
     func test_readsAMinimalPackageWithAnAbsoluteTarget() throws {
         let package = try zip(("[Content_Types].xml", Self.types), ("_rels/.rels", Self.rels),
                               ("word/document.xml", "<w:document \(Self.w)><w:body><w:p><w:r><w:t>hi</w:t></w:r></w:p></w:body></w:document>"))

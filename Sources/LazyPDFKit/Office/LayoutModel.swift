@@ -78,6 +78,8 @@ final class LayoutParagraph: LayoutBlock {
     var keepWithNext = false
     var pageBreakBefore = false
     var widowControl = true
+    /// A tab stop, from the text area, for the tab after a list number; that tab is the first one of the paragraph.
+    var labelTab: Double?
 
     override init() {}
 }
