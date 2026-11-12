@@ -74,8 +74,9 @@ public sealed class StampsPanelTests
 
             await panel.PickAsync(path);
 
-            var frames = new WicImageCodec().DecodeFile(panel.Picture!)!;
-            Assert.Equal((2, 4), (frames[0].Width, frames[0].Height));
+            Assert.Equal(File.ReadAllBytes(path), panel.Picture);
+            var image = PdfImageWriter.AddPicture(tab.Document, panel.Picture!, new WicImageCodec())!;
+            Assert.Equal((2, 4), (image.Width, image.Height));
             Assert.True(Find<Button>(panel, "PictureButton").IsEnabled);
         }
         finally
