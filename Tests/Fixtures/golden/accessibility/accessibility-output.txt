@@ -185,7 +185,7 @@
 < encoding passed none [] Fonts map to text | Every font maps its characters to text.
 < taggedContent passed none [] All content is tagged | All page content is tagged or marked as an artifact.
 < tabOrder passed none [] Tab order follows structure | Pages with links or fields follow the structure order.
-< contrast needsPerson none [] Colour contrast | Colour contrast is not checked here. Look at the pages and make sure text stands out from its background.
+< contrast needsPerson none [] Color contrast | Color contrast is not checked here. Look at the pages and make sure text stands out from its background.
 < formNames passed none [] Form fields have names and tooltips | Every form field has a name and a tooltip, or there are no fields.
 < figureAlt passed none [] Figures have alt text | Every figure has alt text, or there are no figures.
 < tableStructure passed none [] Tables are well formed | Every table has rows and cells in the right places, or there are no tables.
@@ -205,7 +205,7 @@
 < encoding passed none [] Fonts map to text | Every font maps its characters to text.
 < taggedContent passed none [] All content is tagged | All page content is tagged or marked as an artifact.
 < tabOrder passed none [] Tab order follows structure | Pages with links or fields follow the structure order.
-< contrast needsPerson none [] Colour contrast | Colour contrast is not checked here. Look at the pages and make sure text stands out from its background.
+< contrast needsPerson none [] Color contrast | Color contrast is not checked here. Look at the pages and make sure text stands out from its background.
 < formNames passed none [] Form fields have names and tooltips | Every form field has a name and a tooltip, or there are no fields.
 < figureAlt failed none [0:12] Figures have alt text | Figures without alt text: 1, first on page 1. Describe each one.
 < tableStructure passed none [] Tables are well formed | Every table has rows and cells in the right places, or there are no tables.
@@ -225,7 +225,7 @@
 < encoding passed none [] Fonts map to text | Every font maps its characters to text.
 < taggedContent needsPerson none [] All content is tagged | There are no tags to check. Tag the document first.
 < tabOrder passed none [] Tab order follows structure | Pages with links or fields follow the structure order.
-< contrast needsPerson none [] Colour contrast | Colour contrast is not checked here. Look at the pages and make sure text stands out from its background.
+< contrast needsPerson none [] Color contrast | Color contrast is not checked here. Look at the pages and make sure text stands out from its background.
 < formNames passed none [] Form fields have names and tooltips | Every form field has a name and a tooltip, or there are no fields.
 < figureAlt needsPerson none [] Figures have alt text | There are no tags to check. Tag the document first.
 < tableStructure needsPerson none [] Tables are well formed | There are no tags to check. Tag the document first.
@@ -245,7 +245,7 @@
 < encoding passed none [] Fonts map to text | Every font maps its characters to text.
 < taggedContent needsPerson none [] All content is tagged | There are no tags to check. Tag the document first.
 < tabOrder passed none [] Tab order follows structure | Pages with links or fields follow the structure order.
-< contrast needsPerson none [] Colour contrast | Colour contrast is not checked here. Look at the pages and make sure text stands out from its background.
+< contrast needsPerson none [] Color contrast | Color contrast is not checked here. Look at the pages and make sure text stands out from its background.
 < formNames passed none [] Form fields have names and tooltips | Every form field has a name and a tooltip, or there are no fields.
 < figureAlt needsPerson none [] Figures have alt text | There are no tags to check. Tag the document first.
 < tableStructure needsPerson none [] Tables are well formed | There are no tags to check. Tag the document first.
