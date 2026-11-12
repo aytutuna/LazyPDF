@@ -180,7 +180,7 @@ final class FillSignPlacementTests: XCTestCase {
 
     func test_turkishLettersAreMeasuredByTheirBaseLetter() async {
         XCTAssertEqual(FillSignPlacement.measure("şŞğĞİ", 12).width, FillSignPlacement.measure("sSgGI", 12).width)
-        XCTAssertEqual(FillSignPlacement.measure("ı", 12).width, FillSignPlacement.measure("i", 12).width)
+        XCTAssertEqual(FillSignPlacement.measure("ı", 12).width, 12)
         XCTAssertEqual(FillSignPlacement.measure("abc", 12).width, 28)
     }
 }

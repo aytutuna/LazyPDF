@@ -472,7 +472,7 @@ final class PagesToolModelTests: XCTestCase {
         XCTAssertEqual(rig.host.statuses.last, "Pages replaced.")
     }
 
-    func test_replacingATaggedPageSaysTheTagsAreGone() async throws {
+    func test_replacingATaggedPagePrunesTheTagsAndSaysNothing() async throws {
         let dir = TempDir(self)
         let (model, rig) = try attached(bytes: PagesPdfs.tagged())
         rig.pick(dir, "extra.pdf", Pdfs.text(1, "Extra"))
@@ -480,8 +480,8 @@ final class PagesToolModelTests: XCTestCase {
 
         await model.replace()
 
-        XCTAssertFalse(PageJobs.isTagged(rig.tab))
-        XCTAssertEqual(rig.host.notices.map { $0.title }, ["Tags removed"])
+        XCTAssertTrue(PageJobs.isTagged(rig.tab))
+        XCTAssertTrue(rig.host.notices.isEmpty)
     }
 
     func test_aReplaceStaysWithTheFileItStartedOnWhenAnotherOpensMeanwhile() async throws {
