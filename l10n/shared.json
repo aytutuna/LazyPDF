@@ -8520,5 +8520,17 @@
   },
   "Even pages only": {
     "tr": "Yalnızca çift sayfalar"
+  },
+  "Clear signature": {
+    "tr": "İmzayı temizle"
+  },
+  "Remove the signature so the field can be signed again": {
+    "tr": "Alan yeniden imzalanabilsin diye imzayı kaldır"
+  },
+  "Clear the signature of {0}?": {
+    "tr": "{0} alanının imzası temizlensin mi?"
+  },
+  "The signature is removed from the field, and the field can be signed again. The file keeps the earlier signed version in its history. Undo brings the signature back.": {
+    "tr": "İmza alandan kaldırılır ve alan yeniden imzalanabilir. Dosya, önceki imzalı sürümü geçmişinde tutar. Geri al imzayı geri getirir."
   }
 }

@@ -9,6 +9,8 @@ using LazyPDF.App.Documents;
 using LazyPDF.App.Services;
 using LazyPDF.App.Tools;
 using LazyPDF.App.Tools.Certificates;
+using LazyPDF.App.Tools.Forms;
+using LazyPDF.App.Tools.Stamps;
 using LazyPDF.Core;
 using Microsoft.Win32;
 
@@ -21,6 +23,7 @@ namespace LazyPDF.App.Panels.Signatures;
 public partial class SignaturesSidePanel : ToolPanel
 {
     private int _ticket;
+    private HashSet<string> _signedFields = [];
 
     public SignaturesSidePanel()
     {
@@ -80,10 +83,27 @@ public partial class SignaturesSidePanel : ToolPanel
         string? note = reports is { Count: 0 } ? Loc.T("This file has no signatures.") : null;
         if (issuers && reports is { Count: > 0 }) note = Loc.T("Looked for missing certificates just now. The file is not changed.") + (transport!.LastFailure is { } miss ? " " + miss : "");
         if (online && reports is { Count: > 0 }) note = Loc.T("Checked with the certificate servers just now. The file is not changed.") + (transport!.LastFailure is { } failure ? " " + failure : "");
+        _signedFields = SignedFields(tab);
         if (reports is null) Show(null, Loc.T("The signatures could not be checked."));
         else Show(reports.Select(r => Row(r, fields)).ToList(), note);
         if (reports is { Count: > 0 }) List.SelectedIndex = 0;
     }
+
+    internal static HashSet<string> SignedFields(DocumentTab tab)
+    {
+        try
+        {
+            return [.. PdfForm.Read(tab.Document).Fields.Where(f => f.Kind == FieldKind.Signature && f.IsSigned).Select(f => f.Name)];
+        }
+        catch (PdfReadException)
+        {
+            return [];
+        }
+    }
+
+    /// <summary>Whether the field of the signature holds it in the open file and the file may be changed.</summary>
+    internal static bool CanClear(DocumentTab tab, HashSet<string> signed, SignatureRow row) =>
+        row.Report.FieldName is { } name && signed.Contains(name) && ChangeGate.Refusal(tab.Document) is null;
 
     private void Show(List<SignatureRow>? rows, string? note)
     {
@@ -141,6 +161,7 @@ public partial class SignaturesSidePanel : ToolPanel
         ViewButton.IsEnabled = copy && !locked;
         RestoreButton.IsEnabled = copy;
         CertificateButton.IsEnabled = row.Report.Certificate is not null;
+        ClearButton.Visibility = CanClear(Tab!, _signedFields, row) ? Visibility.Visible : Visibility.Collapsed;
         TrustSignerButton.Visibility = FetchButton.Visibility = row.CanTrust ? Visibility.Visible : Visibility.Collapsed;
         CertificateButton.Content = Loc.T("View certificate");
         CertificateInfo.Visibility = Visibility.Collapsed;
@@ -207,6 +228,34 @@ public partial class SignaturesSidePanel : ToolPanel
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or PdfReadException)
         {
             Tell(Loc.T("The file could not be saved. Check the folder and try again."));
+        }
+    }
+
+    private void Clear_Click(object sender, RoutedEventArgs e)
+    {
+        var tab = Tab!;
+        if (List.SelectedItem is not SignatureRow { Report.FieldName: { } name } row || !CanClear(tab, _signedFields, row)) return;
+        Host!.ShowNotice(Loc.T("Clear the signature of {0}?", name),
+            Loc.T("The signature is removed from the field, and the field can be signed again. The file keeps the earlier signed version in its history. Undo brings the signature back."),
+            new NoticeAction(Loc.T("Clear signature"), () =>
+            {
+                if (ReferenceEquals(Tab, tab)) Clear(tab, name, Host!.ShowProblem);
+            }));
+    }
+
+    internal static bool Clear(DocumentTab tab, string name, Action<Problem>? problem = null)
+    {
+        try
+        {
+            var form = PdfForm.Read(tab.Document);
+            form.ClearSignature(form.Find(name) ?? throw new InvalidOperationException(FormText.NotSigned));
+            return tab.Commit(Loc.T("Clear signature"));
+        }
+        catch (Exception error) when (error is InvalidOperationException or PdfReadException)
+        {
+            tab.Session.Discard();
+            problem?.Invoke(FormEdits.ProblemOf(error));
+            return false;
         }
     }
 

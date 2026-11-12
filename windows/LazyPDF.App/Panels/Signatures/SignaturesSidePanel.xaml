@@ -67,6 +67,9 @@
                             Padding="10,3,10,4" Margin="0,0,8,4" Click="Restore_Click" />
                     <Button x:Name="CertificateButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE8D7;" Content="{loc:T View certificate}"
                             Padding="10,3,10,4" Margin="0,0,8,4" Click="Certificate_Click" />
+                    <Button x:Name="ClearButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE74D;" Content="{loc:T Clear signature}"
+                            ToolTip="{loc:T Remove the signature so the field can be signed again}" AutomationProperties.Name="{loc:T Remove the signature so the field can be signed again}"
+                            Padding="10,3,10,4" Margin="0,0,8,4" Click="Clear_Click" />
                     <Button x:Name="TrustSignerButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE73E;" Content="{loc:T Trust this signer}"
                             Padding="10,3,10,4" Margin="0,0,8,4" Click="TrustSigner_Click" />
                     <Button x:Name="FetchButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE896;" Content="{loc:T Fetch missing certificates}"

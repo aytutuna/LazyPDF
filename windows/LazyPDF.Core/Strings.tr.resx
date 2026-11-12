@@ -1186,11 +1186,17 @@
   <data name="Clear menu" xml:space="preserve">
     <value>Menüyü temizle</value>
   </data>
+  <data name="Clear signature" xml:space="preserve">
+    <value>İmzayı temizle</value>
+  </data>
   <data name="Clear the recent files" xml:space="preserve">
     <value>Son dosyaları temizle</value>
   </data>
   <data name="Clear the results" xml:space="preserve">
     <value>Sonuçları temizle</value>
+  </data>
+  <data name="Clear the signature of {0}?" xml:space="preserve">
+    <value>{0} alanının imzası temizlensin mi?</value>
   </data>
   <data name="Click a mark to move, resize or delete it." xml:space="preserve">
     <value>Taşımak, boyutlandırmak veya silmek için bir işarete tıklayın.</value>
@@ -4837,6 +4843,9 @@
   <data name="Remove the selected stamp" xml:space="preserve">
     <value>Seçili damgayı kaldır</value>
   </data>
+  <data name="Remove the signature so the field can be signed again" xml:space="preserve">
+    <value>Alan yeniden imzalanabilsin diye imzayı kaldır</value>
+  </data>
   <data name="Remove this mark" xml:space="preserve">
     <value>Bu işareti kaldır</value>
   </data>
@@ -6672,6 +6681,9 @@
   </data>
   <data name="The signature is gone.|plural" xml:space="preserve">
     <value>{0} imza kaldırıldı.</value>
+  </data>
+  <data name="The signature is removed from the field, and the field can be signed again. The file keeps the earlier signed version in its history. Undo brings the signature back." xml:space="preserve">
+    <value>İmza alandan kaldırılır ve alan yeniden imzalanabilir. Dosya, önceki imzalı sürümü geçmişinde tutar. Geri al imzayı geri getirir.</value>
   </data>
   <data name="The signature may not be checkable after its certificate expires. Add validation data again when the servers answer." xml:space="preserve">
     <value>Sertifika süresi dolunca imza denetlenemeyebilir. Sunucular yanıt verdiğinde doğrulama verisini yeniden ekleyin.</value>
