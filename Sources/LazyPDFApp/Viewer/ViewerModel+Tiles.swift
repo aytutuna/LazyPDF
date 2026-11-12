@@ -13,11 +13,17 @@ extension ViewerModel {
         settleTask?.cancel()
     }
 
-    /// Frees the sharp tiles, keeping the small previews that stand in while the ones in view are drawn again.
+    /// Frees the sharp tiles outside the view, keeping the previews and what is on screen. Nothing is asked for again: the
+    /// tiles around the view come back when the person next scrolls, not while memory is short or the app goes to background.
     public func trimMemory() {
-        cache.trim(keeping: { $0.isPreview })
+        let view = state.viewRect
+        var shown = Set<TileKey>()
+        for page in state.layout.pagesIn(view) {
+            let rect = state.layout.pageRect(page)
+            for tile in state.required(page, ViewRect.intersect(rect, view), { $0 }) { shown.insert(tile.key) }
+        }
+        cache.trim(keeping: { $0.isPreview || shown.contains($0) })
         failed = failed.filter { $0.isPreview }
-        scheduleTiles()
         onRedraw?()
     }
 
