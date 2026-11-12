@@ -21,6 +21,13 @@ public final class OfficeFontSource: FontSource {
     private let installed: FontSource?
     private let bundled: FontSource?
 
+    private struct LoadedKey: Hashable {
+        let family: String
+        let style: Int
+    }
+
+    private var loaded: [LoadedKey: FontFile] = [:]
+
     public init(installed: FontSource?, bundled: FontSource?) {
         self.installed = installed
         self.bundled = bundled
@@ -31,7 +38,17 @@ public final class OfficeFontSource: FontSource {
         guard let bundled else { return nil }
         // A document that names a bundled family itself (Carlito) gets it as it is.
         let name = Self.compatible[Self.fold(family)] ?? family
-        return bundled.find(name, style) ?? bundled.find(Self.defaultFamily, style)
+        return findBundled(bundled, name, style) ?? findBundled(bundled, Self.defaultFamily, style)
+    }
+
+    // Names the bundled source does not know all end up at the default; handing back the same file keeps a document
+    // with thousands of made-up names from reading and parsing the default font once per name.
+    private func findBundled(_ bundled: FontSource, _ family: String, _ style: FontStyles) -> FontFile? {
+        let key = LoadedKey(family: family, style: style.rawValue)
+        if let known = loaded[key] { return known }
+        let file = bundled.find(family, style)
+        if let file { loaded[key] = file }
+        return file
     }
 
     // Only A-Z fold, so the C# twin matches without depending on Foundation's case tables.

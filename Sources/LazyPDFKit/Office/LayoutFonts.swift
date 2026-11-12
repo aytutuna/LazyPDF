@@ -46,6 +46,12 @@ final class LayoutFonts {
         let style: Int
     }
 
+    private struct FileKey: Hashable {
+        let address: Int
+        let index: Int
+        let style: Int
+    }
+
     private struct ChoiceKey: Hashable {
         let face: ObjectIdentifier
         let codePoint: Int
@@ -53,6 +59,7 @@ final class LayoutFonts {
 
     private let source: FontSource?
     private var faces: [FaceKey: FontFace?] = [:]
+    private var byFile: [FileKey: FontFace?] = [:]
     private var chosen: [ChoiceKey: FontFace?] = [:]
 
     init(_ source: FontSource?) {
@@ -66,8 +73,19 @@ final class LayoutFonts {
         let key = FaceKey(family: family, style: style.rawValue)
         if let known = faces[key] { return known }
         var face: FontFace?
-        if let file = source?.find(family, style), let font = TrueTypeFont.tryParse(file.data, file.collectionIndex), font.unitsPerEm > 0 {
-            face = FontFace(family: family, style: style, font: font)
+        if let file = source?.find(family, style) {
+            // Names that resolve to the same file share one face (and one embedded subset); the first name stays on it.
+            // The data array by storage address: a source that hands the same bytes back is the same file.
+            let address = file.data.withUnsafeBufferPointer { $0.baseAddress.map { Int(bitPattern: $0) } }
+            let fileKey = address.map { FileKey(address: $0, index: file.collectionIndex, style: style.rawValue) }
+            if let fileKey, let known = byFile[fileKey] {
+                face = known
+            } else {
+                if let font = TrueTypeFont.tryParse(file.data, file.collectionIndex), font.unitsPerEm > 0 {
+                    face = FontFace(family: family, style: style, font: font)
+                }
+                if let fileKey { byFile[fileKey] = .some(face) }
+            }
         }
         faces[key] = .some(face)
         return face

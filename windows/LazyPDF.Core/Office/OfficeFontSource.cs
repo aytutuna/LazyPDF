@@ -23,6 +23,7 @@ public sealed class OfficeFontSource : IFontSource
 
     private readonly IFontSource? _installed;
     private readonly IFontSource? _bundled;
+    private readonly Dictionary<(string, FontStyles), FontFile> _loaded = [];
 
     public OfficeFontSource(IFontSource? installed, IFontSource? bundled)
     {
@@ -36,7 +37,17 @@ public sealed class OfficeFontSource : IFontSource
         if (_bundled is null) return null;
         // A document that names a bundled family itself (Carlito) gets it as it is.
         string bundled = Compatible.GetValueOrDefault(Fold(family), family);
-        return _bundled.Find(bundled, style) ?? _bundled.Find(DefaultFamily, style);
+        return FindBundled(bundled, style) ?? FindBundled(DefaultFamily, style);
+    }
+
+    // Names the bundled source does not know all end up at the default; handing back the same file keeps a document
+    // with thousands of made-up names from reading and parsing the default font once per name.
+    private FontFile? FindBundled(string family, FontStyles style)
+    {
+        if (_loaded.TryGetValue((family, style), out var known)) return known;
+        var file = _bundled!.Find(family, style);
+        if (file is not null) _loaded[(family, style)] = file;
+        return file;
     }
 
     // Only A-Z fold, so the Swift twin matches without depending on its own case tables.

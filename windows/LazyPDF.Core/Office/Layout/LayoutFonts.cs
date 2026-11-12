@@ -42,7 +42,20 @@ internal sealed class LayoutFonts(IFontSource? source)
         ["Segoe UI", "Segoe UI Symbol", "Microsoft YaHei", "Yu Gothic", "Malgun Gothic", "Arial Unicode MS", "PingFang SC", "Hiragino Sans", "Apple SD Gothic Neo", "Liberation Sans"];
 
     private readonly Dictionary<(string, FontStyles), FontFace?> _faces = [];
+    private readonly Dictionary<(byte[], int, FontStyles), FontFace?> _byFile = new(FileKeyComparer.Instance);
     private readonly Dictionary<(FontFace, int), FontFace?> _chosen = [];
+
+    // The data array by reference: a source that hands the same bytes back is the same file.
+    private sealed class FileKeyComparer : IEqualityComparer<(byte[], int, FontStyles)>
+    {
+        public static readonly FileKeyComparer Instance = new();
+
+        public bool Equals((byte[], int, FontStyles) a, (byte[], int, FontStyles) b) =>
+            ReferenceEquals(a.Item1, b.Item1) && a.Item2 == b.Item2 && a.Item3 == b.Item3;
+
+        public int GetHashCode((byte[], int, FontStyles) k) =>
+            HashCode.Combine(System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(k.Item1), k.Item2, k.Item3);
+    }
 
     /// <summary>Code points no face could draw.</summary>
     public SortedSet<int> Missing { get; } = [];
@@ -51,9 +64,17 @@ internal sealed class LayoutFonts(IFontSource? source)
     {
         if (_faces.TryGetValue((family, style), out var known)) return known;
         FontFace? face = null;
-        if (source?.Find(family, style) is { } file && TrueTypeFont.TryParse(file.Data, file.CollectionIndex) is { } font && font.UnitsPerEm > 0)
+        if (source?.Find(family, style) is { } file)
         {
-            face = new FontFace(family, style, font);
+            // Names that resolve to the same file share one face (and one embedded subset); the first name stays on it.
+            if (!_byFile.TryGetValue((file.Data, file.CollectionIndex, style), out face))
+            {
+                if (TrueTypeFont.TryParse(file.Data, file.CollectionIndex) is { } font && font.UnitsPerEm > 0)
+                {
+                    face = new FontFace(family, style, font);
+                }
+                _byFile[(file.Data, file.CollectionIndex, style)] = face;
+            }
         }
         _faces[(family, style)] = face;
         return face;

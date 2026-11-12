@@ -47,6 +47,29 @@ public class OfficeFontSourceTests
         Assert.Equal("Calibri/0", Encoding.UTF8.GetString(found!.Data));
     }
 
+    private sealed class CarlitoOnly : IFontSource
+    {
+        public int Reads { get; private set; }
+
+        public FontFile? Find(string family, FontStyles style)
+        {
+            if (family != "Carlito" || style != FontStyles.Regular) return null;
+            Reads++;
+            return new FontFile(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fonts", "Carlito-Regular.ttf")));
+        }
+    }
+
+    [Fact]
+    public void UnknownNamesShareOneFontFileAndOneFace()
+    {
+        var bundled = new CarlitoOnly();
+        var fonts = new LayoutFonts(new OfficeFontSource(null, bundled));
+        var first = fonts.Find("f0", FontStyles.Regular);
+        Assert.NotNull(first);
+        for (int i = 1; i < 2000; i++) Assert.Same(first, fonts.Find("f" + i, FontStyles.Regular));
+        Assert.Equal(1, bundled.Reads);
+    }
+
     // The widths of the bundled fonts are what makes them stand in for Word's: A in units of 2048 per em as in the
     // fonts they copy (Arial 1366, Times New Roman 1479, Courier New 1229, Calibri 1185).
     [Theory]

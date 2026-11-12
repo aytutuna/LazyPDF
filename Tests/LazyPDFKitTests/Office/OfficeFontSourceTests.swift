@@ -43,6 +43,26 @@ final class OfficeFontSourceTests: XCTestCase {
         XCTAssertEqual(String(decoding: found!.data, as: UTF8.self), "Calibri/0")
     }
 
+    private final class CarlitoOnly: FontSource {
+        var reads = 0
+
+        func find(_ family: String, _ style: FontStyles) -> FontFile? {
+            guard family == "Carlito", style == .regular else { return nil }
+            reads += 1
+            let folder = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+                .deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("fonts")
+            return (try? Data(contentsOf: folder.appendingPathComponent("carlito/Carlito-Regular.ttf"))).map { FontFile([UInt8]($0)) }
+        }
+    }
+
+    func test_unknownNamesShareOneFontFileAndOneFace() throws {
+        let bundled = CarlitoOnly()
+        let fonts = LayoutFonts(OfficeFontSource(installed: nil, bundled: bundled))
+        let first = try XCTUnwrap(fonts.find("f0", .regular))
+        for i in 1..<2000 { XCTAssertTrue(fonts.find("f\(i)", .regular) === first) }
+        XCTAssertEqual(bundled.reads, 1)
+    }
+
     // The fonts in fonts/ are what make the bundled families stand in for Word's: the advance of A in units of 2048.
     func test_bundledFontsKeepTheMetricsOfWordsFonts() throws {
         let folder = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
