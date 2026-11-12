@@ -1,0 +1,283 @@
+> parse <a/>
+< E {}a
+> parse <?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<a b="1" c='2'><d/>text<e>more</e></a>
+< E {}a
+<   A {}b="1"
+<   A {}c="2"
+<   E {}d
+<   T "text"
+<   E {}e
+<     T "more"
+> parse \xEF\xBB\xBF<a>caf\xC3\xA9 \xE2\x82\xAC \xF0\x9F\x98\x80</a>
+< E {}a
+<   T "caf\u00E9 \u20AC \uD83D\uDE00"
+> parse \xFF\xFE<\x00a\x00>\x00\xE9\x00<\x00/\x00a\x00>\x00
+< E {}a
+<   T "\u00E9"
+> parse \xFE\xFF\x00<\x00a\x00>\x00\xE9\x00<\x00/\x00a\x00>
+< E {}a
+<   T "\u00E9"
+> parse \x00<\x00a\x00>\xD8\x3D\xDE\x00\x00<\x00/\x00a\x00>
+< E {}a
+<   T "\uD83D\uDE00"
+> parse <\x00a\x00>\x00x\x00<\x00/\x00a\x00>\x00
+< E {}a
+<   T "x"
+> parse <a>\xFF</a>
+< error Damaged
+> parse <a>\xC3</a>
+< error Damaged
+> parse \xFF\xFE<\x00a\x00>\x00<
+< error Damaged
+> parse <?xml version="1.0" encoding="UTF-16"?><a>x</a>
+< E {}a
+<   T "x"
+> parse <?xml version="1.0" encoding="us-ascii"?><a>x</a>
+< E {}a
+<   T "x"
+> parse <?xml version="1.0" encoding="ISO-8859-1"?><a>cafe</a>
+< error Unsupported
+> parse <?xml version="1.0" encoding='utf-8'?><a>x</a>
+< E {}a
+<   T "x"
+> parse <?xml version="1.0"?><?pi data?><!-- c --><a/><!-- after --><?pi?>
+< E {}a
+> parse  <?xml version="1.0"?><a/>
+< error Damaged
+> parse <a><?xml version="1.0"?></a>
+< error Damaged
+> parse <a><?XML x?></a>
+< error Damaged
+> parse <a>&lt;&gt;&amp;&quot;&apos;</a>
+< E {}a
+<   T "<>&\"'"
+> parse <a b="&lt;&amp;&quot;&apos;&gt;"/>
+< E {}a
+<   A {}b="<&\"'>"
+> parse <a>&#65;&#x42;&#x1F600;&#9;&#xD;</a>
+< E {}a
+<   T "AB\uD83D\uDE00\t\r"
+> parse <a b="&#10;&#9;&#13;"/>
+< E {}a
+<   A {}b="\n\t\r"
+> parse <a>&#0;</a>
+< error Damaged
+> parse <a>&#xD800;</a>
+< error Damaged
+> parse <a>&#x110000;</a>
+< error Damaged
+> parse <a>&#xFFFE;</a>
+< error Damaged
+> parse <a>&#x;</a>
+< error Damaged
+> parse <a>&#12a;</a>
+< error Damaged
+> parse <a>&#1234567890;</a>
+< error Damaged
+> parse <a>&nbsp;</a>
+< error Damaged
+> parse <a>&amp</a>
+< error Damaged
+> parse <a>&</a>
+< error Damaged
+> parse <a>x\r\ny\rz\n</a>
+< E {}a
+<   T "x\ny\nz\n"
+> parse <a b="x\r\ny\rz\nw\tv"/>
+< E {}a
+<   A {}b="x y z w v"
+> parse <a>one<![CDATA[ <two> & ]]>three</a>
+< E {}a
+<   T "one <two> & three"
+> parse <a><![CDATA[]]></a>
+< E {}a
+> parse <a><![CDATA[x\r\ny\rz]]></a>
+< E {}a
+<   T "x\ny\nz"
+> parse <a><![CDATA[x</a>
+< error Damaged
+> parse <![CDATA[x]]><a/>
+< error Damaged
+> parse <a>ab<!-- c -->cd<?p x?>ef</a>
+< E {}a
+<   T "abcdef"
+> parse <a><!-- open</a>
+< error Damaged
+> parse <a><?p open</a>
+< error Damaged
+> parse <!DOCTYPE a><a/>
+< error Unsupported
+> parse <?xml version="1.0"?><!DOCTYPE a [<!ENTITY x "y">]><a>&x;</a>
+< error Unsupported
+> parse <!DOCTYPE a SYSTEM "http://example.com/a.dtd"><a/>
+< error Unsupported
+> parse <!ELEMENT a ANY><a/>
+< error Damaged
+> parse <a xmlns="urn:d"><b/><c xmlns="" d="1"><e/></c><f/></a>
+< E {urn:d}a
+<   E {urn:d}b
+<   E {}c
+<     A {}d="1"
+<     E {}e
+<   E {urn:d}f
+> parse <p:a xmlns:p="urn:p" xmlns:q="urn:q" p:x="1" q:x="2" y="3"><p:b/><q:b/></p:a>
+< E {urn:p}a
+<   A {urn:p}x="1"
+<   A {urn:q}x="2"
+<   A {}y="3"
+<   E {urn:p}b
+<   E {urn:q}b
+> parse <a xmlns="urn:d" xmlns:p="urn:p" p:x="1" x="2" xml:lang="tr"/>
+< E {urn:d}a
+<   A {urn:p}x="1"
+<   A {}x="2"
+<   A {http://www.w3.org/XML/1998/namespace}lang="tr"
+> parse <p:a xmlns:p="urn:one"><p:b xmlns:p="urn:two"><p:c/></p:b><p:d/></p:a>
+< E {urn:one}a
+<   E {urn:two}b
+<     E {urn:two}c
+<   E {urn:one}d
+> parse <a><p:b xmlns:p="urn:p"/><p:c/></a>
+< error Damaged
+> parse <p:a/>
+< error Damaged
+> parse <a p:x="1"/>
+< error Damaged
+> parse <a xmlns:p="urn:p" p:x="1" p:x="2"/>
+< error Damaged
+> parse <a xmlns:p="urn:p" xmlns:q="urn:p" p:x="1" q:x="2"/>
+< error Damaged
+> parse <a x="1" x="2"/>
+< error Damaged
+> parse <a xmlns:p="urn:a" xmlns:p="urn:b"/>
+< error Damaged
+> parse <a xmlns:p=""/>
+< error Damaged
+> parse <a xmlns:xmlns="urn:x"/>
+< error Damaged
+> parse <a xmlns:xml="urn:x"/>
+< error Damaged
+> parse <a xmlns:xml="http://www.w3.org/XML/1998/namespace" xml:space="preserve"/>
+< E {}a
+<   A {http://www.w3.org/XML/1998/namespace}space="preserve"
+> parse <a:b:c/>
+< error Damaged
+> parse <:a/>
+< error Damaged
+> parse <a:/>
+< error Damaged
+> parse <a x:="1" xmlns:x="urn:x"/>
+< error Damaged
+> parse <a></b>
+< error Damaged
+> parse <a><b></a></b>
+< error Damaged
+> parse <a>
+< error Damaged
+> parse <a><b>
+< error Damaged
+> parse </a>
+< error Damaged
+> parse <a/><b/>
+< error Damaged
+> parse <a/>text
+< error Damaged
+> parse text<a/>
+< error Damaged
+> parse <a/>&amp;
+< error Damaged
+> parse   \n<a/>\n  \r\n
+< E {}a
+> parse 
+< error Damaged
+> parse   
+< error Damaged
+> parse <a b=1/>
+< error Damaged
+> parse <a b="1/>
+< error Damaged
+> parse <a b="<"/>
+< error Damaged
+> parse <a b/>
+< error Damaged
+> parse <a b="1"c="2"/>
+< error Damaged
+> parse <a\tb="1"\n c = '2' />
+< E {}a
+<   A {}b="1"
+<   A {}c="2"
+> parse <a / >
+< error Damaged
+> parse <a/ >
+< error Damaged
+> parse <a >x</a >
+< E {}a
+<   T "x"
+> parse <1a/>
+< error Damaged
+> parse <a-b.c_d:e xmlns:a-b.c_d="urn:x"/>
+< E {urn:x}e
+> parse <\xC3\xA9l\xC3\xA9ment \xC3\xA0="1"/>
+< E {}élément
+<   A {}à="1"
+> parse <a><b/><b/>text<c/>\n</a>
+< E {}a
+<   E {}b
+<   E {}b
+<   T "text"
+<   E {}c
+<   T "\n"
+> parse < a/>
+< error Damaged
+> parse <a
+< error Damaged
+> parse <a b
+< error Damaged
+> parse <a b=
+< error Damaged
+> parse <a b="1
+< error Damaged
+> parse <
+< error Damaged
+> parse <!
+< error Damaged
+> parse <!-
+< error Damaged
+> parse <!--
+< error Damaged
+> parse <?
+< error Damaged
+> parse <?x
+< error Damaged
+> parse <a>&#x41
+< error Damaged
+> parse <a>]]></a>
+< E {}a
+<   T "]]>"
+> limits 3 100 10 <a><b><c/></b></a>
+< E {}a
+<   E {}b
+<     E {}c
+> limits 3 100 10 <a><b><c><d/></c></b></a>
+< error Unsupported
+> limits 2 100 10 <a><b/><b/><b/></a>
+< E {}a
+<   E {}b
+<   E {}b
+<   E {}b
+> limits 5 3 10 <a><b/><c/></a>
+< E {}a
+<   E {}b
+<   E {}c
+> limits 5 3 10 <a><b/><c/><d/></a>
+< error Unsupported
+> limits 5 100 2 <a x="1" y="2"/>
+< E {}a
+<   A {}x="1"
+<   A {}y="2"
+> limits 5 100 2 <a x="1" y="2" z="3"/>
+< error Unsupported
+> limits 5 100 2 <a xmlns="urn:a" xmlns:p="urn:p" x="1"/>
+< error Unsupported
+> limits 5 100 2 <a xmlns="urn:a" xmlns:p="urn:p"/>
+< E {urn:a}a
