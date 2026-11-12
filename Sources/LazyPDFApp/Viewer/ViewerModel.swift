@@ -16,9 +16,6 @@ public final class ViewerModel: DocumentViewer {
     /// Called when the selection menu asks for a mark; the window opens the tool that makes it.
     @ObservationIgnored public var markRequested: ((SelectionMark) -> Void)?
 
-    /// Called when the selection menu asks for a mark; the window opens the tool that makes it.
-    @ObservationIgnored public var markRequested: ((SelectionMark) -> Void)?
-
     @ObservationIgnored var state = PageSurfaceState()
     @ObservationIgnored var history = PageHistory()
     @ObservationIgnored var searchJumped = false
