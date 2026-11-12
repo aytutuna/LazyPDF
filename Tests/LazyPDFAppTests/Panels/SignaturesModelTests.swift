@@ -279,6 +279,12 @@ final class SignaturesModelTests: XCTestCase {
 
         rig.model.trustSigner()
 
+        let notice = try XCTUnwrap(rig.host.notices.last)
+        XCTAssertEqual(notice.title, "Trust Ada Lovelace?")
+        XCTAssertEqual(notice.action?.text, "Trust")
+        XCTAssertEqual(rig.model.trusted.map { $0.name }, [])
+        notice.action?.run()
+
         XCTAssertEqual(rig.model.trusted.map { $0.name }, ["Ada Lovelace"])
         XCTAssertFalse(rig.model.canTrustSigner)
         await settle { rig.model.rows.first?.level == .good }

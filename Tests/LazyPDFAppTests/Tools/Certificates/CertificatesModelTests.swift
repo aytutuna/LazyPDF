@@ -264,6 +264,13 @@ final class CertificatesModelTests: XCTestCase {
 
         await s.model.addValidation()
 
+        let question = try XCTUnwrap(s.rig.host.notices.last)
+        XCTAssertEqual(question.title, "These servers will be asked")
+        XCTAssertEqual(question.action?.text, "Ask them")
+        XCTAssertFalse(s.rig.tab.isDirty)
+        question.action?.run()
+        await waitUntil { s.rig.host.statuses.last == "Added without proof of revocation." }
+
         XCTAssertEqual(s.rig.host.statuses.last, "Added without proof of revocation.")
         XCTAssertEqual(s.rig.host.notices.last?.title, "Proof of revocation is missing")
         XCTAssertTrue(s.rig.host.notices.last?.text.hasPrefix("The server did not answer.") ?? false)
