@@ -43,6 +43,12 @@ public final class DocumentTab: StripTab {
     /// Counts every change to the file's bytes (commit, undo, redo, save compact), so a viewer knows when to draw again.
     public private(set) var revision = 0
 
+    /// Counts the times the renderer was loaded for the latest `revision`: a view that draws from the renderer follows this,
+    /// since the load of a big file finishes after the revision changed.
+    public private(set) var drawn = 0
+
+    @ObservationIgnored private var loading: Task<Void, Never>?
+
     /// The page the viewer shows, 0-based, kept here so each tab comes back as it was left.
     public var pageIndex = 0
 
@@ -192,11 +198,31 @@ public final class DocumentTab: StripTab {
 
     /// For a tool whose engine call committed on the session itself: draws the new state and tells the window.
     public func refresh() {
-        canDraw = renderer.load(session, password)
+        let background = renderer.loadsInBackground && !session.document.isEncrypted
+        if !background { canDraw = renderer.load(session, password) }
         revision += 1
         version += 1
         writeRecovery()
         changed?()
+        if background { startLoad() } else { drawn += 1 }
+    }
+
+    // Loads follow one another, and one that a newer edit or the closing of the tab has outdated says nothing.
+    private func startLoad() {
+        let revision = revision
+        let previous = loading
+        loading = Task { [weak self] in
+            await previous?.value
+            guard let self, !self.isDisposed, revision == self.revision else { return }
+            let drew = await self.renderer.loadAsync(self.session, self.password)
+            guard revision == self.revision else { return }
+            if self.isDisposed {
+                self.renderer.close()
+                return
+            }
+            self.canDraw = drew
+            self.drawn += 1
+        }
     }
 
     // The bytes of a save are the ones already shown, so only the state of the tab changes, unless the save rewrote the file.

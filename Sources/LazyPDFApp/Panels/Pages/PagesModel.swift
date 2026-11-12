@@ -31,7 +31,7 @@ public final class PagesModel: ToolPanelModel {
     public func attach(_ tab: DocumentTab, _ viewer: DocumentViewer, _ host: ToolHost) {
         self.tab = tab
         self.viewer = viewer
-        watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.build() })
+        watch = ObservationWatch(track: { _ = tab.drawn }, changed: { [weak self] in self?.build() })
         build()
     }
 

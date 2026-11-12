@@ -42,7 +42,7 @@ public final class PageGrid {
     public func attach(_ tab: DocumentTab, _ host: ToolHost) {
         self.tab = tab
         self.host = host
-        watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in
+        watch = ObservationWatch(track: { _ = tab.drawn }, changed: { [weak self] in
             guard let self, let tab = self.tab, tab.revision != self.builtRevision else { return }
             self.rebuild(select: nil)
             self.onRebuild?()

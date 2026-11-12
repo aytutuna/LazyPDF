@@ -212,7 +212,7 @@ public final class ViewerModel: DocumentViewer {
     // The registration lives in the watched tab, so it holds nothing strongly and a later show() retires it.
     private func watchRevision(_ watched: DocumentTab, _ ticket: Int) {
         withObservationTracking {
-            _ = watched.revision
+            _ = watched.drawn
         } onChange: { [weak self, weak watched] in
             Task { @MainActor in
                 guard let self, let watched, self.watching == ticket, self.tab === watched else { return }

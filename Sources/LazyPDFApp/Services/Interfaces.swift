@@ -13,6 +13,21 @@ public protocol DocumentRenderer: PageRenderer {
     func pageSize(_ pageIndex: Int) -> (width: Double, height: Double)
 
     func close()
+
+    /// True when `loadAsync` opens the file off the main actor; a renderer that does not is loaded in place.
+    var loadsInBackground: Bool { get }
+
+    /// Like `load`, but the file is opened without holding the main actor, so the session may be edited meanwhile.
+    /// What it needs from the session is taken before the first suspension.
+    @MainActor func loadAsync(_ session: PdfEditSession, _ password: String?) async -> Bool
+}
+
+public extension DocumentRenderer {
+    var loadsInBackground: Bool { false }
+
+    @MainActor func loadAsync(_ session: PdfEditSession, _ password: String?) async -> Bool {
+        load(session, password)
+    }
 }
 
 /// The other Lazy apps on this computer: Lazy Scan to scan into, Lazy Print to print with.

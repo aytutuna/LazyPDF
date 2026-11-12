@@ -18,7 +18,7 @@ import PDFKit
 public final class PdfKitRenderer: DocumentRenderer {
     private static let maxPixels = 150_000_000
 
-    private final class Loaded {
+    private final class Loaded: @unchecked Sendable {
         let document: PDFDocument
         let sizes: [(width: Double, height: Double)]
         let units: [Double]
@@ -39,6 +39,7 @@ public final class PdfKitRenderer: DocumentRenderer {
 
     private let lock = NSLock()
     private var loaded: Loaded?
+    private var generation = 0
 
     public init() {}
 
@@ -62,7 +63,32 @@ public final class PdfKitRenderer: DocumentRenderer {
         let units = (0..<(document?.pageCount ?? 0)).map { $0 < pages.count ? pages[$0].userUnit : 1 }
         let next = document.map { Loaded($0, units) }
         lock.lock()
+        generation += 1
         loaded = next
+        lock.unlock()
+        return next != nil
+    }
+
+    public var loadsInBackground: Bool { true }
+
+    // An encrypted document is read in place, as the engine's decrypted copy needs the live document.
+    @MainActor
+    public func loadAsync(_ session: PdfEditSession, _ password: String?) async -> Bool {
+        let source = session.document
+        if source.isEncrypted { return load(session, password) }
+        let bytes = session.current
+        let units = source.pages.map { $0.userUnit }
+        lock.lock()
+        generation += 1
+        let mine = generation
+        lock.unlock()
+        let next = await Task.detached { () -> Loaded? in
+            guard let document = Self.open(bytes, password) else { return nil }
+            return Loaded(document, units)
+        }.value
+        lock.lock()
+        // A load that began later, or a close, has the say.
+        if generation == mine { loaded = next }
         lock.unlock()
         return next != nil
     }
@@ -83,6 +109,7 @@ public final class PdfKitRenderer: DocumentRenderer {
 
     public func close() {
         lock.lock()
+        generation += 1
         loaded = nil
         lock.unlock()
     }
