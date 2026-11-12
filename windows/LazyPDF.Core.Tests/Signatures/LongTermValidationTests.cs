@@ -204,13 +204,15 @@ public class LongTermValidationTests
     }
 
     [Fact]
-    public void A_chain_that_stops_short_of_a_root_lists_only_the_issuer_link()
+    public void A_chain_that_stops_short_of_a_root_lists_the_top_certificates_own_links_too()
     {
         byte[] signed = PdfSigner.Sign(SignatureKit.Plain(), SignatureKit.Request(Pki) with { Chain = [] });
 
         var servers = PdfLongTermValidation.Servers(signed);
 
-        Assert.Equal(new ValidationServer(ValidationServerKind.CaIssuers, Pki.IssuerUrl, "ca.test"), Assert.Single(servers));
+        Assert.Equal(
+            [(ValidationServerKind.CaIssuers, Pki.IssuerUrl, "ca.test"), (ValidationServerKind.Ocsp, Pki.OcspUrl, "ocsp.test"), (ValidationServerKind.Crl, Pki.CrlUrl, "crl.test")],
+            servers.Select(s => (s.Kind, s.Url, s.Host)));
     }
 
     [Fact]

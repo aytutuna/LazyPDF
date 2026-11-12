@@ -200,14 +200,18 @@ final class LongTermValidationTests: XCTestCase {
         XCTAssertEqual(try PdfLongTermValidation.servers(try PdfEditSession.open(signed)), servers)
     }
 
-    func test_aChainThatStopsShortOfARootListsOnlyTheIssuerLink() throws {
+    func test_aChainThatStopsShortOfARootListsTheTopCertificatesOwnLinksToo() throws {
         var request = SignatureKit.request(pki)
         request.chain = []
         let signed = try PdfSigner.sign(SignatureKit.plain(), request)
 
         let servers = try PdfLongTermValidation.servers(signed)
 
-        XCTAssertEqual(servers, [ValidationServer(kind: .caIssuers, url: Pki.issuerUrl, host: "ca.test")])
+        XCTAssertEqual(servers, [
+            ValidationServer(kind: .caIssuers, url: Pki.issuerUrl, host: "ca.test"),
+            ValidationServer(kind: .ocsp, url: Pki.ocspUrl, host: "ocsp.test"),
+            ValidationServer(kind: .crl, url: Pki.crlUrl, host: "crl.test"),
+        ])
     }
 
     func test_aFileWithoutSignaturesHasNoServersToList() {

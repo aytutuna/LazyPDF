@@ -64,7 +64,12 @@ public static class PdfLongTermValidation
                 }
                 var last = chain[^1];
                 if (!last.SubjectName.RawData.AsSpan().SequenceEqual(last.IssuerName.RawData))
+                {
+                    // Add fetches the issuer from these links, then asks for this certificate's revocation data too.
                     foreach (string url in CertificateLinks.IssuerUrls(last)) Note(ValidationServerKind.CaIssuers, url);
+                    foreach (string url in CertificateLinks.OcspUrls(last)) Note(ValidationServerKind.Ocsp, url);
+                    foreach (string url in CertificateLinks.CrlUrls(last)) Note(ValidationServerKind.Crl, url);
+                }
             }
         }
         return servers;

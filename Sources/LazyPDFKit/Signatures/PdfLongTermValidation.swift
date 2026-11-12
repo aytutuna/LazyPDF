@@ -56,7 +56,10 @@ public enum PdfLongTermValidation {
                     i += 1
                 }
                 if let last = chain.last, !last.isSelfIssued {
+                    // Add fetches the issuer from these links, then asks for this certificate's revocation data too.
                     for url in CertificateLinks.issuerUrls(last) { note(.caIssuers, url) }
+                    for url in CertificateLinks.ocspUrls(last) { note(.ocsp, url) }
+                    for url in CertificateLinks.crlUrls(last) { note(.crl, url) }
                 }
             }
         }
