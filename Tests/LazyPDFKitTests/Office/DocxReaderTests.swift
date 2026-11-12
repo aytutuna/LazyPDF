@@ -13,6 +13,14 @@ final class DocxReaderTests: XCTestCase {
         try Golden.check("office-docx", "docx-output.txt", output)
     }
 
+    func test_docxTablesGoldenFile() throws {
+        var output = ""
+        for (name, package) in try DocxSpec.read(try Golden.input("office-docx", "tables-input.txt")) {
+            output += "> \(name)\n" + DocxSpec.dump(try DocxReader.read(package))
+        }
+        try Golden.check("office-docx", "tables-output.txt", output)
+    }
+
     private func docx(_ body: String, styles: String? = nil) throws -> [UInt8] {
         var parts = [(key: "document", text: body)]
         if let styles { parts.append(("styles", styles)) }
@@ -136,7 +144,7 @@ final class DocxReaderTests: XCTestCase {
             "<w:tbl><w:tr><w:tc><w:p><w:r><w:t>cell</w:t></w:r></w:p></w:tc></w:tr></w:tbl>"
         let made = try OfficeConverter.fromWord(try docx(body), OfficeLayoutSpec.fonts())
         XCTAssertEqual(made.pages, 3)
-        XCTAssertTrue(made.skipped.contains(SkippedFeature("table", 1)))
+        XCTAssertFalse(made.skipped.contains { $0.kind == "table" })
         let pdf = try PdfDocument.open(made.bytes)
         XCTAssertEqual(pdf.pages.count, 3)
         func text(_ i: Int) -> String { TextPage.create(pdf, pdf.pages[i]).text.trimmingCharacters(in: .whitespacesAndNewlines) }

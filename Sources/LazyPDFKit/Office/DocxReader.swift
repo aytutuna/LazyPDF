@@ -38,19 +38,29 @@ final class DocxReader {
     }
 
     private let package: OpcPackage
-    private var skipped: [String: Int] = [:]
-    private var paragraphStyles: [String: (ParaProps, RunProps)] = [:]
+    var skipped: [String: Int] = [:]
+    private struct StyleKey: Hashable {
+        let style: String
+        let table: String
+    }
+
+    private var paragraphStyles: [StyleKey: (ParaProps, RunProps)] = [:]
     private var bands: [String: [LayoutParagraph]] = [:]
-    private var styles = DocxStyles()
-    private var theme = DocxTheme()
+    var styles = DocxStyles()
+    var theme = DocxTheme()
     private var numbering = DocxNumbering()
 
     // State of the part being read.
-    private var blocks: [LayoutBlock] = []
+    var blocks: [LayoutBlock] = []
     private var sectionEnds: [(at: Int, properties: OfficeXmlElement)] = []
     private var fields: [Field] = []
     private var pieces: [Piece] = []
-    private var inBand = false
+    var inBand = false
+    // State of the table cell being read; tableKey tells the cached paragraph styles of one table style and condition from another.
+    var inCell = false
+    var tableKey = ""
+    var tableLayers: [OfficeXmlElement] = []
+    var tableCells = 0
     private var breaker: (() -> Void)?
 
     private init(_ package: OpcPackage) { self.package = package }
@@ -136,7 +146,7 @@ final class DocxReader {
         return try package.xml(target)
     }
 
-    private func skip(_ kind: String) { skipped[kind, default: 0] += 1 }
+    func skip(_ kind: String) { skipped[kind, default: 0] += 1 }
 
     private static func same(_ a: LayoutGeometry, _ b: LayoutGeometry) -> Bool {
         a.width == b.width && a.height == b.height && a.top == b.top && a.right == b.right && a.bottom == b.bottom && a.left == b.left
@@ -185,7 +195,7 @@ final class DocxReader {
 
     // ---- block level ----
 
-    private func readBlocks(_ container: OfficeXmlElement) throws {
+    func readBlocks(_ container: OfficeXmlElement) throws {
         let w = Self.w
         for e in container.elements {
             try Task.checkCancellation()
@@ -196,12 +206,7 @@ final class DocxReader {
             if e.uri != w { continue }
             switch e.name {
             case "p": try paragraph(e)
-            case "tbl":
-                // Tables are read as their paragraphs in order until table layout exists.
-                skip("table")
-                for row in e.elements(w, "tr") {
-                    for cell in row.elements(w, "tc") { try readBlocks(cell) }
-                }
+            case "tbl": try table(e)
             case "sdt":
                 if let content = e.child(w, "sdtContent") { try readBlocks(content) }
             case "ins", "moveTo":
@@ -225,11 +230,12 @@ final class DocxReader {
         let pPr = p.child(w, "pPr")
         let styleId = pPr?.child(w, "pStyle")?.attribute(w, "val")
         let known: (ParaProps, RunProps)
-        if let cached = paragraphStyles[styleId ?? ""] {
+        let key = StyleKey(style: styleId ?? "", table: tableKey)
+        if let cached = paragraphStyles[key] {
             known = cached
         } else {
-            known = styles.paragraph(styleId, theme)
-            paragraphStyles[styleId ?? ""] = known
+            known = styles.paragraph(styleId, theme, tableLayers)
+            paragraphStyles[key] = known
         }
         var props = known.0
         props.apply(pPr)
@@ -261,7 +267,7 @@ final class DocxReader {
         defer { breaker = nil }
         try inline(p, known.1)
         emit(true)
-        if let sectPr = pPr?.child(w, "sectPr"), !inBand { sectionEnds.append((blocks.count, sectPr)) }
+        if let sectPr = pPr?.child(w, "sectPr"), !inBand, !inCell { sectionEnds.append((blocks.count, sectPr)) }
     }
 
     // The runs collected so far, or nil for the part of a paragraph before a page break that has no text.
@@ -403,7 +409,7 @@ final class DocxReader {
             case "noBreakHyphen": text(props, "\u{2011}")
             case "br":
                 let kind = e.attribute(w, "type")
-                if (kind == "page" || kind == "column") && !inBand && visible(props) {
+                if (kind == "page" || kind == "column") && !inBand && !inCell && visible(props) {
                     breaker?()
                 } else {
                     text(props, "\n")

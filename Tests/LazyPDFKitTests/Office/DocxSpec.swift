@@ -93,11 +93,52 @@ enum DocxSpec {
             for p in section.header { paragraph(&o, "header", p) }
             for p in section.footer { paragraph(&o, "footer", p) }
             for block in section.blocks {
-                if let p = block as? LayoutParagraph { paragraph(&o, "p", p) } else { o += "pagebreak\n" }
+                if let p = block as? LayoutParagraph {
+                    paragraph(&o, "p", p)
+                } else if let t = block as? LayoutTable {
+                    table(&o, t)
+                } else {
+                    o += "pagebreak\n"
+                }
             }
         }
         for s in document.skipped { o += "skipped \(s.kind) \(s.count)\n" }
         return o
+    }
+
+    private static func edge(_ b: LayoutBorder?) -> String {
+        guard let b else { return "-" }
+        return "\(num(b.width)):" + String(format: "%06x", b.color)
+    }
+
+    private static func table(_ o: inout String, _ t: LayoutTable) {
+        let align: String
+        switch t.align {
+        case .left: align = "left"
+        case .center: align = "center"
+        case .right: align = "right"
+        case .justify: align = "justify"
+        }
+        o += "table \(t.columns.map { num($0) }.joined(separator: ",")) indent=\(num(t.indent)) \(align)\n"
+        for row in t.rows {
+            o += "row"
+            if row.header { o += " header" }
+            if row.cantSplit { o += " cantsplit" }
+            if row.height > 0 { o += " height=\(num(row.height))" + (row.heightExact ? " exact" : "") }
+            o += "\n"
+            for c in row.cells {
+                let fill = c.fill.map { String(format: "%06x", $0) } ?? "-"
+                let valign: String
+                switch c.vAlign {
+                case .top: valign = "top"
+                case .center: valign = "center"
+                case .bottom: valign = "bottom"
+                }
+                o += "cell \(c.column) \(c.span) \(c.rowSpan) fill=\(fill) margin=\(num(c.marginTop)),\(num(c.marginRight)),\(num(c.marginBottom)),\(num(c.marginLeft)) valign=\(valign)"
+                o += " edges=\(edge(c.top)),\(edge(c.right)),\(edge(c.bottom)),\(edge(c.left))\n"
+                for p in c.paragraphs { paragraph(&o, "cp", p) }
+            }
+        }
     }
 
     private static func paragraph(_ o: inout String, _ band: String, _ p: LayoutParagraph) {

@@ -182,6 +182,7 @@ struct DocxStyle {
     let basedOn: String?
     let pPr: OfficeXmlElement?
     let rPr: OfficeXmlElement?
+    let source: OfficeXmlElement
 }
 
 final class DocxStyles {
@@ -193,6 +194,7 @@ final class DocxStyles {
 
     private(set) var defaultParagraph: String?
     private(set) var defaultCharacter: String?
+    private(set) var defaultTable: String?
 
     static func read(_ root: OfficeXmlElement?) -> DocxStyles {
         let styles = DocxStyles()
@@ -205,10 +207,11 @@ final class DocxStyles {
             guard let id = e.attribute(w, "styleId"), styles.styles[id] == nil else { continue }
             let type = e.attribute(w, "type") ?? "paragraph"
             let basedOn = e.child(w, "basedOn")?.attribute(w, "val")
-            styles.styles[id] = DocxStyle(id: id, type: type, basedOn: basedOn, pPr: e.child(w, "pPr"), rPr: e.child(w, "rPr"))
+            styles.styles[id] = DocxStyle(id: id, type: type, basedOn: basedOn, pPr: e.child(w, "pPr"), rPr: e.child(w, "rPr"), source: e)
             if let flag = e.attribute(w, "default"), flag == "1" || flag == "true" || flag == "on" {
                 if type == "paragraph" && styles.defaultParagraph == nil { styles.defaultParagraph = id }
                 if type == "character" && styles.defaultCharacter == nil { styles.defaultCharacter = id }
+                if type == "table" && styles.defaultTable == nil { styles.defaultTable = id }
             }
         }
         return styles
@@ -219,12 +222,17 @@ final class DocxStyles {
         return s
     }
 
-    /// The document defaults, then the paragraph style and the styles it is based on, farthest first.
-    func paragraph(_ id: String?, _ theme: DocxTheme) -> (ParaProps, RunProps) {
+    /// The document defaults, then the table style layers when the paragraph is in a table, then the paragraph style and
+    /// the styles it is based on, farthest first.
+    func paragraph(_ id: String?, _ theme: DocxTheme, _ tableLayers: [OfficeXmlElement] = []) -> (ParaProps, RunProps) {
         var paragraph = ParaProps()
         var run = RunProps()
         run.apply(defaultRPr, theme)
         paragraph.apply(defaultPPr)
+        for layer in tableLayers {
+            paragraph.apply(layer.child(DocxReader.w, "pPr"))
+            run.apply(layer.child(DocxReader.w, "rPr"), theme)
+        }
         for s in chain(find(id, "paragraph") == nil ? defaultParagraph : id, "paragraph") {
             paragraph.apply(s.pPr)
             run.apply(s.rPr, theme)
@@ -236,6 +244,9 @@ final class DocxStyles {
     func character(_ id: String?, _ run: inout RunProps, _ theme: DocxTheme) {
         for s in chain(find(id, "character") == nil ? defaultCharacter : id, "character") { run.apply(s.rPr, theme) }
     }
+
+    /// The table style (or the default one) and the styles it is based on, farthest first.
+    func table(_ id: String?) -> [DocxStyle] { chain(find(id, "table") == nil ? defaultTable : id, "table") }
 
     private func chain(_ id: String?, _ type: String) -> [DocxStyle] {
         var chain: [DocxStyle] = []
