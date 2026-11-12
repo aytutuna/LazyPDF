@@ -23,6 +23,49 @@ public class PdfOcrLayerTests
     }
 
     [Fact]
+    public void SkewedLineIsWrittenWithTurnedTextMatrices()
+    {
+        var document = OcrKit.Scan();
+        double angle = 0.1;
+        AddWords(document, [new OcrWord("Skewed", new OcrBox(50, 100, 100, 20), 1f, angle), new OcrWord("line", new OcrBox(160, 100, 60, 20), 1f, angle)]);
+        var page = document.Pages[0];
+        var matrices = System.Text.RegularExpressions.Regex.Matches(OcrKit.Latin(page.Contents()), @"(\S+) (\S+) (\S+) (\S+) (\S+) (\S+) Tm")
+            .Select(m => Enumerable.Range(1, 6).Select(i => double.Parse(m.Groups[i].Value, System.Globalization.CultureInfo.InvariantCulture)).ToArray()).ToList();
+        Assert.Equal(3, matrices.Count);
+        foreach (var m in matrices)
+        {
+            Assert.Equal(Math.Cos(angle), m[0], 4);
+            Assert.Equal(Math.Sin(angle), m[1], 4);
+            Assert.Equal(-Math.Sin(angle), m[2], 4);
+            Assert.Equal(Math.Cos(angle), m[3], 4);
+        }
+        Assert.Equal(50, matrices[0][4], 3);
+        Assert.Equal(600 - 120, matrices[0][5], 3);
+        Assert.Equal(["Skewed", "line"], TextPage.Create(document, page).Words.Select(w => w.Text));
+
+        var layer = PdfOcrLayer.Words(document, page);
+        Assert.Equal(["Skewed", "line"], layer.Select(w => w.Text));
+        Assert.Equal(50, layer[0].Box.X, 3);
+        Assert.Equal(100, layer[0].Box.Y, 3);
+        Assert.Equal(100, layer[0].Box.Width, 3);
+        Assert.Equal(20, layer[0].Box.Height, 3);
+
+        PdfOcrLayer.Correct(document, page, 1, "lane");
+        Assert.Contains("0.995", OcrKit.Latin(page.Contents()));
+        Assert.Equal(["Skewed", "lane"], PdfOcrLayer.Words(document, page).Select(w => w.Text));
+    }
+
+    [Fact]
+    public void StraightLineIsWrittenAsBefore()
+    {
+        var a = OcrKit.Scan();
+        var b = OcrKit.Scan();
+        AddWords(a, [new OcrWord("Same", new OcrBox(50, 100, 100, 20)), new OcrWord("here", new OcrBox(160, 102, 60, 18))]);
+        AddWords(b, [new OcrWord("Same", new OcrBox(50, 100, 100, 20), 1f, 0), new OcrWord("here", new OcrBox(160, 102, 60, 18), 1f, double.NaN)]);
+        Assert.Equal(OcrKit.Latin(a.Pages[0].Contents()), OcrKit.Latin(b.Pages[0].Contents()));
+    }
+
+    [Fact]
     public void PictureSizeScalesTheBoxes()
     {
         var document = OcrKit.Scan();

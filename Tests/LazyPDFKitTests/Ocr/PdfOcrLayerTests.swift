@@ -25,6 +25,45 @@ final class PdfOcrLayerTests: XCTestCase {
         }
     }
 
+    func test_skewedLineIsWrittenWithTurnedTextMatrices() throws {
+        let document = try OcrKit.scan()
+        let angle = 0.1
+        try addWords(document, [OcrWord("Skewed", OcrBox(50, 100, 100, 20), 1, angle), OcrWord("line", OcrBox(160, 100, 60, 20), 1, angle)])
+        let page = document.pages[0]
+        let tokens = OcrKit.latin(page.contents()).split(whereSeparator: { $0 == " " || $0.isNewline }).map(String.init)
+        var matrices: [[Double]] = []
+        for (i, token) in tokens.enumerated() where token == "Tm" && i >= 6 {
+            matrices.append(tokens[(i - 6)..<i].map { Double($0) ?? .nan })
+        }
+        XCTAssertEqual(matrices.count, 3)
+        for m in matrices {
+            XCTAssertEqual(m[0], cos(angle), accuracy: 1e-4)
+            XCTAssertEqual(m[1], sin(angle), accuracy: 1e-4)
+            XCTAssertEqual(m[2], -sin(angle), accuracy: 1e-4)
+            XCTAssertEqual(m[3], cos(angle), accuracy: 1e-4)
+        }
+        XCTAssertEqual(matrices[0][4], 50, accuracy: 1e-3)
+        XCTAssertEqual(matrices[0][5], 600 - 120, accuracy: 1e-3)
+
+        let layer = try PdfOcrLayer.words(document, page)
+        XCTAssertEqual(layer.map { $0.text }, ["Skewed", "line"])
+        XCTAssertEqual(layer[0].box.x, 50, accuracy: 1e-3)
+        XCTAssertEqual(layer[0].box.y, 100, accuracy: 1e-3)
+        XCTAssertEqual(layer[0].box.width, 100, accuracy: 1e-3)
+        XCTAssertEqual(layer[0].box.height, 20, accuracy: 1e-3)
+
+        try PdfOcrLayer.correct(document, page, 1, "lane")
+        XCTAssertTrue(OcrKit.latin(page.contents()).contains("0.995"))
+        XCTAssertEqual(try PdfOcrLayer.words(document, page).map { $0.text }, ["Skewed", "lane"])
+    }
+
+    func test_straightLineIsWrittenAsBefore() throws {
+        let a = try OcrKit.scan(), b = try OcrKit.scan()
+        try addWords(a, [OcrWord("Same", OcrBox(50, 100, 100, 20)), OcrWord("here", OcrBox(160, 102, 60, 18))])
+        try addWords(b, [OcrWord("Same", OcrBox(50, 100, 100, 20), 1, 0), OcrWord("here", OcrBox(160, 102, 60, 18), 1, .nan)])
+        XCTAssertEqual(OcrKit.latin(a.pages[0].contents()), OcrKit.latin(b.pages[0].contents()))
+    }
+
     func test_pictureSizeScalesTheBoxes() throws {
         let document = try OcrKit.scan()
         try addWords(document, OcrKit.words(dpi: 300), 400 * 300 / 72, 600 * 300 / 72)

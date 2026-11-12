@@ -161,7 +161,7 @@ public enum PdfOcrLayer {
                 lines[at].remove(at: index)
             } else {
                 let old = lines[at][index]
-                lines[at][index] = PlacedWord(text, old.x, old.y, old.width, old.height)
+                lines[at][index] = PlacedWord(text, old.x, old.y, old.width, old.height, old.angle)
             }
             lines.removeAll { $0.isEmpty }
             return

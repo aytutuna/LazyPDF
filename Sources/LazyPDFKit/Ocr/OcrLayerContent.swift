@@ -5,20 +5,23 @@ import Foundation
 // next word. The font size is the line's height and the baseline its bottom edge, so a selection covers the line.
 // Reading it back goes through the same format.
 
-/// A word of the text layer on the page as shown, in display points (origin top-left).
+/// A word of the text layer on the page as shown, in display points (origin top-left). With an angle, x and y+height
+/// are where the baseline starts and the box is the upright one before the word is turned about that point.
 struct PlacedWord {
     let text: String
     let x: Double
     let y: Double
     let width: Double
     let height: Double
+    let angle: Double
 
-    init(_ text: String, _ x: Double, _ y: Double, _ width: Double, _ height: Double) {
+    init(_ text: String, _ x: Double, _ y: Double, _ width: Double, _ height: Double, _ angle: Double = 0) {
         self.text = text
         self.x = x
         self.y = y
         self.width = width
         self.height = height
+        self.angle = angle
     }
 }
 
@@ -27,6 +30,9 @@ enum OcrLayerContent {
     static let fontName = "LPOcrF"
     private static let minSize = 0.01
     private static let minSpace = 0.1
+    private static let minAngle = 1e-6
+    // A turn beyond this is not a skew; it also keeps writtenIn's match to one of the four rotations unambiguous.
+    private static let maxAngle = Double.pi / 6
 
     // What the layer of a page can hold: maxWords words, about seven operations for each (a line of one word has the most).
     private static let maxSize = 16 << 20
@@ -38,11 +44,19 @@ enum OcrLayerContent {
         let sx = geometry.width / Double(pixelWidth), sy = geometry.height / Double(pixelHeight)
         let usable = words.prefix(PdfOcrLayer.maxWords)
             .filter { isFinite($0.box) }
-            .map { OcrWord(clean($0.text), $0.box, $0.confidence) }
+            .map { OcrWord(clean($0.text), $0.box, $0.confidence, $0.angle) }
             .filter { !$0.text.isEmpty }
         var lines: [[PlacedWord]] = []
         for line in OcrText.lines(usable) {
             let row = line.words.filter { !$0.text.isEmpty }
+            let angle = median(row.map { min(max($0.angle.isFinite ? $0.angle : 0, -maxAngle), maxAngle) })
+            if angle != 0 {
+                // A skewed line has no common top and bottom: each word keeps its own baseline start and the line its median height.
+                let height = median(row.map { $0.box.height }) * sy
+                if !(height > minSize) { continue }
+                lines.append(row.map { PlacedWord($0.text, $0.box.x * sx, $0.box.bottom * sy - height, $0.box.width * sx, height, angle) })
+                continue
+            }
             let top = median(row.map { $0.box.y }) * sy, bottom = median(row.map { $0.box.bottom }) * sy
             if !(bottom - top > minSize) { continue }
             lines.append(row.map { PlacedWord($0.text, $0.box.x * sx, top, $0.box.width * sx, bottom - top) })
@@ -60,9 +74,18 @@ enum OcrLayerContent {
                 let word = line[i]
                 place(writer, geometry, word, codes.bytes(OcrVisualOrder.flip(word.text)), word.width)
                 if i + 1 < line.count {
-                    let gap = nanMax(line[i + 1].x - (word.x + word.width), minSpace * word.height)
-                    let space = PlacedWord(word.text, word.x + word.width, word.y, word.width, word.height)
-                    place(writer, geometry, space, codes.bytes(" "), gap)
+                    let next = line[i + 1]
+                    if word.angle == 0 {
+                        let gap = nanMax(next.x - (word.x + word.width), minSpace * word.height)
+                        let space = PlacedWord(word.text, word.x + word.width, word.y, word.width, word.height)
+                        place(writer, geometry, space, codes.bytes(" "), gap)
+                    } else {
+                        let x = word.x + word.width * cos(word.angle), y = word.y - word.width * sin(word.angle)
+                        let dx = next.x - x, dy = next.y + next.height - (y + word.height)
+                        let gap = nanMax((dx * dx + dy * dy).squareRoot(), minSpace * word.height)
+                        let space = PlacedWord(word.text, x, y, word.width, word.height, word.angle)
+                        place(writer, geometry, space, codes.bytes(" "), gap)
+                    }
                 }
             }
             writer.endText()
@@ -73,8 +96,9 @@ enum OcrLayerContent {
     // Tz stretches the half-em glyphs of the string across the width asked for.
     private static func place(_ writer: ContentWriter, _ geometry: PageGeometry, _ word: PlacedWord, _ encoded: [UInt8], _ width: Double) {
         let (x, y) = geometry.toUser(word.x, word.y + word.height)
-        let (rx, ry) = geometry.toUser(word.x + 1, word.y + word.height)
-        let (ux, uy) = geometry.toUser(word.x, word.y + word.height - 1)
+        let c = cos(word.angle), s = sin(word.angle)
+        let (rx, ry) = geometry.toUser(word.x + c, word.y + word.height - s)
+        let (ux, uy) = geometry.toUser(word.x - s, word.y + word.height - c)
         let right = ((rx - x) * (rx - x) + (ry - y) * (ry - y)).squareRoot()
         let up = ((ux - x) * (ux - x) + (uy - y) * (uy - y)).squareRoot()
         let scale = 100 * width / (Double(GlyphlessFont.glyphWidth) / 1000.0 * word.height * Double(encoded.count / 2))
@@ -84,7 +108,7 @@ enum OcrLayerContent {
     }
 
     /// The geometry the stream was written in: the rotation under which its first text matrix runs along the display's
-    /// x axis. After the page's /Rotate changes, lines and heights are only meaningful in that frame; `current` is
+    /// x axis, give or take a skew. After the page's /Rotate changes, lines and heights are only meaningful in that frame; `current` is
     /// returned when no rotation fits.
     static func writtenIn(_ document: PdfDocument, _ page: PdfPage, _ stream: PdfStream, _ current: PageGeometry) throws -> PageGeometry {
         guard let tm = try operations(document, stream).first(where: { $0.operator == "Tm" && $0.operands.count == 6 }) else {
@@ -96,7 +120,7 @@ enum OcrLayerContent {
             let (x0, y0) = candidate.toUser(0, 0)
             let (x1, y1) = candidate.toUser(1, 0)
             let dx = x1 - x0, dy = y1 - y0, length = (dx * dx + dy * dy).squareRoot()
-            if abs(dx / length - a / norm) < 1e-3 && abs(dy / length - b / norm) < 1e-3 { return candidate }
+            if (dx * a + dy * b) / (length * norm) > 0.8 { return candidate }
         }
         return current
     }
@@ -131,9 +155,19 @@ enum OcrLayerContent {
                 let width = Double(GlyphlessFont.glyphWidth) / 1000.0 * size * Double(s.bytes.count / 2) * scale / 100
                 let (x1, y1) = (matrix.e, matrix.f)
                 let (x2, y2) = (matrix.e + matrix.a * width + matrix.c * size, matrix.f + matrix.b * width + matrix.d * size)
-                let box = geometry.toDisplay(PdfRect(x1, y1, x2, y2))
                 let text = font?.toText(s.bytes) ?? bigEndianUnicode(s.bytes)
-                lines[lines.count - 1].append(PlacedWord(OcrVisualOrder.flip(text), box.x, box.y, box.width, box.height))
+                let (ox, oy) = geometry.toDisplay(x1, y1)
+                let (rx, ry) = geometry.toDisplay(x1 + matrix.a * width, y1 + matrix.b * width)
+                let angle = atan2(oy - ry, rx - ox)
+                if abs(angle) < minAngle {
+                    let box = geometry.toDisplay(PdfRect(x1, y1, x2, y2))
+                    lines[lines.count - 1].append(PlacedWord(OcrVisualOrder.flip(text), box.x, box.y, box.width, box.height))
+                } else {
+                    let (ux, uy) = geometry.toDisplay(x1 + matrix.c * size, y1 + matrix.d * size)
+                    let height = ((ux - ox) * (ux - ox) + (uy - oy) * (uy - oy)).squareRoot()
+                    let wide = ((rx - ox) * (rx - ox) + (ry - oy) * (ry - oy)).squareRoot()
+                    lines[lines.count - 1].append(PlacedWord(OcrVisualOrder.flip(text), ox, oy - height, wide, height, angle))
+                }
                 words += 1
             default:
                 break

@@ -2,8 +2,11 @@ using System.Text;
 
 namespace LazyPDF.Core;
 
-/// <summary>A word of the text layer on the page as shown, in display points (origin top-left).</summary>
-internal sealed record PlacedWord(string Text, double X, double Y, double Width, double Height);
+/// <summary>
+/// A word of the text layer on the page as shown, in display points (origin top-left). With an angle, X and Y+Height
+/// are where the baseline starts and the box is the upright one before the word is turned about that point.
+/// </summary>
+internal sealed record PlacedWord(string Text, double X, double Y, double Width, double Height, double Angle = 0);
 
 /// <summary>
 /// The layer's content stream: one text object per line, in render mode 3, each word set by its
@@ -17,6 +20,9 @@ internal static class OcrLayerContent
     public const string FontName = "LPOcrF";
     private const double MinSize = 0.01;
     private const double MinSpace = 0.1;
+    // A turn beyond this is not a skew; it also keeps WrittenIn's match to one of the four rotations unambiguous.
+    private const double MinAngle = 1e-6;
+    private const double MaxAngle = Math.PI / 6;
 
     // What the layer of a page can hold: MaxWords words, about seven operations for each (a line of one word has the most).
     private const long MaxSize = 16L << 20;
@@ -31,6 +37,15 @@ internal static class OcrLayerContent
         foreach (var line in OcrText.Lines(usable))
         {
             var row = line.Words.Where(w => w.Text.Length > 0).ToList();
+            double angle = Median(row.Select(w => Math.Clamp(double.IsFinite(w.Angle) ? w.Angle : 0, -MaxAngle, MaxAngle)));
+            if (angle != 0)
+            {
+                // A skewed line has no common top and bottom: each word keeps its own baseline start and the line its median height.
+                double height = Median(row.Select(w => w.Box.Height)) * sy;
+                if (!(height > MinSize)) continue;
+                lines.Add([.. row.Select(w => new PlacedWord(w.Text, w.Box.X * sx, w.Box.Bottom * sy - height, w.Box.Width * sx, height, angle))]);
+                continue;
+            }
             double top = Median(row.Select(w => w.Box.Y)) * sy, bottom = Median(row.Select(w => w.Box.Bottom)) * sy;
             if (!(bottom - top > MinSize)) continue;
             lines.Add([.. row.Select(w => new PlacedWord(w.Text, w.Box.X * sx, top, w.Box.Width * sx, bottom - top))]);
@@ -51,8 +66,18 @@ internal static class OcrLayerContent
                 Place(writer, geometry, word, codes.Bytes(OcrVisualOrder.Flip(word.Text)), word.Width);
                 if (i + 1 < line.Count)
                 {
-                    double gap = Math.Max(line[i + 1].X - (word.X + word.Width), MinSpace * word.Height);
-                    Place(writer, geometry, word with { X = word.X + word.Width }, codes.Bytes(" "), gap);
+                    var next = line[i + 1];
+                    if (word.Angle == 0)
+                    {
+                        double gap = Math.Max(next.X - (word.X + word.Width), MinSpace * word.Height);
+                        Place(writer, geometry, word with { X = word.X + word.Width }, codes.Bytes(" "), gap);
+                    }
+                    else
+                    {
+                        double x = word.X + word.Width * Math.Cos(word.Angle), y = word.Y - word.Width * Math.Sin(word.Angle);
+                        double gap = Math.Max(Math.Sqrt(Math.Pow(next.X - x, 2) + Math.Pow(next.Y + next.Height - (y + word.Height), 2)), MinSpace * word.Height);
+                        Place(writer, geometry, word with { X = x, Y = y }, codes.Bytes(" "), gap);
+                    }
                 }
             }
             writer.EndText();
@@ -64,8 +89,9 @@ internal static class OcrLayerContent
     private static void Place(ContentWriter writer, PageGeometry geometry, PlacedWord word, byte[] encoded, double width)
     {
         var (x, y) = geometry.ToUser(word.X, word.Y + word.Height);
-        var (rx, ry) = geometry.ToUser(word.X + 1, word.Y + word.Height);
-        var (ux, uy) = geometry.ToUser(word.X, word.Y + word.Height - 1);
+        double cos = Math.Cos(word.Angle), sin = Math.Sin(word.Angle);
+        var (rx, ry) = geometry.ToUser(word.X + cos, word.Y + word.Height - sin);
+        var (ux, uy) = geometry.ToUser(word.X - sin, word.Y + word.Height - cos);
         double right = Math.Sqrt((rx - x) * (rx - x) + (ry - y) * (ry - y)), up = Math.Sqrt((ux - x) * (ux - x) + (uy - y) * (uy - y));
         double scale = 100 * width / (GlyphlessFont.GlyphWidth / 1000.0 * word.Height * (encoded.Length / 2));
         writer.Op("Tz", scale)
@@ -75,7 +101,7 @@ internal static class OcrLayerContent
 
     /// <summary>
     /// The geometry the stream was written in: the rotation under which its first text matrix runs
-    /// along the display's x axis. After the page's /Rotate changes, lines and heights are only
+    /// along the display's x axis, give or take a skew. After the page's /Rotate changes, lines and heights are only
     /// meaningful in that frame; <paramref name="current"/> is returned when no rotation fits.
     /// </summary>
     public static PageGeometry WrittenIn(PdfDocument document, PdfPage page, PdfStream stream, PageGeometry current)
@@ -89,7 +115,7 @@ internal static class OcrLayerContent
             var (x0, y0) = candidate.ToUser(0, 0);
             var (x1, y1) = candidate.ToUser(1, 0);
             double dx = x1 - x0, dy = y1 - y0, length = Math.Sqrt(dx * dx + dy * dy);
-            if (Math.Abs(dx / length - a / norm) < 1e-3 && Math.Abs(dy / length - b / norm) < 1e-3) return candidate;
+            if ((dx * a + dy * b) / (length * norm) > 0.8) return candidate;
         }
         return current;
     }
@@ -125,9 +151,21 @@ internal static class OcrLayerContent
                     double width = GlyphlessFont.GlyphWidth / 1000.0 * size * (s.Bytes.Length / 2) * scale / 100;
                     var (x1, y1) = (matrix.E, matrix.F);
                     var (x2, y2) = (matrix.E + matrix.A * width + matrix.C * size, matrix.F + matrix.B * width + matrix.D * size);
-                    var box = geometry.ToDisplay(new PdfRect(x1, y1, x2, y2));
                     string text = font is null ? Encoding.BigEndianUnicode.GetString(s.Bytes) : font.ToText(s.Bytes);
-                    lines[^1].Add(new PlacedWord(OcrVisualOrder.Flip(text), box.X, box.Y, box.Width, box.Height));
+                    var (ox, oy) = geometry.ToDisplay(x1, y1);
+                    var (rx, ry) = geometry.ToDisplay(x1 + matrix.A * width, y1 + matrix.B * width);
+                    double angle = Math.Atan2(oy - ry, rx - ox);
+                    if (Math.Abs(angle) < MinAngle)
+                    {
+                        var box = geometry.ToDisplay(new PdfRect(x1, y1, x2, y2));
+                        lines[^1].Add(new PlacedWord(OcrVisualOrder.Flip(text), box.X, box.Y, box.Width, box.Height));
+                    }
+                    else
+                    {
+                        var (ux, uy) = geometry.ToDisplay(x1 + matrix.C * size, y1 + matrix.D * size);
+                        double height = Math.Sqrt((ux - ox) * (ux - ox) + (uy - oy) * (uy - oy));
+                        lines[^1].Add(new PlacedWord(OcrVisualOrder.Flip(text), ox, oy - height, Math.Sqrt((rx - ox) * (rx - ox) + (ry - oy) * (ry - oy)), height, angle));
+                    }
                     words++;
                     break;
             }
