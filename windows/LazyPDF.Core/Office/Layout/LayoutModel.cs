@@ -164,10 +164,33 @@ internal abstract record LayoutBox;
 /// <summary>A piece of one line in one style. <see cref="SpaceExtra"/> is added after every space (justified lines).</summary>
 internal sealed record PlacedText(double X, double Baseline, string Text, string Family, FontStyles Style, double Size, int Color, double SpaceExtra) : LayoutBox;
 
-/// <summary>A picture with its top left corner at X, Y.</summary>
-internal sealed record PlacedImage(double X, double Y, double Width, double Height, LayoutPicture Source) : LayoutBox;
+/// <summary>
+/// A picture with its top left corner at X, Y. It is turned clockwise by <paramref name="Rotation"/> degrees about its center
+/// after it has been mirrored left to right, if it is.
+/// </summary>
+internal sealed record PlacedImage(double X, double Y, double Width, double Height, LayoutPicture Source, double Rotation = 0, bool FlipH = false) : LayoutBox;
 
 internal sealed record PlacedRect(double X, double Y, double Width, double Height, int Color) : LayoutBox;
+
+internal enum PathOp { Move, Line, Curve, Close }
+
+/// <summary>One step of an outline. A move or a line ends at X, Y; a curve is a cubic Bezier through X1, Y1 and X2, Y2 to X, Y.</summary>
+internal readonly record struct PathCommand(PathOp Op, double X1 = 0, double Y1 = 0, double X2 = 0, double Y2 = 0, double X = 0, double Y = 0)
+{
+    public static PathCommand Move(double x, double y) => new(PathOp.Move, X: x, Y: y);
+
+    public static PathCommand Line(double x, double y) => new(PathOp.Line, X: x, Y: y);
+
+    public static PathCommand Curve(double x1, double y1, double x2, double y2, double x, double y) => new(PathOp.Curve, x1, y1, x2, y2, x, y);
+
+    public static PathCommand Close() => new(PathOp.Close);
+}
+
+/// <summary>An outline: its width, 0xRRGGBB and the dash pattern in points (on, off, on, off ...; empty is solid).</summary>
+internal sealed record PathStroke(double Width, int Color, IReadOnlyList<double> Dash);
+
+/// <summary>An outline in page points that is filled, stroked or both.</summary>
+internal sealed record PlacedPath(IReadOnlyList<PathCommand> Commands, int? Fill, PathStroke? Stroke) : LayoutBox;
 
 internal sealed record LayoutPage(double Width, double Height, IReadOnlyList<LayoutBox> Boxes);
 

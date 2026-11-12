@@ -109,6 +109,10 @@ internal static class OfficePdfWriter
                 if (!imageNames.TryGetValue(picture.Source.Data, out string? name)) imageNames[picture.Source.Data] = name = ContentResources.Add(pdf, resources, "XObject", image.Reference, "Im");
                 Draw(writer, name, picture, layout.Height);
             }
+            else if (box is PlacedPath path)
+            {
+                Outline(writer, path, layout.Height);
+            }
             else if (box is PlacedText text)
             {
                 var key = (text.Family, text.Style);
@@ -124,8 +128,53 @@ internal static class OfficePdfWriter
         return writer.ToArray();
     }
 
-    // A cropped picture is drawn at the size the whole picture would have and clipped to the visible part.
+    private static void Outline(ContentWriter writer, PlacedPath path, double pageHeight)
+    {
+        writer.Save();
+        if (path.Fill is { } fill) writer.FillRgb(Channel(fill >> 16 & 0xFF), Channel(fill >> 8 & 0xFF), Channel(fill & 0xFF));
+        if (path.Stroke is { } stroke)
+        {
+            writer.StrokeRgb(Channel(stroke.Color >> 16 & 0xFF), Channel(stroke.Color >> 8 & 0xFF), Channel(stroke.Color & 0xFF)).LineWidth(R(stroke.Width));
+            if (stroke.Dash.Count > 0) writer.Op("d", [new PdfArray(stroke.Dash.Select(d => (PdfObject)new PdfNumber(R(d))).ToList()), new PdfNumber(0L)]);
+        }
+        foreach (var c in path.Commands)
+        {
+            switch (c.Op)
+            {
+                case PathOp.Move: writer.MoveTo(R(c.X), R(pageHeight - c.Y)); break;
+                case PathOp.Line: writer.LineTo(R(c.X), R(pageHeight - c.Y)); break;
+                case PathOp.Curve: writer.CurveTo(R(c.X1), R(pageHeight - c.Y1), R(c.X2), R(pageHeight - c.Y2), R(c.X), R(pageHeight - c.Y)); break;
+                default: writer.Close(); break;
+            }
+        }
+        if (path.Fill is not null && path.Stroke is not null) writer.FillAndStroke();
+        else if (path.Fill is not null) writer.Fill();
+        else if (path.Stroke is not null) writer.Stroke();
+        else writer.EndPath();
+        writer.Restore();
+    }
+
     private static void Draw(ContentWriter writer, string name, PlacedImage box, double pageHeight)
+    {
+        if (box.Rotation == 0 && !box.FlipH)
+        {
+            DrawUpright(writer, name, box, pageHeight);
+            return;
+        }
+        // Mirror about the center, then turn; the page runs up, so a clockwise turn is a negative angle.
+        double cx = box.X + box.Width / 2, cy = pageHeight - box.Y - box.Height / 2;
+        double angle = -box.Rotation * Math.PI / 180, cos = Math.Cos(angle), sin = Math.Sin(angle);
+        double fx = box.FlipH ? -1 : 1;
+        var turn = new PdfMatrix(R4(cos * fx), R4(sin * fx), R4(-sin), R4(cos), R(cx - cos * fx * cx + sin * cy), R(cy - sin * fx * cx - cos * cy));
+        writer.Save().Concat(turn);
+        DrawUpright(writer, name, box, pageHeight);
+        writer.Restore();
+    }
+
+    private static double R4(double value) => Math.Round(value * 10000, MidpointRounding.AwayFromZero) / 10000 + 0.0;
+
+    // A cropped picture is drawn at the size the whole picture would have and clipped to the visible part.
+    private static void DrawUpright(ContentWriter writer, string name, PlacedImage box, double pageHeight)
     {
         var s = box.Source;
         double visibleX = 1 - s.CropLeft - s.CropRight, visibleY = 1 - s.CropTop - s.CropBottom;
