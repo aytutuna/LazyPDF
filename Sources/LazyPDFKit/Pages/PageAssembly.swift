@@ -193,7 +193,7 @@ public enum PageAssembly {
     }
 
     // A file of a catalog and an empty tree, with a proper table so that opening it needs no repair.
-    private static func blank(_ version: String) throws -> PdfDocument {
+    static func blank(_ version: String) throws -> PdfDocument {
         let head = "%PDF-\(version)\n%\u{E2}\u{E3}\u{CF}\u{D3}\n"
         let catalog = "1 0 obj\n<</Type /Catalog /Pages 2 0 R>>\nendobj\n"
         let tree = "2 0 obj\n<</Type /Pages /Kids [] /Count 0>>\nendobj\n"
