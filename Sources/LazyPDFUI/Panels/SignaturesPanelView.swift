@@ -84,6 +84,18 @@ public struct SignaturesPanelView: View {
                 .accessibilityLabel(L10n.t("Save the signed version as a file"))
                 .disabled(!model.canSaveSigned)
             }
+            if model.canTrustSigner {
+                Button { model.trustSigner() } label: {
+                    Label(L10n.t("Trust this signer"), systemImage: "checkmark.shield")
+                }
+                Text(L10n.t("Add the signer's certificate to those you trust. Do it only after checking it with them.")).font(.caption).foregroundStyle(.secondary)
+            }
+            if model.canAskServers {
+                Button { model.askServers() } label: {
+                    Label(L10n.t("Look for missing certificates"), systemImage: "network")
+                }
+                Text(L10n.t("Asks the servers the certificates name for the certificate of an issuer. The file is not sent.")).font(.caption).foregroundStyle(.secondary)
+            }
             if let text = model.versionText {
                 Text(text).font(.callout).foregroundStyle(.secondary).accessibilityAddTraits(.updatesFrequently)
             }

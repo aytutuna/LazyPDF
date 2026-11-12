@@ -8438,5 +8438,14 @@
   },
   "Import a .p12 file": {
     "tr": ".p12 dosyası içe aktar"
+  },
+  "Add the signer's certificate to those you trust. Do it only after checking it with them.": {
+    "tr": "İmzalayanın sertifikasını güvendiklerinize ekler. Bunu ancak onunla doğruladıktan sonra yapın."
+  },
+  "Look for missing certificates": {
+    "tr": "Eksik sertifikaları ara"
+  },
+  "Asks the servers the certificates name for the certificate of an issuer. The file is not sent.": {
+    "tr": "Sertifikaların bildirdiği sunuculardan bir vericinin sertifikasını ister. Dosya gönderilmez."
   }
 }

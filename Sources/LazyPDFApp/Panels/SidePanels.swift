@@ -12,7 +12,12 @@ public enum SidePanelCatalog {
         case "attachments": return AttachmentsModel(openedFolder: folders.openedAttachments)
         case "layers": return LayersModel()
         case "comments": return CommentsModel()
-        case "signatures": return SignaturesModel(trust: SignatureTrust(directory: folders.settings))
+        case "signatures":
+            #if canImport(Darwin)
+            return SignaturesModel(trust: SignatureTrust(directory: folders.settings), transport: { UrlSessionTransport() })
+            #else
+            return SignaturesModel(trust: SignatureTrust(directory: folders.settings))
+            #endif
         case "search": return SearchModel()
         default: return nil
         }

@@ -82,6 +82,7 @@
 "Add pictures" = "Resim ekle";
 "Add step" = "Adım ekle";
 "Add tags" = "Etiket ekle";
+"Add the signer's certificate to those you trust. Do it only after checking it with them." = "İmzalayanın sertifikasını güvendiklerinize ekler. Bunu ancak onunla doğruladıktan sonra yapın.";
 "Add to page" = "Sayfaya ekle";
 "Add validation data" = "Doğrulama verisi ekle";
 "Add watermark" = "Filigran ekle";
@@ -160,6 +161,7 @@
 "Ask the signer to sign again with an RSA key of 2048 bits or more, or an ECDSA key on P-256 or a stronger curve." = "İmzalayandan en az 2048 bitlik bir RSA anahtarıyla ya da P-256 veya daha güçlü bir eğri üzerinde bir ECDSA anahtarıyla yeniden imzalamasını isteyin.";
 "Ask the signer to sign again with the certificate included." = "İmzalayandan sertifikayı da ekleyerek yeniden imzalamasını isteyin.";
 "Asks the certificate servers for proof and stores it in the file." = "Sertifika sunucularından kanıt ister ve dosyaya kaydeder.";
+"Asks the servers the certificates name for the certificate of an issuer. The file is not sent." = "Sertifikaların bildirdiği sunuculardan bir vericinin sertifikasını ister. Dosya gönderilmez.";
 "At the end" = "Sona";
 "At the start" = "Başa";
 "Attach file" = "Dosya ekle";
@@ -293,6 +295,7 @@
 "Check the file with the program that signed it." = "Dosyayı imzalayan programla denetleyin.";
 "Check the name and the size of the field, then try again." = "Alanın adını ve boyutunu kontrol edin, sonra yeniden deneyin.";
 "Check the password, and that the file holds a certificate with its private key." = "Parolayı ve dosyanın özel anahtarlı bir sertifika içerdiğini denetleyin.";
+"Checked with the certificate servers just now. The file is not changed." = "Az önce sertifika sunucularıyla denetlendi. Dosya değiştirilmez.";
 "Checking the file" = "Dosya denetleniyor";
 "Checking the files" = "Dosyalar denetleniyor";
 "Checking the signatures" = "İmzalar denetleniyor";
@@ -844,6 +847,7 @@
 "Look" = "Görünüm";
 "Look Up" = "Sözlükte ara";
 "Look at" = "Karşılaştırma yöntemi";
+"Look for missing certificates" = "Eksik sertifikaları ara";
 "Looking for fields" = "Alanlar aranıyor";
 "Looking through the file." = "Dosya taranıyor.";
 "Looks different" = "Farklı görünüyor";
@@ -1421,6 +1425,7 @@
 "Search text" = "Aranacak metin";
 "Search the file" = "Dosyada ara";
 "Search the file to list every match here." = "Dosyada arayın, eşleşmeler burada listelensin.";
+"Search tools" = "Araçlarda ara";
 "Searchable" = "Aranabilir";
 "Searching" = "Aranıyor";
 "Searching for {0}" = "{0} aranıyor";
@@ -1973,6 +1978,7 @@
 "Trim fonts" = "Yazı tiplerini kırp";
 "Trust settings" = "Güven ayarları";
 "Trust the signer's certificate only after checking it with them." = "İmzalayanın sertifikasına ancak onunla doğruladıktan sonra güvenin.";
+"Trust this signer" = "Bu imzacıya güven";
 "Trust what the system trusts" = "Sistemin güvendiklerine güven";
 "Turkish ID numbers" = "T.C. kimlik numaraları";
 "Turn" = "Döndür";

@@ -30,11 +30,14 @@ public final class SignaturesModel: ToolPanelModel {
     var viewer: DocumentViewer?
     var host: ToolHost?
     @ObservationIgnored private let trust: SignatureTrust
+    @ObservationIgnored private let makeTransport: (() -> SigningTransport)?
     @ObservationIgnored private var watch: ObservationWatch?
     @ObservationIgnored private var ticket = 0
 
-    public init(trust: SignatureTrust) {
+    /// `transport`, when given, lets the person ask the servers the certificates name for a certificate the chain lacks.
+    public init(trust: SignatureTrust, transport: (() -> SigningTransport)? = nil) {
         self.trust = trust
+        makeTransport = transport
         trustsSystem = trust.trustsSystem
         trusted = trust.rows
     }
@@ -53,6 +56,17 @@ public final class SignaturesModel: ToolPanelModel {
         guard let row = selectedRow else { return nil }
         if !row.hasLaterRevisions { return L10n.t("This is the signed version.") }
         return tab?.document.isEncrypted == true ? L10n.t("A protected file cannot open as a copy. Save the signed version, then open it.") : nil
+    }
+
+    /// Whether the picked signature failed only for want of trust in a certificate that the person could add.
+    public var canTrustSigner: Bool {
+        guard let row = selectedRow, let certificate = row.report.certificate, row.report.problems.contains(.untrustedSigner) else { return false }
+        return !trusted.contains { $0.der == Data(certificate.rawData).base64EncodedString() }
+    }
+
+    /// Whether the servers can be asked for the certificates the signer's chain lacks.
+    public var canAskServers: Bool {
+        makeTransport != nil && (selectedRow?.report.problems.contains(.untrustedSigner) ?? false) && tab?.certificate == nil
     }
 
     public func attach(_ tab: DocumentTab, _ viewer: DocumentViewer, _ host: ToolHost) {
@@ -77,7 +91,7 @@ public final class SignaturesModel: ToolPanelModel {
 
     /// Checks the signatures of the file as it is; the task ends when the list is shown.
     @discardableResult
-    public func check() -> Task<Void, Never> {
+    public func check(online: Bool = false) -> Task<Void, Never> {
         ticket += 1
         let mine = ticket
         guard let tab else { return Task {} }
@@ -93,6 +107,8 @@ public final class SignaturesModel: ToolPanelModel {
             }
             options.certificate = certificate
         }
+        let transport = online ? makeTransport?() : nil
+        options.transport = transport
         let certificate = options.certificate
         return Task {
             let found = await Task.detached { () -> (reports: [SignatureReport], fields: [String: (page: Int, rect: PdfRect)])? in
@@ -109,7 +125,22 @@ public final class SignaturesModel: ToolPanelModel {
             }
             self.show(found.reports.map { self.row($0, found.fields) }, found.reports.isEmpty ? L10n.t("This file has no signatures.") : nil)
             self.selected = self.rows.first?.id
+            if let transport, !found.reports.isEmpty {
+                self.note = L10n.t("Checked with the certificate servers just now. The file is not changed.") + (transport.lastFailure.map { " " + $0 } ?? "")
+            }
         }
+    }
+
+    /// Checks again, this time fetching the certificate of an issuer the chain lacks from the address the certificate names.
+    public func askServers() {
+        guard canAskServers else { return }
+        check(online: true)
+    }
+
+    /// Adds the picked signature's certificate to those the user trusts.
+    public func trustSigner() {
+        guard let certificate = selectedRow?.report.certificate else { return }
+        addTrusted(certificate.rawData)
     }
 
     public func select(_ id: Int?) {

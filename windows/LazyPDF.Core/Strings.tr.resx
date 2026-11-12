@@ -307,6 +307,9 @@
   <data name="Add tags" xml:space="preserve">
     <value>Etiket ekle</value>
   </data>
+  <data name="Add the signer's certificate to those you trust. Do it only after checking it with them." xml:space="preserve">
+    <value>İmzalayanın sertifikasını güvendiklerinize ekler. Bunu ancak onunla doğruladıktan sonra yapın.</value>
+  </data>
   <data name="Add to page" xml:space="preserve">
     <value>Sayfaya ekle</value>
   </data>
@@ -600,6 +603,9 @@
   </data>
   <data name="Asks the servers named in the signer certificate for the certificates between it and a trusted one." xml:space="preserve">
     <value>İmzacının sertifikasında adı geçen sunuculardan, sertifika ile güvenilen bir sertifika arasındaki sertifikaları ister.</value>
+  </data>
+  <data name="Asks the servers the certificates name for the certificate of an issuer. The file is not sent." xml:space="preserve">
+    <value>Sertifikaların bildirdiği sunuculardan bir vericinin sertifikasını ister. Dosya gönderilmez.</value>
   </data>
   <data name="At the end" xml:space="preserve">
     <value>Sona</value>
@@ -3120,6 +3126,9 @@
   </data>
   <data name="Look at" xml:space="preserve">
     <value>Karşılaştırma yöntemi</value>
+  </data>
+  <data name="Look for missing certificates" xml:space="preserve">
+    <value>Eksik sertifikaları ara</value>
   </data>
   <data name="Look of the signature" xml:space="preserve">
     <value>İmzanın görünümü</value>

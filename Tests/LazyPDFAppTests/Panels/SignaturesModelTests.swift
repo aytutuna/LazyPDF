@@ -195,6 +195,36 @@ final class SignaturesModelTests: XCTestCase {
         await settle { rig.model.rows.first?.level == .caution }
     }
 
+    func test_theSignerIsTrustedFromTheButton() async throws {
+        let (file, _) = try signedFile(comment: false)
+        let rig = try await attached(file)
+        XCTAssertTrue(rig.model.canTrustSigner)
+
+        rig.model.trustSigner()
+
+        XCTAssertEqual(rig.model.trusted.map { $0.name }, ["Ada Lovelace"])
+        XCTAssertFalse(rig.model.canTrustSigner)
+        await settle { rig.model.rows.first?.level == .good }
+    }
+
+    func test_theServersAreAskedOnlyWhenAskedAndOnlyWhereATransportWasGiven() async throws {
+        let (file, _) = try signedFile(comment: false)
+        let without = try await attached(file)
+        XCTAssertFalse(without.model.canAskServers)
+
+        let dir = TempDir(self)
+        let tab = try PanelPdfs.tab(file)
+        let model = SignaturesModel(trust: SignatureTrust(directory: dir.url), transport: { SilentTransport() })
+        model.attach(tab, PanelViewer(tab), RecordingHost())
+        await model.check().value
+        XCTAssertNotEqual(model.note, "Checked with the certificate servers just now. The file is not changed.")
+        XCTAssertTrue(model.canAskServers)
+
+        model.askServers()
+        await settle { model.note?.hasPrefix("Checked with the certificate servers just now.") == true }
+        XCTAssertTrue(model.note?.hasSuffix("No connection.") == true)
+    }
+
     func test_theSignersCertificateIsHandedToTheView() async throws {
         let (file, certificate) = try signedFile(comment: false)
         let rig = try await attached(file)
@@ -257,4 +287,11 @@ final class SignaturesModelTests: XCTestCase {
         XCTAssertEqual(offered.bytes, opened.pdf)
     }
     #endif
+}
+
+private final class SilentTransport: SigningTransport {
+    var lastFailure: String? { "No connection." }
+    func post(_ url: String, _ contentType: String, _ body: [UInt8]) -> [UInt8]? { nil }
+    func get(_ url: String) -> [UInt8]? { nil }
+    func cancel() {}
 }
