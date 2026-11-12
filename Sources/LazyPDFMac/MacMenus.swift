@@ -17,6 +17,13 @@ struct MacMenus: Commands {
     private var usable: Bool { vm.activeDocument != nil && free }
 
     var body: some Commands {
+        fileCommands
+        editCommands
+        menus
+        appCommands
+    }
+
+    @CommandsBuilder private var fileCommands: some Commands {
         CommandGroup(replacing: .newItem) {
             Button(L10n.t("Open")) { shell.commands.open() }
                 .keyboardShortcut("o")
@@ -67,6 +74,9 @@ struct MacMenus: Commands {
                     .disabled(!usable)
             }
         }
+    }
+
+    @CommandsBuilder private var editCommands: some Commands {
         CommandGroup(replacing: .undoRedo) {
             // Always on: the keys belong to the text being typed in first (FileActions.undo), and the document's own step
             // does nothing when there is none.
@@ -90,6 +100,9 @@ struct MacMenus: Commands {
         CommandGroup(after: .toolbar) {
             viewItems
         }
+    }
+
+    @CommandsBuilder private var menus: some Commands {
         CommandMenu(L10n.t("Go")) {
             goItems
         }
@@ -103,6 +116,9 @@ struct MacMenus: Commands {
                 .disabled(!usable)
             }
         }
+    }
+
+    @CommandsBuilder private var appCommands: some Commands {
         CommandGroup(replacing: .appInfo) {
             Button(L10n.t("About Lazy PDF")) {
                 shell.showWindow()
