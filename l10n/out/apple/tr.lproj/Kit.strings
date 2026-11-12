@@ -1947,6 +1947,7 @@
 "This page cannot be shown." = "Bu sayfa gösterilemiyor.";
 "This picture cannot be read." = "Bu resim okunamıyor.";
 "This script did not run. Only built-in format and calculate functions run." = "Bu betik çalışmadı. Yalnızca yerleşik biçim ve hesaplama işlevleri çalışır.";
+"This server is contacted when you sign with a time stamp. It receives a fingerprint of the signature, not the file." = "Zaman damgasıyla imzalarken bu sunucuya bağlanılır. Sunucu, dosyayı değil imzanın parmak izini alır.";
 "This sets the page numbers viewers show. Nothing is printed on the pages." = "Bu, görüntüleyicilerin gösterdiği sayfa numaralarını ayarlar. Sayfalara hiçbir şey basılmaz.";
 "This shape has no fill. Use the line colour instead." = "Bu şeklin dolgusu yok. Çizgi rengini kullanın.";
 "This shape has no line. Use the fill colour instead." = "Bu şeklin çizgisi yok. Dolgu rengini kullanın.";

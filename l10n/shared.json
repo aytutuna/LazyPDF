@@ -6925,6 +6925,9 @@
   "Time stamp server address": {
     "tr": "Zaman damgası sunucusu adresi"
   },
+  "This server is contacted when you sign with a time stamp. It receives a fingerprint of the signature, not the file.": {
+    "tr": "Zaman damgasıyla imzalarken bu sunucuya bağlanılır. Sunucu, dosyayı değil imzanın parmak izini alır."
+  },
   "Trust settings": {
     "tr": "Güven ayarları"
   },

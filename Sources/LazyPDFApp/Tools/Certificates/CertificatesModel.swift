@@ -61,6 +61,7 @@ public final class CertificatesModel: ToolPanelModel {
     public var certifyIndex = 0
     public var timestamp = false
     public var timestampUrl = ""
+    public static let suggestedTimestampUrl = "http://timestamp.digicert.com"
     public var longTerm = false
     public var pfxPassword = ""
 
@@ -141,7 +142,7 @@ public final class CertificatesModel: ToolPanelModel {
         self.tab = tab
         self.viewer = viewer
         self.host = host
-        if timestampUrl.isEmpty { timestampUrl = trust.timestampUrl }
+        if timestampUrl.isEmpty { timestampUrl = trust.timestampUrl.isEmpty ? Self.suggestedTimestampUrl : trust.timestampUrl }
         let chosen = selectedIdentity
         identities = host.certificateChoices()
         selectedIdentity = identities.contains { $0.id == chosen } ? chosen : identities.first?.id

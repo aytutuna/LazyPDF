@@ -7015,6 +7015,9 @@
   <data name="This script did not run. Only built-in format and calculate functions run." xml:space="preserve">
     <value>Bu betik çalışmadı. Yalnızca yerleşik biçim ve hesaplama işlevleri çalışır.</value>
   </data>
+  <data name="This server is contacted when you sign with a time stamp. It receives a fingerprint of the signature, not the file." xml:space="preserve">
+    <value>Zaman damgasıyla imzalarken bu sunucuya bağlanılır. Sunucu, dosyayı değil imzanın parmak izini alır.</value>
+  </data>
   <data name="This sets the page numbers viewers show. Nothing is printed on the pages." xml:space="preserve">
     <value>Bu, görüntüleyicilerin gösterdiği sayfa numaralarını ayarlar. Sayfalara hiçbir şey basılmaz.</value>
   </data>

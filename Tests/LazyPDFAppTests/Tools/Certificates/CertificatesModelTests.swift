@@ -196,6 +196,17 @@ final class CertificatesModelTests: XCTestCase {
         XCTAssertEqual(model.timestampUrl, "https://tsa.example/stamp")
     }
 
+    func test_theTimeStampServerStartsWithTheSuggestedAddress() async throws {
+        let rig = try SecurityRig()
+        let model = CertificatesModel(trust: SignatureTrust(directory: TempDir(self).url), transport: { DownServer() },
+                                      importIdentity: { _, _ in throw SignatureCryptoException(message: "") })
+
+        rig.attach(model)
+
+        XCTAssertEqual(model.timestampUrl, "http://timestamp.digicert.com")
+        XCTAssertTrue(CertificateSigning.isWebAddress(model.timestampUrl))
+    }
+
     func test_aP12FileIsReadWithItsPasswordAndAWrongOneIsSaidSo() async throws {
         let s = try attached()
         let folder = TempDir(self)

@@ -109,6 +109,7 @@ struct CertificatesPanelView: View {
                         .textFieldStyle(.roundedBorder)
                         .autocorrectionDisabled()
                     if !model.urlNote.isEmpty { ReasonText(model.urlNote).accessibilityAddTraits(.updatesFrequently) }
+                    ReasonText(L10n.t("This server is contacted when you sign with a time stamp. It receives a fingerprint of the signature, not the file."))
                 }
                 Toggle(L10n.t("Long term validation"), isOn: $model.longTerm)
                 ReasonText(L10n.t("Keeps the proof that the certificate was good. The signature can then be checked after it expires."))
