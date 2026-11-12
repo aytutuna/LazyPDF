@@ -370,7 +370,7 @@ public sealed class MarkerTests
         made.Dictionary.Remove("BS");
         made.Dictionary["Border"] = new PdfArray([new PdfNumber(0), new PdfNumber(0), new PdfNumber(4)]);
 
-        var dotted = f.Marker.SetDash(made, LineStyle.Dotted);
+        var dotted = f.Marker.SetDash(f.Marker.Find(0, made.Reference!.Number)!, LineStyle.Dotted);
 
         Assert.Equal(4, dotted.Border.Width);
     }
