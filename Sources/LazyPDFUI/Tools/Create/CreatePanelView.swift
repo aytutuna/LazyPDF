@@ -22,6 +22,7 @@ struct CreatePanelView: View {
                     Text(L10n.t("Pictures")).tag(CreateFrom.pictures)
                     Text(L10n.t("Text")).tag(CreateFrom.text)
                     Text(L10n.t("Clipboard")).tag(CreateFrom.clipboard)
+                    if model.offersWebPage { Text(L10n.t("Web page")).tag(CreateFrom.webPage) }
                 }
                 .labelsHidden()
             }
@@ -29,6 +30,7 @@ struct CreatePanelView: View {
             case .blank: blank(model)
             case .pictures: pictures(model)
             case .text: text(model)
+            case .webPage: webPage(model)
             case .clipboard: Label(model.clipboardState, systemImage: "doc.on.clipboard").font(.caption).foregroundStyle(.secondary)
                 .accessibilityAddTraits(.updatesFrequently)
             }
@@ -117,6 +119,18 @@ struct CreatePanelView: View {
     }
 
     @ViewBuilder
+    private func webPage(_ model: CreateModel) -> some View {
+        Button { Task { await model.pickWebPage() } } label: { Label(L10n.t("Choose a web page file"), systemImage: "globe") }
+        if let page = model.webPage {
+            Text(page.url.lastPathComponent).lineLimit(1).truncationMode(.middle)
+        }
+        Label(L10n.t("Scripts do not run and nothing is loaded from the internet."), systemImage: "info.circle")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    @ViewBuilder
     private func setup(_ model: CreateModel) -> some View {
         @Bindable var model = model
         LabelledField(L10n.t("Paper")) {
@@ -176,7 +190,7 @@ public struct CreateSheet: View {
     let close: () -> Void
 
     public init(host: AppViewModel, close: @escaping () -> Void) {
-        _model = State(initialValue: CreateModel(host: host, codec: ImageIOCodec(), fonts: CoreTextFontSource(), settings: host.settings))
+        _model = State(initialValue: CreateModel(host: host, codec: ImageIOCodec(), fonts: CoreTextFontSource(), settings: host.settings, web: WebKitPageRenderer()))
         self.close = close
     }
 
