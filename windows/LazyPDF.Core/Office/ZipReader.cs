@@ -69,7 +69,7 @@ internal sealed class ZipReader
     private static long U64(byte[] d, long at)
     {
         long low = U32(d, at), high = U32(d, at + 4);
-        if (high >= 1 << 31) throw Cut();
+        if (high >= 1L << 31) throw Cut();
         return low | high << 32;
     }
 
