@@ -9,6 +9,7 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using LazyPDF.App.Tools.Certificates;
 using LazyPDF.App.Viewer;
+using LazyPDF.Core;
 
 namespace LazyPDF.App.Tools.Redact;
 
@@ -54,7 +55,9 @@ public sealed class RedactBoxEditor
     private Rect _rect;
     private Rect _start;
     private Point _grab;
+    private PageGeometry? _geometry;
     private bool _nudging;
+    private bool _clearing;
     private bool _resized;
 
     public RedactBoxEditor(IDocumentViewer viewer, Action<MarkItem, MarkItem> changed, Action<string> status, Action leave)
@@ -74,17 +77,19 @@ public sealed class RedactBoxEditor
     public void Detach()
     {
         _viewer.ViewChanged -= Viewer_ViewChanged;
-        Show(null);
+        Clear();
     }
 
     /// <summary>Frames <paramref name="item"/> when it is a box; null, or any other mark, removes the frame.</summary>
     public void Show(MarkItem? item)
     {
-        Clear();
+        if (_clearing) return;
+        Reset();
         if (item is not { IsBox: true } || item.Page >= _viewer.PageCount) return;
         _item = item;
         _layer = _viewer.Overlay(item.Page);
-        _rect = MarkShapes.Where(_viewer.Geometry(item.Page), item.Mark);
+        _geometry = _viewer.Geometry(item.Page);
+        _rect = MarkShapes.Where(_geometry, item.Mark);
         _frame = new Frame();
         _frame.Focusable = true;
         _frame.FocusVisualStyle = null;
@@ -104,9 +109,24 @@ public sealed class RedactBoxEditor
     /// <summary>Gives the frame keyboard focus; false when no box is framed.</summary>
     public bool Focus() => _frame?.Focus() ?? false;
 
+    // Pending nudges go in first; the guard keeps the selection change they cause from framing the box again.
     public void Clear()
     {
-        Commit();
+        _clearing = true;
+        try
+        {
+            Commit();
+        }
+        finally
+        {
+            _clearing = false;
+        }
+        Reset();
+    }
+
+    private void Reset()
+    {
+        _settle.Stop();
         _nudging = false;
         if (_layer is not null)
         {
@@ -230,8 +250,8 @@ public sealed class RedactBoxEditor
             return;
         }
         if (_rect == _start) return;
-        var geometry = _viewer.Geometry(old.Page);
-        var now = old with { Mark = MarkShapes.Box(old.Page, geometry, _rect.TopLeft, _rect.BottomRight) };
+        // The geometry from when the box was framed: the viewer may already show another document.
+        var now = old with { Mark = MarkShapes.Box(old.Page, _geometry!, _rect.TopLeft, _rect.BottomRight) };
         _changed(old, now);
     }
 

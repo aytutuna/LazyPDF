@@ -92,8 +92,8 @@ public partial class RedactPanel : ToolPanel
 
     private void Tab_Changed(object? sender, EventArgs e)
     {
-        DropMarksOfOtherPages();
         _editor!.Clear();
+        DropMarksOfOtherPages();
         DrawOverlays(redrawAll: true);
     }
 
