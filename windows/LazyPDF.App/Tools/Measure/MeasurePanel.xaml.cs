@@ -391,8 +391,8 @@ public partial class MeasurePanel : ToolPanel
         Hint.Text = tool?.Calibrate == true ? Loc.T("Click the two ends of something whose real length you know.")
             : _paused ? Loc.T("Pick Distance, Perimeter or Area to measure again.")
             : Kind() == MeasureKind.Distance
-            ? Loc.T("Click the two ends. Hold Shift for straight lines.")
-            : Loc.T("Click each corner, then double-click to finish. Hold Shift for straight lines.");
+            ? Loc.T("Click the two ends. Hold Shift for straight lines, Alt to skip snapping.")
+            : Loc.T("Click each corner, then double-click to finish. Hold Shift for straight lines, Alt to skip snapping.");
         if (tool is null || tool.Points.Count == 0)
         {
             Readout.Text = "—";

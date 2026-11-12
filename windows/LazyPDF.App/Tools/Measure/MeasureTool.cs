@@ -129,7 +129,7 @@ internal sealed class MeasureTool(IDocumentViewer viewer) : IPagePointerTool
         Snapped = false;
         var at = pointer.Point;
         if (pointer.Modifiers.HasFlag(ModifierKeys.Shift) && sameShape && _points.Count > 0) return MeasureShape.Straighten(_points[^1], at);
-        if (!Snap || !_snaps.TryGetValue(pointer.Page, out var corners)) return at;
+        if (!Snap || pointer.Modifiers.HasFlag(ModifierKeys.Alt) || !_snaps.TryGetValue(pointer.Page, out var corners)) return at;
         double scale = Scale(pointer.Page);
         if (scale <= 0 || MeasureShape.Nearest(corners, at, SnapPixels / scale) is not { } snapped) return at;
         Snapped = true;

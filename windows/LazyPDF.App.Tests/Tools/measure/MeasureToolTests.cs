@@ -207,6 +207,19 @@ public sealed class MeasureToolTests
     }
 
     [Fact]
+    public void HoldingAltKeepsTheClickWhereItWas()
+    {
+        var (tool, done, viewer) = Start(MeasureKind.Distance, withText: true);
+        var word = viewer.Text!.Words[0];
+        var corner = viewer.Geometry.ToDisplay(word.Bounds.Left, word.Bounds.Top);
+
+        tool.Press(At(corner.X + 2, corner.Y - 2, keys: ModifierKeys.Alt));
+        tool.Press(At(300, 300));
+
+        Assert.Equal(corner.X + 2, Assert.Single(done).Points[0].X, 6);
+    }
+
+    [Fact]
     public void ClicksSnapToTheEndsOfDrawnLines()
     {
         var session = PdfEditSession.Open(Pdfs.Text());

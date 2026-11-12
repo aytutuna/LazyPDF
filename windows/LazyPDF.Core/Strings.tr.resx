@@ -1189,6 +1189,9 @@
   <data name="Click each corner, double-click to finish." xml:space="preserve">
     <value>Her köşeye tıklayın, bitirmek için çift tıklayın.</value>
   </data>
+  <data name="Click each corner, then double-click to finish. Hold Shift for straight lines, Alt to skip snapping." xml:space="preserve">
+    <value>Her köşeye tıklayın, bitirmek için çift tıklayın. Düz çizgiler için Shift tuşunu basılı tutun, yakalamayı atlamak için Alt tuşuna basın.</value>
+  </data>
   <data name="Click each corner, then double-click to finish. Hold Shift for straight lines." xml:space="preserve">
     <value>Her köşeye tıklayın, bitirmek için çift tıklayın. Düz çizgiler için Shift tuşunu basılı tutun.</value>
   </data>
@@ -1209,6 +1212,9 @@
   </data>
   <data name="Click the two ends of something whose real length you know." xml:space="preserve">
     <value>Gerçek uzunluğunu bildiğiniz bir şeyin iki ucuna tıklayın.</value>
+  </data>
+  <data name="Click the two ends. Hold Shift for straight lines, Alt to skip snapping." xml:space="preserve">
+    <value>İki ucuna tıklayın. Düz çizgiler için Shift tuşunu basılı tutun, yakalamayı atlamak için Alt tuşuna basın.</value>
   </data>
   <data name="Click the two ends. Hold Shift for straight lines." xml:space="preserve">
     <value>İki ucuna tıklayın. Düz çizgiler için Shift tuşunu basılı tutun.</value>

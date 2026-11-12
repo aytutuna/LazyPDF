@@ -5007,6 +5007,12 @@
   "This file does not let anyone add marks. Ask its owner for a copy that does.": {
     "tr": "Bu dosya kimsenin işaret eklemesine izin vermiyor. Sahibinden izin veren bir kopya isteyin."
   },
+  "Click the two ends. Hold Shift for straight lines, Alt to skip snapping.": {
+    "tr": "İki ucuna tıklayın. Düz çizgiler için Shift tuşunu basılı tutun, yakalamayı atlamak için Alt tuşuna basın."
+  },
+  "Click each corner, then double-click to finish. Hold Shift for straight lines, Alt to skip snapping.": {
+    "tr": "Her köşeye tıklayın, bitirmek için çift tıklayın. Düz çizgiler için Shift tuşunu basılı tutun, yakalamayı atlamak için Alt tuşuna basın."
+  },
   "Click the two ends. Hold Shift for straight lines.": {
     "tr": "İki ucuna tıklayın. Düz çizgiler için Shift tuşunu basılı tutun."
   },
