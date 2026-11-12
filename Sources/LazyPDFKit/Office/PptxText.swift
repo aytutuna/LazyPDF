@@ -42,7 +42,7 @@ extension PptxReader {
         return props
     }
 
-    private func makeParagraphs(_ txBody: OfficeXmlElement, _ layers: [OfficeXmlElement?], _ colors: PptxColors, _ box: PptxBodyProps, _ fontColor: Int?) throws -> ([LayoutParagraph], Bool) {
+    func makeParagraphs(_ txBody: OfficeXmlElement, _ layers: [OfficeXmlElement?], _ colors: PptxColors, _ box: PptxBodyProps, _ fontColor: Int?) throws -> ([LayoutParagraph], Bool) {
         let a = DocxReader.a
         var result: [LayoutParagraph] = []
         var counters = [Int](repeating: 0, count: Self.levels)

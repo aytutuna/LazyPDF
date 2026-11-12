@@ -9,7 +9,7 @@ final class PptxReader {
     static let p = "http://schemas.openxmlformats.org/presentationml/2006/main"
     private static let r = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
     private static let mc = "http://schemas.openxmlformats.org/markup-compatibility/2006"
-    private static let emuPerPoint = 12700.0
+    static let emuPerPoint = 12700.0
     private static let defaultWidth = 720.0, defaultHeight = 540.0
 
     final class Placeholder {
@@ -54,11 +54,7 @@ final class PptxReader {
         let master: Template
         let colors: PptxColors
         let isSlide: Bool
-    }
-
-    private struct FillInfo {
-        let color: Int?
-        let gradient: Bool
+        let relationships: [OpcRelationship]
     }
 
     private struct BackgroundSays {
@@ -74,6 +70,7 @@ final class PptxReader {
     private var width = PptxReader.defaultWidth, height = PptxReader.defaultHeight
     var totalText = 0
     private var drawn = 0
+    private var pictureCount = 0
 
     private init(_ package: OpcPackage, _ limits: PptxLimits) {
         self.package = package
@@ -204,13 +201,13 @@ final class PptxReader {
     }
 
     // A slide placeholder finds its twin in the layout by index first; a layout placeholder finds its twin in the master by kind.
-    private static func match(_ list: [Placeholder], _ type: String?, _ index: Int, _ byIndex: Bool) -> Placeholder? {
+    static func match(_ list: [Placeholder], _ type: String?, _ index: Int, _ byIndex: Bool) -> Placeholder? {
         let group = groupOf(type)
         if byIndex, let exact = list.first(where: { $0.index == index && $0.group == group }) { return exact }
         return list.first { $0.group == group }
     }
 
-    private static func children(_ tree: OfficeXmlElement?) -> [OfficeXmlElement] {
+    static func children(_ tree: OfficeXmlElement?) -> [OfficeXmlElement] {
         var result: [OfficeXmlElement] = []
         for e in tree?.elements ?? [] {
             if e.uri == mc && e.name == "AlternateContent" {
@@ -235,104 +232,17 @@ final class PptxReader {
         let show = root.attribute("showMasterSp")
         if !(show == "0" || show == "false") {
             if layout.showMasterShapes {
-                if master.shapes == nil { master.shapes = try staticShapes(master, Scope(layout: nil, master: master, colors: master.colors, isSlide: false)) }
+                if master.shapes == nil { master.shapes = try staticShapes(master, Scope(layout: nil, master: master, colors: master.colors, isSlide: false, relationships: master.relationships)) }
                 shapes.append(contentsOf: master.shapes!)
             }
-            if layout.shapes == nil { layout.shapes = try staticShapes(layout, Scope(layout: nil, master: master, colors: layout.colors, isSlide: false)) }
+            if layout.shapes == nil { layout.shapes = try staticShapes(layout, Scope(layout: nil, master: master, colors: layout.colors, isSlide: false, relationships: layout.relationships)) }
             shapes.append(contentsOf: layout.shapes!)
         }
-        shapes.append(contentsOf: try makeShapes(root, Scope(layout: layout, master: master, colors: colors, isSlide: true), place: true))
+        shapes.append(contentsOf: try slideShapes(root, Scope(layout: layout, master: master, colors: colors, isSlide: true, relationships: relationships)))
         drawn += shapes.count
         if drawn > limits.maxDrawnShapes { throw PdfReadException(.unsupported, "The presentation has too many shapes.") }
 
         return PptxSlide(number: number, background: try background(root, relationships, colors, layout, master), shapes: shapes)
-    }
-
-    private func staticShapes(_ template: Template, _ scope: Scope) throws -> [PptxShape] {
-        try makeShapes(template.root, scope, place: false)
-    }
-
-    // The shapes of a slide, layout or master that can be drawn. On a layout or master the placeholders are only templates.
-    private func makeShapes(_ root: OfficeXmlElement, _ scope: Scope, place: Bool) throws -> [PptxShape] {
-        var list: [PptxShape] = []
-        var seen = 0
-        for e in Self.children(Self.tree(root)) {
-            if e.uri != Self.p || e.name == "nvGrpSpPr" || e.name == "grpSpPr" || e.name == "extLst" { continue }
-            if e.name == "sp" && !place && Self.placeholderOf(e) != nil { continue }
-            seen += 1
-            if seen > limits.maxShapes {
-                skip(PptxSkipped.shape)
-                continue
-            }
-            try Task.checkCancellation()
-            if e.name == "sp" {
-                if let shape = try makeShape(e, scope) { list.append(shape) }
-            } else {
-                skip(PptxSkipped.shape)
-            }
-        }
-        return list
-    }
-
-    private func fillOf(_ spPr: OfficeXmlElement?, _ colors: PptxColors) -> FillInfo? {
-        for e in spPr?.elements ?? [] where e.uri == DocxReader.a {
-            switch e.name {
-            case "noFill": return FillInfo(color: nil, gradient: false)
-            case "solidFill": return FillInfo(color: colors.first(e), gradient: false)
-            case "gradFill": return FillInfo(color: colors.first(e.child(DocxReader.a, "gsLst")?.child(DocxReader.a, "gs")), gradient: true)
-            case "blipFill", "pattFill", "grpFill": return FillInfo(color: nil, gradient: false)
-            default: break
-            }
-        }
-        return nil
-    }
-
-    private func makeShape(_ sp: OfficeXmlElement, _ scope: Scope) throws -> PptxShape? {
-        let p = Self.p, a = DocxReader.a
-        let spPr = sp.child(p, "spPr")
-        let ph = Self.placeholderOf(sp)
-        var layoutPh: Placeholder?
-        var masterPh: Placeholder?
-        if let ph {
-            let type = ph.attribute("type")
-            let index = Int(PptxColors.clamp(DocxReader.number(ph.attribute("idx")) ?? 0, 0, Double(Int32.max)))
-            layoutPh = scope.layout.flatMap { Self.match($0.placeholders, type, index, true) }
-            masterPh = Self.match(scope.master.placeholders, layoutPh?.type ?? type, layoutPh?.index ?? index, false)
-        } else {
-            let preset = spPr?.child(a, "prstGeom")?.attribute("prst")
-            let txBox = sp.child(p, "nvSpPr")?.child(p, "cNvSpPr")?.attribute("txBox")
-            let textBox = txBox == "1" || txBox == "true"
-            if preset != "rect" && !(preset == nil && textBox && spPr?.child(a, "custGeom") == nil) {
-                skip(PptxSkipped.shape)
-                return nil
-            }
-        }
-
-        let style = sp.child(p, "style")
-        let fill = fillOf(spPr, scope.colors) ?? fillOf(layoutPh?.shape.child(p, "spPr"), scope.colors) ?? fillOf(masterPh?.shape.child(p, "spPr"), scope.colors)
-        var fillColor = fill?.color
-        if fill == nil, let fillRef = style?.child(a, "fillRef"), let idx = DocxReader.number(fillRef.attribute("idx")), idx > 0 {
-            fillColor = scope.colors.first(fillRef)
-        }
-        if let fill, fill.gradient, fillColor != nil { skip(PptxSkipped.gradient) }
-
-        let body = try sp.child(p, "txBody").flatMap { try makeBody($0, ph, layoutPh, masterPh, scope, style) }
-        if fillColor == nil && body == nil { return nil }
-
-        let frame = spPr?.child(a, "xfrm") ?? layoutPh?.shape.child(p, "spPr")?.child(a, "xfrm") ?? masterPh?.shape.child(p, "spPr")?.child(a, "xfrm")
-        let offset = frame?.child(a, "off")
-        let extent = frame?.child(a, "ext")
-        guard let x = DocxReader.number(offset?.attribute("x")), let y = DocxReader.number(offset?.attribute("y")),
-              let cx = DocxReader.number(extent?.attribute("cx")), let cy = DocxReader.number(extent?.attribute("cy")) else {
-            skip(PptxSkipped.shape)
-            return nil
-        }
-        if body != nil, let rot = DocxReader.number(frame!.attribute("rot")), rot != 0 { skip(PptxSkipped.textRotation) }
-
-        let far = 1e9
-        let emu = Self.emuPerPoint
-        return PptxShape(x: PptxColors.clamp(x, -far, far) / emu, y: PptxColors.clamp(y, -far, far) / emu,
-                         width: PptxColors.clamp(cx, 0, far) / emu, height: PptxColors.clamp(cy, 0, far) / emu, fill: fillColor, body: body)
     }
 
     // ---- backgrounds ----
@@ -354,7 +264,7 @@ final class PptxReader {
                 case "gradFill":
                     skip(PptxSkipped.gradient)
                     return BackgroundSays(value: PptxBackground(color: colors.first(e.child(a, "gsLst")?.child(a, "gs")), picture: nil))
-                case "blipFill": return BackgroundSays(value: PptxBackground(color: nil, picture: try picture(e, relationships)))
+                case "blipFill": return BackgroundSays(value: PptxBackground(color: nil, picture: try picture(e, relationships, width, height)))
                 case "noFill", "pattFill", "grpFill": return BackgroundSays(value: nil)
                 default: break
                 }
@@ -382,11 +292,16 @@ final class PptxReader {
         return nil
     }
 
-    // A picture fill stretched over the page; a missing or linked picture is counted as an unreadable one.
-    private func picture(_ blipFill: OfficeXmlElement, _ relationships: [OpcRelationship]) throws -> LayoutPicture? {
+    // A picture of the given size in points; a missing or linked picture is counted as an unreadable one.
+    func picture(_ blipFill: OfficeXmlElement, _ relationships: [OpcRelationship], _ width: Double, _ height: Double) throws -> LayoutPicture? {
         let id = blipFill.child(DocxReader.a, "blip")?.attribute(Self.r, "embed")
         let target = id.flatMap { id in relationships.first { $0.id == id && XlsxReader.endsWith($0.type, "/image") }?.target }
         guard let target, package.contains(target) else {
+            skip(SkippedKinds.unreadablePicture)
+            return nil
+        }
+        pictureCount += 1
+        if pictureCount > limits.maxPictures {
             skip(SkippedKinds.unreadablePicture)
             return nil
         }

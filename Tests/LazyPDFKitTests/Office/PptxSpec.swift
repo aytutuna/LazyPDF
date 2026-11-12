@@ -131,6 +131,11 @@ enum PptxSpec {
             while text.hasSuffix("\n") { text.removeLast() }
             add(part.arguments[0].key, text)
         }
+        for part in parts where part.kind == "bytes" {
+            let digits = Array(part.text.trimmingCharacters(in: .whitespacesAndNewlines).utf8)
+            let bytes = stride(from: 0, to: digits.count - 1, by: 2).map { UInt8(String(decoding: digits[$0...$0 + 1], as: UTF8.self), radix: 16)! }
+            entries.append(ExportZipEntry(part.arguments[0].key, bytes))
+        }
 
         let presentationText = presentation.map { $0.text.trimmingCharacters(in: .whitespacesAndNewlines) }
         add("ppt/presentation.xml", wrapped("p:presentation", presentation.map(attributes) ?? "",
@@ -170,7 +175,20 @@ enum PptxSpec {
                 case .rect(let r):
                     output += "rect \(num(r.x)) \(num(r.y)) \(num(r.width)) \(num(r.height)) \(String(format: "%06x", r.color))\n"
                 case .image(let m):
-                    output += "image \(num(m.x)) \(num(m.y)) \(num(m.width)) \(num(m.height)) \(m.source.file.bytes.count) crop \(num(m.source.cropLeft)) \(num(m.source.cropTop)) \(num(m.source.cropRight)) \(num(m.source.cropBottom))\n"
+                    output += "image \(num(m.x)) \(num(m.y)) \(num(m.width)) \(num(m.height)) \(m.source.file.bytes.count) crop \(num(m.source.cropLeft)) \(num(m.source.cropTop)) \(num(m.source.cropRight)) \(num(m.source.cropBottom))\(m.rotation != 0 ? " rot \(num(m.rotation))" : "")\(m.flipH ? " flip" : "")\n"
+                case .path(let p):
+                    let fill = p.fill.map { String(format: "%06x", $0) } ?? "-"
+                    let stroke = p.stroke.map { "\(num($0.width)) \(String(format: "%06x", $0.color)) \($0.dash.isEmpty ? "-" : $0.dash.map(num).joined(separator: ","))" } ?? "-"
+                    output += "path \(fill) \(stroke)"
+                    for c in p.commands {
+                        switch c {
+                        case .move(let x, let y): output += " M \(num(x)) \(num(y))"
+                        case .line(let x, let y): output += " L \(num(x)) \(num(y))"
+                        case .curve(let x1, let y1, let x2, let y2, let x, let y): output += " C \(num(x1)) \(num(y1)) \(num(x2)) \(num(y2)) \(num(x)) \(num(y))"
+                        case .close: output += " Z"
+                        }
+                    }
+                    output += "\n"
                 }
             }
         }

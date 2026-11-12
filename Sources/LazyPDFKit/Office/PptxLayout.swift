@@ -2,7 +2,8 @@ import Foundation
 
 // Twin of windows/LazyPDF.Core/Office/Pptx/PptxLayout.cs: sets the slides of a presentation on pages the size of the slide. The
 // text goes through `ParagraphLayout` and `Paginator.emitLine` like Word text. There is no paginator; a shape's text that does
-// not fit runs over the edge of the shape, as it does in PowerPoint.
+// not fit runs over the edge of the shape, as it does in PowerPoint. A table is measured like one in a document and put on the
+// slide whole.
 
 enum PptxLayout {
     private static let wide = 1e7
@@ -19,14 +20,23 @@ enum PptxLayout {
                 if let color = background.color {
                     boxes.append(.rect(PlacedRect(x: 0, y: 0, width: presentation.width, height: presentation.height, color: color)))
                 }
-                if let picture = background.picture {
-                    boxes.append(.image(PlacedImage(x: 0, y: 0, width: presentation.width, height: presentation.height, source: picture)))
+                if let backdrop = background.picture {
+                    boxes.append(.image(PlacedImage(x: 0, y: 0, width: presentation.width, height: presentation.height, source: backdrop)))
                 }
             }
             let number = String(slide.number)
             for shape in slide.shapes {
                 if let fill = shape.fill, shape.width > 0, shape.height > 0 {
                     boxes.append(.rect(PlacedRect(x: shape.x, y: shape.y, width: shape.width, height: shape.height, color: fill)))
+                }
+                for path in shape.paths { boxes.append(.path(path)) }
+                if let picture = shape.picture { boxes.append(.image(picture)) }
+                if let table = shape.table {
+                    let lines = try TableLayout.measure(table.table, fonts, max(1, table.table.columns.reduce(0, +)), wide) { p in
+                        if p.rightToLeft { rightToLeft += 1 }
+                        if p.complexScript { complex += 1 }
+                    }
+                    Paginator.emitTable(&boxes, lines, table.x, table.y)
                 }
                 if let body = shape.body { try text(shape, body, fonts, number, &boxes, &rightToLeft, &complex) }
                 if total + boxes.count > maxBoxes { throw PdfReadException(.unsupported, "The presentation is too large.") }

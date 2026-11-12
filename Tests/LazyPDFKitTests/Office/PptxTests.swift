@@ -167,4 +167,122 @@ final class PptxTests: XCTestCase {
         let made = try layout(package)
         for t in texts(made.pages[0]) { XCTAssertTrue(t.x.isFinite && t.baseline.isFinite) }
     }
+
+    private let jpeg = "ffd8ffc0000b080003000401011100ffd9"
+    private let image = "<Relationship Id=\"rIdP\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"../media/pic.jpg\"/>"
+
+    private func pic(_ x: Int, rotated: Bool = false) -> String {
+        "<p:pic><p:nvPicPr><p:cNvPr id=\"2\" name=\"P\"/><p:cNvPicPr/><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed=\"rIdP\"/></p:blipFill><p:spPr><a:xfrm\(rotated ? " rot=\"5400000\"" : "")><a:off x=\"\(x)\" y=\"0\"/><a:ext cx=\"1270000\" cy=\"635000\"/></a:xfrm></p:spPr></p:pic>"
+    }
+
+    private func withPictures(_ shapes: String) throws -> [UInt8] {
+        try PptxSpec.one("@slide1\n<p:cSld><p:spTree>\(shapes)</p:spTree></p:cSld>\n@rels slide1\n\(image)\n@bytes ppt/media/pic.jpg\n\(jpeg)\n")
+    }
+
+    private func group(_ depth: Int, _ inside: String) -> String {
+        depth == 0 ? inside : group(depth - 1, "<p:grpSp><p:nvGrpSpPr><p:cNvPr id=\"\(depth)\" name=\"G\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"635000\" cy=\"635000\"/><a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"635000\" cy=\"635000\"/></a:xfrm></p:grpSpPr>\(inside)</p:grpSp>")
+    }
+
+    private func table(_ rows: Int, _ columns: Int) -> String {
+        let cell = "<a:tc><a:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>x</a:t></a:r></a:p></a:txBody><a:tcPr/></a:tc>"
+        let grid = String(repeating: "<a:gridCol w=\"635000\"/>", count: columns)
+        let row = "<a:tr h=\"254000\">" + String(repeating: cell, count: columns) + "</a:tr>"
+        return "<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id=\"2\" name=\"T\"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"1\" cy=\"1\"/></p:xfrm>"
+            + "<a:graphic><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/table\"><a:tbl><a:tblGrid>\(grid)</a:tblGrid>\(String(repeating: row, count: rows))</a:tbl></a:graphicData></a:graphic></p:graphicFrame>"
+    }
+
+    private func images(_ page: LayoutPage) -> [PlacedImage] {
+        page.boxes.compactMap { if case .image(let i) = $0 { return i } else { return nil } }
+    }
+
+    func test_shapeLayoutGoldenFile() throws {
+        var output = ""
+        for (name, package) in try PptxSpec.read(try Golden.input("office-pptx", "shapes-input.txt")) {
+            output += "> \(name)\n" + PptxSpec.dump(try layout(package))
+        }
+        try Golden.check("office-pptx", "shapes-output.txt", output)
+    }
+
+    func test_shapeContentGoldenFile() throws {
+        var output = ""
+        for (name, package) in try PptxSpec.read(try Golden.input("office-pptx", "shapes-input.txt")) {
+            var contents: [[UInt8]] = []
+            _ = try OfficePdfWriter.create(try layout(package), OfficeLayoutSpec.fonts(), contents: { _, bytes in contents.append(bytes) })
+            output += "> \(name)\n"
+            for page in contents {
+                output += "page\n"
+                var text = Latin1.string(page)
+                while text.hasSuffix("\n") { text.removeLast() }
+                for line in text.components(separatedBy: "\n") { output += "| \(line)\n" }
+            }
+        }
+        try Golden.check("office-pptx", "shapes-content.txt", output)
+    }
+
+    func test_aJpegOnASlideIsPlacedAtItsFrameAndRotated() throws {
+        let made = try OfficeConverter.fromPowerPoint(try withPictures(pic(127000)), OfficeLayoutSpec.fonts())
+        XCTAssertTrue(made.skipped.isEmpty)
+        let placed = images(try layout(try withPictures(pic(127000))).pages[0])
+        XCTAssertEqual(placed.count, 1)
+        XCTAssertEqual(placed[0].x, 10, accuracy: 0.01)
+        XCTAssertEqual(placed[0].width, 100, accuracy: 0.01)
+        XCTAssertEqual(placed[0].height, 50, accuracy: 0.01)
+
+        var contents: [[UInt8]] = []
+        _ = try OfficePdfWriter.create(try layout(try withPictures(pic(0, rotated: true))), OfficeLayoutSpec.fonts(), contents: { _, bytes in contents.append(bytes) })
+        XCTAssertTrue(Latin1.string(contents[0]).contains("0 -1 1 0 "))
+    }
+
+    func test_picturesPastTheLimitAreCounted() throws {
+        let made = try layout(try withPictures(pic(0) + pic(127000) + pic(254000)), PptxLimits(maxPictures: 2))
+        XCTAssertEqual(images(made.pages[0]).count, 2)
+        XCTAssertEqual(made.skipped, [SkippedFeature("picture", 1)])
+    }
+
+    func test_groupsDeeperThanTheLimitAreCountedWithTheirContent() throws {
+        let leaf = box("Leaf", "deep")
+        let within = try layout(try slides(1, group(2, leaf)), PptxLimits(maxGroupDepth: 2))
+        XCTAssertEqual(texts(within.pages[0]).count, 1)
+        let beyond = try layout(try slides(1, group(3, leaf) + box("Kept", "kept")), PptxLimits(maxGroupDepth: 2))
+        XCTAssertEqual(texts(beyond.pages[0]).map { $0.text }, ["kept"])
+        XCTAssertEqual(beyond.skipped, [SkippedFeature("slide-shape", 1)])
+    }
+
+    func test_shapesInsideGroupsCountTowardTheShapeLimit() throws {
+        let made = try layout(try slides(1, group(1, box("A", "one") + box("B", "two") + box("C", "three"))), PptxLimits(maxShapes: 3))
+        XCTAssertEqual(texts(made.pages[0]).map { $0.text }, ["one", "two"])
+        XCTAssertEqual(made.skipped, [SkippedFeature("slide-shape", 1)])
+    }
+
+    func test_aTableWithinTheLimitsIsDrawnAndOneBeyondThemIsCounted() throws {
+        let limits = PptxLimits(maxTableRows: 3, maxTableColumns: 2)
+        let fits = try layout(try slides(1, table(3, 2)), limits)
+        XCTAssertEqual(texts(fits.pages[0]).count, 6)
+        XCTAssertTrue(fits.skipped.isEmpty)
+
+        let tooManyRows = try layout(try slides(1, table(4, 2) + box("A", "kept")), limits)
+        XCTAssertEqual(texts(tooManyRows.pages[0]).map { $0.text }, ["kept"])
+        XCTAssertEqual(tooManyRows.skipped, [SkippedFeature("slide-shape", 1)])
+        XCTAssertEqual(try layout(try slides(1, table(2, 3) + box("A", "kept")), limits).skipped, [SkippedFeature("slide-shape", 1)])
+    }
+
+    func test_aTableCountsItsTextTowardTheTotal() throws {
+        _ = try layout(try slides(1, table(2, 2)), PptxLimits(maxTotalText: 4))
+        let package = try slides(1, table(2, 2))
+        XCTAssertEqual(problem { _ = try layout(package, PptxLimits(maxTotalText: 3)) }, .unsupported)
+    }
+
+    func test_shapesAndTablesAreWrittenToThePdf() throws {
+        let shapes = table(2, 2)
+            + "<p:sp><p:nvSpPr><p:cNvPr id=\"5\" name=\"S\"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm rot=\"2700000\"><a:off x=\"2540000\" y=\"2540000\"/><a:ext cx=\"1270000\" cy=\"635000\"/></a:xfrm><a:prstGeom prst=\"homePlate\"/>"
+            + "<a:solidFill><a:srgbClr val=\"FF0000\"/></a:solidFill><a:ln w=\"12700\"><a:solidFill><a:srgbClr val=\"000000\"/></a:solidFill><a:prstDash val=\"dash\"/></a:ln></p:spPr></p:sp>"
+        var contents: [[UInt8]] = []
+        let made = try OfficePdfWriter.create(try layout(try slides(1, shapes)), OfficeLayoutSpec.fonts(), contents: { _, bytes in contents.append(bytes) })
+        XCTAssertTrue(made.skipped.isEmpty)
+        let content = Latin1.string(contents[0])
+        XCTAssertTrue(content.contains("[4 3] 0 d"))
+        XCTAssertTrue(content.contains("\nB\n"))
+        let pdf = try PdfDocument.open(made.bytes)
+        XCTAssertEqual(TextPage.create(pdf, pdf.pages[0]).text.filter { $0 == "x" }.count, 4)
+    }
 }

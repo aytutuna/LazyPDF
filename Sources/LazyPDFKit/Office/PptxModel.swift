@@ -10,6 +10,10 @@ struct PptxLimits {
     var maxTextLength = 100_000
     var maxTotalText = 4_000_000
     var maxDrawnShapes = 200_000
+    var maxGroupDepth = 5
+    var maxPictures = 2000
+    var maxTableRows = 500
+    var maxTableColumns = 64
 
     static let minSide = 36.0
     static let maxSide = 14_400.0
@@ -22,6 +26,13 @@ enum PptxSkipped {
     static let gradient = "slide-gradient"
     static let textCut = "slide-text-cut"
     static let textRotation = "text-rotation"
+    static let customGeometry = "slide-custom-geometry"
+    static let effect = "slide-effect"
+    static let chart = "slide-chart"
+    static let smartArt = "slide-smartart"
+    static let media = "slide-media"
+    static let embeddedObject = "slide-object"
+    static let tableStyle = "slide-table-style"
 }
 
 /// What fills the page behind a slide: a color, a picture stretched over it, or nothing.
@@ -41,13 +52,25 @@ struct PptxBody {
     var paragraphs: [LayoutParagraph] = []
 }
 
+/// A table with its top left corner at x, y in points; the column widths and the minimum row heights are those of the file.
+struct PptxTable {
+    let x: Double
+    let y: Double
+    let table: LayoutTable
+}
+
 /// A shape in points from the top left of the slide. A slide number field in the text is a `LayoutField.pageNumber` run.
+/// The frame is where the text goes, turned back upright. `fill` is a plain rectangle of the frame; any other outline, with its
+/// arrowheads, is in `paths`, already placed on the slide.
 struct PptxShape {
     var x = 0.0
     var y = 0.0
     var width = 0.0
     var height = 0.0
     var fill: Int?
+    var paths: [PlacedPath] = []
+    var picture: PlacedImage?
+    var table: PptxTable?
     var body: PptxBody?
 }
 

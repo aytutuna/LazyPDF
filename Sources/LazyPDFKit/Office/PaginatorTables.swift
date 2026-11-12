@@ -116,7 +116,19 @@ extension Paginator {
 
     private static func placeRows(_ page: Page, _ table: TableLines, _ from: Int, _ to: Int, _ originX: Double) {
         let parts = CellBoxes()
-        var y = page.y
+        placeRows(parts, table, from, to, originX, page.y)
+        parts.addTo(&page.boxes)
+    }
+
+    /// Puts a whole table on one page with its top left corner at x, y; it is not split.
+    static func emitTable(_ boxes: inout [LayoutBox], _ table: TableLines, _ x: Double, _ y: Double) {
+        let parts = CellBoxes()
+        placeRows(parts, table, 0, table.rows.count, x, y)
+        parts.addTo(&boxes)
+    }
+
+    private static func placeRows(_ parts: CellBoxes, _ table: TableLines, _ from: Int, _ to: Int, _ originX: Double, _ top: Double) {
+        var y = top
         for r in from..<to {
             for cell in table.rows[r].cells {
                 let height = table.height(r, min(to, r + cell.rowSpan))
@@ -124,7 +136,6 @@ extension Paginator {
             }
             y += table.rows[r].height
         }
-        parts.addTo(&page.boxes)
     }
 
     private static func emitRowPiece(_ page: Page, _ row: RowLines, _ originX: Double, _ y: Double, _ height: Double,
