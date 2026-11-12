@@ -30,7 +30,7 @@ public final class PageGrid {
     @ObservationIgnored var tab: DocumentTab?
     @ObservationIgnored var host: ToolHost?
     @ObservationIgnored private var watch: ObservationWatch?
-    @ObservationIgnored private var builtRevision = -1
+    @ObservationIgnored private var builtDrawn = -1
     @ObservationIgnored private var sizes: [(width: Double, height: Double)] = []
     @ObservationIgnored private var marked: PageCell?
 
@@ -43,7 +43,7 @@ public final class PageGrid {
         self.tab = tab
         self.host = host
         watch = ObservationWatch(track: { _ = tab.drawn }, changed: { [weak self] in
-            guard let self, let tab = self.tab, tab.revision != self.builtRevision else { return }
+            guard let self, let tab = self.tab, tab.drawn != self.builtDrawn else { return }
             self.rebuild(select: nil)
             self.onRebuild?()
         })
@@ -83,7 +83,7 @@ public final class PageGrid {
         }
         selected = Set((select ?? []).filter { $0 >= 0 && $0 < cells.count })
         isSigned = document.isSigned
-        builtRevision = tab.revision
+        builtDrawn = tab.drawn
     }
 
     /// Changes the box a page picture fits in; the pictures keep their size until `sharpen`.
