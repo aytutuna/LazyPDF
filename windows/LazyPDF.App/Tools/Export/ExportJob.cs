@@ -31,8 +31,9 @@ public static class ExportJob
 
         if (result.Files == 0)
         {
-            if (result.Gap == ExportGap.NoText && scan) host.ShowNotice(Loc.T("This looks like a scan"), Loc.T("It has pictures of pages and no text. Make searchable (under Scan and OCR) can read the pages, then export again. You can also save the pages as pictures."));
-            else if (result.Gap == ExportGap.NoText) host.ShowNotice(Loc.T("No text found"), Loc.T("This file has no text to export. Run Make searchable first, or save the pages as pictures."));
+            var makeSearchable = new NoticeAction(Loc.T("Make searchable"), () => host.OpenTool("ocr"));
+            if (result.Gap == ExportGap.NoText && scan) host.ShowNotice(Loc.T("This looks like a scan"), Loc.T("It has pictures of pages and no text. Make searchable (under Scan and OCR) can read the pages, then export again. You can also save the pages as pictures."), makeSearchable);
+            else if (result.Gap == ExportGap.NoText) host.ShowNotice(Loc.T("No text found"), Loc.T("This file has no text to export. Run Make searchable first, or save the pages as pictures."), makeSearchable);
             else if (options.Format == ExportFormat.Images) host.ShowNotice(Loc.T("No pictures found"), Loc.T("This file has no pictures to save."));
             else host.ShowProblem(new Problem(Loc.T("Nothing exported"), Loc.T("Windows cannot draw these pages. Try another format.")));
             return;

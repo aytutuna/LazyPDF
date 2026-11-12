@@ -382,6 +382,20 @@ public sealed class ExportToolTests
     }
 
     [Fact]
+    public async Task TheNoTextNoticeOffersMakeSearchableAndOpensThatTool()
+    {
+        using var f = new ViewModelFixture();
+        await f.Vm.OpenAsync(f.Dir.File("scan.pdf", PdfFromPictures.Create([new byte[] { 1 }], new FakeCodec(), new PdfPageSetup(PdfPaper.Picture, Margin: 0)).Bytes));
+
+        await ExportJob.RunAsync(f.Vm.ActiveDocument!, f.Vm, new FakeCodec(), new ExportOptions(ExportFormat.Text), f.Dir.Sub("out.txt"));
+
+        var action = f.Vm.Message!.Action!;
+        Assert.Equal("Make searchable", action.Text);
+        action.Run();
+        Assert.Equal("ocr", f.Vm.ActiveToolId);
+    }
+
+    [Fact]
     public void AWorkbookWithTablesLeavesOutTheTextAroundThem()
     {
         var tablesOnly = new ExportDocument(null, [PageOf(0, Table()), PageOf(1, Table())], 11);
