@@ -24,6 +24,12 @@ public struct VisionTextRecognizer: TextRecognizer {
         return supported.first { $0.lowercased().split(separator: "-").first.map(String.init) == primary }
     }
 
+    // English comes second so Latin-script names and numbers inside another language's page are still read.
+    static func recognitionLanguages(for tag: String) -> [String] {
+        guard !tag.lowercased().hasPrefix("en"), let english = supportedTag("en-US") else { return [tag] }
+        return [tag, english]
+    }
+
     public func recognizeAsync(_ image: PdfRgbaImage, _ language: String) async throws -> [OcrWord] {
         guard let tag = Self.supportedTag(language) else {
             throw InvalidOperationException(L10n.t("This device cannot read {0} text.", language))
@@ -33,7 +39,7 @@ public struct VisionTextRecognizer: TextRecognizer {
 
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
-        request.recognitionLanguages = [tag]
+        request.recognitionLanguages = Self.recognitionLanguages(for: tag)
         request.usesLanguageCorrection = true
         let width = Double(image.width), height = Double(image.height)
 

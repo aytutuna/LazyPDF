@@ -1,5 +1,5 @@
 #if canImport(Vision)
-import LazyPDFApp
+@testable import LazyPDFApp
 import LazyPDFKit
 import XCTest
 
@@ -64,6 +64,17 @@ final class VisionTextRecognizerTests: XCTestCase {
         } catch {
             XCTFail("\(error)")
         }
+    }
+
+    func test_englishFollowsAnotherLanguage() throws {
+        try XCTSkipUnless(VisionTextRecognizer.isAvailable("en-US"))
+        let english = try XCTUnwrap(VisionTextRecognizer.recognitionLanguages(for: "en-US").first)
+        XCTAssertEqual(VisionTextRecognizer.recognitionLanguages(for: english), [english])
+        try XCTSkipUnless(VisionTextRecognizer.isAvailable("de-DE"))
+        let languages = VisionTextRecognizer.recognitionLanguages(for: "de-DE")
+        XCTAssertEqual(languages.count, 2)
+        XCTAssertTrue(languages[0].hasPrefix("de"))
+        XCTAssertTrue(languages[1].hasPrefix("en"))
     }
 
     func test_aNonsenseTagIsNotAvailable() {
