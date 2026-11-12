@@ -16,4 +16,11 @@ public enum OfficeConverter {
         let book = try XlsxReader.read(xlsx)
         return try OfficePdfWriter.create(try XlsxLayout.run(book, LayoutFonts(fonts), Date(), fileName), fonts)
     }
+
+    /// Converts a .pptx file, one page per slide that is not hidden. Throws `PdfReadException` when the file is not a readable
+    /// PowerPoint presentation, is over a limit, or has no slide to show.
+    public static func fromPowerPoint(_ pptx: [UInt8], _ fonts: FontSource?) throws -> OfficePdf {
+        let presentation = try PptxReader.read(pptx)
+        return try OfficePdfWriter.create(try PptxLayout.run(presentation, LayoutFonts(fonts)), fonts)
+    }
 }
