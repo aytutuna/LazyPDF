@@ -21,6 +21,8 @@ public enum FormText {
 
     public static var notAField: String { L10n.t("This field is not part of the form.") }
 
+    public static var notSigned: String { L10n.t("This signature field is not signed.") }
+
     public static var notAButton: String { L10n.t("Only a check box or radio button has an export value.") }
 
     public static var badExport: String { L10n.t("The export value cannot be empty or Off.") }

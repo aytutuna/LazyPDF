@@ -88,6 +88,22 @@ extension PdfForm {
         return plan.count
     }
 
+    /// Takes the signature out of a signed signature field, with the field's appearance, and leaves the field empty to sign
+    /// again. A certification (/Perms /DocMDP) that rests on that signature goes too. Throws `InvalidOperationException` when
+    /// the field is not signed. The signed revision stays in the file's history.
+    public func clearSignature(_ field: FormField) throws {
+        try requireFillable()
+        guard field.isSigned else { throw InvalidOperationException(FormText.notSigned) }
+        if let perms = document.dict(document.catalog, "Perms"),
+           let docMdp = document.resolve(perms["DocMDP"]), docMdp === document.resolve(field.dictionary["V"]) {
+            perms.remove("DocMDP")
+            if perms.count == 0 { document.catalog.remove("Perms") }
+        }
+        field.dictionary.remove("V")
+        field.dictionary.remove("AP")
+        for widget in field.widgets { widget.dictionary.remove("AP") }
+    }
+
     /// Draws the appearances of the fields again from their values: after the form's maker set /NeedAppearances, or after
     /// changing a field's look by hand.
     public func regenerate(_ fields: [FormField]? = nil) throws {

@@ -1950,6 +1950,7 @@
 "This shape has no fill. Use the line colour instead." = "Bu şeklin dolgusu yok. Çizgi rengini kullanın.";
 "This shape has no line. Use the fill colour instead." = "Bu şeklin çizgisi yok. Dolgu rengini kullanın.";
 "This signature could not be checked." = "Bu imza denetlenemedi.";
+"This signature field is not signed." = "Bu imza alanı imzalı değil.";
 "This signature needs a time stamp server." = "Bu imza bir zaman damgası sunucusu gerektiriyor.";
 "This text has replacement text." = "Bu metnin yerine geçen bir metni var.";
 "This text includes annotation text, which the page's content does not hold. Build the page without IncludeAnnotations to edit or redact it." = "Bu metin, sayfa içeriğinde bulunmayan ek açıklama metnini de içeriyor. Düzenlemek ya da karartmak için sayfayı IncludeAnnotations olmadan oluşturun.";
