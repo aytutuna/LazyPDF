@@ -6,9 +6,10 @@ namespace LazyPDF.Core.Office;
 internal static class OfficePdfWriter
 {
     /// <param name="contents">When given, receives the content stream of every page as written.</param>
+    /// <param name="images">Reads pictures that are not JPEG; without it only JPEG pictures are drawn.</param>
     /// <exception cref="InvalidOperationException">No font can draw the text; the message is <see cref="ExportText.NoFont"/>.</exception>
     /// <exception cref="PdfReadException">The page size or margins leave no room, or the document runs past <see cref="Paginator.MaxPages"/>.</exception>
-    public static OfficePdf Create(LayoutDocument document, IFontSource? fonts, CancellationToken cancellation = default, List<byte[]>? contents = null)
+    public static OfficePdf Create(LayoutDocument document, IFontSource? fonts, CancellationToken cancellation = default, List<byte[]>? contents = null, IImageCodec? images = null)
     {
         var layout = new Paginator(document, new LayoutFonts(fonts), cancellation).Run();
         var pdf = ExportPdf.NewDocument();
@@ -21,6 +22,17 @@ internal static class OfficePdfWriter
             {
                 if (!texts.TryGetValue((box.Family, box.Style), out var list)) texts[(box.Family, box.Style)] = list = [];
                 list.Add(box.Text);
+            }
+        }
+        var pictures = new Dictionary<byte[], PdfImage?>(ReferenceEqualityComparer.Instance);
+        int unreadable = 0;
+        foreach (var page in layout.Pages)
+        {
+            foreach (var box in page.Boxes.OfType<PlacedImage>())
+            {
+                cancellation.ThrowIfCancellationRequested();
+                if (!pictures.TryGetValue(box.Source.Data, out var image)) pictures[box.Source.Data] = image = PdfImageWriter.AddPicture(pdf, box.Source.Data, images);
+                if (image is null) unreadable++;
             }
         }
         var drawn = new Dictionary<(string, FontStyles), PdfDrawFont>();
@@ -39,13 +51,15 @@ internal static class OfficePdfWriter
         for (int i = 0; i < layout.Pages.Count; i++)
         {
             cancellation.ThrowIfCancellationRequested();
-            byte[] content = Content(pdf, pdf.Pages[i], layout.Pages[i], drawn);
+            byte[] content = Content(pdf, pdf.Pages[i], layout.Pages[i], drawn, pictures);
             contents?.Add(content);
             var dictionary = new PdfDictionary();
             dictionary["Filter"] = new PdfName("FlateDecode");
             pdf.Pages[i].Dictionary["Contents"] = pdf.Add(new PdfStream(dictionary, PdfFilterEncoders.Flate(content)));
         }
-        return new OfficePdf(pdf.SaveRewrite(), layout.Pages.Count, layout.Skipped, layout.Missing);
+        var skipped = layout.Skipped.ToList();
+        if (unreadable > 0) skipped.Add(new SkippedFeature(SkippedKinds.UnreadablePicture, unreadable));
+        return new OfficePdf(pdf.SaveRewrite(), layout.Pages.Count, skipped, layout.Missing);
     }
 
     // Everything is rounded to 1/100 point, so that both engines write the same numbers.
@@ -53,10 +67,11 @@ internal static class OfficePdfWriter
 
     private static double Channel(int value) => Math.Round(value / 255.0 * 1000, MidpointRounding.AwayFromZero) / 1000;
 
-    private static byte[] Content(PdfDocument pdf, PdfPage page, LayoutPage layout, Dictionary<(string, FontStyles), PdfDrawFont> fonts)
+    private static byte[] Content(PdfDocument pdf, PdfPage page, LayoutPage layout, Dictionary<(string, FontStyles), PdfDrawFont> fonts, Dictionary<byte[], PdfImage?> pictures)
     {
         var writer = new ContentWriter();
         var names = new Dictionary<(string, FontStyles), string>();
+        var imageNames = new Dictionary<byte[], string>(ReferenceEqualityComparer.Instance);
         var resources = ContentResources.ForEdit(pdf, page);
         int color = -1;
         void Color(int rgb)
@@ -73,6 +88,12 @@ internal static class OfficePdfWriter
                 Color(rect.Color);
                 writer.Rect(R(rect.X), R(layout.Height - rect.Y - rect.Height), R(rect.Width), R(rect.Height)).Fill();
             }
+            else if (box is PlacedImage picture)
+            {
+                if (pictures[picture.Source.Data] is not { } image) continue;
+                if (!imageNames.TryGetValue(picture.Source.Data, out string? name)) imageNames[picture.Source.Data] = name = ContentResources.Add(pdf, resources, "XObject", image.Reference, "Im");
+                Draw(writer, name, picture, layout.Height);
+            }
             else if (box is PlacedText text)
             {
                 var key = (text.Family, text.Style);
@@ -86,6 +107,23 @@ internal static class OfficePdfWriter
             }
         }
         return writer.ToArray();
+    }
+
+    // A cropped picture is drawn at the size the whole picture would have and clipped to the visible part.
+    private static void Draw(ContentWriter writer, string name, PlacedImage box, double pageHeight)
+    {
+        var s = box.Source;
+        double visibleX = 1 - s.CropLeft - s.CropRight, visibleY = 1 - s.CropTop - s.CropBottom;
+        double bottom = pageHeight - box.Y - box.Height;
+        if (s.CropLeft + s.CropTop + s.CropRight + s.CropBottom == 0 || visibleX < 0.05 || visibleY < 0.05)
+        {
+            writer.Paint(name, new PdfMatrix(R(box.Width), 0, 0, R(box.Height), R(box.X), R(bottom)));
+            return;
+        }
+        double width = box.Width / visibleX, height = box.Height / visibleY;
+        writer.Save().Rect(R(box.X), R(bottom), R(box.Width), R(box.Height)).Clip();
+        writer.Paint(name, new PdfMatrix(R(width), 0, 0, R(height), R(box.X - s.CropLeft * width), R(bottom - s.CropBottom * height)));
+        writer.Restore();
     }
 
     // Tw only works on one-byte codes, so the gap after each space is a TJ adjustment.

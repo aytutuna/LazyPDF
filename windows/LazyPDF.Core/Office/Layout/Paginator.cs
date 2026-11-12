@@ -14,9 +14,10 @@ internal sealed partial class Paginator
     private const double Tolerance = 0.01;
     private const double MinArea = 36;
 
-    private sealed class Page(LayoutSection section, double top, double bottom, bool hard)
+    private sealed class Page(LayoutSection section, PageVariant variant, double top, double bottom, bool hard)
     {
         public LayoutSection Section { get; } = section;
+        public PageVariant Variant { get; } = variant;
         public double Top { get; } = top;
         public double Bottom { get; } = bottom;
         public bool Hard { get; } = hard;
@@ -30,6 +31,9 @@ internal sealed partial class Paginator
     private readonly CancellationToken _cancellation;
     private readonly List<Page> _pages = [];
     private int _rightToLeft, _complex;
+    // The body area of each kind of page of the section being laid out, and how many pages it has so far.
+    private readonly (double Top, double Bottom)[] _areas = new (double, double)[3];
+    private int _sectionPages;
 
     public Paginator(LayoutDocument document, LayoutFonts fonts, CancellationToken cancellation)
     {
@@ -51,8 +55,8 @@ internal sealed partial class Paginator
             var geometry = page.Section.Page;
             var boxes = new List<LayoutBox>();
             string number = (i + 1).ToString(CultureInfo.InvariantCulture), total = _pages.Count.ToString(CultureInfo.InvariantCulture);
-            var (header, _) = Band(page.Section.Header, geometry, kind => kind == LayoutField.PageNumber ? number : total);
-            var (footer, footerHeight) = Band(page.Section.Footer, geometry, kind => kind == LayoutField.PageNumber ? number : total);
+            var (header, _) = Band(page.Section.HeaderOf(page.Variant), geometry, kind => kind == LayoutField.PageNumber ? number : total);
+            var (footer, footerHeight) = Band(page.Section.FooterOf(page.Variant), geometry, kind => kind == LayoutField.PageNumber ? number : total);
             Emit(boxes, header, geometry, geometry.HeaderDistance);
             Emit(boxes, footer, geometry, geometry.Height - geometry.FooterDistance - footerHeight);
             boxes.AddRange(page.Boxes);
@@ -83,7 +87,7 @@ internal sealed partial class Paginator
         var paragraphs = new List<ParagraphLines>();
         foreach (var paragraph in source)
         {
-            var lines = ParagraphLayout.Run(paragraph, _fonts, width, field);
+            var lines = ParagraphLayout.Run(paragraph, _fonts, width, geometry.Height - geometry.Top - geometry.Bottom, field);
             if (count) Count(lines);
             paragraphs.Add(lines);
             height += paragraph.Before + lines.Height + paragraph.After;
@@ -106,48 +110,65 @@ internal sealed partial class Paginator
             throw new PdfReadException(PdfReadProblem.Unsupported, "The page size or margins leave no room for text.");
         }
         double width = g.Width - g.Left - g.Right;
-        var (_, headerHeight) = Band(section.Header, g, _ => "1", count: true);
-        var (_, footerHeight) = Band(section.Footer, g, _ => "1", count: true);
-        double top = headerHeight > 0 ? Math.Max(g.Top, g.HeaderDistance + headerHeight) : g.Top;
-        double bottom = footerHeight > 0 ? Math.Min(g.Height - g.Bottom, g.Height - g.FooterDistance - footerHeight) : g.Height - g.Bottom;
-        // A band that would leave no body gives way to the margins.
-        if (bottom - top < MinArea) (top, bottom) = (g.Top, g.Height - g.Bottom);
+        // A band shared by several kinds of page is counted once.
+        var counted = new HashSet<List<LayoutParagraph>>(ReferenceEqualityComparer.Instance);
+        for (int v = 0; v < 3; v++)
+        {
+            var variant = (PageVariant)v;
+            bool used = variant == PageVariant.Default || (variant == PageVariant.First ? section.TitlePage : section.EvenAndOdd);
+            var header = section.HeaderOf(variant);
+            var footer = section.FooterOf(variant);
+            var (_, headerHeight) = Band(header, g, _ => "1", count: used && counted.Add(header));
+            var (_, footerHeight) = Band(footer, g, _ => "1", count: used && counted.Add(footer));
+            double top = headerHeight > 0 ? Math.Max(g.Top, g.HeaderDistance + headerHeight) : g.Top;
+            double bottom = footerHeight > 0 ? Math.Min(g.Height - g.Bottom, g.Height - g.FooterDistance - footerHeight) : g.Height - g.Bottom;
+            // A band that would leave no body gives way to the margins.
+            if (bottom - top < MinArea) (top, bottom) = (g.Top, g.Height - g.Bottom);
+            _areas[v] = (top, bottom);
+        }
+        _sectionPages = 0;
 
+        double body = _areas[0].Bottom - _areas[0].Top;
         var blocks = new List<object?>();
         foreach (var block in section.Blocks)
         {
             _cancellation.ThrowIfCancellationRequested();
             if (block is LayoutParagraph paragraph)
             {
-                var lines = ParagraphLayout.Run(paragraph, _fonts, width);
+                var lines = ParagraphLayout.Run(paragraph, _fonts, width, body);
                 Count(lines);
                 blocks.Add(lines);
             }
-            else if (block is LayoutTable table) blocks.Add(TableLayout.Measure(table, _fonts, width, bottom - top, Count));
+            else if (block is LayoutTable table) blocks.Add(TableLayout.Measure(table, _fonts, width, body, Count));
             else blocks.Add(null);
         }
 
-        NewPage(section, top, bottom, hard: true);
+        NewPage(section, hard: true);
         for (int i = 0; i < blocks.Count; i++)
         {
             _cancellation.ThrowIfCancellationRequested();
-            if (blocks[i] is ParagraphLines lines) Place(blocks, i, lines, section, top, bottom);
-            else if (blocks[i] is TableLines table) PlaceTable(table, section, top, bottom);
-            else NewPage(section, top, bottom, hard: true);
+            if (blocks[i] is ParagraphLines lines) Place(blocks, i, lines, section);
+            else if (blocks[i] is TableLines table) PlaceTable(table, section);
+            else NewPage(section, hard: true);
         }
     }
 
-    private void NewPage(LayoutSection section, double top, double bottom, bool hard)
+    private void NewPage(LayoutSection section, bool hard)
     {
         if (_pages.Count >= MaxPages) throw new PdfReadException(PdfReadProblem.Unsupported, "The document has too many pages.");
-        _pages.Add(new Page(section, top, bottom, hard));
+        // The first page of a section and the even pages count by the page's place in the document.
+        var variant = section.TitlePage && _sectionPages == 0 ? PageVariant.First
+            : section.EvenAndOdd && (_pages.Count + 1) % 2 == 0 ? PageVariant.Even : PageVariant.Default;
+        _sectionPages++;
+        var (top, bottom) = _areas[(int)variant];
+        _pages.Add(new Page(section, variant, top, bottom, hard));
     }
 
-    private void Place(List<object?> blocks, int index, ParagraphLines lines, LayoutSection section, double top, double bottom)
+    private void Place(List<object?> blocks, int index, ParagraphLines lines, LayoutSection section)
     {
         var paragraph = lines.Source;
-        if (paragraph.PageBreakBefore && _pages[^1].HasContent) NewPage(section, top, bottom, hard: true);
-        if (paragraph.KeepWithNext) KeepTogether(blocks, index, section, top, bottom);
+        if (paragraph.PageBreakBefore && _pages[^1].HasContent) NewPage(section, hard: true);
+        if (paragraph.KeepWithNext) KeepTogether(blocks, index, section);
 
         int placed = 0, count = lines.Lines.Count;
         while (placed < count)
@@ -169,7 +190,7 @@ internal sealed partial class Paginator
                 if (take == 0 && !page.HasContent) take = 1;
                 if (take == 0)
                 {
-                    NewPage(section, top, bottom, hard: false);
+                    NewPage(section, hard: false);
                     continue;
                 }
             }
@@ -183,14 +204,14 @@ internal sealed partial class Paginator
             }
             page.HasContent = true;
             placed += take;
-            if (placed < count) NewPage(section, top, bottom, hard: false);
+            if (placed < count) NewPage(section, hard: false);
         }
         _pages[^1].Y += paragraph.After;
     }
 
     // A chain of keep-with-next paragraphs and the first lines of the one after it move to a fresh page when
     // they would not fit in what is left of this one, if they fit on a page of their own.
-    private void KeepTogether(List<object?> blocks, int index, LayoutSection section, double top, double bottom)
+    private void KeepTogether(List<object?> blocks, int index, LayoutSection section)
     {
         var page = _pages[^1];
         if (!page.HasContent) return;
@@ -206,7 +227,7 @@ internal sealed partial class Paginator
             need += next.Source.Before + next.Lines.Take(lead).Sum(l => l.Height);
         }
         else if (k < blocks.Count && blocks[k] is TableLines { Rows.Count: > 0 } table) need += table.Rows[0].Height;
-        if (need > page.Bottom - page.Y + Tolerance && need <= page.Bottom - page.Top) NewPage(section, top, bottom, hard: false);
+        if (need > page.Bottom - page.Y + Tolerance && need <= page.Bottom - page.Top) NewPage(section, hard: false);
     }
 
     private static void Emit(List<LayoutBox> boxes, List<ParagraphLines> paragraphs, LayoutGeometry geometry, double top)
@@ -231,11 +252,18 @@ internal sealed partial class Paginator
         int ink = line.Atoms.FindLastIndex(a => !a.IsBlank || a.IsTab);
         var under = new List<LayoutBox>();
         var over = new List<LayoutBox>();
+        var pictures = new List<LayoutBox>();
         double baseline = top + line.Baseline;
         int from = 0;
         while (from <= ink)
         {
             var first = line.Atoms[from];
+            if (first.Picture is { } picture)
+            {
+                pictures.Add(new PlacedImage(originX + first.X, baseline - first.PictureHeight - first.Run.Shift, first.Width, first.PictureHeight, picture));
+                from++;
+                continue;
+            }
             if (first.IsTab || first.IsNewline || first.IsZeroWidth)
             {
                 from++;
@@ -265,11 +293,12 @@ internal sealed partial class Paginator
         }
         // The highlights were added with the text; sorted so that every highlight precedes every text of the line.
         boxes.AddRange(under.OfType<PlacedRect>());
+        boxes.AddRange(pictures);
         boxes.AddRange(under.OfType<PlacedText>());
         boxes.AddRange(over);
     }
 
     private static bool SameStyle(Atom a, Atom b) =>
-        !b.IsTab && !b.IsNewline && !b.IsZeroWidth && a.Face == b.Face && a.Size == b.Size && a.Run.Color == b.Run.Color && a.Run.Underline == b.Run.Underline
+        !b.IsTab && !b.IsNewline && !b.IsZeroWidth && b.Picture is null && a.Face == b.Face && a.Size == b.Size && a.Run.Color == b.Run.Color && a.Run.Underline == b.Run.Underline
         && a.Run.Strike == b.Run.Strike && a.Run.Highlight == b.Run.Highlight && a.Run.Shift == b.Run.Shift;
 }

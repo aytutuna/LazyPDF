@@ -8,6 +8,9 @@ internal sealed class Atom
     public FontFace Face = null!;
     public double Size;
     public double Width;
+    /// <summary>For a picture in line: the picture and its height after it was fitted to the line.</summary>
+    public LayoutPicture? Picture;
+    public double PictureHeight;
     /// <summary>From the left edge of the text area.</summary>
     public double X;
     /// <summary>Space added after the atom by justification.</summary>
@@ -48,7 +51,11 @@ internal static class ParagraphLayout
     private const double Tolerance = 0.01;
     private const double TabWidth = 36;
 
-    public static ParagraphLines Run(LayoutParagraph paragraph, LayoutFonts fonts, double areaWidth, Func<LayoutField, string>? field = null)
+    /// <summary>The code point a picture takes in the text; it breaks like an ideograph.</summary>
+    public const int ObjectCode = 0xFFFC;
+
+    /// <param name="maxHeight">The tallest a picture may be, so that one always fits a page.</param>
+    public static ParagraphLines Run(LayoutParagraph paragraph, LayoutFonts fonts, double areaWidth, double maxHeight, Func<LayoutField, string>? field = null)
     {
         var result = new ParagraphLines { Source = paragraph };
         var atoms = Atoms(paragraph, fonts, field, result);
@@ -56,6 +63,7 @@ internal static class ParagraphLayout
         double left = Math.Max(0, paragraph.Left);
         double first = Math.Max(0, paragraph.Left + paragraph.FirstLine);
         double right = Math.Max(areaWidth - Math.Max(0, paragraph.Right), Math.Max(left, first) + 1);
+        Fit(atoms, right - Math.Min(left, first), maxHeight);
 
         var breaks = LineBreaker.Opportunities(atoms.Select(a => a.Code).ToList());
         var line = new LayoutLine { Start = first };
@@ -104,6 +112,18 @@ internal static class ParagraphLayout
         return result;
     }
 
+    // A picture wider or taller than the room shrinks, keeping its shape.
+    private static void Fit(List<Atom> atoms, double width, double height)
+    {
+        foreach (var atom in atoms)
+        {
+            if (atom.Picture is null) continue;
+            double scale = Math.Min(1, Math.Min(Math.Max(1, width) / atom.Width, Math.Max(1, height) / atom.PictureHeight));
+            atom.Width *= scale;
+            atom.PictureHeight *= scale;
+        }
+    }
+
     // The width an atom takes at x. A tab runs to the hanging indent or the next default stop, never past the right edge.
     private static double Step(Atom atom, double x, double left, double right, bool place)
     {
@@ -122,11 +142,16 @@ internal static class ParagraphLayout
         {
             var face = FaceOf(run, fonts);
             double size = Size(run);
+            if (run.Picture is { } picture)
+            {
+                atoms.Add(new Atom { Code = ObjectCode, Run = run, RunFace = face, Face = face, Size = size, Width = picture.Width, Picture = picture, PictureHeight = picture.Height });
+                continue;
+            }
             string text = field is not null && run.Field != LayoutField.None ? field(run.Field) : run.Text;
             foreach (var rune in text.EnumerateRunes())
             {
                 int code = rune.Value;
-                if (code is 0xAD or 0x200C or 0x200D or 0x2060 or 0xFEFF or (< 0x20 and not '\t' and not '\n') or (>= 0x7F and < 0xA0)) continue;
+                if (code is 0xAD or 0x200C or 0x200D or 0x2060 or 0xFEFF or ObjectCode or (< 0x20 and not '\t' and not '\n') or (>= 0x7F and < 0xA0)) continue;
                 if (code is (>= 0x0590 and <= 0x08FF) or (>= 0xFB1D and <= 0xFDFF) or (>= 0xFE70 and <= 0xFEFF) or (>= 0x10800 and <= 0x10FFF) or (>= 0x1E800 and <= 0x1EFFF)) result.RightToLeft = true;
                 else if (code is (>= 0x0900 and <= 0x0EFF) or (>= 0x0F00 and <= 0x109F) or (>= 0x1780 and <= 0x17FF)) result.ComplexScript = true;
                 var atom = new Atom { Code = code, Run = run, RunFace = face, Face = face, Size = size };
@@ -193,7 +218,7 @@ internal static class ParagraphLayout
         {
             foreach (var a in line.Atoms)
             {
-                ascent = Math.Max(ascent, a.RunFace.Ascent * a.Size + Math.Max(0, a.Run.Shift));
+                ascent = Math.Max(ascent, (a.Picture is null ? a.RunFace.Ascent * a.Size : a.PictureHeight) + Math.Max(0, a.Run.Shift));
                 descent = Math.Max(descent, a.RunFace.Descent * a.Size + Math.Max(0, -a.Run.Shift));
             }
         }

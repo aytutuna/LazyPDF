@@ -10,6 +10,7 @@ internal static class SkippedKinds
 {
     public const string RightToLeftText = "rtl-text";
     public const string ComplexScript = "complex-script";
+    public const string UnreadablePicture = "picture";
 }
 
 internal enum LayoutAlign { Left, Center, Right, Justify }
@@ -34,7 +35,12 @@ internal sealed class LayoutRun
     /// <summary>Points above the baseline; negative sinks the text. The size is already the reduced one.</summary>
     public double Shift { get; init; }
     public LayoutField Field { get; init; }
+    /// <summary>A picture in line with the text; then the text is empty and the font only sets the descent of the line.</summary>
+    public LayoutPicture? Picture { get; init; }
 }
+
+/// <summary>A picture file as the document holds it and the size it takes on the page, in points. The crop edges are the fractions of the picture cut off on each side.</summary>
+internal sealed record LayoutPicture(byte[] Data, double Width, double Height, double CropLeft = 0, double CropTop = 0, double CropRight = 0, double CropBottom = 0);
 
 internal abstract class LayoutBlock;
 
@@ -122,13 +128,27 @@ internal sealed class LayoutGeometry
     public double FooterDistance { get; init; } = 36;
 }
 
+internal enum PageVariant { Default, First, Even }
+
 /// <summary>A run of pages with one geometry and one header and footer; it always starts on a new page.</summary>
 internal sealed class LayoutSection
 {
     public LayoutGeometry Page { get; set; } = new();
     public List<LayoutParagraph> Header { get; init; } = [];
     public List<LayoutParagraph> Footer { get; init; } = [];
+    /// <summary>The first page of the section has its own bands.</summary>
+    public bool TitlePage { get; init; }
+    /// <summary>Even pages, counted from the start of the document, have their own bands.</summary>
+    public bool EvenAndOdd { get; init; }
+    public List<LayoutParagraph> FirstHeader { get; init; } = [];
+    public List<LayoutParagraph> FirstFooter { get; init; } = [];
+    public List<LayoutParagraph> EvenHeader { get; init; } = [];
+    public List<LayoutParagraph> EvenFooter { get; init; } = [];
     public List<LayoutBlock> Blocks { get; init; } = [];
+
+    public List<LayoutParagraph> HeaderOf(PageVariant variant) => variant switch { PageVariant.First => FirstHeader, PageVariant.Even => EvenHeader, _ => Header };
+
+    public List<LayoutParagraph> FooterOf(PageVariant variant) => variant switch { PageVariant.First => FirstFooter, PageVariant.Even => EvenFooter, _ => Footer };
 }
 
 internal sealed class LayoutDocument
@@ -143,6 +163,9 @@ internal abstract record LayoutBox;
 
 /// <summary>A piece of one line in one style. <see cref="SpaceExtra"/> is added after every space (justified lines).</summary>
 internal sealed record PlacedText(double X, double Baseline, string Text, string Family, FontStyles Style, double Size, int Color, double SpaceExtra) : LayoutBox;
+
+/// <summary>A picture with its top left corner at X, Y.</summary>
+internal sealed record PlacedImage(double X, double Y, double Width, double Height, LayoutPicture Source) : LayoutBox;
 
 internal sealed record PlacedRect(double X, double Y, double Width, double Height, int Color) : LayoutBox;
 

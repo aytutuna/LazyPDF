@@ -63,7 +63,7 @@ internal static class TableLayout
                 double inner = Math.Max(1, width - cell.MarginLeft - cell.MarginRight);
                 foreach (var paragraph in cell.Paragraphs)
                 {
-                    var paragraphLines = ParagraphLayout.Run(paragraph, fonts, inner);
+                    var paragraphLines = ParagraphLayout.Run(paragraph, fonts, inner, bodyHeight);
                     count(paragraphLines);
                     for (int k = 0; k < paragraphLines.Lines.Count; k++)
                     {

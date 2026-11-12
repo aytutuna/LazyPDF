@@ -10,7 +10,7 @@ internal static class LineBreaker
     private enum Kind
     {
         Letter, Digit, Space, Tab, Newline, ZeroWidth, Glue, Hyphen, After, Dash, Slash,
-        Open, Close, Quote, Currency, Ideo, IdeoOpen, IdeoClose,
+        Open, Close, Quote, Currency, Ideo, IdeoOpen, IdeoClose, Object,
     }
 
     /// <summary>Entry i is true when a line may end before code point i. Entry 0 is never true.</summary>
@@ -41,6 +41,7 @@ internal static class LineBreaker
         if (after is Kind.Close or Kind.Slash or Kind.Hyphen or Kind.After or Kind.IdeoClose or Kind.Quote) return false;
         if (before is Kind.Space or Kind.Tab) return solid is not (Kind.Open or Kind.IdeoOpen);
         if (before is Kind.Open or Kind.IdeoOpen or Kind.Currency or Kind.Quote) return false;
+        if (before == Kind.Object || after == Kind.Object) return true;
         if (before == Kind.Hyphen) return i >= 2 && kinds[i - 2] is Kind.Letter or Kind.Digit or Kind.Ideo && after != Kind.Digit;
         if (before == Kind.After) return true;
         if (before == Kind.Slash) return after != Kind.Digit;
@@ -60,6 +61,7 @@ internal static class LineBreaker
             case '\t': return Kind.Tab;
             case '\n': return Kind.Newline;
             case 0x200B: return Kind.ZeroWidth;
+            case ParagraphLayout.ObjectCode: return Kind.Object;
             case 0xA0: case 0x2007: case 0x202F: case 0x2011: case 0x2060: case 0xFEFF: return Kind.Glue;
             case '-': return Kind.Hyphen;
             case 0x2010: case 0x2012: case 0x2013: return Kind.After;

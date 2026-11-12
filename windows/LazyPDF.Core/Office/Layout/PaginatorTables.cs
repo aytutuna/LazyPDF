@@ -13,11 +13,11 @@ internal sealed partial class Paginator
         public double Used { get; set; }
     }
 
-    private void PlaceTable(TableLines table, LayoutSection section, double top, double bottom)
+    private void PlaceTable(TableLines table, LayoutSection section)
     {
         // Only a page with something on it gains by starting a fresh one.
         bool movable = _pages[^1].HasContent;
-        double body = bottom - top;
+        double body = _pages[^1].Bottom - _pages[^1].Top;
         RowProgress? progress = null;
         int i = 0;
         while (i < table.Rows.Count)
@@ -37,7 +37,7 @@ internal sealed partial class Paginator
                     if (cut) progress = new RowProgress(row.Cells.Count);
                     else if (movable)
                     {
-                        AdvanceTable(table, section, top, bottom, i);
+                        AdvanceTable(table, section, i);
                         movable = false;
                         continue;
                     }
@@ -71,7 +71,7 @@ internal sealed partial class Paginator
             {
                 if (movable)
                 {
-                    AdvanceTable(table, section, top, bottom, i);
+                    AdvanceTable(table, section, i);
                     movable = false;
                     continue;
                 }
@@ -105,15 +105,15 @@ internal sealed partial class Paginator
             }
             else
             {
-                AdvanceTable(table, section, top, bottom, i);
+                AdvanceTable(table, section, i);
                 movable = false;
             }
         }
     }
 
-    private void AdvanceTable(TableLines table, LayoutSection section, double top, double bottom, int row)
+    private void AdvanceTable(TableLines table, LayoutSection section, int row)
     {
-        NewPage(section, top, bottom, hard: false);
+        NewPage(section, hard: false);
         if (table.Header == 0 || row < table.Header) return;
         var page = _pages[^1];
         PlaceRows(page, table, 0, table.Header, section.Page.Left);
