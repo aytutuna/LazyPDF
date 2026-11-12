@@ -87,6 +87,8 @@ internal sealed partial class PptxReader
                 int at = column++;
                 if (at >= columns.Count) break;
                 if (tc.Attribute("hMerge") is "1" or "true" || tc.Attribute("vMerge") is "1" or "true") continue;
+                // A cell under an earlier span is ignored, as PowerPoint does; this also bounds the work to rows x columns.
+                if (covered[r, at] is not null) continue;
                 var cell = Cell(tc, at, Math.Min(Count(tc, "gridSpan"), columns.Count - at), Math.Min(Count(tc, "rowSpan"), rows.Count - r), scope);
                 row.Cells.Add(cell);
                 for (int i = r; i < r + cell.RowSpan; i++)

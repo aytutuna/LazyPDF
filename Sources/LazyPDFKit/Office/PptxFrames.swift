@@ -92,6 +92,8 @@ extension PptxReader {
                 column += 1
                 if at >= columns.count { break }
                 if Self.isOn(tc.attribute("hMerge")) || Self.isOn(tc.attribute("vMerge")) { continue }
+                // A cell under an earlier span is ignored, as PowerPoint does; this also bounds the work to rows x columns.
+                if covered[r][at] != nil { continue }
                 let cell = try makeCell(tc, at, min(Self.count(tc, "gridSpan"), columns.count - at), min(Self.count(tc, "rowSpan"), rows.count - r), scope)
                 row.cells.append(cell)
                 for i in r..<(r + cell.rowSpan) {

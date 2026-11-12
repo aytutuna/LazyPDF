@@ -342,6 +342,13 @@ public class PptxTests
     }
 
     [Fact]
+    public void ACellUnderAnEarlierSpanIsIgnored()
+    {
+        string overlapping = Table(2, 2).Replace("<a:tc>", "<a:tc gridSpan=\"2\" rowSpan=\"2\">");
+        Assert.Single(Layout(Slides(1, overlapping)).Pages[0].Boxes.OfType<PlacedText>());
+    }
+
+    [Fact]
     public void ATableCountsItsTextTowardTheTotal()
     {
         Layout(Slides(1, Table(2, 2)), new PptxLimits(MaxTotalText: 4));

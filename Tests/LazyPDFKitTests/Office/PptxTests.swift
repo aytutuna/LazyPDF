@@ -300,6 +300,11 @@ final class PptxTests: XCTestCase {
         XCTAssertEqual(try layout(try slides(1, table(2, 3) + box("A", "kept")), limits).skipped, [SkippedFeature("slide-shape", 1)])
     }
 
+    func test_aCellUnderAnEarlierSpanIsIgnored() throws {
+        let overlapping = table(2, 2).replacingOccurrences(of: "<a:tc>", with: "<a:tc gridSpan=\"2\" rowSpan=\"2\">")
+        XCTAssertEqual(texts(try layout(try slides(1, overlapping)).pages[0]).count, 1)
+    }
+
     func test_aTableCountsItsTextTowardTheTotal() throws {
         _ = try layout(try slides(1, table(2, 2)), PptxLimits(maxTotalText: 4))
         let package = try slides(1, table(2, 2))
