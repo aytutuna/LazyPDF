@@ -39,7 +39,7 @@ public final class SearchTimeouts {
 }
 
 public enum TextSearch {
-    private static let regexTimeout: TimeInterval = 2
+    static var regexTimeout: TimeInterval = 2
 
     /// Finds a query on a page. White space in the query matches any run of white space and line breaks; a hyphen at a
     /// line end can be part of the match or not (`in-` and `formation` match "information", `well-` and `known` match

@@ -168,8 +168,12 @@ final class TextSearchTests: TextTestCase {
     func test_aTimedOutPageIsReported() throws {
         let page = try text(line(100, 700, String(repeating: "a", count: 40) + "!"))
         let timeouts = SearchTimeouts()
+        // Some ICU builds give up on this pattern in under a second, so the limit is made shorter than any of them takes.
+        TextSearch.regexTimeout = 0.01
+        defer { TextSearch.regexTimeout = 2 }
         XCTAssertTrue(try TextSearch.find(page, "^(a+)+$", TextSearchOptions(regex: true), timeouts: timeouts).isEmpty)
         XCTAssertEqual(timeouts.pages, [0])
+        TextSearch.regexTimeout = 2
         let quiet = SearchTimeouts()
         XCTAssertEqual(try TextSearch.find(page, "a+!", TextSearchOptions(regex: true), timeouts: quiet).count, 1)
         XCTAssertTrue(quiet.pages.isEmpty)
