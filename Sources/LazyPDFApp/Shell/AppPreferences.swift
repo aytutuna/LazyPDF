@@ -9,6 +9,19 @@ public enum AppAppearance: String, Codable, Sendable {
     case dark
 }
 
+/// A file that was open when the app quit, with the page it was on. The bookmark is what lets a sandboxed app open it again.
+public struct SessionFile: Codable, Equatable {
+    public var path: String
+    public var bookmark: Data?
+    public var page: Int
+
+    public init(path: String, bookmark: Data?, page: Int) {
+        self.path = path
+        self.bookmark = bookmark
+        self.page = page
+    }
+}
+
 /// What the app remembers about its own window.
 public struct AppPreferences: Codable, Equatable {
     public var appearance = AppAppearance.system
@@ -25,10 +38,17 @@ public struct AppPreferences: Codable, Equatable {
     public var cover = false
     public var continuous = true
 
+    /// Whether the files open at quit come back at the next start; only then are `lastFiles` kept.
+    public var reopenLast = false
+    public var lastFiles: [SessionFile] = []
+
+    /// Index in `lastFiles` of the tab that was active.
+    public var lastActive = 0
+
     public init() {}
 
     private enum CodingKeys: String, CodingKey {
-        case appearance, sidePanel, inspectorSections, tint, columns, cover, continuous
+        case appearance, sidePanel, inspectorSections, tint, columns, cover, continuous, reopenLast, lastFiles, lastActive
     }
 
     public init(from decoder: Decoder) throws {
@@ -40,6 +60,9 @@ public struct AppPreferences: Codable, Equatable {
         columns = c.decodeLenient(forKey: .columns, default: columns)
         cover = c.decodeLenient(forKey: .cover, default: cover)
         continuous = c.decodeLenient(forKey: .continuous, default: continuous)
+        reopenLast = c.decodeLenient(forKey: .reopenLast, default: reopenLast)
+        lastFiles = c.decodeLenient(forKey: .lastFiles, default: lastFiles)
+        lastActive = c.decodeLenient(forKey: .lastActive, default: lastActive)
     }
 }
 

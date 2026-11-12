@@ -96,6 +96,7 @@ public final class AppViewModel {
     public private(set) var sidePanelId: String
     @ObservationIgnored private var lastSidePanelId: String
     public private(set) var appearance: AppAppearance
+    public internal(set) var reopenLast: Bool
     public internal(set) var message: InfoMessage?
     @ObservationIgnored var messageSerial = 0
     @ObservationIgnored var heldMessage: Int?
@@ -141,6 +142,7 @@ public final class AppViewModel {
         sidePanelId = preferences.sidePanel
         lastSidePanelId = preferences.sidePanel.isEmpty ? "pages" : preferences.sidePanel
         appearance = preferences.appearance
+        reopenLast = preferences.reopenLast
         recent = buildRecent()
     }
 
