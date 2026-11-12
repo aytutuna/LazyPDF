@@ -18,10 +18,15 @@ extension PdfRedactor {
         for v in values where v.page >= 0 && v.page < work.pages.count && v.length > 0 {
             groups[ValueKey(page: v.page, annotation: v.annotation), default: []].append(v)
         }
+        // Annotations are looked up before anything is removed, because a removal shifts the indexes after it.
+        var pages: [Int: [PdfAnnotation]] = [:]
+        var targets: [(key: ValueKey, annotation: PdfAnnotation)] = []
         for key in groups.keys.sorted(by: { ($0.page, $0.annotation) < ($1.page, $1.annotation) }) {
-            let annotations = PdfAnnotations.read(work, work.pages[key.page])
-            if key.annotation < 0 || key.annotation >= annotations.count { continue }
-            let annotation = annotations[key.annotation]
+            if pages[key.page] == nil { pages[key.page] = PdfAnnotations.read(work, work.pages[key.page]) }
+            guard let annotations = pages[key.page], key.annotation >= 0, key.annotation < annotations.count else { continue }
+            targets.append((key, annotations[key.annotation]))
+        }
+        for (key, annotation) in targets {
             let hits = (groups[key] ?? []).sorted { $0.start > $1.start }
             let done = annotation.type == .widget
                 ? rewriteField(work, annotation, hits, replacement, &needles)

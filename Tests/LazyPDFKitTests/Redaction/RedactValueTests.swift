@@ -69,6 +69,19 @@ final class RedactValueTests: XCTestCase {
         XCTAssertTrue(result.verification.isClean)
     }
 
+    func test_removedFreeTextDoesNotHideALaterHitOnThePage() throws {
+        let document = try blank()
+        try PdfAnnotationWriter(document).addFreeText(document.pages[0], PdfRect(100, 400, 300, 440), "secret", info: AnnotationInfo(author: "A"))
+        try note(document, "mail jane.doe@example.com")
+        let found = try RedactionFinder.findWordsInValues(document, ["secret", "jane.doe@example.com"])
+        XCTAssertEqual(found.count, 2)
+        var options = RedactionOptions()
+        options.overlayText = "\u{1F600}"
+        let result = try PdfRedactor(document).apply([], options, found)
+        XCTAssertFalse(RedactionKit.holds(result.bytes, "jane.doe@example.com"))
+        XCTAssertTrue(result.verification.isClean)
+    }
+
     func test_fieldValueIsRewrittenAndItsAppearanceDrawnAgain() throws {
         let document = try blank()
         let form = PdfForm.read(document)

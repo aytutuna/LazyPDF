@@ -9,11 +9,17 @@ public sealed partial class PdfRedactor
         var counts = new Dictionary<int, int>();
         string replacement = options.OverlayText ?? "";
         var writer = new PdfAnnotationWriter(work, fonts);
-        foreach (var group in values.Where(v => v.Page >= 0 && v.Page < work.Pages.Count && v.Length > 0).GroupBy(v => (v.Page, v.Annotation)))
+        // Annotations are looked up before anything is removed, because a removal shifts the indexes after it.
+        var pages = new Dictionary<int, IReadOnlyList<PdfAnnotation>>();
+        var targets = new List<(IGrouping<(int Page, int Annotation), RedactionValueMatch> Group, PdfAnnotation Annotation)>();
+        foreach (var group in values.Where(v => v.Page >= 0 && v.Page < work.Pages.Count && v.Length > 0).GroupBy(v => (v.Page, v.Annotation)).OrderBy(g => g.Key.Page).ThenBy(g => g.Key.Annotation))
         {
-            var annotations = PdfAnnotations.Read(work, work.Pages[group.Key.Page]);
+            if (!pages.TryGetValue(group.Key.Page, out var annotations)) pages[group.Key.Page] = annotations = PdfAnnotations.Read(work, work.Pages[group.Key.Page]);
             if (group.Key.Annotation < 0 || group.Key.Annotation >= annotations.Count) continue;
-            var annotation = annotations[group.Key.Annotation];
+            targets.Add((group, annotations[group.Key.Annotation]));
+        }
+        foreach (var (group, annotation) in targets)
+        {
             var hits = group.OrderByDescending(v => v.Start).ToList();
             bool done = annotation.Type == AnnotationType.Widget ? RewriteField(work, annotation, hits, replacement, needles) : RewriteComment(work, writer, annotation, hits, replacement, needles);
             if (done) counts[group.Key.Page] = counts.GetValueOrDefault(group.Key.Page) + 1;

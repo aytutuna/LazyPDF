@@ -70,6 +70,20 @@ public class RedactValueTests
     }
 
     [Fact]
+    public void RemovedFreeTextDoesNotHideALaterHitOnThePage()
+    {
+        using var document = Blank();
+        var writer = new PdfAnnotationWriter(document);
+        writer.AddFreeText(document.Pages[0], new PdfRect(100, 400, 300, 440), "secret", null, null, new AnnotationInfo("A"), null);
+        Note(document, "mail jane.doe@example.com");
+        var found = RedactionFinder.FindWordsInValues(document, ["secret", "jane.doe@example.com"]);
+        Assert.Equal(2, found.Count);
+        var result = new PdfRedactor(document).Apply([], new RedactionOptions { OverlayText = "😀" }, found);
+        Assert.False(RedactionKit.Holds(result.Bytes, "jane.doe@example.com"));
+        Assert.True(result.Verification.IsClean);
+    }
+
+    [Fact]
     public void FieldValueIsRewrittenAndItsAppearanceDrawnAgain()
     {
         using var document = Blank();
