@@ -12,9 +12,13 @@ public class ReplaceAllTests
         var kids = string.Join(" ", contents.Select((_, i) => $"{10 + i} 0 R"));
         pdf.Obj(2, $"<</Type /Pages /Kids [{kids}] /Count {contents.Length} /MediaBox [0 0 600 800]>>");
         pdf.Obj(5, EditKit.Helvetica);
+        pdf.Obj(7, "<</Type /Font /Subtype /Type0 /BaseFont /Arial /Encoding /Identity-V /DescendantFonts [<</Type /Font /Subtype /CIDFontType2 /BaseFont /Arial " +
+            "/CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /DW 600>>] /ToUnicode 8 0 R>>");
+        pdf.Stream(8, "", "/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /X def /CMapType 2 def " +
+            "1 begincodespacerange <0000> <FFFF> endcodespacerange 1 beginbfrange <0041> <005A> <0041> endbfrange endcmap end end");
         for (int i = 0; i < contents.Length; i++)
         {
-            pdf.Obj(10 + i, $"<</Type /Page /Parent 2 0 R /Contents {30 + i} 0 R /Resources <</Font <</F1 5 0 R>>>>>>");
+            pdf.Obj(10 + i, $"<</Type /Page /Parent 2 0 R /Contents {30 + i} 0 R /Resources <</Font <</F1 5 0 R /F3 7 0 R>>>>>>");
             pdf.Stream(30 + i, "", contents[i]);
         }
         return PdfEditSession.Open(pdf.Finish());
@@ -71,15 +75,15 @@ public class ReplaceAllTests
     {
         var session = Open(
             "BT /F1 12 Tf 50 700 Td (a world here) Tj ET",
-            "/Span <</ActualText (world)>> BDC BT /F1 12 Tf 50 700 Td (w0rld) Tj ET EMC",
+            "BT /F3 12 Tf 50 700 Td <0057004F0052004C0044> Tj ET",
             "BT /F1 12 Tf 50 700 Td (the wor) Tj 0 -14 Td (ld ends) Tj ET");
         var report = TextReplacer.ReplaceAll(session, "world", "globe");
         Assert.Equal(1, report.Replaced);
         var failure = Assert.Single(report.Failed);
         Assert.Equal(1, failure.Page);
-        Assert.Equal(EditingText.ActualText, failure.Reason);
+        Assert.Equal(EditingText.Vertical, failure.Reason);
         Assert.Equal("a globe here", Page(session, 0));
-        Assert.Equal("world", Page(session, 1));
+        Assert.Equal("WORLD", Page(session, 1));
     }
 
     [Fact]
