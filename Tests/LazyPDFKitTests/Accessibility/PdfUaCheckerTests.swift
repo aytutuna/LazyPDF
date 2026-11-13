@@ -285,19 +285,19 @@ final class PdfUaCheckerTests: XCTestCase {
 
     func test_shownFontsAreEmbedded() throws {
         let plain = "<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>"
-        try fails("31-001", withText(plain))
-        try lacks("31-001", withText(plain, "BT /F1 12 Tf 3 Tr 20 100 Td (Hello) Tj ET"))
+        try fails("31-009", withText(plain))
+        try lacks("31-009", withText(plain, "BT /F1 12 Tf 3 Tr 20 100 Td (Hello) Tj ET"))
 
         let embedded = withText("<</Type /Font /Subtype /Type1 /BaseFont /ABCDEF+Helv /Encoding /WinAnsiEncoding /FontDescriptor 14 0 R>>", more: { pdf in
             pdf.obj(14, "<</Type /FontDescriptor /FontName /ABCDEF+Helv /Flags 32 /FontFile 15 0 R>>")
             pdf.stream(15, "", "x")
         })
-        try lacks("31-001", embedded)
+        try lacks("31-009", embedded)
     }
 
     func test_shownCharactersMapToUnicode() throws {
-        try fails("31-008", withText("<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding <</Type /Encoding /Differences [65 /zzunknown]>>>>", "BT /F1 12 Tf 20 100 Td (A) Tj ET"))
-        try lacks("31-008", withText("<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>"))
+        try fails("31-027", withText("<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding <</Type /Encoding /Differences [65 /zzunknown]>>>>", "BT /F1 12 Tf 20 100 Td (A) Tj ET"))
+        try lacks("31-027", withText("<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>"))
     }
 
     func test_manyBrokenRulesStayWithinTheCap() throws {

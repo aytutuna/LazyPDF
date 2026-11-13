@@ -95,8 +95,8 @@ internal sealed partial class PdfUaChecker
         foreach (var (font, use) in fonts)
         {
             string where = PdfAText.FontName(font.BaseFont);
-            if (use.Shown && !font.IsEmbedded && !font.IsType3) Add("31-001", "7.21.4.1", where, PdfUaText.FontNotEmbedded);
-            if (use.NoText) Add("31-008", "7.21.7", where, PdfUaText.FontNoUnicode);
+            if (use.Shown && !font.IsEmbedded && !font.IsType3) Add("31-009", "7.21.4.1", where, PdfUaText.FontNotEmbedded);
+            if (use.NoText) Add("31-027", "7.21.7", where, PdfUaText.FontNoUnicode);
         }
     }
 

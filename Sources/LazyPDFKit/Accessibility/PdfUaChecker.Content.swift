@@ -121,8 +121,8 @@ extension PdfUaChecker {
         for font in fonts.fonts {
             let use = fonts.use(font)
             let place = PdfAText.fontName(font.baseFont)
-            if use.shown && !font.isEmbedded && !font.isType3 { add("31-001", "7.21.4.1", place, PdfUaText.fontNotEmbedded) }
-            if use.noText { add("31-008", "7.21.7", place, PdfUaText.fontNoUnicode) }
+            if use.shown && !font.isEmbedded && !font.isType3 { add("31-009", "7.21.4.1", place, PdfUaText.fontNotEmbedded) }
+            if use.noText { add("31-027", "7.21.7", place, PdfUaText.fontNoUnicode) }
         }
     }
 
