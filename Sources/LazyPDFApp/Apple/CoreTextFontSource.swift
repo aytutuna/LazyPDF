@@ -4,14 +4,21 @@ import Foundation
 import LazyPDFKit
 
 // Follows windows/LazyPDF.App/Services/SystemFontSource.cs: the fonts installed on the system, as files the engine can
-// embed. A face inside a .ttc collection is picked by its PostScript name.
+// embed. A face inside a .ttc collection is picked by its PostScript name. It is the shaper for those files too, so the
+// writers that receive it draw Arabic and Hebrew shaped.
 
-public final class CoreTextFontSource: FontSource {
+public final class CoreTextFontSource: FontSource, Shaper {
+    private let shaper = CoreTextShaper()
+
     // The names a PDF or a person uses for fonts the system has under another. The name itself is tried second, since
     // Helvetica is installed on the Mac and Arial is not on every device.
     private static let aliases = ["helvetica": "Arial", "times": "Times New Roman", "courier": "Courier New", "symbol": "Symbol"]
 
     public init() {}
+
+    public func shape(_ text: String, _ font: FontFile, rightToLeft: Bool, language: String?) -> [ShapedGlyph]? {
+        shaper.shape(text, font, rightToLeft: rightToLeft, language: language)
+    }
 
     public func find(_ family: String, _ style: FontStyles) -> FontFile? {
         var wanted = [family]
