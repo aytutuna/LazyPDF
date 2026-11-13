@@ -102,7 +102,7 @@ final class OverlayFieldViews: NSObject, NSTextViewDelegate, NSLayoutManagerDele
         view.textColor = color(look.color)
         view.backgroundColor = field.background.map(color) ?? NSColor.textBackgroundColor
         view.insertionPointColor = view.textColor ?? .labelColor
-        view.alignment = alignment(look.alignment)
+        view.alignment = alignment(look.alignment, rightToLeft: TextDirection.isRightToLeft(view.string))
         view.layer?.borderColor = field.border.map { color($0).cgColor }
         view.layer?.borderWidth = field.border == nil ? 0 : 1.5
         view.isHorizontallyResizable = !field.wraps
@@ -166,9 +166,10 @@ final class OverlayFieldViews: NSObject, NSTextViewDelegate, NSLayoutManagerDele
             : NSColor(srgbRed: color.red, green: color.green, blue: color.blue, alpha: color.alpha)
     }
 
-    private func alignment(_ align: TextAlign) -> NSTextAlignment {
+    // A line that starts right to left begins at the right edge unless told otherwise, as the saved page does.
+    private func alignment(_ align: TextAlign, rightToLeft: Bool) -> NSTextAlignment {
         switch align {
-        case .leading: return .left
+        case .leading: return rightToLeft ? .right : .left
         case .center: return .center
         case .trailing: return .right
         case .justified: return .justified

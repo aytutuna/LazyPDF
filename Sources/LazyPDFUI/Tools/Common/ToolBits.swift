@@ -107,4 +107,11 @@ struct OutputChoiceView: View {
         }
     }
 }
+
+extension View {
+    /// Lays a text box out right to left while its text starts with a right-to-left letter, so it reads and aligns as the saved page does.
+    func followsTextDirection(_ text: String) -> some View {
+        environment(\.layoutDirection, TextDirection.isRightToLeft(text) ? .rightToLeft : .leftToRight)
+    }
+}
 #endif

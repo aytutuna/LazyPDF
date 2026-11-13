@@ -72,6 +72,7 @@ struct StampsPanelView: View {
     private func field(_ title: String, _ label: String, _ path: WritableKeyPath<StampForm, String>) -> some View {
         LabelledField(title) {
             TextField(label, text: bind(path)).textFieldStyle(.roundedBorder).autocorrectionDisabled()
+                .followsTextDirection(model.form[keyPath: path])
         }
     }
 
@@ -88,6 +89,7 @@ struct StampsPanelView: View {
                 TextField(L10n.t("Watermark text"), text: bind(\.watermarkText), axis: .vertical)
                     .lineLimit(2...4)
                     .textFieldStyle(.roundedBorder)
+                    .followsTextDirection(model.form.watermarkText)
             }
             slider(L10n.t("Size"), L10n.t("Watermark size"), \.scale, 10...100, L10n.t("{0} %", Int(model.form.scale)))
             slider(L10n.t("Turn"), L10n.t("Watermark angle"), \.turn, -90...90, L10n.t("{0}°", Int(model.form.turn)))

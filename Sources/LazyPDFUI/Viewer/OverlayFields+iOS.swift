@@ -126,7 +126,7 @@ final class OverlayFieldViews: NSObject, UITextViewDelegate {
         view.textColor = color(look.color)
         view.backgroundColor = field.background.map(color) ?? UIColor.systemBackground
         view.tintColor = view.textColor
-        view.textAlignment = alignment(look.alignment)
+        view.textAlignment = alignment(look.alignment, rightToLeft: TextDirection.isRightToLeft(view.text))
         view.layer.borderColor = (field.border.map(color) ?? .clear).cgColor
         view.textContainer.widthTracksTextView = field.wraps
         view.textContainer.size = CGSize(width: field.wraps ? field.area.width * scale : 1e7, height: 1e7)
@@ -181,9 +181,10 @@ final class OverlayFieldViews: NSObject, UITextViewDelegate {
             : UIColor(red: color.red, green: color.green, blue: color.blue, alpha: color.alpha)
     }
 
-    private func alignment(_ align: TextAlign) -> NSTextAlignment {
+    // A line that starts right to left begins at the right edge unless told otherwise, as the saved page does.
+    private func alignment(_ align: TextAlign, rightToLeft: Bool) -> NSTextAlignment {
         switch align {
-        case .leading: return .left
+        case .leading: return rightToLeft ? .right : .left
         case .center: return .center
         case .trailing: return .right
         case .justified: return .justified

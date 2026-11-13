@@ -113,6 +113,7 @@ struct CreatePanelView: View {
         LabelledField(L10n.t("Text for the pages")) {
             TextEditor(text: $model.typedText)
                 .frame(minHeight: 120, maxHeight: 200)
+                .followsTextDirection(model.typedText)
                 .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.secondary.opacity(0.4)))
                 .accessibilityLabel(L10n.t("Text for the pages"))
                 .onChange(of: model.typedText) { model.inputChanged() }

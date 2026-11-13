@@ -91,6 +91,7 @@ struct FillSignPanelView: View {
                     TextField(L10n.t("Text"), text: $model.words, axis: .vertical)
                         .lineLimit(2...6)
                         .textFieldStyle(.roundedBorder)
+                        .followsTextDirection(model.words)
                 }
             } else {
                 LabelledField(L10n.t("Format")) {

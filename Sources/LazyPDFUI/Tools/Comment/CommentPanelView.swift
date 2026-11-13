@@ -144,6 +144,7 @@ struct CommentPanelView: View {
             HStack {
                 TextField(L10n.t("Stamp text"), text: Binding(get: { model.stampName }, set: { model.setStampName($0) }))
                     .textFieldStyle(.roundedBorder)
+                    .followsTextDirection(model.stampName)
                     .frame(minHeight: 44)
                 Menu {
                     ForEach(model.stamps, id: \.self) { label in

@@ -162,9 +162,8 @@ enum OverlayPainter {
             NSAttributedString.Key(kCTFontAttributeName as String): font(look, size),
             NSAttributedString.Key(kCTForegroundColorAttributeName as String): paint.color(look.color, opacity),
         ]
-        let lines = label.text.replacingOccurrences(of: "\r\n", with: "\n").components(separatedBy: "\n").map {
-            CTLineCreateWithAttributedString(NSAttributedString(string: $0, attributes: attributes))
-        }
+        let texts = label.text.replacingOccurrences(of: "\r\n", with: "\n").components(separatedBy: "\n")
+        let lines = texts.map { CTLineCreateWithAttributedString(NSAttributedString(string: $0, attributes: attributes)) }
         var ascent: CGFloat = 0, descent: CGFloat = 0, leading: CGFloat = 0
         var widths: [Double] = []
         for line in lines {
@@ -187,6 +186,7 @@ enum OverlayPainter {
             switch look.alignment {
             case .center: shift = free / 2
             case .trailing: shift = free
+            case .leading where TextDirection.isRightToLeft(texts[i]): shift = free
             default: shift = 0
             }
             context.textPosition = CGPoint(x: origin.x + shift, y: origin.y + ascent + step * CGFloat(i))
