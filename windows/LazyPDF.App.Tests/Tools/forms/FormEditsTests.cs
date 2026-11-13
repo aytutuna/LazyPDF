@@ -667,8 +667,8 @@ public sealed class FormEditsTests
         using var tab = FormPdfs.Tab();
         var fills = new FillMerge();
 
-        fills.Apply(tab, Fonts, "Fill form field", "name", form => form.SetValue("name", "A"));
-        fills.Apply(tab, Fonts, "Fill form field", "name", form => form.SetValue("name", "Ada"));
+        fills.Apply(tab, Fonts, "Fill form", form => form.SetValue("name", "A"));
+        fills.Apply(tab, Fonts, "Fill form", form => form.SetValue("name", "Ada"));
 
         Assert.Equal("Ada", FormPdfs.Read(tab).Find("name")!.Value);
         tab.Undo();
@@ -677,19 +677,19 @@ public sealed class FormEditsTests
     }
 
     [Fact]
-    public void TwoFieldsAreTwoSteps()
+    public void SeveralFieldsAreOneStep()
     {
         using var tab = FormPdfs.Tab();
         var fills = new FillMerge();
 
-        fills.Apply(tab, Fonts, "Fill form field", "name", form => form.SetValue("name", "Ada"));
-        fills.Apply(tab, Fonts, "Fill form field", "code", form => form.SetValue("code", "12"));
+        fills.Apply(tab, Fonts, "Fill form", form => form.SetValue("name", "Ada"));
+        fills.Apply(tab, Fonts, "Fill form", form => form.SetValue("code", "12"));
+        Assert.Equal("Fill form", tab.Session.UndoLabel);
         tab.Undo();
 
-        Assert.Equal("Ada", FormPdfs.Read(tab).Find("name")!.Value);
-        Assert.Null(FormPdfs.Read(tab).Find("code")!.Value);
-        tab.Undo();
         Assert.Null(FormPdfs.Read(tab).Find("name")!.Value);
+        Assert.Null(FormPdfs.Read(tab).Find("code")!.Value);
+        Assert.False(tab.Session.CanUndo);
     }
 
     [Fact]
@@ -697,15 +697,15 @@ public sealed class FormEditsTests
     {
         using var tab = FormPdfs.Tab();
         var fills = new FillMerge();
-        fills.Apply(tab, Fonts, "Fill form field", "name", form => form.SetValue("name", "A"));
-        fills.Apply(tab, Fonts, "Fill form field", "name", form => form.SetValue("name", "Ad"));
+        fills.Apply(tab, Fonts, "Fill form", form => form.SetValue("name", "A"));
+        fills.Apply(tab, Fonts, "Fill form", form => form.SetValue("name", "Ad"));
         FormEdits.Apply(tab, Fonts, "Change tab order", form => { form.SetTabOrder(0, TabOrder.Row); return true; });
 
-        fills.Apply(tab, Fonts, "Fill form field", "name", form => form.SetValue("name", "Ada"));
+        fills.Apply(tab, Fonts, "Fill form", form => form.SetValue("name", "Ada"));
         tab.Undo();
         Assert.Equal("Ad", FormPdfs.Read(tab).Find("name")!.Value);
 
-        fills.Apply(tab, Fonts, "Fill form field", "name", form => form.SetValue("name", "Adam"));
+        fills.Apply(tab, Fonts, "Fill form", form => form.SetValue("name", "Adam"));
         tab.Undo();
         Assert.Equal("Ad", FormPdfs.Read(tab).Find("name")!.Value);
     }

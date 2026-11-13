@@ -14,15 +14,14 @@ public enum AlignKind { Left, Centre, Right, Top, Middle, Bottom, SpaceAcross, S
 internal sealed class FillMerge
 {
     private DocumentTab? _tab;
-    private string? _field;
     private int _revision;
 
-    public T Apply<T>(DocumentTab tab, IFontSource fonts, string label, string field, Func<PdfForm, T> edit)
+    public T Apply<T>(DocumentTab tab, IFontSource fonts, string label, Func<PdfForm, T> edit)
     {
-        bool merge = ReferenceEquals(tab, _tab) && field == _field && tab.Revision == _revision;
+        bool merge = ReferenceEquals(tab, _tab) && tab.Revision == _revision;
         int before = tab.Revision;
         var result = FormEdits.Apply(tab, fonts, label, edit, merge);
-        if (tab.Revision != before) (_tab, _field, _revision) = (tab, field, tab.Revision);
+        if (tab.Revision != before) (_tab, _revision) = (tab, tab.Revision);
         return result;
     }
 

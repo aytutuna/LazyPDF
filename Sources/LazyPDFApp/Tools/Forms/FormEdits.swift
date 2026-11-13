@@ -4,21 +4,20 @@ import LazyPDFKit
 // Follows windows/LazyPDF.App/Tools/Forms/FormEdits.cs: changes to the form of a tab, each one undoable step. The engine's
 // errors pass through to the caller.
 
-/// Typing into one field, or changing it again and again, is one undo step. Another field, another tool, an undo or a
+/// Filling in fields one after another is one undo step. Another tool, an undo or a
 /// redo starts a new one: the tab's revision moves with each of those, and the engine refuses a merge after a save.
 @MainActor
 public final class FillMerge {
     private weak var tab: DocumentTab?
-    private var field: String?
     private var revision = 0
 
     public init() {}
 
-    public func apply<T>(_ tab: DocumentTab, _ fonts: FontSource, _ label: String, _ field: String, _ edit: (PdfForm) throws -> T) throws -> T {
-        let merge = tab === self.tab && field == self.field && tab.revision == revision
+    public func apply<T>(_ tab: DocumentTab, _ fonts: FontSource, _ label: String, _ edit: (PdfForm) throws -> T) throws -> T {
+        let merge = tab === self.tab && tab.revision == revision
         let before = tab.revision
         let result = try FormEdits.apply(tab, fonts, label, merge: merge, edit)
-        if tab.revision != before { (self.tab, self.field, revision) = (tab, field, tab.revision) }
+        if tab.revision != before { (self.tab, revision) = (tab, tab.revision) }
         return result
     }
 

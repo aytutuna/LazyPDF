@@ -317,7 +317,7 @@ public sealed partial class FormsPanel : ToolPanel
     private bool Fill(string name, Func<PdfForm, FormFillResult> fill)
     {
         bool xfa = Form.Xfa == XfaKind.Static;
-        if (Edit(Loc.T("Fill form field"), fill, () => Fill(name, fill), name) is not { } result) return false;
+        if (Edit(Loc.T("Fill form"), fill, () => Fill(name, fill), merge: true) is not { } result) return false;
         if (result.Rejected.Count > 0)
         {
             Host!.ShowProblem(new Problem(Loc.T("Value not accepted"), Loc.T("This field does not take that value. Check it and try again.")));
@@ -329,10 +329,10 @@ public sealed partial class FormsPanel : ToolPanel
     }
 
     // One undoable step. Nothing happens while an edit runs, or before the person has agreed to change a signed file.
-    private T? Edit<T>(string label, Func<PdfForm, T> edit, Action? again = null, string? field = null)
+    private T? Edit<T>(string label, Func<PdfForm, T> edit, Action? again = null, bool merge = false)
     {
         if (_working || Signed(again)) return default;
-        return Guard(() => field is null ? FormEdits.Apply(Tab!, _fonts, label, edit) : _fills.Apply(Tab!, _fonts, label, field, edit));
+        return Guard(() => merge ? _fills.Apply(Tab!, _fonts, label, edit) : FormEdits.Apply(Tab!, _fonts, label, edit));
     }
 
     // A change to a signed file leaves the signatures not covering what is now in it, and a certified file may forbid the change.

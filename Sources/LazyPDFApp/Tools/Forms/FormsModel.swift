@@ -382,7 +382,7 @@ public final class FormsModel: ToolPanelModel {
     private func fillIn(_ field: String, _ change: @escaping (PdfForm) throws -> FormFillResult) -> Bool {
         guard let host else { return false }
         let xfa = form.xfa == .static
-        guard let result = edit(L10n.t("Fill form field"), again: { [weak self] in _ = self?.fillIn(field, change) }, field: field, change) else { return false }
+        guard let result = edit(L10n.t("Fill form"), again: { [weak self] in _ = self?.fillIn(field, change) }, merge: true, change) else { return false }
         if !result.rejected.isEmpty {
             host.showProblem(Problem(L10n.t("Value not accepted"), L10n.t("This field does not take that value. Check it and try again.")))
             return false
@@ -396,10 +396,10 @@ public final class FormsModel: ToolPanelModel {
     }
 
     // One undoable step. Nothing happens while an edit runs, or before the person has agreed to change a signed file.
-    func edit<T>(_ label: String, again: (@MainActor () -> Void)? = nil, field: String? = nil, _ change: (PdfForm) throws -> T) -> T? {
+    func edit<T>(_ label: String, again: (@MainActor () -> Void)? = nil, merge: Bool = false, _ change: (PdfForm) throws -> T) -> T? {
         guard let tab, !isWorking, !signed(again) else { return nil }
         return guarded {
-            if let field { return try fills.apply(tab, fonts, label, field, change) }
+            if merge { return try fills.apply(tab, fonts, label, change) }
             return try FormEdits.apply(tab, fonts, label, change)
         }
     }

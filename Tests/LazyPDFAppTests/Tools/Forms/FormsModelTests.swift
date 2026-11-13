@@ -43,7 +43,7 @@ final class FormsModelTests: XCTestCase {
 
         XCTAssertEqual(rig.form.find("name")?.value, "Ada")
         XCTAssertEqual(rig.model.rows[0].value, "Ada")
-        XCTAssertEqual(rig.tab.session.undoLabel, "Fill form field")
+        XCTAssertEqual(rig.tab.session.undoLabel, "Fill form")
         try rig.tab.undo()
         XCTAssertNil(rig.form.find("name")?.value)
     }
