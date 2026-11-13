@@ -142,13 +142,13 @@ public enum CreateJob {
 extension CreateJob {
     private static func makeWebPage(_ request: CreateRequest, _ web: WebPageRenderer?, _ token: CancelToken) async throws -> MadePdf {
         guard let web, let file = request.files.first else { throw WebPageError.couldNotLoad }
+        let layout = try WebPageLayout(request.setup)
         let size = (try FileManager.default.attributesOfItem(atPath: file.path)[.size] as? NSNumber)?.intValue ?? 0
         if size > WebPageRules.mostBytes { throw WebPageError.tooBig }
         let remote = try await ToolDocuments.run(token) {
             WebPageRules.namesRemoteParts(TextFiles.decode([UInt8](try Data(contentsOf: file))))
         }
         try token.throwIfCancelled()
-        let layout = WebPageLayout(request.setup)
         let rendered = try await ToolDocuments.runAsync(token) { try await web.render(file, layout) }
         return MadePdf(bytes: rendered.bytes, pages: rendered.pages, unreadable: 0, leftOutRemote: remote)
     }
@@ -160,7 +160,7 @@ enum CreateProblems {
         let app = source == .office ? FileKinds.officeApp(request.files[0]) : nil
         let excel = app == .excel
         let slides = app == .powerPoint
-        if source == .web {
+        if source == .web && !(error is ArgumentException) {
             switch error as? WebPageError ?? .couldNotLoad {
             case .tooBig: return Problem(L10n.t("Page is too big"), L10n.t("The web page file is over 20 MB. Pick a smaller one."))
             case .timedOut: return Problem(L10n.t("Page took too long"), L10n.t("The web page did not finish loading. Pick a simpler page."))

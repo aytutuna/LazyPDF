@@ -43,19 +43,46 @@ final class CreateWebPageTests: XCTestCase {
         try await CreateJob.run(f.vm, FakeCodec(), FakeFonts(), CreateRequest(.web, PdfPageSetup(), "a.pdf", files: [file]), web: renderer)
     }
 
-    func test_layoutFollowsPaperOrientationAndMargin() {
-        let a4 = WebPageLayout(PdfPageSetup(paper: .a4, orientation: .auto, margin: 36))
+    func test_layoutFollowsPaperOrientationAndMargin() async throws {
+        let a4 = try WebPageLayout(PdfPageSetup(paper: .a4, orientation: .auto, margin: 36))
         XCTAssertEqual(a4.width, 595.276, accuracy: 0.001)
         XCTAssertEqual(a4.height, 841.89, accuracy: 0.001)
         XCTAssertEqual(a4.contentWidth, 595.276 - 72, accuracy: 0.001)
 
-        let letter = WebPageLayout(PdfPageSetup(paper: .letter, orientation: .landscape, margin: 0))
+        let letter = try WebPageLayout(PdfPageSetup(paper: .letter, orientation: .landscape, margin: 0))
         XCTAssertEqual(letter.width, 792)
         XCTAssertEqual(letter.height, 612)
         XCTAssertEqual(letter.contentHeight, 612)
 
-        let picture = WebPageLayout(PdfPageSetup(paper: .picture, orientation: .portrait))
+        let picture = try WebPageLayout(PdfPageSetup(paper: .picture, orientation: .portrait))
         XCTAssertEqual(picture.width, 595.276, accuracy: 0.001)
+    }
+
+    func test_layoutTakesA3A5LegalAndACustomSize() async throws {
+        let a3 = try WebPageLayout(PdfPageSetup(paper: .a3, orientation: .auto, margin: 36))
+        XCTAssertEqual(a3.width, 841.89, accuracy: 0.001)
+        XCTAssertEqual(a3.height, 1190.551, accuracy: 0.001)
+
+        let a5 = try WebPageLayout(PdfPageSetup(paper: .a5, orientation: .landscape, margin: 36))
+        XCTAssertEqual(a5.width, 595.276, accuracy: 0.001)
+        XCTAssertEqual(a5.height, 419.528, accuracy: 0.001)
+
+        let legal = try WebPageLayout(PdfPageSetup(paper: .legal, orientation: .portrait, margin: 36))
+        XCTAssertEqual(legal.width, 612)
+        XCTAssertEqual(legal.height, 1008)
+        let wide = try WebPageLayout(PdfPageSetup(paper: .legal, orientation: .landscape, margin: 36))
+        XCTAssertEqual(wide.width, 1008)
+        XCTAssertEqual(wide.height, 612)
+
+        let custom = PdfPageSetup(paper: .custom, orientation: .landscape, margin: 0, customWidth: 283.465, customHeight: 425.197)
+        let turned = try WebPageLayout(custom)
+        XCTAssertEqual(turned.width, 425.197, accuracy: 0.001)
+        XCTAssertEqual(turned.height, 283.465, accuracy: 0.001)
+    }
+
+    func test_aMarginThatLeavesNoRoomIsRefused() {
+        XCTAssertThrowsError(try WebPageLayout(PdfPageSetup(paper: .letter, orientation: .landscape, margin: 306))) { XCTAssertTrue($0 is ArgumentException) }
+        XCTAssertNoThrow(try WebPageLayout(PdfPageSetup(paper: .a4, orientation: .auto, margin: 0)))
     }
 
     func test_theRuleListIsJsonThatBlocksTheNetwork() throws {
@@ -157,6 +184,17 @@ final class CreateWebPageTests: XCTestCase {
         XCTAssertEqual(model.webPage?.url.lastPathComponent, "story.html")
     }
 
+    func test_aMarginThatLeavesNoRoomIsSaidAsAMargin() async throws {
+        let f = ViewModelFixture(self)
+        let renderer = FakeWebRenderer()
+        let request = CreateRequest(.web, PdfPageSetup(paper: .a4, orientation: .auto, margin: 500), "a.pdf", files: [page(f)])
+
+        try await CreateJob.run(f.vm, FakeCodec(), FakeFonts(), request, web: renderer)
+
+        XCTAssertEqual(f.vm.message?.title, "Margin is too wide")
+        XCTAssertTrue(renderer.asked.isEmpty)
+    }
+
     func test_aRunHandsThePageAndTheSetupToTheRenderer() async throws {
         let f = ViewModelFixture(self)
         let renderer = FakeWebRenderer()
@@ -173,7 +211,7 @@ final class CreateWebPageTests: XCTestCase {
 
         XCTAssertEqual(renderer.asked.count, 1)
         XCTAssertEqual(renderer.asked[0].0.lastPathComponent, "story.html")
-        XCTAssertEqual(renderer.asked[0].1, WebPageLayout(PdfPageSetup(paper: .letter, orientation: .auto, margin: 72)))
+        XCTAssertEqual(renderer.asked[0].1, try WebPageLayout(PdfPageSetup(paper: .letter, orientation: .auto, margin: 72)))
         XCTAssertEqual(f.vm.activeDocument?.title, "story.pdf")
         XCTAssertNil(f.vm.message)
     }
@@ -226,7 +264,7 @@ final class CreateWebPageTests: XCTestCase {
         vm.cancelBusy()
         try await run.value
 
-        XCTAssertEqual(vm.statusFull, "Cancelled.")
+        XCTAssertEqual(vm.statusFull, "Canceled.")
         XCTAssertTrue(vm.documents.isEmpty)
     }
 

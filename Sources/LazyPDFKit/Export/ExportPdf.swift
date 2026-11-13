@@ -2,7 +2,7 @@ import Foundation
 
 // Twin of windows/LazyPDF.Core/Export/ExportPdf.cs: what the PDFs made from pictures and from text start from.
 
-enum ExportPdf {
+public enum ExportPdf {
     private static let a4Width = 595.276, a4Height = 841.89
     private static let letterWidth = 612.0, letterHeight = 792.0
     private static let a3Width = 841.89, a3Height = 1190.551
@@ -22,7 +22,7 @@ enum ExportPdf {
     }
 
     /// The paper in portrait, turned when landscape. `PdfPaper.picture` reads as A4.
-    static func paper(_ setup: PdfPageSetup, landscape: Bool) -> (width: Double, height: Double) {
+    public static func paper(_ setup: PdfPageSetup, landscape: Bool) -> (width: Double, height: Double) {
         let (w, h): (Double, Double)
         switch setup.paper {
         case .letter: (w, h) = (letterWidth, letterHeight)

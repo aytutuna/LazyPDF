@@ -18,12 +18,13 @@ public struct WebPageLayout: Equatable {
     public let height: Double
     public let margin: Double
 
-    /// A picture-sized page makes no sense for a page of text, so it is A4 here; Automatic is portrait.
-    public init(_ setup: PdfPageSetup) {
-        var (short, long) = setup.paper == .letter ? (612.0, 792.0) : (595.276, 841.89)
-        if setup.orientation == .landscape { swap(&short, &long) }
-        width = short
-        height = long
+    /// The paper of the setup, as the engine's own PDFs take it; a picture-sized page makes no sense for a page of text, so it is A4 here.
+    /// Throws ArgumentException when the margin leaves no room on the page.
+    public init(_ setup: PdfPageSetup) throws {
+        let paper = ExportPdf.paper(setup, landscape: false)
+        guard setup.margin >= 0, setup.margin * 2 < min(paper.width, paper.height) else { throw ArgumentException("The margin leaves no room on the page.") }
+        width = paper.width
+        height = paper.height
         margin = setup.margin
     }
 
