@@ -8068,9 +8068,6 @@
   <data name="pt" xml:space="preserve">
     <value>pt</value>
   </data>
-  <data name="right-to-left text direction" xml:space="preserve">
-    <value>sağdan sola metin yönü</value>
-  </data>
   <data name="rotated text (shown straight)" xml:space="preserve">
     <value>döndürülmüş metin (düz gösterildi)</value>
   </data>

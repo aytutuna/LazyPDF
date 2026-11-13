@@ -17,7 +17,7 @@ internal static class PptxLayout
     public static LayoutResult Run(PptxPresentation presentation, LayoutFonts fonts, CancellationToken cancellation = default)
     {
         var pages = new List<LayoutPage>();
-        int rightToLeft = 0, complex = 0, total = 0;
+        int complex = 0, total = 0;
         foreach (var slide in presentation.Slides)
         {
             cancellation.ThrowIfCancellationRequested();
@@ -37,12 +37,11 @@ internal static class PptxLayout
                 {
                     var lines = TableLayout.Measure(table.Table, fonts, Math.Max(1, table.Table.Columns.Sum()), Wide, p =>
                     {
-                        if (p.RightToLeft) rightToLeft++;
                         if (p.ComplexScript) complex++;
                     });
                     Paginator.EmitTable(boxes, lines, table.X, table.Y);
                 }
-                if (shape.Body is { } body) Text(shape, body, fonts, number, boxes, ref rightToLeft, ref complex);
+                if (shape.Body is { } body) Text(shape, body, fonts, number, boxes, ref complex);
                 if (total + boxes.Count > MaxBoxes) throw new PdfReadException(PdfReadProblem.Unsupported, "The presentation is too large.");
             }
             total += boxes.Count;
@@ -57,12 +56,11 @@ internal static class PptxLayout
             if (at < 0) skipped.Add(new SkippedFeature(kind, count));
             else skipped[at] = skipped[at] with { Count = skipped[at].Count + count };
         }
-        Add(SkippedKinds.RightToLeftText, rightToLeft);
         Add(SkippedKinds.ComplexScript, complex);
         return new LayoutResult(pages, skipped, [.. fonts.Missing]);
     }
 
-    private static void Text(PptxShape shape, PptxBody body, LayoutFonts fonts, string number, List<LayoutBox> boxes, ref int rightToLeft, ref int complex)
+    private static void Text(PptxShape shape, PptxBody body, LayoutFonts fonts, string number, List<LayoutBox> boxes, ref int complex)
     {
         double inner = Math.Max(1, shape.Width - body.Left - body.Right);
         double room = shape.Height - body.Top - body.Bottom;
@@ -70,7 +68,6 @@ internal static class PptxLayout
         foreach (var paragraph in body.Paragraphs)
         {
             var lines = ParagraphLayout.Run(body.Wrap ? paragraph : Unwrapped(paragraph), fonts, body.Wrap ? inner : Wide, Wide, _ => number);
-            if (lines.RightToLeft) rightToLeft++;
             if (lines.ComplexScript) complex++;
             laid.Add(lines);
         }
@@ -95,7 +92,7 @@ internal static class PptxLayout
             if (i > 0) y += lines.Source.Before;
             foreach (var line in lines.Lines)
             {
-                Paginator.EmitLine(boxes, line, left + (body.Wrap ? 0 : Shift(line, aligns[i], inner)), y);
+                Paginator.EmitLine(boxes, line, left + (body.Wrap ? 0 : Shift(line, aligns[i], inner, lines.Source.RightToLeft)), y);
                 y += line.Height;
             }
             if (i < laid.Count - 1) y += lines.Source.After;
@@ -103,16 +100,23 @@ internal static class PptxLayout
     }
 
     // Text that does not wrap is laid out on a line without end and then moved so that its alignment holds against the shape.
+    // A right-to-left paragraph starts at the right edge of the line without end, so it is first brought back to the left.
     private static LayoutParagraph Unwrapped(LayoutParagraph p) => new()
     {
-        Runs = p.Runs, Align = LayoutAlign.Left, Left = p.Left, Right = 0, FirstLine = p.FirstLine, Before = p.Before, After = p.After,
-        LineSpacing = p.LineSpacing, Rule = p.Rule, LabelTab = p.LabelTab,
+        Runs = p.Runs, Align = p.RightToLeft ? LayoutAlign.Right : LayoutAlign.Left, Left = p.Left, Right = 0, FirstLine = p.FirstLine, Before = p.Before, After = p.After,
+        LineSpacing = p.LineSpacing, Rule = p.Rule, LabelTab = p.LabelTab, RightToLeft = p.RightToLeft,
     };
 
-    private static double Shift(LayoutLine line, LayoutAlign align, double inner)
+    private static double Shift(LayoutLine line, LayoutAlign align, double inner, bool rightToLeft)
     {
         int ink = line.Atoms.FindLastIndex(a => !a.IsBlank);
-        if (ink < 0 || align is LayoutAlign.Left or LayoutAlign.Justify) return 0;
+        if (ink < 0) return 0;
+        if (rightToLeft)
+        {
+            double start = line.Atoms.Where(a => !a.IsBlank).Min(a => a.X), width = line.Atoms.Where(a => !a.IsBlank).Max(a => a.BoxRight) - start;
+            return -start + (align is LayoutAlign.Left ? 0 : align == LayoutAlign.Center ? (inner - width) / 2 : inner - width);
+        }
+        if (align is LayoutAlign.Left or LayoutAlign.Justify) return 0;
         double end = line.Atoms[ink].X + line.Atoms[ink].Width;
         return align == LayoutAlign.Center ? (inner - (end - line.Start)) / 2 - line.Start : inner - end;
     }

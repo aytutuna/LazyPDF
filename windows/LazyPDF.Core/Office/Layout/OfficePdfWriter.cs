@@ -29,7 +29,8 @@ internal static class OfficePdfWriter
             foreach (var box in page.Boxes.OfType<PlacedText>())
             {
                 if (!texts.TryGetValue((box.Family, box.Style), out var list)) texts[(box.Family, box.Style)] = list = [];
-                list.Add(box.Text);
+                // A mark in front makes the embedder collect the glyphs of the text as a right-to-left run, brackets mirrored.
+                list.Add(box.RightToLeft ? "\u200F" + box.Text : box.Text);
             }
         }
         var pictures = new Dictionary<byte[], PdfImage?>(ReferenceEqualityComparer.Instance);
@@ -121,6 +122,7 @@ internal static class OfficePdfWriter
                 Color(text.Color);
                 writer.BeginText().Font(name, R(text.Size)).MoveText(R(text.X), R(layout.Height - text.Baseline));
                 if (text.SpaceExtra > 0) Justified(writer, font, text);
+                else if (text.RightToLeft) writer.ShowRun(font, text.Text, true, R(text.Size));
                 else writer.Show(font.Encode(text.Text));
                 writer.EndText();
             }

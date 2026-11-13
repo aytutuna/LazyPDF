@@ -17,11 +17,19 @@ internal sealed class Atom
     public double Extra;
     /// <summary>An explicit stop this tab runs to when the text is before it.</summary>
     public double? Stop;
+    /// <summary>The bidi embedding level; odd is right to left. Set only for a paragraph that needs the algorithm.</summary>
+    public int Level;
+    /// <summary>Where the atom starts in the text the bidi algorithm ran on.</summary>
+    public int Unit;
 
     public bool IsSpace => Code is ' ' or (>= 0x2000 and <= 0x200A and not 0x2007) or 0x1680 or 0x205F;
     public bool IsTab => Code == '\t';
     public bool IsNewline => Code == '\n';
-    public bool IsZeroWidth => Code == 0x200B;
+    public bool IsZeroWidth => Code == 0x200B || Scripts.IsBidiControl(Code);
+    public bool IsRightToLeft => (Level & 1) == 1;
+    /// <summary>The left edge of the room the atom takes: justification adds its gap before a right-to-left atom.</summary>
+    public double BoxLeft => IsRightToLeft ? X - Extra : X;
+    public double BoxRight => IsRightToLeft ? X + Width : X + Width + Extra;
     /// <summary>Takes room (or none) but draws nothing.</summary>
     public bool IsBlank => IsSpace || IsTab || IsNewline || IsZeroWidth;
 }
@@ -39,7 +47,6 @@ internal sealed class ParagraphLines
 {
     public required LayoutParagraph Source { get; init; }
     public List<LayoutLine> Lines { get; } = [];
-    public bool RightToLeft;
     public bool ComplexScript;
 
     public double Height => Lines.Sum(l => l.Height);
@@ -58,7 +65,9 @@ internal static class ParagraphLayout
     public static ParagraphLines Run(LayoutParagraph paragraph, LayoutFonts fonts, double areaWidth, double maxHeight, Func<LayoutField, string>? field = null)
     {
         var result = new ParagraphLines { Source = paragraph };
-        var atoms = Atoms(paragraph, fonts, field, result);
+        var atoms = Atoms(paragraph, fonts, field, result, out bool bidi);
+        var order = bidi || paragraph.RightToLeft ? BidiText(atoms, paragraph) : null;
+        var align = paragraph.RightToLeft ? Mirrored(paragraph.Align) : paragraph.Align;
         if (paragraph.LabelTab is { } labelTab && atoms.Find(a => a.IsTab) is { } labelAtom) labelAtom.Stop = labelTab;
         double left = Math.Max(0, paragraph.Left);
         double first = Math.Max(0, paragraph.Left + paragraph.FirstLine);
@@ -81,7 +90,7 @@ internal static class ParagraphLayout
             bool tooWide = reach > right + Tolerance;
             if (tooWide && line.Atoms.Count > 0)
             {
-                Finish(result, line, right, justify: paragraph.Align == LayoutAlign.Justify, paragraph, fonts);
+                Finish(result, line, right, justify: align == LayoutAlign.Justify, paragraph, align, order, areaWidth, fonts);
                 line = new LayoutLine { Start = left };
                 x = left;
                 continue;
@@ -92,7 +101,7 @@ internal static class ParagraphLayout
                 // A segment wider than the line is cut where it runs out.
                 if (tooWide && k < visible && line.Atoms.Count > 0 && x + Step(atom, x, left, right, place: false) > right + Tolerance)
                 {
-                    Finish(result, line, right, justify: paragraph.Align == LayoutAlign.Justify, paragraph, fonts);
+                    Finish(result, line, right, justify: align == LayoutAlign.Justify, paragraph, align, order, areaWidth, fonts);
                     line = new LayoutLine { Start = left };
                     x = left;
                 }
@@ -102,13 +111,13 @@ internal static class ParagraphLayout
             }
             if (atoms[end - 1].IsNewline)
             {
-                Finish(result, line, right, justify: false, paragraph, fonts);
+                Finish(result, line, right, justify: false, paragraph, align, order, areaWidth, fonts);
                 line = new LayoutLine { Start = left };
                 x = left;
             }
             i = end;
         }
-        Finish(result, line, right, justify: false, paragraph, fonts);
+        Finish(result, line, right, justify: false, paragraph, align, order, areaWidth, fonts);
         return result;
     }
 
@@ -139,8 +148,9 @@ internal static class ParagraphLayout
         return width;
     }
 
-    private static List<Atom> Atoms(LayoutParagraph paragraph, LayoutFonts fonts, Func<LayoutField, string>? field, ParagraphLines result)
+    private static List<Atom> Atoms(LayoutParagraph paragraph, LayoutFonts fonts, Func<LayoutField, string>? field, ParagraphLines result, out bool bidi)
     {
+        bidi = false;
         var atoms = new List<Atom>();
         foreach (var run in paragraph.Runs)
         {
@@ -156,8 +166,8 @@ internal static class ParagraphLayout
             {
                 int code = rune.Value;
                 if (code is 0xAD or 0x200C or 0x200D or 0x2060 or 0xFEFF or ObjectCode or (< 0x20 and not '\t' and not '\n') or (>= 0x7F and < 0xA0)) continue;
-                if (code is (>= 0x0590 and <= 0x08FF) or (>= 0xFB1D and <= 0xFDFF) or (>= 0xFE70 and <= 0xFEFF) or (>= 0x10800 and <= 0x10FFF) or (>= 0x1E800 and <= 0x1EFFF)) result.RightToLeft = true;
-                else if (code is (>= 0x0900 and <= 0x0EFF) or (>= 0x0F00 and <= 0x109F) or (>= 0x1780 and <= 0x17FF)) result.ComplexScript = true;
+                bidi |= run.Rtl || Scripts.NeedsBidi(code);
+                if (code is (>= 0x0900 and <= 0x0EFF) or (>= 0x0F00 and <= 0x109F) or (>= 0x1780 and <= 0x17FF)) result.ComplexScript = true;
                 var atom = new Atom { Code = code, Run = run, RunFace = face, Face = face, Size = size };
                 if (!atom.IsBlank || atom.IsSpace)
                 {
@@ -170,6 +180,34 @@ internal static class ParagraphLayout
         return atoms;
     }
 
+    private static LayoutAlign Mirrored(LayoutAlign align) => align switch
+    {
+        LayoutAlign.Left => LayoutAlign.Right,
+        LayoutAlign.Right => LayoutAlign.Left,
+        _ => align,
+    };
+
+    // The text the bidi algorithm runs on: one character an atom (a tab and a line break are neutral), and a right-to-left run
+    // inside a left-to-right paragraph embedded, so that the neutral characters in it go with its direction.
+    private static BidiParagraph BidiText(List<Atom> atoms, LayoutParagraph paragraph)
+    {
+        var text = new System.Text.StringBuilder(atoms.Count + 2);
+        bool embedded = false;
+        foreach (var atom in atoms)
+        {
+            bool inside = atom.Run.Rtl && !paragraph.RightToLeft;
+            if (inside != embedded)
+            {
+                text.Append(inside ? '\u202B' : '\u202C');
+                embedded = inside;
+            }
+            atom.Unit = text.Length;
+            text.Append(atom.IsNewline ? " " : char.ConvertFromUtf32(atom.Code));
+        }
+        if (embedded) text.Append('\u202C');
+        return new BidiParagraph(text.ToString(), paragraph.RightToLeft ? 1 : 0);
+    }
+
     private static FontFace FaceOf(LayoutRun run, LayoutFonts fonts)
     {
         var style = (run.Bold ? FontStyles.Bold : 0) | (run.Italic ? FontStyles.Italic : 0);
@@ -178,9 +216,10 @@ internal static class ParagraphLayout
 
     internal static double Size(LayoutRun run) => run.Size > 0 ? Math.Min(run.Size, 1000) : 11;
 
-    private static void Finish(ParagraphLines result, LayoutLine line, double right, bool justify, LayoutParagraph paragraph, LayoutFonts fonts)
+    private static void Finish(ParagraphLines result, LayoutLine line, double right, bool justify, LayoutParagraph paragraph, LayoutAlign align, BidiParagraph? bidi, double areaWidth, LayoutFonts fonts)
     {
-        Align(line, right, paragraph.Align, justify);
+        Align(line, right, align, justify);
+        if (bidi is not null) Reorder(line, bidi, paragraph.RightToLeft, areaWidth);
         Measure(line, paragraph, fonts);
         result.Lines.Add(line);
     }
@@ -210,6 +249,41 @@ internal static class ParagraphLayout
                     shift += extra;
                 }
             }
+        }
+    }
+
+    // The atoms were placed in logical order from the start edge. Put them in display order (L2), left to right, from where the
+    // line starts: the left of the text area, or for a right-to-left paragraph the right edge, which the area width gives.
+    private static void Reorder(LayoutLine line, BidiParagraph bidi, bool rightToLeft, double areaWidth)
+    {
+        var atoms = line.Atoms;
+        if (atoms.Count == 0) return;
+        int first = atoms[0].Unit, end = atoms[^1].Unit + (atoms[^1].Code > 0xFFFF ? 2 : 1);
+        var levels = bidi.LineLevels(first, end);
+        foreach (var atom in atoms) atom.Level = levels[atom.Unit - first] is var l and >= 0 ? l : bidi.Level;
+
+        var visual = Enumerable.Range(0, atoms.Count).ToList();
+        int highest = atoms.Max(a => a.Level);
+        int lowestOdd = atoms.Where(a => a.IsRightToLeft).Select(a => a.Level).DefaultIfEmpty(int.MaxValue).Min();
+        for (int level = highest; level >= lowestOdd; level--)
+        {
+            for (int i = 0; i < visual.Count; i++)
+            {
+                if (atoms[visual[i]].Level < level) continue;
+                int j = i;
+                while (j + 1 < visual.Count && atoms[visual[j + 1]].Level >= level) j++;
+                visual.Reverse(i, j - i + 1);
+                i = j;
+            }
+        }
+
+        double total = atoms.Sum(a => a.Width + a.Extra);
+        double x = rightToLeft ? areaWidth - atoms[0].X - total : atoms[0].X;
+        foreach (int k in visual)
+        {
+            var atom = atoms[k];
+            atom.X = x + (atom.IsRightToLeft ? atom.Extra : 0);
+            x += atom.Width + atom.Extra;
         }
     }
 

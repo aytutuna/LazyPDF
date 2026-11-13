@@ -8,7 +8,6 @@ public sealed record SkippedFeature(string Kind, int Count);
 
 internal static class SkippedKinds
 {
-    public const string RightToLeftText = "rtl-text";
     public const string ComplexScript = "complex-script";
     public const string UnreadablePicture = "picture";
 }
@@ -35,6 +34,8 @@ internal sealed class LayoutRun
     /// <summary>Points above the baseline; negative sinks the text. The size is already the reduced one.</summary>
     public double Shift { get; init; }
     public LayoutField Field { get; init; }
+    /// <summary>The run is right to left: the characters in it that have no direction of their own go with the right-to-left text.</summary>
+    public bool Rtl { get; init; }
     /// <summary>A picture in line with the text; then the text is empty and the font only sets the descent of the line.</summary>
     public LayoutPicture? Picture { get; init; }
 }
@@ -65,6 +66,11 @@ internal sealed class LayoutParagraph : LayoutBlock
     public bool WidowControl { get; init; } = true;
     /// <summary>A tab stop, from the text area, for the tab after a list number; that tab is the first one of the paragraph.</summary>
     public double? LabelTab { get; init; }
+    /// <summary>
+    /// The paragraph runs right to left. <see cref="Left"/>, <see cref="Right"/> and <see cref="FirstLine"/> then count from the
+    /// start (right) and end (left) edges, while <see cref="Align"/> stays physical.
+    /// </summary>
+    public bool RightToLeft { get; init; }
 }
 
 /// <summary>A line of a cell edge: its thickness in points and 0xRRGGBB.</summary>
@@ -161,8 +167,11 @@ internal sealed class LayoutDocument
 /// <summary>Positions are in points from the top left of the page.</summary>
 internal abstract record LayoutBox;
 
-/// <summary>A piece of one line in one style. <see cref="SpaceExtra"/> is added after every space (justified lines).</summary>
-internal sealed record PlacedText(double X, double Baseline, string Text, string Family, FontStyles Style, double Size, int Color, double SpaceExtra) : LayoutBox;
+/// <summary>
+/// A piece of one line in one style. <see cref="SpaceExtra"/> is added after every space (justified lines).
+/// <see cref="RightToLeft"/>: the text is one right-to-left run in logical order, drawn from X to the right in display order.
+/// </summary>
+internal sealed record PlacedText(double X, double Baseline, string Text, string Family, FontStyles Style, double Size, int Color, double SpaceExtra, bool RightToLeft = false) : LayoutBox;
 
 /// <summary>
 /// A picture with its top left corner at X, Y. It is turned clockwise by <paramref name="Rotation"/> degrees about its center

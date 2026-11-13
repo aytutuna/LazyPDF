@@ -12,9 +12,10 @@ public class OfficeLayoutTests
 {
     private static string Num(double value) => (Math.Round(value * 100, MidpointRounding.AwayFromZero) / 100 + 0.0).ToString("0.00", CultureInfo.InvariantCulture);
 
-    private static string Dump(LayoutDocument document)
+    private static string Dump(LayoutDocument document) => Dump(document, OfficeLayoutSpec.Fonts());
+
+    internal static string Dump(LayoutDocument document, IFontSource fonts)
     {
-        var fonts = OfficeLayoutSpec.Fonts();
         var layout = new Paginator(document, new LayoutFonts(fonts), default).Run();
         var contents = new List<byte[]>();
         OfficePdfWriter.Create(document, fonts, contents: contents);
@@ -28,7 +29,7 @@ public class OfficeLayoutTests
                 switch (box)
                 {
                     case PlacedText t:
-                        output.Append($"text {Num(t.X)} {Num(t.Baseline)} {t.Family}/{t.Style} {Num(t.Size)} {t.Color:x6} +{Num(t.SpaceExtra)} \"{OfficeLayoutSpec.Escape(t.Text)}\"\n");
+                        output.Append($"text {Num(t.X)} {Num(t.Baseline)} {t.Family}/{t.Style} {Num(t.Size)} {t.Color:x6} +{Num(t.SpaceExtra)}{(t.RightToLeft ? " rtl" : "")} \"{OfficeLayoutSpec.Escape(t.Text)}\"\n");
                         break;
                     case PlacedImage img:
                         output.Append($"image {Num(img.X)} {Num(img.Y)} {Num(img.Width)} {Num(img.Height)}\n");
@@ -229,7 +230,7 @@ public class OfficeLayoutTests
         var document = Single(Small, Paragraph("abc שלום"), Paragraph("السلام"), Paragraph("नमस्ते"), Paragraph("中"));
         document.Skipped.Add(new SkippedFeature("charts", 1));
         var made = OfficePdfWriter.Create(document, OfficeLayoutSpec.Fonts());
-        Assert.Equal([new SkippedFeature("charts", 1), new SkippedFeature(SkippedKinds.RightToLeftText, 2), new SkippedFeature(SkippedKinds.ComplexScript, 1)], made.Skipped);
+        Assert.Equal([new SkippedFeature("charts", 1), new SkippedFeature(SkippedKinds.ComplexScript, 1)], made.Skipped);
         Assert.Contains(0x4E2D, made.Missing);
     }
 

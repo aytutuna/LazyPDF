@@ -49,7 +49,6 @@ internal static class OfficeNotice
         "sparkline" => Loc.T("sparklines"),
         "data-validation" => Loc.T("data validation"),
         "sheet-comment" => Loc.T("cell comments"),
-        "rtl-text" => Loc.T("right-to-left text direction"),
         "complex-script" => Loc.T("complex-script shaping"),
         "hidden-slide" => Loc.T("hidden slides"),
         "slide-shape" => Loc.T("other shapes on slides"),

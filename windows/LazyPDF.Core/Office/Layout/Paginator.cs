@@ -30,7 +30,7 @@ internal sealed partial class Paginator
     private readonly LayoutFonts _fonts;
     private readonly CancellationToken _cancellation;
     private readonly List<Page> _pages = [];
-    private int _rightToLeft, _complex;
+    private int _complex;
     // The body area of each kind of page of the section being laid out, and how many pages it has so far.
     private readonly (double Top, double Bottom)[] _areas = new (double, double)[3];
     private int _sectionPages;
@@ -76,7 +76,6 @@ internal sealed partial class Paginator
             else all[at] = all[at] with { Count = all[at].Count + count };
         }
         foreach (var s in _document.Skipped) Add(s.Kind, s.Count);
-        Add(SkippedKinds.RightToLeftText, _rightToLeft);
         Add(SkippedKinds.ComplexScript, _complex);
         return all;
     }
@@ -97,7 +96,6 @@ internal sealed partial class Paginator
 
     private void Count(ParagraphLines lines)
     {
-        if (lines.RightToLeft) _rightToLeft++;
         if (lines.ComplexScript) _complex++;
     }
 
@@ -280,25 +278,32 @@ internal sealed partial class Paginator
                 continue;
             }
             int to = from;
-            while (to + 1 <= ink && SameStyle(first, line.Atoms[to + 1])) to++;
-            var last = line.Atoms[to];
+            bool odd = first.IsRightToLeft;
+            // Justification gaps sit inside a left-to-right piece as TJ adjustments; a right-to-left piece is cut after each gap.
+            while (to + 1 <= ink && SameStyle(first, line.Atoms[to + 1]) && !(odd && line.Atoms[to].Extra > 0)) to++;
             var text = new System.Text.StringBuilder();
-            double extra = 0;
+            double extra = 0, x = double.MaxValue, boxLeft = double.MaxValue, boxRight = double.MinValue;
             for (int k = from; k <= to; k++)
             {
-                text.Append(char.ConvertFromUtf32(line.Atoms[k].Code));
-                if (line.Atoms[k].Extra > 0) extra = line.Atoms[k].Extra;
+                var atom = line.Atoms[k];
+                text.Append(char.ConvertFromUtf32(atom.Code));
+                if (atom.Extra > 0 && !odd) extra = atom.Extra;
+                x = Math.Min(x, atom.X);
+                boxLeft = Math.Min(boxLeft, atom.BoxLeft);
+                boxRight = Math.Max(boxRight, atom.BoxRight);
             }
             var run = first.Run;
-            double x = originX + first.X, width = last.X + last.Width + last.Extra - first.X;
+            double width = boxRight - boxLeft;
+            x += originX;
+            boxLeft += originX;
             double shift = run.Shift, size = first.Size, bar = size * 0.05;
             if (run.Highlight is { } highlight)
             {
-                under.Add(new PlacedRect(x, baseline - shift - first.RunFace.Ascent * size, width, (first.RunFace.Ascent + first.RunFace.Descent) * size, highlight));
+                under.Add(new PlacedRect(boxLeft, baseline - shift - first.RunFace.Ascent * size, width, (first.RunFace.Ascent + first.RunFace.Descent) * size, highlight));
             }
-            under.Add(new PlacedText(x, baseline - shift, text.ToString(), first.Face.Family, first.Face.Style, size, run.Color, extra));
-            if (run.Underline) over.Add(new PlacedRect(x, baseline - shift + size * 0.1, width, bar, run.Color));
-            if (run.Strike) over.Add(new PlacedRect(x, baseline - shift - size * 0.3, width, bar, run.Color));
+            under.Add(new PlacedText(x, baseline - shift, text.ToString(), first.Face.Family, first.Face.Style, size, run.Color, extra, odd));
+            if (run.Underline) over.Add(new PlacedRect(boxLeft, baseline - shift + size * 0.1, width, bar, run.Color));
+            if (run.Strike) over.Add(new PlacedRect(boxLeft, baseline - shift - size * 0.3, width, bar, run.Color));
             from = to + 1;
         }
         // The highlights were added with the text; sorted so that every highlight precedes every text of the line.
@@ -309,6 +314,6 @@ internal sealed partial class Paginator
     }
 
     private static bool SameStyle(Atom a, Atom b) =>
-        !b.IsTab && !b.IsNewline && !b.IsZeroWidth && b.Picture is null && a.Face == b.Face && a.Size == b.Size && a.Run.Color == b.Run.Color && a.Run.Underline == b.Run.Underline
+        !b.IsTab && !b.IsNewline && !b.IsZeroWidth && b.Picture is null && a.Face == b.Face && a.Level == b.Level && a.Size == b.Size && a.Run.Color == b.Run.Color && a.Run.Underline == b.Run.Underline
         && a.Run.Strike == b.Run.Strike && a.Run.Highlight == b.Run.Highlight && a.Run.Shift == b.Run.Shift;
 }

@@ -17,9 +17,14 @@ internal static class Scripts
     {
         foreach (var rune in text.EnumerateRunes())
         {
-            int cp = rune.Value;
-            if (IsHebrew(cp) || IsArabic(cp) || cp is 0x200E or 0x200F or 0x061C or >= 0x202A and <= 0x202E or >= 0x2066 and <= 0x2069) return true;
+            if (NeedsBidi(rune.Value)) return true;
         }
         return false;
     }
+
+    public static bool NeedsBidi(int cp) =>
+        IsHebrew(cp) || IsArabic(cp) || cp is 0x200E or 0x200F or 0x061C or >= 0x202A and <= 0x202E or >= 0x2066 and <= 0x2069;
+
+    /// <summary>A direction mark or embedding control: it sets a direction but has no glyph.</summary>
+    public static bool IsBidiControl(int cp) => cp is 0x200E or 0x200F or 0x061C or >= 0x202A and <= 0x202E or >= 0x2066 and <= 0x2069;
 }

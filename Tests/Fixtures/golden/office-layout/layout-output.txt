@@ -1040,9 +1040,9 @@ text 30.00 43.90 Carlito/Regular 11.00 000000 +0.00 "first one has."
 > scripts
 page 1 200.00 200.00
 text 20.00 30.47 Carlito/Regular 11.00 000000 +0.00 "Hello "
-text 45.66 30.47 Liberation Sans/Regular 11.00 000000 +0.00 "שלום"
+text 45.66 30.47 Liberation Sans/Regular 11.00 000000 +0.00 rtl "שלום"
 text 69.84 30.47 Carlito/Regular 11.00 000000 +0.00 " world"
-text 20.00 43.90 Carlito/Regular 11.00 000000 +0.00 "السلام"
+text 20.00 43.90 Carlito/Regular 11.00 000000 +0.00 rtl "السلام"
 text 20.00 57.33 Carlito/Regular 11.00 000000 +0.00 "नमस्ते"
 | 0 0 0 rg
 | BT
@@ -1071,7 +1071,6 @@ text 20.00 57.33 Carlito/Regular 11.00 000000 +0.00 "नमस्ते"
 | <000000000000000000000000> Tj
 | ET
 skipped text-boxes 2
-skipped rtl-text 2
 skipped complex-script 1
 missing 627 633 644 645 924 928 92e 938 947 94d
 > missing

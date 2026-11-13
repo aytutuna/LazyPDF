@@ -1,0 +1,105 @@
+# Cases of right-to-left layout, in the format of layout-input.txt with two more keys: rtl on p makes the paragraph right to left,
+# rtl on r makes the run right to left. Align is the side of the page, so a right-to-left paragraph that starts at the edge it
+# starts from says align=right; left, right and first count from the start edge (the right one) and the end edge.
+# Every family is the script font of ../shaping/script.ttf (Hebrew, a few Arabic letters, Latin, digits).
+case alignment of a right to left paragraph
+section
+page 200 200 20 20 20 20
+p rtl align=right
+r | אבג דהו
+p rtl align=left
+r | אבג דהו
+p rtl align=center
+r | אבג דהו
+p rtl
+r | אבג דהו
+case mixed text in a left to right paragraph
+section
+page 200 200 20 20 20 20
+p
+r | abc אבג def 12 דהו
+p align=right
+r | abc אבג דהו def
+case digits and brackets in right to left text
+section
+page 200 200 20 20 20 20
+p rtl align=right
+r | אב (גד) abc 12
+p rtl align=right
+r | אבג 12.5 דהו
+p rtl align=right
+r | (abc) אבג
+case wrapped lines count from the start edge
+section
+page 120 200 20 20 20 20
+p rtl align=right left=20 first=10 right=5
+r | אבג דהו זחט יכל מנס עפצ קרש תאב גדה וזח טיכ למנ
+p rtl align=right left=20 first=-10
+r | abc אבג דהו זחט יכל מנס עפצ קרש תאב גדה
+case justified right to left
+section
+page 120 200 20 20 20 20
+p rtl align=justify
+r | אבג דהו זחט יכל מנס עפצ קרש תאב גדה וזח טיכ למנ סעפ
+case several runs in a right to left paragraph
+section
+page 200 200 20 20 20 20
+p rtl align=right
+r | אבג 
+r b color=ff0000 u | דהו 
+r hl=ffff00 s | זחט 
+r | abc
+case a right to left run in a left to right paragraph
+section
+page 200 200 20 20 20 20
+p
+r | abc 
+r rtl | (12)
+r | def
+p
+r rtl | 12
+r | abc
+case arabic letters in logical order
+section
+page 200 200 20 20 20 20
+p rtl align=right
+r | ابلم ابل
+p
+r | abc ابل 12
+case a bullet and tabs
+section
+page 200 200 20 20 20 20
+p rtl align=right left=24 first=-24
+r | \u2022\tאבג דהו זחט יכל מנס עפצ קרש תאב גדה
+p rtl align=right
+r | אבג\tדהו\tabc
+case a line break and spaces at the end
+section
+page 200 200 20 20 20 20
+p rtl align=right
+r | אבג\nדהו  
+r | abc \nזחט
+case header and footer
+section
+page 200 200 20 20 20 20 10 10
+band header
+p rtl align=right
+r | אבג
+band footer
+p rtl align=left
+r | דהו
+band body
+p rtl align=right
+r | זחט
+case right to left cell text
+section
+page 200 200 20 20 20 20
+table cols=80,80
+row
+cell
+p rtl align=right
+r | אבג דהו זחט יכל מנס
+cell
+p
+r | abc אבג
+endtable

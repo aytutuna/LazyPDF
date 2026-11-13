@@ -59,6 +59,7 @@ internal static class OfficeLayoutSpec
                 KeepWithNext = p.Keys.ContainsKey("keep"),
                 PageBreakBefore = p.Keys.ContainsKey("break"),
                 WidowControl = !p.Keys.ContainsKey("nowidow"),
+                RightToLeft = p.Keys.ContainsKey("rtl"),
             };
             if (cell is not null) cell.Add(made);
             else if (band == "header") section.Header.Add(made);
@@ -125,6 +126,7 @@ internal static class OfficeLayoutSpec
                         Color = keys.ContainsKey("color") ? Convert.ToInt32(keys["color"], 16) : 0,
                         Highlight = keys.ContainsKey("hl") ? Convert.ToInt32(keys["hl"], 16) : null,
                         Shift = Number(keys, "shift"),
+                        Rtl = keys.ContainsKey("rtl"),
                         Field = keys.GetValueOrDefault("field") switch { "page" => LayoutField.PageNumber, "pages" => LayoutField.PageCount, _ => LayoutField.None },
                         Picture = keys.TryGetValue("pic", out string? size) ? Picture(size, keys.GetValueOrDefault("crop")) : null,
                     });
