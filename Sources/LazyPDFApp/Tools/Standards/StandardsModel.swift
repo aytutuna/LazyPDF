@@ -25,6 +25,9 @@ public final class StandardsModel: ToolPanelModel {
     public private(set) var rest = ""
     public private(set) var showsResult = false
 
+    /// The level needs tags and the file's are missing or fail its rules, found by a read of a copy after each change.
+    public private(set) var needsTagging = false
+
     /// A run is going, or was let go by Cancel and has not ended yet: the button waits so that runs do not pile up.
     public private(set) var working = false
 
@@ -35,6 +38,7 @@ public final class StandardsModel: ToolPanelModel {
     var host: ToolHost?
     @ObservationIgnored private var watch: ObservationWatch?
     @ObservationIgnored private var ticket = 0
+    @ObservationIgnored private var probe = 0
     @ObservationIgnored private var convertedTitle: String?
     @ObservationIgnored private let fonts: FontSource?
 
@@ -71,6 +75,18 @@ public final class StandardsModel: ToolPanelModel {
         return StandardsText.losses(signed: document.isSigned, encrypted: document.isEncrypted)
     }
 
+    /// Said before a level A run, with a button that opens the tagging.
+    public var tagHint: String {
+        needsTagging ? L10n.t("{0} needs a tagged file, and this one is not tagged well enough yet. Tag the file first, then run this again.", level.name()) : ""
+    }
+
+    public var tagButton: String { L10n.t("Tag the file") }
+
+    /// Opens Accessibility on the same tab, where the tags are added.
+    public func tagFile() {
+        host?.openTool("accessibility")
+    }
+
     public func setMode(_ mode: StandardsMode) {
         self.mode = mode
     }
@@ -98,7 +114,9 @@ public final class StandardsModel: ToolPanelModel {
         watch?.stop()
         watch = nil
         ticket += 1
+        probe += 1
         showsResult = false
+        needsTagging = false
         rows = []
         tab = nil
         viewer = nil
@@ -111,6 +129,24 @@ public final class StandardsModel: ToolPanelModel {
         fileVersion += 1
         showsResult = false
         rows = []
+        findTagging()
+    }
+
+    private func findTagging() {
+        probe += 1
+        needsTagging = false
+        guard let tab, let host, level.needsTags() else { return }
+        let mine = probe
+        let level = self.level
+        let open = OpenCopy.of(tab, host)
+        Task { [weak self] in
+            let found = await Task.detached { () -> Bool in
+                guard let copy = try? open() else { return false }
+                return !PdfAValidator.taggingIssues(copy, level).isEmpty
+            }.value
+            guard let self, mine == probe else { return }
+            needsTagging = found
+        }
     }
 
     /// Goes to the next page the rule is broken on.

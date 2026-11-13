@@ -33,6 +33,17 @@ struct StandardsPanelView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityAddTraits(.updatesFrequently)
             }
+            if model.needsTagging {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label(model.tagHint, systemImage: "exclamationmark.triangle")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityAddTraits(.updatesFrequently)
+                    Button(model.tagButton) { model.tagFile() }
+                        .frame(minHeight: 44)
+                }
+            }
             if model.showsResult { result }
         }
     }

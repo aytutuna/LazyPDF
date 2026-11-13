@@ -23,6 +23,9 @@ final class SecurityHost: ToolHost, ToolFilePicker, ToolFileExporter {
     var exported: [(name: String, bytes: [UInt8])] = []
     var exportedUrls: [URL] = []
     var signingField: String?
+    var openedTools: [String] = []
+
+    func openTool(_ id: String) { openedTools.append(id) }
 
     func takeSelectionMark() -> SelectionMark? {
         defer { pendingMark = nil }

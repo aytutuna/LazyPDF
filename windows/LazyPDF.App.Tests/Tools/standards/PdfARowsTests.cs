@@ -1,3 +1,4 @@
+using LazyPDF.App.Tools.Accessibility;
 using LazyPDF.App.Tools.Standards;
 using LazyPDF.Core;
 using Xunit;
@@ -92,5 +93,29 @@ public sealed class PdfARowsTests
     public void EveryLevelHasAWordForWhatItIsFor()
     {
         foreach (var level in Enum.GetValues<PdfALevel>()) Assert.False(string.IsNullOrWhiteSpace(StandardsText.Describe(level)));
+    }
+
+    private static Func<PdfDocument> Copy(string? language, bool tagged = true)
+    {
+        var document = PdfDocument.Open(Pdfs.Text());
+        if (tagged) AutoTagger.Tag(document, AccessibilityEdits.TagOptions(language));
+        byte[] bytes = document.SaveRewrite();
+        return () => PdfDocument.Open(bytes);
+    }
+
+    [Fact]
+    public void AnUntaggedFileOrOneTheLevelRejectsNeedsTaggingOnlyAtLevelA()
+    {
+        Assert.True(StandardsText.NeedsTagging(Copy(null, tagged: false), PdfALevel.A2a));
+        Assert.False(StandardsText.NeedsTagging(Copy(null, tagged: false), PdfALevel.A2b));
+        Assert.True(StandardsText.NeedsTagging(Copy(null), PdfALevel.A1a));
+        Assert.False(StandardsText.NeedsTagging(Copy("en-US"), PdfALevel.A1a));
+    }
+
+    [Fact]
+    public void TheHintNamesTheLevel()
+    {
+        Assert.Equal("PDF/A-3a needs a tagged file, and this one is not tagged well enough yet. Tag the file first, then run this again.",
+            StandardsText.TagHint(PdfALevel.A3a));
     }
 }

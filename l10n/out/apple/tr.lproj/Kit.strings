@@ -1682,6 +1682,7 @@
 "Tables have headers" = "Tablolarda başlık var";
 "Tables with a broken layout: {0}{1}. Give each table rows of header and data cells, with the same cells in every row." = "Düzeni bozuk tablolar: {0}{1}. Her tabloya başlık ve veri hücrelerinden oluşan satırlar verin; her satırda aynı hücreler olsun.";
 "Tables without header cells: {0}{1}. Mark the header row or column." = "Başlık hücresi olmayan tablolar: {0}{1}. Başlık satırını ya da sütununu işaretleyin.";
+"Tag the file" = "Dosyayı etiketle";
 "Tag tree" = "Etiket ağacı";
 "Tagged content sits inside an artifact." = "Bir yapıntının içinde etiketli içerik var.";
 "Tags" = "Etiketler";
@@ -2448,6 +2449,7 @@
 "{0} needs a password or certificate that was not given." = "{0} için verilmeyen bir parola ya da sertifika gerekiyor.";
 "{0} needs a password or certificate, and Batch cannot ask for one. Take the lock off first, then add the file again." = "{0} için parola ya da sertifika gerekiyor ve Toplu işlem bunu soramaz. Önce kilidi kaldırın, sonra dosyayı yeniden ekleyin.";
 "{0} needs a password to open." = "{0} dosyasını açmak için parola gerekir.";
+"{0} needs a tagged file, and this one is not tagged well enough yet. Tag the file first, then run this again." = "{0} etiketli bir dosya ister ve bu dosya henüz yeterince iyi etiketlenmemiş. Önce dosyayı etiketleyin, sonra bunu yeniden çalıştırın.";
 "{0} needs a tagged file, and this one is not tagged well enough: {1} Tag the file and fix these first, then convert again." = "{0} etiketli bir dosya ister ve bu dosya yeterince iyi etiketlenmemiş: {1} Önce dosyayı etiketleyip bunları düzeltin, sonra yeniden dönüştürün.";
 "{0} note|one" = "{0} not";
 "{0} note|other" = "{0} not";
