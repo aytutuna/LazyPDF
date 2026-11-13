@@ -46,7 +46,7 @@ struct OrganizeView: View {
                 Button { model.done() } label: {
                     Label(L10n.t("Done"), systemImage: "checkmark").frame(minHeight: 44)
                 }
-                .help(L10n.t("Back to the document (Esc)"))
+                .help(L10n.t("Back to the file (Esc)"))
                 .padding(.trailing, 8)
                 BarButton("rotate.left", L10n.t("Rotate left"), off: !any) { model.turnSelection(-90) }
                 BarButton("rotate.right", L10n.t("Rotate right"), off: !any) { model.turnSelection(90) }
