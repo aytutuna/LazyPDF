@@ -73,6 +73,8 @@ public sealed partial class PdfRedactor(PdfDocument document, IFontSource? fonts
         var texts = chosen.Select(m => m.OverlayText ?? options.OverlayText).Where(t => !string.IsNullOrEmpty(t)).Select(t => t!).ToList();
         if (texts.Count > 0)
         {
+            // The repeats are joined with a space that may not be in any text.
+            if (options.RepeatOverlay) texts.Add(" ");
             font = new PdfFontEmbedder(work, fonts).Add(options.FontFamily, FontStyles.Bold, texts)
                    ?? throw new InvalidOperationException(RedactionText.NoFont);
         }
