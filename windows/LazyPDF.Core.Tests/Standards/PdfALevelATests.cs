@@ -37,6 +37,21 @@ public class PdfALevelATests
     }
 
     [Fact]
+    public void TaggingIssuesNameTheStructureRulesOnlyAtLevelA()
+    {
+        foreach (var level in Levels)
+        {
+            using var untagged = PdfDocument.Open(StandardsKit.Compliant(level));
+            var found = PdfAValidator.TaggingIssues(untagged, level);
+            Assert.Contains(found, i => i.Message == PdfAText.NoStructTree);
+            using var tagged = PdfDocument.Open(StandardsKit.Tagged(level));
+            Assert.Empty(PdfAValidator.TaggingIssues(tagged, level));
+        }
+        using var plain = PdfDocument.Open(StandardsKit.Compliant(PdfALevel.A2b));
+        Assert.Empty(PdfAValidator.TaggingIssues(plain, PdfALevel.A2b));
+    }
+
+    [Fact]
     public void LevelBAndUFilesAreNotHeldToTheStructureRules()
     {
         StandardsKit.AssertClean(StandardsKit.Compliant(PdfALevel.A2b), PdfALevel.A2b);
