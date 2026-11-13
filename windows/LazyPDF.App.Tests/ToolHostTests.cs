@@ -45,6 +45,33 @@ public sealed class ToolHostTests
     }
 
     [Fact]
+    public async Task AToolOpenedToReturnHandsBackTheToolOnce()
+    {
+        using var f = new ViewModelFixture();
+        IToolHost host = f.Vm;
+        await f.Vm.OpenAsync(f.Pdf());
+
+        host.OpenToolReturning("ocr", "export");
+
+        Assert.Equal("ocr", f.Vm.ActiveToolId);
+        Assert.Equal("export", host.TakeReturnTool());
+        Assert.Null(host.TakeReturnTool());
+    }
+
+    [Fact]
+    public async Task PickingAnotherToolForgetsTheToolToReturnTo()
+    {
+        using var f = new ViewModelFixture();
+        IToolHost host = f.Vm;
+        await f.Vm.OpenAsync(f.Pdf());
+
+        host.OpenToolReturning("ocr", "export");
+        f.Vm.SelectTool("redact");
+
+        Assert.Null(host.TakeReturnTool());
+    }
+
+    [Fact]
     public async Task OpeningAToolThatDoesNotExistChangesNothing()
     {
         using var f = new ViewModelFixture();

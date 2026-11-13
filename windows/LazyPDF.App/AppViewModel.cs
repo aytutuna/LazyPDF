@@ -32,6 +32,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     private DocumentTab? _lastDocument;
     private string? _activeToolId;
     private string? _signingField;
+    private string? _returnTool;
     private string _sidePanelId;
     private string _lastSidePanelId;
     private double _sidePanelWidth;
@@ -142,6 +143,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     {
         if (id is not null && ToolCatalog.Find(id) is null) return;
         _activeToolId = id == _activeToolId ? null : id;
+        _returnTool = null;
         DropAction();
         NotifyAll();
     }
@@ -149,6 +151,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     public void OpenTool(string id)
     {
         if (ToolCatalog.Find(id) is null || ActiveDocument is null || IsBusy) return;
+        _returnTool = null;
         if (_activeToolId != id)
         {
             _activeToolId = id;
@@ -156,6 +159,19 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
             NotifyAll();
         }
         ToolOpened?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void OpenToolReturning(string id, string back)
+    {
+        OpenTool(id);
+        if (_activeToolId == id) _returnTool = back;
+    }
+
+    public string? TakeReturnTool()
+    {
+        var back = _returnTool;
+        _returnTool = null;
+        return back;
     }
 
     public void OpenSigning(string field)

@@ -152,12 +152,14 @@ public sealed partial class OcrPanel : ToolPanel
     // The panel is off while the pages are read: a change to the document then would waste the run.
     private async Task Read(DocumentTab tab, IToolHost host, OcrOptions options, IReadOnlyList<string> languages)
     {
+        bool done = false;
         _running = true;
         IsEnabled = false;
         RaiseActionChanged();
         try
         {
-            await OcrWork.MakeSearchableAsync(tab, host, _recognizer, options, languages);
+            var result = await OcrWork.MakeSearchableAsync(tab, host, _recognizer, options, languages);
+            done = result is { Committed: true };
         }
         finally
         {
@@ -165,6 +167,7 @@ public sealed partial class OcrPanel : ToolPanel
             IsEnabled = true;
             RaiseActionChanged();
         }
+        if (done && ReferenceEquals(Tab, tab) && host.TakeReturnTool() is { } back) host.OpenTool(back);
     }
 
     // Runs from the info bar, which the shell's handling of a failed action does not reach.

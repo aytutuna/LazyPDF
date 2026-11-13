@@ -47,6 +47,16 @@ public protocol ToolHost: AnyObject {
     /// tab was not replaced, and the info bar says why.
     func tryReload(_ tab: DocumentTab) async -> Bool
 
+    /// Opens the tool with this id on the document in view, but never closes it when it is open already.
+    func openTool(_ id: String)
+
+    /// As `openTool`, and the tool asks for `takeReturnTool` when its work is done, to go back to the tool `back`. Picking
+    /// any other tool first forgets it.
+    func openToolReturning(_ id: String, back: String)
+
+    /// The tool `openToolReturning` named, once.
+    func takeReturnTool() -> String?
+
     /// Opens the Certificates tool with the empty signature field of that name chosen as the place to sign.
     func openSigning(_ field: String)
 
@@ -98,6 +108,12 @@ public protocol ToolHost: AnyObject {
 }
 
 extension ToolHost {
+    public func openTool(_ id: String) {}
+
+    public func openToolReturning(_ id: String, back: String) {}
+
+    public func takeReturnTool() -> String? { nil }
+
     public func openSigning(_ field: String) {}
 
     public func takeSigningField() -> String? { nil }

@@ -1,7 +1,7 @@
 import Foundation
 import LazyPDFKit
 
-// The window's side of ToolHost.openSigning, takeSigningField, markSelection, isDocumentBusy and verifyCertificate
+// The window's side of ToolHost.openSigning, openTool, openToolReturning, takeReturnTool, takeSigningField, markSelection, isDocumentBusy and verifyCertificate
 // (windows/LazyPDF.App/Tools/IToolHost.cs).
 
 extension AppViewModel {
@@ -13,6 +13,20 @@ extension AppViewModel {
     public func takeSigningField() -> String? {
         defer { signingField = nil }
         return signingField
+    }
+
+    public func openTool(_ id: String) {
+        if activeToolId != id { selectTool(id) }
+    }
+
+    public func openToolReturning(_ id: String, back: String) {
+        openTool(id)
+        returnTool = activeToolId == id ? back : nil
+    }
+
+    public func takeReturnTool() -> String? {
+        defer { returnTool = nil }
+        return returnTool
     }
 
     public func markSelection(_ mark: SelectionMark) {

@@ -110,6 +110,7 @@ public final class AppViewModel {
     @ObservationIgnored var warnedAboutDisk: [ObjectIdentifier: DiskStamp?] = [:]
     @ObservationIgnored var exiting = false
     @ObservationIgnored var signingField: String?
+    @ObservationIgnored var returnTool: String?
     @ObservationIgnored var pendingMark: SelectionMark?
     @ObservationIgnored var markHandler: (@MainActor (SelectionMark) async -> Void)?
     public internal(set) var closeQuestion: DocumentTab?
@@ -203,6 +204,7 @@ public final class AppViewModel {
         if let id, ToolCatalog.find(id) == nil { return }
         if !handIn() { return }
         activeToolId = id == activeToolId ? nil : id
+        returnTool = nil
         dropAction()
         notifyAll()
     }

@@ -133,8 +133,9 @@ public final class ExportModel: ToolPanelModel {
 
     private func tellNothingWasWritten(_ result: ExportResult, _ options: ExportOptions, _ host: ToolHost) {
         if result.gap == .noText {
+            let makeSearchable = NoticeAction(L10n.t("Make searchable")) { [weak host] in host?.openToolReturning("ocr", back: "export") }
             host.showNotice(L10n.t("No text found"),
-                            L10n.t("This file has no text to export. Run Make searchable first, or save the pages as pictures."), nil)
+                            L10n.t("This file has no text to export. Run Make searchable first, or save the pages as pictures."), makeSearchable)
         } else if options.format == .images {
             host.showNotice(L10n.t("No pictures found"), L10n.t("This file has no pictures to save."), nil)
         } else {
