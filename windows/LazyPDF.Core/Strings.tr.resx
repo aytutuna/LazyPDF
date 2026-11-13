@@ -691,9 +691,6 @@
   <data name="Back at the last difference." xml:space="preserve">
     <value>Son farka dönüldü.</value>
   </data>
-  <data name="Back to the document (Esc)" xml:space="preserve">
-    <value>Belgeye dön (Esc)</value>
-  </data>
   <data name="Back to the file (Esc)" xml:space="preserve">
     <value>Dosyaya dön (Esc)</value>
   </data>
