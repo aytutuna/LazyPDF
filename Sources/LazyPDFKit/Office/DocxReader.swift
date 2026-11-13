@@ -319,6 +319,7 @@ final class DocxReader {
         run.highlight = f.highlight
         run.shift = f.shift
         run.field = f.field
+        run.rtl = f.rtl
         run.picture = f.picture
         return run
     }
@@ -354,7 +355,10 @@ final class DocxReader {
         }
         let made = LayoutParagraph()
         made.runs = runs
-        made.align = p.align ?? .left
+        // Word reads left, right, start and end in a right-to-left paragraph as the leading and trailing edge, so the sides swap.
+        let align = p.align ?? .left
+        made.align = p.bidi == true ? mirror(align) : align
+        made.rightToLeft = p.bidi == true
         made.left = p.left ?? 0
         made.right = p.right ?? 0
         made.firstLine = p.first ?? 0
@@ -367,6 +371,14 @@ final class DocxReader {
         made.widowControl = p.widow != false
         made.labelTab = labelTab
         return made
+    }
+
+    private static func mirror(_ align: LayoutAlign) -> LayoutAlign {
+        switch align {
+        case .left: return .right
+        case .right: return .left
+        default: return align
+        }
     }
 
     // ---- inline level ----
@@ -561,7 +573,22 @@ final class DocxReader {
 
     private func text(_ props: RunProps, _ text: String) {
         if text.isEmpty || !visible(props) { return }
-        add(props, props.caps == true ? Self.upper(text) : text, .none)
+        let text = props.caps == true ? Self.upper(text) : text
+        if props.rtl == true || props.complex == true {
+            add(Self.complexProps(props), text, .none)
+            return
+        }
+        // The letters of Hebrew and Arabic take the complex-script font and size; what has no script goes with its neighbor.
+        for (part, complex) in ScriptRuns.split(text) { add(complex ? Self.complexProps(props) : props, part, .none) }
+    }
+
+    private static func complexProps(_ p: RunProps) -> RunProps {
+        var copy = p
+        copy.family = p.csFamily ?? p.family
+        copy.size = p.csSize ?? p.size
+        copy.bold = p.csBold ?? p.bold
+        copy.italic = p.csItalic ?? p.italic
+        return copy
     }
 
     // Plain ASCII only: full case mapping differs between the platforms.
@@ -582,7 +609,7 @@ final class DocxReader {
 
     private static func same(_ a: LayoutRun, _ b: LayoutRun) -> Bool {
         a.field == .none && b.field == .none && a.picture == nil && b.picture == nil && a.family == b.family && a.size == b.size && a.bold == b.bold
-            && a.italic == b.italic && a.underline == b.underline && a.strike == b.strike && a.color == b.color
+            && a.italic == b.italic && a.rtl == b.rtl && a.underline == b.underline && a.strike == b.strike && a.color == b.color
             && a.highlight == b.highlight && a.shift == b.shift
     }
 
@@ -607,6 +634,7 @@ final class DocxReader {
         if let h = p.highlight, h >= 0 { run.highlight = h }
         run.shift = shift
         run.field = field
+        run.rtl = p.rtl == true
         run.picture = picture
         return run
     }

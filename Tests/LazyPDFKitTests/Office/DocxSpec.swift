@@ -180,6 +180,7 @@ enum DocxSpec {
         if p.pageBreakBefore { o += " break" }
         if let tab = p.labelTab { o += " labeltab=\(num(tab))" }
         if !p.widowControl { o += " nowidow" }
+        if p.rightToLeft { o += " rtl" }
         o += "\n"
         for r in p.runs {
             o += "  run \(r.family.replacingOccurrences(of: " ", with: "_")) \(num(r.size)) \(String(format: "%06x", r.color))"
@@ -187,6 +188,7 @@ enum DocxSpec {
             if r.italic { o += " i" }
             if r.underline { o += " u" }
             if r.strike { o += " s" }
+            if r.rtl { o += " rtl" }
             if let hl = r.highlight { o += " hl=" + String(format: "%06x", hl) }
             if r.shift != 0 { o += " shift=\(num(r.shift))" }
             switch r.field {

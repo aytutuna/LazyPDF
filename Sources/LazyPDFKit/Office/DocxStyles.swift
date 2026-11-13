@@ -13,6 +13,14 @@ struct RunProps {
     var strike: Bool?
     var caps: Bool?
     var hidden: Bool?
+    /// The complex-script (Arabic, Hebrew) counterparts: font, size, bold and italic, which apply to the characters of those scripts.
+    var csFamily: String?
+    var csSize: Double?
+    var csBold: Bool?
+    var csItalic: Bool?
+    /// w:rtl: the run is right to left. w:cs: the run is formatted as complex script whatever its characters.
+    var rtl: Bool?
+    var complex: Bool?
     var color: Int?
     /// 0xRRGGBB, or -1 for none.
     var highlight: Int?
@@ -34,8 +42,19 @@ struct RunProps {
                 } else if let named, !named.isEmpty {
                     family = named
                 }
+                let csThemed = e.attribute(w, "cstheme")
+                let csNamed = e.attribute(w, "cs")
+                if let csThemed, let csThemeFont = theme.complexFont(csThemed) {
+                    csFamily = csThemeFont
+                } else if let csNamed, !csNamed.isEmpty {
+                    csFamily = csNamed
+                }
             case "b": bold = DocxReader.on(e)
             case "i": italic = DocxReader.on(e)
+            case "bCs": csBold = DocxReader.on(e)
+            case "iCs": csItalic = DocxReader.on(e)
+            case "rtl": rtl = DocxReader.on(e)
+            case "cs": complex = DocxReader.on(e)
             case "u": underline = val != "none"
             case "strike", "dstrike": strike = DocxReader.on(e)
             case "caps": caps = DocxReader.on(e)
@@ -52,6 +71,8 @@ struct RunProps {
                 if let found { color = found }
             case "sz":
                 if let half = DocxReader.number(val), half > 0 { size = half / 2 }
+            case "szCs":
+                if let csHalf = DocxReader.number(val), csHalf > 0 { csSize = csHalf / 2 }
             case "highlight":
                 if let val {
                     highlight = val == "none" ? -1 : (DocxReader.highlightColor(val) ?? highlight)
@@ -82,6 +103,7 @@ struct ParaProps {
     var keepNext: Bool?
     var pageBreakBefore: Bool?
     var widow: Bool?
+    var bidi: Bool?
     var numId: Int?
     var ilvl: Int?
 
@@ -112,6 +134,7 @@ struct ParaProps {
                 after = Self.length(e, "after") ?? after
                 if let l = DocxReader.number(e.attribute(w, "line")) { line = l }
                 lineRule = e.attribute(w, "lineRule") ?? lineRule
+            case "bidi": bidi = DocxReader.on(e)
             case "keepNext": keepNext = DocxReader.on(e)
             case "pageBreakBefore": pageBreakBefore = DocxReader.on(e)
             case "widowControl": widow = DocxReader.on(e)
@@ -145,6 +168,8 @@ final class DocxTheme {
 
     private var major: String?
     private var minor: String?
+    private var majorCs: String?
+    private var minorCs: String?
     private var colors: [String: Int] = [:]
 
     static func read(_ root: OfficeXmlElement?) -> DocxTheme {
@@ -154,6 +179,8 @@ final class DocxTheme {
         let fonts = elements?.child(a, "fontScheme")
         theme.major = typeface(fonts?.child(a, "majorFont"))
         theme.minor = typeface(fonts?.child(a, "minorFont"))
+        theme.majorCs = typeface(fonts?.child(a, "majorFont"), "cs")
+        theme.minorCs = typeface(fonts?.child(a, "minorFont"), "cs")
         for c in elements?.child(a, "clrScheme")?.elements ?? [] {
             let hex = c.child(a, "srgbClr")?.attribute("val") ?? c.child(a, "sysClr")?.attribute("lastClr")
             if let rgb = DocxReader.hex(hex) { theme.colors[c.name] = rgb }
@@ -161,8 +188,8 @@ final class DocxTheme {
         return theme
     }
 
-    private static func typeface(_ scheme: OfficeXmlElement?) -> String? {
-        guard let name = scheme?.child(DocxReader.a, "latin")?.attribute("typeface"), !name.isEmpty else { return nil }
+    private static func typeface(_ scheme: OfficeXmlElement?, _ script: String = "latin") -> String? {
+        guard let name = scheme?.child(DocxReader.a, script)?.attribute("typeface"), !name.isEmpty else { return nil }
         return name
     }
 
@@ -170,6 +197,13 @@ final class DocxTheme {
     func font(_ reference: String) -> String? {
         if reference.utf8.starts(with: "major".utf8) { return major }
         if reference.utf8.starts(with: "minor".utf8) { return minor }
+        return nil
+    }
+
+    /// The complex-script font of a theme reference such as minorBidi or majorBidi; nil when the theme names none.
+    func complexFont(_ reference: String) -> String? {
+        if reference.utf8.starts(with: "major".utf8) { return majorCs }
+        if reference.utf8.starts(with: "minor".utf8) { return minorCs }
         return nil
     }
 
