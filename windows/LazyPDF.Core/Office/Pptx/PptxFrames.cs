@@ -99,6 +99,11 @@ internal sealed partial class PptxReader
             layout.Rows.Add(row);
         }
         Edges(layout, covered);
+        // Cells, borders and margins were read from the first column; a right-to-left table puts that column on the right.
+        if (PptxRunProps.Flag(table.Child(DocxReader.A, "tblPr")?.Attribute("rtl")) == true)
+        {
+            layout.Mirror();
+        }
 
         var (left, top) = context.Apply(x.X, x.Y);
         return new PptxShape { X = left, Y = top, Width = columns.Sum(), Table = new PptxTable(left, top, layout) };

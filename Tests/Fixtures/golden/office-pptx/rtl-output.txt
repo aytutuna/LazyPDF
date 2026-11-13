@@ -31,3 +31,37 @@ text 249.08 88.20 Tahoma/Regular 14.00 000000 +0.00 rtl "אבג "
 text 228.92 88.20 Verdana/Regular 14.00 000000 +0.00 "def"
 text 79.20 103.60 Verdana/Regular 14.00 000000 +0.00 "abc "
 text 107.90 103.60 Verdana/Regular 14.00 000000 +0.00 rtl "אבג"
+> a table that runs right to left
+page 1 720.00 540.00
+rect 230.00 60.00 60.00 30.00 ffff00
+rect 150.00 60.00 80.00 30.00 ffff00
+rect 50.00 60.00 100.00 30.00 ffff00
+rect 150.00 90.00 140.00 30.00 ffff00
+rect 50.00 90.00 100.00 30.00 ffff00
+text 259.28 76.20 Calibri/Regular 14.00 000000 +0.00 rtl "אבג"
+text 194.24 76.20 Calibri/Regular 14.00 000000 +0.00 rtl "דהו"
+text 132.72 76.20 Calibri/Regular 14.00 000000 +0.00 "b"
+text 264.32 106.20 Calibri/Regular 14.00 000000 +0.00 rtl "זחט"
+text 137.20 106.20 Calibri/Regular 14.00 000000 +0.00 "c"
+rect 229.50 59.50 1.00 31.00 ff0000
+rect 289.50 59.50 1.00 31.00 ff0000
+rect 149.50 59.50 1.00 31.00 ff0000
+rect 149.50 89.50 1.00 31.00 ff0000
+rect 289.50 89.50 1.00 31.00 ff0000
+> a table with right to left switched off
+page 1 720.00 540.00
+rect 50.00 60.00 60.00 30.00 ffff00
+rect 110.00 60.00 80.00 30.00 ffff00
+rect 190.00 60.00 100.00 30.00 ffff00
+rect 50.00 90.00 140.00 30.00 ffff00
+rect 190.00 90.00 100.00 30.00 ffff00
+text 82.88 76.20 Calibri/Regular 14.00 000000 +0.00 rtl "אבג"
+text 157.84 76.20 Calibri/Regular 14.00 000000 +0.00 rtl "דהו"
+text 276.32 76.20 Calibri/Regular 14.00 000000 +0.00 "b"
+text 167.92 106.20 Calibri/Regular 14.00 000000 +0.00 rtl "זחט"
+text 280.80 106.20 Calibri/Regular 14.00 000000 +0.00 "c"
+rect 49.50 59.50 1.00 31.00 ff0000
+rect 109.50 59.50 1.00 31.00 ff0000
+rect 189.50 59.50 1.00 31.00 ff0000
+rect 49.50 89.50 1.00 31.00 ff0000
+rect 189.50 89.50 1.00 31.00 ff0000
