@@ -96,6 +96,8 @@ public final class PdfRedactor {
             if let text = mark.overlayText ?? options.overlayText, !text.isEmpty { texts.append(text) }
         }
         if !texts.isEmpty {
+            // The repeats are joined with a space that may not be in any text.
+            if options.repeatOverlay { texts.append(" ") }
             guard let drawn = try PdfFontEmbedder(work, fonts).add(options.fontFamily, .bold, texts) else {
                 throw InvalidOperationException(RedactionText.noFont)
             }
