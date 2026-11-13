@@ -113,8 +113,28 @@ public partial class PdfUaPanel : ToolPanel
             if (!ReferenceEquals(tab, Tab)) return;
             var document = tab.Document;
             PdfUaMarkResult? result = null;
-            await host.RunBusyAsync(name, async token =>
-                result = await Task.Run(() => PdfUaValidator.Mark(document, DateTimeOffset.Now, token), token).WaitAsync(token));
+            _working = true;
+            RaiseActionChanged();
+            try
+            {
+                await host.RunBusyAsync(name, async token =>
+                {
+                    try
+                    {
+                        result = await Task.Run(() => PdfUaValidator.Mark(document, DateTimeOffset.Now, token));
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // The job edits the open document, so Cancel waits for it to stop and takes back what it wrote.
+                        tab.Session.Discard();
+                        throw;
+                    }
+                });
+            }
+            finally
+            {
+                Idle();
+            }
             if (result is null) return;
             if (!result.Marked)
             {

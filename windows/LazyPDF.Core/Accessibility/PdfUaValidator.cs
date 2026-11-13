@@ -27,6 +27,7 @@ public static class PdfUaValidator
         bool title = !string.IsNullOrWhiteSpace(DocumentMetadata.Read(document).Title);
         var blocking = report.Issues.Where(i => !SettledByMark.Contains(i.Condition) || (i.Condition is "06-003" && !title)).ToList();
         if (blocking.Count > 0 || report.Truncated) return new PdfUaMarkResult(false, new PdfUaReport(blocking, report.Truncated));
+        cancel.ThrowIfCancellationRequested();
         if (!PdfUaMarker.Write(document, date)) return new PdfUaMarkResult(false, report);
         return new PdfUaMarkResult(true, new PdfUaReport([], false));
     }

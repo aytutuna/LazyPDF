@@ -27,6 +27,22 @@ final class PdfUaMarkTests: XCTestCase {
         XCTAssertTrue(ViewerSettings.read(saved).displayDocTitle)
     }
 
+    func test_aCancelledMarkWritesNothing() async throws {
+        let document = try PdfDocument.open(unmarked)
+        let task = Task { () throws -> PdfUaMarkResult in
+            while !Task.isCancelled { await Task.yield() }
+            return try PdfUaValidator.mark(document, PdfUaKit.date)
+        }
+        task.cancel()
+        do {
+            _ = try await task.value
+            XCTFail("expected a cancellation")
+        } catch is CancellationError {
+        }
+        let saved = try reopen(document)
+        XCTAssertTrue(try PdfUaValidator.validate(saved).issues.contains { $0.condition == "06-002" })
+    }
+
     func test_aFileWithoutMetadataGetsAPacketFromInfo() throws {
         let document = try PdfDocument.open(PdfUaKit.build(xmp: ""))
         XCTAssertTrue(try PdfUaValidator.validate(document).issues.contains { $0.condition == "06-001" })

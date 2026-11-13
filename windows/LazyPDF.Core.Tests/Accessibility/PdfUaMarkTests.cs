@@ -27,6 +27,19 @@ public class PdfUaMarkTests
     }
 
     [Fact]
+    public void ACancelledMarkWritesNothing()
+    {
+        using var document = PdfDocument.Open(Unmarked);
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+
+        Assert.ThrowsAny<OperationCanceledException>(() => PdfUaValidator.Mark(document, PdfUaKit.Date, cancelled.Token));
+
+        using var saved = Reopen(document);
+        Assert.Contains("06-002", PdfUaValidator.Validate(saved).Issues.Select(i => i.Condition));
+    }
+
+    [Fact]
     public void AFileWithoutMetadataGetsAPacketFromInfo()
     {
         using var document = PdfDocument.Open(PdfUaKit.Build(xmp: ""));

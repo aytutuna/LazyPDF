@@ -141,8 +141,27 @@ public final class PdfUaModel: ToolPanelModel {
             guard self.tab === tab else { return }
             let document = tab.document
             var result: PdfUaMarkResult?
+            working = true
+            defer { working = false }
             try await host.runBusy(name) { token in
-                result = try await ToolDocuments.run(token) { try PdfUaValidator.mark(document, PanelDates.now()) }
+                do {
+                    // The job edits the open document, so Cancel stops it, waits for it to end and takes back what it wrote.
+                    let date = PanelDates.now()
+                    let job = Task.detached { try PdfUaValidator.mark(document, date) }
+                    let watcher = Task {
+                        while !Task.isCancelled {
+                            if token.isCancelled { return job.cancel() }
+                            try? await Task.sleep(nanoseconds: 20_000_000)
+                        }
+                    }
+                    defer { watcher.cancel() }
+                    let found = try await withTaskCancellationHandler { try await job.value } onCancel: { job.cancel() }
+                    if token.isCancelled { throw CancellationError() }
+                    result = found
+                } catch {
+                    try? tab.session.discard()
+                    throw error
+                }
             }
             guard let result else { return }
             guard result.marked else {

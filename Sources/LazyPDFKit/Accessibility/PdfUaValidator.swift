@@ -22,6 +22,7 @@ public enum PdfUaValidator {
         let title = !DotNetText.isNullOrWhiteSpace(DocumentMetadata.read(document).title)
         let blocking = report.issues.filter { !settledByMark.contains($0.condition) || ($0.condition == "06-003" && !title) }
         if !blocking.isEmpty || report.truncated { return PdfUaMarkResult(false, PdfUaReport(blocking, report.truncated)) }
+        try Task.checkCancellation()
         if !(try PdfUaMarker.write(document, date)) { return PdfUaMarkResult(false, report) }
         return PdfUaMarkResult(true, PdfUaReport([], false))
     }
