@@ -67,6 +67,12 @@ internal sealed partial class PdfAChecker
             || tree.Roots.Count > 0 && tree.Roots.All(r => !string.IsNullOrWhiteSpace(r.Lang));
         if (!language) AddStructure(C("6.8.5", "6.7.4"), PdfAText.Catalog, PdfAText.NoLanguage);
 
+        // Reading the content again is not charged to the budget, so it is left undone once the budget is gone.
+        if (OverBudget)
+        {
+            AddStructure(C("6.8.3.3", "6.7.3.1"), PdfAText.Catalog, PdfAText.TooMuchContent);
+            return;
+        }
         var content = AccessibilityChecker.TaggedContent(_doc, tree);
         if (content.Status == AccessibilityStatus.Failed)
         {

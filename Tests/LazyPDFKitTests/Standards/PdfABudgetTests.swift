@@ -74,4 +74,12 @@ final class PdfABudgetTests: XCTestCase {
         let file = StandardsKit.compliant(content: String(repeating: "1 0 0 0 k 0 0 5 5 re f ", count: 5000))
         XCTAssertEqual(try StandardsKit.check(file).issues.filter { $0.clause == "6.2.4.3" }.count, 1)
     }
+
+    func test_theTaggedContentIsNotReadAgainOnceTheBudgetIsGone() throws {
+        let document = try PdfDocument.open(StandardsKit.tagged(.a2a))
+        let checker = PdfAChecker(document, .a2a)
+        checker.maxWork = 1
+        checker.run()
+        XCTAssertTrue(checker.structureIssues.contains { $0.message == PdfAText.tooMuchContent })
+    }
 }

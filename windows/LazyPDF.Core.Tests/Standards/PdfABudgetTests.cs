@@ -86,4 +86,13 @@ public class PdfABudgetTests
         byte[] file = StandardsKit.Compliant(content: string.Concat(Enumerable.Repeat("1 0 0 0 k 0 0 5 5 re f ", 5000)));
         Assert.Single(StandardsKit.Check(file).Issues, i => i.Clause == "6.2.4.3");
     }
+
+    [Fact]
+    public void TheTaggedContentIsNotReadAgainOnceTheBudgetIsGone()
+    {
+        using var document = PdfDocument.Open(StandardsKit.Tagged(PdfALevel.A2a));
+        var checker = new PdfAChecker(document, PdfALevel.A2a) { MaxWork = 1 };
+        checker.Run();
+        Assert.Contains(checker.StructureIssues, i => i.Message == PdfAText.TooMuchContent);
+    }
 }

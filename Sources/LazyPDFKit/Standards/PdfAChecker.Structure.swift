@@ -55,6 +55,11 @@ extension PdfAChecker {
             || (!tree.roots.isEmpty && tree.roots.allSatisfy { !DotNetText.isNullOrWhiteSpace($0.lang) })
         if !language { addStructure(c("6.8.5", "6.7.4"), PdfAText.catalog, PdfAText.noLanguage) }
 
+        // Reading the content again is not charged to the budget, so it is left undone once the budget is gone.
+        if overBudget {
+            addStructure(c("6.8.3.3", "6.7.3.1"), PdfAText.catalog, PdfAText.tooMuchContent)
+            return
+        }
         // Only a cancelled task throws here, and the checker is not given one.
         if let content = try? AccessibilityChecker.taggedContent(document, tree), content.status == .failed {
             let clause = c("6.8.3.3", "6.7.3.1")
