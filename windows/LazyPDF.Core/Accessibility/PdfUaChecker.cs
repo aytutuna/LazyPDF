@@ -63,7 +63,7 @@ internal sealed partial class PdfUaChecker(PdfDocument document, CancellationTok
     private void CheckMarkInfo()
     {
         var info = _doc.Dict(_doc.Catalog, "MarkInfo");
-        if (_doc.Bool(info, "Marked") != true) Add("01-001", "7.1", PdfAText.Catalog, PdfUaText.NoMarkInfo);
+        if (_doc.Bool(info, "Marked") != true) Add("01-001", "6.2", PdfAText.Catalog, PdfUaText.NoMarkInfo);
         if (_doc.Bool(info, "Suspects") == true) Add("01-007", "7.1", PdfAText.Catalog, PdfUaText.Suspects);
     }
 
@@ -97,7 +97,7 @@ internal sealed partial class PdfUaChecker(PdfDocument document, CancellationTok
             Add("06-001", "7.1", PdfAText.Metadata, problem!);
             return;
         }
-        if (xmp.Get(XmpPacket.PdfUAId, "part")?.Trim() != "1") Add("06-002", "7.1", PdfAText.Metadata, PdfUaText.NoIdentifier);
+        if (xmp.Get(XmpPacket.PdfUAId, "part")?.Trim() != "1") Add("06-002", "5", PdfAText.Metadata, PdfUaText.NoIdentifier);
         if (string.IsNullOrWhiteSpace(xmp.Get(PdfAXmp.Dc, "title"))) Add("06-003", "7.1", PdfAText.Metadata, PdfUaText.NoTitle);
     }
 

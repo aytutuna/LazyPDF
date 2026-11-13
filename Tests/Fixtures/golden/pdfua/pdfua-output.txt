@@ -2,7 +2,7 @@
 < issues 0 truncated false
 > check unmarked
 < issues 2 truncated false
-<   06-002 | 7.1 | Metadata | The XMP metadata does not have pdfuaid:part with the value 1.
+<   06-002 | 5 | Metadata | The XMP metadata does not have pdfuaid:part with the value 1.
 <   07-001 | 7.1 | Catalog | The viewer preferences do not set /DisplayDocTitle to true.
 > check no-metadata
 < issues 2 truncated false
@@ -10,12 +10,12 @@
 <   07-001 | 7.1 | Catalog | The viewer preferences do not set /DisplayDocTitle to true.
 > check no-title
 < issues 3 truncated false
-<   06-002 | 7.1 | Metadata | The XMP metadata does not have pdfuaid:part with the value 1.
+<   06-002 | 5 | Metadata | The XMP metadata does not have pdfuaid:part with the value 1.
 <   06-003 | 7.1 | Metadata | The XMP metadata has no dc:title.
 <   07-001 | 7.1 | Catalog | The viewer preferences do not set /DisplayDocTitle to true.
 > check untagged
 < issues 2 truncated false
-<   01-001 | 7.1 | Catalog | The catalog has no /MarkInfo with /Marked true.
+<   01-001 | 6.2 | Catalog | The catalog has no /MarkInfo with /Marked true.
 <   01-002 | 7.1 | Catalog | The file has no structure tree.
 > check structure
 < issues 11 truncated false
@@ -23,19 +23,19 @@
 <   02-002 | 7.1 | Catalog | The role map leads A in a circle or through too many steps.
 <   02-002 | 7.1 | Catalog | The role map leads B in a circle or through too many steps.
 <   02-003 | 7.1 | Catalog | The standard structure type P is remapped to Span.
-<   09-004 | 7.5 | Structure element 20 | TD is not allowed in Table.
-<   09-005 | 7.6 | Structure element 21 | Lbl is not allowed in L.
+<   09-004 | 7.2 | Structure element 20 | TD is not allowed in Table.
+<   09-005 | 7.2 | Structure element 21 | Lbl is not allowed in L.
 <   11-007 | 7.2 | Structure element 19 | The language x y is not a valid language tag.
 <   13-004 | 7.3 | Structure element 11 | A Figure element has neither /Alt nor /ActualText.
-<   14-002 | 7.4 | Structure element 15 | The first numbered heading is H2; it must be H1.
-<   14-007 | 7.4 | Catalog | The document uses both H and numbered headings.
+<   14-002 | 7.4.2 | Structure element 15 | The first numbered heading is H2; it must be H1.
+<   14-007 | 7.4.4 | Catalog | The document uses both H and numbered headings.
 <   19-003 | 7.9 | Structure element 19 | A Note element has no /ID.
 > check catalog
 < issues 16 truncated false
 <   01-004 | 7.1 | Page 1 | Tagged content sits inside an artifact.
 <   01-005 | 7.1 | Page 1 | Content is neither tagged nor marked as an artifact.
 <   01-007 | 7.1 | Catalog | The catalog says the tags are suspect (/Suspects true).
-<   06-002 | 7.1 | Metadata | The XMP metadata does not have pdfuaid:part with the value 1.
+<   06-002 | 5 | Metadata | The XMP metadata does not have pdfuaid:part with the value 1.
 <   06-003 | 7.1 | Metadata | The XMP metadata has no dc:title.
 <   07-001 | 7.1 | Catalog | The viewer preferences do not set /DisplayDocTitle to true.
 <   11-001 | 7.2 | Catalog | No natural language is set in the catalog or on the top structure elements.
@@ -72,7 +72,7 @@
 > mark untagged
 < marked false
 < issues 2 truncated false
-<   01-001 | 7.1 | Catalog | The catalog has no /MarkInfo with /Marked true.
+<   01-001 | 6.2 | Catalog | The catalog has no /MarkInfo with /Marked true.
 <   01-002 | 7.1 | Catalog | The file has no structure tree.
 < after 2
 > mark structure
@@ -82,12 +82,12 @@
 <   02-002 | 7.1 | Catalog | The role map leads A in a circle or through too many steps.
 <   02-002 | 7.1 | Catalog | The role map leads B in a circle or through too many steps.
 <   02-003 | 7.1 | Catalog | The standard structure type P is remapped to Span.
-<   09-004 | 7.5 | Structure element 20 | TD is not allowed in Table.
-<   09-005 | 7.6 | Structure element 21 | Lbl is not allowed in L.
+<   09-004 | 7.2 | Structure element 20 | TD is not allowed in Table.
+<   09-005 | 7.2 | Structure element 21 | Lbl is not allowed in L.
 <   11-007 | 7.2 | Structure element 19 | The language x y is not a valid language tag.
 <   13-004 | 7.3 | Structure element 11 | A Figure element has neither /Alt nor /ActualText.
-<   14-002 | 7.4 | Structure element 15 | The first numbered heading is H2; it must be H1.
-<   14-007 | 7.4 | Catalog | The document uses both H and numbered headings.
+<   14-002 | 7.4.2 | Structure element 15 | The first numbered heading is H2; it must be H1.
+<   14-007 | 7.4.4 | Catalog | The document uses both H and numbered headings.
 <   19-003 | 7.9 | Structure element 19 | A Note element has no /ID.
 < after 11
 > mark catalog
