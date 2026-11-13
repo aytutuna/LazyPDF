@@ -54,6 +54,7 @@ final class IOSShell {
             await IOSCertificateImport.run(keys, problem: problem)
         })
         model.handInTyping = { panels.handIn() }
+        model.handInOnSwitch = { panels.handInOnSwitch() }
         model.fileWriter = CoordinatedFileWriter()
         model.fileReader = CoordinatedFileReader.read
         let services = IOSToolServices()

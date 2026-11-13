@@ -62,6 +62,21 @@ public sealed class MeasurePanelHandInTests
     });
 
     [Fact]
+    public Task MovingOnLeavesTheWaitingMeasurementsInTheList() => Sta.Run(() =>
+    {
+        using var tab = Open();
+        var panel = Attach(tab);
+        Wait(panel, tab);
+
+        Assert.True(panel.HandInOnSwitch());
+
+        Assert.False(tab.IsDirty);
+        Assert.Null(tab.Document.Array(tab.Document.Pages[0].Dictionary, "Annots"));
+        Assert.True(panel.Action!.CanRun());
+        return Task.CompletedTask;
+    });
+
+    [Fact]
     public Task HandingInWithNothingWaitingChangesNothing() => Sta.Run(() =>
     {
         using var tab = Open();

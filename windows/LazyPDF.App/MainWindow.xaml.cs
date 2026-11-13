@@ -454,7 +454,7 @@ public partial class MainWindow : Window
 
     private void CycleTab(int step)
     {
-        if (!HandedIn()) return;
+        if (!HandedInOnSwitch()) return;
         int index = _vm.Strip.IndexOf(_vm.ActiveTab);
         _vm.ActiveTab = _vm.Strip[(index + step + _vm.Strip.Count) % _vm.Strip.Count];
     }

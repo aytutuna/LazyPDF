@@ -64,6 +64,9 @@ public abstract class ToolPanel : UserControl, IToolPanel
     /// </summary>
     public virtual bool HandIn() => true;
 
+    /// <summary>The same when the user only moves on (another tab, tool or side panel) and nothing is saved or closed.</summary>
+    public virtual bool HandInOnSwitch() => HandIn();
+
     /// <summary>True when unhanded text stays with the tab after Detach, so a refused HandIn loses nothing.</summary>
     public virtual bool KeepsDrafts => false;
 

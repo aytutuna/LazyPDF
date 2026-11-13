@@ -438,6 +438,10 @@ extension AppViewModel {
         handInTyping?() ?? true
     }
 
+    func handInForSwitch() -> Bool {
+        (handInOnSwitch ?? handInTyping)?() ?? true
+    }
+
     // A job edits the document off the main actor, so what is in it now is not something to save or to throw away.
     private func waitForJob() -> Bool {
         if !isBusy && !actionRunning && !MarkWork.shared.running { return false }
