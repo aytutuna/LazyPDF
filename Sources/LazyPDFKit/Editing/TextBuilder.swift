@@ -151,16 +151,13 @@ final class TextBuilder {
         guard let fonts else { throw EditConflictException(EditingText.noFont) }
         let state = place.states.at(anchor.op)
         if state.font == nil { throw EditConflictException(EditingText.fontSetOutside) }
-        var seen = Set<UInt32>()
-        var needed = ""
-        for i in missing {
-            if let scalar = runes[i].unicodeScalars.first, seen.insert(scalar.value).inserted { needed += runes[i] }
-        }
+        // The whole text goes to the embedder: joined forms depend on the neighbours, so distinct characters would miss them.
+        let needed = missing.map { runes[$0] }.joined()
         let key = StandKey(unit: place.unit, font: ObjectIdentifier(anchor.font))
         // An edit taken back removes its resources; a stand-in named by one is no longer there.
         var stand: (draw: PdfDrawFont, name: String, covered: String)?
         if let found = stands[key], batch.hasResource(place, found.name) { stand = found }
-        if let known = stand, needed.unicodeScalars.allSatisfy({ known.covered.unicodeScalars.contains($0) }) {
+        if let known = stand, known.covered.range(of: needed, options: .literal) != nil {
             // The stand-in already has them.
         } else {
             let covered = (stand?.covered ?? "") + needed
@@ -178,7 +175,9 @@ final class TextBuilder {
             guard let name = batch.addResource(place, "Font", drawn.reference) else { throw EditConflictException(EditingText.sharedForm) }
             stand = (drawn, name, covered)
             stands[key] = stand
-            made.append((FontSubstitution(anchor.font.name, family, needed, drawn.isEmbedded), place, name))
+            var seen = Set<UInt32>()
+            let distinct = missing.map { runes[$0] }.filter { r in r.unicodeScalars.first.map { seen.insert($0.value).inserted } ?? false }.joined()
+            made.append((FontSubstitution(anchor.font.name, family, distinct, drawn.isEmbedded), place, name))
         }
         guard let current = stand else { return }
         for i in missing {

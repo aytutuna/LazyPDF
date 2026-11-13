@@ -129,12 +129,13 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
         if (fonts is null) throw new EditConflictException(EditingText.NoFont);
         var state = place.States.At(anchor.Op);
         if (state.Font is null) throw new EditConflictException(EditingText.FontSetOutside);
-        string needed = string.Concat(missing.Select(i => runes[i]).Distinct());
+        // The whole text goes to the embedder: joined forms depend on the neighbours, so distinct characters would miss them.
+        string needed = string.Concat(missing.Select(i => runes[i]));
         var key = (place.Unit, anchor.Font);
         // An edit taken back removes its resources; a stand-in named by one is no longer there.
         bool known = _stand.TryGetValue(key, out var stand) && batch.HasResource(place, stand.Name);
         if (!known) stand = (null!, "", "");
-        if (!known || !needed.EnumerateRunes().All(stand.Covered.EnumerateRunes().ToHashSet().Contains))
+        if (!known || !stand.Covered.Contains(needed, StringComparison.Ordinal))
         {
             string covered = stand.Covered + needed;
             var (families, style) = FontMatch.For(anchor.Font);
@@ -155,7 +156,7 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
             }
             string name = batch.AddResource(place, "Font", draw.Reference) ?? throw new EditConflictException(EditingText.SharedForm);
             _stand[key] = stand = (draw, name, covered);
-            _made.Add((new FontSubstitution(anchor.Font.Name, family, needed, draw.IsEmbedded), place, name));
+            _made.Add((new FontSubstitution(anchor.Font.Name, family, string.Concat(needed.EnumerateRunes().Distinct().Select(r => r.ToString())), draw.IsEmbedded), place, name));
         }
         foreach (int i in missing)
         {
