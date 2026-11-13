@@ -148,7 +148,7 @@ public partial class CreatePanel : ToolPanel
 
     private string? Blocker() =>
         _fileProblem ?? (Source == (int)CreateSource.Blank && !TryBlankPages(out _) ? Loc.T("Type a number from 1 to {0}.", PdfMaker.MostBlankPages)
-            : Source == (int)CreateSource.Word ? null
+            : Source == (int)CreateSource.Office ? null
             : Source != ClipboardIndex || _clipboard != ClipboardKind.Nothing ? (CustomFits() ? null : SizeLimits())
             : null);
 

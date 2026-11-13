@@ -814,6 +814,7 @@
 "Layers" = "Katmanlar";
 "Layout" = "Düzen";
 "Layout can differ from Excel." = "Sayfa düzeni Excel'dekinden farklı olabilir.";
+"Layout can differ from PowerPoint." = "Sayfa düzeni PowerPoint'tekinden farklı olabilir.";
 "Layout can differ from Word." = "Sayfa düzeni Word'dekinden farklı olabilir.";
 "Layout can differ from the original." = "Sayfa düzeni özgün dosyadakinden farklı olabilir.";
 "Lazy PDF Help" = "Lazy PDF Yardımı";
@@ -1058,6 +1059,7 @@
 "Odd pages only" = "Yalnızca tek sayfalar";
 "Old values are still in the file" = "Eski değerler hâlâ dosyada";
 "Old: {0}" = "Eski: {0}";
+"Older Office file is not supported" = "Eski Office dosyası desteklenmiyor";
 "Older readers may not accept these letters. Use AES 256-bit." = "Eski okuyucular bu harfleri kabul etmeyebilir. AES 256 bit kullanın.";
 "On pages" = "Sayfalarda";
 "On the page" = "Sayfada";
@@ -1255,6 +1257,8 @@
 "Portrait" = "Dikey";
 "Position" = "Konum";
 "Position of the watermark" = "Filigranın konumu";
+"PowerPoint file cannot be read" = "PowerPoint dosyası okunamıyor";
+"PowerPoint file is not supported" = "PowerPoint dosyası desteklenmiyor";
 "Prefix" = "Önek";
 "Prefix only" = "Yalnızca önek";
 "Preview" = "Önizleme";
@@ -1431,6 +1435,7 @@
 "Save compact…" = "Küçülterek kaydet…";
 "Save description" = "Açıklamayı kaydet";
 "Save it" = "Kaydet";
+"Save it as .docx, .xlsx or .pptx first." = "Önce .docx, .xlsx veya .pptx olarak kaydedin.";
 "Save language" = "Dili kaydet";
 "Save link" = "Bağlantıyı kaydet";
 "Save properties" = "Özellikleri kaydet";
@@ -1804,6 +1809,7 @@
 "The file has tags, so none were added. Look at them in the tag tree." = "Dosyada etiket var, bu yüzden yenisi eklenmedi. Etiket ağacından bakın.";
 "The file has {0} rows. Only the first was used." = "Dosyada {0} satır var. Yalnızca ilki kullanıldı.";
 "The file is a dynamic XFA form, which has no pages of its own to keep." = "Dosya dinamik bir XFA formu; saklanacak kendi sayfaları yok.";
+"The file is damaged or is not a PowerPoint presentation. Pick a .pptx file." = "Dosya bozuk ya da bir PowerPoint sunusu değil. Bir .pptx dosyası seçin.";
 "The file is damaged or is not a Word document. Pick a .docx file." = "Dosya bozuk ya da bir Word belgesi değil. Bir .docx dosyası seçin.";
 "The file is damaged or is not an Excel workbook. Pick an .xlsx file." = "Dosya bozuk ya da bir Excel çalışma kitabı değil. Bir .xlsx dosyası seçin.";
 "The file is encrypted." = "Dosya şifreli.";
@@ -1880,6 +1886,7 @@
 "The pattern took too long on {0} pages, the first being page {1}; they were not searched." = "Desen {0} sayfada çok uzun sürdü, ilki {1}. sayfa; bu sayfalar aranmadı.";
 "The permissions of this file do not allow changing its fields." = "Bu dosyanın izinleri alanlarının değiştirilmesine izin vermiyor.";
 "The permissions of this file do not allow filling in forms." = "Bu dosyanın izinleri form doldurmaya izin vermiyor.";
+"The presentation cannot be made into a PDF. Only .pptx files up to 100 MB with a slide to show can be; older .ppt files must be saved as .pptx first." = "Sunu PDF'ye çevrilemiyor. Yalnızca gösterilecek slaytı olan, 100 MB'a kadar .pptx dosyaları çevrilebilir; eski .ppt dosyalarını önce .pptx olarak kaydedin.";
 "The print and visibility flags of {0} annotations were corrected." = "{0} ek açıklamanın yazdırma ve görünürlük bayrakları düzeltildi.";
 "The printer did not take {0}. Check that it is on and has no error, then try again." = "Yazıcı {0} dosyasını almadı. Açık olduğundan ve hata vermediğinden emin olup yeniden deneyin.";
 "The real number {0} is beyond 32767." = "{0} gerçel sayısı 32767'yi aşıyor.";

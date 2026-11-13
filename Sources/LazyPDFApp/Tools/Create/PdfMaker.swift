@@ -160,7 +160,6 @@ enum CreateProblems {
         let app = source == .office ? FileKinds.officeApp(request.files[0]) : nil
         let excel = app == .excel
         let slides = app == .powerPoint
-        let excel = source == .office && FileKinds.officeApp(request.files[0]) == .excel
         if source == .web {
             switch error as? WebPageError ?? .couldNotLoad {
             case .tooBig: return Problem(L10n.t("Page is too big"), L10n.t("The web page file is over 20 MB. Pick a smaller one."))

@@ -73,10 +73,12 @@ public sealed class WebPageRulesTests
     public void AMarginThatLeavesNoRoomIsRefused() =>
         Assert.Throws<ArgumentException>(() => WebPageRules.Layout(new PdfPageSetup(PdfPaper.Letter, PdfOrientation.Landscape, 306)));
 
+    private static readonly CreateRequest WebRequest = new(CreateSource.WebPage, new PdfPageSetup(PdfPaper.A4, PdfOrientation.Auto, 36), "page.pdf");
+
     [Fact]
     public void ARuntimeThatIsMissingIsSaidPlainly()
     {
-        var problem = CreateProblems.Failed(new WebViewMissingException(), CreateSource.WebPage);
+        var problem = CreateProblems.Failed(new WebViewMissingException(), WebRequest);
 
         Assert.Equal("Web pages need WebView2", problem.Title);
         Assert.Contains("WebView2 Runtime", problem.Text);
@@ -85,7 +87,7 @@ public sealed class WebPageRulesTests
     [Fact]
     public void APageThatCannotBeDrawnIsNotCalledAPicture()
     {
-        var problem = CreateProblems.Failed(new IOException(), CreateSource.WebPage);
+        var problem = CreateProblems.Failed(new IOException(), WebRequest);
 
         Assert.Equal("Web page cannot be drawn", problem.Title);
     }
@@ -94,7 +96,7 @@ public sealed class WebPageRulesTests
     public Task AWebPageDroppedOnThePanelIsTheSourceAndNamesTheResult() => Sta.Run(() =>
     {
         var panel = new CreatePanel();
-        Assert.False(panel.Action!.CanRun());
+        Assert.Equal((int)CreateSource.Blank, panel.SourceBox.SelectedIndex);
 
         panel.TypedText.RaiseEvent(BatchDropTests.Drop(panel.TypedText, @"C:\x\Report 1.HTML"));
 
