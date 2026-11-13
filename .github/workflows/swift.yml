@@ -41,7 +41,7 @@ jobs:
     # They are built with signing off; the UI test only checks that the iOS app opens a window.
     needs: macos
     runs-on: macos-15
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v7
       - name: Select Xcode 16.4
@@ -87,7 +87,7 @@ jobs:
           test -f "$app/Contents/Resources/tr.lproj/Kit.strings"
           codesign -d --entitlements :- "$app"
       - name: Build the Mac UI tests
-        timeout-minutes: 20
+        timeout-minutes: 30
         run: |
           set -o pipefail
           xcodebuild build-for-testing \
