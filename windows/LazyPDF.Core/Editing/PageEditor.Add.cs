@@ -7,7 +7,7 @@ namespace LazyPDF.Core;
 /// <param name="Size">Font size in points as the page is shown.</param>
 /// <param name="LineSpacing">Multiplies the font's line height.</param>
 public sealed record TextBoxStyle(string Family = "Helvetica", FontStyles Style = FontStyles.Regular, double Size = 12, RgbColor Color = default,
-    TextAlignment Alignment = TextAlignment.Left, double LineSpacing = 1);
+    TextAlignment? Alignment = null, double LineSpacing = 1);
 
 /// <summary>How a new line, rectangle or ellipse is painted; a null colour is not painted.</summary>
 public sealed record ShapeStyle(RgbColor? Stroke = null, RgbColor? Fill = null, double Width = 1, double Opacity = 1);
@@ -50,7 +50,9 @@ public sealed partial class PageEditor
         for (int i = 0; i < lines.Count; i++)
         {
             double width = draw.Width(lines[i], style.Size);
-            double x = style.Alignment switch
+            // No alignment set: text starts where its paragraph does, on the right for right-to-left text.
+            var alignment = style.Alignment ?? (draw.IsRightToLeft(lines[i]) ? TextAlignment.Right : TextAlignment.Left);
+            double x = alignment switch
             {
                 TextAlignment.Center => shown.X + (shown.Width - width) / 2,
                 TextAlignment.Right => shown.X + shown.Width - width,
@@ -58,10 +60,10 @@ public sealed partial class PageEditor
             };
             double y = shown.Y + draw.Ascent * style.Size + i * height;
             var (ux, uy) = geometry.ToUser(x, y);
-            bool justify = style.Alignment == TextAlignment.Justify && !draw.IsEmbedded && i < lines.Count - 1 && lines[i].Contains(' ');
+            bool justify = alignment == TextAlignment.Justify && !draw.IsEmbedded && i < lines.Count - 1 && lines[i].Contains(' ');
             if (justify) w.WordSpacing((shown.Width - width) / lines[i].Count(c => c == ' ') / Math.Sqrt(ax * ax + ay * ay));
             w.TextMatrix(new PdfMatrix(ax, ay, bx, by, ux, uy));
-            w.Show(draw.Encode(lines[i]));
+            w.Show(draw, lines[i], style.Size);
             if (justify) w.WordSpacing(0);
         }
         w.EndText().Restore();

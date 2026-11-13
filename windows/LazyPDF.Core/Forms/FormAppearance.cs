@@ -141,8 +141,9 @@ internal sealed partial class FormAppearance(PdfDocument document)
         c.W.BeginText().Font(name, size);
         foreach (var (text, x, y) in lines)
         {
-            byte[] encoded = font.Encode(text);
-            if (encoded.Length > 0) c.W.TextMatrix(new PdfMatrix(1, 0, 0, 1, x, y)).Show(encoded);
+            if (text.Length == 0) continue;
+            c.W.TextMatrix(new PdfMatrix(1, 0, 0, 1, x, y));
+            font.Show(c.W, text, size);
         }
         c.W.EndText().Restore().EndMarked();
     }

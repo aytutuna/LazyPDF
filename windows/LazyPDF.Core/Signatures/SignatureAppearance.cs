@@ -100,7 +100,7 @@ internal static class SignatureAppearance
         for (int i = 0; i < lines.Count; i++)
         {
             if (i > 0) canvas.W.MoveText(0, -lineHeight);
-            canvas.W.Show(font.Encode(lines[i]));
+            canvas.W.Show(font, lines[i], size);
         }
         canvas.W.EndText();
     }

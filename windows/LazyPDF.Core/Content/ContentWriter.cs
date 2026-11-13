@@ -148,9 +148,14 @@ public sealed class ContentWriter
     /// advances that differ from the font's become <c>TJ</c> adjustments and <c>Ts</c> rises; a line whose glyphs do not map
     /// one to one to its characters is wrapped in marked content with /ActualText, so that copying gives the logical text.
     /// </summary>
-    public ContentWriter Show(PdfDrawFont font, string text, double size)
+    public ContentWriter Show(PdfDrawFont font, string text, double size) => Show(font, font.Shaped(text), text, size);
+
+    /// <summary>Shows a run whose direction the layout has already resolved.</summary>
+    internal ContentWriter ShowRun(PdfDrawFont font, string text, bool rightToLeft, double size) => Show(font, font.Run(text, rightToLeft), text, size);
+
+    private ContentWriter Show(PdfDrawFont font, ShapedLine? line, string text, double size)
     {
-        if (font.Shaped(text) is not { } line) return Show(font.Encode(text));
+        if (line is null) return Show(font.Encode(text));
         if (line.NeedsActualText)
         {
             var bytes = new List<byte> { 0xFE, 0xFF };
@@ -194,7 +199,7 @@ public sealed class ContentWriter
             // A TJ number moves the pen left by that much, so the glyph is drawn after -XOffset and the pen then put where the shaper wants it.
             carry -= glyph.XOffset;
             Adjust();
-            codes.AddRange(font.CodeOf(glyph.Glyph));
+            codes.AddRange(font.CodeOf(line, entry));
             double drift = font.CodeWidth(glyph.Glyph) - glyph.Advance;
             carry += glyph.XOffset + (Math.Abs(drift) > 0.5 ? drift : 0);
         }

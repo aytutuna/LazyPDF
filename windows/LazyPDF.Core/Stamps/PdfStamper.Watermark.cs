@@ -45,7 +45,7 @@ public sealed partial class PdfStamper
                 {
                     double baseline = height - font.Ascent * size - i * font.LineHeight(size);
                     double left = (width - font.Width(lines[i], size)) / 2;
-                    canvas.Writer.TextMatrix(PdfMatrix.Translate(left, baseline)).Show(font.Encode(lines[i]));
+                    canvas.Writer.TextMatrix(PdfMatrix.Translate(left, baseline)).Show(font, lines[i], size);
                 }
                 canvas.Writer.EndText();
             }

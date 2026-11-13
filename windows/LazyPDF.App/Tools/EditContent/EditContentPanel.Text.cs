@@ -28,7 +28,7 @@ public sealed partial class EditContentPanel
 
     private EditorLook NewLook() => new(
         new System.Windows.Media.FontFamily(_newStyle.Family), _newStyle.Size, Palette.Brush(_newStyle.Color),
-        _newStyle.Style.HasFlag(LazyPDF.Core.FontStyles.Bold), _newStyle.Style.HasFlag(LazyPDF.Core.FontStyles.Italic), _newStyle.Alignment);
+        _newStyle.Style.HasFlag(LazyPDF.Core.FontStyles.Bold), _newStyle.Style.HasFlag(LazyPDF.Core.FontStyles.Italic), _newStyle.Alignment ?? TextAlignment.Left);
 
     private void FillText(TextObject? text)
     {
@@ -37,7 +37,7 @@ public sealed partial class EditContentPanel
         SizeBox.Text = Number(text?.Size ?? _newStyle.Size);
         BoldButton.IsChecked = text is null ? _newStyle.Style.HasFlag(LazyPDF.Core.FontStyles.Bold) : text.Font?.IsBold;
         ItalicButton.IsChecked = text is null ? _newStyle.Style.HasFlag(LazyPDF.Core.FontStyles.Italic) : text.Font?.IsItalic;
-        var alignment = text?.Alignment ?? _newStyle.Alignment;
+        var alignment = text?.Alignment ?? _newStyle.Alignment ?? TextAlignment.Left;
         AlignLeft.IsChecked = alignment == TextAlignment.Left;
         AlignCenter.IsChecked = alignment == TextAlignment.Center;
         AlignRight.IsChecked = alignment == TextAlignment.Right;

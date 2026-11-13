@@ -109,7 +109,9 @@ public static class EmbeddedFontBuilder
     {
         if (Open(font, collectionIndex, out status) is not { } f) return null;
 
-        var glyphs = unicodeOfGlyph.Keys.Where(g => g > 0 && g < f.GlyphCount).Order().ToList();
+        // The subsetter numbers glyphs in the order given, so plain text gets the numbering the cmap route gives: by code point.
+        var glyphs = unicodeOfGlyph.Where(p => p.Key > 0 && p.Key < f.GlyphCount)
+            .OrderBy(p => p.Value.Length > 0 && Rune.TryGetRuneAt(p.Value, 0, out var first) ? first.Value : int.MaxValue).ThenBy(p => p.Key).Select(p => p.Key).ToList();
         if (Assemble(font, f, glyphs, collectionIndex, out status) is not { } parts) return null;
         var codes = new SortedDictionary<int, int>();
         var unicode = new Dictionary<int, string>(glyphs.Count);
@@ -117,7 +119,7 @@ public static class EmbeddedFontBuilder
         {
             string text = unicodeOfGlyph[gid];
             unicode[parts.GlyphCodes[gid]] = text;
-            if (Rune.TryGetRuneAt(text, 0, out var rune) && rune.Utf16SequenceLength == text.Length)
+            if (text.Length > 0 && Rune.TryGetRuneAt(text, 0, out var rune) && rune.Utf16SequenceLength == text.Length)
                 codes[rune.Value] = parts.GlyphCodes[gid];
         }
         return Finish(f, parts, codes, missing.Order().Distinct().ToList(), unicode);

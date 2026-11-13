@@ -30,8 +30,9 @@ public interface IFontSource
 /// </summary>
 public sealed class PdfFontEmbedder(PdfDocument document, IFontSource? source = null, IShaper? shaper = null, string? language = null)
 {
-    private readonly IShaper _shaper = shaper ?? new CmapShaper();
-    private readonly bool _builtIn = shaper is null;
+    // An app can let its font source be the shaper too, which saves passing a second object through every writer.
+    private readonly IShaper _shaper = shaper ?? source as IShaper ?? new CmapShaper();
+    private readonly bool _builtIn = (shaper ?? source as IShaper) is null;
 
     private static readonly Dictionary<int, int> WinAnsiCodes = BuildWinAnsi();
 
@@ -118,15 +119,13 @@ public sealed class PdfFontEmbedder(PdfDocument document, IFontSource? source = 
         return built is null ? null : (built, measure, lines);
     }
 
-    // Left-to-right text and the built-in shaper: the cmap glyph of each character, and the mirror image of a bracket in case the line is turned around.
+    // Left-to-right text and the built-in shaper: the cmap glyph of each character.
     private static void CollectPlain(string paragraph, TrueTypeFont measure, Dictionary<int, string> unicodeOf, SortedSet<int> missing)
     {
         foreach (var rune in paragraph.EnumerateRunes())
         {
             if (rune.Value < 0x20 || CmapShaper.IsInvisible(rune.Value)) continue;
             Note(unicodeOf, missing, measure, rune.Value, rune.ToString());
-            int mirror = BidiData.Mirror(rune.Value);
-            if (mirror != rune.Value && measure.GlyphForCodePoint(mirror) is var gid && gid > 0 && gid < measure.GlyphCount) unicodeOf.TryAdd(gid, "");
         }
     }
 
@@ -306,14 +305,7 @@ public sealed class PdfDrawFont
         if (_embedded is not null)
         {
             if (Shaped(text) is not { } line) return EncodePlain(text);
-            var bytes = new byte[line.Glyphs.Count * 2];
-            for (int i = 0; i < line.Glyphs.Count; i++)
-            {
-                int code = _embedded.GlyphCodes.GetValueOrDefault(line.Glyphs[i].Shaped.Glyph);
-                bytes[2 * i] = (byte)(code >> 8);
-                bytes[2 * i + 1] = (byte)code;
-            }
-            return bytes;
+            return [.. line.Glyphs.SelectMany(g => CodeOf(line, g))];
         }
         return [.. text.EnumerateRunes().Where(r => r.Value >= 0x20).Select(r => (byte)PdfFontEmbedder.WinAnsiCode(r.Value))];
     }
@@ -349,13 +341,25 @@ public sealed class PdfDrawFont
     internal ShapedLine? Shaped(string text, int baseLevel = BidiParagraph.Auto) =>
         _lines is null || (_plain && baseLevel != 1 && !Scripts.NeedsBidi(text)) ? null : _lines.Shape(text, baseLevel);
 
+    /// <summary>One run in a direction the caller resolved; null when it is plain and needs no shaping.</summary>
+    internal ShapedLine? Run(string text, bool rightToLeft) =>
+        _lines is null || (_plain && !rightToLeft && !Scripts.NeedsBidi(text)) ? null : _lines.ShapeRun(text, rightToLeft);
+
+    internal double RunWidth(string text, bool rightToLeft, double size) =>
+        Run(text, rightToLeft) is { } line ? line.Width * size / 1000 : Width(text, size);
+
     /// <summary>The width in 1/1000 em that /W gives the code; a shaped advance that differs is made up in the <c>TJ</c> adjustments.</summary>
     internal double CodeWidth(int glyph) => _measure is null ? 0 : Math.Round(_measure.GetAdvance(glyph) * 1000.0 / _measure.UnitsPerEm);
 
-    /// <summary>The character code of a glyph of the shaped text.</summary>
-    internal byte[] CodeOf(int glyph)
+    /// <summary>
+    /// The character code of a glyph of the shaped text. A mirrored bracket the font was not built with, because the
+    /// text had no right-to-left character, is drawn with the glyph the character itself has.
+    /// </summary>
+    internal byte[] CodeOf(ShapedLine line, LineGlyph glyph)
     {
-        int code = _embedded?.GlyphCodes.GetValueOrDefault(glyph) ?? 0;
+        int code = _embedded?.GlyphCodes.GetValueOrDefault(glyph.Shaped.Glyph) ?? 0;
+        if (code == 0 && glyph.Mirrored && _measure is not null && Rune.TryGetRuneAt(line.Text, glyph.Start, out var rune))
+            code = _embedded!.GlyphCodes.GetValueOrDefault(_measure.GlyphForCodePoint(rune.Value));
         return [(byte)(code >> 8), (byte)code];
     }
 

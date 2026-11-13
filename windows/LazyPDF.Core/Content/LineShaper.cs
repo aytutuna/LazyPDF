@@ -37,9 +37,23 @@ internal sealed class LineShaper(FontFile file, IShaper shaper, TrueTypeFont mea
         return _cache[(text, baseLevel)] = Build(text, baseLevel);
     }
 
+    /// <summary>One run of a single direction, as a layout that has resolved the levels itself cuts it. Brackets are mirrored when it runs right to left.</summary>
+    public ShapedLine ShapeRun(string text, bool rightToLeft)
+    {
+        int key = rightToLeft ? 2 : 3;
+        if (_cache.TryGetValue((text, key), out var known)) return known;
+        if (_cache.Count >= CacheLimit) _cache.Clear();
+        string clean = Clean(text);
+        var glyphs = new List<LineGlyph>();
+        bool mirrored = clean.Length > 0 && AddRun(glyphs, clean, 0, clean.Length, rightToLeft ? 1 : 0);
+        return _cache[(text, key)] = Finish(clean, glyphs, mirrored, rightToLeft);
+    }
+
+    private static string Clean(string text) => string.Concat(text.Where(c => c >= 0x20 && c != 0x85 && c != 0x2028 && c != 0x2029));
+
     private ShapedLine Build(string text, int baseLevel)
     {
-        string clean = string.Concat(text.Where(c => c >= 0x20 && c != 0x85 && c != 0x2028 && c != 0x2029));
+        string clean = Clean(text);
         var glyphs = new List<LineGlyph>();
         bool mirrored = false, rtl = baseLevel == 1;
         if (clean.Length > 0 && (baseLevel == 1 || Scripts.NeedsBidi(clean)))
@@ -52,6 +66,11 @@ internal sealed class LineShaper(FontFile file, IShaper shaper, TrueTypeFont mea
         }
         else if (clean.Length > 0) AddRun(glyphs, clean, 0, clean.Length, 0);
 
+        return Finish(clean, glyphs, mirrored, rtl);
+    }
+
+    private static ShapedLine Finish(string clean, List<LineGlyph> glyphs, bool mirrored, bool rtl)
+    {
         int expected = clean.EnumerateRunes().Count(r => !CmapShaper.IsInvisible(r.Value));
         bool actual = mirrored || glyphs.Count != expected || glyphs.Any(g => !IsOneRune(clean, g));
         return new ShapedLine(clean, glyphs, glyphs.Sum(g => g.Shaped.Advance), actual, rtl);

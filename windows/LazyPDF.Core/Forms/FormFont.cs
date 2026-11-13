@@ -71,6 +71,10 @@ internal sealed class FormFont
         return true;
     }
 
+    /// <summary>Shows the text in display order, shaped when the font was added for it.</summary>
+    public ContentWriter Show(ContentWriter writer, string text, double size) =>
+        _added is not null ? writer.Show(_added, text, size) : text.Length == 0 ? writer : writer.Show(Encode(text));
+
     public byte[] Encode(string text)
     {
         if (_added is not null) return _added.Encode(text);

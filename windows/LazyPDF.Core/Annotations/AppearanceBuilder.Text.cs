@@ -45,11 +45,12 @@ internal sealed partial class AppearanceBuilder
         {
             if (y < box.Bottom) break;
             double baseline = y - line.Ascent;
+            // Left is the default alignment, and the default of a right-to-left paragraph is the right.
             double x = a.Alignment switch
             {
                 1 => textBox.Left + (textBox.Width - line.Width) / 2,
                 2 => textBox.Right - line.Width,
-                _ => textBox.Left,
+                _ => line.RightToLeft ? textBox.Right - line.Width : textBox.Left,
             };
             foreach (var piece in line.Pieces)
             {
@@ -72,7 +73,7 @@ internal sealed partial class AppearanceBuilder
             names[piece.Font.Reference.Number] = name;
         }
         c.Color(format.Color, stroke: false);
-        c.W.BeginText().Font(name, format.Size).MoveText(c.X(x), c.Y(baseline)).Show(piece.Font.Encode(piece.Text)).EndText();
+        c.W.BeginText().Font(name, format.Size).MoveText(c.X(x), c.Y(baseline)).ShowRun(piece.Font, piece.Text, piece.RightToLeft, format.Size).EndText();
         if (format.Underline)
         {
             c.Color(format.Color, stroke: true);
@@ -148,7 +149,7 @@ internal sealed partial class AppearanceBuilder
         double baseline = (h - (font.Ascent + font.Descent) * size) / 2;
         string fontName = c.AddFont(font.Reference);
         c.Color(color, stroke: false);
-        c.W.BeginText().Font(fontName, size).MoveText((w - textWidth) / 2, baseline).Show(font.Encode(label)).EndText();
+        c.W.BeginText().Font(fontName, size).MoveText((w - textWidth) / 2, baseline).Show(font, label, size).EndText();
         return c;
     }
 

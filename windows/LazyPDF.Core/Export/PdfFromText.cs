@@ -47,11 +47,15 @@ public static class PdfFromText
             string name = ContentResources.Add(document, ContentResources.ForEdit(document, page), "Font", font.Reference, "F");
             var content = new ContentWriter().BeginText().Font(name, size).MoveText(setup.Margin, height - setup.Margin - font.Ascent * size);
             bool first = true;
+            double at = 0;
             foreach (string line in pages[i])
             {
-                if (!first) content.MoveText(0, -lineHeight);
+                // Right-to-left lines end at the right margin; each move is relative to the start of the line before.
+                double x = font.IsRightToLeft(line) ? box - font.Width(line, size) : 0;
+                if (x != at || !first) content.MoveText(x - at, first ? 0 : -lineHeight);
+                at = x;
                 first = false;
-                if (line.Length > 0) content.Show(font.Encode(line));
+                if (line.Length > 0) content.Show(font, line, size);
             }
             content.EndText();
             page.Dictionary["Contents"] = document.Add(new PdfStream(new PdfDictionary(), content.ToArray()));
