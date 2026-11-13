@@ -47,6 +47,7 @@ struct IOSRoot: View {
         .onChange(of: phase) { _, now in
             if now == .background {
                 vm.flushRecovery()
+                vm.rememberViews()
                 shell.trimViewers()
             }
         }

@@ -30,6 +30,18 @@ final class OpenFlowTests: XCTestCase {
         XCTAssertEqual(f.vm.documents[0].pageIndex, 2)
     }
 
+    func test_theOpenFilesPagesAreKeptWithoutClosingTheTabs() async {
+        let f = ViewModelFixture(self)
+        let url = f.pdf("long.pdf", pages: 4)
+        await f.vm.open(url)
+        f.vm.documents[0].pageIndex = 3
+
+        f.vm.rememberViews()
+
+        XCTAssertEqual(f.vm.recentFiles.view(of: url)?.page, 3)
+        XCTAssertEqual(f.vm.documents.count, 1)
+    }
+
     func test_aPdfOpensInATabAndBecomesTheActiveOne() async {
         let f = ViewModelFixture(self)
         let url = f.pdf("report.pdf")

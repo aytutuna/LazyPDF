@@ -449,6 +449,11 @@ extension AppViewModel {
         if let url = tab.url, tab.pageCount > 1 { recentFiles.rememberView(url, page: tab.pageIndex, zoom: tab.zoom, fit: tab.fit) }
     }
 
+    /// Writes where every open file is, for a platform that is stopped without being asked to quit.
+    public func rememberViews() {
+        for tab in documents { rememberView(tab) }
+    }
+
     private func continueExit(raise: Bool) -> Bool {
         if let dirty = documents.first(where: { $0.isDirty || $0.pendingMarks > 0 }) {
             select(dirty)
