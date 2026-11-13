@@ -119,6 +119,30 @@ final class OfficeLayoutTests: XCTestCase {
         }
     }
 
+    // Joined forms are narrower than the isolated letters.
+    private final class NarrowScriptFont: FontSource, Shaper {
+        private let font = OfficeLayoutSpec.ScriptFont()
+
+        func find(_ family: String, _ style: FontStyles) -> FontFile? { font.find(family, style) }
+
+        func shape(_ text: String, _ font: FontFile, rightToLeft: Bool, language: String?) -> [ShapedGlyph]? {
+            CmapShaper().shape(text, font, rightToLeft: rightToLeft, language: language)!.map {
+                ShapedGlyph(glyph: $0.glyph, advance: $0.advance / 2, xOffset: $0.xOffset, yOffset: $0.yOffset, cluster: $0.cluster)
+            }
+        }
+    }
+
+    func test_arabicIsMeasuredWithTheAdvancesTheShaperDraws() throws {
+        let fonts = OfficeFontSource(installed: NarrowScriptFont(), bundled: nil)
+        let layout = try Paginator(rtlDocument("ابلم", rtl: true, align: .right), LayoutFonts(fonts)).run()
+        var texts: [PlacedText] = []
+        for case .text(let t) in layout.pages[0].boxes { texts.append(t) }
+        XCTAssertEqual(texts.count, 1)
+        let face = LayoutFonts(fonts).find(OfficeFontSource.defaultFamily, [])!
+        let isolated = texts[0].text.unicodeScalars.reduce(0.0) { $0 + face.advance(Int($1.value)) } * texts[0].size
+        XCTAssertEqual(texts[0].x, 180 - isolated / 2, accuracy: 0.01)
+    }
+
     private func drawn(_ align: LayoutAlign, _ text: String) throws -> String {
         var contents: [[UInt8]] = []
         let fonts = OfficeFontSource(installed: OffsetScriptFont(), bundled: nil)

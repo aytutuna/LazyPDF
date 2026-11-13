@@ -5,9 +5,10 @@ internal sealed class FontFace
 {
     private readonly Dictionary<int, double> _advances = [];
 
-    public FontFace(string family, FontStyles style, TrueTypeFont font)
+    public FontFace(string family, FontStyles style, TrueTypeFont font, FontFile file)
     {
         Family = family;
+        File = file;
         Style = style;
         Font = font;
         Ascent = (font.Ascent + font.LineGap) / (double)font.UnitsPerEm;
@@ -17,6 +18,7 @@ internal sealed class FontFace
     public string Family { get; }
     public FontStyles Style { get; }
     public TrueTypeFont Font { get; }
+    public FontFile File { get; }
 
     /// <summary>In em, the line gap included so that a single-spaced line is ascent plus descent.</summary>
     public double Ascent { get; }
@@ -57,6 +59,9 @@ internal sealed class LayoutFonts(IFontSource? source)
             HashCode.Combine(System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(k.Item1), k.Item2, k.Item3);
     }
 
+    /// <summary>The shaper the writer will draw with; text it joins is measured through it too.</summary>
+    public IShaper? Shaper { get; } = (source as OfficeFontSource)?.Shaper;
+
     /// <summary>Code points no face could draw.</summary>
     public SortedSet<int> Missing { get; } = [];
 
@@ -71,7 +76,7 @@ internal sealed class LayoutFonts(IFontSource? source)
             {
                 if (TrueTypeFont.TryParse(file.Data, file.CollectionIndex) is { } font && font.UnitsPerEm > 0)
                 {
-                    face = new FontFace(family, style, font);
+                    face = new FontFace(family, style, font, file);
                 }
                 _byFile[(file.Data, file.CollectionIndex, style)] = face;
             }

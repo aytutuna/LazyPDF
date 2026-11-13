@@ -192,7 +192,44 @@ enum ParagraphLayout {
                 atoms.append(atom)
             }
         }
+        measureJoined(atoms, fonts.shaper)
         return atoms
+    }
+
+    private static func isArabic(_ atom: Atom) -> Bool {
+        let c = atom.code
+        return atom.picture == nil && ((c >= 0x0600 && c <= 0x06FF) || (c >= 0x0750 && c <= 0x077F) || (c >= 0x08A0 && c <= 0x08FF)
+            || (c >= 0xFB50 && c <= 0xFDFF) || (c >= 0xFE70 && c <= 0xFEFF))
+    }
+
+    // The writer draws an Arabic stretch with the joined glyphs of the shaper, whose advances differ from the isolated
+    // letters'. Each glyph's advance goes to the atom its cluster starts in; the rest of a ligature gets none.
+    private static func measureJoined(_ atoms: [Atom], _ shaper: Shaper?) {
+        guard let shaper else { return }
+        var i = 0
+        while i < atoms.count {
+            if !isArabic(atoms[i]) { i += 1; continue }
+            var end = i + 1
+            while end < atoms.count && isArabic(atoms[end]) && atoms[end].run === atoms[i].run && atoms[end].face === atoms[i].face { end += 1 }
+            var text = ""
+            var starts: [Int] = []
+            var length = 0
+            for k in i..<end {
+                starts.append(length)
+                text.unicodeScalars.append(Unicode.Scalar(UInt32(atoms[k].code))!)
+                length += atoms[k].code > 0xFFFF ? 2 : 1
+            }
+            if let glyphs = shaper.shape(text, atoms[i].face.file, rightToLeft: true, language: nil) {
+                for k in i..<end { atoms[k].width = 0 }
+                for glyph in glyphs {
+                    let cluster = min(max(glyph.cluster, 0), length - 1)
+                    var at = 0
+                    while at + 1 < starts.count && starts[at + 1] <= cluster { at += 1 }
+                    atoms[i + at].width += glyph.advance / 1000 * atoms[i].size
+                }
+            }
+            i = end
+        }
     }
 
     private static func mirrored(_ align: LayoutAlign) -> LayoutAlign {

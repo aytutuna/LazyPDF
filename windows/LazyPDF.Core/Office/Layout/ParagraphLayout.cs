@@ -177,7 +177,42 @@ internal static class ParagraphLayout
                 atoms.Add(atom);
             }
         }
+        MeasureJoined(atoms, fonts.Shaper);
         return atoms;
+    }
+
+    private static bool IsArabic(Atom atom) =>
+        atom.Picture is null && atom.Code is (>= 0x0600 and <= 0x06FF) or (>= 0x0750 and <= 0x077F) or (>= 0x08A0 and <= 0x08FF) or (>= 0xFB50 and <= 0xFDFF) or (>= 0xFE70 and <= 0xFEFF);
+
+    // The writer draws an Arabic stretch with the joined glyphs of the shaper, whose advances differ from the isolated
+    // letters'. Each glyph's advance goes to the atom its cluster starts in; the rest of a ligature gets none.
+    private static void MeasureJoined(List<Atom> atoms, IShaper? shaper)
+    {
+        if (shaper is null) return;
+        for (int i = 0; i < atoms.Count;)
+        {
+            if (!IsArabic(atoms[i])) { i++; continue; }
+            int end = i + 1;
+            while (end < atoms.Count && IsArabic(atoms[end]) && ReferenceEquals(atoms[end].Run, atoms[i].Run) && atoms[end].Face == atoms[i].Face) end++;
+            var text = new System.Text.StringBuilder();
+            var starts = new int[end - i];
+            for (int k = i; k < end; k++)
+            {
+                starts[k - i] = text.Length;
+                text.Append(char.ConvertFromUtf32(atoms[k].Code));
+            }
+            if (shaper.Shape(text.ToString(), atoms[i].Face.File, true, null) is { } glyphs)
+            {
+                for (int k = i; k < end; k++) atoms[k].Width = 0;
+                foreach (var glyph in glyphs)
+                {
+                    int at = Array.BinarySearch(starts, Math.Clamp(glyph.Cluster, 0, text.Length - 1));
+                    if (at < 0) at = ~at - 1;
+                    atoms[i + at].Width += glyph.Advance / 1000 * atoms[i].Size;
+                }
+            }
+            i = end;
+        }
     }
 
     private static LayoutAlign Mirrored(LayoutAlign align) => align switch

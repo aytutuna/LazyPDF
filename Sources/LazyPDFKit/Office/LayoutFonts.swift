@@ -6,8 +6,9 @@ import Foundation
 final class FontFace {
     private var advances: [Int: Double] = [:]
 
-    init(family: String, style: FontStyles, font: TrueTypeFont) {
+    init(family: String, style: FontStyles, font: TrueTypeFont, file: FontFile) {
         self.family = family
+        self.file = file
         self.style = style
         self.font = font
         ascent = Double(font.ascent + font.lineGap) / Double(font.unitsPerEm)
@@ -17,6 +18,7 @@ final class FontFace {
     let family: String
     let style: FontStyles
     let font: TrueTypeFont
+    let file: FontFile
 
     /// In em, the line gap included so that a single-spaced line is ascent plus descent.
     let ascent: Double
@@ -62,8 +64,12 @@ final class LayoutFonts {
     private var byFile: [FileKey: FontFace?] = [:]
     private var chosen: [ChoiceKey: FontFace?] = [:]
 
+    /// The shaper the writer will draw with; text it joins is measured through it too.
+    let shaper: Shaper?
+
     init(_ source: FontSource?) {
         self.source = source
+        shaper = (source as? OfficeFontSource)?.shaper
     }
 
     /// Code points no face could draw.
@@ -82,7 +88,7 @@ final class LayoutFonts {
                 face = known
             } else {
                 if let font = TrueTypeFont.tryParse(file.data, file.collectionIndex), font.unitsPerEm > 0 {
-                    face = FontFace(family: family, style: style, font: font)
+                    face = FontFace(family: family, style: style, font: font, file: file)
                 }
                 if let fileKey { byFile[fileKey] = .some(face) }
             }

@@ -27,6 +27,27 @@ public class OfficeRtlTests
             [.. new CmapShaper().Shape(text, font, rightToLeft, language)!.Select(g => g with { XOffset = 50, YOffset = 100 })];
     }
 
+    // Joined forms are narrower than the isolated letters.
+    private sealed class NarrowScriptFont(byte[] data) : IFontSource, IShaper
+    {
+        public FontFile? Find(string family, FontStyles style) => new(data);
+
+        public IReadOnlyList<ShapedGlyph>? Shape(string text, FontFile font, bool rightToLeft, string? language) =>
+            [.. new CmapShaper().Shape(text, font, rightToLeft, language)!.Select(g => g with { Advance = g.Advance / 2 })];
+    }
+
+    [Fact]
+    public void ArabicIsMeasuredWithTheAdvancesTheShaperDraws()
+    {
+        var data = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", "golden", "shaping", "script.ttf"));
+        var fonts = new OfficeFontSource(new NarrowScriptFont(data), null);
+        var layout = new Paginator(Document(Paragraph("ابلم", rtl: true, LayoutAlign.Right)), new LayoutFonts(fonts), default).Run();
+        var text = Assert.Single(layout.Pages[0].Boxes.OfType<PlacedText>());
+        var face = new LayoutFonts(fonts).Find(OfficeFontSource.DefaultFamily, FontStyles.Regular)!;
+        double isolated = text.Text.EnumerateRunes().Sum(r => face.Advance(r.Value)) * text.Size;
+        Assert.Equal(180 - isolated / 2, text.X, 0.01);
+    }
+
     private static string Drawn(LayoutAlign align, string text)
     {
         var data = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Fixtures", "golden", "shaping", "script.ttf"));
