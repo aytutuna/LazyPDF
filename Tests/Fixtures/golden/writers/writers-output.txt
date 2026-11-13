@@ -276,3 +276,119 @@
 10: <</Type /Font /Subtype /CIDFontType2 /BaseFont /AAAAAA+ScriptSans-Regular /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /FontDescriptor 8 0 R /DW 1000 /W [1 [250 550 550 680 720 400 720 640 680 520 440]] /CIDToGIDMap /Identity>>
 11: <</Type /Font /Subtype /Type0 /BaseFont /AAAAAA+ScriptSans-Regular /Encoding /Identity-H /DescendantFonts [10 0 R] /ToUnicode 9 0 R>>
 12: stream <<>> | BT /F1 12 Tf 50 700 Td (Hello ) Tj\n/LzE1 12 Tf\n<0004000500060001000200030001000900080007000A0001000900070008000B> Tj\n/F1 12 Tf ET
+> bates abc
+1: <</Type /Catalog /Pages 2 0 R>>
+2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 600 800]>>
+3: <</Type /Page /Parent 2 0 R /Resources <</Font <</LPS1_F 8 0 R>>>> /Contents [10 0 R 11 0 R 9 0 R]>>
+4: stream font program
+5: <</Type /FontDescriptor /FontName /AAAAAA+ScriptSans-Regular /Flags 32 /FontBBox [-300 -100 900 900] /ItalicAngle 0 /Ascent 800 /Descent -200 /CapHeight 700 /StemV 87 /FontFile2 4 0 R>>
+6: stream <<>> | /CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n2 beginbfrange\n<0002> <0003> <0030>\n<0004> <0006> <0061>\nendbfrange\n1 beginbfchar\n<0001> <0020>\nendbfchar\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n
+7: <</Type /Font /Subtype /CIDFontType2 /BaseFont /AAAAAA+ScriptSans-Regular /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /FontDescriptor 5 0 R /DW 1000 /W [1 [250 550 550 680 720 400]] /CIDToGIDMap /Identity>>
+8: <</Type /Font /Subtype /Type0 /BaseFont /AAAAAA+ScriptSans-Regular /Encoding /Identity-H /DescendantFonts [7 0 R] /ToUnicode 6 0 R>>
+9: stream <</LazyPDF <</Id 1 /Kind /Bates /Label ({bates})>>>> | q\n1 0 0 1 0 0 cm\n0 0 0 rg\n/Artifact <</Type /Pagination /Subtype /Footer /LazyPDF 1>> BDC\nBT\n/LPS1_F 10 Tf\n1 0 0 1 272.5 38 Tm\n<0004000500060002000200030001000400050006> Tj\nET\nEMC\nQ\n
+10: stream <</LazyPDF <</Wrap /Open>>>> | q\n
+11: stream <</LazyPDF <</Wrap /Close>>>> | Q\n
+> bates אבג
+1: <</Type /Catalog /Pages 2 0 R>>
+2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 600 800]>>
+3: <</Type /Page /Parent 2 0 R /Resources <</Font <</LPS1_F 8 0 R>>>> /Contents [10 0 R 11 0 R 9 0 R]>>
+4: stream font program
+5: <</Type /FontDescriptor /FontName /AAAAAA+ScriptSans-Regular /Flags 32 /FontBBox [-300 -100 900 900] /ItalicAngle 0 /Ascent 800 /Descent -200 /CapHeight 700 /StemV 87 /FontFile2 4 0 R>>
+6: stream <<>> | /CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n2 beginbfrange\n<0002> <0003> <0030>\n<0004> <0006> <05D0>\nendbfrange\n1 beginbfchar\n<0001> <0020>\nendbfchar\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n
+7: <</Type /Font /Subtype /CIDFontType2 /BaseFont /AAAAAA+ScriptSans-Regular /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /FontDescriptor 5 0 R /DW 1000 /W [1 [250 550 550 520 560 600]] /CIDToGIDMap /Identity>>
+8: <</Type /Font /Subtype /Type0 /BaseFont /AAAAAA+ScriptSans-Regular /Encoding /Identity-H /DescendantFonts [7 0 R] /ToUnicode 6 0 R>>
+9: stream <</LazyPDF <</Id 1 /Kind /Bates /Label ({bates})>>>> | q\n1 0 0 1 0 0 cm\n0 0 0 rg\n/Artifact <</Type /Pagination /Subtype /Footer /LazyPDF 1>> BDC\nBT\n/LPS1_F 10 Tf\n1 0 0 1 273.7 38 Tm\n<0006000500040001000200020003000600050004> Tj\nET\nEMC\nQ\n
+10: stream <</LazyPDF <</Wrap /Open>>>> | q\n
+11: stream <</LazyPDF <</Wrap /Close>>>> | Q\n
+> bates אב abc
+1: <</Type /Catalog /Pages 2 0 R>>
+2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 600 800]>>
+3: <</Type /Page /Parent 2 0 R /Resources <</Font <</LPS1_F 8 0 R>>>> /Contents [10 0 R 11 0 R 9 0 R]>>
+4: stream font program
+5: <</Type /FontDescriptor /FontName /AAAAAA+ScriptSans-Regular /Flags 32 /FontBBox [-300 -100 900 900] /ItalicAngle 0 /Ascent 800 /Descent -200 /CapHeight 700 /StemV 87 /FontFile2 4 0 R>>
+6: stream <<>> | /CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n3 beginbfrange\n<0002> <0003> <0030>\n<0004> <0006> <0061>\n<0007> <0008> <05D0>\nendbfrange\n1 beginbfchar\n<0001> <0020>\nendbfchar\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n
+7: <</Type /Font /Subtype /CIDFontType2 /BaseFont /AAAAAA+ScriptSans-Regular /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /FontDescriptor 5 0 R /DW 1000 /W [1 [250 550 550 680 720 400 520 560]] /CIDToGIDMap /Identity>>
+8: <</Type /Font /Subtype /Type0 /BaseFont /AAAAAA+ScriptSans-Regular /Encoding /Identity-H /DescendantFonts [7 0 R] /ToUnicode 6 0 R>>
+9: stream <</LazyPDF <</Id 1 /Kind /Bates /Label ({bates})>>>> | q\n1 0 0 1 0 0 cm\n0 0 0 rg\n/Artifact <</Type /Pagination /Subtype /Footer /LazyPDF 1>> BDC\nBT\n/LPS1_F 10 Tf\n1 0 0 1 259.2 38 Tm\n<0004000500060001000800070001000400050006000200020003000100080007> Tj\nET\nEMC\nQ\n
+10: stream <</LazyPDF <</Wrap /Open>>>> | q\n
+11: stream <</LazyPDF <</Wrap /Close>>>> | Q\n
+> redact abc def
+1: <</Type /Catalog /Pages 2 0 R>>
+2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 600 800]>>
+3: <</Type /Page /Parent 2 0 R /Resources <</Font <</RdF1 4 0 R>>>> /Contents 5 0 R>>
+4: <</Type /Font /Subtype /Type0 /BaseFont /AAAAAA+ScriptSans-Regular /Encoding /Identity-H /DescendantFonts [6 0 R] /ToUnicode 7 0 R>>
+5: stream <<>> | q\n\nQ\nq\n0 g\n100 690 m\n300 690 l\n300 720 l\n100 720 l\nh\nf\nBT\n/RdF1 16 Tf\n1 g\n1 0 0 1 172.08 700.2 Tm\n<0002000300040001000500060007> Tj\nET\nQ\n
+6: <</Type /Font /Subtype /CIDFontType2 /BaseFont /AAAAAA+ScriptSans-Regular /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /FontDescriptor 8 0 R /DW 1000 /W [1 [250 680 720 400 440 480 520]] /CIDToGIDMap /Identity>>
+7: stream <<>> | /CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n1 beginbfrange\n<0002> <0007> <0061>\nendbfrange\n1 beginbfchar\n<0001> <0020>\nendbfchar\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n
+8: <</Type /FontDescriptor /FontName /AAAAAA+ScriptSans-Regular /Flags 32 /FontBBox [-300 -100 900 900] /ItalicAngle 0 /Ascent 800 /Descent -200 /CapHeight 700 /StemV 87 /FontFile2 9 0 R>>
+9: stream font program
+> redact אבג דהו
+1: <</Type /Catalog /Pages 2 0 R>>
+2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 600 800]>>
+3: <</Type /Page /Parent 2 0 R /Resources <</Font <</RdF1 4 0 R>>>> /Contents 5 0 R>>
+4: <</Type /Font /Subtype /Type0 /BaseFont /AAAAAA+ScriptSans-Regular /Encoding /Identity-H /DescendantFonts [6 0 R] /ToUnicode 7 0 R>>
+5: stream <<>> | q\n\nQ\nq\n0 g\n100 690 m\n300 690 l\n300 720 l\n100 720 l\nh\nf\nBT\n/RdF1 16 Tf\n1 g\n1 0 0 1 168.24 700.2 Tm\n<0007000600050001000400030002> Tj\nET\nQ\n
+6: <</Type /Font /Subtype /CIDFontType2 /BaseFont /AAAAAA+ScriptSans-Regular /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /FontDescriptor 8 0 R /DW 1000 /W [1 [250 520 560 600 640 680 720]] /CIDToGIDMap /Identity>>
+7: stream <<>> | /CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n1 beginbfrange\n<0002> <0007> <05D0>\nendbfrange\n1 beginbfchar\n<0001> <0020>\nendbfchar\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n
+8: <</Type /FontDescriptor /FontName /AAAAAA+ScriptSans-Regular /Flags 32 /FontBBox [-300 -100 900 900] /ItalicAngle 0 /Ascent 800 /Descent -200 /CapHeight 700 /StemV 87 /FontFile2 9 0 R>>
+9: stream font program
+> redact שלום עולם abc 12
+1: <</Type /Catalog /Pages 2 0 R>>
+2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 600 800]>>
+3: <</Type /Page /Parent 2 0 R /Resources <</Font <</RdF1 4 0 R>>>> /Contents 5 0 R>>
+4: <</Type /Font /Subtype /Type0 /BaseFont /AAAAAA+ScriptSans-Regular /Encoding /Identity-H /DescendantFonts [6 0 R] /ToUnicode 7 0 R>>
+5: stream <<>> | q\n\nQ\nq\n0 g\n100 690 m\n300 690 l\n300 720 l\n100 720 l\nh\nf\nBT\n/RdF1 16 Tf\n1 g\n1 0 0 1 130.48 700.2 Tm\n<0004000500060001000200030001000900080007000A0001000900070008000B> Tj\nET\nQ\n
+6: <</Type /Font /Subtype /CIDFontType2 /BaseFont /AAAAAA+ScriptSans-Regular /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /FontDescriptor 8 0 R /DW 1000 /W [1 [250 550 550 680 720 400 720 640 680 520 440]] /CIDToGIDMap /Identity>>
+7: stream <<>> | /CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n3 beginbfrange\n<0002> <0003> <0031>\n<0004> <0006> <0061>\n<0008> <0009> <05DC>\nendbfrange\n4 beginbfchar\n<0001> <0020>\n<0007> <05D5>\n<000A> <05E2>\n<000B> <05E9>\nendbfchar\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n
+8: <</Type /FontDescriptor /FontName /AAAAAA+ScriptSans-Regular /Flags 32 /FontBBox [-300 -100 900 900] /ItalicAngle 0 /Ascent 800 /Descent -200 /CapHeight 700 /StemV 87 /FontFile2 9 0 R>>
+9: stream font program
+> redactrepeat אבג
+1: <</Type /Catalog /Pages 2 0 R>>
+2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 600 800]>>
+3: <</Type /Page /Parent 2 0 R /Resources <</Font <</RdF1 4 0 R>>>> /Contents 5 0 R>>
+4: <</Type /Font /Subtype /Type0 /BaseFont /AAAAAA+ScriptSans-Regular /Encoding /Identity-H /DescendantFonts [6 0 R] /ToUnicode 7 0 R>>
+5: stream <<>> | q\n\nQ\nq\n0 g\n100 690 m\n300 690 l\n300 720 l\n100 720 l\nh\nf\nBT\n/RdF1 16 Tf\n1 g\n1 0 0 1 109.36 700.2 Tm\n<00030002000100000003000200010000000300020001000000030002000100000003000200010000000300020001> Tj\nET\nQ\n
+6: <</Type /Font /Subtype /CIDFontType2 /BaseFont /AAAAAA+ScriptSans-Regular /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /FontDescriptor 8 0 R /DW 1000 /W [1 [520 560 600]] /CIDToGIDMap /Identity>>
+7: stream <<>> | /CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n1 beginbfrange\n<0001> <0003> <05D0>\nendbfrange\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n
+8: <</Type /FontDescriptor /FontName /AAAAAA+ScriptSans-Regular /Flags 32 /FontBBox [-300 -100 900 900] /ItalicAngle 0 /Ascent 800 /Descent -200 /CapHeight 700 /StemV 87 /FontFile2 9 0 R>>
+9: stream font program
+> redactrepeat abc אב
+1: <</Type /Catalog /Pages 2 0 R>>
+2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 600 800]>>
+3: <</Type /Page /Parent 2 0 R /Resources <</Font <</RdF1 4 0 R>>>> /Contents 5 0 R>>
+4: <</Type /Font /Subtype /Type0 /BaseFont /AAAAAA+ScriptSans-Regular /Encoding /Identity-H /DescendantFonts [6 0 R] /ToUnicode 7 0 R>>
+5: stream <<>> | q\n\nQ\nq\n0 g\n100 690 m\n300 690 l\n300 720 l\n100 720 l\nh\nf\nBT\n/RdF1 16 Tf\n1 g\n1 0 0 1 120.88 700.2 Tm\n<00020003000400010006000500010002000300040001000600050001000200030004000100060005> Tj\nET\nQ\n
+6: <</Type /Font /Subtype /CIDFontType2 /BaseFont /AAAAAA+ScriptSans-Regular /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /FontDescriptor 8 0 R /DW 1000 /W [1 [250 680 720 400 520 560]] /CIDToGIDMap /Identity>>
+7: stream <<>> | /CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n2 beginbfrange\n<0002> <0004> <0061>\n<0005> <0006> <05D0>\nendbfrange\n1 beginbfchar\n<0001> <0020>\nendbfchar\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n
+8: <</Type /FontDescriptor /FontName /AAAAAA+ScriptSans-Regular /Flags 32 /FontBBox [-300 -100 900 900] /ItalicAngle 0 /Ascent 800 /Descent -200 /CapHeight 700 /StemV 87 /FontFile2 9 0 R>>
+9: stream font program
+> sign abc def
+1: <</Type /Catalog /Pages 2 0 R>>
+2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 600 800]>>
+3: <</Type /Page /Parent 2 0 R>>
+4: stream font program
+5: <</Type /FontDescriptor /FontName /AAAAAA+ScriptSans-Regular /Flags 32 /FontBBox [-300 -100 900 900] /ItalicAngle 0 /Ascent 800 /Descent -200 /CapHeight 700 /StemV 87 /FontFile2 4 0 R>>
+6: stream <<>> | /CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n1 beginbfrange\n<0002> <0007> <0061>\nendbfrange\n1 beginbfchar\n<0001> <0020>\nendbfchar\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n
+7: <</Type /Font /Subtype /CIDFontType2 /BaseFont /AAAAAA+ScriptSans-Regular /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /FontDescriptor 5 0 R /DW 1000 /W [1 [250 680 720 400 440 480 520]] /CIDToGIDMap /Identity>>
+8: <</Type /Font /Subtype /Type0 /BaseFont /AAAAAA+ScriptSans-Regular /Encoding /Identity-H /DescendantFonts [7 0 R] /ToUnicode 6 0 R>>
+9: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 200 60] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 8 0 R>>>>>> | BT\n/F1 12 Tf\n0 g\n3 47.4 Td\n<0002000300040001000500060007> Tj\nET\n
+> sign אבג דהו
+1: <</Type /Catalog /Pages 2 0 R>>
+2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 600 800]>>
+3: <</Type /Page /Parent 2 0 R>>
+4: stream font program
+5: <</Type /FontDescriptor /FontName /AAAAAA+ScriptSans-Regular /Flags 32 /FontBBox [-300 -100 900 900] /ItalicAngle 0 /Ascent 800 /Descent -200 /CapHeight 700 /StemV 87 /FontFile2 4 0 R>>
+6: stream <<>> | /CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n1 beginbfrange\n<0002> <0007> <05D0>\nendbfrange\n1 beginbfchar\n<0001> <0020>\nendbfchar\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n
+7: <</Type /Font /Subtype /CIDFontType2 /BaseFont /AAAAAA+ScriptSans-Regular /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /FontDescriptor 5 0 R /DW 1000 /W [1 [250 520 560 600 640 680 720]] /CIDToGIDMap /Identity>>
+8: <</Type /Font /Subtype /Type0 /BaseFont /AAAAAA+ScriptSans-Regular /Encoding /Identity-H /DescendantFonts [7 0 R] /ToUnicode 6 0 R>>
+9: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 200 60] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 8 0 R>>>>>> | BT\n/F1 12 Tf\n0 g\n3 47.4 Td\n<0007000600050001000400030002> Tj\nET\n
+> sign שלום עולם abc 12
+1: <</Type /Catalog /Pages 2 0 R>>
+2: <</Type /Pages /Kids [3 0 R] /Count 1 /MediaBox [0 0 600 800]>>
+3: <</Type /Page /Parent 2 0 R>>
+4: stream font program
+5: <</Type /FontDescriptor /FontName /AAAAAA+ScriptSans-Regular /Flags 32 /FontBBox [-300 -100 900 900] /ItalicAngle 0 /Ascent 800 /Descent -200 /CapHeight 700 /StemV 87 /FontFile2 4 0 R>>
+6: stream <<>> | /CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo <</Registry (Adobe) /Ordering (UCS) /Supplement 0>> def\n/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n3 beginbfrange\n<0002> <0003> <0031>\n<0004> <0006> <0061>\n<0008> <0009> <05DC>\nendbfrange\n4 beginbfchar\n<0001> <0020>\n<0007> <05D5>\n<000A> <05E2>\n<000B> <05E9>\nendbfchar\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n
+7: <</Type /Font /Subtype /CIDFontType2 /BaseFont /AAAAAA+ScriptSans-Regular /CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /FontDescriptor 5 0 R /DW 1000 /W [1 [250 550 550 680 720 400 720 640 680 520 440]] /CIDToGIDMap /Identity>>
+8: <</Type /Font /Subtype /Type0 /BaseFont /AAAAAA+ScriptSans-Regular /Encoding /Identity-H /DescendantFonts [7 0 R] /ToUnicode 6 0 R>>
+9: stream <</Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 200 60] /Matrix [1 0 0 1 0 0] /Resources <</Font <</F1 8 0 R>>>>>> | BT\n/F1 12 Tf\n0 g\n3 47.4 Td\n<0004000500060001000200030001000900080007000A0001000900070008000B> Tj\nET\n
