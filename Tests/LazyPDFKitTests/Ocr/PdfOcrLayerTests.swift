@@ -221,7 +221,10 @@ final class PdfOcrLayerTests: XCTestCase {
 
     func test_wordsPastTheCapAreIgnored() throws {
         let document = try OcrKit.scan()
-        let many = (0..<(PdfOcrLayer.maxWords + 500)).map { OcrKit.word("w\($0)", Double(4 + $0 % 40 * 9), Double(4 + $0 / 40 % 100 * 5), 8, 4) }
+        let many = (0..<(PdfOcrLayer.maxWords + 500)).map { (i: Int) -> OcrWord in
+            let x = 4 + i % 40 * 9, y = 4 + i / 40 % 100 * 5
+            return OcrKit.word("w\(i)", Double(x), Double(y), 8, 4)
+        }
         XCTAssertEqual(try addWords(document, many), PdfOcrLayer.maxWords)
     }
 

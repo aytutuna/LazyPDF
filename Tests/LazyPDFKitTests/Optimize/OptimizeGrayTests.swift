@@ -23,7 +23,8 @@ final class OptimizeGrayTests: XCTestCase {
     private let gray = OptimizeKit.off.with { $0.grayscale = true }
 
     private func luminance(_ c: RgbColor) -> Int {
-        Int((0.299 * Double(c.r) + 0.587 * Double(c.g) + 0.114 * Double(c.b)).rounded(.toNearestOrEven))
+        let r = 0.299 * Double(c.r), g = 0.587 * Double(c.g), b = 0.114 * Double(c.b)
+        return Int((r + g + b).rounded(.toNearestOrEven))
     }
 
     private func run(_ file: [UInt8], _ codec: ImageCodec? = nil) throws -> OptimizeResult {
