@@ -11,6 +11,8 @@ struct PptxSpacing {
 /// Run formatting as one layer states it; nil is "not said".
 struct PptxRunProps {
     var family: String?
+    /// The complex-script font (a:cs), for the Hebrew and Arabic letters of a run.
+    var csFamily: String?
     var size: Double?
     var bold: Bool?
     var italic: Bool?
@@ -18,6 +20,7 @@ struct PptxRunProps {
     var strike: Bool?
     var caps: Bool?
     var link: Bool?
+    var rtl: Bool?
     var color: Int?
     var highlight: Int?
     /// Percent of the size; positive is superscript.
@@ -39,6 +42,8 @@ struct PptxRunProps {
             case "gradFill": color = colors.first(e.child(a, "gsLst")?.child(a, "gs")) ?? color
             case "highlight": highlight = colors.first(e) ?? highlight
             case "latin": family = PptxStyle.font(e.attribute("typeface"), colors) ?? family
+            case "cs": csFamily = PptxStyle.font(e.attribute("typeface"), colors) ?? csFamily
+            case "rtl": rtl = Self.flag(e.attribute("val")) ?? true
             case "hlinkClick": link = true
             default: break
             }
@@ -57,6 +62,7 @@ struct PptxRunProps {
 /// Formatting of one outline level as the layers state it, laid over each other with `apply`.
 struct PptxLevelProps {
     var align: LayoutAlign?
+    var rtl: Bool?
     var marL: Double?
     var indent: Double?
     var line: PptxSpacing?
@@ -78,6 +84,7 @@ struct PptxLevelProps {
         let a = DocxReader.a
         if let left = DocxReader.number(pPr.attribute("marL")) { marL = Self.emu(left) }
         if let first = DocxReader.number(pPr.attribute("indent")) { indent = Self.emu(first) }
+        rtl = PptxRunProps.flag(pPr.attribute("rtl")) ?? rtl
         switch pPr.attribute("algn") {
         case "l": align = .left
         case "ctr": align = .center
@@ -181,13 +188,15 @@ struct PptxBodyProps {
 }
 
 enum PptxStyle {
-    /// A typeface name; +mj-lt and +mn-lt are the theme's heading and body fonts, other theme references name nothing.
+    /// A typeface name; +mj-lt, +mn-lt, +mj-cs and +mn-cs are the theme's heading and body fonts, other theme references name nothing.
     static func font(_ typeface: String?, _ colors: PptxColors) -> String? {
         guard let typeface, let first = typeface.utf16.first else { return nil }
         if first != 0x2B { return typeface }
         switch typeface {
         case "+mj-lt": return colors.theme.font("major")
         case "+mn-lt": return colors.theme.font("minor")
+        case "+mj-cs": return colors.theme.complexFont("major")
+        case "+mn-cs": return colors.theme.complexFont("minor")
         default: return nil
         }
     }

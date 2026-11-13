@@ -88,7 +88,7 @@ extension PptxReader {
                 totalText += units.count
                 if totalText > limits.maxTotalText { throw PdfReadException(.unsupported, "The presentation has too much text.") }
                 if units.isEmpty && field == .none { continue }
-                runs.append(Self.makeRun(props.run, rPr, String(decoding: units, as: UTF16.self), field, colors, box.fontScale))
+                runs.append(contentsOf: Self.makeRuns(props.run, rPr, String(decoding: units, as: UTF16.self), field, colors, box.fontScale))
             }
 
             let hasText = !runs.isEmpty
@@ -117,7 +117,13 @@ extension PptxReader {
         }
     }
 
-    private static func makeRun(_ inherited: PptxRunProps, _ rPr: OfficeXmlElement?, _ text: String, _ field: LayoutField, _ colors: PptxColors, _ scale: Double) -> LayoutRun {
+    // Hebrew and Arabic letters take the complex-script font; a field is never cut.
+    private static func makeRuns(_ inherited: PptxRunProps, _ rPr: OfficeXmlElement?, _ text: String, _ field: LayoutField, _ colors: PptxColors, _ scale: Double) -> [LayoutRun] {
+        if field != .none || text.isEmpty { return [makeRun(inherited, rPr, text, field, colors, scale)] }
+        return ScriptRuns.split(text).map { makeRun(inherited, rPr, $0.text, field, colors, scale, $0.complex) }
+    }
+
+    private static func makeRun(_ inherited: PptxRunProps, _ rPr: OfficeXmlElement?, _ text: String, _ field: LayoutField, _ colors: PptxColors, _ scale: Double, _ complex: Bool = false) -> LayoutRun {
         var props = inherited
         props.apply(rPr, colors)
         var size = (props.size ?? defaultSize) * scale
@@ -129,7 +135,7 @@ extension PptxReader {
         let link = props.link == true
         let run = LayoutRun()
         run.text = props.caps == true ? DocxReader.upper(text) : text
-        run.family = props.family ?? colors.theme.font("minor") ?? "Calibri"
+        run.family = (complex ? props.csFamily : nil) ?? props.family ?? colors.theme.font("minor") ?? "Calibri"
         run.size = size
         run.bold = props.bold == true
         run.italic = props.italic == true
@@ -139,6 +145,7 @@ extension PptxReader {
         run.highlight = props.highlight
         run.shift = shift
         run.field = field
+        run.rtl = props.rtl == true
         return run
     }
 
@@ -199,7 +206,8 @@ extension PptxReader {
         }
         let paragraph = LayoutParagraph()
         paragraph.runs = runs
-        paragraph.align = props.align ?? .left
+        paragraph.align = props.align ?? (props.rtl == true ? .right : .left)
+        paragraph.rightToLeft = props.rtl == true
         paragraph.left = props.marL ?? 0
         paragraph.firstLine = props.indent ?? 0
         paragraph.before = space(props.before, size)

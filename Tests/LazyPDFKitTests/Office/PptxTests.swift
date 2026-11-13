@@ -45,6 +45,15 @@ final class PptxTests: XCTestCase {
         try Golden.check("office-pptx", "pptx-output.txt", output)
     }
 
+    func test_rightToLeftSlideGoldenFile() throws {
+        var output = ""
+        for (name, package) in try PptxSpec.read(try Golden.input("office-pptx", "rtl-input.txt")) {
+            let made = try PptxLayout.run(try PptxReader.read(package), LayoutFonts(OfficeLayoutSpec.scriptFonts()))
+            output += "> \(name)\n" + PptxSpec.dump(made)
+        }
+        try Golden.check("office-pptx", "rtl-output.txt", output)
+    }
+
     func test_onePagePerSlideAtTheSlideSizeWithoutTheHiddenOnes() throws {
         let package = try PptxSpec.one("@presentation\n<p:sldSz cx=\"12192000\" cy=\"6858000\"/>\n@slide1\n<p:cSld><p:spTree/></p:cSld>\n@slide2 show=0\n<p:cSld><p:spTree/></p:cSld>\n@slide3\n<p:cSld><p:spTree/></p:cSld>\n")
         let made = try layout(package)
