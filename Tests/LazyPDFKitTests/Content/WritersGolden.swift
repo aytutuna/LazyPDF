@@ -45,6 +45,19 @@ enum WritersGolden {
         case "header":
             _ = try PdfStamper(document, fonts).addHeaderFooter(HeaderFooterSpec(
                 header: HeaderFooterBand("", text, ""), footer: HeaderFooterBand(text, "", ""), fontFamily: "Script Sans"))
+        case "bates":
+            _ = try PdfStamper(document, fonts).addHeaderFooter(HeaderFooterSpec(
+                footer: HeaderFooterBand("", "{bates}", ""), fontFamily: "Script Sans", bates: BatesSpec(prefix: text, suffix: " " + text, digits: 3)))
+        case "redact", "redactrepeat":
+            var options = RedactionOptions()
+            options.overlayText = text
+            options.repeatOverlay = op == "redactrepeat"
+            options.fontFamily = "Script Sans"
+            let marked = try PdfRedactor(document, fonts).apply([RedactionMark.fromRect(0, PdfRect(100, 690, 300, 720))], options)
+            return try PdfDocument.open(marked.bytes)
+        case "sign":
+            let draw = try PdfFontEmbedder(document, fonts).add("Script Sans", .regular, [text])!
+            _ = try SignatureAppearance.draw(document, PdfRect(0, 0, 200, 60), 0, SignatureLook(), text, draw)
         case "field", "multiline", "comb", "combo":
             try field(document, fonts, op, text)
         case "plain":
