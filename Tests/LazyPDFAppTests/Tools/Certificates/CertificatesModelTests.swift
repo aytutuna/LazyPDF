@@ -266,9 +266,9 @@ final class CertificatesModelTests: XCTestCase {
 
         let question = try XCTUnwrap(s.rig.host.notices.last)
         XCTAssertEqual(question.title, "These servers will be asked")
-        XCTAssertEqual(question.action?.text, "Ask them")
+        XCTAssertEqual(s.rig.host.lastNoticeAction?.text, "Ask them")
         XCTAssertFalse(s.rig.tab.isDirty)
-        question.action?.run()
+        s.rig.host.lastNoticeAction?.run()
         await waitUntil { s.rig.host.statuses.last == "Added without proof of revocation." }
 
         XCTAssertEqual(s.rig.host.statuses.last, "Added without proof of revocation.")
