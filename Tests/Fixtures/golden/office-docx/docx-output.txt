@@ -274,3 +274,69 @@ p left 5.00 0.00 0.00 0.00 0.00 1.00 multiple
   run Times_New_Roman 11.00 000000 "1.\tlevel linked to the style"
 p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
   run Times_New_Roman 11.00 000000 "switched off"
+> right to left paragraphs and runs
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p right 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "אבג דהו"
+p right 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "left is the start"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "right is the end"
+p right 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "start"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "end"
+p center 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "center"
+p justify 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "justified"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "left to right start"
+p right 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "left to right end"
+p left 36.00 18.00 -10.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "switched off, indents"
+p right 36.00 18.00 10.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "indents count from the start"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 rtl "(12)"
+  run Times_New_Roman 10.00 000000 "abc"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "not rtl"
+> style that makes a paragraph right to left
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p right 0.00 0.00 0.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 rtl "אבג"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 rtl "abc"
+> complex script fonts and sizes
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Calibri 11.00 000000 "Hello "
+  run Arial 14.00 000000 "שלום "
+  run Calibri 11.00 000000 "world"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Arial 14.00 000000 "שלום 12 "
+  run Calibri 11.00 000000 "world"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Arial 14.00 000000 "12 (שלום) "
+  run Calibri 11.00 000000 "abc"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Calibri 11.00 000000 b i "bold "
+  run Arial 14.00 000000 b i "אבג"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Calibri 11.00 000000 b i "bold "
+  run Arial 14.00 000000 "אבג"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Calibri 11.00 000000 "plain "
+  run Tahoma 10.00 000000 b i "אבג"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Tahoma 14.00 000000 rtl "abc 12"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Arial 14.00 000000 "abc"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Calibri 11.00 000000 "theme "
+  run Times_New_Roman 14.00 000000 "אבג"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Calibri 11.00 000000 "empty theme "
+  run Arial 14.00 000000 "אבג"

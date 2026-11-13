@@ -305,7 +305,7 @@ internal sealed partial class DocxReader
     private static LayoutRun Rebuild(LayoutRun f, string text) => new()
     {
         Text = text, Family = f.Family, Size = f.Size, Bold = f.Bold, Italic = f.Italic, Underline = f.Underline, Strike = f.Strike,
-        Color = f.Color, Highlight = f.Highlight, Shift = f.Shift, Field = f.Field, Picture = f.Picture,
+        Color = f.Color, Highlight = f.Highlight, Shift = f.Shift, Field = f.Field, Rtl = f.Rtl, Picture = f.Picture,
     };
 
     private void Label(NumberLabel label, RunProps mark)
@@ -332,7 +332,9 @@ internal sealed partial class DocxReader
         return new LayoutParagraph
         {
             Runs = runs,
-            Align = p.Align ?? LayoutAlign.Left,
+            // Word reads left, right, start and end in a right-to-left paragraph as the leading and trailing edge, so the sides swap.
+            Align = p.Bidi == true ? Mirror(p.Align ?? LayoutAlign.Left) : p.Align ?? LayoutAlign.Left,
+            RightToLeft = p.Bidi == true,
             Left = p.Left ?? 0,
             Right = p.Right ?? 0,
             FirstLine = p.First ?? 0,
@@ -346,6 +348,13 @@ internal sealed partial class DocxReader
             LabelTab = labelTab,
         };
     }
+
+    private static LayoutAlign Mirror(LayoutAlign align) => align switch
+    {
+        LayoutAlign.Left => LayoutAlign.Right,
+        LayoutAlign.Right => LayoutAlign.Left,
+        _ => align,
+    };
 
     // ---- inline level ----
 
@@ -553,7 +562,23 @@ internal sealed partial class DocxReader
     {
         if (text.Length == 0 || !Visible(props)) return;
         if (props.Caps == true) text = Upper(text);
-        Add(props, text, LayoutField.None);
+        if (props.Rtl == true || props.Complex == true)
+        {
+            Add(ComplexProps(props), text, LayoutField.None);
+            return;
+        }
+        // The letters of Hebrew and Arabic take the complex-script font and size; what has no script goes with its neighbor.
+        foreach (var (part, complex) in ScriptRuns.Split(text)) Add(complex ? ComplexProps(props) : props, part, LayoutField.None);
+    }
+
+    private static RunProps ComplexProps(RunProps p)
+    {
+        var copy = p.Copy();
+        copy.Family = p.CsFamily ?? p.Family;
+        copy.Size = p.CsSize ?? p.Size;
+        copy.Bold = p.CsBold ?? p.Bold;
+        copy.Italic = p.CsItalic ?? p.Italic;
+        return copy;
     }
 
     // Plain ASCII only: full case mapping differs between the platforms.
@@ -582,7 +607,7 @@ internal sealed partial class DocxReader
 
     private static bool Same(LayoutRun a, LayoutRun b) =>
         a.Field == LayoutField.None && b.Field == LayoutField.None && a.Picture is null && b.Picture is null && a.Family == b.Family && a.Size == b.Size && a.Bold == b.Bold
-        && a.Italic == b.Italic && a.Underline == b.Underline && a.Strike == b.Strike && a.Color == b.Color && a.Highlight == b.Highlight && a.Shift == b.Shift;
+        && a.Italic == b.Italic && a.Rtl == b.Rtl && a.Underline == b.Underline && a.Strike == b.Strike && a.Color == b.Color && a.Highlight == b.Highlight && a.Shift == b.Shift;
 
     private static LayoutRun Format(RunProps p, string text, LayoutField field, LayoutPicture? picture = null)
     {
@@ -603,6 +628,7 @@ internal sealed partial class DocxReader
             Highlight = p.Highlight is >= 0 ? p.Highlight : null,
             Shift = shift,
             Field = field,
+            Rtl = p.Rtl == true,
             Picture = picture,
         };
     }

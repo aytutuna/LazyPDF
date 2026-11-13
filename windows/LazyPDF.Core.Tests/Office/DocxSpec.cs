@@ -167,6 +167,7 @@ internal static class DocxSpec
         if (p.PageBreakBefore) o.Append(" break");
         if (p.LabelTab is { } tab) o.Append($" labeltab={Num(tab)}");
         if (!p.WidowControl) o.Append(" nowidow");
+        if (p.RightToLeft) o.Append(" rtl");
         o.Append('\n');
         foreach (var r in p.Runs)
         {
@@ -175,6 +176,7 @@ internal static class DocxSpec
             if (r.Italic) o.Append(" i");
             if (r.Underline) o.Append(" u");
             if (r.Strike) o.Append(" s");
+            if (r.Rtl) o.Append(" rtl");
             if (r.Highlight is { } hl) o.Append($" hl={hl:x6}");
             if (r.Shift != 0) o.Append($" shift={Num(r.Shift)}");
             if (r.Field != LayoutField.None) o.Append($" field={r.Field.ToString().ToLowerInvariant()}");

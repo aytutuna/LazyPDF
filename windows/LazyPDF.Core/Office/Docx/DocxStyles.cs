@@ -7,6 +7,12 @@ internal sealed class RunProps
     /// <summary>Points.</summary>
     public double? Size;
     public bool? Bold, Italic, Underline, Strike, Caps, Hidden;
+    /// <summary>The complex-script (Arabic, Hebrew) counterparts: font, size, bold and italic, which apply to the characters of those scripts.</summary>
+    public string? CsFamily;
+    public double? CsSize;
+    public bool? CsBold, CsItalic;
+    /// <summary>w:rtl: the run is right to left. w:cs: the run is formatted as complex script whatever its characters.</summary>
+    public bool? Rtl, Complex;
     public int? Color;
     /// <summary>0xRRGGBB, or -1 for none.</summary>
     public int? Highlight;
@@ -29,9 +35,17 @@ internal sealed class RunProps
                     string? named = e.Attribute(DocxReader.W, "ascii") ?? e.Attribute(DocxReader.W, "hAnsi");
                     if (themed is not null && theme.Font(themed) is { } themeFont) Family = themeFont;
                     else if (!string.IsNullOrEmpty(named)) Family = named;
+                    string? csThemed = e.Attribute(DocxReader.W, "cstheme");
+                    string? csNamed = e.Attribute(DocxReader.W, "cs");
+                    if (csThemed is not null && theme.ComplexFont(csThemed) is { } csThemeFont) CsFamily = csThemeFont;
+                    else if (!string.IsNullOrEmpty(csNamed)) CsFamily = csNamed;
                     break;
                 case "b": Bold = DocxReader.On(e); break;
                 case "i": Italic = DocxReader.On(e); break;
+                case "bCs": CsBold = DocxReader.On(e); break;
+                case "iCs": CsItalic = DocxReader.On(e); break;
+                case "rtl": Rtl = DocxReader.On(e); break;
+                case "cs": Complex = DocxReader.On(e); break;
                 case "u": Underline = val != "none"; break;
                 case "strike":
                 case "dstrike": Strike = DocxReader.On(e); break;
@@ -43,6 +57,9 @@ internal sealed class RunProps
                     break;
                 case "sz":
                     if (DocxReader.Number(val) is > 0 and var half) Size = half / 2;
+                    break;
+                case "szCs":
+                    if (DocxReader.Number(val) is > 0 and var csHalf) CsSize = csHalf / 2;
                     break;
                 case "highlight":
                     if (val is not null) Highlight = val == "none" ? -1 : DocxReader.HighlightColor(val) ?? Highlight;
@@ -61,7 +78,7 @@ internal sealed class ParaProps
     public LayoutAlign? Align;
     public double? Left, Right, First, Before, After, Line;
     public string? LineRule;
-    public bool? KeepNext, PageBreakBefore, Widow;
+    public bool? KeepNext, PageBreakBefore, Widow, Bidi;
     public int? NumId, Ilvl;
 
     public ParaProps Copy() => (ParaProps)MemberwiseClone();
@@ -96,6 +113,7 @@ internal sealed class ParaProps
                     if (DocxReader.Number(e.Attribute(DocxReader.W, "line")) is { } line) Line = line;
                     LineRule = e.Attribute(DocxReader.W, "lineRule") ?? LineRule;
                     break;
+                case "bidi": Bidi = DocxReader.On(e); break;
                 case "keepNext": KeepNext = DocxReader.On(e); break;
                 case "pageBreakBefore": PageBreakBefore = DocxReader.On(e); break;
                 case "widowControl": Widow = DocxReader.On(e); break;
@@ -124,7 +142,7 @@ internal sealed class DocxTheme
         ["hyperlink"] = "hlink", ["followedHyperlink"] = "folHlink",
     };
 
-    private string? _major, _minor;
+    private string? _major, _minor, _majorCs, _minorCs;
     private readonly Dictionary<string, int> _colors = [];
 
     public static DocxTheme Read(XmlElement? root)
@@ -134,6 +152,8 @@ internal sealed class DocxTheme
         var fonts = elements?.Child(DocxReader.A, "fontScheme");
         theme._major = Typeface(fonts?.Child(DocxReader.A, "majorFont"));
         theme._minor = Typeface(fonts?.Child(DocxReader.A, "minorFont"));
+        theme._majorCs = Typeface(fonts?.Child(DocxReader.A, "majorFont"), "cs");
+        theme._minorCs = Typeface(fonts?.Child(DocxReader.A, "minorFont"), "cs");
         foreach (var c in elements?.Child(DocxReader.A, "clrScheme")?.Elements() ?? [])
         {
             string? hex = c.Child(DocxReader.A, "srgbClr")?.Attribute("val") ?? c.Child(DocxReader.A, "sysClr")?.Attribute("lastClr");
@@ -142,15 +162,19 @@ internal sealed class DocxTheme
         return theme;
     }
 
-    private static string? Typeface(XmlElement? scheme)
+    private static string? Typeface(XmlElement? scheme, string script = "latin")
     {
-        string? name = scheme?.Child(DocxReader.A, "latin")?.Attribute("typeface");
+        string? name = scheme?.Child(DocxReader.A, script)?.Attribute("typeface");
         return string.IsNullOrEmpty(name) ? null : name;
     }
 
     /// <summary>The latin font of a theme reference such as minorHAnsi or majorAscii.</summary>
     public string? Font(string reference) =>
         reference.StartsWith("major", StringComparison.Ordinal) ? _major : reference.StartsWith("minor", StringComparison.Ordinal) ? _minor : null;
+
+    /// <summary>The complex-script font of a theme reference such as minorBidi or majorBidi; null when the theme names none.</summary>
+    public string? ComplexFont(string reference) =>
+        reference.StartsWith("major", StringComparison.Ordinal) ? _majorCs : reference.StartsWith("minor", StringComparison.Ordinal) ? _minorCs : null;
 
     public int? Color(string name) => _colors.TryGetValue(ColorNames.GetValueOrDefault(name, name), out int rgb) ? rgb : null;
 }

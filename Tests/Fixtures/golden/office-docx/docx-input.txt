@@ -179,3 +179,42 @@
 <w:p><w:pPr><w:pStyle w:val="ListNumber"/><w:ind w:left="3000" w:hanging="400"/></w:pPr><w:r><w:t>own indent</w:t></w:r></w:p>
 <w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>level linked to the style</w:t></w:r></w:p>
 <w:p><w:pPr><w:pStyle w:val="ListNumber"/><w:numPr><w:numId w:val="0"/></w:numPr></w:pPr><w:r><w:t>switched off</w:t></w:r></w:p>
+> right to left paragraphs and runs
+@document
+<w:p><w:pPr><w:bidi/></w:pPr><w:r><w:t>אבג דהו</w:t></w:r></w:p>
+<w:p><w:pPr><w:bidi/><w:jc w:val="left"/></w:pPr><w:r><w:t>left is the start</w:t></w:r></w:p>
+<w:p><w:pPr><w:bidi/><w:jc w:val="right"/></w:pPr><w:r><w:t>right is the end</w:t></w:r></w:p>
+<w:p><w:pPr><w:bidi/><w:jc w:val="start"/></w:pPr><w:r><w:t>start</w:t></w:r></w:p>
+<w:p><w:pPr><w:bidi/><w:jc w:val="end"/></w:pPr><w:r><w:t>end</w:t></w:r></w:p>
+<w:p><w:pPr><w:bidi/><w:jc w:val="center"/></w:pPr><w:r><w:t>center</w:t></w:r></w:p>
+<w:p><w:pPr><w:bidi/><w:jc w:val="both"/></w:pPr><w:r><w:t>justified</w:t></w:r></w:p>
+<w:p><w:pPr><w:jc w:val="start"/></w:pPr><w:r><w:t>left to right start</w:t></w:r></w:p>
+<w:p><w:pPr><w:jc w:val="end"/></w:pPr><w:r><w:t>left to right end</w:t></w:r></w:p>
+<w:p><w:pPr><w:bidi w:val="0"/><w:ind w:start="720" w:end="360" w:hanging="200"/></w:pPr><w:r><w:t>switched off, indents</w:t></w:r></w:p>
+<w:p><w:pPr><w:bidi/><w:ind w:left="720" w:right="360" w:firstLine="200"/></w:pPr><w:r><w:t>indents count from the start</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:rtl/></w:rPr><w:t>(12)</w:t></w:r><w:r><w:t>abc</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:rtl w:val="0"/></w:rPr><w:t>not rtl</w:t></w:r></w:p>
+> style that makes a paragraph right to left
+@styles
+<w:style w:type="paragraph" w:default="1" w:styleId="Normal"/>
+<w:style w:type="paragraph" w:styleId="Hebrew"><w:basedOn w:val="Normal"/><w:pPr><w:bidi/><w:jc w:val="left"/></w:pPr><w:rPr><w:rtl/></w:rPr></w:style>
+@document
+<w:p><w:pPr><w:pStyle w:val="Hebrew"/></w:pPr><w:r><w:t>אבג</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Hebrew"/><w:bidi w:val="0"/></w:pPr><w:r><w:t>abc</w:t></w:r></w:p>
+> complex script fonts and sizes
+@theme
+<a:themeElements><a:fontScheme name="t"><a:majorFont><a:latin typeface="Cambria"/><a:cs typeface="Times New Roman"/></a:majorFont><a:minorFont><a:latin typeface="Arial"/><a:cs typeface=""/></a:minorFont></a:fontScheme></a:themeElements>
+@styles
+<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Arial"/><w:sz w:val="22"/><w:szCs w:val="28"/></w:rPr></w:rPrDefault></w:docDefaults>
+<w:style w:type="paragraph" w:default="1" w:styleId="Normal"/>
+@document
+<w:p><w:r><w:t>Hello שלום world</w:t></w:r></w:p>
+<w:p><w:r><w:t>שלום 12 world</w:t></w:r></w:p>
+<w:p><w:r><w:t>12 (שלום) abc</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:b/><w:i/></w:rPr><w:t>bold אבג</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:b/><w:i/><w:bCs w:val="0"/><w:iCs w:val="0"/></w:rPr><w:t>bold אבג</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:rFonts w:cs="Tahoma"/><w:szCs w:val="20"/><w:bCs/><w:iCs/></w:rPr><w:t>plain אבג</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:rtl/><w:rFonts w:cs="Tahoma"/></w:rPr><w:t>abc 12</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:cs/></w:rPr><w:t>abc</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:rFonts w:cstheme="majorBidi"/></w:rPr><w:t>theme אבג</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:rFonts w:cstheme="minorBidi"/></w:rPr><w:t>empty theme אבג</w:t></w:r></w:p>
