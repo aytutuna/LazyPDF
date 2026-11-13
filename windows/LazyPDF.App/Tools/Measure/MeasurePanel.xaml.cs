@@ -131,6 +131,18 @@ public partial class MeasurePanel : ToolPanel
         _overlay = null;
     }
 
+    // Marks that wait in the list go into the file before a save, an undo or a close, as Add to page does.
+    // A file that cannot take marks keeps them waiting; the close question still names them.
+    public override bool HandIn()
+    {
+        if (Tab is not { } tab || _waiting.Count == 0 || !Exchange.CanComment(tab.Document)) return true;
+        if (MarkWork.Cautioned(tab, Host!, () =>
+            {
+                if (ReferenceEquals(Tab, tab)) Add(tab);
+            })) return false;
+        return Add(tab);
+    }
+
     private MeasureScale ScaleOf(int page) => _scales.For(Tab!.Document, page);
 
     private List<MeasureItem> Items => [.. _waiting.Select(p => p.Item)];
@@ -362,7 +374,7 @@ public partial class MeasurePanel : ToolPanel
         return Task.CompletedTask;
     }
 
-    private void Add(DocumentTab tab)
+    private bool Add(DocumentTab tab)
     {
         int count;
         try
@@ -374,13 +386,14 @@ public partial class MeasurePanel : ToolPanel
             tab.Session.Discard();
             Host!.ShowProblem(new Problem(Loc.T("Measurements not added"), Loc.T("They could not be written to the file. Nothing was changed.")));
             Rebuild();
-            return;
+            return false;
         }
         // Whatever was written is one step, so Undo takes all of it back.
-        if (!MarkWork.Commit(tab, Host!, Loc.T("Measure"))) return;
+        if (!MarkWork.Commit(tab, Host!, Loc.T("Measure"))) return false;
         _waiting.Clear();
         Rebuild();
         Host!.SetStatus(Loc.Plural(count, "Added {0} measurement", "Added {0} measurements"));
+        return true;
     }
 
     private void ShowReadout()
