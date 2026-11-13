@@ -84,7 +84,7 @@ public final class StandardsModel: ToolPanelModel {
 
     /// Opens Accessibility on the same tab, where the tags are added.
     public func tagFile() {
-        host?.openTool("accessibility")
+        host?.openTagging()
     }
 
     public func setMode(_ mode: StandardsMode) {

@@ -57,6 +57,12 @@ public protocol ToolHost: AnyObject {
     /// The field `openSigning` named, once: the tool asks for it when it is shown.
     func takeSigningField() -> String?
 
+    /// Opens Accessibility on its Tags view, where the tags are added.
+    func openTagging()
+
+    /// True once after `openTagging`: Accessibility asks for it as it attaches.
+    func takeTaggingRequest() -> Bool
+
     /// Opens the tool that makes `mark` of the selected text, or hands the mark to it when it is open already.
     func markSelection(_ mark: SelectionMark)
 
@@ -107,6 +113,10 @@ extension ToolHost {
     public func openSigning(_ field: String) {}
 
     public func takeSigningField() -> String? { nil }
+
+    public func openTagging() {}
+
+    public func takeTaggingRequest() -> Bool { false }
 
     public func markSelection(_ mark: SelectionMark) {}
 

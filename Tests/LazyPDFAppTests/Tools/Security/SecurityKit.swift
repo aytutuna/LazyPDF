@@ -26,6 +26,12 @@ final class SecurityHost: ToolHost, ToolFilePicker, ToolFileExporter {
     var openedTools: [String] = []
 
     func openTool(_ id: String) { openedTools.append(id) }
+    var taggingRequested = false
+    func openTagging() { taggingRequested = true }
+    func takeTaggingRequest() -> Bool {
+        defer { taggingRequested = false }
+        return taggingRequested
+    }
 
     func takeSelectionMark() -> SelectionMark? {
         defer { pendingMark = nil }

@@ -43,6 +43,12 @@ public interface IToolHost
     /// <summary>The field <see cref="OpenSigning"/> named, once: the tool asks for it when it is shown.</summary>
     string? TakeSigningField() => null;
 
+    /// <summary>Opens Accessibility on its Tags view, where the tags are added.</summary>
+    void OpenTagging() { }
+
+    /// <summary>True once after <see cref="OpenTagging"/>: Accessibility asks for it when it is shown.</summary>
+    bool TakeTaggingRequest() => false;
+
     /// <summary>Reads the tab's file from disk again and puts it in the tab's place, after a tool wrote the file.</summary>
     Task ReloadAsync(DocumentTab tab);
 

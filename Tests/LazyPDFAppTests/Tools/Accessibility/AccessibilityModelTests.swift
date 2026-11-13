@@ -64,6 +64,17 @@ final class AccessibilityModelTests: XCTestCase {
         try XCTUnwrap(model.rows.first { $0.id == rule })
     }
 
+    func test_aTaggingRequestOpensTheTagsViewWithAddTagsPinned() async throws {
+        let rig = try SecurityRig(Pdfs.text(2), password: nil)
+        rig.host.openTagging()
+        let model = AccessibilityModel(speaker: { FakeSpeaker() })
+        rig.attach(model)
+
+        XCTAssertEqual(model.view, .tags)
+        XCTAssertEqual(model.action?.text, "Add tags")
+        XCTAssertFalse(rig.host.taggingRequested)
+    }
+
     func test_theCheckRunsWhenThePanelIsShownAndSaysHowTheFileDid() async throws {
         let (model, _) = try await attached()
 

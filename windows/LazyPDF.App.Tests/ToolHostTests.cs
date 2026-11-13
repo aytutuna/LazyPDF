@@ -92,6 +92,20 @@ public sealed class ToolHostTests
     }
 
     [Fact]
+    public async Task ATaggingRequestOpensAccessibilityAndIsHandedOverOnce()
+    {
+        using var f = new ViewModelFixture();
+        IToolHost host = f.Vm;
+        await f.Vm.OpenAsync(f.Pdf());
+
+        host.OpenTagging();
+
+        Assert.Equal("accessibility", f.Vm.ActiveToolId);
+        Assert.True(host.TakeTaggingRequest());
+        Assert.False(host.TakeTaggingRequest());
+    }
+
+    [Fact]
     public async Task ASignatureFieldIsHandedOverOnce()
     {
         using var f = new ViewModelFixture();

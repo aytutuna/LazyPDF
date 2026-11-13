@@ -32,6 +32,7 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
     private DocumentTab? _lastDocument;
     private string? _activeToolId;
     private string? _signingField;
+    private bool _taggingRequested;
     private string _sidePanelId;
     private string _lastSidePanelId;
     private double _sidePanelWidth;
@@ -169,6 +170,20 @@ public sealed partial class AppViewModel : INotifyPropertyChanged, IToolHost
         var field = _signingField;
         _signingField = null;
         return field;
+    }
+
+    public void OpenTagging()
+    {
+        _taggingRequested = true;
+        OpenTool("accessibility");
+        if (_activeToolId != "accessibility") _taggingRequested = false;
+    }
+
+    public bool TakeTaggingRequest()
+    {
+        var requested = _taggingRequested;
+        _taggingRequested = false;
+        return requested;
     }
 
     /// <summary>Opens the side panel <paramref name="id"/>, or closes the rail's panel when that one is open already.</summary>

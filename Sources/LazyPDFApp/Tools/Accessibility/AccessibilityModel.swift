@@ -103,7 +103,7 @@ public final class AccessibilityModel: ToolPanelModel {
         checkStale = true
         treeStale = true
         readStale = true
-        view = .check
+        view = host.takeTaggingRequest() ? .tags : .check
         watch = ObservationWatch(track: { _ = tab.revision }, changed: { [weak self] in self?.fileChanged() })
         refresh()
     }
