@@ -100,7 +100,7 @@ final class OfficeTableTests: XCTestCase {
     func test_columnsStartWhereTheGridPutsThem() throws {
         let document = try DocxReader.read(try docx(table(row(cell("a") + cell("b") + cell("c")), 2000, 3000, 1000)))
         let xs = texts(try layout(document).pages[0]).map { ($0.x * 100).rounded() / 100 }
-        XCTAssertEqual(xs, [72 + 5.4, 72 + 100 + 5.4, 72 + 250 + 5.4])
+        XCTAssertEqual(xs, [77.4, 177.4, 327.4])
     }
 
     func test_aSpanTakesTheWidthOfItsColumnsAndAMergeTheHeightOfItsRows() throws {
