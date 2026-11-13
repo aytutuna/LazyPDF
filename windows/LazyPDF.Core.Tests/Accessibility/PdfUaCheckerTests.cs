@@ -35,29 +35,29 @@ public class PdfUaCheckerTests
     public void TheCatalogMustBeMarkedAndHoldATree()
     {
         Fails("01-001", PdfUaKit.Build(markInfo: ""));
-        Fails("01-006", PdfUaKit.Build(markInfo: "/MarkInfo <</Marked true /Suspects true>>"));
+        Fails("01-007", PdfUaKit.Build(markInfo: "/MarkInfo <</Marked true /Suspects true>>"));
         Fails("01-002", PdfUaKit.Build(tree: false));
     }
 
     [Fact]
     public void ContentIsTaggedOrAnArtifact()
     {
-        Fails("01-003", PdfUaKit.Build(content: PdfUaKit.Figure + " 1 0 0 rg 0 0 5 5 re f"));
+        Fails("01-005", PdfUaKit.Build(content: PdfUaKit.Figure + " 1 0 0 rg 0 0 5 5 re f"));
         Passes(PdfUaKit.Build(content: PdfUaKit.Figure + " /Artifact BMC 1 0 0 rg 0 0 5 5 re f EMC"));
-        Fails("01-004", PdfUaKit.Build(content: "/Figure <</MCID 0>> BDC /Artifact BMC 0 0 1 rg 20 20 100 100 re f EMC EMC"));
-        Fails("01-005", PdfUaKit.Build(content: "/Artifact BMC /Figure <</MCID 0>> BDC 0 0 1 rg 20 20 100 100 re f EMC EMC"));
+        Fails("01-003", PdfUaKit.Build(content: "/Figure <</MCID 0>> BDC /Artifact BMC 0 0 1 rg 20 20 100 100 re f EMC EMC"));
+        Fails("01-004", PdfUaKit.Build(content: "/Artifact BMC /Figure <</MCID 0>> BDC 0 0 1 rg 20 20 100 100 re f EMC EMC"));
     }
 
     [Fact]
     public void ASequenceThatTheTreeDoesNotNameIsNotTagged()
     {
-        Fails("01-003", PdfUaKit.Build(content: "/Figure <</MCID 7>> BDC 0 0 1 rg 20 20 100 100 re f EMC"));
+        Fails("01-005", PdfUaKit.Build(content: "/Figure <</MCID 7>> BDC 0 0 1 rg 20 20 100 100 re f EMC"));
     }
 
     [Fact]
     public void TheRoleMapLeadsToStandardTypes()
     {
-        Fails("02-002", PdfUaKit.Build(edit: o => o[10] = "<</Type /StructElem /S /Weird /P 9 0 R /K 11 0 R>>"));
+        Fails("02-001", PdfUaKit.Build(edit: o => o[10] = "<</Type /StructElem /S /Weird /P 9 0 R /K 11 0 R>>"));
         Passes(PdfUaKit.Build(edit: o =>
         {
             o[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</Weird /Sect>>>>";
@@ -69,8 +69,8 @@ public class PdfUaCheckerTests
             o[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</A /B /B /A>>>>";
             o[10] = "<</Type /StructElem /S /A /P 9 0 R /K 11 0 R>>";
         });
-        Fails("02-003", loop);
-        Assert.DoesNotContain("02-002", PdfUaKit.Conditions(loop));
+        Fails("02-002", loop);
+        Assert.DoesNotContain("02-001", PdfUaKit.Conditions(loop));
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public class PdfUaCheckerTests
         var report = PdfUaKit.Check(file);
 
         Assert.True(report.Truncated);
-        Assert.Equal(1000, report.Issues.Count(i => i.Condition == "02-002"));
+        Assert.Equal(1000, report.Issues.Count(i => i.Condition == "02-001"));
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public class PdfUaCheckerTests
     [Fact]
     public void AStandardTypeIsNotRemapped()
     {
-        Fails("02-004", PdfUaKit.Build(edit: o => o[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</P /Span>>>>"));
+        Fails("02-003", PdfUaKit.Build(edit: o => o[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</P /Span>>>>"));
     }
 
     [Fact]
@@ -117,7 +117,8 @@ public class PdfUaCheckerTests
     public void TheWindowShowsTheTitle()
     {
         Fails("07-001", PdfUaKit.Build(viewer: ""));
-        Fails("07-001", PdfUaKit.Build(viewer: "/ViewerPreferences <</DisplayDocTitle false>>"));
+        Fails("07-001", PdfUaKit.Build(viewer: "/ViewerPreferences <</Direction /L2R>>"));
+        Fails("07-002", PdfUaKit.Build(viewer: "/ViewerPreferences <</DisplayDocTitle false>>"));
     }
 
     [Fact]
@@ -202,9 +203,9 @@ public class PdfUaCheckerTests
     {
         Passes(WithHeadings("H1", "H2", "H3", "H2", "H1"));
         Fails("14-002", WithHeadings("H2"));
-        Fails("14-002", WithHeadings("H1", "H3"));
+        Fails("14-003", WithHeadings("H1", "H3"));
         Fails("14-007", WithHeadings("H", "H1"));
-        Assert.DoesNotContain("14-002", PdfUaKit.Conditions(WithHeadings("H1", "H2", "H1", "H2")));
+        Assert.DoesNotContain("14-003", PdfUaKit.Conditions(WithHeadings("H1", "H2", "H1", "H2")));
     }
 
     [Fact]
@@ -218,15 +219,16 @@ public class PdfUaCheckerTests
         });
 
         Passes(With("/ID (n2)"));
-        Fails("19-001", With(""));
-        Fails("19-002", With("/ID (n1)"));
+        Fails("19-003", With(""));
+        Fails("19-004", With("/ID (n1)"));
     }
 
     [Fact]
     public void OptionalContentConfigurationsAreNamedAndStatic()
     {
-        Fails("20-001", PdfUaKit.Build(catalog: "/OCProperties <</OCGs [] /D <</Order []>>>>"));
-        Fails("20-002", PdfUaKit.Build(catalog: "/OCProperties <</OCGs [] /D <</Name (View) /AS []>>>>"));
+        Fails("20-001", PdfUaKit.Build(catalog: "/OCProperties <</OCGs [] /D <</Name (View)>> /Configs [<</Order []>>]>>"));
+        Fails("20-002", PdfUaKit.Build(catalog: "/OCProperties <</OCGs [] /D <</Order []>>>>"));
+        Fails("20-003", PdfUaKit.Build(catalog: "/OCProperties <</OCGs [] /D <</Name (View) /AS []>>>>"));
         Passes(PdfUaKit.Build(catalog: "/OCProperties <</OCGs [] /D <</Name (View)>>>>"));
     }
 
@@ -256,7 +258,7 @@ public class PdfUaCheckerTests
         var security = PdfSecurity.Create("", "owner", permissions, PdfCryptStrength.Aes128, id);
         using var document = PdfDocument.Open(plain.SaveRewrite(new PdfSaveOptions(Security: security, DocumentId: id)));
 
-        Assert.Equal(allowed, !PdfUaValidator.Validate(document).Issues.Any(i => i.Condition == "26-001"));
+        Assert.Equal(allowed, !PdfUaValidator.Validate(document).Issues.Any(i => i.Condition == "26-002"));
     }
 
     private static byte[] WithAnnotation(string annotation, string elementType = "Link", bool tagged = true, string page = "/Tabs /S") =>
@@ -273,7 +275,8 @@ public class PdfUaCheckerTests
         Passes(WithAnnotation(link));
 
         Fails("28-002", WithAnnotation(link, tagged: false));
-        Fails("28-003", WithAnnotation(link, elementType: "Annot"));
+        Fails("28-011", WithAnnotation(link, elementType: "Annot"));
+        Fails("28-003", WithAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10] /Contents (Note)>>"));
         Fails("28-004", WithAnnotation("<</Type /Annot /Subtype /Link /Rect [0 0 10 10]>>"));
         Fails("28-004", WithAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10]>>", "Annot"));
         Passes(WithAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10] /Contents (Note)>>", "Annot"));
@@ -305,7 +308,7 @@ public class PdfUaCheckerTests
         const string field = "<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /Rect [0 0 10 10] /TU (Name)>>";
         Passes(WithAnnotation(field, "Form"));
         Fails("28-005", WithAnnotation(field.Replace("/TU (Name)", ""), "Form"));
-        Fails("28-003", WithAnnotation(field, "Annot"));
+        Fails("28-010", WithAnnotation(field, "Annot"));
 
         Passes(PdfUaKit.Build(page: "/Tabs /S /Annots [13 0 R]", edit: o =>
         {
@@ -321,15 +324,17 @@ public class PdfUaCheckerTests
     [Fact]
     public void PagesWithAnnotationsFollowTheStructureForTabOrder()
     {
-        Fails("28-006", WithAnnotation("<</Type /Annot /Subtype /Link /Rect [0 0 10 10] /Contents (Home)>>", page: ""));
+        const string link = "<</Type /Annot /Subtype /Link /Rect [0 0 10 10] /Contents (Home)>>";
+        Fails("28-008", WithAnnotation(link, page: ""));
+        Fails("28-009", WithAnnotation(link, page: "/Tabs /R"));
     }
 
     [Fact]
-    public void ReferenceAndPostScriptXObjectsFail()
+    public void AReferenceXObjectFails()
     {
         const string resources = "/XObject <</X1 13 0 R>>";
         Fails("30-001", PdfUaKit.Build(resources: resources, extra: pdf => pdf.Stream(13, "/Type /XObject /Subtype /Form /BBox [0 0 1 1] /Ref <</F (x.pdf) /Page 0>>", "")));
-        Fails("30-002", PdfUaKit.Build(resources: resources, extra: pdf => pdf.Stream(13, "/Type /XObject /Subtype /PS", "")));
+        Passes(PdfUaKit.Build(resources: resources, extra: pdf => pdf.Stream(13, "/Type /XObject /Subtype /PS", "")));
         Passes(PdfUaKit.Build(resources: resources, extra: pdf => pdf.Stream(13, "/Type /XObject /Subtype /Form /BBox [0 0 1 1]", "")));
     }
 

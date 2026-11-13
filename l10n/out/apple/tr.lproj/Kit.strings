@@ -1843,7 +1843,6 @@
 "The file does not end with %%EOF." = "Dosya %%EOF ile bitmiyor.";
 "The file does not pass the checks, or its metadata cannot be changed. Check it again." = "Dosya denetimlerden geçmiyor ya da üst verisi değiştirilemiyor. Yeniden denetleyin.";
 "The file embeds another file, which this level does not allow." = "Dosya başka bir dosya gömüyor; bu düzey buna izin vermiyor.";
-"The file has a PostScript XObject." = "Dosyada bir PostScript XObject var.";
 "The file has no figures." = "Dosyada şekil yok.";
 "The file has no signature to add validation data to." = "Dosyada doğrulama verisi eklenecek bir imza yok.";
 "The file has no structure tree." = "Dosyada yapı ağacı yok.";

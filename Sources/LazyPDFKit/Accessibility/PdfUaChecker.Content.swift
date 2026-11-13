@@ -108,9 +108,9 @@ extension PdfUaChecker {
             let visitor = PageContent(known)
             interpreter.run(page, visitor)
             let place = PdfAText.pageName(page.index + 1)
-            if tree != nil && visitor.untagged > 0 { add("01-003", "7.1", place, PdfUaText.untagged) }
-            if visitor.artifactInTagged > 0 { add("01-004", "7.1", place, PdfUaText.artifactInTagged) }
-            if visitor.taggedInArtifact > 0 { add("01-005", "7.1", place, PdfUaText.taggedInArtifact) }
+            if tree != nil && visitor.untagged > 0 { add("01-005", "7.1", place, PdfUaText.untagged) }
+            if visitor.artifactInTagged > 0 { add("01-003", "7.1", place, PdfUaText.artifactInTagged) }
+            if visitor.taggedInArtifact > 0 { add("01-004", "7.1", place, PdfUaText.taggedInArtifact) }
             for font in visitor.fonts.fonts {
                 let use = visitor.fonts.use(font)
                 fonts.note(font, shown: use.shown, noText: use.noText)
@@ -126,7 +126,7 @@ extension PdfUaChecker {
         }
     }
 
-    // 7.20: no reference or PostScript XObject, in a page's resources or in the forms below them.
+    // 7.20: no reference XObject, in a page's resources or in the forms below them.
     func checkXObjects() {
         var seen = Set<ObjectIdentifier>()
         var pending: [(resources: PdfDictionary?, place: String)] = []
@@ -136,7 +136,6 @@ extension PdfUaChecker {
             for entry in xobjects.entries.prefix(Self.maxEntries) {
                 guard let xobject = document.resolve(entry.value) as? PdfStream, seen.insert(ObjectIdentifier(xobject)).inserted else { continue }
                 let subtype = document.name(xobject.dictionary, "Subtype")
-                if subtype == "PS" || xobject.dictionary.containsKey("PS") { add("30-002", "7.20", place, PdfUaText.postScriptXObject) }
                 if xobject.dictionary.containsKey("Ref") { add("30-001", "7.20", place, PdfUaText.referenceXObject) }
                 if subtype == "Form" { pending.append((document.dict(xobject.dictionary, "Resources"), place)) }
             }

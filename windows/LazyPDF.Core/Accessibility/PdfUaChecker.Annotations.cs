@@ -16,7 +16,8 @@ internal sealed partial class PdfUaChecker
         {
             cancel.ThrowIfCancellationRequested();
             if (_doc.Array(page.Dictionary, "Annots") is not { Items.Count: > 0 } annotations) continue;
-            if (_doc.Name(page.Dictionary, "Tabs") != "S") Add("28-006", "7.18.3", PdfAText.PageName(page.Index + 1), PdfUaText.TabOrder);
+            string? tabs = _doc.Name(page.Dictionary, "Tabs");
+            if (tabs != "S") Add(tabs is null ? "28-008" : "28-009", "7.18.3", PdfAText.PageName(page.Index + 1), PdfUaText.TabOrder);
             for (int i = 0; i < annotations.Items.Count && --budget >= 0; i++)
             {
                 if (_doc.Resolve(annotations.Items[i]) is not PdfDictionary annotation) continue;
@@ -39,7 +40,7 @@ internal sealed partial class PdfUaChecker
         if (_tree is not null)
         {
             if (owner is null) Add("28-002", "7.18.1", where, PdfUaText.AnnotationUntagged(subtype));
-            else if (_tree.StandardType(owner.Type) != expected) Add("28-003", "7.18.1", where, PdfUaText.AnnotationTag(subtype, expected, _tree.StandardType(owner.Type)));
+            else if (_tree.StandardType(owner.Type) != expected) Add(subtype switch { "Widget" => "28-010", "Link" => "28-011", _ => "28-003" }, "7.18.1", where, PdfUaText.AnnotationTag(subtype, expected, _tree.StandardType(owner.Type)));
         }
         // The structure element's /Alt stands in for the missing key, except on a Link, whose /Contents 7.18.5 requires itself.
         bool described = !string.IsNullOrWhiteSpace(owner?.Alt);

@@ -70,7 +70,7 @@ final class PdfUaChecker {
     private func checkMarkInfo() {
         let info = document.dict(document.catalog, "MarkInfo")
         if document.bool(info, "Marked") != true { add("01-001", "7.1", PdfAText.catalog, PdfUaText.noMarkInfo) }
-        if document.bool(info, "Suspects") == true { add("01-006", "7.1", PdfAText.catalog, PdfUaText.suspects) }
+        if document.bool(info, "Suspects") == true { add("01-007", "7.1", PdfAText.catalog, PdfUaText.suspects) }
     }
 
     private func checkTree() {
@@ -103,7 +103,9 @@ final class PdfUaChecker {
     }
 
     private func checkDisplayTitle() {
-        if !ViewerSettings.read(document).displayDocTitle { add("07-001", "7.1", PdfAText.catalog, PdfUaText.titleNotShown) }
+        if ViewerSettings.read(document).displayDocTitle { return }
+        let listed = document.dict(document.catalog, "ViewerPreferences")?.containsKey("DisplayDocTitle") ?? false
+        add(listed ? "07-002" : "07-001", "7.1", PdfAText.catalog, PdfUaText.titleNotShown)
     }
 
     // 7.2: the language of the text can be told, from the catalog or from every top structure element.
@@ -120,13 +122,13 @@ final class PdfUaChecker {
     // 7.10: configurations have a name and no automatic state.
     private func checkOptionalContent() {
         guard let properties = document.dict(document.catalog, "OCProperties") else { return }
-        var configs: [PdfDictionary] = []
-        if let main = document.dict(properties, "D") { configs.append(main) }
-        configs += (document.array(properties, "Configs")?.items.prefix(256) ?? []).compactMap { document.resolve($0) as? PdfDictionary }
-        for config in configs {
+        var configs: [(config: PdfDictionary, noName: String)] = []
+        if let main = document.dict(properties, "D") { configs.append((main, "20-002")) }
+        configs += (document.array(properties, "Configs")?.items.prefix(256) ?? []).compactMap { document.resolve($0) as? PdfDictionary }.map { ($0, "20-001") }
+        for (config, noName) in configs {
             let named = (document.resolve(config["Name"]) as? PdfString).map { !$0.bytes.isEmpty } ?? false
-            if !named { add("20-001", "7.10", PdfAText.catalog, PdfUaText.configName) }
-            if config.containsKey("AS") { add("20-002", "7.10", PdfAText.catalog, PdfUaText.configAutoState) }
+            if !named { add(noName, "7.10", PdfAText.catalog, PdfUaText.configName) }
+            if config.containsKey("AS") { add("20-003", "7.10", PdfAText.catalog, PdfUaText.configAutoState) }
         }
     }
 
@@ -151,7 +153,7 @@ final class PdfUaChecker {
     // 7.16: the extraction-for-accessibility permission is not withheld.
     private func checkSecurity() {
         if let security = document.security, !security.permissions.contains(.extractForAccessibility) {
-            add("26-001", "7.16", PdfAText.catalog, PdfUaText.encrypted)
+            add("26-002", "7.16", PdfAText.catalog, PdfUaText.encrypted)
         }
     }
 }

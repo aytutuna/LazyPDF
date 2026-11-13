@@ -49,7 +49,6 @@ public static class PdfUaText
     public static string TabOrder => Loc.T("The page has annotations and its tab order does not follow the structure.");
 
     public static string ReferenceXObject => Loc.T("A form XObject has a /Ref entry.");
-    public static string PostScriptXObject => Loc.T("The file has a PostScript XObject.");
 
     public static string FontNotEmbedded => Loc.T("The font is not embedded.");
     public static string FontNoUnicode => Loc.T("The font has characters that do not map to Unicode.");

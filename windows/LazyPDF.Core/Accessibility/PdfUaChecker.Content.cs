@@ -81,9 +81,9 @@ internal sealed partial class PdfUaChecker
                 continue;
             }
             string where = PdfAText.PageName(page.Index + 1);
-            if (_tree is not null && visitor.Untagged > 0) Add("01-003", "7.1", where, PdfUaText.Untagged);
-            if (visitor.ArtifactInTagged > 0) Add("01-004", "7.1", where, PdfUaText.ArtifactInTagged);
-            if (visitor.TaggedInArtifact > 0) Add("01-005", "7.1", where, PdfUaText.TaggedInArtifact);
+            if (_tree is not null && visitor.Untagged > 0) Add("01-005", "7.1", where, PdfUaText.Untagged);
+            if (visitor.ArtifactInTagged > 0) Add("01-003", "7.1", where, PdfUaText.ArtifactInTagged);
+            if (visitor.TaggedInArtifact > 0) Add("01-004", "7.1", where, PdfUaText.TaggedInArtifact);
             foreach (var (font, use) in visitor.Fonts)
             {
                 fonts.TryGetValue(font, out var before);
@@ -100,7 +100,7 @@ internal sealed partial class PdfUaChecker
         }
     }
 
-    // 7.20: no reference or PostScript XObject, in a page's resources or in the forms below them.
+    // 7.20: no reference XObject, in a page's resources or in the forms below them.
     private void CheckXObjects()
     {
         var seen = new HashSet<PdfStream>(ReferenceEqualityComparer.Instance);
@@ -115,7 +115,6 @@ internal sealed partial class PdfUaChecker
             {
                 if (_doc.Resolve(value) is not PdfStream xobject || !seen.Add(xobject)) continue;
                 string? subtype = _doc.Name(xobject.Dictionary, "Subtype");
-                if (subtype == "PS" || xobject.Dictionary.ContainsKey("PS")) Add("30-002", "7.20", where, PdfUaText.PostScriptXObject);
                 if (xobject.Dictionary.ContainsKey("Ref")) Add("30-001", "7.20", where, PdfUaText.ReferenceXObject);
                 if (subtype == "Form") pending.Push((_doc.Dict(xobject.Dictionary, "Resources"), where));
             }

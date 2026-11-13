@@ -31,23 +31,23 @@ final class PdfUaCheckerTests: XCTestCase {
 
     func test_theCatalogMustBeMarkedAndHoldATree() throws {
         try fails("01-001", PdfUaKit.build(markInfo: ""))
-        try fails("01-006", PdfUaKit.build(markInfo: "/MarkInfo <</Marked true /Suspects true>>"))
+        try fails("01-007", PdfUaKit.build(markInfo: "/MarkInfo <</Marked true /Suspects true>>"))
         try fails("01-002", PdfUaKit.build(tree: false))
     }
 
     func test_contentIsTaggedOrAnArtifact() throws {
-        try fails("01-003", PdfUaKit.build(content: PdfUaKit.figure + " 1 0 0 rg 0 0 5 5 re f"))
+        try fails("01-005", PdfUaKit.build(content: PdfUaKit.figure + " 1 0 0 rg 0 0 5 5 re f"))
         try passes(PdfUaKit.build(content: PdfUaKit.figure + " /Artifact BMC 1 0 0 rg 0 0 5 5 re f EMC"))
-        try fails("01-004", PdfUaKit.build(content: "/Figure <</MCID 0>> BDC /Artifact BMC 0 0 1 rg 20 20 100 100 re f EMC EMC"))
-        try fails("01-005", PdfUaKit.build(content: "/Artifact BMC /Figure <</MCID 0>> BDC 0 0 1 rg 20 20 100 100 re f EMC EMC"))
+        try fails("01-003", PdfUaKit.build(content: "/Figure <</MCID 0>> BDC /Artifact BMC 0 0 1 rg 20 20 100 100 re f EMC EMC"))
+        try fails("01-004", PdfUaKit.build(content: "/Artifact BMC /Figure <</MCID 0>> BDC 0 0 1 rg 20 20 100 100 re f EMC EMC"))
     }
 
     func test_aSequenceThatTheTreeDoesNotNameIsNotTagged() throws {
-        try fails("01-003", PdfUaKit.build(content: "/Figure <</MCID 7>> BDC 0 0 1 rg 20 20 100 100 re f EMC"))
+        try fails("01-005", PdfUaKit.build(content: "/Figure <</MCID 7>> BDC 0 0 1 rg 20 20 100 100 re f EMC"))
     }
 
     func test_theRoleMapLeadsToStandardTypes() throws {
-        try fails("02-002", PdfUaKit.build(edit: { $0[10] = "<</Type /StructElem /S /Weird /P 9 0 R /K 11 0 R>>" }))
+        try fails("02-001", PdfUaKit.build(edit: { $0[10] = "<</Type /StructElem /S /Weird /P 9 0 R /K 11 0 R>>" }))
         try passes(PdfUaKit.build(edit: { o in
             o[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</Weird /Sect>>>>"
             o[10] = "<</Type /StructElem /S /Weird /P 9 0 R /K 11 0 R>>"
@@ -57,8 +57,8 @@ final class PdfUaCheckerTests: XCTestCase {
             o[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</A /B /B /A>>>>"
             o[10] = "<</Type /StructElem /S /A /P 9 0 R /K 11 0 R>>"
         })
-        try fails("02-003", loop)
-        try lacks("02-002", loop)
+        try fails("02-002", loop)
+        try lacks("02-001", loop)
     }
 
     func test_manyUnmappedTypesAreReportedUpToTheLimit() throws {
@@ -71,11 +71,11 @@ final class PdfUaCheckerTests: XCTestCase {
         let report = try PdfUaKit.check(file)
 
         XCTAssertTrue(report.truncated)
-        XCTAssertEqual(report.issues.filter { $0.condition == "02-002" }.count, 1000)
+        XCTAssertEqual(report.issues.filter { $0.condition == "02-001" }.count, 1000)
     }
 
     func test_aStandardTypeIsNotRemapped() throws {
-        try fails("02-004", PdfUaKit.build(edit: { $0[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</P /Span>>>>" }))
+        try fails("02-003", PdfUaKit.build(edit: { $0[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</P /Span>>>>" }))
     }
 
     func test_theMetadataNamesPdfUaAndHoldsATitle() throws {
@@ -87,7 +87,8 @@ final class PdfUaCheckerTests: XCTestCase {
 
     func test_theWindowShowsTheTitle() throws {
         try fails("07-001", PdfUaKit.build(viewer: ""))
-        try fails("07-001", PdfUaKit.build(viewer: "/ViewerPreferences <</DisplayDocTitle false>>"))
+        try fails("07-001", PdfUaKit.build(viewer: "/ViewerPreferences <</Direction /L2R>>"))
+        try fails("07-002", PdfUaKit.build(viewer: "/ViewerPreferences <</DisplayDocTitle false>>"))
     }
 
     func test_tablesAndListsNestAsTheStandardSays() throws {
@@ -157,9 +158,9 @@ final class PdfUaCheckerTests: XCTestCase {
     func test_headingsAreInOrder() throws {
         try passes(withHeadings(["H1", "H2", "H3", "H2", "H1"]))
         try fails("14-002", withHeadings(["H2"]))
-        try fails("14-002", withHeadings(["H1", "H3"]))
+        try fails("14-003", withHeadings(["H1", "H3"]))
         try fails("14-007", withHeadings(["H", "H1"]))
-        try lacks("14-002", withHeadings(["H1", "H2", "H1", "H2"]))
+        try lacks("14-003", withHeadings(["H1", "H2", "H1", "H2"]))
     }
 
     func test_notesHaveUniqueIds() throws {
@@ -172,13 +173,14 @@ final class PdfUaCheckerTests: XCTestCase {
         }
 
         try passes(with("/ID (n2)"))
-        try fails("19-001", with(""))
-        try fails("19-002", with("/ID (n1)"))
+        try fails("19-003", with(""))
+        try fails("19-004", with("/ID (n1)"))
     }
 
     func test_optionalContentConfigurationsAreNamedAndStatic() throws {
-        try fails("20-001", PdfUaKit.build(catalog: "/OCProperties <</OCGs [] /D <</Order []>>>>"))
-        try fails("20-002", PdfUaKit.build(catalog: "/OCProperties <</OCGs [] /D <</Name (View) /AS []>>>>"))
+        try fails("20-001", PdfUaKit.build(catalog: "/OCProperties <</OCGs [] /D <</Name (View)>> /Configs [<</Order []>>]>>"))
+        try fails("20-002", PdfUaKit.build(catalog: "/OCProperties <</OCGs [] /D <</Order []>>>>"))
+        try fails("20-003", PdfUaKit.build(catalog: "/OCProperties <</OCGs [] /D <</Name (View) /AS []>>>>"))
         try passes(PdfUaKit.build(catalog: "/OCProperties <</OCGs [] /D <</Name (View)>>>>"))
     }
 
@@ -204,7 +206,7 @@ final class PdfUaCheckerTests: XCTestCase {
             let security = PdfSecurity.create(userPassword: "", ownerPassword: "owner", permissions: permissions, strength: .aes128, firstId: id)
             let document = try PdfDocument.open(try plain.saveRewrite(PdfSaveOptions(security: security, documentId: id)))
 
-            XCTAssertEqual(!(try PdfUaValidator.validate(document).issues.contains { $0.condition == "26-001" }), allowed)
+            XCTAssertEqual(!(try PdfUaValidator.validate(document).issues.contains { $0.condition == "26-002" }), allowed)
         }
     }
 
@@ -220,7 +222,8 @@ final class PdfUaCheckerTests: XCTestCase {
         try passes(withAnnotation(link))
 
         try fails("28-002", withAnnotation(link, tagged: false))
-        try fails("28-003", withAnnotation(link, "Annot"))
+        try fails("28-011", withAnnotation(link, "Annot"))
+        try fails("28-003", withAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10] /Contents (Note)>>"))
         try fails("28-004", withAnnotation("<</Type /Annot /Subtype /Link /Rect [0 0 10 10]>>"))
         try fails("28-004", withAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10]>>", "Annot"))
         try passes(withAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10] /Contents (Note)>>", "Annot"))
@@ -247,7 +250,7 @@ final class PdfUaCheckerTests: XCTestCase {
         let field = "<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /Rect [0 0 10 10] /TU (Name)>>"
         try passes(withAnnotation(field, "Form"))
         try fails("28-005", withAnnotation(field.replacingOccurrences(of: "/TU (Name)", with: ""), "Form"))
-        try fails("28-003", withAnnotation(field, "Annot"))
+        try fails("28-010", withAnnotation(field, "Annot"))
 
         try passes(PdfUaKit.build(page: "/Tabs /S /Annots [13 0 R]", edit: { o in
             o[10] = "<</Type /StructElem /S /Document /P 9 0 R /K [11 0 R 14 0 R]>>"
@@ -259,13 +262,15 @@ final class PdfUaCheckerTests: XCTestCase {
     }
 
     func test_pagesWithAnnotationsFollowTheStructureForTabOrder() throws {
-        try fails("28-006", withAnnotation("<</Type /Annot /Subtype /Link /Rect [0 0 10 10] /Contents (Home)>>", page: ""))
+        let link = "<</Type /Annot /Subtype /Link /Rect [0 0 10 10] /Contents (Home)>>"
+        try fails("28-008", withAnnotation(link, page: ""))
+        try fails("28-009", withAnnotation(link, page: "/Tabs /R"))
     }
 
-    func test_referenceAndPostScriptXObjectsFail() throws {
+    func test_aReferenceXObjectFails() throws {
         let resources = "/XObject <</X1 13 0 R>>"
         try fails("30-001", PdfUaKit.build(resources: resources, extra: { $0.stream(13, "/Type /XObject /Subtype /Form /BBox [0 0 1 1] /Ref <</F (x.pdf) /Page 0>>", "") }))
-        try fails("30-002", PdfUaKit.build(resources: resources, extra: { $0.stream(13, "/Type /XObject /Subtype /PS", "") }))
+        try passes(PdfUaKit.build(resources: resources, extra: { $0.stream(13, "/Type /XObject /Subtype /PS", "") }))
         try passes(PdfUaKit.build(resources: resources, extra: { $0.stream(13, "/Type /XObject /Subtype /Form /BBox [0 0 1 1]", "") }))
     }
 

@@ -7,7 +7,7 @@ import Foundation
 
 public enum PdfUaValidator {
     // The conditions marking settles itself: the identifier, the title shown, and a packet made from /Info.
-    private static let settledByMark: Set<String> = ["06-001", "06-002", "06-003", "07-001"]
+    private static let settledByMark: Set<String> = ["06-001", "06-002", "06-003", "07-001", "07-002"]
 
     public static func validate(_ document: PdfDocument) throws -> PdfUaReport {
         let checker = PdfUaChecker(document)

@@ -8972,9 +8972,6 @@
   "The page has annotations and its tab order does not follow the structure.": {
     "tr": "Sayfada ek açıklamalar var ve sekme sırası yapıyı izlemiyor."
   },
-  "The file has a PostScript XObject.": {
-    "tr": "Dosyada bir PostScript XObject var."
-  },
   "The font has characters that do not map to Unicode.": {
     "tr": "Yazı tipinde Unicode'a eşlenmeyen karakterler var."
   },

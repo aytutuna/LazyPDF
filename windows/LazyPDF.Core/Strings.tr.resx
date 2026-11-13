@@ -6586,9 +6586,6 @@
   <data name="The file embeds another file, which this level does not allow." xml:space="preserve">
     <value>Dosya başka bir dosya gömüyor; bu düzey buna izin vermiyor.</value>
   </data>
-  <data name="The file has a PostScript XObject." xml:space="preserve">
-    <value>Dosyada bir PostScript XObject var.</value>
-  </data>
   <data name="The file has no figures." xml:space="preserve">
     <value>Dosyada şekil yok.</value>
   </data>

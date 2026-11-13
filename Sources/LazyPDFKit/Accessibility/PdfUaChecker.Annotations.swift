@@ -13,7 +13,8 @@ extension PdfUaChecker {
         var budget = 50_000
         for page in document.pages {
             guard let annotations = document.array(page.dictionary, "Annots"), !annotations.items.isEmpty else { continue }
-            if document.name(page.dictionary, "Tabs") != "S" { add("28-006", "7.18.3", PdfAText.pageName(page.index + 1), PdfUaText.tabOrder) }
+            let tabs = document.name(page.dictionary, "Tabs")
+            if tabs != "S" { add(tabs == nil ? "28-008" : "28-009", "7.18.3", PdfAText.pageName(page.index + 1), PdfUaText.tabOrder) }
             var i = 0
             while i < annotations.items.count {
                 budget -= 1
@@ -42,7 +43,7 @@ extension PdfUaChecker {
         if let tree {
             if let owner {
                 if tree.standardType(owner.type) != expected {
-                    add("28-003", "7.18.1", place, PdfUaText.annotationTag(subtype, expected, tree.standardType(owner.type)))
+                    add(subtype == "Widget" ? "28-010" : subtype == "Link" ? "28-011" : "28-003", "7.18.1", place, PdfUaText.annotationTag(subtype, expected, tree.standardType(owner.type)))
                 }
             } else {
                 add("28-002", "7.18.1", place, PdfUaText.annotationUntagged(subtype))

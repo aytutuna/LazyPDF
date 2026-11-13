@@ -26,8 +26,8 @@ internal sealed partial class PdfUaChecker
                 Add(type == "Figure" ? "13-004" : "17-002", type == "Figure" ? "7.3" : "7.7", Place(element), PdfUaText.NoAlt(type));
             if (element.Lang is { } lang && !AccessibilityChecker.LanguageTagPattern.IsMatch(lang)) Add("11-007", "7.2", Place(element), PdfUaText.BadLanguage(lang));
             if (type != "Note") continue;
-            if (string.IsNullOrEmpty(element.Id)) Add("19-001", "7.9", Place(element), PdfUaText.NoteId);
-            else if (!notes.Add(element.Id)) Add("19-002", "7.9", Place(element), PdfUaText.NoteIdTwice(element.Id));
+            if (string.IsNullOrEmpty(element.Id)) Add("19-003", "7.9", Place(element), PdfUaText.NoteId);
+            else if (!notes.Add(element.Id)) Add("19-004", "7.9", Place(element), PdfUaText.NoteIdTwice(element.Id));
         }
     }
 
@@ -37,7 +37,7 @@ internal sealed partial class PdfUaChecker
         var tree = _tree!;
         foreach (var (key, value) in tree.RoleMap.OrderBy(e => e.Key, StringComparer.Ordinal).Take(MaxEntries))
         {
-            if (StructureTree.IsStandard(key) && key != value) Add("02-004", "7.1", PdfAText.Catalog, PdfUaText.StandardRemapped(key, value));
+            if (StructureTree.IsStandard(key) && key != value) Add("02-003", "7.1", PdfAText.Catalog, PdfUaText.StandardRemapped(key, value));
         }
         var first = new Dictionary<string, StructElement>(StringComparer.Ordinal);
         foreach (var element in elements) first.TryAdd(element.Type, element);
@@ -48,9 +48,9 @@ internal sealed partial class PdfUaChecker
             if (_truncated) break;
             if (StructureTree.IsStandard(type)) continue;
             bool loop = Loops(type);
-            if (loop) Add("02-003", "7.1", PdfAText.Catalog, PdfUaText.RoleMapCircular(type));
+            if (loop) Add("02-002", "7.1", PdfAText.Catalog, PdfUaText.RoleMapCircular(type));
             else if (!StructureTree.IsStandard(tree.StandardType(type)) && first.TryGetValue(type, out var element))
-                Add("02-002", "7.1", Place(element), PdfUaText.NotMapped(type));
+                Add("02-001", "7.1", Place(element), PdfUaText.NotMapped(type));
         }
     }
 
@@ -120,7 +120,7 @@ internal sealed partial class PdfUaChecker
             if (t.Length < 2 || t[0] != 'H' || !int.TryParse(t.AsSpan(1), out int level)) continue;
             numbered = true;
             if (previous == 0 && level != 1) Add("14-002", "7.4", Place(element), PdfUaText.FirstHeading(level));
-            else if (level > previous + 1) Add("14-002", "7.4", Place(element), PdfUaText.HeadingSkipped(level, previous));
+            else if (level > previous + 1) Add("14-003", "7.4", Place(element), PdfUaText.HeadingSkipped(level, previous));
             previous = level;
         }
         if (plain && numbered) Add("14-007", "7.4", PdfAText.Catalog, PdfUaText.HeadingMixed);

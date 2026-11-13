@@ -30,9 +30,9 @@ extension PdfUaChecker {
             if let lang = element.lang, !AccessibilityChecker.isLanguageTag(lang) { add("11-007", "7.2", Self.place(element), PdfUaText.badLanguage(lang)) }
             if t != "Note" { continue }
             if let id = element.id, !id.isEmpty {
-                if !notes.insert(OrdinalString(id)).inserted { add("19-002", "7.9", Self.place(element), PdfUaText.noteIdTwice(id)) }
+                if !notes.insert(OrdinalString(id)).inserted { add("19-004", "7.9", Self.place(element), PdfUaText.noteIdTwice(id)) }
             } else {
-                add("19-001", "7.9", Self.place(element), PdfUaText.noteId)
+                add("19-003", "7.9", Self.place(element), PdfUaText.noteId)
             }
         }
     }
@@ -41,7 +41,7 @@ extension PdfUaChecker {
     private func checkRoleMap(_ tree: StructureTree, _ elements: [StructElement]) {
         for entry in tree.roleMap.entries.sorted(by: { ordinalPrecedes($0.key, $1.key) }).prefix(Self.maxEntries) {
             if StructureTree.isStandard(entry.key) && !XmlParser.same(entry.key, entry.value) {
-                add("02-004", "7.1", PdfAText.catalog, PdfUaText.standardRemapped(entry.key, entry.value))
+                add("02-003", "7.1", PdfAText.catalog, PdfUaText.standardRemapped(entry.key, entry.value))
             }
         }
         var types = Set<OrdinalString>()
@@ -56,9 +56,9 @@ extension PdfUaChecker {
             if truncated { break }
             if StructureTree.isStandard(type) { continue }
             if loops(tree, type) {
-                add("02-003", "7.1", PdfAText.catalog, PdfUaText.roleMapCircular(type))
+                add("02-002", "7.1", PdfAText.catalog, PdfUaText.roleMapCircular(type))
             } else if !StructureTree.isStandard(tree.standardType(type)), let element = first[OrdinalString(type)] {
-                add("02-002", "7.1", Self.place(element), PdfUaText.notMapped(type))
+                add("02-001", "7.1", Self.place(element), PdfUaText.notMapped(type))
             }
         }
     }
@@ -126,7 +126,7 @@ extension PdfUaChecker {
             if previous == 0 && level != 1 {
                 add("14-002", "7.4", Self.place(element), PdfUaText.firstHeading(level))
             } else if level > previous + 1 {
-                add("14-002", "7.4", Self.place(element), PdfUaText.headingSkipped(level, previous))
+                add("14-003", "7.4", Self.place(element), PdfUaText.headingSkipped(level, previous))
             }
             previous = level
         }

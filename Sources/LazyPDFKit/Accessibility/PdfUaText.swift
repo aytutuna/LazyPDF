@@ -49,7 +49,6 @@ public enum PdfUaText {
     public static var tabOrder: String { L10n.t("The page has annotations and its tab order does not follow the structure.") }
 
     public static var referenceXObject: String { L10n.t("A form XObject has a /Ref entry.") }
-    public static var postScriptXObject: String { L10n.t("The file has a PostScript XObject.") }
 
     public static var fontNotEmbedded: String { L10n.t("The font is not embedded.") }
     public static var fontNoUnicode: String { L10n.t("The font has characters that do not map to Unicode.") }

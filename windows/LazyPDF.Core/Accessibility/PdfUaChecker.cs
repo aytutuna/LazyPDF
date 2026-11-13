@@ -64,7 +64,7 @@ internal sealed partial class PdfUaChecker(PdfDocument document, CancellationTok
     {
         var info = _doc.Dict(_doc.Catalog, "MarkInfo");
         if (_doc.Bool(info, "Marked") != true) Add("01-001", "7.1", PdfAText.Catalog, PdfUaText.NoMarkInfo);
-        if (_doc.Bool(info, "Suspects") == true) Add("01-006", "7.1", PdfAText.Catalog, PdfUaText.Suspects);
+        if (_doc.Bool(info, "Suspects") == true) Add("01-007", "7.1", PdfAText.Catalog, PdfUaText.Suspects);
     }
 
     private void CheckTree()
@@ -103,7 +103,9 @@ internal sealed partial class PdfUaChecker(PdfDocument document, CancellationTok
 
     private void CheckDisplayTitle()
     {
-        if (!ViewerSettings.Read(_doc).DisplayDocTitle) Add("07-001", "7.1", PdfAText.Catalog, PdfUaText.TitleNotShown);
+        if (ViewerSettings.Read(_doc).DisplayDocTitle) return;
+        bool listed = _doc.Dict(_doc.Catalog, "ViewerPreferences") is { } preferences && preferences.ContainsKey("DisplayDocTitle");
+        Add(listed ? "07-002" : "07-001", "7.1", PdfAText.Catalog, PdfUaText.TitleNotShown);
     }
 
     // 7.2: the language of the text can be told, from the catalog or from every top structure element.
@@ -122,13 +124,13 @@ internal sealed partial class PdfUaChecker(PdfDocument document, CancellationTok
     private void CheckOptionalContent()
     {
         if (_doc.Dict(_doc.Catalog, "OCProperties") is not { } properties) return;
-        var configs = new List<PdfDictionary>();
-        if (_doc.Dict(properties, "D") is { } main) configs.Add(main);
-        configs.AddRange(_doc.Array(properties, "Configs")?.Items.Take(256).Select(_doc.Resolve).OfType<PdfDictionary>() ?? []);
-        foreach (var config in configs)
+        var configs = new List<(PdfDictionary Config, string NoName)>();
+        if (_doc.Dict(properties, "D") is { } main) configs.Add((main, "20-002"));
+        configs.AddRange((_doc.Array(properties, "Configs")?.Items.Take(256).Select(_doc.Resolve).OfType<PdfDictionary>() ?? []).Select(c => (c, "20-001")));
+        foreach (var (config, noName) in configs)
         {
-            if (_doc.Resolve(config["Name"]) is not PdfString { Bytes.Length: > 0 }) Add("20-001", "7.10", PdfAText.Catalog, PdfUaText.ConfigName);
-            if (config.ContainsKey("AS")) Add("20-002", "7.10", PdfAText.Catalog, PdfUaText.ConfigAutoState);
+            if (_doc.Resolve(config["Name"]) is not PdfString { Bytes.Length: > 0 }) Add(noName, "7.10", PdfAText.Catalog, PdfUaText.ConfigName);
+            if (config.ContainsKey("AS")) Add("20-003", "7.10", PdfAText.Catalog, PdfUaText.ConfigAutoState);
         }
     }
 
@@ -155,6 +157,6 @@ internal sealed partial class PdfUaChecker(PdfDocument document, CancellationTok
     private void CheckSecurity()
     {
         if (_doc.Security is { } security && (security.Permissions & PdfPermissions.ExtractForAccessibility) == 0)
-            Add("26-001", "7.16", PdfAText.Catalog, PdfUaText.Encrypted);
+            Add("26-002", "7.16", PdfAText.Catalog, PdfUaText.Encrypted);
     }
 }
