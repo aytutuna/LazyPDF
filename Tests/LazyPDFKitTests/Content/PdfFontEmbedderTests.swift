@@ -67,6 +67,17 @@ final class PdfFontEmbedderTests: XCTestCase {
         XCTAssertEqual(try base("Courier New", .regular), "Courier")
     }
 
+    func test_formFontWrapKeepsTheParagraphDirectionOnEveryLine() throws {
+        let document = try blank()
+        let text = "שלום AB AB AB עולם"
+        let font = try XCTUnwrap(try PdfFontEmbedder(document, FixtureFonts()).add("Arial", .regular, [text]))
+
+        let lines = FormFont.fromAdded("F", font).wrap(text, 10, font.width("AB AB", 10) + 0.1)
+
+        XCTAssertGreaterThan(lines.count, 1)
+        for line in lines { XCTAssertTrue(font.isRightToLeft(line), line) }
+    }
+
     func test_turkishTextNeedsAFontFile() throws {
         let document = try blank()
         XCTAssertNil(try PdfFontEmbedder(document).add("Arial", .regular, [turkish]))

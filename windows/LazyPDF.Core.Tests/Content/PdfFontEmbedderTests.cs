@@ -255,6 +255,20 @@ public class PdfFontEmbedderTests
     }
 
     [Fact]
+    public void FormFontWrapKeepsTheParagraphDirectionOnEveryLine()
+    {
+        var document = Blank();
+        string text = "שלום abc def ghi עולם";
+        var font = new PdfFontEmbedder(document, new WindowsFonts()).Add("Arial", FontStyles.Regular, [text])!;
+        var formFont = FormFont.FromAdded("F", font);
+
+        var lines = formFont.Wrap(text, 10, font.Width("def ghi עולם", 10) + 1);
+
+        Assert.True(lines.Count > 1);
+        Assert.All(lines, l => Assert.True(font.IsRightToLeft(l)));
+    }
+
+    [Fact]
     public void LineHeightFollowsTheMetrics()
     {
         var document = Blank();
