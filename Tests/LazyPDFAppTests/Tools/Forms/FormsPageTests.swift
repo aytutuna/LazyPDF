@@ -19,7 +19,7 @@ final class FormsFillOnThePageTests: XCTestCase {
         rig.tap(rig.centre("agree"))
 
         XCTAssertEqual(rig.form.find("agree")?.isChecked, false)
-        XCTAssertEqual(rig.tab.session.undoLabel, "Fill form field")
+        XCTAssertEqual(rig.tab.session.undoLabel, "Fill form")
     }
 
     func test_aTapOnARadioButtonChoosesItAndTheGroupFollows() async throws {
@@ -99,7 +99,7 @@ final class FormsFillOnThePageTests: XCTestCase {
 
         XCTAssertEqual(rig.form.find("name")?.value, "Ada")
         XCTAssertEqual(rig.field("name")?.text, "Ada")
-        XCTAssertEqual(rig.tab.session.undoLabel, "Fill form field")
+        XCTAssertEqual(rig.tab.session.undoLabel, "Fill form")
     }
 
     func test_aFlagsValueBeyondTheRangeOfAnIntegerDoesNotStopTheFieldsShowing() async throws {

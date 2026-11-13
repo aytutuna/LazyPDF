@@ -2344,8 +2344,8 @@
   <data name="Fill and sign" xml:space="preserve">
     <value>Doldur ve imzala</value>
   </data>
-  <data name="Fill form field" xml:space="preserve">
-    <value>Form alanını doldur</value>
+  <data name="Fill form" xml:space="preserve">
+    <value>Formu doldur</value>
   </data>
   <data name="Fill in" xml:space="preserve">
     <value>Doldur</value>
