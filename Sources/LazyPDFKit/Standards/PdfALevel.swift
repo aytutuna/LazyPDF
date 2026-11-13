@@ -93,4 +93,12 @@ public enum PdfAValidator {
         checker.run()
         return checker.report()
     }
+
+    /// The level A rules of the logical structure that the file breaks; empty for the levels that need no tags.
+    public static func taggingIssues(_ document: PdfDocument, _ level: PdfALevel) -> [PdfAIssue] {
+        if !level.needsTags() { return [] }
+        let checker = PdfAChecker(document, level)
+        checker.run()
+        return checker.structureIssues
+    }
 }

@@ -66,4 +66,13 @@ public static class PdfAValidator
         checker.Run();
         return checker.Report();
     }
+
+    /// <summary>The level A rules of the logical structure that the file breaks; empty for the levels that need no tags.</summary>
+    public static IReadOnlyList<PdfAIssue> TaggingIssues(PdfDocument document, PdfALevel level)
+    {
+        if (!level.NeedsTags()) return [];
+        var checker = new PdfAChecker(document, level);
+        checker.Run();
+        return checker.StructureIssues;
+    }
 }

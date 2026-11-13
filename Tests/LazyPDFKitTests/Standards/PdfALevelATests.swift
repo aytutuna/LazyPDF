@@ -34,6 +34,15 @@ final class PdfALevelATests: XCTestCase {
         StandardsKit.assertContains(try StandardsKit.clauses(StandardsKit.compliant(.a2a), .a2a), "6.7.2")
     }
 
+    func test_taggingIssuesNameTheStructureRulesOnlyAtLevelA() throws {
+        for level in levels {
+            let found = PdfAValidator.taggingIssues(try PdfDocument.open(StandardsKit.compliant(level)), level)
+            StandardsKit.assertHas(found) { $0.message == PdfAText.noStructTree }
+            XCTAssertTrue(PdfAValidator.taggingIssues(try PdfDocument.open(StandardsKit.tagged(level)), level).isEmpty)
+        }
+        XCTAssertTrue(PdfAValidator.taggingIssues(try PdfDocument.open(StandardsKit.compliant(.a2b)), .a2b).isEmpty)
+    }
+
     func test_levelBAndUFilesAreNotHeldToTheStructureRules() throws {
         try StandardsKit.assertClean(StandardsKit.compliant(.a2b), .a2b)
         try StandardsKit.assertClean(StandardsKit.compliant(.a2u), .a2u)
