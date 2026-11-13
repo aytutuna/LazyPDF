@@ -51,6 +51,13 @@ public sealed class StatusLineTests
     }
 
     [Fact]
+    public void ZoomIsBlankForATabThatFitsTheWindow()
+    {
+        Assert.Equal("", MainWindow.ZoomReadout(0));
+        Assert.Equal("150 %", MainWindow.ZoomReadout(1.5));
+    }
+
+    [Fact]
     public void InchesUseTheDecimalCommaOfTheCulture()
     {
         var saved = CultureInfo.CurrentCulture;

@@ -82,6 +82,9 @@ public partial class MainWindow : Window
             ? Loc.T("Page {0} of {1}", index + 1, count)
             : Loc.T("Page {0} ({1} of {2})", label, index + 1, count);
 
+    // A tab that is not shown keeps 0 while it fits the width or page; there is no number to give.
+    internal static string ZoomReadout(double zoom) => zoom > 0 ? Loc.T("{0} %", Math.Round(zoom * 100)) : "";
+
     internal static string SizeReadout(double widthPt, double heightPt, bool metric) => metric
         ? Loc.T("{0} × {1} mm", Math.Round(widthPt * 25.4 / 72), Math.Round(heightPt * 25.4 / 72))
         : Loc.T("{0} × {1} in", Math.Round(widthPt / 72, 1), Math.Round(heightPt / 72, 1));
@@ -282,7 +285,7 @@ public partial class MainWindow : Window
         var size = new LazyPDF.Core.PageGeometry(tab.Document.Pages[index]);
         PageBoxText.Text = SizeReadout(size.Width, size.Height, System.Globalization.RegionInfo.CurrentRegion.IsMetric);
         double zoom = ReferenceEquals(_shownTab, tab) ? _viewer.Zoom : tab.Zoom;
-        ZoomText.Text = Loc.T("{0} %", Math.Round(zoom * 100));
+        ZoomText.Text = ZoomReadout(zoom);
         NameReadouts();
     }
 
