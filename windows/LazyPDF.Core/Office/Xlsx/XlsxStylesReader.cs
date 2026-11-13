@@ -141,7 +141,7 @@ internal static class XlsxStylesReader
         return XlsxParse.Double(e.Attribute("tint")) is { } tint && tint != 0 ? Tint(rgb.Value, Math.Max(-1, Math.Min(1, tint))) : rgb;
     }
 
-    /// <summary>Lightens or darkens a colour the way the file format defines tint: luminance in HLS space.</summary>
+    /// <summary>Lightens or darkens a color the way the file format defines tint: luminance in HLS space.</summary>
     private static int Tint(int rgb, double tint)
     {
         double r = (rgb >> 16 & 0xFF) / 255.0, g = (rgb >> 8 & 0xFF) / 255.0, b = (rgb & 0xFF) / 255.0;

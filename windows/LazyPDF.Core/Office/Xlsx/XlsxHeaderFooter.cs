@@ -9,7 +9,7 @@ internal sealed record HfRun(string Text, bool Bold, bool Italic);
 /// <summary>What the fields of a header or footer stand for.</summary>
 internal sealed record HfContext(int Page, int Pages, string Date, string Time, string File, string Sheet);
 
-/// <summary>Reads the &amp; codes of a header or footer string into its left, centre and right sections, each a list of lines of runs.</summary>
+/// <summary>Reads the &amp; codes of a header or footer string into its left, center and right sections, each a list of lines of runs.</summary>
 internal static class XlsxHeaderFooter
 {
     public const int MaxLines = 100;

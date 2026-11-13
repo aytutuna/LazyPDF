@@ -3,7 +3,7 @@ using System.Text;
 
 namespace LazyPDF.Core.Office;
 
-/// <summary>A cell value as text, and the colour the format asked for (0xRRGGBB), if any.</summary>
+/// <summary>A cell value as text, and the color the format asked for (0xRRGGBB), if any.</summary>
 internal readonly record struct FormatResult(string Text, int? Color);
 
 /// <summary>

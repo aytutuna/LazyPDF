@@ -45,13 +45,13 @@ internal enum XlsxVertical { Top, Center, Bottom, Justify, Distributed }
 
 internal enum XlsxCellKind { Blank, Number, Text, Bool, Error }
 
-/// <summary>A font as the styles part states it. <see cref="Color"/> is 0xRRGGBB, or null for the automatic colour.</summary>
+/// <summary>A font as the styles part states it. <see cref="Color"/> is 0xRRGGBB, or null for the automatic color.</summary>
 internal sealed record XlsxFont(string Name, double Size, bool Bold, bool Italic, bool Underline, bool Strike, int? Color);
 
-/// <summary>A fill: the colour of a solid fill (null for none); <see cref="Unsupported"/> when the file asks for a pattern or gradient, which is left out.</summary>
+/// <summary>A fill: the color of a solid fill (null for none); <see cref="Unsupported"/> when the file asks for a pattern or gradient, which is left out.</summary>
 internal sealed record XlsxFill(int? Color, bool Unsupported);
 
-/// <summary>One side of a border: the style name as the file writes it (thin, medium, dashed, ...) and the colour, null for automatic.</summary>
+/// <summary>One side of a border: the style name as the file writes it (thin, medium, dashed, ...) and the color, null for automatic.</summary>
 internal sealed record XlsxBorderEdge(string Style, int? Color);
 
 internal sealed record XlsxBorder(XlsxBorderEdge? Left, XlsxBorderEdge? Right, XlsxBorderEdge? Top, XlsxBorderEdge? Bottom);
@@ -61,7 +61,7 @@ internal sealed record XlsxXf(
     int Font, int Fill, int Border, int NumberFormatId, XlsxHorizontal Horizontal, XlsxVertical Vertical, bool Wrap, int Indent, bool Rotated);
 
 /// <summary>
-/// A cell with its text already formatted. <see cref="Color"/> is the colour the number format asked for. <see cref="RichFont"/> is
+/// A cell with its text already formatted. <see cref="Color"/> is the color the number format asked for. <see cref="RichFont"/> is
 /// the font of the first run of a rich text cell, which replaces the font of the format.
 /// </summary>
 internal sealed class XlsxCell

@@ -46,7 +46,7 @@ enum XlsxVertical: String { case top, center, bottom, justify, distributed }
 
 enum XlsxCellKind { case blank, number, text, bool, error }
 
-/// A font as the styles part states it. `color` is 0xRRGGBB, or nil for the automatic colour.
+/// A font as the styles part states it. `color` is 0xRRGGBB, or nil for the automatic color.
 struct XlsxFont: Equatable {
     let name: String
     let size: Double
@@ -57,13 +57,13 @@ struct XlsxFont: Equatable {
     let color: Int?
 }
 
-/// A fill: the colour of a solid fill (nil for none); `unsupported` when the file asks for a pattern or gradient, which is left out.
+/// A fill: the color of a solid fill (nil for none); `unsupported` when the file asks for a pattern or gradient, which is left out.
 struct XlsxFill {
     let color: Int?
     let unsupported: Bool
 }
 
-/// One side of a border: the style name as the file writes it (thin, medium, dashed, ...) and the colour, nil for automatic.
+/// One side of a border: the style name as the file writes it (thin, medium, dashed, ...) and the color, nil for automatic.
 struct XlsxBorderEdge {
     let style: String
     let color: Int?
@@ -89,7 +89,7 @@ struct XlsxXf {
     let rotated: Bool
 }
 
-/// A cell with its text already formatted. `color` is the colour the number format asked for. `richFont` is the font of the
+/// A cell with its text already formatted. `color` is the color the number format asked for. `richFont` is the font of the
 /// first run of a rich text cell, which replaces the font of the format.
 struct XlsxCell {
     let column: Int

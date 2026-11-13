@@ -137,7 +137,7 @@ enum XlsxStylesReader {
         return rgb
     }
 
-    /// Lightens or darkens a colour the way the file format defines tint: luminance in HLS space.
+    /// Lightens or darkens a color the way the file format defines tint: luminance in HLS space.
     private static func tint(_ rgb: Int, _ tint: Double) -> Int {
         var r = Double(rgb >> 16 & 0xFF) / 255.0, g = Double(rgb >> 8 & 0xFF) / 255.0, b = Double(rgb & 0xFF) / 255.0
         let maxC = max(r, max(g, b)), minC = min(r, min(g, b))

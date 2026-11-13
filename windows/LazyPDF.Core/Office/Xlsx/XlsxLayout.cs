@@ -766,7 +766,7 @@ internal sealed class XlsxLayout
             rightEdge = CellAt(plan, m.FirstRow, m.LastColumn) is { } r ? Border(r)?.Right : null;
             bottomEdge = CellAt(plan, m.LastRow, m.FirstColumn) is { } b ? Border(b)?.Bottom : null;
         }
-        // A neighbour only hides the shared edge when it is printed right beside this cell on the same page.
+        // A neighbor only hides the shared edge when it is printed right beside this cell on the same page.
         if (leftEdge is not null && item.Column > 0 && columns[item.Column - 1] == column - 1 && CellAt(plan, row, column - 1) is { } l && Border(l)?.Right is not null) leftEdge = null;
         if (topEdge is not null && item.Row > 0 && rows[item.Row - 1] == row - 1 && CellAt(plan, row - 1, column) is { } t && Border(t)?.Bottom is not null) topEdge = null;
         if (topEdge is not null) Edge(boxes, true, item.Y, item.X, right, topEdge);

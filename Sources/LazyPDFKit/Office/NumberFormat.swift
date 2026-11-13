@@ -2,7 +2,7 @@ import Foundation
 
 // Twin of windows/LazyPDF.Core/Office/Xlsx/NumberFormat.cs. Codes are read as UTF-16 units, as the C# reads chars.
 
-/// A cell value as text, and the colour the format asked for (0xRRGGBB), if any.
+/// A cell value as text, and the color the format asked for (0xRRGGBB), if any.
 struct FormatResult: Equatable {
     let text: String
     let color: Int?

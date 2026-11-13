@@ -19,7 +19,7 @@ struct HfContext {
     let sheet: String
 }
 
-/// Reads the & codes of a header or footer string into its left, centre and right sections, each a list of lines of runs.
+/// Reads the & codes of a header or footer string into its left, center and right sections, each a list of lines of runs.
 enum XlsxHeaderFooter {
     static let maxLines = 100
 

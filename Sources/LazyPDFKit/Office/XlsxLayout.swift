@@ -803,7 +803,7 @@ final class XlsxLayout {
             rightEdge = Self.cellAt(plan, m.firstRow, m.lastColumn).flatMap { borderOf($0)?.right }
             bottomEdge = Self.cellAt(plan, m.lastRow, m.firstColumn).flatMap { borderOf($0)?.bottom }
         }
-        // A neighbour only hides the shared edge when it is printed right beside this cell on the same page.
+        // A neighbor only hides the shared edge when it is printed right beside this cell on the same page.
         if leftEdge != nil, item.column > 0, columns[item.column - 1] == column - 1, let l = Self.cellAt(plan, row, column - 1), borderOf(l)?.right != nil { leftEdge = nil }
         if topEdge != nil, item.row > 0, rows[item.row - 1] == row - 1, let t = Self.cellAt(plan, row - 1, column), borderOf(t)?.bottom != nil { topEdge = nil }
         if let e = topEdge { edge(&boxes, true, item.y, item.x, right, e) }
