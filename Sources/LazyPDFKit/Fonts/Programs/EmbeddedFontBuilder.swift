@@ -48,6 +48,10 @@ public struct EmbeddedFont {
     public let codes: [Int: Int]
     /// Code points of the text the font has no glyph for; they encode as code 0 (.notdef).
     public let missing: [Int]
+    /// Glyph ID of the source font to character code, for text that was shaped into glyphs.
+    public let glyphCodes: [Int: Int]
+    /// Character code to the text it stands for, for the /ToUnicode CMap. One glyph may stand for several code points.
+    public let unicodeOfCode: [Int: String]
 
     /// The string as two-byte codes for a show-text operator.
     public func encode(_ text: String) -> [UInt8] {
@@ -74,10 +78,10 @@ public enum EmbeddedFontBuilder {
     /// TrueType fonts are cut down to the glyphs of `texts` (TrueTypeSubsetter), codes are the new glyph IDs.
     /// A TrueType font whose OS/2 forbids subsetting, and any OpenType font with CFF outlines, is embedded whole
     /// with the glyph ID as code; there is no CFF subsetter. A font that forbids embedding is refused.
+    /// Each character gets the glyph the cmap has for it; `buildGlyphs` takes glyphs a shaper chose.
     public static func build(_ font: [UInt8], _ texts: [String], _ collectionIndex: Int = 0) -> (font: EmbeddedFont?, status: EmbedStatus) {
-        guard let f = TrueTypeFont.tryParse(font, collectionIndex) else { return (nil, .unreadable) }
-        if !f.hasOutlines { return (nil, .noOutlines) }
-        if !f.embeddingAllowed { return (nil, .embeddingForbidden) }
+        let (opened, status) = open(font, collectionIndex)
+        guard let f = opened else { return (nil, status) }
 
         var glyphOf: [Int: Int] = [:]
         var missing: Set<Int> = []
@@ -95,43 +99,96 @@ public enum EmbeddedFontBuilder {
         }
         let codePoints = glyphOf.keys.sorted()
 
+        guard let parts = assemble(font, f, codePoints.map { glyphOf[$0] ?? 0 }, collectionIndex) else { return (nil, .unreadable) }
+        var codes: [Int: Int] = [:]
+        for (cp, gid) in glyphOf { codes[cp] = parts.glyphCodes[gid] ?? 0 }
+        var unicode: [Int: String] = [:]
+        for cp in codePoints.reversed() {
+            if let scalar = Unicode.Scalar(UInt32(truncatingIfNeeded: cp)), let code = codes[cp] { unicode[code] = String(scalar) }
+        }
+        return (finish(f, parts, codes, missing.sorted(), unicode), .ok)
+    }
+
+    /// Like `build` for glyphs a shaper chose. `unicodeOfGlyph` maps each glyph ID used to the text it stands for
+    /// (several code points for a ligature); `missing` are the code points that came out as .notdef. `codes` holds
+    /// the glyphs that stand for a single code point.
+    public static func buildGlyphs(_ font: [UInt8], _ unicodeOfGlyph: [Int: String], _ missing: [Int], _ collectionIndex: Int = 0)
+        -> (font: EmbeddedFont?, status: EmbedStatus) {
+        let (opened, status) = open(font, collectionIndex)
+        guard let f = opened else { return (nil, status) }
+
+        // The order only feeds the subset tag: the subsetter numbers glyphs by ID whatever the order.
+        let glyphs = unicodeOfGlyph.filter { $0.key > 0 && $0.key < f.glyphCount }.sorted { a, b in
+            let fa = a.value.unicodeScalars.first.map { Int($0.value) } ?? Int.max
+            let fb = b.value.unicodeScalars.first.map { Int($0.value) } ?? Int.max
+            return fa != fb ? fa < fb : a.key < b.key
+        }.map { $0.key }
+        guard let parts = assemble(font, f, glyphs, collectionIndex) else { return (nil, .unreadable) }
+        var codes: [Int: Int] = [:]
+        var unicode: [Int: String] = [:]
+        for gid in glyphs {
+            let text = unicodeOfGlyph[gid] ?? ""
+            let code = parts.glyphCodes[gid] ?? 0
+            unicode[code] = text
+            let scalars = text.unicodeScalars
+            if scalars.count == 1, let first = scalars.first { codes[Int(first.value)] = code }
+        }
+        return (finish(f, parts, codes, Set(missing).sorted(), unicode), .ok)
+    }
+
+    private static func open(_ font: [UInt8], _ collectionIndex: Int) -> (TrueTypeFont?, EmbedStatus) {
+        guard let f = TrueTypeFont.tryParse(font, collectionIndex) else { return (nil, .unreadable) }
+        if !f.hasOutlines { return (nil, .noOutlines) }
+        if !f.embeddingAllowed { return (nil, .embeddingForbidden) }
+        return (f, .ok)
+    }
+
+    private struct Parts {
+        let program: [UInt8]
+        let whole: Bool
+        let glyphCodes: [Int: Int]
+        let glyphs: [Int]
+    }
+
+    private static func assemble(_ font: [UInt8], _ f: TrueTypeFont, _ glyphs: [Int], _ collectionIndex: Int) -> Parts? {
         // A collection cannot be embedded as it is: its fonts share tables by offset.
         let whole = f.isCff || !f.subsettingAllowed
-        if whole && Array(font.prefix(4)) == Array("ttcf".utf8) { return (nil, .unreadable) }
+        if whole && Array(font.prefix(4)) == Array("ttcf".utf8) { return nil }
 
         let program: [UInt8]
-        var codes: [Int: Int] = [:]
+        var codeOf: [Int: Int] = [:]
         if whole {
             program = font
             // 9.7.4.2: the code of a CIDFontType0 is a CID, which a CID-keyed font maps through its charset.
-            for (cp, gid) in glyphOf { codes[cp] = f.cff?.cidForGlyph(gid) ?? gid }
+            for gid in glyphs { codeOf[gid] = f.cff?.cidForGlyph(gid) ?? gid }
         } else {
-            let result = TrueTypeSubsetter.subset(font, Set(glyphOf.values), collectionIndex)
-            if result.status != .ok { return (nil, .unreadable) }
+            let result = TrueTypeSubsetter.subset(font, Set(glyphs), collectionIndex)
+            if result.status != .ok { return nil }
             program = result.data
-            for (cp, gid) in glyphOf { codes[cp] = result.glyphMap[gid] ?? 0 }
+            for gid in glyphs { codeOf[gid] = result.glyphMap[gid] ?? 0 }
         }
+        return Parts(program: program, whole: whole, glyphCodes: codeOf, glyphs: glyphs)
+    }
 
+    private static func finish(_ f: TrueTypeFont, _ parts: Parts, _ codes: [Int: Int], _ missing: [Int], _ unicode: [Int: String]) -> EmbeddedFont {
         var widths: [Int: Int] = [:]
-        for cp in codePoints {
-            guard let code = codes[cp], let gid = glyphOf[cp] else { continue }
-            widths[code] = scale(Double(f.getAdvance(gid)), f.unitsPerEm)
-        }
+        for (gid, code) in parts.glyphCodes { widths[code] = scale(Double(f.getAdvance(gid)), f.unitsPerEm) }
 
         // CID 0 has no glyph of the text, but Width measures a missing character by the .notdef advance.
         if !missing.isEmpty { widths[0] = scale(Double(f.getAdvance(0)), f.unitsPerEm) }
 
-        let built = EmbeddedFont(
-            baseFont: baseFontName(f, !whole, codePoints.map { glyphOf[$0] ?? 0 }),
+        return EmbeddedFont(
+            baseFont: baseFontName(f, !parts.whole, parts.glyphs),
             isCff: f.isCff,
-            isSubset: !whole,
-            program: program,
+            isSubset: !parts.whole,
+            program: parts.program,
             defaultWidth: 1000,
             widths: runs(widths),
             descriptor: describe(f),
             codes: codes,
-            missing: missing.sorted())
-        return (built, .ok)
+            missing: missing,
+            glyphCodes: parts.glyphCodes,
+            unicodeOfCode: unicode)
     }
 
     private static func scale(_ units: Double, _ unitsPerEm: Int) -> Int {

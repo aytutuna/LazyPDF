@@ -176,6 +176,75 @@ public final class ContentWriter {
     @discardableResult
     public func show(_ encoded: [UInt8]) -> ContentWriter { op("Tj", [PdfString(bytes: encoded, isHex: true)]) }
 
+    /// Shows the line of text in `font` set in `size`, in display order. A shaper's offsets and advances that differ from
+    /// the font's become `TJ` adjustments and `Ts` rises; a line whose glyphs do not map one to one to its characters is
+    /// wrapped in marked content with /ActualText, so that copying gives the logical text.
+    @discardableResult
+    public func show(_ font: PdfDrawFont, _ text: String, _ size: Double) -> ContentWriter {
+        show(font, font.shaped(text), text, size)
+    }
+
+    /// Shows a run whose direction the layout has already resolved.
+    @discardableResult
+    func showRun(_ font: PdfDrawFont, _ text: String, _ rightToLeft: Bool, _ size: Double) -> ContentWriter {
+        show(font, font.run(text, rightToLeft), text, size)
+    }
+
+    private func show(_ font: PdfDrawFont, _ line: ShapedLine?, _ text: String, _ size: Double) -> ContentWriter {
+        guard let line else { return show(font.encode(text)) }
+        if line.needsActualText {
+            var bytes: [UInt8] = [0xFE, 0xFF]
+            for unit in line.actualText.utf16 {
+                bytes.append(UInt8(truncatingIfNeeded: unit >> 8))
+                bytes.append(UInt8(truncatingIfNeeded: unit))
+            }
+            let properties = PdfDictionary()
+            properties["ActualText"] = PdfString(bytes: bytes, isHex: true)
+            op("BDC", [PdfName("Span"), properties])
+        }
+
+        var items: [PdfObject] = []
+        var codes: [UInt8] = []
+        var adjusted = false
+        var carry = 0.0, rise = 0.0
+        func rounded(_ value: Double) -> Double { (value * 1000).rounded(.toNearestOrEven) / 1000 }
+        func adjust() {
+            carry = rounded(carry)
+            if carry == 0 { return }
+            if !codes.isEmpty { items.append(PdfString(bytes: codes, isHex: true)) }
+            codes.removeAll()
+            items.append(PdfNumber(carry))
+            carry = 0
+            adjusted = true
+        }
+        func closeShow() {
+            if !codes.isEmpty { items.append(PdfString(bytes: codes, isHex: true)) }
+            codes.removeAll()
+            if !items.isEmpty { op(adjusted ? "TJ" : "Tj", [adjusted ? PdfArray(items) : items[0]]) }
+            items = []
+            adjusted = false
+        }
+
+        for entry in line.glyphs {
+            let glyph = entry.shaped
+            let lift = rounded(glyph.yOffset * size / 1000)
+            if lift != rise {
+                closeShow()
+                op("Ts", lift)
+                rise = lift
+            }
+            // A TJ number moves the pen left by that much, so the glyph is drawn after -xOffset and the pen then put where the shaper wants it.
+            carry -= glyph.xOffset
+            adjust()
+            codes.append(contentsOf: font.codeOf(line, entry))
+            let drift = font.codeWidth(glyph.glyph) - glyph.advance
+            carry += glyph.xOffset + (abs(drift) > 0.5 ? drift : 0)
+        }
+        closeShow()
+        if rise != 0 { op("Ts", 0) }
+        return line.needsActualText ? endMarked() : self
+    }
+
     /// Paints the /XObject resource `name`.
     @discardableResult
     public func paint(_ name: String) -> ContentWriter { op("Do", [PdfName(name)]) }
