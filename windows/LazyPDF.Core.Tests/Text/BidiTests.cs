@@ -7,10 +7,16 @@ public class BidiTests
 {
     // Tests/Fixtures/golden/bidi/bidi-character.txt, lines of the Unicode conformance file; the Swift suite reads the same file.
     [Fact]
-    public void CuratedConformanceLinesPass()
+    public void CuratedConformanceLinesPass() => Assert.True(CheckLines("bidi-character.txt") >= 250);
+
+    // Depth overflow (X5a to X7) and L1 with a paragraph separator and a tab, which the conformance file does not reach.
+    [Fact]
+    public void OverflowAndLineEndLinesPass() => Assert.Equal(5, CheckLines("bidi-overflow.txt"));
+
+    private static int CheckLines(string file)
     {
         int checkedLines = 0;
-        foreach (string line in Golden.Input("bidi", "bidi-character.txt").Split('\n'))
+        foreach (string line in Golden.Input("bidi", file).Split('\n'))
         {
             if (line.Length == 0 || line[0] == '#') continue;
             string[] f = line.Split(';');
@@ -36,7 +42,7 @@ public class BidiTests
             Assert.True(f[4] == order, $"{line}\norder {order}");
             checkedLines++;
         }
-        Assert.True(checkedLines >= 250);
+        return checkedLines;
     }
 
     private static string Visual(string text, int baseLevel = BidiParagraph.Auto)

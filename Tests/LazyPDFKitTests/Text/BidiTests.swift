@@ -6,8 +6,17 @@ import XCTest
 final class BidiTests: XCTestCase {
     // Tests/Fixtures/golden/bidi/bidi-character.txt, lines of the Unicode conformance file; the C# suite reads the same file.
     func testCuratedConformanceLinesPass() throws {
+        XCTAssertGreaterThanOrEqual(try checkLines("bidi-character.txt"), 250)
+    }
+
+    // Depth overflow (X5a to X7) and L1 with a paragraph separator and a tab, which the conformance file does not reach.
+    func testOverflowAndLineEndLinesPass() throws {
+        XCTAssertEqual(try checkLines("bidi-overflow.txt"), 5)
+    }
+
+    private func checkLines(_ file: String) throws -> Int {
         var checkedLines = 0
-        for line in try Golden.input("bidi", "bidi-character.txt").split(separator: "\n", omittingEmptySubsequences: true) {
+        for line in try Golden.input("bidi", file).split(separator: "\n", omittingEmptySubsequences: true) {
             if line.hasPrefix("#") { continue }
             let f = line.split(separator: ";", omittingEmptySubsequences: false).map(String.init)
             let cps = f[0].split(separator: " ").map { Int($0, radix: 16)! }
@@ -34,7 +43,7 @@ final class BidiTests: XCTestCase {
             XCTAssertEqual(f[4], order, String(line))
             checkedLines += 1
         }
-        XCTAssertGreaterThanOrEqual(checkedLines, 250)
+        return checkedLines
     }
 
     private func visual(_ text: String, _ baseLevel: Int = BidiParagraph.auto) -> String {
