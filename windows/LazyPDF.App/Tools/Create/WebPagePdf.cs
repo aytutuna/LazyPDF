@@ -80,7 +80,7 @@ internal static class WebPagePdf
         }
         catch (OperationCanceledException) when (!cancel.IsCancellationRequested)
         {
-            throw new IOException("The page took too long.");
+            throw new WebPageException(WebPageProblem.TimedOut);
         }
         catch (Exception e) when (e is COMException or InvalidOperationException or ArgumentException)
         {

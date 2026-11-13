@@ -21,7 +21,8 @@ public sealed record CreateRequest(CreateSource Source, PdfPageSetup Setup, stri
 /// <param name="Unreadable">Pictures that could not be read, or letters the font lacks.</param>
 /// <param name="Skipped">Pictures or picture frames too large to decode.</param>
 /// <param name="Features">What an Office file had that the converter left out.</param>
-public sealed record MadePdf(byte[] Bytes, int Pages, int Unreadable, int Skipped = 0, IReadOnlyList<SkippedFeature>? Features = null);
+/// <param name="LeftOutRemote">A web page named parts from the internet that were left out.</param>
+public sealed record MadePdf(byte[] Bytes, int Pages, int Unreadable, int Skipped = 0, IReadOnlyList<SkippedFeature>? Features = null, bool LeftOutRemote = false);
 
 public static class PdfMaker
 {
@@ -34,8 +35,13 @@ public static class PdfMaker
     /// <summary>A web page file, drawn by the web view on the window thread; the one source that cannot go through <see cref="Make"/>.</summary>
     public static async Task<MadePdf> MakeWebPageAsync(CreateRequest request, CancellationToken cancel)
     {
-        var bytes = await WebPagePdf.RenderAsync(request.Files![0], request.Setup, cancel);
-        return new MadePdf(bytes, PdfDocument.Open(bytes).Pages.Count, 0);
+        string file = request.Files![0];
+        if (new FileInfo(file).Length > WebPageRules.MostBytes) throw new WebPageException(WebPageProblem.TooBig);
+        bool remote = await Task.Run(() => WebPageRules.NamesRemoteParts(TextFiles.Decode(File.ReadAllBytes(file))), cancel).WaitAsync(cancel);
+        var bytes = await WebPagePdf.RenderAsync(file, request.Setup, cancel);
+        int pages = PdfDocument.Open(bytes).Pages.Count;
+        if (pages > WebPageRules.MostPages) throw new WebPageException(WebPageProblem.TooLong);
+        return new MadePdf(bytes, pages, 0, LeftOutRemote: remote);
     }
 
     public static MadePdf Make(CreateRequest request, IImageCodec codec, IFontSource fonts, CancellationToken cancel = default)

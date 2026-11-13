@@ -110,6 +110,65 @@ public sealed class WebPageRulesTests
     }
 
     [Fact]
+    public void AReadErrorOfTheViewResultIsAWebPageProblemNotAWordOne()
+    {
+        var problem = CreateProblems.Failed(new PdfReadException(PdfReadProblem.Damaged, "bad"), WebRequest);
+
+        Assert.Equal("Web page cannot be drawn", problem.Title);
+    }
+
+    [Theory]
+    [InlineData(WebPageProblem.TooBig, "Page is too big")]
+    [InlineData(WebPageProblem.TimedOut, "Page took too long")]
+    [InlineData(WebPageProblem.TooLong, "Page is too long")]
+    public void ALimitHasItsOwnProblem(WebPageProblem which, string title) =>
+        Assert.Equal(title, CreateProblems.Failed(new WebPageException(which), WebRequest).Title);
+
+    [Fact]
+    public async Task AFileOverTheLimitIsRefusedBeforeTheViewSeesIt()
+    {
+        string file = Path.Combine(Path.GetTempPath(), "lazypdf-" + Guid.NewGuid().ToString("N") + ".html");
+        try
+        {
+            using (var stream = File.Create(file)) stream.SetLength(WebPageRules.MostBytes + 1);
+
+            var error = await Assert.ThrowsAsync<WebPageException>(() => PdfMaker.MakeWebPageAsync(WebRequest with { Files = [file] }, CancellationToken.None));
+
+            Assert.Equal(WebPageProblem.TooBig, error.Problem);
+        }
+        finally
+        {
+            File.Delete(file);
+        }
+    }
+
+    [Theory]
+    [InlineData("<img src=\"https://a.example/p.png\">", true)]
+    [InlineData("<IMG SRC='//a.example/p.png'>", true)]
+    [InlineData("<link rel=\"stylesheet\" href=\"http://a.example/s.css\">", true)]
+    [InlineData("<style>body { background: url(https://a.example/b.png) }</style>", true)]
+    [InlineData("<style>@import \"https://a.example/s.css\";</style>", true)]
+    [InlineData("<script src=https://a.example/s.js></script>", true)]
+    [InlineData("<img alt=\"a\" class=b SRC = \" HTTPS://a.example/p.png\">", true)]
+    [InlineData("<a href=\"https://a.example/\">link</a>", false)]
+    [InlineData("<img src=\"pic.png\">", false)]
+    [InlineData("<p>see https://a.example/p.png</p>", false)]
+    [InlineData("<img alt=\"x\"><p data-src=\"//a.example/\">", false)]
+    [InlineData("<img xsrc=\"//a.example/p.png\">", false)]
+    [InlineData("", false)]
+    public void PartsFromTheInternetAreSpottedButLinksAreNot(string html, bool expected) => Assert.Equal(expected, WebPageRules.NamesRemoteParts(html));
+
+    [Fact]
+    public void AFileOfTagStartsIsReadInShortOrder()
+    {
+        string html = string.Concat(Enumerable.Repeat("<img ", 20_000)) + new string('x', 100_000) + "url(" + new string(' ', 100_000);
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+
+        Assert.False(WebPageRules.NamesRemoteParts(html));
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
     public Task AWebPageDroppedOnThePanelIsTheSourceAndNamesTheResult() => Sta.Run(() =>
     {
         var panel = new CreatePanel();
