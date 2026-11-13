@@ -273,17 +273,16 @@ public final class MeasureModel: ToolPanelModel {
                               place: L10n.t("Page {0}", viewer?.pageLabel(item.page) ?? String(item.page + 1)),
                               removeName: L10n.t("Remove {0}", item.title))
         }
+        tab?.pendingMeasurements = waiting.items.count
         redraw()
         showReadout()
     }
 
     // Marks that wait in the list go into the file before a save, an undo or a close, as Add to page does.
-    // A file that cannot take marks keeps them waiting.
+    // A file that cannot take marks, or is signed, keeps them waiting; the close question still names them.
     public func handIn() -> Bool {
-        guard let tab, let host, !waiting.items.isEmpty, CommentExchange.canComment(tab.document) else { return true }
-        if MarkWork.cautioned(tab, host, again: { [weak self] in
-            if let self, self.tab === tab { _ = self.write(tab, host) }
-        }) { return false }
+        guard let tab, let host, !waiting.items.isEmpty, CommentExchange.canComment(tab.document),
+              MarkWork.caution(tab.document) == nil else { return true }
         return write(tab, host)
     }
 

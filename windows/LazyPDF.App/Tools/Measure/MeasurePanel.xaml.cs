@@ -132,14 +132,11 @@ public partial class MeasurePanel : ToolPanel
     }
 
     // Marks that wait in the list go into the file before a save, an undo or a close, as Add to page does.
-    // A file that cannot take marks keeps them waiting; the close question still names them.
+    // A file that cannot take marks, or is signed, keeps them waiting; the close question still names them.
+    // They are readings the user may never add, so a signed file must not hold the window back with its caution.
     public override bool HandIn()
     {
-        if (Tab is not { } tab || _waiting.Count == 0 || !Exchange.CanComment(tab.Document)) return true;
-        if (MarkWork.Cautioned(tab, Host!, () =>
-            {
-                if (ReferenceEquals(Tab, tab)) Add(tab);
-            })) return false;
+        if (Tab is not { } tab || _waiting.Count == 0 || !Exchange.CanComment(tab.Document) || MarkWork.Caution(tab.Document) is not null) return true;
         return Add(tab);
     }
 

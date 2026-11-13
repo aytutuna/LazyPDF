@@ -380,7 +380,7 @@ extension AppViewModel {
     public func requestClose(_ tab: DocumentTab) -> Bool {
         if waitForJob() { return false }
         if tab === activeDocument && !handIn() { return false }
-        if !tab.isDirty && tab.pendingMarks == 0 {
+        if !tab.isDirty && !tab.hasUnappliedWork {
             close(tab)
             return true
         }
@@ -455,7 +455,7 @@ extension AppViewModel {
     }
 
     private func continueExit(raise: Bool) -> Bool {
-        if let dirty = documents.first(where: { $0.isDirty || $0.pendingMarks > 0 }) {
+        if let dirty = documents.first(where: { $0.isDirty || $0.hasUnappliedWork }) {
             select(dirty)
             closeQuestion = dirty
             notifyAll()
