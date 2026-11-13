@@ -340,3 +340,29 @@ p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
 p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
   run Calibri 11.00 000000 "empty theme "
   run Arial 14.00 000000 "אבג"
+> section direction puts the gutter on the right
+section 612.00 792.00 72.00 72.00 72.00 90.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "left to right"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+section 612.00 792.00 72.00 90.00 72.00 72.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "right to left"
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 ""
+section 612.00 792.00 72.00 72.00 72.00 90.00 36.00 36.00
+p left 0.00 0.00 0.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "switched off"
+> list level direction
+section 612.00 792.00 72.00 72.00 72.00 72.00 36.00 36.00
+p right 36.00 0.00 -18.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "1.\tאבג"
+p left 36.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "2.\town direction wins"
+p left 72.00 0.00 -18.00 0.00 0.00 1.00 multiple
+  run Times_New_Roman 10.00 000000 "a)\tleft to right level"
+p right 72.00 0.00 -18.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "b)\tדהו"
+p right 50.00 0.00 -10.00 0.00 0.00 1.00 multiple rtl
+  run Times_New_Roman 10.00 000000 "-\tזחט"

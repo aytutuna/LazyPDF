@@ -218,3 +218,23 @@
 <w:p><w:r><w:rPr><w:cs/></w:rPr><w:t>abc</w:t></w:r></w:p>
 <w:p><w:r><w:rPr><w:rFonts w:cstheme="majorBidi"/></w:rPr><w:t>theme אבג</w:t></w:r></w:p>
 <w:p><w:r><w:rPr><w:rFonts w:cstheme="minorBidi"/></w:rPr><w:t>empty theme אבג</w:t></w:r></w:p>
+> section direction puts the gutter on the right
+@document
+<w:p><w:r><w:t>left to right</w:t></w:r></w:p>
+<w:p><w:pPr><w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="360"/></w:sectPr></w:pPr></w:p>
+<w:p><w:r><w:t>right to left</w:t></w:r></w:p>
+<w:p><w:pPr><w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="360"/><w:bidi/></w:sectPr></w:pPr></w:p>
+<w:p><w:r><w:t>switched off</w:t></w:r></w:p>
+<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="360"/><w:bidi w:val="0"/></w:sectPr>
+> list level direction
+@numbering
+<w:abstractNum w:abstractNumId="0"><w:lvl w:ilvl="0"><w:start w:val="1"/><w:numFmt w:val="decimal"/><w:lvlText w:val="%1."/><w:pPr><w:bidi/><w:ind w:left="720" w:hanging="360"/></w:pPr></w:lvl><w:lvl w:ilvl="1"><w:start w:val="1"/><w:numFmt w:val="lowerLetter"/><w:lvlText w:val="%2)"/><w:pPr><w:ind w:left="1440" w:hanging="360"/></w:pPr></w:lvl></w:abstractNum>
+<w:abstractNum w:abstractNumId="1"><w:lvl w:ilvl="0"><w:numFmt w:val="bullet"/><w:lvlText w:val="-"/><w:pPr><w:ind w:left="720" w:hanging="360"/></w:pPr></w:lvl></w:abstractNum>
+<w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num>
+<w:num w:numId="2"><w:abstractNumId w:val="1"/></w:num>
+@document
+<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>אבג</w:t></w:r></w:p>
+<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr><w:bidi w:val="0"/></w:pPr><w:r><w:t>own direction wins</w:t></w:r></w:p>
+<w:p><w:pPr><w:numPr><w:ilvl w:val="1"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>left to right level</w:t></w:r></w:p>
+<w:p><w:pPr><w:numPr><w:ilvl w:val="1"/><w:numId w:val="1"/></w:numPr><w:bidi/><w:jc w:val="left"/></w:pPr><w:r><w:t>דהו</w:t></w:r></w:p>
+<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="2"/></w:numPr><w:bidi/><w:ind w:left="1000" w:hanging="200"/></w:pPr><w:r><w:t>זחט</w:t></w:r></w:p>
