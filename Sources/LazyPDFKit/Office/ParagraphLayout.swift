@@ -19,6 +19,10 @@ final class Atom {
     var extra = 0.0
     /// An explicit stop this tab runs to when the text is before it.
     var stop: Double?
+    /// The bidi embedding level; odd is right to left. Set only for a paragraph that needs the algorithm.
+    var level = 0
+    /// Where the atom starts in the text the bidi algorithm ran on.
+    var unit = 0
 
     init(code: Int, run: LayoutRun, face: FontFace, size: Double) {
         self.code = code
@@ -34,7 +38,11 @@ final class Atom {
 
     var isTab: Bool { code == 0x09 }
     var isNewline: Bool { code == 0x0A }
-    var isZeroWidth: Bool { code == 0x200B }
+    var isZeroWidth: Bool { code == 0x200B || Scripts.isBidiControl(code) }
+    var isRightToLeft: Bool { level & 1 == 1 }
+    /// The left edge of the room the atom takes: justification adds its gap before a right-to-left atom.
+    var boxLeft: Double { isRightToLeft ? x - extra : x }
+    var boxRight: Double { isRightToLeft ? x + width : x + width + extra }
     /// Takes room (or none) but draws nothing.
     var isBlank: Bool { isSpace || isTab || isNewline || isZeroWidth }
 }
@@ -54,7 +62,6 @@ final class LayoutLine {
 final class ParagraphLines {
     let source: LayoutParagraph
     var lines: [LayoutLine] = []
-    var rightToLeft = false
     var complexScript = false
 
     init(_ source: LayoutParagraph) {
@@ -78,13 +85,16 @@ enum ParagraphLayout {
     /// `maxHeight` is the tallest a picture may be, so that one always fits a page.
     static func run(_ paragraph: LayoutParagraph, _ fonts: LayoutFonts, _ areaWidth: Double, _ maxHeight: Double, _ field: ((LayoutField) -> String)? = nil) throws -> ParagraphLines {
         let result = ParagraphLines(paragraph)
-        let atoms = try makeAtoms(paragraph, fonts, field, result)
+        var bidi = false
+        let atoms = try makeAtoms(paragraph, fonts, field, result, &bidi)
+        let order = bidi || paragraph.rightToLeft ? bidiText(atoms, paragraph) : nil
+        let align = paragraph.rightToLeft ? mirrored(paragraph.align) : paragraph.align
         if let labelTab = paragraph.labelTab, let labelAtom = atoms.first(where: { $0.isTab }) { labelAtom.stop = labelTab }
         let left = max(0, paragraph.left)
         let first = max(0, paragraph.left + paragraph.firstLine)
         let right = max(areaWidth - max(0, paragraph.right), max(left, first) + 1)
         fit(atoms, right - min(left, first), maxHeight, paragraph)
-        let justify = paragraph.align == .justify
+        let justify = align == .justify
 
         let breaks = LineBreaker.opportunities(atoms.map { $0.code })
         var line = LayoutLine(start: first)
@@ -100,7 +110,7 @@ enum ParagraphLayout {
             for k in i..<visible { reach += step(atoms[k], reach, left, right, place: false) }
             let tooWide = reach > right + tolerance
             if tooWide && !line.atoms.isEmpty {
-                try finish(result, line, right, justify: justify, paragraph, fonts)
+                try finish(result, line, right, justify: justify, paragraph, align, order, areaWidth, fonts)
                 line = LayoutLine(start: left)
                 x = left
                 continue
@@ -109,7 +119,7 @@ enum ParagraphLayout {
                 let atom = atoms[k]
                 // A segment wider than the line is cut where it runs out.
                 if tooWide && k < visible && !line.atoms.isEmpty && x + step(atom, x, left, right, place: false) > right + tolerance {
-                    try finish(result, line, right, justify: justify, paragraph, fonts)
+                    try finish(result, line, right, justify: justify, paragraph, align, order, areaWidth, fonts)
                     line = LayoutLine(start: left)
                     x = left
                 }
@@ -118,13 +128,13 @@ enum ParagraphLayout {
                 line.atoms.append(atom)
             }
             if atoms[end - 1].isNewline {
-                try finish(result, line, right, justify: false, paragraph, fonts)
+                try finish(result, line, right, justify: false, paragraph, align, order, areaWidth, fonts)
                 line = LayoutLine(start: left)
                 x = left
             }
             i = end
         }
-        try finish(result, line, right, justify: false, paragraph, fonts)
+        try finish(result, line, right, justify: false, paragraph, align, order, areaWidth, fonts)
         return result
     }
 
@@ -151,7 +161,7 @@ enum ParagraphLayout {
         return width
     }
 
-    private static func makeAtoms(_ paragraph: LayoutParagraph, _ fonts: LayoutFonts, _ field: ((LayoutField) -> String)?, _ result: ParagraphLines) throws -> [Atom] {
+    private static func makeAtoms(_ paragraph: LayoutParagraph, _ fonts: LayoutFonts, _ field: ((LayoutField) -> String)?, _ result: ParagraphLines, _ bidi: inout Bool) throws -> [Atom] {
         var atoms: [Atom] = []
         for run in paragraph.runs {
             let face = try faceOf(run, fonts)
@@ -170,10 +180,8 @@ enum ParagraphLayout {
                 let code = Int(scalar.value)
                 if code == 0xAD || code == 0x200C || code == 0x200D || code == 0x2060 || code == 0xFEFF || code == objectCode || (code < 0x20 && code != 0x09 && code != 0x0A)
                     || (code >= 0x7F && code < 0xA0) { continue }
-                if (code >= 0x0590 && code <= 0x08FF) || (code >= 0xFB1D && code <= 0xFDFF) || (code >= 0xFE70 && code <= 0xFEFF)
-                    || (code >= 0x10800 && code <= 0x10FFF) || (code >= 0x1E800 && code <= 0x1EFFF) {
-                    result.rightToLeft = true
-                } else if (code >= 0x0900 && code <= 0x0EFF) || (code >= 0x0F00 && code <= 0x109F) || (code >= 0x1780 && code <= 0x17FF) {
+                bidi = bidi || run.rtl || Scripts.needsBidi(code)
+                if (code >= 0x0900 && code <= 0x0EFF) || (code >= 0x0F00 && code <= 0x109F) || (code >= 0x1780 && code <= 0x17FF) {
                     result.complexScript = true
                 }
                 let atom = Atom(code: code, run: run, face: face, size: runSize)
@@ -185,6 +193,36 @@ enum ParagraphLayout {
             }
         }
         return atoms
+    }
+
+    private static func mirrored(_ align: LayoutAlign) -> LayoutAlign {
+        switch align {
+        case .left: return .right
+        case .right: return .left
+        default: return align
+        }
+    }
+
+    // The text the bidi algorithm runs on: one character an atom (a tab and a line break are neutral), and a right-to-left run
+    // inside a left-to-right paragraph embedded, so that the neutral characters in it go with its direction.
+    private static func bidiText(_ atoms: [Atom], _ paragraph: LayoutParagraph) -> BidiParagraph {
+        var text = String.UnicodeScalarView()
+        var units = 0
+        var embedded = false
+        for atom in atoms {
+            let inside = atom.run.rtl && !paragraph.rightToLeft
+            if inside != embedded {
+                text.append(Unicode.Scalar(inside ? 0x202B : 0x202C)!)
+                units += 1
+                embedded = inside
+            }
+            atom.unit = units
+            let scalar = Unicode.Scalar(UInt32(atom.isNewline ? 0x20 : atom.code)) ?? Unicode.Scalar(0xFFFD)!
+            text.append(scalar)
+            units += atom.code > 0xFFFF ? 2 : 1
+        }
+        if embedded { text.append(Unicode.Scalar(0x202C)!) }
+        return BidiParagraph(String(text), baseLevel: paragraph.rightToLeft ? 1 : 0)
     }
 
     static func faceOf(_ run: LayoutRun, _ fonts: LayoutFonts) throws -> FontFace {
@@ -199,8 +237,9 @@ enum ParagraphLayout {
 
     static func size(_ run: LayoutRun) -> Double { run.size > 0 ? min(run.size, 1000) : 11 }
 
-    private static func finish(_ result: ParagraphLines, _ line: LayoutLine, _ right: Double, justify: Bool, _ paragraph: LayoutParagraph, _ fonts: LayoutFonts) throws {
-        align(line, right, paragraph.align, justify)
+    private static func finish(_ result: ParagraphLines, _ line: LayoutLine, _ right: Double, justify: Bool, _ paragraph: LayoutParagraph, _ align: LayoutAlign, _ bidi: BidiParagraph?, _ areaWidth: Double, _ fonts: LayoutFonts) throws {
+        self.align(line, right, align, justify)
+        if let bidi { reorder(line, bidi, paragraph.rightToLeft, areaWidth) }
         try measure(line, paragraph, fonts)
         result.lines.append(line)
     }
@@ -224,6 +263,48 @@ enum ParagraphLayout {
                     shift += extra
                 }
             }
+        }
+    }
+
+    // The atoms were placed in logical order from the start edge. Put them in display order (L2), left to right, from where the
+    // line starts: the left of the text area, or for a right-to-left paragraph the right edge, which the area width gives.
+    private static func reorder(_ line: LayoutLine, _ bidi: BidiParagraph, _ rightToLeft: Bool, _ areaWidth: Double) {
+        let atoms = line.atoms
+        guard let head = atoms.first, let tail = atoms.last else { return }
+        let first = head.unit
+        let end = tail.unit + (tail.code > 0xFFFF ? 2 : 1)
+        let levels = bidi.lineLevels(first, end)
+        for atom in atoms {
+            let l = levels[atom.unit - first]
+            atom.level = l >= 0 ? l : bidi.level
+        }
+
+        var visual = Array(0..<atoms.count)
+        let highest = atoms.map { $0.level }.max() ?? 0
+        let lowestOdd = atoms.filter { $0.isRightToLeft }.map { $0.level }.min() ?? Int.max
+        var level = highest
+        while level >= lowestOdd {
+            var i = 0
+            while i < visual.count {
+                if atoms[visual[i]].level < level {
+                    i += 1
+                    continue
+                }
+                var j = i
+                while j + 1 < visual.count && atoms[visual[j + 1]].level >= level { j += 1 }
+                visual[i...j].reverse()
+                i = j + 1
+            }
+            level -= 1
+        }
+
+        var total = 0.0
+        for a in atoms { total += a.width + a.extra }
+        var x = rightToLeft ? areaWidth - head.x - total : head.x
+        for k in visual {
+            let atom = atoms[k]
+            atom.x = x + (atom.isRightToLeft ? atom.extra : 0)
+            x += atom.width + atom.extra
         }
     }
 

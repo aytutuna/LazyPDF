@@ -31,6 +31,24 @@ enum OfficeLayoutSpec {
 
     static func fonts() -> FontSource { OfficeFontSource(installed: nil, bundled: BundledFonts()) }
 
+    /// The script font of the shaping golden for every family; each family gets a copy of its own, so that the layout keeps
+    /// the names apart.
+    final class ScriptFont: FontSource {
+        private let data = (try? ShapingGolden.font()) ?? []
+        private var files: [String: FontFile] = [:]
+
+        func find(_ family: String, _ style: FontStyles) -> FontFile? {
+            if let known = files[family] { return known }
+            var copy = data
+            copy.withUnsafeMutableBufferPointer { _ in }
+            let file = FontFile(copy)
+            files[family] = file
+            return file
+        }
+    }
+
+    static func scriptFonts() -> FontSource { OfficeFontSource(installed: nil, bundled: ScriptFont()) }
+
     static func read(_ input: String) throws -> [(name: String, document: LayoutDocument)] {
         var cases: [(name: String, document: LayoutDocument)] = []
         var document: LayoutDocument?
@@ -64,6 +82,7 @@ enum OfficeLayoutSpec {
             made.keepWithNext = p.keys["keep"] != nil
             made.pageBreakBefore = p.keys["break"] != nil
             made.widowControl = p.keys["nowidow"] == nil
+            made.rightToLeft = p.keys["rtl"] != nil
             if let cell {
                 cell.paragraphs.append(made)
             } else {
@@ -125,6 +144,7 @@ enum OfficeLayoutSpec {
                 run.color = k["color"].map { Int($0, radix: 16)! } ?? 0
                 run.highlight = k["hl"].map { Int($0, radix: 16)! }
                 run.shift = number(k, "shift")
+                run.rtl = k["rtl"] != nil
                 switch k["field"] {
                 case "page": run.field = .pageNumber
                 case "pages": run.field = .pageCount

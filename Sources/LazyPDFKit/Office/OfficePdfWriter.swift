@@ -34,7 +34,8 @@ enum OfficePdfWriter {
                     texts[key] = []
                     order.append(key)
                 }
-                texts[key]!.append(box.text)
+                // A mark in front makes the embedder collect the glyphs of the text as a right-to-left run, brackets mirrored.
+                texts[key]!.append(box.rightToLeft ? "\u{200F}" + box.text : box.text)
             }
         }
         var pictures: [ObjectIdentifier: PdfImage?] = [:]
@@ -117,7 +118,9 @@ enum OfficePdfWriter {
                 if names[key] == nil { names[key] = ContentResources.add(pdf, resources, "Font", font.reference, "F") }
                 setColor(text.color)
                 writer.beginText().font(names[key]!, round2(text.size)).moveText(round2(text.x), round2(layout.height - text.baseline))
-                if text.spaceExtra > 0 { justified(writer, font, text) } else { writer.show(font.encode(text.text)) }
+                if text.spaceExtra > 0 { justified(writer, font, text) }
+                else if text.rightToLeft { writer.showRun(font, text.text, true, round2(text.size)) }
+                else { writer.show(font.encode(text.text)) }
                 writer.endText()
             }
         }

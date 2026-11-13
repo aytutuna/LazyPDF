@@ -21,8 +21,9 @@ final class OfficeLayoutTests: XCTestCase {
         }
     }
 
-    private func dump(_ document: LayoutDocument) throws -> String {
-        let fonts = OfficeLayoutSpec.fonts()
+    private func dump(_ document: LayoutDocument) throws -> String { try dump(document, OfficeLayoutSpec.fonts()) }
+
+    func dump(_ document: LayoutDocument, _ fonts: FontSource) throws -> String {
         let layout = try Paginator(document, LayoutFonts(fonts)).run()
         var contents: [[UInt8]] = []
         _ = try OfficePdfWriter.create(document, fonts) { _, bytes in contents.append(bytes) }
@@ -33,7 +34,7 @@ final class OfficeLayoutTests: XCTestCase {
             for box in page.boxes {
                 switch box {
                 case .text(let t):
-                    output += "text \(num(t.x)) \(num(t.baseline)) \(t.family)/\(styleName(t.style)) \(num(t.size)) \(String(format: "%06x", t.color)) +\(num(t.spaceExtra)) \"\(OfficeLayoutSpec.escape(t.text))\"\n"
+                    output += "text \(num(t.x)) \(num(t.baseline)) \(t.family)/\(styleName(t.style)) \(num(t.size)) \(String(format: "%06x", t.color)) +\(num(t.spaceExtra))\(t.rightToLeft ? " rtl" : "") \"\(OfficeLayoutSpec.escape(t.text))\"\n"
                 case .image(let img):
                     output += "image \(num(img.x)) \(num(img.y)) \(num(img.width)) \(num(img.height))\n"
                 case .rect(let r):
@@ -57,6 +58,52 @@ final class OfficeLayoutTests: XCTestCase {
             output += "> \(name)\n" + (try dump(document))
         }
         try Golden.check("office-layout", "layout-output.txt", output)
+    }
+
+    func test_rightToLeftLayoutGoldenFile() throws {
+        var output = ""
+        for (name, document) in try OfficeLayoutSpec.read(try Golden.input("office-layout", "rtl-input.txt")) {
+            output += "> \(name)\n" + (try dump(document, OfficeLayoutSpec.scriptFonts()))
+        }
+        try Golden.check("office-layout", "rtl-output.txt", output)
+    }
+
+    private func rtlDocument(_ text: String, rtl: Bool, align: LayoutAlign = .left) -> LayoutDocument {
+        let made = paragraph(text, align: align)
+        made.rightToLeft = rtl
+        return single(LayoutGeometry(width: 200, height: 200, top: 20, right: 20, bottom: 20, left: 20), [made])
+    }
+
+    func test_aRightToLeftParagraphStartsAtTheRightEdgeAndItsLinesStaySortedByPlace() throws {
+        let fonts = LayoutFonts(OfficeLayoutSpec.scriptFonts())
+        let document = rtlDocument("אבג דהו זחט יכל מנס עפצ קרש תאב גדה וזח", rtl: true, align: .right)
+        let layout = try Paginator(document, fonts).run()
+        var texts: [PlacedText] = []
+        for case .text(let t) in layout.pages[0].boxes { texts.append(t) }
+        XCTAssertGreaterThan(texts.count, 1)
+        XCTAssertTrue(texts.allSatisfy { $0.rightToLeft })
+        let face = fonts.find(OfficeFontSource.defaultFamily, [])!
+        for baseline in Set(texts.map { $0.baseline }) {
+            let ends = texts.filter { $0.baseline == baseline }.map { t in t.x + t.text.unicodeScalars.reduce(0.0) { $0 + face.advance(Int($1.value)) } * t.size }
+            XCTAssertEqual(ends.max()!, 180, accuracy: 0.01)
+        }
+    }
+
+    func test_rightToLeftTextIsWrittenInDisplayOrderAndReadsBackInLogicalOrder() throws {
+        let text = "אבג abc דהו 12 זחט"
+        let made = try OfficePdfWriter.create(rtlDocument(text, rtl: true, align: .right), OfficeLayoutSpec.scriptFonts())
+        let pdf = try PdfDocument.open(made.bytes)
+        XCTAssertEqual(TextPage.create(pdf, pdf.pages[0]).text.replacingOccurrences(of: "\n", with: " "), text)
+        XCTAssertTrue(made.missing.isEmpty)
+    }
+
+    func test_aLeftToRightParagraphWithoutHebrewLaysOutAsBefore() throws {
+        let layout = try Paginator(rtlDocument("abc def", rtl: false), LayoutFonts(OfficeLayoutSpec.scriptFonts())).run()
+        var texts: [PlacedText] = []
+        for case .text(let t) in layout.pages[0].boxes { texts.append(t) }
+        XCTAssertEqual(texts.count, 1)
+        XCTAssertFalse(texts[0].rightToLeft)
+        XCTAssertEqual(texts[0].x, 20)
     }
 
     func test_tablesGoldenFile() throws {
@@ -216,7 +263,7 @@ final class OfficeLayoutTests: XCTestCase {
         let document = single(Self.small, [paragraph("abc שלום"), paragraph("السلام"), paragraph("नमस्ते"), paragraph("中")])
         document.skipped.append(SkippedFeature("charts", 1))
         let made = try OfficePdfWriter.create(document, OfficeLayoutSpec.fonts())
-        XCTAssertEqual(made.skipped, [SkippedFeature("charts", 1), SkippedFeature(SkippedKinds.rightToLeftText, 2), SkippedFeature(SkippedKinds.complexScript, 1)])
+        XCTAssertEqual(made.skipped, [SkippedFeature("charts", 1), SkippedFeature(SkippedKinds.complexScript, 1)])
         XCTAssertTrue(made.missing.contains(0x4E2D))
     }
 

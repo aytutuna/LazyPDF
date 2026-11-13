@@ -39,7 +39,7 @@ final class Paginator {
     private let document: LayoutDocument
     private let fonts: LayoutFonts
     var pages: [Page] = []
-    private var rightToLeft = 0, complex = 0
+    private var complex = 0
     // The body area of each kind of page of the section being laid out, and how many pages it has so far.
     private var areas = [(top: Double, bottom: Double)](repeating: (0, 0), count: 3)
     private var sectionPages = 0
@@ -78,7 +78,6 @@ final class Paginator {
             if let at = all.firstIndex(where: { $0.kind == kind }) { all[at].count += count } else { all.append(SkippedFeature(kind, count)) }
         }
         for s in document.skipped { add(s.kind, s.count) }
-        add(SkippedKinds.rightToLeftText, rightToLeft)
         add(SkippedKinds.complexScript, complex)
         return all
     }
@@ -97,7 +96,6 @@ final class Paginator {
     }
 
     private func tally(_ lines: ParagraphLines) {
-        if lines.rightToLeft { rightToLeft += 1 }
         if lines.complexScript { complex += 1 }
     }
 
@@ -283,25 +281,32 @@ final class Paginator {
                 continue
             }
             var to = from
-            while to + 1 <= ink && sameStyle(first, line.atoms[to + 1]) { to += 1 }
-            let last = line.atoms[to]
+            let odd = first.isRightToLeft
+            // Justification gaps sit inside a left-to-right piece as TJ adjustments; a right-to-left piece is cut after each gap.
+            while to + 1 <= ink && sameStyle(first, line.atoms[to + 1]) && !(odd && line.atoms[to].extra > 0) { to += 1 }
             var text = String.UnicodeScalarView()
-            var extra = 0.0
+            var extra = 0.0, left = Double.greatestFiniteMagnitude, boxLeft = Double.greatestFiniteMagnitude, boxRight = -Double.greatestFiniteMagnitude
             for k in from...to {
-                text.append(Unicode.Scalar(UInt32(line.atoms[k].code))!)
-                if line.atoms[k].extra > 0 { extra = line.atoms[k].extra }
+                let atom = line.atoms[k]
+                text.append(Unicode.Scalar(UInt32(atom.code))!)
+                if atom.extra > 0 && !odd { extra = atom.extra }
+                left = min(left, atom.x)
+                boxLeft = min(boxLeft, atom.boxLeft)
+                boxRight = max(boxRight, atom.boxRight)
             }
             let run = first.run
-            let x = originX + first.x, width = last.x + last.width + last.extra - first.x
+            let width = boxRight - boxLeft
+            let x = left + originX
+            boxLeft += originX
             let shift = run.shift, size = first.size, bar = size * 0.05
             if let highlight = run.highlight {
-                highlights.append(.rect(PlacedRect(x: x, y: baseline - shift - first.runFace.ascent * size, width: width,
+                highlights.append(.rect(PlacedRect(x: boxLeft, y: baseline - shift - first.runFace.ascent * size, width: width,
                                                    height: (first.runFace.ascent + first.runFace.descent) * size, color: highlight)))
             }
             texts.append(.text(PlacedText(x: x, baseline: baseline - shift, text: String(text), family: first.face.family, style: first.face.style,
-                                          size: size, color: run.color, spaceExtra: extra)))
-            if run.underline { over.append(.rect(PlacedRect(x: x, y: baseline - shift + size * 0.1, width: width, height: bar, color: run.color))) }
-            if run.strike { over.append(.rect(PlacedRect(x: x, y: baseline - shift - size * 0.3, width: width, height: bar, color: run.color))) }
+                                          size: size, color: run.color, spaceExtra: extra, rightToLeft: odd)))
+            if run.underline { over.append(.rect(PlacedRect(x: boxLeft, y: baseline - shift + size * 0.1, width: width, height: bar, color: run.color))) }
+            if run.strike { over.append(.rect(PlacedRect(x: boxLeft, y: baseline - shift - size * 0.3, width: width, height: bar, color: run.color))) }
             from = to + 1
         }
         boxes.append(contentsOf: highlights)
@@ -311,7 +316,7 @@ final class Paginator {
     }
 
     private static func sameStyle(_ a: Atom, _ b: Atom) -> Bool {
-        !b.isTab && !b.isNewline && !b.isZeroWidth && b.picture == nil && a.face === b.face && a.size == b.size && a.run.color == b.run.color
+        !b.isTab && !b.isNewline && !b.isZeroWidth && b.picture == nil && a.face === b.face && a.level == b.level && a.size == b.size && a.run.color == b.run.color
             && a.run.underline == b.run.underline && a.run.strike == b.run.strike && a.run.highlight == b.run.highlight && a.run.shift == b.run.shift
     }
 }

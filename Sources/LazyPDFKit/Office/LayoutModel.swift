@@ -29,7 +29,6 @@ public struct SkippedFeature: Equatable {
 }
 
 enum SkippedKinds {
-    static let rightToLeftText = "rtl-text"
     static let complexScript = "complex-script"
     static let unreadablePicture = "picture"
 }
@@ -55,6 +54,8 @@ final class LayoutRun {
     /// Points above the baseline; negative sinks the text. The size is already the reduced one.
     var shift = 0.0
     var field = LayoutField.none
+    /// The run is right to left: the characters in it that have no direction of their own go with the right-to-left text.
+    var rtl = false
     /// A picture in line with the text; then the text is empty and the font only sets the descent of the line.
     var picture: LayoutPicture?
 
@@ -111,6 +112,9 @@ final class LayoutParagraph: LayoutBlock {
     var widowControl = true
     /// A tab stop, from the text area, for the tab after a list number; that tab is the first one of the paragraph.
     var labelTab: Double?
+    /// The paragraph runs right to left. `left`, `right` and `firstLine` then count from the start (right) and end (left)
+    /// edges, while `align` stays physical.
+    var rightToLeft = false
 
     override init() {}
 }
@@ -223,7 +227,8 @@ final class LayoutDocument {
     init() {}
 }
 
-/// A piece of one line in one style. `spaceExtra` is added after every space (justified lines).
+/// A piece of one line in one style. `spaceExtra` is added after every space (justified lines). `rightToLeft`: the text
+/// is one right-to-left run in logical order, drawn from x to the right in display order.
 struct PlacedText {
     let x: Double
     let baseline: Double
@@ -233,6 +238,7 @@ struct PlacedText {
     let size: Double
     let color: Int
     let spaceExtra: Double
+    var rightToLeft = false
 }
 
 /// A picture with its top left corner at x, y. It is turned clockwise by `rotation` degrees about its center after it has

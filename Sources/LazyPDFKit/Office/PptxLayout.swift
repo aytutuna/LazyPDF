@@ -12,7 +12,7 @@ enum PptxLayout {
     /// Throws `PdfReadException` when the slides come to too many boxes.
     static func run(_ presentation: PptxPresentation, _ fonts: LayoutFonts) throws -> LayoutResult {
         var pages: [LayoutPage] = []
-        var rightToLeft = 0, complex = 0, total = 0
+        var complex = 0, total = 0
         for slide in presentation.slides {
             try Task.checkCancellation()
             var boxes: [LayoutBox] = []
@@ -33,12 +33,11 @@ enum PptxLayout {
                 for path in shape.paths { boxes.append(.path(path)) }
                 if let table = shape.table {
                     let lines = try TableLayout.measure(table.table, fonts, max(1, table.table.columns.reduce(0, +)), wide) { p in
-                        if p.rightToLeft { rightToLeft += 1 }
                         if p.complexScript { complex += 1 }
                     }
                     Paginator.emitTable(&boxes, lines, table.x, table.y)
                 }
-                if let body = shape.body { try text(shape, body, fonts, number, &boxes, &rightToLeft, &complex) }
+                if let body = shape.body { try text(shape, body, fonts, number, &boxes, &complex) }
                 if total + boxes.count > maxBoxes { throw PdfReadException(.unsupported, "The presentation is too large.") }
             }
             total += boxes.count
@@ -50,18 +49,16 @@ enum PptxLayout {
             if count <= 0 { return }
             if let at = skipped.firstIndex(where: { $0.kind == kind }) { skipped[at].count += count } else { skipped.append(SkippedFeature(kind, count)) }
         }
-        add(SkippedKinds.rightToLeftText, rightToLeft)
         add(SkippedKinds.complexScript, complex)
         return LayoutResult(pages: pages, skipped: skipped, missing: fonts.missing.sorted())
     }
 
-    private static func text(_ shape: PptxShape, _ body: PptxBody, _ fonts: LayoutFonts, _ number: String, _ boxes: inout [LayoutBox], _ rightToLeft: inout Int, _ complex: inout Int) throws {
+    private static func text(_ shape: PptxShape, _ body: PptxBody, _ fonts: LayoutFonts, _ number: String, _ boxes: inout [LayoutBox], _ complex: inout Int) throws {
         let inner = max(1, shape.width - body.left - body.right)
         let room = shape.height - body.top - body.bottom
         var laid: [ParagraphLines] = []
         for paragraph in body.paragraphs {
             let lines = try ParagraphLayout.run(body.wrap ? paragraph : unwrapped(paragraph), fonts, body.wrap ? inner : wide, wide, { _ in number })
-            if lines.rightToLeft { rightToLeft += 1 }
             if lines.complexScript { complex += 1 }
             laid.append(lines)
         }
@@ -83,7 +80,7 @@ enum PptxLayout {
             let lines = laid[i]
             if i > 0 { y += lines.source.before }
             for line in lines.lines {
-                Paginator.emitLine(&boxes, line, left + (body.wrap ? 0 : shift(line, aligns[i], inner)), y)
+                Paginator.emitLine(&boxes, line, left + (body.wrap ? 0 : shift(line, aligns[i], inner, lines.source.rightToLeft)), y)
                 y += line.height
             }
             if i < laid.count - 1 { y += lines.source.after }
@@ -91,10 +88,11 @@ enum PptxLayout {
     }
 
     // Text that does not wrap is laid out on a line without end and then moved so that its alignment holds against the shape.
+    // A right-to-left paragraph starts at the right edge of the line without end, so it is first brought back to the left.
     private static func unwrapped(_ p: LayoutParagraph) -> LayoutParagraph {
         let q = LayoutParagraph()
         q.runs = p.runs
-        q.align = .left
+        q.align = p.rightToLeft ? .right : .left
         q.left = p.left
         q.right = 0
         q.firstLine = p.firstLine
@@ -103,11 +101,19 @@ enum PptxLayout {
         q.lineSpacing = p.lineSpacing
         q.rule = p.rule
         q.labelTab = p.labelTab
+        q.rightToLeft = p.rightToLeft
         return q
     }
 
-    private static func shift(_ line: LayoutLine, _ align: LayoutAlign, _ inner: Double) -> Double {
-        guard let ink = line.atoms.lastIndex(where: { !$0.isBlank }), align == .center || align == .right else { return 0 }
+    private static func shift(_ line: LayoutLine, _ align: LayoutAlign, _ inner: Double, _ rightToLeft: Bool) -> Double {
+        guard let ink = line.atoms.lastIndex(where: { !$0.isBlank }) else { return 0 }
+        if rightToLeft {
+            let inked = line.atoms.filter { !$0.isBlank }
+            let start = inked.map { $0.x }.min()!
+            let width = inked.map { $0.boxRight }.max()! - start
+            return -start + (align == .left ? 0 : align == .center ? (inner - width) / 2 : inner - width)
+        }
+        guard align == .center || align == .right else { return 0 }
         let end = line.atoms[ink].x + line.atoms[ink].width
         return align == .center ? (inner - (end - line.start)) / 2 - line.start : inner - end
     }

@@ -14,12 +14,14 @@ enum Scripts {
 
     /// Whether the text needs the bidi algorithm: a right-to-left letter, or a mark or embedding that sets a direction.
     static func needsBidi(_ text: String) -> Bool {
-        for scalar in text.unicodeScalars {
-            let cp = Int(scalar.value)
-            if isHebrew(cp) || isArabic(cp) || cp == 0x200E || cp == 0x200F || cp == 0x061C || (cp >= 0x202A && cp <= 0x202E)
-                || (cp >= 0x2066 && cp <= 0x2069) { return true }
-        }
-        return false
+        text.unicodeScalars.contains { needsBidi(Int($0.value)) }
+    }
+
+    static func needsBidi(_ cp: Int) -> Bool { isHebrew(cp) || isArabic(cp) || isBidiControl(cp) }
+
+    /// A direction mark or embedding control: it sets a direction but has no glyph.
+    static func isBidiControl(_ cp: Int) -> Bool {
+        cp == 0x200E || cp == 0x200F || cp == 0x061C || (cp >= 0x202A && cp <= 0x202E) || (cp >= 0x2066 && cp <= 0x2069)
     }
 }
 

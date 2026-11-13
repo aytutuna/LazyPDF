@@ -48,7 +48,6 @@ enum OfficeNotice {
         case "sparkline": return L10n.t("sparklines")
         case "data-validation": return L10n.t("data validation")
         case "sheet-comment": return L10n.t("cell comments")
-        case "rtl-text": return L10n.t("right-to-left text direction")
         case "complex-script": return L10n.t("complex-script shaping")
         case "hidden-slide": return L10n.t("hidden slides")
         case "slide-shape": return L10n.t("other shapes on slides")
