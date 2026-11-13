@@ -26,6 +26,7 @@ public partial class BatchPanel
         BatchStepKind.Rotate => Loc.T("Rotate pages"),
         BatchStepKind.Protect => Loc.T("Protect"),
         BatchStepKind.ExportPictures => Loc.T("Export pictures"),
+        BatchStepKind.PdfUa => Loc.T("PDF/UA"),
         _ => Loc.T("PDF/A"),
     };
 
@@ -48,6 +49,7 @@ public partial class BatchPanel
         BatchStepKind.Rotate => TurnDetail(step),
         BatchStepKind.Protect => step.Password.Length == 0 ? Loc.T("Password not set") : Loc.T("Password to open the file"),
         BatchStepKind.ExportPictures => Loc.T("{0} at {1} dpi", PictureName(step.Picture), step.Dpi),
+        BatchStepKind.PdfUa => step.MarkPdfUa ? Loc.T("Checks and marks") : Loc.T("Checks only"),
         _ => step.Level.Name(),
     };
 
@@ -143,6 +145,7 @@ public partial class BatchPanel
         RotateEditor.Visibility = Show(step.Kind == BatchStepKind.Rotate);
         ProtectEditor.Visibility = Show(step.Kind == BatchStepKind.Protect);
         PicturesEditor.Visibility = Show(step.Kind == BatchStepKind.ExportPictures);
+        PdfUaEditor.Visibility = Show(step.Kind == BatchStepKind.PdfUa);
         QualityRow.Visibility = Show(step.Picture == PictureFormat.Jpeg);
 
         _loading = true;
@@ -152,6 +155,7 @@ public partial class BatchPanel
         KeepForms.IsChecked = step.KeepForms;
         KeepLinks.IsChecked = step.KeepLinks;
         KeepAttachments.IsChecked = step.KeepAttachments;
+        MarkPdfUaBox.IsChecked = step.MarkPdfUa;
         WatermarkBox.Text = step.Text;
         OpacityBox.Text = step.Opacity.ToString(CultureInfo.CurrentCulture);
         AngleBox.Text = step.Angle.ToString(CultureInfo.CurrentCulture);
@@ -316,6 +320,9 @@ public partial class BatchPanel
                 if (DpiBox.SelectedItem is ComboBoxItem { Tag: int dpi }) step.Dpi = dpi;
                 step.Quality = (int)QualityBox.Value;
                 QualityRow.Visibility = Show(step.Picture == PictureFormat.Jpeg);
+                break;
+            case BatchStepKind.PdfUa:
+                step.MarkPdfUa = MarkPdfUaBox.IsChecked == true;
                 break;
             case BatchStepKind.PdfA when LevelBox.SelectedItem is ComboBoxItem { Tag: PdfALevel level }:
                 step.Level = level;

@@ -18,6 +18,7 @@ public enum BatchStepKind
     Rotate,
     Protect,
     ExportPictures,
+    PdfUa,
 }
 
 public enum BatchPages
@@ -89,6 +90,9 @@ public sealed class BatchStep
     public bool KeepLinks { get; set; }
 
     public bool KeepAttachments { get; set; }
+
+    /// <summary>PdfUa: write the PDF/UA-1 identifier into a file that fails only on what marking settles.</summary>
+    public bool MarkPdfUa { get; set; }
 
     /// <summary>The password of Protect. Kept in memory only: it is left out of the saved set and asked for again.</summary>
     [JsonIgnore]

@@ -68,6 +68,7 @@ public final class BatchRunner: @unchecked Sendable {
             }
             try token.throwIfCancelled()
             try checkPdfA(set, bytes, &notes)
+            try checkPdfUa(set, bytes, &notes)
         } catch let failed as StepFailed {
             return BatchResult(input: file, output: nil, ok: false, title: failed.problem.title, detail: failed.problem.text)
         } catch is CancellationError {
@@ -135,7 +136,27 @@ public final class BatchRunner: @unchecked Sendable {
             notes += converted.changes
             if last && !converted.remaining.isEmpty { notes.append(Self.rulesLeft(converted.remaining.count)) }
             return made
+        case .pdfUa:
+            return try step.markPdfUa ? markPdfUa(bytes, now) : bytes
         }
+    }
+
+    private func markPdfUa(_ bytes: [UInt8], _ now: DateTimeOffset) throws -> [UInt8] {
+        let session = try PdfEditSession.open(bytes)
+        guard try PdfUaValidator.mark(session.document, now).marked else { return bytes }
+        try session.commit(L10n.t("Mark as PDF/UA"))
+        return session.current
+    }
+
+    // Steps after the PDF/UA step can undo it, so the report is on the finished file.
+    private func checkPdfUa(_ set: BatchSet, _ bytes: [UInt8], _ notes: inout [String]) throws {
+        guard set.steps.contains(where: { $0.kind == .pdfUa }) else { return }
+        let report = try PdfUaValidator.validate(try PdfDocument.open(bytes))
+        let left = Set(report.issues.map(\.condition)).count
+        if left > 0 {
+            notes.append(L10n.plural(left, one: "{0} PDF/UA condition is not met.", other: "{0} PDF/UA conditions are not met."))
+        }
+        if report.truncated { notes.append(L10n.t("The PDF/UA check stopped at 1000 findings.")) }
     }
 
     private static func rulesLeft(_ count: Int) -> String {

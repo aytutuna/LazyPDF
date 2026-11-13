@@ -150,6 +150,9 @@
                     <TextBlock Text="{loc:T Place}" Style="{StaticResource FieldLabelText}" Margin="0,8,0,0" />
                     <ComboBox x:Name="PlaceBox" AutomationProperties.Name="{loc:T Where the number goes}" SelectionChanged="Setting_Changed" />
                 </StackPanel>
+                <StackPanel x:Name="PdfUaEditor">
+                    <CheckBox x:Name="MarkPdfUaBox" Style="{StaticResource ToggleSwitchStyle}" Content="{loc:T Mark as PDF/UA when the check passes}" AutomationProperties.Name="{loc:T Mark as PDF/UA when the check passes}" Click="Setting_Changed" />
+                </StackPanel>
                 <StackPanel x:Name="LevelEditor">
                     <TextBlock Text="{loc:T Level}" Style="{StaticResource FieldLabelText}" />
                     <ComboBox x:Name="LevelBox" AutomationProperties.Name="{loc:T PDF/A level}" SelectionChanged="Setting_Changed" />

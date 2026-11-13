@@ -5,7 +5,7 @@ import LazyPDFKit
 // are kept in. The engine's enums are not Codable, so the settings that name one are kept as their own cases.
 
 public enum BatchStepKind: Int, CaseIterable, Codable {
-    case ocr, compress, clean, watermark, bates, pdfA
+    case ocr, compress, clean, watermark, bates, pdfA, pdfUa
 }
 
 public enum BatesPlace: Int, CaseIterable, Codable {
@@ -82,6 +82,9 @@ public struct BatchStep: Codable, Equatable {
     public var keepLinks = false
     public var keepAttachments = false
 
+    /// PdfUa: write the PDF/UA-1 identifier into a file that fails only on what marking settles.
+    public var markPdfUa = false
+
     public init(_ kind: BatchStepKind) {
         self.kind = kind
     }
@@ -100,7 +103,7 @@ public struct BatchStep: Codable, Equatable {
 
     private enum CodingKeys: String, CodingKey {
         case kind, text, preset, level, digits, start, suffix, place, opacity, angle, size, anchorIndex
-        case keepComments, keepForms, keepLinks, keepAttachments
+        case keepComments, keepForms, keepLinks, keepAttachments, markPdfUa
     }
 
     public init(from decoder: Decoder) throws {
@@ -121,6 +124,7 @@ public struct BatchStep: Codable, Equatable {
         keepForms = c.decodeLenient(forKey: .keepForms, default: keepForms)
         keepLinks = c.decodeLenient(forKey: .keepLinks, default: keepLinks)
         keepAttachments = c.decodeLenient(forKey: .keepAttachments, default: keepAttachments)
+        markPdfUa = c.decodeLenient(forKey: .markPdfUa, default: markPdfUa)
     }
 }
 

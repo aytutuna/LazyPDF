@@ -1141,6 +1141,12 @@
   <data name="Checking {0}" xml:space="preserve">
     <value>{0} denetleniyor</value>
   </data>
+  <data name="Checks and marks" xml:space="preserve">
+    <value>Denetler ve işaretler</value>
+  </data>
+  <data name="Checks only" xml:space="preserve">
+    <value>Yalnızca denetler</value>
+  </data>
   <data name="Choices" xml:space="preserve">
     <value>Seçenekler</value>
   </data>
@@ -3348,6 +3354,9 @@
   </data>
   <data name="Mark as PDF/UA" xml:space="preserve">
     <value>PDF/UA olarak işaretle</value>
+  </data>
+  <data name="Mark as PDF/UA when the check passes" xml:space="preserve">
+    <value>Denetimden geçerse PDF/UA olarak işaretle</value>
   </data>
   <data name="Mark every match" xml:space="preserve">
     <value>Tüm eşleşmeleri işaretle</value>
@@ -6274,6 +6283,9 @@
   <data name="The Note /ID {0} is used twice." xml:space="preserve">
     <value>Note /ID değeri {0} iki kez kullanılmış.</value>
   </data>
+  <data name="The PDF/UA check stopped at 1000 findings." xml:space="preserve">
+    <value>PDF/UA denetimi 1000 bulguda durdu.</value>
+  </data>
   <data name="The PFX file could not be opened. Check the password and that the file is a PFX." xml:space="preserve">
     <value>PFX dosyası açılamadı. Parolayı ve dosyanın PFX olduğunu denetleyin.</value>
   </data>
@@ -8334,6 +8346,9 @@
   </data>
   <data name="{0} PDF/A rule is left.|plural" xml:space="preserve">
     <value>{0} PDF/A kuralı kaldı.</value>
+  </data>
+  <data name="{0} PDF/UA condition is not met.|plural" xml:space="preserve">
+    <value>{0} PDF/UA koşulu karşılanmıyor.</value>
   </data>
   <data name="{0} actions or scripts were removed." xml:space="preserve">
     <value>{0} eylem ya da betik kaldırıldı.</value>

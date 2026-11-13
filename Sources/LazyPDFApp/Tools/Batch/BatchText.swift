@@ -12,6 +12,7 @@ public enum BatchText {
         case .watermark: return L10n.t("Watermark")
         case .bates: return L10n.t("Bates numbers")
         case .pdfA: return L10n.t("PDF/A")
+        case .pdfUa: return L10n.t("PDF/UA")
         }
     }
 
@@ -34,6 +35,7 @@ public enum BatchText {
         case .bates:
             return L10n.t("Starts at {0}", BatesSpec(prefix: step.text, suffix: step.suffix, digits: step.digits, start: step.start).format(step.start))
         case .pdfA: return step.level.level.name()
+        case .pdfUa: return step.markPdfUa ? L10n.t("Checks and marks") : L10n.t("Checks only")
         }
     }
 

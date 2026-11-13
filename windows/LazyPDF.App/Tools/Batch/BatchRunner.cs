@@ -49,10 +49,13 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
             for (int i = 0; i < set.Steps.Count; i++)
             {
                 cancellation.ThrowIfCancellationRequested();
+                // A locked file cannot be read again, so the check runs on what goes into Protect.
+                if (set.Steps[i].Kind == BatchStepKind.Protect) CheckPdfUa(set, bytes, notes);
                 bytes = await ApplyAsync(set.Steps[i], i == set.Steps.Count - 1, bytes, now, name, notes, cancellation);
             }
             cancellation.ThrowIfCancellationRequested();
             CheckPdfA(set, bytes, notes);
+            if (set.Steps.LastOrDefault() is not { Kind: BatchStepKind.Protect }) CheckPdfUa(set, bytes, notes);
         }
         catch (StepFailed failed)
         {
@@ -221,6 +224,8 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
                 }
             case BatchStepKind.ExportPictures:
                 return bytes;
+            case BatchStepKind.PdfUa:
+                return step.MarkPdfUa ? MarkPdfUa(bytes, now, cancellation) : bytes;
             default:
                 {
                     var converted = new PdfAConverter(fonts).Convert(bytes, step.Level, now);
@@ -241,6 +246,25 @@ internal sealed class BatchRunner(IImageCodec codec, IFontSource fonts, ITextRec
         using var made = PdfDocument.Open(bytes);
         int left = PdfAValidator.Validate(made, set.Steps[at].Level).Issues.Count;
         if (left > 0) notes.Add(Loc.Plural(left, "{0} PDF/A rule is left.", "{0} PDF/A rules are left."));
+    }
+
+    private static byte[] MarkPdfUa(byte[] bytes, DateTimeOffset now, CancellationToken cancellation)
+    {
+        var session = PdfEditSession.Open(bytes);
+        if (!PdfUaValidator.Mark(session.Document, now, cancellation).Marked) return bytes;
+        session.Commit(Loc.T("Mark as PDF/UA"));
+        return session.Current.ToArray();
+    }
+
+    // Steps after the PDF/UA step can undo it, so the report is on the finished file.
+    private static void CheckPdfUa(BatchSet set, byte[] bytes, List<string> notes)
+    {
+        if (!set.Steps.Any(s => s.Kind == BatchStepKind.PdfUa)) return;
+        using var made = PdfDocument.Open(bytes);
+        var report = PdfUaValidator.Validate(made);
+        int left = report.Issues.Select(i => i.Condition).Distinct().Count();
+        if (left > 0) notes.Add(Loc.Plural(left, "{0} PDF/UA condition is not met.", "{0} PDF/UA conditions are not met."));
+        if (report.Truncated) notes.Add(Loc.T("The PDF/UA check stopped at 1000 findings."));
     }
 
     private async Task<byte[]> OcrAsync(BatchStep step, byte[] bytes, List<string> notes, CancellationToken cancellation)

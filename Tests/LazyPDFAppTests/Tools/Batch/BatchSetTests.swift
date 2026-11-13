@@ -31,7 +31,9 @@ final class BatchSetTests: XCTestCase {
         compress.preset = .small
         var pdfA = BatchStep(.pdfA)
         pdfA.level = .a3u
-        let steps = [bates, compress, pdfA]
+        var pdfUa = BatchStep(.pdfUa)
+        pdfUa.markPdfUa = true
+        let steps = [bates, compress, pdfA, pdfUa]
 
         store.save(BatchSet(name: "Cases", steps: steps, outputFolder: "/out", nameTemplate: "{name}-b", watchFolder: "/in"))
         store.save(BatchSet(name: "Other"))
@@ -43,12 +45,13 @@ final class BatchSetTests: XCTestCase {
 
         store.save(BatchSet(name: "Cases", steps: steps, nameTemplate: "{name}-b"))
         let back = try XCTUnwrap(BatchSetStore(directory: dir.url).load().first { $0.name == "Cases" })
-        XCTAssertEqual(back.steps.map(\.kind), [.bates, .compress, .pdfA])
+        XCTAssertEqual(back.steps.map(\.kind), [.bates, .compress, .pdfA, .pdfUa])
         XCTAssertEqual(back.steps[0].text, "X-")
         XCTAssertEqual(back.steps[0].digits, 8)
         XCTAssertEqual(back.steps[0].start, 40)
         XCTAssertEqual(back.steps[1].preset, .small)
         XCTAssertEqual(back.steps[2].level, .a3u)
+        XCTAssertTrue(back.steps[3].markPdfUa)
         XCTAssertEqual(back.nameTemplate, "{name}-b")
 
         store.delete("cases")
