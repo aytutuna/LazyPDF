@@ -83,7 +83,7 @@ extension PdfUaChecker {
             let list = ["L", "LI", "Lbl", "LBody"].contains(t)
             if !table && !list { continue }
             let checkpoint = table ? "09-004" : "09-005"
-            let clause = table ? "7.5" : "7.6"
+            let clause = "7.2"
 
             let isPlaced: Bool
             switch t {
@@ -124,13 +124,13 @@ extension PdfUaChecker {
             guard units.count >= 2, units[0] == 0x48, let level = Self.parseLevel(units[1...]) else { continue }
             numbered = true
             if previous == 0 && level != 1 {
-                add("14-002", "7.4", Self.place(element), PdfUaText.firstHeading(level))
+                add("14-002", "7.4.2", Self.place(element), PdfUaText.firstHeading(level))
             } else if level > previous + 1 {
-                add("14-003", "7.4", Self.place(element), PdfUaText.headingSkipped(level, previous))
+                add("14-003", "7.4.2", Self.place(element), PdfUaText.headingSkipped(level, previous))
             }
             previous = level
         }
-        if plain && numbered { add("14-007", "7.4", PdfAText.catalog, PdfUaText.headingMixed) }
+        if plain && numbered { add("14-007", "7.4.4", PdfAText.catalog, PdfUaText.headingMixed) }
     }
 
     // int.TryParse with the invariant culture: white space around the digits and one sign are allowed.

@@ -77,7 +77,7 @@ internal sealed partial class PdfUaChecker
             bool table = t is "THead" or "TBody" or "TFoot" or "TR" or "TH" or "TD" or "Table";
             bool list = t is "L" or "LI" or "Lbl" or "LBody";
             if (!table && !list) continue;
-            string checkpoint = table ? "09-004" : "09-005", clause = table ? "7.5" : "7.6";
+            string checkpoint = table ? "09-004" : "09-005", clause = "7.2";
 
             bool placed = t switch
             {
@@ -119,10 +119,10 @@ internal sealed partial class PdfUaChecker
             if (t == "H") plain = true;
             if (t.Length < 2 || t[0] != 'H' || !int.TryParse(t.AsSpan(1), out int level)) continue;
             numbered = true;
-            if (previous == 0 && level != 1) Add("14-002", "7.4", Place(element), PdfUaText.FirstHeading(level));
-            else if (level > previous + 1) Add("14-003", "7.4", Place(element), PdfUaText.HeadingSkipped(level, previous));
+            if (previous == 0 && level != 1) Add("14-002", "7.4.2", Place(element), PdfUaText.FirstHeading(level));
+            else if (level > previous + 1) Add("14-003", "7.4.2", Place(element), PdfUaText.HeadingSkipped(level, previous));
             previous = level;
         }
-        if (plain && numbered) Add("14-007", "7.4", PdfAText.Catalog, PdfUaText.HeadingMixed);
+        if (plain && numbered) Add("14-007", "7.4.4", PdfAText.Catalog, PdfUaText.HeadingMixed);
     }
 }

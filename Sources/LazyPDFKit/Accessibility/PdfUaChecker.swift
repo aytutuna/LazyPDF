@@ -69,7 +69,7 @@ final class PdfUaChecker {
 
     private func checkMarkInfo() {
         let info = document.dict(document.catalog, "MarkInfo")
-        if document.bool(info, "Marked") != true { add("01-001", "7.1", PdfAText.catalog, PdfUaText.noMarkInfo) }
+        if document.bool(info, "Marked") != true { add("01-001", "6.2", PdfAText.catalog, PdfUaText.noMarkInfo) }
         if document.bool(info, "Suspects") == true { add("01-007", "7.1", PdfAText.catalog, PdfUaText.suspects) }
     }
 
@@ -98,7 +98,7 @@ final class PdfUaChecker {
             add("06-001", "7.1", PdfAText.metadata, problem ?? "")
             return
         }
-        if xmp.get(XmpPacket.pdfuaId, "part").map({ DotNetText.trim($0) }) != "1" { add("06-002", "7.1", PdfAText.metadata, PdfUaText.noIdentifier) }
+        if xmp.get(XmpPacket.pdfuaId, "part").map({ DotNetText.trim($0) }) != "1" { add("06-002", "5", PdfAText.metadata, PdfUaText.noIdentifier) }
         if DotNetText.isNullOrWhiteSpace(xmp.get(PdfAXmp.dc, "title")) { add("06-003", "7.1", PdfAText.metadata, PdfUaText.noTitle) }
     }
 
