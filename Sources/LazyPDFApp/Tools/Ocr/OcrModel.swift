@@ -179,10 +179,12 @@ public final class OcrModel: ToolPanelModel {
     // The panel is off while the pages are read: a change to the document then would waste the run.
     private func read(_ tab: DocumentTab, _ host: ToolHost, _ options: OcrOptions) async {
         isRunning = true
-        defer { isRunning = false }
+        var done = false
         await ChangeGate.guardedAsync(host, L10n.t("Make searchable")) { [self] in
-            _ = try await OcrWork.makeSearchable(tab, host, recognizer, options)
+            done = try await OcrWork.makeSearchable(tab, host, recognizer, options)?.committed == true
         }
+        isRunning = false
+        if done, self.tab === tab, let back = host.takeReturnTool() { host.openTool(back) }
     }
 
     public func removeLayers() {

@@ -393,6 +393,7 @@ public sealed class ExportToolTests
         Assert.Equal("Make searchable", action.Text);
         action.Run();
         Assert.Equal("ocr", f.Vm.ActiveToolId);
+        Assert.Equal("export", ((LazyPDF.App.Tools.IToolHost)f.Vm).TakeReturnTool());
     }
 
     [Fact]

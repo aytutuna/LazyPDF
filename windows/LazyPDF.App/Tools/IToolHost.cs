@@ -37,6 +37,12 @@ public interface IToolHost
     /// <summary>Opens the tool with this id on the document in view, as picking it from the tool strip would, but never closes it when it is open already.</summary>
     void OpenTool(string id) { }
 
+    /// <summary>As above, and the tool asks for <see cref="TakeReturnTool"/> when its work is done, to go back to the tool <paramref name="back"/>. Picking any other tool first forgets it.</summary>
+    void OpenToolReturning(string id, string back) => OpenTool(id);
+
+    /// <summary>The tool <see cref="OpenToolReturning"/> named, once.</summary>
+    string? TakeReturnTool() => null;
+
     /// <summary>Opens the Certificates tool with the empty signature field of that name chosen as the place to sign.</summary>
     void OpenSigning(string field) { }
 

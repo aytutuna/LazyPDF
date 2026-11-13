@@ -234,4 +234,23 @@ final class SigningHostTests: XCTestCase {
         XCTAssertEqual(fixture.vm.activeToolId, "certificates")
         XCTAssertEqual(fixture.vm.takeSigningField(), "B")
     }
+
+    func test_aToolOpenedToReturnHandsBackTheToolOnce() async {
+        let fixture = ViewModelFixture(self)
+
+        fixture.vm.openToolReturning("ocr", back: "export")
+
+        XCTAssertEqual(fixture.vm.activeToolId, "ocr")
+        XCTAssertEqual(fixture.vm.takeReturnTool(), "export")
+        XCTAssertNil(fixture.vm.takeReturnTool())
+    }
+
+    func test_pickingAnotherToolForgetsTheToolToReturnTo() async {
+        let fixture = ViewModelFixture(self)
+
+        fixture.vm.openToolReturning("ocr", back: "export")
+        fixture.vm.selectTool("redact")
+
+        XCTAssertNil(fixture.vm.takeReturnTool())
+    }
 }
