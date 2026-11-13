@@ -86,14 +86,16 @@ final class CoreTextShaperTests: XCTestCase {
         let arial = try file("Arial")
         let glyphs = try shape(arial, "\u{05D0}\u{05B8}\u{05D1}")
 
-        XCTAssertEqual(glyphs.map(\.cluster), [2, 0, 0])
-        XCTAssertEqual(glyphs[1].advance, 0, accuracy: 0.5)
+        // Arial draws the letter and its point as one glyph, so that cluster covers both and the point's place in the
+        // text is the gap up to the next cluster.
+        XCTAssertEqual(glyphs.map(\.cluster), [2, 0])
+        XCTAssertTrue(glyphs.allSatisfy { $0.glyph > 0 && $0.advance > 0 })
     }
 
     func test_bracketsAreNotMirroredASecondTime() throws {
-        let geeza = try file("Geeza Pro")
-        let glyphs = try shape(geeza, ")" + alef + "(")
-        let font = try XCTUnwrap(TrueTypeFont.tryParse(geeza.data, geeza.collectionIndex))
+        let arial = try file("Arial")
+        let glyphs = try shape(arial, ")\u{05D0}(")
+        let font = try XCTUnwrap(TrueTypeFont.tryParse(arial.data, arial.collectionIndex))
         let open = font.glyphForCodePoint(0x28)
         let close = font.glyphForCodePoint(0x29)
 
