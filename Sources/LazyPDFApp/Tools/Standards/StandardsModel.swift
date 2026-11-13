@@ -16,10 +16,10 @@ public final class StandardsModel: ToolPanelModel {
     /// The most rows listed; the rest are counted.
     public nonisolated static let rowsShown = 100
 
-    public nonisolated static let levels: [PdfALevel] = [.a1b, .a2b, .a2u, .a3b, .a3u, .a4]
+    public nonisolated static let levels: [PdfALevel] = [.a1a, .a1b, .a2a, .a2b, .a2u, .a3a, .a3b, .a3u, .a4]
 
     public private(set) var mode = StandardsMode.check
-    public private(set) var levelIndex = 1
+    public private(set) var levelIndex = StandardsModel.levels.firstIndex(of: .a2b)!
     public private(set) var verdict = ""
     public private(set) var rows: [IssueRow] = []
     public private(set) var rest = ""

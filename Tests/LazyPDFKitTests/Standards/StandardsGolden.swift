@@ -43,6 +43,9 @@ enum StandardsGolden {
         case "a2u": return .a2u
         case "a3b": return .a3b
         case "a3u": return .a3u
+        case "a1a": return .a1a
+        case "a2a": return .a2a
+        case "a3a": return .a3a
         default: return .a4
         }
     }
@@ -108,8 +111,26 @@ enum StandardsGolden {
                                           content: String(repeating: "q ", count: 29) + String(repeating: "Q ", count: 29) + "0 0 1 rg 20 20 40000.5 100 re f")
         case "inline":
             return StandardsKit.compliant(level, content: "q BI /W 1 /H 1 /BPC 8 /CS /G /I true /F /Crypt ID x EI Q BI /W 1 /H 1 /BPC 8 /CS /RGB ID abc EI Q")
+        case "a-good":
+            return StandardsKit.tagged(level)
+        case "a-unmarked":
+            return StandardsKit.tagged(level, marked: "")
+        case "a-nolang":
+            return StandardsKit.tagged(level, lang: "")
+        case "a-loose":
+            return StandardsKit.tagged(level, content: "/Figure <</MCID 0>> BDC 0 0 1 rg 20 20 100 100 re f EMC 1 0 0 rg 130 20 50 50 re f")
+        case "a-noalt":
+            return StandardsKit.tagged(level, alt: "")
+        case "a-rolemap":
+            return StandardsKit.tagged(level, roleMap: "/RoleMap <</Chart /Graph>>", figureType: "Chart")
+        case "a-rolemap-ok":
+            return StandardsKit.tagged(level, roleMap: "/RoleMap <</Chart /Figure>>", figureType: "Chart")
+        case "a-part2-type":
+            return StandardsKit.tagged(level, figureType: "Annot")
         case "plain":
             return plain()
+        case "plain-lang":
+            return plain(catalog: "/Lang (en-US)")
         case "transparency":
             return plain("/GS gs 0 g 0 0 50 50 re f", resources: "/ExtGState <</GS <</ca 0.5>>>>")
         case "lzw":

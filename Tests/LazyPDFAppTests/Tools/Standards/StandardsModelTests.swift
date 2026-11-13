@@ -40,7 +40,7 @@ final class StandardsModelTests: XCTestCase {
 
         await model.action!.run()
         XCTAssertTrue(model.showsResult)
-        model.setLevel(3)
+        model.setLevel(StandardsModel.levels.firstIndex(of: .a3b)!)
         XCTAssertFalse(model.showsResult)
         XCTAssertEqual(model.levelNote, "Like 2b, and other files may be attached.")
         XCTAssertEqual(model.action!.text, "Check")
@@ -54,7 +54,7 @@ final class StandardsModelTests: XCTestCase {
 
         XCTAssertEqual(model.modeNote, "Makes a new file and tries to meet the level. This file stays as it is.")
         XCTAssertEqual(model.action!.text, "Convert to PDF/A-2b")
-        model.setLevel(5)
+        model.setLevel(StandardsModel.levels.firstIndex(of: .a4)!)
         XCTAssertEqual(model.action!.text, "Convert to PDF/A-4")
     }
 

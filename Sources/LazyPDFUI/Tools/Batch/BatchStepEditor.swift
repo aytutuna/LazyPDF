@@ -98,7 +98,7 @@ struct BatchStepEditor: View {
     private var level: some View {
         LabelledField(L10n.t("Level")) {
             Picker(L10n.t("PDF/A level"), selection: binding(\.level)) {
-                ForEach(BatchLevel.allCases, id: \.self) { Text($0.level.name()).tag($0) }
+                ForEach(BatchLevel.listed, id: \.self) { Text($0.level.name()).tag($0) }
             }
             .labelsHidden()
         }

@@ -147,6 +147,23 @@ public enum PdfAText {
     public static var autoState: String { L10n.t("An optional content configuration has /AS.") }
     public static var orderIncomplete: String { L10n.t("The /Order of a configuration leaves out some groups.") }
 
+    public static var noMarkInfo: String { L10n.t("The catalog has no /MarkInfo with /Marked true.") }
+    public static var noStructTree: String { L10n.t("The file has no structure tree.") }
+    public static var emptyStructTree: String { L10n.t("The structure tree has no elements.") }
+    public static var structTreeTooBig: String { L10n.t("The structure tree is too large to check in full.") }
+    public static var contentOutsideTree: String { L10n.t("Content is neither in the structure tree nor marked as an artifact.") }
+    public static func nonStandardType(_ type: String) -> String { L10n.t("The structure type {0} is not a standard type and the role map does not lead to one.", type) }
+    public static func noAlternateText(_ type: String) -> String { L10n.t("A {0} element has neither /Alt nor /ActualText.", type) }
+    public static var noLanguage: String { L10n.t("No natural language is set in the catalog or on the top structure elements.") }
+    public static func structureElement(_ number: Int) -> String { L10n.t("Structure element {0}", number) }
+    public static var setLanguageToTag: String { L10n.t("Set the document language first and Lazy PDF can tag the file itself.") }
+    public static func tagFirst(_ level: PdfALevel, _ problems: [String], _ hint: String? = nil) -> String {
+        let text = L10n.t("{0} needs a tagged file, and this one is not tagged well enough: {1} Tag the file and fix these first, then convert again.", level.name(), problems.joined(separator: " "))
+        return hint.map { text + " " + $0 } ?? text
+    }
+    public static func tagged(_ pages: Int) -> String { L10n.t("The file was tagged automatically ({0} pages). Check the reading order and the descriptions.", pages) }
+    public static var marked: String { L10n.t("The file was marked as tagged.") }
+
     public static let producer = "Lazy PDF"
     public static var needsPassword: String { L10n.t("The file needs a password.") }
     public static var unreadable: String { L10n.t("The file could not be read.") }

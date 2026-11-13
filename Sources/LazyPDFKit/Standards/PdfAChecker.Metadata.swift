@@ -85,7 +85,7 @@ extension PdfAChecker {
             if xmp.get(PdfAXmp.id, "rev").map({ PdfDate.trimmed($0) }) != "2020" { add(clause, PdfAText.metadata, PdfAText.noRevision) }
             return
         }
-        let accepted = level.needsUnicode() ? ["U", "A"] : isPart1 ? ["B", "A"] : ["B", "U", "A"]
+        let accepted = level.needsTags() ? ["A"] : level.needsUnicode() ? ["U", "A"] : isPart1 ? ["B", "A"] : ["B", "U", "A"]
         if conformance == nil || !accepted.contains(conformance ?? "") {
             add(clause, PdfAText.metadata, PdfAText.wrongConformance(conformance, level.conformance() ?? ""))
         }

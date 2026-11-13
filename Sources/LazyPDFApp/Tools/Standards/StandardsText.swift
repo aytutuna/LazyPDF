@@ -12,6 +12,9 @@ enum StandardsText {
         case .a3b: return L10n.t("Like 2b, and other files may be attached.")
         case .a3u: return L10n.t("Like 3b, and every character keeps its text.")
         case .a4: return L10n.t("The newest, based on PDF 2.0.")
+        case .a1a: return L10n.t("Like 1b, and the file must be tagged for screen readers. Untagged files need a language set first.")
+        case .a2a: return L10n.t("Like 2u, and the file must be tagged for screen readers. Untagged files need a language set first.")
+        case .a3a: return L10n.t("Like 3u, and the file must be tagged for screen readers. Untagged files need a language set first.")
         }
     }
 

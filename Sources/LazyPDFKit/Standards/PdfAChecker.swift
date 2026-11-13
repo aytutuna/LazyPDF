@@ -44,6 +44,9 @@ final class PdfAChecker {
     /// Colour components of the output intent's profile; 0 when the file has none.
     var intentComponents = 0
 
+    /// The issues of the level A rules, which the converter turns into a refusal when tagging could not settle them.
+    var structureIssues: [PdfAIssue] = []
+
     // Annotations
     var nextLists = Set<ObjectIdentifier>()
     var appearancesRun = Set<ObjectIdentifier>()
@@ -81,6 +84,7 @@ final class PdfAChecker {
         checkPages()
         checkObjects()
         checkFonts()
+        checkStructure()
     }
 
     /// The clause for part 1, or for the later parts.

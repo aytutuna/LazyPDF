@@ -25,7 +25,10 @@ public enum BatchPreset: Int, CaseIterable, Codable {
 }
 
 public enum BatchLevel: Int, CaseIterable, Codable {
-    case a1b, a2b, a2u, a3b, a3u, a4
+    case a1b, a2b, a2u, a3b, a3u, a4, a1a, a2a, a3a
+
+    /// The saved numbers keep the level A cases last; a picker lists them by part, then A, B, U.
+    public static let listed: [BatchLevel] = [.a1a, .a1b, .a2a, .a2b, .a2u, .a3a, .a3b, .a3u, .a4]
 
     public var level: PdfALevel {
         switch self {
@@ -35,6 +38,9 @@ public enum BatchLevel: Int, CaseIterable, Codable {
         case .a3b: return .a3b
         case .a3u: return .a3u
         case .a4: return .a4
+        case .a1a: return .a1a
+        case .a2a: return .a2a
+        case .a3a: return .a3a
         }
     }
 }
