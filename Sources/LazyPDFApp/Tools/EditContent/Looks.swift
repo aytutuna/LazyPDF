@@ -40,7 +40,7 @@ public enum EditorLook {
         case .center: return .center
         case .right: return .trailing
         case .justify: return .justified
-        case .left: return .leading
+        case .left: return .left
         }
     }
 

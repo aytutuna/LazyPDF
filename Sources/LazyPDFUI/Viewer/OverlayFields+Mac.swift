@@ -170,6 +170,7 @@ final class OverlayFieldViews: NSObject, NSTextViewDelegate, NSLayoutManagerDele
     private func alignment(_ align: TextAlign, rightToLeft: Bool) -> NSTextAlignment {
         switch align {
         case .leading: return rightToLeft ? .right : .left
+        case .left: return .left
         case .center: return .center
         case .trailing: return .right
         case .justified: return .justified
