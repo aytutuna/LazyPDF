@@ -137,7 +137,7 @@ public final class ViewerModel: DocumentViewer {
     }
 
     @ObservationIgnored
-    public private(set) lazy var search = ViewerSearch(source: { [unowned self] in self.textSource() }, startPage: { [unowned self] in self.state.currentPage })
+    public private(set) lazy var search = ViewerSearch(source: { [unowned self] in self.textSource() }, startPage: { [unowned self] in self.state.currentPage }, pageLabel: { [unowned self] in self.pageLabel($0) })
 
     // NSMapTable is not in Foundation on Linux, so the key is the tab's identity and the box checks the tab is still the same one.
     private final class ViewBox {

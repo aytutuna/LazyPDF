@@ -10,11 +10,21 @@ public struct SearchHit {
     public let before: String
     public let after: String
 
+    /// The page's own label, when the file has one.
+    public var label: String?
+
+    public init(match: SearchMatch, before: String, after: String, label: String? = nil) {
+        self.match = match
+        self.before = before
+        self.after = after
+        self.label = label
+    }
+
     public var page: Int { match.page }
 
     public var text: String { match.text }
 
-    public var pageText: String { L10n.t("Page {0}", page + 1) }
+    public var pageText: String { L10n.t("Page {0}", label ?? String(page + 1)) }
 
     /// What a screen reader says for the row: the page, then the words around the match.
     public var spoken: String { "\(pageText). \(before)\(text)\(after)" }
@@ -31,8 +41,12 @@ public final class ViewerSearch {
     private nonisolated static let context = 32
     private nonisolated static let batch = 25
 
+    /// The most hits kept from the start page on; a search that finds more stops there.
+    public nonisolated static let maxHits = 1000
+
     @ObservationIgnored private let source: () -> Task<TextSource?, Never>
     @ObservationIgnored private let startPage: () -> Int
+    @ObservationIgnored private let pageLabel: ((Int) -> String)?
     @ObservationIgnored private var running: Task<Void, Never>?
     @ObservationIgnored private var generation = 0
     @ObservationIgnored private var quiet = false
@@ -49,6 +63,12 @@ public final class ViewerSearch {
 
     public private(set) var isRunning = false
 
+    /// The search ended at `maxHits` with more of the file left.
+    public private(set) var capped = false
+
+    /// The user stopped the search before it finished.
+    public private(set) var stopped = false
+
     /// The last step went round past the first or last hit.
     public private(set) var wrapped = SearchWrap.none
 
@@ -64,10 +84,12 @@ public final class ViewerSearch {
     /// Called when `current` moved, so the view goes to it.
     @ObservationIgnored public var onCurrentChanged: (() -> Void)?
 
-    /// `source` gives the text of the file, nil when it cannot be read; `startPage` the page the first current hit is taken from.
-    public init(source: @escaping () -> Task<TextSource?, Never>, startPage: @escaping () -> Int) {
+    /// `source` gives the text of the file, nil when it cannot be read; `startPage` the page the first current hit is taken from;
+    /// `pageLabel` the label of a page, nil numbers hits by page.
+    public init(source: @escaping () -> Task<TextSource?, Never>, startPage: @escaping () -> Int, pageLabel: ((Int) -> String)? = nil) {
         self.source = source
         self.startPage = startPage
+        self.pageLabel = pageLabel
     }
 
     /// Searches for `query`; an empty one clears. The task ends when the search has.
@@ -85,6 +107,8 @@ public final class ViewerSearch {
         wrapped = .none
         noText = false
         timedOut = []
+        capped = false
+        stopped = false
         landed = -1
         if query.isEmpty {
             isRunning = false
@@ -96,6 +120,15 @@ public final class ViewerSearch {
         let task = Task { await self.run(text, query, options, first, id) }
         running = task
         return task
+    }
+
+    /// Ends a running search and keeps the hits found so far.
+    public func stop() {
+        guard isRunning else { return }
+        running?.cancel()
+        generation += 1
+        isRunning = false
+        stopped = true
     }
 
     public func clear() {
@@ -157,35 +190,64 @@ public final class ViewerSearch {
 
     private nonisolated func run(_ text: Task<TextSource?, Never>, _ query: String, _ options: TextSearchOptions, _ start: Int, _ id: Int) async {
         var bad = false
-        var found = false
+        var count = 0
+        var capped = false
         var noText = false
         let timeouts = SearchTimeouts()
         do {
             if let source = await text.value {
                 var batch: [SearchHit] = []
-                for try await match in try source.find(query, options, timeouts: timeouts) {
-                    found = true
+                // The first hits before the view are listed as they come, so Stop keeps them; past that only the ones nearest the view are kept.
+                var early: [SearchMatch] = []
+                var streamed = 0
+                var after = 0
+                func add(_ match: SearchMatch) async {
                     batch.append(SearchHit(match: match, before: Self.around(source, match, -1), after: Self.around(source, match, 1)))
                     if batch.count >= Self.batch {
                         await deliver(batch, start, id)
                         batch = []
                     }
                 }
+                for try await match in try source.find(query, options, timeouts: timeouts) {
+                    count += 1
+                    if match.page < start {
+                        if streamed < Self.maxHits {
+                            streamed += 1
+                            await add(match)
+                            continue
+                        }
+                        if early.count >= Self.maxHits {
+                            early.removeFirst()
+                            capped = true
+                        }
+                        early.append(match)
+                        continue
+                    }
+                    while !early.isEmpty { await add(early.removeFirst()) }
+                    if after >= Self.maxHits {
+                        capped = true
+                        break
+                    }
+                    after += 1
+                    await add(match)
+                }
+                while !early.isEmpty { await add(early.removeFirst()) }
                 await deliver(batch, start, id)
-                noText = !found && (0..<source.pageCount).allSatisfy { source.page($0).chars.isEmpty }
+                noText = count == 0 && (0..<source.pageCount).allSatisfy { source.page($0).chars.isEmpty }
             }
         } catch is CancellationError {
             return
         } catch {
             bad = true
         }
-        await finish(bad, noText, timeouts.pages.sorted(), id)
+        await finish(bad, noText, capped, timeouts.pages.sorted(), id)
     }
 
     private func deliver(_ batch: [SearchHit], _ start: Int, _ id: Int) {
         guard id == generation, !batch.isEmpty else { return }
         let first = current < 0
-        for hit in batch {
+        for var hit in batch {
+            hit.label = pageLabel?(hit.page)
             hits.append(hit)
             if current < 0 && hit.page >= start { current = hits.count - 1 }
         }
@@ -195,11 +257,12 @@ public final class ViewerSearch {
         }
     }
 
-    private func finish(_ bad: Bool, _ noText: Bool, _ timedOut: [Int], _ id: Int) {
+    private func finish(_ bad: Bool, _ noText: Bool, _ capped: Bool, _ timedOut: [Int], _ id: Int) {
         guard id == generation else { return }
         isRunning = false
         badPattern = bad
         self.noText = noText
+        self.capped = capped
         self.timedOut = timedOut
         if current < 0 && !hits.isEmpty {
             current = 0

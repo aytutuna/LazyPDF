@@ -15,8 +15,15 @@ public struct SearchPanelView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
-                Button { model.showFind() } label: {
-                    Label(L10n.t("Search"), systemImage: "magnifyingglass")
+                HStack {
+                    Button { model.showFind() } label: {
+                        Label(L10n.t("Search"), systemImage: "magnifyingglass")
+                    }
+                    if model.isSearching {
+                        Button { model.stop() } label: {
+                            Label(L10n.t("Stop searching"), systemImage: "stop.circle")
+                        }
+                    }
                 }
                 Text(model.summary)
                     .font(.callout)

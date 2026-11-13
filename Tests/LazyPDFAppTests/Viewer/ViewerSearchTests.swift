@@ -220,6 +220,51 @@ final class ViewerSearchTests: XCTestCase {
         XCTAssertTrue(search.hits.allSatisfy { $0.text == "dog" })
     }
 
+    func test_hitsAreNumberedByThePagesLabel() async throws {
+        let bytes = try pages(2)
+        let search = ViewerSearch(source: { Task { await TextSource.open(bytes, password: nil) } }, startPage: { 0 }, pageLabel: { ["iv", "v"][$0] })
+
+        await search.start("fox", TextSearchOptions()).value
+
+        XCTAssertEqual(search.hits.map { $0.pageText }, ["Page iv", "Page v"])
+    }
+
+    func test_aWordOnEveryPageOfALongFileStopsAtTheCap() async throws {
+        let search = searching(try pages(ViewerSearch.maxHits + 20))
+
+        await search.start("fox", TextSearchOptions()).value
+
+        XCTAssertEqual(search.hits.count, ViewerSearch.maxHits)
+        XCTAssertTrue(search.capped)
+        XCTAssertFalse(search.isRunning)
+    }
+
+    func test_exactlyTheCapIsNotCapped() async throws {
+        let search = searching(try pages(ViewerSearch.maxHits))
+
+        await search.start("fox", TextSearchOptions()).value
+
+        XCTAssertEqual(search.hits.count, ViewerSearch.maxHits)
+        XCTAssertFalse(search.capped)
+    }
+
+    func test_stoppingEndsTheSearchAndAnotherStartClearsIt() async throws {
+        let bytes = try pages(2)
+        let slow = Later<TextSource?>()
+        let search = ViewerSearch(source: { Task { await slow.value } }, startPage: { 0 })
+
+        let run = search.start("fox", TextSearchOptions())
+        search.stop()
+        slow.set(await TextSource.open(bytes, password: nil))
+        await run.value
+
+        XCTAssertFalse(search.isRunning)
+        XCTAssertTrue(search.stopped)
+        XCTAssertTrue(search.hits.isEmpty)
+        search.start("fox", TextSearchOptions())
+        XCTAssertFalse(search.stopped)
+    }
+
     func test_aFileTheEngineCannotOpenGivesNoHits() async {
         let search = ViewerSearch(source: { Task { nil } }, startPage: { 0 })
 
