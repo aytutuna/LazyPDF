@@ -49,16 +49,16 @@ Windows SDK for .NET (Microsoft.Windows.SDK.NET.dll 10.0.19041.55, from the
 package Microsoft.Windows.SDK.NET.Ref 10.0.19041.57)
     Copyright (c) Microsoft Corporation. All rights reserved.
     They let the app call Windows.Data.Pdf and Windows.Media.Ocr. C#/WinRT is
-    under the MIT licence, the same text as above with the copyright line
+    under the MIT license, the same text as above with the copyright line
     "Copyright (c) Microsoft Corporation". The Windows SDK projection names
-    the Windows SDK licence as its terms: https://aka.ms/WinSDKLicenseURL
+    the Windows SDK license as its terms: https://aka.ms/WinSDKLicenseURL
 
 Microsoft.Web.WebView2 (Microsoft.Web.WebView2.Core.dll, Microsoft.Web.WebView2.Wpf.dll,
 WebView2Loader.dll, 1.0.4314.35)
     Copyright (C) Microsoft Corporation. All rights reserved.
     Renders a web page file to PDF in Create. It drives the WebView2 runtime
     that Windows or Edge provides; the runtime is not part of the app. BSD
-    3-clause licence:
+    3-clause license:
 
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions are
@@ -90,7 +90,7 @@ WebView2Loader.dll, 1.0.4314.35)
 
 Adobe predefined CJK CMaps (Fonts/Tables/CMapData.cs)
     61 character collection maps, character id mappings only, from Adobe's
-    cmap-resources, under the BSD 3-clause licence:
+    cmap-resources, under the BSD 3-clause license:
 
     Copyright 1990-2023 Adobe. All rights reserved.
 
@@ -122,7 +122,7 @@ Adobe predefined CJK CMaps (Fonts/Tables/CMapData.cs)
 
 
 Adobe Glyph List and ZapfDingbats glyph list (Fonts/Tables/GlyphListData.cs)
-    Adobe Systems, under the BSD 3-clause licence:
+    Adobe Systems, under the BSD 3-clause license:
 
     Copyright 2002-2019 Adobe (http://www.adobe.com/).
 
@@ -168,7 +168,7 @@ Adobe Core 14 font metrics (Fonts/Tables/Standard14Data.cs)
     file(s); and that this paragraph is not modified. Adobe Systems has no
     responsibility or obligation to support the use of the AFM files.
 
-sRGB colour profile (Standards/PdfASrgb.cs)
+sRGB color profile (Standards/PdfASrgb.cs)
     "sRGB-v2-magic.icc" from Compact-ICC-Profiles by Clinton Ingram,
     https://github.com/saucecontrol/Compact-ICC-Profiles, released to the
     public domain under CC0 1.0. It is the output intent of PDF/A files the
