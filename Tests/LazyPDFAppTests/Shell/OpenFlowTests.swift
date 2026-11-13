@@ -18,6 +18,18 @@ final class OpenFlowTests: XCTestCase {
         XCTAssertNil(f.vm.activeDocument)
     }
 
+    func test_aClosedFileReopensAtThePageItWasLeftOn() async {
+        let f = ViewModelFixture(self)
+        let url = f.pdf("long.pdf", pages: 4)
+        await f.vm.open(url)
+        f.vm.documents[0].pageIndex = 2
+        f.vm.close(f.vm.documents[0])
+
+        await f.vm.open(url)
+
+        XCTAssertEqual(f.vm.documents[0].pageIndex, 2)
+    }
+
     func test_aPdfOpensInATabAndBecomesTheActiveOne() async {
         let f = ViewModelFixture(self)
         let url = f.pdf("report.pdf")

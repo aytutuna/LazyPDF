@@ -257,6 +257,10 @@ extension AppViewModel {
             tab.pageIndex = min(was.pageIndex, tab.pageCount - 1)
             tab.zoom = was.zoom
             tab.fit = was.fit
+        } else if let url, pending.recovery == nil, let seen = recentFiles.view(of: url) {
+            tab.pageIndex = min(max(seen.page, 0), max(tab.pageCount - 1, 0))
+            tab.zoom = seen.zoom
+            tab.fit = seen.fit
         }
         select(tab)
         if let note = source.note {
@@ -351,7 +355,10 @@ extension AppViewModel {
             return false
         }
         warnedAboutDisk[ObjectIdentifier(tab)] = nil
-        if let url = tab.url { recentFiles.add(url) }
+        if let url = tab.url {
+            recentFiles.add(url)
+            recentFiles.rememberView(url, page: tab.pageIndex, zoom: tab.zoom, fit: tab.fit)
+        }
         recent = buildRecent()
         // A plain notice may have been raised by the hand-in just before this save, so it stays.
         if let shown = message, shown.isError || shown.action != nil { message = nil }
@@ -394,6 +401,7 @@ extension AppViewModel {
         dropAction()
         warnedAboutDisk[ObjectIdentifier(tab)] = nil
         tab.changed = nil
+        rememberView(tab)
         tab.dispose()
         notifyAll()
         if exiting { _ = continueExit(raise: true) }
@@ -437,6 +445,10 @@ extension AppViewModel {
         return true
     }
 
+    private func rememberView(_ tab: DocumentTab) {
+        if let url = tab.url, tab.pageCount > 1 { recentFiles.rememberView(url, page: tab.pageIndex, zoom: tab.zoom, fit: tab.fit) }
+    }
+
     private func continueExit(raise: Bool) -> Bool {
         if let dirty = documents.first(where: { $0.isDirty || $0.pendingMarks > 0 }) {
             select(dirty)
@@ -444,7 +456,10 @@ extension AppViewModel {
             notifyAll()
             return true
         }
-        for tab in documents { tab.dispose() }
+        for tab in documents {
+            rememberView(tab)
+            tab.dispose()
+        }
         exiting = false
         if raise { exitRequested?() }
         return false

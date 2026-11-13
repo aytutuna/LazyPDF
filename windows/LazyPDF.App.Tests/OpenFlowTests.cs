@@ -288,6 +288,21 @@ public sealed class OpenFlowTests
     }
 
     [Fact]
+    public async Task AClosedFileReopensAtThePageItWasLeftOn()
+    {
+        using var f = new ViewModelFixture();
+        string path = f.Pdf("long.pdf", pages: 4);
+        await f.Vm.OpenAsync(path);
+        await f.SettledAsync();
+        f.Vm.ActiveDocument!.PageIndex = 2;
+        f.Vm.Close(f.Vm.ActiveDocument!);
+
+        await f.Vm.OpenAsync(path);
+
+        Assert.Equal(2, f.Vm.ActiveDocument!.PageIndex);
+    }
+
+    [Fact]
     public void ARecentCardForAMissingFileSaysSo()
     {
         var card = new RecentCard(new RecentItem(Path.Combine(Path.GetTempPath(), "gone.pdf"), "", "", "", false));
