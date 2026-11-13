@@ -61,10 +61,14 @@ public partial class SearchSidePanel : ToolPanel
             : search.BadPattern ? Loc.T("Not a valid pattern")
             : search.Running && search.Hits.Count > 0 ? Loc.T("{0} found", search.Hits.Count)
             : search.Running ? Loc.T("Searching for {0}", search.Query)
+            : search.Stopped && search.Hits.Count == 0 ? Loc.T("Stopped")
+            : search.Stopped ? Loc.T("{0} found, stopped", search.Hits.Count)
             : search.Hits.Count == 0 && TimedOutText.For(search.TimedOut) is { } slow ? slow
             : search.NoText ? Loc.T("This file has no text to search. Try Make searchable.")
             : search.Hits.Count == 0 ? Loc.T("No results for {0}", search.Query)
             : Loc.Plural(search.Hits.Count, "{0} result for {1}", "{0} results for {1}", search.Hits.Count, search.Query);
+        StopButton.Visibility = search.Running ? Visibility.Visible : Visibility.Collapsed;
+        if (search.Capped) Summary.Text += " " + Loc.T("First {0} shown. Narrow the search to see the rest.", ViewerSearch.MaxHits);
         if (search.Hits.Count > 0 && TimedOutText.For(search.TimedOut) is { } more) Summary.Text += " " + more;
         if (Results.SelectedIndex == search.Current) return;
         _syncing = true;
@@ -92,6 +96,8 @@ public partial class SearchSidePanel : ToolPanel
             Viewer?.Search.Select(Results.ItemContainerGenerator.IndexFromContainer(item));
         _pressed = null;
     }
+
+    private void Stop_Click(object sender, RoutedEventArgs e) => Viewer?.Search.Stop();
 
     private void Run() => Viewer?.Search.Start(Query.Text, Viewer.Search.Options);
 

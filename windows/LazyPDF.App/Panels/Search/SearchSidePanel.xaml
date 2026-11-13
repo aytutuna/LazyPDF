@@ -10,8 +10,12 @@
                 <TextBox x:Name="Query" AutomationProperties.Name="{loc:T Search}" TextChanged="Query_TextChanged" PreviewKeyDown="Query_PreviewKeyDown" />
                 <TextBlock x:Name="QueryHint" Text="{loc:T Search the file}" Style="{StaticResource PlaceholderText}" />
             </Grid>
-            <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE721;" Content="{loc:T Search}" AutomationProperties.Name="{loc:T Search}" Padding="10,3,10,4" HorizontalAlignment="Left"
-                    ToolTip="{loc:T Search (Ctrl+F)}" Click="Find_Click" />
+            <StackPanel Orientation="Horizontal">
+                <Button Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE721;" Content="{loc:T Search}" AutomationProperties.Name="{loc:T Search}" Padding="10,3,10,4" HorizontalAlignment="Left"
+                        ToolTip="{loc:T Search (Ctrl+F)}" Click="Find_Click" />
+                <Button x:Name="StopButton" Style="{StaticResource IconTextButtonStyle}" loc:Icon.Glyph="&#xE71A;" Content="{loc:T Stop searching}" AutomationProperties.Name="{loc:T Stop searching}"
+                        Padding="10,3,10,4" Margin="8,0,0,0" Visibility="Collapsed" Click="Stop_Click" />
+            </StackPanel>
             <TextBlock x:Name="Summary" Style="{StaticResource ReasonText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />
             <DockPanel x:Name="StageNote" Margin="0,8,0,0" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite">
                 <TextBlock DockPanel.Dock="Left" Style="{StaticResource ReasonGlyph}" Text="&#xE946;" />
