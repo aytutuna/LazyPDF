@@ -236,7 +236,8 @@ internal static class BlockLayout
             if (glyph is not null) origins.Add(glyph.Origin);
         }
         double spacing = origins.Count > 1 ? Math.Abs((origins[1].X - origins[0].X) * -uy + (origins[1].Y - origins[0].Y) * ux) : 0;
-        if (starts.Count < 2) return (TextAlignment.Left, spacing);
+        // A lone right-to-left line is set from the right edge, as the writers set it.
+        if (starts.Count < 2) return (text.Lines[block.Lines.Start].IsRtl ? TextAlignment.Right : TextAlignment.Left, spacing);
         double tol = 0.6 * size;
         bool Same(IEnumerable<double> values, double within) => values.Max() - values.Min() <= within;
         var centers = starts.Zip(ends, (a, b) => (a + b) / 2).ToList();

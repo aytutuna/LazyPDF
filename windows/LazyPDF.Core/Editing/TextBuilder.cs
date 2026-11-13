@@ -26,6 +26,9 @@ internal sealed class EditPiece
 
     public bool IsSpace { get; init; }
 
+    /// <summary>The piece is a whole shaped run (see <see cref="TextBuilder.Shape"/>): <see cref="Text"/> is its logical text and <see cref="Bytes"/> is not used.</summary>
+    public bool IsShaped { get; init; }
+
     /// <summary>The width in em before spacing and scaling, and whether word spacing applies to it (a single byte code 32).</summary>
     public double Em { get; init; }
     public bool Code32 { get; init; }
@@ -176,22 +179,40 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
         }
     }
 
-    // Consecutive pieces of one stand-in with right-to-left characters become one piece, encoded in display order.
-    private static List<EditPiece> Shaped(IReadOnlyList<EditPiece> pieces)
+    /// <summary>
+    /// Joins consecutive pieces of one stand-in font with right-to-left characters into one piece, so that it is shaped and
+    /// written in display order and measured by what the shaper makes of it. <paramref name="rightToLeft"/> is the direction
+    /// of the paragraph the line belongs to; a line that would start the other way gets a direction mark. Pieces
+    /// with no such text stay as they are.
+    /// </summary>
+    internal static List<EditPiece> Shape(IReadOnlyList<EditPiece> pieces, EditGlyph anchor, double? size = null, bool? rightToLeft = null)
     {
+        double em = size ?? anchor.FontSize;
         var result = new List<EditPiece>();
         for (int i = 0; i < pieces.Count; i++)
         {
             int end = i + 1;
-            if (pieces[i].Draw is { } draw && pieces[i].Shift is null)
+            if (pieces[i].Draw is { } draw && pieces[i].Shift is null && !pieces[i].IsShaped)
             {
-                while (end < pieces.Count && pieces[end].Draw == draw && pieces[end].Font == pieces[i].Font && pieces[end].Shift is null) end++;
+                while (end < pieces.Count && pieces[end].Draw == draw && pieces[end].Font == pieces[i].Font && pieces[end].Shift is null && !pieces[end].IsShaped) end++;
                 string text = string.Concat(pieces.Skip(i).Take(end - i).Select(p => p.Text));
-                if (Scripts.NeedsBidi(text))
+                if (Scripts.NeedsBidi(text) && draw.IsEmbedded)
                 {
-                    result.Add(new EditPiece { Text = text, Bytes = draw.Encode(text), Font = pieces[i].Font, Advance = pieces.Skip(i).Take(end - i).Sum(p => p.Advance) });
-                    i = end - 1;
-                    continue;
+                    if (rightToLeft is { } rtl && draw.IsRightToLeft(text) != rtl) text = (rtl ? (char)0x200F : (char)0x200E) + text;
+                    if (draw.Shaped(text) is { } line)
+                    {
+                        result.Add(new EditPiece
+                        {
+                            Text = text,
+                            Font = pieces[i].Font,
+                            Draw = draw,
+                            IsShaped = true,
+                            Em = line.Width / 1000,
+                            Advance = (line.Width / 1000 * em + anchor.CharSpacing * line.Glyphs.Count) * anchor.Scale,
+                        });
+                        i = end - 1;
+                        continue;
+                    }
                 }
             }
             result.Add(pieces[i]);
@@ -206,7 +227,6 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
     /// </summary>
     public static List<ShowItem> Items(Place place, EditGlyph at, IReadOnlyList<EditPiece> pieces, double shift = 0, byte[]? before = null, byte[]? after = null, double? size = null, ContentOperation? current = null)
     {
-        pieces = Shaped(pieces);
         var items = new List<ShowItem>();
         if (before is { Length: > 0 }) items.Add(new ShowOps(before));
         if (shift != 0) items.Add(new ShowShift(-shift));
@@ -235,6 +255,12 @@ internal sealed class TextBuilder(PdfDocument document, EditBatch batch, IFontSo
                 continue;
             }
             Select(piece.Font);
+            if (piece.IsShaped)
+            {
+                Flush();
+                items.Add(new ShowOps(new ContentWriter().Show(piece.Draw!, piece.Text, size ?? at.FontSize).ToArray()));
+                continue;
+            }
             run.AddRange(piece.Bytes);
         }
         Select(null);
