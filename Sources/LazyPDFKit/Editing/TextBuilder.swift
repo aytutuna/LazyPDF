@@ -40,6 +40,9 @@ struct EditPiece {
     /// The resource name of the stand-in font; nil for the font in force.
     var font: String?
 
+    /// The stand-in font the bytes were made in; its pieces are shaped together when the line is written.
+    var draw: PdfDrawFont?
+
     var isSpace = false
 
     /// The width in em before spacing and scaling, and whether word spacing applies to it (a single byte code 32).
@@ -100,6 +103,7 @@ final class TextBuilder {
         let fontCodec = codec(anchor.font)
         var pieces = [EditPiece?](repeating: nil, count: runes.count)
         var missing: [Int] = []
+        let bidi = fonts != nil && Scripts.needsBidi(text)
         for i in 0..<runes.count {
             let r = runes[i]
             if let code = fontCodec.tryGet(r) ?? fontCodec.tryExtend(r) {
@@ -110,8 +114,22 @@ final class TextBuilder {
                 missing.append(i)
             }
         }
-        if !missing.isEmpty { try substitute(place, anchor, runes, &pieces, missing) }
+        if bidi { try shapeInStandIn(place, anchor, runes, &pieces, missing) }
+        else if !missing.isEmpty { try substitute(place, anchor, runes, &pieces, missing) }
         return pieces.compactMap { $0 }
+    }
+
+    // The font in the file draws characters one by one in logical order, so text with right-to-left characters goes whole
+    // into a stand-in that items shapes. When no stand-in can be had the pieces stay as they are, unless a glyph is missing anyway.
+    private func shapeInStandIn(_ place: Place, _ anchor: EditGlyph, _ runes: [String], _ pieces: inout [EditPiece?], _ missing: [Int]) throws {
+        var all = [EditPiece?](repeating: nil, count: runes.count)
+        do {
+            try substitute(place, anchor, runes, &all, Array(0..<runes.count))
+        } catch let error as EditConflictException {
+            if missing.isEmpty { return }
+            throw error
+        }
+        pieces = all
     }
 
     /// The pieces of `text` all in a font chosen for the job, drawn at `size`.
@@ -119,7 +137,7 @@ final class TextBuilder {
         runes(text).map { r in
             EditPiece(text: r, bytes: draw.encode(r),
                       advance: (draw.width(r, 1000) / 1000 * size + anchor.charSpacing + (r == " " && !draw.isEmbedded ? anchor.wordSpacing : 0)) * anchor.scale,
-                      font: name, isSpace: r == " ", em: draw.width(r, 1000) / 1000, code32: r == " " && !draw.isEmbedded)
+                      font: name, draw: draw, isSpace: r == " ", em: draw.width(r, 1000) / 1000, code32: r == " " && !draw.isEmbedded)
         }
     }
 
@@ -168,14 +186,37 @@ final class TextBuilder {
             let width = current.draw.width(r, 1000)
             pieces[i] = EditPiece(text: r, bytes: current.draw.encode(r),
                                   advance: (width / 1000 * anchor.fontSize + anchor.charSpacing + (r == " " && !current.draw.isEmbedded ? anchor.wordSpacing : 0)) * anchor.scale,
-                                  font: current.name, isSpace: r == " ", em: width / 1000, code32: r == " " && !current.draw.isEmbedded)
+                                  font: current.name, draw: current.draw, isSpace: r == " ", em: width / 1000, code32: r == " " && !current.draw.isEmbedded)
         }
+    }
+
+    // Consecutive pieces of one stand-in with right-to-left characters become one piece, encoded in display order.
+    private static func shaped(_ pieces: [EditPiece]) -> [EditPiece] {
+        var result: [EditPiece] = []
+        var i = 0
+        while i < pieces.count {
+            if let draw = pieces[i].draw, pieces[i].shift == nil {
+                var end = i + 1
+                while end < pieces.count, pieces[end].draw === draw, pieces[end].font == pieces[i].font, pieces[end].shift == nil { end += 1 }
+                let run = pieces[i..<end]
+                let text = run.map { $0.text }.joined()
+                if Scripts.needsBidi(text) {
+                    result.append(EditPiece(text: text, bytes: draw.encode(text), advance: run.reduce(0) { $0 + $1.advance }, font: pieces[i].font))
+                    i = end
+                    continue
+                }
+            }
+            result.append(pieces[i])
+            i += 1
+        }
+        return result
     }
 
     /// The pieces as show items. A stand-in font is selected before its characters and the font in
     /// force at `at` selected again after them; `before` and `after` go round the whole text.
     static func items(_ place: Place, _ at: EditGlyph, _ pieces: [EditPiece], shift: Double = 0, before: [UInt8]? = nil, after: [UInt8]? = nil,
                       size: Double? = nil, current: ContentOperation? = nil) throws -> [ShowItem] {
+        let pieces = shaped(pieces)
         var items: [ShowItem] = []
         if let before, !before.isEmpty { items.append(ShowOps(before)) }
         if shift != 0 { items.append(ShowShift(-shift)) }

@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using Xunit;
 
 namespace LazyPDF.Core.Tests;
 
@@ -41,6 +42,10 @@ internal static class WritersGolden
                 var session = PdfEditSession.Open(AnnotationFixtures.Blank(1).SaveRewrite());
                 new PageEditor(session, 0, fonts).AddTextBox(new PdfRect(50, 600, 250, 700), text, new TextBoxStyle("Script Sans", Size: 14));
                 return PdfDocument.Open(session.Current.ToArray());
+            case "edit":
+                var edit = EditKit.Session("BT /F1 12 Tf 50 700 Td (Hello world) Tj ET");
+                Assert.True(new PageEditor(edit, 0, fonts).ReplaceText(EditKit.Find(edit, "world"), text).Done);
+                return PdfDocument.Open(edit.Current.ToArray());
             case "watermark":
                 new PdfStamper(document, fonts).AddWatermark(new WatermarkSpec { Text = text, FontFamily = "Script Sans" });
                 break;

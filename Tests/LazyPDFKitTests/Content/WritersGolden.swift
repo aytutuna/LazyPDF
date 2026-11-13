@@ -35,6 +35,11 @@ enum WritersGolden {
             let session = try PdfEditSession.open(try AnnotationFixtures.blank(1).saveRewrite())
             _ = try PageEditor(session, 0, fonts).addTextBox(PdfRect(50, 600, 250, 700), text, TextBoxStyle(family: "Script Sans", size: 14))
             return try PdfDocument.open(session.current)
+        case "edit":
+            let edit = try EditKit.session("BT /F1 12 Tf 50 700 Td (Hello world) Tj ET")
+            let result = try PageEditor(edit, 0, fonts).replaceText(try EditKit.find(edit, "world"), text)
+            XCTAssertTrue(result.done)
+            return try PdfDocument.open(edit.current)
         case "watermark":
             _ = try PdfStamper(document, fonts).addWatermark(WatermarkSpec(text: text, fontFamily: "Script Sans"))
         case "header":
