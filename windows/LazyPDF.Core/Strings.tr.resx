@@ -2413,9 +2413,6 @@
   <data name="First page number" xml:space="preserve">
     <value>İlk sayfa numarası</value>
   </data>
-  <data name="First {0} shown. Narrow the search to see the rest." xml:space="preserve">
-    <value>İlk {0} sonuç gösteriliyor. Gerisini görmek için aramayı daraltın.</value>
-  </data>
   <data name="Fit" xml:space="preserve">
     <value>Sığdır</value>
   </data>
@@ -3435,6 +3432,9 @@
   </data>
   <data name="More ways to save" xml:space="preserve">
     <value>Diğer kaydetme yolları</value>
+  </data>
+  <data name="More were found. Narrow the search to see the rest." xml:space="preserve">
+    <value>Daha fazlası bulundu. Gerisini görmek için aramayı daraltın.</value>
   </data>
   <data name="Move" xml:space="preserve">
     <value>Taşı</value>

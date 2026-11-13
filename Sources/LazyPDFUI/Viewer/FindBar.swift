@@ -39,7 +39,7 @@ struct FindBar: View {
 
     private var note: String? {
         let search = viewer.search
-        let parts = [search.capped ? L10n.t("First {0} shown. Narrow the search to see the rest.", ViewerSearch.maxHits) : nil,
+        let parts = [search.capped ? L10n.t("More were found. Narrow the search to see the rest.") : nil,
                      TimedOutText.forPages(search.timedOut)].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined(separator: " ")
     }

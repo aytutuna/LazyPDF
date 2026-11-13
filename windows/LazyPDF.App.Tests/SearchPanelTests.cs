@@ -73,7 +73,7 @@ public sealed class SearchPanelTests
         await Sta.Until(() => !search.Running);
 
         Assert.Equal(Visibility.Collapsed, stop.Visibility);
-        Assert.EndsWith(Loc.T("First {0} shown. Narrow the search to see the rest.", ViewerSearch.MaxHits), summary.Text);
+        Assert.EndsWith(Loc.T("More were found. Narrow the search to see the rest."), summary.Text);
     });
 
     [Fact]

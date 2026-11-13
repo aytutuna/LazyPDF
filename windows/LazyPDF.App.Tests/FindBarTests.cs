@@ -113,6 +113,6 @@ public sealed class FindBarTests
         await Sta.Until(() => !search.Running);
 
         Assert.Equal(Visibility.Visible, bar.CapNote.Visibility);
-        Assert.StartsWith(Loc.T("First {0} shown. Narrow the search to see the rest.", ViewerSearch.MaxHits), bar.CapNote.Text);
+        Assert.StartsWith(Loc.T("More were found. Narrow the search to see the rest."), bar.CapNote.Text);
     });
 }

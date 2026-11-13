@@ -68,7 +68,7 @@ public partial class SearchSidePanel : ToolPanel
             : search.Hits.Count == 0 ? Loc.T("No results for {0}", search.Query)
             : Loc.Plural(search.Hits.Count, "{0} result for {1}", "{0} results for {1}", search.Hits.Count, search.Query);
         StopButton.Visibility = search.Running ? Visibility.Visible : Visibility.Collapsed;
-        if (search.Capped) Summary.Text += " " + Loc.T("First {0} shown. Narrow the search to see the rest.", ViewerSearch.MaxHits);
+        if (search.Capped) Summary.Text += " " + Loc.T("More were found. Narrow the search to see the rest.");
         if (search.Hits.Count > 0 && TimedOutText.For(search.TimedOut) is { } more) Summary.Text += " " + more;
         if (Results.SelectedIndex == search.Current) return;
         _syncing = true;

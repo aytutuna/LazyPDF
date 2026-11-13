@@ -70,7 +70,7 @@ public partial class FindBar : UserControl
         StopButton.Visibility = search.Running ? Visibility.Visible : Visibility.Collapsed;
         string note = string.Join(' ', new[]
         {
-            search.Capped ? Loc.T("First {0} shown. Narrow the search to see the rest.", ViewerSearch.MaxHits) : null,
+            search.Capped ? Loc.T("More were found. Narrow the search to see the rest.") : null,
             TimedOutText.For(search.TimedOut),
         }.Where(n => n is not null));
         CapNote.Text = note;
