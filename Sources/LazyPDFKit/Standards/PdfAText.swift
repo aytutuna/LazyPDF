@@ -152,6 +152,8 @@ public enum PdfAText {
     public static var emptyStructTree: String { L10n.t("The structure tree has no elements.") }
     public static var structTreeTooBig: String { L10n.t("The structure tree is too large to check in full.") }
     public static var contentOutsideTree: String { L10n.t("Content is neither in the structure tree nor marked as an artifact.") }
+    public static var noStructParents: String { L10n.t("A page with tagged content has no /StructParents.") }
+    public static var parentTreeMismatch: String { L10n.t("The parent tree does not lead the content of this page back to the structure elements that hold it.") }
     public static func nonStandardType(_ type: String) -> String { L10n.t("The structure type {0} is not a standard type and the role map does not lead to one.", type) }
     public static func noAlternateText(_ type: String) -> String { L10n.t("A {0} element has neither /Alt nor /ActualText.", type) }
     public static var noLanguage: String { L10n.t("No natural language is set in the catalog or on the top structure elements.") }

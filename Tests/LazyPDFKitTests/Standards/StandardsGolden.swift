@@ -125,6 +125,10 @@ enum StandardsGolden {
             return StandardsKit.tagged(level, roleMap: "/RoleMap <</Chart /Graph>>", figureType: "Chart")
         case "a-rolemap-ok":
             return StandardsKit.tagged(level, roleMap: "/RoleMap <</Chart /Figure>>", figureType: "Chart")
+        case "a-noparents":
+            return StandardsKit.tagged(level, structParents: "")
+        case "a-wrongparent":
+            return StandardsKit.tagged(level, parentTree: "[0 [10 0 R]]")
         case "a-part2-type":
             return StandardsKit.tagged(level, figureType: "Annot")
         case "plain":

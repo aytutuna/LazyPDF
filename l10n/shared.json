@@ -8873,6 +8873,12 @@
   "No natural language is set in the catalog or on the top structure elements.": {
     "tr": "Katalogda da üst yapı öğelerinde de doğal dil belirtilmemiş."
   },
+  "A page with tagged content has no /StructParents.": {
+    "tr": "Etiketli içeriği olan sayfada /StructParents yok."
+  },
+  "The parent tree does not lead the content of this page back to the structure elements that hold it.": {
+    "tr": "Üst ağaç bu sayfanın içeriğini onu tutan yapı öğelerine geri bağlamıyor."
+  },
   "Structure element {0}": {
     "tr": "Yapı öğesi {0}"
   },

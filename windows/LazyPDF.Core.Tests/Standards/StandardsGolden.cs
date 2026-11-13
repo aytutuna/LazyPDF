@@ -131,6 +131,10 @@ internal static class StandardsGolden
                 return StandardsKit.Tagged(level, roleMap: "/RoleMap <</Chart /Graph>>", figureType: "Chart");
             case "a-rolemap-ok":
                 return StandardsKit.Tagged(level, roleMap: "/RoleMap <</Chart /Figure>>", figureType: "Chart");
+            case "a-noparents":
+                return StandardsKit.Tagged(level, structParents: "");
+            case "a-wrongparent":
+                return StandardsKit.Tagged(level, parentTree: "[0 [10 0 R]]");
             case "a-part2-type":
                 return StandardsKit.Tagged(level, figureType: "Annot");
             case "plain":

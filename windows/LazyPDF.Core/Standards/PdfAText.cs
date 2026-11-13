@@ -147,6 +147,8 @@ public static class PdfAText
     public static string EmptyStructTree => Loc.T("The structure tree has no elements.");
     public static string StructTreeTooBig => Loc.T("The structure tree is too large to check in full.");
     public static string ContentOutsideTree => Loc.T("Content is neither in the structure tree nor marked as an artifact.");
+    public static string NoStructParents => Loc.T("A page with tagged content has no /StructParents.");
+    public static string ParentTreeMismatch => Loc.T("The parent tree does not lead the content of this page back to the structure elements that hold it.");
     public static string NonStandardType(string type) => Loc.T("The structure type {0} is not a standard type and the role map does not lead to one.", type);
     public static string NoAlternateText(string type) => Loc.T("A {0} element has neither /Alt nor /ActualText.", type);
     public static string NoLanguage => Loc.T("No natural language is set in the catalog or on the top structure elements.");

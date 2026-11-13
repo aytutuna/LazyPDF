@@ -37,6 +37,7 @@
 "A note or field on page {1} could not keep its other text and was removed whole.|other" = "{1}. sayfada {0} not veya alan diğer metnini koruyamadı ve bütünüyle kaldırıldı.";
 "A page has an /AA entry." = "Bir sayfada /AA girdisi var.";
 "A page or form has a transparency group." = "Bir sayfada ya da formda saydamlık grubu var.";
+"A page with tagged content has no /StructParents." = "Etiketli içeriği olan sayfada /StructParents yok.";
 "A path that clips cannot be changed." = "Kırpan bir yol değiştirilemez.";
 "A picture on page {1} that could not be read was removed whole.|one" = "{1}. sayfada okunamayan {0} resim bütünüyle kaldırıldı.";
 "A picture on page {1} that could not be read was removed whole.|other" = "{1}. sayfada okunamayan {0} resim bütünüyle kaldırıldı.";
@@ -1929,6 +1930,7 @@
 "The pages could not be tagged. Save a copy of the file and try again." = "Sayfalar etiketlenemedi. Dosyanın bir kopyasını kaydedip yeniden deneyin.";
 "The pages they were on changed. Measure them again." = "Bulundukları sayfalar değişti. Yeniden ölçün.";
 "The paragraph grew. Text below stayed put." = "Paragraf uzadı. Altındaki metin yerinde kaldı.";
+"The parent tree does not lead the content of this page back to the structure elements that hold it." = "Üst ağaç bu sayfanın içeriğini onu tutan yapı öğelerine geri bağlamıyor.";
 "The parts could not be made. Try a different amount." = "Parçalar oluşturulamadı. Başka bir değer deneyin.";
 "The passwords do not match." = "Parolalar eşleşmiyor.";
 "The pattern took too long on page {0}; it was not searched." = "Desen {0}. sayfada çok uzun sürdü; sayfa aranmadı.";

@@ -32,13 +32,13 @@ enum StandardsKit {
     /// `compliant` with a structure tree: a Document holding one Figure that draws the blue square, with a description, the
     /// language and /MarkInfo. The arguments replace the parts a test breaks.
     static func tagged(_ level: PdfALevel, marked: String = "/MarkInfo <</Marked true>>", lang: String = "/Lang (en-US)", roleMap: String = "",
-                       figureType: String = "Figure", alt: String = "/Alt (A blue square)",
+                       figureType: String = "Figure", alt: String = "/Alt (A blue square)", structParents: String = "/StructParents 0", parentTree: String = "[0 [11 0 R]]",
                        content: String = "/Figure <</MCID 0>> BDC 0 0 1 rg 20 20 100 100 re f EMC") -> [UInt8] {
-        compliant(level, catalog: "/StructTreeRoot 9 0 R \(marked) \(lang)", page: "/StructParents 0", content: content, extra: { pdf in
+        compliant(level, catalog: "/StructTreeRoot 9 0 R \(marked) \(lang)", page: structParents, content: content, extra: { pdf in
             pdf.obj(9, "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R \(roleMap)>>")
             pdf.obj(10, "<</Type /StructElem /S /Document /P 9 0 R /K 11 0 R>>")
             pdf.obj(11, "<</Type /StructElem /S /\(figureType) /P 10 0 R /Pg 3 0 R /K 0 \(alt)>>")
-            pdf.obj(12, "<</Nums [0 [11 0 R]]>>")
+            pdf.obj(12, "<</Nums \(parentTree)>>")
         })
     }
 

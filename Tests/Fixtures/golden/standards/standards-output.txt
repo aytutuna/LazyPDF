@@ -1764,6 +1764,24 @@
 < issues 0 truncated false
 > check A3a a-part2-type
 < issues 0 truncated false
+> check A1a a-noparents
+< issues 1 truncated false
+<   6.8.3.1 | Page 1 | A page with tagged content has no /StructParents.
+> check A2a a-noparents
+< issues 1 truncated false
+<   6.7.2 | Page 1 | A page with tagged content has no /StructParents.
+> check A3a a-noparents
+< issues 1 truncated false
+<   6.7.2 | Page 1 | A page with tagged content has no /StructParents.
+> check A1a a-wrongparent
+< issues 1 truncated false
+<   6.8.3.1 | Page 1 | The parent tree does not lead the content of this page back to the structure elements that hold it.
+> check A2a a-wrongparent
+< issues 1 truncated false
+<   6.7.2 | Page 1 | The parent tree does not lead the content of this page back to the structure elements that hold it.
+> check A3a a-wrongparent
+< issues 1 truncated false
+<   6.7.2 | Page 1 | The parent tree does not lead the content of this page back to the structure elements that hold it.
 > check A1a compliant
 < issues 2 truncated false
 <   6.8.2.2 | Catalog | The catalog has no /MarkInfo with /Marked true.
@@ -1849,6 +1867,9 @@
 < remaining 0 clean false
 > convert A2a a-loose
 < refusal PDF/A-2a needs a tagged file, and this one is not tagged well enough: Content is neither in the structure tree nor marked as an artifact. Tag the file and fix these first, then convert again.
+< remaining 0 clean false
+> convert A2a a-noparents
+< refusal PDF/A-2a needs a tagged file, and this one is not tagged well enough: A page with tagged content has no /StructParents. Tag the file and fix these first, then convert again.
 < remaining 0 clean false
 > convert A2a plain-lang
 < refusal none

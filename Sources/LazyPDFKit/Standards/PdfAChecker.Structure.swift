@@ -55,6 +55,8 @@ extension PdfAChecker {
             || (!tree.roots.isEmpty && tree.roots.allSatisfy { !DotNetText.isNullOrWhiteSpace($0.lang) })
         if !language { addStructure(c("6.8.5", "6.7.4"), PdfAText.catalog, PdfAText.noLanguage) }
 
+        checkParentTree(tree)
+
         // Reading the content again is not charged to the budget, so it is left undone once the budget is gone.
         if overBudget {
             addStructure(c("6.8.3.3", "6.7.3.1"), PdfAText.catalog, PdfAText.tooMuchContent)
@@ -65,6 +67,25 @@ extension PdfAChecker {
             let clause = c("6.8.3.3", "6.7.3.1")
             if content.where.isEmpty { addStructure(clause, PdfAText.catalog, PdfAText.contentOutsideTree) }
             for place in content.where { addStructure(clause, PdfAText.pageName(place.pageIndex + 1), PdfAText.contentOutsideTree) }
+        }
+    }
+
+    // 14.7.4.4 of ISO 32000-1: a page whose content the tree holds names its key in /StructParents, and the parent tree leads
+    // each sequence back to the element that holds it. Content of forms is not followed.
+    private func checkParentTree(_ tree: StructureTree) {
+        let clause = c("6.8.3.1", "6.7.2")
+        var pages: [Int: [StructContent]] = [:]
+        for content in tree.contents where content.stream == nil { pages[content.pageIndex, default: []].append(content) }
+        for index in pages.keys.sorted() {
+            guard index >= 0, index < document.pages.count else { continue }
+            let place = PdfAText.pageName(index + 1)
+            if let key = document.integer(document.pages[index].dictionary, "StructParents") {
+                if pages[index]!.contains(where: { tree.elementFor(key, $0.mcid) !== $0.parent }) {
+                    addStructure(clause, place, PdfAText.parentTreeMismatch)
+                }
+            } else {
+                addStructure(clause, place, PdfAText.noStructParents)
+            }
         }
     }
 

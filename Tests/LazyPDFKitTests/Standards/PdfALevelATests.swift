@@ -75,6 +75,15 @@ final class PdfALevelATests: XCTestCase {
         StandardsKit.assertContains(try StandardsKit.clauses(file, .a1a), "6.8.3.3")
     }
 
+    func test_contentTheParentTreeCannotLeadBackIsReported() throws {
+        for level in [PdfALevel.a1a, .a2a, .a3a] {
+            let none = try issues(StandardsKit.tagged(level, structParents: ""), level)
+            XCTAssertTrue(none.contains { $0.message == PdfAText.noStructParents && $0.where == "Page 1" })
+            let wrong = try issues(StandardsKit.tagged(level, parentTree: "[0 [10 0 R]]"), level)
+            XCTAssertTrue(wrong.contains { $0.message == PdfAText.parentTreeMismatch })
+        }
+    }
+
     func test_aCustomTypeNeedsARoleMapToAStandardOne() throws {
         let bad = StandardsKit.tagged(.a2a, roleMap: "/RoleMap <</Chart /Graph>>", figureType: "Chart")
         XCTAssertEqual(try issues(bad, .a2a).map { $0.message }, [PdfAText.nonStandardType("Chart")])

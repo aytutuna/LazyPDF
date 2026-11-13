@@ -203,6 +203,12 @@ check A3a a-rolemap-ok
 check A1a a-part2-type
 check A2a a-part2-type
 check A3a a-part2-type
+check A1a a-noparents
+check A2a a-noparents
+check A3a a-noparents
+check A1a a-wrongparent
+check A2a a-wrongparent
+check A3a a-wrongparent
 check A1a compliant
 check A2a compliant
 check A3a compliant
@@ -215,6 +221,7 @@ convert A2a a-good
 convert A2a compliant
 convert A2a a-rolemap
 convert A2a a-loose
+convert A2a a-noparents
 convert A2a plain-lang
 convert A3a a-good
 convert A3a compliant

@@ -67,6 +67,8 @@ internal sealed partial class PdfAChecker
             || tree.Roots.Count > 0 && tree.Roots.All(r => !string.IsNullOrWhiteSpace(r.Lang));
         if (!language) AddStructure(C("6.8.5", "6.7.4"), PdfAText.Catalog, PdfAText.NoLanguage);
 
+        CheckParentTree(tree);
+
         // Reading the content again is not charged to the budget, so it is left undone once the budget is gone.
         if (OverBudget)
         {
@@ -79,6 +81,26 @@ internal sealed partial class PdfAChecker
             string clause = C("6.8.3.3", "6.7.3.1");
             if (content.Where.Count == 0) AddStructure(clause, PdfAText.Catalog, PdfAText.ContentOutsideTree);
             foreach (var place in content.Where) AddStructure(clause, PdfAText.PageName(place.PageIndex + 1), PdfAText.ContentOutsideTree);
+        }
+    }
+
+    // 14.7.4.4 of ISO 32000-1: a page whose content the tree holds names its key in /StructParents, and the parent tree leads
+    // each sequence back to the element that holds it. Content of forms is not followed.
+    private void CheckParentTree(StructureTree tree)
+    {
+        string clause = C("6.8.3.1", "6.7.2");
+        foreach (var group in tree.Contents.Where(c => c.Stream is null).GroupBy(c => c.PageIndex))
+        {
+            if (group.Key < 0 || group.Key >= _doc.Pages.Count) continue;
+            string where = PdfAText.PageName(group.Key + 1);
+            if (_doc.Integer(_doc.Pages[group.Key].Dictionary, "StructParents") is not { } key)
+            {
+                AddStructure(clause, where, PdfAText.NoStructParents);
+            }
+            else if (group.Any(c => !ReferenceEquals(tree.ElementFor(key, c.Mcid), c.Parent)))
+            {
+                AddStructure(clause, where, PdfAText.ParentTreeMismatch);
+            }
         }
     }
 

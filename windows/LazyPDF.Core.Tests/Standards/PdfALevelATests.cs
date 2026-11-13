@@ -90,6 +90,18 @@ public class PdfALevelATests
     }
 
     [Fact]
+    public void ContentTheParentTreeCannotLeadBackIsReported()
+    {
+        foreach (var level in new[] { PdfALevel.A1a, PdfALevel.A2a, PdfALevel.A3a })
+        {
+            var none = StandardsKit.Check(StandardsKit.Tagged(level, structParents: ""), level).Issues;
+            Assert.Contains(none, i => i.Message == PdfAText.NoStructParents && i.Where == "Page 1");
+            var wrong = StandardsKit.Check(StandardsKit.Tagged(level, parentTree: "[0 [10 0 R]]"), level).Issues;
+            Assert.Contains(wrong, i => i.Message == PdfAText.ParentTreeMismatch);
+        }
+    }
+
+    [Fact]
     public void ACustomTypeNeedsARoleMapToAStandardOne()
     {
         var bad = StandardsKit.Tagged(PdfALevel.A2a, roleMap: "/RoleMap <</Chart /Graph>>", figureType: "Chart");

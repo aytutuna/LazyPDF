@@ -133,6 +133,9 @@
   <data name="A page or form has a transparency group." xml:space="preserve">
     <value>Bir sayfada ya da formda saydamlık grubu var.</value>
   </data>
+  <data name="A page with tagged content has no /StructParents." xml:space="preserve">
+    <value>Etiketli içeriği olan sayfada /StructParents yok.</value>
+  </data>
   <data name="A password breaks PDF/A. Leave out either the PDF/A step or the Protect step." xml:space="preserve">
     <value>Parola PDF/A'yı bozar. PDF/A adımını ya da Koru adımını çıkarın.</value>
   </data>
@@ -6870,6 +6873,9 @@
   </data>
   <data name="The paragraph grew. Text below stayed put." xml:space="preserve">
     <value>Paragraf uzadı. Altındaki metin yerinde kaldı.</value>
+  </data>
+  <data name="The parent tree does not lead the content of this page back to the structure elements that hold it." xml:space="preserve">
+    <value>Üst ağaç bu sayfanın içeriğini onu tutan yapı öğelerine geri bağlamıyor.</value>
   </data>
   <data name="The parts could not be made. Try a different amount." xml:space="preserve">
     <value>Parçalar oluşturulamadı. Başka bir değer deneyin.</value>
