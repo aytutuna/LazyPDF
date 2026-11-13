@@ -108,6 +108,7 @@ internal sealed partial class PdfUaChecker
         foreach (var page in _doc.Pages) pending.Push((page.Resources, PdfAText.PageName(page.Index + 1)));
         while (pending.Count > 0 && seen.Count < MaxEntries)
         {
+            cancel.ThrowIfCancellationRequested();
             var (resources, where) = pending.Pop();
             if (_doc.Dict(resources, "XObject") is not { } xobjects) continue;
             foreach (var (_, value) in xobjects.Entries.Take(MaxEntries))

@@ -61,6 +61,19 @@ final class PdfUaCheckerTests: XCTestCase {
         try lacks("02-002", loop)
     }
 
+    func test_manyUnmappedTypesAreReportedUpToTheLimit() throws {
+        let file = PdfUaKit.build(edit: { o in
+            let kids = (13..<3013).map { "\($0) 0 R" }.joined(separator: " ")
+            o[10] = "<</Type /StructElem /S /Document /P 9 0 R /K [11 0 R \(kids)]>>"
+            for n in 13..<3013 { o[n] = "<</Type /StructElem /S /T\(n) /P 10 0 R>>" }
+        })
+
+        let report = try PdfUaKit.check(file)
+
+        XCTAssertTrue(report.truncated)
+        XCTAssertEqual(report.issues.filter { $0.condition == "02-002" }.count, 1000)
+    }
+
     func test_aStandardTypeIsNotRemapped() throws {
         try fails("02-004", PdfUaKit.build(edit: { $0[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</P /Span>>>>" }))
     }

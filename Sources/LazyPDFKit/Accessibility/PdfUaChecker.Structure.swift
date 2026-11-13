@@ -45,14 +45,20 @@ extension PdfUaChecker {
             }
         }
         var types = Set<OrdinalString>()
+        var first = [OrdinalString: StructElement]()
         for entry in tree.roleMap.entries.prefix(Self.maxEntries) { types.insert(OrdinalString(entry.key)) }
-        for element in elements { types.insert(OrdinalString(element.type)) }
+        for element in elements {
+            let key = OrdinalString(element.type)
+            types.insert(key)
+            if first[key] == nil { first[key] = element }
+        }
         for type in types.map({ $0.text }).sorted(by: ordinalPrecedes) {
+            if truncated { break }
             if StructureTree.isStandard(type) { continue }
             if loops(tree, type) {
                 add("02-003", "7.1", PdfAText.catalog, PdfUaText.roleMapCircular(type))
-            } else if !StructureTree.isStandard(tree.standardType(type)), let first = elements.first(where: { XmlParser.same($0.type, type) }) {
-                add("02-002", "7.1", Self.place(first), PdfUaText.notMapped(type))
+            } else if !StructureTree.isStandard(tree.standardType(type)), let element = first[OrdinalString(type)] {
+                add("02-002", "7.1", Self.place(element), PdfUaText.notMapped(type))
             }
         }
     }

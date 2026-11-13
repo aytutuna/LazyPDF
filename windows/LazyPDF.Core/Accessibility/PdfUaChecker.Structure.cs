@@ -20,6 +20,7 @@ internal sealed partial class PdfUaChecker
         var notes = new HashSet<string>();
         foreach (var element in elements)
         {
+            cancel.ThrowIfCancellationRequested();
             string type = Type(element);
             if (type is "Figure" or "Formula" && string.IsNullOrWhiteSpace(element.Alt) && string.IsNullOrWhiteSpace(element.ActualText))
                 Add(type == "Figure" ? "13-004" : "17-002", type == "Figure" ? "7.3" : "7.7", Place(element), PdfUaText.NoAlt(type));
@@ -38,14 +39,18 @@ internal sealed partial class PdfUaChecker
         {
             if (StructureTree.IsStandard(key) && key != value) Add("02-004", "7.1", PdfAText.Catalog, PdfUaText.StandardRemapped(key, value));
         }
-        var types = new HashSet<string>(tree.RoleMap.Keys.Take(MaxEntries).Concat(elements.Select(e => e.Type)));
+        var first = new Dictionary<string, StructElement>(StringComparer.Ordinal);
+        foreach (var element in elements) first.TryAdd(element.Type, element);
+        var types = new HashSet<string>(tree.RoleMap.Keys.Take(MaxEntries).Concat(first.Keys));
         foreach (string type in types.OrderBy(t => t, StringComparer.Ordinal))
         {
+            cancel.ThrowIfCancellationRequested();
+            if (_truncated) break;
             if (StructureTree.IsStandard(type)) continue;
             bool loop = Loops(type);
             if (loop) Add("02-003", "7.1", PdfAText.Catalog, PdfUaText.RoleMapCircular(type));
-            else if (!StructureTree.IsStandard(tree.StandardType(type)) && elements.Any(e => e.Type == type))
-                Add("02-002", "7.1", Place(elements.First(e => e.Type == type)), PdfUaText.NotMapped(type));
+            else if (!StructureTree.IsStandard(tree.StandardType(type)) && first.TryGetValue(type, out var element))
+                Add("02-002", "7.1", Place(element), PdfUaText.NotMapped(type));
         }
     }
 
@@ -66,6 +71,7 @@ internal sealed partial class PdfUaChecker
     {
         foreach (var element in elements)
         {
+            cancel.ThrowIfCancellationRequested();
             string t = type(element);
             string parent = element.Parent is { } p ? type(p) : "";
             bool table = t is "THead" or "TBody" or "TFoot" or "TR" or "TH" or "TD" or "Table";

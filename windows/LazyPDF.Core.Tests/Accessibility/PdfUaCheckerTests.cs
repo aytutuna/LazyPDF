@@ -74,6 +74,31 @@ public class PdfUaCheckerTests
     }
 
     [Fact]
+    public void ManyUnmappedTypesAreReportedUpToTheLimit()
+    {
+        var file = PdfUaKit.Build(edit: o =>
+        {
+            var kids = Enumerable.Range(13, 3000).Select(n => $"{n} 0 R");
+            o[10] = $"<</Type /StructElem /S /Document /P 9 0 R /K [11 0 R {string.Join(' ', kids)}]>>";
+            for (int n = 13; n < 3013; n++) o[n] = $"<</Type /StructElem /S /T{n} /P 10 0 R>>";
+        });
+
+        var report = PdfUaKit.Check(file);
+
+        Assert.True(report.Truncated);
+        Assert.Equal(1000, report.Issues.Count(i => i.Condition == "02-002"));
+    }
+
+    [Fact]
+    public void CancellationStopsTheCheck()
+    {
+        using var source = new CancellationTokenSource();
+        source.Cancel();
+        using var document = PdfDocument.Open(PdfUaKit.Build());
+        Assert.Throws<OperationCanceledException>(() => PdfUaValidator.Validate(document, source.Token));
+    }
+
+    [Fact]
     public void AStandardTypeIsNotRemapped()
     {
         Fails("02-004", PdfUaKit.Build(edit: o => o[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</P /Span>>>>"));

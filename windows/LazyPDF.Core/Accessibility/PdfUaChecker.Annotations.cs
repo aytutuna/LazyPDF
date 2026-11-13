@@ -14,6 +14,7 @@ internal sealed partial class PdfUaChecker
         int budget = 50_000;
         foreach (var page in _doc.Pages)
         {
+            cancel.ThrowIfCancellationRequested();
             if (_doc.Array(page.Dictionary, "Annots") is not { Items.Count: > 0 } annotations) continue;
             if (_doc.Name(page.Dictionary, "Tabs") != "S") Add("28-006", "7.18.3", PdfAText.PageName(page.Index + 1), PdfUaText.TabOrder);
             for (int i = 0; i < annotations.Items.Count && --budget >= 0; i++)

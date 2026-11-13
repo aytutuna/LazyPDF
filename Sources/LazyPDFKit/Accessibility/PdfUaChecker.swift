@@ -12,7 +12,7 @@ final class PdfUaChecker {
     let document: PdfDocument
     private var issues: [PdfUaIssue] = []
     private var seen = Set<[UInt8]>()
-    private var truncated = false
+    private(set) var truncated = false
     var tree: StructureTree?
 
     init(_ document: PdfDocument) {
