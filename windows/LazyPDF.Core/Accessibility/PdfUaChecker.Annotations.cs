@@ -39,8 +39,10 @@ internal sealed partial class PdfUaChecker
         string expected = subtype switch { "Widget" => "Form", "Link" => "Link", _ => "Annot" };
         if (_tree is not null)
         {
-            if (owner is null) Add("28-002", "7.18.1", where, PdfUaText.AnnotationUntagged(subtype));
-            else if (_tree.StandardType(owner.Type) != expected) Add(subtype switch { "Widget" => "28-010", "Link" => "28-011", _ => "28-003" }, subtype switch { "Widget" => "7.18.4", "Link" => "7.18.5", _ => "7.18.1" }, where, PdfUaText.AnnotationTag(subtype, expected, _tree.StandardType(owner.Type)));
+            string id = subtype switch { "Widget" => "28-010", "Link" => "28-011", _ => "28-002" };
+            string clause = subtype switch { "Widget" => "7.18.4", "Link" => "7.18.5", _ => "7.18.1" };
+            if (owner is null) Add(id, clause, where, PdfUaText.AnnotationUntagged(subtype));
+            else if (_tree.StandardType(owner.Type) != expected) Add(id, clause, where, PdfUaText.AnnotationTag(subtype, expected, _tree.StandardType(owner.Type)));
         }
         // The structure element's /Alt stands in for the missing key, except on a Link, whose /Contents 7.18.5 requires itself.
         bool described = !string.IsNullOrWhiteSpace(owner?.Alt);
@@ -50,7 +52,7 @@ internal sealed partial class PdfUaChecker
         }
         else if (string.IsNullOrWhiteSpace(PdfText.Read(_doc, annotation, "Contents")) && (subtype == "Link" || !described))
         {
-            Add("28-004", subtype == "Link" ? "7.18.5" : "7.18.1", where, PdfUaText.AnnotationContents(subtype));
+            Add(subtype == "Link" ? "28-012" : "28-004", subtype == "Link" ? "7.18.5" : "7.18.1", where, PdfUaText.AnnotationContents(subtype));
         }
         if (subtype == "FileAttachment") CheckFileSpec(annotation["FS"]);
     }

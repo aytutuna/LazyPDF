@@ -221,10 +221,10 @@ final class PdfUaCheckerTests: XCTestCase {
         let link = "<</Type /Annot /Subtype /Link /Rect [0 0 10 10] /Contents (Home)>>"
         try passes(withAnnotation(link))
 
-        try fails("28-002", withAnnotation(link, tagged: false))
+        try fails("28-011", withAnnotation(link, tagged: false))
         try fails("28-011", withAnnotation(link, "Annot"))
-        try fails("28-003", withAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10] /Contents (Note)>>"))
-        try fails("28-004", withAnnotation("<</Type /Annot /Subtype /Link /Rect [0 0 10 10]>>"))
+        try fails("28-002", withAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10] /Contents (Note)>>"))
+        try fails("28-012", withAnnotation("<</Type /Annot /Subtype /Link /Rect [0 0 10 10]>>"))
         try fails("28-004", withAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10]>>", "Annot"))
         try passes(withAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10] /Contents (Note)>>", "Annot"))
     }
@@ -232,7 +232,7 @@ final class PdfUaCheckerTests: XCTestCase {
     func test_theElementsAltDescribesAnAnnotationButNotALink() throws {
         try passes(withAnnotation("<</Type /Annot /Subtype /Stamp /Rect [0 0 10 10]>>", "Annot /Alt (Approved)"))
         try passes(withAnnotation("<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /Rect [0 0 10 10]>>", "Form /Alt (Name)"))
-        try fails("28-004", withAnnotation("<</Type /Annot /Subtype /Link /Rect [0 0 10 10]>>", "Link /Alt (Home)"))
+        try fails("28-012", withAnnotation("<</Type /Annot /Subtype /Link /Rect [0 0 10 10]>>", "Link /Alt (Home)"))
         try fails("28-004", withAnnotation("<</Type /Annot /Subtype /Stamp /Rect [0 0 10 10]>>", "Annot /Alt ( )"))
         try fails("28-005", withAnnotation("<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /Rect [0 0 10 10]>>", "Form /Alt ( )"))
     }
