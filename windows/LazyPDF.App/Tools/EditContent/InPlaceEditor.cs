@@ -78,11 +78,18 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
         box.Loaded += (_, _) => box.Dispatcher.BeginInvoke(() =>
         {
             box.Focus();
-            box.CaretIndex = caret is { } at ? box.GetCharacterIndexFromPoint(new Point(at.X - area.X, at.Y - area.Y), true) : box.Text.Length;
+            box.CaretIndex = caret is { } at ? box.GetCharacterIndexFromPoint(InBox(box, at, area), true) : box.Text.Length;
         });
         _box = box;
         _overlay = overlay;
         overlay.Children.Add(box);
+    }
+
+    // A right-to-left box is mirrored against the overlay, so x inside it counts from its right edge
+    internal static Point InBox(TextBox box, Point at, Rect area)
+    {
+        double x = at.X - area.X;
+        return new Point(box.FlowDirection == FlowDirection.RightToLeft ? box.ActualWidth - x : x, at.Y - area.Y);
     }
 
     /// <summary>Shows the text in another font, size or colour while it is open.</summary>
