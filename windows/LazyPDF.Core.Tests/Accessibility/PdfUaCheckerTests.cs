@@ -69,7 +69,7 @@ public class PdfUaCheckerTests
             o[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</A /B /B /A>>>>";
             o[10] = "<</Type /StructElem /S /A /P 9 0 R /K 11 0 R>>";
         });
-        Fails("02-002", loop);
+        Fails("02-003", loop);
         Assert.DoesNotContain("02-001", PdfUaKit.Conditions(loop));
     }
 
@@ -101,7 +101,7 @@ public class PdfUaCheckerTests
     [Fact]
     public void AStandardTypeIsNotRemapped()
     {
-        Fails("02-003", PdfUaKit.Build(edit: o => o[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</P /Span>>>>"));
+        Fails("02-004", PdfUaKit.Build(edit: o => o[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</P /Span>>>>"));
     }
 
     [Fact]

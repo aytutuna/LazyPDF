@@ -20,9 +20,9 @@
 > check structure
 < issues 11 truncated false
 <   02-001 | 7.1 | Structure element 18 | The structure type Weird is not a standard type and the role map does not lead to one.
-<   02-002 | 7.1 | Catalog | The role map leads A in a circle or through too many steps.
-<   02-002 | 7.1 | Catalog | The role map leads B in a circle or through too many steps.
-<   02-003 | 7.1 | Catalog | The standard structure type P is remapped to Span.
+<   02-003 | 7.1 | Catalog | The role map leads A in a circle or through too many steps.
+<   02-003 | 7.1 | Catalog | The role map leads B in a circle or through too many steps.
+<   02-004 | 7.1 | Catalog | The standard structure type P is remapped to Span.
 <   09-004 | 7.2 | Structure element 20 | TD is not allowed in Table.
 <   09-005 | 7.2 | Structure element 21 | Lbl is not allowed in L.
 <   11-007 | 7.2 | Structure element 19 | The language x y is not a valid language tag.
@@ -79,9 +79,9 @@
 < marked false
 < issues 11 truncated false
 <   02-001 | 7.1 | Structure element 18 | The structure type Weird is not a standard type and the role map does not lead to one.
-<   02-002 | 7.1 | Catalog | The role map leads A in a circle or through too many steps.
-<   02-002 | 7.1 | Catalog | The role map leads B in a circle or through too many steps.
-<   02-003 | 7.1 | Catalog | The standard structure type P is remapped to Span.
+<   02-003 | 7.1 | Catalog | The role map leads A in a circle or through too many steps.
+<   02-003 | 7.1 | Catalog | The role map leads B in a circle or through too many steps.
+<   02-004 | 7.1 | Catalog | The standard structure type P is remapped to Span.
 <   09-004 | 7.2 | Structure element 20 | TD is not allowed in Table.
 <   09-005 | 7.2 | Structure element 21 | Lbl is not allowed in L.
 <   11-007 | 7.2 | Structure element 19 | The language x y is not a valid language tag.

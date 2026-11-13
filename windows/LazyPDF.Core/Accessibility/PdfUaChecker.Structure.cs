@@ -37,7 +37,7 @@ internal sealed partial class PdfUaChecker
         var tree = _tree!;
         foreach (var (key, value) in tree.RoleMap.OrderBy(e => e.Key, StringComparer.Ordinal).Take(MaxEntries))
         {
-            if (StructureTree.IsStandard(key) && key != value) Add("02-003", "7.1", PdfAText.Catalog, PdfUaText.StandardRemapped(key, value));
+            if (StructureTree.IsStandard(key) && key != value) Add("02-004", "7.1", PdfAText.Catalog, PdfUaText.StandardRemapped(key, value));
         }
         var first = new Dictionary<string, StructElement>(StringComparer.Ordinal);
         foreach (var element in elements) first.TryAdd(element.Type, element);
@@ -48,7 +48,7 @@ internal sealed partial class PdfUaChecker
             if (_truncated) break;
             if (StructureTree.IsStandard(type)) continue;
             bool loop = Loops(type);
-            if (loop) Add("02-002", "7.1", PdfAText.Catalog, PdfUaText.RoleMapCircular(type));
+            if (loop) Add("02-003", "7.1", PdfAText.Catalog, PdfUaText.RoleMapCircular(type));
             else if (!StructureTree.IsStandard(tree.StandardType(type)) && first.TryGetValue(type, out var element))
                 Add("02-001", "7.1", Place(element), PdfUaText.NotMapped(type));
         }
