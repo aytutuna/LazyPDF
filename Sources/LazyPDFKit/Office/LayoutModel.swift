@@ -163,12 +163,24 @@ final class LayoutRow {
 /// A table. A column of 0 has no width of its own and shares what the others leave.
 final class LayoutTable: LayoutBlock {
     var columns: [Double] = []
-    /// From the left of the text area, for a left aligned table.
+    /// From the left of the text area, for a left aligned table; from the right for a right aligned one when the table is right to left.
     var indent = 0.0
     var align = LayoutAlign.left
+    /// The table's columns run right to left, so the indent belongs to the right edge. `mirror()` has put the cells there; this only moves the indent.
+    var rightToLeft = false
     var rows: [LayoutRow] = []
 
     override init() {}
+
+    /// Turns a table written from its start edge into one drawn right to left: the columns, the cells' places, borders and margins swap sides.
+    func mirror() {
+        columns.reverse()
+        for cell in rows.flatMap({ $0.cells }) {
+            cell.column = columns.count - cell.column - cell.span
+            swap(&cell.left, &cell.right)
+            swap(&cell.marginLeft, &cell.marginRight)
+        }
+    }
 }
 
 /// Sizes in points. Header and footer distances are measured from the page edge to the band.

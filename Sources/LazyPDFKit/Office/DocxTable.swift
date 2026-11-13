@@ -262,6 +262,16 @@ extension DocxReader {
         default: made.align = .left
         }
         made.rows = outRows
+        // Everything above was read from the start edge: the first grid column, left and right as leading and trailing.
+        var visualRtl = false
+        for properties in chain.map({ $0.source.child(w, "tblPr") }) + [tblPr] {
+            if let visual = properties?.child(w, "bidiVisual") { visualRtl = Self.on(visual) }
+        }
+        if visualRtl {
+            made.align = Self.mirror(made.align)
+            made.rightToLeft = true
+            made.mirror()
+        }
         blocks.append(made)
     }
 

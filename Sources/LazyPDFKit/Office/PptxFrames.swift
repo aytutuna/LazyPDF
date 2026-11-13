@@ -103,6 +103,10 @@ extension PptxReader {
             layout.rows.append(row)
         }
         Self.edges(layout, covered)
+        // Cells, borders and margins were read from the first column; a right-to-left table puts that column on the right.
+        if PptxRunProps.flag(table.child(a, "tblPr")?.attribute("rtl")) == true {
+            layout.mirror()
+        }
 
         let corner = context.apply(x.x, x.y)
         return PptxShape(x: corner.x, y: corner.y, width: columns.reduce(0, +), table: PptxTable(x: corner.x, y: corner.y, table: layout))

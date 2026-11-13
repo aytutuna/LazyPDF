@@ -176,13 +176,16 @@ final class DocxReader {
         var width = points(size, "w") ?? 612, height = points(size, "h") ?? 792
         if size?.attribute(w, "orient") == "landscape" && width < height { swap(&width, &height) }
         let margin = sectPr.child(w, "pgMar")
+        // The gutter binds the pages on the left; a right-to-left section binds them on the right.
+        let gutter = points(margin, "gutter") ?? 0
+        let rtl = sectPr.child(w, "bidi").map { on($0) } ?? false
         return LayoutGeometry(
             width: width,
             height: height,
             top: abs(points(margin, "top") ?? 72),
-            right: points(margin, "right") ?? 72,
+            right: (points(margin, "right") ?? 72) + (rtl ? gutter : 0),
             bottom: abs(points(margin, "bottom") ?? 72),
-            left: (points(margin, "left") ?? 72) + (points(margin, "gutter") ?? 0),
+            left: (points(margin, "left") ?? 72) + (rtl ? 0 : gutter),
             headerDistance: points(margin, "header") ?? 36,
             footerDistance: points(margin, "footer") ?? 36)
     }
@@ -373,7 +376,7 @@ final class DocxReader {
         return made
     }
 
-    private static func mirror(_ align: LayoutAlign) -> LayoutAlign {
+    static func mirror(_ align: LayoutAlign) -> LayoutAlign {
         switch align {
         case .left: return .right
         case .right: return .left
