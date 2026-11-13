@@ -11,8 +11,10 @@ final class IOSShellTests: XCTestCase {
         XCTAssertTrue(IOSShell.isTemporary(inbox.appendingPathComponent("a.pdf")))
     }
 
-    func test_anInboxCopyNamedThroughThePrivateFolderIsTemporary() {
+    func test_anInboxCopyNamedThroughThePrivateFolderIsTemporary() throws {
         let path = inbox.resolvingSymlinksInPath().path
+        // On a device the app's folders sit under /var, a link to /private/var; the simulator keeps them under /Users.
+        try XCTSkipUnless(path.hasPrefix("/private/var/") || path.hasPrefix("/var/"), "no /private alias for \(path)")
         let alias = path.hasPrefix("/private/var/") ? String(path.dropFirst("/private".count)) : "/private" + path
         XCTAssertTrue(IOSShell.isTemporary(URL(fileURLWithPath: alias + "/a.pdf")))
     }
