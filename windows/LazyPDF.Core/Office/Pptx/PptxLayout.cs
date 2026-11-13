@@ -109,15 +109,16 @@ internal static class PptxLayout
 
     private static double Shift(LayoutLine line, LayoutAlign align, double inner, bool rightToLeft)
     {
-        int ink = line.Atoms.FindLastIndex(a => !a.IsBlank);
-        if (ink < 0) return 0;
+        var inked = line.Atoms.Where(a => !a.IsBlank).ToList();
+        if (inked.Count == 0) return 0;
         if (rightToLeft)
         {
-            double start = line.Atoms.Where(a => !a.IsBlank).Min(a => a.X), width = line.Atoms.Where(a => !a.IsBlank).Max(a => a.BoxRight) - start;
+            double start = inked.Min(a => a.X), width = inked.Max(a => a.BoxRight) - start;
             return -start + (align is LayoutAlign.Left ? 0 : align == LayoutAlign.Center ? (inner - width) / 2 : inner - width);
         }
         if (align is LayoutAlign.Left or LayoutAlign.Justify) return 0;
-        double end = line.Atoms[ink].X + line.Atoms[ink].Width;
+        // Atoms stay in logical order after reordering, so the last one is not necessarily the rightmost.
+        double end = inked.Max(a => a.X + a.Width);
         return align == LayoutAlign.Center ? (inner - (end - line.Start)) / 2 - line.Start : inner - end;
     }
 }

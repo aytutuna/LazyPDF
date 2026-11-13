@@ -19,8 +19,10 @@ page 1 720.00 540.00
 text 209.22 88.20 Calibri/Regular 14.00 000000 +0.00 rtl "אבג דהו"
 text 79.20 103.60 Calibri/Regular 14.00 000000 +0.00 rtl "אבג דהו"
 text 144.21 119.00 Calibri/Regular 14.00 000000 +0.00 rtl "אבג דהו"
-text 227.70 134.40 Calibri/Regular 14.00 000000 +0.00 "abc "
-text 256.40 134.40 Calibri/Regular 14.00 000000 +0.00 rtl "אבג"
+text 212.58 134.40 Calibri/Regular 14.00 000000 +0.00 "abc "
+text 241.28 134.40 Calibri/Regular 14.00 000000 +0.00 rtl "אבג"
+text 145.89 149.80 Calibri/Regular 14.00 000000 +0.00 "abc "
+text 174.59 149.80 Calibri/Regular 14.00 000000 +0.00 rtl "אבג"
 > complex script font
 page 1 720.00 540.00
 text 279.60 88.20 Verdana/Regular 14.00 000000 +0.00 "abc"

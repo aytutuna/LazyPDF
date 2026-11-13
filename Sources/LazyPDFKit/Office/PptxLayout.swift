@@ -106,15 +106,16 @@ enum PptxLayout {
     }
 
     private static func shift(_ line: LayoutLine, _ align: LayoutAlign, _ inner: Double, _ rightToLeft: Bool) -> Double {
-        guard let ink = line.atoms.lastIndex(where: { !$0.isBlank }) else { return 0 }
+        let inked = line.atoms.filter { !$0.isBlank }
+        if inked.isEmpty { return 0 }
         if rightToLeft {
-            let inked = line.atoms.filter { !$0.isBlank }
             let start = inked.map { $0.x }.min()!
             let width = inked.map { $0.boxRight }.max()! - start
             return -start + (align == .left ? 0 : align == .center ? (inner - width) / 2 : inner - width)
         }
         guard align == .center || align == .right else { return 0 }
-        let end = line.atoms[ink].x + line.atoms[ink].width
+        // Atoms stay in logical order after reordering, so the last one is not necessarily the rightmost.
+        let end = inked.map { $0.x + $0.width }.max()!
         return align == .center ? (inner - (end - line.start)) / 2 - line.start : inner - end
     }
 }
