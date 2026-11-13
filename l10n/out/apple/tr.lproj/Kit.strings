@@ -9,6 +9,7 @@
 "A Note element has no /ID." = "Bir Note öğesinde /ID yok.";
 "A PDF/A output intent has no /DestOutputProfile." = "Bir PDF/A çıktı amacında /DestOutputProfile yok.";
 "A PostScript XObject is used." = "Bir PostScript XObject kullanılıyor.";
+"A TrapNet annotation is not allowed." = "TrapNet ek açıklamasına izin verilmez.";
 "A TrueType CIDFont has no /CIDToGIDMap." = "Bir TrueType CIDFont'unda /CIDToGIDMap yok.";
 "A TrueType font must use WinAnsiEncoding or MacRomanEncoding." = "Bir TrueType yazı tipi WinAnsiEncoding ya da MacRomanEncoding kullanmalı.";
 "A Word, Excel or PowerPoint file" = "Bir Word, Excel veya PowerPoint dosyası";

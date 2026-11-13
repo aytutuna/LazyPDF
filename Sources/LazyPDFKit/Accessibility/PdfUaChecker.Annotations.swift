@@ -20,8 +20,12 @@ extension PdfUaChecker {
                 if budget < 0 { break }
                 defer { i += 1 }
                 guard let annotation = document.resolve(annotations.items[i]) as? PdfDictionary else { continue }
-                guard let subtype = document.name(annotation, "Subtype"), !["Popup", "PrinterMark", "TrapNet"].contains(subtype) else { continue }
+                guard let subtype = document.name(annotation, "Subtype"), !["Popup", "PrinterMark"].contains(subtype) else { continue }
                 let place = PdfAText.annotationName(page.index + 1, i + 1)
+                if subtype == "TrapNet" {
+                    add("28-007", "7.18.2", place, PdfUaText.trapNet)
+                    continue
+                }
                 let owner = (annotations.items[i] as? PdfReference).flatMap { owners[$0.number] }
                 checkAnnotation(annotation, subtype, place, owner)
             }

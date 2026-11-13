@@ -290,6 +290,13 @@ public class PdfUaCheckerTests
     }
 
     [Fact]
+    public void ATrapNetAnnotationIsNotAllowed()
+    {
+        Fails("28-007", WithAnnotation("<</Type /Annot /Subtype /TrapNet /Rect [0 0 10 10]>>", tagged: false));
+        Passes(WithAnnotation("<</Type /Annot /Subtype /PrinterMark /Rect [0 0 10 10]>>", tagged: false));
+    }
+
+    [Fact]
     public void APopupNeedsNothing() => Passes(WithAnnotation("<</Type /Annot /Subtype /Popup /Rect [0 0 10 10]>>", tagged: false));
 
     [Fact]

@@ -21,8 +21,13 @@ internal sealed partial class PdfUaChecker
             {
                 if (_doc.Resolve(annotations.Items[i]) is not PdfDictionary annotation) continue;
                 string? subtype = _doc.Name(annotation, "Subtype");
-                if (subtype is null or "Popup" or "PrinterMark" or "TrapNet") continue;
+                if (subtype is null or "Popup" or "PrinterMark") continue;
                 string where = PdfAText.AnnotationName(page.Index + 1, i + 1);
+                if (subtype == "TrapNet")
+                {
+                    Add("28-007", "7.18.2", where, PdfUaText.TrapNet);
+                    continue;
+                }
                 CheckAnnotation(annotation, subtype, where, annotations.Items[i] is PdfReference reference && owners.TryGetValue(reference.Number, out var owner) ? owner : null);
             }
         }

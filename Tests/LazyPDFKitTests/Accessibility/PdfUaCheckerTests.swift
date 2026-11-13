@@ -234,6 +234,11 @@ final class PdfUaCheckerTests: XCTestCase {
         try fails("28-005", withAnnotation("<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /Rect [0 0 10 10]>>", "Form /Alt ( )"))
     }
 
+    func test_aTrapNetAnnotationIsNotAllowed() throws {
+        try fails("28-007", withAnnotation("<</Type /Annot /Subtype /TrapNet /Rect [0 0 10 10]>>", tagged: false))
+        try passes(withAnnotation("<</Type /Annot /Subtype /PrinterMark /Rect [0 0 10 10]>>", tagged: false))
+    }
+
     func test_aPopupNeedsNothing() throws {
         try passes(withAnnotation("<</Type /Annot /Subtype /Popup /Rect [0 0 10 10]>>", tagged: false))
     }

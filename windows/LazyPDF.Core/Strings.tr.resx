@@ -49,6 +49,9 @@
   <data name="A PostScript XObject is used." xml:space="preserve">
     <value>Bir PostScript XObject kullanılıyor.</value>
   </data>
+  <data name="A TrapNet annotation is not allowed." xml:space="preserve">
+    <value>TrapNet ek açıklamasına izin verilmez.</value>
+  </data>
   <data name="A TrueType CIDFont has no /CIDToGIDMap." xml:space="preserve">
     <value>Bir TrueType CIDFont'unda /CIDToGIDMap yok.</value>
   </data>

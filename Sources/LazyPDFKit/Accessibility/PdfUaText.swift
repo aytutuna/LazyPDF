@@ -43,6 +43,7 @@ public enum PdfUaText {
 
     public static func annotationUntagged(_ subtype: String) -> String { L10n.t("A {0} annotation is not part of the structure tree.", subtype) }
     public static func annotationTag(_ subtype: String, _ expected: String, _ found: String) -> String { L10n.t("A {0} annotation sits in a {2} element; it needs {1}.", subtype, expected, found) }
+    public static var trapNet: String { L10n.t("A TrapNet annotation is not allowed.") }
     public static func annotationContents(_ subtype: String) -> String { L10n.t("A {0} annotation has no /Contents.", subtype) }
     public static var widgetTooltip: String { L10n.t("A form field has no /TU.") }
     public static var tabOrder: String { L10n.t("The page has annotations and its tab order does not follow the structure.") }

@@ -44,6 +44,7 @@ public static class PdfUaText
     public static string AnnotationUntagged(string subtype) => Loc.T("A {0} annotation is not part of the structure tree.", subtype);
     public static string AnnotationTag(string subtype, string expected, string found) => Loc.T("A {0} annotation sits in a {2} element; it needs {1}.", subtype, expected, found);
     public static string AnnotationContents(string subtype) => Loc.T("A {0} annotation has no /Contents.", subtype);
+    public static string TrapNet => Loc.T("A TrapNet annotation is not allowed.");
     public static string WidgetTooltip => Loc.T("A form field has no /TU.");
     public static string TabOrder => Loc.T("The page has annotations and its tab order does not follow the structure.");
 

@@ -8963,6 +8963,9 @@
   "A {0} annotation has no /Contents.": {
     "tr": "Bir {0} ek açıklamasında /Contents yok."
   },
+  "A TrapNet annotation is not allowed.": {
+    "tr": "TrapNet ek açıklamasına izin verilmez."
+  },
   "A form field has no /TU.": {
     "tr": "Bir form alanında /TU yok."
   },
