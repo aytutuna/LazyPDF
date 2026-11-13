@@ -491,6 +491,22 @@ public sealed class BatchRunnerTests
     }
 
     [Fact]
+    public async Task APdfUaStepWithMarkingDoesNotMarkAFileThatALaterStepBreaks()
+    {
+        using var dir = new TempDir();
+        string file = dir.File("a.pdf", TaggedFile());
+        var set = Set(dir, new BatchStep { Kind = BatchStepKind.PdfUa, MarkPdfUa = true }, Step(BatchStepKind.Watermark, "DRAFT"));
+
+        var result = await Run(Runner(), file, set);
+
+        Assert.True(result.Ok, result.Detail);
+        using var made = PdfDocument.Open(File.ReadAllBytes(result.Output!));
+        var report = PdfUaValidator.Validate(made);
+        Assert.False(report.IsValid);
+        Assert.Contains("06-001", report.Issues.Select(i => i.Condition));
+    }
+
+    [Fact]
     public async Task APdfUaStepBeforeProtectIsCheckedBeforeTheLock()
     {
         using var dir = new TempDir();

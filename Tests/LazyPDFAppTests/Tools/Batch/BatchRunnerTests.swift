@@ -220,6 +220,22 @@ final class BatchRunnerTests: XCTestCase {
         XCTAssertTrue(try PdfUaValidator.validate(made).issues.contains { $0.condition == "06-001" })
     }
 
+    func test_aPdfUaStepWithMarkingDoesNotMarkAFileThatALaterStepBreaks() async throws {
+        let dir = TempDir(self)
+        let file = dir.file("a.pdf", taggedFile())
+        var marking = BatchStep(.pdfUa)
+        marking.markPdfUa = true
+        var set = BatchSet(steps: [marking, step(.watermark, "DRAFT")])
+
+        let result = try await run(runner(), file, &set, into: dir.sub("out"))
+
+        XCTAssertTrue(result.ok, result.detail)
+        let made = try PdfDocument.open([UInt8](try Data(contentsOf: try XCTUnwrap(result.output))))
+        let report = try PdfUaValidator.validate(made)
+        XCTAssertFalse(report.isValid)
+        XCTAssertTrue(report.issues.contains { $0.condition == "06-001" })
+    }
+
     func test_aPdfUaStepReportsAFileThatCannotBeMarked() async throws {
         let dir = TempDir(self)
         let file = dir.file("a.pdf", Pdfs.text())
