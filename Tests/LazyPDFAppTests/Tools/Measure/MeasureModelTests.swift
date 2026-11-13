@@ -159,6 +159,48 @@ final class MeasureModelTests: XCTestCase {
         XCTAssertEqual(rig.tab.session.undoLabel, "Measure")
     }
 
+    func test_handingInWritesTheWaitingMeasurementsAsOneStep() async throws {
+        let (model, rig) = try attached()
+        try measure(model, ViewPoint(100, 100), ViewPoint(172, 100))
+
+        XCTAssertTrue(model.handIn())
+
+        XCTAssertTrue(model.rows.isEmpty)
+        XCTAssertEqual(rig.tab.session.undoLabel, "Measure")
+        XCTAssertFalse(PdfAnnotations.read(rig.tab.document, rig.tab.document.pages[0]).isEmpty)
+    }
+
+    func test_handingInWithNothingWaitingChangesNothing() async throws {
+        let (model, rig) = try attached()
+
+        XCTAssertTrue(model.handIn())
+
+        XCTAssertFalse(rig.tab.isDirty)
+    }
+
+    func test_handingInOnASignedFileWaitsForTheAnswer() async throws {
+        let (model, rig) = try attached(try Pdfs.signed(certified: false))
+        try measure(model, ViewPoint(100, 100), ViewPoint(172, 100))
+
+        XCTAssertFalse(model.handIn())
+
+        XCTAssertEqual(rig.host.notices.map(\.title), ["Check before going on"])
+        XCTAssertEqual(model.rows.count, 1)
+        XCTAssertFalse(rig.tab.isDirty)
+    }
+
+    func test_handingInOnAFileThatTakesNoMarksKeepsTheListAndGoesOn() async throws {
+        let model = MeasureModel(fonts: FakeFonts())
+        let locked = try ToolRig(try Pdfs.restricted(.print), password: "")
+        locked.attach(model)
+        try measure(model, ViewPoint(100, 100), ViewPoint(172, 100))
+
+        XCTAssertTrue(model.handIn())
+
+        XCTAssertEqual(model.rows.count, 1)
+        XCTAssertFalse(locked.tab.isDirty)
+    }
+
     func test_theListIsKeptPerTab() async throws {
         let (model, rig) = try attached()
         try measure(model, ViewPoint(0, 0), ViewPoint(72, 0))

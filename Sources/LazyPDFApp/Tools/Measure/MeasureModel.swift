@@ -277,6 +277,16 @@ public final class MeasureModel: ToolPanelModel {
         showReadout()
     }
 
+    // Marks that wait in the list go into the file before a save, an undo or a close, as Add to page does.
+    // A file that cannot take marks keeps them waiting.
+    public func handIn() -> Bool {
+        guard let tab, let host, !waiting.items.isEmpty, CommentExchange.canComment(tab.document) else { return true }
+        if MarkWork.cautioned(tab, host, again: { [weak self] in
+            if let self, self.tab === tab { _ = self.write(tab, host) }
+        }) { return false }
+        return write(tab, host)
+    }
+
     private func add() {
         guard let tab, let host else { return }
         if !CommentExchange.canComment(tab.document) {
@@ -284,35 +294,36 @@ public final class MeasureModel: ToolPanelModel {
             return
         }
         if !MarkWork.cautioned(tab, host, again: { [weak self] in
-            if let self, self.tab === tab { self.write(tab, host) }
-        }) { write(tab, host) }
+            if let self, self.tab === tab { _ = self.write(tab, host) }
+        }) { _ = write(tab, host) }
     }
 
-    private func write(_ tab: DocumentTab, _ host: ToolHost) {
+    private func write(_ tab: DocumentTab, _ host: ToolHost) -> Bool {
         let count: Int
         do {
             count = try MeasureWriter.write(tab.document, items, scale, author: author, date: PanelDates.now(), fonts: fonts)
         } catch let error as PdfPermissionException {
             try? tab.session.discard()
             ChangeGate.guarded(host, L10n.t("Measure")) { throw error }
-            return
+            return false
         } catch {
             try? tab.session.discard()
             host.showProblem(Problem(L10n.t("Measurements not added"), L10n.t("They could not be written to the file. Nothing was changed.")))
             rebuild()
-            return
+            return false
         }
         // Whatever was written is one step, so Undo takes all of it back.
         do {
-            if !(try MarkWork.commit(tab, host, L10n.t("Measure"))) { return }
+            if !(try MarkWork.commit(tab, host, L10n.t("Measure"))) { return false }
         } catch {
             try? tab.session.discard()
             ChangeGate.guarded(host, L10n.t("Measure")) { throw error }
-            return
+            return false
         }
         waiting.items.removeAll()
         rebuild()
         host.setStatus(L10n.plural(count, one: "Added {0} measurement", other: "Added {0} measurements"))
+        return true
     }
 
     private func showReadout() {
