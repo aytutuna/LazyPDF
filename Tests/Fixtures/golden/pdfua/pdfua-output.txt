@@ -50,8 +50,8 @@
 <   30-001 | 7.20 | Page 1 | A form XObject has a /Ref entry.
 > check text
 < issues 2 truncated false
-<   31-001 | 7.21.4.1 | Font Helvetica | The font is not embedded.
-<   31-008 | 7.21.7 | Font Helvetica | The font has characters that do not map to Unicode.
+<   31-009 | 7.21.4.1 | Font Helvetica | The font is not embedded.
+<   31-027 | 7.21.7 | Font Helvetica | The font has characters that do not map to Unicode.
 > mark compliant
 < marked true
 < issues 0 truncated false

@@ -351,22 +351,22 @@ public class PdfUaCheckerTests
     public void ShownFontsAreEmbedded()
     {
         const string plain = "<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>";
-        Fails("31-001", WithText(plain));
-        Assert.DoesNotContain("31-001", PdfUaKit.Conditions(WithText(plain, "BT /F1 12 Tf 3 Tr 20 100 Td (Hello) Tj ET")));
+        Fails("31-009", WithText(plain));
+        Assert.DoesNotContain("31-009", PdfUaKit.Conditions(WithText(plain, "BT /F1 12 Tf 3 Tr 20 100 Td (Hello) Tj ET")));
 
         var embedded = WithText("<</Type /Font /Subtype /Type1 /BaseFont /ABCDEF+Helv /Encoding /WinAnsiEncoding /FontDescriptor 14 0 R>>", more: pdf =>
         {
             pdf.Obj(14, "<</Type /FontDescriptor /FontName /ABCDEF+Helv /Flags 32 /FontFile 15 0 R>>");
             pdf.Stream(15, "", "x");
         });
-        Assert.DoesNotContain("31-001", PdfUaKit.Conditions(embedded));
+        Assert.DoesNotContain("31-009", PdfUaKit.Conditions(embedded));
     }
 
     [Fact]
     public void ShownCharactersMapToUnicode()
     {
-        Fails("31-008", WithText("<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding <</Type /Encoding /Differences [65 /zzunknown]>>>>", "BT /F1 12 Tf 20 100 Td (A) Tj ET"));
-        Assert.DoesNotContain("31-008", PdfUaKit.Conditions(WithText("<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>")));
+        Fails("31-027", WithText("<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding <</Type /Encoding /Differences [65 /zzunknown]>>>>", "BT /F1 12 Tf 20 100 Td (A) Tj ET"));
+        Assert.DoesNotContain("31-027", PdfUaKit.Conditions(WithText("<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>")));
     }
 
     [Fact]
