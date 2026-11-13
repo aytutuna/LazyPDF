@@ -36,11 +36,13 @@ internal sealed partial class PdfUaChecker
             if (owner is null) Add("28-002", "7.18.1", where, PdfUaText.AnnotationUntagged(subtype));
             else if (_tree.StandardType(owner.Type) != expected) Add("28-003", "7.18.1", where, PdfUaText.AnnotationTag(subtype, expected, _tree.StandardType(owner.Type)));
         }
+        // The structure element's /Alt stands in for the missing key, except on a Link, whose /Contents 7.18.5 requires itself.
+        bool described = !string.IsNullOrWhiteSpace(owner?.Alt);
         if (subtype == "Widget")
         {
-            if (!HasTooltip(annotation)) Add("28-005", "7.18.4", where, PdfUaText.WidgetTooltip);
+            if (!described && !HasTooltip(annotation)) Add("28-005", "7.18.4", where, PdfUaText.WidgetTooltip);
         }
-        else if (string.IsNullOrWhiteSpace(PdfText.Read(_doc, annotation, "Contents")))
+        else if (string.IsNullOrWhiteSpace(PdfText.Read(_doc, annotation, "Contents")) && (subtype == "Link" || !described))
         {
             Add("28-004", subtype == "Link" ? "7.18.5" : "7.18.1", where, PdfUaText.AnnotationContents(subtype));
         }

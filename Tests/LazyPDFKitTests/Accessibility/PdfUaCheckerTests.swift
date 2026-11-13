@@ -226,6 +226,14 @@ final class PdfUaCheckerTests: XCTestCase {
         try passes(withAnnotation("<</Type /Annot /Subtype /Text /Rect [0 0 10 10] /Contents (Note)>>", "Annot"))
     }
 
+    func test_theElementsAltDescribesAnAnnotationButNotALink() throws {
+        try passes(withAnnotation("<</Type /Annot /Subtype /Stamp /Rect [0 0 10 10]>>", "Annot /Alt (Approved)"))
+        try passes(withAnnotation("<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /Rect [0 0 10 10]>>", "Form /Alt (Name)"))
+        try fails("28-004", withAnnotation("<</Type /Annot /Subtype /Link /Rect [0 0 10 10]>>", "Link /Alt (Home)"))
+        try fails("28-004", withAnnotation("<</Type /Annot /Subtype /Stamp /Rect [0 0 10 10]>>", "Annot /Alt ( )"))
+        try fails("28-005", withAnnotation("<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /Rect [0 0 10 10]>>", "Form /Alt ( )"))
+    }
+
     func test_aPopupNeedsNothing() throws {
         try passes(withAnnotation("<</Type /Annot /Subtype /Popup /Rect [0 0 10 10]>>", tagged: false))
     }

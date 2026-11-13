@@ -44,9 +44,11 @@ extension PdfUaChecker {
                 add("28-002", "7.18.1", place, PdfUaText.annotationUntagged(subtype))
             }
         }
+        // The structure element's /Alt stands in for the missing key, except on a Link, whose /Contents 7.18.5 requires itself.
+        let described = !DotNetText.isNullOrWhiteSpace(owner?.alt)
         if subtype == "Widget" {
-            if !hasTooltip(annotation) { add("28-005", "7.18.4", place, PdfUaText.widgetTooltip) }
-        } else if DotNetText.isNullOrWhiteSpace(PdfText.read(document, annotation, "Contents")) {
+            if !described && !hasTooltip(annotation) { add("28-005", "7.18.4", place, PdfUaText.widgetTooltip) }
+        } else if DotNetText.isNullOrWhiteSpace(PdfText.read(document, annotation, "Contents")) && (subtype == "Link" || !described) {
             add("28-004", subtype == "Link" ? "7.18.5" : "7.18.1", place, PdfUaText.annotationContents(subtype))
         }
         if subtype == "FileAttachment" { checkFileSpec(annotation["FS"]) }

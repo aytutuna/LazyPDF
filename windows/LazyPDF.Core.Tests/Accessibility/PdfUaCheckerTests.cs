@@ -280,6 +280,16 @@ public class PdfUaCheckerTests
     }
 
     [Fact]
+    public void TheElementsAltDescribesAnAnnotationButNotALink()
+    {
+        Passes(WithAnnotation("<</Type /Annot /Subtype /Stamp /Rect [0 0 10 10]>>", "Annot /Alt (Approved)"));
+        Passes(WithAnnotation("<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /Rect [0 0 10 10]>>", "Form /Alt (Name)"));
+        Fails("28-004", WithAnnotation("<</Type /Annot /Subtype /Link /Rect [0 0 10 10]>>", "Link /Alt (Home)"));
+        Fails("28-004", WithAnnotation("<</Type /Annot /Subtype /Stamp /Rect [0 0 10 10]>>", "Annot /Alt ( )"));
+        Fails("28-005", WithAnnotation("<</Type /Annot /Subtype /Widget /FT /Tx /T (a) /Rect [0 0 10 10]>>", "Form /Alt ( )"));
+    }
+
+    [Fact]
     public void APopupNeedsNothing() => Passes(WithAnnotation("<</Type /Annot /Subtype /Popup /Rect [0 0 10 10]>>", tagged: false));
 
     [Fact]
