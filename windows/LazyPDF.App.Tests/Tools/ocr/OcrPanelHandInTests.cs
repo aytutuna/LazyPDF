@@ -21,6 +21,7 @@ public sealed class OcrPanelHandInTests
     {
         var tab = new DocumentTab(PdfEditSession.Open(Pdfs.Text(1), (string?)null), new FakeRenderer(), null, "a.pdf", null);
         PdfOcrLayer.Add(tab.Document, [new OcrPageWords(0, [new OcrWord("alpha", new OcrBox(10, 10, 50, 20)), new OcrWord("beta", new OcrBox(70, 10, 50, 20))], 200, 300)], "en");
+        tab.Session.Commit("Read");
         var panel = new OcrPanel(new NoRecognizer(), () => new OcrLanguageState([], []));
         panel.Attach(tab, FakeViewer.Create().Viewer, new RecordingHost());
         typeof(OcrPanel).GetMethod("Pick", BindingFlags.Instance | BindingFlags.NonPublic, [typeof(int), typeof(int), typeof(bool)])!
@@ -53,7 +54,8 @@ public sealed class OcrPanelHandInTests
 
         Assert.True(panel.HandIn());
 
-        Assert.False(tab.IsDirty);
+        Assert.False(tab.Document.HasChanges);
+        Assert.Equal("Read", tab.Session.UndoLabel);
         return Task.CompletedTask;
     });
 }

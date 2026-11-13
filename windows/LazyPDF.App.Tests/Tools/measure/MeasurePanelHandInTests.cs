@@ -24,6 +24,7 @@ public sealed class MeasurePanelHandInTests
     {
         var waiting = (List<Pending>)typeof(MeasurePanel).GetField("_waiting", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(panel)!;
         waiting.Add(new Pending(new MeasureItem(MeasureKind.Distance, 0, [new(10, 10), new(110, 10)]), PageKey.Of(tab.Document.Pages[0])));
+        typeof(MeasurePanel).GetMethod("Rebuild", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(panel, null);
     }
 
     [Fact]
@@ -37,7 +38,8 @@ public sealed class MeasurePanelHandInTests
         Assert.True(panel.HandIn());
 
         Assert.True(tab.IsDirty);
-        Assert.Single(tab.Document.Array(tab.Document.Pages[0].Dictionary, "Annots")!.Items);
+        // A distance is the line and its label.
+        Assert.Equal(2, tab.Document.Array(tab.Document.Pages[0].Dictionary, "Annots")!.Items.Count);
         Assert.False(panel.Action!.CanRun());
         Assert.Equal(0, tab.PendingMeasurements);
         return Task.CompletedTask;
