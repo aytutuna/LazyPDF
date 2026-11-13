@@ -57,7 +57,7 @@ final class PdfUaCheckerTests: XCTestCase {
             o[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</A /B /B /A>>>>"
             o[10] = "<</Type /StructElem /S /A /P 9 0 R /K 11 0 R>>"
         })
-        try fails("02-002", loop)
+        try fails("02-003", loop)
         try lacks("02-001", loop)
     }
 
@@ -75,7 +75,7 @@ final class PdfUaCheckerTests: XCTestCase {
     }
 
     func test_aStandardTypeIsNotRemapped() throws {
-        try fails("02-003", PdfUaKit.build(edit: { $0[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</P /Span>>>>" }))
+        try fails("02-004", PdfUaKit.build(edit: { $0[9] = "<</Type /StructTreeRoot /K 10 0 R /ParentTree 12 0 R /RoleMap <</P /Span>>>>" }))
     }
 
     func test_theMetadataNamesPdfUaAndHoldsATitle() throws {
