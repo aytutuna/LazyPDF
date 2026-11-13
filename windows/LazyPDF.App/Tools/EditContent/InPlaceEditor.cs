@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using LazyPDF.App.Services;
 using LazyPDF.App.Viewer;
 
 namespace LazyPDF.App.Tools.EditContent;
@@ -15,6 +16,7 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
     private TextBox? _box;
     private PageOverlay? _overlay;
     private bool _lineBreaks;
+    private LazyPDF.Core.TextAlignment? _alignment;
 
     public bool IsOpen => _box is not null;
 
@@ -68,6 +70,9 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
         Canvas.SetLeft(box, area.X);
         Canvas.SetTop(box, area.Y);
         Look(box, look);
+        _alignment = look.Alignment;
+        box.TextChanged += (_, _) => Flow(box);
+        Flow(box);
         PageOverlay.KeepUpright(box, viewer.Rotation);
         box.PreviewKeyDown += Box_PreviewKeyDown;
         box.Loaded += (_, _) => box.Dispatcher.BeginInvoke(() =>
@@ -83,7 +88,10 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
     /// <summary>Shows the text in another font, size or colour while it is open.</summary>
     public void Restyle(EditorLook look)
     {
-        if (_box is not null) Look(_box, look);
+        if (_box is null) return;
+        Look(_box, look);
+        _alignment = look.Alignment;
+        Flow(_box);
     }
 
     public void Upright()
@@ -110,11 +118,20 @@ internal sealed class InPlaceEditor(IDocumentViewer viewer)
         box.Foreground = new SolidColorBrush(look.Color);
         box.Background = light ? Brushes.Black : Brushes.White;
         box.CaretBrush = light ? Brushes.White : Brushes.Black;
-        box.TextAlignment = look.Alignment switch
+    }
+
+    // The box reads right to left when the text starts with a right-to-left letter, as the saved page will. A mirrored box
+    // puts Left at the right edge, so the page's left and right swap; an alignment that is not set starts the line.
+    private void Flow(TextBox box)
+    {
+        bool rtl = TextDirection.IsRightToLeft(box.Text);
+        box.FlowDirection = rtl ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+        box.TextAlignment = _alignment switch
         {
             LazyPDF.Core.TextAlignment.Center => System.Windows.TextAlignment.Center,
-            LazyPDF.Core.TextAlignment.Right => System.Windows.TextAlignment.Right,
             LazyPDF.Core.TextAlignment.Justify => System.Windows.TextAlignment.Justify,
+            LazyPDF.Core.TextAlignment.Right => rtl ? System.Windows.TextAlignment.Left : System.Windows.TextAlignment.Right,
+            LazyPDF.Core.TextAlignment.Left => rtl ? System.Windows.TextAlignment.Right : System.Windows.TextAlignment.Left,
             _ => System.Windows.TextAlignment.Left,
         };
     }
