@@ -180,6 +180,19 @@ public sealed partial class OcrPanel
         if (OcrWork.Cleared(tab, host, () => ApplyAnyway(tab, word, text))) Apply(tab, word, text);
     }
 
+    // A word typed and not yet in the file goes in before the file is saved, undone or closed. False while a signed file waits
+    // for its answer.
+    public override bool HandIn()
+    {
+        if (Tab is not { } tab || Host is not { } host || _picked is not { } word) return true;
+        if (!_shown.TryGetValue(word.Page, out var shown) || word.Index >= shown.Words.Count) return true;
+        string text = WordBox.Text.Trim();
+        if (text == shown.Words[word.Index].Text) return true;
+        if (OcrWork.Cleared(tab, host, () => ApplyAnyway(tab, word, text))) Apply(tab, word, text);
+        else return OcrWork.Refusal(tab.Document) is not null;
+        return true;
+    }
+
     private void ApplyAnyway(DocumentTab tab, (int Page, int Index) word, string text)
     {
         if (ReferenceEquals(Tab, tab)) Apply(tab, word, text);
