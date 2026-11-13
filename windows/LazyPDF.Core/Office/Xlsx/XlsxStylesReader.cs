@@ -124,10 +124,12 @@ internal static class XlsxStylesReader
             "top" => XlsxVertical.Top, "center" => XlsxVertical.Center, "justify" => XlsxVertical.Justify, "distributed" => XlsxVertical.Distributed,
             _ => XlsxVertical.Bottom,
         };
+        int order = XlsxParse.Int(a?.Attribute("readingOrder")) is 1 or 2 ? XlsxParse.Int(a?.Attribute("readingOrder"))!.Value : 0;
         return new XlsxXf(
             XlsxParse.Int(x.Attribute("fontId")) ?? 0, XlsxParse.Int(x.Attribute("fillId")) ?? 0, XlsxParse.Int(x.Attribute("borderId")) ?? 0,
             XlsxParse.Int(x.Attribute("numFmtId")) ?? 0, horizontal, vertical, XlsxParse.Flag(a?.Attribute("wrapText"), false),
-            Math.Min(XlsxParse.Int(a?.Attribute("indent")) ?? 0, 250), (XlsxParse.Int(a?.Attribute("textRotation")) ?? 0) != 0);
+            Math.Min(XlsxParse.Int(a?.Attribute("indent")) ?? 0, 250), (XlsxParse.Int(a?.Attribute("textRotation")) ?? 0) != 0,
+            order);
     }
 
     private static int? ReadColor(XmlElement? e, DocxTheme theme)

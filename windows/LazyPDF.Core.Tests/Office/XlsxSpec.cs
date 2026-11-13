@@ -149,12 +149,12 @@ internal static class XlsxSpec
             for (int i = 0; i < styles.Xfs.Count; i++)
             {
                 var x = styles.Xfs[i];
-                o.Append($"xf {i} font={x.Font} fill={x.Fill} border={x.Border} fmt={x.NumberFormatId} {x.Horizontal.ToString().ToLowerInvariant()} {x.Vertical.ToString().ToLowerInvariant()} indent={x.Indent}{(x.Wrap ? " wrap" : "")}{(x.Rotated ? " rotated" : "")}\n");
+                o.Append($"xf {i} font={x.Font} fill={x.Fill} border={x.Border} fmt={x.NumberFormatId} {x.Horizontal.ToString().ToLowerInvariant()} {x.Vertical.ToString().ToLowerInvariant()} indent={x.Indent}{(x.Wrap ? " wrap" : "")}{(x.Rotated ? " rotated" : "")}{(x.ReadingOrder != 0 ? " order=" + x.ReadingOrder : "")}\n");
             }
         }
         foreach (var sheet in workbook.Sheets)
         {
-            o.Append($"sheet \"{OfficeLayoutSpec.Escape(sheet.Name)}\" col={Num(sheet.DefaultColumnWidth)} row={Num(sheet.DefaultRowHeight)}\n");
+            o.Append($"sheet \"{OfficeLayoutSpec.Escape(sheet.Name)}\" col={Num(sheet.DefaultColumnWidth)} row={Num(sheet.DefaultRowHeight)}{(sheet.RightToLeft ? " rtl" : "")}\n");
             foreach (var c in sheet.Columns) o.Append($"  cols {c.First}-{c.Last} {Num(c.Width)}{(c.Hidden ? " hidden" : "")}\n");
             foreach (var row in sheet.Rows)
             {

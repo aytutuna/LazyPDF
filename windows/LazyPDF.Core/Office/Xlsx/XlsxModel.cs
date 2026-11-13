@@ -56,9 +56,12 @@ internal sealed record XlsxBorderEdge(string Style, int? Color);
 
 internal sealed record XlsxBorder(XlsxBorderEdge? Left, XlsxBorderEdge? Right, XlsxBorderEdge? Top, XlsxBorderEdge? Bottom);
 
-/// <summary>A cell format (a cellXfs entry): the indexes into the font, fill and border lists and the alignment. Rotated text is not drawn rotated.</summary>
+/// <summary>
+/// A cell format (a cellXfs entry): the indexes into the font, fill and border lists and the alignment. Rotated text is not drawn rotated.
+/// <paramref name="ReadingOrder"/> is 0 for the direction of the text itself, 1 left to right, 2 right to left.
+/// </summary>
 internal sealed record XlsxXf(
-    int Font, int Fill, int Border, int NumberFormatId, XlsxHorizontal Horizontal, XlsxVertical Vertical, bool Wrap, int Indent, bool Rotated);
+    int Font, int Fill, int Border, int NumberFormatId, XlsxHorizontal Horizontal, XlsxVertical Vertical, bool Wrap, int Indent, bool Rotated, int ReadingOrder = 0);
 
 /// <summary>
 /// A cell with its text already formatted. <see cref="Color"/> is the color the number format asked for. <see cref="RichFont"/> is
@@ -135,6 +138,8 @@ internal sealed class XlsxSheet
     public List<XlsxRow> Rows { get; } = [];
     public List<XlsxColumns> Columns { get; } = [];
     public double DefaultColumnWidth { get; set; }
+    /// <summary>The sheet's columns run from right to left (sheetView rightToLeft).</summary>
+    public bool RightToLeft { get; set; }
     public double DefaultRowHeight { get; set; } = 15;
     public List<XlsxRange> Merges { get; } = [];
     public List<XlsxRange> PrintArea { get; } = [];

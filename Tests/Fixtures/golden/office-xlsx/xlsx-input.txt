@@ -203,3 +203,15 @@
 <?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdD" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/><Relationship Id="rIdM" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments" Target="../missing.xml"/></Relationships>
 @part xl/drawings/drawing1.xml
 <?xml version="1.0"?><xdr:wsDr xmlns:xdr="urn:xdr" xmlns:a="urn:a"><xdr:twoCellAnchor><xdr:grpSp/></xdr:twoCellAnchor><xdr:twoCellAnchor><xdr:cxnSp/><xdr:graphicFrame/></xdr:twoCellAnchor><xdr:twoCellAnchor><xdr:contentPart/></xdr:twoCellAnchor></xdr:wsDr>
+> reading order and right to left sheets
+@workbook
+<sheets><sheet name="R" sheetId="1" r:id="rId1"/><sheet name="L" sheetId="2" r:id="rId2"/></sheets>
+@styles
+<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>
+<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
+<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+<cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/><xf numFmtId="0" fontId="0" fillId="0" borderId="0"><alignment readingOrder="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="0"><alignment readingOrder="2" horizontal="right"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="0"><alignment readingOrder="0"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="0"><alignment readingOrder="3"/></xf></cellXfs>
+@sheet1
+<sheetViews><sheetView rightToLeft="1" workbookViewId="0"/></sheetViews><sheetData><row r="1"><c r="A1" s="1" t="str"><v>a</v></c><c r="B1" s="2" t="str"><v>b</v></c><c r="C1" s="3" t="str"><v>c</v></c><c r="D1" s="4" t="str"><v>d</v></c></row></sheetData>
+@sheet2
+<sheetViews><sheetView rightToLeft="0" workbookViewId="0"/></sheetViews><sheetData><row r="1"><c r="A1" t="str"><v>a</v></c></row></sheetData>

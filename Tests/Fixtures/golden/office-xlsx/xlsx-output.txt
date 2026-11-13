@@ -279,3 +279,23 @@ skipped conditional-format 1
 skipped data-validation 2
 skipped sheet-shape 3
 skipped sparkline 3
+> reading order and right to left sheets
+workbook mdw=7
+font 0 Calibri 11.00 -
+fill 0 -
+fill 1 - unsupported
+border 0 - - - -
+xf 0 font=0 fill=0 border=0 fmt=0 general bottom indent=0
+xf 1 font=0 fill=0 border=0 fmt=0 general bottom indent=0 order=1
+xf 2 font=0 fill=0 border=0 fmt=0 right bottom indent=0 order=2
+xf 3 font=0 fill=0 border=0 fmt=0 general bottom indent=0
+xf 4 font=0 fill=0 border=0 fmt=0 general bottom indent=0
+sheet "R" col=48.00 row=15.00 rtl
+  row 1
+    A1 t s=1 "a"
+    B1 t s=2 "b"
+    C1 t s=3 "c"
+    D1 t s=4 "d"
+sheet "L" col=48.00 row=15.00
+  row 1
+    A1 t s=0 "a"

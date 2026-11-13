@@ -186,6 +186,7 @@ internal sealed class XlsxReader
         var root = _package.Xml(part);
         if (root.Uri != M || root.Name != "worksheet") throw PdfReadException.Damaged($"The part {part} is not a worksheet.");
         var sheet = new XlsxSheet { Name = name };
+        sheet.RightToLeft = XlsxParse.Flag(root.Child(M, "sheetViews")?.Child(M, "sheetView")?.Attribute("rightToLeft"), false);
 
         var format = root.Child(M, "sheetFormatPr");
         double baseWidth = XlsxParse.Double(format?.Attribute("baseColWidth")) ?? 8;

@@ -59,6 +59,9 @@ internal sealed class XlsxLayout
     private readonly List<Pending> _pages = [];
     private int _boxes;
     private int _number = 1;
+    // On a right-to-left sheet the columns of a page are laid out left to right first and then turned about the middle of the
+    // columns: x becomes this number minus x. Null for a sheet that runs the usual way.
+    private double? _flip;
 
     private XlsxLayout(XlsxWorkbook book, LayoutFonts fonts, DateTime now, string file, CancellationToken cancellation)
     {
@@ -206,14 +209,24 @@ internal sealed class XlsxLayout
             if (xf.Wrap && cell.Kind == XlsxCellKind.Text && !plan.Covered.Contains(key) && !plan.Anchors.ContainsKey(key))
             {
                 double inner = plan.ColumnWidth[cell.Column] - 2 * Pad;
-                if (inner > 1 && cell.Text.Length > 0) pitch = Lines(cell.Text, font, Align(cell, xf), inner).Sum(l => l.Height) + 1.5;
+                bool rtl = Direction(plan.Sheet, cell, xf);
+                if (inner > 1 && cell.Text.Length > 0) pitch = Lines(cell.Text, font, Align(cell, xf, rtl), inner, rtl: rtl).Sum(l => l.Height) + 1.5;
             }
             height = Math.Max(height, pitch);
         }
         return Math.Min(height, 409.5);
     }
 
-    private static LayoutAlign Align(XlsxCell cell, XlsxXf xf) => Horizontal(cell, xf) switch
+    // Whether the text of the cell runs right to left: as the format says, else as its first letter, else as the sheet. Numbers
+    // keep their own order unless the format says otherwise.
+    private static bool Direction(XlsxSheet sheet, XlsxCell cell, XlsxXf xf)
+    {
+        if (xf.ReadingOrder != 0) return xf.ReadingOrder == 2;
+        if (cell.Kind != XlsxCellKind.Text) return false;
+        return ScriptRuns.StartsComplex(cell.Text) ?? sheet.RightToLeft;
+    }
+
+    private static LayoutAlign Align(XlsxCell cell, XlsxXf xf, bool rtl) => Horizontal(cell, xf, rtl) switch
     {
         XlsxHorizontal.Right => LayoutAlign.Right,
         XlsxHorizontal.Center or XlsxHorizontal.CenterContinuous or XlsxHorizontal.Distributed => LayoutAlign.Center,
@@ -221,10 +234,11 @@ internal sealed class XlsxLayout
         _ => LayoutAlign.Left,
     };
 
-    private static XlsxHorizontal Horizontal(XlsxCell cell, XlsxXf xf)
+    // General alignment puts text at the start of its direction.
+    private static XlsxHorizontal Horizontal(XlsxCell cell, XlsxXf xf, bool rtl)
     {
         if (xf.Horizontal != XlsxHorizontal.General) return xf.Horizontal;
-        return cell.Kind switch { XlsxCellKind.Number => XlsxHorizontal.Right, XlsxCellKind.Bool or XlsxCellKind.Error => XlsxHorizontal.Center, _ => XlsxHorizontal.Left };
+        return cell.Kind switch { XlsxCellKind.Number => XlsxHorizontal.Right, XlsxCellKind.Bool or XlsxCellKind.Error => XlsxHorizontal.Center, _ => rtl ? XlsxHorizontal.Right : XlsxHorizontal.Left };
     }
 
     private static LayoutRun RunOf(XlsxFont font, string text, int color) => new()
@@ -239,8 +253,8 @@ internal sealed class XlsxLayout
         Color = color,
     };
 
-    private List<LayoutLine> Lines(string text, XlsxFont font, LayoutAlign align, double width, int color = 0) =>
-        ParagraphLayout.Run(new LayoutParagraph { Runs = [RunOf(font, text, color)], Align = align }, _fonts, width, Wide).Lines;
+    private List<LayoutLine> Lines(string text, XlsxFont font, LayoutAlign align, double width, int color = 0, bool rtl = false) =>
+        ParagraphLayout.Run(new LayoutParagraph { Runs = [RunOf(font, text, color)], Align = align, RightToLeft = rtl }, _fonts, width, Wide).Lines;
 
     // Used range and areas
 
@@ -499,13 +513,14 @@ internal sealed class XlsxLayout
         left[0] = g.HeadingWidth;
         for (int i = 0; i < columns.Count; i++) left[i + 1] = left[i] + widths[i];
         double width = left[^1], height = top[^1];
+        _flip = plan.Sheet.RightToLeft ? left[0] + width : null;
         var columnAt = new Dictionary<int, int>();
         for (int i = 0; i < columns.Count; i++) columnAt[columns[i]] = i;
 
         if (setup.Gridlines)
         {
             for (int i = 0; i < top.Length; i++) boxes.Add(new PlacedRect(g.HeadingWidth, top[i] - 0.25, width - g.HeadingWidth, 0.5, 0x808080));
-            for (int i = 0; i < left.Length; i++) boxes.Add(new PlacedRect(left[i] - 0.25, g.HeadingHeight, 0.5, height - g.HeadingHeight, 0x808080));
+            for (int i = 0; i < left.Length; i++) boxes.Add(new PlacedRect(Turn(left[i]) - 0.25, g.HeadingHeight, 0.5, height - g.HeadingHeight, 0x808080));
             CheckProgress(boxes);
         }
 
@@ -534,7 +549,7 @@ internal sealed class XlsxLayout
                 var xf = _book.Styles.Xf(cell.Style);
                 if (xf.Fill < _book.Styles.Fills.Count && _book.Styles.Fills[xf.Fill].Color is { } fill)
                 {
-                    boxes.Add(new PlacedRect(item.X, item.Y, item.W, item.H, fill));
+                    boxes.Add(new PlacedRect(Mirror(item.X, item.W), item.Y, item.W, item.H, fill));
                 }
             }
         }
@@ -624,15 +639,18 @@ internal sealed class XlsxLayout
         // No line of this font fits a row this short, so skip measuring and the spill scan.
         if (item.H < font.Size * 0.5) return;
         int color = cell.Color ?? font.Color ?? 0;
-        var horizontal = Horizontal(cell, xf);
+        bool rtl = Direction(plan.Sheet, cell, xf);
+        var horizontal = Horizontal(cell, xf, rtl);
+        // Spilling into the empty cells next to this one is worked out as for a sheet that runs the usual way, so left and right swap.
+        var side = _flip is null ? horizontal : horizontal switch { XlsxHorizontal.Left => XlsxHorizontal.Right, XlsxHorizontal.Right => XlsxHorizontal.Left, _ => horizontal };
         double limitLeft = item.X + Pad, limitRight = item.X + item.W - Pad, span = item.W;
         bool wrap = xf.Wrap && cell.Kind == XlsxCellKind.Text;
         if (!wrap && cell.Kind == XlsxCellKind.Text && item.Merge is null && plan.Rows.TryGetValue(rows[item.Row], out var row))
         {
             // Text spills out of its cell on the side or sides its alignment leaves free.
-            if (horizontal is XlsxHorizontal.Left or XlsxHorizontal.Fill or XlsxHorizontal.Justify) limitRight = Math.Max(limitRight, Reach(plan, row, columns, left, item.Column, 1, spill) - Pad);
-            else if (horizontal == XlsxHorizontal.Right) limitLeft = Math.Min(limitLeft, Reach(plan, row, columns, left, item.Column, -1, spill) + Pad);
-            else if (horizontal == XlsxHorizontal.CenterContinuous)
+            if (side is XlsxHorizontal.Left or XlsxHorizontal.Fill or XlsxHorizontal.Justify) limitRight = Math.Max(limitRight, Reach(plan, row, columns, left, item.Column, 1, spill) - Pad);
+            else if (side == XlsxHorizontal.Right) limitLeft = Math.Min(limitLeft, Reach(plan, row, columns, left, item.Column, -1, spill) + Pad);
+            else if (side == XlsxHorizontal.CenterContinuous)
             {
                 // Center Across Selection centers over the empty cells to its right, as one wide cell.
                 span = Reach(plan, row, columns, left, item.Column, 1, spill) - item.X;
@@ -646,9 +664,15 @@ internal sealed class XlsxLayout
             }
         }
         double indent = xf.Indent * IndentStep;
-        var align = Align(cell, xf);
-        if (wrap) Wrapped(cell.Text, font, color, align, xf.Vertical, indent, item, boxes);
-        else Single(cell.Text, font, color, horizontal, xf.Vertical, indent, cell.Kind == XlsxCellKind.Number, item.X, item.Y, span, item.H, limitLeft, limitRight, boxes);
+        var align = Align(cell, xf, rtl);
+        double x = item.X;
+        if (_flip is not null)
+        {
+            (limitLeft, limitRight) = (Turn(limitRight), Turn(limitLeft));
+            x = Mirror(item.X, span);
+        }
+        if (wrap) Wrapped(cell.Text, font, color, align, xf.Vertical, indent, rtl, _flip is null ? item : item with { X = Mirror(item.X, item.W) }, boxes);
+        else Single(cell.Text, font, color, horizontal, xf.Vertical, indent, cell.Kind == XlsxCellKind.Number, rtl, x, item.Y, span, item.H, limitLeft, limitRight, boxes);
     }
 
     private static double TopOf(XlsxVertical vertical, double y, double h, double text) => vertical switch
@@ -658,12 +682,17 @@ internal sealed class XlsxLayout
         _ => y + h - VPad - text,
     };
 
-    private void Wrapped(string text, XlsxFont font, int color, LayoutAlign align, XlsxVertical vertical, double indent, Item item, List<LayoutBox> boxes)
+    private double Turn(double x) => _flip is { } flip ? flip - x : x;
+
+    // The left edge of a stretch that starts at x and is w wide, once the sheet has been turned.
+    private double Mirror(double x, double w) => _flip is { } flip ? flip - x - w : x;
+
+    private void Wrapped(string text, XlsxFont font, int color, LayoutAlign align, XlsxVertical vertical, double indent, bool rtl, Item item, List<LayoutBox> boxes)
     {
         double shift = align == LayoutAlign.Left ? indent : 0;
         double inner = item.W - 2 * Pad - (align is LayoutAlign.Left or LayoutAlign.Right ? indent : 0);
         if (inner < 1) return;
-        var paragraph = new LayoutParagraph { Runs = [RunOf(font, text.Replace("\r\n", "\n").Replace('\r', '\n'), color)], Align = align };
+        var paragraph = new LayoutParagraph { Runs = [RunOf(font, text.Replace("\r\n", "\n").Replace('\r', '\n'), color)], Align = align, RightToLeft = rtl };
         var lines = ParagraphLayout.Run(paragraph, _fonts, inner, Wide).Lines;
         double total = lines.Sum(l => l.Height);
         double y = TopOf(vertical, item.Y, item.H, total);
@@ -675,17 +704,17 @@ internal sealed class XlsxLayout
     }
 
     private void Single(
-        string text, XlsxFont font, int color, XlsxHorizontal horizontal, XlsxVertical vertical, double indent, bool number,
+        string text, XlsxFont font, int color, XlsxHorizontal horizontal, XlsxVertical vertical, double indent, bool number, bool rtl,
         double x, double y, double w, double h, double limitLeft, double limitRight, List<LayoutBox> boxes)
     {
         text = text.Replace("\r\n", " ").Replace('\r', ' ').Replace('\n', ' ');
-        var line = Lines(text, font, LayoutAlign.Left, Wide, color)[0];
+        var line = OneLine(text, font, color, rtl);
         double width = Ink(line);
         double room = w - 2 * Pad;
         if (number && width > room + Tolerance)
         {
-            double hash = Ink(Lines("#", font, LayoutAlign.Left, Wide)[0]);
-            line = Lines(new string('#', Math.Max(1, (int)Math.Floor(room / hash))), font, LayoutAlign.Left, Wide, color)[0];
+            double hash = Ink(OneLine("#", font, 0, rtl));
+            line = OneLine(new string('#', Math.Max(1, (int)Math.Floor(room / hash))), font, color, rtl);
             width = Ink(line);
         }
         double origin = horizontal switch
@@ -701,10 +730,23 @@ internal sealed class XlsxLayout
         Paginator.EmitLine(boxes, line, origin, top);
     }
 
+    // A right-to-left line is laid out from the right edge of a line without end, and moved to start at 0 like the others.
+    private LayoutLine OneLine(string text, XlsxFont font, int color, bool rtl)
+    {
+        var line = Lines(text, font, rtl ? LayoutAlign.Right : LayoutAlign.Left, Wide, color, rtl)[0];
+        var ink = line.Atoms.Where(a => !a.IsBlank).ToList();
+        if (rtl && ink.Count > 0)
+        {
+            double start = ink.Min(a => a.X);
+            foreach (var a in line.Atoms) a.X -= start;
+        }
+        return line;
+    }
+
     private static double Ink(LayoutLine line)
     {
-        int ink = line.Atoms.FindLastIndex(a => !a.IsBlank);
-        return ink < 0 ? 0 : line.Atoms[ink].X + line.Atoms[ink].Width;
+        var ink = line.Atoms.Where(a => !a.IsBlank).ToList();
+        return ink.Count == 0 ? 0 : ink.Max(a => a.X + a.Width);
     }
 
     // Borders
@@ -755,7 +797,9 @@ internal sealed class XlsxLayout
     {
         var border = Border(item.Cell);
         if (border is null) return;
-        double right = item.X + item.W, bottom = item.Y + item.H;
+        // The edges are those of the sides the cell shows, so on a sheet that runs right to left the left edge is at the end of the columns.
+        bool turned = _flip is not null;
+        double x = Mirror(item.X, item.W), right = x + item.W, bottom = item.Y + item.H;
         int row = item.RowId, column = item.Cell.Column;
         var topEdge = border.Top;
         var leftEdge = border.Left;
@@ -763,16 +807,19 @@ internal sealed class XlsxLayout
         var bottomEdge = border.Bottom;
         if (item.Merge is { } m)
         {
-            rightEdge = CellAt(plan, m.FirstRow, m.LastColumn) is { } r ? Border(r)?.Right : null;
+            rightEdge = CellAt(plan, m.FirstRow, turned ? m.FirstColumn : m.LastColumn) is { } r ? Border(r)?.Right : null;
+            if (turned) leftEdge = CellAt(plan, m.FirstRow, m.LastColumn) is { } l ? Border(l)?.Left : null;
             bottomEdge = CellAt(plan, m.LastRow, m.FirstColumn) is { } b ? Border(b)?.Bottom : null;
         }
         // A neighbor only hides the shared edge when it is printed right beside this cell on the same page.
-        if (leftEdge is not null && item.Column > 0 && columns[item.Column - 1] == column - 1 && CellAt(plan, row, column - 1) is { } l && Border(l)?.Right is not null) leftEdge = null;
+        int beside = turned ? 1 : -1;
+        if (leftEdge is not null && item.Merge is null && item.Column + beside >= 0 && item.Column + beside < columns.Count && columns[item.Column + beside] == column + beside
+            && CellAt(plan, row, column + beside) is { } neighbor && Border(neighbor)?.Right is not null) leftEdge = null;
         if (topEdge is not null && item.Row > 0 && rows[item.Row - 1] == row - 1 && CellAt(plan, row - 1, column) is { } t && Border(t)?.Bottom is not null) topEdge = null;
-        if (topEdge is not null) Edge(boxes, true, item.Y, item.X, right, topEdge);
-        if (leftEdge is not null) Edge(boxes, false, item.X, item.Y, bottom, leftEdge);
+        if (topEdge is not null) Edge(boxes, true, item.Y, x, right, topEdge);
+        if (leftEdge is not null) Edge(boxes, false, x, item.Y, bottom, leftEdge);
         if (rightEdge is not null) Edge(boxes, false, right, item.Y, bottom, rightEdge);
-        if (bottomEdge is not null) Edge(boxes, true, bottom, item.X, right, bottomEdge);
+        if (bottomEdge is not null) Edge(boxes, true, bottom, x, right, bottomEdge);
     }
 
     private XlsxBorder? Border(XlsxCell cell)
@@ -801,9 +848,9 @@ internal sealed class XlsxLayout
             Edge(boxes, true, y + h, x, x + w, edge);
             Edge(boxes, false, x, y, y + h, edge);
             Edge(boxes, false, x + w, y, y + h, edge);
-            Single(text, font, 0, XlsxHorizontal.Center, XlsxVertical.Center, 0, false, x, y, w, h, x, x + w, boxes);
+            Single(text, font, 0, XlsxHorizontal.Center, XlsxVertical.Center, 0, false, false, x, y, w, h, x, x + w, boxes);
         }
-        for (int j = 0; j < columns.Count; j++) Box(ColumnName(columns[j]), left[j], 0, left[j + 1] - left[j], g.HeadingHeight);
+        for (int j = 0; j < columns.Count; j++) Box(ColumnName(columns[j]), Mirror(left[j], left[j + 1] - left[j]), 0, left[j + 1] - left[j], g.HeadingHeight);
         for (int i = 0; i < rows.Count; i++) Box(rows[i].ToString(CultureInfo.InvariantCulture), 0, top[i], g.HeadingWidth, top[i + 1] - top[i]);
     }
 
