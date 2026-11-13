@@ -83,8 +83,9 @@ internal static class WritersGolden
             };
             sb.Append(number).Append(": ").Append(text).Append('\n');
         }
-        // The subset tag and the annotation name are random; the stream length depends on the deflate.
+        // The subset tag and the annotation name are random; the stream length and whether a short stream is deflated at all
+        // depend on the deflate of each engine.
         string dump = Regex.Replace(sb.ToString().TrimEnd('\n'), @"/[A-Z]{6}\+", "/AAAAAA+");
-        return Regex.Replace(Regex.Replace(dump, @"/NM \([^)]*\)", "/NM (id)"), @" ?/Length \d+", "");
+        return Regex.Replace(Regex.Replace(dump, @"/NM \([^)]*\)", "/NM (id)"), @" ?/(Length \d+|Filter /FlateDecode)", "");
     }
 }
