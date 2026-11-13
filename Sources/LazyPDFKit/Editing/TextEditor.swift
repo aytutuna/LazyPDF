@@ -105,13 +105,32 @@ final class TextEditor {
         }
     }
 
+    // Glyphs sit in the stream in display order, which for right-to-left characters is not the order of the characters; a range
+    // with such characters is taken left to right so that its first glyph is where the range starts on the page.
+    func ordered(_ range: TextRange) -> [EditGlyph] {
+        let glyphs = model.glyphsIn(range)
+        let chars = model.text.chars
+        var rtl = false
+        var i = Swift.max(range.start, 0)
+        while i < Swift.min(range.end, model.charGlyphs.count) && !rtl {
+            rtl = model.charGlyphs[i] != nil && chars[i].isRtl
+            i += 1
+        }
+        if !rtl || glyphs.isEmpty { return glyphs }
+        let (ux, uy) = anchorOf(glyphs).direction
+        return glyphs.enumerated().sorted {
+            let a = $0.element.origin.x * ux + $0.element.origin.y * uy, b = $1.element.origin.x * ux + $1.element.origin.y * uy
+            return a != b ? a < b : $0.offset < $1.offset
+        }.map { $0.element }
+    }
+
     func anchorOf(_ glyphs: [EditGlyph]) -> EditGlyph {
         glyphs.first { $0.text.utf16.contains { !$0.isWhiteSpace } } ?? glyphs[0]
     }
 
     /// Replaces the glyphs of a range of characters with `text` in their font, at the place of the first of them.
     func replace(_ range: TextRange, _ text: String, _ style: TextStyleChange? = nil) throws {
-        let glyphs = model.glyphsIn(range)
+        let glyphs = ordered(range)
         if glyphs.isEmpty { throw EditConflictException(EditingText.noText) }
         try check(glyphs)
         if style == nil {
@@ -146,7 +165,7 @@ final class TextEditor {
                 continue
             }
             let anchor = anchorOf(group)
-            let pieces = try builder.build(Self.placeOf(group[0]), anchor, part)
+            let pieces = TextBuilder.shape(try builder.build(Self.placeOf(group[0]), anchor, part), anchor)
             try putText(group[0], false, pieces, StyleWrap(), 0)
             let unplaced = try putTwins(group[0], anchor, pieces, part, nil, StyleWrap(), 0)
             let groupWidth = pieces.reduce(0) { $0 + $1.advance } * anchor.unitX
@@ -193,7 +212,7 @@ final class TextEditor {
 
     // Removes the glyphs and moves what follows them in the same string back to where it was.
     func delete(_ range: TextRange) throws {
-        let glyphs = model.glyphsIn(range)
+        let glyphs = ordered(range)
         if glyphs.isEmpty { throw EditConflictException(EditingText.noText) }
         try check(glyphs)
         try cutAll(glyphs, nil)
@@ -249,7 +268,7 @@ final class TextEditor {
     }
 
     func piecesFor(_ place: Place, _ at: EditGlyph, _ anchor: EditGlyph, _ text: String, _ style: TextStyleChange?) throws -> (pieces: [EditPiece], wrap: StyleWrap) {
-        guard let style else { return (try builder.build(place, anchor, text), StyleWrap()) }
+        guard let style else { return (TextBuilder.shape(try builder.build(place, anchor, text), anchor), StyleWrap()) }
         let state = place.states.at(at.op)
         let before = ContentWriter()
         let after = ContentWriter()
@@ -273,7 +292,7 @@ final class TextEditor {
             size = fontSize
             let draw = try standIn(anchor.font, style, text)
             guard let name = batch.addResource(place, "Font", draw.reference) else { throw EditConflictException(EditingText.sharedForm) }
-            pieces = TextBuilder.buildWith(draw, name, anchor, text, fontSize)
+            pieces = TextBuilder.shape(TextBuilder.buildWith(draw, name, anchor, text, fontSize), anchor, size: fontSize)
         } else {
             pieces = try builder.build(place, anchor, text)
             if let newSize = style.size {
@@ -281,8 +300,10 @@ final class TextEditor {
                 before.font(fontName.value, newSize)
                 restore.insert(.font)
                 let factor = newSize / at.fontSize
-                pieces = pieces.map { EditPiece(text: $0.text, bytes: $0.bytes, advance: $0.advance * factor, font: $0.font, isSpace: $0.isSpace, shift: $0.shift) }
+                pieces = pieces.map { EditPiece(text: $0.text, bytes: $0.bytes, advance: $0.advance * factor, font: $0.font, draw: $0.draw, isSpace: $0.isSpace, em: $0.em, code32: $0.code32, shift: $0.shift) }
+                size = newSize
             }
+            pieces = TextBuilder.shape(pieces, anchor, size: size)
         }
         if !restore.isEmpty { try place.states.at(at.op + 1).replay(after, restore) }
         return (pieces, StyleWrap(before: before.length > 0 ? before.toArray() : nil, after: after.length > 0 ? after.toArray() : nil, size: size))
@@ -448,16 +469,28 @@ final class TextEditor {
         let (ux, uy) = first.direction
         let start = first.origin.x * ux + first.origin.y * uy
         let end = start + newWidth
-        var i = Swift.max(range.end, 0)
+        // The characters after a right-to-left range are on its left, so the neighbour that matters is the nearest one on the right.
+        let known = Swift.min(range.end, model.charGlyphs.count)
+        let rtl = (Swift.max(range.start, 0)..<Swift.max(known, Swift.max(range.start, 0))).contains { model.charGlyphs[$0] != nil && model.text.chars[$0].isRtl }
+        var neighbour: EditGlyph?
+        var neighbourStart = 0.0
+        var i = rtl ? Swift.max(range.start - 400, 0) : Swift.max(range.end, 0)
         let limit = range.end > model.charGlyphs.count ? model.charGlyphs.count : Swift.min(model.charGlyphs.count, range.end + 400)
         while i < limit {
             defer { i += 1 }
-            guard let next = model.charGlyphs[i], !next.text.utf16.allSatisfy({ $0.isWhiteSpace }) else { continue }
+            guard let next = model.charGlyphs[i], !next.text.utf16.allSatisfy({ $0.isWhiteSpace }), !glyphs.contains(where: { $0 === next }) else { continue }
             let across = abs((next.origin.x - first.origin.x) * -uy + (next.origin.y - first.origin.y) * ux)
             let nextStart = next.origin.x * ux + next.origin.y * uy
-            if across > 0.3 * first.userSize || nextStart < start { continue }
-            if Self.sameRun(last, next) { return }
-            if end > nextStart - 0.05 * first.userSize { overlaps = true }
+            if across > 0.3 * first.userSize || nextStart < (rtl ? start + oldWidth - 0.05 * first.userSize : start) { continue }
+            if neighbour == nil || nextStart < neighbourStart {
+                neighbour = next
+                neighbourStart = nextStart
+            }
+            if !rtl { break }
+        }
+        if let neighbour {
+            if Self.sameRun(last, neighbour) { return }
+            if end > neighbourStart - 0.05 * first.userSize { overlaps = true }
             return
         }
         let box = model.page.cropBox

@@ -40,6 +40,14 @@ enum WritersGolden {
             let result = try PageEditor(edit, 0, fonts).replaceText(try EditKit.find(edit, "world"), text)
             XCTAssertTrue(result.done)
             return try PdfDocument.open(edit.current)
+        case "editrtl":
+            let line = try PdfEditSession.open(try AnnotationFixtures.blank(1).saveRewrite())
+            _ = try PageEditor(line, 0, fonts).addTextBox(PdfRect(50, 600, 250, 700), "אבג דהו", TextBoxStyle(family: "Script Sans", size: 14))
+            let again = try PdfEditSession.open(line.current)
+            let editor = try PageEditor(again, 0, fonts)
+            let block = try XCTUnwrap(try editor.objects.compactMap { $0 as? TextObject }.first)
+            XCTAssertTrue(try editor.replaceText(block.range, text).done)
+            return try PdfDocument.open(again.current)
         case "watermark":
             _ = try PdfStamper(document, fonts).addWatermark(WatermarkSpec(text: text, fontFamily: "Script Sans"))
         case "header":

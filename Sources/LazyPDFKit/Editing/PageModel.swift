@@ -245,7 +245,8 @@ enum BlockLayout {
             i += 1
         }
         let spacing = origins.count > 1 ? abs((origins[1].x - origins[0].x) * -uy + (origins[1].y - origins[0].y) * ux) : 0
-        if starts.count < 2 { return (.left, spacing) }
+        // A lone right-to-left line is set from the right edge, as the writers set it.
+        if starts.count < 2 { return (text.lines[block.lines.start].isRtl ? .right : .left, spacing) }
         let tol = 0.6 * size
         func same(_ values: [Double], _ within: Double) -> Bool {
             guard let high = values.max(), let low = values.min() else { return false }
