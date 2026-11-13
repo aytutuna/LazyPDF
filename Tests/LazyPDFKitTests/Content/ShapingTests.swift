@@ -197,6 +197,21 @@ final class ShapingTests: XCTestCase {
         XCTAssertEqual(ours.toText(font.encode("لا")), "لا")
     }
 
+    func test_mirroredBracketsKeepTheCharacterTheyDepict() throws {
+        let text = "אב (גד)"
+        let document = try blank()
+        let font = try XCTUnwrap(try PdfFontEmbedder(document, ScriptFonts()).add("Script Sans", [], [text]))
+
+        // Each bracket is drawn with the other one's glyph, which only ever appears mirrored here.
+        let page = document.pages[0]
+        let name = ContentResources.add(document, ContentResources.forEdit(document, page), "Font", font.reference, "F")
+        page.dictionary["Contents"] = try document.add(PdfStream(PdfDictionary(), data: ContentWriter().beginText().font(name, 12).show(font, text, 12).endText().toArray()))
+        let reopened = try PdfDocument.open(try document.saveRewrite())
+        let fonts = try XCTUnwrap(reopened.dict(reopened.pages[0].resources, "Font"))
+        let ours = PdfFont.get(reopened, try XCTUnwrap(reopened.resolve(fonts.entries[0].value) as? PdfDictionary))
+        XCTAssertEqual(ours.toText(font.encode(text)), "(דג) בא")
+    }
+
     func test_offsetsAndAdvancesBecomeTjAdjustmentsAndRises() throws {
         let font = try embed("ab", OffsetShaper())
         let text = content { $0.show(font, "ab", 10) }

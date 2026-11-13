@@ -125,6 +125,8 @@ public final class PdfFontEmbedder {
                 }
             }
         }
+        // Glyphs that only ever stood for part of a cluster still need a value for the code to be mapped.
+        for (gid, text) in unicodeOf where text.isEmpty { unicodeOf[gid] = "\u{200B}" }
         guard let built = EmbeddedFontBuilder.buildGlyphs(file.data, unicodeOf, missing.sorted(), file.collectionIndex).font else { return nil }
         return (built, measure, lines)
     }
@@ -150,8 +152,8 @@ public final class PdfFontEmbedder {
         let end: Int
     }
 
-    // The first glyph of a cluster gets the cluster's text; the others of a one-to-many cluster, and mirrored ones,
-    // stand for nothing of their own.
+    // The first glyph of a cluster gets the cluster's text; the others of a one-to-many cluster stand for
+    // nothing of their own, and a mirrored glyph depicts the mirror character.
     private func collect(_ line: ShapedLine, _ unicodeOf: inout [Int: String], _ missing: inout Set<Int>) {
         var seen: Set<Span> = []
         for glyph in line.glyphs {
@@ -162,7 +164,10 @@ public final class PdfFontEmbedder {
                 for scalar in text.unicodeScalars { missing.insert(Int(scalar.value)) }
                 continue
             }
-            if glyph.mirrored || !seen.insert(Span(start: glyph.start, end: glyph.end)).inserted { text = "" }
+            if !seen.insert(Span(start: glyph.start, end: glyph.end)).inserted { text = "" }
+            else if glyph.mirrored {
+                text = String(String.UnicodeScalarView(text.unicodeScalars.map { Unicode.Scalar(UInt32(BidiData.mirror(Int($0.value)))) ?? $0 }))
+            }
             keep(&unicodeOf, glyph.shaped.glyph, text)
         }
     }

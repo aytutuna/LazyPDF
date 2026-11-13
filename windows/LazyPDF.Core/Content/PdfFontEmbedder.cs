@@ -115,6 +115,8 @@ public sealed class PdfFontEmbedder(PdfDocument document, IFontSource? source = 
                 }
             }
         }
+        // Glyphs that only ever stood for part of a cluster still need a value for the code to be mapped.
+        foreach (int gid in unicodeOf.Where(p => p.Value.Length == 0).Select(p => p.Key).ToList()) unicodeOf[gid] = "\u200B";
         var built = EmbeddedFontBuilder.BuildGlyphs(file.Data, unicodeOf, missing, out _, file.CollectionIndex);
         return built is null ? null : (built, measure, lines);
     }
@@ -143,7 +145,7 @@ public sealed class PdfFontEmbedder(PdfDocument document, IFontSource? source = 
             unicodeOf[gid] = text;
     }
 
-    // The first glyph of a cluster gets the cluster's text; the others of a one-to-many cluster, and mirrored ones, stand for nothing of their own.
+    // The first glyph of a cluster gets the cluster's text; the others of a one-to-many cluster stand for nothing of their own, and a mirrored glyph depicts the mirror character.
     private static void Collect(ShapedLine line, Dictionary<int, string> unicodeOf, SortedSet<int> missing)
     {
         var seen = new HashSet<(int, int)>();
@@ -155,7 +157,8 @@ public sealed class PdfFontEmbedder(PdfDocument document, IFontSource? source = 
                 foreach (var rune in text.EnumerateRunes()) missing.Add(rune.Value);
                 continue;
             }
-            if (glyph.Mirrored || !seen.Add((glyph.Start, glyph.End))) text = "";
+            if (!seen.Add((glyph.Start, glyph.End))) text = "";
+            else if (glyph.Mirrored) text = string.Concat(text.EnumerateRunes().Select(r => char.ConvertFromUtf32(BidiData.Mirror(r.Value))));
             Keep(unicodeOf, glyph.Shaped.Glyph, text);
         }
     }

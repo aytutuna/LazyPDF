@@ -239,6 +239,23 @@ public class ShapingTests
     }
 
     [Fact]
+    public void MirroredBracketsKeepTheCharacterTheyDepict()
+    {
+        const string text = "אב (גד)";
+        var document = Blank();
+        var font = new PdfFontEmbedder(document, new ScriptFonts()).Add("Script Sans", FontStyles.Regular, [text])!;
+
+        // Each bracket is drawn with the other one's glyph, which only ever appears mirrored here.
+        var page = document.Pages[0];
+        string name = ContentResources.Add(document, ContentResources.ForEdit(document, page), "Font", font.Reference, "F");
+        page.Dictionary["Contents"] = document.Add(new PdfStream(new PdfDictionary(), new ContentWriter().BeginText().Font(name, 12).Show(font, text, 12).EndText().ToArray()));
+        using var reopened = PdfDocument.Open(document.SaveRewrite());
+        var fonts = reopened.Dict(reopened.Pages[0].Resources, "Font")!;
+        var ours = PdfFont.Get(reopened, (PdfDictionary)reopened.Resolve(fonts.Entries[0].Value)!);
+        Assert.Equal("(דג) בא", ours.ToText(font.Encode(text)));
+    }
+
+    [Fact]
     public void OffsetsAndAdvancesBecomeTjAdjustmentsAndRises()
     {
         var font = Embed("ab", new OffsetShaper());
