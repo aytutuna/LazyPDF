@@ -1,0 +1,31 @@
+> right to left paragraphs
+page 1 720.00 540.00
+text 129.22 88.20 Calibri/Regular 14.00 000000 +0.00 rtl "אבג דהו"
+text 79.20 103.60 Calibri/Regular 14.00 000000 +0.00 rtl "אבג דהו"
+text 104.21 119.00 Calibri/Regular 14.00 000000 +0.00 rtl "אבג דהו"
+text 107.24 134.40 Calibri/Regular 14.00 000000 +0.00 rtl "אבג דהו זחט"
+text 79.66 149.80 Calibri/Regular 14.00 000000 +0.00 rtl "יכל מנס עפצ קרש"
+text 162.96 165.20 Calibri/Regular 14.00 000000 +0.00 rtl "תאב"
+text 180.60 180.60 Calibri/Regular 14.00 000000 +0.00 rtl "-"
+text 89.24 180.60 Calibri/Regular 14.00 000000 +0.00 rtl "אבג דהו זחט"
+text 87.00 196.00 Calibri/Regular 14.00 000000 +0.00 rtl "יכל מנס עפצ"
+text 144.96 211.40 Calibri/Regular 14.00 000000 +0.00 rtl "קרש"
+text 79.20 226.80 Calibri/Regular 14.00 000000 +0.00 "abc "
+text 127.50 226.80 Calibri/Regular 14.00 000000 +0.00 rtl "("
+text 112.10 226.80 Calibri/Regular 14.00 000000 +0.00 "12"
+text 107.90 226.80 Calibri/Regular 14.00 000000 +0.00 rtl ")"
+> text that does not wrap
+page 1 720.00 540.00
+text 209.22 88.20 Calibri/Regular 14.00 000000 +0.00 rtl "אבג דהו"
+text 79.20 103.60 Calibri/Regular 14.00 000000 +0.00 rtl "אבג דהו"
+text 144.21 119.00 Calibri/Regular 14.00 000000 +0.00 rtl "אבג דהו"
+text 227.70 134.40 Calibri/Regular 14.00 000000 +0.00 "abc "
+text 256.40 134.40 Calibri/Regular 14.00 000000 +0.00 rtl "אבג"
+> complex script font
+page 1 720.00 540.00
+text 279.60 88.20 Verdana/Regular 14.00 000000 +0.00 "abc"
+text 276.10 88.20 Verdana/Regular 14.00 000000 +0.00 rtl " "
+text 249.08 88.20 Tahoma/Regular 14.00 000000 +0.00 rtl "אבג "
+text 228.92 88.20 Verdana/Regular 14.00 000000 +0.00 "def"
+text 79.20 103.60 Verdana/Regular 14.00 000000 +0.00 "abc "
+text 107.90 103.60 Verdana/Regular 14.00 000000 +0.00 rtl "אבג"

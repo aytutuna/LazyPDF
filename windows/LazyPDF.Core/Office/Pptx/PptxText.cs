@@ -106,7 +106,7 @@ internal sealed partial class PptxReader
                 _totalText += text.Length;
                 if (_totalText > _limits.MaxTotalText) throw new PdfReadException(PdfReadProblem.Unsupported, "The presentation has too much text.");
                 if (text.Length == 0 && field == LayoutField.None) continue;
-                runs.Add(MakeRun(props.Run, rPr, text, field, colors, box.FontScale));
+                runs.AddRange(MakeRuns(props.Run, rPr, text, field, colors, box.FontScale));
             }
 
             bool hasText = runs.Count > 0;
@@ -137,7 +137,18 @@ internal sealed partial class PptxReader
         }
     }
 
-    private static LayoutRun MakeRun(PptxRunProps inherited, XmlElement? rPr, string text, LayoutField field, PptxColors colors, double scale)
+    // Hebrew and Arabic letters take the complex-script font; a field is never cut.
+    private static IEnumerable<LayoutRun> MakeRuns(PptxRunProps inherited, XmlElement? rPr, string text, LayoutField field, PptxColors colors, double scale)
+    {
+        if (field != LayoutField.None || text.Length == 0)
+        {
+            yield return MakeRun(inherited, rPr, text, field, colors, scale);
+            yield break;
+        }
+        foreach (var (part, complex) in ScriptRuns.Split(text)) yield return MakeRun(inherited, rPr, part, field, colors, scale, complex);
+    }
+
+    private static LayoutRun MakeRun(PptxRunProps inherited, XmlElement? rPr, string text, LayoutField field, PptxColors colors, double scale, bool complex = false)
     {
         var props = inherited.Copy();
         props.Apply(rPr, colors);
@@ -151,7 +162,7 @@ internal sealed partial class PptxReader
         return new LayoutRun
         {
             Text = props.Caps == true ? DocxReader.Upper(text) : text,
-            Family = props.Family ?? colors.Theme.Font("minor") ?? "Calibri",
+            Family = (complex ? props.CsFamily : null) ?? props.Family ?? colors.Theme.Font("minor") ?? "Calibri",
             Size = size,
             Bold = props.Bold == true,
             Italic = props.Italic == true,
@@ -161,6 +172,7 @@ internal sealed partial class PptxReader
             Highlight = props.Highlight,
             Shift = shift,
             Field = field,
+            Rtl = props.Rtl == true,
         };
     }
 
@@ -226,7 +238,8 @@ internal sealed partial class PptxReader
         return new LayoutParagraph
         {
             Runs = runs,
-            Align = props.Align ?? LayoutAlign.Left,
+            Align = props.Align ?? (props.Rtl == true ? LayoutAlign.Right : LayoutAlign.Left),
+            RightToLeft = props.Rtl == true,
             Left = props.MarL ?? 0,
             FirstLine = props.Indent ?? 0,
             Before = Space(props.Before, size),

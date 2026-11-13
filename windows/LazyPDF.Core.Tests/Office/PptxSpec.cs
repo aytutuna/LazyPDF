@@ -169,7 +169,7 @@ internal static class PptxSpec
                 switch (box)
                 {
                     case PlacedText t:
-                        output.Append($"text {Num(t.X)} {Num(t.Baseline)} {t.Family}/{t.Style} {Num(t.Size)} {t.Color:x6} +{Num(t.SpaceExtra)} \"{OfficeLayoutSpec.Escape(t.Text)}\"\n");
+                        output.Append($"text {Num(t.X)} {Num(t.Baseline)} {t.Family}/{t.Style} {Num(t.Size)} {t.Color:x6} +{Num(t.SpaceExtra)}{(t.RightToLeft ? " rtl" : "")} \"{OfficeLayoutSpec.Escape(t.Text)}\"\n");
                         break;
                     case PlacedRect r:
                         output.Append($"rect {Num(r.X)} {Num(r.Y)} {Num(r.Width)} {Num(r.Height)} {r.Color:x6}\n");

@@ -7,8 +7,10 @@ internal readonly record struct PptxSpacing(double Value, bool Points);
 internal sealed class PptxRunProps
 {
     public string? Family;
+    /// <summary>The complex-script font (a:cs), for the Hebrew and Arabic letters of a run.</summary>
+    public string? CsFamily;
     public double? Size;
-    public bool? Bold, Italic, Underline, Strike, Caps, Link;
+    public bool? Bold, Italic, Underline, Strike, Caps, Link, Rtl;
     public int? Color, Highlight;
     /// <summary>Percent of the size; positive is superscript.</summary>
     public double? Baseline;
@@ -42,6 +44,12 @@ internal sealed class PptxRunProps
                 case "latin":
                     Family = PptxStyle.Font(e.Attribute("typeface"), colors) ?? Family;
                     break;
+                case "cs":
+                    CsFamily = PptxStyle.Font(e.Attribute("typeface"), colors) ?? CsFamily;
+                    break;
+                case "rtl":
+                    Rtl = Flag(e.Attribute("val")) ?? true;
+                    break;
                 case "hlinkClick":
                     Link = true;
                     break;
@@ -56,6 +64,7 @@ internal sealed class PptxRunProps
 internal sealed class PptxLevelProps
 {
     public LayoutAlign? Align;
+    public bool? Rtl;
     public double? MarL, Indent;
     public PptxSpacing? Line, Before, After;
     /// <summary>none, char or auto.</summary>
@@ -77,6 +86,7 @@ internal sealed class PptxLevelProps
         if (pPr is null) return;
         if (DocxReader.Number(pPr.Attribute("marL")) is { } left) MarL = Emu(left);
         if (DocxReader.Number(pPr.Attribute("indent")) is { } indent) Indent = Emu(indent);
+        Rtl = PptxRunProps.Flag(pPr.Attribute("rtl")) ?? Rtl;
         Align = pPr.Attribute("algn") switch
         {
             "l" => LayoutAlign.Left,
@@ -178,11 +188,12 @@ internal sealed class PptxBodyProps
 
 internal static class PptxStyle
 {
-    /// <summary>A typeface name; +mj-lt and +mn-lt are the theme's heading and body fonts, other theme references name nothing.</summary>
+    /// <summary>A typeface name; +mj-lt, +mn-lt, +mj-cs and +mn-cs are the theme's heading and body fonts, other theme references name nothing.</summary>
     public static string? Font(string? typeface, PptxColors colors)
     {
         if (string.IsNullOrEmpty(typeface)) return null;
         if (typeface[0] != '+') return typeface;
-        return typeface switch { "+mj-lt" => colors.Theme.Font("major"), "+mn-lt" => colors.Theme.Font("minor"), _ => null };
+        return typeface switch { "+mj-lt" => colors.Theme.Font("major"), "+mn-lt" => colors.Theme.Font("minor"),
+            "+mj-cs" => colors.Theme.ComplexFont("major"), "+mn-cs" => colors.Theme.ComplexFont("minor"), _ => null };
     }
 }
