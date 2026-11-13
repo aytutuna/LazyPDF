@@ -23,7 +23,7 @@ internal static class PdfUaMarker
         if (existing is null) document.Catalog["Metadata"] = document.Add(stream);
         var xmp = XmpPacket.Load(document)!;
         xmp.Set(XmpPacket.PdfUAId, "pdfuaid", "part", "1");
-        if (!xmp.Has(XmpPacket.Dc, "title") && !string.IsNullOrWhiteSpace(meta.Title)) xmp.SetAlt(XmpPacket.Dc, "dc", "title", meta.Title);
+        if (string.IsNullOrWhiteSpace(xmp.Get(XmpPacket.Dc, "title")) && !string.IsNullOrWhiteSpace(meta.Title)) xmp.SetAlt(XmpPacket.Dc, "dc", "title", meta.Title);
         if (xmp.Has(XmpPacket.PdfAId, "part")) xmp.DeclarePdfUaSchema();
         stream.Data = xmp.ToBytes();
         stream.Dictionary.Remove("Filter");

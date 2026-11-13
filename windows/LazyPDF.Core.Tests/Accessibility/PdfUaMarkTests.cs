@@ -76,6 +76,19 @@ public class PdfUaMarkTests
     }
 
     [Fact]
+    public void AnEmptyTitleInTheXmpTakesTheInfoTitle()
+    {
+        string packet = PdfUaKit.Packet(ua: false).Replace(">Title</rdf:li>", "></rdf:li>");
+        using var document = PdfDocument.Open(PdfUaKit.Build(xmp: packet, viewer: ""));
+        Assert.Contains("06-003", PdfUaValidator.Validate(document).Issues.Select(i => i.Condition));
+
+        Assert.True(Mark(document).Marked);
+
+        using var saved = Reopen(document);
+        Assert.True(PdfUaValidator.Validate(saved).IsValid);
+    }
+
+    [Fact]
     public void MarkingTwiceChangesNothingTheSecondTime()
     {
         using var document = PdfDocument.Open(Unmarked);

@@ -67,6 +67,16 @@ final class PdfUaMarkTests: XCTestCase {
         XCTAssertTrue(try PdfUaValidator.validate(try reopen(document)).isValid)
     }
 
+    func test_anEmptyTitleInTheXmpTakesTheInfoTitle() throws {
+        let packet = PdfUaKit.packet(ua: false).replacingOccurrences(of: ">Title</rdf:li>", with: "></rdf:li>")
+        let document = try PdfDocument.open(PdfUaKit.build(viewer: "", xmp: packet))
+        XCTAssertTrue(try PdfUaValidator.validate(document).issues.contains { $0.condition == "06-003" })
+
+        XCTAssertTrue(try mark(document).marked)
+
+        XCTAssertTrue(try PdfUaValidator.validate(try reopen(document)).isValid)
+    }
+
     func test_markingTwiceChangesNothingTheSecondTime() throws {
         let document = try PdfDocument.open(unmarked)
         _ = try mark(document)

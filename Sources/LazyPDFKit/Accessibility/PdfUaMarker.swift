@@ -21,7 +21,7 @@ enum PdfUaMarker {
         }
         let xmp = XmpPacket.load(document)!
         xmp.set(XmpPacket.pdfuaId, "pdfuaid", "part", "1")
-        if !xmp.has(XmpPacket.dc, "title"), !DotNetText.isNullOrWhiteSpace(meta.title) { xmp.setAlt(XmpPacket.dc, "dc", "title", meta.title) }
+        if DotNetText.isNullOrWhiteSpace(xmp.get(XmpPacket.dc, "title")), !DotNetText.isNullOrWhiteSpace(meta.title) { xmp.setAlt(XmpPacket.dc, "dc", "title", meta.title) }
         if xmp.has(XmpPacket.pdfaId, "part") { xmp.declarePdfUaSchema() }
         stream.data = xmp.toBytes()
         stream.dictionary.remove("Filter")
