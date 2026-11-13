@@ -76,11 +76,12 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
             return;
         }
         var anchor = AnchorOf(glyphs);
-        var pieces = Pieces(PlaceOf(glyphs[0]), glyphs[0], anchor, text, style, out var wrap);
+        bool? rtl = LineRtl(FirstChar(range));
+        var pieces = Pieces(PlaceOf(glyphs[0]), glyphs[0], anchor, text, style, rtl, out var wrap);
         double newWidth = pieces.Sum(p => p.Advance) * anchor.UnitX;
         double shift = AlignmentShift(range, glyphs, newWidth);
         PutText(glyphs[0], false, pieces, wrap, shift);
-        var unplaced = PutTwins(glyphs[0], anchor, pieces, text, style, wrap, shift);
+        var unplaced = PutTwins(glyphs[0], anchor, pieces, text, style, rtl, wrap, shift);
         CutAll(glyphs, glyphs[0], unplaced, shift + newWidth - Extent(glyphs));
         CheckRoom(range, glyphs, newWidth);
     }
@@ -92,6 +93,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
         var runes = text.EnumerateRunes().Select(r => r.ToString()).ToList();
         int next = 0;
         double width = 0;
+        bool? rtl = LineRtl(FirstChar(range));
         for (int i = 0; i < groups.Count; i++)
         {
             var group = groups[i];
@@ -105,9 +107,9 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
             }
             group = Ordered(range, group);
             var anchor = AnchorOf(group);
-            var pieces = TextBuilder.Shape(builder.Build(PlaceOf(group[0]), anchor, part), anchor);
+            var pieces = TextBuilder.Shape(builder.Build(PlaceOf(group[0]), anchor, part), anchor, null, rtl);
             PutText(group[0], false, pieces, default, 0);
-            var unplaced = PutTwins(group[0], anchor, pieces, part, null, default, 0);
+            var unplaced = PutTwins(group[0], anchor, pieces, part, null, rtl, default, 0);
             double groupWidth = pieces.Sum(p => p.Advance) * anchor.UnitX;
             CutAll(group, group[0], unplaced, groupWidth - Extent(group));
             width += groupWidth;
@@ -132,17 +134,26 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     {
         var chars = model.Text.Chars;
         EditGlyph? glyph = null;
+        int found = -1;
         bool after = false;
         if (index < 0) throw new EditConflictException(EditingText.NoText);
         for (int i = Math.Min(index, chars.Count - 1); i >= 0 && glyph is null; i--)
         {
             glyph = model.CharGlyphs[i];
-            if (glyph is not null) after = i < index;
+            if (glyph is not null)
+            {
+                after = i < index;
+                found = i;
+            }
         }
-        for (int i = index; i < chars.Count && glyph is null; i++) glyph = model.CharGlyphs[i];
+        for (int i = index; i < chars.Count && glyph is null; i++)
+        {
+            glyph = model.CharGlyphs[i];
+            found = i;
+        }
         if (glyph is null) throw new EditConflictException(EditingText.NoText);
         Check([glyph]);
-        var pieces = Pieces(PlaceOf(glyph), glyph, glyph, text, null, out var wrap);
+        var pieces = Pieces(PlaceOf(glyph), glyph, glyph, text, null, LineRtl(found), out var wrap);
         PutText(glyph, after, pieces, wrap, 0);
     }
 
@@ -169,7 +180,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     }
 
     // A twin is shown in a font and a stream of its own, so the codes of the anchor's font mean nothing to it: its text is built again for it.
-    private List<EditGlyph> PutTwins(EditGlyph glyph, EditGlyph anchor, List<EditPiece> pieces, string text, TextStyleChange? style, StyleWrap wrap, double shift)
+    private List<EditGlyph> PutTwins(EditGlyph glyph, EditGlyph anchor, List<EditPiece> pieces, string text, TextStyleChange? style, bool? rtl, StyleWrap wrap, double shift)
     {
         var unplaced = new List<EditGlyph>();
         foreach (var twin in glyph.Twins)
@@ -182,7 +193,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
             var mark = batch.Save();
             try
             {
-                var own = Pieces(PlaceOf(twin), twin, twin, text, style, out var twinWrap);
+                var own = Pieces(PlaceOf(twin), twin, twin, text, style, rtl, out var twinWrap);
                 PutText(twin, false, own, twinWrap, shift);
             }
             catch (EditConflictException) when (twin.RenderMode == 3)
@@ -207,10 +218,10 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
     /// <summary>The operators round new text that change its look, and the size it is set at.</summary>
     internal readonly record struct StyleWrap(byte[]? Before, byte[]? After, double? Size);
 
-    private List<EditPiece> Pieces(Place place, EditGlyph at, EditGlyph anchor, string text, TextStyleChange? style, out StyleWrap wrap)
+    private List<EditPiece> Pieces(Place place, EditGlyph at, EditGlyph anchor, string text, TextStyleChange? style, bool? rtl, out StyleWrap wrap)
     {
         wrap = default;
-        if (style is null) return TextBuilder.Shape(builder.Build(place, anchor, text), anchor);
+        if (style is null) return TextBuilder.Shape(builder.Build(place, anchor, text), anchor, null, rtl);
         var state = place.States.At(at.Op);
         var before = new ContentWriter();
         var after = new ContentWriter();
@@ -234,7 +245,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
             size = style.Size ?? at.FontSize;
             var draw = StandIn(anchor.Font, style, text);
             string name = batch.AddResource(place, "Font", draw.Reference) ?? throw new EditConflictException(EditingText.SharedForm);
-            pieces = TextBuilder.Shape(TextBuilder.BuildWith(draw, name, anchor, text, size.Value), anchor, size);
+            pieces = TextBuilder.Shape(TextBuilder.BuildWith(draw, name, anchor, text, size.Value), anchor, size, rtl);
         }
         else
         {
@@ -248,7 +259,7 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
                 pieces = [.. pieces.Select(p => new EditPiece { Text = p.Text, Bytes = p.Bytes, Font = p.Font, Draw = p.Draw, IsSpace = p.IsSpace, Em = p.Em, Code32 = p.Code32, Shift = p.Shift, Advance = p.Advance * factor })];
                 size = newSize;
             }
-            pieces = TextBuilder.Shape(pieces, anchor, size);
+            pieces = TextBuilder.Shape(pieces, anchor, size, rtl);
         }
         if (restore != StateParts.None) place.States.At(at.Op + 1).Replay(after, restore);
         wrap = new StyleWrap(before.Length > 0 ? before.ToArray() : null, after.Length > 0 ? after.ToArray() : null, size);
@@ -376,6 +387,9 @@ internal sealed partial class TextEditor(PageModel model, EditBatch batch, TextB
         }
         return states.At(last + 1).Depth == depth;
     }
+
+    // New text is laid out the way the line reads, not the way its own first letter does.
+    private bool? LineRtl(int index) => index < 0 ? null : model.Text.Lines[model.Text.Chars[index].Line].IsRtl;
 
     private double AlignmentShift(TextRange range, IReadOnlyList<EditGlyph> glyphs, double newWidth)
     {

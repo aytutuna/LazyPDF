@@ -2,7 +2,7 @@
 # freetext: a text box annotation. textbox: PageEditor.AddTextBox (Fill and sign text). watermark and header: PdfStamper.
 # field: a text field; multiline: a multiline field with /Q 0; comb: an 8 cell comb field; combo: a combo box value.
 # bates: a footer {bates} with the text as prefix and suffix. redact and redactrepeat: a redaction overlay text. sign: the text of a signature appearance.
-# plain: PdfFromText. edit: Edit text replacing "world" in a Helvetica line. editrtl: Edit text replacing the whole of a Hebrew line made by the text box writer.
+# plain: PdfFromText. edit: Edit text replacing "world" in a Helvetica line. editrtl: Edit text replacing the whole of a Hebrew line made by the text box writer. editpart: replacing its second word only.
 freetext abc def
 freetext אבג דהו
 freetext שלום עולם abc 12
@@ -43,3 +43,5 @@ editrtl אב
 editrtl אבג דהו זחט
 editrtl שלום עולם abc 12
 editrtl אב (גד)
+editpart abc דה
+editpart גד

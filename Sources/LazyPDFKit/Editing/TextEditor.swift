@@ -143,11 +143,12 @@ final class TextEditor {
             }
         }
         let anchor = anchorOf(glyphs)
-        let (pieces, wrap) = try piecesFor(Self.placeOf(glyphs[0]), glyphs[0], anchor, text, style)
+        let rtl = lineRtl(firstChar(range))
+        let (pieces, wrap) = try piecesFor(Self.placeOf(glyphs[0]), glyphs[0], anchor, text, style, rtl)
         let newWidth = pieces.reduce(0) { $0 + $1.advance } * anchor.unitX
         let shift = alignmentShift(range, glyphs, newWidth)
         try putText(glyphs[0], false, pieces, wrap, shift)
-        let unplaced = try putTwins(glyphs[0], anchor, pieces, text, style, wrap, shift)
+        let unplaced = try putTwins(glyphs[0], anchor, pieces, text, style, rtl, wrap, shift)
         try cutAll(glyphs, glyphs[0], unplaced, shift + newWidth - Self.extent(glyphs))
         checkRoom(range, glyphs, newWidth)
     }
@@ -158,6 +159,7 @@ final class TextEditor {
         let runes = text.unicodeScalars.map { String($0) }
         var next = 0
         var width = 0.0
+        let rtl = lineRtl(firstChar(range))
         for i in 0..<groups.count {
             let logical = groups[i]
             let take = i == groups.count - 1 ? runes.count - next : Swift.min(logical.count, runes.count - next)
@@ -169,9 +171,9 @@ final class TextEditor {
             }
             let group = ordered(range, logical)
             let anchor = anchorOf(group)
-            let pieces = TextBuilder.shape(try builder.build(Self.placeOf(group[0]), anchor, part), anchor)
+            let pieces = TextBuilder.shape(try builder.build(Self.placeOf(group[0]), anchor, part), anchor, rightToLeft: rtl)
             try putText(group[0], false, pieces, StyleWrap(), 0)
-            let unplaced = try putTwins(group[0], anchor, pieces, part, nil, StyleWrap(), 0)
+            let unplaced = try putTwins(group[0], anchor, pieces, part, nil, rtl, StyleWrap(), 0)
             let groupWidth = pieces.reduce(0) { $0 + $1.advance } * anchor.unitX
             try cutAll(group, group[0], unplaced, groupWidth - Self.extent(group))
             width += groupWidth
@@ -197,20 +199,25 @@ final class TextEditor {
         if index < 0 { throw EditConflictException(EditingText.noText) }
         var glyph: EditGlyph?
         var after = false
+        var at = -1
         var i = Swift.min(index, chars.count - 1)
         while i >= 0 && glyph == nil {
             glyph = model.charGlyphs[i]
-            if glyph != nil { after = i < index }
+            if glyph != nil {
+                after = i < index
+                at = i
+            }
             i -= 1
         }
         i = index
         while i < chars.count && glyph == nil {
             glyph = model.charGlyphs[i]
+            at = i
             i += 1
         }
         guard let found = glyph else { throw EditConflictException(EditingText.noText) }
         try check([found])
-        let (pieces, wrap) = try piecesFor(Self.placeOf(found), found, found, text, nil)
+        let (pieces, wrap) = try piecesFor(Self.placeOf(found), found, found, text, nil, lineRtl(at))
         try putText(found, after, pieces, wrap, 0)
     }
 
@@ -236,7 +243,7 @@ final class TextEditor {
     }
 
     // A twin is shown in a font and a stream of its own, so the codes of the anchor's font mean nothing to it: its text is built again for it.
-    func putTwins(_ glyph: EditGlyph, _ anchor: EditGlyph, _ pieces: [EditPiece], _ text: String, _ style: TextStyleChange?, _ wrap: StyleWrap, _ shift: Double) throws -> [EditGlyph] {
+    func putTwins(_ glyph: EditGlyph, _ anchor: EditGlyph, _ pieces: [EditPiece], _ text: String, _ style: TextStyleChange?, _ rtl: Bool?, _ wrap: StyleWrap, _ shift: Double) throws -> [EditGlyph] {
         var unplaced: [EditGlyph] = []
         for twin in glyph.twins {
             if twin.font === anchor.font && twin.unit === anchor.unit {
@@ -245,7 +252,7 @@ final class TextEditor {
             }
             let mark = batch.save()
             do {
-                let (own, twinWrap) = try piecesFor(Self.placeOf(twin), twin, twin, text, style)
+                let (own, twinWrap) = try piecesFor(Self.placeOf(twin), twin, twin, text, style, rtl)
                 try putText(twin, false, own, twinWrap, shift)
             } catch is EditConflictException where twin.renderMode == 3 {
                 // A hidden copy that cannot show the new letters is cut with the rest rather than blocking the edit.
@@ -271,8 +278,8 @@ final class TextEditor {
         var size: Double?
     }
 
-    func piecesFor(_ place: Place, _ at: EditGlyph, _ anchor: EditGlyph, _ text: String, _ style: TextStyleChange?) throws -> (pieces: [EditPiece], wrap: StyleWrap) {
-        guard let style else { return (TextBuilder.shape(try builder.build(place, anchor, text), anchor), StyleWrap()) }
+    func piecesFor(_ place: Place, _ at: EditGlyph, _ anchor: EditGlyph, _ text: String, _ style: TextStyleChange?, _ rtl: Bool?) throws -> (pieces: [EditPiece], wrap: StyleWrap) {
+        guard let style else { return (TextBuilder.shape(try builder.build(place, anchor, text), anchor, rightToLeft: rtl), StyleWrap()) }
         let state = place.states.at(at.op)
         let before = ContentWriter()
         let after = ContentWriter()
@@ -296,7 +303,7 @@ final class TextEditor {
             size = fontSize
             let draw = try standIn(anchor.font, style, text)
             guard let name = batch.addResource(place, "Font", draw.reference) else { throw EditConflictException(EditingText.sharedForm) }
-            pieces = TextBuilder.shape(TextBuilder.buildWith(draw, name, anchor, text, fontSize), anchor, size: fontSize)
+            pieces = TextBuilder.shape(TextBuilder.buildWith(draw, name, anchor, text, fontSize), anchor, size: fontSize, rightToLeft: rtl)
         } else {
             pieces = try builder.build(place, anchor, text)
             if let newSize = style.size {
@@ -307,7 +314,7 @@ final class TextEditor {
                 pieces = pieces.map { EditPiece(text: $0.text, bytes: $0.bytes, advance: $0.advance * factor, font: $0.font, draw: $0.draw, isSpace: $0.isSpace, em: $0.em, code32: $0.code32, shift: $0.shift) }
                 size = newSize
             }
-            pieces = TextBuilder.shape(pieces, anchor, size: size)
+            pieces = TextBuilder.shape(pieces, anchor, size: size, rightToLeft: rtl)
         }
         if !restore.isEmpty { try place.states.at(at.op + 1).replay(after, restore) }
         return (pieces, StyleWrap(before: before.length > 0 ? before.toArray() : nil, after: after.length > 0 ? after.toArray() : nil, size: size))
@@ -436,6 +443,9 @@ final class TextEditor {
         }
         return states.at(last + 1).depth == depth
     }
+
+    // New text is laid out the way the line reads, not the way its own first letter does.
+    private func lineRtl(_ index: Int) -> Bool? { index < 0 ? nil : model.text.lines[model.text.chars[index].line].isRtl }
 
     private func alignmentShift(_ range: TextRange, _ glyphs: [EditGlyph], _ newWidth: Double) -> Double {
         let first = firstChar(range)
