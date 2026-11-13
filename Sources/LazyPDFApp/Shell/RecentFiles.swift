@@ -41,14 +41,22 @@ public struct RecentFile: Codable, Equatable {
     public var bookmark = Data()
     public var opened = Date(timeIntervalSince1970: 0)
 
-    public init(path: String, bookmark: Data, opened: Date) {
+    /// Where the file was left: the page (0-based), the zoom (0 for none) and the fit mode.
+    public var page = 0
+    public var zoom = 0.0
+    public var fit = FitMode.none
+
+    public init(path: String, bookmark: Data, opened: Date, page: Int = 0, zoom: Double = 0, fit: FitMode = .none) {
         self.path = path
         self.bookmark = bookmark
         self.opened = opened
+        self.page = page
+        self.zoom = zoom
+        self.fit = fit
     }
 
     private enum CodingKeys: String, CodingKey {
-        case path, bookmark, opened
+        case path, bookmark, opened, page, zoom, fit
     }
 
     public init(from decoder: Decoder) throws {
@@ -56,6 +64,9 @@ public struct RecentFile: Codable, Equatable {
         path = c.decodeLenient(forKey: .path, default: path)
         bookmark = c.decodeLenient(forKey: .bookmark, default: bookmark)
         opened = c.decodeLenient(forKey: .opened, default: opened)
+        page = c.decodeLenient(forKey: .page, default: page)
+        zoom = c.decodeLenient(forKey: .zoom, default: zoom)
+        fit = c.decodeLenient(forKey: .fit, default: fit)
     }
 }
 
@@ -94,8 +105,27 @@ public final class RecentFiles {
     }
 
     public func add(_ url: URL, now: Date = Date()) {
-        let files = load().filter { !matches($0, url) }
-        write([RecentFile(path: Self.key(url), bookmark: bookmarks.make(url) ?? Data(), opened: now)] + files)
+        let all = load()
+        let kept = all.first { matches($0, url) }
+        let files = all.filter { !matches($0, url) }
+        let entry = RecentFile(path: Self.key(url), bookmark: bookmarks.make(url) ?? Data(), opened: now,
+                               page: kept?.page ?? 0, zoom: kept?.zoom ?? 0, fit: kept?.fit ?? .none)
+        write([entry] + files)
+    }
+
+    /// Keeps where the file was left for the next time it is opened; a file that is not listed is ignored.
+    public func rememberView(_ url: URL, page: Int, zoom: Double, fit: FitMode) {
+        var files = load()
+        guard let at = files.firstIndex(where: { matches($0, url) }) else { return }
+        files[at].page = page
+        files[at].zoom = zoom
+        files[at].fit = fit
+        write(files)
+    }
+
+    /// What was remembered for the file, if it is listed.
+    public func view(of url: URL) -> RecentFile? {
+        load().first { matches($0, url) }
     }
 
     /// Takes out the entry for the file, whether it is stored under this path or its bookmark now leads here.

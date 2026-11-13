@@ -141,4 +141,30 @@ final class RecentFilesTests: XCTestCase {
 
         XCTAssertEqual(RecentFiles.key(composed), RecentFiles.key(decomposed))
     }
+
+    func test_theViewIsRememberedAndKeptWhenOpenedAgain() {
+        let dir = TempDir(self)
+        let recent = recent(dir)
+        let a = dir.sub("docs/a.pdf"), b = dir.sub("docs/b.pdf")
+        recent.add(a)
+        recent.add(b)
+        recent.rememberView(a, page: 4, zoom: 1.5, fit: .width)
+
+        let files = self.recent(dir).load()
+        XCTAssertEqual(files.map(\.path), [key(b), key(a)])
+        XCTAssertEqual(files[1].page, 4)
+        XCTAssertEqual(files[1].zoom, 1.5)
+        XCTAssertEqual(files[1].fit, .width)
+
+        recent.add(a)
+        XCTAssertEqual(recent.load()[0].page, 4)
+    }
+
+    func test_aViewForAnUnlistedFileIsIgnored() {
+        let dir = TempDir(self)
+        let recent = recent(dir)
+        recent.rememberView(dir.sub("docs/a.pdf"), page: 2, zoom: 1, fit: .none)
+
+        XCTAssertTrue(recent.load().isEmpty)
+    }
 }
