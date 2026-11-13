@@ -18,7 +18,7 @@ extension TextEditor {
         let anchor = anchorOf(block.glyphs)
         let (ux, uy) = anchor.direction
         for line in block.lines {
-            let glyphs = model.glyphsIn(line.range)
+            let glyphs = ordered(line.range)
             if glyphs.isEmpty { continue }
             let first = glyphs[0]
             let start = first.origin.x * ux + first.origin.y * uy
@@ -75,11 +75,14 @@ extension TextEditor {
         }
 
         var laid: [(pieces: [EditPiece], last: Bool)] = []
+        let blockRtl = model.text.lines[block.block.lines.start].isRtl
         for paragraph in Self.paragraphs(text) {
+            // A line takes the direction of its paragraph, which the first strong character sets, or the block's when there is none.
+            let rtl = Scripts.needsBidi(paragraph) ? BidiParagraph(paragraph).level == 1 : blockRtl
             let wrapped = Self.wrap(try builder.build(place, anchor, paragraph), room, laid.count, widthOf)
-            for i in 0..<wrapped.count { laid.append((wrapped[i], i == wrapped.count - 1)) }
+            for i in 0..<wrapped.count { laid.append((TextBuilder.shape(wrapped[i], anchor, rightToLeft: rtl), i == wrapped.count - 1)) }
         }
-        let alignment = multi ? block.alignment : .left
+        let alignment = block.alignment
         func target(_ k: Int, _ width: Double) -> Double {
             switch alignment {
             case .center: return (left + right) / 2 - width / 2

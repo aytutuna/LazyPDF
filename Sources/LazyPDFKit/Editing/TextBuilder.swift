@@ -45,6 +45,9 @@ struct EditPiece {
 
     var isSpace = false
 
+    /// The piece is a whole shaped run (see `TextBuilder.shape`): `text` is its logical text and `bytes` is not used.
+    var isShaped = false
+
     /// The width in em before spacing and scaling, and whether word spacing applies to it (a single byte code 32).
     var em = 0.0
     var code32 = false
@@ -189,20 +192,28 @@ final class TextBuilder {
         }
     }
 
-    // Consecutive pieces of one stand-in with right-to-left characters become one piece, encoded in display order.
-    private static func shaped(_ pieces: [EditPiece]) -> [EditPiece] {
+    /// Joins consecutive pieces of one stand-in font with right-to-left characters into one piece, so that it is shaped and
+    /// written in display order and measured by what the shaper makes of it. `rightToLeft` is the direction of the paragraph
+    /// the line belongs to; a line that would start the other way gets a direction mark. Pieces with no such text stay as they are.
+    static func shape(_ pieces: [EditPiece], _ anchor: EditGlyph, size: Double? = nil, rightToLeft: Bool? = nil) -> [EditPiece] {
+        let em = size ?? anchor.fontSize
         var result: [EditPiece] = []
         var i = 0
         while i < pieces.count {
-            if let draw = pieces[i].draw, pieces[i].shift == nil {
+            if let draw = pieces[i].draw, pieces[i].shift == nil, !pieces[i].isShaped {
                 var end = i + 1
-                while end < pieces.count, pieces[end].draw === draw, pieces[end].font == pieces[i].font, pieces[end].shift == nil { end += 1 }
-                let run = pieces[i..<end]
-                let text = run.map { $0.text }.joined()
-                if Scripts.needsBidi(text) {
-                    result.append(EditPiece(text: text, bytes: draw.encode(text), advance: run.reduce(0) { $0 + $1.advance }, font: pieces[i].font))
-                    i = end
-                    continue
+                while end < pieces.count, pieces[end].draw === draw, pieces[end].font == pieces[i].font, pieces[end].shift == nil, !pieces[end].isShaped { end += 1 }
+                var text = pieces[i..<end].map { $0.text }.joined()
+                if Scripts.needsBidi(text), draw.isEmbedded {
+                    if let rtl = rightToLeft, draw.isRightToLeft(text) != rtl { text = (rtl ? "\u{200F}" : "\u{200E}") + text }
+                    if let line = draw.shaped(text) {
+                        var piece = EditPiece(text: text, advance: (line.width / 1000 * em + anchor.charSpacing * Double(line.glyphs.count)) * anchor.scale,
+                                              font: pieces[i].font, draw: draw, em: line.width / 1000)
+                        piece.isShaped = true
+                        result.append(piece)
+                        i = end
+                        continue
+                    }
                 }
             }
             result.append(pieces[i])
@@ -215,7 +226,6 @@ final class TextBuilder {
     /// force at `at` selected again after them; `before` and `after` go round the whole text.
     static func items(_ place: Place, _ at: EditGlyph, _ pieces: [EditPiece], shift: Double = 0, before: [UInt8]? = nil, after: [UInt8]? = nil,
                       size: Double? = nil, current: ContentOperation? = nil) throws -> [ShowItem] {
-        let pieces = shaped(pieces)
         var items: [ShowItem] = []
         if let before, !before.isEmpty { items.append(ShowOps(before)) }
         if shift != 0 { items.append(ShowShift(-shift)) }
@@ -245,6 +255,11 @@ final class TextBuilder {
                 continue
             }
             try select(piece.font)
+            if piece.isShaped, let draw = piece.draw {
+                flush()
+                items.append(ShowOps(ContentWriter().show(draw, piece.text, size ?? at.fontSize).toArray()))
+                continue
+            }
             run.append(contentsOf: piece.bytes)
         }
         try select(nil)
