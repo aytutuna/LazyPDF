@@ -15,6 +15,9 @@ internal sealed class XmpPacket
     public static readonly XNamespace Pdfx = "http://ns.adobe.com/pdfx/1.3/";
     public static readonly XNamespace PdfAId = "http://www.aiim.org/pdfa/ns/id/";
     public static readonly XNamespace PdfUAId = "http://www.aiim.org/pdfua/ns/id/";
+    private static readonly XNamespace Extension = "http://www.aiim.org/pdfa/ns/extension/";
+    private static readonly XNamespace Schema = "http://www.aiim.org/pdfa/ns/schema#";
+    private static readonly XNamespace Property = "http://www.aiim.org/pdfa/ns/property#";
 
     private const int MaxSize = 1 << 24;
 
@@ -95,6 +98,35 @@ internal sealed class XmpPacket
             found |= attributes.Count + elements.Count > 0;
         }
         return found;
+    }
+
+    /// <summary>
+    /// The extension schema PDF/A asks for the pdfuaid namespace. It joins the file's own list of schemas when there is one,
+    /// and is not added twice.
+    /// </summary>
+    public void DeclarePdfUaSchema()
+    {
+        if (Descriptions().SelectMany(d => d.Descendants(Schema + "namespaceURI")).Any(e => e.Value.Trim() == PdfUAId.NamespaceName)) return;
+        var entry = new XElement(Rdf + "li", new XAttribute(Rdf + "parseType", "Resource"),
+            new XElement(Schema + "schema", "PDF/UA identification schema"),
+            new XElement(Schema + "namespaceURI", PdfUAId.NamespaceName),
+            new XElement(Schema + "prefix", "pdfuaid"),
+            new XElement(Schema + "property", new XElement(Rdf + "Seq", new XElement(Rdf + "li", new XAttribute(Rdf + "parseType", "Resource"),
+                new XElement(Property + "name", "part"),
+                new XElement(Property + "valueType", "Integer"),
+                new XElement(Property + "category", "internal"),
+                new XElement(Property + "description", "Indicates which part of ISO 14289 the file follows")))));
+        var bag = Descriptions().SelectMany(d => d.Elements(Extension + "schemas")).Select(e => e.Element(Rdf + "Bag")).FirstOrDefault(b => b is not null);
+        if (bag is not null)
+        {
+            bag.Add(entry);
+            return;
+        }
+        _rdf.Add(new XElement(Rdf + "Description", new XAttribute(Rdf + "about", ""),
+            new XAttribute(XNamespace.Xmlns + "pdfaExtension", Extension.NamespaceName),
+            new XAttribute(XNamespace.Xmlns + "pdfaSchema", Schema.NamespaceName),
+            new XAttribute(XNamespace.Xmlns + "pdfaProperty", Property.NamespaceName),
+            new XElement(Extension + "schemas", new XElement(Rdf + "Bag", entry))));
     }
 
     public byte[] ToBytes()

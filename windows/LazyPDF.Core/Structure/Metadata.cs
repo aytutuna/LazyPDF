@@ -98,7 +98,7 @@ public sealed record DocumentMetadata(
         stream.Dictionary.Remove("DecodeParms");
     }
 
-    private static bool HasCryptFilter(PdfDocument document, PdfStream stream) =>
+    internal static bool HasCryptFilter(PdfDocument document, PdfStream stream) =>
         document.Resolve(stream.Dictionary["Filter"]) switch
         {
             PdfName n => n.Value == "Crypt",

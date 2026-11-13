@@ -15,3 +15,7 @@ public sealed record PdfUaReport(IReadOnlyList<PdfUaIssue> Issues, bool Truncate
     public bool IsValid => Issues.Count == 0;
 }
 
+
+/// <param name="Marked">The file now names PDF/UA-1; false leaves it as it was.</param>
+/// <param name="Blocking">The issues that stood in the way, empty when marked. Those the marking itself would have settled are not in it.</param>
+public sealed record PdfUaMarkResult(bool Marked, PdfUaReport Blocking);

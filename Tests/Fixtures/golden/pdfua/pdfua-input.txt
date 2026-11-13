@@ -1,0 +1,18 @@
+# One line is "<op> <case>". The files are made from the case name by PdfUaGolden (C#); the Swift twin makes the same files.
+# check <case>: the issues the PDF/UA-1 check finds: condition | clause | where | message.
+# mark <case>: PdfUaValidator.Mark with the date 2026-03-04T10:30:00Z: whether it marked, the issues that blocked it, and the issues found in the file afterwards.
+check compliant
+check unmarked
+check no-metadata
+check no-title
+check untagged
+check structure
+check catalog
+check text
+mark compliant
+mark unmarked
+mark no-metadata
+mark no-title
+mark untagged
+mark structure
+mark catalog
