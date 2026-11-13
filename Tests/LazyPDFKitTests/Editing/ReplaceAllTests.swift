@@ -10,8 +10,12 @@ final class ReplaceAllTests: XCTestCase {
         let kids = (0..<contents.count).map { "\(10 + $0) 0 R" }.joined(separator: " ")
         pdf.obj(2, "<</Type /Pages /Kids [\(kids)] /Count \(contents.count) /MediaBox [0 0 600 800]>>")
         pdf.obj(5, EditKit.helvetica)
+        pdf.obj(7, "<</Type /Font /Subtype /Type0 /BaseFont /Arial /Encoding /Identity-V /DescendantFonts [<</Type /Font /Subtype /CIDFontType2 /BaseFont /Arial " +
+            "/CIDSystemInfo <</Registry (Adobe) /Ordering (Identity) /Supplement 0>> /DW 600>>] /ToUnicode 8 0 R>>")
+        pdf.stream(8, "", "/CIDInit /ProcSet findresource begin 12 dict begin begincmap /CMapName /X def /CMapType 2 def " +
+            "1 begincodespacerange <0000> <FFFF> endcodespacerange 1 beginbfrange <0041> <005A> <0041> endbfrange endcmap end end")
         for i in 0..<contents.count {
-            pdf.obj(10 + i, "<</Type /Page /Parent 2 0 R /Contents \(30 + i) 0 R /Resources <</Font <</F1 5 0 R>>>>>>")
+            pdf.obj(10 + i, "<</Type /Page /Parent 2 0 R /Contents \(30 + i) 0 R /Resources <</Font <</F1 5 0 R /F3 7 0 R>>>>>>")
             pdf.stream(30 + i, "", contents[i])
         }
         return try PdfEditSession.open(pdf.finish())
@@ -59,15 +63,15 @@ final class ReplaceAllTests: XCTestCase {
     func test_whatCannotBeReplacedIsReportedAndLeftAlone() throws {
         let session = try open(
             "BT /F1 12 Tf 50 700 Td (a world here) Tj ET",
-            "/Span <</ActualText (world)>> BDC BT /F1 12 Tf 50 700 Td (w0rld) Tj ET EMC",
+            "BT /F3 12 Tf 50 700 Td <0057004F0052004C0044> Tj ET",
             "BT /F1 12 Tf 50 700 Td (the wor) Tj 0 -14 Td (ld ends) Tj ET")
         let report = try TextReplacer.replaceAll(session, "world", "globe")
         XCTAssertEqual(report.replaced, 1)
         let failure = try assertSingle(report.failed)
         XCTAssertEqual(failure.page, 1)
-        XCTAssertEqual(failure.reason, EditingText.actualText)
+        XCTAssertEqual(failure.reason, EditingText.vertical)
         XCTAssertEqual(try page(session, 0), "a globe here")
-        XCTAssertEqual(try page(session, 1), "world")
+        XCTAssertEqual(try page(session, 1), "WORLD")
     }
 
     func test_lettersNoFontHasAreReportedPerMatch() throws {
