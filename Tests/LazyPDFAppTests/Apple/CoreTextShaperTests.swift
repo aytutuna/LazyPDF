@@ -19,6 +19,21 @@ final class CoreTextShaperTests: XCTestCase {
         try XCTUnwrap(source.shape(text, file, rightToLeft: true, language: nil))
     }
 
+    func test_sharedShaperGivesTheSameGlyphsOnManyThreads() throws {
+        let geeza = try file("Geeza Pro")
+        let arial = try file("Arial")
+        let text = meem + reh + hah + beh + alef
+        let expected = [try shape(geeza, text).map(\.glyph), try shape(arial, text).map(\.glyph)]
+        let lock = NSLock()
+        var wrong = 0
+        DispatchQueue.concurrentPerform(iterations: 200) { i in
+            let which = i % 2
+            let glyphs = source.shape(text, which == 0 ? geeza : arial, rightToLeft: true, language: nil)?.map(\.glyph)
+            if glyphs != expected[which] { lock.lock(); wrong += 1; lock.unlock() }
+        }
+        XCTAssertEqual(wrong, 0)
+    }
+
     func test_arabicLettersTakeTheirJoinedForms() throws {
         let geeza = try file("Geeza Pro")
         let glyphs = try shape(geeza, meem + reh + hah + beh + alef)

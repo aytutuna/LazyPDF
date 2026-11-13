@@ -10,6 +10,7 @@ final class CoreTextShaper: Shaper {
     // Advances and positions come out in em fractions of this size, so they are already in 1/1000 em.
     private static let size: CGFloat = 1000
 
+    private let lock = NSLock()
     private var cached: (file: FontFile, font: CTFont)?
 
     func shape(_ text: String, _ font: FontFile, rightToLeft: Bool, language: String?) -> [ShapedGlyph]? {
@@ -95,6 +96,9 @@ final class CoreTextShaper: Shaper {
     }
 
     private func ctFont(_ file: FontFile) -> CTFont? {
+        // One shaper is shared by every document being opened, and those opens run on separate threads.
+        lock.lock()
+        defer { lock.unlock() }
         if let cached, cached.file.collectionIndex == file.collectionIndex, cached.file.data == file.data { return cached.font }
         guard let faces = CTFontManagerCreateFontDescriptorsFromData(Data(file.data) as CFData) as? [CTFontDescriptor],
               file.collectionIndex >= 0, file.collectionIndex < faces.count else { return nil }
