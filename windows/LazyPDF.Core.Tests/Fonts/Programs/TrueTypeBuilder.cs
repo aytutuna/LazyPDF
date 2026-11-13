@@ -213,6 +213,11 @@ internal static class TrueTypeBuilder
             ["prep"] = [0xB8, 0x01, 0xFF],
         };
 
+        return File(tables);
+    }
+
+    private static byte[] File(SortedDictionary<string, byte[]> tables)
+    {
         var file = new List<byte>(Cat(U32(0x00010000), U16(tables.Count), U16(128), U16(3), U16(tables.Count * 16 - 128)));
         var at = 12 + 16 * tables.Count;
         var body = new List<byte>();
@@ -224,4 +229,99 @@ internal static class TrueTypeBuilder
         file.AddRange(body);
         return file.ToArray();
     }
+
+    /// <summary>
+    /// A font for the shaping tests: a box glyph for each character of <see cref="ScriptCodePoints"/> (glyph IDs from 1 in that
+    /// order), Hebrew points and the Arabic fatha with no advance, and three glyphs no cmap entry reaches: the lam-alef
+    /// ligature, beh in its initial form and beh in its final form (<see cref="LamAlef"/>, <see cref="BehInitial"/>, <see cref="BehFinal"/>).
+    /// 1000 units per em; the family is "Script Sans".
+    /// </summary>
+    public static byte[] BuildScript()
+    {
+        var cps = ScriptCodePoints;
+        int count = 1 + cps.Length + 3;
+        var glyphs = new List<byte[]> { Array.Empty<byte>() };
+        var advances = new List<int> { 500 };
+        var lsb = new List<int> { 0 };
+        foreach (int cp in cps)
+        {
+            int advance = ScriptAdvance(cp);
+            advances.Add(advance);
+            if (cp == 0x20)
+            {
+                glyphs.Add(Array.Empty<byte>());
+                lsb.Add(0);
+            }
+            else if (advance == 0)
+            {
+                glyphs.Add(Simple([(-300, 800, true), (-100, 800, true), (-100, 900, true), (-300, 900, true)]));
+                lsb.Add(-300);
+            }
+            else
+            {
+                glyphs.Add(Simple([(50, 0, true), (advance - 50, 0, true), (advance - 50, 700, true), (50, 700, true)]));
+                lsb.Add(50);
+            }
+        }
+        foreach (int advance in new[] { 900, 600, 640 })
+        {
+            advances.Add(advance);
+            glyphs.Add(Simple([(50, 0, true), (advance - 50, 0, true), (advance - 50, 700, true), (50, 700, true)]));
+            lsb.Add(50);
+        }
+
+        var offsets = new List<int>();
+        var glyf = new List<byte>();
+        foreach (var g in glyphs)
+        {
+            offsets.Add(glyf.Count);
+            glyf.AddRange(g);
+        }
+        offsets.Add(glyf.Count);
+
+        var groups = Cat(cps.Select((cp, i) => Cat(U32((uint)cp), U32((uint)cp), U32((uint)(i + 1)))).ToArray());
+        var cmap = Cat(U16(0), U16(1), U16(3), U16(10), U32(12), U16(12), U16(0), U32((uint)(16 + groups.Length)), U32(0), U32((uint)cps.Length), groups);
+
+        var tables = new SortedDictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            ["OS/2"] = Cat(U16(2), U16(520), U16(400), U16(5), U16(0), new byte[58], U16(800), U16(-200), U16(100), U16(850), U16(250), new byte[8],
+                U16(500), U16(700), new byte[6]),
+            ["cmap"] = cmap,
+            ["glyf"] = glyf.ToArray(),
+            ["head"] = Cat(U32(0x00010000), U32(0x00010000), U32(0), U32(0x5F0F3CF5), U16(3), U16(1000), new byte[16],
+                U16(-300), U16(-100), U16(900), U16(900), U16(0), U16(8), U16(2), U16(0), U16(0)),
+            ["hhea"] = Cat(U32(0x00010000), U16(800), U16(-200), U16(100), U16(900), new byte[22], U16(count)),
+            ["hmtx"] = Cat(Enumerable.Range(0, count).Select(i => Cat(U16(advances[i]), U16(lsb[i]))).ToArray()),
+            ["loca"] = Cat(offsets.Select(o => U16(o / 2)).ToArray()),
+            ["maxp"] = Cat(U32(0x00010000), U16(count), new byte[26]),
+            ["name"] = Cat(U16(0), U16(2), U16(6 + 24),
+                Cat(U16(3), U16(1), U16(0x409), U16(1), U16(22), U16(0)), Cat(U16(3), U16(1), U16(0x409), U16(6), U16(36), U16(22)),
+                Encoding.BigEndianUnicode.GetBytes("Script Sans"), Encoding.BigEndianUnicode.GetBytes("ScriptSans-Regular")),
+            ["post"] = Cat(U32(0x00030000), U32(0), U16(-100), U16(50), new byte[20]),
+        };
+        return File(tables);
+    }
+
+    /// <summary>Space, punctuation, digits, Latin letters, Hebrew letters and points, and a few Arabic letters, in code point order.</summary>
+    public static readonly int[] ScriptCodePoints = new[] { 0x20, 0x21, 0x28, 0x29, 0x2C, 0x2D, 0x2E, 0x3A, 0x3C, 0x3E, 0x5B, 0x5D, 0x627, 0x628, 0x644, 0x645, 0x64E }
+        .Concat(Enumerable.Range('0', 10)).Concat(Enumerable.Range('A', 26)).Concat(Enumerable.Range('a', 26))
+        .Concat(Enumerable.Range(0x5B0, 13)).Concat(Enumerable.Range(0x5D0, 27)).Order().ToArray();
+
+    public static int Gid(int codePoint) => Array.IndexOf(ScriptCodePoints, codePoint) + 1;
+
+    public static int LamAlef => 1 + ScriptCodePoints.Length;
+
+    public static int BehInitial => LamAlef + 1;
+
+    public static int BehFinal => LamAlef + 2;
+
+    public static int ScriptAdvance(int cp) => cp switch
+    {
+        0x20 => 250,
+        >= 0x30 and <= 0x39 => 550,
+        0x21 or 0x28 or 0x29 or 0x2C or 0x2D or 0x2E or 0x3A or 0x5B or 0x5D => 300,
+        0x3C or 0x3E => 500,
+        >= 0x5B0 and <= 0x5BC or 0x64E => 0,
+        _ => 400 + cp * 37 % 9 * 40,
+    };
 }
